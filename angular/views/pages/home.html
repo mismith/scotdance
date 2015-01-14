@@ -1,0 +1,17 @@
+<div id="HomePageCtrl" ng-controller="HomePageCtrl">
+	<div class="grid-table grid-center grid-middle">
+		<div>
+			<article style="display: inline-block;">
+				<h1>ng-boilerplate</h1>
+				<ul class="grid-left">
+					<li>AngularJS working: {{ angularWorking }}</li>
+					<li>Firebase working: {{ firebaseWorking }}</li>
+					<li>UI Router state: {{ $state.current.name }}({page: '{{ $state.params.page || 'home' }}'})</li>
+					<li>Glyphs working: <i class="glyph glyph-facebook"></i></li>
+					<li>GlyphIcons working: <i class="glyphicon glyphicon-ok"></i></li>
+					<li>FontAwesome working: <i class="fa fa-check"></i></li>
+				</ul>
+			</article>
+		</div>
+	</div>
+</div>
