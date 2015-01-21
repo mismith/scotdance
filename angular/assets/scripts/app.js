@@ -16,7 +16,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'firebaseHelper'])
 				.state('main.page', {
 					url: '/:page',
 					templateUrl: function($stateParams){
-						return 'views/pages/' + ($stateParams.page || 'home') + '.html';
+						return 'views/page/' + ($stateParams.page || 'home') + '.html';
 					},
 				});
 		

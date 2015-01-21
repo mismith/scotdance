@@ -11,11 +11,11 @@
 # Config
 
 * If you are making a site with a pre-existing design, disable Twitter Bootstrap and FontAwesome by:
-	* Removing the 2 <link>s in `/index.html`
-	* Removing the 1 <script> in `/index.html`
+	* Removing the 2 `<link>`s in `/index.html`
+	* Removing the 1 `<script>` in `/index.html`
 	* Removing the `ui.bootstrap` module from your `/assets/js/app.js` dependencies
 * If you are not going to be using Firebase as your backend, disabled it by:
-	* Removing the 3 <script>s in `/index.html`
+	* Removing the 3 `<script>`s in `/index.html`
 	* Removing the `firebaseHelper` module from your `/assets/js/app.js` dependencies
 * Replace all instances of `XXXXXX` with relevant info in `/index.html` and `/assets/js/app.js`; consider:
 	* <meta> tags and OpenGraph info
@@ -27,8 +27,9 @@
 
 # Structure
 
-`/templates/` is for general-purpose partials (i.e. angular directive templates, re-used UI elements, or repeated content sections)
-`/views/` is for partials to be rendered as full view templates (e.g. public vs. authenticated, header1 vs. header2)
-`/views/pages/` is for partials that will be included in other views (e.g. subviews)
-`/assets/img/` is for all site-specific static images; any user-uploaded content should be kept elsewhere
-`/assets/js/` should contain only dynamically generated code; any code you will edit directly should be in `/assets/js/src/`
+* `/views/` is for partials to be rendered as full view templates (e.g. public vs. authenticated, header1 vs. header2)
+* `/views/page/` is for partials that will be included in other views (e.g. subviews)
+* `/views/template/` is for general-purpose partials (i.e. angular directive templates, re-used UI elements, or repeated content sections)
+* `/assets/img/` is for all site-specific static images; any user-uploaded content should be kept elsewhere
+* `/assets/scripts/` should contain your source code, whereas `/assets/js/` should contain only dynamically generated javascript
+* `/assets/styles/`, likewise, should contain your source code, whereas `/assets/css/` should contain only dynamically generated css
