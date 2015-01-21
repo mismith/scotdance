@@ -22,6 +22,13 @@
 	* Google Analytics
 * Update `/robots.txt` and `/sitemap.xml` accordingly
 * Create an app icon in PNG format at `/assets/img/touchicon.png`
+* Customize the `.glyphs` via [IcoMoon.io](https://icomoon.io/app/):
+    1. import `/assets/selection.json` into the IcoMoon site
+    2. make your changes, add new icons, etc.
+    3. download the package (using the default settings except for: Font Name: "glyph", Class Prefix: "glyph-")
+    4. copy the contents of the unzipped `fonts` directory to `/assets/fonts/`
+    5. copy the `selection.json` file to `/assets/`
+    6. copy the new/changed contents from `style.css` into `/assets/styles/glyph.inc.less` (note that there are custom tweaks to the generic `.glyph` class so only copy the `.glyph-*` classes below it)
 
 
 
