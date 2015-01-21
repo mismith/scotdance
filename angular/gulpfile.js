@@ -1,13 +1,16 @@
 /* config */
 var PROXY_ADDR = '', // e.g. example.dev
-	ASSET_PATH = 'assets';
+	BASE_DIR   = '',
+	ASSET_PATH = BASE_DIR + 'assets';
 	
 var globs = {
 	js: [
-		ASSET_PATH + '/js/src/**/*.js',
+		ASSET_PATH + '/scripts/*/**/*.js',
+		ASSET_PATH + '/scripts/**/*.js',
 	],
 	less: [
-		ASSET_PATH + '/less/**/*.less',
+		ASSET_PATH + '/styles/**/*.less',
+		'!' + ASSET_PATH + '/styles/**/*.inc.less',
 	],
 	files: [
 		'**/.htaccess',
@@ -54,7 +57,7 @@ gulp
 			.pipe(browserSync.reload({stream:true}));
 	})
 	.task('less', function(){
-		return gulp.src(globs.less.concat(['!' + ASSET_PATH + '/less/**/*.inc.less']))
+		return gulp.src(globs.less)
 			.pipe(less())
 			.pipe(autoprefixer('last 2 versions'))
 			.pipe(minifyCss())
@@ -85,7 +88,7 @@ gulp
 		}else{
 			// N.B. this doesn't work with HTML5 URL rewriting
 			config.server = { 
-				baseDir: './',
+				baseDir: './' + BASE_DIR,
 			};
 		}
 		browserSync.init(config);
