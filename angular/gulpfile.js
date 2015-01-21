@@ -1,7 +1,7 @@
 /* config */
-var PROXY_ADDR = '', // e.g. example.dev
-	BASE_DIR   = '',
-	ASSET_PATH = BASE_DIR + 'assets';
+var PROXY_ADDR = '', // e.g. 'example.dev'
+	BASE_PATH  = '', // e.g. 'html/'
+	ASSET_PATH = BASE_PATH + 'assets';
 	
 var globs = {
 	js: [
@@ -88,7 +88,7 @@ gulp
 		}else{
 			// N.B. this doesn't work with HTML5 URL rewriting
 			config.server = { 
-				baseDir: './' + BASE_DIR,
+				baseDir: './' + BASE_PATH,
 			};
 		}
 		browserSync.init(config);
