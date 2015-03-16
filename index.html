@@ -44,7 +44,9 @@
 </head>
 <body ng-controller="AppCtrl">
 	
-	<ui-view id="template" autoscroll="false"></ui-view>
+	<div ui-view id="app" autoscroll="false">
+		<loader />
+	</div>
 	
 	<!-- Scripts -->
 	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.4/angular.min.js"></script>
