@@ -4,10 +4,11 @@ angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'firebaseHelper'])
 		FastClick.attach(document.body);
 	})
 	
-	.config(function($locationProvider, $urlRouterProvider, $stateProvider, $firebaseHelperProvider){
+	.config(function($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider){
 		// routing
 		$locationProvider.html5Mode(true);
 		$urlRouterProvider.when('',  '/');
+		$urlMatcherFactoryProvider.strictMode(false); // make trailing slashes optional
 		$stateProvider  
 			.state('main', {
 				abstract: true,
