@@ -1,10 +1,10 @@
-angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'firebaseHelper'])
+angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'firebaseHelper', 'contentful'])
 	
 	.run(function(){
 		FastClick.attach(document.body);
 	})
 	
-	.config(function($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider){
+	.config(function($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider, contentfulProvider){
 		// routing
 		$locationProvider.html5Mode(true);
 		$urlRouterProvider.when('',  '/');
@@ -23,6 +23,10 @@ angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'firebaseHelper'])
 		
 		// data
 		$firebaseHelperProvider.namespace('demo');
+		contentfulProvider.setOptions({
+			accessToken: 'XXXXXX',
+			space:       'XXXXXX',
+		});
 	})
 	
 	.controller('AppCtrl', function($rootScope, $state){
