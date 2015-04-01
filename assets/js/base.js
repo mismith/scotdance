@@ -1,13 +1,14 @@
-angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'firebaseHelper'])
+angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'firebaseHelper', 'contentful'])
 	
 	.run(function(){
 		FastClick.attach(document.body);
 	})
 	
-	.config(["$locationProvider", "$urlRouterProvider", "$stateProvider", "$firebaseHelperProvider", function($locationProvider, $urlRouterProvider, $stateProvider, $firebaseHelperProvider){
+	.config(["$locationProvider", "$urlRouterProvider", "$urlMatcherFactoryProvider", "$stateProvider", "$firebaseHelperProvider", "contentfulProvider", function($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider, contentfulProvider){
 		// routing
 		$locationProvider.html5Mode(true);
 		$urlRouterProvider.when('',  '/');
+		$urlMatcherFactoryProvider.strictMode(false); // make trailing slashes optional
 		$stateProvider  
 			.state('main', {
 				abstract: true,
@@ -16,12 +17,45 @@ angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'firebaseHelper'])
 				.state('main.page', {
 					url: '/:page',
 					templateUrl: function($stateParams){
-						return 'views/pages/' + ($stateParams.page || 'home') + '.html';
+						return 'views/page/' + ($stateParams.page || 'home') + '.html';
 					},
 				});
+		/**
+		* Extend the UI Router $stateProvider, adding the ability to specify an
+		* anchor hash as a parameter in the ui-sref directive.
+		*/
+		$provide.decorator('$state', ['$delegate', function ($stateProvider) {
+			// Save the orignal function for generating a state's URL.
+			var $stateHref = $stateProvider.href;
+			
+			// Create our extended function.
+			$stateProvider.href = function href(stateOrName, params, options) {
+				var hash = '';
+				params = params || {};
+				var hashParam = params['#'];
+				
+				// Check if the anchor parameter was specified.
+				if (typeof hashParam !== 'undefined') {
+					// Ensure hash parameter is a string and not empty.
+					if ((typeof hashParam === 'string' || hashParam instanceof String) && hashParam.length) {
+						hash = '#' + hashParam;
+					}
+					
+					delete params['#'];
+				}
+				
+				// Return the original parsed URL with the hash appended.
+				return $stateHref(stateOrName, params, options) + hash;
+			};
+			return $stateProvider;
+		}]);
 		
 		// data
 		$firebaseHelperProvider.namespace('demo');
+		contentfulProvider.setOptions({
+			accessToken: 'XXXXXX',
+			space:       'XXXXXX',
+		});
 	}])
 	
 	.controller('AppCtrl', ["$rootScope", "$state", function($rootScope, $state){
