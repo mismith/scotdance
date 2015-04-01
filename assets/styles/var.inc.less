@@ -1,0 +1,158 @@
+// units
+@u:  12px;
+@hh: 100px;
+@t:  300ms;
+
+// colors
+@darkest:  #0A0A0A;
+@darker:   #090909;
+@dark:     #231F20;
+@neutral:  #939598;
+@lighter:  #ECFEE0;
+@lightest: #FFF;
+
+@pink:  #DB3A64;
+@green: #00CEB0;
+
+// sizes
+@full: 1440px;
+
+// fonts
+@font-heading: 'Oswald', sans-serif;
+@font-body: 'Roboto Slab', serif;
+
+// resets
+* {
+	box-sizing: border-box;
+}
+html,
+body {
+	width: 100%;
+	height: 100%;
+	padding: 0;
+	margin: 0;
+}
+figure,
+fieldset,
+menu {
+	padding: 0;
+	border: 0;
+	margin: 0;
+}
+img {
+	border: 0;
+	vertical-align: middle;
+}
+
+// special elements
+loader {
+	display: block;
+	width: 200px;
+	height: 200px;
+	background: transparent url(../img/loading.gif) center center no-repeat;
+	background-size: 32px;
+	margin: auto;
+}
+
+// layout
+.grid-slide {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	
+	min-height: 90vh;
+}
+.grid-section {
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-size: cover;
+	padding: @hh @u*2;
+}
+.grid-aside {
+	padding: @hh/4 0;
+	
+	h2 {
+		display: inline-block;
+		vertical-align: middle;
+		margin: @u @u*2;
+	}
+}
+
+.grid-wrapper {
+	position: relative;
+	overflow: hidden;
+}
+.grid-wrap {
+	max-width: @full;
+	margin: 0 auto;
+}
+.grid-table {
+	display: table;
+	width: 100%;
+	
+	> * {
+		display: table-cell;
+		vertical-align: middle;
+	}
+}
+
+// alignment
+.align-left {
+	text-align: left;
+}
+.align-center {
+	text-align: center;
+}
+.align-right {
+	text-align: right;
+}
+.align-top {
+	vertical-align: top;
+}
+.align-middle {
+	vertical-align: middle;
+}
+.align-bottom {
+	vertical-align: bottom;
+}
+
+// lists
+.list-unstyled {
+	padding: 0;
+	margin: 0;
+	list-style: none;
+	
+	> li {
+		padding: 0;
+		margin: 0;
+	}
+}
+.list-inline {
+	.list-unstyled;
+	
+	> li {
+		display: inline-block;
+	}
+}
+
+// colours
+.dim {
+	opacity: .5;
+}
+.lightest {
+	color: @lightest;
+}
+.neutral {
+	color: @neutral;
+}
+.darkest {
+	color: @darkest;
+}
+.bg-lightest {
+	background-color: @lightest;
+	color: @darkest;
+}
+.bg-darkest {
+	background-color: @darkest;
+	color: @lightest;
+}
