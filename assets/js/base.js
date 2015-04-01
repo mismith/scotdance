@@ -4,7 +4,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'firebaseHelper', 'conten
 		FastClick.attach(document.body);
 	})
 	
-	.config(["$locationProvider", "$urlRouterProvider", "$urlMatcherFactoryProvider", "$stateProvider", "$firebaseHelperProvider", "contentfulProvider", function($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider, contentfulProvider){
+	.config(["$locationProvider", "$urlRouterProvider", "$urlMatcherFactoryProvider", "$stateProvider", "$provide", "$firebaseHelperProvider", "contentfulProvider", function($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $provide, $firebaseHelperProvider, contentfulProvider){
 		// routing
 		$locationProvider.html5Mode(true);
 		$urlRouterProvider.when('',  '/');
