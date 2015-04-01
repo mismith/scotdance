@@ -13,14 +13,14 @@
 * If you are making a site with a pre-existing design, disable Twitter Bootstrap and FontAwesome by:
 	* Removing the 2 `<link>`s in `/index.html`
 	* Removing the 1 `<script>` in `/index.html`
-	* Removing the `ui.bootstrap` module from your `/assets/js/app.js` dependencies
+	* Removing the `ui.bootstrap` module from your `/assets/scripts/app.js` dependencies
 * If you are not going to be using Firebase as your backend, disable it by:
 	* Removing the 3 `<script>`s in `/index.html`
-	* Removing the `firebaseHelper` module from your `/assets/js/app.js` dependencies
-* If you are not going to be using Contentful as your backend, disable it by:
-	* Removing the 3 `<script>`s in `/index.html`
-	* Removing the `contentfulProvider` module from your `/assets/js/app.js` dependencies
-* Replace all instances of `XXXXXX` with relevant info in `/index.html` and `/assets/js/app.js`; consider:
+	* Removing the `firebaseHelper` module from your `/assets/scripts/app.js` dependencies
+* If you are not going to be using Contentful as your backend (with Markdown support via Marked plugin), disable it by:
+	* Removing the 3 `<script>`s in `/index.html` (one for `contentful` and two for `marked`)
+	* Removing the `contentful` and `hc.marked` modules from your `/assets/scripts/app.js` dependencies
+* Replace all instances of `XXXXXX` with relevant info in `/index.html` and `/assets/scripts/app.js`; consider:
 	* <meta> tags and OpenGraph info
 	* Google Analytics
 * Update `/robots.txt` and `/sitemap.xml` accordingly

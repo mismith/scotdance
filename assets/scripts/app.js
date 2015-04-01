@@ -1,4 +1,4 @@
-angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'firebaseHelper', 'contentful'])
+angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'firebaseHelper', 'contentful', 'hc.marked'])
 	
 	.run(function(){
 		FastClick.attach(document.body);
