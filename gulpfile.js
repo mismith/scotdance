@@ -10,7 +10,6 @@ var globs = {
 	],
 	less: [
 		ASSET_PATH + '/styles/**/*.less',
-		'!' + ASSET_PATH + '/styles/**/*.inc.less',
 	],
 	files: [
 		'**/.htaccess',
@@ -57,7 +56,7 @@ gulp
 			.pipe(browserSync.reload({stream:true}));
 	})
 	.task('less', function(){
-		return gulp.src(globs.less)
+		return gulp.src(globs.less.concat('!' + ASSET_PATH + '/styles/**/*.inc.less')) // append this here so that these files are still watched for changes, they just don't get compiled/output
 			.pipe(less())
 			.pipe(autoprefixer('last 2 versions'))
 			.pipe(minifyCss())
