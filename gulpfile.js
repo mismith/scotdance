@@ -1,6 +1,6 @@
-/* config */
-var PROXY_ADDR = '', // e.g. 'example.dev'
-	BASE_PATH  = '', // e.g. 'html/'
+// config
+var PROXY_ADDR = '',
+	BASE_PATH  = '',
 	ASSET_PATH = BASE_PATH + 'assets';
 	
 var globs = {
@@ -13,7 +13,7 @@ var globs = {
 	],
 	files: [
 		'**/.htaccess',
-		'**/*.+(html|php|jpg|jpeg|gif|png)',
+		'**/*.+(html|php|jpg|jpeg|gif|png|svg)',
 	],
 };
 var dests = {
@@ -21,10 +21,11 @@ var dests = {
 	less: ASSET_PATH + '/css',
 }
 
-/* includes */
+// includes
 var gulp         = require('gulp'),
 	gutil        = require('gulp-util'),
 	rename       = require('gulp-rename'),
+	notifier     = require('node-notifier'),
 	
 	// watching
 	browserSync  = require('browser-sync'),
@@ -32,6 +33,7 @@ var gulp         = require('gulp'),
 	// js
 	concat       = require('gulp-concat'),
 	uglify       = require('gulp-uglify'),
+	jsValidate   = require('gulp-jsvalidate'),
 	ngAnnotate   = require('gulp-ng-annotate'),
 	
 	// css
@@ -40,29 +42,87 @@ var gulp         = require('gulp'),
 	minifyCss    = require('gulp-minify-css');
 
 
-/* tasks */
+var handleError = function(error, type){
+	//console.log(error);
+	
+	// remove any leading error marker
+	error.message = error.message.replace(/^error:\s*/i, '');
+	
+	// shorten fileName
+	var fileName = error.fileName ? error.fileName.replace(__dirname, '') : '';
+	
+	// show an OS-level notification to make sure we catch our attention
+	// (do this before we format things since it can't handle the formatting)
+	notifier.notify({
+		title: 'ERROR(' + error.plugin + ')',
+		subtitle: fileName,
+		message: error.message,
+		sound: 'Basso',
+		activate: 'com.apple.Terminal',
+	});
+	
+	// colour the problematic line for higher visibility
+	if(error.extract){
+		var middleIndex = Math.floor(error.extract.length / 2);
+		error.extract[middleIndex] = gutil.colors.red(error.extract[middleIndex]);
+	}
+	// append highlighted fileName to message, if not already there
+	if(fileName){
+		if(error.message.indexOf(error.fileName) >= 0){
+			error.message = error.message.replace(error.fileName, gutil.colors.magenta(fileName));
+		}else{
+			error.message += ' in ' + gutil.colors.magenta(fileName);
+		}
+	}
+	// process line numbers
+	var line = error.lineNumber || error.line;
+	
+	// output the formatted error
+	gutil.log(
+		// error and plugin
+		gutil.colors.red('ERROR(' + error.plugin + '): ') +
+		
+		// message
+		error.message +
+		
+		// offending line number and column
+		(line ? ' [' + gutil.colors.cyan(line) + ':' + gutil.colors.cyan(error.column) + ']' : '') +
+		
+		// preview the offending code
+		(error.extract ? '\n\n\t' + error.extract.join('\n\t') : '') +
+		
+		// finish with a new line
+		'\n'
+	);
+	
+	// prevent this error from breaking/stopping watchers
+	this.emit('end');
+};
+
+// tasks
 gulp
 	// build
 	.task('js', function(){
-		return gulp.src(globs.js)
+		gulp.src(globs.js)
+			.pipe(jsValidate()).on('error', handleError)
 			.pipe(concat('base.js'))
-			.pipe(ngAnnotate())
+			.pipe(ngAnnotate()).on('error', handleError)
 			.pipe(gulp.dest(dests.js))
 			
 			.pipe(rename({suffix: '.min'}))
-			.pipe(uglify())
+			.pipe(uglify()).on('error', handleError)
 			.pipe(gulp.dest(dests.js))
 			
-			.pipe(browserSync.reload({stream:true}));
+			.pipe(browserSync.reload({stream: true}));
 	})
 	.task('less', function(){
-		return gulp.src(globs.less.concat('!' + ASSET_PATH + '/styles/**/*.inc.less')) // append this here so that these files are still watched for changes, they just don't get compiled/output
-			.pipe(less())
+		gulp.src(globs.less.concat('!' + ASSET_PATH + '/styles/**/*.inc.less')) // append this here so that these files are still watched for changes, they just don't get compiled/output
+			.pipe(less()).on('error', handleError)
 			.pipe(autoprefixer('last 2 versions'))
 			.pipe(minifyCss())
 			.pipe(gulp.dest(dests.less))
 			
-			.pipe(browserSync.reload({stream:true}));
+			.pipe(browserSync.reload({stream: true}));
 	})
 	.task('build', ['js','less'])
 	
