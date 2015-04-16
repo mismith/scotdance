@@ -32,10 +32,17 @@ angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'firebaseHelper', 'conten
 	.controller('AppCtrl', ["$rootScope", "$state", function($rootScope, $state){
 		$rootScope.$state = $state;
 	}])
-	.controller('HomePageCtrl', ["$scope", "$firebaseHelper", function($scope, $firebaseHelper){
+	.controller('HomePageCtrl', ["$scope", "$firebaseHelper", "contentful", function($scope, $firebaseHelper, contentful){
+		// angular
 		$scope.angularWorking = 'Yes';
 		
+		// firebase
 		$firebaseHelper.load('example').then(function(example){
 			$scope.firebaseWorking = true;
+		});
+		
+		// contentful
+		contentful.entries('order=sys.createdAt').then(function(response){
+			$scope.entries = response.data.items;
 		});
 	}]);
