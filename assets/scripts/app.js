@@ -8,18 +8,27 @@ angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'firebaseHelper', 'conten
 		// routing
 		$locationProvider.html5Mode(true);
 		$urlRouterProvider.when('',  '/');
-		$stateProvider  
+		var pages = [
+			'home'
+		];
+		$stateProvider
+			// pages
 			.state('main', {
 				abstract: true,
 				templateUrl: 'views/main.html',
 			})
 				.state('page', {
 					parent: 'main',
-					url: '/:page',
+					url: '/{page:|' + pages.join('|') + '}',
 					templateUrl: function($stateParams){
 						return 'views/page/' + ($stateParams.page || 'home') + '.html';
 					},
-				});
+				})
+			// catch-all
+			.state('otherwise', {
+				url: '*path',
+				templateUrl: 'views/page/404.html',
+			});
 		
 		// data
 		$firebaseHelperProvider.namespace('demo');
