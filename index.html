@@ -1,34 +1,45 @@
 <!DOCTYPE html>
 <html lang="en" ng-app="XXXXXX">
 <head>
+	<!-- base -->
 	<base href="/">
 	<meta charset="UTF-8">
-	<title>XXXXXX</title>
+	<title>XXXXXX</title><!-- 60 char max -->
 	
-	<!-- SEO -->
-<!--
-	<meta name="description" content="XXXXXX">
-	<meta property="og:description" content="XXXXXX">
-	<meta property="og:title" content="XXXXXX">
-	<meta property="og:image" content="XXXXXX">
-	<meta property="og:type" content="XXXXXX">
-	<meta property="og:url" content="XXXXXX">
--->
-	
-	<!-- Mobile -->
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<!-- mobile -->
+	<meta name="viewport" content="width=400, initial-scale=1.0">
 	<meta name="mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black">
 	<link rel="apple-touch-icon-precomposed" href="/assets/img/touchicon.png" type="image/png">
 	<link rel="shortcut icon" href="/assets/img/touchicon.png" type="image/png">
 	
-	<!-- Styles -->
+	<!-- search engines -->
+	<meta name="description" content="XXXXXX"><!-- 160 char max -->
+	<link rel="canonical" href="XXXXXX" >
+	
+	<!-- facebook -->
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="XXXXXX" />
+	<meta property="og:description" content="XXXXXX" />
+	<meta property="og:url" content="XXXXXX" />
+	<meta property="og:site_name" content="XXXXXX" />
+	<meta property="og:image" content="XXXXXX/assets/img/og_image.jpg" /><!--500px x 500px-->
+	<meta property="og:image" content="XXXXXX/assets/img/og_image_fb.jpg" /><!--1200px x 630px-->
+	
+	<!-- twitter -->
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:site" content="@XXXXXX">
+	<meta name="twitter:title" content="XXXXXX">
+	<meta name="twitter:description" content="XXXXXX">
+	<meta name="twitter:image:src" content="XXXXXX/assets/img/og_image.jpg">
+	
+	<!-- styles -->
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css">
 	<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" type="text/css">
 	<link rel="stylesheet" href="/assets/css/base.css" type="text/css">
 	
-	<!-- Analytics + Compatibility -->
+	<!-- analytics + compatibility -->
 <!--
 	<script>
 		// google analytics
@@ -41,6 +52,7 @@
 	</script>
 -->
 	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" /><![endif]-->
 </head>
 <body ng-controller="AppCtrl">
 	
