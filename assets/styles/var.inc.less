@@ -10,7 +10,7 @@
 @dark:     #666;
 @neutral:  #7A7A7A;
 @light:    #999;
-@lighter:  #CCC;
+@lighter:  #F1F2F2;
 @lightest: #FFF;
 
 // sizes
@@ -80,15 +80,12 @@ loader {
 	background-position: center center;
 	background-repeat: no-repeat;
 	background-size: cover;
-	padding: @hh @u*2;
+	padding: @hh 0;
 }
 .grid-header {
 	.grid-section;
-	
-	@media (max-width: @mobile) {
-		padding-top: @hh*.75;
-		padding-bottom: @hh*.75;
-	}
+	padding-top: @hh/2;
+	padding-bottom: @hh/2;
 }
 
 .grid-wrapper {
@@ -150,6 +147,7 @@ loader {
 
 // interactivity
 .btn {
+	-webkit-appearance: none;
 	appearance: none;
 	display: inline-block;
 	background: @lighter;
@@ -170,9 +168,9 @@ loader {
 	}
 }
 .input {
+	-webkit-appearance: none;
 	appearance: none;
 	display: inline-block;
-	width: 100%;
 	min-height: 32px;
 	background: @lightest;
 	color: @darkest;
