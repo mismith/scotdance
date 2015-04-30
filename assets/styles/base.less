@@ -20,3 +20,69 @@ h6 {
 // classes
 
 // sections
+#header {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 50;
+	
+	#nav {
+		.grid-table;
+		min-height: @hh;
+		
+		a {
+			color: inherit;
+			padding: 0 @u;
+		}
+		.logo {
+			width: 1%;
+		}
+		.handle {
+			display: none;
+			width: @hh;
+			text-align: center;
+		}
+		#menu {
+			text-align: right;
+			
+			a {
+				display: block;
+			}
+		}
+	}
+	+ * {
+		margin-top: @hh;
+	}
+	@media (max-width: @mobile) {
+		user-select: none;
+		
+		#nav {
+			padding-right: 0;
+			
+			.handle {
+				display: table-cell;
+			}
+			#menu {
+				display: none;
+				position: fixed;
+				top: @hh;
+				right: 0;
+				background: @lightest;
+				padding: @u*2 0 @u*4;
+				overflow: auto;
+				
+				> * {
+					display: block;
+				}
+				a {
+					font-size: 1.2em;
+					padding: @u @u*4;
+				}
+				&.toggled {
+					display: block;
+				}
+			}
+		}
+	}
+}

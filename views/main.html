@@ -1,5 +1,14 @@
 <header id="header">
-	#header
+	<nav id="nav">
+		<a href="/" class="logo"><img src="/assets/img/logo.png" alt="XXXXXX"></a>
+		<span class="separator">&nbsp;</span>
+		<a id="handle" class="handle" ng-click="$root.menu = ! menu; $event.stopPropagation()"><i class="glyph glyph-menu"></i></a>
+		<ul id="menu" class="list-inline" ng-class="{toggled: menu}">
+			<li><a ui-sref="page({page: ''})">Menu #1</a></li>
+			<li><a ui-sref="page({page: ''})">Menu #2</a></li>
+			<li><a ui-sref="page({page: ''})">Menu #3</a></li>
+		</ul>
+	</nav>
 </header>
 <main id="main" class="page-{{ $state.params.page }}" ui-view autoscroll="false">
 	<loader />
