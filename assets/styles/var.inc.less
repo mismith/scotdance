@@ -36,18 +36,18 @@ body {
 }
 figure,
 fieldset,
-iframe,
-menu {
+iframe {
 	padding: 0;
 	border: 0;
 	margin: 0;
 }
 textarea {
+	min-height: 4em;
 	resize: vertical;
 }
 img {
+	.align-middle;
 	border: 0;
-	vertical-align: middle;
 }
 a {
 	text-decoration: none;
@@ -110,8 +110,8 @@ loader {
 	width: 100%;
 	
 	> * {
+		.align-middle;
 		display: table-cell;
-		vertical-align: middle;
 	}
 	&.folded {
 		display: block;
@@ -131,6 +131,14 @@ loader {
 		@media (max-width: @mobile) {
 			.grid-table.folded;
 		}
+	}
+}
+.grid-columns {
+	.grid-table;
+	
+	> * {
+		.align-top;
+		width: 50%;
 	}
 }
 
@@ -155,16 +163,15 @@ loader {
 
 // interactivity
 .btn {
+	.bg-lightest;
+	.align-center;
+	.align-middle;
 	-webkit-appearance: none;
 	appearance: none;
 	display: inline-block;
-	background: @lighter;
-	color: @darker;
 	font: inherit;
 	font-weight: normal;
-	text-align: center;
 	text-decoration: none;
-	vertical-align: middle;
 	padding: @u/2 @u*2;
 	margin: 0;
 	border: 0;
@@ -172,18 +179,18 @@ loader {
 	cursor: pointer;
 	
 	&:hover {
+		.color-neutral;
 		text-decoration: none;
 	}
 }
 .input {
+	.bg-lightest;
+	.align-middle;
 	-webkit-appearance: none;
 	appearance: none;
 	display: inline-block;
 	min-height: 32px;
-	background: @lightest;
-	color: @darkest;
 	font: inherit;
-	vertical-align: middle;
 	padding: @u/2 @u*2;
 	margin: 0;
 	border: 0;
@@ -214,18 +221,49 @@ loader {
 .dim {
 	opacity: .5;
 }
-.lightest {
+.color-lightest {
 	color: @lightest;
 }
-.neutral {
+.color-lighter {
+	color: @lighter;
+}
+.color-light {
+	color: @light;
+}
+.color-neutral {
 	color: @neutral;
 }
-.darkest {
+.color-dark {
+	color: @dark;
+}
+.color-darker {
+	color: @darker;
+}
+.color-darkest {
 	color: @darkest;
 }
 .bg-lightest {
 	background-color: @lightest;
 	color: @darkest;
+}
+.bg-lighter {
+	.bg-lightest;
+	background-color: @lighter;
+}
+.bg-light {
+	.bg-lightest;
+	background-color: @light;
+}
+.bg-neutral {
+	background-color: @neutral;
+}
+.bg-dark {
+	.bg-darkest;
+	background-color: @dark;
+}
+.bg-darker {
+	.bg-darkest;
+	background-color: @darker;
 }
 .bg-darkest {
 	background-color: @darkest;
