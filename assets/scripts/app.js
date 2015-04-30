@@ -1,4 +1,4 @@
-angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'firebaseHelper', 'contentful', 'hc.marked'])
+angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'duScroll', 'firebaseHelper', 'contentful', 'hc.marked'])
 	
 	.run(function(){
 		FastClick.attach(document.body);
@@ -38,8 +38,15 @@ angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'firebaseHelper', 'conten
 		});
 	})
 	
-	.controller('AppCtrl', function($rootScope, $state){
+	.controller('AppCtrl', function($rootScope, $state, $document, $location){
 		$rootScope.$state = $state;
+		
+		// smooth scrolling
+		$rootScope.scrollTo = function(id){
+			var el = document.getElementById(id);
+			if(el) $document.scrollToElementAnimated(el, document.getElementById('header').offsetHeight || 0);
+		};
+		$rootScope.scrollTo($location.path().replace(/^\//, ''));
 	})
 	.controller('HomePageCtrl', function($scope, $firebaseHelper, contentful){
 		// angular
@@ -54,4 +61,15 @@ angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'firebaseHelper', 'conten
 		contentful.entries('order=sys.createdAt').then(function(response){
 			$scope.entries = response.data.items;
 		});
+	})
+	
+	// smooth scrolling
+	.directive('href', function(){
+		return function($scope, $element, $attrs){
+			if($attrs.href && $attrs.href[0] == '#'){
+				$element.on('click', function(e){
+					$scope.scrollTo(($attrs.href || '').replace(/^#/, ''));
+				});
+			}
+		};
 	});

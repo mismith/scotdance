@@ -14,6 +14,11 @@
 	* Removing the 2 `<link>`s in `/index.html`
 	* Removing the 1 `<script>` in `/index.html`
 	* Removing the `ui.bootstrap` module from your `/assets/scripts/app.js` dependencies
+* If you are not going to be using smooth scrolling, disable it by:
+	* Removing the 1 `<script>` in `/index.html`
+	* Removing the `duScroll` module from your `/assets/scripts/app.js` dependencies
+	* Removing the `scrollTo` helper from `AppCtrl` and the `href` directive
+	* **N.B.** this config only works when `ui-router` is **not** enabled
 * If you are not going to be using Firebase as your backend, disable it by:
 	* Removing the 3 `<script>`s in `/index.html`
 	* Removing the `firebaseHelper` module from your `/assets/scripts/app.js` dependencies
@@ -21,7 +26,7 @@
 	* Removing the 3 `<script>`s in `/index.html` (one for `contentful` and two for `marked`)
 	* Removing the `contentful` and `hc.marked` modules from your `/assets/scripts/app.js` dependencies
 * Replace all instances of `XXXXXX` with relevant info in `/index.html` and `/assets/scripts/app.js`; consider:
-	* <meta> tags and OpenGraph info
+	* <meta> tags and OpenGraph/social media info
 	* Google Analytics
 * Update `/robots.txt` and `/sitemap.xml` accordingly
 * Create an app icon in PNG format at `/assets/img/touchicon.png`
