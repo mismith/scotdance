@@ -39,12 +39,16 @@ h6 {
 		.logo {
 			width: 1%;
 		}
+		.separator {
+			width: 100%;
+		}
 		.handle {
 			display: none;
-			width: @hh;
-			text-align: center;
+			min-width: @hh;
 		}
 		#menu {
+			white-space: nowrap;
+			
 			a {
 				display: block;
 			}
@@ -63,11 +67,11 @@ h6 {
 				display: table-cell;
 			}
 			#menu {
+				.bg-lightest;
 				display: none;
 				position: fixed;
 				top: @hh;
 				right: 0;
-				background: @lightest;
 				padding: @u*2 0 @u*4;
 				overflow: auto;
 				
