@@ -24,6 +24,7 @@ var dests = {
 // includes
 var gulp         = require('gulp'),
 	gutil        = require('gulp-util'),
+	argv         = require('yargs').argv,
 	rename       = require('gulp-rename'),
 	notifier     = require('node-notifier'),
 	
@@ -138,9 +139,9 @@ gulp
 		var config = {
 			files: globs.files,
 			watchOptions: {debounce: 400},
-			ghostMode: false,
+			ghostMode: argv.g || gutil.env.ghost, // call `gulp -g` or `gulp --ghost` to start in ghostMode
 			notify: false,
-			open: !! gutil.env.open, // call `gulp --open` to start gulp and also open a new browser window
+			open: ! argv.s && ! gutil.env.silent, // call `gulp -s` or `gulp --silent` to start gulp without opening a new browser window
 		};
 		if(PROXY_ADDR){
 			config.proxy = PROXY_ADDR;

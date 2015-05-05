@@ -3,8 +3,9 @@
 2. Configure your local/dev proxy/domain in `/gulpfile.js`, if needed
 3. Run `sudo npm update` after `cd`ing into the directory this file lives in
 4. Run `gulp` to launch watchers, pre-compilers, live browser-syncing, etc.
-  1. Run `gulp --open` to launch a live-updating browser window
-  2. Run `sudo ulimit -n 8192` if you get a 'memory limit exceeded' error running the previous command
+  1. Run `gulp -s` or `gulp --silent` to prevent launching a new live-updating browser window
+  2. Run `gulp -g` or `gulp --ghost` to sync all browser page changes, scrolling, and clicks
+  3. Run `sudo ulimit -n 8192` if you get a 'memory limit exceeded' error running the previous command
 
 
 
