@@ -11,6 +11,8 @@
 
 # Config
 
+* If you don't need any of Google's custom webfonts, shorten loading times by:
+	* Removing the 1 `<link>`s in `/index.html`
 * If you are making a site with a pre-existing design, disable Twitter Bootstrap and FontAwesome by:
 	* Removing the 2 `<link>`s in `/index.html`
 	* Removing the 1 `<script>` in `/index.html`
@@ -27,7 +29,8 @@
 	* Removing the 3 `<script>`s in `/index.html` (one for `contentful` and two for `marked`)
 	* Removing the `contentful` and `hc.marked` modules from your `/assets/scripts/app.js` dependencies
 * Replace all instances of `XXXXXX` with relevant info in `/index.html` and `/assets/scripts/app.js`; consider:
-	* <meta> tags and OpenGraph/social media info
+	* `<meta>` tags
+	* Open Graph & social media info
 	* Google Analytics
 * Update `/robots.txt` and `/sitemap.xml` accordingly
 * Create an app icon in PNG format at `/assets/img/touchicon.png`
