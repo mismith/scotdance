@@ -53,3 +53,4 @@
 * `/assets/img/` is for all site-specific static images; any user-uploaded content should be kept elsewhere
 * `/assets/scripts/` should contain your source code, whereas `/assets/js/` should contain only dynamically generated javascript
 * `/assets/styles/`, likewise, should contain your source code, whereas `/assets/css/` should contain only dynamically generated css
+* `/assets/fonts/` should contain only IcoMoon generated glyph font files, whereas `/assets/webfonts/` can be used for text display fonts
