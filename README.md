@@ -1,5 +1,6 @@
 # Setup
 
+1. Make sure the `<base href="">` tag in `/index.html` is set to the proper path
 2. Configure your local/dev proxy/domain in `/gulpfile.js`, if needed
 3. Run `sudo npm update` after `cd`ing into the directory this file lives in
 4. Run `gulp` to launch watchers, pre-compilers, live browser-syncing, etc.
