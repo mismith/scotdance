@@ -2,24 +2,45 @@
 var PROXY_ADDR = '',
 	BASE_PATH  = '',
 	ASSET_PATH = BASE_PATH + 'assets';
-	
-var globs = {
-	js: [
-		ASSET_PATH + '/scripts/*/**/*.js',
-		ASSET_PATH + '/scripts/**/*.js',
-	],
-	less: [
-		ASSET_PATH + '/styles/**/*.less',
-	],
-	files: [
-		'**/.htaccess',
-		'**/*.+(html|php|jpg|jpeg|gif|png|svg)',
-	],
+
+var config = {
+	autoprefixer: 'last 2 versions',
+	htmlhint: {
+		'doctype-first':            false,
+		'spec-char-escape':         false,
+		'img-alt-require':          true,
+		'attr-unsafe-chars':        true,
+		'space-tab-mixed-disabled': true,
+	},
+	names: {
+		js: 'base.js',
+	},
+	globs: {
+		html: [
+			'**/*.+(html|php)',
+		],
+		js: [
+			ASSET_PATH + '/scripts/*/**/*.js',
+			ASSET_PATH + '/scripts/**/*.js',
+		],
+		less: [
+			ASSET_PATH + '/styles/**/*.less',
+		],
+		refresh: [
+			'**/.htaccess',
+			'**/*.+(html|php|jpg|jpeg|gif|png|svg)',
+		],
+		excludes: [
+			'!**/node_modules/**/*',
+			'!**/vendor/**/*',
+			'!**/wp/**/*',
+		],
+	},
+	dests: {
+		js:   ASSET_PATH + '/js',
+		less: ASSET_PATH + '/css',
+	}
 };
-var dests = {
-	js:   ASSET_PATH + '/js',
-	less: ASSET_PATH + '/css',
-}
 
 // includes
 var gulp         = require('gulp'),
@@ -30,6 +51,9 @@ var gulp         = require('gulp'),
 	
 	// watching
 	browserSync  = require('browser-sync'),
+		
+	// html
+	htmlhint     = require('gulp-htmlhint'),
 		
 	// js
 	concat       = require('gulp-concat'),
@@ -103,25 +127,30 @@ var handleError = function(error, type){
 // tasks
 gulp
 	// build
+	.task('html', function(){
+		gulp.src(config.globs.html.concat(config.globs.excludes))
+			.pipe(htmlhint(config.htmlhint))
+			.pipe(htmlhint.reporter());
+	})
 	.task('js', function(){
-		gulp.src(globs.js)
+		gulp.src(config.globs.js.concat(config.globs.excludes))
 			.pipe(jsValidate()).on('error', handleError)
-			.pipe(concat('base.js'))
+			.pipe(concat(config.names.js))
 			.pipe(ngAnnotate()).on('error', handleError)
-			.pipe(gulp.dest(dests.js))
+			.pipe(gulp.dest(config.dests.js))
 			
 			.pipe(rename({suffix: '.min'}))
 			.pipe(uglify()).on('error', handleError)
-			.pipe(gulp.dest(dests.js))
+			.pipe(gulp.dest(config.dests.js))
 			
 			.pipe(browserSync.reload({stream: true}));
 	})
 	.task('less', function(){
-		gulp.src(globs.less.concat('!' + ASSET_PATH + '/styles/**/*.inc.less')) // append this here so that these files are still watched for changes, they just don't get compiled/output
+		gulp.src(config.globs.less.concat(config.globs.excludes).concat('!' + ASSET_PATH + '/styles/**/*.inc.less')) // append this here so that these files are still watched for changes, they just don't get compiled/output
 			.pipe(less()).on('error', handleError)
-			.pipe(autoprefixer('last 2 versions'))
+			.pipe(autoprefixer(config.autoprefixer))
 			.pipe(minifyCss())
-			.pipe(gulp.dest(dests.less))
+			.pipe(gulp.dest(config.dests.less))
 			
 			.pipe(browserSync.reload({stream: true}));
 	})
@@ -129,31 +158,34 @@ gulp
 	
 	
 	// watch
+	.task('html.watch', ['html'], function(){
+		gulp.watch(config.globs.html.concat(config.globs.excludes), ['html']);
+	})
 	.task('js.watch', ['js'], function(){
-		gulp.watch(globs.js, ['js']);
+		gulp.watch(config.globs.js.concat(config.globs.excludes), ['js']);
 	})
 	.task('less.watch', ['less'], function(){
-		gulp.watch(globs.less, ['less']);
+		gulp.watch(config.globs.less.concat(config.globs.excludes), ['less']);
 	})
-	.task('watch', ['js.watch','less.watch'], function(){
-		var config = {
-			files: globs.files,
+	.task('watch', ['html.watch','js.watch','less.watch'], function(){
+		var options = {
+			files: config.globs.refresh.concat(config.globs.excludes),
 			watchOptions: {debounce: 400},
 			ghostMode: argv.g || gutil.env.ghost, // call `gulp -g` or `gulp --ghost` to start in ghostMode
 			notify: false,
 			open: ! argv.s && ! gutil.env.silent, // call `gulp -s` or `gulp --silent` to start gulp without opening a new browser window
 		};
 		if(PROXY_ADDR){
-			config.proxy = PROXY_ADDR;
+			options.proxy = PROXY_ADDR;
 		}else{
 			// N.B. this doesn't work with HTML5 URL rewriting
-			config.server = { 
+			options.server = { 
 				baseDir: './' + BASE_PATH,
 			};
 		}
-		browserSync.init(config);
+		browserSync.init(options);
 	})
 	
-	// default
-	.task('default', ['watch'])
 	
+	// default
+	.task('default', ['watch']);
