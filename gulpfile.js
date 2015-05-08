@@ -6,11 +6,13 @@ var PROXY_ADDR = '',
 var config = {
 	autoprefixer: 'last 2 versions',
 	htmlhint: {
-		'doctype-first':            false,
-		'spec-char-escape':         false,
-		'img-alt-require':          true,
-		'attr-unsafe-chars':        true,
-		'space-tab-mixed-disabled': true,
+		"doctype-first": false,
+		"spec-char-escape": false,
+		"attr-lowercase": false,
+		"tagname-lowercase": false,
+		"img-alt-require": true,
+		"attr-unsafe-chars": true,
+		"space-tab-mixed-disabled": true,
 	},
 	names: {
 		js: 'base.js',
