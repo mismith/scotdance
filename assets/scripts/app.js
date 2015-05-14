@@ -1,13 +1,17 @@
 angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'duScroll', 'firebaseHelper', 'contentful', 'hc.marked'])
 	
 	.run(function(){
+		// remove 300ms click delay on touch devices
 		FastClick.attach(document.body);
+		
+		// fix vh units in ios7 (and others)
+		viewportUnitsBuggyfill.init();
 	})
 	
 	.config(function($locationProvider, $urlRouterProvider, $stateProvider, $firebaseHelperProvider, contentfulProvider){
 		// routing
 		$locationProvider.html5Mode(true);
-		$urlRouterProvider.when('',  '/');
+		$urlRouterProvider.when('', '/');
 		var pages = [
 			'home'
 		];
