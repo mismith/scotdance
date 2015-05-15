@@ -87,6 +87,8 @@ gulp
 	// build
 	.task('html', function(){
 		gulp.src(config.globs.html.concat(config.globs.excludes))
+		
+			.pipe(browserSync.reload({stream: true}));
 	})
 	.task('js', function(){
 		gulp.src(config.globs.js.concat(config.globs.excludes))
