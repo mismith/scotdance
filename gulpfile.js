@@ -1,50 +1,11 @@
-// config
-var PROXY_ADDR = '',
-	BASE_PATH  = '',
-	ASSET_PATH = BASE_PATH + 'assets';
-
-var config = {
-	autoprefixer: 'last 2 versions',
-	htmlhint: {
-		"doctype-first": false,
-		"spec-char-escape": false,
-		"attr-lowercase": false,
-		"tagname-lowercase": false,
-		"img-alt-require": true,
-		"attr-unsafe-chars": true,
-		"space-tab-mixed-disabled": true,
-	},
-	concat: {
-		js: 'base',
-	},
-	globs: {
-		html: [
-			'**/*.{html,htm,php}',
-		],
-		js: [
-			ASSET_PATH + '/scripts/*/**/*.js',
-			ASSET_PATH + '/scripts/**/*.js',
-		],
-		less: [
-			ASSET_PATH + '/styles/**/*.less',
-		],
-		refresh: [
-			'**/*.{htaccess,html,htm,php,jpg,jpeg,gif,png,svg}',
-		],
-		excludes: [
-			'!**/node_modules/**/*',
-			'!**/vendor/**/*',
-			'!**/wp/**/*',
-		],
-	},
-	dests: {
-		js:   ASSET_PATH + '/js',
-		less: ASSET_PATH + '/css',
-	}
-};
-
 // includes
 var gulp         = require('gulp'),
+
+	// build
+	fs           = require('fs'),
+	merge        = require('merge');
+
+	// utility
 	gutil        = require('gulp-util'),
 	argv         = require('yargs').argv,
 	rename       = require('gulp-rename'),
@@ -52,8 +13,8 @@ var gulp         = require('gulp'),
 	
 	// watching
 	browserSync  = require('browser-sync'),
-		
-	// html
+	
+	// linting
 	htmlhint     = require('gulp-htmlhint'),
 		
 	// js
@@ -68,13 +29,64 @@ var gulp         = require('gulp'),
 	minifyCss    = require('gulp-minify-css');
 
 
+// config
+var defaults = {
+	autoprefixer: 'last 2 versions',
+	htmlhint: {
+		"doctype-first": false,
+		"spec-char-escape": false,
+		"attr-lowercase": false,
+		"tagname-lowercase": false,
+		"img-alt-require": true,
+		"attr-unsafe-chars": true,
+		"space-tab-mixed-disabled": true,
+	},
+	browsersync: {
+		watchOptions: {debounce: 400},
+		notify: false,
+		server: { 
+			baseDir: './',
+		},
+		//proxy: 'example.dev',
+	},
+	concat: {
+		js: 'base',
+	},
+	globs: {
+		excludes: [
+			'!**/node_modules/**/*',
+			'!**/vendor/**/*',
+			'!**/wp/**/*',
+		],
+		html: [
+			'**/*.{html,htm,php}',
+		],
+		js: [
+			'assets/scripts/*/**/*.js', // subfolders first
+			'assets/scripts/**/*.js',
+		],
+		less: [
+			'assets/styles/**/*.less',
+			// note that files ending in ".inc.less" will not be compiled (but they will be watched)
+		],
+		files: [
+			'**/*.{htaccess,jpg,jpeg,gif,png,svg}',
+		],
+	},
+	dests: {
+		js:   'assets/js',
+		less: 'assets/css',
+	}
+};
+var gulpconfig = './gulpconfig.js';
+var config = merge.recursive(defaults, fs.existsSync(gulpconfig) ? require(gulpconfig) : {});
+
+
 // tasks
 gulp
 	// build
 	.task('html', function(){
 		gulp.src(config.globs.html.concat(config.globs.excludes))
-			.pipe(htmlhint(config.htmlhint))
-			.pipe(htmlhint.reporter());
 	})
 	.task('js', function(){
 		gulp.src(config.globs.js.concat(config.globs.excludes))
@@ -90,7 +102,7 @@ gulp
 			.pipe(browserSync.reload({stream: true}));
 	})
 	.task('less', function(){
-		gulp.src(config.globs.less.concat(config.globs.excludes).concat('!' + ASSET_PATH + '/styles/**/*.inc.less')) // append this here so that these files are still watched for changes, they just don't get compiled/output
+		gulp.src(config.globs.less.concat(config.globs.excludes).concat('!**/*.inc.less')) // don't output .inc.less files as they are never accessed directly
 			.pipe(less()).on('error', handleError)
 			.pipe(autoprefixer(config.autoprefixer))
 			.pipe(minifyCss())
@@ -98,36 +110,31 @@ gulp
 			
 			.pipe(browserSync.reload({stream: true}));
 	})
-	.task('build', ['js','less'])
+	.task('build', ['html','js','less'])
 	
 	
+	// lint
+	.task('html.lint', function(){
+		gulp.src(config.globs.html.concat(config.globs.excludes))
+			.pipe(htmlhint(config.htmlhint))
+			.pipe(htmlhint.reporter());
+	})
 	// watch
-	.task('html.watch', ['html'], function(){
+	.task('html.watch', function(){
 		gulp.watch(config.globs.html.concat(config.globs.excludes), ['html']);
 	})
-	.task('js.watch', ['js'], function(){
+	.task('js.watch', function(){
 		gulp.watch(config.globs.js.concat(config.globs.excludes), ['js']);
 	})
-	.task('less.watch', ['less'], function(){
+	.task('less.watch', function(){
 		gulp.watch(config.globs.less.concat(config.globs.excludes), ['less']);
 	})
 	.task('watch', ['html.watch','js.watch','less.watch'], function(){
-		var options = {
-			files: config.globs.refresh.concat(config.globs.excludes),
-			watchOptions: {debounce: 400},
+		browserSync.init(merge.recursive(config.browsersync || {}, {
+			files: config.globs.files.concat(config.globs.excludes),
 			ghostMode: argv.g || gutil.env.ghost, // call `gulp -g` or `gulp --ghost` to start in ghostMode
-			notify: false,
 			open: ! argv.s && ! gutil.env.silent, // call `gulp -s` or `gulp --silent` to start gulp without opening a new browser window
-		};
-		if(PROXY_ADDR){
-			options.proxy = PROXY_ADDR;
-		}else{
-			// N.B. this doesn't work with HTML5 URL rewriting
-			options.server = { 
-				baseDir: './' + BASE_PATH,
-			};
-		}
-		browserSync.init(options);
+		}));
 	})
 	
 	
