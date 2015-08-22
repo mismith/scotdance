@@ -15,6 +15,9 @@ var gulp         = require('gulp'),
 	browserSync  = require('browser-sync'),
 	historyApiFallback = require('connect-history-api-fallback'),
 	
+	// caching
+	manifest     = require('gulp-manifest'),
+	
 	// linting
 	htmlhint     = require('gulp-htmlhint'),
 		
@@ -41,6 +44,13 @@ var defaults = {
 		"img-alt-require": true,
 		"attr-unsafe-chars": true,
 		"space-tab-mixed-disabled": true,
+	},
+	manifest: {
+		basePath: __dirname.replace(/[^\w\s]/g, "\\$&"),
+		filename: 'cache.manifest',
+		exclude: 'cache.manifest',
+		//preferOnline: true,
+		hash: true,
 	},
 	browsersync: {
 		watchOptions: {debounce: 400},
@@ -74,13 +84,19 @@ var defaults = {
 		files: [
 			'**/*.{htaccess,jpg,jpeg,gif,png,svg}',
 		],
+		manifest: [
+			'assets/js/*',
+			'assets/css/*',
+			'assets/img/*.{jpg,jpeg,gif,png,svg}',
+			'*.{html}',
+		],
 	},
 	dests: {
 		js:   'assets/js',
 		less: 'assets/css',
 	}
 };
-var gulpconfig = './gulpconfig.js';
+var gulpconfig = './gulpfile.config.js';
 var config = merge.recursive(defaults, fs.existsSync(gulpconfig) ? require(gulpconfig) : {});
 
 
@@ -114,8 +130,13 @@ gulp
 			
 			.pipe(browserSync.reload({stream: true}));
 	})
-	.task('build', ['html','js','less'])
-	
+	.task('manifest', function(){
+		gulp.src(config.globs.manifest.concat(config.globs.excludes))
+			.pipe(manifest(config.manifest))
+			
+			.pipe(gulp.dest(''));
+	})
+	.task('build', ['html','js','less','manifest'])
 	
 	// lint
 	.task('html.lint', function(){
@@ -133,7 +154,10 @@ gulp
 	.task('less.watch', function(){
 		gulp.watch(config.globs.less.concat(config.globs.excludes), ['less']);
 	})
-	.task('watch', ['html.watch','js.watch','less.watch'], function(){
+	.task('manifest.watch', function(){
+		gulp.watch(config.globs.manifest.concat(config.globs.excludes), ['manifest']);
+	})
+	.task('watch', ['html.watch','js.watch','less.watch','manifest.watch'], function(){
 		browserSync.init(merge.recursive(config.browsersync || {}, {
 			files: config.globs.files.concat(config.globs.excludes),
 			ghostMode: argv.g || gutil.env.ghost, // call `gulp -g` or `gulp --ghost` to start in ghostMode

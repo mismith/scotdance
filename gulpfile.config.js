@@ -4,5 +4,10 @@ module.exports = {
 		server: undefined,
 		proxy: 'example.dev',
 	},
+	manifest: {
+		cache: [
+			'// ...'
+		],
+	},
 */
 };
