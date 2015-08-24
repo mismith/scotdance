@@ -53,7 +53,9 @@ var defaults = {
 		hash: true,
 	},
 	browsersync: {
+		ui: false,
 		watchOptions: {debounce: 400},
+		reloadDebounce: 400,
 		notify: false,
 		server: { 
 			baseDir: './',
@@ -98,6 +100,13 @@ var defaults = {
 };
 var gulpconfig = './gulpfile.config.js';
 var config = merge.recursive(defaults, fs.existsSync(gulpconfig) ? require(gulpconfig) : {});
+var concatIf = function (array, toConcat, ifCondition) {
+	if (ifCondition) {
+		array = array.concat(toConcat);
+		console.log(array);
+	}
+	return array;
+};
 
 
 // tasks
@@ -136,7 +145,7 @@ gulp
 			
 			.pipe(gulp.dest(''));
 	})
-	.task('build', ['html','js','less','manifest'])
+	.task('build', concatIf(['html','js','less'], 'manifest', argv.m || gutil.env.manifest))
 	
 	// lint
 	.task('html.lint', function(){
@@ -157,10 +166,10 @@ gulp
 	.task('manifest.watch', function(){
 		gulp.watch(config.globs.manifest.concat(config.globs.excludes), ['manifest']);
 	})
-	.task('watch', ['html.watch','js.watch','less.watch','manifest.watch'], function(){
+	.task('watch', concatIf(['html.watch','js.watch','less.watch'], 'manifest.watch', argv.m || gutil.env.manifest), function(){
 		browserSync.init(merge.recursive(config.browsersync || {}, {
 			files: config.globs.files.concat(config.globs.excludes),
-			ghostMode: argv.g || gutil.env.ghost, // call `gulp -g` or `gulp --ghost` to start in ghostMode
+			ghostMode: !! (argv.g || gutil.env.ghost), // call `gulp -g` or `gulp --ghost` to start in ghostMode
 			open: ! (argv.s || gutil.env.silent), // call `gulp -s` or `gulp --silent` to start gulp without opening a new browser window
 		}));
 	})
