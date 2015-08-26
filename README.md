@@ -7,6 +7,7 @@
   2. Run `gulp -s` or `gulp --silent` to prevent launching a new live-updating browser window
   3. Run `gulp -g` or `gulp --ghost` to sync all browser page changes, scrolling, and clicks
   4. Run `gulp lint` to get feedback on coding styling
+  4. Run `gulp rev` to auto-append file hashes to any `href` or `src` attributes in your html ending in `?rev=`
 
 
 

@@ -50,7 +50,7 @@ var defaults = {
 		basePath: __dirname.replace(/[^\w\s]/g, "\\$&"),
 		filename: 'cache.manifest',
 		exclude: 'cache.manifest',
-		//preferOnline: true,
+		preferOnline: true,
 		hash: true,
 	},
 	browsersync: {
@@ -90,8 +90,11 @@ var defaults = {
 		manifest: [
 			'assets/js/*',
 			'assets/css/*',
+			'assets/fonts/*',
+			'assets/webfonts/*',
 			'assets/img/*.{jpg,jpeg,gif,png,svg}',
-			'*.{html}',
+			'assets/**/*.{mp3,mp4,m4a,m4v,wav,flv,ogg,ogv,webm}',
+			'**/*.{html,htm,php}',
 		],
 	},
 	dests: {
@@ -150,6 +153,7 @@ gulp
 			.pipe(htmlhint(config.htmlhint))
 			.pipe(htmlhint.reporter());
 	})
+	.task('lint', ['html.lint'])
 	
 	// watch
 	.task('html.watch', function(){
@@ -163,9 +167,9 @@ gulp
 	})
 	.task('watch', ['html.watch','js.watch','less.watch'], function(){
 		browserSync.init(merge.recursive(config.browsersync || {}, {
-			files: config.globs.files.concat(config.globs.excludes),
+			files:     config.globs.files.concat(config.globs.excludes),
 			ghostMode: !! (argv.g || gutil.env.ghost), // call `gulp -g` or `gulp --ghost` to start in ghostMode
-			open: ! (argv.s || gutil.env.silent), // call `gulp -s` or `gulp --silent` to start gulp without opening a new browser window
+			open:      ! (argv.s || gutil.env.silent), // call `gulp -s` or `gulp --silent` to start gulp without opening a new browser window
 		}));
 	})
 	
