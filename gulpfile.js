@@ -17,6 +17,7 @@ var gulp         = require('gulp'),
 	
 	// caching
 	manifest     = require('gulp-manifest'),
+	rev          = require('gulp-rev-append'),
 	
 	// linting
 	htmlhint     = require('gulp-htmlhint'),
@@ -98,15 +99,8 @@ var defaults = {
 		less: 'assets/css',
 	}
 };
-var gulpconfig = './gulpfile.config.js';
-var config = merge.recursive(defaults, fs.existsSync(gulpconfig) ? require(gulpconfig) : {});
-var concatIf = function (array, toConcat, ifCondition) {
-	if (ifCondition) {
-		array = array.concat(toConcat);
-		console.log(array);
-	}
-	return array;
-};
+var configPath = './gulpfile.config.js',
+	config     = merge.recursive(defaults, fs.existsSync(configPath) ? require(configPath) : {});
 
 
 // tasks
@@ -114,8 +108,12 @@ gulp
 	// build
 	.task('html', function(){
 		gulp.src(config.globs.html.concat(config.globs.excludes))
-		
 			.pipe(browserSync.reload({stream: true}));
+	})
+	.task('rev', function(){
+		gulp.src(config.globs.html.concat(config.globs.excludes))
+			.pipe(rev())
+			.pipe(gulp.dest('.'))
 	})
 	.task('js', function(){
 		gulp.src(config.globs.js.concat(config.globs.excludes))
@@ -142,10 +140,9 @@ gulp
 	.task('manifest', function(){
 		gulp.src(config.globs.manifest.concat(config.globs.excludes))
 			.pipe(manifest(config.manifest))
-			
-			.pipe(gulp.dest(''));
+			.pipe(gulp.dest('.'));
 	})
-	.task('build', concatIf(['html','js','less'], 'manifest', argv.m || gutil.env.manifest))
+	.task('build', ['html','rev','js','less','manifest'])
 	
 	// lint
 	.task('html.lint', function(){
@@ -153,6 +150,7 @@ gulp
 			.pipe(htmlhint(config.htmlhint))
 			.pipe(htmlhint.reporter());
 	})
+	
 	// watch
 	.task('html.watch', function(){
 		gulp.watch(config.globs.html.concat(config.globs.excludes), ['html']);
@@ -163,10 +161,7 @@ gulp
 	.task('less.watch', function(){
 		gulp.watch(config.globs.less.concat(config.globs.excludes), ['less']);
 	})
-	.task('manifest.watch', function(){
-		gulp.watch(config.globs.manifest.concat(config.globs.excludes), ['manifest']);
-	})
-	.task('watch', concatIf(['html.watch','js.watch','less.watch'], 'manifest.watch', argv.m || gutil.env.manifest), function(){
+	.task('watch', ['html.watch','js.watch','less.watch'], function(){
 		browserSync.init(merge.recursive(config.browsersync || {}, {
 			files: config.globs.files.concat(config.globs.excludes),
 			ghostMode: !! (argv.g || gutil.env.ghost), // call `gulp -g` or `gulp --ghost` to start in ghostMode
