@@ -3,7 +3,7 @@ var gulp         = require('gulp'),
 
 	// build
 	fs           = require('fs'),
-	merge        = require('merge');
+	merge        = require('merge'),
 
 	// utility
 	gutil        = require('gulp-util'),
@@ -32,7 +32,6 @@ var gulp         = require('gulp'),
 	less         = require('gulp-less'),
 	autoprefixer = require('gulp-autoprefixer'),
 	minifyCss    = require('gulp-minify-css');
-
 
 // config
 var defaults = {
@@ -74,6 +73,7 @@ var defaults = {
 			'!**/wp/**/*',
 		],
 		html: [
+			'!assets/**/*',
 			'**/*.{html,htm,php}',
 		],
 		js: [
@@ -110,16 +110,16 @@ var configPath = './gulpfile.config.js',
 gulp
 	// build
 	.task('html', function(){
-		gulp.src(config.globs.html.concat(config.globs.excludes))
+		return gulp.src(config.globs.html.concat(config.globs.excludes))
 			.pipe(browserSync.reload({stream: true}));
 	})
 	.task('rev', function(){
-		gulp.src(config.globs.html.concat(config.globs.excludes))
+		return gulp.src(config.globs.html.concat(config.globs.excludes))
 			.pipe(rev())
 			.pipe(gulp.dest('.'))
 	})
 	.task('js', function(){
-		gulp.src(config.globs.js.concat(config.globs.excludes))
+		return gulp.src(config.globs.js.concat(config.globs.excludes))
 			.pipe(jsValidate()).on('error', handleError)
 			.pipe(ngAnnotate()).on('error', handleError)
 			.pipe(concat(config.concat.js + '.js'))
@@ -132,7 +132,7 @@ gulp
 			.pipe(browserSync.reload({stream: true}));
 	})
 	.task('less', function(){
-		gulp.src(config.globs.less.concat(config.globs.excludes).concat('!**/*.inc.less')) // don't output .inc.less files as they are never accessed directly
+		return gulp.src(config.globs.less.concat(config.globs.excludes).concat('!**/*.inc.less')) // don't output .inc.less files as they are never accessed directly
 			.pipe(less()).on('error', handleError)
 			.pipe(autoprefixer(config.autoprefixer))
 			.pipe(minifyCss())
@@ -141,7 +141,7 @@ gulp
 			.pipe(browserSync.reload({stream: true}));
 	})
 	.task('manifest', function(){
-		gulp.src(config.globs.manifest.concat(config.globs.excludes))
+		return gulp.src(config.globs.manifest.concat(config.globs.excludes))
 			.pipe(manifest(config.manifest))
 			.pipe(gulp.dest('.'));
 	})
@@ -149,7 +149,7 @@ gulp
 	
 	// lint
 	.task('html.lint', function(){
-		gulp.src(config.globs.html.concat(config.globs.excludes))
+		return gulp.src(config.globs.html.concat(config.globs.excludes))
 			.pipe(htmlhint(config.htmlhint))
 			.pipe(htmlhint.reporter());
 	})
@@ -157,20 +157,22 @@ gulp
 	
 	// watch
 	.task('html.watch', function(){
-		gulp.watch(config.globs.html.concat(config.globs.excludes), ['html']);
+		return gulp.watch(config.globs.html.concat(config.globs.excludes), ['html']);
 	})
 	.task('js.watch', function(){
-		gulp.watch(config.globs.js.concat(config.globs.excludes), ['js']);
+		return gulp.watch(config.globs.js.concat(config.globs.excludes), ['js']);
 	})
 	.task('less.watch', function(){
-		gulp.watch(config.globs.less.concat(config.globs.excludes), ['less']);
+		return gulp.watch(config.globs.less.concat(config.globs.excludes), ['less']);
 	})
 	.task('watch', ['html.watch','js.watch','less.watch'], function(){
-		browserSync.init(merge.recursive(config.browsersync || {}, {
+		var options = merge.recursive(config.browsersync || {}, {
 			files:     config.globs.files.concat(config.globs.excludes),
 			ghostMode: !! (argv.g || gutil.env.ghost), // call `gulp -g` or `gulp --ghost` to start in ghostMode
 			open:      ! (argv.s || gutil.env.silent), // call `gulp -s` or `gulp --silent` to start gulp without opening a new browser window
-		}));
+		});
+		if (options.proxy) delete options.server; // prefer proxy to server
+		browserSync.init(options);
 	})
 	
 	
