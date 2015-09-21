@@ -4,7 +4,7 @@
 	<!-- base -->
 	<base href="/" />
 	<meta charset="UTF-8" />
-	<title>XXXXXX</title><!-- 60 char max -->
+	<title ng-bind="($title ? $title + ' | ' : '') + 'XXXXXX'">XXXXXX</title><!-- 60 char max -->
 	
 	<!-- mobile -->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -70,6 +70,7 @@
 	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.4/angular.min.js"></script>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.14/angular-ui-router.min.js"></script>
 	
+	<script src="//cdn.rawgit.com/nonplus/angular-ui-router-title/v0.0.4/angular-ui-router-title.js"></script>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/angular-scroll/0.6.4/angular-scroll.min.js"></script>
 	
 	<script src="//cdn.firebase.com/js/client/2.2.3/firebase.js"></script>
