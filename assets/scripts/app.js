@@ -1,6 +1,6 @@
 angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'duScroll', 'firebaseHelper', 'contentful', 'hc.marked', 'bigUtil', 'bigScroll', 'bigSlider', 'bigWordpress'])
 	
-	.config(function($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $scrollToProvider, $wpProvider, $firebaseHelperProvider, contentfulProvider){
+	.config(function($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider, contentfulProvider){
 		// routing
 		$locationProvider.html5Mode(true);
 		$urlRouterProvider.when('', '/');
