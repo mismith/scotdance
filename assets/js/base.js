@@ -327,7 +327,7 @@ angular.module('bigWordpress', [])
 		$scope.custom_field    = $wp.custom_field;
 		$scope.thumbnail_image = $wp.thumbnail_image;
 	}]);
-angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'duScroll', 'firebaseHelper', 'contentful', 'hc.marked', 'bigUtil', 'bigScroll', 'bigSlider', 'bigWordpress'])
+angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'firebaseHelper', 'contentful', 'hc.marked', 'bigUtil', 'bigScroll', 'bigSlider', 'bigWordpress'])
 	
 	.config(["$locationProvider", "$urlRouterProvider", "$urlMatcherFactoryProvider", "$stateProvider", "$firebaseHelperProvider", "contentfulProvider", function($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider, contentfulProvider){
 		// routing
