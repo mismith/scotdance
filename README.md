@@ -1,12 +1,11 @@
 # Setup
 
 1. Ensure everything is up to date by running `sudo npm update` after `cd`ing into the directory this file lives in
-2. Configure your `/gulpconfig.js`, if needed
+2. Configure your `/gulpfile.config.js`, if needed
 3. Run `gulp` to launch watchers, pre-compilers, live browser-syncing, etc.
   1. Run `sudo ulimit -n 8192` if you get a 'memory limit exceeded' error running the previous command
   2. Run `gulp -s` or `gulp --silent` to prevent launching a new live-updating browser window
   3. Run `gulp -g` or `gulp --ghost` to sync all browser page changes, scrolling, and clicks
-  4. Run `gulp lint` to get feedback on coding styling
   4. Run `gulp rev` to auto-append file hashes to any `href` or `src` attributes in your html ending in `?rev=`
 
 
@@ -33,9 +32,8 @@
 	* Removing the `ui.bootstrap` module from your `/assets/scripts/app.js` dependencies
 * If you are not going to be using smooth scrolling, disable it by:
 	* Removing the `<script>` in `/index.html`
-	* Removing the `duScroll` module from your `/assets/scripts/app.js` dependencies
-	* Removing the `scrollTo` helper from `AppCtrl` and the `href` directive
-	* **N.B.** this config only works when `ui-router` is **not** enabled
+	* Removing the `bigScroll` module from your `/assets/scripts/app.js` dependencies
+	* Removing the file at `/assets/scripts/modules/bigScroll.js`
 * If you are not going to be using Firebase as your backend, disable it by:
 	* Removing the 3 `<script>`s in `/index.html`
 	* Removing the `firebaseHelper` module from your `/assets/scripts/app.js` dependencies
