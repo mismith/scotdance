@@ -26,10 +26,6 @@
     6. copy the new/changed contents from `style.css` into `/assets/styles/glyph.inc.less` (note that there are custom tweaks to the generic `.glyph` class so only copy the `.glyph-*` classes below it)
 * If you don't need any of Google's webfonts, shorten loading times by:
 	* Removing the `<link>` in `/index.html`
-* If you are making a site with a pre-existing design, disable Twitter Bootstrap by:
-	* Removing the `<link>` in `/index.html`
-	* Removing the `<script>` in `/index.html`
-	* Removing the `ui.bootstrap` module from your `/assets/scripts/app.js` dependencies
 * If you are not going to be using smooth scrolling, disable it by:
 	* Removing the `<script>` in `/index.html`
 	* Removing the `bigScroll` module from your `/assets/scripts/app.js` dependencies
@@ -45,6 +41,7 @@
 	* Open Graph & social media info
 	* Google Analytics
 * Update `/robots.txt` and `/sitemap.xml` accordingly
+
 
 
 # Structure
