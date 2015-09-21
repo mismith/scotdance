@@ -1,22 +1,17 @@
-angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'duScroll', 'firebaseHelper', 'contentful', 'hc.marked'])
+angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'duScroll', 'firebaseHelper', 'contentful', 'hc.marked', 'bigUtil', 'bigScroll', 'bigSlider', 'bigWordpress'])
 	
-	.run(function(){
-		// remove 300ms click delay on touch devices
-		FastClick.attach(document.body);
-		
-		// fix vh units in ios7 (and others)
-		viewportUnitsBuggyfill.init();
-	})
-	
-	.config(function($locationProvider, $urlRouterProvider, $stateProvider, $firebaseHelperProvider, contentfulProvider){
+	.config(function($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $scrollToProvider, $wpProvider, $firebaseHelperProvider, contentfulProvider){
 		// routing
 		$locationProvider.html5Mode(true);
 		$urlRouterProvider.when('', '/');
+		$urlRouterProvider.when('home', '/');
+		$urlMatcherFactoryProvider.strictMode(false); // make trailing slashes optional
+		
+		// pages
 		var pages = [
 			'home'
 		];
 		$stateProvider
-			// pages
 			.state('main', {
 				abstract: true,
 				templateUrl: 'views/main.html',
@@ -27,12 +22,26 @@ angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'duScroll', 'firebaseHelp
 					templateUrl: function($stateParams){
 						return 'views/page/' + ($stateParams.page || 'home') + '.html';
 					},
+					resolve: {
+						$title: function ($stateParams) {
+							switch ($stateParams.page) {
+								case '':
+								case 'home':      return '';
+								default:          return $stateParams.page[0].toUpperCase() + $stateParams.page.slice(1);
+							}
+						},
+					},
 				})
-			// catch-all
-			.state('otherwise', {
-				url: '*path',
+		// fallbacks
+			.state('404', {
+				parent: 'main',
 				templateUrl: 'views/page/404.html',
 			});
+		$urlRouterProvider.otherwise(function ($injector, $location) {
+			var $state = $injector.get('$state');
+			$state.go('404', null, {location: false});
+			return $location.path();
+		});
 		
 		// data
 		$firebaseHelperProvider.namespace('demo');
@@ -42,15 +51,8 @@ angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'duScroll', 'firebaseHelp
 		});
 	})
 	
-	.controller('AppCtrl', function($rootScope, $state, $document, $location){
+	.controller('AppCtrl', function($rootScope, $state){
 		$rootScope.$state = $state;
-		
-		// smooth scrolling
-		$rootScope.scrollTo = function(id){
-			var el = document.getElementById(id);
-			if(el) $document.scrollToElementAnimated(el, document.getElementById('header').offsetHeight || 0);
-		};
-		$rootScope.scrollTo($location.path().replace(/^\//, ''));
 	})
 	.controller('HomePageCtrl', function($scope, $firebaseHelper, contentful){
 		// angular
@@ -65,15 +67,4 @@ angular.module('XXXXXX', ['ui.router', 'ui.bootstrap', 'duScroll', 'firebaseHelp
 		contentful.entries('order=sys.createdAt').then(function(response){
 			$scope.entries = response.data.items;
 		});
-	})
-	
-	// smooth scrolling
-	.directive('href', function(){
-		return function($scope, $element, $attrs){
-			if($attrs.href && $attrs.href[0] == '#'){
-				$element.on('click', function(e){
-					$scope.scrollTo(($attrs.href || '').replace(/^#/, ''));
-				});
-			}
-		};
 	});

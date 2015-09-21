@@ -1,5 +1,12 @@
 angular.module('bigUtil', [])
 	.run(function ($rootScope, $document) {
+		// remove 300ms click delay on touch devices
+		FastClick.attach(document.body);
+		
+		// fix vh units in ios7 (and others)
+		viewportUnitsBuggyfill.init();
+		
+		// mobile menu
 		var $menu = $rootScope.$menu = {
 			active: false,
 			open: function () {

@@ -1,16 +1,17 @@
-<header id="header">
-	<nav id="nav">
-		<a href="/" class="logo"><img src="/assets/img/touchicon.png" alt="XXXXXX" height="32"></a>
-		<span class="separator">&nbsp;</span>
-		<a id="handle" class="handle align-center" ng-click="$root.menu = ! menu; $event.stopPropagation()"><i class="glyph glyph-menu"></i></a>
-		<ul id="menu" class="list-inline align-right" ng-class="{toggled: menu}">
-			<li><a ui-sref="page({page: '1'})">Menu1</a></li>
-			<li><a ui-sref="page({page: '2'})">Menu2</a></li>
-			<li><a ui-sref="page({page: '3'})">Menu3</a></li>
+<header id="header" class="flex-row flex-align-end">
+	<nav class="flex flex-row flex-justify-center">
+		<a ui-sref="page({page: ''})">
+			<img src="assets/img/logo.svg" width="XXXXXX" height="XXXXXX" alt="XXXXXX">
+		</a>
+		<ul id="menu" class="flex-row flex-justify-center flex-align-center">
+			<li ng-repeat="menu in menus">
+				<a ng-if="menu.sref" ui-sref="{{ menu.sref }}" ui-sref-active="active" ng-bind="menu.name"></a>
+			</li>
 		</ul>
+		<button ng-click="$menu.toggle($event)" class="hide-gt-mobile">…</button>
 	</nav>
 </header>
-<main id="main" class="page-{{ $state.params.page }}" ui-view autoscroll="false">
+<main id="main" class="flex-column flex-justify-center flex" ui-view>
 	<loader />
 </main>
 <footer id="footer">
