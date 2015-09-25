@@ -7,6 +7,7 @@ angular.module('bigScroll', ['duScroll'])
 		
 		this.$get = ['$rootScope', '$location', '$anchorScroll', '$timeout', '$document', function ($rootScope, $location, $anchorScroll, $timeout, $document) {
 			var $scrollTo = function (el, offset, delay) {
+				if (angular.isString(el)) el = document.getElementById(el);
 				return $document.scrollTo(el, offset === undefined ? (headerOffset === undefined ? document.getElementById('header').offsetHeight : headerOffset) : offset, delay === undefined ? 600 : delay);
 			};
 			
@@ -18,7 +19,7 @@ angular.module('bigScroll', ['duScroll'])
 					var hash = $location.hash();
 					if (hash) {
 						$timeout(function () {
-							$scrollTo(document.getElementById(hash), undefined, delay);
+							$scrollTo(hash, undefined, delay);
 						});
 					} else {
 						$scrollTo(null, 0, 0);
@@ -60,12 +61,8 @@ angular.module('bigScroll', ['duScroll'])
 			link: function($scope, $element, $attrs){
 				$element.on('click', function(e){
 					if($attrs.href && (($attrs.href[0] == '/' && $location.path() == $attrs.href.substring(0, $attrs.href.indexOf('#')) && $attrs.href.indexOf('#') >= 0) || $attrs.href[0] == '#')){
-						e.preventDefault();
-						
-						var id = $attrs.href.substring($attrs.href.indexOf('#') + 1);
-						$location.hash(id);
-						
-						$scrollTo(document.getElementById(id));
+						var id = $attrs.href.substring($attrs.href.lastIndexOf('#') + 1);
+						$scrollTo(id);
 					}
 				});
 			},
@@ -327,11 +324,11 @@ angular.module('bigWordpress', [])
 		$scope.custom_field    = $wp.custom_field;
 		$scope.thumbnail_image = $wp.thumbnail_image;
 	}]);
-angular.module('XXXXXX', ['ui.router', 'firebaseHelper', 'contentful', 'hc.marked', 'bigUtil', 'bigScroll', 'bigSlider', 'bigWordpress'])
+angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'contentful', 'hc.marked', 'bigUtil', 'bigScroll', 'bigSlider', 'bigWordpress'])
 	
 	.config(["$locationProvider", "$urlRouterProvider", "$urlMatcherFactoryProvider", "$stateProvider", "$firebaseHelperProvider", "contentfulProvider", function($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider, contentfulProvider){
 		// routing
-		$locationProvider.html5Mode(true);
+		$locationProvider.html5Mode(true).hashPrefix('!');
 		$urlRouterProvider.when('', '/');
 		$urlRouterProvider.when('home', '/');
 		$urlMatcherFactoryProvider.strictMode(false); // make trailing slashes optional

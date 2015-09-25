@@ -2,7 +2,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'con
 	
 	.config(function($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider, contentfulProvider){
 		// routing
-		$locationProvider.html5Mode(true);
+		$locationProvider.html5Mode(true).hashPrefix('!');
 		$urlRouterProvider.when('', '/');
 		$urlRouterProvider.when('home', '/');
 		$urlMatcherFactoryProvider.strictMode(false); // make trailing slashes optional
