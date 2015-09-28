@@ -8,22 +8,13 @@ var gulp         = require('gulp'),
 	// utility
 	gutil        = require('gulp-util'),
 	argv         = require('yargs').argv,
-	rename       = require('gulp-rename'),
-	notifier     = require('node-notifier'),
 	
 	// watching
 	browserSync  = require('browser-sync'),
-	historyApiFallback = require('connect-history-api-fallback'),
-	
-	// caching
-	manifest     = require('gulp-manifest'),
-	rev          = require('gulp-rev-append'),
-	
-	// linting
-	htmlhint     = require('gulp-htmlhint'),
 		
 	// js
 	concat       = require('gulp-concat'),
+	rename       = require('gulp-rename'),
 	uglify       = require('gulp-uglify'),
 	jsValidate   = require('gulp-jsvalidate'),
 	ngAnnotate   = require('gulp-ng-annotate'),
@@ -53,13 +44,13 @@ var defaults = {
 		hash: true,
 	},
 	browsersync: {
+		online: true,
 		ui: false,
 		watchOptions: {debounce: 400},
 		reloadDebounce: 400,
 		notify: false,
 		server: { 
-			baseDir: './',
-			middleware: [ historyApiFallback() ],
+			middleware: [ require('connect-history-api-fallback')() ],
 		},
 		//proxy: 'example.dev',
 	},
@@ -68,12 +59,11 @@ var defaults = {
 	},
 	globs: {
 		excludes: [
-			'!**/node_modules/**/*',
-			'!**/vendor/**/*',
-			'!**/wp/**/*',
+			'!node_modules/',
+			'!vendor/',
+			'!wp/',
 		],
 		html: [
-			'!assets/**/*',
 			'**/*.{html,htm,php}',
 		],
 		js: [
@@ -115,7 +105,7 @@ gulp
 	})
 	.task('rev', function(){
 		return gulp.src(config.globs.html.concat(config.globs.excludes))
-			.pipe(rev())
+			.pipe(require('gulp-rev-append')())
 			.pipe(gulp.dest('.'))
 	})
 	.task('js', function(){
@@ -142,7 +132,7 @@ gulp
 	})
 	.task('manifest', function(){
 		return gulp.src(config.globs.manifest.concat(config.globs.excludes))
-			.pipe(manifest(config.manifest))
+			.pipe(require('gulp-manifest')(config.manifest))
 			.pipe(gulp.dest('.'));
 	})
 	.task('build', ['html','rev','js','less','manifest'])
@@ -150,7 +140,7 @@ gulp
 	// lint
 	.task('html.lint', function(){
 		return gulp.src(config.globs.html.concat(config.globs.excludes))
-			.pipe(htmlhint(config.htmlhint))
+			.pipe(require('gulp-htmlhint')(config.htmlhint))
 			.pipe(htmlhint.reporter());
 	})
 	.task('lint', ['html.lint'])
@@ -192,7 +182,7 @@ var handleError = function(error, type){
 	
 	// show an OS-level notification to make sure we catch our attention
 	// (do this before we format things since it can't handle the formatting)
-	notifier.notify({
+	require('node-notifier').notify({
 		title: 'ERROR(' + error.plugin + ')',
 		subtitle: fileName,
 		message: error.message,
