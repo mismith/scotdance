@@ -1,3 +1,21 @@
+angular.module('bigContentful', ['contentful', 'hc.marked'])
+	.directive('contentfulBg', function () {
+		var key = 'background';
+		return {
+			restrict: 'A',
+			link: function ($scope, $element, $attrs) {
+				$scope.$watch(function () {
+					return $scope.$eval($attrs.contentfulBg) || $scope.$contentfulEntry;
+				}, function ($entry) {
+					if ($entry && $entry.fields && $entry.fields[key] && $entry.fields[key].fields && $entry.fields[key].fields.file && $entry.fields[key].fields.file.url) {
+						$element.css({
+							backgroundImage: 'url(' + $entry.fields[key].fields.file.url + ')',
+						});
+					}
+				});
+			},
+		};
+	});
 angular.module('bigScroll', ['duScroll'])
 	.provider('$scrollTo', function () {
 		var headerOffset = undefined;
@@ -324,7 +342,7 @@ angular.module('bigWordpress', [])
 		$scope.custom_field    = $wp.custom_field;
 		$scope.thumbnail_image = $wp.thumbnail_image;
 	}]);
-angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'contentful', 'hc.marked', 'bigUtil', 'bigScroll', 'bigSlider', 'bigWordpress'])
+angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'bigUtil', 'bigScroll', 'bigSlider', 'bigWordpress', 'bigContentful'])
 	
 	.config(["$locationProvider", "$urlRouterProvider", "$urlMatcherFactoryProvider", "$stateProvider", "$firebaseHelperProvider", "contentfulProvider", function($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider, contentfulProvider){
 		// routing

@@ -1,4 +1,4 @@
-angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'contentful', 'hc.marked', 'bigUtil', 'bigScroll', 'bigSlider', 'bigWordpress'])
+angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'bigUtil', 'bigScroll', 'bigSlider', 'bigWordpress', 'bigContentful'])
 	
 	.config(function($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider, contentfulProvider){
 		// routing
