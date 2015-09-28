@@ -44,12 +44,12 @@ var defaults = {
 		hash: true,
 	},
 	browsersync: {
-		online: true,
 		ui: false,
 		watchOptions: {debounce: 400},
 		reloadDebounce: 400,
 		notify: false,
-		server: { 
+		server: {
+			baseDir: './',
 			middleware: [ require('connect-history-api-fallback')() ],
 		},
 		//proxy: 'example.dev',
