@@ -26,8 +26,8 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'big
 						$title: function ($stateParams) {
 							switch ($stateParams.page) {
 								case '':
-								case 'home':      return '';
-								default:          return $stateParams.page[0].toUpperCase() + $stateParams.page.slice(1);
+								case 'home': return '';
+								default:     return $stateParams.page[0].toUpperCase() + $stateParams.page.slice(1);
 							}
 						},
 					},

@@ -8,17 +8,17 @@ var gulp         = require('gulp'),
 	// utility
 	gutil        = require('gulp-util'),
 	argv         = require('yargs').argv,
-	
+
 	// watching
 	browserSync  = require('browser-sync'),
-		
+
 	// js
 	concat       = require('gulp-concat'),
 	rename       = require('gulp-rename'),
 	uglify       = require('gulp-uglify'),
 	jsValidate   = require('gulp-jsvalidate'),
 	ngAnnotate   = require('gulp-ng-annotate'),
-	
+
 	// css
 	less         = require('gulp-less'),
 	autoprefixer = require('gulp-autoprefixer'),
