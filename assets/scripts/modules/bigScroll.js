@@ -61,6 +61,8 @@ angular.module('bigScroll', ['duScroll'])
 			link: function($scope, $element, $attrs){
 				$element.on('click', function(e){
 					if($attrs.href && (($attrs.href[0] == '/' && $location.path() == $attrs.href.substring(0, $attrs.href.indexOf('#')) && $attrs.href.indexOf('#') >= 0) || $attrs.href[0] == '#')){
+						e.preventDefault();
+						
 						var id = $attrs.href.substring($attrs.href.lastIndexOf('#') + 1);
 						$scrollTo(id);
 					}
