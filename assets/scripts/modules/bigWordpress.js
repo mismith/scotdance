@@ -35,15 +35,20 @@ angular.module('bigWordpress', [])
 			self.api = function (method, params) {
 				var deferred = $q.defer();
 				
-				$http.get(basePath + method, {params: params})
-					.success(function (response) {
-						if (response && response.status == 'ok') {
-							deferred.resolve(response);
+				if (angular.isString(params)) {
+					method += '?' + params;
+					params = {};
+				}
+				
+				$http.jsonp(basePath + method, {params: angular.extend({callback: 'JSON_CALLBACK'}, params || {})})
+					.then(function (response) {
+						if (response && response.data && response.data.status == 'ok') {
+							deferred.resolve(response.data);
 						} else {
 							deferred.reject();
 						}
 					})
-					.error(function () {
+					.catch(function (response) {
 						deferred.reject();
 					});
 				
@@ -93,6 +98,27 @@ angular.module('bigWordpress', [])
 			
 			return self;
 		}]
+	})
+	.directive('wpPost', function ($wp) {
+		return {
+			link: function ($scope, $element, $attrs) {
+				$scope.$wpPost = {$loading: true};
+				
+				$attrs.$observe('wpPost', function (v) {
+					var query = $scope.$eval(v);
+					if (query) {
+						$wp.api('get_post', query).then(function (response) {
+							$scope.$wpPost = response.post;
+						}).catch(function (err) {
+							$scope.$wpPost.$loading = false;
+							$scope.$wpPost.$error   = err;
+							
+							console.error(err);
+						});
+					}
+				});
+			},
+		};
 	})
 	.controller('WordpressCtrl', function ($rootScope, $scope, $wp) {
 		$scope.posts = [];
