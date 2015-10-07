@@ -53,11 +53,6 @@ textarea {
 img {
 	.align-middle;
 	border: 0;
-	
-	@media (max-width: @mobile) {
-		max-width: 100%;
-		height: auto;
-	}
 }
 a {
 	color: inherit;
@@ -161,6 +156,14 @@ loader {
 // wrapping
 .nowrap {
 	white-space: nowrap;
+}
+.hyphenate {
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+	-webkit-hyphens: auto;
+	-moz-hyphens: auto;
+	-ms-hyphens: auto;
+	hyphens: auto;
 }
 
 // alignment
@@ -370,7 +373,7 @@ loader {
 		flex-direction: row-reverse;
 	}
 	&.flex-fully {
-		width: 100%;
+		min-width: 100%;
 	}
 }
 .flex-column {
@@ -381,7 +384,7 @@ loader {
 		flex-direction: column-reverse;
 	}
 	&.flex-fully {
-		height: 100%;
+		min-height: 100%;
 	}
 }
 
