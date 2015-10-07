@@ -413,9 +413,9 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'big
 		accessToken: 'XXXXXX',
 		space: 'XXXXXX'
 	});
-}]).controller('AppCtrl', ["$rootScope", "$state", function ($rootScope, $state) {
+}]).controller('AppCtrl', ["$rootScope", "$scope", "$state", "$firebaseHelper", "contentful", function ($rootScope, $scope, $state, $firebaseHelper, contentful) {
 	$rootScope.$state = $state;
-}]).controller('HomePageCtrl', ["$scope", "$firebaseHelper", "contentful", function ($scope, $firebaseHelper, contentful) {
+
 	// angular
 	$scope.angularWorking = 'Yes';
 

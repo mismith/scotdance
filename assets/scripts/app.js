@@ -9,7 +9,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'big
 		
 		// pages
 		var pages = [
-			'home'
+			'home',
 		];
 		$stateProvider
 			.state('main', {
@@ -49,10 +49,10 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'big
 		});
 	})
 	
-	.controller('AppCtrl', function($rootScope, $state){
+	.controller('AppCtrl', function($rootScope, $scope, $state, $firebaseHelper, contentful){
 		$rootScope.$state = $state;
-	})
-	.controller('HomePageCtrl', function($scope, $firebaseHelper, contentful){
+		
+		
 		// angular
 		$scope.angularWorking = 'Yes';
 		

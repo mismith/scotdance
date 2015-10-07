@@ -1,18 +1,14 @@
-<section id="HomePageCtrl" ng-controller="HomePageCtrl" class="grid-section">
-	<div class="grid-table grid-center grid-middle">
-		<div>
-			<article style="display: inline-block;">
-				<h1>ng-boilerplate</h1>
-				<ul class="grid-left">
-					<li>AngularJS working: {{ angularWorking }}</li>
-					<li>Firebase working: {{ firebaseWorking }}</li>
-					<li>Contentful working: {{ !! entries.length }}</li>
-					<li>UI Router state: {{ $state.current.name }}({page: '{{ $state.params.page || 'home' }}'})</li>
-					<li>IcoMoon Glyphs working: <i class="glyph glyph-menu"></i></li>
-					<li>GlyphIcons working: <i class="glyphicon glyphicon-ok"></i></li>
-					<li>FontAwesome working: <i class="fa fa-check"></i></li>
-				</ul>
-			</article>
-		</div>
+<section class="bg-image" style="background-image: url();">
+	<div class="layout-wrap padding">
+		<h1>ng-boilerplate</h1>
+		<ul class="grid-left">
+			<li>AngularJS working: {{ angularWorking }}</li>
+			<li>Firebase working: {{ firebaseWorking }}</li>
+			<li>Contentful working: {{ !! entries.length }}</li>
+			<li>UI Router state: {{ $state.current.name }}({page: '{{ $state.params.page || 'home' }}'})</li>
+			<li>IcoMoon Glyphs working: <i class="glyph glyph-menu"></i></li>
+			<li>GlyphIcons working: <i class="glyphicon glyphicon-ok"></i></li>
+			<li>FontAwesome working: <i class="fa fa-check"></i></li>
+		</ul>
 	</div>
 </section>
