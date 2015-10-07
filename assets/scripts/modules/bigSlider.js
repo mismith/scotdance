@@ -12,7 +12,7 @@ angular.module('bigSlider', [])
 			restrict: 'E',
 			replace: true,
 			transclude: true,
-			template: '<div class="big-slider-slides" style="display: flex; flex-direction: row; transform: translate3d(0,0,0); transition: transform 300ms ease-in-out;" ng-transclude></div>',
+			template: '<div class="big-slider-slides" style="display:-webkit-flex; display:-ms-flexbox; display:flex; -webkit-flex-direction:row; -ms-flex-direction:row; flex-direction: row; -webkit-transform: translate3d(0,0,0); -ms-transform: translate3d(0,0,0); transform: translate3d(0,0,0); transition: all 300ms ease-in-out;" ng-transclude></div>',
 			link: function ($scope, $element, $attrs) {
 				var width      = 0,
 					numSlides  = 0,
@@ -47,7 +47,8 @@ angular.module('bigSlider', [])
 				$scope.slide = function (index) {
 					slideIndex = index % numSlides;
 					if (slideIndex < 0) slideIndex += numSlides;
-					$element.css({transform: 'translate3d(' + (-width * slideIndex) + 'px,0,0)'});
+					var transform = 'translate3d(' + (-width * slideIndex) + 'px,0,0)';
+					$element.css({webkitTransform: transform, msTransform: transform, transform: transform});
 				};
 				$scope.next = function () {
 					$scope.slide(slideIndex + 1);
