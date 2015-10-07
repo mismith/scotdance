@@ -1,19 +1,23 @@
 <header id="header" class="flex-row flex-align-end">
-	<nav class="flex flex-row flex-justify-center">
-		<a ui-sref="page({page: ''})">
-			<img src="assets/img/logo.svg" width="XXXXXX" height="XXXXXX" alt="XXXXXX">
+	<nav id="nav" class="flex flex-row flex-justify-center flex-align-center layout-wrap">
+		<a ui-sref="page({page: '', '#': ''})">
+			<img src="assets/img/logo.svg" width="XXXXXX" height="XXXXXX" alt="XXXXXX" />
 		</a>
 		<ul id="menu" class="flex-row flex-justify-center flex-align-center">
 			<li ng-repeat="menu in menus">
 				<a ng-if="menu.sref" ui-sref="{{ menu.sref }}" ui-sref-active="active" ng-bind="menu.name"></a>
 			</li>
 		</ul>
-		<button ng-click="$menu.toggle($event)" class="hide-gt-mobile">…</button>
+		<button ng-click="$menu.toggle($event)" class="passthru hide-gt-mobile">
+			<img src="assets/img/icon/menu.svg" alt="Toggle Menu" />
+		</button>
 	</nav>
 </header>
 <main id="main" class="flex-column flex-justify-center flex" ui-view>
 	<loader />
 </main>
 <footer id="footer">
-	#footer
+	<div class="flex-row flex-justify-between padding-sm layout-wrap">
+		#footer
+	</div>
 </footer>
