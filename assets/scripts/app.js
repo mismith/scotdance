@@ -19,9 +19,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'big
 				.state('page', {
 					parent: 'main',
 					url: '/{page:|' + pages.join('|') + '}',
-					templateUrl: function($stateParams){
-						return 'views/page/' + ($stateParams.page || 'home') + '.html';
-					},
+					templateUrl: $stateParams => 'views/page/' + ($stateParams.page || 'home') + '.html',
 					resolve: {
 						$title: function ($stateParams) {
 							switch ($stateParams.page) {

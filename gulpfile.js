@@ -15,6 +15,7 @@ var gulp         = require('gulp'),
 	// js
 	concat       = require('gulp-concat'),
 	rename       = require('gulp-rename'),
+	babel        = require('gulp-babel'),
 	uglify       = require('gulp-uglify'),
 	jsValidate   = require('gulp-jsvalidate'),
 	ngAnnotate   = require('gulp-ng-annotate'),
@@ -110,22 +111,23 @@ gulp
 	})
 	.task('js', function(){
 		return gulp.src(config.globs.excludes.concat(config.globs.js))
-			.pipe(jsValidate()).on('error', handleError)
-			.pipe(ngAnnotate()).on('error', handleError)
+			.pipe(jsValidate(config.jsValidate)).on('error', handleError)
+			.pipe(babel(config.babel)).on('error', handleError)
+			.pipe(ngAnnotate(config.ngAnnotate)).on('error', handleError)
 			.pipe(concat(config.concat.js + '.js'))
 			.pipe(gulp.dest(config.dests.js))
 			
 			.pipe(rename({suffix: '.min'}))
-			.pipe(uglify()).on('error', handleError)
+			.pipe(uglify(config.uglify)).on('error', handleError)
 			.pipe(gulp.dest(config.dests.js))
 			
 			.pipe(browserSync.reload({stream: true}));
 	})
 	.task('less', function(){
 		return gulp.src(config.globs.excludes.concat(config.globs.less).concat('!**/*.inc.less')) // don't output .inc.less files as they are never accessed directly
-			.pipe(less()).on('error', handleError)
+			.pipe(less(config.less)).on('error', handleError)
 			.pipe(autoprefixer(config.autoprefixer))
-			.pipe(minifyCss())
+			.pipe(minifyCss(config.minifyCss))
 			.pipe(gulp.dest(config.dests.less))
 			
 			.pipe(browserSync.reload({stream: true}));

@@ -4,6 +4,7 @@
     "connect-history-api-fallback": "^1.1.0",
     "gulp": "^3.9.0",
     "gulp-autoprefixer": "0.0.8",
+    "gulp-babel": "^5.2.1",
     "gulp-concat": "^2.3.4",
     "gulp-htmlhint": "^0.1.1",
     "gulp-jsvalidate": "^2.0.0",
