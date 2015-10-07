@@ -79,6 +79,8 @@ angular.module('bigScroll', ['duScroll'])
 			link: function($scope, $element, $attrs){
 				$element.on('click', function(e){
 					if($attrs.href && (($attrs.href[0] == '/' && $location.path() == $attrs.href.substring(0, $attrs.href.indexOf('#')) && $attrs.href.indexOf('#') >= 0) || $attrs.href[0] == '#')){
+						e.preventDefault();
+						
 						var id = $attrs.href.substring($attrs.href.lastIndexOf('#') + 1);
 						$scrollTo(id);
 					}
@@ -100,7 +102,7 @@ angular.module('bigSlider', [])
 			restrict: 'E',
 			replace: true,
 			transclude: true,
-			template: '<div class="big-slider-slides" style="display: flex; flex-direction: row; transform: translate3d(0,0,0); transition: transform 300ms ease-in-out;" ng-transclude></div>',
+			template: '<div class="big-slider-slides" style="display:-webkit-flex; display:-ms-flexbox; display:flex; -webkit-flex-direction:row; -ms-flex-direction:row; flex-direction: row; -webkit-transform: translate3d(0,0,0); -ms-transform: translate3d(0,0,0); transform: translate3d(0,0,0); transition: all 300ms ease-in-out;" ng-transclude></div>',
 			link: function ($scope, $element, $attrs) {
 				var width      = 0,
 					numSlides  = 0,
@@ -135,7 +137,8 @@ angular.module('bigSlider', [])
 				$scope.slide = function (index) {
 					slideIndex = index % numSlides;
 					if (slideIndex < 0) slideIndex += numSlides;
-					$element.css({transform: 'translate3d(' + (-width * slideIndex) + 'px,0,0)'});
+					var transform = 'translate3d(' + (-width * slideIndex) + 'px,0,0)';
+					$element.css({webkitTransform: transform, msTransform: transform, transform: transform});
 				};
 				$scope.next = function () {
 					$scope.slide(slideIndex + 1);
@@ -247,15 +250,20 @@ angular.module('bigWordpress', [])
 			self.api = function (method, params) {
 				var deferred = $q.defer();
 				
-				$http.get(basePath + method, {params: params})
-					.success(function (response) {
-						if (response && response.status == 'ok') {
-							deferred.resolve(response);
+				if (angular.isString(params)) {
+					method += '?' + params;
+					params = {};
+				}
+				
+				$http.jsonp(basePath + method, {params: angular.extend({callback: 'JSON_CALLBACK'}, params || {})})
+					.then(function (response) {
+						if (response && response.data && response.data.status == 'ok') {
+							deferred.resolve(response.data);
 						} else {
 							deferred.reject();
 						}
 					})
-					.error(function () {
+					.catch(function (response) {
 						deferred.reject();
 					});
 				
@@ -306,6 +314,27 @@ angular.module('bigWordpress', [])
 			return self;
 		}]
 	})
+	.directive('wpPost', ["$wp", function ($wp) {
+		return {
+			link: function ($scope, $element, $attrs) {
+				$scope.$wpPost = {$loading: true};
+				
+				$attrs.$observe('wpPost', function (v) {
+					var query = $scope.$eval(v);
+					if (query) {
+						$wp.api('get_post', query).then(function (response) {
+							$scope.$wpPost = response.post;
+						}).catch(function (err) {
+							$scope.$wpPost.$loading = false;
+							$scope.$wpPost.$error   = err;
+							
+							console.error(err);
+						});
+					}
+				});
+			},
+		};
+	}])
 	.controller('WordpressCtrl', ["$rootScope", "$scope", "$wp", function ($rootScope, $scope, $wp) {
 		$scope.posts = [];
 		$scope.setCategory = function (categoryId, postType) {
@@ -370,8 +399,8 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'big
 						$title: ["$stateParams", function ($stateParams) {
 							switch ($stateParams.page) {
 								case '':
-								case 'home':      return '';
-								default:          return $stateParams.page[0].toUpperCase() + $stateParams.page.slice(1);
+								case 'home': return '';
+								default:     return $stateParams.page[0].toUpperCase() + $stateParams.page.slice(1);
 							}
 						}],
 					},
