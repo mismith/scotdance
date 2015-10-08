@@ -68,29 +68,29 @@ var defaults = {
 			'**/*.{html,htm,php}',
 		],
 		js: [
-			'assets/scripts/*/**/*.js', // subfolders first
-			'assets/scripts/**/*.js',
+			'html/assets/scripts/*/**/*.js', // subfolders first
+			'html/assets/scripts/**/*.js',
 		],
 		less: [
-			'assets/styles/**/*.less',
+			'html/assets/styles/**/*.less',
 			// note that files ending in ".inc.less" will not be compiled (but they will be watched)
 		],
 		files: [
 			'**/*.{htaccess,jpg,jpeg,gif,png,svg}',
 		],
 		manifest: [
-			'assets/js/*',
-			'assets/css/*',
-			'assets/fonts/*',
-			'assets/webfonts/*',
-			'assets/img/*.{jpg,jpeg,gif,png,svg}',
-			'assets/**/*.{mp3,mp4,m4a,m4v,wav,flv,ogg,ogv,webm}',
+			'html/assets/js/*',
+			'html/assets/css/*',
+			'html/assets/fonts/*',
+			'html/assets/webfonts/*',
+			'html/assets/img/*.{jpg,jpeg,gif,png,svg}',
+			'html/assets/**/*.{mp3,mp4,m4a,m4v,wav,flv,ogg,ogv,webm}',
 			'**/*.{html,htm,php}',
 		],
 	},
 	dests: {
-		js:   'assets/js',
-		less: 'assets/css',
+		scripts: 'html/assets/js',
+		styles:  'html/assets/css',
 	}
 };
 var configPath = './gulpfile.config.js',
@@ -115,11 +115,11 @@ gulp
 			.pipe(babel(config.babel)).on('error', handleError)
 			.pipe(ngAnnotate(config.ngAnnotate)).on('error', handleError)
 			.pipe(concat(config.concat.js + '.js'))
-			.pipe(gulp.dest(config.dests.js))
+			.pipe(gulp.dest(config.dests.scripts))
 			
 			.pipe(rename({suffix: '.min'}))
 			.pipe(uglify(config.uglify)).on('error', handleError)
-			.pipe(gulp.dest(config.dests.js))
+			.pipe(gulp.dest(config.dests.scripts))
 			
 			.pipe(browserSync.reload({stream: true}));
 	})
@@ -127,8 +127,11 @@ gulp
 		return gulp.src(config.globs.excludes.concat(config.globs.less).concat('!**/*.inc.less')) // don't output .inc.less files as they are never accessed directly
 			.pipe(less(config.less)).on('error', handleError)
 			.pipe(autoprefixer(config.autoprefixer))
+			.pipe(gulp.dest(config.dests.styles))
+			
+			.pipe(rename({suffix: '.min'}))
 			.pipe(minifyCss(config.minifyCss))
-			.pipe(gulp.dest(config.dests.less))
+			.pipe(gulp.dest(config.dests.styles))
 			
 			.pipe(browserSync.reload({stream: true}));
 	})
