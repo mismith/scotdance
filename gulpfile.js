@@ -50,7 +50,7 @@ var defaults = {
 		reloadDebounce: 400,
 		notify: false,
 		server: {
-			baseDir: './',
+			baseDir: './html/',
 			middleware: [ require('connect-history-api-fallback')() ],
 		},
 		//proxy: 'example.dev',
