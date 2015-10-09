@@ -65,8 +65,8 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'ngH
 	$rootScope.$state = $state;
 
 	$firebaseHelper.hotTable = function hotTable() {
-		var ref = $firebaseHelper.ref.apply(this, arguments);
-		fbHot = {
+		var ref = $firebaseHelper.ref.apply(this, arguments),
+		    fbHot = {
 			parse: function parse(snapshot) {
 				$timeout(function () {
 					if (!fbHot.revisions) {
@@ -97,10 +97,13 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'ngH
 			},
 			save: function save() {
 				var obj = {};
-				fbHot.data.map(function (item) {
-					var $id = item.$id;
-					delete item.$id;
-					if ($id) obj[$id] = item;
+				fbHot.data.forEach(function (item) {
+					var $id = item.$id,
+					    o = angular.copy(item);
+
+					delete o.$id;
+					if ($id) obj[$id] = o;
+					// @TODO: handle priority ?
 				});
 				console.log('saving', obj);
 
@@ -115,11 +118,9 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'ngH
 
 		return fbHot;
 	};
-	var fbHot = $scope.fbHot = $firebaseHelper.hotTable('competitionsData/idc0/dancers'),
-	    data = $scope.data = fbHot.data;
+	$scope.fbHot = $firebaseHelper.hotTable('competitionsData/idc0/dancers');
 
 	$scope.settings = {
-		data: data, // @TODO: make sure this gets updated once the data loads
 		columns: [{ data: 'number', title: '#', readOnly: true }, { data: 'firstName', title: 'First Name' }, { data: 'lastName', title: 'Last Name' }, { data: 'location', title: 'Location' }],
 		minSpareRows: 1,
 		undo: true,

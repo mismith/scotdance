@@ -1,7 +1,7 @@
 <section class="flex-center">
-	<hot-table settings="settings"></hot-table>
+	<hot-table settings="settings" datarows="fbHot.data"></hot-table>
 	<button ng-click="fbHot.save()">Save</button>
 	<button ng-if="fbHot.revisions > 1" ng-click="fbHot.refresh()">Refresh</button>
 	
-	<pre ng-bind="data | json"></pre>
+	<pre ng-bind="fbHot.data | json"></pre>
 </section>
