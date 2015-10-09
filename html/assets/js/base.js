@@ -1,436 +1,8 @@
 'use strict';
 
-angular.module('bigContentful', ['contentful', 'hc.marked']).directive('contentfulBg', function () {
-	var key = 'background';
-	return {
-		restrict: 'A',
-		link: function link($scope, $element, $attrs) {
-			$scope.$watch(function () {
-				return $scope.$eval($attrs.contentfulBg) || $scope.$contentfulEntry;
-			}, function ($entry) {
-				if ($entry && $entry.fields && $entry.fields[key] && $entry.fields[key].fields && $entry.fields[key].fields.file && $entry.fields[key].fields.file.url) {
-					$element.css({
-						backgroundImage: 'url(' + $entry.fields[key].fields.file.url + ')'
-					});
-				}
-			});
-		}
-	};
-});
-'use strict';
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
 
-angular.module('bigScroll', ['duScroll']).provider('$scrollTo', function () {
-	var headerOffset = undefined;
-	this.setDefaultHeaderOffset = function (offset) {
-		headerOffset = offset;
-	};
-
-	this.$get = ['$rootScope', '$location', '$anchorScroll', '$timeout', '$document', function ($rootScope, $location, $anchorScroll, $timeout, $document) {
-		var $scrollTo = function $scrollTo(el, offset, delay) {
-			if (angular.isString(el)) el = document.getElementById(el);
-			return $document.scrollTo(el, offset === undefined ? headerOffset === undefined ? document.getElementById('header').offsetHeight : headerOffset : offset, delay === undefined ? 600 : delay);
-		};
-
-		var scrolled = false,
-		    scrollRefresh = function scrollRefresh(resetScrolled, delay) {
-			if (scrolled) return;
-			if (resetScrolled) scrolled = false;
-
-			var hash = $location.hash();
-			if (hash) {
-				$timeout(function () {
-					$scrollTo(hash, undefined, delay);
-				});
-			} else {
-				$scrollTo(null, 0, 0);
-			}
-		};
-		$rootScope.$on('$viewContentLoaded', function () {
-			scrolled = false;
-			$document.one('mousewheel', function () {
-				scrolled = true;
-			});
-			scrollRefresh(true);
-		});
-		$rootScope.$on('$stateChangeSuccess', function () {
-			scrollRefresh(true);
-		});
-		$rootScope.$on('bigScrollRefresh', function () {
-			scrollRefresh(undefined, 0);
-		});
-
-		return $scrollTo;
-	}];
-}).directive('img', ["$rootScope", function ($rootScope) {
-	return {
-		restrict: 'E',
-		link: function link($scope, $element, $attrs) {
-			if (!$attrs.height) {
-				$element[0].onload = function () {
-					//console.log('img onload', $element[0].src);
-					$rootScope.$emit('bigScrollRefresh');
-				};
-			}
-		}
-	};
-}]).directive('a', ["$location", "$scrollTo", function ($location, $scrollTo) {
-	return {
-		restrict: 'E',
-		link: function link($scope, $element, $attrs) {
-			$element.on('click', function (e) {
-				if ($attrs.href && ($attrs.href[0] == '/' && $location.path() == $attrs.href.substring(0, $attrs.href.indexOf('#')) && $attrs.href.indexOf('#') >= 0 || $attrs.href[0] == '#')) {
-					e.preventDefault();
-
-					var id = $attrs.href.substring($attrs.href.lastIndexOf('#') + 1);
-					$scrollTo(id);
-				}
-			});
-		}
-	};
-}]);
-'use strict';
-
-angular.module('bigSlider', []).directive('bigSlider', ["$window", function ($window) {
-	return {
-		restrict: 'E',
-		replace: true,
-		transclude: true,
-		template: '<div class="big-slider" style="overflow: hidden;" ng-transclude></div>'
-	};
-}]).directive('bigSliderSlides', ["$window", function ($window) {
-	return {
-		restrict: 'E',
-		replace: true,
-		transclude: true,
-		template: '<div class="big-slider-slides" style="display:-webkit-flex; display:-ms-flexbox; display:flex; -webkit-flex-direction:row; -ms-flex-direction:row; flex-direction: row; -webkit-transform: translate3d(0,0,0); -ms-transform: translate3d(0,0,0); transform: translate3d(0,0,0); transition: all 300ms ease-in-out;" ng-transclude></div>',
-		link: function link($scope, $element, $attrs) {
-			var width = 0,
-			    numSlides = 0,
-			    slideIndex = 0;
-
-			// watch parent for sizing
-			function getColumns() {
-				return $scope.$eval($attrs.columns) || 1;
-			}
-			function getWidth() {
-				return width = $element[0].parentNode.offsetWidth / getColumns();
-			}
-			angular.element($window).bind('resize', function () {
-				getWidth();
-				setWidth();
-			});
-			getWidth();
-
-			// watch for slides
-			function setWidth(w) {
-				w = w || width;
-				$element.css({ width: numSlides * w + 'px' }).children().css({ width: w + 'px' });
-			}
-			$scope.$watch(function () {
-				return $element.children().length;
-			}, function (v) {
-				numSlides = v;
-				setWidth();
-			});
-
-			// helpers
-			$scope.index = function () {
-				return slideIndex;
-			};
-			$scope.isVisible = function (index) {
-				return index >= slideIndex && index < slideIndex + getColumns();
-			};
-			$scope.slide = function (index) {
-				slideIndex = index % numSlides;
-				if (slideIndex < 0) {
-					slideIndex = numSlides - getColumns();
-				} else if (index + getColumns() > numSlides) {
-					// loop back around to beginning
-					slideIndex = 0;
-				}
-				var transform = 'translate3d(' + -width * slideIndex + 'px,0,0)';
-				$element.css({ webkitTransform: transform, msTransform: transform, transform: transform });
-			};
-			$scope.next = function () {
-				$scope.slide(slideIndex + 1);
-			};
-			$scope.prev = function () {
-				$scope.slide(slideIndex - 1);
-			};
-		}
-	};
-}]).directive('bigSliderSlide', function () {
-	return {
-		restrict: 'E',
-		replace: true,
-		transclude: true,
-		template: '<article class="big-slider-slide" ng-class="{visible: isVisible($index)}" ng-transclude></article>'
-	};
-}).directive('bigSliderNav', function () {
-	return {
-		restrict: 'E',
-		replace: true,
-		transclude: true,
-		template: '<nav class="big-slider-nav" ng-transclude></nav>'
-	};
-});
-'use strict';
-
-angular.module('bigUtil', []).run(["$rootScope", "$document", function ($rootScope, $document) {
-	// remove 300ms click delay on touch devices
-	FastClick.attach(document.body);
-
-	// fix vh units in ios7 (and others)
-	viewportUnitsBuggyfill.init();
-
-	// mobile menu
-	var $menu = $rootScope.$menu = {
-		active: false,
-		open: function open() {
-			$menu.active = true;
-		},
-		close: function close() {
-			$menu.active = false;
-		},
-		toggle: function toggle(e) {
-			$menu.active = !$menu.active;
-			if (e) e.stopPropagation();
-		}
-	};
-	$document.on('click', function () {
-		$rootScope.$apply($menu.close);
-	});
-	$document.on('keyup', function (e) {
-		$rootScope.$apply(function () {
-			if (e.keyCode === 27 /*esc*/) $menu.close();
-		});
-	});
-
-	var $modal = $rootScope.$modal = {
-		active: false,
-		open: function open(id) {
-			$modal.active = id;
-		},
-		close: function close() {
-			$modal.active = false;
-		},
-		toggle: function toggle(id) {
-			$modal.active = $modal.active === id ? false : id;
-		},
-		isOpen: function isOpen(id) {
-			return $modal.active === id;
-		}
-	};
-	// prevent scroll bubbling when modal open
-	$rootScope.$watch('$modal.active', function (v) {
-		angular.element(document.body).css({
-			overflow: v ? 'hidden' : ''
-		});
-	});
-	// allow Esc key to close modal
-	$document.on('keyup', function (e) {
-		$rootScope.$apply(function () {
-			if (e.keyCode === 27 /*esc*/) $modal.close();
-		});
-	});
-}]).filter('length', function () {
-	return function (obj) {
-		return angular.isArray(obj) ? obj.length : angular.isObject(obj) ? Object.keys(obj).filter(function (v) {
-			return v[0] != '$';
-		}).length : 0;
-	};
-}).filter('unique', function () {
-	return function (array, key) {
-		if (!array) return array;
-
-		var o = {},
-		    r = [];
-
-		for (var i = 0; i < array.length; i++) {
-			o[angular.isFunction(key) ? key(array[i]) : array[i][key]] = array[i];
-		}
-		for (var k in o) {
-			r.push(o[k]);
-		}
-		return r;
-	};
-}).directive('bigClickToggle', ["$parse", function ($parse) {
-	return {
-		restrict: 'A',
-		link: function link($scope, $element, $attrs) {
-			var obj = $scope.$eval($attrs.bigClickToggle);
-			$element.on('click', function (e) {
-				e.preventDefault();
-
-				$scope.$apply(function () {
-					angular.forEach(obj, function (v, k) {
-						return $parse(k).assign($scope, v);
-					});
-				});
-			});
-			angular.forEach(obj, function (v, k) {
-				$scope.$watch(k, function (newV) {
-					if (newV !== undefined) $element[v === newV ? 'addClass' : 'removeClass']($scope.$eval($attrs.bigClickToggleActive) || 'active');
-				});
-			});
-		}
-	};
-}]);
-'use strict';
-
-angular.module('bigWordpress', []).provider('$wp', function () {
-	var basePath = '/wp/api/';
-	this.setApiBase = function (path) {
-		basePath = path;
-	};
-
-	this.$get = ['$http', '$q', function ($http, $q) {
-		var self = this;
-
-		// helpers
-		self.proper_date = function (date) {
-			return (date || '').replace(' ', 'T');
-		};
-		self.custom_field = function (post, field) {
-			try {
-				return post.custom_fields[field][0];
-			} catch (e) {
-				return undefined;
-			}
-		};
-		self.thumbnail_image = function (post, size) {
-			try {
-				return post.thumbnail_images[size || 'full'].url;
-			} catch (e) {
-				try {
-					return post.attachments[0].url;
-				} catch (e) {
-					return undefined;
-				}
-			}
-		};
-
-		// ajax
-		self.api = function (method, params) {
-			var deferred = $q.defer();
-
-			if (angular.isString(params)) {
-				method += '?' + params;
-				params = {};
-			}
-
-			$http.jsonp(basePath + method, { params: angular.extend({ callback: 'JSON_CALLBACK' }, params || {}) }).then(function (response) {
-				if (response && response.data && response.data.status == 'ok') {
-					deferred.resolve(response.data);
-				} else {
-					deferred.reject();
-				}
-			})['catch'](function (response) {
-				deferred.reject();
-			});
-
-			return deferred.promise;
-		};
-		self.posts = function ($scope, params, method) {
-			var page = 1,
-			    count = 10;
-
-			$scope.loading = false;
-			$scope.fetchedAll = false;
-			$scope.fetchPosts = function (items) {
-				if ($scope.loading || $scope.fetchedAll) return; // only one request at a time
-
-				$scope.loading = true;
-				return self.api(method || 'get_category_posts', angular.extend({ count: count, page: page }, params)).then(function (response) {
-					angular.forEach(response.posts, function (post) {
-						items.push(post);
-					});
-
-					if (page < response.pages) {
-						page++;
-					} else {
-						$scope.fetchedAll = true;
-					}
-				})['catch'](function (err) {
-					$scope.fetchedAll = true;
-
-					// @TODO: properly handle error
-					console.error(err);
-				})['finally'](function () {
-					$scope.loading = false;
-				});
-			};
-		};
-
-		// cache
-		// N.B. does not cache pagination results!
-		var cache = {};
-		self.cache = function (path, set) {
-			if (set) cache[path] = set;
-			return cache[path];
-		};
-
-		return self;
-	}];
-}).directive('wpPost', ["$wp", function ($wp) {
-	return {
-		link: function link($scope, $element, $attrs) {
-			$scope.$wpPost = { $loading: true };
-
-			$attrs.$observe('wpPost', function (v) {
-				var query = $scope.$eval(v);
-				if (query) {
-					$wp.api('get_post', query).then(function (response) {
-						$scope.$wpPost = response.post;
-					})['catch'](function (err) {
-						$scope.$wpPost.$loading = false;
-						$scope.$wpPost.$error = err;
-
-						console.error(err);
-					});
-				}
-			});
-		}
-	};
-}]).controller('WordpressCtrl', ["$rootScope", "$scope", "$wp", function ($rootScope, $scope, $wp) {
-	$scope.posts = [];
-	$scope.setCategory = function (categoryId, postType) {
-		postType = postType || 'publication';
-
-		// setup
-		$wp.posts($scope, { id: categoryId, post_type: postType });
-
-		// check if they are cached
-		var path = postType + '/' + categoryId,
-		    cached = $wp.cache(path);
-		if (cached) return $scope.posts = cached;
-
-		// otherwise, fetch and cache em
-		$scope.fetchPosts($scope.posts).then(function () {
-			//console.log('wp loaded');
-			$rootScope.$emit('bigScrollRefresh');
-
-			$wp.cache(path, $scope.posts);
-		});
-	};
-	$scope.hasCategory = function (post, categoryId) {
-		var found = false;
-		if (post && post.categories) {
-			angular.forEach(post.categories, function (category) {
-				if (found) return;
-				if (category.id == categoryId) return found = true;
-			});
-		}
-		return found;
-	};
-
-	$scope.proper_date = $wp.proper_date;
-	$scope.custom_field = $wp.custom_field;
-	$scope.thumbnail_image = $wp.thumbnail_image;
-}]);
-'use strict';
-
-angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'bigUtil', 'bigScroll', 'bigSlider', 'bigWordpress', 'bigContentful']).config(["$locationProvider", "$urlRouterProvider", "$urlMatcherFactoryProvider", "$stateProvider", "$firebaseHelperProvider", "contentfulProvider", function ($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider, contentfulProvider) {
+angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'ngHandsontable']).config(["$locationProvider", "$urlRouterProvider", "$urlMatcherFactoryProvider", "$stateProvider", "$firebaseHelperProvider", "$provide", function ($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider, $provide) {
 	// routing
 	$locationProvider.html5Mode(true).hashPrefix('!');
 	$urlRouterProvider.when('', '/');
@@ -472,24 +44,101 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'big
 	});
 
 	// data
-	$firebaseHelperProvider.namespace('demo');
-	contentfulProvider.setOptions({
-		accessToken: 'XXXXXX',
-		space: 'XXXXXX'
-	});
-}]).controller('AppCtrl', ["$rootScope", "$scope", "$state", "$firebaseHelper", "contentful", function ($rootScope, $scope, $state, $firebaseHelper, contentful) {
+	$firebaseHelperProvider.namespace('scotdance');
+	/*
+ 		$provide.decorator('$firebaseArray', function ($delegate) {
+ 			$delegate.prototype.$table = function $table() {
+ 				let arr = [];
+ 				console.log(arr.length);
+ 				this.$list.$loaded(function (list) {
+ 				console.log(arr.length);
+ 					for (let item of list) {
+ 						arr.push(item);
+ 					}
+ 				});
+ 				return arr;
+ 			};
+ 			return $delegate;
+ 		});
+ */
+}]).controller('AppCtrl', ["$rootScope", "$scope", "$state", "$firebaseHelper", "$timeout", function ($rootScope, $scope, $state, $firebaseHelper, $timeout) {
 	$rootScope.$state = $state;
 
-	// angular
-	$scope.angularWorking = 'Yes';
+	$firebaseHelper.hotTable = function hotTable() {
+		var ref = $firebaseHelper.ref.apply(this, arguments);
+		fbHot = {
+			parse: function parse(snapshot) {
+				$timeout(function () {
+					if (!fbHot.revisions) {
+						(function () {
+							var _fbHot$data;
 
-	// firebase
-	$firebaseHelper.load('example').then(function (example) {
-		$scope.firebaseWorking = true;
-	});
+							var obj = snapshot.exportVal(),
+							    arr = Object.keys(obj).map(function (k) {
+								var o = angular.copy(obj[k]);
+								o.$id = k;
+								return o;
+							});
 
-	// contentful
-	contentful.entries('order=sys.createdAt').then(function (response) {
-		$scope.entries = response.data.items;
-	});
+							(_fbHot$data = fbHot.data).splice.apply(_fbHot$data, [0, fbHot.data.length].concat(_toConsumableArray(arr)));
+						})();
+					} else {
+						console.info(fbHot.revisions + ' revision' + (fbHot.revisions === 1 ? ' has' : 's have') + ' been made to this reference since you last saved:', ref.path.toString());
+					}
+					fbHot.revisions++;
+				});
+			},
+			init: function init() {
+				ref.orderByPriority().on('value', fbHot.parse);
+			},
+			refresh: function refresh() {
+				fbHot.revisions = 0;
+				ref.orderByPriority().once('value', fbHot.parse);
+			},
+			save: function save() {
+				var obj = {};
+				fbHot.data.map(function (item) {
+					var $id = item.$id;
+					delete item.$id;
+					if ($id) obj[$id] = item;
+				});
+				console.log('saving', obj);
+
+				fbHot.revisions = 0;
+				ref.update(obj);
+			},
+			revisions: 0,
+			data: []
+		};
+
+		fbHot.init();
+
+		return fbHot;
+	};
+	var fbHot = $scope.fbHot = $firebaseHelper.hotTable('competitionsData/idc0/dancers'),
+	    data = $scope.data = fbHot.data;
+
+	$scope.settings = {
+		data: data, // @TODO: make sure this gets updated once the data loads
+		columns: [{ data: 'number', title: '#', readOnly: true }, { data: 'firstName', title: 'First Name' }, { data: 'lastName', title: 'Last Name' }, { data: 'location', title: 'Location' }],
+		minSpareRows: 1,
+		undo: true,
+		contextMenu: ['remove_row', '---------', 'undo']
+	};
 }]);
+/*
+			afterChange: (changes, source) => {
+				console.log(source);
+				switch (source) {
+					case 'edit':
+					case 'undo':
+						angular.forEach(changes, function (change) {
+							var key = $data.$keyAt(change[0]);
+							if (key) {
+								$firebaseHelper.ref($data, key).child(change[1]).set(change[3]);
+							}
+						});
+						break;
+				}
+			},
+*/

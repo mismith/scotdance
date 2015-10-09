@@ -1,6 +1,6 @@
-angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'bigUtil', 'bigScroll', 'bigSlider', 'bigWordpress', 'bigContentful'])
+angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'ngHandsontable'])
 	
-	.config(function($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider, contentfulProvider){
+	.config(function($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider, $provide){
 		// routing
 		$locationProvider.html5Mode(true).hashPrefix('!');
 		$urlRouterProvider.when('', '/');
@@ -42,27 +42,108 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'big
 		});
 		
 		// data
-		$firebaseHelperProvider.namespace('demo');
-		contentfulProvider.setOptions({
-			accessToken: 'XXXXXX',
-			space:       'XXXXXX',
+		$firebaseHelperProvider.namespace('scotdance');
+/*
+		$provide.decorator('$firebaseArray', function ($delegate) {
+			$delegate.prototype.$table = function $table() {
+				let arr = [];
+				console.log(arr.length);
+				this.$list.$loaded(function (list) {
+				console.log(arr.length);
+					for (let item of list) {
+						arr.push(item);
+					}
+				});
+				return arr;
+			};
+			return $delegate;
 		});
+*/
 	})
 	
-	.controller('AppCtrl', function($rootScope, $scope, $state, $firebaseHelper, contentful){
+	.controller('AppCtrl', function($rootScope, $scope, $state, $firebaseHelper, $timeout){
 		$rootScope.$state = $state;
 		
+		$firebaseHelper.hotTable = function hotTable() {
+			let ref   = $firebaseHelper.ref.apply(this, arguments);
+				fbHot = {
+					parse: function parse(snapshot) {
+						$timeout(function () {
+							if ( ! fbHot.revisions) {
+								let obj = snapshot.exportVal(),
+									arr = Object.keys(obj).map((k) => {
+										let o = angular.copy(obj[k]);
+										o.$id = k;
+										return o;
+									});
+								
+								fbHot.data.splice(0, fbHot.data.length, ...arr);
+							} else {
+								console.info(fbHot.revisions + ' revision' + (fbHot.revisions === 1 ? ' has' : 's have') + ' been made to this reference since you last saved:', ref.path.toString());
+							}
+							fbHot.revisions++;
+						});
+					},
+					init: function init() {
+						ref.orderByPriority().on('value', fbHot.parse);
+					},
+					refresh: function refresh() {
+						fbHot.revisions = 0;
+						ref.orderByPriority().once('value', fbHot.parse);
+					},
+					save: function save() {
+						var obj = {};
+						fbHot.data.map((item) => {
+							var $id = item.$id;
+							delete item.$id;
+							if ($id) obj[$id] = item;
+						});
+						console.log('saving', obj);
+						
+						fbHot.revisions = 0;
+						ref.update(obj);
+					},
+					revisions: 0,
+					data: [],
+				};
+			
+			fbHot.init();
+			
+			return fbHot;
+		};
+		let fbHot = $scope.fbHot = $firebaseHelper.hotTable('competitionsData/idc0/dancers'),
+			data  = $scope.data  = fbHot.data;
 		
-		// angular
-		$scope.angularWorking = 'Yes';
-		
-		// firebase
-		$firebaseHelper.load('example').then(function(example){
-			$scope.firebaseWorking = true;
-		});
-		
-		// contentful
-		contentful.entries('order=sys.createdAt').then(function(response){
-			$scope.entries = response.data.items;
-		});
+		$scope.settings = {
+			data: data, // @TODO: make sure this gets updated once the data loads
+			columns: [
+				{data: 'number', title: '#', readOnly: true},
+				{data: 'firstName', title: 'First Name'},
+				{data: 'lastName', title: 'Last Name'},
+				{data: 'location', title: 'Location'},
+			],
+			minSpareRows: 1,
+			undo: true,
+			contextMenu: [
+				'remove_row',
+				'---------',
+				'undo',
+			],
+/*
+			afterChange: (changes, source) => {
+				console.log(source);
+				switch (source) {
+					case 'edit':
+					case 'undo':
+						angular.forEach(changes, function (change) {
+							var key = $data.$keyAt(change[0]);
+							if (key) {
+								$firebaseHelper.ref($data, key).child(change[1]).set(change[3]);
+							}
+						});
+						break;
+				}
+			},
+*/
+		};
 	});

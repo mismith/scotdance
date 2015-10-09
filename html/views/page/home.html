@@ -1,12 +1,7 @@
-<section class="bg-image" style="background-image: url();">
-	<div class="layout-wrap padding">
-		<h1>ng-boilerplate</h1>
-		<ul class="grid-left">
-			<li>AngularJS working: {{ angularWorking }}</li>
-			<li>Firebase working: {{ firebaseWorking }}</li>
-			<li>Contentful working: {{ !! entries.length }}</li>
-			<li>UI Router state: {{ $state.current.name }}({page: '{{ $state.params.page || 'home' }}'})</li>
-			<li>FontAwesome working: <i class="fa fa-check"></i></li>
-		</ul>
-	</div>
+<section class="flex-center">
+	<hot-table settings="settings"></hot-table>
+	<button ng-click="fbHot.save()">Save</button>
+	<button ng-if="fbHot.revisions > 1" ng-click="fbHot.refresh()">Refresh</button>
+	
+	<pre ng-bind="data | json"></pre>
 </section>
