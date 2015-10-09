@@ -1,4 +1,5 @@
 // units
+@t:     300ms;
 @ux:    10%;
 @uy:    5%;
 @ux-sm: 10px;
@@ -76,25 +77,33 @@ h6 {
 }
 
 
-// interactivity
-.btn,
-.input {
+
+// resetting
+.passthru {
 	-webkit-appearance: none;
 	appearance: none;
-	display: inline-block;
+	background: none;
+	color: inherit;
 	font: inherit;
-	font-size: 16px;
-	font-weight: 300;
-	padding: 10px 25px;
+	padding: 0;
 	margin: 0;
 	border: 0;
 	border-radius: 0;
+	outline: 0;
+}
+
+// interactivity
+.btn,
+.input {
+	.passthru;
+	display: inline-block;
+	padding: 10px 25px;
 }
 .btn {
 	.bg-primary;
 	.color-lightest;
+	.uppercase;
 	text-decoration: none;
-	text-transform: uppercase;
 	cursor: pointer;
 	
 	&:hover {
@@ -107,6 +116,15 @@ h6 {
 	&.hero {
 		font-size: 24px;
 	}
+}
+.input {
+	.bg-lightest;
+}
+
+// utility
+.round {
+	border-radius: 50%;
+	outline: 0; // hide square outline
 }
 
 // loading
@@ -137,7 +155,7 @@ loader {
 }
 
 
-// layout
+// layout / wrapping
 .layout-wrap {
 	max-width: @desktop;
 	margin-left: auto;
@@ -152,10 +170,14 @@ loader {
 		padding-top: 100%;
 	}
 }
-
-// wrapping
+.layout-scroll {
+	overflow: auto;
+}
 .nowrap {
 	white-space: nowrap;
+}
+.wrap {
+	white-space: wrap;
 }
 .hyphenate {
 	overflow-wrap: break-word;
@@ -166,12 +188,23 @@ loader {
 	hyphens: auto;
 }
 
+// text
+.lowercase {
+	text-transform: lowercase;
+}
+.uppercase {
+	text-transform: uppercase;
+}
+
 // alignment
 .align-left {
 	text-align: left;
 }
 .align-center {
 	text-align: center;
+}
+.align-justify {
+	text-align: justify;
 }
 .align-right {
 	text-align: right;
@@ -363,6 +396,28 @@ loader {
 		padding: 0;
 		margin: 0;
 	}
+	
+	&.flex-margin {
+		margin: -@uy/2 -@ux/2;
+		
+		> * {
+			margin: @uy/2 @ux/2;
+		}
+	}
+	&.flex-margin-sm {
+		margin: -@uy-sm/2 -@ux-sm/2;
+		
+		> * {
+			margin: @uy-sm/2 @ux-sm/2;
+		}
+	}
+	&.flex-margin-xs {
+		margin: -@uy-sm/4 -@ux-sm/4;
+		
+		> * {
+			margin: @uy-sm/4 @ux-sm/4;
+		}
+	}
 }
 .flex-row {
 	display: flex;
@@ -427,24 +482,15 @@ loader {
 	.flex-column;
 	.flex-justify-center;
 	.flex-align-center;
+	
+	&.flex-fully {
+		min-width: 100%;
+		min-height: 100%;
+	}
 }
 .flex-items-equally {
 	> * {
 		.flex;
-	}
-}
-.flex-margin {
-	margin: -@uy/2 -@ux/2;
-	
-	> * {
-		margin: @uy/2 @ux/2;
-	}
-}
-.flex-margin-sm {
-	margin: -@uy-sm -@ux-sm;
-	
-	> * {
-		.margin-sm;
 	}
 }
 

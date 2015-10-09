@@ -109,8 +109,11 @@ angular.module('bigSlider', []).directive('bigSlider', ["$window", function ($wi
 			    slideIndex = 0;
 
 			// watch parent for sizing
+			function getColumns() {
+				return $scope.$eval($attrs.columns) || 1;
+			}
 			function getWidth() {
-				return width = $element[0].parentNode.offsetWidth;
+				return width = $element[0].parentNode.offsetWidth / getColumns();
 			}
 			angular.element($window).bind('resize', function () {
 				getWidth();
@@ -134,9 +137,17 @@ angular.module('bigSlider', []).directive('bigSlider', ["$window", function ($wi
 			$scope.index = function () {
 				return slideIndex;
 			};
+			$scope.isVisible = function (index) {
+				return index >= slideIndex && index < slideIndex + getColumns();
+			};
 			$scope.slide = function (index) {
 				slideIndex = index % numSlides;
-				if (slideIndex < 0) slideIndex += numSlides;
+				if (slideIndex < 0) {
+					slideIndex = numSlides - getColumns();
+				} else if (index + getColumns() > numSlides) {
+					// loop back around to beginning
+					slideIndex = 0;
+				}
 				var transform = 'translate3d(' + -width * slideIndex + 'px,0,0)';
 				$element.css({ webkitTransform: transform, msTransform: transform, transform: transform });
 			};
@@ -153,7 +164,7 @@ angular.module('bigSlider', []).directive('bigSlider', ["$window", function ($wi
 		restrict: 'E',
 		replace: true,
 		transclude: true,
-		template: '<article class="big-slider-slide" ng-transclude></article>'
+		template: '<article class="big-slider-slide" ng-class="{visible: isVisible($index)}" ng-transclude></article>'
 	};
 }).directive('bigSliderNav', function () {
 	return {
@@ -182,13 +193,45 @@ angular.module('bigUtil', []).run(["$rootScope", "$document", function ($rootSco
 			$menu.active = false;
 		},
 		toggle: function toggle(e) {
-			console.log('tog');
 			$menu.active = !$menu.active;
 			if (e) e.stopPropagation();
 		}
 	};
 	$document.on('click', function () {
-		$menu.close();
+		$rootScope.$apply($menu.close);
+	});
+	$document.on('keyup', function (e) {
+		$rootScope.$apply(function () {
+			if (e.keyCode === 27 /*esc*/) $menu.close();
+		});
+	});
+
+	var $modal = $rootScope.$modal = {
+		active: false,
+		open: function open(id) {
+			$modal.active = id;
+		},
+		close: function close() {
+			$modal.active = false;
+		},
+		toggle: function toggle(id) {
+			$modal.active = $modal.active === id ? false : id;
+		},
+		isOpen: function isOpen(id) {
+			return $modal.active === id;
+		}
+	};
+	// prevent scroll bubbling when modal open
+	$rootScope.$watch('$modal.active', function (v) {
+		angular.element(document.body).css({
+			overflow: v ? 'hidden' : ''
+		});
+	});
+	// allow Esc key to close modal
+	$document.on('keyup', function (e) {
+		$rootScope.$apply(function () {
+			if (e.keyCode === 27 /*esc*/) $modal.close();
+		});
 	});
 }]).filter('length', function () {
 	return function (obj) {
@@ -211,7 +254,28 @@ angular.module('bigUtil', []).run(["$rootScope", "$document", function ($rootSco
 		}
 		return r;
 	};
-});
+}).directive('bigClickToggle', ["$parse", function ($parse) {
+	return {
+		restrict: 'A',
+		link: function link($scope, $element, $attrs) {
+			var obj = $scope.$eval($attrs.bigClickToggle);
+			$element.on('click', function (e) {
+				e.preventDefault();
+
+				$scope.$apply(function () {
+					angular.forEach(obj, function (v, k) {
+						return $parse(k).assign($scope, v);
+					});
+				});
+			});
+			angular.forEach(obj, function (v, k) {
+				$scope.$watch(k, function (newV) {
+					if (newV !== undefined) $element[v === newV ? 'addClass' : 'removeClass']($scope.$eval($attrs.bigClickToggleActive) || 'active');
+				});
+			});
+		}
+	};
+}]);
 'use strict';
 
 angular.module('bigWordpress', []).provider('$wp', function () {

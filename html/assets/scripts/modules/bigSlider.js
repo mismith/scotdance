@@ -19,8 +19,11 @@ angular.module('bigSlider', [])
 					slideIndex = 0;
 				
 				// watch parent for sizing
+				function getColumns() {
+					return $scope.$eval($attrs.columns) || 1;
+				}
 				function getWidth () {
-					return width = $element[0].parentNode.offsetWidth;
+					return width = $element[0].parentNode.offsetWidth / getColumns();
 				}
 				angular.element($window).bind('resize', function () {
 					getWidth();
@@ -44,10 +47,17 @@ angular.module('bigSlider', [])
 				$scope.index = function () {
 					return slideIndex;
 				};
+				$scope.isVisible = function (index) {
+					return index >= slideIndex && index < slideIndex + getColumns();
+				};
 				$scope.slide = function (index) {
 					slideIndex = index % numSlides;
-					if (slideIndex < 0) slideIndex += numSlides;
-					var transform = 'translate3d(' + (-width * slideIndex) + 'px,0,0)';
+					if (slideIndex < 0) {
+						slideIndex = numSlides - getColumns();
+					} else if (index + getColumns() > numSlides) { // loop back around to beginning
+						slideIndex = 0;
+					}
+					var transform = 'translate3d(' + -width * slideIndex + 'px,0,0)';
 					$element.css({webkitTransform: transform, msTransform: transform, transform: transform});
 				};
 				$scope.next = function () {
@@ -64,7 +74,7 @@ angular.module('bigSlider', [])
 			restrict: 'E',
 			replace: true,
 			transclude: true,
-			template: '<article class="big-slider-slide" ng-transclude></article>',
+			template: '<article class="big-slider-slide" ng-class="{visible: isVisible($index)}" ng-transclude></article>',
 		};
 	})
 	.directive('bigSliderNav', function () {
