@@ -1,15 +1,16 @@
-angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'ngHandsontable'])
+angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHelper', 'ngHandsontable'])
 	
 	.config(function($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider, $provide){
 		// routing
 		$locationProvider.html5Mode(true).hashPrefix('!');
 		$urlRouterProvider.when('', '/');
-		$urlRouterProvider.when('home', '/');
+		$urlRouterProvider.when('/home', '/');
 		$urlMatcherFactoryProvider.strictMode(false); // make trailing slashes optional
 		
 		// pages
 		var pages = [
 			'home',
+			'competitions',
 		];
 		$stateProvider
 			.state('main', {
@@ -30,6 +31,35 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'ngH
 						},
 					},
 				})
+				.state('competition', {
+					parent: 'page',
+					url: '/:competitionId/:section',
+					templateUrl: $stateParams => 'views/page/competition/' + $stateParams.section + '.html',
+					resolve: {
+						Competition:     ($firebaseHelper, $stateParams) => $firebaseHelper.object('competitions', $stateParams.competitionId),
+						CompetitionData: ($firebaseHelper, $stateParams) => $firebaseHelper.object('competitionsData', $stateParams.competitionId),
+						$title: function (Competition) {
+							return Competition.name;
+						},
+					},
+					controller: function ($scope, $firebaseHelper, $stateParams, Competition, CompetitionData) {
+						var section = $stateParams.section;
+						
+						$scope.competition = Competition;
+						
+						switch (section) {
+							case 'info':
+								$scope.competitionData = CompetitionData;
+								break;
+							default:
+								$scope.hot = $firebaseHelper.hotTable(CompetitionData, section);
+								$firebaseHelper.load(CompetitionData, 'settings').then(function(settings) {
+									$scope.settings = angular.extend(settings.all || {}, settings[section] || {});
+								});
+								break;
+						}
+					}
+				})
 		// fallbacks
 			.state('404', {
 				parent: 'main',
@@ -43,108 +73,76 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'firebaseHelper', 'ngH
 		
 		// data
 		$firebaseHelperProvider.namespace('scotdance');
-/*
-		$provide.decorator('$firebaseArray', function ($delegate) {
-			$delegate.prototype.$table = function $table() {
-				let arr = [];
-				console.log(arr.length);
-				this.$list.$loaded(function (list) {
-				console.log(arr.length);
-					for (let item of list) {
-						arr.push(item);
-					}
-				});
-				return arr;
-			};
-			return $delegate;
-		});
-*/
 	})
 	
 	.controller('AppCtrl', function($rootScope, $scope, $state, $firebaseHelper, $timeout){
 		$rootScope.$state = $state;
 		
 		$firebaseHelper.hotTable = function hotTable() {
-			let ref   = $firebaseHelper.ref.apply(this, arguments),
-				fbHot = {
-					parse: function parse(snapshot) {
+			let self = {
+					ref: $firebaseHelper.ref.apply(this, arguments),
+					parseData: function parse(snapshot) {
 						$timeout(function () {
-							if ( ! fbHot.revisions) {
-								let obj = snapshot.exportVal(),
-									arr = Object.keys(obj).map((k) => {
-										let o = angular.copy(obj[k]);
-										o.$id = k;
-										return o;
-									});
-								
-								fbHot.data.splice(0, fbHot.data.length, ...arr);
+							let obj = snapshot.exportVal(),
+								arr = Object.keys(obj).map((k) => {
+									let o = angular.copy(obj[k]);
+									o.$id = k;
+									return o;
+								});
+							
+							self.original = angular.copy(arr);
+							
+							if ( ! self.revisions) {
+								self.data.splice(0, self.data.length, ...arr);
 							} else {
-								console.info(fbHot.revisions + ' revision' + (fbHot.revisions === 1 ? ' has' : 's have') + ' been made to this reference since you last saved:', ref.path.toString());
+								console.info(self.revisions + ' revision' + (self.revisions === 1 ? ' has' : 's have') + ' been made to this reference since you last saved:', self.ref.path.toString());
 							}
-							fbHot.revisions++;
+							self.revisions++;
 						});
 					},
 					init: function init() {
-						ref.orderByPriority().on('value', fbHot.parse);
+						self.ref.orderByPriority().on('value', self.parseData);
 					},
 					refresh: function refresh() {
-						fbHot.revisions = 0;
-						ref.orderByPriority().once('value', fbHot.parse);
+						self.revisions = 0;
+						self.ref.orderByPriority().once('value', self.parseData);
 					},
 					save: function save() {
-						var obj = {};
-						fbHot.data.forEach((item) => {
-							var $id = item.$id,
+						var data = {};
+						self.data.forEach(function (item) {
+							var $id = item.$id || self.ref.push().key(),
 								o   = angular.copy(item);
 							
 							delete o.$id;
-							if ($id) obj[$id] = o;
+							angular.forEach(o, function (v, k) { if (v === '' || k.match(/^[^\w\d_]/)) delete o[k]; }); // clear empties (so they will be deleted from server)
+							
 							// @TODO: handle priority ?
+							data[$id] = o;
 						});
-						console.log('saving', obj);
+						console.log('saving', data);
 						
-						fbHot.revisions = 0;
-						ref.update(obj);
+						self.revisions = 0;
+						self.ref.set(data, self.refresh);
+					},
+					dirty: function dirty() {
+						if ( ! self.data || ! self.original) return;
+						
+						var cleanedData = self.data.filter(function (item) {
+							let found = false;
+							angular.forEach(item, (v) => (found = found || v));
+							return found; // @TODO: all props?
+						});
+						return ! angular.equals(cleanedData, self.original);
 					},
 					revisions: 0,
 					data: [],
 				};
 			
-			fbHot.init();
+			self.init();
 			
-			return fbHot;
+			return self;
 		};
-		$scope.fbHot = $firebaseHelper.hotTable('competitionsData/idc0/dancers');
-		
-		$scope.settings = {
-			columns: [
-				{data: 'number', title: '#', readOnly: true},
-				{data: 'firstName', title: 'First Name'},
-				{data: 'lastName', title: 'Last Name'},
-				{data: 'location', title: 'Location'},
-			],
-			minSpareRows: 1,
-			undo: true,
-			contextMenu: [
-				'remove_row',
-				'---------',
-				'undo',
-			],
-/*
-			afterChange: (changes, source) => {
-				console.log(source);
-				switch (source) {
-					case 'edit':
-					case 'undo':
-						angular.forEach(changes, function (change) {
-							var key = $data.$keyAt(change[0]);
-							if (key) {
-								$firebaseHelper.ref($data, key).child(change[1]).set(change[3]);
-							}
-						});
-						break;
-				}
-			},
-*/
-		};
+	})
+	.controller('CompetitionsCtrl', function($scope, $firebaseHelper){
+		$scope.competitions = $firebaseHelper.array('competitions');
 	});

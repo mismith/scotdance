@@ -68,20 +68,21 @@ h6 {
   border-radius: 0;
   outline: 0;
   display: inline-block;
-  padding: 10px 25px;
 }
 .btn {
   background-color: #0000ff;
   color: #ffffff;
   text-transform: uppercase;
   text-decoration: none;
+  padding: 10px 25px;
   cursor: pointer;
 }
 .btn:hover {
   text-decoration: none;
   background-color: #0000bf;
 }
-.btn:active {
+.btn:active,
+.btn.active {
   background-color: #000080;
 }
 .btn.hero {
@@ -89,6 +90,8 @@ h6 {
 }
 .input {
   background-color: #ffffff;
+  padding: 10px 20px;
+  border: solid 1px #999999;
 }
 .round {
   border-radius: 50%;
@@ -686,19 +689,32 @@ h6 {
   font-weight: inherit;
   text-transform: uppercase;
 }
-#header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
+td .input {
+  width: 100%;
 }
-#header #nav {
-  min-height: 100px;
+.num {
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  display: inline-block;
+  background-color: #ffffff;
+  padding: 10px 20px;
+  border: solid 1px #999999;
+  text-align: center;
+  font-size: larger;
+  font-weight: bold;
+  border-color: transparent;
 }
-#header #nav #menu {
-  white-space: nowrap;
+td .num {
+  width: 100%;
 }
-#header #nav #menu a {
-  display: block;
+#app {
+  height: 100%;
 }

@@ -17,25 +17,20 @@ h6 {
 }
 
 // classes
-
+.input {
+	td & {
+		width: 100%;
+	}
+}
+.num {
+	.input;
+	text-align: center;
+	font-size: larger;
+	font-weight: bold;
+	border-color: transparent;
+}
 
 // sections
-#header {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	z-index: 100;
-	
-	#nav {
-		min-height: @hh;
-		
-		#menu {
-			white-space: nowrap;
-			
-			a {
-				display: block;
-			}
-		}
-	}
+#app {
+	height: 100%;
 }

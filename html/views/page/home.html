@@ -1,7 +1,4 @@
-<section class="flex-center">
-	<hot-table settings="settings" datarows="fbHot.data"></hot-table>
-	<button ng-click="fbHot.save()">Save</button>
-	<button ng-if="fbHot.revisions > 1" ng-click="fbHot.refresh()">Refresh</button>
-	
-	<pre ng-bind="fbHot.data | json"></pre>
+<section class="padding flex-center">
+	<a ui-sref="page({page: 'competitions'})">All Competitions</a><br />
+	<a ui-sref="competition({page: 'competitions', competitionId: 'idc0', section: 'info'})">Demo Competition</a>
 </section>

@@ -97,20 +97,21 @@ h6 {
 .input {
 	.passthru;
 	display: inline-block;
-	padding: 10px 25px;
 }
 .btn {
 	.bg-primary;
 	.color-lightest;
 	.uppercase;
 	text-decoration: none;
+	padding: 10px 25px;
 	cursor: pointer;
 	
 	&:hover {
 		text-decoration: none;
 		background-color: darken(@primary, 12.5%);
 	}
-	&:active {
+	&:active,
+	&.active {
 		background-color: darken(@primary, 25%);
 	}
 	&.hero {
@@ -119,6 +120,8 @@ h6 {
 }
 .input {
 	.bg-lightest;
+	padding: 10px 20px;
+	border: solid 1px @light;
 }
 
 // utility

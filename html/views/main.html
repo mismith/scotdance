@@ -1,5 +1,5 @@
-<header id="header" class="flex-row flex-align-end">
-	<nav id="nav" class="flex flex-row flex-justify-center flex-align-center layout-wrap">
+<header id="header" class="flex-row bg-primary">
+	<nav id="nav" class="flex flex-row flex-justify-between flex-align-center">
 		<a ui-sref="page({page: '', '#': ''})">
 			<img src="assets/img/logo.svg" width="XXXXXX" height="XXXXXX" alt="XXXXXX" />
 		</a>
@@ -13,11 +13,6 @@
 		</button>
 	</nav>
 </header>
-<main id="main" class="flex-column flex-justify-center flex" ui-view>
+<main id="main" class="flex flex-column layout-scroll" ui-view>
 	<loader />
 </main>
-<footer id="footer">
-	<div class="flex-row flex-justify-between padding-sm layout-wrap">
-		#footer
-	</div>
-</footer>
