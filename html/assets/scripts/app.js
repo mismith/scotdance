@@ -34,7 +34,18 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 				.state('competition', {
 					parent: 'page',
 					url: '/:competitionId/:section',
-					templateUrl: $stateParams => 'views/page/competition/' + $stateParams.section + '.html',
+					templateUrl: function ($stateParams) {
+						var path = '';
+						switch ($stateParams.section) {
+							case 'info':
+								path = $stateParams.section;
+								break;
+							default:
+								path = 'table';
+								break;
+						}
+						return 'views/page/competition/' + path + '.html';
+					},
 					resolve: {
 						Competition:     ($firebaseHelper, $stateParams) => $firebaseHelper.object('competitions', $stateParams.competitionId),
 						CompetitionData: ($firebaseHelper, $stateParams) => $firebaseHelper.object('competitionsData', $stateParams.competitionId),
@@ -53,8 +64,9 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 								break;
 							default:
 								$scope.hot = $firebaseHelper.hotTable(CompetitionData, section);
-								$firebaseHelper.load(CompetitionData, 'settings').then(function(settings) {
-									$scope.settings = angular.extend(settings.all || {}, settings[section] || {});
+								$firebaseHelper.load('settings').then(function(settings = {}) {
+									var overrides = CompetitionData.settings || {};
+									$scope.settings = angular.extend(settings.all || {}, settings[section] || {}, overrides.all || {}, overrides[section] || {});
 								});
 								break;
 						}
@@ -84,7 +96,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 					parseData: function parse(snapshot) {
 						$timeout(function () {
 							let obj = snapshot.exportVal(),
-								arr = Object.keys(obj).map((k) => {
+								arr = Object.keys(obj || {}).map((k) => {
 									let o = angular.copy(obj[k]);
 									o.$id = k;
 									return o;

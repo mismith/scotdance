@@ -137,7 +137,16 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 		parent: 'page',
 		url: '/:competitionId/:section',
 		templateUrl: function templateUrl($stateParams) {
-			return 'views/page/competition/' + $stateParams.section + '.html';
+			var path = '';
+			switch ($stateParams.section) {
+				case 'info':
+					path = $stateParams.section;
+					break;
+				default:
+					path = 'table';
+					break;
+			}
+			return 'views/page/competition/' + path + '.html';
 		},
 		resolve: {
 			Competition: ["$firebaseHelper", "$stateParams", function Competition($firebaseHelper, $stateParams) {
@@ -161,8 +170,11 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 					break;
 				default:
 					$scope.hot = $firebaseHelper.hotTable(CompetitionData, section);
-					$firebaseHelper.load(CompetitionData, 'settings').then(function (settings) {
-						$scope.settings = angular.extend(settings.all || {}, settings[section] || {});
+					$firebaseHelper.load('settings').then(function () {
+						var settings = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+						var overrides = CompetitionData.settings || {};
+						$scope.settings = angular.extend(settings.all || {}, settings[section] || {}, overrides.all || {}, overrides[section] || {});
 					});
 					break;
 			}
@@ -190,7 +202,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 			parseData: function parse(snapshot) {
 				$timeout(function () {
 					var obj = snapshot.exportVal(),
-					    arr = Object.keys(obj).map(function (k) {
+					    arr = Object.keys(obj || {}).map(function (k) {
 						var o = angular.copy(obj[k]);
 						o.$id = k;
 						return o;
