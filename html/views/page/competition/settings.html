@@ -17,23 +17,11 @@
 			<td><input type="date" ng-model="competition.end" class="input" /></td>
 		</tr>
 		
-		<tr>
-			<td>Dancers</td>
-			<td><span class="num" ng-bind="competitionData.dancers | length"></span></td>
-		</tr>
-		<tr>
-			<td>Dances</td>
-			<td><span class="num" ng-bind="competitionData.dances | length"></span></td>
-		</tr>
-		<tr>
-			<td>Platforms</td>
-			<td><span class="num" ng-bind="competitionData.platforms | length"></span></td>
+		<tr ng-repeat="section in sections track by section.$id">
+			<td ng-bind="section.name"></td>
+			<td><span class="num" ng-bind="competitionData[section.$id] | length"></span></td>
 		</tr>
 	</table>
-<!--
-	<pre>{{ competition | json }}</pre>
-	<pre>{{ competitionData | json }}</pre>
--->
 </section>
 <footer class="bg-light">
 	<div class="flex-row flex-justify-between margin-sm">

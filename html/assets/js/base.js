@@ -109,6 +109,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 	$locationProvider.html5Mode(true).hashPrefix('!');
 	$urlRouterProvider.when('', '/');
 	$urlRouterProvider.when('/home', '/');
+	$urlRouterProvider.when(/^\/competitions\/[^\/]+$/, '$0/settings');
 	$urlMatcherFactoryProvider.strictMode(false); // make trailing slashes optional
 
 	// pages
@@ -134,21 +135,14 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 			}]
 		}
 	}).state('competition', {
+		abtract: true,
 		parent: 'page',
-		url: '/:competitionId/:section',
-		templateUrl: function templateUrl($stateParams) {
-			var path = '';
-			switch ($stateParams.section) {
-				case 'info':
-					path = $stateParams.section;
-					break;
-				default:
-					path = 'table';
-					break;
-			}
-			return 'views/page/competition/' + path + '.html';
-		},
+		url: '/:competitionId',
+		templateUrl: 'views/page/competition.html',
 		resolve: {
+			Sections: ["$firebaseHelper", function Sections($firebaseHelper) {
+				return $firebaseHelper.array('sections');
+			}],
 			Competition: ["$firebaseHelper", "$stateParams", function Competition($firebaseHelper, $stateParams) {
 				return $firebaseHelper.object('competitions', $stateParams.competitionId);
 			}],
@@ -159,22 +153,61 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 				return Competition.name;
 			}]
 		},
-		controller: ["$scope", "$firebaseHelper", "$stateParams", "Competition", "CompetitionData", function controller($scope, $firebaseHelper, $stateParams, Competition, CompetitionData) {
-			var section = $stateParams.section;
-
+		controller: ["$scope", "Sections", "Competition", "CompetitionData", function controller($scope, Sections, Competition, CompetitionData) {
+			$scope.sections = Sections;
 			$scope.competition = Competition;
-
+			$scope.competitionData = CompetitionData;
+		}]
+	}).state('competition.section', {
+		url: '/:section',
+		templateUrl: function templateUrl($stateParams) {
+			var path = '';
+			switch ($stateParams.section) {
+				case 'settings':
+					path = $stateParams.section;
+					break;
+				default:
+					path = 'table';
+					break;
+			}
+			return 'views/page/competition/' + path + '.html';
+		},
+		controller: ["$scope", "$stateParams", "$firebaseHelper", "Sections", "Competition", "CompetitionData", function controller($scope, $stateParams, $firebaseHelper, Sections, Competition, CompetitionData) {
+			var section = $stateParams.section;
 			switch (section) {
-				case 'info':
-					$scope.competitionData = CompetitionData;
+				case 'settings':
+
 					break;
 				default:
 					$scope.hot = $firebaseHelper.hotTable(CompetitionData, section);
-					$firebaseHelper.load('settings').then(function () {
-						var settings = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+					$firebaseHelper.load(Sections).then(function (sections) {
+						var settings = angular.copy(angular.extend(sections.settings || {}, sections[section] || {}));
 
-						var overrides = CompetitionData.settings || {};
-						$scope.settings = angular.extend(settings.all || {}, settings[section] || {}, overrides.all || {}, overrides[section] || {});
+						switch (section) {
+							case 'dances':
+								$firebaseHelper.array(CompetitionData, 'levels').$loaded(function (levels) {
+									angular.forEach(levels, function (level) {
+										settings.columns.push({
+											data: level.abbr,
+											title: level.name,
+											type: 'checkbox',
+											uncheckedTemplate: ''
+										});
+									});
+								});
+								break;
+						}
+						angular.forEach(settings.columns, function (v, k) {
+							if (v.type === 'age') {
+								v.type = 'numeric';
+								v.renderer = function (instance, td, row, col, prop, value, cellProperties) {
+									var age = value ? moment(Competition.date).diff(value, 'years') : undefined;
+									Handsontable.renderers.NumericRenderer(instance, td, row, col, prop, age, cellProperties);
+									return td;
+								};
+							}
+						});
+						$scope.settings = settings;
 					});
 					break;
 			}

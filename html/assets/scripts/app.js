@@ -5,6 +5,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 		$locationProvider.html5Mode(true).hashPrefix('!');
 		$urlRouterProvider.when('', '/');
 		$urlRouterProvider.when('/home', '/');
+		$urlRouterProvider.when(/^\/competitions\/[^\/]+$/, '$0/settings');
 		$urlMatcherFactoryProvider.strictMode(false); // make trailing slashes optional
 		
 		// pages
@@ -32,45 +33,76 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 					},
 				})
 				.state('competition', {
+					abtract: true,
 					parent: 'page',
-					url: '/:competitionId/:section',
-					templateUrl: function ($stateParams) {
-						var path = '';
-						switch ($stateParams.section) {
-							case 'info':
-								path = $stateParams.section;
-								break;
-							default:
-								path = 'table';
-								break;
-						}
-						return 'views/page/competition/' + path + '.html';
-					},
+					url: '/:competitionId',
+					templateUrl: 'views/page/competition.html',
 					resolve: {
+						Sections:        ($firebaseHelper) => $firebaseHelper.array('sections'),
 						Competition:     ($firebaseHelper, $stateParams) => $firebaseHelper.object('competitions', $stateParams.competitionId),
 						CompetitionData: ($firebaseHelper, $stateParams) => $firebaseHelper.object('competitionsData', $stateParams.competitionId),
-						$title: function (Competition) {
-							return Competition.name;
-						},
+						$title:          (Competition) => Competition.name,
 					},
-					controller: function ($scope, $firebaseHelper, $stateParams, Competition, CompetitionData) {
-						var section = $stateParams.section;
-						
-						$scope.competition = Competition;
-						
-						switch (section) {
-							case 'info':
-								$scope.competitionData = CompetitionData;
-								break;
-							default:
-								$scope.hot = $firebaseHelper.hotTable(CompetitionData, section);
-								$firebaseHelper.load('settings').then(function(settings = {}) {
-									var overrides = CompetitionData.settings || {};
-									$scope.settings = angular.extend(settings.all || {}, settings[section] || {}, overrides.all || {}, overrides[section] || {});
-								});
-								break;
-						}
+					controller: function ($scope, Sections, Competition, CompetitionData) {
+						$scope.sections            = Sections;
+						$scope.competition         = Competition;
+						$scope.competitionData     = CompetitionData;
 					}
+				})
+					.state('competition.section', {
+						url: '/:section',
+						templateUrl: function ($stateParams) {
+							let path = '';
+							switch ($stateParams.section) {
+								case 'settings':
+									path = $stateParams.section;
+									break;
+								default:
+									path = 'table';
+									break;
+							}
+							return 'views/page/competition/' + path + '.html';
+						},
+						controller: function ($scope, $stateParams, $firebaseHelper, Sections, Competition, CompetitionData) {
+							let section = $stateParams.section;
+							switch (section) {
+								case 'settings':
+									
+									break;
+								default:
+									$scope.hot = $firebaseHelper.hotTable(CompetitionData, section);
+									$firebaseHelper.load(Sections).then(function (sections) {
+										var settings = angular.copy(angular.extend(sections.settings || {}, sections[section] || {}));
+										
+										switch (section) {
+											case 'dances':
+												$firebaseHelper.array(CompetitionData, 'levels').$loaded(function (levels) {
+													angular.forEach(levels, function (level) {
+														settings.columns.push({
+															data: level.abbr,
+															title: level.name,
+															type: 'checkbox',
+															uncheckedTemplate: '',
+														});
+													});
+												});
+												break;
+										}
+										angular.forEach(settings.columns, function (v, k) {
+											if (v.type === 'age'){
+												v.type = 'numeric';
+												v.renderer = function (instance, td, row, col, prop, value, cellProperties) {
+													let age = value ? moment(Competition.date).diff(value, 'years') : undefined;
+													Handsontable.renderers.NumericRenderer(instance, td, row, col, prop, age, cellProperties);
+													return td;
+												};
+											}
+										});
+										$scope.settings = settings;
+									});
+									break;
+							}
+						},
 				})
 		// fallbacks
 			.state('404', {
