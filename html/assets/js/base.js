@@ -205,6 +205,14 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 									Handsontable.renderers.NumericRenderer(instance, td, row, col, prop, age, cellProperties);
 									return td;
 								};
+							} else if (v.data === 'level') {
+								$firebaseHelper.array(CompetitionData, 'levels').$loaded(function (levels) {
+									var source = [];
+									angular.forEach(levels, function (level) {
+										return source.push(level.name);
+									});
+									v.source = source;
+								});
 							}
 						});
 						$scope.settings = settings;
