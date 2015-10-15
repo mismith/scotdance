@@ -1,9 +1,13 @@
 <div class="flex flex-row flex-nowrap layout-scroll">
-	<section class="flex" style="width: 50%; overflow: hidden;">
-		<hot-table ng-if="settings" settings="settings" datarows="hot.data"></hot-table>
+	<section class="flex flex-row" style="width: 66.66%;">
+		<div class="flex" style="width: 100%; overflow: hidden;">
+			<hot-table ng-if="settings" settings="settings" datarows="hot.data"></hot-table>
+		</div>
 	</section>
-	<aside ng-if="helperHot" class="bg-lighter" style="width: 50%; overflow: hidden;">
-		<hot-table settings="helperHot.settings" datarows="helperHot.data"></hot-table>
+	<aside ng-if="helperHot" class="flex-row bg-lighter" style="width: 33.33%;">
+		<div class="flex" style="width: 100%; overflow: hidden;">
+			<hot-table settings="helperHot.settings" datarows="helperHot.data"></hot-table>
+		</div>
 	</aside>
 	<aside ng-if="showColumns" class="bg-light layout-scroll">
 		<pre ng-bind="settings.columns | json"></pre>
