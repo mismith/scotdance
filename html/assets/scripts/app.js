@@ -57,6 +57,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 								case 'settings':
 									path = $stateParams.section;
 									break;
+								case 'groups':
 								default:
 									path = 'table';
 									break;
@@ -65,6 +66,9 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 						},
 						controller: function ($scope, $stateParams, $firebaseHelper, Sections, Competition, CompetitionData) {
 							let section = $stateParams.section;
+							
+							let getAge = (date) => date ? moment(Competition.date).diff(date, 'years') : undefined;
+							
 							switch (section) {
 								case 'settings':
 									
@@ -79,12 +83,52 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 												$firebaseHelper.array(CompetitionData, 'levels').$loaded(function (levels) {
 													angular.forEach(levels, function (level) {
 														settings.columns.push({
-															data: level.abbr,
-															title: level.name,
-															type: 'checkbox',
+															data:              level.abbr,
+															title:             level.name,
+															type:              'checkbox',
 															uncheckedTemplate: '',
 														});
 													});
+												});
+												break;
+											case 'groups':
+												$firebaseHelper.array(CompetitionData, 'dancers').$loaded(function (dancers) {
+													let ageLevels = {};
+													angular.forEach(dancers, function (dancer) {
+														let age = getAge(dancer.dob);
+														ageLevels[age] = ageLevels[age] || {};
+														ageLevels[age][dancer.level] = (ageLevels[age][dancer.level] || 0) + 1;
+													});
+													
+													let data = [];
+													angular.forEach(ageLevels, function (levels, age) {
+														levels.age = age;
+														data.push(levels);
+													});
+													
+													let settings = {
+														columns: [
+															{
+																data:    'age',
+																title:   'Age',
+																readOnly: true,
+															}
+														],
+													};
+													$firebaseHelper.array(CompetitionData, 'levels').$loaded(function (levels) {
+														angular.forEach(levels, function (level) {
+															settings.columns.push({
+																data:     level.name,
+																title:    level.name,
+																type:     'numeric',
+																readOnly: true,
+															})
+														});
+													});
+													$scope.helperHot = {
+														data:     data,
+														settings: settings,
+													};
 												});
 												break;
 										}
@@ -92,7 +136,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 											if (v.type === 'age'){
 												v.type = 'numeric';
 												v.renderer = function (instance, td, row, col, prop, value, cellProperties) {
-													let age = value ? moment(Competition.date).diff(value, 'years') : undefined;
+													let age = getAge(value);
 													Handsontable.renderers.NumericRenderer(instance, td, row, col, prop, age, cellProperties);
 													return td;
 												};

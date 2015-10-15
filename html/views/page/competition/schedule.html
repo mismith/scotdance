@@ -1,0 +1,21 @@
+<section class="flex layout-scroll">
+	<table class="margin-sm">
+		<tr>
+			<td>Dance</td>
+			<td ng-repeat="platform in competitionData.platforms">
+				<div ng-bind="platform.name"></div>
+				<div ng-bind="platform.color"></div>
+			</td>
+		</tr>
+		<tr ng-repeat="dance in competitionData.dances">
+			<td>
+				<div ng-bind="dance.name"></div>
+			</td>
+		</tr>
+		<tr ng-repeat="dancer in competitionData.dancers">
+			<td>
+				<div ng-bind="dancer.name"></div>
+			</td>
+		</tr>
+	</table>
+</section>

@@ -1,7 +1,10 @@
 <div class="flex flex-row flex-nowrap layout-scroll">
-	<section class="flex" style="overflow: hidden;">
+	<section class="flex" style="width: 50%; overflow: hidden;">
 		<hot-table ng-if="settings" settings="settings" datarows="hot.data"></hot-table>
 	</section>
+	<aside ng-if="helperHot" class="bg-lighter" style="width: 50%; overflow: hidden;">
+		<hot-table settings="helperHot.settings" datarows="helperHot.data"></hot-table>
+	</aside>
 	<aside ng-if="showColumns" class="bg-light layout-scroll">
 		<pre ng-bind="settings.columns | json"></pre>
 	</aside>

@@ -166,6 +166,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 				case 'settings':
 					path = $stateParams.section;
 					break;
+				case 'groups':
 				default:
 					path = 'table';
 					break;
@@ -174,6 +175,11 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 		},
 		controller: ["$scope", "$stateParams", "$firebaseHelper", "Sections", "Competition", "CompetitionData", function controller($scope, $stateParams, $firebaseHelper, Sections, Competition, CompetitionData) {
 			var section = $stateParams.section;
+
+			var getAge = function getAge(date) {
+				return date ? moment(Competition.date).diff(date, 'years') : undefined;
+			};
+
 			switch (section) {
 				case 'settings':
 
@@ -196,12 +202,50 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 									});
 								});
 								break;
+							case 'groups':
+								$firebaseHelper.array(CompetitionData, 'dancers').$loaded(function (dancers) {
+									var ageLevels = {};
+									angular.forEach(dancers, function (dancer) {
+										var age = getAge(dancer.dob);
+										ageLevels[age] = ageLevels[age] || {};
+										ageLevels[age][dancer.level] = (ageLevels[age][dancer.level] || 0) + 1;
+									});
+
+									var data = [];
+									angular.forEach(ageLevels, function (levels, age) {
+										levels.age = age;
+										data.push(levels);
+									});
+
+									var settings = {
+										columns: [{
+											data: 'age',
+											title: 'Age',
+											readOnly: true
+										}]
+									};
+									$firebaseHelper.array(CompetitionData, 'levels').$loaded(function (levels) {
+										angular.forEach(levels, function (level) {
+											settings.columns.push({
+												data: level.name,
+												title: level.name,
+												type: 'numeric',
+												readOnly: true
+											});
+										});
+									});
+									$scope.helperHot = {
+										data: data,
+										settings: settings
+									};
+								});
+								break;
 						}
 						angular.forEach(settings.columns, function (v, k) {
 							if (v.type === 'age') {
 								v.type = 'numeric';
 								v.renderer = function (instance, td, row, col, prop, value, cellProperties) {
-									var age = value ? moment(Competition.date).diff(value, 'years') : undefined;
+									var age = getAge(value);
 									Handsontable.renderers.NumericRenderer(instance, td, row, col, prop, age, cellProperties);
 									return td;
 								};
