@@ -405,4 +405,38 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 	};
 }]).controller('CompetitionsCtrl', ["$scope", "$firebaseHelper", function ($scope, $firebaseHelper) {
 	$scope.competitions = $firebaseHelper.array('competitions');
-}]);
+}]).directive('input', function () {
+	return {
+		restrict: 'E',
+		require: '?ngModel',
+		link: function link(scope, element, attrs, ngModelCtrl) {
+			switch (attrs.type) {
+				// autoconvert string dates to Date objects for <input type="date"> in Angular 1.3
+				case 'date':
+					//format text going to user (model to view)
+					ngModelCtrl.$formatters.push(function (v) {
+						return new Date(moment(v).format());
+					});
+
+					//format text from the user (view to model)
+					ngModelCtrl.$parsers.push(function (v) {
+						return moment(new Date(v)).format();
+					});
+					break;
+				// ensure numbers are not stored as string, and that any falsy values are treated as 0
+				case 'number':
+				case 'range':
+					//format text going to user (model to view)
+					ngModelCtrl.$formatters.push(function (v) {
+						return v || 0;
+					});
+
+					//format text from the user (view to model)
+					ngModelCtrl.$parsers.push(function (v) {
+						return parseFloat(v) || 0;
+					});
+					break;
+			}
+		}
+	};
+});
