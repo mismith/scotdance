@@ -66,7 +66,6 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 						},
 						controller: function ($scope, $stateParams, $firebaseHelper, Sections, Competition, CompetitionData) {
 							let section = $stateParams.section;
-							
 							let getAge = (date) => date ? moment(Competition.date).diff(date, 'years') : undefined;
 							
 							switch (section) {
@@ -74,15 +73,15 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 									
 									break;
 								default:
-									$scope.hot = $firebaseHelper.hotTable(CompetitionData, section);
+									var hot = $scope.hot = $firebaseHelper.hot(CompetitionData, section);
 									$firebaseHelper.load(Sections).then(function (sections) {
-										var settings = angular.copy(angular.extend(sections.settings || {}, sections[section] || {}));
+										hot.settings = angular.copy(angular.extend(sections.settings || {}, sections[section] || {}));
 										
 										switch (section) {
 											case 'dances':
 												$firebaseHelper.array(CompetitionData, 'levels').$loaded(function (levels) {
 													angular.forEach(levels, function (level) {
-														settings.columns.push({
+														hot.settings.columns.push({
 															data:              level.abbr,
 															title:             level.name,
 															type:              'checkbox',
@@ -91,7 +90,16 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 													});
 												});
 												break;
+											case 'dancers':
+												hot.settings.columns.push({
+													data:     'dob',
+													title:    '(Age)',
+													type:     'age',
+													readOnly: true,
+												});
+												break;
 											case 'groups':
+												// helperHot
 												$firebaseHelper.array(CompetitionData, 'dancers').$loaded(function (dancers) {
 													let ageLevels = {};
 													angular.forEach(dancers, function (dancer) {
@@ -129,10 +137,55 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 														data:     data,
 														settings: settings,
 													};
+													
+												
+													hot.settings.columns.push({
+														title: '(# Dancers)',
+														data: '$dancersCount',
+														type: 'numeric',
+														readOnly: true,
+													});
+													hot.onData(function (data) {
+														angular.forEach(data, function (row) {
+															for(let age = parseInt(row.min); age <= parseInt(row.max); age++) {
+																if ( ! row.$dancersCount) row.$dancersCount = 0;
+																if (ageLevels[age]) row.$dancersCount += (parseInt(ageLevels[age][row.level]) || 0);
+															}
+														});
+													});
 												});
+												$scope.generateGroups = function (data, hot) {
+													hot.data = [];
+													$firebaseHelper.array(CompetitionData, 'levels').$loaded(function (levels) {
+														angular.forEach(levels, function (level) {
+															level.$counter = level.$counted = level.$min = level.$max = 0;
+															
+															angular.forEach(data, function (group, i) {
+																level.$counter += group[level.name] || 0;
+																if ( ! level.$min) level.$min = group.age;
+																if ((level.$counter >= 1 && level.$counted >= 1) || (i >= data.length - 1)) {
+																	level.$max = group.age;
+																	
+																	//console.log(level.name, level.$min, level.$max, level.$counter);
+																	if (hot && hot.data) {
+																		hot.data.push({
+																			level: level.name,
+																			min:   level.$min,
+																			max:   level.$max,
+																		});
+																	}
+																	
+																	level.$counter = level.$counted = level.$min = level.$max = 0;
+																} else {
+																	level.$counted++;
+																}
+															});
+														});
+													});
+												};
 												break;
 										}
-										angular.forEach(settings.columns, function (v, k) {
+										angular.forEach(hot.settings.columns, function (v, k) {
 											if (v.type === 'age'){
 												v.type = 'numeric';
 												v.renderer = function (instance, td, row, col, prop, value, cellProperties) {
@@ -148,7 +201,6 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 												});
 											}
 										});
-										$scope.settings = settings;
 									});
 									break;
 							}
@@ -172,7 +224,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 	.controller('AppCtrl', function($rootScope, $scope, $state, $firebaseHelper, $timeout){
 		$rootScope.$state = $state;
 		
-		$firebaseHelper.hotTable = function hotTable() {
+		$firebaseHelper.hot = function hot() {
 			let self = {
 					ref: $firebaseHelper.ref.apply(this, arguments),
 					parseData: function parse(snapshot) {
@@ -187,17 +239,22 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 							self.original = angular.copy(arr);
 							
 							if ( ! self.revisions) {
-								self.data.splice(0, self.data.length, ...arr);
+								self.data = arr;
+								if (angular.isFunction(self.callback)) self.callback(self.data);
 							} else {
-								console.info(self.revisions + ' revision' + (self.revisions === 1 ? ' has' : 's have') + ' been made to this reference since you last saved:', self.ref.path.toString());
+								//console.info(self.revisions + ' revision' + (self.revisions === 1 ? ' has' : 's have') + ' been made to this reference since you last saved:', self.ref.path.toString());
 							}
 							self.revisions++;
 						});
 					},
+					callback: null,
+					onData: function (callback) {
+						self.callback = callback;
+					},
 					init: function init() {
 						self.ref.orderByPriority().on('value', self.parseData);
 					},
-					refresh: function refresh() {
+					reload: function reload() {
 						self.revisions = 0;
 						self.ref.orderByPriority().once('value', self.parseData);
 					},
@@ -213,10 +270,10 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 							// @TODO: handle priority ?
 							data[$id] = o;
 						});
-						console.log('saving', data);
+						//console.log('saving', data);
 						
 						self.revisions = 0;
-						self.ref.set(data, self.refresh);
+						self.ref.set(data, self.reload);
 					},
 					dirty: function dirty() {
 						if ( ! self.data || ! self.original) return;
