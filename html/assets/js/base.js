@@ -176,13 +176,76 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 			var getAge = function getAge(date) {
 				return date ? moment(Competition.date).diff(date, 'years') : undefined;
 			};
+			function getGroupDancers(group) {
+				var groupDancers = {};
+				angular.forEach(CompetitionData.dancers, function (dancer, dancerId) {
+					if (dancer.level !== group.level) return;
+
+					var age = getAge(dancer.dob);
+					if (parseInt(group.min) <= age && age <= parseInt(group.max)) {
+						groupDancers[dancer.$id || dancerId] = dancer;
+					}
+				});
+				return groupDancers;
+			}
+			var getGroupName = $scope.getGroupName = function getGroupName(group) {
+				return group.level + ' ' + group.min + '-' + group.max;
+			};
+			var knapsack = function knapsack(numContainers, arrayOfObjects, key) {
+				var containers = Array.from(new Array(numContainers), function () {
+					return [];
+				}),
+				    containerCounts = Array.from(new Array(numContainers), function () {
+					return 0;
+				});
+
+				arrayOfObjects = arrayOfObjects.sort(function (a, b) {
+					return b[key] - a[key];
+				}); // sort from highest to lowest
+
+				var indexOfSmallestContainer = function indexOfSmallestContainer() {
+					return containerCounts.indexOf(Math.min.apply(Math, containerCounts));
+				};
+				angular.forEach(arrayOfObjects, function (item) {
+					var i = indexOfSmallestContainer();
+
+					containers[i].push(item);
+					containerCounts[i] += item[key] || 0;
+				});
+
+				return containers;
+			};
 
 			switch (section) {
 				case 'settings':
 
 					break;
 				case 'schedule':
+					$firebaseHelper.array(CompetitionData, 'dances').$loaded(function (dances) {
+						$scope.dances = dances;
 
+						$firebaseHelper.array(CompetitionData, 'groups').$loaded(function (groups) {
+							angular.forEach(groups, function (group) {
+								group.$dancersCount = Object.keys(getGroupDancers(group)).length;
+							});
+
+							$firebaseHelper.array(CompetitionData, 'platforms').$loaded(function (platforms) {
+								$scope.platforms = platforms;
+
+								angular.forEach(dances, function (dance) {
+									dance.$groups = groups.filter(function (group) {
+										return !!dance[group.level];
+									});
+
+									var counts = knapsack(3, dance.$groups, '$dancersCount');
+									dance.$platforms = angular.copy(platforms);
+									angular.forEach(dance.$platforms, function (platform, i) {
+										platform.$groups = counts[i];
+									});
+								});
+							});
+						});
+					});
 					break;
 				default:
 					var hot = $scope.hot = $firebaseHelper.hot(CompetitionData, section);

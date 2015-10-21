@@ -1,17 +1,23 @@
 <section class="flex layout-scroll">
 	<table class="margin-sm" border="1">
 		<tr>
-			<td>Dance</td>
-			<td ng-repeat="platform in competitionData.platforms">
+			<th>Dance</th>
+			<th ng-repeat="platform in platforms">
 				<div ng-bind="platform.name"></div>
 				<div ng-bind="platform.description"></div>
-			</td>
+			</th>
 		</tr>
-		<tr ng-repeat="dance in competitionData.dances">
+		<tr ng-repeat="dance in dances">
 			<td>
 				<div ng-bind="dance.name"></div>
 			</td>
-			<td ng-repeat="(level, active) in dance" ng-bind="level"></td>
+			<td ng-repeat="platform in platforms">
+				{{ dance.$platforms.$getRecord(platformId) }}
+				<div ng-repeat="group in dance.$platforms[$index].$groups | orderBy:['$id','min']">
+					<span ng-bind="getGroupName(group)"></span> (<span ng-bind="group.$dancersCount"></span>)
+				</div>
+<!-- 				<div ng-repeat="(level, active) in dance" ng-bind="level"></div> -->
+			</td>
 		</tr>
 	</table>
 </section>
