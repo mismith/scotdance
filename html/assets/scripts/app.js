@@ -55,9 +55,9 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 							let path = '';
 							switch ($stateParams.section) {
 								case 'settings':
+								case 'schedule':
 									path = $stateParams.section;
 									break;
-								case 'groups':
 								default:
 									path = 'table';
 									break;
@@ -72,6 +72,9 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 								case 'settings':
 									
 									break;
+								case 'schedule':
+									
+									break;
 								default:
 									var hot = $scope.hot = $firebaseHelper.hot(CompetitionData, section);
 									$firebaseHelper.load(Sections).then(function (sections) {
@@ -82,7 +85,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 												$firebaseHelper.array(CompetitionData, 'levels').$loaded(function (levels) {
 													angular.forEach(levels, function (level) {
 														hot.settings.columns.push({
-															data:              level.abbr,
+															data:              level.name,
 															title:             level.name,
 															type:              'checkbox',
 															uncheckedTemplate: '',
