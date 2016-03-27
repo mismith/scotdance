@@ -1,35 +1,53 @@
 'use strict';
 
-angular.module('bigUtil', []).run(["$rootScope", "$document", function ($rootScope, $document) {
+angular.module('miUtil', []).run(["$rootScope", "$document", "$timeout", function ($rootScope, $document, $timeout) {
 	// remove 300ms click delay on touch devices
-	FastClick.attach(document.body);
+	if (window.FastClick) FastClick.attach(document.body);
 
 	// fix vh units in ios7 (and others)
-	viewportUnitsBuggyfill.init();
+	if (window.viewportUnitsBuggyfill) viewportUnitsBuggyfill.init();
 
-	// mobile menu
+	// menu
 	var $menu = $rootScope.$menu = {
 		active: false,
-		open: function open() {
+		open: function open(e) {
 			$menu.active = true;
+			if (e) e.stopPropagation();
 		},
-		close: function close() {
+		close: function close(e) {
 			$menu.active = false;
+			if (e) e.stopPropagation();
 		},
 		toggle: function toggle(e) {
 			$menu.active = !$menu.active;
 			if (e) e.stopPropagation();
 		}
 	};
+	// close the menu as soon as you click
 	$document.on('click', function () {
-		$rootScope.$apply($menu.close);
-	});
-	$document.on('keyup', function (e) {
-		$rootScope.$apply(function () {
-			if (e.keyCode === 27 /*esc*/) $menu.close();
+		$timeout(function () {
+			$menu.close();
 		});
 	});
+	// allow Esc key to close menu
+	$document.on('keyup', function (e) {
+		if (e.keyCode === 27 /*esc*/) {
+				$timeout(function () {
+					$menu.close();
+				});
+			}
+	});
+	// prevent scroll bubbling when menu open
+	$rootScope.miUtilPreventScrollOnMenuActive = true;
+	$rootScope.$watch('$menu.active', function (v) {
+		if ($rootScope.miUtilPreventScrollOnMenuActive) {
+			angular.element(document.body).css({
+				overflow: v ? 'hidden' : ''
+			});
+		}
+	});
 
+	// modal
 	var $modal = $rootScope.$modal = {
 		active: false,
 		open: function open(id) {
@@ -39,23 +57,30 @@ angular.module('bigUtil', []).run(["$rootScope", "$document", function ($rootSco
 			$modal.active = false;
 		},
 		toggle: function toggle(id) {
-			$modal.active = $modal.active === id ? false : id;
+			if ($modal.active === id) {
+				$modal.close();
+			} else {
+				$modal.open(id);
+			}
 		},
 		isOpen: function isOpen(id) {
 			return $modal.active === id;
 		}
 	};
+	// allow Esc key to close modal
+	$document.on('keyup', function (e) {
+		if (e.keyCode === 27 /*esc*/) {
+				$timeout(function () {
+					$modal.close();
+				});
+			}
+	});
 	// prevent scroll bubbling when modal open
 	$rootScope.$watch('$modal.active', function (v) {
 		angular.element(document.body).css({
 			overflow: v ? 'hidden' : ''
 		});
-	});
-	// allow Esc key to close modal
-	$document.on('keyup', function (e) {
-		$rootScope.$apply(function () {
-			if (e.keyCode === 27 /*esc*/) $modal.close();
-		});
+		$rootScope.$broadcast('$modal.' + (v ? 'open' : 'close'));
 	});
 }]).filter('length', function () {
 	return function (obj) {
@@ -78,15 +103,37 @@ angular.module('bigUtil', []).run(["$rootScope", "$document", function ($rootSco
 		}
 		return r;
 	};
-}).directive('bigClickToggle', ["$parse", function ($parse) {
+}).directive('miIcon', function () {
+	return {
+		scope: { svg: '@', size: '@' },
+		restrict: 'E',
+		replace: true,
+		templateNamespace: 'svg',
+		template: '<svg xmlns="http://www.w3.org/2000/svg" class="mi-icon" style="display: inline-block; width: {{ size || 16 }}px; height: {{ size || 16 }}px; fill: currentColor; vertical-align: middle;"><use xlink:href="" /></svg>',
+		link: function link($scope, $element, $attrs) {
+			// manual scope override to avoid initial svg attr set issue/error
+			$attrs.$observe('svg', function (svg) {
+				$element.children().attr('xlink:href', 'assets/icons.svg#' + svg);
+			});
+		}
+	};
+}).directive('miModal', function () {
+	return {
+		scope: { id: '@' },
+		restrict: 'E',
+		replace: true,
+		transclude: true,
+		template: '<aside ng-show="$root.$modal.isOpen(id)" ng-click="$root.$modal.close()" class="mi-modal-container" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0;">\n\t\t\t\t<div class="mi-modal">\n\t\t\t\t\t<div ng-click="$event.stopPropagation()" class="mi-modal-content" ng-transclude></div>\n\t\t\t\t\t<a ng-click="$root.$modal.close()" class="mi-modal-close">\n\t\t\t\t\t\t<mi-icon svg="x"></mi-icon>\n\t\t\t\t\t</a>\n\t\t\t\t</div>\n\t\t\t</aside>'
+	};
+}).directive('miClickToggle', ["$timeout", "$parse", function ($timeout, $parse) {
 	return {
 		restrict: 'A',
 		link: function link($scope, $element, $attrs) {
-			var obj = $scope.$eval($attrs.bigClickToggle);
+			var obj = $scope.$eval($attrs.miClickToggle);
 			$element.on('click', function (e) {
 				e.preventDefault();
 
-				$scope.$apply(function () {
+				$timeout(function () {
 					angular.forEach(obj, function (v, k) {
 						return $parse(k).assign($scope, v);
 					});
@@ -94,7 +141,7 @@ angular.module('bigUtil', []).run(["$rootScope", "$document", function ($rootSco
 			});
 			angular.forEach(obj, function (v, k) {
 				$scope.$watch(k, function (newV) {
-					if (newV !== undefined) $element[v === newV ? 'addClass' : 'removeClass']($scope.$eval($attrs.bigClickToggleActive) || 'active');
+					if (newV !== undefined) $element[v === newV ? 'addClass' : 'removeClass']($scope.$eval($attrs.miClickToggleActive) || 'active');
 				});
 			});
 		}
@@ -102,7 +149,7 @@ angular.module('bigUtil', []).run(["$rootScope", "$document", function ($rootSco
 }]);
 'use strict';
 
-angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHelper', 'ngHandsontable']).config(["$locationProvider", "$urlRouterProvider", "$urlMatcherFactoryProvider", "$stateProvider", "$firebaseHelperProvider", "$provide", function ($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider, $provide) {
+angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'miUtil', 'firebaseHelper', 'ngHandsontable']).config(["$locationProvider", "$urlRouterProvider", "$urlMatcherFactoryProvider", "$stateProvider", "$firebaseHelperProvider", "$provide", function ($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider, $provide) {
 	// routing
 	$locationProvider.html5Mode(true).hashPrefix('!');
 	$urlRouterProvider.when('', '/');
@@ -151,7 +198,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 				return Competition.name;
 			}]
 		},
-		controller: ["$scope", "Sections", "Competition", "CompetitionData", function controller($scope, Sections, Competition, CompetitionData) {
+		controller: ["$scope", "$firebaseHelper", "Sections", "Competition", "CompetitionData", function controller($scope, $firebaseHelper, Sections, Competition, CompetitionData) {
 			$scope.sections = Sections;
 			$scope.competition = Competition;
 			$scope.competitionData = CompetitionData;
@@ -163,6 +210,8 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 			switch ($stateParams.section) {
 				case 'settings':
 				case 'schedule':
+				case 'scores':
+				case 'results':
 					path = $stateParams.section;
 					break;
 				default:
@@ -171,7 +220,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 			}
 			return 'views/page/competition/' + path + '.html';
 		},
-		controller: ["$scope", "$stateParams", "$firebaseHelper", "Sections", "Competition", "CompetitionData", function controller($scope, $stateParams, $firebaseHelper, Sections, Competition, CompetitionData) {
+		controller: ["$scope", "$stateParams", "$firebaseHelper", "$filter", "Sections", "Competition", "CompetitionData", function controller($scope, $stateParams, $firebaseHelper, $filter, Sections, Competition, CompetitionData) {
 			var section = $stateParams.section;
 			var getAge = function getAge(date) {
 				return date ? moment(Competition.date).diff(date, 'years') : undefined;
@@ -237,11 +286,46 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 										return !!dance[group.level];
 									});
 
-									var counts = knapsack(3, dance.$groups, '$dancersCount');
+									var counts = knapsack(platforms.length, dance.$groups, '$dancersCount');
 									dance.$platforms = angular.copy(platforms);
 									angular.forEach(dance.$platforms, function (platform, i) {
 										platform.$groups = counts[i];
 									});
+								});
+							});
+						});
+					});
+					break;
+				case 'scores':
+				case 'results':
+					$scope.getPlacesArray = function (group) {
+						var places = [];
+						for (var i = 0; i < Math.ceil($filter('length')(group.$dancers) / 2); i++) {
+							var place = (i + 1).toString(),
+							    suffix = 'th';
+							switch (place[place.length - 1]) {
+								case '1':
+									suffix = 'st';
+									break;
+								case '2':
+									suffix = 'nd';
+									break;
+								case '3':
+									suffix = 'rd';
+									break;
+							}
+							places.push(place + suffix);
+						}
+						return places;
+					};
+					$firebaseHelper.array(CompetitionData, 'groups').$loaded(function (groups) {
+						$scope.groups = groups;
+
+						$firebaseHelper.array(CompetitionData, 'dances').$loaded(function (dances) {
+							angular.forEach(groups, function (group) {
+								group.$dancers = getGroupDancers(group);
+								group.$dances = dances.filter(function (dance) {
+									return !!dance[group.level];
 								});
 							});
 						});

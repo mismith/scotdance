@@ -12,7 +12,6 @@
 				<div ng-bind="dance.name"></div>
 			</td>
 			<td ng-repeat="platform in platforms">
-				{{ dance.$platforms.$getRecord(platformId) }}
 				<div ng-repeat="group in dance.$platforms[$index].$groups | orderBy:['$id','min']">
 					<span ng-bind="getGroupName(group)"></span> (<span ng-bind="group.$dancersCount"></span>)
 				</div>

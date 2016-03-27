@@ -1,4 +1,4 @@
-angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHelper', 'ngHandsontable'])
+angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'miUtil', 'firebaseHelper', 'ngHandsontable'])
 	
 	.config(function($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider, $provide){
 		// routing
@@ -43,7 +43,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 						CompetitionData: ($firebaseHelper, $stateParams) => $firebaseHelper.object('competitionsData', $stateParams.competitionId),
 						$title:          (Competition) => Competition.name,
 					},
-					controller: function ($scope, Sections, Competition, CompetitionData) {
+					controller: function ($scope, $firebaseHelper, Sections, Competition, CompetitionData) {
 						$scope.sections            = Sections;
 						$scope.competition         = Competition;
 						$scope.competitionData     = CompetitionData;
@@ -56,6 +56,8 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 							switch ($stateParams.section) {
 								case 'settings':
 								case 'schedule':
+								case 'scores':
+								case 'results':
 									path = $stateParams.section;
 									break;
 								default:
@@ -64,7 +66,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 							}
 							return 'views/page/competition/' + path + '.html';
 						},
-						controller: function ($scope, $stateParams, $firebaseHelper, Sections, Competition, CompetitionData) {
+						controller: function ($scope, $stateParams, $firebaseHelper, $filter, Sections, Competition, CompetitionData) {
 							let section = $stateParams.section;
 							let getAge = (date) => date ? moment(Competition.date).diff(date, 'years') : undefined;
 							function getGroupDancers(group) {
@@ -120,12 +122,45 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'bigUtil', 'firebaseHe
 												angular.forEach(dances, function (dance) {
 													dance.$groups = groups.filter((group) => !! dance[group.level]);
 													
-													var counts = knapsack(3, dance.$groups, '$dancersCount');
+													var counts = knapsack(platforms.length, dance.$groups, '$dancersCount');
 													dance.$platforms = angular.copy(platforms);
 													angular.forEach(dance.$platforms, function (platform, i) {
 														platform.$groups = counts[i];
 													});
 												});
+											});
+										});
+									});
+									break;
+								case 'scores':
+								case 'results':
+									$scope.getPlacesArray = function (group) {
+										let places = [];
+										for (let i = 0; i < Math.ceil($filter('length')(group.$dancers) / 2); i++) {
+											let place = (i + 1).toString(),
+												suffix = 'th';
+											switch (place[place.length - 1]) {
+												case '1':
+													suffix = 'st';
+													break;
+												case '2':
+													suffix = 'nd';
+													break;
+												case '3':
+													suffix = 'rd';
+													break;
+											}
+											places.push(place + suffix);
+										}
+										return places;
+									};
+									$firebaseHelper.array(CompetitionData, 'groups').$loaded(function (groups) {
+										$scope.groups = groups;
+
+										$firebaseHelper.array(CompetitionData, 'dances').$loaded(function (dances) {
+											angular.forEach(groups, function (group) {
+												group.$dancers = getGroupDancers(group);
+												group.$dances = dances.filter((dance) => !! dance[group.level]);
 											});
 										});
 									});

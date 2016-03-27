@@ -1,0 +1,16 @@
+<section class="flex layout-scroll">
+	<article ng-repeat="group in groups">
+		<h2 ng-bind="getGroupName(group)"></h2>
+		<table ng-repeat="dance in group.$dances" class="margin-sm" border="1">	
+			<tr>
+				<th colspan="2" ng-bind="dance.name"></th>
+			</tr>
+			<tr ng-repeat="dancer in group.$dancers">
+				<td ng-bind="dancer.number"></td>
+				<td>
+					<input type="number" ng-model="score" />
+				</td>
+			</tr>
+		</table>
+	</article>
+</section>
