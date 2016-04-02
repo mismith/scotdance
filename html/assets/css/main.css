@@ -718,3 +718,8 @@ td .num {
 #app {
   height: 100%;
 }
+#header {
+  -webkit-flex-shrink: 0;
+      -ms-flex-negative: 0;
+          flex-shrink: 0;
+}
