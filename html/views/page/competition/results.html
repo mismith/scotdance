@@ -1,0 +1,29 @@
+<section class="flex layout-scroll">
+	<article ng-repeat="group in groups">
+		<h2 ng-bind="getGroupName(group)"></h2>
+		<table class="margin-sm" border="1">
+			<tr ng-repeat="dancer in group.$dancers">
+				<td ng-bind="dancer.number"></td>
+				<td ng-bind="dancer.firstName"></td>
+				<td ng-bind="dancer.lastName"></td>
+				<td ng-bind="dancer.location"></td>
+			</tr>
+		</table>
+		<table class="margin-sm" border="1">
+			<tr>
+				<th>&nbsp;</th>
+				<th ng-repeat="place in getPlacesArray(group)">
+					<span ng-bind="place"></span>
+				</th>
+			</tr>
+			<tr ng-repeat="dance in group.$dances">
+				<td>
+					<div ng-bind="dance.name"></div>
+				</td>
+				<td ng-repeat="score in group.$scores">
+					<span ng-bind="score.$dancer.number"></span>
+				</td>
+			</tr>
+		</table>
+	</article>
+</section>

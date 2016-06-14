@@ -1,0 +1,14 @@
+- pre-registration
+	- settings/info
+	- skill levels
+	- dances
+- registration
+	- dancers
+- post-registration
+	- age-groups
+	- staff
+	- platforms
+	- schedule
+- competition
+	- scores
+	- results
