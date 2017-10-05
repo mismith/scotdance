@@ -209,6 +209,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'miUtil', 'firebaseHel
 			var path = '';
 			switch ($stateParams.section) {
 				case 'settings':
+				case 'groups':
 				case 'schedule':
 				case 'scores':
 				case 'results':
@@ -220,12 +221,15 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'miUtil', 'firebaseHel
 			}
 			return 'views/page/competition/' + path + '.html';
 		},
-		controller: ["$scope", "$stateParams", "$firebaseHelper", "$filter", "Sections", "Competition", "CompetitionData", function controller($scope, $stateParams, $firebaseHelper, $filter, Sections, Competition, CompetitionData) {
+		controller: ["$rootScope", "$scope", "$stateParams", "$firebaseHelper", "$filter", "Sections", "Competition", "CompetitionData", function controller($rootScope, $scope, $stateParams, $firebaseHelper, $filter, Sections, Competition, CompetitionData) {
 			var section = $stateParams.section;
-			var getAge = function getAge(date) {
+			var getAge = $rootScope.getAge = function (date) {
 				return date ? moment(Competition.date).diff(date, 'years') : undefined;
 			};
-			function getGroupDancers(group) {
+			var getGroupName = $rootScope.getGroupName = function (group) {
+				return group.level + ' ' + group.min + '-' + group.max;
+			};
+			var getGroupDancers = function getGroupDancers(group) {
 				var groupDancers = {};
 				angular.forEach(CompetitionData.dancers, function (dancer, dancerId) {
 					if (dancer.level !== group.level) return;
@@ -236,9 +240,6 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'miUtil', 'firebaseHel
 					}
 				});
 				return groupDancers;
-			}
-			var getGroupName = $scope.getGroupName = function getGroupName(group) {
-				return group.level + ' ' + group.min + '-' + group.max;
 			};
 			var knapsack = function knapsack(numContainers, arrayOfObjects, key) {
 				var containers = Array.from(new Array(numContainers), function () {
@@ -267,7 +268,47 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'miUtil', 'firebaseHel
 
 			switch (section) {
 				case 'settings':
+					// @IGNORE
+					break;
+				case 'groups':
+					$scope.levels = $firebaseHelper.array(CompetitionData, 'levels');
+					$scope.dancers = $firebaseHelper.array(CompetitionData, 'dancers');
 
+					$scope.byLevel = function (level) {
+						return function (item) {
+							return item.level === level.name;
+						};
+					};
+
+					$scope.generateGroups = function (data, hot) {
+						hot.data = [];
+						$firebaseHelper.array(CompetitionData, 'levels').$loaded(function (levels) {
+							angular.forEach(levels, function (level) {
+								level.$counter = level.$counted = level.$min = level.$max = 0;
+
+								angular.forEach(data, function (group, i) {
+									level.$counter += group[level.name] || 0;
+									if (!level.$min) level.$min = group.age;
+									if (level.$counter >= 1 && level.$counted >= 1 || i >= data.length - 1) {
+										level.$max = group.age;
+
+										//console.log(level.name, level.$min, level.$max, level.$counter);
+										if (hot && hot.data) {
+											hot.data.push({
+												level: level.name,
+												min: level.$min,
+												max: level.$max
+											});
+										}
+
+										level.$counter = level.$counted = level.$min = level.$max = 0;
+									} else {
+										level.$counted++;
+									}
+								});
+							});
+						});
+					};
 					break;
 				case 'schedule':
 					$firebaseHelper.array(CompetitionData, 'dances').$loaded(function (dances) {
@@ -298,7 +339,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'miUtil', 'firebaseHel
 					break;
 				case 'scores':
 				case 'results':
-					$scope.getPlacesArray = function (group) {
+					$scope.getPlacesArray = _.memoize(function (group) {
 						var places = [];
 						for (var i = 0; i < Math.ceil($filter('length')(group.$dancers) / 2); i++) {
 							var place = (i + 1).toString(),
@@ -317,17 +358,64 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'miUtil', 'firebaseHel
 							places.push(place + suffix);
 						}
 						return places;
+					});
+					$scope.scores = $firebaseHelper.array(CompetitionData, 'scores');
+					$scope.scores.$loaded(function () {
+						return $scope.scores.$$loaded = true;
+					});
+					// $scope.getDanceScores = function(scores, groupId, danceId) {
+					// 	var danceScores = [];
+					// 	if (scores && scores[groupId] && scores[groupId][danceId]) {
+					// 		angular.forEach(scores[groupId][danceId], _.memoize((score, dancerId) => {
+					// 			danceScores.push({
+					// 				score,
+					// 				dancerId,
+					// 			});
+					// 		}));
+					// 	}
+					// 	return danceScores;
+					// };
+					$scope.saveScore = function (groupId, danceId, dancerId, value) {
+						$firebaseHelper.ref($scope.scores, groupId + ':' + danceId).update({
+							dancerId: dancerId,
+							value: value || null
+						});
 					};
-					$firebaseHelper.array(CompetitionData, 'groups').$loaded(function (groups) {
+					$firebaseHelper.array(CompetitionData, 'groups').$loaded().then(function (groups) {
 						$scope.groups = groups;
 
-						$firebaseHelper.array(CompetitionData, 'dances').$loaded(function (dances) {
-							angular.forEach(groups, function (group) {
-								group.$dancers = getGroupDancers(group);
-								group.$dances = dances.filter(function (dance) {
-									return !!dance[group.level];
-								});
+						return $firebaseHelper.array(CompetitionData, 'dances').$loaded();
+					}).then(function (dances) {
+						angular.forEach($scope.groups, function (group) {
+							group.$dancers = getGroupDancers(group);
+							group.$dances = dances.filter(function (dance) {
+								return !!dance[group.level];
 							});
+
+							// let data = [];
+							// let settings = {
+							// 	columns: [
+							// 		{
+							// 			data:    'number',
+							// 			title:   '#',
+							// 			readOnly: true,
+							// 		}
+							// 	],
+							// };
+							// angular.forEach(group.$dances, dance => {
+							// 	settings.columns.push({
+							// 		data: '$scores.' + dance.$id,
+							// 		title: dance.name,
+							// 	});
+							// });
+							// angular.forEach(group.$dancers, dancer => {
+							// 	dancer.$scores = {};
+							// 	data.push(dancer);
+							// });
+							// group.$hot = {
+							// 	data,
+							// 	settings,
+							// };
 						});
 					});
 					break;
@@ -356,89 +444,6 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'miUtil', 'firebaseHel
 									type: 'age',
 									readOnly: true
 								});
-								break;
-							case 'groups':
-								// helperHot
-								$firebaseHelper.array(CompetitionData, 'dancers').$loaded(function (dancers) {
-									var ageLevels = {};
-									angular.forEach(dancers, function (dancer) {
-										var age = getAge(dancer.dob);
-										ageLevels[age] = ageLevels[age] || {};
-										ageLevels[age][dancer.level] = (ageLevels[age][dancer.level] || 0) + 1;
-									});
-
-									var data = [];
-									angular.forEach(ageLevels, function (levels, age) {
-										levels.age = age;
-										data.push(levels);
-									});
-
-									var settings = {
-										columns: [{
-											data: 'age',
-											title: 'Age',
-											readOnly: true
-										}]
-									};
-									$firebaseHelper.array(CompetitionData, 'levels').$loaded(function (levels) {
-										angular.forEach(levels, function (level) {
-											settings.columns.push({
-												data: level.name,
-												title: level.name,
-												type: 'numeric',
-												readOnly: true
-											});
-										});
-									});
-									$scope.helperHot = {
-										data: data,
-										settings: settings
-									};
-
-									hot.settings.columns.push({
-										title: '(# Dancers)',
-										data: '$dancersCount',
-										type: 'numeric',
-										readOnly: true
-									});
-									hot.onData(function (data) {
-										angular.forEach(data, function (row) {
-											for (var age = parseInt(row.min); age <= parseInt(row.max); age++) {
-												if (!row.$dancersCount) row.$dancersCount = 0;
-												if (ageLevels[age]) row.$dancersCount += parseInt(ageLevels[age][row.level]) || 0;
-											}
-										});
-									});
-								});
-								$scope.generateGroups = function (data, hot) {
-									hot.data = [];
-									$firebaseHelper.array(CompetitionData, 'levels').$loaded(function (levels) {
-										angular.forEach(levels, function (level) {
-											level.$counter = level.$counted = level.$min = level.$max = 0;
-
-											angular.forEach(data, function (group, i) {
-												level.$counter += group[level.name] || 0;
-												if (!level.$min) level.$min = group.age;
-												if (level.$counter >= 1 && level.$counted >= 1 || i >= data.length - 1) {
-													level.$max = group.age;
-
-													//console.log(level.name, level.$min, level.$max, level.$counter);
-													if (hot && hot.data) {
-														hot.data.push({
-															level: level.name,
-															min: level.$min,
-															max: level.$max
-														});
-													}
-
-													level.$counter = level.$counted = level.$min = level.$max = 0;
-												} else {
-													level.$counted++;
-												}
-											});
-										});
-									});
-								};
 								break;
 						}
 						angular.forEach(hot.settings.columns, function (v, k) {
@@ -589,4 +594,44 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'miUtil', 'firebaseHel
 			}
 		}
 	};
+}).filter('groupByAge', ["$rootScope", function ($rootScope) {
+	return _.memoize(function (dancers) {
+		var grouped = {};
+		angular.forEach(dancers, function (dancer) {
+			var age = $rootScope.getAge(dancer.dob);
+			grouped[age] = grouped[age] || [];
+			grouped[age].push(dancer);
+		});
+		return grouped;
+	});
+}]).filter('groupByGroup', function () {
+	return _.memoize(function (dancersByAge) {
+		var grouped = [],
+		    extras = [];
+		angular.forEach(dancersByAge, function (dancers) {
+			if (!dancers) return;
+
+			if (dancers.length >= 6) {
+				if (extras.length) {
+					dancers = dancers.concat(extras);
+				}
+				grouped.push(angular.copy(dancers));
+			} else {
+				extras = extras.concat(dancers);
+				if (extras.length >= 6) {
+					grouped.push(angular.copy(extras));
+					extras = [];
+				}
+			}
+		});
+		if (extras.length) {
+			if (grouped.length) {
+				grouped[grouped.length - 1] = grouped[grouped.length - 1].concat(angular.copy(extras));
+			} else {
+				grouped.push(angular.copy(extras));
+			}
+			extras = [];
+		}
+		return grouped;
+	});
 });

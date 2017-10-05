@@ -1,0 +1,18 @@
+<section class="flex layout-scroll">
+	<div ng-repeat="level in levels">
+		<header>
+			<h2 ng-bind="level.name"></h2>
+		</header>
+		<div class="flex-row flex-nowrap">
+			<div ng-repeat="(age, dancers) in dancersByAge = (dancers | filter:byLevel(level) | groupByAge)" style="border: solid 1px black;" ng-style="{'flex-grow': dancers.length}">
+				<span ng-bind="age"></span>
+				<span ng-bind="dancers.length"></span>
+			</div>
+		</div>
+		<div class="flex-row flex-nowrap">
+			<div ng-repeat="dancers in dancersByAge | groupByGroup" style="border: dashed 1px black;" ng-style="{'flex-grow': dancers.length}">
+				<span ng-bind="dancers.length"></span>
+			</div>
+		</div>
+	</div>
+</section>
