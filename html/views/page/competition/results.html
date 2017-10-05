@@ -1,7 +1,7 @@
 <section class="flex layout-scroll">
 	<article ng-repeat="group in groups">
 		<h2 ng-bind="getGroupName(group)"></h2>
-		<table class="margin-sm" border="1">
+		<table class="margin-sm">
 			<tr ng-repeat="dancer in group.$dancers">
 				<td ng-bind="dancer.number"></td>
 				<td ng-bind="dancer.firstName"></td>
@@ -20,8 +20,9 @@
 				<td>
 					<div ng-bind="dance.name"></div>
 				</td>
-				<td ng-repeat="score in group.$scores">
-					<span ng-bind="score.$dancer.number"></span>
+				<td ng-repeat="score in scores | filter:{$id: group.$id +':'+ dance.$id} | orderBy:'-value' | limitTo: getPlacesArray(group).length">
+					<span ng-bind="group.$dancers[score.dancerId].number"></span>
+					<!--<span ng-bind="score.value | json"></span>-->
 				</td>
 			</tr>
 		</table>
