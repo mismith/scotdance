@@ -2,7 +2,7 @@ import Vue from 'vue';
 import VueMaterial from 'vue-material';
 import 'vue-material/dist/vue-material.css';
 
-import App from './App';
+import App from './app';
 import router from './router';
 
 Vue.config.productionTip = false;
@@ -18,7 +18,7 @@ Vue.material.registerTheme('default', {
 new Vue({
   el: '#app',
   router,
-  template: '<App />',
+  template: '<app />',
   components: {
     App,
   },

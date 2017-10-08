@@ -122,7 +122,7 @@
 
 <script>
 export default {
-  name: 'HelloWorld',
+  name: 'hello-world',
 };
 </script>
 
