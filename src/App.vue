@@ -1,7 +1,7 @@
 <template>
   <div id="app" class="md-scroll-frame md-scroll">
 
-    <md-sidenav class="md-left md-fixed" ref="sidebar">
+    <md-sidenav md-swipeable class="md-left md-fixed" ref="sidebar">
       <md-toolbar class="md-account-header">
         <md-list class="md-transparent">
           <md-list-item>
