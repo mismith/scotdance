@@ -1,4 +1,5 @@
 import Vue from 'vue';
+import VueFire from 'vuefire';
 import VueMaterial from 'vue-material';
 import 'vue-material/dist/vue-material.css';
 
@@ -6,6 +7,8 @@ import App from './app';
 import router from './router';
 
 Vue.config.productionTip = false;
+
+Vue.use(VueFire);
 Vue.use(VueMaterial);
 Vue.material.registerTheme('default', {
   primary: {

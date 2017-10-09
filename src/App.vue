@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" class="md-scroll-frame md-scroll">
 
     <md-sidenav class="md-left md-fixed" ref="sidebar">
       <md-toolbar class="md-account-header">
@@ -24,24 +24,10 @@
       </md-toolbar>
 
       <md-list>
-        <md-list-item @click="$refs.sidebar.toggle()" class="md-primary">
-          <md-icon>insert_drive_file</md-icon> <span>My files</span>
-        </md-list-item>
-
-        <md-list-item @click="$refs.sidebar.toggle()">
-          <md-icon>people</md-icon> <span>Shared with me</span>
-        </md-list-item>
-
-        <md-list-item @click="$refs.sidebar.toggle()">
-          <md-icon>access_time</md-icon> <span>Recent</span>
-        </md-list-item>
-
-        <md-list-item @click="$refs.sidebar.toggle()">
-          <md-icon>start</md-icon> <span>Starred</span>
-        </md-list-item>
-
-        <md-list-item @click="$refs.sidebar.toggle()">
-          <md-icon>delete</md-icon> <span>Trash</span>
+        <md-subheader>Competitions</md-subheader>
+        <md-list-item v-for="competition in competitions" :key="competition[idKey]" :href="`/competitions/${competition[idKey]}`" @click="$refs.sidebar.toggle()">
+          <md-icon>event</md-icon>
+          <span>{{ competition.name }}</span>
         </md-list-item>
       </md-list>
     </md-sidenav>
@@ -56,13 +42,13 @@
 
         <span class="md-flex"></span>
 
-        <md-button class="md-icon-button">
+        <!--<md-button class="md-icon-button">
           <md-icon>search</md-icon>
-        </md-button>
+        </md-button>-->
       </div>
     </md-toolbar>
 
-    <main id="main">
+    <main id="main" class="md-scroll-frame md-scroll">
       <router-view />
     </main>
 
@@ -70,25 +56,39 @@
 </template>
 
 <script>
+import {
+  idKey,
+  db,
+} from '@/helpers/firebase';
+
 export default {
   name: 'app',
+  data() {
+    return {
+      idKey,
+    };
+  },
+  firebase: {
+    competitions: db.child('competitions'),
+  },
 };
 </script>
 
 <style lang="scss">
 html,
-body,
-#app {
+body {
+  @extend .md-scroll-frame;
+}
+
+.md-scroll-frame {
+  display: flex;
+  flex-direction: column;
   height: 100%;
   overflow: hidden;
 }
-#app,
-#main {
-  display: flex;
-  flex-direction: column;
-}
-#main {
+.md-scroll {
   flex: 1;
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 </style>

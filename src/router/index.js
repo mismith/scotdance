@@ -1,6 +1,8 @@
 import Vue from 'vue';
 import Router from 'vue-router';
-import HelloWorld from '@/components/hello-world';
+import Competition from '@/components/competition';
+import CompetitionInfo from '@/components/competition/info';
+import CompetitionDancers from '@/components/competition/dancers';
 
 Vue.use(Router);
 
@@ -9,8 +11,34 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'Hello',
-      component: HelloWorld,
+      name: 'home',
+    },
+    {
+      path: '/competitions/:competitionId',
+      // name: 'competition',
+      component: Competition,
+      children: [
+        {
+          path: '',
+          name: 'competition',
+          component: CompetitionInfo,
+        },
+        {
+          path: 'dancers',
+          name: 'competition.dancers',
+          component: CompetitionDancers,
+        },
+        {
+          path: 'schedule',
+          name: 'competition.schedule',
+          // component: CompetitionSchedule,
+        },
+        {
+          path: 'results',
+          name: 'competition.results',
+          // component: CompetitionResults,
+        },
+      ],
     },
   ],
 });
