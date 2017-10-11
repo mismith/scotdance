@@ -1,5 +1,3 @@
-'use strict';
-
 angular.module('miUtil', []).run(["$rootScope", "$document", "$timeout", function ($rootScope, $document, $timeout) {
 	// remove 300ms click delay on touch devices
 	if (window.FastClick) FastClick.attach(document.body);
@@ -147,8 +145,6 @@ angular.module('miUtil', []).run(["$rootScope", "$document", "$timeout", functio
 		}
 	};
 }]);
-'use strict';
-
 angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'miUtil', 'firebaseHelper', 'ngHandsontable']).config(["$locationProvider", "$urlRouterProvider", "$urlMatcherFactoryProvider", "$stateProvider", "$firebaseHelperProvider", "$provide", function ($locationProvider, $urlRouterProvider, $urlMatcherFactoryProvider, $stateProvider, $firebaseHelperProvider, $provide) {
 	// routing
 	$locationProvider.html5Mode(true).hashPrefix('!');
@@ -376,10 +372,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'miUtil', 'firebaseHel
 					// 	return danceScores;
 					// };
 					$scope.saveScore = function (groupId, danceId, dancerId, value) {
-						$firebaseHelper.ref($scope.scores, groupId + ':' + danceId).update({
-							dancerId: dancerId,
-							value: value || null
-						});
+						$firebaseHelper.ref($scope.scores, groupId, danceId, dancerId).set(value || null);
 					};
 					$firebaseHelper.array(CompetitionData, 'groups').$loaded().then(function (groups) {
 						$scope.groups = groups;

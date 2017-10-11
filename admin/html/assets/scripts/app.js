@@ -212,10 +212,7 @@ angular.module('XXXXXX', ['ui.router', 'ui.router.title', 'miUtil', 'firebaseHel
 									// 	return danceScores;
 									// };
 									$scope.saveScore = function (groupId, danceId, dancerId, value) {
-										$firebaseHelper.ref($scope.scores, `${groupId}:${danceId}`).update({
-												dancerId: dancerId,
-												value: value || null,
-											});
+										$firebaseHelper.ref($scope.scores, groupId, danceId, dancerId).set(value || null);
 									};
 									$firebaseHelper.array(CompetitionData, 'groups').$loaded()
 										.then(function (groups) {
