@@ -91,10 +91,10 @@ var defaults = {
 	dests: {
 		scripts: 'html/assets/js',
 		styles:  'html/assets/css',
-	}
+	},
 };
-var configPath = './gulpfile.config.js',
-	config     = merge.recursive(defaults, fs.existsSync(configPath) ? require(configPath) : {});
+var configPath = './gulpfile.config.js';
+var config = merge.recursive(defaults, fs.existsSync(configPath) ? require(configPath) : {});
 
 
 // tasks
