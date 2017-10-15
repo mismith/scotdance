@@ -19,23 +19,11 @@
       </md-button>-->
     </md-toolbar>
     <md-list class="md-double-line md-scroll">
-      <md-spinner md-indeterminate v-if="!dancersLoaded" style="margin: auto;" />
       <!--<md-subheader class="md-inset">Dancers</md-subheader>-->
 
-      <md-list-item v-for="dancer in dancers" :key="dancer[idKey]" :class="{'md-primary': isFavorite(dancer)}">
-        <md-avatar class="md-avatar-icon">
-          <span>{{ dancer.number }}</span>
-        </md-avatar>
+      <dancer-list-item v-for="dancer in dancers" :key="dancer[idKey]" :dancer="dancer" />
 
-        <div class="md-list-text-container">
-          <span>{{ dancer.firstName }} {{ dancer.lastName }}</span>
-          <p>{{ dancer.level }} • {{ dancer.location }}</p>
-        </div>
-
-        <md-button @click="handleFavoriteToggle(dancer)" class="md-icon-button md-list-action">
-          <md-icon>{{ isFavorite(dancer) ? 'star' : 'star_border' }}</md-icon>
-        </md-button>
-      </md-list-item>
+      <md-spinner md-indeterminate v-if="!dancersLoaded" style="margin: auto;" />
     </md-list>
   </div>
 </template>
@@ -43,6 +31,7 @@
 <script>
 import FuzzySearch from 'fuzzy-search';
 import ArraySort from 'array-sort';
+import DancerListItem from '@/components/dancer-list-item';
 import {
   idKey,
   db,
@@ -62,7 +51,6 @@ export default {
   },
   firebase: {
     dancersRaw: db.child('competitionsData').child('idc0').child('dancers'),
-    favoritesRaw: db.child('users:favorites').child('idu0').child('dancers'),
   },
   computed: {
     dancers() {
@@ -79,24 +67,15 @@ export default {
 
       return filtered;
     },
-    favorites() {
-      return this.favoritesRaw;
-    },
-  },
-  methods: {
-    isFavorite(dancer) {
-      return this.favorites.find(favorite => favorite[idKey] === dancer[idKey]);
-    },
-    handleFavoriteToggle(dancer) {
-      const toggled = this.isFavorite(dancer) ? null : false;
-      return this.$firebaseRefs.favoritesRaw.child(dancer[idKey]).set(toggled);
-    },
   },
   created() {
     return this.$firebaseRefs.dancersRaw.once('value')
       .then(() => {
         this.dancersLoaded = true;
       });
+  },
+  components: {
+    DancerListItem,
   },
 };
 </script>
@@ -110,16 +89,6 @@ export default {
     .md-input-container {
       width: auto;
       flex: 1;
-    }
-  }
-  > .md-list {
-    .md-avatar {
-      &.md-avatar-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        color: #FFF;
-      }
     }
   }
 }

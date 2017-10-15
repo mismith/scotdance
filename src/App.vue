@@ -92,6 +92,17 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+.md-list {
+  .md-avatar {
+    &.md-avatar-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFF;
+    }
+  }
+}
+
 [class*="icon-"].md-icon {
   font-size: 20px;
 }
