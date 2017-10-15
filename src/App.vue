@@ -91,4 +91,8 @@ body {
   overflow: auto;
   -webkit-overflow-scrolling: touch;
 }
+
+[class*="icon-"].md-icon {
+  font-size: 20px;
+}
 </style>
