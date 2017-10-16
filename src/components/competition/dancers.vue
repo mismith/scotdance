@@ -19,9 +19,10 @@
       </md-button>-->
     </md-toolbar>
     <md-list class="md-double-line md-scroll">
-      <!--<md-subheader class="md-inset">Dancers</md-subheader>-->
 
-      <dancer-list-item v-for="dancer in dancers" :key="dancer[idKey]" :dancer="dancer" />
+      <div v-for="(dancer, i) in filteredDancers" :key="dancer[idKey]">
+        <dancer-list-item :dancer="dancer" />
+      </div>
 
       <md-spinner md-indeterminate v-if="!dancersLoaded" style="margin: auto;" />
     </md-list>
@@ -31,14 +32,17 @@
 <script>
 import FuzzySearch from 'fuzzy-search';
 import ArraySort from 'array-sort';
+import DancersGroupsMixin from '@/mixins/dancers-groups';
 import DancerListItem from '@/components/dancer-list-item';
 import {
   idKey,
-  db,
 } from '@/helpers/firebase';
 
 export default {
   name: 'competition-dancers',
+  mixins: [
+    DancersGroupsMixin,
+  ],
   data() {
     return {
       idKey,
@@ -49,18 +53,17 @@ export default {
       sortBy: undefined,
     };
   },
-  firebase: {
-    dancersRaw: db.child('competitionsData').child('idc0').child('dancers'),
-  },
   computed: {
-    dancers() {
-      const dancers = this.dancersRaw.map(dancer => ({
+    filteredDancers() {
+      const dancers = this.dancers.map(dancer => ({
         ...dancer,
         number: `${dancer.number}`, // stringify this so ArraySort doesn't fail for Number-type
       }));
 
       // filter by search term
-      const filtered = (this.filterBy ? new FuzzySearch(dancers, ['number', 'firstName', 'lastName', 'location', 'level']).search(this.filterBy) : dancers);
+      const filtered = this.filterBy
+        ? new FuzzySearch(dancers, ['number', 'firstName', 'lastName', 'location', '$group.$order']).search(this.filterBy)
+        : dancers;
 
       // sort by key
       if (this.sortBy) ArraySort(filtered, this.sortBy);

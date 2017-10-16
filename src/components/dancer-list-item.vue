@@ -6,7 +6,7 @@
 
     <div class="md-list-text-container">
       <span>{{ dancer.firstName }} {{ dancer.lastName }}</span>
-      <p>{{ dancer.$groupName }} • {{ dancer.location }}</p>
+      <p>{{ dancer.$group && dancer.$group.$name }} • {{ dancer.location }}</p>
     </div>
 
     <slot />
@@ -35,7 +35,6 @@ export default {
   },
   firebase: {
     favorites: db.child('users:favorites').child('idu0').child('dancers'),
-    groups: db.child('competitionsData').child('idc0').child('groups'),
   },
   methods: {
     isFavorite(dancer) {

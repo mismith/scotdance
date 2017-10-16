@@ -46,7 +46,7 @@
 </template>
 
 <script>
-import moment from 'moment-mini';
+import DancersGroupsMixin from '@/mixins/dancers-groups';
 import DancerListItem from '@/components/dancer-list-item';
 import ResultListItem from '@/components/result-list-item';
 import {
@@ -56,6 +56,9 @@ import {
 
 export default {
   name: 'competition-results',
+  mixins: [
+    DancersGroupsMixin,
+  ],
   data() {
     return {
       idKey,
@@ -65,20 +68,12 @@ export default {
   },
   firebase: {
     dances: db.child('competitionsData').child('idc0').child('dances'),
-    dancersRaw: db.child('competitionsData').child('idc0').child('dancers'),
-    groups: db.child('competitionsData').child('idc0').child('groups'),
     scoresRaw: {
       source: db.child('competitionsData').child('idc0').child('scores'),
       asObject: true,
     },
   },
   computed: {
-    dancers() {
-      return this.dancersRaw.map(dancer => ({
-        ...dancer,
-        $groupName: this.getGroupName(this.getDancerGroup(dancer)),
-      }));
-    },
     scores() {
       const scores = {};
       Object.entries(this.scoresRaw).forEach(([groupId, danceIds]) => {
@@ -150,17 +145,6 @@ export default {
     },
   },
   methods: {
-    getGroupName(group) {
-      return group ? `${group.level} ${group.min}${group.max !== group.min ? `-${group.max}` : ''}` : '';
-    },
-    getDancerGroup(dancer) {
-      const age = moment(/* TODO: Competition.date */).diff(moment(dancer.dob, 'YYYY-MM-DD'), 'years');
-      return this.groups.find((group) => {
-        const min = parseInt(group.min, 10);
-        const max = parseInt(group.max, 10);
-        return group.level === dancer.level && min <= age && age <= max;
-      });
-    },
     getWinner(groupId, danceId = undefined) {
       const group = this.scores[groupId];
       if (group) {
