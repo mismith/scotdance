@@ -7,11 +7,11 @@
       <span style="display: inline-block; width: 12px;" />
       <md-input-container>
         <md-select v-model="sortBy" placeholder="Sort dancers">
-          <md-option value="number">Number</md-option>
+          <md-option value="$group.$order">Age Group</md-option>
           <md-option value="firstName">First Name</md-option>
           <md-option value="lastName">Last Name</md-option>
           <md-option value="location">Location</md-option>
-          <md-option value="level">Level</md-option>
+          <md-option value="number">Number</md-option>
         </md-select>
       </md-input-container>
       <!--<md-button class="md-icon-button">
@@ -21,7 +21,9 @@
     <md-list class="md-double-line md-scroll">
 
       <div v-for="(dancer, i) in filteredDancers" :key="dancer[idKey]">
+        <md-subheader v-if="getSortCategory(dancer) !== getSortCategory(filteredDancers[i - 1])">{{ getSortCategory(dancer) || 'Unknown' }}</md-subheader>
         <dancer-list-item :dancer="dancer" />
+        <md-divider v-if="getSortCategory(dancer) !== getSortCategory(filteredDancers[i + 1])" />
       </div>
 
       <md-spinner md-indeterminate v-if="!loaded" style="margin: auto;" />
@@ -50,7 +52,7 @@ export default {
       loaded: false,
 
       filterBy: undefined,
-      sortBy: undefined,
+      sortBy: '$group.$order',
     };
   },
   computed: {
@@ -66,9 +68,30 @@ export default {
         : dancers;
 
       // sort by key
-      if (this.sortBy) ArraySort(filtered, this.sortBy);
+      if (this.sortBy) ArraySort(filtered, [this.sortBy, 'number']);
 
       return filtered;
+    },
+  },
+  methods: {
+    getSortCategory(dancer) {
+      if (!dancer) return undefined;
+
+      switch (this.sortBy) {
+        case 'number': {
+          return undefined;
+        }
+        case 'firstName':
+        case 'lastName': {
+          return dancer[this.sortBy][0];
+        }
+        case '$group.$order': {
+          return dancer.$group && dancer.$group.$name;
+        }
+        default: {
+          return dancer[this.sortBy];
+        }
+      }
     },
   },
   created() {
