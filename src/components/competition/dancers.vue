@@ -19,7 +19,6 @@
       </md-button>-->
     </md-toolbar>
     <md-list class="md-double-line md-scroll">
-
       <div v-for="(dancer, i) in filteredDancers" :key="dancer[idKey]">
         <md-subheader v-if="getSortCategory(dancer) !== getSortCategory(filteredDancers[i - 1])">{{ getSortCategory(dancer) || 'Unknown' }}</md-subheader>
         <dancer-list-item :dancer="dancer" />

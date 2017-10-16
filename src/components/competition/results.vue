@@ -26,6 +26,7 @@
           </div>
           <md-divider />
         </div>
+        <md-spinner md-indeterminate v-if="!loaded" style="margin: auto;" />
       </md-list>
     </md-board>
     <md-board class="md-scroll-frame">
@@ -62,6 +63,8 @@ export default {
   data() {
     return {
       idKey,
+
+      loaded: false,
 
       selected: undefined,
     };
@@ -159,6 +162,17 @@ export default {
       }
       return undefined;
     },
+  },
+  created() {
+    return Promise.all([
+      this.$firebaseRefs.dancersRaw.once('value'),
+      this.$firebaseRefs.groupsRaw.once('value'),
+      this.$firebaseRefs.dances.once('value'),
+      this.$firebaseRefs.scoresRaw.once('value'),
+    ])
+      .then(() => {
+        this.loaded = true;
+      });
   },
   components: {
     DancerListItem,
