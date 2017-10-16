@@ -24,7 +24,7 @@
         <dancer-list-item :dancer="dancer" />
       </div>
 
-      <md-spinner md-indeterminate v-if="!dancersLoaded" style="margin: auto;" />
+      <md-spinner md-indeterminate v-if="!loaded" style="margin: auto;" />
     </md-list>
   </div>
 </template>
@@ -47,7 +47,7 @@ export default {
     return {
       idKey,
 
-      dancersLoaded: false,
+      loaded: false,
 
       filterBy: undefined,
       sortBy: undefined,
@@ -72,9 +72,12 @@ export default {
     },
   },
   created() {
-    return this.$firebaseRefs.dancersRaw.once('value')
+    return Promise.all([
+      this.$firebaseRefs.dancersRaw.once('value'),
+      this.$firebaseRefs.groupsRaw.once('value'),
+    ])
       .then(() => {
-        this.dancersLoaded = true;
+        this.loaded = true;
       });
   },
   components: {
