@@ -1,6 +1,6 @@
 <template>
   <md-list-item>
-    <md-avatar class="md-avatar-icon" :class="{'md-primary': isFavorite(dancer)}">
+    <md-avatar class="md-avatar-icon" :class="{'md-accent': isFavorite(dancer)}">
       <span>{{ dancer.number }}</span>
     </md-avatar>
 
