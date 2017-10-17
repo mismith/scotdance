@@ -3,6 +3,7 @@ import Router from 'vue-router';
 import Competition from '@/components/competition';
 import CompetitionInfo from '@/components/competition/info';
 import CompetitionDancers from '@/components/competition/dancers';
+import CompetitionSchedule from '@/components/competition/schedule';
 import CompetitionResults from '@/components/competition/results';
 
 Vue.use(Router);
@@ -32,7 +33,7 @@ export default new Router({
         {
           path: 'schedule',
           name: 'competition.schedule',
-          // component: CompetitionSchedule,
+          component: CompetitionSchedule,
         },
         {
           path: 'results',
