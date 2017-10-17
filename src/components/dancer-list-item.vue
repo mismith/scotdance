@@ -1,6 +1,6 @@
 <template>
   <md-list-item>
-    <md-avatar class="md-avatar-icon" :class="{'md-accent': isFavorite(dancer)}">
+    <md-avatar class="md-avatar-icon" :class="{'md-accent': dancer.$favorite}">
       <span>{{ dancer.number }}</span>
     </md-avatar>
 
@@ -12,7 +12,7 @@
     <slot />
 
     <md-button @click="handleFavoriteToggle(dancer)" class="md-icon-button md-list-action">
-      <md-icon>{{ isFavorite(dancer) ? 'star' : 'star_border' }}</md-icon>
+      <md-icon :class="{'md-accent': dancer.$favorite}">{{ dancer.$favorite ? 'star' : 'star_border' }}</md-icon>
     </md-button>
   </md-list-item>
 </template>
@@ -28,20 +28,12 @@ export default {
   props: {
     dancer: Object,
   },
-  data() {
-    return {
-      idKey,
-    };
-  },
   firebase: {
     favorites: db.child('users:favorites').child('idu0').child('dancers'),
   },
   methods: {
-    isFavorite(dancer) {
-      return this.favorites.find(favorite => favorite[idKey] === dancer[idKey]);
-    },
     handleFavoriteToggle(dancer) {
-      const toggled = this.isFavorite(dancer) ? null : false;
+      const toggled = dancer.$favorite ? null : true;
       return this.$firebaseRefs.favorites.child(dancer[idKey]).set(toggled);
     },
   },

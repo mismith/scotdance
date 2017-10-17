@@ -1,5 +1,6 @@
 import moment from 'moment-mini';
 import {
+  idKey,
   db,
 } from '@/helpers/firebase';
 
@@ -7,12 +8,14 @@ export default {
   firebase: {
     dancersRaw: db.child('competitionsData').child('idc0').child('dancers'),
     groupsRaw: db.child('competitionsData').child('idc0').child('groups'),
+    favorites: db.child('users:favorites').child('idu0').child('dancers'),
   },
   computed: {
     dancers() {
       return this.dancersRaw.map(dancer => ({
         ...dancer,
         $group: this.getDancerGroup(dancer),
+        $favorite: this.isFavorite(dancer),
       }));
     },
     groups() {
@@ -34,6 +37,12 @@ export default {
     },
     getGroupName(group) {
       return group ? `${group.level} ${group.min}${group.max !== group.min ? `-${group.max}` : ''}` : '';
+    },
+    isFavorite(dancer) {
+      return this.favorites.find(favorite => favorite[idKey] === dancer[idKey]);
+    },
+    hasFavorites(dancers) {
+      return dancers.some(dancer => dancer.$favorite);
     },
   },
 };

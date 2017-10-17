@@ -42,7 +42,7 @@
 <script>
 import FuzzySearch from 'fuzzy-search';
 import ArraySort from 'array-sort';
-import DancersGroupsMixin from '@/mixins/dancers-groups';
+import DancersGroupsFavoritesMixin from '@/mixins/dancers-groups-favorites';
 import DancerListItem from '@/components/dancer-list-item';
 import {
   idKey,
@@ -51,7 +51,7 @@ import {
 export default {
   name: 'competition-dancers',
   mixins: [
-    DancersGroupsMixin,
+    DancersGroupsFavoritesMixin,
   ],
   data() {
     return {

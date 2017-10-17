@@ -1,6 +1,6 @@
 <template>
   <md-list-item @click="$emit('click', $event)">
-    <md-avatar class="md-avatar-icon" :class="{'md-primary': winner}">
+    <md-avatar class="md-avatar-icon" :class="{'md-primary': winner, 'md-accent': winner && winner.$favorite}">
       <span v-if="winner">{{ winner.number }}</span>
       <small v-else>TBD</small>
     </md-avatar>

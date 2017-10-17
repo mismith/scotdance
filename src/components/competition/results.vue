@@ -53,7 +53,7 @@
 </template>
 
 <script>
-import DancersGroupsMixin from '@/mixins/dancers-groups';
+import DancersGroupsFavoritesMixin from '@/mixins/dancers-groups-favorites';
 import DancerListItem from '@/components/dancer-list-item';
 import ResultListItem from '@/components/result-list-item';
 import {
@@ -64,7 +64,7 @@ import {
 export default {
   name: 'competition-results',
   mixins: [
-    DancersGroupsMixin,
+    DancersGroupsFavoritesMixin,
   ],
   data() {
     return {
