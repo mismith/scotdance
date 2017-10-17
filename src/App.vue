@@ -121,7 +121,32 @@ body {
 
     .md-list-item-container {
       .md-subheader {
+        flex-grow: 1;
         padding-left: 0;
+
+        .md-icon {
+          font-size: 14px;
+          margin-left: 4px;
+        }
+        ~ .md-list-expand-indicator {
+          flex: 0;
+        }
+      }
+    }
+    .badge {
+      line-height: 1.2;
+      background-color: rgba(0,0,0,.2);
+      color: #FFF;
+      font-size: .85em;
+      padding: 2px 6px;
+      margin-right: 12px;
+      border-radius: 10px;
+      opacity: 1;
+      transition: opacity 300ms;
+    }
+    &:not(.md-active) {
+      .badge {
+        opacity: 0;
       }
     }
   }

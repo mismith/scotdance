@@ -25,7 +25,10 @@
         md-expand-multiple
         :class="{'md-active': filterBy}"
       >
-        <md-subheader>{{ bucket[idKey] }}</md-subheader>
+        <md-subheader>
+          {{ bucket[idKey] }}
+          <md-icon v-if="hasFavorites(bucket.dancers)" class="md-accent">star</md-icon>
+        </md-subheader>
         <span class="badge">{{ bucket.dancers.length }}</span>
         <md-list-expand>
           <md-list class="md-double-line">
@@ -136,31 +139,6 @@ export default {
     .md-input-container {
       width: auto;
       flex: 1;
-    }
-  }
-  .md-list-item {
-    .badge {
-      line-height: 1.2;
-      background-color: rgba(0,0,0,.2);
-      color: #FFF;
-      font-size: .85em;
-      padding: 2px 6px;
-      margin-right: 12px;
-      border-radius: 10px;
-      opacity: 1;
-      transition: opacity 300ms;
-    }
-    .md-subheader {
-      flex-grow: 1;
-
-      ~ .md-list-expand-indicator {
-        flex: 0;
-      }
-    }
-    &:not(.md-active) {
-      .badge {
-        opacity: 0;
-      }
     }
   }
 }

@@ -7,7 +7,10 @@
           :key="group[idKey]"
           md-expand-multiple
         >
-          <md-subheader>{{ getGroupName(group) }}</md-subheader>
+          <md-subheader>
+            {{ getGroupName(group) }}
+            <md-icon v-if="hasFavorites(getDancers(group))" class="md-accent">star</md-icon>
+          </md-subheader>
           <md-list-expand>
             <md-list class="md-double-line">
               <result-list-item
@@ -19,7 +22,7 @@
               >
                 {{ dance.name }}
               </result-list-item>
-              <div v-if="group.level !== 'Primary' && dances.length">
+              <div v-if="group.level !== 'Primary'">
                 <md-divider class="md-inset" />
                 <result-list-item
                   :winner="getWinner(group[idKey])"
@@ -167,6 +170,13 @@ export default {
         return this.dancers.find(d => d[idKey] === group.winner.dancerId);
       }
       return undefined;
+    },
+    getDancers(group) {
+      // TODO: make this check performant
+      return this.dancers.filter((dancer) => {
+        const dancerGroup = this.getDancerGroup(dancer);
+        return dancerGroup && dancerGroup[idKey] === group[idKey];
+      });
     },
   },
   created() {
