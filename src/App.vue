@@ -92,7 +92,39 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+.md-boards {
+  &.md-swiper {
+    .md-boards-content {
+      flex: 1;
+
+      .md-board {
+        padding: 0;
+
+        &.md-scroll-frame {
+          height: auto;
+          bottom: 0;
+        }
+        .md-scroll {
+          bottom: 0;
+        }
+      }
+    }
+    .md-boards-navigation {
+      display: none;
+    }
+  }
+}
+
 .md-list {
+  > .md-list-item {
+    flex-shrink: 0;
+
+    .md-list-item-container {
+      .md-subheader {
+        padding-left: 0;
+      }
+    }
+  }
   .md-avatar {
     &.md-avatar-icon {
       display: inline-flex;

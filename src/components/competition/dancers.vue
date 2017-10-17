@@ -18,12 +18,21 @@
         <md-icon>more_vert</md-icon>
       </md-button>-->
     </md-toolbar>
-    <md-list class="md-double-line md-scroll">
-      <div v-for="(dancer, i) in filteredDancers" :key="dancer[idKey]">
-        <md-subheader v-if="getSortCategory(dancer) !== getSortCategory(filteredDancers[i - 1])">{{ getSortCategory(dancer) || 'Unknown' }}</md-subheader>
-        <dancer-list-item :dancer="dancer" />
-        <md-divider v-if="getSortCategory(dancer) !== getSortCategory(filteredDancers[i + 1])" />
-      </div>
+    <md-list class="md-scroll">
+      <md-list-item
+        v-for="bucket in bucketedDancers"
+        :key="bucket[idKey]"
+        md-expand-multiple
+        :class="{'md-active': filterBy}"
+      >
+        <md-subheader>{{ bucket[idKey] }}</md-subheader>
+        <span class="badge">{{ bucket.dancers.length }}</span>
+        <md-list-expand>
+          <md-list class="md-double-line">
+            <dancer-list-item v-for="dancer in bucket.dancers" :dancer="dancer" v-show="1" />
+          </md-list>
+        </md-list-expand>
+      </md-list-item>
 
       <md-spinner md-indeterminate v-if="!loaded" style="margin: auto;" />
     </md-list>
@@ -63,13 +72,26 @@ export default {
 
       // filter by search term
       const filtered = this.filterBy
-        ? new FuzzySearch(dancers, ['number', 'firstName', 'lastName', 'location', '$group.$order']).search(this.filterBy)
+        ? new FuzzySearch(dancers, ['number', 'firstName', 'lastName', 'location', '$group.$name']).search(this.filterBy)
         : dancers;
 
       // sort by key
       if (this.sortBy) ArraySort(filtered, [this.sortBy, 'number']);
 
       return filtered;
+    },
+    bucketedDancers() {
+      const buckets = {};
+      this.filteredDancers.forEach((dancer) => {
+        const bucket = this.getSortCategory(dancer);
+        buckets[bucket] = buckets[bucket] || [];
+        buckets[bucket].push(dancer);
+      });
+      return Object.entries(buckets)
+        .map(([bucket, dancers]) => ({
+          [idKey]: bucket,
+          dancers,
+        }));
     },
   },
   methods: {
@@ -111,12 +133,34 @@ export default {
 <style lang="scss">
 .competition-dancers {
   > .md-toolbar {
-    // padding-left: 16px;
-    // padding-right: 16px;
-
     .md-input-container {
       width: auto;
       flex: 1;
+    }
+  }
+  .md-list-item {
+    .badge {
+      line-height: 1.2;
+      background-color: rgba(0,0,0,.2);
+      color: #FFF;
+      font-size: .85em;
+      padding: 2px 6px;
+      margin-right: 12px;
+      border-radius: 10px;
+      opacity: 1;
+      transition: opacity 300ms;
+    }
+    .md-subheader {
+      flex-grow: 1;
+
+      ~ .md-list-expand-indicator {
+        flex: 0;
+      }
+    }
+    &:not(.md-active) {
+      .badge {
+        opacity: 0;
+      }
     }
   }
 }

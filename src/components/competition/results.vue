@@ -1,31 +1,37 @@
 <template>
-  <md-boards ref="boards" :md-swipeable="!!selected" class="competition-results md-scroll-frame">
+  <md-boards ref="boards" :md-swipeable="!!selected" class="competition-results md-swiper md-scroll-frame">
     <md-board class="md-scroll-frame">
       <md-list class="md-scroll">
-        <div v-for="group in groups" :key="group[idKey]">
+        <md-list-item
+          v-for="group in groups"
+          :key="group[idKey]"
+          md-expand-multiple
+        >
           <md-subheader>{{ getGroupName(group) }}</md-subheader>
-
-          <result-list-item
-            v-for="dance in dances"
-            :key="dance[idKey]"
-            v-if="dance[group.level]"
-            :winner="getWinner(group[idKey], dance[idKey])"
-            @click="selected = {group, dance}"
-          >
-            {{ dance.name }}
-          </result-list-item>
-          <div v-if="group.level !== 'Primary'">
-            <md-divider class="md-inset" />
-            <result-list-item
-              :winner="getWinner(group[idKey])"
-              @click="selected = {group}"
-            >
-              Overall
-              <md-icon md-iconset="icon-trophy" slot="icon" />
-            </result-list-item>
-          </div>
-          <md-divider />
-        </div>
+          <md-list-expand>
+            <md-list class="md-double-line">
+              <result-list-item
+                v-for="dance in dances"
+                :key="dance[idKey]"
+                v-if="dance[group.level]"
+                :winner="getWinner(group[idKey], dance[idKey])"
+                @click="selected = {group, dance}"
+              >
+                {{ dance.name }}
+              </result-list-item>
+              <div v-if="group.level !== 'Primary' && dances.length">
+                <md-divider class="md-inset" />
+                <result-list-item
+                  :winner="getWinner(group[idKey])"
+                  @click="selected = {group}"
+                >
+                  Overall
+                  <md-icon md-iconset="icon-trophy" slot="icon" />
+                </result-list-item>
+              </div>
+            </md-list>
+          </md-list-expand>
+        </md-list-item>
         <md-spinner md-indeterminate v-if="!loaded" style="margin: auto;" />
       </md-list>
     </md-board>
@@ -182,25 +188,14 @@ export default {
 </script>
 
 <style lang="scss">
-.competition-results {
-  &.md-boards {
-    .md-boards-content {
-      flex: 1;
+.md-list {
+  > div {
+    position: relative;
 
-      .md-board {
-        padding: 0;
-
-        &.md-scroll-frame {
-          height: auto;
-          bottom: 0;
-        }
-        .md-scroll {
-          bottom: 0;
-        }
-      }
-    }
-    .md-boards-navigation {
-      display: none;
+    > .md-divider {
+      bottom: auto;
+      top: 0;
+      z-index: 3;
     }
   }
 }
