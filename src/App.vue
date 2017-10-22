@@ -25,7 +25,11 @@
 
       <md-list>
         <md-subheader>Competitions</md-subheader>
-        <md-list-item v-for="competition in competitions" :key="competition[idKey]" :href="`/competitions/${competition[idKey]}`" @click="$refs.sidebar.toggle()">
+        <md-list-item
+          v-for="competition in competitions"
+          :key="competition[idKey]"
+          @click="$router.push(`/competitions/${competition[idKey]}`); $refs.sidebar.toggle();"
+        >
           <md-icon>event</md-icon>
           <span>{{ competition.name }}</span>
         </md-list-item>
