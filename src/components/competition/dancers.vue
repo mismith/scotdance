@@ -32,7 +32,7 @@
         <span class="badge">{{ bucket.dancers.length }}</span>
         <md-list-expand>
           <md-list class="md-double-line">
-            <dancer-list-item v-for="dancer in bucket.dancers" :dancer="dancer" v-show="1" />
+            <dancer-list-item v-for="dancer in bucket.dancers" :key="dancer[idKey]" :dancer="dancer" v-show="1" />
           </md-list>
         </md-list-expand>
       </md-list-item>
