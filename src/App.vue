@@ -1,29 +1,35 @@
 <template>
   <div id="app" class="md-scroll-frame md-scroll">
 
-    <md-sidenav md-swipeable class="md-left md-fixed" ref="sidebar">
+    <md-sidenav ref="sidebar" md-swipeable @close="toggleAccount(false)" class="md-left md-fixed">
       <md-toolbar class="md-account-header">
-        <md-list class="md-transparent">
+        <md-button v-if="!me" @click="$refs.login.open()" class="md-raised" style="margin-left: auto; margin-right: auto;">
+          <span>Login</span>
+        </md-button>
+        <md-list v-else class="md-transparent">
           <md-list-item>
-            <md-avatar class="md-large">
-              <img src="https://placeimg.com/64/64/people/8" alt="People" />
-            </md-avatar>
+            <md-avatar class="md-large" :style="{background: `url(${me.photoURL}) center center / cover no-repeat`}" />
           </md-list-item>
-
-          <md-list-item>
+          <md-list-item @click="toggleAccount()" :class="{toggled: accountToggled}">
             <div class="md-list-text-container">
-              <span>John Doe</span>
-              <span>johndoe@email.com</span>
+              <span>{{ me.displayName }}</span>
+              <span>{{ me.email }}</span>
             </div>
-
-            <md-button class="md-icon-button md-list-action">
+            <md-button class="md-icon-button md-list-action" @click="toggleAccount()">
               <md-icon>arrow_drop_down</md-icon>
             </md-button>
           </md-list-item>
         </md-list>
       </md-toolbar>
 
-      <md-list>
+      <md-list v-if="accountToggled" class="animate-in">
+        <md-subheader>Account</md-subheader>
+        <md-list-item @click="logout().then(toggleAccount)">
+          <md-icon>exit_to_app</md-icon>
+          <span>Logout</span>
+        </md-list-item>
+      </md-list>
+      <md-list v-else>
         <md-subheader>Competitions</md-subheader>
         <md-list-item
           v-for="competition in competitions"
@@ -56,10 +62,53 @@
       <router-view />
     </main>
 
+    <md-dialog ref="login">
+      <md-swiper ref="loginSwiper" class="md-swiper-login">
+        <md-board>
+          <form @submit.prevent="login(credentials)">
+            <md-input-container>
+              <label>Email</label>
+              <md-input type="email" name="email" v-model="credentials.email" required autofocus />
+            </md-input-container>
+            <md-input-container md-has-password>
+              <label>Password</label>
+              <md-input type="password" name="password" v-model="credentials.password" required />
+            </md-input-container>
+
+            <footer>
+              <md-button type="submit" class="md-primary md-raised">Login</md-button>
+
+              <md-button @click="$refs.loginSwiper.next()" class="ml-auto">Forgot?</md-button>
+            </footer>
+          </form>
+        </md-board>
+        <md-board>
+          <form @submit.prevent="forgot(credentials)">
+            <header>
+              <p>We can send you a link to reset your password.</p>
+              <br />
+            </header>
+
+            <md-input-container>
+              <label>Email</label>
+              <md-input type="email" name="email" v-model="credentials.email" required autofocus />
+            </md-input-container>
+
+            <footer>
+              <md-button type="submit" class="md-primary md-raised">Send</md-button>
+
+              <md-button @click="$refs.loginSwiper.prev()">Cancel</md-button>
+            </footer>
+          </form>
+        </md-board>
+      </md-swiper>
+    </md-dialog>
+
   </div>
 </template>
 
 <script>
+import FirebaseAuthMixin from '@/mixins/firebase/auth';
 import {
   idKey,
   db,
@@ -67,13 +116,22 @@ import {
 
 export default {
   name: 'app',
+  mixins: [
+    FirebaseAuthMixin,
+  ],
   data() {
     return {
       idKey,
+      accountToggled: false,
     };
   },
   firebase: {
     competitions: db.child('competitions'),
+  },
+  methods: {
+    toggleAccount(accountToggled = undefined) {
+      this.accountToggled = accountToggled !== undefined ? accountToggled : !this.accountToggled;
+    },
   },
 };
 </script>
@@ -96,25 +154,40 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-.md-boards {
-  &.md-swiper {
-    .md-boards-content {
-      flex: 1;
-
-      .md-board {
-        padding: 0;
-
-        &.md-scroll-frame {
-          height: auto;
-          bottom: 0;
+.md-toolbar {
+  &.md-account-header {
+    &:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url(/static/touchicon.svg) center center / cover;
+      opacity: .25;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .md-list-item {
+      .md-list-action {
+        .md-icon {
+          transform: rotate(0);
+          transition: transform 300ms;
         }
-        .md-scroll {
-          bottom: 0;
+      }
+      &.toggled {
+        .md-list-action {
+          .md-icon {
+            transform: rotate(180deg);
+          }
         }
       }
     }
-    .md-boards-navigation {
-      display: none;
+    .md-list-item-container,
+    .md-button-ghost {
+      &:hover:not([disabled]) {
+        background-color: transparent !important;
+      }
     }
   }
 }
@@ -164,7 +237,39 @@ body {
   }
 }
 
+@keyframes animate-in {
+  0% { opacity: 0; transform: translate3d(0, -50%, 0); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.animate-in {
+  > * {
+    transform-origin: center top;
+    animation: animate-in 300ms forwards;
+  }
+}
+
 [class*="icon-"].md-icon {
   font-size: 20px;
+  padding-left: 2px;
+}
+
+.md-swiper-login {
+  form {
+    padding: 12px;
+
+    > footer {
+      display: flex;
+      justify-content: space-between;
+
+      .md-button {
+        &:first-child {
+          margin-left: 0;
+        }
+        &:last-child {
+          margin-right: 0;
+        }
+      }
+    }
+  }
 }
 </style>
