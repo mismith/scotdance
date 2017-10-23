@@ -1,5 +1,5 @@
 <template>
-  <md-boards ref="boards" :md-swipeable="!!selected" class="competition-schedule md-swiper md-scroll-frame">
+  <md-swiper ref="boards" :md-swipeable="!!selected" class="competition-schedule md-scroll-frame">
     <md-board class="md-scroll-frame">
       <md-list class="md-scroll">
         <div v-for="dance in dances" :key="dance[idKey]">
@@ -37,7 +37,7 @@
         <dancer-list-item v-for="(dancer, i) in selectedDancers" :key="dancer[idKey]" :dancer="dancer" />
       </md-list>
     </md-board>
-  </md-boards>
+  </md-swiper>
 </template>
 
 <script>
@@ -80,9 +80,9 @@ export default {
   watch: {
     selected(selected) {
       if (selected) {
-        this.$refs.boards.moveNextBoard();
+        this.$refs.boards.next();
       } else {
-        this.$refs.boards.movePrevBoard();
+        this.$refs.boards.prev();
       }
     },
   },

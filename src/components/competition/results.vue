@@ -1,5 +1,5 @@
 <template>
-  <md-boards ref="boards" :md-swipeable="!!selected" class="competition-results md-swiper md-scroll-frame">
+  <md-swiper ref="boards" :md-swipeable="!!selected" class="competition-results md-scroll-frame">
     <md-board class="md-scroll-frame">
       <md-list class="md-scroll">
         <md-list-item
@@ -52,7 +52,7 @@
         <md-subheader v-if="!selectedScores.length">Results to be determined.</md-subheader>
       </md-list>
     </md-board>
-  </md-boards>
+  </md-swiper>
 </template>
 
 <script>
@@ -150,9 +150,9 @@ export default {
   watch: {
     selected(selected) {
       if (selected) {
-        this.$refs.boards.moveNextBoard();
+        this.$refs.boards.next();
       } else {
-        this.$refs.boards.movePrevBoard();
+        this.$refs.boards.prev();
       }
     },
   },
