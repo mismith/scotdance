@@ -9,10 +9,10 @@
         >
           <md-subheader>
             {{ getGroupName(group) }}
-            <md-icon v-if="hasFavorites(getDancers(group))" class="md-accent">star</md-icon>
+            <md-icon v-if="hasFavorites(getGroupDancers(group))" class="md-accent">star</md-icon>
           </md-subheader>
           <md-list-expand>
-            <md-list class="md-double-line">
+            <md-list>
               <result-list-item
                 v-for="dance in dances"
                 :key="dance[idKey]"
@@ -61,7 +61,6 @@ import DancerListItem from '@/components/dancer-list-item';
 import ResultListItem from '@/components/result-list-item';
 import {
   idKey,
-  db,
 } from '@/helpers/firebase';
 
 export default {
@@ -78,12 +77,19 @@ export default {
       selected: undefined,
     };
   },
-  firebase: {
-    dances: db.child('competitionsData').child('idc0').child('dances'),
-    scoresRaw: {
-      source: db.child('competitionsData').child('idc0').child('scores'),
-      asObject: true,
-    },
+  firebase() {
+    return {
+      dances: this.competitionDataRef.child('dances'),
+      scoresRaw: {
+        source: this.competitionDataRef.child('scores'),
+        asObject: true,
+      },
+
+      // from DancersGroupsFavoritesMixin
+      dancersRaw: this.competitionDataRef.child('dancers'),
+      groupsRaw: this.competitionDataRef.child('groups'),
+      favorites: this.userFavoritesRef.child('dancers'),
+    };
   },
   computed: {
     scores() {
@@ -170,13 +176,6 @@ export default {
         return this.dancers.find(d => d[idKey] === group.winner.dancerId);
       }
       return undefined;
-    },
-    getDancers(group) {
-      // TODO: make this check performant
-      return this.dancers.filter((dancer) => {
-        const dancerGroup = this.getDancerGroup(dancer);
-        return dancerGroup && dancerGroup[idKey] === group[idKey];
-      });
     },
   },
   created() {

@@ -19,6 +19,7 @@ export default new Router({
       path: '/competitions/:competitionId',
       // name: 'competition',
       component: Competition,
+      props: true,
       children: [
         {
           path: '',

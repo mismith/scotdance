@@ -8,23 +8,21 @@
 </template>
 
 <script>
-import {
-  idKey,
-  db,
-} from '@/helpers/firebase';
-
 export default {
   name: 'competition-info',
-  data() {
-    return {
-      idKey,
-    };
-  },
-  firebase: {
-    competition: {
-      source: db.child('competitions').child('idc0'),
-      asObject: true,
+  props: {
+    competitionRef: {
+      type: Object,
+      required: true,
     },
+  },
+  firebase() {
+    return {
+      competition: {
+        source: this.competitionRef,
+        asObject: true,
+      },
+    };
   },
 };
 </script>

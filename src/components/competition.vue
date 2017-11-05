@@ -1,8 +1,11 @@
 <template>
   <div class="competition md-scroll-frame">
-
     <div class="md-scroll">
-      <router-view />
+      <router-view
+        :competition-ref="competitionRef"
+        :competition-data-ref="competitionDataRef"
+        :user-favorites-ref="userFavoritesRef"
+      />
     </div>
 
     <md-bottom-bar>
@@ -39,8 +42,22 @@
 </template>
 
 <script>
+import {
+  db,
+} from '@/helpers/firebase';
+
 export default {
   name: 'competition',
+  props: {
+    competitionId: String,
+  },
+  data() {
+    return {
+      competitionRef: db.child('competitions').child(this.competitionId),
+      competitionDataRef: db.child('competitionsData').child(this.competitionId),
+      userFavoritesRef: db.child('users:favorites').child('idu0'),
+    };
+  },
 };
 </script>
 

@@ -1,15 +1,27 @@
 import moment from 'moment-mini';
 import {
   idKey,
-  db,
 } from '@/helpers/firebase';
 
 export default {
-  firebase: {
-    dancersRaw: db.child('competitionsData').child('idc0').child('dancers'),
-    groupsRaw: db.child('competitionsData').child('idc0').child('groups'),
-    favorites: db.child('users:favorites').child('idu0').child('dancers'),
+  props: {
+    competitionDataRef: {
+      type: Object,
+      required: true,
+    },
+    userFavoritesRef: {
+      type: Object,
+      required: true,
+    },
   },
+  // // TODO: this doesn't seem to bubble up, so needs to be manually copied
+  // firebase() {
+  //   return {
+  //     dancersRaw: this.competitionDataRef.child('dancers'),
+  //     groupsRaw: this.competitionDataRef.child('groups'),
+  //     favorites: this.userFavoritesRef.child('dancers'),
+  //   };
+  // },
   computed: {
     dancers() {
       return this.dancersRaw.map(dancer => ({
@@ -27,6 +39,13 @@ export default {
     },
   },
   methods: {
+    getGroupDancers(group) {
+      // TODO: make this check performant
+      return this.dancers.filter((dancer) => {
+        const dancerGroup = this.getDancerGroup(dancer);
+        return dancerGroup && dancerGroup[idKey] === group[idKey];
+      });
+    },
     getDancerGroup(dancer) {
       const age = moment(/* TODO: Competition.date */).diff(moment(dancer.dob, 'YYYY-MM-DD'), 'years');
       return this.groups.find((group) => {

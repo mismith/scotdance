@@ -14,9 +14,15 @@
           <md-option value="number">Number</md-option>
         </md-select>
       </md-input-container>
-      <!--<md-button class="md-icon-button">
-        <md-icon>more_vert</md-icon>
-      </md-button>-->
+      <!--<md-menu md-direction="bottom left">
+        <md-button md-menu-trigger class="md-icon-button" style="margin-left: 12px; margin-right: 0;">
+          <md-icon>more_vert</md-icon>
+        </md-button>
+        <md-menu-content>
+          <md-menu-item>Expand All</md-menu-item>
+          <md-menu-item>Collapse All</md-menu-item>
+        </md-menu-content>
+      </md-menu>-->
     </md-toolbar>
     <md-list class="md-scroll">
       <md-list-item
@@ -63,7 +69,15 @@ export default {
       loaded: false,
 
       filterBy: undefined,
-      sortBy: '$group.$order',
+      sortBy: 'firstName',
+    };
+  },
+  firebase() {
+    return {
+      // from DancersGroupsFavoritesMixin
+      dancersRaw: this.competitionDataRef.child('dancers'),
+      groupsRaw: this.competitionDataRef.child('groups'),
+      favorites: this.userFavoritesRef.child('dancers'),
     };
   },
   computed: {
