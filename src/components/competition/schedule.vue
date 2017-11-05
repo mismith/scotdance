@@ -1,30 +1,48 @@
 <template>
   <md-swiper ref="boards" :md-swipeable="!!selected" class="competition-schedule md-scroll-frame">
-    <md-board class="md-scroll-frame">
-      <md-list class="md-scroll">
-        <div v-for="dance in dances" :key="dance[idKey]">
-          <md-subheader>{{ dance.name }}</md-subheader>
+    <md-board>
+      <md-tabs md-fixed :md-dynamic-height="false">
+        <md-tab md-label="Morning" style="padding: 0;">
+          <div class="md-scroll-frame">
+            <md-list class="md-scroll">
+              <md-list-item
+                v-for="dance in dances"
+                :key="dance[idKey]"
+                md-expand-multiple
+              >
+                <md-subheader>
+                  {{ dance.name }}
+                </md-subheader>
+                <md-list-expand>
+                  <md-list class="md-double-line">
+                    <md-list-item
+                      v-for="group in groups"
+                      :key="group[idKey]"
+                      v-if="dance[group.level]"
+                      @click="selected = {group, dance}"
+                    >
+                      <md-avatar class="md-avatar-icon">
+                        <span>{{ getPlatform(dance, group).number }}</span>
+                      </md-avatar>
 
-          <md-list-item
-            v-for="group in groups"
-            :key="group[idKey]"
-            v-if="dance[group.level]"
-            @click="selected = {group, dance}"
-          >
-            <md-avatar class="md-avatar-icon">
-              <span>{{ group.number }}</span>
-            </md-avatar>
+                      <div class="md-list-text-container">
+                        <span>{{ getGroupName(group) }}</span>
+                        <p>Judge Name</p>
+                      </div>
 
-            <div class="md-list-text-container">
-              <span>{{ getGroupName(group) }}</span>
-            </div>
-
-            <md-icon>chevron_right</md-icon>
-          </md-list-item>
-          <md-divider />
-        </div>
-        <md-spinner md-indeterminate v-if="!loaded" style="margin: auto;" />
-      </md-list>
+                      <md-icon>chevron_right</md-icon>
+                    </md-list-item>
+                  </md-list>
+                </md-list-expand>
+              </md-list-item>
+              <md-spinner md-indeterminate v-if="!loaded" style="margin: auto;" />
+            </md-list>
+          </div>
+        </md-tab>
+        <md-tab md-label="Afternoon">
+          TBD
+        </md-tab>
+      </md-tabs>
     </md-board>
     <md-board class="md-scroll-frame">
       <md-toolbar class="md-dense">
@@ -45,7 +63,6 @@ import DancersGroupsFavoritesMixin from '@/mixins/dancers-groups-favorites';
 import DancerListItem from '@/components/dancer-list-item';
 import {
   idKey,
-  db,
 } from '@/helpers/firebase';
 
 export default {
@@ -62,9 +79,16 @@ export default {
       selected: undefined,
     };
   },
-  firebase: {
-    dances: db.child('competitionsData').child('idc0').child('dances'),
-    platforms: db.child('competitionsData').child('idc0').child('platforms'),
+  firebase() {
+    return {
+      dances: this.competitionDataRef.child('dances'),
+      platforms: this.competitionDataRef.child('platforms'),
+
+      // from DancersGroupsFavoritesMixin
+      dancersRaw: this.competitionDataRef.child('dancers'),
+      groupsRaw: this.competitionDataRef.child('groups'),
+      favorites: this.userFavoritesRef.child('dancers'),
+    };
   },
   computed: {
     selectedDancers() {
@@ -84,6 +108,13 @@ export default {
       } else {
         this.$refs.boards.prev();
       }
+    },
+  },
+  methods: {
+    getPlatform() {
+      return {
+        number: Math.ceil(Math.random() * 3),
+      };
     },
   },
   created() {
