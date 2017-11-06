@@ -77,6 +77,7 @@ export default {
       // from DancersGroupsFavoritesMixin
       dancersRaw: this.competitionDataRef.child('dancers'),
       groupsRaw: this.competitionDataRef.child('groups'),
+      levels: this.competitionDataRef.child('levels'),
       favorites: this.userFavoritesRef.child('dancers'),
     };
   },

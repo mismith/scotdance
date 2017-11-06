@@ -19,6 +19,7 @@ export default {
   //   return {
   //     dancersRaw: this.competitionDataRef.child('dancers'),
   //     groupsRaw: this.competitionDataRef.child('groups'),
+  //     levels: this.competitionDataRef.child('levels'),
   //     favorites: this.userFavoritesRef.child('dancers'),
   //   };
   // },
@@ -51,11 +52,15 @@ export default {
       return this.groups.find((group) => {
         const min = parseInt(group.min, 10);
         const max = parseInt(group.max, 10);
-        return group.level === dancer.level && min <= age && age <= max;
+        return dancer.levelId === group.levelId && min <= age && age <= max;
       });
     },
+    getLevel(levelId) {
+      return this.levels.find(level => level[idKey] === levelId);
+    },
     getGroupName(group) {
-      return group ? `${group.level} ${group.min}${group.max !== group.min ? `-${group.max}` : ''}` : '';
+      const level = this.getLevel(group.levelId);
+      return group ? `${level ? level.name : ''} ${group.min}${group.max !== group.min ? `-${group.max}` : ''}` : '';
     },
     isFavorite(dancer) {
       return this.favorites.find(favorite => favorite[idKey] === dancer[idKey]);

@@ -18,7 +18,7 @@
                     <md-list-item
                       v-for="group in groups"
                       :key="group[idKey]"
-                      v-if="dance[group.level]"
+                      v-if="dance.levelIds && dance.levelIds[group.levelId]"
                       @click="selected = {group, dance}"
                     >
                       <md-avatar class="md-avatar-icon">
@@ -87,6 +87,7 @@ export default {
       // from DancersGroupsFavoritesMixin
       dancersRaw: this.competitionDataRef.child('dancers'),
       groupsRaw: this.competitionDataRef.child('groups'),
+      levels: this.competitionDataRef.child('levels'),
       favorites: this.userFavoritesRef.child('dancers'),
     };
   },

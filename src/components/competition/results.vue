@@ -16,13 +16,13 @@
               <result-list-item
                 v-for="dance in dances"
                 :key="dance[idKey]"
-                v-if="dance[group.level]"
+                v-if="dance.levelIds && dance.levelIds[group.levelId]"
                 :winner="getWinner(group[idKey], dance[idKey])"
                 @click="selected = {group, dance}"
               >
                 {{ dance.name }}
               </result-list-item>
-              <div v-if="group.level !== 'Primary'">
+              <div v-if="group.levelId !== '-K0Iom30phJzv3oSaHsn'">
                 <md-divider class="md-inset" />
                 <result-list-item
                   :winner="getWinner(group[idKey])"
@@ -88,6 +88,7 @@ export default {
       // from DancersGroupsFavoritesMixin
       dancersRaw: this.competitionDataRef.child('dancers'),
       groupsRaw: this.competitionDataRef.child('groups'),
+      levels: this.competitionDataRef.child('levels'),
       favorites: this.userFavoritesRef.child('dancers'),
     };
   },
