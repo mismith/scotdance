@@ -43,7 +43,8 @@
           </md-button>
         </md-list-item>
 
-        <md-list-item @click="$router.push('/competitions/+'); $refs.sidebar.toggle();">
+  {{ `/competitions/${db.push().key}` }}
+        <md-list-item @click="$router.push(`/competitions/${db.push().key}`); $refs.sidebar.toggle();">
           <md-icon>add</md-icon>
           <span>Add new</span>
         </md-list-item>
@@ -130,6 +131,8 @@ export default {
   data() {
     return {
       idKey,
+      db,
+
       accountToggled: false,
 
       title: '',
