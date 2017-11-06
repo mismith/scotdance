@@ -8,7 +8,7 @@
       />
     </div>
 
-    <md-bottom-bar>
+    <md-bottom-bar v-if="$route.name !== 'competition.admin'">
       <md-bottom-bar-item
         md-iconset="icon-info"
         @click="$router.push({ name: 'competition' })"

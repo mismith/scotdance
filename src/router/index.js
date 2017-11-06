@@ -5,6 +5,7 @@ import CompetitionInfo from '@/components/competition/info';
 import CompetitionDancers from '@/components/competition/dancers';
 import CompetitionSchedule from '@/components/competition/schedule';
 import CompetitionResults from '@/components/competition/results';
+import CompetitionAdmin from '@/components/competition/admin';
 
 Vue.use(Router);
 
@@ -17,7 +18,6 @@ export default new Router({
     },
     {
       path: '/competitions/:competitionId',
-      // name: 'competition',
       component: Competition,
       props: true,
       children: [
@@ -40,6 +40,11 @@ export default new Router({
           path: 'results',
           name: 'competition.results',
           component: CompetitionResults,
+        },
+        {
+          path: 'admin/:tab?',
+          name: 'competition.admin',
+          component: CompetitionAdmin,
         },
       ],
     },

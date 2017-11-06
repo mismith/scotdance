@@ -2,7 +2,7 @@
   <md-swiper ref="boards" :md-swipeable="!!selected" class="competition-schedule md-scroll-frame">
     <md-board>
       <md-tabs md-fixed :md-dynamic-height="false">
-        <md-tab md-label="Morning" style="padding: 0;">
+        <md-tab md-label="Morning">
           <div class="md-scroll-frame">
             <md-list class="md-scroll">
               <md-list-item
@@ -40,7 +40,7 @@
           </div>
         </md-tab>
         <md-tab md-label="Afternoon">
-          TBD
+          <md-subheader>TBD</md-subheader>
         </md-tab>
       </md-tabs>
     </md-board>
@@ -137,6 +137,8 @@ export default {
 
 <style lang="scss">
 .competition-schedule {
-
+  .md-tab {
+    padding: 0;
+  }
 }
 </style>
