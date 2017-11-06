@@ -38,6 +38,14 @@
         >
           <md-icon>event</md-icon>
           <span>{{ competition.name }}</span>
+          <md-button class="md-icon-button md-list-action" @click="$router.push(`/competitions/${competition[idKey]}/admin`); $refs.sidebar.toggle();">
+            <md-icon>settings</md-icon>
+          </md-button>
+        </md-list-item>
+
+        <md-list-item @click="$router.push('/competitions/+'); $refs.sidebar.toggle();">
+          <md-icon>add</md-icon>
+          <span>Add new</span>
         </md-list-item>
       </md-list>
     </md-sidenav>
@@ -48,7 +56,7 @@
           <md-icon>menu</md-icon>
         </md-button>
 
-        <h2 class="md-title">ScotDance</h2>
+        <h2 class="md-title">{{ title || 'ScotDance' }}</h2>
 
         <span class="md-flex"></span>
 
@@ -123,10 +131,17 @@ export default {
     return {
       idKey,
       accountToggled: false,
+
+      title: '',
     };
   },
   firebase: {
     competitions: db.child('competitions'),
+  },
+  watch: {
+    title(title) {
+      window.document.title = title || 'ScotDance';
+    },
   },
   methods: {
     toggleAccount(accountToggled = undefined) {
