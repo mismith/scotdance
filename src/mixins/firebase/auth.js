@@ -30,6 +30,8 @@ export default {
         .catch((err) => {
           this.authLoading = false;
           this.authError = err;
+
+          throw err;
         });
     },
     forgot(credentials = this.credentials) {
@@ -44,6 +46,8 @@ export default {
         .catch((err) => {
           this.authLoading = false;
           this.authError = err;
+
+          throw err;
         });
     },
     login(credentials = this.credentials) {
@@ -58,6 +62,8 @@ export default {
         .catch((err) => {
           this.authLoading = false;
           this.authError = err;
+
+          throw err;
         });
     },
     logout() {
@@ -67,13 +73,11 @@ export default {
   created() {
     this.unbindFirebaseAuth = firebase.auth().onAuthStateChanged((me) => {
       if (me) {
-        this.me = me.providerData[0];
-
-        this.$emit('authed', this.me);
+        this.$bindAsObject('me', firebase.database().ref('users').child(me.uid));
+        this.$emit('authed', me);
       } else {
-        this.me = me;
-
-        this.$emit('unauthed', this.me);
+        if (this.me) this.$unbind('me');
+        this.$emit('unauthed');
       }
     });
   },

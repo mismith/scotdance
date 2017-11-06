@@ -7,6 +7,7 @@ import App from './app';
 import router from './router';
 
 import MdSwiper from './components/md-swiper';
+import MdSpinnable from './components/md-spinnable';
 
 Vue.config.productionTip = false;
 
@@ -21,6 +22,7 @@ Vue.material.registerTheme('default', {
   },
 });
 Vue.component('md-swiper', MdSwiper);
+Vue.component('md-spinnable', MdSpinnable);
 
 /* eslint-disable no-new */
 new Vue({

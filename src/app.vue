@@ -3,9 +3,14 @@
 
     <md-sidenav ref="sidebar" md-swipeable @close="toggleAccount(false)" class="md-left md-fixed">
       <md-toolbar class="md-account-header">
-        <md-button v-if="!me" @click="$refs.login.open()" class="md-raised" style="margin-left: auto; margin-right: auto;">
-          <span>Login</span>
-        </md-button>
+        <div v-if="!me" class="account-buttons">
+          <md-button @click="$refs.register.open()" class="md-raised" style="margin-left: auto; margin-right: auto;">
+            <span>Register</span>
+          </md-button>
+          <md-button @click="$refs.login.open()" class="md-raised" style="margin-left: auto; margin-right: auto;">
+            <span>Login</span>
+          </md-button>
+        </div>
         <md-list v-else class="md-transparent">
           <md-list-item>
             <md-avatar class="md-large" :style="{background: `url(${me.photoURL}) center center / cover no-repeat`}" />
@@ -38,13 +43,12 @@
         >
           <md-icon>event</md-icon>
           <span>{{ competition.name }}</span>
-          <md-button class="md-icon-button md-list-action" @click="$router.push(`/competitions/${competition[idKey]}/admin`); $refs.sidebar.toggle();">
+          <md-button v-if="me && me.admin" class="md-icon-button md-list-action" @click="$router.push(`/competitions/${competition[idKey]}/admin`); $refs.sidebar.toggle();">
             <md-icon>settings</md-icon>
           </md-button>
         </md-list-item>
 
-  {{ `/competitions/${db.push().key}` }}
-        <md-list-item @click="$router.push(`/competitions/${db.push().key}`); $refs.sidebar.toggle();">
+        <md-list-item v-if="me && me.admin" @click="$router.push(`/competitions/${db.push().key}/admin`); $refs.sidebar.toggle();">
           <md-icon>add</md-icon>
           <span>Add new</span>
         </md-list-item>
@@ -68,13 +72,13 @@
     </md-toolbar>
 
     <main id="main" class="md-scroll-frame md-scroll">
-      <router-view />
+      <router-view :key="$route.fullPath" />
     </main>
 
-    <md-dialog ref="login">
+    <md-dialog ref="login" class="md-dialog-login">
       <md-swiper ref="loginSwiper" class="md-swiper-login">
         <md-board>
-          <form @submit.prevent="login(credentials)">
+          <form @submit.prevent="login(credentials).then($refs.login.close)">
             <md-input-container>
               <label>Email</label>
               <md-input type="email" name="email" v-model="credentials.email" required autofocus />
@@ -85,14 +89,20 @@
             </md-input-container>
 
             <footer>
-              <md-button type="submit" class="md-primary md-raised">Login</md-button>
+              <md-spinnable :md-spinning="authLoading">
+                <md-button type="submit" class="md-primary md-raised">Login</md-button>
+              </md-spinnable>
 
               <md-button @click="$refs.loginSwiper.next()" class="ml-auto">Forgot?</md-button>
             </footer>
+
+            <aside v-if="authError">
+              {{ authError.message }}
+            </aside>
           </form>
         </md-board>
         <md-board>
-          <form @submit.prevent="forgot(credentials)">
+          <form @submit.prevent="forgot(credentials).then(handlePasswordReset)">
             <header>
               <p>We can send you a link to reset your password.</p>
               <br />
@@ -104,13 +114,41 @@
             </md-input-container>
 
             <footer>
-              <md-button type="submit" class="md-primary md-raised">Send</md-button>
+              <md-spinnable :md-spinning="authLoading">
+                <md-button type="submit" class="md-primary md-raised">Send</md-button>
+              </md-spinnable>
 
               <md-button @click="$refs.loginSwiper.prev()">Cancel</md-button>
             </footer>
+
+            <aside v-if="authMessage">
+              {{ authMessage }}
+            </aside>
           </form>
         </md-board>
       </md-swiper>
+    </md-dialog>
+    <md-dialog ref="register" class="md-dialog-register">
+      <form @submit.prevent="register(credentials).then($refs.register.close)">
+        <md-input-container>
+          <label>Email</label>
+          <md-input type="email" name="email" v-model="credentials.email" required autofocus />
+        </md-input-container>
+        <md-input-container md-has-password>
+          <label>Password</label>
+          <md-input type="password" name="password" v-model="credentials.password" required />
+        </md-input-container>
+
+        <footer>
+          <md-spinnable :md-spinning="authLoading">
+            <md-button type="submit" class="md-primary md-raised">Register</md-button>
+          </md-spinnable>
+        </footer>
+
+        <aside v-if="authError">
+          {{ authError.message }}
+        </aside>
+      </form>
     </md-dialog>
 
   </div>
@@ -134,6 +172,7 @@ export default {
       db,
 
       accountToggled: false,
+      authMessage: undefined,
 
       title: '',
     };
@@ -147,9 +186,28 @@ export default {
     },
   },
   methods: {
+    handlePasswordReset() {
+      this.authMessage = 'Success! Check your email inbox for instructions to reset your password.';
+    },
     toggleAccount(accountToggled = undefined) {
       this.accountToggled = accountToggled !== undefined ? accountToggled : !this.accountToggled;
     },
+  },
+  created() {
+    this.$on('authed', (me) => {
+      this.$firebaseRefs.me.update(me.providerData[0]);
+    });
+  },
+  mounted() {
+    this.$refs.register.$on('open', () => {
+      this.authError = null;
+    });
+    this.$refs.login.$on('open', () => {
+      this.authError = null;
+    });
+    this.$refs.login.$on('close', () => {
+      this.authMessage = null;
+    });
   },
 };
 </script>
@@ -172,19 +230,18 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+.md-dialog {
+  aside {
+    margin-top: 16px;
+  }
+}
+
 .md-toolbar {
   &.md-account-header {
-    &:before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: url(/static/touchicon.svg) center center / cover;
-      opacity: .25;
-      pointer-events: none;
-      z-index: 0;
+    .account-buttons {
+      display: flex;
+      flex-direction: column;
+      margin: 0 auto;
     }
     .md-list-item {
       .md-list-action {
@@ -206,6 +263,18 @@ body {
       &:hover:not([disabled]) {
         background-color: transparent !important;
       }
+    }
+    &:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url(/static/touchicon.svg) center center / cover;
+      opacity: .25;
+      pointer-events: none;
+      z-index: 0;
     }
   }
 }
@@ -271,7 +340,8 @@ body {
   padding-left: 2px;
 }
 
-.md-swiper-login {
+.md-dialog-login,
+.md-dialog-register {
   form {
     padding: 12px;
 
