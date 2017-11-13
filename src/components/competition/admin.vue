@@ -25,7 +25,7 @@
           <form v-if="section.form" style="padding: 12px 16px;">
             <md-input-container v-for="field in section.form.fields" :key="field.data">
               <label>{{ field.title }}</label>
-              <md-input v-model="competition[field.data]" required />
+              <md-input v-model="competition[field.data]" @change="handleFormInputChange(section[idKey], field.data, $event)" required />
             </md-input-container>
           </form>
 
@@ -213,6 +213,15 @@ export default {
       this.groups.filter(g => g[idKey]).forEach((group, index) => {
         this.$firebaseRefs.groupsRaw.child(group[idKey]).child('platformId').set(platformIds[index % platformIds.length]);
       });
+    },
+
+    handleFormInputChange(section, field, value) {
+      const collection = section === 'info' ? 'competition' : section;
+
+      // save
+      this.$firebaseRefs[collection]
+        .child(field)
+        .set(value);
     },
 
     // getGroupDances(group) {
