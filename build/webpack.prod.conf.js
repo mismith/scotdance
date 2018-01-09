@@ -9,6 +9,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const OptimizeCSSPlugin = require('optimize-css-assets-webpack-plugin')
+const UglifyJSPlugin = require('uglifyjs-webpack-plugin')
 
 const env = config.build.env
 
@@ -31,10 +32,7 @@ const webpackConfig = merge(baseWebpackConfig, {
       'process.env': env
     }),
     // UglifyJs do not support ES6+, you can also use babel-minify for better treeshaking: https://github.com/babel/minify
-    new webpack.optimize.UglifyJsPlugin({
-      compress: {
-        warnings: false
-      },
+    new UglifyJSPlugin({
       sourceMap: true
     }),
     // extract css into its own file
