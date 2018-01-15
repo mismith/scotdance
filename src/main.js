@@ -2,6 +2,7 @@ import Vue from 'vue';
 import VueFire from 'vuefire';
 import VueMaterial from 'vue-material';
 import 'vue-material/dist/vue-material.css';
+import 'simple-line-icons/css/simple-line-icons.css';
 
 import App from './app';
 import router from './router';
