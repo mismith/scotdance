@@ -4,7 +4,7 @@
       <span>{{ dancer.number }}</span>
     </md-avatar>
 
-    <div class="md-list-text-container">
+    <div class="md-list-item-text">
       <span>{{ dancer.firstName }} {{ dancer.lastName }}</span>
       <p>{{ dancer.$group && dancer.$group.$name }} • {{ dancer.location }}</p>
     </div>
@@ -12,7 +12,9 @@
     <slot />
 
     <md-button @click="handleFavoriteToggle(dancer)" class="md-icon-button md-list-action">
-      <md-icon :class="{'md-accent': dancer.$favorite}">{{ dancer.$favorite ? 'star' : 'star_border' }}</md-icon>
+      <md-icon :class="{'md-accent': dancer.$favorite}">
+        {{ dancer.$favorite ? 'star' : 'star_border' }}
+      </md-icon>
     </md-button>
   </md-list-item>
 </template>

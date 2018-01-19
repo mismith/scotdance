@@ -1,21 +1,27 @@
 <template>
   <div class="competition-dancers md-scroll-frame">
     <md-toolbar class="md-dense">
-      <md-input-container md-clearable>
-        <md-input v-model="filterBy" placeholder="Find dancers" />
-      </md-input-container>
+      <md-field md-clearable>
+        <label for="filterBy">Filter by</label>
+        <md-input v-model="filterBy" id="filterBy" />
+      </md-field>
       <span style="display: inline-block; width: 12px;" />
-      <md-input-container>
-        <md-select v-model="sortBy" placeholder="Sort dancers">
+      <md-field>
+        <label for="sortBy">Sort by</label>
+        <md-select v-model="sortBy" id="sortBy">
           <md-option value="$group.$order">Age Group</md-option>
           <md-option value="firstName">First Name</md-option>
           <md-option value="lastName">Last Name</md-option>
           <md-option value="location">Location</md-option>
           <md-option value="number">Number</md-option>
         </md-select>
-      </md-input-container>
-      <!--<md-menu md-direction="bottom left">
-        <md-button md-menu-trigger class="md-icon-button" style="margin-left: 12px; margin-right: 0;">
+      </md-field>
+      <!--<md-menu md-align-trigger>
+        <md-button
+          md-menu-trigger
+          class="md-icon-button"
+          style="margin-left: 12px; margin-right: 0;"
+        >
           <md-icon>more_vert</md-icon>
         </md-button>
         <md-menu-content>
@@ -24,11 +30,11 @@
         </md-menu-content>
       </md-menu>-->
     </md-toolbar>
-    <md-list class="md-scroll">
-      <md-list-item
+    <md-list class="md-list md-scroll">
+       <md-list-item
         v-for="bucket in bucketedDancers"
         :key="bucket[idKey]"
-        md-expand-multiple
+        md-expand
         :class="{'md-active': filterBy}"
       >
         <md-subheader>
@@ -36,14 +42,17 @@
           <md-icon v-if="hasFavorites(bucket.dancers)" class="md-accent">star</md-icon>
         </md-subheader>
         <span class="badge">{{ bucket.dancers.length }}</span>
-        <md-list-expand>
-          <md-list class="md-double-line">
-            <dancer-list-item v-for="dancer in bucket.dancers" :key="dancer[idKey]" :dancer="dancer" v-show="1" />
-          </md-list>
-        </md-list-expand>
+
+        <md-list slot="md-expand" class="md-double-line">
+          <dancer-list-item
+            v-for="dancer in bucket.dancers"
+            :key="dancer[idKey]"
+            :dancer="dancer"
+          />
+        </md-list>
       </md-list-item>
 
-      <md-spinner md-indeterminate v-if="!loaded" style="margin: auto;" />
+      <md-progress-spinner md-mode="indeterminate" v-if="!loaded" style="margin: auto;" />
     </md-list>
   </div>
 </template>
@@ -69,7 +78,7 @@ export default {
       loaded: false,
 
       filterBy: undefined,
-      sortBy: 'firstName',
+      sortBy: '$group.$order',
     };
   },
   firebase() {
@@ -151,7 +160,7 @@ export default {
 <style lang="scss">
 .competition-dancers {
   > .md-toolbar {
-    .md-input-container {
+    .md-field {
       width: auto;
       flex: 1;
     }

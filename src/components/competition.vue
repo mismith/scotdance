@@ -8,34 +8,37 @@
       />
     </div>
 
-    <md-bottom-bar v-if="$route.name !== 'competition.admin'">
+    <md-bottom-bar
+      v-if="$route.name !== 'competition.admin'"
+      :md-active-item="`tab-${$router.currentRoute.name}`"
+    >
       <md-bottom-bar-item
-        md-iconset="icon-info"
-        @click="$router.push({ name: 'competition' })"
-        :md-active="$router.currentRoute.name === 'competition'"
+        id="tab-competition.info"
+        @click="$router.push({ name: 'competition.info' })"
       >
-        Info
+        <md-icon class="icon-info"></md-icon>
+        <span class="md-bottom-bar-label">Info</span>
       </md-bottom-bar-item>
       <md-bottom-bar-item
-        md-iconset="icon-people"
+        id="tab-competition.dancers"
         @click="$router.push({ name: 'competition.dancers' })"
-        :md-active="$router.currentRoute.name === 'competition.dancers'"
       >
-        Dancers
+        <md-icon class="icon-people"></md-icon>
+        <span class="md-bottom-bar-label">Dancers</span>
       </md-bottom-bar-item>
       <md-bottom-bar-item
-        md-iconset="icon-clock"
-        @click="$router.push({ name: 'competition.schedule' })" 
-        :md-active="$router.currentRoute.name === 'competition.schedule'"
+        id="tab-competition.schedule"
+        @click="$router.push({ name: 'competition.schedule' })"
       >
-        Schedule
+        <md-icon class="icon-clock"></md-icon>
+        <span class="md-bottom-bar-label">Schedule</span>
       </md-bottom-bar-item>
       <md-bottom-bar-item
-        md-iconset="icon-trophy"
+        id="tab-competition.results"
         @click="$router.push({ name: 'competition.results' })"
-        :md-active="$router.currentRoute.name === 'competition.results'"
       >
-        Results
+        <md-icon class="icon-trophy"></md-icon>
+        <span class="md-bottom-bar-label">Results</span>
       </md-bottom-bar-item>
     </md-bottom-bar>
   </div>
@@ -63,6 +66,12 @@ export default {
 
 <style lang="scss">
 .competition {
+  .md-bottom-bar {
+    z-index: 1; // maintain box-shadow
 
+    .md-ripple {
+      justify-content: center; // center tabs
+    }
+  }
 }
 </style>

@@ -10,7 +10,7 @@
         <md-toolbar class="md-dense">
           <span style="flex-grow: 1;"></span>
 
-          <md-menu md-direction="bottom left">
+          <md-menu md-align-trigger>
             <md-button md-menu-trigger class="md-icon-button">
               <md-icon>more_vert</md-icon>
             </md-button>
@@ -23,36 +23,42 @@
 
         <div class="md-scroll">
           <form v-if="section.form" style="padding: 12px 16px;">
-            <md-input-container v-for="field in section.form.fields" :key="field.data">
+            <md-field v-for="field in section.form.fields" :key="field.data">
               <label>{{ field.title }}</label>
-              <md-input v-model="competition[field.data]" @change="handleFormInputChange(section[idKey], field.data, $event)" required />
-            </md-input-container>
+              <md-input
+                v-model="competition[field.data]"
+                @change="handleFormInputChange(section[idKey], field.data, $event)"
+                required
+              />
+            </md-field>
           </form>
 
           <hot-table v-else-if="section.hot" :settings="section.hot" />
 
           <div v-else-if="section[idKey] === 'schedule'">
             <md-table>
-              <md-table-header>
-                <md-table-row>
-                  <md-table-head>&nbsp;</md-table-head>
-                  <md-table-head v-for="platform of platforms" :key="platform[idKey]">
-                    Platform {{ platform.name }}
-                  </md-table-head>
-                </md-table-row>
-              </md-table-header>
-              <md-table-body>
-                <md-table-row v-for="dance of dances" :key="dance[idKey]">
-                  <md-table-cell>
-                    {{ dance.name }}
-                  </md-table-cell>
-                  <md-table-cell v-for="platform of platforms" :key="platform[idKey]">
-                    <div v-for="group of groups" v-show="dance.levelIds && dance.levelIds[group.levelId] && group.platformId === platform[idKey]">
-                      {{ getGroupName(group) }}
-                    </div>
-                  </md-table-cell>
-                </md-table-row>
-              </md-table-body>
+              <md-table-row>
+                <md-table-head>&nbsp;</md-table-head>
+                <md-table-head v-for="platform of platforms" :key="platform[idKey]">
+                  Platform {{ platform.name }}
+                </md-table-head>
+              </md-table-row>
+              <md-table-row v-for="dance of dances" :key="dance[idKey]">
+                <md-table-cell>
+                  {{ dance.name }}
+                </md-table-cell>
+                <md-table-cell v-for="platform of platforms" :key="platform[idKey]">
+                  <div
+                    v-for="group of groups"
+                    :key="group[idKey]"
+                    v-show="dance.levelIds
+                      && dance.levelIds[group.levelId]
+                      && group.platformId === platform[idKey]"
+                  >
+                    {{ getGroupName(group) }}
+                  </div>
+                </md-table-cell>
+              </md-table-row>
             </md-table>
           </div>
 
@@ -80,9 +86,15 @@
                     {{ dancer.number }}
                   </md-table-cell>
                   <md-table-cell v-for="dance of getGroupDances(group)" :key="dance[idKey]">
-                    <md-input-container>
-                      <md-input type="number" v-model="scores.test" min="0" max="100" @change="saveScore(group[idKey], dance[idKey], dancer[idKey], $event)" />
-                    </md-input-container>
+                    <md-field>
+                      <md-input
+                        type="number"
+                        v-model="scores.test"
+                        min="0"
+                        max="100"
+                        @change="saveScore(group[idKey], dance[idKey], dancer[idKey], $event)"
+                      />
+                    </md-field>
                   </md-table-cell>
                 </md-table-row>
               </md-table-body>
@@ -95,22 +107,23 @@
         </div>
       </div>
     </div>
-    <md-bottom-bar>
+
+    <md-bottom-bar :md-active-item="`tab-${$router.currentRoute.params.tab || 'info'}`">
       <md-bottom-bar-item
         v-for="section of sections"
         :key="section[idKey]"
-        :md-iconset="section.icon"
         @click="$router.push({ name: 'competition.admin', params: { tab: section[idKey] } })"
-        :md-active="getActiveTab(section[idKey])"
+        :id="`tab-${section[idKey]}`"
       >
-        {{ section.name }}
+        <md-icon :class="section.icon"></md-icon>
+        <span class="md-bottom-bar-label">{{ section.name }}</span>
       </md-bottom-bar-item>
     </md-bottom-bar>
   </div>
 </template>
 
 <script>
-import HotTable from 'vue-handsontable-official';
+// import HotTable from 'vue-handsontable-official';
 import DancersGroupsFavoritesMixin from '@/mixins/dancers-groups-favorites';
 import {
   idKey,
@@ -232,7 +245,7 @@ export default {
     // },
   },
   components: {
-    HotTable,
+    // HotTable,
   },
 };
 </script>

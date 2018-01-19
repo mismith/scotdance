@@ -1,8 +1,8 @@
 <template>
   <div class="competition-info md-scroll-frame">
     <div class="md-scroll">
-      <h1>{{ competition.name }}</h1>
-      <p>{{ competition.location }}</p>
+      <h1 class="md-display-3">{{ competition.name }}</h1>
+      <p class="md-headline">{{ competition.location }}</p>
     </div>
   </div>
 </template>
@@ -29,6 +29,7 @@ export default {
 
 <style lang="scss">
 .competition-info {
+  text-align: center;
   padding: 0 16px;
 }
 </style>

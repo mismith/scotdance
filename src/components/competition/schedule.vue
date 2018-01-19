@@ -1,41 +1,40 @@
 <template>
-  <md-swiper ref="boards" :md-swipeable="!!selected" class="competition-schedule md-scroll-frame">
-    <md-board>
-      <md-tabs md-fixed :md-dynamic-height="false">
+  <swiper class="competition-schedule md-scroll-frame" :class="{'swiper-no-swiping': !selected}">
+    <swiper-slide>
+      <md-tabs md-alignment="fixed" class="md-scroll-frame">
         <md-tab md-label="Morning">
           <div class="md-scroll-frame">
             <md-list class="md-scroll">
               <md-list-item
                 v-for="dance in dances"
                 :key="dance[idKey]"
-                md-expand-multiple
+                md-expand
               >
                 <md-subheader>
                   {{ dance.name }}
                 </md-subheader>
-                <md-list-expand>
-                  <md-list class="md-double-line">
-                    <md-list-item
-                      v-for="group in groups"
-                      :key="group[idKey]"
-                      v-if="dance.levelIds && dance.levelIds[group.levelId]"
-                      @click="selected = {group, dance}"
-                    >
-                      <md-avatar class="md-avatar-icon">
-                        <span>{{ getPlatform(dance, group).number }}</span>
-                      </md-avatar>
 
-                      <div class="md-list-text-container">
-                        <span>{{ getGroupName(group) }}</span>
-                        <p>Judge Name</p>
-                      </div>
+                <md-list slot="md-expand" class="md-double-line">
+                  <md-list-item
+                    v-for="group in groups"
+                    :key="group[idKey]"
+                    v-if="dance.levelIds && dance.levelIds[group.levelId]"
+                    @click="selected = {group, dance}"
+                  >
+                    <md-avatar class="md-avatar-icon">
+                      <span>{{ getPlatform(dance, group).number }}</span>
+                    </md-avatar>
 
-                      <md-icon>chevron_right</md-icon>
-                    </md-list-item>
-                  </md-list>
-                </md-list-expand>
+                    <div class="md-list-item-text">
+                      <span>{{ getGroupName(group) }}</span>
+                      <p>Judge Name</p>
+                    </div>
+
+                    <md-icon>chevron_right</md-icon>
+                  </md-list-item>
+                </md-list>
               </md-list-item>
-              <md-spinner md-indeterminate v-if="!loaded" style="margin: auto;" />
+              <md-progress-spinner md-mode="indeterminate" v-if="!loaded" style="margin: auto;" />
             </md-list>
           </div>
         </md-tab>
@@ -43,19 +42,29 @@
           <md-subheader>TBD</md-subheader>
         </md-tab>
       </md-tabs>
-    </md-board>
-    <md-board class="md-scroll-frame">
-      <md-toolbar class="md-dense">
-        <md-button @click="selected = null;" class="md-icon-button">
-          <md-icon>chevron_left</md-icon>
-        </md-button>
-        <span v-if="selected">{{ selected.dance && selected.dance.name }} &rsaquo; {{ getGroupName(selected.group) }}</span>
-      </md-toolbar>
-      <md-list class="md-double-line md-scroll">
-        <dancer-list-item v-for="(dancer, i) in selectedDancers" :key="dancer[idKey]" :dancer="dancer" />
-      </md-list>
-    </md-board>
-  </md-swiper>
+    </swiper-slide>
+    <swiper-slide>
+      <div class="md-scroll-frame">
+        <md-toolbar class="md-dense">
+          <md-button @click="selected = null;" class="md-icon-button">
+            <md-icon>chevron_left</md-icon>
+          </md-button>
+          <span v-if="selected">
+            {{ selected.dance && selected.dance.name }}
+            &rsaquo;
+            {{ getGroupName(selected.group) }}
+          </span>
+        </md-toolbar>
+        <md-list class="md-double-line md-scroll">
+          <dancer-list-item
+            v-for="dancer in selectedDancers"
+            :key="dancer[idKey]"
+            :dancer="dancer"
+          />
+        </md-list>
+      </div>
+    </swiper-slide>
+  </swiper>
 </template>
 
 <script>
@@ -105,9 +114,9 @@ export default {
   watch: {
     selected(selected) {
       if (selected) {
-        this.$refs.boards.next();
+        this.$el.swiper.slideNext();
       } else {
-        this.$refs.boards.prev();
+        this.$el.swiper.slidePrev();
       }
     },
   },
@@ -137,6 +146,14 @@ export default {
 
 <style lang="scss">
 .competition-schedule {
+  .md-tabs-navigation {
+    flex-shrink: 0;
+  }
+  .md-tabs-content,
+  .md-tabs-container,
+  .md-tab {
+    height: 100% !important;
+  }
   .md-tab {
     padding: 0;
   }

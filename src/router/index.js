@@ -1,5 +1,11 @@
 import Vue from 'vue';
 import Router from 'vue-router';
+
+import Home from '@/components/home';
+
+import Competitions from '@/components/competitions';
+import CompetitionsList from '@/components/competitions/list';
+
 import Competition from '@/components/competition';
 import CompetitionInfo from '@/components/competition/info';
 import CompetitionDancers from '@/components/competition/dancers';
@@ -15,36 +21,47 @@ export default new Router({
     {
       path: '/',
       name: 'home',
+      component: Home,
     },
     {
-      path: '/competitions/:competitionId',
-      component: Competition,
-      props: true,
+      path: '/competitions',
+      component: Competitions,
       children: [
         {
           path: '',
-          name: 'competition',
-          component: CompetitionInfo,
+          component: CompetitionsList,
         },
         {
-          path: 'dancers',
-          name: 'competition.dancers',
-          component: CompetitionDancers,
-        },
-        {
-          path: 'schedule',
-          name: 'competition.schedule',
-          component: CompetitionSchedule,
-        },
-        {
-          path: 'results',
-          name: 'competition.results',
-          component: CompetitionResults,
-        },
-        {
-          path: 'admin/:tab?',
-          name: 'competition.admin',
-          component: CompetitionAdmin,
+          path: ':competitionId',
+          component: Competition,
+          props: true,
+          children: [
+            {
+              path: '',
+              name: 'competition.info',
+              component: CompetitionInfo,
+            },
+            {
+              path: 'dancers',
+              name: 'competition.dancers',
+              component: CompetitionDancers,
+            },
+            {
+              path: 'schedule',
+              name: 'competition.schedule',
+              component: CompetitionSchedule,
+            },
+            {
+              path: 'results',
+              name: 'competition.results',
+              component: CompetitionResults,
+            },
+            {
+              path: 'admin/:tab?',
+              name: 'competition.admin',
+              component: CompetitionAdmin,
+            },
+          ],
         },
       ],
     },

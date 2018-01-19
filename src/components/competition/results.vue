@@ -1,58 +1,65 @@
 <template>
-  <md-swiper ref="boards" :md-swipeable="!!selected" class="competition-results md-scroll-frame">
-    <md-board class="md-scroll-frame">
+  <swiper class="competition-results md-scroll-frame" :class="{'swiper-no-swiping': !selected}">
+    <swiper-slide class="md-scroll-frame">
       <md-list class="md-scroll">
         <md-list-item
           v-for="group in groups"
           :key="group[idKey]"
-          md-expand-multiple
+          md-expand
         >
           <md-subheader>
             {{ getGroupName(group) }}
             <md-icon v-if="hasFavorites(getGroupDancers(group))" class="md-accent">star</md-icon>
           </md-subheader>
-          <md-list-expand>
-            <md-list>
+
+          <md-list slot="md-expand">
+            <result-list-item
+              v-for="dance in dances"
+              :key="dance[idKey]"
+              v-if="dance.levelIds && dance.levelIds[group.levelId]"
+              :winner="getWinner(group[idKey], dance[idKey])"
+              @click="selected = {group, dance}"
+            >
+              {{ dance.name }}
+            </result-list-item>
+            <div v-if="group.levelId !== '-K0Iom30phJzv3oSaHsn'">
+              <md-divider class="md-inset" />
               <result-list-item
-                v-for="dance in dances"
-                :key="dance[idKey]"
-                v-if="dance.levelIds && dance.levelIds[group.levelId]"
-                :winner="getWinner(group[idKey], dance[idKey])"
-                @click="selected = {group, dance}"
+                :winner="getWinner(group[idKey])"
+                @click="selected = {group}"
               >
-                {{ dance.name }}
+                Overall
+                <md-icon md-iconset="icon-trophy" slot="icon" />
               </result-list-item>
-              <div v-if="group.levelId !== '-K0Iom30phJzv3oSaHsn'">
-                <md-divider class="md-inset" />
-                <result-list-item
-                  :winner="getWinner(group[idKey])"
-                  @click="selected = {group}"
-                >
-                  Overall
-                  <md-icon md-iconset="icon-trophy" slot="icon" />
-                </result-list-item>
-              </div>
-            </md-list>
-          </md-list-expand>
+            </div>
+          </md-list>
         </md-list-item>
-        <md-spinner md-indeterminate v-if="!loaded" style="margin: auto;" />
+        <md-progress-spinner md-mode="indeterminate" v-if="!loaded" style="margin: auto;" />
       </md-list>
-    </md-board>
-    <md-board class="md-scroll-frame">
+    </swiper-slide>
+    <swiper-slide class="md-scroll-frame">
       <md-toolbar class="md-dense">
         <md-button @click="selected = null;" class="md-icon-button">
           <md-icon>chevron_left</md-icon>
         </md-button>
-        <span v-if="selected">{{ getGroupName(selected.group) }} &rsaquo; {{ selected.dance ? selected.dance.name : 'Overall' }}</span>
+        <span v-if="selected">
+          {{ getGroupName(selected.group) }}
+          &rsaquo;
+          {{ selected.dance ? selected.dance.name : 'Overall' }}
+        </span>
       </md-toolbar>
       <md-list class="md-double-line md-scroll">
-        <dancer-list-item v-for="(dancer, i) in selectedScores" :key="dancer[idKey]" :dancer="dancer">
+        <dancer-list-item
+          v-for="(dancer, i) in selectedScores"
+          :key="dancer[idKey]"
+          :dancer="dancer"
+        >
           <output>{{ i + 1 }}</output>
         </dancer-list-item>
         <md-subheader v-if="!selectedScores.length">Results to be determined.</md-subheader>
       </md-list>
-    </md-board>
-  </md-swiper>
+    </swiper-slide>
+  </swiper>
 </template>
 
 <script>
@@ -157,9 +164,9 @@ export default {
   watch: {
     selected(selected) {
       if (selected) {
-        this.$refs.boards.next();
+        this.$el.swiper.slideNext();
       } else {
-        this.$refs.boards.prev();
+        this.$el.swiper.slidePrev();
       }
     },
   },

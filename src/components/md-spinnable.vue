@@ -1,7 +1,7 @@
 <template>
   <div class="md-spinnable">
     <slot />
-    <md-spinner v-if="mdSpinning" :md-size="25" md-indeterminate />
+    <md-progress-spinner v-if="mdSpinning" :md-diameter="25" md-mode="indeterminate" />
   </div>
 </template>
 
