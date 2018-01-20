@@ -1,5 +1,5 @@
 <template>
-  <md-list-item>
+  <md-list-item @click="$emit('click', $event)">
     <md-avatar class="md-avatar-icon" :class="{'md-accent': dancer.$favorite}">
       <span>{{ dancer.number }}</span>
     </md-avatar>
