@@ -11,7 +11,9 @@ import CompetitionInfo from '@/components/competition/info';
 import CompetitionDancers from '@/components/competition/dancers';
 import CompetitionSchedule from '@/components/competition/schedule';
 import CompetitionResults from '@/components/competition/results';
+
 import CompetitionAdmin from '@/components/competition/admin';
+import CompetitionAdminImport from '@/components/competition/admin/import';
 
 Vue.use(Router);
 
@@ -55,6 +57,11 @@ export default new Router({
               path: 'results',
               name: 'competition.results',
               component: CompetitionResults,
+            },
+            {
+              path: 'admin/import',
+              name: 'competition.admin.import',
+              component: CompetitionAdminImport,
             },
             {
               path: 'admin/:tab?',
