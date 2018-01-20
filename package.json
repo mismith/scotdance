@@ -20,15 +20,17 @@
     "array-sort": "^0.1.4",
     "firebase": "^4.6.0",
     "fuzzy-search": "^2.0.0",
+    "handsontable": "^0.35.0",
+    "js-xlsx": "^0.8.22",
     "moment-mini": "^2.18.1",
     "simple-line-icons": "^2.4.1",
     "swiper": "^4.0.7",
     "vue": "^2.5.2",
     "vue-awesome-swiper": "^3.1.0",
-    "vue-handsontable-official": "^1.0.0",
     "vue-material": "^1.0.0-beta-7",
     "vue-router": "^3.0.1",
-    "vuefire": "^1.4.4"
+    "vuefire": "^1.4.4",
+    "xlsx": "^0.11.17"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",
