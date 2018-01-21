@@ -1,25 +1,27 @@
 <template>
   <div class="competition-admin md-scroll-frame">
     <div class="md-scroll-frame">
+      <md-toolbar class="md-dense">
+        <md-button @click="showImport = true">Import</md-button>
+
+        <span style="flex-grow: 1;"></span>
+
+        <md-menu md-align-trigger>
+          <md-button md-menu-trigger class="md-icon-button">
+            <md-icon>more_vert</md-icon>
+          </md-button>
+          <md-menu-content>
+            <md-menu-item @selected="autofillPlatforms()">Autofill Platforms</md-menu-item>
+          </md-menu-content>
+        </md-menu>
+        <!--<md-button class="md-accent md-raised">Save</md-button>-->
+      </md-toolbar>
       <div
         v-for="section of sections"
         :key="section[idKey]"
         v-show="getActiveTab(section[idKey])"
         class="md-scroll-frame"
       >
-        <md-toolbar class="md-dense">
-          <span style="flex-grow: 1;"></span>
-
-          <md-menu md-align-trigger>
-            <md-button md-menu-trigger class="md-icon-button">
-              <md-icon>more_vert</md-icon>
-            </md-button>
-            <md-menu-content>
-              <md-menu-item @selected="autofillPlatforms()">Autofill Platforms</md-menu-item>
-            </md-menu-content>
-          </md-menu>
-          <!--<md-button class="md-accent md-raised">Save</md-button>-->
-        </md-toolbar>
 
         <div class="md-scroll">
           <form v-if="section.form" class="md-padding">
@@ -119,11 +121,16 @@
         <span class="md-bottom-bar-label">{{ section.name }}</span>
       </md-bottom-bar-item>
     </md-bottom-bar>
+
+    <md-dialog :md-active.sync="showImport" style="width: 100%; height: 100%;">
+      <admin-import :competition-data-ref="competitionDataRef" @done="showImport = false" />
+    </md-dialog>
   </div>
 </template>
 
 <script>
 // import HotTable from 'vue-handsontable-official';
+import AdminImport from '@/components/competition/admin/import';
 import DancersGroupsFavoritesMixin from '@/mixins/dancers-groups-favorites';
 import {
   idKey,
@@ -146,6 +153,8 @@ export default {
       idKey,
 
       scores: {},
+
+      showImport: false,
     };
   },
   firebase() {
@@ -246,6 +255,7 @@ export default {
   },
   components: {
     // HotTable,
+    AdminImport,
   },
 };
 </script>

@@ -1,12 +1,12 @@
 <template>
-  <md-steppers :md-active-step.sync="step" md-linear class="competition-admin-import">
+  <md-steppers :md-active-step.sync="step" md-linear class="admin-import">
     <md-step id="upload" md-label="Upload" md-description="Select a file to import">
       <div class="md-scroll-frame md-padding" style="font-size: 1.2em;">
         <h2>Instructions</h2>
         <ol style="max-width: 600px;">
-          <li>Find the Excel spreadsheet (.xslx file) that contains the exported values to import. Click <strong>Next</strong>.</li>
-          <li>Browse through the sheet contents and select which one contains the dancers, and which one contains the age grouping headers. Click <strong>Next</strong>.</li>
-          <li>Double-check that the values were parsed properly&mdash;this is how data will be imported so if anything is missing or looks broken here, it will likely fail to import properly. Click <strong>Import</strong>.</li>
+          <li>Select the Excel spreadsheet (.xslx file) that contains the exported values to import. Click <strong>Next</strong>.</li>
+          <li>Determine which sheet contains the list of dancers, and which one contains the age groupings. Select each, respectively, then click <strong>Next</strong>.</li>
+          <li>Double-check that all values were parsed properly&mdash;this is how data will be imported, so if anything is missing or looks broken, it will likely fail to import properly. When sure, click <strong>Import</strong>.</li>
         </ol>
       </div>
       <md-toolbar class="md-layout">
@@ -116,7 +116,7 @@ import {
 } from '@/helpers/firebase';
 
 export default {
-  name: 'competition-admin-import',
+  name: 'admin-import',
   props: {
     competitionDataRef: {
       type: Object,
@@ -333,6 +333,8 @@ export default {
         // add to db
         await this.competitionDataRef.child('dancers').push(dancer);
       }));
+
+      this.$emit('done');
     },
   },
   components: {
@@ -342,7 +344,7 @@ export default {
 </script>
 
 <style lang="scss">
-.competition-admin-import {
+.admin-import {
   .md-toolbar.md-layout {
     > .md-layout-item {
       margin-right: 16px;
