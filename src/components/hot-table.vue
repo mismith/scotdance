@@ -11,7 +11,7 @@ export default {
   props: {
     options: {
       type: Object,
-      default: {},
+      default: () => ({}),
     },
   },
   data() {
@@ -23,7 +23,9 @@ export default {
     this.instance = new Handsontable(this.$el, this.options);
   },
   beforeDestroy() {
-    this.instance && this.instance.destroy();
+    if (this.instance) {
+      this.instance.destroy();
+    }
   },
 };
 </script>

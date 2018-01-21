@@ -369,7 +369,7 @@ body {
 
 .md-toolbar {
   flex-shrink: 0;
-  z-index: 5;
+  z-index: 200; // > 101 .ht_clone_top
 }
 
 .md-tabs {
@@ -388,8 +388,35 @@ body {
   }
 }
 
+.md-steppers {
+  @extend .md-scroll-frame;
+
+  .md-steppers-navigation {
+    flex-shrink: 0;
+  }
+  .md-steppers-wrapper {
+    flex: 1;
+  }
+  .md-steppers-container,
+  .md-stepper-content,
+  .md-stepper {
+    height: 100% !important;
+  }
+  .md-stepper {
+    padding: 0;
+
+    .md-stepper-content {
+      @extend .md-scroll-frame;
+    }
+  }
+}
+
 .swiper-slide {
   @extend .md-scroll-frame;
+}
+
+.md-padding {
+  padding: 12px 16px;
 }
 
 

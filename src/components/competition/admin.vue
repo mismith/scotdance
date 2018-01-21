@@ -22,7 +22,7 @@
         </md-toolbar>
 
         <div class="md-scroll">
-          <form v-if="section.form" style="padding: 12px 16px;">
+          <form v-if="section.form" class="md-padding">
             <md-field v-for="field in section.form.fields" :key="field.data">
               <label>{{ field.title }}</label>
               <md-input
