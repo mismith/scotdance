@@ -11,7 +11,7 @@
 
     <slot />
 
-    <md-button @click="handleFavoriteToggle(dancer)" class="md-icon-button md-list-action">
+    <md-button @click.stop="handleFavoriteToggle(dancer)" class="md-icon-button md-list-action">
       <md-icon :class="{'md-accent': dancer.$favorite}">
         {{ dancer.$favorite ? 'star' : 'star_border' }}
       </md-icon>
