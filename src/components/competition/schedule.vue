@@ -1,7 +1,7 @@
 <template>
-  <swiper class="competition-schedule md-scroll-frame" :class="{'swiper-no-swiping': !selected}">
+  <swiper class="competition-schedule md-scroll-frame swiper-no-swiping">
     <swiper-slide>
-      <md-tabs md-alignment="fixed" class="md-scroll-frame">
+      <md-tabs md-alignment="fixed">
         <md-tab md-label="Morning">
           <div class="md-scroll-frame">
             <md-list class="md-scroll">
@@ -146,16 +146,6 @@ export default {
 
 <style lang="scss">
 .competition-schedule {
-  .md-tabs-navigation {
-    flex-shrink: 0;
-  }
-  .md-tabs-content,
-  .md-tabs-container,
-  .md-tab {
-    height: 100% !important;
-  }
-  .md-tab {
-    padding: 0;
-  }
+
 }
 </style>

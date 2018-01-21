@@ -367,6 +367,31 @@ body {
   }
 }
 
+.md-toolbar {
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+.md-tabs {
+  @extend .md-scroll-frame;
+
+  .md-tabs-navigation {
+    flex-shrink: 0;
+  }
+  .md-tabs-content,
+  .md-tabs-container,
+  .md-tab {
+    height: 100% !important;
+  }
+  .md-tab {
+    padding: 0;
+  }
+}
+
+.swiper-slide {
+  @extend .md-scroll-frame;
+}
+
 
 // component styles
 .md-dialog {

@@ -1,5 +1,5 @@
 <template>
-  <swiper class="competition-results md-scroll-frame" :class="{'swiper-no-swiping': !selected}">
+  <swiper class="competition-results md-scroll-frame swiper-no-swiping">
     <swiper-slide class="md-scroll-frame">
       <md-list class="md-scroll">
         <md-list-item

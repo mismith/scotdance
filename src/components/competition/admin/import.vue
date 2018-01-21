@@ -10,7 +10,7 @@
           />
         </md-field>
       </form>
-      <md-tabs v-if="workbook" class="md-scroll-frame">
+      <md-tabs v-if="workbook">
         <md-tab
           v-for="(sheetName, sheetIndex) of workbook.SheetNames"
           :key="sheetIndex"
@@ -146,17 +146,6 @@ export default {
 
 <style lang="scss">
 .competition-admin-import {
-  .md-tabs-navigation {
-    flex-shrink: 0;
-  }
-  .md-tabs-content,
-  .md-tabs-container,
-  .md-tab {
-    height: 100% !important;
-  }
-  .md-tab {
-    padding: 0;
-  }
 
 }
 </style>
