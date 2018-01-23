@@ -6,6 +6,10 @@
           <md-button @click="showImport = true">Import</md-button>
         </div>
 
+        <div v-if="inTabs('dances')">
+          <md-button @click="addStandardDances()">Add Standard Dances</md-button>
+        </div>
+
         <span style="flex-grow: 1;"></span>
 
         <!--<md-button class="md-accent md-raised">Save</md-button>-->
@@ -222,6 +226,41 @@ export default {
   methods: {
     inTabs(...tabs) {
       return tabs.some(tab => (this.$route.params.tab || 'info') === tab);
+    },
+
+    addStandardDances() {
+      const standardDances = [
+        {
+          name: 'Pas de basques',
+          shortName: 'PDB',
+        },
+        {
+          name: 'Pas de basques & High Cuts',
+          shortName: 'PDBHC',
+        },
+        {
+          name: 'Highland Fling',
+          shortName: 'Fling',
+        },
+        {
+          name: 'Sword Dance',
+          shortName: 'Sword',
+        },
+        {
+          name: 'Seann Truibhas',
+          shortName: 'ST',
+        },
+        {
+          name: 'Scottish Lilt',
+          shortName: 'Lilt',
+        },
+      ];
+
+      // append
+      // @TODO: make this local-only until save
+      return Promise.all(standardDances.map((dance) => {
+        return this.$firebaseRefs.dances.push(dance);
+      }));
     },
 
     handleFormInputChange(section, field, value) {
