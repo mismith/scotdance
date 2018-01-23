@@ -87,7 +87,7 @@
           :id="`tab-${key}`"
           :md-label="key"
         >
-          <hot-table :options="toReviewHot(items, key)" />
+          <hot-table :settings="toReviewHot(items, key)" />
         </md-tab>
       </md-tabs>
       <md-toolbar class="md-layout">
@@ -107,9 +107,7 @@
 
 <script>
 import XLSX from 'js-xlsx';
-import HotTable from '@/components/hot-table';
-// import HotTable from 'vue-handsontable-official';
-// need to manually comment out line in `node_modules/vue-handsontable-official/src/HotTable.vue`
+import HotTable from '@/lib/vue-handsontable/HotTable';
 
 import {
   idKey,

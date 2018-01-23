@@ -129,7 +129,7 @@
 </template>
 
 <script>
-// import HotTable from 'vue-handsontable-official';
+import HotTable from '@/lib/vue-handsontable/HotTable';
 import AdminImport from '@/components/competition/admin/import';
 import DancersGroupsFavoritesMixin from '@/mixins/dancers-groups-favorites';
 import {
