@@ -23,8 +23,8 @@
               <label>{{ field.title }}</label>
               <md-input
                 v-model="competition[field.data]"
-                @change="handleFormInputChange(section[idKey], field.data, $event)"
-                required
+                @change="handleFormInputChange(section[idKey], field.data, $event.target.value)"
+                :required="field.required"
               />
             </md-field>
           </form>
