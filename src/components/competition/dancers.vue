@@ -1,60 +1,83 @@
 <template>
-  <div class="competition-dancers md-scroll-frame">
-    <md-toolbar class="md-dense">
-      <md-field md-clearable>
-        <label for="filterBy">Filter by</label>
-        <md-input v-model="filterBy" id="filterBy" />
-      </md-field>
-      <span style="display: inline-block; width: 12px;" />
-      <md-field>
-        <label for="sortBy">Sort by</label>
-        <md-select v-model="sortBy" id="sortBy">
-          <md-option value="$group.$order">Age Group</md-option>
-          <md-option value="firstName">First Name</md-option>
-          <md-option value="lastName">Last Name</md-option>
-          <md-option value="location">Location</md-option>
-          <md-option value="number">Number</md-option>
-        </md-select>
-      </md-field>
-      <!--<md-menu md-align-trigger>
-        <md-button
-          md-menu-trigger
-          class="md-icon-button"
-          style="margin-left: 12px; margin-right: 0;"
-        >
-          <md-icon>more_vert</md-icon>
-        </md-button>
-        <md-menu-content>
-          <md-menu-item>Expand All</md-menu-item>
-          <md-menu-item>Collapse All</md-menu-item>
-        </md-menu-content>
-      </md-menu>-->
-    </md-toolbar>
-    <md-list class="md-list md-scroll">
-       <md-list-item
-        v-for="bucket in bucketedDancers"
-        :key="bucket[idKey]"
-        md-expand
-        :class="{'md-active': filterBy}"
-      >
-        <md-subheader>
-          {{ bucket[idKey] }}
-          <md-icon v-if="hasFavorites(bucket.dancers)" class="md-accent">star</md-icon>
-        </md-subheader>
-        <span class="badge">{{ bucket.dancers.length }}</span>
+  <swiper class="competition-dancers md-scroll-frame swiper-no-swiping">
+    <swiper-slide>
+      <md-toolbar class="md-dense">
+        <md-field md-clearable>
+          <label for="filterBy">Search</label>
+          <md-input v-model="filterBy" id="filterBy" />
+        </md-field>
+        <span style="display: inline-block; width: 12px;" />
+        <md-field>
+          <label for="sortBy">Sort by</label>
+          <md-select v-model="sortBy" id="sortBy">
+            <md-option value="$group.$order">Age Group</md-option>
+            <md-option value="firstName">First Name</md-option>
+            <md-option value="lastName">Last Name</md-option>
+            <md-option value="location">Location</md-option>
+            <md-option value="number">Number</md-option>
+          </md-select>
+        </md-field>
+        <!--<md-menu md-align-trigger>
+          <md-button
+            md-menu-trigger
+            class="md-icon-button"
+            style="margin-left: 12px; margin-right: 0;"
+          >
+            <md-icon>more_vert</md-icon>
+          </md-button>
+          <md-menu-content>
+            <md-menu-item>Expand All</md-menu-item>
+            <md-menu-item>Collapse All</md-menu-item>
+          </md-menu-content>
+        </md-menu>-->
+      </md-toolbar>
 
-        <md-list slot="md-expand" class="md-double-line">
-          <dancer-list-item
-            v-for="dancer in bucket.dancers"
-            :key="dancer[idKey]"
-            :dancer="dancer"
-          />
+      <div class="md-scroll">
+        <md-list class="md-list">
+           <md-list-item
+            v-for="bucket in bucketedDancers"
+            :key="bucket[idKey]"
+            md-expand
+            :class="{'md-active': filterBy}"
+          >
+            <md-subheader>
+              {{ bucket[idKey] }}
+              <md-icon v-if="hasFavorites(bucket.dancers)" class="md-accent">star</md-icon>
+            </md-subheader>
+            <span class="badge">{{ bucket.dancers.length }}</span>
+
+            <md-list slot="md-expand" class="md-double-line">
+              <dancer-list-item
+                v-for="dancer in bucket.dancers"
+                :key="dancer[idKey]"
+                :dancer="dancer"
+                @click="selected = {bucket, dancer}"
+              />
+            </md-list>
+          </md-list-item>
+
+          <md-progress-spinner md-mode="indeterminate" v-if="!loaded" style="margin: auto;" />
         </md-list>
-      </md-list-item>
-
-      <md-progress-spinner md-mode="indeterminate" v-if="!loaded" style="margin: auto;" />
-    </md-list>
-  </div>
+      </div>
+    </swiper-slide>
+    <swiper-slide>
+      <div class="md-scroll-frame">
+        <md-toolbar class="md-dense">
+          <md-button @click="selected = null;" class="md-icon-button">
+            <md-icon>chevron_left</md-icon>
+          </md-button>
+          <span>All dancers</span>
+        </md-toolbar>
+        <md-list class="md-double-line md-scroll">
+          <div v-if="selected" class="md-padding">
+            <!--@TODO-->
+            Name: {{ selected.dancer.firstName }} {{ selected.dancer.lastName }}<br />
+            Age Group: {{ selected.bucket[idKey] }}<br />
+          </div>
+        </md-list>
+      </div>
+    </swiper-slide>
+  </swiper>
 </template>
 
 <script>
@@ -79,6 +102,8 @@ export default {
 
       filterBy: undefined,
       sortBy: '$group.$order',
+
+      selected: undefined,
     };
   },
   firebase() {
@@ -121,6 +146,15 @@ export default {
         }));
     },
   },
+  watch: {
+    selected(selected) {
+      if (selected) {
+        this.$el.swiper.slideNext();
+      } else {
+        this.$el.swiper.slidePrev();
+      }
+    },
+  },
   methods: {
     getSortCategory(dancer) {
       if (!dancer) return undefined;
@@ -159,7 +193,7 @@ export default {
 
 <style lang="scss">
 .competition-dancers {
-  > .md-toolbar {
+  .md-toolbar {
     .md-field {
       width: auto;
       flex: 1;
