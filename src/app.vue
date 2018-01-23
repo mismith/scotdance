@@ -346,6 +346,10 @@ body {
           flex: 0;
         }
       }
+      .md-list-item-text {
+        display: inline-block;
+        text-overflow: ellipsis;
+      }
       &:not(.md-active) {
         .badge {
           opacity: 0;
