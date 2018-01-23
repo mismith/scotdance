@@ -2,7 +2,9 @@
   <div class="competition-admin md-scroll-frame">
     <div class="md-scroll-frame">
       <md-toolbar class="md-dense">
-        <md-button @click="showImport = true">Import</md-button>
+        <div v-if="inTabs('info', 'levels', 'dancers', 'groups')">
+          <md-button @click="showImport = true">Import</md-button>
+        </div>
 
         <span style="flex-grow: 1;"></span>
 
@@ -19,7 +21,7 @@
       <div
         v-for="section of sections"
         :key="section[idKey]"
-        v-show="getActiveTab(section[idKey])"
+        v-show="inTabs(section[idKey])"
         class="md-scroll-frame"
       >
 
@@ -226,8 +228,8 @@ export default {
     },
   },
   methods: {
-    getActiveTab(tabId) {
-      return (this.$route.params.tab === tabId) || (!this.$route.params.tab && tabId === 'info');
+    inTabs(...tabs) {
+      return tabs.some(tab => (this.$route.params.tab || 'info') === tab);
     },
 
     autofillPlatforms() {
