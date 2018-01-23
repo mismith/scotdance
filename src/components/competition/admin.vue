@@ -8,14 +8,6 @@
 
         <span style="flex-grow: 1;"></span>
 
-        <md-menu md-align-trigger>
-          <md-button md-menu-trigger class="md-icon-button">
-            <md-icon>more_vert</md-icon>
-          </md-button>
-          <md-menu-content>
-            <md-menu-item @selected="autofillPlatforms()">Autofill Platforms</md-menu-item>
-          </md-menu-content>
-        </md-menu>
         <!--<md-button class="md-accent md-raised">Save</md-button>-->
       </md-toolbar>
       <div
@@ -230,13 +222,6 @@ export default {
   methods: {
     inTabs(...tabs) {
       return tabs.some(tab => (this.$route.params.tab || 'info') === tab);
-    },
-
-    autofillPlatforms() {
-      const platformIds = this.platforms.map(p => p[idKey]).filter(pId => pId);
-      this.groups.filter(g => g[idKey]).forEach((group, index) => {
-        this.$firebaseRefs.groupsRaw.child(group[idKey]).child('platformId').set(platformIds[index % platformIds.length]);
-      });
     },
 
     handleFormInputChange(section, field, value) {
