@@ -32,8 +32,8 @@
         </md-menu>-->
       </md-toolbar>
 
-      <div class="md-scroll">
-        <md-list class="md-list">
+      <div v-if="loaded" class="md-scroll">
+        <md-list>
            <md-list-item
             v-for="bucket in bucketedDancers"
             :key="bucket[idKey]"
@@ -55,10 +55,9 @@
               />
             </md-list>
           </md-list-item>
-
-          <md-progress-spinner md-mode="indeterminate" v-if="!loaded" style="margin: auto;" />
         </md-list>
       </div>
+      <md-progress-spinner v-else md-mode="indeterminate" style="margin: auto;" />
     </swiper-slide>
     <swiper-slide>
       <div v-if="selected" class="md-scroll-frame">
@@ -175,7 +174,7 @@ export default {
       }
     },
   },
-  created() {
+  mounted() {
     return this.competitionDataRef.once('value')
       .then(() => {
         this.loaded = true;

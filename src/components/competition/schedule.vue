@@ -3,7 +3,7 @@
     <swiper-slide>
       <md-tabs md-alignment="fixed">
         <md-tab md-label="Morning">
-          <div class="md-scroll-frame">
+          <div v-if="loaded" class="md-scroll-frame">
             <md-list class="md-scroll">
               <md-list-item
                 v-for="dance in dances"
@@ -34,9 +34,9 @@
                   </md-list-item>
                 </md-list>
               </md-list-item>
-              <md-progress-spinner md-mode="indeterminate" v-if="!loaded" style="margin: auto;" />
             </md-list>
           </div>
+          <md-progress-spinner v-else md-mode="indeterminate" style="margin: auto;" />
         </md-tab>
         <md-tab md-label="Afternoon">
           <md-subheader>TBD</md-subheader>
@@ -122,7 +122,7 @@ export default {
       };
     },
   },
-  created() {
+  mounted() {
     return this.competitionDataRef.once('value')
       .then(() => {
         this.loaded = true;
@@ -136,6 +136,9 @@ export default {
 
 <style lang="scss">
 .competition-schedule {
-
+  .md-tab {
+    display: flex;
+    flex-direction: column;
+  }
 }
 </style>
