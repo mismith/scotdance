@@ -18,7 +18,7 @@
                   <md-list-item
                     v-for="group in groups"
                     :key="group[idKey]"
-                    v-if="dance.levelIds && dance.levelIds[group.levelId]"
+                    v-if="dance.groupIds && dance.groupIds[group[idKey]]"
                     @click="selected = { group, dance }"
                   >
                     <md-avatar class="md-avatar-icon">
@@ -100,8 +100,7 @@ export default {
     selectedDancers() {
       if (this.selected) {
         return this.dancers.filter((dancer) => {
-          const group = this.getDancerGroup(dancer);
-          return group && group[idKey] === this.selected.group[idKey];
+          return dancer.groupId === this.selected.group[idKey];
         });
       }
       return [];

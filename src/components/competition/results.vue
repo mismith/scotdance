@@ -108,38 +108,40 @@ export default {
   computed: {
     scores() {
       const scores = {};
-      Object.entries(this.scoresRaw).forEach(([groupId, danceIds]) => {
-        scores[groupId] = {
-          dances: {},
-          overall: {},
-        };
-        Object.entries(danceIds).forEach(([danceId, dancerIds]) => {
-          const dancers = Object.entries(dancerIds)
-            .map(([dancerId, score]) => {
-              // cumulate for overall totals
-              scores[groupId].overall[dancerId] = (scores[groupId].overall[dancerId] || 0) + score;
-
-              return {
-                dancerId,
-                score,
-              };
-            })
-            .sort((a, b) => b.score - a.score); // highest score first
-
-          scores[groupId].dances[danceId] = {
-            dancers,
-            winner: dancers.length && dancers[0], // first place
+      if (this.scoresRaw.length) {
+        Object.entries(this.scoresRaw).forEach(([groupId, danceIds]) => {
+          scores[groupId] = {
+            dances: {},
+            overall: {},
           };
-        });
+          Object.entries(danceIds).forEach(([danceId, dancerIds]) => {
+            const dancers = Object.entries(dancerIds)
+              .map(([dancerId, score]) => {
+                // cumulate for overall totals
+                scores[groupId].overall[dancerId] = (scores[groupId].overall[dancerId] || 0) + score;
 
-        const overall = Object.entries(scores[groupId].overall)
-          .map(([dancerId, score]) => ({
-            dancerId,
-            score,
-          }))
-          .sort((a, b) => b.score - a.score);
-        scores[groupId].winner = overall.length && overall[0]; // highest score first + first place
-      });
+                return {
+                  dancerId,
+                  score,
+                };
+              })
+              .sort((a, b) => b.score - a.score); // highest score first
+
+            scores[groupId].dances[danceId] = {
+              dancers,
+              winner: dancers.length && dancers[0], // first place
+            };
+          });
+
+          const overall = Object.entries(scores[groupId].overall)
+            .map(([dancerId, score]) => ({
+              dancerId,
+              score,
+            }))
+            .sort((a, b) => b.score - a.score);
+          scores[groupId].winner = overall.length && overall[0]; // highest score first + first place
+        });
+      }
       return scores;
     },
     selectedScores() {

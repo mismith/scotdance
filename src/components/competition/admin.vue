@@ -199,12 +199,14 @@ export default {
               data: this[section[idKey]],
             };
             if (section[idKey] === 'dances') {
-              section.hot.columns = section.hot.columns.concat(this.levels.map(level => ({
-                data: `levelIds.${level[idKey]}`,
-                title: level.name,
-                type: 'checkbox',
-                uncheckedTemplate: '',
-              })));
+              section.hot.columns = section.hot.columns.concat(this.groups
+                .filter(group => group[idKey]) // remove extra/blank row
+                .map(group => ({
+                  data: `groupIds.${group[idKey]}`,
+                  title: group.$name,
+                  type: 'checkbox',
+                  uncheckedTemplate: null,
+                })));
             }
             section.hot.columns = section.hot.columns.map((column) => {
               if (column.data === 'levelId') {
