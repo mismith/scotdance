@@ -51,7 +51,7 @@
                 v-for="dancer in bucket.dancers"
                 :key="dancer[idKey]"
                 :dancer="dancer"
-                @click="selected = {bucket, dancer}"
+                @click="selected = { bucket, dancer }"
               />
             </md-list>
           </md-list-item>
@@ -83,17 +83,28 @@
 <script>
 import FuzzySearch from 'fuzzy-search';
 import ArraySort from 'array-sort';
-import DancersGroupsFavoritesMixin from '@/mixins/dancers-groups-favorites';
 import DancerListItem from '@/components/dancer-list-item';
 import {
   idKey,
 } from '@/helpers/firebase';
+import {
+  hasFavorites,
+} from '@/helpers/competition';
 
 export default {
   name: 'competition-dancers',
-  mixins: [
-    DancersGroupsFavoritesMixin,
-  ],
+  props: {
+    competitionDataRef: {
+      type: Object,
+      required: true,
+    },
+    dancers: Array,
+    groups: Array,
+    levels: Array,
+    favorites: Array,
+    dances: Array,
+    platforms: Array,
+  },
   data() {
     return {
       idKey,
@@ -104,15 +115,6 @@ export default {
       sortBy: '$group.$order',
 
       selected: undefined,
-    };
-  },
-  firebase() {
-    return {
-      // from DancersGroupsFavoritesMixin
-      dancersRaw: this.competitionDataRef.child('dancers'),
-      groupsRaw: this.competitionDataRef.child('groups'),
-      levels: this.competitionDataRef.child('levels'),
-      favorites: this.userFavoritesRef.child('dancers'),
     };
   },
   computed: {
@@ -149,13 +151,15 @@ export default {
   watch: {
     selected(selected) {
       if (selected) {
-        this.$el.swiper.slideNext();
+        this.$el.swiper.slideTo(1);
       } else {
-        this.$el.swiper.slidePrev();
+        this.$el.swiper.slideTo(0);
       }
     },
   },
   methods: {
+    hasFavorites,
+
     getSortCategory(dancer) {
       if (!dancer) return undefined;
 
@@ -177,10 +181,7 @@ export default {
     },
   },
   created() {
-    return Promise.all([
-      this.$firebaseRefs.dancersRaw.once('value'),
-      this.$firebaseRefs.groupsRaw.once('value'),
-    ])
+    return this.competitionDataRef.once('value')
       .then(() => {
         this.loaded = true;
       });

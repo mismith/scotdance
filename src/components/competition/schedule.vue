@@ -19,14 +19,14 @@
                     v-for="group in groups"
                     :key="group[idKey]"
                     v-if="dance.levelIds && dance.levelIds[group.levelId]"
-                    @click="selected = {group, dance}"
+                    @click="selected = { group, dance }"
                   >
                     <md-avatar class="md-avatar-icon">
                       <span>{{ getPlatform(dance, group).number }}</span>
                     </md-avatar>
 
                     <div class="md-list-item-text">
-                      <span>{{ getGroupName(group) }}</span>
+                      <span>{{ group.$name }}</span>
                       <p>Judge Name</p>
                     </div>
 
@@ -50,9 +50,9 @@
             <md-icon>chevron_left</md-icon>
           </md-button>
           <span v-if="selected">
-            {{ selected.dance && selected.dance.name }}
+            {{ selected.dance.name }}
             &rsaquo;
-            {{ getGroupName(selected.group) }}
+            {{ selected.group.$name }}
           </span>
         </md-toolbar>
         <md-list class="md-double-line md-scroll">
@@ -68,7 +68,6 @@
 </template>
 
 <script>
-import DancersGroupsFavoritesMixin from '@/mixins/dancers-groups-favorites';
 import DancerListItem from '@/components/dancer-list-item';
 import {
   idKey,
@@ -76,9 +75,18 @@ import {
 
 export default {
   name: 'competition-schedule',
-  mixins: [
-    DancersGroupsFavoritesMixin,
-  ],
+  props: {
+    competitionDataRef: {
+      type: Object,
+      required: true,
+    },
+    dancers: Array,
+    groups: Array,
+    levels: Array,
+    favorites: Array,
+    dances: Array,
+    platforms: Array,
+  },
   data() {
     return {
       idKey,
@@ -86,18 +94,6 @@ export default {
       loaded: false,
 
       selected: undefined,
-    };
-  },
-  firebase() {
-    return {
-      dances: this.competitionDataRef.child('dances'),
-      platforms: this.competitionDataRef.child('platforms'),
-
-      // from DancersGroupsFavoritesMixin
-      dancersRaw: this.competitionDataRef.child('dancers'),
-      groupsRaw: this.competitionDataRef.child('groups'),
-      levels: this.competitionDataRef.child('levels'),
-      favorites: this.userFavoritesRef.child('dancers'),
     };
   },
   computed: {
@@ -114,9 +110,9 @@ export default {
   watch: {
     selected(selected) {
       if (selected) {
-        this.$el.swiper.slideNext();
+        this.$el.swiper.slideTo(1);
       } else {
-        this.$el.swiper.slidePrev();
+        this.$el.swiper.slideTo(0);
       }
     },
   },
@@ -128,12 +124,7 @@ export default {
     },
   },
   created() {
-    return Promise.all([
-      this.$firebaseRefs.dancersRaw.once('value'),
-      this.$firebaseRefs.groupsRaw.once('value'),
-      this.$firebaseRefs.dances.once('value'),
-      this.$firebaseRefs.platforms.once('value'),
-    ])
+    return this.competitionDataRef.once('value')
       .then(() => {
         this.loaded = true;
       });

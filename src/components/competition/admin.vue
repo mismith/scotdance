@@ -55,7 +55,7 @@
                       && dance.levelIds[group.levelId]
                       && group.platformId === platform[idKey]"
                   >
-                    {{ getGroupName(group) }}
+                    {{group.$name}}
                   </div>
                 </md-table-cell>
               </md-table-row>
@@ -129,7 +129,6 @@
 <script>
 import HotTable from '@/lib/vue-handsontable/HotTable';
 import AdminImport from '@/components/competition/admin/import';
-import DancersGroupsFavoritesMixin from '@/mixins/dancers-groups-favorites';
 import {
   idKey,
   db,
@@ -137,14 +136,21 @@ import {
 
 export default {
   name: 'competition-admin',
-  mixins: [
-    DancersGroupsFavoritesMixin,
-  ],
   props: {
     competitionRef: {
       type: Object,
       required: true,
     },
+    competitionDataRef: {
+      type: Object,
+      required: true,
+    },
+    dancers: Array,
+    groups: Array,
+    levels: Array,
+    favorites: Array,
+    dances: Array,
+    platforms: Array,
   },
   data() {
     return {
@@ -157,24 +163,17 @@ export default {
   },
   firebase() {
     return {
-      competition: {
+      competitionRaw: {
         source: this.competitionRef,
         asObject: true,
       },
       sectionsRaw: db.child('sections'),
-
-      levels: this.competitionDataRef.child('levels'),
-      dances: this.competitionDataRef.child('dances'),
-      staff: this.competitionDataRef.child('staff'),
-      platforms: this.competitionDataRef.child('platforms'),
-
-      // from DancersGroupsFavoritesMixin
-      dancersRaw: this.competitionDataRef.child('dancers'),
-      groupsRaw: this.competitionDataRef.child('groups'),
-      favorites: this.userFavoritesRef.child('dancers'),
     };
   },
   computed: {
+    competition() {
+      return this.competitionRaw;
+    },
     sections() {
       return this.sectionsRaw
         .map((s) => {
