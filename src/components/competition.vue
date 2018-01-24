@@ -95,6 +95,7 @@ export default {
     dancers() {
       return this.dancersRaw.map(dancer => ({
         ...dancer,
+        number: `${dancer.number}`, // stringify
         $group: this.findGroup(dancer.groupId),
         $favorite: this.isFavoriteDancer(dancer),
       }));

@@ -38,7 +38,7 @@
             v-for="bucket in bucketedDancers"
             :key="bucket[idKey]"
             md-expand
-            :class="{'md-active': filterBy}"
+            :class="{'md-active': filterBy /* @TODO */}"
           >
             <md-subheader>
               {{ bucket[idKey] }}
@@ -119,15 +119,10 @@ export default {
   },
   computed: {
     filteredDancers() {
-      const dancers = this.dancers.map(dancer => ({
-        ...dancer,
-        number: `${dancer.number}`, // stringify this so ArraySort doesn't fail for Number-type
-      }));
-
       // filter by search term
       const filtered = this.filterBy
-        ? new FuzzySearch(dancers, ['number', 'firstName', 'lastName', 'location', '$group.$name']).search(this.filterBy)
-        : dancers;
+        ? new FuzzySearch(this.dancers, ['number', 'firstName', 'lastName', 'location', '$group.$name']).search(this.filterBy)
+        : this.dancers;
 
       // sort by key
       if (this.sortBy) ArraySort(filtered, [this.sortBy, 'number']);
