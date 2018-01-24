@@ -22,7 +22,7 @@
             >
               {{ dance.name }}
             </result-list-item>
-            <div v-if="findLevel(group.levelId).name !== 'Primary'">
+            <div v-if="group.$level.name !== 'Primary'">
               <md-divider class="md-inset" />
               <result-list-item
                 :winner="getWinner(group[idKey])"
