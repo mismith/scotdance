@@ -145,6 +145,7 @@ export default {
       type: Object,
       required: true,
     },
+    competition: Object,
     dancers: Array,
     groups: Array,
     levels: Array,
@@ -163,17 +164,10 @@ export default {
   },
   firebase() {
     return {
-      competitionRaw: {
-        source: this.competitionRef,
-        asObject: true,
-      },
       sectionsRaw: db.child('sections'),
     };
   },
   computed: {
-    competition() {
-      return this.competitionRaw;
-    },
     sections() {
       return this.sectionsRaw
         .map((s) => {

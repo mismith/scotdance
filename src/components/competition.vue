@@ -5,6 +5,7 @@
         :competition-ref="competitionRef"
         :competition-data-ref="competitionDataRef"
         :user-favorites-ref="userFavoritesRef"
+        :competition="competition"
         :dancers="dancers"
         :groups="groups"
         :levels="levels"
@@ -73,6 +74,12 @@ export default {
   },
   firebase() {
     return {
+      // info
+      competitionRaw: {
+        source: this.competitionRef,
+        asObject: true,
+      },
+      // data
       dancersRaw: this.competitionDataRef.child('dancers'),
       groupsRaw: this.competitionDataRef.child('groups'),
       levelsRaw: this.competitionDataRef.child('levels'),
@@ -82,6 +89,9 @@ export default {
     };
   },
   computed: {
+    competition() {
+      return this.competitionRaw;
+    },
     dancers() {
       return this.dancersRaw.map(dancer => ({
         ...dancer,
