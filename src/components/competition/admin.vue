@@ -170,27 +170,24 @@ export default {
   computed: {
     sections() {
       return this.sectionsRaw
-        .map((s) => {
+        .map((sectionData) => {
           const section = {
-            ...s,
+            ...sectionData,
           };
+          const data = this[section[idKey]];
 
           if (section.hot) {
             section.hot = {
               contextMenu: [
                 'remove_row',
-                '---------',
-                'undo',
               ],
-              minSpareRows: 1,
               colHeaders: true,
               rowHeaders: true,
               stretchH: 'all',
-              undo: true,
 
               ...section.hot,
 
-              data: this[section[idKey]],
+              data,
             };
             if (section[idKey] === 'dances') {
               section.hot.columns = section.hot.columns.concat(this.groups
