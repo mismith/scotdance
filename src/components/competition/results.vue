@@ -69,8 +69,6 @@ import {
   idKey,
 } from '@/helpers/firebase';
 import {
-  findLevel,
-  findGroupDancers,
   hasFavorites,
 } from '@/helpers/competition';
 
@@ -180,13 +178,10 @@ export default {
   },
   methods: {
     hasFavorites,
-    findLevel(...args) {
-      return findLevel.call(this, ...args);
-    },
-    findGroupDancers(...args) {
-      return findGroupDancers.call(this, ...args);
-    },
 
+    findGroupDancers(group) {
+      return this.dancers.filter(dancer => dancer.groupId === group[idKey]);
+    },
     getWinner(groupId, danceId = undefined) {
       const group = this.scores[groupId];
       if (group) {

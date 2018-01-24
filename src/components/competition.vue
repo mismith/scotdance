@@ -52,12 +52,11 @@
 
 <script>
 import {
+  idKey,
   db,
 } from '@/helpers/firebase';
 import {
-  findGroup,
-  getGroupName,
-  isFavoriteDancer,
+  findByIdKey,
 } from '@/helpers/competition';
 
 export default {
@@ -69,7 +68,7 @@ export default {
     return {
       competitionRef: db.child('competitions').child(this.competitionId),
       competitionDataRef: db.child('competitionsData').child(this.competitionId),
-      userFavoritesRef: db.child('users:favorites').child('idu0'),
+      userFavoritesRef: db.child('users:favorites').child('idu0'), // @TODO
     };
   },
   firebase() {
@@ -86,15 +85,16 @@ export default {
     dancers() {
       return this.dancersRaw.map(dancer => ({
         ...dancer,
-        $group: findGroup.call(this, dancer.groupId),
-        $favorite: isFavoriteDancer.call(this, dancer),
+        $group: this.findGroup(dancer.groupId),
+        $favorite: this.isFavoriteDancer(dancer),
       }));
     },
     groups() {
       return this.groupsRaw.map((group, i) => ({
         ...group,
-        $order: `${10000 + i}`, // pad with 'leading zeros'
-        $name: getGroupName.call(this, group),
+        $order: `${10000 + i}`, // pad with leading 'zeros'
+        $name: this.getGroupName(group),
+        $level: this.findLevel(group.levelId),
       }));
     },
     levels() {
@@ -108,6 +108,21 @@ export default {
     },
     platforms() {
       return this.platformsRaw;
+    },
+  },
+  methods: {
+    findGroup(groupId) {
+      return findByIdKey(this.groups, groupId);
+    },
+    findLevel(levelId) {
+      return findByIdKey(this.levels, levelId);
+    },
+    getGroupName(group) {
+      const level = this.findLevel(group.levelId);
+      return `${level ? level.name : ''} ${group.name}`;
+    },
+    isFavoriteDancer(dancer) {
+      return !!findByIdKey(this.favorites, dancer[idKey]);
     },
   },
 };
