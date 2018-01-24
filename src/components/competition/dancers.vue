@@ -61,18 +61,18 @@
       </div>
     </swiper-slide>
     <swiper-slide>
-      <div class="md-scroll-frame">
+      <div v-if="selected" class="md-scroll-frame">
         <md-toolbar class="md-dense">
           <md-button @click="selected = null;" class="md-icon-button">
             <md-icon>chevron_left</md-icon>
           </md-button>
-          <span>All dancers</span>
+          <span>{{ selected.dancer.$group.$name }}</span>
         </md-toolbar>
         <md-list class="md-double-line md-scroll">
-          <div v-if="selected" class="md-padding">
+          <div class="md-padding">
             <!--@TODO-->
             Name: {{ selected.dancer.firstName }} {{ selected.dancer.lastName }}<br />
-            Age Group: {{ selected.bucket[idKey] }}<br />
+            Location: {{ selected.dancer.location }}<br />
           </div>
         </md-list>
       </div>
