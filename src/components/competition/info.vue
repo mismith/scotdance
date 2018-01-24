@@ -11,18 +11,7 @@
 export default {
   name: 'competition-info',
   props: {
-    competitionRef: {
-      type: Object,
-      required: true,
-    },
-  },
-  firebase() {
-    return {
-      competition: {
-        source: this.competitionRef,
-        asObject: true,
-      },
-    };
+    competition: Object,
   },
 };
 </script>
