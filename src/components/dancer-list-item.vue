@@ -5,8 +5,8 @@
     </md-avatar>
 
     <div class="md-list-item-text">
-      <span>{{ dancer.firstName }} {{ dancer.lastName }}</span>
-      <p>{{ dancer.$group && dancer.$group.$name }} • {{ dancer.location }}</p>
+      <span>{{ dancer.$name }}</span>
+      <p>{{ dancer.$group.$name }} • {{ dancer.location }}</p>
     </div>
 
     <slot />
@@ -31,7 +31,7 @@ export default {
     dancer: Object,
   },
   firebase: {
-    favorites: db.child('users:favorites').child('idu0').child('dancers'),
+    favorites: db.child('users:favorites').child('idu0').child('dancers'), // @TODO
   },
   methods: {
     handleFavoriteToggle(dancer) {

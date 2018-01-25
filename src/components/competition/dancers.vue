@@ -70,7 +70,7 @@
         <md-list class="md-double-line md-scroll">
           <div class="md-padding">
             <!--@TODO-->
-            Name: {{ selected.dancer.firstName }} {{ selected.dancer.lastName }}<br />
+            Name: {{ selected.dancer.$name }}<br />
             Location: {{ selected.dancer.location }}<br />
           </div>
         </md-list>

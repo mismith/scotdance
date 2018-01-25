@@ -96,6 +96,7 @@ export default {
       return this.dancersRaw.map(dancer => ({
         ...dancer,
         number: `${dancer.number}`, // stringify
+        $name: `${dancer.firstName} ${dancer.lastName}`,
         $group: this.findGroup(dancer.groupId),
         $favorite: this.isFavoriteDancer(dancer),
       }));
@@ -115,7 +116,14 @@ export default {
       return this.favoritesRaw;
     },
     dances() {
-      return this.dancesRaw;
+      return this.dancesRaw.map(dance => {
+        const stepsString = dance.steps ? ` (${dance.steps})` : '';
+        return {
+          ...dance,
+          $name: `${dance.name}${stepsString}`,
+          $shortName: `${dance.shortName}${stepsString}`,
+        };
+      });
     },
     platforms() {
       return this.platformsRaw;
