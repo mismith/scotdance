@@ -116,7 +116,7 @@ export default {
       return this.favoritesRaw;
     },
     dances() {
-      return this.dancesRaw.map(dance => {
+      return this.dancesRaw.map((dance) => {
         const stepsString = dance.steps ? ` (${dance.steps})` : '';
         return {
           ...dance,

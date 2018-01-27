@@ -33,7 +33,7 @@
             </md-field>
           </form>
 
-          <hot-table v-else-if="section.hot" :settings="section.hot" />
+          <hot-table v-else-if="section.hot" :settings="section.hot" class="fullscreen" />
 
           <div v-else-if="section[idKey] === 'schedule'">
             <md-table>
@@ -284,8 +284,11 @@ export default {
     vertical-align: top;
   }
   .handsontable {
-    height: 100%;
     z-index: 90; // keep below sidebar, backdrop, modals
+
+    &.fullscreen {
+      height: 100%;
+    }
   }
 }
 </style>
