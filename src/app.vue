@@ -357,17 +357,18 @@ body {
       }
     }
   }
-  .md-avatar {
-    &.md-avatar-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: #FFF;
-      font-size: 1em;
-    }
-  }
   &.md-transparent {
     background-color: transparent;
+  }
+}
+
+.md-avatar {
+  &.md-avatar-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFF;
+    font-size: 16px;
   }
 }
 
