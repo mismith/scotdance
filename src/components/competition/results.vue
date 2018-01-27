@@ -15,9 +15,8 @@
 
             <md-list slot="md-expand">
               <result-list-item
-                v-for="dance in dances"
+                v-for="dance in findGroupDances(group)"
                 :key="dance[idKey]"
-                v-if="dance.levelIds && dance.levelIds[group.levelId]"
                 :winner="getWinner(group[idKey], dance[idKey])"
                 @click="selected = { group, dance }"
               >
@@ -30,7 +29,7 @@
                   @click="selected = { group }"
                 >
                   Overall
-                  <md-icon md-iconset="icon-trophy" slot="icon" />
+                  <md-icon class="icon-trophy" slot="icon" />
                 </result-list-item>
               </div>
             </md-list>
@@ -183,6 +182,9 @@ export default {
 
     findGroupDancers(group) {
       return this.dancers.filter(dancer => dancer.groupId === group[idKey]);
+    },
+    findGroupDances(group) {
+      return this.dances.filter(dance => dance.groupIds && dance.groupIds[group[idKey]]);
     },
     getWinner(groupId, danceId = undefined) {
       const group = this.scores[groupId];
