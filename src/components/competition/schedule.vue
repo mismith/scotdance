@@ -27,7 +27,7 @@
 
                     <div class="md-list-item-text">
                       <span>{{ group.$name }}</span>
-                      <p>Judge Name</p>
+                      <p>{{ getGroupJudge(group).$name }}</p>
                     </div>
 
                     <md-icon>chevron_right</md-icon>
@@ -120,6 +120,9 @@ export default {
       return {
         number: Math.ceil(Math.random() * 3),
       };
+    },
+    getGroupJudge(group) {
+      return '';
     },
   },
   mounted() {
