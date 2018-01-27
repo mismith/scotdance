@@ -151,6 +151,7 @@ export default {
     levels: Array,
     favorites: Array,
     dances: Array,
+    staff: Array,
     platforms: Array,
   },
   data() {

@@ -11,6 +11,7 @@
         :levels="levels"
         :favorites="favorites"
         :dances="dances"
+        :staff="staff"
         :platforms="platforms"
       />
     </div>
@@ -85,6 +86,7 @@ export default {
       levelsRaw: this.competitionDataRef.child('levels'),
       favoritesRaw: this.userFavoritesRef.child('dancers'),
       dancesRaw: this.competitionDataRef.child('dances'),
+      staffRaw: this.competitionDataRef.child('staff'),
       platformsRaw: this.competitionDataRef.child('platforms'),
     };
   },
@@ -124,6 +126,9 @@ export default {
           $shortName: `${dance.shortName}${stepsString}`,
         };
       });
+    },
+    staff() {
+      return this.staffRaw;
     },
     platforms() {
       return this.platformsRaw;
