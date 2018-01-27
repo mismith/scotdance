@@ -144,7 +144,7 @@ export default {
     },
     getGroupName(group) {
       const level = this.findLevel(group.levelId);
-      return `${level ? level.name : ''} ${group.name}`;
+      return `${level ? level.name : ''} ${group.name || ''}`;
     },
     isFavoriteDancer(dancer) {
       return !!findByIdKey(this.favorites, dancer[idKey]);
