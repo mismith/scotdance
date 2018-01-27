@@ -176,7 +176,8 @@ export default {
       });
     },
     sheetToJson(sheet, options = { header: 1 }) {
-      return XLSX.utils.sheet_to_json(sheet, options);
+      return XLSX.utils.sheet_to_json(sheet, options)
+        .filter(row => Object.entries(row).some(([k, v]) => v)); // remove empties
     },
     sheetToHot(sheet, settings = {}) {
       return this.toHot(this.sheetToJson(sheet), settings);
@@ -232,11 +233,12 @@ export default {
           'group',
         ],
       });
-      const dancers = dancersData.slice(1); // remove header row
+      const dancers = dancersData
+        .slice(1); // remove header row
 
       const levels = dancers
         .map(datum => datum.level)
-        .filter((v, i, a) => a.indexOf(v) === i); // uniques
+        .filter((v, i, a) => a.indexOf(v) === i); // only keep uniques
 
 
       const groupsData = this.sheetToJson(groupsSheet, {
