@@ -135,6 +135,7 @@ export default {
     },
   },
   methods: {
+    // @TODO: make tabs persist/not re-load on change
     findGroup(groupId) {
       return findByIdKey(this.groups, groupId);
     },

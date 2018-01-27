@@ -12,6 +12,15 @@
 
         <span style="flex-grow: 1;"></span>
 
+        <md-button @click="confirmRemove = true" class="md-accent">Delete</md-button>
+        <md-dialog-confirm
+          :md-active.sync="confirmRemove"
+          md-title="Delete competition"
+          md-content="Are you sure you want to permanently delete this competition?"
+          md-confirm-text="Yes"
+          md-cancel-text="No"
+          @md-confirm="remove" />
+
         <md-button @click="save()" class="md-primary md-raised" :disabled="!isDirty">Save</md-button>
       </md-toolbar>
       <div
@@ -161,6 +170,7 @@ export default {
       scores: {},
 
       showImport: false,
+      confirmRemove: false,
 
       unsavedChanges: {},
     };
@@ -237,6 +247,7 @@ export default {
     },
   },
   methods: {
+    // @TODO: alert to confirm losing changes on tab change
     inTabs(...tabs) {
       return tabs.some(tab => (this.$route.params.tab || 'info') === tab);
     },
@@ -262,6 +273,12 @@ export default {
 
       // reset everything
       this.$set(this, 'unsavedChanges', {});
+    },
+
+    async remove() {
+      await this.competitionRef.remove();
+      await this.competitionDataRef.remove();
+      this.$router.replace('/');
     },
 
     addStandardDances() {
