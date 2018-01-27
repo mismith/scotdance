@@ -12,7 +12,7 @@
 
         <span style="flex-grow: 1;"></span>
 
-        <!--<md-button class="md-accent md-raised">Save</md-button>-->
+        <md-button @click="save()" class="md-primary md-raised" :disabled="!isDirty">Save</md-button>
       </md-toolbar>
       <div
         v-for="section of sections"
@@ -161,6 +161,8 @@ export default {
       scores: {},
 
       showImport: false,
+
+      unsavedChanges: {},
     };
   },
   firebase() {
@@ -189,6 +191,21 @@ export default {
               ...section.hot,
 
               data,
+
+              afterChange: (changes, source) => {
+                if (source !== 'loadData') {
+                  changes.forEach(([row, prop, oldVal, newVal]) => {
+                    const path = `${section[idKey]}/${data[row][idKey]}/${prop.replace('.', '/')}`;
+                    this.queueSave(path, newVal);
+                  });
+                }
+              },
+              beforeRemoveRow: (index, amount) => {
+                for (let i = 0; i < amount; i += 1) {
+                  const path = `${section[idKey]}/${data[index + i][idKey]}`;
+                  this.queueSave(path, null);
+                }
+              },
             };
             if (section[idKey] === 'dances') {
               section.hot.columns = section.hot.columns.concat(this.groups
@@ -215,10 +232,36 @@ export default {
           return section;
         });
     },
+    isDirty() {
+      return Object.keys(this.unsavedChanges).length;
+    },
   },
   methods: {
     inTabs(...tabs) {
       return tabs.some(tab => (this.$route.params.tab || 'info') === tab);
+    },
+
+    queueSave(path, value) {
+      this.$set(this.unsavedChanges, path, value);
+    },
+    async save() {
+      // process competition/info saves first/differently
+      const infoChanges = {};
+      Object.entries(this.unsavedChanges).forEach(([path, value]) => {
+        const infoRegex = /^info\//;
+        if (infoRegex.test(path)) {
+          // move to infoChanges
+          infoChanges[path.replace(infoRegex, '')] = value;
+          delete this.unsavedChanges[path];
+        }
+      });
+      await this.competitionRef.update(infoChanges);
+
+      // next, process all the data changes
+      await this.competitionDataRef.update(this.unsavedChanges);
+
+      // reset everything
+      this.$set(this, 'unsavedChanges', {});
     },
 
     addStandardDances() {
@@ -252,25 +295,13 @@ export default {
       // append
       // @TODO: make this local-only until save
       return Promise.all(standardDances.map((dance) => {
-        return this.$firebaseRefs.dances.push(dance);
+        return this.competitionDataRef.child('dances').push(dance);
       }));
     },
 
     handleFormInputChange(section, field, value) {
-      const collection = section === 'info' ? 'competition' : section;
-
-      // save
-      this.$firebaseRefs[collection]
-        .child(field)
-        .set(value);
+      return this.queueSave(`${section}/${field}`, value);
     },
-
-    // getGroupDances(group) {
-    //   return this.dances.filter(d => d.levelIds[group.levelId]);
-    // },
-    // saveScore(groupId, danceId, dancerId, score) {
-    //   console.log(groupId, danceId, dancerId, score);
-    // },
   },
   components: {
     HotTable,
