@@ -1,5 +1,5 @@
 <template>
-  <md-list-item @click="$emit('click', $event)">
+  <md-list-item @click="$emit('click', $event)" class="result-list-item">
     <md-avatar
       class="md-avatar-icon"
       :class="{'md-primary': winner, 'md-accent': winner && winner.$favorite}"

@@ -1,5 +1,5 @@
 <template>
-  <md-list-item @click="$emit('click', $event)">
+  <md-list-item @click="$emit('click', $event)" class="dancer-list-item">
     <md-avatar class="md-avatar-icon" :class="{'md-accent': dancer.$favorite}">
       <span>{{ dancer.number }}</span>
     </md-avatar>
@@ -11,11 +11,13 @@
 
     <slot />
 
-    <md-button @click.stop="handleFavoriteToggle(dancer)" class="md-icon-button md-list-action">
-      <md-icon :class="{'md-accent': dancer.$favorite}">
-        {{ dancer.$favorite ? 'star' : 'star_border' }}
-      </md-icon>
-    </md-button>
+    <slot name="icon">
+      <md-button @click.stop="handleFavoriteToggle(dancer)" class="md-icon-button md-list-action">
+        <md-icon :class="{'md-accent': dancer.$favorite}">
+          {{ dancer.$favorite ? 'star' : 'star_border' }}
+        </md-icon>
+      </md-button>
+    </slot>
   </md-list-item>
 </template>
 
