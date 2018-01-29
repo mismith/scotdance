@@ -12,7 +12,8 @@
     <slot />
 
     <slot name="icon">
-      <md-button @click.stop="handleFavoriteToggle(dancer)" class="md-icon-button md-list-action">
+      <span v-if="place" class="place">{{ place }}</span>
+      <md-button v-else @click.stop="handleFavoriteToggle(dancer)" class="md-icon-button md-list-action">
         <md-icon :class="{'md-accent': dancer.$favorite}">
           {{ dancer.$favorite ? 'star' : 'star_border' }}
         </md-icon>
@@ -31,6 +32,7 @@ export default {
   name: 'dancer-list-item',
   props: {
     dancer: Object,
+    place: Number,
   },
   firebase: {
     favorites: db.child('users:favorites').child('idu0').child('dancers'), // @TODO
@@ -45,5 +47,18 @@ export default {
 </script>
 
 <style lang="scss">
+.dancer-list-item {
+  .place {
+    color: var(--md-theme-default-primary);
+    font-size: 2em;
+    font-weight: bold;
 
+    &::before {
+      content: "#";
+      display: inline-block;
+      font-size: 0.5em;
+      vertical-align: middle;
+    }
+  }
+}
 </style>

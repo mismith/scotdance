@@ -17,18 +17,19 @@
               <result-list-item
                 v-for="dance in findGroupDances(group)"
                 :key="dance[idKey]"
-                :winner="getWinner(group[idKey], dance[idKey])"
+                :winner="getGroupDanceWinner(group, dance)"
                 @click="selected = { group, dance }"
               >
-                {{ dance.name }}
+                {{ dance.$name }}
               </result-list-item>
+
               <div v-if="group.$level.name !== 'Primary'">
                 <md-divider class="md-inset" />
                 <result-list-item
-                  :winner="getWinner(group[idKey])"
-                  @click="selected = { group }"
+                  :winner="getGroupDanceWinner(group, overall)"
+                  @click="selected = { group, dance: overall }"
                 >
-                  Overall
+                  {{ overall.$name }}
                   <md-icon class="icon-trophy" slot="icon" />
                 </result-list-item>
               </div>
@@ -46,24 +47,24 @@
         <span v-if="selected">
           {{ selected.group.$name }}
           &rsaquo;
-          {{ selected.dance ? selected.dance.name : 'Overall' }}
+          {{ selected.dance.$name }}
         </span>
       </md-toolbar>
       <md-list class="md-double-line md-scroll">
         <dancer-list-item
-          v-for="(dancer, i) in selectedScores"
+          v-for="(dancer, index) in placedDancers"
           :key="dancer[idKey]"
           :dancer="dancer"
-        >
-          <output>{{ i + 1 }}</output>
-        </dancer-list-item>
-        <md-subheader v-if="!selectedScores.length">Results to be determined.</md-subheader>
+          :place="index + 1"
+        />
+        <md-subheader v-if="!placedDancers.length">Results to be determined.</md-subheader>
       </md-list>
     </swiper-slide>
   </swiper>
 </template>
 
 <script>
+import ResultsMixin from '@/mixins/results';
 import DancerListItem from '@/components/dancer-list-item';
 import ResultListItem from '@/components/result-list-item';
 import {
@@ -75,6 +76,9 @@ import {
 
 export default {
   name: 'competition-results',
+  mixins: [
+    ResultsMixin,
+  ],
   props: {
     competitionDataRef: {
       type: Object,
@@ -82,90 +86,24 @@ export default {
     },
     dancers: Array,
     groups: Array,
-    levels: Array,
-    favorites: Array,
     dances: Array,
-    platforms: Array,
+    placings: Object,
   },
   data() {
     return {
       idKey,
 
       loaded: false,
-
       selected: undefined,
     };
   },
-  firebase() {
-    return {
-      scoresRaw: {
-        source: this.competitionDataRef.child('scores'),
-        asObject: true,
-      },
-    };
-  },
   computed: {
-    scores() {
-      const scores = {};
-      if (this.scoresRaw.length) {
-        Object.entries(this.scoresRaw).forEach(([groupId, danceIds]) => {
-          scores[groupId] = {
-            dances: {},
-            overall: {},
-          };
-          Object.entries(danceIds).forEach(([danceId, dancerIds]) => {
-            const dancers = Object.entries(dancerIds)
-              .map(([dancerId, score]) => {
-                // cumulate for overall totals
-                scores[groupId].overall[dancerId] = (scores[groupId].overall[dancerId] || 0) + score;
-
-                return {
-                  dancerId,
-                  score,
-                };
-              })
-              .sort((a, b) => b.score - a.score); // highest score first
-
-            scores[groupId].dances[danceId] = {
-              dancers,
-              winner: dancers.length && dancers[0], // first place
-            };
-          });
-
-          const overall = Object.entries(scores[groupId].overall)
-            .map(([dancerId, score]) => ({
-              dancerId,
-              score,
-            }))
-            .sort((a, b) => b.score - a.score);
-          scores[groupId].winner = overall.length && overall[0]; // highest score first + first place
-        });
-      }
-      return scores;
-    },
-    selectedScores() {
+    placedDancers() {
+      let placings = [];
       if (this.selected) {
-        const groupId = this.selected.group && this.selected.group[idKey];
-        const danceId = this.selected.dance && this.selected.dance[idKey];
-
-        if (this.scores[groupId]) {
-          if (danceId) {
-            // specific dance results
-            if (this.scores[groupId].dances[danceId]) {
-              return this.scores[groupId].dances[danceId].dancers
-                // only top half (rounded down)
-                .filter((v, i, a) => i <= Math.max(1, (a.length / 2) - 1))
-                // make dancer record
-                .map(entry => this.dancers.find(d => d[idKey] === entry.dancerId));
-            }
-          } else {
-            // overall results
-            // make dancer record
-            return this.dancers.filter(d => d[idKey] === this.scores[groupId].winner.dancerId);
-          }
-        }
+        placings = this.getGroupDancePlacings(this.selected.group, this.selected.dance);
       }
-      return [];
+      return this.getPlacedDancers(placings);
     },
   },
   watch: {
@@ -179,27 +117,6 @@ export default {
   },
   methods: {
     hasFavorites,
-
-    findGroupDancers(group) {
-      return this.dancers.filter(dancer => dancer.groupId === group[idKey]);
-    },
-    findGroupDances(group) {
-      return this.dances.filter(dance => dance.groupIds && dance.groupIds[group[idKey]]);
-    },
-    getWinner(groupId, danceId = undefined) {
-      const group = this.scores[groupId];
-      if (group) {
-        if (danceId) {
-          const dance = group.dances[danceId];
-          if (dance) {
-            return this.dancers.find(d => d[idKey] === dance.winner.dancerId);
-          }
-          return undefined;
-        }
-        return this.dancers.find(d => d[idKey] === group.winner.dancerId);
-      }
-      return undefined;
-    },
   },
   mounted() {
     return this.competitionDataRef.once('value')

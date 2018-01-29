@@ -16,21 +16,22 @@
             <result-list-item
               v-for="dance in findGroupDances(group)"
               :key="dance[idKey]"
+              :winner="getGroupDanceWinner(group, dance)"
               @click="selected = { group, dance }"
               :class="{selected: selected && selected.group === group && selected.dance === dance}"
             >
-              {{ dance.name }}
-
+              {{ dance.$name }}
               <span slot="icon" />
             </result-list-item>
 
             <div v-if="group.$level.name !== 'Primary'">
               <md-divider class="md-inset" />
               <result-list-item
+                :winner="getGroupDanceWinner(group, overall)"
                 @click="selected = { group, dance: overall }"
-              :class="{selected: selected && selected.group === group && selected.dance === overall}"
+                :class="{selected: selected && selected.group === group && selected.dance === overall}"
               >
-                Overall
+                {{ overall.$name }}
                 <md-icon class="icon-trophy" slot="icon" />
               </result-list-item>
             </div>
@@ -56,23 +57,23 @@
         </dancer-list-item>
       </md-list>
     </div>
-    <div class="md-layout-item md-scroll placed-dancers">
+    <div class="md-layout-item md-scroll">
       <md-subheader>Placings</md-subheader>
       <md-list v-if="selected">
         <dancer-list-item
-          v-for="dancer in placedDancers"
+          v-for="(dancer, index) in placedDancers"
           :key="dancer[idKey]"
           :dancer="dancer"
+          :place="index + 1"
           @click="placeDancer(dancer)"
-        >
-          <span slot="icon" class="place">{{ getDancerPlaceIndex(dancer) + 1 }}</span>
-        </dancer-list-item>
+        />
       </md-list>
     </div>
   </div>
 </template>
 
 <script>
+import ResultsMixin from '@/mixins/results';
 import DancerListItem from '@/components/dancer-list-item';
 import ResultListItem from '@/components/result-list-item';
 import {
@@ -81,6 +82,9 @@ import {
 
 export default {
   name: 'admin-results',
+  mixins: [
+    ResultsMixin,
+  ],
   props: {
     groups: Array,
     dances: Array,
@@ -95,9 +99,6 @@ export default {
       selected: undefined,
 
       placedDancers: [],
-      overall: {
-        [idKey]: 'overall',
-      },
     };
   },
   watch: {
@@ -107,30 +108,16 @@ export default {
       //   confirm('Are you sure?');
       // }
 
-      // reset/empty placed dancers on group/dance change
+      // reset placed dancers on group/dance change
       let placings = [];
-      if (selected && selected.group && selected.dance) {
-        const groupId = selected.group[idKey];
-        const danceId = selected.dance[idKey];
-
-        if (this.placings && this.placings[groupId] && this.placings[groupId][danceId]) {
-          placings = this.placings[groupId][danceId];
-        }
+      if (this.selected) {
+        placings = this.getGroupDancePlacings(this.selected.group, this.selected.dance);
       }
 
-      // transform ranked dancerIds into ordered array of dancers
-      const placedDancers = placings.map(dancerId => this.dancers.find(dancer => dancer[idKey] === dancerId));
-      this.$set(this, 'placedDancers', placedDancers);
+      this.$set(this, 'placedDancers', this.getPlacedDancers(placings));
     },
   },
   methods: {
-    findGroupDancers(group) {
-      return this.dancers.filter(dancer => dancer.groupId === group[idKey]);
-    },
-    findGroupDances(group) {
-      return this.dances.filter(dance => dance.groupIds && dance.groupIds[group[idKey]]);
-    },
-
     placeDancer(dancer) {
       const placeIndex = this.getDancerPlaceIndex(dancer);
       if (placeIndex >= 0) {
@@ -178,27 +165,13 @@ export default {
   .result-list-item {
     &.selected {
       .md-avatar {
-        background-color: var(--md-theme-default-primary);
+        background-color: var(--md-theme-default-accent);
       }
     }
   }
   .dancer-list-item {
     &.placed {
       opacity: 0.33;
-    }
-  }
-  .placed-dancers {
-    .place {
-      color: var(--md-theme-default-primary);
-      font-size: 2em;
-      font-weight: bold;
-
-      &::before {
-        content: "#";
-        display: inline-block;
-        font-size: 0.5em;
-        vertical-align: middle;
-      }
     }
   }
 }
