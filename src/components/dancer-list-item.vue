@@ -12,7 +12,7 @@
     <slot />
 
     <slot name="icon">
-      <span v-if="place" class="place">{{ place }}</span>
+      <span v-if="place" class="place">{{ place }}<small class="ordinal">{{ getPlaceOrdinal(place) }}</small></span>
       <md-button v-else @click.stop="handleFavoriteToggle(dancer)" class="md-icon-button md-list-action">
         <md-icon :class="{'md-accent': dancer.$favorite}">
           {{ dancer.$favorite ? 'star' : 'star_border' }}
@@ -42,6 +42,22 @@ export default {
       const toggled = dancer.$favorite ? null : true;
       return this.$firebaseRefs.favorites.child(dancer[idKey]).set(toggled);
     },
+    getPlaceOrdinal(place) {
+      switch (`${place}`) {
+        case '1': {
+          return 'st';
+        }
+        case '2': {
+          return 'nd';
+        }
+        case '3': {
+          return 'rd';
+        }
+        default: {
+          return 'th';
+        }
+      }
+    },
   },
 };
 </script>
@@ -53,11 +69,11 @@ export default {
     font-size: 2em;
     font-weight: bold;
 
-    &::before {
-      content: "#";
+    .ordinal {
       display: inline-block;
+      width: 20px; // aligns the ordinals despite varying character widths
       font-size: 0.5em;
-      vertical-align: middle;
+      vertical-align: top;
     }
   }
 }
