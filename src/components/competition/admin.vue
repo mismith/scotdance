@@ -71,44 +71,16 @@
             </md-table>
           </div>
 
-          <!--<div v-else-if="section[idKey] === 'scores'">
-            <div v-for="group of groups" :key="group[idKey]">
-              <md-subheader>{{ getGroupName(group) }}</md-subheader>
-              <md-list>
-                <md-list-item v-for="dance of getGroupDances(group)" :key="dance[idKey]">
-                  {{ dance.name }}
-                </md-list-item>
-              </md-list>
-            </div>
-            <!- -<md-table v-for="group of groups">
-              <md-table-header>
-                <md-table-row>
-                  <md-table-head>{{ getGroupName(group) }}</md-table-head>
-                  <md-table-head>
-                    {{ dance.name }}
-                  </md-table-head>
-                </md-table-row>
-              </md-table-header>
-              <md-table-body>
-                <md-table-row v-for="dancer of getGroupDancers(group)" :key="dancer[idKey]">
-                  <md-table-cell>
-                    {{ dancer.number }}
-                  </md-table-cell>
-                  <md-table-cell v-for="dance of getGroupDances(group)" :key="dance[idKey]">
-                    <md-field>
-                      <md-input
-                        type="number"
-                        v-model="scores.test"
-                        min="0"
-                        max="100"
-                        @change="saveScore(group[idKey], dance[idKey], dancer[idKey], $event)"
-                      />
-                    </md-field>
-                  </md-table-cell>
-                </md-table-row>
-              </md-table-body>
-            </md-table>- ->
-          </div>-->
+          <div v-else-if="section[idKey] === 'results'" class="md-scroll-frame">
+            <admin-results
+              :dancers="dancers"
+              :groups="groups"
+              :dances="dances"
+              :placings="placings"
+              :unsaved-changes="unsavedChanges"
+              @change="handleChanges($event)"
+            />
+          </div>
 
           <md-subheader v-else>
             TBD
@@ -138,6 +110,7 @@
 <script>
 import HotTable from '@/lib/vue-handsontable/HotTable';
 import AdminImport from '@/components/competition/admin/import';
+import AdminResults from '@/components/competition/admin/results';
 import {
   idKey,
   db,
@@ -162,12 +135,11 @@ export default {
     dances: Array,
     staff: Array,
     platforms: Array,
+    placings: Object,
   },
   data() {
     return {
       idKey,
-
-      scores: {},
 
       showImport: false,
       confirmRemove: false,
@@ -319,10 +291,16 @@ export default {
     handleFormInputChange(section, field, value) {
       return this.queueSave(`${section}/${field}`, value);
     },
+    handleChanges(changes) {
+      Object.entries(changes).forEach(([path, value]) => {
+        this.queueSave(path, value);
+      });
+    },
   },
   components: {
     HotTable,
     AdminImport,
+    AdminResults,
   },
 };
 </script>

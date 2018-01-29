@@ -13,6 +13,7 @@
         :dances="dances"
         :staff="staff"
         :platforms="platforms"
+        :placings="placings"
       />
     </div>
 
@@ -88,6 +89,10 @@ export default {
       dancesRaw: this.competitionDataRef.child('dances'),
       staffRaw: this.competitionDataRef.child('staff'),
       platformsRaw: this.competitionDataRef.child('platforms'),
+      placingsRaw: {
+        source: this.competitionDataRef.child('placings'),
+        asObject: true,
+      },
     };
   },
   computed: {
@@ -132,6 +137,9 @@ export default {
     },
     platforms() {
       return this.platformsRaw;
+    },
+    placings() {
+      return this.placingsRaw;
     },
   },
   methods: {
