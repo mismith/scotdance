@@ -161,13 +161,14 @@ export default {
           const section = {
             ...sectionData,
           };
-          const data = this[section[idKey]];
+          const data = [].concat(this[section[idKey]]);
 
           if (section.hot) {
             section.hot = {
               contextMenu: [
                 'remove_row',
               ],
+              minSpareRows: 1,
               colHeaders: true,
               rowHeaders: true,
               stretchH: 'all',
@@ -179,6 +180,12 @@ export default {
               afterChange: (changes, source) => {
                 if (source !== 'loadData') {
                   changes.forEach(([row, prop, oldVal, newVal]) => {
+                    // add key if new entry
+                    if (!data[row][idKey]) {
+                      data[row][idKey] = db.push().key;
+                    }
+
+                    // queue up a save
                     const path = `${section[idKey]}/${data[row][idKey]}/${prop.replace('.', '/')}`;
                     this.queueSave(path, newVal);
                   });
