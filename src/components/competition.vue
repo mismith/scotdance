@@ -133,7 +133,10 @@ export default {
       });
     },
     staff() {
-      return this.staffRaw;
+      return this.staffRaw.map((member) => ({
+        ...member,
+        $name: `${member.firstName} ${member.lastName}`,
+      }));
     },
     platforms() {
       return this.platformsRaw;
