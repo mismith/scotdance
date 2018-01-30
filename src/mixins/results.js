@@ -18,25 +18,25 @@ export default {
     findGroupDances(group) {
       return this.dances.filter(dance => dance.groupIds && dance.groupIds[group[idKey]]);
     },
-    getGroupDancePlacings(group, dance) {
-      let placings = [];
+    getGroupDanceResults(group, dance) {
+      let results = [];
       if (group && dance) {
         const groupId = group[idKey];
         const danceId = dance[idKey];
 
-        if (this.placings && this.placings[groupId] && this.placings[groupId][danceId]) {
-          placings = this.placings[groupId][danceId];
+        if (this.results && this.results[groupId] && this.results[groupId][danceId]) {
+          results = this.results[groupId][danceId];
         }
       }
-      return placings;
+      return results;
     },
-    getPlacedDancers(placings) {
+    getPlacedDancers(results) {
       // transform ranked dancerIds into ordered array of dancer objects
-      return placings.map(dancerId => this.dancers.find(dancer => dancer[idKey] === dancerId));
+      return results.map(dancerId => this.dancers.find(dancer => dancer[idKey] === dancerId));
     },
     getGroupDanceWinner(group, dance) {
-      const placings = this.getGroupDancePlacings(group, dance);
-      const placedDancers = this.getPlacedDancers(placings);
+      const results = this.getGroupDanceResults(group, dance);
+      const placedDancers = this.getPlacedDancers(results);
 
       return placedDancers[0];
     },

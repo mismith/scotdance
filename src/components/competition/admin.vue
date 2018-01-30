@@ -2,7 +2,7 @@
   <div class="competition-admin md-scroll-frame">
     <div class="md-scroll-frame">
       <md-toolbar class="md-dense">
-        <div v-if="inTabs('info', 'levels', 'dancers', 'groups')">
+        <div v-if="inTabs('info', 'categories', 'dancers', 'groups')">
           <md-button @click="showImport = true">Import</md-button>
         </div>
 
@@ -60,8 +60,8 @@
                   <div
                     v-for="group of groups"
                     :key="group[idKey]"
-                    v-show="dance.levelIds
-                      && dance.levelIds[group.levelId]
+                    v-show="dance.categoryIds
+                      && dance.categoryIds[group.categoryId]
                       && group.platformId === platform[idKey]"
                   >
                     {{group.$name}}
@@ -76,7 +76,7 @@
               :dancers="dancers"
               :groups="groups"
               :dances="dances"
-              :placings="placings"
+              :results="results"
               :unsaved-changes="unsavedChanges"
               @change="handleChanges($event)"
             />
@@ -130,12 +130,12 @@ export default {
     competition: Object,
     dancers: Array,
     groups: Array,
-    levels: Array,
+    categories: Array,
     favorites: Array,
     dances: Array,
     staff: Array,
     platforms: Array,
-    placings: Object,
+    results: Object,
   },
   data() {
     return {
@@ -200,9 +200,9 @@ export default {
                 })));
             }
             section.hot.columns = section.hot.columns.map((column) => {
-              if (column.data === 'levelId') {
+              if (column.data === 'categoryId') {
                 // eslint-disable-next-line no-param-reassign
-                column.source = this.levels.map(l => l.name);
+                column.source = this.categories.map(l => l.name);
               }
               if (column.data === 'platformId') {
                 // eslint-disable-next-line no-param-reassign

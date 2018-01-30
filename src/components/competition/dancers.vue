@@ -99,10 +99,6 @@ export default {
     },
     dancers: Array,
     groups: Array,
-    levels: Array,
-    favorites: Array,
-    dances: Array,
-    platforms: Array,
   },
   data() {
     return {

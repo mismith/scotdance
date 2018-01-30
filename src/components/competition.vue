@@ -8,12 +8,12 @@
         :competition="competition"
         :dancers="dancers"
         :groups="groups"
-        :levels="levels"
+        :categories="categories"
         :favorites="favorites"
         :dances="dances"
         :staff="staff"
         :platforms="platforms"
-        :placings="placings"
+        :results="results"
       />
     </div>
 
@@ -84,13 +84,13 @@ export default {
       // data
       dancersRaw: this.competitionDataRef.child('dancers'),
       groupsRaw: this.competitionDataRef.child('groups'),
-      levelsRaw: this.competitionDataRef.child('levels'),
+      categoriesRaw: this.competitionDataRef.child('categories'),
       favoritesRaw: this.userFavoritesRef.child('dancers'),
       dancesRaw: this.competitionDataRef.child('dances'),
       staffRaw: this.competitionDataRef.child('staff'),
       platformsRaw: this.competitionDataRef.child('platforms'),
-      placingsRaw: {
-        source: this.competitionDataRef.child('placings'),
+      resultsRaw: {
+        source: this.competitionDataRef.child('results'),
         asObject: true,
       },
     };
@@ -104,8 +104,8 @@ export default {
         ...dancer,
         number: `${dancer.number}`, // stringify
         $name: `${dancer.firstName} ${dancer.lastName}`,
-        $group: this.findGroup(dancer.groupId),
-        $favorite: this.isFavoriteDancer(dancer),
+        $group: findByIdKey(this.groups, dancer.groupId),
+        $favorite: !!findByIdKey(this.favorites, dancer[idKey]),
       }));
     },
     groups() {
@@ -113,11 +113,11 @@ export default {
         ...group,
         $order: `${10000 + i}`, // pad with leading 'zeros'
         $name: this.getGroupName(group),
-        $level: this.findLevel(group.levelId),
+        $category: this.findCategory(group.categoryId),
       }));
     },
-    levels() {
-      return this.levelsRaw;
+    categories() {
+      return this.categoriesRaw;
     },
     favorites() {
       return this.favoritesRaw;
@@ -138,24 +138,18 @@ export default {
     platforms() {
       return this.platformsRaw;
     },
-    placings() {
-      return this.placingsRaw;
+    results() {
+      return this.resultsRaw;
     },
   },
   methods: {
     // @TODO: make tabs persist/not re-load on change
-    findGroup(groupId) {
-      return findByIdKey(this.groups, groupId);
-    },
-    findLevel(levelId) {
-      return findByIdKey(this.levels, levelId);
+    findCategory(categoryId) {
+      return findByIdKey(this.categories, categoryId);
     },
     getGroupName(group) {
-      const level = this.findLevel(group.levelId);
-      return `${level ? level.name : ''} ${group.name || ''}`;
-    },
-    isFavoriteDancer(dancer) {
-      return !!findByIdKey(this.favorites, dancer[idKey]);
+      const category = this.findCategory(group.categoryId);
+      return `${category ? category.name : ''} ${group.name || ''}`;
     },
   },
 };

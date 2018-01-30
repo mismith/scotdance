@@ -80,7 +80,7 @@
       </md-toolbar>
     </md-step>
     <md-step id="review" md-label="Review" md-description="Ensure values look correct">
-      <md-tabs v-if="data" md-active-tab="tab-levels">
+      <md-tabs v-if="data" md-active-tab="tab-categories">
         <md-tab
           v-for="(items, key) of data"
           :key="key"
@@ -213,12 +213,12 @@ export default {
     },
     handleReview() {
       const {
-        levels,
+        categories,
         groups,
         dancers,
       } = this.data;
 
-      this.importData(levels, groups, dancers);
+      this.importData(categories, groups, dancers);
     },
 
     parseSpreadsheet(dancersSheet, groupsSheet) {
@@ -228,7 +228,7 @@ export default {
           'firstName',
           'lastName',
           'age',
-          'level',
+          'category',
           'location',
           'group',
         ],
@@ -236,8 +236,8 @@ export default {
       const dancers = dancersData
         .slice(1); // remove header row
 
-      const levels = dancers
-        .map(datum => datum.level)
+      const categories = dancers
+        .map(datum => datum.category)
         .filter((v, i, a) => a.indexOf(v) === i); // only keep uniques
 
 
@@ -259,12 +259,12 @@ export default {
           currentGroup = Object.keys(groups).length + 1;
 
           const title = (datum.number || '').trim();
-          const name = title.replace(new RegExp(levels.join('|')), '').trim();
-          const level = title.replace(name, '').trim();
+          const name = title.replace(new RegExp(categories.join('|')), '').trim();
+          const category = title.replace(name, '').trim();
           groups[currentGroup] = {
             number: currentGroup,
             name,
-            level,
+            category,
             // dancers: [],
           };
         } else {
@@ -276,34 +276,34 @@ export default {
 
       // return all items normalized to arrays
       return {
-        levels: levels.map(level => ({ name: level })),
+        categories: categories.map(category => ({ name: category })),
         groups: Object.values(groups),
         dancers,
       };
     },
-    async importData(levels, groups, dancers) {
-      const levelMappings = await Promise.all(levels.map(async (levelData) => {
-        const level = {
-          name: levelData.name,
+    async importData(categories, groups, dancers) {
+      const categoryMappings = await Promise.all(categories.map(async (categoryData) => {
+        const category = {
+          name: categoryData.name,
         };
 
         // add to db
-        const ref = await this.competitionDataRef.child('levels').push(level);
+        const ref = await this.competitionDataRef.child('categories').push(category);
 
         // pass through
         return {
           [idKey]: ref.key,
-          ...level,
+          ...category,
         };
       }));
 
       const groupMappings = await Promise.all(groups.map(async (groupData) => {
-        const levelId = levelMappings.find((level) => {
-          return `${level.name}` === `${groupData.level}`;
+        const categoryId = categoryMappings.find((category) => {
+          return `${category.name}` === `${groupData.category}`;
         });
         const group = {
           name: groupData.name,
-          levelId: (levelId && levelId[idKey]) || null,
+          categoryId: (categoryId && categoryId[idKey]) || null,
         };
 
         // add to db
@@ -327,7 +327,7 @@ export default {
           lastName: dancerData.lastName,
           location: dancerData.location,
           groupId: (groupId && groupId[idKey]) || null,
-          levelId: (groupId && groupId.levelId) || null,
+          categoryId: (groupId && groupId.categoryId) || null,
         };
 
         // add to db

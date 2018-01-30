@@ -24,7 +24,7 @@
               <span slot="icon" />
             </result-list-item>
 
-            <div v-if="group.$level.name !== 'Primary'">
+            <div v-if="group.$category.name !== 'Primary'">
               <md-divider class="md-inset" />
               <result-list-item
                 :winner="getGroupDanceWinner(group, overall)"
@@ -89,7 +89,7 @@ export default {
     groups: Array,
     dances: Array,
     dancers: Array,
-    placings: Object,
+    results: Object,
     // unsavedChanges: Object,
   },
   data() {
@@ -109,12 +109,12 @@ export default {
       // }
 
       // reset placed dancers on group/dance change
-      let placings = [];
+      let results = [];
       if (this.selected) {
-        placings = this.getGroupDancePlacings(this.selected.group, this.selected.dance);
+        results = this.getGroupDanceResults(this.selected.group, this.selected.dance);
       }
 
-      this.$set(this, 'placedDancers', this.getPlacedDancers(placings));
+      this.$set(this, 'placedDancers', this.getPlacedDancers(results));
     },
   },
   methods: {
