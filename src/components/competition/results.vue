@@ -64,7 +64,6 @@
 </template>
 
 <script>
-import ResultsMixin from '@/mixins/results';
 import DancerListItem from '@/components/dancer-list-item';
 import ResultListItem from '@/components/result-list-item';
 import {
@@ -73,12 +72,17 @@ import {
 import {
   hasFavorites,
 } from '@/helpers/competition';
+import {
+  overall,
+  findGroupDancers,
+  findGroupDances,
+  getGroupDanceResults,
+  getPlacedDancers,
+  getGroupDanceWinner,
+} from '@/helpers/results';
 
 export default {
   name: 'competition-results',
-  mixins: [
-    ResultsMixin,
-  ],
   props: {
     competitionDataRef: {
       type: Object,
@@ -92,6 +96,7 @@ export default {
   data() {
     return {
       idKey,
+      overall,
 
       loaded: false,
       selected: undefined,
@@ -117,6 +122,11 @@ export default {
   },
   methods: {
     hasFavorites,
+    findGroupDancers,
+    findGroupDances,
+    getGroupDanceResults,
+    getPlacedDancers,
+    getGroupDanceWinner,
   },
   mounted() {
     return this.competitionDataRef.once('value')

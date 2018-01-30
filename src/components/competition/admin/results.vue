@@ -73,18 +73,22 @@
 </template>
 
 <script>
-import ResultsMixin from '@/mixins/results';
 import DancerListItem from '@/components/dancer-list-item';
 import ResultListItem from '@/components/result-list-item';
 import {
   idKey,
 } from '@/helpers/firebase';
+import {
+  overall,
+  findGroupDancers,
+  findGroupDances,
+  getGroupDanceResults,
+  getPlacedDancers,
+  getGroupDanceWinner,
+} from '@/helpers/results';
 
 export default {
   name: 'admin-results',
-  mixins: [
-    ResultsMixin,
-  ],
   props: {
     groups: Array,
     dances: Array,
@@ -95,6 +99,7 @@ export default {
   data() {
     return {
       idKey,
+      overall,
 
       selected: undefined,
 
@@ -118,6 +123,12 @@ export default {
     },
   },
   methods: {
+    findGroupDancers,
+    findGroupDances,
+    getGroupDanceResults,
+    getPlacedDancers,
+    getGroupDanceWinner,
+
     placeDancer(dancer) {
       const placeIndex = this.getDancerPlaceIndex(dancer);
       if (placeIndex >= 0) {
