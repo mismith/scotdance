@@ -52,9 +52,7 @@
           :dancer="dancer"
           @click="placeDancer(dancer)"
           :class="{placed: isPlaced(dancer)}"
-        >
-          <span slot="icon" />
-        </dancer-list-item>
+        />
       </md-list>
     </div>
     <div class="md-layout-item md-scroll">
@@ -175,9 +173,7 @@ export default {
   }
   .result-list-item {
     &.selected {
-      .md-avatar {
-        background-color: var(--md-theme-default-accent);
-      }
+      background-color: rgba(0, 0, 0, 0.12);
     }
   }
   .dancer-list-item {

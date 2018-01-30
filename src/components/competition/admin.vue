@@ -12,7 +12,9 @@
 
         <span style="flex-grow: 1;"></span>
 
-        <md-button @click="confirmRemove = true" class="md-accent">Delete</md-button>
+        <md-button @click="confirmRemove = true" class="md-icon-button md-accent">
+          <md-icon class="icon-trash" />
+        </md-button>
         <md-dialog-confirm
           :md-active.sync="confirmRemove"
           md-title="Delete competition"
