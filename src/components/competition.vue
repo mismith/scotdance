@@ -144,7 +144,10 @@ export default {
       }));
     },
     platforms() {
-      return this.platformsRaw;
+      return this.platformsRaw.map(platform => ({
+        ...platform,
+        $name: `Platform ${platform.name}`,
+      }));
     },
     schedule() {
       return this.scheduleRaw;
