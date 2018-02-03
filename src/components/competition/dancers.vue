@@ -65,7 +65,7 @@
           <md-button @click="selected = null;" class="md-icon-button">
             <md-icon>chevron_left</md-icon>
           </md-button>
-          <span>{{ selected.dancer.$group.$name }}</span>
+          <span>Dancers</span>
         </md-toolbar>
         <md-list class="md-double-line md-scroll">
           <div class="md-padding">
