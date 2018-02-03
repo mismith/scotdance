@@ -13,6 +13,7 @@
         :dances="dances"
         :staff="staff"
         :platforms="platforms"
+        :schedule="schedule"
         :results="results"
       />
     </div>
@@ -89,6 +90,10 @@ export default {
       dancesRaw: this.competitionDataRef.child('dances'),
       staffRaw: this.competitionDataRef.child('staff'),
       platformsRaw: this.competitionDataRef.child('platforms'),
+      scheduleRaw: {
+        source: this.competitionDataRef.child('schedule'),
+        asObject: true,
+      },
       resultsRaw: {
         source: this.competitionDataRef.child('results'),
         asObject: true,
@@ -133,13 +138,16 @@ export default {
       });
     },
     staff() {
-      return this.staffRaw.map((member) => ({
+      return this.staffRaw.map(member => ({
         ...member,
         $name: `${member.firstName} ${member.lastName}`,
       }));
     },
     platforms() {
       return this.platformsRaw;
+    },
+    schedule() {
+      return this.scheduleRaw;
     },
     results() {
       return this.resultsRaw;

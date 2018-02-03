@@ -105,8 +105,8 @@ export default {
     };
   },
   watch: {
-    selected(selected) {
-      // @TODO: 
+    selected() {
+      // @TODO:
       // if (Object.keys(this.unsavedChanges).length) {
       //   confirm('Are you sure?');
       // }
@@ -144,7 +144,7 @@ export default {
         const danceId = this.selected.dance[idKey];
 
         // set placed dancers in order
-        unsavedChanges[`results/${groupId}/${danceId}`] = this.placedDancers.map(dancer => dancer[idKey]);
+        unsavedChanges[`results/${groupId}/${danceId}`] = this.placedDancers.map(d => d[idKey]);
       }
       this.$emit('change', unsavedChanges);
     },

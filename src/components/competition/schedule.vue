@@ -118,7 +118,7 @@ export default {
         number: Math.ceil(Math.random() * 3),
       };
     },
-    getGroupJudge(group) {
+    getGroupJudge() {
       return '';
     },
   },

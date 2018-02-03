@@ -16,7 +16,7 @@ export default {
   name: 'home',
   methods: {
     TODO() {
-      window.alert('Coming Soon.\nFor now, Select Share > Add to Homescreen');
+      window.alert('Coming Soon.\nFor now, Select Share > Add to Homescreen'); // eslint-disable-line no-alert
     },
   },
 };

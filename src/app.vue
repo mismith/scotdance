@@ -282,7 +282,7 @@ export default {
 </script>
 
 <style lang="scss">
-// custome vue-material theme
+// custom vue-material theme
 @import "~vue-material/dist/theme/engine";
 @include md-register-theme("default", (
   primary: md-get-palette-color(blue, 600),

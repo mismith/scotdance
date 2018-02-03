@@ -177,6 +177,7 @@ export default {
     },
     sheetToJson(sheet, options = { header: 1 }) {
       return XLSX.utils.sheet_to_json(sheet, options)
+        // eslint-disable-next-line no-unused-vars
         .filter(row => Object.entries(row).some(([k, v]) => v)); // remove empties
     },
     sheetToHot(sheet, settings = {}) {

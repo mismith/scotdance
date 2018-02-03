@@ -47,41 +47,11 @@
           <hot-table v-else-if="section.hot" :settings="section.hot" class="fullscreen" />
 
           <div v-else-if="section[idKey] === 'schedule'">
-            <md-table>
-              <md-table-row>
-                <md-table-head>&nbsp;</md-table-head>
-                <md-table-head v-for="platform of platforms" :key="platform[idKey]">
-                  Platform {{ platform.name }}
-                </md-table-head>
-              </md-table-row>
-              <md-table-row v-for="dance of dances" :key="dance[idKey]">
-                <md-table-cell>
-                  {{ dance.name }}
-                </md-table-cell>
-                <md-table-cell v-for="platform of platforms" :key="platform[idKey]">
-                  <div
-                    v-for="group of groups"
-                    :key="group[idKey]"
-                    v-show="dance.categoryIds
-                      && dance.categoryIds[group.categoryId]
-                      && group.platformId === platform[idKey]"
-                  >
-                    {{group.$name}}
-                  </div>
-                </md-table-cell>
-              </md-table-row>
-            </md-table>
+            <admin-schedule v-bind="$props" @change="handleChanges($event)" />
           </div>
 
           <div v-else-if="section[idKey] === 'results'" class="md-scroll-frame">
-            <admin-results
-              :dancers="dancers"
-              :groups="groups"
-              :dances="dances"
-              :results="results"
-              :unsaved-changes="unsavedChanges"
-              @change="handleChanges($event)"
-            />
+            <admin-results v-bind="$props" @change="handleChanges($event)" />
           </div>
 
           <md-subheader v-else>
@@ -112,6 +82,7 @@
 <script>
 import HotTable from '@/lib/vue-handsontable/HotTable';
 import AdminImport from '@/components/competition/admin/import';
+import AdminSchedule from '@/components/competition/admin/schedule';
 import AdminResults from '@/components/competition/admin/results';
 import {
   idKey,
@@ -137,6 +108,7 @@ export default {
     dances: Array,
     staff: Array,
     platforms: Array,
+    schedule: Object,
     results: Object,
   },
   data() {
@@ -179,7 +151,7 @@ export default {
 
               afterChange: (changes, source) => {
                 if (source !== 'loadData') {
-                  changes.forEach(([row, prop, oldVal, newVal]) => {
+                  changes.forEach(([row, prop, oldVal, newVal]) => { // eslint-disable-line no-unused-vars
                     // add key if new entry
                     if (!data[row][idKey]) {
                       data[row][idKey] = db.push().key;
@@ -309,6 +281,7 @@ export default {
   components: {
     HotTable,
     AdminImport,
+    AdminSchedule,
     AdminResults,
   },
 };

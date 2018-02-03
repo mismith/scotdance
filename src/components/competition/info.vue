@@ -7,7 +7,11 @@
       <section class="staff">
         <h3>Judges</h3>
         <ul class="md-layout">
-          <li v-for="member of staff.filter(staff => staff.type ==='Judge')" class="md-layout-item">
+          <li
+            v-for="member of staff.filter(staff => staff.type ==='Judge')"
+            :key="member[idKey]"
+            class="md-layout-item"
+          >
             <div>{{ member.$name }}</div>
             <small>{{ member.location }}</small>
           </li>
@@ -17,7 +21,11 @@
       <section class="staff">
         <h3>Pipers</h3>
         <ul class="md-layout">
-          <li v-for="member of staff.filter(staff => staff.type ==='Piper')" class="md-layout-item">
+          <li
+            v-for="member of staff.filter(staff => staff.type === 'Piper')"
+            :key="member[idKey]"
+            class="md-layout-item"
+          >
             <div>{{ member.$name }}</div>
             <small>{{ member.location }}</small>
           </li>
