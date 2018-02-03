@@ -1,71 +1,73 @@
 <template>
-  <div class="md-layout admin-results">
-    <div class="md-layout-item md-scroll admin-blade">
-      <md-subheader>Groups / Dances</md-subheader>
-      <md-list>
-        <md-list-item
-          v-for="group in groups"
-          :key="group[idKey]"
-          md-expand
-        >
-          <md-subheader>
-            {{ group.$name }}
-          </md-subheader>
+  <div class="admin-results md-scroll-frame">
+    <div class="md-layout admin-blades">
+      <div class="md-layout-item md-size-33 admin-blade md-scroll">
+        <md-subheader>Groups / Dances</md-subheader>
+        <md-list>
+          <md-list-item
+            v-for="group in groups"
+            :key="group[idKey]"
+            md-expand
+          >
+            <md-subheader>
+              {{ group.$name }}
+            </md-subheader>
 
-          <md-list slot="md-expand">
-            <result-list-item
-              v-for="dance in findGroupDances(group)"
-              :key="dance[idKey]"
-              :winner="getGroupDanceWinner(group, dance)"
-              @click="selected = { group, dance }"
-              :class="{selected: selected && selected.group === group && selected.dance === dance}"
-            >
-              {{ dance.$name }}
-              <span slot="icon" />
-            </result-list-item>
-
-            <div v-if="group.$category.name !== 'Primary'">
-              <md-divider class="md-inset" />
+            <md-list slot="md-expand">
               <result-list-item
-                :winner="getGroupDanceWinner(group, overall)"
-                @click="selected = { group, dance: overall }"
-                :class="{selected: selected && selected.group === group && selected.dance === overall}"
+                v-for="dance in findGroupDances(group)"
+                :key="dance[idKey]"
+                :winner="getGroupDanceWinner(group, dance)"
+                @click="selected = { group, dance }"
+                :class="{selected: selected && selected.group === group && selected.dance === dance}"
               >
-                {{ overall.$name }}
-                <md-icon class="icon-trophy" slot="icon" />
+                {{ dance.$name }}
+                <span slot="icon" />
               </result-list-item>
-            </div>
-          </md-list>
-        </md-list-item>
-      </md-list>
-    </div>
-    <div class="md-layout-item md-scroll admin-blade">
-      <md-subheader>
-        {{ selected && selected.group ? selected.group.$name : '' }}
-        {{ selected && selected.dance ? selected.dance.$name : '' }}
-        Dancers
-      </md-subheader>
-      <md-list v-if="selected">
-        <dancer-list-item
-          v-for="dancer in findGroupDancers(selected.group)"
-          :key="dancer[idKey]"
-          :dancer="dancer"
-          @click="placeDancer(dancer)"
-          :class="{placed: isPlaced(dancer)}"
-        />
-      </md-list>
-    </div>
-    <div class="md-layout-item md-scroll admin-blade">
-      <md-subheader>Placings</md-subheader>
-      <md-list v-if="selected">
-        <dancer-list-item
-          v-for="(dancer, index) in placedDancers"
-          :key="dancer[idKey]"
-          :dancer="dancer"
-          :place="index + 1"
-          @click="placeDancer(dancer)"
-        />
-      </md-list>
+
+              <div v-if="group.$category.name !== 'Primary'">
+                <md-divider class="md-inset" />
+                <result-list-item
+                  :winner="getGroupDanceWinner(group, overall)"
+                  @click="selected = { group, dance: overall }"
+                  :class="{selected: selected && selected.group === group && selected.dance === overall}"
+                >
+                  {{ overall.$name }}
+                  <md-icon class="icon-trophy" slot="icon" />
+                </result-list-item>
+              </div>
+            </md-list>
+          </md-list-item>
+        </md-list>
+      </div>
+      <div class="md-layout-item md-size-33 admin-blade md-scroll">
+        <md-subheader>
+          {{ selected && selected.group ? selected.group.$name : '' }}
+          {{ selected && selected.dance ? selected.dance.$name : '' }}
+          Dancers
+        </md-subheader>
+        <md-list v-if="selected">
+          <dancer-list-item
+            v-for="dancer in findGroupDancers(selected.group)"
+            :key="dancer[idKey]"
+            :dancer="dancer"
+            @click="placeDancer(dancer)"
+            :class="{placed: isPlaced(dancer)}"
+          />
+        </md-list>
+      </div>
+      <div class="md-layout-item md-size-33 admin-blade md-scroll">
+        <md-subheader>Placings</md-subheader>
+        <md-list v-if="selected">
+          <dancer-list-item
+            v-for="(dancer, index) in placedDancers"
+            :key="dancer[idKey]"
+            :dancer="dancer"
+            :place="index + 1"
+            @click="placeDancer(dancer)"
+          />
+        </md-list>
+      </div>
     </div>
   </div>
 </template>
@@ -164,8 +166,6 @@ export default {
 
 <style lang="scss">
 .admin-results {
-  height: 100%;
-
   .result-list-item {
     &.selected {
       background-color: rgba(0, 0, 0, 0.12);

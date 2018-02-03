@@ -13,7 +13,7 @@
         <span style="flex-grow: 1;"></span>
 
         <md-button @click="confirmRemove = true" class="md-icon-button md-accent">
-          <md-icon class="icon-trash" />
+          <md-icon>delete</md-icon>
         </md-button>
         <md-dialog-confirm
           :md-active.sync="confirmRemove"
@@ -32,7 +32,7 @@
         class="md-scroll-frame"
       >
 
-        <div class="md-scroll">
+        <div class="md-scroll-frame">
           <form v-if="section.form" class="md-padding">
             <md-field v-for="field in section.form.fields" :key="field.data">
               <label>{{ field.title }}</label>
@@ -46,13 +46,9 @@
 
           <hot-table v-else-if="section.hot" :settings="section.hot" class="fullscreen" />
 
-          <div v-else-if="section[idKey] === 'schedule'" class="md-scroll-frame">
-            <admin-schedule v-bind="$props" @change="handleChanges($event)" />
-          </div>
+          <admin-schedule v-else-if="section[idKey] === 'schedule'" v-bind="$props" @change="handleChanges($event)" />
 
-          <div v-else-if="section[idKey] === 'results'" class="md-scroll-frame">
-            <admin-results v-bind="$props" @change="handleChanges($event)" />
-          </div>
+          <admin-results v-else-if="section[idKey] === 'results'" v-bind="$props" @change="handleChanges($event)" />
 
           <md-subheader v-else>
             TBD
@@ -300,9 +296,11 @@ export default {
     }
   }
 
-  .admin-blade {
-    &:not(:last-child) {
-      border-right: solid 6px #ccc;
+  .admin-blades {
+    .admin-blade {
+      &:not(:last-child) {
+        border-right: solid 6px #ccc;
+      }
     }
   }
 }
