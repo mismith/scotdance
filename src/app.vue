@@ -290,7 +290,6 @@ export default {
 @import "~vue-material/dist/theme/all";
 
 // app-wide helpers
-.md-scrollbar,
 .md-scroll-frame {
   display: flex;
   flex-direction: column;
@@ -303,11 +302,14 @@ export default {
   -webkit-overflow-scrolling: touch;
 }
 
+// app frame
 html * {
   box-sizing: border-box; // fix `.md-ripple` offset bug?
 }
 html,
-body {
+body,
+.md-app-container,
+.md-app-scroller {
   @extend .md-scroll-frame;
 }
 .md-app {
@@ -318,6 +320,7 @@ body {
   padding: 0;
 }
 
+// app-wide md-component styling
 .md-list {
   > .md-list-item {
     flex-shrink: 0;
@@ -423,7 +426,6 @@ body {
 .md-padding {
   padding: 12px 16px;
 }
-
 
 // component styles
 .md-dialog {
