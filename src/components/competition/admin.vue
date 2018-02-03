@@ -46,7 +46,7 @@
 
           <hot-table v-else-if="section.hot" :settings="section.hot" class="fullscreen" />
 
-          <div v-else-if="section[idKey] === 'schedule'">
+          <div v-else-if="section[idKey] === 'schedule'" class="md-scroll-frame">
             <admin-schedule v-bind="$props" @change="handleChanges($event)" />
           </div>
 
