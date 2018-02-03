@@ -128,11 +128,9 @@ export default {
     getPlacedDancers,
     getGroupDanceWinner,
   },
-  mounted() {
-    return this.competitionDataRef.once('value')
-      .then(() => {
-        this.loaded = true;
-      });
+  async mounted() {
+    await this.competitionDataRef.once('value');
+    this.loaded = true;
   },
   components: {
     DancerListItem,
