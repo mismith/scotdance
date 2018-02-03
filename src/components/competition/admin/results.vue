@@ -1,6 +1,6 @@
 <template>
   <div class="md-layout admin-results">
-    <div class="md-layout-item md-scroll">
+    <div class="md-layout-item md-scroll admin-blade">
       <md-subheader>Groups / Dances</md-subheader>
       <md-list>
         <md-list-item
@@ -39,7 +39,7 @@
         </md-list-item>
       </md-list>
     </div>
-    <div class="md-layout-item md-scroll">
+    <div class="md-layout-item md-scroll admin-blade">
       <md-subheader>
         {{ selected && selected.group ? selected.group.$name : '' }}
         {{ selected && selected.dance ? selected.dance.$name : '' }}
@@ -55,7 +55,7 @@
         />
       </md-list>
     </div>
-    <div class="md-layout-item md-scroll">
+    <div class="md-layout-item md-scroll admin-blade">
       <md-subheader>Placings</md-subheader>
       <md-list v-if="selected">
         <dancer-list-item
@@ -166,11 +166,6 @@ export default {
 .admin-results {
   height: 100%;
 
-  .md-layout-item {
-    &:not(:last-child) {
-      border-right: solid 6px #ccc;
-    }
-  }
   .result-list-item {
     &.selected {
       background-color: rgba(0, 0, 0, 0.12);

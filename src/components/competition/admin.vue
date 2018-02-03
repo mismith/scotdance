@@ -299,5 +299,11 @@ export default {
       height: 100%;
     }
   }
+
+  .admin-blade {
+    &:not(:last-child) {
+      border-right: solid 6px #ccc;
+    }
+  }
 }
 </style>

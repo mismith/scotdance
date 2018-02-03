@@ -10,7 +10,7 @@
       </span>
     </md-toolbar>
     <div class="md-layout">
-      <div class="md-layout-item md-size-33">
+      <div class="md-layout-item md-size-33 admin-blade">
         <swiper ref="swiper" class="swiper-no-swiping">
           <swiper-slide v-for="(step, stepIndex) in steps" :key="step[idKey]">
             <header>
@@ -53,7 +53,7 @@
           </swiper-slide>
         </swiper>
       </div>
-      <div class="md-layout-item md-size-66">
+      <div class="md-layout-item md-size-66 admin-blade">
         <form v-if="activeStep">
           <md-field md-clearable>
             <label>Name</label>
@@ -191,12 +191,6 @@ export default {
 
     + .md-scroll .md-list {
       padding-top: 0;
-    }
-  }
-
-  .md-layout-item {
-    &:not(:last-child) {
-      border-right: solid 6px #ccc;
     }
   }
 }
