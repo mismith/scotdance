@@ -19,10 +19,19 @@
                   @click="$set(step, '$selected', item); slideTo(stepIndex + 1);"
                 >
                   <span class="md-list-item-text">{{ item.name }}</span>
-                  <md-button v-if="step.options" @click.stop="handleRemove(step, itemIndex)" class="md-icon-button">
-                    <md-icon>clear</md-icon>
+
+                  <md-button v-if="step.options" @click.stop="$set(item, '$confirmRemove', true)" class="md-icon-button">
+                    <md-icon>delete</md-icon>
                   </md-button>
+                  <md-dialog-confirm
+                    :md-active.sync="item.$confirmRemove"
+                    md-title="Delete entry"
+                    md-content="Are you sure you want to permanently delete this entry?"
+                    md-confirm-text="Yes"
+                    md-cancel-text="No"
+                    @md-confirm="handleRemove(step, itemIndex)" />
                 </md-list-item>
+
                 <form v-if="step.options" @submit.prevent="handleAddNew(step)" class="footer">
                   <md-list-item>
                     <md-field

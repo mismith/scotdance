@@ -12,7 +12,7 @@
 
         <span style="flex-grow: 1;"></span>
 
-        <md-button @click="confirmRemove = true" class="md-icon-button md-accent">
+        <md-button @click="confirmRemove = true" class="md-icon-button">
           <md-icon>delete</md-icon>
         </md-button>
         <md-dialog-confirm
