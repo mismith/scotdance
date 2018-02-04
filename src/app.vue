@@ -359,6 +359,11 @@ body,
         }
       }
     }
+    &.active {
+      .md-list-item-container {
+        color: var(--md-theme-default-primary) !important;
+      }
+    }
   }
   &.md-transparent {
     background-color: transparent;

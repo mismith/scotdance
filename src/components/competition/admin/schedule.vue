@@ -17,6 +17,7 @@
                   v-for="(item, itemIndex) in step.$items"
                   :key="item[idKey]"
                   @click="$set(step, '$selected', item); slideTo(stepIndex + 1);"
+                  :class="{active: step.$selected === item}"
                 >
                   <span class="md-list-item-text">{{ item.name }}</span>
 
@@ -77,7 +78,10 @@
         </swiper>
       </div>
       <div class="md-layout-item md-size-66 admin-blade">
-        <form v-if="activeStep && activeStep.$selected" @submit.prevent class="md-padding">
+        <div v-if="activeStep && activeStep[idKey] === 'dances'" class="md-scroll-frame">
+          <hot-table :settings="toHotTable(activeStep)" />
+        </div>
+        <form v-else-if="activeStep && activeStep.$selected" @submit.prevent class="md-padding">
           <div v-for="(field, key) in activeStep.fields" :key="key">
             <md-field v-if="field.type === 'textarea'" md-clearable>
               <label>{{ field.name }}</label>
@@ -107,6 +111,7 @@
 </template>
 
 <script>
+import HotTable from '@/lib/vue-handsontable/HotTable';
 import {
   idKey,
 } from '@/helpers/firebase';
@@ -205,20 +210,6 @@ export default {
           },
           $items: [],
         },
-        {
-          [idKey]: 'platforms',
-          name: 'Platforms',
-          $items: this.platforms,
-        },
-        {
-          [idKey]: 'groups',
-          name: 'Age Groups',
-          options: {
-            type: 'select',
-            sources: this.groups,
-          },
-          $items: [],
-        },
       ],
     };
   },
@@ -277,8 +268,30 @@ export default {
     handleRemove(step, itemIndex) {
       step.$items.splice(itemIndex, 1);
     },
+
+    toHotTable(step) {
+      const item = step.$selected;
+
+      return {
+        columns: this.platforms.map(platform => ({
+          data: platform[idKey],
+          title: platform.$name,
+          type: 'dropdown',
+          source: this.groups.map(group => group[idKey]),
+        })),
+        contextMenu: [
+          'remove_row',
+        ],
+        minSpareRows: 1,
+        rowHeaders: true,
+        stretchH: 'all',
+
+        data: [],
+      };
+    },
   },
   components: {
+    HotTable,
   },
 };
 </script>
