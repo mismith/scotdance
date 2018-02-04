@@ -66,7 +66,7 @@
                       <md-input v-model="step.$addNew" />
                     </md-field>
 
-                    <md-button type="submit" :disabled="!step.$addNew" class="md-icon-button md-raised md-primary">
+                    <md-button type="submit" :disabled="!isAddNewValid(step.$addNew)" class="md-icon-button md-raised md-primary">
                       <md-icon>add</md-icon>
                     </md-button>
                   </md-list-item>
@@ -244,11 +244,20 @@ export default {
       });
     },
 
+    isAddNewValid(addNew) {
+      if (addNew instanceof Array) {
+        if (addNew[0] === '') addNew.splice(0, 1);
+        if (addNew.length) return true;
+      } else {
+        return !!(addNew || '').trim();
+      }
+      return false;
+    },
     handleAddNew(step) {
       if (step.options) {
         const items = step.$items;
         if (step.options.type === 'select') {
-          step.$addNew.forEach((selected) => {
+          step.$addNew.filter(v => v).forEach((selected) => {
             items.push({
               [idKey]: `${items.length}`,
               name: (this[step[idKey]].find(item => item[idKey] === selected) || {}).$name,
@@ -262,7 +271,7 @@ export default {
         }
       }
       this.$nextTick(() => {
-        this.$set(step, '$addNew', null);
+        this.$set(step, '$addNew', '');
       });
     },
     handleRemove(step, itemIndex) {
