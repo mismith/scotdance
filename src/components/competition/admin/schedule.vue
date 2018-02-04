@@ -5,10 +5,11 @@
         <swiper ref="swiper" class="swiper-no-swiping">
           <swiper-slide v-for="(step, stepIndex) in steps" :key="step[idKey]">
             <md-subheader class="header">
-              {{ step.name }}
-              <md-button v-if="stepIndex > 0" @click="slideTo(stepIndex - 1)" class="md-icon-button md-raised md-primary">
+              <md-button v-if="stepIndex > 0" @click="slideTo(stepIndex - 1)" class="md-icon-button">
                 <md-icon>chevron_left</md-icon>
               </md-button>
+
+              {{ step.name }}
             </md-subheader>
             <div class="md-scroll">
               <md-list>
@@ -291,7 +292,8 @@ export default {
     margin: 6px 0;
 
     .md-button {
-      margin-left: auto;
+      margin-left: -8px;
+      margin-right: 12px;
     }
     + .md-scroll .md-list {
       padding-top: 0;
