@@ -77,7 +77,7 @@
           </swiper-slide>
         </swiper>
       </div>
-      <div class="md-layout-item md-size-66 admin-blade">
+      <div class="md-layout-item md-size-66 admin-blade md-scroll-frame">
         <div v-if="activeStep && activeStep[idKey] === 'dances'" class="md-scroll-frame">
           <hot-table :settings="toHotTable(activeStep)" />
         </div>
