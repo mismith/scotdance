@@ -285,6 +285,7 @@ export default {
         contextMenu: [
           'remove_row',
         ],
+        manualRowMove: true,
         minSpareRows: 1,
         rowHeaders: true,
         stretchH: 'all',
