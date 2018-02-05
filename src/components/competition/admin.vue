@@ -84,6 +84,9 @@ import {
   idKey,
   db,
 } from '@/helpers/firebase';
+import {
+  makeKeyValuePairColumn,
+} from '@/helpers/handsontable';
 
 export default {
   name: 'competition-admin',
@@ -179,11 +182,13 @@ export default {
             section.hot.columns = section.hot.columns.map((column) => {
               if (column.data === 'categoryId') {
                 // eslint-disable-next-line no-param-reassign
-                column.source = this.categories.map(l => l.name);
+                column.source = this.categories;
+                return makeKeyValuePairColumn(column, 'name');
               }
-              if (column.data === 'platformId') {
+              if (column.data === 'groupId') {
                 // eslint-disable-next-line no-param-reassign
-                column.source = this.platforms.map(p => p.name);
+                column.source = this.groups;
+                return makeKeyValuePairColumn(column);
               }
               return column;
             });

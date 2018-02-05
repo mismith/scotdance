@@ -115,6 +115,9 @@ import HotTable from '@/lib/vue-handsontable/HotTable';
 import {
   idKey,
 } from '@/helpers/firebase';
+import {
+  makeKeyValuePairColumn,
+} from '@/helpers/handsontable';
 
 export default {
   name: 'admin-schedule',
@@ -273,12 +276,12 @@ export default {
       const item = step.$selected;
 
       return {
-        columns: this.platforms.map(platform => ({
+        columns: this.platforms.map(platform => makeKeyValuePairColumn({
           data: platform[idKey],
           title: platform.$name,
-          type: 'dropdown',
-          source: this.groups.map(group => group[idKey]),
+          source: this.groups,
         })),
+
         contextMenu: [
           'remove_row',
         ],
