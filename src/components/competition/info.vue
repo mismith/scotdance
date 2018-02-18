@@ -4,11 +4,11 @@
       <h1 class="md-display-3">{{ competition.name }}</h1>
       <p class="md-headline">{{ competition.location }}</p>
 
-      <section class="staff">
+      <section v-if="judges.length" class="staff">
         <h3>Judges</h3>
         <ul class="md-layout">
           <li
-            v-for="member of staff.filter(staff => staff.type ==='Judge')"
+            v-for="member of judges"
             :key="member[idKey]"
             class="md-layout-item"
           >
@@ -18,11 +18,11 @@
         </ul>
       </section>
 
-      <section class="staff">
+      <section v-if="pipers.length" class="staff">
         <h3>Pipers</h3>
         <ul class="md-layout">
           <li
-            v-for="member of staff.filter(staff => staff.type === 'Piper')"
+            v-for="member of pipers"
             :key="member[idKey]"
             class="md-layout-item"
           >
@@ -41,6 +41,14 @@ export default {
   props: {
     competition: Object,
     staff: Array,
+  },
+  computed: {
+    judges() {
+      return this.staff.filter(staff => staff.type === 'Judge');
+    },
+    pipers() {
+      return this.staff.filter(staff => staff.type === 'Piper');
+    },
   },
 };
 </script>
