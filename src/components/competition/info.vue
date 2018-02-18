@@ -1,6 +1,6 @@
 <template>
   <div class="competition-info md-scroll-frame">
-    <div class="md-scroll">
+    <div v-if="competition" class="md-scroll">
       <h1 class="md-display-2">{{ competition.name }}</h1>
       <p class="md-headline">{{ competition.location }}</p>
 
@@ -32,6 +32,7 @@
         </ul>
       </section>
     </div>
+    <md-progress-spinner v-else md-mode="indeterminate" style="margin: auto;" />
   </div>
 </template>
 
