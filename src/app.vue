@@ -66,7 +66,7 @@
             </form>
           </md-dialog>
           <md-dialog :md-active.sync="loginVisible" class="md-dialog-login">
-            <swiper ref="loginSwiper" :options="{width: 280}" class="swiper-no-swiping">
+            <swiper ref="loginSwiper" :options="{ slidesPerView: 'auto' }" class="swiper-no-swiping">
               <swiper-slide>
                 <form @submit.prevent="login(credentials).then(() => (loginVisible = false))">
                   <md-field>
@@ -94,10 +94,7 @@
                       <md-button type="submit" class="md-primary md-raised">Login</md-button>
                     </md-spinnable>
 
-                    <md-button
-                      @click="$refs.loginSwiper.swiper.slideNext()"
-                      class="ml-auto"
-                    >
+                    <md-button @click="$refs.loginSwiper.swiper.slideNext()">
                       Forgot?
                     </md-button>
                   </footer>
@@ -440,6 +437,10 @@ body,
 }
 .md-dialog-login,
 .md-dialog-register {
+  .md-dialog-container,
+  .swiper-container {
+    width: 100%;
+  }
   form {
     padding: 12px;
 

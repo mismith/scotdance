@@ -13,7 +13,6 @@ import MdSpinnable from './components/md-spinnable';
 
 Vue.config.productionTip = false;
 
-
 Vue.use(VueFire);
 Vue.use(VueMaterial);
 Vue.component('md-spinnable', MdSpinnable);
