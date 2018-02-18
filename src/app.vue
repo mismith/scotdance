@@ -5,7 +5,7 @@
         <md-icon>menu</md-icon>
       </md-button>
 
-      <h2 class="md-title">{{ 'ScotDance' }}</h2>
+      <h2 class="md-title">{{ title }}</h2>
 
       <!--<span class="md-flex"></span>
 
@@ -220,6 +220,9 @@
 </template>
 
 <script>
+import {
+  getTitleChunks,
+} from '@/helpers/router';
 import FirebaseAuthMixin from '@/mixins/firebase/auth';
 import {
   idKey,
@@ -260,6 +263,16 @@ export default {
       } else {
         this.authMessage = null;
       }
+    },
+  },
+  asyncComputed: {
+    async title() {
+      const titleChunks = await getTitleChunks(this.$route);
+
+      if (titleChunks.length > 2) {
+        return titleChunks[titleChunks.length - 2];
+      }
+      return titleChunks[titleChunks.length - 1];
     },
   },
   methods: {

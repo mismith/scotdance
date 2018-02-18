@@ -5,6 +5,7 @@ import 'vue-material/dist/vue-material.css';
 import VueAwesomeSwiper from 'vue-awesome-swiper';
 import 'swiper/dist/css/swiper.css';
 import 'simple-line-icons/css/simple-line-icons.css';
+import AsyncComputed from 'vue-async-computed';
 
 import {
   getTitleChunks,
@@ -21,6 +22,7 @@ Vue.use(VueFire);
 Vue.use(VueMaterial);
 Vue.component('md-spinnable', MdSpinnable);
 Vue.use(VueAwesomeSwiper);
+Vue.use(AsyncComputed);
 
 router.beforeEach(async (to, from, next) => {
   const titleChunks = await getTitleChunks(to);

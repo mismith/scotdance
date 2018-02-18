@@ -8072,6 +8072,10 @@ void-elements@^2.0.0:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/void-elements/-/void-elements-2.0.1.tgz#c066afb582bb1cb4128d60ea92392e94d5e9dbec"
 
+vue-async-computed@^3.3.1:
+  version "3.3.1"
+  resolved "https://registry.yarnpkg.com/vue-async-computed/-/vue-async-computed-3.3.1.tgz#9d754e649ccabef97e7e3932f1bc097a66a23db7"
+
 vue-awesome-swiper@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/vue-awesome-swiper/-/vue-awesome-swiper-3.1.0.tgz#b1e1ca54316e703831d2b219bd98c568f037951c"
