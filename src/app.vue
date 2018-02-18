@@ -32,7 +32,7 @@
             <span>Login</span>
           </md-button>
 
-          <md-dialog :md-active.sync="registerVisible" class="md-dialog-register">
+          <md-dialog :md-active.sync="registerVisible" :md-fullscreen="false" class="md-dialog-register">
             <form @submit.prevent="register(credentials).then(() => (registerVisible = false))">
               <md-field>
                 <label>Email</label>
@@ -65,7 +65,7 @@
               </aside>
             </form>
           </md-dialog>
-          <md-dialog :md-active.sync="loginVisible" class="md-dialog-login">
+          <md-dialog :md-active.sync="loginVisible" :md-fullscreen="false" class="md-dialog-login">
             <swiper ref="loginSwiper" :options="{ slidesPerView: 'auto' }" class="swiper-no-swiping">
               <swiper-slide>
                 <form @submit.prevent="login(credentials).then(() => (loginVisible = false))">
@@ -458,6 +458,9 @@ body,
       }
     }
   }
+}
+.md-dialog-overlay {
+  z-index: 7; // cover .md-app-drawer
 }
 
 .md-app-drawer {
