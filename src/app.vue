@@ -1,6 +1,6 @@
 <template>
   <md-app id="app" class="md-scroll-frame md-scroll">
-    <md-app-toolbar class="md-primary">
+    <md-app-toolbar class="md-primary" style="flex-wrap: nowrap;">
       <md-button class="md-icon-button" @click="menuVisible = !menuVisible">
         <md-icon>menu</md-icon>
       </md-button>
