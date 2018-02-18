@@ -36,11 +36,20 @@
 </template>
 
 <script>
+import {
+  idKey,
+} from '@/helpers/firebase';
+
 export default {
   name: 'competition-info',
   props: {
     competition: Object,
     staff: Array,
+  },
+  data() {
+    return {
+      idKey,
+    };
   },
   computed: {
     judges() {
