@@ -48,8 +48,10 @@ export default {
 <style lang="scss">
 .competition-info {
   text-align: center;
-  padding: 0 16px;
 
+  > .md-scroll {
+    padding: 0 16px;
+  }
   .staff {
     ul {
       padding: 0;
