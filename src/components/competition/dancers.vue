@@ -33,7 +33,7 @@
       </md-toolbar>
 
       <div v-if="loaded" class="md-scroll">
-        <md-list>
+        <md-list v-if="bucketedDancers.length">
            <md-list-item
             v-for="bucket in bucketedDancers"
             :key="bucket[idKey]"
@@ -56,6 +56,11 @@
             </md-list>
           </md-list-item>
         </md-list>
+        <md-empty-state
+          v-else
+          md-icon="report_problem"
+          md-label="No dancers yet"
+        />
       </div>
       <md-progress-spinner v-else md-mode="indeterminate" style="margin: auto;" />
     </swiper-slide>

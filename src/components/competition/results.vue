@@ -2,7 +2,7 @@
   <swiper class="competition-results md-scroll-frame swiper-no-swiping">
     <swiper-slide class="md-scroll-frame">
       <div v-if="loaded" class="md-scroll">
-        <md-list>
+        <md-list v-if="groups.length">
           <md-list-item
             v-for="group in groups"
             :key="group[idKey]"
@@ -36,6 +36,11 @@
             </md-list>
           </md-list-item>
         </md-list>
+        <md-empty-state
+          v-else
+          md-icon="report_problem"
+          md-label="No results yet"
+        />
       </div>
       <md-progress-spinner v-else md-mode="indeterminate" style="margin: auto;" />
     </swiper-slide>
