@@ -6,6 +6,10 @@ import VueAwesomeSwiper from 'vue-awesome-swiper';
 import 'swiper/dist/css/swiper.css';
 import 'simple-line-icons/css/simple-line-icons.css';
 
+import {
+  getTitleChunks,
+} from '@/helpers/router';
+
 import App from './app';
 import router from './router';
 
@@ -17,6 +21,14 @@ Vue.use(VueFire);
 Vue.use(VueMaterial);
 Vue.component('md-spinnable', MdSpinnable);
 Vue.use(VueAwesomeSwiper);
+
+router.beforeEach(async (to, from, next) => {
+  const titleChunks = await getTitleChunks(to);
+
+  document.title = titleChunks.reverse().join(' • ');
+
+  next();
+});
 
 /* eslint-disable no-new */
 new Vue({

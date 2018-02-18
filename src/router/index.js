@@ -1,5 +1,8 @@
 import Vue from 'vue';
 import Router from 'vue-router';
+import {
+  db,
+} from '@/helpers/firebase';
 
 import Home from '@/components/home';
 
@@ -23,19 +26,34 @@ export default new Router({
       path: '/',
       name: 'home',
       component: Home,
+      meta: {
+        title: 'ScotDance',
+      },
     },
     {
       path: '/competitions',
       component: Competitions,
+      meta: {
+        title: 'ScotDance',
+      },
       children: [
         {
           path: '',
           component: CompetitionsList,
+          meta: {
+            title: 'All Competitions',
+          },
         },
         {
           path: ':competitionId',
           component: Competition,
           props: true,
+          meta: {
+            async title(route) {
+              const snap = await db.child(`competitions/${route.params.competitionId}/name`).once('value');
+              return snap.val() || 'Competition';
+            },
+          },
           children: [
             {
               path: '',
@@ -46,21 +64,33 @@ export default new Router({
               path: 'dancers',
               name: 'competition.dancers',
               component: CompetitionDancers,
+              meta: {
+                title: 'Dancers',
+              },
             },
             {
               path: 'schedule',
               name: 'competition.schedule',
               component: CompetitionSchedule,
+              meta: {
+                title: 'Schedule',
+              },
             },
             {
               path: 'results',
               name: 'competition.results',
               component: CompetitionResults,
+              meta: {
+                title: 'Results',
+              },
             },
             {
               path: 'admin/:tab?',
               name: 'competition.admin',
               component: CompetitionAdmin,
+              meta: {
+                title: 'Admin',
+              },
             },
           ],
         },
