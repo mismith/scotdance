@@ -25,7 +25,7 @@
                 <span slot="icon" />
               </result-list-item>
 
-              <div v-if="group.$category.name !== 'Primary'">
+              <div v-if="group.$category && group.$category.name !== 'Primary'">
                 <md-divider class="md-inset" />
                 <result-list-item
                   :winner="getGroupDanceWinner(group, overall)"
