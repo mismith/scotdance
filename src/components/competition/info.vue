@@ -1,7 +1,7 @@
 <template>
   <div class="competition-info md-scroll-frame">
     <div class="md-scroll">
-      <h1 class="md-display-3">{{ competition.name }}</h1>
+      <h1 class="md-display-2">{{ competition.name }}</h1>
       <p class="md-headline">{{ competition.location }}</p>
 
       <section v-if="judges.length" class="staff">
