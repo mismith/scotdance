@@ -72,7 +72,7 @@
             <!--@TODO-->
             <div>Name: {{ selected.dancer.$name }}</div>
             <div>Location: {{ selected.dancer.location }}</div>
-            <div>Age Group: {{ selected.dancer.$group.$name }}</div>
+            <div>Age Group: {{ selected.dancer.$group && selected.dancer.$group.$name }}</div>
           </div>
         </md-list>
       </div>

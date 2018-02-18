@@ -6,7 +6,7 @@
 
     <div class="md-list-item-text">
       <span>{{ dancer.$name }}</span>
-      <p>{{ dancer.$group.$name }} • {{ dancer.location }}</p>
+      <p>{{ dancer.$group && dancer.$group.$name }} • {{ dancer.location }}</p>
     </div>
 
     <slot />
