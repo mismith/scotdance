@@ -28,7 +28,6 @@
           </md-list-item>
           <md-list-item @click="toggleAccount()" :class="{toggled: accountToggled}">
             <div class="md-list-item-text">
-              <span>{{ me.displayName }}</span>
               <span>{{ me.email }}</span>
             </div>
             <md-button class="md-icon-button md-list-action" @click.stop="toggleAccount()">

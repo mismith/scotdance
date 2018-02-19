@@ -12,7 +12,9 @@
     <slot />
 
     <slot name="icon">
-      <span v-if="place" class="place">{{ place }}<small class="ordinal">{{ getPlaceOrdinal(place) }}</small></span>
+      <span v-if="place" class="place">
+        {{ place }}<small class="ordinal">{{ getPlaceOrdinal(place) }}</small>
+      </span>
       <md-button
         v-else-if="$store.state.me"
         @click.stop="handleFavoriteToggle(dancer)"
