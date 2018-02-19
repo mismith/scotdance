@@ -40,6 +40,10 @@
 
       <md-list v-if="accountToggled" class="animate-in">
         <md-subheader>Account</md-subheader>
+        <md-list-item @click="$router.push('/profile'); menuVisible = false;">
+          <md-icon>account_circle</md-icon>
+          <span class="md-list-item-text">Profile</span>
+        </md-list-item>
         <md-list-item @click="logout().then(toggleAccount)">
           <md-icon>exit_to_app</md-icon>
           <span class="md-list-item-text">Logout</span>

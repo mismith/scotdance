@@ -5,6 +5,7 @@ import {
 } from '@/helpers/firebase';
 
 import Home from '@/components/home';
+import Profile from '@/components/profile';
 
 import Competitions from '@/components/competitions';
 import CompetitionsList from '@/components/competitions/list';
@@ -28,6 +29,14 @@ export default new Router({
       component: Home,
       meta: {
         title: 'ScotDance',
+      },
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: Profile,
+      meta: {
+        title: 'Profile',
       },
     },
     {
