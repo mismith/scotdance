@@ -126,6 +126,7 @@
 <script>
 import {
   firebase,
+  db,
 } from '@/helpers/firebase';
 
 export default {
@@ -165,8 +166,11 @@ export default {
 
       return firebase.auth()
         .createUserWithEmailAndPassword(credentials.email, credentials.password)
-        .then(() => {
+        .then((me) => {
           this.authLoading = false;
+
+          // add to db
+          db.child('users').child(me.uid).set(me.providerData[0]);
         })
         .catch((err) => {
           this.authLoading = false;

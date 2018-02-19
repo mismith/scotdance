@@ -161,12 +161,6 @@ export default {
       return firebase.auth().signOut();
     },
   },
-  created() {
-    // @TODO:
-    this.$on('authed', (me) => {
-      this.$firebaseRefs.me.update(me.providerData[0]);
-    });
-  },
   components: {
     AccountButtons,
     CompetitionListItem,
