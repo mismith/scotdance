@@ -39,7 +39,9 @@
 
       <md-list v-if="accountToggled" class="animate-in">
         <md-subheader>Account</md-subheader>
-        <md-list-item @click="$router.push('/profile'); menuVisible = false;">
+        <md-list-item
+          @click="$router.push('/profile'); menuVisible = false; accountToggled = false;"
+        >
           <md-icon>account_circle</md-icon>
           <span class="md-list-item-text">Profile</span>
         </md-list-item>
