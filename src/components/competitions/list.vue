@@ -2,14 +2,12 @@
   <div class="competitions-list md-scroll-frame">
     <div class="md-scroll">
       <md-list>
-        <md-list-item
+        <competition-list-item
           v-for="competition in competitions"
           :key="competition[idKey]"
+          :competition="competition"
           @click="$router.push(`/competitions/${competition[idKey]}`)"
-        >
-          <md-icon>event</md-icon>
-          <span class="md-list-item-text">{{ competition.name }}</span>
-        </md-list-item>
+        />
       </md-list>
     </div>
   </div>
@@ -20,6 +18,7 @@ import {
   idKey,
   db,
 } from '@/helpers/firebase';
+import CompetitionListItem from '@/components/competition-list-item';
 
 export default {
   name: 'competitions-list',
@@ -38,6 +37,9 @@ export default {
         $favorite: this.$store.getters.isFavorite('competitions', competition[idKey]),
       }));
     },
+  },
+  components: {
+    CompetitionListItem,
   },
 };
 </script>

@@ -47,13 +47,12 @@
       </md-list>
       <md-list v-else>
         <md-subheader>My Competitions</md-subheader>
-        <md-list-item
-          v-for="competition in competitions"
+        <competition-list-item
+          v-for="competition in competitions.filter(competition => competition.$favorite)"
           :key="competition[idKey]"
+          :competition="competition"
           @click="$router.push(`/competitions/${competition[idKey]}`); menuVisible = false;"
         >
-          <md-icon>event</md-icon>
-          <span class="md-list-item-text">{{ competition.name }}</span>
           <md-button
             v-if="me && me.admin"
             class="md-icon-button md-list-action"
@@ -62,7 +61,7 @@
           >
             <md-icon>settings</md-icon>
           </md-button>
-        </md-list-item>
+        </competition-list-item>
 
         <md-list-item
           v-if="me && me.admin"
@@ -111,6 +110,7 @@ import {
   firebase,
 } from '@/helpers/firebase';
 import AccountButtons from '@/components/account-buttons';
+import CompetitionListItem from '@/components/competition-list-item';
 
 export default {
   name: 'app',
@@ -164,6 +164,7 @@ export default {
   },
   components: {
     AccountButtons,
+    CompetitionListItem,
   },
 };
 </script>
