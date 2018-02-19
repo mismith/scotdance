@@ -29,7 +29,15 @@ export default {
     };
   },
   firebase: {
-    competitions: db.child('competitions'),
+    competitionsRaw: db.child('competitions'),
+  },
+  computed: {
+    competitions() {
+      return this.competitionsRaw.map(competition => ({
+        ...competition,
+        $favorite: this.$store.getters.isFavorite('competitions', competition[idKey]),
+      }));
+    },
   },
 };
 </script>

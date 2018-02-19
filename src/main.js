@@ -32,7 +32,8 @@ Vue.use(AsyncComputed);
 firebase.auth().onAuthStateChanged((me) => {
   if (me) {
     const meRef = firebase.database().ref('users').child(me.uid);
-    store.dispatch('auth', { meRef });
+    const myFavoritesRef = firebase.database().ref('users:favorites').child(me.uid);
+    store.dispatch('auth', { meRef, myFavoritesRef });
   } else if (store.state.me) {
     store.dispatch('unauth');
   }

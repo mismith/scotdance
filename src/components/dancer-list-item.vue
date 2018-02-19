@@ -13,7 +13,11 @@
 
     <slot name="icon">
       <span v-if="place" class="place">{{ place }}<small class="ordinal">{{ getPlaceOrdinal(place) }}</small></span>
-      <md-button v-else @click.stop="handleFavoriteToggle(dancer)" class="md-icon-button md-list-action">
+      <md-button
+        v-else-if="$store.state.me"
+        @click.stop="handleFavoriteToggle(dancer)"
+        class="md-icon-button md-list-action"
+      >
         <md-icon :class="{'md-accent': dancer.$favorite}">
           {{ dancer.$favorite ? 'star' : 'star_border' }}
         </md-icon>
@@ -34,14 +38,16 @@ export default {
     dancer: Object,
     place: Number,
   },
-  firebase: {
-    favorites: db.child('users:favorites').child('idu0').child('dancers'), // @TODO
-  },
   methods: {
     handleFavoriteToggle(dancer) {
-      const toggled = dancer.$favorite ? null : true;
-      return this.$firebaseRefs.favorites.child(dancer[idKey]).set(toggled);
+      return db
+        .child('users:favorites')
+        .child(this.$store.state.me[idKey])
+        .child('dancers')
+        .child(dancer[idKey])
+        .set(dancer.$favorite ? null : true);
     },
+
     getPlaceOrdinal(place) {
       switch (`${place}`) {
         case '1': {

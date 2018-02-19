@@ -4,12 +4,10 @@
       <router-view
         :competition-ref="competitionRef"
         :competition-data-ref="competitionDataRef"
-        :user-favorites-ref="userFavoritesRef"
         :competition="competition"
         :dancers="dancers"
         :groups="groups"
         :categories="categories"
-        :favorites="favorites"
         :dances="dances"
         :staff="staff"
         :platforms="platforms"
@@ -72,7 +70,6 @@ export default {
     return {
       competitionRef: db.child('competitions').child(this.competitionId),
       competitionDataRef: db.child('competitionsData').child(this.competitionId),
-      userFavoritesRef: db.child('users:favorites').child('idu0'), // @TODO
     };
   },
   firebase() {
@@ -86,7 +83,6 @@ export default {
       dancersRaw: this.competitionDataRef.child('dancers'),
       groupsRaw: this.competitionDataRef.child('groups'),
       categoriesRaw: this.competitionDataRef.child('categories'),
-      favoritesRaw: this.userFavoritesRef.child('dancers'),
       dancesRaw: this.competitionDataRef.child('dances'),
       staffRaw: this.competitionDataRef.child('staff'),
       platformsRaw: this.competitionDataRef.child('platforms'),
@@ -110,7 +106,7 @@ export default {
         number: `${dancer.number}`, // stringify
         $name: `${dancer.firstName} ${dancer.lastName}`,
         $group: findByIdKey(this.groups, dancer.groupId),
-        $favorite: !!findByIdKey(this.favorites, dancer[idKey]),
+        $favorite: this.$store.getters.isFavorite('dancers', dancer[idKey]),
       }));
     },
     groups() {
@@ -123,9 +119,6 @@ export default {
     },
     categories() {
       return this.categoriesRaw;
-    },
-    favorites() {
-      return this.favoritesRaw;
     },
     dances() {
       return this.dancesRaw.map((dance) => {

@@ -31,7 +31,6 @@
         v-show="inTabs(section[idKey])"
         class="md-scroll-frame"
       >
-
         <div class="md-scroll-frame">
           <form v-if="section.form" class="md-padding">
             <md-field v-for="field in section.form.fields" :key="field.data">
@@ -103,7 +102,6 @@ export default {
     dancers: Array,
     groups: Array,
     categories: Array,
-    favorites: Array,
     dances: Array,
     staff: Array,
     platforms: Array,
