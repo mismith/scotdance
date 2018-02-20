@@ -9,6 +9,7 @@ import VueAsyncComputed from 'vue-async-computed';
 
 import {
   firebase,
+  db,
 } from '@/helpers/firebase';
 import {
   getTitleChunks,
@@ -31,11 +32,13 @@ Vue.use(VueAsyncComputed);
 // monitor user auth
 firebase.auth().onAuthStateChanged((me) => {
   if (me) {
-    const meRef = firebase.database().ref('users').child(me.uid);
-    const myFavoritesRef = firebase.database().ref('users:favorites').child(me.uid);
+    const meRef = db.child('users').child(me.uid);
+    const myFavoritesRef = db.child('users:favorites').child(me.uid);
     store.dispatch('auth', { meRef, myFavoritesRef });
   } else if (store.state.me) {
     store.dispatch('unauth');
+  } else {
+    store.state.me = null;
   }
 });
 

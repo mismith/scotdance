@@ -1,13 +1,18 @@
 <template>
   <div class="profile md-scroll-frame">
-    <div class="md-scroll">
-      <div v-if="me" class="md-padding">
-        <md-avatar>
-          <img
-            :src="me.photoURL || `//avatars.io/gravatar/${me.email}`"
-            :alt="me.displayName"
-          />
-        </md-avatar>
+    <div class="md-scroll-frame">
+      <div v-if="me" class="md-padding md-scroll-frame md-scroll">
+        <div class="md-layout md-alignment-center">
+          <md-avatar>
+            <img
+              :src="me.photoURL || `//avatars.io/gravatar/${me.email}`"
+              :alt="me.displayName"
+            />
+          </md-avatar>
+          <div class="md-layout-item md-padding">
+            Avatar via <a href="https://gravatar.com/" target="_blank">Gravatar</a>
+          </div>
+        </div>
 
         <md-field>
           <label>Display name</label>
@@ -18,7 +23,7 @@
           <md-input v-model="me.email" readonly required />
         </md-field>
 
-        <footer>
+        <footer class="md-layout md-alignment-center" style="margin-top: auto;">
           <md-button @click="removeActive = true" class="md-accent">Delete Account</md-button>
           <md-dialog :md-active.sync="removeActive" :md-fullscreen="false" class="remove-user-dialog">
             <md-dialog-title>Are you sure?</md-dialog-title>
@@ -57,10 +62,11 @@
         </footer>
       </div>
       <md-empty-state
-        v-else
+        v-else-if="me !== undefined"
         md-icon="report_problem"
         md-label="Not logged in"
       />
+      <md-progress-spinner v-else md-mode="indeterminate" style="margin: auto;" />
     </div>
   </div>
 </template>
