@@ -38,7 +38,7 @@
             v-for="bucket in bucketedDancers"
             :key="bucket[idKey]"
             md-expand
-            :class="{'md-active': filterBy /* @TODO */}"
+            :md-expanded="!!filterBy"
           >
             <md-subheader>
               {{ bucket[idKey] }}
