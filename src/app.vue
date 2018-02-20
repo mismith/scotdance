@@ -16,7 +16,7 @@
 
     <md-app-drawer :md-active.sync="menuVisible">
       <md-toolbar class="md-primary md-large md-account-header">
-        <account-buttons v-if="!me" />
+        <account-buttons v-if="!me" class="md-padding" />
         <md-list v-else class="md-transparent">
           <md-list-item>
             <md-avatar class="md-large">
@@ -358,11 +358,6 @@ body,
 .md-account-header {
   padding: 0;
 
-  .account-buttons {
-    display: flex;
-    flex-direction: column;
-    margin: 0 auto;
-  }
   .md-list {
     width: 100%;
 

@@ -3,14 +3,12 @@
     <md-button
       @click="registerVisible = true"
       class="md-raised"
-      style="margin-left: auto; margin-right: auto;"
     >
       <span>Register</span>
     </md-button>
     <md-button
       @click="loginVisible = true"
       class="md-raised"
-      style="margin-left: auto; margin-right: auto;"
     >
       <span>Login</span>
     </md-button>
@@ -229,8 +227,11 @@ export default {
 </script>
 
 <style lang="scss">
-.login-dialog,
-.register-dialog {
+.account-buttons {
+  display: flex;
+  flex-direction: column;
+}
+.login-dialog {
   .md-dialog-container,
   .swiper-container {
     width: 100%;
