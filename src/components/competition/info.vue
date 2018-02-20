@@ -65,8 +65,6 @@ export default {
 
 <style lang="scss">
 .competition-info {
-  text-align: center;
-
   > .md-scroll {
     padding: 0 16px;
   }
