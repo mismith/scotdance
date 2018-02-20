@@ -59,7 +59,7 @@
         <md-empty-state
           v-else
           md-icon="report_problem"
-          md-label="No dancers yet"
+          :md-label="`No dancers ${filterBy ? 'match' : 'yet'}`"
         />
       </div>
       <md-progress-spinner v-else md-mode="indeterminate" style="margin: auto;" />
@@ -121,7 +121,7 @@ export default {
   computed: {
     filteredDancers() {
       // filter by search term
-      const filtered = this.filterBy
+      const filtered = this.filterBy && this.dancers.length
         ? new FuzzySearch(this.dancers, ['number', 'firstName', 'lastName', 'location', '$group.$name']).search(this.filterBy)
         : this.dancers;
 
