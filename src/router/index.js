@@ -27,9 +27,6 @@ export default new Router({
       path: '/',
       name: 'home',
       component: Home,
-      meta: {
-        title: 'ScotDance',
-      },
     },
     {
       path: '/profile',
@@ -42,9 +39,6 @@ export default new Router({
     {
       path: '/competitions',
       component: Competitions,
-      meta: {
-        title: 'ScotDance',
-      },
       children: [
         {
           path: '',
