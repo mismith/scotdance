@@ -39,6 +39,7 @@
 
       <md-list v-if="accountToggled" class="animate-in">
         <md-subheader>Account</md-subheader>
+
         <md-list-item
           @click="$router.push('/profile'); menuVisible = false; accountToggled = false;"
         >
@@ -50,8 +51,9 @@
           <span class="md-list-item-text">Logout</span>
         </md-list-item>
       </md-list>
-      <md-list v-else>
+      <md-list v-else-if="me" style="margin-bottom: auto;">
         <md-subheader>My Competitions</md-subheader>
+
         <competition-list-item
           v-for="competition in competitions.filter(competition => competition.$favorite)"
           :key="competition[idKey]"
@@ -59,7 +61,7 @@
           @click="$router.push(`/competitions/${competition[idKey]}`); menuVisible = false;"
         >
           <md-button
-            v-if="me && me.admin"
+            v-if="me.admin"
             class="md-icon-button md-list-action"
             @click.stop="$router.push(`/competitions/${competition[idKey]}/admin`);
               menuVisible = false;"
@@ -69,7 +71,7 @@
         </competition-list-item>
 
         <md-list-item
-          v-if="me && me.admin"
+          v-if="me.admin"
           @click="$router.push(`/competitions/${db.push().key}/admin`); menuVisible = false;"
         >
           <md-icon>add</md-icon>
@@ -77,8 +79,8 @@
         </md-list-item>
       </md-list>
 
-      <md-list style="margin-top: auto;">
-        <md-subheader>Shortcuts</md-subheader>
+      <md-list v-if="!accountToggled">
+        <md-subheader>Links</md-subheader>
 
         <md-list-item
           @click="$router.push(`/competitions`); menuVisible = false;"
@@ -90,7 +92,7 @@
           @click="$router.push(`/`); menuVisible = false;"
         >
           <md-icon>home</md-icon>
-          <span class="md-list-item-text">Home</span>
+          <span class="md-list-item-text">App Home</span>
         </md-list-item>
       </md-list>
     </md-app-drawer>
