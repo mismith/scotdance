@@ -33,7 +33,7 @@ export default new Router({
       name: 'profile',
       component: Profile,
       meta: {
-        title: 'Profile',
+        title: 'My Profile',
       },
     },
     {

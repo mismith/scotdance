@@ -43,7 +43,7 @@
           @click="$router.push('/profile'); menuVisible = false; accountToggled = false;"
         >
           <md-icon>account_circle</md-icon>
-          <span class="md-list-item-text">Profile</span>
+          <span class="md-list-item-text">My Profile</span>
         </md-list-item>
         <md-list-item @click="logout().then(toggleAccount)">
           <md-icon>exit_to_app</md-icon>
