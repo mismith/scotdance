@@ -15,107 +15,116 @@
       <span>Login</span>
     </md-button>
 
-    <md-dialog :md-active.sync="registerVisible" :md-fullscreen="false" class="md-dialog-register">
+    <md-dialog :md-active.sync="registerVisible" :md-fullscreen="false" class="register-dialog">
       <form @submit.prevent="register(credentials).then(() => (registerVisible = false))">
-        <md-field>
-          <label>Email</label>
-          <md-input
-            type="email"
-            name="email"
-            v-model="credentials.email"
-            required
-            autofocus
-          />
-        </md-field>
-        <md-field md-has-password>
-          <label>Password</label>
-          <md-input
-            type="password"
-            name="password"
-            v-model="credentials.password"
-            required
-          />
-        </md-field>
+        <div class="md-dialog-content">
+          <md-field>
+            <label>Email</label>
+            <md-input
+              type="email"
+              name="email"
+              v-model="credentials.email"
+              required
+              autofocus
+            />
+          </md-field>
+          <md-field md-has-password>
+            <label>Password</label>
+            <md-input
+              type="password"
+              name="password"
+              v-model="credentials.password"
+              required
+            />
+          </md-field>
 
-        <footer>
+          <aside v-if="authError" class="validation-message">
+            {{ authError.message }}
+          </aside>
+        </div>
+
+        <footer class="md-dialog-actions">
           <md-spinnable :md-spinning="authLoading">
             <md-button type="submit" class="md-primary md-raised">Register</md-button>
           </md-spinnable>
         </footer>
-
-        <aside v-if="authError">
-          {{ authError.message }}
-        </aside>
       </form>
     </md-dialog>
-    <md-dialog :md-active.sync="loginVisible" :md-fullscreen="false" class="md-dialog-login">
+    <md-dialog :md-active.sync="loginVisible" :md-fullscreen="false" class="login-dialog">
       <swiper ref="loginSwiper" :options="{ slidesPerView: 'auto' }" class="swiper-no-swiping">
         <swiper-slide>
           <form @submit.prevent="login(credentials).then(() => (loginVisible = false))">
-            <md-field>
-              <label>Email</label>
-              <md-input
-                type="email"
-                name="email"
-                v-model="credentials.email"
-                required
-                autofocus
-              />
-            </md-field>
-            <md-field md-has-password>
-              <label>Password</label>
-              <md-input
-                type="password"
-                name="password"
-                v-model="credentials.password"
-                required
-              />
-            </md-field>
+            <div class="md-dialog-content">
+              <md-field>
+                <label>Email</label>
+                <md-input
+                  type="email"
+                  name="email"
+                  v-model="credentials.email"
+                  required
+                  autofocus
+                />
+              </md-field>
+              <md-field md-has-password>
+                <label>Password</label>
+                <md-input
+                  type="password"
+                  name="password"
+                  v-model="credentials.password"
+                  required
+                />
+              </md-field>
 
-            <footer>
+              <aside v-if="authError" class="validation-message">
+                {{ authError.message }}
+              </aside>
+            </div>
+
+            <footer class="md-dialog-actions">
               <md-spinnable :md-spinning="authLoading">
                 <md-button type="submit" class="md-primary md-raised">Login</md-button>
               </md-spinnable>
 
-              <md-button @click="$refs.loginSwiper.swiper.slideNext()">
+              <md-button @click="$refs.loginSwiper.swiper.slideNext(); authError = null;">
                 Forgot?
               </md-button>
             </footer>
-
-            <aside v-if="authError">
-              {{ authError.message }}
-            </aside>
           </form>
         </swiper-slide>
         <swiper-slide>
           <form @submit.prevent="forgot(credentials).then(handlePasswordReset)">
-            <header>
-              <p>We can send you a link to reset your password.</p>
-              <br />
-            </header>
+            <div class="md-dialog-content">
+              <header>
+                <p>We can send you a link to reset your password.</p>
+                <br />
+              </header>
 
-            <md-field>
-              <label>Email</label>
-              <md-input
-                type="email"
-                name="email"
-                v-model="credentials.email"
-                required
-                autofocus
-              />
-            </md-field>
+              <md-field>
+                <label>Email</label>
+                <md-input
+                  type="email"
+                  name="email"
+                  v-model="credentials.email"
+                  required
+                  autofocus
+                />
+              </md-field>
 
-            <footer>
+              <aside v-if="authError" class="validation-message">
+                {{ authError.message }}
+              </aside>
+              <aside v-if="authMessage" class="validation-message">
+                {{ authMessage }}
+              </aside>
+            </div>
+
+            <footer class="md-dialog-actions">
               <md-spinnable :md-spinning="authLoading">
                 <md-button type="submit" class="md-primary md-raised">Send</md-button>
               </md-spinnable>
 
-              <md-button @click="$refs.loginSwiper.swiper.slidePrev()">Cancel</md-button>
+              <md-button @click="$refs.loginSwiper.swiper.slidePrev(); authError = null;">Cancel</md-button>
             </footer>
-
-            <aside v-if="authMessage">
-              {{ authMessage }}
-            </aside>
           </form>
         </swiper-slide>
       </swiper>
@@ -179,12 +188,12 @@ export default {
           throw err;
         });
     },
-    forgot(credentials = this.credentials) {
+    login(credentials = this.credentials) {
       this.authLoading = true;
       this.authError = null;
 
       return firebase.auth()
-        .sendPasswordResetEmail(credentials.email)
+        .signInWithEmailAndPassword(credentials.email, credentials.password)
         .then(() => {
           this.authLoading = false;
         })
@@ -195,12 +204,12 @@ export default {
           throw err;
         });
     },
-    login(credentials = this.credentials) {
+    forgot(credentials = this.credentials) {
       this.authLoading = true;
       this.authError = null;
 
       return firebase.auth()
-        .signInWithEmailAndPassword(credentials.email, credentials.password)
+        .sendPasswordResetEmail(credentials.email)
         .then(() => {
           this.authLoading = false;
         })
@@ -220,7 +229,11 @@ export default {
 </script>
 
 <style lang="scss">
-.account-buttons {
-
+.login-dialog,
+.register-dialog {
+  .md-dialog-container,
+  .swiper-container {
+    width: 100%;
+  }
 }
 </style>

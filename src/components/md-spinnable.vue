@@ -1,6 +1,7 @@
 <template>
   <div class="md-spinnable">
     <slot />
+
     <md-progress-spinner v-if="mdSpinning" :md-diameter="25" md-mode="indeterminate" />
   </div>
 </template>
@@ -18,5 +19,9 @@ export default {
 .md-spinnable {
   display: inline-flex;
   align-items: center;
+
+  .md-progress-spinner {
+    margin-left: 8px;
+  }
 }
 </style>

@@ -320,34 +320,9 @@ body,
 }
 
 // component styles
-.md-dialog {
-  aside {
-    margin-top: 16px;
-  }
-}
-.md-dialog-login,
-.md-dialog-register {
-  .md-dialog-container,
-  .swiper-container {
-    width: 100%;
-  }
-  form {
-    padding: 12px;
-
-    > footer {
-      display: flex;
-      justify-content: space-between;
-
-      .md-button {
-        &:first-child {
-          margin-left: 0;
-        }
-        &:last-child {
-          margin-right: 0;
-        }
-      }
-    }
-  }
+.validation-message {
+  color: var(--md-theme-default-accent) !important;
+  margin-top: 16px;
 }
 .md-dialog-overlay {
   z-index: 7; // cover .md-app-drawer
@@ -356,6 +331,26 @@ body,
 .md-app-drawer {
   display: flex;
   flex-direction: column;
+}
+
+.login-dialog,
+.register-dialog,
+.remove-user-dialog {
+  .md-dialog-actions {
+    display: flex;
+    justify-content: space-between;
+    padding-right: 24px;
+    padding-bottom: 12px;
+
+    .md-button {
+      &:first-child {
+        margin-left: 0;
+      }
+      &:last-child {
+        margin-right: 0;
+      }
+    }
+  }
 }
 
 .md-account-header {
