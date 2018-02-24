@@ -55,6 +55,12 @@
             :class="{placed: isPlaced(dancer)}"
           />
         </md-list>
+        <md-empty-state
+          v-else
+          md-icon="timeline"
+          md-label="Enter results"
+          md-description="Select an age group and dance"
+        />
       </div>
       <div class="md-layout-item md-size-33 admin-blade md-scroll">
         <md-subheader>Placings</md-subheader>
@@ -67,6 +73,12 @@
             @click="placeDancer(dancer)"
           />
         </md-list>
+        <md-empty-state
+          v-if="!placedDancers.length"
+          md-icon="swap_vert"
+          md-label="Order dancers"
+          md-description="Select dancers in the order they placed"
+        />
       </div>
     </div>
   </div>
