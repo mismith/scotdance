@@ -12,9 +12,7 @@
     <slot />
 
     <slot name="icon">
-      <span v-if="place" class="place">
-        {{ place }}<small class="ordinal">{{ getPlaceOrdinal(place) }}</small>
-      </span>
+      <place v-if="place !== undefined" :place="place" />
       <md-button
         v-else-if="$store.state.me"
         @click.stop="handleFavoriteToggle(dancer)"
@@ -33,6 +31,7 @@ import {
   idKey,
   db,
 } from '@/helpers/firebase';
+import Place from '@/components/place';
 
 export default {
   name: 'dancer-list-item',
@@ -49,40 +48,15 @@ export default {
         .child(dancer[idKey])
         .set(dancer.$favorite ? null : true);
     },
-
-    getPlaceOrdinal(place) {
-      switch (`${place}`) {
-        case '1': {
-          return 'st';
-        }
-        case '2': {
-          return 'nd';
-        }
-        case '3': {
-          return 'rd';
-        }
-        default: {
-          return 'th';
-        }
-      }
-    },
+  },
+  components: {
+    Place,
   },
 };
 </script>
 
 <style lang="scss">
 .dancer-list-item {
-  .place {
-    color: var(--md-theme-default-primary);
-    font-size: 2em;
-    font-weight: bold;
 
-    .ordinal {
-      display: inline-block;
-      width: 20px; // aligns the ordinals despite varying character widths
-      font-size: 0.5em;
-      vertical-align: top;
-    }
-  }
 }
 </style>
