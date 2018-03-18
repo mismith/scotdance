@@ -33,14 +33,25 @@
       >
         <div class="md-scroll-frame">
           <form v-if="section.form" class="md-padding">
-            <md-field v-for="field in section.form.fields" :key="field.data">
-              <label>{{ field.title }}</label>
-              <md-input
+            <div v-for="field in section.form.fields" :key="field.data">
+              <md-datepicker
+                v-if="field.type === 'datetime'"
                 v-model="competition[field.data]"
-                @change="handleFormInputChange(section[idKey], field.data, $event.target.value)"
-                :required="field.required"
-              />
-            </md-field>
+                @input="handleFormInputChange(section[idKey], field.data, $event)"
+                :class="{ 'md-required': field.required }"
+              >
+                <label>{{ field.title }}</label>
+              </md-datepicker>
+              <md-field v-else>
+                <label>{{ field.title }}</label>
+                <md-input
+                  v-model="competition[field.data]"
+                  @change="handleFormInputChange(section[idKey], field.data, $event.target.value)"
+                  :required="field.required"
+                />
+              </md-field>
+            </div>
+
           </form>
 
           <hot-table v-else-if="section.hot" :settings="section.hot" class="fullscreen" />

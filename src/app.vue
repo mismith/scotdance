@@ -178,6 +178,14 @@ export default {
 ));
 @import "~vue-material/dist/theme/all";
 
+// element overrides
+a[target="_blank"] {
+  &:after {
+    content: "\2197";
+    margin-left: 0.25em;
+  }
+}
+
 // app-wide helpers
 .md-scroll-frame {
   display: flex;
