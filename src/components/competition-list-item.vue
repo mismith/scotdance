@@ -10,16 +10,6 @@
       </p>
     </div>
 
-    <md-button
-      v-if="$store.state.me"
-      @click.stop="handleFavoriteToggle(competition)"
-      class="md-icon-button md-list-action"
-    >
-      <md-icon :class="{'md-accent': competition.$favorite}">
-        {{ competition.$favorite ? 'star' : 'star_border' }}
-      </md-icon>
-    </md-button>
-
     <slot />
   </md-list-item>
 </template>
@@ -38,15 +28,6 @@ export default {
   },
   methods: {
     moment,
-
-    handleFavoriteToggle(competition) {
-      return db
-        .child('users:favorites')
-        .child(this.$store.state.me[idKey])
-        .child('competitions')
-        .child(competition[idKey])
-        .set(competition.$favorite ? null : true);
-    },
   },
 };
 </script>

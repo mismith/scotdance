@@ -51,17 +51,27 @@
           <span class="md-list-item-text">Logout</span>
         </md-list-item>
       </md-list>
-      <md-list v-else-if="me" style="margin-bottom: auto;">
-        <md-subheader>My Competitions</md-subheader>
+      <md-list v-if="!accountToggled" class="md-double-line" style="margin-bottom: auto;">
+        <md-subheader>
+          <div>Competitions</div>
+
+          <md-button
+            v-if="me && me.admin"
+            @click="$router.push(`/competitions/${db.push().key}/admin`); menuVisible = false;"
+            class="md-icon-button"
+          >
+            <md-icon>add</md-icon>
+          </md-button>
+        </md-subheader>
 
         <competition-list-item
-          v-for="competition in competitions.filter(competition => competition.$favorite)"
+          v-for="competition in relevantCompetitions"
           :key="competition[idKey]"
           :competition="competition"
           @click="$router.push(`/competitions/${competition[idKey]}`); menuVisible = false;"
         >
           <md-button
-            v-if="me.admin"
+            v-if="me && me.admin"
             class="md-icon-button md-list-action"
             @click.stop="$router.push(`/competitions/${competition[idKey]}/admin`);
               menuVisible = false;"
@@ -70,24 +80,16 @@
           </md-button>
         </competition-list-item>
 
-        <md-list-item
-          v-if="me.admin"
-          @click="$router.push(`/competitions/${db.push().key}/admin`); menuVisible = false;"
-        >
-          <md-icon>add</md-icon>
-          <span class="md-list-item-text">Add new</span>
-        </md-list-item>
+        <footer v-if="competitions.length && competitions.length !== relevantCompetitions.length" style="text-align: center;">
+          <md-button @click="$router.push(`/competitions`); menuVisible = false;">
+            See {{ competitions.length - relevantCompetitions.length }} More
+          </md-button>
+        </footer>
       </md-list>
 
       <md-list v-if="!accountToggled">
         <md-subheader>Links</md-subheader>
 
-        <md-list-item
-          @click="$router.push(`/competitions`); menuVisible = false;"
-        >
-          <md-icon>date_range</md-icon>
-          <span class="md-list-item-text">All Competitions</span>
-        </md-list-item>
         <md-list-item
           @click="$router.push(`/`); menuVisible = false;"
         >
@@ -105,6 +107,7 @@
 </template>
 
 <script>
+import moment from 'moment-mini';
 import {
   mapState,
 } from 'vuex';
@@ -143,6 +146,18 @@ export default {
         ...competition,
         $favorite: this.$store.getters.isFavorite('competitions', competition[idKey]),
       }));
+    },
+
+    relevantCompetitions() {
+      return this.competitions
+        .filter((competition) => { // only show upcoming or up to 7 day old events
+          if (competition.date && moment(competition.date).isAfter(moment().subtract(7, 'days'))) {
+            return true;
+          }
+          return false;
+        })
+        .sort((a, b) => moment(a).diff(b)) // order chronologically
+        .slice(0, 10); // limit to 10 max
     },
   },
   asyncComputed: {
@@ -197,6 +212,15 @@ a[target="_blank"] {
   flex: 1;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
+}
+.md-subheader {
+  > div {
+    flex: auto;
+
+    + * {
+      margin-right: -10px;
+    }
+  }
 }
 
 // app frame
