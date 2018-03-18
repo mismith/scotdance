@@ -1,7 +1,7 @@
 <template>
   <div class="competitions-list md-scroll-frame">
     <div class="md-scroll">
-      <md-list>
+      <md-list class="md-double-line">
         <competition-list-item
           v-for="competition in competitions"
           :key="competition[idKey]"
