@@ -72,14 +72,12 @@
           </md-button>
           <span>Dancers</span>
         </md-toolbar>
-        <md-list class="md-double-line md-scroll">
-          <div class="md-padding">
-            <!--@TODO-->
-            <div>Name: {{ selected.dancer.$name }}</div>
-            <div>Location: {{ selected.dancer.location }}</div>
-            <div>Age Group: {{ selected.dancer.$group && selected.dancer.$group.$name }}</div>
-          </div>
-        </md-list>
+        <dancer-report
+          :dancer="selectedDancer"
+          :dances="dances"
+          :groups="groups"
+          :results="results"
+        />
       </div>
     </swiper-slide>
   </swiper>
@@ -89,6 +87,7 @@
 import FuzzySearch from 'fuzzy-search';
 import ArraySort from 'array-sort';
 import DancerListItem from '@/components/dancer-list-item';
+import DancerReport from '@/components/dancer-report';
 import {
   idKey,
 } from '@/helpers/firebase';
@@ -104,7 +103,9 @@ export default {
       required: true,
     },
     dancers: Array,
+    dances: Array,
     groups: Array,
+    results: Object,
   },
   data() {
     return {
@@ -142,6 +143,11 @@ export default {
           [idKey]: bucket,
           dancers,
         }));
+    },
+    selectedDancer() {
+      if (this.selected && this.selected.dancer) {
+        return this.dancers.find(dancer => dancer[idKey] === this.selected.dancer[idKey]);
+      }
     },
   },
   watch: {
@@ -182,6 +188,7 @@ export default {
   },
   components: {
     DancerListItem,
+    DancerReport,
   },
 };
 </script>
