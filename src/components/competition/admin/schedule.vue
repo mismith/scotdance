@@ -272,9 +272,7 @@ export default {
       step.$items.splice(itemIndex, 1);
     },
 
-    toHotTable(step) {
-      const item = step.$selected;
-
+    toHotTable() {
       return {
         columns: this.platforms.map(platform => makeKeyValuePairColumn({
           data: platform[idKey],

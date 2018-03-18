@@ -148,6 +148,7 @@ export default {
       if (this.selected && this.selected.dancer) {
         return this.dancers.find(dancer => dancer[idKey] === this.selected.dancer[idKey]);
       }
+      return null;
     },
   },
   watch: {

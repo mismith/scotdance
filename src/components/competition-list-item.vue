@@ -16,10 +16,6 @@
 
 <script>
 import moment from 'moment-mini';
-import {
-  idKey,
-  db,
-} from '@/helpers/firebase';
 
 export default {
   name: 'competition-list-item',
