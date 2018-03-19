@@ -126,7 +126,7 @@ export default {
         return {
           ...dance,
           $name: `${dance.name}${stepsString}`,
-          $shortName: `${dance.shortName}${stepsString}`,
+          $shortName: `${dance.shortName || dance.name}${stepsString}`,
         };
       });
     },
