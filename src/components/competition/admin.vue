@@ -15,7 +15,7 @@
         <md-button @click="save()" class="md-primary md-raised" :disabled="!isDirty">Save</md-button>
       </md-toolbar>
       <div class="md-scroll-frame">
-        <div class="md-scroll-frame">
+        <div v-if="currentSection" class="md-scroll-frame">
           <form v-if="currentSection.form" class="md-padding">
             <div v-for="field in currentSection.form.fields" :key="field.data">
               <md-datepicker
@@ -53,6 +53,7 @@
             </md-button>
           </footer>
         </div>
+        <md-progress-spinner v-else md-mode="indeterminate" style="margin: auto;" />
       </div>
     </div>
 
