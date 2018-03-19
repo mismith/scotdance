@@ -6,8 +6,8 @@
           <md-button @click="showImport = true">Import</md-button>
         </div>
 
-        <div v-if="inTabs('dances')">
-          <md-button @click="addStandardDances()">Add Standard Dances</md-button>
+        <div v-if="currentSection">
+          <preset-picker v-if="currentSection.presets" :presets="currentSection.presets" @select="addPresets" />
         </div>
 
         <span style="flex-grow: 1;"></span>
@@ -87,6 +87,7 @@ import HotTable from '@/lib/vue-handsontable/HotTable';
 import AdminImport from '@/components/competition/admin/import';
 import AdminSchedule from '@/components/competition/admin/schedule';
 import AdminResults from '@/components/competition/admin/results';
+import PresetPicker from '@/components/preset-picker';
 import {
   idKey,
   db,
@@ -251,38 +252,11 @@ export default {
       this.$router.replace('/');
     },
 
-    addStandardDances() {
-      const standardDances = [
-        {
-          name: 'Pas de basques',
-          shortName: 'PDB',
-        },
-        {
-          name: 'Pas de basques & High Cuts',
-          shortName: 'PDBHC',
-        },
-        {
-          name: 'Highland Fling',
-          shortName: 'Fling',
-        },
-        {
-          name: 'Sword Dance',
-          shortName: 'Sword',
-        },
-        {
-          name: 'Seann Truibhas',
-          shortName: 'ST',
-        },
-        {
-          name: 'Scottish Lilt',
-          shortName: 'Lilt',
-        },
-      ];
-
+    addPresets(presets, tab = this.currentTab) {
       // append
       // @TODO: make this local-only until save
-      return Promise.all(standardDances.map((dance) => {
-        return this.competitionDataRef.child('dances').push(dance);
+      return Promise.all(presets.map((preset) => {
+        return this.competitionDataRef.child(tab).push(preset);
       }));
     },
 
@@ -300,6 +274,7 @@ export default {
     AdminImport,
     AdminSchedule,
     AdminResults,
+    PresetPicker,
   },
 };
 </script>
