@@ -14,19 +14,14 @@
 
         <md-button @click="save()" class="md-primary md-raised" :disabled="!isDirty">Save</md-button>
       </md-toolbar>
-      <div
-        v-for="section of sections"
-        :key="section[idKey]"
-        v-show="inTabs(section[idKey])"
-        class="md-scroll-frame"
-      >
+      <div class="md-scroll-frame">
         <div class="md-scroll-frame">
-          <form v-if="section.form" class="md-padding">
-            <div v-for="field in section.form.fields" :key="field.data">
+          <form v-if="currentSection.form" class="md-padding">
+            <div v-for="field in currentSection.form.fields" :key="field.data">
               <md-datepicker
                 v-if="field.type === 'datetime'"
                 v-model="competition[field.data]"
-                @input="handleFormInputChange(section[idKey], field.data, $event)"
+                @input="handleFormInputChange(currentSection[idKey], field.data, $event)"
                 :class="{ 'md-required': field.required }"
               >
                 <label>{{ field.title }}</label>
@@ -35,19 +30,18 @@
                 <label>{{ field.title }}</label>
                 <md-input
                   v-model="competition[field.data]"
-                  @change="handleFormInputChange(section[idKey], field.data, $event.target.value)"
+                  @change="handleFormInputChange(currentSection[idKey], field.data, $event.target.value)"
                   :required="field.required"
                 />
               </md-field>
             </div>
-
           </form>
 
-          <hot-table v-else-if="section.hot" :settings="section.hot" class="fullscreen" />
+          <hot-table v-else-if="currentSection.hot" :settings="currentSection.hot" class="fullscreen" />
 
-          <admin-schedule v-else-if="section[idKey] === 'schedule'" v-bind="$props" @change="handleChanges($event)" />
+          <admin-schedule v-else-if="currentSection[idKey] === 'schedule'" v-bind="$props" @change="handleChanges" />
 
-          <admin-results v-else-if="section[idKey] === 'results'" v-bind="$props" @change="handleChanges($event)" />
+          <admin-results v-else-if="currentSection[idKey] === 'results'" v-bind="$props" @change="handleChanges" />
 
           <md-subheader v-else>
             TBD
@@ -138,6 +132,13 @@ export default {
     };
   },
   computed: {
+    currentTab() {
+      return this.$route.params.tab || 'info';
+    },
+    currentSection() {
+      return this.getSection(this.currentTab);
+    },
+
     sections() {
       return this.sectionsRaw
         .map((sectionData) => {
@@ -215,7 +216,10 @@ export default {
   methods: {
     // @TODO: alert to confirm losing changes on tab change
     inTabs(...tabs) {
-      return tabs.some(tab => (this.$route.params.tab || 'info') === tab);
+      return tabs.some(tab => (this.currentTab) === tab);
+    },
+    getSection(sectionId) {
+      return this.sections.find(section => section[idKey] === sectionId);
     },
 
     queueSave(path, value) {
