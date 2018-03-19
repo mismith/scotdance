@@ -293,6 +293,8 @@ export default {
   }
 
   .admin-blades {
+    flex: auto;
+
     .admin-blade {
       &:not(:last-child) {
         border-right: solid 6px #ccc;

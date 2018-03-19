@@ -311,9 +311,6 @@ export default {
       margin-right: 0;
     }
   }
-  .admin-blades {
-    flex: 1;
-  }
 
   a {
     cursor: pointer;
