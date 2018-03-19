@@ -12,17 +12,6 @@
 
         <span style="flex-grow: 1;"></span>
 
-        <md-button @click="confirmRemove = true" class="md-icon-button">
-          <md-icon>delete</md-icon>
-        </md-button>
-        <md-dialog-confirm
-          :md-active.sync="confirmRemove"
-          md-title="Delete competition"
-          md-content="Are you sure you want to permanently delete this competition?"
-          md-confirm-text="Yes"
-          md-cancel-text="No"
-          @md-confirm="remove" />
-
         <md-button @click="save()" class="md-primary md-raised" :disabled="!isDirty">Save</md-button>
       </md-toolbar>
       <div
@@ -63,6 +52,12 @@
           <md-subheader v-else>
             TBD
           </md-subheader>
+
+          <footer v-if="inTabs('info')" class="md-layout md-alignment-center" style="margin-top: auto;">
+            <md-button @click="confirmRemove = true" class="md-accent">
+              Delete Competition
+            </md-button>
+          </footer>
         </div>
       </div>
     </div>
@@ -82,6 +77,14 @@
     <md-dialog :md-active.sync="showImport" style="width: 100%; height: 100%;">
       <admin-import :competition-data-ref="competitionDataRef" @done="showImport = false" />
     </md-dialog>
+    <md-dialog-confirm
+      :md-active.sync="confirmRemove"
+      md-title="Delete competition"
+      md-content="Are you sure you want to permanently delete this competition?"
+      md-confirm-text="Yes"
+      md-cancel-text="No"
+      @md-confirm="remove"
+    />
   </div>
 </template>
 
