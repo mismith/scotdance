@@ -11,16 +11,40 @@
     </div>
 
     <slot />
+
+    <md-button
+      v-if="me && me.admin"
+      class="md-icon-button md-list-action"
+      @click.stop="$router.push(`/competitions/${competition[idKey]}/admin`); $emit('admin-click', $event);"
+    >
+      <md-icon>settings</md-icon>
+    </md-button>
   </md-list-item>
 </template>
 
 <script>
 import moment from 'moment-mini';
+import {
+  mapState,
+} from 'vuex';
+import {
+  idKey,
+} from '@/helpers/firebase';
 
 export default {
   name: 'competition-list-item',
   props: {
     competition: Object,
+  },
+  data() {
+    return {
+      idKey,
+    };
+  },
+  computed: {
+    ...mapState([
+      'me',
+    ]),
   },
   methods: {
     moment,

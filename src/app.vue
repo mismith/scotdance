@@ -69,16 +69,8 @@
           :key="competition[idKey]"
           :competition="competition"
           @click="$router.push(`/competitions/${competition[idKey]}`); menuVisible = false;"
-        >
-          <md-button
-            v-if="me && me.admin"
-            class="md-icon-button md-list-action"
-            @click.stop="$router.push(`/competitions/${competition[idKey]}/admin`);
-              menuVisible = false;"
-          >
-            <md-icon>settings</md-icon>
-          </md-button>
-        </competition-list-item>
+          @admin-click="menuVisible = false;"
+        />
 
         <footer v-if="competitions.length && competitions.length !== relevantCompetitions.length" style="text-align: center;">
           <md-button @click="$router.push(`/competitions`); menuVisible = false;">
