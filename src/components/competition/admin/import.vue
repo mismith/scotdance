@@ -36,7 +36,7 @@
           :id="`tab-sheet-${sheetIndex}`"
           :md-label="sheetName"
         >
-          <hot-table :options="sheetToHot(workbook.Sheets[sheetName])" />
+          <HotTable :options="sheetToHot(workbook.Sheets[sheetName])" />
         </md-tab>
       </md-tabs>
       <md-toolbar v-if="workbook" class="md-layout">
@@ -87,7 +87,7 @@
           :id="`tab-${key}`"
           :md-label="key"
         >
-          <hot-table :settings="toReviewHot(items, key)" />
+          <HotTable :settings="toReviewHot(items, key)" />
         </md-tab>
       </md-tabs>
       <md-toolbar class="md-layout">
@@ -107,7 +107,7 @@
 
 <script>
 import XLSX from 'js-xlsx';
-import HotTable from '@/lib/vue-handsontable/HotTable';
+import HotTable from '@handsontable/vue';
 
 import {
   idKey,

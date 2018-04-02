@@ -134,6 +134,10 @@
   version "0.2.6"
   resolved "https://registry.yarnpkg.com/@firebase/webchannel-wrapper/-/webchannel-wrapper-0.2.6.tgz#a4b81ca8cdeb1acbc7923289a4a514f61b59db86"
 
+"@handsontable/vue@^2.0.0-beta1":
+  version "2.0.0-beta1"
+  resolved "https://registry.yarnpkg.com/@handsontable/vue/-/vue-2.0.0-beta1.tgz#81bb727dbbe29a8f24181632864a21b26d22965a"
+
 abbrev@1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.1.1.tgz#f8f2c887ad10bf67f634f005b6987fed3179aac8"

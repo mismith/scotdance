@@ -37,7 +37,7 @@
             </div>
           </form>
 
-          <hot-table v-else-if="currentSection.hot" :settings="currentSection.hot" class="fullscreen" />
+          <HotTable v-else-if="currentSection.hot" :settings="currentSection.hot" class="fullscreen" />
 
           <admin-schedule v-else-if="currentSection[idKey] === 'schedule'" v-bind="$props" @change="handleChanges" />
 
@@ -84,7 +84,7 @@
 </template>
 
 <script>
-import HotTable from '@/lib/vue-handsontable/HotTable';
+import HotTable from '@handsontable/vue';
 import AdminImport from '@/components/competition/admin/import';
 import AdminSchedule from '@/components/competition/admin/schedule';
 import AdminResults from '@/components/competition/admin/results';
@@ -96,6 +96,7 @@ import {
 import {
   makeKeyValuePairColumn,
 } from '@/helpers/handsontable';
+import 'handsontable/dist/handsontable.full.css';
 
 export default {
   name: 'competition-admin',

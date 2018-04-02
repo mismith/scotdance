@@ -79,7 +79,7 @@
       </div>
       <div class="md-layout-item md-size-66 admin-blade md-scroll-frame">
         <div v-if="activeStep && activeStep[idKey] === 'dances'" class="md-scroll-frame">
-          <hot-table :settings="toHotTable(activeStep)" />
+          <HotTable :settings="toHotTable(activeStep)" />
         </div>
         <form v-else-if="activeStep && activeStep.$selected" @submit.prevent class="md-padding">
           <div v-for="(field, key) in activeStep.fields" :key="key">
