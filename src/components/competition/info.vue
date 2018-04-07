@@ -1,7 +1,7 @@
 <template>
   <div class="competition-info md-scroll-frame">
     <div v-if="competition" class="md-scroll">
-      <h1 class="md-display-2">{{ competition.name }}</h1>
+      <h1 class="md-display-1">{{ competition.name }}</h1>
       <p class="md-headline">{{ moment(competition.date).format('dddd, MMMM D, YYYY') }}</p>
       <p v-if="competition.venue" class="md-headline">
         <a v-if="competition.address" :href="`https://maps.google.com/?q=${competition.address}`" target="_blank">{{ competition.venue }}</a>
