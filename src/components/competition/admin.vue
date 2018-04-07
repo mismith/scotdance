@@ -12,7 +12,7 @@
 
         <span style="flex-grow: 1;"></span>
 
-        <md-button @click="save()" class="md-primary md-raised" :disabled="!isDirty">Save</md-button>
+        <md-spunnable :md-spinning="saving" />
       </md-toolbar>
       <div class="md-scroll-frame">
         <div v-if="currentSection" class="md-scroll-frame">
@@ -89,6 +89,7 @@ import AdminImport from '@/components/competition/admin/import';
 import AdminSchedule from '@/components/competition/admin/schedule';
 import AdminResults from '@/components/competition/admin/results';
 import PresetPicker from '@/components/preset-picker';
+import MdSpunnable from '@/components/md-spunnable';
 import {
   idKey,
   db,
@@ -126,7 +127,8 @@ export default {
       showImport: false,
       confirmRemove: false,
 
-      unsavedChanges: {},
+      saving: false,
+      savingPromises: [],
     };
   },
   firebase() {
@@ -174,14 +176,14 @@ export default {
 
                     // queue up a save
                     const path = `${section[idKey]}/${data[row][idKey]}/${prop.replace('.', '/')}`;
-                    this.queueSave(path, newVal);
+                    this.save(path, newVal);
                   });
                 }
               },
               beforeRemoveRow: (index, amount) => {
                 for (let i = 0; i < amount; i += 1) {
                   const path = `${section[idKey]}/${data[index + i][idKey]}`;
-                  this.queueSave(path, null);
+                  this.save(path, null);
                 }
               },
             };
@@ -212,12 +214,8 @@ export default {
           return section;
         });
     },
-    isDirty() {
-      return Object.keys(this.unsavedChanges).length;
-    },
   },
   methods: {
-    // @TODO: alert to confirm losing changes on tab change
     inTabs(...tabs) {
       return tabs.some(tab => (this.currentTab) === tab);
     },
@@ -225,62 +223,54 @@ export default {
       return this.sections.find(section => section[idKey] === sectionId);
     },
 
-    addPresets(presets, tab = this.currentTab) {
-      // append
-      // @TODO: make this local-only until save
-      return Promise.all(presets.map((preset) => {
-        return this.competitionDataRef.child(tab).push(preset);
+    awaitSave(...promises) {
+      return new Promise((resolve, reject) => {
+        this.savingPromises.push(...promises);
+
+        if (this.saving) {
+          clearTimeout(this.saving);
+        }
+        this.saving = setTimeout(() => {
+          Promise.all(this.savingPromises)
+            .then(() => {
+              this.saving = false;
+              resolve();
+            })
+            .catch((err) => {
+              this.saving = false;
+              reject(err);
+            });
+        }, 1000);
+      });
+    },
+    async save(path, value) {
+      const ref = /^info\//.test(path) ? this.competitionRef : this.competitionDataRef;
+      await this.awaitSave(ref.update({
+        [path]: value,
       }));
     },
-
     async remove() {
-      await this.competitionRef.remove();
-      await this.competitionDataRef.remove();
+      await this.awaitSave(
+        this.competitionRef.remove(),
+        this.competitionDataRef.remove(),
+      );
       this.$router.replace('/');
     },
 
+    addPresets(presets, tab = this.currentTab) {
+      // append
+      return Promise.all(presets.map((preset) => {
+        return this.save(`${tab}/${db.push().key}`, preset);
+      }));
+    },
+
     handleFormInputChange(section, field, value) {
-      return this.queueSave(`${section}/${field}`, value);
+      return this.save(`${section}/${field}`, value);
     },
     handleChanges(changes) {
-      Object.entries(changes).forEach(([path, value]) => {
-        this.queueSave(path, value);
+      return Object.entries(changes).map(([path, value]) => {
+        return this.save(path, value);
       });
-    },
-    queueSave(path, value) {
-      this.$set(this.unsavedChanges, path, value);
-    },
-    async save() {
-      // ignore nested paths (since you can't save, say, a child of a deleted parent)
-      const paths = Object.keys(this.unsavedChanges);
-      const pathsToIgnore = paths.filter(path => paths.find((p) => {
-        if (p !== path) {
-          return p.indexOf(path) >= 0;
-        }
-        return false;
-      }));
-
-      // process competition/info saves first/differently
-      const infoChanges = {};
-      Object.entries(this.unsavedChanges).forEach(([path, value]) => {
-        const infoRegex = /^info\//;
-        if (infoRegex.test(path)) {
-          // move to infoChanges
-          infoChanges[path.replace(infoRegex, '')] = value;
-          delete this.unsavedChanges[path];
-        }
-        // remove ignores
-        if (pathsToIgnore.includes(path)) {
-          delete this.unsavedChanges[path];
-        }
-      });
-      await this.competitionRef.update(infoChanges);
-
-      // next, process all the data changes
-      await this.competitionDataRef.update(this.unsavedChanges);
-
-      // reset everything
-      this.$set(this, 'unsavedChanges', {});
     },
   },
   components: {
@@ -289,6 +279,7 @@ export default {
     AdminSchedule,
     AdminResults,
     PresetPicker,
+    MdSpunnable,
   },
 };
 </script>
