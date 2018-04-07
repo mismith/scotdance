@@ -14,6 +14,7 @@
 </template>
 
 <script>
+import moment from 'moment-mini';
 import {
   idKey,
   db,
@@ -32,10 +33,9 @@ export default {
   },
   computed: {
     competitions() {
-      return this.competitionsRaw.map(competition => ({
-        ...competition,
-        $favorite: this.$store.getters.isFavorite('competitions', competition[idKey]),
-      }));
+      return this.competitionsRaw
+        .sort((a, b) => moment(a.date).diff(b.date)) // order chronologically
+        .reverse(); // flip
     },
   },
   components: {
