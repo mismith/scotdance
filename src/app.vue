@@ -160,6 +160,8 @@ export default {
 
       if (titleChunks.length > 2) {
         return titleChunks[titleChunks.length - 2];
+      } else if (this.$route.name === 'competition.info') {
+        return titleChunks[0];
       }
       return titleChunks[titleChunks.length - 1];
     },
