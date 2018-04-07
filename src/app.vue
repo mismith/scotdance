@@ -37,58 +37,60 @@
         </md-list>
       </md-toolbar>
 
-      <md-list v-if="accountToggled" class="animate-in">
-        <md-subheader>Account</md-subheader>
+      <div class="md-scroll">
+        <md-list v-if="accountToggled" class="md-dense animate-in">
+          <md-subheader>Account</md-subheader>
 
-        <md-list-item
-          @click="$router.push('/profile'); menuVisible = false; accountToggled = false;"
-        >
-          <md-icon>account_circle</md-icon>
-          <span class="md-list-item-text">My Profile</span>
-        </md-list-item>
-        <md-list-item @click="logout().then(toggleAccount)">
-          <md-icon>exit_to_app</md-icon>
-          <span class="md-list-item-text">Logout</span>
-        </md-list-item>
-      </md-list>
-      <md-list v-if="!accountToggled" class="md-double-line" style="margin-bottom: auto;">
-        <md-subheader>
-          <div>Competitions</div>
-
-          <md-button
-            v-if="me && me.admin"
-            @click="$router.push(`/competitions/${db.push().key}/admin`); menuVisible = false;"
-            class="md-icon-button"
+          <md-list-item
+            @click="$router.push('/profile'); menuVisible = false; accountToggled = false;"
           >
-            <md-icon>add</md-icon>
-          </md-button>
-        </md-subheader>
+            <md-icon>account_circle</md-icon>
+            <span class="md-list-item-text">My Profile</span>
+          </md-list-item>
+          <md-list-item @click="logout().then(toggleAccount)">
+            <md-icon>exit_to_app</md-icon>
+            <span class="md-list-item-text">Logout</span>
+          </md-list-item>
+        </md-list>
+        <md-list v-if="!accountToggled" class="md-double-line md-dense" style="margin-bottom: auto;">
+          <md-subheader>
+            <div>Competitions</div>
 
-        <competition-list-item
-          v-for="competition in relevantCompetitions"
-          :key="competition[idKey]"
-          :competition="competition"
-          @click="$router.push(`/competitions/${competition[idKey]}`); menuVisible = false;"
-          @admin-click="menuVisible = false;"
-        />
+            <md-button
+              v-if="me && me.admin"
+              @click="$router.push(`/competitions/${db.push().key}/admin`); menuVisible = false;"
+              class="md-icon-button"
+            >
+              <md-icon>add</md-icon>
+            </md-button>
+          </md-subheader>
 
-        <footer v-if="competitions.length && competitions.length !== relevantCompetitions.length" style="text-align: center;">
-          <md-button @click="$router.push(`/competitions`); menuVisible = false;">
-            See {{ competitions.length - relevantCompetitions.length }} More
-          </md-button>
-        </footer>
-      </md-list>
+          <competition-list-item
+            v-for="competition in relevantCompetitions"
+            :key="competition[idKey]"
+            :competition="competition"
+            @click="$router.push(`/competitions/${competition[idKey]}`); menuVisible = false;"
+            @admin-click="menuVisible = false;"
+          />
 
-      <md-list v-if="!accountToggled">
-        <md-subheader>Links</md-subheader>
+          <footer v-if="competitions.length && competitions.length !== relevantCompetitions.length" style="text-align: center;">
+            <md-button @click="$router.push(`/competitions`); menuVisible = false;">
+              See {{ competitions.length - relevantCompetitions.length }} More
+            </md-button>
+          </footer>
+        </md-list>
 
-        <md-list-item
-          @click="$router.push(`/`); menuVisible = false;"
-        >
-          <md-icon>home</md-icon>
-          <span class="md-list-item-text">App Home</span>
-        </md-list-item>
-      </md-list>
+        <md-list v-if="!accountToggled" class="md-dense">
+          <md-subheader>Links</md-subheader>
+
+          <md-list-item
+            @click="$router.push(`/`); menuVisible = false;"
+          >
+            <md-icon>home</md-icon>
+            <span class="md-list-item-text">App Home</span>
+          </md-list-item>
+        </md-list>
+      </div>
     </md-app-drawer>
 
     <md-app-content id="main" class="md-scroll-frame md-scroll">
@@ -280,6 +282,20 @@ body,
   }
   &.md-transparent {
     background-color: transparent;
+  }
+  &.md-dense {
+    .md-list-item-content {
+      > .md-icon {
+        &:first-child {
+          margin-right: 16px;
+        }
+      }
+      .md-list-action {
+        &:last-of-type {
+          margin-left: 8px;
+        }
+      }
+    }
   }
 }
 
