@@ -37,7 +37,7 @@
         </md-list>
       </md-toolbar>
 
-      <div class="md-scroll">
+      <div class="md-scroll-frame md-scroll">
         <md-list v-if="accountToggled" class="md-dense animate-in">
           <md-subheader>Account</md-subheader>
 
@@ -239,6 +239,8 @@ body,
 
 // app-wide md-component styling
 .md-list {
+  flex-shrink: 0;
+
   > .md-list-item {
     flex-shrink: 0;
 

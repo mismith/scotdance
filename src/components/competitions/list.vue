@@ -34,6 +34,9 @@ export default {
   computed: {
     competitions() {
       return this.competitionsRaw
+        .map(competition => ({
+          ...competition,
+        }))
         .sort((a, b) => moment(a.date).diff(b.date)) // order chronologically
         .reverse(); // flip
     },

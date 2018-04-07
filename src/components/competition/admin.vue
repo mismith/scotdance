@@ -253,7 +253,7 @@ export default {
     async save() {
       // ignore nested paths (since you can't save, say, a child of a deleted parent)
       const paths = Object.keys(this.unsavedChanges);
-      const pathsToIgnore = paths.filter(path => paths.find(p => {
+      const pathsToIgnore = paths.filter(path => paths.find((p) => {
         if (p !== path) {
           return p.indexOf(path) >= 0;
         }

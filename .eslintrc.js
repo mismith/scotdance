@@ -50,5 +50,6 @@ module.exports = {
     // @mismith overrides
     'arrow-body-style': 0,
     'max-len': 0,
+    'no-unused-vars': 1
   }
 }
