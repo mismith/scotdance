@@ -225,10 +225,41 @@ export default {
       return this.sections.find(section => section[idKey] === sectionId);
     },
 
+    addPresets(presets, tab = this.currentTab) {
+      // append
+      // @TODO: make this local-only until save
+      return Promise.all(presets.map((preset) => {
+        return this.competitionDataRef.child(tab).push(preset);
+      }));
+    },
+
+    async remove() {
+      await this.competitionRef.remove();
+      await this.competitionDataRef.remove();
+      this.$router.replace('/');
+    },
+
+    handleFormInputChange(section, field, value) {
+      return this.queueSave(`${section}/${field}`, value);
+    },
+    handleChanges(changes) {
+      Object.entries(changes).forEach(([path, value]) => {
+        this.queueSave(path, value);
+      });
+    },
     queueSave(path, value) {
       this.$set(this.unsavedChanges, path, value);
     },
     async save() {
+      // ignore nested paths (since you can't save, say, a child of a deleted parent)
+      const paths = Object.keys(this.unsavedChanges);
+      const pathsToIgnore = paths.filter(path => paths.find(p => {
+        if (p !== path) {
+          return p.indexOf(path) >= 0;
+        }
+        return false;
+      }));
+
       // process competition/info saves first/differently
       const infoChanges = {};
       Object.entries(this.unsavedChanges).forEach(([path, value]) => {
@@ -236,6 +267,10 @@ export default {
         if (infoRegex.test(path)) {
           // move to infoChanges
           infoChanges[path.replace(infoRegex, '')] = value;
+          delete this.unsavedChanges[path];
+        }
+        // remove ignores
+        if (pathsToIgnore.includes(path)) {
           delete this.unsavedChanges[path];
         }
       });
@@ -246,29 +281,6 @@ export default {
 
       // reset everything
       this.$set(this, 'unsavedChanges', {});
-    },
-
-    async remove() {
-      await this.competitionRef.remove();
-      await this.competitionDataRef.remove();
-      this.$router.replace('/');
-    },
-
-    addPresets(presets, tab = this.currentTab) {
-      // append
-      // @TODO: make this local-only until save
-      return Promise.all(presets.map((preset) => {
-        return this.competitionDataRef.child(tab).push(preset);
-      }));
-    },
-
-    handleFormInputChange(section, field, value) {
-      return this.queueSave(`${section}/${field}`, value);
-    },
-    handleChanges(changes) {
-      Object.entries(changes).forEach(([path, value]) => {
-        this.queueSave(path, value);
-      });
     },
   },
   components: {
