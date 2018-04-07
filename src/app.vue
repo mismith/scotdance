@@ -148,7 +148,7 @@ export default {
           }
           return false;
         })
-        .sort((a, b) => moment(a).diff(b)) // order chronologically
+        .sort((a, b) => moment(a.date).diff(b.date)) // order chronologically
         .slice(0, 10); // limit to 10 max
     },
   },
