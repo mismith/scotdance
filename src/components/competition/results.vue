@@ -18,7 +18,7 @@
                 v-for="dance in findGroupDances(group)"
                 :key="dance[idKey]"
                 :winner="getGroupDanceWinner(group, dance)"
-                @click="selected = { group, dance }"
+                @click="select({ group, dance })"
               >
                 {{ dance.$name }}
               </result-list-item>
@@ -27,7 +27,7 @@
                 <md-divider class="md-inset" />
                 <result-list-item
                   :winner="getGroupDanceWinner(group, overall)"
-                  @click="selected = { group, dance: overall }"
+                  @click="select({ group, dance: overall })"
                 >
                   {{ overall.$name }}
                   <md-icon class="icon-trophy" slot="icon" />
@@ -46,7 +46,7 @@
     </swiper-slide>
     <swiper-slide class="md-scroll-frame">
       <md-toolbar class="md-dense">
-        <md-button @click="selected = null;" class="md-icon-button">
+        <md-button @click="select(null)" class="md-icon-button">
           <md-icon>chevron_left</md-icon>
         </md-button>
         <span v-if="selected">
@@ -132,6 +132,10 @@ export default {
     getGroupDanceResults,
     getPlacedDancers,
     getGroupDanceWinner,
+
+    select(selected) {
+      this.$set(this, 'selected', selected);
+    },
   },
   async mounted() {
     await this.competitionDataRef.once('value');
