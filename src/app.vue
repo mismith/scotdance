@@ -238,6 +238,11 @@ body,
 }
 
 // app-wide md-component styling
+.md-subheader.md-title {
+  color: inherit;
+  font-size: 24px;
+  padding-top: 16px;
+}
 .md-list {
   flex-shrink: 0;
 

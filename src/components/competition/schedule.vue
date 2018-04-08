@@ -144,10 +144,5 @@ export default {
       flex-direction: column;
     }
   }
-  .md-subheader.md-title {
-    color: inherit;
-    font-size: 24px;
-    padding-top: 16px;
-  }
 }
 </style>
