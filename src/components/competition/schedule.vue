@@ -11,19 +11,26 @@
             <md-subheader v-if="day.name" class="md-title">
               <span>{{ day.name }}</span>
             </md-subheader>
-            <div v-for="block in day.blocks" :key="block[idKey]" class="block">
-              <header>
-                <md-subheader>{{ block.name }}</md-subheader>
-                <div class="md-subheading">{{ block.description }}</div>
-              </header>
 
-              <md-card>
+            <md-list class="md-list-cards">
+              <md-list-item
+                v-for="block in day.blocks"
+                :key="block[idKey]"
+                md-expand
+                md-expanded
+              >
+                <md-subheader>
+                  <div>{{ block.name }}</div>
+                  <div class="md-caption">{{ block.description }}</div>
+                </md-subheader>
+
                 <md-list
-                  v-for="event in block.events"
-                  :key="event[idKey]"
                   class="md-double-line"
+                  slot="md-expand"
                 >
                   <md-list-item
+                    v-for="event in block.events"
+                    :key="event[idKey]"
                     @click="event.dances && select({ day, block, event })"
                   >
                     <div class="md-list-item-text">
@@ -33,8 +40,8 @@
                     <md-icon v-if="event.dances">chevron_right</md-icon>
                   </md-list-item>
                 </md-list>
-              </md-card>
-            </div>
+              </md-list-item>
+            </md-list>
           </div>
           <md-progress-spinner v-else md-mode="indeterminate" style="margin: auto;" />
         </md-tab>
@@ -119,49 +126,26 @@ export default {
 
 <style lang="scss">
 .competition-schedule {
+  background-color: #eee;
+
   .md-tabs {
     .md-tabs-navigation {
       .md-button {
         min-width: 48px;
       }
     }
+    .md-tabs-content {
+      background: initial;
+    }
     .md-tab {
       display: flex;
       flex-direction: column;
-      background-color: #eee;
     }
   }
-
   .md-subheader.md-title {
     color: inherit;
     font-size: 24px;
     padding-top: 16px;
-  }
-
-  .block {
-    margin-bottom: 16px;
-  }
-
-  .md-card {
-    .md-list {
-      padding: 0;
-
-      .md-list-item {
-        .md-list-item-content {
-          //min-height: 48px;
-        }
-      }
-    }
-  }
-
-  ol {
-    list-style: none;
-    margin: 0;
-    padding-left: 32px;
-
-    > li {
-      margin: 16px 0;
-    }
   }
 }
 </style>

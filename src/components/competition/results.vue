@@ -2,7 +2,7 @@
   <swiper class="competition-results md-scroll-frame swiper-no-swiping">
     <swiper-slide class="md-scroll-frame">
       <div v-if="loaded" class="md-scroll">
-        <md-list v-if="groups.length">
+        <md-list v-if="groups.length" class="md-list-cards">
           <md-list-item
             v-for="group in groups"
             :key="group[idKey]"
@@ -145,14 +145,18 @@ export default {
 </script>
 
 <style lang="scss">
-.md-list {
-  > div {
-    position: relative;
+.competition-results {
+  background: #eee;
 
-    > .md-divider {
-      bottom: auto;
-      top: 0;
-      z-index: 3;
+  .md-list {
+    > div {
+      position: relative;
+
+      > .md-divider {
+        bottom: auto;
+        top: 0;
+        z-index: 3;
+      }
     }
   }
 }
