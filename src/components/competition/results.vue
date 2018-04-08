@@ -45,7 +45,7 @@
       <md-progress-spinner v-else md-mode="indeterminate" style="margin: auto;" />
     </swiper-slide>
     <swiper-slide class="md-scroll-frame">
-      <md-toolbar class="md-dense">
+      <md-toolbar class="md-dense md-toolbar-nowrap">
         <md-button @click="select(null)" class="md-icon-button">
           <md-icon>chevron_left</md-icon>
         </md-button>

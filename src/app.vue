@@ -334,12 +334,15 @@ body,
 
 .md-toolbar {
   flex-shrink: 0;
-  flex-wrap: nowrap;
   z-index: 200; // > 101 .ht_clone_top
 
   > span {
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  &.md-toolbar-nowrap {
+    flex-wrap: nowrap;
   }
 }
 

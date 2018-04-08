@@ -66,7 +66,7 @@
     </swiper-slide>
     <swiper-slide>
       <div v-if="selected" class="md-scroll-frame">
-        <md-toolbar class="md-dense">
+        <md-toolbar class="md-dense md-toolbar-nowrap">
           <md-button @click="selected = null;" class="md-icon-button">
             <md-icon>chevron_left</md-icon>
           </md-button>
