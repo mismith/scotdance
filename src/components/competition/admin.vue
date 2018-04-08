@@ -69,7 +69,7 @@
       </md-bottom-bar-item>
     </md-bottom-bar>
 
-    <md-dialog :md-active.sync="showImport" style="width: 100%; height: 100%;">
+    <md-dialog :md-active.sync="showImport" class="import-dialog">
       <admin-import :competition-data-ref="competitionDataRef" @done="showImport = false" />
     </md-dialog>
     <md-dialog-confirm
@@ -306,5 +306,13 @@ export default {
       }
     }
   }
+}
+
+.import-dialog {
+    &,
+   .md-dialog-container {
+     width: 100%;
+     height: 100%;
+   }
 }
 </style>

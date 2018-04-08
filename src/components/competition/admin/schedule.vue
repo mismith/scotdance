@@ -159,6 +159,7 @@ export default {
 
         return fields;
       }
+      return null;
     },
 
     handleListItemCreate(path, item) {
