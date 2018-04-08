@@ -52,7 +52,7 @@
                   v-for="dancer in bucket.dancers"
                   :key="dancer[idKey]"
                   :dancer="dancer"
-                  @click="selected = { bucket, dancer }"
+                  @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] }})"
                 />
               </md-list>
             </md-list-item>
@@ -72,15 +72,15 @@
       />
     </swiper-slide>
     <swiper-slide>
-      <div v-if="selected" class="md-scroll-frame">
+      <div v-if="currentDancer" class="md-scroll-frame">
         <md-toolbar class="md-dense md-toolbar-nowrap">
-          <md-button @click="selected = null;" class="md-icon-button">
+          <md-button @click="$router.push({ name: 'competition.dancers' })" class="md-icon-button">
             <md-icon>chevron_left</md-icon>
           </md-button>
           <span>Dancers</span>
         </md-toolbar>
         <dancer-report
-          :dancer="selectedDancer"
+          :dancer="currentDancer"
           :dances="dances"
           :groups="groups"
           :results="results"
@@ -105,6 +105,7 @@ import {
 export default {
   name: 'competition-dancers',
   props: {
+    dancerId: String,
     competitionDataRef: {
       type: Object,
       required: true,
@@ -122,11 +123,16 @@ export default {
 
       filterBy: undefined,
       sortBy: '$group.$order',
-
-      selected: undefined,
     };
   },
   computed: {
+    currentDancer() {
+      if (this.dancerId) {
+        return this.dancers.find(dancer => dancer[idKey] === this.dancerId);
+      }
+      return null;
+    },
+
     filteredDancers() {
       // filter by search term
       const filtered = this.filterBy && this.dancers.length
@@ -151,19 +157,13 @@ export default {
           dancers,
         }));
     },
-    selectedDancer() {
-      if (this.selected && this.selected.dancer) {
-        return this.dancers.find(dancer => dancer[idKey] === this.selected.dancer[idKey]);
-      }
-      return null;
-    },
     forceExpanded() {
       return !!this.filterBy || this.sortBy === 'number';
     },
   },
   watch: {
-    selected(selected) {
-      if (selected) {
+    currentDancer(currentDancer) {
+      if (currentDancer) {
         this.$el.swiper.slideTo(1);
       } else {
         this.$el.swiper.slideTo(0);

@@ -64,9 +64,10 @@ export default new Router({
               component: CompetitionInfo,
             },
             {
-              path: 'dancers',
+              path: 'dancers/:dancerId?',
               name: 'competition.dancers',
               component: CompetitionDancers,
+              props: true,
               meta: {
                 title: 'Dancers',
               },
@@ -80,9 +81,10 @@ export default new Router({
               },
             },
             {
-              path: 'results',
+              path: 'results/:groupId?/:danceId?',
               name: 'competition.results',
               component: CompetitionResults,
+              props: true,
               meta: {
                 title: 'Results',
               },
