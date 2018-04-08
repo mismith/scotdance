@@ -24,10 +24,7 @@
                   <div class="md-caption">{{ block.description }}</div>
                 </md-subheader>
 
-                <md-list
-                  class="md-double-line"
-                  slot="md-expand"
-                >
+                <md-list slot="md-expand" class="md-double-line">
                   <md-list-item
                     v-for="event in block.events"
                     :key="event[idKey]"
