@@ -85,6 +85,12 @@
             </md-field>
           </div>
         </form>
+        <md-empty-state
+          v-else
+          md-icon="event_note"
+          md-label="Edit activities"
+          md-description="Add or select an item to edit"
+        />
       </div>
     </div>
   </div>

@@ -2,8 +2,7 @@
   <div class="admin-results md-scroll-frame">
     <div class="md-layout admin-blades">
       <div class="md-layout-item md-size-33 admin-blade md-scroll">
-        <md-subheader>Groups / Dances</md-subheader>
-        <md-list>
+        <md-list v-if="groups.length">
           <md-list-item
             v-for="group in groups"
             :key="group[idKey]"
@@ -39,20 +38,27 @@
             </md-list>
           </md-list-item>
         </md-list>
+        <md-empty-state
+          v-else
+          md-icon="error"
+          md-label="No age groups found"
+        />
       </div>
       <div class="md-layout-item md-size-33 admin-blade md-scroll">
-        <md-subheader>
-          {{ selected && selected.group ? selected.group.$name : '' }}
-          {{ selected && selected.dance ? selected.dance.$name : '' }}
-          Dancers
-        </md-subheader>
         <md-list v-if="selected">
-          <dancer-list-item
-            v-for="dancer in findGroupDancers(selected.group)"
-            :key="dancer[idKey]"
-            :dancer="dancer"
-            @click="placeDancer(dancer)"
-            :class="{placed: isPlaced(dancer)}"
+          <div v-if="selectedDancers.length">
+            <dancer-list-item
+              v-for="dancer in selectedDancers"
+              :key="dancer[idKey]"
+              :dancer="dancer"
+              @click="placeDancer(dancer)"
+              :class="{placed: isPlaced(dancer)}"
+            />
+          </div>
+          <md-empty-state
+            v-else
+            md-icon="error"
+            md-label="No dancers found"
           />
         </md-list>
         <md-empty-state
@@ -63,8 +69,7 @@
         />
       </div>
       <div class="md-layout-item md-size-33 admin-blade md-scroll">
-        <md-subheader>Placings</md-subheader>
-        <md-list v-if="selected">
+        <md-list v-if="placedDancers.length">
           <dancer-list-item
             v-for="(dancer, index) in placedDancers"
             :key="dancer[idKey]"
@@ -74,7 +79,7 @@
           />
         </md-list>
         <md-empty-state
-          v-if="!placedDancers.length"
+          v-else
           md-icon="swap_vert"
           md-label="Order dancers"
           md-description="Select dancers in the order they placed"
@@ -132,6 +137,11 @@ export default {
       }
 
       this.$set(this, 'placedDancers', this.getPlacedDancers(results));
+    },
+  },
+  computed: {
+    selectedDancers() {
+      return this.selected ? this.findGroupDancers(this.selected.group) : [];
     },
   },
   methods: {
