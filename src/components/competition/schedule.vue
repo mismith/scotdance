@@ -1,7 +1,7 @@
 <template>
   <swiper class="competition-schedule md-scroll-frame swiper-no-swiping">
     <swiper-slide>
-      <md-tabs md-alignment="fixed">
+      <md-tabs v-if="schedule.days" md-alignment="fixed">
         <md-tab
           v-for="day in schedule.days"
           :key="day[idKey]"
@@ -46,6 +46,11 @@
           <md-progress-spinner v-else md-mode="indeterminate" style="margin: auto;" />
         </md-tab>
       </md-tabs>
+      <md-empty-state
+        v-else
+        md-icon="report_problem"
+        md-label="No schedule yet"
+      />
     </swiper-slide>
     <swiper-slide>
       <div v-if="selected" class="md-scroll-frame">
