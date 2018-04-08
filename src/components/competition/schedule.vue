@@ -2,65 +2,62 @@
   <swiper class="competition-schedule md-scroll-frame swiper-no-swiping">
     <swiper-slide>
       <md-tabs md-alignment="fixed">
-        <md-tab md-label="Morning">
-          <div v-if="loaded" class="md-scroll-frame">
-            <md-list class="md-scroll">
-              <md-list-item
-                v-for="dance in dances"
-                :key="dance[idKey]"
-                md-expand
-              >
-                <md-subheader>
-                  {{ dance.name }}
-                </md-subheader>
+        <md-tab
+          v-for="day in schedule.days"
+          :key="day[idKey]"
+          :md-label="moment(day.date).format('ddd')"
+        >
+          <div v-if="loaded" class="md-scroll-frame md-scroll">
+            <md-subheader v-if="day.name" class="md-title">
+              <span>{{ day.name }}</span>
+            </md-subheader>
+            <div v-for="block in day.blocks" :key="block[idKey]" class="block">
+              <header>
+                <md-subheader>{{ block.name }}</md-subheader>
+                <div class="md-subheading">{{ block.description }}</div>
+              </header>
 
-                <md-list slot="md-expand" class="md-double-line">
+              <md-card>
+                <md-list
+                  v-for="event in block.events"
+                  :key="event[idKey]"
+                  class="md-double-line"
+                >
                   <md-list-item
-                    v-for="group in groups"
-                    :key="group[idKey]"
-                    v-if="dance.groupIds && dance.groupIds[group[idKey]]"
-                    @click="selected = { group, dance }"
+                    @click="event.dances && select({ day, block, event })"
                   >
-                    <md-avatar class="md-avatar-icon">
-                      <span>{{ getPlatform(dance, group).number }}</span>
-                    </md-avatar>
-
                     <div class="md-list-item-text">
-                      <span>{{ group.$name }}</span>
-                      <p>{{ getGroupJudge(group).$name }}</p>
+                      <div>{{ event.name }}</div>
+                      <div>{{ event.description }}</div>
                     </div>
-
-                    <md-icon>chevron_right</md-icon>
+                    <md-icon v-if="event.dances">chevron_right</md-icon>
                   </md-list-item>
                 </md-list>
-              </md-list-item>
-            </md-list>
+              </md-card>
+            </div>
           </div>
           <md-progress-spinner v-else md-mode="indeterminate" style="margin: auto;" />
-        </md-tab>
-        <md-tab md-label="Afternoon">
-          <md-subheader>TBD</md-subheader>
         </md-tab>
       </md-tabs>
     </swiper-slide>
     <swiper-slide>
-      <div class="md-scroll-frame">
+      <div v-if="selected" class="md-scroll-frame">
         <md-toolbar class="md-dense">
-          <md-button @click="selected = null;" class="md-icon-button">
+          <md-button @click="select(null)" class="md-icon-button">
             <md-icon>chevron_left</md-icon>
           </md-button>
-          <span v-if="selected">
-            {{ selected.dance.name }}
+          <span>
+            {{ selected.day.name }}
             &rsaquo;
-            {{ selected.group.$name }}
+            {{ selected.block.name }}
           </span>
         </md-toolbar>
         <md-list class="md-double-line md-scroll">
-          <dancer-list-item
-            v-for="dancer in selectedDancers"
-            :key="dancer[idKey]"
-            :dancer="dancer"
-          />
+          <md-list-item v-for="dance in selected.event.dances" :key="dance[idKey]">
+            <div class="md-list-item-text">
+              {{ dance.name }}
+            </div>
+          </md-list-item>
         </md-list>
       </div>
     </swiper-slide>
@@ -68,6 +65,7 @@
 </template>
 
 <script>
+import moment from 'moment-mini';
 import DancerListItem from '@/components/dancer-list-item';
 import {
   idKey,
@@ -80,9 +78,7 @@ export default {
       type: Object,
       required: true,
     },
-    dancers: Array,
-    groups: Array,
-    dances: Array,
+    schedule: Object,
   },
   data() {
     return {
@@ -94,14 +90,6 @@ export default {
     };
   },
   computed: {
-    selectedDancers() {
-      if (this.selected) {
-        return this.dancers.filter((dancer) => {
-          return dancer.groupId === this.selected.group[idKey];
-        });
-      }
-      return [];
-    },
   },
   watch: {
     selected(selected) {
@@ -113,13 +101,10 @@ export default {
     },
   },
   methods: {
-    getPlatform() {
-      return {
-        number: Math.ceil(Math.random() * 3),
-      };
-    },
-    getGroupJudge() {
-      return '';
+    moment,
+
+    select(selected) {
+      this.$set(this, 'selected', selected);
     },
   },
   async mounted() {
@@ -134,9 +119,49 @@ export default {
 
 <style lang="scss">
 .competition-schedule {
-  .md-tab {
-    display: flex;
-    flex-direction: column;
+  .md-tabs {
+    .md-tabs-navigation {
+      .md-button {
+        min-width: 48px;
+      }
+    }
+    .md-tab {
+      display: flex;
+      flex-direction: column;
+      background-color: #eee;
+    }
+  }
+
+  .md-subheader.md-title {
+    color: inherit;
+    font-size: 24px;
+    padding-top: 16px;
+  }
+
+  .block {
+    margin-bottom: 16px;
+  }
+
+  .md-card {
+    .md-list {
+      padding: 0;
+
+      .md-list-item {
+        .md-list-item-content {
+          //min-height: 48px;
+        }
+      }
+    }
+  }
+
+  ol {
+    list-style: none;
+    margin: 0;
+    padding-left: 32px;
+
+    > li {
+      margin: 16px 0;
+    }
   }
 }
 </style>

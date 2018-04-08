@@ -71,7 +71,7 @@
               v-else-if="field.type === 'datepicker'"
               v-model="selected.item[key]"
               :class="{ 'md-required': field.required }"
-              @change="handleListItemUpdate(selected.path, selected.item)"
+              @input="handleListItemUpdate(selected.path, selected.item)"
             >
               <label>{{ field.name || key }}</label>
             </md-datepicker>
@@ -137,6 +137,7 @@ export default {
 
         switch (collection) {
           case 'days': {
+            fields.name.required = false;
             fields.date = {
               name: 'Date',
               type: 'datepicker',
@@ -160,11 +161,14 @@ export default {
       });
     },
     handleListItemUpdate(path, item) {
-      const key = item[idKey];
-      delete item[idKey];
+      const clone = {
+        ...item,
+      };
+      const key = clone[idKey];
+      delete clone[idKey];
 
       this.$emit('change', {
-        [`${path}/${key}`]: item,
+        [`${path}/${key}`]: clone,
       });
     },
     handleListItemRemove(path, item) {
