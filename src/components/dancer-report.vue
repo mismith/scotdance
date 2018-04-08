@@ -13,6 +13,7 @@
         :key="dance[idKey]"
         :winner="null"
         :place="getPlace(dancer, dancer.$group, dance)"
+        @click="$router.push({ name: 'competition.results', params: { groupId: dancer.$group[idKey], danceId: dance[idKey]}})"
       >
         {{ dance.$name }}
       </result-list-item>

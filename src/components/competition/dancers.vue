@@ -162,16 +162,20 @@ export default {
     },
   },
   watch: {
-    currentDancer(currentDancer) {
-      if (currentDancer) {
+    currentDancer() {
+      this.showRelevantSlide();
+    },
+  },
+  methods: {
+    hasFavorites,
+
+    showRelevantSlide() {
+      if (this.currentDancer) {
         this.$el.swiper.slideTo(1);
       } else {
         this.$el.swiper.slideTo(0);
       }
     },
-  },
-  methods: {
-    hasFavorites,
 
     getSortCategory(dancer) {
       if (!dancer) return undefined;
@@ -194,6 +198,8 @@ export default {
     },
   },
   async mounted() {
+    this.showRelevantSlide();
+
     await this.competitionDataRef.once('value');
     this.loaded = true;
   },

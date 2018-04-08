@@ -61,6 +61,7 @@
             :key="dancer[idKey]"
             :dancer="dancer"
             :place="index + 1"
+            @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] }})"
           />
           <md-subheader v-if="!placedDancers.length">Results to be determined.</md-subheader>
         </md-list>
@@ -135,12 +136,8 @@ export default {
     },
   },
   watch: {
-    currentDance(currentDance) {
-      if (currentDance) {
-        this.$el.swiper.slideTo(1);
-      } else {
-        this.$el.swiper.slideTo(0);
-      }
+    currentDance() {
+      this.showRelevantSlide();
     },
   },
   methods: {
@@ -150,8 +147,18 @@ export default {
     getGroupDanceResults,
     getPlacedDancers,
     getGroupDanceWinner,
+
+    showRelevantSlide() {
+      if (this.currentDance) {
+        this.$el.swiper.slideTo(1);
+      } else {
+        this.$el.swiper.slideTo(0);
+      }
+    },
   },
   async mounted() {
+    this.showRelevantSlide();
+
     await this.competitionDataRef.once('value');
     this.loaded = true;
   },
