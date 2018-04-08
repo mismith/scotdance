@@ -58,7 +58,7 @@
         </md-list>
         <md-empty-state
           v-else
-          md-icon="report_problem"
+          :md-icon="filterBy ? 'error_outline' : 'error'"
           :md-label="`No dancers ${filterBy ? 'match' : 'yet'}`"
         />
       </div>

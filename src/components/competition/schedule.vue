@@ -48,7 +48,7 @@
       </md-tabs>
       <md-empty-state
         v-else
-        md-icon="report_problem"
+        md-icon="error"
         md-label="No schedule yet"
       />
     </swiper-slide>

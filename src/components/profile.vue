@@ -63,7 +63,7 @@
       </div>
       <md-empty-state
         v-else-if="me !== undefined"
-        md-icon="report_problem"
+        md-icon="error"
         md-label="Not logged in"
       />
       <md-progress-spinner v-else md-mode="indeterminate" style="margin: auto;" />

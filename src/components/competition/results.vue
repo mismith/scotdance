@@ -38,7 +38,7 @@
         </md-list>
         <md-empty-state
           v-else
-          md-icon="report_problem"
+          md-icon="error"
           md-label="No results yet"
         />
       </div>
