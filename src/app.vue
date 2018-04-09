@@ -217,6 +217,11 @@ a[target="_blank"] {
       margin-right: -10px;
     }
   }
+  &.md-title {
+    color: inherit;
+    font-size: 24px;
+    padding-top: 16px;
+  }
 }
 
 // app frame
@@ -236,13 +241,14 @@ body,
 .md-app-content {
   padding: 0;
 }
+.md-dialog-overlay {
+  z-index: 7; // cover .md-app-drawer
+}
+.md-select-menu {
+  z-index: 11; // cover .md-dialog
+}
 
 // app-wide md-component styling
-.md-subheader.md-title {
-  color: inherit;
-  font-size: 24px;
-  padding-top: 16px;
-}
 .md-list {
   flex-shrink: 0;
 
@@ -390,13 +396,6 @@ body,
       }
     }
   }
-}
-
-.md-dialog-overlay {
-  z-index: 7; // cover .md-app-drawer
-}
-.md-select-menu {
-  z-index: 11; // cover .md-dialog
 }
 
 .swiper-slide {
