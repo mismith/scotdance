@@ -68,32 +68,8 @@ export default {
   },
   data() {
     return {
-      competitionRef: db.child('competitions').child(this.competitionId),
-      competitionDataRef: db.child('competitionsData').child(this.competitionId),
-    };
-  },
-  firebase() {
-    return {
-      // info
-      competitionRaw: {
-        source: this.competitionRef,
-        asObject: true,
-      },
-      // data
-      dancersRaw: this.competitionDataRef.child('dancers'),
-      groupsRaw: this.competitionDataRef.child('groups'),
-      categoriesRaw: this.competitionDataRef.child('categories'),
-      dancesRaw: this.competitionDataRef.child('dances'),
-      staffRaw: this.competitionDataRef.child('staff'),
-      platformsRaw: this.competitionDataRef.child('platforms'),
-      scheduleRaw: {
-        source: this.competitionDataRef.child('schedule'),
-        asObject: true,
-      },
-      resultsRaw: {
-        source: this.competitionDataRef.child('results'),
-        asObject: true,
-      },
+      competitionRef: undefined,
+      competitionDataRef: undefined,
     };
   },
   computed: {
@@ -149,8 +125,39 @@ export default {
       return this.resultsRaw;
     },
   },
+  watch: {
+    competitionId() {
+      this.loadFirebase();
+    },
+  },
   methods: {
-    // @TODO: make tabs persist/not re-load on change
+    loadFirebase() {
+      this.competitionRef = db.child('competitions').child(this.competitionId);
+      this.competitionDataRef = db.child('competitionsData').child(this.competitionId);
+
+      // info object
+      if (this.competitionRaw) this.$unbind('competitionRaw');
+      this.$bindAsObject('competitionRaw', this.competitionRef);
+      // data arrays
+      if (this.dancersRaw) this.$unbind('dancersRaw');
+      this.$bindAsArray('dancersRaw', this.competitionDataRef.child('dancers'));
+      if (this.groupsRaw) this.$unbind('groupsRaw');
+      this.$bindAsArray('groupsRaw', this.competitionDataRef.child('groups'));
+      if (this.categoriesRaw) this.$unbind('categoriesRaw');
+      this.$bindAsArray('categoriesRaw', this.competitionDataRef.child('categories'));
+      if (this.dancesRaw) this.$unbind('dancesRaw');
+      this.$bindAsArray('dancesRaw', this.competitionDataRef.child('dances'));
+      if (this.staffRaw) this.$unbind('staffRaw');
+      this.$bindAsArray('staffRaw', this.competitionDataRef.child('staff'));
+      if (this.platformsRaw) this.$unbind('platformsRaw');
+      this.$bindAsArray('platformsRaw', this.competitionDataRef.child('platforms'));
+      // data objects
+      if (this.scheduleRaw) this.$unbind('scheduleRaw');
+      this.$bindAsObject('scheduleRaw', this.competitionDataRef.child('schedule'));
+      if (this.resultsRaw) this.$unbind('resultsRaw');
+      this.$bindAsObject('resultsRaw', this.competitionDataRef.child('results'));
+    },
+
     findCategory(categoryId) {
       return findByIdKey(this.categories, categoryId);
     },
@@ -158,6 +165,9 @@ export default {
       const category = this.findCategory(group.categoryId);
       return `${category ? category.name : ''} ${group.name || ''}`;
     },
+  },
+  created() {
+    this.loadFirebase();
   },
 };
 </script>

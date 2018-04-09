@@ -94,7 +94,7 @@
     </md-app-drawer>
 
     <md-app-content id="main" class="md-scroll-frame md-scroll">
-      <router-view :key="$route.fullPath" />
+      <router-view />
     </md-app-content>
 
   </md-app>
