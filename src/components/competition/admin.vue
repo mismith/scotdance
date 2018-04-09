@@ -1,6 +1,6 @@
 <template>
   <div class="competition-admin md-scroll-frame">
-    <div class="md-scroll-frame">
+    <div v-if="currentSection" class="md-scroll-frame md-scroll">
       <md-toolbar class="md-dense">
         <div v-if="inTabs('info', 'categories', 'dancers', 'groups')">
           <md-button @click="showImport = true">Import</md-button>
@@ -14,47 +14,47 @@
 
         <md-spunnable :md-spinning="saving" />
       </md-toolbar>
-      <div class="md-scroll-frame">
-        <div v-if="currentSection" class="md-scroll-frame">
-          <form v-if="currentSection.form" class="md-padding">
-            <div v-for="field in currentSection.form.fields" :key="field.data">
-              <md-datepicker
-                v-if="field.type === 'datetime'"
+      <div class="md-scroll">
+        <form v-if="currentSection.form" class="md-padding">
+          <div v-for="field in currentSection.form.fields" :key="field.data">
+            <md-datepicker
+              v-if="field.type === 'datetime'"
+              v-model="competition[field.data]"
+              @input="handleFormInputChange(currentSection[idKey], field.data, $event)"
+              :class="{ 'md-required': field.required }"
+            >
+              <label>{{ field.title }}</label>
+            </md-datepicker>
+            <md-field v-else>
+              <label>{{ field.title }}</label>
+              <md-input
                 v-model="competition[field.data]"
-                @input="handleFormInputChange(currentSection[idKey], field.data, $event)"
-                :class="{ 'md-required': field.required }"
-              >
-                <label>{{ field.title }}</label>
-              </md-datepicker>
-              <md-field v-else>
-                <label>{{ field.title }}</label>
-                <md-input
-                  v-model="competition[field.data]"
-                  @change="handleFormInputChange(currentSection[idKey], field.data, $event.target.value)"
-                  :required="field.required"
-                />
-              </md-field>
-            </div>
-          </form>
+                @change="handleFormInputChange(currentSection[idKey], field.data, $event.target.value)"
+                :required="field.required"
+              />
+            </md-field>
+          </div>
+        </form>
 
-          <HotTable v-else-if="currentSection.hot" :settings="currentSection.hot" class="fullscreen" />
+        <HotTable v-else-if="currentSection.hot" :settings="currentSection.hot" class="fullscreen" />
 
-          <admin-schedule v-else-if="currentSection[idKey] === 'schedule'" v-bind="$props" @change="handleChanges" />
+        <admin-schedule v-else-if="currentSection[idKey] === 'schedule'" v-bind="$props" @change="handleChanges" />
 
-          <admin-results v-else-if="currentSection[idKey] === 'results'" v-bind="$props" @change="handleChanges" />
+        <admin-results v-else-if="currentSection[idKey] === 'results'" v-bind="$props" @change="handleChanges" />
 
-          <md-subheader v-else>
-            TBD
-          </md-subheader>
+        <md-subheader v-else>
+          TBD
+        </md-subheader>
 
-          <footer v-if="inTabs('info')" class="md-layout md-alignment-center" style="margin-top: auto;">
-            <md-button @click="confirmRemove = true" class="md-accent">
-              Delete Competition
-            </md-button>
-          </footer>
-        </div>
-        <md-progress-spinner v-else md-mode="indeterminate" style="margin: auto;" />
+        <footer v-if="inTabs('info')" class="md-layout md-alignment-center" style="margin-top: auto;">
+          <md-button @click="confirmRemove = true" class="md-accent">
+            Delete Competition
+          </md-button>
+        </footer>
       </div>
+    </div>
+    <div v-else class="md-scroll-frame">
+      <md-progress-spinner md-mode="indeterminate" style="margin: auto;" />
     </div>
 
     <md-bottom-bar :md-active-item="`tab-${$router.currentRoute.params.tab || 'info'}`">
