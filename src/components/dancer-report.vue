@@ -1,22 +1,27 @@
 <template>
   <div class="dancer-report">
-    <md-list class="md-double-line md-scroll">
+    <md-list class="md-double-line md-scroll md-list-cards">
       <dancer-list-item
         :key="dancer[idKey]"
         :dancer="dancer"
       />
     </md-list>
-    <md-list v-if="dancer.$group">
-      <md-subheader>{{ dancer.$group.$name }} Results</md-subheader>
-      <result-list-item
-        v-for="dance in findGroupDances(dancer.$group)"
-        :key="dance[idKey]"
-        :winner="null"
-        :place="getPlace(dancer, dancer.$group, dance)"
-        @click="$router.push({ name: 'competition.results', params: { groupId: dancer.$group[idKey], danceId: dance[idKey]}})"
-      >
-        {{ dance.$name }}
-      </result-list-item>
+    <md-list v-if="dancer.$group" class="md-list-cards">
+      <md-list-item md-expand :md-expanded="true">
+        <md-subheader>Results</md-subheader>
+
+        <md-list slot="md-expand">
+          <result-list-item
+            v-for="dance in findGroupDances(dancer.$group)"
+            :key="dance[idKey]"
+            :winner="null"
+            :place="getPlace(dancer, dancer.$group, dance)"
+            @click="$router.push({ name: 'competition.results', params: { groupId: dancer.$group[idKey], danceId: dance[idKey]}})"
+          >
+            {{ dance.$name }}
+          </result-list-item>
+        </md-list>
+      </md-list-item>
     </md-list>
   </div>
 </template>
