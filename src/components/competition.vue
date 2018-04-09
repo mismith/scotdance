@@ -1,6 +1,6 @@
 <template>
   <div class="competition md-scroll-frame">
-    <div class="md-scroll">
+    <div v-if="loaded" class="md-scroll">
       <router-view
         :competition-ref="competitionRef"
         :competition-data-ref="competitionDataRef"
@@ -14,6 +14,9 @@
         :schedule="schedule"
         :results="results"
       />
+    </div>
+    <div v-else class="md-scroll-frame">
+      <md-progress-spinner md-mode="indeterminate" style="margin: auto;" />
     </div>
 
     <md-bottom-bar
@@ -70,6 +73,8 @@ export default {
     return {
       competitionRef: undefined,
       competitionDataRef: undefined,
+
+      loaded: false,
     };
   },
   computed: {
@@ -132,6 +137,8 @@ export default {
   },
   methods: {
     loadFirebase() {
+      this.loaded = false;
+
       this.competitionRef = db.child('competitions').child(this.competitionId);
       this.competitionDataRef = db.child('competitionsData').child(this.competitionId);
 
@@ -156,6 +163,12 @@ export default {
       this.$bindAsObject('scheduleRaw', this.competitionDataRef.child('schedule'));
       if (this.resultsRaw) this.$unbind('resultsRaw');
       this.$bindAsObject('resultsRaw', this.competitionDataRef.child('results'));
+
+      return Promise.all([
+        this.competitionRef.once('value'),
+        this.competitionDataRef.once('value'),
+      ])
+        .then(() => (this.loaded = true));
     },
 
     findCategory(categoryId) {

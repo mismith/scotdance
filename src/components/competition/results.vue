@@ -1,7 +1,7 @@
 <template>
   <swiper class="competition-results md-scroll-frame swiper-no-swiping">
-    <swiper-slide class="md-scroll-frame">
-      <div v-if="loaded" class="md-scroll">
+    <swiper-slide>
+      <div class="md-scroll">
         <md-list v-if="groups.length" class="md-list-cards">
           <md-list-item
             v-for="group in groups"
@@ -42,7 +42,6 @@
           md-label="No results yet"
         />
       </div>
-      <md-progress-spinner v-else md-mode="indeterminate" style="margin: auto;" />
     </swiper-slide>
     <swiper-slide class="md-scroll-frame">
       <div v-if="currentGroup && currentDance" class="md-scroll-frame">
@@ -106,8 +105,6 @@ export default {
     return {
       idKey,
       overall,
-
-      loaded: false,
     };
   },
   computed: {
@@ -158,9 +155,6 @@ export default {
   },
   async mounted() {
     this.showRelevantSlide();
-
-    await this.competitionDataRef.once('value');
-    this.loaded = true;
   },
   components: {
     DancerListItem,

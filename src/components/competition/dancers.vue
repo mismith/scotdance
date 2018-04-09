@@ -1,7 +1,7 @@
 <template>
   <swiper class="competition-dancers md-scroll-frame swiper-no-swiping">
     <swiper-slide>
-      <div v-if="dancers.length" class="md-scroll-frame md-scroll">
+      <div v-if="dancers.length" class="md-scroll">
         <md-toolbar class="md-dense">
           <md-field md-clearable>
             <label for="filterBy">Search</label>
@@ -33,7 +33,7 @@
           </md-menu>-->
         </md-toolbar>
 
-        <div v-if="loaded" class="md-scroll">
+        <div class="md-scroll">
           <md-list v-if="bucketedDancers.length" class="md-list-cards">
              <md-list-item
               v-for="bucket in bucketedDancers"
@@ -63,7 +63,6 @@
             md-label="No dancers match"
           />
         </div>
-        <md-progress-spinner v-else md-mode="indeterminate" style="margin: auto;" />
       </div>
       <md-empty-state
         v-else
@@ -118,8 +117,6 @@ export default {
   data() {
     return {
       idKey,
-
-      loaded: false,
 
       filterBy: undefined,
       sortBy: '$group.$order',
@@ -199,9 +196,6 @@ export default {
   },
   async mounted() {
     this.showRelevantSlide();
-
-    await this.competitionDataRef.once('value');
-    this.loaded = true;
   },
   components: {
     DancerListItem,

@@ -7,7 +7,7 @@
           :key="day[idKey]"
           :md-label="moment(day.date).format('ddd')"
         >
-          <div v-if="loaded" class="md-scroll-frame md-scroll">
+          <div class="md-scroll-frame md-scroll">
             <md-subheader v-if="day.name" class="md-title">
               <span>{{ day.name }}</span>
             </md-subheader>
@@ -40,7 +40,6 @@
               </md-list-item>
             </md-list>
           </div>
-          <md-progress-spinner v-else md-mode="indeterminate" style="margin: auto;" />
         </md-tab>
       </md-tabs>
       <md-empty-state
@@ -93,8 +92,6 @@ export default {
     return {
       idKey,
 
-      loaded: false,
-
       selected: undefined,
     };
   },
@@ -115,10 +112,6 @@ export default {
     select(selected) {
       this.$set(this, 'selected', selected);
     },
-  },
-  async mounted() {
-    await this.competitionDataRef.once('value');
-    this.loaded = true;
   },
   components: {
     DancerListItem,
