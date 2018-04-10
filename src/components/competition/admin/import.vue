@@ -54,24 +54,10 @@
             </md-select>
           </md-field>
         </div>
-        <div class="md-layout-item">
-          <md-field>
-            <label>Groups sheet</label>
-            <md-select v-model="groupsSheetIndex">
-              <md-option
-                v-for="(sheetName, sheetIndex) of workbook.SheetNames"
-                :key="sheetIndex"
-                :value="sheetIndex"
-              >
-                {{sheetName}}
-              </md-option>
-            </md-select>
-          </md-field>
-        </div>
         <footer class="md-layout-item">
           <md-button
             @click="handleChoose()"
-            :disabled="dancersSheetIndex < 0 || groupsSheetIndex < 0"
+            :disabled="dancersSheetIndex < 0"
             class="md-raised md-primary"
           >
             Next
@@ -129,7 +115,6 @@ export default {
       workbook: undefined,
 
       dancersSheetIndex: -1,
-      groupsSheetIndex: -1,
       data: {},
     };
   },
@@ -140,7 +125,9 @@ export default {
         rowHeaders: true,
         colHeaders: true,
         stretchH: 'all',
-        readOnly: true,
+        contextMenu: [
+          'remove_row',
+        ],
       }, settings);
     },
     toReviewHot(items, key) {
@@ -197,17 +184,15 @@ export default {
         this.step = 'choose';
 
         // auto-pick default sheets
-        this.dancersSheetIndex = workbook.SheetNames.findIndex(name => /Delimited/i.test(name));
-        this.groupsSheetIndex = workbook.SheetNames.findIndex(name => /Program/i.test(name));
+        this.dancersSheetIndex = workbook.SheetNames.findIndex(name => /Program/i.test(name));
       };
       reader.readAsBinaryString(this.file);
     },
     handleChoose() {
       const dancersSheet = this.workbook.Sheets[this.workbook.SheetNames[this.dancersSheetIndex]];
-      const groupsSheet = this.workbook.Sheets[this.workbook.SheetNames[this.groupsSheetIndex]];
 
       // store for reviewing
-      this.$set(this, 'data', this.parseSpreadsheet(dancersSheet, groupsSheet));
+      this.$set(this, 'data', this.parseSpreadsheet(dancersSheet));
 
       // move to next step
       this.step = 'review';
@@ -222,27 +207,8 @@ export default {
       this.importData(categories, groups, dancers);
     },
 
-    parseSpreadsheet(dancersSheet, groupsSheet) {
+    parseSpreadsheet(dancersSheet) {
       const dancersData = this.sheetToJson(dancersSheet, {
-        header: [
-          'number',
-          'firstName',
-          'lastName',
-          'age',
-          'category',
-          'location',
-          'group',
-        ],
-      });
-      const dancers = dancersData
-        .slice(1); // remove header row
-
-      const categories = dancers
-        .map(datum => datum.category)
-        .filter((v, i, a) => a.indexOf(v) === i); // only keep uniques
-
-
-      const groupsData = this.sheetToJson(groupsSheet, {
         header: [
           'number',
           'firstName',
@@ -252,26 +218,36 @@ export default {
       });
 
       const groups = {};
-      let currentGroup;
-      groupsData.forEach((datum) => {
+      const dancers = [];
+      const categories = [];
+      let currentCode;
+      dancersData.forEach((datum) => {
         if (!datum.number) return; // skip blanks
         if (!/^\d+$/.test(datum.number)) {
-          // group title
-          currentGroup = Object.keys(groups).length + 1;
+          currentCode = Object.keys(groups).length + 1;
 
+          // parse group and category from section header
           const title = (datum.number || '').trim();
-          const name = title.replace(new RegExp(categories.join('|')), '').trim();
-          const category = title.replace(name, '').trim();
-          groups[currentGroup] = {
-            number: currentGroup,
-            name,
+          const category = title.replace(/\d(.*)$/, '').trim();
+          const name = title.replace(category, '').trim();
+          if (categories.indexOf(category) < 0) {
+            categories.push(category);
+          }
+
+          groups[currentCode] = {
+            code: currentCode,
             category,
-            // dancers: [],
+            name,
           };
         } else {
           // dancer
-          // groups[currentGroup].dancers.push(datum);
-          // NB: these don't actually get used, so just ignore them
+          dancers.push({
+            number: datum.number,
+            firstName: datum.firstName,
+            lastName: datum.lastName,
+            location: datum.location,
+            code: currentCode,
+          });
         }
       });
 
@@ -313,14 +289,14 @@ export default {
         // pass through
         return {
           [idKey]: ref.key,
-          number: groupData.number,
+          code: groupData.code,
           ...group,
         };
       }));
 
       await Promise.all(dancers.map(async (dancerData) => {
         const groupId = groupMappings.find((group) => {
-          return `${group.number}` === `${dancerData.group}`;
+          return `${group.code}` === `${dancerData.code}`;
         });
         const dancer = {
           number: dancerData.number,

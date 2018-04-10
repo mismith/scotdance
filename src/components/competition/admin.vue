@@ -154,13 +154,13 @@ export default {
 
           if (section.hot) {
             section.hot = {
-              contextMenu: [
-                'remove_row',
-              ],
-              minSpareRows: 1,
               colHeaders: true,
               rowHeaders: true,
               stretchH: 'all',
+              minSpareRows: 1,
+              contextMenu: [
+                'remove_row',
+              ],
 
               ...section.hot,
 
