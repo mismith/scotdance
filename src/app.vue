@@ -448,6 +448,16 @@ body,
 .md-account-header {
   padding: 0;
 
+  .account-buttons {
+    align-items: center;
+    margin: auto;
+
+    .md-button {
+      margin-left: 0;
+      margin-right: 0;
+    }
+  }
+
   .md-list {
     width: 100%;
 
