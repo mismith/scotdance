@@ -8,6 +8,15 @@
     </md-list>
     <md-list v-if="dancer.$group" class="md-list-cards">
       <md-list-item md-expand :md-expanded="true">
+        <md-subheader>Schedule</md-subheader>
+
+        <md-list slot="md-expand">
+          <md-subheader class="md-list-item">
+            Schedule to be determined.
+          </md-subheader>
+        </md-list>
+      </md-list-item>
+      <md-list-item md-expand :md-expanded="true">
         <md-subheader>Results</md-subheader>
 
         <md-list slot="md-expand">
