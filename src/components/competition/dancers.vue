@@ -73,7 +73,7 @@
     <swiper-slide>
       <div v-if="currentDancer" class="md-scroll-frame">
         <md-toolbar class="md-dense md-toolbar-nowrap">
-          <md-button @click="$router.push({ name: 'competition.dancers' })" class="md-icon-button">
+          <md-button @click="$router.go(-1)" class="md-icon-button">
             <md-icon>chevron_left</md-icon>
           </md-button>
           <span>Dancers</span>
