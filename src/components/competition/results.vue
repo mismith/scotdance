@@ -54,7 +54,7 @@
           </span>
         </md-toolbar>
 
-        <div class="md-scroll-frame md-scroll">
+        <div class="md-scroll">
           <md-subheader class="md-title">{{ currentDance.$name }}</md-subheader>
 
           <md-list class="md-double-line md-list-card">

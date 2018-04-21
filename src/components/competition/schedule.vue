@@ -7,7 +7,7 @@
           :key="day[idKey]"
           :md-label="moment(day.date).format('ddd')"
         >
-          <div class="md-scroll-frame md-scroll">
+          <div class="md-scroll">
             <md-subheader v-if="day.name" class="md-title">
               <span>{{ day.name }}</span>
             </md-subheader>

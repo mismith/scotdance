@@ -1,6 +1,6 @@
 <template>
   <div class="dancer-report">
-    <md-list class="md-double-line md-scroll md-list-cards">
+    <md-list class="md-double-line md-list-cards">
       <dancer-list-item
         :key="dancer[idKey]"
         :dancer="dancer"

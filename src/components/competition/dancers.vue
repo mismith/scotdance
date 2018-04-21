@@ -1,7 +1,7 @@
 <template>
   <swiper class="competition-dancers md-scroll-frame swiper-no-swiping">
     <swiper-slide>
-      <div v-if="dancers.length" class="md-scroll">
+      <div v-if="dancers.length" class="md-scroll-frame">
         <md-toolbar class="md-dense">
           <md-field md-clearable>
             <label for="filterBy">Search</label>
@@ -78,11 +78,13 @@
           </md-button>
           <span>Dancers</span>
         </md-toolbar>
+
         <dancer-report
           :dancer="currentDancer"
           :dances="dances"
           :groups="groups"
           :results="results"
+          class="md-scroll"
         />
       </div>
     </swiper-slide>
