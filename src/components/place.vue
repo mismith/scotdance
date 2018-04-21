@@ -1,6 +1,6 @@
 <template>
   <div class="place" :class="{ finalized }">
-    <md-icon v-if="!finalized" style="margin-right: 16px;">access_time</md-icon>
+    <small v-if="!finalized" class="tbd">TBD</small>
     <div v-else>{{ place || '-' }}<small class="ordinal">{{ ordinal }}</small></div>
   </div>
 </template>
@@ -45,6 +45,12 @@ export default {
   font-size: 2em;
   font-weight: bold;
 
+  .tbd {
+    font-size: 13.333px;
+    font-weight: normal;
+    text-transform: uppercase;
+    margin-right: 12px;
+  }
   .ordinal {
     display: inline-block;
     width: 20px; // aligns the ordinals despite varying character widths
