@@ -60,6 +60,7 @@
             {{ selected.block.name }}
           </span>
         </md-toolbar>
+
         <md-list class="md-double-line md-scroll">
           <md-list-item v-for="dance in selected.event.dances" :key="dance[idKey]">
             <div class="md-list-item-text">

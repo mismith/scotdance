@@ -53,17 +53,23 @@
             {{ currentGroup.$name }}
           </span>
         </md-toolbar>
-        <md-subheader class="md-title">{{ currentDance.$name }}</md-subheader>
-        <md-list class="md-double-line md-scroll md-list-cards md-list-cards-non-expanding">
-          <dancer-list-item
-            v-for="(dancer, index) in placedDancers"
-            :key="dancer[idKey]"
-            :dancer="dancer"
-            :place="index + 1"
-            @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] }})"
-          />
-          <md-subheader v-if="!placedDancers.length">Results to be determined.</md-subheader>
-        </md-list>
+
+        <div class="md-scroll-frame md-scroll">
+          <md-subheader class="md-title">{{ currentDance.$name }}</md-subheader>
+
+          <md-list class="md-double-line md-list-card">
+            <dancer-list-item
+              v-for="(dancer, index) in placedDancers"
+              :key="dancer[idKey]"
+              :dancer="dancer"
+              :place="index + 1"
+              @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] }})"
+            />
+            <md-subheader v-if="!placedDancers.length" class="md-list-item">
+              Results to be determined.
+            </md-subheader>
+          </md-list>
+        </div>
       </div>
     </swiper-slide>
   </swiper>

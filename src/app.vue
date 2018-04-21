@@ -222,6 +222,9 @@ a[target="_blank"] {
     font-size: 24px;
     padding-top: 16px;
   }
+  &.md-list-item:first-of-type {
+    margin-top: 0;
+  }
 }
 
 // app frame
@@ -267,7 +270,7 @@ body,
       transition: opacity 300ms;
     }
     .md-list-item-container {
-      .md-subheader {
+      .md-subheader:not(.md-list-item) {
         flex-grow: 1;
         padding-left: 0;
 
@@ -311,6 +314,11 @@ body,
         }
       }
     }
+  }
+  &.md-list-card {
+    padding: 0;
+    margin: 12px 16px;
+    box-shadow: 0 2px 1px -1px rgba(0,0,0,.2), 0 1px 1px 0 rgba(0,0,0,.14), 0 1px 3px 0 rgba(0,0,0,.12); // .md-elevation-1
   }
   &.md-list-cards {
     background-color: initial;
