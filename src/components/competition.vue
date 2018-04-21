@@ -168,7 +168,9 @@ export default {
         this.competitionRef.once('value'),
         this.competitionDataRef.once('value'),
       ])
-        .then(() => (this.loaded = true));
+        .then(() => {
+          this.loaded = true;
+        });
     },
 
     findCategory(categoryId) {
