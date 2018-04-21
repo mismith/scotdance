@@ -48,84 +48,78 @@
         </footer>
       </form>
     </md-dialog>
-    <md-dialog :md-active.sync="loginVisible" :md-fullscreen="false" class="login-dialog">
-      <swiper ref="loginSwiper" :options="{ slidesPerView: 'auto' }" class="swiper-no-swiping">
-        <swiper-slide>
-          <form @submit.prevent="login(credentials).then(() => (loginVisible = false))">
-            <div class="md-dialog-content">
-              <md-field>
-                <label>Email</label>
-                <md-input
-                  type="email"
-                  name="email"
-                  v-model="credentials.email"
-                  required
-                  autofocus
-                />
-              </md-field>
-              <md-field md-has-password>
-                <label>Password</label>
-                <md-input
-                  type="password"
-                  name="password"
-                  v-model="credentials.password"
-                  required
-                />
-              </md-field>
+    <md-dialog :md-active.sync="loginVisible" :md-fullscreen="false" @md-closed="forgot = false" class="login-dialog">
+      <form v-if="!forgot" @submit.prevent="login(credentials).then(() => (loginVisible = false))">
+        <div class="md-dialog-content">
+          <md-field>
+            <label>Email</label>
+            <md-input
+              type="email"
+              name="email"
+              v-model="credentials.email"
+              required
+              autofocus
+            />
+          </md-field>
+          <md-field md-has-password>
+            <label>Password</label>
+            <md-input
+              type="password"
+              name="password"
+              v-model="credentials.password"
+              required
+            />
+          </md-field>
 
-              <aside v-if="authError" class="validation-message">
-                {{ authError.message }}
-              </aside>
-            </div>
+          <aside v-if="authError" class="validation-message">
+            {{ authError.message }}
+          </aside>
+        </div>
 
-            <footer class="md-dialog-actions">
-              <md-spinnable :md-spinning="authLoading">
-                <md-button type="submit" class="md-primary md-raised">Login</md-button>
-              </md-spinnable>
+        <footer class="md-dialog-actions">
+          <md-spinnable :md-spinning="authLoading">
+            <md-button type="submit" class="md-primary md-raised">Login</md-button>
+          </md-spinnable>
 
-              <md-button @click="$refs.loginSwiper.swiper.slideNext(); authError = null;">
-                Forgot?
-              </md-button>
-            </footer>
-          </form>
-        </swiper-slide>
-        <swiper-slide>
-          <form @submit.prevent="forgot(credentials).then(handlePasswordReset)">
-            <div class="md-dialog-content">
-              <header>
-                <p>We can send you a link to reset your password.</p>
-                <br />
-              </header>
+          <md-button @click="forgot = true; authError = null;">
+            Forgot?
+          </md-button>
+        </footer>
+      </form>
+      <form v-else @submit.prevent="reset(credentials).then(handlePasswordReset)">
+        <div class="md-dialog-content">
+          <header>
+            <p>We can send you a link to reset your password.</p>
+            <br />
+          </header>
 
-              <md-field>
-                <label>Email</label>
-                <md-input
-                  type="email"
-                  name="email"
-                  v-model="credentials.email"
-                  required
-                  autofocus
-                />
-              </md-field>
+          <md-field>
+            <label>Email</label>
+            <md-input
+              type="email"
+              name="email"
+              v-model="credentials.email"
+              required
+              autofocus
+            />
+          </md-field>
 
-              <aside v-if="authError" class="validation-message">
-                {{ authError.message }}
-              </aside>
-              <aside v-if="authMessage" class="validation-message">
-                {{ authMessage }}
-              </aside>
-            </div>
+          <aside v-if="authError" class="validation-message">
+            {{ authError.message }}
+          </aside>
+          <aside v-if="authMessage" class="validation-message">
+            {{ authMessage }}
+          </aside>
+        </div>
 
-            <footer class="md-dialog-actions">
-              <md-spinnable :md-spinning="authLoading">
-                <md-button type="submit" class="md-primary md-raised">Send</md-button>
-              </md-spinnable>
+        <footer class="md-dialog-actions">
+          <md-spinnable :md-spinning="authLoading">
+            <md-button type="submit" class="md-primary md-raised">Send</md-button>
+          </md-spinnable>
 
-              <md-button @click="$refs.loginSwiper.swiper.slidePrev(); authError = null;">Cancel</md-button>
-            </footer>
-          </form>
-        </swiper-slide>
-      </swiper>
+          <md-button @click="forgot = false; authError = null;">Cancel</md-button>
+        </footer>
+      </form>
     </md-dialog>
   </div>
 </template>
@@ -150,6 +144,7 @@ export default {
 
       registerVisible: false,
       loginVisible: false,
+      forgot: false,
     };
   },
   watch: {
@@ -202,7 +197,7 @@ export default {
           throw err;
         });
     },
-    forgot(credentials = this.credentials) {
+    reset(credentials = this.credentials) {
       this.authLoading = true;
       this.authError = null;
 
@@ -230,11 +225,5 @@ export default {
 .account-buttons {
   display: flex;
   flex-direction: column;
-}
-.login-dialog {
-  .md-dialog-container,
-  .swiper-container {
-    width: 100%;
-  }
 }
 </style>
