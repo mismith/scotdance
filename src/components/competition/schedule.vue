@@ -3,8 +3,8 @@
     <swiper-slide>
       <md-tabs v-if="schedule.days" md-alignment="fixed">
         <md-tab
-          v-for="day in schedule.days"
-          :key="day[idKey]"
+          v-for="(day, dayId) in schedule.days"
+          :key="dayId"
           :md-label="moment(day.date).format('ddd')"
         >
           <div class="md-scroll">
@@ -14,8 +14,8 @@
 
             <md-list class="md-list-cards">
               <md-list-item
-                v-for="block in day.blocks"
-                :key="block[idKey]"
+                v-for="(block, blockId) in day.blocks"
+                :key="blockId"
                 md-expand
                 md-expanded
               >
@@ -26,9 +26,9 @@
 
                 <md-list slot="md-expand" class="md-double-line">
                   <md-list-item
-                    v-for="event in block.events"
-                    :key="event[idKey]"
-                    @click="event.dances && select({ day, block, event })"
+                    v-for="(event, eventId) in block.events"
+                    :key="eventId"
+                    @click="event.dances && $router.push({ name: 'competition.schedule', params: { dayId, blockId, eventId }})"
                   >
                     <div class="md-list-item-text">
                       <div>{{ event.name }}</div>
@@ -49,23 +49,23 @@
       />
     </swiper-slide>
     <swiper-slide>
-      <div v-if="selected" class="md-scroll-frame">
+      <div v-if="currentDay && currentBlock && currentEvent" class="md-scroll-frame">
         <md-toolbar class="md-dense md-toolbar-nowrap">
-          <md-button @click="select(null)" class="md-icon-button">
+          <md-button @click="$router.push({ name: 'competition.schedule' })" class="md-icon-button">
             <md-icon>chevron_left</md-icon>
           </md-button>
           <span>
-            {{ selected.day.name }}
+            {{ currentDay.name }}
             &rsaquo;
-            {{ selected.block.name }}
+            {{ currentBlock.name }}
           </span>
         </md-toolbar>
 
         <div class="md-scroll">
-          <md-subheader class="md-title">{{ selected.event.name }}</md-subheader>
+          <md-subheader class="md-title">{{ currentEvent.name }}</md-subheader>
 
           <md-list class="md-double-line md-list-card">
-            <md-list-item v-for="dance in selected.event.dances" :key="dance[idKey]">
+            <md-list-item v-for="dance in currentEvent.dances" :key="dance[idKey]">
               <div class="md-list-item-text">
                 {{ dance.name }}
               </div>
@@ -87,6 +87,9 @@ import {
 export default {
   name: 'competition-schedule',
   props: {
+    dayId: String,
+    blockId: String,
+    eventId: String,
     competitionDataRef: {
       type: Object,
       required: true,
@@ -96,27 +99,46 @@ export default {
   data() {
     return {
       idKey,
-
-      selected: undefined,
     };
   },
   computed: {
+    currentDay() {
+      if (this.dayId && this.schedule && this.schedule.days) {
+        return this.schedule.days[this.dayId];
+      }
+      return null;
+    },
+    currentBlock() {
+      if (this.blockId && this.currentDay && this.currentDay.blocks) {
+        return this.currentDay.blocks[this.blockId];
+      }
+      return null;
+    },
+    currentEvent() {
+      if (this.eventId && this.currentBlock && this.currentBlock.events) {
+        return this.currentBlock.events[this.eventId];
+      }
+      return null;
+    },
   },
   watch: {
-    selected(selected) {
-      if (selected) {
+    currentEvent() {
+      this.showRelevantSlide();
+    },
+  },
+  methods: {
+    moment,
+
+    showRelevantSlide() {
+      if (this.currentEvent) {
         this.$el.swiper.slideTo(1);
       } else {
         this.$el.swiper.slideTo(0);
       }
     },
   },
-  methods: {
-    moment,
-
-    select(selected) {
-      this.$set(this, 'selected', selected);
-    },
+  async mounted() {
+    this.showRelevantSlide();
   },
   components: {
     DancerListItem,

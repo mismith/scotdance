@@ -73,9 +73,10 @@ export default new Router({
               },
             },
             {
-              path: 'schedule',
+              path: 'schedule/:dayId?/:blockId?/:eventId?',
               name: 'competition.schedule',
               component: CompetitionSchedule,
+              props: true,
               meta: {
                 title: 'Schedule',
               },
