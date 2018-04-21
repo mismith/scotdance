@@ -61,13 +61,17 @@
           </span>
         </md-toolbar>
 
-        <md-list class="md-double-line md-scroll">
-          <md-list-item v-for="dance in selected.event.dances" :key="dance[idKey]">
-            <div class="md-list-item-text">
-              {{ dance.name }}
-            </div>
-          </md-list-item>
-        </md-list>
+        <div class="md-scroll">
+          <md-subheader class="md-title">{{ selected.event.name }}</md-subheader>
+
+          <md-list class="md-double-line md-list-card">
+            <md-list-item v-for="dance in selected.event.dances" :key="dance[idKey]">
+              <div class="md-list-item-text">
+                {{ dance.name }}
+              </div>
+            </md-list-item>
+          </md-list>
+        </div>
       </div>
     </swiper-slide>
   </swiper>
