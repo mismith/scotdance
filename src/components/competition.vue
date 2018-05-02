@@ -20,32 +20,32 @@
     </div>
 
     <md-bottom-bar
-      v-if="$route.name !== 'competition.admin'"
-      :md-active-item="`tab-${$router.currentRoute.name}`"
+      v-if="currentTab !== 'admin'"
+      :md-active-item="`tab-${currentTab}`"
     >
       <md-bottom-bar-item
-        id="tab-competition.info"
+        id="tab-info"
         @click="$router.push({ name: 'competition.info' })"
       >
         <md-icon class="icon-info"></md-icon>
         <span class="md-bottom-bar-label">Info</span>
       </md-bottom-bar-item>
       <md-bottom-bar-item
-        id="tab-competition.dancers"
+        id="tab-dancers"
         @click="$router.push({ name: 'competition.dancers' })"
       >
         <md-icon class="icon-people"></md-icon>
         <span class="md-bottom-bar-label">Dancers</span>
       </md-bottom-bar-item>
       <md-bottom-bar-item
-        id="tab-competition.schedule"
+        id="tab-schedule"
         @click="$router.push({ name: 'competition.schedule' })"
       >
         <md-icon class="icon-clock"></md-icon>
         <span class="md-bottom-bar-label">Schedule</span>
       </md-bottom-bar-item>
       <md-bottom-bar-item
-        id="tab-competition.results"
+        id="tab-results"
         @click="$router.push({ name: 'competition.results' })"
       >
         <md-icon class="icon-trophy"></md-icon>
@@ -78,6 +78,10 @@ export default {
     };
   },
   computed: {
+    currentTab() {
+      return this.$route.name.replace(/^.*?\./, '').replace(/\..*?$/, '') || 'info';
+    },
+
     competition() {
       return this.competitionRaw;
     },

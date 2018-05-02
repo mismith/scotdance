@@ -38,13 +38,7 @@
 
         <HotTable v-else-if="currentSection.hot" :settings="currentSection.hot" class="fullscreen" />
 
-        <admin-schedule v-else-if="currentSection[idKey] === 'schedule'" v-bind="$props" @change="handleChanges" />
-
-        <admin-results v-else-if="currentSection[idKey] === 'results'" v-bind="$props" @change="handleChanges" />
-
-        <md-subheader v-else>
-          TBD
-        </md-subheader>
+        <router-view v-else v-bind="$props" @change="handleChanges" />
 
         <footer v-if="inTabs('info')" class="md-layout md-alignment-center" style="margin-top: auto;">
           <md-button @click="confirmRemove = true" class="md-accent">
@@ -57,12 +51,12 @@
       <md-progress-spinner md-mode="indeterminate" style="margin: auto;" />
     </div>
 
-    <md-bottom-bar :md-active-item="`tab-${$router.currentRoute.params.tab || 'info'}`">
+    <md-bottom-bar :md-active-item="`tab-admin-${currentTab}`">
       <md-bottom-bar-item
         v-for="section of sections"
         :key="section[idKey]"
-        @click="$router.push({ name: 'competition.admin', params: { tab: section[idKey] } })"
-        :id="`tab-${section[idKey]}`"
+        @click="goToTab(section[idKey])"
+        :id="`tab-admin-${section[idKey]}`"
       >
         <md-icon :class="section.icon"></md-icon>
         <span class="md-bottom-bar-label">{{ section.name }}</span>
@@ -86,7 +80,6 @@
 <script>
 import HotTable from '@handsontable/vue';
 import AdminImport from '@/components/competition/admin/import';
-import AdminSchedule from '@/components/competition/admin/schedule';
 import AdminResults from '@/components/competition/admin/results';
 import PresetPicker from '@/components/preset-picker';
 import MdSpunnable from '@/components/md-spunnable';
@@ -138,7 +131,7 @@ export default {
   },
   computed: {
     currentTab() {
-      return this.$route.params.tab || 'info';
+      return this.$route.params.tab || this.$route.name.replace(/^.*\./, '') || 'info';
     },
     currentSection() {
       return this.getSection(this.currentTab);
@@ -216,6 +209,26 @@ export default {
     },
   },
   methods: {
+    goToTab(tab) {
+      switch (tab) {
+        case 'schedule':
+        case 'results': {
+          this.$router.push({
+            name: `competition.admin.${tab}`,
+          });
+          break;
+        }
+        default: {
+          this.$router.push({
+            name: 'competition.admin.tab',
+            params: {
+              tab,
+            },
+          });
+          break;
+        }
+      }
+    },
     inTabs(...tabs) {
       return tabs.some(tab => (this.currentTab) === tab);
     },
@@ -246,7 +259,7 @@ export default {
     async save(path, value) {
       const ref = /^info\//.test(path) ? this.competitionRef : this.competitionDataRef;
       await this.awaitSave(ref.update({
-        [path]: value,
+        [path]: value || null,
       }));
     },
     async remove() {
@@ -276,7 +289,6 @@ export default {
   components: {
     HotTable,
     AdminImport,
-    AdminSchedule,
     AdminResults,
     PresetPicker,
     MdSpunnable,

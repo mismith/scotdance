@@ -10,7 +10,7 @@
           <admin-list-item
             slot-scope="day"
             :item="day"
-            @click.stop="handleListItemSelect('schedule/days', day)"
+            @click.stop="handleListItemSelect({ dayId: day[idKey] })"
             @remove="handleListItemRemove('schedule/days', day)"
           >
             <admin-list
@@ -21,7 +21,7 @@
               <admin-list-item
                 slot-scope="block"
                 :item="block"
-                @click.stop="handleListItemSelect(`schedule/days/${day[idKey]}/blocks`, block)"
+                @click.stop="handleListItemSelect({ dayId: day[idKey], blockId: block[idKey] })"
                 @remove="handleListItemRemove(`schedule/days/${day[idKey]}/blocks`, block)"
               >
                 <admin-list
@@ -32,7 +32,7 @@
                   <admin-list-item
                     slot-scope="event"
                     :item="event"
-                    @click.stop="handleListItemSelect(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events`, event)"
+                    @click.stop="handleListItemSelect({ dayId: day[idKey], blockId: block[idKey], eventId: event[idKey] })"
                     @remove="handleListItemRemove(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events`, event)"
                   >
                     <admin-list
@@ -43,8 +43,9 @@
                       <admin-list-item
                         slot-scope="dance"
                         :item="dance"
-                        :expandable="false"
-                        @click.stop="handleListItemSelect(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events/${event[idKey]}/dances`, dance)"
+                        :item-name-fn="itemDanceNameFn"
+                        :md-expand="false"
+                        @click.stop="handleListItemSelect({ dayId: day[idKey], blockId: block[idKey], eventId: event[idKey], danceId: dance[idKey] })"
                         @remove="handleListItemRemove(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events/${event[idKey]}/dances`, dance)"
                       />
                     </admin-list>
@@ -55,32 +56,51 @@
           </admin-list-item>
         </admin-list>
       </div>
-      <div class="md-layout-item md-size-50 admin-blade md-scroll-frame">
-        <form v-if="selected.item" @submit.prevent class="md-padding">
-          <div v-for="(field, key) in getSelectedFields()" :key="key">
-            <md-field v-if="field.type === 'textarea'" md-clearable>
+      <div class="md-layout-item md-size-50 md-scroll admin-blade">
+        <form v-if="currentItem" @submit.prevent class="md-padding">
+          <div v-for="(field, key) in currentItemFields" :key="key">
+            <md-field v-if="field.type === 'select'">
+              <label>{{ field.name || key }}</label>
+              <md-select
+                v-model="currentItem[key]"
+                :required="currentItem.required"
+                @md-selected="handleListItemUpdate(currentPath, currentItem)"
+              >
+                <md-option
+                  v-for="preset in field.presets"
+                  :key="preset[idKey]"
+                  :value="preset[idKey]"
+                >
+                  {{ preset.$name || preset.name }}
+                </md-option>
+              </md-select>
+            </md-field>
+
+            <md-field v-else-if="field.type === 'textarea'" md-clearable>
               <label>{{ field.name || key }}</label>
               <md-textarea
-                v-model="selected.item[key]"
+                v-model="currentItem[key]"
                 :md-autogrow="true"
                 :required="field.required"
-                @change="handleListItemUpdate(selected.path, selected.item)"
+                @input="handleListItemUpdate(currentPath, currentItem)"
               />
             </md-field>
+
             <md-datepicker
               v-else-if="field.type === 'datepicker'"
-              v-model="selected.item[key]"
+              v-model="currentItem[key]"
               :class="{ 'md-required': field.required }"
-              @input="handleListItemUpdate(selected.path, selected.item)"
+              @input="handleListItemUpdate(currentPath, currentItem)"
             >
               <label>{{ field.name || key }}</label>
             </md-datepicker>
+
             <md-field v-else md-clearable>
               <label>{{ field.name || key }}</label>
               <md-input
-                v-model="selected.item[key]"
+                v-model="currentItem[key]"
                 :required="field.required"
-                @change="handleListItemUpdate(selected.path, selected.item)"
+                @input="handleListItemUpdate(currentPath, currentItem)"
               />
             </md-field>
           </div>
@@ -100,6 +120,9 @@
 import AdminList from '@/components/competition/admin/admin-list';
 import AdminListItem from '@/components/competition/admin/admin-list-item';
 import {
+  getScheduleItemDanceName,
+} from '@/helpers/competition';
+import {
   idKey,
   db,
 } from '@/helpers/firebase';
@@ -107,6 +130,10 @@ import {
 export default {
   name: 'admin-schedule',
   props: {
+    dayId: String,
+    blockId: String,
+    eventId: String,
+    danceId: String,
     competitionDataRef: {
       type: Object,
       required: true,
@@ -120,15 +147,41 @@ export default {
     return {
       idKey,
 
-      selected: {
-        path: undefined,
-        item: undefined,
-      },
+      currentItem: undefined,
     };
   },
-  methods: {
-    getSelectedFields() {
-      if (this.selected.item) {
+  watch: {
+    currentPath: {
+      handler(currentPath) {
+        if (this.currentItem) this.$unbind('currentItem');
+        this.currentItem = null;
+        if (!currentPath) return;
+        this.$bindAsObject('currentItem', this.competitionDataRef.child(currentPath));
+      },
+      immediate: true,
+    },
+  },
+  computed: {
+    currentPath() {
+      const pathProps = [
+        ['days', this.dayId],
+        ['blocks', this.blockId],
+        ['events', this.eventId],
+        ['dances', this.danceId],
+      ];
+      const path = pathProps
+        .filter(([collection, id]) => collection && id)
+        .map(([collection, id]) => `${collection}/${id}`)
+        .join('/');
+
+      return path && `schedule/${path}`;
+    },
+    currentItemCollection() {
+      const chunks = this.currentPath.split('/');
+      return chunks.length >= 2 ? chunks[chunks.length - 2] : null;
+    },
+    currentItemFields() {
+      if (this.currentItem) {
         const fields = {
           name: {
             name: 'Name',
@@ -139,15 +192,23 @@ export default {
             type: 'textarea',
           },
         };
-        const collection = this.selected.path.replace(/^.*\//, '');
 
-        switch (collection) {
+        switch (this.currentItemCollection) {
           case 'days': {
             fields.name.required = false;
             fields.date = {
               name: 'Date',
               type: 'datepicker',
               required: true,
+            };
+            break;
+          }
+          case 'dances': {
+            fields.name.required = false;
+            fields.danceId = {
+              name: 'Dance',
+              type: 'select',
+              presets: this.dances,
             };
             break;
           }
@@ -161,6 +222,11 @@ export default {
       }
       return null;
     },
+  },
+  methods: {
+    itemDanceNameFn(item) {
+      return getScheduleItemDanceName(item, this.dances);
+    },
 
     handleListItemCreate(path, item) {
       this.$emit('change', {
@@ -171,11 +237,17 @@ export default {
       const clone = {
         ...item,
       };
-      const key = clone[idKey];
       delete clone[idKey];
 
+      // strip undefineds
+      Object.entries(clone).forEach(([k, v]) => {
+        if (v === undefined) {
+          clone[k] = null;
+        }
+      });
+
       this.$emit('change', {
-        [`${path}/${key}`]: clone,
+        [path]: clone,
       });
     },
     handleListItemRemove(path, item) {
@@ -183,10 +255,10 @@ export default {
         [`${path}/${item[idKey]}`]: null,
       });
     },
-    handleListItemSelect(path, item) {
-      this.$set(this, 'selected', {
-        path,
-        item,
+    handleListItemSelect(params) {
+      this.$router.push({
+        name: 'competition.admin.schedule',
+        params,
       });
     },
   },

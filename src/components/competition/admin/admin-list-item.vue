@@ -1,11 +1,11 @@
 <template>
   <md-list-item
     class="admin-list-item"
-    :md-expand="expandable"
-    @update:mdExpanded="$event && $emit('md-expanded', $event)"
+    :md-expand="mdExpand"
+    :md-expanded="mdExpanded"
     @click="$emit('click', $event)"
   >
-    <span class="md-list-item-text">{{ item.name }}</span>
+    <div class="md-list-item-text" v-html="itemNameFn(item)" />
 
     <md-list slot="md-expand">
       <slot />
@@ -23,7 +23,7 @@
       @md-confirm="$emit('remove', item)"
     />
 
-    <md-icon v-if="!expandable">chevron_right</md-icon>
+    <md-icon v-if="!mdExpand">chevron_right</md-icon>
   </md-list-item>
 </template>
 
@@ -36,10 +36,15 @@ export default {
   name: 'admin-list-item',
   props: {
     item: Object,
-    expandable: {
+    itemNameFn: {
+      type: Function,
+      default: item => item.$name || item.name,
+    },
+    mdExpand: {
       type: Boolean,
       default: true,
     },
+    mdExpanded: Boolean,
   },
   data() {
     return {
