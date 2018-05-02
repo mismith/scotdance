@@ -53,7 +53,7 @@ export default {
   computed: {
     selectedPresets() {
       const selected = Object.entries(this.selected)
-        .filter(([k, v]) => v)
+        .filter(([k, v]) => k && v)
         .map(([k]) => k);
 
       return this.presets.filter(preset => selected.includes(preset[this.prop]));

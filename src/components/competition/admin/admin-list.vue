@@ -14,7 +14,9 @@
               v-for="preset in presets"
               :key="preset[idKey]"
               :value="preset[idKey]"
-            >{{ preset.$name || preset.name }}</md-option>
+            >
+              {{ preset.$name || preset.name }}
+            </md-option>
           </md-select>
         </md-field>
 
