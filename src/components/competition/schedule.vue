@@ -28,7 +28,7 @@
                   <md-list-item
                     v-for="(event, eventId) in block.events"
                     :key="eventId"
-                    @click="event.dances && $router.push({ name: 'competition.schedule', params: { dayId, blockId, eventId }})"
+                    @click="$router.push({ name: 'competition.schedule', params: { dayId, blockId, eventId }})"
                   >
                     <div class="md-list-item-text">
                       <div>{{ event.name }}</div>
@@ -63,6 +63,11 @@
 
         <div class="md-scroll">
           <md-subheader class="md-title">{{ currentEvent.name }}</md-subheader>
+          <div
+            v-if="currentEvent.description"
+            v-html="currentEvent.description"
+            class="md-padding"
+          />
 
           <md-list class="md-double-line md-list-card">
             <md-list-item v-for="dance in currentEvent.dances" :key="dance[idKey]">
