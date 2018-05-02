@@ -104,6 +104,18 @@
               />
             </md-field>
           </div>
+
+          <div v-if="currentItemCollection === 'dances'">
+            <admin-platforms
+              :path="currentPath"
+              :item="currentItem"
+              :platforms="platforms"
+              :groups="groups"
+              :dances="dances"
+              :staff="staff"
+              @change="handlePlatformChanges"
+            />
+          </div>
         </form>
         <md-empty-state
           v-else
@@ -119,6 +131,7 @@
 <script>
 import AdminList from '@/components/competition/admin/admin-list';
 import AdminListItem from '@/components/competition/admin/admin-list-item';
+import AdminPlatforms from '@/components/competition/admin/platforms';
 import {
   getScheduleItemDanceName,
 } from '@/helpers/competition';
@@ -140,6 +153,7 @@ export default {
     },
     groups: Array,
     dances: Array,
+    staff: Array,
     platforms: Array,
     schedule: Object,
   },
@@ -261,10 +275,15 @@ export default {
         params,
       });
     },
+    handlePlatformChanges(changes) {
+      // bubble up
+      this.$emit('change', changes);
+    },
   },
   components: {
     AdminList,
     AdminListItem,
+    AdminPlatforms,
   },
 };
 </script>

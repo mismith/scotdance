@@ -69,11 +69,27 @@
             class="md-padding"
           />
 
-          <md-list class="md-double-line md-list-card">
-            <md-list-item v-for="dance in currentEvent.dances" :key="dance[idKey]">
-              <div class="md-list-item-text">
-                {{ dance.name }}
-              </div>
+          <md-list class="md-list-cards">
+            <md-list-item
+              v-for="dance in currentEvent.dances"
+              :key="dance[idKey]"
+              md-expand
+              md-expanded
+            >
+              <md-subheader>
+                <div>{{ getScheduleItemDanceName(dance, dances) }}</div>
+                <div v-if="dance.description" class="md-caption">{{ dance.description }}</div>
+              </md-subheader>
+
+              <md-content slot="md-expand" class="md-elevation-1">
+                <admin-platforms
+                  :item="dance"
+                  :groups="groups"
+                  :dances="dances"
+                  :staff="staff"
+                  :platforms="platforms"
+                />
+              </md-content>
             </md-list-item>
           </md-list>
         </div>
@@ -85,6 +101,10 @@
 <script>
 import moment from 'moment-mini';
 import DancerListItem from '@/components/dancer-list-item';
+import AdminPlatforms from '@/components/competition/admin/platforms';
+import {
+  getScheduleItemDanceName,
+} from '@/helpers/competition';
 import {
   idKey,
 } from '@/helpers/firebase';
@@ -99,6 +119,10 @@ export default {
       type: Object,
       required: true,
     },
+    groups: Array,
+    dances: Array,
+    staff: Array,
+    platforms: Array,
     schedule: Object,
   },
   data() {
@@ -133,6 +157,7 @@ export default {
   },
   methods: {
     moment,
+    getScheduleItemDanceName,
 
     showRelevantSlide() {
       if (this.currentEvent) {
@@ -147,6 +172,7 @@ export default {
   },
   components: {
     DancerListItem,
+    AdminPlatforms,
   },
 };
 </script>
@@ -167,6 +193,14 @@ export default {
     .md-tab {
       display: flex;
       flex-direction: column;
+    }
+  }
+  .admin-platforms {
+    margin-bottom: 4px;
+    overflow-x: auto;
+
+    .pool {
+      padding: 0 6px 12px;
     }
   }
 }

@@ -13,3 +13,7 @@ export function getScheduleItemDanceName(item, dances) {
   const named = dance || item;
   return named.$name || named.name;
 }
+
+export function hydrateByIdKey(ids, items = []) {
+  return (ids || []).map(id => findByIdKey(items, id));
+}

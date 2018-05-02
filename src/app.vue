@@ -270,16 +270,18 @@ body,
       transition: opacity 300ms;
     }
     .md-list-item-container {
-      .md-subheader:not(.md-list-item) {
-        flex-grow: 1;
-        padding-left: 0;
+      .md-list-item-content {
+        .md-subheader:not(.md-list-item) {
+          flex-grow: 1;
+          padding-left: 0;
 
-        .md-icon {
-          font-size: 14px;
-          margin-left: 4px;
-        }
-        ~ .md-list-expand-indicator {
-          flex: 0;
+          .md-icon {
+            font-size: 14px;
+            margin-left: 4px;
+          }
+          ~ .md-list-expand-indicator {
+            flex: 0;
+          }
         }
       }
       .md-list-item-text {
@@ -317,7 +319,7 @@ body,
   }
   &.md-list-card {
     padding: 0;
-    margin: 12px 16px;
+    margin: 8px 16px;
     box-shadow: 0 2px 1px -1px rgba(0,0,0,.2), 0 1px 1px 0 rgba(0,0,0,.14), 0 1px 3px 0 rgba(0,0,0,.12); // .md-elevation-1
   }
   &.md-list-cards {
@@ -332,7 +334,7 @@ body,
         > .md-list-expand {
           > .md-list {
             padding: 0;
-            margin: 0 16px 12px;
+            margin: 0 16px 8px;
             box-shadow: 0 2px 1px -1px rgba(0,0,0,.2), 0 1px 1px 0 rgba(0,0,0,.14), 0 1px 3px 0 rgba(0,0,0,.12); // .md-elevation-1
           }
         }
