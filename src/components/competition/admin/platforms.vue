@@ -1,12 +1,25 @@
 <template>
-  <div class="admin-platforms" :class="{ interactive: !!path }">
+  <div class="admin-platforms" :class="{ interactive: admin }">
     <div v-if="platforms.length" class="pools">
       <div v-for="pool in pools" :key="pool[idKey]" class="pool">
         <md-subheader>{{ pool.$name || pool.name }}</md-subheader>
 
-        <draggable v-model="pool.$items" :options="{ group: 'items', disabled: !path }" @sort="handleChanges(pool)" class="draggable">
-          <md-chip v-for="item in pool.$items" :key="item[idKey]" :class="{ 'md-accent': isJudge(item) }">
-            {{ item.$name || item.name }}
+        <draggable
+          v-model="pool.$items"
+          :options="{ group: 'items', disabled: !admin }"
+          @sort="handleChanges(pool)"
+          class="draggable"
+        >
+          <md-chip
+            v-for="poolItem in pool.$items"
+            :key="poolItem[idKey]"
+            @click="!admin && !poolItem.type && $router.push({
+              name: 'competition.results',
+              params: { groupId: poolItem[idKey], danceId: item.danceId }
+            })"
+            :class="{ 'md-primary': isJudge(poolItem) }"
+          >
+            {{ poolItem.$name || poolItem.name }}
           </md-chip>
         </draggable>
       </div>
@@ -46,6 +59,9 @@ export default {
     };
   },
   computed: {
+    admin() {
+      return !!this.path;
+    },
     danceGroups() {
       return this.groups.filter((group) => {
         const dance = findByIdKey(this.dances, this.item.danceId);
@@ -85,7 +101,7 @@ export default {
         }),
       ];
 
-      if (this.path) {
+      if (this.admin) {
         pools.push({
           name: 'Unassigned',
           $items: [
