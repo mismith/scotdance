@@ -10,7 +10,11 @@
           <admin-list-item
             slot-scope="day"
             :item="day"
-            @click.stop="handleListItemSelect({ dayId: day[idKey] })"
+            md-expand
+            :md-expanded="dayId === day[idKey]"
+            @update:mdExpanded="$event && handleListItemSelect({
+              dayId: day[idKey],
+            })"
             @remove="handleListItemRemove('schedule/days', day)"
           >
             <admin-list
@@ -21,7 +25,12 @@
               <admin-list-item
                 slot-scope="block"
                 :item="block"
-                @click.stop="handleListItemSelect({ dayId: day[idKey], blockId: block[idKey] })"
+                md-expand
+                :md-expanded="blockId === block[idKey]"
+                @update:mdExpanded="$event && handleListItemSelect({
+                  dayId: day[idKey],
+                  blockId: block[idKey],
+                })"
                 @remove="handleListItemRemove(`schedule/days/${day[idKey]}/blocks`, block)"
               >
                 <admin-list
@@ -32,7 +41,13 @@
                   <admin-list-item
                     slot-scope="event"
                     :item="event"
-                    @click.stop="handleListItemSelect({ dayId: day[idKey], blockId: block[idKey], eventId: event[idKey] })"
+                    md-expand
+                    :md-expanded="eventId === event[idKey]"
+                    @update:mdExpanded="$event && handleListItemSelect({
+                      dayId: day[idKey],
+                      blockId: block[idKey],
+                      eventId: event[idKey],
+                    })"
                     @remove="handleListItemRemove(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events`, event)"
                   >
                     <admin-list
@@ -44,8 +59,12 @@
                         slot-scope="dance"
                         :item="dance"
                         :item-name-fn="itemDanceNameFn"
-                        :md-expand="false"
-                        @click.stop="handleListItemSelect({ dayId: day[idKey], blockId: block[idKey], eventId: event[idKey], danceId: dance[idKey] })"
+                        @click="handleListItemSelect({
+                          dayId: day[idKey],
+                          blockId: block[idKey],
+                          eventId: event[idKey],
+                          danceId: dance[idKey],
+                        })"
                         @remove="handleListItemRemove(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events/${event[idKey]}/dances`, dance)"
                       />
                     </admin-list>
@@ -270,8 +289,7 @@ export default {
       });
     },
     handleListItemSelect(params) {
-      this.$router.push({
-        name: 'competition.admin.schedule',
+      this.$router.replace({
         params,
       });
     },

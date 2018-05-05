@@ -3,7 +3,8 @@
     class="admin-list-item"
     :md-expand="mdExpand"
     :md-expanded="mdExpanded"
-    @click="$emit('click', $event)"
+    @update:mdExpanded="$emit('update:mdExpanded', $event)"
+    @click.stop="$emit('click', $event)"
   >
     <div class="md-list-item-text" v-html="itemNameFn(item)" />
 
@@ -40,10 +41,7 @@ export default {
       type: Function,
       default: item => item.$name || item.name,
     },
-    mdExpand: {
-      type: Boolean,
-      default: true,
-    },
+    mdExpand: Boolean,
     mdExpanded: Boolean,
   },
   data() {

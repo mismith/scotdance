@@ -7,6 +7,8 @@
             v-for="group in groups"
             :key="group[idKey]"
             md-expand
+            :md-expanded="group[idKey] === groupId"
+            @update:mdExpanded="handleGroupExpanded(group[idKey], $event)"
           >
             <md-subheader>
               {{ group.$name }}
@@ -156,6 +158,16 @@ export default {
         this.$el.swiper.slideTo(1);
       } else {
         this.$el.swiper.slideTo(0);
+      }
+    },
+
+    handleGroupExpanded(groupId, expanded) {
+      if (expanded) {
+        this.$router.replace({
+          params: {
+            groupId,
+          },
+        });
       }
     },
   },

@@ -72,9 +72,10 @@
           <md-list class="md-list-cards">
             <md-list-item
               v-for="dance in currentEvent.dances"
-              :key="dance[idKey]"
+              :key="dance.danceId"
               md-expand
-              md-expanded
+              :md-expanded="dance.danceId === danceId"
+              @update:mdExpanded="handleDanceExpanded(dance.danceId, $event)"
             >
               <md-subheader>
                 <div>{{ getScheduleItemDanceName(dance, dances) }}</div>
@@ -115,6 +116,7 @@ export default {
     dayId: String,
     blockId: String,
     eventId: String,
+    danceId: String,
     competitionDataRef: {
       type: Object,
       required: true,
@@ -164,6 +166,16 @@ export default {
         this.$el.swiper.slideTo(1);
       } else {
         this.$el.swiper.slideTo(0);
+      }
+    },
+
+    handleDanceExpanded(danceId, expanded) {
+      if (expanded) {
+        this.$router.replace({
+          params: {
+            danceId,
+          },
+        });
       }
     },
   },
