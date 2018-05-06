@@ -206,6 +206,10 @@ export default {
     .pools {
       .pool {
         .draggable {
+          padding: 4px 0;
+          border: 1px dashed #999;
+          border-radius: 20px;
+
           .md-chip {
             cursor: move;
           }
