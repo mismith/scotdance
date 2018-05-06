@@ -7,7 +7,7 @@
         <draggable
           v-model="pool.$items"
           :options="{ group: 'items', disabled: !admin }"
-          @sort="handleChanges(pool)"
+          @sort="handleSort(pool)"
           class="draggable"
         >
           <md-chip
@@ -30,11 +30,26 @@
       md-label="No platforms"
       md-description="Add at least one platform first"
     />
+
+    <footer v-if="admin">
+      <md-button
+        :disabled="!item.platforms"
+        @click="handleCopy"
+      >Copy</md-button>
+      <md-button
+        :disabled="clipboard.type !== 'platforms'"
+        @click="handlePaste"
+      >Paste</md-button>
+    </footer>
   </div>
 </template>
 
 <script>
 import Draggable from 'vuedraggable';
+import {
+  mapState,
+  mapMutations,
+} from 'vuex';
 import {
   findByIdKey,
   hydrateByIdKey,
@@ -59,6 +74,10 @@ export default {
     };
   },
   computed: {
+    ...mapState([
+      'clipboard',
+    ]),
+
     admin() {
       return !!this.path;
     },
@@ -115,9 +134,27 @@ export default {
     },
   },
   methods: {
+    ...mapMutations([
+      'copy',
+    ]),
+
     isJudge: item => item.type === 'Judge',
 
-    handleChanges(pool) {
+    handleCopy() {
+      this.copy({
+        data: this.item.platforms,
+        type: 'platforms',
+      });
+    },
+    handlePaste() {
+      if (!this.clipboard.type === 'platforms') return; // ensure proper data type
+      if (!this.path) return; // can't save changes if we don't know where to save to
+
+      this.$emit('change', {
+        [`${this.path}/platforms`]: this.clipboard.data,
+      });
+    },
+    handleSort(pool) {
       if (!pool[idKey]) return; // skip if removing from unassigned pool
       if (!this.path) return; // can't save changes if we don't know where to save to
 

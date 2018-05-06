@@ -11,6 +11,10 @@ export default new Vuex.Store({
   state: {
     me: undefined,
     myFavorites: undefined,
+    clipboard: {
+      type: undefined,
+      data: undefined,
+    },
   },
   getters: {
     isFavorite: state => (type, id) => {
@@ -19,6 +23,13 @@ export default new Vuex.Store({
   },
   mutations: {
     ...firebaseMutations,
+
+    copy(state, { data, type = 'text/plain' }) {
+      state.clipboard = {
+        type,
+        data,
+      };
+    },
   },
   actions: {
     auth: firebaseAction(({ bindFirebaseRef }, { meRef, myFavoritesRef }) => {
