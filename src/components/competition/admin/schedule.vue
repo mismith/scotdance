@@ -14,6 +14,9 @@
             :md-expanded="dayId === day[idKey]"
             @update:mdExpanded="$event && handleListItemSelect({
               dayId: day[idKey],
+              blockId: null,
+              eventId: null,
+              danceId: null,
             })"
             @remove="handleListItemRemove('schedule/days', day)"
           >
@@ -30,6 +33,8 @@
                 @update:mdExpanded="$event && handleListItemSelect({
                   dayId: day[idKey],
                   blockId: block[idKey],
+                  eventId: null,
+                  danceId: null,
                 })"
                 @remove="handleListItemRemove(`schedule/days/${day[idKey]}/blocks`, block)"
               >
@@ -47,6 +52,7 @@
                       dayId: day[idKey],
                       blockId: block[idKey],
                       eventId: event[idKey],
+                      danceId: null,
                     })"
                     @remove="handleListItemRemove(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events`, event)"
                   >
