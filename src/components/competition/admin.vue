@@ -259,7 +259,7 @@ export default {
     async save(path, value) {
       const ref = /^info\//.test(path) ? this.competitionRef : this.competitionDataRef;
       await this.awaitSave(ref.update({
-        [path]: value || null,
+        [path.replace(/^info\//, '')]: value || null,
       }));
     },
     async remove() {
