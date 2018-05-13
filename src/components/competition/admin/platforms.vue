@@ -112,7 +112,7 @@ export default {
           const $items = poolPlatform ? [
             ...hydrateByIdKey(poolPlatform.orderedJudgeIds, this.judges),
             ...hydrateByIdKey(poolPlatform.orderedGroupIds, this.danceGroups),
-          ] : [];
+          ].filter(item => item || null) : [];
           return {
             ...platform,
             $items,
