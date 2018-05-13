@@ -73,7 +73,7 @@
             <md-list-item
               v-for="dance in currentEvent.dances"
               :key="dance.danceId"
-              md-expand
+              :md-expand="!!dance.platforms"
               :md-expanded="dance.danceId === danceId"
               @update:mdExpanded="handleDanceExpanded(dance.danceId, $event)"
             >
