@@ -59,17 +59,28 @@
         <div class="md-scroll">
           <md-subheader class="md-title">{{ currentDance.$name }}</md-subheader>
 
-          <md-list class="md-double-line md-list-card">
-            <dancer-list-item
-              v-for="(dancer, index) in placedDancers"
-              :key="dancer[idKey]"
-              :dancer="dancer"
-              :place="index + 1"
-              @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] }})"
-            />
-            <md-subheader v-if="!placedDancers.length" class="md-list-item">
-              Results to be determined.
-            </md-subheader>
+          <md-list class="md-list-cards">
+            <md-list-item
+              v-for="group in groupedDancers"
+              :key="group.name"
+              md-expand
+              md-expanded
+            >
+              <md-subheader>{{ group.name }}</md-subheader>
+
+              <md-list slot="md-expand" class="md-double-line">
+                <dancer-list-item
+                  v-for="(dancer, index) in group.dancers"
+                  :key="dancer[idKey]"
+                  :dancer="dancer"
+                  :place="group.placed && index + 1"
+                  @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] }})"
+                />
+                <md-subheader v-if="group.placed && !group.dancers.length" class="md-list-item">
+                  Results to be determined.
+                </md-subheader>
+              </md-list>
+            </md-list-item>
           </md-list>
         </div>
       </div>
@@ -131,13 +142,35 @@ export default {
       }
       return null;
     },
-
+    currentDancers() {
+      if (this.currentGroup) {
+        return this.findGroupDancers(this.currentGroup);
+      }
+      return [];
+    },
     placedDancers() {
       let results = [];
       if (this.currentGroup && this.currentDance) {
         results = this.getGroupDanceResults(this.currentGroup, this.currentDance);
       }
       return this.getPlacedDancers(results);
+    },
+    unplacedDancers() {
+      const placedDancerIds = this.placedDancers.map(dancer => dancer[idKey]);
+      return this.currentDancers.filter(dancer => !placedDancerIds.includes(dancer[idKey]));
+    },
+    groupedDancers() {
+      return [
+        {
+          name: 'Placed',
+          dancers: this.placedDancers,
+          placed: true,
+        },
+        {
+          name: 'Dancers',
+          dancers: this.unplacedDancers,
+        },
+      ];
     },
   },
   watch: {
