@@ -1,4 +1,4 @@
-#Wed May 16 19:06:00 MDT 2018
+#Wed May 16 20:36:21 MDT 2018
 base.0=/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/transforms/dexMerger/debug/0
 renamed.0=classes.dex
 file.0=/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/transforms/dexMerger/debug/0/classes.dex
