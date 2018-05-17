@@ -23,6 +23,10 @@
     <platform name="android">
         <allow-intent href="market:*" />
     </platform>
+    <plugin name="cordova-plugin-statusbar" spec="^2.4.2" />
+    <preference name="StatusBarOverlaysWebView" value="false" />
+    <preference name="StatusBarBackgroundColor" value="#1e88e5" />
+    <preference name="StatusBarDefaultScrollToTop" value="true" />
     <engine name="android" spec="^7.0.0" />
     <engine name="ios" spec="^4.5.4" />
 </widget>

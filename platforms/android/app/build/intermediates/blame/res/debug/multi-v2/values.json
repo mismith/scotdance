@@ -6,11 +6,11 @@
                 {
                     "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/values/strings.xml",
                     "from": {
-                        "startLines": "-1,2,-1",
-                        "startColumns": "-1,4,-1",
-                        "startOffsets": "-1,55,-1",
-                        "endColumns": "-1,46,-1",
-                        "endOffsets": "-1,97,-1"
+                        "startLines": "4,2,3",
+                        "startColumns": "4,4,4",
+                        "startOffsets": "161,55,102",
+                        "endColumns": "63,46,58",
+                        "endOffsets": "220,97,156"
                     },
                     "to": {
                         "startLines": "2,3,4",
