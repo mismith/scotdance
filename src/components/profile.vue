@@ -5,7 +5,7 @@
         <div class="md-layout md-alignment-center">
           <md-avatar>
             <img
-              :src="me.photoURL || `//avatars.io/gravatar/${me.email}`"
+              :src="me.photoURL || `https://avatars.io/gravatar/${me.email}`"
               :alt="me.displayName"
             />
           </md-avatar>

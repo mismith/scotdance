@@ -16,12 +16,13 @@
 
     <md-app-drawer :md-active.sync="menuVisible">
       <md-toolbar class="md-primary md-large md-account-header">
+        <div class="bg" style="background-image: url('static/touchicon.svg');"></div>
         <account-buttons v-if="!me" class="md-padding" />
         <md-list v-else class="md-transparent">
           <md-list-item>
             <md-avatar class="md-large">
               <img
-                :src="me.photoURL || `//avatars.io/gravatar/${me.email}`"
+                :src="me.photoURL || `https://avatars.io/gravatar/${me.email}`"
                 :alt="me.displayName"
               />
             </md-avatar>
@@ -189,6 +190,9 @@ export default {
 ));
 @import "~vue-material/dist/theme/all";
 
+$simple-line-font-path: "~simple-line-icons/fonts/";
+@import "~simple-line-icons/scss/simple-line-icons";
+
 // element overrides
 a[target="_blank"] {
   &:after {
@@ -245,7 +249,7 @@ body,
   padding: 0;
 }
 .md-dialog-overlay {
-  z-index: 7; // cover .md-app-drawer
+  z-index: 9; // cover .md-app-drawer
 }
 .md-select-menu {
   z-index: 11; // cover .md-dialog
@@ -450,6 +454,19 @@ body,
 .md-account-header {
   padding: 0;
 
+  .bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-position: center center;
+    background-size: cover;
+    opacity: .25;
+    pointer-events: none;
+    z-index: 0;
+  }
+
   .account-buttons {
     align-items: center;
     margin: auto;
@@ -481,19 +498,6 @@ body,
         }
       }
     }
-  }
-
-  &:before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url("/static/touchicon.svg") center center / cover;
-    opacity: .25;
-    pointer-events: none;
-    z-index: 0;
   }
 }
 

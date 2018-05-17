@@ -4,7 +4,6 @@ import VueMaterial from 'vue-material';
 import 'vue-material/dist/vue-material.css';
 import VueAwesomeSwiper from 'vue-awesome-swiper';
 import 'swiper/dist/css/swiper.css';
-import 'simple-line-icons/css/simple-line-icons.css';
 import VueAsyncComputed from 'vue-async-computed';
 
 import {
