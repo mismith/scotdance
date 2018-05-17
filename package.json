@@ -12,7 +12,7 @@
     "predeploy": "npm run build",
     "deploy": "firebase deploy",
     "postdeploy": "npm version patch",
-    "web": "open ./www/dist/index.html",
+    "web": "open ./www/index.html",
     "ios": "cordova run ios",
     "android": "cordova run android",
     "icon": "cordova-icon --icon=static/touchicon.png",
