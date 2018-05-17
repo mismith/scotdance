@@ -22,6 +22,15 @@ import MdSpinnable from './components/md-spinnable';
 
 Vue.config.productionTip = false;
 
+// cordova
+if (window.location.protocol === 'file:') {
+  Vue.prototype.isApp = true;
+  const cordovaScript = document.createElement('script');
+  cordovaScript.setAttribute('type', 'text/javascript');
+  cordovaScript.setAttribute('src', 'cordova.js');
+  document.body.appendChild(cordovaScript);
+}
+
 Vue.use(VueFire);
 Vue.use(VueMaterial);
 Vue.component('md-spinnable', MdSpinnable);
