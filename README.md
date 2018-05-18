@@ -1,6 +1,6 @@
 # scotdance
 
-> App for highland dancing events.
+> Highland dancing event tracker
 
 ## Build Setup
 

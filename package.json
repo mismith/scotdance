@@ -1,7 +1,7 @@
 {
   "name": "scotdance",
   "version": "1.0.13",
-  "description": "App for highland dancing events.",
+  "description": "Highland dancing event tracker",
   "author": "Murray Smith <murray@mismith.info>",
   "private": true,
   "scripts": {

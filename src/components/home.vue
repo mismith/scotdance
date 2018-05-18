@@ -3,7 +3,7 @@
     <div>
       <img src="static/img/touchicon.png" role="presentation" width="128" height="128" />
       <h1 class="md-display-3">ScotDance</h1>
-      <p class="md-headline">App for highland dancing events</p>
+      <p class="md-headline">Highland dancing event tracker</p>
       <p>
         <md-button @click.prevent="TODO()" class="md-primary md-raised">Install App</md-button>
       </p>
