@@ -16,7 +16,7 @@
 
     <md-app-drawer :md-active.sync="menuVisible">
       <md-toolbar class="md-primary md-large md-account-header">
-        <div class="bg" style="background-image: url('static/touchicon.svg');"></div>
+        <div class="bg" style="background-image: url('static/img/touchicon.png');"></div>
         <account-buttons v-if="!me" class="md-padding" />
         <md-list v-else class="md-transparent">
           <md-list-item>

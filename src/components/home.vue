@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <div>
-      <img src="static/touchicon.svg" role="presentation" width="128" height="128" />
+      <img src="static/img/touchicon.png" role="presentation" width="128" height="128" />
       <h1 class="md-display-3">ScotDance</h1>
       <p class="md-headline">App for highland dancing events</p>
       <p>

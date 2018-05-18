@@ -28,8 +28,16 @@
         "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/xml/config.xml"
     },
     {
+        "merged": "/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/res/merged/debug/drawable-land-ldpi_screen.png.flat",
+        "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/drawable-land-ldpi/screen.png"
+    },
+    {
         "merged": "/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/res/merged/debug/drawable-port-xxxhdpi_screen.png.flat",
         "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/drawable-port-xxxhdpi/screen.png"
+    },
+    {
+        "merged": "/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/res/merged/debug/mipmap-mdpi_icon.png.flat",
+        "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/mipmap-mdpi/icon.png"
     },
     {
         "merged": "/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/res/merged/debug/mipmap-xhdpi_icon.png.flat",
@@ -52,52 +60,16 @@
         "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/drawable-land-mdpi/screen.png"
     },
     {
-        "merged": "/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/res/merged/debug/drawable-hdpi_icon.png.flat",
-        "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/drawable-hdpi/icon.png"
-    },
-    {
-        "merged": "/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/res/merged/debug/drawable-land-xxhdpi_screen.png.flat",
-        "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/drawable-land-xxhdpi/screen.png"
-    },
-    {
-        "merged": "/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/res/merged/debug/drawable-xxhdpi_icon.png.flat",
-        "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/drawable-xxhdpi/icon.png"
-    },
-    {
-        "merged": "/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/res/merged/debug/drawable-xhdpi_icon.png.flat",
-        "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/drawable-xhdpi/icon.png"
-    },
-    {
-        "merged": "/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/res/merged/debug/drawable_icon.png.flat",
-        "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/drawable/icon.png"
-    },
-    {
-        "merged": "/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/res/merged/debug/drawable-land-ldpi_screen.png.flat",
-        "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/drawable-land-ldpi/screen.png"
-    },
-    {
-        "merged": "/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/res/merged/debug/mipmap-mdpi_icon.png.flat",
-        "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/mipmap-mdpi/icon.png"
-    },
-    {
-        "merged": "/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/res/merged/debug/drawable-ldpi_icon.png.flat",
-        "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/drawable-ldpi/icon.png"
-    },
-    {
         "merged": "/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/res/merged/debug/mipmap-hdpi_icon.png.flat",
         "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/mipmap-hdpi/icon.png"
-    },
-    {
-        "merged": "/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/res/merged/debug/drawable-mdpi_icon.png.flat",
-        "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/drawable-mdpi/icon.png"
     },
     {
         "merged": "/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/res/merged/debug/drawable-port-xhdpi_screen.png.flat",
         "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/drawable-port-xhdpi/screen.png"
     },
     {
-        "merged": "/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/res/merged/debug/drawable-xxxhdpi_icon.png.flat",
-        "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/drawable-xxxhdpi/icon.png"
+        "merged": "/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/res/merged/debug/drawable-land-xxhdpi_screen.png.flat",
+        "source": "/Users/msmith/Sites/+/scotdance/platforms/android/app/src/main/res/drawable-land-xxhdpi/screen.png"
     },
     {
         "merged": "/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/res/merged/debug/drawable-land-xxxhdpi_screen.png.flat",

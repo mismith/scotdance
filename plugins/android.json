@@ -7,10 +7,10 @@
     "files": {}
   },
   "installed_plugins": {
-    "cordova-plugin-whitelist": {
+    "cordova-plugin-statusbar": {
       "PACKAGE_NAME": "info.mismith.scotdance"
     },
-    "cordova-plugin-statusbar": {
+    "cordova-plugin-whitelist": {
       "PACKAGE_NAME": "info.mismith.scotdance"
     }
   },

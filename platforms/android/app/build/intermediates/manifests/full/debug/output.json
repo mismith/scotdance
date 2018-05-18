@@ -1,1 +1,1 @@
-[{"outputType":{"type":"MERGED_MANIFESTS"},"apkInfo":{"type":"MAIN","splits":[],"versionCode":10000},"path":"AndroidManifest.xml","properties":{"packageId":"info.mismith.scotdance","split":"","minSdkVersion":"16"}}]
+[{"outputType":{"type":"MERGED_MANIFESTS"},"apkInfo":{"type":"MAIN","splits":[],"versionCode":10000},"path":"AndroidManifest.xml","properties":{"packageId":"info.mismith.scotdance","split":"","minSdkVersion":"19"}}]
