@@ -5,9 +5,9 @@
         <md-icon>menu</md-icon>
       </md-button>
 
-      <h2 class="md-title">{{ title }}</h2>
+      <a @click.prevent="$router.push('/')" href="#" class="md-title">{{ title }}</a>
 
-      <md-button @click="help()" class="md-icon-button" style="margin-left: auto;">
+      <md-button @click.prevent="help()" class="md-icon-button" style="margin-left: auto;">
         <md-icon>help</md-icon>
       </md-button>
     </md-app-toolbar>
@@ -378,6 +378,9 @@ body,
   > span {
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  a.md-title {
+    text-decoration: none;
   }
 
   &.md-toolbar-nowrap {
