@@ -1,15 +1,18 @@
 <template>
   <div class="competition-info md-scroll-frame">
     <div class="md-scroll">
-      <h1 class="md-display-1">{{ competition.name }}</h1>
-      <p class="md-headline">{{ moment(competition.date).format('dddd, MMMM D, YYYY') }}</p>
-      <p v-if="competition.venue" class="md-headline">
-        <a v-if="competition.address" :href="`https://maps.google.com/?q=${competition.address}`" target="_blank" class="ext">{{ competition.venue }}</a>
-        <span v-else>{{ competition.venue }}</span>
-      </p>
-      <p class="md-headline">{{ competition.location }}</p>
+      <section class="hero">
+        <h1 class="md-display-1">{{ competition.name }}</h1>
+        <p class="md-headline">{{ moment(competition.date).format('dddd, MMMM D, YYYY') }}</p>
+        <p v-if="competition.venue" class="md-subheading">
+          <a v-if="competition.address" :href="`https://maps.google.com/?q=${competition.address}`" target="_blank" class="ext">{{ competition.venue }}</a>
+          <span v-else>{{ competition.venue }}</span>
+          <br />
+          <span>{{ competition.location }}</span>
+        </p>
+      </section>
 
-      <section v-if="judges.length" class="staff">
+      <section v-if="judges.length" class="staff alt">
         <h3>Judges</h3>
         <ul class="md-layout">
           <li
@@ -23,7 +26,7 @@
         </ul>
       </section>
 
-      <section v-if="pipers.length" class="staff">
+      <section v-if="pipers.length" class="staff alt">
         <h3>Pipers</h3>
         <ul class="md-layout">
           <li
@@ -76,12 +79,21 @@ export default {
   > .md-scroll {
     padding: 0 16px;
   }
+  .hero {
+    margin-bottom: 32px;
+  }
   .staff {
     ul {
       padding: 0;
       marging: 0;
       list-style: none;
     }
+  }
+
+  .alt {
+    padding: 2px 16px;
+    margin-left: -16px;
+    margin-right: -16px;
   }
 }
 </style>

@@ -20,7 +20,7 @@
       </div>
     </section>
 
-    <section id="features">
+    <section id="features" class="alt">
       <header>
         <h2 class="md-display-1">A virtual program of events</h2>
         <p class="md-subheading">Modernize your highland dancing experience by interacting with competition information digitally.</p>
@@ -108,8 +108,6 @@ export default {
     }
   }
   #features {
-    background-color: rgba(0, 0, 0, 0.1);
-
     .md-layout {
       .md-layout-item {
         padding: 20px;

@@ -207,14 +207,6 @@ export default {
 $simple-line-font-path: "~simple-line-icons/fonts/";
 @import "~simple-line-icons/scss/simple-line-icons";
 
-// element overrides
-a.ext {
-  &:after {
-    content: "\2197";
-    margin-left: 0.25em;
-  }
-}
-
 // app-wide helpers
 .md-scroll-frame {
   display: flex;
@@ -243,6 +235,17 @@ a.ext {
   &.md-list-item:first-of-type {
     margin-top: 0;
   }
+}
+
+// app-wide custom styling
+a.ext {
+  &:after {
+    content: "\2197";
+    margin-left: 0.25em;
+  }
+}
+.alt {
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 // app frame
