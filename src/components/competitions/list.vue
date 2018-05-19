@@ -1,13 +1,24 @@
 <template>
   <div class="competitions-list md-scroll-frame">
     <div class="md-scroll">
-      <md-list class="md-double-line">
-        <competition-list-item
-          v-for="competition in competitions"
-          :key="competition[idKey]"
-          :competition="competition"
-          @click="$router.push(`/competitions/${competition[idKey]}`)"
-        />
+      <md-list class="md-list-cards">
+        <md-list-item
+          v-for="group in groupedCompetitions"
+          :key="group.name"
+          md-expand
+          :md-expanded="true"
+        >
+          <md-subheader>{{ group.name }}</md-subheader>
+
+          <md-list slot="md-expand" class="md-double-line">
+            <competition-list-item
+              v-for="competition in group.competitions"
+              :key="competition[idKey]"
+              :competition="competition"
+              @click="$router.push(`/competitions/${competition[idKey]}`)"
+            />
+          </md-list>
+        </md-list-item>
       </md-list>
     </div>
   </div>
@@ -32,13 +43,23 @@ export default {
     competitionsRaw: db.child('competitions'),
   },
   computed: {
-    competitions() {
-      return this.competitionsRaw
+    groupedCompetitions() {
+      const competitions = this.competitionsRaw
         .map(competition => ({
           ...competition,
         }))
-        .sort((a, b) => moment(a.date).diff(b.date)) // order chronologically
-        .reverse(); // flip
+        .sort((a, b) => moment(a.date).diff(b.date)); // order chronologically
+
+      return [
+        {
+          name: 'Upcoming',
+          competitions: competitions.filter(c => moment().diff(c.date) < 0),
+        },
+        {
+          name: 'Archived',
+          competitions: competitions.filter(c => moment().diff(c.date) >= 0).reverse(),
+        },
+      ];
     },
   },
   components: {
@@ -49,6 +70,6 @@ export default {
 
 <style lang="scss">
 .competitions-list {
-
+  background-color: #eee;
 }
 </style>
