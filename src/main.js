@@ -23,6 +23,7 @@ import MdSpinnable from './components/md-spinnable';
 Vue.config.productionTip = false;
 
 // cordova
+Vue.prototype.isApp = false;
 if (window.location.protocol === 'file:') {
   Vue.prototype.isApp = true;
   const cordovaScript = document.createElement('script');
