@@ -131,7 +131,7 @@ export default {
   },
   computed: {
     currentTab() {
-      return this.$route.params.tab || this.$route.name.replace(/^.*\./, '') || 'info';
+      return this.$route.params.tab || this.$route.name.split('.')[2] || 'info';
     },
     currentSection() {
       return this.getSection(this.currentTab);
