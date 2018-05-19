@@ -7,10 +7,10 @@
         <p class="md-headline">Highland dancing event tracker</p>
         <p>Skip the pen and paper—attend highland dance competitions in style with this app for your mobile device.</p>
         <p v-if="!isApp" class="store-badges">
-          <a @click.prevent="TODO()" href="#" target="_blank" class="no-ext-icon">
+          <a @click.prevent="TODO()" href="#" target="_blank">
             <img src="static/img/app-store.svg" alt="Download on the App Store" />
           </a>
-          <a @click.prevent="TODO()" href="#" target="_blank" class="no-ext-icon">
+          <a @click.prevent="TODO()" href="#" target="_blank">
             <img src="static/img/play-store.svg" alt="Get it on Google Play" />
           </a>
         </p>

@@ -4,7 +4,7 @@
       <h1 class="md-display-1">{{ competition.name }}</h1>
       <p class="md-headline">{{ moment(competition.date).format('dddd, MMMM D, YYYY') }}</p>
       <p v-if="competition.venue" class="md-headline">
-        <a v-if="competition.address" :href="`https://maps.google.com/?q=${competition.address}`" target="_blank">{{ competition.venue }}</a>
+        <a v-if="competition.address" :href="`https://maps.google.com/?q=${competition.address}`" target="_blank" class="ext">{{ competition.venue }}</a>
         <span v-else>{{ competition.venue }}</span>
       </p>
       <p class="md-headline">{{ competition.location }}</p>

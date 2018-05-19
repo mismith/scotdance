@@ -205,7 +205,7 @@ $simple-line-font-path: "~simple-line-icons/fonts/";
 @import "~simple-line-icons/scss/simple-line-icons";
 
 // element overrides
-a[target="_blank"]:not(.no-ext-icon) {
+a.ext {
   &:after {
     content: "\2197";
     margin-left: 0.25em;

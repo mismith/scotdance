@@ -10,7 +10,7 @@
             />
           </md-avatar>
           <div class="md-layout-item md-padding">
-            Avatar via <a href="https://gravatar.com/" target="_blank">Gravatar</a>
+            Avatar via <a href="https://gravatar.com/" target="_blank" class="ext">Gravatar</a>
           </div>
         </div>
 
