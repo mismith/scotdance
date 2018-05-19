@@ -197,6 +197,7 @@ export default {
 @import "~vue-material/dist/theme/engine";
 @include md-register-theme("default", (
   primary: md-get-palette-color(blue, 600),
+  accent: md-get-palette-color(pink, 500)
 ));
 @import "~vue-material/dist/theme/all";
 
