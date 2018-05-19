@@ -43,5 +43,12 @@ export default new Vuex.Store({
       unbindFirebaseRef('myFavorites');
       state.myFavorites = null;
     }),
+
+    help() {
+      if (window.$crisp) {
+        window.$crisp.push(['do', 'chat:show']);
+        window.$crisp.push(['do', 'chat:open']);
+      }
+    },
   },
 });

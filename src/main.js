@@ -60,6 +60,10 @@ router.beforeEach(async (to, from, next) => {
   next();
 });
 
+if (window.$crisp) {
+  window.$crisp.push(['do', 'chat:hide']);
+}
+
 // eslint-disable-next-line no-new
 new Vue({
   el: '#app',

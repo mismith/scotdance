@@ -7,11 +7,9 @@
 
       <h2 class="md-title">{{ title }}</h2>
 
-      <!--<span class="md-flex"></span>
-
-      <md-button class="md-icon-button">
-        <md-icon>search</md-icon>
-      </md-button>-->
+      <md-button @click="help()" class="md-icon-button" style="margin-left: auto;">
+        <md-icon>help</md-icon>
+      </md-button>
     </md-app-toolbar>
 
     <md-app-drawer :md-active.sync="menuVisible">
@@ -105,6 +103,7 @@
 import moment from 'moment-mini';
 import {
   mapState,
+  mapActions,
 } from 'vuex';
 import {
   getTitleChunks,
@@ -178,6 +177,10 @@ export default {
     },
   },
   methods: {
+    ...mapActions([
+      'help',
+    ]),
+
     toggleAccount(accountToggled = undefined) {
       this.accountToggled = accountToggled !== undefined ? accountToggled : !this.accountToggled;
     },

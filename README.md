@@ -1,4 +1,4 @@
-# scotdance
+# ScotDance
 
 > Highland dancing event tracker
 
