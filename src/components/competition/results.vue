@@ -1,5 +1,5 @@
 <template>
-  <swiper class="competition-results md-scroll-frame swiper-no-swiping">
+  <swiper class="competition-results md-scroll-frame swiper-no-swiping alt">
     <swiper-slide>
       <div class="md-scroll">
         <md-list v-if="groups.length" class="md-list-cards">
@@ -216,8 +216,6 @@ export default {
 
 <style lang="scss">
 .competition-results {
-  background: #eee;
-
   .md-list {
     > div {
       position: relative;

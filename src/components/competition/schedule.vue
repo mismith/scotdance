@@ -1,5 +1,5 @@
 <template>
-  <swiper class="competition-schedule md-scroll-frame swiper-no-swiping">
+  <swiper class="competition-schedule md-scroll-frame swiper-no-swiping alt">
     <swiper-slide>
       <md-tabs v-if="schedule.days" md-alignment="fixed">
         <md-tab
@@ -191,8 +191,6 @@ export default {
 
 <style lang="scss">
 .competition-schedule {
-  background-color: #eee;
-
   .md-tabs {
     .md-tabs-navigation {
       .md-button {

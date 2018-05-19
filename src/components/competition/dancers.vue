@@ -1,5 +1,5 @@
 <template>
-  <swiper class="competition-dancers md-scroll-frame swiper-no-swiping">
+  <swiper class="competition-dancers md-scroll-frame swiper-no-swiping alt">
     <swiper-slide>
       <div v-if="dancers.length" class="md-scroll-frame">
         <md-toolbar class="md-dense">
@@ -208,8 +208,6 @@ export default {
 
 <style lang="scss">
 .competition-dancers {
-  background-color: #eee;
-
   .md-toolbar {
     .md-field {
       width: auto;

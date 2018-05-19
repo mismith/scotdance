@@ -1,5 +1,5 @@
 <template>
-  <div class="competitions-list md-scroll-frame">
+  <div class="competitions-list md-scroll-frame alt">
     <div class="md-scroll">
       <md-list class="md-list-cards">
         <md-list-item
@@ -70,6 +70,6 @@ export default {
 
 <style lang="scss">
 .competitions-list {
-  background-color: #eee;
+
 }
 </style>
