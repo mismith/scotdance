@@ -167,6 +167,16 @@ export default {
       return titleChunks[titleChunks.length - 1];
     },
   },
+  watch: {
+    me(me) {
+      if (me && window.SessionStack) {
+        window.SessionStack.identify({
+          userId: me[idKey],
+          email: me.email,
+        });
+      }
+    },
+  },
   methods: {
     toggleAccount(accountToggled = undefined) {
       this.accountToggled = accountToggled !== undefined ? accountToggled : !this.accountToggled;
