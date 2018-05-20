@@ -76,9 +76,10 @@
                   :place="group.placed && index + 1"
                   @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] }})"
                 />
-                <md-subheader v-if="group.placed && !group.dancers.length" class="md-list-item">
-                  Results to be determined.
-                </md-subheader>
+                <md-list-item v-if="!group.dancers.length" class="empty">
+                  <span v-if="group.placed">Results to be determined.</span>
+                  <span v-else>No dancers found.</span>
+                </md-list-item>
               </md-list>
             </md-list-item>
           </md-list>

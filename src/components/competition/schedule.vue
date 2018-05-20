@@ -36,6 +36,9 @@
                     </div>
                     <md-icon v-if="event.dances">chevron_right</md-icon>
                   </md-list-item>
+                  <md-list-item v-if="!block.events" class="empty">
+                    No events found.
+                  </md-list-item>
                 </md-list>
               </md-list-item>
             </md-list>

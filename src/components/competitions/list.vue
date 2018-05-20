@@ -17,6 +17,9 @@
               :competition="competition"
               @click="$router.push(`/competitions/${competition[idKey]}`)"
             />
+            <md-list-item v-if="!group.competitions.length" class="empty">
+              No competitions found.
+            </md-list-item>
           </md-list>
         </md-list-item>
       </md-list>

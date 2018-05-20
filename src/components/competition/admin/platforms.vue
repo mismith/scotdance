@@ -209,15 +209,11 @@ export default {
           padding: 4px 0;
           border: 1px dashed #999;
           border-radius: 20px;
+          margin: 4px;
 
           .md-chip {
             cursor: move;
           }
-        }
-
-        &:last-child {
-          width: 100%;
-          flex: none;
         }
       }
     }

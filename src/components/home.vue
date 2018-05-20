@@ -15,7 +15,7 @@
           </a>
         </p>
         <p>
-          <md-button @click.prevent="$router.push(`/competitions`)" class="md-primary md-raised">Browse Competitions</md-button>
+          <md-button @click.prevent="$router.push({ name: 'competitions' })" class="md-primary md-raised">Browse Competitions</md-button>
         </p>
       </div>
     </section>

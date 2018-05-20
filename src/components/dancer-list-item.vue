@@ -1,12 +1,16 @@
 <template>
   <md-list-item @click="$emit('click', $event)" class="dancer-list-item">
     <md-avatar class="md-avatar-icon" :class="{'md-accent': dancer.$favorite}">
-      <span>{{ dancer.number }}</span>
+      <span>{{ dancer.number || '#' }}</span>
     </md-avatar>
 
     <div class="md-list-item-text">
       <span>{{ dancer.$name }}</span>
-      <p>{{ dancer.$group && dancer.$group.$name }} • {{ dancer.location }}</p>
+      <p>
+        {{ dancer.$group && dancer.$group.$name }}
+        <span v-if="dancer.$group && dancer.$group.$name && dancer.location"> • </span>
+        {{ dancer.location }}
+      </p>
     </div>
 
     <slot />

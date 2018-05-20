@@ -44,6 +44,7 @@ export default new Router({
       children: [
         {
           path: '',
+          name: 'competitions',
           component: CompetitionsList,
           meta: {
             title: 'All Competitions',

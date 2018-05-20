@@ -11,9 +11,9 @@
         <md-subheader>Schedule</md-subheader>
 
         <md-list slot="md-expand">
-          <md-subheader class="md-list-item">
+          <md-list-item class="empty">
             Schedule to be determined.
-          </md-subheader>
+          </md-list-item>
         </md-list>
       </md-list-item>
       <md-list-item md-expand :md-expanded="true">

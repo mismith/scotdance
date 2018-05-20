@@ -27,7 +27,7 @@
           </md-list-item>
           <md-list-item @click="toggleAccount()" :class="{toggled: accountToggled}">
             <div class="md-list-item-text">
-              <span>{{ me.email }}</span>
+              <span>{{ me.email || 'Account' }}</span>
             </div>
             <md-button class="md-icon-button md-list-action" @click.stop="toggleAccount()">
               <md-icon>arrow_drop_down</md-icon>
@@ -72,8 +72,12 @@
             @admin-click="menuVisible = false;"
           />
 
+          <md-list-item v-if="!relevantCompetitions.length" class="empty">
+            No competitions found.
+          </md-list-item>
+
           <footer v-if="competitions.length && competitions.length !== relevantCompetitions.length" style="text-align: center;">
-            <md-button @click="$router.push(`/competitions`); menuVisible = false;">
+            <md-button @click="$router.push({ name: 'competitions' }); menuVisible = false;">
               See {{ competitions.length - relevantCompetitions.length }} More
             </md-button>
           </footer>
@@ -143,13 +147,15 @@ export default {
     },
 
     relevantCompetitions() {
-      return this.competitions
-        .filter((competition) => { // only show upcoming or up to 7 day old events
-          if (competition.date && moment(competition.date).isAfter(moment().subtract(7, 'days'))) {
-            return true;
-          }
-          return false;
-        })
+      const relevantCompetitions = this.competitions.filter((competition) => {
+        // only show upcoming or up to 7 day old events
+        if (competition.date && moment(competition.date).isAfter(moment().subtract(7, 'days'))) {
+          return true;
+        }
+        return false;
+      });
+
+      return (relevantCompetitions.length ? relevantCompetitions : this.competitions)
         .sort((a, b) => moment(a.date).diff(b.date)) // order chronologically
         .slice(0, 10); // limit to 10 max
     },
@@ -169,13 +175,13 @@ export default {
   watch: {
     me(me) {
       if (me) {
-        if (window.SessionStack) {
+        if (window.SessionStack && me[idKey]) {
           window.SessionStack.identify({
             userId: me[idKey],
             email: me.email,
           });
         }
-        if (window.$crisp) {
+        if (window.$crisp && me.email) {
           window.$crisp.push(['set', 'user:email', me.email]);
         }
       }
@@ -309,7 +315,7 @@ body,
     }
     .md-list-item-container {
       .md-list-item-content {
-        .md-subheader:not(.md-list-item) {
+        .md-subheader {
           flex-grow: 1;
           padding-left: 0;
 
@@ -335,6 +341,13 @@ body,
     &.active {
       .md-list-item-container {
         color: var(--md-theme-default-primary) !important;
+      }
+    }
+    &.empty {
+      .md-list-item-content {
+        font-size: small;
+        font-style: italic;
+        opacity: 0.5;
       }
     }
   }

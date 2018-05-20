@@ -98,6 +98,9 @@
                 >
                   {{ preset.$name || preset.name }}
                 </md-option>
+                <md-option v-if="!field.presets.length" disabled>
+                  None found.
+                </md-option>
               </md-select>
             </md-field>
 

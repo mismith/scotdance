@@ -88,8 +88,8 @@ export default {
     dancers() {
       return this.dancersRaw.map(dancer => ({
         ...dancer,
-        number: `${dancer.number}`, // stringify
-        $name: `${dancer.firstName} ${dancer.lastName}`,
+        number: `${dancer.number || ''}`.trim(), // stringify
+        $name: `${dancer.firstName || ''} ${dancer.lastName || ''}`.trim(),
         $group: findByIdKey(this.groups, dancer.groupId),
         $favorite: this.$store.getters.isFavorite('dancers', dancer[idKey]),
       }));
@@ -107,24 +107,25 @@ export default {
     },
     dances() {
       return this.dancesRaw.map((dance) => {
+        const name = dance.name || '';
         const stepsString = dance.steps ? ` (${dance.steps})` : '';
         return {
           ...dance,
-          $name: `${dance.name}${stepsString}`,
-          $shortName: `${dance.shortName || dance.name}${stepsString}`,
+          $name: `${name}${stepsString}`.trim(),
+          $shortName: `${dance.shortName || name}${stepsString}`.trim(),
         };
       });
     },
     staff() {
       return this.staffRaw.map(member => ({
         ...member,
-        $name: `${member.firstName} ${member.lastName}`,
+        $name: `${member.firstName || ''} ${member.lastName || ''}`.trim(),
       }));
     },
     platforms() {
       return this.platformsRaw.map(platform => ({
         ...platform,
-        $name: `Platform ${platform.name}`,
+        $name: `Platform ${platform.name}`.trim(),
       }));
     },
     schedule() {
