@@ -1832,7 +1832,7 @@ copy-webpack-plugin@^4.0.1:
     p-limit "^1.0.0"
     serialize-javascript "^1.4.0"
 
-cordova-android@^7.0.0:
+cordova-android@^7.1.0:
   version "7.1.0"
   resolved "https://registry.yarnpkg.com/cordova-android/-/cordova-android-7.1.0.tgz#1cd36ee7b9d19bad50d3e9842b731fe590924dd5"
   dependencies:
@@ -7231,6 +7231,10 @@ vue-awesome-swiper@^3.1.0:
   dependencies:
     object-assign "^4.1.1"
     swiper "^4.0.7"
+
+vue-body-class@^2.0.0-beta.2:
+  version "2.0.0-beta.2"
+  resolved "https://registry.yarnpkg.com/vue-body-class/-/vue-body-class-2.0.0-beta.2.tgz#d11bda0ef9ed2fc9dceec0325ca87c0099f17eea"
 
 vue-eslint-parser@^2.0.3:
   version "2.0.3"

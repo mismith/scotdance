@@ -204,8 +204,20 @@ export default {
 ));
 @import "~vue-material/dist/theme/all";
 
+// import simple-line-icons
 $simple-line-font-path: "~simple-line-icons/fonts/";
 @import "~simple-line-icons/scss/simple-line-icons";
+
+// extension styling overrides
+body.has-bottom-bar {
+  #crisp-chatbox {
+    > div {
+      > a {
+        margin-bottom: 56px !important;
+      }
+    }
+  }
+}
 
 // app-wide helpers
 .md-scroll-frame {

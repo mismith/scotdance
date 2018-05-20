@@ -58,6 +58,7 @@ export default new Router({
               const snap = await db.child(`competitions/${route.params.competitionId}/name`).once('value');
               return snap.val() || 'Competition';
             },
+            bodyClass: 'has-bottom-bar',
           },
           children: [
             {

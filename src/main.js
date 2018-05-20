@@ -5,6 +5,7 @@ import 'vue-material/dist/vue-material.css';
 import VueAwesomeSwiper from 'vue-awesome-swiper';
 import 'swiper/dist/css/swiper.css';
 import VueAsyncComputed from 'vue-async-computed';
+import VueBodyClass from 'vue-body-class';
 
 import {
   firebase,
@@ -37,6 +38,7 @@ Vue.use(VueMaterial);
 Vue.component('md-spinnable', MdSpinnable);
 Vue.use(VueAwesomeSwiper);
 Vue.use(VueAsyncComputed);
+Vue.use(VueBodyClass, router);
 
 // monitor user auth
 firebase.auth().onAuthStateChanged((me) => {
@@ -60,6 +62,7 @@ router.beforeEach(async (to, from, next) => {
   next();
 });
 
+// hide by default (e.g. until navbar help icon is clicked)
 if (window.$crisp) {
   window.$crisp.push(['do', 'chat:hide']);
 }
