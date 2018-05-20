@@ -168,11 +168,16 @@ export default {
   },
   watch: {
     me(me) {
-      if (me && window.SessionStack) {
-        window.SessionStack.identify({
-          userId: me[idKey],
-          email: me.email,
-        });
+      if (me) {
+        if (window.SessionStack) {
+          window.SessionStack.identify({
+            userId: me[idKey],
+            email: me.email,
+          });
+        }
+        if (window.$crisp) {
+          window.$crisp.push(['set', 'user:email', me.email]);
+        }
       }
     },
   },
