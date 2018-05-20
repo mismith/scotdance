@@ -7,6 +7,11 @@ export const overall = {
   $name: 'Overall',
 };
 
+export const callbacks = {
+  [idKey]: 'callbacks',
+  $name: 'Callbacks',
+};
+
 export function findGroupDancers(group) {
   return this.dancers.filter(dancer => dancer.groupId === group[idKey]);
 }

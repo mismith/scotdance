@@ -15,27 +15,13 @@
               <md-icon v-if="hasFavorites(findGroupDancers(group))" class="md-accent">star</md-icon>
             </md-subheader>
 
-            <md-list slot="md-expand">
-              <result-list-item
-                v-for="dance in findGroupDances(group)"
-                :key="dance[idKey]"
-                :winner="getGroupDanceWinner(group, dance)"
-                @click="$router.push({ name: 'competition.results', params: { groupId: group[idKey], danceId: dance[idKey] }})"
-              >
-                {{ dance.$name }}
-              </result-list-item>
-
-              <div v-if="group.$category && group.$category.name !== 'Primary'">
-                <md-divider class="md-inset" />
-                <result-list-item
-                  :winner="getGroupDanceWinner(group, overall)"
-                  @click="$router.push({ name: 'competition.results', params: { groupId: group[idKey], danceId: overall[idKey] }})"
-                >
-                  {{ overall.$name }}
-                  <md-icon class="icon-trophy" slot="icon" />
-                </result-list-item>
-              </div>
-            </md-list>
+            <results-list
+              slot="md-expand"
+              :group="group"
+              :dances="dances"
+              :dancers="dancers"
+              :results="results"
+            />
           </md-list-item>
         </md-list>
         <md-empty-state
@@ -73,7 +59,7 @@
                   v-for="(dancer, index) in group.dancers"
                   :key="dancer[idKey]"
                   :dancer="dancer"
-                  :place="group.placed && index + 1"
+                  :place="group.placed && (danceId !== callbacks[idKey] ? index + 1 : undefined)"
                   @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] }})"
                 />
                 <md-list-item v-if="!group.dancers.length" class="empty">
@@ -91,7 +77,7 @@
 
 <script>
 import DancerListItem from '@/components/dancer-list-item';
-import ResultListItem from '@/components/result-list-item';
+import ResultsList from '@/components/results-list';
 import {
   idKey,
 } from '@/helpers/firebase';
@@ -100,11 +86,10 @@ import {
 } from '@/helpers/competition';
 import {
   overall,
+  callbacks,
   findGroupDancers,
-  findGroupDances,
   getGroupDanceResults,
   getPlacedDancers,
-  getGroupDanceWinner,
 } from '@/helpers/results';
 
 export default {
@@ -125,6 +110,7 @@ export default {
     return {
       idKey,
       overall,
+      callbacks,
     };
   },
   computed: {
@@ -136,8 +122,10 @@ export default {
     },
     currentDance() {
       if (this.danceId) {
-        if (this.danceId === 'overall') {
+        if (this.danceId === overall[idKey]) {
           return overall;
+        } else if (this.danceId === callbacks[idKey]) {
+          return callbacks;
         }
         return this.dances.find(dance => dance[idKey] === this.danceId);
       }
@@ -145,7 +133,8 @@ export default {
     },
     currentDancers() {
       if (this.currentGroup) {
-        return this.findGroupDancers(this.currentGroup);
+        return this.findGroupDancers(this.currentGroup)
+          .sort((a, b) => Number.parseInt(a.number, 10) - Number.parseInt(b.number, 10));
       }
       return [];
     },
@@ -163,14 +152,14 @@ export default {
     groupedDancers() {
       return [
         {
-          name: 'Placed',
+          name: 'Dancers',
           dancers: this.placedDancers,
           placed: true,
         },
-        {
-          name: 'Dancers',
-          dancers: this.unplacedDancers,
-        },
+        // {
+        //   name: 'Other Dancers',
+        //   dancers: this.unplacedDancers,
+        // },
       ];
     },
   },
@@ -182,10 +171,8 @@ export default {
   methods: {
     hasFavorites,
     findGroupDancers,
-    findGroupDances,
     getGroupDanceResults,
     getPlacedDancers,
-    getGroupDanceWinner,
 
     showRelevantSlide() {
       if (this.currentDance) {
@@ -210,7 +197,7 @@ export default {
   },
   components: {
     DancerListItem,
-    ResultListItem,
+    ResultsList,
   },
 };
 </script>

@@ -339,8 +339,10 @@ body,
       }
     }
     &.active {
-      .md-list-item-container {
-        color: var(--md-theme-default-primary) !important;
+      background-color: var(--md-theme-default-primary) !important;
+
+      .md-list-item-content {
+        color: #fff;
       }
     }
     &.empty {

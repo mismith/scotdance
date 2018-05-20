@@ -12,30 +12,13 @@
               {{ group.$name }}
             </md-subheader>
 
-            <md-list slot="md-expand">
-              <result-list-item
-                v-for="dance in findGroupDances(group)"
-                :key="dance[idKey]"
-                :winner="getGroupDanceWinner(group, dance)"
-                @click="selected = { group, dance }"
-                :class="{selected: selected && selected.group === group && selected.dance === dance}"
-              >
-                {{ dance.$name }}
-                <span slot="icon" />
-              </result-list-item>
-
-              <div v-if="group.$category && group.$category.name !== 'Primary'">
-                <md-divider class="md-inset" />
-                <result-list-item
-                  :winner="getGroupDanceWinner(group, overall)"
-                  @click="selected = { group, dance: overall }"
-                  :class="{selected: selected && selected.group === group && selected.dance === overall}"
-                >
-                  {{ overall.$name }}
-                  <md-icon class="icon-trophy" slot="icon" />
-                </result-list-item>
-              </div>
-            </md-list>
+            <results-list
+              slot="md-expand"
+              :group="group"
+              :dances="dances"
+              :dancers="dancers"
+              :results="results"
+            />
           </md-list-item>
         </md-list>
         <md-empty-state
@@ -45,18 +28,16 @@
         />
       </div>
       <div class="md-layout-item md-size-33 admin-blade md-scroll">
-        <md-list v-if="selected">
-          <div v-if="selectedDancers.length">
-            <dancer-list-item
-              v-for="dancer in selectedDancers"
-              :key="dancer[idKey]"
-              :dancer="dancer"
-              @click="placeDancer(dancer)"
-              :class="{placed: isPlaced(dancer)}"
-            />
-          </div>
+        <md-list v-if="currentDance" class="md-double-line">
+          <dancer-list-item
+            v-for="dancer in currentDancers"
+            :key="dancer[idKey]"
+            :dancer="dancer"
+            @click="placeDancer(dancer)"
+            :class="{placed: isPlaced(dancer)}"
+          />
           <md-empty-state
-            v-else
+            v-if="!currentDancers.length"
             md-icon="error"
             md-label="No dancers found"
           />
@@ -69,12 +50,12 @@
         />
       </div>
       <div class="md-layout-item md-size-33 admin-blade md-scroll">
-        <md-list v-if="placedDancers.length">
+        <md-list v-if="placedDancers.length" class="md-double-line">
           <dancer-list-item
             v-for="(dancer, index) in placedDancers"
             :key="dancer[idKey]"
             :dancer="dancer"
-            :place="index + 1"
+            :place="danceId !== callbacks[idKey] ? index + 1 : undefined"
             @click="placeDancer(dancer)"
           />
         </md-list>
@@ -91,22 +72,24 @@
 
 <script>
 import DancerListItem from '@/components/dancer-list-item';
-import ResultListItem from '@/components/result-list-item';
+import ResultsList from '@/components/results-list';
 import {
   idKey,
 } from '@/helpers/firebase';
 import {
   overall,
+  callbacks,
   findGroupDancers,
-  findGroupDances,
   getGroupDanceResults,
   getPlacedDancers,
-  getGroupDanceWinner,
 } from '@/helpers/results';
 
 export default {
   name: 'admin-results',
   props: {
+    groupId: String,
+    danceId: String,
+
     groups: Array,
     dances: Array,
     dancers: Array,
@@ -117,39 +100,46 @@ export default {
     return {
       idKey,
       overall,
-
-      selected: undefined,
-
-      placedDancers: [],
+      callbacks,
     };
   },
-  watch: {
-    selected() {
-      // @TODO:
-      // if (Object.keys(this.unsavedChanges).length) {
-      //   confirm('Are you sure?');
-      // }
-
-      // reset placed dancers on group/dance change
-      let results = [];
-      if (this.selected) {
-        results = this.getGroupDanceResults(this.selected.group, this.selected.dance);
-      }
-
-      this.$set(this, 'placedDancers', this.getPlacedDancers(results));
-    },
-  },
   computed: {
-    selectedDancers() {
-      return this.selected ? this.findGroupDancers(this.selected.group) : [];
+    currentGroup() {
+      if (this.groupId) {
+        return this.groups.find(group => group[idKey] === this.groupId);
+      }
+      return null;
+    },
+    currentDance() {
+      if (this.danceId) {
+        if (this.danceId === overall[idKey]) {
+          return overall;
+        } else if (this.danceId === callbacks[idKey]) {
+          return callbacks;
+        }
+        return this.dances.find(dance => dance[idKey] === this.danceId);
+      }
+      return null;
+    },
+    currentDancers() {
+      if (this.currentGroup) {
+        return this.findGroupDancers(this.currentGroup)
+          .sort((a, b) => Number.parseInt(a.number, 10) - Number.parseInt(b.number, 10));
+      }
+      return [];
+    },
+    placedDancers() {
+      let results = [];
+      if (this.currentGroup && this.currentDance) {
+        results = this.getGroupDanceResults(this.currentGroup, this.currentDance);
+      }
+      return this.getPlacedDancers(results);
     },
   },
   methods: {
     findGroupDancers,
-    findGroupDances,
     getGroupDanceResults,
     getPlacedDancers,
-    getGroupDanceWinner,
 
     placeDancer(dancer) {
       const placeIndex = this.getDancerPlaceIndex(dancer);
@@ -162,15 +152,9 @@ export default {
       }
 
       // emit changes
-      const unsavedChanges = {};
-      if (this.selected && this.selected.group && this.selected.dance) {
-        const groupId = this.selected.group[idKey];
-        const danceId = this.selected.dance[idKey];
-
-        // set placed dancers in order
-        unsavedChanges[`results/${groupId}/${danceId}`] = this.placedDancers.map(d => d[idKey]);
-      }
-      this.$emit('change', unsavedChanges);
+      this.$emit('change', {
+        [`results/${this.groupId}/${this.danceId}`]: this.placedDancers.map(d => d[idKey]),
+      });
     },
     getDancerPlaceIndex(dancer) {
       return this.placedDancers.findIndex(d => d[idKey] === dancer[idKey]);
@@ -181,7 +165,7 @@ export default {
   },
   components: {
     DancerListItem,
-    ResultListItem,
+    ResultsList,
   },
 };
 </script>

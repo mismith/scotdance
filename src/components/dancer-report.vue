@@ -23,10 +23,10 @@
           <result-list-item
             v-for="dance in findGroupDances(dancer.$group)"
             :key="dance[idKey]"
-            :winner="null"
             :place="getPlace(dancer, dancer.$group, dance)"
             @click="$router.push({ name: 'competition.results', params: { groupId: dancer.$group[idKey], danceId: dance[idKey]}})"
           >
+            <span slot="avatar" />
             {{ dance.$name }}
           </result-list-item>
         </md-list>

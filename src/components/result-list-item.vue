@@ -1,13 +1,15 @@
 <template>
   <md-list-item @click="$emit('click', $event)" class="result-list-item">
-    <md-avatar
-      v-if="winner !== null"
-      class="md-avatar-icon"
-      :class="{'md-primary': winner, 'md-accent': winner && winner.$favorite}"
-    >
-      <span v-if="winner">{{ winner.number }}</span>
-      <small v-else>TBD</small>
-    </md-avatar>
+    <slot name="avatar">
+      <md-avatar
+        class="md-avatar-icon"
+        :class="{'md-primary': winner, 'md-accent': winner && winner.$favorite}"
+      >
+        <span v-if="winner && winner.number">{{ winner.number }}</span>
+        <md-icon v-else-if="winner">check</md-icon>
+        <small v-else>TBD</small>
+      </md-avatar>
+    </slot>
 
     <span class="md-list-item-text"><slot /></span>
 
@@ -24,8 +26,8 @@ import Place from '@/components/place';
 export default {
   name: 'result-list-item',
   props: {
-    winner: Object,
-    place: Number,
+    winner: Object, // undefined -> TBD; {} -> show checkmark; { number } -> show number
+    place: Number, // undefined -> show chevron
   },
   components: {
     Place,

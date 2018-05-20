@@ -55,7 +55,8 @@
                   v-for="dancer in bucket.dancers"
                   :key="dancer[idKey]"
                   :dancer="dancer"
-                  @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] }})"
+                  @click="$router.push({ params: { dancerId: dancer[idKey] }})"
+                  :class="{ active: $route.params.dancerId === dancer[idKey] }"
                 />
               </md-list>
             </md-list-item>

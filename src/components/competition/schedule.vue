@@ -28,7 +28,8 @@
                   <md-list-item
                     v-for="(event, eventId) in block.events"
                     :key="eventId"
-                    @click="$router.push({ name: 'competition.schedule', params: { dayId, blockId, eventId }})"
+                    @click="$router.push({ params: { dayId, blockId, eventId }})"
+                    :class="{ active: isActive(dayId, blockId, eventId) }"
                   >
                     <div class="md-list-item-text">
                       <div>{{ event.name }}</div>
@@ -120,10 +121,7 @@ export default {
     blockId: String,
     eventId: String,
     danceId: String,
-    competitionDataRef: {
-      type: Object,
-      required: true,
-    },
+
     groups: Array,
     dances: Array,
     staff: Array,
@@ -170,6 +168,10 @@ export default {
       } else {
         this.$el.swiper.slideTo(0);
       }
+    },
+
+    isActive(dayId, blockId, eventId) {
+      return this.dayId === dayId && this.blockId === blockId && this.eventId === eventId;
     },
 
     handleDanceExpanded(danceId, expanded) {

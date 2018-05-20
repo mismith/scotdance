@@ -109,7 +109,7 @@ export default new Router({
                   props: true,
                 },
                 {
-                  path: 'results',
+                  path: 'results/:groupId?/:danceId?',
                   name: 'competition.admin.results',
                   component: CompetitionAdminResults,
                   props: true,
