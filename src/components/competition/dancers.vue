@@ -2,22 +2,25 @@
   <swiper class="competition-dancers md-scroll-frame swiper-no-swiping alt">
     <swiper-slide>
       <div v-if="dancers.length" class="md-scroll-frame">
-        <md-toolbar class="md-dense">
-          <md-field md-clearable>
+        <md-toolbar>
+          <md-field md-clearable style="margin-left: 8px; margin-right: 8px;">
             <label for="filterBy">Search</label>
             <md-input v-model="filterBy" id="filterBy" />
           </md-field>
-          <span style="display: inline-block; width: 12px;" />
-          <md-field>
-            <label for="sortBy">Sort by</label>
-            <md-select v-model="sortBy" id="sortBy">
-              <md-option value="$group.$order">Age Group</md-option>
-              <md-option value="firstName">First Name</md-option>
-              <md-option value="lastName">Last Name</md-option>
-              <md-option value="location">Location</md-option>
-              <md-option value="number">Number</md-option>
-            </md-select>
-          </md-field>
+          <md-menu md-direction="bottom-end" md-align-trigger @selected="sortBy">
+            <md-button md-menu-trigger class="md-icon-button">
+              <md-icon>filter_list</md-icon>
+            </md-button>
+
+            <md-menu-content>
+              <md-menu-item
+                v-for="by in sortableBy"
+                :key="by.key"
+                @click="sortBy = by.key"
+                :class="{ active: sortBy === by.key }"
+              >{{ by.name }}</md-menu-item>
+            </md-menu-content>
+          </md-menu>
           <!--<md-menu md-align-trigger>
             <md-button
               md-menu-trigger
@@ -120,8 +123,15 @@ export default {
     return {
       idKey,
 
+      sortableBy: [
+        { key: '$group.$name', name: 'Age Group' },
+        { key: 'number', name: 'Number' },
+        { key: 'location', name: 'Location' },
+        { key: 'firstName', name: 'First Name' },
+        { key: 'lastName', name: 'Last Name' },
+      ],
+      sortBy: '$group.$name',
       filterBy: undefined,
-      sortBy: '$group.$order',
     };
   },
   computed: {
@@ -135,7 +145,7 @@ export default {
     filteredDancers() {
       // filter by search term
       const filtered = this.filterBy && this.dancers.length
-        ? new FuzzySearch(this.dancers, ['number', 'firstName', 'lastName', 'location', '$group.$name']).search(this.filterBy)
+        ? new FuzzySearch(this.dancers, this.sortableBy.map(({ key }) => key)).search(this.filterBy)
         : this.dancers;
 
       // sort by key
@@ -146,7 +156,7 @@ export default {
     bucketedDancers() {
       const buckets = {};
       this.filteredDancers.forEach((dancer) => {
-        const bucket = this.getSortCategory(dancer);
+        const bucket = this.getSortCategory(dancer) || '?';
         buckets[bucket] = buckets[bucket] || [];
         buckets[bucket].push(dancer);
       });
@@ -157,7 +167,7 @@ export default {
         }));
     },
     forceExpanded() {
-      return !!this.filterBy || this.sortBy === 'number';
+      return !!this.filterBy || this.bucketedDancers.length <= 1;
     },
   },
   watch: {
@@ -179,19 +189,22 @@ export default {
     getSortCategory(dancer) {
       if (!dancer) return undefined;
 
+      const sortableBy = this.sortableBy.find(({ key }) => key === this.sortBy);
+      const fallback = sortableBy && sortableBy.name;
       switch (this.sortBy) {
         case 'number': {
-          return 'Number';
+          return fallback;
         }
         case 'firstName':
         case 'lastName': {
-          return dancer[this.sortBy][0];
+          // get first letter
+          return (dancer[this.sortBy] || '')[0] || fallback;
         }
-        case '$group.$order': {
-          return dancer.$group && dancer.$group.$name;
+        case '$group.$name': {
+          return (dancer.$group && dancer.$group.$name) || fallback;
         }
         default: {
-          return dancer[this.sortBy];
+          return dancer[this.sortBy] || fallback;
         }
       }
     },
