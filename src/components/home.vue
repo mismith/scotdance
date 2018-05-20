@@ -10,7 +10,7 @@
           <a @click.prevent="TODO()" href="#" target="_blank">
             <img src="static/img/app-store.svg" alt="Download on the App Store" />
           </a>
-          <a @click.prevent="TODO()" href="#" target="_blank">
+          <a href="https://play.google.com/store/apps/details?id=info.mismith.scotdance" target="_blank">
             <img src="static/img/play-store.svg" alt="Get it on Google Play" />
           </a>
         </p>
