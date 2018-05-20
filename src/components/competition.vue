@@ -144,7 +144,7 @@ export default {
       this.loaded = false;
 
       this.competitionRef = db.child('competitions').child(this.competitionId);
-      this.competitionDataRef = db.child('competitionsData').child(this.competitionId);
+      this.competitionDataRef = db.child('competitions:data').child(this.competitionId);
 
       // info object
       if (this.competitionRaw) this.$unbind('competitionRaw');

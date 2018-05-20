@@ -1,5 +1,6 @@
 import firebase from 'firebase';
 
+const ENV = 'production';
 const config = {
   apiKey: 'AIzaSyCxvA2RMvlCQ3WCzAqPotD8IOhnmCtQ1xM',
   authDomain: 'scotdance.firebaseapp.com',
@@ -11,7 +12,7 @@ const config = {
 firebase.initializeApp(config);
 
 const idKey = '.key';
-const db = firebase.database().ref();
+const db = firebase.database().ref(ENV);
 
 export {
   idKey,
