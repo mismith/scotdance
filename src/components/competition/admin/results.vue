@@ -124,7 +124,7 @@ export default {
     currentDancers() {
       if (this.currentGroup) {
         return this.findGroupDancers(this.currentGroup)
-          .sort((a, b) => Number.parseInt(a.number, 10) - Number.parseInt(b.number, 10));
+          .sort((a, b) => a.$number.localeCompare(b.$number));
       }
       return [];
     },

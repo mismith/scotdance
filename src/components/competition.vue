@@ -88,7 +88,7 @@ export default {
     dancers() {
       return this.dancersRaw.map(dancer => ({
         ...dancer,
-        number: `${dancer.number || ''}`.trim(), // stringify
+        $number: `${10000 + Number.parseInt(dancer.number, 10)}`, // prepend with leading 'zeroes'
         $name: `${dancer.firstName || ''} ${dancer.lastName || ''}`.trim(),
         $group: findByIdKey(this.groups, dancer.groupId),
         $favorite: this.$store.getters.isFavorite('dancers', dancer[idKey]),
@@ -97,7 +97,7 @@ export default {
     groups() {
       return this.groupsRaw.map((group, i) => ({
         ...group,
-        $order: `${10000 + i}`, // pad with leading 'zeros'
+        $order: `${10000 + i}`, // prepend with leading 'zeroes'
         $name: this.getGroupName(group),
         $category: this.findCategory(group.categoryId),
       }));

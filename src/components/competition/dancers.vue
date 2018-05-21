@@ -125,13 +125,13 @@ export default {
       idKey,
 
       sortableBy: [
-        { key: '$group.$name', name: 'Age Group' },
-        { key: 'number', name: 'Number' },
+        { key: '$group.$order', name: 'Age Group', searchKey: '$group.$name' },
+        { key: '$number', name: 'Number', searchKey: 'number' },
         { key: 'location', name: 'Location' },
         { key: 'firstName', name: 'First Name' },
         { key: 'lastName', name: 'Last Name' },
       ],
-      sortBy: '$group.$name',
+      sortBy: '$group.$order',
       filterBy: undefined,
     };
   },
@@ -145,12 +145,15 @@ export default {
 
     filteredDancers() {
       // filter by search term
+      const searchKeys = this.sortableBy.map(({ key, searchKey }) => searchKey || key);
       const filtered = this.filterBy && this.dancers.length
-        ? new FuzzySearch(this.dancers, this.sortableBy.map(({ key }) => key)).search(this.filterBy)
+        ? new FuzzySearch(this.dancers, searchKeys).search(this.filterBy)
         : this.dancers;
 
       // sort by key
-      if (this.sortBy) ArraySort(filtered, [this.sortBy, 'number']);
+      if (this.sortBy) {
+        ArraySort(filtered, [this.sortBy, '$number']);
+      }
 
       return filtered;
     },
@@ -193,7 +196,7 @@ export default {
       const sortableBy = this.sortableBy.find(({ key }) => key === this.sortBy);
       const fallback = sortableBy && sortableBy.name;
       switch (this.sortBy) {
-        case 'number': {
+        case '$number': {
           return fallback;
         }
         case 'firstName':
@@ -201,7 +204,7 @@ export default {
           // get first letter
           return (dancer[this.sortBy] || '')[0] || fallback;
         }
-        case '$group.$name': {
+        case '$group.$order': {
           return (dancer.$group && dancer.$group.$name) || fallback;
         }
         default: {
