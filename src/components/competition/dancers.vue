@@ -160,7 +160,7 @@ export default {
     bucketedDancers() {
       const buckets = {};
       this.filteredDancers.forEach((dancer) => {
-        const bucket = this.getSortCategory(dancer) || '?';
+        const bucket = this.getSortGroup(dancer) || '?';
         buckets[bucket] = buckets[bucket] || [];
         buckets[bucket].push(dancer);
       });
@@ -190,7 +190,7 @@ export default {
       }
     },
 
-    getSortCategory(dancer) {
+    getSortGroup(dancer) {
       if (!dancer) return undefined;
 
       const sortableBy = this.sortableBy.find(({ key }) => key === this.sortBy);
