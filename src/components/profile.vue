@@ -16,7 +16,7 @@
 
         <md-field>
           <label>Display name</label>
-          <md-input v-model="me.displayName" />
+          <md-input v-model="me.displayName" @input="handleChanges('displayName')" />
         </md-field>
         <md-field>
           <label>Email</label>
@@ -159,6 +159,15 @@ export default {
     },
   },
   methods: {
+    handleChanges(...props) {
+      const changes = {};
+      props.forEach(prop => {
+        changes[prop] = this.me[prop] || null;
+      });
+
+      db.child('users').child(this.me[idKey]).update(changes);
+    },
+
     async changePassword() {
       this.passwordLoading = true;
       this.passwordError = null;
