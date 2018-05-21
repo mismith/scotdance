@@ -27,6 +27,7 @@
     <preference name="StatusBarOverlaysWebView" value="false" />
     <preference name="StatusBarBackgroundColor" value="#1e88e5" />
     <preference name="StatusBarDefaultScrollToTop" value="true" />
+    <preference name="DisallowOverscroll" value="true" />
     <engine name="ios" spec="^4.5.4" />
     <engine name="android" spec="^7.1.0" />
 </widget>
