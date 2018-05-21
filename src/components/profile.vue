@@ -23,6 +23,51 @@
           <md-input v-model="me.email" readonly required />
         </md-field>
 
+        <div class="md-layout md-alignment-center">
+          <md-button @click="passwordActive = true" class="md-primary">Change Password</md-button>
+          <md-dialog :md-active.sync="passwordActive" :md-fullscreen="false" class="change-password-dialog">
+            <md-dialog-title>Change your password</md-dialog-title>
+
+            <md-dialog-content>
+              <md-field md-toggle-password>
+                <label>Current Password</label>
+                <md-input
+                  v-model="passwordConfirm"
+                  type="password"
+                  name="password"
+                  @keypress.enter="changePassword"
+                />
+              </md-field>
+              <md-field md-toggle-password>
+                <label>New Password</label>
+                <md-input
+                  v-model="newPassword"
+                  type="password"
+                  name="password"
+                  @keypress.enter="changePassword"
+                />
+              </md-field>
+
+              <aside v-if="passwordError" class="validation-message">
+                {{ passwordError.message }}
+              </aside>
+            </md-dialog-content>
+
+            <md-dialog-actions>
+              <md-spinnable :md-spinning="passwordLoading">
+                <md-button
+                  @click="changePassword"
+                  :disabled="!passwordConfirm || !newPassword"
+                  class="md-primary md-raised"
+                >
+                  Change Password
+                </md-button>
+              </md-spinnable>
+              <md-button @click="passwordActive = false">Cancel</md-button>
+            </md-dialog-actions>
+          </md-dialog>
+        </div>
+
         <footer class="md-layout md-alignment-center" style="margin-top: auto;">
           <md-button @click="removeActive = true" class="md-accent">Delete Account</md-button>
           <md-dialog :md-active.sync="removeActive" :md-fullscreen="false" class="remove-user-dialog">
@@ -85,6 +130,12 @@ export default {
   name: 'profile',
   data() {
     return {
+      passwordActive: false,
+      passwordConfirm: undefined,
+      newPassword: undefined,
+      passwordLoading: false,
+      passwordError: undefined,
+
       removeActive: false,
       removeConfirm: undefined,
       removeLoading: false,
@@ -97,12 +148,34 @@ export default {
     ]),
   },
   watch: {
+    passwordActive() {
+      this.passwordConfirm = null;
+      this.newPassword = null;
+      this.passwordError = null;
+    },
     removeActive() {
       this.removeConfirm = null;
       this.removeError = null;
     },
   },
   methods: {
+    async changePassword() {
+      this.passwordLoading = true;
+      this.passwordError = null;
+      if (this.me && this.passwordConfirm && this.newPassword) {
+        try {
+          const user = firebase.auth().currentUser;
+          await user.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(this.me.email, this.passwordConfirm));
+          await user.updatePassword(this.newPassword);
+
+          this.passwordLoading = false;
+          this.passwordActive = false;
+        } catch (err) {
+          this.passwordError = err;
+          this.passwordLoading = false;
+        }
+      }
+    },
     async remove() {
       this.removeLoading = true;
       this.removeError = null;

@@ -485,6 +485,7 @@ body,
 
 .login-dialog,
 .register-dialog,
+.change-password-dialog,
 .remove-user-dialog {
   .md-dialog-actions {
     display: flex;
