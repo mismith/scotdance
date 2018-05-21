@@ -3,10 +3,9 @@
     <slot name="avatar">
       <md-avatar
         class="md-avatar-icon"
-        :class="{'md-primary': winner, 'md-accent': winner && winner.$favorite}"
+        :class="{ 'md-primary': winner }"
       >
-        <span v-if="winner && winner.number">{{ winner.number }}</span>
-        <md-icon v-else-if="winner">check</md-icon>
+        <md-icon v-if="winner">check</md-icon>
         <small v-else>TBD</small>
       </md-avatar>
     </slot>
@@ -26,7 +25,7 @@ import Place from '@/components/place';
 export default {
   name: 'result-list-item',
   props: {
-    winner: Object, // undefined -> TBD; {} -> show checkmark; { number } -> show number
+    winner: Object, // undefined -> TBD; {...} -> show checkmark;
     place: Number, // undefined -> show chevron
   },
   components: {

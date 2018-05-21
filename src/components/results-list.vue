@@ -1,7 +1,7 @@
 <template>
   <md-list class="results-list">
     <result-list-item
-      :winner="getGroupDanceWinner(group, callbacks) && {}"
+      :winner="getGroupDanceWinner(group, callbacks)"
       @click="handleClick(group, callbacks)"
       :class="{ active: isActive(group, callbacks) }"
     >
