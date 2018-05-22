@@ -6,6 +6,7 @@ import VueAwesomeSwiper from 'vue-awesome-swiper';
 import 'swiper/dist/css/swiper.css';
 import VueAsyncComputed from 'vue-async-computed';
 import VueBodyClass from 'vue-body-class';
+import VueLocalStorage from 'vue-localstorage';
 
 import {
   firebase,
@@ -21,7 +22,8 @@ import store from './store';
 
 import MdSpinnable from './components/md-spinnable';
 
-Vue.config.productionTip = false;
+// disable (amongst other things) vue-localstoreage verbose logging
+Vue.config.silent = true;
 
 // cordova
 Vue.prototype.isApp = false;
@@ -39,6 +41,9 @@ Vue.component('md-spinnable', MdSpinnable);
 Vue.use(VueAwesomeSwiper);
 Vue.use(VueAsyncComputed);
 Vue.use(VueBodyClass, router);
+Vue.use(VueLocalStorage, {
+  bind: true,
+});
 
 // monitor user auth
 firebase.auth().onAuthStateChanged((me) => {

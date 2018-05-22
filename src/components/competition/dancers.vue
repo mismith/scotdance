@@ -42,7 +42,8 @@
               v-for="bucket in bucketedDancers"
               :key="bucket[idKey]"
               md-expand
-              :md-expanded="forceExpanded"
+              :md-expanded="isBucketExpanded(bucket, bucketedDancers)"
+              @update:mdExpanded="handleBucketExpanded(bucket[idKey], $event)"
             >
               <md-subheader>
                 {{ bucket[idKey] }}
@@ -106,6 +107,10 @@ import {
 import {
   hasFavorites,
 } from '@/helpers/competition';
+import {
+  isExpanded,
+  handleExpanded,
+} from '@/helpers/router';
 
 export default {
   name: 'competition-dancers',
@@ -120,6 +125,20 @@ export default {
     groups: Array,
     results: Object,
   },
+  localStorage: {
+    filterBy: {
+      type: String,
+      default: '',
+    },
+    sortBy: {
+      type: String,
+      default: '$group.$order',
+    },
+    expandedBuckets: {
+      type: Object,
+      default: {}, // { [sortBy]: [], ... }
+    },
+  },
   data() {
     return {
       idKey,
@@ -131,8 +150,6 @@ export default {
         { key: 'firstName', name: 'First Name' },
         { key: 'lastName', name: 'Last Name' },
       ],
-      sortBy: '$group.$order',
-      filterBy: undefined,
     };
   },
   computed: {
@@ -170,9 +187,6 @@ export default {
           dancers,
         }));
     },
-    forceExpanded() {
-      return !!this.filterBy || this.bucketedDancers.length <= 1;
-    },
   },
   watch: {
     currentDancer() {
@@ -188,6 +202,22 @@ export default {
       } else {
         this.$el.swiper.slideTo(0);
       }
+    },
+
+    isBucketExpanded(item, items) {
+      // searching, so expand all groups
+      if (this.filterBy) return true;
+
+      const itemIds = items.map(i => i[idKey]);
+      return isExpanded(this.expandedBuckets[this.sortBy], item[idKey], itemIds);
+    },
+    handleBucketExpanded(bucketId, expanded) {
+      this.expandedBuckets[this.sortBy] = handleExpanded(
+        this.expandedBuckets[this.sortBy],
+        bucketId,
+        expanded,
+      );
+      this.$localStorage.set('expandedBuckets', this.expandedBuckets);
     },
 
     getSortGroup(dancer) {

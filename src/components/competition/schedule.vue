@@ -17,7 +17,8 @@
                 v-for="(block, blockId) in day.blocks"
                 :key="blockId"
                 md-expand
-                md-expanded
+                :md-expanded="isBlockExpanded(blockId, Object.keys(day.blocks))"
+                @update:mdExpanded="handleBlockExpanded(blockId, $event)"
               >
                 <md-subheader>
                   <div>{{ block.name }}</div>
@@ -75,11 +76,11 @@
 
           <md-list class="md-list-cards">
             <md-list-item
-              v-for="dance in currentEvent.dances"
-              :key="dance.danceId"
+              v-for="(dance, danceId) in currentEvent.dances"
+              :key="danceId"
               :md-expand="!!dance.platforms"
-              :md-expanded="dance.danceId === danceId"
-              @update:mdExpanded="handleDanceExpanded(dance.danceId, $event)"
+              :md-expanded="isDanceExpanded(danceId, Object.keys(currentEvent.dances))"
+              @update:mdExpanded="handleDanceExpanded(danceId, $event)"
             >
               <md-subheader>
                 <div>{{ getScheduleItemDanceName(dance, dances) }}</div>
@@ -113,6 +114,10 @@ import {
 import {
   idKey,
 } from '@/helpers/firebase';
+import {
+  isExpanded,
+  handleExpanded,
+} from '@/helpers/router';
 
 export default {
   name: 'competition-schedule',
@@ -127,6 +132,16 @@ export default {
     staff: Array,
     platforms: Array,
     schedule: Object,
+  },
+  localStorage: {
+    expandedBlocks: {
+      type: Object,
+      default: [],
+    },
+    expandedDances: {
+      type: Object,
+      default: {}, // { [eventId]: [], ... }
+    },
   },
   data() {
     return {
@@ -174,14 +189,24 @@ export default {
       return this.dayId === dayId && this.blockId === blockId && this.eventId === eventId;
     },
 
+    isBlockExpanded(blockId, blockIds) {
+      return isExpanded(this.expandedBlocks, blockId, blockIds);
+    },
+    handleBlockExpanded(blockId, expanded) {
+      this.expandedBlocks = handleExpanded(this.expandedBlocks, blockId, expanded);
+      this.$localStorage.set('expandedBlocks', this.expandedBlocks);
+    },
+
+    isDanceExpanded(danceId, danceIds) {
+      return isExpanded(this.expandedDances[this.eventId], danceId, danceIds);
+    },
     handleDanceExpanded(danceId, expanded) {
-      if (expanded) {
-        this.$router.replace({
-          params: {
-            danceId,
-          },
-        });
-      }
+      this.expandedDances[this.eventId] = handleExpanded(
+        this.expandedDances[this.eventId],
+        danceId,
+        expanded,
+      );
+      this.$localStorage.set('expandedDances', this.expandedDances);
     },
   },
   async mounted() {

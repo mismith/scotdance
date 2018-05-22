@@ -88,7 +88,7 @@ export default {
     dancers() {
       return this.dancersRaw.map(dancer => ({
         ...dancer,
-        $number: `${10000 + Number.parseInt(dancer.number, 10)}`, // prepend with leading 'zeroes'
+        $number: `${10000 + Number.parseInt(dancer.number, 10)}`, // prepend with leading 'zeroes', and stringify for search
         $name: `${dancer.firstName || ''} ${dancer.lastName || ''}`.trim(),
         $group: findByIdKey(this.groups, dancer.groupId),
         $favorite: this.$store.getters.isFavorite('dancers', dancer[idKey]),
