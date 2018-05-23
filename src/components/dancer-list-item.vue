@@ -15,17 +15,18 @@
 
     <slot />
 
+    <md-button
+      v-if="$store.state.me"
+      @click.stop="handleFavoriteToggle(dancer)"
+      class="md-icon-button md-list-action"
+    >
+      <md-icon :class="{'md-accent': dancer.$favorite}">
+        {{ dancer.$favorite ? 'star' : 'star_border' }}
+      </md-icon>
+    </md-button>
+
     <slot name="icon">
       <place v-if="place !== undefined" :place="place" />
-      <md-button
-        v-else-if="$store.state.me"
-        @click.stop="handleFavoriteToggle(dancer)"
-        class="md-icon-button md-list-action"
-      >
-        <md-icon :class="{'md-accent': dancer.$favorite}">
-          {{ dancer.$favorite ? 'star' : 'star_border' }}
-        </md-icon>
-      </md-button>
     </slot>
   </md-list-item>
 </template>
@@ -61,6 +62,8 @@ export default {
 
 <style lang="scss">
 .dancer-list-item {
-
+  .place {
+    margin-left: 12px;
+  }
 }
 </style>
