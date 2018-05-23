@@ -6,7 +6,7 @@
         :dancer="dancer"
       />
     </md-list>
-    <md-list v-if="dancer.$group" class="md-list-cards">
+    <md-list v-if="group" class="md-list-cards">
       <md-list-item md-expand :md-expanded="true">
         <md-subheader>Schedule</md-subheader>
 
@@ -21,13 +21,23 @@
 
         <md-list slot="md-expand">
           <result-list-item
-            v-for="dance in findGroupDances(dancer.$group)"
+            v-for="dance in findGroupDances(group)"
             :key="dance[idKey]"
-            :place="getPlace(dancer, dancer.$group, dance)"
-            @click="$router.push({ name: 'competition.results', params: { groupId: dancer.$group[idKey], danceId: dance[idKey]}})"
+            :place="getPlace(dancer, group, dance)"
+            @click="$router.push({ name: 'competition.results', params: { groupId: group[idKey], danceId: dance[idKey]}})"
           >
             <span slot="avatar" />
             {{ dance.$name }}
+          </result-list-item>
+
+          <md-divider v-if="hasOverall(group)" />
+          <result-list-item
+             v-if="hasOverall(group)"
+            :place="getPlace(dancer, group, overall)"
+            @click="$router.push({ name: 'competition.results', params: { groupId: group[idKey], danceId: overall[idKey]}})"
+          >
+            <span slot="avatar" />
+            {{ overall.$name }}
           </result-list-item>
         </md-list>
       </md-list-item>
@@ -36,14 +46,16 @@
 </template>
 
 <script>
-import {
-  findGroupDances,
-} from '@/helpers/results';
 import DancerListItem from '@/components/dancer-list-item';
 import ResultListItem from '@/components/result-list-item';
 import {
   idKey,
 } from '@/helpers/firebase';
+import {
+  overall,
+  hasOverall,
+  findGroupDances,
+} from '@/helpers/results';
 
 export default {
   name: 'dancer-report',
@@ -56,9 +68,14 @@ export default {
   data() {
     return {
       idKey,
+      overall,
+      hasOverall,
     };
   },
-  watch: {
+  computed: {
+    group() {
+      return this.dancer && this.dancer.$group;
+    },
   },
   methods: {
     findGroupDances,
