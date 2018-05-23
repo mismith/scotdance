@@ -8,7 +8,7 @@
     </md-button>
     <md-button
       @click="loginVisible = true"
-      class="md-raised"
+      class="md-raised md-accent"
     >
       <span>Login</span>
     </md-button>

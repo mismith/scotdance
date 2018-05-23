@@ -21,6 +21,13 @@
               >{{ by.name }}</md-menu-item>
             </md-menu-content>
           </md-menu>
+          <md-button
+            @click="onlyFavorites = !onlyFavorites"
+            class="md-icon-button"
+            :class="{ 'md-accent': onlyFavorites }"
+          >
+            <md-icon>{{ onlyFavorites ? 'star' : 'star_border' }}</md-icon>
+          </md-button>
           <!--<md-menu md-align-trigger>
             <md-button
               md-menu-trigger
@@ -41,20 +48,22 @@
              <md-list-item
               v-for="bucket in bucketedDancers"
               :key="bucket[idKey]"
+              v-if="!onlyFavorites || hasFavorites(bucket.dancers)"
               md-expand
               :md-expanded="isBucketExpanded(bucket, bucketedDancers)"
               @update:mdExpanded="handleBucketExpanded(bucket[idKey], $event)"
             >
               <md-subheader>
-                {{ bucket[idKey] }}
+                {{ bucket[idKey] || '?' }}
                 <md-icon v-if="hasFavorites(bucket.dancers)" class="md-accent">star</md-icon>
               </md-subheader>
-              <span class="badge">{{ bucket.dancers.length }}</span>
+              <!--<span class="badge">{{ bucket.dancers.length }}</span>-->
 
               <md-list slot="md-expand" class="md-double-line">
                 <dancer-list-item
                   v-for="dancer in bucket.dancers"
                   :key="dancer[idKey]"
+                  v-if="!onlyFavorites || dancer.$favorite"
                   :dancer="dancer"
                   @click="$router.push({ params: { dancerId: dancer[idKey] }})"
                   :class="{ active: $route.params.dancerId === dancer[idKey] }"
@@ -150,6 +159,7 @@ export default {
         { key: 'firstName', name: 'First Name' },
         { key: 'lastName', name: 'Last Name' },
       ],
+      onlyFavorites: false,
     };
   },
   computed: {
@@ -177,7 +187,7 @@ export default {
     bucketedDancers() {
       const buckets = {};
       this.filteredDancers.forEach((dancer) => {
-        const bucket = this.getSortGroup(dancer) || '?';
+        const bucket = this.getSortGroup(dancer);
         buckets[bucket] = buckets[bucket] || [];
         buckets[bucket].push(dancer);
       });
@@ -256,6 +266,8 @@ export default {
 <style lang="scss">
 .competition-dancers {
   .md-toolbar {
+    flex-wrap: nowrap;
+
     .md-field {
       width: auto;
       flex: 1;
