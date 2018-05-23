@@ -32,7 +32,7 @@
       </div>
     </swiper-slide>
     <swiper-slide class="md-scroll-frame">
-      <div v-if="currentGroup && currentDance" class="md-scroll-frame">
+      <div v-if="currentGroup" class="md-scroll-frame">
         <md-toolbar class="md-dense md-toolbar-nowrap">
           <md-button @click="$router.go(-1)" class="md-icon-button">
             <md-icon>chevron_left</md-icon>
@@ -42,29 +42,31 @@
           </span>
         </md-toolbar>
 
-        <div class="md-scroll">
-          <md-subheader class="md-title">{{ currentDance.$name }}</md-subheader>
-
+        <div id="results-detail" class="md-scroll">
           <md-list class="md-list-cards">
             <md-list-item
-              v-for="group in groupedDancers"
-              :key="group.name"
+              v-for="dance in groupedDancers"
+              :key="dance.name"
+              :id="`dance-${dance[idKey]}`"
               md-expand
-              md-expanded
+              :md-expanded="isDanceExpanded(dance, groupedDancers)"
+              @update:mdExpanded="handleDanceExpanded(dance[idKey], $event)"
             >
-              <md-subheader>{{ group.name }}</md-subheader>
+              <md-subheader>{{ dance.$name }}</md-subheader>
 
               <md-list slot="md-expand" class="md-double-line">
                 <dancer-list-item
-                  v-for="(dancer, index) in group.dancers"
+                  v-for="(dancer, index) in dance.dancers"
                   :key="dancer[idKey]"
                   :dancer="dancer"
-                  :place="group.placed && (danceId !== callbacks[idKey] ? index + 1 : undefined)"
+                  :place="index + 1"
                   @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] }})"
-                />
-                <md-list-item v-if="!group.dancers.length" class="empty">
-                  <span v-if="group.placed">Results to be determined.</span>
-                  <span v-else>No dancers found.</span>
+                >
+                  <span v-if="dance[idKey] === callbacks[idKey]" slot="icon" />
+                  <md-icon v-if="dance[idKey] === overall[idKey]" slot="icon" class="icon-trophy md-primary" />
+                </dancer-list-item>
+                <md-list-item v-if="!dance.dancers.length" class="empty">
+                  Results to be determined.
                 </md-list-item>
               </md-list>
             </md-list-item>
@@ -87,9 +89,11 @@ import {
 import {
   overall,
   callbacks,
+  findGroupDances,
   findGroupDancers,
   getGroupDanceResults,
   getPlacedDancers,
+  hasOverall,
 } from '@/helpers/results';
 import {
   isExpanded,
@@ -112,8 +116,12 @@ export default {
   },
   localStorage: {
     expandedGroups: {
-      type: Object,
+      type: Array,
       default: [],
+    },
+    expandedDances: {
+      type: Object,
+      default: {}, // { [groupId]: [], ... }
     },
   },
   data() {
@@ -141,36 +149,31 @@ export default {
       }
       return null;
     },
-    currentDancers() {
+    currentDances() {
       if (this.currentGroup) {
-        return this.findGroupDancers(this.currentGroup)
-          .sort((a, b) => a.$number.localeCompare(b.$number));
+        return this.findGroupDances(this.currentGroup);
       }
       return [];
     },
-    placedDancers() {
-      let results = [];
-      if (this.currentGroup && this.currentDance) {
-        results = this.getGroupDanceResults(this.currentGroup, this.currentDance);
-      }
-      return this.getPlacedDancers(results);
-    },
-    unplacedDancers() {
-      const placedDancerIds = this.placedDancers.map(dancer => dancer[idKey]);
-      return this.currentDancers.filter(dancer => !placedDancerIds.includes(dancer[idKey]));
-    },
     groupedDancers() {
-      return [
-        {
-          name: 'Dancers',
-          dancers: this.placedDancers,
-          placed: true,
-        },
-        // {
-        //   name: 'Other Dancers',
-        //   dancers: this.unplacedDancers,
-        // },
+      const groups = [
+        callbacks,
+        ...this.currentDances,
       ];
+
+      if (hasOverall(this.currentGroup)) {
+        groups.push(overall);
+      }
+
+      return groups.map((dance) => {
+        const results = this.getGroupDanceResults(this.currentGroup, dance);
+        const dancers = this.getPlacedDancers(results);
+
+        return {
+          ...dance,
+          dancers,
+        };
+      });
     },
   },
   watch: {
@@ -180,6 +183,7 @@ export default {
   },
   methods: {
     hasFavorites,
+    findGroupDances,
     findGroupDancers,
     getGroupDanceResults,
     getPlacedDancers,
@@ -187,6 +191,13 @@ export default {
     showRelevantSlide() {
       if (this.currentDance) {
         this.$el.swiper.slideTo(1);
+
+        // scroll to currentDance
+        setTimeout(() => {
+          this.$scrollTo(`#dance-${this.currentDance[idKey]}`, 0, {
+            container: '#results-detail',
+          });
+        }, 100);
       } else {
         this.$el.swiper.slideTo(0);
       }
@@ -199,6 +210,19 @@ export default {
     handleGroupExpanded(groupId, expanded) {
       this.expandedGroups = handleExpanded(this.expandedGroups, groupId, expanded);
       this.$localStorage.set('expandedGroups', this.expandedGroups);
+    },
+
+    isDanceExpanded(item, items) {
+      const itemIds = items.map(i => i[idKey]);
+      return isExpanded(this.expandedDances[this.groupId], item[idKey], itemIds, true);
+    },
+    handleDanceExpanded(danceId, expanded) {
+      this.expandedDances[this.groupId] = handleExpanded(
+        this.expandedDances[this.groupId],
+        danceId,
+        expanded,
+      );
+      this.$localStorage.set('expandedDances', this.expandedDances);
     },
   },
   async mounted() {

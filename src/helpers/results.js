@@ -40,3 +40,7 @@ export function getGroupDanceWinner(group, dance) {
 
   return placedDancers[0];
 }
+
+export function hasOverall(group) {
+  return group.$category && group.$category.name !== 'Primary';
+}

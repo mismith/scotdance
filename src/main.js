@@ -7,6 +7,7 @@ import 'swiper/dist/css/swiper.css';
 import VueAsyncComputed from 'vue-async-computed';
 import VueBodyClass from 'vue-body-class';
 import VueLocalStorage from 'vue-localstorage';
+import VueScrollTo from 'vue-scrollto';
 
 import {
   firebase,
@@ -44,6 +45,7 @@ Vue.use(VueBodyClass, router);
 Vue.use(VueLocalStorage, {
   bind: true,
 });
+Vue.use(VueScrollTo);
 
 // monitor user auth
 firebase.auth().onAuthStateChanged((me) => {

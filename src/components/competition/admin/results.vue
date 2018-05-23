@@ -50,14 +50,17 @@
         />
       </div>
       <div class="md-layout-item md-size-33 admin-blade md-scroll">
-        <md-list v-if="placedDancers.length" class="md-double-line">
+        <md-list v-if="currentDance && placedDancers.length" class="md-double-line">
           <dancer-list-item
             v-for="(dancer, index) in placedDancers"
             :key="dancer[idKey]"
             :dancer="dancer"
-            :place="danceId !== callbacks[idKey] ? index + 1 : undefined"
+            :place="index + 1"
             @click="placeDancer(dancer)"
-          />
+          >
+            <span v-if="currentDance[idKey] === callbacks[idKey]" slot="icon" />
+            <md-icon v-if="currentDance[idKey] === overall[idKey]" slot="icon" class="icon-trophy md-primary" />
+          </dancer-list-item>
         </md-list>
         <md-empty-state
           v-else

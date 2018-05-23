@@ -135,7 +135,7 @@ export default {
   },
   localStorage: {
     expandedBlocks: {
-      type: Object,
+      type: Array,
       default: [],
     },
     expandedDances: {
@@ -190,7 +190,7 @@ export default {
     },
 
     isBlockExpanded(blockId, blockIds) {
-      return isExpanded(this.expandedBlocks, blockId, blockIds);
+      return isExpanded(this.expandedBlocks, blockId, blockIds, true);
     },
     handleBlockExpanded(blockId, expanded) {
       this.expandedBlocks = handleExpanded(this.expandedBlocks, blockId, expanded);

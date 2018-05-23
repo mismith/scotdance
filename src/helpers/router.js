@@ -9,7 +9,7 @@ export async function getTitleChunks(route) {
     .filter(chunk => chunk);
 }
 
-export function isExpanded(items, itemId, itemIds) {
+export function isExpanded(items, itemId, itemIds, expandAll = false) {
   const clones = [...(items || [])];
 
   // was expanded before, so restore
@@ -17,7 +17,7 @@ export function isExpanded(items, itemId, itemIds) {
     // only one item, so save a tap
     || itemIds.length <= 1
     // nothing expanded, so expand first
-    || (!clones.length && itemIds.indexOf(itemId) === 0);
+    || (!clones.length && (expandAll ? true : itemIds.indexOf(itemId) === 0));
 }
 
 export function handleExpanded(items, itemId, expanded) {

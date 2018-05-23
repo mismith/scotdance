@@ -44,6 +44,7 @@ import {
   getPlacedDancers,
   getGroupDanceWinner,
   getGroupDanceResults,
+  hasOverall,
 } from '@/helpers/results';
 
 export default {
@@ -68,6 +69,7 @@ export default {
     getPlacedDancers,
     getGroupDanceWinner,
     getGroupDanceResults,
+    hasOverall,
 
     isActive(group, dance) {
       const {
@@ -76,9 +78,6 @@ export default {
       } = this.$route.params;
 
       return groupId === group[idKey] && danceId === dance[idKey];
-    },
-    hasOverall(group) {
-      return group.$category && group.$category.name !== 'Primary';
     },
 
     handleClick(group, dance) {
