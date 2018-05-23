@@ -1,6 +1,0 @@
-<header class="bg-accent">
-	<div class="flex-row margin-sm">
-		<a ng-repeat="section in sections track by section.$id" ui-sref="competition.section({section: section.$id})" ui-sref-active="active" class="btn" ng-bind="section.name"></a>
-	</div>
-</header>
-<section class="flex flex-column layout-scroll" ui-view></section>

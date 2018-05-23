@@ -1,8 +1,0 @@
-<section class="flex flex-row flex-nowrap layout-scroll">
-	<aside ng-controller="CompetitionsCtrl" class="padding-sm bg-lighter layout-scroll">
-		<div class="flex-column">
-			<a ng-repeat="comp in competitions track by competition.$id" ui-sref="competition({competitionId: comp.$id})" ng-bind="comp.name"></a>
-		</div>
-	</aside>
-	<section class="flex flex-column layout-scroll" ui-view></section>
-</section>
