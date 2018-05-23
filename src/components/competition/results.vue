@@ -248,5 +248,10 @@ export default {
       }
     }
   }
+  .dancer-list-item {
+    .group {
+      display: none;
+    }
+  }
 }
 </style>

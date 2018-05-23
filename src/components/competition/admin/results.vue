@@ -181,6 +181,9 @@ export default {
     }
   }
   .dancer-list-item {
+    .group {
+      display: none;
+    }
     &.placed {
       opacity: 0.33;
     }

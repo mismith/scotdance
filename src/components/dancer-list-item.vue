@@ -7,9 +7,8 @@
     <div class="md-list-item-text">
       <span>{{ dancer.$name }}</span>
       <p>
-        {{ dancer.$group && dancer.$group.$name }}
-        <span v-if="dancer.$group && dancer.$group.$name && dancer.location"> • </span>
-        {{ dancer.location }}
+        <span class="group">{{ dancer.$group && dancer.$group.$name }}</span>
+        <span class="location">{{ dancer.location }}</span>
       </p>
     </div>
 
@@ -62,6 +61,19 @@ export default {
 
 <style lang="scss">
 .dancer-list-item {
+  .md-list-item-text {
+    p {
+      span {
+        &:not(:last-child) {
+          &::after {
+            content: "•";
+            display: inline-block;
+            margin-left: 0.25em;
+          }
+        }
+      }
+    }
+  }
   .place {
     margin-left: 12px;
   }
