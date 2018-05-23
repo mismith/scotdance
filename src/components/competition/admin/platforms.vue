@@ -17,10 +17,9 @@
               name: 'competition.results',
               params: { groupId: poolItem[idKey], danceId: item.danceId }
             })"
-            :class="{ 'md-primary': isJudge(poolItem) }"
+            :class="{ 'md-primary': isJudge(poolItem), 'md-accent': hasFavorites(findGroupDancers(poolItem)) }"
           >
             {{ poolItem.$name || poolItem.name }}
-            <md-icon v-if="hasFavorites(findGroupDancers(poolItem))" class="md-accent">star</md-icon>
           </md-chip>
         </draggable>
       </div>

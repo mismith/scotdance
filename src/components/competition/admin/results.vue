@@ -10,6 +10,7 @@
           >
             <md-subheader>
               {{ group.$name }}
+              <md-icon v-if="hasFavorites(findGroupDancers(group))" class="md-accent">star</md-icon>
             </md-subheader>
 
             <results-list
@@ -80,6 +81,9 @@ import {
   idKey,
 } from '@/helpers/firebase';
 import {
+  hasFavorites,
+} from '@/helpers/competition';
+import {
   overall,
   callbacks,
   findGroupDancers,
@@ -140,6 +144,7 @@ export default {
     },
   },
   methods: {
+    hasFavorites,
     findGroupDancers,
     getGroupDanceResults,
     getPlacedDancers,

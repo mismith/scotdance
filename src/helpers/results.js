@@ -34,12 +34,6 @@ export function getPlacedDancers(results) {
   // transform ranked dancerIds into ordered array of dancer objects
   return results.map(dancerId => this.dancers.find(dancer => dancer[idKey] === dancerId));
 }
-export function getGroupDanceWinner(group, dance) {
-  const results = this.getGroupDanceResults(group, dance);
-  const placedDancers = this.getPlacedDancers(results);
-
-  return placedDancers[0];
-}
 
 export function hasOverall(group) {
   return group.$category && group.$category.name !== 'Primary';

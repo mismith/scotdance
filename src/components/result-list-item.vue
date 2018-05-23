@@ -3,9 +3,9 @@
     <slot name="avatar">
       <md-avatar
         class="md-avatar-icon"
-        :class="{ 'md-primary': winner }"
+        :class="{ 'md-primary': hasResults, 'md-accent': hasFavorites(dancers || []) }"
       >
-        <md-icon v-if="winner">check</md-icon>
+        <md-icon v-if="hasResults">check</md-icon>
         <small v-else>TBD</small>
       </md-avatar>
     </slot>
@@ -21,12 +21,23 @@
 
 <script>
 import Place from '@/components/place';
+import {
+  hasFavorites,
+} from '@/helpers/competition';
 
 export default {
   name: 'result-list-item',
   props: {
-    winner: Object, // undefined -> TBD; {...} -> show checkmark;
+    dancers: Array, // [] -> TBD; [...] -> show checkmark;
     place: Number, // undefined -> show chevron
+  },
+  computed: {
+    hasResults() {
+      return this.dancers && this.dancers.length;
+    },
+  },
+  methods: {
+    hasFavorites,
   },
   components: {
     Place,
