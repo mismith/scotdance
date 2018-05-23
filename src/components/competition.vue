@@ -110,6 +110,7 @@ export default {
         const name = dance.name || '';
         const stepsString = dance.steps ? ` (${dance.steps})` : '';
         return {
+          groupIds: {},
           ...dance,
           $name: `${name}${stepsString}`.trim(),
           $shortName: `${dance.shortName || name}${stepsString}`.trim(),

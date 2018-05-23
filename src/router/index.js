@@ -19,6 +19,7 @@ import CompetitionResults from '@/components/competition/results';
 import CompetitionAdmin from '@/components/competition/admin';
 import CompetitionAdminSchedule from '@/components/competition/admin/schedule';
 import CompetitionAdminResults from '@/components/competition/admin/results';
+import CompetitionAdminDanceGroups from '@/components/competition/admin/dance-groups';
 import CompetitionAdminTab from '@/components/competition/admin/tab';
 
 Vue.use(Router);
@@ -112,6 +113,12 @@ export default new Router({
                   path: 'results/:groupId?/:danceId?',
                   name: 'competition.admin.results',
                   component: CompetitionAdminResults,
+                  props: true,
+                },
+                {
+                  path: 'dance-groups/:groupId?',
+                  name: 'competition.admin.dance-groups',
+                  component: CompetitionAdminDanceGroups,
                   props: true,
                 },
                 {

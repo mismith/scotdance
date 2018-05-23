@@ -180,16 +180,6 @@ export default {
                 }
               },
             };
-            if (section[idKey] === 'dances') {
-              section.hot.columns = section.hot.columns.concat(this.groups
-                .filter(group => group[idKey]) // remove extra/blank row
-                .map(group => ({
-                  data: `groupIds.${group[idKey]}`,
-                  title: group.$name,
-                  type: 'checkbox',
-                  uncheckedTemplate: null,
-                })));
-            }
             section.hot.columns = section.hot.columns.map((column) => {
               if (column.data === 'categoryId') {
                 // eslint-disable-next-line no-param-reassign
@@ -212,7 +202,8 @@ export default {
     goToTab(tab) {
       switch (tab) {
         case 'schedule':
-        case 'results': {
+        case 'results':
+        case 'dance-groups': {
           this.$router.push({
             name: `competition.admin.${tab}`,
           });
