@@ -161,7 +161,7 @@ export default {
   methods: {
     handleChanges(...props) {
       const changes = {};
-      props.forEach(prop => {
+      props.forEach((prop) => {
         changes[prop] = this.me[prop] || null;
       });
 

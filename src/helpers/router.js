@@ -27,10 +27,8 @@ export function handleExpanded(items, itemId, expanded) {
     if (index < 0) {
       clones.push(itemId);
     }
-  } else {
-    if (index >= 0) {
-      clones.splice(index, 1);
-    }
+  } else if (index >= 0) {
+    clones.splice(index, 1);
   }
   return clones;
 }
