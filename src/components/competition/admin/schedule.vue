@@ -140,6 +140,7 @@
               :platforms="platforms"
               :groups="groups"
               :dances="dances"
+              :dancers="dancers"
               :staff="staff"
               @change="handlePlatformChanges"
             />
@@ -181,6 +182,7 @@ export default {
     },
     groups: Array,
     dances: Array,
+    dancers: Array,
     staff: Array,
     platforms: Array,
     schedule: Object,

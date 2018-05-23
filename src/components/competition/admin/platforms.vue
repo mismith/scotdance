@@ -20,6 +20,7 @@
             :class="{ 'md-primary': isJudge(poolItem) }"
           >
             {{ poolItem.$name || poolItem.name }}
+            <md-icon v-if="hasFavorites(findGroupDancers(poolItem))" class="md-accent">star</md-icon>
           </md-chip>
         </draggable>
       </div>
@@ -53,7 +54,11 @@ import {
 import {
   findByIdKey,
   hydrateByIdKey,
+  hasFavorites,
 } from '@/helpers/competition';
+import {
+  findGroupDancers,
+} from '@/helpers/results';
 import {
   idKey,
 } from '@/helpers/firebase';
@@ -65,6 +70,7 @@ export default {
     item: Object,
     groups: Array,
     dances: Array,
+    dancers: Array,
     staff: Array,
     platforms: Array,
   },
@@ -134,6 +140,9 @@ export default {
     },
   },
   methods: {
+    findGroupDancers,
+    hasFavorites,
+
     ...mapMutations([
       'copy',
     ]),
@@ -196,6 +205,13 @@ export default {
 
         .md-chip {
           margin: 1px 4px;
+
+          .md-icon {
+            min-width: 18px;
+            width: 18px;
+            font-size: 18px !important;
+            padding-bottom: 4px;
+          }
         }
       }
     }

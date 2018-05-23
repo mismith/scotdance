@@ -92,6 +92,7 @@
                   :item="dance"
                   :groups="groups"
                   :dances="dances"
+                  :dancers="dancers"
                   :staff="staff"
                   :platforms="platforms"
                 />
@@ -129,6 +130,7 @@ export default {
 
     groups: Array,
     dances: Array,
+    dancers: Array,
     staff: Array,
     platforms: Array,
     schedule: Object,
