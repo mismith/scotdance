@@ -48,7 +48,6 @@
              <md-list-item
               v-for="bucket in bucketedDancers"
               :key="bucket[idKey]"
-              v-if="!onlyFavorites || hasFavorites(bucket.dancers)"
               md-expand
               :md-expanded="isBucketExpanded(bucket, bucketedDancers)"
               @update:mdExpanded="handleBucketExpanded(bucket[idKey], $event)"
@@ -63,7 +62,6 @@
                 <dancer-list-item
                   v-for="dancer in bucket.dancers"
                   :key="dancer[idKey]"
-                  v-if="!onlyFavorites || dancer.$favorite"
                   :dancer="dancer"
                   @click="$router.push({ params: { dancerId: dancer[idKey] }})"
                   :class="{ active: $route.params.dancerId === dancer[idKey] }"
@@ -173,9 +171,14 @@ export default {
     filteredDancers() {
       // filter by search term
       const searchKeys = this.sortableBy.map(({ key, searchKey }) => searchKey || key);
-      const filtered = this.filterBy && this.dancers.length
+      let filtered = this.filterBy && this.dancers.length
         ? new FuzzySearch(this.dancers, searchKeys).search(this.filterBy)
         : this.dancers;
+
+      // filter by onlyFavorites, if necessary
+      if (this.onlyFavorites) {
+        filtered = filtered.filter(dancer => dancer.$favorite);
+      }
 
       // sort by key
       if (this.sortBy) {
