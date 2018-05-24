@@ -1,223 +1,24 @@
 <template>
   <div class="account-buttons">
     <md-button
-      @click="registerVisible = true"
+      @click="$store.commit('setRegisterDialogOpen', true)"
       class="md-raised"
     >
       <span>Register</span>
     </md-button>
     <md-button
-      @click="loginVisible = true"
+      @click="$store.commit('setLoginDialogOpen', true)"
       class="md-raised md-accent"
     >
       <span>Login</span>
     </md-button>
-
-    <md-dialog :md-active.sync="registerVisible" :md-fullscreen="false" class="register-dialog">
-      <form @submit.prevent="register(credentials).then(() => (registerVisible = false))">
-        <div class="md-dialog-content">
-          <md-field>
-            <label>Email</label>
-            <md-input
-              type="email"
-              name="email"
-              v-model="credentials.email"
-              required
-              autofocus
-            />
-          </md-field>
-          <md-field md-has-password>
-            <label>Password</label>
-            <md-input
-              type="password"
-              name="password"
-              v-model="credentials.password"
-              required
-            />
-          </md-field>
-
-          <aside v-if="authError" class="validation-message">
-            {{ authError.message }}
-          </aside>
-        </div>
-
-        <footer class="md-dialog-actions">
-          <md-spinnable :md-spinning="authLoading">
-            <md-button type="submit" class="md-primary md-raised">Register</md-button>
-          </md-spinnable>
-        </footer>
-      </form>
-    </md-dialog>
-    <md-dialog :md-active.sync="loginVisible" :md-fullscreen="false" @md-closed="forgot = false" class="login-dialog">
-      <form v-if="!forgot" @submit.prevent="login(credentials).then(() => (loginVisible = false))">
-        <div class="md-dialog-content">
-          <md-field>
-            <label>Email</label>
-            <md-input
-              type="email"
-              name="email"
-              v-model="credentials.email"
-              required
-              autofocus
-            />
-          </md-field>
-          <md-field md-has-password>
-            <label>Password</label>
-            <md-input
-              type="password"
-              name="password"
-              v-model="credentials.password"
-              required
-            />
-          </md-field>
-
-          <aside v-if="authError" class="validation-message">
-            {{ authError.message }}
-          </aside>
-        </div>
-
-        <footer class="md-dialog-actions">
-          <md-spinnable :md-spinning="authLoading">
-            <md-button type="submit" class="md-primary md-raised">Login</md-button>
-          </md-spinnable>
-
-          <md-button @click="forgot = true; authError = null;">
-            Forgot?
-          </md-button>
-        </footer>
-      </form>
-      <form v-else @submit.prevent="reset(credentials).then(handlePasswordReset)">
-        <div class="md-dialog-content">
-          <header>
-            <p>We can send you a link to reset your password.</p>
-            <br />
-          </header>
-
-          <md-field>
-            <label>Email</label>
-            <md-input
-              type="email"
-              name="email"
-              v-model="credentials.email"
-              required
-              autofocus
-            />
-          </md-field>
-
-          <aside v-if="authError" class="validation-message">
-            {{ authError.message }}
-          </aside>
-          <aside v-if="authMessage" class="validation-message">
-            {{ authMessage }}
-          </aside>
-        </div>
-
-        <footer class="md-dialog-actions">
-          <md-spinnable :md-spinning="authLoading">
-            <md-button type="submit" class="md-primary md-raised">Send</md-button>
-          </md-spinnable>
-
-          <md-button @click="forgot = false; authError = null;">Cancel</md-button>
-        </footer>
-      </form>
-    </md-dialog>
   </div>
 </template>
 
 <script>
-import {
-  firebase,
-  db,
-} from '@/helpers/firebase';
 
 export default {
   name: 'account-buttons',
-  data() {
-    return {
-      credentials: {
-        email: undefined,
-        password: undefined,
-      },
-      authLoading: false,
-      authError: undefined,
-      authMessage: undefined,
-
-      registerVisible: false,
-      loginVisible: false,
-      forgot: false,
-    };
-  },
-  watch: {
-    registerVisible(v) {
-      if (v) {
-        this.authError = null;
-      }
-    },
-    loginVisible(v) {
-      if (v) {
-        this.authError = null;
-      } else {
-        this.authMessage = null;
-      }
-    },
-  },
-  methods: {
-    register(credentials = this.credentials) {
-      this.authLoading = true;
-      this.authError = null;
-
-      return firebase.auth()
-        .createUserWithEmailAndPassword(credentials.email, credentials.password)
-        .then((me) => {
-          this.authLoading = false;
-
-          // add to db
-          db.child('users').child(me.uid).set(me.providerData[0]);
-        })
-        .catch((err) => {
-          this.authLoading = false;
-          this.authError = err;
-
-          throw err;
-        });
-    },
-    login(credentials = this.credentials) {
-      this.authLoading = true;
-      this.authError = null;
-
-      return firebase.auth()
-        .signInWithEmailAndPassword(credentials.email, credentials.password)
-        .then(() => {
-          this.authLoading = false;
-        })
-        .catch((err) => {
-          this.authLoading = false;
-          this.authError = err;
-
-          throw err;
-        });
-    },
-    reset(credentials = this.credentials) {
-      this.authLoading = true;
-      this.authError = null;
-
-      return firebase.auth()
-        .sendPasswordResetEmail(credentials.email)
-        .then(() => {
-          this.authLoading = false;
-        })
-        .catch((err) => {
-          this.authLoading = false;
-          this.authError = err;
-
-          throw err;
-        });
-    },
-
-    handlePasswordReset() {
-      this.authMessage = 'Success! Check your email inbox for instructions to reset your password.';
-    },
-  },
 };
 </script>
 
@@ -225,5 +26,12 @@ export default {
 .account-buttons {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  margin: auto;
+
+  .md-button {
+    margin-left: 0;
+    margin-right: 0;
+  }
 }
 </style>

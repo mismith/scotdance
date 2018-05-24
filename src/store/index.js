@@ -11,6 +11,11 @@ export default new Vuex.Store({
   state: {
     me: undefined,
     myFavorites: undefined,
+
+    favoritesDialogOpen: false,
+    registerDialogOpen: false,
+    loginDialogOpen: false,
+
     clipboard: {
       type: undefined,
       data: undefined,
@@ -23,6 +28,18 @@ export default new Vuex.Store({
   },
   mutations: {
     ...firebaseMutations,
+
+    setFavoritesDialogOpen(state, to) {
+      state.favoritesDialogOpen = to;
+    },
+    setRegisterDialogOpen(state, to) {
+      state.registerDialogOpen = to;
+      if (to) state.favoritesDialogOpen = false;
+    },
+    setLoginDialogOpen(state, to) {
+      state.loginDialogOpen = to;
+      if (to) state.favoritesDialogOpen = false;
+    },
 
     copy(state, { data, type = 'text/plain' }) {
       state.clipboard = {

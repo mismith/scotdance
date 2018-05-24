@@ -14,7 +14,10 @@
 
     <md-app-drawer :md-active.sync="menuVisible">
       <md-toolbar class="md-primary md-large md-account-header">
-        <div class="bg" style="background-image: url('static/img/touchicon.png');"></div>
+        <div class="account-bg" style="background-image: url('static/img/touchicon.png');"></div>
+        <favorites-dialog />
+        <register-dialog />
+        <login-dialog />
         <account-buttons v-if="!me" class="md-padding" />
         <md-list v-else class="md-transparent">
           <md-list-item>
@@ -117,6 +120,9 @@ import {
   db,
   firebase,
 } from '@/helpers/firebase';
+import RegisterDialog from '@/components/register-dialog';
+import LoginDialog from '@/components/login-dialog';
+import FavoritesDialog from '@/components/favorites-dialog';
 import AccountButtons from '@/components/account-buttons';
 import CompetitionListItem from '@/components/competition-list-item';
 
@@ -209,6 +215,9 @@ export default {
     },
   },
   components: {
+    RegisterDialog,
+    LoginDialog,
+    FavoritesDialog,
     AccountButtons,
     CompetitionListItem,
   },
@@ -267,6 +276,9 @@ body.has-bottom-bar {
   &.md-list-item:first-of-type {
     margin-top: 0;
   }
+}
+.md-bg-primary {
+  background-color: var(--md-theme-default-primary);
 }
 
 // app-wide custom styling
@@ -513,31 +525,21 @@ body,
   }
 }
 
+.account-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-position: center center;
+  background-size: cover;
+  opacity: .25;
+  pointer-events: none;
+  z-index: 0;
+}
 .md-account-header {
   padding: 0;
 
-  .bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-position: center center;
-    background-size: cover;
-    opacity: .25;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .account-buttons {
-    align-items: center;
-    margin: auto;
-
-    .md-button {
-      margin-left: 0;
-      margin-right: 0;
-    }
-  }
 
   .md-list {
     width: 100%;

@@ -15,7 +15,6 @@
     <slot />
 
     <md-button
-      v-if="$store.state.me"
       @click.stop="handleFavoriteToggle(dancer)"
       class="md-icon-button md-list-action"
     >
@@ -32,9 +31,13 @@
 
 <script>
 import {
+  mapState,
+} from 'vuex';
+import {
   idKey,
   db,
 } from '@/helpers/firebase';
+import AccountButtons from '@/components/account-buttons';
 import Place from '@/components/place';
 
 export default {
@@ -43,17 +46,40 @@ export default {
     dancer: Object,
     place: Number,
   },
+  computed: {
+    ...mapState([
+      'me',
+    ]),
+  },
+  watch: {
+    me(me) {
+      if (this.$store.state.favoritesDialogOpen && me) {
+        if (this.$store.state.favoritesDialogOpen[idKey]) {
+          // favorite 'stored' dancer
+          this.handleFavoriteToggle(this.$store.state.favoritesDialogOpen, true);
+        }
+        this.$store.commit('setFavoritesDialogOpen', false);
+      }
+    },
+  },
   methods: {
-    handleFavoriteToggle(dancer) {
-      return db
-        .child('users:favorites')
-        .child(this.$store.state.me[idKey])
-        .child('dancers')
-        .child(dancer[idKey])
-        .set(dancer.$favorite ? null : true);
+    handleFavoriteToggle(dancer, force = undefined) {
+      if (this.me) {
+        const toggled = dancer.$favorite ? null : true;
+        return db
+          .child('users:favorites')
+          .child(this.me[idKey])
+          .child('dancers')
+          .child(dancer[idKey])
+          .set(force !== undefined ? force : toggled);
+      }
+
+      // 'store' dancer for favoriting post-auth, while opening dialog to inform user about favorites
+      return this.$store.commit('setFavoritesDialogOpen', dancer);
     },
   },
   components: {
+    AccountButtons,
     Place,
   },
 };
