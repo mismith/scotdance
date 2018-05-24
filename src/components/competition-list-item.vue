@@ -1,5 +1,9 @@
 <template>
-  <md-list-item @click="$emit('click', $event)" class="competition-list-item">
+  <md-list-item
+    @click="$emit('click', $event)"
+    class="competition-list-item"
+    :class="{ published: competition.published }"
+  >
     <md-icon>event</md-icon>
 
     <div class="md-list-item-text">
@@ -63,6 +67,9 @@ export default {
         }
       }
     }
+  }
+  &:not(.published) {
+    opacity: 0.5;
   }
 }
 </style>
