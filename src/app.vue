@@ -150,6 +150,10 @@ export default {
     },
     relevantCompetitions() {
       const relevantCompetitions = this.competitions.filter((competition) => {
+        // only show published competitions
+        if (!competition.published) {
+          return false;
+        }
         // only show upcoming or up to 7 day old events
         if (competition.date && moment(competition.date).isAfter(moment().subtract(7, 'days'))) {
           return true;
@@ -157,8 +161,12 @@ export default {
         return false;
       });
 
-      return (relevantCompetitions.length ? relevantCompetitions : this.competitions)
-        .slice(0, 10); // limit to 10 max
+      // limit to 10 relevant competitions at most
+      if (relevantCompetitions.length) {
+        return relevantCompetitions.slice(0, 10);
+      }
+      // fallback to showing (up to) 10 most recent competitions if no relevant ones are found
+      return this.competitions.slice(-10);
     },
   },
   asyncComputed: {
