@@ -31,36 +31,29 @@
 import moment from 'moment-mini';
 import {
   idKey,
-  db,
 } from '@/helpers/firebase';
 import CompetitionListItem from '@/components/competition-list-item';
 
 export default {
   name: 'competitions-list',
+  props: {
+    competitions: Array,
+  },
   data() {
     return {
       idKey,
     };
   },
-  firebase: {
-    competitionsRaw: db.child('competitions'),
-  },
   computed: {
     groupedCompetitions() {
-      const competitions = this.competitionsRaw
-        .map(competition => ({
-          ...competition,
-        }))
-        .sort((a, b) => moment(a.date).diff(b.date)); // order chronologically
-
       return [
         {
           name: 'Upcoming',
-          competitions: competitions.filter(c => moment().diff(c.date) < 0),
+          competitions: this.competitions.filter(c => moment().diff(c.date) < 0),
         },
         {
           name: 'Archived',
-          competitions: competitions.filter(c => moment().diff(c.date) >= 0).reverse(),
+          competitions: this.competitions.filter(c => moment().diff(c.date) >= 0).reverse(),
         },
       ];
     },

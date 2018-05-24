@@ -97,7 +97,7 @@
     </md-app-drawer>
 
     <md-app-content id="main" class="md-scroll-frame md-scroll">
-      <router-view />
+      <router-view :competitions="competitions" />
     </md-app-content>
 
   </md-app>
@@ -140,12 +140,14 @@ export default {
     ]),
 
     competitions() {
-      return this.competitionsRaw.map(competition => ({
-        ...competition,
-        $favorite: this.$store.getters.isFavorite('competitions', competition[idKey]),
-      }));
+      return this.competitionsRaw
+        .map(competition => ({
+          ...competition,
+          $favorite: this.$store.getters.isFavorite('competitions', competition[idKey]),
+        }))
+        .filter(competition => competition.published || (this.me && this.me.admin))
+        .sort((a, b) => moment(a.date).diff(b.date)); // order chronologically
     },
-
     relevantCompetitions() {
       const relevantCompetitions = this.competitions.filter((competition) => {
         // only show upcoming or up to 7 day old events
@@ -156,7 +158,6 @@ export default {
       });
 
       return (relevantCompetitions.length ? relevantCompetitions : this.competitions)
-        .sort((a, b) => moment(a.date).diff(b.date)) // order chronologically
         .slice(0, 10); // limit to 10 max
     },
   },
