@@ -485,6 +485,18 @@ body,
   }
 }
 
+.md-button {
+  &.md-large {
+    height: 48px;
+    font-size: 16px;
+
+    .md-ripple {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+  }
+}
+
 .swiper-slide {
   @extend .md-scroll-frame;
 }
