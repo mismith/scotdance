@@ -25,6 +25,16 @@
             >
               <label>{{ field.title }}</label>
             </md-datepicker>
+
+            <md-checkbox
+              v-else-if="field.type === 'checkbox'"
+              v-model="competition[field.data]"
+              @change="handleFormInputChange(currentSection[idKey], field.data, $event)"
+              :required="field.required"
+            >
+              {{ field.title }}
+            </md-checkbox>
+
             <md-field v-else>
               <label>{{ field.title }}</label>
               <md-input
