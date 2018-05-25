@@ -23,6 +23,10 @@
         <param name="ios-package" value="CDVStatusBar" />
         <param name="onload" value="true" />
     </feature>
+    <feature name="SplashScreen">
+        <param name="ios-package" value="CDVSplashScreen" />
+        <param name="onload" value="true" />
+    </feature>
     <name>ScotDance</name>
     <description>
         App for highland dancing events.
@@ -57,4 +61,5 @@
     <preference name="StatusBarStyle" value="lightcontent" />
     <preference name="StatusBarBackgroundColor" value="#1e88e5" />
     <preference name="StatusBarDefaultScrollToTop" value="true" />
+    <preference name="AutoHideSplashScreen" value="false" />
 </widget>

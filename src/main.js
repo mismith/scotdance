@@ -36,6 +36,7 @@ if (window.location.protocol === 'file:') {
   document.body.appendChild(cordovaScript);
 
   document.addEventListener('deviceready', () => {
+    window.navigator.splashscreen.hide();
     window.StatusBar.show();
   }, false);
 }
