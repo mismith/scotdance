@@ -34,6 +34,10 @@ if (window.location.protocol === 'file:') {
   cordovaScript.setAttribute('type', 'text/javascript');
   cordovaScript.setAttribute('src', 'cordova.js');
   document.body.appendChild(cordovaScript);
+
+  document.addEventListener('deviceready', () => {
+    window.StatusBar.show();
+  }, false);
 }
 
 Vue.use(VueFire);
