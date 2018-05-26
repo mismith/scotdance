@@ -30,9 +30,13 @@ export function getGroupDanceResults(group, dance) {
   }
   return results;
 }
-export function getPlacedDancers(results) {
+export function getPlacedDancers(results, sortByNumber = false) {
   // transform ranked dancerIds into ordered array of dancer objects
-  return results.map(dancerId => this.dancers.find(dancer => dancer[idKey] === dancerId));
+  const dancers = results.map(dancerId => this.dancers.find(dancer => dancer[idKey] === dancerId));
+  if (sortByNumber) {
+    return dancers.sort((a, b) => a.$number.localeCompare(b.$number));
+  }
+  return dancers;
 }
 
 export function hasOverall(group) {

@@ -1,7 +1,7 @@
 <template>
   <md-list class="results-list">
     <result-list-item
-      :dancers="getPlacedDancers(getGroupDanceResults(group, callbacks))"
+      :dancers="getPlacedDancers(getGroupDanceResults(group, callbacks), true)"
       @click="handleClick(group, callbacks)"
       :class="{ active: isActive(group, callbacks) }"
     >

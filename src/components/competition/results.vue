@@ -167,7 +167,7 @@ export default {
 
       return groups.map((dance) => {
         const results = this.getGroupDanceResults(this.currentGroup, dance);
-        const dancers = this.getPlacedDancers(results);
+        const dancers = this.getPlacedDancers(results, dance[idKey] === callbacks[idKey]);
 
         return {
           ...dance,

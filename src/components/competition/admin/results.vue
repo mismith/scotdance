@@ -136,11 +136,11 @@ export default {
       return [];
     },
     placedDancers() {
-      let results = [];
       if (this.currentGroup && this.currentDance) {
-        results = this.getGroupDanceResults(this.currentGroup, this.currentDance);
+        const results = this.getGroupDanceResults(this.currentGroup, this.currentDance);
+        return this.getPlacedDancers(results, this.currentDance[idKey] === callbacks[idKey]);
       }
-      return this.getPlacedDancers(results);
+      return [];
     },
   },
   methods: {
