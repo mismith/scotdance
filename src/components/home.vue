@@ -2,8 +2,8 @@
   <div class="home">
     <section class="hero">
       <div>
-        <img src="static/img/touchicon.png" role="presentation" width="128" height="128" />
-        <h1 class="md-display-3">ScotDance</h1>
+        <img src="static/img/touchicon.png" role="presentation" width="88" height="88" />
+        <h1 class="md-display-2">ScotDance</h1>
         <p class="md-headline">Highland dancing event tracker</p>
         <p class="md-subheading">Skip the pen and paper—attend highland dance competitions in style with this app for your mobile device.</p>
         <p v-if="!isApp" class="store-badges">
