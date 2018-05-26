@@ -42,6 +42,9 @@
           <p>Get real-time results updates—from callbacks through to placings—and review them anytime after a competition, too.</p>
         </div>
       </div>
+      <footer>
+          <md-button @click.prevent="$router.push({ name: 'competitions' })" class="md-primary md-raised">Browse Competitions</md-button>
+      </footer>
     </section>
 
     <section id="about">
