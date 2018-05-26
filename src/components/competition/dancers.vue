@@ -7,14 +7,14 @@
             <label for="filterBy">Search</label>
             <md-input v-model="filterBy" id="filterBy" />
           </md-field>
-          <md-menu md-direction="bottom-end" md-align-trigger @selected="sortBy">
+          <md-menu md-direction="bottom-end" @selected="sortBy">
             <md-button md-menu-trigger class="md-icon-button">
               <md-icon>filter_list</md-icon>
             </md-button>
 
             <md-menu-content>
               <md-menu-item
-                v-for="by in sortableBy"
+                v-for="by in sortableBys"
                 :key="by.key"
                 @click="sortBy = by.key"
                 :class="{ active: sortBy === by.key }"
@@ -44,27 +44,27 @@
         </md-toolbar>
 
         <div class="md-scroll">
-          <md-list v-if="bucketedDancers.length" class="md-list-cards">
+          <md-list v-if="Object.keys(groupedDancers).length" class="md-list-cards">
             <md-list-item-cards
-              v-for="bucket in bucketedDancers"
-              :key="bucket[idKey]"
+              v-for="(group, groupId) in groupedDancers"
+              :key="groupId"
               md-expand
-              :md-expanded="isBucketExpanded(bucket, bucketedDancers)"
-              @update:mdExpanded="handleBucketExpanded(bucket[idKey], $event)"
+              :md-expanded="isGroupExpanded(groupId, Object.keys(groupedDancers))"
+              @update:mdExpanded="handleGroupExpanded(groupId, $event)"
             >
               <md-subheader>
-                {{ bucket[idKey] || '?' }}
-                <md-icon v-if="hasFavorites(bucket.dancers)" class="md-accent">star</md-icon>
+                {{ groupId || '?' }}
+                <md-icon v-if="hasFavorites(group)" class="md-accent">star</md-icon>
               </md-subheader>
-              <!--<span class="badge">{{ bucket.dancers.length }}</span>-->
+              <!--<span class="badge">{{ group.length }}</span>-->
 
               <md-list slot="md-expand" class="md-double-line">
                 <dancer-list-item
-                  v-for="dancer in bucket.dancers"
+                  v-for="dancer in group"
                   :key="dancer[idKey]"
                   :dancer="dancer"
                   @click="$router.push({ params: { dancerId: dancer[idKey] }})"
-                  :class="{ active: $route.params.dancerId === dancer[idKey] }"
+                  :class="{ active: dancerId === dancer[idKey] }"
                 />
               </md-list>
             </md-list-item-cards>
@@ -106,6 +106,7 @@
 <script>
 import FuzzySearch from 'fuzzy-search';
 import ArraySort from 'array-sort';
+import groupBy from 'lodash.groupby';
 import DancerListItem from '@/components/dancer-list-item';
 import DancerReport from '@/components/dancer-report';
 import {
@@ -141,7 +142,7 @@ export default {
       type: String,
       default: '$group.$order',
     },
-    expandedBuckets: {
+    expandedGroups: {
       type: Object,
       default: {}, // { [sortBy]: {}, ... }
     },
@@ -150,7 +151,7 @@ export default {
     return {
       idKey,
 
-      sortableBy: [
+      sortableBys: [
         { key: '$group.$order', name: 'Age Group', searchKey: '$group.$name' },
         { key: '$number', name: 'Number', searchKey: 'number' },
         { key: 'location', name: 'Location' },
@@ -168,10 +169,13 @@ export default {
       return null;
     },
 
+    sortableBy() {
+      return this.sortableBys.find(({ key }) => key === this.sortBy);
+    },
     filteredDancers() {
       // filter by search term
-      const searchKeys = this.sortableBy.map(({ key, searchKey }) => searchKey || key);
-      let filtered = this.filterBy && this.dancers.length
+      const searchKeys = this.sortableBys.map(({ key, searchKey }) => searchKey || key);
+      let filtered = (this.filterBy && this.dancers.length)
         ? new FuzzySearch(this.dancers, searchKeys).search(this.filterBy)
         : this.dancers;
 
@@ -187,18 +191,8 @@ export default {
 
       return filtered;
     },
-    bucketedDancers() {
-      const buckets = {};
-      this.filteredDancers.forEach((dancer) => {
-        const bucket = this.getSortGroup(dancer);
-        buckets[bucket] = buckets[bucket] || [];
-        buckets[bucket].push(dancer);
-      });
-      return Object.entries(buckets)
-        .map(([bucket, dancers]) => ({
-          [idKey]: bucket,
-          dancers,
-        }));
+    groupedDancers() {
+      return groupBy(this.filteredDancers, this.getSortGroup);
     },
   },
   watch: {
@@ -217,27 +211,25 @@ export default {
       }
     },
 
-    isBucketExpanded(item, items) {
+    isGroupExpanded(itemId, itemIds) {
       // searching, so expand all groups
       if (this.filterBy) return true;
 
-      const itemIds = items.map(i => i[idKey]);
-      return isExpanded(this.expandedBuckets[this.sortBy], item[idKey], itemIds);
+      return isExpanded(this.expandedGroups[this.sortBy], itemId, itemIds);
     },
-    handleBucketExpanded(bucketId, expanded) {
-      this.expandedBuckets[this.sortBy] = handleExpanded(
-        this.expandedBuckets[this.sortBy],
-        bucketId,
+    handleGroupExpanded(groupId, expanded) {
+      this.expandedGroups[this.sortBy] = handleExpanded(
+        this.expandedGroups[this.sortBy],
+        groupId,
         expanded,
       );
-      this.$localStorage.set('expandedBuckets', this.expandedBuckets);
+      this.$localStorage.set('expandedGroups', this.expandedGroups);
     },
 
     getSortGroup(dancer) {
       if (!dancer) return undefined;
 
-      const sortableBy = this.sortableBy.find(({ key }) => key === this.sortBy);
-      const fallback = sortableBy && sortableBy.name;
+      const fallback = this.sortableBy && this.sortableBy.name;
       switch (this.sortBy) {
         case '$number': {
           return fallback;

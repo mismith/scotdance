@@ -28,6 +28,7 @@
     "fuzzy-search": "^2.0.0",
     "handsontable": "^0.35.0",
     "js-xlsx": "^0.8.22",
+    "lodash.groupby": "^4.6.0",
     "moment-mini": "^2.18.1",
     "simple-line-icons": "^2.4.1",
     "swiper": "^4.0.7",
