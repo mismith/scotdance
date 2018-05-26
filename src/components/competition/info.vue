@@ -87,8 +87,16 @@ export default {
   .staff {
     ul {
       padding: 0;
-      marging: 0;
+      margin: 0 -8px;
       list-style: none;
+
+      li {
+        padding: 0 8px 16px;
+
+        > * {
+          white-space: nowrap;
+        }
+      }
     }
   }
 
