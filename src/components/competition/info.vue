@@ -41,6 +41,12 @@
           </li>
         </ul>
       </section>
+
+      <section>
+        <p v-if="competition.sobhd">
+          <small><strong>SOBHD</strong> {{ competition.sobhd }}</small>
+        </p>
+      </section>
     </div>
   </div>
 </template>
