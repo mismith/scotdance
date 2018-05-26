@@ -3,7 +3,7 @@
     <swiper-slide>
       <div class="md-scroll">
         <md-list v-if="groups.length" class="md-list-cards">
-          <md-list-item
+          <md-list-item-cards
             v-for="group in groups"
             :key="group[idKey]"
             md-expand
@@ -22,7 +22,7 @@
               :dancers="dancers"
               :results="results"
             />
-          </md-list-item>
+          </md-list-item-cards>
         </md-list>
         <md-empty-state
           v-else
@@ -44,7 +44,7 @@
 
         <div id="results-detail" class="md-scroll">
           <md-list class="md-list-cards">
-            <md-list-item
+            <md-list-item-cards
               v-for="dance in groupedDancers"
               :key="dance.name"
               :id="`dance-${dance[idKey]}`"
@@ -69,7 +69,7 @@
                   Results to be determined.
                 </md-list-item>
               </md-list>
-            </md-list-item>
+            </md-list-item-cards>
           </md-list>
         </div>
       </div>

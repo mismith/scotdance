@@ -2,7 +2,7 @@
   <div class="competitions-list md-scroll-frame alt">
     <div class="md-scroll">
       <md-list class="md-list-cards">
-        <md-list-item
+        <md-list-item-cards
           v-for="group in groupedCompetitions"
           :key="group.name"
           md-expand
@@ -21,7 +21,7 @@
               No competitions found.
             </md-list-item>
           </md-list>
-        </md-list-item>
+        </md-list-item-cards>
       </md-list>
     </div>
   </div>

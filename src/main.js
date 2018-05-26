@@ -17,11 +17,12 @@ import {
   getTitleChunks,
 } from '@/helpers/router';
 
-import App from './app';
-import router from './router';
-import store from './store';
+import App from '@/app';
+import router from '@/router';
+import store from '@/store';
 
-import MdSpinnable from './components/md-spinnable';
+import MdSpinnable from '@/components/md-spinnable';
+import MdListItemCards from '@/components/md-list-item-cards';
 
 // disable (amongst other things) vue-localstoreage verbose logging
 Vue.config.silent = true;
@@ -44,6 +45,7 @@ if (window.location.protocol === 'file:') {
 Vue.use(VueFire);
 Vue.use(VueMaterial);
 Vue.component('md-spinnable', MdSpinnable);
+Vue.component('md-list-item-cards', MdListItemCards);
 Vue.use(VueAwesomeSwiper);
 Vue.use(VueAsyncComputed);
 Vue.use(VueBodyClass, router);

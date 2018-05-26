@@ -13,7 +13,7 @@
             </md-subheader>
 
             <md-list class="md-list-cards">
-              <md-list-item
+              <md-list-item-cards
                 v-for="(block, blockId) in day.blocks"
                 :key="blockId"
                 md-expand
@@ -42,7 +42,7 @@
                     No events found.
                   </md-list-item>
                 </md-list>
-              </md-list-item>
+              </md-list-item-cards>
             </md-list>
           </div>
         </md-tab>

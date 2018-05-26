@@ -45,7 +45,7 @@
 
         <div class="md-scroll">
           <md-list v-if="bucketedDancers.length" class="md-list-cards">
-             <md-list-item
+            <md-list-item-cards
               v-for="bucket in bucketedDancers"
               :key="bucket[idKey]"
               md-expand
@@ -67,7 +67,7 @@
                   :class="{ active: $route.params.dancerId === dancer[idKey] }"
                 />
               </md-list>
-            </md-list-item>
+            </md-list-item-cards>
           </md-list>
           <md-empty-state
             v-else
