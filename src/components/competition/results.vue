@@ -116,12 +116,12 @@ export default {
   },
   localStorage: {
     expandedGroups: {
-      type: Array,
-      default: [],
+      type: Object,
+      default: {},
     },
     expandedDances: {
       type: Object,
-      default: {}, // { [groupId]: [], ... }
+      default: {}, // { [groupId]: {}, ... }
     },
   },
   data() {

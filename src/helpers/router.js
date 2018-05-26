@@ -1,3 +1,4 @@
+
 export async function getTitleChunks(route) {
   return ['ScotDance', ...await Promise.all(route.matched
     .map(async (match) => {
@@ -10,25 +11,23 @@ export async function getTitleChunks(route) {
 }
 
 export function isExpanded(items, itemId, itemIds, expandAll = false) {
-  const clones = [...(items || [])];
+  if (!items) items = {}; // eslint-disable-line no-param-reassign
 
   // was expanded before, so restore
-  return clones.indexOf(itemId) >= 0
+  return !!items[itemId]
     // only one item, so save a tap
     || itemIds.length <= 1
     // nothing expanded, so expand first
-    || (!clones.length && (expandAll ? true : itemIds.indexOf(itemId) === 0));
+    || (!Object.keys(items).length && (expandAll ? true : itemIds.indexOf(itemId) === 0));
 }
 
 export function handleExpanded(items, itemId, expanded) {
-  const clones = [...(items || [])];
-  const index = clones.indexOf(itemId);
+  if (!items) items = {}; // eslint-disable-line no-param-reassign
+
   if (expanded) {
-    if (index < 0) {
-      clones.push(itemId);
-    }
-  } else if (index >= 0) {
-    clones.splice(index, 1);
+    items[itemId] = true; // eslint-disable-line no-param-reassign
+  } else if (items[itemId]) {
+    items[itemId] = false; // eslint-disable-line no-param-reassign
   }
-  return clones;
+  return items;
 }

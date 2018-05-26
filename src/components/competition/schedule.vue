@@ -137,12 +137,12 @@ export default {
   },
   localStorage: {
     expandedBlocks: {
-      type: Array,
-      default: [],
+      type: Object,
+      default: {},
     },
     expandedDances: {
       type: Object,
-      default: {}, // { [eventId]: [], ... }
+      default: {}, // { [eventId]: {}, ... }
     },
   },
   data() {

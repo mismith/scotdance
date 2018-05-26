@@ -143,7 +143,7 @@ export default {
     },
     expandedBuckets: {
       type: Object,
-      default: {}, // { [sortBy]: [], ... }
+      default: {}, // { [sortBy]: {}, ... }
     },
   },
   data() {
