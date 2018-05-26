@@ -305,6 +305,7 @@ body,
 .md-app {
   flex-direction: column;
   flex: 1;
+  margin-bottom: env(safe-area-inset-bottom); // iPhone X
 }
 .md-app-content {
   padding: 0;
