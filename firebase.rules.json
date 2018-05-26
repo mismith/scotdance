@@ -1,6 +1,30 @@
 {
   "rules": {
-    ".read": true,
-    ".write": true
+    "$environment": {
+      "sections": {
+        ".read": true,
+        ".write": false
+      },
+      "competitions": {
+        ".read": true,
+        ".write": "root.child($environment).child('users').child(auth.uid).child('admin').val() === true" // is ADMIN
+      },
+      "competitions:data": {
+        ".read": true,
+        ".write": "root.child($environment).child('users').child(auth.uid).child('admin').val() === true" // is ADMIN
+      },
+      "users": {
+        "$userId": {
+          ".read": "auth != null && auth.uid === $userId", // is SELF
+          ".write": "auth != null && auth.uid === $userId" // is SELF
+        }
+      },
+      "users:favorites": {
+        "$userId": {
+          ".read": "auth != null && auth.uid === $userId", // is SELF
+          ".write": "auth != null && auth.uid === $userId" // is SELF
+        }
+      }
+    }
   }
 }
