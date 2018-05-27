@@ -129,9 +129,13 @@ export default {
       return null;
     },
     currentDancers() {
-      if (this.currentGroup) {
-        return this.findGroupDancers(this.currentGroup)
-          .sort((a, b) => a.$number.localeCompare(b.$number));
+      if (this.currentGroup && this.currentDance) {
+        if (this.currentDance[idKey] === callbacks[idKey]) {
+          return this.findGroupDancers(this.currentGroup)
+            .sort((a, b) => a.$number.localeCompare(b.$number));
+        }
+        const results = this.getGroupDanceResults(this.currentGroup, callbacks);
+        return this.getPlacedDancers(results, true);
       }
       return [];
     },
