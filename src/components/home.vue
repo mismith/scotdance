@@ -51,7 +51,7 @@
       <header>
         <h2 class="md-display-1">About</h2>
         <p>ScotDance is an <a href="https://github.com/mismith/scotdance" target="_blank" class="ext">open source hobby project</a> coded by <a href="https://mismith.io" target="_blank" class="ext">Murray Smith</a> in 2018.</p>
-        <p>Want to get in touch? Send a message via <a @click="help()">live chat</a>.</p>
+        <p>Want to get in touch? Send a message via <a @click.prevent="help()">live chat</a>.</p>
       </header>
     </section>
   </div>

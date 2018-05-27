@@ -9,7 +9,8 @@
             @click="$router.push({ params: { groupId: group[idKey] } })"
             :class="{ active: isActive(group) }"
           >
-            {{ group.$name }}
+            <span class="md-list-item-text">{{ group.$name }}</span>
+            <md-icon>chevron_right</md-icon>
           </md-list-item>
         </md-list>
         <md-empty-state
@@ -38,13 +39,19 @@
         </md-list>
         <md-empty-state
           v-else
-          md-icon="timeline"
-          md-label="Enable dances"
-          md-description="Select an age group"
+          md-icon="call_merge"
+          md-label="Toggle dances"
+          md-description="Link age groups to specific dances"
         />
       </div>
       <div class="md-layout-item md-size-33 admin-blade md-scroll">
-        <HotTable v-if="currentGroup" :settings="hotSettings" class="fullscreen" />
+        <HotTable v-if="currentGroup && findGroupDances(currentGroup).length" :settings="hotSettings" class="fullscreen" />
+        <md-empty-state
+          v-else
+          md-icon="sort"
+          md-label="Championship draws"
+          md-description="Specify dancer order per dance"
+        />
       </div>
     </div>
   </div>
