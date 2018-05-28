@@ -5,6 +5,7 @@
         <md-list-item-cards
           v-for="group in groupedCompetitions"
           :key="group.name"
+          v-if="group.competitions.length"
           md-expand
           :md-expanded="true"
         >
@@ -17,12 +18,14 @@
               :competition="competition"
               @click="$router.push(`/competitions/${competition[idKey]}`)"
             />
-            <md-list-item v-if="!group.competitions.length" class="empty">
-              No competitions found.
-            </md-list-item>
           </md-list>
         </md-list-item-cards>
       </md-list>
+      <md-empty-state
+        v-if="!competitions.length"
+        md-icon="error"
+        md-label="No competitions found"
+      />
     </div>
   </div>
 </template>
@@ -52,7 +55,7 @@ export default {
           competitions: this.competitions.filter(c => moment().diff(c.date) < 0),
         },
         {
-          name: 'Archived',
+          name: 'Archive',
           competitions: this.competitions.filter(c => moment().diff(c.date) >= 0).reverse(),
         },
       ];
