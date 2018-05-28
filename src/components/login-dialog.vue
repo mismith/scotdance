@@ -37,11 +37,11 @@
       </div>
 
       <footer class="md-dialog-actions">
-        <md-spinnable :md-spinning="authLoading">
+        <md-button @click="loginVisible = false">Cancel</md-button>
+
+        <md-spinnable :md-spinning="authLoading" md-left>
           <md-button type="submit" class="md-primary md-raised">Login</md-button>
         </md-spinnable>
-
-        <md-button @click="loginVisible = false">Cancel</md-button>
       </footer>
     </form>
     <form v-else @submit.prevent="reset(credentials).then(handlePasswordReset)">
@@ -71,11 +71,11 @@
       </div>
 
       <footer class="md-dialog-actions">
-        <md-spinnable :md-spinning="authLoading">
+        <md-button @click="forgot = false; authError = null;">Back</md-button>
+
+        <md-spinnable :md-spinning="authLoading" md-left>
           <md-button type="submit" class="md-primary md-raised">Send</md-button>
         </md-spinnable>
-
-        <md-button @click="forgot = false; authError = null;">Back</md-button>
       </footer>
     </form>
   </md-dialog>

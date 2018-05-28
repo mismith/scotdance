@@ -54,7 +54,9 @@
             </md-dialog-content>
 
             <md-dialog-actions>
-              <md-spinnable :md-spinning="passwordLoading">
+              <md-button @click="passwordActive = false">Cancel</md-button>
+
+              <md-spinnable :md-spinning="passwordLoading" md-left>
                 <md-button
                   @click="changePassword"
                   :disabled="!passwordConfirm || !newPassword"
@@ -63,7 +65,6 @@
                   Change Password
                 </md-button>
               </md-spinnable>
-              <md-button @click="passwordActive = false">Cancel</md-button>
             </md-dialog-actions>
           </md-dialog>
         </div>
@@ -92,7 +93,9 @@
             </md-dialog-content>
 
             <md-dialog-actions>
-              <md-spinnable :md-spinning="removeLoading">
+              <md-button @click="removeActive = false">Cancel</md-button>
+
+              <md-spinnable :md-spinning="removeLoading" md-left>
                 <md-button
                   @click="remove"
                   :disabled="!removeConfirm"
@@ -101,7 +104,6 @@
                   Delete Account
                 </md-button>
               </md-spinnable>
-              <md-button @click="removeActive = false">Cancel</md-button>
             </md-dialog-actions>
           </md-dialog>
         </footer>

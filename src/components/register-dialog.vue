@@ -32,11 +32,11 @@
       </div>
 
       <footer class="md-dialog-actions">
-        <md-spinnable :md-spinning="authLoading">
+        <md-button @click="registerVisible = false">Cancel</md-button>
+
+        <md-spinnable :md-spinning="authLoading" md-left>
           <md-button type="submit" class="md-primary md-raised">Register</md-button>
         </md-spinnable>
-
-        <md-button @click="registerVisible = false">Cancel</md-button>
       </footer>
     </form>
   </md-dialog>
