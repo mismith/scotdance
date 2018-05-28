@@ -37,7 +37,7 @@
             :key="dancer[idKey]"
             :dancer="dancer"
             @click="placeDancer(dancer)"
-            :class="{placed: isPlaced(dancer)}"
+            :class="{ placed: isPlaced(dancer, placedDancers) }"
           />
           <md-empty-state
             v-if="!currentDancers.length"
@@ -58,9 +58,10 @@
             v-for="(dancer, index) in placedDancers"
             :key="dancer[idKey]"
             :dancer="dancer"
-            :place="index + 1"
+            :place="getPlace(dancer, placedDancers)"
             @click="placeDancer(dancer)"
           >
+            <md-switch v-if="index" v-model="dancer.$tie" @change="handleTie(dancer, $event)" />
             <span v-if="currentDance[idKey] === callbacks[idKey]" slot="icon" />
             <md-icon v-if="currentDance[idKey] === overall[idKey]" slot="icon" class="icon-trophy md-primary" />
           </dancer-list-item>
@@ -89,8 +90,10 @@ import {
   overall,
   callbacks,
   findGroupDancers,
-  getGroupDanceResults,
   getPlacedDancers,
+  getPlaceIndex,
+  isPlaced,
+  getPlace,
 } from '@/helpers/results';
 import {
   isExpanded,
@@ -143,18 +146,16 @@ export default {
     currentDancers() {
       if (this.currentGroup && this.currentDance) {
         if (this.currentDance[idKey] === callbacks[idKey]) {
-          return this.findGroupDancers(this.currentGroup)
-            .sort((a, b) => a.$number.localeCompare(b.$number));
+          return this.findGroupDancers(this.currentGroup);
         }
-        const results = this.getGroupDanceResults(this.currentGroup, callbacks);
-        return this.getPlacedDancers(results, true);
+        return this.getPlacedDancers(this.currentGroup, callbacks, true);
       }
       return [];
     },
     placedDancers() {
       if (this.currentGroup && this.currentDance) {
-        const results = this.getGroupDanceResults(this.currentGroup, this.currentDance);
-        return this.getPlacedDancers(results, this.currentDance[idKey] === callbacks[idKey]);
+        const sortByNumber = this.currentDance[idKey] === callbacks[idKey];
+        return this.getPlacedDancers(this.currentGroup, this.currentDance, sortByNumber);
       }
       return [];
     },
@@ -162,8 +163,9 @@ export default {
   methods: {
     hasFavorites,
     findGroupDancers,
-    getGroupDanceResults,
     getPlacedDancers,
+    isPlaced,
+    getPlace,
 
     isGroupExpanded(item, items) {
       const itemIds = items.map(i => i[idKey]);
@@ -174,8 +176,25 @@ export default {
       this.$localStorage.set('expandedGroups', this.expandedGroups);
     },
 
+    save() {
+      // emit changes (to be saved up the chain)
+      this.$emit('change', {
+        [`results/${this.groupId}/${this.danceId}`]: this.placedDancers.map((dancer) => {
+          const dancerId = dancer[idKey];
+          return `${dancerId}${dancer.$tie ? ':tie' : ''}`;
+        }),
+      });
+    },
+    handleTie(dancer, tie) {
+      const placeIndex = getPlaceIndex(dancer, this.placedDancers);
+      if (placeIndex >= 0) {
+        this.placedDancers[placeIndex].$tie = tie;
+
+        this.save();
+      }
+    },
     placeDancer(dancer) {
-      const placeIndex = this.getDancerPlaceIndex(dancer);
+      const placeIndex = getPlaceIndex(dancer, this.placedDancers);
       if (placeIndex >= 0) {
         // remove
         this.placedDancers.splice(placeIndex, 1);
@@ -184,16 +203,7 @@ export default {
         this.placedDancers.push(dancer);
       }
 
-      // emit changes
-      this.$emit('change', {
-        [`results/${this.groupId}/${this.danceId}`]: this.placedDancers.map(d => d[idKey]),
-      });
-    },
-    getDancerPlaceIndex(dancer) {
-      return this.placedDancers.findIndex(d => d[idKey] === dancer[idKey]);
-    },
-    isPlaced(dancer) {
-      return this.getDancerPlaceIndex(dancer) >= 0;
+      this.save();
     },
   },
   components: {

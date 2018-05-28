@@ -56,10 +56,10 @@
 
               <md-list slot="md-expand" class="md-double-line">
                 <dancer-list-item
-                  v-for="(dancer, index) in dance.dancers"
+                  v-for="dancer in dance.dancers"
                   :key="dancer[idKey]"
                   :dancer="dancer"
-                  :place="index + 1"
+                  :place="getPlace(dancer, dance.dancers)"
                   @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] }})"
                 >
                   <span v-if="dance[idKey] === callbacks[idKey]" slot="icon" />
@@ -91,9 +91,9 @@ import {
   callbacks,
   findGroupDances,
   findGroupDancers,
-  getGroupDanceResults,
   getPlacedDancers,
   hasOverall,
+  getPlace,
 } from '@/helpers/results';
 import {
   isExpanded,
@@ -166,8 +166,8 @@ export default {
       }
 
       return groups.map((dance) => {
-        const results = this.getGroupDanceResults(this.currentGroup, dance);
-        const dancers = this.getPlacedDancers(results, dance[idKey] === callbacks[idKey]);
+        const sortByNumber = dance[idKey] === callbacks[idKey];
+        const dancers = this.getPlacedDancers(this.currentGroup, dance, sortByNumber);
 
         return {
           ...dance,
@@ -185,8 +185,8 @@ export default {
     hasFavorites,
     findGroupDances,
     findGroupDancers,
-    getGroupDanceResults,
     getPlacedDancers,
+    getPlace,
 
     showRelevantSlide() {
       if (this.currentDance) {

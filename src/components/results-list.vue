@@ -1,7 +1,7 @@
 <template>
   <md-list class="results-list">
     <result-list-item
-      :dancers="getPlacedDancers(getGroupDanceResults(group, callbacks), true)"
+      :dancers="getPlacedDancers(group, callbacks, true)"
       @click="handleClick(group, callbacks)"
       :class="{ active: isActive(group, callbacks) }"
     >
@@ -12,7 +12,7 @@
     <result-list-item
       v-for="dance in findGroupDances(group)"
       :key="dance[idKey]"
-      :dancers="getPlacedDancers(getGroupDanceResults(group, dance))"
+      :dancers="getPlacedDancers(group, dance)"
       @click="handleClick(group, dance)"
       :class="{ active: isActive(group, dance) }"
     >
@@ -22,7 +22,7 @@
     <md-divider v-if="hasOverall(group)" class="md-inset" />
     <result-list-item
       v-if="hasOverall(group)"
-      :dancers="getPlacedDancers(getGroupDanceResults(group, overall))"
+      :dancers="getPlacedDancers(group, overall)"
       @click="handleClick(group, overall)"
       :class="{ active: isActive(group, overall) }"
     >
@@ -43,7 +43,6 @@ import {
   findGroupDances,
   findGroupDancers,
   getPlacedDancers,
-  getGroupDanceResults,
   hasOverall,
 } from '@/helpers/results';
 
@@ -68,7 +67,6 @@ export default {
     findGroupDances,
     findGroupDancers,
     getPlacedDancers,
-    getGroupDanceResults,
     hasOverall,
 
     isActive(group, dance) {

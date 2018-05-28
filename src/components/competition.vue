@@ -92,7 +92,8 @@ export default {
         $name: `${dancer.firstName || ''} ${dancer.lastName || ''}`.trim(),
         $group: findByIdKey(this.groups, dancer.groupId),
         $favorite: this.$store.getters.isFavorite('dancers', dancer[idKey]),
-      }));
+      }))
+        .sort((a, b) => a.$number.localeCompare(b.$number)); // sort by number
     },
     groups() {
       return this.groupsRaw.map((group, i) => ({
