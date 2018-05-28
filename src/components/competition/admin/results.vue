@@ -7,6 +7,8 @@
             v-for="group in groups"
             :key="group[idKey]"
             md-expand
+            :md-expanded="isGroupExpanded(group, groups)"
+            @update:mdExpanded="handleGroupExpanded(group[idKey], $event)"
           >
             <md-subheader>
               {{ group.$name }}
@@ -90,6 +92,10 @@ import {
   getGroupDanceResults,
   getPlacedDancers,
 } from '@/helpers/results';
+import {
+  isExpanded,
+  handleExpanded,
+} from '@/helpers/router';
 
 export default {
   name: 'admin-results',
@@ -102,6 +108,12 @@ export default {
     dancers: Array,
     results: Object,
     // unsavedChanges: Object,
+  },
+  localStorage: {
+    expandedGroups: {
+      type: Object,
+      default: {},
+    },
   },
   data() {
     return {
@@ -152,6 +164,15 @@ export default {
     findGroupDancers,
     getGroupDanceResults,
     getPlacedDancers,
+
+    isGroupExpanded(item, items) {
+      const itemIds = items.map(i => i[idKey]);
+      return isExpanded(this.expandedGroups, item[idKey], itemIds);
+    },
+    handleGroupExpanded(groupId, expanded) {
+      this.expandedGroups = handleExpanded(this.expandedGroups, groupId, expanded);
+      this.$localStorage.set('expandedGroups', this.expandedGroups);
+    },
 
     placeDancer(dancer) {
       const placeIndex = this.getDancerPlaceIndex(dancer);
