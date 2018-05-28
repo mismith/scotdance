@@ -34,11 +34,17 @@ export default new Vuex.Store({
     },
     setRegisterDialogOpen(state, to) {
       state.registerDialogOpen = to;
-      if (to) state.favoritesDialogOpen = false;
+      if (to) {
+        state.loginDialogOpen = false;
+        state.favoritesDialogOpen = false;
+      }
     },
     setLoginDialogOpen(state, to) {
       state.loginDialogOpen = to;
-      if (to) state.favoritesDialogOpen = false;
+      if (to) {
+        state.registerDialogOpen = false;
+        state.favoritesDialogOpen = false;
+      }
     },
 
     copy(state, { data, type = 'text/plain' }) {

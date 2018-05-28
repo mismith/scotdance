@@ -26,6 +26,13 @@
           />
         </md-field>
 
+        <p>
+          Already have an account?
+          <a @click="$store.commit('setLoginDialogOpen', true)">
+            Login
+          </a>
+        </p>
+
         <aside v-if="authError" class="validation-message">
           {{ authError.message }}
         </aside>

@@ -27,9 +27,18 @@
           />
         </md-field>
 
-        <a @click="forgot = true; authError = null;">
-          Reset Your Password
-        </a>
+        <p>
+          Need an account first?
+          <a @click="$store.commit('setRegisterDialogOpen', true)">
+            Register
+          </a>
+        </p>
+        <p>
+          Can't log in?
+          <a @click="forgot = true; authError = null;">
+            Reset Password
+          </a>
+        </p>
 
         <aside v-if="authError" class="validation-message">
           {{ authError.message }}

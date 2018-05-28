@@ -516,9 +516,13 @@ body,
 .register-dialog,
 .change-password-dialog,
 .remove-user-dialog {
+  p {
+    color: #666;
+  }
   .md-dialog-actions {
     display: flex;
     justify-content: space-between;
+    padding-left: 16px;
     padding-right: 24px;
     padding-bottom: 12px;
 
