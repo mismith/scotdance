@@ -1,93 +1,108 @@
 <template>
   <div class="competition-admin md-scroll-frame">
-    <div v-if="currentSection" class="md-scroll-frame md-scroll">
-      <md-toolbar class="md-dense">
-        <div v-if="inTabs('info', 'categories', 'dancers', 'groups')">
-          <md-button @click="showImport = true">Import</md-button>
-        </div>
-
-        <div v-if="currentSection">
-          <preset-picker v-if="currentSection.presets" :presets="currentSection.presets" @select="addPresets" />
-        </div>
-
-        <span style="flex-grow: 1;"></span>
-
-        <md-spunnable :md-spinning="saving" />
-      </md-toolbar>
-      <div class="md-scroll">
-        <form v-if="currentSection.form" class="md-padding">
-          <div v-for="field in currentSection.form.fields" :key="field.data">
-            <md-datepicker
-              v-if="field.type === 'datetime'"
-              v-model="competition[field.data]"
-              @input="handleFormInputChange(currentSection[idKey], field.data, $event)"
-              :class="{ 'md-required': field.required }"
-            >
-              <label>{{ field.title }}</label>
-            </md-datepicker>
-
-            <md-checkbox
-              v-else-if="field.type === 'checkbox'"
-              v-model="competition[field.data]"
-              @change="handleFormInputChange(currentSection[idKey], field.data, $event)"
-              :required="field.required"
-            >
-              {{ field.title }}
-            </md-checkbox>
-
-            <md-field v-else>
-              <label>{{ field.title }}</label>
-              <md-input
-                v-model="competition[field.data]"
-                @change="handleFormInputChange(currentSection[idKey], field.data, $event.target.value)"
-                :required="field.required"
-              />
-            </md-field>
+    <div v-if="me && me.admin" class="md-scroll-frame">
+      <div v-if="currentSection" class="md-scroll-frame md-scroll">
+        <md-toolbar class="md-dense">
+          <div v-if="inTabs('info', 'categories', 'dancers', 'groups')">
+            <md-button @click="showImport = true">Import</md-button>
           </div>
-        </form>
 
-        <HotTable v-else-if="currentSection.hot" :settings="currentSection.hot" class="fullscreen" />
+          <div v-if="currentSection">
+            <preset-picker v-if="currentSection.presets" :presets="currentSection.presets" @select="addPresets" />
+          </div>
 
-        <router-view v-else v-bind="$props" @change="handleChanges" />
+          <span style="flex-grow: 1;"></span>
 
-        <footer v-if="inTabs('info')" class="md-layout md-alignment-center" style="margin-top: auto;">
-          <md-button @click="confirmRemove = true" class="md-accent">
-            Delete Competition
-          </md-button>
-        </footer>
+          <md-spunnable :md-spinning="saving" />
+        </md-toolbar>
+        <div class="md-scroll">
+          <form v-if="currentSection.form" class="md-padding">
+            <div v-for="field in currentSection.form.fields" :key="field.data">
+              <md-datepicker
+                v-if="field.type === 'datetime'"
+                v-model="competition[field.data]"
+                @input="handleFormInputChange(currentSection[idKey], field.data, $event)"
+                :class="{ 'md-required': field.required }"
+              >
+                <label>{{ field.title }}</label>
+              </md-datepicker>
+
+              <md-checkbox
+                v-else-if="field.type === 'checkbox'"
+                v-model="competition[field.data]"
+                @change="handleFormInputChange(currentSection[idKey], field.data, $event)"
+                :required="field.required"
+              >
+                {{ field.title }}
+              </md-checkbox>
+
+              <md-field v-else>
+                <label>{{ field.title }}</label>
+                <md-input
+                  v-model="competition[field.data]"
+                  @change="handleFormInputChange(currentSection[idKey], field.data, $event.target.value)"
+                  :required="field.required"
+                />
+              </md-field>
+            </div>
+          </form>
+
+          <HotTable v-else-if="currentSection.hot" :settings="currentSection.hot" class="fullscreen" />
+
+          <router-view v-else v-bind="$props" @change="handleChanges" />
+
+          <footer v-if="inTabs('info')" class="md-layout md-alignment-center" style="margin-top: auto;">
+            <md-button @click="confirmRemove = true" class="md-accent">
+              Delete Competition
+            </md-button>
+          </footer>
+        </div>
       </div>
-    </div>
-    <div v-else class="md-scroll-frame">
-      <md-progress-spinner md-mode="indeterminate" style="margin: auto;" />
-    </div>
+      <div v-else class="md-scroll-frame">
+        <md-progress-spinner md-mode="indeterminate" style="margin: auto;" />
+      </div>
 
-    <md-bottom-bar :md-active-item="`tab-admin-${currentTab}`">
-      <md-bottom-bar-item
-        v-for="section of sections"
-        :key="section[idKey]"
-        @click="goToTab(section[idKey])"
-        :id="`tab-admin-${section[idKey]}`"
-      >
-        <md-icon :class="section.icon"></md-icon>
-        <span class="md-bottom-bar-label">{{ section.name }}</span>
-      </md-bottom-bar-item>
-    </md-bottom-bar>
+      <md-bottom-bar :md-active-item="`tab-admin-${currentTab}`">
+        <md-bottom-bar-item
+          v-for="section of sections"
+          :key="section[idKey]"
+          @click="goToTab(section[idKey])"
+          :id="`tab-admin-${section[idKey]}`"
+        >
+          <md-icon :class="section.icon"></md-icon>
+          <span class="md-bottom-bar-label">{{ section.name }}</span>
+        </md-bottom-bar-item>
+      </md-bottom-bar>
 
-    <md-dialog :md-active.sync="showImport" class="import-dialog">
-      <admin-import :competition-data-ref="competitionDataRef" @done="showImport = false" />
-    </md-dialog>
-    <md-dialog-confirm
-      :md-active.sync="confirmRemove"
-      md-title="Delete competition"
-      md-content="Are you sure you want to permanently delete this competition?"
-      md-confirm-text="Yes"
-      md-cancel-text="No"
-      @md-confirm="remove"
+      <md-dialog :md-active.sync="showImport" class="import-dialog">
+        <admin-import :competition-data-ref="competitionDataRef" @done="showImport = false" />
+      </md-dialog>
+      <md-dialog-confirm
+        :md-active.sync="confirmRemove"
+        md-title="Delete competition"
+        md-content="Are you sure you want to permanently delete this competition?"
+        md-confirm-text="Yes"
+        md-cancel-text="No"
+        @md-confirm="remove"
+      />
+    </div>
+    <md-empty-state
+      v-if="!me"
+      md-icon="error"
+      md-label="Login required"
+    />
+    <md-empty-state
+      v-if="me && !me.admin"
+      md-icon="error"
+      md-label="Access denied"
     />
   </div>
 </template>
 
 <script>
+import {
+  mapState,
+} from 'vuex';
 import HotTable from '@handsontable/vue';
 import AdminImport from '@/components/competition/admin/import';
 import AdminResults from '@/components/competition/admin/results';
@@ -140,6 +155,10 @@ export default {
     };
   },
   computed: {
+    ...mapState([
+      'me',
+    ]),
+
     currentTab() {
       return this.$route.params.tab || this.$route.name.split('.')[2] || 'info';
     },
