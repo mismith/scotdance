@@ -7,7 +7,7 @@
         <p class="md-headline">Highland dancing event tracker</p>
         <p class="md-subheading">Skip the pen and paper—attend highland dance competitions in style with this app for your mobile device.</p>
         <p v-if="!isApp" class="store-badges">
-          <a @click.prevent="TODO()" href="#" target="_blank">
+          <a href="https://itunes.apple.com/us/app/scotdance/id1386475626?mt=8" target="_blank">
             <img src="static/img/app-store.svg" alt="Download on the App Store" />
           </a>
           <a href="https://play.google.com/store/apps/details?id=info.mismith.scotdance" target="_blank">
