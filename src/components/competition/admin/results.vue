@@ -61,7 +61,11 @@
             :place="getPlace(dancer, placedDancers)"
             @click="placeDancer(dancer)"
           >
-            <md-switch v-if="index" v-model="dancer.$tie" @change="handleTie(dancer, $event)" />
+            <md-switch
+              v-if="index && currentDance[idKey] !== callbacks[idKey]"
+              v-model="dancer.$tie"
+              @change="handleTie(dancer, $event)"
+            />
             <span v-if="currentDance[idKey] === callbacks[idKey]" slot="icon" />
             <md-icon v-if="currentDance[idKey] === overall[idKey]" slot="icon" class="icon-trophy md-primary" />
           </dancer-list-item>
