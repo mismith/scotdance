@@ -1,5 +1,5 @@
 <template>
-  <div class="competition-info md-scroll-frame">
+  <div class="competition-info md-scroll-frame alt">
     <div class="md-scroll">
       <section class="hero">
         <h1 class="md-display-1">{{ competition.name }}</h1>
@@ -14,33 +14,37 @@
         </p>
       </section>
 
-      <section v-if="judges.length" class="staff alt">
-        <h3>Judges</h3>
-        <ul class="md-layout">
-          <li
-            v-for="member of judges"
-            :key="member[idKey]"
-            class="md-layout-item"
-          >
-            <div>{{ member.$name }}</div>
-            <small>{{ member.location }}</small>
-          </li>
-        </ul>
-      </section>
+      <md-list class="staff md-list-cards">
+        <md-list-item-cards v-if="judges.length" md-expand md-expanded>
+          <md-subheader>Judges</md-subheader>
 
-      <section v-if="pipers.length" class="staff alt">
-        <h3>Pipers</h3>
-        <ul class="md-layout">
-          <li
-            v-for="member of pipers"
-            :key="member[idKey]"
-            class="md-layout-item"
-          >
-            <div>{{ member.$name }}</div>
-            <small>{{ member.location }}</small>
-          </li>
-        </ul>
-      </section>
+          <ul slot="md-expand" class="md-layout">
+            <li
+              v-for="member of judges"
+              :key="member[idKey]"
+              class="md-layout-item"
+            >
+              <div>{{ member.$name }}</div>
+              <small>{{ member.location }}</small>
+            </li>
+          </ul>
+        </md-list-item-cards>
+        <md-list-item-cards v-if="pipers.length" md-expand md-expanded>
+          <md-subheader>Pipers</md-subheader>
+
+          <ul slot="md-expand" class="md-layout">
+            <li
+              v-for="member of pipers"
+              :key="member[idKey]"
+              class="md-layout-item"
+            >
+              <div>{{ member.$name }}</div>
+              <small>{{ member.location }}</small>
+            </li>
+          </ul>
+        </md-list-item-cards>
+      </md-list>
+
 
       <section>
         <p v-if="competition.sobhd">
@@ -91,25 +95,24 @@ export default {
     margin-bottom: 32px;
   }
   .staff {
+    .md-list-item-content {
+      padding-left: 0;
+      padding-right: 0;
+    }
     ul {
+      background: #fff;
       padding: 0;
-      margin: 0 -8px;
+      margin: 0;
       list-style: none;
 
       li {
-        padding: 0 8px 16px;
+        padding: 16px;
 
         > * {
           white-space: nowrap;
         }
       }
     }
-  }
-
-  .alt {
-    padding: 2px 16px;
-    margin-left: -16px;
-    margin-right: -16px;
   }
 }
 </style>
