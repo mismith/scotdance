@@ -139,15 +139,27 @@ export default {
     },
   },
   methods: {
-    findGroupDancers,
-    hasFavorites,
-
     ...mapMutations([
       'copy',
     ]),
 
+    findGroupDancers,
+    hasFavorites,
+
     isJudge: item => item.type === 'Judge',
 
+    handleSort(pool) {
+      if (!pool[idKey]) return; // skip if removing from unassigned pool
+      if (!this.path) return; // can't save changes if we don't know where to save to
+
+      // pluck items of proper type of of joined sorting array
+      const orderedGroupIds = pool.$items.filter(item => !this.isJudge(item)).map(group => group[idKey]);
+      const orderedJudgeIds = pool.$items.filter(this.isJudge).map(judge => judge[idKey]);
+      this.$emit('change', {
+        [`${this.path}/platforms/${pool[idKey]}/orderedGroupIds`]: orderedGroupIds,
+        [`${this.path}/platforms/${pool[idKey]}/orderedJudgeIds`]: orderedJudgeIds,
+      });
+    },
     handleCopy() {
       this.copy({
         data: this.item.platforms,
@@ -160,18 +172,6 @@ export default {
 
       this.$emit('change', {
         [`${this.path}/platforms`]: this.clipboard.data,
-      });
-    },
-    handleSort(pool) {
-      if (!pool[idKey]) return; // skip if removing from unassigned pool
-      if (!this.path) return; // can't save changes if we don't know where to save to
-
-      // pluck items of proper type of of joined sorting array
-      const orderedGroupIds = pool.$items.filter(item => !this.isJudge(item)).map(group => group[idKey]);
-      const orderedJudgeIds = pool.$items.filter(this.isJudge).map(judge => judge[idKey]);
-      this.$emit('change', {
-        [`${this.path}/platforms/${pool[idKey]}/orderedGroupIds`]: orderedGroupIds,
-        [`${this.path}/platforms/${pool[idKey]}/orderedJudgeIds`]: orderedJudgeIds,
       });
     },
   },

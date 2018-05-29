@@ -31,8 +31,18 @@
               @change="handleDanceToggle(dance, $event)"
             />
           </md-list-item>
+
+          <footer v-if="dances.length">
+            <md-button
+              @click="handleCopy"
+            >Copy</md-button>
+            <md-button
+              :disabled="clipboard.type !== 'dance-groups'"
+              @click="handlePaste"
+            >Paste</md-button>
+          </footer>
           <md-empty-state
-            v-if="!dances.length"
+            v-else
             md-icon="error"
             md-label="No dances found"
           />
@@ -45,7 +55,7 @@
         />
       </div>
       <div class="md-layout-item md-size-33 admin-blade md-scroll">
-        <HotTable v-if="currentGroup && findGroupDances(currentGroup).length" :settings="hotSettings" class="fullscreen" />
+        <HotTable v-if="currentGroupDances.length" :settings="hotSettings" class="fullscreen" />
         <md-empty-state
           v-else
           md-icon="sort"
@@ -59,6 +69,13 @@
 
 <script>
 import HotTable from '@handsontable/vue';
+import {
+  mapState,
+  mapMutations,
+} from 'vuex';
+import {
+  findByIdKey,
+} from '@/helpers/competition';
 import {
   findGroupDances,
   findGroupDancers,
@@ -83,11 +100,21 @@ export default {
     };
   },
   computed: {
+    ...mapState([
+      'clipboard',
+    ]),
+
     currentGroup() {
       if (this.groupId) {
         return this.groups.find(group => group[idKey] === this.groupId);
       }
       return null;
+    },
+    currentGroupDances() {
+      if (this.currentGroup) {
+        return this.findGroupDances(this.currentGroup);
+      }
+      return false;
     },
 
     hotSettings() {
@@ -100,7 +127,7 @@ export default {
           'remove_row',
         ],
 
-        columns: this.findGroupDances(this.currentGroup).map((dance) => {
+        columns: this.currentGroupDances.map((dance) => {
           return {
             title: dance.$shortName,
           };
@@ -110,6 +137,10 @@ export default {
     },
   },
   methods: {
+    ...mapMutations([
+      'copy',
+    ]),
+
     findGroupDances,
     findGroupDancers,
 
@@ -120,6 +151,22 @@ export default {
     handleDanceToggle(dance, toggled) {
       this.$emit('change', {
         [`dances/${dance[idKey]}/groupIds/${this.groupId}`]: toggled || null,
+      });
+    },
+    handleCopy() {
+      this.copy({
+        data: this.currentGroupDances.map(d => d[idKey]),
+        type: 'dance-groups',
+      });
+    },
+    handlePaste() {
+      if (!this.clipboard.type === 'dance-groups') return; // ensure proper data type
+
+      (this.clipboard.data || []).forEach((toggledDanceId) => {
+        const dance = findByIdKey(this.dances, toggledDanceId);
+        if (dance) {
+          this.handleDanceToggle(dance, true);
+        }
       });
     },
   },
