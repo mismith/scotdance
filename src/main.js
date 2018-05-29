@@ -29,18 +29,19 @@ import MdListItemCards from '@/components/md-list-item-cards';
 Vue.config.silent = true;
 
 // cordova
-Vue.prototype.isApp = false;
-if (window.location.protocol === 'file:') {
-  Vue.prototype.isApp = true;
+Vue.prototype.isApp = window.location.protocol === 'file:';
+if (Vue.prototype.isApp) {
+  // allow loading cordova plugins
   const cordovaScript = document.createElement('script');
   cordovaScript.setAttribute('type', 'text/javascript');
   cordovaScript.setAttribute('src', 'cordova.js');
   document.body.appendChild(cordovaScript);
 
+  // once cordova plugins are ready
   document.addEventListener('deviceready', () => {
     window.navigator.splashscreen.hide();
     window.StatusBar.show();
-  }, false);
+  });
 }
 
 Vue.use(VueFire);
