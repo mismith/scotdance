@@ -1,7 +1,7 @@
 <template>
   <div class="admin-schedule md-scroll-frame">
     <div class="md-layout admin-blades">
-      <div class="md-layout-item md-size-50 md-scroll admin-blade">
+      <div class="md-layout-item md-size-33 md-scroll admin-blade">
         <admin-list
           :items-ref="competitionDataRef.child('schedule/days')"
           items-type="Day"
@@ -72,6 +72,7 @@
                           danceId: dance[idKey],
                         })"
                         @remove="handleListItemRemove(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events/${event[idKey]}/dances`, dance)"
+                        :class="{ active: danceId === dance[idKey] }"
                       />
                     </admin-list>
                   </admin-list-item>
@@ -81,7 +82,7 @@
           </admin-list-item>
         </admin-list>
       </div>
-      <div class="md-layout-item md-size-50 md-scroll admin-blade">
+      <div class="md-layout-item md-size-66 md-scroll admin-blade">
         <form v-if="currentItem" @submit.prevent class="md-padding">
           <div v-for="(field, key) in currentItemFields" :key="key">
             <md-field v-if="field.type === 'select'">
