@@ -12,7 +12,7 @@
       </md-button>
     </md-app-toolbar>
 
-    <md-app-drawer :md-active.sync="menuVisible" v-touch:swipe.left="closeMenu">
+    <md-app-drawer :md-active.sync="menuVisible">
       <md-toolbar class="md-primary md-large md-account-header">
         <div class="account-bg" style="background-image: url('static/img/touchicon.png');"></div>
         <favorites-dialog />
@@ -99,7 +99,7 @@
       </div>
     </md-app-drawer>
 
-    <md-app-content id="main" v-touch:swipe.right="handleSwipeToGoBack" class="md-scroll-frame md-scroll">
+    <md-app-content id="main" class="md-scroll-frame md-scroll">
       <router-view :competitions="competitions" />
     </md-app-content>
   </md-app>
@@ -107,6 +107,7 @@
 
 <script>
 import moment from 'moment-mini';
+import Hammer from 'hammerjs';
 import {
   mapState,
   mapActions,
@@ -222,6 +223,20 @@ export default {
       return firebase.auth().signOut();
     },
   },
+  mounted() {
+    new Hammer(this.$el)
+      .on('swipeleft', () => {
+        this.closeMenu();
+      })
+      .on('swiperight', ({ deltaX, srcEvent: { pageX } }) => {
+        const EDGE_THRESHOLD = 30;
+        const startLeft = pageX - deltaX;
+        // const startRight = window.innerWidth - startRight;
+        if (startLeft <= EDGE_THRESHOLD) {
+          window.history.go(-1);
+        }
+      });
+  },
   components: {
     RegisterDialog,
     LoginDialog,
@@ -267,6 +282,7 @@ body.has-bottom-bar {
   flex: 1;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 .md-subheader {
   > div {
@@ -518,6 +534,7 @@ body,
 .md-app-drawer {
   display: flex;
   flex-direction: column;
+  touch-action: pan-y;
 }
 
 .login-dialog,
