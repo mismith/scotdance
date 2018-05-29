@@ -40,6 +40,7 @@
     "vue-material": "1.0.0-beta-10.2",
     "vue-router": "^3.0.1",
     "vue-scrollto": "^2.11.0",
+    "vue2-touch-events": "^1.0.0",
     "vuedraggable": "^2.16.0",
     "vuefire": "^1.4.4",
     "vuex": "^3.0.1",

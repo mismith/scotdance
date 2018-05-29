@@ -8,6 +8,7 @@ import VueAsyncComputed from 'vue-async-computed';
 import VueBodyClass from 'vue-body-class';
 import VueLocalStorage from 'vue-localstorage';
 import VueScrollTo from 'vue-scrollto';
+import Vue2TouchEvents from 'vue2-touch-events';
 
 import {
   firebase,
@@ -53,6 +54,7 @@ Vue.use(VueLocalStorage, {
   bind: true,
 });
 Vue.use(VueScrollTo);
+Vue.use(Vue2TouchEvents);
 
 // monitor user auth
 firebase.auth().onAuthStateChanged((me) => {

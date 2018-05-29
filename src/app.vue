@@ -12,7 +12,7 @@
       </md-button>
     </md-app-toolbar>
 
-    <md-app-drawer :md-active.sync="menuVisible">
+    <md-app-drawer :md-active.sync="menuVisible" v-touch:swipe.left="closeMenu">
       <md-toolbar class="md-primary md-large md-account-header">
         <div class="account-bg" style="background-image: url('static/img/touchicon.png');"></div>
         <favorites-dialog />
@@ -44,7 +44,7 @@
           <md-subheader>Account</md-subheader>
 
           <md-list-item
-            @click="$router.push('/profile'); menuVisible = false; accountToggled = false;"
+            @click="$router.push('/profile'); closeMenu();"
           >
             <md-icon>account_circle</md-icon>
             <span class="md-list-item-text">My Profile</span>
@@ -60,7 +60,7 @@
 
             <md-button
               v-if="me && me.admin"
-              @click="$router.push(`/competitions/${db.push().key}/admin`); menuVisible = false;"
+              @click="$router.push(`/competitions/${db.push().key}/admin`); closeMenu();"
               class="md-icon-button"
             >
               <md-icon>add</md-icon>
@@ -71,7 +71,7 @@
             v-for="competition in relevantCompetitions"
             :key="competition[idKey]"
             :competition="competition"
-            @click="$router.push(`/competitions/${competition[idKey]}`); menuVisible = false;"
+            @click="$router.push(`/competitions/${competition[idKey]}`); closeMenu();"
             @admin-click="menuVisible = false;"
           />
 
@@ -80,7 +80,7 @@
           </md-list-item>
 
           <footer v-if="competitions.length && competitions.length !== relevantCompetitions.length" style="text-align: center;">
-            <md-button @click="$router.push({ name: 'competitions' }); menuVisible = false;">
+            <md-button @click="$router.push({ name: 'competitions' }); closeMenu();">
               See {{ competitions.length - relevantCompetitions.length }} More
             </md-button>
           </footer>
@@ -90,7 +90,7 @@
           <md-subheader>Links</md-subheader>
 
           <md-list-item
-            @click="$router.push(`/`); menuVisible = false;"
+            @click="$router.push(`/`); closeMenu();"
           >
             <md-icon>home</md-icon>
             <span class="md-list-item-text">App Home</span>
@@ -207,6 +207,10 @@ export default {
       'help',
     ]),
 
+    closeMenu() {
+      this.menuVisible = false;
+      this.accountToggled = false;
+    },
     toggleAccount(accountToggled = undefined) {
       this.accountToggled = accountToggled !== undefined ? accountToggled : !this.accountToggled;
     },
