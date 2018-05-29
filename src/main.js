@@ -41,6 +41,18 @@ if (Vue.prototype.isApp) {
     window.navigator.splashscreen.hide();
     window.StatusBar.show();
   });
+
+  // scroll to top on status bar tap
+  window.addEventListener('statusTap', () => {
+    const containers = document.querySelectorAll('.md-scroll');
+    Array.from(containers).forEach((container) => {
+      if (container.scrollTop === 0) return;
+
+      VueScrollTo.scrollTo(document.body, {
+        container,
+      });
+    });
+  });
 }
 
 Vue.use(VueFire);
