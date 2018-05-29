@@ -1,3 +1,4 @@
+import FastClick from 'fastclick';
 import Vue from 'vue';
 import VueFire from 'vuefire';
 import VueMaterial from 'vue-material';
@@ -54,6 +55,8 @@ if (Vue.prototype.isApp) {
     });
   });
 }
+
+FastClick.attach(document.body);
 
 Vue.use(VueFire);
 Vue.use(VueMaterial);
