@@ -63,7 +63,11 @@
                   @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] }})"
                 >
                   <span v-if="dance[idKey] === callbacks[idKey]" slot="icon" />
-                  <md-icon v-if="dance[idKey] === overall[idKey]" slot="icon" class="icon-trophy md-primary" />
+                  <md-icon
+                    v-if="dance[idKey] === overall[idKey] && dance.dancers.length <= 1"
+                    slot="icon"
+                    class="icon-trophy md-primary"
+                  />
                 </dancer-list-item>
                 <md-list-item v-if="!dance.dancers.length" class="empty">
                   Results to be determined.

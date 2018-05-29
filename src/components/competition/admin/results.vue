@@ -67,7 +67,11 @@
               @change="handleTie(dancer, $event)"
             />
             <span v-if="currentDance[idKey] === callbacks[idKey]" slot="icon" />
-            <md-icon v-if="currentDance[idKey] === overall[idKey]" slot="icon" class="icon-trophy md-primary" />
+            <md-icon
+              v-if="currentDance[idKey] === overall[idKey] && placedDancers.length <= 1"
+              slot="icon"
+              class="icon-trophy md-primary"
+            />
           </dancer-list-item>
         </md-list>
         <md-empty-state
