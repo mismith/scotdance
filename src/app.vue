@@ -99,10 +99,9 @@
       </div>
     </md-app-drawer>
 
-    <md-app-content id="main" class="md-scroll-frame md-scroll">
+    <md-app-content id="main" v-touch:swipe.right="handleSwipeToGoBack" class="md-scroll-frame md-scroll">
       <router-view :competitions="competitions" />
     </md-app-content>
-
   </md-app>
 </template>
 
@@ -214,6 +213,11 @@ export default {
     toggleAccount(accountToggled = undefined) {
       this.accountToggled = accountToggled !== undefined ? accountToggled : !this.accountToggled;
     },
+
+    handleSwipeToGoBack() {
+      window.history.go(-1);
+    },
+
     logout() {
       return firebase.auth().signOut();
     },

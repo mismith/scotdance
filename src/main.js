@@ -54,7 +54,9 @@ Vue.use(VueLocalStorage, {
   bind: true,
 });
 Vue.use(VueScrollTo);
-Vue.use(Vue2TouchEvents);
+Vue.use(Vue2TouchEvents, {
+  swipeTolerance: 66,
+});
 
 // monitor user auth
 firebase.auth().onAuthStateChanged((me) => {
