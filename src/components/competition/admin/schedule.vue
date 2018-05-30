@@ -118,8 +118,9 @@
             <md-datepicker
               v-else-if="field.type === 'datepicker'"
               v-model="currentItem[key]"
-              :class="{ 'md-required': field.required }"
+              md-immediately
               @input="handleListItemUpdate(currentPath, currentItem)"
+              :class="{ 'md-required': field.required }"
             >
               <label>{{ field.name || key }}</label>
             </md-datepicker>

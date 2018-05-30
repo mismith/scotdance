@@ -20,14 +20,6 @@
           </md-select>
         </md-field>
 
-        <md-datepicker
-          v-else-if="presets && presetsType === 'datepicker'"
-          v-model="newItem"
-          @md-selected="handleAddNew"
-        >
-          <label>Add New {{ itemsType }}</label>
-        </md-datepicker>
-
         <md-autocomplete
           v-else-if="presets"
           v-model="newItem"
@@ -64,6 +56,10 @@ export default {
       required: true,
     },
     itemsType: String,
+    displayKey: {
+      type: String,
+      default: 'name',
+    },
     presets: Array,
     presetsType: String,
   },
@@ -85,7 +81,7 @@ export default {
     },
     handleAddNew() {
       this.$emit('create', {
-        name: this.newItem,
+        [this.displayKey]: this.newItem,
       });
 
       this.newItem = null;

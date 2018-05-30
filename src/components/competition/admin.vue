@@ -21,6 +21,7 @@
               <md-datepicker
                 v-if="field.type === 'datetime'"
                 v-model="competition[field.data]"
+                md-immediately
                 @input="handleFormInputChange(currentSection[idKey], field.data, $event)"
                 :class="{ 'md-required': field.required }"
               >
