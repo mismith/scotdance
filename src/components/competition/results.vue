@@ -119,11 +119,11 @@ export default {
     results: Object,
   },
   localStorage: {
-    expandedGroups: {
+    resultsExpandedGroups: {
       type: Object,
       default: {},
     },
-    expandedDances: {
+    resultsExpandedDances: {
       type: Object,
       default: {}, // { [groupId]: {}, ... }
     },
@@ -209,24 +209,24 @@ export default {
 
     isGroupExpanded(item, items) {
       const itemIds = items.map(i => i[idKey]);
-      return isExpanded(this.expandedGroups, item[idKey], itemIds);
+      return isExpanded(this.resultsExpandedGroups, item[idKey], itemIds);
     },
     handleGroupExpanded(groupId, expanded) {
-      this.expandedGroups = handleExpanded(this.expandedGroups, groupId, expanded);
-      this.$localStorage.set('expandedGroups', this.expandedGroups);
+      this.resultsExpandedGroups = handleExpanded(this.resultsExpandedGroups, groupId, expanded);
+      this.$localStorage.set('resultsExpandedGroups', this.resultsExpandedGroups);
     },
 
     isDanceExpanded(item, items) {
       const itemIds = items.map(i => i[idKey]);
-      return isExpanded(this.expandedDances[this.groupId], item[idKey], itemIds, true);
+      return isExpanded(this.resultsExpandedDances[this.groupId], item[idKey], itemIds, true);
     },
     handleDanceExpanded(danceId, expanded) {
-      this.expandedDances[this.groupId] = handleExpanded(
-        this.expandedDances[this.groupId],
+      this.resultsExpandedDances[this.groupId] = handleExpanded(
+        this.resultsExpandedDances[this.groupId],
         danceId,
         expanded,
       );
-      this.$localStorage.set('expandedDances', this.expandedDances);
+      this.$localStorage.set('resultsExpandedDances', this.resultsExpandedDances);
     },
   },
   async mounted() {

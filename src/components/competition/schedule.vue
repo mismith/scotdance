@@ -135,11 +135,11 @@ export default {
     schedule: Object,
   },
   localStorage: {
-    expandedBlocks: {
+    scheduleExpandedBlocks: {
       type: Object,
       default: {},
     },
-    expandedDances: {
+    scheduleExpandedDances: {
       type: Object,
       default: {}, // { [eventId]: {}, ... }
     },
@@ -190,23 +190,23 @@ export default {
     },
 
     isBlockExpanded(blockId, blockIds) {
-      return isExpanded(this.expandedBlocks, blockId, blockIds, true);
+      return isExpanded(this.scheduleExpandedBlocks, blockId, blockIds, true);
     },
     handleBlockExpanded(blockId, expanded) {
-      this.expandedBlocks = handleExpanded(this.expandedBlocks, blockId, expanded);
-      this.$localStorage.set('expandedBlocks', this.expandedBlocks);
+      this.scheduleExpandedBlocks = handleExpanded(this.scheduleExpandedBlocks, blockId, expanded);
+      this.$localStorage.set('scheduleExpandedBlocks', this.scheduleExpandedBlocks);
     },
 
     isDanceExpanded(danceId, danceIds) {
-      return isExpanded(this.expandedDances[this.eventId], danceId, danceIds);
+      return isExpanded(this.scheduleExpandedDances[this.eventId], danceId, danceIds);
     },
     handleDanceExpanded(danceId, expanded) {
-      this.expandedDances[this.eventId] = handleExpanded(
-        this.expandedDances[this.eventId],
+      this.scheduleExpandedDances[this.eventId] = handleExpanded(
+        this.scheduleExpandedDances[this.eventId],
         danceId,
         expanded,
       );
-      this.$localStorage.set('expandedDances', this.expandedDances);
+      this.$localStorage.set('scheduleExpandedDances', this.scheduleExpandedDances);
     },
   },
   async mounted() {

@@ -142,7 +142,7 @@ export default {
       type: String,
       default: '$group.$order',
     },
-    expandedGroups: {
+    dancersExpandedGroups: {
       type: Object,
       default: {}, // { [sortBy]: {}, ... }
     },
@@ -215,15 +215,15 @@ export default {
       // searching, so expand all groups
       if (this.filterBy) return true;
 
-      return isExpanded(this.expandedGroups[this.sortBy], itemId, itemIds);
+      return isExpanded(this.dancersExpandedGroups[this.sortBy], itemId, itemIds);
     },
     handleGroupExpanded(groupId, expanded) {
-      this.expandedGroups[this.sortBy] = handleExpanded(
-        this.expandedGroups[this.sortBy],
+      this.dancersExpandedGroups[this.sortBy] = handleExpanded(
+        this.dancersExpandedGroups[this.sortBy],
         groupId,
         expanded,
       );
-      this.$localStorage.set('expandedGroups', this.expandedGroups);
+      this.$localStorage.set('dancersExpandedGroups', this.dancersExpandedGroups);
     },
 
     getSortGroup(dancer) {

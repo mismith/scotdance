@@ -118,10 +118,9 @@ export default {
     dances: Array,
     dancers: Array,
     results: Object,
-    // unsavedChanges: Object,
   },
   localStorage: {
-    expandedGroups: {
+    adminResultsExpandedGroups: {
       type: Object,
       default: {},
     },
@@ -177,11 +176,11 @@ export default {
 
     isGroupExpanded(item, items) {
       const itemIds = items.map(i => i[idKey]);
-      return isExpanded(this.expandedGroups, item[idKey], itemIds);
+      return isExpanded(this.adminResultsExpandedGroups, item[idKey], itemIds);
     },
     handleGroupExpanded(groupId, expanded) {
-      this.expandedGroups = handleExpanded(this.expandedGroups, groupId, expanded);
-      this.$localStorage.set('expandedGroups', this.expandedGroups);
+      this.adminResultsExpandedGroups = handleExpanded(this.adminResultsExpandedGroups, groupId, expanded);
+      this.$localStorage.set('adminResultsExpandedGroups', this.adminResultsExpandedGroups);
     },
 
     save() {
