@@ -22,12 +22,13 @@ export function isExpanded(items, itemId, itemIds, expandAll = false) {
 }
 
 export function handleExpanded(items, itemId, expanded) {
-  if (!items) items = {}; // eslint-disable-line no-param-reassign
-
+  const expandeds = {
+    ...items,
+  };
   if (expanded) {
-    items[itemId] = true; // eslint-disable-line no-param-reassign
-  } else if (items[itemId]) {
-    items[itemId] = false; // eslint-disable-line no-param-reassign
+    expandeds[itemId] = true;
+  } else if (expandeds[itemId]) {
+    expandeds[itemId] = false;
   }
-  return items;
+  return expandeds;
 }
