@@ -20,6 +20,8 @@ export default new Vuex.Store({
       type: undefined,
       data: undefined,
     },
+
+    helpVisible: false,
   },
   getters: {
     isFavorite: state => (type, id) => {
@@ -67,10 +69,16 @@ export default new Vuex.Store({
       state.myFavorites = null;
     }),
 
-    help() {
+    help({ state }, set = undefined) {
       if (window.$crisp) {
-        window.$crisp.push(['do', 'chat:show']);
-        window.$crisp.push(['do', 'chat:open']);
+        if (set === false || (set === undefined && state.helpVisible)) {
+          window.$crisp.push(['do', 'chat:hide']);
+          state.helpVisible = false;
+        } else if (set === true || (set === undefined && !state.helpVisible)) {
+          window.$crisp.push(['do', 'chat:show']);
+          window.$crisp.push(['do', 'chat:open']);
+          state.helpVisible = true;
+        }
       }
     },
   },

@@ -7,9 +7,16 @@
 
       <a @click.prevent="$router.push('/')" href="#" class="md-title">{{ title }}</a>
 
-      <md-button @click.prevent="help()" class="md-icon-button" style="margin-left: auto;">
-        <md-icon>help</md-icon>
-      </md-button>
+      <md-menu style="margin-left: auto;">
+        <md-button md-menu-trigger class="md-icon-button">
+          <md-icon>help</md-icon>
+        </md-button>
+
+        <md-menu-content>
+          <md-menu-item @click="help(true)">Live Chat</md-menu-item>
+          <md-menu-item v-if="$store.state.helpVisible" @click="help(false)" class="md-accent">Hide Live Chat</md-menu-item>
+        </md-menu-content>
+      </md-menu>
     </md-app-toolbar>
 
     <md-app-drawer :md-active.sync="menuVisible">
