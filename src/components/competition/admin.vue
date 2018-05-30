@@ -50,7 +50,9 @@
 
           <HotTable v-else-if="currentSection.hot" :settings="currentSection.hot" class="fullscreen" />
 
-          <router-view v-else v-bind="$props" @change="handleChanges" />
+          <keep-alive v-else>
+            <router-view v-bind="$props" @change="handleChanges" />
+          </keep-alive>
 
           <footer v-if="inTabs('info')" class="md-layout md-alignment-center" style="margin-top: auto;">
             <md-button @click="confirmRemove = true" class="md-accent">

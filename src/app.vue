@@ -107,7 +107,9 @@
     </md-app-drawer>
 
     <md-app-content id="main" class="md-scroll-frame md-scroll">
-      <router-view :competitions="competitions" />
+      <keep-alive>
+        <router-view :competitions="competitions" />
+      </keep-alive>
     </md-app-content>
   </md-app>
 </template>

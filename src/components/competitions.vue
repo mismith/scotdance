@@ -1,6 +1,8 @@
 <template>
   <div class="competitions md-scroll-frame">
-    <router-view :competitions="competitions" />
+    <keep-alive>
+      <router-view :competitions="competitions" />
+    </keep-alive>
   </div>
 </template>
 

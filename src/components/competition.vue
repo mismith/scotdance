@@ -1,19 +1,21 @@
 <template>
   <div class="competition md-scroll-frame">
     <div v-if="loaded" class="md-scroll">
-      <router-view
-        :competition-ref="competitionRef"
-        :competition-data-ref="competitionDataRef"
-        :competition="competition"
-        :dancers="dancers"
-        :groups="groups"
-        :categories="categories"
-        :dances="dances"
-        :staff="staff"
-        :platforms="platforms"
-        :schedule="schedule"
-        :results="results"
-      />
+      <keep-alive>
+        <router-view
+          :competition-ref="competitionRef"
+          :competition-data-ref="competitionDataRef"
+          :competition="competition"
+          :dancers="dancers"
+          :groups="groups"
+          :categories="categories"
+          :dances="dances"
+          :staff="staff"
+          :platforms="platforms"
+          :schedule="schedule"
+          :results="results"
+        />
+      </keep-alive>
     </div>
     <div v-else class="md-scroll-frame">
       <md-progress-spinner md-mode="indeterminate" style="margin: auto;" />
