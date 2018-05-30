@@ -106,7 +106,6 @@
 </template>
 
 <script>
-import moment from 'moment-mini';
 import Hammer from 'hammerjs';
 import {
   mapState,
@@ -152,7 +151,7 @@ export default {
           $favorite: this.$store.getters.isFavorite('competitions', competition[idKey]),
         }))
         .filter(competition => competition.published || (this.me && this.me.admin))
-        .sort((a, b) => moment(a.date).diff(b.date)); // order chronologically
+        .sort((a, b) => this.$moment(a.date).diff(b.date)); // order chronologically
     },
     relevantCompetitions() {
       const relevantCompetitions = this.competitions.filter((competition) => {
@@ -161,7 +160,7 @@ export default {
           return false;
         }
         // only show upcoming or up to 7 day old events
-        if (competition.date && moment(competition.date).isAfter(moment().subtract(7, 'days'))) {
+        if (competition.date && this.$moment(competition.date).isAfter(this.$moment().subtract(7, 'days'))) {
           return true;
         }
         return false;

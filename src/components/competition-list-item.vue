@@ -9,7 +9,7 @@
     <div class="md-list-item-text">
       <span>{{ competition.name }}</span>
       <p>
-        <span v-if="competition.date">{{ moment(competition.date).format('MMM D, YYYY') }}</span>
+        <span v-if="competition.date">{{ $moment(competition.date).format('MMM D, YYYY') }}</span>
         <span v-if="competition.location">{{ competition.location }}</span>
       </p>
     </div>
@@ -27,7 +27,6 @@
 </template>
 
 <script>
-import moment from 'moment-mini';
 import {
   mapState,
 } from 'vuex';
@@ -49,9 +48,6 @@ export default {
     ...mapState([
       'me',
     ]),
-  },
-  methods: {
-    moment,
   },
 };
 </script>

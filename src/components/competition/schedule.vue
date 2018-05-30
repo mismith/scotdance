@@ -5,7 +5,7 @@
         <md-tab
           v-for="(day, dayId) in schedule.days"
           :key="dayId"
-          :md-label="moment(day.date).format('ddd')"
+          :md-label="$moment(day.date).format('ddd')"
         >
           <div class="md-scroll">
             <md-subheader v-if="day.name" class="md-title">
@@ -106,7 +106,6 @@
 </template>
 
 <script>
-import moment from 'moment-mini';
 import DancerListItem from '@/components/dancer-list-item';
 import AdminPlatforms from '@/components/competition/admin/platforms';
 import {
@@ -176,7 +175,6 @@ export default {
     },
   },
   methods: {
-    moment,
     getScheduleItemDanceName,
 
     showRelevantSlide() {

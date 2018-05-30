@@ -4,7 +4,7 @@
       <section class="hero">
         <h1 class="md-display-1">{{ competition.name }}</h1>
         <p v-if="competition.date" class="md-headline">
-          {{ moment(competition.date).format('dddd, MMMM D, YYYY') }}
+          {{ $moment(competition.date).format('dddd, MMMM D, YYYY') }}
         </p>
         <p v-if="competition.venue" class="md-subheading">
           <a v-if="competition.address" :href="`https://maps.google.com/?q=${competition.address}`" target="_blank" class="ext">{{ competition.venue }}</a>
@@ -56,7 +56,6 @@
 </template>
 
 <script>
-import moment from 'moment-mini';
 import {
   idKey,
 } from '@/helpers/firebase';
@@ -79,9 +78,6 @@ export default {
     pipers() {
       return this.staff.filter(staff => staff.type === 'Piper');
     },
-  },
-  methods: {
-    moment,
   },
 };
 </script>

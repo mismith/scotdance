@@ -31,7 +31,6 @@
 </template>
 
 <script>
-import moment from 'moment-mini';
 import {
   idKey,
 } from '@/helpers/firebase';
@@ -52,11 +51,11 @@ export default {
       return [
         {
           name: 'Upcoming',
-          competitions: this.competitions.filter(c => moment().diff(c.date) < 0),
+          competitions: this.competitions.filter(c => this.$moment().diff(c.date) < 0),
         },
         {
           name: 'Archive',
-          competitions: this.competitions.filter(c => moment().diff(c.date) >= 0).reverse(),
+          competitions: this.competitions.filter(c => this.$moment().diff(c.date) >= 0).reverse(),
         },
       ];
     },

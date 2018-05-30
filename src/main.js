@@ -9,6 +9,7 @@ import VueAsyncComputed from 'vue-async-computed';
 import VueBodyClass from 'vue-body-class';
 import VueLocalStorage from 'vue-localstorage';
 import VueScrollTo from 'vue-scrollto';
+import moment from 'moment-mini';
 
 import {
   firebase,
@@ -55,9 +56,10 @@ if (Vue.prototype.isApp) {
     });
   });
 }
-
 FastClick.attach(document.body);
 
+// libs
+Vue.prototype.$moment = moment;
 Vue.use(VueFire);
 Vue.use(VueMaterial);
 Vue.component('md-spinnable', MdSpinnable);
