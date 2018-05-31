@@ -7,7 +7,7 @@
           {{ $moment(competition.date).format('dddd, MMMM D, YYYY') }}
         </p>
         <p v-if="competition.venue" class="md-subheading">
-          <a v-if="competition.address" :href="`https://maps.google.com/?q=${competition.address}`" target="_blank" class="ext">{{ competition.venue }}</a>
+          <a v-if="competition.address" :href="`https://maps.google.com/?q=${competition.venue},+${competition.address}`" target="_blank" class="ext">{{ competition.venue }}</a>
           <span v-else>{{ competition.venue }}</span>
           <br />
           <span>{{ competition.location }}</span>
