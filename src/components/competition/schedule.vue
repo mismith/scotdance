@@ -238,9 +238,12 @@ export default {
   .admin-platforms {
     margin-bottom: 4px;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 
-    .pool {
-      padding: 0 6px 12px;
+    .pools {
+      .pool {
+        padding: 0 6px 12px;
+      }
     }
   }
 }

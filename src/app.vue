@@ -232,7 +232,9 @@ export default {
     },
   },
   mounted() {
-    new Hammer(this.$el)
+    new Hammer(this.$el, {
+      touchAction: 'auto',
+    })
       .on('swipeleft', () => {
         this.closeMenu();
       })
