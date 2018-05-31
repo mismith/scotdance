@@ -44,12 +44,12 @@
         </md-toolbar>
 
         <div class="md-scroll">
-          <md-list v-if="Object.keys(groupedDancers).length" class="md-list-cards">
+          <md-list v-if="groupIds.length" class="md-list-cards">
             <md-list-item-cards
               v-for="(group, groupId) in groupedDancers"
               :key="groupId"
               md-expand
-              :md-expanded="isGroupExpanded(groupId, Object.keys(groupedDancers))"
+              :md-expanded="isGroupExpanded(groupId, groupIds)"
               @update:mdExpanded="handleGroupExpanded(groupId, $event)"
             >
               <md-subheader>
@@ -105,7 +105,7 @@
 
 <script>
 import FuzzySearch from 'fuzzy-search';
-import ArraySort from 'array-sort';
+import sortBy from 'lodash.sortby';
 import groupBy from 'lodash.groupby';
 import DancerListItem from '@/components/dancer-list-item';
 import DancerReport from '@/components/dancer-report';
@@ -172,27 +172,32 @@ export default {
     sortableBy() {
       return this.sortableBys.find(({ key }) => key === this.sortBy);
     },
-    filteredDancers() {
+    groupedDancers() {
+      let filtered = this.dancers;
+
       // filter by search term
-      const searchKeys = this.sortableBys.map(({ key, searchKey }) => searchKey || key);
-      let filtered = (this.filterBy && this.dancers.length)
-        ? new FuzzySearch(this.dancers, searchKeys).search(this.filterBy)
-        : this.dancers;
+      if (this.filterBy && filtered.length) {
+        const searchKeys = this.sortableBys.map(({ key, searchKey }) => searchKey || key);
+        filtered = new FuzzySearch(filtered, searchKeys).search(this.filterBy);
+      }
 
       // filter by onlyFavorites, if necessary
       if (this.onlyFavorites) {
-        filtered = filtered.filter(dancer => dancer.$favorite);
+        filtered = filtered.filter(dancer => dancer && dancer.$favorite);
       }
 
       // sort by key
       if (this.sortBy) {
-        ArraySort(filtered, [this.sortBy, '$number']);
+        filtered = sortBy(filtered, [this.sortBy, '$number']);
       }
 
-      return filtered;
+      // group together
+      const grouped = groupBy(filtered, this.getSortGroup);
+
+      return grouped;
     },
-    groupedDancers() {
-      return groupBy(this.filteredDancers, this.getSortGroup);
+    groupIds() {
+      return Object.keys(this.groupedDancers);
     },
   },
   watch: {
