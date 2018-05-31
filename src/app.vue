@@ -395,8 +395,28 @@ body,
     &.active {
       background-color: var(--md-theme-default-primary) !important;
 
-      .md-list-item-content {
-        color: #fff;
+      > .md-list-item-container {
+        .md-list-item-content {
+          color: #fff;
+        }
+      }
+    }
+    &.highlighted {
+      > .md-list-item-container {
+        .md-subheader {
+          > span {
+            display: flex;
+            align-items: center;
+
+            &::after {
+              content: "•";
+              width: 16px;
+              color: var(--md-theme-default-primary);
+              font-size: 24px;
+              text-align: right;
+            }
+          }
+        }
       }
     }
     &.empty {

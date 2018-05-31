@@ -9,9 +9,10 @@
             md-expand
             :md-expanded="isGroupExpanded(group, groups)"
             @update:mdExpanded="handleGroupExpanded(group[idKey], $event)"
+            :class="{ highlighted: results[group[idKey]] }"
           >
             <md-subheader>
-              {{ group.$name }}
+              <span>{{ group.$name }}</span>
               <md-icon v-if="hasFavorites(findGroupDancers(group))" class="md-accent">star</md-icon>
             </md-subheader>
 
