@@ -138,6 +138,7 @@ export default {
     dances: Array,
     staff: Array,
     platforms: Array,
+    draws: Object,
     schedule: Object,
     results: Object,
   },

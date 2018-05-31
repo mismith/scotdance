@@ -12,6 +12,7 @@
           :dances="dances"
           :staff="staff"
           :platforms="platforms"
+          :draws="draws"
           :schedule="schedule"
           :results="results"
         />
@@ -132,6 +133,9 @@ export default {
         $name: `Platform ${platform.name}`.trim(),
       }));
     },
+    draws() {
+      return this.drawsRaw;
+    },
     schedule() {
       return this.scheduleRaw;
     },
@@ -168,6 +172,8 @@ export default {
       if (this.platformsRaw) this.$unbind('platformsRaw');
       this.$bindAsArray('platformsRaw', this.competitionDataRef.child('platforms'));
       // data objects
+      if (this.drawsRaw) this.$unbind('drawsRaw');
+      this.$bindAsObject('drawsRaw', this.competitionDataRef.child('draws'));
       if (this.scheduleRaw) this.$unbind('scheduleRaw');
       this.$bindAsObject('scheduleRaw', this.competitionDataRef.child('schedule'));
       if (this.resultsRaw) this.$unbind('resultsRaw');

@@ -93,6 +93,7 @@ export default {
     groups: Array,
     dances: Array,
     dancers: Array,
+    draws: Object,
   },
   data() {
     return {
@@ -118,21 +119,37 @@ export default {
     },
 
     hotSettings() {
+      const data = this.findGroupDancers(this.currentGroup).map(() => ({}));
+      const columns = this.currentGroupDances.map((dance) => {
+        const danceId = dance[idKey];
+        data.forEach((row, index) => {
+          if (this.draws && this.draws[this.groupId] && this.draws[this.groupId][danceId]) {
+            row[danceId] = this.draws[this.groupId][danceId][index]; // eslint-disable-line no-param-reassign
+          }
+        });
+        return {
+          title: dance.$shortName,
+          data: danceId,
+        };
+      });
+
       return {
         colHeaders: true,
         rowHeaders: true,
         stretchH: 'all',
-        minSpareRows: 1,
-        contextMenu: [
-          'remove_row',
-        ],
 
-        columns: this.currentGroupDances.map((dance) => {
-          return {
-            title: dance.$shortName,
-          };
-        }),
-        data: this.findGroupDancers(this.currentGroup),
+        columns,
+        data,
+
+        afterChange: (changes, source) => {
+          if (source !== 'loadData') {
+            changes.forEach(([index, danceId, , dancerNumber]) => {
+              this.$emit('change', {
+                [`draws/${this.groupId}/${danceId}/${index}`]: dancerNumber,
+              });
+            });
+          }
+        },
       };
     },
   },
