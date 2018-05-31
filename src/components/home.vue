@@ -50,8 +50,10 @@
     <section id="about">
       <header>
         <h2 class="md-display-1">About</h2>
-        <p>ScotDance is an <a href="https://github.com/mismith/scotdance" target="_blank" class="ext">open source hobby project</a> coded by <a href="https://mismith.io" target="_blank" class="ext">Murray Smith</a> in 2018.</p>
-        <p>Want to get in touch? Send a message via <a @click.prevent="help()">live chat</a>.</p>
+        <p>ScotDance was started in 2017 by <a href="https://mismith.io" target="_blank" class="ext">Murray Smith</a></p>
+        <p>View the source code on <a href="https://github.com/mismith/scotdance" target="_blank" class="ext">GitHub</a></p>
+        <p>Track development via <a href="https://trello.com/b/ZCZ8t1fH" target="_blank" class="ext">Trello</a></p>
+        <p>Get support via <a @click.prevent="help(true)">live chat</a></p>
       </header>
     </section>
   </div>
@@ -68,10 +70,6 @@ export default {
     ...mapActions([
       'help',
     ]),
-
-    TODO() {
-      window.alert('Coming Soon'); // eslint-disable-line no-alert
-    },
   },
 };
 </script>
