@@ -1,5 +1,9 @@
 <template>
-  <md-list-item @click="$emit('click', $event)" class="dancer-list-item">
+  <md-list-item
+    @click="$emit('click', $event)"
+    class="dancer-list-item"
+    :class="{ placeholder: dancer.number === '?' }"
+  >
     <md-avatar class="md-avatar-icon" :class="{ 'md-accent': dancer.$favorite }">
       <span>{{ dancer.number || '#' }}</span>
     </md-avatar>
@@ -102,6 +106,10 @@ export default {
   }
   .place {
     margin-left: 12px;
+  }
+
+  &.placeholder {
+    background: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.1) 5px, rgba(0, 0, 0, 0.1) 10px);
   }
 }
 </style>

@@ -39,6 +39,13 @@
             @click="placeDancer(dancer)"
             :class="{ placed: isPlaced(dancer, placedDancers) }"
           />
+          <dancer-list-item
+            v-if="currentDancers.length"
+            :dancer="getPlaceholderDancer()"
+            @click="placeDancer(getPlaceholderDancer())"
+            class="placeholder"
+          />
+
           <md-empty-state
             v-if="!currentDancers.length"
             md-icon="error"
@@ -97,6 +104,7 @@ import {
 import {
   overall,
   callbacks,
+  getPlaceholderDancer,
   findGroupDancers,
   getPlacedDancers,
   getPlaceIndex,
@@ -169,6 +177,7 @@ export default {
   },
   methods: {
     hasFavorites,
+    getPlaceholderDancer,
     findGroupDancers,
     getPlacedDancers,
     isPlaced,

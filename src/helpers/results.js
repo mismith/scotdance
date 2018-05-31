@@ -15,6 +15,12 @@ export const callbacks = {
   $name: 'Callbacks',
 };
 
+export const getPlaceholderDancer = (timestamp = undefined) => ({
+  [idKey]: timestamp || Date.now(),
+  number: '?',
+  $name: 'Unknown Dancer',
+});
+
 export function findGroupDancers(group) {
   return this.dancers.filter(dancer => dancer.groupId === group[idKey]);
 }
@@ -36,7 +42,9 @@ export function getPlacedDancers(group, dance, sortByNumber = false) {
   // transform ranked dancerIds into ordered array of dancer objects
   const dancers = results.map((result) => {
     const [dancerId, tie] = result.split(':');
-    const dancer = findByIdKey(this.dancers, dancerId);
+    const dancer = `${dancerId}` === `${parseInt(dancerId, 10)}`
+      ? getPlaceholderDancer(dancerId)
+      : findByIdKey(this.dancers, dancerId);
 
     if (!dancer) {
       return dancer;
