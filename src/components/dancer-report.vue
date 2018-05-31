@@ -7,7 +7,7 @@
       />
     </md-list>
     <md-list v-if="group" class="md-list-cards">
-      <md-list-item-cards md-expand :md-expanded="true">
+      <!--<md-list-item-cards md-expand :md-expanded="true">
         <md-subheader>Schedule</md-subheader>
 
         <md-list slot="md-expand">
@@ -15,7 +15,7 @@
             Schedule to be determined.
           </md-list-item>
         </md-list>
-      </md-list-item-cards>
+      </md-list-item-cards>-->
       <md-list-item-cards md-expand :md-expanded="true">
         <md-subheader>Results</md-subheader>
 
