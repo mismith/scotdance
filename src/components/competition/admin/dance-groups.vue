@@ -33,6 +33,7 @@
           </md-list-item>
 
           <footer v-if="dances.length">
+            <md-divider />
             <md-button
               @click="handleCopy"
             >Copy</md-button>
