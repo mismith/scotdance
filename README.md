@@ -47,14 +47,16 @@ Command | Description
 ### Google Play Store
 
 * [Google Play Console](https://play.google.com/apps/publish/?account=6715160108161692003#AppDashboardPlace:p=info.mismith.scotdance&appid=4972780107515202457)
-* To build a signed `.apk` for uploading to the Play Store, place the `scotdance.keystore` (stored in a private Dropbox) in the root of this repo. You'll need to enter both passwords every build (since they aren't stored in the committed `build.json`).
+* To build a signed `.apk` for uploading to the Play Store, place the `scotdance.keystore` (stored in a private Dropbox) in the root of this repo. You'll need to enter (then revert) two passwords every release build (since they shouldn't be committed, obviously).
 * To upload to Google Play:
 
-    1. `yarn build:app`
-    1. Open Google Play Console
-    2. Create a new Production Release
-    3. Select/Drag in `platforms/android/app/build/outputs/apk/release/app-release.apk`
-    4. Complete all remaining steps/info
+    1. Add both passwords in `build.json` (and save the file)
+    2. `yarn build:app`
+    3. Revert/discard the two passwords added in `build.json`
+    4. Open Google Play Console
+    5. Create a new Production Release
+    6. Select/Drag in `platforms/android/app/build/outputs/apk/release/app-release.apk`
+    7. Complete all remaining steps/info
 * Steps used to generate the keystore for this project:
     ``` bash
     keytool -genkey -v -keystore scotdance.keystore -alias scotdance -keyalg RSA -keysize 2048 -validity 10000
