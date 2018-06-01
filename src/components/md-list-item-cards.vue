@@ -12,7 +12,7 @@
         </md-button>
       </div>
 
-      <div class="md-list-expand">
+      <div v-if="showContent" class="md-list-expand">
         <slot name="md-expand" />
       </div>
     </div>
