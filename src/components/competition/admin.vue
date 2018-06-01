@@ -65,7 +65,7 @@
         <md-progress-spinner md-mode="indeterminate" style="margin: auto;" />
       </div>
 
-      <md-bottom-bar :md-active-item="`tab-admin-${currentTab}`">
+      <md-bottom-bar ref="bottomBar">
         <md-bottom-bar-item
           v-for="section of sections"
           :key="section[idKey]"
@@ -231,7 +231,18 @@ export default {
         });
     },
   },
+  watch: {
+    currentTab() {
+      this.syncBottomBar();
+    },
+  },
   methods: {
+    async syncBottomBar() {
+      await this.$nextTick(); // await md-bottom-bar's internally queued $nextTick
+      const adminTabId = `tab-admin-${this.currentTab}`;
+      this.$refs.bottomBar.MdBottomBar.activeItem = adminTabId;
+    },
+
     goToTab(tab) {
       switch (tab) {
         case 'schedule':
@@ -309,6 +320,9 @@ export default {
         return this.save(path, value);
       });
     },
+  },
+  mounted() {
+    this.syncBottomBar();
   },
   components: {
     HotTable,

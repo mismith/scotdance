@@ -22,36 +22,21 @@
       <md-progress-spinner md-mode="indeterminate" style="margin: auto;" />
     </div>
 
-    <md-bottom-bar
-      v-if="currentTab !== 'admin'"
-      :md-active-item="`tab-${currentTab}`"
-    >
-      <md-bottom-bar-item
-        id="tab-info"
-        @click="$router.push({ name: 'competition.info' })"
-      >
-        <md-icon class="icon-info"></md-icon>
+    <md-bottom-bar ref="bottomBar" v-show="currentTab !== 'admin'">
+      <md-bottom-bar-item id="tab-info" :to="{ name: 'competition.info' }">
+        <md-icon class="icon-info" />
         <span class="md-bottom-bar-label">Info</span>
       </md-bottom-bar-item>
-      <md-bottom-bar-item
-        id="tab-dancers"
-        @click="$router.push({ name: 'competition.dancers' })"
-      >
-        <md-icon class="icon-people"></md-icon>
+      <md-bottom-bar-item id="tab-dancers" :to="{ name: 'competition.dancers' }">
+        <md-icon class="icon-people" />
         <span class="md-bottom-bar-label">Dancers</span>
       </md-bottom-bar-item>
-      <md-bottom-bar-item
-        id="tab-schedule"
-        @click="$router.push({ name: 'competition.schedule' })"
-      >
-        <md-icon class="icon-clock"></md-icon>
+      <md-bottom-bar-item id="tab-schedule" :to="{ name: 'competition.schedule' }">
+        <md-icon class="icon-clock" />
         <span class="md-bottom-bar-label">Schedule</span>
       </md-bottom-bar-item>
-      <md-bottom-bar-item
-        id="tab-results"
-        @click="$router.push({ name: 'competition.results' })"
-      >
-        <md-icon class="icon-trophy"></md-icon>
+      <md-bottom-bar-item id="tab-results" :to="{ name: 'competition.results' }">
+        <md-icon class="icon-trophy" />
         <span class="md-bottom-bar-label">Results</span>
       </md-bottom-bar-item>
     </md-bottom-bar>
@@ -147,8 +132,17 @@ export default {
     competitionId() {
       this.loadFirebase();
     },
+    currentTab() {
+      this.syncBottomBar();
+    },
   },
   methods: {
+    async syncBottomBar() {
+      await this.$nextTick(); // await md-bottom-bar's internally queued $nextTick
+      const tabId = `tab-${this.currentTab}`;
+      this.$refs.bottomBar.MdBottomBar.activeItem = tabId;
+    },
+
     async loadFirebase() {
       if (!this.competitionId) return;
 
@@ -198,6 +192,9 @@ export default {
   },
   created() {
     this.loadFirebase();
+  },
+  mounted() {
+    this.syncBottomBar();
   },
 };
 </script>
