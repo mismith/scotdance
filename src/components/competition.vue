@@ -149,7 +149,9 @@ export default {
     },
   },
   methods: {
-    loadFirebase() {
+    async loadFirebase() {
+      if (!this.competitionId) return;
+
       this.loaded = false;
 
       this.competitionRef = db.child('competitions').child(this.competitionId);
@@ -179,13 +181,11 @@ export default {
       if (this.resultsRaw) this.$unbind('resultsRaw');
       this.$bindAsObject('resultsRaw', this.competitionDataRef.child('results'));
 
-      return Promise.all([
+      await Promise.all([
         this.competitionRef.once('value'),
         this.competitionDataRef.once('value'),
-      ])
-        .then(() => {
-          this.loaded = true;
-        });
+      ]);
+      this.loaded = true;
     },
 
     findCategory(categoryId) {
