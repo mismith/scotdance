@@ -1,10 +1,14 @@
 <template>
-  <li class="md-list-item md-list-item-cards" :class="{
-    'md-expand': mdExpand,
-    'md-active': showContent,
-  }">
+  <li
+    class="md-list-item md-list-item-cards"
+    :class="{
+      'md-expand': mdExpand,
+      'md-active': showContent,
+      'md-animated': animateExpanding,
+    }"
+  >
     <div class="md-list-item-container">
-      <div @click="showContent = !showContent" class="md-list-item-content">
+      <div @click="handleClick" class="md-list-item-content">
         <slot />
 
         <md-button class="md-icon-button">
@@ -29,6 +33,7 @@ export default {
   data() {
     return {
       showContent: false,
+      animateExpanding: false,
     };
   },
   watch: {
@@ -42,6 +47,10 @@ export default {
     showContent() {
       this.$emit('update:mdExpanded', this.showContent);
     },
+    $route() {
+      // require re-clicking to show animations again if route changes
+      this.animateExpanding = false;
+    },
   },
   methods: {
     open() {
@@ -49,6 +58,14 @@ export default {
     },
     close() {
       this.showContent = false;
+    },
+
+    async handleClick() {
+      // animate opening if clicked (never animate programmatic expands)
+      this.animateExpanding = true;
+      await this.$nextTick();
+
+      this.showContent = !this.showContent;
     },
   },
   mounted() {
@@ -79,16 +96,25 @@ export default {
 
         .md-icon {
           transform: rotate(90deg);
-          transition: transform 300ms;
         }
       }
     }
-
-    > .md-list-expand {
-      animation: appear 300ms;
-    }
   }
 
+  &.md-animated {
+    > .md-list-item-container {
+      > .md-list-item-content {
+        > .md-icon-button {
+          .md-icon {
+            transition: transform 300ms;
+          }
+        }
+      }
+      > .md-list-expand {
+        animation: appear 300ms;
+      }
+    }
+  }
   &.md-active {
     > .md-list-item-container {
       > .md-list-item-content {

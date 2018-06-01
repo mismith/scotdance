@@ -29,7 +29,7 @@ import MdListItemCards from '@/components/md-list-item-cards';
 // disable (amongst other things) vue-localstoreage verbose logging
 Vue.config.silent = true;
 
-// cordova
+// hybrid apps
 Vue.prototype.isApp = window.location.protocol === 'file:';
 if (Vue.prototype.isApp) {
   // allow loading cordova plugins
