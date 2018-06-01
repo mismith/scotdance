@@ -52,6 +52,14 @@ if (Vue.prototype.isApp) {
 
       VueScrollTo.scrollTo(document.body, {
         container,
+        onStart() {
+          // stop any lingering user-initiated scroll/rubber-banding
+          container.style.overflow = 'hidden'; // eslint-disable-line no-param-reassign
+        },
+        onDone() {
+          // restore user scrollability
+          container.style.overflow = ''; // eslint-disable-line no-param-reassign
+        },
       });
     });
   });
