@@ -300,6 +300,7 @@ body.has-bottom-bar {
     flex: auto;
 
     + * {
+      text-align: right;
       margin-right: -10px;
     }
   }
