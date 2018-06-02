@@ -66,6 +66,7 @@ export default {
       await this.$nextTick();
 
       this.showContent = !this.showContent;
+      this.$emit('toggled', this.showContent);
     },
   },
   mounted() {

@@ -18,7 +18,7 @@
                 :key="blockId"
                 md-expand
                 :md-expanded="isBlockExpanded(blockId, Object.keys(day.blocks))"
-                @update:mdExpanded="handleBlockExpanded(blockId, $event)"
+                @toggled="handleBlockExpanded(blockId, $event)"
               >
                 <md-subheader>
                   <div>{{ block.name }}</div>
@@ -80,7 +80,7 @@
               :key="danceId"
               :md-expand="!!dance.platforms"
               :md-expanded="isDanceExpanded(danceId, Object.keys(currentEvent.dances))"
-              @update:mdExpanded="handleDanceExpanded(danceId, $event)"
+              @toggled="handleDanceExpanded(danceId, $event)"
             >
               <md-subheader>
                 <div>{{ getScheduleItemDanceName(dance, dances) }}</div>

@@ -1,4 +1,3 @@
-
 export async function getTitleChunks(route) {
   return ['ScotDance', ...await Promise.all(route.matched
     .map(async (match) => {
@@ -10,25 +9,30 @@ export async function getTitleChunks(route) {
     .filter(chunk => chunk);
 }
 
-export function isExpanded(items, itemId, itemIds, expandAll = false) {
-  if (!items) items = {}; // eslint-disable-line no-param-reassign
+export function isExpanded(items, itemId, itemIds, expandByDefault = false) {
+  const expandeds = {
+    ...items,
+  };
 
-  // was expanded before, so restore
-  return !!items[itemId]
-    // only one item, so save a tap
-    || itemIds.length <= 1
-    // nothing expanded, so expand first
-    || (!Object.keys(items).length && (expandAll ? true : itemIds.indexOf(itemId) === 0));
+  if (expandeds[itemId] !== undefined) {
+    // has been explicitly set, so restore
+    return expandeds[itemId];
+  }
+  if (itemIds.length <= 1) {
+    // only one item, so save a tap and expand
+    return true;
+  }
+  if (expandByDefault) {
+    return expandByDefault;
+  }
+  // expand first item (at least)
+  return itemIds.indexOf(itemId) === 0;
 }
 
 export function handleExpanded(items, itemId, expanded) {
   const expandeds = {
     ...items,
+    [itemId]: !!expanded,
   };
-  if (expanded) {
-    expandeds[itemId] = true;
-  } else if (expandeds[itemId]) {
-    expandeds[itemId] = false;
-  }
   return expandeds;
 }

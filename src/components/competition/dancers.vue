@@ -50,7 +50,7 @@
               :key="groupId"
               md-expand
               :md-expanded="isGroupExpanded(groupId, groupIds)"
-              @update:mdExpanded="handleGroupExpanded(groupId, $event)"
+              @toggled="handleGroupExpanded(groupId, $event)"
             >
               <md-subheader>
                 {{ groupId || '?' }}

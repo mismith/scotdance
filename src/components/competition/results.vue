@@ -8,7 +8,7 @@
             :key="group[idKey]"
             md-expand
             :md-expanded="isGroupExpanded(group, groups)"
-            @update:mdExpanded="handleGroupExpanded(group[idKey], $event)"
+            @toggled="handleGroupExpanded(group[idKey], $event)"
             :class="{ highlighted: results[group[idKey]] }"
           >
             <md-subheader>
@@ -51,7 +51,7 @@
               :id="`dance-${dance[idKey]}`"
               md-expand
               :md-expanded="isDanceExpanded(dance, groupedDancers)"
-              @update:mdExpanded="handleDanceExpanded(dance[idKey], $event)"
+              @toggled="handleDanceExpanded(dance[idKey], $event)"
             >
               <md-subheader>{{ dance.$name }}</md-subheader>
 
