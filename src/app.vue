@@ -202,6 +202,7 @@ export default {
           window.SessionStack.identify({
             userId: me[idKey],
             email: me.email,
+            displayName: me.displayName || me.email || me[idKey],
           });
         }
         if (window.$crisp && me.email) {
