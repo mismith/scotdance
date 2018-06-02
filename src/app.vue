@@ -473,7 +473,7 @@ body,
   }
   &.md-list-cards {
     background-color: initial;
-    padding: 0;
+    padding: 0 0 12px;
 
     > .md-list-item {
       > .md-list-item-container {
