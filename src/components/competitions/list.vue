@@ -61,14 +61,22 @@ export default {
     groupedCompetitions() {
       return [
         {
+          [idKey]: 'current',
+          name: 'Current',
+          competitions: this.competitions
+            .filter(c => c.date && this.$moment().isSame(c.date, 'week')),
+        },
+        {
           [idKey]: 'upcoming',
           name: 'Upcoming',
-          competitions: this.competitions.filter(c => this.$moment().diff(c.date) < 0),
+          competitions: this.competitions
+            .filter(c => this.$moment().isAfter(c.date, 'week')),
         },
         {
           [idKey]: 'archive',
           name: 'Archive',
-          competitions: this.competitions.filter(c => this.$moment().diff(c.date) >= 0).reverse(),
+          competitions: this.competitions
+            .filter(c => !c.date || this.$moment().isBefore(c.date, 'week')).reverse(),
         },
       ];
     },
