@@ -56,6 +56,12 @@
             <md-icon>account_circle</md-icon>
             <span class="md-list-item-text">My Profile</span>
           </md-list-item>
+
+          <md-divider style="margin-top: auto;" />
+          <md-list-item @click="clearLocalStorage()">
+            <md-icon>cached</md-icon>
+            <span class="md-list-item-text">Reset App Data</span>
+          </md-list-item>
           <md-list-item @click="logout().then(toggleAccount)">
             <md-icon>exit_to_app</md-icon>
             <span class="md-list-item-text">Logout</span>
@@ -240,6 +246,12 @@ export default {
       window.history.go(-1);
     },
 
+    clearLocalStorage() {
+      if (window.localStorage) {
+        window.localStorage.clear();
+        window.location.reload();
+      }
+    },
     logout() {
       return firebase.auth().signOut();
     },

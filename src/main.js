@@ -86,6 +86,7 @@ Vue.use(VueAsyncComputed);
 Vue.use(VueBodyClass, router);
 Vue.use(VueLocalStorage, {
   bind: true,
+  namespace: 'scotdance',
 });
 Vue.use(VueScrollTo);
 
