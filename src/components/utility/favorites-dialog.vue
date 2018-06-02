@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import AccountButtons from '@/components/account-buttons';
+import AccountButtons from '@/components/utility/account-buttons';
 
 export default {
   name: 'favorites-dialog',

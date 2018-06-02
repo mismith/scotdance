@@ -107,8 +107,8 @@
 import FuzzySearch from 'fuzzy-search';
 import sortBy from 'lodash.sortby';
 import groupBy from 'lodash.groupby';
-import DancerListItem from '@/components/dancer-list-item';
-import DancerReport from '@/components/dancer-report';
+import DancerListItem from '@/components/utility/dancer-list-item';
+import DancerReport from '@/components/utility/dancer-report';
 import {
   idKey,
 } from '@/helpers/firebase';

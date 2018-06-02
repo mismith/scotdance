@@ -160,9 +160,9 @@
 </template>
 
 <script>
-import AdminList from '@/components/competition/admin/admin-list';
-import AdminListItem from '@/components/competition/admin/admin-list-item';
-import AdminPlatforms from '@/components/competition/admin/platforms';
+import AdminList from '@/components/competition/admin/utility/admin-list';
+import AdminListItem from '@/components/competition/admin/utility/admin-list-item';
+import AdminPlatforms from '@/components/competition/admin/utility/platforms';
 import {
   getScheduleItemDanceName,
 } from '@/helpers/competition';

@@ -106,8 +106,8 @@
 </template>
 
 <script>
-import DancerListItem from '@/components/dancer-list-item';
-import AdminPlatforms from '@/components/competition/admin/platforms';
+import DancerListItem from '@/components/utility/dancer-list-item';
+import AdminPlatforms from '@/components/competition/admin/utility/platforms';
 import {
   getScheduleItemDanceName,
 } from '@/helpers/competition';

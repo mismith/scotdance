@@ -23,8 +23,8 @@ import App from '@/app';
 import router from '@/router';
 import store from '@/store';
 
-import MdSpinnable from '@/components/md-spinnable';
-import MdListItemCards from '@/components/md-list-item-cards';
+import MdSpinnable from '@/components/utility/md-spinnable';
+import MdListItemCards from '@/components/utility/md-list-item-cards';
 
 import $package from '../package.json';
 

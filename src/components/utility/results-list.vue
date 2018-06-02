@@ -33,7 +33,7 @@
 </template>
 
 <script>
-import ResultListItem from '@/components/result-list-item';
+import ResultListItem from '@/components/utility/result-list-item';
 import {
   idKey,
 } from '@/helpers/firebase';

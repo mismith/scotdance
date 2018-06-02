@@ -138,11 +138,11 @@ import {
   db,
   firebase,
 } from '@/helpers/firebase';
-import RegisterDialog from '@/components/register-dialog';
-import LoginDialog from '@/components/login-dialog';
-import FavoritesDialog from '@/components/favorites-dialog';
-import AccountButtons from '@/components/account-buttons';
-import CompetitionListItem from '@/components/competition-list-item';
+import RegisterDialog from '@/components/utility/register-dialog';
+import LoginDialog from '@/components/utility/login-dialog';
+import FavoritesDialog from '@/components/utility/favorites-dialog';
+import AccountButtons from '@/components/utility/account-buttons';
+import CompetitionListItem from '@/components/utility/competition-list-item';
 
 export default {
   name: 'app',

@@ -32,7 +32,7 @@
 </template>
 
 <script>
-import CompetitionListItem from '@/components/competition-list-item';
+import CompetitionListItem from '@/components/utility/competition-list-item';
 import {
   idKey,
 } from '@/helpers/firebase';

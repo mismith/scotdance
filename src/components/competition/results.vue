@@ -83,8 +83,8 @@
 </template>
 
 <script>
-import DancerListItem from '@/components/dancer-list-item';
-import ResultsList from '@/components/results-list';
+import DancerListItem from '@/components/utility/dancer-list-item';
+import ResultsList from '@/components/utility/results-list';
 import {
   idKey,
 } from '@/helpers/firebase';

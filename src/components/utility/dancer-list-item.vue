@@ -41,8 +41,8 @@ import {
   idKey,
   db,
 } from '@/helpers/firebase';
-import AccountButtons from '@/components/account-buttons';
-import Place from '@/components/place';
+import AccountButtons from '@/components/utility/account-buttons';
+import Place from '@/components/utility/place';
 
 export default {
   name: 'dancer-list-item',

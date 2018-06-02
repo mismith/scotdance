@@ -107,10 +107,10 @@ import {
   mapState,
 } from 'vuex';
 import HotTable from '@handsontable/vue';
-import AdminImport from '@/components/competition/admin/import';
+import AdminImport from '@/components/competition/admin/utility/import';
 import AdminResults from '@/components/competition/admin/results';
-import PresetPicker from '@/components/preset-picker';
-import MdSpunnable from '@/components/md-spunnable';
+import PresetPicker from '@/components/utility/preset-picker';
+import MdSpunnable from '@/components/utility/md-spunnable';
 import {
   idKey,
   db,

@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import Place from '@/components/place';
+import Place from '@/components/utility/place';
 import {
   hasFavorites,
 } from '@/helpers/competition';

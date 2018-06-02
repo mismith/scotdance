@@ -43,7 +43,7 @@
 </template>
 
 <script>
-import AdminListItem from '@/components/competition/admin/admin-list-item';
+import AdminListItem from '@/components/competition/admin/utility/admin-list-item';
 import {
   idKey,
 } from '@/helpers/firebase';
