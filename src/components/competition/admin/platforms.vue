@@ -182,6 +182,24 @@ export default {
 </script>
 
 <style lang="scss">
+@keyframes bounce-in {
+  0% {
+    transform: translate3d(50%, 0, 0);
+    opacity: 0;
+  }
+  50% {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  66% {
+    transform: translate3d(6%, 0, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
 .admin-platforms {
   .pools {
     display: flex;
@@ -213,6 +231,12 @@ export default {
           }
         }
       }
+    }
+  }
+  &:not(.interactive) {
+    .pools {
+      animation: bounce-in 300ms 150ms ease-in forwards;
+      opacity: 0;
     }
   }
   &.interactive {

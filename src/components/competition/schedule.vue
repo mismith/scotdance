@@ -75,7 +75,7 @@
           />
 
           <md-list class="md-list-cards">
-            <md-list-item
+            <md-list-item-cards
               v-for="(dance, danceId) in currentEvent.dances"
               :key="danceId"
               :md-expand="!!dance.platforms"
@@ -97,7 +97,7 @@
                   :platforms="platforms"
                 />
               </md-content>
-            </md-list-item>
+            </md-list-item-cards>
           </md-list>
         </div>
       </div>
