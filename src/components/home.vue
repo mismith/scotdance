@@ -4,8 +4,11 @@
       <div>
         <img src="static/img/touchicon.png" role="presentation" width="88" height="88" />
         <h1 class="md-display-2">ScotDance</h1>
-        <p class="md-headline">Highland dancing event tracker</p>
+        <p class="md-headline">{{ $package.description }}</p>
         <p class="md-subheading">Skip the pen and paper—attend highland dance competitions in style with this app for your mobile device.</p>
+        <p>
+          <md-button @click.prevent="$router.push({ name: 'competitions' })" class="md-primary md-raised md-large">Browse Competitions</md-button>
+        </p>
         <p v-if="!isApp" class="store-badges">
           <a href="https://itunes.apple.com/us/app/scotdance/id1386475626?mt=8" target="_blank">
             <img src="static/img/app-store.svg" alt="Download on the App Store" />
@@ -13,9 +16,6 @@
           <a href="https://play.google.com/store/apps/details?id=info.mismith.scotdance" target="_blank">
             <img src="static/img/play-store.svg" alt="Get it on Google Play" />
           </a>
-        </p>
-        <p>
-          <md-button @click.prevent="$router.push({ name: 'competitions' })" class="md-primary md-raised md-large">Browse Competitions</md-button>
         </p>
       </div>
     </section>
@@ -121,6 +121,11 @@ export default {
       .md-layout-item {
         padding: 20px;
       }
+    }
+  }
+  #about {
+    a {
+      white-space: nowrap;
     }
   }
 }
