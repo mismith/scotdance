@@ -47,7 +47,7 @@
       </md-toolbar>
 
       <div class="md-scroll-frame md-scroll">
-        <md-list v-if="accountToggled" class="md-dense animate-in">
+        <md-list v-if="accountToggled" class="animate-in" style="flex: auto;">
           <md-subheader>Account</md-subheader>
 
           <md-list-item
@@ -94,7 +94,7 @@
 
           <footer v-if="competitions.length && competitions.length !== relevantCompetitions.length" style="text-align: center;">
             <md-button @click="$router.push({ name: 'competitions' }); closeMenu();">
-              See {{ competitions.length - relevantCompetitions.length }} More
+              View {{ competitions.length - relevantCompetitions.length }} More
             </md-button>
           </footer>
         </md-list>
@@ -174,12 +174,8 @@ export default {
     },
     relevantCompetitions() {
       const relevantCompetitions = this.competitions.filter((competition) => {
-        // only show published competitions
-        if (!competition.published) {
-          return false;
-        }
         // only show upcoming or up to 7 day old events
-        if (competition.date && this.$moment(competition.date).isAfter(this.$moment().subtract(7, 'days'))) {
+        if (competition.date && this.$moment().isSame(competition.date, 'week')) {
           return true;
         }
         return false;
