@@ -28,7 +28,7 @@
 
         <p>
           Already have an account?
-          <a @click="$store.commit('setLoginDialogOpen', true)">
+          <a @click="$store.commit('setDialogOpen', 'login')">
             Login
           </a>
         </p>
@@ -71,10 +71,10 @@ export default {
   computed: {
     registerVisible: {
       get() {
-        return this.$store.state.registerDialogOpen;
+        return this.$store.state.dialogOpen === 'register';
       },
       set(value) {
-        return this.$store.commit('setRegisterDialogOpen', value);
+        return this.$store.commit('setDialogOpen', value && 'register');
       },
     },
   },

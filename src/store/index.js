@@ -18,9 +18,7 @@ export default new Vuex.Store({
     myFavorites: undefined,
     postLoginCallbacks: [],
 
-    favoritesDialogOpen: false,
-    registerDialogOpen: false,
-    loginDialogOpen: false,
+    dialogOpen: undefined,
 
     clipboard: {
       type: undefined,
@@ -48,22 +46,8 @@ export default new Vuex.Store({
       state.postLoginCallbacks.push(callback);
     },
 
-    setFavoritesDialogOpen(state, to) {
-      state.favoritesDialogOpen = to;
-    },
-    setRegisterDialogOpen(state, to) {
-      state.registerDialogOpen = to;
-      if (to) {
-        state.loginDialogOpen = false;
-        state.favoritesDialogOpen = false;
-      }
-    },
-    setLoginDialogOpen(state, to) {
-      state.loginDialogOpen = to;
-      if (to) {
-        state.registerDialogOpen = false;
-        state.favoritesDialogOpen = false;
-      }
+    setDialogOpen(state, to) {
+      state.dialogOpen = to;
     },
 
     copy(state, { data, type = 'text/plain' }) {

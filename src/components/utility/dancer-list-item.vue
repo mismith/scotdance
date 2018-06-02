@@ -73,7 +73,7 @@ export default {
       });
 
       // ...while opening dialog to inform user about favorites functionality
-      return this.$store.commit('setFavoritesDialogOpen', true);
+      return this.$store.commit('setDialogOpen', 'favorites');
     },
   },
   components: {
