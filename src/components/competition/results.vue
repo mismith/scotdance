@@ -70,8 +70,17 @@
                     class="icon-trophy md-primary"
                   />
                 </dancer-list-item>
+
                 <md-list-item v-if="!dance.dancers.length" class="empty">
                   Results to be determined.
+                </md-list-item>
+
+                <md-divider v-if="currentGroup.sponsor && dance[idKey] === overall[idKey]" />
+                <md-list-item v-if="currentGroup.sponsor && dance[idKey] === overall[idKey]">
+                  <div class="md-list-item-text">
+                    <div>{{ currentGroup.sponsor }}</div>
+                    <div>Trophy Sponsor</div>
+                  </div>
                 </md-list-item>
               </md-list>
             </md-list-item-cards>
