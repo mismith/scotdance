@@ -4,10 +4,11 @@
       <md-list class="md-list-cards">
         <md-list-item-cards
           v-for="group in groupedCompetitions"
-          :key="group.name"
+          :key="group[idKey]"
           v-if="group.competitions.length"
           md-expand
-          :md-expanded="true"
+          :md-expanded="isGroupExpanded(group, groupedCompetitions)"
+          @toggled="handleGroupExpanded(group[idKey], $event)"
         >
           <md-subheader>{{ group.name }}</md-subheader>
 
@@ -31,15 +32,25 @@
 </template>
 
 <script>
+import CompetitionListItem from '@/components/competition-list-item';
 import {
   idKey,
 } from '@/helpers/firebase';
-import CompetitionListItem from '@/components/competition-list-item';
+import {
+  isExpanded,
+  handleExpanded,
+} from '@/helpers/router';
 
 export default {
   name: 'competitions-list',
   props: {
     competitions: Array,
+  },
+  localStorage: {
+    competitionsListExpandedGroups: {
+      type: Object,
+      default: {},
+    },
   },
   data() {
     return {
@@ -50,14 +61,26 @@ export default {
     groupedCompetitions() {
       return [
         {
+          [idKey]: 'upcoming',
           name: 'Upcoming',
           competitions: this.competitions.filter(c => this.$moment().diff(c.date) < 0),
         },
         {
+          [idKey]: 'archive',
           name: 'Archive',
           competitions: this.competitions.filter(c => this.$moment().diff(c.date) >= 0).reverse(),
         },
       ];
+    },
+  },
+  methods: {
+    isGroupExpanded(item, items) {
+      const itemIds = items.map(i => i[idKey]);
+      return isExpanded(this.competitionsListExpandedGroups, item[idKey], itemIds);
+    },
+    handleGroupExpanded(groupId, expanded) {
+      this.competitionsListExpandedGroups = handleExpanded(this.competitionsListExpandedGroups, groupId, expanded);
+      this.$localStorage.set('competitionsListExpandedGroups', this.competitionsListExpandedGroups);
     },
   },
   components: {
