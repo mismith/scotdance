@@ -55,17 +55,6 @@ export default {
       'me',
     ]),
   },
-  watch: {
-    me(me) {
-      if (this.$store.state.favoritesDialogOpen && me) {
-        if (this.$store.state.favoritesDialogOpen[idKey]) {
-          // favorite 'stored' dancer
-          this.handleFavoriteToggle(this.$store.state.favoritesDialogOpen, true);
-        }
-        this.$store.commit('setFavoritesDialogOpen', false);
-      }
-    },
-  },
   methods: {
     handleFavoriteToggle(dancer, force = undefined) {
       if (this.me) {
@@ -78,8 +67,13 @@ export default {
           .set(force !== undefined ? force : toggled);
       }
 
-      // 'store' dancer for favoriting post-auth, while opening dialog to inform user about favorites
-      return this.$store.commit('setFavoritesDialogOpen', dancer);
+      // 'store' dancer for favoriting post-auth...
+      this.$store.commit('addPostLoginCallback', () => {
+        this.handleFavoriteToggle(dancer, true);
+      });
+
+      // ...while opening dialog to inform user about favorites functionality
+      return this.$store.commit('setFavoritesDialogOpen', true);
     },
   },
   components: {

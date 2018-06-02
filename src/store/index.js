@@ -16,6 +16,7 @@ export default new Vuex.Store({
 
     me: undefined,
     myFavorites: undefined,
+    postLoginCallbacks: [],
 
     favoritesDialogOpen: false,
     registerDialogOpen: false,
@@ -41,6 +42,10 @@ export default new Vuex.Store({
     },
     setDevice(state, to) {
       state.$device = to;
+    },
+
+    addPostLoginCallback(state, callback) {
+      state.postLoginCallbacks.push(callback);
     },
 
     setFavoritesDialogOpen(state, to) {
@@ -69,8 +74,14 @@ export default new Vuex.Store({
     },
   },
   actions: {
-    auth: firebaseAction(({ bindFirebaseRef }, { meRef, myFavoritesRef }) => {
-      bindFirebaseRef('me', meRef);
+    auth: firebaseAction(({ bindFirebaseRef, state }, { meRef, myFavoritesRef }) => {
+      bindFirebaseRef('me', meRef, {
+        readyCallback() {
+          // flush post-login callbacks
+          state.postLoginCallbacks.forEach(callback => callback());
+          state.postLoginCallbacks = [];
+        },
+      });
       bindFirebaseRef('myFavorites', myFavoritesRef);
     }),
     unauth: firebaseAction(({ unbindFirebaseRef, state }) => {
