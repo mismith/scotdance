@@ -46,7 +46,6 @@
 <script>
 import {
   idKey,
-  db,
 } from '@/helpers/firebase';
 import {
   findByIdKey,
@@ -56,6 +55,8 @@ export default {
   name: 'competition',
   props: {
     competitionId: String,
+    competitionsRef: Object,
+    competitionsDataRef: Object,
   },
   data() {
     return {
@@ -148,8 +149,8 @@ export default {
 
       this.loaded = false;
 
-      this.competitionRef = db.child('competitions').child(this.competitionId);
-      this.competitionDataRef = db.child('competitions:data').child(this.competitionId);
+      this.competitionRef = this.competitionsRef.child(this.competitionId);
+      this.competitionDataRef = this.competitionsDataRef.child(this.competitionId);
 
       // info object
       if (this.competitionRaw) this.$unbind('competitionRaw');

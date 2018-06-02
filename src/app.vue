@@ -108,7 +108,11 @@
 
     <md-app-content id="main" class="md-scroll-frame md-scroll">
       <keep-alive>
-        <router-view :competitions="competitions" />
+        <router-view
+          :competitions="competitions"
+          :competitions-ref="competitionsRef"
+          :competitions-data-ref="competitionsDataRef"
+        />
       </keep-alive>
     </md-app-content>
   </md-app>
@@ -143,10 +147,10 @@ export default {
 
       accountToggled: false,
       menuVisible: false,
+
+      competitionsRef: undefined,
+      competitionsDataRef: undefined,
     };
-  },
-  firebase: {
-    competitionsRaw: db.child('competitions'),
   },
   computed: {
     ...mapState([
@@ -216,6 +220,14 @@ export default {
       'help',
     ]),
 
+    async loadFirebase() {
+      this.competitionsRef = db.child('competitions');
+      this.competitionsDataRef = db.child('competitions:data');
+
+      if (this.competitionsRaw) this.$unbind('competitionsRaw');
+      this.$bindAsArray('competitionsRaw', this.competitionsRef);
+    },
+
     closeMenu() {
       this.menuVisible = false;
       this.accountToggled = false;
@@ -231,6 +243,9 @@ export default {
     logout() {
       return firebase.auth().signOut();
     },
+  },
+  created() {
+    this.loadFirebase();
   },
   mounted() {
     new Hammer(this.$el, {
