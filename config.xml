@@ -29,6 +29,7 @@
     <preference name="StatusBarBackgroundColor" value="#1e88e5" />
     <plugin name="cordova-plugin-splashscreen" spec="^5.0.2" />
     <preference name="AutoHideSplashScreen" value="false" />
+    <plugin name="cordova-plugin-device" spec="^2.0.2" />
     <engine name="ios" spec="^4.5.4" />
     <engine name="android" spec="^7.1.0" />
 </widget>

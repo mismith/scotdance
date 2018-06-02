@@ -26,10 +26,12 @@ import store from '@/store';
 import MdSpinnable from '@/components/md-spinnable';
 import MdListItemCards from '@/components/md-list-item-cards';
 
+import $package from '../package.json';
+
 // disable (amongst other things) vue-localstoreage verbose logging
 Vue.config.silent = true;
 
-// hybrid apps
+// app / devices
 Vue.prototype.isApp = window.location.protocol === 'file:';
 if (Vue.prototype.isApp) {
   // allow loading cordova plugins
@@ -42,6 +44,7 @@ if (Vue.prototype.isApp) {
   document.addEventListener('deviceready', () => {
     window.navigator.splashscreen.hide();
     window.StatusBar.show();
+    store.commit('setDevice', window.device);
   });
 
   // scroll to top on status bar tap
@@ -65,6 +68,7 @@ if (Vue.prototype.isApp) {
   });
 }
 FastClick.attach(document.body);
+store.commit('setPackage', $package);
 
 // libs
 Vue.prototype.$moment = moment;

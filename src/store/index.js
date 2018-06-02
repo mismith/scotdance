@@ -9,6 +9,11 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
+    $package: {},
+    $device: {
+      platform: 'Web',
+    },
+
     me: undefined,
     myFavorites: undefined,
 
@@ -30,6 +35,13 @@ export default new Vuex.Store({
   },
   mutations: {
     ...firebaseMutations,
+
+    setPackage(state, to) {
+      state.$package = to;
+    },
+    setDevice(state, to) {
+      state.$device = to;
+    },
 
     setFavoritesDialogOpen(state, to) {
       state.favoritesDialogOpen = to;

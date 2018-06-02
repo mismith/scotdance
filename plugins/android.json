@@ -15,6 +15,9 @@
     },
     "cordova-plugin-splashscreen": {
       "PACKAGE_NAME": "info.mismith.scotdance"
+    },
+    "cordova-plugin-device": {
+      "PACKAGE_NAME": "info.mismith.scotdance"
     }
   },
   "dependent_plugins": {}
