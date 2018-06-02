@@ -45,6 +45,9 @@ if (Vue.prototype.isApp) {
     window.navigator.splashscreen.hide();
     window.StatusBar.show();
     store.commit('setDevice', window.device);
+    if (!window.device.isVirtual && window.SessionStack) {
+      window.SessionStack.start();
+    }
   });
 
   // scroll to top on status bar tap
@@ -66,6 +69,8 @@ if (Vue.prototype.isApp) {
       });
     });
   });
+} else if (!/localhost/.test(window.location.hostname)) {
+  window.SessionStack.start();
 }
 FastClick.attach(document.body);
 store.commit('setPackage', $package);
