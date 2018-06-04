@@ -18,6 +18,7 @@ export const callbacks = {
 export const getPlaceholderDancer = (timestamp = undefined) => ({
   [idKey]: timestamp || Date.now(),
   number: '?',
+  $number: '?',
   $name: 'Unknown Dancer',
 });
 
