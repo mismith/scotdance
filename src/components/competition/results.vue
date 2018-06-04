@@ -81,7 +81,7 @@
                 <md-list-item v-if="currentGroup.sponsor && dance[idKey] === overall[idKey]">
                   <div class="md-list-item-text">
                     <div>{{ currentGroup.sponsor }}</div>
-                    <div>Trophy Sponsor</div>
+                    <div>{{ currentGroup.trophy || '' }} Trophy Sponsor</div>
                   </div>
                 </md-list-item>
               </md-list>
