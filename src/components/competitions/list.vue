@@ -70,13 +70,13 @@ export default {
           [idKey]: 'upcoming',
           name: 'Upcoming',
           competitions: this.competitions
-            .filter(c => this.$moment().isAfter(c.date, 'week')),
+            .filter(c => this.$moment().isBefore(c.date, 'week')),
         },
         {
           [idKey]: 'archive',
           name: 'Archive',
           competitions: this.competitions
-            .filter(c => !c.date || this.$moment().isBefore(c.date, 'week')).reverse(),
+            .filter(c => !c.date || this.$moment().isAfter(c.date, 'week')).reverse(),
         },
       ];
     },
