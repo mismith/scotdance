@@ -115,6 +115,12 @@ router.beforeEach(async (to, from, next) => {
 // hide by default (e.g. until navbar help icon is clicked)
 if (window.$crisp) {
   window.$crisp.push(['do', 'chat:hide']);
+  window.$crisp.push(['on', 'message:received', () => {
+    if (window.$crisp.is('chat:hidden')) {
+      window.$crisp.push(['do', 'chat:show']);
+      store.commit('setHelpVisible', true);
+    }
+  }]);
 }
 
 // eslint-disable-next-line no-new

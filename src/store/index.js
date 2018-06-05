@@ -56,6 +56,10 @@ export default new Vuex.Store({
         data,
       };
     },
+
+    setHelpVisible(state, helpVisible) {
+      state.helpVisible = helpVisible;
+    },
   },
   actions: {
     auth: firebaseAction(({ bindFirebaseRef, state }, { meRef, myFavoritesRef }) => {
@@ -76,15 +80,15 @@ export default new Vuex.Store({
       state.myFavorites = null;
     }),
 
-    help({ state }, set = undefined) {
+    help({ state, commit }, set = undefined) {
       if (window.$crisp) {
         if (set === false || (set === undefined && state.helpVisible)) {
           window.$crisp.push(['do', 'chat:hide']);
-          state.helpVisible = false;
+          commit('setHelpVisible', false);
         } else if (set === true || (set === undefined && !state.helpVisible)) {
           window.$crisp.push(['do', 'chat:show']);
+          commit('setHelpVisible', true);
           window.$crisp.push(['do', 'chat:open']);
-          state.helpVisible = true;
         }
       }
     },
