@@ -31,6 +31,21 @@ import $package from '../package.json';
 // disable (amongst other things) vue-localstoreage verbose logging
 Vue.config.silent = true;
 
+// libs
+Vue.prototype.$moment = moment;
+Vue.use(VueFire);
+Vue.use(VueMaterial);
+Vue.component('md-spinnable', MdSpinnable);
+Vue.component('md-list-item-cards', MdListItemCards);
+Vue.use(VueAwesomeSwiper);
+Vue.use(VueAsyncComputed);
+Vue.use(VueBodyClass, router);
+Vue.use(VueLocalStorage, {
+  bind: true,
+  namespace: $package.name,
+});
+Vue.use(VueScrollTo);
+
 // app / devices
 Vue.prototype.isApp = window.location.protocol === 'file:';
 if (Vue.prototype.isApp) {
@@ -42,9 +57,9 @@ if (Vue.prototype.isApp) {
 
   // once cordova plugins are ready
   document.addEventListener('deviceready', () => {
+    store.commit('setDevice', window.device);
     window.navigator.splashscreen.hide();
     window.StatusBar.show();
-    store.commit('setDevice', window.device);
     if (!window.device.isVirtual && window.SessionStack) {
       window.SessionStack.start();
     }
@@ -74,21 +89,6 @@ if (Vue.prototype.isApp) {
 }
 FastClick.attach(document.body);
 store.commit('setPackage', $package);
-
-// libs
-Vue.prototype.$moment = moment;
-Vue.use(VueFire);
-Vue.use(VueMaterial);
-Vue.component('md-spinnable', MdSpinnable);
-Vue.component('md-list-item-cards', MdListItemCards);
-Vue.use(VueAwesomeSwiper);
-Vue.use(VueAsyncComputed);
-Vue.use(VueBodyClass, router);
-Vue.use(VueLocalStorage, {
-  bind: true,
-  namespace: 'scotdance',
-});
-Vue.use(VueScrollTo);
 
 // monitor user auth
 firebase.auth().onAuthStateChanged((me) => {
