@@ -17,7 +17,7 @@
               v-for="competition in group.competitions"
               :key="competition[idKey]"
               :competition="competition"
-              @click="$router.push(`/competitions/${competition[idKey]}`)"
+              :to="{ name: 'competition.info', params: { competitionId: competition[idKey] } }"
             />
           </md-list>
         </md-list-item-cards>

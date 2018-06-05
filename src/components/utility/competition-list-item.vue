@@ -1,6 +1,6 @@
 <template>
   <md-list-item
-    @click="$emit('click', $event)"
+    :to="to"
     class="competition-list-item"
     :class="{ published: competition.published }"
   >
@@ -18,8 +18,8 @@
 
     <md-button
       v-if="me && me.admin"
+      :to="{ name: 'competition.admin', params: { competitionId: competition[idKey] } }"
       class="md-icon-button md-list-action"
-      @click.stop="$router.push(`/competitions/${competition[idKey]}/admin`); $emit('admin-click', $event);"
     >
       <md-icon>settings</md-icon>
     </md-button>
@@ -38,6 +38,7 @@ export default {
   name: 'competition-list-item',
   props: {
     competition: Object,
+    to: true,
   },
   data() {
     return {

@@ -6,7 +6,7 @@
           <md-list-item
             v-for="group in groups"
             :key="group[idKey]"
-            @click="$router.push({ params: { groupId: group[idKey] } })"
+            :to="{ params: { groupId: group[idKey] } }"
             :class="{ active: isActive(group) }"
           >
             <span class="md-list-item-text">{{ group.$name }}</span>

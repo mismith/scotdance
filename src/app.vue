@@ -5,7 +5,7 @@
         <md-icon>menu</md-icon>
       </md-button>
 
-      <a @click.prevent="$router.push('/')" href="#" class="md-title">{{ title }}</a>
+      <router-link to="/" class="md-title">{{ title }}</router-link>
 
       <md-menu style="margin-left: auto;">
         <md-button md-menu-trigger class="md-icon-button">
@@ -35,7 +35,7 @@
               />
             </md-avatar>
           </md-list-item>
-          <md-list-item @click="toggleAccount()" :class="{toggled: accountToggled}">
+          <md-list-item @click="toggleAccount()" :class="{ toggled: accountToggled }">
             <div class="md-list-item-text">
               <span>{{ me.displayName || me.email || 'Account' }}</span>
             </div>
@@ -50,9 +50,7 @@
         <md-list v-if="accountToggled" class="animate-in" style="flex: auto;">
           <md-subheader>Account</md-subheader>
 
-          <md-list-item
-            @click="$router.push('/profile'); closeMenu();"
-          >
+          <md-list-item :to="{ name: 'profile' }" @click="closeMenu()">
             <md-icon>account_circle</md-icon>
             <span class="md-list-item-text">My Profile</span>
           </md-list-item>
@@ -73,7 +71,8 @@
 
             <md-button
               v-if="me && me.admin"
-              @click="$router.push(`/competitions/${db.push().key}/admin`); closeMenu();"
+              :to="{ name: 'competition.admin', params: { competitionId: db.push().key } }"
+              @click.native="closeMenu()"
               class="md-icon-button"
             >
               <md-icon>add</md-icon>
@@ -84,8 +83,8 @@
             v-for="competition in relevantCompetitions"
             :key="competition[idKey]"
             :competition="competition"
-            @click="$router.push(`/competitions/${competition[idKey]}`); closeMenu();"
-            @admin-click="menuVisible = false;"
+            :to="{ name: 'competition.info', params: { competitionId: competition[idKey] } }"
+            @click.native="closeMenu()"
           />
 
           <md-list-item v-if="!relevantCompetitions.length" class="empty">
@@ -93,7 +92,7 @@
           </md-list-item>
 
           <footer v-if="competitions.length && competitions.length !== relevantCompetitions.length" style="text-align: center;">
-            <md-button @click="$router.push({ name: 'competitions' }); closeMenu();">
+            <md-button :to="{ name: 'competitions' }" @click.native="closeMenu()">
               View {{ competitions.length - relevantCompetitions.length }} More
             </md-button>
           </footer>
@@ -102,9 +101,7 @@
         <md-list v-if="!accountToggled" class="md-dense">
           <md-subheader>Links</md-subheader>
 
-          <md-list-item
-            @click="$router.push(`/`); closeMenu();"
-          >
+          <md-list-item to="/" @click="closeMenu()">
             <md-icon>home</md-icon>
             <span class="md-list-item-text">App Home</span>
           </md-list-item>

@@ -1,5 +1,5 @@
 <template>
-  <md-list-item @click="$emit('click', $event)" class="result-list-item">
+  <md-list-item :to="to" class="result-list-item">
     <slot name="avatar">
       <md-avatar
         class="md-avatar-icon"
@@ -30,6 +30,7 @@ export default {
   props: {
     dancers: Array, // [] -> TBD; [...] -> show checkmark;
     place: Number, // undefined -> show chevron
+    to: true,
   },
   computed: {
     hasResults() {

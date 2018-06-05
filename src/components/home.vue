@@ -7,7 +7,7 @@
         <p class="md-headline">{{ $package.description }}</p>
         <p class="md-subheading">Skip the pen and paper—attend highland dance competitions in style with this app for your mobile device.</p>
         <p>
-          <md-button @click.prevent="$router.push({ name: 'competitions' })" class="md-primary md-raised md-large">Browse Competitions</md-button>
+          <md-button :to="{ name: 'competitions' }" class="md-primary md-raised md-large">Browse Competitions</md-button>
         </p>
         <p v-if="!isApp" class="store-badges">
           <a href="https://itunes.apple.com/us/app/scotdance/id1386475626?mt=8" target="_blank">
@@ -43,7 +43,7 @@
         </div>
       </div>
       <footer>
-          <md-button @click.prevent="$router.push({ name: 'competitions' })" class="md-primary md-raised">Browse Competitions</md-button>
+          <md-button :to="{ name: 'competitions' }" class="md-primary md-raised">Browse Competitions</md-button>
       </footer>
     </section>
 

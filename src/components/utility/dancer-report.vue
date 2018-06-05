@@ -24,7 +24,7 @@
             v-for="dance in findGroupDances(group)"
             :key="dance[idKey]"
             :place="getPlace(dancer, group, dance)"
-            @click="$router.push({ name: 'competition.results', params: { groupId: group[idKey], danceId: dance[idKey]}})"
+            :to="{ name: 'competition.results', params: { groupId: group[idKey], danceId: dance[idKey] } }"
           >
             <span slot="avatar" />
             {{ dance.$name }}
@@ -34,7 +34,7 @@
           <result-list-item
              v-if="hasOverall(group)"
             :place="getPlace(dancer, group, overall)"
-            @click="$router.push({ name: 'competition.results', params: { groupId: group[idKey], danceId: overall[idKey]}})"
+            :to="{ name: 'competition.results', params: { groupId: group[idKey], danceId: overall[idKey] } }"
           >
             <span slot="avatar" />
             {{ overall.$name }}

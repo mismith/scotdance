@@ -2,7 +2,7 @@
   <md-list class="results-list">
     <result-list-item
       :dancers="getPlacedDancers(group, callbacks, true)"
-      @click="handleClick(group, callbacks)"
+      :to="{ params: { groupId: group[idKey], danceId: callbacks[idKey] } }"
       :class="{ active: isActive(group, callbacks) }"
     >
       {{ callbacks.$name }}
@@ -13,7 +13,7 @@
       v-for="dance in findGroupDances(group)"
       :key="dance[idKey]"
       :dancers="getPlacedDancers(group, dance)"
-      @click="handleClick(group, dance)"
+      :to="{ params: { groupId: group[idKey], danceId: dance[idKey] } }"
       :class="{ active: isActive(group, dance) }"
     >
       {{ dance.$name }}
@@ -23,7 +23,7 @@
     <result-list-item
       v-if="hasOverall(group)"
       :dancers="getPlacedDancers(group, overall)"
-      @click="handleClick(group, overall)"
+      :to="{ params: { groupId: group[idKey], danceId: overall[idKey] } }"
       :class="{ active: isActive(group, overall) }"
     >
       {{ overall.$name }}
