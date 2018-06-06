@@ -401,7 +401,7 @@ body,
   flex-direction: column;
   flex: 1;
   margin-bottom: env(safe-area-inset-bottom); // iPhone X
-  z-index: 160; // > 150 .md-toolbar
+  z-index: 3;
 }
 .md-app-content {
   padding: 0;
@@ -541,7 +541,6 @@ body,
 
 .md-toolbar {
   flex-shrink: 0;
-  z-index: 150; // > 101 .ht_clone_top
 
   > span {
     overflow: hidden;
@@ -619,6 +618,9 @@ body,
   margin-top: 16px;
 }
 
+.md-app-toolbar {
+  z-index: 3; // > 2 .md-app
+}
 .md-app-drawer {
   display: flex;
   flex-direction: column;
@@ -664,7 +666,6 @@ body,
 }
 .md-account-header {
   padding: 0;
-
 
   .md-list {
     width: 100%;
