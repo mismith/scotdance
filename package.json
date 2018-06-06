@@ -7,6 +7,7 @@
     "dev": "webpack-dev-server --inline --progress --config build/webpack.dev.conf.js",
     "lint": "eslint --ext .js,.vue src",
     "build": "node build/build.js",
+    "report": "npm run build --report",
     "deploy": "npm run build && firebase deploy",
     "web": "npm run build && open ./www/index.html",
     "ios": "npm run build && cordova run ios",

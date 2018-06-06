@@ -11,7 +11,7 @@ Command | Description
 `yarn dev` | serve with hot reload at localhost:8080
 `yarn lint` | show code formatting tips
 `yarn build` | build for production with minification
-`yarn build --report` | view the bundle analyzer report
+`yarn report` | view the bundle analyzer report
 `yarn deploy` | build and push web front-end to Firebase hosting
 `yarn web` | build and preview web front-end via file:// protocol
 `yarn ios` | build and emulate on iOS device
