@@ -401,6 +401,7 @@ body,
   flex-direction: column;
   flex: 1;
   margin-bottom: env(safe-area-inset-bottom); // iPhone X
+  z-index: 160; // > 150 .md-toolbar
 }
 .md-app-content {
   padding: 0;
@@ -540,7 +541,7 @@ body,
 
 .md-toolbar {
   flex-shrink: 0;
-  z-index: 200; // > 101 .ht_clone_top
+  z-index: 150; // > 101 .ht_clone_top
 
   > span {
     overflow: hidden;
