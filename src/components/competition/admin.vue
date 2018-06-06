@@ -106,19 +106,18 @@
 import {
   mapState,
 } from 'vuex';
-import HotTable from '@handsontable/vue';
-import AdminImport from '@/components/competition/admin/utility/import';
-import AdminResults from '@/components/competition/admin/results';
-import PresetPicker from '@/components/utility/preset-picker';
-import MdSpunnable from '@/components/utility/md-spunnable';
+import {
+  HotTable,
+  makeKeyValuePairColumn,
+} from '@/helpers/admin';
 import {
   idKey,
   db,
 } from '@/helpers/firebase';
-import {
-  makeKeyValuePairColumn,
-} from '@/helpers/handsontable';
-import 'handsontable/dist/handsontable.full.css';
+import AdminImport from '@/components/competition/admin/utility/import';
+import AdminResults from '@/components/competition/admin/results';
+import PresetPicker from '@/components/utility/preset-picker';
+import MdSpunnable from '@/components/utility/md-spunnable';
 
 export default {
   name: 'competition-admin',

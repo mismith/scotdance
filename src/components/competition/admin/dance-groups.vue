@@ -69,11 +69,13 @@
 </template>
 
 <script>
-import HotTable from '@handsontable/vue';
 import {
   mapState,
   mapMutations,
 } from 'vuex';
+import {
+  HotTable,
+} from '@/helpers/admin';
 import {
   findByIdKey,
 } from '@/helpers/competition';

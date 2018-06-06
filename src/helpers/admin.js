@@ -1,8 +1,10 @@
+import XLSX from 'js-xlsx';
 import Handsontable from 'handsontable';
+import 'handsontable/dist/handsontable.full.css';
+import HotTable from '@handsontable/vue';
 import { idKey } from '@/helpers/firebase';
 
-// eslint-disable-next-line import/prefer-default-export
-export function makeKeyValuePairColumn(column, valueProp = '$name', keyProp = idKey) {
+function makeKeyValuePairColumn(column, valueProp = '$name', keyProp = idKey) {
   return {
     ...column,
     type: 'handsontable',
@@ -24,3 +26,10 @@ export function makeKeyValuePairColumn(column, valueProp = '$name', keyProp = id
     },
   };
 }
+
+export {
+  XLSX,
+  Handsontable,
+  HotTable,
+  makeKeyValuePairColumn,
+};

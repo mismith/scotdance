@@ -92,12 +92,13 @@
 </template>
 
 <script>
-import XLSX from 'js-xlsx';
-import HotTable from '@handsontable/vue';
-
 import {
   idKey,
 } from '@/helpers/firebase';
+import {
+  HotTable,
+  XLSX,
+} from '@/helpers/admin';
 
 export default {
   name: 'admin-import',
