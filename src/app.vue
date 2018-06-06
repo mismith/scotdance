@@ -359,7 +359,7 @@ body.has-bottom-bar {
 .slide-left-leave-active,
 .slide-right-enter-active,
 .slide-right-leave-active {
-  transition: all 200ms;
+  transition: all 250ms;
 }
 .slide-left-enter,
 .slide-right-leave-to {

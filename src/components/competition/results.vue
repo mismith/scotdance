@@ -201,7 +201,7 @@ export default {
           this.$scrollTo(`#dance-${this.currentDance[idKey]}`, 0, {
             container: '#results-detail',
           });
-        }, 100);
+        }, 250);
       }
     },
   },
