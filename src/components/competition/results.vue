@@ -35,7 +35,7 @@
       </div>
       <div v-else class="blade md-scroll-frame" key="detail">
         <md-toolbar class="md-dense md-toolbar-nowrap">
-          <md-button @click="$router.go(-1)" class="md-icon-button">
+          <md-button :to="{ name: $route.name }" class="md-icon-button">
             <md-icon>chevron_left</md-icon>
           </md-button>
           <span>
@@ -143,6 +143,8 @@ export default {
       idKey,
       overall,
       callbacks,
+
+      scrollTimeout: undefined,
     };
   },
   computed: {
@@ -194,7 +196,8 @@ export default {
     currentDance(currentDance) {
       if (currentDance) {
         // scroll to currentDance
-        setTimeout(() => {
+        if (this.scrollTimeout) clearTimeout(this.scrollTimeout);
+        this.scrollTimeout = setTimeout(() => {
           this.$scrollTo(`#dance-${this.currentDance[idKey]}`, 0, {
             container: '#results-detail',
           });

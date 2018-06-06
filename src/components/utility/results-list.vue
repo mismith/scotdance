@@ -77,15 +77,6 @@ export default {
 
       return groupId === group[idKey] && danceId === dance[idKey];
     },
-
-    handleClick(group, dance) {
-      this.$router.push({
-        params: {
-          groupId: group[idKey],
-          danceId: dance[idKey],
-        },
-      });
-    },
   },
   components: {
     ResultListItem,
