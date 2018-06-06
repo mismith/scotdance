@@ -103,13 +103,23 @@ firebase.auth().onAuthStateChanged((me) => {
   }
 });
 
-// set page title
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, prev, next) => {
+  // set page title
   const titleChunks = await getTitleChunks(to);
-
   document.title = titleChunks.reverse().join(' • ');
 
   next();
+});
+
+router.afterEach(() => {
+  // force all scroll containers to scroll to top (to prevent weird overflow bugs)
+  const containers = document.querySelectorAll('.md-scroll');
+  Array.from(containers).forEach((container) => {
+    VueScrollTo.scrollTo(document.body, {
+      container,
+      duration: 0,
+    });
+  });
 });
 
 // hide by default (e.g. until navbar help icon is clicked)
