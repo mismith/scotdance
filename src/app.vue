@@ -260,7 +260,7 @@ export default {
         this.closeMenu();
       })
       .on('swiperight', ({ deltaX, srcEvent: { pageX } }) => {
-        const EDGE_THRESHOLD = 30;
+        const EDGE_THRESHOLD = 64;
         const startLeft = pageX - deltaX;
         // const startRight = window.innerWidth - startRight;
         if (startLeft <= EDGE_THRESHOLD) {
