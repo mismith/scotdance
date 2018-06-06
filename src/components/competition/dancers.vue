@@ -1,89 +1,89 @@
 <template>
-  <swiper class="competition-dancers md-scroll-frame swiper-no-swiping alt">
-    <swiper-slide>
-      <div v-if="dancers.length" class="md-scroll-frame">
-        <md-toolbar>
-          <md-field md-clearable style="margin-left: 8px; margin-right: 8px;">
-            <label for="filterBy">Search</label>
-            <md-input v-model="filterBy" id="filterBy" />
-          </md-field>
-          <md-menu md-direction="bottom-end" @selected="sortBy">
-            <md-button md-menu-trigger class="md-icon-button">
-              <md-icon>filter_list</md-icon>
-            </md-button>
+  <div class="competition-dancers blades md-scroll-frame alt">
+    <transition :name="`slide-${currentDancer ? 'left' : 'right'}`">
+      <div v-if="!currentDancer" class="blade md-scroll-frame" key="list">
+        <div v-if="dancers.length" class="md-scroll-frame">
+          <md-toolbar>
+            <md-field md-clearable style="margin-left: 8px; margin-right: 8px;">
+              <label for="filterBy">Search</label>
+              <md-input v-model="filterBy" id="filterBy" />
+            </md-field>
+            <md-menu md-direction="bottom-end" @selected="sortBy">
+              <md-button md-menu-trigger class="md-icon-button">
+                <md-icon>filter_list</md-icon>
+              </md-button>
 
-            <md-menu-content>
-              <md-menu-item
-                v-for="by in sortableBys"
-                :key="by.key"
-                @click="sortBy = by.key"
-                :class="{ active: sortBy === by.key }"
-              >{{ by.name }}</md-menu-item>
-            </md-menu-content>
-          </md-menu>
-          <md-button
-            @click="onlyFavorites = !onlyFavorites"
-            class="md-icon-button"
-            :class="{ 'md-accent': onlyFavorites }"
-          >
-            <md-icon>{{ onlyFavorites ? 'star' : 'star_border' }}</md-icon>
-          </md-button>
-          <!--<md-menu md-align-trigger>
+              <md-menu-content>
+                <md-menu-item
+                  v-for="by in sortableBys"
+                  :key="by.key"
+                  @click="sortBy = by.key"
+                  :class="{ active: sortBy === by.key }"
+                >{{ by.name }}</md-menu-item>
+              </md-menu-content>
+            </md-menu>
             <md-button
-              md-menu-trigger
+              @click="onlyFavorites = !onlyFavorites"
               class="md-icon-button"
-              style="margin-left: 12px; margin-right: 0;"
+              :class="{ 'md-accent': onlyFavorites }"
             >
-              <md-icon>more_vert</md-icon>
+              <md-icon>{{ onlyFavorites ? 'star' : 'star_border' }}</md-icon>
             </md-button>
-            <md-menu-content>
-              <md-menu-item>Expand All</md-menu-item>
-              <md-menu-item>Collapse All</md-menu-item>
-            </md-menu-content>
-          </md-menu>-->
-        </md-toolbar>
+            <!--<md-menu md-align-trigger>
+              <md-button
+                md-menu-trigger
+                class="md-icon-button"
+                style="margin-left: 12px; margin-right: 0;"
+              >
+                <md-icon>more_vert</md-icon>
+              </md-button>
+              <md-menu-content>
+                <md-menu-item>Expand All</md-menu-item>
+                <md-menu-item>Collapse All</md-menu-item>
+              </md-menu-content>
+            </md-menu>-->
+          </md-toolbar>
 
-        <div class="md-scroll">
-          <md-list v-if="groupIds.length" class="md-list-cards">
-            <md-list-item-cards
-              v-for="(group, groupId) in groupedDancers"
-              :key="groupId"
-              md-expand
-              :md-expanded="isGroupExpanded(groupId, groupIds)"
-              @toggled="handleGroupExpanded(groupId, $event)"
-            >
-              <md-subheader>
-                {{ groupId || '?' }}
-                <md-icon v-if="hasFavorites(group)" class="md-accent">star</md-icon>
-              </md-subheader>
-              <!--<span class="badge">{{ group.length }}</span>-->
+          <div class="md-scroll">
+            <md-list v-if="groupIds.length" class="md-list-cards">
+              <md-list-item-cards
+                v-for="(group, groupId) in groupedDancers"
+                :key="groupId"
+                md-expand
+                :md-expanded="isGroupExpanded(groupId, groupIds)"
+                @toggled="handleGroupExpanded(groupId, $event)"
+              >
+                <md-subheader>
+                  {{ groupId || '?' }}
+                  <md-icon v-if="hasFavorites(group)" class="md-accent">star</md-icon>
+                </md-subheader>
+                <!--<span class="badge">{{ group.length }}</span>-->
 
-              <md-list slot="md-expand" class="md-double-line">
-                <dancer-list-item
-                  v-for="dancer in group"
-                  :key="dancer[idKey]"
-                  :dancer="dancer"
-                  @click="$router.push({ params: { dancerId: dancer[idKey] }})"
-                  :class="{ active: dancerId === dancer[idKey] }"
-                />
-              </md-list>
-            </md-list-item-cards>
-          </md-list>
-          <md-empty-state
-            v-else
-            md-icon="error_outline"
-            md-label="No dancers match"
-          />
+                <md-list slot="md-expand" class="md-double-line">
+                  <dancer-list-item
+                    v-for="dancer in group"
+                    :key="dancer[idKey]"
+                    :dancer="dancer"
+                    @click="$router.push({ params: { dancerId: dancer[idKey] }})"
+                    :class="{ active: dancerId === dancer[idKey] }"
+                  />
+                </md-list>
+              </md-list-item-cards>
+            </md-list>
+            <md-empty-state
+              v-else
+              md-icon="error_outline"
+              md-label="No dancers match"
+            />
+          </div>
         </div>
+        <md-empty-state
+          v-else
+          md-icon="error"
+          md-label="No dancers yet"
+        />
       </div>
-      <md-empty-state
-        v-else
-        md-icon="error"
-        md-label="No dancers yet"
-      />
-    </swiper-slide>
-    <swiper-slide>
-      <div v-if="currentDancer" class="md-scroll-frame">
+      <div v-else class="blade md-scroll-frame" key="detail">
         <md-toolbar class="md-dense md-toolbar-nowrap">
           <md-button @click="$router.go(-1)" class="md-icon-button">
             <md-icon>chevron_left</md-icon>
@@ -99,8 +99,8 @@
           class="md-scroll"
         />
       </div>
-    </swiper-slide>
-  </swiper>
+    </transition>
+  </div>
 </template>
 
 <script>
@@ -200,21 +200,8 @@ export default {
       return Object.keys(this.groupedDancers);
     },
   },
-  watch: {
-    currentDancer() {
-      this.showRelevantSlide();
-    },
-  },
   methods: {
     hasFavorites,
-
-    showRelevantSlide() {
-      if (this.currentDancer) {
-        this.$el.swiper.slideTo(1);
-      } else {
-        this.$el.swiper.slideTo(0);
-      }
-    },
 
     isGroupExpanded(itemId, itemIds) {
       // searching, so expand all groups
@@ -252,9 +239,6 @@ export default {
         }
       }
     },
-  },
-  async mounted() {
-    this.showRelevantSlide();
   },
   components: {
     DancerListItem,

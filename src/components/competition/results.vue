@@ -1,8 +1,8 @@
 <template>
-  <swiper class="competition-results md-scroll-frame swiper-no-swiping alt">
-    <swiper-slide>
-      <div class="md-scroll">
-        <md-list v-if="groups.length" class="md-list-cards">
+  <div class="competition-results blades md-scroll-frame alt">
+    <transition :name="`slide-${currentGroup ? 'left' : 'right'}`">
+      <div v-if="!currentGroup" class="blade md-scroll-frame" key="list">
+        <md-list v-if="groups.length" class="md-list-cards md-scroll">
           <md-list-item-cards
             v-for="group in groups"
             :key="group[idKey]"
@@ -33,9 +33,7 @@
           md-label="No results yet"
         />
       </div>
-    </swiper-slide>
-    <swiper-slide class="md-scroll-frame">
-      <div v-if="currentGroup" class="md-scroll-frame">
+      <div v-else class="blade md-scroll-frame" key="detail">
         <md-toolbar class="md-dense md-toolbar-nowrap">
           <md-button @click="$router.go(-1)" class="md-icon-button">
             <md-icon>chevron_left</md-icon>
@@ -89,8 +87,8 @@
           </md-list>
         </div>
       </div>
-    </swiper-slide>
-  </swiper>
+    </transition>
+  </div>
 </template>
 
 <script>
@@ -193,8 +191,15 @@ export default {
     },
   },
   watch: {
-    currentDance() {
-      this.showRelevantSlide();
+    currentDance(currentDance) {
+      if (currentDance) {
+        // scroll to currentDance
+        setTimeout(() => {
+          this.$scrollTo(`#dance-${this.currentDance[idKey]}`, 0, {
+            container: '#results-detail',
+          });
+        }, 100);
+      }
     },
   },
   methods: {
@@ -203,21 +208,6 @@ export default {
     findGroupDancers,
     getPlacedDancers,
     getPlace,
-
-    showRelevantSlide() {
-      if (this.currentDance) {
-        this.$el.swiper.slideTo(1);
-
-        // scroll to currentDance
-        setTimeout(() => {
-          this.$scrollTo(`#dance-${this.currentDance[idKey]}`, 0, {
-            container: '#results-detail',
-          });
-        }, 100);
-      } else {
-        this.$el.swiper.slideTo(0);
-      }
-    },
 
     isGroupExpanded(item, items) {
       const itemIds = items.map(i => i[idKey]);
@@ -240,9 +230,6 @@ export default {
       );
       this.$localStorage.set('resultsExpandedDances', this.resultsExpandedDances);
     },
-  },
-  async mounted() {
-    this.showRelevantSlide();
   },
   components: {
     DancerListItem,

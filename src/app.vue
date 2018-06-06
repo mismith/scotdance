@@ -337,6 +337,45 @@ body.has-bottom-bar {
   background-color: var(--md-theme-default-primary);
 }
 
+// transitions
+.blades {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  position: relative;
+  overflow: hidden;
+
+  .blade {
+    width: 100%;
+
+    + .blade {
+      // margin-left: -100%;
+    }
+    // min-width: 100%;
+    // opacity: 1;
+  }
+}
+.slide-left-enter-active,
+.slide-left-leave-active,
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: all 200ms;
+}
+.slide-left-enter,
+.slide-right-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+.slide-left-leave-active,
+.slide-right-leave-active {
+  position: absolute;
+}
+.slide-left-leave-to,
+.slide-right-enter {
+  transform: translateX(-25%);
+  opacity: 0;
+}
+
 // app-wide custom styling
 a.ext {
   &:after {
@@ -567,10 +606,6 @@ body,
       padding-right: 16px;
     }
   }
-}
-
-.swiper-slide {
-  @extend .md-scroll-frame;
 }
 
 .md-padding {

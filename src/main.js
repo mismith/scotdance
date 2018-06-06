@@ -3,8 +3,6 @@ import Vue from 'vue';
 import VueFire from 'vuefire';
 import VueMaterial from 'vue-material';
 import 'vue-material/dist/vue-material.css';
-import VueAwesomeSwiper from 'vue-awesome-swiper';
-import 'swiper/dist/css/swiper.css';
 import VueAsyncComputed from 'vue-async-computed';
 import VueBodyClass from 'vue-body-class';
 import VueLocalStorage from 'vue-localstorage';
@@ -37,7 +35,6 @@ Vue.use(VueFire);
 Vue.use(VueMaterial);
 Vue.component('md-spinnable', MdSpinnable);
 Vue.component('md-list-item-cards', MdListItemCards);
-Vue.use(VueAwesomeSwiper);
 Vue.use(VueAsyncComputed);
 Vue.use(VueBodyClass, router);
 Vue.use(VueLocalStorage, {
