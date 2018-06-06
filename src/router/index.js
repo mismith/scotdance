@@ -16,12 +16,6 @@ import CompetitionDancers from '@/components/competition/dancers';
 import CompetitionSchedule from '@/components/competition/schedule';
 import CompetitionResults from '@/components/competition/results';
 
-import CompetitionAdmin from '@/components/competition/admin';
-import CompetitionAdminSchedule from '@/components/competition/admin/schedule';
-import CompetitionAdminResults from '@/components/competition/admin/results';
-import CompetitionAdminDanceGroups from '@/components/competition/admin/dance-groups';
-import CompetitionAdminTab from '@/components/competition/admin/tab';
-
 Vue.use(Router);
 
 export default new Router({
@@ -98,7 +92,7 @@ export default new Router({
             {
               path: 'admin',
               name: 'competition.admin',
-              component: CompetitionAdmin,
+              component: () => import(/* webpackChunkName: "admin" */ '@/components/competition/admin'),
               meta: {
                 title: 'Admin',
               },
@@ -106,25 +100,25 @@ export default new Router({
                 {
                   path: 'schedule/:dayId?/:blockId?/:eventId?/:danceId?',
                   name: 'competition.admin.schedule',
-                  component: CompetitionAdminSchedule,
+                  component: () => import(/* webpackChunkName: "admin" */ '@/components/competition/admin/schedule'),
                   props: true,
                 },
                 {
                   path: 'results/:groupId?/:danceId?',
                   name: 'competition.admin.results',
-                  component: CompetitionAdminResults,
+                  component: () => import(/* webpackChunkName: "admin" */ '@/components/competition/admin/results'),
                   props: true,
                 },
                 {
                   path: 'dance-groups/:groupId?',
                   name: 'competition.admin.dance-groups',
-                  component: CompetitionAdminDanceGroups,
+                  component: () => import(/* webpackChunkName: "admin" */ '@/components/competition/admin/dance-groups'),
                   props: true,
                 },
                 {
                   path: ':tab',
                   name: 'competition.admin.tab',
-                  component: CompetitionAdminTab,
+                  component: () => import(/* webpackChunkName: "admin" */ '@/components/competition/admin/tab'),
                   props: true,
                 },
               ],

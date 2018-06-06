@@ -1,4 +1,4 @@
-import XLSX from 'js-xlsx';
+import XLSX from 'xlsx';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.css';
 import HotTable from '@handsontable/vue';
