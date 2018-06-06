@@ -66,18 +66,21 @@ if (Vue.prototype.isApp) {
   window.addEventListener('statusTap', () => {
     const containers = document.querySelectorAll('.md-scroll');
     Array.from(containers).forEach((container) => {
-      if (container.scrollTop === 0) return;
+      if (container.scrollTop === 0) return; // skip if already at top
+
+      // stop any lingering user-initiated scroll/rubber-banding
+      const disableScrollability = () => {
+        container.style.overflow = 'hidden'; // eslint-disable-line no-param-reassign
+      };
+      const restoreScrollability = () => {
+        container.style.overflow = ''; // eslint-disable-line no-param-reassign
+      };
 
       VueScrollTo.scrollTo(document.body, {
         container,
-        onStart() {
-          // stop any lingering user-initiated scroll/rubber-banding
-          container.style.overflow = 'hidden'; // eslint-disable-line no-param-reassign
-        },
-        onDone() {
-          // restore user scrollability
-          container.style.overflow = ''; // eslint-disable-line no-param-reassign
-        },
+        onStart: disableScrollability,
+        onCancel: restoreScrollability,
+        onDone: restoreScrollability,
       });
     });
   });
