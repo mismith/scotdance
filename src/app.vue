@@ -213,6 +213,14 @@ export default {
         }
       }
     },
+    $route(to) {
+      // scroll to selector if specified in query string
+      if (to.query.at) {
+        this.$nextTick(() => {
+          this.$scrollAll(to.query.at);
+        });
+      }
+    },
   },
   methods: {
     ...mapActions([
