@@ -126,6 +126,21 @@ router.beforeEach(async (to, prev, next) => {
     });
   }
 
+  // restore to previous params for competition routes, if necessary & possible
+  if (to.params.competitionId && to.name !== prev.name) {
+    const storedRoute = routeInfo[to.name];
+    if (storedRoute && storedRoute.params.competitionId === to.params.competitionId) {
+      // same competition, so consider restoring a tab's params
+      if (Object.keys(to.params).length === 1 && Object.keys(storedRoute.params).length > 1) {
+        // loading root of tab, and have non-root params stored, so restore params
+        return next({
+          name: to.name,
+          ...storedRoute,
+        });
+      }
+    }
+  }
+
   // set page title
   const titleChunks = await getTitleChunks(to);
   document.title = titleChunks.reverse().join(' • ');
