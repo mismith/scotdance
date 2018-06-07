@@ -113,19 +113,39 @@ firebase.auth().onAuthStateChanged((me) => {
   }
 });
 
+// router
+Vue.localStorage.addProperty('routeInfo', Object, {});
 router.beforeEach(async (to, prev, next) => {
+  // restore last route (e.g. when re-opening a force-quit app)
+  const routeInfo = Vue.localStorage.get('routeInfo');
+  const routeToRestore = routeInfo.$current;
+  if (!prev.name && routeToRestore && routeToRestore !== to.name) {
+    return next({
+      name: routeToRestore,
+      ...routeInfo[routeToRestore],
+    });
+  }
+
   // set page title
   const titleChunks = await getTitleChunks(to);
   document.title = titleChunks.reverse().join(' • ');
 
-  next();
+  return next();
 });
 
-router.afterEach(() => {
+router.afterEach((to) => {
   // force all scroll containers to scroll to top (to prevent weird overflow bugs)
   $scrollAll(document.body, {
     duration: 1,
   });
+
+  // store route/tab states for restoring (e.g. on app re-open)
+  const routeInfo = Vue.localStorage.get('routeInfo');
+  routeInfo.$current = to.name;
+  routeInfo[to.name] = {
+    params: to.params,
+  };
+  Vue.localStorage.set('routeInfo', routeInfo);
 });
 
 // hide by default (e.g. until navbar help icon is clicked)
