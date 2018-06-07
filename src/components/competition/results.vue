@@ -198,8 +198,8 @@ export default {
         // scroll to currentDance
         if (this.scrollTimeout) clearTimeout(this.scrollTimeout);
         this.scrollTimeout = setTimeout(() => {
-          this.$scrollTo(`#dance-${this.currentDance[idKey]}`, 0, {
-            container: '#results-detail',
+          this.$scrollAll(`#dance-${this.currentDance[idKey]}`, {
+            duration: 1,
           });
         }, 250);
       }

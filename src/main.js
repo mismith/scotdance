@@ -7,6 +7,7 @@ import VueAsyncComputed from 'vue-async-computed';
 import VueBodyClass from 'vue-body-class';
 import VueLocalStorage from 'vue-localstorage';
 import VueScrollTo from 'vue-scrollto';
+import { scroller } from 'vue-scrollto/src/scrollTo';
 import moment from 'moment-mini';
 
 import {
@@ -43,6 +44,21 @@ Vue.use(VueLocalStorage, {
 });
 Vue.use(VueScrollTo);
 
+const $scrollAll = (element, options = {}) => {
+  const containers = document.querySelectorAll('.md-scroll');
+  Array.from(containers).forEach((container) => {
+    const scrollTo = scroller();
+    scrollTo(element, {
+      container,
+      ...options,
+      onStart: (...args) => options.onStart && options.onStart(container, ...args),
+      onCancel: (...args) => options.onCancel && options.onCancel(container, ...args),
+      onDone: (...args) => options.onDone && options.onDone(container, ...args),
+    });
+  });
+};
+Vue.prototype.$scrollAll = $scrollAll;
+
 // app / devices
 Vue.prototype.isApp = window.location.protocol === 'file:';
 if (Vue.prototype.isApp) {
@@ -64,24 +80,18 @@ if (Vue.prototype.isApp) {
 
   // scroll to top on status bar tap
   window.addEventListener('statusTap', () => {
-    const containers = document.querySelectorAll('.md-scroll');
-    Array.from(containers).forEach((container) => {
-      if (container.scrollTop === 0) return; // skip if already at top
+    // stop any lingering user-initiated scroll/rubber-banding
+    const disableScrollability = (container) => {
+      container.style.overflow = 'hidden'; // eslint-disable-line no-param-reassign
+    };
+    const restoreScrollability = (container) => {
+      container.style.overflow = ''; // eslint-disable-line no-param-reassign
+    };
 
-      // stop any lingering user-initiated scroll/rubber-banding
-      const disableScrollability = () => {
-        container.style.overflow = 'hidden'; // eslint-disable-line no-param-reassign
-      };
-      const restoreScrollability = () => {
-        container.style.overflow = ''; // eslint-disable-line no-param-reassign
-      };
-
-      VueScrollTo.scrollTo(document.body, {
-        container,
-        onStart: disableScrollability,
-        onCancel: restoreScrollability,
-        onDone: restoreScrollability,
-      });
+    $scrollAll(document.body, {
+      onStart: disableScrollability,
+      onCancel: restoreScrollability,
+      onDone: restoreScrollability,
     });
   });
 } else if (!/localhost/.test(window.location.hostname)) {
@@ -113,12 +123,8 @@ router.beforeEach(async (to, prev, next) => {
 
 router.afterEach(() => {
   // force all scroll containers to scroll to top (to prevent weird overflow bugs)
-  const containers = document.querySelectorAll('.md-scroll');
-  Array.from(containers).forEach((container) => {
-    VueScrollTo.scrollTo(document.body, {
-      container,
-      duration: 0,
-    });
+  $scrollAll(document.body, {
+    duration: 1,
   });
 });
 
