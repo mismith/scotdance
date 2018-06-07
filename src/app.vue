@@ -15,6 +15,8 @@
         <md-menu-content>
           <md-menu-item @click="help(true)">Live Chat</md-menu-item>
           <md-menu-item v-if="$store.state.helpVisible" @click="help(false)" class="md-accent">Hide Live Chat</md-menu-item>
+          <md-divider />
+          <md-menu-item :to="{ name: 'home', query: { at: '#about' } }">About ScotDance</md-menu-item>
         </md-menu-content>
       </md-menu>
     </md-app-toolbar>
