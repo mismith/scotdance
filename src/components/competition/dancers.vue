@@ -44,7 +44,7 @@
             </md-menu>-->
           </md-toolbar>
 
-          <div class="md-scroll">
+          <div class="md-scroll-frame md-scroll">
             <md-list v-if="groupIds.length" class="md-list-cards">
               <md-list-item-cards
                 v-for="(group, groupId) in groupedDancers"
@@ -96,7 +96,7 @@
           :dances="dances"
           :groups="groups"
           :results="results"
-          class="md-scroll"
+          class="md-scroll-frame md-scroll"
         />
       </div>
     </transition>

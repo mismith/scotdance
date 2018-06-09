@@ -15,7 +15,7 @@
 
           <md-spunnable :md-spinning="saving" />
         </md-toolbar>
-        <div class="md-scroll">
+        <div class="md-scroll-frame md-scroll">
           <form v-if="currentSection.form" class="md-padding">
             <div v-for="field in currentSection.form.fields" :key="field.data">
               <md-datepicker

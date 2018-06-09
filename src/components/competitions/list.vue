@@ -1,6 +1,6 @@
 <template>
   <div class="competitions-list md-scroll-frame alt">
-    <div class="md-scroll">
+    <div class="md-scroll-frame md-scroll">
       <md-list class="md-list-cards">
         <md-list-item-cards
           v-for="group in groupedCompetitions"

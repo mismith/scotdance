@@ -1,6 +1,6 @@
 <template>
   <div class="competition md-scroll-frame">
-    <div v-if="loaded" class="md-scroll">
+    <div v-if="loaded" class="md-scroll-frame md-scroll">
       <keep-alive>
         <router-view
           :competition-ref="competitionRef"
