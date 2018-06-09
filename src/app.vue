@@ -5,9 +5,9 @@
         <md-icon>menu</md-icon>
       </md-button>
 
-      <router-link to="/" class="md-title">{{ title }}</router-link>
+      <router-link to="/" class="md-title" style="margin-right: auto;">{{ title }}</router-link>
 
-      <md-menu style="margin-left: auto;">
+      <md-menu>
         <md-button md-menu-trigger class="md-icon-button">
           <md-icon>help</md-icon>
         </md-button>
