@@ -129,6 +129,9 @@ export default {
         contextMenu: [
           'remove_row',
         ],
+        sortIndicator: true,
+        columnSorting: true,
+        manualColumnResize: true,
       }, settings);
     },
     toReviewHot(items, key) {
@@ -161,6 +164,9 @@ export default {
       }
       return this.toHot(data, {
         colHeaders: Object.keys(data[0]),
+        sortIndicator: true,
+        columnSorting: true,
+        manualColumnResize: true,
       });
     },
     sheetToJson(sheet, options = { header: 1 }) {

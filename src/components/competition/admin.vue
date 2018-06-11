@@ -186,6 +186,9 @@ export default {
               contextMenu: [
                 'remove_row',
               ],
+              sortIndicator: true,
+              columnSorting: true,
+              manualColumnResize: true,
 
               ...section.hot,
 
