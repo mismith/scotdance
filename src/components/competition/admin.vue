@@ -115,8 +115,8 @@ import {
   db,
 } from '@/helpers/firebase';
 import AdminImport from '@/components/competition/admin/utility/import';
+import PresetPicker from '@/components/competition/admin/utility/preset-picker';
 import AdminResults from '@/components/competition/admin/results';
-import PresetPicker from '@/components/utility/preset-picker';
 import MdSpunnable from '@/components/utility/md-spunnable';
 
 export default {
