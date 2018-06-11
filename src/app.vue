@@ -318,6 +318,11 @@ body.has-bottom-bar {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+
+  &.spinner-container {
+    justify-contents: center;
+    align-items: center;
+  }
 }
 .md-scroll {
   flex: 1;

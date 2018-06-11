@@ -7,8 +7,8 @@
         :competitions-data-ref="competitionsDataRef"
       />
     </keep-alive>
-    <div v-else class="md-scroll-frame">
-      <md-progress-spinner md-mode="indeterminate" style="margin: auto;" />
+    <div v-else class="md-scroll-frame spinner-container">
+      <md-progress-spinner md-mode="indeterminate" />
     </div>
   </div>
 </template>
