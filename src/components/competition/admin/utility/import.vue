@@ -5,7 +5,7 @@
         <h2>Instructions</h2>
         <ol style="max-width: 600px;">
           <li>Select the Excel spreadsheet (.xslx file) that contains the exported values to import. Click <strong>Next</strong>.</li>
-          <li>Determine which sheet contains the list of dancers, and which one contains the age groupings. Select each, respectively, then click <strong>Next</strong>.</li>
+          <li>Determine which sheet contains the list of dancers with age grouping headers; select it below, then click <strong>Next</strong>.</li>
           <li>Double-check that all values were parsed properly&mdash;this is how data will be imported, so if anything is missing or looks broken, it will likely fail to import properly. When sure, click <strong>Import</strong>.</li>
         </ol>
       </div>
