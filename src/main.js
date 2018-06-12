@@ -45,7 +45,7 @@ Vue.use(VueLocalStorage, {
 Vue.use(VueScrollTo);
 
 const $scrollAll = (element, options = {}) => {
-  const containers = document.querySelectorAll('.md-scroll');
+  const containers = document.querySelectorAll('.md-scroll:not(.admin-blade)');
   Array.from(containers).forEach((container) => {
     const scrollTo = scroller();
     scrollTo(element, {
