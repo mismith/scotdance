@@ -185,7 +185,7 @@ export default {
     },
 
     isDanceExpanded(danceId, danceIds) {
-      return isExpanded(this.scheduleExpandedDances[this.eventId], danceId, danceIds);
+      return isExpanded(this.scheduleExpandedDances[this.eventId], danceId, danceIds, true);
     },
     handleDanceExpanded(danceId, expanded) {
       this.scheduleExpandedDances[this.eventId] = handleExpanded(
