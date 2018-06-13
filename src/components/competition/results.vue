@@ -1,8 +1,8 @@
 <template>
   <div class="competition-results blades md-scroll-frame alt">
     <transition :name="`slide-${currentGroup ? 'left' : 'right'}`">
-      <div v-if="!currentGroup" class="blade md-scroll-frame" key="list">
-        <md-list v-if="groups.length" class="md-list-cards md-scroll-frame md-scroll">
+      <div v-if="!currentGroup" class="blade md-scroll-frame md-scroll" key="list">
+        <md-list v-if="groups.length" class="md-list-cards">
           <md-list-item-cards
             v-for="group in groups"
             :key="group[idKey]"

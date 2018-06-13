@@ -206,17 +206,8 @@ export default {
 <style lang="scss">
 .competition-schedule {
   .md-tabs {
-    .md-tabs-navigation {
-      .md-button {
-        min-width: 48px;
-      }
-    }
     .md-tabs-content {
       background: initial;
-    }
-    .md-tab {
-      display: flex;
-      flex-direction: column;
     }
   }
   .admin-platforms {

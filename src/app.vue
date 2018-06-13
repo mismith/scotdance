@@ -324,7 +324,7 @@ body.has-bottom-bar {
 .md-scroll-frame {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: auto;
   overflow: hidden;
 
   &.spinner-container {
@@ -333,7 +333,6 @@ body.has-bottom-bar {
   }
 }
 .md-scroll {
-  flex: 1;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
@@ -370,12 +369,6 @@ body.has-bottom-bar {
 
   .blade {
     width: 100%;
-
-    + .blade {
-      // margin-left: -100%;
-    }
-    // min-width: 100%;
-    // opacity: 1;
   }
 }
 .slide-left-enter-active,
@@ -434,6 +427,9 @@ body,
 }
 .md-select-menu {
   z-index: 11; // cover .md-dialog
+}
+.md-layout-item {
+  flex: 1 0 auto; // fix iOS <= 10.2 flexbug
 }
 
 // app-wide md-component styling
@@ -579,18 +575,21 @@ body,
 }
 
 .md-tabs {
-  @extend .md-scroll-frame;
-
-  .md-tabs-navigation {
-    flex-shrink: 0;
-  }
+  &,
   .md-tabs-content,
   .md-tabs-container,
   .md-tab {
-    height: 100% !important;
+    @extend .md-scroll-frame;
   }
   .md-tab {
     padding: 0;
+  }
+  .md-tabs-navigation {
+    flex-shrink: 0;
+
+    .md-button {
+      min-width: 48px;
+    }
   }
 }
 
