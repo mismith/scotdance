@@ -17,3 +17,15 @@ export function getScheduleItemDanceName(item, dances) {
 export function hydrateByIdKey(ids, items = []) {
   return (ids || []).map(id => findByIdKey(items, id));
 }
+
+export function danceExtender(dance) {
+  const name = dance.name || '';
+  const stepsString = dance.steps ? ` (${dance.steps})` : '';
+
+  return {
+    groupIds: {},
+    ...dance,
+    $name: `${name}${stepsString}`.trim(),
+    $shortName: `${dance.shortName || name}${stepsString}`.trim(),
+  };
+}

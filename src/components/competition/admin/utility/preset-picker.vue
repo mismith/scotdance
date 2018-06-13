@@ -6,9 +6,9 @@
 
       <md-dialog-content>
         <md-list>
-          <md-list-item v-for="preset in presets" :key="preset[prop]">
-            <md-checkbox v-model="selected[preset[prop]]" />
-            <span class="md-list-item-text">{{ preset[prop] }}</span>
+          <md-list-item v-for="preset in presets" :key="getValue(preset)">
+            <md-checkbox v-model="selected[getValue(preset)]" /><!-- eslint-disable-line vue/valid-v-model -->
+            <span class="md-list-item-text">{{ getValue(preset) }}</span>
           </md-list-item>
         </md-list>
       </md-dialog-content>
@@ -37,7 +37,7 @@ export default {
   props: {
     presets: Array,
     prop: {
-      type: String,
+      type: [String, Function],
       default: 'name',
     },
   },
@@ -56,10 +56,16 @@ export default {
         .filter(([k, v]) => k && v)
         .map(([k]) => k);
 
-      return this.presets.filter(preset => selected.includes(preset[this.prop]));
+      return this.presets.filter(preset => selected.includes(this.getValue(preset)));
     },
   },
   methods: {
+    getValue(preset) {
+      if (typeof this.prop === 'function') {
+        return this.prop(preset);
+      }
+      return preset[this.prop];
+    },
     select() {
       // trigger only selected presets
       this.$emit('select', this.selectedPresets);

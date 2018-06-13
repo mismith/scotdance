@@ -49,6 +49,7 @@ import {
 } from '@/helpers/firebase';
 import {
   findByIdKey,
+  danceExtender,
 } from '@/helpers/competition';
 
 export default {
@@ -96,16 +97,7 @@ export default {
       return this.categoriesRaw;
     },
     dances() {
-      return this.dancesRaw.map((dance) => {
-        const name = dance.name || '';
-        const stepsString = dance.steps ? ` (${dance.steps})` : '';
-        return {
-          groupIds: {},
-          ...dance,
-          $name: `${name}${stepsString}`.trim(),
-          $shortName: `${dance.shortName || name}${stepsString}`.trim(),
-        };
-      });
+      return this.dancesRaw.map(danceExtender);
     },
     staff() {
       return this.staffRaw.map(member => ({

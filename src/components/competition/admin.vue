@@ -8,7 +8,12 @@
           </div>
 
           <div v-if="currentSection">
-            <preset-picker v-if="currentSection.presets" :presets="currentSection.presets" @select="addPresets" />
+            <preset-picker
+              v-if="currentSection.presets"
+              :presets="currentSection.presets"
+              :prop="currentSection[idKey] === 'dances' ? p => danceExtender(p).$name : 'name'"
+              @select="addPresets"
+            />
           </div>
 
           <span style="flex-grow: 1;"></span>
@@ -106,6 +111,9 @@
 import {
   mapState,
 } from 'vuex';
+import {
+  danceExtender,
+} from '@/helpers/competition';
 import {
   HotTable,
   makeKeyValuePairColumn,
@@ -239,6 +247,8 @@ export default {
     },
   },
   methods: {
+    danceExtender,
+
     async syncBottomBar() {
       await this.$nextTick(); // await md-bottom-bar's internally queued $nextTick
       const adminTabId = `tab-admin-${this.currentTab}`;
