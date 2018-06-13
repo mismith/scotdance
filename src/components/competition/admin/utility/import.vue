@@ -70,12 +70,15 @@
       <md-toolbar class="md-layout">
         <div class="md-layout-item" />
         <footer class="md-layout-item">
-          <md-button
-            @click="handleReview()"
-            class="md-raised md-primary"
-          >
-            Import
-          </md-button>
+          <md-spinnable :md-spinning="importing" md-left>
+            <md-button
+              @click="handleReview()"
+              :disabled="importing"
+              class="md-raised md-primary"
+            >
+              Import
+            </md-button>
+          </md-spinnable>
         </footer>
       </md-toolbar>
     </md-step>
@@ -107,6 +110,8 @@ export default {
 
       dancersSheetIndex: -1,
       data: {},
+
+      importing: false,
     };
   },
   methods: {
@@ -256,6 +261,9 @@ export default {
       };
     },
     async importData(categories, groups, dancers) {
+      this.importing = true;
+      await this.$nextTick();
+
       const categoryMappings = await Promise.all(categories.map(async (categoryData) => {
         const category = {
           name: categoryData.name,
@@ -309,6 +317,7 @@ export default {
       }));
 
       this.$emit('done');
+      this.importing = false;
     },
   },
   components: {
