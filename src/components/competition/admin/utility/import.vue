@@ -4,7 +4,7 @@
       <div class="md-scroll-frame md-padding" style="font-size: 1.2em;">
         <h2>Instructions</h2>
         <ol style="max-width: 600px;">
-          <li>Select the Excel spreadsheet (.xslx file) that contains the exported values to import. Click <strong>Next</strong>.</li>
+          <li>Select the <strong>Excel spreadsheet</strong> (.xslx file) that contains the exported values to import.</li>
           <li>Determine which sheet contains the list of dancers with age grouping headers; select it below, then click <strong>Next</strong>.</li>
           <li>Double-check that all values were parsed properly&mdash;this is how data will be imported, so if anything is missing or looks broken, it will likely fail to import properly. When sure, click <strong>Import</strong>.</li>
         </ol>
@@ -13,30 +13,21 @@
         <md-field class="md-layout-item">
           <label>Spreadsheet file</label>
           <md-file
-            @md-change="file = $event[0]"
+            @md-change="handleUpload($event[0])"
             accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           />
         </md-field>
-        <footer class="md-layout-item">
-          <md-button
-            @click="handleUpload()"
-            :disabled="!file"
-            class="md-raised md-primary"
-          >
-            Next
-          </md-button>
-        </footer>
       </md-toolbar>
     </md-step>
     <md-step id="choose" md-label="Choose" md-description="Pick which data to use">
-      <md-tabs v-if="workbook" md-active-tab="tab-sheet-0">
+      <md-tabs v-if="workbook">
         <md-tab
           v-for="(sheetName, sheetIndex) of workbook.SheetNames"
           :key="sheetIndex"
           :id="`tab-sheet-${sheetIndex}`"
           :md-label="sheetName"
         >
-          <HotTable :options="sheetToHot(workbook.Sheets[sheetName])" />
+          <HotTable :settings="sheetToHot(workbook.Sheets[sheetName])" />
         </md-tab>
       </md-tabs>
       <md-toolbar v-if="workbook" class="md-layout">
@@ -77,7 +68,7 @@
         </md-tab>
       </md-tabs>
       <md-toolbar class="md-layout">
-        <div class="md-layout-item"></div>
+        <div class="md-layout-item" />
         <footer class="md-layout-item">
           <md-button
             @click="handleReview()"
@@ -112,7 +103,6 @@ export default {
     return {
       step: 'upload',
 
-      file: undefined,
       workbook: undefined,
 
       dancersSheetIndex: -1,
@@ -178,7 +168,7 @@ export default {
       return this.toHot(this.sheetToJson(sheet), settings);
     },
 
-    handleUpload() {
+    handleUpload(file) {
       const reader = new FileReader();
       reader.onload = (event) => {
         const data = event.target.result;
@@ -193,7 +183,7 @@ export default {
         // auto-pick default sheets
         this.dancersSheetIndex = workbook.SheetNames.findIndex(name => /Program/i.test(name));
       };
-      reader.readAsBinaryString(this.file);
+      reader.readAsBinaryString(file);
     },
     handleChoose() {
       const dancersSheet = this.workbook.Sheets[this.workbook.SheetNames[this.dancersSheetIndex]];
