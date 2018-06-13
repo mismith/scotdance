@@ -7,6 +7,14 @@
 
       <router-link to="/" class="md-title" style="margin-right: auto;">{{ title }}</router-link>
 
+      <md-button
+        v-if="me && me.admin && $route.params.competitionId"
+        :to="{ name: /^competition.admin/.test($route.name) ? 'competition.info' : 'competition.admin' }"
+        class="md-icon-button"
+      >
+        <md-icon>{{ /^competition.admin/.test($route.name) ? 'visibility' : 'settings' }}</md-icon>
+      </md-button>
+
       <md-menu>
         <md-button md-menu-trigger class="md-icon-button">
           <md-icon>help</md-icon>
