@@ -14,7 +14,7 @@
         </p>
       </section>
 
-      <md-list class="staff md-list-cards">
+      <md-list v-if="staff.length" class="staff md-list-cards">
         <md-list-item-cards v-if="judges.length" md-expand md-expanded>
           <md-subheader>Judges</md-subheader>
 
@@ -86,9 +86,6 @@ export default {
 .competition-info {
   > .md-scroll {
     padding: 0 16px;
-  }
-  .hero {
-    margin-bottom: 32px;
   }
   .staff {
     .md-list-item-content {
