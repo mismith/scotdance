@@ -8,7 +8,7 @@
       />
     </keep-alive>
     <div v-else class="md-scroll-frame spinner-container">
-      <md-progress-spinner md-mode="indeterminate" />
+      <mi-md-spinner />
     </div>
   </div>
 </template>

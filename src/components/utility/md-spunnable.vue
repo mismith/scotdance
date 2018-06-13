@@ -1,8 +1,8 @@
 <template>
   <div class="md-spunnable">
-    <md-progress-spinner
-      :md-diameter="25"
-      md-mode="indeterminate"
+    <mi-md-spinner
+      :diameter="25"
+      :width="6"
       title="Saving..."
       :style="{ visibility: mdSpinning ? 'visible' : 'hidden' }"
     />
@@ -21,6 +21,7 @@ export default {
 
 <style lang="scss">
 .md-spunnable {
+  display: flex;
   position: relative;
 
   .md-icon {

@@ -19,7 +19,7 @@
       </keep-alive>
     </div>
     <div v-else class="md-scroll-frame spinner-container">
-      <md-progress-spinner md-mode="indeterminate" />
+      <mi-md-spinner />
     </div>
 
     <md-bottom-bar ref="bottomBar" v-show="currentTab !== 'admin'">

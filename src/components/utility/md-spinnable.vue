@@ -2,7 +2,7 @@
   <div class="md-spinnable" :class="{ 'md-left': mdLeft }">
     <slot />
 
-    <md-progress-spinner v-if="mdSpinning" :md-diameter="25" md-mode="indeterminate" />
+    <mi-md-spinner v-if="mdSpinning" :diameter="25" :width="6" />
   </div>
 </template>
 
@@ -21,12 +21,12 @@ export default {
   display: inline-flex;
   align-items: center;
 
-  .md-progress-spinner {
+  .mi-md-spinner {
     margin-left: 8px;
   }
 
   &.md-left {
-    .md-progress-spinner {
+    .mi-md-spinner {
       order: -1;
       margin-right: 8px;
       margin-left: 0;

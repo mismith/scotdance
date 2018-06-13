@@ -320,7 +320,7 @@ body.has-bottom-bar {
   overflow: hidden;
 
   &.spinner-container {
-    justify-contents: center;
+    justify-content: center;
     align-items: center;
   }
 }

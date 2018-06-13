@@ -22,6 +22,7 @@ import App from '@/app';
 import router from '@/router';
 import store from '@/store';
 
+import MiMdSpinner from '@/components/utility/mi-md-spinner';
 import MdSpinnable from '@/components/utility/md-spinnable';
 import MdListItemCards from '@/components/utility/md-list-item-cards';
 
@@ -34,6 +35,7 @@ Vue.config.silent = true;
 Vue.prototype.$moment = moment;
 Vue.use(VueFire);
 Vue.use(VueMaterial);
+Vue.component('mi-md-spinner', MiMdSpinner);
 Vue.component('md-spinnable', MdSpinnable);
 Vue.component('md-list-item-cards', MdListItemCards);
 Vue.use(VueAsyncComputed);

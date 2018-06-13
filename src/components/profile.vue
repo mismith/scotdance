@@ -113,7 +113,7 @@
         md-icon="error"
         md-label="Not logged in"
       />
-      <md-progress-spinner v-else md-mode="indeterminate" style="margin: auto;" />
+      <mi-md-spinner />
     </div>
   </div>
 </template>
