@@ -84,7 +84,7 @@ export default {
   methods: {
     isGroupExpanded(item, items) {
       const itemIds = items.map(i => i[idKey]);
-      return isExpanded(this.competitionsListExpandedGroups, item[idKey], itemIds);
+      return isExpanded(this.competitionsListExpandedGroups, item[idKey], itemIds, true);
     },
     handleGroupExpanded(groupId, expanded) {
       this.competitionsListExpandedGroups = handleExpanded(this.competitionsListExpandedGroups, groupId, expanded);
