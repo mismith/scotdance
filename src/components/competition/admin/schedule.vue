@@ -1,7 +1,7 @@
 <template>
   <div class="admin-schedule md-scroll-frame">
-    <div class="md-layout admin-blades">
-      <div class="md-layout-item md-size-33 admin-blade md-scroll">
+    <div class="md-layout blades admin-blades">
+      <div class="md-layout-item md-size-33 blade admin-blade md-scroll">
         <admin-list
           :items-ref="competitionDataRef.child('schedule/days')"
           items-type="Day"
@@ -82,7 +82,7 @@
           </admin-list-item>
         </admin-list>
       </div>
-      <div class="md-layout-item md-size-66 admin-blade md-scroll">
+      <div class="md-layout-item md-size-66 blade admin-blade md-scroll">
         <form v-if="currentItem" @submit.prevent class="md-padding">
           <div v-for="(field, key) in currentItemFields" :key="key">
             <md-field v-if="field.type === 'select'">

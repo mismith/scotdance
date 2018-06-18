@@ -1,7 +1,7 @@
 <template>
   <div class="admin-dance-groups md-scroll-frame">
-    <div class="md-layout admin-blades">
-      <div class="md-layout-item md-size-33 admin-blade md-scroll">
+    <div class="md-layout blades admin-blades">
+      <div class="md-layout-item md-size-33 blade admin-blade md-scroll">
         <md-list v-if="groups.length">
           <md-list-item
             v-for="group in groups"
@@ -19,7 +19,7 @@
           md-label="No age groups found"
         />
       </div>
-      <div class="md-layout-item md-size-33 admin-blade md-scroll">
+      <div class="md-layout-item md-size-33 blade admin-blade md-scroll">
         <md-list v-if="currentGroup">
           <md-list-item
             v-for="dance in dances"
@@ -55,7 +55,7 @@
           md-description="Link age groups to specific dances"
         />
       </div>
-      <div class="md-layout-item md-size-33 admin-blade md-scroll">
+      <div class="md-layout-item md-size-33 blade admin-blade md-scroll">
         <HotTable v-if="currentGroupDances.length" :settings="hotSettings" class="fullscreen" />
         <md-empty-state
           v-else

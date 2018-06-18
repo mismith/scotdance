@@ -1,7 +1,7 @@
 <template>
   <div class="admin-results md-scroll-frame">
-    <div class="md-layout admin-blades">
-      <div class="md-layout-item md-size-33 admin-blade md-scroll alt">
+    <div class="md-layout blades admin-blades">
+      <div class="md-layout-item md-size-33 blade admin-blade md-scroll alt">
         <results-list
           v-if="groups.length"
           :groups="groups"
@@ -15,7 +15,7 @@
           md-label="No age groups found"
         />
       </div>
-      <div class="md-layout-item md-size-33 admin-blade md-scroll">
+      <div class="md-layout-item md-size-33 blade admin-blade md-scroll">
         <md-list v-if="currentDance" class="md-double-line">
           <dancer-list-item
             v-for="dancer in currentDancers"
@@ -44,7 +44,7 @@
           md-description="Select an age group and dance"
         />
       </div>
-      <div class="md-layout-item md-size-33 admin-blade md-scroll">
+      <div class="md-layout-item md-size-33 blade admin-blade md-scroll">
         <placed-dancer-list
           v-if="currentDance && placedDancers.length"
           :admin="true"

@@ -358,14 +358,16 @@ export default {
       height: 100%;
     }
   }
+}
 
-  .admin-blades {
-    flex: auto;
+.admin-blades {
+  flex: auto;
 
-    .admin-blade {
-      &:not(:last-child) {
-        border-right: solid 6px #ccc;
-      }
+  .admin-blade {
+    width: auto;
+
+    &:not(:last-child) {
+      border-right: solid 6px #ccc;
     }
   }
 }
