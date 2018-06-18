@@ -1,32 +1,14 @@
 <template>
   <div class="admin-results md-scroll-frame">
     <div class="md-layout admin-blades">
-      <div class="md-layout-item md-size-33 admin-blade md-scroll">
-        <md-list v-if="groups.length">
-          <md-list-item
-            v-for="group in groups"
-            :key="group[idKey]"
-            md-expand
-            :md-expanded="isGroupExpanded(group, groups)"
-            @update:mdExpanded="handleGroupExpanded(group[idKey], $event)"
-            :class="{ highlighted: results[group[idKey]] }"
-          >
-            <md-subheader>
-              <span>{{ group.$name }}</span>
-              <md-icon v-if="hasFavorites(findGroupDancers(group))" class="md-accent">
-                {{ hasFavorites(getPlacedDancers(group, callbacks)) ? 'star' : 'star_outline' }}
-              </md-icon>
-            </md-subheader>
-
-            <results-list
-              slot="md-expand"
-              :group="group"
-              :dances="dances"
-              :dancers="dancers"
-              :results="results"
-            />
-          </md-list-item>
-        </md-list>
+      <div class="md-layout-item md-size-33 admin-blade md-scroll alt">
+        <results-list
+          v-if="groups.length"
+          :groups="groups"
+          :dances="dances"
+          :dancers="dancers"
+          :results="results"
+        />
         <md-empty-state
           v-else
           md-icon="error"
@@ -114,10 +96,6 @@ import {
   isPlaced,
   getPlace,
 } from '@/helpers/results';
-import {
-  isExpanded,
-  handleExpanded,
-} from '@/helpers/router';
 
 export default {
   name: 'admin-results',
@@ -129,12 +107,6 @@ export default {
     dances: Array,
     dancers: Array,
     results: Object,
-  },
-  localStorage: {
-    adminResultsExpandedGroups: {
-      type: Object,
-      default: {},
-    },
   },
   data() {
     return {
@@ -185,15 +157,6 @@ export default {
     getPlacedDancers,
     isPlaced,
     getPlace,
-
-    isGroupExpanded(item, items) {
-      const itemIds = items.map(i => i[idKey]);
-      return isExpanded(this.adminResultsExpandedGroups, item[idKey], itemIds);
-    },
-    handleGroupExpanded(groupId, expanded) {
-      this.adminResultsExpandedGroups = handleExpanded(this.adminResultsExpandedGroups, groupId, expanded);
-      this.$localStorage.set('adminResultsExpandedGroups', this.adminResultsExpandedGroups);
-    },
 
     save() {
       // emit changes (to be saved up the chain)

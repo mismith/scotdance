@@ -2,31 +2,13 @@
   <div class="competition-results blades md-scroll-frame alt">
     <transition :name="`slide-${currentGroup ? 'left' : 'right'}`">
       <div v-if="!currentGroup" class="blade md-scroll-frame md-scroll" key="list">
-        <md-list v-if="groups.length" class="md-list-cards">
-          <md-list-item-cards
-            v-for="group in groups"
-            :key="group[idKey]"
-            md-expand
-            :md-expanded="isGroupExpanded(group, groups)"
-            @toggled="handleGroupExpanded(group[idKey], $event)"
-            :class="{ highlighted: results[group[idKey]] }"
-          >
-            <md-subheader>
-              <span>{{ group.$name }}</span>
-              <md-icon v-if="hasFavorites(findGroupDancers(group))" class="md-accent">
-                {{ hasFavorites(getPlacedDancers(group, callbacks)) ? 'star' : 'star_outline' }}
-              </md-icon>
-            </md-subheader>
-
-            <results-list
-              slot="md-expand"
-              :group="group"
-              :dances="dances"
-              :dancers="dancers"
-              :results="results"
-            />
-          </md-list-item-cards>
-        </md-list>
+        <results-list
+          v-if="groups.length"
+          :groups="groups"
+          :dances="dances"
+          :dancers="dancers"
+          :results="results"
+        />
         <md-empty-state
           v-else
           md-icon="error"
@@ -98,13 +80,9 @@ import {
   idKey,
 } from '@/helpers/firebase';
 import {
-  hasFavorites,
-} from '@/helpers/competition';
-import {
   overall,
   callbacks,
   findGroupDances,
-  findGroupDancers,
   getPlacedDancers,
   hasOverall,
   getPlace,
@@ -129,10 +107,6 @@ export default {
     results: Object,
   },
   localStorage: {
-    resultsExpandedGroups: {
-      type: Object,
-      default: {},
-    },
     resultsExpandedDances: {
       type: Object,
       default: {}, // { [groupId]: {}, ... }
@@ -206,20 +180,9 @@ export default {
     },
   },
   methods: {
-    hasFavorites,
     findGroupDances,
-    findGroupDancers,
     getPlacedDancers,
     getPlace,
-
-    isGroupExpanded(item, items) {
-      const itemIds = items.map(i => i[idKey]);
-      return isExpanded(this.resultsExpandedGroups, item[idKey], itemIds);
-    },
-    handleGroupExpanded(groupId, expanded) {
-      this.resultsExpandedGroups = handleExpanded(this.resultsExpandedGroups, groupId, expanded);
-      this.$localStorage.set('resultsExpandedGroups', this.resultsExpandedGroups);
-    },
 
     isDanceExpanded(item, items) {
       const itemIds = items.map(i => i[idKey]);
