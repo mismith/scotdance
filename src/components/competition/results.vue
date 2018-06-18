@@ -70,6 +70,9 @@ import {
   idKey,
 } from '@/helpers/firebase';
 import {
+  findByIdKey,
+} from '@/helpers/competition';
+import {
   overall,
   callbacks,
   findGroupDances,
@@ -113,7 +116,7 @@ export default {
   computed: {
     currentGroup() {
       if (this.groupId) {
-        return this.groups.find(group => group[idKey] === this.groupId);
+        return findByIdKey(this.groups, this.groupId);
       }
       return null;
     },
@@ -124,7 +127,7 @@ export default {
         } else if (this.danceId === callbacks[idKey]) {
           return callbacks;
         }
-        return this.dances.find(dance => dance[idKey] === this.danceId);
+        return findByIdKey(this.dances, this.danceId);
       }
       return null;
     },
