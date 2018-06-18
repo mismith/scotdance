@@ -37,22 +37,12 @@
             >
               <md-subheader>{{ dance.$name }}</md-subheader>
 
-              <md-list slot="md-expand" class="md-double-line">
-                <dancer-list-item
-                  v-for="dancer in dance.dancers"
-                  :key="dancer[idKey]"
-                  :dancer="dancer"
-                  :place="getPlace(dancer, dance.dancers)"
-                  @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] }})"
-                >
-                  <span v-if="dance[idKey] === callbacks[idKey]" slot="icon" />
-                  <md-icon
-                    v-if="dance[idKey] === overall[idKey] && dance.dancers.length <= 1"
-                    slot="icon"
-                    class="icon-trophy md-primary"
-                  />
-                </dancer-list-item>
-
+              <placed-dancer-list
+                slot="md-expand"
+                :dance="dance"
+                :dancers="dance.dancers"
+                @dancer-click="$router.push({ name: 'competition.dancers', params: { dancerId: $event[idKey] }})"
+              >
                 <md-list-item v-if="!dance.dancers.length" class="empty">
                   Results to be determined.
                 </md-list-item>
@@ -64,7 +54,7 @@
                     <div>{{ currentGroup.trophy || '' }} Trophy Sponsor</div>
                   </div>
                 </md-list-item>
-              </md-list>
+              </placed-dancer-list>
             </md-list-item-cards>
           </md-list>
         </div>
@@ -74,8 +64,8 @@
 </template>
 
 <script>
-import DancerListItem from '@/components/utility/dancer-list-item';
 import ResultsList from '@/components/utility/results-list';
+import PlacedDancerList from '@/components/utility/placed-dancer-list';
 import {
   idKey,
 } from '@/helpers/firebase';
@@ -85,7 +75,6 @@ import {
   findGroupDances,
   getPlacedDancers,
   hasOverall,
-  getPlace,
 } from '@/helpers/results';
 import {
   isExpanded,
@@ -182,7 +171,6 @@ export default {
   methods: {
     findGroupDances,
     getPlacedDancers,
-    getPlace,
 
     isDanceExpanded(item, items) {
       const itemIds = items.map(i => i[idKey]);
@@ -198,8 +186,8 @@ export default {
     },
   },
   components: {
-    DancerListItem,
     ResultsList,
+    PlacedDancerList,
   },
 };
 </script>

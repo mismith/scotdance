@@ -45,27 +45,14 @@
         />
       </div>
       <div class="md-layout-item md-size-33 admin-blade md-scroll">
-        <md-list v-if="currentDance && placedDancers.length" class="md-double-line">
-          <dancer-list-item
-            v-for="(dancer, index) in placedDancers"
-            :key="dancer[idKey]"
-            :dancer="dancer"
-            :place="getPlace(dancer, placedDancers)"
-            @click="placeDancer(dancer)"
-          >
-            <md-switch
-              v-if="index && currentDance[idKey] !== callbacks[idKey]"
-              v-model="dancer.$tie"
-              @change="handleTie(dancer, $event)"
-            />
-            <span v-if="currentDance[idKey] === callbacks[idKey]" slot="icon" />
-            <md-icon
-              v-if="currentDance[idKey] === overall[idKey] && placedDancers.length <= 1"
-              slot="icon"
-              class="icon-trophy md-primary"
-            />
-          </dancer-list-item>
-        </md-list>
+        <placed-dancer-list
+          v-if="currentDance && placedDancers.length"
+          :admin="true"
+          :dance="currentDance"
+          :dancers="placedDancers"
+          @dancer-click="placeDancer($event)"
+          @dancer-toggle="handleTie($event[0], $event[1])"
+        />
         <md-empty-state
           v-else
           md-icon="swap_vert"
@@ -80,6 +67,7 @@
 <script>
 import DancerListItem from '@/components/utility/dancer-list-item';
 import ResultsList from '@/components/utility/results-list';
+import PlacedDancerList from '@/components/utility/placed-dancer-list';
 import {
   idKey,
 } from '@/helpers/firebase';
@@ -94,7 +82,6 @@ import {
   getPlacedDancers,
   getPlaceIndex,
   isPlaced,
-  getPlace,
 } from '@/helpers/results';
 
 export default {
@@ -156,7 +143,6 @@ export default {
     findGroupDancers,
     getPlacedDancers,
     isPlaced,
-    getPlace,
 
     save() {
       // emit changes (to be saved up the chain)
@@ -191,6 +177,7 @@ export default {
   components: {
     DancerListItem,
     ResultsList,
+    PlacedDancerList,
   },
 };
 </script>
