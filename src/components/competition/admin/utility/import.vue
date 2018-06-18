@@ -1,7 +1,7 @@
 <template>
   <md-steppers :md-active-step.sync="step" md-linear class="admin-import">
     <md-step id="upload" md-label="Upload" md-description="Select a file to import">
-      <div class="md-scroll-frame md-padding" style="font-size: 1.2em;">
+      <div class="md-scroll-frame md-scroll md-padding">
         <h2>Instructions</h2>
         <ol style="max-width: 600px;">
           <li>Select the <strong>Excel spreadsheet</strong> (.xslx file) that contains the exported values to import.</li>
@@ -45,7 +45,7 @@
             </md-select>
           </md-field>
         </div>
-        <footer class="md-layout-item">
+        <footer>
           <md-button
             @click="handleChoose()"
             :disabled="dancersSheetIndex < 0"
@@ -69,7 +69,7 @@
       </md-tabs>
       <md-toolbar class="md-layout">
         <div class="md-layout-item" />
-        <footer class="md-layout-item">
+        <footer>
           <md-spinnable :md-spinning="importing" md-left>
             <md-button
               @click="handleReview()"

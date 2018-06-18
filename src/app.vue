@@ -575,13 +575,10 @@ body,
 }
 
 .md-tabs {
-  &,
-  .md-tabs-content,
-  .md-tabs-container,
+  @extend .md-scroll-frame;
+
   .md-tab {
-    @extend .md-scroll-frame;
-  }
-  .md-tab {
+    height: 100%;
     padding: 0;
   }
   .md-tabs-navigation {
@@ -591,11 +588,17 @@ body,
       min-width: 48px;
     }
   }
+  .md-tabs-content,
+  .md-tabs-container {
+    height: 100% !important;
+  }
 }
 
 .md-dialog {
   .md-steppers {
     @extend .md-scroll-frame;
+
+    font-size: 1.2em;
 
     .md-steppers-navigation {
       flex-shrink: 0;
@@ -603,6 +606,7 @@ body,
     .md-steppers-wrapper {
       flex: 1;
     }
+    &,
     .md-steppers-container,
     .md-stepper-content,
     .md-stepper {
