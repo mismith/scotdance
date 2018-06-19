@@ -6,6 +6,9 @@
           <div v-if="inTabs('info', 'categories', 'dancers', 'groups')">
             <md-button @click="showImport = true">Import</md-button>
           </div>
+          <div v-if="inTabs('results')">
+            <md-button @click="showImportResults = true">Import</md-button>
+          </div>
 
           <div v-if="currentSection">
             <preset-picker
@@ -83,7 +86,19 @@
       </md-bottom-bar>
 
       <md-dialog :md-active.sync="showImport" class="import-dialog">
-        <admin-import :competition-data-ref="competitionDataRef" @done="showImport = false" />
+        <admin-import
+          :competition-data-ref="competitionDataRef"
+          @done="showImport = false"
+        />
+      </md-dialog>
+      <md-dialog :md-active.sync="showImportResults" class="import-results-dialog">
+        <admin-import-results
+          :competition-data-ref="competitionDataRef"
+          :groups="groups"
+          :dances="dances"
+          :dancers="dancers"
+          @done="showImportResults = false"
+        />
       </md-dialog>
       <md-dialog-confirm
         :md-active.sync="confirmRemove"
@@ -123,6 +138,7 @@ import {
   db,
 } from '@/helpers/firebase';
 import AdminImport from '@/components/competition/admin/utility/import';
+import AdminImportResults from '@/components/competition/admin/utility/import-results';
 import PresetPicker from '@/components/competition/admin/utility/preset-picker';
 import AdminResults from '@/components/competition/admin/results';
 import MdSpunnable from '@/components/utility/md-spunnable';
@@ -154,6 +170,7 @@ export default {
       idKey,
 
       showImport: false,
+      showImportResults: false,
       confirmRemove: false,
 
       saving: false,
@@ -339,6 +356,7 @@ export default {
   components: {
     HotTable,
     AdminImport,
+    AdminImportResults,
     AdminResults,
     PresetPicker,
     MdSpunnable,
@@ -372,11 +390,12 @@ export default {
   }
 }
 
-.import-dialog {
-    &,
-   .md-dialog-container {
-     width: 100%;
-     height: 100%;
-   }
+.import-dialog,
+.import-results-dialog {
+  &,
+  .md-dialog-container {
+    width: 100%;
+    height: 100%;
+  }
 }
 </style>

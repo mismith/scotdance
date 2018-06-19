@@ -3,7 +3,7 @@
     <md-step id="upload" md-label="Upload" md-description="Select a file to import">
       <div class="md-scroll-frame md-scroll md-padding">
         <h2>Instructions</h2>
-        <ol style="max-width: 600px;">
+        <ol>
           <li>Select the <strong>Excel spreadsheet</strong> (.xslx file) that contains the exported values to import.</li>
           <li>Determine which sheet contains the list of dancers with age grouping headers; select it below, then click <strong>Next</strong>.</li>
           <li>Double-check that all values were parsed properly&mdash;this is how data will be imported, so if anything is missing or looks broken, it will likely fail to import properly. When sure, click <strong>Import</strong>.</li>
