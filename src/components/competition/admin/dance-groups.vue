@@ -110,19 +110,19 @@ export default {
 
     currentGroup() {
       if (this.groupId) {
-        return this.groups.find(group => group[idKey] === this.groupId);
+        return findByIdKey(this.groups, this.groupId);
       }
       return null;
     },
     currentGroupDances() {
       if (this.currentGroup) {
-        return this.findGroupDances(this.currentGroup);
+        return findGroupDances(this.currentGroup, this.dances);
       }
       return false;
     },
 
     hotSettings() {
-      const data = this.findGroupDancers(this.currentGroup).map(() => ({}));
+      const data = findGroupDancers(this.currentGroup, this.dancers).map(() => ({}));
       const columns = this.currentGroupDances.map((dance) => {
         const danceId = dance[idKey];
         data.forEach((row, index) => {
@@ -160,9 +160,6 @@ export default {
     ...mapMutations([
       'copy',
     ]),
-
-    findGroupDances,
-    findGroupDancers,
 
     isActive(group) {
       return group[idKey] === this.groupId;

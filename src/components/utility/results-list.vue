@@ -10,13 +10,13 @@
     >
       <md-subheader>
         <span>{{ group.$name }}</span>
-        <md-icon v-if="hasFavorites(findGroupDancers(group))" class="md-accent">
-          {{ hasFavorites(getPlacedDancers(group, callbacks)) ? 'star' : 'star_outline' }}
+        <md-icon v-if="hasFavorites(findGroupDancers(group, dances))" class="md-accent">
+          {{ hasFavorites(findPlacedDancers(group, callbacks, dancers, results)) ? 'star' : 'star_outline' }}
         </md-icon>
       </md-subheader>
       <md-list slot="md-expand" class="results-list">
         <result-list-item
-          :dancers="getPlacedDancers(group, callbacks, true)"
+          :dancers="findPlacedDancers(group, callbacks, dancers, results, true)"
           :to="{ params: { groupId: group[idKey], danceId: callbacks[idKey] } }"
           :class="{ active: isActive(group, callbacks) }"
         >
@@ -25,9 +25,9 @@
         <md-divider class="md-inset" />
 
         <result-list-item
-          v-for="dance in findGroupDances(group)"
+          v-for="dance in findGroupDances(group, dances)"
           :key="dance[idKey]"
-          :dancers="getPlacedDancers(group, dance)"
+          :dancers="findPlacedDancers(group, dance, dancers, results)"
           :to="{ params: { groupId: group[idKey], danceId: dance[idKey] } }"
           :class="{ active: isActive(group, dance) }"
         >
@@ -37,7 +37,7 @@
         <md-divider v-if="hasOverall(group)" class="md-inset" />
         <result-list-item
           v-if="hasOverall(group)"
-          :dancers="getPlacedDancers(group, overall)"
+          :dancers="findPlacedDancers(group, overall, dancers, results)"
           :to="{ params: { groupId: group[idKey], danceId: overall[idKey] } }"
           :class="{ active: isActive(group, overall) }"
         >
@@ -62,7 +62,7 @@ import {
   callbacks,
   findGroupDances,
   findGroupDancers,
-  getPlacedDancers,
+  findPlacedDancers,
   hasOverall,
 } from '@/helpers/results';
 import {
@@ -95,7 +95,7 @@ export default {
     hasFavorites,
     findGroupDances,
     findGroupDancers,
-    getPlacedDancers,
+    findPlacedDancers,
     hasOverall,
 
     isActive(group, dance) {

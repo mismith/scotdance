@@ -21,7 +21,7 @@
 
         <md-list slot="md-expand">
           <result-list-item
-            v-for="dance in findGroupDances(group)"
+            v-for="dance in findGroupDances(group, dances)"
             :key="dance[idKey]"
             :place="getPlace(dancer, group, dance)"
             :to="{ name: 'competition.results', params: { groupId: group[idKey], danceId: dance[idKey] } }"

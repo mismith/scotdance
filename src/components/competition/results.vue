@@ -76,7 +76,7 @@ import {
   overall,
   callbacks,
   findGroupDances,
-  getPlacedDancers,
+  findPlacedDancers,
   hasOverall,
 } from '@/helpers/results';
 import {
@@ -133,7 +133,7 @@ export default {
     },
     currentDances() {
       if (this.currentGroup) {
-        return this.findGroupDances(this.currentGroup);
+        return findGroupDances(this.currentGroup, this.dances);
       }
       return [];
     },
@@ -149,7 +149,7 @@ export default {
 
       return groups.map((dance) => {
         const sortByNumber = dance[idKey] === callbacks[idKey];
-        const dancers = this.getPlacedDancers(this.currentGroup, dance, sortByNumber);
+        const dancers = findPlacedDancers(this.currentGroup, dance, this.dancers, this.result, sortByNumber);
 
         return {
           ...dance,
@@ -172,9 +172,6 @@ export default {
     },
   },
   methods: {
-    findGroupDances,
-    getPlacedDancers,
-
     isDanceExpanded(item, items) {
       const itemIds = items.map(i => i[idKey]);
       return isExpanded(this.resultsExpandedDances[this.groupId], item[idKey], itemIds, true);

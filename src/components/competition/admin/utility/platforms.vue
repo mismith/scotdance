@@ -17,7 +17,7 @@
               name: 'competition.results',
               params: { groupId: poolItem[idKey], danceId: item.danceId }
             })"
-            :class="{ 'md-primary': isJudge(poolItem), 'md-accent': hasFavorites(findGroupDancers(poolItem)) }"
+            :class="{ 'md-primary': isJudge(poolItem), 'md-accent': hasFavorites(findGroupDancers(poolItem, dancers)) }"
           >
             {{ poolItem.$name || poolItem.name }}
           </md-chip>

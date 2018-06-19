@@ -80,7 +80,7 @@ import {
   callbacks,
   getPlaceholderDancer,
   findGroupDancers,
-  getPlacedDancers,
+  findPlacedDancers,
   getPlaceIndex,
   isPlaced,
 } from '@/helpers/results';
@@ -124,16 +124,16 @@ export default {
     currentDancers() {
       if (this.currentGroup && this.currentDance) {
         if (this.currentDance[idKey] === callbacks[idKey]) {
-          return this.findGroupDancers(this.currentGroup);
+          return findGroupDancers(this.currentGroup, this.dancers);
         }
-        return this.getPlacedDancers(this.currentGroup, callbacks, true);
+        return findPlacedDancers(this.currentGroup, callbacks, this.dancers, this.results, true);
       }
       return [];
     },
     placedDancers() {
       if (this.currentGroup && this.currentDance) {
         const sortByNumber = this.currentDance[idKey] === callbacks[idKey];
-        return this.getPlacedDancers(this.currentGroup, this.currentDance, sortByNumber);
+        return findPlacedDancers(this.currentGroup, this.currentDance, this.dancers, this.results, sortByNumber);
       }
       return [];
     },
@@ -141,8 +141,6 @@ export default {
   methods: {
     hasFavorites,
     getPlaceholderDancer,
-    findGroupDancers,
-    getPlacedDancers,
     isPlaced,
 
     save() {

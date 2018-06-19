@@ -22,30 +22,30 @@ export const getPlaceholderDancer = (timestamp = undefined) => ({
   $name: 'Unknown Dancer',
 });
 
-export function findGroupDancers(group) {
-  return this.dancers.filter(dancer => dancer.groupId === group[idKey]);
+export function findGroupDancers(group, dancers = []) {
+  return dancers.filter(dancer => dancer.groupId === group[idKey]);
 }
-export function findGroupDances(group) {
-  return this.dances.filter(dance => dance.groupIds && dance.groupIds[group[idKey]]);
+export function findGroupDances(group, dances = []) {
+  return dances.filter(dance => dance.groupIds && dance.groupIds[group[idKey]]);
 }
-export function getPlacedDancers(group, dance, sortByNumber = false) {
+export function findPlacedDancers(group, dance, dancers = [], results = {}, sortByNumber = false) {
   // get ranked dancerIds
-  let results = [];
+  let placings = [];
   if (group && dance) {
     const groupId = group[idKey];
     const danceId = dance[idKey];
 
-    if (this.results && this.results[groupId] && this.results[groupId][danceId]) {
-      results = this.results[groupId][danceId];
+    if (results && results[groupId] && results[groupId][danceId]) {
+      placings = results[groupId][danceId];
     }
   }
 
   // transform ranked dancerIds into ordered array of dancer objects
-  const dancers = results.map((result) => {
+  const placedDancers = placings.map((result) => {
     const [dancerId, tie] = result.split(':');
     const dancer = `${dancerId}` === `${parseInt(dancerId, 10)}`
       ? getPlaceholderDancer(dancerId)
-      : findByIdKey(this.dancers, dancerId);
+      : findByIdKey(dancers, dancerId);
 
     if (!dancer) {
       return dancer;
@@ -56,9 +56,9 @@ export function getPlacedDancers(group, dance, sortByNumber = false) {
     };
   });
   if (sortByNumber) {
-    return dancers.sort((a, b) => a.$number.localeCompare(b.$number));
+    return placedDancers.sort((a, b) => a.$number.localeCompare(b.$number));
   }
-  return dancers;
+  return placedDancers;
 }
 
 export function hasOverall(group) {
