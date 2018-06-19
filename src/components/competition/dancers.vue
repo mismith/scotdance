@@ -104,7 +104,7 @@
 </template>
 
 <script>
-import FuzzySearch from 'fuzzy-search';
+import Fuse from 'fuse.js';
 import sortBy from 'lodash.sortby';
 import groupBy from 'lodash.groupby';
 import DancerListItem from '@/components/utility/dancer-list-item';
@@ -178,7 +178,7 @@ export default {
       // filter by search term
       if (this.filterBy && filtered.length) {
         const searchKeys = this.sortableBys.map(({ key, searchKey }) => searchKey || key);
-        filtered = new FuzzySearch(filtered, searchKeys).search(this.filterBy);
+        filtered = new Fuse(filtered, { keys: searchKeys }).search(this.filterBy);
       }
 
       // filter by onlyFavorites, if necessary
