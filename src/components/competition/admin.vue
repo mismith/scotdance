@@ -96,12 +96,12 @@
     </div>
     <md-empty-state
       v-if="!me"
-      md-icon="error"
+      md-icon="block"
       md-label="Login required"
     />
     <md-empty-state
       v-if="me && !me.admin"
-      md-icon="error"
+      md-icon="block"
       md-label="Access denied"
     />
   </div>

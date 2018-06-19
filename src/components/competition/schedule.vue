@@ -50,7 +50,7 @@
         </md-tabs>
         <md-empty-state
           v-else
-          md-icon="error"
+          md-icon="clear"
           md-label="No schedule yet"
         />
       </div>

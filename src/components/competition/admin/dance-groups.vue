@@ -15,7 +15,7 @@
         </md-list>
         <md-empty-state
           v-else
-          md-icon="error"
+          md-icon="clear"
           md-label="No age groups found"
         />
       </div>
@@ -44,24 +44,24 @@
           </footer>
           <md-empty-state
             v-else
-            md-icon="error"
+            md-icon="clear"
             md-label="No dances found"
           />
         </md-list>
         <md-empty-state
           v-else
           md-icon="call_merge"
-          md-label="Toggle dances"
-          md-description="Link age groups to specific dances"
+          md-label="Link dances"
+          md-description="Pick dances for each age group"
         />
       </div>
       <div class="md-layout-item md-size-33 blade admin-blade md-scroll">
         <HotTable v-if="currentGroupDances.length" :settings="hotSettings" class="fullscreen" />
         <md-empty-state
           v-else
-          md-icon="sort"
+          md-icon="vertical_split"
           md-label="Championship draws"
-          md-description="Specify dancer order per dance"
+          md-description="Specify dancer order for each dance"
         />
       </div>
     </div>

@@ -11,7 +11,7 @@
         />
         <md-empty-state
           v-else
-          md-icon="error"
+          md-icon="clear"
           md-label="No age groups found"
         />
       </div>
@@ -33,13 +33,13 @@
 
           <md-empty-state
             v-if="!currentDancers.length"
-            md-icon="error"
+            md-icon="clear"
             md-label="No dancers found"
           />
         </md-list>
         <md-empty-state
           v-else
-          md-icon="timeline"
+          md-icon="touch_app"
           md-label="Enter results"
           md-description="Select an age group and dance"
         />
@@ -55,9 +55,9 @@
         />
         <md-empty-state
           v-else
-          md-icon="swap_vert"
+          md-icon="vertical_split"
           md-label="Order dancers"
-          md-description="Select dancers in the order they placed"
+          md-description="Select dancers in the order placed"
         />
       </div>
     </div>

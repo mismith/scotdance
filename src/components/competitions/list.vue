@@ -24,7 +24,7 @@
       </md-list>
       <md-empty-state
         v-if="!competitions.length"
-        md-icon="error"
+        md-icon="clear"
         md-label="No competitions found"
       />
     </div>

@@ -11,7 +11,7 @@
         />
         <md-empty-state
           v-else
-          md-icon="error"
+          md-icon="clear"
           md-label="No results yet"
         />
       </div>
