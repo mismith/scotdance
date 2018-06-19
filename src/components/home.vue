@@ -6,8 +6,10 @@
         <h1 class="md-display-2">ScotDance</h1>
         <p class="md-headline">{{ $package.description }}</p>
         <p class="md-subheading">Skip the pen and paper—attend highland dance competitions in style with this app for your mobile device.</p>
-        <p>
-          <md-button :to="{ name: 'competitions' }" class="md-primary md-raised md-large">Browse Competitions</md-button>
+        <p class="print-hide">
+          <md-button :to="{ name: 'competitions' }" class="md-primary md-raised md-large">
+            Browse Competitions
+          </md-button>
         </p>
         <p v-if="!isApp" class="store-badges">
           <a href="https://itunes.apple.com/us/app/scotdance/id1386475626?mt=8" target="_blank">
@@ -17,6 +19,9 @@
             <img src="static/img/play-store.svg" alt="Get it on Google Play" />
           </a>
         </p>
+        <h1 class="md-display-1 print-show">
+          <a href="https://scotdance.app">www.scotdance.app</a>
+        </h1>
       </div>
     </section>
 
@@ -26,17 +31,17 @@
         <p class="md-subheading">Modernize your highland dancing experience by interacting with competition information digitally.</p>
       </header>
       <div class="md-layout">
-        <div class="md-layout-item md-small-size-100">
+        <div class="md-layout-item md-xsmall-size-100 md-size-33">
           <md-icon class="md-size-4x icon-people md-primary" />
           <h2 class="md-title">Dancers</h2>
           <p>Search through dancers by their competition number, name, age group, etc. Then mark your favourites for easy tracking.</p>
         </div>
-        <div class="md-layout-item md-small-size-100">
+        <div class="md-layout-item md-xsmall-size-100 md-size-33">
           <md-icon class="md-size-4x icon-clock md-primary" />
           <h2 class="md-title">Schedule</h2>
           <p>Use the at-a-glance schedule to check event start times, which platforms to dance at, order of dances, and more.</p>
         </div>
-        <div class="md-layout-item md-small-size-100">
+        <div class="md-layout-item md-xsmall-size-100 md-size-33">
           <md-icon class="md-size-4x icon-trophy md-primary" />
           <h2 class="md-title">Results</h2>
           <p>Get real-time results updates—from callbacks through to placings—and review them anytime after a competition, too.</p>

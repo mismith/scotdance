@@ -1,6 +1,6 @@
 <template>
   <md-app id="app" class="md-scroll-frame md-scroll">
-    <md-app-toolbar class="md-primary" style="flex-wrap: nowrap;">
+    <md-app-toolbar class="md-primary print-hide" style="flex-wrap: nowrap;">
       <md-button class="md-icon-button" @click="menuVisible = !menuVisible">
         <md-icon>menu</md-icon>
       </md-button>
@@ -726,6 +726,48 @@ body,
   > * {
     transform-origin: center top;
     animation: animate-in 300ms forwards;
+  }
+}
+
+// print overrides
+.print-show {
+  display: none !important;
+}
+@media print {
+  html,
+  body,
+  #app,
+  #main {
+    width: 11in;
+    height: 8.5in;
+    background-color: transparent !important;
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
+    border: 0;
+  }
+  .home {
+    > * {
+      &:not(.hero) {
+        display: none;
+      }
+      &.hero {
+        width: 5.5in;
+        height: 4.25in;
+
+        h1,
+        p {
+          margin: 10px;
+        }
+      }
+    }
+  }
+
+  .print-show {
+    display: unset !important;
+  }
+  .print-hide {
+    display: none !important;
   }
 }
 </style>
