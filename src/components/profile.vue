@@ -113,7 +113,7 @@
         md-icon="error"
         md-label="Not logged in"
       />
-      <mi-md-spinner />
+      <mi-md-spinner v-else />
     </div>
   </div>
 </template>
