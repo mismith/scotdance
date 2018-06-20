@@ -1,7 +1,7 @@
 <template>
   <div class="competition-admin md-scroll-frame">
     <div v-if="me && me.admin" class="md-scroll-frame">
-      <div v-if="currentSection" class="md-scroll-frame md-scroll">
+      <div v-if="currentSection" class="md-scroll-frame">
         <md-toolbar class="md-dense">
           <div v-if="inTabs('info', 'categories', 'dancers', 'groups')">
             <md-button @click="showImport = true">Import</md-button>

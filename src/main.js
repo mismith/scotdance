@@ -61,6 +61,37 @@ const $scrollAll = (element, options = {}) => {
 };
 Vue.prototype.$scrollAll = $scrollAll;
 
+(() => {
+  // restore scroll positions (can't use vue-router native because of flexbox app-frame)
+  const namespace = 'persist-scroll';
+  Vue.localStorage.addProperty(namespace, Object, {});
+  const storage = Vue.localStorage.get(namespace, {});
+  let onScroll;
+  const rebind = el => onScroll && el.addEventListener('scroll', onScroll);
+  const unbind = el => onScroll && el.removeEventListener('scroll', onScroll);
+  const restore = (el, { value: name }) => {
+    const value = Number.parseFloat(storage[name]);
+    setTimeout(() => {
+      el.scrollTop = value; // eslint-disable-line no-param-reassign
+    });
+  };
+
+  Vue.directive(namespace, {
+    bind(el, { value: name }) {
+      onScroll = () => {
+        const value = el.scrollTop;
+        storage[name] = value;
+        Vue.localStorage.set(namespace, storage);
+      };
+      rebind(el);
+    },
+    inserted: restore,
+    update: restore,
+    componentUpdated: restore,
+    unbind,
+  });
+})();
+
 // app / devices
 Vue.prototype.isApp = window.location.protocol === 'file:';
 if (Vue.prototype.isApp) {
@@ -119,7 +150,7 @@ firebase.auth().onAuthStateChanged((me) => {
 Vue.localStorage.addProperty('routeInfo', Object, {});
 router.beforeEach(async (to, prev, next) => {
   // restore last route (e.g. when re-opening a force-quit app)
-  const routeInfo = Vue.localStorage.get('routeInfo');
+  const routeInfo = Vue.localStorage.get('routeInfo', {});
   const routeToRestore = routeInfo.$current;
   if (!prev.name && routeToRestore && routeToRestore !== to.name) {
     return next({
@@ -151,13 +182,8 @@ router.beforeEach(async (to, prev, next) => {
 });
 
 router.afterEach((to) => {
-  // force all scroll containers to scroll to top (to prevent weird overflow bugs)
-  $scrollAll(document.body, {
-    duration: 1,
-  });
-
   // store route/tab states for restoring (e.g. on app re-open)
-  const routeInfo = Vue.localStorage.get('routeInfo');
+  const routeInfo = Vue.localStorage.get('routeInfo', {});
   routeInfo.$current = to.name;
   routeInfo[to.name] = {
     params: to.params,

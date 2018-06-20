@@ -8,7 +8,7 @@
             :key="dayId"
             :md-label="$moment(day.date).format('ddd')"
           >
-            <div class="md-scroll-frame md-scroll">
+            <div v-persist-scroll="$route.fullPath" class="md-scroll-frame md-scroll">
               <md-subheader v-if="day.name" class="md-title">
                 <span>{{ day.name }}</span>
               </md-subheader>
@@ -66,7 +66,7 @@
           </span>
         </md-toolbar>
 
-        <div class="md-scroll-frame md-scroll">
+        <div v-persist-scroll="$route.fullPath" class="md-scroll-frame md-scroll">
           <md-subheader class="md-title">{{ currentEvent.name }}</md-subheader>
           <div
             v-if="currentEvent.description"

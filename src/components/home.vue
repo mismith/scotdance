@@ -1,5 +1,5 @@
 <template>
-  <div class="home">
+  <div v-persist-scroll="$route.fullPath" class="home md-scroll-frame md-scroll">
     <section class="hero">
       <div>
         <img src="static/img/touchicon.png" role="presentation" width="88" height="88" />

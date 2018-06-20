@@ -1,120 +1,118 @@
 <template>
   <div class="profile md-scroll-frame">
-    <div class="md-scroll-frame">
-      <div v-if="me" class="md-padding md-scroll-frame md-scroll">
-        <div class="md-layout md-alignment-center">
-          <md-avatar>
-            <img
-              :src="me.photoURL || `https://avatars.io/gravatar/${me.email}`"
-              :alt="me.displayName"
-            />
-          </md-avatar>
-          <div class="md-layout-item md-padding">
-            Avatar via <a href="https://gravatar.com/" target="_blank" class="ext">Gravatar</a>
-          </div>
+    <div v-if="me" class="md-padding md-scroll-frame md-scroll">
+      <div class="md-layout md-alignment-center">
+        <md-avatar>
+          <img
+            :src="me.photoURL || `https://avatars.io/gravatar/${me.email}`"
+            :alt="me.displayName"
+          />
+        </md-avatar>
+        <div class="md-layout-item md-padding">
+          Avatar via <a href="https://gravatar.com/" target="_blank" class="ext">Gravatar</a>
         </div>
-
-        <md-field>
-          <label>Display name</label>
-          <md-input v-model="me.displayName" @input="handleChanges('displayName')" />
-        </md-field>
-        <md-field>
-          <label>Email</label>
-          <md-input v-model="me.email" readonly required />
-        </md-field>
-
-        <div class="md-layout md-alignment-center">
-          <md-button @click="passwordActive = true" class="md-primary">Change Password</md-button>
-          <md-dialog :md-active.sync="passwordActive" :md-fullscreen="false" class="change-password-dialog">
-            <md-dialog-title>Change your password</md-dialog-title>
-
-            <md-dialog-content>
-              <md-field md-toggle-password>
-                <label>Current Password</label>
-                <md-input
-                  v-model="passwordConfirm"
-                  type="password"
-                  name="password"
-                  @keypress.enter="changePassword"
-                />
-              </md-field>
-              <md-field md-toggle-password>
-                <label>New Password</label>
-                <md-input
-                  v-model="newPassword"
-                  type="password"
-                  name="password"
-                  @keypress.enter="changePassword"
-                />
-              </md-field>
-
-              <aside v-if="passwordError" class="validation-message">
-                {{ passwordError.message }}
-              </aside>
-            </md-dialog-content>
-
-            <md-dialog-actions>
-              <md-button @click="passwordActive = false">Cancel</md-button>
-
-              <md-spinnable :md-spinning="passwordLoading" md-left>
-                <md-button
-                  @click="changePassword"
-                  :disabled="!passwordConfirm || !newPassword"
-                  class="md-primary md-raised"
-                >
-                  Change Password
-                </md-button>
-              </md-spinnable>
-            </md-dialog-actions>
-          </md-dialog>
-        </div>
-
-        <footer class="md-layout md-alignment-center" style="margin-top: auto;">
-          <md-button @click="removeActive = true" class="md-accent">Delete Account</md-button>
-          <md-dialog :md-active.sync="removeActive" :md-fullscreen="false" class="remove-user-dialog">
-            <md-dialog-title>Are you sure?</md-dialog-title>
-
-            <md-dialog-content>
-              <p>This will permanently delete your account and all associated data.</p>
-              <p>In order to proceed, please enter your password:</p>
-              <md-field md-toggle-password>
-                <label>Password</label>
-                <md-input
-                  v-model="removeConfirm"
-                  type="password"
-                  name="password"
-                  @keypress.enter="remove"
-                />
-              </md-field>
-
-              <aside v-if="removeError" class="validation-message">
-                {{ removeError.message }}
-              </aside>
-            </md-dialog-content>
-
-            <md-dialog-actions>
-              <md-button @click="removeActive = false">Cancel</md-button>
-
-              <md-spinnable :md-spinning="removeLoading" md-left>
-                <md-button
-                  @click="remove"
-                  :disabled="!removeConfirm"
-                  class="md-primary md-raised"
-                >
-                  Delete Account
-                </md-button>
-              </md-spinnable>
-            </md-dialog-actions>
-          </md-dialog>
-        </footer>
       </div>
-      <md-empty-state
-        v-else-if="me !== undefined"
-        md-icon="error"
-        md-label="Not logged in"
-      />
-      <mi-md-spinner v-else />
+
+      <md-field>
+        <label>Display name</label>
+        <md-input v-model="me.displayName" @input="handleChanges('displayName')" />
+      </md-field>
+      <md-field>
+        <label>Email</label>
+        <md-input v-model="me.email" readonly required />
+      </md-field>
+
+      <div class="md-layout md-alignment-center">
+        <md-button @click="passwordActive = true" class="md-primary">Change Password</md-button>
+        <md-dialog :md-active.sync="passwordActive" :md-fullscreen="false" class="change-password-dialog">
+          <md-dialog-title>Change your password</md-dialog-title>
+
+          <md-dialog-content>
+            <md-field md-toggle-password>
+              <label>Current Password</label>
+              <md-input
+                v-model="passwordConfirm"
+                type="password"
+                name="password"
+                @keypress.enter="changePassword"
+              />
+            </md-field>
+            <md-field md-toggle-password>
+              <label>New Password</label>
+              <md-input
+                v-model="newPassword"
+                type="password"
+                name="password"
+                @keypress.enter="changePassword"
+              />
+            </md-field>
+
+            <aside v-if="passwordError" class="validation-message">
+              {{ passwordError.message }}
+            </aside>
+          </md-dialog-content>
+
+          <md-dialog-actions>
+            <md-button @click="passwordActive = false">Cancel</md-button>
+
+            <md-spinnable :md-spinning="passwordLoading" md-left>
+              <md-button
+                @click="changePassword"
+                :disabled="!passwordConfirm || !newPassword"
+                class="md-primary md-raised"
+              >
+                Change Password
+              </md-button>
+            </md-spinnable>
+          </md-dialog-actions>
+        </md-dialog>
+      </div>
+
+      <footer class="md-layout md-alignment-center" style="margin-top: auto;">
+        <md-button @click="removeActive = true" class="md-accent">Delete Account</md-button>
+        <md-dialog :md-active.sync="removeActive" :md-fullscreen="false" class="remove-user-dialog">
+          <md-dialog-title>Are you sure?</md-dialog-title>
+
+          <md-dialog-content>
+            <p>This will permanently delete your account and all associated data.</p>
+            <p>In order to proceed, please enter your password:</p>
+            <md-field md-toggle-password>
+              <label>Password</label>
+              <md-input
+                v-model="removeConfirm"
+                type="password"
+                name="password"
+                @keypress.enter="remove"
+              />
+            </md-field>
+
+            <aside v-if="removeError" class="validation-message">
+              {{ removeError.message }}
+            </aside>
+          </md-dialog-content>
+
+          <md-dialog-actions>
+            <md-button @click="removeActive = false">Cancel</md-button>
+
+            <md-spinnable :md-spinning="removeLoading" md-left>
+              <md-button
+                @click="remove"
+                :disabled="!removeConfirm"
+                class="md-primary md-raised"
+              >
+                Delete Account
+              </md-button>
+            </md-spinnable>
+          </md-dialog-actions>
+        </md-dialog>
+      </footer>
     </div>
+    <md-empty-state
+      v-else-if="me !== undefined"
+      md-icon="error"
+      md-label="Not logged in"
+    />
+    <mi-md-spinner v-else />
   </div>
 </template>
 

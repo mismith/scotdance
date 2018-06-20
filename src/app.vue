@@ -1,5 +1,5 @@
 <template>
-  <md-app id="app" class="md-scroll-frame md-scroll">
+  <md-app id="app" class="md-scroll-frame">
     <md-app-toolbar class="md-primary print-hide" style="flex-wrap: nowrap;">
       <md-button class="md-icon-button" @click="menuVisible = !menuVisible">
         <md-icon>menu</md-icon>
@@ -119,7 +119,7 @@
       </div>
     </md-app-drawer>
 
-    <md-app-content id="main" class="md-scroll-frame md-scroll">
+    <md-app-content id="main" class="md-scroll-frame">
       <keep-alive>
         <router-view
           :competitions="competitions"
@@ -325,6 +325,7 @@ body.has-bottom-bar {
   display: flex;
   flex-direction: column;
   flex: auto;
+  height: 100%;
   overflow: hidden;
 
   &.spinner-container {
@@ -382,9 +383,9 @@ body.has-bottom-bar {
   transform: translateX(100%);
   opacity: 0;
 }
-.slide-left-leave-active,
-.slide-right-leave-active {
-  position: absolute;
+.slide-left-enter-active,
+.slide-right-enter-active {
+  margin-left: -100%;
 }
 .slide-left-leave-to,
 .slide-right-enter {
