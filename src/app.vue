@@ -325,7 +325,6 @@ body.has-bottom-bar {
   display: flex;
   flex-direction: column;
   flex: auto;
-  height: 100%;
   overflow: hidden;
 
   &.spinner-container {
@@ -578,20 +577,31 @@ body,
 .md-tabs {
   @extend .md-scroll-frame;
 
-  .md-tab {
-    height: 100%;
-    padding: 0;
-  }
-  .md-tabs-navigation {
+  &-navigation {
     flex-shrink: 0;
 
     .md-button {
-      min-width: 48px;
+      min-width: 48px !important;
     }
   }
-  .md-tabs-content,
-  .md-tabs-container {
-    height: 100% !important;
+  &-content {
+    position: relative;
+    flex: auto;
+  }
+  &-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+  .md-tab {
+    padding: 0;
+
+    &,
+    > .md-scroll-frame {
+      height: 100%;
+    }
   }
 }
 
