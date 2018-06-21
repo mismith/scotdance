@@ -369,6 +369,13 @@ body.has-bottom-bar {
 
   .blade {
     width: 100%;
+
+    + .blade {
+      // @HACK to avoid post-animation flicker on iOS
+      // this essentially causes `position: absolute` on the incoming blade,
+      // but without altering the scroll position (which gums up the persist-scroll directive)
+      margin-left: -100%;
+    }
   }
 }
 .slide-left-enter-active,
@@ -379,16 +386,12 @@ body.has-bottom-bar {
 }
 .slide-left-enter,
 .slide-right-leave-to {
-  transform: translateX(100%);
+  transform: translate3d(100%, 0, 0);
   opacity: 0;
-}
-.slide-left-enter-active,
-.slide-right-enter-active {
-  margin-left: -100%;
 }
 .slide-left-leave-to,
 .slide-right-enter {
-  transform: translateX(-25%);
+  transform: translate3d(-25%, 0, 0);
   opacity: 0;
 }
 
