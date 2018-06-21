@@ -30,7 +30,7 @@
           </span>
         </md-toolbar>
 
-        <div v-persist-scroll="$route.fullPath" class="md-scroll-frame md-scroll">
+        <div id="results-detail" v-persist-scroll="$route.fullPath" class="md-scroll-frame md-scroll">
           <md-list class="md-list-cards">
             <md-list-item-cards
               v-for="dance in groupedDancers"
@@ -170,7 +170,7 @@ export default {
         if (this.scrollTimeout) clearTimeout(this.scrollTimeout);
         this.scrollTimeout = setTimeout(() => {
           this.$scrollAll(`#dance-${this.currentDance[idKey]}`, {
-            duration: 1,
+            container: '#results-detail',
           });
         }, 250);
       }

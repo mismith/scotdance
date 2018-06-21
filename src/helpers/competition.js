@@ -5,7 +5,7 @@ export function findByIdKey(items, id) {
 }
 
 export function hasFavorites(dancers) {
-  return dancers.some(dancer => dancer.$favorite);
+  return dancers.some(dancer => dancer && dancer.$favorite);
 }
 
 export function getScheduleItemDanceName(item, dances) {

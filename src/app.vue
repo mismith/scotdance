@@ -372,7 +372,7 @@ body.has-bottom-bar {
 
     + .blade {
       // @HACK to avoid post-animation flicker on iOS
-      // this essentially causes `position: absolute` on the incoming blade,
+      // this essentially causes `position: absolute` on the incoming blade—e.g. to allow stacking
       // but without altering the scroll position (which gums up the persist-scroll directive)
       margin-left: -100%;
     }
