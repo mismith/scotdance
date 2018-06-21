@@ -1,8 +1,9 @@
 {
   "name": "scotdance",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Highland dancing event tracker",
   "author": "Murray Smith <murray@mismith.info>",
+  "license": "UNLICENSED",
   "scripts": {
     "dev": "webpack-dev-server --inline --progress --config build/webpack.dev.conf.js",
     "lint": "eslint --ext .js,.vue src",
