@@ -154,7 +154,7 @@ export default {
 
       return groups.map((dance) => {
         const sortByNumber = dance[idKey] === callbacks[idKey];
-        const dancers = findPlacedDancers(this.currentGroup, dance, this.dancers, this.result, sortByNumber);
+        const dancers = findPlacedDancers(this.currentGroup, dance, this.dancers, this.results, sortByNumber);
 
         return {
           ...dance,
