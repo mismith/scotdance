@@ -128,7 +128,10 @@ if (Vue.prototype.isApp) {
     });
   });
 } else if (!/localhost/.test(window.location.hostname)) {
-  window.SessionStack.start();
+  if (window.SessionStack) {
+    window.SessionStack.start();
+    window.SessionStack.log(`${window.device.platform || ''} App v${$package.version || '?'}`);
+  }
 }
 FastClick.attach(document.body);
 store.commit('setPackage', $package);
