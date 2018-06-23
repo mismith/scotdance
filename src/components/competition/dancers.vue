@@ -179,7 +179,10 @@ export default {
       // filter by search term
       if (this.filterBy && filtered.length) {
         const searchKeys = this.sortableBys.map(({ key, searchKey }) => searchKey || key);
-        filtered = new Fuse(filtered, { keys: searchKeys }).search(this.filterBy);
+        filtered = new Fuse(filtered, {
+          keys: searchKeys,
+          threshold: 0.33,
+        }).search(this.filterBy);
       }
 
       // filter by onlyFavorites, if necessary
