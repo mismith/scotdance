@@ -135,7 +135,7 @@
             </md-field>
           </div>
 
-          <div v-if="currentItemCollection === 'dances'">
+          <div v-if="currentItemCollection === 'dances' && currentItem.danceId">
             <admin-platforms
               :path="currentPath"
               :item="currentItem"
