@@ -5,7 +5,7 @@
         <md-icon>menu</md-icon>
       </md-button>
 
-      <router-link to="/" class="md-title" style="margin-right: auto;">{{ title }}</router-link>
+      <router-link :to="{ name: 'competitions' }" class="md-title" style="margin-right: auto;">{{ title }}</router-link>
 
       <md-button
         v-if="me && me.admin && $route.params.competitionId"
