@@ -10,7 +10,7 @@
     >
       <md-subheader>
         <span>{{ group.$name }}</span>
-        <md-icon v-if="hasFavorites(findGroupDancers(group, dances))" class="md-accent">
+        <md-icon v-if="hasFavorites(findGroupDancers(group, dancers))" class="md-accent">
           {{ hasFavorites(findPlacedDancers(group, callbacks, dancers, results)) ? 'star' : 'star_outline' }}
         </md-icon>
       </md-subheader>
