@@ -367,7 +367,7 @@ body.has-bottom-bar {
   position: relative;
   overflow: hidden;
 
-  .blade {
+  .blade:not(.admin-blade) {
     width: 100%;
 
     + .blade {
