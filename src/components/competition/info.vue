@@ -43,6 +43,20 @@
             </li>
           </ul>
         </md-list-item-cards>
+        <md-list-item-cards v-if="volunteers.length" md-expand md-expanded>
+          <md-subheader>Volunteers</md-subheader>
+
+          <ul slot="md-expand">
+            <li
+              v-for="member of volunteers"
+              :key="member[idKey]"
+              class="md-layout-item"
+            >
+              <div>{{ member.$name }}</div>
+              <small>{{ member.location }}</small>
+            </li>
+          </ul>
+        </md-list-item-cards>
       </md-list>
 
 
@@ -77,6 +91,9 @@ export default {
     },
     pipers() {
       return this.staff.filter(staff => staff.type === 'Piper');
+    },
+    volunteers() {
+      return this.staff.filter(staff => staff.type === 'Volunteer');
     },
   },
 };
