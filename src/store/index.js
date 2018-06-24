@@ -1,6 +1,10 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import {
+  getField,
+  updateField,
+} from 'vuex-map-fields';
+import {
   firebaseMutations,
   firebaseAction,
 } from 'vuexfire';
@@ -14,6 +18,10 @@ export default new Vuex.Store({
       platform: 'Web',
     },
 
+    credentials: {
+      email: undefined,
+      password: undefined,
+    },
     me: undefined,
     myFavorites: undefined,
     postLoginCallbacks: [],
@@ -28,11 +36,14 @@ export default new Vuex.Store({
     helpVisible: false,
   },
   getters: {
+    getField,
+
     isFavorite: state => (type, id) => {
       return state.myFavorites && state.myFavorites[type] && !!state.myFavorites[type][id];
     },
   },
   mutations: {
+    updateField,
     ...firebaseMutations,
 
     setPackage(state, to) {

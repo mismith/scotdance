@@ -12,7 +12,7 @@
           <md-input
             type="email"
             name="email"
-            v-model="credentials.email"
+            v-model="email"
             required
             autofocus
           />
@@ -22,7 +22,7 @@
           <md-input
             type="password"
             name="password"
-            v-model="credentials.password"
+            v-model="password"
             required
           />
         </md-field>
@@ -65,7 +65,7 @@
           <md-input
             type="email"
             name="email"
-            v-model="credentials.email"
+            v-model="email"
             required
             autofocus
           />
@@ -92,6 +92,9 @@
 
 <script>
 import {
+  mapFields,
+} from 'vuex-map-fields';
+import {
   firebase,
 } from '@/helpers/firebase';
 
@@ -99,10 +102,6 @@ export default {
   name: 'login-dialog',
   data() {
     return {
-      credentials: {
-        email: undefined,
-        password: undefined,
-      },
       authLoading: false,
       authError: undefined,
       authMessage: undefined,
@@ -111,6 +110,11 @@ export default {
     };
   },
   computed: {
+    ...mapFields([
+      'credentials.email',
+      'credentials.password',
+    ]),
+
     loginVisible: {
       get() {
         return this.$store.state.dialogOpen === 'login';
@@ -135,10 +139,11 @@ export default {
       this.authError = null;
 
       return firebase.auth()
-        .signInWithEmailAndPassword(this.credentials.email, this.credentials.password)
+        .signInWithEmailAndPassword(this.email, this.password)
         .then(() => {
           this.authLoading = false;
-          this.credentials = {};
+          this.email = null;
+          this.password = null;
 
           // close dialog
           this.loginVisible = false;
@@ -155,10 +160,11 @@ export default {
       this.authError = null;
 
       return firebase.auth()
-        .sendPasswordResetEmail(this.credentials.email)
+        .sendPasswordResetEmail(this.email)
         .then(() => {
           this.authLoading = false;
-          this.credentials = {};
+          this.email = null;
+          this.password = null;
 
           // alert user
           this.authMessage = 'Success! Check your email inbox for instructions to reset your password.';

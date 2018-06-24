@@ -11,7 +11,7 @@
           <md-input
             type="email"
             name="email"
-            v-model="credentials.email"
+            v-model="email"
             required
             autofocus
           />
@@ -21,7 +21,7 @@
           <md-input
             type="password"
             name="password"
-            v-model="credentials.password"
+            v-model="password"
             required
           />
         </md-field>
@@ -51,6 +51,9 @@
 
 <script>
 import {
+  mapFields,
+} from 'vuex-map-fields';
+import {
   firebase,
   db,
 } from '@/helpers/firebase';
@@ -59,15 +62,16 @@ export default {
   name: 'register-dialog',
   data() {
     return {
-      credentials: {
-        email: undefined,
-        password: undefined,
-      },
       authLoading: false,
       authError: undefined,
     };
   },
   computed: {
+    ...mapFields([
+      'credentials.email',
+      'credentials.password',
+    ]),
+
     registerVisible: {
       get() {
         return this.$store.state.dialogOpen === 'register';
@@ -90,10 +94,11 @@ export default {
       this.authError = null;
 
       return firebase.auth()
-        .createUserWithEmailAndPassword(this.credentials.email, this.credentials.password)
+        .createUserWithEmailAndPassword(this.email, this.password)
         .then((me) => {
           this.authLoading = false;
-          this.credentials = {};
+          this.email = null;
+          this.password = null;
 
           // add to db
           db.child('users').child(me.uid).set(me.providerData[0]);
