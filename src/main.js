@@ -1,4 +1,3 @@
-import FastClick from 'fastclick';
 import Vue from 'vue';
 import VueFire from 'vuefire';
 import VueMaterial from 'vue-material';
@@ -133,7 +132,6 @@ if (Vue.prototype.isApp) {
     window.SessionStack.log(`${window.device.platform || ''} App v${$package.version || '?'}`);
   }
 }
-FastClick.attach(document.body);
 store.commit('setPackage', $package);
 
 // monitor user auth
