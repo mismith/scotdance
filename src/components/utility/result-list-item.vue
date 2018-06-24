@@ -5,7 +5,7 @@
         class="md-avatar-icon"
         :class="{ 'md-primary': hasResults, 'md-accent': hasFavorites(dancers || []) }"
       >
-        <md-icon v-if="hasResults">check</md-icon>
+        <md-icon v-if="hasResults">{{ hasPlaceholderDancers ? 'done_outline' : 'check' }}</md-icon>
         <small v-else>TBD</small>
       </md-avatar>
     </slot>
@@ -29,6 +29,7 @@ export default {
   name: 'result-list-item',
   props: {
     dancers: Array, // [] -> TBD; [...] -> show checkmark;
+    hasPlaceholderDancers: Boolean, // true -> show hollow checkmark
     place: Number, // undefined -> show chevron
     to: true,
   },

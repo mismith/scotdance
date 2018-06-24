@@ -5,22 +5,34 @@ import {
   findByIdKey,
 } from '@/helpers/competition';
 
-export const overall = {
-  [idKey]: 'overall',
-  $name: 'Overall',
-};
-
 export const callbacks = {
   [idKey]: 'callbacks',
   $name: 'Callbacks',
 };
+export const overall = {
+  [idKey]: 'overall',
+  $name: 'Overall',
+};
+export function hasOverall(group) {
+  return group.$category && group.$category.name !== 'Primary';
+}
 
 export const getPlaceholderDancer = (timestamp = undefined) => ({
   [idKey]: timestamp || Date.now(),
   number: '?',
   $number: '?',
-  $name: 'Unknown Dancer',
+  $name: 'Dancer',
 });
+export function isPlaceholderDancerId(dancerId) {
+  return /^\d+$/.test(dancerId);
+}
+export function hasPlaceholderDancers(groupId, danceId, results = {}) {
+  try {
+    return results[groupId][danceId].some(dancerId => isPlaceholderDancerId(dancerId));
+  } catch (err) {
+    return false;
+  }
+}
 
 export function findGroupDancers(group, dancers = []) {
   return dancers.filter(dancer => dancer.groupId === group[idKey]);
@@ -43,7 +55,7 @@ export function findPlacedDancers(group, dance, dancers = [], results = {}, sort
   // transform ranked dancerIds into ordered array of dancer objects
   const placedDancers = placings.map((result) => {
     const [dancerId, tie] = result.split(':');
-    const dancer = `${dancerId}` === `${parseInt(dancerId, 10)}`
+    const dancer = isPlaceholderDancerId(dancerId)
       ? getPlaceholderDancer(dancerId)
       : findByIdKey(dancers, dancerId);
 
@@ -60,19 +72,12 @@ export function findPlacedDancers(group, dance, dancers = [], results = {}, sort
   }
   return placedDancers;
 }
-
-export function hasOverall(group) {
-  return group.$category && group.$category.name !== 'Primary';
-}
-
 export function getPlaceIndex(dancer, dancers) {
   return dancers.findIndex(d => d[idKey] === dancer[idKey]);
 }
-
 export function isPlaced(dancer, dancers) {
   return getPlaceIndex(dancer, dancers) >= 0;
 }
-
 export function getPlace(dancer, dancers) {
   const dancerIndex = getPlaceIndex(dancer, dancers);
   return dancers.reduce((place, d, i) => {
@@ -80,4 +85,19 @@ export function getPlace(dancer, dancers) {
     if (d.$tie) return place;
     return i + 1;
   }, 0);
+}
+
+export function isInProgress(group, dances = [], results = {}) {
+  const groupResults = results && results[group[idKey]];
+  if (groupResults) {
+    const dancesToCheck = [
+      callbacks,
+      ...findGroupDances(group, dances),
+      hasOverall(group) && overall,
+    ];
+    return dancesToCheck
+      .filter(v => v)
+      .some(dance => !groupResults[dance[idKey]] || hasPlaceholderDancers(group[idKey], dance[idKey], results));
+  }
+  return false;
 }

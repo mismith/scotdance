@@ -6,17 +6,20 @@
       md-expand
       :md-expanded="isGroupExpanded(group, groups)"
       @toggled="handleGroupExpanded(group[idKey], $event)"
-      :class="{ highlighted: results[group[idKey]] }"
     >
       <md-subheader>
         <span>{{ group.$name }}</span>
         <md-icon v-if="hasFavorites(findGroupDancers(group, dancers))" class="md-accent">
           {{ hasFavorites(findPlacedDancers(group, callbacks, dancers, results)) ? 'star' : 'star_outline' }}
         </md-icon>
+        <md-icon v-if="results[group[idKey]]" class="md-primary" style="margin-left: auto; margin-right: -16px;">
+          {{ isInProgress(group, dances, results) ? 'check_circle_outline' : 'check_circle' }}
+        </md-icon>
       </md-subheader>
       <md-list slot="md-expand" class="results-list">
         <result-list-item
           :dancers="findPlacedDancers(group, callbacks, dancers, results, true)"
+          :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], callbacks[idKey], results)"
           :to="{ params: { groupId: group[idKey], danceId: callbacks[idKey] } }"
           :class="{ active: isActive(group, callbacks) }"
         >
@@ -28,6 +31,7 @@
           v-for="dance in findGroupDances(group, dances)"
           :key="dance[idKey]"
           :dancers="findPlacedDancers(group, dance, dancers, results)"
+          :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], dance[idKey], results)"
           :to="{ params: { groupId: group[idKey], danceId: dance[idKey] } }"
           :class="{ active: isActive(group, dance) }"
         >
@@ -38,6 +42,7 @@
         <result-list-item
           v-if="hasOverall(group)"
           :dancers="findPlacedDancers(group, overall, dancers, results)"
+          :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], overall[idKey], results)"
           :to="{ params: { groupId: group[idKey], danceId: overall[idKey] } }"
           :class="{ active: isActive(group, overall) }"
         >
@@ -60,6 +65,8 @@ import {
 import {
   overall,
   callbacks,
+  hasPlaceholderDancers,
+  isInProgress,
   findGroupDances,
   findGroupDancers,
   findPlacedDancers,
@@ -93,6 +100,8 @@ export default {
   },
   methods: {
     hasFavorites,
+    hasPlaceholderDancers,
+    isInProgress,
     findGroupDances,
     findGroupDancers,
     findPlacedDancers,

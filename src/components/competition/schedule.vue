@@ -100,7 +100,6 @@
 </template>
 
 <script>
-import DancerListItem from '@/components/utility/dancer-list-item';
 import AdminPlatforms from '@/components/competition/admin/utility/platforms';
 import {
   getScheduleItemDanceName,
@@ -191,7 +190,6 @@ export default {
     },
   },
   components: {
-    DancerListItem,
     AdminPlatforms,
   },
 };
