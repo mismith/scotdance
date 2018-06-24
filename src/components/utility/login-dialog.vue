@@ -5,7 +5,7 @@
     @md-closed="forgot = false"
     class="login-dialog"
   >
-    <form v-if="!forgot" @submit.prevent="login(credentials).then(() => (loginVisible = false))">
+    <form v-if="!forgot" @submit.prevent="login()">
       <div class="md-dialog-content">
         <md-field>
           <label>Email</label>
@@ -53,7 +53,7 @@
         </md-spinnable>
       </footer>
     </form>
-    <form v-else @submit.prevent="reset(credentials).then(handlePasswordReset)">
+    <form v-else @submit.prevent="reset()">
       <div class="md-dialog-content">
         <header>
           <p>We can send you a link to reset your password.</p>
@@ -130,14 +130,18 @@ export default {
     },
   },
   methods: {
-    login(credentials = this.credentials) {
+    login() {
       this.authLoading = true;
       this.authError = null;
 
       return firebase.auth()
-        .signInWithEmailAndPassword(credentials.email, credentials.password)
+        .signInWithEmailAndPassword(this.credentials.email, this.credentials.password)
         .then(() => {
           this.authLoading = false;
+          this.credentials = {};
+
+          // close dialog
+          this.loginVisible = false;
         })
         .catch((err) => {
           this.authLoading = false;
@@ -146,14 +150,18 @@ export default {
           throw err;
         });
     },
-    reset(credentials = this.credentials) {
+    reset() {
       this.authLoading = true;
       this.authError = null;
 
       return firebase.auth()
-        .sendPasswordResetEmail(credentials.email)
+        .sendPasswordResetEmail(this.credentials.email)
         .then(() => {
           this.authLoading = false;
+          this.credentials = {};
+
+          // alert user
+          this.authMessage = 'Success! Check your email inbox for instructions to reset your password.';
         })
         .catch((err) => {
           this.authLoading = false;
@@ -161,10 +169,6 @@ export default {
 
           throw err;
         });
-    },
-
-    handlePasswordReset() {
-      this.authMessage = 'Success! Check your email inbox for instructions to reset your password.';
     },
   },
 };

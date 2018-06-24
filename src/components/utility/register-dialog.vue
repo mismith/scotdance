@@ -4,7 +4,7 @@
     :md-fullscreen="false"
     class="register-dialog"
   >
-    <form @submit.prevent="register(credentials).then(() => (registerVisible = false))">
+    <form @submit.prevent="register()">
       <div class="md-dialog-content">
         <md-field>
           <label>Email</label>
@@ -65,7 +65,6 @@ export default {
       },
       authLoading: false,
       authError: undefined,
-      authMessage: undefined,
     };
   },
   computed: {
@@ -86,17 +85,21 @@ export default {
     },
   },
   methods: {
-    register(credentials = this.credentials) {
+    register() {
       this.authLoading = true;
       this.authError = null;
 
       return firebase.auth()
-        .createUserWithEmailAndPassword(credentials.email, credentials.password)
+        .createUserWithEmailAndPassword(this.credentials.email, this.credentials.password)
         .then((me) => {
           this.authLoading = false;
+          this.credentials = {};
 
           // add to db
           db.child('users').child(me.uid).set(me.providerData[0]);
+
+          // close dialog
+          this.registerVisible = false;
         })
         .catch((err) => {
           this.authLoading = false;
