@@ -64,7 +64,10 @@ export default new Vuex.Store({
   actions: {
     auth: firebaseAction(({ bindFirebaseRef, state }, { meRef, myFavoritesRef }) => {
       bindFirebaseRef('me', meRef, {
-        readyCallback() {
+        async readyCallback() {
+          // await this.me
+          await Vue.nextTick();
+
           // flush post-login callbacks
           state.postLoginCallbacks.forEach(callback => callback());
           state.postLoginCallbacks = [];

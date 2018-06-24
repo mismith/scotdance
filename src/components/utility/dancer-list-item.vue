@@ -56,20 +56,22 @@ export default {
     ]),
   },
   methods: {
-    handleFavoriteToggle(dancer, force = undefined) {
+    handleFavoriteToggle(dancer) {
+      const setFavorite = to => db
+        .child('users:favorites')
+        .child(this.me[idKey])
+        .child('dancers')
+        .child(dancer[idKey])
+        .set(to);
+
       if (this.me) {
         const toggled = dancer.$favorite ? null : true;
-        return db
-          .child('users:favorites')
-          .child(this.me[idKey])
-          .child('dancers')
-          .child(dancer[idKey])
-          .set(force !== undefined ? force : toggled);
+        return setFavorite(toggled);
       }
 
       // 'store' dancer for favoriting post-auth...
       this.$store.commit('addPostLoginCallback', () => {
-        this.handleFavoriteToggle(dancer, true);
+        setFavorite(true);
       });
 
       // ...while opening dialog to inform user about favorites functionality
