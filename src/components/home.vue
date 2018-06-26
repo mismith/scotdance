@@ -25,7 +25,7 @@
       </div>
     </section>
 
-    <section id="features" class="alt">
+    <section id="about" class="alt">
       <header>
         <h2 class="md-display-1">A virtual program of events</h2>
         <p class="md-subheading">Modernize your highland dancing experience by interacting with competition information digitally.</p>
@@ -52,9 +52,21 @@
       </footer>
     </section>
 
-    <section id="about">
+    <section id="faq">
       <header>
-        <h2 class="md-display-1">About</h2>
+        <h2 class="md-display-1">FAQs</h2>
+        <dl>
+          <template v-for="faq in faqs">
+            <dt :key="faq.question" v-html="faq.question" class="md-title" />
+            <dd :key="faq.answer" v-html="faq.answer" />
+          </template>
+        </dl>
+      </header>
+    </section>
+
+    <section id="tech" class="alt">
+      <header>
+        <h2 class="md-display-1">Tech</h2>
         <p>ScotDance was started in 2017 by <a href="https://mismith.io" target="_blank" class="ext">Murray Smith</a></p>
         <p>View the source code on <a href="https://github.com/mismith/scotdance" target="_blank" class="ext">GitHub</a></p>
         <p>Track development via <a href="https://trello.com/b/ZCZ8t1fH" target="_blank" class="ext">Trello</a></p>
@@ -70,9 +82,15 @@ import {
   mapState,
   mapActions,
 } from 'vuex';
+import {
+  db,
+} from '@/helpers/firebase';
 
 export default {
   name: 'home',
+  firebase: {
+    faqs: db.child('faqs'),
+  },
   computed: {
     ...mapState([
       '$package',
@@ -131,6 +149,21 @@ export default {
   #about {
     a {
       white-space: nowrap;
+    }
+  }
+  #faq {
+    dl {
+      max-width: 768px;
+      text-align: left;
+      margin: 0 auto;
+
+      dt,
+      dd {
+        margin: 12px 0;
+      }
+      dt {
+        margin-top: 24px;
+      }
     }
   }
 }

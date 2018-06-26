@@ -13,6 +13,10 @@
         ".read": true,
         ".write": "root.child($environment).child('users').child(auth.uid).child('admin').val() === true" // is ADMIN
       },
+      "faqs": {
+        ".read": true,
+        ".write": "root.child($environment).child('users').child(auth.uid).child('admin').val() === true" // is ADMIN
+      },
       "users": {
         "$userId": {
           ".read": "auth != null && auth.uid === $userId", // is SELF
