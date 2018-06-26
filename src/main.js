@@ -92,6 +92,13 @@ Vue.prototype.$scrollAll = $scrollAll;
 })();
 
 // app / devices
+store.commit('setPackage', $package);
+const startSessionStack = () => {
+  if (window.SessionStack && (!window.device || (window.device && !window.device.isVirtual))) {
+    window.SessionStack.start();
+    window.SessionStack.log(`${store.state.$device.platform || ''} App v${store.state.$package.version || '?'}`);
+  }
+};
 Vue.prototype.isApp = window.location.protocol === 'file:';
 if (Vue.prototype.isApp) {
   // allow loading cordova plugins
@@ -102,12 +109,11 @@ if (Vue.prototype.isApp) {
 
   // once cordova plugins are ready
   document.addEventListener('deviceready', () => {
-    store.commit('setDevice', window.device);
     window.navigator.splashscreen.hide();
     window.StatusBar.show();
-    if (!window.device.isVirtual && window.SessionStack) {
-      window.SessionStack.start();
-    }
+
+    store.commit('setDevice', window.device);
+    startSessionStack();
   });
 
   // scroll to top on status bar tap
@@ -127,12 +133,8 @@ if (Vue.prototype.isApp) {
     });
   });
 } else if (!/localhost/.test(window.location.hostname)) {
-  if (window.SessionStack) {
-    window.SessionStack.start();
-    window.SessionStack.log(`${window.device.platform || ''} App v${$package.version || '?'}`);
-  }
+  startSessionStack();
 }
-store.commit('setPackage', $package);
 
 // monitor user auth
 firebase.auth().onAuthStateChanged((me) => {
