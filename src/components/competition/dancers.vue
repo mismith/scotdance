@@ -70,9 +70,20 @@
               </md-list-item-cards>
             </md-list>
             <md-empty-state
-              v-else
+              v-else-if="!onlyFavorites"
               md-icon="error_outline"
               md-label="No dancers match"
+            />
+            <md-empty-state
+              v-else-if="me"
+              md-icon="star_half"
+              md-label="No favourite dancers"
+            />
+            <md-empty-state
+              v-else
+              md-icon="star_half"
+              md-label="No favourite dancers"
+              md-description="Login to highlight your favourites–making them much easier to find"
             />
           </div>
         </div>
@@ -208,7 +219,7 @@ export default {
 
     isGroupExpanded(itemId, itemIds) {
       // searching, so expand all groups
-      if (this.filterBy) return true;
+      if (this.filterBy || this.onlyFavorites) return true;
 
       return isExpanded(this.dancersExpandedGroups[this.sortBy], itemId, itemIds);
     },
