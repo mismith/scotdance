@@ -1,7 +1,7 @@
 <template>
   <div class="competition-schedule blades md-scroll-frame alt">
     <transition :name="`slide-${currentEvent ? 'left' : 'right'}`">
-      <div v-if="!currentEvent" key="list" class="md-scroll-frame">
+      <div v-if="!currentEvent" key="list" class="blade md-scroll-frame">
         <div v-if="schedule.days" v-persist-scroll="$route.fullPath" class="md-scroll-frame md-scroll">
           <div v-for="(day, dayId) in schedule.days" :key="dayId">
             <md-subheader class="md-title">
