@@ -46,7 +46,7 @@
         <md-list-item-cards v-if="volunteers.length" md-expand md-expanded>
           <md-subheader>Volunteers</md-subheader>
 
-          <ul slot="md-expand">
+          <ul slot="md-expand" class="md-layout long-list">
             <li
               v-for="member of volunteers"
               :key="member[idKey]"
@@ -120,6 +120,16 @@ export default {
 
         > * {
           white-space: nowrap;
+        }
+      }
+
+      &.long-list {
+        display: block;
+        padding: 16px;
+
+        li {
+          display: block;
+          padding: 0;
         }
       }
     }
