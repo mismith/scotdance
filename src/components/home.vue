@@ -140,16 +140,11 @@ export default {
       }
     }
   }
-  #features {
+  #about {
     .md-layout {
       .md-layout-item {
         padding: 20px;
       }
-    }
-  }
-  #about {
-    a {
-      white-space: nowrap;
     }
   }
   #faq {
@@ -165,6 +160,11 @@ export default {
       dt {
         margin-top: 24px;
       }
+    }
+  }
+  #tech {
+    a {
+      white-space: nowrap;
     }
   }
 }
