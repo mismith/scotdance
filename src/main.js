@@ -112,7 +112,7 @@ if (Vue.prototype.isApp) {
     window.navigator.splashscreen.hide();
     window.StatusBar.show();
 
-    store.commit('setDevice', window.device);
+    if (window.device) store.commit('setDevice', window.device);
     startSessionStack();
   });
 
