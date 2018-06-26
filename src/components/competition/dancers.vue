@@ -188,7 +188,7 @@ export default {
 
       // filter by search term
       if (this.filterBy && filtered.length) {
-        const searchKeys = this.sortableBys.map(({ key, searchKey }) => searchKey || key);
+        const searchKeys = this.sortableBys.map(({ key, searchKey }) => searchKey || key).concat(['$name']);
         filtered = new Fuse(filtered, {
           keys: searchKeys,
           threshold: 0.33,
