@@ -7,13 +7,40 @@
         class="blade md-scroll-frame md-scroll"
         key="list"
       >
-        <results-list
-          v-if="groups.length"
-          :groups="groups"
-          :dances="dances"
-          :dancers="dancers"
-          :results="results"
-        />
+        <md-list v-if="groupedCategories.length" class="md-list-cards">
+          <md-list-item-cards
+            v-for="category in groupedCategories"
+            :key="category[idKey]"
+            md-expand
+            :md-expanded="isCategoryExpanded(category, groupedCategories)"
+            @toggled="handleCategoryExpanded(category[idKey], $event)"
+          >
+            <md-subheader>
+              <span>{{ category.name }}</span>
+              <md-icon v-if="hasFavorites(dancers.filter(dancer => dancer.$group.categoryId === category[idKey]))" class="md-accent">
+                star
+              </md-icon>
+              <md-icon v-if="checkCategoryGroups(category, group => results[group[idKey]])" class="md-primary" style="margin-left: auto; margin-right: -16px;">
+                {{ checkCategoryGroups(category, group => !results[group[idKey]] || isInProgress(group, dances, results)) ? 'check_circle_outline' : 'check_circle' }}
+              </md-icon>
+              <!-- <md-icon v-if="results[group[idKey]]" class="md-primary" style="margin-left: auto; margin-right: -16px;">
+                {{ isInProgress(group, dances, results) ? 'check_circle_outline' : 'check_circle' }}
+              </md-icon> -->
+            </md-subheader>
+
+            <md-list slot="md-expand">
+              <result-list-item
+                v-for="group in category.$groups"
+                :key="group[idKey]"
+                :to="{ params: { groupId: group[idKey] } }"
+                :dancers="findPlacedDancers(group, callbacks, dancers, results)"
+                :has-placeholder-dancers="isInProgress(group, dances, results)"
+              >
+                {{ group.name }}
+              </result-list-item>
+            </md-list>
+          </md-list-item-cards>
+        </md-list>
         <md-empty-state
           v-else
           md-icon="clear"
@@ -69,17 +96,19 @@
 </template>
 
 <script>
-import ResultsList from '@/components/utility/results-list';
+import ResultListItem from '@/components/utility/result-list-item';
 import PlacedDancerList from '@/components/utility/placed-dancer-list';
 import {
   idKey,
 } from '@/helpers/firebase';
 import {
   findByIdKey,
+  hasFavorites,
 } from '@/helpers/competition';
 import {
   overall,
   callbacks,
+  isInProgress,
   findGroupDances,
   findPlacedDancers,
   hasOverall,
@@ -99,11 +128,16 @@ export default {
       required: true,
     },
     dancers: Array,
+    categories: Array,
     groups: Array,
     dances: Array,
     results: Object,
   },
   localStorage: {
+    resultsExpandedCategories: {
+      type: Object,
+      default: {},
+    },
     resultsExpandedDances: {
       type: Object,
       default: {}, // { [groupId]: {}, ... }
@@ -136,16 +170,17 @@ export default {
       }
       return null;
     },
-    currentDances() {
-      if (this.currentGroup) {
-        return findGroupDances(this.currentGroup, this.dances);
-      }
-      return [];
+
+    groupedCategories() {
+      return this.categories.map(category => ({
+        ...category,
+        $groups: this.groups.filter(group => group.categoryId === category[idKey]),
+      }));
     },
     groupedDancers() {
       const groups = [
         callbacks,
-        ...this.currentDances,
+        ...(this.currentGroup ? findGroupDances(this.currentGroup, this.dances) : []),
       ];
 
       if (hasOverall(this.currentGroup)) {
@@ -177,6 +212,25 @@ export default {
     },
   },
   methods: {
+    hasFavorites,
+    isInProgress,
+    findPlacedDancers,
+
+    checkCategoryGroups(category, check = () => {}) {
+      return this.groups
+        .filter(group => group.categoryId === category[idKey])
+        .some(check);
+    },
+
+    isCategoryExpanded(item, items) {
+      const itemIds = items.map(i => i[idKey]);
+      return isExpanded(this.resultsExpandedCategories, item[idKey], itemIds, true);
+    },
+    handleCategoryExpanded(categoryId, expanded) {
+      this.resultsExpandedCategories = handleExpanded(this.resultsExpandedCategories, categoryId, expanded);
+      this.$localStorage.set('resultsExpandedCategories', this.resultsExpandedCategories);
+    },
+
     isDanceExpanded(item, items) {
       const itemIds = items.map(i => i[idKey]);
       return isExpanded(this.resultsExpandedDances[this.groupId], item[idKey], itemIds, true);
@@ -191,7 +245,7 @@ export default {
     },
   },
   components: {
-    ResultsList,
+    ResultListItem,
     PlacedDancerList,
   },
 };

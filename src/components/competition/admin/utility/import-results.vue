@@ -105,7 +105,7 @@
 <script>
 import HTMLParser from 'fast-html-parser';
 import Fuse from 'fuse.js';
-import ResultsList from '@/components/utility/results-list';
+import ResultsList from '@/components/competition/admin/utility/results-list';
 import PlacedDancerList from '@/components/utility/placed-dancer-list';
 import {
   idKey,
