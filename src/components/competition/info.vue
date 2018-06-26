@@ -15,40 +15,18 @@
       </section>
 
       <md-list v-if="staff.length" class="staff md-list-cards">
-        <md-list-item-cards v-if="judges.length" md-expand md-expanded>
-          <md-subheader>Judges</md-subheader>
+        <md-list-item-cards
+          v-for="(group, name) in groupedStaff"
+          :key="name"
+          md-expand
+          :md-expanded="isGroupExpanded(name, Object.keys(groupedStaff))"
+          @toggled="handleGroupExpanded(name, $event)"
+        >
+          <md-subheader>{{ name }}s</md-subheader>
 
-          <ul slot="md-expand" class="md-layout">
+          <ul slot="md-expand" class="md-layout" :class="{ 'long-list': group.length > 10 }">
             <li
-              v-for="member of judges"
-              :key="member[idKey]"
-              class="md-layout-item"
-            >
-              <div>{{ member.$name }}</div>
-              <small>{{ member.location }}</small>
-            </li>
-          </ul>
-        </md-list-item-cards>
-        <md-list-item-cards v-if="pipers.length" md-expand md-expanded>
-          <md-subheader>Pipers</md-subheader>
-
-          <ul slot="md-expand" class="md-layout">
-            <li
-              v-for="member of pipers"
-              :key="member[idKey]"
-              class="md-layout-item"
-            >
-              <div>{{ member.$name }}</div>
-              <small>{{ member.location }}</small>
-            </li>
-          </ul>
-        </md-list-item-cards>
-        <md-list-item-cards v-if="volunteers.length" md-expand md-expanded>
-          <md-subheader>Volunteers</md-subheader>
-
-          <ul slot="md-expand" class="md-layout long-list">
-            <li
-              v-for="member of volunteers"
+              v-for="member of group"
               :key="member[idKey]"
               class="md-layout-item"
             >
@@ -70,9 +48,14 @@
 </template>
 
 <script>
+import groupBy from 'lodash.groupby';
 import {
   idKey,
 } from '@/helpers/firebase';
+import {
+  isExpanded,
+  handleExpanded,
+} from '@/helpers/router';
 
 export default {
   name: 'competition-info',
@@ -80,20 +63,29 @@ export default {
     competition: Object,
     staff: Array,
   },
+  localStorage: {
+    infoExpandedGroups: {
+      type: Object,
+      default: {},
+    },
+  },
   data() {
     return {
       idKey,
     };
   },
   computed: {
-    judges() {
-      return this.staff.filter(staff => staff.type === 'Judge');
+    groupedStaff() {
+      return groupBy(this.staff, 'type');
     },
-    pipers() {
-      return this.staff.filter(staff => staff.type === 'Piper');
+  },
+  methods: {
+    isGroupExpanded(groupName, groupNames) {
+      return isExpanded(this.infoExpandedGroups, groupName, groupNames, true);
     },
-    volunteers() {
-      return this.staff.filter(staff => staff.type === 'Volunteer');
+    handleGroupExpanded(groupName, expanded) {
+      this.infoExpandedGroups = handleExpanded(this.infoExpandedGroups, groupName, expanded);
+      this.$localStorage.set('infoExpandedGroups', this.infoExpandedGroups);
     },
   },
 };
