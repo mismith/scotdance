@@ -55,12 +55,13 @@
     <section id="faq">
       <header>
         <h2 class="md-display-1">FAQs</h2>
-        <dl>
+        <dl v-if="faqs.length">
           <template v-for="faq in faqs">
             <dt :key="faq.question" v-html="faq.question" class="md-title" />
             <dd :key="faq.answer" v-html="faq.answer" />
           </template>
         </dl>
+        <mi-md-spinner v-else />
       </header>
     </section>
 
