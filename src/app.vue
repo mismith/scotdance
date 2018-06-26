@@ -442,17 +442,6 @@ body,
   > .md-list-item {
     flex-shrink: 0;
 
-    .badge {
-      line-height: 1.2;
-      background-color: rgba(0,0,0,.2);
-      color: #FFF;
-      font-size: .85em;
-      padding: 2px 6px;
-      margin-right: 12px;
-      border-radius: 10px;
-      opacity: 1;
-      transition: opacity 300ms;
-    }
     .md-list-item-container {
       .md-list-item-content {
         .md-subheader {
@@ -462,6 +451,12 @@ body,
           .md-icon {
             font-size: 14px;
             margin-left: 4px;
+
+            &.summary-icon {
+              margin-left: auto;
+              margin-right: -16px;
+              transition: opacity .3s;
+            }
           }
           ~ .md-list-expand-indicator {
             flex: 0;
@@ -472,8 +467,10 @@ body,
         display: inline-block;
         text-overflow: ellipsis;
       }
-      &:not(.md-active) {
-        .badge {
+    }
+    &.md-active {
+      .md-icon {
+        &.summary-icon {
           opacity: 0;
         }
       }

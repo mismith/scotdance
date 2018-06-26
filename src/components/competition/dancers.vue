@@ -57,7 +57,6 @@
                   {{ groupId || '?' }}
                   <md-icon v-if="hasFavorites(group)" class="md-accent">star</md-icon>
                 </md-subheader>
-                <!--<span class="badge">{{ group.length }}</span>-->
 
                 <md-list slot="md-expand" class="md-double-line">
                   <dancer-list-item

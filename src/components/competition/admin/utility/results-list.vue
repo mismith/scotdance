@@ -12,7 +12,7 @@
         <md-icon v-if="hasFavorites(findGroupDancers(group, dancers))" class="md-accent">
           star
         </md-icon>
-        <md-icon v-if="results[group[idKey]]" class="md-primary" style="margin-left: auto; margin-right: -16px;">
+        <md-icon v-if="results[group[idKey]]" class="md-primary summary-icon">
           {{ isInProgress(group, dances, results) ? 'check_circle_outline' : 'check_circle' }}
         </md-icon>
       </md-subheader>

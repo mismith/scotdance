@@ -20,7 +20,7 @@
               <md-icon v-if="hasFavorites(dancers.filter(dancer => dancer.$group.categoryId === category[idKey]))" class="md-accent">
                 star
               </md-icon>
-              <md-icon v-if="checkCategoryGroups(category, group => results[group[idKey]])" class="md-primary" style="margin-left: auto; margin-right: -16px;">
+              <md-icon v-if="checkCategoryGroups(category, group => results[group[idKey]])" class="md-primary summary-icon">
                 {{ checkCategoryGroups(category, group => !results[group[idKey]] || isInProgress(group, dances, results)) ? 'check_circle_outline' : 'check_circle' }}
               </md-icon>
               <!-- <md-icon v-if="results[group[idKey]]" class="md-primary" style="margin-left: auto; margin-right: -16px;">
@@ -37,6 +37,9 @@
                 :has-placeholder-dancers="isInProgress(group, dances, results)"
               >
                 {{ group.name }}
+                <md-icon v-if="checkCategoryGroups(category, group => results[group[idKey]])" class="md-primary summary-icon">
+                  {{ checkCategoryGroups(category, group => !results[group[idKey]] || isInProgress(group, dances, results)) ? 'check_circle_outline' : 'check_circle' }}
+                </md-icon>
               </result-list-item>
             </md-list>
           </md-list-item-cards>
