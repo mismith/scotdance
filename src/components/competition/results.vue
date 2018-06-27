@@ -83,7 +83,10 @@
                 </md-list-item>
 
                 <md-divider v-if="currentGroup.sponsor && dance[idKey] === overall[idKey]" />
-                <md-list-item v-if="currentGroup.sponsor && dance[idKey] === overall[idKey]">
+                <md-list-item
+                  v-if="currentGroup.sponsor && dance[idKey] === overall[idKey]"
+                  @click="showTrophy = true"
+                >
                   <div class="md-list-item-text">
                     <div>{{ currentGroup.sponsor }}</div>
                     <div>{{ currentGroup.trophy || '' }} Trophy Sponsor</div>
@@ -92,6 +95,16 @@
               </placed-dancer-list>
             </md-list-item-cards>
           </md-list>
+
+          <md-dialog :md-active.sync="showTrophy" :md-fullscreen="false" class="trophy-dialog">
+            <header>
+              <md-subheader class="md-title">{{ currentGroup.sponsor }}</md-subheader>
+              <div class="md-padding pre-line">{{ currentGroup.trophy || '' }} Trophy Sponsor</div>
+            </header>
+            <md-dialog-actions>
+              <md-button @click="showTrophy = false" class="md-primary">Done</md-button>
+            </md-dialog-actions>
+          </md-dialog>
         </div>
       </div>
     </transition>
@@ -153,6 +166,7 @@ export default {
       callbacks,
 
       scrollTimeout: undefined,
+      showTrophy: false,
     };
   },
   computed: {
