@@ -96,7 +96,7 @@ store.commit('setPackage', $package);
 const startSessionStack = () => {
   if (window.SessionStack && (!window.device || (window.device && !window.device.isVirtual))) {
     window.SessionStack.start();
-    window.SessionStack.log(`${store.state.$device.platform || ''} App v${store.state.$package.version || '?'}`);
+    window.SessionStack.log(`${(store.state.$device && store.state.$device.platform) || ''} App v${store.state.$package.version || '?'}`);
   }
 };
 Vue.prototype.isApp = window.location.protocol === 'file:';

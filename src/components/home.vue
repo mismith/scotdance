@@ -72,7 +72,7 @@
         <p>View the source code on <a href="https://github.com/mismith/scotdance" target="_blank" class="ext">GitHub</a></p>
         <p>Track development via <a href="https://trello.com/b/ZCZ8t1fH" target="_blank" class="ext">Trello</a></p>
         <p>Get support via <a @click.prevent="help(true)">Live Chat</a></p>
-        <p><small>{{ $device.platform || '' }} App v{{ $package.version || '?' }}</small></p>
+        <p><small>{{ ($device && $device.platform) || '' }} App v{{ $package.version || '?' }}</small></p>
       </header>
     </section>
   </div>
