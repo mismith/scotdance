@@ -17,7 +17,7 @@
           >
             <md-subheader>
               <span>{{ category.name }}</span>
-              <md-icon v-if="hasFavorites(dancers.filter(dancer => dancer.$group.categoryId === category[idKey]))" class="md-accent">
+              <md-icon v-if="hasFavorites(findCategoryDancers(category, dancers))" class="md-accent">
                 star
               </md-icon>
               <results-progress-indicator
@@ -125,6 +125,7 @@ import {
   isInProgress,
   findGroupDances,
   findGroupDancers,
+  findCategoryDancers,
   findPlacedDancers,
   hasOverall,
 } from '@/helpers/results';
@@ -231,6 +232,7 @@ export default {
     hasFavorites,
     isInProgress,
     findGroupDancers,
+    findCategoryDancers,
     findPlacedDancers,
 
     isCategoryExpanded(item, items) {

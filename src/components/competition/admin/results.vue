@@ -73,7 +73,6 @@ import {
 } from '@/helpers/firebase';
 import {
   findByIdKey,
-  hasFavorites,
 } from '@/helpers/competition';
 import {
   overall,
@@ -139,7 +138,6 @@ export default {
     },
   },
   methods: {
-    hasFavorites,
     getPlaceholderDancer,
     isPlaced,
 

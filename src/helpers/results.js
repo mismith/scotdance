@@ -34,11 +34,14 @@ export function hasPlaceholderDancers(groupId, danceId, results = {}) {
   }
 }
 
-export function findGroupDancers(group, dancers = []) {
-  return dancers.filter(dancer => dancer.groupId === group[idKey]);
+export function findCategoryDancers(category, dancers = []) {
+  return dancers.filter(dancer => dancer.$group && dancer.$group.categoryId === category[idKey]);
 }
 export function findGroupDances(group, dances = []) {
   return dances.filter(dance => dance.groupIds && dance.groupIds[group[idKey]]);
+}
+export function findGroupDancers(group, dancers = []) {
+  return dancers.filter(dancer => dancer.groupId === group[idKey]);
 }
 export function findPlacedDancers(group, dance, dancers = [], results = {}, sortByNumber = false) {
   // get ranked dancerIds
