@@ -470,13 +470,6 @@ body,
         text-overflow: ellipsis;
       }
     }
-    &.md-active {
-      .md-icon {
-        &.summary-icon {
-          opacity: 0;
-        }
-      }
-    }
     &.active {
       background-color: var(--md-theme-default-primary) !important;
 

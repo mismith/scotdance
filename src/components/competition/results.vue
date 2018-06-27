@@ -20,12 +20,12 @@
               <md-icon v-if="hasFavorites(dancers.filter(dancer => dancer.$group.categoryId === category[idKey]))" class="md-accent">
                 star
               </md-icon>
-              <md-icon v-if="checkCategoryGroups(category, group => results[group[idKey]])" class="md-primary summary-icon">
-                {{ checkCategoryGroups(category, group => !results[group[idKey]] || isInProgress(group, dances, results)) ? 'check_circle_outline' : 'check_circle' }}
-              </md-icon>
-              <!-- <md-icon v-if="results[group[idKey]]" class="md-primary" style="margin-left: auto; margin-right: -16px;">
-                {{ isInProgress(group, dances, results) ? 'check_circle_outline' : 'check_circle' }}
-              </md-icon> -->
+              <results-progress-indicator
+                :category="category"
+                :groups="groups"
+                :dances="dances"
+                :results="results"
+              />
             </md-subheader>
 
             <md-list slot="md-expand">
@@ -37,9 +37,6 @@
                 :has-placeholder-dancers="isInProgress(group, dances, results)"
               >
                 {{ group.name }}
-                <md-icon v-if="checkCategoryGroups(category, group => results[group[idKey]])" class="md-primary summary-icon">
-                  {{ checkCategoryGroups(category, group => !results[group[idKey]] || isInProgress(group, dances, results)) ? 'check_circle_outline' : 'check_circle' }}
-                </md-icon>
               </result-list-item>
             </md-list>
           </md-list-item-cards>
@@ -114,6 +111,7 @@
 <script>
 import ResultListItem from '@/components/utility/result-list-item';
 import PlacedDancerList from '@/components/utility/placed-dancer-list';
+import ResultsProgressIndicator from '@/components/utility/results-progress-indicator';
 import {
   idKey,
 } from '@/helpers/firebase';
@@ -126,6 +124,7 @@ import {
   callbacks,
   isInProgress,
   findGroupDances,
+  findGroupDancers,
   findPlacedDancers,
   hasOverall,
 } from '@/helpers/results';
@@ -231,13 +230,8 @@ export default {
   methods: {
     hasFavorites,
     isInProgress,
+    findGroupDancers,
     findPlacedDancers,
-
-    checkCategoryGroups(category, check = () => {}) {
-      return this.groups
-        .filter(group => group.categoryId === category[idKey])
-        .some(check);
-    },
 
     isCategoryExpanded(item, items) {
       const itemIds = items.map(i => i[idKey]);
@@ -264,6 +258,7 @@ export default {
   components: {
     ResultListItem,
     PlacedDancerList,
+    ResultsProgressIndicator,
   },
 };
 </script>
