@@ -1,11 +1,18 @@
 <template>
   <div class="dancer-report">
-    <md-list class="md-double-line md-list-cards">
-      <dancer-list-item
-        :key="dancer[idKey]"
-        :dancer="dancer"
-      />
-    </md-list>
+    <header>
+      <md-subheader class="md-title">
+        <span>{{ dancer.$name }}</span>
+        <favorite-dancer-button :dancer="dancer" />
+      </md-subheader>
+      <div class="md-padding">
+        <span class="group">#{{ dancer.number }}</span>
+        •
+        <span class="group">{{ dancer.$group && dancer.$group.$name }}</span>
+        •
+        <span class="location">{{ dancer.location }}</span>
+      </div>
+    </header>
     <md-list v-if="group" class="md-list-cards">
       <!--<md-list-item-cards md-expand :md-expanded="true">
         <md-subheader>Schedule</md-subheader>
@@ -46,7 +53,7 @@
 </template>
 
 <script>
-import DancerListItem from '@/components/utility/dancer-list-item';
+import FavoriteDancerButton from '@/components/utility/favorite-dancer-button';
 import ResultListItem from '@/components/utility/result-list-item';
 import {
   idKey,
@@ -98,7 +105,7 @@ export default {
     },
   },
   components: {
-    DancerListItem,
+    FavoriteDancerButton,
     ResultListItem,
   },
 };
@@ -106,6 +113,8 @@ export default {
 
 <style lang="scss">
 .dancer-report {
-
+  .md-title {
+    flex-wrap: nowrap;
+  }
 }
 </style>
