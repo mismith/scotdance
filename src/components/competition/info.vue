@@ -24,11 +24,10 @@
         >
           <md-subheader>{{ name }}s</md-subheader>
 
-          <ul slot="md-expand" class="md-layout" :class="{ 'long-list': group.length > 10 }">
+          <ul slot="md-expand" :class="{ 'long-list': group.length > 12 }">
             <li
               v-for="member of group"
               :key="member[idKey]"
-              class="md-layout-item"
             >
               <div>{{ member.$name }}</div>
               <small>{{ member.location }}</small>
