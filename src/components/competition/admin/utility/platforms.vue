@@ -1,7 +1,7 @@
 <template>
   <div class="admin-platforms" :class="{ interactive: admin }">
     <div v-if="platforms.length" class="pools">
-      <div v-for="pool in pools" :key="pool[idKey]" class="pool">
+      <div v-for="pool in pools" :key="pool[idKey]" class="pool" :class="{ empty: !pool.$items.length }">
         <md-subheader>{{ pool.$name || pool.name }}</md-subheader>
 
         <draggable
@@ -237,6 +237,12 @@ export default {
     .pools {
       animation: bounce-in 300ms 150ms ease-in forwards;
       opacity: 0;
+
+      .pool {
+        &.empty {
+          display: none;
+        }
+      }
     }
   }
   &.interactive {
