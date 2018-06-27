@@ -7,6 +7,11 @@
             <md-subheader class="md-title">
               <span>{{ day.name || $moment(day.date).format('dddd') }}</span>
             </md-subheader>
+            <div
+              v-if="day.description"
+              v-html="day.description"
+              class="md-padding pre-line"
+            />
 
             <md-list class="md-list-cards">
               <md-list-item-cards
@@ -18,7 +23,7 @@
               >
                 <md-subheader>
                   <div>{{ block.name }}</div>
-                  <div class="md-caption">{{ block.description }}</div>
+                  <div class="md-caption">{{ textify(block.description) }}</div>
                 </md-subheader>
 
                 <md-list slot="md-expand" class="md-double-line">
@@ -30,9 +35,9 @@
                   >
                     <div class="md-list-item-text">
                       <div>{{ event.name }}</div>
-                      <div>{{ event.description }}</div>
+                      <div>{{ textify(event.description) }}</div>
                     </div>
-                    <md-icon v-if="event.dances">chevron_right</md-icon>
+                    <md-icon v-if="event.dances || event.description">chevron_right</md-icon>
                   </md-list-item>
                   <md-list-item v-if="!block.events" class="empty">
                     No events found.
@@ -61,12 +66,14 @@
         </md-toolbar>
 
         <div v-persist-scroll="$route.fullPath" class="md-scroll-frame md-scroll">
-          <md-subheader class="md-title">{{ currentEvent.name }}</md-subheader>
-          <div
-            v-if="currentEvent.description"
-            v-html="currentEvent.description"
-            class="md-padding"
-          />
+          <header>
+            <md-subheader class="md-title">{{ currentEvent.name }}</md-subheader>
+            <div
+              v-if="currentEvent.description"
+              v-html="currentEvent.description"
+              class="md-padding pre-line"
+            />
+          </header>
 
           <md-list class="md-list-cards">
             <md-list-item-cards
@@ -78,7 +85,11 @@
             >
               <md-subheader>
                 <div>{{ getScheduleItemDanceName(dance, dances) }}</div>
-                <div v-if="dance.description" class="md-caption">{{ dance.description }}</div>
+                <div
+                  v-if="dance.description"
+                  v-html="dance.description"
+                  class="md-caption"
+                />
               </md-subheader>
 
               <md-content slot="md-expand" class="md-elevation-1">
@@ -102,6 +113,7 @@
 <script>
 import AdminPlatforms from '@/components/competition/admin/utility/platforms';
 import {
+  textify,
   getScheduleItemDanceName,
 } from '@/helpers/competition';
 import {
@@ -164,6 +176,7 @@ export default {
   },
   methods: {
     getScheduleItemDanceName,
+    textify,
 
     isActive(dayId, blockId, eventId) {
       return this.dayId === dayId && this.blockId === blockId && this.eventId === eventId;

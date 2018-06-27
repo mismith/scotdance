@@ -6,11 +6,9 @@
         <favorite-dancer-button :dancer="dancer" />
       </md-subheader>
       <div class="md-padding">
-        <span class="group">#{{ dancer.number }}</span>
-        •
-        <span class="group">{{ dancer.$group && dancer.$group.$name }}</span>
-        •
-        <span class="location">{{ dancer.location }}</span>
+        <div class="number">#{{ dancer.number }}</div>
+        <div class="group">{{ dancer.$group && dancer.$group.$name }}</div>
+        <div class="location">{{ dancer.location }}</div>
       </div>
     </header>
     <md-list v-if="group" class="md-list-cards">

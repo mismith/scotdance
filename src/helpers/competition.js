@@ -34,6 +34,10 @@ export function danceExtender(dance) {
   };
 }
 
+export function textify(html) {
+  return (html || '').replace(/<[^>]+?>/g, '').replace(/\n+/g, ' • ');
+}
+
 export function toggleFavoriteDancer(dancer) {
   const setFavorite = to => db
     .child('users:favorites')

@@ -635,6 +635,9 @@ body,
 .md-padding {
   padding: 12px 16px;
 }
+.pre-line {
+  white-space: pre-line;
+}
 
 // component styles
 .validation-message {
