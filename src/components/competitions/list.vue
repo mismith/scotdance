@@ -1,6 +1,6 @@
 <template>
   <div class="competitions-list md-scroll-frame alt">
-    <div v-persist-scroll="$route.fullPath" class="md-scroll-frame md-scroll">
+    <div v-if="loaded" v-persist-scroll="$route.fullPath" class="md-scroll-frame md-scroll">
       <md-list class="md-list-cards">
         <md-list-item-cards
           v-for="group in groupedCompetitions"
@@ -28,6 +28,9 @@
         md-label="No competitions found"
       />
     </div>
+    <div v-else class="md-scroll-frame spinner-container">
+      <mi-md-spinner />
+    </div>
   </div>
 </template>
 
@@ -45,6 +48,7 @@ export default {
   name: 'competitions-list',
   props: {
     competitions: Array,
+    competitionsRef: Object,
   },
   localStorage: {
     competitionsListExpandedGroups: {
@@ -55,6 +59,8 @@ export default {
   data() {
     return {
       idKey,
+
+      loaded: false,
     };
   },
   computed: {
@@ -90,6 +96,11 @@ export default {
       this.competitionsListExpandedGroups = handleExpanded(this.competitionsListExpandedGroups, groupId, expanded);
       this.$localStorage.set('competitionsListExpandedGroups', this.competitionsListExpandedGroups);
     },
+  },
+  async created() {
+    await this.competitionsRef.once('value');
+
+    this.loaded = true;
   },
   components: {
     CompetitionListItem,

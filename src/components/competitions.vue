@@ -1,15 +1,12 @@
 <template>
   <div class="competitions md-scroll-frame">
-    <keep-alive v-if="loaded">
+    <keep-alive>
       <router-view
         :competitions="competitions"
         :competitions-ref="competitionsRef"
         :competitions-data-ref="competitionsDataRef"
       />
     </keep-alive>
-    <div v-else class="md-scroll-frame spinner-container">
-      <mi-md-spinner />
-    </div>
   </div>
 </template>
 
@@ -20,16 +17,6 @@ export default {
     competitions: Array,
     competitionsRef: Object,
     competitionsDataRef: Object,
-  },
-  data() {
-    return {
-      loaded: false,
-    };
-  },
-  async created() {
-    await this.competitionsRef.once('value');
-
-    this.loaded = true;
   },
 };
 </script>
