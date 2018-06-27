@@ -1,4 +1,8 @@
-import { idKey } from '@/helpers/firebase';
+import {
+  idKey,
+  db,
+} from '@/helpers/firebase';
+import store from '@/store';
 
 export function findByIdKey(items, id) {
   return items.find(item => item[idKey] === id);
@@ -28,4 +32,26 @@ export function danceExtender(dance) {
     $name: `${name}${stepsString}`.trim(),
     $shortName: `${dance.shortName || name}${stepsString}`.trim(),
   };
+}
+
+export function toggleFavoriteDancer(dancer) {
+  const setFavorite = to => db
+    .child('users:favorites')
+    .child(store.state.me[idKey])
+    .child('dancers')
+    .child(dancer[idKey])
+    .set(to);
+
+  if (store.state.me) {
+    const toggled = dancer.$favorite ? null : true;
+    return setFavorite(toggled);
+  }
+
+  // 'store' dancer for favoriting post-auth...
+  store.commit('addPostLoginCallback', () => {
+    setFavorite(true);
+  });
+
+  // ...while opening dialog to inform user about favorites functionality
+  return store.commit('setDialogOpen', 'favorites');
 }

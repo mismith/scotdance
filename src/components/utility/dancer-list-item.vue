@@ -18,14 +18,7 @@
 
     <slot />
 
-    <md-button
-      @click.stop="handleFavoriteToggle(dancer)"
-      class="md-icon-button md-list-action"
-    >
-      <md-icon :class="{ 'md-accent': dancer.$favorite }">
-        {{ dancer.$favorite ? 'star' : 'star_border' }}
-      </md-icon>
-    </md-button>
+    <favorite-dancer-button :dancer="dancer" class="md-list-action" />
 
     <slot name="icon">
       <place v-if="place !== undefined" :place="place" />
@@ -34,14 +27,7 @@
 </template>
 
 <script>
-import {
-  mapState,
-} from 'vuex';
-import {
-  idKey,
-  db,
-} from '@/helpers/firebase';
-import AccountButtons from '@/components/utility/account-buttons';
+import FavoriteDancerButton from '@/components/utility/favorite-dancer-button';
 import Place from '@/components/utility/place';
 
 export default {
@@ -50,36 +36,8 @@ export default {
     dancer: Object,
     place: Number,
   },
-  computed: {
-    ...mapState([
-      'me',
-    ]),
-  },
-  methods: {
-    handleFavoriteToggle(dancer) {
-      const setFavorite = to => db
-        .child('users:favorites')
-        .child(this.me[idKey])
-        .child('dancers')
-        .child(dancer[idKey])
-        .set(to);
-
-      if (this.me) {
-        const toggled = dancer.$favorite ? null : true;
-        return setFavorite(toggled);
-      }
-
-      // 'store' dancer for favoriting post-auth...
-      this.$store.commit('addPostLoginCallback', () => {
-        setFavorite(true);
-      });
-
-      // ...while opening dialog to inform user about favorites functionality
-      return this.$store.commit('setDialogOpen', 'favorites');
-    },
-  },
   components: {
-    AccountButtons,
+    FavoriteDancerButton,
     Place,
   },
 };
