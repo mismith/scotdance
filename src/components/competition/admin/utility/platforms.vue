@@ -18,6 +18,7 @@
             :class="{ 'md-primary': isJudge(poolItem), 'md-accent': hasFavorites(findGroupDancers(poolItem, dancers)) }"
           >
             {{ poolItem.$name || poolItem.name }}
+            <md-icon v-if="!admin && !poolItem.type">chevron_right</md-icon>
           </md-chip>
         </draggable>
       </div>
@@ -222,10 +223,9 @@ export default {
           margin: 1px 4px;
 
           .md-icon {
-            min-width: 18px;
-            width: 18px;
-            font-size: 18px !important;
-            padding-bottom: 4px;
+            font-size: 20px !important;
+            margin-top: -1px;
+            margin-right: -8px;
           }
         }
       }
