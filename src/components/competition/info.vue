@@ -24,15 +24,17 @@
         >
           <md-subheader>{{ name }}s</md-subheader>
 
-          <ul slot="md-expand" :class="{ 'long-list': group.length > 12 }">
-            <li
+          <md-list slot="md-expand" class="md-double-line md-dense" :class="{ 'long-list': group.length > 12 }">
+            <dancer-list-item
               v-for="member of group"
               :key="member[idKey]"
+              :dancer="member"
             >
-              <div>{{ member.$name }}</div>
-              <small>{{ member.location }}</small>
-            </li>
-          </ul>
+              <md-avatar v-if="member.image" slot="icon">
+                <img :src="member.image" />
+              </md-avatar>
+            </dancer-list-item>
+          </md-list>
         </md-list-item-cards>
       </md-list>
 
@@ -48,6 +50,7 @@
 
 <script>
 import groupBy from 'lodash.groupby';
+import DancerListItem from '@/components/utility/dancer-list-item';
 import {
   idKey,
 } from '@/helpers/firebase';
@@ -87,41 +90,25 @@ export default {
       this.$localStorage.set('infoExpandedGroups', this.infoExpandedGroups);
     },
   },
+  components: {
+    DancerListItem,
+  },
 };
 </script>
 
 <style lang="scss">
 .competition-info {
-  > .md-scroll {
-    padding: 0 16px;
+  .md-scroll > section {
+    padding: 0 16px 16px;
   }
   .staff {
-    .md-list-item-content {
-      padding-left: 0;
-      padding-right: 0;
-    }
-    ul {
-      background: #fff;
-      padding: 0;
-      margin: 0;
-      list-style: none;
-
-      li {
-        padding: 16px;
-
-        > * {
-          white-space: nowrap;
-        }
+    .dancer-list-item {
+      .md-list-item-content {
+        min-height: 48px;
       }
-
-      &.long-list {
-        display: block;
-        padding: 16px;
-
-        li {
-          display: block;
-          padding: 0;
-        }
+      .md-avatar:first-child,
+      .favorite-dancer-button {
+        display: none;
       }
     }
   }

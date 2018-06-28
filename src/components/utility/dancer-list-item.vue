@@ -5,14 +5,16 @@
     class="dancer-list-item"
     :class="{ placeholder: dancer.number === '?' }"
   >
-    <md-avatar class="md-avatar-icon" :class="{ 'md-accent': dancer.$favorite }">
-      <span>{{ dancer.number || '#' }}</span>
-    </md-avatar>
+    <slot name="avatar">
+      <md-avatar class="md-avatar-icon" :class="{ 'md-accent': dancer.$favorite }">
+        <span>{{ dancer.number || '#' }}</span>
+      </md-avatar>
+    </slot>
 
     <div class="md-list-item-text">
       <span>{{ dancer.$name }}</span>
       <p>
-        <span class="group">{{ dancer.$group && dancer.$group.$name }}</span>
+        <span v-if="dancer.$group" class="group">{{ dancer.$group.$name }}</span>
         <span class="location">{{ dancer.location }}</span>
       </p>
     </div>
