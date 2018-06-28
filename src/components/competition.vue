@@ -205,7 +205,7 @@ export default {
         .catch((err) => {
           if (err.code === 'PERMISSION_DENIED') {
             // intercept this error since the app shows a 'unavailable' message itself
-            console.warn(err);
+            console.warn(err); // eslint-disable-line no-console
           } else {
             throw err;
           }
