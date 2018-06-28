@@ -20,7 +20,7 @@
         <result-list-item
           :dancers="findPlacedDancers(group, callbacks, dancers, results, true)"
           :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], callbacks[idKey], results)"
-          :to="{ params: { groupId: group[idKey], danceId: callbacks[idKey] } }"
+          :to="{ name: $route.name, params: { groupId: group[idKey], danceId: callbacks[idKey] } }"
           :class="{ active: isActive(group, callbacks) }"
         >
           {{ callbacks.$name }}
@@ -32,7 +32,7 @@
           :key="dance[idKey]"
           :dancers="findPlacedDancers(group, dance, dancers, results)"
           :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], dance[idKey], results)"
-          :to="{ params: { groupId: group[idKey], danceId: dance[idKey] } }"
+          :to="{ name: $route.name, params: { groupId: group[idKey], danceId: dance[idKey] } }"
           :class="{ active: isActive(group, dance) }"
         >
           {{ dance.$name }}
@@ -43,7 +43,7 @@
           v-if="hasOverall(group)"
           :dancers="findPlacedDancers(group, overall, dancers, results)"
           :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], overall[idKey], results)"
-          :to="{ params: { groupId: group[idKey], danceId: overall[idKey] } }"
+          :to="{ name: $route.name, params: { groupId: group[idKey], danceId: overall[idKey] } }"
           :class="{ active: isActive(group, overall) }"
         >
           {{ overall.$name }}

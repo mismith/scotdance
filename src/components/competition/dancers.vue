@@ -63,7 +63,7 @@
                     v-for="dancer in group"
                     :key="dancer[idKey]"
                     :dancer="dancer"
-                    :to="{ params: { dancerId: dancer[idKey] } }"
+                    :to="{ name: $route.name, params: { dancerId: dancer[idKey] } }"
                     :class="{ active: dancerId === dancer[idKey] }"
                   />
                 </md-list>

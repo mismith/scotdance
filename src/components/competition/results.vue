@@ -32,7 +32,7 @@
               <result-list-item
                 v-for="group in category.$groups"
                 :key="group[idKey]"
-                :to="{ params: { groupId: group[idKey] } }"
+                :to="{ name: $route.name, params: { groupId: group[idKey] } }"
                 :dancers="findPlacedDancers(group, callbacks, dancers, results)"
                 :has-placeholder-dancers="isInProgress(group, dances, results)"
               >

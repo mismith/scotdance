@@ -30,7 +30,7 @@
                   <md-list-item
                     v-for="(event, eventId) in block.events"
                     :key="eventId"
-                    :to="{ params: { dayId, blockId, eventId } }"
+                    :to="{ name: $route.name, params: { dayId, blockId, eventId } }"
                     :class="{ active: isActive(dayId, blockId, eventId) }"
                   >
                     <div class="md-list-item-text">
