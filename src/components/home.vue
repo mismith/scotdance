@@ -58,7 +58,7 @@
         <dl v-if="faqs.length">
           <template v-for="faq in faqs">
             <dt :key="faq.question" v-html="faq.question" class="md-title" />
-            <dd :key="faq.answer" v-html="faq.answer" />
+            <dd :key="faq.answer" v-html="faq.answer" class="pre-line" />
           </template>
         </dl>
         <mi-md-spinner v-else />
