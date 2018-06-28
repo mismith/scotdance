@@ -2,7 +2,11 @@ import XLSX from 'xlsx';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.css';
 import HotTable from '@handsontable/vue';
-import { idKey } from '@/helpers/firebase';
+import store from '@/store';
+import {
+  idKey,
+} from '@/helpers/firebase';
+
 
 function makeKeyValuePairColumn(column, valueProp = '$name', keyProp = idKey) {
   return {
@@ -27,9 +31,14 @@ function makeKeyValuePairColumn(column, valueProp = '$name', keyProp = idKey) {
   };
 }
 
+function isAdmin() {
+  return store.state.me && store.state.me.admin;
+}
+
 export {
   XLSX,
   Handsontable,
   HotTable,
   makeKeyValuePairColumn,
+  isAdmin,
 };

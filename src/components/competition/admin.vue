@@ -1,6 +1,6 @@
 <template>
   <div class="competition-admin md-scroll-frame">
-    <div v-if="me && me.admin" class="md-scroll-frame">
+    <div v-if="isAdmin()" class="md-scroll-frame">
       <div v-if="currentSection" class="md-scroll-frame">
         <md-toolbar class="md-dense">
           <div v-if="inTabs('info', 'categories', 'dancers', 'groups')">
@@ -127,12 +127,13 @@ import {
   mapState,
 } from 'vuex';
 import {
-  danceExtender,
-} from '@/helpers/competition';
-import {
   HotTable,
   makeKeyValuePairColumn,
+  isAdmin,
 } from '@/helpers/admin';
+import {
+  danceExtender,
+} from '@/helpers/competition';
 import {
   idKey,
   db,
@@ -264,6 +265,7 @@ export default {
     },
   },
   methods: {
+    isAdmin,
     danceExtender,
 
     async syncBottomBar() {

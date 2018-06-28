@@ -1,8 +1,8 @@
+import store from '@/store';
 import {
   idKey,
   db,
 } from '@/helpers/firebase';
-import store from '@/store';
 
 export function findByIdKey(items, id) {
   return items.find(item => item[idKey] === id);

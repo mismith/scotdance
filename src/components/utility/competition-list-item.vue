@@ -17,7 +17,7 @@
     <slot />
 
     <md-button
-      v-if="me && me.admin"
+      v-if="isAdmin()"
       :to="{ name: 'competition.admin', params: { competitionId: competition[idKey] } }"
       class="md-icon-button md-list-action"
     >
@@ -28,8 +28,8 @@
 
 <script>
 import {
-  mapState,
-} from 'vuex';
+  isAdmin,
+} from '@/helpers/admin';
 import {
   idKey,
 } from '@/helpers/firebase';
@@ -45,10 +45,8 @@ export default {
       idKey,
     };
   },
-  computed: {
-    ...mapState([
-      'me',
-    ]),
+  methods: {
+    isAdmin,
   },
 };
 </script>

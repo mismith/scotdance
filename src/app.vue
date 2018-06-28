@@ -8,7 +8,7 @@
       <router-link :to="{ name: 'competitions' }" class="md-title" style="margin-right: auto;">{{ title }}</router-link>
 
       <md-button
-        v-if="me && me.admin && $route.params.competitionId"
+        v-if="isAdmin() && $route.params.competitionId"
         :to="{ name: /^competition.admin/.test($route.name) ? 'competition.info' : 'competition.admin' }"
         class="md-icon-button"
       >
@@ -81,7 +81,7 @@
             <div>Competitions</div>
 
             <md-button
-              v-if="me && me.admin"
+              v-if="isAdmin()"
               :to="{ name: 'competition.admin', params: { competitionId: db.push().key } }"
               @click.native="closeMenu()"
               class="md-icon-button"
@@ -142,6 +142,9 @@ import {
   getTitleChunks,
 } from '@/helpers/router';
 import {
+  isAdmin,
+} from '@/helpers/admin';
+import {
   idKey,
   db,
   firebase,
@@ -177,7 +180,7 @@ export default {
           ...competition,
           $favorite: this.$store.getters.isFavorite('competitions', competition[idKey]),
         }))
-        .filter(competition => competition.listed || (this.me && this.me.admin))
+        .filter(competition => competition.listed || isAdmin())
         .sort((a, b) => this.$moment(a.date).diff(b.date)); // order chronologically
     },
     relevantCompetitions() {
@@ -237,6 +240,8 @@ export default {
     ...mapActions([
       'help',
     ]),
+
+    isAdmin,
 
     async loadFirebase() {
       this.competitionsRef = db.child('competitions');

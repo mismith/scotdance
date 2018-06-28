@@ -2,7 +2,7 @@
   <div class="competition md-scroll-frame">
     <div v-if="competitionExists" class="md-scroll-frame">
       <div v-if="loaded" class="md-scroll-frame">
-        <keep-alive v-if="(me && me.admin) || competition.published || currentTab === 'info'">
+        <keep-alive v-if="isAdmin() || competition.published || currentTab === 'info'">
           <router-view
             :competition-ref="competitionRef"
             :competition-data-ref="competitionDataRef"
@@ -65,12 +65,15 @@ import {
   mapState,
 } from 'vuex';
 import {
-  idKey,
-} from '@/helpers/firebase';
+  isAdmin,
+} from '@/helpers/admin';
 import {
   findByIdKey,
   danceExtender,
 } from '@/helpers/competition';
+import {
+  idKey,
+} from '@/helpers/firebase';
 
 export default {
   name: 'competition',
@@ -160,6 +163,8 @@ export default {
     },
   },
   methods: {
+    isAdmin,
+
     async syncBottomBar() {
       await this.$nextTick(); // await md-bottom-bar's internally queued $nextTick
       const tabId = `tab-${this.currentTab}`;
