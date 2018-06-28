@@ -100,32 +100,32 @@
                   :dancers="dancers"
                   :staff="staff"
                   :platforms="platforms"
-                  @item-click="showDraw = { group: $event, dance: findByIdKey(dances, dance.danceId) }"
+                  @item-click="setCurrentDialog(['draw', { group: $event, dance: findByIdKey(dances, dance.danceId) }])"
                 />
               </md-content>
             </md-list-item-cards>
           </md-list>
         </div>
 
-        <md-dialog :md-active.sync="showDraw" class="draw-dialog">
+        <md-dialog :md-active.sync="drawVisible" class="draw-dialog">
           <md-dialog-title>
             <div>Draw / Order</div>
-            <div v-if="showDraw" class="md-caption">
-              {{ showDraw.dance.$shortName }} • {{ showDraw.group.$name }}
+            <div v-if="currentDialogData" class="md-caption">
+              {{ currentDialogData.dance.$shortName }} • {{ currentDialogData.group.$name }}
             </div>
           </md-dialog-title>
-          <md-dialog-content v-if="showDraw" class="alt">
+          <md-dialog-content v-if="currentDialogData" class="alt">
             <md-list class="md-double-line">
               <dancer-list-item
-                v-for="dancer in findDrawnDancers(showDraw.group, showDraw.dance)"
+                v-for="dancer in findDrawnDancers(currentDialogData.group, currentDialogData.dance)"
                 :key="dancer[idKey]"
                 :dancer="dancer"
-                @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] } }); showDraw = false;"
+                @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] } }); drawVisible = false;"
               />
             </md-list>
           </md-dialog-content>
           <md-dialog-actions>
-            <md-button @click="showDraw = false" class="md-primary">Done</md-button>
+            <md-button @click="drawVisible = false" class="md-primary">Done</md-button>
           </md-dialog-actions>
         </md-dialog>
       </div>
@@ -136,6 +136,10 @@
 <script>
 import AdminPlatforms from '@/components/competition/admin/utility/platforms';
 import DancerListItem from '@/components/utility/dancer-list-item';
+import {
+  mapState,
+  mapMutations,
+} from 'vuex';
 import {
   idKey,
 } from '@/helpers/firebase';
@@ -182,11 +186,23 @@ export default {
   data() {
     return {
       idKey,
-
-      showDraw: false,
     };
   },
   computed: {
+    ...mapState([
+      'currentDialog',
+      'currentDialogData',
+    ]),
+
+    drawVisible: {
+      get() {
+        return this.currentDialog === 'draw';
+      },
+      set(value) {
+        return this.setCurrentDialog(value && 'draw');
+      },
+    },
+
     currentDay() {
       if (this.dayId && this.schedule && this.schedule.days) {
         return this.schedule.days[this.dayId];
@@ -210,6 +226,10 @@ export default {
     textify,
     findByIdKey,
     getScheduleItemDanceName,
+
+    ...mapMutations([
+      'setCurrentDialog',
+    ]),
 
     findDrawnDancers(group, dance) {
       const draw = this.draws && this.draws[group[idKey]] && this.draws[group[idKey]][dance[idKey]];
