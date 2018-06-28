@@ -1,5 +1,6 @@
 <template>
   <md-list-item
+    :to="to"
     @click="$emit('click', $event)"
     class="dancer-list-item"
     :class="{ placeholder: dancer.number === '?' }"
@@ -35,6 +36,7 @@ export default {
   props: {
     dancer: Object,
     place: Number,
+    to: true,
   },
   components: {
     FavoriteDancerButton,
