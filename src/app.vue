@@ -178,7 +178,7 @@ export default {
           ...competition,
           $favorite: this.$store.getters.isFavorite('competitions', competition[idKey]),
         }))
-        .filter(competition => competition.published || (this.me && this.me.admin))
+        .filter(competition => competition.listed || (this.me && this.me.admin))
         .sort((a, b) => this.$moment(a.date).diff(b.date)); // order chronologically
     },
     relevantCompetitions() {

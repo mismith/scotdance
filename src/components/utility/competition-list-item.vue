@@ -2,7 +2,7 @@
   <md-list-item
     :to="to"
     class="competition-list-item"
-    :class="{ published: competition.published }"
+    :class="{ listed: competition.listed, published: competition.published }"
   >
     <md-icon>event</md-icon>
 
@@ -64,6 +64,9 @@ export default {
         }
       }
     }
+  }
+  &:not(.listed) {
+    background: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.1) 5px, rgba(0, 0, 0, 0.1) 10px);
   }
   &:not(.published) {
     opacity: 0.5;

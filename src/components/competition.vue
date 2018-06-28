@@ -1,28 +1,45 @@
 <template>
   <div class="competition md-scroll-frame">
-    <div v-if="loaded" class="md-scroll-frame">
-      <keep-alive>
-        <router-view
-          :competition-ref="competitionRef"
-          :competition-data-ref="competitionDataRef"
-          :competition="competition"
-          :dancers="dancers"
-          :groups="groups"
-          :categories="categories"
-          :dances="dances"
-          :staff="staff"
-          :platforms="platforms"
-          :draws="draws"
-          :schedule="schedule"
-          :results="results"
-        />
-      </keep-alive>
+    <div v-if="competitionExists" class="md-scroll-frame">
+      <div v-if="loaded" class="md-scroll-frame">
+        <keep-alive v-if="(me && me.admin) || competition.published || currentTab === 'info'">
+          <router-view
+            :competition-ref="competitionRef"
+            :competition-data-ref="competitionDataRef"
+            :competition="competition"
+            :dancers="dancers"
+            :groups="groups"
+            :categories="categories"
+            :dances="dances"
+            :staff="staff"
+            :platforms="platforms"
+            :draws="draws"
+            :schedule="schedule"
+            :results="results"
+          />
+        </keep-alive>
+        <div v-else class="md-scroll-frame alt">
+          <md-empty-state
+            md-icon="access_time"
+            md-label="Not available yet"
+            md-description="Check back closer to the competition date:"
+          >
+            <div class="md-title">{{ $moment(competition.date).format('dddd, MMMM D') }}</div>
+          </md-empty-state>
+        </div>
+      </div>
+      <div v-else class="md-scroll-frame alt spinner-container">
+        <mi-md-spinner />
+      </div>
     </div>
-    <div v-else class="md-scroll-frame spinner-container">
-      <mi-md-spinner />
+    <div v-else class="md-scroll-frame alt">
+      <md-empty-state
+        md-icon="close"
+        md-label="Competition not found"
+      />
     </div>
 
-    <md-bottom-bar ref="bottomBar" v-show="currentTab !== 'admin'">
+    <md-bottom-bar ref="bottomBar" v-show="competitionExists && currentTab !== 'admin'">
       <md-bottom-bar-item id="tab-info" :to="{ name: 'competition.info' }">
         <md-icon class="icon-info" />
         <span class="md-bottom-bar-label">Info</span>
@@ -44,6 +61,9 @@
 </template>
 
 <script>
+import {
+  mapState,
+} from 'vuex';
 import {
   idKey,
 } from '@/helpers/firebase';
@@ -68,8 +88,15 @@ export default {
     };
   },
   computed: {
+    ...mapState([
+      'me',
+    ]),
+
     currentTab() {
       return this.$route.name.replace(/^.*?\./, '').replace(/\..*?$/, '') || 'info';
+    },
+    competitionExists() {
+      return this.competition && this.competition['.value'] !== null;
     },
 
     competition() {
@@ -122,6 +149,9 @@ export default {
     },
   },
   watch: {
+    me() {
+      this.loadFirebase();
+    },
     competitionId() {
       this.loadFirebase();
     },
@@ -171,7 +201,15 @@ export default {
       await Promise.all([
         this.competitionRef.once('value'),
         this.competitionDataRef.once('value'),
-      ]);
+      ])
+        .catch((err) => {
+          if (err.code === 'PERMISSION_DENIED') {
+            // intercept this error since the app shows a 'unavailable' message itself
+            console.warn(err);
+          } else {
+            throw err;
+          }
+        });
       this.loaded = true;
     },
 
