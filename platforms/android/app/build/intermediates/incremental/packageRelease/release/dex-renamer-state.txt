@@ -1,4 +1,4 @@
-#Tue Jun 26 00:34:36 MDT 2018
+#Wed Jun 27 23:27:38 MDT 2018
 base.0=/Users/msmith/Sites/+/scotdance/platforms/android/app/build/intermediates/transforms/dex/release/0
 path.0=classes.dex
 renamed.0=classes.dex
