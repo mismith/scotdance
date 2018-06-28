@@ -340,6 +340,8 @@ body.has-bottom-bar {
   touch-action: pan-y;
 }
 .md-subheader {
+  flex-shrink: 0;
+
   > div {
     flex: auto;
 
