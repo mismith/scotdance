@@ -23,7 +23,6 @@
         <md-menu-content>
           <md-menu-item :to="{ name: 'home', query: { at: '#about' } }">About</md-menu-item>
           <md-menu-item :to="{ name: 'home', query: { at: '#faq' } }">FAQs</md-menu-item>
-          <md-menu-item :to="{ name: 'home', query: { at: '#tech' } }">Tech</md-menu-item>
           <md-divider />
           <md-menu-item @click="help(true)">Feedback</md-menu-item>
           <md-menu-item v-if="$store.state.helpVisible" @click="help(false)" class="md-accent">Hide Live Chat</md-menu-item>

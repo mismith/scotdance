@@ -65,9 +65,9 @@
       </header>
     </section>
 
-    <section id="tech" class="alt">
+    <section id="info" class="alt">
       <header>
-        <h2 class="md-display-1">Tech</h2>
+        <h2 class="md-display-1">Info</h2>
         <p>ScotDance was started in 2017 by <a href="https://mismith.io" target="_blank" class="ext">Murray Smith</a></p>
         <p>View the source code on <a href="https://github.com/mismith/scotdance" target="_blank" class="ext">GitHub</a></p>
         <p>Track development via <a href="https://trello.com/b/ZCZ8t1fH" target="_blank" class="ext">Trello</a></p>
@@ -162,7 +162,7 @@ export default {
       }
     }
   }
-  #tech {
+  #info {
     a {
       white-space: nowrap;
     }
