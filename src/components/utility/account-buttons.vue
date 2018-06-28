@@ -1,13 +1,13 @@
 <template>
   <div class="account-buttons">
     <md-button
-      @click="$store.commit('setDialogOpen', 'register')"
+      @click="$store.commit('setCurrentDialog', 'register')"
       class="md-raised"
     >
       <span>Register</span>
     </md-button>
     <md-button
-      @click="$store.commit('setDialogOpen', 'login')"
+      @click="$store.commit('setCurrentDialog', 'login')"
       class="md-raised md-accent"
     >
       <span>Login</span>

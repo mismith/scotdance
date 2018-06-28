@@ -26,7 +26,8 @@ export default new Vuex.Store({
     myFavorites: undefined,
     postLoginCallbacks: [],
 
-    dialogOpen: undefined,
+    currentDialog: undefined,
+    currentDialogData: undefined,
 
     clipboard: {
       type: undefined,
@@ -57,8 +58,14 @@ export default new Vuex.Store({
       state.postLoginCallbacks.push(callback);
     },
 
-    setDialogOpen(state, to) {
-      state.dialogOpen = to;
+    setCurrentDialog(state, to) {
+      if (typeof to === 'string') {
+        state.currentDialog = to;
+        state.currentDialogData = undefined;
+      } else {
+        state.currentDialog = to[0];
+        state.currentDialogData = to[1];
+      }
     },
 
     copy(state, { data, type = 'text/plain' }) {

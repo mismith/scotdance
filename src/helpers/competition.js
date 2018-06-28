@@ -57,5 +57,5 @@ export function toggleFavoriteDancer(dancer) {
   });
 
   // ...while opening dialog to inform user about favorites functionality
-  return store.commit('setDialogOpen', 'favorites');
+  return store.commit('setCurrentDialog', 'favorites');
 }

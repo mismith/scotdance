@@ -30,10 +30,10 @@ export default {
   computed: {
     favoritesVisible: {
       get() {
-        return this.$store.state.dialogOpen === 'favorites';
+        return this.$store.state.currentDialog === 'favorites';
       },
       set(value) {
-        return this.$store.commit('setDialogOpen', value && 'favorites');
+        return this.$store.commit('setCurrentDialog', value && 'favorites');
       },
     },
   },

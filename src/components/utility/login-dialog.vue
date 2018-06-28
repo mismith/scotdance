@@ -29,7 +29,7 @@
 
         <p>
           Need an account first?
-          <a @click="$store.commit('setDialogOpen', 'register')">
+          <a @click="$store.commit('setCurrentDialog', 'register')">
             Register
           </a>
         </p>
@@ -117,10 +117,10 @@ export default {
 
     loginVisible: {
       get() {
-        return this.$store.state.dialogOpen === 'login';
+        return this.$store.state.currentDialog === 'login';
       },
       set(value) {
-        return this.$store.commit('setDialogOpen', value && 'login');
+        return this.$store.commit('setCurrentDialog', value && 'login');
       },
     },
   },
