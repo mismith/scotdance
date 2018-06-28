@@ -587,6 +587,9 @@ body,
 }
 
 .md-dialog {
+  .md-dialog-content {
+    @extend .md-scroll;
+  }
   .md-steppers {
     @extend .md-scroll-frame;
 

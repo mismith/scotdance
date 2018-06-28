@@ -100,11 +100,34 @@
                   :dancers="dancers"
                   :staff="staff"
                   :platforms="platforms"
+                  @item-click="showDraw = { group: $event, dance: findByIdKey(dances, dance.danceId) }"
                 />
               </md-content>
             </md-list-item-cards>
           </md-list>
         </div>
+
+        <md-dialog :md-active.sync="showDraw" class="draw-dialog">
+          <md-dialog-title>
+            <div>Draw / Order</div>
+            <div v-if="showDraw" class="md-caption">
+              {{ showDraw.dance.$shortName }} • {{ showDraw.group.$name }}
+            </div>
+          </md-dialog-title>
+          <md-dialog-content v-if="showDraw" class="alt">
+            <md-list class="md-double-line">
+              <dancer-list-item
+                v-for="dancer in findDrawnDancers(showDraw.group, showDraw.dance)"
+                :key="dancer[idKey]"
+                :dancer="dancer"
+                @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] } }); showDraw = false;"
+              />
+            </md-list>
+          </md-dialog-content>
+          <md-dialog-actions>
+            <md-button @click="showDraw = false" class="md-primary">Done</md-button>
+          </md-dialog-actions>
+        </md-dialog>
       </div>
     </transition>
   </div>
@@ -112,10 +135,7 @@
 
 <script>
 import AdminPlatforms from '@/components/competition/admin/utility/platforms';
-import {
-  textify,
-  getScheduleItemDanceName,
-} from '@/helpers/competition';
+import DancerListItem from '@/components/utility/dancer-list-item';
 import {
   idKey,
 } from '@/helpers/firebase';
@@ -123,6 +143,15 @@ import {
   isExpanded,
   handleExpanded,
 } from '@/helpers/router';
+import {
+  textify,
+  findByIdKey,
+  getScheduleItemDanceName,
+} from '@/helpers/competition';
+import {
+  getPlaceholderDancer,
+  findGroupDancers,
+} from '@/helpers/results';
 
 export default {
   name: 'competition-schedule',
@@ -137,6 +166,7 @@ export default {
     dancers: Array,
     staff: Array,
     platforms: Array,
+    draws: Object,
     schedule: Object,
   },
   localStorage: {
@@ -152,6 +182,8 @@ export default {
   data() {
     return {
       idKey,
+
+      showDraw: false,
     };
   },
   computed: {
@@ -175,8 +207,19 @@ export default {
     },
   },
   methods: {
-    getScheduleItemDanceName,
     textify,
+    findByIdKey,
+    getScheduleItemDanceName,
+
+    findDrawnDancers(group, dance) {
+      const draw = this.draws && this.draws[group[idKey]] && this.draws[group[idKey]][dance[idKey]];
+      if (draw) {
+        return draw // order by draw order
+          .map(number => this.dancers.find(dancer => `${dancer.number}` === `${number}`) || getPlaceholderDancer());
+      }
+      return findGroupDancers(group, this.dancers)
+        .sort((a, b) => b.$number.localeCompare(a.$number)); // order by reverse sign-up/number
+    },
 
     isActive(dayId, blockId, eventId) {
       return this.dayId === dayId && this.blockId === blockId && this.eventId === eventId;
@@ -204,6 +247,7 @@ export default {
   },
   components: {
     AdminPlatforms,
+    DancerListItem,
   },
 };
 </script>
@@ -219,6 +263,28 @@ export default {
       .pool {
         padding: 0 6px 12px;
       }
+    }
+  }
+}
+.draw-dialog {
+  .md-dialog-container {
+    max-width: 100%;
+  }
+  .md-dialog-title {
+    padding-bottom: 12px;
+    margin-bottom: 0;
+  }
+  .md-dialog-content {
+    padding: 16px;
+    border: 0 solid transparent;
+    border-width: 1px 0;
+  }
+  .dancer-list-item {
+    .md-list-item-content {
+      min-height: 48px;
+    }
+    .group {
+      display: none;
     }
   }
 }

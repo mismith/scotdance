@@ -92,17 +92,17 @@
               </placed-dancer-list>
             </md-list-item-cards>
           </md-list>
-
-          <md-dialog :md-active.sync="showTrophy" :md-fullscreen="false" class="trophy-dialog">
-            <header>
-              <md-subheader class="md-title">{{ currentGroup.sponsor }}</md-subheader>
-              <div class="md-padding pre-line">{{ currentGroup.trophy || '' }} Trophy Sponsor</div>
-            </header>
-            <md-dialog-actions>
-              <md-button @click="showTrophy = false" class="md-primary">Done</md-button>
-            </md-dialog-actions>
-          </md-dialog>
         </div>
+
+        <md-dialog :md-active.sync="showTrophy" :md-fullscreen="false" class="trophy-dialog">
+          <md-dialog-title>{{ currentGroup.sponsor }}</md-dialog-title>
+          <md-dialog-content>
+            <div class="pre-line">{{ currentGroup.trophy || '' }} Trophy Sponsor</div>
+          </md-dialog-content>
+          <md-dialog-actions>
+            <md-button @click="showTrophy = false" class="md-primary">Done</md-button>
+          </md-dialog-actions>
+        </md-dialog>
       </div>
     </transition>
   </div>

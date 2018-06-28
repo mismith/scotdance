@@ -13,10 +13,8 @@
           <md-chip
             v-for="poolItem in pool.$items"
             :key="poolItem[idKey]"
-            @click="!admin && !poolItem.type && $router.push({
-              name: 'competition.results',
-              params: { groupId: poolItem[idKey], danceId: item.danceId }
-            })"
+            :md-clickable="!admin && !poolItem.type"
+            @click="!admin && !poolItem.type && $emit('item-click', poolItem)"
             :class="{ 'md-primary': isJudge(poolItem), 'md-accent': hasFavorites(findGroupDancers(poolItem, dancers)) }"
           >
             {{ poolItem.$name || poolItem.name }}
