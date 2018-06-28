@@ -10,8 +10,10 @@
         ".write": "root.child($environment).child('users').child(auth.uid).child('admin').val() === true" // is ADMIN
       },
       "competitions:data": {
-        ".read": true,
-        ".write": "root.child($environment).child('users').child(auth.uid).child('admin').val() === true" // is ADMIN
+        ".write": "root.child($environment).child('users').child(auth.uid).child('admin').val() === true", // is ADMIN
+        "$competitionId": {
+          ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true || root.child($environment).child('users').child(auth.uid).child('admin').val() === true" // is PUBLISHED || is ADMIN
+        }
       },
       "faqs": {
         ".read": true,
