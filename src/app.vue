@@ -185,8 +185,8 @@ export default {
     },
     relevantCompetitions() {
       const relevantCompetitions = this.competitions.filter((competition) => {
-        // only show upcoming or up to 7 day old events
-        if (competition.date && this.$moment().isSame(competition.date, 'week')) {
+        // only show upcoming or up to a week old events
+        if (competition.date && this.$moment().isSameOrBefore(competition.date, 'week')) {
           return true;
         }
         return false;
