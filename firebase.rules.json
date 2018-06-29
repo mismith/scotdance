@@ -14,10 +14,12 @@
         ".write": "root.child($environment).child('users:permissions').child(auth.uid).hasChild('admin') === true" // is ADMIN
       },
       "competitions:data": {
+        ".read": "root.child($environment).child('users:permissions').child(auth.uid).hasChild('admin') === true", // is ADMIN
+        ".write": "root.child($environment).child('users:permissions').child(auth.uid).hasChild('admin') === true", // is ADMIN
         "$competitionId": {
-          ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true || root.child($environment).child('users:permissions').child(auth.uid).child('competitions:data').hasChild($competitionId) === true || root.child($environment).child('users:permissions').child(auth.uid).hasChild('admin') === true", // is PUBLISHED || has PERMISSION || is ADMIN
+          ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true || root.child($environment).child('users:permissions').child(auth.uid).child('competitions:data').hasChild($competitionId) === true", // is PUBLISHED || has PERMISSION
           "$sectionId": {
-            ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions:data').child($competitionId).hasChild($sectionId) === true || root.child($environment).child('users:permissions').child(auth.uid).hasChild('admin') === true" // has PERMISSION || is ADMIN
+            ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions:data').child($competitionId).hasChild($sectionId) === true" // has PERMISSION
           }
         }
       },

@@ -81,7 +81,7 @@
             <div>Competitions</div>
 
             <md-button
-              v-if="hasPermission('admin')"
+              v-if="hasPermission()"
               :to="{ name: 'competition.admin', params: { competitionId: db.push().key } }"
               @click.native="closeMenu()"
               class="md-icon-button"

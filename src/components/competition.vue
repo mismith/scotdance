@@ -24,7 +24,7 @@
             md-label="Not available yet"
             md-description="Check back closer to the competition date:"
           >
-            <div class="md-title">{{ $moment(competition.date).format('dddd, MMMM D') }}</div>
+            <div class="md-title">{{ competition.date ? $moment(competition.date).format('dddd, MMMM D') : 'Soon' }}</div>
           </md-empty-state>
         </div>
       </div>
@@ -99,7 +99,7 @@ export default {
       return this.$route.name.replace(/^.*?\./, '').replace(/\..*?$/, '') || 'info';
     },
     competitionExists() {
-      return this.competition && this.competition['.value'] !== null;
+      return this.competition && (this.competition['.value'] !== null || this.currentTab === 'admin');
     },
 
     competition() {
