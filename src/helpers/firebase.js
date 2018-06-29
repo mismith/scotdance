@@ -2,7 +2,7 @@ import * as firebase from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/database';
 
-const ENV = 'production';
+const FIREBASE_ENV = 'production';
 const config = {
   apiKey: 'AIzaSyCxvA2RMvlCQ3WCzAqPotD8IOhnmCtQ1xM',
   authDomain: 'scotdance.firebaseapp.com',
@@ -14,9 +14,10 @@ const config = {
 firebase.initializeApp(config);
 
 const idKey = '.key';
-const db = firebase.database().ref(ENV);
+const db = firebase.database().ref(FIREBASE_ENV);
 
 export {
+  FIREBASE_ENV,
   idKey,
   db,
   config,

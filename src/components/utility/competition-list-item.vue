@@ -17,7 +17,7 @@
     <slot />
 
     <md-button
-      v-if="isAdmin()"
+      v-if="hasPermission('competitions:data', competition[idKey])"
       :to="{ name: 'competition.admin', params: { competitionId: competition[idKey] } }"
       class="md-icon-button md-list-action"
     >
@@ -28,7 +28,7 @@
 
 <script>
 import {
-  isAdmin,
+  hasPermission,
 } from '@/helpers/admin';
 import {
   idKey,
@@ -46,7 +46,7 @@ export default {
     };
   },
   methods: {
-    isAdmin,
+    hasPermission,
   },
 };
 </script>

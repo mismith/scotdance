@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
+import { get } from 'deep-property';
 import {
   getField,
   updateField,
@@ -24,6 +25,7 @@ export default new Vuex.Store({
     },
     me: undefined,
     myFavorites: undefined,
+    myPermissions: undefined,
     postLoginCallbacks: [],
 
     currentDialog: undefined,
@@ -41,6 +43,12 @@ export default new Vuex.Store({
 
     isFavorite: state => (type, id) => {
       return state.myFavorites && state.myFavorites[type] && !!state.myFavorites[type][id];
+    },
+    hasPermission: state => (...keys) => {
+      if (get(state.myPermissions, 'admin')) {
+        return true;
+      }
+      return !!get(state.myPermissions, keys.join('.'));
     },
   },
   mutations: {
@@ -80,7 +88,7 @@ export default new Vuex.Store({
     },
   },
   actions: {
-    auth: firebaseAction(({ bindFirebaseRef, state }, { meRef, myFavoritesRef }) => {
+    auth: firebaseAction(({ bindFirebaseRef, state }, { meRef, myFavoritesRef, myPermissionsRef }) => {
       bindFirebaseRef('me', meRef, {
         async readyCallback() {
           // await this.me
@@ -92,6 +100,7 @@ export default new Vuex.Store({
         },
       });
       bindFirebaseRef('myFavorites', myFavoritesRef);
+      bindFirebaseRef('myPermissions', myPermissionsRef);
     }),
     unauth: firebaseAction(({ unbindFirebaseRef, state }) => {
       unbindFirebaseRef('me');
@@ -99,6 +108,9 @@ export default new Vuex.Store({
 
       unbindFirebaseRef('myFavorites');
       state.myFavorites = null;
+
+      unbindFirebaseRef('myPermissions');
+      state.myPermissions = null;
     }),
 
     help({ state, commit }, set = undefined) {

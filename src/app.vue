@@ -8,7 +8,7 @@
       <router-link :to="{ name: 'competitions' }" class="md-title" style="margin-right: auto;">{{ title }}</router-link>
 
       <md-button
-        v-if="isAdmin() && $route.params.competitionId"
+        v-if="$route.params.competitionId && hasPermission('competitions:data', $route.params.competitionId)"
         :to="{ name: /^competition.admin/.test($route.name) ? 'competition.info' : 'competition.admin' }"
         class="md-icon-button"
       >
@@ -81,7 +81,7 @@
             <div>Competitions</div>
 
             <md-button
-              v-if="isAdmin()"
+              v-if="hasPermission('admin')"
               :to="{ name: 'competition.admin', params: { competitionId: db.push().key } }"
               @click.native="closeMenu()"
               class="md-icon-button"
@@ -142,7 +142,7 @@ import {
   getTitleChunks,
 } from '@/helpers/router';
 import {
-  isAdmin,
+  hasPermission,
 } from '@/helpers/admin';
 import {
   idKey,
@@ -180,7 +180,7 @@ export default {
           ...competition,
           $favorite: this.$store.getters.isFavorite('competitions', competition[idKey]),
         }))
-        .filter(competition => competition.listed || isAdmin())
+        .filter(competition => competition.listed || hasPermission('competitions:data', competition[idKey]))
         .sort((a, b) => this.$moment(a.date).diff(b.date)); // order chronologically
     },
     relevantCompetitions() {
@@ -241,7 +241,7 @@ export default {
       'help',
     ]),
 
-    isAdmin,
+    hasPermission,
 
     async loadFirebase() {
       this.competitionsRef = db.child('competitions');

@@ -2,7 +2,7 @@
   <div class="competition md-scroll-frame">
     <div v-if="competitionExists" class="md-scroll-frame">
       <div v-if="loaded" class="md-scroll-frame">
-        <keep-alive v-if="isAdmin() || competition.published || currentTab === 'info'">
+        <keep-alive v-if="currentTab === 'info' || competition.published || hasPermission('competitions:data', competitionId)">
           <router-view
             :competition-ref="competitionRef"
             :competition-data-ref="competitionDataRef"
@@ -35,7 +35,7 @@
     <div v-else class="md-scroll-frame alt">
       <md-empty-state
         md-icon="close"
-        md-label="Competition not found"
+        md-label="No competition found"
       />
     </div>
 
@@ -65,7 +65,7 @@ import {
   mapState,
 } from 'vuex';
 import {
-  isAdmin,
+  hasPermission,
 } from '@/helpers/admin';
 import {
   findByIdKey,
@@ -163,7 +163,7 @@ export default {
     },
   },
   methods: {
-    isAdmin,
+    hasPermission,
 
     async syncBottomBar() {
       await this.$nextTick(); // await md-bottom-bar's internally queued $nextTick

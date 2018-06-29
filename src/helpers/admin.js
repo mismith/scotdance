@@ -31,8 +31,8 @@ function makeKeyValuePairColumn(column, valueProp = '$name', keyProp = idKey) {
   };
 }
 
-function isAdmin() {
-  return store.state.me && store.state.me.admin;
+function hasPermission(...keys) {
+  return store.getters.hasPermission(...keys);
 }
 
 export {
@@ -40,5 +40,5 @@ export {
   Handsontable,
   HotTable,
   makeKeyValuePairColumn,
-  isAdmin,
+  hasPermission,
 };

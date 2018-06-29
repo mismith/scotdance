@@ -5,19 +5,21 @@
         ".read": true,
         ".write": false
       },
-      "competitions": {
-        ".read": true,
-        ".write": "root.child($environment).child('users').child(auth.uid).child('admin').val() === true" // is ADMIN
-      },
-      "competitions:data": {
-        ".write": "root.child($environment).child('users').child(auth.uid).child('admin').val() === true", // is ADMIN
-        "$competitionId": {
-          ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true || root.child($environment).child('users').child(auth.uid).child('admin').val() === true" // is PUBLISHED || is ADMIN
-        }
-      },
       "faqs": {
         ".read": true,
-        ".write": "root.child($environment).child('users').child(auth.uid).child('admin').val() === true" // is ADMIN
+        ".write": false
+      },
+      "competitions": {
+        ".read": true,
+        ".write": "root.child($environment).child('users:permissions').child(auth.uid).hasChild('admin') === true" // is ADMIN
+      },
+      "competitions:data": {
+        "$competitionId": {
+          ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true || root.child($environment).child('users:permissions').child(auth.uid).child('competitions:data').hasChild($competitionId) === true || root.child($environment).child('users:permissions').child(auth.uid).hasChild('admin') === true", // is PUBLISHED || has PERMISSION || is ADMIN
+          "$sectionId": {
+            ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions:data').child($competitionId).hasChild($sectionId) === true || root.child($environment).child('users:permissions').child(auth.uid).hasChild('admin') === true" // has PERMISSION || is ADMIN
+          }
+        }
       },
       "users": {
         "$userId": {
@@ -29,6 +31,12 @@
         "$userId": {
           ".read": "auth != null && auth.uid === $userId", // is SELF
           ".write": "auth != null && auth.uid === $userId" // is SELF
+        }
+      },
+      "users:permissions": {
+        "$userId": {
+          ".read": "auth != null && auth.uid === $userId", // is SELF
+          ".write": false
         }
       }
     }

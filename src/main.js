@@ -141,7 +141,8 @@ firebase.auth().onAuthStateChanged((me) => {
   if (me) {
     const meRef = db.child('users').child(me.uid);
     const myFavoritesRef = db.child('users:favorites').child(me.uid);
-    store.dispatch('auth', { meRef, myFavoritesRef });
+    const myPermissionsRef = db.child('users:permissions').child(me.uid);
+    store.dispatch('auth', { meRef, myFavoritesRef, myPermissionsRef });
   } else if (store.state.me) {
     store.dispatch('unauth');
   } else {

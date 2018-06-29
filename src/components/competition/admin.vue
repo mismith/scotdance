@@ -1,89 +1,82 @@
 <template>
   <div class="competition-admin md-scroll-frame">
-    <div v-if="isAdmin()" class="md-scroll-frame">
-      <div v-if="currentSection" class="md-scroll-frame">
-        <md-toolbar class="md-dense">
-          <div v-if="inTabs('info', 'categories', 'dancers', 'groups')">
-            <md-button @click="showImport = true">Import</md-button>
-          </div>
-          <div v-if="inTabs('results')">
-            <md-button @click="showImportResults = true">Import</md-button>
-          </div>
-
-          <div v-if="currentSection">
-            <preset-picker
-              v-if="currentSection.presets"
-              :presets="currentSection.presets"
-              :prop="currentSection[idKey] === 'dances' ? p => danceExtender(p).$name : 'name'"
-              @select="addPresets"
-            />
-          </div>
-
-          <span style="flex-grow: 1;"></span>
-
-          <md-spunnable :md-spinning="saving" />
-        </md-toolbar>
-        <div class="md-scroll-frame md-scroll">
-          <form v-if="currentSection.form" class="md-padding">
-            <div v-for="field in currentSection.form.fields" :key="field.data">
-              <md-datepicker
-                v-if="field.type === 'datetime'"
-                v-model="competition[field.data]"
-                md-immediately
-                @input="handleFormInputChange(currentSection[idKey], field.data, $event)"
-                :class="{ 'md-required': field.required }"
-              >
-                <label>{{ field.title }}</label>
-              </md-datepicker>
-
-              <md-checkbox
-                v-else-if="field.type === 'checkbox'"
-                v-model="competition[field.data]"
-                @change="handleFormInputChange(currentSection[idKey], field.data, $event)"
-                :required="field.required"
-              >
-                {{ field.title }}
-              </md-checkbox>
-
-              <md-field v-else>
-                <label>{{ field.title }}</label>
-                <md-input
-                  v-model="competition[field.data]"
-                  @change="handleFormInputChange(currentSection[idKey], field.data, $event.target.value)"
-                  :required="field.required"
-                />
-              </md-field>
+    <div v-if="currentSection" class="md-scroll-frame">
+      <div v-if="hasPermission('competitions:data', $route.params.competitionId, currentSection[idKey])" class="md-scroll-frame">
+        <div class="md-scroll-frame">
+          <md-toolbar class="md-dense">
+            <div v-if="inTabs('info', 'categories', 'dancers', 'groups')">
+              <md-button @click="showImport = true">Import</md-button>
             </div>
-          </form>
+            <div v-if="inTabs('results')">
+              <md-button @click="showImportResults = true">Import</md-button>
+            </div>
 
-          <HotTable v-else-if="currentSection.hot" :settings="currentSection.hot" class="fullscreen" />
+            <div v-if="currentSection">
+              <preset-picker
+                v-if="currentSection.presets"
+                :presets="currentSection.presets"
+                :prop="currentSection[idKey] === 'dances' ? p => danceExtender(p).$name : 'name'"
+                @select="addPresets"
+              />
+            </div>
 
-          <keep-alive v-else>
-            <router-view v-bind="$props" @change="handleChanges" />
-          </keep-alive>
+            <span style="flex-grow: 1;"></span>
 
-          <footer v-if="inTabs('info')" class="md-layout md-alignment-center" style="margin-top: auto;">
-            <md-button @click="confirmRemove = true" class="md-accent">
-              Delete Competition
-            </md-button>
-          </footer>
+            <md-spunnable :md-spinning="saving" />
+          </md-toolbar>
+          <div class="md-scroll-frame md-scroll">
+            <form v-if="currentSection.form" class="md-padding">
+              <div v-for="field in currentSection.form.fields" :key="field.data">
+                <md-datepicker
+                  v-if="field.type === 'datetime'"
+                  v-model="competition[field.data]"
+                  md-immediately
+                  @input="handleFormInputChange(currentSection[idKey], field.data, $event)"
+                  :class="{ 'md-required': field.required }"
+                >
+                  <label>{{ field.title }}</label>
+                </md-datepicker>
+
+                <md-checkbox
+                  v-else-if="field.type === 'checkbox'"
+                  v-model="competition[field.data]"
+                  @change="handleFormInputChange(currentSection[idKey], field.data, $event)"
+                  :required="field.required"
+                >
+                  {{ field.title }}
+                </md-checkbox>
+
+                <md-field v-else>
+                  <label>{{ field.title }}</label>
+                  <md-input
+                    v-model="competition[field.data]"
+                    @change="handleFormInputChange(currentSection[idKey], field.data, $event.target.value)"
+                    :required="field.required"
+                  />
+                </md-field>
+              </div>
+            </form>
+
+            <HotTable v-else-if="currentSection.hot" :settings="currentSection.hot" class="fullscreen" />
+
+            <keep-alive v-else>
+              <router-view v-bind="$props" @change="handleChanges" />
+            </keep-alive>
+
+            <footer v-if="inTabs('info')" class="md-layout md-alignment-center" style="margin-top: auto;">
+              <md-button @click="confirmRemove = true" class="md-accent">
+                Delete Competition
+              </md-button>
+            </footer>
+          </div>
         </div>
       </div>
-      <div v-else class="md-scroll-frame spinner-container">
-        <mi-md-spinner />
+      <div v-else-if="!me">
+        <md-empty-state md-icon="block" md-label="Login required" />
       </div>
-
-      <md-bottom-bar ref="bottomBar">
-        <md-bottom-bar-item
-          v-for="section of sections"
-          :key="section[idKey]"
-          @click="goToTab(section[idKey])"
-          :id="`tab-admin-${section[idKey]}`"
-        >
-          <md-icon :class="section.icon"></md-icon>
-          <span class="md-bottom-bar-label">{{ section.name }}</span>
-        </md-bottom-bar-item>
-      </md-bottom-bar>
+      <div v-else-if="!me.admin">
+        <md-empty-state md-icon="block" md-label="Access denied" />
+      </div>
 
       <md-dialog :md-active.sync="showImport" class="import-dialog">
         <admin-import
@@ -109,16 +102,22 @@
         @md-confirm="remove"
       />
     </div>
-    <md-empty-state
-      v-if="!me"
-      md-icon="block"
-      md-label="Login required"
-    />
-    <md-empty-state
-      v-if="me && !me.admin"
-      md-icon="block"
-      md-label="Access denied"
-    />
+    <div v-else class="md-scroll-frame spinner-container">
+      <mi-md-spinner />
+    </div>
+
+    <md-bottom-bar ref="bottomBar"
+        class="md-accent">
+      <md-bottom-bar-item
+        v-for="section of sections"
+        :key="section[idKey]"
+        @click="goToTab(section[idKey])"
+        :id="`tab-admin-${section[idKey]}`"
+      >
+        <md-icon :class="section.icon"></md-icon>
+        <span class="md-bottom-bar-label">{{ section.name }}</span>
+      </md-bottom-bar-item>
+    </md-bottom-bar>
   </div>
 </template>
 
@@ -129,7 +128,7 @@ import {
 import {
   HotTable,
   makeKeyValuePairColumn,
-  isAdmin,
+  hasPermission,
 } from '@/helpers/admin';
 import {
   danceExtender,
@@ -265,7 +264,7 @@ export default {
     },
   },
   methods: {
-    isAdmin,
+    hasPermission,
     danceExtender,
 
     async syncBottomBar() {
