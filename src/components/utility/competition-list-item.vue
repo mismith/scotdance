@@ -28,8 +28,8 @@
 
 <script>
 import {
-  hasPermission,
-} from '@/helpers/admin';
+  mapGetters,
+} from 'vuex';
 import {
   idKey,
 } from '@/helpers/firebase';
@@ -46,7 +46,9 @@ export default {
     };
   },
   methods: {
-    hasPermission,
+    ...mapGetters([
+      'hasPermission',
+    ]),
   },
 };
 </script>

@@ -136,14 +136,12 @@
 import Hammer from 'hammerjs';
 import {
   mapState,
+  mapGetters,
   mapActions,
 } from 'vuex';
 import {
   getTitleChunks,
 } from '@/helpers/router';
-import {
-  hasPermission,
-} from '@/helpers/admin';
 import {
   idKey,
   db,
@@ -180,7 +178,7 @@ export default {
           ...competition,
           $favorite: this.$store.getters.isFavorite('competitions', competition[idKey]),
         }))
-        .filter(competition => competition.listed || hasPermission('competitions:data', competition[idKey]))
+        .filter(competition => competition.listed || this.hasPermission('competitions:data', competition[idKey]))
         .sort((a, b) => this.$moment(a.date).diff(b.date)); // order chronologically
     },
     relevantCompetitions() {
@@ -237,11 +235,12 @@ export default {
     },
   },
   methods: {
+    ...mapGetters([
+      'hasPermission',
+    ]),
     ...mapActions([
       'help',
     ]),
-
-    hasPermission,
 
     async loadFirebase() {
       this.competitionsRef = db.child('competitions');

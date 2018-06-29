@@ -63,10 +63,8 @@
 <script>
 import {
   mapState,
+  mapGetters,
 } from 'vuex';
-import {
-  hasPermission,
-} from '@/helpers/admin';
 import {
   findByIdKey,
   danceExtender,
@@ -163,7 +161,9 @@ export default {
     },
   },
   methods: {
-    hasPermission,
+    ...mapGetters([
+      'hasPermission',
+    ]),
 
     async syncBottomBar() {
       await this.$nextTick(); // await md-bottom-bar's internally queued $nextTick

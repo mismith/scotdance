@@ -124,11 +124,11 @@
 <script>
 import {
   mapState,
+  mapGetters,
 } from 'vuex';
 import {
   HotTable,
   makeKeyValuePairColumn,
-  hasPermission,
 } from '@/helpers/admin';
 import {
   danceExtender,
@@ -264,8 +264,11 @@ export default {
     },
   },
   methods: {
-    hasPermission,
     danceExtender,
+
+    ...mapGetters([
+      'hasPermission',
+    ]),
 
     async syncBottomBar() {
       await this.$nextTick(); // await md-bottom-bar's internally queued $nextTick
