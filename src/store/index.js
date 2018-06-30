@@ -44,7 +44,7 @@ export default new Vuex.Store({
     isFavorite: state => (type, id) => {
       return state.myFavorites && state.myFavorites[type] && !!state.myFavorites[type][id];
     },
-    hasPermission: state => (...keys) => {
+    hasPermission(state, ...keys) {
       if (get(state.myPermissions, 'admin')) {
         return true;
       }
