@@ -1,6 +1,6 @@
 <template>
   <md-button
-    @click.stop="toggleFavoriteDancer(dancer)"
+    @click.prevent.stop="toggleFavoriteDancer(dancer)"
     class="favorite-dancer-button md-icon-button"
   >
     <md-icon :class="{ 'md-accent': dancer.$favorite }">
