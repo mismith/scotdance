@@ -238,7 +238,7 @@ export default {
           .map(number => this.dancers.find(dancer => `${dancer.number}` === `${number}`) || getPlaceholderDancer());
       }
       return findGroupDancers(group, this.dancers)
-        .sort((a, b) => b.$number.localeCompare(a.$number)); // order by reverse sign-up/number
+        .sort((a, b) => a.$number.localeCompare(b.$number)); // order by dancer number
     },
 
     isActive(dayId, blockId, eventId) {
