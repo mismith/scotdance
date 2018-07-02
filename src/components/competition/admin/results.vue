@@ -16,7 +16,7 @@
         />
       </div>
       <div class="md-layout-item md-size-33 blade admin-blade md-scroll">
-        <md-list v-if="currentDance" class="md-double-line">
+        <md-list v-if="currentDance">
           <dancer-list-item
             v-for="dancer in currentDancers"
             :key="dancer[idKey]"
