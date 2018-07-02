@@ -134,12 +134,12 @@
 </template>
 
 <script>
-import AdminPlatforms from '@/components/competition/admin/utility/platforms';
-import DancerListItem from '@/components/utility/dancer-list-item';
 import {
   mapState,
   mapMutations,
 } from 'vuex';
+import AdminPlatforms from '@/components/competition/admin/utility/platforms';
+import DancerListItem from '@/components/utility/dancer-list-item';
 import {
   idKey,
 } from '@/helpers/firebase';
