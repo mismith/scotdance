@@ -4,9 +4,13 @@
       <div v-if="!currentDancer" class="blade md-scroll-frame" key="list">
         <div v-if="dancers.length" class="md-scroll-frame">
           <md-toolbar>
-            <md-field md-clearable style="margin-left: 8px; margin-right: 8px;">
-              <label for="filterBy">Search</label>
-              <md-input v-model="filterBy" id="filterBy" />
+            <md-field style="margin-left: 8px; margin-right: 8px;">
+              <!-- can't use proper <md-input> here because it causes performance issues on mobile devices -->
+              <input v-model="filterBy" class="md-input" placeholder="Search" />
+              <div class="md-layout md-alignment-center" style="width: 32px;">
+                <md-icon v-if="filterBy === filterByDebounced">search</md-icon>
+                <mi-md-spinner v-else :diameter="20" :width="6" />
+              </div>
             </md-field>
             <md-menu md-direction="bottom-end" @selected="sortBy">
               <md-button md-menu-trigger class="md-icon-button">
@@ -29,19 +33,6 @@
             >
               <md-icon>{{ onlyFavorites ? 'star' : 'star_border' }}</md-icon>
             </md-button>
-            <!--<md-menu md-align-trigger>
-              <md-button
-                md-menu-trigger
-                class="md-icon-button"
-                style="margin-left: 12px; margin-right: 0;"
-              >
-                <md-icon>more_vert</md-icon>
-              </md-button>
-              <md-menu-content>
-                <md-menu-item>Expand All</md-menu-item>
-                <md-menu-item>Collapse All</md-menu-item>
-              </md-menu-content>
-            </md-menu>-->
           </md-toolbar>
 
           <div v-persist-scroll="$route.fullPath" class="md-scroll-frame md-scroll">
@@ -145,7 +136,7 @@ export default {
     results: Object,
   },
   localStorage: {
-    filterBy: {
+    filterByDebounced: {
       type: String,
       default: '',
     },
@@ -162,6 +153,8 @@ export default {
     return {
       idKey,
 
+      filterBy: this.$localStorage.get('filterByDebounced', ''),
+      filterByTimeout: undefined,
       sortableBys: [
         { key: '$group.$order', name: 'Age Group', searchKey: '$group.$name' },
         { key: '$number', name: 'Number', searchKey: 'number' },
@@ -187,12 +180,12 @@ export default {
       let filtered = this.dancers;
 
       // filter by search term
-      if (this.filterBy && filtered.length) {
+      if (this.filterByDebounced && filtered.length) {
         const searchKeys = this.sortableBys.map(({ key, searchKey }) => searchKey || key).concat(['$name']);
         filtered = new Fuse(filtered, {
           keys: searchKeys,
           threshold: 0.33,
-        }).search(this.filterBy);
+        }).search(this.filterByDebounced);
       }
 
       // filter by onlyFavorites, if necessary
@@ -214,12 +207,20 @@ export default {
       return Object.keys(this.groupedDancers);
     },
   },
+  watch: {
+    filterBy() {
+      clearTimeout(this.filterByTimeout);
+      this.filterByTimeout = setTimeout(() => {
+        this.filterByDebounced = this.filterBy;
+      }, 300);
+    },
+  },
   methods: {
     hasFavorites,
 
     isGroupExpanded(itemId, itemIds) {
       // searching, so expand all groups
-      if (this.filterBy || this.onlyFavorites) return true;
+      if (this.filterByDebounced || this.onlyFavorites) return true;
 
       return isExpanded(this.dancersExpandedGroups[this.sortBy], itemId, itemIds);
     },
