@@ -107,7 +107,7 @@
           </md-list>
         </div>
 
-        <md-dialog :md-active.sync="drawVisible" class="draw-dialog">
+        <md-dialog :md-active.sync="drawVisible" :md-fullscreen="false" class="draw-dialog">
           <md-dialog-title>
             <div>Draw / Order</div>
             <div v-if="currentDialogData" class="md-caption">
