@@ -382,18 +382,6 @@ export default {
   }
 }
 
-.admin-blades {
-  flex: auto;
-
-  .admin-blade {
-    width: auto;
-
-    &:not(:last-child) {
-      border-right: solid 6px #ccc;
-    }
-  }
-}
-
 .import-dialog,
 .import-results-dialog {
   &,

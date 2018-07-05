@@ -61,29 +61,30 @@
       </md-toolbar>
     </md-step>
     <md-step id="review" md-label="Review" md-description="Ensure values look correct">
-      <div class="md-scroll-frame md-layout blades admin-blades">
-        <div class="md-layout-item md-size-50 blade admin-blade md-scroll alt">
+      <blades>
+        <blade class="md-small-size-100 md-size-50 md-scroll alt">
           <results-list
             :groups="groups.filter(group => Object.keys(results).includes(group[idKey]))"
             :dances="dances"
             :dancers="dancers"
             :results="results"
           />
-        </div>
-        <div class="md-layout-item md-size-50 blade admin-blade md-scroll">
+        </blade>
+        <blade class="md-small-size-100 md-size-50 md-scroll">
           <placed-dancer-list
             v-if="placedDancers.length"
             :dance="currentDance"
             :dancers="placedDancers"
           />
-          <md-empty-state
-            v-else
-            md-icon="vertical_split"
-            md-label="Placed dancers"
-            md-description="Double-check the results to import"
-          />
-        </div>
-      </div>
+          <div v-else>
+            <md-empty-state
+              md-icon="vertical_split"
+              md-label="Placed dancers"
+              md-description="Double-check the results to import"
+            />
+          </div>
+        </blade>
+      </blades>
       <md-toolbar class="md-layout">
         <div class="md-layout-item" />
         <footer>

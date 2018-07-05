@@ -1,54 +1,54 @@
 <template>
-  <div class="competition-results blades md-scroll-frame alt">
-    <transition :name="`slide-${currentGroup ? 'left' : 'right'}`">
-      <div
-        v-if="!currentGroup"
-        v-persist-scroll="$route.fullPath"
-        class="blade md-scroll-frame md-scroll"
-        key="list"
-      >
-        <md-list v-if="groupedCategories.length" class="md-list-cards">
-          <md-list-item-cards
-            v-for="category in groupedCategories"
-            :key="category[idKey]"
-            md-expand
-            :md-expanded="isCategoryExpanded(category, groupedCategories)"
-            @toggled="handleCategoryExpanded(category[idKey], $event)"
-          >
-            <md-subheader>
-              <span>{{ category.name }}</span>
-              <md-icon v-if="hasFavorites(findCategoryDancers(category, dancers))" class="md-accent">
-                star
-              </md-icon>
-              <results-progress-indicator
-                :category="category"
-                :groups="groups"
-                :dances="dances"
-                :results="results"
-              />
-            </md-subheader>
+  <blades class="competition-results alt">
+    <blade
+      :active="!currentGroup"
+      v-persist-scroll="`/competitions/${competitionId}/results`"
+      class="md-small-size-100 md-size-33 md-scroll"
+    >
+      <md-list v-if="groupedCategories.length" class="md-list-cards">
+        <md-list-item-cards
+          v-for="category in groupedCategories"
+          :key="category[idKey]"
+          md-expand
+          :md-expanded="isCategoryExpanded(category, groupedCategories)"
+          @toggled="handleCategoryExpanded(category[idKey], $event)"
+        >
+          <md-subheader>
+            <span>{{ category.name }}</span>
+            <md-icon v-if="hasFavorites(findCategoryDancers(category, dancers))" class="md-accent">
+              star
+            </md-icon>
+            <results-progress-indicator
+              :category="category"
+              :groups="groups"
+              :dances="dances"
+              :results="results"
+            />
+          </md-subheader>
 
-            <md-list slot="md-expand">
-              <result-list-item
-                v-for="group in category.$groups"
-                :key="group[idKey]"
-                :to="{ name: $route.name, params: { groupId: group[idKey] } }"
-                :dancers="findPlacedDancers(group, callbacks, dancers, results)"
-                :has-placeholder-dancers="isInProgress(group, dances, results)"
-              >
-                {{ group.name }}
-              </result-list-item>
-            </md-list>
-          </md-list-item-cards>
-        </md-list>
+          <md-list slot="md-expand">
+            <result-list-item
+              v-for="group in category.$groups"
+              :key="group[idKey]"
+              :to="{ name: $route.name, params: { groupId: group[idKey] } }"
+              :dancers="findPlacedDancers(group, callbacks, dancers, results)"
+              :has-placeholder-dancers="isInProgress(group, dances, results)"
+            >
+              {{ group.name }}
+            </result-list-item>
+          </md-list>
+        </md-list-item-cards>
+      </md-list>
+      <div v-else>
         <md-empty-state
-          v-else
           md-icon="clear"
           md-label="No results yet"
         />
       </div>
-      <div v-else class="blade md-scroll-frame" key="detail">
-        <md-toolbar class="md-dense md-toolbar-nowrap">
+    </blade>
+    <blade :active="currentGroup" class="md-small-size-100 md-size-66">
+      <div v-if="currentGroup" class="md-scroll-frame">
+        <md-toolbar class="md-dense md-toolbar-nowrap md-medium-hide">
           <md-button :to="{ name: $route.name }" class="md-icon-button">
             <md-icon>chevron_left</md-icon>
           </md-button>
@@ -57,7 +57,11 @@
           </span>
         </md-toolbar>
 
-        <div id="results-detail" v-persist-scroll="$route.fullPath" class="md-scroll-frame md-scroll">
+        <div
+          id="results-detail"
+          v-persist-scroll="`/competitions/${competitionId}/results/${groupId}`"
+          class="md-scroll-frame md-scroll"
+        >
           <md-list class="md-list-cards">
             <md-list-item-cards
               v-for="dance in groupedDancers"
@@ -104,8 +108,15 @@
           </md-dialog-actions>
         </md-dialog>
       </div>
-    </transition>
-  </div>
+      <div v-else>
+        <md-empty-state
+          md-icon="touch_app"
+          md-label="See results"
+          md-description="Select an age group"
+        />
+      </div>
+    </blade>
+  </bladeS>
 </template>
 
 <script>
@@ -137,6 +148,7 @@ import {
 export default {
   name: 'competition-results',
   props: {
+    competitionId: String,
     groupId: String,
     danceId: String,
     competitionDataRef: {
@@ -200,7 +212,7 @@ export default {
         ...(this.currentGroup ? findGroupDances(this.currentGroup, this.dances) : []),
       ];
 
-      if (hasOverall(this.currentGroup)) {
+      if (hasOverall(this.currentGroup || {})) {
         groups.push(overall);
       }
 

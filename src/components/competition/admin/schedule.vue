@@ -1,162 +1,160 @@
 <template>
-  <div class="admin-schedule md-scroll-frame">
-    <div class="md-layout blades admin-blades">
-      <div class="md-layout-item md-size-33 blade admin-blade md-scroll">
-        <admin-list
-          :items-ref="competitionDataRef.child('schedule/days')"
-          items-type="Day"
-          @create="handleListItemCreate('schedule/days', $event)"
+  <blades class="admin-schedule md-scroll-frame">
+    <blade :active="!currentItem" class="md-small-size-100 md-size-33 md-scroll">
+      <admin-list
+        :items-ref="competitionDataRef.child('schedule/days')"
+        items-type="Day"
+        @create="handleListItemCreate('schedule/days', $event)"
+      >
+        <admin-list-item
+          slot-scope="day"
+          :item="day"
+          md-expand
+          :md-expanded="dayId === day[idKey]"
+          @update:mdExpanded="$event && handleListItemSelect({
+            dayId: day[idKey],
+            blockId: null,
+            eventId: null,
+            danceId: null,
+          })"
+          @remove="handleListItemRemove('schedule/days', day)"
         >
-          <admin-list-item
-            slot-scope="day"
-            :item="day"
-            md-expand
-            :md-expanded="dayId === day[idKey]"
-            @update:mdExpanded="$event && handleListItemSelect({
-              dayId: day[idKey],
-              blockId: null,
-              eventId: null,
-              danceId: null,
-            })"
-            @remove="handleListItemRemove('schedule/days', day)"
+          <admin-list
+            :items-ref="competitionDataRef.child(`schedule/days/${day[idKey]}/blocks`)"
+            items-type="Block"
+            @create="handleListItemCreate(`schedule/days/${day[idKey]}/blocks`, $event)"
           >
-            <admin-list
-              :items-ref="competitionDataRef.child(`schedule/days/${day[idKey]}/blocks`)"
-              items-type="Block"
-              @create="handleListItemCreate(`schedule/days/${day[idKey]}/blocks`, $event)"
+            <admin-list-item
+              slot-scope="block"
+              :item="block"
+              md-expand
+              :md-expanded="blockId === block[idKey]"
+              @update:mdExpanded="$event && handleListItemSelect({
+                dayId: day[idKey],
+                blockId: block[idKey],
+                eventId: null,
+                danceId: null,
+              })"
+              @remove="handleListItemRemove(`schedule/days/${day[idKey]}/blocks`, block)"
             >
-              <admin-list-item
-                slot-scope="block"
-                :item="block"
-                md-expand
-                :md-expanded="blockId === block[idKey]"
-                @update:mdExpanded="$event && handleListItemSelect({
-                  dayId: day[idKey],
-                  blockId: block[idKey],
-                  eventId: null,
-                  danceId: null,
-                })"
-                @remove="handleListItemRemove(`schedule/days/${day[idKey]}/blocks`, block)"
+              <admin-list
+                :items-ref="competitionDataRef.child(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events`)"
+                items-type="Event"
+                @create="handleListItemCreate(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events`, $event)"
               >
-                <admin-list
-                  :items-ref="competitionDataRef.child(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events`)"
-                  items-type="Event"
-                  @create="handleListItemCreate(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events`, $event)"
+                <admin-list-item
+                  slot-scope="event"
+                  :item="event"
+                  md-expand
+                  :md-expanded="eventId === event[idKey]"
+                  @update:mdExpanded="$event && handleListItemSelect({
+                    dayId: day[idKey],
+                    blockId: block[idKey],
+                    eventId: event[idKey],
+                    danceId: null,
+                  })"
+                  @remove="handleListItemRemove(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events`, event)"
                 >
-                  <admin-list-item
-                    slot-scope="event"
-                    :item="event"
-                    md-expand
-                    :md-expanded="eventId === event[idKey]"
-                    @update:mdExpanded="$event && handleListItemSelect({
-                      dayId: day[idKey],
-                      blockId: block[idKey],
-                      eventId: event[idKey],
-                      danceId: null,
-                    })"
-                    @remove="handleListItemRemove(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events`, event)"
+                  <admin-list
+                    :items-ref="competitionDataRef.child(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events/${event[idKey]}/dances`)"
+                    items-type="Dance"
+                    @create="handleListItemCreate(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events/${event[idKey]}/dances`, $event)"
                   >
-                    <admin-list
-                      :items-ref="competitionDataRef.child(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events/${event[idKey]}/dances`)"
-                      items-type="Dance"
-                      @create="handleListItemCreate(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events/${event[idKey]}/dances`, $event)"
-                    >
-                      <admin-list-item
-                        slot-scope="dance"
-                        :item="dance"
-                        :item-name-fn="itemDanceNameFn"
-                        @click="handleListItemSelect({
-                          dayId: day[idKey],
-                          blockId: block[idKey],
-                          eventId: event[idKey],
-                          danceId: dance[idKey],
-                        })"
-                        @remove="handleListItemRemove(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events/${event[idKey]}/dances`, dance)"
-                        :class="{ active: danceId === dance[idKey] }"
-                      />
-                    </admin-list>
-                  </admin-list-item>
-                </admin-list>
-              </admin-list-item>
-            </admin-list>
-          </admin-list-item>
-        </admin-list>
-      </div>
-      <div class="md-layout-item md-size-66 blade admin-blade md-scroll">
-        <form v-if="currentItem" @submit.prevent class="md-padding">
-          <div v-for="(field, key) in currentItemFields" :key="key">
-            <md-field v-if="field.type === 'select'">
-              <label>{{ field.name || key }}</label>
-              <md-select
-                v-model="currentItem[key]"
-                :required="currentItem.required"
-                @md-selected="handleListItemUpdate(currentPath, currentItem)"
-              >
-                <md-option
-                  v-for="preset in field.presets"
-                  :key="preset[idKey]"
-                  :value="preset[idKey]"
-                >
-                  {{ preset.$name || preset.name }}
-                </md-option>
-                <md-option v-if="!field.presets.length" disabled>
-                  None found.
-                </md-option>
-              </md-select>
-            </md-field>
-
-            <md-field v-else-if="field.type === 'textarea'" md-clearable>
-              <label>{{ field.name || key }}</label>
-              <md-textarea
-                v-model="currentItem[key]"
-                :md-autogrow="true"
-                :required="field.required"
-                @input="handleListItemUpdate(currentPath, currentItem)"
-              />
-            </md-field>
-
-            <md-datepicker
-              v-else-if="field.type === 'datepicker'"
+                    <admin-list-item
+                      slot-scope="dance"
+                      :item="dance"
+                      :item-name-fn="itemDanceNameFn"
+                      @click="handleListItemSelect({
+                        dayId: day[idKey],
+                        blockId: block[idKey],
+                        eventId: event[idKey],
+                        danceId: dance[idKey],
+                      })"
+                      @remove="handleListItemRemove(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events/${event[idKey]}/dances`, dance)"
+                      :class="{ active: danceId === dance[idKey] }"
+                    />
+                  </admin-list>
+                </admin-list-item>
+              </admin-list>
+            </admin-list-item>
+          </admin-list>
+        </admin-list-item>
+      </admin-list>
+    </blade>
+    <blade :active="currentItem" class="md-small-size-100 md-size-66 md-scroll">
+      <form v-if="currentItem" @submit.prevent class="md-padding">
+        <div v-for="(field, key) in currentItemFields" :key="key">
+          <md-field v-if="field.type === 'select'">
+            <label>{{ field.name || key }}</label>
+            <md-select
               v-model="currentItem[key]"
-              md-immediately
-              @input="handleListItemUpdate(currentPath, currentItem)"
-              :class="{ 'md-required': field.required }"
+              :required="currentItem.required"
+              @md-selected="handleListItemUpdate(currentPath, currentItem)"
             >
-              <label>{{ field.name || key }}</label>
-            </md-datepicker>
+              <md-option
+                v-for="preset in field.presets"
+                :key="preset[idKey]"
+                :value="preset[idKey]"
+              >
+                {{ preset.$name || preset.name }}
+              </md-option>
+              <md-option v-if="!field.presets.length" disabled>
+                None found.
+              </md-option>
+            </md-select>
+          </md-field>
 
-            <md-field v-else md-clearable>
-              <label>{{ field.name || key }}</label>
-              <md-input
-                v-model="currentItem[key]"
-                :required="field.required"
-                @input="handleListItemUpdate(currentPath, currentItem)"
-              />
-            </md-field>
-          </div>
-
-          <div v-if="currentItemCollection === 'dances' && currentItem.danceId">
-            <admin-platforms
-              :path="currentPath"
-              :item="currentItem"
-              :platforms="platforms"
-              :groups="groups"
-              :dances="dances"
-              :dancers="dancers"
-              :staff="staff"
-              @change="handlePlatformChanges"
+          <md-field v-else-if="field.type === 'textarea'" md-clearable>
+            <label>{{ field.name || key }}</label>
+            <md-textarea
+              v-model="currentItem[key]"
+              :md-autogrow="true"
+              :required="field.required"
+              @input="handleListItemUpdate(currentPath, currentItem)"
             />
-          </div>
-        </form>
-        <md-empty-state
-          v-else
-          md-icon="event_note"
-          md-label="Edit activities"
-          md-description="Add or select an item to edit"
-        />
-      </div>
-    </div>
-  </div>
+          </md-field>
+
+          <md-datepicker
+            v-else-if="field.type === 'datepicker'"
+            v-model="currentItem[key]"
+            md-immediately
+            @input="handleListItemUpdate(currentPath, currentItem)"
+            :class="{ 'md-required': field.required }"
+          >
+            <label>{{ field.name || key }}</label>
+          </md-datepicker>
+
+          <md-field v-else md-clearable>
+            <label>{{ field.name || key }}</label>
+            <md-input
+              v-model="currentItem[key]"
+              :required="field.required"
+              @input="handleListItemUpdate(currentPath, currentItem)"
+            />
+          </md-field>
+        </div>
+
+        <div v-if="currentItemCollection === 'dances' && currentItem.danceId">
+          <admin-platforms
+            :path="currentPath"
+            :item="currentItem"
+            :platforms="platforms"
+            :groups="groups"
+            :dances="dances"
+            :dancers="dancers"
+            :staff="staff"
+            @change="handlePlatformChanges"
+          />
+        </div>
+      </form>
+      <md-empty-state
+        v-else
+        md-icon="event_note"
+        md-label="Edit activities"
+        md-description="Add or select an item to edit"
+      />
+    </blade>
+  </blades>
 </template>
 
 <script>

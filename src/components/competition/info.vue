@@ -1,6 +1,9 @@
 <template>
   <div class="competition-info md-scroll-frame alt">
-    <div v-persist-scroll="$route.fullPath" class="md-scroll-frame md-scroll">
+    <div
+      v-persist-scroll="`/competitions/${competitionId}/info`"
+      class="md-scroll-frame md-scroll"
+    >
       <section class="hero">
         <h1 class="md-display-1">{{ competition.name }}</h1>
         <p v-if="competition.date" class="md-headline">
@@ -85,6 +88,7 @@ import {
 export default {
   name: 'competition-info',
   props: {
+    competitionId: String,
     competition: Object,
     staff: Array,
   },

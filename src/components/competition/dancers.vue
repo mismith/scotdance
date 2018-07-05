@@ -1,98 +1,105 @@
 <template>
-  <div class="competition-dancers blades md-scroll-frame alt">
-    <transition :name="`slide-${currentDancer ? 'left' : 'right'}`">
-      <div v-if="!currentDancer" class="blade md-scroll-frame" key="list">
-        <div v-if="dancers.length" class="md-scroll-frame">
-          <md-toolbar>
-            <md-field style="margin-left: 8px; margin-right: 8px;">
-              <!-- can't use proper <md-input> here because it causes performance issues on mobile devices -->
-              <input v-model="filterBy" class="md-input" placeholder="Search" />
-              <div class="md-layout md-alignment-center" style="width: 32px;">
-                <md-icon v-if="filterBy === filterByDebounced">search</md-icon>
-                <mi-md-spinner v-else :diameter="20" :width="6" />
-              </div>
-            </md-field>
-            <md-menu md-direction="bottom-end" @selected="sortBy">
-              <md-button md-menu-trigger class="md-icon-button">
-                <md-icon>filter_list</md-icon>
-              </md-button>
-
-              <md-menu-content>
-                <md-menu-item
-                  v-for="by in sortableBys"
-                  :key="by.key"
-                  @click="sortBy = by.key"
-                  :class="{ active: sortBy === by.key }"
-                >{{ by.name }}</md-menu-item>
-              </md-menu-content>
-            </md-menu>
-            <md-button
-              @click="onlyFavorites = !onlyFavorites"
-              class="md-icon-button"
-              :class="{ 'md-accent': onlyFavorites }"
-            >
-              <md-icon>{{ onlyFavorites ? 'star' : 'star_border' }}</md-icon>
+  <blades class="competition-dancers alt">
+    <blade :active="!currentDancer" class="md-small-size-100 md-size-50">
+      <div v-if="dancers.length" class="md-scroll-frame">
+        <md-toolbar>
+          <md-field style="margin-left: 8px; margin-right: 8px;">
+            <!-- can't use proper <md-input> here because it causes performance issues on mobile devices -->
+            <input v-model="filterBy" class="md-input" placeholder="Search" />
+            <div class="md-layout md-alignment-center" style="width: 32px; flex: 0;">
+              <md-icon v-if="filterBy === filterByDebounced">search</md-icon>
+              <mi-md-spinner v-else :diameter="20" :width="6" />
+            </div>
+          </md-field>
+          <md-menu md-direction="bottom-end" @selected="sortBy">
+            <md-button md-menu-trigger class="md-icon-button">
+              <md-icon>filter_list</md-icon>
             </md-button>
-          </md-toolbar>
 
-          <div v-persist-scroll="$route.fullPath" class="md-scroll-frame md-scroll">
-            <md-list v-if="groupIds.length" class="md-list-cards">
-              <md-list-item-cards
-                v-for="(group, groupId) in groupedDancers"
-                :key="groupId"
-                md-expand
-                :md-expanded="isGroupExpanded(groupId, groupIds)"
-                @toggled="handleGroupExpanded(groupId, $event)"
-              >
-                <md-subheader>
-                  {{ groupId || '?' }}
-                  <md-icon v-if="hasFavorites(group)" class="md-accent">star</md-icon>
-                </md-subheader>
+            <md-menu-content>
+              <md-menu-item
+                v-for="by in sortableBys"
+                :key="by.key"
+                @click="sortBy = by.key"
+                :class="{ active: sortBy === by.key }"
+              >{{ by.name }}</md-menu-item>
+            </md-menu-content>
+          </md-menu>
+          <md-button
+            @click="onlyFavorites = !onlyFavorites"
+            class="md-icon-button"
+            :class="{ 'md-accent': onlyFavorites }"
+          >
+            <md-icon>{{ onlyFavorites ? 'star' : 'star_border' }}</md-icon>
+          </md-button>
+        </md-toolbar>
 
-                <md-list slot="md-expand" class="md-double-line">
-                  <dancer-list-item
-                    v-for="dancer in group"
-                    :key="dancer[idKey]"
-                    :dancer="dancer"
-                    :to="{ name: $route.name, params: { dancerId: dancer[idKey] } }"
-                    :class="{ active: dancerId === dancer[idKey] }"
-                  />
-                </md-list>
-              </md-list-item-cards>
-            </md-list>
-            <md-empty-state
-              v-else-if="!onlyFavorites"
-              md-icon="error_outline"
-              md-label="No dancers match"
-            />
-            <md-empty-state
-              v-else-if="me"
-              md-icon="star_half"
-              md-label="No favourite dancers"
-            />
-            <md-empty-state
-              v-else
-              md-icon="star_half"
-              md-label="No favourite dancers"
-              md-description="Login to highlight your favourites–making them much easier to find"
-            />
-          </div>
+        <div
+          v-persist-scroll="`/competitions/${competitionId}/dancers`"
+          class="md-scroll-frame md-scroll"
+        >
+          <md-list v-if="groupIds.length" class="md-list-cards">
+            <md-list-item-cards
+              v-for="(group, groupId) in groupedDancers"
+              :key="groupId"
+              md-expand
+              :md-expanded="isGroupExpanded(groupId, groupIds)"
+              @toggled="handleGroupExpanded(groupId, $event)"
+            >
+              <md-subheader>
+                {{ groupId || '?' }}
+                <md-icon v-if="hasFavorites(group)" class="md-accent">star</md-icon>
+              </md-subheader>
+
+              <md-list slot="md-expand" class="md-double-line">
+                <dancer-list-item
+                  v-for="dancer in group"
+                  :key="dancer[idKey]"
+                  :dancer="dancer"
+                  :to="{ name: $route.name, params: { dancerId: dancer[idKey] } }"
+                  :class="{ active: dancerId === dancer[idKey] }"
+                />
+              </md-list>
+            </md-list-item-cards>
+          </md-list>
+          <md-empty-state
+            v-else-if="!onlyFavorites"
+            md-icon="error_outline"
+            md-label="No dancers match"
+          />
+          <md-empty-state
+            v-else-if="me"
+            md-icon="star_half"
+            md-label="No favourite dancers"
+          />
+          <md-empty-state
+            v-else
+            md-icon="star_half"
+            md-label="No favourite dancers"
+            md-description="Login to highlight your favourites–making them much easier to find"
+          />
         </div>
+      </div>
+      <div v-else>
         <md-empty-state
-          v-else
           md-icon="clear"
           md-label="No dancers yet"
         />
       </div>
-      <div v-else class="blade md-scroll-frame" key="detail">
-        <md-toolbar class="md-dense md-toolbar-nowrap">
+    </blade>
+    <blade :active="currentDancer" class="md-small-size-100 md-size-50">
+      <div v-if="currentDancer" class="md-scroll-frame">
+        <md-toolbar class="md-dense md-toolbar-nowrap md-medium-hide">
           <md-button :to="{ name: $route.name }" class="md-icon-button">
             <md-icon>chevron_left</md-icon>
           </md-button>
           <span>Dancers</span>
         </md-toolbar>
 
-        <div v-persist-scroll="$route.fullPath" class="md-scroll-frame md-scroll">
+        <div
+          v-persist-scroll="`/competitions/${competitionId}/dancers/${dancerId}`"
+          class="md-scroll-frame md-scroll"
+        >
           <dancer-report
             :dancer="currentDancer"
             :dancers="dancers"
@@ -102,8 +109,15 @@
           />
         </div>
       </div>
-    </transition>
-  </div>
+      <div v-else>
+        <md-empty-state
+          md-icon="touch_app"
+          md-label="See dancer details"
+          md-description="Select a dancer"
+        />
+      </div>
+    </blade>
+  </blades>
 </template>
 
 <script>
@@ -126,6 +140,7 @@ import {
 export default {
   name: 'competition-dancers',
   props: {
+    competitionId: String,
     dancerId: String,
     competitionDataRef: {
       type: Object,

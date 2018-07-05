@@ -1,67 +1,65 @@
 <template>
-  <div class="admin-results md-scroll-frame">
-    <div class="md-layout blades admin-blades">
-      <div class="md-layout-item md-size-33 blade admin-blade md-scroll alt">
-        <results-list
-          v-if="groups.length"
-          :groups="groups"
-          :dances="dances"
-          :dancers="dancers"
-          :results="results"
+  <blades class="admin-results">
+    <blade :active="!currentDance" class="md-small-size-100 md-size-33 md-scroll alt">
+      <results-list
+        v-if="groups.length"
+        :groups="groups"
+        :dances="dances"
+        :dancers="dancers"
+        :results="results"
+      />
+      <md-empty-state
+        v-else
+        md-icon="clear"
+        md-label="No age groups found"
+      />
+    </blade>
+    <blade :active="currentDance" class="md-small-size-100 md-size-33 md-scroll">
+      <md-list v-if="currentDance">
+        <dancer-list-item
+          v-for="dancer in currentDancers"
+          :key="dancer[idKey]"
+          :dancer="dancer"
+          @click="placeDancer(dancer)"
+          :class="{ placed: isPlaced(dancer, placedDancers) }"
         />
-        <md-empty-state
-          v-else
-          md-icon="clear"
-          md-label="No age groups found"
+        <dancer-list-item
+          v-if="currentDancers.length"
+          :dancer="getPlaceholderDancer()"
+          @click="placeDancer(getPlaceholderDancer())"
+          class="placeholder"
         />
-      </div>
-      <div class="md-layout-item md-size-33 blade admin-blade md-scroll">
-        <md-list v-if="currentDance">
-          <dancer-list-item
-            v-for="dancer in currentDancers"
-            :key="dancer[idKey]"
-            :dancer="dancer"
-            @click="placeDancer(dancer)"
-            :class="{ placed: isPlaced(dancer, placedDancers) }"
-          />
-          <dancer-list-item
-            v-if="currentDancers.length"
-            :dancer="getPlaceholderDancer()"
-            @click="placeDancer(getPlaceholderDancer())"
-            class="placeholder"
-          />
 
-          <md-empty-state
-            v-if="!currentDancers.length"
-            md-icon="clear"
-            md-label="No dancers found"
-          />
-        </md-list>
         <md-empty-state
-          v-else
-          md-icon="touch_app"
-          md-label="Enter results"
-          md-description="Select an age group and dance"
+          v-if="!currentDancers.length"
+          md-icon="clear"
+          md-label="No dancers found"
         />
-      </div>
-      <div class="md-layout-item md-size-33 blade admin-blade md-scroll">
-        <placed-dancer-list
-          v-if="currentDance && placedDancers.length"
-          :admin="true"
-          :dance="currentDance"
-          :dancers="placedDancers"
-          @dancer-click="placeDancer($event)"
-          @dancer-toggle="handleTie($event[0], $event[1])"
-        />
-        <md-empty-state
-          v-else
-          md-icon="vertical_split"
-          md-label="Order dancers"
-          md-description="Select dancers in the order placed"
-        />
-      </div>
-    </div>
-  </div>
+      </md-list>
+      <md-empty-state
+        v-else
+        md-icon="touch_app"
+        md-label="Enter results"
+        md-description="Select an age group and dance"
+      />
+    </blade>
+    <blade class="md-small-size-100 md-size-33 md-scroll">
+      <placed-dancer-list
+        v-if="currentDance && placedDancers.length"
+        :admin="true"
+        :dance="currentDance"
+        :dancers="placedDancers"
+        @dancer-click="placeDancer($event)"
+        @dancer-toggle="handleTie($event[0], $event[1])"
+      />
+      <md-empty-state
+        v-else
+        md-icon="vertical_split"
+        md-label="Order dancers"
+        md-description="Select dancers in the order placed"
+      />
+    </blade>
+  </blades>
 </template>
 
 <script>

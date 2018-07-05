@@ -1,71 +1,69 @@
 <template>
-  <div class="admin-dance-groups md-scroll-frame">
-    <div class="md-layout blades admin-blades">
-      <div class="md-layout-item md-size-33 blade admin-blade md-scroll">
-        <md-list v-if="groups.length">
-          <md-list-item
-            v-for="group in groups"
-            :key="group[idKey]"
-            :to="{ name: $route.name, params: { groupId: group[idKey] } }"
-            :class="{ active: isActive(group) }"
-          >
-            <span class="md-list-item-text">{{ group.$name }}</span>
-            <md-icon>chevron_right</md-icon>
-          </md-list-item>
-        </md-list>
+  <blades class="admin-dance-groups">
+    <blade :active="!currentGroup" class="md-small-size-100 md-size-33 md-scroll">
+      <md-list v-if="groups.length">
+        <md-list-item
+          v-for="group in groups"
+          :key="group[idKey]"
+          :to="{ name: $route.name, params: { groupId: group[idKey] } }"
+          :class="{ active: isActive(group) }"
+        >
+          <span class="md-list-item-text">{{ group.$name }}</span>
+          <md-icon>chevron_right</md-icon>
+        </md-list-item>
+      </md-list>
+      <md-empty-state
+        v-else
+        md-icon="clear"
+        md-label="No age groups found"
+      />
+    </blade>
+    <blade :active="currentGroup" class="md-small-size-100 md-size-33 md-scroll">
+      <md-list v-if="currentGroup">
+        <md-list-item
+          v-for="dance in dances"
+          :key="dance[idKey]"
+        >
+          <span class="md-list-item-text">{{ dance.$name }}</span>
+          <md-switch
+            v-model="dance.groupIds[currentGroup[idKey]]"
+            @change="handleDanceToggle(dance, $event)"
+          />
+        </md-list-item>
+
+        <footer v-if="dances.length">
+          <md-divider />
+          <md-button
+            @click="handleCopy"
+          >Copy</md-button>
+          <md-button
+            :disabled="clipboard.type !== 'dance-groups'"
+            @click="handlePaste"
+          >Paste</md-button>
+        </footer>
         <md-empty-state
           v-else
           md-icon="clear"
-          md-label="No age groups found"
+          md-label="No dances found"
         />
-      </div>
-      <div class="md-layout-item md-size-33 blade admin-blade md-scroll">
-        <md-list v-if="currentGroup">
-          <md-list-item
-            v-for="dance in dances"
-            :key="dance[idKey]"
-          >
-            <span class="md-list-item-text">{{ dance.$name }}</span>
-            <md-switch
-              v-model="dance.groupIds[currentGroup[idKey]]"
-              @change="handleDanceToggle(dance, $event)"
-            />
-          </md-list-item>
-
-          <footer v-if="dances.length">
-            <md-divider />
-            <md-button
-              @click="handleCopy"
-            >Copy</md-button>
-            <md-button
-              :disabled="clipboard.type !== 'dance-groups'"
-              @click="handlePaste"
-            >Paste</md-button>
-          </footer>
-          <md-empty-state
-            v-else
-            md-icon="clear"
-            md-label="No dances found"
-          />
-        </md-list>
-        <md-empty-state
-          v-else
-          md-icon="call_merge"
-          md-label="Link dances"
-          md-description="Pick dances for each age group"
-        />
-      </div>
-      <div class="md-layout-item md-size-33 blade admin-blade md-scroll">
-        <HotTable v-if="currentGroupDances.length" :settings="hotSettings" class="fullscreen" />
-        <md-empty-state
-          v-else
-          md-icon="vertical_split"
-          md-label="Championship draws"
-          md-description="Specify dancer order for each dance"
-        />
-      </div>
-    </div>
-  </div>
+      </md-list>
+      <md-empty-state
+        v-else
+        md-icon="call_merge"
+        md-label="Link dances"
+        md-description="Pick dances for each age group"
+      />
+    </blade>
+    <blade class="md-small-size-100 md-size-33 md-scroll">
+      <HotTable v-if="currentGroupDances.length" :settings="hotSettings" class="fullscreen" />
+      <md-empty-state
+        v-else
+        md-icon="vertical_split"
+        md-label="Championship draws"
+        md-description="Specify dancer order for each dance"
+      />
+    </blade>
+  </blades>
 </template>
 
 <script>

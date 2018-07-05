@@ -367,24 +367,6 @@ body.has-bottom-bar {
 }
 
 // transitions
-.blades {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  position: relative;
-  overflow: hidden;
-
-  .blade:not(.admin-blade) {
-    width: 100%;
-
-    + .blade {
-      // @HACK to avoid post-animation flicker on iOS
-      // this essentially causes `position: absolute` on the incoming blade—e.g. to allow stacking
-      // but without altering the scroll position (which gums up the persist-scroll directive)
-      margin-left: -100%;
-    }
-  }
-}
 .slide-left-enter-active,
 .slide-left-leave-active,
 .slide-right-enter-active,
@@ -475,9 +457,11 @@ body,
         text-overflow: ellipsis;
       }
     }
+    > .md-list-item-router.router-link-active,
     &.active {
       background-color: var(--md-theme-default-primary) !important;
 
+      &.md-list-item-container,
       > .md-list-item-container {
         .md-list-item-content {
           color: #fff;

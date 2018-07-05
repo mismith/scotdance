@@ -1,6 +1,10 @@
 <template>
   <div class="competitions-list md-scroll-frame alt">
-    <div v-if="loaded" v-persist-scroll="$route.fullPath" class="md-scroll-frame md-scroll">
+    <div
+      v-if="loaded"
+      v-persist-scroll="'/competitions'"
+      class="md-scroll-frame md-scroll"
+    >
       <md-list class="md-list-cards">
         <md-list-item-cards
           v-for="group in groupedCompetitions"

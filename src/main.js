@@ -23,6 +23,8 @@ import store from '@/store';
 
 import MiMdSpinner from '@/components/utility/mi-md-spinner';
 import MdSpinnable from '@/components/utility/md-spinnable';
+import Blades from '@/components/utility/blades';
+import Blade from '@/components/utility/blade';
 import MdListItemCards from '@/components/utility/md-list-item-cards';
 
 import $package from '../package.json';
@@ -36,6 +38,8 @@ Vue.use(VueFire);
 Vue.use(VueMaterial);
 Vue.component('mi-md-spinner', MiMdSpinner);
 Vue.component('md-spinnable', MdSpinnable);
+Vue.component('blades', Blades);
+Vue.component('blade', Blade);
 Vue.component('md-list-item-cards', MdListItemCards);
 Vue.use(VueAsyncComputed);
 Vue.use(VueBodyClass, router);
@@ -46,7 +50,7 @@ Vue.use(VueLocalStorage, {
 Vue.use(VueScrollTo);
 
 const $scrollAll = (element, options = {}) => {
-  const containers = options.container ? [options.container] : document.querySelectorAll('.md-scroll:not(.admin-blade)');
+  const containers = options.container ? [options.container] : document.querySelectorAll('.md-scroll:not(.persist-scroll)');
   Array.from(containers).forEach((container) => {
     const scrollTo = scroller();
     scrollTo(element, {
@@ -66,20 +70,30 @@ Vue.prototype.$scrollAll = $scrollAll;
   Vue.localStorage.addProperty(namespace, Object, {});
   const storage = Vue.localStorage.get(namespace, {});
   let onScroll;
-  const rebind = el => onScroll && el.addEventListener('scroll', onScroll);
-  const unbind = el => onScroll && el.removeEventListener('scroll', onScroll);
-  const restore = (el, { value: name }) => {
-    const value = Number.parseFloat(storage[name]);
+  const rebind = (el) => {
+    if (onScroll) {
+      el.addEventListener('scroll', onScroll);
+      el.classList.add(namespace);
+    }
+  };
+  const unbind = (el) => {
+    if (onScroll) {
+      el.removeEventListener('scroll', onScroll);
+      el.classList.remove(namespace);
+    }
+  };
+  const restore = (el, { value: key }) => {
+    const value = Number.parseFloat(storage[key]);
     setTimeout(() => {
       el.scrollTop = value; // eslint-disable-line no-param-reassign
     });
   };
 
   Vue.directive(namespace, {
-    bind(el, { value: name }) {
+    bind(el, { value: key }) {
       onScroll = () => {
         const value = el.scrollTop;
-        storage[name] = value;
+        storage[key] = value;
         Vue.localStorage.set(namespace, storage);
       };
       rebind(el);
