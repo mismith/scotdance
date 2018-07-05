@@ -60,12 +60,15 @@ import {
   overall,
   hasOverall,
   findGroupDances,
+  findPlacedDancers,
+  getPlace,
 } from '@/helpers/results';
 
 export default {
   name: 'dancer-report',
   props: {
     dancer: Object,
+    dancers: Array,
     dances: Array,
     groups: Array,
     results: Object,
@@ -86,20 +89,13 @@ export default {
     findGroupDances,
 
     getPlace(dancer, group, dance) {
-      try {
-        const groupId = group[idKey];
-        const danceId = dance[idKey];
-        const index = this.results[groupId][danceId].indexOf(dancer[idKey]);
-        if (index >= 0) {
-          // placed
-          return index + 1;
-        }
-        // did not place
-        return 0;
-      } catch (err) {
-        // no results yet
-        return null;
+      if (this.results[group[idKey]] && this.results[group[idKey]][dance[idKey]]) {
+        const placedDancers = findPlacedDancers(group, dance, this.dancers, this.results);
+        return getPlace(dancer, placedDancers);
       }
+
+      // no results yet
+      return null;
     },
   },
   components: {

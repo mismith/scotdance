@@ -95,6 +95,7 @@
         <div v-persist-scroll="$route.fullPath" class="md-scroll-frame md-scroll">
           <dancer-report
             :dancer="currentDancer"
+            :dancers="dancers"
             :dances="dances"
             :groups="groups"
             :results="results"
