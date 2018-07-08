@@ -40,10 +40,7 @@
         <md-list v-else class="md-transparent">
           <md-list-item>
             <md-avatar class="md-large">
-              <img
-                :src="me.photoURL || `https://avatars.io/gravatar/${me.email}`"
-                :alt="me.displayName"
-              />
+              <gravatar :user="me" />
             </md-avatar>
           </md-list-item>
           <md-list-item @click="toggleAccount()" :class="{ toggled: accountToggled }">

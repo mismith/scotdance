@@ -3,10 +3,7 @@
     <div v-if="me" class="md-padding md-scroll-frame md-scroll">
       <div class="md-layout md-alignment-center">
         <md-avatar>
-          <img
-            :src="me.photoURL || `https://avatars.io/gravatar/${me.email}`"
-            :alt="me.displayName"
-          />
+          <gravatar :user="me" />
         </md-avatar>
         <div class="md-layout-item md-padding">
           Avatar via <a href="https://gravatar.com/" target="_blank" class="ext">Gravatar</a>

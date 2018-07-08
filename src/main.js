@@ -25,6 +25,7 @@ import MiMdSpinner from '@/components/utility/mi-md-spinner';
 import MdSpinnable from '@/components/utility/md-spinnable';
 import Blades from '@/components/utility/blades';
 import Blade from '@/components/utility/blade';
+import Gravatar from '@/components/utility/gravatar';
 import MdListItemCards from '@/components/utility/md-list-item-cards';
 
 import $package from '../package.json';
@@ -40,6 +41,7 @@ Vue.component('mi-md-spinner', MiMdSpinner);
 Vue.component('md-spinnable', MdSpinnable);
 Vue.component('blades', Blades);
 Vue.component('blade', Blade);
+Vue.component('gravatar', Gravatar);
 Vue.component('md-list-item-cards', MdListItemCards);
 Vue.use(VueAsyncComputed);
 Vue.use(VueBodyClass, router);
