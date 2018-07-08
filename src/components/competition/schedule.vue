@@ -165,6 +165,7 @@ import {
 import {
   textify,
   findByIdKey,
+  sortByKey,
   getScheduleItemDanceName,
 } from '@/helpers/competition';
 import {
@@ -254,7 +255,7 @@ export default {
           .map(number => this.dancers.find(dancer => `${dancer.number}` === `${number}`) || getPlaceholderDancer());
       }
       return findGroupDancers(group, this.dancers)
-        .sort((a, b) => a.$number.localeCompare(b.$number)); // order by dancer number
+        .sort(sortByKey('$number')); // order by dancer number
     },
 
     isActive(dayId, blockId, eventId) {

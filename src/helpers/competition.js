@@ -8,6 +8,10 @@ export function findByIdKey(items, id) {
   return items.find(item => item[idKey] === id);
 }
 
+export function sortByKey(key = idKey) {
+  return (a, b) => a[key].localeCompare(b[key]);
+}
+
 export function hasFavorites(dancers) {
   return dancers.some(dancer => dancer && dancer.$favorite);
 }

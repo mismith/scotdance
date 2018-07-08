@@ -3,6 +3,7 @@ import {
 } from '@/helpers/firebase';
 import {
   findByIdKey,
+  sortByKey,
 } from '@/helpers/competition';
 
 export const callbacks = {
@@ -71,7 +72,7 @@ export function findPlacedDancers(group, dance, dancers = [], results = {}, sort
     };
   });
   if (sortByNumber) {
-    return placedDancers.sort((a, b) => a.$number.localeCompare(b.$number));
+    return placedDancers.sort(sortByKey('$number'));
   }
   return placedDancers;
 }

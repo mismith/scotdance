@@ -67,6 +67,7 @@ import {
 } from 'vuex';
 import {
   findByIdKey,
+  sortByKey,
   danceExtender,
 } from '@/helpers/competition';
 import {
@@ -111,7 +112,7 @@ export default {
         $group: findByIdKey(this.groups, dancer.groupId),
         $favorite: this.$store.getters.isFavorite('dancers', dancer[idKey]),
       }))
-        .sort((a, b) => a.$number.localeCompare(b.$number)); // sort by number
+        .sort(sortByKey('$number')); // sort by number
     },
     groups() {
       return this.groupsRaw.map((group, i) => ({
