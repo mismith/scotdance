@@ -52,7 +52,7 @@
       <div v-else-if="!me">
         <md-empty-state md-icon="block" md-label="Login required" />
       </div>
-      <div v-else-if="!me.admin">
+      <div v-else-if="!me.admin"><!-- @TODO -->
         <md-empty-state md-icon="block" md-label="Access denied" />
       </div>
 
@@ -84,13 +84,15 @@
       <mi-md-spinner />
     </div>
 
-    <md-bottom-bar ref="bottomBar"
-        class="md-accent">
+    <md-bottom-bar
+      ref="bottomBar"
+      class="md-accent"
+    >
       <md-bottom-bar-item
         v-for="section of sections"
         :key="section[idKey]"
         @click="goToTab(section[idKey])"
-        :id="`tab-admin-${section[idKey]}`"
+        :id="`tab-competition-admin-${section[idKey]}`"
       >
         <md-icon :class="section.icon"></md-icon>
         <span class="md-bottom-bar-label">{{ section.name }}</span>
@@ -237,7 +239,7 @@ export default {
 
     async syncBottomBar() {
       await this.$nextTick(); // await md-bottom-bar's internally queued $nextTick
-      const adminTabId = `tab-admin-${this.currentTab}`;
+      const adminTabId = `tab-competition-admin-${this.currentTab}`;
       this.$refs.bottomBar.MdBottomBar.activeItem = adminTabId;
     },
 

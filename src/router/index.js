@@ -94,7 +94,7 @@ export default new Router({
               name: 'competition.admin',
               component: () => import(/* webpackChunkName: "admin" */ '@/components/competition/admin'),
               meta: {
-                title: 'Admin',
+                title: 'Competition Admin',
               },
               children: [
                 {
