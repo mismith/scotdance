@@ -3,13 +3,31 @@
     <blade :active="!currentDancer" class="md-small-size-100 md-size-50">
       <div v-if="dancers.length" class="md-scroll-frame">
         <md-toolbar>
-          <md-field style="margin-left: 8px; margin-right: 8px;">
+          <md-field class="search-field">
             <!-- can't use proper <md-input> here because it causes performance issues on mobile devices -->
             <input v-model="filterBy" class="md-input" placeholder="Search" />
-            <div class="md-layout md-alignment-center" style="width: 32px; flex: 0;">
-              <md-icon v-if="filterBy === filterByDebounced">search</md-icon>
-              <mi-md-spinner v-else :diameter="20" :width="6" />
-            </div>
+
+            <md-button
+              v-if="filterBy !== filterByDebounced"
+              class="md-icon-button md-dense"
+              disabled
+            >
+              <mi-md-spinner :diameter="20" :width="6" />
+            </md-button>
+            <md-button
+              v-else-if="filterBy"
+              @click="filterBy = ''"
+              class="md-icon-button md-dense"
+            >
+              <md-icon>clear</md-icon>
+            </md-button>
+            <md-button
+              v-else
+              class="md-icon-button md-dense"
+              disabled
+            >
+              <md-icon>search</md-icon>
+            </md-button>
           </md-field>
           <md-menu md-direction="bottom-end" @selected="sortBy">
             <md-button md-menu-trigger class="md-icon-button">
@@ -282,10 +300,15 @@ export default {
 .competition-dancers {
   .md-toolbar {
     flex-wrap: nowrap;
+    padding-left: 16px;
+    padding-right: 16px;
 
     .md-field {
       width: auto;
       flex: 1;
+    }
+    .search-field {
+      margin-right: 8px;
     }
   }
 }
