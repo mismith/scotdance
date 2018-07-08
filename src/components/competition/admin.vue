@@ -26,35 +26,13 @@
           </md-toolbar>
           <div class="md-scroll-frame md-scroll">
             <form v-if="currentSection.form" class="md-padding">
-              <div v-for="field in currentSection.form.fields" :key="field.data">
-                <md-datepicker
-                  v-if="field.type === 'datetime'"
-                  v-model="competition[field.data]"
-                  md-immediately
-                  @input="handleFormInputChange(currentSection[idKey], field.data, $event)"
-                  :class="{ 'md-required': field.required }"
-                >
-                  <label>{{ field.title }}</label>
-                </md-datepicker>
-
-                <md-checkbox
-                  v-else-if="field.type === 'checkbox'"
-                  v-model="competition[field.data]"
-                  @change="handleFormInputChange(currentSection[idKey], field.data, $event)"
-                  :required="field.required"
-                >
-                  {{ field.title }}
-                </md-checkbox>
-
-                <md-field v-else>
-                  <label>{{ field.title }}</label>
-                  <md-input
-                    v-model="competition[field.data]"
-                    @change="handleFormInputChange(currentSection[idKey], field.data, $event.target.value)"
-                    :required="field.required"
-                  />
-                </md-field>
-              </div>
+              <dynamic-field
+                v-for="field in currentSection.form.fields"
+                :key="field.data"
+                :field="field"
+                :data="competition"
+                @change="handleFormInputChange(currentSection[idKey], field.data, $event)"
+              />
             </form>
 
             <HotTable v-else-if="currentSection.hot" :settings="currentSection.hot" class="fullscreen" />
@@ -137,6 +115,7 @@ import {
   idKey,
   db,
 } from '@/helpers/firebase';
+import DynamicField from '@/components/admin/utility/dynamic-field';
 import AdminImport from '@/components/competition/admin/utility/import';
 import AdminImportResults from '@/components/competition/admin/utility/import-results';
 import PresetPicker from '@/components/competition/admin/utility/preset-picker';
@@ -359,6 +338,7 @@ export default {
   },
   components: {
     HotTable,
+    DynamicField,
     AdminImport,
     AdminImportResults,
     AdminResults,
