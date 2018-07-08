@@ -30,9 +30,27 @@ function makeKeyValuePairColumn(column, valueProp = '$name', keyProp = idKey) {
   };
 }
 
+const augmentHot = (settings = {}) => {
+  return {
+    colHeaders: true,
+    rowHeaders: true,
+    stretchH: 'all',
+    minSpareRows: 1,
+    contextMenu: [
+      'remove_row',
+    ],
+    sortIndicator: true,
+    columnSorting: true,
+    manualColumnResize: true,
+
+    ...settings,
+  };
+};
+
 export {
   XLSX,
   Handsontable,
   HotTable,
   makeKeyValuePairColumn,
+  augmentHot,
 };

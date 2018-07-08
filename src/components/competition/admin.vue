@@ -107,6 +107,7 @@ import {
 import {
   HotTable,
   makeKeyValuePairColumn,
+  augmentHot,
 } from '@/helpers/admin';
 import {
   danceExtender,
@@ -175,29 +176,27 @@ export default {
 
     sections() {
       return this.sectionsRaw
-        .map((sectionData) => {
-          const section = {
-            ...sectionData,
-          };
-          const data = [].concat(this[section[idKey]]);
-
+        .map((section) => {
           if (section.hot) {
-            section.hot = {
-              colHeaders: true,
-              rowHeaders: true,
-              stretchH: 'all',
-              minSpareRows: 1,
-              contextMenu: [
-                'remove_row',
-              ],
-              sortIndicator: true,
-              columnSorting: true,
-              manualColumnResize: true,
+            const data = this[section[idKey]];
 
+            // eslint-disable-next-line no-param-reassign
+            section.hot = augmentHot({
               ...section.hot,
-
               data,
-
+              columns: (section.hot.columns || []).map((column) => {
+                if (column.data === 'categoryId') {
+                  // eslint-disable-next-line no-param-reassign
+                  column.source = this.categories;
+                  return makeKeyValuePairColumn(column, 'name');
+                }
+                if (column.data === 'groupId') {
+                  // eslint-disable-next-line no-param-reassign
+                  column.source = this.groups;
+                  return makeKeyValuePairColumn(column);
+                }
+                return column;
+              }),
               afterChange: (changes, source) => {
                 if (source !== 'loadData') {
                   changes.forEach(([row, prop, oldVal, newVal]) => { // eslint-disable-line no-unused-vars
@@ -218,19 +217,6 @@ export default {
                   this.save(path, null);
                 }
               },
-            };
-            section.hot.columns = section.hot.columns.map((column) => {
-              if (column.data === 'categoryId') {
-                // eslint-disable-next-line no-param-reassign
-                column.source = this.categories;
-                return makeKeyValuePairColumn(column, 'name');
-              }
-              if (column.data === 'groupId') {
-                // eslint-disable-next-line no-param-reassign
-                column.source = this.groups;
-                return makeKeyValuePairColumn(column);
-              }
-              return column;
             });
           }
           return section;

@@ -92,6 +92,7 @@ import {
 import {
   HotTable,
   XLSX,
+  augmentHot,
 } from '@/helpers/admin';
 
 export default {
@@ -115,20 +116,6 @@ export default {
     };
   },
   methods: {
-    toHot(data, settings = {}) {
-      return Object.assign({
-        data,
-        rowHeaders: true,
-        colHeaders: true,
-        stretchH: 'all',
-        contextMenu: [
-          'remove_row',
-        ],
-        sortIndicator: true,
-        columnSorting: true,
-        manualColumnResize: true,
-      }, settings);
-    },
     toReviewHot(items, key) {
       let data;
       switch (key) {
@@ -157,11 +144,9 @@ export default {
           data = items;
         }
       }
-      return this.toHot(data, {
+      return augmentHot({
+        data,
         colHeaders: Object.keys(data[0]),
-        sortIndicator: true,
-        columnSorting: true,
-        manualColumnResize: true,
       });
     },
     sheetToJson(sheet, options = { header: 1 }) {
@@ -170,7 +155,10 @@ export default {
         .filter(row => Object.entries(row).some(([k, v]) => v)); // remove empties
     },
     sheetToHot(sheet, settings = {}) {
-      return this.toHot(this.sheetToJson(sheet), settings);
+      return augmentHot({
+        data: this.sheetToJson(sheet),
+        ...settings,
+      });
     },
 
     handleUpload(file) {
