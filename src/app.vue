@@ -463,7 +463,7 @@ body,
 
       &.md-list-item-container,
       > .md-list-item-container {
-        .md-list-item-content {
+        *:not(.md-primary):not(.md-accent) {
           color: #fff;
         }
       }
