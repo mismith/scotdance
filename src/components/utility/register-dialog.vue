@@ -110,7 +110,7 @@ export default {
           this.authLoading = false;
           this.authError = err;
 
-          throw err;
+          console.warn(err); // eslint-disable-line no-console
         });
     },
   },
