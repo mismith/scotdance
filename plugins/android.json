@@ -18,6 +18,9 @@
     },
     "cordova-plugin-device": {
       "PACKAGE_NAME": "info.mismith.scotdance"
+    },
+    "cordova-plugin-network-information": {
+      "PACKAGE_NAME": "info.mismith.scotdance"
     }
   },
   "dependent_plugins": {}
