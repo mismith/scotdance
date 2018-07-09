@@ -1,143 +1,60 @@
 <template>
   <blades class="admin-schedule md-scroll-frame">
-    <blade :active="!currentItem" class="md-small-size-100 md-size-33 md-scroll">
-      <admin-list
-        :items-ref="competitionDataRef.child('schedule/days')"
-        items-type="Day"
-        @create="handleListItemCreate('schedule/days', $event)"
-      >
-        <admin-list-item
-          slot-scope="day"
-          :item="day"
-          md-expand
-          :md-expanded="dayId === day[idKey]"
-          @update:mdExpanded="$event && handleListItemSelect({
-            dayId: day[idKey],
-            blockId: null,
-            eventId: null,
-            danceId: null,
-          })"
-          @remove="handleListItemRemove('schedule/days', day)"
-        >
-          <admin-list
-            :items-ref="competitionDataRef.child(`schedule/days/${day[idKey]}/blocks`)"
-            items-type="Block"
-            @create="handleListItemCreate(`schedule/days/${day[idKey]}/blocks`, $event)"
-          >
-            <admin-list-item
-              slot-scope="block"
-              :item="block"
-              md-expand
-              :md-expanded="blockId === block[idKey]"
-              @update:mdExpanded="$event && handleListItemSelect({
-                dayId: day[idKey],
-                blockId: block[idKey],
-                eventId: null,
-                danceId: null,
-              })"
-              @remove="handleListItemRemove(`schedule/days/${day[idKey]}/blocks`, block)"
-            >
-              <admin-list
-                :items-ref="competitionDataRef.child(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events`)"
-                items-type="Event"
-                @create="handleListItemCreate(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events`, $event)"
+    <template v-for="blade in blades">
+      <blade :key="blade.collection" v-if="blade.parent()" class="md-small-size-100 md-size-25 md-scroll alt">
+        <md-list class="md-list-cards">
+          <md-list-item-cards md-expand md-expanded>
+            <md-subheader style="text-transform: capitalize;">
+              {{ blade.collection }}
+            </md-subheader>
+
+            <md-list slot="md-expand">
+              <md-list-item
+                v-for="(item, itemId) in blade.parent()[blade.collection]"
+                :key="itemId"
+                :id="itemId"
+                :class="{ active: blade.id() === itemId }"
+                @click="goToBlade(blade.params(itemId))"
               >
-                <admin-list-item
-                  slot-scope="event"
-                  :item="event"
-                  md-expand
-                  :md-expanded="eventId === event[idKey]"
-                  @update:mdExpanded="$event && handleListItemSelect({
-                    dayId: day[idKey],
-                    blockId: block[idKey],
-                    eventId: event[idKey],
-                    danceId: null,
-                  })"
-                  @remove="handleListItemRemove(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events`, event)"
-                >
-                  <admin-list
-                    :items-ref="competitionDataRef.child(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events/${event[idKey]}/dances`)"
-                    items-type="Dance"
-                    @create="handleListItemCreate(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events/${event[idKey]}/dances`, $event)"
-                  >
-                    <admin-list-item
-                      slot-scope="dance"
-                      :item="dance"
-                      :item-name-fn="itemDanceNameFn"
-                      @click="handleListItemSelect({
-                        dayId: day[idKey],
-                        blockId: block[idKey],
-                        eventId: event[idKey],
-                        danceId: dance[idKey],
-                      })"
-                      @remove="handleListItemRemove(`schedule/days/${day[idKey]}/blocks/${block[idKey]}/events/${event[idKey]}/dances`, dance)"
-                      :class="{ active: danceId === dance[idKey] }"
-                    />
-                  </admin-list>
-                </admin-list-item>
-              </admin-list>
-            </admin-list-item>
-          </admin-list>
-        </admin-list-item>
-      </admin-list>
-    </blade>
-    <blade :active="currentItem" class="md-small-size-100 md-size-66 md-scroll">
-      <form v-if="currentItem" @submit.prevent class="md-padding">
-        <div v-for="(field, key) in currentItemFields" :key="key">
-          <md-field v-if="field.type === 'select'">
-            <label>{{ field.name || key }}</label>
-            <md-select
-              v-model="currentItem[key]"
-              :required="currentItem.required"
-              @md-selected="handleListItemUpdate(currentPath, currentItem)"
-            >
-              <md-option
-                v-for="preset in field.presets"
-                :key="preset[idKey]"
-                :value="preset[idKey]"
+                <div class="md-list-item-text">{{ blade.name(item) }}</div>
+                <md-icon>chevron_right</md-icon>
+              </md-list-item>
+            </md-list>
+          </md-list-item-cards>
+          <md-list-item-cards md-expand md-expanded>
+            <md-subheader>
+              Add New
+            </md-subheader>
+
+            <md-list slot="md-expand">
+              <new-dynamic-field @change="handleListItemCreate(blade, $event)" />
+              <md-divider v-if="blade.presets" />
+              <md-list-item
+                v-for="preset in blade.presets"
+                :key="blade.name(preset)"
+                @click="handleListItemCreate(blade, preset)"
+                :class="{ dimmed: isBladePresetUsed(blade, preset) }"
               >
-                {{ preset.$name || preset.name }}
-              </md-option>
-              <md-option v-if="!field.presets.length" disabled>
-                None found.
-              </md-option>
-            </md-select>
-          </md-field>
-
-          <md-field v-else-if="field.type === 'textarea'" md-clearable>
-            <label>{{ field.name || key }}</label>
-            <md-textarea
-              v-model="currentItem[key]"
-              :md-autogrow="true"
-              :required="field.required"
-              @input="handleListItemUpdate(currentPath, currentItem)"
-            />
-          </md-field>
-
-          <md-datepicker
-            v-else-if="field.type === 'datepicker'"
-            v-model="currentItem[key]"
-            md-immediately
-            @input="handleListItemUpdate(currentPath, currentItem)"
-            :class="{ 'md-required': field.required }"
-          >
-            <label>{{ field.name || key }}</label>
-          </md-datepicker>
-
-          <md-field v-else md-clearable>
-            <label>{{ field.name || key }}</label>
-            <md-input
-              v-model="currentItem[key]"
-              :required="field.required"
-              @input="handleListItemUpdate(currentPath, currentItem)"
-            />
-          </md-field>
-        </div>
-
-        <div v-if="currentItemCollection === 'dances' && currentItem.danceId">
+                <div class="md-list-item-text">{{ blade.name(preset) }}</div>
+                <md-icon>add</md-icon>
+              </md-list-item>
+            </md-list>
+          </md-list-item-cards>
+        </md-list>
+      </blade>
+      <blade :key="blade.collection" v-if="blade.item()" :class="`md-small-size-100 md-size-${blade.size || 50} md-scroll`">
+        <form @submit.prevent class="md-padding">
+          <dynamic-field
+            v-for="field in blade.fields"
+            :key="field.data"
+            :field="field"
+            :data="blade.item()"
+            @change="handleListItemUpdate(blade, blade.id(), $event)"
+          />
           <admin-platforms
+            v-if="blade.collection === 'dances' && currentDance.danceId"
             :path="currentPath"
-            :item="currentItem"
+            :item="currentDance"
             :platforms="platforms"
             :groups="groups"
             :dances="dances"
@@ -145,29 +62,45 @@
             :staff="staff"
             @change="handlePlatformChanges"
           />
-        </div>
-      </form>
+        </form>
+
+        <footer>
+          <md-button @click="confirmRemove = { blade, itemId: blade.id() }" class="md-accent">
+            Delete Item
+          </md-button>
+        </footer>
+      </blade>
+    </template>
+    <blade v-if="!currentDay">
       <md-empty-state
-        v-else
         md-icon="event_note"
-        md-label="Edit activities"
+        md-label="Edit schedule entries"
         md-description="Add or select an item to edit"
       />
     </blade>
+
+    <md-dialog-confirm
+      :md-active.sync="confirmRemove"
+      md-title="Delete item"
+      md-content="Are you sure you want to permanently delete this item?"
+      md-confirm-text="Yes"
+      md-cancel-text="No"
+      @md-confirm="handleListItemRemove(confirmRemove.blade, confirmRemove.itemId)"
+    />
   </blades>
 </template>
 
 <script>
-import AdminList from '@/components/competition/admin/utility/admin-list';
-import AdminListItem from '@/components/competition/admin/utility/admin-list-item';
+import DynamicField from '@/components/admin/utility/dynamic-field';
+import NewDynamicField from '@/components/admin/utility/new-dynamic-field';
 import AdminPlatforms from '@/components/competition/admin/utility/platforms';
-import {
-  getScheduleItemDanceName,
-} from '@/helpers/competition';
 import {
   idKey,
   db,
 } from '@/helpers/firebase';
+import {
+  getScheduleItemDanceName,
+} from '@/helpers/competition';
 
 export default {
   name: 'admin-schedule',
@@ -191,27 +124,188 @@ export default {
     return {
       idKey,
 
-      currentItem: undefined,
+      confirmRemove: false,
+
+      blades: [
+        {
+          collection: 'days',
+          parent: () => this.schedule,
+          item: () => this.currentDay,
+          id: () => this.dayId,
+          params: itemId => ({ dayId: itemId }),
+          name: item => item.name,
+          fields: [
+            {
+              data: 'name',
+              title: 'Name',
+              required: true,
+            },
+            {
+              data: 'description',
+              title: 'Description',
+              type: 'textarea',
+            },
+          ],
+          presets: [
+            {
+              name: 'Saturday',
+            },
+            {
+              name: 'Sunday',
+            },
+          ],
+        },
+        {
+          collection: 'blocks',
+          parent: () => this.currentDay,
+          item: () => this.currentBlock,
+          id: () => this.blockId,
+          params: itemId => ({ dayId: this.dayId, blockId: itemId }),
+          name: item => item.name,
+          fields: [
+            {
+              data: 'name',
+              title: 'Name',
+              required: true,
+            },
+            {
+              data: 'description',
+              title: 'Description',
+              type: 'textarea',
+            },
+          ],
+          presets: [
+            {
+              name: 'Morning',
+            },
+            {
+              name: 'Afternoon',
+            },
+            {
+              name: 'Evening',
+            },
+          ],
+        },
+        {
+          collection: 'events',
+          parent: () => this.currentBlock,
+          item: () => this.currentEvent,
+          id: () => this.eventId,
+          params: itemId => ({ dayId: this.dayId, blockId: this.blockId, eventId: itemId }),
+          name: item => item.name,
+          fields: [
+            {
+              data: 'name',
+              title: 'Name',
+              required: true,
+            },
+            {
+              data: 'description',
+              title: 'Description',
+              type: 'textarea',
+            },
+          ],
+          presets: [
+            {
+              name: 'Primary',
+            },
+            {
+              name: 'Pre-Premier',
+            },
+            {
+              name: 'Premier',
+            },
+            {
+              name: 'Junior',
+            },
+            {
+              name: 'Senior',
+            },
+          ],
+        },
+        {
+          collection: 'dances',
+          parent: () => this.currentEvent,
+          item: () => this.currentDance,
+          id: () => this.danceId,
+          params: itemId => ({ dayId: this.dayId, blockId: this.blockId, eventId: this.eventId, danceId: itemId }),
+          name: item => getScheduleItemDanceName(item, this.dances),
+          fields: [
+            {
+              data: 'name',
+              title: 'Name',
+            },
+            {
+              data: 'description',
+              title: 'Description',
+              type: 'textarea',
+            },
+            {
+              data: 'danceId',
+              title: 'Dance',
+              type: 'select',
+              presets: this.dances,
+            },
+          ],
+          presets: this.dances.map(dance => ({ danceId: dance[idKey] })),
+          size: 75,
+        },
+      ],
     };
   },
   watch: {
     currentPath: {
-      handler(currentPath) {
-        if (this.currentItem) this.$unbind('currentItem');
-        this.currentItem = null;
-        if (!currentPath) return;
-        this.$bindAsObject('currentItem', this.competitionDataRef.child(currentPath));
+      async handler(currentPath) {
+        if (currentPath) {
+          await this.$nextTick();
+          const element = document.getElementById(this.competitionDataRef.child(currentPath).key);
+          this.$scrollTo(element, {
+            container: this.$el,
+            x: true,
+            y: false,
+          });
+        }
       },
       immediate: true,
     },
   },
   computed: {
+    currentDay() {
+      if (this.dayId && this.schedule && this.schedule.days) {
+        return this.schedule.days[this.dayId];
+      }
+      return null;
+    },
+    currentBlock() {
+      if (this.blockId && this.currentDay && this.currentDay.blocks) {
+        return this.currentDay.blocks[this.blockId];
+      }
+      return null;
+    },
+    currentEvent() {
+      if (this.eventId && this.currentBlock && this.currentBlock.events) {
+        return this.currentBlock.events[this.eventId];
+      }
+      return null;
+    },
+    currentDance() {
+      if (this.danceId && this.currentEvent && this.currentEvent.dances) {
+        return this.currentEvent.dances[this.danceId];
+      }
+      return null;
+    },
+
     currentPath() {
+      return this.getPath(this);
+    },
+  },
+  methods: {
+    getPath({ dayId, blockId, eventId, danceId }) {
       const pathProps = [
-        ['days', this.dayId],
-        ['blocks', this.blockId],
-        ['events', this.eventId],
-        ['dances', this.danceId],
+        ['days', dayId],
+        ['blocks', blockId],
+        ['events', eventId],
+        ['dances', danceId],
       ];
       const path = pathProps
         .filter(([collection, id]) => collection && id)
@@ -220,64 +314,44 @@ export default {
 
       return path && `schedule/${path}`;
     },
-    currentItemCollection() {
-      const chunks = this.currentPath.split('/');
-      return chunks.length >= 2 ? chunks[chunks.length - 2] : null;
+    isBladePresetUsed(blade, preset) {
+      return Object.values(blade.parent()[blade.collection] || {})
+        .find(item => blade.name(item) === blade.name(preset));
     },
-    currentItemFields() {
-      if (this.currentItem) {
-        const fields = {
-          name: {
-            name: 'Name',
-            required: true,
-          },
-          description: {
-            name: 'Description',
-            type: 'textarea',
-          },
-        };
-
-        switch (this.currentItemCollection) {
-          case 'days': {
-            fields.name.required = false;
-            fields.date = {
-              name: 'Date',
-              type: 'datepicker',
-              required: true,
-            };
-            break;
-          }
-          case 'dances': {
-            fields.name.required = false;
-            fields.danceId = {
-              name: 'Dance',
-              type: 'select',
-              presets: this.dances,
-            };
-            break;
-          }
-          default: {
-            // @IGNORE
-            break;
-          }
-        }
-
-        return fields;
-      }
-      return null;
-    },
-  },
-  methods: {
-    itemDanceNameFn(item) {
-      return getScheduleItemDanceName(item, this.dances);
-    },
-
-    handleListItemCreate(path, item) {
-      this.$emit('change', {
-        [`${path}/${db.push().key}`]: item,
+    goToBlade(params) {
+      this.$router.push({
+        name: this.$route.name,
+        params: {
+          dayId: null,
+          blockId: null,
+          eventId: null,
+          danceId: null,
+          ...params,
+        },
       });
     },
-    handleListItemUpdate(path, item) {
+
+    handleListItemCreate(blade, item) {
+      const params = blade.params(db.push().key);
+      const path = this.getPath(params);
+      this.$emit('change', {
+        [path]: item,
+      });
+
+      // redirect
+      this.goToBlade(params);
+    },
+    handleListItemRemove(blade, itemId) {
+      const path = this.getPath(blade.params(itemId));
+      this.$emit('change', {
+        [path]: null,
+      });
+
+      // redirect
+      this.goToBlade(blade.params());
+    },
+    handleListItemUpdate(blade, itemId, item) {
+      const path = this.getPath(blade.params(itemId));
       const clone = {
         ...item,
       };
@@ -294,24 +368,15 @@ export default {
         [path]: clone,
       });
     },
-    handleListItemRemove(path, item) {
-      this.$emit('change', {
-        [`${path}/${item[idKey]}`]: null,
-      });
-    },
-    handleListItemSelect(params) {
-      this.$router.replace({
-        params,
-      });
-    },
+
     handlePlatformChanges(changes) {
       // bubble up
       this.$emit('change', changes);
     },
   },
   components: {
-    AdminList,
-    AdminListItem,
+    DynamicField,
+    NewDynamicField,
     AdminPlatforms,
   },
 };
@@ -319,8 +384,23 @@ export default {
 
 <style lang="scss">
 .admin-schedule {
-  .md-list-expand {
-    padding-left: 16px;
+  .blade {
+    form.md-list-item-content {
+      padding-top: 8px;
+      padding-bottom: 16px;
+
+      .md-list-action {
+        margin-right: -8px;
+      }
+    }
+    > footer {
+      display: flex;
+      justify-content: center;
+      margin-top: auto;
+    }
+  }
+  .dimmed {
+    opacity: 0.5;
   }
 }
 </style>

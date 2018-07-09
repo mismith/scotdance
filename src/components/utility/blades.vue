@@ -16,5 +16,6 @@ export default {
   flex-direction: row;
   flex-wrap: nowrap;
   position: relative;
+  overflow-x: auto;
 }
 </style>
