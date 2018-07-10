@@ -60,7 +60,7 @@
     <blade :active="currentEvent" class="md-small-size-100 md-size-66">
       <div v-if="currentEvent" class="md-scroll-frame">
         <md-toolbar class="md-dense md-toolbar-nowrap md-medium-hide">
-          <md-button :to="{ name: $route.name }" class="md-icon-button">
+          <md-button :to="{ name: $route.name, params: { competitionId } }" class="md-icon-button">
             <md-icon>chevron_left</md-icon>
           </md-button>
           <span>

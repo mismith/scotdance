@@ -40,19 +40,19 @@
     </div>
 
     <md-bottom-bar ref="bottomBar" v-show="competitionExists && currentTab !== 'admin'">
-      <md-bottom-bar-item id="tab-info" :to="{ name: 'competition.info' }">
+      <md-bottom-bar-item id="tab-info" :to="{ name: 'competition.info', params: { competitionId } }">
         <md-icon class="icon-info" />
         <span class="md-bottom-bar-label">Info</span>
       </md-bottom-bar-item>
-      <md-bottom-bar-item id="tab-dancers" :to="{ name: 'competition.dancers' }">
+      <md-bottom-bar-item id="tab-dancers" :to="{ name: 'competition.dancers', params: { competitionId } }">
         <md-icon class="icon-people" />
         <span class="md-bottom-bar-label">Dancers</span>
       </md-bottom-bar-item>
-      <md-bottom-bar-item id="tab-schedule" :to="{ name: 'competition.schedule' }">
+      <md-bottom-bar-item id="tab-schedule" :to="{ name: 'competition.schedule', params: { competitionId } }">
         <md-icon class="icon-clock" />
         <span class="md-bottom-bar-label">Schedule</span>
       </md-bottom-bar-item>
-      <md-bottom-bar-item id="tab-results" :to="{ name: 'competition.results' }">
+      <md-bottom-bar-item id="tab-results" :to="{ name: 'competition.results', params: { competitionId } }">
         <md-icon class="icon-trophy" />
         <span class="md-bottom-bar-label">Results</span>
       </md-bottom-bar-item>

@@ -74,7 +74,7 @@
                   v-for="dancer in group"
                   :key="dancer[idKey]"
                   :dancer="dancer"
-                  :to="{ name: $route.name, params: { dancerId: dancer[idKey] } }"
+                  :to="{ name: $route.name, params: { competitionId, dancerId: dancer[idKey] } }"
                   :class="{ active: dancerId === dancer[idKey] }"
                 />
               </md-list>
@@ -108,7 +108,7 @@
     <blade :active="currentDancer" class="md-small-size-100 md-size-50">
       <div v-if="currentDancer" class="md-scroll-frame">
         <md-toolbar class="md-dense md-toolbar-nowrap md-medium-hide">
-          <md-button :to="{ name: $route.name }" class="md-icon-button">
+          <md-button :to="{ name: $route.name, params: { competitionId } }" class="md-icon-button">
             <md-icon>chevron_left</md-icon>
           </md-button>
           <span>Dancers</span>
