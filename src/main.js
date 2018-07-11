@@ -11,7 +11,6 @@ import moment from 'moment-mini';
 
 import {
   firebase,
-  db,
 } from '@/helpers/firebase';
 import {
   getTitleChunks,
@@ -155,10 +154,7 @@ if (Vue.prototype.isApp) {
 // monitor user auth
 firebase.auth().onAuthStateChanged((me) => {
   if (me) {
-    const meRef = db.child('users').child(me.uid);
-    const myFavoritesRef = db.child('users:favorites').child(me.uid);
-    const myPermissionsRef = db.child('users:permissions').child(me.uid);
-    store.dispatch('auth', { meRef, myFavoritesRef, myPermissionsRef });
+    store.dispatch('auth', me);
   } else if (store.state.me) {
     store.dispatch('unauth');
   } else {

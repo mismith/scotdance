@@ -9,6 +9,9 @@ import {
   firebaseMutations,
   firebaseAction,
 } from 'vuexfire';
+import {
+  db,
+} from '@/helpers/firebase';
 
 Vue.use(Vuex);
 
@@ -88,8 +91,8 @@ export default new Vuex.Store({
     },
   },
   actions: {
-    auth: firebaseAction(({ bindFirebaseRef, state }, { meRef, myFavoritesRef, myPermissionsRef }) => {
-      bindFirebaseRef('me', meRef, {
+    auth: firebaseAction(({ bindFirebaseRef, state }, { uid }) => {
+      bindFirebaseRef('me', db.child('users').child(uid), {
         async readyCallback() {
           // await this.me
           await Vue.nextTick();
@@ -99,8 +102,8 @@ export default new Vuex.Store({
           state.postLoginCallbacks = [];
         },
       });
-      bindFirebaseRef('myFavorites', myFavoritesRef);
-      bindFirebaseRef('myPermissions', myPermissionsRef);
+      bindFirebaseRef('myFavorites', db.child('users:favorites').child(uid));
+      bindFirebaseRef('myPermissions', db.child('users:permissions').child(uid));
     }),
     unauth: firebaseAction(({ unbindFirebaseRef, state }) => {
       unbindFirebaseRef('me');
