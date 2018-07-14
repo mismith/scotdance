@@ -10,6 +10,7 @@ import {
   firebaseAction,
 } from 'vuexfire';
 import {
+  idKey,
   db,
 } from '@/helpers/firebase';
 
@@ -26,10 +27,14 @@ export default new Vuex.Store({
       email: undefined,
       password: undefined,
     },
+    postLoginCallbacks: [],
+
+    meRef: undefined,
+    myFavoritesRef: undefined,
+    myPermissionsRef: undefined,
     me: undefined,
     myFavorites: undefined,
     myPermissions: undefined,
-    postLoginCallbacks: [],
 
     currentDialog: undefined,
     currentDialogData: undefined,
@@ -45,9 +50,9 @@ export default new Vuex.Store({
     getField,
 
     isFavorite: state => (type, id) => {
-      return state.myFavorites && state.myFavorites[type] && !!state.myFavorites[type][id];
+      return !!get(state.myFavorites, `${type}.${id}`);
     },
-    hasPermission(state, ...keys) {
+    hasPermission: state => (...keys) => {
       if (get(state.myPermissions, 'admin')) {
         return true;
       }
@@ -92,9 +97,12 @@ export default new Vuex.Store({
   },
   actions: {
     auth: firebaseAction(({ bindFirebaseRef, state }, { uid }) => {
-      bindFirebaseRef('me', db.child('users').child(uid), {
+      state.meRef = db.child('users').child(uid);
+      state.myFavoritesRef = db.child('users:favorites').child(uid);
+      state.myPermissionsRef = db.child('users:permissions').child(uid);
+      bindFirebaseRef('me', state.meRef, {
         async readyCallback() {
-          // await this.me
+          // await 'me'
           await Vue.nextTick();
 
           // flush post-login callbacks
@@ -102,20 +110,41 @@ export default new Vuex.Store({
           state.postLoginCallbacks = [];
         },
       });
-      bindFirebaseRef('myFavorites', db.child('users:favorites').child(uid));
-      bindFirebaseRef('myPermissions', db.child('users:permissions').child(uid));
+      bindFirebaseRef('myFavorites', state.myFavoritesRef);
+      bindFirebaseRef('myPermissions', state.myPermissionsRef);
     }),
     unauth: firebaseAction(({ unbindFirebaseRef, state }) => {
       unbindFirebaseRef('me');
-      state.me = null;
-
       unbindFirebaseRef('myFavorites');
-      state.myFavorites = null;
-
       unbindFirebaseRef('myPermissions');
+
+      state.me = null;
+      state.myFavorites = null;
       state.myPermissions = null;
+
+      state.meRef = null;
+      state.myFavoritesRef = null;
+      state.myPermissionsRef = null;
     }),
 
+    toggleFavoriteDancer({ state, commit }, dancer) {
+      const setFavorite = to => state.myFavoritesRef
+        .child('dancers')
+        .child(dancer[idKey])
+        .set(to || null);
+
+      if (state.myFavoritesRef) {
+        return setFavorite(!dancer.$favorite);
+      }
+
+      // 'store' dancer for favoriting post-auth...
+      commit('addPostLoginCallback', () => {
+        setFavorite(true);
+      });
+
+      // ...while opening dialog to inform user about favorites functionality
+      return commit('setCurrentDialog', 'favorites');
+    },
     help({ state, commit }, set = undefined) {
       if (window.$crisp) {
         if (set === false || (set === undefined && state.helpVisible)) {

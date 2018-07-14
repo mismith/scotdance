@@ -11,8 +11,8 @@
 
 <script>
 import {
-  toggleFavoriteDancer,
-} from '@/helpers/competition';
+  mapActions,
+} from 'vuex';
 
 export default {
   name: 'favorite-dancer-button',
@@ -20,7 +20,9 @@ export default {
     dancer: Object,
   },
   methods: {
-    toggleFavoriteDancer,
+    ...mapActions([
+      'toggleFavoriteDancer',
+    ]),
   },
 };
 </script>

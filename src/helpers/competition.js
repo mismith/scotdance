@@ -1,7 +1,5 @@
-import store from '@/store';
 import {
   idKey,
-  db,
 } from '@/helpers/firebase';
 
 export function findByIdKey(items, id) {
@@ -40,26 +38,4 @@ export function danceExtender(dance) {
 
 export function textify(html) {
   return (html || '').replace(/<[^>]+?>/g, '').replace(/\n+/g, ' • ');
-}
-
-export function toggleFavoriteDancer(dancer) {
-  const setFavorite = to => db
-    .child('users:favorites')
-    .child(store.state.me[idKey])
-    .child('dancers')
-    .child(dancer[idKey])
-    .set(to);
-
-  if (store.state.me) {
-    const toggled = dancer.$favorite ? null : true;
-    return setFavorite(toggled);
-  }
-
-  // 'store' dancer for favoriting post-auth...
-  store.commit('addPostLoginCallback', () => {
-    setFavorite(true);
-  });
-
-  // ...while opening dialog to inform user about favorites functionality
-  return store.commit('setCurrentDialog', 'favorites');
 }
