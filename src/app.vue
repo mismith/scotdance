@@ -33,9 +33,16 @@
     <md-app-drawer :md-active.sync="menuVisible">
       <md-toolbar class="md-primary md-large md-account-header">
         <div class="account-bg" style="background-image: url('static/img/touchicon.png');"></div>
-        <favorites-dialog />
         <register-dialog />
         <login-dialog />
+        <requires-auth-dialog name="favorites">
+          <template slot="title">
+            Track your favourites
+            <md-icon class="md-accent">star</md-icon>
+          </template>
+          <p>To see the dancers you care most about <strong>featured throughout the app</strong>, you'll need an account first.</p>
+          <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
+        </requires-auth-dialog>
         <account-buttons v-if="!me" class="md-padding" />
         <md-list v-else class="md-transparent">
           <md-list-item>
@@ -146,7 +153,7 @@ import {
 } from '@/helpers/firebase';
 import RegisterDialog from '@/components/utility/register-dialog';
 import LoginDialog from '@/components/utility/login-dialog';
-import FavoritesDialog from '@/components/utility/favorites-dialog';
+import RequiresAuthDialog from '@/components/utility/requires-auth-dialog';
 import AccountButtons from '@/components/utility/account-buttons';
 import CompetitionListItem from '@/components/utility/competition-list-item';
 
@@ -291,7 +298,7 @@ export default {
   components: {
     RegisterDialog,
     LoginDialog,
-    FavoritesDialog,
+    RequiresAuthDialog,
     AccountButtons,
     CompetitionListItem,
   },

@@ -1,23 +1,21 @@
 <template>
   <md-dialog
-    :md-active.sync="favoritesVisible"
+    :md-active.sync="dialogVisible"
     :md-fullscreen="false"
-    class="favorites-dialog"
+    class="requires-auth-dialog"
   >
     <md-dialog-title>
-      Track your favourites
-      <md-icon class="md-accent">star</md-icon>
+      <slot name="title" />
     </md-dialog-title>
     <md-dialog-content>
-      <p>To see the dancers you care most about <strong>featured throughout the app</strong>, you'll need an account first.</p>
-      <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
+      <slot />
     </md-dialog-content>
     <div class="md-padding md-bg-primary" style="position: relative;">
       <div class="account-bg" style="background-image: url('static/img/touchicon.png');"></div>
       <account-buttons />
     </div>
     <md-dialog-actions>
-      <md-button @click="favoritesVisible = false">Not Now</md-button>
+      <md-button @click="dialogVisible = false">Not Now</md-button>
     </md-dialog-actions>
   </md-dialog>
 </template>
@@ -26,14 +24,20 @@
 import AccountButtons from '@/components/utility/account-buttons';
 
 export default {
-  name: 'favorites-dialog',
+  name: 'requires-auth-dialog',
+  props: {
+    name: {
+      type: String,
+      required: true,
+    },
+  },
   computed: {
-    favoritesVisible: {
+    dialogVisible: {
       get() {
-        return this.$store.state.currentDialog === 'favorites';
+        return this.$store.state.currentDialog === this.name;
       },
       set(value) {
-        return this.$store.commit('setCurrentDialog', value && 'favorites');
+        return this.$store.commit('setCurrentDialog', value && this.name);
       },
     },
   },
@@ -44,7 +48,7 @@ export default {
 </script>
 
 <style lang="scss">
-.favorites-dialog {
+.requires-auth-dialog {
   .md-dialog-title {
     display: flex;
 
