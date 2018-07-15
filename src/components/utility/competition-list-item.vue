@@ -17,7 +17,7 @@
     <slot />
 
     <md-button
-      v-if="hasPermission('competitions:data', competition[idKey])"
+      v-if="$store.getters.hasPermission('competitions:data', competition[idKey])"
       :to="{ name: 'competition.admin', params: { competitionId: competition[idKey] } }"
       class="md-icon-button md-list-action"
     >
@@ -27,9 +27,6 @@
 </template>
 
 <script>
-import {
-  mapGetters,
-} from 'vuex';
 import {
   idKey,
 } from '@/helpers/firebase';
@@ -44,11 +41,6 @@ export default {
     return {
       idKey,
     };
-  },
-  methods: {
-    ...mapGetters([
-      'hasPermission',
-    ]),
   },
 };
 </script>

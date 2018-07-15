@@ -1,7 +1,7 @@
 <template>
   <div class="competition-admin md-scroll-frame">
     <div v-if="currentSection" class="md-scroll-frame">
-      <div v-if="hasPermission('competitions:data', $route.params.competitionId, currentSection[idKey])" class="md-scroll-frame">
+      <div v-if="hasPermission" class="md-scroll-frame">
         <div class="md-scroll-frame">
           <md-toolbar class="md-dense">
             <div v-if="inTabs('info', 'categories', 'dancers', 'groups')">
@@ -104,7 +104,6 @@
 <script>
 import {
   mapState,
-  mapGetters,
 } from 'vuex';
 import {
   HotTable,
@@ -169,6 +168,10 @@ export default {
       'me',
     ]),
 
+    hasPermission() {
+      return this.currentSection && this.$store.getters.hasPermission('competitions:data', this.$route.params.competitionId, this.currentSection[idKey]);
+    },
+
     currentTab() {
       return this.$route.params.tab || this.$route.name.split('.')[2] || 'info';
     },
@@ -232,10 +235,6 @@ export default {
   },
   methods: {
     danceExtender,
-
-    ...mapGetters([
-      'hasPermission',
-    ]),
 
     async syncBottomBar() {
       await this.$nextTick(); // await md-bottom-bar's internally queued $nextTick

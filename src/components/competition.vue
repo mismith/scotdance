@@ -2,7 +2,7 @@
   <div class="competition md-scroll-frame">
     <div v-if="competitionExists" class="md-scroll-frame">
       <div v-if="loaded" class="md-scroll-frame">
-        <keep-alive v-if="currentTab === 'info' || competition.published || hasPermission('competitions:data', competitionId)">
+        <keep-alive v-if="currentTab === 'info' || competition.published || $store.getters.hasPermission('competitions:data', competitionId)">
           <router-view
             :competition-ref="competitionRef"
             :competition-data-ref="competitionDataRef"
@@ -83,7 +83,6 @@
 <script>
 import {
   mapState,
-  mapGetters,
   mapMutations,
 } from 'vuex';
 import {
@@ -194,9 +193,6 @@ export default {
     },
   },
   methods: {
-    ...mapGetters([
-      'hasPermission',
-    ]),
     ...mapMutations([
       'setCurrentDialog',
     ]),

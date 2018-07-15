@@ -8,7 +8,7 @@
       <router-link :to="{ name: 'competitions' }" class="md-title" style="margin-right: auto;">{{ title }}</router-link>
 
       <md-button
-        v-if="$route.params.competitionId && hasPermission('competitions:data', $route.params.competitionId)"
+        v-if="$route.params.competitionId && $store.getters.hasPermission('competitions:data', $route.params.competitionId)"
         :to="{ name: /^competition.admin/.test($route.name) ? 'competition.info' : 'competition.admin' }"
         class="md-icon-button"
       >
@@ -91,7 +91,7 @@
             <div>Competitions</div>
 
             <md-button
-              v-if="hasPermission()"
+              v-if="$store.getters.hasPermission('admin')"
               :to="{ name: 'competition.admin', params: { competitionId: db.push().key } }"
               @click.native="closeMenu()"
               class="md-icon-button"
@@ -146,7 +146,6 @@
 import Hammer from 'hammerjs';
 import {
   mapState,
-  mapGetters,
   mapActions,
 } from 'vuex';
 import {
@@ -188,7 +187,7 @@ export default {
           ...competition,
           $favorite: this.$store.getters.isFavorite('competitions', competition[idKey]),
         }))
-        .filter(competition => competition.listed || this.hasPermission('competitions:data', competition[idKey]))
+        .filter(competition => competition.listed || this.$store.getters.hasPermission('competitions:data', competition[idKey]))
         .sort((a, b) => this.$moment(a.date).diff(b.date)); // order chronologically
     },
     relevantCompetitions() {
@@ -245,9 +244,6 @@ export default {
     },
   },
   methods: {
-    ...mapGetters([
-      'hasPermission',
-    ]),
     ...mapActions([
       'help',
     ]),
