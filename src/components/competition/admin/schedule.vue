@@ -49,7 +49,7 @@
             :key="field.data"
             :field="field"
             :data="blade.item()"
-            @change="handleListItemUpdate(blade, blade.id(), $event)"
+            @change="handleListItemUpdate(blade, blade.id(), blade.item())"
           />
           <admin-platforms
             v-if="blade.collection === 'dances' && currentDance.danceId"

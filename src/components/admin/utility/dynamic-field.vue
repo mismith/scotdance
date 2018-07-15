@@ -7,7 +7,7 @@
         :required="field.required"
         :readonly="field.readonly"
         :disabled="field.disabled"
-        @md-selected="handleChange($event)"
+        @md-selected="handleChange()"
       >
         <md-option
           v-for="preset in field.presets"
@@ -26,7 +26,7 @@
       v-else-if="field.type === 'datetime'"
       v-model="data[field.data]"
       md-immediately
-      @input="handleChange($event)"
+      @input="handleChange()"
       :class="{ 'md-required': field.required }"
     >
       <label>{{ field.title }}</label>
@@ -38,7 +38,7 @@
       :required="field.required"
       :readonly="field.readonly"
       :disabled="field.disabled"
-      @change="handleChange($event)"
+      @change="handleChange()"
     >
       {{ field.title }}
     </md-checkbox>
@@ -51,7 +51,7 @@
         :readonly="field.readonly"
         :disabled="field.disabled"
         md-autogrow
-        @change="handleChange($event.target.value)"
+        @change="handleChange()"
       />
     </md-field>
 
@@ -62,7 +62,7 @@
         :required="field.required"
         :readonly="field.readonly"
         :disabled="field.disabled"
-        @change="handleChange($event.target.value)"
+        @change="handleChange()"
       />
     </md-field>
   </div>

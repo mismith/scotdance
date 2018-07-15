@@ -31,7 +31,7 @@
                 :key="field.data"
                 :field="field"
                 :data="competition"
-                @change="handleFormInputChange(currentSection[idKey], field.data, $event)"
+                @change="save(`${currentSection[idKey]}/${field.data}`, competition[field.data])"
               />
             </form>
 
@@ -302,9 +302,6 @@ export default {
       }));
     },
 
-    handleFormInputChange(section, field, value) {
-      return this.save(`${section}/${field}`, value);
-    },
     handleChanges(changes) {
       return Object.entries(changes).map(([path, value]) => {
         return this.save(path, value);
