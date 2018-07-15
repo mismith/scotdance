@@ -26,11 +26,13 @@
           </md-list>
         </md-list-item-cards>
       </md-list>
-      <md-empty-state
-        v-if="!competitions.length"
-        md-icon="clear"
-        md-label="No competitions found"
-      />
+
+      <div v-if="!competitions.length">
+        <md-empty-state
+          md-icon="clear"
+          md-label="No competitions found"
+        />
+      </div>
     </div>
     <div v-else class="md-scroll-frame spinner-container">
       <mi-md-spinner />

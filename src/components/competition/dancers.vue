@@ -55,22 +55,25 @@
               </md-list>
             </md-list-item-cards>
           </md-list>
-          <md-empty-state
-            v-else-if="!onlyFavorites"
-            md-icon="error_outline"
-            md-label="No dancers match"
-          />
-          <md-empty-state
-            v-else-if="me"
-            md-icon="star_half"
-            md-label="No favourite dancers"
-          />
-          <md-empty-state
-            v-else
-            md-icon="star_half"
-            md-label="No favourite dancers"
-            md-description="Login to highlight your favourites–making them much easier to find"
-          />
+          <div v-else-if="!onlyFavorites">
+            <md-empty-state
+              md-icon="error_outline"
+              md-label="No dancers match"
+            />
+          </div>
+          <div v-else-if="me">
+            <md-empty-state
+              md-icon="star_half"
+              md-label="No favourite dancers"
+            />
+          </div>
+          <div v-else>
+            <md-empty-state
+              md-icon="star_half"
+              md-label="No favourite dancers"
+              md-description="Login to highlight your favourites–making them much easier to find"
+            />
+          </div>
         </div>
       </div>
       <div v-else>

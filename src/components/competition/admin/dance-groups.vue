@@ -12,11 +12,12 @@
           <md-icon>chevron_right</md-icon>
         </md-list-item>
       </md-list>
-      <md-empty-state
-        v-else
-        md-icon="clear"
-        md-label="No age groups found"
-      />
+      <div v-else>
+        <md-empty-state
+          md-icon="clear"
+          md-label="No age groups found"
+        />
+      </div>
     </blade>
     <blade :active="currentGroup" class="md-small-size-100 md-size-33 md-scroll">
       <md-list v-if="currentGroup">
@@ -41,27 +42,30 @@
             @click="handlePaste"
           >Paste</md-button>
         </footer>
-        <md-empty-state
-          v-else
-          md-icon="clear"
-          md-label="No dances found"
-        />
+        <div v-else>
+          <md-empty-state
+            md-icon="clear"
+            md-label="No dances found"
+          />
+        </div>
       </md-list>
-      <md-empty-state
-        v-else
-        md-icon="call_merge"
-        md-label="Link dances"
-        md-description="Pick dances for each age group"
-      />
+      <div v-else>
+        <md-empty-state
+          md-icon="call_merge"
+          md-label="Link dances"
+          md-description="Pick dances for each age group"
+        />
+      </div>
     </blade>
     <blade class="md-small-size-100 md-size-33 md-scroll">
       <HotTable v-if="currentGroupDances.length" :settings="hotSettings" class="fullscreen" />
-      <md-empty-state
-        v-else
-        md-icon="vertical_split"
-        md-label="Championship draws"
-        md-description="Specify dancer order for each dance"
-      />
+      <div v-else>
+        <md-empty-state
+          md-icon="vertical_split"
+          md-label="Championship draws"
+          md-description="Specify dancer order for each dance"
+        />
+      </div>
     </blade>
   </blades>
 </template>

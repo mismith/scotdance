@@ -31,12 +31,13 @@
         </draggable>
       </div>
     </div>
-    <md-empty-state
-      v-else
-      md-icon="warning"
-      md-label="No platforms"
-      md-description="Add at least one platform first"
-    />
+    <div v-else>
+      <md-empty-state
+        md-icon="warning"
+        md-label="No platforms"
+        md-description="Add at least one platform first"
+      />
+    </div>
 
     <footer v-if="admin">
       <md-button

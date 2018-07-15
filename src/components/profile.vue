@@ -104,11 +104,12 @@
         </md-dialog>
       </footer>
     </div>
-    <md-empty-state
-      v-else-if="me !== undefined"
-      md-icon="error"
-      md-label="Not logged in"
-    />
+    <div v-else-if="me !== undefined">
+      <md-empty-state
+        md-icon="error"
+        md-label="Not logged in"
+      />
+    </div>
     <mi-md-spinner v-else />
   </div>
 </template>
