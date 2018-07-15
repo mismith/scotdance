@@ -3,32 +3,7 @@
     <blade :active="!currentDancer" class="md-small-size-100 md-size-50">
       <div v-if="dancers.length" class="md-scroll-frame">
         <md-toolbar>
-          <md-field class="search-field">
-            <!-- can't use proper <md-input> here because it causes performance issues on mobile devices -->
-            <input v-model="filterBy" class="md-input" placeholder="Search" />
-
-            <md-button
-              v-if="filterBy !== filterByDebounced"
-              class="md-icon-button md-dense"
-              disabled
-            >
-              <mi-md-spinner :diameter="20" :width="6" />
-            </md-button>
-            <md-button
-              v-else-if="filterBy"
-              @click="filterBy = ''"
-              class="md-icon-button md-dense"
-            >
-              <md-icon>clear</md-icon>
-            </md-button>
-            <md-button
-              v-else
-              class="md-icon-button md-dense"
-              disabled
-            >
-              <md-icon>search</md-icon>
-            </md-button>
-          </md-field>
+          <search-field :filter-by.sync="filterBy" />
           <md-menu md-direction="bottom-end" @selected="sortBy">
             <md-button md-menu-trigger class="md-icon-button">
               <md-icon>filter_list</md-icon>
@@ -142,6 +117,7 @@
 import Fuse from 'fuse.js';
 import sortBy from 'lodash.sortby';
 import groupBy from 'lodash.groupby';
+import SearchField from '@/components/utility/search-field';
 import DancerListItem from '@/components/utility/dancer-list-item';
 import DancerReport from '@/components/utility/dancer-report';
 import {
@@ -170,7 +146,7 @@ export default {
     results: Object,
   },
   localStorage: {
-    filterByDebounced: {
+    filterBy: {
       type: String,
       default: '',
     },
@@ -187,8 +163,6 @@ export default {
     return {
       idKey,
 
-      filterBy: this.$localStorage.get('filterByDebounced', ''),
-      filterByTimeout: undefined,
       sortableBys: [
         { key: '$group.$order', name: 'Age Group', searchKey: '$group.$name' },
         { key: '$number', name: 'Number', searchKey: 'number' },
@@ -214,12 +188,12 @@ export default {
       let filtered = this.dancers;
 
       // filter by search term
-      if (this.filterByDebounced && filtered.length) {
+      if (this.filterBy && filtered.length) {
         const searchKeys = this.sortableBys.map(({ key, searchKey }) => searchKey || key).concat(['$name']);
         filtered = new Fuse(filtered, {
           keys: searchKeys,
           threshold: 0.33,
-        }).search(this.filterByDebounced);
+        }).search(this.filterBy);
       }
 
       // filter by onlyFavorites, if necessary
@@ -241,20 +215,12 @@ export default {
       return Object.keys(this.groupedDancers);
     },
   },
-  watch: {
-    filterBy() {
-      clearTimeout(this.filterByTimeout);
-      this.filterByTimeout = setTimeout(() => {
-        this.filterByDebounced = this.filterBy;
-      }, 300);
-    },
-  },
   methods: {
     hasFavorites,
 
     isGroupExpanded(itemId, itemIds) {
       // searching, so expand all groups
-      if (this.filterByDebounced || this.onlyFavorites) return true;
+      if (this.filterBy || this.onlyFavorites) return true;
 
       return isExpanded(this.dancersExpandedGroups[this.sortBy], itemId, itemIds);
     },
@@ -290,6 +256,7 @@ export default {
     },
   },
   components: {
+    SearchField,
     DancerListItem,
     DancerReport,
   },
