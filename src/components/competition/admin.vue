@@ -113,8 +113,6 @@ import {
   db,
 } from '@/helpers/firebase';
 import DynamicField from '@/components/admin/utility/dynamic-field';
-import AdminImport from '@/components/competition/admin/utility/import';
-import AdminImportResults from '@/components/competition/admin/utility/import-results';
 import PresetPicker from '@/components/competition/admin/utility/preset-picker';
 import AdminResults from '@/components/competition/admin/results';
 import MdSpunnable from '@/components/utility/md-spunnable';
@@ -314,8 +312,8 @@ export default {
   components: {
     HotTable,
     DynamicField,
-    AdminImport,
-    AdminImportResults,
+    AdminImport: () => import(/* webpackChunkName: "import" */ '@/components/competition/admin/utility/import'),
+    AdminImportResults: () => import(/* webpackChunkName: "import" */ '@/components/competition/admin/utility/import-results'),
     AdminResults,
     PresetPicker,
     MdSpunnable,

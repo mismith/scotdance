@@ -86,12 +86,12 @@
 </template>
 
 <script>
+import XLSX from 'xlsx';
 import {
   idKey,
 } from '@/helpers/firebase';
 import {
   HotTable,
-  XLSX,
   augmentHot,
 } from '@/helpers/admin';
 

@@ -1,4 +1,3 @@
-import XLSX from 'xlsx';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.css';
 import HotTable from '@handsontable/vue';
@@ -48,7 +47,6 @@ const augmentHot = (settings = {}) => {
 };
 
 export {
-  XLSX,
   Handsontable,
   HotTable,
   makeKeyValuePairColumn,
