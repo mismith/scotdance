@@ -1,7 +1,12 @@
 <template>
   <div class="admin-platforms" :class="{ interactive: admin }">
     <div v-if="platforms.length" class="pools">
-      <div v-for="pool in pools" :key="pool[idKey]" class="pool" :class="{ empty: !pool.$items.length }">
+      <div
+        v-for="pool in pools"
+        :key="pool[idKey]"
+        class="pool"
+        :class="{ empty: !pool.$items.length }"
+      >
         <md-subheader>{{ pool.$name || pool.name }}</md-subheader>
 
         <draggable
@@ -13,12 +18,15 @@
           <md-chip
             v-for="poolItem in pool.$items"
             :key="poolItem[idKey]"
-            :md-clickable="!admin && !poolItem.type"
-            @click="!admin && !poolItem.type && $emit('item-click', poolItem)"
-            :class="{ 'md-primary': isJudge(poolItem), 'md-accent': hasFavorites(findGroupDancers(poolItem, dancers)) }"
+            :md-clickable="!admin"
+            @click="!admin && $emit('item-click', poolItem)"
+            :class="{
+              'md-primary': isJudge(poolItem),
+              'md-accent': hasFavorites(findGroupDancers(poolItem, dancers)),
+            }"
           >
             {{ poolItem.$name || poolItem.name }}
-            <md-icon v-if="!admin && !poolItem.type">chevron_right</md-icon>
+            <md-icon v-if="!admin">chevron_right</md-icon>
           </md-chip>
         </draggable>
       </div>

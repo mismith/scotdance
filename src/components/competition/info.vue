@@ -41,25 +41,6 @@
           </md-list>
         </md-list-item-cards>
       </md-list>
-      <md-dialog :md-active.sync="staffVisible" :md-fullscreen="false" class="staff-dialog">
-        <md-dialog-title v-if="currentDialogData">
-          <md-avatar v-if="currentDialogData.image" class="md-large" style="float: right;">
-            <img :src="currentDialogData.image" />
-          </md-avatar>
-          <div>{{ currentDialogData.$name }}</div>
-          <div v-if="currentDialogData" class="md-caption">
-            {{ currentDialogData.location }}
-          </div>
-        </md-dialog-title>
-        <md-dialog-content
-          v-if="currentDialogData && currentDialogData.description"
-          v-html="currentDialogData.description"
-          class="pre-line alt"
-        />
-        <md-dialog-actions>
-          <md-button @click="staffVisible = false" class="md-primary">Done</md-button>
-        </md-dialog-actions>
-      </md-dialog>
 
       <section>
         <p v-if="competition.sobhd">
@@ -72,7 +53,6 @@
 
 <script>
 import {
-  mapState,
   mapMutations,
 } from 'vuex';
 import groupBy from 'lodash.groupby';
@@ -104,20 +84,6 @@ export default {
     };
   },
   computed: {
-    ...mapState([
-      'currentDialog',
-      'currentDialogData',
-    ]),
-
-    staffVisible: {
-      get() {
-        return this.currentDialog === 'staff';
-      },
-      set(value) {
-        return this.setCurrentDialog(value && 'staff');
-      },
-    },
-
     groupedStaff() {
       return groupBy(this.staff, 'type');
     },
@@ -156,14 +122,6 @@ export default {
         display: none;
       }
     }
-  }
-}
-.staff-dialog {
-  .md-dialog-title {
-    margin-bottom: 12px;
-  }
-  .md-dialog-content {
-    padding-top: 12px;
   }
 }
 </style>

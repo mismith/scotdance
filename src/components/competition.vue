@@ -57,6 +57,26 @@
         <span class="md-bottom-bar-label">Results</span>
       </md-bottom-bar-item>
     </md-bottom-bar>
+
+    <md-dialog :md-active.sync="staffVisible" :md-fullscreen="false" class="staff-dialog">
+      <md-dialog-title v-if="currentDialogData">
+        <md-avatar v-if="currentDialogData.image" class="md-large" style="float: right;">
+          <img :src="currentDialogData.image" />
+        </md-avatar>
+        <div>{{ currentDialogData.$name }}</div>
+        <div v-if="currentDialogData" class="md-caption">
+          {{ currentDialogData.location }}
+        </div>
+      </md-dialog-title>
+      <md-dialog-content
+        v-if="currentDialogData && currentDialogData.description"
+        v-html="currentDialogData.description"
+        class="pre-line alt"
+      />
+      <md-dialog-actions>
+        <md-button @click="staffVisible = false" class="md-primary">Done</md-button>
+      </md-dialog-actions>
+    </md-dialog>
   </div>
 </template>
 
@@ -64,6 +84,7 @@
 import {
   mapState,
   mapGetters,
+  mapMutations,
 } from 'vuex';
 import {
   findByIdKey,
@@ -92,7 +113,18 @@ export default {
   computed: {
     ...mapState([
       'me',
+      'currentDialog',
+      'currentDialogData',
     ]),
+
+    staffVisible: {
+      get() {
+        return this.currentDialog === 'staff';
+      },
+      set(value) {
+        return this.setCurrentDialog(value && 'staff');
+      },
+    },
 
     currentTab() {
       return this.$route.name.replace(/^.*?\./, '').replace(/\..*?$/, '') || 'info';
@@ -164,6 +196,9 @@ export default {
   methods: {
     ...mapGetters([
       'hasPermission',
+    ]),
+    ...mapMutations([
+      'setCurrentDialog',
     ]),
 
     async syncBottomBar() {
@@ -244,6 +279,14 @@ export default {
     .md-ripple {
       justify-content: center; // center tabs
     }
+  }
+}
+.staff-dialog {
+  .md-dialog-title {
+    margin-bottom: 12px;
+  }
+  .md-dialog-content {
+    padding-top: 12px;
   }
 }
 </style>

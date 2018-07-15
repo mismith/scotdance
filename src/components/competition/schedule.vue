@@ -108,7 +108,7 @@
                   :dancers="dancers"
                   :staff="staff"
                   :platforms="platforms"
-                  @item-click="setCurrentDialog(['draw', { group: $event, dance: findByIdKey(dances, dance.danceId) }])"
+                  @item-click="handlePlatformClick($event, dance)"
                 />
               </md-content>
             </md-list-item-cards>
@@ -260,6 +260,17 @@ export default {
 
     isActive(dayId, blockId, eventId) {
       return this.dayId === dayId && this.blockId === blockId && this.eventId === eventId;
+    },
+
+    handlePlatformClick(item, dance) {
+      if (item.type) {
+        this.setCurrentDialog(['staff', item]);
+      } else {
+        this.setCurrentDialog(['draw', {
+          group: item,
+          dance: findByIdKey(this.dances, dance.danceId),
+        }]);
+      }
     },
 
     isBlockExpanded(blockId, blockIds) {
