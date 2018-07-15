@@ -145,9 +145,8 @@ export default {
         }
       }
       return augmentHot({
-        data,
         colHeaders: Object.keys(data[0]),
-      });
+      }, data);
     },
     sheetToJson(sheet, options = { header: 1 }) {
       return XLSX.utils.sheet_to_json(sheet, options)
@@ -155,10 +154,7 @@ export default {
         .filter(row => Object.entries(row).some(([k, v]) => v)); // remove empties
     },
     sheetToHot(sheet, settings = {}) {
-      return augmentHot({
-        data: this.sheetToJson(sheet),
-        ...settings,
-      });
+      return augmentHot(settings, this.sheetToJson(sheet));
     },
 
     handleUpload(file) {

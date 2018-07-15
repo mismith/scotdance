@@ -172,13 +172,11 @@ export default {
       return this.sectionsRaw
         .map((section) => {
           if (section.hot) {
-            const data = this[section[idKey]];
-
             // eslint-disable-next-line no-param-reassign
             section.hot = augmentHot({
               ...section.hot,
-              data,
-              columns: (section.hot.columns || []).map((column) => {
+
+              columns: section.hot.columns && section.hot.columns.map((column) => {
                 if (column.data === 'categoryId') {
                   // eslint-disable-next-line no-param-reassign
                   column.source = this.categories;
@@ -191,26 +189,9 @@ export default {
                 }
                 return column;
               }),
-              afterChange: (changes, source) => {
-                if (source !== 'loadData') {
-                  changes.forEach(([row, prop, oldVal, newVal]) => { // eslint-disable-line no-unused-vars
-                    // add key if new entry
-                    if (!data[row][idKey]) {
-                      data[row][idKey] = db.push().key;
-                    }
-
-                    // queue up a save
-                    const path = `${section[idKey]}/${data[row][idKey]}/${prop.replace('.', '/')}`;
-                    this.save(path, newVal);
-                  });
-                }
-              },
-              beforeRemoveRow: (index, amount) => {
-                for (let i = 0; i < amount; i += 1) {
-                  const path = `${section[idKey]}/${data[index + i][idKey]}`;
-                  this.save(path, null);
-                }
-              },
+            }, this[section[idKey]], {
+              collection: section[idKey],
+              handler: this.save,
             });
           }
           return section;
