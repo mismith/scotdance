@@ -583,6 +583,12 @@ body,
   }
 }
 
+.md-bottom-bar {
+  > .md-ripple {
+    justify-content: center;
+  }
+}
+
 .md-dialog {
   .md-dialog-content {
     @extend .md-scroll;
