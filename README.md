@@ -31,6 +31,8 @@ Links to the admin panels needed to manage this project:
 * DNS: [Cloudflare](https://dash.cloudflare.com/f9b1ba7aa72b02f28e63a13fd4aa7184/scotdance.app)
 * Domain: [Namecheap](https://ap.www.namecheap.com/domains/domaincontrolpanel/scotdance.app)
 * Email (alias): [GSuite](https://admin.google.com)
+* Error logging / session recording: [SessionStack](https://app.sessionstack.com/#/projects/4982/sessions)
+* Live Chat: [Crisp](https://app.crisp.chat/website/160e5d08-deea-4187-a21b-39762a904c26/inbox/)
 
 
 ## App (Cordova)
