@@ -1,7 +1,7 @@
 <template>
   <div class="competition-admin md-scroll-frame">
-    <div v-if="currentSection" class="md-scroll-frame">
-      <div v-if="hasPermission" class="md-scroll-frame">
+    <div v-if="hasPermission" class="md-scroll-frame">
+      <div v-if="currentSection" class="md-scroll-frame">
         <div class="md-scroll-frame">
           <md-toolbar class="md-dense">
             <div v-if="inTabs('info', 'categories', 'dancers', 'groups')">
@@ -49,12 +49,6 @@
           </div>
         </div>
       </div>
-      <div v-else-if="!me">
-        <md-empty-state md-icon="block" md-label="Login required" />
-      </div>
-      <div v-else-if="!me.admin"><!-- @TODO -->
-        <md-empty-state md-icon="block" md-label="Access denied" />
-      </div>
 
       <md-dialog :md-active.sync="showImport" class="import-dialog">
         <admin-import
@@ -80,8 +74,11 @@
         @md-confirm="remove"
       />
     </div>
-    <div v-else class="md-scroll-frame spinner-container">
-      <mi-md-spinner />
+    <div v-else-if="!$store.state.me">
+      <md-empty-state md-icon="block" md-label="Login required" />
+    </div>
+    <div v-else>
+      <md-empty-state md-icon="block" md-label="Access denied" />
     </div>
 
     <md-bottom-bar
@@ -103,9 +100,6 @@
 </template>
 
 <script>
-import {
-  mapState,
-} from 'vuex';
 import {
   HotTable,
   makeKeyValuePairColumn,
@@ -165,10 +159,6 @@ export default {
     };
   },
   computed: {
-    ...mapState([
-      'me',
-    ]),
-
     hasPermission() {
       return this.currentSection && this.$store.getters.hasPermission('competitions:data', this.$route.params.competitionId, this.currentSection[idKey]);
     },
