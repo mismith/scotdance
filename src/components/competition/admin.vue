@@ -86,6 +86,7 @@
 
     <md-bottom-bar
       ref="bottomBar"
+      v-show="hasPermission"
       class="md-accent"
     >
       <md-bottom-bar-item
