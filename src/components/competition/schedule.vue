@@ -116,14 +116,14 @@
         </div>
 
         <md-dialog :md-active.sync="drawVisible" :md-fullscreen="false" class="draw-dialog">
-          <md-dialog-title>
+          <md-dialog-title v-if="currentDialogData">
             <div>Draw / Order</div>
-            <div v-if="currentDialogData" class="md-caption">
+            <div v-if="currentDialogData.dance && currentDialogData.group" class="md-caption">
               {{ currentDialogData.dance.$shortName }} • {{ currentDialogData.group.$name }}
             </div>
           </md-dialog-title>
           <md-dialog-content v-if="currentDialogData" class="alt">
-            <md-list class="md-double-line">
+            <md-list v-if="currentDialogData.dance && currentDialogData.group" class="md-double-line">
               <dancer-list-item
                 v-for="dancer in findDrawnDancers(currentDialogData.group, currentDialogData.dance)"
                 :key="dancer[idKey]"
