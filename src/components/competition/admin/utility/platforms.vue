@@ -26,7 +26,7 @@
             }"
           >
             {{ poolItem.$name || poolItem.name }}
-            <md-icon v-if="!admin">chevron_right</md-icon>
+            <md-icon v-if="!admin">keyboard_arrow_down</md-icon>
           </md-chip>
         </draggable>
       </div>
