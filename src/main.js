@@ -197,7 +197,13 @@ router.beforeEach(async (to, prev, next) => {
   return next();
 });
 
+router.beforeEach((to, from, next) => {
+  store.commit('setLoading', true);
+  next();
+});
 router.afterEach((to) => {
+  store.commit('setLoading', false);
+
   // store route/tab states for restoring (e.g. on app re-open)
   const routeInfo = Vue.localStorage.get('routeInfo', {});
   routeInfo.$current = to.name;

@@ -131,13 +131,16 @@
     </md-app-drawer>
 
     <md-app-content id="main" class="md-scroll-frame">
-      <keep-alive>
+      <keep-alive v-if="!$store.state.loading">
         <router-view
           :competitions="competitions"
           :competitions-ref="competitionsRef"
           :competitions-data-ref="competitionsDataRef"
         />
       </keep-alive>
+      <div v-else class="md-scroll-frame spinner-container">
+        <mi-md-spinner />
+      </div>
     </md-app-content>
   </md-app>
 </template>
