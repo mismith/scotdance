@@ -120,6 +120,7 @@ import MdSpunnable from '@/components/utility/md-spunnable';
 export default {
   name: 'competition-admin',
   props: {
+    competitionId: String,
     competitionRef: {
       type: Object,
       required: true,
@@ -158,14 +159,11 @@ export default {
   },
   computed: {
     hasPermission() {
-      return this.currentSection && this.$store.getters.hasPermission('competitions:data', this.$route.params.competitionId, this.currentSection[idKey]);
+      return this.currentSection && this.$store.getters.hasPermission('competitions:data', this.competitionId, this.currentSection[idKey]);
     },
 
-    currentTab() {
-      return this.$route.params.tab || this.$route.name.split('.')[2] || 'info';
-    },
     currentSection() {
-      return this.getSection(this.currentTab);
+      return this.getSection(this.$root.currentTab);
     },
 
     sections() {
@@ -199,7 +197,7 @@ export default {
     },
   },
   watch: {
-    currentTab() {
+    '$root.currentTab'() { // eslint-disable-line object-shorthand
       this.syncBottomBar();
     },
   },
@@ -208,7 +206,7 @@ export default {
 
     async syncBottomBar() {
       await this.$nextTick(); // await md-bottom-bar's internally queued $nextTick
-      const adminTabId = `tab-competition-admin-${this.currentTab}`;
+      const adminTabId = `tab-competition-admin-${this.$root.currentTab}`;
       this.$refs.bottomBar.MdBottomBar.activeItem = adminTabId;
     },
 
@@ -234,7 +232,7 @@ export default {
       }
     },
     inTabs(...tabs) {
-      return tabs.some(tab => (this.currentTab) === tab);
+      return tabs.some(tab => this.$root.currentTab === tab);
     },
     getSection(sectionId) {
       return this.sections.find(section => section[idKey] === sectionId);
@@ -274,7 +272,7 @@ export default {
       this.$router.replace('/');
     },
 
-    addPresets(presets, tab = this.currentTab) {
+    addPresets(presets, tab = this.$root.currentTab) {
       // append
       return Promise.all(presets.map((preset) => {
         return this.save(`${tab}/${db.push().key}`, preset);

@@ -58,7 +58,7 @@ export default new Router({
           },
           children: [
             {
-              path: '',
+              path: 'info',
               name: 'competition.info',
               component: CompetitionInfo,
             },
@@ -91,12 +91,15 @@ export default new Router({
             },
             {
               path: 'admin',
-              name: 'competition.admin',
               component: () => import(/* webpackChunkName: "admin" */ '@/components/competition/admin'),
               meta: {
                 title: 'Competition Admin',
               },
               children: [
+                {
+                  path: 'info',
+                  name: 'competition.admin.info',
+                },
                 {
                   path: 'schedule/:dayId?/:blockId?/:eventId?/:danceId?',
                   name: 'competition.admin.schedule',
@@ -118,7 +121,6 @@ export default new Router({
                 {
                   path: ':tab',
                   name: 'competition.admin.tab',
-                  component: () => import(/* webpackChunkName: "admin" */ '@/components/competition/admin/tab'),
                   props: true,
                 },
               ],

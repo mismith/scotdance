@@ -2,7 +2,7 @@
   <div class="competition md-scroll-frame">
     <div v-if="competitionExists" class="md-scroll-frame">
       <div v-if="loaded" class="md-scroll-frame">
-        <keep-alive v-if="currentTab === 'info' || competition.published || $store.getters.hasPermission('competitions:data', competitionId)">
+        <keep-alive v-if="$root.currentTab === 'info' || competition.published || $store.getters.hasPermission('competitions:data', competitionId)">
           <router-view
             :competition-ref="competitionRef"
             :competition-data-ref="competitionDataRef"
@@ -39,7 +39,7 @@
       />
     </div>
 
-    <md-bottom-bar ref="bottomBar" v-show="competitionExists && currentTab !== 'admin'">
+    <md-bottom-bar ref="bottomBar" v-show="competitionExists && !isAdminRoute">
       <md-bottom-bar-item id="tab-info" :to="{ name: 'competition.info', params: { competitionId } }">
         <md-icon class="icon-info" />
         <span class="md-bottom-bar-label">Info</span>
@@ -125,11 +125,11 @@ export default {
       },
     },
 
-    currentTab() {
-      return this.$route.name.replace(/^.*?\./, '').replace(/\..*?$/, '') || 'info';
+    isAdminRoute() {
+      return this.$route.name.indexOf('.admin.') >= 0;
     },
     competitionExists() {
-      return this.competition && (this.competition['.value'] !== null || this.currentTab === 'admin');
+      return this.competition && (this.competition['.value'] !== null || this.isAdminRoute);
     },
 
     competition() {
@@ -188,7 +188,7 @@ export default {
     competitionId() {
       this.loadFirebase();
     },
-    currentTab() {
+    '$root.currentTab'() { // eslint-disable-line object-shorthand
       this.syncBottomBar();
     },
   },
@@ -199,7 +199,7 @@ export default {
 
     async syncBottomBar() {
       await this.$nextTick(); // await md-bottom-bar's internally queued $nextTick
-      const tabId = `tab-${this.currentTab}`;
+      const tabId = `tab-${this.$root.currentTab}`;
       this.$refs.bottomBar.MdBottomBar.activeItem = tabId;
     },
 

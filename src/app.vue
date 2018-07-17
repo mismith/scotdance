@@ -9,7 +9,7 @@
 
       <md-button
         v-if="$route.params.competitionId && $store.getters.hasPermission('competitions:data', $route.params.competitionId)"
-        :to="{ name: /^competition.admin/.test($route.name) ? 'competition.info' : 'competition.admin' }"
+        :to="{ name: /^competition.admin/.test($route.name) ? 'competition.info' : 'competition.admin.info' }"
         class="md-icon-button"
       >
         <md-icon>{{ /^competition.admin/.test($route.name) ? 'visibility' : 'settings' }}</md-icon>
@@ -92,7 +92,7 @@
 
             <md-button
               v-if="$store.getters.hasPermission('admin')"
-              :to="{ name: 'competition.admin', params: { competitionId: db.push().key } }"
+              :to="{ name: 'competition.admin.info', params: { competitionId: db.push().key } }"
               @click.native="closeMenu()"
               class="md-icon-button"
             >

@@ -230,6 +230,11 @@ new Vue({
   router,
   store,
   template: '<app />',
+  computed: {
+    currentTab() {
+      return this.$route.params.tab || this.$route.name.split('.').slice(-1)[0];
+    },
+  },
   components: {
     App,
   },

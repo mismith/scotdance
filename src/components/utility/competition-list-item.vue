@@ -18,7 +18,7 @@
 
     <md-button
       v-if="$store.getters.hasPermission('competitions:data', competition[idKey])"
-      :to="{ name: 'competition.admin', params: { competitionId: competition[idKey] } }"
+      :to="{ name: 'competition.admin.info', params: { competitionId: competition[idKey] } }"
       class="md-icon-button md-list-action"
     >
       <md-icon>settings</md-icon>
