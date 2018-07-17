@@ -253,9 +253,9 @@ export default {
     }
   }
   &.interactive {
-    flex-wrap: wrap;
-
     .pools {
+      flex-wrap: wrap;
+
       .pool {
         .draggable {
           padding: 4px 0;
