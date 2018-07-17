@@ -25,15 +25,14 @@
             <md-spunnable :md-spinning="saving" />
           </md-toolbar>
           <div class="md-scroll-frame md-scroll">
-            <form v-if="currentSection.form" class="md-padding">
-              <dynamic-field
-                v-for="field in currentSection.form.fields"
-                :key="field.data"
-                :field="field"
-                :data="competition"
-                @change="save(`${currentSection[idKey]}/${field.data}`, competition[field.data])"
-              />
-            </form>
+            <dynamic-form
+              v-if="currentSection.form"
+              :path="currentSection[idKey]"
+              :fields="currentSection.form.fields"
+              :data="competition"
+              class="md-padding"
+              @change="handleChanges"
+            />
 
             <HotTable v-else-if="currentSection.hot" :settings="currentSection.hot" class="fullscreen" />
 
@@ -112,7 +111,7 @@ import {
   idKey,
   db,
 } from '@/helpers/firebase';
-import DynamicField from '@/components/admin/utility/dynamic-field';
+import DynamicForm from '@/components/admin/utility/dynamic-form';
 import PresetPicker from '@/components/competition/admin/utility/preset-picker';
 import AdminResults from '@/components/competition/admin/results';
 import MdSpunnable from '@/components/utility/md-spunnable';
@@ -290,7 +289,7 @@ export default {
   },
   components: {
     HotTable,
-    DynamicField,
+    DynamicForm,
     AdminImport: () => import(/* webpackChunkName: "import" */ '@/components/competition/admin/utility/import'),
     AdminImportResults: () => import(/* webpackChunkName: "import" */ '@/components/competition/admin/utility/import-results'),
     AdminResults,
