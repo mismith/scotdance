@@ -146,14 +146,16 @@ export default {
         columns,
         data,
 
-        afterChange: (changes, source) => {
+        beforeChange: (changes, source) => {
           if (source !== 'loadData') {
             changes.forEach(([index, danceId, , dancerNumber]) => {
               this.$emit('change', {
                 [`draws/${this.groupId}/${danceId}/${index}`]: dancerNumber,
               });
             });
+            return false;
           }
+          return true;
         },
       };
     },

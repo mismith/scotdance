@@ -33,13 +33,15 @@
               class="md-padding"
               @change="handleChanges"
             />
-            <HotTable
+            <mi-hot-table
               v-else-if="currentSection.hot"
               :settings="currentSection.hot"
+              :data="this[$root.currentTab]"
               class="fullscreen"
+              @change="handleHotChanges"
             />
             <keep-alive v-else>
-              <router-view v-bind="$props" @change="handleChanges" />
+              <router-view v-bind="$props" @change="handleDataChanges" />
             </keep-alive>
 
             <footer v-if="inTabs('info')" class="md-layout md-alignment-center" style="margin-top: auto;">
@@ -102,9 +104,7 @@
 
 <script>
 import {
-  HotTable,
   makeKeyValuePairColumn,
-  augmentHot,
 } from '@/helpers/admin';
 import {
   danceExtender,
@@ -113,6 +113,7 @@ import {
   idKey,
   db,
 } from '@/helpers/firebase';
+import MiHotTable from '@/components/admin/utility/mi-hot-table';
 import DynamicForm from '@/components/admin/utility/dynamic-form';
 import PresetPicker from '@/components/competition/admin/utility/preset-picker';
 import AdminResults from '@/components/competition/admin/results';
@@ -172,7 +173,7 @@ export default {
         .map((section) => {
           if (section.hot) {
             // eslint-disable-next-line no-param-reassign
-            section.hot = augmentHot({
+            section.hot = {
               ...section.hot,
 
               columns: section.hot.columns && section.hot.columns.map((column) => {
@@ -188,10 +189,7 @@ export default {
                 }
                 return column;
               }),
-            }, this[section[idKey]], {
-              collection: section[idKey],
-              handler: this.save,
-            });
+            };
           }
           return section;
         });
@@ -285,12 +283,22 @@ export default {
         return this.save(path, value);
       });
     },
+    handleDataChanges(changes) {
+      this.awaitSave(this.competitionDataRef.update(changes));
+    },
+    handleHotChanges(changes) {
+      Object.entries(changes).forEach(([path, change]) => {
+        this.handleDataChanges({
+          [`${this.$root.currentTab}/${path}`]: change,
+        });
+      });
+    },
   },
   mounted() {
     this.syncBottomBar();
   },
   components: {
-    HotTable,
+    MiHotTable,
     DynamicForm,
     AdminImport: () => import(/* webpackChunkName: "import" */ '@/components/competition/admin/utility/import'),
     AdminImportResults: () => import(/* webpackChunkName: "import" */ '@/components/competition/admin/utility/import-results'),

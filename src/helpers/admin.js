@@ -3,7 +3,6 @@ import 'handsontable/dist/handsontable.full.css';
 import HotTable from '@handsontable/vue';
 import {
   idKey,
-  db,
 } from '@/helpers/firebase';
 
 
@@ -30,50 +29,23 @@ function makeKeyValuePairColumn(column, valueProp = '$name', keyProp = idKey) {
   };
 }
 
-const augmentHot = (settings = {}, data = undefined, autoSave = undefined) => {
-  const defaults = {
-    colHeaders: true,
-    rowHeaders: true,
-    stretchH: 'all',
-    minSpareRows: 1,
-    contextMenu: [
-      'remove_row',
-    ],
-    sortIndicator: true,
-    columnSorting: true,
-    manualColumnResize: true,
+const augmentHot = (settings = {}, data = undefined) => ({
+  colHeaders: true,
+  rowHeaders: true,
+  stretchH: 'all',
+  minSpareRows: 1,
+  contextMenu: [
+    'remove_row',
+  ],
+  sortIndicator: true,
+  columnSorting: true,
+  manualColumnResize: true,
 
-    data,
-  };
+  ...settings,
 
-  if (data && autoSave && autoSave.collection && autoSave.handler) {
-    defaults.afterChange = (changes, source) => {
-      if (source !== 'loadData') {
-        changes.forEach(([row, prop, oldVal, newVal]) => { // eslint-disable-line no-unused-vars
-          // add key if new entry
-          if (!data[row][idKey]) {
-            data[row][idKey] = db.push().key; // eslint-disable-line no-param-reassign
-          }
+  data,
+});
 
-          // queue up a save
-          const path = `${autoSave.collection}/${data[row][idKey]}/${prop.replace('.', '/')}`;
-          autoSave.handler(path, newVal);
-        });
-      }
-    };
-    defaults.beforeRemoveRow = (index, amount) => {
-      for (let i = 0; i < amount; i += 1) {
-        const path = `${autoSave.collection}/${data[index + i][idKey]}`;
-        autoSave.handler(path, null);
-      }
-    };
-  }
-
-  return {
-    ...defaults,
-    ...settings,
-  };
-};
 
 export {
   Handsontable,
