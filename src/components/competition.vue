@@ -4,18 +4,20 @@
       <div v-if="loaded" class="md-scroll-frame">
         <keep-alive v-if="$root.currentTab === 'info' || competition.published || $store.getters.hasPermission('competitions:data', competitionId)">
           <router-view
-            :competition-ref="competitionRef"
-            :competition-data-ref="competitionDataRef"
-            :competition="competition"
-            :dancers="dancers"
-            :groups="groups"
-            :categories="categories"
-            :dances="dances"
-            :staff="staff"
-            :platforms="platforms"
-            :draws="draws"
-            :schedule="schedule"
-            :results="results"
+            v-bind="{
+              competitionRef,
+              competitionDataRef,
+              competition,
+              dancers,
+              groups,
+              categories,
+              dances,
+              staff,
+              platforms,
+              draws,
+              schedule,
+              results,
+            }"
           />
         </keep-alive>
         <div v-else class="md-scroll-frame alt">

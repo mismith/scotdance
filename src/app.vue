@@ -133,9 +133,11 @@
     <md-app-content id="main" class="md-scroll-frame">
       <keep-alive v-if="!$store.state.loading">
         <router-view
-          :competitions="competitions"
-          :competitions-ref="competitionsRef"
-          :competitions-data-ref="competitionsDataRef"
+          v-bind="{
+            competitions,
+            competitionsRef,
+            competitionsDataRef,
+          }"
         />
       </keep-alive>
       <div v-else class="md-scroll-frame spinner-container">

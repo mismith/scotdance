@@ -33,9 +33,11 @@
               class="md-padding"
               @change="handleChanges"
             />
-
-            <HotTable v-else-if="currentSection.hot" :settings="currentSection.hot" class="fullscreen" />
-
+            <HotTable
+              v-else-if="currentSection.hot"
+              :settings="currentSection.hot"
+              class="fullscreen"
+            />
             <keep-alive v-else>
               <router-view v-bind="$props" @change="handleChanges" />
             </keep-alive>
