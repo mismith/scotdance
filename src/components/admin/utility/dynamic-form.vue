@@ -5,7 +5,7 @@
       :key="field.data"
       :field="field"
       :data="data"
-      @change="handleChange(field.data, data[field.data])"
+      @change="handleChanges"
     />
   </form>
 </template>
@@ -16,15 +16,12 @@ import DynamicField from '@/components/admin/utility/dynamic-field';
 export default {
   name: 'dynamic-form',
   props: {
-    path: String,
     fields: Array,
     data: Object,
   },
   methods: {
-    handleChange(key, value) {
-      this.$emit('change', {
-        [`${this.path}/${key}`]: value,
-      });
+    handleChanges(changes) {
+      this.$emit('change', changes);
     },
   },
   components: {

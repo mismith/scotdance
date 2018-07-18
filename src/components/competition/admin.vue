@@ -27,11 +27,10 @@
           <div class="md-scroll-frame md-scroll">
             <dynamic-form
               v-if="currentSection.form"
-              :path="currentSection[idKey]"
               :fields="currentSection.form.fields"
               :data="competition"
               class="md-padding"
-              @change="handleChanges"
+              @change="handleInfoChanges"
             />
             <mi-hot-table
               v-else-if="currentSection.hot"
@@ -74,7 +73,7 @@
         md-content="Are you sure you want to permanently delete this competition?"
         md-confirm-text="Yes"
         md-cancel-text="No"
-        @md-confirm="remove"
+        @md-confirm="handleRemove"
       />
     </div>
     <div v-else-if="!$store.state.me">
@@ -257,31 +256,15 @@ export default {
         }, 1000);
       });
     },
-    async save(path, value) {
-      const ref = /^info\//.test(path) ? this.competitionRef : this.competitionDataRef;
-      await this.awaitSave(ref.update({
-        [path.replace(/^info\//, '')]: value || null,
-      }));
-    },
-    async remove() {
+    async handleRemove() {
       await this.awaitSave(
         this.competitionRef.remove(),
         this.competitionDataRef.remove(),
       );
       this.$router.replace('/');
     },
-
-    addPresets(presets, tab = this.$root.currentTab) {
-      // append
-      return Promise.all(presets.map((preset) => {
-        return this.save(`${tab}/${db.push().key}`, preset);
-      }));
-    },
-
-    handleChanges(changes) {
-      return Object.entries(changes).map(([path, value]) => {
-        return this.save(path, value);
-      });
+    handleInfoChanges(changes) {
+      this.awaitSave(this.competitionRef.update(changes));
     },
     handleDataChanges(changes) {
       this.awaitSave(this.competitionDataRef.update(changes));
@@ -293,6 +276,13 @@ export default {
         });
       });
     },
+    addPresets(presets, tab = this.$root.currentTab) {
+      presets.forEach((preset) => {
+        this.handleDataChanges({
+          [`${tab}/${db.push().key}`]: preset,
+        });
+      });
+    },
   },
   mounted() {
     this.syncBottomBar();
@@ -300,8 +290,8 @@ export default {
   components: {
     MiHotTable,
     DynamicForm,
-    AdminImport: () => import(/* webpackChunkName: "import" */ '@/components/competition/admin/utility/import'),
-    AdminImportResults: () => import(/* webpackChunkName: "import" */ '@/components/competition/admin/utility/import-results'),
+    AdminImport: () => import(/* webpackChunkName: "admin-import" */ '@/components/competition/admin/utility/import'),
+    AdminImportResults: () => import(/* webpackChunkName: "admin-import" */ '@/components/competition/admin/utility/import-results'),
     AdminResults,
     PresetPicker,
     MdSpunnable,
