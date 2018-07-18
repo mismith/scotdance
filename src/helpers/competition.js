@@ -7,7 +7,7 @@ export function findByIdKey(items, id) {
 }
 
 export function sortByKey(key = idKey) {
-  return (a, b) => a[key].localeCompare(b[key]);
+  return (a, b) => (a[key] || '').localeCompare(b[key] || '');
 }
 
 export function hasFavorites(dancers) {
