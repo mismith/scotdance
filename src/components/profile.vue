@@ -1,6 +1,6 @@
 <template>
   <div class="profile md-scroll-frame">
-    <div v-if="me" class="md-padding md-scroll-frame md-scroll">
+    <div class="md-padding md-scroll-frame md-scroll">
       <dynamic-field :field="{ type: 'avatar' }" :data="me" />
 
       <md-field>
@@ -97,13 +97,6 @@
         </md-dialog>
       </footer>
     </div>
-    <div v-else-if="me !== undefined">
-      <md-empty-state
-        md-icon="error"
-        md-label="Not logged in"
-      />
-    </div>
-    <mi-md-spinner v-else />
   </div>
 </template>
 

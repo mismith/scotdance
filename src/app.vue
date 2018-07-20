@@ -131,7 +131,7 @@
     </md-app-drawer>
 
     <md-app-content id="main" class="md-scroll-frame">
-      <keep-alive v-if="!$store.state.loading">
+      <keep-alive v-if="!$store.state.loading && $store.state.me !== undefined">
         <router-view
           v-bind="{
             competitions,

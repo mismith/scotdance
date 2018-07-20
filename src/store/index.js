@@ -120,9 +120,9 @@ export default new Vuex.Store({
       bindFirebaseRef('myPermissions', state.myPermissionsRef);
     }),
     unauth: firebaseAction(({ unbindFirebaseRef, state }) => {
-      unbindFirebaseRef('me');
-      unbindFirebaseRef('myFavorites');
-      unbindFirebaseRef('myPermissions');
+      if (state.me) unbindFirebaseRef('me');
+      if (state.myFavorites) unbindFirebaseRef('myFavorites');
+      if (state.myPermissions) unbindFirebaseRef('myPermissions');
 
       state.me = null;
       state.myFavorites = null;
