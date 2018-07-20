@@ -1,26 +1,25 @@
 {
   "rules": {
     "$environment": {
+      ".read": "root.child($environment).child('users:permissions').child(auth.uid).child('admin').val() === true", // is ADMIN
+      ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('admin').val() === true", // is ADMIN
+
       "sections": {
-        ".read": true,
-        ".write": false
+        ".read": true
       },
       "faqs": {
-        ".read": true,
-        ".write": false
+        ".read": true
       },
       "competitions": {
         ".read": true,
-        ".write": "root.child($environment).child('users:permissions').child(auth.uid).hasChild('admin') === true" // is ADMIN
+        "$competitionId": {
+          ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true" // has PERMISSION
+        }
       },
       "competitions:data": {
-        ".read": "root.child($environment).child('users:permissions').child(auth.uid).hasChild('admin') === true", // is ADMIN
-        ".write": "root.child($environment).child('users:permissions').child(auth.uid).hasChild('admin') === true", // is ADMIN
         "$competitionId": {
-          ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true || root.child($environment).child('users:permissions').child(auth.uid).child('competitions:data').hasChild($competitionId) === true", // is PUBLISHED || has PERMISSION
-          "$sectionId": {
-            ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions:data').child($competitionId).hasChild($sectionId) === true" // has PERMISSION
-          }
+          ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true || root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // is PUBLISHED || has PERMISSION
+          ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true" // has PERMISSION
         }
       },
       "users": {
