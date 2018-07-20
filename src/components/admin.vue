@@ -135,7 +135,8 @@ export default {
 
     goToTab(tab) {
       switch (tab) {
-        case 'info': {
+        case 'info':
+        case 'users': {
           this.$router.push({
             name: `admin.${tab}`,
           });

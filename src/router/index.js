@@ -160,6 +160,12 @@ export default new Router({
           component: () => import(/* webpackChunkName: "admin" */ '@/components/admin/info'),
         },
         {
+          path: 'users/:userId?',
+          name: 'admin.users',
+          component: () => import(/* webpackChunkName: "admin" */ '@/components/admin/users'),
+          props: true,
+        },
+        {
           path: ':tab',
           name: 'admin.tab',
           // props: true, // @TODO: why does this cause an error?
