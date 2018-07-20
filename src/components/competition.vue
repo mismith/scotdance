@@ -1,10 +1,11 @@
 <template>
   <div class="competition md-scroll-frame">
-    <div v-if="competitionExists" class="md-scroll-frame">
-      <div v-if="loaded" class="md-scroll-frame">
+    <div v-if="loaded" class="md-scroll-frame">
+      <div v-if="competitionExists" class="md-scroll-frame">
         <keep-alive v-if="$root.currentTab === 'info' || competition.published || $store.getters.hasPermission('competitions:data', competitionId)">
           <router-view
             v-bind="{
+              competitionId,
               competitionRef,
               competitionDataRef,
               competition,
@@ -30,15 +31,15 @@
           </md-empty-state>
         </div>
       </div>
-      <div v-else class="md-scroll-frame alt spinner-container">
-        <mi-md-spinner />
+      <div v-else class="md-scroll-frame alt">
+        <md-empty-state
+          md-icon="close"
+          md-label="No competition found"
+        />
       </div>
     </div>
-    <div v-else class="md-scroll-frame alt">
-      <md-empty-state
-        md-icon="close"
-        md-label="No competition found"
-      />
+    <div v-else class="md-scroll-frame alt spinner-container">
+      <mi-md-spinner />
     </div>
 
     <md-bottom-bar ref="bottomBar" v-show="competitionExists && !isAdminRoute">
