@@ -58,6 +58,12 @@ export default new Router({
           },
           children: [
             {
+              path: '',
+              redirect: {
+                name: 'competition.info',
+              },
+            },
+            {
               path: 'info',
               name: 'competition.info',
               component: CompetitionInfo,
@@ -96,6 +102,12 @@ export default new Router({
                 title: 'Competition Admin',
               },
               children: [
+                {
+                  path: '',
+                  redirect: {
+                    name: 'competition.admin.info',
+                  },
+                },
                 {
                   path: 'info',
                   name: 'competition.admin.info',
