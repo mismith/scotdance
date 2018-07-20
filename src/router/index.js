@@ -141,5 +141,30 @@ export default new Router({
         },
       ],
     },
+    {
+      path: '/admin',
+      component: () => import(/* webpackChunkName: "admin" */ '@/components/admin'),
+      meta: {
+        title: 'App Admin',
+      },
+      children: [
+        {
+          path: '',
+          redirect: {
+            name: 'admin.info',
+          },
+        },
+        {
+          path: 'info',
+          name: 'admin.info',
+          component: () => import(/* webpackChunkName: "admin" */ '@/components/admin/info'),
+        },
+        {
+          path: ':tab',
+          name: 'admin.tab',
+          // props: true, // @TODO: why does this cause an error?
+        },
+      ],
+    },
   ],
 });

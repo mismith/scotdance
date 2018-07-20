@@ -126,6 +126,14 @@
             <md-icon>home</md-icon>
             <span class="md-list-item-text">App Home</span>
           </md-list-item>
+          <md-list-item
+            v-if="$store.getters.hasPermission('admin')"
+            :to="{ name: 'admin.info' }"
+            @click="closeMenu()"
+          >
+            <md-icon>settings_applications</md-icon>
+            <span class="md-list-item-text">App Admin</span>
+          </md-list-item>
         </md-list>
       </div>
     </md-app-drawer>
