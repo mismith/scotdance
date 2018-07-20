@@ -155,7 +155,7 @@ export default {
   },
   computed: {
     hasPermission() {
-      return this.$store.getters.hasPermission('competitions:data', this.competitionId);
+      return this.$store.getters.hasPermission(`competitions/${this.competitionId}`);
     },
 
     currentSection() {

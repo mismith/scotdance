@@ -2,7 +2,7 @@
   <div class="competition md-scroll-frame">
     <div v-if="loaded" class="md-scroll-frame">
       <div v-if="competitionExists" class="md-scroll-frame">
-        <keep-alive v-if="$root.currentTab === 'info' || competition.published || $store.getters.hasPermission('competitions:data', competitionId)">
+        <keep-alive v-if="$root.currentTab === 'info' || competition.published || hasPermission">
           <router-view
             v-bind="{
               competitionId,
@@ -128,6 +128,9 @@ export default {
       },
     },
 
+    hasPermission() {
+      return this.$store.getters.hasPermission(`competitions/${this.competitionId}`);
+    },
     isAdminRoute() {
       return this.$route.name.indexOf('.admin.') >= 0;
     },

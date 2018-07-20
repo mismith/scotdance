@@ -8,7 +8,7 @@
       <router-link :to="{ name: 'competitions' }" class="md-title" style="margin-right: auto;">{{ title }}</router-link>
 
       <md-button
-        v-if="$route.params.competitionId && $store.getters.hasPermission('competitions:data', $route.params.competitionId)"
+        v-if="$route.params.competitionId && $store.getters.hasPermission(`competitions/${$route.params.competitionId}`)"
         :to="{ name: /^competition.admin/.test($route.name) ? 'competition.info' : 'competition.admin.info' }"
         class="md-icon-button"
       >
@@ -192,7 +192,7 @@ export default {
           ...competition,
           $favorite: this.$store.getters.isFavorite('competitions', competition[idKey]),
         }))
-        .filter(competition => competition.listed || this.$store.getters.hasPermission('competitions:data', competition[idKey]))
+        .filter(competition => competition.listed || this.$store.getters.hasPermission(`competitions/${competition[idKey]}`))
         .sort((a, b) => this.$moment(a.date).diff(b.date)); // order chronologically
     },
     relevantCompetitions() {

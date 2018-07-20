@@ -54,11 +54,11 @@ export default new Vuex.Store({
     isFavorite: state => (type, id) => {
       return get(state.myFavorites, `${type}.${id}`);
     },
-    hasPermission: state => (...keys) => {
-      if (get(state.myPermissions, 'admin')) {
+    hasPermission: state => (permission) => {
+      if (get(state.myPermissions, 'admin') === true) {
         return true;
       }
-      return get(state.myPermissions, keys.join('.'));
+      return get(state.myPermissions, permission.replace(/\//g, '.')) === true;
     },
   },
   mutations: {
