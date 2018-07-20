@@ -1,6 +1,6 @@
 <template>
   <div class="competition-admin md-scroll-frame">
-    <div v-if="hasPermission" class="md-scroll-frame">
+    <requires-permission :permission="hasPermission" class="md-scroll-frame">
       <div v-if="currentSection" class="md-scroll-frame">
         <div class="md-scroll-frame">
           <md-toolbar class="md-dense">
@@ -75,13 +75,7 @@
         md-cancel-text="No"
         @md-confirm="handleRemove"
       />
-    </div>
-    <div v-else-if="!$store.state.me">
-      <md-empty-state md-icon="block" md-label="Login required" />
-    </div>
-    <div v-else>
-      <md-empty-state md-icon="block" md-label="Access denied" />
-    </div>
+    </requires-permission>
 
     <md-bottom-bar
       ref="bottomBar"
@@ -91,8 +85,8 @@
       <md-bottom-bar-item
         v-for="section of sections"
         :key="section[idKey]"
-        @click="goToTab(section[idKey])"
         :id="`tab-competition-admin-${section[idKey]}`"
+        @click="goToTab(section[idKey])"
       >
         <md-icon :class="section.icon"></md-icon>
         <span class="md-bottom-bar-label">{{ section.name }}</span>
@@ -112,6 +106,7 @@ import {
   idKey,
   db,
 } from '@/helpers/firebase';
+import RequiresPermission from '@/components/utility/requires-permission';
 import MiHotTable from '@/components/admin/utility/mi-hot-table';
 import DynamicForm from '@/components/admin/utility/dynamic-form';
 import PresetPicker from '@/components/competition/admin/utility/preset-picker';
@@ -160,7 +155,7 @@ export default {
   },
   computed: {
     hasPermission() {
-      return this.currentSection && this.$store.getters.hasPermission('competitions:data', this.competitionId, this.currentSection[idKey]);
+      return this.$store.getters.hasPermission('competitions:data', this.competitionId);
     },
 
     currentSection() {
@@ -288,6 +283,7 @@ export default {
     this.syncBottomBar();
   },
   components: {
+    RequiresPermission,
     MiHotTable,
     DynamicForm,
     AdminImport: () => import(/* webpackChunkName: "admin-import" */ '@/components/competition/admin/utility/import'),

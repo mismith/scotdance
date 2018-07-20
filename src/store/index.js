@@ -52,13 +52,13 @@ export default new Vuex.Store({
     getField,
 
     isFavorite: state => (type, id) => {
-      return !!get(state.myFavorites, `${type}.${id}`);
+      return get(state.myFavorites, `${type}.${id}`);
     },
     hasPermission: state => (...keys) => {
       if (get(state.myPermissions, 'admin')) {
         return true;
       }
-      return !!get(state.myPermissions, keys.join('.'));
+      return get(state.myPermissions, keys.join('.'));
     },
   },
   mutations: {
