@@ -1,14 +1,7 @@
 <template>
   <div class="profile md-scroll-frame">
     <div v-if="me" class="md-padding md-scroll-frame md-scroll">
-      <div class="md-layout md-alignment-center">
-        <md-avatar>
-          <gravatar :user="me" />
-        </md-avatar>
-        <div class="md-layout-item md-padding">
-          Avatar via <a href="https://gravatar.com/" target="_blank" class="ext">Gravatar</a>
-        </div>
-      </div>
+      <dynamic-field :field="{ type: 'avatar' }" :data="me" />
 
       <md-field>
         <label>Display name</label>
@@ -123,6 +116,7 @@ import {
   idKey,
   db,
 } from '@/helpers/firebase';
+import DynamicField from '@/components/admin/utility/dynamic-field';
 
 export default {
   name: 'profile',
@@ -204,6 +198,9 @@ export default {
       }
     },
   },
+  components: {
+    DynamicField,
+  },
 };
 </script>
 
@@ -212,8 +209,6 @@ export default {
   .md-avatar {
     min-width: 100px;
     min-height: 100px;
-    border-radius: 50%;
-    margin-bottom: 16px;
   }
 }
 </style>

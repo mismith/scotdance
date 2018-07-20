@@ -1,6 +1,15 @@
 <template>
   <div class="dynamic-field">
-    <md-field v-if="field.type === 'select'">
+    <div v-if="field.type === 'avatar'" class="md-field md-layout md-alignment-center">
+      <md-avatar class="md-large">
+        <gravatar :user="data" />
+      </md-avatar>
+      <div class="md-layout-item md-padding">
+        Avatar via <a href="https://gravatar.com/" target="_blank" class="ext">Gravatar</a>
+      </div>
+    </div>
+
+    <md-field v-else-if="field.type === 'select'">
       <label>{{ field.title }}</label>
       <md-select
         v-model="data[field.data]"
