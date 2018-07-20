@@ -1,6 +1,7 @@
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.css';
 import HotTable from '@handsontable/vue';
+import flatten from 'obj-flatten';
 import {
   idKey,
 } from '@/helpers/firebase';
@@ -46,10 +47,12 @@ const augmentHot = (settings = {}, data = undefined) => ({
   data,
 });
 
+const flattenPaths = obj => Object.keys(flatten(obj, '/') || {});
 
 export {
   Handsontable,
   HotTable,
   makeKeyValuePairColumn,
   augmentHot,
+  flattenPaths,
 };

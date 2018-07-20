@@ -55,6 +55,17 @@
           :data="currentUser"
           @change="handleChanges($event, `users/${userId}`)"
         />
+
+        <path-chips
+          label="Permissions"
+          :data="permissions[currentUser[idKey]]"
+          @change="handleChanges($event, `users:permissions/${userId}`)"
+        />
+        <path-chips
+          label="Favourites"
+          :data="favorites[currentUser[idKey]]"
+          @change="handleChanges($event, `users:favorites/${userId}`)"
+        />
       </div>
       <div v-else>
         <md-empty-state
@@ -77,6 +88,7 @@ import {
 import PaginatedList from '@/components/admin/utility/paginated-list';
 import SearchField from '@/components/utility/search-field';
 import DynamicForm from '@/components/admin/utility/dynamic-form';
+import PathChips from '@/components/admin/utility/path-chips';
 
 export default {
   name: 'admin-users',
@@ -84,6 +96,8 @@ export default {
     userId: String,
     section: Object,
     users: Array,
+    favorites: Object,
+    permissions: Object,
   },
   data() {
     return {
@@ -137,6 +151,7 @@ export default {
     PaginatedList,
     SearchField,
     DynamicForm,
+    PathChips,
   },
 };
 </script>
