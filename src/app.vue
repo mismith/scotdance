@@ -591,6 +591,11 @@ body,
   }
 }
 
+.md-empty-state,
+.md-empty-state-container {
+  transition-duration: 0s !important;
+}
+
 .md-dialog {
   .md-dialog-content {
     @extend .md-scroll;
