@@ -155,10 +155,8 @@ if (Vue.prototype.isApp) {
 firebase.auth().onAuthStateChanged((me) => {
   if (me) {
     store.dispatch('auth', me);
-  } else if (store.state.me) {
-    store.dispatch('unauth');
   } else {
-    store.state.me = null;
+    store.dispatch('unauth');
   }
 });
 
