@@ -68,6 +68,7 @@
       <label>{{ field.title }}</label>
       <md-input
         v-model="data[field.data]"
+        :type="field.type || 'text'"
         :required="field.required"
         :readonly="field.readonly"
         :disabled="field.disabled"
