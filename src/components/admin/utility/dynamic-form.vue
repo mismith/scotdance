@@ -1,5 +1,5 @@
 <template>
-  <form class="dynamic-form">
+  <form @submit.prevent="handleSubmit" class="dynamic-form">
     <dynamic-field
       v-for="field in fields"
       :key="field.data"
@@ -22,6 +22,9 @@ export default {
   methods: {
     handleChanges(changes) {
       this.$emit('change', changes);
+    },
+    handleSubmit(event) {
+      this.$emit('submit', event);
     },
   },
   components: {
