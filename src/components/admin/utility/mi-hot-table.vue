@@ -27,7 +27,7 @@ export default {
           if (source !== 'loadData') {
             const aggregated = {};
             changes.forEach(([row, prop, , newVal]) => { // eslint-disable-line vue/no-side-effects-in-computed-properties
-              aggregated[`${this.data[row][idKey] || db.push().key}/${prop.replace('.', '/')}`] = newVal;
+              aggregated[`${this.data[row][idKey] || db.push().key}/${prop.replace('.', '/')}`] = newVal; // @TODO: why is this.data no defined when adding to the bottom row?
             });
             this.$emit('change', aggregated); // eslint-disable-line vue/no-side-effects-in-computed-properties
 
