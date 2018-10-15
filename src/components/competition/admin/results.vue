@@ -54,6 +54,7 @@
         :dancers="placedDancers"
         @dancer-click="placeDancer($event)"
         @dancer-toggle="handleTie($event[0], $event[1])"
+        @dancer-reorder="handleDrag($event)"
       />
       <div v-else>
         <md-empty-state
@@ -159,6 +160,16 @@ export default {
 
         this.save();
       }
+    },
+    handleDrag({ oldIndex, newIndex }) {
+      this.placedDancers.splice(newIndex, 0, this.placedDancers.splice(oldIndex, 1)[0]);
+
+      // can't be tied if at top of list
+      if (newIndex === 0) {
+        this.placedDancers[0].$tie = false;
+      }
+
+      this.save();
     },
     placeDancer(dancer) {
       const placeIndex = getPlaceIndex(dancer, this.placedDancers);

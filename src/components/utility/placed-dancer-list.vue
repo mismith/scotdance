@@ -1,5 +1,11 @@
 <template>
-  <md-list class="md-double-line">
+  <draggable
+    element="md-list"
+    v-model="dancers"
+    :options="{ disabled: !admin }"
+    @sort="$emit('dancer-reorder', $event)"
+    class="placed-dancer-list md-double-line draggable"
+  >
     <dancer-list-item
       v-for="(dancer, index) in dancers"
       :key="dancer[idKey]"
@@ -21,10 +27,11 @@
     </dancer-list-item>
 
     <slot />
-  </md-list>
+  </draggable>
 </template>
 
 <script>
+import Draggable from 'vuedraggable';
 import DancerListItem from '@/components/utility/dancer-list-item';
 import {
   idKey,
@@ -53,6 +60,7 @@ export default {
     getPlace,
   },
   components: {
+    Draggable,
     DancerListItem,
   },
 };
@@ -60,6 +68,11 @@ export default {
 
 <style lang="scss">
 .placed-dancer-list {
-
+  .sortable-ghost {
+    box-shadow: inset 0 0 0 2px var(--md-theme-default-primary);
+  }
+  .sortable-drag {
+    opacity: 0;
+  }
 }
 </style>
