@@ -207,5 +207,10 @@ export default {
       opacity: 0.33;
     }
   }
+  .placed-dancer-list {
+    .favorite-dancer-button {
+      display: none;
+    }
+  }
 }
 </style>
