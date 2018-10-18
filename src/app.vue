@@ -8,8 +8,8 @@
       <router-link :to="{ name: 'competitions' }" class="md-title" style="margin-right: auto;">{{ title }}</router-link>
 
       <md-button
-        v-if="$route.params.competitionId && $store.getters.hasPermission(`competitions/${$route.params.competitionId}`)"
-        :to="{ name: /^competition.admin/.test($route.name) ? 'competition.info' : 'competition.admin.info' }"
+        v-if="$route.params.competitionId && $store.getters.hasPermission(`competitions/${$route.params.competitionId}`) && getMirrorRoute()"
+        :to="getMirrorRoute()"
         class="md-icon-button"
       >
         <md-icon>{{ /^competition.admin/.test($route.name) ? 'visibility' : 'settings' }}</md-icon>
@@ -163,6 +163,7 @@ import {
 } from 'vuex';
 import {
   getTitleChunks,
+  getFirstExisting,
 } from '@/helpers/router';
 import {
   idKey,
@@ -267,6 +268,23 @@ export default {
 
       if (this.competitionsRaw) this.$unbind('competitionsRaw');
       this.$bindAsArray('competitionsRaw', this.competitionsRef);
+    },
+
+    getMirrorRoute() {
+      const [, isAdmin, tabName] = this.$route.name.match(/^competition\.(admin\.)?([^.]+?)$/);
+      const mirrorBaseName = `competition${isAdmin ? '' : '.admin'}`;
+      const tab = this.$route.params.tab || tabName;
+
+      return getFirstExisting({
+        name: `${mirrorBaseName}.${tab}`,
+      }, {
+        name: `${mirrorBaseName}.tab`,
+        params: {
+          tab,
+        },
+      }, {
+        name: `${mirrorBaseName}.info`,
+      });
     },
 
     closeMenu() {
