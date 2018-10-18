@@ -1,3 +1,5 @@
+import router from '@/router';
+
 export async function getTitleChunks(route) {
   return ['ScotDance', ...await Promise.all(route.matched
     .map(async (match) => {
@@ -35,4 +37,14 @@ export function handleExpanded(items, itemId, expanded) {
     [itemId]: !!expanded,
   };
   return expandeds;
+}
+
+export function getFirstExisting(...routes) {
+  if (!routes.length) return null;
+
+  const { route: { matched } } = router.resolve(routes[0]);
+  if (matched.length) {
+    return routes[0];
+  }
+  return getFirstExisting(...routes.slice(1));
 }

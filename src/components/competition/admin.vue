@@ -106,6 +106,9 @@ import {
   idKey,
   db,
 } from '@/helpers/firebase';
+import {
+  getFirstExisting,
+} from '@/helpers/router';
 import RequiresPermission from '@/components/utility/requires-permission';
 import MiHotTable from '@/components/admin/utility/mi-hot-table';
 import DynamicForm from '@/components/admin/utility/dynamic-form';
@@ -204,25 +207,14 @@ export default {
     },
 
     goToTab(tab) {
-      switch (tab) {
-        case 'schedule':
-        case 'results':
-        case 'dance-groups': {
-          this.$router.push({
-            name: `competition.admin.${tab}`,
-          });
-          break;
-        }
-        default: {
-          this.$router.push({
-            name: 'competition.admin.tab',
-            params: {
-              tab,
-            },
-          });
-          break;
-        }
-      }
+      this.$router.push(getFirstExisting({
+        name: `competition.admin.${tab}`,
+      }, {
+        name: 'competition.admin.tab',
+        params: {
+          tab,
+        },
+      }));
     },
     inTabs(...tabs) {
       return tabs.some(tab => this.$root.currentTab === tab);

@@ -62,6 +62,9 @@ import {
   idKey,
   db,
 } from '@/helpers/firebase';
+import {
+  getFirstExisting,
+} from '@/helpers/router';
 import RequiresPermission from '@/components/utility/requires-permission';
 import MiHotTable from '@/components/admin/utility/mi-hot-table';
 import MdSpunnable from '@/components/utility/md-spunnable';
@@ -134,24 +137,14 @@ export default {
     },
 
     goToTab(tab) {
-      switch (tab) {
-        case 'info':
-        case 'users': {
-          this.$router.push({
-            name: `admin.${tab}`,
-          });
-          break;
-        }
-        default: {
-          this.$router.push({
-            name: 'admin.tab',
-            params: {
-              tab,
-            },
-          });
-          break;
-        }
-      }
+      this.$router.push(getFirstExisting({
+        name: `admin.${tab}`,
+      }, {
+        name: 'admin.tab',
+        params: {
+          tab,
+        },
+      }));
     },
     inTabs(...tabs) {
       return tabs.some(tab => (this.$root.currentTab) === tab);
