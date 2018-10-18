@@ -206,7 +206,9 @@ router.afterEach((to) => {
   const routeInfo = Vue.localStorage.get('routeInfo', {});
   routeInfo.$current = to.name;
   routeInfo[to.name] = {
-    params: to.params,
+    params: { // clone so mutations don't have side-effects
+      ...to.params,
+    },
   };
   Vue.localStorage.set('routeInfo', routeInfo);
 });
