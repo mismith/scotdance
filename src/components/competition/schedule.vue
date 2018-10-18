@@ -6,7 +6,7 @@
       class="md-small-size-100 md-size-33 md-scroll"
     >
       <div v-if="schedule.days">
-        <div v-for="(day, dayId) in schedule.days" :key="dayId">
+        <div v-for="day in toOrderedArray(schedule.days)" :key="day[idKey]">
           <md-subheader class="md-title">
             <span>{{ day.name || $moment(day.date).format('dddd') }}</span>
           </md-subheader>
@@ -18,11 +18,11 @@
 
           <md-list class="md-list-cards">
             <md-list-item-cards
-              v-for="(block, blockId) in day.blocks"
-              :key="blockId"
+              v-for="block in toOrderedArray(day.blocks)"
+              :key="block[idKey]"
               md-expand
-              :md-expanded="isBlockExpanded(blockId, Object.keys(day.blocks))"
-              @toggled="handleBlockExpanded(blockId, $event)"
+              :md-expanded="isBlockExpanded(block[idKey], Object.keys(day.blocks))"
+              @toggled="handleBlockExpanded(block[idKey], $event)"
             >
               <md-subheader>
                 <div>{{ block.name }}</div>
@@ -31,10 +31,17 @@
 
               <md-list slot="md-expand" class="md-double-line">
                 <md-list-item
-                  v-for="(event, eventId) in block.events"
-                  :key="eventId"
-                  :to="{ name: $route.name, params: { dayId, blockId, eventId } }"
-                  :class="{ active: isActive(dayId, blockId, eventId) }"
+                  v-for="event in toOrderedArray(block.events)"
+                  :key="event[idKey]"
+                  :to="{
+                    name: $route.name,
+                      params: {
+                      dayId: day[idKey],
+                      blockId: block[idKey],
+                      eventId: event[idKey],
+                    },
+                  }"
+                  :class="{ active: isActive(day[idKey], block[idKey], event[idKey]) }"
                 >
                   <div class="md-list-item-text">
                     <div>{{ event.name }}</div>
@@ -85,11 +92,11 @@
 
           <md-list class="md-list-cards">
             <md-list-item-cards
-              v-for="(dance, danceId) in currentEvent.dances"
-              :key="danceId"
+              v-for="dance in toOrderedArray(currentEvent.dances)"
+              :key="dance[idKey]"
               :md-expand="!!dance.platforms"
-              :md-expanded="isDanceExpanded(danceId, Object.keys(currentEvent.dances))"
-              @toggled="handleDanceExpanded(danceId, $event)"
+              :md-expanded="isDanceExpanded(dance[idKey], Object.keys(currentEvent.dances))"
+              @toggled="handleDanceExpanded(dance[idKey], $event)"
             >
               <md-subheader>
                 <div>{{ getScheduleItemDanceName(dance, dances) }}</div>
@@ -157,6 +164,7 @@ import AdminPlatforms from '@/components/competition/admin/utility/platforms';
 import DancerListItem from '@/components/utility/dancer-list-item';
 import {
   idKey,
+  toOrderedArray,
 } from '@/helpers/firebase';
 import {
   isExpanded,
@@ -242,6 +250,7 @@ export default {
   methods: {
     textify,
     findByIdKey,
+    toOrderedArray,
     getScheduleItemDanceName,
 
     ...mapMutations([

@@ -8,18 +8,24 @@
               {{ blade.collection }}
             </md-subheader>
 
-            <md-list slot="md-expand">
+            <draggable
+              element="md-list"
+              slot="md-expand"
+              :value="blade.items()"
+              class="draggable"
+              @sort="handleListItemReorder(blade, $event)"
+            >
               <md-list-item
-                v-for="(item, itemId) in blade.parent()[blade.collection]"
-                :key="itemId"
-                :id="itemId"
-                :class="{ active: blade.id() === itemId }"
-                @click="goToBlade(blade.params(itemId))"
+                v-for="item in blade.items()"
+                :key="item[idKey]"
+                :id="item[idKey]"
+                :class="{ active: blade.id() === item[idKey] }"
+                @click="goToBlade(blade.params(item[idKey]))"
               >
                 <div class="md-list-item-text">{{ blade.name(item) }}</div>
                 <md-icon>chevron_right</md-icon>
               </md-list-item>
-            </md-list>
+            </draggable>
           </md-list-item-cards>
           <md-list-item-cards md-expand md-expanded>
             <md-subheader>
@@ -32,8 +38,8 @@
               <md-list-item
                 v-for="preset in blade.presets"
                 :key="blade.name(preset)"
-                @click="handleListItemCreate(blade, preset)"
                 :class="{ dimmed: isBladePresetUsed(blade, preset) }"
+                @click="handleListItemCreate(blade, preset)"
               >
                 <div class="md-list-item-text">{{ blade.name(preset) }}</div>
                 <md-icon>add</md-icon>
@@ -91,12 +97,14 @@
 </template>
 
 <script>
+import Draggable from 'vuedraggable';
 import DynamicField from '@/components/admin/utility/dynamic-field';
 import NewDynamicField from '@/components/admin/utility/new-dynamic-field';
 import AdminPlatforms from '@/components/competition/admin/utility/platforms';
 import {
   idKey,
   db,
+  toOrderedArray,
 } from '@/helpers/firebase';
 import {
   getScheduleItemDanceName,
@@ -130,10 +138,11 @@ export default {
         {
           collection: 'days',
           parent: () => this.schedule,
+          items: () => toOrderedArray(this.schedule.days),
           item: () => this.currentDay,
           id: () => this.dayId,
           params: itemId => ({ dayId: itemId }),
-          name: item => item.name,
+          name: item => item && item.name,
           fields: [
             {
               data: 'name',
@@ -158,10 +167,11 @@ export default {
         {
           collection: 'blocks',
           parent: () => this.currentDay,
+          items: () => toOrderedArray(this.currentDay.blocks),
           item: () => this.currentBlock,
           id: () => this.blockId,
           params: itemId => ({ dayId: this.dayId, blockId: itemId }),
-          name: item => item.name,
+          name: item => item && item.name,
           fields: [
             {
               data: 'name',
@@ -189,10 +199,11 @@ export default {
         {
           collection: 'events',
           parent: () => this.currentBlock,
+          items: () => toOrderedArray(this.currentBlock.events),
           item: () => this.currentEvent,
           id: () => this.eventId,
           params: itemId => ({ dayId: this.dayId, blockId: this.blockId, eventId: itemId }),
-          name: item => item.name,
+          name: item => item && item.name,
           fields: [
             {
               data: 'name',
@@ -226,10 +237,11 @@ export default {
         {
           collection: 'dances',
           parent: () => this.currentEvent,
+          items: () => toOrderedArray(this.currentEvent.dances),
           item: () => this.currentDance,
           id: () => this.danceId,
           params: itemId => ({ dayId: this.dayId, blockId: this.blockId, eventId: this.eventId, danceId: itemId }),
-          name: item => getScheduleItemDanceName(item, this.dances),
+          name: item => item && getScheduleItemDanceName(item, this.dances),
           fields: [
             {
               data: 'name',
@@ -315,7 +327,8 @@ export default {
       return path && `schedule/${path}`;
     },
     isBladePresetUsed(blade, preset) {
-      return Object.values(blade.parent()[blade.collection] || {})
+      const items = blade.items();
+      return items && items
         .find(item => blade.name(item) === blade.name(preset));
     },
     goToBlade(params) {
@@ -369,12 +382,27 @@ export default {
       });
     },
 
+    handleListItemReorder(blade, { oldIndex, newIndex }) {
+      const items = blade.items();
+      items.splice(newIndex, 0, items.splice(oldIndex, 1)[0]);
+
+      const changes = {};
+      items.forEach((item, order) => {
+        const params = blade.params(item[idKey]);
+        const path = this.getPath(params);
+        changes[`${path}/order`] = order;
+      });
+
+      this.$emit('change', changes);
+    },
+
     handlePlatformChanges(changes) {
       // bubble up
       this.$emit('change', changes);
     },
   },
   components: {
+    Draggable,
     DynamicField,
     NewDynamicField,
     AdminPlatforms,
@@ -385,6 +413,12 @@ export default {
 <style lang="scss">
 .admin-schedule {
   .blade {
+    .sortable-ghost {
+      box-shadow: inset 0 0 0 2px var(--md-theme-default-primary);
+    }
+    .sortable-drag {
+      opacity: 0;
+    }
     form.md-list-item-content {
       padding-top: 8px;
       padding-bottom: 16px;
