@@ -274,16 +274,22 @@ export default {
       const [, isAdmin, tabName] = this.$route.name.match(/^competition\.(admin\.)?([^.]+?)$/);
       const mirrorBaseName = `competition${isAdmin ? '' : '.admin'}`;
       const tab = this.$route.params.tab || tabName;
+      const params = {
+        competitionId: this.$route.params.competitionId,
+      };
 
       return getFirstExisting({
         name: `${mirrorBaseName}.${tab}`,
+        params,
       }, {
         name: `${mirrorBaseName}.tab`,
         params: {
+          ...params,
           tab,
         },
       }, {
         name: `${mirrorBaseName}.info`,
+        params,
       });
     },
 

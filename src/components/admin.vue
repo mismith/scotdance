@@ -137,11 +137,16 @@ export default {
     },
 
     goToTab(tab) {
+      const params = {
+        competitionId: this.$route.params.competitionId,
+      };
       this.$router.push(getFirstExisting({
         name: `admin.${tab}`,
+        params,
       }, {
         name: 'admin.tab',
         params: {
+          ...params,
           tab,
         },
       }));
