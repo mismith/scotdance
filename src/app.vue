@@ -575,6 +575,7 @@ body,
 
 .md-toolbar {
   flex-shrink: 0;
+  z-index: 3; // maintain box-shadow; keep above .md-list-item
 
   > span {
     overflow: hidden;
@@ -586,6 +587,10 @@ body,
 
   &.md-toolbar-nowrap {
     flex-wrap: nowrap;
+  }
+
+  &.md-app-toolbar {
+    z-index: 4; // keep above body content toolbars
   }
 }
 
@@ -623,6 +628,7 @@ body,
 .md-bottom-bar {
   display: flex;
   flex-shrink: 0;
+  z-index: 3; // maintain box-shadow; keep above .md-list-item
 
   > .md-ripple {
     width: auto;

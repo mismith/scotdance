@@ -274,11 +274,6 @@ export default {
 </script>
 
 <style lang="scss">
-.competition {
-  .md-bottom-bar {
-    z-index: 1; // maintain box-shadow
-  }
-}
 .staff-dialog {
   .md-dialog-title {
     margin-bottom: 12px;
