@@ -699,6 +699,24 @@ body,
   }
 }
 
+// drag-n-drop
+.sortable-handle {
+  .md-list-item & {
+    order: -1;
+    margin-left: -16px;
+    opacity: 0.5;
+    cursor: move;
+  }
+}
+.sortable-ghost {
+  .md-list-item & {
+    box-shadow: inset 0 0 0 2px var(--md-theme-default-primary);
+  }
+}
+.sortable-drag {
+  opacity: 0;
+}
+
 .md-padding {
   padding: 12px 16px;
 }

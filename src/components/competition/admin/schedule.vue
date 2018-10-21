@@ -424,16 +424,7 @@ export default {
 .admin-schedule {
   .blade {
     .sortable-handle {
-      order: -1;
-      margin-left: -16px;
       margin-right: 8px;
-      opacity: 0.5;
-    }
-    .sortable-ghost {
-      box-shadow: inset 0 0 0 2px var(--md-theme-default-primary);
-    }
-    .sortable-drag {
-      opacity: 0;
     }
     form.md-list-item-content {
       padding-top: 8px;

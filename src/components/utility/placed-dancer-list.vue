@@ -74,16 +74,6 @@ export default {
 
 <style lang="scss">
 .placed-dancer-list {
-  .sortable-handle {
-    order: -1;
-    margin-left: -16px;
-    opacity: 0.5;
-  }
-  .sortable-ghost {
-    box-shadow: inset 0 0 0 2px var(--md-theme-default-primary);
-  }
-  .sortable-drag {
-    opacity: 0;
-  }
+
 }
 </style>
