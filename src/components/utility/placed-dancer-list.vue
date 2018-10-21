@@ -2,7 +2,7 @@
   <draggable
     element="md-list"
     v-model="dancers"
-    :options="{ disabled: !admin }"
+    :options="{ disabled: !draggingEnabled, handle: '.sortable-handle' }"
     @sort="$emit('dancer-reorder', $event)"
     class="placed-dancer-list md-double-line draggable"
   >
@@ -13,6 +13,7 @@
       :place="getPlace(dancer, dancers)"
       @click="$emit('dancer-click', dancer)"
     >
+      <md-icon v-if="draggingEnabled" class="sortable-handle">drag_indicator</md-icon>
       <md-switch
         v-if="admin && index && dance[idKey] !== callbacks[idKey]"
         v-model="dancer.$tie"
@@ -56,6 +57,11 @@ export default {
       callbacks,
     };
   },
+  computed: {
+    draggingEnabled() {
+      return !!this.admin;
+    },
+  },
   methods: {
     getPlace,
   },
@@ -68,6 +74,11 @@ export default {
 
 <style lang="scss">
 .placed-dancer-list {
+  .sortable-handle {
+    order: -1;
+    margin-left: -16px;
+    opacity: 0.5;
+  }
   .sortable-ghost {
     box-shadow: inset 0 0 0 2px var(--md-theme-default-primary);
   }

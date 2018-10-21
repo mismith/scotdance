@@ -18,6 +18,7 @@
               slot="md-expand"
               :value="blade.items()"
               class="draggable"
+              :options="{ handle: '.sortable-handle' }"
               @sort="handleListItemReorder(blade, $event)"
             >
               <md-list-item
@@ -26,6 +27,7 @@
                 :class="{ active: blade.id() === item[idKey] }"
                 @click="goToBlade(blade.params(item[idKey]))"
               >
+                <md-icon class="sortable-handle">drag_indicator</md-icon>
                 <div class="md-list-item-text">{{ blade.name(item) }}</div>
                 <md-icon>chevron_right</md-icon>
               </md-list-item>
@@ -421,6 +423,12 @@ export default {
 <style lang="scss">
 .admin-schedule {
   .blade {
+    .sortable-handle {
+      order: -1;
+      margin-left: -16px;
+      margin-right: 8px;
+      opacity: 0.5;
+    }
     .sortable-ghost {
       box-shadow: inset 0 0 0 2px var(--md-theme-default-primary);
     }
