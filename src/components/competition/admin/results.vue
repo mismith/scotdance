@@ -1,6 +1,6 @@
 <template>
-  <blades class="admin-results">
-    <blade :active="!currentDance" class="md-small-size-100 md-size-33 md-scroll alt">
+  <blades class="admin-results" :stacks="true">
+    <blade id="blade-groups" :active="!currentDance" class="md-small-size-100 md-size-33 md-scroll alt">
       <results-list
         v-if="groups.length"
         :groups="groups"
@@ -15,7 +15,7 @@
         />
       </div>
     </blade>
-    <blade :active="currentDance" class="md-small-size-100 md-size-33 md-scroll">
+    <blade id="blade-dancers" :active="currentDance" class="md-small-size-100 md-size-33 md-scroll">
       <md-list v-if="currentDance">
         <dancer-list-item
           v-for="dancer in currentDancers"
@@ -138,6 +138,17 @@ export default {
         return findPlacedDancers(this.currentGroup, this.currentDance, this.dancers, this.results, sortByNumber);
       }
       return [];
+    },
+  },
+  watch: {
+    currentDance: {
+      async handler(currentDance) {
+        await this.$nextTick();
+        const id = currentDance ? 'dancers' : 'groups';
+        const element = document.getElementById(`blade-${id}`);
+        this.$scrollTo(element, { container: this.$el });
+      },
+      immediate: true,
     },
   },
   methods: {
