@@ -302,6 +302,7 @@ export default {
 
     &.fullscreen {
       height: 100%;
+      min-height: 300px;
     }
   }
 }

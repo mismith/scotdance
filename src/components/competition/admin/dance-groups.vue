@@ -1,6 +1,6 @@
 <template>
-  <blades class="admin-dance-groups">
-    <blade :active="!currentGroup" class="md-small-size-100 md-size-33 md-scroll">
+  <blades class="admin-dance-groups" :stacks="true">
+    <blade id="blade-groups" :active="!currentGroup" class="md-small-size-100 md-size-33 md-scroll">
       <md-list v-if="groups.length">
         <md-list-item
           v-for="group in groups"
@@ -19,7 +19,7 @@
         />
       </div>
     </blade>
-    <blade :active="currentGroup" class="md-small-size-100 md-size-33 md-scroll">
+    <blade id="blade-dances" :active="currentGroup" class="md-small-size-100 md-size-33 md-scroll">
       <md-list v-if="currentGroup">
         <md-list-item
           v-for="dance in dances"
@@ -158,6 +158,17 @@ export default {
           return true;
         },
       };
+    },
+  },
+  watch: {
+    currentGroup: {
+      async handler(currentGroup) {
+        await this.$nextTick();
+        const id = currentGroup ? 'dances' : 'groups';
+        const element = document.getElementById(`blade-${id}`);
+        this.$scrollTo(element, { container: this.$el });
+      },
+      immediate: true,
     },
   },
   methods: {
