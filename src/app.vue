@@ -618,8 +618,16 @@ body,
 }
 
 .md-bottom-bar {
+  display: flex;
+  flex-shrink: 0;
+
   > .md-ripple {
-    justify-content: center;
+    width: auto;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .md-bottom-bar-item {
+    flex: 1 0 auto;
   }
 }
 

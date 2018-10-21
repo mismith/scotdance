@@ -277,10 +277,6 @@ export default {
 .competition {
   .md-bottom-bar {
     z-index: 1; // maintain box-shadow
-
-    .md-ripple {
-      justify-content: center; // center tabs
-    }
   }
 }
 .staff-dialog {
