@@ -1,7 +1,12 @@
 <template>
-  <blades class="admin-schedule md-scroll-frame">
+  <blades class="admin-schedule" :stacks="true">
     <template v-for="blade in blades">
-      <blade :key="blade.collection" v-if="blade.parent()" class="md-small-size-100 md-size-25 md-scroll alt">
+      <blade
+        :key="blade.collection"
+        id="blade-root"
+        v-if="blade.parent()"
+        class="md-small-size-100 md-size-25 md-scroll alt"
+      >
         <md-list class="md-list-cards">
           <md-list-item-cards md-expand md-expanded>
             <md-subheader style="text-transform: capitalize;">
@@ -18,7 +23,6 @@
               <md-list-item
                 v-for="item in blade.items()"
                 :key="item[idKey]"
-                :id="item[idKey]"
                 :class="{ active: blade.id() === item[idKey] }"
                 @click="goToBlade(blade.params(item[idKey]))"
               >
@@ -48,7 +52,12 @@
           </md-list-item-cards>
         </md-list>
       </blade>
-      <blade :key="blade.collection" v-if="blade.item()" :class="`md-small-size-100 md-size-${blade.size || 50} md-scroll`">
+      <blade
+        :key="blade.collection"
+        v-if="blade.item()"
+        :id="`blade-${blade.id()}`"
+        :class="`md-small-size-100 md-size-${blade.size || 50} md-scroll`"
+      >
         <form @submit.prevent class="md-padding">
           <dynamic-field
             v-for="field in blade.fields"
@@ -265,22 +274,6 @@ export default {
       ],
     };
   },
-  watch: {
-    currentPath: {
-      async handler(currentPath) {
-        if (currentPath) {
-          await this.$nextTick();
-          const element = document.getElementById(this.competitionDataRef.child(currentPath).key);
-          this.$scrollTo(element, {
-            container: this.$el,
-            x: true,
-            y: false,
-          });
-        }
-      },
-      immediate: true,
-    },
-  },
   computed: {
     currentDay() {
       if (this.dayId && this.schedule && this.schedule.days) {
@@ -309,6 +302,21 @@ export default {
 
     currentPath() {
       return this.getPath(this);
+    },
+  },
+  watch: {
+    currentPath: {
+      async handler(currentPath) {
+        await this.$nextTick();
+        const id = currentPath ? this.competitionDataRef.child(currentPath).key : 'root';
+        const element = document.getElementById(`blade-${id}`);
+        this.$scrollTo(element, {
+          container: this.$el,
+          x: true,
+          y: true,
+        });
+      },
+      immediate: true,
     },
   },
   methods: {
