@@ -32,7 +32,20 @@
           <md-menu-item v-if="$store.state.helpVisible" @click="help(false)" class="md-accent">
             Hide Live Chat
           </md-menu-item>
+          <md-divider />
+          <md-list-item @click="confirmClearLocalStorage = true">
+            <span class="md-list-item-text">Clear App Cache</span>
+          </md-list-item>
         </md-menu-content>
+
+        <md-dialog-confirm
+          :md-active.sync="confirmClearLocalStorage"
+          md-title="Clear App Cache"
+          md-content="<p>In order to enhance performance and usability, this app stores certain settings in your device's local storage cache.</p> <p>If you are ever encountering layout or navigation bugs, clearing these may help resolve certain issues related to: <ul><li>expanded/collapsed states</li><li>active/last-used screens</li><li>stored scroll positions</li></ul><p><strong>Are you sure you want to permanently erase these stored settings?</strong></p>"
+          md-confirm-text="Yes"
+          md-cancel-text="No"
+          @md-confirm="clearLocalStorage()"
+        />
       </md-menu>
     </md-app-toolbar>
 
@@ -77,10 +90,6 @@
           </md-list-item>
 
           <md-divider style="margin-top: auto;" />
-          <md-list-item @click="clearLocalStorage()">
-            <md-icon>cached</md-icon>
-            <span class="md-list-item-text">Reset App Data</span>
-          </md-list-item>
           <md-list-item @click="logout().then(toggleAccount)">
             <md-icon>exit_to_app</md-icon>
             <span class="md-list-item-text">Logout</span>
@@ -188,6 +197,8 @@ export default {
 
       competitionsRef: undefined,
       competitionsDataRef: undefined,
+
+      confirmClearLocalStorage: false,
     };
   },
   computed: {
