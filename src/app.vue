@@ -477,9 +477,12 @@ body,
     .md-list-item-container {
       .md-list-item-content {
         .md-subheader {
-          flex-grow: 1;
+          flex: 1;
           padding-left: 0;
 
+          > span {
+            flex: 1;
+          }
           .md-icon {
             font-size: 14px;
             margin-left: 4px;
