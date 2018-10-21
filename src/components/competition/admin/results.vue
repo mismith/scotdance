@@ -165,7 +165,7 @@ export default {
       this.placedDancers.splice(newIndex, 0, this.placedDancers.splice(oldIndex, 1)[0]);
 
       // can't be tied if at top of list
-      if (newIndex === 0) {
+      if (newIndex === 0 || oldIndex === 0) {
         this.placedDancers[0].$tie = false;
       }
 
