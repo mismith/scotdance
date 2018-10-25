@@ -1,5 +1,5 @@
 <template>
-  <HotTable :settings="augmentedSettings" :data="data" class="mi-hot-table" />
+  <HotTable :settings="augmentHot(settings)" :data="data" class="mi-hot-table" />
 </template>
 
 <script>
@@ -18,12 +18,12 @@ export default {
     settings: Object,
     data: Array,
   },
-  computed: {
-    augmentedSettings() {
-      const settings = augmentHot(this.settings);
+  methods: {
+    augmentHot(settings = {}) {
+      const augmentedSettings = augmentHot(settings);
 
       if (this.data) {
-        settings.beforeChange = (changes, source) => {
+        augmentedSettings.beforeChange = (changes, source) => {
           if (source !== 'loadData') {
             const aggregated = {};
             changes.forEach(([row, prop, , newVal]) => { // eslint-disable-line vue/no-side-effects-in-computed-properties
@@ -35,7 +35,7 @@ export default {
           }
           return true;
         };
-        settings.beforeRemoveRow = (index, amount) => {
+        augmentedSettings.beforeRemoveRow = (index, amount) => {
           const aggregated = {};
           for (let row = index; row < index + amount; row += 1) {
             if (this.data[row] && this.data[row][idKey]) {
@@ -48,7 +48,7 @@ export default {
         };
       }
 
-      return settings;
+      return augmentedSettings;
     },
   },
   components: {
