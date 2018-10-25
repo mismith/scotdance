@@ -23,28 +23,33 @@ export default {
       const augmentedSettings = augmentHot(settings);
 
       if (this.data) {
-        augmentedSettings.beforeChange = (changes, source) => {
+        const instance = this;
+        augmentedSettings.afterLoadData = function afterLoadData() {
+          // restore sorting after data is refreshed
+          const ColumnSorting = this.getPlugin('ColumnSorting');
+          ColumnSorting.sort(ColumnSorting.getSortConfig());
+        };
+        augmentedSettings.beforeChange = function beforeChange(changes, source) {
           if (source !== 'loadData') {
             const aggregated = {};
-            changes.forEach(([row, prop, , newVal]) => { // eslint-disable-line vue/no-side-effects-in-computed-properties
-              aggregated[`${this.data[row][idKey] || db.push().key}/${prop.replace('.', '/')}`] = newVal; // @TODO: why is this.data no defined when adding to the bottom row?
+            changes.forEach(([row, prop, , newVal]) => {
+              const physicalRow = this.toPhysicalRow(row); // to account for sorting
+              const key = instance.data[physicalRow] && instance.data[physicalRow][idKey];
+              aggregated[`${key || db.push().key}/${prop.replace('.', '/')}`] = newVal;
             });
-            this.$emit('change', aggregated); // eslint-disable-line vue/no-side-effects-in-computed-properties
-
-            return false; // prevent duplicate row (one from firebase, one from hot-table)
+            instance.$emit('change', aggregated);
           }
-          return true;
         };
-        augmentedSettings.beforeRemoveRow = (index, amount) => {
+        augmentedSettings.beforeRemoveRow = function beforeRemoveRow(index, amount) {
           const aggregated = {};
           for (let row = index; row < index + amount; row += 1) {
-            if (this.data[row] && this.data[row][idKey]) {
-              aggregated[this.data[row][idKey]] = null;
+            const physicalRow = this.toPhysicalRow(row); // to account for sorting
+            const key = instance.data[physicalRow] && instance.data[physicalRow][idKey];
+            if (key) {
+              aggregated[key] = null;
             }
           }
-          this.$emit('change', aggregated); // eslint-disable-line vue/no-side-effects-in-computed-properties
-
-          // return false; // prevent duplicate remove (one from firebase, one from hot-table)
+          instance.$emit('change', aggregated);
         };
       }
 
