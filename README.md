@@ -7,18 +7,18 @@ Highland dancing event tracker
 
 Command | Description
 --- | ---
-`yarn` | install dependencies
-`yarn dev` | serve with hot reload at localhost:8080
-`yarn lint` | show code formatting tips
-`yarn build` | build for production with minification
-`yarn report` | view the bundle analyzer report
-`yarn deploy` | build and push web front-end to Firebase hosting
-`yarn web` | build and preview web front-end via file:// protocol
-`yarn ios` | build and emulate on iOS device
-`yarn android` | build and emulate on Android device
-`yarn build:app` | build iOS and Android for release
-`yarn icon` | auto-generate all required app icons
-`yarn splash` | auto-generate all required splash screen images
+`npm i` | install dependencies
+`npm run dev` | serve with hot reload at localhost:8080
+`npm run lint` | show code formatting tips
+`npm run build` | build for production with minification
+`npm run report` | view the bundle analyzer report
+`npm run deploy` | build and push web front-end to Firebase hosting
+`npm run web` | build and preview web front-end via file:// protocol
+`npm run ios` | build and emulate on iOS device
+`npm run android` | build and emulate on Android device
+`npm run build:app` | build iOS and Android for release
+`npm run icon` | auto-generate all required app icons
+`npm run splash` | auto-generate all required splash screen images
 
 
 ## Admin
@@ -56,7 +56,7 @@ Links to the admin panels needed to manage this project:
 * Use Automatic Signing in Xcode, after setting up all certificates and provisioning profiles
 * To upload to App Store:
 
-    1. `yarn build:app`
+    1. `npm run build:app`
     2. Open project in Xcode (`platforms/ios/ScotDance.xcodeproj`)
     3. In the top menu, select "Product" > "Archive"
     4. Click "Upload to App Store..."
@@ -69,7 +69,7 @@ Links to the admin panels needed to manage this project:
 * To upload to Google Play:
 
     1. Add both passwords in `build.json` (and save the file)
-    2. `yarn build:app`
+    2. `npm run build:app`
     3. Revert/discard the two passwords added in `build.json`
     4. Open Google Play Console
     5. Create a new Production Release
