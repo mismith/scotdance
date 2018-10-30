@@ -51,7 +51,7 @@
 
     <md-app-drawer :md-active.sync="menuVisible">
       <md-toolbar class="md-primary md-large md-account-header">
-        <div class="account-bg" style="background-image: url('static/img/touchicon.png');"></div>
+        <div class="account-bg"></div>
         <register-dialog />
         <login-dialog />
         <requires-auth-dialog name="favorites">
@@ -770,6 +770,7 @@ body,
   left: 0;
   right: 0;
   bottom: 0;
+  background-image: url('~@/assets/img/touchicon.png');
   background-position: center center;
   background-size: cover;
   opacity: .25;

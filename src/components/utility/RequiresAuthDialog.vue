@@ -11,7 +11,7 @@
       <slot />
     </md-dialog-content>
     <div class="md-padding md-bg-primary" style="position: relative;">
-      <div class="account-bg" style="background-image: url('static/img/touchicon.png');"></div>
+      <div class="account-bg"></div>
       <account-buttons />
     </div>
     <md-dialog-actions>

@@ -14,8 +14,8 @@
     "ios": "npm run build && cordova run ios",
     "android": "npm run build && cordova run android",
     "build:app": "npm run build && cordova build --release",
-    "icon": "cordova-icon --icon=static/img/touchicon.png",
-    "splash": "cordova-splash --splash=static/img/splash.png"
+    "icon": "cordova-icon --icon=res/icon.png",
+    "splash": "cordova-splash --splash=res/splash.png"
   },
   "dependencies": {
     "@handsontable/vue": "^2.0.0-beta1",
