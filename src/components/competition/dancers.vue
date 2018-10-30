@@ -123,12 +123,8 @@ import groupBy from 'lodash.groupby';
 import SearchField from '@/components/utility/search-field';
 import DancerListItem from '@/components/utility/dancer-list-item';
 import DancerReport from '@/components/utility/dancer-report';
-import {
-  idKey,
-} from '@/helpers/firebase';
-import {
-  hasFavorites,
-} from '@/helpers/competition';
+import { idKey } from '@/helpers/firebase';
+import { hasFavorites } from '@/helpers/competition';
 import {
   isExpanded,
   handleExpanded,

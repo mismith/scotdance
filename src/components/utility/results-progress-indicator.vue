@@ -5,12 +5,8 @@
 </template>
 
 <script>
-import {
-  idKey,
-} from '@/helpers/firebase';
-import {
-  isInProgress,
-} from '@/helpers/results';
+import { idKey } from '@/helpers/firebase';
+import { isInProgress } from '@/helpers/results';
 
 export default {
   name: 'results-progress-indicator',

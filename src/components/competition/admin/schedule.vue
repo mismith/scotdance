@@ -117,9 +117,7 @@ import {
   db,
   toOrderedArray,
 } from '@/helpers/firebase';
-import {
-  getScheduleItemDanceName,
-} from '@/helpers/competition';
+import { getScheduleItemDanceName } from '@/helpers/competition';
 
 export default {
   name: 'admin-schedule',

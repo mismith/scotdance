@@ -1,6 +1,4 @@
-import {
-  idKey,
-} from '@/helpers/firebase';
+import { idKey } from '@/helpers/firebase';
 
 export function findByIdKey(items, id) {
   return items.find(item => item[idKey] === id);

@@ -75,19 +75,13 @@ import {
   mapState,
   mapMutations,
 } from 'vuex';
-import {
-  HotTable,
-} from '@/helpers/admin';
-import {
-  findByIdKey,
-} from '@/helpers/competition';
+import { HotTable } from '@/helpers/admin';
+import { findByIdKey } from '@/helpers/competition';
 import {
   findGroupDances,
   findGroupDancers,
 } from '@/helpers/results';
-import {
-  idKey,
-} from '@/helpers/firebase';
+import { idKey } from '@/helpers/firebase';
 
 export default {
   name: 'admin-dange-groups',

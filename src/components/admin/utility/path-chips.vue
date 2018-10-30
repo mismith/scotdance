@@ -10,9 +10,7 @@
 </template>
 
 <script>
-import {
-  flattenPaths,
-} from '@/helpers/admin';
+import { flattenPaths } from '@/helpers/admin';
 
 export default {
   name: 'path-chips',

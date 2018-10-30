@@ -1,8 +1,6 @@
 import Vue from 'vue';
 import Router from 'vue-router';
-import {
-  db,
-} from '@/helpers/firebase';
+import { db } from '@/helpers/firebase';
 
 import Home from '@/components/home';
 import Profile from '@/components/profile';

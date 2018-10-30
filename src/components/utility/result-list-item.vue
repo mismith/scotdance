@@ -21,9 +21,7 @@
 
 <script>
 import Place from '@/components/utility/place';
-import {
-  hasFavorites,
-} from '@/helpers/competition';
+import { hasFavorites } from '@/helpers/competition';
 
 export default {
   name: 'result-list-item',

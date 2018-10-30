@@ -9,12 +9,8 @@ import VueScrollTo from 'vue-scrollto';
 import { scroller } from 'vue-scrollto/src/scrollTo';
 import moment from 'moment-mini';
 
-import {
-  firebase,
-} from '@/helpers/firebase';
-import {
-  getTitleChunks,
-} from '@/helpers/router';
+import { firebase } from '@/helpers/firebase';
+import { getTitleChunks } from '@/helpers/router';
 
 import App from '@/app';
 import router from '@/router';

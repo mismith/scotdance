@@ -87,9 +87,7 @@
 
 <script>
 import XLSX from 'xlsx';
-import {
-  idKey,
-} from '@/helpers/firebase';
+import { idKey } from '@/helpers/firebase';
 import {
   HotTable,
   augmentHot,
@@ -264,9 +262,7 @@ export default {
       }));
 
       const groupMappings = await Promise.all(groups.map(async (groupData) => {
-        const categoryId = categoryMappings.find((category) => {
-          return `${category.name}` === `${groupData.category}`;
-        });
+        const categoryId = categoryMappings.find(category => `${category.name}` === `${groupData.category}`);
         const group = {
           name: groupData.name,
           categoryId: (categoryId && categoryId[idKey]) || null,
@@ -284,9 +280,7 @@ export default {
       }));
 
       await Promise.all(dancers.map(async (dancerData) => {
-        const groupId = groupMappings.find((group) => {
-          return `${group.code}` === `${dancerData.code}`;
-        });
+        const groupId = groupMappings.find(group => `${group.code}` === `${dancerData.code}`);
         const dancer = {
           number: dancerData.number,
           firstName: dancerData.firstName,

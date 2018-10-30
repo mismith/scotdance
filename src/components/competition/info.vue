@@ -52,14 +52,10 @@
 </template>
 
 <script>
-import {
-  mapMutations,
-} from 'vuex';
+import { mapMutations } from 'vuex';
 import groupBy from 'lodash.groupby';
 import DancerListItem from '@/components/utility/dancer-list-item';
-import {
-  idKey,
-} from '@/helpers/firebase';
+import { idKey } from '@/helpers/firebase';
 import {
   isExpanded,
   handleExpanded,

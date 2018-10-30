@@ -34,9 +34,7 @@
 <script>
 import Draggable from 'vuedraggable';
 import DancerListItem from '@/components/utility/dancer-list-item';
-import {
-  idKey,
-} from '@/helpers/firebase';
+import { idKey } from '@/helpers/firebase';
 import {
   overall,
   callbacks,

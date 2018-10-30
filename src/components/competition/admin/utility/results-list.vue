@@ -56,12 +56,8 @@
 
 <script>
 import ResultListItem from '@/components/utility/result-list-item';
-import {
-  idKey,
-} from '@/helpers/firebase';
-import {
-  hasFavorites,
-} from '@/helpers/competition';
+import { idKey } from '@/helpers/firebase';
+import { hasFavorites } from '@/helpers/competition';
 import {
   overall,
   callbacks,

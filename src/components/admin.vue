@@ -62,9 +62,7 @@ import {
   idKey,
   db,
 } from '@/helpers/firebase';
-import {
-  getFirstExisting,
-} from '@/helpers/router';
+import { getFirstExisting } from '@/helpers/router';
 import RequiresPermission from '@/components/utility/requires-permission';
 import MiHotTable from '@/components/admin/utility/mi-hot-table';
 import MdSpunnable from '@/components/utility/md-spunnable';

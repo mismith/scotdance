@@ -50,9 +50,7 @@
 </template>
 
 <script>
-import {
-  mapFields,
-} from 'vuex-map-fields';
+import { mapFields } from 'vuex-map-fields';
 import {
   firebase,
   db,

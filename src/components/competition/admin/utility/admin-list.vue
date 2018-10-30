@@ -44,9 +44,7 @@
 
 <script>
 import AdminListItem from '@/components/competition/admin/utility/admin-list-item';
-import {
-  idKey,
-} from '@/helpers/firebase';
+import { idKey } from '@/helpers/firebase';
 
 export default {
   name: 'admin-list',

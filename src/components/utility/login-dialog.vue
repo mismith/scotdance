@@ -91,12 +91,8 @@
 </template>
 
 <script>
-import {
-  mapFields,
-} from 'vuex-map-fields';
-import {
-  firebase,
-} from '@/helpers/firebase';
+import { mapFields } from 'vuex-map-fields';
+import { firebase } from '@/helpers/firebase';
 
 export default {
   name: 'login-dialog',

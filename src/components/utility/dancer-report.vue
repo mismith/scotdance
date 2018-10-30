@@ -53,9 +53,7 @@
 <script>
 import FavoriteDancerButton from '@/components/utility/favorite-dancer-button';
 import ResultListItem from '@/components/utility/result-list-item';
-import {
-  idKey,
-} from '@/helpers/firebase';
+import { idKey } from '@/helpers/firebase';
 import {
   overall,
   hasOverall,

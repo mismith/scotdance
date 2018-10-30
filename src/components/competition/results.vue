@@ -123,9 +123,7 @@
 import ResultListItem from '@/components/utility/result-list-item';
 import PlacedDancerList from '@/components/utility/placed-dancer-list';
 import ResultsProgressIndicator from '@/components/utility/results-progress-indicator';
-import {
-  idKey,
-} from '@/helpers/firebase';
+import { idKey } from '@/helpers/firebase';
 import {
   findByIdKey,
   hasFavorites,

@@ -93,9 +93,7 @@ import {
   sortByKey,
   danceExtender,
 } from '@/helpers/competition';
-import {
-  idKey,
-} from '@/helpers/firebase';
+import { idKey } from '@/helpers/firebase';
 
 export default {
   name: 'competition',

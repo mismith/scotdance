@@ -63,12 +63,8 @@ import {
   hydrateByIdKey,
   hasFavorites,
 } from '@/helpers/competition';
-import {
-  findGroupDancers,
-} from '@/helpers/results';
-import {
-  idKey,
-} from '@/helpers/firebase';
+import { findGroupDancers } from '@/helpers/results';
+import { idKey } from '@/helpers/firebase';
 
 export default {
   name: 'admin-platforms',

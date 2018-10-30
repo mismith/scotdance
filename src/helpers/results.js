@@ -1,6 +1,4 @@
-import {
-  idKey,
-} from '@/helpers/firebase';
+import { idKey } from '@/helpers/firebase';
 import {
   findByIdKey,
   sortByKey,

@@ -29,9 +29,7 @@
 </template>
 
 <script>
-import {
-  idKey,
-} from '@/helpers/firebase';
+import { idKey } from '@/helpers/firebase';
 
 export default {
   name: 'admin-list-item',

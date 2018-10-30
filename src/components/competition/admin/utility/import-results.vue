@@ -108,12 +108,8 @@ import HTMLParser from 'fast-html-parser';
 import Fuse from 'fuse.js';
 import ResultsList from '@/components/competition/admin/utility/results-list';
 import PlacedDancerList from '@/components/utility/placed-dancer-list';
-import {
-  idKey,
-} from '@/helpers/firebase';
-import {
-  findByIdKey,
-} from '@/helpers/competition';
+import { idKey } from '@/helpers/firebase';
+import { findByIdKey } from '@/helpers/competition';
 import {
   overall,
   callbacks,

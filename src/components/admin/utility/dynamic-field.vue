@@ -79,9 +79,7 @@
 </template>
 
 <script>
-import {
-  idKey,
-} from '@/helpers/firebase';
+import { idKey } from '@/helpers/firebase';
 
 export default {
   name: 'dynamic-field',

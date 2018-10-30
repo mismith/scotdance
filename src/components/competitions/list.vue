@@ -42,9 +42,7 @@
 
 <script>
 import CompetitionListItem from '@/components/utility/competition-list-item';
-import {
-  idKey,
-} from '@/helpers/firebase';
+import { idKey } from '@/helpers/firebase';
 import {
   isExpanded,
   handleExpanded,

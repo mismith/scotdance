@@ -83,9 +83,7 @@ import {
   mapState,
   mapActions,
 } from 'vuex';
-import {
-  db,
-} from '@/helpers/firebase';
+import { db } from '@/helpers/firebase';
 
 export default {
   name: 'home',
