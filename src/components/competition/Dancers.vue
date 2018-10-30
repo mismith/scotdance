@@ -120,9 +120,9 @@
 import Fuse from 'fuse.js';
 import sortBy from 'lodash.sortby';
 import groupBy from 'lodash.groupby';
-import SearchField from '@/components/utility/search-field';
-import DancerListItem from '@/components/utility/dancer-list-item';
-import DancerReport from '@/components/utility/dancer-report';
+import SearchField from '@/components/utility/SearchField.vue';
+import DancerListItem from '@/components/utility/DancerListItem.vue';
+import DancerReport from '@/components/utility/DancerReport.vue';
 import { idKey } from '@/helpers/firebase';
 import { hasFavorites } from '@/helpers/competition';
 import {

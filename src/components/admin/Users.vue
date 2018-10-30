@@ -85,10 +85,10 @@ import {
   idKey,
   db,
 } from '@/helpers/firebase';
-import PaginatedList from '@/components/admin/utility/paginated-list';
-import SearchField from '@/components/utility/search-field';
-import DynamicForm from '@/components/admin/utility/dynamic-form';
-import PathChips from '@/components/admin/utility/path-chips';
+import PaginatedList from '@/components/admin/utility/PaginatedList.vue';
+import SearchField from '@/components/utility/SearchField.vue';
+import DynamicForm from '@/components/admin/utility/DynamicForm.vue';
+import PathChips from '@/components/admin/utility/PathChips.vue';
 
 export default {
   name: 'admin-users',

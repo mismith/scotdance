@@ -54,7 +54,7 @@
 <script>
 import { mapMutations } from 'vuex';
 import groupBy from 'lodash.groupby';
-import DancerListItem from '@/components/utility/dancer-list-item';
+import DancerListItem from '@/components/utility/DancerListItem.vue';
 import { idKey } from '@/helpers/firebase';
 import {
   isExpanded,

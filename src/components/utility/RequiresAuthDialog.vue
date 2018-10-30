@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import AccountButtons from '@/components/utility/account-buttons';
+import AccountButtons from '@/components/utility/AccountButtons.vue';
 
 export default {
   name: 'requires-auth-dialog',

@@ -41,7 +41,7 @@
 </template>
 
 <script>
-import CompetitionListItem from '@/components/utility/competition-list-item';
+import CompetitionListItem from '@/components/utility/CompetitionListItem.vue';
 import { idKey } from '@/helpers/firebase';
 import {
   isExpanded,

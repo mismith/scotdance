@@ -160,8 +160,8 @@ import {
   mapState,
   mapMutations,
 } from 'vuex';
-import AdminPlatforms from '@/components/competition/admin/utility/platforms';
-import DancerListItem from '@/components/utility/dancer-list-item';
+import AdminPlatforms from '@/components/competition/admin/utility/Platforms.vue';
+import DancerListItem from '@/components/utility/DancerListItem.vue';
 import {
   idKey,
   toOrderedArray,

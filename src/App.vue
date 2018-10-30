@@ -179,11 +179,11 @@ import {
   db,
   firebase,
 } from '@/helpers/firebase';
-import RegisterDialog from '@/components/utility/register-dialog';
-import LoginDialog from '@/components/utility/login-dialog';
-import RequiresAuthDialog from '@/components/utility/requires-auth-dialog';
-import AccountButtons from '@/components/utility/account-buttons';
-import CompetitionListItem from '@/components/utility/competition-list-item';
+import RegisterDialog from '@/components/utility/RegisterDialog.vue';
+import LoginDialog from '@/components/utility/LoginDialog.vue';
+import RequiresAuthDialog from '@/components/utility/RequiresAuthDialog.vue';
+import AccountButtons from '@/components/utility/AccountButtons.vue';
+import CompetitionListItem from '@/components/utility/CompetitionListItem.vue';
 
 export default {
   name: 'app',

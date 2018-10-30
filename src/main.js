@@ -12,16 +12,16 @@ import moment from 'moment-mini';
 import { firebase } from '@/helpers/firebase';
 import { getTitleChunks } from '@/helpers/router';
 
-import App from '@/app';
+import App from '@/App.vue';
 import router from '@/router';
 import store from '@/store';
 
-import MiMdSpinner from '@/components/utility/mi-md-spinner';
-import MdSpinnable from '@/components/utility/md-spinnable';
-import Blades from '@/components/utility/blades';
-import Blade from '@/components/utility/blade';
-import Gravatar from '@/components/utility/gravatar';
-import MdListItemCards from '@/components/utility/md-list-item-cards';
+import MiMdSpinner from '@/components/utility/MiMdSpinner.vue';
+import MdSpinnable from '@/components/utility/MdSpinnable.vue';
+import Blades from '@/components/utility/Blades.vue';
+import Blade from '@/components/utility/Blade.vue';
+import Gravatar from '@/components/utility/Gravatar.vue';
+import MdListItemCards from '@/components/utility/MdListItemCards.vue';
 
 import $package from '../package.json';
 
@@ -220,18 +220,13 @@ if (window.$crisp) {
   }]);
 }
 
-// eslint-disable-next-line no-new
 new Vue({
-  el: '#app',
   router,
   store,
-  template: '<app />',
+  render: h => h(App),
   computed: {
     currentTab() {
       return this.$route.params.tab || this.$route.name.split('.').slice(-1)[0];
     },
   },
-  components: {
-    App,
-  },
-});
+}).$mount('#app');

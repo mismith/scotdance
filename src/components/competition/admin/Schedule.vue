@@ -109,9 +109,9 @@
 
 <script>
 import Draggable from 'vuedraggable';
-import DynamicField from '@/components/admin/utility/dynamic-field';
-import NewDynamicField from '@/components/admin/utility/new-dynamic-field';
-import AdminPlatforms from '@/components/competition/admin/utility/platforms';
+import DynamicField from '@/components/admin/utility/DynamicField.vue';
+import NewDynamicField from '@/components/admin/utility/NewDynamicField.vue';
+import AdminPlatforms from '@/components/competition/admin/utility/Platforms.vue';
 import {
   idKey,
   db,
@@ -249,7 +249,9 @@ export default {
           items: () => toOrderedArray(this.currentEvent.dances),
           item: () => this.currentDance,
           id: () => this.danceId,
-          params: itemId => ({ dayId: this.dayId, blockId: this.blockId, eventId: this.eventId, danceId: itemId }),
+          params: itemId => ({
+            dayId: this.dayId, blockId: this.blockId, eventId: this.eventId, danceId: itemId,
+          }),
           name: item => item && getScheduleItemDanceName(item, this.dances),
           fields: [
             {
@@ -320,7 +322,9 @@ export default {
     },
   },
   methods: {
-    getPath({ dayId, blockId, eventId, danceId }) {
+    getPath({
+      dayId, blockId, eventId, danceId,
+    }) {
       const pathProps = [
         ['days', dayId],
         ['blocks', blockId],

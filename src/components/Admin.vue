@@ -63,10 +63,10 @@ import {
   db,
 } from '@/helpers/firebase';
 import { getFirstExisting } from '@/helpers/router';
-import RequiresPermission from '@/components/utility/requires-permission';
-import MiHotTable from '@/components/admin/utility/mi-hot-table';
-import MdSpunnable from '@/components/utility/md-spunnable';
-import DynamicForm from '@/components/admin/utility/dynamic-form';
+import RequiresPermission from '@/components/utility/RequiresPermission.vue';
+import MiHotTable from '@/components/admin/utility/MiHotTable.vue';
+import MdSpunnable from '@/components/utility/MdSpunnable.vue';
+import DynamicForm from '@/components/admin/utility/DynamicForm.vue';
 
 export default {
   name: 'admin',

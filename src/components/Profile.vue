@@ -107,7 +107,7 @@ import {
   idKey,
   db,
 } from '@/helpers/firebase';
-import DynamicField from '@/components/admin/utility/dynamic-field';
+import DynamicField from '@/components/admin/utility/DynamicField.vue';
 
 export default {
   name: 'profile',

@@ -30,8 +30,8 @@
 </template>
 
 <script>
-import FavoriteDancerButton from '@/components/utility/favorite-dancer-button';
-import Place from '@/components/utility/place';
+import FavoriteDancerButton from '@/components/utility/FavoriteDancerButton.vue';
+import Place from '@/components/utility/Place.vue';
 
 export default {
   name: 'dancer-list-item',

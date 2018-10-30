@@ -103,12 +103,12 @@ import {
   db,
 } from '@/helpers/firebase';
 import { getFirstExisting } from '@/helpers/router';
-import RequiresPermission from '@/components/utility/requires-permission';
-import MiHotTable from '@/components/admin/utility/mi-hot-table';
-import DynamicForm from '@/components/admin/utility/dynamic-form';
-import PresetPicker from '@/components/competition/admin/utility/preset-picker';
-import AdminResults from '@/components/competition/admin/results';
-import MdSpunnable from '@/components/utility/md-spunnable';
+import RequiresPermission from '@/components/utility/RequiresPermission.vue';
+import MiHotTable from '@/components/admin/utility/MiHotTable.vue';
+import DynamicForm from '@/components/admin/utility/DynamicForm.vue';
+import PresetPicker from '@/components/competition/admin/utility/PresetPicker.vue';
+import AdminResults from '@/components/competition/admin/Results.vue';
+import MdSpunnable from '@/components/utility/MdSpunnable.vue';
 
 export default {
   name: 'competition-admin',
@@ -277,8 +277,8 @@ export default {
     RequiresPermission,
     MiHotTable,
     DynamicForm,
-    AdminImport: () => import(/* webpackChunkName: "admin-import" */ '@/components/competition/admin/utility/import'),
-    AdminImportResults: () => import(/* webpackChunkName: "admin-import" */ '@/components/competition/admin/utility/import-results'),
+    AdminImport: () => import(/* webpackChunkName: "admin-import" */ '@/components/competition/admin/utility/Import.vue'),
+    AdminImportResults: () => import(/* webpackChunkName: "admin-import" */ '@/components/competition/admin/utility/ImportResults.vue'),
     AdminResults,
     PresetPicker,
     MdSpunnable,

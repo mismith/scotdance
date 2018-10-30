@@ -51,8 +51,8 @@
 </template>
 
 <script>
-import FavoriteDancerButton from '@/components/utility/favorite-dancer-button';
-import ResultListItem from '@/components/utility/result-list-item';
+import FavoriteDancerButton from '@/components/utility/FavoriteDancerButton.vue';
+import ResultListItem from '@/components/utility/ResultListItem.vue';
 import { idKey } from '@/helpers/firebase';
 import {
   overall,

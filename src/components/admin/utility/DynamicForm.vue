@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import DynamicField from '@/components/admin/utility/dynamic-field';
+import DynamicField from '@/components/admin/utility/DynamicField.vue';
 
 export default {
   name: 'dynamic-form',

@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import Place from '@/components/utility/place';
+import Place from '@/components/utility/Place.vue';
 import { hasFavorites } from '@/helpers/competition';
 
 export default {

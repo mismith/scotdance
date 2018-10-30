@@ -1,5 +1,5 @@
 <template>
-  <md-list class="md-list-cards">
+  <md-list class="results-list md-list-cards">
     <md-list-item-cards
       v-for="group in groups"
       :key="group[idKey]"
@@ -55,7 +55,7 @@
 </template>
 
 <script>
-import ResultListItem from '@/components/utility/result-list-item';
+import ResultListItem from '@/components/utility/ResultListItem.vue';
 import { idKey } from '@/helpers/firebase';
 import { hasFavorites } from '@/helpers/competition';
 import {

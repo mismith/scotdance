@@ -68,9 +68,9 @@
 </template>
 
 <script>
-import DancerListItem from '@/components/utility/dancer-list-item';
-import ResultsList from '@/components/competition/admin/utility/results-list';
-import PlacedDancerList from '@/components/utility/placed-dancer-list';
+import DancerListItem from '@/components/utility/DancerListItem.vue';
+import ResultsList from '@/components/competition/admin/utility/ResultsList.vue';
+import PlacedDancerList from '@/components/utility/PlacedDancerList.vue';
 import { idKey } from '@/helpers/firebase';
 import { findByIdKey } from '@/helpers/competition';
 import {
