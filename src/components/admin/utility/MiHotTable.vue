@@ -27,7 +27,8 @@ export default {
         augmentedSettings.afterLoadData = function afterLoadData() {
           // restore sorting after data is refreshed
           const ColumnSorting = this.getPlugin('ColumnSorting');
-          ColumnSorting.sort(ColumnSorting.getSortConfig());
+          const sortConfig = ColumnSorting.getSortConfig();
+          if (sortConfig.length) ColumnSorting.sort(sortConfig);
         };
         augmentedSettings.beforeChange = function beforeChange(changes, source) {
           if (source !== 'loadData') {
