@@ -9,14 +9,13 @@ Command | Description
 --- | ---
 `npm i` | install dependencies
 `npm run dev` | serve with hot reload at localhost:8080
-`npm run lint` | show code formatting tips
+`npm run dev:ios` | build and emulate on iOS device
+`npm run dev:android` | build and emulate on Android device
 `npm run build` | build for production with minification
-`npm run report` | view the bundle analyzer report
-`npm run deploy` | build and push web front-end to Firebase hosting
-`npm run web` | build and preview web front-end via file:// protocol
-`npm run ios` | build and emulate on iOS device
-`npm run android` | build and emulate on Android device
+`npm run build:ios` | build iOS for release
+`npm run build:android` | build Android for release
 `npm run build:app` | build iOS and Android for release
+`npm run lint` | show code formatting tips
 `npm run icon` | auto-generate all required app icons
 `npm run splash` | auto-generate all required splash screen images
 
