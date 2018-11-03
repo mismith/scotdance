@@ -1,7 +1,12 @@
-www/
 info.txt
 *.log
 *.keystore
+
+# Cordova
+/www/
+/platforms/
+/plugins/
+/public/cordova.js
 
 # Vue defaults
 .DS_Store

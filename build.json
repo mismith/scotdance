@@ -6,5 +6,23 @@
       "alias": "scotdance",
       "password" : ""
     }
+  },
+  "ios": {
+    "debug": {
+      "codeSignIdentity": "iPhone Developer",
+      "developmentTeam": "UH23LCVKZ2",
+      "packageType": "development",
+      "buildFlag": [
+        "-UseModernBuildSystem=0"
+      ]
+    },
+    "release": {
+      "codeSignIdentity": "iPhone Developer",
+      "developmentTeam": "UH23LCVKZ2",
+      "packageType": "app-store",
+      "buildFlag": [
+        "-UseModernBuildSystem=0"
+      ]
+    }
   }
 }
