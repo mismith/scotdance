@@ -1,6 +1,7 @@
 info.txt
 *.log
 *.keystore
+/.firebase
 
 # Cordova
 /www/

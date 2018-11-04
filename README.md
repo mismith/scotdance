@@ -16,8 +16,6 @@ Command | Description
 `npm run build:android` | build Android for release
 `npm run build:app` | build iOS and Android for release
 `npm run lint` | show code formatting tips
-`npm run icon` | auto-generate all required app icons
-`npm run splash` | auto-generate all required splash screen images
 
 
 ## Admin
@@ -58,7 +56,7 @@ Links to the admin panels needed to manage this project:
     1. `npm run build:app`
     2. Open project in Xcode (`platforms/ios/ScotDance.xcodeproj`)
     3. In the top menu, select "Product" > "Archive"
-    4. Click "Upload to App Store..."
+    4. Click "Distribute to iOS"
     5. Follow the wizard
     6. In iTunes Connect, create a New iOS Version, then complete/fill out all remaining steps/info (the new build should be processed and ready to be selected shortly)
 
