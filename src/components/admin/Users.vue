@@ -42,7 +42,7 @@
       </div>
       <div v-else>
         <md-empty-state
-          md-icon="error_outline"
+          md-icon="clear"
           md-label="No users found"
         />
       </div>

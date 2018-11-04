@@ -33,7 +33,7 @@
       </div>
       <div v-else class="md-scroll-frame alt">
         <md-empty-state
-          md-icon="close"
+          md-icon="clear"
           md-label="No competition found"
         />
       </div>
