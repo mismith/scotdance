@@ -3,7 +3,6 @@
   "version": "1.4.4",
   "description": "Highland dancing event tracker",
   "author": "Murray Smith <murray@mismith.info>",
-  "license": "UNLICENSED",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
@@ -20,7 +19,8 @@
     "splash": "cordova-splash --splash=res/splash.png"
   },
   "dependencies": {
-    "@handsontable/vue": "^2.0.0-beta1",
+    "@handsontable/vue": "^2.0.0",
+    "cordova": "^8.1.2",
     "cordova-android": "^7.1.1",
     "cordova-ios": "^4.5.5",
     "cordova-plugin-device": "^2.0.2",
@@ -66,31 +66,9 @@
     "sass-loader": "^7.0.1",
     "vue-template-compiler": "^2.5.17"
   },
-  "engines": {
-    "node": ">= 8.11.3",
-    "npm": ">= 6.4.1",
-    "imagemagick": "brew install imagemagick"
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not ie <= 8"
-  ],
-  "cordova": {
-    "plugins": {
-      "cordova-plugin-whitelist": {},
-      "cordova-plugin-statusbar": {},
-      "cordova-plugin-splashscreen": {},
-      "cordova-plugin-device": {},
-      "cordova-plugin-network-information": {}
-    },
-    "platforms": [
-      "ios",
-      "android"
-    ]
-  },
   "vue": {
-    "outputDir": "www"
+    "outputDir": "www",
+    "baseUrl": ""
   },
   "eslintConfig": {
     "root": true,
@@ -114,5 +92,33 @@
     "plugins": {
       "autoprefixer": {}
     }
-  }
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ],
+  "cordova": {
+    "plugins": {
+      "cordova-plugin-whitelist": {},
+      "cordova-plugin-statusbar": {},
+      "cordova-plugin-splashscreen": {},
+      "cordova-plugin-device": {},
+      "cordova-plugin-network-information": {}
+    },
+    "platforms": [
+      "ios",
+      "android"
+    ]
+  },
+  "engines": {
+    "node": ">= 8.11.3",
+    "npm": ">= 6.4.1",
+    "imagemagick": "brew install imagemagick"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mismith/scotdance.git"
+  },
+  "license": "UNLICENSED"
 }
