@@ -1,5 +1,5 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="new-dymamic-field md-list-item-content">
+  <form @submit.prevent="handleSubmit" class="new-dynamic-field md-list-item-content">
     <dynamic-field
       :field="field"
       :data="data"
@@ -40,7 +40,9 @@ export default {
   },
   methods: {
     handleSubmit() {
-      this.$emit('change', this.data);
+      this.$emit('change', {
+        ...this.data,
+      });
 
       this.data[this.field.data] = '';
     },
@@ -53,6 +55,11 @@ export default {
 
 <style lang="scss">
 .new-dynamic-field {
+  padding-top: 8px;
+  padding-bottom: 16px;
 
+  .md-list-action:last-of-type {
+    margin-right: -8px;
+  }
 }
 </style>

@@ -428,14 +428,6 @@ export default {
     .sortable-handle {
       margin-right: 8px;
     }
-    form.md-list-item-content {
-      padding-top: 8px;
-      padding-bottom: 16px;
-
-      .md-list-action {
-        margin-right: -8px;
-      }
-    }
     > footer {
       display: flex;
       justify-content: center;
