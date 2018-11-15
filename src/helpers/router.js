@@ -1,7 +1,7 @@
 import router from '@/router';
 
 export async function getTitleChunks(route) {
-  return ['ScotDance', ...await Promise.all(route.matched
+  return ['ScotDance.app', ...await Promise.all(route.matched
     .map(async (match) => {
       if (typeof match.meta.title === 'function') {
         return match.meta.title(route);

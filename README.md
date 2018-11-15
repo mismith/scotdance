@@ -1,4 +1,4 @@
-# ScotDance
+# ScotDance.app
 
 Highland dancing event tracker
 
