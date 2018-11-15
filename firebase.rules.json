@@ -24,19 +24,19 @@
       },
       "users": {
         "$userId": {
-          ".read": "auth != null && auth.uid === $userId", // is SELF
-          ".write": "auth != null && auth.uid === $userId" // is SELF
+          ".read": "auth !== null && auth.uid === $userId", // is SELF
+          ".write": "auth !== null && auth.uid === $userId" // is SELF
         }
       },
       "users:favorites": {
         "$userId": {
-          ".read": "auth != null && auth.uid === $userId", // is SELF
-          ".write": "auth != null && auth.uid === $userId" // is SELF
+          ".read": "auth !== null && auth.uid === $userId", // is SELF
+          ".write": "auth !== null && auth.uid === $userId" // is SELF
         }
       },
       "users:permissions": {
         "$userId": {
-          ".read": "auth != null && auth.uid === $userId", // is SELF
+          ".read": "auth !== null && auth.uid === $userId", // is SELF
           ".write": false
         }
       }
