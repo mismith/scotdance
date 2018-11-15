@@ -15,6 +15,9 @@
           <br />
           <span>{{ competition.location }}</span>
         </p>
+        <p v-if="competition.sobhd">
+          <small><strong>SOBHD</strong> {{ competition.sobhd }}</small>
+        </p>
       </section>
 
       <md-list v-if="staff.length" class="staff md-list-cards">
@@ -41,12 +44,6 @@
           </md-list>
         </md-list-item-cards>
       </md-list>
-
-      <section>
-        <p v-if="competition.sobhd">
-          <small><strong>SOBHD</strong> {{ competition.sobhd }}</small>
-        </p>
-      </section>
     </div>
   </div>
 </template>
