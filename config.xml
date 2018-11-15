@@ -2,7 +2,7 @@
 <widget id="info.mismith.scotdance" version="1.5.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>ScotDance</name>
     <description>
-        App for highland dancing events.
+        Highland dancing event tracker.
     </description>
     <author email="murray@mismith.info" href="http://mismith.info">
         Murray Smith

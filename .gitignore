@@ -1,8 +1,3 @@
-info.txt
-*.log
-*.keystore
-/.firebase
-
 # Cordova
 /www/
 /platforms/
@@ -12,7 +7,7 @@ info.txt
 # Vue defaults
 .DS_Store
 node_modules
-/dist
+dist
 
 # local env files
 .env.local
@@ -31,3 +26,10 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw*
+
+# Custom
+info.txt
+*.log
+*.keystore
+/.firebase
+.runtimeconfig.json
