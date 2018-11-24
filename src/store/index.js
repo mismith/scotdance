@@ -106,7 +106,7 @@ export default new Vuex.Store({
     auth: firebaseAction(({ bindFirebaseRef, state }, { uid }) => {
       state.meRef = db.child('users').child(uid);
       state.myFavoritesRef = db.child('users:favorites').child(uid);
-      state.myPermissionsRef = db.child('users:permissions').child(uid);
+      state.myPermissionsRef = db.child('permissions/users').child(uid);
       bindFirebaseRef('me', state.meRef, {
         async readyCallback() {
           // await 'me'

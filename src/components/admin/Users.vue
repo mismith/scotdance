@@ -59,7 +59,7 @@
         <path-chips
           label="Permissions"
           :data="permissions[currentUser[idKey]]"
-          @change="handleChanges($event, `users:permissions/${userId}`)"
+          @change="handleChanges($event, `permissions/users/${userId}`)"
         />
         <path-chips
           label="Favourites"
