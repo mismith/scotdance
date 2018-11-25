@@ -92,11 +92,11 @@ export default {
     },
 
     async handleRemove() {
-      await this.awaitSave(
+      await Promise.all([
         this.competitionRef.remove(),
         this.competitionDataRef.remove(),
-      );
-      this.$router.replace('/');
+      ]);
+      this.$router.replace({ name: 'competitions' });
     },
 
     handleChanges(...args) {
