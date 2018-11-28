@@ -3,10 +3,11 @@ import 'firebase/auth';
 import 'firebase/database';
 
 const FIREBASE_ENV = process.env.NODE_ENV || 'production';
+const instance = FIREBASE_ENV === 'development' ? 'scotdance-dev' : 'scotdance';
 const config = {
   apiKey: 'AIzaSyCxvA2RMvlCQ3WCzAqPotD8IOhnmCtQ1xM',
   authDomain: 'scotdance.firebaseapp.com',
-  databaseURL: 'https://scotdance.firebaseio.com',
+  databaseURL: `https://${instance}.firebaseio.com`,
   projectId: 'firebase-scotdance',
   storageBucket: 'firebase-scotdance.appspot.com',
   messagingSenderId: '635645850119',

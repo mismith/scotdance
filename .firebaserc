@@ -1,5 +1,17 @@
 {
   "projects": {
     "default": "firebase-scotdance"
+  },
+  "targets": {
+    "firebase-scotdance": {
+      "database": {
+        "production": [
+          "scotdance"
+        ],
+        "development": [
+          "scotdance-dev"
+        ]
+      }
+    }
   }
 }
