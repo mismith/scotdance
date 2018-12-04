@@ -107,6 +107,10 @@ export default new Router({
                   },
                 },
                 {
+                  path: 'info',
+                  redirect: 'info/general',
+                },
+                {
                   path: 'info/:subtabId?',
                   name: 'competition.admin.info',
                   component: () => import(/* webpackChunkName: "admin" */ '@/components/competition/admin/Info.vue'),
