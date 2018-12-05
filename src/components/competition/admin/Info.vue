@@ -1,22 +1,22 @@
 <template>
   <blades class="admin-info" :stacks="true">
-    <blade id="blade-subtabs" class="md-small-size-100 md-size-25 md-scroll">
+    <blade id="blade-subsections" class="md-small-size-100 md-size-25 md-scroll">
       <md-list>
         <md-list-item
-          v-for="subtab in toOrderedArray(section.subtabs)"
-          :key="subtab[idKey]"
-          :to="{ name: 'competition.admin.info', params: { subtabId: subtab[idKey] } }"
+          v-for="subsection in toOrderedArray(section.subsections)"
+          :key="subsection[idKey]"
+          :to="{ name: 'competition.admin.info', params: { subsectionId: subsection[idKey] } }"
         >
-          <div class="md-list-item-text">{{ subtab.title }}</div>
+          <div class="md-list-item-text">{{ subsection.title }}</div>
           <md-icon>chevron_right</md-icon>
         </md-list-item>
       </md-list>
     </blade>
     <blade id="blade-form" class="md-small-size-100 md-size-75 md-scroll">
-      <div v-if="currentSubtab">
+      <div v-if="currentSubsection">
         <dynamic-form
-          v-if="currentSubtab.fields"
-          :fields="currentSubtab.fields"
+          v-if="currentSubsection.fields"
+          :fields="currentSubsection.fields"
           :data="competition"
           class="md-padding"
           @change="handleChanges"
@@ -60,7 +60,7 @@ export default {
   name: 'admin-info',
   props: {
     competitionId: String,
-    subtabId: String,
+    subsectionId: String,
     competitionRef: {
       type: Object,
       required: true,
@@ -80,15 +80,15 @@ export default {
     };
   },
   computed: {
-    currentSubtab() {
-      return (this.section.subtabs || {})[this.subtabId];
+    currentSubsection() {
+      return (this.section.subsections || {})[this.subsectionId];
     },
   },
   methods: {
     toOrderedArray,
 
     inTabs(...tabs) {
-      return tabs.some(tab => this.subtabId === tab);
+      return tabs.some(tab => this.subsectionId === tab);
     },
 
     async handleRemove() {
