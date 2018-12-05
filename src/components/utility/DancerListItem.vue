@@ -57,6 +57,7 @@ export default {
             content: "•";
             display: inline-block;
             margin-left: 0.25em;
+            margin-right: 0.25em;
           }
         }
       }
