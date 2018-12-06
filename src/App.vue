@@ -170,10 +170,7 @@ import {
   mapState,
   mapActions,
 } from 'vuex';
-import {
-  getTitleChunks,
-  getFirstExisting,
-} from '@/helpers/router';
+import { getTitleChunks, getFirstExisting } from '@/helpers/router';
 import {
   idKey,
   db,

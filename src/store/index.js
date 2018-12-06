@@ -1,3 +1,5 @@
+/* eslint-disable no-param-reassign */
+
 import Vue from 'vue';
 import Vuex from 'vuex';
 import { get } from 'deep-property';
@@ -83,8 +85,9 @@ export default new Vuex.Store({
         state.currentDialog = to;
         state.currentDialogData = undefined;
       } else {
-        state.currentDialog = to[0];
-        state.currentDialogData = to[1];
+        const [currentDialog, currentDialogData] = to || [];
+        state.currentDialog = currentDialog;
+        state.currentDialogData = currentDialogData;
       }
     },
 
