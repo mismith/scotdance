@@ -21,10 +21,10 @@
         </md-button>
 
         <md-menu-content>
-          <md-menu-item :to="{ name: 'home', query: { at: '#about' } }" exact>
+          <md-menu-item :to="{ name: 'home', query: { at: 'about' } }" exact>
             About
           </md-menu-item>
-          <md-menu-item :to="{ name: 'home', query: { at: '#faq' } }" exact>
+          <md-menu-item :to="{ name: 'home', query: { at: 'faq' } }" exact>
             FAQs
           </md-menu-item>
           <md-divider />
@@ -256,14 +256,6 @@ export default {
         }
       }
     },
-    $route(to) {
-      // scroll to selector if specified in query string
-      if (to.query.at) {
-        this.$nextTick(() => {
-          this.$scrollAll(to.query.at);
-        });
-      }
-    },
   },
   methods: {
     ...mapActions([
@@ -341,6 +333,15 @@ export default {
           window.history.go(-1);
         }
       });
+
+    // scroll to selector if specified in query string
+    this.$watch('$route', (to) => {
+      if (to.query.at) {
+        this.$nextTick(() => {
+          this.$scrollAll(`#${to.query.at}`);
+        });
+      }
+    }, { immediate: true });
   },
   components: {
     RegisterDialog,
