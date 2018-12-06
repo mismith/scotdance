@@ -2,7 +2,7 @@
   <div v-persist-scroll="'/'" class="home md-scroll-frame md-scroll">
     <section class="hero">
       <div>
-        <img src="@/assets/img/touchicon.png" role="presentation" width="88" height="88" />
+        <img src="/img/touchicon.png" role="presentation" width="88" height="88" />
         <h1 class="md-display-2">ScotDance.app</h1>
         <p class="md-headline">{{ $package.description }}</p>
         <p class="md-subheading">Skip the pen and paper—attend highland dance competitions in style with this app for your mobile device.</p>
