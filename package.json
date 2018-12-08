@@ -31,7 +31,7 @@
     "cordova-plugin-whitelist": "^1.3.3",
     "deep-property": "^1.1.0",
     "fast-html-parser": "^1.0.1",
-    "firebase": "^4.6.0",
+    "firebase": "^5.7.0",
     "fuse.js": "^3.2.1",
     "hammerjs": "^2.0.8",
     "handsontable": "^6.1.1",
