@@ -107,8 +107,10 @@ export default new Router({
                   },
                 },
                 {
-                  path: 'info',
+                  path: 'info/:subtabId?',
                   name: 'competition.admin.info',
+                  component: () => import(/* webpackChunkName: "admin" */ '@/components/competition/admin/Info.vue'),
+                  props: true,
                 },
                 {
                   path: 'schedule/:dayId?/:blockId?/:eventId?/:danceId?',

@@ -25,29 +25,21 @@
             <md-spunnable :md-spinning="saving" />
           </md-toolbar>
           <div class="md-scroll-frame md-scroll">
-            <dynamic-form
-              v-if="currentSection.form"
-              :fields="currentSection.form.fields"
-              :data="competition"
-              class="md-padding"
-              @change="handleInfoChanges"
-            />
             <mi-hot-table
-              v-else-if="currentSection.hot"
+              v-if="currentSection.hot"
               :settings="currentSection.hot"
               :data="this[$root.currentTab]"
               class="fullscreen"
               @change="handleHotChanges"
             />
             <keep-alive v-else>
-              <router-view v-bind="$props" @change="handleDataChanges" />
+              <router-view
+                v-bind="$props"
+                :section="currentSection"
+                @change="handleDataChanges"
+                @info-change="handleInfoChanges"
+              />
             </keep-alive>
-
-            <footer v-if="inTabs('info')" class="md-layout md-alignment-center" style="margin-top: auto;">
-              <md-button @click="confirmRemove = true" class="md-accent">
-                Delete Competition
-              </md-button>
-            </footer>
           </div>
         </div>
       </div>
@@ -67,14 +59,6 @@
           @done="showImportResults = false"
         />
       </md-dialog>
-      <md-dialog-confirm
-        :md-active.sync="confirmRemove"
-        md-title="Delete competition"
-        md-content="Are you sure you want to permanently delete this competition?"
-        md-confirm-text="Yes"
-        md-cancel-text="No"
-        @md-confirm="handleRemove"
-      />
     </requires-permission>
 
     <md-bottom-bar
@@ -105,9 +89,7 @@ import {
 import { getFirstExisting } from '@/helpers/router';
 import RequiresPermission from '@/components/utility/RequiresPermission.vue';
 import MiHotTable from '@/components/admin/utility/MiHotTable.vue';
-import DynamicForm from '@/components/admin/utility/DynamicForm.vue';
 import PresetPicker from '@/components/competition/admin/utility/PresetPicker.vue';
-import AdminResults from '@/components/competition/admin/Results.vue';
 import MdSpunnable from '@/components/utility/MdSpunnable.vue';
 
 export default {
@@ -139,7 +121,6 @@ export default {
 
       showImport: false,
       showImportResults: false,
-      confirmRemove: false,
 
       saving: false,
       savingPromises: [],
@@ -242,13 +223,6 @@ export default {
         }, 1000);
       });
     },
-    async handleRemove() {
-      await this.awaitSave(
-        this.competitionRef.remove(),
-        this.competitionDataRef.remove(),
-      );
-      this.$router.replace('/');
-    },
     handleInfoChanges(changes) {
       this.awaitSave(this.competitionRef.update(changes));
     },
@@ -276,10 +250,8 @@ export default {
   components: {
     RequiresPermission,
     MiHotTable,
-    DynamicForm,
     AdminImport: () => import(/* webpackChunkName: "admin-import" */ '@/components/competition/admin/utility/Import.vue'),
     AdminImportResults: () => import(/* webpackChunkName: "admin-import" */ '@/components/competition/admin/utility/ImportResults.vue'),
-    AdminResults,
     PresetPicker,
     MdSpunnable,
   },
