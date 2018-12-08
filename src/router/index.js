@@ -13,6 +13,7 @@ import CompetitionInfo from '@/components/competition/Info.vue';
 import CompetitionDancers from '@/components/competition/Dancers.vue';
 import CompetitionSchedule from '@/components/competition/Schedule.vue';
 import CompetitionResults from '@/components/competition/Results.vue';
+import CompetitionInvite from '@/components/competition/Invite.vue';
 
 Vue.use(Router);
 
@@ -89,6 +90,15 @@ export default new Router({
               props: true,
               meta: {
                 title: 'Results',
+              },
+            },
+            {
+              path: 'invites/:inviteId',
+              name: 'competition.invite',
+              component: CompetitionInvite,
+              props: true,
+              meta: {
+                title: 'Your Invitation',
               },
             },
             {

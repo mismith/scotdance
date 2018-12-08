@@ -19,7 +19,13 @@
       "competitions:data": {
         "$competitionId": {
           ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true || root.child($environment).child('permissions/users').child(auth.uid).child('competitions').child($competitionId).val() === true", // is PUBLISHED || has PERMISSION
-          ".write": "root.child($environment).child('permissions/users').child(auth.uid).child('competitions').child($competitionId).val() === true" // has PERMISSION
+          ".write": "root.child($environment).child('permissions/users').child(auth.uid).child('competitions').child($competitionId).val() === true", // has PERMISSION
+          "invites": {
+            "$inviteId": {
+              ".read": "auth !== null", // is AUTHED
+              ".write": "auth !== null" // is AUTHED
+            }
+          }
         }
       },
       "users": {
@@ -35,6 +41,11 @@
         }
       },
       "permissions": {
+        "competitions": {
+          "$competitionId": {
+            ".read": "root.child($environment).child('permissions/users').child(auth.uid).child('competitions').child($competitionId).val() === true" // has PERMISSION to same COMPETITION
+          }
+        },
         "users": {
           "$userId": {
             ".read": "auth !== null && auth.uid === $userId", // is SELF

@@ -21,6 +21,9 @@
           class="md-padding"
           @change="handleChanges"
         />
+        <div v-if="inTabs('permissions')">
+          <admin-invites v-bind="$props" />
+        </div>
         <footer
           v-if="inTabs('general')"
           class="md-layout md-alignment-center"
@@ -55,6 +58,7 @@ import {
   toOrderedArray,
 } from '@/helpers/firebase';
 import DynamicForm from '@/components/admin/utility/DynamicForm.vue';
+import AdminInvites from '@/components/competition/admin/utility/Invites.vue';
 
 export default {
   name: 'admin-info',
@@ -105,6 +109,7 @@ export default {
   },
   components: {
     DynamicForm,
+    AdminInvites,
   },
 };
 </script>
