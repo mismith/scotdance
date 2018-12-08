@@ -57,9 +57,7 @@ export default new Router({
           children: [
             {
               path: '',
-              redirect: {
-                name: 'competition.info',
-              },
+              redirect: 'info',
             },
             {
               path: 'info',
@@ -102,9 +100,7 @@ export default new Router({
               children: [
                 {
                   path: '',
-                  redirect: {
-                    name: 'competition.admin.info',
-                  },
+                  redirect: 'info',
                 },
                 {
                   path: 'info',
@@ -154,9 +150,7 @@ export default new Router({
       children: [
         {
           path: '',
-          redirect: {
-            name: 'admin.info',
-          },
+          redirect: 'info',
         },
         {
           path: 'info',
