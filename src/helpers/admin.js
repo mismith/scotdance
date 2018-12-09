@@ -14,7 +14,9 @@ function makeKeyValuePairColumn(column, valueProp = '$name', keyProp = idKey) {
       data: column.source,
       columns: [{ data: valueProp }],
       getValue: function getValue() {
-        return this.getSourceDataAtRow(this.getSelected()[0])[keyProp];
+        const [[startRowIndex]] = this.getSelected();
+        const data = this.getSourceDataAtRow(startRowIndex);
+        return data && data[keyProp];
       },
     },
     renderer: function renderer(...args) {
