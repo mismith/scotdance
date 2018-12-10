@@ -1,26 +1,41 @@
 <template>
   <md-steppers :md-active-step.sync="step" md-linear class="admin-import">
-    <md-step id="upload" md-label="Upload" md-description="Select a file to import">
+    <md-step
+      id="upload"
+      md-label="Upload"
+      md-description="Select a file to import"
+      :md-done="step !== 'upload'"
+    >
       <div class="md-scroll-frame md-scroll md-padding">
         <h2>Instructions</h2>
         <ol>
-          <li>Select the <strong>Excel spreadsheet</strong> (.xslx file) that contains the exported values to import.</li>
-          <li>Determine which sheet contains the list of dancers with age grouping headers; select it below, then click <strong>Next</strong>.</li>
-          <li>Double-check that all values were parsed properly&mdash;this is how data will be imported, so if anything is missing or looks broken, it will likely fail to import properly. When sure, click <strong>Import</strong>.</li>
+          <li>Select the <strong>Excel spreadsheet</strong> (.xslx file) that contains the values to import.</li>
+          <li>Pick the sheet that contains a list of dancers with age grouping headers, then click <strong>Next</strong>.</li>
+          <li>Double-check that all values were parsed properly&mdash;this is how data will be imported, so if anything is missing or looks broken, it will likely fail to import properly. If it looks okay, click <strong>Import</strong>.</li>
         </ol>
       </div>
       <md-toolbar class="md-layout">
-        <md-field class="md-layout-item">
-          <label>Spreadsheet file</label>
-          <md-file
-            @md-change="handleUpload($event[0])"
-            accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-          />
-        </md-field>
+        <div class="md-layout-item">
+          <md-field>
+            <label>Spreadsheet file</label>
+            <md-file
+              @md-change="handleUpload($event[0])"
+              accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            />
+          </md-field>
+        </div>
+        <footer>
+          <md-button @click="handleCancel()">Cancel</md-button>
+        </footer>
       </md-toolbar>
     </md-step>
-    <md-step id="choose" md-label="Choose" md-description="Pick which data to use">
-      <md-tabs v-if="workbook">
+    <md-step
+      id="choose"
+      md-label="Choose"
+      md-description="Pick which data to use"
+      :md-done="step === 'review'"
+    >
+      <md-tabs v-if="workbook" @md-changed="handleSheetChange">
         <md-tab
           v-for="(sheetName, sheetIndex) of workbook.SheetNames"
           :key="sheetIndex"
@@ -31,21 +46,9 @@
         </md-tab>
       </md-tabs>
       <md-toolbar v-if="workbook" class="md-layout">
-        <div class="md-layout-item">
-          <md-field>
-            <label>Dancers sheet</label>
-            <md-select v-model="dancersSheetIndex">
-              <md-option
-                v-for="(sheetName, sheetIndex) of workbook.SheetNames"
-                :key="sheetIndex"
-                :value="sheetIndex"
-              >
-                {{sheetName}}
-              </md-option>
-            </md-select>
-          </md-field>
-        </div>
+        <div class="md-layout-item" />
         <footer>
+          <md-button @click="handleCancel()">Cancel</md-button>
           <md-button
             @click="handleChoose()"
             :disabled="dancersSheetIndex < 0"
@@ -56,8 +59,12 @@
         </footer>
       </md-toolbar>
     </md-step>
-    <md-step id="review" md-label="Review" md-description="Ensure values look correct">
-      <md-tabs v-if="data" md-active-tab="tab-categories">
+    <md-step
+      id="review"
+      md-label="Review"
+      md-description="Ensure values look correct"
+    >
+      <md-tabs v-if="data" md-active-tab="tab-dancers">
         <md-tab
           v-for="(items, key) of data"
           :key="key"
@@ -70,6 +77,7 @@
       <md-toolbar class="md-layout">
         <div class="md-layout-item" />
         <footer>
+          <md-button @click="handleCancel()">Cancel</md-button>
           <md-spinnable :md-spinning="importing" md-left>
             <md-button
               @click="handleReview()"
@@ -119,20 +127,17 @@ export default {
       switch (key) {
         case 'groups': {
           data = items.map((item) => {
-            const datum = Object.assign({}, item);
-
-            delete datum.number;
-
+            const { number, code, ...datum } = item;
             return datum;
           });
           break;
         }
         case 'dancers': {
           data = items.map((item) => {
-            const datum = Object.assign({}, item);
+            const { code, ...datum } = item;
 
-            const group = this.data.groups.find(g => `${g.number}` === `${datum.group}`);
-            if (group) datum.group = group.name;
+            const group = this.data.groups.find(g => `${g.code}` === `${code}`);
+            if (group) datum.group = `${group.category} ${group.name}`;
 
             return datum;
           });
@@ -143,7 +148,8 @@ export default {
         }
       }
       return augmentHot({
-        colHeaders: Object.keys(data[0]),
+        colHeaders: Object.keys(data[0] || {}),
+        readOnly: true,
       }, data);
     },
     sheetToJson(sheet, options = { header: 1 }) {
@@ -152,10 +158,19 @@ export default {
         .filter(row => Object.entries(row).some(([k, v]) => v)); // remove empties
     },
     sheetToHot(sheet, settings = {}) {
-      return augmentHot(settings, this.sheetToJson(sheet));
+      const rows = this.sheetToJson(sheet);
+      const minCols = rows.reduce((num, row) => Math.max(num, row.length), 0);
+
+      return augmentHot({
+        minCols,
+        readOnly: true,
+        ...settings,
+      }, rows);
     },
 
     handleUpload(file) {
+      if (!file) return;
+
       const reader = new FileReader();
       reader.onload = (event) => {
         const data = event.target.result;
@@ -171,6 +186,9 @@ export default {
         this.dancersSheetIndex = workbook.SheetNames.findIndex(name => /Program/i.test(name));
       };
       reader.readAsBinaryString(file);
+    },
+    handleSheetChange(tabId) {
+      this.dancersSheetIndex = Number.parseInt(tabId.replace(/[^0-9]/g, ''));
     },
     handleChoose() {
       const dancersSheet = this.workbook.Sheets[this.workbook.SheetNames[this.dancersSheetIndex]];
@@ -237,9 +255,9 @@ export default {
 
       // return all items normalized to arrays
       return {
-        categories: categories.map(category => ({ name: category })),
-        groups: Object.values(groups),
         dancers,
+        groups: Object.values(groups),
+        categories: categories.map(category => ({ name: category })),
       };
     },
     async importData(categories, groups, dancers) {
@@ -296,6 +314,9 @@ export default {
 
       this.$emit('done');
       this.importing = false;
+    },
+    handleCancel() {
+      this.$emit('done');
     },
   },
   components: {
