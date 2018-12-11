@@ -7,12 +7,32 @@
       :md-done="step !== 'upload'"
     >
       <div class="md-scroll-frame md-scroll md-padding">
-        <h2>Instructions</h2>
+        <h3>Instructions</h3>
         <ol>
           <li>Select the <strong>Excel spreadsheet</strong> (.xslx file) that contains the values to import.</li>
           <li>Pick the sheet that contains a list of dancers with age grouping headers, then click <strong>Next</strong>.</li>
           <li>Double-check that all values were parsed properly&mdash;this is how data will be imported, so if anything is missing or looks broken, it will likely fail to import properly. If it looks okay, click <strong>Import</strong>.</li>
         </ol>
+
+        <h3>Formatting</h3>
+        <p>The spreadsheet should have the following structure:</p>
+        <table class="demo">
+          <tbody v-for="category in 2">
+            <tr>
+              <td>Category / Age Group</td>
+              <td v-for="td in 3">&nbsp;</td>
+            </tr>
+            <tr v-for="dancer in 3">
+              <td>Dancer Number</td>
+              <td>First Name</td>
+              <td>Last Name</td>
+              <td>Location</td>
+            </tr>
+            <tr>
+              <td v-for="td in 4">{{ category === 1 ? '&nbsp;' : '...' }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
       <md-toolbar class="md-layout">
         <div class="md-layout-item">
@@ -334,6 +354,20 @@ export default {
     > footer.md-layout-item {
       flex: 0;
       margin-right: 0;
+    }
+  }
+  h3 {
+    margin-bottom: 0;
+  }
+  table.demo {
+    border-spacing: 0;
+    border: 1px solid #ccc;
+    border-width: 0 0 1px 1px;
+
+    td {
+      width: 25%;
+      border: 1px solid #ccc;
+      border-width: 1px 1px 0 0;
     }
   }
 }
