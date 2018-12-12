@@ -18,6 +18,27 @@
         <p v-if="competition.sobhd">
           <small><strong>SOBHD</strong> {{ competition.sobhd }}</small>
         </p>
+        <div v-if="competition.registrationURL" class="md-layout md-alignment-center">
+          <div>
+            <md-button
+              :href="competition.registrationURL"
+              target="_blank"
+              class="md-primary md-raised solo"
+            >
+              <span class="ext">Register</span>
+            </md-button>
+          </div>
+          <div class="md-layout-item" style="opacity: 0.66; margin-left: 16px;">
+            <div v-if="competition.registrationStart">
+              Registration open{{ $moment(competition.registrationStart).isAfter() ? 's' : 'ed'}}
+              {{ $moment(competition.registrationStart).format('MMM D, YYYY \\a\\t h:mma') }}
+            </div>
+            <div v-if="competition.registrationEnd">
+              Registration close{{ $moment(competition.registrationEnd).isAfter() ? 's' : 'd'}}
+              {{ $moment(competition.registrationEnd).format('MMM D, YYYY \\a\\t h:mma') }}
+            </div>
+          </div>
+        </div>
       </section>
 
       <md-list v-if="staff.length" class="staff md-list-cards">
