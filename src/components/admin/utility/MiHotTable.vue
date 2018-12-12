@@ -36,7 +36,7 @@ export default {
             changes.forEach(([row, prop, , newVal]) => {
               const physicalRow = this.toPhysicalRow(row); // to account for sorting
               const key = instance.data[physicalRow] && instance.data[physicalRow][idKey];
-              aggregated[`${key || db.push().key}/${prop.replace('.', '/')}`] = newVal;
+              aggregated[`${key || db.push().key}/${prop.replace('.', '/')}`] = newVal || null;
             });
             instance.$emit('change', aggregated);
           }
