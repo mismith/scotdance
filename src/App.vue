@@ -686,6 +686,10 @@ body,
 }
 
 .md-button {
+  &.solo {
+    margin-left: 0;
+    margin-right: 0;
+  }
   &.md-large {
     height: 48px;
     font-size: 16px;

@@ -2,13 +2,13 @@
   <div class="account-buttons">
     <md-button
       @click="$store.commit('setCurrentDialog', 'register')"
-      class="md-raised"
+      class="md-raised solo"
     >
       <span>Register</span>
     </md-button>
     <md-button
       @click="$store.commit('setCurrentDialog', 'login')"
-      class="md-raised md-accent"
+      class="md-raised md-accent solo"
     >
       <span>Login</span>
     </md-button>
@@ -28,10 +28,5 @@ export default {
   flex-direction: column;
   align-items: center;
   margin: auto;
-
-  .md-button {
-    margin-left: 0;
-    margin-right: 0;
-  }
 }
 </style>
