@@ -31,16 +31,6 @@
       </md-select>
     </md-field>
 
-    <md-datepicker
-      v-else-if="field.type === 'datetime'"
-      v-model="data[field.data]"
-      md-immediately
-      @input="handleChanges()"
-      :class="{ 'md-required': field.required }"
-    >
-      <label>{{ field.title }}</label>
-    </md-datepicker>
-
     <md-checkbox
       v-else-if="field.type === 'checkbox'"
       v-model="value"
