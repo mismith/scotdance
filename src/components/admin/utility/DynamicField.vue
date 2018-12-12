@@ -12,7 +12,7 @@
     <md-field v-else-if="field.type === 'select'">
       <label>{{ field.title }}</label>
       <md-select
-        v-model="data[field.data]"
+        v-model="value"
         :required="field.required"
         :readonly="field.readonly"
         :disabled="field.disabled"
@@ -43,7 +43,7 @@
 
     <md-checkbox
       v-else-if="field.type === 'checkbox'"
-      v-model="data[field.data]"
+      v-model="value"
       :required="field.required"
       :readonly="field.readonly"
       :disabled="field.disabled"
@@ -55,7 +55,7 @@
     <md-field v-else-if="field.type === 'textarea'">
       <label>{{ field.title }}</label>
       <md-textarea
-        v-model="data[field.data]"
+        v-model="value"
         :required="field.required"
         :readonly="field.readonly"
         :disabled="field.disabled"
@@ -67,7 +67,7 @@
     <md-field v-else>
       <label>{{ field.title }}</label>
       <md-input
-        v-model="data[field.data]"
+        v-model="value"
         :type="field.type || 'text'"
         :required="field.required"
         :readonly="field.readonly"
@@ -91,6 +91,16 @@ export default {
     return {
       idKey,
     };
+  },
+  computed: {
+    value: {
+      get() {
+        return this.data[this.field.data];
+      },
+      set(value) {
+        this.data[this.field.data] = value;
+      },
+    },
   },
   methods: {
     handleChanges() {
