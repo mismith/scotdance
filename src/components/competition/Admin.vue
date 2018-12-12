@@ -47,6 +47,9 @@
       <md-dialog :md-active.sync="showImport" class="import-dialog">
         <admin-import
           :competition-data-ref="competitionDataRef"
+          :groups="groups"
+          :categories="categories"
+          :dancers="dancers"
           @done="showImport = false"
         />
       </md-dialog>

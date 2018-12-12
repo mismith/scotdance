@@ -115,6 +115,7 @@
 
 <script>
 import XLSX from 'xlsx';
+import find from 'lodash.find';
 import { idKey } from '@/helpers/firebase';
 import {
   HotTable,
@@ -128,6 +129,9 @@ export default {
       type: Object,
       required: true,
     },
+    groups: Array,
+    categories: Array,
+    dancers: Array,
   },
   data() {
     return {
@@ -169,6 +173,7 @@ export default {
       }
       return augmentHot({
         colHeaders: Object.keys(data[0] || {}),
+        minSpareRows: 0,
         readOnly: true,
       }, data);
     },
@@ -183,6 +188,7 @@ export default {
 
       return augmentHot({
         minCols,
+        minSpareRows: 0,
         readOnly: true,
         ...settings,
       }, rows);
@@ -285,51 +291,70 @@ export default {
       await this.$nextTick();
 
       const categoryMappings = await Promise.all(categories.map(async (categoryData) => {
-        const category = {
+        const matches = {
           name: categoryData.name,
         };
+        const category = find(this.categories, matches) || matches;
 
-        // add to db
-        const ref = await this.competitionDataRef.child('categories').push(category);
+        let key = category[idKey];
+        if (!key) {
+          // add to db
+          ({ key } = await this.competitionDataRef.child('categories').push(category));
+        }
 
         // pass through
         return {
-          [idKey]: ref.key,
+          [idKey]: key,
           ...category,
         };
       }));
 
       const groupMappings = await Promise.all(groups.map(async (groupData) => {
-        const categoryId = categoryMappings.find(category => `${category.name}` === `${groupData.category}`);
-        const group = {
+        const categoryId = categoryMappings
+          .find(category => `${category.name}` === `${groupData.category}`);
+        const matches = {
           name: groupData.name,
           categoryId: (categoryId && categoryId[idKey]) || null,
         };
+        const group = find(this.groups, matches) || matches;
 
-        // add to db
-        const ref = await this.competitionDataRef.child('groups').push(group);
+        let key = group[idKey];
+        if (!key) {
+          // add to db
+          ({ key } = await this.competitionDataRef.child('groups').push(group));
+        }
 
         // pass through
         return {
-          [idKey]: ref.key,
+          [idKey]: key,
           code: groupData.code,
           ...group,
         };
       }));
 
       await Promise.all(dancers.map(async (dancerData) => {
-        const groupId = groupMappings.find(group => `${group.code}` === `${dancerData.code}`);
-        const dancer = {
+        const groupId = groupMappings
+          .find(group => `${group.code}` === `${dancerData.code}`);
+        const matches = {
           number: dancerData.number,
           firstName: dancerData.firstName,
           lastName: dancerData.lastName,
           location: dancerData.location,
-          groupId: (groupId && groupId[idKey]) || null,
-          categoryId: (groupId && groupId.categoryId) || null,
         };
+        const dancer = find(this.dancers, matches) || matches;
+        dancer.groupId = (groupId && groupId[idKey]) || dancer.groupId || null;
+        dancer.categoryId = (groupId && groupId.categoryId) || dancer.categoryId || null;
 
-        // add to db
-        await this.competitionDataRef.child('dancers').push(dancer);
+        let key = dancer[idKey];
+        if (!key) {
+          // add to db
+          ({ key } = await this.competitionDataRef.child('dancers').push(dancer));
+        }
+
+        return {
+          [idKey]: key,
+          ...dancer,
+        };
       }));
 
       this.$emit('done');
