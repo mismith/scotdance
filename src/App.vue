@@ -437,10 +437,13 @@ body.has-bottom-bar {
 }
 
 // app-wide custom styling
-a.ext {
-  &:after {
-    content: "\2197";
-    margin-left: 0.25em;
+a {
+  &.ext,
+  & .ext {
+    &:after {
+      content: "\2197";
+      margin-left: 0.25em;
+    }
   }
 }
 .alt {
