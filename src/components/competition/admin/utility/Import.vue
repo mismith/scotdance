@@ -17,19 +17,19 @@
         <h3>Formatting</h3>
         <p>The spreadsheet should have the following structure:</p>
         <table class="demo">
-          <tbody v-for="category in 2">
+          <tbody v-for="category in 2" :key="category">
             <tr>
               <td>Category / Age Group</td>
-              <td v-for="td in 3">&nbsp;</td>
+              <td v-for="td in 3" :key="td">&nbsp;</td>
             </tr>
-            <tr v-for="dancer in 3">
+            <tr v-for="dancer in 3" :key="dancer">
               <td>Dancer Number</td>
               <td>First Name</td>
               <td>Last Name</td>
               <td>Location</td>
             </tr>
             <tr>
-              <td v-for="td in 4">{{ category === 1 ? '&nbsp;' : '...' }}</td>
+              <td v-for="td in 4" :key="td">{{ category === 1 ? '&nbsp;' : '...' }}</td>
             </tr>
           </tbody>
         </table>
@@ -208,7 +208,7 @@ export default {
       reader.readAsBinaryString(file);
     },
     handleSheetChange(tabId) {
-      this.dancersSheetIndex = Number.parseInt(tabId.replace(/[^0-9]/g, ''));
+      this.dancersSheetIndex = Number.parseInt(tabId.replace(/[^0-9]/g, ''), 10);
     },
     handleChoose() {
       const dancersSheet = this.workbook.Sheets[this.workbook.SheetNames[this.dancersSheetIndex]];
