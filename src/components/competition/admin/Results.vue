@@ -1,6 +1,6 @@
 <template>
   <blades class="admin-results" :stacks="true">
-    <blade id="blade-groups" :active="!currentDance" class="md-small-size-100 md-size-33 md-scroll alt">
+    <blade id="blade-groups" :active="!currentDance" class="md-small-size-100 md-size-33 app-scroll alt">
       <results-list
         v-if="groups.length"
         :groups="groups"
@@ -15,7 +15,7 @@
         />
       </div>
     </blade>
-    <blade id="blade-dancers" :active="currentDance" class="md-small-size-100 md-size-33 md-scroll">
+    <blade id="blade-dancers" :active="currentDance" class="md-small-size-100 md-size-33 app-scroll">
       <md-list v-if="currentDance">
         <dancer-list-item
           v-for="dancer in currentDancers"
@@ -46,7 +46,7 @@
         />
       </div>
     </blade>
-    <blade class="md-small-size-100 md-size-33 md-scroll">
+    <blade class="md-small-size-100 md-size-33 app-scroll">
       <placed-dancer-list
         v-if="currentDance && placedDancers.length"
         :admin="true"

@@ -1,5 +1,5 @@
 <template>
-  <div class="blades md-layout md-scroll-frame" :class="{ stacks: stacks }">
+  <div class="blades md-layout app-scroll-frame" :class="{ stacks: stacks }">
     <slot />
   </div>
 </template>
@@ -15,7 +15,7 @@ export default {
 
 <style lang="scss">
 .blades {
-  // extends: md-layout, md-scroll-frame
+  // extends: md-layout, app-scroll-frame
   flex-direction: row;
   flex-wrap: nowrap;
   position: relative;

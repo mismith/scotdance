@@ -5,7 +5,7 @@
         :key="blade.collection"
         id="blade-root"
         v-if="blade.parent()"
-        class="md-small-size-100 md-size-25 md-scroll alt"
+        class="md-small-size-100 md-size-25 app-scroll alt"
       >
         <md-list class="md-list-cards">
           <md-list-item-cards md-expand md-expanded>
@@ -58,7 +58,7 @@
         :key="blade.collection"
         v-if="blade.item()"
         :id="`blade-${blade.id()}`"
-        :class="`md-small-size-100 md-size-${blade.size || 50} md-scroll`"
+        :class="`md-small-size-100 md-size-${blade.size || 50} app-scroll`"
       >
         <form @submit.prevent class="md-padding">
           <dynamic-field

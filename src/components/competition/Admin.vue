@@ -1,8 +1,8 @@
 <template>
-  <div class="competition-admin md-scroll-frame">
-    <requires-permission :permission="hasPermission" class="md-scroll-frame">
-      <div v-if="currentSection" class="md-scroll-frame">
-        <div class="md-scroll-frame">
+  <div class="competition-admin app-scroll-frame">
+    <requires-permission :permission="hasPermission" class="app-scroll-frame">
+      <div v-if="currentSection" class="app-scroll-frame">
+        <div class="app-scroll-frame">
           <md-toolbar class="md-dense">
             <div v-if="inTabs('info', 'categories', 'dancers', 'groups')">
               <md-button @click="showImport = true">Import</md-button>
@@ -24,7 +24,7 @@
 
             <md-spunnable :md-spinning="saving" />
           </md-toolbar>
-          <div class="md-scroll-frame md-scroll">
+          <div class="app-scroll-frame app-scroll">
             <mi-hot-table
               v-if="currentSection.hot"
               :settings="currentSection.hot"

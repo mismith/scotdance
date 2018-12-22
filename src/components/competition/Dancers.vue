@@ -1,7 +1,7 @@
 <template>
   <blades class="competition-dancers alt">
     <blade :active="!currentDancer" class="md-small-size-100 md-size-50">
-      <div v-if="dancers.length" class="md-scroll-frame">
+      <div v-if="dancers.length" class="app-scroll-frame">
         <md-toolbar>
           <search-field :filter-by.sync="filterBy" />
           <md-menu md-direction="bottom-end" @selected="sortBy">
@@ -29,7 +29,7 @@
 
         <div
           v-persist-scroll="`/competitions/${competitionId}/dancers`"
-          class="md-scroll-frame md-scroll"
+          class="app-scroll-frame app-scroll"
         >
           <md-list v-if="groupIds.length" class="md-list-cards">
             <md-list-item-cards
@@ -84,7 +84,7 @@
       </div>
     </blade>
     <blade :active="currentDancer" class="md-small-size-100 md-size-50">
-      <div v-if="currentDancer" class="md-scroll-frame">
+      <div v-if="currentDancer" class="app-scroll-frame">
         <md-toolbar class="md-dense md-toolbar-nowrap md-medium-hide">
           <md-button :to="{ name: $route.name, params: { competitionId } }" class="md-icon-button">
             <md-icon>chevron_left</md-icon>
@@ -94,7 +94,7 @@
 
         <div
           v-persist-scroll="`/competitions/${competitionId}/dancers/${dancerId}`"
-          class="md-scroll-frame md-scroll"
+          class="app-scroll-frame app-scroll"
         >
           <dancer-report
             :dancer="currentDancer"

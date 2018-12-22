@@ -1,7 +1,7 @@
 <template>
-  <div class="competition md-scroll-frame">
-    <div v-if="loaded" class="md-scroll-frame">
-      <div v-if="competitionExists" class="md-scroll-frame">
+  <div class="competition app-scroll-frame">
+    <div v-if="loaded" class="app-scroll-frame">
+      <div v-if="competitionExists" class="app-scroll-frame">
         <keep-alive v-if="$root.currentTab === 'info' || $route.name === 'competition.invite' || competition.published || hasPermission">
           <router-view
             v-bind="{
@@ -21,7 +21,7 @@
             }"
           />
         </keep-alive>
-        <div v-else class="md-scroll-frame alt">
+        <div v-else class="app-scroll-frame alt">
           <md-empty-state
             md-icon="access_time"
             md-label="Not available yet"
@@ -31,14 +31,14 @@
           </md-empty-state>
         </div>
       </div>
-      <div v-else class="md-scroll-frame alt">
+      <div v-else class="app-scroll-frame alt">
         <md-empty-state
           md-icon="clear"
           md-label="No competition found"
         />
       </div>
     </div>
-    <div v-else class="md-scroll-frame alt spinner-container">
+    <div v-else class="app-scroll-frame alt spinner-container">
       <mi-md-spinner />
     </div>
 

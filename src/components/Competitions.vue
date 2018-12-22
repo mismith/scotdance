@@ -1,5 +1,5 @@
 <template>
-  <div class="competitions md-scroll-frame">
+  <div class="competitions app-scroll-frame">
     <keep-alive>
       <router-view
         :competitions="competitions"

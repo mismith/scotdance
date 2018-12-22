@@ -1,7 +1,7 @@
 <template>
   <md-steppers :md-active-step.sync="step" md-linear class="admin-import-results">
     <md-step id="upload" md-label="Upload" md-description="Select a file to import">
-      <div class="md-scroll-frame md-scroll md-padding">
+      <div class="app-scroll-frame app-scroll md-padding">
         <h2>Instructions</h2>
         <ol>
           <li>Select the <strong>HTML file(s)</strong> below that contain(s) the exported values from Highland Scrutineer.</li>
@@ -21,7 +21,7 @@
       </md-toolbar>
     </md-step>
     <md-step id="choose" md-label="Choose" md-description="Pick which data to use">
-      <form class="md-scroll-frame md-scroll">
+      <form class="app-scroll-frame app-scroll">
         <md-subheader>Group(s)</md-subheader>
         <div v-for="datum in imported" :key="datum.file" class="md-layout md-gutter md-layout-nowrap md-padding">
           <div class="md-layout-item md-size-45">{{ datum.group }}</div>
@@ -62,7 +62,7 @@
     </md-step>
     <md-step id="review" md-label="Review" md-description="Ensure values look correct">
       <blades>
-        <blade class="md-small-size-100 md-size-50 md-scroll alt">
+        <blade class="md-small-size-100 md-size-50 app-scroll alt">
           <results-list
             :groups="groups.filter(group => Object.keys(results).includes(group[idKey]))"
             :dances="dances"
@@ -70,7 +70,7 @@
             :results="results"
           />
         </blade>
-        <blade class="md-small-size-100 md-size-50 md-scroll">
+        <blade class="md-small-size-100 md-size-50 app-scroll">
           <placed-dancer-list
             v-if="placedDancers.length"
             :dance="currentDance"

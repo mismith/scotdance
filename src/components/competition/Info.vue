@@ -1,8 +1,8 @@
 <template>
-  <div class="competition-info md-scroll-frame alt">
+  <div class="competition-info app-scroll-frame alt">
     <div
       v-persist-scroll="`/competitions/${competitionId}/info`"
-      class="md-scroll-frame md-scroll"
+      class="app-scroll-frame app-scroll"
     >
       <section class="hero">
         <h1 class="md-display-1">{{ competition.name }}</h1>
@@ -123,7 +123,7 @@ export default {
 
 <style lang="scss">
 .competition-info {
-  .md-scroll > section {
+  .app-scroll > section {
     padding: 0 16px 16px;
   }
   .staff {

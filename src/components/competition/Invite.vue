@@ -1,5 +1,5 @@
 <template>
-  <div class="invite md-scroll-frame md-scroll">
+  <div class="invite app-scroll-frame app-scroll">
     <div class="md-layout md-alignment-center md-padding">
       <div v-if="!$store.state.me">
         <md-empty-state

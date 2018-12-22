@@ -1,5 +1,5 @@
 <template>
-  <md-app id="app" class="md-scroll-frame">
+  <md-app id="app" class="app-scroll-frame">
     <md-app-toolbar class="md-primary print-hide" style="flex-wrap: nowrap;">
       <md-button class="md-icon-button" @click="menuVisible = !menuVisible">
         <md-icon>menu</md-icon>
@@ -80,7 +80,7 @@
         </md-list>
       </md-toolbar>
 
-      <div class="md-scroll-frame md-scroll">
+      <div class="app-scroll-frame app-scroll">
         <md-list v-if="accountToggled" class="animate-in" style="flex: auto;">
           <md-subheader>Account</md-subheader>
 
@@ -147,7 +147,7 @@
       </div>
     </md-app-drawer>
 
-    <md-app-content id="main" class="md-scroll-frame">
+    <md-app-content id="main" class="app-scroll-frame">
       <keep-alive v-if="!$store.state.loading && $store.state.me !== undefined">
         <router-view
           v-bind="{
@@ -157,7 +157,7 @@
           }"
         />
       </keep-alive>
-      <div v-else class="md-scroll-frame spinner-container">
+      <div v-else class="app-scroll-frame spinner-container">
         <mi-md-spinner />
       </div>
     </md-app-content>
@@ -378,7 +378,7 @@ body.has-bottom-bar {
 }
 
 // app-wide helpers
-.md-scroll-frame {
+.app-scroll-frame {
   display: flex;
   flex-direction: column;
   flex: auto;
@@ -389,7 +389,7 @@ body.has-bottom-bar {
     align-items: center;
   }
 }
-.md-scroll {
+.app-scroll {
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
@@ -458,7 +458,7 @@ html,
 body,
 .md-app-container,
 .md-app-scroller {
-  @extend .md-scroll-frame;
+  @extend .app-scroll-frame;
 }
 .md-app {
   flex-direction: column;
@@ -607,7 +607,7 @@ body,
 }
 
 .md-tabs {
-  @extend .md-scroll-frame;
+  @extend .app-scroll-frame;
 
   &-navigation {
     flex-shrink: 0;
@@ -631,7 +631,7 @@ body,
     padding: 0;
 
     &,
-    > .md-scroll-frame {
+    > .app-scroll-frame {
       height: 100%;
     }
   }
@@ -659,10 +659,10 @@ body,
 
 .md-dialog {
   .md-dialog-content {
-    @extend .md-scroll;
+    @extend .app-scroll;
   }
   .md-steppers {
-    @extend .md-scroll-frame;
+    @extend .app-scroll-frame;
 
     font-size: 1.2em;
 
@@ -682,7 +682,7 @@ body,
       padding: 0;
 
       .md-stepper-content {
-        @extend .md-scroll-frame;
+        @extend .app-scroll-frame;
       }
     }
   }

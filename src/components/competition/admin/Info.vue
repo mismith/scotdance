@@ -1,6 +1,6 @@
 <template>
   <blades class="admin-info" :stacks="true">
-    <blade id="blade-subsections" class="md-small-size-100 md-size-25 md-scroll">
+    <blade id="blade-subsections" class="md-small-size-100 md-size-25 app-scroll">
       <md-list>
         <md-list-item
           v-for="subsection in toOrderedArray(section.subsections)"
@@ -12,7 +12,7 @@
         </md-list-item>
       </md-list>
     </blade>
-    <blade id="blade-form" class="md-small-size-100 md-size-75 md-scroll">
+    <blade id="blade-form" class="md-small-size-100 md-size-75 app-scroll">
       <div v-if="currentSubsection">
         <dynamic-form
           v-if="currentSubsection.fields"

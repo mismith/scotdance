@@ -6,7 +6,7 @@
       md-description="Select a file to import"
       :md-done="step !== 'upload'"
     >
-      <div class="md-scroll-frame md-scroll md-padding">
+      <div class="app-scroll-frame app-scroll md-padding">
         <h3>Instructions</h3>
         <ol>
           <li>Select the <strong>Excel spreadsheet</strong> (.xslx file) that contains the values to import.</li>

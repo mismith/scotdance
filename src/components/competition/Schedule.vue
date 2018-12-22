@@ -3,7 +3,7 @@
     <blade
       :active="!currentEvent"
       v-persist-scroll="`/competitions/${competitionId}/schedule`"
-      class="md-small-size-100 md-size-33 md-scroll"
+      class="md-small-size-100 md-size-33 app-scroll"
     >
       <div v-if="schedule.days">
         <div v-for="day in toOrderedArray(schedule.days)" :key="day[idKey]">
@@ -65,7 +65,7 @@
       </div>
     </blade>
     <blade :active="currentEvent" class="md-small-size-100 md-size-66">
-      <div v-if="currentEvent" class="md-scroll-frame">
+      <div v-if="currentEvent" class="app-scroll-frame">
         <md-toolbar class="md-dense md-toolbar-nowrap md-medium-hide">
           <md-button :to="{ name: $route.name, params: { competitionId } }" class="md-icon-button">
             <md-icon>chevron_left</md-icon>
@@ -79,7 +79,7 @@
 
         <div
           v-persist-scroll="`/competitions/${competitionId}/schedule/${dayId}/${blockId}/${eventId}`"
-          class="md-scroll-frame md-scroll"
+          class="app-scroll-frame app-scroll"
         >
           <header>
             <md-subheader class="md-title">{{ currentEvent.name }}</md-subheader>

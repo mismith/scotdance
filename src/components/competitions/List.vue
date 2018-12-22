@@ -1,9 +1,9 @@
 <template>
-  <div class="competitions-list md-scroll-frame alt">
+  <div class="competitions-list app-scroll-frame alt">
     <div
       v-if="loaded"
       v-persist-scroll="'/competitions'"
-      class="md-scroll-frame md-scroll"
+      class="app-scroll-frame app-scroll"
     >
       <md-list class="md-list-cards">
         <md-list-item-cards
@@ -34,7 +34,7 @@
         />
       </div>
     </div>
-    <div v-else class="md-scroll-frame spinner-container">
+    <div v-else class="app-scroll-frame spinner-container">
       <mi-md-spinner />
     </div>
   </div>

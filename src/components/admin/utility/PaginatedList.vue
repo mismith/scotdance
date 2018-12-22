@@ -1,6 +1,6 @@
 <template>
-  <div class="paginated-list md-scroll-frame">
-    <div class="md-scroll-frame md-scroll">
+  <div class="paginated-list app-scroll-frame">
+    <div class="app-scroll-frame app-scroll">
       <md-list v-if="items.length">
         <slot v-for="item in paginated" v-bind="item" />
       </md-list>

@@ -1,6 +1,6 @@
 <template>
   <blades class="admin-dance-groups" :stacks="true">
-    <blade id="blade-groups" :active="!currentGroup" class="md-small-size-100 md-size-33 md-scroll">
+    <blade id="blade-groups" :active="!currentGroup" class="md-small-size-100 md-size-33 app-scroll">
       <md-list v-if="groups.length">
         <md-list-item
           v-for="group in groups"
@@ -19,7 +19,7 @@
         />
       </div>
     </blade>
-    <blade id="blade-dances" :active="currentGroup" class="md-small-size-100 md-size-33 md-scroll">
+    <blade id="blade-dances" :active="currentGroup" class="md-small-size-100 md-size-33 app-scroll">
       <md-list v-if="currentGroup">
         <md-list-item
           v-for="dance in dances"
@@ -57,7 +57,7 @@
         />
       </div>
     </blade>
-    <blade class="md-small-size-100 md-size-33 md-scroll">
+    <blade class="md-small-size-100 md-size-33 app-scroll">
       <HotTable v-if="currentGroupDances.length" :settings="hotSettings" class="fullscreen" />
       <div v-else>
         <md-empty-state

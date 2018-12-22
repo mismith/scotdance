@@ -3,7 +3,7 @@
     <blade
       :active="!currentGroup"
       v-persist-scroll="`/competitions/${competitionId}/results`"
-      class="md-small-size-100 md-size-33 md-scroll"
+      class="md-small-size-100 md-size-33 app-scroll"
     >
       <md-list v-if="groupedCategories.length" class="md-list-cards">
         <md-list-item-cards
@@ -47,7 +47,7 @@
       </div>
     </blade>
     <blade :active="currentGroup" class="md-small-size-100 md-size-66">
-      <div v-if="currentGroup" class="md-scroll-frame">
+      <div v-if="currentGroup" class="app-scroll-frame">
         <md-toolbar class="md-dense md-toolbar-nowrap md-medium-hide">
           <md-button :to="{ name: $route.name, params: { competitionId } }" class="md-icon-button">
             <md-icon>chevron_left</md-icon>
@@ -60,7 +60,7 @@
         <div
           id="results-detail"
           v-persist-scroll="`/competitions/${competitionId}/results/${groupId}`"
-          class="md-scroll-frame md-scroll"
+          class="app-scroll-frame app-scroll"
         >
           <md-list class="md-list-cards">
             <md-list-item-cards

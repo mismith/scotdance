@@ -47,7 +47,7 @@ Vue.use(VueLocalStorage, {
 Vue.use(VueScrollTo);
 
 const $scrollAll = (element, options = {}) => {
-  const containers = options.container ? [options.container] : document.querySelectorAll('.md-scroll:not(.persist-scroll)');
+  const containers = options.container ? [options.container] : document.querySelectorAll('.app-scroll:not(.persist-scroll)');
   Array.from(containers).forEach((container) => {
     const scrollTo = scroller();
     scrollTo(element, {

@@ -1,5 +1,5 @@
 <template>
-  <div class="blade md-layout-item md-scroll-frame" :class="{ 'blade-active': active }">
+  <div class="blade md-layout-item app-scroll-frame" :class="{ 'blade-active': active }">
     <slot />
   </div>
 </template>

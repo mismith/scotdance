@@ -1,6 +1,6 @@
 <template>
-  <div class="profile md-scroll-frame">
-    <div class="md-padding md-scroll-frame md-scroll">
+  <div class="profile app-scroll-frame">
+    <div class="md-padding app-scroll-frame app-scroll">
       <dynamic-field :field="{ type: 'avatar' }" :data="me" />
 
       <md-field>

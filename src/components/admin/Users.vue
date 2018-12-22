@@ -1,7 +1,7 @@
 <template>
   <blades class="admin-users">
     <blade :active="!currentUser" class="md-small-size-100 md-size-33">
-      <div v-if="users.length" class="md-scroll-frame">
+      <div v-if="users.length" class="app-scroll-frame">
         <md-toolbar>
           <search-field :filter-by.sync="filterBy" />
           <!--<md-menu md-direction="bottom-end" @selected="sortBy">
@@ -36,7 +36,7 @@
             <md-icon>chevron_right</md-icon>
           </md-list-item>
         </paginated-list>
-        <div v-else class="md-scroll-frame spinner-container">
+        <div v-else class="app-scroll-frame spinner-container">
           <mi-md-spinner />
         </div>
       </div>
@@ -48,7 +48,7 @@
       </div>
     </blade>
     <blade :active="currentUser" class="md-small-size-100 md-size-66">
-      <div v-if="currentUser" class="md-scroll md-padding">
+      <div v-if="currentUser" class="app-scroll md-padding">
         <dynamic-form
           v-if="section.form"
           :fields="section.form.fields"

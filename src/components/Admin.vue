@@ -1,13 +1,13 @@
 <template>
-  <div class="admin md-scroll-frame">
-    <requires-permission :permission="hasPermission" class="md-scroll-frame">
-      <div v-if="currentSection" class="md-scroll-frame">
+  <div class="admin app-scroll-frame">
+    <requires-permission :permission="hasPermission" class="app-scroll-frame">
+      <div v-if="currentSection" class="app-scroll-frame">
         <md-toolbar class="md-dense">
           <span style="flex-grow: 1;"></span>
 
           <md-spunnable :md-spinning="saving" />
         </md-toolbar>
-        <div class="md-scroll-frame md-scroll">
+        <div class="app-scroll-frame app-scroll">
           <!-- <dynamic-form
             v-if="currentSection.form"
             :fields="currentSection.form.fields"

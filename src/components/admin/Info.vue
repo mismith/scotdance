@@ -1,6 +1,6 @@
 <template>
-  <div class="admin-info md-scroll-frame md-scroll">
-    <section class="md-layout md-alignment-center md-scroll-frame md-padding" style="flex-direction: row;">
+  <div class="admin-info app-scroll-frame app-scroll">
+    <section class="md-layout md-alignment-center app-scroll-frame md-padding" style="flex-direction: row;">
       <md-card>
         <md-card-header class="md-layout md-alignment-center">
           <md-icon class="md-size-4x">event</md-icon>
