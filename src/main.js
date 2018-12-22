@@ -23,6 +23,7 @@ import Blade from '@/components/utility/Blade.vue';
 import Gravatar from '@/components/utility/Gravatar.vue';
 import MdListItemCards from '@/components/utility/MdListItemCards.vue';
 
+import './plugins/vuetify';
 import $package from '../package.json';
 
 // disable (amongst other things) vue-localstoreage verbose logging
