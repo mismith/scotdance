@@ -10,7 +10,7 @@
       class="md-icon-button md-raised md-primary md-list-action"
       :disabled="!isValid"
     >
-      <md-icon>add</md-icon>
+      <v-icon>add</v-icon>
     </md-button>
   </form>
 </template>

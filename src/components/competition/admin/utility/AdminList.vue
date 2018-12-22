@@ -35,7 +35,7 @@
         </md-field>
 
         <md-button type="submit" :disabled="!isAddNewValid(newItem)" class="md-icon-button md-raised md-primary">
-          <md-icon>add</md-icon>
+          <v-icon>add</v-icon>
         </md-button>
       </md-list-item>
     </form>

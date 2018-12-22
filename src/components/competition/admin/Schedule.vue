@@ -29,7 +29,7 @@
               >
                 <md-icon class="sortable-handle">drag_indicator</md-icon>
                 <div class="md-list-item-text">{{ blade.name(item) }}</div>
-                <md-icon>chevron_right</md-icon>
+                <v-icon>chevron_right</v-icon>
               </md-list-item>
             </draggable>
           </md-list-item-cards>
@@ -48,7 +48,7 @@
                 @click="handleListItemCreate(blade, preset)"
               >
                 <div class="md-list-item-text">{{ blade.name(preset) }}</div>
-                <md-icon>add</md-icon>
+                <v-icon>add</v-icon>
               </md-list-item>
             </md-list>
           </md-list-item-cards>

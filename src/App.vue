@@ -57,7 +57,7 @@
         <requires-auth-dialog name="favorites">
           <template slot="title">
             Track your favourites
-            <md-icon class="md-accent">star</md-icon>
+            <v-icon color="accent">star</v-icon>
           </template>
           <p>To see the dancers you care most about <strong>featured throughout the app</strong>, you'll need an account first.</p>
           <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
@@ -85,13 +85,13 @@
           <md-subheader>Account</md-subheader>
 
           <md-list-item :to="{ name: 'profile' }" @click="closeMenu()">
-            <md-icon>account_circle</md-icon>
+            <v-icon>account_circle</v-icon>
             <span class="md-list-item-text">My Profile</span>
           </md-list-item>
 
           <md-divider style="margin-top: auto;" />
           <md-list-item @click="logout().then(toggleAccount)">
-            <md-icon>exit_to_app</md-icon>
+            <v-icon>exit_to_app</v-icon>
             <span class="md-list-item-text">Logout</span>
           </md-list-item>
         </md-list>
@@ -132,7 +132,7 @@
           <md-subheader>Links</md-subheader>
 
           <md-list-item to="/" exact @click="closeMenu()">
-            <md-icon>home</md-icon>
+            <v-icon>home</v-icon>
             <span class="md-list-item-text">App Home</span>
           </md-list-item>
           <md-list-item
@@ -140,7 +140,7 @@
             :to="{ name: 'admin.info' }"
             @click="closeMenu()"
           >
-            <md-icon>settings_applications</md-icon>
+            <v-icon>settings_applications</v-icon>
             <span class="md-list-item-text">App Admin</span>
           </md-list-item>
         </md-list>

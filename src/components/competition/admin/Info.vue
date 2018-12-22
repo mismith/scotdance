@@ -8,7 +8,7 @@
           :to="{ name: 'competition.admin.info', params: { subsectionId: subsection[idKey] } }"
         >
           <div class="md-list-item-text">{{ subsection.title }}</div>
-          <md-icon>chevron_right</md-icon>
+          <v-icon>chevron_right</v-icon>
         </md-list-item>
       </md-list>
     </blade>

@@ -4,7 +4,7 @@
     class="competition-list-item"
     :class="{ listed: competition.listed, published: competition.published }"
   >
-    <md-icon>event</md-icon>
+    <v-icon>event</v-icon>
 
     <div class="md-list-item-text">
       <span>{{ competition.name }}</span>
@@ -21,7 +21,7 @@
       :to="{ name: 'competition.admin.info', params: { competitionId: competition[idKey] } }"
       class="md-icon-button md-list-action"
     >
-      <md-icon>settings</md-icon>
+      <v-icon>settings</v-icon>
     </md-button>
   </md-list-item>
 </template>

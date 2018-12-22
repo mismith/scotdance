@@ -14,7 +14,7 @@
 
     <md-toolbar class="pagination md-dense">
       <md-button @click="page -= 1" :disabled="page <= 1" class="md-icon-button">
-        <md-icon>skip_previous</md-icon>
+        <v-icon>skip_previous</v-icon>
       </md-button>
       <div class="info">
         Page
@@ -26,7 +26,7 @@
         of {{ pages.length }}
       </div>
       <md-button @click="page += 1" :disabled="page >= pages.length" class="md-icon-button">
-        <md-icon>skip_next</md-icon>
+        <v-icon>skip_next</v-icon>
       </md-button>
     </md-toolbar>
   </div>

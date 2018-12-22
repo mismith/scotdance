@@ -9,7 +9,7 @@
             :key="invite[idKey]"
           >
             <md-avatar class="md-avatar-icon md-primary">
-              <md-icon>check</md-icon>
+              <v-icon>check</v-icon>
             </md-avatar>
             <div class="md-list-item-text">
               <div>{{ invite.payload.email }}</div>
@@ -24,13 +24,13 @@
               class="md-icon-button md-list-action"
               @click="handleAdministratorDemote(invite)"
             >
-              <md-icon>clear</md-icon>
+              <v-icon>clear</v-icon>
               <md-tooltip md-direction="right">Remove Admin</md-tooltip>
             </md-button>
           </md-list-item>
           <md-list-item>
             <md-avatar class="md-avatar-icon">
-              <md-icon>verified_user</md-icon>
+              <v-icon>verified_user</v-icon>
             </md-avatar>
             <div class="md-list-item-text">
               <div>System Administrators</div>
@@ -99,14 +99,14 @@
               class="md-icon-button md-list-action"
               @click="handleInviteDelete(invite)"
             >
-              <md-icon>delete</md-icon>
+              <v-icon>delete</v-icon>
               <md-tooltip md-direction="right">Delete Invite</md-tooltip>
             </md-button>
             <md-button
               class="md-icon-button md-list-action"
               @click="handleInviteCancel(invite)"
             >
-              <md-icon>clear</md-icon>
+              <v-icon>clear</v-icon>
               <md-tooltip md-direction="right">Cancel Invite</md-tooltip>
             </md-button>
           </md-list-item>

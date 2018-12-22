@@ -9,7 +9,7 @@
           :class="{ active: isActive(group) }"
         >
           <span class="md-list-item-text">{{ group.$name }}</span>
-          <md-icon>chevron_right</md-icon>
+          <v-icon>chevron_right</v-icon>
         </md-list-item>
       </md-list>
       <div v-else>

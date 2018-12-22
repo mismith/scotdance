@@ -15,14 +15,14 @@
       @click="filterByDebounced = ''"
       class="md-icon-button md-dense"
     >
-      <md-icon>clear</md-icon>
+      <v-icon>clear</v-icon>
     </md-button>
     <md-button
       v-else
       class="md-icon-button md-dense"
       disabled
     >
-      <md-icon>search</md-icon>
+      <v-icon>search</v-icon>
     </md-button>
   </md-field>
 </template>

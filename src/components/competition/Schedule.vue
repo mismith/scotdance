@@ -68,7 +68,7 @@
       <div v-if="currentEvent" class="app-scroll-frame">
         <md-toolbar class="md-dense md-toolbar-nowrap md-medium-hide">
           <md-button :to="{ name: $route.name, params: { competitionId } }" class="md-icon-button">
-            <md-icon>chevron_left</md-icon>
+            <v-icon>chevron_left</v-icon>
           </md-button>
           <span>
             {{ currentDay.name }}

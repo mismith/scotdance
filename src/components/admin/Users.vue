@@ -6,7 +6,7 @@
           <search-field :filter-by.sync="filterBy" />
           <!--<md-menu md-direction="bottom-end" @selected="sortBy">
             <md-button md-menu-trigger class="md-icon-button">
-              <md-icon>filter_list</md-icon>
+              <v-icon>filter_list</v-icon>
             </md-button>
 
             <md-menu-content>
@@ -33,7 +33,7 @@
               <div>{{ user.displayName }}</div>
               <div>{{ user.uid }}</div>
             </div>
-            <md-icon>chevron_right</md-icon>
+            <v-icon>chevron_right</v-icon>
           </md-list-item>
         </paginated-list>
         <div v-else class="app-scroll-frame spinner-container">

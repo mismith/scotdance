@@ -13,7 +13,7 @@
     </md-list>
 
     <md-button @click.stop="confirmRemove = true" class="md-icon-button">
-      <md-icon>delete</md-icon>
+      <v-icon>delete</v-icon>
     </md-button>
     <md-dialog-confirm
       :md-active.sync="confirmRemove"

@@ -6,7 +6,7 @@
           <search-field :filter-by.sync="filterBy" />
           <md-menu md-direction="bottom-end" @selected="sortBy">
             <md-button md-menu-trigger class="md-icon-button">
-              <md-icon>filter_list</md-icon>
+              <v-icon>filter_list</v-icon>
             </md-button>
 
             <md-menu-content>
@@ -23,7 +23,7 @@
             class="md-icon-button"
             :class="{ 'md-accent': onlyFavorites }"
           >
-            <md-icon>{{ onlyFavorites ? 'star' : 'star_border' }}</md-icon>
+            <v-icon>{{ onlyFavorites ? 'star' : 'star_border' }}</v-icon>
           </md-button>
         </md-toolbar>
 
@@ -87,7 +87,7 @@
       <div v-if="currentDancer" class="app-scroll-frame">
         <md-toolbar class="md-dense md-toolbar-nowrap md-medium-hide">
           <md-button :to="{ name: $route.name, params: { competitionId } }" class="md-icon-button">
-            <md-icon>chevron_left</md-icon>
+            <v-icon>chevron_left</v-icon>
           </md-button>
           <span>Dancers</span>
         </md-toolbar>

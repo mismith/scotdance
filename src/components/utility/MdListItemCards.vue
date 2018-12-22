@@ -12,7 +12,7 @@
         <slot />
 
         <md-button class="md-icon-button">
-          <md-icon>chevron_right</md-icon>
+          <v-icon>chevron_right</v-icon>
         </md-button>
       </div>
 
