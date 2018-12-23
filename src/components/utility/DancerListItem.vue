@@ -1,32 +1,36 @@
 <template>
-  <md-list-item
+  <v-list-tile
     :to="to"
     @click="$emit('click', $event)"
     class="dancer-list-item"
     :class="{ placeholder: dancer.number === '?' }"
   >
     <slot name="avatar">
-      <md-avatar class="md-avatar-icon" :class="{ 'md-accent': dancer.$favorite }">
+      <v-list-tile-avatar :color="dancer.$favorite ? 'secondary' : 'grey'" class="white--text">
         <span>{{ dancer.number || '#' }}</span>
-      </md-avatar>
+      </v-list-tile-avatar>
     </slot>
 
-    <div class="md-list-item-text">
-      <span>{{ dancer.$name }}</span>
-      <p>
+    <v-list-tile-content>
+      <v-list-tile-title>{{ dancer.$name }}</v-list-tile-title>
+      <v-list-tile-sub-title>
         <span v-if="dancer.$group" class="group">{{ dancer.$group.$name }}</span>
         <span class="location">{{ dancer.location }}</span>
-      </p>
-    </div>
+      </v-list-tile-sub-title>
+    </v-list-tile-content>
 
     <slot />
 
-    <favorite-dancer-button :dancer="dancer" class="md-list-action" />
-
-    <slot name="icon">
-      <place v-if="place !== undefined" :place="place" />
-    </slot>
-  </md-list-item>
+    <v-list-tile-action>
+      <slot name="favorite">
+        <favorite-dancer-button :dancer="dancer" @click.stop />
+      </slot>
+    </v-list-tile-action>
+    <v-list-tile-action v-if="place !== undefined">
+      <place v-if="place > 0" :place="place" class="primary--text" />
+      <v-icon v-else-if="place === 0" color="primary" class="icon-trophy" />
+    </v-list-tile-action>
+  </v-list-tile>
 </template>
 
 <script>

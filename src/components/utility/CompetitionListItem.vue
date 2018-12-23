@@ -1,29 +1,33 @@
 <template>
-  <md-list-item
+  <v-list-tile
     :to="to"
     class="competition-list-item"
     :class="{ listed: competition.listed, published: competition.published }"
   >
-    <v-icon>event</v-icon>
+    <v-list-tile-action>
+      <v-icon>event</v-icon>
+    </v-list-tile-action>
 
-    <div class="md-list-item-text">
-      <span>{{ competition.name }}</span>
-      <p>
+    <v-list-tile-content>
+      <v-list-tile-title>{{ competition.name }}</v-list-tile-title>
+      <v-list-tile-sub-title>
         <span v-if="competition.date">{{ $moment(competition.date).format('MMM D, YYYY') }}</span>
         <span v-if="competition.location">{{ competition.location }}</span>
-      </p>
-    </div>
+      </v-list-tile-sub-title>
+    </v-list-tile-content>
 
     <slot />
 
-    <md-button
-      v-if="$store.getters.hasPermission(`competitions/${competition[idKey]}`)"
-      :to="{ name: 'competition.admin.info', params: { competitionId: competition[idKey] } }"
-      class="md-icon-button md-list-action"
-    >
-      <v-icon>settings</v-icon>
-    </md-button>
-  </md-list-item>
+    <v-list-tile-action>
+      <v-btn
+        icon
+        v-if="$store.getters.hasPermission(`competitions/${competition[idKey]}`)"
+        :to="{ name: 'competition.admin.info', params: { competitionId: competition[idKey] } }"
+      >
+        <v-icon>settings</v-icon>
+      </v-btn>
+    </v-list-tile-action>
+  </v-list-tile>
 </template>
 
 <script>

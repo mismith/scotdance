@@ -10,12 +10,12 @@
     <md-dialog-content>
       <slot />
     </md-dialog-content>
-    <div class="md-padding md-bg-primary" style="position: relative;">
+    <div class="pa-3 primary" style="position: relative;">
       <div class="account-bg"></div>
       <account-buttons />
     </div>
     <md-dialog-actions>
-      <md-button @click="dialogVisible = false">Not Now</md-button>
+      <v-btn @click="dialogVisible = false">Not Now</v-btn>
     </md-dialog-actions>
   </md-dialog>
 </template>

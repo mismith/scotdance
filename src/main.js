@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import VueFire from 'vuefire';
 import VueMaterial from 'vue-material';
-import 'vue-material/dist/vue-material.css';
+// import 'vue-material/dist/vue-material.css';
 import VueAsyncComputed from 'vue-async-computed';
 import VueBodyClass from 'vue-body-class';
 import VueLocalStorage from 'vue-localstorage';
@@ -17,11 +17,10 @@ import router from '@/router';
 import store from '@/store';
 
 import MiMdSpinner from '@/components/utility/MiMdSpinner.vue';
-import MdSpinnable from '@/components/utility/MdSpinnable.vue';
+import EmptyState from '@/components/utility/EmptyState.vue';
 import Blades from '@/components/utility/Blades.vue';
 import Blade from '@/components/utility/Blade.vue';
 import Gravatar from '@/components/utility/Gravatar.vue';
-import MdListItemCards from '@/components/utility/MdListItemCards.vue';
 
 import './plugins/vuetify';
 import $package from '../package.json';
@@ -33,12 +32,11 @@ Vue.config.silent = true;
 Vue.prototype.$moment = moment;
 Vue.use(VueFire);
 Vue.use(VueMaterial);
+Vue.component('empty-state', EmptyState);
 Vue.component('mi-md-spinner', MiMdSpinner);
-Vue.component('md-spinnable', MdSpinnable);
 Vue.component('blades', Blades);
 Vue.component('blade', Blade);
 Vue.component('gravatar', Gravatar);
-Vue.component('md-list-item-cards', MdListItemCards);
 Vue.use(VueAsyncComputed);
 Vue.use(VueBodyClass, router);
 Vue.use(VueLocalStorage, {

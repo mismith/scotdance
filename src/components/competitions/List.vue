@@ -5,32 +5,31 @@
       v-persist-scroll="'/competitions'"
       class="app-scroll-frame app-scroll"
     >
-      <md-list class="md-list-cards">
-        <md-list-item-cards
+      <v-list expand class="grouped">
+        <v-list-group
           v-for="group in groupedCompetitions"
           :key="group[idKey]"
           v-if="group.competitions.length"
-          md-expand
-          :md-expanded="isGroupExpanded(group, groupedCompetitions)"
-          @toggled="handleGroupExpanded(group[idKey], $event)"
+          :value="isGroupExpanded(group, groupedCompetitions)"
+          @input="handleGroupExpanded(group[idKey], $event)"
         >
-          <md-subheader>{{ group.name }}</md-subheader>
+          <v-subheader slot="activator">{{ group.name }}</v-subheader>
 
-          <md-list slot="md-expand" class="md-double-line">
+          <v-list two-line>
             <competition-list-item
               v-for="competition in group.competitions"
               :key="competition[idKey]"
               :competition="competition"
               :to="{ name: 'competition.info', params: { competitionId: competition[idKey] } }"
             />
-          </md-list>
-        </md-list-item-cards>
-      </md-list>
+          </v-list>
+        </v-list-group>
+      </v-list>
 
       <div v-if="!competitions.length">
-        <md-empty-state
-          md-icon="clear"
-          md-label="No competitions found"
+        <empty-state
+          icon="clear"
+          label="No competitions found"
         />
       </div>
     </div>

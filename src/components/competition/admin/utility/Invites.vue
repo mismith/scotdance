@@ -1,43 +1,44 @@
 <template>
   <div class="admin-invites">
-    <md-list class="md-list-cards">
-      <md-list-item-cards md-expand md-expanded>
-        <md-subheader>Administrators</md-subheader>
-        <md-list slot="md-expand" class="md-double-line">
-          <md-list-item
+    <v-list expand class="grouped">
+      <v-list-group :value="true">
+        <v-subheader slot="activator">Administrators</v-subheader>
+        <v-list two-line>
+          <v-list-tile
             v-for="invite in administrators"
             :key="invite[idKey]"
           >
-            <md-avatar class="md-avatar-icon md-primary">
+            <v-list-tile-avatar color="primary">
               <v-icon>check</v-icon>
-            </md-avatar>
-            <div class="md-list-item-text">
-              <div>{{ invite.payload.email }}</div>
-              <span>
+            </v-list-tile-avatar>
+            <v-list-tile-content>
+              <v-list-tile-title>{{ invite.payload.email }}</v-list-tile-title>
+              <v-list-tile-sub-title>
                 Since
                 <time :title="invite.accepted">
                   {{ $moment(invite.accepted).fromNow() }}
                 </time>
-              </span>
-            </div>
-            <md-button
-              class="md-icon-button md-list-action"
-              @click="handleAdministratorDemote(invite)"
-            >
-              <v-icon>clear</v-icon>
-              <md-tooltip md-direction="right">Remove Admin</md-tooltip>
-            </md-button>
-          </md-list-item>
-          <md-list-item>
-            <md-avatar class="md-avatar-icon">
+              </v-list-tile-sub-title>
+            </v-list-tile-content>
+            <v-list-tile-action>
+              <v-tooltip>
+                <v-btn icon slot="activator" @click="handleAdministratorDemote(invite)">
+                  <v-icon>clear</v-icon>
+                </v-btn>
+                <span>Remove Admin</span>
+              </v-tooltip>
+            </v-list-tile-action>
+          </v-list-tile>
+          <v-list-tile>
+            <v-list-tile-avatar>
               <v-icon>verified_user</v-icon>
-            </md-avatar>
-            <div class="md-list-item-text">
-              <div>System Administrators</div>
-            </div>
-          </md-list-item>
-        </md-list>
-      </md-list-item-cards>
+            </v-list-tile-avatar>
+            <v-list-tile-content>
+              <v-list-tile-title>System Administrators</v-list-tile-title>
+            </v-list-tile-content>
+          </v-list-tile>
+        </v-list>
+      </v-list-group>
 
       <md-dialog-confirm
         :md-active.sync="confirmDemote"
@@ -48,76 +49,86 @@
         @md-confirm="confirmDemote.resolve()"
         @md-cancel="confirmDemote.reject()"
       />
-    </md-list>
-    <md-list class="md-list-cards">
-      <md-list-item-cards md-expand md-expanded>
-        <md-subheader>Invites</md-subheader>
-        <md-list slot="md-expand" class="md-double-line">
-          <md-list-item
+    </v-list>
+    <v-list expand class="grouped">
+      <v-list-group :value="true">
+        <v-subheader slot="activator">Invites</v-subheader>
+        <v-list two-line>
+          <v-list-tile
             v-for="invite in invites"
             :key="invite[idKey]"
           >
-            <md-avatar
-              class="md-avatar-icon"
-              :class="{
-                'md-accent': FirebaseInvites.is(invite, FirebaseInvites.status.CREATED),
-              }"
+            <v-list-tile-avatar
+              :color="FirebaseInvites.is(invite, FirebaseInvites.status.CREATED) && 'secondary'"
             >
-              <md-icon>{{
+              <v-icon>{{
                 FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED, FirebaseInvites.status.EXPIRED)
                 ? 'clear'
                 : 'mail_outline'
-              }}</md-icon>
-            </md-avatar>
-            <div class="md-list-item-text">
-              <div>{{ invite.payload.email }}</div>
-              <span v-if="FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED)">
-                Cancelled
-                <time :title="invite.cancelled">
-                  {{ $moment(invite.cancelled).fromNow() }}
-                </time>
-              </span>
-              <span v-else-if="FirebaseInvites.is(invite, FirebaseInvites.status.EXPIRED)">
-                Expired
-                <time :title="invite.expires">
-                  {{ $moment(invite.expires).fromNow() }}
-                </time>
-              </span>
-              <span v-else-if="FirebaseInvites.is(invite, FirebaseInvites.status.CREATED)">
-                Invited
-                <time :title="invite.created">
-                  {{ $moment(invite.created).fromNow() }}
-                </time>
-              </span>
-              <span>
-                &bull;
-                <a href="#" @click="handleInviteResend(invite)">Resend</a>
-              </span>
-            </div>
-            <md-button
-              v-if="FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED, FirebaseInvites.status.EXPIRED)"
-              class="md-icon-button md-list-action"
-              @click="handleInviteDelete(invite)"
-            >
-              <v-icon>delete</v-icon>
-              <md-tooltip md-direction="right">Delete Invite</md-tooltip>
-            </md-button>
-            <md-button
-              class="md-icon-button md-list-action"
-              @click="handleInviteCancel(invite)"
-            >
-              <v-icon>clear</v-icon>
-              <md-tooltip md-direction="right">Cancel Invite</md-tooltip>
-            </md-button>
-          </md-list-item>
-          <md-divider />
+              }}</v-icon>
+            </v-list-tile-avatar>
+
+            <v-list-tile-content>
+              <v-list-tile-title>{{ invite.payload.email }}</v-list-tile-title>
+              <v-list-tile-sub-title>
+                <span v-if="FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED)">
+                  Cancelled
+                  <time :title="invite.cancelled">
+                    {{ $moment(invite.cancelled).fromNow() }}
+                  </time>
+                </span>
+                <span v-else-if="FirebaseInvites.is(invite, FirebaseInvites.status.EXPIRED)">
+                  Expired
+                  <time :title="invite.expires">
+                    {{ $moment(invite.expires).fromNow() }}
+                  </time>
+                </span>
+                <span v-else-if="FirebaseInvites.is(invite, FirebaseInvites.status.CREATED)">
+                  Invited
+                  <time :title="invite.created">
+                    {{ $moment(invite.created).fromNow() }}
+                  </time>
+                </span>
+                <span>
+                  &bull;
+                  <a href="#" @click="handleInviteResend(invite)">Resend</a>
+                </span>
+              </v-list-tile-sub-title>
+            </v-list-tile-content>
+
+            <v-list-tile-action v-if="FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED, FirebaseInvites.status.EXPIRED)">
+              <v-tooltip>
+                <v-btn
+                  slot="activator"
+                  icon
+                  @click="handleInviteDelete(invite)"
+                >
+                  <v-icon>delete</v-icon>
+                </v-btn>
+                <span>Delete Invite</span>
+              </v-tooltip>
+            </v-list-tile-action>
+            <v-list-tile-action v-else>
+              <v-tooltip>
+                <v-btn
+                  slot="activator"
+                  icon
+                  @click="handleInviteCancel(invite)"
+                >
+                  <v-icon>clear</v-icon>
+                </v-btn>
+                <span>Cancel Invite</span>
+              </v-tooltip>
+            </v-list-tile-action>
+          </v-list-tile>
+          <v-divider />
           <new-dynamic-field
             :field="{ title: 'Invite by Email', data: 'email', type: 'email' }"
             @change="handleInviteCreate"
           />
-        </md-list>
-      </md-list-item-cards>
-    </md-list>
+        </v-list>
+      </v-list-group>
+    </v-list>
   </div>
 </template>
 

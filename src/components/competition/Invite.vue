@@ -1,11 +1,11 @@
 <template>
   <div class="invite app-scroll-frame app-scroll">
-    <div class="md-layout md-alignment-center md-padding">
+    <v-layout align-center justify-center class="pa-3">
       <div v-if="!$store.state.me">
-        <md-empty-state
-          md-icon="block"
-          md-label="Login required"
-          md-description="In order to accept this invite, you need an account."
+        <empty-state
+          icon="block"
+          label="Login required"
+          description="In order to accept this invite, you need an account."
         />
         <account-buttons />
       </div>
@@ -13,69 +13,68 @@
         <mi-md-spinner />
       </div>
       <div v-else-if="!invite.created">
-        <md-empty-state
-          md-icon="clear"
-          md-label="Invite not found"
-          md-description="Perhaps try asking to be invited again?"
+        <empty-state
+          icon="clear"
+          label="Invite not found"
+          description="Perhaps try asking to be invited again?"
         />
       </div>
       <div v-else-if="invite.accepted && invite.acceptedBy">
         <div v-if="$store.state.me && $store.state.me[idKey] === invite.acceptedBy">
-          <md-empty-state
-            md-icon="check"
-            md-label="Invite accepted"
+          <empty-state
+            icon="check"
+            label="Invite accepted"
             md-rounded
             class="md-primary"
           />
-          <footer class="md-layout md-alignment-center">
-            <md-button
+          <v-layout justify-center>
+            <v-btn
+              color="primary"
               :to="{ name: 'competition.admin.info', params: { competitionId }}"
-              class="md-primary md-raised"
             >
               Administer Competition
-            </md-button>
-          </footer>
+            </v-btn>
+          </v-layout>
         </div>
         <div v-else>
-          <md-empty-state
-            md-icon="cancel"
-            md-label="Invite already accepted"
-            md-description="Perhaps try asking to be invited again?"
+          <empty-state
+            icon="cancel"
+            label="Invite already accepted"
+            description="Perhaps try asking to be invited again?"
           />
         </div>
       </div>
       <div v-else-if="invite.cancelled">
-        <md-empty-state
-          md-icon="cancel"
-          md-label="Invite cancelled"
-          md-description="You'll need to ask to be invited again."
+        <empty-state
+          icon="cancel"
+          label="Invite cancelled"
+          description="You'll need to ask to be invited again."
         />
       </div>
       <div v-else-if="$moment().isAfter(invite.expires)">
-        <md-empty-state
-          md-icon="timer_off"
-          md-label="Invite expired"
-          md-description="You'll need to ask to be invited again."
+        <empty-state
+          icon="timer_off"
+          label="Invite expired"
+          description="You'll need to ask to be invited again."
         />
       </div>
       <div v-else>
-        <md-empty-state
-          md-icon="drafts"
-          md-label="Your Invitation"
-          md-description="Get administrator access to this competition."
+        <empty-state
+          icon="drafts"
+          label="Your Invitation"
+          description="Get administrator access to this competition."
         />
-        <footer class="md-layout md-alignment-center">
-          <md-spinnable :md-spinning="invite.accepted && !invite.acceptedBy">
-            <md-button
-              @click="handleAccept"
-              class="md-primary md-raised"
-            >
-              Accept
-            </md-button>
-          </md-spinnable>
-        </footer>
+        <v-layout justify-center>
+          <v-btn
+            color="primary"
+            :loading="invite.accepted && !invite.acceptedBy"
+            @click="handleAccept"
+          >
+            Accept
+          </v-btn>
+        </v-layout>
       </div>
-    </div>
+    </v-layout>
   </div>
 </template>
 
@@ -128,12 +127,6 @@ export default {
 
 <style lang="scss">
 .invite {
-  > .md-layout {
-    flex: auto;
-    padding-bottom: 15%;
-  }
-  footer {
-    margin-top: 20px;
-  }
+
 }
 </style>

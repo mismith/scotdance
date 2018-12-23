@@ -1,50 +1,51 @@
 <template>
   <blades class="competition-dancers alt">
-    <blade :active="!currentDancer" class="md-small-size-100 md-size-50">
+    <blade :active="!currentDancer" class="xs12 md6">
       <div v-if="dancers.length" class="app-scroll-frame">
-        <md-toolbar>
-          <search-field :filter-by.sync="filterBy" />
-          <md-menu md-direction="bottom-end" @selected="sortBy">
-            <md-button md-menu-trigger class="md-icon-button">
+        <v-toolbar dense>
+          <search-field :filter-by.sync="filterBy" class="flex" />
+          <v-menu @selected="sortBy">
+            <v-btn icon slot="activator">
               <v-icon>filter_list</v-icon>
-            </md-button>
+            </v-btn>
 
-            <md-menu-content>
-              <md-menu-item
+            <v-list>
+              <v-list-tile
                 v-for="by in sortableBys"
                 :key="by.key"
                 @click="sortBy = by.key"
                 :class="{ active: sortBy === by.key }"
-              >{{ by.name }}</md-menu-item>
-            </md-menu-content>
-          </md-menu>
-          <md-button
+              >
+                {{ by.name }}
+              </v-list-tile>
+            </v-list>
+          </v-menu>
+          <v-btn
+            icon
+            :color="onlyFavorites && 'secondary'"
             @click="onlyFavorites = !onlyFavorites"
-            class="md-icon-button"
-            :class="{ 'md-accent': onlyFavorites }"
           >
             <v-icon>{{ onlyFavorites ? 'star' : 'star_border' }}</v-icon>
-          </md-button>
-        </md-toolbar>
+          </v-btn>
+        </v-toolbar>
 
         <div
           v-persist-scroll="`/competitions/${competitionId}/dancers`"
           class="app-scroll-frame app-scroll"
         >
-          <md-list v-if="groupIds.length" class="md-list-cards">
-            <md-list-item-cards
+          <v-list v-if="groupIds.length" expand class="grouped">
+            <v-list-group
               v-for="(group, groupId) in groupedDancers"
               :key="groupId"
-              md-expand
-              :md-expanded="isGroupExpanded(groupId, groupIds)"
-              @toggled="handleGroupExpanded(groupId, $event)"
+              :value="isGroupExpanded(groupId, groupIds)"
+              @input="handleGroupExpanded(groupId, $event)"
             >
-              <md-subheader>
-                {{ groupId || '?' }}
-                <md-icon v-if="hasFavorites(group)" class="md-accent">star</md-icon>
-              </md-subheader>
+              <v-subheader slot="activator">
+                <v-flex>{{ groupId || '?' }}</v-flex>
+                <v-icon v-if="hasFavorites(group)" color="secondary">star</v-icon>
+              </v-subheader>
 
-              <md-list slot="md-expand" class="md-double-line">
+              <v-list two-line>
                 <dancer-list-item
                   v-for="dancer in group"
                   :key="dancer[idKey]"
@@ -52,45 +53,45 @@
                   :to="{ name: $route.name, params: { competitionId, dancerId: dancer[idKey] } }"
                   :class="{ active: dancerId === dancer[idKey] }"
                 />
-              </md-list>
-            </md-list-item-cards>
-          </md-list>
+              </v-list>
+            </v-list-group>
+          </v-list>
           <div v-else-if="!onlyFavorites">
-            <md-empty-state
-              md-icon="error_outline"
-              md-label="No dancers match"
+            <empty-state
+              icon="error_outline"
+              label="No dancers match"
             />
           </div>
           <div v-else-if="me">
-            <md-empty-state
-              md-icon="star_half"
-              md-label="No favourite dancers"
+            <empty-state
+              icon="star_half"
+              label="No favourite dancers"
             />
           </div>
           <div v-else>
-            <md-empty-state
-              md-icon="star_half"
-              md-label="No favourite dancers"
-              md-description="Login to highlight your favourites–making them much easier to find"
+            <empty-state
+              icon="star_half"
+              label="No favourite dancers"
+              description="Login to highlight your favourites–making them much easier to find"
             />
           </div>
         </div>
       </div>
       <div v-else>
-        <md-empty-state
-          md-icon="clear"
-          md-label="No dancers yet"
+        <empty-state
+          icon="clear"
+          label="No dancers yet"
         />
       </div>
     </blade>
-    <blade :active="currentDancer" class="md-small-size-100 md-size-50">
+    <blade :active="currentDancer" class="xs12 md6">
       <div v-if="currentDancer" class="app-scroll-frame">
-        <md-toolbar class="md-dense md-toolbar-nowrap md-medium-hide">
-          <md-button :to="{ name: $route.name, params: { competitionId } }" class="md-icon-button">
+        <v-toolbar dense class="hidden-md-and-up">
+          <v-btn icon :to="{ name: $route.name, params: { competitionId } }">
             <v-icon>chevron_left</v-icon>
-          </md-button>
+          </v-btn>
           <span>Dancers</span>
-        </md-toolbar>
+        </v-toolbar>
 
         <div
           v-persist-scroll="`/competitions/${competitionId}/dancers/${dancerId}`"
@@ -106,10 +107,10 @@
         </div>
       </div>
       <div v-else>
-        <md-empty-state
-          md-icon="touch_app"
-          md-label="See dancer details"
-          md-description="Select a dancer"
+        <empty-state
+          icon="touch_app"
+          label="See dancer details"
+          description="Select a dancer"
         />
       </div>
     </blade>

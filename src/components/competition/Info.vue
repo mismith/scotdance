@@ -5,11 +5,11 @@
       class="app-scroll-frame app-scroll"
     >
       <section class="hero">
-        <h1 class="md-display-1">{{ competition.name }}</h1>
-        <p v-if="competition.date" class="md-headline">
+        <h1 class="display-1">{{ competition.name }}</h1>
+        <p v-if="competition.date" class="headline">
           {{ $moment(competition.date).format('dddd, MMMM D, YYYY') }}
         </p>
-        <p v-if="competition.venue" class="md-subheading">
+        <p v-if="competition.venue" class="subheading">
           <a v-if="competition.address" :href="`https://maps.google.com/?q=${competition.venue},+${competition.address}`" target="_blank" class="ext">{{ competition.venue }}</a>
           <span v-else>{{ competition.venue }}</span>
           <br />
@@ -18,17 +18,16 @@
         <p v-if="competition.sobhd">
           <small><strong>SOBHD</strong> {{ competition.sobhd }}</small>
         </p>
-        <div v-if="competition.registrationURL" class="md-layout md-alignment-center">
-          <div>
-            <md-button
-              :href="competition.registrationURL"
-              target="_blank"
-              class="md-primary md-raised solo"
-            >
-              <span class="ext">Register</span>
-            </md-button>
-          </div>
-          <div class="md-layout-item" style="opacity: 0.66; margin-left: 16px;">
+        <v-layout v-if="competition.registrationURL">
+          <v-btn
+            :href="competition.registrationURL"
+            target="_blank"
+            color="primary"
+            class="ml-0"
+          >
+            <span class="ext">Register</span>
+          </v-btn>
+          <v-flex style="opacity: 0.66;">
             <div v-if="competition.registrationStart">
               Registration open{{ $moment(competition.registrationStart).isAfter() ? 's' : 'ed'}}
               {{ $moment(competition.registrationStart).format('MMM D, YYYY \\a\\t h:mma') }}
@@ -37,34 +36,33 @@
               Registration close{{ $moment(competition.registrationEnd).isAfter() ? 's' : 'd'}}
               {{ $moment(competition.registrationEnd).format('MMM D, YYYY \\a\\t h:mma') }}
             </div>
-          </div>
-        </div>
+          </v-flex>
+        </v-layout>
       </section>
 
-      <md-list v-if="staff.length" class="staff md-list-cards">
-        <md-list-item-cards
+      <v-list v-if="staff.length" expand class="staff grouped">
+        <v-list-group
           v-for="(group, name) in groupedStaff"
           :key="name"
-          md-expand
-          :md-expanded="isGroupExpanded(name, Object.keys(groupedStaff))"
-          @toggled="handleGroupExpanded(name, $event)"
+          :value="isGroupExpanded(name, Object.keys(groupedStaff))"
+          @input="handleGroupExpanded(name, $event)"
         >
-          <md-subheader>{{ name }}s</md-subheader>
+          <v-subheader slot="activator">{{ name }}s</v-subheader>
 
-          <md-list slot="md-expand" class="md-double-line md-dense" :class="{ 'long-list': group.length > 12 }">
+          <v-list two-line :class="{ 'long-list': group.length > 12 }">
             <dancer-list-item
               v-for="member of group"
               :key="member[idKey]"
               :dancer="member"
               @click="setCurrentDialog(['staff', member])"
             >
-              <md-avatar v-if="member.image" slot="icon">
+              <v-list-tile-avatar v-if="member.image" slot="avatar">
                 <img :src="member.image" />
-              </md-avatar>
+              </v-list-tile-avatar>
             </dancer-list-item>
-          </md-list>
-        </md-list-item-cards>
-      </md-list>
+          </v-list>
+        </v-list-group>
+      </v-list>
     </div>
   </div>
 </template>

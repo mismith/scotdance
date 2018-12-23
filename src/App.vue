@@ -1,42 +1,46 @@
 <template>
-  <md-app id="app" class="app-scroll-frame">
-    <md-app-toolbar class="md-primary print-hide" style="flex-wrap: nowrap;">
-      <md-button class="md-icon-button" @click="menuVisible = !menuVisible">
-        <md-icon>menu</md-icon>
-      </md-button>
+  <v-app id="app" class="app-scroll-frame">
+    <v-toolbar app color="primary" dark class="print-hide">
+      <v-toolbar-side-icon @click="menuVisible = !menuVisible" />
 
-      <router-link :to="{ name: 'competitions' }" class="md-title" style="margin-right: auto;">{{ title }}</router-link>
+      <v-toolbar-title>
+        <router-link :to="{ name: 'competitions' }">{{ title }}</router-link>
+      </v-toolbar-title>
 
-      <md-button
+      <v-spacer />
+
+      <v-btn
+        icon
         v-if="$route.params.competitionId && $store.getters.hasPermission(`competitions/${$route.params.competitionId}`) && getMirrorRoute()"
         :to="getMirrorRoute()"
-        class="md-icon-button"
       >
-        <md-icon>{{ /^competition.admin/.test($route.name) ? 'visibility' : 'settings' }}</md-icon>
-      </md-button>
+        <v-icon>{{ /^competition.admin/.test($route.name) ? 'visibility' : 'settings' }}</v-icon>
+      </v-btn>
 
-      <md-menu>
-        <md-button md-menu-trigger class="md-icon-button">
-          <md-icon>help</md-icon>
-        </md-button>
+      <v-menu>
+        <v-btn icon slot="activator">
+          <v-icon>help</v-icon>
+        </v-btn>
 
-        <md-menu-content>
-          <md-menu-item :to="{ name: 'home', query: { at: 'about' } }" exact>
-            About
-          </md-menu-item>
-          <md-menu-item :to="{ name: 'home', query: { at: 'faq' } }" exact>
-            FAQs
-          </md-menu-item>
-          <md-divider />
-          <md-menu-item @click="help(true)">Feedback</md-menu-item>
-          <md-menu-item v-if="$store.state.helpVisible" @click="help(false)" class="md-accent">
-            Hide Live Chat
-          </md-menu-item>
-          <md-divider />
-          <md-list-item @click="confirmClearLocalStorage = true">
-            <span class="md-list-item-text">Clear App Cache</span>
-          </md-list-item>
-        </md-menu-content>
+        <v-list>
+          <v-list-tile :to="{ name: 'home', query: { at: 'about' } }" exact>
+            <v-list-tile-title>About</v-list-tile-title>
+          </v-list-tile>
+          <v-list-tile :to="{ name: 'home', query: { at: 'faq' } }" exact>
+            <v-list-tile-title>FAQs</v-list-tile-title>
+          </v-list-tile>
+          <v-divider />
+          <v-list-tile @click="help(true)">
+            <v-list-tile-title>Feedback</v-list-tile-title>
+          </v-list-tile>
+          <v-list-tile v-if="$store.state.helpVisible" @click="help(false)">
+            <v-list-tile-title class="error--text">Hide Live Chat</v-list-tile-title>
+          </v-list-tile>
+          <v-divider />
+          <v-list-tile @click="confirmClearLocalStorage = true">
+            <v-list-tile-title>Clear App Cache</v-list-tile-title>
+          </v-list-tile>
+        </v-list>
 
         <md-dialog-confirm
           :md-active.sync="confirmClearLocalStorage"
@@ -46,108 +50,128 @@
           md-cancel-text="No"
           @md-confirm="clearLocalStorage()"
         />
-      </md-menu>
-    </md-app-toolbar>
+      </v-menu>
+    </v-toolbar>
 
-    <md-app-drawer :md-active.sync="menuVisible">
-      <md-toolbar class="md-primary md-large md-account-header">
+    <v-navigation-drawer app v-model="menuVisible">
+      <header class="account-header primary">
         <div class="account-bg"></div>
+        <account-buttons v-if="!me" class="pa-3" />
+        <div v-else>
+          <v-list three-line>
+            <v-list-tile class="has-avatar">
+              <v-avatar :size="64">
+                <gravatar :user="me" />
+              </v-avatar>
+            </v-list-tile>
+          </v-list>
+          <v-list dark>
+            <v-list-group v-model="accountToggled" no-action>
+              <v-list-tile slot="activator">
+                <v-list-tile-content>
+                  <v-list-tile-title>
+                    {{ me.displayName || me.email || 'Account' }}
+                  </v-list-tile-title>
+                </v-list-tile-content>
+              </v-list-tile>
+            </v-list-group>
+          </v-list>
+        </div>
+
         <register-dialog />
         <login-dialog />
         <requires-auth-dialog name="favorites">
           <template slot="title">
             Track your favourites
-            <v-icon color="accent">star</v-icon>
+            <v-icon color="secondary">star</v-icon>
           </template>
           <p>To see the dancers you care most about <strong>featured throughout the app</strong>, you'll need an account first.</p>
           <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
         </requires-auth-dialog>
-        <account-buttons v-if="!me" class="md-padding" />
-        <md-list v-else class="md-transparent">
-          <md-list-item>
-            <md-avatar class="md-large">
-              <gravatar :user="me" />
-            </md-avatar>
-          </md-list-item>
-          <md-list-item @click="toggleAccount()" :class="{ toggled: accountToggled }">
-            <div class="md-list-item-text">
-              <span>{{ me.displayName || me.email || 'Account' }}</span>
-            </div>
-            <md-button class="md-icon-button md-list-action" @click.stop="toggleAccount()">
-              <md-icon>arrow_drop_down</md-icon>
-            </md-button>
-          </md-list-item>
-        </md-list>
-      </md-toolbar>
+      </header>
 
       <div class="app-scroll-frame app-scroll">
-        <md-list v-if="accountToggled" class="animate-in" style="flex: auto;">
-          <md-subheader>Account</md-subheader>
+        <v-list v-if="accountToggled" class="animate-in">
+          <v-subheader>Account</v-subheader>
 
-          <md-list-item :to="{ name: 'profile' }" @click="closeMenu()">
-            <v-icon>account_circle</v-icon>
-            <span class="md-list-item-text">My Profile</span>
-          </md-list-item>
+          <v-list-tile :to="{ name: 'profile' }" @click="closeMenu()">
+            <v-list-tile-action>
+              <v-icon>account_circle</v-icon>
+            </v-list-tile-action>
+            <v-list-tile-title>My Profile</v-list-tile-title>
+          </v-list-tile>
 
-          <md-divider style="margin-top: auto;" />
-          <md-list-item @click="logout().then(toggleAccount)">
-            <v-icon>exit_to_app</v-icon>
-            <span class="md-list-item-text">Logout</span>
-          </md-list-item>
-        </md-list>
-        <md-list v-if="!accountToggled" class="md-double-line md-dense" style="margin-bottom: auto;">
-          <md-subheader>
-            <div>Competitions</div>
+          <v-spacer />
+          <v-divider />
+          <v-list-tile @click="logout().then(toggleAccount)">
+            <v-list-tile-action>
+              <v-icon>exit_to_app</v-icon>
+            </v-list-tile-action>
+            <v-list-tile-title>Logout</v-list-tile-title>
+          </v-list-tile>
+        </v-list>
 
-            <md-button
-              v-if="$store.getters.hasPermission('admin')"
-              :to="{ name: 'competition.admin.info', params: { competitionId: db.push().key } }"
+        <template v-else>
+          <v-list two-line>
+            <v-subheader>
+              <v-flex>Competitions</v-flex>
+
+              <v-btn
+                icon
+                v-if="$store.getters.hasPermission('admin')"
+                :to="{ name: 'competition.admin.info', params: { competitionId: db.push().key } }"
+                @click.native="closeMenu()"
+              >
+                <v-icon>add</v-icon>
+              </v-btn>
+            </v-subheader>
+
+            <competition-list-item
+              v-for="competition in relevantCompetitions"
+              :key="competition[idKey]"
+              :competition="competition"
+              :to="{ name: 'competition.info', params: { competitionId: competition[idKey] } }"
               @click.native="closeMenu()"
-              class="md-icon-button"
+            />
+
+            <v-list-tile v-if="!relevantCompetitions.length" class="empty">
+              No competitions found.
+            </v-list-tile>
+
+            <footer v-if="competitions.length && competitions.length !== relevantCompetitions.length" style="text-align: center;">
+              <v-btn :to="{ name: 'competitions' }" @click.native="closeMenu()">
+                View {{ competitions.length - relevantCompetitions.length }} More
+              </v-btn>
+            </footer>
+          </v-list>
+
+          <v-spacer />
+          <v-divider />
+          <v-list>
+            <v-subheader>Links</v-subheader>
+
+            <v-list-tile to="/" exact @click="closeMenu()">
+              <v-list-tile-action>
+                <v-icon>home</v-icon>
+              </v-list-tile-action>
+              <v-list-tile-title>App Home</v-list-tile-title>
+            </v-list-tile>
+            <v-list-tile
+              v-if="$store.getters.hasPermission('admin')"
+              :to="{ name: 'admin.info' }"
+              @click="closeMenu()"
             >
-              <md-icon>add</md-icon>
-            </md-button>
-          </md-subheader>
-
-          <competition-list-item
-            v-for="competition in relevantCompetitions"
-            :key="competition[idKey]"
-            :competition="competition"
-            :to="{ name: 'competition.info', params: { competitionId: competition[idKey] } }"
-            @click.native="closeMenu()"
-          />
-
-          <md-list-item v-if="!relevantCompetitions.length" class="empty">
-            No competitions found.
-          </md-list-item>
-
-          <footer v-if="competitions.length && competitions.length !== relevantCompetitions.length" style="text-align: center;">
-            <md-button :to="{ name: 'competitions' }" @click.native="closeMenu()">
-              View {{ competitions.length - relevantCompetitions.length }} More
-            </md-button>
-          </footer>
-        </md-list>
-
-        <md-list v-if="!accountToggled" class="md-dense">
-          <md-subheader>Links</md-subheader>
-
-          <md-list-item to="/" exact @click="closeMenu()">
-            <v-icon>home</v-icon>
-            <span class="md-list-item-text">App Home</span>
-          </md-list-item>
-          <md-list-item
-            v-if="$store.getters.hasPermission('admin')"
-            :to="{ name: 'admin.info' }"
-            @click="closeMenu()"
-          >
-            <v-icon>settings_applications</v-icon>
-            <span class="md-list-item-text">App Admin</span>
-          </md-list-item>
-        </md-list>
+              <v-list-tile-action>
+                <v-icon>settings_applications</v-icon>
+              </v-list-tile-action>
+              <v-list-tile-title>App Admin</v-list-tile-title>
+            </v-list-tile>
+          </v-list>
+        </template>
       </div>
-    </md-app-drawer>
+    </v-navigation-drawer>
 
-    <md-app-content id="main" class="app-scroll-frame">
+    <v-content id="main" class="app-scroll-frame">
       <keep-alive v-if="!$store.state.loading && $store.state.me !== undefined">
         <router-view
           v-bind="{
@@ -160,8 +184,8 @@
       <div v-else class="app-scroll-frame spinner-container">
         <mi-md-spinner />
       </div>
-    </md-app-content>
-  </md-app>
+    </v-content>
+  </v-app>
 </template>
 
 <script>
@@ -355,12 +379,12 @@ export default {
 
 <style lang="scss">
 // custom vue-material theme
-@import "~vue-material/dist/theme/engine";
-@include md-register-theme("default", (
-  primary: md-get-palette-color(blue, 600),
-  accent: md-get-palette-color(pink, 500)
-));
-@import "~vue-material/dist/theme/all";
+// @import "~vue-material/dist/theme/engine";
+// @include md-register-theme("default", (
+//   primary: md-get-palette-color(blue, 600),
+//   accent: md-get-palette-color(pink, 500)
+// ));
+// @import "~vue-material/dist/theme/all";
 
 // import simple-line-icons
 $simple-line-font-path: "~simple-line-icons/fonts/";
@@ -394,16 +418,18 @@ body.has-bottom-bar {
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
 }
-.md-subheader {
-  flex-shrink: 0;
 
-  > div {
-    flex: auto;
-
-    + * {
-      text-align: right;
-      margin-right: -10px;
+.v-toolbar {
+  .v-toolbar__title {
+    a {
+      color: inherit;
+      text-decoration: none;
     }
+  }
+}
+.v-subheader {
+  .v-btn {
+    margin-right: -8px;
   }
   &.md-title {
     color: inherit;
@@ -413,9 +439,6 @@ body.has-bottom-bar {
   &.md-list-item:first-of-type {
     margin-top: 0;
   }
-}
-.md-bg-primary {
-  background-color: var(--md-theme-default-primary);
 }
 
 // transitions
@@ -451,32 +474,17 @@ a {
 }
 
 // app frame
-html * {
-  box-sizing: border-box; // fix `.md-ripple` offset bug?
+html {
+  height: 100%;
 }
 html,
 body,
-.md-app-container,
-.md-app-scroller {
+.v-content__wrap {
   @extend .app-scroll-frame;
 }
-.md-app {
-  flex-direction: column;
-  flex: 1;
-  margin-bottom: env(safe-area-inset-bottom); // iPhone X
-  z-index: 3;
-}
-.md-app-content {
-  padding: 0;
-}
-.md-dialog-overlay {
-  z-index: 9; // cover .md-app-drawer
-}
-.md-select-menu {
-  z-index: 11; // cover .md-dialog
-}
-.md-layout-item {
-  flex: 1 0 auto; // fix iOS <= 10.2 flexbug
+
+.v-bottom-nav {
+  flex-shrink: 0;
 }
 
 // app-wide md-component styling
@@ -551,25 +559,6 @@ body,
       }
     }
   }
-  &.md-list-cards {
-    background-color: initial;
-    padding: 0 0 12px;
-
-    > .md-list-item {
-      > .md-list-item-container {
-        background-color: initial !important;
-        border: 0 !important;
-
-        > .md-list-expand {
-          > .md-list {
-            padding: 0;
-            margin: 0 16px 8px;
-            box-shadow: 0 2px 1px -1px rgba(0,0,0,.2), 0 1px 1px 0 rgba(0,0,0,.14), 0 1px 3px 0 rgba(0,0,0,.12); // .md-elevation-1
-          }
-        }
-      }
-    }
-  }
 }
 .md-menu-content {
   max-height: 50vh; // for toolbar help button (w/ hide live chat visible)
@@ -637,26 +626,6 @@ body,
   }
 }
 
-.md-bottom-bar {
-  display: flex;
-  flex-shrink: 0;
-  z-index: 3; // maintain box-shadow; keep above .md-list-item
-
-  > .md-ripple {
-    width: auto;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-  }
-  .md-bottom-bar-item {
-    flex: 1 0 auto;
-  }
-}
-
-.md-empty-state,
-.md-empty-state-container {
-  transition-duration: 0s !important;
-}
-
 .md-dialog {
   .md-dialog-content {
     @extend .app-scroll;
@@ -688,25 +657,9 @@ body,
   }
 }
 
-.md-button {
-  &.solo {
-    margin-left: 0;
-    margin-right: 0;
-  }
-  &.md-large {
-    height: 48px;
-    font-size: 16px;
-
-    .md-ripple {
-      padding-left: 16px;
-      padding-right: 16px;
-    }
-  }
-}
-
 // drag-n-drop
 .sortable-handle {
-  .md-list-item & {
+  .v-list__tile & {
     order: -1;
     margin-left: -16px;
     opacity: 0.5;
@@ -722,9 +675,6 @@ body,
   opacity: 0;
 }
 
-.md-padding {
-  padding: 12px 16px;
-}
 .pre-line {
   white-space: pre-line;
 }
@@ -733,15 +683,6 @@ body,
 .validation-message {
   color: var(--md-theme-default-accent) !important;
   margin-top: 16px;
-}
-
-.md-app-toolbar {
-  z-index: 3; // > 2 .md-app
-}
-.md-app-drawer {
-  display: flex;
-  flex-direction: column;
-  touch-action: pan-y;
 }
 
 .login-dialog,
@@ -757,15 +698,6 @@ body,
     padding-left: 16px;
     padding-right: 24px;
     padding-bottom: 12px;
-
-    .md-button {
-      &:first-child {
-        margin-left: 0;
-      }
-      &:last-child {
-        margin-right: 0;
-      }
-    }
   }
 }
 
@@ -782,30 +714,34 @@ body,
   pointer-events: none;
   z-index: 0;
 }
-.md-account-header {
-  padding: 0;
+.account-header {
+  position: relative;
+  min-height: 128px;
 
-  .md-list {
-    width: 100%;
+  .v-list {
+    padding: 0;
+  }
+}
 
-    .md-list-item {
-      .md-list-item-container {
-        color: #fff !important;
-      }
-      .md-list-action {
-        .md-icon {
-          transform: rotate(0);
-          transition: transform 300ms;
-        }
-      }
-      &.toggled {
-        .md-list-action {
-          .md-icon {
-            transform: rotate(180deg);
-          }
+.v-list {
+  &.grouped {
+    background-color: transparent;
+
+    .v-list__group {
+      .v-list__group__header {
+        .v-subheader {
+          padding-right: 0;
         }
       }
     }
+    //   &:before,
+    //   &:after {
+    //     display: none;
+    //   }
+    // }
+    // .v-list__group__items {
+    //   padding-left: 16px;
+    //   padding-right: 16px;
   }
 }
 

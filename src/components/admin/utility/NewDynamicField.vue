@@ -1,17 +1,9 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="new-dynamic-field md-list-item-content">
-    <dynamic-field
-      :field="field"
-      :data="data"
-      class="md-list-item-text"
-    />
-    <md-button
-      type="submit"
-      class="md-icon-button md-raised md-primary md-list-action"
-      :disabled="!isValid"
-    >
+  <form @submit.prevent="handleSubmit" class="new-dynamic-field layout">
+    <dynamic-field :field="field" :data="data" class="flex ml-3" />
+    <v-btn type="submit" icon color="primary" :disabled="!isValid">
       <v-icon>add</v-icon>
-    </md-button>
+    </v-btn>
   </form>
 </template>
 
@@ -55,11 +47,6 @@ export default {
 
 <style lang="scss">
 .new-dynamic-field {
-  padding-top: 8px;
-  padding-bottom: 16px;
 
-  .md-list-action:last-of-type {
-    margin-right: -8px;
-  }
 }
 </style>

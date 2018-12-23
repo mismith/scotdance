@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-platforms" :class="{ interactive: admin }">
+  <div class="admin-platforms white" :class="{ interactive: admin }">
     <div v-if="platforms.length" class="pools">
       <div
         v-for="pool in pools"
@@ -7,7 +7,7 @@
         class="pool"
         :class="{ empty: !pool.$items.length }"
       >
-        <md-subheader>{{ pool.$name || pool.name }}</md-subheader>
+        <v-subheader>{{ pool.$name || pool.name }}</v-subheader>
 
         <draggable
           v-model="pool.$items"
@@ -15,39 +15,29 @@
           @sort="handleSort(pool)"
           class="draggable"
         >
-          <md-chip
+          <v-chip
             v-for="poolItem in pool.$items"
             :key="poolItem[idKey]"
-            :md-clickable="!admin"
+            :color="hasFavorites(findGroupDancers(poolItem, dancers)) ? 'secondary' : (isJudge(poolItem) && 'primary')"
             @click="!admin && $emit('item-click', poolItem)"
-            :class="{
-              'md-primary': isJudge(poolItem),
-              'md-accent': hasFavorites(findGroupDancers(poolItem, dancers)),
-            }"
           >
             {{ poolItem.$name || poolItem.name }}
-            <md-icon v-if="!admin">keyboard_arrow_down</md-icon>
-          </md-chip>
+            <v-icon v-if="!admin" right>more_vert</v-icon>
+          </v-chip>
         </draggable>
       </div>
     </div>
     <div v-else>
-      <md-empty-state
-        md-icon="warning"
-        md-label="No platforms"
-        md-description="Add at least one platform first"
+      <empty-state
+        icon="warning"
+        label="No platforms"
+        description="Add at least one platform first"
       />
     </div>
 
     <footer v-if="admin">
-      <md-button
-        :disabled="!item.platforms"
-        @click="handleCopy"
-      >Copy</md-button>
-      <md-button
-        :disabled="clipboard.type !== 'platforms'"
-        @click="handlePaste"
-      >Paste</md-button>
+      <v-btn flat :disabled="!item.platforms" @click="handleCopy">Copy</v-btn>
+      <v-btn flat :disabled="clipboard.type !== 'platforms'" @click="handlePaste">Paste</v-btn>
     </footer>
   </div>
 </template>
@@ -214,25 +204,12 @@ export default {
       flex-shrink: 0;
       flex-grow: 1;
 
-      .md-subheader {
-        flex-grow: 0 !important;
-      }
       .draggable {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
         flex-grow: 1;
         min-height: 64px;
-
-        .md-chip {
-          margin: 1px 4px;
-
-          .md-icon {
-            font-size: 20px !important;
-            margin-top: -1px;
-            margin-right: -8px;
-          }
-        }
       }
     }
   }
@@ -254,12 +231,12 @@ export default {
 
       .pool {
         .draggable {
-          padding: 4px 0;
           border: 1px dashed #999;
           border-radius: 20px;
           margin: 4px;
 
-          .md-chip {
+          .v-chip,
+          .v-chip * {
             cursor: move;
           }
         }

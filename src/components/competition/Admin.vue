@@ -3,12 +3,12 @@
     <requires-permission :permission="hasPermission" class="app-scroll-frame">
       <div v-if="currentSection" class="app-scroll-frame">
         <div class="app-scroll-frame">
-          <md-toolbar class="md-dense">
+          <v-toolbar dense>
             <div v-if="inTabs('info', 'categories', 'dancers', 'groups')">
-              <md-button @click="showImport = true">Import</md-button>
+              <v-btn flat @click="showImport = true">Import</v-btn>
             </div>
             <div v-if="inTabs('results')">
-              <md-button @click="showImportResults = true">Import</md-button>
+              <v-btn flat @click="showImportResults = true">Import</v-btn>
             </div>
 
             <div v-if="currentSection">
@@ -20,10 +20,10 @@
               />
             </div>
 
-            <span style="flex-grow: 1;"></span>
+            <v-spacer />
 
             <md-spunnable :md-spinning="saving" />
-          </md-toolbar>
+          </v-toolbar>
           <div class="app-scroll-frame app-scroll">
             <mi-hot-table
               v-if="currentSection.hot"
@@ -64,21 +64,19 @@
       </md-dialog>
     </requires-permission>
 
-    <md-bottom-bar
-      ref="bottomBar"
-      v-show="hasPermission"
-      class="md-accent"
-    >
-      <md-bottom-bar-item
-        v-for="section of sections"
+    <v-bottom-nav v-if="hasPermission" :value="true" :active="$root.currentTab">
+      <v-btn
+        v-for="section in sections"
         :key="section[idKey]"
-        :id="`tab-competition-admin-${section[idKey]}`"
+        :value="section[idKey]"
+        color="primary"
+        flat
         @click="goToTab(section[idKey])"
       >
-        <md-icon :class="section.icon"></md-icon>
-        <span class="md-bottom-bar-label">{{ section.name }}</span>
-      </md-bottom-bar-item>
-    </md-bottom-bar>
+        <span>{{ section.name }}</span>
+        <v-icon :class="section.icon"></v-icon>
+      </v-btn>
+    </v-bottom-nav>
   </div>
 </template>
 
@@ -170,19 +168,8 @@ export default {
         });
     },
   },
-  watch: {
-    '$root.currentTab'() { // eslint-disable-line object-shorthand
-      this.syncBottomBar();
-    },
-  },
   methods: {
     danceExtender,
-
-    async syncBottomBar() {
-      await this.$nextTick(); // await md-bottom-bar's internally queued $nextTick
-      const adminTabId = `tab-competition-admin-${this.$root.currentTab}`;
-      this.$refs.bottomBar.MdBottomBar.activeItem = adminTabId;
-    },
 
     goToTab(tab) {
       const params = {
@@ -246,9 +233,6 @@ export default {
         });
       });
     },
-  },
-  mounted() {
-    this.syncBottomBar();
   },
   components: {
     RequiresPermission,

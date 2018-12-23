@@ -3,13 +3,13 @@
     <section class="hero">
       <div>
         <img src="/img/touchicon.png" role="presentation" width="88" height="88" />
-        <h1 class="md-display-2">ScotDance.app</h1>
-        <p class="md-headline">{{ $package.description }}</p>
-        <p class="md-subheading">Skip the pen and paper—attend highland dance competitions in style with this app for your mobile device.</p>
+        <h1 class="display-2">ScotDance.app</h1>
+        <p class="headline">{{ $package.description }}</p>
+        <p class="subheading">Skip the pen and paper—attend highland dance competitions in style with this app for your mobile device.</p>
         <p class="print-hide">
-          <md-button :to="{ name: 'competitions' }" class="md-primary md-raised md-large">
+          <v-btn :to="{ name: 'competitions' }" color="primary" large>
             Browse Competitions
-          </md-button>
+          </v-btn>
         </p>
         <p v-if="!isApp" class="store-badges">
           <a href="https://itunes.apple.com/us/app/scotdance/id1386475626?mt=8" target="_blank">
@@ -19,7 +19,7 @@
             <img src="@/assets/img/play-store.svg" alt="Get it on Google Play" />
           </a>
         </p>
-        <h1 class="md-display-1 print-show">
+        <h1 class="display-1 print-show">
           <a href="https://scotdance.app">www.scotdance.app</a>
         </h1>
       </div>
@@ -27,37 +27,37 @@
 
     <section id="about" class="alt">
       <header>
-        <h2 class="md-display-1">A virtual program of events</h2>
-        <p class="md-subheading">Modernize your highland dancing experience by interacting with competition information digitally.</p>
+        <h2 class="display-1">A virtual program of events</h2>
+        <p class="subheading">Modernize your highland dancing experience by interacting with competition information digitally.</p>
       </header>
-      <div class="md-layout">
-        <div class="md-layout-item md-xsmall-size-100 md-size-33">
-          <md-icon class="md-size-4x icon-people md-primary" />
-          <h2 class="md-title">Dancers</h2>
+      <v-layout wrap>
+        <v-flex xs12 sm4>
+          <v-icon color="primary" class="icon-people" />
+          <h2 class="title">Dancers</h2>
           <p>Search through dancers by their competition number, name, age group, etc. Then mark your favourites for easy tracking.</p>
-        </div>
-        <div class="md-layout-item md-xsmall-size-100 md-size-33">
-          <md-icon class="md-size-4x icon-clock md-primary" />
-          <h2 class="md-title">Schedule</h2>
+        </v-flex>
+        <v-flex xs12 sm4>
+          <v-icon color="primary" class="icon-clock" />
+          <h2 class="title">Schedule</h2>
           <p>Use the at-a-glance schedule to check event start times, which platforms to dance at, order of dances, and more.</p>
-        </div>
-        <div class="md-layout-item md-xsmall-size-100 md-size-33">
-          <md-icon class="md-size-4x icon-trophy md-primary" />
-          <h2 class="md-title">Results</h2>
+        </v-flex>
+        <v-flex xs12 sm4>
+          <v-icon color="primary" class="icon-trophy" />
+          <h2 class="title">Results</h2>
           <p>Get real-time results updates—from callbacks through to placings—and review them anytime after a competition, too.</p>
-        </div>
-      </div>
+        </v-flex>
+      </v-layout>
       <footer>
-          <md-button :to="{ name: 'competitions' }" class="md-primary md-raised">Browse Competitions</md-button>
+        <v-btn :to="{ name: 'competitions' }" color="primary">Browse Competitions</v-btn>
       </footer>
     </section>
 
     <section id="faq">
       <header>
-        <h2 class="md-display-1">FAQs</h2>
+        <h2 class="display-1">FAQs</h2>
         <dl v-if="faqs.length">
           <template v-for="faq in faqs">
-            <dt :key="faq.question" v-html="faq.question" class="md-title" />
+            <dt :key="faq.question" v-html="faq.question" class="title" />
             <dd :key="faq.answer" v-html="faq.answer" class="pre-line" />
           </template>
         </dl>
@@ -67,7 +67,7 @@
 
     <section id="info" class="alt">
       <header>
-        <h2 class="md-display-1">Info</h2>
+        <h2 class="display-1">Info</h2>
         <p>ScotDance.app was created in 2017 by <a href="https://mismith.io" target="_blank" class="ext">Murray Smith</a></p>
         <p>View the source code on <a href="https://github.com/mismith/scotdance" target="_blank" class="ext">GitHub</a></p>
         <p>Track development via <a href="https://trello.com/b/ZCZ8t1fH" target="_blank" class="ext">Trello</a></p>
@@ -125,7 +125,7 @@ export default {
     justify-content: center;
     padding: 40px;
 
-    .md-display-3 {
+    .display-3 {
       margin-bottom: 0;
     }
     .store-badges {
@@ -139,10 +139,11 @@ export default {
     }
   }
   #about {
-    .md-layout {
-      .md-layout-item {
-        padding: 20px;
-      }
+    .v-icon {
+      font-size: 88px;
+    }
+    .flex {
+      padding: 20px;
     }
   }
   #faq {

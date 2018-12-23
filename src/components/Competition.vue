@@ -22,19 +22,21 @@
           />
         </keep-alive>
         <div v-else class="app-scroll-frame alt">
-          <md-empty-state
-            md-icon="access_time"
-            md-label="Not available yet"
-            md-description="Check back closer to the competition date:"
+          <empty-state
+            icon="access_time"
+            label="Not available yet"
+            description="Check back closer to the competition date:"
           >
-            <div class="md-title">{{ competition.date ? $moment(competition.date).format('dddd, MMMM D') : 'Soon' }}</div>
-          </md-empty-state>
+            <div class="md-title">
+              {{ competition.date ? $moment(competition.date).format('dddd, MMMM D') : 'Soon' }}
+            </div>
+          </empty-state>
         </div>
       </div>
       <div v-else class="app-scroll-frame alt">
-        <md-empty-state
-          md-icon="clear"
-          md-label="No competition found"
+        <empty-state
+          icon="clear"
+          label="No competition found"
         />
       </div>
     </div>
@@ -42,24 +44,44 @@
       <mi-md-spinner />
     </div>
 
-    <md-bottom-bar ref="bottomBar" v-show="competitionExists && !isAdminRoute">
-      <md-bottom-bar-item id="tab-info" :to="{ name: 'competition.info', params: { competitionId } }">
-        <md-icon class="icon-info" />
-        <span class="md-bottom-bar-label">Info</span>
-      </md-bottom-bar-item>
-      <md-bottom-bar-item id="tab-dancers" :to="{ name: 'competition.dancers', params: { competitionId } }">
-        <md-icon class="icon-people" />
-        <span class="md-bottom-bar-label">Dancers</span>
-      </md-bottom-bar-item>
-      <md-bottom-bar-item id="tab-schedule" :to="{ name: 'competition.schedule', params: { competitionId } }">
-        <md-icon class="icon-clock" />
-        <span class="md-bottom-bar-label">Schedule</span>
-      </md-bottom-bar-item>
-      <md-bottom-bar-item id="tab-results" :to="{ name: 'competition.results', params: { competitionId } }">
-        <md-icon class="icon-trophy" />
-        <span class="md-bottom-bar-label">Results</span>
-      </md-bottom-bar-item>
-    </md-bottom-bar>
+    <v-bottom-nav v-if="competitionExists && !isAdminRoute" :value="true">
+      <v-btn
+        color="primary"
+        flat
+        value="info"
+        :to="{ name: 'competition.info', params: { competitionId } }"
+      >
+        <span>Info</span>
+        <v-icon class="icon-info" />
+      </v-btn>
+      <v-btn
+        color="primary"
+        flat
+        value="dancers"
+        :to="{ name: 'competition.dancers', params: { competitionId } }"
+      >
+        <span>Dancers</span>
+        <v-icon class="icon-people" />
+      </v-btn>
+      <v-btn
+        color="primary"
+        flat
+        value="schedule"
+        :to="{ name: 'competition.schedule', params: { competitionId } }"
+      >
+        <span>Schedule</span>
+        <v-icon class="icon-clock" />
+      </v-btn>
+      <v-btn
+        color="primary"
+        flat
+        value="results"
+        :to="{ name: 'competition.results', params: { competitionId } }"
+      >
+        <span>Results</span>
+        <v-icon class="icon-trophy" />
+      </v-btn>
+    </v-bottom-nav>
 
     <md-dialog :md-active.sync="staffVisible" :md-fullscreen="false" class="staff-dialog">
       <md-dialog-title v-if="currentDialogData">
@@ -77,7 +99,7 @@
         class="pre-line alt"
       />
       <md-dialog-actions>
-        <md-button @click="staffVisible = false" class="md-primary">Done</md-button>
+        <v-btn color="primary" flat @click="staffVisible = false">Done</v-btn>
       </md-dialog-actions>
     </md-dialog>
   </div>
@@ -192,20 +214,11 @@ export default {
     competitionId() {
       this.loadFirebase();
     },
-    '$root.currentTab'() { // eslint-disable-line object-shorthand
-      this.syncBottomBar();
-    },
   },
   methods: {
     ...mapMutations([
       'setCurrentDialog',
     ]),
-
-    async syncBottomBar() {
-      await this.$nextTick(); // await md-bottom-bar's internally queued $nextTick
-      const tabId = `tab-${this.$root.currentTab}`;
-      this.$refs.bottomBar.MdBottomBar.activeItem = tabId;
-    },
 
     async loadFirebase() {
       if (!this.competitionId) return;
@@ -264,9 +277,6 @@ export default {
   },
   created() {
     this.loadFirebase();
-  },
-  mounted() {
-    this.syncBottomBar();
   },
 };
 </script>

@@ -1,12 +1,13 @@
 <template>
-  <md-button
+  <v-btn
+    icon
+    flat
+    :color="dancer.$favorite && 'secondary'"
     @click.prevent.stop="toggleFavoriteDancer(dancer)"
-    class="favorite-dancer-button md-icon-button"
+    class="favorite-dancer-button"
   >
-    <md-icon :class="{ 'md-accent': dancer.$favorite }">
-      {{ dancer.$favorite ? 'star' : 'star_border' }}
-    </md-icon>
-  </md-button>
+    <v-icon>{{ dancer.$favorite ? 'star' : 'star_border' }}</v-icon>
+  </v-btn>
 </template>
 
 <script>

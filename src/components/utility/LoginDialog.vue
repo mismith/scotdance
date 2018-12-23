@@ -7,25 +7,21 @@
   >
     <form v-if="!forgot" @submit.prevent="login()">
       <div class="md-dialog-content">
-        <md-field>
-          <label>Email</label>
-          <md-input
-            type="email"
-            name="email"
-            v-model="email"
-            required
-            autofocus
-          />
-        </md-field>
-        <md-field md-has-password>
-          <label>Password</label>
-          <md-input
-            type="password"
-            name="password"
-            v-model="password"
-            required
-          />
-        </md-field>
+        <v-text-field
+          label="Email"
+          type="email"
+          name="email"
+          v-model="email"
+          required
+          autofocus
+        />
+        <v-text-field
+          label="Password"
+          type="password"
+          name="password"
+          v-model="password"
+          required
+        />
 
         <p>
           Need an account first?
@@ -46,11 +42,9 @@
       </div>
 
       <footer class="md-dialog-actions">
-        <md-button @click="loginVisible = false">Cancel</md-button>
+        <v-btn @click="loginVisible = false">Cancel</v-btn>
 
-        <md-spinnable :md-spinning="authLoading" md-left>
-          <md-button type="submit" class="md-primary md-raised">Login</md-button>
-        </md-spinnable>
+        <v-btn type="submit" color="primary" :loading="authLoading">Login</v-btn>
       </footer>
     </form>
     <form v-else @submit.prevent="reset()">
@@ -60,16 +54,14 @@
           <br />
         </header>
 
-        <md-field>
-          <label>Email</label>
-          <md-input
-            type="email"
-            name="email"
-            v-model="email"
-            required
-            autofocus
-          />
-        </md-field>
+        <v-text-field
+          label="Email"
+          type="email"
+          name="email"
+          v-model="email"
+          required
+          autofocus
+        />
 
         <aside v-if="authError" class="validation-message">
           {{ authError.message }}
@@ -80,11 +72,9 @@
       </div>
 
       <footer class="md-dialog-actions">
-        <md-button @click="forgot = false; authError = null;">Back</md-button>
+        <v-btn @click="forgot = false; authError = null;">Back</v-btn>
 
-        <md-spinnable :md-spinning="authLoading" md-left>
-          <md-button type="submit" class="md-primary md-raised">Send</md-button>
-        </md-spinnable>
+        <v-btn type="submit" color="primary" :loading="authLoading">Send</v-btn>
       </footer>
     </form>
   </md-dialog>

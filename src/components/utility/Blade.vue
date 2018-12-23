@@ -1,7 +1,7 @@
 <template>
-  <div class="blade md-layout-item app-scroll-frame" :class="{ 'blade-active': active }">
+  <v-flex class="blade app-scroll-frame" :class="{ 'blade-active': active }">
     <slot />
-  </div>
+  </v-flex>
 </template>
 
 <script>
@@ -50,6 +50,8 @@ export default {
   }
   @media (min-width: 960px) {
     .blade {
+      flex-shrink: 0;
+
       .md-medium-hide {
         display: none !important; // @HACK to fix vue-material not setting this as important, so md-toolbar overrides it
       }

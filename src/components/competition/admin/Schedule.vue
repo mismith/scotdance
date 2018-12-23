@@ -5,62 +5,64 @@
         :key="blade.collection"
         id="blade-root"
         v-if="blade.parent()"
-        class="md-small-size-100 md-size-25 app-scroll alt"
+        class="xs12 md3 app-scroll alt"
       >
-        <md-list class="md-list-cards">
-          <md-list-item-cards md-expand md-expanded>
-            <md-subheader style="text-transform: capitalize;">
+        <v-list expand class="grouped">
+          <v-list-group :value="true">
+            <v-subheader slot="activator" style="text-transform: capitalize;">
               {{ blade.collection }}
-            </md-subheader>
+            </v-subheader>
 
-            <draggable
-              element="md-list"
-              slot="md-expand"
-              :value="blade.items()"
-              class="draggable"
-              :options="{ handle: '.sortable-handle' }"
-              @sort="handleListItemReorder(blade, $event)"
-            >
-              <md-list-item
-                v-for="item in blade.items()"
-                :key="item[idKey]"
-                :class="{ active: blade.id() === item[idKey] }"
-                @click="goToBlade(blade.params(item[idKey]))"
+            <v-list>
+              <draggable
+                :value="blade.items()"
+                class="draggable"
+                :options="{ handle: '.sortable-handle' }"
+                @sort="handleListItemReorder(blade, $event)"
               >
-                <md-icon class="sortable-handle">drag_indicator</md-icon>
-                <div class="md-list-item-text">{{ blade.name(item) }}</div>
-                <v-icon>chevron_right</v-icon>
-              </md-list-item>
-            </draggable>
-          </md-list-item-cards>
-          <md-list-item-cards md-expand md-expanded>
-            <md-subheader>
-              Add New
-            </md-subheader>
+                <v-list-tile
+                  v-for="item in blade.items()"
+                  :key="item[idKey]"
+                  :class="{ active: blade.id() === item[idKey] }"
+                  @click="goToBlade(blade.params(item[idKey]))"
+                >
+                  <v-icon class="sortable-handle">drag_indicator</v-icon>
+                  <v-list-tile-content>
+                    <v-list-tile-title>{{ blade.name(item) }}</v-list-tile-title>
+                  </v-list-tile-content>
+                  <v-icon>chevron_right</v-icon>
+                </v-list-tile>
+              </draggable>
+            </v-list>
+          </v-list-group>
+          <v-list-group :value="true">
+            <v-subheader slot="activator">Add New</v-subheader>
 
-            <md-list slot="md-expand">
+            <v-list>
               <new-dynamic-field @change="handleListItemCreate(blade, $event)" />
-              <md-divider v-if="blade.presets" />
-              <md-list-item
+              <v-divider v-if="blade.presets" />
+              <v-list-tile
                 v-for="preset in blade.presets"
                 :key="blade.name(preset)"
                 :class="{ dimmed: isBladePresetUsed(blade, preset) }"
                 @click="handleListItemCreate(blade, preset)"
               >
-                <div class="md-list-item-text">{{ blade.name(preset) }}</div>
+                <v-list-tile-content>
+                  <v-list-tile-title>{{ blade.name(preset) }}</v-list-tile-title>
+                </v-list-tile-content>
                 <v-icon>add</v-icon>
-              </md-list-item>
-            </md-list>
-          </md-list-item-cards>
-        </md-list>
+              </v-list-tile>
+            </v-list>
+          </v-list-group>
+        </v-list>
       </blade>
       <blade
         :key="blade.collection"
         v-if="blade.item()"
         :id="`blade-${blade.id()}`"
-        :class="`md-small-size-100 md-size-${blade.size || 50} app-scroll`"
+        :class="`xs12 md${blade.size || 6} app-scroll`"
       >
-        <form @submit.prevent class="md-padding">
+        <form @submit.prevent class="pa-3">
           <dynamic-field
             v-for="field in blade.fields"
             :key="field.data"
@@ -81,18 +83,19 @@
           />
         </form>
 
-        <footer>
-          <md-button @click="confirmRemove = { blade, itemId: blade.id() }" class="md-accent">
+        <v-spacer />
+        <v-layout align-center justify-center>
+          <v-btn flat color="error" @click="confirmRemove = { blade, itemId: blade.id() }">
             Delete Item
-          </md-button>
-        </footer>
+          </v-btn>
+        </v-layout>
       </blade>
     </template>
     <blade v-if="!currentDay">
-      <md-empty-state
-        md-icon="event_note"
-        md-label="Edit schedule entries"
-        md-description="Add or select an item to edit"
+      <empty-state
+        icon="event_note"
+        label="Edit schedule entries"
+        description="Add or select an item to edit"
       />
     </blade>
 
@@ -271,7 +274,7 @@ export default {
             },
           ],
           presets: this.dances.map(dance => ({ danceId: dance[idKey] })),
-          size: 75,
+          size: 9,
         },
       ],
     };
@@ -427,11 +430,6 @@ export default {
   .blade {
     .sortable-handle {
       margin-right: 8px;
-    }
-    > footer {
-      display: flex;
-      justify-content: center;
-      margin-top: auto;
     }
   }
   .dimmed {

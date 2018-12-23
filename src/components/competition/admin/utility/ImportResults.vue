@@ -1,7 +1,7 @@
 <template>
   <md-steppers :md-active-step.sync="step" md-linear class="admin-import-results">
     <md-step id="upload" md-label="Upload" md-description="Select a file to import">
-      <div class="app-scroll-frame app-scroll md-padding">
+      <div class="app-scroll-frame app-scroll pa-3">
         <h2>Instructions</h2>
         <ol>
           <li>Select the <strong>HTML file(s)</strong> below that contain(s) the exported values from Highland Scrutineer.</li>
@@ -22,8 +22,8 @@
     </md-step>
     <md-step id="choose" md-label="Choose" md-description="Pick which data to use">
       <form class="app-scroll-frame app-scroll">
-        <md-subheader>Group(s)</md-subheader>
-        <div v-for="datum in imported" :key="datum.file" class="md-layout md-gutter md-layout-nowrap md-padding">
+        <v-subheader>Group(s)</v-subheader>
+        <div v-for="datum in imported" :key="datum.file" class="md-layout md-gutter md-layout-nowrap pa-3">
           <div class="md-layout-item md-size-45">{{ datum.group }}</div>
           <span class="md-layout-item md-size-5">&rarr;</span>
           <div class="md-layout-item md-size-50">
@@ -35,8 +35,8 @@
           </div>
         </div>
 
-        <md-subheader>Dance(s)</md-subheader>
-        <div v-for="danceName in getUniqueDances(imported)" :key="danceName" class="md-layout md-gutter md-layout-nowrap md-padding">
+        <v-subheader>Dance(s)</v-subheader>
+        <div v-for="danceName in getUniqueDances(imported)" :key="danceName" class="md-layout md-gutter md-layout-nowrap pa-3">
           <div class="md-layout-item md-size-45">{{ danceName }}</div>
           <span class="md-layout-item md-size-5">&rarr;</span>
           <div class="md-layout-item md-size-50">
@@ -51,18 +51,18 @@
       <md-toolbar class="md-layout">
         <div class="md-layout-item" />
         <footer>
-          <md-button
+          <v-btn
+            colo="primary"
             @click="handleChoose()"
-            class="md-raised md-primary"
           >
             Next
-          </md-button>
+          </v-btn>
         </footer>
       </md-toolbar>
     </md-step>
     <md-step id="review" md-label="Review" md-description="Ensure values look correct">
       <blades>
-        <blade class="md-small-size-100 md-size-50 app-scroll alt">
+        <blade class="xs12 md6 app-scroll alt">
           <results-list
             :groups="groups.filter(group => Object.keys(results).includes(group[idKey]))"
             :dances="dances"
@@ -70,15 +70,15 @@
             :results="results"
           />
         </blade>
-        <blade class="md-small-size-100 md-size-50 app-scroll">
+        <blade class="xs12 md6 app-scroll">
           <placed-dancer-list
             v-if="placedDancers.length"
             :dance="currentDance"
             :dancers="placedDancers"
           />
           <div v-else>
-            <md-empty-state
-              md-icon="vertical_split"
+            <empty-state
+              icon="vertical_split"
               md-label="Placed dancers"
               md-description="Double-check the results to import"
             />
@@ -88,15 +88,14 @@
       <md-toolbar class="md-layout">
         <div class="md-layout-item" />
         <footer>
-          <md-spinnable :md-spinning="importing" md-left>
-            <md-button
-              @click="handleReview()"
-              :disabled="importing"
-              class="md-raised md-primary"
-            >
-              Import
-            </md-button>
-          </md-spinnable>
+          <v-btn
+            color="primary"
+            :disabled="importing"
+            :loading="importing"
+            @click="handleReview()"
+          >
+            Import
+          </v-btn>
         </footer>
       </md-toolbar>
     </md-step>

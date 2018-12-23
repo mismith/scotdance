@@ -1,34 +1,30 @@
 <template>
   <div class="paginated-list app-scroll-frame">
     <div class="app-scroll-frame app-scroll">
-      <md-list v-if="items.length">
+      <v-list v-if="items.length">
         <slot v-for="item in paginated" v-bind="item" />
-      </md-list>
+      </v-list>
       <div v-else>
-        <md-empty-state
-          md-icon="error_outline"
-          md-label="No items match"
+        <empty-state
+          icon="error_outline"
+          label="No items match"
         />
       </div>
     </div>
 
-    <md-toolbar class="pagination md-dense">
-      <md-button @click="page -= 1" :disabled="page <= 1" class="md-icon-button">
+    <v-toolbar dense class="pagination">
+      <v-btn icon @click="page -= 1" :disabled="page <= 1">
         <v-icon>skip_previous</v-icon>
-      </md-button>
-      <div class="info">
+      </v-btn>
+      <v-layout>
         Page
-        <md-field>
-          <md-select v-model="page">
-            <md-option v-for="p in pages" :key="p" :value="p">{{ p }}</md-option>
-          </md-select>
-        </md-field>
+        <v-select v-model="page" :items="pages" class="flex" />
         of {{ pages.length }}
-      </div>
-      <md-button @click="page += 1" :disabled="page >= pages.length" class="md-icon-button">
+      </v-layout>
+      <v-btn icon :disabled="page >= pages.length" @click="page += 1">
         <v-icon>skip_next</v-icon>
-      </md-button>
-    </md-toolbar>
+      </v-btn>
+    </v-toolbar>
   </div>
 </template>
 
@@ -61,24 +57,6 @@ export default {
 .paginated-list {
   .pagination {
     display: flex;
-
-    .info {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex: auto;
-
-      .md-field {
-        min-height: 0;
-        max-width: 60px;
-        margin: 0 8px;
-        padding: 0;
-
-        .md-input {
-          text-align: center;
-        }
-      }
-    }
   }
 }
 </style>

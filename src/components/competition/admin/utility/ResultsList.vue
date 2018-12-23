@@ -1,22 +1,21 @@
 <template>
-  <md-list class="results-list md-list-cards">
-    <md-list-item-cards
+  <v-list expand class="results-list grouped">
+    <v-list-group
       v-for="group in groups"
       :key="group[idKey]"
-      md-expand
-      :md-expanded="isGroupExpanded(group, groups)"
-      @toggled="handleGroupExpanded(group[idKey], $event)"
+      :value="isGroupExpanded(group, groups)"
+      @input="handleGroupExpanded(group[idKey], $event)"
     >
-      <md-subheader>
-        <span>{{ group.$name }}</span>
-        <md-icon v-if="hasFavorites(findGroupDancers(group, dancers))" class="md-accent">
+      <v-subheader slot="activator">
+        <v-flex>{{ group.$name }}</v-flex>
+        <v-icon v-if="hasFavorites(findGroupDancers(group, dancers))" color="secondary">
           star
-        </md-icon>
-        <md-icon v-if="results[group[idKey]]" class="md-primary summary-icon">
+        </v-icon>
+        <v-icon v-if="results[group[idKey]]" color="primary" class="summary-icon">
           {{ isInProgress(group, dances, results) ? 'check_circle_outline' : 'check_circle' }}
-        </md-icon>
-      </md-subheader>
-      <md-list slot="md-expand" class="results-list">
+        </v-icon>
+      </v-subheader>
+      <v-list class="results-list">
         <result-list-item
           :dancers="findPlacedDancers(group, callbacks, dancers, results, true)"
           :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], callbacks[idKey], results)"
@@ -25,7 +24,7 @@
         >
           {{ callbacks.$name }}
         </result-list-item>
-        <md-divider class="md-inset" />
+        <v-divider inset />
 
         <result-list-item
           v-for="dance in findGroupDances(group, dances)"
@@ -38,7 +37,7 @@
           {{ dance.$name }}
         </result-list-item>
 
-        <md-divider v-if="hasOverall(group)" class="md-inset" />
+        <v-divider v-if="hasOverall(group)" inset />
         <result-list-item
           v-if="hasOverall(group)"
           :dancers="findPlacedDancers(group, overall, dancers, results)"
@@ -47,11 +46,11 @@
           :class="{ active: isActive(group, overall) }"
         >
           {{ overall.$name }}
-          <md-icon class="icon-trophy" slot="icon" />
+          <v-icon class="icon-trophy" slot="icon" />
         </result-list-item>
-      </md-list>
-    </md-list-item-cards>
-  </md-list>
+      </v-list>
+    </v-list-group>
+  </v-list>
 </template>
 
 <script>

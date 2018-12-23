@@ -2,17 +2,17 @@
   <div class="admin app-scroll-frame">
     <requires-permission :permission="hasPermission" class="app-scroll-frame">
       <div v-if="currentSection" class="app-scroll-frame">
-        <md-toolbar class="md-dense">
-          <span style="flex-grow: 1;"></span>
+        <v-toolbar dense class="md-dense">
+          <v-spacer />
 
           <md-spunnable :md-spinning="saving" />
-        </md-toolbar>
+        </v-toolbar>
         <div class="app-scroll-frame app-scroll">
           <!-- <dynamic-form
             v-if="currentSection.form"
             :fields="currentSection.form.fields"
             :data="{ test: '@TODO' }"
-            class="md-padding"
+            class="pa-3"
             @change="handleChanges"
           /> -->
           <mi-hot-table
@@ -39,21 +39,19 @@
       </div>
     </requires-permission>
 
-    <md-bottom-bar
-      ref="bottomBar"
-      v-show="hasPermission"
-      class="md-accent"
-    >
-      <md-bottom-bar-item
+    <v-bottom-nav v-if="hasPermission" :value="true" :active="$root.currentTab">
+      <v-btn
         v-for="section in sections"
         :key="section[idKey]"
+        :value="section[idKey]"
+        color="primary"
+        flat
         @click="goToTab(section[idKey])"
-        :id="`tab-admin-${section[idKey]}`"
       >
-        <md-icon :class="section.icon"></md-icon>
-        <span class="md-bottom-bar-label">{{ section.name }}</span>
-      </md-bottom-bar-item>
-    </md-bottom-bar>
+        <span>{{ section.name }}</span>
+        <v-icon :class="section.icon"></v-icon>
+      </v-btn>
+    </v-bottom-nav>
   </div>
 </template>
 
@@ -122,18 +120,7 @@ export default {
       return this.permissionsRaw;
     },
   },
-  watch: {
-    '$root.currentTab'() { // eslint-disable-line object-shorthand
-      this.syncBottomBar();
-    },
-  },
   methods: {
-    async syncBottomBar() {
-      await this.$nextTick(); // await md-bottom-bar's internally queued $nextTick
-      const adminTabId = `tab-admin-${this.$root.currentTab}`;
-      this.$refs.bottomBar.MdBottomBar.activeItem = adminTabId;
-    },
-
     goToTab(tab) {
       const params = {
         competitionId: this.$route.params.competitionId,
@@ -186,9 +173,6 @@ export default {
         });
       });
     },
-  },
-  mounted() {
-    this.syncBottomBar();
   },
   components: {
     RequiresPermission,

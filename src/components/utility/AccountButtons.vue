@@ -1,17 +1,18 @@
 <template>
   <div class="account-buttons">
-    <md-button
+    <v-btn
       @click="$store.commit('setCurrentDialog', 'register')"
-      class="md-raised solo"
+      class="mx-0"
     >
       <span>Register</span>
-    </md-button>
-    <md-button
+    </v-btn>
+    <v-btn
+      color="secondary"
       @click="$store.commit('setCurrentDialog', 'login')"
-      class="md-raised md-accent solo"
+      class="mx-0"
     >
       <span>Login</span>
-    </md-button>
+    </v-btn>
   </div>
 </template>
 

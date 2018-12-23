@@ -1,7 +1,7 @@
 <template>
-  <md-icon v-if="hasResults" class="md-primary summary-icon">
+  <v-icon v-if="hasResults" color="primary" class="summary-icon">
     {{ isInProgress ? 'check_circle_outline' : 'check_circle' }}
-  </md-icon>
+  </v-icon>
 </template>
 
 <script>

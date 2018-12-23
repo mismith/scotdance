@@ -4,10 +4,10 @@
       <slot />
     </template>
     <template v-else-if="!$store.state.me">
-      <md-empty-state md-icon="block" md-label="Login required" />
+      <empty-state icon="block" label="Login required" />
     </template>
     <template v-else>
-      <md-empty-state md-icon="block" md-label="Access denied" />
+      <empty-state icon="block" label="Access denied" />
     </template>
   </div>
 </template>

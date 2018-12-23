@@ -1,22 +1,25 @@
 <template>
-  <md-list-item :to="to" class="result-list-item">
+  <v-list-tile :to="to" class="result-list-item">
     <slot name="avatar">
-      <md-avatar
-        class="md-avatar-icon"
-        :class="{ 'md-primary': hasResults, 'md-accent': hasFavorites(dancers || []) }"
+      <v-list-tile-avatar
+        :color="hasFavorites(dancers || []) ? 'secondary' : (hasResults ? 'primary' : 'grey')"
       >
-        <md-icon v-if="hasResults">{{ hasPlaceholderDancers ? 'done_outline' : 'check' }}</md-icon>
+        <v-icon v-if="hasResults">{{ hasPlaceholderDancers ? 'done_outline' : 'check' }}</v-icon>
         <small v-else>TBD</small>
-      </md-avatar>
+      </v-list-tile-avatar>
     </slot>
 
-    <span class="md-list-item-text"><slot /></span>
+    <v-list-tile-content>
+      <v-list-tile-title><slot /></v-list-tile-title>
+    </v-list-tile-content>
 
-    <slot name="icon">
-      <place v-if="place !== undefined" :place="place" />
-      <md-icon v-else>chevron_right</md-icon>
-    </slot>
-  </md-list-item>
+    <v-list-tile-action>
+      <slot name="icon">
+        <place v-if="place !== undefined" :place="place" class="primary--text" />
+        <v-icon v-else>chevron_right</v-icon>
+      </slot>
+    </v-list-tile-action>
+  </v-list-tile>
 </template>
 
 <script>

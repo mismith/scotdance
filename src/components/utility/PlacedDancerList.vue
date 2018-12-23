@@ -1,34 +1,32 @@
 <template>
-  <draggable
-    element="md-list"
-    v-model="dancers"
-    :options="{ disabled: !draggingEnabled, handle: '.sortable-handle' }"
-    @sort="$emit('dancer-reorder', $event)"
-    class="placed-dancer-list md-double-line draggable"
-  >
-    <dancer-list-item
-      v-for="(dancer, index) in dancers"
-      :key="dancer[idKey]"
-      :dancer="dancer"
-      :place="getPlace(dancer, dancers)"
-      @click="$emit('dancer-click', dancer)"
+  <v-list two-line class="placed-dancer-list">
+    <draggable
+      v-model="dancers"
+      :options="{ disabled: !draggingEnabled, handle: '.sortable-handle' }"
+      @sort="$emit('dancer-reorder', $event)"
+      class="draggable"
     >
-      <md-icon v-if="draggingEnabled" class="sortable-handle">drag_indicator</md-icon>
-      <md-switch
-        v-if="admin && index && dance[idKey] !== callbacks[idKey]"
-        v-model="dancer.$tie"
-        @change="$emit('dancer-toggle', [dancer, $event])"
-      />
-      <span v-if="dance[idKey] === callbacks[idKey]" slot="icon" />
-      <md-icon
-        v-if="dance[idKey] === overall[idKey] && dancers.length <= 1"
-        slot="icon"
-        class="icon-trophy md-primary"
-      />
-    </dancer-list-item>
+      <dancer-list-item
+        v-for="(dancer, index) in dancers"
+        :key="dancer[idKey]"
+        :dancer="dancer"
+        :place="getPlace(dancer, dancers)"
+        @click="$emit('dancer-click', dancer)"
+      >
+        <v-icon v-if="draggingEnabled" class="sortable-handle">drag_indicator</v-icon>
 
-    <slot />
-  </draggable>
+        <v-switch
+          slot="favorite"
+          v-if="admin && index && dance[idKey] !== callbacks[idKey]"
+          v-model="dancer.$tie"
+          @click.stop
+          @change="$emit('dancer-toggle', [dancer, $event])"
+        />
+      </dancer-list-item>
+
+      <slot />
+    </draggable>
+  </v-list>
 </template>
 
 <script>
@@ -61,7 +59,11 @@ export default {
     },
   },
   methods: {
-    getPlace,
+    getPlace(dancer, dancers) {
+      if (this.dance[idKey] === callbacks[idKey]) return undefined; // no places in callbacks
+      if (this.dance[idKey] === overall[idKey] && dancers.length <= 1) return 0; // overall winner
+      return getPlace(dancer, dancers);
+    },
   },
   components: {
     Draggable,

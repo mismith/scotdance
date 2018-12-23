@@ -1,30 +1,21 @@
 <template>
   <div class="dancer-report">
     <header>
-      <md-subheader class="md-title">
-        <span>{{ dancer.$name }}</span>
+      <v-subheader class="title">
+        <v-flex>{{ dancer.$name }}</v-flex>
         <favorite-dancer-button :dancer="dancer" />
-      </md-subheader>
-      <div class="md-padding">
+      </v-subheader>
+      <div class="pa-3">
         <div class="number">#{{ dancer.number }}</div>
         <div class="group">{{ dancer.$group && dancer.$group.$name }}</div>
         <div class="location">{{ dancer.location }}</div>
       </div>
     </header>
-    <md-list v-if="group" class="md-list-cards">
-      <!--<md-list-item-cards md-expand :md-expanded="true">
-        <md-subheader>Schedule</md-subheader>
+    <v-list v-if="group" expand class="grouped">
+      <v-list-group :value="true">
+        <v-subheader slot="activator">Results</v-subheader>
 
-        <md-list slot="md-expand">
-          <md-list-item class="empty">
-            Schedule to be determined.
-          </md-list-item>
-        </md-list>
-      </md-list-item-cards>-->
-      <md-list-item-cards md-expand :md-expanded="true">
-        <md-subheader>Results</md-subheader>
-
-        <md-list slot="md-expand">
+        <v-list>
           <result-list-item
             v-for="dance in findGroupDances(group, dances)"
             :key="dance[idKey]"
@@ -35,7 +26,7 @@
             {{ dance.$name }}
           </result-list-item>
 
-          <md-divider v-if="hasOverall(group)" />
+          <v-divider v-if="hasOverall(group)" />
           <result-list-item
              v-if="hasOverall(group)"
             :place="getPlace(dancer, group, overall)"
@@ -44,9 +35,9 @@
             <span slot="avatar" />
             {{ overall.$name }}
           </result-list-item>
-        </md-list>
-      </md-list-item-cards>
-    </md-list>
+        </v-list>
+      </v-list-group>
+    </v-list>
   </div>
 </template>
 

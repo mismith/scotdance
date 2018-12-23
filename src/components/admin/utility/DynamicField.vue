@@ -1,70 +1,49 @@
 <template>
   <div class="dynamic-field">
-    <div v-if="field.type === 'avatar'" class="md-field md-layout md-alignment-center">
-      <md-avatar class="md-large">
-        <gravatar :user="data" />
-      </md-avatar>
-      <div class="md-layout-item md-padding">
-        Avatar via <a href="https://gravatar.com/" target="_blank" class="ext">Gravatar</a>
-      </div>
-    </div>
-
-    <md-field v-else-if="field.type === 'select'">
-      <label>{{ field.title }}</label>
-      <md-select
-        v-model="value"
-        :required="field.required"
-        :readonly="field.readonly"
-        :disabled="field.disabled"
-        @md-selected="handleChanges()"
-      >
-        <md-option
-          v-for="preset in field.presets"
-          :key="preset[idKey]"
-          :value="preset[idKey]"
-        >
-          {{ preset.$name || preset.name }}
-        </md-option>
-        <md-option v-if="!field.presets.length" disabled>
-          None found.
-        </md-option>
-      </md-select>
-    </md-field>
-
-    <md-checkbox
-      v-else-if="field.type === 'checkbox'"
+    <v-select
+      v-if="field.type === 'select'"
       v-model="value"
+      :label="field.title"
+      :items="field.presets"
+      item-text="name"
+      :item-value="idKey"
       :required="field.required"
       :readonly="field.readonly"
       :disabled="field.disabled"
       @change="handleChanges()"
-    >
-      {{ field.title }}
-    </md-checkbox>
+    />
 
-    <md-field v-else-if="field.type === 'textarea'">
-      <label>{{ field.title }}</label>
-      <md-textarea
-        v-model="value"
-        :required="field.required"
-        :readonly="field.readonly"
-        :disabled="field.disabled"
-        md-autogrow
-        @change="handleChanges()"
-      />
-    </md-field>
+    <v-checkbox
+      v-else-if="field.type === 'checkbox'"
+      v-model="value"
+      :label="field.title"
+      :required="field.required"
+      :readonly="field.readonly"
+      :disabled="field.disabled"
+      @change="handleChanges()"
+    />
 
-    <md-field v-else>
-      <label>{{ field.title }}</label>
-      <md-input
-        v-model="value"
-        :type="field.type || 'text'"
-        :required="field.required"
-        :readonly="field.readonly"
-        :disabled="field.disabled"
-        @change="handleChanges()"
-      />
-    </md-field>
+    <v-textarea
+      v-else-if="field.type === 'textarea'"
+      v-model="value"
+      :label="field.title"
+      :required="field.required"
+      :readonly="field.readonly"
+      :disabled="field.disabled"
+      auto-grow
+      @change="handleChanges()"
+    />
+
+    <v-text-field
+      v-else
+      v-model="value"
+      :label="field.title"
+      :type="field.type || 'text'"
+      :required="field.required"
+      :readonly="field.readonly"
+      :disabled="field.disabled"
+      @change="handleChanges()"
+    />
   </div>
 </template>
 

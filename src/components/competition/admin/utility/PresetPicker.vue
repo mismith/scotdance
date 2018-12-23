@@ -1,27 +1,28 @@
 <template>
   <div class="preset-picker">
-    <md-button @click="dialogOpen = true">Add Preset(s)</md-button>
+    <v-btn flat @click="dialogOpen = true">Add Preset(s)</v-btn>
+
     <md-dialog :md-active.sync="dialogOpen">
       <md-dialog-title>Select preset(s) to add:</md-dialog-title>
 
       <md-dialog-content>
-        <md-list>
-          <md-list-item v-for="preset in presets" :key="getValue(preset)">
+        <v-list>
+          <v-list-tile v-for="preset in presets" :key="getValue(preset)">
             <md-checkbox v-model="selected[getValue(preset)]" /><!-- eslint-disable-line vue/valid-v-model -->
-            <span class="md-list-item-text">{{ getValue(preset) }}</span>
-          </md-list-item>
-        </md-list>
+            <v-list-tile-title>{{ getValue(preset) }}</v-list-tile-title>
+          </v-list-tile>
+        </v-list>
       </md-dialog-content>
 
       <md-dialog-actions>
-        <md-button @click="dialogOpen = false">Cancel</md-button>
-        <md-button
-          @click="select"
+        <v-btn @click="dialogOpen = false">Cancel</v-btn>
+        <v-btn
+          color="primary"
           :disabled="!selectedPresets.length"
-          class="md-primary md-raised"
+          @click="select"
         >
           Add
-        </md-button>
+        </v-btn>
       </md-dialog-actions>
     </md-dialog>
   </div>

@@ -1,7 +1,7 @@
 <template>
-  <div class="blades md-layout app-scroll-frame" :class="{ stacks: stacks }">
+  <v-layout row class="blades app-scroll-frame" :class="{ stacks }">
     <slot />
-  </div>
+  </v-layout>
 </template>
 
 <script>
@@ -15,9 +15,6 @@ export default {
 
 <style lang="scss">
 .blades {
-  // extends: md-layout, app-scroll-frame
-  flex-direction: row;
-  flex-wrap: nowrap;
   position: relative;
 
   @media (min-width: 960px) {

@@ -1,37 +1,37 @@
 <template>
   <blades class="admin-info" :stacks="true">
-    <blade id="blade-subsections" class="md-small-size-100 md-size-25 app-scroll">
-      <md-list>
-        <md-list-item
+    <blade id="blade-subsections" class="xs12 md3 app-scroll">
+      <v-list>
+        <v-list-tile
           v-for="subsection in toOrderedArray(section.subsections)"
           :key="subsection[idKey]"
           :to="{ name: 'competition.admin.info', params: { subsectionId: subsection[idKey] } }"
         >
-          <div class="md-list-item-text">{{ subsection.title }}</div>
+          <v-list-tile-content>
+            <v-list-tile-title>{{ subsection.title }}</v-list-tile-title>
+          </v-list-tile-content>
           <v-icon>chevron_right</v-icon>
-        </md-list-item>
-      </md-list>
+        </v-list-tile>
+      </v-list>
     </blade>
-    <blade id="blade-form" class="md-small-size-100 md-size-75 app-scroll">
-      <div v-if="currentSubsection">
+    <blade id="blade-form" class="xs12 md9 app-scroll">
+      <template v-if="currentSubsection">
         <dynamic-form
           v-if="currentSubsection.fields"
           :fields="currentSubsection.fields"
           :data="competition"
-          class="md-padding"
+          class="pa-3"
           @change="handleChanges"
         />
-        <div v-if="inTabs('permissions')">
+        <template v-if="inTabs('permissions')">
           <admin-invites v-bind="$props" />
-        </div>
-        <footer
-          v-if="inTabs('general')"
-          class="md-layout md-alignment-center"
-          style="margin-top: auto;"
-        >
-          <md-button @click="confirmRemove = true" class="md-accent">
+        </template>
+
+        <v-spacer />
+        <v-layout v-if="inTabs('general')" align-center justify-center>
+          <v-btn flat color="error" @click="confirmRemove = true">
             Delete Competition
-          </md-button>
+          </v-btn>
           <md-dialog-confirm
             :md-active.sync="confirmRemove"
             md-title="Delete competition"
@@ -40,14 +40,13 @@
             md-cancel-text="No"
             @md-confirm="handleRemove"
           />
-        </footer>
-      </div>
-      <div v-else>
-        <md-empty-state
-          md-icon="settings"
-          md-label="Competition settings"
-        />
-      </div>
+        </v-layout>
+      </template>
+      <empty-state
+        v-else
+        icon="settings"
+        label="Competition settings"
+      />
     </blade>
   </blades>
 </template>

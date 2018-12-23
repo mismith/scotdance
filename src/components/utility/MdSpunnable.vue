@@ -6,7 +6,7 @@
       title="Saving..."
       :style="{ visibility: mdSpinning ? 'visible' : 'hidden' }"
     />
-    <md-icon v-show="!mdSpinning" class="md-primary" title="Saved">check</md-icon>
+    <v-icon v-show="!mdSpinning" color="primary" title="Saved">check</v-icon>
   </div>
 </template>
 

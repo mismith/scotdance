@@ -1,31 +1,31 @@
 <template>
   <div class="admin-info app-scroll-frame app-scroll">
-    <section class="md-layout md-alignment-center app-scroll-frame md-padding" style="flex-direction: row;">
-      <md-card>
-        <md-card-header class="md-layout md-alignment-center">
-          <md-icon class="md-size-4x">event</md-icon>
-        </md-card-header>
-        <md-card-content class="md-layout md-alignment-center">
+    <v-layout row align-center justify-center class="app-scroll-frame pa-3">
+      <v-card>
+        <v-card-media class="pa-3">
+          <v-icon :size="88">event</v-icon>
+        </v-card-media>
+        <v-card-title>
           <div class="md-title">{{ competitions.length }} competitions</div>
-        </md-card-content>
-      </md-card>
-      <md-card>
-        <md-card-header class="md-layout md-alignment-center">
-          <md-icon class="md-size-4x icon-people" />
-        </md-card-header>
-        <md-card-content class="md-layout md-alignment-center">
+        </v-card-title>
+      </v-card>
+      <v-card>
+        <v-card-media class="pa-3">
+          <v-icon :size="88" class="icon-people" />
+        </v-card-media>
+        <v-card-title>
           <div class="md-title">{{ users.length }} users</div>
-        </md-card-content>
-      </md-card>
-      <md-card>
-        <md-card-header class="md-layout md-alignment-center">
-          <md-icon class="md-size-4x icon-question" />
-        </md-card-header>
-        <md-card-content class="md-layout md-alignment-center">
+        </v-card-title>
+      </v-card>
+      <v-card>
+        <v-card-media class="pa-3">
+          <v-icon :size="88" class="icon-question" />
+        </v-card-media>
+        <v-card-title>
           <div class="md-title">{{ faqs.length }} FAQs</div>
-        </md-card-content>
-      </md-card>
-    </section>
+        </v-card-title>
+      </v-card>
+    </v-layout>
   </div>
 </template>
 

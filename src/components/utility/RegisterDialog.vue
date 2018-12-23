@@ -6,25 +6,21 @@
   >
     <form @submit.prevent="register()">
       <div class="md-dialog-content">
-        <md-field>
-          <label>Email</label>
-          <md-input
-            type="email"
-            name="email"
-            v-model="email"
-            required
-            autofocus
-          />
-        </md-field>
-        <md-field md-has-password>
-          <label>Password</label>
-          <md-input
-            type="password"
-            name="password"
-            v-model="password"
-            required
-          />
-        </md-field>
+        <v-text-field
+          label="Email"
+          type="email"
+          name="email"
+          v-model="email"
+          required
+          autofocus
+        />
+        <v-text-field
+          label="Password"
+          type="password"
+          name="password"
+          v-model="password"
+          required
+        />
 
         <p>
           Already have an account?
@@ -39,11 +35,9 @@
       </div>
 
       <footer class="md-dialog-actions">
-        <md-button @click="registerVisible = false">Cancel</md-button>
+        <v-btn @click="registerVisible = false">Cancel</v-btn>
 
-        <md-spinnable :md-spinning="authLoading" md-left>
-          <md-button type="submit" class="md-primary md-raised">Register</md-button>
-        </md-spinnable>
+        <v-btn type="submit" color="primary" :loading="authLoading">Register</v-btn>
       </footer>
     </form>
   </md-dialog>

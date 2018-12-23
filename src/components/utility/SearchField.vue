@@ -1,30 +1,33 @@
 <template>
-  <md-field class="search-field">
+  <v-layout class="search-field">
     <!-- can't use proper <md-input> here because it causes performance issues on mobile devices -->
-    <input v-model="filterBy" class="md-input" placeholder="Search" />
+    <input v-model="filterBy" class="md-input flex" placeholder="Search" />
 
-    <md-button
+    <v-btn
       v-if="filterBy !== filterByDebounced"
-      class="md-icon-button md-dense"
+      icon
+      dense
       disabled
     >
       <mi-md-spinner :diameter="20" :width="6" />
-    </md-button>
-    <md-button
+    </v-btn>
+    <v-btn
       v-else-if="filterBy"
+      icon
+      dense
       @click="filterByDebounced = ''"
-      class="md-icon-button md-dense"
     >
       <v-icon>clear</v-icon>
-    </md-button>
-    <md-button
+    </v-btn>
+    <v-btn
       v-else
-      class="md-icon-button md-dense"
+      icon
+      dense
       disabled
     >
       <v-icon>search</v-icon>
-    </md-button>
-  </md-field>
+    </v-btn>
+  </v-layout>
 </template>
 
 <script>

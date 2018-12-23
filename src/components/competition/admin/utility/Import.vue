@@ -6,7 +6,7 @@
       md-description="Select a file to import"
       :md-done="step !== 'upload'"
     >
-      <div class="app-scroll-frame app-scroll md-padding">
+      <div class="app-scroll-frame app-scroll pa-3">
         <h3>Instructions</h3>
         <ol>
           <li>Select the <strong>Excel spreadsheet</strong> (.xslx file) that contains the values to import.</li>
@@ -45,7 +45,7 @@
           </md-field>
         </div>
         <footer>
-          <md-button @click="handleCancel()">Cancel</md-button>
+          <v-btn @click="handleCancel()">Cancel</v-btn>
         </footer>
       </md-toolbar>
     </md-step>
@@ -68,14 +68,14 @@
       <md-toolbar v-if="workbook" class="md-layout">
         <div class="md-layout-item" />
         <footer>
-          <md-button @click="handleCancel()">Cancel</md-button>
-          <md-button
-            @click="handleChoose()"
+          <v-btn @click="handleCancel()">Cancel</v-btn>
+          <v-btn
+            color="primary"
             :disabled="dancersSheetIndex < 0"
-            class="md-raised md-primary"
+            @click="handleChoose()"
           >
             Next
-          </md-button>
+          </v-btn>
         </footer>
       </md-toolbar>
     </md-step>
@@ -97,16 +97,16 @@
       <md-toolbar class="md-layout">
         <div class="md-layout-item" />
         <footer>
-          <md-button @click="handleCancel()">Cancel</md-button>
-          <md-spinnable :md-spinning="importing" md-left>
-            <md-button
-              @click="handleReview()"
-              :disabled="importing"
-              class="md-raised md-primary"
-            >
-              Import
-            </md-button>
-          </md-spinnable>
+          <v-btn @click="handleCancel()">Cancel</v-btn>
+
+          <v-btn
+            colo="primary"
+            :disabled="importing"
+            :loading="importing"
+            @click="handleReview()"
+          >
+            Import
+          </v-btn>
         </footer>
       </md-toolbar>
     </md-step>

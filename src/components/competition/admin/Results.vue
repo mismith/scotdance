@@ -1,6 +1,6 @@
 <template>
   <blades class="admin-results" :stacks="true">
-    <blade id="blade-groups" :active="!currentDance" class="md-small-size-100 md-size-33 app-scroll alt">
+    <blade id="blade-groups" :active="!currentDance" class="xs12 md4 app-scroll alt">
       <results-list
         v-if="groups.length"
         :groups="groups"
@@ -9,14 +9,14 @@
         :results="results"
       />
       <div v-else>
-        <md-empty-state
-          md-icon="clear"
-          md-label="No age groups found"
+        <empty-state
+          icon="clear"
+          label="No age groups found"
         />
       </div>
     </blade>
-    <blade id="blade-dancers" :active="currentDance" class="md-small-size-100 md-size-33 app-scroll">
-      <md-list v-if="currentDance">
+    <blade id="blade-dancers" :active="currentDance" class="xs12 md4 app-scroll">
+      <v-list v-if="currentDance" two-line>
         <dancer-list-item
           v-for="dancer in currentDancers"
           :key="dancer[idKey]"
@@ -32,21 +32,21 @@
         />
 
         <div v-if="!currentDancers.length">
-          <md-empty-state
-            md-icon="clear"
-            md-label="No dancers found"
+          <empty-state
+            icon="clear"
+            label="No dancers found"
           />
         </div>
-      </md-list>
+      </v-list>
       <div v-else>
-        <md-empty-state
-          md-icon="touch_app"
-          md-label="Enter results"
-          md-description="Select an age group and dance"
+        <empty-state
+          icon="touch_app"
+          label="Enter results"
+          description="Select an age group and dance"
         />
       </div>
     </blade>
-    <blade class="md-small-size-100 md-size-33 app-scroll">
+    <blade class="xs12 md4 app-scroll">
       <placed-dancer-list
         v-if="currentDance && placedDancers.length"
         :admin="true"
@@ -57,10 +57,10 @@
         @dancer-reorder="handleDrag($event)"
       />
       <div v-else>
-        <md-empty-state
-          md-icon="vertical_split"
-          md-label="Order dancers"
-          md-description="Select dancers in the order placed"
+        <empty-state
+          icon="vertical_split"
+          label="Order dancers"
+          description="Select dancers in the order placed"
         />
       </div>
     </blade>
@@ -212,11 +212,6 @@ export default {
     }
     &.placed {
       opacity: 0.33;
-    }
-  }
-  .placed-dancer-list {
-    .favorite-dancer-button {
-      display: none;
     }
   }
 }

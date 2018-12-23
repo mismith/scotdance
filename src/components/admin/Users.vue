@@ -1,54 +1,40 @@
 <template>
   <blades class="admin-users">
-    <blade :active="!currentUser" class="md-small-size-100 md-size-33">
+    <blade :active="!currentUser" class="xs12 md4">
       <div v-if="users.length" class="app-scroll-frame">
-        <md-toolbar>
+        <v-toolbar>
           <search-field :filter-by.sync="filterBy" />
-          <!--<md-menu md-direction="bottom-end" @selected="sortBy">
-            <md-button md-menu-trigger class="md-icon-button">
-              <v-icon>filter_list</v-icon>
-            </md-button>
-
-            <md-menu-content>
-              <md-menu-item
-                v-for="by in sortableBys"
-                :key="by.key"
-                @click="sortBy = by.key"
-                :class="{ active: sortBy === by.key }"
-              >{{ by.name }}</md-menu-item>
-            </md-menu-content>
-          </md-menu>-->
-        </md-toolbar>
+        </v-toolbar>
 
         <paginated-list v-if="loaded" :items="filteredUsers">
-          <md-list-item
+          <v-list-tile
             slot-scope="user"
             :to="{ name: $route.name, params: { userId: user[idKey] } }"
             :class="{ active: userId === user[idKey] }"
           >
-            <md-avatar>
+            <v-list-tile-avatar>
               <gravatar :user="user" />
-            </md-avatar>
-            <div class="md-list-item-text">
-              <div>{{ user.displayName }}</div>
-              <div>{{ user.uid }}</div>
-            </div>
+            </v-list-tile-avatar>
+            <v-list-tile-content>
+              <v-list-tile-title>{{ user.displayName }}</v-list-tile-title>
+              <v-list-tile-sub-title>{{ user.uid }}</v-list-tile-sub-title>
+            </v-list-tile-content>
             <v-icon>chevron_right</v-icon>
-          </md-list-item>
+          </v-list-tile>
         </paginated-list>
         <div v-else class="app-scroll-frame spinner-container">
           <mi-md-spinner />
         </div>
       </div>
       <div v-else>
-        <md-empty-state
-          md-icon="clear"
-          md-label="No users found"
+        <empty-state
+          icon="clear"
+          label="No users found"
         />
       </div>
     </blade>
-    <blade :active="currentUser" class="md-small-size-100 md-size-66">
-      <div v-if="currentUser" class="app-scroll md-padding">
+    <blade :active="currentUser" class="xs12 md8">
+      <div v-if="currentUser" class="app-scroll pa-3">
         <dynamic-form
           v-if="section.form"
           :fields="section.form.fields"
@@ -68,10 +54,10 @@
         />
       </div>
       <div v-else>
-        <md-empty-state
-          md-icon="touch_app"
-          md-label="See user details"
-          md-description="Select a user"
+        <empty-state
+          icon="touch_app"
+          label="See user details"
+          description="Select a user"
         />
       </div>
     </blade>

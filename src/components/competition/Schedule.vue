@@ -3,34 +3,33 @@
     <blade
       :active="!currentEvent"
       v-persist-scroll="`/competitions/${competitionId}/schedule`"
-      class="md-small-size-100 md-size-33 app-scroll"
+      class="xs12 md4 app-scroll"
     >
       <div v-if="schedule.days">
         <div v-for="day in toOrderedArray(schedule.days)" :key="day[idKey]">
-          <md-subheader class="md-title">
-            <span>{{ day.name || $moment(day.date).format('dddd') }}</span>
-          </md-subheader>
+          <v-subheader class="title">
+            {{ day.name || $moment(day.date).format('dddd') }}
+          </v-subheader>
           <div
             v-if="day.description"
             v-html="day.description"
-            class="md-padding pre-line"
+            class="pa-3 pre-line"
           />
 
-          <md-list class="md-list-cards">
-            <md-list-item-cards
+          <v-list expand class="grouped">
+            <v-list-group
               v-for="block in toOrderedArray(day.blocks)"
               :key="block[idKey]"
-              md-expand
-              :md-expanded="isBlockExpanded(block[idKey], Object.keys(day.blocks))"
-              @toggled="handleBlockExpanded(block[idKey], $event)"
+              :value="isBlockExpanded(block[idKey], Object.keys(day.blocks))"
+              @input="handleBlockExpanded(block[idKey], $event)"
             >
-              <md-subheader>
-                <div>{{ block.name }}</div>
-                <div class="md-caption">{{ textify(block.description) }}</div>
-              </md-subheader>
+              <v-subheader slot="activator">
+                <v-flex>{{ block.name }}</v-flex>
+                <div class="caption">{{ textify(block.description) }}</div>
+              </v-subheader>
 
-              <md-list slot="md-expand" class="md-double-line">
-                <md-list-item
+              <v-list two-line>
+                <v-list-tile
                   v-for="event in toOrderedArray(block.events)"
                   :key="event[idKey]"
                   :to="{
@@ -43,71 +42,71 @@
                   }"
                   :class="{ active: isActive(day[idKey], block[idKey], event[idKey]) }"
                 >
-                  <div class="md-list-item-text">
-                    <div>{{ event.name }}</div>
-                    <div>{{ textify(event.description) }}</div>
-                  </div>
-                  <md-icon v-if="event.dances || event.description">chevron_right</md-icon>
-                </md-list-item>
-                <md-list-item v-if="!block.events" class="empty">
+                  <v-list-tile-content>
+                    <v-list-tile-title>{{ event.name }}</v-list-tile-title>
+                    <v-list-tile-sub-title>{{ textify(event.description) }}</v-list-tile-sub-title>
+                  </v-list-tile-content>
+                  <v-icon v-if="event.dances || event.description">chevron_right</v-icon>
+                </v-list-tile>
+                <v-list-tile v-if="!block.events" class="empty">
                   No events found.
-                </md-list-item>
-              </md-list>
-            </md-list-item-cards>
-          </md-list>
+                </v-list-tile>
+              </v-list>
+            </v-list-group>
+          </v-list>
         </div>
       </div>
       <div v-else>
-        <md-empty-state
-          md-icon="clear"
-          md-label="No schedule yet"
+        <empty-state
+          icon="clear"
+          label="No schedule yet"
         />
       </div>
     </blade>
-    <blade :active="currentEvent" class="md-small-size-100 md-size-66">
+    <blade :active="currentEvent" class="xs12 md8">
       <div v-if="currentEvent" class="app-scroll-frame">
-        <md-toolbar class="md-dense md-toolbar-nowrap md-medium-hide">
-          <md-button :to="{ name: $route.name, params: { competitionId } }" class="md-icon-button">
+        <v-toolbar dense class="hidden-md-and-up">
+          <v-btn icon :to="{ name: $route.name, params: { competitionId } }">
             <v-icon>chevron_left</v-icon>
-          </md-button>
+          </v-btn>
           <span>
             {{ currentDay.name }}
             &rsaquo;
             {{ currentBlock.name }}
           </span>
-        </md-toolbar>
+        </v-toolbar>
 
         <div
           v-persist-scroll="`/competitions/${competitionId}/schedule/${dayId}/${blockId}/${eventId}`"
           class="app-scroll-frame app-scroll"
         >
           <header>
-            <md-subheader class="md-title">{{ currentEvent.name }}</md-subheader>
+            <v-subheader class="title">{{ currentEvent.name }}</v-subheader>
             <div
               v-if="currentEvent.description"
               v-html="currentEvent.description"
-              class="md-padding pre-line"
+              class="pa-3 pre-line"
             />
           </header>
 
-          <md-list class="md-list-cards">
-            <md-list-item-cards
+          <v-list expand class="grouped">
+            <v-list-group
               v-for="dance in toOrderedArray(currentEvent.dances)"
               :key="dance[idKey]"
               :md-expand="!!dance.platforms"
-              :md-expanded="isDanceExpanded(dance[idKey], Object.keys(currentEvent.dances))"
-              @toggled="handleDanceExpanded(dance[idKey], $event)"
+              :value="isDanceExpanded(dance[idKey], Object.keys(currentEvent.dances))"
+              @input="handleDanceExpanded(dance[idKey], $event)"
             >
-              <md-subheader>
-                <div>{{ getScheduleItemDanceName(dance, dances) }}</div>
+              <v-subheader slot="activator">
+                <v-flex>{{ getScheduleItemDanceName(dance, dances) }}</v-flex>
                 <div
                   v-if="dance.description"
                   v-html="dance.description"
-                  class="md-caption"
+                  class="caption"
                 />
-              </md-subheader>
+              </v-subheader>
 
-              <md-content slot="md-expand" class="md-elevation-1">
+              <md-content class="md-elevation-1">
                 <admin-platforms
                   :item="dance"
                   :groups="groups"
@@ -118,8 +117,8 @@
                   @item-click="handlePlatformClick($event, dance)"
                 />
               </md-content>
-            </md-list-item-cards>
-          </md-list>
+            </v-list-group>
+          </v-list>
         </div>
 
         <md-dialog :md-active.sync="drawVisible" :md-fullscreen="false" class="draw-dialog">
@@ -140,15 +139,15 @@
             </md-list>
           </md-dialog-content>
           <md-dialog-actions>
-            <md-button @click="drawVisible = false" class="md-primary">Done</md-button>
+            <v-btn color="primary" @click="drawVisible = false">Done</v-btn>
           </md-dialog-actions>
         </md-dialog>
       </div>
       <div v-else>
-        <md-empty-state
-          md-icon="touch_app"
-          md-label="See event details"
-          md-description="Select an event"
+        <empty-state
+          icon="touch_app"
+          label="See event details"
+          description="Select an event"
         />
       </div>
     </blade>
@@ -315,12 +314,6 @@ export default {
     margin-bottom: 4px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-
-    .pools {
-      .pool {
-        padding: 0 6px 12px;
-      }
-    }
   }
 }
 .draw-dialog {

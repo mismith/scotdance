@@ -3,30 +3,29 @@
     <blade
       :active="!currentGroup"
       v-persist-scroll="`/competitions/${competitionId}/results`"
-      class="md-small-size-100 md-size-33 app-scroll"
+      class="xs12 md4 app-scroll"
     >
-      <md-list v-if="groupedCategories.length" class="md-list-cards">
-        <md-list-item-cards
+      <v-list v-if="groupedCategories.length" expand class="grouped">
+        <v-list-group
           v-for="category in groupedCategories"
           :key="category[idKey]"
-          md-expand
-          :md-expanded="isCategoryExpanded(category, groupedCategories)"
-          @toggled="handleCategoryExpanded(category[idKey], $event)"
+          :value="isCategoryExpanded(category, groupedCategories)"
+          @input="handleCategoryExpanded(category[idKey], $event)"
         >
-          <md-subheader>
-            <span>{{ category.name }}</span>
-            <md-icon v-if="hasFavorites(findCategoryDancers(category, dancers))" class="md-accent">
+          <v-subheader slot="activator">
+            <v-flex>{{ category.name }}</v-flex>
+            <v-icon v-if="hasFavorites(findCategoryDancers(category, dancers))" color="secondary">
               star
-            </md-icon>
+            </v-icon>
             <results-progress-indicator
               :category="category"
               :groups="groups"
               :dances="dances"
               :results="results"
             />
-          </md-subheader>
+          </v-subheader>
 
-          <md-list slot="md-expand">
+          <v-list>
             <result-list-item
               v-for="group in category.$groups"
               :key="group[idKey]"
@@ -36,66 +35,68 @@
             >
               {{ group.name }}
             </result-list-item>
-          </md-list>
-        </md-list-item-cards>
-      </md-list>
+          </v-list>
+        </v-list-group>
+      </v-list>
       <div v-else>
-        <md-empty-state
-          md-icon="clear"
-          md-label="No results yet"
+        <empty-state
+          icon="clear"
+          label="No results yet"
         />
       </div>
     </blade>
-    <blade :active="currentGroup" class="md-small-size-100 md-size-66">
+    <blade :active="currentGroup" class="xs12 md8">
       <div v-if="currentGroup" class="app-scroll-frame">
-        <md-toolbar class="md-dense md-toolbar-nowrap md-medium-hide">
-          <md-button :to="{ name: $route.name, params: { competitionId } }" class="md-icon-button">
+        <v-toolbar dense class="hidden-md-and-up">
+          <v-btn icon :to="{ name: $route.name, params: { competitionId } }">
             <v-icon>chevron_left</v-icon>
-          </md-button>
+          </v-btn>
           <span>
             {{ currentGroup.$name }}
           </span>
-        </md-toolbar>
+        </v-toolbar>
 
         <div
           id="results-detail"
           v-persist-scroll="`/competitions/${competitionId}/results/${groupId}`"
           class="app-scroll-frame app-scroll"
         >
-          <md-list class="md-list-cards">
-            <md-list-item-cards
+          <v-list expand class="grouped">
+            <v-list-group
               v-for="dance in groupedDancers"
               :key="dance.name"
               :id="`dance-${dance[idKey]}`"
-              md-expand
-              :md-expanded="isDanceExpanded(dance, groupedDancers)"
-              @toggled="handleDanceExpanded(dance[idKey], $event)"
+              :value="isDanceExpanded(dance, groupedDancers)"
+              @input="handleDanceExpanded(dance[idKey], $event)"
             >
-              <md-subheader>{{ dance.$name }}</md-subheader>
+              <v-subheader slot="activator">{{ dance.$name }}</v-subheader>
 
               <placed-dancer-list
-                slot="md-expand"
                 :dance="dance"
                 :dancers="dance.dancers"
                 @dancer-click="$router.push({ name: 'competition.dancers', params: { dancerId: $event[idKey] }})"
               >
-                <md-list-item v-if="!dance.dancers.length" class="empty">
+                <v-list-tile v-if="!dance.dancers.length" class="empty">
                   Results to be determined.
-                </md-list-item>
+                </v-list-tile>
 
-                <md-divider v-if="currentGroup.sponsor && dance[idKey] === overall[idKey]" />
-                <md-list-item
+                <v-divider v-if="currentGroup.sponsor && dance[idKey] === overall[idKey]" />
+                <v-list-tile
                   v-if="currentGroup.sponsor && dance[idKey] === overall[idKey]"
                   @click="showTrophy = true"
                 >
-                  <div class="md-list-item-text">
-                    <div>{{ currentGroup.sponsor }}</div>
-                    <div>{{ currentGroup.trophy || '' }} Trophy Sponsor</div>
-                  </div>
-                </md-list-item>
+                  <v-list-tile-content>
+                    <v-list-tile-title>
+                      {{ currentGroup.sponsor }}
+                    </v-list-tile-title>
+                    <v-list-tile-sub-title>
+                      {{ currentGroup.trophy || '' }} Trophy Sponsor
+                    </v-list-tile-sub-title>
+                  </v-list-tile-content>
+                </v-list-tile>
               </placed-dancer-list>
-            </md-list-item-cards>
-          </md-list>
+            </v-list-group>
+          </v-list>
         </div>
 
         <md-dialog :md-active.sync="showTrophy" :md-fullscreen="false" class="trophy-dialog">
@@ -104,15 +105,15 @@
             <div class="pre-line">{{ currentGroup.trophy || '' }} Trophy Sponsor</div>
           </md-dialog-content>
           <md-dialog-actions>
-            <md-button @click="showTrophy = false" class="md-primary">Done</md-button>
+            <v-btn color="primary" @click="showTrophy = false">Done</v-btn>
           </md-dialog-actions>
         </md-dialog>
       </div>
       <div v-else>
-        <md-empty-state
-          md-icon="touch_app"
-          md-label="See results"
-          md-description="Select an age group"
+        <empty-state
+          icon="touch_app"
+          label="See results"
+          description="Select an age group"
         />
       </div>
     </blade>
