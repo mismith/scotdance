@@ -33,14 +33,19 @@
                   <v-icon>chevron_right</v-icon>
                 </v-list-tile>
               </draggable>
+
+              <v-list-tile v-if="!blade.items().length" class="empty">
+                <v-list-tile-avatar>
+                  <v-icon>clear</v-icon>
+                </v-list-tile-avatar>
+                No items yet.
+              </v-list-tile>
             </v-list>
           </v-list-group>
           <v-list-group :value="true">
-            <v-subheader slot="activator">Add New</v-subheader>
+            <v-subheader slot="activator">Add Presets</v-subheader>
 
             <v-list>
-              <new-dynamic-field @change="handleListItemCreate(blade, $event)" />
-              <v-divider v-if="blade.presets" />
               <v-list-tile
                 v-for="preset in blade.presets"
                 :key="blade.name(preset)"
@@ -52,6 +57,13 @@
                 </v-list-tile-content>
                 <v-icon>add</v-icon>
               </v-list-tile>
+
+              <v-divider v-if="blade.presets.length" class="mb-2" />
+              <new-dynamic-field
+                :field="{ title: 'Add Custom', data: 'name' }"
+                @change="handleListItemCreate(blade, $event)"
+                class="pl-3"
+              />
             </v-list>
           </v-list-group>
         </v-list>
@@ -84,11 +96,11 @@
         </form>
 
         <v-spacer />
-        <v-layout align-center justify-center>
+        <div class="layout align-center justify-center flex-none">
           <v-btn flat color="error" @click="confirmRemove = { blade, itemId: blade.id() }">
             Delete Item
           </v-btn>
-        </v-layout>
+        </div>
       </blade>
     </template>
     <blade v-if="!currentDay">
@@ -99,13 +111,13 @@
       />
     </blade>
 
-    <md-dialog-confirm
-      :md-active.sync="confirmRemove"
-      md-title="Delete item"
-      md-content="Are you sure you want to permanently delete this item?"
-      md-confirm-text="Yes"
-      md-cancel-text="No"
-      @md-confirm="handleListItemRemove(confirmRemove.blade, confirmRemove.itemId)"
+    <dialog-card
+      :value="confirmRemove"
+      title="Delete item"
+      text="Are you sure you want to permanently delete this item?"
+      cancel-label="No"
+      submit-label="Yes"
+      @submit="handleListItemRemove(confirmRemove.blade, confirmRemove.itemId)"
     />
   </blades>
 </template>
@@ -376,6 +388,7 @@ export default {
       });
 
       // redirect
+      this.confirmRemove = false;
       this.goToBlade(blade.params());
     },
     handleListItemUpdate(blade, itemId, item) {
@@ -431,9 +444,6 @@ export default {
     .sortable-handle {
       margin-right: 8px;
     }
-  }
-  .dimmed {
-    opacity: 0.5;
   }
 }
 </style>

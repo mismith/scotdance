@@ -2,19 +2,14 @@
   <div class="admin app-scroll-frame">
     <requires-permission :permission="hasPermission" class="app-scroll-frame">
       <div v-if="currentSection" class="app-scroll-frame">
-        <v-toolbar dense class="md-dense">
+        <v-toolbar dense>
           <v-spacer />
 
-          <md-spunnable :md-spinning="saving" />
+          <v-btn icon flat color="primary" :loading="saving">
+            <v-icon>check</v-icon>
+          </v-btn>
         </v-toolbar>
         <div class="app-scroll-frame app-scroll">
-          <!-- <dynamic-form
-            v-if="currentSection.form"
-            :fields="currentSection.form.fields"
-            :data="{ test: '@TODO' }"
-            class="pa-3"
-            @change="handleChanges"
-          /> -->
           <mi-hot-table
             v-if="currentSection.hot"
             :settings="currentSection.hot"
@@ -63,7 +58,6 @@ import {
 import { getFirstExisting } from '@/helpers/router';
 import RequiresPermission from '@/components/utility/RequiresPermission.vue';
 import MiHotTable from '@/components/admin/utility/MiHotTable.vue';
-import MdSpunnable from '@/components/utility/MdSpunnable.vue';
 import DynamicForm from '@/components/admin/utility/DynamicForm.vue';
 
 export default {
@@ -176,7 +170,6 @@ export default {
   },
   components: {
     RequiresPermission,
-    MdSpunnable,
     DynamicForm,
     MiHotTable,
   },

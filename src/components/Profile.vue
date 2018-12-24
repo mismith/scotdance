@@ -1,114 +1,101 @@
 <template>
-  <div class="profile app-scroll-frame">
-    <div class="pa-3 app-scroll-frame app-scroll">
-      <form>
-        <v-layout align-center>
-          <v-avatar :size="100">
-            <gravatar :user="me" />
-          </v-avatar>
-          <v-flex class="pa-3">
-            Avatar via <a href="https://gravatar.com/" target="_blank" class="ext">Gravatar</a>
-          </v-flex>
-        </v-layout>
-
-        <v-text-field
-          label="Display name"
-          v-model="me.displayName"
-          @input="handleChanges('displayName')"
-        />
-        <v-text-field
-          label="Email"
-          v-model="me.email"
-          readonly
-          required
-        />
-
-        <div>
-          <v-btn flat color="primary" @click="passwordActive = true">Change Password</v-btn>
-          <md-dialog :md-active.sync="passwordActive" :md-fullscreen="false" class="change-password-dialog">
-            <md-dialog-title>Change your password</md-dialog-title>
-
-            <md-dialog-content>
-              <md-field md-toggle-password>
-                <label>Current Password</label>
-                <md-input
-                  v-model="passwordConfirm"
-                  type="password"
-                  name="password"
-                  @keypress.enter="changePassword"
-                />
-              </md-field>
-              <md-field md-toggle-password>
-                <label>New Password</label>
-                <md-input
-                  v-model="newPassword"
-                  type="password"
-                  name="password"
-                  @keypress.enter="changePassword"
-                />
-              </md-field>
-
-              <aside v-if="passwordError" class="validation-message">
-                {{ passwordError.message }}
-              </aside>
-            </md-dialog-content>
-
-            <md-dialog-actions>
-              <v-btn @click="passwordActive = false">Cancel</v-btn>
-
-              <v-btn
-                color="primary"
-                :disabled="!passwordConfirm || !newPassword"
-                :loading="passwordLoading"
-                @click="changePassword"
-              >
-                Change Password
-              </v-btn>
-            </md-dialog-actions>
-          </md-dialog>
+  <form class="profile app-scroll-frame app-scroll">
+    <div class="pa-3">
+      <header class="layout align-center flex-none mb-3">
+        <v-avatar :size="100">
+          <gravatar :user="me" />
+        </v-avatar>
+        <div class="flex pa-3">
+          Avatar via <a href="https://gravatar.com/" target="_blank" class="ext">Gravatar</a>
         </div>
+      </header>
 
-        <footer>
-          <v-btn flat color="error" @click="removeActive = true">Delete Account</v-btn>
-          <md-dialog :md-active.sync="removeActive" :md-fullscreen="false" class="remove-user-dialog">
-            <md-dialog-title>Are you sure?</md-dialog-title>
+      <v-text-field
+        label="Display name"
+        v-model="me.displayName"
+        @input="handleChanges('displayName')"
+      />
+      <v-text-field
+        label="Email"
+        v-model="me.email"
+        readonly
+        required
+      />
 
-            <md-dialog-content>
-              <p>This will permanently delete your account and all associated data.</p>
-              <p>In order to proceed, please enter your password:</p>
-              <md-field md-toggle-password>
-                <label>Password</label>
-                <md-input
-                  v-model="removeConfirm"
-                  type="password"
-                  name="password"
-                  @keypress.enter="remove"
-                />
-              </md-field>
+      <dialog-card
+        v-model="passwordActive"
+        title="Change your password"
+        cancel-label="Cancel"
+        async
+        @submit="changePassword"
+      >
+        <v-btn slot="activator" flat color="primary" class="mx-0">Change Password</v-btn>
 
-              <aside v-if="removeError" class="validation-message">
-                {{ removeError.message }}
-              </aside>
-            </md-dialog-content>
+        <v-text-field
+          label="Current Password"
+          v-model="passwordConfirm"
+          type="password"
+          name="password"
+        />
+        <v-text-field
+          label="New Password"
+          v-model="newPassword"
+          type="password"
+          name="password"
+        />
+        <v-alert :value="passwordError" type="error">
+          {{ passwordError && passwordError.message }}
+        </v-alert>
 
-            <md-dialog-actions>
-              <v-btn @click="removeActive = false">Cancel</v-btn>
-
-              <v-btn
-                flat
-                color="error"
-                :disabled="!removeConfirm"
-                :loading="removeLoading"
-                @click="remove"
-              >
-                Delete Account
-              </v-btn>
-            </md-dialog-actions>
-          </md-dialog>
-        </footer>
-      </form>
+        <v-btn
+          slot="submit"
+          flat
+          color="primary"
+          :disabled="!passwordConfirm || !newPassword"
+          :loading="passwordLoading"
+          type="submit"
+        >
+          Change Password
+        </v-btn>
+      </dialog-card>
     </div>
-  </div>
+
+    <v-spacer />
+    <footer class="layout justify-center flex-none">
+      <dialog-card
+        v-model="removeActive"
+        title="Are you sure?"
+        cancel-label="Cancel"
+        async
+        @submit="remove"
+      >
+        <v-btn slot="activator" flat color="error" class="mx-0">Delete Account</v-btn>
+
+        <p>This will permanently delete your account and all associated data.</p>
+        <p>In order to proceed, please enter your password:</p>
+        <v-text-field
+          label="Password"
+          v-model="removeConfirm"
+          type="password"
+          name="password"
+        />
+        <v-alert :value="removeError" type="error">
+          {{ removeError && removeError.message }}
+        </v-alert>
+
+        <v-btn
+          slot="submit"
+          flat
+          color="error"
+          :disabled="!removeConfirm"
+          :loading="removeLoading"
+          type="submit"
+        >
+          Delete Account
+        </v-btn>
+      </dialog-card>
+    </footer>
+  </form>
 </template>
 
 <script>

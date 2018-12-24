@@ -1,23 +1,20 @@
 <template>
-  <md-dialog
-    :md-active.sync="dialogVisible"
-    :md-fullscreen="false"
+  <dialog-card
+    v-model="dialogVisible"
+    cancel-label="Not Now"
     class="requires-auth-dialog"
   >
-    <md-dialog-title>
-      <slot name="title" />
-    </md-dialog-title>
-    <md-dialog-content>
-      <slot />
-    </md-dialog-content>
-    <div class="pa-3 primary" style="position: relative;">
-      <div class="account-bg"></div>
-      <account-buttons />
+    <slot slot="title" name="title" />
+    <div slot="text">
+      <v-card-text>
+        <slot />
+      </v-card-text>
+      <div class="pa-3 primary" style="position: relative;">
+        <div class="account-bg"></div>
+        <account-buttons />
+      </div>
     </div>
-    <md-dialog-actions>
-      <v-btn @click="dialogVisible = false">Not Now</v-btn>
-    </md-dialog-actions>
-  </md-dialog>
+  </dialog-card>
 </template>
 
 <script>
@@ -49,12 +46,6 @@ export default {
 
 <style lang="scss">
 .requires-auth-dialog {
-  .md-dialog-title {
-    display: flex;
 
-    .md-icon {
-      margin: 0 4px;
-    }
-  }
 }
 </style>

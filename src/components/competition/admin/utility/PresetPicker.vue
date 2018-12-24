@@ -2,29 +2,31 @@
   <div class="preset-picker">
     <v-btn flat @click="dialogOpen = true">Add Preset(s)</v-btn>
 
-    <md-dialog :md-active.sync="dialogOpen">
-      <md-dialog-title>Select preset(s) to add:</md-dialog-title>
-
-      <md-dialog-content>
-        <v-list>
-          <v-list-tile v-for="preset in presets" :key="getValue(preset)">
-            <md-checkbox v-model="selected[getValue(preset)]" /><!-- eslint-disable-line vue/valid-v-model -->
+    <dialog-card v-model="dialogOpen" title="Select preset(s) to add:" @submit="select">
+      <v-list slot="text">
+        <v-list-tile v-for="preset in presets" :key="getValue(preset)">
+          <v-list-action>
+            <v-checkbox v-model="selected[getValue(preset)]" /><!-- eslint-disable-line vue/valid-v-model -->
+          </v-list-action>
+          <v-list-tile-content>
             <v-list-tile-title>{{ getValue(preset) }}</v-list-tile-title>
-          </v-list-tile>
-        </v-list>
-      </md-dialog-content>
+          </v-list-tile-content>
+        </v-list-tile>
+      </v-list>
 
-      <md-dialog-actions>
-        <v-btn @click="dialogOpen = false">Cancel</v-btn>
+      <v-card-actions slot="actions" class="justify-end">
+        <v-btn flat @click="dialogOpen = false">Cancel</v-btn>
+
         <v-btn
+          flat
           color="primary"
           :disabled="!selectedPresets.length"
-          @click="select"
+          type="submit"
         >
           Add
         </v-btn>
-      </md-dialog-actions>
-    </md-dialog>
+      </v-card-actions>
+    </dialog-card>
   </div>
 </template>
 

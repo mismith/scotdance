@@ -4,12 +4,11 @@
       <v-list v-if="items.length">
         <slot v-for="item in paginated" v-bind="item" />
       </v-list>
-      <div v-else>
-        <empty-state
-          icon="error_outline"
-          label="No items match"
-        />
-      </div>
+      <empty-state
+        v-else
+        icon="error_outline"
+        label="No items match"
+      />
     </div>
 
     <v-toolbar dense class="pagination">

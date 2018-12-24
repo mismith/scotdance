@@ -96,8 +96,6 @@ export default {
 
 <style lang="scss">
 .dancer-report {
-  .md-title {
-    flex-wrap: nowrap;
-  }
+
 }
 </style>

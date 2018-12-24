@@ -1,46 +1,42 @@
 <template>
-  <md-dialog
-    :md-active.sync="registerVisible"
-    :md-fullscreen="false"
+  <dialog-card
+    v-model="registerVisible"
+    async
+    @submit="register"
     class="register-dialog"
   >
-    <form @submit.prevent="register()">
-      <div class="md-dialog-content">
-        <v-text-field
-          label="Email"
-          type="email"
-          name="email"
-          v-model="email"
-          required
-          autofocus
-        />
-        <v-text-field
-          label="Password"
-          type="password"
-          name="password"
-          v-model="password"
-          required
-        />
+    <v-text-field
+      label="Email"
+      type="email"
+      name="email"
+      v-model="email"
+      required
+      autofocus
+    />
+    <v-text-field
+      label="Password"
+      type="password"
+      name="password"
+      v-model="password"
+      required
+    />
 
-        <p>
-          Already have an account?
-          <a @click="$store.commit('setCurrentDialog', 'login')">
-            Login
-          </a>
-        </p>
+    <p>
+      Already have an account?
+      <a @click="$store.commit('setCurrentDialog', 'login')">
+        Login
+      </a>
+    </p>
 
-        <aside v-if="authError" class="validation-message">
-          {{ authError.message }}
-        </aside>
-      </div>
+    <v-alert :value="authError" type="error">
+      {{ authError && authError.message }}
+    </v-alert>
 
-      <footer class="md-dialog-actions">
-        <v-btn @click="registerVisible = false">Cancel</v-btn>
-
-        <v-btn type="submit" color="primary" :loading="authLoading">Register</v-btn>
-      </footer>
-    </form>
-  </md-dialog>
+    <v-card-actions slot="actions" class="justify-end">
+      <v-btn flat @click="registerVisible = false">Cancel</v-btn>
+      <v-btn flat color="primary" :loading="authLoading" type="submit">Register</v-btn>
+    </v-card-actions>
+  </dialog-card>
 </template>
 
 <script>

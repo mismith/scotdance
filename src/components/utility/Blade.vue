@@ -52,10 +52,6 @@ export default {
     .blade {
       flex-shrink: 0;
 
-      .md-medium-hide {
-        display: none !important; // @HACK to fix vue-material not setting this as important, so md-toolbar overrides it
-      }
-
       + .blade {
         border-left: solid 6px #ccc;
       }

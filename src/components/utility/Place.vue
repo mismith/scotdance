@@ -1,5 +1,5 @@
 <template>
-  <div class="place" :class="{ finalized }">
+  <div class="place" :class="{ 'primary--text': finalized }">
     <small v-if="!finalized" class="tbd">TBD</small>
     <div v-else>{{ place || '-' }}<small class="ordinal">{{ ordinal }}</small></div>
   </div>
@@ -56,10 +56,6 @@ export default {
     width: 20px; // aligns the ordinals despite varying character widths
     font-size: 0.5em;
     vertical-align: top;
-  }
-
-  &.finalized {
-    color: var(--md-theme-default-primary);
   }
 }
 </style>

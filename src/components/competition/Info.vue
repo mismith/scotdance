@@ -4,13 +4,13 @@
       v-persist-scroll="`/competitions/${competitionId}/info`"
       class="app-scroll-frame app-scroll"
     >
-      <section class="hero">
+      <section class="pa-3">
         <h1 class="display-1">{{ competition.name }}</h1>
         <p v-if="competition.date" class="headline">
           {{ $moment(competition.date).format('dddd, MMMM D, YYYY') }}
         </p>
         <p v-if="competition.venue" class="subheading">
-          <a v-if="competition.address" :href="`https://maps.google.com/?q=${competition.venue},+${competition.address}`" target="_blank" class="ext">{{ competition.venue }}</a>
+          <a v-if="competition.address" :href="`https://maps.google.com/?q=${competition.venue},+${competition.address},+${competition.location}`" target="_blank" class="ext">{{ competition.venue }}</a>
           <span v-else>{{ competition.venue }}</span>
           <br />
           <span>{{ competition.location }}</span>
@@ -18,16 +18,16 @@
         <p v-if="competition.sobhd">
           <small><strong>SOBHD</strong> {{ competition.sobhd }}</small>
         </p>
-        <v-layout v-if="competition.registrationURL">
+        <v-layout wrap align-center v-if="competition.registrationURL">
           <v-btn
             :href="competition.registrationURL"
             target="_blank"
             color="primary"
-            class="ml-0"
+            class="ml-0 mr-3"
           >
             <span class="ext">Register</span>
           </v-btn>
-          <v-flex style="opacity: 0.66;">
+          <v-flex xs12 sm6 style="opacity: 0.66;">
             <div v-if="competition.registrationStart">
               Registration open{{ $moment(competition.registrationStart).isAfter() ? 's' : 'ed'}}
               {{ $moment(competition.registrationStart).format('MMM D, YYYY \\a\\t h:mma') }}
@@ -56,6 +56,7 @@
               :dancer="member"
               @click="setCurrentDialog(['staff', member])"
             >
+              <span slot="favorite" />
               <v-list-tile-avatar v-if="member.image" slot="avatar">
                 <img :src="member.image" />
               </v-list-tile-avatar>
@@ -121,19 +122,6 @@ export default {
 
 <style lang="scss">
 .competition-info {
-  .app-scroll > section {
-    padding: 0 16px 16px;
-  }
-  .staff {
-    .dancer-list-item {
-      .md-list-item-content {
-        min-height: 48px;
-      }
-      .md-avatar:first-child,
-      .favorite-dancer-button {
-        display: none;
-      }
-    }
-  }
+
 }
 </style>

@@ -1,83 +1,80 @@
 <template>
-  <md-dialog
-    :md-active.sync="loginVisible"
-    :md-fullscreen="false"
-    @md-closed="forgot = false"
+  <dialog-card
+    v-model="loginVisible"
+    async
+    @cancel="forgot = false"
+    @submit="forgot ? reset() : login()"
     class="login-dialog"
   >
-    <form v-if="!forgot" @submit.prevent="login()">
-      <div class="md-dialog-content">
-        <v-text-field
-          label="Email"
-          type="email"
-          name="email"
-          v-model="email"
-          required
-          autofocus
-        />
-        <v-text-field
-          label="Password"
-          type="password"
-          name="password"
-          v-model="password"
-          required
-        />
+    <template v-if="!forgot">
+      <v-text-field
+        label="Email"
+        type="email"
+        name="email"
+        v-model="email"
+        required
+        autofocus
+      />
+      <v-text-field
+        label="Password"
+        type="password"
+        name="password"
+        v-model="password"
+        required
+      />
 
-        <p>
-          Need an account first?
-          <a @click="$store.commit('setCurrentDialog', 'register')">
-            Register
-          </a>
-        </p>
-        <p>
-          Can't log in?
-          <a @click="forgot = true; authError = null;">
-            Reset Password
-          </a>
-        </p>
+      <p>
+        Need an account first?
+        <a @click="$store.commit('setCurrentDialog', 'register')">
+          Register
+        </a>
+      </p>
+      <p>
+        Can't log in?
+        <a @click="forgot = true; authError = null;">
+          Reset Password
+        </a>
+      </p>
 
-        <aside v-if="authError" class="validation-message">
-          {{ authError.message }}
-        </aside>
-      </div>
+      <v-alert :value="authError" type="error">
+        {{ authError && authError.message }}
+      </v-alert>
 
-      <footer class="md-dialog-actions">
-        <v-btn @click="loginVisible = false">Cancel</v-btn>
+      <v-card-actions slot="actions" class="justify-end">
+        <v-btn flat @click="loginVisible = false">Cancel</v-btn>
 
-        <v-btn type="submit" color="primary" :loading="authLoading">Login</v-btn>
-      </footer>
-    </form>
-    <form v-else @submit.prevent="reset()">
-      <div class="md-dialog-content">
-        <header>
-          <p>We can send you a link to reset your password.</p>
-          <br />
-        </header>
+        <v-btn flat color="primary" :loading="authLoading" type="submit">Login</v-btn>
+      </v-card-actions>
+    </template>
+    <template v-else>
+      <header>
+        <p>We can send you a link to reset your password.</p>
+        <br />
+      </header>
 
-        <v-text-field
-          label="Email"
-          type="email"
-          name="email"
-          v-model="email"
-          required
-          autofocus
-        />
+      <v-text-field
+        label="Email"
+        type="email"
+        name="email"
+        v-model="email"
+        required
+        autofocus
+      />
 
-        <aside v-if="authError" class="validation-message">
-          {{ authError.message }}
-        </aside>
-        <aside v-if="authMessage" class="validation-message">
-          {{ authMessage }}
-        </aside>
-      </div>
+      <v-alert :value="authError" type="error">
+        {{ authError && authError.message }}
+      </v-alert>
+      <v-alert :value="authMessage" type="success">
+        {{ authMessage }}
+      </v-alert>
 
-      <footer class="md-dialog-actions">
-        <v-btn @click="forgot = false; authError = null;">Back</v-btn>
+      <v-card-actions slot="actions" class="justify-end">
+        <v-btn flat @click="forgot = false; authError = null;">Back</v-btn>
 
-        <v-btn type="submit" color="primary" :loading="authLoading">Send</v-btn>
-      </footer>
-    </form>
-  </md-dialog>
+        <v-btn flat color="primary" :loading="authLoading" type="submit">Send</v-btn>
+      </v-card-actions>
+    </template>
+  </dialog-card>
 </template>
 
 <script>

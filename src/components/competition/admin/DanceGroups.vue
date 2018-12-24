@@ -1,6 +1,6 @@
 <template>
   <blades class="admin-dance-groups" :stacks="true">
-    <blade id="blade-groups" :active="!currentGroup" class="xs12 md4 app-scroll">
+    <blade id="blade-groups" :active="!currentGroup" class="xs12 md4 app-scroll alt">
       <v-list v-if="groups.length">
         <v-list-tile
           v-for="group in groups"
@@ -18,9 +18,10 @@
         v-else
         icon="clear"
         label="No age groups found"
+        description="Add or import some first"
       />
     </blade>
-    <blade id="blade-dances" :active="currentGroup" class="xs12 md4 app-scroll">
+    <blade id="blade-dances" :active="currentGroup" class="xs12 md4 app-scroll alt">
       <v-list v-if="currentGroup">
         <v-list-tile
           v-for="dance in dances"
@@ -59,7 +60,7 @@
         description="Pick dances for each age group"
       />
     </blade>
-    <blade class="xs12 md4 app-scroll">
+    <blade class="xs12 md4 app-scroll alt">
       <HotTable v-if="currentGroupDances.length" :settings="hotSettings" class="fullscreen" />
       <empty-state
         v-else

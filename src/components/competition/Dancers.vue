@@ -3,7 +3,7 @@
     <blade :active="!currentDancer" class="xs12 md6">
       <div v-if="dancers.length" class="app-scroll-frame">
         <v-toolbar dense>
-          <search-field :filter-by.sync="filterBy" class="flex" />
+          <search-field v-model="filterBy" class="flex mr-2" />
           <v-menu @selected="sortBy">
             <v-btn icon slot="activator">
               <v-icon>filter_list</v-icon>
@@ -14,7 +14,7 @@
                 v-for="by in sortableBys"
                 :key="by.key"
                 @click="sortBy = by.key"
-                :class="{ active: sortBy === by.key }"
+                :class="{ 'primary--text': sortBy === by.key }"
               >
                 {{ by.name }}
               </v-list-tile>
@@ -22,7 +22,7 @@
           </v-menu>
           <v-btn
             icon
-            :color="onlyFavorites && 'secondary'"
+            :class="{ 'secondary--text': onlyFavorites }"
             @click="onlyFavorites = !onlyFavorites"
           >
             <v-icon>{{ onlyFavorites ? 'star' : 'star_border' }}</v-icon>
@@ -42,7 +42,7 @@
             >
               <v-subheader slot="activator">
                 <v-flex>{{ groupId || '?' }}</v-flex>
-                <v-icon v-if="hasFavorites(group)" color="secondary">star</v-icon>
+                <v-icon v-if="!onlyFavorites && hasFavorites(group)" color="secondary">star</v-icon>
               </v-subheader>
 
               <v-list two-line>
@@ -51,43 +51,39 @@
                   :key="dancer[idKey]"
                   :dancer="dancer"
                   :to="{ name: $route.name, params: { competitionId, dancerId: dancer[idKey] } }"
-                  :class="{ active: dancerId === dancer[idKey] }"
                 />
               </v-list>
             </v-list-group>
           </v-list>
-          <div v-else-if="!onlyFavorites">
-            <empty-state
-              icon="error_outline"
-              label="No dancers match"
-            />
-          </div>
-          <div v-else-if="me">
-            <empty-state
-              icon="star_half"
-              label="No favourite dancers"
-            />
-          </div>
-          <div v-else>
-            <empty-state
-              icon="star_half"
-              label="No favourite dancers"
-              description="Login to highlight your favourites–making them much easier to find"
-            />
-          </div>
+          <empty-state
+            v-else-if="!onlyFavorites"
+            icon="error_outline"
+            label="No dancers match"
+          />
+          <empty-state
+            v-else-if="me"
+            icon="star_half"
+            label="No favourite dancers"
+          />
+          <empty-state
+            v-else
+            icon="star_half"
+            label="No favourite dancers"
+            description="Login to highlight your favourites–making them much easier to find"
+          />
         </div>
       </div>
-      <div v-else>
-        <empty-state
-          icon="clear"
-          label="No dancers yet"
-        />
-      </div>
+      <empty-state
+        v-else
+        icon="clear"
+        label="No dancers yet"
+        description="Check back later"
+      />
     </blade>
     <blade :active="currentDancer" class="xs12 md6">
       <div v-if="currentDancer" class="app-scroll-frame">
         <v-toolbar dense class="hidden-md-and-up">
-          <v-btn icon :to="{ name: $route.name, params: { competitionId } }">
+          <v-btn flat icon :to="{ name: $route.name, params: { competitionId } }">
             <v-icon>chevron_left</v-icon>
           </v-btn>
           <span>Dancers</span>
@@ -106,13 +102,12 @@
           />
         </div>
       </div>
-      <div v-else>
-        <empty-state
-          icon="touch_app"
-          label="See dancer details"
-          description="Select a dancer"
-        />
-      </div>
+      <empty-state
+        v-else
+        icon="touch_app"
+        label="See dancer details"
+        description="Select a dancer"
+      />
     </blade>
   </blades>
 </template>
@@ -265,17 +260,13 @@ export default {
 
 <style lang="scss">
 .competition-dancers {
-  .md-toolbar {
-    flex-wrap: nowrap;
-    padding-left: 16px;
-    padding-right: 16px;
+  .search-field {
+    .v-input__control {
+      min-height: 36px !important;
 
-    .md-field {
-      width: auto;
-      flex: 1;
-    }
-    .search-field {
-      margin-right: 8px;
+      .v-input__slot {
+        margin: 0;
+      }
     }
   }
 }

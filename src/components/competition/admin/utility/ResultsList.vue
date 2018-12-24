@@ -128,16 +128,6 @@ export default {
 
 <style lang="scss">
 .results-list {
-  .md-list {
-    > div {
-      position: relative;
 
-      > .md-divider {
-        bottom: auto;
-        top: 0;
-        z-index: 3;
-      }
-    }
-  }
 }
 </style>

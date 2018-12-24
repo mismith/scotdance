@@ -8,14 +8,14 @@
         :dancers="dancers"
         :results="results"
       />
-      <div v-else>
-        <empty-state
-          icon="clear"
-          label="No age groups found"
-        />
-      </div>
+      <empty-state
+        v-else
+        icon="clear"
+        label="No age groups found"
+        description="Add or import some first"
+      />
     </blade>
-    <blade id="blade-dancers" :active="currentDance" class="xs12 md4 app-scroll">
+    <blade id="blade-dancers" :active="currentDance" class="xs12 md4 app-scroll alt">
       <v-list v-if="currentDance" two-line>
         <dancer-list-item
           v-for="dancer in currentDancers"
@@ -31,22 +31,20 @@
           class="placeholder"
         />
 
-        <div v-if="!currentDancers.length">
-          <empty-state
-            icon="clear"
-            label="No dancers found"
-          />
-        </div>
-      </v-list>
-      <div v-else>
         <empty-state
-          icon="touch_app"
-          label="Enter results"
-          description="Select an age group and dance"
+          v-if="!currentDancers.length"
+          icon="clear"
+          label="No dancers found"
         />
-      </div>
+      </v-list>
+      <empty-state
+        v-else
+        icon="touch_app"
+        label="Enter results"
+        description="Select an age group and dance"
+      />
     </blade>
-    <blade class="xs12 md4 app-scroll">
+    <blade class="xs12 md4 app-scroll alt">
       <placed-dancer-list
         v-if="currentDance && placedDancers.length"
         :admin="true"
@@ -56,13 +54,12 @@
         @dancer-toggle="handleTie($event[0], $event[1])"
         @dancer-reorder="handleDrag($event)"
       />
-      <div v-else>
-        <empty-state
-          icon="vertical_split"
-          label="Order dancers"
-          description="Select dancers in the order placed"
-        />
-      </div>
+      <empty-state
+        v-else
+        icon="vertical_split"
+        label="Order dancers"
+        description="Select dancers in the order placed"
+      />
     </blade>
   </blades>
 </template>

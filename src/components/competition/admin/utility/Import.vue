@@ -1,121 +1,116 @@
 <template>
-  <md-steppers :md-active-step.sync="step" md-linear class="admin-import">
-    <md-step
-      id="upload"
-      md-label="Upload"
-      md-description="Select a file to import"
-      :md-done="step !== 'upload'"
-    >
-      <div class="app-scroll-frame app-scroll pa-3">
-        <h3>Instructions</h3>
-        <ol>
-          <li>Select the <strong>Excel spreadsheet</strong> (.xslx file) that contains the values to import.</li>
-          <li>Pick the sheet that contains a list of dancers with age grouping headers, then click <strong>Next</strong>.</li>
-          <li>Double-check that all values were parsed properly&mdash;this is how data will be imported, so if anything is missing or looks broken, it will likely fail to import properly. If it looks okay, click <strong>Import</strong>.</li>
-        </ol>
+  <v-card class="admin-import">
+    <v-stepper v-model="step">
+      <v-stepper-header>
+        <v-stepper-step :complete="step !== 'upload'" step="1">
+          Upload
+          <small>Select a file to import</small>
+        </v-stepper-step>
+        <v-divider />
+        <v-stepper-step :complete="step > 1" step="2">
+          Choose
+          <small>Pick which data to use</small>
+        </v-stepper-step>
+        <v-divider />
+        <v-stepper-step :complete="step === 'review'" step="3">
+          Review
+          <small>Ensure values look correct</small>
+        </v-stepper-step>
+      </v-stepper-header>
 
-        <h3>Formatting</h3>
-        <p>The spreadsheet should have the following structure:</p>
-        <table class="demo">
-          <tbody v-for="category in 2" :key="category">
-            <tr>
-              <td>Category / Age Group</td>
-              <td v-for="td in 3" :key="td">&nbsp;</td>
-            </tr>
-            <tr v-for="dancer in 3" :key="dancer">
-              <td>Dancer Number</td>
-              <td>First Name</td>
-              <td>Last Name</td>
-              <td>Location</td>
-            </tr>
-            <tr>
-              <td v-for="td in 4" :key="td">{{ category === 1 ? '&nbsp;' : '...' }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <md-toolbar class="md-layout">
-        <div class="md-layout-item">
-          <md-field>
-            <label>Spreadsheet file</label>
-            <md-file
-              @md-change="handleUpload($event[0])"
+      <v-stepper-items>
+        <v-stepper-content step="1" class="pa-0">
+          <div class="app-scroll-frame app-scroll pa-3 alt">
+            <h3>Instructions</h3>
+            <ol>
+              <li>Select the <strong>Excel spreadsheet</strong> (.xslx file) that contains the values to import.</li>
+              <li>Pick the sheet that contains a list of dancers with age grouping headers, then click <strong>Next</strong>.</li>
+              <li>Double-check that all values were parsed properly&mdash;this is how data will be imported, so if anything is missing or looks broken, it will likely fail to import properly. If it looks okay, click <strong>Import</strong>.</li>
+            </ol>
+
+            <h3>Formatting</h3>
+            <p>The spreadsheet should have the following structure:</p>
+            <table class="demo">
+              <tbody v-for="category in 2" :key="category">
+                <tr>
+                  <td>Category / Age Group</td>
+                  <td v-for="td in 3" :key="td">&nbsp;</td>
+                </tr>
+                <tr v-for="dancer in 3" :key="dancer">
+                  <td>Dancer Number</td>
+                  <td>First Name</td>
+                  <td>Last Name</td>
+                  <td>Location</td>
+                </tr>
+                <tr>
+                  <td v-for="td in 4" :key="td">{{ category === 1 ? '&nbsp;' : '...' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <v-card-actions class="justify-end">
+            <v-btn flat @click="handleCancel()">Cancel</v-btn>
+
+            <v-file
               accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            />
-          </md-field>
-        </div>
-        <footer>
-          <v-btn @click="handleCancel()">Cancel</v-btn>
-        </footer>
-      </md-toolbar>
-    </md-step>
-    <md-step
-      id="choose"
-      md-label="Choose"
-      md-description="Pick which data to use"
-      :md-done="step === 'review'"
-    >
-      <md-tabs v-if="workbook" @md-changed="handleSheetChange">
-        <md-tab
-          v-for="(sheetName, sheetIndex) of workbook.SheetNames"
-          :key="sheetIndex"
-          :id="`tab-sheet-${sheetIndex}`"
-          :md-label="sheetName"
-        >
-          <HotTable :settings="sheetToHot(workbook.Sheets[sheetName])" />
-        </md-tab>
-      </md-tabs>
-      <md-toolbar v-if="workbook" class="md-layout">
-        <div class="md-layout-item" />
-        <footer>
-          <v-btn @click="handleCancel()">Cancel</v-btn>
-          <v-btn
-            color="primary"
-            :disabled="dancersSheetIndex < 0"
-            @click="handleChoose()"
-          >
-            Next
-          </v-btn>
-        </footer>
-      </md-toolbar>
-    </md-step>
-    <md-step
-      id="review"
-      md-label="Review"
-      md-description="Ensure values look correct"
-    >
-      <md-tabs v-if="data" md-active-tab="tab-dancers">
-        <md-tab
-          v-for="(items, key) of data"
-          :key="key"
-          :id="`tab-${key}`"
-          :md-label="key"
-        >
-          <HotTable :settings="toReviewHot(items, key)" />
-        </md-tab>
-      </md-tabs>
-      <md-toolbar class="md-layout">
-        <div class="md-layout-item" />
-        <footer>
-          <v-btn @click="handleCancel()">Cancel</v-btn>
-
-          <v-btn
-            colo="primary"
-            :disabled="importing"
-            :loading="importing"
-            @click="handleReview()"
-          >
-            Import
-          </v-btn>
-        </footer>
-      </md-toolbar>
-    </md-step>
-  </md-steppers>
+              @change="handleUpload"
+            >
+              <v-btn flat color="primary">Upload Spreadsheet</v-btn>
+            </v-file>
+          </v-card-actions>
+        </v-stepper-content>
+        <v-stepper-content step="2" class="pa-0">
+          <v-tabs v-if="workbook" @md-changed="handleSheetChange">
+            <v-tab v-for="(sheetName, sheetIndex) of workbook.SheetNames" :key="sheetIndex">
+              {{ sheetName }}
+            </v-tab>
+            <v-tab-item v-for="(sheetName, sheetIndex) of workbook.SheetNames" :key="sheetIndex">
+              <HotTable :settings="sheetToHot(workbook.Sheets[sheetName])" />
+            </v-tab-item>
+          </v-tabs>
+          <v-card-actions class="justify-end">
+            <v-btn flat @click="handleCancel()">Cancel</v-btn>
+            <v-btn
+              flat
+              color="primary"
+              :disabled="dancersSheetIndex < 0"
+              @click="handleChoose()"
+            >
+              Next
+            </v-btn>
+          </v-card-actions>
+        </v-stepper-content>
+        <v-stepper-content step="3" class="pa-0">
+          <v-tabs v-if="data">
+            <v-tab v-for="(items, key) of data" :key="key">
+              {{ key }}
+            </v-tab>
+            <v-tab-item v-for="(items, key) of data" :key="key">
+              <HotTable :settings="toReviewHot(items, key)" />
+            </v-tab-item>
+          </v-tabs>
+          <v-card-actions class="justify-end">
+            <v-btn flat @click="handleCancel()">Cancel</v-btn>
+            <v-btn
+              flat
+              color="primary"
+              :disabled="importing"
+              :loading="importing"
+              @click="handleReview()"
+            >
+              Import
+            </v-btn>
+          </v-card-actions>
+        </v-stepper-content>
+      </v-stepper-items>
+    </v-stepper>
+  </v-card>
 </template>
 
 <script>
 import XLSX from 'xlsx';
 import find from 'lodash.find';
+import VFile from '@outluch/v-file';
 import { idKey } from '@/helpers/firebase';
 import {
   HotTable,
@@ -135,7 +130,7 @@ export default {
   },
   data() {
     return {
-      step: 'upload',
+      step: 1,
 
       workbook: undefined,
 
@@ -206,7 +201,7 @@ export default {
         this.$set(this, 'workbook', workbook);
 
         // move to next step
-        this.step = 'choose';
+        this.step += 1;
 
         // auto-pick default sheets
         this.dancersSheetIndex = workbook.SheetNames.findIndex(name => /Program/i.test(name));
@@ -223,7 +218,7 @@ export default {
       this.$set(this, 'data', this.parseSpreadsheet(dancersSheet));
 
       // move to next step
-      this.step = 'review';
+      this.step += 1;
     },
     handleReview() {
       const {
@@ -366,24 +361,13 @@ export default {
   },
   components: {
     HotTable,
+    VFile,
   },
 };
 </script>
 
 <style lang="scss">
 .admin-import {
-  .md-toolbar.md-layout {
-    > .md-layout-item {
-      margin-right: 16px;
-    }
-    > footer.md-layout-item {
-      flex: 0;
-      margin-right: 0;
-    }
-  }
-  h3 {
-    margin-bottom: 0;
-  }
   table.demo {
     border-spacing: 0;
     border: 1px solid #ccc;

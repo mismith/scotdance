@@ -4,7 +4,9 @@
       <v-list-tile-avatar
         :color="hasFavorites(dancers || []) ? 'secondary' : (hasResults ? 'primary' : 'grey')"
       >
-        <v-icon v-if="hasResults">{{ hasPlaceholderDancers ? 'done_outline' : 'check' }}</v-icon>
+        <v-icon v-if="hasResults">
+          {{ hasPlaceholderDancers ? 'done_outline' : 'check' }}
+        </v-icon>
         <small v-else>TBD</small>
       </v-list-tile-avatar>
     </slot>
@@ -15,7 +17,7 @@
 
     <v-list-tile-action>
       <slot name="icon">
-        <place v-if="place !== undefined" :place="place" class="primary--text" />
+        <place v-if="place !== undefined" :place="place" />
         <v-icon v-else>chevron_right</v-icon>
       </slot>
     </v-list-tile-action>

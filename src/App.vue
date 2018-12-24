@@ -42,19 +42,27 @@
           </v-list-tile>
         </v-list>
 
-        <md-dialog-confirm
-          :md-active.sync="confirmClearLocalStorage"
-          md-title="Clear App Cache"
-          md-content="<p>In order to enhance performance and usability, this app stores certain settings in your device's local storage cache.</p> <p>If you are ever encountering layout or navigation bugs, clearing these may help resolve certain issues related to: <ul><li>expanded/collapsed states</li><li>active/last-used screens</li><li>stored scroll positions</li></ul><p><strong>Are you sure you want to permanently erase these stored settings?</strong></p>"
-          md-confirm-text="Yes"
-          md-cancel-text="No"
-          @md-confirm="clearLocalStorage()"
-        />
+        <dialog-card
+          v-model="confirmClearLocalStorage"
+          title="Clear App Cache"
+          cancel-label="No"
+          submit-label="Yes"
+          @submit="clearLocalStorage()"
+        >
+          <p>In order to enhance performance and usability, this app stores certain settings in your device's local storage cache.</p>
+          <p>If you are ever encountering layout or navigation bugs, clearing these may help resolve certain issues related to:</p>
+          <ul class="mb-3">
+            <li>expanded/collapsed states</li>
+            <li>active/last-used screens</li>
+            <li>stored scroll positions</li>
+          </ul>
+          <p><strong>Are you sure you want to permanently erase these stored settings?</strong></p>
+        </dialog-card>
       </v-menu>
     </v-toolbar>
 
-    <v-navigation-drawer app v-model="menuVisible">
-      <header class="account-header primary">
+    <v-navigation-drawer app v-model="menuVisible" class="app-scroll-frame">
+      <header class="account-header primary flex-none">
         <div class="account-bg"></div>
         <account-buttons v-if="!me" class="pa-3" />
         <div v-else>
@@ -81,17 +89,18 @@
         <register-dialog />
         <login-dialog />
         <requires-auth-dialog name="favorites">
-          <template slot="title">
+          <v-card-title slot="title" class="title">
             Track your favourites
             <v-icon color="secondary">star</v-icon>
-          </template>
+          </v-card-title>
+
           <p>To see the dancers you care most about <strong>featured throughout the app</strong>, you'll need an account first.</p>
           <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
         </requires-auth-dialog>
       </header>
 
       <div class="app-scroll-frame app-scroll">
-        <v-list v-if="accountToggled" class="animate-in">
+        <v-list v-if="accountToggled" class="layout column flex">
           <v-subheader>Account</v-subheader>
 
           <v-list-tile :to="{ name: 'profile' }" @click="closeMenu()">
@@ -135,6 +144,9 @@
             />
 
             <v-list-tile v-if="!relevantCompetitions.length" class="empty">
+              <v-list-tile-avatar>
+                <v-icon>clear</v-icon>
+              </v-list-tile-avatar>
               No competitions found.
             </v-list-tile>
 
@@ -182,7 +194,7 @@
         />
       </keep-alive>
       <div v-else class="app-scroll-frame spinner-container">
-        <mi-md-spinner />
+        <spinner />
       </div>
     </v-content>
   </v-app>
@@ -378,14 +390,6 @@ export default {
 </script>
 
 <style lang="scss">
-// custom vue-material theme
-// @import "~vue-material/dist/theme/engine";
-// @include md-register-theme("default", (
-//   primary: md-get-palette-color(blue, 600),
-//   accent: md-get-palette-color(pink, 500)
-// ));
-// @import "~vue-material/dist/theme/all";
-
 // import simple-line-icons
 $simple-line-font-path: "~simple-line-icons/fonts/";
 @import "~simple-line-icons/scss/simple-line-icons";
@@ -419,6 +423,15 @@ body.has-bottom-bar {
   touch-action: pan-y;
 }
 
+.flex-none {
+  flex: none;
+}
+
+.empty,
+.dimmed {
+  opacity: 0.5;
+}
+
 .v-toolbar {
   .v-toolbar__title {
     a {
@@ -428,16 +441,21 @@ body.has-bottom-bar {
   }
 }
 .v-subheader {
+  flex: none;
+
   .v-btn {
     margin-right: -8px;
   }
-  &.md-title {
-    color: inherit;
-    font-size: 24px;
-    padding-top: 16px;
-  }
-  &.md-list-item:first-of-type {
-    margin-top: 0;
+}
+.v-avatar {
+  &.primary,
+  &.secondary,
+  &.grey {
+    color: #fff;
+
+    .v-icon {
+      color: inherit;
+    }
   }
 }
 
@@ -488,152 +506,12 @@ body,
 }
 
 // app-wide md-component styling
-.md-list {
-  flex-shrink: 0;
-
-  > .md-list-item {
-    flex-shrink: 0;
-
-    .md-list-item-container {
-      .md-list-item-content {
-        .md-subheader {
-          flex: 1;
-          padding-left: 0;
-
-          > span {
-            flex: 1;
-          }
-          .md-icon {
-            font-size: 14px;
-            margin-left: 4px;
-
-            &.summary-icon {
-              margin-left: auto;
-              margin-right: -16px;
-              transition: opacity .3s;
-            }
-          }
-          ~ .md-list-expand-indicator {
-            flex: 0;
-          }
-        }
-      }
-      .md-list-item-text {
-        display: inline-block;
-        text-overflow: ellipsis;
-      }
-    }
-    > .md-list-item-router.router-link-active,
-    &.active {
-      background-color: var(--md-theme-default-primary) !important;
-
-      &.md-list-item-container,
-      > .md-list-item-container {
-        *:not(.md-primary):not(.md-accent) {
-          color: #fff;
-        }
-      }
-    }
-    &.empty {
-      .md-list-item-content {
-        font-size: small;
-        font-style: italic;
-        opacity: 0.5;
-      }
-    }
-  }
-  &.md-transparent {
-    background-color: transparent;
-  }
-  &.md-dense {
-    .md-list-item-content {
-      > .md-icon {
-        &:first-child {
-          margin-right: 16px;
-        }
-      }
-      .md-list-action {
-        &:last-of-type {
-          margin-left: 8px;
-        }
-      }
-    }
-  }
-}
-.md-menu-content {
-  max-height: 50vh; // for toolbar help button (w/ hide live chat visible)
-}
-
-.md-avatar {
-  &.md-avatar-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: #FFF;
-    font-size: 16px;
-  }
-}
-
-.md-toolbar {
-  flex-shrink: 0;
-  z-index: 3; // maintain box-shadow; keep above .md-list-item
-
-  > span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  a.md-title {
-    text-decoration: none;
-  }
-
-  &.md-toolbar-nowrap {
-    flex-wrap: nowrap;
-  }
-
-  &.md-app-toolbar {
-    z-index: 4; // keep above body content toolbars
-  }
-}
-
-.md-tabs {
-  @extend .app-scroll-frame;
-
-  &-navigation {
-    flex-shrink: 0;
-
-    .md-button {
-      min-width: 48px !important;
-    }
-  }
-  &-content {
-    position: relative;
-    flex: auto;
-  }
-  &-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-  }
-  .md-tab {
-    padding: 0;
-
-    &,
-    > .app-scroll-frame {
-      height: 100%;
-    }
-  }
-}
-
 .md-dialog {
   .md-dialog-content {
     @extend .app-scroll;
   }
   .md-steppers {
     @extend .app-scroll-frame;
-
-    font-size: 1.2em;
 
     .md-steppers-navigation {
       flex-shrink: 0;
@@ -680,27 +558,6 @@ body,
 }
 
 // component styles
-.validation-message {
-  color: var(--md-theme-default-accent) !important;
-  margin-top: 16px;
-}
-
-.login-dialog,
-.register-dialog,
-.change-password-dialog,
-.remove-user-dialog {
-  p {
-    color: #666;
-  }
-  .md-dialog-actions {
-    display: flex;
-    justify-content: space-between;
-    padding-left: 16px;
-    padding-right: 24px;
-    padding-bottom: 12px;
-  }
-}
-
 .account-bg {
   position: absolute;
   top: 0;
@@ -712,7 +569,6 @@ body,
   background-size: cover;
   opacity: .25;
   pointer-events: none;
-  z-index: 0;
 }
 .account-header {
   position: relative;
@@ -724,6 +580,15 @@ body,
 }
 
 .v-list {
+  .v-input--switch {
+    .v-input__control {
+      margin: auto;
+    }
+    .v-input--selection-controls__input {
+      margin-right: 0;
+    }
+  }
+
   &.grouped {
     background-color: transparent;
 
@@ -734,26 +599,6 @@ body,
         }
       }
     }
-    //   &:before,
-    //   &:after {
-    //     display: none;
-    //   }
-    // }
-    // .v-list__group__items {
-    //   padding-left: 16px;
-    //   padding-right: 16px;
-  }
-}
-
-// account panel transition
-@keyframes animate-in {
-  0% { opacity: 0; transform: translate3d(0, -50%, 0); }
-  100% { opacity: 1; transform: translate3d(0, 0, 0); }
-}
-.animate-in {
-  > * {
-    transform-origin: center top;
-    animation: animate-in 300ms forwards;
   }
 }
 

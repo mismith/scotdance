@@ -1,6 +1,6 @@
 <template>
   <blades class="admin-info" :stacks="true">
-    <blade id="blade-subsections" class="xs12 md3 app-scroll">
+    <blade id="blade-subsections" class="xs12 md3 app-scroll alt">
       <v-list>
         <v-list-tile
           v-for="subsection in toOrderedArray(section.subsections)"
@@ -28,19 +28,19 @@
         </template>
 
         <v-spacer />
-        <v-layout v-if="inTabs('general')" align-center justify-center>
+        <div v-if="inTabs('general')" class="layout align-center justify-center flex-none">
           <v-btn flat color="error" @click="confirmRemove = true">
             Delete Competition
           </v-btn>
-          <md-dialog-confirm
-            :md-active.sync="confirmRemove"
-            md-title="Delete competition"
-            md-content="Are you sure you want to permanently delete this competition?"
-            md-confirm-text="Yes"
-            md-cancel-text="No"
-            @md-confirm="handleRemove"
+          <dialog-card
+            v-model="confirmRemove"
+            title="Delete competition"
+            text="Are you sure you want to permanently delete this competition?"
+            cancel-label="No"
+            submit-label="Yes"
+            @submit="handleRemove"
           />
-        </v-layout>
+        </div>
       </template>
       <empty-state
         v-else

@@ -3,7 +3,7 @@
     <blade :active="!currentUser" class="xs12 md4">
       <div v-if="users.length" class="app-scroll-frame">
         <v-toolbar>
-          <search-field :filter-by.sync="filterBy" />
+          <search-field v-model="filterBy" />
         </v-toolbar>
 
         <paginated-list v-if="loaded" :items="filteredUsers">
@@ -23,15 +23,14 @@
           </v-list-tile>
         </paginated-list>
         <div v-else class="app-scroll-frame spinner-container">
-          <mi-md-spinner />
+          <spinner />
         </div>
       </div>
-      <div v-else>
-        <empty-state
-          icon="clear"
-          label="No users found"
-        />
-      </div>
+      <empty-state
+        v-else
+        icon="clear"
+        label="No users found"
+      />
     </blade>
     <blade :active="currentUser" class="xs12 md8">
       <div v-if="currentUser" class="app-scroll pa-3">
@@ -53,13 +52,12 @@
           @change="handleChanges($event, `users:favorites/${userId}`)"
         />
       </div>
-      <div v-else>
-        <empty-state
-          icon="touch_app"
-          label="See user details"
-          description="Select a user"
-        />
-      </div>
+      <empty-state
+        v-else
+        icon="touch_app"
+        label="See user details"
+        description="Select a user"
+      />
     </blade>
   </blades>
 </template>

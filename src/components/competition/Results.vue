@@ -35,20 +35,26 @@
             >
               {{ group.name }}
             </result-list-item>
+            <v-list-tile v-if="!category.$groups.length" class="empty">
+              <v-list-tile-avatar>
+                <v-icon>clear</v-icon>
+              </v-list-tile-avatar>
+              No more info.
+            </v-list-tile>
           </v-list>
         </v-list-group>
       </v-list>
-      <div v-else>
-        <empty-state
-          icon="clear"
-          label="No results yet"
-        />
-      </div>
+      <empty-state
+        v-else
+        icon="clear"
+        label="No results yet"
+        description="Check back later"
+      />
     </blade>
     <blade :active="currentGroup" class="xs12 md8">
       <div v-if="currentGroup" class="app-scroll-frame">
         <v-toolbar dense class="hidden-md-and-up">
-          <v-btn icon :to="{ name: $route.name, params: { competitionId } }">
+          <v-btn flat icon :to="{ name: $route.name, params: { competitionId } }">
             <v-icon>chevron_left</v-icon>
           </v-btn>
           <span>
@@ -77,6 +83,9 @@
                 @dancer-click="$router.push({ name: 'competition.dancers', params: { dancerId: $event[idKey] }})"
               >
                 <v-list-tile v-if="!dance.dancers.length" class="empty">
+                  <v-list-tile-avatar>
+                    <v-icon>clear</v-icon>
+                  </v-list-tile-avatar>
                   Results to be determined.
                 </v-list-tile>
 
@@ -99,23 +108,16 @@
           </v-list>
         </div>
 
-        <md-dialog :md-active.sync="showTrophy" :md-fullscreen="false" class="trophy-dialog">
-          <md-dialog-title>{{ currentGroup.sponsor }}</md-dialog-title>
-          <md-dialog-content>
-            <div class="pre-line">{{ currentGroup.trophy || '' }} Trophy Sponsor</div>
-          </md-dialog-content>
-          <md-dialog-actions>
-            <v-btn color="primary" @click="showTrophy = false">Done</v-btn>
-          </md-dialog-actions>
-        </md-dialog>
+        <dialog-card v-model="showTrophy" :title="currentGroup.sponsor">
+          <div class="pre-line">{{ currentGroup.trophy || '' }} Trophy Sponsor</div>
+        </dialog-card>
       </div>
-      <div v-else>
-        <empty-state
-          icon="touch_app"
-          label="See results"
-          description="Select an age group"
-        />
-      </div>
+      <empty-state
+        v-else
+        icon="touch_app"
+        label="See results"
+        description="Select an age group"
+      />
     </blade>
   </bladeS>
 </template>
@@ -278,17 +280,6 @@ export default {
 
 <style lang="scss">
 .competition-results {
-  .md-list {
-    > div {
-      position: relative;
-
-      > .md-divider {
-        bottom: auto;
-        top: 0;
-        z-index: 3;
-      }
-    }
-  }
   .dancer-list-item {
     .group {
       display: none;

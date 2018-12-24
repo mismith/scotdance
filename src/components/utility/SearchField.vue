@@ -1,56 +1,37 @@
 <template>
-  <v-layout class="search-field">
-    <!-- can't use proper <md-input> here because it causes performance issues on mobile devices -->
-    <input v-model="filterBy" class="md-input flex" placeholder="Search" />
-
-    <v-btn
-      v-if="filterBy !== filterByDebounced"
-      icon
-      dense
-      disabled
-    >
-      <mi-md-spinner :diameter="20" :width="6" />
-    </v-btn>
-    <v-btn
-      v-else-if="filterBy"
-      icon
-      dense
-      @click="filterByDebounced = ''"
-    >
-      <v-icon>clear</v-icon>
-    </v-btn>
-    <v-btn
-      v-else
-      icon
-      dense
-      disabled
-    >
-      <v-icon>search</v-icon>
-    </v-btn>
-  </v-layout>
+  <v-text-field
+    label="Search"
+    type="search"
+    v-model="value"
+    append-icon="search"
+    clearable
+    solo
+    :loading="value !== valueDebounced"
+    class="search-field"
+  />
 </template>
 
 <script>
 export default {
   name: 'search-field',
   props: {
-    filterBy: String,
+    value: String,
   },
   data() {
     return {
-      filterByDebounced: this.filterBy,
-      filterByTimeout: undefined,
+      valueDebounced: this.value,
+      valueTimeout: undefined,
     };
   },
   watch: {
-    filterBy(filterBy) {
-      clearTimeout(this.filterByTimeout);
-      this.filterByTimeout = setTimeout(() => {
-        this.filterByDebounced = filterBy;
+    value(value) {
+      clearTimeout(this.valueTimeout);
+      this.valueTimeout = setTimeout(() => {
+        this.valueDebounced = value || '';
       }, 300);
     },
-    filterByDebounced(filterByDebounced) {
-      this.$emit('update:filterBy', filterByDebounced);
+    valueDebounced(valueDebounced) {
+      this.$emit('input', valueDebounced);
     },
   },
 };

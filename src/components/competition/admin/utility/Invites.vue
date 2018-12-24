@@ -40,14 +40,14 @@
         </v-list>
       </v-list-group>
 
-      <md-dialog-confirm
-        :md-active.sync="confirmDemote"
-        md-title="Demote administrator"
-        md-content="Are you sure you want to revoke this user's ability to administer this competition?"
-        md-confirm-text="Yes"
-        md-cancel-text="No"
-        @md-confirm="confirmDemote.resolve()"
-        @md-cancel="confirmDemote.reject()"
+      <dialog-card
+        v-model="confirmDemote"
+        title="Demote administrator"
+        text="Are you sure you want to revoke this user's ability to administer this competition?"
+        cancel-label="No"
+        submit-label="Yes"
+        @cancel="confirmDemote.reject()"
+        @submit="confirmDemote.resolve()"
       />
     </v-list>
     <v-list expand class="grouped">
@@ -63,7 +63,7 @@
             >
               <v-icon>{{
                 FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED, FirebaseInvites.status.EXPIRED)
-                ? 'clear'
+                ? 'cancel'
                 : 'mail_outline'
               }}</v-icon>
             </v-list-tile-avatar>
@@ -98,11 +98,7 @@
 
             <v-list-tile-action v-if="FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED, FirebaseInvites.status.EXPIRED)">
               <v-tooltip>
-                <v-btn
-                  slot="activator"
-                  icon
-                  @click="handleInviteDelete(invite)"
-                >
+                <v-btn slot="activator" icon @click="handleInviteDelete(invite)">
                   <v-icon>delete</v-icon>
                 </v-btn>
                 <span>Delete Invite</span>
@@ -110,21 +106,24 @@
             </v-list-tile-action>
             <v-list-tile-action v-else>
               <v-tooltip>
-                <v-btn
-                  slot="activator"
-                  icon
-                  @click="handleInviteCancel(invite)"
-                >
-                  <v-icon>clear</v-icon>
+                <v-btn slot="activator" icon @click="handleInviteCancel(invite)">
+                  <v-icon>cancel</v-icon>
                 </v-btn>
                 <span>Cancel Invite</span>
               </v-tooltip>
             </v-list-tile-action>
           </v-list-tile>
+          <v-list-tile v-if="!invites.length" class="empty">
+            <v-list-tile-avatar>
+              <v-icon>clear</v-icon>
+            </v-list-tile-avatar>
+            No pending invites.
+          </v-list-tile>
           <v-divider />
           <new-dynamic-field
             :field="{ title: 'Invite by Email', data: 'email', type: 'email' }"
             @change="handleInviteCreate"
+            class="pl-3 pt-2"
           />
         </v-list>
       </v-list-group>

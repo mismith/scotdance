@@ -22,7 +22,9 @@
 
             <v-spacer />
 
-            <md-spunnable :md-spinning="saving" />
+            <v-btn icon flat color="primary" :loading="saving">
+              <v-icon>check</v-icon>
+            </v-btn>
           </v-toolbar>
           <div class="app-scroll-frame app-scroll">
             <mi-hot-table
@@ -44,7 +46,7 @@
         </div>
       </div>
 
-      <md-dialog :md-active.sync="showImport" class="import-dialog">
+      <v-dialog v-model="showImport" @keydown.esc.stop="showImport = false">
         <admin-import
           :competition-data-ref="competitionDataRef"
           :groups="groups"
@@ -52,16 +54,19 @@
           :dancers="dancers"
           @done="showImport = false"
         />
-      </md-dialog>
-      <md-dialog :md-active.sync="showImportResults" class="import-results-dialog">
-        <admin-import-results
-          :competition-data-ref="competitionDataRef"
-          :groups="groups"
-          :dances="dances"
-          :dancers="dancers"
-          @done="showImportResults = false"
-        />
-      </md-dialog>
+      </v-dialog>
+      <v-dialog v-model="showImportResults" @keydown.esc.stop="showImport = false">
+        <v-card>
+          <admin-import-results
+            slot="text"
+            :competition-data-ref="competitionDataRef"
+            :groups="groups"
+            :dances="dances"
+            :dancers="dancers"
+            @done="showImportResults = false"
+          />
+        </v-card>
+      </v-dialog>
     </requires-permission>
 
     <v-bottom-nav v-if="hasPermission" :value="true" :active="$root.currentTab">
@@ -91,7 +96,6 @@ import { getFirstExisting } from '@/helpers/router';
 import RequiresPermission from '@/components/utility/RequiresPermission.vue';
 import MiHotTable from '@/components/admin/utility/MiHotTable.vue';
 import PresetPicker from '@/components/competition/admin/utility/PresetPicker.vue';
-import MdSpunnable from '@/components/utility/MdSpunnable.vue';
 
 export default {
   name: 'competition-admin',
@@ -240,32 +244,17 @@ export default {
     AdminImport: () => import(/* webpackChunkName: "admin-import" */ '@/components/competition/admin/utility/Import.vue'),
     AdminImportResults: () => import(/* webpackChunkName: "admin-import" */ '@/components/competition/admin/utility/ImportResults.vue'),
     PresetPicker,
-    MdSpunnable,
   },
 };
 </script>
 
 <style lang="scss">
 .competition-admin {
-  .md-table-cell {
-    vertical-align: top;
-  }
   .handsontable {
-    z-index: 90; // keep below sidebar, backdrop, modals
-
     &.fullscreen {
       height: 100%;
       min-height: 300px;
     }
-  }
-}
-
-.import-dialog,
-.import-results-dialog {
-  &,
-  .md-dialog-container {
-    width: 100%;
-    height: 100%;
   }
 }
 </style>

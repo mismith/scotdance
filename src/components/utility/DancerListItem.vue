@@ -6,7 +6,7 @@
     :class="{ placeholder: dancer.number === '?' }"
   >
     <slot name="avatar">
-      <v-list-tile-avatar :color="dancer.$favorite ? 'secondary' : 'grey'" class="white--text">
+      <v-list-tile-avatar :color="dancer.$favorite ? 'secondary' : 'grey'">
         <span>{{ dancer.number || '#' }}</span>
       </v-list-tile-avatar>
     </slot>
@@ -27,7 +27,7 @@
       </slot>
     </v-list-tile-action>
     <v-list-tile-action v-if="place !== undefined">
-      <place v-if="place > 0" :place="place" class="primary--text" />
+      <place v-if="place > 0" :place="place" />
       <v-icon v-else-if="place === 0" color="primary" class="icon-trophy" />
     </v-list-tile-action>
   </v-list-tile>
@@ -53,22 +53,17 @@ export default {
 
 <style lang="scss">
 .dancer-list-item {
-  .md-list-item-text {
-    p {
-      span {
-        &:not(:last-child) {
-          &::after {
-            content: "•";
-            display: inline-block;
-            margin-left: 0.25em;
-            margin-right: 0.25em;
-          }
+  .v-list__tile__sub-title {
+    > span {
+      &:not(:last-child) {
+        &::after {
+          content: "•";
+          display: inline-block;
+          margin-left: 0.25em;
+          margin-right: 0.25em;
         }
       }
     }
-  }
-  .place {
-    margin-left: 12px;
   }
 
   &.placeholder {

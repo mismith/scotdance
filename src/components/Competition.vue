@@ -27,7 +27,7 @@
             label="Not available yet"
             description="Check back closer to the competition date:"
           >
-            <div class="md-title">
+            <div class="title">
               {{ competition.date ? $moment(competition.date).format('dddd, MMMM D') : 'Soon' }}
             </div>
           </empty-state>
@@ -41,7 +41,7 @@
       </div>
     </div>
     <div v-else class="app-scroll-frame alt spinner-container">
-      <mi-md-spinner />
+      <spinner />
     </div>
 
     <v-bottom-nav v-if="competitionExists && !isAdminRoute" :value="true">
@@ -83,25 +83,23 @@
       </v-btn>
     </v-bottom-nav>
 
-    <md-dialog :md-active.sync="staffVisible" :md-fullscreen="false" class="staff-dialog">
-      <md-dialog-title v-if="currentDialogData">
-        <md-avatar v-if="currentDialogData.image" class="md-large" style="float: right;">
+    <dialog-card v-model="staffVisible">
+      <v-card-title v-if="currentDialogData" slot="title" class="layout row wrap">
+        <v-avatar v-if="currentDialogData.image" :size="200" class="mr-3">
           <img :src="currentDialogData.image" />
-        </md-avatar>
-        <div>{{ currentDialogData.$name }}</div>
-        <div v-if="currentDialogData" class="md-caption">
-          {{ currentDialogData.location }}
-        </div>
-      </md-dialog-title>
-      <md-dialog-content
+        </v-avatar>
+        <v-flex>
+          <div class="title my-3">{{ currentDialogData.$name }}</div>
+          <div class="subheading">{{ currentDialogData.location }}</div>
+        </v-flex>
+      </v-card-title>
+      <v-card-text
+        slot="text"
         v-if="currentDialogData && currentDialogData.description"
         v-html="currentDialogData.description"
         class="pre-line alt"
       />
-      <md-dialog-actions>
-        <v-btn color="primary" flat @click="staffVisible = false">Done</v-btn>
-      </md-dialog-actions>
-    </md-dialog>
+    </dialog-card>
   </div>
 </template>
 
@@ -282,12 +280,7 @@ export default {
 </script>
 
 <style lang="scss">
-.staff-dialog {
-  .md-dialog-title {
-    margin-bottom: 12px;
-  }
-  .md-dialog-content {
-    padding-top: 12px;
-  }
+.competition {
+
 }
 </style>

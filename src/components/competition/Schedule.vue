@@ -49,24 +49,33 @@
                   <v-icon v-if="event.dances || event.description">chevron_right</v-icon>
                 </v-list-tile>
                 <v-list-tile v-if="!block.events" class="empty">
-                  No events found.
+                  <v-list-tile-avatar>
+                    <v-icon>clear</v-icon>
+                  </v-list-tile-avatar>
+                  No more info.
                 </v-list-tile>
               </v-list>
             </v-list-group>
+            <v-list-tile v-if="!day.blocks" class="empty">
+              <v-list-tile-avatar>
+                <v-icon>clear</v-icon>
+              </v-list-tile-avatar>
+              No more info.
+            </v-list-tile>
           </v-list>
         </div>
       </div>
-      <div v-else>
-        <empty-state
-          icon="clear"
-          label="No schedule yet"
-        />
-      </div>
+      <empty-state
+        v-else
+        icon="clear"
+        label="No schedule yet"
+        description="Check back later"
+      />
     </blade>
     <blade :active="currentEvent" class="xs12 md8">
       <div v-if="currentEvent" class="app-scroll-frame">
         <v-toolbar dense class="hidden-md-and-up">
-          <v-btn icon :to="{ name: $route.name, params: { competitionId } }">
+          <v-btn flat icon :to="{ name: $route.name, params: { competitionId } }">
             <v-icon>chevron_left</v-icon>
           </v-btn>
           <span>
@@ -93,7 +102,7 @@
             <v-list-group
               v-for="dance in toOrderedArray(currentEvent.dances)"
               :key="dance[idKey]"
-              :md-expand="!!dance.platforms"
+              :disabled="!dance.danceId"
               :value="isDanceExpanded(dance[idKey], Object.keys(currentEvent.dances))"
               @input="handleDanceExpanded(dance[idKey], $event)"
             >
@@ -106,50 +115,53 @@
                 />
               </v-subheader>
 
-              <md-content class="md-elevation-1">
-                <admin-platforms
-                  :item="dance"
-                  :groups="groups"
-                  :dances="dances"
-                  :dancers="dancers"
-                  :staff="staff"
-                  :platforms="platforms"
-                  @item-click="handlePlatformClick($event, dance)"
-                />
-              </md-content>
+              <admin-platforms
+                :item="dance"
+                :groups="groups"
+                :dances="dances"
+                :dancers="dancers"
+                :staff="staff"
+                :platforms="platforms"
+                @item-click="handlePlatformClick($event, dance)"
+              />
             </v-list-group>
+            <v-list-tile v-if="!currentEvent.dances && !currentEvent.description" class="empty">
+              <v-list-tile-avatar>
+                <v-icon>clear</v-icon>
+              </v-list-tile-avatar>
+              No more info.
+            </v-list-tile>
           </v-list>
         </div>
 
-        <md-dialog :md-active.sync="drawVisible" :md-fullscreen="false" class="draw-dialog">
-          <md-dialog-title v-if="currentDialogData">
-            <div>Draw / Order</div>
-            <div v-if="currentDialogData.dance && currentDialogData.group" class="md-caption">
+        <dialog-card v-model="drawVisible">
+          <v-card-title v-if="currentDialogData" slot="title">
+            <div class="title">Draw / Order</div>
+            <div v-if="currentDialogData.dance && currentDialogData.group" class="caption">
               {{ currentDialogData.dance.$shortName }} • {{ currentDialogData.group.$name }}
             </div>
-          </md-dialog-title>
-          <md-dialog-content v-if="currentDialogData" class="alt">
-            <md-list v-if="currentDialogData.dance && currentDialogData.group" class="md-double-line">
-              <dancer-list-item
-                v-for="dancer in findDrawnDancers(currentDialogData.group, currentDialogData.dance)"
-                :key="dancer[idKey]"
-                :dancer="dancer"
-                @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] } }); drawVisible = false;"
-              />
-            </md-list>
-          </md-dialog-content>
-          <md-dialog-actions>
-            <v-btn color="primary" @click="drawVisible = false">Done</v-btn>
-          </md-dialog-actions>
-        </md-dialog>
+          </v-card-title>
+
+          <v-list
+            slot="text"
+            v-if="currentDialogData && currentDialogData.dance && currentDialogData.group"
+            two-line
+          >
+            <dancer-list-item
+              v-for="dancer in findDrawnDancers(currentDialogData.group, currentDialogData.dance)"
+              :key="dancer[idKey]"
+              :dancer="dancer"
+              @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] } }); drawVisible = false;"
+            />
+          </v-list>
+        </dialog-card>
       </div>
-      <div v-else>
-        <empty-state
-          icon="touch_app"
-          label="See event details"
-          description="Select an event"
-        />
-      </div>
+      <empty-state
+        v-else
+        icon="touch_app"
+        label="See event details"
+        description="Select an event"
+      />
     </blade>
   </blades>
 </template>
@@ -311,31 +323,8 @@ export default {
 <style lang="scss">
 .competition-schedule {
   .admin-platforms {
-    margin-bottom: 4px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-  }
-}
-.draw-dialog {
-  .md-dialog-container {
-    max-width: 100%;
-  }
-  .md-dialog-title {
-    padding-bottom: 12px;
-    margin-bottom: 0;
-  }
-  .md-dialog-content {
-    padding: 16px;
-    border: 0 solid transparent;
-    border-width: 1px 0;
-  }
-  .dancer-list-item {
-    .md-list-item-content {
-      min-height: 48px;
-    }
-    .group {
-      display: none;
-    }
   }
 }
 </style>

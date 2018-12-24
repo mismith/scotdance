@@ -1,6 +1,6 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="new-dynamic-field layout">
-    <dynamic-field :field="field" :data="data" class="flex ml-3" />
+  <form @submit.prevent="handleSubmit" class="new-dynamic-field layout align-center">
+    <dynamic-field :field="field" :data="data" class="flex" />
     <v-btn type="submit" icon color="primary" :disabled="!isValid">
       <v-icon>add</v-icon>
     </v-btn>
@@ -47,6 +47,8 @@ export default {
 
 <style lang="scss">
 .new-dynamic-field {
-
+  .v-messages {
+    display: none;
+  }
 }
 </style>

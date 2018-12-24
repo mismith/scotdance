@@ -34,7 +34,7 @@
       </div>
     </div>
     <div v-else class="app-scroll-frame spinner-container">
-      <mi-md-spinner />
+      <spinner />
     </div>
   </div>
 </template>

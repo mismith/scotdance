@@ -1,6 +1,6 @@
 <template>
   <div class="admin-platforms white" :class="{ interactive: admin }">
-    <div v-if="platforms.length" class="pools">
+    <div v-if="!isEmpty" class="pools">
       <div
         v-for="pool in pools"
         :key="pool[idKey]"
@@ -22,18 +22,22 @@
             @click="!admin && $emit('item-click', poolItem)"
           >
             {{ poolItem.$name || poolItem.name }}
-            <v-icon v-if="!admin" right>more_vert</v-icon>
           </v-chip>
         </draggable>
       </div>
     </div>
-    <div v-else>
-      <empty-state
-        icon="warning"
-        label="No platforms"
-        description="Add at least one platform first"
-      />
-    </div>
+    <empty-state
+      v-else-if="admin"
+      icon="warning"
+      label="No platforms"
+      description="Add at least one platform first"
+    />
+    <v-list-tile v-else class="empty">
+      <v-list-tile-avatar>
+        <v-icon>clear</v-icon>
+      </v-list-tile-avatar>
+      No more info.
+    </v-list-tile>
 
     <footer v-if="admin">
       <v-btn flat :disabled="!item.platforms" @click="handleCopy">Copy</v-btn>
@@ -130,6 +134,10 @@ export default {
       }
 
       return pools;
+    },
+
+    isEmpty() {
+      return !(this.platforms.length && this.pools.some(pool => pool.$items.length));
     },
   },
   methods: {

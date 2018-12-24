@@ -1,12 +1,16 @@
 <template>
-  <md-chips
+  <v-combobox
+    :label="label"
+    :items="paths"
     v-model="paths"
+    item-text="path"
+    item-value="path"
+    multiple
+    chips
     @md-insert="handleChanges($event, true)"
     @md-delete="handleChanges($event, null)"
     class="path-chips"
-  >
-    <label>{{ label }}</label>
-  </md-chips>
+  />
 </template>
 
 <script>
@@ -20,7 +24,7 @@ export default {
   },
   computed: {
     paths() {
-      return flattenPaths(this.data);
+      return flattenPaths(this.data).map(path => ({ path }));
     },
   },
   methods: {

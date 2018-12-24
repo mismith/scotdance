@@ -9,7 +9,7 @@
 
 <script>
 export default {
-  name: 'md-spunnable',
+  name: 'empty-state',
   props: {
     icon: String,
     label: String,

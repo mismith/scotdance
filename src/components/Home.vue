@@ -3,7 +3,7 @@
     <section class="hero">
       <div>
         <img src="/img/touchicon.png" role="presentation" width="88" height="88" />
-        <h1 class="display-2">ScotDance.app</h1>
+        <h1 class="display-2 my-3">ScotDance.app</h1>
         <p class="headline">{{ $package.description }}</p>
         <p class="subheading">Skip the pen and paper—attend highland dance competitions in style with this app for your mobile device.</p>
         <p class="print-hide">
@@ -27,23 +27,23 @@
 
     <section id="about" class="alt">
       <header>
-        <h2 class="display-1">A virtual program of events</h2>
+        <h2 class="display-1 my-3">A virtual program of events</h2>
         <p class="subheading">Modernize your highland dancing experience by interacting with competition information digitally.</p>
       </header>
       <v-layout wrap>
         <v-flex xs12 sm4>
           <v-icon color="primary" class="icon-people" />
-          <h2 class="title">Dancers</h2>
+          <h2 class="title my-3">Dancers</h2>
           <p>Search through dancers by their competition number, name, age group, etc. Then mark your favourites for easy tracking.</p>
         </v-flex>
         <v-flex xs12 sm4>
           <v-icon color="primary" class="icon-clock" />
-          <h2 class="title">Schedule</h2>
+          <h2 class="title my-3">Schedule</h2>
           <p>Use the at-a-glance schedule to check event start times, which platforms to dance at, order of dances, and more.</p>
         </v-flex>
         <v-flex xs12 sm4>
           <v-icon color="primary" class="icon-trophy" />
-          <h2 class="title">Results</h2>
+          <h2 class="title my-3">Results</h2>
           <p>Get real-time results updates—from callbacks through to placings—and review them anytime after a competition, too.</p>
         </v-flex>
       </v-layout>
@@ -54,20 +54,20 @@
 
     <section id="faq">
       <header>
-        <h2 class="display-1">FAQs</h2>
+        <h2 class="display-1 my-3">FAQs</h2>
         <dl v-if="faqs.length">
           <template v-for="faq in faqs">
             <dt :key="faq.question" v-html="faq.question" class="title" />
             <dd :key="faq.answer" v-html="faq.answer" class="pre-line" />
           </template>
         </dl>
-        <mi-md-spinner v-else />
+        <spinner v-else />
       </header>
     </section>
 
     <section id="info" class="alt">
       <header>
-        <h2 class="display-1">Info</h2>
+        <h2 class="display-1 my-3">Info</h2>
         <p>ScotDance.app was created in 2017 by <a href="https://mismith.io" target="_blank" class="ext">Murray Smith</a></p>
         <p>View the source code on <a href="https://github.com/mismith/scotdance" target="_blank" class="ext">GitHub</a></p>
         <p>Track development via <a href="https://trello.com/b/ZCZ8t1fH" target="_blank" class="ext">Trello</a></p>

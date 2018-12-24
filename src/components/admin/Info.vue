@@ -1,31 +1,31 @@
 <template>
   <div class="admin-info app-scroll-frame app-scroll">
-    <v-layout row align-center justify-center class="app-scroll-frame pa-3">
+    <div class="layout row align-center justify-center app-scroll-frame alt pa-3">
       <v-card>
-        <v-card-media class="pa-3">
+        <v-responsive class="pa-3">
           <v-icon :size="88">event</v-icon>
-        </v-card-media>
+        </v-responsive>
         <v-card-title>
-          <div class="md-title">{{ competitions.length }} competitions</div>
+          <div class="title">{{ competitions.length }} competitions</div>
         </v-card-title>
       </v-card>
       <v-card>
-        <v-card-media class="pa-3">
+        <v-responsive class="pa-3">
           <v-icon :size="88" class="icon-people" />
-        </v-card-media>
+        </v-responsive>
         <v-card-title>
-          <div class="md-title">{{ users.length }} users</div>
+          <div class="title">{{ users.length }} users</div>
         </v-card-title>
       </v-card>
       <v-card>
-        <v-card-media class="pa-3">
+        <v-responsive class="pa-3">
           <v-icon :size="88" class="icon-question" />
-        </v-card-media>
+        </v-responsive>
         <v-card-title>
-          <div class="md-title">{{ faqs.length }} FAQs</div>
+          <div class="title">{{ faqs.length }} FAQs</div>
         </v-card-title>
       </v-card>
-    </v-layout>
+    </div>
   </div>
 </template>
 

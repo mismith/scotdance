@@ -19,8 +19,7 @@
           slot="favorite"
           v-if="admin && index && dance[idKey] !== callbacks[idKey]"
           v-model="dancer.$tie"
-          @click.stop
-          @change="$emit('dancer-toggle', [dancer, $event])"
+          @click.stop="$emit('dancer-toggle', [dancer, !dancer.$tie])"
         />
       </dancer-list-item>
 
