@@ -26,15 +26,13 @@
         <v-list-tile
           v-for="dance in dances"
           :key="dance[idKey]"
+          @click="handleDanceToggle(dance, !dance.groupIds[groupId])"
         >
           <v-list-tile-content>
             <v-list-tile-title>{{ dance.$name }}</v-list-tile-title>
           </v-list-tile-content>
           <v-list-tile-action>
-            <v-switch
-              v-model="dance.groupIds[currentGroup[idKey]]"
-              @change="handleDanceToggle(dance, $event)"
-            />
+            <v-switch :input-value="!!dance.groupIds[groupId]" />
           </v-list-tile-action>
         </v-list-tile>
 
