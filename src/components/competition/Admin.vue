@@ -69,7 +69,7 @@
       </v-dialog>
     </requires-permission>
 
-    <v-bottom-nav v-if="hasPermission" :value="true" :active="$root.currentTab">
+    <v-bottom-nav v-if="hasPermission" :value="true" :active="$root.currentTab" style="overflow-x: auto; justify-content: unset;">
       <v-btn
         v-for="section in sections"
         :key="section[idKey]"
