@@ -61,7 +61,7 @@
       </v-menu>
     </v-toolbar>
 
-    <v-navigation-drawer app v-model="menuVisible" class="app-scroll-frame">
+    <v-navigation-drawer v-model="menuVisible" app touchless class="app-scroll-frame">
       <header class="account-header primary flex-none">
         <div class="account-bg"></div>
         <account-buttons v-if="!me" class="pa-3" />
