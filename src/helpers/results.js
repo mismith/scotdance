@@ -103,3 +103,25 @@ export function isInProgress(group, dances = [], results = {}) {
   }
   return false;
 }
+
+export function getRows(groups, dances, dancers, results) {
+  const rows = [];
+  groups.forEach((group) => {
+    dances.forEach((dance) => {
+      const placedDancers = findPlacedDancers(group, dance, dancers, results);
+      placedDancers.forEach((dancer) => {
+        rows.push({
+          category: (group.$category && group.$category.name) || '?',
+          group: group.name || '?',
+          dance: dance.name || '?',
+          number: dancer.number || '?',
+          firstName: dancer.firstName || '?',
+          lastName: dancer.lastName || '?',
+          location: dancer.location || '?',
+          place: getPlace(dancer, placedDancers) || '?',
+        });
+      });
+    });
+  });
+  return rows;
+}

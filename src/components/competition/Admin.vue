@@ -5,10 +5,11 @@
         <div class="app-scroll-frame">
           <v-toolbar dense>
             <div v-if="inTabs('info', 'categories', 'dancers', 'groups')">
-              <v-btn flat @click="showImport = true">Import</v-btn>
+              <v-btn flat @click="showImport = true">Import&hellip;</v-btn>
             </div>
             <div v-if="inTabs('results')">
-              <v-btn flat @click="showImportResults = true">Import</v-btn>
+              <v-btn flat @click="showImportResults = true">Import&hellip;</v-btn>
+              <v-btn flat @click="exportResults()">Export CSV</v-btn>
             </div>
 
             <div v-if="currentSection">
@@ -86,6 +87,7 @@
 </template>
 
 <script>
+import saveCSV from 'save-csv';
 import { makeKeyValuePairColumn } from '@/helpers/admin';
 import { danceExtender } from '@/helpers/competition';
 import {
@@ -93,6 +95,7 @@ import {
   db,
 } from '@/helpers/firebase';
 import { getFirstExisting } from '@/helpers/router';
+import { getRows } from '@/helpers/results';
 import RequiresPermission from '@/components/utility/RequiresPermission.vue';
 import MiHotTable from '@/components/admin/utility/MiHotTable.vue';
 import PresetPicker from '@/components/competition/admin/utility/PresetPicker.vue';
@@ -236,6 +239,10 @@ export default {
           [`${tab}/${db.push().key}`]: preset,
         });
       });
+    },
+    exportResults() {
+      const exportedRows = getRows(this.groups, this.dances, this.dancers, this.results);
+      saveCSV(exportedRows, { filename: `Results - ${this.competition.name}.csv` });
     },
   },
   components: {

@@ -43,6 +43,7 @@
     "md5": "^2.2.1",
     "moment-mini": "^2.22.1",
     "obj-flatten": "^2.0.3",
+    "save-csv": "^4.1.0",
     "simple-line-icons": "^2.4.1",
     "vue": "^2.5.18",
     "vue-async-computed": "^3.3.1",
