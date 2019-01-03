@@ -193,7 +193,7 @@
           }"
         />
       </keep-alive>
-      <div v-else class="app-scroll-frame spinner-container">
+      <div v-else class="app-scroll-frame">
         <spinner />
       </div>
     </v-content>
@@ -411,11 +411,6 @@ body.has-bottom-bar {
   flex-direction: column;
   flex: auto;
   overflow: hidden;
-
-  &.spinner-container {
-    justify-content: center;
-    align-items: center;
-  }
 }
 .app-scroll {
   overflow: auto;

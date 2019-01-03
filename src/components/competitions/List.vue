@@ -33,7 +33,7 @@
         />
       </div>
     </div>
-    <div v-else class="app-scroll-frame spinner-container">
+    <div v-else class="app-scroll-frame">
       <spinner />
     </div>
   </div>

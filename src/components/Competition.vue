@@ -40,7 +40,7 @@
         />
       </div>
     </div>
-    <div v-else class="app-scroll-frame alt spinner-container">
+    <div v-else class="app-scroll-frame alt">
       <spinner />
     </div>
 
