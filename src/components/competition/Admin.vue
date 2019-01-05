@@ -55,17 +55,14 @@
           @done="showImport = false"
         />
       </v-dialog>
-      <v-dialog v-model="showImportResults" @keydown.esc.stop="showImport = false">
-        <v-card>
-          <admin-import-results
-            slot="text"
-            :competition-data-ref="competitionDataRef"
-            :groups="groups"
-            :dances="dances"
-            :dancers="dancers"
-            @done="showImportResults = false"
-          />
-        </v-card>
+      <v-dialog v-model="showImportResults" @keydown.esc.stop="showImportResults = false">
+        <admin-import-results
+          :competition-data-ref="competitionDataRef"
+          :groups="groups"
+          :dances="dances"
+          :dancers="dancers"
+          @done="showImportResults = false"
+        />
       </v-dialog>
     </requires-permission>
 

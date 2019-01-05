@@ -1,110 +1,140 @@
 <template>
-  <md-steppers :md-active-step.sync="step" md-linear class="admin-import-results">
-    <md-step id="upload" md-label="Upload" md-description="Select a file to import">
-      <div class="app-scroll-frame app-scroll pa-3">
-        <h2>Instructions</h2>
-        <ol>
-          <li>Select the <strong>HTML file(s)</strong> below that contain(s) the exported values from Highland Scrutineer.</li>
-          <li>Ensure all the imported values correlate to existing data&mdash;the defaults may not always be correct&mdash;then click <strong>Next</strong>.</li>
-          <li>Double-check that all values were parsed properly&mdash;this is how data will be imported, so if anything is missing or looks broken, it will likely fail to import properly. When sure, click <strong>Import</strong>.</li>
-        </ol>
-      </div>
-      <md-toolbar class="md-layout">
-        <md-field class="md-layout-item">
-          <label>HTML file(s)</label>
-          <md-file
-            @md-change="handleUpload($event)"
-            accept="text/html"
-            multiple
-          />
-        </md-field>
-      </md-toolbar>
-    </md-step>
-    <md-step id="choose" md-label="Choose" md-description="Pick which data to use">
-      <form class="app-scroll-frame app-scroll">
-        <v-subheader>Group(s)</v-subheader>
-        <div v-for="datum in imported" :key="datum.file" class="md-layout md-gutter md-layout-nowrap pa-3">
-          <div class="md-layout-item md-size-45">{{ datum.group }}</div>
-          <span class="md-layout-item md-size-5">&rarr;</span>
-          <div class="md-layout-item md-size-50">
-            <md-field md-dense>
-              <md-select v-model="mapped[datum.group]">
-                <md-option v-for="group in groups" :key="group[idKey]" :value="group[idKey]">{{ group.$name }}</md-option>
-              </md-select>
-            </md-field>
-          </div>
-        </div>
+  <v-card class="admin-import-results">
+    <v-stepper v-model="step">
+      <v-stepper-header>
+        <v-stepper-step :editable="!!imported.length" :complete="step > 1" :step="1">
+          Upload
+          <small>Select files to import</small>
+        </v-stepper-step>
+        <v-divider />
+        <v-stepper-step :editable="step > 2" :complete="step > 2" :step="2">
+          Choose
+          <small>Pick which data to use</small>
+        </v-stepper-step>
+        <v-divider />
+        <v-stepper-step :step="3">
+          Review
+          <small>Ensure values look correct</small>
+        </v-stepper-step>
+      </v-stepper-header>
+      <v-divider />
 
-        <v-subheader>Dance(s)</v-subheader>
-        <div v-for="danceName in getUniqueDances(imported)" :key="danceName" class="md-layout md-gutter md-layout-nowrap pa-3">
-          <div class="md-layout-item md-size-45">{{ danceName }}</div>
-          <span class="md-layout-item md-size-5">&rarr;</span>
-          <div class="md-layout-item md-size-50">
-            <md-field md-dense>
-              <md-select v-model="mapped[danceName]">
-                <md-option v-for="dance in dances" :key="dance[idKey]" :value="dance[idKey]">{{ dance.$name }}</md-option>
-              </md-select>
-            </md-field>
+      <v-stepper-items>
+        <v-stepper-content :step="1" class="pa-0">
+          <div class="app-scroll-frame app-scroll pa-3 alt">
+            <h3>Instructions</h3>
+            <ol>
+              <li>Select the <strong>HTML file(s)</strong> below that contain(s) the exported values from Highland Scrutineer.</li>
+              <li>Ensure all the imported values correlate to existing data&mdash;the defaults may not always be correct&mdash;then click <strong>Next</strong>.</li>
+              <li>Double-check that all values were parsed properly&mdash;this is how data will be imported, so if anything is missing or looks broken, it will likely fail to import properly. When sure, click <strong>Import</strong>.</li>
+            </ol>
           </div>
-        </div>
-      </form>
-      <md-toolbar class="md-layout">
-        <div class="md-layout-item" />
-        <footer>
-          <v-btn
-            colo="primary"
-            @click="handleChoose()"
-          >
-            Next
-          </v-btn>
-        </footer>
-      </md-toolbar>
-    </md-step>
-    <md-step id="review" md-label="Review" md-description="Ensure values look correct">
-      <blades>
-        <blade class="xs12 md6 app-scroll alt">
-          <results-list
-            :groups="groups.filter(group => Object.keys(results).includes(group[idKey]))"
-            :dances="dances"
-            :dancers="dancers"
-            :results="results"
-          />
-        </blade>
-        <blade class="xs12 md6 app-scroll">
-          <placed-dancer-list
-            v-if="placedDancers.length"
-            :dance="currentDance"
-            :dancers="placedDancers"
-          />
-          <div v-else>
-            <empty-state
-              icon="vertical_split"
-              md-label="Placed dancers"
-              md-description="Double-check the results to import"
-            />
+
+          <v-divider />
+          <v-card-actions class="justify-end flex-none">
+            <v-btn flat @click="handleCancel()">Cancel</v-btn>
+
+            <v-file
+              accept="text/html"
+              multiple
+              @change="handleUpload"
+            >
+              <v-btn flat color="primary">Select File(s)</v-btn>
+            </v-file>
+          </v-card-actions>
+        </v-stepper-content>
+        <v-stepper-content :step="2" class="pa-0">
+          <div class="layout row wrap app-scroll-frame app-scroll alt">
+            <div class="flex xs6">
+              <v-subheader>Group(s)</v-subheader>
+              <div v-for="datum in imported" :key="datum.file" class="px-3">
+                <v-select
+                  v-model="mapped[datum.group]"
+                  :label="datum.group"
+                  :items="groups"
+                  :item-value="idKey"
+                  item-text="$name"
+                  box
+                />
+              </div>
+            </div>
+            <div class="flex xs6">
+              <v-subheader>Dance(s)</v-subheader>
+              <div v-for="danceName in getUniqueDances(imported)" :key="danceName" class="px-3">
+                <v-select
+                  v-model="mapped[danceName]"
+                  :label="danceName"
+                  :items="dances"
+                  :item-value="idKey"
+                  item-text="$name"
+                  box
+                />
+              </div>
+            </div>
           </div>
-        </blade>
-      </blades>
-      <md-toolbar class="md-layout">
-        <div class="md-layout-item" />
-        <footer>
-          <v-btn
-            color="primary"
-            :disabled="importing"
-            :loading="importing"
-            @click="handleReview()"
-          >
-            Import
-          </v-btn>
-        </footer>
-      </md-toolbar>
-    </md-step>
-  </md-steppers>
+
+          <v-divider />
+          <v-card-actions class="justify-end flex-none">
+            <v-btn flat @click="handleCancel()">Cancel</v-btn>
+
+            <v-btn
+              flat
+              color="primary"
+              @click="handleChoose()"
+            >
+              Next
+            </v-btn>
+          </v-card-actions>
+        </v-stepper-content>
+        <v-stepper-content :step="3" class="pa-0">
+          <blades>
+            <blade class="xs12 md6 app-scroll alt">
+              <results-list
+                :groups="groups.filter(group => Object.keys(results).includes(group[idKey]))"
+                :dances="dances"
+                :dancers="dancers"
+                :results="results"
+              />
+            </blade>
+            <blade class="xs12 md6 app-scroll alt">
+              <placed-dancer-list
+                v-if="placedDancers.length"
+                :dance="currentDance"
+                :dancers="placedDancers"
+              />
+              <empty-state
+                v-else
+                icon="vertical_split"
+                label="Placed dancers"
+                description="Double-check the results to import"
+              />
+            </blade>
+          </blades>
+
+          <v-divider />
+          <v-card-actions class="justify-end flex-none">
+            <v-btn flat @click="handleCancel()">Cancel</v-btn>
+
+            <v-btn
+              flat
+              color="primary"
+              :disabled="importing"
+              :loading="importing"
+              @click="handleReview()"
+            >
+              Import
+            </v-btn>
+          </v-card-actions>
+        </v-stepper-content>
+      </v-stepper-items>
+    </v-stepper>
+  </v-card>
 </template>
 
 <script>
 import HTMLParser from 'fast-html-parser';
 import Fuse from 'fuse.js';
+import VFile from '@outluch/v-file';
 import ResultsList from '@/components/competition/admin/utility/ResultsList.vue';
 import PlacedDancerList from '@/components/utility/PlacedDancerList.vue';
 import { idKey } from '@/helpers/firebase';
@@ -134,7 +164,7 @@ export default {
     return {
       idKey,
 
-      step: 'upload',
+      step: 1,
 
       imported: [],
       mapped: {},
@@ -269,7 +299,25 @@ export default {
       });
 
       // move to next step
-      this.step = 'choose';
+      this.step += 1;
+    },
+    handleChoose() {
+      this.results = this.parseData(this.imported);
+
+      // move to next step
+      this.step += 1;
+    },
+    async handleReview() {
+      await this.importData();
+
+      // close dialog
+      this.$emit('done');
+      this.step = 1;
+    },
+    handleCancel() {
+      // close dialog
+      this.$emit('done');
+      this.step = 1;
     },
 
     getUniqueDances(imported) {
@@ -303,13 +351,6 @@ export default {
       });
       return results;
     },
-    handleChoose() {
-      this.results = this.parseData(this.imported);
-
-      // move to next step
-      this.step = 'review';
-    },
-
     async importData() {
       this.importing = true;
       await this.$nextTick();
@@ -319,37 +360,19 @@ export default {
         return this.competitionDataRef.child('results').child(groupId).set(result);
       }));
 
-      this.$emit('done');
       this.importing = false;
-    },
-    handleReview() {
-      this.importData();
     },
   },
   components: {
     ResultsList,
     PlacedDancerList,
+    VFile,
   },
 };
 </script>
 
 <style lang="scss">
 .admin-import-results {
-  .md-steppers-wrapper,
-  .md-steppers-container,
-  .md-stepper {
-    height: 100% !important;
-  }
-  form {
-    .md-layout {
-      align-items: center;
-      flex-shrink: 0;
 
-      .md-field {
-        margin-top: -16px;
-        margin-bottom: 0;
-      }
-    }
-  }
 }
 </style>

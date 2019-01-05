@@ -2,25 +2,26 @@
   <v-card class="admin-import">
     <v-stepper v-model="step">
       <v-stepper-header>
-        <v-stepper-step :complete="step !== 'upload'" step="1">
+        <v-stepper-step :editable="!!workbook" :complete="step > 1" :step="1">
           Upload
           <small>Select a file to import</small>
         </v-stepper-step>
         <v-divider />
-        <v-stepper-step :complete="step > 1" step="2">
+        <v-stepper-step :editable="step > 2" :complete="step > 2" :step="2">
           Choose
           <small>Pick which data to use</small>
         </v-stepper-step>
         <v-divider />
-        <v-stepper-step :complete="step === 'review'" step="3">
+        <v-stepper-step :step="3">
           Review
           <small>Ensure values look correct</small>
         </v-stepper-step>
       </v-stepper-header>
+      <v-divider />
 
       <v-stepper-items>
-        <v-stepper-content step="1" class="pa-0">
-          <div class="app-scroll-frame app-scroll pa-3 alt">
+        <v-stepper-content :step="1" class="pa-0">
+          <div class="app-scroll-frame app-scroll pa-3">
             <h3>Instructions</h3>
             <ol>
               <li>Select the <strong>Excel spreadsheet</strong> (.xslx file) that contains the values to import.</li>
@@ -48,28 +49,36 @@
               </tbody>
             </table>
           </div>
-          <v-card-actions class="justify-end">
+
+          <v-divider />
+          <v-card-actions class="justify-end flex-none">
             <v-btn flat @click="handleCancel()">Cancel</v-btn>
 
             <v-file
               accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               @change="handleUpload"
             >
-              <v-btn flat color="primary">Upload Spreadsheet</v-btn>
+              <v-btn flat color="primary">Select File</v-btn>
             </v-file>
           </v-card-actions>
         </v-stepper-content>
-        <v-stepper-content step="2" class="pa-0">
-          <v-tabs v-if="workbook" @md-changed="handleSheetChange">
+        <v-stepper-content :step="2" class="pa-0">
+          <v-tabs v-if="workbook" v-model="dancersSheetIndex">
             <v-tab v-for="(sheetName, sheetIndex) of workbook.SheetNames" :key="sheetIndex">
               {{ sheetName }}
             </v-tab>
-            <v-tab-item v-for="(sheetName, sheetIndex) of workbook.SheetNames" :key="sheetIndex">
-              <HotTable :settings="sheetToHot(workbook.Sheets[sheetName])" />
-            </v-tab-item>
+            <v-tabs-items class="app-scroll">
+              <hot-table
+                :key="dancersSheetIndex"
+                :settings="sheetToHot(dancersSheet)"
+              />
+            </v-tabs-items>
           </v-tabs>
-          <v-card-actions class="justify-end">
+
+          <v-divider />
+          <v-card-actions class="justify-end flex-none">
             <v-btn flat @click="handleCancel()">Cancel</v-btn>
+
             <v-btn
               flat
               color="primary"
@@ -80,17 +89,23 @@
             </v-btn>
           </v-card-actions>
         </v-stepper-content>
-        <v-stepper-content step="3" class="pa-0">
-          <v-tabs v-if="data">
-            <v-tab v-for="(items, key) of data" :key="key">
+        <v-stepper-content :step="3" class="pa-0">
+          <v-tabs v-if="data" v-model="dataTabIndex">
+            <v-tab v-for="key of dataKeys" :key="key">
               {{ key }}
             </v-tab>
-            <v-tab-item v-for="(items, key) of data" :key="key">
-              <HotTable :settings="toReviewHot(items, key)" />
-            </v-tab-item>
+            <v-tabs-items class="app-scroll">
+              <hot-table
+                :key="dataTabIndex"
+                :settings="toReviewHot(dataKeys[dataTabIndex])"
+              />
+            </v-tabs-items>
           </v-tabs>
-          <v-card-actions class="justify-end">
+
+          <v-divider />
+          <v-card-actions class="justify-end flex-none">
             <v-btn flat @click="handleCancel()">Cancel</v-btn>
+
             <v-btn
               flat
               color="primary"
@@ -133,26 +148,82 @@ export default {
       step: 1,
 
       workbook: undefined,
-
-      dancersSheetIndex: -1,
-      data: {},
+      dancersSheetIndex: 0,
+      dataTabIndex: 0,
+      data: undefined,
 
       importing: false,
     };
   },
+  computed: {
+    dancersSheet() {
+      if (this.workbook) {
+        return this.workbook.Sheets[this.workbook.SheetNames[this.dancersSheetIndex]];
+      }
+      return undefined;
+    },
+    dataKeys() {
+      return Object.keys(this.data || {});
+    },
+  },
   methods: {
-    toReviewHot(items, key) {
+    handleUpload(file) {
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const data = event.target.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+
+        // store for processing
+        this.$set(this, 'workbook', workbook);
+
+        // move to next step
+        this.step += 1;
+
+        // auto-pick default sheets
+        this.dancersSheetIndex = workbook.SheetNames.findIndex(name => /Program/i.test(name)) || 0;
+      };
+      reader.readAsBinaryString(file);
+    },
+    handleChoose() {
+      // store for reviewing
+      this.$set(this, 'data', this.parseSpreadsheet(this.dancersSheet));
+
+      // move to next step
+      this.step += 1;
+    },
+    async handleReview() {
+      const {
+        categories,
+        groups,
+        dancers,
+      } = this.data;
+
+      await this.importData(categories, groups, dancers);
+
+      // close dialog
+      this.$emit('done');
+      this.step = 1;
+    },
+    handleCancel() {
+      // close dialog
+      this.$emit('done');
+      this.step = 1;
+    },
+
+    toReviewHot(key) {
       let data;
       switch (key) {
         case 'groups': {
-          data = items.map((item) => {
+          data = this.data[key].map((item) => {
             const { number, code, ...datum } = item;
             return datum;
           });
           break;
         }
         case 'dancers': {
-          data = items.map((item) => {
+          data = this.data[key].map((item) => {
             const { code, ...datum } = item;
 
             const group = this.data.groups.find(g => `${g.code}` === `${code}`);
@@ -163,11 +234,11 @@ export default {
           break;
         }
         default: {
-          data = items;
+          data = this.data[key];
         }
       }
       return augmentHot({
-        colHeaders: Object.keys(data[0] || {}),
+        colHeaders: Object.keys((data && data[0]) || {}),
         minSpareRows: 0,
         readOnly: true,
       }, data);
@@ -188,48 +259,6 @@ export default {
         ...settings,
       }, rows);
     },
-
-    handleUpload(file) {
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const data = event.target.result;
-        const workbook = XLSX.read(data, { type: 'binary' });
-
-        // store for processing
-        this.$set(this, 'workbook', workbook);
-
-        // move to next step
-        this.step += 1;
-
-        // auto-pick default sheets
-        this.dancersSheetIndex = workbook.SheetNames.findIndex(name => /Program/i.test(name));
-      };
-      reader.readAsBinaryString(file);
-    },
-    handleSheetChange(tabId) {
-      this.dancersSheetIndex = Number.parseInt(tabId.replace(/[^0-9]/g, ''), 10);
-    },
-    handleChoose() {
-      const dancersSheet = this.workbook.Sheets[this.workbook.SheetNames[this.dancersSheetIndex]];
-
-      // store for reviewing
-      this.$set(this, 'data', this.parseSpreadsheet(dancersSheet));
-
-      // move to next step
-      this.step += 1;
-    },
-    handleReview() {
-      const {
-        categories,
-        groups,
-        dancers,
-      } = this.data;
-
-      this.importData(categories, groups, dancers);
-    },
-
     parseSpreadsheet(dancersSheet) {
       const dancersData = this.sheetToJson(dancersSheet, {
         header: [
@@ -352,11 +381,7 @@ export default {
         };
       }));
 
-      this.$emit('done');
       this.importing = false;
-    },
-    handleCancel() {
-      this.$emit('done');
     },
   },
   components: {
