@@ -417,41 +417,8 @@ body.has-bottom-bar {
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
 }
-
 .flex-none {
   flex: none;
-}
-
-.empty,
-.dimmed {
-  opacity: 0.5;
-}
-
-.v-toolbar {
-  .v-toolbar__title {
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-  }
-}
-.v-subheader {
-  flex: none;
-
-  .v-btn {
-    margin-right: -8px;
-  }
-}
-.v-avatar {
-  &.primary,
-  &.secondary,
-  &.grey {
-    color: #fff;
-
-    .v-icon {
-      color: inherit;
-    }
-  }
 }
 
 // transitions
@@ -485,6 +452,13 @@ a {
 .alt {
   background-color: rgba(0, 0, 0, 0.1);
 }
+.pre-line {
+  white-space: pre-line;
+}
+.empty,
+.dimmed {
+  opacity: 0.5;
+}
 
 // app frame
 html {
@@ -499,32 +473,52 @@ body,
 .v-bottom-nav {
   flex-shrink: 0;
 }
+.v-toolbar {
+  z-index: 1;
 
-// app-wide md-component styling
-.md-dialog {
-  .md-dialog-content {
-    @extend .app-scroll;
+  .v-toolbar__title {
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
   }
-  .md-steppers {
-    @extend .app-scroll-frame;
+}
+.v-subheader {
+  flex: none;
 
-    .md-steppers-navigation {
-      flex-shrink: 0;
-    }
-    .md-steppers-wrapper {
-      flex: 1;
-    }
-    &,
-    .md-steppers-container,
-    .md-stepper-content,
-    .md-stepper {
-      height: 100% !important;
-    }
-    .md-stepper {
-      padding: 0;
+  .v-btn {
+    margin-right: -8px;
+  }
+}
+.v-avatar {
+  &.primary,
+  &.secondary,
+  &.grey {
+    color: #fff;
 
-      .md-stepper-content {
-        @extend .app-scroll-frame;
+    .v-icon {
+      color: inherit;
+    }
+  }
+}
+.v-list {
+  .v-input--switch {
+    .v-input__control {
+      margin: auto;
+    }
+    .v-input--selection-controls__input {
+      margin-right: 0;
+    }
+  }
+
+  &.grouped {
+    background-color: transparent;
+
+    .v-list__group {
+      .v-list__group__header {
+        .v-subheader {
+          padding-right: 0;
+        }
       }
     }
   }
@@ -548,10 +542,6 @@ body,
   opacity: 0;
 }
 
-.pre-line {
-  white-space: pre-line;
-}
-
 // component styles
 .account-bg {
   position: absolute;
@@ -571,29 +561,6 @@ body,
 
   .v-list {
     padding: 0;
-  }
-}
-
-.v-list {
-  .v-input--switch {
-    .v-input__control {
-      margin: auto;
-    }
-    .v-input--selection-controls__input {
-      margin-right: 0;
-    }
-  }
-
-  &.grouped {
-    background-color: transparent;
-
-    .v-list__group {
-      .v-list__group__header {
-        .v-subheader {
-          padding-right: 0;
-        }
-      }
-    }
   }
 }
 
