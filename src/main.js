@@ -1,7 +1,5 @@
 import Vue from 'vue';
 import VueFire from 'vuefire';
-import VueMaterial from 'vue-material';
-// import 'vue-material/dist/vue-material.css';
 import VueAsyncComputed from 'vue-async-computed';
 import VueBodyClass from 'vue-body-class';
 import VueLocalStorage from 'vue-localstorage';
@@ -32,7 +30,6 @@ Vue.config.silent = true;
 // libs
 Vue.prototype.$moment = moment;
 Vue.use(VueFire);
-Vue.use(VueMaterial);
 Vue.component('dialog-card', DialogCard);
 Vue.component('empty-state', EmptyState);
 Vue.component('spinner', Spinner);
