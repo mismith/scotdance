@@ -13,7 +13,12 @@
         :place="getPlace(dancer, dancers)"
         @click="$emit('dancer-click', dancer)"
       >
-        <v-icon v-if="draggingEnabled" class="sortable-handle">drag_indicator</v-icon>
+        <v-icon
+          v-if="draggingEnabled && dance[idKey] !== callbacks[idKey]"
+          class="sortable-handle"
+        >
+          drag_indicator
+        </v-icon>
 
         <v-switch
           slot="favorite"
