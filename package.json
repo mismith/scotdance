@@ -5,7 +5,7 @@
   "author": "Murray Smith <murray@mismith.info>",
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
+    "build": "vue-cli-service build --report",
     "lint": "vue-cli-service lint",
     "build:android": "npm run build && cordova build android --release",
     "build:app": "npm run build && cordova build --release",
