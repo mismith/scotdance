@@ -570,6 +570,9 @@ body,
     border-top: dashed 2px #ccc;
     border-bottom: dashed 2px #ccc;
   }
+  &.v-chip {
+    opacity: 0.5;
+  }
 }
 .sortable-drag {
   opacity: 0;

@@ -18,7 +18,8 @@
           <v-chip
             v-for="poolItem in pool.$items"
             :key="poolItem[idKey]"
-            :color="hasFavorites(findGroupDancers(poolItem, dancers)) ? 'secondary' : (isJudge(poolItem) && 'primary')"
+            :color="getChipColor(poolItem)"
+            :dark="!!getChipColor(poolItem)"
             @click="!admin && $emit('item-click', poolItem)"
           >
             {{ poolItem.$name || poolItem.name }}
@@ -145,10 +146,17 @@ export default {
       'copy',
     ]),
 
-    findGroupDancers,
-    hasFavorites,
-
     isJudge: item => item.type === 'Judge',
+
+    getChipColor(poolItem) {
+      if (hasFavorites(findGroupDancers(poolItem, this.dancers))) {
+        return 'secondary';
+      }
+      if (this.isJudge(poolItem)) {
+        return 'primary';
+      }
+      return undefined;
+    },
 
     handleSort(pool) {
       if (!pool[idKey]) return; // skip if removing from unassigned pool
