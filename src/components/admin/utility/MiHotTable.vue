@@ -1,5 +1,5 @@
 <template>
-  <HotTable :settings="augmentHot(settings)" :data="data" class="mi-hot-table" />
+  <hot-table :settings="augmentHot(settings)" :data="data" class="mi-hot-table" />
 </template>
 
 <script>

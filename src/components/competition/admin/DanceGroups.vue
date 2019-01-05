@@ -59,7 +59,7 @@
       />
     </blade>
     <blade class="xs12 md4 app-scroll alt">
-      <HotTable v-if="currentGroupDances.length" :settings="hotSettings" class="fullscreen" />
+      <hot-table v-if="currentGroupDances.length" :settings="hotSettings" />
       <empty-state
         v-else
         icon="vertical_split"

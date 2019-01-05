@@ -14,7 +14,6 @@
             v-if="currentSection.hot"
             :settings="currentSection.hot"
             :data="this[$root.currentTab]"
-            class="fullscreen"
             @change="handleHotChanges"
           />
           <keep-alive v-else>

@@ -461,15 +461,38 @@ a {
 }
 
 // app frame
-html {
-  height: 100%;
-}
 html,
 body,
+#app {
+  height: 100%;
+  overflow: hidden;
+}
+.application--wrap,
 .v-content__wrap {
   @extend .app-scroll-frame;
 }
 
+// framework component styling
+.v-dialog {
+  &,
+  .v-card,
+  .v-stepper,
+  .v-stepper__items,
+  .v-stepper__content,
+  .v-stepper__wrapper,
+  .v-tabs,
+  .v-window,
+  .v-window__container,
+  .v-window-item {
+    display: flex;
+    flex-direction: column;
+    flex: auto;
+  }
+  .v-stepper__header,
+  .v-tabs__bar {
+    flex-shrink: 0;
+  }
+}
 .v-bottom-nav {
   flex-shrink: 0;
 }
@@ -524,18 +547,28 @@ body,
   }
 }
 
+// tables
+.handsontable {
+  height: 100vh;
+  z-index: 0;
+}
+
 // drag-n-drop
 .sortable-handle {
   .v-list__tile & {
     order: -1;
+    height: 100%;
     margin-left: -16px;
     opacity: 0.5;
     cursor: move;
   }
 }
+.sortable-chosen,
 .sortable-ghost {
-  .md-list-item & {
-    box-shadow: inset 0 0 0 2px var(--md-theme-default-primary);
+  .v-list__tile {
+    opacity: 0.5;
+    border-top: dashed 2px #ccc;
+    border-bottom: dashed 2px #ccc;
   }
 }
 .sortable-drag {

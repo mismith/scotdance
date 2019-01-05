@@ -32,7 +32,6 @@
               v-if="currentSection.hot"
               :settings="currentSection.hot"
               :data="this[$root.currentTab]"
-              class="fullscreen"
               @change="handleHotChanges"
             />
             <keep-alive v-else>
@@ -257,11 +256,6 @@ export default {
 
 <style lang="scss">
 .competition-admin {
-  .handsontable {
-    &.fullscreen {
-      height: 100%;
-      min-height: 300px;
-    }
-  }
+
 }
 </style>
