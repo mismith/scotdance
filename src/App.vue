@@ -585,7 +585,7 @@ body,
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('/img/touchicon.png');
+  background-image: url('./assets/img/touchicon.png');
   background-position: center center;
   background-size: cover;
   opacity: .25;
