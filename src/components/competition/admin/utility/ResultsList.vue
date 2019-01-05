@@ -24,7 +24,7 @@
         >
           {{ callbacks.$name }}
         </result-list-item>
-        <v-divider inset />
+        <v-divider v-if="findGroupDances(group, dances).length" inset />
 
         <result-list-item
           v-for="dance in findGroupDances(group, dances)"
