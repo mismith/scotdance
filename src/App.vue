@@ -129,7 +129,7 @@
                 icon
                 v-if="$store.getters.hasPermission('admin')"
                 :to="{ name: 'competition.admin.info', params: { competitionId: db.push().key } }"
-                @click.native="closeMenu()"
+                @click="closeMenu()"
               >
                 <v-icon>add</v-icon>
               </v-btn>
@@ -140,7 +140,7 @@
               :key="competition[idKey]"
               :competition="competition"
               :to="{ name: 'competition.info', params: { competitionId: competition[idKey] } }"
-              @click.native="closeMenu()"
+              @click="closeMenu()"
             />
 
             <v-list-tile v-if="!relevantCompetitions.length" class="empty">
@@ -150,8 +150,11 @@
               No competitions found.
             </v-list-tile>
 
-            <footer v-if="competitions.length && competitions.length !== relevantCompetitions.length" style="text-align: center;">
-              <v-btn :to="{ name: 'competitions' }" @click.native="closeMenu()">
+            <footer
+              v-if="competitions.length && competitions.length !== relevantCompetitions.length"
+              style="text-align: center;"
+            >
+              <v-btn flat :to="{ name: 'competitions' }" @click="closeMenu()">
                 View {{ competitions.length - relevantCompetitions.length }} More
               </v-btn>
             </footer>
