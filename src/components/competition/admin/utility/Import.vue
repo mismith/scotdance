@@ -63,7 +63,7 @@
           </v-card-actions>
         </v-stepper-content>
         <v-stepper-content :step="2" class="pa-0">
-          <v-tabs v-if="workbook" v-model="dancersSheetIndex">
+          <v-tabs v-if="workbook" v-model="dancersSheetIndex" show-arrows>
             <v-tab v-for="(sheetName, sheetIndex) of workbook.SheetNames" :key="sheetIndex">
               {{ sheetName }}
             </v-tab>
@@ -90,7 +90,7 @@
           </v-card-actions>
         </v-stepper-content>
         <v-stepper-content :step="3" class="pa-0">
-          <v-tabs v-if="data" v-model="dataTabIndex">
+          <v-tabs v-if="data" v-model="dataTabIndex" show-arrows>
             <v-tab v-for="key of dataKeys" :key="key">
               {{ key }}
             </v-tab>

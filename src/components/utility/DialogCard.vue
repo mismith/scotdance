@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="isOpen" @keydown.esc.stop="handleCancel">
+  <v-dialog v-model="isOpen" :max-width="fullWidth ? 'none' : 300" @keydown.esc.stop="handleCancel">
     <slot slot="activator" name="activator"></slot>
     <form @submit.prevent="handleSubmit">
       <v-card>
@@ -56,6 +56,7 @@ export default {
       type: String,
       default: null,
     },
+    fullWidth: Boolean,
     async: Boolean,
   },
   computed: {

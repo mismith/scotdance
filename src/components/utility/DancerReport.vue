@@ -35,6 +35,13 @@
             <span slot="avatar" />
             {{ overall.$name }}
           </result-list-item>
+
+          <v-list-tile v-if="!findGroupDances(group, dances).length && !hasOverall(group)" class="empty">
+            <v-list-tile-avatar>
+              <v-icon>clear</v-icon>
+            </v-list-tile-avatar>
+            Results to be determined.
+          </v-list-tile>
         </v-list>
       </v-list-group>
     </v-list>

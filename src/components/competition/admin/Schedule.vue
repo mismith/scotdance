@@ -112,7 +112,7 @@
     </blade>
 
     <dialog-card
-      :value="confirmRemove"
+      v-model="confirmRemove"
       title="Delete item"
       text="Are you sure you want to permanently delete this item?"
       cancel-label="No"

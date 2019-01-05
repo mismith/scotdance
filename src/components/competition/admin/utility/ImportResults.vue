@@ -87,7 +87,7 @@
           </v-card-actions>
         </v-stepper-content>
         <v-stepper-content :step="3" class="pa-0">
-          <blades>
+          <blades class="stacks">
             <blade class="xs12 md6 app-scroll alt">
               <results-list
                 :groups="groups.filter(group => Object.keys(results).includes(group[idKey]))"
