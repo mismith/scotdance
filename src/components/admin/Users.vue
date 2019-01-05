@@ -41,15 +41,12 @@
           @change="handleChanges($event, `users/${userId}`)"
         />
 
-        <path-chips
+        <v-combobox
           label="Permissions"
-          :data="permissions[currentUser[idKey]]"
-          @change="handleChanges($event, `permissions/users/${userId}`)"
-        />
-        <path-chips
-          label="Favourites"
-          :data="favorites[currentUser[idKey]]"
-          @change="handleChanges($event, `users:favorites/${userId}`)"
+          v-model="selectedPermissions"
+          :items="availablePermissions"
+          multiple
+          chips
         />
       </div>
       <empty-state
@@ -65,14 +62,11 @@
 <script>
 import Fuse from 'fuse.js';
 import sortBy from 'lodash.sortby';
-import {
-  idKey,
-  db,
-} from '@/helpers/firebase';
+import { flattenPaths } from '@/helpers/admin';
+import { idKey, db } from '@/helpers/firebase';
 import PaginatedList from '@/components/admin/utility/PaginatedList.vue';
 import SearchField from '@/components/utility/SearchField.vue';
 import DynamicForm from '@/components/admin/utility/DynamicForm.vue';
-import PathChips from '@/components/admin/utility/PathChips.vue';
 
 export default {
   name: 'admin-users',
@@ -80,8 +74,8 @@ export default {
     userId: String,
     section: Object,
     users: Array,
-    favorites: Object,
     permissions: Object,
+    competitions: Array,
   },
   data() {
     return {
@@ -116,6 +110,25 @@ export default {
 
       return filtered;
     },
+
+    availablePermissions() {
+      return [
+        {
+          text: 'System Administrator',
+          value: 'admin',
+        },
+        ...this.competitions.map(competiton => ({
+          text: competiton.name,
+          value: `competitons/${competiton[idKey]}`,
+        })),
+      ];
+    },
+    selectedPermissions() {
+      // @TODO: make this editable
+      return flattenPaths(this.permissions[this.currentUser[idKey]])
+        .map(path => this.availablePermissions.find(({ value }) => value === path))
+        .filter(v => v);
+    },
   },
   methods: {
     handleChanges(changes, prefix) {
@@ -135,7 +148,6 @@ export default {
     PaginatedList,
     SearchField,
     DynamicForm,
-    PathChips,
   },
 };
 </script>
