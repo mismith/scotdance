@@ -3,6 +3,7 @@
     v-model="isOpen"
     :max-width="fullWidth ? 'none' : 300"
     @keydown.esc.stop="handleCancel"
+    ref="dialog"
   >
     <slot slot="activator" name="activator"></slot>
     <form @submit.prevent="handleSubmit" class="v-dialog--scrollable">
@@ -94,6 +95,7 @@ export default {
       this.$emit('cancel');
 
       await this.$nextTick();
+      this.$refs.dialog.isActive = false;
       this.isOpen = false;
     },
     async handleSubmit() {
@@ -101,6 +103,7 @@ export default {
 
       if (!this.async) {
         await this.$nextTick();
+        this.$refs.dialog.isActive = false;
         this.isOpen = false;
       }
     },
