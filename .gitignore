@@ -33,3 +33,4 @@ info.txt
 *.keystore
 /.firebase
 .runtimeconfig.json
+/public/version.json

@@ -4,6 +4,13 @@
   },
   "hosting": {
     "public": "www",
+    "headers": [{
+      "source" : "/version.json",
+      "headers" : [{
+        "key" : "Access-Control-Allow-Origin",
+        "value" : "*"
+      }]
+    }],
     "rewrites": [
       {
         "source": "**",
