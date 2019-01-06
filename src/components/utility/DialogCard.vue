@@ -1,11 +1,16 @@
 <template>
-  <v-dialog v-model="isOpen" :max-width="fullWidth ? 'none' : 300" @keydown.esc.stop="handleCancel">
+  <v-dialog
+    v-model="isOpen"
+    :max-width="fullWidth ? 'none' : 300"
+    @keydown.esc.stop="handleCancel"
+  >
     <slot slot="activator" name="activator"></slot>
-    <form @submit.prevent="handleSubmit">
+    <form @submit.prevent="handleSubmit" class="v-dialog--scrollable">
       <v-card>
         <slot name="title">
           <v-card-title v-if="title" v-html="title" class="title" />
         </slot>
+
         <slot name="text">
           <v-card-text>
             <slot>
@@ -13,6 +18,7 @@
             </slot>
           </v-card-text>
         </slot>
+
         <slot name="actions">
           <v-card-actions class="justify-end">
             <slot name="cancel">

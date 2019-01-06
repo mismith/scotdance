@@ -495,6 +495,14 @@ body,
   .v-tabs__bar {
     flex-shrink: 0;
   }
+
+  &--scrollable > .v-card {
+    width: 100%;
+
+    > .v-card__text {
+      @extend .app-scroll;
+    }
+  }
 }
 .v-bottom-nav {
   flex-shrink: 0;

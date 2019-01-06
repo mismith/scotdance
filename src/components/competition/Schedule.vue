@@ -135,25 +135,26 @@
         </div>
 
         <dialog-card v-model="drawVisible">
-          <v-card-title v-if="currentDialogData" slot="title">
+          <v-card-title v-if="currentDialogData" slot="title" class="layout column align-start">
             <div class="title">Draw / Order</div>
             <div v-if="currentDialogData.dance && currentDialogData.group" class="caption">
               {{ currentDialogData.dance.$shortName }} • {{ currentDialogData.group.$name }}
             </div>
           </v-card-title>
 
-          <v-list
-            slot="text"
-            v-if="currentDialogData && currentDialogData.dance && currentDialogData.group"
-            two-line
-          >
-            <dancer-list-item
-              v-for="dancer in findDrawnDancers(currentDialogData.group, currentDialogData.dance)"
-              :key="dancer[idKey]"
-              :dancer="dancer"
-              @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] } }); drawVisible = false;"
-            />
-          </v-list>
+          <v-card-text slot="text" class="pa-0">
+            <v-list
+              v-if="currentDialogData && currentDialogData.dance && currentDialogData.group"
+              two-line
+            >
+              <dancer-list-item
+                v-for="dancer in findDrawnDancers(currentDialogData.group, currentDialogData.dance)"
+                :key="dancer[idKey]"
+                :dancer="dancer"
+                @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] } }); drawVisible = false;"
+              />
+            </v-list>
+          </v-card-text>
         </dialog-card>
       </div>
       <empty-state
