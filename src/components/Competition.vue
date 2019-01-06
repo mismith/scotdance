@@ -85,7 +85,7 @@
 
     <dialog-card v-model="staffVisible" full-width>
       <v-card-title v-if="currentDialogData" slot="title" class="layout row wrap">
-        <v-avatar v-if="currentDialogData.image" :size="200" class="mr-3">
+        <v-avatar v-if="currentDialogData.image" :size="100" class="mr-3">
           <img :src="currentDialogData.image" />
         </v-avatar>
         <v-flex>
