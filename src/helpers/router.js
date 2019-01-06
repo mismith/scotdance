@@ -1,4 +1,6 @@
+import compareVersions from 'compare-versions';
 import router from '@/router';
+import store from '@/store';
 
 export async function getTitleChunks(route) {
   return ['ScotDance.app', ...await Promise.all(route.matched
@@ -47,4 +49,26 @@ export function getFirstExisting(...routes) {
     return routes[0];
   }
   return getFirstExisting(...routes.slice(1));
+}
+
+export async function checkForUpdates() {
+  try {
+    const res = await window.fetch('https://scotdance.app/version.json');
+    const { version: latestVersion } = await res.json();
+    const { version: currentVersion } = store.state.$package;
+    const needsUpdating = compareVersions(currentVersion, latestVersion) < 0;
+
+    if (needsUpdating) {
+      return {
+        currentVersion,
+        latestVersion,
+      };
+    }
+  } catch (err) {
+    if (err) {
+      // eslint-disable-next-line no-console
+      console.log('Failed to determine whether an update is available', err.message);
+    }
+  }
+  return false;
 }

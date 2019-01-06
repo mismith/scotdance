@@ -1,7 +1,12 @@
 <template>
   <v-app id="app" class="app-scroll-frame">
     <v-toolbar app color="primary" dark class="print-hide">
-      <v-toolbar-side-icon @click="menuVisible = !menuVisible" />
+      <v-toolbar-side-icon @click="menuVisible = !menuVisible">
+        <v-badge v-model="needsUpdating" color="secondary">
+          <span slot="badge" />
+          <v-icon>menu</v-icon>
+        </v-badge>
+      </v-toolbar-side-icon>
 
       <v-toolbar-title>
         <router-link :to="{ name: 'competitions' }">{{ title }}</router-link>
@@ -165,6 +170,15 @@
           <v-list>
             <v-subheader>Links</v-subheader>
 
+            <prompt-to-update v-if="needsUpdating">
+              <v-list-tile slot="activator" color="secondary">
+                <v-list-tile-action>
+                  <v-icon color="secondary">fiber_new</v-icon>
+                </v-list-tile-action>
+                <v-list-tile-title>Update App</v-list-tile-title>
+              </v-list-tile>
+            </prompt-to-update>
+
             <v-list-tile to="/" exact @click="closeMenu()">
               <v-list-tile-action>
                 <v-icon>home</v-icon>
@@ -204,21 +218,15 @@
 </template>
 
 <script>
-import {
-  mapState,
-  mapActions,
-} from 'vuex';
-import { getTitleChunks, getFirstExisting } from '@/helpers/router';
-import {
-  idKey,
-  db,
-  firebase,
-} from '@/helpers/firebase';
+import { mapState, mapActions } from 'vuex';
+import { getTitleChunks, getFirstExisting, checkForUpdates } from '@/helpers/router';
+import { idKey, db, firebase } from '@/helpers/firebase';
 import RegisterDialog from '@/components/utility/RegisterDialog.vue';
 import LoginDialog from '@/components/utility/LoginDialog.vue';
 import RequiresAuthDialog from '@/components/utility/RequiresAuthDialog.vue';
 import AccountButtons from '@/components/utility/AccountButtons.vue';
 import CompetitionListItem from '@/components/utility/CompetitionListItem.vue';
+import PromptToUpdate from '@/components/utility/PromptToUpdate.vue';
 
 export default {
   name: 'app',
@@ -234,6 +242,8 @@ export default {
       competitionsDataRef: undefined,
 
       confirmClearLocalStorage: false,
+
+      needsUpdating: false,
     };
   },
   computed: {
@@ -353,8 +363,10 @@ export default {
       return firebase.auth().signOut();
     },
   },
-  created() {
+  async created() {
     this.loadFirebase();
+
+    this.needsUpdating = await checkForUpdates();
   },
   mounted() {
     // scroll to selector if specified in query string
@@ -372,6 +384,7 @@ export default {
     RequiresAuthDialog,
     AccountButtons,
     CompetitionListItem,
+    PromptToUpdate,
   },
 };
 </script>
@@ -511,6 +524,14 @@ body,
     a {
       color: inherit;
       text-decoration: none;
+    }
+  }
+  .v-toolbar__side-icon {
+    .v-badge__badge {
+      width: 16px;
+      height: 16px;
+      margin-top: 3px;
+      margin-right: 3px;
     }
   }
 }

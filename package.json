@@ -24,6 +24,7 @@
     "@handsontable/vue": "^2.0.0",
     "@mismith/firebase-tools": "^1.4.0",
     "@outluch/v-file": "^1.0.0",
+    "compare-versions": "^3.4.0",
     "cordova": "^8.1.2",
     "cordova-android": "^7.1.4",
     "cordova-ios": "^4.5.5",
