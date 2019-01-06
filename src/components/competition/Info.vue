@@ -60,6 +60,7 @@
               <v-list-tile-avatar v-if="member.image" slot="avatar">
                 <img :src="member.image" />
               </v-list-tile-avatar>
+              <span v-else slot="avatar" />
             </dancer-list-item>
           </v-list>
         </v-list-group>
