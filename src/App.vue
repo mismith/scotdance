@@ -447,7 +447,7 @@ a {
   &.ext,
   & .ext {
     &:after {
-      content: "\2197";
+      content: "\2197\FE0E"; // append \FE0E to prevent iOS from emojifying the arrow
       margin-left: 0.25em;
     }
   }
