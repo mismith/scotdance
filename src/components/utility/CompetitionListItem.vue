@@ -10,7 +10,7 @@
 
     <v-list-tile-content>
       <v-list-tile-title>{{ competition.name }}</v-list-tile-title>
-      <v-list-tile-sub-title>
+      <v-list-tile-sub-title class="dot-divided">
         <span v-if="competition.date">{{ $moment(competition.date).format('MMM D, YYYY') }}</span>
         <span v-if="competition.location">{{ competition.location }}</span>
       </v-list-tile-sub-title>
@@ -49,16 +49,6 @@ export default {
 
 <style lang="scss">
 .competition-list-item {
-  p {
-    > span {
-      &:not(:last-child) {
-        &::after {
-          content: " •";
-          margin: 0 0.25em;
-        }
-      }
-    }
-  }
   &:not(.listed) {
     background: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.1) 5px, rgba(0, 0, 0, 0.1) 10px);
   }

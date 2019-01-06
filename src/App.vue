@@ -462,6 +462,18 @@ a {
 .dimmed {
   opacity: 0.5;
 }
+.dot-divided {
+  > span {
+    &:not(:last-child) {
+      &::after {
+        content: "•";
+        display: inline-block;
+        margin-left: 0.25em;
+        margin-right: 0.25em;
+      }
+    }
+  }
+}
 
 // app frame
 html,
@@ -506,6 +518,7 @@ body,
 }
 .v-bottom-nav {
   flex-shrink: 0;
+  z-index: 1;
 }
 .v-toolbar {
   z-index: 1;

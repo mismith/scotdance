@@ -13,7 +13,7 @@
 
     <v-list-tile-content>
       <v-list-tile-title>{{ dancer.$name }}</v-list-tile-title>
-      <v-list-tile-sub-title>
+      <v-list-tile-sub-title class="dot-divided">
         <span v-if="dancer.$group" class="group">{{ dancer.$group.$name }}</span>
         <span class="location">{{ dancer.location }}</span>
       </v-list-tile-sub-title>
@@ -53,19 +53,6 @@ export default {
 
 <style lang="scss">
 .dancer-list-item {
-  .v-list__tile__sub-title {
-    > span {
-      &:not(:last-child) {
-        &::after {
-          content: "•";
-          display: inline-block;
-          margin-left: 0.25em;
-          margin-right: 0.25em;
-        }
-      }
-    }
-  }
-
   &.placeholder {
     background: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.1) 5px, rgba(0, 0, 0, 0.1) 10px);
   }
