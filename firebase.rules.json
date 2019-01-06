@@ -4,9 +4,6 @@
       ".read": "root.child($environment).child('permissions/users').child(auth.uid).child('admin').val() === true", // is ADMIN
       ".write": "root.child($environment).child('permissions/users').child(auth.uid).child('admin').val() === true", // is ADMIN
 
-      "sections": {
-        ".read": true
-      },
       "faqs": {
         ".read": true
       },

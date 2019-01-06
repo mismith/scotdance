@@ -86,10 +86,8 @@
 import saveCSV from 'save-csv';
 import { makeKeyValuePairColumn } from '@/helpers/admin';
 import { danceExtender } from '@/helpers/competition';
-import {
-  idKey,
-  db,
-} from '@/helpers/firebase';
+import sections from '@/schemas/sections.json';
+import { idKey, db, toOrderedArray } from '@/helpers/firebase';
 import { getFirstExisting } from '@/helpers/router';
 import { getRows } from '@/helpers/results';
 import RequiresPermission from '@/components/utility/RequiresPermission.vue';
@@ -130,11 +128,6 @@ export default {
       savingPromises: [],
     };
   },
-  firebase() {
-    return {
-      sectionsRaw: db.child('sections'),
-    };
-  },
   computed: {
     hasPermission() {
       return this.$store.getters.hasPermission(`competitions/${this.competitionId}`);
@@ -145,7 +138,7 @@ export default {
     },
 
     sections() {
-      return this.sectionsRaw
+      return toOrderedArray(sections)
         .map((section) => {
           if (section.hot) {
             // eslint-disable-next-line no-param-reassign

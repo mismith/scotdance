@@ -12,6 +12,7 @@
         <div class="app-scroll-frame app-scroll">
           <mi-hot-table
             v-if="currentSection.hot"
+            :key="currentSection[idKey]"
             :settings="currentSection.hot"
             :data="this[$root.currentTab]"
             @change="handleHotChanges"
@@ -50,10 +51,8 @@
 </template>
 
 <script>
-import {
-  idKey,
-  db,
-} from '@/helpers/firebase';
+import sectionAdmin from '@/schemas/sections-admin.json';
+import { idKey, db, toOrderedArray } from '@/helpers/firebase';
 import { getFirstExisting } from '@/helpers/router';
 import RequiresPermission from '@/components/utility/RequiresPermission.vue';
 import MiHotTable from '@/components/admin/utility/MiHotTable.vue';
@@ -71,7 +70,6 @@ export default {
   },
   firebase() {
     return {
-      sectionsRaw: db.child('admin/sections'),
       competitionsRaw: db.child('competitions'),
       faqsRaw: db.child('faqs'),
       usersRaw: db.child('users'),
@@ -95,7 +93,7 @@ export default {
     },
 
     sections() {
-      return this.sectionsRaw;
+      return toOrderedArray(sectionAdmin);
     },
     competitions() {
       return this.competitionsRaw;

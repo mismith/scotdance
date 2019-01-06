@@ -3,6 +3,14 @@
     <div class="layout row align-center justify-center app-scroll-frame alt pa-3">
       <v-card>
         <v-responsive class="pa-3">
+          <v-icon :size="88" class="icon-question" />
+        </v-responsive>
+        <v-card-title>
+          <div class="title">{{ faqs.length }} FAQs</div>
+        </v-card-title>
+      </v-card>
+      <v-card>
+        <v-responsive class="pa-3">
           <v-icon :size="88">event</v-icon>
         </v-responsive>
         <v-card-title>
@@ -15,14 +23,6 @@
         </v-responsive>
         <v-card-title>
           <div class="title">{{ users.length }} users</div>
-        </v-card-title>
-      </v-card>
-      <v-card>
-        <v-responsive class="pa-3">
-          <v-icon :size="88" class="icon-question" />
-        </v-responsive>
-        <v-card-title>
-          <div class="title">{{ faqs.length }} FAQs</div>
         </v-card-title>
       </v-card>
     </div>
