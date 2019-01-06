@@ -15,6 +15,7 @@
           <br />
           <span>{{ competition.location }}</span>
         </p>
+        <div v-if="competition.description" v-html="competition.description" class="mb-3 pre-line" />
         <p v-if="competition.sobhd">
           <small><strong>SOBHD</strong> {{ competition.sobhd }}</small>
         </p>
