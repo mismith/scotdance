@@ -204,7 +204,6 @@
 </template>
 
 <script>
-import Hammer from 'hammerjs';
 import {
   mapState,
   mapActions,
@@ -358,21 +357,6 @@ export default {
     this.loadFirebase();
   },
   mounted() {
-    new Hammer(this.$el, {
-      touchAction: 'auto',
-    })
-      .on('swipeleft', () => {
-        this.closeMenu();
-      })
-      .on('swiperight', ({ deltaX, srcEvent: { pageX } }) => {
-        const EDGE_THRESHOLD = 64;
-        const startLeft = pageX - deltaX;
-        // const startRight = window.innerWidth - startRight;
-        if (startLeft <= EDGE_THRESHOLD) {
-          window.history.go(-1);
-        }
-      });
-
     // scroll to selector if specified in query string
     this.$watch('$route', (to) => {
       if (to.query.at) {
