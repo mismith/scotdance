@@ -9,12 +9,20 @@
         <p v-if="competition.date" class="headline">
           {{ $moment(competition.date).format('dddd, MMMM D, YYYY') }}
         </p>
-        <p v-if="competition.venue" class="subheading">
-          <a v-if="competition.address" :href="`https://maps.google.com/?q=${competition.venue},+${competition.address},+${competition.location}`" target="_blank" class="ext">{{ competition.venue }}</a>
-          <span v-else>{{ competition.venue }}</span>
-          <br />
-          <span>{{ competition.location }}</span>
-        </p>
+        <div class="subheading">
+          <div v-if="competition.venue">
+            <a
+              v-if="competition.address"
+              :href="`https://maps.google.com/?q=${competition.venue},+${competition.address},+${competition.location}`"
+              target="_blank"
+              class="ext"
+            >
+              {{ competition.venue }}
+            </a>
+            <span v-else>{{ competition.venue }}</span>
+          </div>
+          <p>{{ competition.location }}</p>
+        </div>
         <div v-if="competition.description" v-html="competition.description" class="mb-3 pre-line" />
         <p v-if="competition.sobhd">
           <small><strong>SOBHD</strong> {{ competition.sobhd }}</small>
