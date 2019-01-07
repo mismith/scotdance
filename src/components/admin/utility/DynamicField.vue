@@ -3,7 +3,7 @@
     <v-select
       v-if="field.type === 'select'"
       v-model="value"
-      :label="field.title"
+      :label="getLabel(field)"
       :items="field.presets"
       item-text="name"
       :item-value="idKey"
@@ -17,7 +17,7 @@
     <v-checkbox
       v-else-if="field.type === 'checkbox'"
       v-model="value"
-      :label="field.title"
+      :label="getLabel(field)"
       :required="field.required"
       :readonly="field.readonly"
       :disabled="field.disabled"
@@ -28,7 +28,7 @@
     <v-textarea
       v-else-if="field.type === 'textarea'"
       v-model="value"
-      :label="field.title"
+      :label="getLabel(field)"
       :required="field.required"
       :readonly="field.readonly"
       :disabled="field.disabled"
@@ -40,7 +40,7 @@
     <v-text-field
       v-else
       v-model="value"
-      :label="field.title"
+      :label="getLabel(field)"
       :type="field.type || 'text'"
       :required="field.required"
       :readonly="field.readonly"
@@ -76,6 +76,9 @@ export default {
     },
   },
   methods: {
+    getLabel(field) {
+      return `${field.title}${field.required ? ' *' : ''}`;
+    },
     handleInput() {
       this.$emit('input', {
         [this.field.data]: this.data[this.field.data],

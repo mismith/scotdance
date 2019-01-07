@@ -16,7 +16,7 @@
         @input="handleChanges('displayName')"
       />
       <v-text-field
-        label="Email"
+        label="Email *"
         v-model="me.email"
         readonly
         required

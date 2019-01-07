@@ -6,7 +6,7 @@
     class="register-dialog"
   >
     <v-text-field
-      label="Email"
+      label="Email *"
       type="email"
       name="email"
       v-model="email"
@@ -14,7 +14,7 @@
       autofocus
     />
     <v-text-field
-      label="Password"
+      label="Password *"
       type="password"
       name="password"
       v-model="password"
