@@ -21,7 +21,7 @@
               </v-list-tile-sub-title>
             </v-list-tile-content>
             <v-list-tile-action>
-              <v-tooltip>
+              <v-tooltip fixed left>
                 <v-btn icon slot="activator" @click="handleAdministratorDemote(invite)">
                   <v-icon>clear</v-icon>
                 </v-btn>
@@ -41,7 +41,7 @@
       </v-list-group>
 
       <dialog-card
-        v-model="confirmDemote"
+        :value="confirmDemote"
         title="Demote administrator"
         text="Are you sure you want to revoke this user's ability to administer this competition?"
         cancel-label="No"
@@ -97,7 +97,7 @@
             </v-list-tile-content>
 
             <v-list-tile-action v-if="FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED, FirebaseInvites.status.EXPIRED)">
-              <v-tooltip>
+              <v-tooltip fixed left>
                 <v-btn slot="activator" icon @click="handleInviteDelete(invite)">
                   <v-icon>delete</v-icon>
                 </v-btn>
@@ -105,7 +105,7 @@
               </v-tooltip>
             </v-list-tile-action>
             <v-list-tile-action v-else>
-              <v-tooltip>
+              <v-tooltip fixed left>
                 <v-btn slot="activator" icon @click="handleInviteCancel(invite)">
                   <v-icon>cancel</v-icon>
                 </v-btn>
