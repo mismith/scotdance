@@ -5,7 +5,8 @@
       :key="field.data"
       :field="field"
       :data="data"
-      @change="handleChanges"
+      @input="handleInput"
+      @change="handleChange"
     />
     <slot />
   </form>
@@ -21,8 +22,11 @@ export default {
     data: Object,
   },
   methods: {
-    handleChanges(changes) {
-      this.$emit('change', changes);
+    handleInput(change) {
+      this.$emit('input', { change, form: this.$el });
+    },
+    handleChange(change) {
+      this.$emit('change', change);
     },
     handleSubmit(event) {
       this.$emit('submit', event);

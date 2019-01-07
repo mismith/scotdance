@@ -10,7 +10,8 @@
       :required="field.required"
       :readonly="field.readonly"
       :disabled="field.disabled"
-      @change="handleChanges()"
+      @input="handleInput()"
+      @change="handleChange()"
     />
 
     <v-checkbox
@@ -20,7 +21,8 @@
       :required="field.required"
       :readonly="field.readonly"
       :disabled="field.disabled"
-      @change="handleChanges()"
+      @input="handleInput()"
+      @change="handleChange()"
     />
 
     <v-textarea
@@ -31,7 +33,8 @@
       :readonly="field.readonly"
       :disabled="field.disabled"
       auto-grow
-      @change="handleChanges()"
+      @input="handleInput()"
+      @change="handleChange()"
     />
 
     <v-text-field
@@ -42,7 +45,8 @@
       :required="field.required"
       :readonly="field.readonly"
       :disabled="field.disabled"
-      @change="handleChanges()"
+      @input="handleInput()"
+      @change="handleChange()"
     />
   </div>
 </template>
@@ -72,7 +76,12 @@ export default {
     },
   },
   methods: {
-    handleChanges() {
+    handleInput() {
+      this.$emit('input', {
+        [this.field.data]: this.data[this.field.data],
+      });
+    },
+    handleChange() {
       this.$emit('change', {
         [this.field.data]: this.data[this.field.data],
       });
