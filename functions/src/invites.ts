@@ -48,9 +48,9 @@ class Invites extends FirebaseInvites {
     const userId = invite[FirebaseInvites.prop.ACCEPTED_BY];
     if (userId) {
       const { competitionId } = ctx.params;
-      await this.config.db.child('permissions').update({
-        [`users/${userId}/competitions/${competitionId}`]: value,
-        [`competitions/${competitionId}/users/${userId}`]: value,
+      await this.config.db.update({
+        [`users:permissions/${userId}/competitions/${competitionId}`]: value,
+        [`competitions:permissions/${competitionId}/users/${userId}`]: value,
       });
     }
   }

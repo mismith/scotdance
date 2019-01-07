@@ -78,7 +78,7 @@ export default {
         asObject: true,
       },
       permissionsRaw: {
-        source: db.child('permissions/users'),
+        source: db.child('users:permissions'),
         asObject: true,
       },
     };

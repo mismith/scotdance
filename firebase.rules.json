@@ -1,8 +1,8 @@
 {
   "rules": {
     "$environment": {
-      ".read": "root.child($environment).child('permissions/users').child(auth.uid).child('admin').val() === true", // is ADMIN
-      ".write": "root.child($environment).child('permissions/users').child(auth.uid).child('admin').val() === true", // is ADMIN
+      ".read": "root.child($environment).child('users:permissions').child(auth.uid).child('admin').val() === true", // is ADMIN
+      ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('admin').val() === true", // is ADMIN
 
       "faqs": {
         ".read": true
@@ -10,19 +10,24 @@
       "competitions": {
         ".read": true,
         "$competitionId": {
-          ".write": "root.child($environment).child('permissions/users').child(auth.uid).child('competitions').child($competitionId).val() === true" // has PERMISSION
+          ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true" // has PERMISSION
         }
       },
       "competitions:data": {
         "$competitionId": {
-          ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true || root.child($environment).child('permissions/users').child(auth.uid).child('competitions').child($competitionId).val() === true", // is PUBLISHED || has PERMISSION
-          ".write": "root.child($environment).child('permissions/users').child(auth.uid).child('competitions').child($competitionId).val() === true", // has PERMISSION
+          ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true || root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // is PUBLISHED || has PERMISSION
+          ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // has PERMISSION
           "invites": {
             "$inviteId": {
               ".read": "auth !== null", // is AUTHED
               ".write": "auth !== null" // is AUTHED
             }
           }
+        }
+      },
+      "competitions:permissions": {
+        "$competitionId": {
+          ".read": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true" // has PERMISSION to same COMPETITION
         }
       },
       "users": {
@@ -37,17 +42,10 @@
           ".write": "auth !== null && auth.uid === $userId" // is SELF
         }
       },
-      "permissions": {
-        "competitions": {
-          "$competitionId": {
-            ".read": "root.child($environment).child('permissions/users').child(auth.uid).child('competitions').child($competitionId).val() === true" // has PERMISSION to same COMPETITION
-          }
-        },
-        "users": {
-          "$userId": {
-            ".read": "auth !== null && auth.uid === $userId", // is SELF
-            ".write": "auth !== null && auth.uid === $userId && !newData.exists()" // is REMOVING OWN permissions
-          }
+      "users:permissions": {
+        "$userId": {
+          ".read": "auth !== null && auth.uid === $userId", // is SELF
+          ".write": "auth !== null && auth.uid === $userId && !newData.exists()" // is REMOVING OWN permissions
         }
       }
     }
