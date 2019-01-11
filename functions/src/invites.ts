@@ -1,8 +1,6 @@
 import { config } from 'firebase-functions';
-import { ServerClient } from 'postmark';
 import { FirebaseDynamicLinks, FirebaseInvites } from '@mismith/firebase-tools/dist/server';
-
-const postmark = new ServerClient(config().postmark.server_api_token);
+import { postmark } from './utility/email';
 
 const dynamicLinks = new FirebaseDynamicLinks(
   config().fb.web_api_key,
@@ -17,11 +15,11 @@ class Invites extends FirebaseInvites {
     const url = `${this.config.url}/#/competitions/${competitionId}/invites/${inviteId}`;
     const link = await dynamicLinks.getShortLink(url, true);
 
-    // build email template
+    // send email
     const invite = snap.val();
     const competitionPath = `competitions/${competitionId}`;
     const competition = (await this.config.db.child(competitionPath).once('value')).val();
-    const invitation = {
+    await postmark.sendEmailWithTemplate({
       From: this.config.email,
       To: this.config.env === 'development' ? this.config.email : invite.payload.email,
       TemplateAlias: 'competition-admin-invite',
@@ -37,10 +35,7 @@ class Invites extends FirebaseInvites {
           link,
         },
       },
-    };
-
-    // send email
-    await postmark.sendEmailWithTemplate(invitation);
+    });
   }
 
   async attachUserToCompetition(snap, ctx, value) {
