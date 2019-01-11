@@ -15,6 +15,7 @@ const appConfig = {
   db,
   database,
   name: 'ScotDance.app',
+  description: 'Highland dancing event tracker',
   email: 'admin@scotdance.app',
   url: env === 'development' ? 'http://localhost:8080' : 'https://scotdance.app',
 };

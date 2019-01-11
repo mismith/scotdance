@@ -26,6 +26,7 @@ class Invites extends FirebaseInvites {
       TemplateModel: {
         app: {
           name: this.config.name,
+          description: this.config.description,
           email: this.config.email,
           url: this.config.url,
         },
