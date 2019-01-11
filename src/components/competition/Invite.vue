@@ -1,14 +1,6 @@
 <template>
-  <div class="invite layout align-center justify-center app-scroll-frame app-scroll alt pa-3">
-    <div v-if="!$store.state.me">
-      <empty-state
-        icon="block"
-        label="Login required"
-        description="In order to accept this invite, you need an account."
-      />
-      <account-buttons />
-    </div>
-    <div v-else-if="!invite">
+  <requires-permission class="invite layout align-center justify-center app-scroll-frame app-scroll pa-3">
+    <div v-if="!invite">
       <spinner />
     </div>
     <empty-state
@@ -67,12 +59,13 @@
         </v-btn>
       </footer>
     </div>
-  </div>
+  </requires-permission>
 </template>
 
 <script>
 import { FirebaseInvites } from '@mismith/firebase-tools';
 import { idKey } from '@/helpers/firebase';
+import RequiresPermission from '@/components/utility/RequiresPermission.vue';
 import AccountButtons from '@/components/utility/AccountButtons.vue';
 
 export default {
@@ -112,6 +105,7 @@ export default {
     },
   },
   components: {
+    RequiresPermission,
     AccountButtons,
   },
 };

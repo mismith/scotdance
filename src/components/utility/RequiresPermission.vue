@@ -1,11 +1,12 @@
 <template>
   <div class="requires-permission">
-    <template v-if="permission">
+    <template v-if="permission || $store.state.me">
       <slot />
     </template>
-    <template v-else-if="!$store.state.me">
+    <div v-else-if="!$store.state.me" class="ma-auto">
       <empty-state icon="block" label="Login required" />
-    </template>
+      <account-buttons />
+    </div>
     <template v-else>
       <empty-state icon="block" label="Access denied" />
     </template>
@@ -13,10 +14,15 @@
 </template>
 
 <script>
+import AccountButtons from '@/components/utility/AccountButtons.vue';
+
 export default {
   name: 'requires-permission',
   props: {
     permission: true,
+  },
+  components: {
+    AccountButtons,
   },
 };
 </script>

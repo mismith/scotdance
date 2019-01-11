@@ -1,38 +1,35 @@
 <template>
-  <div class="admin app-scroll-frame">
-    <requires-permission :permission="hasPermission" class="app-scroll-frame">
-      <div v-if="currentSection" class="app-scroll-frame">
-        <v-toolbar dense>
-          <v-spacer />
+  <requires-permission :permission="hasPermission" class="admin app-scroll-frame">
+    <v-toolbar dense>
+      <v-spacer />
 
-          <v-btn icon flat color="primary" :loading="saving">
-            <v-icon>check</v-icon>
-          </v-btn>
-        </v-toolbar>
-        <div class="app-scroll-frame app-scroll">
-          <mi-hot-table
-            v-if="currentSection.hot"
-            :key="currentSection[idKey]"
-            :settings="currentSection.hot"
-            :data="this[$root.currentTab]"
-            @change="handleHotChanges"
-          />
-          <keep-alive v-else>
-            <router-view
-              v-bind="{
-                section: currentSection,
-                competitions,
-                faqs,
-                users,
-                favorites,
-                permissions,
-              }"
-              @change="handleChanges"
-            />
-          </keep-alive>
-        </div>
-      </div>
-    </requires-permission>
+      <v-btn icon flat color="primary" :loading="saving">
+        <v-icon>check</v-icon>
+      </v-btn>
+    </v-toolbar>
+
+    <div class="app-scroll-frame app-scroll">
+      <mi-hot-table
+        v-if="currentSection.hot"
+        :key="currentSection[idKey]"
+        :settings="currentSection.hot"
+        :data="this[$root.currentTab]"
+        @change="handleHotChanges"
+      />
+      <keep-alive v-else>
+        <router-view
+          v-bind="{
+            section: currentSection,
+            competitions,
+            faqs,
+            users,
+            favorites,
+            permissions,
+          }"
+          @change="handleChanges"
+        />
+      </keep-alive>
+    </div>
 
     <v-bottom-nav v-if="hasPermission" :value="true" :active="$root.currentTab">
       <v-btn
@@ -47,7 +44,7 @@
         <v-icon :class="section.icon"></v-icon>
       </v-btn>
     </v-bottom-nav>
-  </div>
+  </requires-permission>
 </template>
 
 <script>

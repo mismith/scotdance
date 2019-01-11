@@ -1,70 +1,65 @@
 <template>
-  <div class="competition-admin app-scroll-frame">
-    <requires-permission :permission="hasPermission" class="app-scroll-frame">
-      <div v-if="currentSection" class="app-scroll-frame">
-        <div class="app-scroll-frame">
-          <v-toolbar dense>
-            <div v-if="inTabs('info', 'categories', 'dancers', 'groups')">
-              <v-btn flat @click="showImport = true">Import&hellip;</v-btn>
-            </div>
-            <div v-if="inTabs('results')">
-              <v-btn flat @click="showImportResults = true">Import&hellip;</v-btn>
-              <v-btn flat @click="exportResults()">Export CSV</v-btn>
-            </div>
-
-            <div v-if="currentSection">
-              <preset-picker
-                v-if="currentSection.presets"
-                :presets="currentSection.presets"
-                :prop="currentSection[idKey] === 'dances' ? p => danceExtender(p).$name : 'name'"
-                @select="addPresets"
-              />
-            </div>
-
-            <v-spacer />
-
-            <v-btn icon flat color="primary" :loading="saving">
-              <v-icon>check</v-icon>
-            </v-btn>
-          </v-toolbar>
-          <div class="app-scroll-frame app-scroll">
-            <mi-hot-table
-              v-if="currentSection.hot"
-              :settings="currentSection.hot"
-              :data="this[$root.currentTab]"
-              @change="handleHotChanges"
-            />
-            <keep-alive v-else>
-              <router-view
-                v-bind="$props"
-                :section="currentSection"
-                @change="handleDataChanges"
-                @info-change="handleInfoChanges"
-              />
-            </keep-alive>
-          </div>
-        </div>
+  <requires-permission :permission="hasPermission" class="competition-admin app-scroll-frame">
+    <v-toolbar dense>
+      <div v-if="inTabs('info', 'categories', 'dancers', 'groups')">
+        <v-btn flat @click="showImport = true">Import&hellip;</v-btn>
+      </div>
+      <div v-if="inTabs('results')">
+        <v-btn flat @click="showImportResults = true">Import&hellip;</v-btn>
+        <v-btn flat @click="exportResults()">Export CSV</v-btn>
       </div>
 
-      <v-dialog v-model="showImport" @keydown.esc.stop="showImport = false">
-        <admin-import
-          :competition-data-ref="competitionDataRef"
-          :groups="groups"
-          :categories="categories"
-          :dancers="dancers"
-          @done="showImport = false"
+      <div v-if="currentSection">
+        <preset-picker
+          v-if="currentSection.presets"
+          :presets="currentSection.presets"
+          :prop="currentSection[idKey] === 'dances' ? p => danceExtender(p).$name : 'name'"
+          @select="addPresets"
         />
-      </v-dialog>
-      <v-dialog v-model="showImportResults" @keydown.esc.stop="showImportResults = false">
-        <admin-import-results
-          :competition-data-ref="competitionDataRef"
-          :groups="groups"
-          :dances="dances"
-          :dancers="dancers"
-          @done="showImportResults = false"
+      </div>
+
+      <v-spacer />
+
+      <v-btn icon flat color="primary" :loading="saving">
+        <v-icon>check</v-icon>
+      </v-btn>
+    </v-toolbar>
+
+    <div class="app-scroll-frame app-scroll">
+      <mi-hot-table
+        v-if="currentSection.hot"
+        :settings="currentSection.hot"
+        :data="this[$root.currentTab]"
+        @change="handleHotChanges"
+      />
+      <keep-alive v-else>
+        <router-view
+          v-bind="$props"
+          :section="currentSection"
+          @change="handleDataChanges"
+          @info-change="handleInfoChanges"
         />
-      </v-dialog>
-    </requires-permission>
+      </keep-alive>
+    </div>
+
+    <v-dialog v-model="showImport" @keydown.esc.stop="showImport = false">
+      <admin-import
+        :competition-data-ref="competitionDataRef"
+        :groups="groups"
+        :categories="categories"
+        :dancers="dancers"
+        @done="showImport = false"
+      />
+    </v-dialog>
+    <v-dialog v-model="showImportResults" @keydown.esc.stop="showImportResults = false">
+      <admin-import-results
+        :competition-data-ref="competitionDataRef"
+        :groups="groups"
+        :dances="dances"
+        :dancers="dancers"
+        @done="showImportResults = false"
+      />
+    </v-dialog>
 
     <v-bottom-nav v-if="hasPermission" :value="true" :active="$root.currentTab" style="overflow-x: auto; justify-content: unset;">
       <v-btn
@@ -79,7 +74,7 @@
         <v-icon :class="section.icon"></v-icon>
       </v-btn>
     </v-bottom-nav>
-  </div>
+  </requires-permission>
 </template>
 
 <script>
