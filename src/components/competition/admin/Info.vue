@@ -1,6 +1,6 @@
 <template>
   <blades class="admin-info" :stacks="true">
-    <blade id="blade-subsections" class="xs12 md3 app-scroll alt">
+    <blade id="blade-subsections" class="xs12 md3 app-scroll">
       <v-list>
         <v-list-tile
           v-for="subsection in toOrderedArray(section.subsections)"

@@ -15,7 +15,7 @@
         description="Add or import some first"
       />
     </blade>
-    <blade id="blade-dancers" :active="currentDance" class="xs12 md4 app-scroll alt">
+    <blade id="blade-dancers" :active="currentDance" class="xs12 md4 app-scroll">
       <v-list v-if="currentDance" two-line>
         <dancer-list-item
           v-for="dancer in currentDancers"
@@ -44,7 +44,7 @@
         description="Select an age group and dance"
       />
     </blade>
-    <blade class="xs12 md4 app-scroll alt">
+    <blade class="xs12 md4 app-scroll">
       <placed-dancer-list
         v-if="currentDance && placedDancers.length"
         :admin="true"
