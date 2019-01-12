@@ -128,7 +128,11 @@
         <template v-else>
           <v-list two-line>
             <v-subheader>
-              <v-flex>Competitions</v-flex>
+              <v-flex>
+                <router-link :to="{ name: 'competitions' }" style="color: inherit; text-decoration: none;">
+                  Competitions
+                </router-link>
+              </v-flex>
 
               <v-btn
                 icon
@@ -157,9 +161,9 @@
 
             <footer
               v-if="competitions.length && competitions.length !== relevantCompetitions.length"
-              style="text-align: center;"
+              class="layout justify-center"
             >
-              <v-btn flat :to="{ name: 'competitions' }" @click="closeMenu()">
+              <v-btn flat color="primary" exact :to="{ name: 'competitions' }" @click="closeMenu()">
                 View {{ competitions.length - relevantCompetitions.length }} More
               </v-btn>
             </footer>
