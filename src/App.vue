@@ -109,18 +109,18 @@
           <v-subheader>Account</v-subheader>
 
           <v-list-tile :to="{ name: 'profile' }" @click="closeMenu()">
-            <v-list-tile-action>
+            <v-list-tile-avatar>
               <v-icon>account_circle</v-icon>
-            </v-list-tile-action>
+            </v-list-tile-avatar>
             <v-list-tile-title>My Profile</v-list-tile-title>
           </v-list-tile>
 
           <v-spacer />
           <v-divider />
           <v-list-tile @click="logout().then(toggleAccount)">
-            <v-list-tile-action>
+            <v-list-tile-avatar>
               <v-icon>exit_to_app</v-icon>
-            </v-list-tile-action>
+            </v-list-tile-avatar>
             <v-list-tile-title>Logout</v-list-tile-title>
           </v-list-tile>
         </v-list>
@@ -176,17 +176,17 @@
 
             <prompt-to-update v-if="needsUpdating">
               <v-list-tile slot="activator" color="secondary">
-                <v-list-tile-action>
+                <v-list-tile-avatar>
                   <v-icon color="secondary">fiber_new</v-icon>
-                </v-list-tile-action>
+                </v-list-tile-avatar>
                 <v-list-tile-title>Update App</v-list-tile-title>
               </v-list-tile>
             </prompt-to-update>
 
             <v-list-tile to="/" exact @click="closeMenu()">
-              <v-list-tile-action>
+              <v-list-tile-avatar>
                 <v-icon>home</v-icon>
-              </v-list-tile-action>
+              </v-list-tile-avatar>
               <v-list-tile-title>App Home</v-list-tile-title>
             </v-list-tile>
             <v-list-tile
@@ -194,9 +194,9 @@
               :to="{ name: 'admin.info' }"
               @click="closeMenu()"
             >
-              <v-list-tile-action>
+              <v-list-tile-avatar>
                 <v-icon>settings_applications</v-icon>
-              </v-list-tile-action>
+              </v-list-tile-avatar>
               <v-list-tile-title>App Admin</v-list-tile-title>
             </v-list-tile>
           </v-list>

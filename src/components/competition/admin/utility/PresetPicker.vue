@@ -5,9 +5,9 @@
     <dialog-card v-model="dialogOpen" title="Select preset(s) to add:" @submit="select">
       <v-list slot="text">
         <v-list-tile v-for="preset in presets" :key="getValue(preset)">
-          <v-list-action>
+          <v-list-tile-action>
             <v-checkbox v-model="selected[getValue(preset)]" /><!-- eslint-disable-line vue/valid-v-model -->
-          </v-list-action>
+          </v-list-tile-action>
           <v-list-tile-content>
             <v-list-tile-title>{{ getValue(preset) }}</v-list-tile-title>
           </v-list-tile-content>

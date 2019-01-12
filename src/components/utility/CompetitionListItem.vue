@@ -4,9 +4,9 @@
     class="competition-list-item"
     :class="{ listed: competition.listed, published: competition.published }"
   >
-    <v-list-tile-action>
+    <v-list-tile-avatar color="white">
       <v-icon>event</v-icon>
-    </v-list-tile-action>
+    </v-list-tile-avatar>
 
     <v-list-tile-content>
       <v-list-tile-title>{{ competition.name }}</v-list-tile-title>
