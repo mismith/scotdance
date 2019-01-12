@@ -47,8 +47,8 @@ export default {
 
 <style lang="scss">
 .new-dynamic-field {
-  .v-messages {
-    display: none;
+  .v-list & {
+    padding-right: 2px;
   }
 }
 </style>

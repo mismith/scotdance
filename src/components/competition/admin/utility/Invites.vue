@@ -119,11 +119,11 @@
             </v-list-tile-avatar>
             No pending invites.
           </v-list-tile>
-          <v-divider />
+          <v-divider class="mb-2" />
           <new-dynamic-field
             :field="{ title: 'Invite by Email', data: 'email', type: 'email' }"
             @change="handleInviteCreate"
-            class="pl-3 pt-2"
+            class="pl-3"
           />
         </v-list>
       </v-list-group>
