@@ -15,6 +15,30 @@
       @change="handleChange()"
     />
 
+    <v-menu
+      v-else-if="field.type === 'date'"
+      v-model="datePicking"
+      :close-on-content-click="false"
+      full-width
+      max-width="290"
+    >
+      <v-text-field
+        slot="activator"
+        :value="value"
+        :label="getLabel(field)"
+        :required="field.required"
+        :disabled="field.disabled"
+        :hint="field.description"
+        readonly
+        @focus="datePicking = true"
+      />
+      <v-date-picker
+        v-model="value"
+        @input="datePicking = false; handleInput()"
+        @change="datePicking = false; handleChange()"
+      />
+    </v-menu>
+
     <v-checkbox
       v-else-if="field.type === 'checkbox'"
       v-model="value"
@@ -68,6 +92,8 @@ export default {
   data() {
     return {
       idKey,
+
+      datePicking: false,
     };
   },
   computed: {
