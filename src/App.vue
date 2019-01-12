@@ -19,7 +19,7 @@
         v-if="$route.params.competitionId && $store.getters.hasPermission(`competitions/${$route.params.competitionId}`) && getMirrorRoute()"
         :to="getMirrorRoute()"
       >
-        <v-icon>{{ /^competition.admin/.test($route.name) ? 'visibility' : 'settings' }}</v-icon>
+        <v-icon>{{ /^competition.admin/.test($route.name) ? 'visibility' : 'edit' }}</v-icon>
       </v-btn>
 
       <v-menu>

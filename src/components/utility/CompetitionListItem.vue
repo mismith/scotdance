@@ -24,7 +24,7 @@
         v-if="$store.getters.hasPermission(`competitions/${competition[idKey]}`)"
         :to="{ name: 'competition.admin.info', params: { competitionId: competition[idKey] } }"
       >
-        <v-icon>settings</v-icon>
+        <v-icon>edit</v-icon>
       </v-btn>
     </v-list-tile-action>
   </v-list-tile>
