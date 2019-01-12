@@ -11,13 +11,13 @@
       />
     </div>
 
-    <v-toolbar dense class="pagination">
+    <v-toolbar v-if="pages.length > 1" dense class="pagination layout flex-none">
       <v-btn icon @click="page -= 1" :disabled="page <= 1">
         <v-icon>skip_previous</v-icon>
       </v-btn>
-      <v-layout>
+      <v-layout align-center>
         Page
-        <v-select v-model="page" :items="pages" class="flex" />
+        <v-select v-model="page" :items="pages" single-line hide-details class="mx-2" />
         of {{ pages.length }}
       </v-layout>
       <v-btn icon :disabled="page >= pages.length" @click="page += 1">
@@ -55,7 +55,11 @@ export default {
 <style lang="scss">
 .paginated-list {
   .pagination {
-    display: flex;
+    white-space: nowrap;
+
+    .v-text-field {
+      padding-top: 0;
+    }
   }
 }
 </style>
