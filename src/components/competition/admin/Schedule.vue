@@ -23,8 +23,7 @@
                 <v-list-tile
                   v-for="item in blade.items()"
                   :key="item[idKey]"
-                  :class="{ active: blade.id() === item[idKey] }"
-                  @click="goToBlade(blade.params(item[idKey]))"
+                  :to="getBladeRoute(blade.params(item[idKey]))"
                 >
                   <v-icon class="sortable-handle">drag_indicator</v-icon>
                   <v-list-tile-content>
@@ -358,8 +357,8 @@ export default {
       return items && items
         .find(item => blade.name(item) === blade.name(preset));
     },
-    goToBlade(params) {
-      this.$router.push({
+    getBladeRoute(params) {
+      return {
         name: this.$route.name,
         params: {
           dayId: null,
@@ -368,7 +367,10 @@ export default {
           danceId: null,
           ...params,
         },
-      });
+      };
+    },
+    goToBlade(params) {
+      this.$router.push(this.getBladeRoute(params));
     },
 
     handleListItemCreate(blade, item) {
