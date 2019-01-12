@@ -107,7 +107,7 @@
             <v-list-tile-action v-else>
               <v-tooltip fixed left>
                 <v-btn slot="activator" icon @click="handleInviteCancel(invite)">
-                  <v-icon>cancel</v-icon>
+                  <v-icon>clear</v-icon>
                 </v-btn>
                 <span>Cancel Invite</span>
               </v-tooltip>
