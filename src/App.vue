@@ -22,7 +22,7 @@
         <v-icon>{{ /^competition.admin/.test($route.name) ? 'visibility' : 'edit' }}</v-icon>
       </v-btn>
 
-      <v-menu>
+      <v-menu offset-y left>
         <v-btn icon slot="activator">
           <v-icon>help</v-icon>
         </v-btn>
