@@ -81,7 +81,7 @@
 import saveCSV from 'save-csv';
 import { makeKeyValuePairColumn } from '@/helpers/admin';
 import { danceExtender } from '@/helpers/competition';
-import sections from '@/schemas/sections.json';
+import sections from '@/schemas/sections';
 import { idKey, db, toOrderedArray } from '@/helpers/firebase';
 import { getFirstExisting } from '@/helpers/router';
 import { getRows } from '@/helpers/results';

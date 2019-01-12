@@ -10,6 +10,7 @@
       :required="field.required"
       :readonly="field.readonly"
       :disabled="field.disabled"
+      :hint="field.description"
       @input="handleInput()"
       @change="handleChange()"
     />
@@ -21,6 +22,8 @@
       :required="field.required"
       :readonly="field.readonly"
       :disabled="field.disabled"
+      :hint="field.description"
+      persistent-hint
       @input="handleInput()"
       @change="handleChange()"
     />
@@ -32,6 +35,7 @@
       :required="field.required"
       :readonly="field.readonly"
       :disabled="field.disabled"
+      :hint="field.description"
       auto-grow
       @input="handleInput()"
       @change="handleChange()"
@@ -45,6 +49,7 @@
       :required="field.required"
       :readonly="field.readonly"
       :disabled="field.disabled"
+      :hint="field.description"
       @input="handleInput()"
       @change="handleChange()"
     />

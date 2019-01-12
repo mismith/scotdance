@@ -35,8 +35,7 @@
     <blade :active="currentUser" class="xs12 md8">
       <div v-if="currentUser" class="app-scroll pa-3">
         <dynamic-form
-          v-if="section.form"
-          :fields="section.form.fields"
+          :fields="section.fields"
           :data="currentUser"
           @change="handleChanges($event, `users/${userId}`)"
         />
@@ -96,7 +95,7 @@ export default {
 
     filteredUsers() {
       let filtered = this.users;
-      const fields = this.section && this.section.form && this.section.form.fields;
+      const fields = this.section && this.section.fields;
 
       // filter by search term
       if (this.filterBy && filtered.length && fields) {

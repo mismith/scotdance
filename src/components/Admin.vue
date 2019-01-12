@@ -48,7 +48,7 @@
 </template>
 
 <script>
-import sectionAdmin from '@/schemas/sections-admin.json';
+import sectionAdmin from '@/schemas/sections-admin';
 import { idKey, db, toOrderedArray } from '@/helpers/firebase';
 import { getFirstExisting } from '@/helpers/router';
 import RequiresPermission from '@/components/utility/RequiresPermission.vue';
