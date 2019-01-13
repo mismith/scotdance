@@ -90,6 +90,7 @@
       :disabled="field.disabled"
       :hint="field.description"
       :rules="rules"
+      rows="1"
       auto-grow
       @input="handleInput()"
       @change="handleChange()"
