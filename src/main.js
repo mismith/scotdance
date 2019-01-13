@@ -101,7 +101,10 @@ Vue.prototype.$scrollAll = $scrollAll;
 })();
 
 // app / devices
-store.commit('setPackage', $package);
+store.commit('setPackage', {
+  $name: 'ScotDance.app',
+  ...$package,
+});
 const startSessionStack = () => {
   if (window.SessionStack && (!window.device || (window.device && !window.device.isVirtual))) {
     window.SessionStack.start();

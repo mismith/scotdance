@@ -3,7 +3,7 @@
     <section class="hero">
       <div>
         <img src="@/assets/img/touchicon.png" role="presentation" width="88" height="88" />
-        <h1 class="display-2 my-3">ScotDance.app</h1>
+        <h1 class="display-2 my-3">{{ $package.$name }}</h1>
         <p class="headline">{{ $package.description }}</p>
         <p class="subheading">Skip the pen and paper—attend highland dance competitions in style with this app for your mobile device.</p>
         <p class="print-hide">
@@ -68,7 +68,7 @@
     <section id="info" class="alt">
       <header>
         <h2 class="display-1 my-3">Info</h2>
-        <p>ScotDance.app was created in 2017 by <a href="https://mismith.io" target="_blank" class="ext">Murray Smith</a></p>
+        <p>{{ $package.$name }} was created in 2017 by <a href="https://mismith.io" target="_blank" class="ext">Murray Smith</a></p>
         <p>View the source code on <a href="https://github.com/mismith/scotdance" target="_blank" class="ext">GitHub</a></p>
         <p>Track development via <a href="https://trello.com/b/ZCZ8t1fH" target="_blank" class="ext">Trello</a></p>
         <p>Get support via <a @click.prevent="help(true)">Live Chat</a></p>

@@ -3,7 +3,7 @@ import router from '@/router';
 import store from '@/store';
 
 export async function getTitleChunks(route) {
-  return ['ScotDance.app', ...await Promise.all(route.matched
+  return [store.state.$package.$name, ...await Promise.all(route.matched
     .map(async (match) => {
       if (typeof match.meta.title === 'function') {
         return match.meta.title(route);
