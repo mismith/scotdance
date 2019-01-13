@@ -5,7 +5,7 @@
         <v-btn flat @click="showImport = true">Import&hellip;</v-btn>
       </div>
       <div v-if="inTabs('results')">
-        <v-btn flat @click="showImportResults = true">Import&hellip;</v-btn>
+        <!-- <v-btn flat @click="showImportResults = true">Import&hellip;</v-btn> -->
         <v-btn flat @click="exportResults()">Export CSV</v-btn>
       </div>
 
@@ -51,7 +51,7 @@
         @done="showImport = false"
       />
     </v-dialog>
-    <v-dialog v-model="showImportResults" @keydown.esc.stop="showImportResults = false">
+    <!-- <v-dialog v-model="showImportResults" @keydown.esc.stop="showImportResults = false">
       <admin-import-results
         :competition-data-ref="competitionDataRef"
         :groups="groups"
@@ -59,7 +59,7 @@
         :dancers="dancers"
         @done="showImportResults = false"
       />
-    </v-dialog>
+    </v-dialog> -->
 
     <v-bottom-nav v-if="hasPermission" :value="true" :active="$root.currentTab" style="overflow-x: auto; justify-content: unset;">
       <v-btn
