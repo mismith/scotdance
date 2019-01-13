@@ -19,10 +19,9 @@
 
     <slot />
 
-    <v-list-tile-action>
+    <v-list-tile-action v-if="$store.getters.hasPermission(`competitions/${competition[idKey]}`)">
       <v-btn
         icon
-        v-if="$store.getters.hasPermission(`competitions/${competition[idKey]}`)"
         :to="{ name: 'competition.admin.info', params: { competitionId: competition[idKey] } }"
       >
         <v-icon>edit</v-icon>
