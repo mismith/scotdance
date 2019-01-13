@@ -35,20 +35,25 @@
       v-else-if="field.type === 'date'"
       v-model="datePicking"
       :close-on-content-click="false"
+      :open-on-click="false"
       full-width
+      offset-y
       max-width="290"
     >
       <v-text-field
         slot="activator"
-        :value="value"
+        v-model="value"
         :name="field.data"
         :label="field.title"
         :required="field.required"
         :disabled="field.disabled"
         :hint="field.description"
-        readonly
+        :readonly="field.readonly"
         :rules="rules"
+        browser-autocomplete="none"
         @focus="datePicking = true"
+        @input="handleInput()"
+        @change="handleChange()"
       />
       <v-date-picker
         v-model="value"
@@ -137,6 +142,7 @@ export default {
     rules() {
       return [
         this.field.required ? (v => !!`${v || ''}`.trim() || 'Required.') : true,
+        this.field.type === 'date' ? (v => /^\d\d\d\d-\d\d-\d\d$/.test(`${v || ''}`.trim()) || 'Expected format: YYYY-MM-DD') : true,
         ...(this.field.rules || []),
       ];
     },
