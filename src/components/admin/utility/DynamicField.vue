@@ -1,9 +1,9 @@
 <template>
-  <div class="dynamic-field">
+  <div class="dynamic-field" :class="{ required: field.required }">
     <v-select
       v-if="field.type === 'select'"
       v-model="value"
-      :label="getLabel(field)"
+      :label="field.title"
       :items="field.presets"
       item-text="name"
       :item-value="idKey"
@@ -19,7 +19,7 @@
       v-else-if="field.type === 'image'"
       v-model="value"
       :storage-path="field.storagePath"
-      :label="getLabel(field)"
+      :label="field.title"
       :required="field.required"
       :disabled="field.disabled"
       :hint="field.description"
@@ -37,7 +37,7 @@
       <v-text-field
         slot="activator"
         :value="value"
-        :label="getLabel(field)"
+        :label="field.title"
         :required="field.required"
         :disabled="field.disabled"
         :hint="field.description"
@@ -54,7 +54,7 @@
     <v-checkbox
       v-else-if="field.type === 'checkbox'"
       v-model="value"
-      :label="getLabel(field)"
+      :label="field.title"
       :required="field.required"
       :readonly="field.readonly"
       :disabled="field.disabled"
@@ -67,7 +67,7 @@
     <v-textarea
       v-else-if="field.type === 'textarea'"
       v-model="value"
-      :label="getLabel(field)"
+      :label="field.title"
       :required="field.required"
       :readonly="field.readonly"
       :disabled="field.disabled"
@@ -80,7 +80,7 @@
     <v-text-field
       v-else
       v-model="value"
-      :label="getLabel(field)"
+      :label="field.title"
       :type="field.type || 'text'"
       :required="field.required"
       :readonly="field.readonly"
@@ -120,9 +120,6 @@ export default {
     },
   },
   methods: {
-    getLabel(field) {
-      return `${field.title}${field.required ? ' *' : ''}`;
-    },
     handleInput() {
       this.$emit('input', {
         [this.field.data]: this.data[this.field.data],
@@ -142,6 +139,13 @@ export default {
 
 <style lang="scss">
 .dynamic-field {
-
+  &.required {
+    label {
+      &::after {
+        content: '*';
+        margin-left: 0.25em;
+      }
+    }
+  }
 }
 </style>
