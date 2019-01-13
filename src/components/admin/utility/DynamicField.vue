@@ -11,6 +11,7 @@
       :readonly="field.readonly"
       :disabled="field.disabled"
       :hint="field.description"
+      :rules="rules"
       @input="handleInput()"
       @change="handleChange()"
     />
@@ -23,6 +24,7 @@
       :required="field.required"
       :disabled="field.disabled"
       :hint="field.description"
+      :rules="rules"
       @input="handleInput()"
       @change="handleChange()"
     />
@@ -42,6 +44,7 @@
         :disabled="field.disabled"
         :hint="field.description"
         readonly
+        :rules="rules"
         @focus="datePicking = true"
       />
       <v-date-picker
@@ -60,6 +63,7 @@
       :disabled="field.disabled"
       :hint="field.description"
       persistent-hint
+      :rules="rules"
       @input="handleInput()"
       @change="handleChange()"
     />
@@ -72,6 +76,7 @@
       :readonly="field.readonly"
       :disabled="field.disabled"
       :hint="field.description"
+      :rules="rules"
       auto-grow
       @input="handleInput()"
       @change="handleChange()"
@@ -86,6 +91,7 @@
       :readonly="field.readonly"
       :disabled="field.disabled"
       :hint="field.description"
+      :rules="rules"
       @input="handleInput()"
       @change="handleChange()"
     />
@@ -117,6 +123,13 @@ export default {
       set(value) {
         this.data[this.field.data] = value;
       },
+    },
+
+    rules() {
+      return [
+        this.field.required ? (v => !!`${v || ''}`.trim() || 'Required.') : true,
+        ...(this.field.rules || []),
+      ];
     },
   },
   methods: {
