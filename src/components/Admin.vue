@@ -8,7 +8,7 @@
       </v-btn>
     </v-toolbar>
 
-    <div class="app-scroll-frame app-scroll">
+    <div v-if="currentSection" class="app-scroll-frame app-scroll">
       <mi-hot-table
         v-if="currentSection.hot"
         :key="currentSection[idKey]"
