@@ -9,6 +9,7 @@
         <v-list-group
           v-for="category in groupedCategories"
           :key="category[idKey]"
+          lazy
           :value="isCategoryExpanded(category, groupedCategories)"
           @input="handleCategoryExpanded(category[idKey], $event)"
         >
@@ -71,6 +72,7 @@
             <v-list-group
               v-for="dance in groupedDancers"
               :key="dance.name"
+              lazy
               :id="`dance-${dance[idKey]}`"
               :value="isDanceExpanded(dance, groupedDancers)"
               @input="handleDanceExpanded(dance[idKey], $event)"

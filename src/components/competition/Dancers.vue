@@ -37,6 +37,7 @@
             <v-list-group
               v-for="(group, groupId) in groupedDancers"
               :key="groupId"
+              lazy
               :value="isGroupExpanded(groupId, groupIds)"
               @input="handleGroupExpanded(groupId, $event)"
             >

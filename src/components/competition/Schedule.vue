@@ -20,6 +20,7 @@
             <v-list-group
               v-for="block in toOrderedArray(day.blocks)"
               :key="block[idKey]"
+              lazy
               :value="isBlockExpanded(block[idKey], Object.keys(day.blocks), !!block.events)"
               @input="handleBlockExpanded(block[idKey], $event)"
             >
@@ -102,6 +103,7 @@
             <v-list-group
               v-for="dance in toOrderedArray(currentEvent.dances)"
               :key="dance[idKey]"
+              lazy
               :value="isDanceExpanded(dance[idKey], Object.keys(currentEvent.dances), !!dance.danceId)"
               @input="handleDanceExpanded(dance[idKey], $event)"
             >

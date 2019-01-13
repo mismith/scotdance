@@ -63,6 +63,7 @@
         <v-list-group
           v-for="(group, name) in groupedStaff"
           :key="name"
+          lazy
           :value="isGroupExpanded(name, Object.keys(groupedStaff))"
           @input="handleGroupExpanded(name, $event)"
         >

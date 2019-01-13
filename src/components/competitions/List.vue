@@ -10,7 +10,8 @@
           v-for="group in groupedCompetitions"
           :key="group[idKey]"
           v-if="group.competitions.length"
-          :value="isGroupExpanded(group, groupedCompetitions)"
+          lazy
+          :value="isGroupExpanded(group, groupedCompetitions, !group.collapsed)"
           @input="handleGroupExpanded(group[idKey], $event)"
         >
           <v-subheader slot="activator">{{ group.name }}</v-subheader>
@@ -86,14 +87,15 @@ export default {
           name: 'Archive',
           competitions: this.competitions
             .filter(c => !c.date || this.$moment().isAfter(c.date, 'week')).reverse(),
+          collapsed: true,
         },
       ];
     },
   },
   methods: {
-    isGroupExpanded(item, items) {
+    isGroupExpanded(item, items, fallback = true) {
       const itemIds = items.map(i => i[idKey]);
-      return isExpanded(this.competitionsListExpandedGroups, item[idKey], itemIds, true);
+      return isExpanded(this.competitionsListExpandedGroups, item[idKey], itemIds, fallback);
     },
     handleGroupExpanded(groupId, expanded) {
       this.competitionsListExpandedGroups = handleExpanded(this.competitionsListExpandedGroups, groupId, expanded);
