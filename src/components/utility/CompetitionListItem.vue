@@ -5,7 +5,8 @@
     :class="{ listed: competition.listed, published: competition.published }"
   >
     <v-list-tile-avatar color="white">
-      <v-icon>event</v-icon>
+      <img v-if="competition.image" :src="competition.image" role="presentation" />
+      <v-icon v-else>event</v-icon>
     </v-list-tile-avatar>
 
     <v-list-tile-content>

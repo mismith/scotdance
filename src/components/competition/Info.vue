@@ -5,7 +5,17 @@
       class="app-scroll-frame app-scroll"
     >
       <section class="pa-3">
-        <h1 class="display-1">{{ competition.name }}</h1>
+        <v-avatar
+          v-if="competition.image"
+          color="white"
+          size="200"
+          class="elevation-2 mb-3"
+          :class="{ 'ml-3': $vuetify.breakpoint.mdAndUp }"
+          :style="{ float: $vuetify.breakpoint.mdAndUp ? 'right' : undefined }"
+        >
+          <img :src="competition.image" />
+        </v-avatar>
+        <h1 class="display-1 mb-3">{{ competition.name }}</h1>
         <p v-if="competition.date" class="headline">
           {{ $moment(competition.date).format('dddd, MMMM D, YYYY') }}
         </p>

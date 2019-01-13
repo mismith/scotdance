@@ -1,6 +1,7 @@
 import * as firebase from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/database';
+import 'firebase/storage';
 
 const FIREBASE_ENV = process.env.NODE_ENV || 'production';
 const instance = FIREBASE_ENV === 'development' ? 'scotdance-dev' : 'scotdance';
@@ -16,6 +17,8 @@ firebase.initializeApp(config);
 
 const idKey = '.key';
 const db = firebase.database().ref(FIREBASE_ENV);
+
+const buckets = firebase.storage().ref(FIREBASE_ENV);
 
 const toOrderedArray = (obj) => {
   return Object.entries(obj || {})
@@ -43,9 +46,10 @@ const toOrderedArray = (obj) => {
 
 export {
   FIREBASE_ENV,
-  idKey,
-  db,
   config,
   firebase,
+  idKey,
+  db,
+  buckets,
   toOrderedArray,
 };

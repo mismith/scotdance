@@ -15,6 +15,18 @@
       @change="handleChange()"
     />
 
+    <image-uploader
+      v-else-if="field.type === 'image'"
+      v-model="value"
+      :storage-path="field.storagePath"
+      :label="getLabel(field)"
+      :required="field.required"
+      :disabled="field.disabled"
+      :hint="field.description"
+      @input="handleInput()"
+      @change="handleChange()"
+    />
+
     <v-menu
       v-else-if="field.type === 'date'"
       v-model="datePicking"
@@ -82,6 +94,7 @@
 
 <script>
 import { idKey } from '@/helpers/firebase';
+import ImageUploader from '@/components/competition/admin/utility/ImageUploader.vue';
 
 export default {
   name: 'dynamic-field',
@@ -120,6 +133,9 @@ export default {
         [this.field.data]: this.data[this.field.data],
       });
     },
+  },
+  components: {
+    ImageUploader,
   },
 };
 </script>

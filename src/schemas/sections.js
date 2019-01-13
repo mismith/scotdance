@@ -39,6 +39,13 @@ export const infoGeneralFields = [
     title: 'SOBHD Registration Number',
     description: 'e.g. "C-AB-CO-12-3456"',
   },
+  {
+    data: 'image',
+    title: 'Image',
+    type: 'image',
+    description: '(optional) SVG, PNG, or JPG image under 244KB',
+    storagePath: 'competitions/images',
+  },
 ];
 
 export default {
