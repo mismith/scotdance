@@ -1,5 +1,5 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="dynamic-form">
+  <v-form ref="form" v-model="value" class="dynamic-form" @submit.prevent="handleSubmit">
     <dynamic-field
       v-for="field in fields"
       :key="field.data"
@@ -9,7 +9,7 @@
       @change="handleChange"
     />
     <slot />
-  </form>
+  </v-form>
 </template>
 
 <script>
@@ -18,17 +18,24 @@ import DynamicField from '@/components/admin/utility/DynamicField.vue';
 export default {
   name: 'dynamic-form',
   props: {
+    value: true,
     fields: Array,
     data: Object,
   },
+  watch: {
+    value(v) {
+      this.$emit('input', v);
+    },
+  },
   methods: {
     handleInput(change) {
-      this.$emit('input', { change, form: this.$el });
+      this.$emit('field-input', change);
     },
     handleChange(change) {
-      this.$emit('change', change);
+      this.$emit('field-change', change);
     },
     handleSubmit(event) {
+      this.$refs.form.validate();
       this.$emit('submit', event);
     },
   },

@@ -21,7 +21,7 @@
           :fields="currentSubsection.fields"
           :data="competition"
           class="pa-3"
-          @change="handleChanges"
+          @field-change="handleChanges"
         />
         <template v-if="inTabs('permissions')">
           <admin-invites v-bind="$props" />

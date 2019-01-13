@@ -37,7 +37,7 @@
         <dynamic-form
           :fields="section.fields"
           :data="currentUser"
-          @change="handleChanges($event, `users/${userId}`)"
+          @field-change="handleChanges($event, `users/${userId}`)"
         />
 
         <v-combobox
