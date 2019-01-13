@@ -58,11 +58,13 @@ export default {
             const kb = size => `${Math.round(size / 1024)}KB`;
             return `File size is too large (${kb(file.size)}). It must be under ${kb(this.maxSize)}.`;
           }
+          return false;
         },
         (file) => {
           if (!this.accept.split(',').map(t => t.trim()).includes(file.type)) {
             return `Invalid file format (${file.type}). It must be of type(s): ${this.accept}.`;
           }
+          return false;
         },
       ],
     };
@@ -104,7 +106,7 @@ export default {
         try {
           const task = buckets.child(`${this.storagePath}/${file.name}`).put(file);
           task.on('state_changed', ({ bytesTransferred, totalBytes }) => {
-            this.progress = bytesTransferred / totalBytes * 100 || 1;
+            this.progress = (bytesTransferred / totalBytes) * 100 || 1;
           });
           const snap = await task;
           const url = await snap.ref.getDownloadURL();

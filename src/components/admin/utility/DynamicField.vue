@@ -94,7 +94,7 @@
 
 <script>
 import { idKey } from '@/helpers/firebase';
-import ImageUploader from '@/components/competition/admin/utility/ImageUploader.vue';
+import ImageUploader from '@/components/admin/utility/ImageUploader.vue';
 
 export default {
   name: 'dynamic-field',
