@@ -3,6 +3,7 @@
     <v-select
       v-if="field.type === 'select'"
       v-model="value"
+      :name="field.data"
       :label="field.title"
       :items="field.presets"
       item-text="name"
@@ -19,6 +20,7 @@
     <image-uploader
       v-else-if="field.type === 'image'"
       v-model="value"
+      :name="field.data"
       :storage-path="field.storagePath"
       :label="field.title"
       :required="field.required"
@@ -39,6 +41,7 @@
       <v-text-field
         slot="activator"
         :value="value"
+        :name="field.data"
         :label="field.title"
         :required="field.required"
         :disabled="field.disabled"
@@ -57,6 +60,7 @@
     <v-checkbox
       v-else-if="field.type === 'checkbox'"
       v-model="value"
+      :name="field.data"
       :label="field.title"
       :required="field.required"
       :readonly="field.readonly"
@@ -71,6 +75,7 @@
     <v-textarea
       v-else-if="field.type === 'textarea'"
       v-model="value"
+      :name="field.data"
       :label="field.title"
       :required="field.required"
       :readonly="field.readonly"
@@ -85,6 +90,7 @@
     <v-text-field
       v-else
       v-model="value"
+      :name="field.data"
       :label="field.title"
       :type="field.type || 'text'"
       :required="field.required"
