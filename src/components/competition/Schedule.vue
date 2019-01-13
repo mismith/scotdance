@@ -20,7 +20,7 @@
             <v-list-group
               v-for="block in toOrderedArray(day.blocks)"
               :key="block[idKey]"
-              :value="isBlockExpanded(block[idKey], Object.keys(day.blocks))"
+              :value="isBlockExpanded(block[idKey], Object.keys(day.blocks), !!block.events)"
               @input="handleBlockExpanded(block[idKey], $event)"
             >
               <v-subheader slot="activator">
@@ -102,8 +102,7 @@
             <v-list-group
               v-for="dance in toOrderedArray(currentEvent.dances)"
               :key="dance[idKey]"
-              :disabled="!dance.danceId"
-              :value="isDanceExpanded(dance[idKey], Object.keys(currentEvent.dances))"
+              :value="isDanceExpanded(dance[idKey], Object.keys(currentEvent.dances), !!dance.danceId)"
               @input="handleDanceExpanded(dance[idKey], $event)"
             >
               <v-subheader slot="activator">
@@ -294,16 +293,16 @@ export default {
       }
     },
 
-    isBlockExpanded(blockId, blockIds) {
-      return isExpanded(this.scheduleExpandedBlocks, blockId, blockIds, true);
+    isBlockExpanded(blockId, blockIds, fallback = true) {
+      return isExpanded(this.scheduleExpandedBlocks, blockId, blockIds, fallback);
     },
     handleBlockExpanded(blockId, expanded) {
       this.scheduleExpandedBlocks = handleExpanded(this.scheduleExpandedBlocks, blockId, expanded);
       this.$localStorage.set('scheduleExpandedBlocks', this.scheduleExpandedBlocks);
     },
 
-    isDanceExpanded(danceId, danceIds) {
-      return isExpanded(this.scheduleExpandedDances[this.eventId], danceId, danceIds, true);
+    isDanceExpanded(danceId, danceIds, fallback = true) {
+      return isExpanded(this.scheduleExpandedDances[this.eventId], danceId, danceIds, fallback);
     },
     handleDanceExpanded(danceId, expanded) {
       this.scheduleExpandedDances[this.eventId] = handleExpanded(
