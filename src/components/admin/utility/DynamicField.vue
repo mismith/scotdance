@@ -68,9 +68,12 @@
       :hint="field.description"
       persistent-hint
       :rules="rules"
+      style="flex-direction: column;"
       @input="handleInput()"
       @change="handleChange()"
-    />
+    >
+      <div slot="prepend" v-html="field.prepend" class="mb-3" />
+    </v-checkbox>
 
     <v-textarea
       v-else-if="field.type === 'textarea'"
