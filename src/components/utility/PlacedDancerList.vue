@@ -22,7 +22,8 @@
 
         <v-switch
           slot="favorite"
-          v-if="admin && index && dance[idKey] !== callbacks[idKey]"
+          v-if="admin && dance[idKey] !== callbacks[idKey]"
+          v-show="index"
           :input-value="dancer.$tie"
           @click.stop="$emit('dancer-toggle', [dancer, !dancer.$tie])"
         />
