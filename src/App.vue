@@ -1,6 +1,6 @@
 <template>
-  <v-app id="app" class="app-scroll-frame">
-    <v-toolbar app color="primary" dark class="print-hide">
+  <v-app id="app" class="app-scroll-frame" :class="{ dev: env !== 'production' }">
+    <v-toolbar app dark color="primary" class="print-hide">
       <v-toolbar-side-icon @click="menuVisible = !menuVisible">
         <v-badge v-model="needsUpdating" color="secondary">
           <span slot="badge" />
@@ -224,7 +224,7 @@
 <script>
 import { mapState, mapActions } from 'vuex';
 import { getTitleChunks, getFirstExisting, checkForUpdates } from '@/helpers/router';
-import { idKey, db, firebase } from '@/helpers/firebase';
+import { FIREBASE_ENV, idKey, db, firebase } from '@/helpers/firebase';
 import RegisterDialog from '@/components/utility/RegisterDialog.vue';
 import LoginDialog from '@/components/utility/LoginDialog.vue';
 import RequiresAuthDialog from '@/components/utility/RequiresAuthDialog.vue';
@@ -236,6 +236,7 @@ export default {
   name: 'app',
   data() {
     return {
+      env: FIREBASE_ENV,
       idKey,
       db,
 
@@ -486,6 +487,11 @@ body,
 .application--wrap,
 .v-content__wrap {
   @extend .app-scroll-frame;
+}
+#app.dev {
+  .v-toolbar.v-toolbar--fixed.primary {
+    background-image: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.1) 5px, rgba(0, 0, 0, 0.1) 10px);
+  }
 }
 
 // framework component styling
