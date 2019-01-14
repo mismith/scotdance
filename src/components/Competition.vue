@@ -83,7 +83,7 @@
       </v-btn>
     </v-bottom-nav>
 
-    <dialog-card v-model="staffVisible" full-width>
+    <dialog-card v-model="staffVisible">
       <v-card-title v-if="currentDialogData" slot="title" class="layout row wrap">
         <v-avatar v-if="currentDialogData.image" :size="100" class="mr-3">
           <img :src="currentDialogData.image" />
