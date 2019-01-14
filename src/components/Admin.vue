@@ -3,9 +3,12 @@
     <v-toolbar dense>
       <v-spacer />
 
-      <v-btn icon flat color="primary" :loading="saving">
-        <v-icon>check</v-icon>
-      </v-btn>
+      <v-tooltip left>
+        <v-btn slot="activator" icon flat color="primary" :loading="saving">
+          <v-icon>check</v-icon>
+        </v-btn>
+        <span>{{ saving ? 'Saving...' : 'Saved' }}</span>
+      </v-tooltip>
     </v-toolbar>
 
     <div v-if="currentSection" class="app-scroll-frame app-scroll">
