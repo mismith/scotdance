@@ -19,12 +19,14 @@ export default {
 
   @media (min-width: 960px) {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   &.stacks {
     @media (max-width: 959px) {
       flex-direction: column;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
   }
 }
