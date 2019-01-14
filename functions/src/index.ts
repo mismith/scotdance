@@ -1,6 +1,7 @@
 import { initializeApp, database as adminDB } from 'firebase-admin';
 import { config, database as functionsDB } from 'firebase-functions';
 import Invites from './invites';
+import Submissions from './submissions';
 
 const env = config().app.env || 'production';
 const instance = env === 'development' ? 'scotdance-dev' : 'scotdance';
@@ -25,3 +26,8 @@ const invitesHooks = invites.hook(`/${env}/competitions:data/{competitionId}/inv
 export const competitionInviteCreated = invitesHooks.onCreate;
 export const competitionInviteUpdated = invitesHooks.onUpdate;
 export const competitionInviteDeleted = invitesHooks.onDelete;
+
+const submissions = new Submissions(database, appConfig);
+const submissionsHooks = submissions.hook(`/${env}/competitions:submissions`);
+export const competitionSubmissionCreated = submissionsHooks.onCreate;
+export const competitionSubmissionUpdated = submissionsHooks.onUpdate;

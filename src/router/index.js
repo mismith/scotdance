@@ -7,6 +7,7 @@ import Profile from '@/components/Profile.vue';
 
 import Competitions from '@/components/Competitions.vue';
 import CompetitionsList from '@/components/competitions/List.vue';
+import CompetitionsSubmit from '@/components/competitions/Submit.vue';
 
 import Competition from '@/components/Competition.vue';
 import CompetitionInfo from '@/components/competition/Info.vue';
@@ -42,6 +43,14 @@ export default new Router({
           component: CompetitionsList,
           meta: {
             title: 'All Competitions',
+          },
+        },
+        {
+          path: 'submit',
+          name: 'competitions.submit',
+          component: CompetitionsSubmit,
+          meta: {
+            title: 'Submit Competition',
           },
         },
         {
@@ -166,6 +175,12 @@ export default new Router({
           path: 'info',
           name: 'admin.info',
           component: () => import(/* webpackChunkName: "admin" */ '@/components/admin/Info.vue'),
+        },
+        {
+          path: 'submissions/:submissionId?',
+          name: 'admin.submissions',
+          component: () => import(/* webpackChunkName: "admin" */ '@/components/admin/Submissions.vue'),
+          props: true,
         },
         {
           path: 'users/:userId?',

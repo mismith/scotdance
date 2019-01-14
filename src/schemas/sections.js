@@ -1,52 +1,4 @@
-export const infoGeneralFields = [
-  {
-    data: 'name',
-    required: true,
-    title: 'Name',
-    description: 'e.g. "Canadian Championships 2018"',
-  },
-  {
-    data: 'date',
-    required: true,
-    title: 'Date',
-    type: 'date',
-    description: 'e.g. "2018-07-30"',
-  },
-  {
-    data: 'location',
-    required: true,
-    title: 'Location',
-    description: 'e.g. "Calgary, AB" or "Calgary, Alberta, Canada"',
-  },
-  {
-    data: 'venue',
-    title: 'Venue Name',
-    description: 'e.g. "Telus Convention Centre"',
-  },
-  {
-    data: 'address',
-    title: 'Venue Address',
-    description: 'e.g. "120 9th Ave SE"',
-  },
-  {
-    data: 'description',
-    title: 'Description',
-    type: 'textarea',
-    description: '(optional) Any other important info you wish to highlight',
-  },
-  {
-    data: 'sobhd',
-    title: 'SOBHD Registration Number',
-    description: 'e.g. "C-AB-CO-12-3456"',
-  },
-  {
-    data: 'image',
-    title: 'Image',
-    type: 'image',
-    description: '(optional) SVG, PNG, or JPG image under 244KB',
-    storagePath: 'competitions/images',
-  },
-];
+import { submissionsFields } from '@/schemas/submissions';
 
 export default {
   info: {
@@ -58,7 +10,14 @@ export default {
         order: 1,
         title: 'General',
         fields: [
-          ...infoGeneralFields,
+          ...submissionsFields,
+          {
+            data: 'image',
+            title: 'Image',
+            type: 'image',
+            description: '(optional) SVG, PNG, or JPG image under 244KB',
+            storagePath: 'competitions/images',
+          },
           {
             data: 'listed',
             title: 'Listed',

@@ -25,6 +25,11 @@
           }
         }
       },
+      "competitions:submissions": {
+        "$competitionId": {
+          ".write": "auth !== null && !data.exists() && !newData.child('approved').exists()" // is AUTHED and CREATING and NOT approving
+        }
+      },
       "competitions:permissions": {
         "$competitionId": {
           ".read": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true" // has PERMISSION to same COMPETITION

@@ -49,6 +49,7 @@
       </v-layout>
       <footer>
         <v-btn :to="{ name: 'competitions' }" color="primary">Browse Competitions</v-btn>
+        <v-btn :to="{ name: 'competitions.submit' }" color="secondary">Submit Competition</v-btn>
       </footer>
     </section>
 

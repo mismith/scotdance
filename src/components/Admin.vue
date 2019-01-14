@@ -24,6 +24,7 @@
           v-bind="{
             section: currentSection,
             competitions,
+            submissions,
             faqs,
             users,
             favorites,
@@ -71,6 +72,7 @@ export default {
   firebase() {
     return {
       competitionsRaw: db.child('competitions'),
+      submissionsRaw: db.child('competitions:submissions'),
       faqsRaw: db.child('faqs'),
       usersRaw: db.child('users'),
       favoritesRaw: {
@@ -97,6 +99,9 @@ export default {
     },
     competitions() {
       return this.competitionsRaw;
+    },
+    submissions() {
+      return this.submissionsRaw;
     },
     faqs() {
       return this.faqsRaw;

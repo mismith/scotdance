@@ -102,6 +102,15 @@
           <p>To see the dancers you care most about <strong>featured throughout the app</strong>, you'll need an account first.</p>
           <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
         </requires-auth-dialog>
+        <requires-auth-dialog name="submissions">
+          <v-card-title slot="title" class="title">
+            <v-flex>Submit your competition</v-flex>
+            <v-icon color="secondary">how_to_vote</v-icon>
+          </v-card-title>
+
+          <p>To bring the app to your event, you'll need an account first.</p>
+          <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
+        </requires-auth-dialog>
       </header>
 
       <div class="app-scroll-frame app-scroll">
@@ -134,12 +143,7 @@
                 </router-link>
               </v-flex>
 
-              <v-btn
-                icon
-                v-if="$store.getters.hasPermission('admin')"
-                :to="{ name: 'competition.admin.info', params: { competitionId: db.push().key } }"
-                @click="closeMenu()"
-              >
+              <v-btn :to="{ name: 'competitions.submit' }" flat fab small @click="closeMenu()">
                 <v-icon>add</v-icon>
               </v-btn>
             </v-subheader>

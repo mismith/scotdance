@@ -21,8 +21,13 @@ export default {
       ],
     },
   },
-  users: {
+  submissions: {
     order: 3,
+    name: 'Submissions',
+    icon: 'icon-plus',
+  },
+  users: {
+    order: 4,
     name: 'Users',
     icon: 'icon-people',
     fields: [
