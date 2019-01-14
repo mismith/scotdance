@@ -33,6 +33,8 @@
       />
     </blade>
     <blade :active="currentUser" class="xs12 md8">
+      <blade-toolbar class="hidden-md-and-up" />
+
       <div v-if="currentUser" class="app-scroll pa-3">
         <dynamic-form
           :fields="section.fields"
@@ -66,6 +68,7 @@ import { idKey, db } from '@/helpers/firebase';
 import PaginatedList from '@/components/admin/utility/PaginatedList.vue';
 import SearchField from '@/components/utility/SearchField.vue';
 import DynamicForm from '@/components/admin/utility/DynamicForm.vue';
+import BladeToolbar from '@/components/utility/BladeToolbar.vue';
 
 export default {
   name: 'admin-users',
@@ -147,6 +150,7 @@ export default {
     PaginatedList,
     SearchField,
     DynamicForm,
+    BladeToolbar,
   },
 };
 </script>

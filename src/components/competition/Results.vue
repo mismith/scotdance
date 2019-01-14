@@ -54,14 +54,7 @@
     </blade>
     <blade :active="currentGroup" class="xs12 md8">
       <div v-if="currentGroup" class="app-scroll-frame">
-        <v-toolbar dense class="hidden-md-and-up">
-          <v-btn flat icon :to="{ name: $route.name, params: { competitionId } }">
-            <v-icon>chevron_left</v-icon>
-          </v-btn>
-          <span>
-            {{ currentGroup.$name }}
-          </span>
-        </v-toolbar>
+        <blade-toolbar :text="currentGroup.$name" class="hidden-md-and-up" />
 
         <div
           id="results-detail"
@@ -128,6 +121,7 @@
 import ResultListItem from '@/components/utility/ResultListItem.vue';
 import PlacedDancerList from '@/components/utility/PlacedDancerList.vue';
 import ResultsProgressIndicator from '@/components/utility/ResultsProgressIndicator.vue';
+import BladeToolbar from '@/components/utility/BladeToolbar.vue';
 import { idKey } from '@/helpers/firebase';
 import {
   findByIdKey,
@@ -276,6 +270,7 @@ export default {
     ResultListItem,
     PlacedDancerList,
     ResultsProgressIndicator,
+    BladeToolbar,
   },
 };
 </script>

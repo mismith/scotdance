@@ -40,6 +40,8 @@
       />
     </blade>
     <blade :active="currentSubmission" class="xs12 md8">
+      <blade-toolbar class="hidden-md-and-up" />
+
       <div v-if="currentSubmission" class="app-scroll-frame app-scroll alt">
         <v-list expand class="grouped flex">
           <v-list-group
@@ -107,6 +109,7 @@ import { findByIdKey } from '@/helpers/competition';
 import steps from '@/schemas/submissions';
 import CompetitionListItem from '@/components/utility/CompetitionListItem.vue';
 import DynamicForm from '@/components/admin/utility/DynamicForm.vue';
+import BladeToolbar from '@/components/utility/BladeToolbar.vue';
 
 export default {
   name: 'admin-submissions',
@@ -159,6 +162,7 @@ export default {
   components: {
     CompetitionListItem,
     DynamicForm,
+    BladeToolbar,
   },
 };
 </script>

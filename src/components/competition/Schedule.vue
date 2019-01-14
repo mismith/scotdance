@@ -75,16 +75,10 @@
     </blade>
     <blade :active="currentEvent" class="xs12 md8">
       <div v-if="currentEvent" class="app-scroll-frame">
-        <v-toolbar dense class="hidden-md-and-up">
-          <v-btn flat icon :to="{ name: $route.name, params: { competitionId } }">
-            <v-icon>chevron_left</v-icon>
-          </v-btn>
-          <span>
-            {{ currentDay.name }}
-            &rsaquo;
-            {{ currentBlock.name }}
-          </span>
-        </v-toolbar>
+        <blade-toolbar
+          :text="`${currentDay.name} &rsaquo; ${currentBlock.name}`"
+          class="hidden-md-and-up"
+        />
 
         <div
           v-persist-scroll="`/competitions/${competitionId}/schedule/${dayId}/${blockId}/${eventId}`"
@@ -175,6 +169,7 @@ import {
 } from 'vuex';
 import AdminPlatforms from '@/components/competition/admin/utility/Platforms.vue';
 import DancerListItem from '@/components/utility/DancerListItem.vue';
+import BladeToolbar from '@/components/utility/BladeToolbar.vue';
 import {
   idKey,
   toOrderedArray,
@@ -318,6 +313,7 @@ export default {
   components: {
     AdminPlatforms,
     DancerListItem,
+    BladeToolbar,
   },
 };
 </script>

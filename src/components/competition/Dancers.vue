@@ -83,12 +83,7 @@
     </blade>
     <blade :active="currentDancer" class="xs12 md6">
       <div v-if="currentDancer" class="app-scroll-frame">
-        <v-toolbar dense class="hidden-md-and-up">
-          <v-btn flat icon :to="{ name: $route.name, params: { competitionId } }">
-            <v-icon>chevron_left</v-icon>
-          </v-btn>
-          <span>Dancers</span>
-        </v-toolbar>
+        <blade-toolbar class="hidden-md-and-up" />
 
         <div
           v-persist-scroll="`/competitions/${competitionId}/dancers/${dancerId}`"
@@ -120,6 +115,7 @@ import groupBy from 'lodash.groupby';
 import SearchField from '@/components/utility/SearchField.vue';
 import DancerListItem from '@/components/utility/DancerListItem.vue';
 import DancerReport from '@/components/utility/DancerReport.vue';
+import BladeToolbar from '@/components/utility/BladeToolbar.vue';
 import { idKey } from '@/helpers/firebase';
 import { hasFavorites } from '@/helpers/competition';
 import {
@@ -255,6 +251,7 @@ export default {
     SearchField,
     DancerListItem,
     DancerReport,
+    BladeToolbar,
   },
 };
 </script>
