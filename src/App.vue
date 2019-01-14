@@ -1,6 +1,6 @@
 <template>
   <v-app id="app" class="app-scroll-frame" :class="{ dev: env !== 'production' }">
-    <v-toolbar app dark color="primary" class="print-hide">
+    <v-toolbar app dark absolute color="primary" class="print-hide">
       <v-toolbar-side-icon @click="menuVisible = !menuVisible">
         <v-badge v-model="needsUpdating" color="secondary">
           <span slot="badge" />
@@ -66,7 +66,7 @@
       </v-menu>
     </v-toolbar>
 
-    <v-navigation-drawer v-model="menuVisible" app touchless class="app-scroll-frame">
+    <v-navigation-drawer v-model="menuVisible" app absolute touchless class="app-scroll-frame">
       <header class="account-header primary flex-none">
         <div class="account-bg"></div>
         <account-buttons v-if="!me" class="pa-3" />
@@ -485,16 +485,31 @@ a {
 html,
 body,
 #app {
+  width: 100%;
   height: 100%;
   overflow: hidden;
+}
+body {
+  // for iPhone-X
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.application--wrap {
+  min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); // for iPhone-X
 }
 .application--wrap,
 .v-content__wrap {
   @extend .app-scroll-frame;
 }
-#app.dev {
-  .v-toolbar.v-toolbar--fixed.primary {
-    background-image: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.1) 5px, rgba(0, 0, 0, 0.1) 10px);
+
+#app {
+  &.dev {
+    // make it obvious that we're not using prod data
+    .v-toolbar.primary {
+      background-image: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.1) 5px, rgba(0, 0, 0, 0.1) 10px);
+    }
   }
 }
 
