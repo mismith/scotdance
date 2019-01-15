@@ -38,7 +38,7 @@ Links to the admin panels needed to manage this project:
 ### Combined Release
 
 1. While waiting between/for any of the following steps, write release notes / changelog
-2. Increments versions in `control.xml` and `package.json`
+2. Increments versions in `control.xml`, `package.json`, and `package-lock.json`
 3. Deploy to app stores:
     1. Perform steps 1-3 of the Play Store instructions
     2. Perform steps 2-5 of the App Store instructions

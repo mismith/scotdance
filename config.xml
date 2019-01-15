@@ -19,7 +19,7 @@
         <allow-intent href="itms:*" />
         <allow-intent href="itms-apps:*" />
         <edit-config file="*-Info.plist" mode="merge" target="NSPhotoLibraryUsageDescription">
-            <string>Allow sending files via Live Chat</string>
+            <string>Allow uploading images in the Admin Panel, or sending files via Live Chat</string>
         </edit-config>
         <edit-config file="*-Info.plist" mode="merge" target="NSCameraUsageDescription">
             <string>Allow sending files via Live Chat</string>
