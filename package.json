@@ -4,6 +4,7 @@
   "description": "Highland dancing event tracker",
   "author": "Murray Smith <murray@mismith.info>",
   "scripts": {
+    "init": "npm run build && cordova platform add android && cordova platform add ios",
     "serve": "vue-cli-service serve",
     "prebuild": "pilfer-package version > public/version.json",
     "build": "vue-cli-service build --report",
@@ -16,9 +17,8 @@
     "build:android": "npm run build && cordova build android --release",
     "build:app": "npm run build && cordova build --release",
     "build:ios": "npm run build && cordova build ios --release",
-    "icon": "cordova-icon-sharp --icon=res/icon.png",
-    "splash": "cordova-splash-sharp --splash=res/splash.png",
-    "init": "npm run build && cordova platform add android && cordova platform add ios"
+    "icon": "app-icon generate -i res/icon.png",
+    "splash": "cordova-splash-sharp --splash=res/splash.png"
   },
   "dependencies": {
     "@handsontable/vue": "^2.0.0",
@@ -66,7 +66,7 @@
     "@vue/cli-plugin-eslint": "^3.2.1",
     "@vue/cli-service": "^3.2.0",
     "@vue/eslint-config-airbnb": "^3.0.5",
-    "cordova-icon-sharp": "^0.9.2",
+    "app-icon": "^0.6.3",
     "cordova-splash-sharp": "^0.9.0",
     "lint-staged": "^7.2.2",
     "node-sass": "^4.11.0",
