@@ -1,5 +1,5 @@
 <template>
-  <div class="AdminInvites">
+  <div class="AdminInvites alt">
     <v-list expand class="grouped">
       <v-list-group :value="true">
         <v-subheader slot="activator">Administrators</v-subheader>
@@ -39,7 +39,6 @@
           </v-list-tile>
         </v-list>
       </v-list-group>
-
       <DialogCard
         :value="confirmDemote"
         title="Demote administrator"
@@ -49,8 +48,7 @@
         @cancel="confirmDemote.reject()"
         @submit="confirmDemote.resolve()"
       />
-    </v-list>
-    <v-list expand class="grouped">
+
       <v-list-group :value="true">
         <v-subheader slot="activator">Invites</v-subheader>
         <v-list two-line>
