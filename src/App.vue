@@ -229,12 +229,12 @@
 import { mapState, mapActions } from 'vuex';
 import { getTitleChunks, getFirstExisting, checkForUpdates } from '@/helpers/router';
 import { FIREBASE_ENV, idKey, db, firebase } from '@/helpers/firebase';
-import RegisterDialog from '@/components/utility/RegisterDialog.vue';
-import LoginDialog from '@/components/utility/LoginDialog.vue';
-import RequiresAuthDialog from '@/components/utility/RequiresAuthDialog.vue';
-import AccountButtons from '@/components/utility/AccountButtons.vue';
-import CompetitionListItem from '@/components/utility/CompetitionListItem.vue';
-import PromptToUpdate from '@/components/utility/PromptToUpdate.vue';
+import RegisterDialog from '@/components/RegisterDialog.vue';
+import LoginDialog from '@/components/LoginDialog.vue';
+import RequiresAuthDialog from '@/components/RequiresAuthDialog.vue';
+import AccountButtons from '@/components/AccountButtons.vue';
+import CompetitionListItem from '@/components/CompetitionListItem.vue';
+import PromptToUpdate from '@/components/PromptToUpdate.vue';
 
 export default {
   name: 'app',

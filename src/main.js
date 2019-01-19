@@ -14,12 +14,12 @@ import App from '@/App.vue';
 import router from '@/router';
 import store from '@/store';
 
-import DialogCard from '@/components/utility/DialogCard.vue';
-import Spinner from '@/components/utility/Spinner.vue';
-import EmptyState from '@/components/utility/EmptyState.vue';
-import Blades from '@/components/utility/Blades.vue';
-import Blade from '@/components/utility/Blade.vue';
-import Gravatar from '@/components/utility/Gravatar.vue';
+import DialogCard from '@/components/DialogCard.vue';
+import Spinner from '@/components/Spinner.vue';
+import EmptyState from '@/components/EmptyState.vue';
+import Blades from '@/components/Blades.vue';
+import Blade from '@/components/Blade.vue';
+import Gravatar from '@/components/Gravatar.vue';
 
 import './plugins/vuetify';
 import $package from '../package.json';
