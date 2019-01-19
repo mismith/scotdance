@@ -1,9 +1,5 @@
 <template>
-  <DialogCard
-    cancel-label="Later"
-    submit-label="Update Now"
-    @submit="updateApp()"
-  >
+  <DialogCard cancel-label="Later">
     <slot name="activator" slot="activator" />
 
     <v-card-title slot="title" class="layout">
@@ -12,11 +8,21 @@
     </v-card-title>
     <v-card-text slot="text" class="pa-3 primary white--text" style="position: relative;">
       <div class="account-bg"></div>
-      <div style="position: relative;">
+      <div style="position: relative; text-align: center;">
         <div>Get the latest version of the app:</div>
         <big>{{ currentVersion }} &rarr; {{ latestVersion }}</big>
       </div>
     </v-card-text>
+
+    <v-btn
+      slot="submit"
+      flat
+      color="primary"
+      :href="platformSpecificAppStoreURL"
+      target="_blank"
+    >
+      Update Now
+    </v-btn>
   </DialogCard>
 </template>
 
@@ -32,12 +38,12 @@ export default {
     };
   },
   computed: {
-    url() {
-      switch (this.$store.state.$device.platform) {
-        case 'iOS': {
+    platformSpecificAppStoreURL() {
+      switch (this.$store.state.$device.platform.toLowerCase()) {
+        case 'ios': {
           return 'itms-apps://itunes.apple.com/app/1386475626';
         }
-        case 'Android': {
+        case 'android': {
           return 'market://details?id=info.mismith.scotdance';
         }
         default: {
@@ -53,9 +59,6 @@ export default {
         this.currentVersion = updates.currentVersion;
         this.latestVersion = updates.latestVersion;
       }
-    },
-    updateApp() {
-      this.$router.go(this.url);
     },
   },
   created() {
