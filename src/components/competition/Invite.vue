@@ -1,9 +1,9 @@
 <template>
-  <requires-permission class="invite layout align-center justify-center app-scroll-frame app-scroll pa-3">
+  <RequiresPermission class="CompetitionInvite layout align-center justify-center app-scroll-frame app-scroll pa-3">
     <div v-if="!invite">
-      <spinner />
+      <Spinner />
     </div>
-    <empty-state
+    <EmptyState
       v-else-if="!invite.created"
       icon="clear"
       label="Invite not found"
@@ -11,7 +11,7 @@
     />
     <div v-else-if="invite.accepted && invite.acceptedBy">
       <div v-if="$store.state.me && $store.state.me[idKey] === invite.acceptedBy">
-        <empty-state
+        <EmptyState
           icon="check"
           label="Invite accepted"
         />
@@ -24,27 +24,27 @@
           </v-btn>
         </footer>
       </div>
-      <empty-state
+      <EmptyState
         v-else
         icon="cancel"
         label="Invite already accepted"
         description="Perhaps try asking to be invited again?"
       />
     </div>
-    <empty-state
+    <EmptyState
       v-else-if="invite.cancelled"
       icon="cancel"
       label="Invite cancelled"
       description="You'll need to ask to be invited again."
     />
-    <empty-state
+    <EmptyState
       v-else-if="$moment().isAfter(invite.expires)"
       icon="timer_off"
       label="Invite expired"
       description="You'll need to ask to be invited again."
     />
     <div v-else>
-      <empty-state
+      <EmptyState
         icon="drafts"
         label="Your Invitation"
         description="Get administrator access to this competition."
@@ -59,7 +59,7 @@
         </v-btn>
       </footer>
     </div>
-  </requires-permission>
+  </RequiresPermission>
 </template>
 
 <script>
@@ -69,7 +69,7 @@ import RequiresPermission from '@/components/utility/RequiresPermission.vue';
 import AccountButtons from '@/components/utility/AccountButtons.vue';
 
 export default {
-  name: 'invite',
+  name: 'CompetitionInvite',
   props: {
     competitionId: String,
     inviteId: String,
@@ -110,9 +110,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.invite {
-
-}
-</style>

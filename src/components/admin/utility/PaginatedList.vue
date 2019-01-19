@@ -1,10 +1,10 @@
 <template>
-  <div class="paginated-list app-scroll-frame">
+  <div class="PaginatedList app-scroll-frame">
     <div class="app-scroll-frame app-scroll">
       <v-list v-if="items.length">
         <slot v-for="item in paginated" v-bind="item" />
       </v-list>
-      <empty-state
+      <EmptyState
         v-else
         icon="error_outline"
         label="No items match"
@@ -29,7 +29,7 @@
 
 <script>
 export default {
-  name: 'paginated-list',
+  name: 'PaginatedList',
   props: {
     items: Array,
   },
@@ -53,7 +53,7 @@ export default {
 </script>
 
 <style lang="scss">
-.paginated-list {
+.PaginatedList {
   .pagination {
     white-space: nowrap;
 

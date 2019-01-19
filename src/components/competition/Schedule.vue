@@ -1,6 +1,6 @@
 <template>
-  <blades class="competition-schedule alt">
-    <blade
+  <Blades class="CompetitionSchedule alt">
+    <Blade
       :active="!currentEvent"
       v-persist-scroll="`/competitions/${competitionId}/schedule`"
       class="xs12 md4 app-scroll"
@@ -66,16 +66,16 @@
           </v-list>
         </div>
       </div>
-      <empty-state
+      <EmptyState
         v-else
         icon="clear"
         label="No schedule yet"
         description="Check back later"
       />
-    </blade>
-    <blade :active="currentEvent" class="xs12 md8">
+    </Blade>
+    <Blade :active="currentEvent" class="xs12 md8">
       <div v-if="currentEvent" class="app-scroll-frame">
-        <blade-toolbar
+        <BladeToolbar
           :text="`${currentDay.name} &rsaquo; ${currentBlock.name}`"
           class="hidden-md-and-up"
         />
@@ -110,7 +110,7 @@
                 />
               </v-subheader>
 
-              <admin-platforms
+              <AdminPlatforms
                 :item="dance"
                 :groups="groups"
                 :dances="dances"
@@ -129,7 +129,7 @@
           </v-list>
         </div>
 
-        <dialog-card v-model="drawVisible">
+        <DialogCard v-model="drawVisible">
           <v-card-title v-if="currentDialogData" slot="title" class="layout column align-start">
             <div class="title">Draw / Order</div>
             <div v-if="currentDialogData.dance && currentDialogData.group" class="caption">
@@ -142,7 +142,7 @@
               v-if="currentDialogData && currentDialogData.dance && currentDialogData.group"
               two-line
             >
-              <dancer-list-item
+              <DancerListItem
                 v-for="dancer in findDrawnDancers(currentDialogData.group, currentDialogData.dance)"
                 :key="dancer[idKey]"
                 :dancer="dancer"
@@ -150,16 +150,16 @@
               />
             </v-list>
           </v-card-text>
-        </dialog-card>
+        </DialogCard>
       </div>
-      <empty-state
+      <EmptyState
         v-else
         icon="touch_app"
         label="See event details"
         description="Select an event"
       />
-    </blade>
-  </blades>
+    </Blade>
+  </Blades>
 </template>
 
 <script>
@@ -190,7 +190,7 @@ import {
 } from '@/helpers/results';
 
 export default {
-  name: 'competition-schedule',
+  name: 'CompetitionSchedule',
   props: {
     competitionId: String,
     dayId: String,
@@ -319,8 +319,8 @@ export default {
 </script>
 
 <style lang="scss">
-.competition-schedule {
-  .admin-platforms {
+.CompetitionSchedule {
+  .AdminPlatforms {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }

@@ -1,5 +1,5 @@
 <template>
-  <div class="image-uploader">
+  <div class="ImageUploader">
     <v-text-field
       :value="filename"
       :label="label"
@@ -29,7 +29,7 @@
 import { buckets } from '@/helpers/firebase';
 
 export default {
-  name: 'image-uploader',
+  name: 'ImageUploader',
   props: {
     storagePath: String,
     value: true,
@@ -132,7 +132,7 @@ export default {
 </script>
 
 <style lang="scss">
-.image-uploader {
+.ImageUploader {
   .v-progress-linear {
     position: absolute;
     bottom: 0;

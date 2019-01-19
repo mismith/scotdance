@@ -1,8 +1,8 @@
 <template>
-  <div class="preset-picker">
+  <div class="PresetPicker">
     <v-btn flat @click="dialogOpen = true">Add Preset(s)</v-btn>
 
-    <dialog-card v-model="dialogOpen" title="Select preset(s) to add:" @submit="select">
+    <DialogCard v-model="dialogOpen" title="Select preset(s) to add:" @submit="select">
       <v-list slot="text">
         <v-list-tile v-for="preset in presets" :key="getValue(preset)">
           <v-list-tile-action>
@@ -26,7 +26,7 @@
           Add
         </v-btn>
       </v-card-actions>
-    </dialog-card>
+    </DialogCard>
   </div>
 </template>
 
@@ -34,7 +34,7 @@
 import { idKey } from '@/helpers/firebase';
 
 export default {
-  name: 'preset-picker',
+  name: 'PresetPicker',
   props: {
     presets: Array,
     prop: {
@@ -80,9 +80,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.preset-picker {
-
-}
-</style>

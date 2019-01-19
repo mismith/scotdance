@@ -1,12 +1,12 @@
 <template>
-  <v-flex class="blade app-scroll-frame" :class="{ 'blade-active': active }">
+  <v-flex class="Blade app-scroll-frame" :class="{ 'blade-active': active }">
     <slot />
   </v-flex>
 </template>
 
 <script>
 export default {
-  name: 'blade',
+  name: 'Blade',
   props: {
     active: Boolean,
   },
@@ -14,16 +14,16 @@ export default {
 </script>
 
 <style lang="scss">
-.blades {
+.Blades {
   @media (max-width: 959px) {
     &:not(.stacks) {
-      .blade {
+      .Blade {
         transition: all 300ms;
         transform: translate3d(-100%, 0, 0);
         opacity: 0;
         z-index: 0;
 
-        + .blade {
+        + .Blade {
           transform: translate3d(100%, 0, 0);
           // @HACK to avoid post-animation flicker on iOS
           // this essentially causes `position: absolute` on the incoming blade—e.g. to allow stacking
@@ -39,20 +39,20 @@ export default {
       }
     }
     &.stacks {
-      .blade {
+      .Blade {
         flex: 1 0 auto;
 
-        + .blade {
+        + .Blade {
           border-top: solid 6px #ccc;
         }
       }
     }
   }
   @media (min-width: 960px) {
-    .blade {
+    .Blade {
       flex-shrink: 0;
 
-      + .blade {
+      + .Blade {
         border-left: solid 6px #ccc;
       }
     }

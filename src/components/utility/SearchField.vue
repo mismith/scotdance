@@ -7,13 +7,13 @@
     clearable
     solo
     :loading="value !== valueDebounced"
-    class="search-field"
+    class="SearchField"
   />
 </template>
 
 <script>
 export default {
-  name: 'search-field',
+  name: 'SearchField',
   props: {
     value: String,
   },
@@ -36,9 +36,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.search-field {
-
-}
-</style>

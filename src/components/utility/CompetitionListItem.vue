@@ -1,7 +1,7 @@
 <template>
   <v-list-tile
     :to="to"
-    class="competition-list-item"
+    class="CompetitionListItem"
     :class="{ listed: competition.listed, published: competition.published }"
   >
     <v-list-tile-avatar color="white">
@@ -34,7 +34,7 @@
 import { idKey } from '@/helpers/firebase';
 
 export default {
-  name: 'competition-list-item',
+  name: 'CompetitionListItem',
   props: {
     competition: Object,
     to: true,
@@ -48,7 +48,7 @@ export default {
 </script>
 
 <style lang="scss">
-.competition-list-item {
+.CompetitionListItem {
   &:not(.listed) {
     background: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.1) 5px, rgba(0, 0, 0, 0.1) 10px);
   }

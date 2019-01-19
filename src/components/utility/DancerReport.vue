@@ -1,9 +1,9 @@
 <template>
-  <div class="dancer-report">
+  <div class="DancerReport">
     <header>
       <v-subheader class="title">
         <v-flex>{{ dancer.$name }}</v-flex>
-        <favorite-dancer-button :dancer="dancer" />
+        <FavoriteDancerButton :dancer="dancer" />
       </v-subheader>
       <div class="pa-3">
         <div class="number">#{{ dancer.number }}</div>
@@ -16,7 +16,7 @@
         <v-subheader slot="activator">Results</v-subheader>
 
         <v-list>
-          <result-list-item
+          <ResultListItem
             v-for="dance in findGroupDances(group, dances)"
             :key="dance[idKey]"
             :place="getPlace(dancer, group, dance)"
@@ -24,17 +24,17 @@
           >
             <span slot="avatar" />
             {{ dance.$name }}
-          </result-list-item>
+          </ResultListItem>
 
           <v-divider v-if="hasOverall(group)" />
-          <result-list-item
+          <ResultListItem
              v-if="hasOverall(group)"
             :place="getPlace(dancer, group, overall)"
             :to="{ name: 'competition.results', params: { groupId: group[idKey], danceId: overall[idKey] } }"
           >
             <span slot="avatar" />
             {{ overall.$name }}
-          </result-list-item>
+          </ResultListItem>
 
           <v-list-tile v-if="!findGroupDances(group, dances).length && !hasOverall(group)" class="empty">
             <v-list-tile-avatar>
@@ -61,7 +61,7 @@ import {
 } from '@/helpers/results';
 
 export default {
-  name: 'dancer-report',
+  name: 'DancerReport',
   props: {
     dancer: Object,
     dancers: Array,
@@ -100,9 +100,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.dancer-report {
-
-}
-</style>

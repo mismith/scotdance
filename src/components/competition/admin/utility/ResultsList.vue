@@ -1,5 +1,5 @@
 <template>
-  <v-list expand class="results-list grouped">
+  <v-list expand class="ResultsList grouped">
     <v-list-group
       v-for="group in groups"
       :key="group[idKey]"
@@ -12,22 +12,22 @@
         <v-icon v-if="hasFavorites(findGroupDancers(group, dancers))" color="secondary">
           star
         </v-icon>
-        <v-icon v-if="results[group[idKey]]" color="primary" class="summary-icon">
+        <v-icon v-if="results[group[idKey]]" color="primary">
           {{ isInProgress(group, dances, results) ? 'check_circle_outline' : 'check_circle' }}
         </v-icon>
       </v-subheader>
-      <v-list class="results-list">
-        <result-list-item
+      <v-list class="ResultsList">
+        <ResultListItem
           :dancers="findPlacedDancers(group, callbacks, dancers, results, true)"
           :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], callbacks[idKey], results)"
           :to="{ name: $route.name, params: { groupId: group[idKey], danceId: callbacks[idKey] } }"
           :class="{ active: isActive(group, callbacks) }"
         >
           {{ callbacks.$name }}
-        </result-list-item>
+        </ResultListItem>
         <v-divider v-if="findGroupDances(group, dances).length" inset />
 
-        <result-list-item
+        <ResultListItem
           v-for="dance in findGroupDances(group, dances)"
           :key="dance[idKey]"
           :dancers="findPlacedDancers(group, dance, dancers, results)"
@@ -36,10 +36,10 @@
           :class="{ active: isActive(group, dance) }"
         >
           {{ dance.$name }}
-        </result-list-item>
+        </ResultListItem>
 
         <v-divider v-if="hasOverall(group)" inset />
-        <result-list-item
+        <ResultListItem
           v-if="hasOverall(group)"
           :dancers="findPlacedDancers(group, overall, dancers, results)"
           :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], overall[idKey], results)"
@@ -48,7 +48,7 @@
         >
           {{ overall.$name }}
           <v-icon class="icon-trophy" slot="icon" />
-        </result-list-item>
+        </ResultListItem>
       </v-list>
     </v-list-group>
   </v-list>
@@ -74,7 +74,7 @@ import {
 } from '@/helpers/router';
 
 export default {
-  name: 'results-list',
+  name: 'ResultsList',
   props: {
     groups: Array,
     dances: Array,
@@ -126,9 +126,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.results-list {
-
-}
-</style>

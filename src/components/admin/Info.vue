@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-info app-scroll-frame app-scroll">
+  <div class="AdminInfo app-scroll-frame app-scroll">
     <div class="layout row align-center justify-center app-scroll-frame alt pa-3">
       <v-card>
         <v-responsive class="pa-3">
@@ -31,7 +31,7 @@
 
 <script>
 export default {
-  name: 'admin-info',
+  name: 'AdminInfo',
   props: {
     section: Object,
     users: Array,
@@ -40,9 +40,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.admin-info {
-
-}
-</style>

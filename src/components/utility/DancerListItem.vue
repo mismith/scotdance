@@ -2,7 +2,7 @@
   <v-list-tile
     :to="to"
     @click="$emit('click', $event)"
-    class="dancer-list-item"
+    class="DancerListItem"
     :class="{ placeholder: dancer.number === '?' }"
   >
     <slot name="avatar">
@@ -23,7 +23,7 @@
 
     <v-list-tile-action>
       <slot name="favorite">
-        <favorite-dancer-button :dancer="dancer" @click.stop />
+        <FavoriteDancerButton :dancer="dancer" @click.stop />
       </slot>
     </v-list-tile-action>
     <v-list-tile-action v-if="place !== undefined">
@@ -38,7 +38,7 @@ import FavoriteDancerButton from '@/components/utility/FavoriteDancerButton.vue'
 import Place from '@/components/utility/Place.vue';
 
 export default {
-  name: 'dancer-list-item',
+  name: 'DancerListItem',
   props: {
     dancer: Object,
     place: Number,
@@ -52,7 +52,7 @@ export default {
 </script>
 
 <style lang="scss">
-.dancer-list-item {
+.DancerListItem {
   &.placeholder {
     background: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.1) 5px, rgba(0, 0, 0, 0.1) 10px);
   }

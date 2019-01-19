@@ -1,10 +1,10 @@
 <template>
-  <v-progress-circular v-bind="$props" indeterminate color="primary" class="spinner" />
+  <v-progress-circular v-bind="$props" indeterminate color="primary" class="Spinner" />
 </template>
 
 <script>
 export default {
-  name: 'spinner',
+  name: 'Spinner',
   props: {
     size: {
       type: Number,
@@ -19,7 +19,7 @@ export default {
 </script>
 
 <style lang="scss">
-.spinner {
+.Spinner {
   display: inline-flex;
   margin: auto;
 }

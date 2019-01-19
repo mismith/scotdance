@@ -1,6 +1,6 @@
 <template>
-  <v-form ref="form" v-model="value" class="dynamic-form" @submit.prevent="handleSubmit">
-    <dynamic-field
+  <v-form ref="form" v-model="value" class="DynamicForm" @submit.prevent="handleSubmit">
+    <DynamicField
       v-for="field in fields"
       :key="field.data"
       :field="field"
@@ -16,7 +16,7 @@
 import DynamicField from '@/components/admin/utility/DynamicField.vue';
 
 export default {
-  name: 'dynamic-form',
+  name: 'DynamicForm',
   props: {
     value: true,
     fields: Array,
@@ -44,9 +44,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.dynamic-form {
-
-}
-</style>

@@ -4,7 +4,7 @@
     flat
     :color="dancer.$favorite && 'secondary'"
     @click.prevent.stop="toggleFavoriteDancer(dancer)"
-    class="favorite-dancer-button"
+    class="FavoriteDancerButton"
   >
     <v-icon>{{ dancer.$favorite ? 'star' : 'star_border' }}</v-icon>
   </v-btn>
@@ -14,7 +14,7 @@
 import { mapActions } from 'vuex';
 
 export default {
-  name: 'favorite-dancer-button',
+  name: 'FavoriteDancerButton',
   props: {
     dancer: Object,
   },
@@ -25,9 +25,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.favorite-dancer-button {
-
-}
-</style>

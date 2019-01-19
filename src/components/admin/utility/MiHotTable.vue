@@ -1,5 +1,5 @@
 <template>
-  <hot-table :settings="augmentHot(settings)" :data="data" class="mi-hot-table" />
+  <HotTable :settings="augmentHot(settings)" :data="data" class="MiHotTable" />
 </template>
 
 <script>
@@ -13,7 +13,7 @@ import {
 } from '@/helpers/admin';
 
 export default {
-  name: 'mi-hot-table',
+  name: 'MiHotTable',
   props: {
     settings: Object,
     data: Array,
@@ -62,9 +62,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.mi-hot-table {
-
-}
-</style>

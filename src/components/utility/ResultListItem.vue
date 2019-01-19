@@ -1,5 +1,5 @@
 <template>
-  <v-list-tile :to="to" class="result-list-item">
+  <v-list-tile :to="to" class="ResultListItem">
     <slot name="avatar">
       <v-list-tile-avatar
         :color="hasFavorites(dancers || []) ? 'secondary' : (hasResults ? 'primary' : 'grey')"
@@ -29,7 +29,7 @@ import Place from '@/components/utility/Place.vue';
 import { hasFavorites } from '@/helpers/competition';
 
 export default {
-  name: 'result-list-item',
+  name: 'ResultListItem',
   props: {
     dancers: Array, // [] -> TBD; [...] -> show checkmark;
     hasPlaceholderDancers: Boolean, // true -> show hollow checkmark
@@ -49,9 +49,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.result-list-item {
-
-}
-</style>

@@ -1,9 +1,9 @@
 <template>
-  <form class="profile app-scroll-frame app-scroll">
+  <form class="Profile app-scroll-frame app-scroll">
     <div class="pa-3">
       <header class="layout align-center flex-none mb-3">
         <v-avatar :size="100">
-          <gravatar :user="me" />
+          <Gravatar :user="me" />
         </v-avatar>
         <div class="flex pa-3">
           Avatar via <a href="https://gravatar.com/" target="_blank" class="ext">Gravatar</a>
@@ -22,7 +22,7 @@
         required
       />
 
-      <dialog-card
+      <DialogCard
         v-model="passwordActive"
         title="Change your password"
         cancel-label="Cancel"
@@ -57,12 +57,12 @@
         >
           Change Password
         </v-btn>
-      </dialog-card>
+      </DialogCard>
     </div>
 
     <v-spacer />
     <footer class="layout justify-center flex-none">
-      <dialog-card
+      <DialogCard
         v-model="removeActive"
         title="Are you sure?"
         cancel-label="Cancel"
@@ -93,7 +93,7 @@
         >
           Delete Account
         </v-btn>
-      </dialog-card>
+      </DialogCard>
     </footer>
   </form>
 </template>
@@ -108,7 +108,7 @@ import {
 import DynamicField from '@/components/admin/utility/DynamicField.vue';
 
 export default {
-  name: 'profile',
+  name: 'Profile',
   data() {
     return {
       passwordActive: false,
@@ -192,9 +192,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.profile {
-
-}
-</style>

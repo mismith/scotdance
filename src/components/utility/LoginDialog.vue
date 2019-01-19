@@ -1,10 +1,10 @@
 <template>
-  <dialog-card
+  <DialogCard
     v-model="loginVisible"
     async
     @cancel="forgot = false"
     @submit="forgot ? reset() : login()"
-    class="login-dialog"
+    class="LoginDialog"
   >
     <template v-if="!forgot">
       <v-text-field
@@ -74,7 +74,7 @@
         <v-btn flat color="primary" :loading="authLoading" type="submit">Send</v-btn>
       </v-card-actions>
     </template>
-  </dialog-card>
+  </DialogCard>
 </template>
 
 <script>
@@ -82,7 +82,7 @@ import { mapFields } from 'vuex-map-fields';
 import { firebase } from '@/helpers/firebase';
 
 export default {
-  name: 'login-dialog',
+  name: 'LoginDialog',
   data() {
     return {
       authLoading: false,
@@ -162,9 +162,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.login-dialog {
-
-}
-</style>

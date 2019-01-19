@@ -1,5 +1,5 @@
 <template>
-  <div class="home app-scroll-frame app-scroll">
+  <div class="Home app-scroll-frame app-scroll">
     <section class="hero">
       <div>
         <img src="@/assets/img/touchicon.png" role="presentation" width="88" height="88" />
@@ -62,7 +62,7 @@
             <dd :key="faq.answer" v-html="faq.answer" class="pre-line" />
           </template>
         </dl>
-        <spinner v-else />
+        <Spinner v-else />
       </header>
     </section>
 
@@ -87,7 +87,7 @@ import {
 import { db } from '@/helpers/firebase';
 
 export default {
-  name: 'home',
+  name: 'Home',
   firebase: {
     faqs: db.child('faqs'),
   },
@@ -106,7 +106,7 @@ export default {
 </script>
 
 <style lang="scss">
-.home {
+.Home {
   display: flex;
   flex-direction: column;
   min-height: 100%;

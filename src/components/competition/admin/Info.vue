@@ -1,6 +1,6 @@
 <template>
-  <blades class="admin-info" :stacks="true">
-    <blade id="blade-subsections" class="xs12 md3 app-scroll">
+  <Blades class="AdminInfo" :stacks="true">
+    <Blade id="blade-subsections" class="xs12 md3 app-scroll">
       <v-list>
         <v-list-tile
           v-for="subsection in toOrderedArray(section.subsections)"
@@ -13,10 +13,10 @@
           <v-icon>chevron_right</v-icon>
         </v-list-tile>
       </v-list>
-    </blade>
-    <blade id="blade-form" class="xs12 md9 app-scroll">
+    </Blade>
+    <Blade id="blade-form" class="xs12 md9 app-scroll">
       <template v-if="currentSubsection">
-        <dynamic-form
+        <DynamicForm
           v-if="currentSubsection.fields"
           :fields="currentSubsection.fields"
           :data="competition"
@@ -24,7 +24,7 @@
           @field-change="handleChanges"
         />
         <template v-if="inTabs('permissions')">
-          <admin-invites v-bind="$props" />
+          <AdminInvites v-bind="$props" />
         </template>
 
         <v-spacer />
@@ -32,7 +32,7 @@
           <v-btn flat color="error" @click="confirmRemove = true">
             Delete Competition
           </v-btn>
-          <dialog-card
+          <DialogCard
             v-model="confirmRemove"
             title="Delete competition"
             text="Are you sure you want to permanently delete this competition?"
@@ -42,13 +42,13 @@
           />
         </div>
       </template>
-      <empty-state
+      <EmptyState
         v-else
         icon="settings"
         label="Competition settings"
       />
-    </blade>
-  </blades>
+    </Blade>
+  </Blades>
 </template>
 
 <script>
@@ -60,7 +60,7 @@ import DynamicForm from '@/components/admin/utility/DynamicForm.vue';
 import AdminInvites from '@/components/competition/admin/utility/Invites.vue';
 
 export default {
-  name: 'admin-info',
+  name: 'AdminInfo',
   props: {
     competitionId: String,
     subsectionId: String,
@@ -112,9 +112,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.admin-info {
-
-}
-</style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-invites">
+  <div class="AdminInvites">
     <v-list expand class="grouped">
       <v-list-group :value="true">
         <v-subheader slot="activator">Administrators</v-subheader>
@@ -40,7 +40,7 @@
         </v-list>
       </v-list-group>
 
-      <dialog-card
+      <DialogCard
         :value="confirmDemote"
         title="Demote administrator"
         text="Are you sure you want to revoke this user's ability to administer this competition?"
@@ -120,7 +120,7 @@
             No pending invites.
           </v-list-tile>
           <v-divider class="mb-2" />
-          <new-dynamic-field
+          <NewDynamicField
             :field="{ title: 'Invite by Email', data: 'email', type: 'email' }"
             @change="handleInviteCreate"
             class="pl-3"
@@ -137,7 +137,7 @@ import { idKey } from '@/helpers/firebase';
 import NewDynamicField from '@/components/admin/utility/NewDynamicField.vue';
 
 export default {
-  name: 'admin-invites',
+  name: 'AdminInvites',
   props: {
     competitionId: String,
     competitionDataRef: {
@@ -199,9 +199,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.admin-invites {
-
-}
-</style>

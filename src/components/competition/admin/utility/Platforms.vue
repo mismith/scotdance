@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-platforms white" :class="{ interactive: admin }">
+  <div class="AdminPlatforms white" :class="{ interactive: admin }">
     <div v-if="!isEmpty" class="pools">
       <div
         v-for="pool in pools"
@@ -27,7 +27,7 @@
         </draggable>
       </div>
     </div>
-    <empty-state
+    <EmptyState
       v-else-if="admin"
       icon="warning"
       label="No platforms"
@@ -62,7 +62,7 @@ import { findGroupDancers } from '@/helpers/results';
 import { idKey } from '@/helpers/firebase';
 
 export default {
-  name: 'admin-platforms',
+  name: 'AdminPlatforms',
   props: {
     path: String,
     item: Object,
@@ -210,7 +210,7 @@ export default {
     opacity: 1;
   }
 }
-.admin-platforms {
+.AdminPlatforms {
   .pools {
     display: flex;
 

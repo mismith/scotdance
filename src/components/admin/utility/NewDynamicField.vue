@@ -1,6 +1,6 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="new-dynamic-field layout align-center">
-    <dynamic-field :field="field" :data="data" class="flex" />
+  <form @submit.prevent="handleSubmit" class="NewDynamicField layout align-center">
+    <DynamicField :field="field" :data="data" class="flex" />
     <v-btn type="submit" icon color="primary" :disabled="!isValid">
       <v-icon>add</v-icon>
     </v-btn>
@@ -46,7 +46,7 @@ export default {
 </script>
 
 <style lang="scss">
-.new-dynamic-field {
+.NewDynamicField {
   .v-list & {
     padding-right: 2px;
   }

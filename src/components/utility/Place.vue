@@ -1,5 +1,5 @@
 <template>
-  <div class="place" :class="{ 'primary--text': finalized }">
+  <div class="Place" :class="{ 'primary--text': finalized }">
     <small v-if="!finalized" class="tbd">TBD</small>
     <div v-else>{{ place || '-' }}<small class="ordinal">{{ ordinal }}</small></div>
   </div>
@@ -7,7 +7,7 @@
 
 <script>
 export default {
-  name: 'place',
+  name: 'Place',
   props: {
     place: Number,
   },
@@ -39,7 +39,7 @@ export default {
 </script>
 
 <style lang="scss">
-.place {
+.Place {
   display: flex;
   align-items: center;
   font-size: 2em;

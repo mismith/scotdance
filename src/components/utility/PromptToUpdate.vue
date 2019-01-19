@@ -1,5 +1,5 @@
 <template>
-  <dialog-card
+  <DialogCard
     cancel-label="Later"
     submit-label="Update Now"
     @submit="updateApp()"
@@ -17,14 +17,14 @@
         <big>{{ currentVersion }} &rarr; {{ latestVersion }}</big>
       </div>
     </v-card-text>
-  </dialog-card>
+  </DialogCard>
 </template>
 
 <script>
 import { checkForUpdates } from '@/helpers/router';
 
 export default {
-  name: 'prompt-to-update',
+  name: 'PromptToUpdate',
   data() {
     return {
       currentVersion: undefined,

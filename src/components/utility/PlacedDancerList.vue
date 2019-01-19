@@ -1,12 +1,12 @@
 <template>
-  <v-list two-line class="placed-dancer-list">
+  <v-list two-line class="PlacedDancerList">
     <draggable
       v-model="dancers"
       :options="{ disabled: !draggingEnabled, handle: '.sortable-handle' }"
       @sort="$emit('dancer-reorder', $event)"
       class="draggable"
     >
-      <dancer-list-item
+      <DancerListItem
         v-for="(dancer, index) in dancers"
         :key="dancer[idKey]"
         :dancer="dancer"
@@ -27,7 +27,7 @@
           :input-value="dancer.$tie"
           @click.stop="$emit('dancer-toggle', [dancer, !dancer.$tie])"
         />
-      </dancer-list-item>
+      </DancerListItem>
 
       <slot />
     </draggable>
@@ -45,7 +45,7 @@ import {
 } from '@/helpers/results';
 
 export default {
-  name: 'placed-dancer-list',
+  name: 'PlacedDancerList',
   props: {
     admin: Boolean,
     dance: Object,
@@ -76,9 +76,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.placed-dancer-list {
-
-}
-</style>

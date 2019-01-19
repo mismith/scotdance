@@ -1,5 +1,5 @@
 <template>
-  <div class="competition app-scroll-frame">
+  <div class="Competition app-scroll-frame">
     <div v-if="loaded" class="app-scroll-frame">
       <div v-if="competitionExists" class="app-scroll-frame">
         <keep-alive v-if="$root.currentTab === 'info' || $route.name === 'competition.invite' || competition.published || hasPermission">
@@ -22,7 +22,7 @@
           />
         </keep-alive>
         <div v-else class="app-scroll-frame alt">
-          <empty-state
+          <EmptyState
             icon="access_time"
             label="Not available yet"
             description="Check back closer to the competition date:"
@@ -30,18 +30,18 @@
             <div class="title">
               {{ competition.date ? $moment(competition.date).format('dddd, MMMM D') : 'Soon' }}
             </div>
-          </empty-state>
+          </EmptyState>
         </div>
       </div>
       <div v-else class="app-scroll-frame alt">
-        <empty-state
+        <EmptyState
           icon="clear"
           label="No competition found"
         />
       </div>
     </div>
     <div v-else class="app-scroll-frame alt">
-      <spinner />
+      <Spinner />
     </div>
 
     <v-bottom-nav v-if="competitionExists && !isAdminRoute" :value="true">
@@ -83,7 +83,7 @@
       </v-btn>
     </v-bottom-nav>
 
-    <dialog-card v-model="staffVisible">
+    <DialogCard v-model="staffVisible">
       <v-card-title v-if="currentDialogData" slot="title" class="layout row wrap">
         <v-avatar v-if="currentDialogData.image" :size="100" class="mr-3">
           <img :src="currentDialogData.image" />
@@ -99,7 +99,7 @@
         v-html="currentDialogData.description"
         class="pre-line alt"
       />
-    </dialog-card>
+    </DialogCard>
   </div>
 </template>
 
@@ -116,7 +116,7 @@ import {
 import { idKey } from '@/helpers/firebase';
 
 export default {
-  name: 'competition',
+  name: 'Competition',
   props: {
     competitionId: String,
     competitionsRef: Object,
@@ -278,9 +278,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.competition {
-
-}
-</style>

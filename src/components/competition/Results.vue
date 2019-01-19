@@ -1,6 +1,6 @@
 <template>
-  <blades class="competition-results alt">
-    <blade
+  <Blades class="CompetitionResults alt">
+    <Blade
       :active="!currentGroup"
       v-persist-scroll="`/competitions/${competitionId}/results`"
       class="xs12 md4 app-scroll"
@@ -18,7 +18,7 @@
             <v-icon v-if="hasFavorites(findCategoryDancers(category, dancers))" color="secondary">
               star
             </v-icon>
-            <results-progress-indicator
+            <ResultsProgressIndicator
               :category="category"
               :groups="groups"
               :dances="dances"
@@ -27,7 +27,7 @@
           </v-subheader>
 
           <v-list>
-            <result-list-item
+            <ResultListItem
               v-for="group in category.$groups"
               :key="group[idKey]"
               :to="{ name: $route.name, params: { groupId: group[idKey] } }"
@@ -35,7 +35,7 @@
               :has-placeholder-dancers="isInProgress(group, dances, results)"
             >
               {{ group.name }}
-            </result-list-item>
+            </ResultListItem>
             <v-list-tile v-if="!category.$groups.length" class="empty">
               <v-list-tile-avatar>
                 <v-icon>clear</v-icon>
@@ -45,16 +45,16 @@
           </v-list>
         </v-list-group>
       </v-list>
-      <empty-state
+      <EmptyState
         v-else
         icon="clear"
         label="No results yet"
         description="Check back later"
       />
-    </blade>
-    <blade :active="currentGroup" class="xs12 md8">
+    </Blade>
+    <Blade :active="currentGroup" class="xs12 md8">
       <div v-if="currentGroup" class="app-scroll-frame">
-        <blade-toolbar :text="currentGroup.$name" class="hidden-md-and-up" />
+        <BladeToolbar :text="currentGroup.$name" class="hidden-md-and-up" />
 
         <div
           id="results-detail"
@@ -72,7 +72,7 @@
             >
               <v-subheader slot="activator">{{ dance.$name }}</v-subheader>
 
-              <placed-dancer-list
+              <PlacedDancerList
                 :dance="dance"
                 :dancers="dance.dancers"
                 @dancer-click="$router.push({ name: 'competition.dancers', params: { dancerId: $event[idKey] }})"
@@ -98,23 +98,23 @@
                     </v-list-tile-sub-title>
                   </v-list-tile-content>
                 </v-list-tile>
-              </placed-dancer-list>
+              </PlacedDancerList>
             </v-list-group>
           </v-list>
         </div>
 
-        <dialog-card v-model="showTrophy" :title="currentGroup.sponsor">
+        <DialogCard v-model="showTrophy" :title="currentGroup.sponsor">
           <div class="pre-line">{{ currentGroup.trophy || '' }} Trophy Sponsor</div>
-        </dialog-card>
+        </DialogCard>
       </div>
-      <empty-state
+      <EmptyState
         v-else
         icon="touch_app"
         label="See results"
         description="Select an age group"
       />
-    </blade>
-  </bladeS>
+    </Blade>
+  </BladeS>
 </template>
 
 <script>
@@ -143,7 +143,7 @@ import {
 } from '@/helpers/router';
 
 export default {
-  name: 'competition-results',
+  name: 'CompetitionResults',
   props: {
     competitionId: String,
     groupId: String,
@@ -276,8 +276,8 @@ export default {
 </script>
 
 <style lang="scss">
-.competition-results {
-  .dancer-list-item {
+.CompetitionResults {
+  .DancerListItem {
     .group {
       display: none;
     }

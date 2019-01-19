@@ -1,5 +1,5 @@
 <template>
-  <v-icon v-if="hasResults" color="primary" class="summary-icon">
+  <v-icon v-if="hasResults" color="primary">
     {{ isInProgress ? 'check_circle_outline' : 'check_circle' }}
   </v-icon>
 </template>
@@ -9,7 +9,7 @@ import { idKey } from '@/helpers/firebase';
 import { isInProgress } from '@/helpers/results';
 
 export default {
-  name: 'results-progress-indicator',
+  name: 'ResultsProgressIndicator',
   props: {
     category: Object,
     groups: Array,
@@ -38,9 +38,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.results-progress-indicator {
-
-}
-</style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="competitions-submit app-scroll-frame app-scroll alt">
+  <div class="CompetitionsSubmit app-scroll-frame app-scroll alt">
     <v-stepper v-model="currentStep" vertical class="flex-none pb-3">
       <v-stepper-step
         :step="1"
@@ -51,7 +51,7 @@
         </v-stepper-step>
         <v-stepper-content :key="step[idKey]" :step="index + 2">
           <div class="layout wrap">
-            <dynamic-form
+            <DynamicForm
               v-model="step.$isValid"
               :fields="step.fields"
               :data="submission[step[idKey]]"
@@ -69,14 +69,14 @@
                   {{ step.submitLabel || 'Next' }}
                 </v-btn>
               </footer>
-            </dynamic-form>
+            </DynamicForm>
             <div v-if="step[idKey] === 'competition'" class="flex md4 ml-4 hidden-sm-and-down">
               <figure class="device-frame mb-3">
                 <div class="device-frame-content application theme--light app-scroll layout column">
                   <v-toolbar dark color="primary">
                     <v-toolbar-title class="title">{{ $store.state.$package.$name }}</v-toolbar-title>
                   </v-toolbar>
-                  <competition-info :competition="preview" :staff="[]" />
+                  <CompetitionInfo :competition="preview" :staff="[]" />
                 </div>
                 <figcaption class="device-frame-caption">App Preview</figcaption>
               </figure>
@@ -87,7 +87,7 @@
     </v-stepper>
 
     <div v-if="submitted" class="pa-3">
-      <empty-state
+      <EmptyState
         icon="mail_outline"
         label="All done!"
         description="Expect a confirmation email in your inbox momentarily."
@@ -95,7 +95,7 @@
         <p class="mt-3">Your submission will be reviewed <strong>within 7 days</strong>, and you will receive another email once approved.</p>
 
         <v-btn color="primary" @click="handleRestart">Submit Another Competition</v-btn>
-      </empty-state>
+      </EmptyState>
     </div>
   </div>
 </template>
@@ -108,7 +108,7 @@ import AccountButtons from '@/components/utility/AccountButtons.vue';
 import CompetitionInfo from '@/components/competition/Info.vue';
 
 export default {
-  name: 'competitions-submit',
+  name: 'CompetitionsSubmit',
   data() {
     return {
       idKey,
@@ -211,7 +211,7 @@ export default {
 </script>
 
 <style lang="scss">
-.competitions-submit {
+.CompetitionsSubmit {
   .device-frame {
     max-width: 400px;
     background-color: #333;

@@ -1,5 +1,5 @@
 <template>
-  <requires-permission :permission="hasPermission" class="admin app-scroll-frame">
+  <RequiresPermission :permission="hasPermission" class="Admin app-scroll-frame">
     <v-toolbar dense>
       <v-spacer />
 
@@ -12,7 +12,7 @@
     </v-toolbar>
 
     <div v-if="currentSection" class="app-scroll-frame app-scroll">
-      <mi-hot-table
+      <MiHotTable
         v-if="currentSection.hot"
         :key="currentSection[idKey]"
         :settings="currentSection.hot"
@@ -48,7 +48,7 @@
         <v-icon :class="section.icon"></v-icon>
       </v-btn>
     </v-bottom-nav>
-  </requires-permission>
+  </RequiresPermission>
 </template>
 
 <script>
@@ -60,7 +60,7 @@ import MiHotTable from '@/components/admin/utility/MiHotTable.vue';
 import DynamicForm from '@/components/admin/utility/DynamicForm.vue';
 
 export default {
-  name: 'admin',
+  name: 'Admin',
   data() {
     return {
       idKey,
@@ -177,9 +177,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.admin {
-
-}
-</style>

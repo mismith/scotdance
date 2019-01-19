@@ -1,5 +1,5 @@
 <template>
-  <v-card class="admin-import">
+  <v-card class="AdminImport">
     <v-stepper v-model="step">
       <v-stepper-header>
         <v-stepper-step :editable="!!workbook" :complete="step > 1" :step="1">
@@ -68,7 +68,7 @@
               {{ sheetName }}
             </v-tab>
             <v-tabs-items class="app-scroll">
-              <hot-table
+              <HotTable
                 :key="dancersSheetIndex"
                 :settings="sheetToHot(dancersSheet)"
               />
@@ -95,7 +95,7 @@
               {{ key }}
             </v-tab>
             <v-tabs-items class="app-scroll">
-              <hot-table
+              <HotTable
                 :key="dataTabIndex"
                 :settings="toReviewHot(dataKeys[dataTabIndex])"
               />
@@ -133,7 +133,7 @@ import {
 } from '@/helpers/admin';
 
 export default {
-  name: 'admin-import',
+  name: 'AdminImport',
   props: {
     competitionDataRef: {
       type: Object,
@@ -392,7 +392,7 @@ export default {
 </script>
 
 <style lang="scss">
-.admin-import {
+.AdminImport {
   table.demo {
     border-spacing: 0;
     border: 1px solid #ccc;

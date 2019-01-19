@@ -1,9 +1,5 @@
 <template>
-  <dialog-card
-    v-model="dialogVisible"
-    cancel-label="Not Now"
-    class="requires-auth-dialog"
-  >
+  <DialogCard v-model="dialogVisible" cancel-label="Not Now" class="RequiresAuthDialog">
     <slot slot="title" name="title" />
     <div slot="text">
       <v-card-text>
@@ -11,17 +7,17 @@
       </v-card-text>
       <div class="pa-3 primary" style="position: relative;">
         <div class="account-bg"></div>
-        <account-buttons />
+        <AccountButtons />
       </div>
     </div>
-  </dialog-card>
+  </DialogCard>
 </template>
 
 <script>
 import AccountButtons from '@/components/utility/AccountButtons.vue';
 
 export default {
-  name: 'requires-auth-dialog',
+  name: 'RequiresAuthDialog',
   props: {
     name: {
       type: String,
@@ -43,9 +39,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.requires-auth-dialog {
-
-}
-</style>

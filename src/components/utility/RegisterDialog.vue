@@ -1,9 +1,9 @@
 <template>
-  <dialog-card
+  <DialogCard
     v-model="registerVisible"
     async
     @submit="register"
-    class="register-dialog"
+    class="RegisterDialog"
   >
     <v-text-field
       label="Email *"
@@ -36,7 +36,7 @@
       <v-btn flat @click="registerVisible = false">Cancel</v-btn>
       <v-btn flat color="primary" :loading="authLoading" type="submit">Register</v-btn>
     </v-card-actions>
-  </dialog-card>
+  </DialogCard>
 </template>
 
 <script>
@@ -47,7 +47,7 @@ import {
 } from '@/helpers/firebase';
 
 export default {
-  name: 'register-dialog',
+  name: 'RegisterDialog',
   data() {
     return {
       authLoading: false,
@@ -104,9 +104,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.register-dialog {
-
-}
-</style>

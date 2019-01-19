@@ -2,7 +2,7 @@
   <img
     :src="user.photoURL || `https://gravatar.com/avatar/${hash}`"
     :alt="user.displayName"
-    class="gravatar"
+    class="Gravatar"
   />
 </template>
 
@@ -10,7 +10,7 @@
 import md5 from 'md5';
 
 export default {
-  name: 'gravatar',
+  name: 'Gravatar',
   props: {
     user: Object,
   },
@@ -21,9 +21,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.gravatar {
-
-}
-</style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="dynamic-field" :class="{ required: field.required }">
+  <div class="DynamicField" :class="{ required: field.required }">
     <v-select
       v-if="field.type === 'select'"
       v-model="value"
@@ -17,7 +17,7 @@
       @change="handleChange()"
     />
 
-    <image-uploader
+    <ImageUploader
       v-else-if="field.type === 'image'"
       v-model="value"
       :name="field.data"
@@ -118,7 +118,7 @@ import { idKey } from '@/helpers/firebase';
 import ImageUploader from '@/components/admin/utility/ImageUploader.vue';
 
 export default {
-  name: 'dynamic-field',
+  name: 'DynamicField',
   props: {
     field: Object,
     data: Object,
@@ -167,7 +167,7 @@ export default {
 </script>
 
 <style lang="scss">
-.dynamic-field {
+.DynamicField {
   &.required {
     label {
       &::after {

@@ -1,51 +1,51 @@
 <template>
-  <blades class="admin-results" :stacks="true">
-    <blade id="blade-groups" :active="!currentDance" class="xs12 md4 app-scroll alt">
-      <results-list
+  <Blades class="AdminResults" :stacks="true">
+    <Blade id="blade-groups" :active="!currentDance" class="xs12 md4 app-scroll alt">
+      <ResultsList
         v-if="groups.length"
         :groups="groups"
         :dances="dances"
         :dancers="dancers"
         :results="results"
       />
-      <empty-state
+      <EmptyState
         v-else
         icon="clear"
         label="No age groups found"
         description="Add or import some first"
       />
-    </blade>
-    <blade id="blade-dancers" :active="currentDance" class="xs12 md4 app-scroll">
+    </Blade>
+    <Blade id="blade-dancers" :active="currentDance" class="xs12 md4 app-scroll">
       <v-list v-if="currentDance" two-line>
-        <dancer-list-item
+        <DancerListItem
           v-for="dancer in currentDancers"
           :key="dancer[idKey]"
           :dancer="dancer"
           @click="placeDancer(dancer)"
           :class="{ placed: isPlaced(dancer, placedDancers) }"
         />
-        <dancer-list-item
+        <DancerListItem
           v-if="currentDancers.length"
           :dancer="getPlaceholderDancer()"
           @click="placeDancer(getPlaceholderDancer())"
           class="placeholder"
         />
 
-        <empty-state
+        <EmptyState
           v-if="!currentDancers.length"
           icon="clear"
           label="No dancers found"
         />
       </v-list>
-      <empty-state
+      <EmptyState
         v-else
         icon="touch_app"
         label="Enter results"
         description="Select an age group and dance"
       />
-    </blade>
-    <blade class="xs12 md4 app-scroll">
-      <placed-dancer-list
+    </Blade>
+    <Blade class="xs12 md4 app-scroll">
+      <PlacedDancerList
         v-if="currentDance && placedDancers.length"
         :admin="true"
         :dance="currentDance"
@@ -54,14 +54,14 @@
         @dancer-toggle="handleTie($event[0], $event[1])"
         @dancer-reorder="handleDrag($event)"
       />
-      <empty-state
+      <EmptyState
         v-else
         icon="vertical_split"
         label="Order dancers"
         description="Select dancers in the order placed"
       />
-    </blade>
-  </blades>
+    </Blade>
+  </Blades>
 </template>
 
 <script>
@@ -81,7 +81,7 @@ import {
 } from '@/helpers/results';
 
 export default {
-  name: 'admin-results',
+  name: 'AdminResults',
   props: {
     groupId: String,
     danceId: String,
@@ -197,13 +197,13 @@ export default {
 </script>
 
 <style lang="scss">
-.admin-results {
-  .result-list-item {
+.AdminResults {
+  .ResultListItem {
     &.selected {
       background-color: rgba(0, 0, 0, 0.12);
     }
   }
-  .dancer-list-item {
+  .DancerListItem {
     .group {
       display: none;
     }

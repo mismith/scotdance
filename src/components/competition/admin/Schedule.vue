@@ -1,7 +1,7 @@
 <template>
-  <blades class="admin-schedule" :stacks="true">
+  <Blades class="AdminSchedule" :stacks="true">
     <template v-for="blade in blades">
-      <blade
+      <Blade
         :key="blade.collection"
         id="blade-root"
         v-if="blade.parent()"
@@ -58,7 +58,7 @@
               </v-list-tile>
 
               <v-divider v-if="blade.presets.length" class="mb-2" />
-              <new-dynamic-field
+              <NewDynamicField
                 :field="{ title: 'Add Custom', data: 'name' }"
                 @change="handleListItemCreate(blade, $event)"
                 class="pl-3"
@@ -66,22 +66,22 @@
             </v-list>
           </v-list-group>
         </v-list>
-      </blade>
-      <blade
+      </Blade>
+      <Blade
         :key="blade.collection"
         v-if="blade.item()"
         :id="`blade-${blade.id()}`"
         :class="`xs12 md${blade.size || 6} app-scroll`"
       >
         <form @submit.prevent class="pa-3">
-          <dynamic-field
+          <DynamicField
             v-for="field in blade.fields"
             :key="field.data"
             :field="field"
             :data="blade.item()"
             @change="handleListItemUpdate(blade, blade.id(), blade.item())"
           />
-          <admin-platforms
+          <AdminPlatforms
             v-if="blade.collection === 'dances' && currentDance.danceId"
             :path="currentPath"
             :item="currentDance"
@@ -100,17 +100,17 @@
             Delete Item
           </v-btn>
         </div>
-      </blade>
+      </Blade>
     </template>
-    <blade v-if="!currentDay">
-      <empty-state
+    <Blade v-if="!currentDay">
+      <EmptyState
         icon="event_note"
         label="Edit schedule entries"
         description="Add or select an item to edit"
       />
-    </blade>
+    </Blade>
 
-    <dialog-card
+    <DialogCard
       v-model="confirmRemove"
       title="Delete item"
       text="Are you sure you want to permanently delete this item?"
@@ -118,7 +118,7 @@
       submit-label="Yes"
       @submit="handleListItemRemove(confirmRemove.blade, confirmRemove.itemId)"
     />
-  </blades>
+  </Blades>
 </template>
 
 <script>
@@ -134,7 +134,7 @@ import {
 import { getScheduleItemDanceName } from '@/helpers/competition';
 
 export default {
-  name: 'admin-schedule',
+  name: 'AdminSchedule',
   props: {
     dayId: String,
     blockId: String,
@@ -441,11 +441,9 @@ export default {
 </script>
 
 <style lang="scss">
-.admin-schedule {
-  .blade {
-    .sortable-handle {
-      margin-right: 8px;
-    }
+.AdminSchedule {
+  .sortable-handle {
+    margin-right: 8px;
   }
 }
 </style>

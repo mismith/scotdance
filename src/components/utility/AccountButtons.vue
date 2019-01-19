@@ -1,5 +1,5 @@
 <template>
-  <div class="account-buttons">
+  <div class="AccountButtons">
     <v-btn
       @click="$store.commit('setCurrentDialog', 'register')"
       class="mx-0"
@@ -19,12 +19,12 @@
 <script>
 
 export default {
-  name: 'account-buttons',
+  name: 'AccountButtons',
 };
 </script>
 
 <style lang="scss">
-.account-buttons {
+.AccountButtons {
   display: flex;
   flex-direction: column;
   align-items: center;

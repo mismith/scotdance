@@ -47,7 +47,7 @@
           </v-list-tile>
         </v-list>
 
-        <dialog-card
+        <DialogCard
           v-model="confirmClearLocalStorage"
           title="Clear App Cache"
           cancel-label="No"
@@ -62,19 +62,19 @@
             <li>stored scroll positions</li>
           </ul>
           <p><strong>Are you sure you want to permanently erase these stored settings?</strong></p>
-        </dialog-card>
+        </DialogCard>
       </v-menu>
     </v-toolbar>
 
     <v-navigation-drawer v-model="menuVisible" app absolute touchless class="app-scroll-frame">
       <header class="account-header primary flex-none">
         <div class="account-bg"></div>
-        <account-buttons v-if="!me" class="pa-3" />
+        <AccountButtons v-if="!me" class="pa-3" />
         <div v-else>
           <v-list three-line>
             <v-list-tile class="has-avatar">
               <v-avatar :size="64">
-                <gravatar :user="me" />
+                <Gravatar :user="me" />
               </v-avatar>
             </v-list-tile>
           </v-list>
@@ -91,9 +91,9 @@
           </v-list>
         </div>
 
-        <register-dialog />
-        <login-dialog />
-        <requires-auth-dialog name="favorites">
+        <RegisterDialog />
+        <LoginDialog />
+        <RequiresAuthDialog name="favorites">
           <v-card-title slot="title" class="title">
             Track your favourites
             <v-icon color="secondary">star</v-icon>
@@ -101,8 +101,8 @@
 
           <p>To see the dancers you care most about <strong>featured throughout the app</strong>, you'll need an account first.</p>
           <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
-        </requires-auth-dialog>
-        <requires-auth-dialog name="submissions">
+        </RequiresAuthDialog>
+        <RequiresAuthDialog name="submissions">
           <v-card-title slot="title" class="title">
             <v-flex>Submit your competition</v-flex>
             <v-icon color="secondary">how_to_vote</v-icon>
@@ -110,7 +110,7 @@
 
           <p>To bring the app to your event, you'll need an account first.</p>
           <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
-        </requires-auth-dialog>
+        </RequiresAuthDialog>
       </header>
 
       <div class="app-scroll-frame app-scroll">
@@ -148,7 +148,7 @@
               </v-btn>
             </v-subheader>
 
-            <competition-list-item
+            <CompetitionListItem
               v-for="competition in relevantCompetitions"
               :key="competition[idKey]"
               :competition="competition"
@@ -178,14 +178,14 @@
           <v-list>
             <v-subheader>Links</v-subheader>
 
-            <prompt-to-update v-if="needsUpdating">
+            <PromptToUpdate v-if="needsUpdating">
               <v-list-tile slot="activator" color="secondary">
                 <v-list-tile-avatar>
                   <v-icon color="secondary">fiber_new</v-icon>
                 </v-list-tile-avatar>
                 <v-list-tile-title>Update App</v-list-tile-title>
               </v-list-tile>
-            </prompt-to-update>
+            </PromptToUpdate>
 
             <v-list-tile to="/" exact @click="closeMenu()">
               <v-list-tile-avatar>
@@ -219,7 +219,7 @@
         />
       </keep-alive>
       <div v-else class="app-scroll-frame">
-        <spinner />
+        <Spinner />
       </div>
     </v-content>
   </v-app>

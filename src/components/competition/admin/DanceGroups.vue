@@ -1,6 +1,6 @@
 <template>
-  <blades class="admin-dance-groups" :stacks="true">
-    <blade id="blade-groups" :active="!currentGroup" class="xs12 md4 app-scroll">
+  <Blades class="AdminDanceGroups" :stacks="true">
+    <Blade id="blade-groups" :active="!currentGroup" class="xs12 md4 app-scroll">
       <v-list v-if="groups.length">
         <v-list-tile
           v-for="group in groups"
@@ -14,14 +14,14 @@
           <v-icon>chevron_right</v-icon>
         </v-list-tile>
       </v-list>
-      <empty-state
+      <EmptyState
         v-else
         icon="clear"
         label="No age groups found"
         description="Add or import some first"
       />
-    </blade>
-    <blade id="blade-dances" :active="currentGroup" class="xs12 md4 app-scroll">
+    </Blade>
+    <Blade id="blade-dances" :active="currentGroup" class="xs12 md4 app-scroll">
       <v-list v-if="currentGroup">
         <v-list-tile
           v-for="dance in dances"
@@ -45,29 +45,29 @@
             Paste
           </v-btn>
         </footer>
-        <empty-state
+        <EmptyState
           v-else
           icon="clear"
           label="No dances found"
         />
       </v-list>
-      <empty-state
+      <EmptyState
         v-else
         icon="call_merge"
         label="Link dances"
         description="Pick dances for each age group"
       />
-    </blade>
-    <blade class="xs12 md4 app-scroll">
-      <hot-table v-if="currentGroupDances.length" :settings="hotSettings" />
-      <empty-state
+    </Blade>
+    <Blade class="xs12 md4 app-scroll">
+      <HotTable v-if="currentGroupDances.length" :settings="hotSettings" />
+      <EmptyState
         v-else
         icon="vertical_split"
         label="Championship draws"
         description="Specify dancer order for each dance"
       />
-    </blade>
-  </blades>
+    </Blade>
+  </Blades>
 </template>
 
 <script>
@@ -201,9 +201,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.admin-dance-groups {
-
-}
-</style>

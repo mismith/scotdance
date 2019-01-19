@@ -1,5 +1,5 @@
 <template>
-  <div class="competitions app-scroll-frame">
+  <div class="Competitions app-scroll-frame">
     <keep-alive>
       <router-view
         :competitions="competitions"
@@ -12,7 +12,7 @@
 
 <script>
 export default {
-  name: 'competitions',
+  name: 'Competitions',
   props: {
     competitions: Array,
     competitionsRef: Object,
@@ -20,9 +20,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.competitions {
-
-}
-</style>

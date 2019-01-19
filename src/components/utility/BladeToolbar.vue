@@ -1,5 +1,5 @@
 <template>
-  <v-toolbar dense class="blade-toolbar">
+  <v-toolbar dense class="BladeToolbar">
     <v-btn flat icon @click="handleClick">
       <v-icon>chevron_left</v-icon>
     </v-btn>
@@ -9,7 +9,7 @@
 
 <script>
 export default {
-  name: 'blade-toolbar',
+  name: 'BladeToolbar',
   props: {
     text: String,
   },
@@ -20,9 +20,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.blade-toolbar {
-
-}
-</style>

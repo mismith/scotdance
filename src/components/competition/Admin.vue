@@ -1,5 +1,5 @@
 <template>
-  <requires-permission :permission="hasPermission" class="competition-admin app-scroll-frame">
+  <RequiresPermission :permission="hasPermission" class="CompetitionAdmin app-scroll-frame">
     <v-toolbar dense>
       <div v-if="inTabs('info', 'categories', 'dancers', 'groups')">
         <v-btn flat @click="showImport = true">Import&hellip;</v-btn>
@@ -10,7 +10,7 @@
       </div>
 
       <div v-if="currentSection">
-        <preset-picker
+        <PresetPicker
           v-if="currentSection.presets"
           :presets="currentSection.presets"
           :prop="currentSection[idKey] === 'dances' ? p => danceExtender(p).$name : 'name'"
@@ -29,7 +29,7 @@
     </v-toolbar>
 
     <div v-if="currentSection" class="app-scroll-frame app-scroll">
-      <mi-hot-table
+      <MiHotTable
         v-if="currentSection.hot"
         :settings="currentSection.hot"
         :data="this[$root.currentTab]"
@@ -46,7 +46,7 @@
     </div>
 
     <v-dialog v-model="showImport" @keydown.esc.stop="showImport = false">
-      <admin-import
+      <AdminImport
         :competition-data-ref="competitionDataRef"
         :groups="groups"
         :categories="categories"
@@ -55,7 +55,7 @@
       />
     </v-dialog>
     <!-- <v-dialog v-model="showImportResults" @keydown.esc.stop="showImportResults = false">
-      <admin-import-results
+      <AdminImportResults
         :competition-data-ref="competitionDataRef"
         :groups="groups"
         :dances="dances"
@@ -77,7 +77,7 @@
         <v-icon :class="section.icon"></v-icon>
       </v-btn>
     </v-bottom-nav>
-  </requires-permission>
+  </RequiresPermission>
 </template>
 
 <script>
@@ -93,7 +93,7 @@ import MiHotTable from '@/components/admin/utility/MiHotTable.vue';
 import PresetPicker from '@/components/competition/admin/utility/PresetPicker.vue';
 
 export default {
-  name: 'competition-admin',
+  name: 'CompetitionAdmin',
   props: {
     competitionId: String,
     competitionRef: {
@@ -235,15 +235,9 @@ export default {
   components: {
     RequiresPermission,
     MiHotTable,
-    AdminImport: () => import(/* webpackChunkName: "admin-import" */ '@/components/competition/admin/utility/Import.vue'),
-    AdminImportResults: () => import(/* webpackChunkName: "admin-import" */ '@/components/competition/admin/utility/ImportResults.vue'),
+    AdminImport: () => import(/* webpackChunkName: "AdminImport" */ '@/components/competition/admin/utility/Import.vue'),
+    AdminImportResults: () => import(/* webpackChunkName: "AdminImport" */ '@/components/competition/admin/utility/ImportResults.vue'),
     PresetPicker,
   },
 };
 </script>
-
-<style lang="scss">
-.competition-admin {
-
-}
-</style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="competitions-list app-scroll-frame alt">
+  <div class="CompetitionsList app-scroll-frame alt">
     <div
       v-if="loaded"
       v-persist-scroll="'/competitions'"
@@ -17,7 +17,7 @@
           <v-subheader slot="activator">{{ group.name }}</v-subheader>
 
           <v-list two-line>
-            <competition-list-item
+            <CompetitionListItem
               v-for="competition in group.competitions"
               :key="competition[idKey]"
               :competition="competition"
@@ -28,14 +28,14 @@
       </v-list>
 
       <div v-if="!competitions.length">
-        <empty-state
+        <EmptyState
           icon="clear"
           label="No competitions found"
         />
       </div>
     </div>
     <div v-else class="app-scroll-frame">
-      <spinner />
+      <Spinner />
     </div>
   </div>
 </template>
@@ -49,7 +49,7 @@ import {
 } from '@/helpers/router';
 
 export default {
-  name: 'competitions-list',
+  name: 'CompetitionsList',
   props: {
     competitions: Array,
     competitionsRef: Object,
@@ -112,9 +112,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.competitions-list {
-
-}
-</style>

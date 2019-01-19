@@ -1,19 +1,19 @@
 <template>
-  <blades class="admin-users">
-    <blade :active="!currentUser" class="xs12 md4">
+  <Blades class="AdminUsers">
+    <Blade :active="!currentUser" class="xs12 md4">
       <div v-if="users.length" class="app-scroll-frame">
         <v-toolbar>
-          <search-field v-model="filterBy" />
+          <SearchField v-model="filterBy" />
         </v-toolbar>
 
-        <paginated-list v-if="loaded" :items="filteredUsers">
+        <PaginatedList v-if="loaded" :items="filteredUsers">
           <v-list-tile
             slot-scope="user"
             :to="{ name: $route.name, params: { userId: user[idKey] } }"
             :class="{ active: userId === user[idKey] }"
           >
             <v-list-tile-avatar>
-              <gravatar :user="user" />
+              <Gravatar :user="user" />
             </v-list-tile-avatar>
             <v-list-tile-content>
               <v-list-tile-title>{{ user.displayName }}</v-list-tile-title>
@@ -21,22 +21,22 @@
             </v-list-tile-content>
             <v-icon>chevron_right</v-icon>
           </v-list-tile>
-        </paginated-list>
+        </PaginatedList>
         <div v-else class="app-scroll-frame">
-          <spinner />
+          <Spinner />
         </div>
       </div>
-      <empty-state
+      <EmptyState
         v-else
         icon="clear"
         label="No users found"
       />
-    </blade>
-    <blade :active="currentUser" class="xs12 md8">
-      <blade-toolbar class="hidden-md-and-up" />
+    </Blade>
+    <Blade :active="currentUser" class="xs12 md8">
+      <BladeToolbar class="hidden-md-and-up" />
 
       <div v-if="currentUser" class="app-scroll pa-3">
-        <dynamic-form
+        <DynamicForm
           :fields="section.fields"
           :data="currentUser"
           @field-change="handleChanges($event, `users/${userId}`)"
@@ -50,14 +50,14 @@
           chips
         />
       </div>
-      <empty-state
+      <EmptyState
         v-else
         icon="touch_app"
         label="See user details"
         description="Select a user"
       />
-    </blade>
-  </blades>
+    </Blade>
+  </Blades>
 </template>
 
 <script>
@@ -71,7 +71,7 @@ import DynamicForm from '@/components/admin/utility/DynamicForm.vue';
 import BladeToolbar from '@/components/utility/BladeToolbar.vue';
 
 export default {
-  name: 'admin-users',
+  name: 'AdminUsers',
   props: {
     userId: String,
     section: Object,
@@ -154,9 +154,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.admin-users {
-
-}
-</style>

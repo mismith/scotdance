@@ -1,9 +1,9 @@
 <template>
-  <blades class="competition-dancers alt">
-    <blade :active="!currentDancer" class="xs12 md6">
+  <Blades class="CompetitionDancers alt">
+    <Blade :active="!currentDancer" class="xs12 md6">
       <div v-if="dancers.length" class="app-scroll-frame">
         <v-toolbar dense>
-          <search-field v-model="filterBy" class="flex mr-2" />
+          <SearchField v-model="filterBy" class="flex mr-2" />
           <v-menu @selected="sortBy">
             <v-btn icon slot="activator">
               <v-icon>filter_list</v-icon>
@@ -47,7 +47,7 @@
               </v-subheader>
 
               <v-list two-line>
-                <dancer-list-item
+                <DancerListItem
                   v-for="dancer in group"
                   :key="dancer[idKey]"
                   :dancer="dancer"
@@ -56,17 +56,17 @@
               </v-list>
             </v-list-group>
           </v-list>
-          <empty-state
+          <EmptyState
             v-else-if="!onlyFavorites"
             icon="error_outline"
             label="No dancers match"
           />
-          <empty-state
+          <EmptyState
             v-else-if="me"
             icon="star_half"
             label="No favourite dancers"
           />
-          <empty-state
+          <EmptyState
             v-else
             icon="star_half"
             label="No favourite dancers"
@@ -74,22 +74,22 @@
           />
         </div>
       </div>
-      <empty-state
+      <EmptyState
         v-else
         icon="clear"
         label="No dancers yet"
         description="Check back later"
       />
-    </blade>
-    <blade :active="currentDancer" class="xs12 md6">
+    </Blade>
+    <Blade :active="currentDancer" class="xs12 md6">
       <div v-if="currentDancer" class="app-scroll-frame">
-        <blade-toolbar class="hidden-md-and-up" />
+        <BladeToolbar class="hidden-md-and-up" />
 
         <div
           v-persist-scroll="`/competitions/${competitionId}/dancers/${dancerId}`"
           class="app-scroll-frame app-scroll"
         >
-          <dancer-report
+          <DancerReport
             :dancer="currentDancer"
             :dancers="dancers"
             :dances="dances"
@@ -98,14 +98,14 @@
           />
         </div>
       </div>
-      <empty-state
+      <EmptyState
         v-else
         icon="touch_app"
         label="See dancer details"
         description="Select a dancer"
       />
-    </blade>
-  </blades>
+    </Blade>
+  </Blades>
 </template>
 
 <script>
@@ -124,7 +124,7 @@ import {
 } from '@/helpers/router';
 
 export default {
-  name: 'competition-dancers',
+  name: 'CompetitionDancers',
   props: {
     competitionId: String,
     dancerId: String,
@@ -257,8 +257,8 @@ export default {
 </script>
 
 <style lang="scss">
-.competition-dancers {
-  .search-field {
+.CompetitionDancers {
+  .SearchField {
     .v-input__control {
       min-height: 36px !important;
 

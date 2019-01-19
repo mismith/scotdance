@@ -1,5 +1,5 @@
 <template>
-  <v-card class="admin-import-results">
+  <v-card class="AdminImportResults">
     <v-stepper v-model="step">
       <v-stepper-header>
         <v-stepper-step :editable="!!imported.length" :complete="step > 1" :step="1">
@@ -87,29 +87,29 @@
           </v-card-actions>
         </v-stepper-content>
         <v-stepper-content :step="3" class="pa-0">
-          <blades class="stacks">
-            <blade class="xs12 md6 app-scroll alt">
-              <results-list
+          <Blades class="stacks">
+            <Blade class="xs12 md6 app-scroll alt">
+              <ResultsList
                 :groups="groups.filter(group => Object.keys(results).includes(group[idKey]))"
                 :dances="dances"
                 :dancers="dancers"
                 :results="results"
               />
-            </blade>
-            <blade class="xs12 md6 app-scroll alt">
-              <placed-dancer-list
+            </Blade>
+            <Blade class="xs12 md6 app-scroll alt">
+              <PlacedDancerList
                 v-if="placedDancers.length"
                 :dance="currentDance"
                 :dancers="placedDancers"
               />
-              <empty-state
+              <EmptyState
                 v-else
                 icon="vertical_split"
                 label="Placed dancers"
                 description="Double-check the results to import"
               />
-            </blade>
-          </blades>
+            </Blade>
+          </Blades>
 
           <v-divider />
           <v-card-actions class="justify-end flex-none">
@@ -147,7 +147,7 @@ import {
 } from '@/helpers/results';
 
 export default {
-  name: 'admin-import-results',
+  name: 'AdminImportResults',
   props: {
     groupId: String,
     danceId: String,
@@ -370,9 +370,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.admin-import-results {
-
-}
-</style>

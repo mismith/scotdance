@@ -1,6 +1,6 @@
 <template>
-  <blades class="admin-submissions">
-    <blade :active="!currentSubmission" class="xs12 md4">
+  <Blades class="AdminSubmissions">
+    <Blade :active="!currentSubmission" class="xs12 md4">
       <div v-if="submissions.length" class="app-scroll-frame app-scroll">
         <v-list v-if="loaded" two-line>
           <v-list-tile
@@ -30,17 +30,17 @@
           </v-list-tile>
         </v-list>
         <div v-else class="app-scroll-frame">
-          <spinner />
+          <Spinner />
         </div>
       </div>
-      <empty-state
+      <EmptyState
         v-else
         icon="clear"
         label="No submissions found"
       />
-    </blade>
-    <blade :active="currentSubmission" class="xs12 md8">
-      <blade-toolbar class="hidden-md-and-up" />
+    </Blade>
+    <Blade :active="currentSubmission" class="xs12 md8">
+      <BladeToolbar class="hidden-md-and-up" />
 
       <div v-if="currentSubmission" class="app-scroll-frame app-scroll alt">
         <v-list expand class="grouped flex">
@@ -52,7 +52,7 @@
             <v-subheader slot="activator">
               {{ step.name }}
             </v-subheader>
-            <dynamic-form
+            <DynamicForm
               :fields="step.fields"
               :data="currentSubmission[step[idKey]]"
               class="white pa-3"
@@ -93,14 +93,14 @@
           </div>
         </footer>
       </div>
-      <empty-state
+      <EmptyState
         v-else
         icon="touch_app"
         label="See submission details"
         description="Select a submission"
       />
-    </blade>
-  </blades>
+    </Blade>
+  </Blades>
 </template>
 
 <script>
@@ -112,7 +112,7 @@ import DynamicForm from '@/components/admin/utility/DynamicForm.vue';
 import BladeToolbar from '@/components/utility/BladeToolbar.vue';
 
 export default {
-  name: 'admin-submissions',
+  name: 'AdminSubmissions',
   props: {
     submissionId: String,
     submissions: Array,
@@ -166,9 +166,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.admin-submissions {
-
-}
-</style>

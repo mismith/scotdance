@@ -1,9 +1,10 @@
 <template>
   <v-dialog
+    ref="dialog"
     v-model="isOpen"
     :max-width="fullWidth ? 'none' : 300"
+    class="DialogCard"
     @keydown.esc.stop="handleCancel"
-    ref="dialog"
   >
     <slot slot="activator" name="activator"></slot>
     <form @submit.prevent="handleSubmit" class="v-dialog--scrollable">
@@ -50,7 +51,7 @@
 
 <script>
 export default {
-  name: 'dialog-card',
+  name: 'DialogCard',
   props: {
     value: true,
     title: String,
@@ -110,9 +111,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.dialog-card {
-
-}
-</style>

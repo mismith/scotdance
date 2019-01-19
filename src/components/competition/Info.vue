@@ -1,5 +1,5 @@
 <template>
-  <div class="competition-info app-scroll-frame alt">
+  <div class="CompetitionInfo app-scroll-frame alt">
     <div
       v-persist-scroll="`/competitions/${competitionId}/info`"
       class="app-scroll-frame app-scroll"
@@ -70,7 +70,7 @@
           <v-subheader slot="activator">{{ name }}s</v-subheader>
 
           <v-list two-line :class="{ 'long-list': group.length > 12 }">
-            <dancer-list-item
+            <DancerListItem
               v-for="member of group"
               :key="member[idKey]"
               :dancer="member"
@@ -81,7 +81,7 @@
                 <img :src="member.image" />
               </v-list-tile-avatar>
               <span v-else slot="avatar" />
-            </dancer-list-item>
+            </DancerListItem>
           </v-list>
         </v-list-group>
       </v-list>
@@ -100,7 +100,7 @@ import {
 } from '@/helpers/router';
 
 export default {
-  name: 'competition-info',
+  name: 'CompetitionInfo',
   props: {
     competitionId: String,
     competition: Object,
@@ -140,9 +140,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.competition-info {
-
-}
-</style>

@@ -1,12 +1,12 @@
 <template>
-  <v-layout row class="blades app-scroll-frame" :class="{ stacks }">
+  <v-layout row class="Blades app-scroll-frame" :class="{ stacks }">
     <slot />
   </v-layout>
 </template>
 
 <script>
 export default {
-  name: 'blades',
+  name: 'Blades',
   props: {
     stacks: Boolean,
   },
@@ -14,7 +14,7 @@ export default {
 </script>
 
 <style lang="scss">
-.blades {
+.Blades {
   position: relative;
 
   @media (min-width: 960px) {
