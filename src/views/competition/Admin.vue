@@ -92,6 +92,9 @@ import RequiresPermission from '@/components/RequiresPermission.vue';
 import MiHotTable from '@/components/admin/MiHotTable.vue';
 import PresetPicker from '@/components/admin/PresetPicker.vue';
 
+const AdminImport = () => import(/* webpackChunkName: "AdminImport" */ '@/components/admin/Import.vue');
+// const AdminImportResults = () => import(/* webpackChunkName: "AdminImport" */ '@/components/admin/ImportResults.vue');
+
 export default {
   name: 'CompetitionAdmin',
   props: {
@@ -120,7 +123,7 @@ export default {
       idKey,
 
       showImport: false,
-      showImportResults: false,
+      // showImportResults: false,
 
       saving: false,
       savingPromises: [],
@@ -235,8 +238,8 @@ export default {
   components: {
     RequiresPermission,
     MiHotTable,
-    AdminImport: () => import(/* webpackChunkName: "AdminImport" */ '@/components/admin/Import.vue'),
-    AdminImportResults: () => import(/* webpackChunkName: "AdminImport" */ '@/components/admin/ImportResults.vue'),
+    AdminImport,
+    // AdminImportResults,
     PresetPicker,
   },
 };

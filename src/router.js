@@ -16,6 +16,17 @@ import CompetitionSchedule from '@/views/competition/Schedule.vue';
 import CompetitionResults from '@/views/competition/Results.vue';
 import CompetitionInvite from '@/views/competition/Invite.vue';
 
+const CompetitionAdmin = () => import(/* webpackChunkName: "admin" */ '@/views/competition/Admin.vue');
+const CompetitionAdminInfo = () => import(/* webpackChunkName: "admin" */ '@/views/competition/admin/Info.vue');
+const CompetitionAdminSchedule = () => import(/* webpackChunkName: "admin" */ '@/views/competition/admin/Schedule.vue');
+const CompetitionAdminResults = () => import(/* webpackChunkName: "admin" */ '@/views/competition/admin/Results.vue');
+const CompetitionAdminDanceGroups = () => import(/* webpackChunkName: "admin" */ '@/views/competition/admin/DanceGroups.vue');
+
+const Admin = () => import(/* webpackChunkName: "admin" */ '@/views/Admin.vue');
+const AdminInfo = () => import(/* webpackChunkName: "admin" */ '@/views/admin/Info.vue');
+const AdminSubmissions = () => import(/* webpackChunkName: "admin" */ '@/views/admin/Submissions.vue');
+const AdminUsers = () => import(/* webpackChunkName: "admin" */ '@/views/admin/Users.vue');
+
 Vue.use(Router);
 
 export default new Router({
@@ -59,7 +70,9 @@ export default new Router({
           props: true,
           meta: {
             async title(route) {
-              const snap = await db.child(`competitions/${route.params.competitionId}/name`).once('value');
+              const snap = await db
+                .child(`competitions/${route.params.competitionId}/name`)
+                .once('value');
               return snap.val() || 'Competition';
             },
             bodyClass: 'has-bottom-bar',
@@ -112,7 +125,7 @@ export default new Router({
             },
             {
               path: 'admin',
-              component: () => import(/* webpackChunkName: "admin" */ '@/views/competition/Admin.vue'),
+              component: CompetitionAdmin,
               meta: {
                 title: 'Competition Admin',
               },
@@ -128,25 +141,25 @@ export default new Router({
                 {
                   path: 'info/:subsectionId?',
                   name: 'competition.admin.info',
-                  component: () => import(/* webpackChunkName: "admin" */ '@/views/competition/admin/Info.vue'),
+                  component: CompetitionAdminInfo,
                   props: true,
                 },
                 {
                   path: 'schedule/:dayId?/:blockId?/:eventId?/:danceId?',
                   name: 'competition.admin.schedule',
-                  component: () => import(/* webpackChunkName: "admin" */ '@/views/competition/admin/Schedule.vue'),
+                  component: CompetitionAdminSchedule,
                   props: true,
                 },
                 {
                   path: 'results/:groupId?/:danceId?',
                   name: 'competition.admin.results',
-                  component: () => import(/* webpackChunkName: "admin" */ '@/views/competition/admin/Results.vue'),
+                  component: CompetitionAdminResults,
                   props: true,
                 },
                 {
                   path: 'dance-groups/:groupId?',
                   name: 'competition.admin.dance-groups',
-                  component: () => import(/* webpackChunkName: "admin" */ '@/views/competition/admin/DanceGroups.vue'),
+                  component: CompetitionAdminDanceGroups,
                   props: true,
                 },
                 {
@@ -162,7 +175,7 @@ export default new Router({
     },
     {
       path: '/admin',
-      component: () => import(/* webpackChunkName: "admin" */ '@/views/Admin.vue'),
+      component: Admin,
       meta: {
         title: 'App Admin',
       },
@@ -174,18 +187,18 @@ export default new Router({
         {
           path: 'info',
           name: 'admin.info',
-          component: () => import(/* webpackChunkName: "admin" */ '@/views/admin/Info.vue'),
+          component: AdminInfo,
         },
         {
           path: 'submissions/:submissionId?',
           name: 'admin.submissions',
-          component: () => import(/* webpackChunkName: "admin" */ '@/views/admin/Submissions.vue'),
+          component: AdminSubmissions,
           props: true,
         },
         {
           path: 'users/:userId?',
           name: 'admin.users',
-          component: () => import(/* webpackChunkName: "admin" */ '@/views/admin/Users.vue'),
+          component: AdminUsers,
           props: true,
         },
         {
