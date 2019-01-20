@@ -159,11 +159,11 @@ firebase.auth().onAuthStateChanged((me) => {
 
 // router
 Vue.localStorage.addProperty('routeInfo', Object, {});
-router.beforeEach(async (to, prev, next) => {
+router.beforeEach(async (to, from, next) => {
   // restore last route (e.g. when re-opening a force-quit app)
   const routeInfo = Vue.localStorage.get('routeInfo', {});
   const routeToRestore = routeInfo.$current;
-  if (!prev.name && routeToRestore && routeToRestore !== to.name) {
+  if (!from.name && to.name === 'home' && routeToRestore !== 'home') {
     return next({
       name: routeToRestore,
       ...routeInfo[routeToRestore],
@@ -171,7 +171,7 @@ router.beforeEach(async (to, prev, next) => {
   }
 
   // restore to previous params for competition routes, if necessary & possible
-  if (to.params.competitionId && to.name !== prev.name) {
+  if (to.params.competitionId && to.name !== from.name) {
     const storedRoute = routeInfo[to.name];
     if (storedRoute && storedRoute.params.competitionId === to.params.competitionId) {
       // same competition, so consider restoring a tab's params
@@ -189,12 +189,9 @@ router.beforeEach(async (to, prev, next) => {
   const titleChunks = await getTitleChunks(to);
   document.title = titleChunks.reverse().join(' • ');
 
-  return next();
-});
-
-router.beforeEach((to, from, next) => {
   store.commit('setLoading', true);
-  next();
+
+  return next();
 });
 router.afterEach((to) => {
   store.commit('setLoading', false);
