@@ -265,10 +265,19 @@ export default {
           item: () => this.currentDance,
           id: () => this.danceId,
           params: itemId => ({
-            dayId: this.dayId, blockId: this.blockId, eventId: this.eventId, danceId: itemId,
+            dayId: this.dayId,
+            blockId: this.blockId,
+            eventId: this.eventId,
+            danceId: itemId,
           }),
           name: item => item && getScheduleItemDanceName(item, this.dances),
           fields: [
+            {
+              data: 'danceId',
+              title: 'Dance',
+              type: 'select',
+              presets: this.dances.map(dance => ({ text: dance.$name, value: dance[idKey] })),
+            },
             {
               data: 'name',
               title: 'Name',
@@ -277,12 +286,6 @@ export default {
               data: 'description',
               title: 'Description',
               type: 'textarea',
-            },
-            {
-              data: 'danceId',
-              title: 'Dance',
-              type: 'select',
-              presets: this.dances,
             },
           ],
           presets: this.dances.map(dance => ({ danceId: dance[idKey] })),
