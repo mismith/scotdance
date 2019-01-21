@@ -34,7 +34,7 @@
               :dancers="findPlacedDancers(group, callbacks, dancers, results)"
               :has-placeholder-dancers="isInProgress(group, dances, results)"
             >
-              {{ group.name }}
+              {{ group.name || group.$name }}
             </ResultListItem>
             <v-list-tile v-if="!category.$groups.length" class="empty">
               <v-list-tile-avatar>
