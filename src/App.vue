@@ -209,15 +209,14 @@
     </v-navigation-drawer>
 
     <v-content id="main" class="app-scroll-frame">
-      <keep-alive v-if="!$store.state.loading && $store.state.me !== undefined">
-        <router-view
-          v-bind="{
-            competitions,
-            competitionsRef,
-            competitionsDataRef,
-          }"
-        />
-      </keep-alive>
+      <router-view
+        v-if="!$store.state.loading && $store.state.me !== undefined"
+        v-bind="{
+          competitions,
+          competitionsRef,
+          competitionsDataRef,
+        }"
+      />
       <div v-else class="app-scroll-frame">
         <Spinner />
       </div>

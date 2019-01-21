@@ -1,12 +1,10 @@
 <template>
   <div class="Competitions app-scroll-frame">
-    <keep-alive>
-      <router-view
-        :competitions="competitions"
-        :competitions-ref="competitionsRef"
-        :competitions-data-ref="competitionsDataRef"
-      />
-    </keep-alive>
+    <router-view
+      :competitions="competitions"
+      :competitions-ref="competitionsRef"
+      :competitions-data-ref="competitionsDataRef"
+    />
   </div>
 </template>
 

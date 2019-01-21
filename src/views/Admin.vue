@@ -19,20 +19,19 @@
         :data="this[$root.currentTab]"
         @change="handleHotChanges"
       />
-      <keep-alive v-else>
-        <router-view
-          v-bind="{
-            section: currentSection,
-            competitions,
-            submissions,
-            faqs,
-            users,
-            favorites,
-            permissions,
-          }"
-          @change="handleChanges"
-        />
-      </keep-alive>
+      <router-view
+        v-else
+        v-bind="{
+          section: currentSection,
+          competitions,
+          submissions,
+          faqs,
+          users,
+          favorites,
+          permissions,
+        }"
+        @change="handleChanges"
+      />
     </div>
 
     <v-bottom-nav v-if="hasPermission" :value="true" :active="$root.currentTab">

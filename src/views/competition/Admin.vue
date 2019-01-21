@@ -35,14 +35,13 @@
         :data="this[$root.currentTab]"
         @change="handleHotChanges"
       />
-      <keep-alive v-else>
-        <router-view
-          v-bind="$props"
-          :section="currentSection"
-          @change="handleDataChanges"
-          @info-change="handleInfoChanges"
-        />
-      </keep-alive>
+      <router-view
+        v-else
+        v-bind="$props"
+        :section="currentSection"
+        @change="handleDataChanges"
+        @info-change="handleInfoChanges"
+      />
     </div>
 
     <v-dialog v-model="showImport" @keydown.esc.stop="showImport = false">

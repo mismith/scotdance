@@ -2,25 +2,24 @@
   <div class="Competition app-scroll-frame">
     <div v-if="loaded" class="app-scroll-frame">
       <div v-if="competitionExists" class="app-scroll-frame">
-        <keep-alive v-if="$root.currentTab === 'info' || $route.name === 'competition.invite' || competition.published || hasPermission">
-          <router-view
-            v-bind="{
-              competitionId,
-              competitionRef,
-              competitionDataRef,
-              competition,
-              dancers,
-              groups,
-              categories,
-              dances,
-              staff,
-              platforms,
-              draws,
-              schedule,
-              results,
-            }"
-          />
-        </keep-alive>
+        <router-view
+          v-if="$root.currentTab === 'info' || $route.name === 'competition.invite' || competition.published || hasPermission"
+          v-bind="{
+            competitionId,
+            competitionRef,
+            competitionDataRef,
+            competition,
+            dancers,
+            groups,
+            categories,
+            dances,
+            staff,
+            platforms,
+            draws,
+            schedule,
+            results,
+          }"
+        />
         <div v-else class="app-scroll-frame alt">
           <EmptyState
             icon="access_time"
