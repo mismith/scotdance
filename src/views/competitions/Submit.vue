@@ -188,7 +188,6 @@ export default {
       await db.child('competitions:submissions').push({
         ...this.submission,
         submitted: this.$moment().format(),
-        userId: this.$store.state.me[idKey],
       });
 
       this.submitting = false;

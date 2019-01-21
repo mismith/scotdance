@@ -50,14 +50,14 @@ class Submissions {
   async handleApproved(snap, ctx) {
     const submission = snap.val();
     const model = this.getTemplateModel(submission);
-    const { competition, userId } = submission;
+    const { competition, submittedBy } = submission;
 
     // create competition, and give submitter admin privileges to it
     const competitionSnap = await this.config.db.child('competitions').push(competition);
     const competitionId = competitionSnap.key;
     await this.config.db.update({
-      [`competitions:permissions/${competitionId}/users/${userId}`]: true,
-      [`users:permissions/${userId}/competitions/${competitionId}`]: true,
+      [`competitions:permissions/${competitionId}/users/${submittedBy}`]: true,
+      [`users:permissions/${submittedBy}/competitions/${competitionId}`]: true,
     });
 
     // send email
@@ -85,7 +85,12 @@ class Submissions {
       ref,
       onCreate: ref.onCreate(async (after, ctx) => {
         try {
-          return this.handleCreate(after, ctx);
+          await after.ref.update({
+            submittedBy: ctx.auth.uid,
+          });
+          const snap = await after.ref.once('value');
+
+          return this.handleCreate(snap, ctx);
         } catch (err) {
           return this.handleError(err, after, ctx);
         }
