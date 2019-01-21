@@ -53,11 +53,18 @@
               {{ step.name }}
             </v-subheader>
             <DynamicForm
+              v-if="currentSubmission[step[idKey]]"
               :fields="step.fields"
               :data="currentSubmission[step[idKey]]"
               class="white pa-3"
               @field-change="handleChanges($event, `competitions:submissions/${submissionId}/${step[idKey]}`)"
             />
+            <v-list-tile v-else class="empty">
+              <v-list-tile-avatar>
+                <v-icon>clear</v-icon>
+              </v-list-tile-avatar>
+              No more info.
+            </v-list-tile>
           </v-list-group>
         </v-list>
         <footer class="layout align-center flex-none mb-2">
