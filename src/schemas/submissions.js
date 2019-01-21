@@ -13,12 +13,6 @@ export const submissionsFields = [
     description: 'e.g. "2018-07-30"',
   },
   {
-    data: 'location',
-    required: true,
-    title: 'Location',
-    description: 'e.g. "Calgary, AB" or "Calgary, Alberta, Canada"',
-  },
-  {
     data: 'venue',
     title: 'Venue Name',
     description: 'e.g. "Telus Convention Centre"',
@@ -27,6 +21,12 @@ export const submissionsFields = [
     data: 'address',
     title: 'Venue Address',
     description: 'e.g. "120 9th Ave SE"',
+  },
+  {
+    data: 'location',
+    required: true,
+    title: 'Location',
+    description: 'e.g. "Calgary, AB" or "Calgary, Alberta, Canada"',
   },
   {
     data: 'description',
