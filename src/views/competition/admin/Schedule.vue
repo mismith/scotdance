@@ -1,12 +1,18 @@
 <template>
   <Blades class="AdminSchedule" :stacks="true">
-    <template v-for="blade in blades">
+    <template v-for="(blade, index) in blades">
       <Blade
         :key="blade.collection"
         id="blade-root"
         v-if="blade.parent()"
         class="xs12 md3 app-scroll alt"
       >
+        <BladeToolbar
+          v-if="index >= 1 && blade.item()"
+          :to="getBladeRoute(blade.params())"
+          :text="blades[index - 1].name(blades[index - 1].item())"
+          class="hidden-sm-and-down"
+        />
         <v-list expand class="grouped">
           <v-list-group :value="true">
             <v-subheader slot="activator" style="text-transform: capitalize;">
@@ -124,6 +130,7 @@
 
 <script>
 import Draggable from 'vuedraggable';
+import BladeToolbar from '@/components/BladeToolbar.vue';
 import DynamicField from '@/components/admin/DynamicField.vue';
 import NewDynamicField from '@/components/admin/NewDynamicField.vue';
 import AdminPlatforms from '@/components/admin/Platforms.vue';
@@ -448,6 +455,7 @@ export default {
   },
   components: {
     Draggable,
+    BladeToolbar,
     DynamicField,
     NewDynamicField,
     AdminPlatforms,
