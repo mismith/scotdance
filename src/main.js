@@ -189,13 +189,9 @@ router.beforeEach(async (to, from, next) => {
   const titleChunks = await getTitleChunks(to);
   document.title = titleChunks.reverse().join(' • ');
 
-  store.commit('setLoading', true);
-
   return next();
 });
 router.afterEach((to) => {
-  store.commit('setLoading', false);
-
   // store route/tab states for restoring (e.g. on app re-open)
   const routeInfo = Vue.localStorage.get('routeInfo', {});
   routeInfo.$current = to.name;

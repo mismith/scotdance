@@ -25,8 +25,6 @@ export default new Vuex.Store({
       platform: 'Web',
     },
 
-    loading: true,
-
     credentials: {
       email: undefined,
       password: undefined,
@@ -64,10 +62,6 @@ export default new Vuex.Store({
   mutations: {
     updateField,
     ...firebaseMutations,
-
-    setLoading(state, to) {
-      state.loading = to;
-    },
 
     setPackage(state, to) {
       state.$package = to;

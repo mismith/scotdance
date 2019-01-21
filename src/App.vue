@@ -210,7 +210,7 @@
 
     <v-content id="main" class="app-scroll-frame">
       <router-view
-        v-if="!$store.state.loading && $store.state.me !== undefined"
+        v-if="$store.state.me !== undefined"
         v-bind="{
           competitions,
           competitionsRef,
