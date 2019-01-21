@@ -1,12 +1,16 @@
 <template>
   <div class="PresetPicker">
-    <v-btn flat @click="dialogOpen = true">Add Preset(s)</v-btn>
+    <v-btn flat @click="dialogOpen = true">Add Presets&hellip;</v-btn>
 
-    <DialogCard v-model="dialogOpen" title="Select preset(s) to add:" @submit="select">
-      <v-list slot="text">
-        <v-list-tile v-for="preset in presets" :key="getValue(preset)">
+    <DialogCard v-model="dialogOpen" title="Select preset(s) to add:" @submit="handleSubmit">
+      <v-list slot="text" class="app-scroll">
+        <v-list-tile
+          v-for="preset in presets"
+          :key="getValue(preset)"
+          @click="handleToggle(preset)"
+        >
           <v-list-tile-action>
-            <v-checkbox v-model="selected[getValue(preset)]" /><!-- eslint-disable-line vue/valid-v-model -->
+            <v-checkbox :value="selected[getValue(preset)]" />
           </v-list-tile-action>
           <v-list-tile-content>
             <v-list-tile-title>{{ getValue(preset) }}</v-list-tile-title>
@@ -20,7 +24,6 @@
         <v-btn
           flat
           color="primary"
-          :disabled="!selectedPresets.length"
           type="submit"
         >
           Add
@@ -67,7 +70,11 @@ export default {
       }
       return preset[this.prop];
     },
-    select() {
+    handleToggle(preset) {
+      const value = this.getValue(preset);
+      this.$set(this.selected, value, !this.selected[value]);
+    },
+    handleSubmit() {
       // trigger only selected presets
       this.$emit('select', this.selectedPresets);
 
