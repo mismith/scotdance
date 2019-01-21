@@ -10,7 +10,6 @@ export default {
         order: 1,
         title: 'General',
         fields: [
-          ...submissionsFields,
           {
             data: 'image',
             title: 'Image',
@@ -18,6 +17,7 @@ export default {
             description: '(optional) SVG, PNG, or JPG image under 244KB',
             storagePath: 'competitions/images',
           },
+          ...submissionsFields,
           {
             data: 'listed',
             title: 'Listed',

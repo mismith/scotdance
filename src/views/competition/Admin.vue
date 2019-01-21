@@ -84,10 +84,10 @@
 import saveCSV from 'save-csv';
 import { makeKeyValuePairColumn } from '@/helpers/admin';
 import { danceExtender } from '@/helpers/competition';
-import sections from '@/schemas/sections';
 import { idKey, db, toOrderedArray } from '@/helpers/firebase';
 import { getFirstExisting } from '@/helpers/router';
 import { getRows } from '@/helpers/results';
+import competitionAdminSchema from '@/schemas/competition-admin';
 import RequiresPermission from '@/components/RequiresPermission.vue';
 import MiHotTable from '@/components/admin/MiHotTable.vue';
 import PresetPicker from '@/components/admin/PresetPicker.vue';
@@ -139,7 +139,7 @@ export default {
     },
 
     sections() {
-      return toOrderedArray(sections)
+      return toOrderedArray(competitionAdminSchema)
         .map((section) => {
           if (section.hot) {
             // eslint-disable-next-line no-param-reassign

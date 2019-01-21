@@ -52,7 +52,7 @@
 </template>
 
 <script>
-import sectionAdmin from '@/schemas/sections-admin';
+import adminSchema from '@/schemas/admin';
 import { idKey, db, toOrderedArray } from '@/helpers/firebase';
 import { getFirstExisting } from '@/helpers/router';
 import RequiresPermission from '@/components/RequiresPermission.vue';
@@ -95,7 +95,7 @@ export default {
     },
 
     sections() {
-      return toOrderedArray(sectionAdmin);
+      return toOrderedArray(adminSchema);
     },
     competitions() {
       return this.competitionsRaw;
