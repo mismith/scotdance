@@ -96,7 +96,7 @@
 
         <v-spacer />
         <div class="layout align-center justify-center flex-none">
-          <v-btn flat color="error" @click="confirmRemove = { blade, itemId: blade.id() }">
+          <v-btn flat color="error" @click="handleListItemRemove(blade)">
             Delete Item
           </v-btn>
         </div>
@@ -111,12 +111,13 @@
     </Blade>
 
     <DialogCard
-      v-model="confirmRemove"
+      :value="confirmRemove"
       title="Delete item"
       text="Are you sure you want to permanently delete this item?"
       cancel-label="No"
       submit-label="Yes"
-      @submit="handleListItemRemove(confirmRemove.blade, confirmRemove.itemId)"
+      @cancel="confirmRemove.reject()"
+      @submit="confirmRemove.resolve()"
     />
   </Blades>
 </template>
@@ -155,7 +156,7 @@ export default {
     return {
       idKey,
 
-      confirmRemove: false,
+      confirmRemove: undefined,
 
       blades: [
         {
@@ -383,16 +384,6 @@ export default {
       // redirect
       this.goToBlade(params);
     },
-    handleListItemRemove(blade, itemId) {
-      const path = this.getPath(blade.params(itemId));
-      this.$emit('change', {
-        [path]: null,
-      });
-
-      // redirect
-      this.confirmRemove = false;
-      this.goToBlade(blade.params());
-    },
     handleListItemUpdate(blade, itemId, item) {
       const path = this.getPath(blade.params(itemId));
       const clone = {
@@ -410,6 +401,27 @@ export default {
       this.$emit('change', {
         [path]: clone,
       });
+    },
+    async handleListItemRemove(blade) {
+      try {
+        await new Promise((resolve, reject) => {
+          this.confirmRemove = { resolve, reject };
+        });
+
+        const itemId = blade.id();
+        const path = this.getPath(blade.params(itemId));
+        this.$emit('change', {
+          [path]: null,
+        });
+
+        // redirect
+        this.confirmRemove = false;
+        this.goToBlade(blade.params());
+      } catch (err) {
+        if (err) console.error(err); // eslint-disable-line no-console
+      } finally {
+        this.confirmRemove = null;
+      }
     },
 
     handleListItemReorder(blade, { oldIndex, newIndex }) {
