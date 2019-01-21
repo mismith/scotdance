@@ -54,7 +54,11 @@
     </Blade>
     <Blade :active="currentGroup" class="xs12 md8">
       <div v-if="currentGroup" class="app-scroll-frame">
-        <BladeToolbar :text="currentGroup.$name" class="hidden-md-and-up" />
+        <BladeToolbar
+          :to="{ name: $route.name, params: { competitionId } }"
+          :text="currentGroup.$name"
+          class="hidden-md-and-up"
+        />
 
         <div
           id="results-detail"

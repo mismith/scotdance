@@ -40,7 +40,10 @@
       />
     </Blade>
     <Blade :active="currentSubmission" class="xs12 md8">
-      <BladeToolbar class="hidden-md-and-up" />
+      <BladeToolbar
+        :to="{ name: $route.name }"
+        class="hidden-md-and-up"
+      />
 
       <div v-if="currentSubmission" class="app-scroll-frame app-scroll alt">
         <v-list expand class="grouped flex">

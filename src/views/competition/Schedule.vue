@@ -76,6 +76,7 @@
     <Blade :active="currentEvent" class="xs12 md8">
       <div v-if="currentEvent" class="app-scroll-frame">
         <BladeToolbar
+          :to="{ name: $route.name, params: { competitionId } }"
           :text="`${currentDay.name} &rsaquo; ${currentBlock.name}`"
           class="hidden-md-and-up"
         />

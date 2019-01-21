@@ -33,7 +33,10 @@
       />
     </Blade>
     <Blade :active="currentUser" class="xs12 md8">
-      <BladeToolbar class="hidden-md-and-up" />
+      <BladeToolbar
+        :to="{ name: $route.name }"
+        class="hidden-md-and-up"
+      />
 
       <div v-if="currentUser" class="app-scroll pa-3">
         <DynamicForm

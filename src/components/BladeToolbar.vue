@@ -1,9 +1,9 @@
 <template>
   <v-toolbar dense class="BladeToolbar">
-    <v-btn flat icon @click="handleClick">
+    <v-btn :to="to" flat icon>
       <v-icon>chevron_left</v-icon>
     </v-btn>
-    <div v-html="text || ($route.meta && $route.meta.title) || 'Back'" />
+    <div v-html="text || ($route.meta && $route.meta.title) || 'Back'" class="ellipsis" />
   </v-toolbar>
 </template>
 
@@ -12,11 +12,7 @@ export default {
   name: 'BladeToolbar',
   props: {
     text: String,
-  },
-  methods: {
-    handleClick() {
-      this.$router.go(-1);
-    },
+    to: [String, Object],
   },
 };
 </script>

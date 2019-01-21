@@ -83,7 +83,10 @@
     </Blade>
     <Blade :active="currentDancer" class="xs12 md6">
       <div v-if="currentDancer" class="app-scroll-frame">
-        <BladeToolbar class="hidden-md-and-up" />
+        <BladeToolbar
+          :to="{ name: $route.name, params: { competitionId } }"
+          class="hidden-md-and-up"
+        />
 
         <div
           v-persist-scroll="`/competitions/${competitionId}/dancers/${dancerId}`"
