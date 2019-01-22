@@ -34,6 +34,48 @@
             </div>
           </EmptyState>
         </div>
+
+        <v-bottom-nav v-if="!isAdminRoute" :value="true" class="listed-only">
+          <v-btn
+            color="primary"
+            flat
+            value="info"
+            :to="{ name: 'competition.info', params: { competitionId } }"
+          >
+            <span>Info</span>
+            <v-icon class="icon-info" />
+          </v-btn>
+          <v-btn
+            color="primary"
+            flat
+            value="dancers"
+            :to="{ name: 'competition.dancers', params: { competitionId } }"
+            class="published-only"
+          >
+            <span>Dancers</span>
+            <v-icon class="icon-people" />
+          </v-btn>
+          <v-btn
+            color="primary"
+            flat
+            value="schedule"
+            :to="{ name: 'competition.schedule', params: { competitionId } }"
+            class="published-only"
+          >
+            <span>Schedule</span>
+            <v-icon class="icon-clock" />
+          </v-btn>
+          <v-btn
+            color="primary"
+            flat
+            value="results"
+            :to="{ name: 'competition.results', params: { competitionId } }"
+            class="published-only"
+          >
+            <span>Results</span>
+            <v-icon class="icon-trophy" />
+          </v-btn>
+        </v-bottom-nav>
       </div>
       <div v-else class="app-scroll-frame alt">
         <EmptyState
@@ -45,48 +87,6 @@
     <div v-else class="app-scroll-frame alt">
       <Spinner />
     </div>
-
-    <v-bottom-nav v-if="competitionExists && !isAdminRoute" :value="true" class="listed-only">
-      <v-btn
-        color="primary"
-        flat
-        value="info"
-        :to="{ name: 'competition.info', params: { competitionId } }"
-      >
-        <span>Info</span>
-        <v-icon class="icon-info" />
-      </v-btn>
-      <v-btn
-        color="primary"
-        flat
-        value="dancers"
-        :to="{ name: 'competition.dancers', params: { competitionId } }"
-        class="published-only"
-      >
-        <span>Dancers</span>
-        <v-icon class="icon-people" />
-      </v-btn>
-      <v-btn
-        color="primary"
-        flat
-        value="schedule"
-        :to="{ name: 'competition.schedule', params: { competitionId } }"
-        class="published-only"
-      >
-        <span>Schedule</span>
-        <v-icon class="icon-clock" />
-      </v-btn>
-      <v-btn
-        color="primary"
-        flat
-        value="results"
-        :to="{ name: 'competition.results', params: { competitionId } }"
-        class="published-only"
-      >
-        <span>Results</span>
-        <v-icon class="icon-trophy" />
-      </v-btn>
-    </v-bottom-nav>
 
     <DialogCard v-model="staffVisible">
       <v-card-title v-if="currentDialogData" slot="title" class="layout row wrap">
@@ -164,7 +164,9 @@ export default {
       return this.$route.name.indexOf('.admin.') >= 0 || this.$route.name === 'competition.invite';
     },
     competitionExists() {
-      return this.competition && (this.competition['.value'] !== null || this.isAdminRoute);
+      return this.competition
+        && (this.competition['.value'] !== null || this.isAdminRoute)
+        && (this.competition.listed || this.isAdmin);
     },
 
     competition() {
