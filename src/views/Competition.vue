@@ -1,9 +1,12 @@
 <template>
-  <div class="Competition app-scroll-frame">
+  <div
+    class="Competition app-scroll-frame"
+    :class="{listed: competition.listed, published: competition.published, 'is-admin': isAdmin }"
+  >
     <div v-if="loaded" class="app-scroll-frame">
       <div v-if="competitionExists" class="app-scroll-frame">
         <router-view
-          v-if="$root.currentTab === 'info' || $route.name === 'competition.invite' || competition.published || hasPermission"
+          v-if="hasPermission"
           v-bind="{
             competitionId,
             competitionRef,
@@ -43,7 +46,7 @@
       <Spinner />
     </div>
 
-    <v-bottom-nav v-if="competitionExists && !isAdminRoute" :value="true">
+    <v-bottom-nav v-if="competitionExists && !isAdminRoute" :value="true" class="listed-only">
       <v-btn
         color="primary"
         flat
@@ -58,6 +61,7 @@
         flat
         value="dancers"
         :to="{ name: 'competition.dancers', params: { competitionId } }"
+        class="published-only"
       >
         <span>Dancers</span>
         <v-icon class="icon-people" />
@@ -67,6 +71,7 @@
         flat
         value="schedule"
         :to="{ name: 'competition.schedule', params: { competitionId } }"
+        class="published-only"
       >
         <span>Schedule</span>
         <v-icon class="icon-clock" />
@@ -76,6 +81,7 @@
         flat
         value="results"
         :to="{ name: 'competition.results', params: { competitionId } }"
+        class="published-only"
       >
         <span>Results</span>
         <v-icon class="icon-trophy" />
@@ -145,8 +151,14 @@ export default {
       },
     },
 
-    hasPermission() {
+    isAdmin() {
       return this.$store.getters.hasPermission(`competitions/${this.competitionId}`);
+    },
+    hasPermission() {
+      return this.$root.currentTab === 'info'
+        || this.$route.name === 'competition.invite'
+        || this.competition.published
+        || this.isAdmin;
     },
     isAdminRoute() {
       return this.$route.name.indexOf('.admin.') >= 0 || this.$route.name === 'competition.invite';
@@ -277,3 +289,14 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.Competition {
+  &.is-admin {
+    &:not(.listed) .listed-only,
+    &.listed:not(.published) .published-only {
+      background-image: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.1) 5px, rgba(0, 0, 0, 0.1) 10px) !important;
+    }
+  }
+}
+</style>

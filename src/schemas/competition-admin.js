@@ -331,11 +331,13 @@ export default {
     order: 6,
     name: 'Dance Groups',
     icon: 'icon-playlist',
+    className: 'published-only',
   },
   dancers: {
     order: 7,
     name: 'Dancers',
     icon: 'icon-people',
+    className: 'published-only',
     hot: {
       columns: [
         {
@@ -371,6 +373,7 @@ export default {
     order: 8,
     name: 'Platforms',
     icon: 'icon-layers',
+    className: 'published-only',
     hot: {
       columns: [
         {
@@ -389,10 +392,12 @@ export default {
     order: 9,
     name: 'Schedule',
     icon: 'icon-clock',
+    className: 'published-only',
   },
   results: {
     order: 10,
     name: 'Results',
     icon: 'icon-trophy',
+    className: 'published-only',
   },
 };

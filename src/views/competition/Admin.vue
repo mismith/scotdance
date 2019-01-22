@@ -63,13 +63,20 @@
       />
     </v-dialog> -->
 
-    <v-bottom-nav v-if="hasPermission" :value="true" :active="$root.currentTab" style="overflow-x: auto; -webkit-overflow-scrolling: touch; justify-content: unset;">
+    <v-bottom-nav
+      v-if="hasPermission"
+      :value="true"
+      :active="$root.currentTab"
+      class="listed-only"
+      style="overflow-x: auto; -webkit-overflow-scrolling: touch; justify-content: unset;"
+    >
       <v-btn
         v-for="section in sections"
         :key="section[idKey]"
         :value="section[idKey]"
         color="primary"
         flat
+        :class="section.className"
         @click="goToTab(section[idKey])"
       >
         <span>{{ section.name }}</span>
