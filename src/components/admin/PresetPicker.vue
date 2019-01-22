@@ -1,36 +1,33 @@
 <template>
-  <div class="PresetPicker">
-    <v-btn flat @click="dialogOpen = true">Add Presets&hellip;</v-btn>
+  <DialogCard v-model="dialogOpen" title="Select preset(s) to add:" class="PresetPicker" @submit="handleSubmit">
+    <v-btn slot="activator" flat>Add Presets&hellip;</v-btn>
+    <v-list slot="text" class="app-scroll">
+      <v-list-tile
+        v-for="preset in presets"
+        :key="getValue(preset)"
+        @click="handleToggle(preset)"
+      >
+        <v-list-tile-action>
+          <v-checkbox :value="selected[getValue(preset)]" />
+        </v-list-tile-action>
+        <v-list-tile-content>
+          <v-list-tile-title>{{ getValue(preset) }}</v-list-tile-title>
+        </v-list-tile-content>
+      </v-list-tile>
+    </v-list>
 
-    <DialogCard v-model="dialogOpen" title="Select preset(s) to add:" @submit="handleSubmit">
-      <v-list slot="text" class="app-scroll">
-        <v-list-tile
-          v-for="preset in presets"
-          :key="getValue(preset)"
-          @click="handleToggle(preset)"
-        >
-          <v-list-tile-action>
-            <v-checkbox :value="selected[getValue(preset)]" />
-          </v-list-tile-action>
-          <v-list-tile-content>
-            <v-list-tile-title>{{ getValue(preset) }}</v-list-tile-title>
-          </v-list-tile-content>
-        </v-list-tile>
-      </v-list>
+    <v-card-actions slot="actions" class="justify-end">
+      <v-btn flat @click="dialogOpen = false">Cancel</v-btn>
 
-      <v-card-actions slot="actions" class="justify-end">
-        <v-btn flat @click="dialogOpen = false">Cancel</v-btn>
-
-        <v-btn
-          flat
-          color="primary"
-          type="submit"
-        >
-          Add
-        </v-btn>
-      </v-card-actions>
-    </DialogCard>
-  </div>
+      <v-btn
+        flat
+        color="primary"
+        type="submit"
+      >
+        Add
+      </v-btn>
+    </v-card-actions>
+  </DialogCard>
 </template>
 
 <script>
@@ -63,6 +60,14 @@ export default {
       return this.presets.filter(preset => selected.includes(this.getValue(preset)));
     },
   },
+  watch: {
+    dialogOpen(isOpen) {
+      // reset on close
+      if (!isOpen) {
+        this.selected = {};
+      }
+    },
+  },
   methods: {
     getValue(preset) {
       if (typeof this.prop === 'function') {
@@ -77,9 +82,6 @@ export default {
     handleSubmit() {
       // trigger only selected presets
       this.$emit('select', this.selectedPresets);
-
-      // reset
-      this.selected = {};
 
       // close
       this.dialogOpen = false;

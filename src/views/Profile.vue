@@ -105,7 +105,6 @@ import {
   idKey,
   db,
 } from '@/helpers/firebase';
-import DynamicField from '@/components/admin/DynamicField.vue';
 
 export default {
   name: 'Profile',
@@ -186,9 +185,6 @@ export default {
         }
       }
     },
-  },
-  components: {
-    DynamicField,
   },
 };
 </script>

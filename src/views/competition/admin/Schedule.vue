@@ -348,7 +348,10 @@ export default {
   },
   methods: {
     getPath({
-      dayId, blockId, eventId, danceId,
+      dayId,
+      blockId,
+      eventId,
+      danceId,
     }) {
       const pathProps = [
         ['days', dayId],
