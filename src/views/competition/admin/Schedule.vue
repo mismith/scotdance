@@ -13,64 +13,50 @@
           :text="blades[index - 1].name(blades[index - 1].item())"
           class="hidden-sm-and-down"
         />
-        <v-list expand class="grouped">
-          <v-list-group :value="true">
-            <v-subheader slot="activator" style="text-transform: capitalize;">
-              {{ blade.collection }}
-            </v-subheader>
+        <v-subheader class="layout">
+          <v-flex style="text-transform: capitalize;">{{ blade.collection }}</v-flex>
 
-            <v-list>
-              <draggable
-                :value="blade.items()"
-                class="draggable"
-                :options="{ handle: '.sortable-handle' }"
-                @sort="handleListItemReorder(blade, $event)"
-              >
-                <v-list-tile
-                  v-for="item in blade.items()"
-                  :key="item[idKey]"
-                  :to="getBladeRoute(blade.params(item[idKey]))"
-                >
-                  <v-icon class="sortable-handle">drag_indicator</v-icon>
-                  <v-list-tile-content>
-                    <v-list-tile-title>{{ blade.name(item) }}</v-list-tile-title>
-                  </v-list-tile-content>
-                  <v-icon>chevron_right</v-icon>
-                </v-list-tile>
-              </draggable>
+          <PresetPicker
+            v-if="blade.presets"
+            :presets="blade.presets"
+            :prop="blade.name"
+            @select="items => items.map(item => handleListItemCreate(blade, item))"
+          >
+            <v-btn slot="activator" flat fab small>
+              <v-icon>playlist_add</v-icon>
+            </v-btn>
+          </PresetPicker>
 
-              <v-list-tile v-if="!blade.items().length" class="empty">
-                <v-list-tile-avatar>
-                  <v-icon>clear</v-icon>
-                </v-list-tile-avatar>
-                No items yet.
-              </v-list-tile>
-            </v-list>
-          </v-list-group>
-          <v-list-group :value="true">
-            <v-subheader slot="activator">Add Presets</v-subheader>
+          <v-btn flat fab small @click="handleListItemCreate(blade)">
+            <v-icon>add</v-icon>
+          </v-btn>
+        </v-subheader>
+        <v-list>
+          <draggable
+            :value="blade.items()"
+            class="draggable"
+            :options="{ handle: '.sortable-handle' }"
+            @sort="handleListItemReorder(blade, $event)"
+          >
+            <v-list-tile
+              v-for="item in blade.items()"
+              :key="item[idKey]"
+              :to="getBladeRoute(blade.params(item[idKey]))"
+            >
+              <v-icon class="sortable-handle">drag_indicator</v-icon>
+              <v-list-tile-content>
+                <v-list-tile-title>{{ blade.name(item) }}</v-list-tile-title>
+              </v-list-tile-content>
+              <v-icon>chevron_right</v-icon>
+            </v-list-tile>
+          </draggable>
 
-            <v-list>
-              <v-list-tile
-                v-for="preset in blade.presets"
-                :key="blade.name(preset)"
-                :class="{ dimmed: isBladePresetUsed(blade, preset) }"
-                @click="handleListItemCreate(blade, preset)"
-              >
-                <v-list-tile-content>
-                  <v-list-tile-title>{{ blade.name(preset) }}</v-list-tile-title>
-                </v-list-tile-content>
-                <v-icon>add</v-icon>
-              </v-list-tile>
-
-              <v-divider v-if="blade.presets.length" class="mb-2" />
-              <NewDynamicField
-                :field="{ title: 'Add Custom', data: 'name' }"
-                @change="handleListItemCreate(blade, $event)"
-                class="pl-3"
-              />
-            </v-list>
-          </v-list-group>
+          <v-list-tile v-if="!blade.items().length" class="empty">
+            <v-list-tile-avatar>
+              <v-icon>clear</v-icon>
+            </v-list-tile-avatar>
+            No items yet.
+          </v-list-tile>
         </v-list>
       </Blade>
       <Blade
@@ -117,6 +103,21 @@
     </Blade>
 
     <DialogCard
+      :value="confirmCreate"
+      title="Add new item:"
+      @cancel="confirmCreate.reject()"
+      @submit="confirmCreate.resolve()"
+    >
+      <div slot="text" class="app-scroll px-3">
+        <v-text-field ref="confirmCreateValue" v-model="confirmCreateValue" label="Name" />
+      </div>
+      <v-card-actions slot="actions" class="justify-end">
+        <v-btn flat @click="confirmCreate = false">Cancel</v-btn>
+
+        <v-btn flat color="primary" type="submit">Add</v-btn>
+      </v-card-actions>
+    </DialogCard>
+    <DialogCard
       :value="confirmRemove"
       title="Delete item"
       text="Are you sure you want to permanently delete this item?"
@@ -134,6 +135,7 @@ import BladeToolbar from '@/components/BladeToolbar.vue';
 import DynamicField from '@/components/admin/DynamicField.vue';
 import NewDynamicField from '@/components/admin/NewDynamicField.vue';
 import AdminPlatforms from '@/components/admin/Platforms.vue';
+import PresetPicker from '@/components/admin/PresetPicker.vue';
 import {
   idKey,
   db,
@@ -163,6 +165,8 @@ export default {
     return {
       idKey,
 
+      confirmCreate: undefined,
+      confirmCreateValue: undefined,
       confirmRemove: undefined,
 
       blades: [
@@ -345,6 +349,14 @@ export default {
       },
       immediate: true,
     },
+    async confirmCreate(confirmCreate) {
+      if (!confirmCreate) {
+        this.confirmCreateValue = undefined;
+      } else {
+        await this.$nextTick();
+        this.$refs.confirmCreateValue.focus();
+      }
+    },
   },
   methods: {
     getPath({
@@ -387,15 +399,33 @@ export default {
       this.$router.push(this.getBladeRoute(params));
     },
 
-    handleListItemCreate(blade, item) {
-      const params = blade.params(db.push().key);
-      const path = this.getPath(params);
-      this.$emit('change', {
-        [path]: item,
-      });
+    async handleListItemCreate(blade, item = undefined) {
+      try {
+        const itemId = db.push().key;
+        const params = blade.params(itemId);
+        const path = this.getPath(params);
 
-      // redirect
-      this.goToBlade(params);
+        if (!item) {
+          await new Promise((resolve, reject) => {
+            this.confirmCreate = { resolve, reject };
+          });
+          item = { // eslint-disable-line no-param-reassign
+            name: this.confirmCreateValue,
+          };
+        }
+
+        this.$emit('change', {
+          [path]: item,
+        });
+
+        // redirect
+        this.goToBlade(params);
+      } catch (err) {
+        if (err) console.error(err); // eslint-disable-line no-console
+      } finally {
+        this.confirmCreate = null;
+        this.confirmCreateValue = undefined;
+      }
     },
     handleListItemUpdate(blade, itemId, item) {
       const path = this.getPath(blade.params(itemId));
@@ -428,7 +458,6 @@ export default {
         });
 
         // redirect
-        this.confirmRemove = false;
         this.goToBlade(blade.params());
       } catch (err) {
         if (err) console.error(err); // eslint-disable-line no-console
@@ -462,6 +491,7 @@ export default {
     DynamicField,
     NewDynamicField,
     AdminPlatforms,
+    PresetPicker,
   },
 };
 </script>

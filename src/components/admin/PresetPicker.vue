@@ -1,6 +1,8 @@
 <template>
   <DialogCard v-model="dialogOpen" title="Select preset(s) to add:" class="PresetPicker" @submit="handleSubmit">
-    <v-btn slot="activator" flat>Add Presets&hellip;</v-btn>
+    <slot name="activator" slot="activator">
+      <v-btn flat>Add Presets&hellip;</v-btn>
+    </slot>
     <v-list slot="text" class="app-scroll">
       <v-list-tile
         v-for="preset in presets"
