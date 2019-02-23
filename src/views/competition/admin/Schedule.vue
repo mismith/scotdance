@@ -22,14 +22,20 @@
             :prop="blade.name"
             @select="items => items.map(item => handleListItemCreate(blade, item))"
           >
-            <v-btn slot="activator" flat fab small>
-              <v-icon>playlist_add</v-icon>
-            </v-btn>
+            <v-tooltip slot="activator" bottom>
+              <v-btn slot="activator" flat fab small>
+                <v-icon>playlist_add</v-icon>
+              </v-btn>
+              <span>Add preset(s)</span>
+            </v-tooltip>
           </PresetPicker>
 
-          <v-btn flat fab small @click="handleListItemCreate(blade)">
-            <v-icon>add</v-icon>
-          </v-btn>
+          <v-tooltip bottom>
+            <v-btn slot="activator" flat fab small @click="handleListItemCreate(blade)">
+              <v-icon>add</v-icon>
+            </v-btn>
+            <span>Add new item</span>
+          </v-tooltip>
         </v-subheader>
         <v-list>
           <draggable
