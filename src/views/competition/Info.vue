@@ -33,11 +33,8 @@
           </div>
           <p>{{ competition.location }}</p>
         </div>
-        <div v-if="competition.description" v-html="competition.description" class="mb-3 pre-line" />
-        <p v-if="competition.sobhd">
-          <small><strong>SOBHD</strong> {{ competition.sobhd }}</small>
-        </p>
-        <v-layout wrap align-center v-if="competition.registrationURL">
+
+        <v-layout v-if="competition.registrationURL" wrap align-center class="mb-3">
           <v-btn
             :href="competition.registrationURL"
             target="_blank"
@@ -57,6 +54,11 @@
             </div>
           </v-flex>
         </v-layout>
+
+        <div v-if="competition.description" v-html="competition.description" class="mb-3 pre-line" />
+        <p v-if="competition.sobhd">
+          <small><strong>SOBHD</strong> {{ competition.sobhd }}</small>
+        </p>
       </section>
 
       <v-list v-if="staff.length" expand class="staff grouped">
