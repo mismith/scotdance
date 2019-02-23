@@ -452,7 +452,7 @@ a {
   &.ext,
   & .ext {
     &:after {
-      content: "\2197\FE0E"; // append \FE0E to prevent iOS from emojifying the arrow
+      content: "\2197\00FE0E"; // append \00FE0E to prevent iOS/Android from emojifying the arrow
       margin-left: 0.25em;
     }
   }
