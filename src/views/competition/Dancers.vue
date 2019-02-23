@@ -2,7 +2,7 @@
   <Blades class="CompetitionDancers alt">
     <Blade :active="!currentDancer" class="xs12 md6">
       <div v-if="dancers.length" class="app-scroll-frame">
-        <v-toolbar dense>
+        <v-toolbar>
           <SearchField v-model="filterBy" class="flex mr-2" />
           <v-menu @selected="sortBy">
             <v-btn icon slot="activator">
