@@ -1,0 +1,63 @@
+{
+  "project_info": {
+    "project_number": "635645850119",
+    "firebase_url": "https://scotdance.firebaseio.com",
+    "project_id": "firebase-scotdance",
+    "storage_bucket": "firebase-scotdance.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:635645850119:android:ade02e2f6d10e486",
+        "android_client_info": {
+          "package_name": "info.mismith.scotdance"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "635645850119-f80tj6l1a317su2tp4dmnphc0lso6cu6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "info.mismith.scotdance",
+            "certificate_hash": "7aab2a535341cc1102189842c4d350a05fe89316"
+          }
+        },
+        {
+          "client_id": "635645850119-6fmi3pshscivbls0pcml7er0tvfi76r3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdeEWTznk7h_h76mpMqbde-g5r6KQ4yXo"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "635645850119-6fmi3pshscivbls0pcml7er0tvfi76r3.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "635645850119-d7plcr42hkel9f3s1g6r3qt04thgm7kd.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "info.mismith.scotdance",
+                "app_store_id": "1386475626"
+              }
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
