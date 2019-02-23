@@ -39,6 +39,7 @@
             :href="competition.registrationURL"
             target="_blank"
             color="primary"
+            :disabled="$moment().isAfter(competition.registrationEnd)"
             class="ml-0 mr-3"
           >
             <span class="ext">Register</span>
