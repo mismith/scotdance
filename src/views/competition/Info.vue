@@ -56,6 +56,19 @@
           </v-flex>
         </v-layout>
 
+        <div v-if="competition.links" class="mb-3">
+          <v-btn
+            v-for="link in competition.links"
+            :key="link.url"
+            :href="link.url"
+            target="_blank"
+            color="primary"
+            class="ml-0 mr-3"
+          >
+            <span class="ext">{{ link.name }}</span>
+          </v-btn>
+        </div>
+
         <div v-if="competition.description" v-html="competition.description" class="mb-3 pre-line" />
         <p v-if="competition.sobhd">
           <small><strong>SOBHD</strong> {{ competition.sobhd }}</small>

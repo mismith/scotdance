@@ -56,8 +56,27 @@ export default {
           },
         ],
       },
-      permissions: {
+      links: {
         order: 3,
+        title: 'Links',
+        hot: {
+          columns: [
+            {
+              data: 'name',
+              title: 'Name',
+              required: true,
+            },
+            {
+              data: 'url',
+              title: 'URL',
+              // type: 'url',
+              required: true,
+            },
+          ],
+        },
+      },
+      permissions: {
+        order: 4,
         title: 'Permissions',
       },
     },

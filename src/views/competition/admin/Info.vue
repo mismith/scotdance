@@ -16,16 +16,20 @@
     </Blade>
     <Blade id="blade-form" class="xs12 md9 app-scroll">
       <template v-if="currentSubsection">
+        <MiHotTable
+          v-if="currentSubsection.hot"
+          :settings="currentSubsection.hot"
+          :data="toOrderedArray(competition[subsectionId])"
+          @change="handleInfoSubsectionChanges"
+        />
         <DynamicForm
-          v-if="currentSubsection.fields"
+          v-else-if="currentSubsection.fields"
           :fields="currentSubsection.fields"
           :data="competition"
           class="pa-3"
-          @field-change="handleChanges"
+          @field-change="handleInfoChanges"
         />
-        <template v-if="inTabs('permissions')">
-          <AdminInvites v-bind="$props" />
-        </template>
+        <AdminInvites v-else-if="inTabs('permissions')" v-bind="$props" />
 
         <v-spacer />
         <div v-if="inTabs('general')" class="layout align-center justify-center flex-none">
@@ -56,6 +60,7 @@ import {
   idKey,
   toOrderedArray,
 } from '@/helpers/firebase';
+import MiHotTable from '@/components/admin/MiHotTable.vue';
 import DynamicForm from '@/components/admin/DynamicForm.vue';
 import AdminInvites from '@/components/admin/Invites.vue';
 
@@ -102,11 +107,19 @@ export default {
       this.$router.replace({ name: 'competitions' });
     },
 
-    handleChanges(...args) {
+    handleInfoChanges(...args) {
       this.$emit('info-change', ...args);
+    },
+    handleInfoSubsectionChanges(changes) {
+      Object.entries(changes).forEach(([path, change]) => {
+        this.handleInfoChanges({
+          [`${this.subsectionId}/${path}`]: change,
+        });
+      });
     },
   },
   components: {
+    MiHotTable,
     DynamicForm,
     AdminInvites,
   },
