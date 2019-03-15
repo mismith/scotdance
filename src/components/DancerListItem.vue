@@ -21,11 +21,11 @@
 
     <slot />
 
-    <v-list-tile-action>
-      <slot name="favorite">
+    <slot name="favorite">
+      <v-list-tile-action>
         <FavoriteDancerButton :dancer="dancer" @click.stop />
-      </slot>
-    </v-list-tile-action>
+      </v-list-tile-action>
+    </slot>
     <v-list-tile-action v-if="place !== undefined">
       <place v-if="place > 0" :place="place" />
       <v-icon v-else-if="place === 0" color="primary" class="icon-trophy" />

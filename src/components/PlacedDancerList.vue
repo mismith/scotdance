@@ -20,13 +20,16 @@
           drag_indicator
         </v-icon>
 
-        <v-switch
+        <v-list-action
           slot="favorite"
           v-if="admin && dance[idKey] !== callbacks[idKey]"
-          v-show="index"
-          :input-value="dancer.$tie"
-          @click.stop="$emit('dancer-toggle', [dancer, !dancer.$tie])"
-        />
+        >
+          <v-switch
+            v-show="index"
+            :input-value="dancer.$tie"
+            @click.stop="$emit('dancer-toggle', [dancer, !dancer.$tie])"
+          />
+        </v-list-action>
       </DancerListItem>
 
       <slot />
