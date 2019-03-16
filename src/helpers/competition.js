@@ -36,3 +36,7 @@ export function danceExtender(dance) {
 export function textify(html) {
   return (html || '').replace(/<[^>]+?>/g, '').replace(/\n+/g, ' • ');
 }
+
+export function isNotEmptyObject(item) {
+  return Object.values(item || {}).some(v => v);
+}

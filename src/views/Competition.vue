@@ -117,6 +117,7 @@ import {
   findByIdKey,
   sortByKey,
   danceExtender,
+  isNotEmptyObject,
 } from '@/helpers/competition';
 import { idKey } from '@/helpers/firebase';
 
@@ -173,40 +174,51 @@ export default {
       return this.competitionRaw;
     },
     dancers() {
-      return this.dancersRaw.map(dancer => ({
-        ...dancer,
-        $number: `${10000 + Number.parseInt(dancer.number, 10)}`, // prepend with leading 'zeroes', and stringify for search
-        $name: `${dancer.firstName || ''} ${dancer.lastName || ''}`.trim(),
-        $group: findByIdKey(this.groups, dancer.groupId),
-        $favorite: this.$store.getters.isFavorite('dancers', dancer[idKey]),
-      }))
+      return this.dancersRaw
+        .map(dancer => ({
+          ...dancer,
+          $number: `${10000 + Number.parseInt(dancer.number, 10)}`, // prepend with leading 'zeroes', and stringify for search
+          $name: `${dancer.firstName || ''} ${dancer.lastName || ''}`.trim(),
+          $group: findByIdKey(this.groups, dancer.groupId),
+          $favorite: this.$store.getters.isFavorite('dancers', dancer[idKey]),
+        }))
+        .filter(isNotEmptyObject)
         .sort(sortByKey('$number')); // sort by number
     },
     groups() {
-      return this.groupsRaw.map((group, i) => ({
-        ...group,
-        $order: `${10000 + i}`, // prepend with leading 'zeroes'
-        $name: this.getGroupName(group),
-        $category: this.findCategory(group.categoryId),
-      }));
+      return this.groupsRaw
+        .map((group, i) => ({
+          ...group,
+          $order: `${10000 + i}`, // prepend with leading 'zeroes'
+          $name: this.getGroupName(group),
+          $category: this.findCategory(group.categoryId),
+        }))
+        .filter(isNotEmptyObject);
     },
     categories() {
-      return this.categoriesRaw;
+      return this.categoriesRaw
+        .filter(isNotEmptyObject);
     },
     dances() {
-      return this.dancesRaw.map(danceExtender);
+      return this.dancesRaw
+        .map(danceExtender)
+        .filter(isNotEmptyObject);
     },
     staff() {
-      return this.staffRaw.map(member => ({
-        ...member,
-        $name: `${member.firstName || ''} ${member.lastName || ''}`.trim(),
-      }));
+      return this.staffRaw
+        .map(member => ({
+          ...member,
+          $name: `${member.firstName || ''} ${member.lastName || ''}`.trim(),
+        }))
+        .filter(isNotEmptyObject);
     },
     platforms() {
-      return this.platformsRaw.map(platform => ({
-        ...platform,
-        $name: `Platform ${platform.name}`.trim(),
-      }));
+      return this.platformsRaw
+        .filter(isNotEmptyObject)
+        .map(platform => ({
+          ...platform,
+          $name: `Platform ${platform.name}`.trim(),
+        }));
     },
     draws() {
       return this.drawsRaw;
