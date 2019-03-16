@@ -406,6 +406,20 @@ export default {
         },
       ],
     },
+    presets: [
+      {
+        name: 'A',
+      },
+      {
+        name: 'B',
+      },
+      {
+        name: 'C',
+      },
+      {
+        name: 'Stage',
+      },
+    ],
   },
   schedule: {
     order: 9,
