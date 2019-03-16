@@ -107,12 +107,6 @@ store.commit('setPackage', {
   $name: 'ScotDance.app',
   ...$package,
 });
-const startSessionStack = () => {
-  if (window.SessionStack && (!window.device || (window.device && !window.device.isVirtual))) {
-    window.SessionStack.start();
-    window.SessionStack.log(`${(store.state.$device && store.state.$device.platform) || ''} App v${store.state.$package.version || '?'}`);
-  }
-};
 Vue.prototype.isApp = window.location.protocol === 'file:';
 if (Vue.prototype.isApp) {
   // allow loading cordova plugins
@@ -127,7 +121,6 @@ if (Vue.prototype.isApp) {
     window.StatusBar.show();
 
     if (window.device) store.commit('setDevice', window.device);
-    startSessionStack();
   });
 
   // scroll to top on status bar tap
@@ -146,8 +139,6 @@ if (Vue.prototype.isApp) {
       onDone: restoreScrollability,
     });
   });
-} else if (!/localhost/.test(window.location.hostname)) {
-  startSessionStack();
 }
 
 // monitor user auth

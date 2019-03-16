@@ -300,13 +300,6 @@ export default {
   watch: {
     me(me) {
       if (me) {
-        if (window.SessionStack && me[idKey]) {
-          window.SessionStack.identify({
-            userId: me[idKey],
-            email: me.email,
-            displayName: me.displayName || me.email || me[idKey],
-          });
-        }
         if (window.$crisp && me.email) {
           window.$crisp.push(['set', 'user:email', me.email]);
         }
