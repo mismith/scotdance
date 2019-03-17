@@ -305,7 +305,15 @@ export default {
               type: 'textarea',
             },
           ],
-          presets: this.dances.map(dance => ({ danceId: dance[idKey] })),
+          presets: [
+            {
+              name: 'Registration',
+            },
+            {
+              name: 'Results',
+            },
+            ...this.dances.map(dance => ({ danceId: dance[idKey] })),
+          ],
           size: 9,
         },
       ],
