@@ -124,96 +124,8 @@ export default {
       ],
     },
   },
-  categories: {
-    order: 3,
-    name: 'Categories',
-    icon: 'icon-graduation',
-    hot: {
-      columns: [
-        {
-          data: 'name',
-          title: 'Name',
-          required: true,
-        },
-      ],
-    },
-    presets: [
-      {
-        name: 'Primary',
-      },
-      {
-        name: 'Beginner',
-      },
-      {
-        name: 'Novice',
-      },
-      {
-        name: 'Intermediate',
-      },
-      {
-        name: 'Premier',
-      },
-      {
-        name: 'Restricted Premier',
-      },
-      {
-        name: 'Premier Special',
-      },
-    ],
-  },
-  groups: {
-    order: 4,
-    name: 'Age Groups',
-    icon: 'icon-organization',
-    hot: {
-      columns: [
-        {
-          data: 'categoryId',
-          title: 'Category',
-          type: 'dropdown',
-          required: true,
-        },
-        {
-          data: 'name',
-          title: 'Name',
-          required: true,
-        },
-        {
-          data: 'sponsor',
-          title: 'Trophy Sponsor',
-        },
-        {
-          data: 'trophy',
-          title: 'Trophy Name',
-        },
-      ],
-    },
-    presets: [
-      {
-        name: '7 & Under 10 Years',
-      },
-      {
-        name: '10 & Under 12 Years',
-      },
-      {
-        name: '12 & Under 14 Years',
-      },
-      {
-        name: '14 & Under 16 Years',
-      },
-      {
-        name: '16 & Under 18 Years',
-      },
-      {
-        name: '18 & Under 21 Years',
-      },
-      {
-        name: '21 Years & Over',
-      },
-    ],
-  },
   dances: {
-    order: 5,
+    order: 3,
     name: 'Dances',
     icon: 'icon-music-tone-alt',
     hot: {
@@ -346,14 +258,96 @@ export default {
       },
     ],
   },
-  'dance-groups': {
-    order: 6,
-    name: 'Dance Groups',
-    icon: 'icon-playlist',
-    className: 'published-only',
+  categories: {
+    order: 4,
+    name: 'Categories',
+    icon: 'icon-graduation',
+    hot: {
+      columns: [
+        {
+          data: 'name',
+          title: 'Name',
+          required: true,
+        },
+      ],
+    },
+    presets: [
+      {
+        name: 'Primary',
+      },
+      {
+        name: 'Beginner',
+      },
+      {
+        name: 'Novice',
+      },
+      {
+        name: 'Intermediate',
+      },
+      {
+        name: 'Premier',
+      },
+      {
+        name: 'Restricted Premier',
+      },
+      {
+        name: 'Premier Special',
+      },
+    ],
+  },
+  groups: {
+    order: 5,
+    name: 'Age Groups',
+    icon: 'icon-organization',
+    hot: {
+      columns: [
+        {
+          data: 'categoryId',
+          title: 'Category',
+          type: 'dropdown',
+          required: true,
+        },
+        {
+          data: 'name',
+          title: 'Name',
+          required: true,
+        },
+        {
+          data: 'sponsor',
+          title: 'Trophy Sponsor',
+        },
+        {
+          data: 'trophy',
+          title: 'Trophy Name',
+        },
+      ],
+    },
+    presets: [
+      {
+        name: '7 & Under 10 Years',
+      },
+      {
+        name: '10 & Under 12 Years',
+      },
+      {
+        name: '12 & Under 14 Years',
+      },
+      {
+        name: '14 & Under 16 Years',
+      },
+      {
+        name: '16 & Under 18 Years',
+      },
+      {
+        name: '18 & Under 21 Years',
+      },
+      {
+        name: '21 Years & Over',
+      },
+    ],
   },
   dancers: {
-    order: 7,
+    order: 6,
     name: 'Dancers',
     icon: 'icon-people',
     className: 'published-only',
@@ -387,6 +381,12 @@ export default {
         },
       ],
     },
+  },
+  'dance-groups': {
+    order: 7,
+    name: 'Dance Groups',
+    icon: 'icon-playlist',
+    className: 'published-only',
   },
   platforms: {
     order: 8,
