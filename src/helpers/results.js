@@ -57,12 +57,13 @@ export function findPlacedDancers(group, dance, dancers = [], results = {}, sort
   // transform ranked dancerIds into ordered array of dancer objects
   const placedDancers = placings.map((result) => {
     const [dancerId, tie] = result.split(':');
+    const placeholderDancer = getPlaceholderDancer(dancerId);
     const dancer = isPlaceholderDancerId(dancerId)
-      ? getPlaceholderDancer(dancerId)
+      ? placeholderDancer
       : findByIdKey(dancers, dancerId);
 
     if (!dancer) {
-      return dancer;
+      return placeholderDancer;
     }
     return {
       ...dancer,
