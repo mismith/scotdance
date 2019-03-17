@@ -14,7 +14,7 @@ export function hasFavorites(dancers) {
 
 export function getScheduleItemDanceName(item, dances) {
   const dance = findByIdKey(dances, item.danceId);
-  return item.$name || item.name || dance.$name || dance.name;
+  return (item && (item.$name || item.name)) || (dance && (dance.$name || dance.name));
 }
 
 export function hydrateByIdKey(ids, items = []) {
