@@ -65,14 +65,52 @@
         description="Pick dances for each age group"
       />
     </Blade>
-    <Blade class="xs12 md4 app-scroll">
-      <HotTable v-if="currentGroupDances.length" :settings="hotSettings" />
+    <Blade class="xs12 md4">
       <EmptyState
-        v-else
+        v-if="!currentGroupHasDraws || !currentGroupDances.length || !currentGroupDancers.length"
         icon="vertical_split"
         label="Championship draws"
         description="Specify dancer order for each dance"
       />
+      <div v-else class="app-scroll">
+        <HotTable :settings="hotSettings" />
+      </div>
+      <v-toolbar v-if="currentGroup">
+        <v-list-tile v-if="!currentGroupDances.length" class="empty">
+          <v-list-tile-avatar>
+            <v-icon>warning</v-icon>
+          </v-list-tile-avatar>
+          <v-list-tile-content>
+            <v-list-tile-title>
+              No dances toggled.
+            </v-list-tile-title>
+            <v-list-tile-sub-title>
+              Enable some first.
+            </v-list-tile-sub-title>
+          </v-list-tile-content>
+        </v-list-tile>
+
+        <v-list-tile v-else-if="!currentGroupDancers.length" class="empty">
+          <v-list-tile-avatar>
+            <v-icon>warning</v-icon>
+          </v-list-tile-avatar>
+          <v-list-tile-content>
+            <v-list-tile-title>No dancers in this age group.</v-list-tile-title>
+            <v-list-tile-sub-title>
+              <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dancers' } }">
+                Add or import some first &rsaquo;
+              </router-link>
+            </v-list-tile-sub-title>
+          </v-list-tile-content>
+        </v-list-tile>
+
+        <template v-else>
+          <v-switch v-model="currentGroupHasDraws" label="Enable" hide-details />
+          <v-btn flat color="primary" @click="handleShuffleCurrentGroupDraws()">
+            Auto-Fill
+          </v-btn>
+        </template>
+      </v-toolbar>
     </Blade>
   </Blades>
 </template>
@@ -104,6 +142,8 @@ export default {
   data() {
     return {
       idKey,
+
+      currentGroupDrawsEnabled: undefined,
     };
   },
   computed: {
@@ -123,9 +163,28 @@ export default {
       }
       return false;
     },
+    currentGroupDancers() {
+      if (this.currentGroup) {
+        return findGroupDancers(this.currentGroup, this.dancers);
+      }
+      return false;
+    },
+    currentGroupHasDraws: {
+      get() {
+        return this.currentGroupDrawsEnabled;
+      },
+      set(v) {
+        this.currentGroupDrawsEnabled = !!v;
+
+        if (!v) {
+          // clear if/when disabled
+          this.handleResetCurrentGroupDraws();
+        }
+      },
+    },
 
     hotSettings() {
-      const data = findGroupDancers(this.currentGroup, this.dancers).map(() => ({}));
+      const data = this.currentGroupDancers.map(() => ({}));
       const columns = this.currentGroupDances.map((dance) => {
         const danceId = dance[idKey];
         data.forEach((row, index) => {
@@ -164,6 +223,9 @@ export default {
   watch: {
     currentGroup: {
       async handler(currentGroup) {
+        this.currentGroupDrawsEnabled = this.draws && this.draws[this.groupId];
+
+        // scroll to blade, if necessary
         await this.$nextTick();
         const id = currentGroup ? 'dances' : 'groups';
         const element = document.getElementById(`blade-${id}`);
@@ -201,6 +263,36 @@ export default {
           this.handleDanceToggle(dance, true);
         }
       });
+    },
+
+    handleResetCurrentGroupDraws() {
+      this.$emit('change', {
+        [`draws/${this.groupId}`]: null,
+      });
+    },
+    handleShuffleCurrentGroupDraws() {
+      if (this.currentGroupDances && this.currentGroupDancers) {
+        const shuffle = (a) => {
+          const b = [...a];
+          for (let i = b.length - 1; i > 0; i -= 1) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [b[i], b[j]] = [b[j], b[i]];
+          }
+          return b;
+        };
+        const dancerNumbers = this.currentGroupDancers.map(dancer => dancer.number);
+        const draws = this.currentGroupDances.reduce((acc, dance) => ({
+          ...acc,
+          [dance[idKey]]: shuffle(dancerNumbers),
+        }), {});
+
+        this.handleResetCurrentGroupDraws(); // wipe existing data first
+        this.$emit('change', {
+          [`draws/${this.groupId}`]: draws,
+        });
+
+        this.currentGroupDrawsEnabled = true;
+      }
     },
   },
   components: {
