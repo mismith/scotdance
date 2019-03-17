@@ -61,7 +61,7 @@
             <v-list-tile-avatar>
               <v-icon>clear</v-icon>
             </v-list-tile-avatar>
-            No items yet.
+            <span>No items yet. <a @click="handleListItemCreate(blade)">Add one.</a></span>
           </v-list-tile>
         </v-list>
       </Blade>

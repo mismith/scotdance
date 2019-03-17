@@ -29,12 +29,32 @@
     </v-toolbar>
 
     <div v-if="currentSection" class="app-scroll-frame app-scroll">
-      <MiHotTable
-        v-if="currentSection.hot"
-        :settings="currentSection.hot"
-        :data="this[$root.currentTab]"
-        @change="handleHotChanges"
-      />
+      <template v-if="currentSection.hot">
+        <EmptyState
+          v-if="inTabs('groups') && !this.categories.length"
+          icon="warning"
+          label="No categories found"
+        >
+          <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'categories' } }">
+            <span class="subheading">Add or import some first &rsaquo;</span>
+          </router-link>
+        </EmptyState>
+        <EmptyState
+          v-else-if="inTabs('dancers') && !this.groups.length"
+          icon="warning"
+          label="No age groups found"
+        >
+          <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }">
+            <span class="subheading">Add or import some first &rsaquo;</span>
+          </router-link>
+        </EmptyState>
+        <MiHotTable
+          v-else
+          :settings="currentSection.hot"
+          :data="this[$root.currentTab]"
+          @change="handleHotChanges"
+        />
+      </template>
       <router-view
         v-else
         v-bind="$props"

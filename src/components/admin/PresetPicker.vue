@@ -16,6 +16,12 @@
           <v-list-tile-title>{{ getValue(preset) }}</v-list-tile-title>
         </v-list-tile-content>
       </v-list-tile>
+      <v-list-tile v-if="!presets.length" class="empty">
+        <v-list-tile-avatar>
+          <v-icon>clear</v-icon>
+        </v-list-tile-avatar>
+        <span>No presets found.</span>
+      </v-list-tile>
     </v-list>
 
     <v-card-actions slot="actions" class="justify-end">

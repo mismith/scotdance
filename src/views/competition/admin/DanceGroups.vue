@@ -16,10 +16,13 @@
       </v-list>
       <EmptyState
         v-else
-        icon="clear"
+        icon="warning"
         label="No age groups found"
-        description="Add or import some first"
-      />
+      >
+        <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }">
+          <span class="subheading">Add or import some first &rsaquo;</span>
+        </router-link>
+      </EmptyState>
     </Blade>
     <Blade id="blade-dances" :active="currentGroup" class="xs12 md4 app-scroll">
       <v-list v-if="currentGroup">
@@ -47,9 +50,13 @@
         </footer>
         <EmptyState
           v-else
-          icon="clear"
+          icon="warning"
           label="No dances found"
-        />
+        >
+          <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dances' } }">
+            <span class="subheading">Add or import some first &rsaquo;</span>
+          </router-link>
+        </EmptyState>
       </v-list>
       <EmptyState
         v-else

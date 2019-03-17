@@ -28,11 +28,23 @@
       </div>
     </div>
     <EmptyState
+      v-else-if="admin && !danceGroups.length"
+      icon="warning"
+      label="No dance groups found"
+      >
+      <router-link :to="{ name: 'competition.admin.dance-groups' }">
+        <span class="subheading">Configure some first &rsaquo;</span>
+      </router-link>
+    </EmptyState>
+    <EmptyState
       v-else-if="admin"
       icon="warning"
-      label="No platforms"
-      description="Add at least one platform first"
-    />
+      label="No platforms found"
+      >
+      <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'platforms' } }">
+        <span class="subheading">Add at least one platform first &rsaquo;</span>
+      </router-link>
+    </EmptyState>
     <v-list-tile v-else class="empty">
       <v-list-tile-avatar>
         <v-icon>clear</v-icon>
@@ -40,7 +52,7 @@
       No more info.
     </v-list-tile>
 
-    <footer v-if="admin">
+    <footer v-if="admin && !isEmpty">
       <v-btn flat :disabled="!item.platforms" @click="handleCopy">Copy</v-btn>
       <v-btn flat :disabled="clipboard.type !== 'platforms'" @click="handlePaste">Paste</v-btn>
     </footer>
