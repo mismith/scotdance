@@ -96,6 +96,11 @@
         <v-flex>
           <div class="title my-3">{{ currentDialogData.$name }}</div>
           <div class="subheading">{{ currentDialogData.location }}</div>
+          <div v-if="currentDialogData.website" class="subheading">
+            <a :href="formatExternalURL(currentDialogData.website)" target="_blank" class="ext">
+              {{ formatHumanURL(currentDialogData.website) }}
+            </a>
+          </div>
         </v-flex>
       </v-card-title>
       <v-card-text
@@ -113,6 +118,10 @@ import {
   mapState,
   mapMutations,
 } from 'vuex';
+import { 
+  formatExternalURL,
+  formatHumanURL,
+} from '@/helpers/router';
 import {
   findByIdKey,
   sortByKey,
@@ -239,6 +248,8 @@ export default {
     },
   },
   methods: {
+    formatExternalURL,
+    formatHumanURL,
     ...mapMutations([
       'setCurrentDialog',
     ]),

@@ -72,3 +72,11 @@ export async function checkForUpdates() {
   }
   return false;
 }
+
+export function formatExternalURL(url) {
+  return (url || '').replace(/^(?:http(s?):\/\/)?/i, 'http$1://');
+}
+
+export function formatHumanURL(url) {
+  return (url || '').replace(/^((https?:)?\/\/)?(www\.)?/i, '');
+}

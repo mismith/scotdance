@@ -125,6 +125,12 @@ export default {
         {
           data: 'image',
           title: 'Image',
+          // type: 'image',
+        },
+        {
+          data: 'website',
+          title: 'Website',
+          // type: 'url',
         },
       ],
     },
