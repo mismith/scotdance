@@ -36,7 +36,7 @@
 
         <v-layout v-if="competition.registrationURL" wrap align-center class="mb-3">
           <v-btn
-            :href="competition.registrationURL"
+            :href="formatExternalURL(competition.registrationURL)"
             target="_blank"
             color="primary"
             :disabled="$moment().isAfter(competition.registrationEnd)"
@@ -60,7 +60,7 @@
           <v-btn
             v-for="link in competition.links"
             :key="link.url"
-            :href="link.url"
+            :href="formatExternalURL(link.url)"
             target="_blank"
             color="primary"
             class="ml-0 mr-3"
@@ -113,6 +113,7 @@ import { idKey } from '@/helpers/firebase';
 import {
   isExpanded,
   handleExpanded,
+  formatExternalURL,
 } from '@/helpers/router';
 
 export default {
@@ -139,6 +140,7 @@ export default {
     },
   },
   methods: {
+    formatExternalURL,
     ...mapMutations([
       'setCurrentDialog',
     ]),
