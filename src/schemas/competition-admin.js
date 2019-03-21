@@ -9,6 +9,7 @@ export default {
       general: {
         order: 1,
         name: 'General',
+        icon: 'icon-info',
         fields: [
           {
             data: 'image',
@@ -35,6 +36,7 @@ export default {
       registration: {
         order: 2,
         name: 'Registration',
+        icon: 'icon-direction',
         fields: [
           {
             data: 'registrationURL',
@@ -59,6 +61,7 @@ export default {
       links: {
         order: 3,
         name: 'Links',
+        icon: 'icon-link',
         hot: {
           columns: [
             {
@@ -78,6 +81,7 @@ export default {
       permissions: {
         order: 4,
         name: 'Permissions',
+        icon: 'icon-lock',
       },
     },
   },
