@@ -8,7 +8,7 @@ export default {
     subsections: {
       general: {
         order: 1,
-        title: 'General',
+        name: 'General',
         fields: [
           {
             data: 'image',
@@ -34,7 +34,7 @@ export default {
       },
       registration: {
         order: 2,
-        title: 'Registration',
+        name: 'Registration',
         fields: [
           {
             data: 'registrationURL',
@@ -58,7 +58,7 @@ export default {
       },
       links: {
         order: 3,
-        title: 'Links',
+        name: 'Links',
         hot: {
           columns: [
             {
@@ -77,7 +77,7 @@ export default {
       },
       permissions: {
         order: 4,
-        title: 'Permissions',
+        name: 'Permissions',
       },
     },
   },

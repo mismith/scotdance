@@ -8,7 +8,7 @@
           :to="{ name: 'competition.admin.info', params: { subsectionId: subsection[idKey] } }"
         >
           <v-list-tile-content>
-            <v-list-tile-title>{{ subsection.title }}</v-list-tile-title>
+            <v-list-tile-title>{{ subsection.name }}</v-list-tile-title>
           </v-list-tile-content>
           <v-icon>chevron_right</v-icon>
         </v-list-tile>
