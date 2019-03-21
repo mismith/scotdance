@@ -15,7 +15,7 @@
       <v-list-tile-title>{{ dancer.$name }}</v-list-tile-title>
       <v-list-tile-sub-title class="dot-divided">
         <span v-if="dancer.$group" class="group">{{ dancer.$group.$name }}</span>
-        <span class="location">{{ dancer.location }}</span>
+        <span class="location">{{ dancer.location || formatHumanURL(dancer.website) }}</span>
       </v-list-tile-sub-title>
     </v-list-tile-content>
 
@@ -34,6 +34,7 @@
 </template>
 
 <script>
+import { formatHumanURL } from '@/helpers/router';
 import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue';
 import Place from '@/components/Place.vue';
 
@@ -43,6 +44,9 @@ export default {
     dancer: Object,
     place: Number,
     to: true,
+  },
+  methods: {
+    formatHumanURL,
   },
   components: {
     FavoriteDancerButton,
