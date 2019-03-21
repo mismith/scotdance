@@ -87,8 +87,8 @@ export default {
   },
   staff: {
     order: 2,
-    name: 'Staff',
-    icon: 'icon-emotsmile',
+    name: 'Attribution',
+    icon: 'icon-heart',
     hot: {
       columns: [
         {
@@ -99,6 +99,7 @@ export default {
             'Judge',
             'Piper',
             'Volunteer',
+            'Sponsor',
           ],
           required: true,
         },
