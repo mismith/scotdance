@@ -391,10 +391,6 @@ export default {
 </script>
 
 <style lang="scss">
-// import simple-line-icons
-$simple-line-font-path: "~simple-line-icons/fonts/";
-@import "~simple-line-icons/scss/simple-line-icons";
-
 // extension styling overrides
 body.has-bottom-bar {
   #crisp-chatbox {
