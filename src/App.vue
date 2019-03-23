@@ -34,13 +34,15 @@
           <v-list-tile :to="{ name: 'home', query: { at: 'faq' } }" exact>
             <v-list-tile-title>FAQs</v-list-tile-title>
           </v-list-tile>
-          <v-divider />
-          <v-list-tile @click="help(true)">
-            <v-list-tile-title>Feedback</v-list-tile-title>
-          </v-list-tile>
-          <v-list-tile v-if="$store.state.helpVisible" @click="help(false)">
-            <v-list-tile-title class="error--text">Hide Live Chat</v-list-tile-title>
-          </v-list-tile>
+          <template v-if="$store.state.helpAvailable">
+            <v-divider />
+            <v-list-tile @click="help(true)">
+              <v-list-tile-title>Feedback</v-list-tile-title>
+            </v-list-tile>
+            <v-list-tile v-if="$store.state.helpVisible" @click="help(false)">
+              <v-list-tile-title class="error--text">Hide Live Chat</v-list-tile-title>
+            </v-list-tile>
+          </template>
           <v-divider />
           <v-list-tile @click="confirmClearLocalStorage = true">
             <v-list-tile-title>Clear App Cache</v-list-tile-title>

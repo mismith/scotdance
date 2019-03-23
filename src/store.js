@@ -46,6 +46,7 @@ export default new Vuex.Store({
       data: undefined,
     },
 
+    helpAvailable: false,
     helpVisible: false,
   },
   getters: {
@@ -92,6 +93,9 @@ export default new Vuex.Store({
       };
     },
 
+    setHelpAvailable(state, helpAvailable) {
+      state.helpAvailable = helpAvailable;
+    },
     setHelpVisible(state, helpVisible) {
       state.helpVisible = helpVisible;
     },
@@ -101,6 +105,7 @@ export default new Vuex.Store({
       state.meRef = db.child('users').child(uid);
       state.myFavoritesRef = db.child('users:favorites').child(uid);
       state.myPermissionsRef = db.child('users:permissions').child(uid);
+
       bindFirebaseRef('me', state.meRef, {
         async readyCallback() {
           // await 'me'
@@ -147,7 +152,7 @@ export default new Vuex.Store({
       return commit('setCurrentDialog', 'favorites');
     },
     help({ state, commit }, set = undefined) {
-      if (window.$crisp) {
+      if (window.$crisp && state.helpAvailable) {
         if (set === false || (set === undefined && state.helpVisible)) {
           window.$crisp.push(['do', 'chat:hide']);
           commit('setHelpVisible', false);

@@ -206,6 +206,8 @@ if (window.$crisp) {
       store.commit('setHelpVisible', true);
     }
   }]);
+
+  store.commit('setHelpAvailable', true);
 }
 
 new Vue({
