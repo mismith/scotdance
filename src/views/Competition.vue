@@ -118,7 +118,7 @@ import {
   mapState,
   mapMutations,
 } from 'vuex';
-import { 
+import {
   formatExternalURL,
   formatHumanURL,
 } from '@/helpers/router';

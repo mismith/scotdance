@@ -117,7 +117,6 @@
 import { idKey, db, toOrderedArray } from '@/helpers/firebase';
 import { findByIdKey } from '@/helpers/competition';
 import steps from '@/schemas/submissions';
-import CompetitionListItem from '@/components/CompetitionListItem.vue';
 import DynamicForm from '@/components/admin/DynamicForm.vue';
 import BladeToolbar from '@/components/BladeToolbar.vue';
 
@@ -170,7 +169,6 @@ export default {
     this.loaded = true;
   },
   components: {
-    CompetitionListItem,
     DynamicForm,
     BladeToolbar,
   },

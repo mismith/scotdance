@@ -265,7 +265,7 @@ export default {
       return this.competitionsRaw
         .map(competition => ({
           ...competition,
-          $favorite: this.$store.getters.isFavorite('competitions', competition[idKey]),
+          // $favorite: this.$store.getters.isFavorite('competitions', competition[idKey]),
         }))
         .filter(competition => competition.listed || this.$store.getters.hasPermission(`competitions/${competition[idKey]}`))
         .sort((a, b) => this.$moment(a.date).diff(b.date)); // order chronologically
