@@ -13,7 +13,7 @@
             </v-list-tile-avatar>
             <v-list-tile-content>
               <v-list-tile-title>
-                {{ submission.competition.name }}
+                {{ submission.competition && submission.competition.name }}
               </v-list-tile-title>
               <v-list-tile-sub-title v-if="submission.approved" :title="submission.approved">
                 Approved:
