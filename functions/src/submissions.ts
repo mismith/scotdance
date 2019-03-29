@@ -1,4 +1,5 @@
 import { postmark } from './utility/email';
+import { attachUserToCompetition } from './utility/competition';
 
 class Submissions {
   database;
@@ -55,9 +56,10 @@ class Submissions {
     // create competition, and give submitter admin privileges to it
     const competitionSnap = await this.config.db.child('competitions').push(competition);
     const competitionId = competitionSnap.key;
-    await this.config.db.update({
-      [`competitions:permissions/${competitionId}/users/${submittedBy}`]: true,
-      [`users:permissions/${submittedBy}/competitions/${competitionId}`]: true,
+    await attachUserToCompetition({
+      db: this.config.db,
+      userId: submittedBy,
+      competitionId,
     });
 
     // send email

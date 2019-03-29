@@ -1,6 +1,7 @@
 import { config } from 'firebase-functions';
 import { FirebaseDynamicLinks, FirebaseInvites } from '@mismith/firebase-tools/dist/server';
 import { postmark } from './utility/email';
+import { attachUserToCompetition } from './utility/competition';
 
 const dynamicLinks = new FirebaseDynamicLinks(
   config().fb.web_api_key,
@@ -44,9 +45,11 @@ class Invites extends FirebaseInvites {
     const userId = invite[FirebaseInvites.prop.ACCEPTED_BY];
     if (userId) {
       const { competitionId } = ctx.params;
-      await this.config.db.update({
-        [`users:permissions/${userId}/competitions/${competitionId}`]: value,
-        [`competitions:permissions/${competitionId}/users/${userId}`]: value,
+      await attachUserToCompetition({
+        db: this.config.db,
+        userId,
+        competitionId,
+        value,
       });
     }
   }
