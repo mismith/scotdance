@@ -4,7 +4,7 @@
   "description": "Highland dancing event tracker",
   "author": "Murray Smith <murray@mismith.info>",
   "scripts": {
-    "init": "npm run build && cordova platform add android && cordova platform add ios",
+    "init": "npm run build && cordova prepare",
     "serve": "vue-cli-service serve",
     "prebuild": "pilfer-package version > public/version.json",
     "build": "vue-cli-service build --report",
