@@ -562,6 +562,8 @@ body {
   }
 }
 .v-avatar {
+  overflow: hidden;
+
   &.primary,
   &.secondary,
   &.grey {
@@ -570,6 +572,14 @@ body {
     .v-icon {
       color: inherit;
     }
+  }
+
+  img {
+    width: initial;
+    height: initial;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 0;
   }
 }
 .v-list {

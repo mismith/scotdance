@@ -1,6 +1,6 @@
 <template>
   <img
-    :src="user.photoURL || `https://gravatar.com/avatar/${hash}`"
+    :src="user.photoURL || `https://gravatar.com/avatar/${hash}/?s=200`"
     :alt="user.displayName"
     class="Gravatar"
   />
