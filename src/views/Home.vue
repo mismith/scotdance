@@ -10,6 +10,9 @@
           <v-btn :to="{ name: 'competitions' }" color="primary" large>
             Browse Competitions
           </v-btn>
+          <v-btn :to="{ name: 'competitions.submit' }" color="secondary" large>
+            Submit Competition
+          </v-btn>
         </p>
         <p v-if="!isApp" class="store-badges">
           <a href="https://itunes.apple.com/us/app/scotdance/id1386475626?mt=8" target="_blank">
@@ -48,8 +51,12 @@
         </v-flex>
       </v-layout>
       <footer>
-        <v-btn :to="{ name: 'competitions' }" color="primary">Browse Competitions</v-btn>
-        <v-btn :to="{ name: 'competitions.submit' }" color="secondary">Submit Competition</v-btn>
+        <v-btn :to="{ name: 'competitions' }" color="primary">
+          Browse Competitions
+        </v-btn>
+        <v-btn :to="{ name: 'competitions.submit' }" color="secondary">
+          Submit Competition
+        </v-btn>
       </footer>
     </section>
 
