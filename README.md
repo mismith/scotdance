@@ -30,6 +30,7 @@ Links to the admin panels needed to manage this project:
 * Email hosting (alias): [GSuite](https://admin.google.com)
 * Email sending/templates: [Postmark](https://account.postmarkapp.com/servers/4370108/overview)
 * Live Chat: [Crisp](https://app.crisp.chat/website/160e5d08-deea-4187-a21b-39762a904c26/inbox/)
+* Icon/Splashscreen resizing: [Abiro PhoneGap Image Generator](http://pgicons.abiro.com/)
 
 
 ## App (Cordova)
