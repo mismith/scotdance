@@ -133,8 +133,11 @@ export default {
     justify-content: center;
     padding: 40px;
 
-    .display-3 {
-      margin-bottom: 0;
+    h1 {
+      @media (max-width: 400px) {
+        // prevent overflow on iPhone 5
+        font-size: 36px !important;
+      }
     }
     .store-badges {
       a {
