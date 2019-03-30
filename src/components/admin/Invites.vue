@@ -8,19 +8,19 @@
             v-for="invite in administrators"
             :key="invite[idKey]"
           >
-            <v-list-tile-avatar color="primary">
-              <v-icon>check</v-icon>
+            <v-list-tile-avatar :color="invite.submitted ? '' : 'primary'">
+              <v-icon>{{ invite.submitted ? 'check_circle' : 'check' }}</v-icon>
             </v-list-tile-avatar>
             <v-list-tile-content>
               <v-list-tile-title>{{ invite.payload.email }}</v-list-tile-title>
               <v-list-tile-sub-title>
-                Since
+                {{ invite.submitted ? 'Submitted' : 'Since' }}
                 <time :title="invite.accepted">
                   {{ $moment(invite.accepted).fromNow() }}
                 </time>
               </v-list-tile-sub-title>
             </v-list-tile-content>
-            <v-list-tile-action>
+            <v-list-tile-action v-if="!invite.submitted">
               <v-tooltip fixed left>
                 <v-btn icon slot="activator" @click="handleAdministratorDemote(invite)">
                   <v-icon>clear</v-icon>
@@ -131,7 +131,7 @@
 
 <script>
 import { FirebaseInvites } from '@mismith/firebase-tools';
-import { idKey } from '@/helpers/firebase';
+import { idKey, db } from '@/helpers/firebase';
 import NewDynamicField from '@/components/admin/NewDynamicField.vue';
 
 export default {
@@ -142,6 +142,7 @@ export default {
       type: Object,
       required: true,
     },
+    competition: Object,
   },
   data() {
     return {
@@ -157,11 +158,44 @@ export default {
     };
   },
   computed: {
+    submissionId() {
+      return this.competition && this.competition.submissionId;
+    },
     administrators() {
-      return this.invitesRaw.filter(invite => FirebaseInvites.is(invite, FirebaseInvites.status.ACCEPTED));
+      const email = this.submission && this.submission.contact && this.submission.contact.email;
+
+      return this.invitesRaw
+        .filter((invite) => {
+          // show submitter as such instead of showing as a regularly invited user
+          if (invite.payload && invite.payload.email === email) {
+            return false;
+          }
+
+          return FirebaseInvites.is(invite, FirebaseInvites.status.ACCEPTED);
+        })
+        .concat(this.submission && this.submission.submitted ? [
+          {
+            accepted: this.submission.submitted,
+            payload: this.submission.contact || {},
+            ...this.submission,
+          },
+        ] : []);
     },
     invites() {
-      return this.invitesRaw.filter(invite => !FirebaseInvites.is(invite, FirebaseInvites.status.ACCEPTED));
+      return this.invitesRaw
+        .filter(invite => !FirebaseInvites.is(invite, FirebaseInvites.status.ACCEPTED));
+    },
+  },
+  watch: {
+    submissionId: {
+      handler(submissionId, previousSubmissionId) {
+        if (submissionId && submissionId !== previousSubmissionId) {
+          const submissionRef = db.child('competitions:submissions').child(submissionId);
+          if (this.submission) this.$unbind('submission');
+          this.$bindAsObject('submission', submissionRef);
+        }
+      },
+      immediate: true,
     },
   },
   methods: {

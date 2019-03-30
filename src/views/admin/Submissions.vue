@@ -146,7 +146,7 @@ export default {
   },
   methods: {
     getUser(userId) {
-      return findByIdKey(this.users, userId);
+      return findByIdKey(this.users, userId) || {};
     },
 
     handleChanges(changes, prefix) {

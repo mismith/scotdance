@@ -50,11 +50,16 @@ class Submissions {
 
   async handleApproved(snap, ctx) {
     const submission = snap.val();
+    const submissionId = snap.key;
     const model = this.getTemplateModel(submission);
-    const { competition, submittedBy } = submission;
+    const { competition = {}, contact = {}, submittedBy } = submission;
 
-    // create competition, and give submitter admin privileges to it
-    const competitionSnap = await this.config.db.child('competitions').push(competition);
+    // create competition, linking back to submission
+    const competitionSnap = await this.config.db.child('competitions').push({
+      ...competition,
+      submissionId,
+    });
+    // give submitter admin privileges to competition
     const competitionId = competitionSnap.key;
     await attachUserToCompetition({
       db: this.config.db,
@@ -65,7 +70,7 @@ class Submissions {
     // send email
     await postmark.sendEmailWithTemplate({
       From: this.config.email,
-      To: this.config.env === 'development' ? this.config.email : submission.contact.email,
+      To: this.config.env === 'development' ? this.config.email : contact.email,
       TemplateAlias: 'competition-submission-approved',
       TemplateModel: {
         ...model,
