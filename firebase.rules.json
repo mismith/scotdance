@@ -15,6 +15,9 @@
       },
       "competitions:data": {
         "$competitionId": {
+          "staff": {
+            ".read": true
+          },
           ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true || root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // is PUBLISHED || has PERMISSION
           ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // has PERMISSION
           "invites": {
