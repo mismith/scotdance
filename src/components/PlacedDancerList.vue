@@ -2,7 +2,8 @@
   <v-list two-line class="PlacedDancerList">
     <draggable
       v-model="dancers"
-      :options="{ disabled: !draggingEnabled, handle: '.sortable-handle' }"
+      handle=".sortable-handle"
+      :disabled="!draggingEnabled"
       @sort="$emit('dancer-reorder', $event)"
       class="draggable"
     >

@@ -41,7 +41,7 @@
           <draggable
             :value="blade.items()"
             class="draggable"
-            :options="{ handle: '.sortable-handle' }"
+            handle=".sortable-handle"
             @sort="handleListItemReorder(blade, $event)"
           >
             <v-list-tile

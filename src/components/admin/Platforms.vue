@@ -11,7 +11,8 @@
 
         <draggable
           v-model="pool.$items"
-          :options="{ group: 'items', disabled: !admin }"
+          group="items"
+          :disabled="!admin"
           @sort="handleSort(pool)"
           class="draggable"
         >
