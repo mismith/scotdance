@@ -113,6 +113,10 @@
           <p>To bring the app to your event, you'll need an account first.</p>
           <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
         </RequiresAuthDialog>
+
+        <v-btn flat fab absolute color="white" @click="menuVisible = false">
+          <v-icon>close</v-icon>
+        </v-btn>
       </header>
 
       <div class="app-scroll-frame app-scroll">
@@ -655,6 +659,10 @@ body {
 
   .v-list {
     padding: 0;
+  }
+  .v-btn.v-btn--absolute {
+    top: 0;
+    right: 0;
   }
 }
 
