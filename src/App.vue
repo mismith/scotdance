@@ -272,7 +272,7 @@ export default {
           // $favorite: this.$store.getters.isFavorite('competitions', competition[idKey]),
         }))
         .filter(competition => competition.listed || this.$store.getters.hasPermission(`competitions/${competition[idKey]}`))
-        .sort((a, b) => this.$moment(a.date).diff(b.date)); // order chronologically
+        .sort((a, b) => -this.$moment(a.date).diff(b.date)); // order chronologically
     },
     relevantCompetitions() {
       const relevantCompetitions = this.competitions.filter((competition) => {
@@ -567,6 +567,7 @@ body {
 }
 .v-avatar {
   overflow: hidden;
+  flex-shrink: 0;
 
   &.primary,
   &.secondary,
