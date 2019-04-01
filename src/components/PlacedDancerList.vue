@@ -7,31 +7,33 @@
       @sort="$emit('dancer-reorder', $event)"
       class="draggable"
     >
-      <DancerListItem
-        v-for="(dancer, index) in dancers"
-        :key="dancer[idKey]"
-        :dancer="dancer"
-        :place="getPlace(dancer, dancers)"
-        @click="$emit('dancer-click', dancer)"
-      >
-        <v-icon
-          v-if="draggingEnabled && dance[idKey] !== callbacks[idKey]"
-          class="sortable-handle"
+      <v-slide-y-transition group hide-on-leave>
+        <DancerListItem
+          v-for="(dancer, index) in dancers"
+          :key="dancer[idKey]"
+          :dancer="dancer"
+          :place="getPlace(dancer, dancers)"
+          @click="$emit('dancer-click', dancer)"
         >
-          drag_indicator
-        </v-icon>
+          <v-icon
+            v-if="draggingEnabled && dance[idKey] !== callbacks[idKey]"
+            class="sortable-handle"
+          >
+            drag_indicator
+          </v-icon>
 
-        <v-list-action
-          slot="favorite"
-          v-if="admin && dance[idKey] !== callbacks[idKey]"
-        >
-          <v-switch
-            v-show="index"
-            :input-value="dancer.$tie"
-            @click.stop="$emit('dancer-toggle', [dancer, !dancer.$tie])"
-          />
-        </v-list-action>
-      </DancerListItem>
+          <v-list-action
+            slot="favorite"
+            v-if="admin && dance[idKey] !== callbacks[idKey]"
+          >
+            <v-switch
+              v-show="index"
+              :input-value="dancer.$tie"
+              @click.stop="$emit('dancer-toggle', [dancer, !dancer.$tie])"
+            />
+          </v-list-action>
+        </DancerListItem>
+      </v-slide-y-transition>
 
       <slot />
     </draggable>

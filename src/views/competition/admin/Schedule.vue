@@ -44,17 +44,19 @@
             handle=".sortable-handle"
             @sort="handleListItemReorder(blade, $event)"
           >
-            <v-list-tile
-              v-for="item in blade.items()"
-              :key="item[idKey]"
-              :to="getBladeRoute(blade.params(item[idKey]))"
-            >
-              <v-icon class="sortable-handle">drag_indicator</v-icon>
-              <v-list-tile-content>
-                <v-list-tile-title>{{ blade.name(item) }}</v-list-tile-title>
-              </v-list-tile-content>
-              <v-icon>chevron_right</v-icon>
-            </v-list-tile>
+            <v-slide-y-transition group hide-on-leave>
+              <v-list-tile
+                v-for="item in blade.items()"
+                :key="item[idKey]"
+                :to="getBladeRoute(blade.params(item[idKey]))"
+              >
+                <v-icon class="sortable-handle">drag_indicator</v-icon>
+                <v-list-tile-content>
+                  <v-list-tile-title>{{ blade.name(item) }}</v-list-tile-title>
+                </v-list-tile-content>
+                <v-icon>chevron_right</v-icon>
+              </v-list-tile>
+            </v-slide-y-transition>
           </draggable>
 
           <v-list-tile v-if="!blade.items().length" class="empty">
