@@ -244,8 +244,7 @@ export default {
   }
   &:not(.interactive) {
     .pools {
-      animation: bounce-in 300ms 150ms ease-in forwards;
-      opacity: 0;
+      animation: bounce-in 300ms 150ms ease-in both;
 
       .pool {
         &.empty {
