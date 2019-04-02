@@ -12,8 +12,7 @@
     "dev": "npm run serve",
     "dev:android": "NODE_ENV=development npm run build && cordova emulate android",
     "dev:ios": "NODE_ENV=development npm run build && cordova emulate ios",
-    "devices:android": "cordova emulate android --list",
-    "devices:ios": "cordova emulate ios --list",
+    "devices": "cordova run --list",
     "build:android": "npm run build && cordova build android --release",
     "build:app": "npm run build && cordova build --release",
     "build:ios": "npm run build && cordova build ios --release"
