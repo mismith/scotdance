@@ -70,36 +70,54 @@
             </v-list-tile>
           </v-list-group>
         </v-list>
-        <footer class="layout align-center flex-none mb-2">
-          <div class="pa-3">
-            <div :title="currentSubmission.submitted">
-              Submitted:
-              <strong>{{ $moment(currentSubmission.submitted).format('LLLL') }}</strong>
+        <footer class="pb-2">
+          <div class="layout align-center flex-none flex-wrap">
+            <div class="pa-3">
+              <div :title="currentSubmission.submitted">
+                Submitted:
+                <strong>{{ $moment(currentSubmission.submitted).format('LLLL') }}</strong>
+              </div>
+              <div v-if="currentSubmission.approvedBy" :title="currentSubmission.approved">
+                Approved:
+                <strong>{{ $moment(currentSubmission.approved).format('LLLL') }}</strong>
+              </div>
             </div>
-            <div v-if="currentSubmission.approvedBy" :title="currentSubmission.approved">
-              Approved:
-              <strong>{{ $moment(currentSubmission.approved).format('LLLL') }}</strong>
+            <v-spacer />
+            <div class="pa-3" style="text-align: right;">
+              <v-btn
+                v-if="!currentSubmission.approvedBy"
+                color="primary"
+                :loading="currentSubmission.approved"
+                @click="handleApprove"
+                class="ma-0"
+              >
+                Approve
+              </v-btn>
+              <div v-if="currentSubmission.approvedBy">
+                Approval Time:
+                <strong>{{ $moment.duration($moment(currentSubmission.approved).diff(currentSubmission.submitted)).humanize() }}</strong>
+              </div>
+              <div v-if="currentSubmission.approvedBy">
+                Approved By:
+                <strong>{{ getUser(currentSubmission.approvedBy).email }}</strong>
+              </div>
             </div>
           </div>
-          <v-spacer />
-          <div class="pa-3" style="text-align: right;">
+          <div v-if="currentSubmission.competitionId" class="pt-0 px-3 pb-3" style="text-align: right;">
             <v-btn
-              v-if="!currentSubmission.approvedBy"
-              color="primary"
-              :loading="currentSubmission.approved"
-              @click="handleApprove"
-              class="ma-0"
+              :to="{ name: 'competition.info', params: { competitionId: currentSubmission.competitionId } }"
+              class="ml-0"
             >
-              Approve
+              View Competition
             </v-btn>
-            <div v-if="currentSubmission.approvedBy">
-              Approval Time:
-              <strong>{{ $moment.duration($moment(currentSubmission.approved).diff(currentSubmission.submitted)).humanize() }}</strong>
-            </div>
-            <div v-if="currentSubmission.approvedBy">
-              Approved By:
-              <strong>{{ getUser(currentSubmission.approvedBy).email }}</strong>
-            </div>
+            <v-btn
+              v-if="currentSubmission.competitionId"
+              color="primary"
+              :to="{ name: 'competition.admin.info', params: { competitionId: currentSubmission.competitionId } }"
+              class="mr-0"
+            >
+              Administer Competition
+            </v-btn>
           </div>
         </footer>
       </div>

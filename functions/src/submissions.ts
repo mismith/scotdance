@@ -54,13 +54,16 @@ class Submissions {
     const model = this.getTemplateModel(submission);
     const { competition = {}, contact = {}, submittedBy } = submission;
 
-    // create competition, linking back to submission
+    // create competition, linking back to submission (and vice versa)
     const competitionSnap = await this.config.db.child('competitions').push({
       ...competition,
       submissionId,
     });
-    // give submitter admin privileges to competition
     const competitionId = competitionSnap.key;
+    await snap.ref.update({
+      competitionId,
+    });
+    // give submitter admin privileges to competition
     await attachUserToCompetition({
       db: this.config.db,
       userId: submittedBy,
