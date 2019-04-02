@@ -93,7 +93,7 @@ class Submissions {
       onCreate: ref.onCreate(async (after, ctx) => {
         try {
           await after.ref.update({
-            submittedBy: ctx.auth.uid,
+            submittedBy: ctx.auth ? ctx.auth.uid : 'admin',
           });
           const snap = await after.ref.once('value');
 
@@ -107,7 +107,7 @@ class Submissions {
           // approved
           if (before.child('approved').val() !== after.child('approved').val()) {
             await after.ref.update({
-              approvedBy: ctx.auth.uid,
+              approvedBy: ctx.auth ? ctx.auth.uid : 'admin',
             });
             const snap = await after.ref.once('value');
 
