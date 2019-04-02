@@ -96,6 +96,15 @@
 
         <v-spacer />
         <div class="layout align-center justify-center flex-none">
+          <v-btn
+            v-if="getPrevBlade(blade)"
+            :disabled="getPrevBlade(blade).items().length < 2"
+            flat
+            color="primary"
+            @click="handleListItemMove(blade, getPrevBlade(blade))"
+          >
+            Move Item
+          </v-btn>
           <v-btn flat color="error" @click="handleListItemRemove(blade)">
             Delete Item
           </v-btn>
@@ -121,6 +130,31 @@
       <div slot="text" class="app-scroll px-3">
         <v-text-field ref="confirmCreateValue" v-model="confirmCreateValue" label="Name" />
       </div>
+    </DialogCard>
+    <DialogCard
+      :value="confirmMove"
+      title="Move item"
+      text="Where would you like to move this item?"
+      cancel-label="Cancel"
+      submit-label="Move"
+      :disabled="!confirmMoveValue"
+      @cancel="confirmMove.reject()"
+      @submit="confirmMove.resolve()"
+    >
+      <v-radio-group
+        slot="text"
+        v-if="confirmMove"
+        v-model="confirmMoveValue"
+        class="app-scroll px-3"
+      >
+        <v-radio
+          v-for="item in confirmMove.prevBlade.items()"
+          :key="item[idKey]"
+          :label="confirmMove.prevBlade.name(item)"
+          :value="item[idKey]"
+          :disabled="item[idKey] === confirmMove.prevBlade.id()"
+        />
+      </v-radio-group>
     </DialogCard>
     <DialogCard
       :value="confirmRemove"
@@ -172,6 +206,8 @@ export default {
 
       confirmCreate: undefined,
       confirmCreateValue: undefined,
+      confirmMove: undefined,
+      confirmMoveValue: undefined,
       confirmRemove: undefined,
 
       blades: [
@@ -370,6 +406,11 @@ export default {
         this.$refs.confirmCreateValue.focus();
       }
     },
+    async confirmMove(confirmMove) {
+      if (!confirmMove) {
+        this.confirmMoveValue = undefined;
+      }
+    },
   },
   methods: {
     getPath({
@@ -395,6 +436,11 @@ export default {
       const items = blade.items();
       return items && items
         .find(item => blade.name(item) === blade.name(preset));
+    },
+    getPrevBlade(blade) {
+      const bladeIndex = this.blades.findIndex(b => b.collection === blade.collection);
+      const prevBlade = this.blades[bladeIndex - 1];
+      return prevBlade;
     },
     getBladeRoute(params) {
       return {
@@ -457,6 +503,37 @@ export default {
       this.$emit('change', {
         [path]: clone,
       });
+    },
+    async handleListItemMove(blade, prevBlade) {
+      try {
+        await new Promise((resolve, reject) => {
+          this.confirmMove = {
+            resolve,
+            reject,
+            blade,
+            prevBlade,
+          };
+        });
+
+        if (this.confirmMoveValue) {
+          const from = blade.params(blade.id());
+          const to = {
+            ...from,
+            ...prevBlade.params(this.confirmMoveValue),
+          };
+          this.$emit('change', {
+            [this.getPath(from)]: null, // remove old
+            [this.getPath(to)]: blade.item(), // add new/moved
+          });
+
+          // redirect
+          this.goToBlade(to);
+        }
+      } catch (err) {
+        if (err) console.error(err); // eslint-disable-line no-console
+      } finally {
+        this.confirmMove = null;
+      }
     },
     async handleListItemRemove(blade) {
       try {
