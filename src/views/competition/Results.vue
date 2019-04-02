@@ -57,8 +57,23 @@
         <BladeToolbar
           :to="{ name: $route.name, params: { competitionId } }"
           :text="currentGroup.$name"
-          class="hidden-md-and-up"
-        />
+        >
+          <v-menu offset-y left>
+            <v-btn slot="activator" icon>
+              <v-icon>more_vert</v-icon>
+            </v-btn>
+            <v-list>
+              <v-list-tile>
+                <v-list-tile-action>
+                  <v-checkbox v-model="autoScrollResults" />
+                </v-list-tile-action>
+                <v-list-tile-content @click="autoScrollResults = !autoScrollResults">
+                  <v-list-tile-title>Scroll to new results</v-list-tile-title>
+                </v-list-tile-content>
+              </v-list-tile>
+            </v-list>
+          </v-menu>
+        </BladeToolbar>
 
         <div
           id="results-detail"
@@ -80,6 +95,7 @@
                 :dance="dance"
                 :dancers="dance.dancers"
                 @dancer-click="$router.push({ name: 'competition.dancers', params: { dancerId: $event[idKey] }})"
+                @dancer-added="handleDancerAdded"
               >
                 <v-list-tile v-if="!dance.dancers.length" class="empty">
                   <v-list-tile-avatar>
@@ -170,6 +186,10 @@ export default {
     resultsExpandedDances: {
       type: Object,
       default: {}, // { [groupId]: {}, ... }
+    },
+    autoScrollResults: {
+      type: Boolean,
+      default: true,
     },
   },
   data() {
@@ -268,6 +288,16 @@ export default {
         expanded,
       );
       this.$localStorage.set('resultsExpandedDances', this.resultsExpandedDances);
+    },
+
+    handleDancerAdded(dancer, el) {
+      if (this.autoScrollResults) {
+        const container = document.querySelector('#results-detail');
+        this.$scrollAll(el, {
+          container,
+          offset: (el.offsetHeight - container.offsetHeight) / 2, // center vertically
+        });
+      }
     },
   },
   components: {

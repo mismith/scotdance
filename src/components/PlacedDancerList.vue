@@ -14,6 +14,7 @@
           :dancer="dancer"
           :place="getPlace(dancer, dancers)"
           @click="$emit('dancer-click', dancer)"
+          @mounted="handleDancerMounted(dancer, $event)"
         >
           <v-icon
             v-if="draggingEnabled && dance[idKey] !== callbacks[idKey]"
@@ -62,6 +63,8 @@ export default {
       idKey,
       overall,
       callbacks,
+
+      dancerEls: {},
     };
   },
   computed: {
@@ -69,11 +72,35 @@ export default {
       return !!this.admin;
     },
   },
+  watch: {
+    async dancers(dancers, prev) {
+      // if a newly added dancer, lookup and emit its DOM element
+      if (dancers && prev && dancers.length > prev.length) {
+        const prevIds = prev.map(dancer => dancer[idKey]);
+
+        await this.$nextTick(); // wait for the element to be mounted first
+
+        dancers.forEach((dancer) => {
+          if (!prevIds.includes(dancer[idKey])) {
+            const el = this.dancerEls[dancer[idKey]];
+            if (el) {
+              this.$emit('dancer-added', dancer, el);
+            }
+          }
+        });
+      }
+    },
+  },
   methods: {
     getPlace(dancer, dancers) {
       if (this.dance[idKey] === callbacks[idKey]) return undefined; // no places in callbacks
       if (this.dance[idKey] === overall[idKey] && dancers.length <= 1) return 0; // overall winner
       return getPlace(dancer, dancers);
+    },
+
+    handleDancerMounted(dancer, el) {
+      // store map of dancerIds and their respective elements
+      this.dancerEls[dancer[idKey]] = el;
     },
   },
   components: {

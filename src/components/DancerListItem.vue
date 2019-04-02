@@ -48,6 +48,9 @@ export default {
   methods: {
     formatHumanURL,
   },
+  mounted() {
+    this.$emit('mounted', this.$el);
+  },
   components: {
     FavoriteDancerButton,
     Place,
