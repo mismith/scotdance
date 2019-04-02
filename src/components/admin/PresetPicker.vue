@@ -1,5 +1,12 @@
 <template>
-  <DialogCard v-model="dialogOpen" title="Select preset(s) to add:" class="PresetPicker" @submit="handleSubmit">
+  <DialogCard
+    v-model="dialogOpen"
+    title="Select preset(s) to add:"
+    cancel-label="Cancel"
+    submit-label="Add"
+    class="PresetPicker"
+    @submit="handleSubmit"
+  >
     <slot name="activator" slot="activator">
       <v-btn flat>Add Presets&hellip;</v-btn>
     </slot>
@@ -23,18 +30,6 @@
         <span>No presets found.</span>
       </v-list-tile>
     </v-list>
-
-    <v-card-actions slot="actions" class="justify-end">
-      <v-btn flat @click="dialogOpen = false">Cancel</v-btn>
-
-      <v-btn
-        flat
-        color="primary"
-        type="submit"
-      >
-        Add
-      </v-btn>
-    </v-card-actions>
   </DialogCard>
 </template>
 

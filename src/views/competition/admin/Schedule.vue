@@ -113,17 +113,14 @@
     <DialogCard
       :value="confirmCreate"
       title="Add new item:"
+      cancel-label="Cancel"
+      submit-label="Add"
       @cancel="confirmCreate.reject()"
       @submit="confirmCreate.resolve()"
     >
       <div slot="text" class="app-scroll px-3">
         <v-text-field ref="confirmCreateValue" v-model="confirmCreateValue" label="Name" />
       </div>
-      <v-card-actions slot="actions" class="justify-end">
-        <v-btn flat @click="confirmCreate = false">Cancel</v-btn>
-
-        <v-btn flat color="primary" type="submit">Add</v-btn>
-      </v-card-actions>
     </DialogCard>
     <DialogCard
       :value="confirmRemove"

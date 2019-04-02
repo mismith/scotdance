@@ -26,6 +26,9 @@
         v-model="passwordActive"
         title="Change your password"
         cancel-label="Cancel"
+        submit-label="Change Password"
+        :disabled="!passwordConfirm || !newPassword"
+        :loading="passwordLoading"
         async
         @submit="changePassword"
       >
@@ -46,17 +49,6 @@
         <v-alert :value="passwordError" type="error">
           {{ passwordError && passwordError.message }}
         </v-alert>
-
-        <v-btn
-          slot="submit"
-          flat
-          color="primary"
-          :disabled="!passwordConfirm || !newPassword"
-          :loading="passwordLoading"
-          type="submit"
-        >
-          Change Password
-        </v-btn>
       </DialogCard>
     </div>
 
@@ -66,6 +58,9 @@
         v-model="removeActive"
         title="Are you sure?"
         cancel-label="Cancel"
+        submit-label="Delete Account"
+        :disabled="!removeConfirm"
+        :loading="removeLoading"
         async
         @submit="remove"
       >
@@ -82,17 +77,6 @@
         <v-alert :value="removeError" type="error">
           {{ removeError && removeError.message }}
         </v-alert>
-
-        <v-btn
-          slot="submit"
-          flat
-          color="error"
-          :disabled="!removeConfirm"
-          :loading="removeLoading"
-          type="submit"
-        >
-          Delete Account
-        </v-btn>
       </DialogCard>
     </footer>
   </form>

@@ -38,6 +38,8 @@
                 flat
                 color="primary"
                 type="submit"
+                :loading="loading"
+                :disabled="disabled"
               >
                 {{ submitLabel }}
               </v-btn>
@@ -64,6 +66,8 @@ export default {
       type: String,
       default: null,
     },
+    loading: Boolean,
+    disabled: Boolean,
     fullWidth: Boolean,
     async: Boolean,
   },
