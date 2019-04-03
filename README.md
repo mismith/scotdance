@@ -51,6 +51,7 @@ Links to the admin panels needed to manage this project:
 
 ### Apple App Store
 
+* On first setup, change Xcode to use Legacy Build System
 * Use Automatic Signing in Xcode, after setting up all certificates and provisioning profiles
 * To upload to App Store:
 
