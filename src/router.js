@@ -1,6 +1,8 @@
 import Vue from 'vue';
 import Router from 'vue-router';
 import { db } from '@/helpers/firebase';
+import competitionSchema from '@/schemas/competition';
+import competitionAdminSchema from '@/schemas/competition-admin';
 
 import Home from '@/views/Home.vue';
 import Profile from '@/views/Profile.vue';
@@ -93,7 +95,7 @@ export default new Router({
               component: CompetitionDancers,
               props: true,
               meta: {
-                title: 'Dancers',
+                title: competitionSchema.dancers.name,
               },
             },
             {
@@ -102,7 +104,7 @@ export default new Router({
               component: CompetitionSchedule,
               props: true,
               meta: {
-                title: 'Schedule',
+                title: competitionSchema.schedule.name,
               },
             },
             {
@@ -111,7 +113,7 @@ export default new Router({
               component: CompetitionResults,
               props: true,
               meta: {
-                title: 'Results',
+                title: competitionSchema.results.name,
               },
             },
             {
@@ -143,29 +145,51 @@ export default new Router({
                   name: 'competition.admin.info',
                   component: CompetitionAdminInfo,
                   props: true,
+                  meta: {
+                    title(route) {
+                      const section = competitionAdminSchema.info;
+                      const subsection = section.subsections[route.params.subsectionId];
+                      return subsection && subsection.name;
+                    },
+                  },
                 },
                 {
                   path: 'schedule/:dayId?/:blockId?/:eventId?/:danceId?',
                   name: 'competition.admin.schedule',
                   component: CompetitionAdminSchedule,
                   props: true,
+                  meta: {
+                    title: competitionAdminSchema.dancers.name,
+                  },
                 },
                 {
                   path: 'results/:groupId?/:danceId?',
                   name: 'competition.admin.results',
                   component: CompetitionAdminResults,
                   props: true,
+                  meta: {
+                    title: competitionAdminSchema.results.name,
+                  },
                 },
                 {
                   path: 'dance-groups/:groupId?',
                   name: 'competition.admin.dance-groups',
                   component: CompetitionAdminDanceGroups,
                   props: true,
+                  meta: {
+                    title: competitionAdminSchema['dance-groups'].name,
+                  },
                 },
                 {
                   path: ':tab',
                   name: 'competition.admin.tab',
                   props: true,
+                  meta: {
+                    title(route) {
+                      const section = competitionAdminSchema[route.params.tab];
+                      return section && section.name;
+                    },
+                  },
                 },
               ],
             },
