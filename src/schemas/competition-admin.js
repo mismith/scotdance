@@ -1,10 +1,9 @@
+import competitionSchema from '@/schemas/competition';
 import { submissionsFields } from '@/schemas/submissions';
 
 export default {
   info: {
-    order: 1,
-    name: 'Info',
-    icon: 'icon-info',
+    ...competitionSchema.info,
     subsections: {
       general: {
         order: 1,
@@ -358,10 +357,8 @@ export default {
     ],
   },
   dancers: {
+    ...competitionSchema.dancers,
     order: 6,
-    name: 'Dancers',
-    icon: 'icon-people',
-    className: 'published-only',
     hot: {
       columns: [
         {
@@ -433,15 +430,11 @@ export default {
     ],
   },
   schedule: {
+    ...competitionSchema.schedule,
     order: 9,
-    name: 'Schedule',
-    icon: 'icon-clock',
-    className: 'published-only',
   },
   results: {
+    ...competitionSchema.results,
     order: 10,
-    name: 'Results',
-    icon: 'icon-trophy',
-    className: 'published-only',
   },
 };

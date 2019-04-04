@@ -35,45 +35,23 @@
           </EmptyState>
         </div>
 
-        <v-bottom-nav v-if="!isAdminRoute" :value="true" class="listed-only">
+        <v-bottom-nav
+          v-if="!isAdminRoute"
+          :value="true"
+          :active="$root.currentTab"
+          class="listed-only"
+        >
           <v-btn
+            v-for="section in sections"
+            :key="section[idKey]"
+            :value="section[idKey]"
+            :to="getTabRoute(section[idKey])"
             color="primary"
             flat
-            value="info"
-            :to="{ name: 'competition.info', params: { competitionId } }"
+            :class="section.className"
           >
-            <span>Info</span>
-            <v-icon class="icon-info" />
-          </v-btn>
-          <v-btn
-            color="primary"
-            flat
-            value="dancers"
-            :to="{ name: 'competition.dancers', params: { competitionId } }"
-            class="published-only"
-          >
-            <span>Dancers</span>
-            <v-icon class="icon-people" />
-          </v-btn>
-          <v-btn
-            color="primary"
-            flat
-            value="schedule"
-            :to="{ name: 'competition.schedule', params: { competitionId } }"
-            class="published-only"
-          >
-            <span>Schedule</span>
-            <v-icon class="icon-clock" />
-          </v-btn>
-          <v-btn
-            color="primary"
-            flat
-            value="results"
-            :to="{ name: 'competition.results', params: { competitionId } }"
-            class="published-only"
-          >
-            <span>Results</span>
-            <v-icon class="icon-trophy" />
+            <span>{{ section.name }}</span>
+            <v-icon :class="section.icon"></v-icon>
           </v-btn>
         </v-bottom-nav>
       </div>
@@ -128,7 +106,11 @@ import {
   danceExtender,
   isNotEmptyObject,
 } from '@/helpers/competition';
-import { idKey } from '@/helpers/firebase';
+import {
+  idKey,
+  toOrderedArray,
+} from '@/helpers/firebase';
+import competitionSchema from '@/schemas/competition';
 
 export default {
   name: 'Competition',
@@ -139,6 +121,8 @@ export default {
   },
   data() {
     return {
+      idKey,
+
       competitionRef: undefined,
       competitionDataRef: undefined,
 
@@ -177,6 +161,10 @@ export default {
       return this.competition
         && (this.competition['.value'] !== null || this.isAdminRoute)
         && (this.competition.listed || this.isAdmin);
+    },
+
+    sections() {
+      return toOrderedArray(competitionSchema);
     },
 
     competition() {
@@ -253,6 +241,16 @@ export default {
     ...mapMutations([
       'setCurrentDialog',
     ]),
+
+    getTabRoute(tab) {
+      const params = {
+        competitionId: this.competitionId,
+      };
+      return {
+        name: `competition.${tab}`,
+        params,
+      };
+    },
 
     async loadFirebase() {
       if (!this.competitionId) return;

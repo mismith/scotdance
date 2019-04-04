@@ -117,16 +117,11 @@ export default {
   },
   methods: {
     getTabRoute(tab) {
-      const params = {
-        competitionId: this.$route.params.competitionId,
-      };
       return getFirstExisting({
         name: `admin.${tab}`,
-        params,
       }, {
         name: 'admin.tab',
         params: {
-          ...params,
           tab,
         },
       });
