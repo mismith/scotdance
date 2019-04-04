@@ -39,9 +39,9 @@
         v-for="section in sections"
         :key="section[idKey]"
         :value="section[idKey]"
+        :to="getTabRoute(section[idKey])"
         color="primary"
         flat
-        @click="goToTab(section[idKey])"
       >
         <span>{{ section.name }}</span>
         <v-icon :class="section.icon"></v-icon>
@@ -116,11 +116,11 @@ export default {
     },
   },
   methods: {
-    goToTab(tab) {
+    getTabRoute(tab) {
       const params = {
         competitionId: this.$route.params.competitionId,
       };
-      this.$router.push(getFirstExisting({
+      return getFirstExisting({
         name: `admin.${tab}`,
         params,
       }, {
@@ -129,7 +129,7 @@ export default {
           ...params,
           tab,
         },
-      }));
+      });
     },
     inTabs(...tabs) {
       return tabs.some(tab => (this.$root.currentTab) === tab);
