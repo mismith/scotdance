@@ -88,7 +88,6 @@
       :value="true"
       :active="$root.currentTab"
       class="listed-only"
-      style="overflow-x: auto; -webkit-overflow-scrolling: touch; justify-content: unset;"
     >
       <v-btn
         v-for="section in sections"

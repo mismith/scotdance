@@ -518,9 +518,22 @@ body {
     }
   }
 }
-.v-bottom-nav {
+.v-bottom-nav.v-item-group {
   flex-shrink: 0;
+  justify-content: unset;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   z-index: 1;
+
+  // can't use justify-content: center; because then overflowing clips
+  > * {
+    &:first-child {
+      margin-left: auto;
+    }
+    &:last-child {
+      margin-right: auto;
+    }
+  }
 }
 .v-toolbar {
   z-index: 1;
