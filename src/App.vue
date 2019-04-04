@@ -424,24 +424,6 @@ body.has-bottom-bar {
   flex: none;
 }
 
-// transitions
-.slide-left-enter-active,
-.slide-left-leave-active,
-.slide-right-enter-active,
-.slide-right-leave-active {
-  transition: all 250ms;
-}
-.slide-left-enter,
-.slide-right-leave-to {
-  transform: translate3d(100%, 0, 0);
-  opacity: 0;
-}
-.slide-left-leave-to,
-.slide-right-enter {
-  transform: translate3d(-25%, 0, 0);
-  opacity: 0;
-}
-
 // app-wide custom styling
 a {
   &.ext,
