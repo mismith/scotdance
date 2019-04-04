@@ -41,13 +41,25 @@ export default {
         };
         augmentedSettings.beforeChange = function beforeChange(changes, source) {
           if (source !== 'loadData') {
+            // store/retrieve to avoid adding a new db entry per change (instead of per new row)
+            const keys = {};
+            const getKey = (row) => {
+              if (!keys[row]) {
+                const key = instance.clonedData[row] && instance.clonedData[row][idKey];
+                if (!key) {
+                  keys[row] = db.push().key;
+                } else {
+                  keys[row] = key;
+                }
+              }
+              return keys[row];
+            };
+
             const aggregated = {};
             changes.forEach(([row, prop, , newVal]) => {
               const physicalRow = this.toPhysicalRow(row); // to account for sorting
-              const key = instance.clonedData[physicalRow] && instance.clonedData[physicalRow][idKey];
-              if (key || newVal) { // ignore if new row and no value entered
-                aggregated[`${key || db.push().key}/${prop.replace('.', '/')}`] = newVal || null;
-              }
+              const key = getKey(physicalRow);
+              aggregated[`${key}/${prop.replace('.', '/')}`] = newVal || null;
             });
             if (Object.keys(aggregated).length) { // ignore if new row and no value entered
               instance.$emit('change', aggregated);
