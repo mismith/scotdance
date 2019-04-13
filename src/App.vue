@@ -356,10 +356,6 @@ export default {
       this.accountToggled = accountToggled !== undefined ? accountToggled : !this.accountToggled;
     },
 
-    handleSwipeToGoBack() {
-      window.history.go(-1);
-    },
-
     clearLocalStorage() {
       if (window.localStorage) {
         window.localStorage.clear();

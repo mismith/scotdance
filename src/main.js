@@ -32,13 +32,13 @@ Vue.config.silent = true;
 
 // libs
 Vue.prototype.$moment = moment;
-Vue.use(VueFire);
 Vue.component('DialogCard', DialogCard);
 Vue.component('EmptyState', EmptyState);
 Vue.component('Gravatar', Gravatar);
 Vue.component('Spinner', Spinner);
 Vue.component('Blades', Blades);
 Vue.component('Blade', Blade);
+Vue.use(VueFire);
 Vue.use(VueAsyncComputed);
 Vue.use(VueBodyClass, router);
 Vue.use(VueLocalStorage, {

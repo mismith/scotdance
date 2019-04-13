@@ -13,7 +13,7 @@ const config = {
   storageBucket: 'firebase-scotdance.appspot.com',
   messagingSenderId: '635645850119',
 };
-firebase.initializeApp(config);
+const app = firebase.initializeApp(config);
 
 const idKey = '.key';
 const db = firebase.database().ref(FIREBASE_ENV);
@@ -46,8 +46,9 @@ const toOrderedArray = (obj) => {
 
 export {
   FIREBASE_ENV,
-  config,
   firebase,
+  config,
+  app,
   idKey,
   db,
   buckets,

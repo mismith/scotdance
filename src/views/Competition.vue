@@ -168,10 +168,10 @@ export default {
     },
 
     competition() {
-      return this.competitionRaw;
+      return this.competitionRaw || {};
     },
     dancers() {
-      return this.dancersRaw
+      return (this.dancersRaw || [])
         .map(dancer => ({
           ...dancer,
           $number: `${10000 + Number.parseInt(dancer.number, 10)}`, // prepend with leading 'zeroes', and stringify for search
@@ -183,7 +183,7 @@ export default {
         .sort(sortByKey('$number')); // sort by number
     },
     groups() {
-      return this.groupsRaw
+      return (this.groupsRaw || [])
         .map((group, i) => ({
           ...group,
           $order: `${10000 + i}`, // prepend with leading 'zeroes'
@@ -193,16 +193,16 @@ export default {
         .filter(isNotEmptyObject);
     },
     categories() {
-      return this.categoriesRaw
+      return (this.categoriesRaw || [])
         .filter(isNotEmptyObject);
     },
     dances() {
-      return this.dancesRaw
+      return (this.dancesRaw || [])
         .map(danceExtender)
         .filter(isNotEmptyObject);
     },
     staff() {
-      return this.staffRaw
+      return (this.staffRaw || [])
         .map(member => ({
           ...member,
           $name: `${member.firstName || ''} ${member.lastName || ''}`.trim(),
@@ -210,7 +210,7 @@ export default {
         .filter(isNotEmptyObject);
     },
     platforms() {
-      return this.platformsRaw
+      return (this.platformsRaw || [])
         .filter(isNotEmptyObject)
         .map(platform => ({
           ...platform,
@@ -218,13 +218,13 @@ export default {
         }));
     },
     draws() {
-      return this.drawsRaw;
+      return this.drawsRaw || {};
     },
     schedule() {
-      return this.scheduleRaw;
+      return this.scheduleRaw || {};
     },
     results() {
-      return this.resultsRaw;
+      return this.resultsRaw || {};
     },
   },
   watch: {
