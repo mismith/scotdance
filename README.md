@@ -1,7 +1,14 @@
-# ScotDance.app
+# [ScotDance.app](https://scotdance.app)
 
-Highland dancing event tracker
+> Highland dancing event tracker
 
+Skip the pen and paper—attend highland dance competitions in style with this app for your mobile device.
+
+Modernize your highland dancing experience by interacting with program-of-events information digitally:
+- Search through dancers by their competition number, name, age group, etc. Then mark your favourites for easy tracking.
+- Track your 'favourite' dancers to make it easy to follow you/your children/friends.
+- Use the at-a-glance schedule to check event start times, which platforms to dance at, order of dances, and more.
+- Get real-time results updates—from callbacks through to placings—and review them anytime after a competition, too.
 
 ## Dev
 
