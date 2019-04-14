@@ -1,5 +1,11 @@
 # Release Notes
 
+## 1.7.1 - Apr 14, 2019
+- results screen now auto-scrolls to live results as they appear
+- competitions listing now shows as a timeline instead of a boring list
+- competitions now show judge/piper/volunteer/sponsor info before competition day
+- minor UI improvements: list item animations, non-stretching images, nav-drawer close button
+
 ## 1.7.0 - Mar 29, 2019
 - improve competition info page, thereby allowing custom link buttons
 - fix fonts and certain icon glyphs displaying improperly and/or loading slowly
