@@ -45,17 +45,22 @@ Links to the admin panels needed to manage this project:
 
 ### Combined Release
 
-1. While waiting between/for any of the following steps, write release notes / changelog
-2. Increments versions in `control.xml`, `package.json`, and `package-lock.json`
+1. While waiting between/for any of the following steps, write release notes in `CHANGELOG.md`
+2. Increment versions via `npm run version`, which consists of:
+    1. `control.xml`
+    2. `package.json`
+    3. `package-lock.json`
 3. Deploy to app stores:
     1. Perform steps 1-3 of the Play Store instructions
     2. Perform steps 2-5 of the App Store instructions
     3. Perform steps 4-7 of the Play Store instructions
     4. Once iOS build package is processed, perform step 6 of the App Store instructions
-4. Commit version and platforms changes using the release version as the commit message (e.g. `1.0.0`)
-5. Tag the commit using the release version prepended with `v` (e.g. `v1.0.0`)
-6. Deploy to web via `firebase deploy`
-7. Push to `master`
+4. Finalize the release via `npm run release`, which consists of:
+    1. Commit version change and release notes using the release version as the commit message (e.g. `1.0.0`)
+    2. Tag the commit using the release version prepended with `v` (e.g. `v1.0.0`)
+5. Deploy to web via `npm run deploy`, which consists of:
+    1. Deploy to web via `firebase deploy`
+    2. Push to `master`
 
 ### Apple App Store
 
