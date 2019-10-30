@@ -409,6 +409,7 @@ body.has-bottom-bar {
   display: flex;
   flex-direction: column;
   flex: auto;
+  height: 100%;
   overflow: hidden;
 }
 .app-scroll {
@@ -469,7 +470,7 @@ body {
   margin-bottom: env(safe-area-inset-bottom);
 }
 .application--wrap {
-  min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); // for iPhone-X
+  min-height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom)); // for iPhone-X
 }
 .application--wrap,
 .v-content__wrap {
@@ -487,23 +488,23 @@ body {
 
 // framework component styling
 .v-dialog {
-  &,
-  .v-card,
-  .v-stepper,
-  .v-stepper__items,
-  .v-stepper__content,
-  .v-stepper__wrapper,
-  .v-tabs,
-  .v-window,
-  .v-window__container,
-  .v-window-item {
-    display: flex;
-    flex-direction: column;
-    flex: auto;
-  }
-  .v-stepper__header,
-  .v-tabs__bar {
-    flex-shrink: 0;
+  &--full-height {
+    &,
+    > .v-card,
+    .v-stepper,
+    .v-stepper__items,
+    .v-stepper__content,
+    .v-stepper__wrapper,
+    .v-tabs,
+    .v-window,
+    .v-window__container,
+    .v-window-item {
+      @extend .app-scroll-frame;
+    }
+    .v-stepper__header,
+    .v-tabs__bar {
+      flex-shrink: 0;
+    }
   }
 
   &--scrollable > .v-card {
@@ -603,7 +604,8 @@ body {
 
 // tables
 .handsontable {
-  height: 100vh;
+  height: 100%; // height must also be defined at some point up the chain (e.g. .app-scroll-frame)
+  overflow: hidden; // enables HotTable's scrolling
   z-index: 0;
 }
 

@@ -72,7 +72,7 @@
         label="Championship draws"
         description="Specify dancer order for each dance"
       />
-      <div v-else class="app-scroll">
+      <div v-else class="app-scroll app-scroll-frame">
         <HotTable :settings="hotSettings" />
       </div>
       <v-toolbar v-if="currentGroup">

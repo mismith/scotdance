@@ -17,7 +17,7 @@
         </v-list-tile>
       </v-list>
     </Blade>
-    <Blade id="blade-form" class="xs12 md9 app-scroll">
+    <Blade id="blade-form" class="xs12 md9 app-scroll app-scroll-frame">
       <template v-if="currentSubsection">
         <MiHotTable
           v-if="currentSubsection.hot"
