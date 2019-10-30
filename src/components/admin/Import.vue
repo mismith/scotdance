@@ -295,9 +295,9 @@ export default {
           // dancer
           dancers.push({
             number: datum.number,
-            firstName: datum.firstName,
-            lastName: datum.lastName,
-            location: datum.location,
+            firstName: datum.firstName || '',
+            lastName: datum.lastName || '',
+            location: datum.location || '',
             code: currentCode,
           });
         }
