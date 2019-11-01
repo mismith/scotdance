@@ -37,6 +37,9 @@
 
         <footer class="mt-2">
           <v-btn color="primary" class="mx-0" @click="handleStart">Start</v-btn>
+          <v-btn v-if="me && me.admin" color="secondary" class="mr-0" @click="handleSkip">
+            Skip
+          </v-btn>
         </footer>
       </v-stepper-content>
 
@@ -101,6 +104,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
 import { idKey, db, toOrderedArray } from '@/helpers/firebase';
 import steps, { checklists } from '@/schemas/submissions';
 import DynamicForm from '@/components/admin/DynamicForm.vue';
@@ -123,6 +127,11 @@ export default {
 
       checklists: toOrderedArray(checklists),
     };
+  },
+  computed: {
+    ...mapState([
+      'me',
+    ]),
   },
   methods: {
     reset() {
@@ -196,6 +205,15 @@ export default {
 
     async handleRestart() {
       this.reset();
+    },
+
+    async handleSkip() {
+      this.$router.push({
+        name: 'competition.admin.info',
+        params: {
+          competitionId: db.push().key,
+        },
+      });
     },
   },
   created() {
