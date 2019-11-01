@@ -176,7 +176,8 @@ export default {
         this.step += 1;
 
         // auto-pick default sheets
-        this.dancersSheetIndex = workbook.SheetNames.findIndex(name => /Program/i.test(name)) || 0;
+        const autoDetectedSheetIndex = workbook.SheetNames.findIndex(name => /Program/i.test(name));
+        this.dancersSheetIndex = autoDetectedSheetIndex >= 0 ? autoDetectedSheetIndex : 0;
       };
       reader.readAsBinaryString(file);
     },
