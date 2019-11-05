@@ -15,7 +15,7 @@
       <v-list-tile-title>{{ dancer.$name }}</v-list-tile-title>
       <v-list-tile-sub-title class="dot-divided">
         <span v-if="dancer.$group" class="group">{{ dancer.$group.$name }}</span>
-        <span class="location">{{ dancer.location || formatHumanURL(dancer.website) }}</span>
+        <span v-if="detail" class="location">{{ detail }}</span>
       </v-list-tile-sub-title>
     </v-list-tile-content>
 
@@ -45,8 +45,10 @@ export default {
     place: Number,
     to: true,
   },
-  methods: {
-    formatHumanURL,
+  computed: {
+    detail() {
+      return this.dancer.location || formatHumanURL(this.dancer.website);
+    },
   },
   mounted() {
     this.$emit('mounted', this.$el);
