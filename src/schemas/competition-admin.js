@@ -319,7 +319,7 @@ export default {
         },
         {
           data: 'name',
-          title: 'Name',
+          title: 'Age Range',
           required: true,
         },
         {
