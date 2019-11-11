@@ -24,14 +24,18 @@
     <footer v-if="$store.getters.hasPermission(`competitions/${competition[idKey]}`)" class="my-3">
       <v-btn
         :to="{ name: 'competition.admin.info', params: { competitionId: competition[idKey] } }"
-        :color="!competition.listed ? 'default' : (!competition.published ? 'secondary' : 'primary')"
+        color="primary"
         small
         class="ma-0"
       >
-        <template v-if="!competition.listed">Unlisted</template>
-        <template v-else-if="!competition.published">Unpublished</template>
-        <template v-else>Administer</template>
+        Administer
       </v-btn>
+      <v-chip v-if="!competition.listed" small disabled class="ml-3 black--text">
+        Unlisted
+      </v-chip>
+      <v-chip v-else-if="!competition.published" small disabled class="ml-3 black--text">
+        Unpublished
+      </v-chip>
     </footer>
   </v-timeline-item>
 </template>
@@ -59,7 +63,7 @@ export default {
     text-decoration: inherit;
   }
 
-  &:not(.listed) .v-btn.default {
+  &:not(.listed) .v-chip--disabled {
     background: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.1) 5px, rgba(0, 0, 0, 0.1) 10px);
   }
 }
