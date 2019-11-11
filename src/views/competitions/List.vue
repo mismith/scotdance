@@ -17,7 +17,20 @@
             <span class="dimmed caption text-uppercase">{{ competition.$timeline }}</span>
           </v-timeline-item>
 
-          <CompetitionTimelineItem :key="competition[idKey]" :competition="competition" />
+          <v-timeline-item
+            v-if="competition[idKey] === '__NOW__'"
+            :key="competition[idKey]"
+            small
+            color="secondary"
+            class="now"
+          >
+            <v-chip color="secondary" small disabled class="white--text">Now</v-chip>
+          </v-timeline-item>
+          <CompetitionTimelineItem
+            v-else
+            :key="competition[idKey]"
+            :competition="competition"
+          />
         </template>
       </v-timeline>
 
@@ -54,8 +67,9 @@ export default {
   computed: {
     timelineCompetitions() {
       let currentTimelineGroup;
-      return this.competitions
-        .map((competition) => {
+      let firstPastEventIndex = -1;
+      const timelineCompetitions = this.competitions
+        .map((competition, index) => {
           const $date = this.$moment(competition.date);
           let timelineGroup = $date.format('MMMM YYYY');
           if (timelineGroup !== currentTimelineGroup) {
@@ -63,12 +77,23 @@ export default {
           } else {
             timelineGroup = undefined;
           }
+          if (firstPastEventIndex <= 0 && $date.isBefore()) {
+            firstPastEventIndex = index;
+          }
 
           return {
             ...competition,
             $timeline: timelineGroup,
           };
         });
+
+      if (firstPastEventIndex >= 0) {
+        timelineCompetitions.splice(firstPastEventIndex - 1, 0, {
+          [idKey]: '__NOW__',
+        });
+      }
+
+      return timelineCompetitions;
     },
   },
   async created() {
@@ -81,3 +106,19 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+@keyframes blink {
+  0% { opacity: 100%; }
+  100% { opacity: 0%; }
+}
+.CompetitionsList {
+  .v-timeline-item.now {
+    .v-timeline-item__dot {
+      .v-timeline-item__inner-dot {
+        animation: blink 1s infinite alternate;
+      }
+    }
+  }
+}
+</style>
