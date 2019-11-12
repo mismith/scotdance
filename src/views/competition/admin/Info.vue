@@ -95,6 +95,18 @@ export default {
       return (this.section.subsections || {})[this.subsectionId];
     },
   },
+  watch: {
+    currentSubsection: {
+      async handler(currentSubsection) {
+        // scroll to blade, if necessary
+        await this.$nextTick();
+        const id = currentSubsection ? 'form' : 'subsections';
+        const element = document.getElementById(`blade-${id}`);
+        this.$scrollTo(element, { container: this.$el });
+      },
+      immediate: true,
+    },
+  },
   methods: {
     toOrderedArray,
 
