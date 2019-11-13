@@ -56,6 +56,9 @@
     <footer v-if="admin && !isEmpty">
       <v-btn flat :disabled="!item.platforms" @click="handleCopy">Copy</v-btn>
       <v-btn flat :disabled="clipboard.type !== 'platforms'" @click="handlePaste">Paste</v-btn>
+      <v-btn flat :disabled="!judges.length" @click="handleCycleJudges">
+        Cycle Judges
+      </v-btn>
     </footer>
   </div>
 </template>
@@ -183,6 +186,7 @@ export default {
         [`${this.path}/platforms/${pool[idKey]}/orderedJudgeIds`]: orderedJudgeIds,
       });
     },
+
     handleCopy() {
       this.copy({
         data: this.item.platforms,
@@ -196,6 +200,48 @@ export default {
       this.$emit('change', {
         [`${this.path}/platforms`]: this.clipboard.data,
       });
+    },
+
+    handleCycleJudges() {
+      if (!this.item || !this.path) return; // can't save changes if we don't know where to save to
+
+      // find the first platform's first assigned judge (if any)
+      let judgeIndexOffset = 0;
+      this.platforms.some(({ [idKey]: platformId }) => {
+        if (
+          this.item.platforms
+          && this.item.platforms[platformId]
+          && this.item.platforms[platformId].orderedJudgeIds
+          && this.item.platforms[platformId].orderedJudgeIds.length
+        ) {
+          const [judgeId] = this.item.platforms[platformId].orderedJudgeIds;
+          const judgeIndex = this.judges.findIndex(({ [idKey]: id }) => id === judgeId);
+          if (judgeIndex >= 0) {
+            // decrement by one to rotate judges around
+            judgeIndexOffset = judgeIndex - 1;
+            // wrap around if out of range
+            if (judgeIndexOffset < 0) {
+              judgeIndexOffset += this.judges.length;
+            }
+            // no need to keep looping now that we've found a match
+            return true;
+          }
+        }
+        return false;
+      });
+
+      // spread judges across all platforms, offsetting based on the first match found
+      const judgeIds = this.judges.map(({ [idKey]: judgeId }) => judgeId);
+      const cycledJudgeIds = judgeIds
+        .slice(judgeIndexOffset, judgeIds.length)
+        .concat(judgeIds.slice(0, judgeIndexOffset));
+      const judgesPerPlatform = Math.floor(this.judges.length / this.platforms.length) || 1;
+      const changes = this.platforms.reduce((acc, platform, index) => ({
+        ...acc,
+        [`${this.path}/platforms/${platform[idKey]}/orderedJudgeIds`]: cycledJudgeIds
+          .slice(index * judgesPerPlatform, (index + 1) * judgesPerPlatform),
+      }), {});
+      this.$emit('change', changes);
     },
   },
   components: {
