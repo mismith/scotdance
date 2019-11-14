@@ -22,12 +22,12 @@ export const getPlaceholderDancer = (timestamp = undefined) => ({
   $number: '?',
   $name: 'Dancer',
 });
-export function isPlaceholderDancerId(dancerId) {
+export function isPlaceholderId(dancerId) {
   return /^\d+$/.test(dancerId);
 }
 export function hasPlaceholderDancers(groupId, danceId, results = {}) {
   try {
-    return results[groupId][danceId].some(dancerId => isPlaceholderDancerId(dancerId));
+    return results[groupId][danceId].some(dancerId => isPlaceholderId(dancerId));
   } catch (err) {
     return false;
   }
@@ -58,7 +58,7 @@ export function findPlacedDancers(group, dance, dancers = [], results = {}, sort
   const placedDancers = placings.map((result) => {
     const [dancerId, tie] = result.split(':');
     const placeholderDancer = getPlaceholderDancer(dancerId);
-    const dancer = isPlaceholderDancerId(dancerId)
+    const dancer = isPlaceholderId(dancerId)
       ? placeholderDancer
       : findByIdKey(dancers, dancerId);
 

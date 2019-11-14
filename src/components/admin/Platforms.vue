@@ -21,6 +21,8 @@
             :key="poolItem[idKey]"
             :color="getChipColor(poolItem)"
             :dark="!!getChipColor(poolItem)"
+            :disabled="getChipColor(poolItem) === null"
+            :style="{ visibility: !admin && getChipColor(poolItem) === null && 'hidden' }"
             @click="!admin && $emit('item-click', poolItem)"
           >
             {{ poolItem.$name || poolItem.name }}
@@ -74,8 +76,15 @@ import {
   hydrateByIdKey,
   hasFavorites,
 } from '@/helpers/competition';
-import { findGroupDancers } from '@/helpers/results';
+import { findGroupDancers, isPlaceholderId } from '@/helpers/results';
 import { idKey } from '@/helpers/firebase';
+
+function getPlaceholderSlot(timestamp = undefined) {
+  return {
+    [idKey]: timestamp || Date.now(),
+    name: 'Spacer',
+  };
+}
 
 export default {
   name: 'AdminPlatforms',
@@ -131,8 +140,13 @@ export default {
           const poolPlatform = this.item && this.item.platforms && this.item.platforms[platform[idKey]];
           const $items = poolPlatform ? [
             ...hydrateByIdKey(poolPlatform.orderedJudgeIds, this.judges),
-            ...hydrateByIdKey(poolPlatform.orderedGroupIds, this.danceGroups),
-          ].filter(item => item || null) : [];
+            ...hydrateByIdKey(poolPlatform.orderedGroupIds, [
+              ...this.danceGroups,
+              ...(poolPlatform.orderedGroupIds || [])
+                .filter(isPlaceholderId)
+                .map(getPlaceholderSlot),
+            ]),
+          ].filter(Boolean) : [];
           return {
             ...platform,
             $items,
@@ -146,6 +160,7 @@ export default {
           $items: [
             ...this.unassignedJudges,
             ...this.unassignedDanceGroups,
+            getPlaceholderSlot(),
           ],
         });
       }
@@ -170,6 +185,9 @@ export default {
       }
       if (this.isJudge(poolItem)) {
         return 'primary';
+      }
+      if (isPlaceholderId(poolItem[idKey])) {
+        return null;
       }
       return undefined;
     },
