@@ -5,41 +5,41 @@
         <v-subheader slot="activator">Administrators</v-subheader>
         <v-list two-line>
           <v-slide-y-transition group hide-on-leave>
-            <v-list-tile
+            <v-list-item
               v-for="invite in administrators"
               :key="invite[idKey]"
             >
-              <v-list-tile-avatar :color="invite.submitted ? '' : 'primary'">
+              <v-list-item-avatar :color="invite.submitted ? '' : 'primary'">
                 <v-icon>{{ invite.submitted ? 'check_circle' : 'check' }}</v-icon>
-              </v-list-tile-avatar>
-              <v-list-tile-content>
-                <v-list-tile-title>{{ invite.payload.email }}</v-list-tile-title>
-                <v-list-tile-sub-title>
+              </v-list-item-avatar>
+              <v-list-item-content>
+                <v-list-item-title>{{ invite.payload.email }}</v-list-item-title>
+                <v-list-item-sub-title>
                   {{ invite.submitted ? 'Submitted' : 'Since' }}
                   <time :title="invite.accepted">
                     {{ $moment(invite.accepted).fromNow() }}
                   </time>
-                </v-list-tile-sub-title>
-              </v-list-tile-content>
-              <v-list-tile-action v-if="!invite.submitted">
+                </v-list-item-sub-title>
+              </v-list-item-content>
+              <v-list-item-action v-if="!invite.submitted">
                 <v-tooltip fixed left>
                   <v-btn icon slot="activator" @click="handleAdministratorDemote(invite)">
                     <v-icon>clear</v-icon>
                   </v-btn>
                   <span>Remove Admin</span>
                 </v-tooltip>
-              </v-list-tile-action>
-            </v-list-tile>
+              </v-list-item-action>
+            </v-list-item>
           </v-slide-y-transition>
 
-          <v-list-tile>
-            <v-list-tile-avatar>
+          <v-list-item>
+            <v-list-item-avatar>
               <v-icon>verified_user</v-icon>
-            </v-list-tile-avatar>
-            <v-list-tile-content>
-              <v-list-tile-title>System Administrators</v-list-tile-title>
-            </v-list-tile-content>
-          </v-list-tile>
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title>System Administrators</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
         </v-list>
       </v-list-group>
       <DialogCard
@@ -56,11 +56,11 @@
         <v-subheader slot="activator">Invites</v-subheader>
         <v-list two-line>
           <v-slide-y-transition group hide-on-leave>
-            <v-list-tile
+            <v-list-item
               v-for="invite in invites"
               :key="invite[idKey]"
             >
-              <v-list-tile-avatar
+              <v-list-item-avatar
                 :color="FirebaseInvites.is(invite, FirebaseInvites.status.CREATED) && 'secondary'"
               >
                 <v-icon>{{
@@ -68,11 +68,11 @@
                   ? 'cancel'
                   : 'mail_outline'
                 }}</v-icon>
-              </v-list-tile-avatar>
+              </v-list-item-avatar>
 
-              <v-list-tile-content>
-                <v-list-tile-title>{{ invite.payload.email }}</v-list-tile-title>
-                <v-list-tile-sub-title>
+              <v-list-item-content>
+                <v-list-item-title>{{ invite.payload.email }}</v-list-item-title>
+                <v-list-item-sub-title>
                   <span v-if="FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED)">
                     Cancelled
                     <time :title="invite.cancelled">
@@ -95,39 +95,39 @@
                     &bull;
                     <a href="#" @click="handleInviteResend(invite)">Resend</a>
                   </span>
-                </v-list-tile-sub-title>
-              </v-list-tile-content>
+                </v-list-item-sub-title>
+              </v-list-item-content>
 
-              <v-list-tile-action v-if="FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED, FirebaseInvites.status.EXPIRED)">
+              <v-list-item-action v-if="FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED, FirebaseInvites.status.EXPIRED)">
                 <v-tooltip fixed left>
                   <v-btn slot="activator" icon @click="handleInviteDelete(invite)">
                     <v-icon>delete</v-icon>
                   </v-btn>
                   <span>Delete Invite</span>
                 </v-tooltip>
-              </v-list-tile-action>
-              <v-list-tile-action v-else>
+              </v-list-item-action>
+              <v-list-item-action v-else>
                 <v-tooltip fixed left>
                   <v-btn slot="activator" icon @click="handleInviteCancel(invite)">
                     <v-icon>clear</v-icon>
                   </v-btn>
                   <span>Cancel Invite</span>
                 </v-tooltip>
-              </v-list-tile-action>
-            </v-list-tile>
+              </v-list-item-action>
+            </v-list-item>
           </v-slide-y-transition>
 
-          <v-list-tile v-if="!invites.length" class="empty">
-            <v-list-tile-avatar>
+          <v-list-item v-if="!invites.length" class="empty">
+            <v-list-item-avatar>
               <v-icon>clear</v-icon>
-            </v-list-tile-avatar>
+            </v-list-item-avatar>
             No pending invites.
-          </v-list-tile>
+          </v-list-item>
           <v-divider class="mb-2" />
           <NewDynamicField
             :field="{ title: 'Invite by Email', data: 'email', type: 'email' }"
             @change="handleInviteCreate"
-            class="pl-3"
+            class="pl-4"
           />
         </v-list>
       </v-list-group>

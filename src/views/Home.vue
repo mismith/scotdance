@@ -3,22 +3,22 @@
     <section class="hero">
       <div>
         <img src="@/assets/img/touchicon.png" role="presentation" width="88" height="88" />
-        <h1 class="display-2 my-3">{{ $package.$name }}</h1>
+        <h1 class="display-2 my-4">{{ $package.$name }}</h1>
         <p class="headline">{{ $package.description }}</p>
-        <p class="subheading">Skip the pen and paper—attend highland dance competitions in style with this app for your mobile device.</p>
+        <p class="subtitle-1">Skip the pen and paper—attend highland dance competitions in style with this app for your mobile device.</p>
         <p class="print-hide">
-          <v-btn :to="{ name: 'competitions' }" color="primary" large>
+          <v-btn :to="{ name: 'competitions' }" color="primary" large class="ma-2">
             Browse Competitions
           </v-btn>
-          <v-btn :to="{ name: 'competitions.submit' }" color="secondary" large>
+          <v-btn :to="{ name: 'competitions.submit' }" color="secondary" large class="ma-2">
             Submit Competition
           </v-btn>
         </p>
         <p v-if="!isApp" class="store-badges">
-          <a href="https://itunes.apple.com/us/app/scotdance/id1386475626?mt=8" target="_blank">
+          <a href="https://itunes.apple.com/us/app/scotdance/id1386475626?mt=8" target="_blank" class="ma-2">
             <img src="@/assets/img/app-store.svg" alt="Download on the App Store" />
           </a>
-          <a href="https://play.google.com/store/apps/details?id=info.mismith.scotdance" target="_blank">
+          <a href="https://play.google.com/store/apps/details?id=info.mismith.scotdance" target="_blank" class="ma-2">
             <img src="@/assets/img/play-store.svg" alt="Get it on Google Play" />
           </a>
         </p>
@@ -30,31 +30,31 @@
 
     <section id="about" class="alt">
       <header>
-        <h2 class="display-1 my-3">A virtual program of events</h2>
-        <p class="subheading">Modernize your highland dancing experience by interacting with competition information digitally.</p>
+        <h2 class="display-1 my-4">A virtual program of events</h2>
+        <p class="subtitle-1">Modernize your highland dancing experience by interacting with competition information digitally.</p>
       </header>
       <v-layout wrap>
         <v-flex xs12 sm4>
           <v-icon color="primary" class="icon-people" />
-          <h2 class="title my-3">Dancers</h2>
+          <h2 class="title my-4">Dancers</h2>
           <p>Search through dancers by their competition number, name, age group, etc. Then mark your favourites for easy tracking.</p>
         </v-flex>
         <v-flex xs12 sm4>
           <v-icon color="primary" class="icon-clock" />
-          <h2 class="title my-3">Schedule</h2>
+          <h2 class="title my-4">Schedule</h2>
           <p>Use the at-a-glance schedule to check event start times, which platforms to dance at, order of dances, and more.</p>
         </v-flex>
         <v-flex xs12 sm4>
           <v-icon color="primary" class="icon-trophy" />
-          <h2 class="title my-3">Results</h2>
+          <h2 class="title my-4">Results</h2>
           <p>Get real-time results updates—from callbacks through to placings—and review them anytime after a competition, too.</p>
         </v-flex>
       </v-layout>
       <footer>
-        <v-btn :to="{ name: 'competitions' }" color="primary">
+        <v-btn :to="{ name: 'competitions' }" color="primary" class="ma-2">
           Browse Competitions
         </v-btn>
-        <v-btn :to="{ name: 'competitions.submit' }" color="secondary">
+        <v-btn :to="{ name: 'competitions.submit' }" color="secondary" class="ma-2">
           Submit Competition
         </v-btn>
       </footer>
@@ -62,7 +62,7 @@
 
     <section id="faq">
       <header>
-        <h2 class="display-1 my-3">FAQs</h2>
+        <h2 class="display-1 my-4">FAQs</h2>
         <dl v-if="faqs.length">
           <template v-for="faq in faqs">
             <dt :key="faq.question" v-html="faq.question" class="title" />
@@ -75,7 +75,7 @@
 
     <section id="info" class="alt">
       <header>
-        <h2 class="display-1 my-3">Info</h2>
+        <h2 class="display-1 my-4">Info</h2>
         <p>{{ $package.$name }} was created in 2017 by <a href="https://mismith.io" target="_blank" class="ext">Murray Smith</a></p>
         <p>View the source code on <a href="https://github.com/mismith/scotdance" target="_blank" class="ext">GitHub</a></p>
         <p>Track development via <a href="https://trello.com/b/ZCZ8t1fH" target="_blank" class="ext">Trello</a></p>
@@ -142,7 +142,6 @@ export default {
     .store-badges {
       a {
         display: inline-block;
-        margin: 8px;
       }
       img {
         height: 48px;

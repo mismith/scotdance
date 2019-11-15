@@ -13,14 +13,13 @@
           <div
             v-if="day.description"
             v-html="day.description"
-            class="pa-3 pre-line"
+            class="pa-4 pre-line"
           />
 
           <v-list expand class="grouped">
             <v-list-group
               v-for="block in toOrderedArray(day.blocks)"
               :key="block[idKey]"
-              lazy
               :value="isBlockExpanded(block[idKey], Object.keys(day.blocks), !!block.events)"
               @input="handleBlockExpanded(block[idKey], $event)"
             >
@@ -30,7 +29,7 @@
               </v-subheader>
 
               <v-list two-line>
-                <v-list-tile
+                <v-list-item
                   v-for="event in toOrderedArray(block.events)"
                   :key="event[idKey]"
                   :to="{
@@ -43,26 +42,26 @@
                   }"
                   :class="{ active: isActive(day[idKey], block[idKey], event[idKey]) }"
                 >
-                  <v-list-tile-content>
-                    <v-list-tile-title>{{ event.name }}</v-list-tile-title>
-                    <v-list-tile-sub-title>{{ textify(event.description) }}</v-list-tile-sub-title>
-                  </v-list-tile-content>
+                  <v-list-item-content>
+                    <v-list-item-title>{{ event.name }}</v-list-item-title>
+                    <v-list-item-sub-title>{{ textify(event.description) }}</v-list-item-sub-title>
+                  </v-list-item-content>
                   <v-icon v-if="event.dances || event.description">chevron_right</v-icon>
-                </v-list-tile>
-                <v-list-tile v-if="!block.events" class="empty">
-                  <v-list-tile-avatar>
+                </v-list-item>
+                <v-list-item v-if="!block.events" class="empty">
+                  <v-list-item-avatar>
                     <v-icon>clear</v-icon>
-                  </v-list-tile-avatar>
+                  </v-list-item-avatar>
                   No more info.
-                </v-list-tile>
+                </v-list-item>
               </v-list>
             </v-list-group>
-            <v-list-tile v-if="!day.blocks" class="empty">
-              <v-list-tile-avatar>
+            <v-list-item v-if="!day.blocks" class="empty">
+              <v-list-item-avatar>
                 <v-icon>clear</v-icon>
-              </v-list-tile-avatar>
+              </v-list-item-avatar>
               No more info.
-            </v-list-tile>
+            </v-list-item>
           </v-list>
         </div>
       </div>
@@ -90,7 +89,7 @@
             <div
               v-if="currentEvent.description"
               v-html="currentEvent.description"
-              class="pa-3 pre-line"
+              class="pa-4 pre-line"
             />
           </header>
 
@@ -98,7 +97,6 @@
             <v-list-group
               v-for="dance in toOrderedArray(currentEvent.dances)"
               :key="dance[idKey]"
-              lazy
               :value="isDanceExpanded(dance[idKey], Object.keys(currentEvent.dances), !!dance.danceId)"
               @input="handleDanceExpanded(dance[idKey], $event)"
             >
@@ -121,12 +119,12 @@
                 @item-click="handlePlatformClick($event, dance)"
               />
             </v-list-group>
-            <v-list-tile v-if="!currentEvent.dances && !currentEvent.description" class="empty">
-              <v-list-tile-avatar>
+            <v-list-item v-if="!currentEvent.dances && !currentEvent.description" class="empty">
+              <v-list-item-avatar>
                 <v-icon>clear</v-icon>
-              </v-list-tile-avatar>
+              </v-list-item-avatar>
               No more info.
-            </v-list-tile>
+            </v-list-item>
           </v-list>
         </div>
 

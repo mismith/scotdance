@@ -3,7 +3,6 @@
     <v-list-group
       v-for="group in groups"
       :key="group[idKey]"
-      lazy
       :value="isGroupExpanded(group, groups)"
       @input="handleGroupExpanded(group[idKey], $event)"
     >

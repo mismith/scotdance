@@ -3,31 +3,31 @@
     <Blade :active="!currentSubmission" class="xs12 md4">
       <div v-if="submissions.length" class="app-scroll-frame app-scroll">
         <v-list v-if="loaded" two-line>
-          <v-list-tile
+          <v-list-item
             v-for="submission in submissions"
             :key="submission[idKey]"
             :to="{ name: $route.name, params: { submissionId: submission[idKey] } }"
           >
-            <v-list-tile-avatar :color="submission.approved ? 'primary' : 'secondary'">
+            <v-list-item-avatar :color="submission.approved ? 'primary' : 'secondary'">
               <v-icon>{{ submission.approved ? 'check' : 'new_releases' }}</v-icon>
-            </v-list-tile-avatar>
-            <v-list-tile-content>
-              <v-list-tile-title>
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title>
                 {{ submission.competition && submission.competition.name }}
-              </v-list-tile-title>
-              <v-list-tile-sub-title v-if="submission.approved" :title="submission.approved">
+              </v-list-item-title>
+              <v-list-item-sub-title v-if="submission.approved" :title="submission.approved">
                 Approved:
                 {{ $moment(submission.approved).fromNow() }}
-              </v-list-tile-sub-title>
-              <v-list-tile-sub-title v-else :title="submission.submitted">
+              </v-list-item-sub-title>
+              <v-list-item-sub-title v-else :title="submission.submitted">
                 Submitted:
                 {{ $moment(submission.submitted).fromNow() }}
-              </v-list-tile-sub-title>
-            </v-list-tile-content>
-            <v-list-tile-action>
+              </v-list-item-sub-title>
+            </v-list-item-content>
+            <v-list-item-action>
               <v-icon>chevron_right</v-icon>
-            </v-list-tile-action>
-          </v-list-tile>
+            </v-list-item-action>
+          </v-list-item>
         </v-list>
         <div v-else class="app-scroll-frame">
           <Spinner />
@@ -59,20 +59,20 @@
               v-if="currentSubmission[step[idKey]]"
               :fields="step.fields"
               :data="currentSubmission[step[idKey]]"
-              class="white pa-3"
+              class="white pa-4"
               @field-change="handleChanges($event, `competitions:submissions/${submissionId}/${step[idKey]}`)"
             />
-            <v-list-tile v-else class="empty">
-              <v-list-tile-avatar>
+            <v-list-item v-else class="empty">
+              <v-list-item-avatar>
                 <v-icon>clear</v-icon>
-              </v-list-tile-avatar>
+              </v-list-item-avatar>
               No more info.
-            </v-list-tile>
+            </v-list-item>
           </v-list-group>
         </v-list>
         <footer class="pb-2">
           <div class="layout align-center flex-none flex-wrap">
-            <div class="pa-3">
+            <div class="pa-4">
               <div :title="currentSubmission.submitted">
                 Submitted:
                 <strong>{{ $moment(currentSubmission.submitted).format('LLLL') }}</strong>
@@ -83,7 +83,7 @@
               </div>
             </div>
             <v-spacer />
-            <div class="pa-3" style="text-align: right;">
+            <div class="pa-4" style="text-align: right;">
               <v-btn
                 v-if="!currentSubmission.approvedBy"
                 color="primary"
@@ -103,7 +103,7 @@
               </div>
             </div>
           </div>
-          <div v-if="currentSubmission.competitionId" class="pt-0 px-3 pb-3" style="text-align: right;">
+          <div v-if="currentSubmission.competitionId" class="pt-0 px-4 pb-4" style="text-align: right;">
             <v-btn
               :to="{ name: 'competition.info', params: { competitionId: currentSubmission.competitionId } }"
               class="ml-0"

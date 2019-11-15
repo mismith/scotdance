@@ -26,7 +26,7 @@
             <slot name="cancel">
               <v-btn
                 v-if="cancelLabel !== null"
-                flat
+                text
                 @click="handleCancel"
               >
                 {{ cancelLabel }}
@@ -35,7 +35,7 @@
             <slot name="submit">
               <v-btn
                 v-if="submitLabel !== null"
-                flat
+                text
                 color="primary"
                 type="submit"
                 :loading="loading"

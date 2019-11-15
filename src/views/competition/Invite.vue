@@ -1,5 +1,5 @@
 <template>
-  <RequiresPermission class="CompetitionInvite layout align-center justify-center app-scroll-frame app-scroll pa-3">
+  <RequiresPermission class="CompetitionInvite layout align-center justify-center app-scroll-frame app-scroll pa-4">
     <div v-if="!invite">
       <Spinner />
     </div>

@@ -2,11 +2,11 @@
   <RequiresPermission :permission="hasPermission" class="CompetitionAdmin app-scroll-frame">
     <v-toolbar dense>
       <div v-if="inTabs('categories', 'dancers', 'groups')">
-        <v-btn flat @click="showImport = true" class="hidden-xs-only">Import&hellip;</v-btn>
+        <v-btn text @click="showImport = true" class="hidden-xs-only">Import&hellip;</v-btn>
       </div>
       <div v-if="inTabs('results')">
-        <!-- <v-btn flat @click="showImportResults = true" class="hidden-xs-only">Import&hellip;</v-btn> -->
-        <v-btn flat @click="exportResults()">Export CSV</v-btn>
+        <!-- <v-btn text @click="showImportResults = true" class="hidden-xs-only">Import&hellip;</v-btn> -->
+        <v-btn text @click="exportResults()">Export CSV</v-btn>
       </div>
 
       <div v-if="currentSection">
@@ -21,7 +21,7 @@
       <v-spacer />
 
       <v-tooltip left>
-        <v-btn slot="activator" icon flat color="primary" :loading="saving">
+        <v-btn slot="activator" icon text color="primary" :loading="saving">
           <v-icon>check</v-icon>
         </v-btn>
         <span>{{ saving ? 'Saving...' : 'Saved' }}</span>
@@ -36,7 +36,7 @@
           label="No categories found"
         >
           <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'categories' } }">
-            <span class="subheading">Add or import some first &rsaquo;</span>
+            <span class="subtitle-1">Add or import some first &rsaquo;</span>
           </router-link>
         </EmptyState>
         <EmptyState
@@ -45,7 +45,7 @@
           label="No age groups found"
         >
           <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }">
-            <span class="subheading">Add or import some first &rsaquo;</span>
+            <span class="subtitle-1">Add or import some first &rsaquo;</span>
           </router-link>
         </EmptyState>
         <MiHotTable
@@ -83,7 +83,7 @@
       />
     </v-dialog> -->
 
-    <v-bottom-nav
+    <v-bottom-navigation
       v-if="hasPermission"
       :value="true"
       :active="$root.currentTab"
@@ -95,13 +95,13 @@
         :value="section[idKey]"
         :to="getTabRoute(section[idKey])"
         color="primary"
-        flat
+        text
         :class="section.className"
       >
         <span>{{ section.name }}</span>
         <v-icon :class="section.icon"></v-icon>
       </v-btn>
-    </v-bottom-nav>
+    </v-bottom-navigation>
   </RequiresPermission>
 </template>
 

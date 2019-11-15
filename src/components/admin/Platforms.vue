@@ -36,7 +36,7 @@
       label="No dance groups found"
       >
       <router-link :to="{ name: 'competition.admin.dance-groups' }">
-        <span class="subheading">Configure some first &rsaquo;</span>
+        <span class="subtitle-1">Configure some first &rsaquo;</span>
       </router-link>
     </EmptyState>
     <EmptyState
@@ -45,20 +45,20 @@
       label="No platforms found"
       >
       <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'platforms' } }">
-        <span class="subheading">Add at least one platform first &rsaquo;</span>
+        <span class="subtitle-1">Add at least one platform first &rsaquo;</span>
       </router-link>
     </EmptyState>
-    <v-list-tile v-else class="empty">
-      <v-list-tile-avatar>
+    <v-list-item v-else class="empty">
+      <v-list-item-avatar>
         <v-icon>clear</v-icon>
-      </v-list-tile-avatar>
+      </v-list-item-avatar>
       No more info.
-    </v-list-tile>
+    </v-list-item>
 
     <footer v-if="admin && !isEmpty">
-      <v-btn flat :disabled="!item.platforms" @click="handleCopy">Copy</v-btn>
-      <v-btn flat :disabled="clipboard.type !== 'platforms'" @click="handlePaste">Paste</v-btn>
-      <v-btn flat :disabled="!judges.length" @click="handleCycleJudges">
+      <v-btn text :disabled="!item.platforms" @click="handleCopy">Copy</v-btn>
+      <v-btn text :disabled="clipboard.type !== 'platforms'" @click="handlePaste">Paste</v-btn>
+      <v-btn text :disabled="!judges.length" @click="handleCycleJudges">
         Cycle Judges
       </v-btn>
     </footer>

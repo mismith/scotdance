@@ -1,8 +1,8 @@
 <template>
   <div class="AdminInfo app-scroll-frame app-scroll">
-    <div class="layout row align-center justify-center app-scroll-frame alt pa-3">
+    <div class="layout row align-center justify-center app-scroll-frame alt pa-4">
       <v-card>
-        <v-responsive class="pa-3">
+        <v-responsive class="pa-4">
           <v-icon :size="88" class="icon-question" />
         </v-responsive>
         <v-card-title>
@@ -10,7 +10,7 @@
         </v-card-title>
       </v-card>
       <v-card>
-        <v-responsive class="pa-3">
+        <v-responsive class="pa-4">
           <v-icon :size="88">event</v-icon>
         </v-responsive>
         <v-card-title>
@@ -18,7 +18,7 @@
         </v-card-title>
       </v-card>
       <v-card>
-        <v-responsive class="pa-3">
+        <v-responsive class="pa-4">
           <v-icon :size="88" class="icon-people" />
         </v-responsive>
         <v-card-title>

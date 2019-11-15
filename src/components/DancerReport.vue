@@ -5,7 +5,7 @@
         <v-flex>{{ dancer.$name }}</v-flex>
         <FavoriteDancerButton :dancer="dancer" />
       </v-subheader>
-      <div class="pa-3">
+      <div class="pa-4">
         <div class="number">#{{ dancer.number }}</div>
         <div class="group">{{ dancer.$group && dancer.$group.$name }}</div>
         <div class="location">{{ dancer.location }}</div>
@@ -36,12 +36,12 @@
             {{ overall.$name }}
           </ResultListItem>
 
-          <v-list-tile v-if="!findGroupDances(group, dances).length && !hasOverall(group)" class="empty">
-            <v-list-tile-avatar>
+          <v-list-item v-if="!findGroupDances(group, dances).length && !hasOverall(group)" class="empty">
+            <v-list-item-avatar>
               <v-icon>clear</v-icon>
-            </v-list-tile-avatar>
+            </v-list-item-avatar>
             Results to be determined.
-          </v-list-tile>
+          </v-list-item>
         </v-list>
       </v-list-group>
     </v-list>

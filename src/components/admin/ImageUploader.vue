@@ -3,7 +3,7 @@
     <v-card hover max-width="300" class="column align-center my-2">
       <v-progress-linear v-show="progress" v-model="progress" absolute />
       <img v-if="preview || value" :src="preview || value" :style="{ opacity: progress ? 0.25 : 1 }" />
-      <v-flex v-else class="layout column align-center pa-3">
+      <v-flex v-else class="layout column align-center pa-4">
         <v-icon size="100" class="">cloud_upload</v-icon>
         <div>Drag or Browse</div>
       </v-flex>

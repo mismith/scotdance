@@ -4,7 +4,7 @@
       <v-spacer />
 
       <v-tooltip left>
-        <v-btn slot="activator" icon flat color="primary" :loading="saving">
+        <v-btn slot="activator" icon text color="primary" :loading="saving">
           <v-icon>check</v-icon>
         </v-btn>
         <span>{{ saving ? 'Saving...' : 'Saved' }}</span>
@@ -34,19 +34,19 @@
       />
     </div>
 
-    <v-bottom-nav v-if="hasPermission" :value="true" :active="$root.currentTab">
+    <v-bottom-navigation v-if="hasPermission" :value="true" :active="$root.currentTab">
       <v-btn
         v-for="section in sections"
         :key="section[idKey]"
         :value="section[idKey]"
         :to="getTabRoute(section[idKey])"
         color="primary"
-        flat
+        text
       >
         <span>{{ section.name }}</span>
         <v-icon :class="section.icon"></v-icon>
       </v-btn>
-    </v-bottom-nav>
+    </v-bottom-navigation>
   </RequiresPermission>
 </template>
 

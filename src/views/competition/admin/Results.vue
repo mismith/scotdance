@@ -14,7 +14,7 @@
         label="No age groups found"
       >
         <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }">
-          <span class="subheading">Add or import some first &rsaquo;</span>
+          <span class="subtitle-1">Add or import some first &rsaquo;</span>
         </router-link>
       </EmptyState>
     </Blade>
@@ -40,7 +40,7 @@
           label="No dancers found"
         >
           <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dancers' } }">
-            <span class="subheading">Add dancers with this age group first &rsaquo;</span>
+            <span class="subtitle-1">Add dancers with this age group first &rsaquo;</span>
           </router-link>
         </EmptyState>
         <EmptyState
@@ -49,7 +49,7 @@
           label="No dancers to place"
         >
           <router-link :to="{ name: 'competition.admin.results', params: { groupId, danceId: callbacks[idKey] } }">
-            <span class="subheading">Make sure enter callbacks first &rsaquo;</span>
+            <span class="subtitle-1">Make sure enter callbacks first &rsaquo;</span>
           </router-link>
         </EmptyState>
       </v-list>

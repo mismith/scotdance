@@ -1,33 +1,33 @@
 <template>
-  <v-list-tile
+  <v-list-item
     :to="to"
     class="CompetitionListItem"
     :class="{ listed: competition.listed, published: competition.published }"
   >
-    <v-list-tile-avatar color="white">
+    <v-list-item-avatar color="white">
       <img v-if="competition.image" :src="competition.image" role="presentation" />
       <v-icon v-else>event</v-icon>
-    </v-list-tile-avatar>
+    </v-list-item-avatar>
 
-    <v-list-tile-content>
-      <v-list-tile-title>{{ competition.name }}</v-list-tile-title>
-      <v-list-tile-sub-title class="dot-divided">
+    <v-list-item-content>
+      <v-list-item-title>{{ competition.name }}</v-list-item-title>
+      <v-list-item-sub-title class="dot-divided">
         <span v-if="competition.date">{{ $moment(competition.date).format('MMM D, YYYY') }}</span>
         <span v-if="competition.location">{{ competition.location }}</span>
-      </v-list-tile-sub-title>
-    </v-list-tile-content>
+      </v-list-item-sub-title>
+    </v-list-item-content>
 
     <slot />
 
-    <v-list-tile-action v-if="$store.getters.hasPermission(`competitions/${competition[idKey]}`)">
+    <v-list-item-action v-if="$store.getters.hasPermission(`competitions/${competition[idKey]}`)">
       <v-btn
         icon
         :to="{ name: 'competition.admin.info', params: { competitionId: competition[idKey] } }"
       >
         <v-icon>edit</v-icon>
       </v-btn>
-    </v-list-tile-action>
-  </v-list-tile>
+    </v-list-item-action>
+  </v-list-item>
 </template>
 
 <script>

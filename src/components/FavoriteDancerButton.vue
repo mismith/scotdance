@@ -1,7 +1,7 @@
 <template>
   <v-btn
     icon
-    flat
+    text
     :color="dancer.$favorite && 'secondary'"
     @click.prevent.stop="toggleFavoriteDancer(dancer)"
     class="FavoriteDancerButton"

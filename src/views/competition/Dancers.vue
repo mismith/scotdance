@@ -10,14 +10,14 @@
             </v-btn>
 
             <v-list>
-              <v-list-tile
+              <v-list-item
                 v-for="by in sortableBys"
                 :key="by.key"
                 @click="sortBy = by.key"
                 :class="{ 'primary--text': sortBy === by.key }"
               >
                 {{ by.name }}
-              </v-list-tile>
+              </v-list-item>
             </v-list>
           </v-menu>
           <v-btn
@@ -37,7 +37,6 @@
             <v-list-group
               v-for="(group, groupId) in groupedDancers"
               :key="groupId"
-              lazy
               :value="isGroupExpanded(groupId, groupIds)"
               @input="handleGroupExpanded(groupId, $event)"
             >

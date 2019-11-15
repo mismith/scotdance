@@ -2,17 +2,17 @@
   <Blades class="AdminDanceGroups" :stacks="true">
     <Blade id="blade-groups" :active="!currentGroup" class="xs12 md4 app-scroll">
       <v-list v-if="groups.length">
-        <v-list-tile
+        <v-list-item
           v-for="group in groups"
           :key="group[idKey]"
           :to="{ name: $route.name, params: { groupId: group[idKey] } }"
           :class="{ active: isActive(group) }"
         >
-          <v-list-tile-content>
-            <v-list-tile-title>{{ group.$name }}</v-list-tile-title>
-          </v-list-tile-content>
+          <v-list-item-content>
+            <v-list-item-title>{{ group.$name }}</v-list-item-title>
+          </v-list-item-content>
           <v-icon>chevron_right</v-icon>
-        </v-list-tile>
+        </v-list-item>
       </v-list>
       <EmptyState
         v-else
@@ -20,31 +20,31 @@
         label="No age groups found"
       >
         <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }">
-          <span class="subheading">Add or import some first &rsaquo;</span>
+          <span class="subtitle-1">Add or import some first &rsaquo;</span>
         </router-link>
       </EmptyState>
     </Blade>
     <Blade id="blade-dances" :active="currentGroup" class="xs12 md4 app-scroll">
       <v-list v-if="currentGroup">
-        <v-list-tile
+        <v-list-item
           v-for="dance in dances"
           :key="dance[idKey]"
           @click="handleDanceToggle(dance, !dance.groupIds[groupId])"
         >
-          <v-list-tile-content>
-            <v-list-tile-title>{{ dance.$name }}</v-list-tile-title>
-          </v-list-tile-content>
-          <v-list-tile-action>
+          <v-list-item-content>
+            <v-list-item-title>{{ dance.$name }}</v-list-item-title>
+          </v-list-item-content>
+          <v-list-item-action>
             <v-switch :input-value="!!dance.groupIds[groupId]" />
-          </v-list-tile-action>
-        </v-list-tile>
+          </v-list-item-action>
+        </v-list-item>
 
         <footer v-if="dances.length">
           <v-divider />
-          <v-btn flat @click="handleCopy">
+          <v-btn text @click="handleCopy">
             Copy
           </v-btn>
-          <v-btn flat :disabled="clipboard.type !== 'dance-groups'" @click="handlePaste">
+          <v-btn text :disabled="clipboard.type !== 'dance-groups'" @click="handlePaste">
             Paste
           </v-btn>
         </footer>
@@ -54,7 +54,7 @@
           label="No dances found"
         >
           <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dances' } }">
-            <span class="subheading">Add or import some first &rsaquo;</span>
+            <span class="subtitle-1">Add or import some first &rsaquo;</span>
           </router-link>
         </EmptyState>
       </v-list>
@@ -76,37 +76,37 @@
         <HotTable :settings="hotSettings" />
       </div>
       <v-toolbar v-if="currentGroup">
-        <v-list-tile v-if="!currentGroupDances.length" class="empty">
-          <v-list-tile-avatar>
+        <v-list-item v-if="!currentGroupDances.length" class="empty">
+          <v-list-item-avatar>
             <v-icon>warning</v-icon>
-          </v-list-tile-avatar>
-          <v-list-tile-content>
-            <v-list-tile-title>
+          </v-list-item-avatar>
+          <v-list-item-content>
+            <v-list-item-title>
               No dances toggled.
-            </v-list-tile-title>
-            <v-list-tile-sub-title>
+            </v-list-item-title>
+            <v-list-item-sub-title>
               Enable some first.
-            </v-list-tile-sub-title>
-          </v-list-tile-content>
-        </v-list-tile>
+            </v-list-item-sub-title>
+          </v-list-item-content>
+        </v-list-item>
 
-        <v-list-tile v-else-if="!currentGroupDancers.length" class="empty">
-          <v-list-tile-avatar>
+        <v-list-item v-else-if="!currentGroupDancers.length" class="empty">
+          <v-list-item-avatar>
             <v-icon>warning</v-icon>
-          </v-list-tile-avatar>
-          <v-list-tile-content>
-            <v-list-tile-title>No dancers in this age group.</v-list-tile-title>
-            <v-list-tile-sub-title>
+          </v-list-item-avatar>
+          <v-list-item-content>
+            <v-list-item-title>No dancers in this age group.</v-list-item-title>
+            <v-list-item-sub-title>
               <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dancers' } }">
                 Add or import some first &rsaquo;
               </router-link>
-            </v-list-tile-sub-title>
-          </v-list-tile-content>
-        </v-list-tile>
+            </v-list-item-sub-title>
+          </v-list-item-content>
+        </v-list-item>
 
         <template v-else>
           <v-switch v-model="currentGroupHasDraws" label="Enable" hide-details />
-          <v-btn flat color="primary" @click="handleShuffleCurrentGroupDraws()">
+          <v-btn text color="primary" @click="handleShuffleCurrentGroupDraws()">
             Auto-Fill
           </v-btn>
         </template>

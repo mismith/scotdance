@@ -6,7 +6,7 @@
       <div class="title flex">Update Available</div>
       <v-icon>system_update</v-icon>
     </v-card-title>
-    <v-card-text slot="text" class="pa-3 primary white--text" style="position: relative;">
+    <v-card-text slot="text" class="pa-4 primary white--text" style="position: relative;">
       <div class="account-bg"></div>
       <div style="position: relative; text-align: center;">
         <div>Get the latest version of the app:</div>
@@ -16,7 +16,7 @@
 
     <v-btn
       slot="submit"
-      flat
+      text
       color="primary"
       :href="platformSpecificAppStoreURL"
       target="_blank"

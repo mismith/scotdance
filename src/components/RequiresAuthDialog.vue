@@ -5,7 +5,7 @@
       <v-card-text>
         <slot />
       </v-card-text>
-      <div class="pa-3 primary" style="position: relative;">
+      <div class="pa-4 primary" style="position: relative;">
         <div class="account-bg"></div>
         <AccountButtons />
       </div>

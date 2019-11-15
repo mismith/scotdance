@@ -33,8 +33,8 @@
     </v-alert>
 
     <v-card-actions slot="actions" class="justify-end">
-      <v-btn flat @click="registerVisible = false">Cancel</v-btn>
-      <v-btn flat color="primary" :loading="authLoading" type="submit">Register</v-btn>
+      <v-btn text @click="registerVisible = false">Cancel</v-btn>
+      <v-btn text color="primary" :loading="authLoading" type="submit">Register</v-btn>
     </v-card-actions>
   </DialogCard>
 </template>

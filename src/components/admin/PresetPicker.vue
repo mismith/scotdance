@@ -8,27 +8,27 @@
     @submit="handleSubmit"
   >
     <slot name="activator" slot="activator">
-      <v-btn flat>Add Presets&hellip;</v-btn>
+      <v-btn text>Add Presets&hellip;</v-btn>
     </slot>
     <v-list slot="text" class="app-scroll">
-      <v-list-tile
+      <v-list-item
         v-for="preset in presets"
         :key="getValue(preset)"
         @click="handleToggle(preset)"
       >
-        <v-list-tile-action>
+        <v-list-item-action>
           <v-checkbox :value="selected[getValue(preset)]" />
-        </v-list-tile-action>
-        <v-list-tile-content>
-          <v-list-tile-title>{{ getValue(preset) }}</v-list-tile-title>
-        </v-list-tile-content>
-      </v-list-tile>
-      <v-list-tile v-if="!presets.length" class="empty">
-        <v-list-tile-avatar>
+        </v-list-item-action>
+        <v-list-item-content>
+          <v-list-item-title>{{ getValue(preset) }}</v-list-item-title>
+        </v-list-item-content>
+      </v-list-item>
+      <v-list-item v-if="!presets.length" class="empty">
+        <v-list-item-avatar>
           <v-icon>clear</v-icon>
-        </v-list-tile-avatar>
+        </v-list-item-avatar>
         <span>No presets found.</span>
-      </v-list-tile>
+      </v-list-item>
     </v-list>
   </DialogCard>
 </template>

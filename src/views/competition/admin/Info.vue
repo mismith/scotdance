@@ -2,19 +2,19 @@
   <Blades class="AdminInfo" :stacks="true">
     <Blade id="blade-subsections" class="xs12 md3 app-scroll">
       <v-list>
-        <v-list-tile
+        <v-list-item
           v-for="subsection in toOrderedArray(section.subsections)"
           :key="subsection[idKey]"
           :to="{ name: 'competition.admin.info', params: { subsectionId: subsection[idKey] } }"
         >
-          <v-list-tile-avatar>
+          <v-list-item-avatar>
             <v-icon :class="subsection.icon" />
-          </v-list-tile-avatar>
-          <v-list-tile-content>
-            <v-list-tile-title>{{ subsection.name }}</v-list-tile-title>
-          </v-list-tile-content>
+          </v-list-item-avatar>
+          <v-list-item-content>
+            <v-list-item-title>{{ subsection.name }}</v-list-item-title>
+          </v-list-item-content>
           <v-icon>chevron_right</v-icon>
-        </v-list-tile>
+        </v-list-item>
       </v-list>
     </Blade>
     <Blade id="blade-form" class="xs12 md9 app-scroll app-scroll-frame">
@@ -29,14 +29,14 @@
           v-else-if="currentSubsection.fields"
           :fields="currentSubsection.fields"
           :data="competition"
-          class="pa-3"
+          class="pa-4"
           @field-change="handleInfoChanges"
         />
         <AdminInvites v-else-if="inTabs('permissions')" v-bind="$props" />
 
         <v-spacer />
         <div v-if="inTabs('general')" class="layout align-center justify-center flex-none">
-          <v-btn flat color="error" @click="confirmRemove = true">
+          <v-btn text color="error" @click="confirmRemove = true">
             Delete Competition
           </v-btn>
           <DialogCard

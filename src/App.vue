@@ -1,6 +1,6 @@
 <template>
   <v-app id="app" class="app-scroll-frame" :class="{ dev: env !== 'production' }">
-    <v-toolbar app dark absolute color="primary" class="print-hide">
+    <v-app-bar app dark absolute color="primary" class="print-hide">
       <v-toolbar-side-icon @click="menuVisible = !menuVisible">
         <v-badge v-model="needsUpdating" color="secondary">
           <span slot="badge" />
@@ -23,30 +23,32 @@
       </v-btn>
 
       <v-menu offset-y left>
-        <v-btn icon slot="activator">
-          <v-icon>help</v-icon>
-        </v-btn>
+        <template v-slot:activator="{ on }">
+          <v-btn icon v-on="on">
+            <v-icon>help</v-icon>
+          </v-btn>
+        </template>
 
         <v-list>
-          <v-list-tile :to="{ name: 'home', query: { at: 'about' } }" exact>
-            <v-list-tile-title>About</v-list-tile-title>
-          </v-list-tile>
-          <v-list-tile :to="{ name: 'home', query: { at: 'faq' } }" exact>
-            <v-list-tile-title>FAQs</v-list-tile-title>
-          </v-list-tile>
+          <v-list-item :to="{ name: 'home', query: { at: 'about' } }" exact>
+            <v-list-item-title>About</v-list-item-title>
+          </v-list-item>
+          <v-list-item :to="{ name: 'home', query: { at: 'faq' } }" exact>
+            <v-list-item-title>FAQs</v-list-item-title>
+          </v-list-item>
           <template v-if="$store.state.helpAvailable">
             <v-divider />
-            <v-list-tile @click="help(true)">
-              <v-list-tile-title>Feedback</v-list-tile-title>
-            </v-list-tile>
-            <v-list-tile v-if="$store.state.helpVisible" @click="help(false)">
-              <v-list-tile-title class="error--text">Hide Live Chat</v-list-tile-title>
-            </v-list-tile>
+            <v-list-item @click="help(true)">
+              <v-list-item-title>Feedback</v-list-item-title>
+            </v-list-item>
+            <v-list-item v-if="$store.state.helpVisible" @click="help(false)">
+              <v-list-item-title class="error--text">Hide Live Chat</v-list-item-title>
+            </v-list-item>
           </template>
           <v-divider />
-          <v-list-tile @click="confirmClearLocalStorage = true">
-            <v-list-tile-title>Clear App Cache</v-list-tile-title>
-          </v-list-tile>
+          <v-list-item @click="confirmClearLocalStorage = true">
+            <v-list-item-title>Clear App Cache</v-list-item-title>
+          </v-list-item>
         </v-list>
 
         <DialogCard
@@ -58,7 +60,7 @@
         >
           <p>In order to enhance performance and usability, this app stores certain settings in your device's local storage cache.</p>
           <p>If you are ever encountering layout or navigation bugs, clearing these may help resolve certain issues related to:</p>
-          <ul class="mb-3">
+          <ul class="mb-4">
             <li>expanded/collapsed states</li>
             <li>active/last-used screens</li>
             <li>stored scroll positions</li>
@@ -66,32 +68,32 @@
           <p><strong>Are you sure you want to permanently erase these stored settings?</strong></p>
         </DialogCard>
       </v-menu>
-    </v-toolbar>
+    </v-app-bar>
 
-    <v-navigation-drawer v-model="menuVisible" app absolute touchless class="app-scroll-frame" style="display: flex;">
+    <v-navigation-drawer v-model="menuVisible" app absolute touchless class="app-scroll-frame">
       <header class="account-header primary flex-none">
         <div class="account-bg"></div>
-        <AccountButtons v-if="!me" class="pa-3" />
-        <div v-else>
+        <AccountButtons v-if="!me" class="pa-4" />
+        <template v-else>
           <v-list three-line>
-            <v-list-tile class="has-avatar">
+            <v-list-item class="has-avatar">
               <v-avatar :size="64">
                 <Gravatar :user="me" />
               </v-avatar>
-            </v-list-tile>
+            </v-list-item>
           </v-list>
           <v-list dark>
             <v-list-group v-model="accountToggled" no-action>
-              <v-list-tile slot="activator">
-                <v-list-tile-content>
-                  <v-list-tile-title>
+              <v-list-item slot="activator">
+                <v-list-item-content>
+                  <v-list-item-title>
                     {{ me.displayName || me.email || 'Account' }}
-                  </v-list-tile-title>
-                </v-list-tile-content>
-              </v-list-tile>
+                  </v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
             </v-list-group>
           </v-list>
-        </div>
+        </template>
 
         <RegisterDialog />
         <LoginDialog />
@@ -114,7 +116,7 @@
           <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
         </RequiresAuthDialog>
 
-        <v-btn flat fab absolute color="white" @click="menuVisible = false">
+        <v-btn text fab absolute color="white" @click="menuVisible = false">
           <v-icon>close</v-icon>
         </v-btn>
       </header>
@@ -123,21 +125,21 @@
         <v-list v-if="accountToggled" class="layout column flex">
           <v-subheader>Account</v-subheader>
 
-          <v-list-tile :to="{ name: 'profile' }" @click="closeMenu()">
-            <v-list-tile-avatar>
+          <v-list-item :to="{ name: 'profile' }" @click="closeMenu()">
+            <v-list-item-avatar>
               <v-icon>account_circle</v-icon>
-            </v-list-tile-avatar>
-            <v-list-tile-title>My Profile</v-list-tile-title>
-          </v-list-tile>
+            </v-list-item-avatar>
+            <v-list-item-title>My Profile</v-list-item-title>
+          </v-list-item>
 
           <v-spacer />
           <v-divider />
-          <v-list-tile @click="logout().then(toggleAccount)">
-            <v-list-tile-avatar>
+          <v-list-item @click="logout().then(toggleAccount)">
+            <v-list-item-avatar>
               <v-icon>exit_to_app</v-icon>
-            </v-list-tile-avatar>
-            <v-list-tile-title>Logout</v-list-tile-title>
-          </v-list-tile>
+            </v-list-item-avatar>
+            <v-list-item-title>Logout</v-list-item-title>
+          </v-list-item>
         </v-list>
 
         <template v-else>
@@ -149,7 +151,7 @@
                 </router-link>
               </v-flex>
 
-              <v-btn :to="{ name: 'competitions.submit' }" flat fab small @click="closeMenu()">
+              <v-btn :to="{ name: 'competitions.submit' }" text fab small @click="closeMenu()">
                 <v-icon>add</v-icon>
               </v-btn>
             </v-subheader>
@@ -162,18 +164,18 @@
               @click="closeMenu()"
             />
 
-            <v-list-tile v-if="!relevantCompetitions.length" class="empty">
-              <v-list-tile-avatar>
+            <v-list-item v-if="!relevantCompetitions.length" class="empty">
+              <v-list-item-avatar>
                 <v-icon>clear</v-icon>
-              </v-list-tile-avatar>
+              </v-list-item-avatar>
               No competitions found.
-            </v-list-tile>
+            </v-list-item>
 
             <footer
               v-if="competitions.length && competitions.length !== relevantCompetitions.length"
               class="layout justify-center"
             >
-              <v-btn flat color="primary" exact :to="{ name: 'competitions' }" @click="closeMenu()">
+              <v-btn text color="primary" exact :to="{ name: 'competitions' }" @click="closeMenu()">
                 View {{ competitions.length - relevantCompetitions.length }} More
               </v-btn>
             </footer>
@@ -185,30 +187,30 @@
             <v-subheader>Links</v-subheader>
 
             <PromptToUpdate v-if="needsUpdating">
-              <v-list-tile slot="activator" color="secondary">
-                <v-list-tile-avatar>
+              <v-list-item slot="activator" color="secondary">
+                <v-list-item-avatar>
                   <v-icon color="secondary">fiber_new</v-icon>
-                </v-list-tile-avatar>
-                <v-list-tile-title>Update App</v-list-tile-title>
-              </v-list-tile>
+                </v-list-item-avatar>
+                <v-list-item-title>Update App</v-list-item-title>
+              </v-list-item>
             </PromptToUpdate>
 
-            <v-list-tile to="/" exact @click="closeMenu()">
-              <v-list-tile-avatar>
+            <v-list-item to="/" exact @click="closeMenu()">
+              <v-list-item-avatar>
                 <v-icon>home</v-icon>
-              </v-list-tile-avatar>
-              <v-list-tile-title>App Home</v-list-tile-title>
-            </v-list-tile>
-            <v-list-tile
+              </v-list-item-avatar>
+              <v-list-item-title>App Home</v-list-item-title>
+            </v-list-item>
+            <v-list-item
               v-if="$store.getters.hasPermission('admin')"
               :to="{ name: 'admin.info' }"
               @click="closeMenu()"
             >
-              <v-list-tile-avatar>
+              <v-list-item-avatar>
                 <v-icon>settings_applications</v-icon>
-              </v-list-tile-avatar>
-              <v-list-tile-title>App Admin</v-list-tile-title>
-            </v-list-tile>
+              </v-list-item-avatar>
+              <v-list-item-title>App Admin</v-list-item-title>
+            </v-list-item>
           </v-list>
         </template>
       </div>
@@ -473,7 +475,8 @@ body {
   min-height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom)); // for iPhone-X
 }
 .application--wrap,
-.v-content__wrap {
+.v-content__wrap,
+.v-navigation-drawer__content {
   @extend .app-scroll-frame;
 }
 
@@ -502,7 +505,7 @@ body {
       @extend .app-scroll-frame;
     }
     .v-stepper__header,
-    .v-tabs__bar {
+    .v-tabs-bar {
       flex-shrink: 0;
     }
   }
@@ -515,12 +518,11 @@ body {
     }
   }
 }
-.v-bottom-nav.v-item-group {
+.v-bottom-navigation.v-item-group {
   flex-shrink: 0;
   justify-content: unset;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  z-index: 1;
 
   // can't use justify-content: center; because then overflowing clips
   > * {
@@ -533,8 +535,6 @@ body {
   }
 }
 .v-toolbar {
-  z-index: 1;
-
   .v-toolbar__title {
     a {
       color: inherit;
@@ -606,7 +606,6 @@ body {
 .handsontable {
   height: 100%; // height must also be defined at some point up the chain (e.g. .app-scroll-frame)
   overflow: hidden; // enables HotTable's scrolling
-  z-index: 0;
 }
 
 // drag-n-drop

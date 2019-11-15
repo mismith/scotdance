@@ -7,20 +7,20 @@
         </v-toolbar>
 
         <PaginatedList v-if="loaded" :items="filteredUsers">
-          <v-list-tile
+          <v-list-item
             slot-scope="user"
             :to="{ name: $route.name, params: { userId: user[idKey] } }"
             :class="{ active: userId === user[idKey] }"
           >
-            <v-list-tile-avatar>
+            <v-list-item-avatar>
               <Gravatar :user="user" />
-            </v-list-tile-avatar>
-            <v-list-tile-content>
-              <v-list-tile-title>{{ user.displayName }}</v-list-tile-title>
-              <v-list-tile-sub-title>{{ user.uid }}</v-list-tile-sub-title>
-            </v-list-tile-content>
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title>{{ user.displayName }}</v-list-item-title>
+              <v-list-item-sub-title>{{ user.uid }}</v-list-item-sub-title>
+            </v-list-item-content>
             <v-icon>chevron_right</v-icon>
-          </v-list-tile>
+          </v-list-item>
         </PaginatedList>
         <div v-else class="app-scroll-frame">
           <Spinner />
@@ -38,7 +38,7 @@
         class="hidden-md-and-up"
       />
 
-      <div v-if="currentUser" class="app-scroll pa-3">
+      <div v-if="currentUser" class="app-scroll pa-4">
         <DynamicForm
           :fields="section.fields"
           :data="currentUser"

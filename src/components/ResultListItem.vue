@@ -1,27 +1,27 @@
 <template>
-  <v-list-tile :to="to" class="ResultListItem">
+  <v-list-item :to="to" class="ResultListItem">
     <slot name="avatar">
-      <v-list-tile-avatar
+      <v-list-item-avatar
         :color="hasFavorites(dancers || []) ? 'secondary' : (hasResults ? 'primary' : 'grey')"
       >
         <v-icon v-if="hasResults">
           {{ hasPlaceholderDancers ? 'done_outline' : 'check' }}
         </v-icon>
         <small v-else>TBD</small>
-      </v-list-tile-avatar>
+      </v-list-item-avatar>
     </slot>
 
-    <v-list-tile-content>
-      <v-list-tile-title><slot /></v-list-tile-title>
-    </v-list-tile-content>
+    <v-list-item-content>
+      <v-list-item-title><slot /></v-list-item-title>
+    </v-list-item-content>
 
-    <v-list-tile-action>
+    <v-list-item-action>
       <slot name="icon">
         <place v-if="place !== undefined" :place="place" />
         <v-icon v-else>chevron_right</v-icon>
       </slot>
-    </v-list-tile-action>
-  </v-list-tile>
+    </v-list-item-action>
+  </v-list-item>
 </template>
 
 <script>

@@ -24,7 +24,7 @@ import Blades from '@/components/Blades.vue';
 import Blade from '@/components/Blade.vue';
 import Gravatar from '@/components/Gravatar.vue';
 
-import './plugins/vuetify';
+import vuetify from './plugins/vuetify';
 import $package from '../package.json';
 
 // disable (amongst other things) vue-localstoreage verbose logging
@@ -213,7 +213,9 @@ if (window.$crisp) {
 new Vue({
   router,
   store,
+  vuetify,
   render: h => h(App),
+
   computed: {
     currentTab() {
       return this.$route.params.tab || this.$route.name.split('.').slice(-1)[0];

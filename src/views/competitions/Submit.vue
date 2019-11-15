@@ -1,6 +1,6 @@
 <template>
   <div class="CompetitionsSubmit app-scroll-frame app-scroll alt">
-    <v-stepper v-model="currentStep" vertical class="flex-none pb-3">
+    <v-stepper v-model="currentStep" vertical class="flex-none pb-4">
       <v-stepper-step
         :step="1"
         :complete="currentStep > 1"
@@ -13,7 +13,7 @@
 
         <v-list style="max-width: 540px;">
           <template v-for="checklist in checklists">
-            <header :key="checklist[idKey]" v-html="checklist.title" class="mt-4 mb-3" />
+            <header :key="checklist[idKey]" v-html="checklist.title" class="mt-6 mb-4" />
             <v-list-group
               v-for="item in checklist.items"
               :key="item.title"
@@ -23,12 +23,15 @@
                 <v-icon :color="item.$active ? 'primary' : 'grey'" :large="$vuetify.breakpoint.smAndUp" class="ml-2">
                   {{ item.icon || 'check' }}
                 </v-icon>
-                <div class="ml-3" :class="{ subheading: $vuetify.breakpoint.smAndUp, 'primary--text': item.$active }">
+                <div class="ml-4" :class="{
+                  'subtitle-1': $vuetify.breakpoint.smAndUp,
+                  'primary--text': item.$active,
+                }">
                   {{ item.title }}
                 </div>
               </v-layout>
 
-              <v-card flat>
+              <v-card text>
                 <v-card-text v-html="item.description" />
               </v-card>
             </v-list-group>
@@ -73,8 +76,8 @@
                 </v-btn>
               </footer>
             </DynamicForm>
-            <div v-if="step[idKey] === 'competition'" class="flex md4 ml-4 hidden-sm-and-down">
-              <figure class="device-frame mb-3">
+            <div v-if="step[idKey] === 'competition'" class="flex md4 ml-6 hidden-sm-and-down">
+              <figure class="device-frame mb-4">
                 <div class="device-frame-content application theme--light app-scroll layout column">
                   <v-toolbar dark color="primary">
                     <v-toolbar-title class="title">{{ $store.state.$package.$name }}</v-toolbar-title>
@@ -89,13 +92,13 @@
       </template>
     </v-stepper>
 
-    <div v-if="submitted" class="pa-3">
+    <div v-if="submitted" class="pa-4">
       <EmptyState
         icon="mail_outline"
         label="All done!"
         description="Expect a confirmation email in your inbox momentarily."
       >
-        <p class="mt-3">Your submission will be reviewed <strong>within 7 days</strong>, and you will receive another email once approved.</p>
+        <p class="mt-4">Your submission will be reviewed <strong>within 7 days</strong>, and you will receive another email once approved.</p>
 
         <v-btn color="primary" @click="handleRestart">Submit Another Competition</v-btn>
       </EmptyState>

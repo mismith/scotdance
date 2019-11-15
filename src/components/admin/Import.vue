@@ -21,7 +21,7 @@
 
       <v-stepper-items>
         <v-stepper-content :step="1" class="pa-0">
-          <div class="app-scroll-frame app-scroll pa-3">
+          <div class="app-scroll-frame app-scroll pa-4">
             <h3>Instructions</h3>
             <ol>
               <li>Select the <strong>Excel spreadsheet</strong> (.xslx file) that contains the values to import.</li>
@@ -52,13 +52,13 @@
 
           <v-divider />
           <v-card-actions class="justify-end flex-none">
-            <v-btn flat @click="handleCancel()">Cancel</v-btn>
+            <v-btn text @click="handleCancel()">Cancel</v-btn>
 
             <v-file
               accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               @change="handleUpload"
             >
-              <v-btn flat color="primary">Select File</v-btn>
+              <v-btn text color="primary">Select File</v-btn>
             </v-file>
           </v-card-actions>
         </v-stepper-content>
@@ -74,10 +74,10 @@
 
           <v-divider />
           <v-card-actions class="justify-end flex-none">
-            <v-btn flat @click="handleCancel()">Cancel</v-btn>
+            <v-btn text @click="handleCancel()">Cancel</v-btn>
 
             <v-btn
-              flat
+              text
               color="primary"
               :disabled="dancersSheetIndex < 0"
               @click="handleChoose()"
@@ -98,10 +98,10 @@
 
           <v-divider />
           <v-card-actions class="justify-end flex-none">
-            <v-btn flat @click="handleCancel()">Cancel</v-btn>
+            <v-btn text @click="handleCancel()">Cancel</v-btn>
 
             <v-btn
-              flat
+              text
               color="primary"
               :disabled="importing"
               :loading="importing"

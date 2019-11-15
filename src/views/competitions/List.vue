@@ -6,13 +6,13 @@
       class="app-scroll-frame app-scroll"
     >
 
-      <v-timeline dense class="mx-3">
+      <v-timeline dense class="mx-4">
         <template v-for="competition in timelineCompetitions">
           <v-timeline-item
             v-if="competition.$timeline"
             :key="competition[idKey]"
             hide-dot
-            class="mt-4"
+            class="mt-6"
           >
             <span class="dimmed caption text-uppercase">{{ competition.$timeline }}</span>
           </v-timeline-item>

@@ -35,7 +35,7 @@
           </EmptyState>
         </div>
 
-        <v-bottom-nav
+        <v-bottom-navigation
           v-if="!isAdminRoute"
           :value="true"
           :active="$root.currentTab"
@@ -47,13 +47,13 @@
             :value="section[idKey]"
             :to="getTabRoute(section[idKey])"
             color="primary"
-            flat
+            text
             :class="section.className"
           >
             <span>{{ section.name }}</span>
             <v-icon :class="section.icon"></v-icon>
           </v-btn>
-        </v-bottom-nav>
+        </v-bottom-navigation>
       </div>
       <div v-else class="app-scroll-frame alt">
         <EmptyState
@@ -68,13 +68,13 @@
 
     <DialogCard v-model="staffVisible">
       <v-card-title v-if="currentDialogData" slot="title" class="layout row wrap">
-        <v-avatar v-if="currentDialogData.image" :size="100" class="mr-3">
+        <v-avatar v-if="currentDialogData.image" :size="100" class="mr-4">
           <img :src="currentDialogData.image" />
         </v-avatar>
         <v-flex>
-          <div class="title my-3">{{ currentDialogData.$name }}</div>
-          <div class="subheading">{{ currentDialogData.location }}</div>
-          <div v-if="currentDialogData.website" class="subheading">
+          <div class="title my-4">{{ currentDialogData.$name }}</div>
+          <div class="subtitle-1">{{ currentDialogData.location }}</div>
+          <div v-if="currentDialogData.website" class="subtitle-1">
             <a :href="formatExternalURL(currentDialogData.website)" target="_blank" class="ext">
               {{ formatHumanURL(currentDialogData.website) }}
             </a>

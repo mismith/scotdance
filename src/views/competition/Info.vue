@@ -4,22 +4,22 @@
       v-persist-scroll="`/competitions/${competitionId}/info`"
       class="app-scroll-frame app-scroll"
     >
-      <section class="pa-3">
+      <section class="pa-4">
         <v-avatar
           v-if="competition.image"
           color="white"
           size="200"
-          class="elevation-2 mb-3"
+          class="elevation-2 mb-4"
           :class="{ 'ml-3': $vuetify.breakpoint.mdAndUp }"
           :style="{ float: $vuetify.breakpoint.mdAndUp ? 'right' : undefined }"
         >
           <img :src="competition.image" />
         </v-avatar>
-        <h1 class="display-1 mb-3">{{ competition.name }}</h1>
+        <h1 class="display-1 mb-4">{{ competition.name }}</h1>
         <p v-if="competition.date" class="headline">
           {{ $moment(competition.date).format('dddd, MMMM D, YYYY') }}
         </p>
-        <div class="subheading">
+        <div class="subtitle-1">
           <div v-if="competition.venue">
             <a
               v-if="competition.address"
@@ -34,13 +34,13 @@
           <p>{{ competition.location }}</p>
         </div>
 
-        <v-layout v-if="competition.registrationURL" wrap align-center class="mb-3">
+        <v-layout v-if="competition.registrationURL" wrap align-center class="mb-4">
           <v-btn
             :href="formatExternalURL(competition.registrationURL)"
             target="_blank"
             color="primary"
             :disabled="$moment().isAfter(competition.registrationEnd)"
-            class="ml-0 mr-3"
+            class="ml-0 mr-4"
           >
             <span class="ext">Register</span>
           </v-btn>
@@ -56,20 +56,20 @@
           </v-flex>
         </v-layout>
 
-        <div v-if="competition.links" class="mb-3">
+        <div v-if="competition.links" class="mb-4">
           <v-btn
             v-for="link in competition.links"
             :key="link.url"
             :href="formatExternalURL(link.url)"
             target="_blank"
             color="primary"
-            class="ml-0 mr-3"
+            class="ml-0 mr-4"
           >
             <span class="ext">{{ link.name }}</span>
           </v-btn>
         </div>
 
-        <div v-if="competition.description" v-html="competition.description" class="mb-3 pre-line" />
+        <div v-if="competition.description" v-html="competition.description" class="mb-4 pre-line" />
         <p v-if="competition.sobhd">
           <small><strong>SOBHD</strong> {{ competition.sobhd }}</small>
         </p>
@@ -79,7 +79,6 @@
         <v-list-group
           v-for="(group, name) in groupedStaff"
           :key="name"
-          lazy
           :value="isGroupExpanded(name, Object.keys(groupedStaff))"
           @input="handleGroupExpanded(name, $event)"
         >
@@ -93,9 +92,9 @@
               @click="setCurrentDialog(['staff', member])"
             >
               <span slot="favorite" />
-              <v-list-tile-avatar v-if="member.image" slot="avatar">
+              <v-list-item-avatar v-if="member.image" slot="avatar">
                 <img :src="member.image" />
-              </v-list-tile-avatar>
+              </v-list-item-avatar>
               <span v-else slot="avatar" />
             </DancerListItem>
           </v-list>

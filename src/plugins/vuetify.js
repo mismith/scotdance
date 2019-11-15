@@ -1,10 +1,15 @@
 import Vue from 'vue';
 import Vuetify from 'vuetify/lib';
-import 'vuetify/src/stylus/app.styl';
-import colors from 'vuetify/es5/util/colors';
+import colors from 'vuetify/lib/util/colors';
 
-Vue.use(Vuetify, {
+Vue.use(Vuetify);
+
+export default new Vuetify({
   theme: {
-    secondary: colors.pink,
+    themes: {
+      light: {
+        secondary: colors.pink,
+      },
+    },
   },
 });

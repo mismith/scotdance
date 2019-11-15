@@ -14,14 +14,14 @@
       </v-avatar>
     </router-link>
     <router-link :to="{ name: 'competition.info', params: { competitionId: competition[idKey] } }">
-      <div class="subheading">{{ competition.name }}</div>
+      <div class="subtitle-1">{{ competition.name }}</div>
       <div class="dot-divided dimmed">
         <span v-if="competition.date">{{ $moment(competition.date).format('MMM D, YYYY') }}</span>
         <span v-if="competition.location">{{ competition.location }}</span>
       </div>
     </router-link>
 
-    <footer v-if="$store.getters.hasPermission(`competitions/${competition[idKey]}`)" class="my-3">
+    <footer v-if="$store.getters.hasPermission(`competitions/${competition[idKey]}`)" class="my-4">
       <v-btn
         :to="{ name: 'competition.admin.info', params: { competitionId: competition[idKey] } }"
         color="primary"
@@ -30,10 +30,10 @@
       >
         Administer
       </v-btn>
-      <v-chip v-if="!competition.listed" small disabled class="ml-3 black--text">
+      <v-chip v-if="!competition.listed" small disabled class="ml-4 black--text">
         Unlisted
       </v-chip>
-      <v-chip v-else-if="!competition.published" small disabled class="ml-3 black--text">
+      <v-chip v-else-if="!competition.published" small disabled class="ml-4 black--text">
         Unpublished
       </v-chip>
     </footer>

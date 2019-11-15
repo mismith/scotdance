@@ -77,7 +77,7 @@
       @input="handleInput()"
       @change="handleChange()"
     >
-      <div slot="prepend" v-html="field.prepend" class="mb-3" />
+      <div slot="prepend" v-html="field.prepend" class="mb-4" />
     </v-checkbox>
 
     <v-textarea

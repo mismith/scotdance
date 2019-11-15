@@ -9,7 +9,6 @@
         <v-list-group
           v-for="category in groupedCategories"
           :key="category[idKey]"
-          lazy
           :value="isCategoryExpanded(category, groupedCategories)"
           @input="handleCategoryExpanded(category[idKey], $event)"
         >
@@ -36,12 +35,12 @@
             >
               {{ group.name || group.$name }}
             </ResultListItem>
-            <v-list-tile v-if="!category.$groups.length" class="empty">
-              <v-list-tile-avatar>
+            <v-list-item v-if="!category.$groups.length" class="empty">
+              <v-list-item-avatar>
                 <v-icon>clear</v-icon>
-              </v-list-tile-avatar>
+              </v-list-item-avatar>
               No more info.
-            </v-list-tile>
+            </v-list-item>
           </v-list>
         </v-list-group>
       </v-list>
@@ -63,14 +62,14 @@
               <v-icon>more_vert</v-icon>
             </v-btn>
             <v-list>
-              <v-list-tile>
-                <v-list-tile-action>
+              <v-list-item>
+                <v-list-item-action>
                   <v-checkbox v-model="autoScrollResults" />
-                </v-list-tile-action>
-                <v-list-tile-content @click="autoScrollResults = !autoScrollResults">
-                  <v-list-tile-title>Scroll to new results</v-list-tile-title>
-                </v-list-tile-content>
-              </v-list-tile>
+                </v-list-item-action>
+                <v-list-item-content @click="autoScrollResults = !autoScrollResults">
+                  <v-list-item-title>Scroll to new results</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
             </v-list>
           </v-menu>
         </BladeToolbar>
@@ -84,7 +83,6 @@
             <v-list-group
               v-for="dance in groupedDancers"
               :key="dance.name"
-              lazy
               :id="`dance-${dance[idKey]}`"
               :value="isDanceExpanded(dance, groupedDancers)"
               @input="handleDanceExpanded(dance[idKey], $event)"
@@ -97,27 +95,27 @@
                 @dancer-click="$router.push({ name: 'competition.dancers', params: { dancerId: $event[idKey] }})"
                 @dancer-added="handleDancerAdded"
               >
-                <v-list-tile v-if="!dance.dancers.length" class="empty">
-                  <v-list-tile-avatar>
+                <v-list-item v-if="!dance.dancers.length" class="empty">
+                  <v-list-item-avatar>
                     <v-icon>clear</v-icon>
-                  </v-list-tile-avatar>
+                  </v-list-item-avatar>
                   Results to be determined.
-                </v-list-tile>
+                </v-list-item>
 
                 <v-divider v-if="currentGroup.sponsor && dance[idKey] === overall[idKey]" />
-                <v-list-tile
+                <v-list-item
                   v-if="currentGroup.sponsor && dance[idKey] === overall[idKey]"
                   @click="showTrophy = true"
                 >
-                  <v-list-tile-content>
-                    <v-list-tile-title>
+                  <v-list-item-content>
+                    <v-list-item-title>
                       {{ currentGroup.sponsor }}
-                    </v-list-tile-title>
-                    <v-list-tile-sub-title>
+                    </v-list-item-title>
+                    <v-list-item-sub-title>
                       {{ currentGroup.trophy || '' }} Trophy Sponsor
-                    </v-list-tile-sub-title>
-                  </v-list-tile-content>
-                </v-list-tile>
+                    </v-list-item-sub-title>
+                  </v-list-item-content>
+                </v-list-item>
               </PlacedDancerList>
             </v-list-group>
           </v-list>

@@ -41,9 +41,9 @@
       </v-alert>
 
       <v-card-actions slot="actions" class="justify-end">
-        <v-btn flat @click="loginVisible = false">Cancel</v-btn>
+        <v-btn text @click="loginVisible = false">Cancel</v-btn>
 
-        <v-btn flat color="primary" :loading="authLoading" type="submit">Login</v-btn>
+        <v-btn text color="primary" :loading="authLoading" type="submit">Login</v-btn>
       </v-card-actions>
     </template>
     <template v-else>
@@ -69,9 +69,9 @@
       </v-alert>
 
       <v-card-actions slot="actions" class="justify-end">
-        <v-btn flat @click="forgot = false; authError = null;">Back</v-btn>
+        <v-btn text @click="forgot = false; authError = null;">Back</v-btn>
 
-        <v-btn flat color="primary" :loading="authLoading" type="submit">Send</v-btn>
+        <v-btn text color="primary" :loading="authLoading" type="submit">Send</v-btn>
       </v-card-actions>
     </template>
   </DialogCard>

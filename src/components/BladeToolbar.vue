@@ -1,9 +1,9 @@
 <template>
   <v-toolbar dense class="BladeToolbar">
-    <v-btn :to="to" exact flat icon>
+    <v-btn :to="to" exact text icon>
       <v-icon>chevron_left</v-icon>
     </v-btn>
-    <div v-html="text || ($route.meta && $route.meta.title) || 'Back'" class="flex ellipsis" />
+    <div v-html="text || ($route.meta && $route.meta.title) || 'Back'" class="flex text-truncate" />
 
     <slot />
   </v-toolbar>

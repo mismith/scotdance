@@ -23,7 +23,7 @@
             @select="items => items.map(item => handleListItemCreate(blade, item))"
           >
             <v-tooltip slot="activator" bottom>
-              <v-btn slot="activator" flat fab small>
+              <v-btn slot="activator" text fab small>
                 <v-icon>playlist_add</v-icon>
               </v-btn>
               <span>Add preset(s)</span>
@@ -31,7 +31,7 @@
           </PresetPicker>
 
           <v-tooltip bottom>
-            <v-btn slot="activator" flat fab small @click="handleListItemCreate(blade)">
+            <v-btn slot="activator" text fab small @click="handleListItemCreate(blade)">
               <v-icon>add</v-icon>
             </v-btn>
             <span>Add new item</span>
@@ -45,26 +45,26 @@
             @sort="handleListItemReorder(blade, $event)"
           >
             <v-slide-y-transition group hide-on-leave>
-              <v-list-tile
+              <v-list-item
                 v-for="item in blade.items()"
                 :key="item[idKey]"
                 :to="getBladeRoute(blade.params(item[idKey]))"
               >
                 <v-icon class="sortable-handle">drag_indicator</v-icon>
-                <v-list-tile-content>
-                  <v-list-tile-title>{{ blade.name(item) }}</v-list-tile-title>
-                </v-list-tile-content>
+                <v-list-item-content>
+                  <v-list-item-title>{{ blade.name(item) }}</v-list-item-title>
+                </v-list-item-content>
                 <v-icon>chevron_right</v-icon>
-              </v-list-tile>
+              </v-list-item>
             </v-slide-y-transition>
           </draggable>
 
-          <v-list-tile v-if="!blade.items().length" class="empty">
-            <v-list-tile-avatar>
+          <v-list-item v-if="!blade.items().length" class="empty">
+            <v-list-item-avatar>
               <v-icon>clear</v-icon>
-            </v-list-tile-avatar>
+            </v-list-item-avatar>
             <span>No items yet. <a @click="handleListItemCreate(blade)">Add one.</a></span>
-          </v-list-tile>
+          </v-list-item>
         </v-list>
       </Blade>
       <Blade
@@ -73,7 +73,7 @@
         :id="`blade-${blade.id()}`"
         :class="`xs12 md${blade.size || 6} app-scroll`"
       >
-        <form @submit.prevent class="pa-3">
+        <form @submit.prevent class="pa-4">
           <DynamicField
             v-for="field in blade.fields"
             :key="field.data"
@@ -99,13 +99,13 @@
           <v-btn
             v-if="getPrevBlade(blade)"
             :disabled="getPrevBlade(blade).items().length < 2"
-            flat
+            text
             color="primary"
             @click="handleListItemMove(blade, getPrevBlade(blade))"
           >
             Move Item
           </v-btn>
-          <v-btn flat color="error" @click="handleListItemRemove(blade)">
+          <v-btn text color="error" @click="handleListItemRemove(blade)">
             Delete Item
           </v-btn>
         </div>
@@ -127,7 +127,7 @@
       @cancel="confirmCreate.reject()"
       @submit="confirmCreate.resolve()"
     >
-      <div slot="text" class="app-scroll px-3">
+      <div slot="text" class="app-scroll px-4">
         <v-text-field ref="confirmCreateValue" v-model="confirmCreateValue" label="Name" />
       </div>
     </DialogCard>
@@ -145,7 +145,7 @@
         slot="text"
         v-if="confirmMove"
         v-model="confirmMoveValue"
-        class="app-scroll px-3"
+        class="app-scroll px-4"
       >
         <v-radio
           v-for="item in confirmMove.prevBlade.items()"
