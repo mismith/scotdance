@@ -48,12 +48,12 @@ export const checklists = {
     items: [
       {
         title: 'submit this form',
-        icon: 'send',
+        icon: 'mdi-send',
         description: 'It only takes a few minutes—and if you have a competition info sheet already, you\'re already mostly done. You can always make edits later, of course.',
       },
       {
         title: 'await approval',
-        icon: 'thumb_up',
+        icon: 'mdi-thumb-up',
         description: 'It may take up to 7 days for your submission to be reviewed, but usually it\'ll be done overnight.',
       },
     ],
@@ -64,12 +64,12 @@ export const checklists = {
     items: [
       {
         title: 'build out competition details',
-        icon: 'assignment',
+        icon: 'mdi-assignment',
         description: 'Essentially, all the information you put into a paper program goes into the app via an easy-to-use admin panel (that you\'ll gain access to once your submission is approved).',
       },
       {
         title: 'import dancer registrations',
-        icon: 'backup',
+        icon: 'mdi-backup',
         description: 'You can either upload a properly formatted Excel spreadsheet, or fill in the dancers, categories, and age groups using the admin panel\'s Excel-like interface.',
       },
     ],
@@ -80,17 +80,17 @@ export const checklists = {
     items: [
       {
         title: 'have access to a laptop or tablet',
-        icon: 'devices',
+        icon: 'mdi-devices',
         description: 'While you can technically use a phone to input results, it\'s much easier on a larger screen.',
       },
       {
         title: 'have an active internet connection',
-        icon: 'wifi',
+        icon: 'mdi-wifi',
         description: 'Keep in mind that you\'ll need either WiFi or cell signal at the location where you\'ll be inputting results (e.g. announcer\'s desk).',
       },
       {
         title: 'have a volunteer enter results in real-time',
-        icon: 'touch_app',
+        icon: 'mdi-touch-app',
         description: '<p>Inputting results with the admin panel is almost the same as viewing results in the app—all that\'s required is the ability to listen (or read) and click along.</p><p>Having results sheets printouts available is crucial to not missing any announcements. It can be equally helpful to have a partner alongside you to check for mistakes.</p>',
       },
     ],

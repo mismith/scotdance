@@ -10,7 +10,7 @@
       />
       <EmptyState
         v-else
-        icon="warning"
+        icon="mdi-warning"
         label="No age groups found"
       >
         <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }">
@@ -36,7 +36,7 @@
 
         <EmptyState
           v-if="!currentDancers.length && currentDance === callbacks"
-          icon="warning"
+          icon="mdi-warning"
           label="No dancers found"
         >
           <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dancers' } }">
@@ -45,7 +45,7 @@
         </EmptyState>
         <EmptyState
           v-if="!currentDancers.length && currentDance !== callbacks"
-          icon="warning"
+          icon="mdi-warning"
           label="No dancers to place"
         >
           <router-link :to="{ name: 'competition.admin.results', params: { groupId, danceId: callbacks[idKey] } }">
@@ -55,7 +55,7 @@
       </v-list>
       <EmptyState
         v-else
-        icon="touch_app"
+        icon="mdi-touch-app"
         label="Enter results"
         description="Select an age group and dance"
       />
@@ -72,7 +72,7 @@
       />
       <EmptyState
         v-else
-        icon="vertical_split"
+        icon="mdi-vertical-split"
         label="Order dancers"
         description="Select dancers in the order placed"
       />

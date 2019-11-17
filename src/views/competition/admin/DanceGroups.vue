@@ -11,12 +11,12 @@
           <v-list-item-content>
             <v-list-item-title>{{ group.$name }}</v-list-item-title>
           </v-list-item-content>
-          <v-icon>chevron_right</v-icon>
+          <v-icon>mdi-chevron-right</v-icon>
         </v-list-item>
       </v-list>
       <EmptyState
         v-else
-        icon="warning"
+        icon="mdi-warning"
         label="No age groups found"
       >
         <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }">
@@ -50,7 +50,7 @@
         </footer>
         <EmptyState
           v-else
-          icon="warning"
+          icon="mdi-warning"
           label="No dances found"
         >
           <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dances' } }">
@@ -60,7 +60,7 @@
       </v-list>
       <EmptyState
         v-else
-        icon="call_merge"
+        icon="mdi-call-merge"
         label="Link dances"
         description="Pick dances for each age group"
       />
@@ -68,7 +68,7 @@
     <Blade class="xs12 md4">
       <EmptyState
         v-if="!currentGroupHasDraws || !currentGroupDances.length || !currentGroupDancers.length"
-        icon="vertical_split"
+        icon="mdi-vertical-split"
         label="Championship draws"
         description="Specify dancer order for each dance"
       />
@@ -78,7 +78,7 @@
       <v-toolbar v-if="currentGroup">
         <v-list-item v-if="!currentGroupDances.length" class="empty">
           <v-list-item-avatar>
-            <v-icon>warning</v-icon>
+            <v-icon>mdi-warning</v-icon>
           </v-list-item-avatar>
           <v-list-item-content>
             <v-list-item-title>
@@ -92,7 +92,7 @@
 
         <v-list-item v-else-if="!currentGroupDancers.length" class="empty">
           <v-list-item-avatar>
-            <v-icon>warning</v-icon>
+            <v-icon>mdi-warning</v-icon>
           </v-list-item-avatar>
           <v-list-item-content>
             <v-list-item-title>No dancers in this age group.</v-list-item-title>

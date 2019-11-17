@@ -6,14 +6,14 @@
       </v-list>
       <EmptyState
         v-else
-        icon="error_outline"
+        icon="mdi-error-outline"
         label="No items match"
       />
     </div>
 
     <v-toolbar v-if="pages.length > 1" dense class="pagination layout flex-none">
       <v-btn icon @click="page -= 1" :disabled="page <= 1">
-        <v-icon>skip_previous</v-icon>
+        <v-icon>mdi-skip-previous</v-icon>
       </v-btn>
       <v-layout align-center>
         Page
@@ -21,7 +21,7 @@
         of {{ pages.length }}
       </v-layout>
       <v-btn icon :disabled="page >= pages.length" @click="page += 1">
-        <v-icon>skip_next</v-icon>
+        <v-icon>mdi-skip-next</v-icon>
       </v-btn>
     </v-toolbar>
   </div>

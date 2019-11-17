@@ -22,7 +22,7 @@
 
       <v-tooltip left>
         <v-btn slot="activator" icon text color="primary" :loading="saving">
-          <v-icon>check</v-icon>
+          <v-icon>mdi-check</v-icon>
         </v-btn>
         <span>{{ saving ? 'Saving...' : 'Saved' }}</span>
       </v-tooltip>
@@ -32,7 +32,7 @@
       <template v-if="currentSection.hot">
         <EmptyState
           v-if="inTabs('groups') && !this.categories.length"
-          icon="warning"
+          icon="mdi-warning"
           label="No categories found"
         >
           <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'categories' } }">
@@ -41,7 +41,7 @@
         </EmptyState>
         <EmptyState
           v-else-if="inTabs('dancers') && !this.groups.length"
-          icon="warning"
+          icon="mdi-warning"
           label="No age groups found"
         >
           <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }">

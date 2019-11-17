@@ -38,7 +38,7 @@
 
           <v-list-item v-if="!findGroupDances(group, dances).length && !hasOverall(group)" class="empty">
             <v-list-item-avatar>
-              <v-icon>clear</v-icon>
+              <v-icon>mdi-clear</v-icon>
             </v-list-item-avatar>
             Results to be determined.
           </v-list-item>

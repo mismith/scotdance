@@ -36,7 +36,7 @@
 
       <div v-if="!competitions.length">
         <EmptyState
-          icon="clear"
+          icon="mdi-clear"
           label="No competitions found"
         />
       </div>

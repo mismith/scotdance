@@ -3,7 +3,7 @@
     label="Search"
     type="search"
     v-model="value"
-    append-icon="search"
+    append-icon="mdi-search"
     clearable
     solo
     :loading="value !== valueDebounced"

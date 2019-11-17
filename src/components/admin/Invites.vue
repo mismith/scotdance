@@ -10,7 +10,7 @@
               :key="invite[idKey]"
             >
               <v-list-item-avatar :color="invite.submitted ? '' : 'primary'">
-                <v-icon>{{ invite.submitted ? 'check_circle' : 'check' }}</v-icon>
+                <v-icon>mdi-{{ invite.submitted ? 'check-circle' : 'check' }}</v-icon>
               </v-list-item-avatar>
               <v-list-item-content>
                 <v-list-item-title>{{ invite.payload.email }}</v-list-item-title>
@@ -24,7 +24,7 @@
               <v-list-item-action v-if="!invite.submitted">
                 <v-tooltip fixed left>
                   <v-btn icon slot="activator" @click="handleAdministratorDemote(invite)">
-                    <v-icon>clear</v-icon>
+                    <v-icon>mdi-clear</v-icon>
                   </v-btn>
                   <span>Remove Admin</span>
                 </v-tooltip>
@@ -34,7 +34,7 @@
 
           <v-list-item>
             <v-list-item-avatar>
-              <v-icon>verified_user</v-icon>
+              <v-icon>mdi-verified-user</v-icon>
             </v-list-item-avatar>
             <v-list-item-content>
               <v-list-item-title>System Administrators</v-list-item-title>
@@ -63,7 +63,7 @@
               <v-list-item-avatar
                 :color="FirebaseInvites.is(invite, FirebaseInvites.status.CREATED) && 'secondary'"
               >
-                <v-icon>{{
+                <v-icon>mdi-{{
                   FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED, FirebaseInvites.status.EXPIRED)
                   ? 'cancel'
                   : 'mail_outline'
@@ -101,7 +101,7 @@
               <v-list-item-action v-if="FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED, FirebaseInvites.status.EXPIRED)">
                 <v-tooltip fixed left>
                   <v-btn slot="activator" icon @click="handleInviteDelete(invite)">
-                    <v-icon>delete</v-icon>
+                    <v-icon>mdi-delete</v-icon>
                   </v-btn>
                   <span>Delete Invite</span>
                 </v-tooltip>
@@ -109,7 +109,7 @@
               <v-list-item-action v-else>
                 <v-tooltip fixed left>
                   <v-btn slot="activator" icon @click="handleInviteCancel(invite)">
-                    <v-icon>clear</v-icon>
+                    <v-icon>mdi-clear</v-icon>
                   </v-btn>
                   <span>Cancel Invite</span>
                 </v-tooltip>
@@ -119,7 +119,7 @@
 
           <v-list-item v-if="!invites.length" class="empty">
             <v-list-item-avatar>
-              <v-icon>clear</v-icon>
+              <v-icon>mdi-clear</v-icon>
             </v-list-item-avatar>
             No pending invites.
           </v-list-item>

@@ -46,11 +46,13 @@
                     <v-list-item-title>{{ event.name }}</v-list-item-title>
                     <v-list-item-sub-title>{{ textify(event.description) }}</v-list-item-sub-title>
                   </v-list-item-content>
-                  <v-icon v-if="event.dances || event.description">chevron_right</v-icon>
+                  <v-icon v-if="event.dances || event.description">
+                    mdi-chevron-right
+                  </v-icon>
                 </v-list-item>
                 <v-list-item v-if="!block.events" class="empty">
                   <v-list-item-avatar>
-                    <v-icon>clear</v-icon>
+                    <v-icon>mdi-clear</v-icon>
                   </v-list-item-avatar>
                   No more info.
                 </v-list-item>
@@ -58,7 +60,7 @@
             </v-list-group>
             <v-list-item v-if="!day.blocks" class="empty">
               <v-list-item-avatar>
-                <v-icon>clear</v-icon>
+                <v-icon>mdi-clear</v-icon>
               </v-list-item-avatar>
               No more info.
             </v-list-item>
@@ -67,7 +69,7 @@
       </div>
       <EmptyState
         v-else
-        icon="clear"
+        icon="mdi-clear"
         label="No schedule yet"
         description="Check back later"
       />
@@ -121,7 +123,7 @@
             </v-list-group>
             <v-list-item v-if="!currentEvent.dances && !currentEvent.description" class="empty">
               <v-list-item-avatar>
-                <v-icon>clear</v-icon>
+                <v-icon>mdi-clear</v-icon>
               </v-list-item-avatar>
               No more info.
             </v-list-item>
@@ -153,7 +155,7 @@
       </div>
       <EmptyState
         v-else
-        icon="touch_app"
+        icon="mdi-touch-app"
         label="See event details"
         description="Select an event"
       />

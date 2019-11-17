@@ -2,7 +2,7 @@
   <form @submit.prevent="handleSubmit" class="NewDynamicField layout align-center">
     <DynamicField :field="field" :data="data" class="flex" />
     <v-btn type="submit" icon color="primary" :disabled="!isValid">
-      <v-icon>add</v-icon>
+      <v-icon>mdi-add</v-icon>
     </v-btn>
   </form>
 </template>

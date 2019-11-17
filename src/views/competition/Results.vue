@@ -14,8 +14,11 @@
         >
           <v-subheader slot="activator">
             <v-flex>{{ category.name }}</v-flex>
-            <v-icon v-if="hasFavorites(findCategoryDancers(category, dancers))" color="secondary">
-              star
+            <v-icon
+              v-if="hasFavorites(findCategoryDancers(category, dancers))"
+              color="secondary"
+            >
+              mdi-star
             </v-icon>
             <ResultsProgressIndicator
               :category="category"
@@ -37,7 +40,7 @@
             </ResultListItem>
             <v-list-item v-if="!category.$groups.length" class="empty">
               <v-list-item-avatar>
-                <v-icon>clear</v-icon>
+                <v-icon>mdi-clear</v-icon>
               </v-list-item-avatar>
               No more info.
             </v-list-item>
@@ -46,7 +49,7 @@
       </v-list>
       <EmptyState
         v-else
-        icon="clear"
+        icon="mdi-clear"
         label="No results yet"
         description="Check back later"
       />
@@ -59,7 +62,7 @@
         >
           <v-menu offset-y left>
             <v-btn slot="activator" icon>
-              <v-icon>more_vert</v-icon>
+              <v-icon>mdi-more-vert</v-icon>
             </v-btn>
             <v-list>
               <v-list-item>
@@ -97,7 +100,7 @@
               >
                 <v-list-item v-if="!dance.dancers.length" class="empty">
                   <v-list-item-avatar>
-                    <v-icon>clear</v-icon>
+                    <v-icon>mdi-clear</v-icon>
                   </v-list-item-avatar>
                   Results to be determined.
                 </v-list-item>
@@ -127,7 +130,7 @@
       </div>
       <EmptyState
         v-else
-        icon="touch_app"
+        icon="mdi-touch-app"
         label="See results"
         description="Select an age group"
       />

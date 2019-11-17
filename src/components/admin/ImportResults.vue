@@ -104,7 +104,7 @@
               />
               <EmptyState
                 v-else
-                icon="vertical_split"
+                icon="mdi-vertical-split"
                 label="Placed dancers"
                 description="Double-check the results to import"
               />

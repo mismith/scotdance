@@ -1,7 +1,7 @@
 <template>
   <v-toolbar dense class="BladeToolbar">
     <v-btn :to="to" exact text icon>
-      <v-icon>chevron_left</v-icon>
+      <v-icon>mdi-chevron-left</v-icon>
     </v-btn>
     <div v-html="text || ($route.meta && $route.meta.title) || 'Back'" class="flex text-truncate" />
 

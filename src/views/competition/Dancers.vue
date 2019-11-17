@@ -6,7 +6,7 @@
           <SearchField v-model="filterBy" class="flex mr-2" />
           <v-menu @selected="sortBy">
             <v-btn icon slot="activator">
-              <v-icon>filter_list</v-icon>
+              <v-icon>mdi-filter-list</v-icon>
             </v-btn>
 
             <v-list>
@@ -25,7 +25,7 @@
             :class="{ 'secondary--text': onlyFavorites }"
             @click="onlyFavorites = !onlyFavorites"
           >
-            <v-icon>{{ onlyFavorites ? 'star' : 'star_border' }}</v-icon>
+            <v-icon>mdi-{{ onlyFavorites ? 'star' : 'star-border' }}</v-icon>
           </v-btn>
         </v-toolbar>
 
@@ -42,7 +42,12 @@
             >
               <v-subheader slot="activator">
                 <v-flex>{{ groupId || '?' }}</v-flex>
-                <v-icon v-if="!onlyFavorites && hasFavorites(group)" color="secondary">star</v-icon>
+                <v-icon
+                  v-if="!onlyFavorites && hasFavorites(group)"
+                  color="secondary"
+                >
+                  mdi-star
+                </v-icon>
               </v-subheader>
 
               <v-list two-line>
@@ -57,17 +62,17 @@
           </v-list>
           <EmptyState
             v-else-if="!onlyFavorites"
-            icon="error_outline"
+            icon="mdi-error-outline"
             label="No dancers match"
           />
           <EmptyState
             v-else-if="me"
-            icon="star_half"
+            icon="mdi-star-half"
             label="No favourite dancers"
           />
           <EmptyState
             v-else
-            icon="star_half"
+            icon="mdi-star-half"
             label="No favourite dancers"
             description="Login to highlight your favourites–making them much easier to find"
           />
@@ -75,7 +80,7 @@
       </div>
       <EmptyState
         v-else
-        icon="clear"
+        icon="mdi-clear"
         label="No dancers yet"
         description="Check back later"
       />
@@ -102,7 +107,7 @@
       </div>
       <EmptyState
         v-else
-        icon="touch_app"
+        icon="mdi-touch-app"
         label="See dancer details"
         description="Select a dancer"
       />

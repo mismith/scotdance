@@ -32,7 +32,7 @@
     </div>
     <EmptyState
       v-else-if="admin && !danceGroups.length"
-      icon="warning"
+      icon="mdi-warning"
       label="No dance groups found"
       >
       <router-link :to="{ name: 'competition.admin.dance-groups' }">
@@ -41,7 +41,7 @@
     </EmptyState>
     <EmptyState
       v-else-if="admin"
-      icon="warning"
+      icon="mdi-warning"
       label="No platforms found"
       >
       <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'platforms' } }">
@@ -50,7 +50,7 @@
     </EmptyState>
     <v-list-item v-else class="empty">
       <v-list-item-avatar>
-        <v-icon>clear</v-icon>
+        <v-icon>mdi-clear</v-icon>
       </v-list-item-avatar>
       No more info.
     </v-list-item>

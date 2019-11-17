@@ -6,7 +6,7 @@
   >
     <v-list-item-avatar color="white">
       <img v-if="competition.image" :src="competition.image" role="presentation" />
-      <v-icon v-else>event</v-icon>
+      <v-icon v-else>mdi-event</v-icon>
     </v-list-item-avatar>
 
     <v-list-item-content>
@@ -24,7 +24,7 @@
         icon
         :to="{ name: 'competition.admin.info', params: { competitionId: competition[idKey] } }"
       >
-        <v-icon>edit</v-icon>
+        <v-icon>mdi-edit</v-icon>
       </v-btn>
     </v-list-item-action>
   </v-list-item>

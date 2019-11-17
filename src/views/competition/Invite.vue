@@ -5,14 +5,14 @@
     </div>
     <EmptyState
       v-else-if="!invite.created"
-      icon="clear"
+      icon="mdi-clear"
       label="Invite not found"
       description="Perhaps try asking to be invited again?"
     />
     <div v-else-if="invite.accepted && invite.acceptedBy">
       <div v-if="$store.state.me && $store.state.me[idKey] === invite.acceptedBy">
         <EmptyState
-          icon="check"
+          icon="mdi-check"
           label="Invite accepted"
         />
         <footer class="layout justify-center">
@@ -26,26 +26,26 @@
       </div>
       <EmptyState
         v-else
-        icon="cancel"
+        icon="mdi-cancel"
         label="Invite already accepted"
         description="Perhaps try asking to be invited again?"
       />
     </div>
     <EmptyState
       v-else-if="invite.cancelled"
-      icon="cancel"
+      icon="mdi-cancel"
       label="Invite cancelled"
       description="You'll need to ask to be invited again."
     />
     <EmptyState
       v-else-if="$moment().isAfter(invite.expires)"
-      icon="timer_off"
+      icon="mdi-timer-off"
       label="Invite expired"
       description="You'll need to ask to be invited again."
     />
     <div v-else>
       <EmptyState
-        icon="drafts"
+        icon="mdi-drafts"
         label="Your Invitation"
         description="Get administrator access to this competition."
       />

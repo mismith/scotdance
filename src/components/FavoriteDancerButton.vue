@@ -6,7 +6,7 @@
     @click.prevent.stop="toggleFavoriteDancer(dancer)"
     class="FavoriteDancerButton"
   >
-    <v-icon>{{ dancer.$favorite ? 'star' : 'star_border' }}</v-icon>
+    <v-icon>mdi-{{ dancer.$favorite ? 'star' : 'star-border' }}</v-icon>
   </v-btn>
 </template>
 

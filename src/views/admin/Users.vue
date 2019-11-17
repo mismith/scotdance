@@ -19,7 +19,7 @@
               <v-list-item-title>{{ user.displayName }}</v-list-item-title>
               <v-list-item-sub-title>{{ user.uid }}</v-list-item-sub-title>
             </v-list-item-content>
-            <v-icon>chevron_right</v-icon>
+            <v-icon>mdi-chevron-right</v-icon>
           </v-list-item>
         </PaginatedList>
         <div v-else class="app-scroll-frame">
@@ -28,7 +28,7 @@
       </div>
       <EmptyState
         v-else
-        icon="clear"
+        icon="mdi-clear"
         label="No users found"
       />
     </Blade>
@@ -55,7 +55,7 @@
       </div>
       <EmptyState
         v-else
-        icon="touch_app"
+        icon="mdi-touch-app"
         label="See user details"
         description="Select a user"
       />

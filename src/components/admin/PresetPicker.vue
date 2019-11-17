@@ -25,7 +25,7 @@
       </v-list-item>
       <v-list-item v-if="!presets.length" class="empty">
         <v-list-item-avatar>
-          <v-icon>clear</v-icon>
+          <v-icon>mdi-clear</v-icon>
         </v-list-item-avatar>
         <span>No presets found.</span>
       </v-list-item>

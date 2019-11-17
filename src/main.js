@@ -6,8 +6,6 @@ import VueLocalStorage from 'vue-localstorage';
 import VueScrollTo from 'vue-scrollto';
 import { scroller } from 'vue-scrollto/src/scrollTo';
 import moment from 'moment-mini';
-import 'typeface-roboto/index.css';
-import 'material-design-icons-iconfont/dist/material-design-icons.css';
 import 'simple-line-icons/css/simple-line-icons.css';
 
 import { firebase } from '@/helpers/firebase';

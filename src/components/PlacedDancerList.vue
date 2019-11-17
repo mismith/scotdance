@@ -20,7 +20,7 @@
             v-if="draggingEnabled && dance[idKey] !== callbacks[idKey]"
             class="sortable-handle"
           >
-            drag_indicator
+            mdi-drag-indicator
           </v-icon>
 
           <v-list-action

@@ -25,7 +25,7 @@
         />
         <div v-else class="app-scroll-frame alt">
           <EmptyState
-            icon="access_time"
+            icon="mdi-access-time"
             label="Not available yet"
             description="Check back closer to the competition date:"
           >
@@ -57,7 +57,7 @@
       </div>
       <div v-else class="app-scroll-frame alt">
         <EmptyState
-          icon="clear"
+          icon="mdi-clear"
           label="No competition found"
         />
       </div>

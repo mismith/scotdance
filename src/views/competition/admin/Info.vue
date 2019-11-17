@@ -13,7 +13,7 @@
           <v-list-item-content>
             <v-list-item-title>{{ subsection.name }}</v-list-item-title>
           </v-list-item-content>
-          <v-icon>chevron_right</v-icon>
+          <v-icon>mdi-chevron-right</v-icon>
         </v-list-item>
       </v-list>
     </Blade>
@@ -51,7 +51,7 @@
       </template>
       <EmptyState
         v-else
-        icon="settings"
+        icon="mdi-settings"
         label="Competition settings"
       />
     </Blade>

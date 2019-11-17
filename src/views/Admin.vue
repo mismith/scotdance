@@ -5,7 +5,7 @@
 
       <v-tooltip left>
         <v-btn slot="activator" icon text color="primary" :loading="saving">
-          <v-icon>check</v-icon>
+          <v-icon>mdi-check</v-icon>
         </v-btn>
         <span>{{ saving ? 'Saving...' : 'Saved' }}</span>
       </v-tooltip>

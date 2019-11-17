@@ -9,10 +9,10 @@
       <v-subheader slot="activator">
         <v-flex>{{ group.$name }}</v-flex>
         <v-icon v-if="hasFavorites(findGroupDancers(group, dancers))" color="secondary">
-          star
+          mdi-star
         </v-icon>
         <v-icon v-if="results[group[idKey]]" color="primary">
-          {{ isInProgress(group, dances, results) ? 'check_circle_outline' : 'check_circle' }}
+          mdi-{{ isInProgress(group, dances, results) ? 'check-circle-outline' : 'check-circle' }}
         </v-icon>
       </v-subheader>
       <v-list class="ResultsList">

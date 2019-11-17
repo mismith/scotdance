@@ -24,7 +24,7 @@
           >
             <v-tooltip slot="activator" bottom>
               <v-btn slot="activator" text fab small>
-                <v-icon>playlist_add</v-icon>
+                <v-icon>mdi-playlist-add</v-icon>
               </v-btn>
               <span>Add preset(s)</span>
             </v-tooltip>
@@ -32,7 +32,7 @@
 
           <v-tooltip bottom>
             <v-btn slot="activator" text fab small @click="handleListItemCreate(blade)">
-              <v-icon>add</v-icon>
+              <v-icon>mdi-add</v-icon>
             </v-btn>
             <span>Add new item</span>
           </v-tooltip>
@@ -50,18 +50,18 @@
                 :key="item[idKey]"
                 :to="getBladeRoute(blade.params(item[idKey]))"
               >
-                <v-icon class="sortable-handle">drag_indicator</v-icon>
+                <v-icon class="sortable-handle">mdi-drag-indicator</v-icon>
                 <v-list-item-content>
                   <v-list-item-title>{{ blade.name(item) }}</v-list-item-title>
                 </v-list-item-content>
-                <v-icon>chevron_right</v-icon>
+                <v-icon>mdi-chevron-right</v-icon>
               </v-list-item>
             </v-slide-y-transition>
           </draggable>
 
           <v-list-item v-if="!blade.items().length" class="empty">
             <v-list-item-avatar>
-              <v-icon>clear</v-icon>
+              <v-icon>mdi-clear</v-icon>
             </v-list-item-avatar>
             <span>No items yet. <a @click="handleListItemCreate(blade)">Add one.</a></span>
           </v-list-item>
@@ -113,7 +113,7 @@
     </template>
     <Blade v-if="!currentDay">
       <EmptyState
-        icon="event_note"
+        icon="mdi-event-note"
         label="Edit schedule entries"
         description="Add or select an item to edit"
       />

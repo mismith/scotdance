@@ -20,8 +20,12 @@
               v-model="item.$active"
             >
               <v-layout slot="activator" align-center class="py-2">
-                <v-icon :color="item.$active ? 'primary' : 'grey'" :large="$vuetify.breakpoint.smAndUp" class="ml-2">
-                  {{ item.icon || 'check' }}
+                <v-icon
+                  :color="item.$active ? 'primary' : 'grey'"
+                  :large="$vuetify.breakpoint.smAndUp"
+                  class="ml-2"
+                >
+                  {{ item.icon || 'mdi-check' }}
                 </v-icon>
                 <div class="ml-4" :class="{
                   'subtitle-1': $vuetify.breakpoint.smAndUp,
@@ -94,7 +98,7 @@
 
     <div v-if="submitted" class="pa-4">
       <EmptyState
-        icon="mail_outline"
+        icon="mdi-mail-outline"
         label="All done!"
         description="Expect a confirmation email in your inbox momentarily."
       >

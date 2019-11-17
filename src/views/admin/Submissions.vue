@@ -9,7 +9,7 @@
             :to="{ name: $route.name, params: { submissionId: submission[idKey] } }"
           >
             <v-list-item-avatar :color="submission.approved ? 'primary' : 'secondary'">
-              <v-icon>{{ submission.approved ? 'check' : 'new_releases' }}</v-icon>
+              <v-icon>mdi-{{ submission.approved ? 'check' : 'new-releases' }}</v-icon>
             </v-list-item-avatar>
             <v-list-item-content>
               <v-list-item-title>
@@ -25,7 +25,7 @@
               </v-list-item-sub-title>
             </v-list-item-content>
             <v-list-item-action>
-              <v-icon>chevron_right</v-icon>
+              <v-icon>mdi-chevron-right</v-icon>
             </v-list-item-action>
           </v-list-item>
         </v-list>
@@ -35,7 +35,7 @@
       </div>
       <EmptyState
         v-else
-        icon="clear"
+        icon="mdi-clear"
         label="No submissions found"
       />
     </Blade>
@@ -64,7 +64,7 @@
             />
             <v-list-item v-else class="empty">
               <v-list-item-avatar>
-                <v-icon>clear</v-icon>
+                <v-icon>mdi-clear</v-icon>
               </v-list-item-avatar>
               No more info.
             </v-list-item>
@@ -123,7 +123,7 @@
       </div>
       <EmptyState
         v-else
-        icon="touch_app"
+        icon="mdi-touch-app"
         label="See submission details"
         description="Select a submission"
       />

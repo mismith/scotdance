@@ -4,7 +4,7 @@
       <v-toolbar-side-icon @click="menuVisible = !menuVisible">
         <v-badge v-model="needsUpdating" color="secondary">
           <span slot="badge" />
-          <v-icon>menu</v-icon>
+          <v-icon>mdi-menu</v-icon>
         </v-badge>
       </v-toolbar-side-icon>
 
@@ -19,13 +19,13 @@
         v-if="$route.params.competitionId && $store.getters.hasPermission(`competitions/${$route.params.competitionId}`) && getMirrorRoute()"
         :to="getMirrorRoute()"
       >
-        <v-icon>{{ /^competition.admin/.test($route.name) ? 'visibility' : 'edit' }}</v-icon>
+        <v-icon>mdi-{{ /^competition.admin/.test($route.name) ? 'visibility' : 'edit' }}</v-icon>
       </v-btn>
 
       <v-menu offset-y left>
         <template v-slot:activator="{ on }">
           <v-btn icon v-on="on">
-            <v-icon>help</v-icon>
+            <v-icon>mdi-help</v-icon>
           </v-btn>
         </template>
 
@@ -100,7 +100,7 @@
         <RequiresAuthDialog name="favorites">
           <v-card-title slot="title" class="title">
             Track your favourites
-            <v-icon color="secondary">star</v-icon>
+            <v-icon color="secondary">mdi-star</v-icon>
           </v-card-title>
 
           <p>To see the dancers you care most about <strong>featured throughout the app</strong>, you'll need an account first.</p>
@@ -109,7 +109,7 @@
         <RequiresAuthDialog name="submissions">
           <v-card-title slot="title" class="title">
             <v-flex>Submit your competition</v-flex>
-            <v-icon color="secondary">how_to_vote</v-icon>
+            <v-icon color="secondary">mdi-how-to-vote</v-icon>
           </v-card-title>
 
           <p>To bring the app to your event, you'll need an account first.</p>
@@ -117,7 +117,7 @@
         </RequiresAuthDialog>
 
         <v-btn text fab absolute color="white" @click="menuVisible = false">
-          <v-icon>close</v-icon>
+          <v-icon>mdi-close</v-icon>
         </v-btn>
       </header>
 
@@ -127,7 +127,7 @@
 
           <v-list-item :to="{ name: 'profile' }" @click="closeMenu()">
             <v-list-item-avatar>
-              <v-icon>account_circle</v-icon>
+              <v-icon>mdi-account-circle</v-icon>
             </v-list-item-avatar>
             <v-list-item-title>My Profile</v-list-item-title>
           </v-list-item>
@@ -136,7 +136,7 @@
           <v-divider />
           <v-list-item @click="logout().then(toggleAccount)">
             <v-list-item-avatar>
-              <v-icon>exit_to_app</v-icon>
+              <v-icon>mdi-exit-to-app</v-icon>
             </v-list-item-avatar>
             <v-list-item-title>Logout</v-list-item-title>
           </v-list-item>
@@ -152,7 +152,7 @@
               </v-flex>
 
               <v-btn :to="{ name: 'competitions.submit' }" text fab small @click="closeMenu()">
-                <v-icon>add</v-icon>
+                <v-icon>mdi-add</v-icon>
               </v-btn>
             </v-subheader>
 
@@ -166,7 +166,7 @@
 
             <v-list-item v-if="!relevantCompetitions.length" class="empty">
               <v-list-item-avatar>
-                <v-icon>clear</v-icon>
+                <v-icon>mdi-clear</v-icon>
               </v-list-item-avatar>
               No competitions found.
             </v-list-item>
@@ -189,7 +189,7 @@
             <PromptToUpdate v-if="needsUpdating">
               <v-list-item slot="activator" color="secondary">
                 <v-list-item-avatar>
-                  <v-icon color="secondary">fiber_new</v-icon>
+                  <v-icon color="secondary">mdi-fiber-new</v-icon>
                 </v-list-item-avatar>
                 <v-list-item-title>Update App</v-list-item-title>
               </v-list-item>
@@ -197,7 +197,7 @@
 
             <v-list-item to="/" exact @click="closeMenu()">
               <v-list-item-avatar>
-                <v-icon>home</v-icon>
+                <v-icon>mdi-home</v-icon>
               </v-list-item-avatar>
               <v-list-item-title>App Home</v-list-item-title>
             </v-list-item>
@@ -207,7 +207,7 @@
               @click="closeMenu()"
             >
               <v-list-item-avatar>
-                <v-icon>settings_applications</v-icon>
+                <v-icon>mdi-settings-applications</v-icon>
               </v-list-item-avatar>
               <v-list-item-title>App Admin</v-list-item-title>
             </v-list-item>

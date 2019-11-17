@@ -11,7 +11,7 @@
       </v-card>
       <v-card>
         <v-responsive class="pa-4">
-          <v-icon :size="88">event</v-icon>
+          <v-icon :size="88">mdi-event</v-icon>
         </v-responsive>
         <v-card-title>
           <div class="title">{{ competitions.length }} competitions</div>
