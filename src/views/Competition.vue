@@ -37,8 +37,7 @@
 
         <v-bottom-navigation
           v-if="!isAdminRoute"
-          :value="true"
-          :active="$root.currentTab"
+          v-model="$root.currentTab"
           class="listed-only"
         >
           <v-btn
@@ -57,7 +56,7 @@
       </div>
       <div v-else class="app-scroll-frame alt">
         <EmptyState
-          icon="mdi-clear"
+          icon="mdi-close"
           label="No competition found"
         />
       </div>
@@ -67,26 +66,29 @@
     </div>
 
     <DialogCard v-model="staffVisible">
-      <v-card-title v-if="currentDialogData" slot="title" class="layout row wrap">
-        <v-avatar v-if="currentDialogData.image" :size="100" class="mr-4">
-          <img :src="currentDialogData.image" />
-        </v-avatar>
-        <v-flex>
-          <div class="title my-4">{{ currentDialogData.$name }}</div>
-          <div class="subtitle-1">{{ currentDialogData.location }}</div>
-          <div v-if="currentDialogData.website" class="subtitle-1">
-            <a :href="formatExternalURL(currentDialogData.website)" target="_blank" class="ext">
-              {{ formatHumanURL(currentDialogData.website) }}
-            </a>
-          </div>
-        </v-flex>
-      </v-card-title>
-      <v-card-text
-        slot="text"
-        v-if="currentDialogData && currentDialogData.description"
-        v-html="currentDialogData.description"
-        class="pre-line alt"
-      />
+      <template #title>
+        <v-card-title v-if="currentDialogData" class="d-flex flex-wrap">
+          <v-avatar v-if="currentDialogData.image" :size="100" class="mr-4">
+            <img :src="currentDialogData.image" />
+          </v-avatar>
+          <v-col>
+            <div class="title my-4">{{ currentDialogData.$name }}</div>
+            <div class="subtitle-1">{{ currentDialogData.location }}</div>
+            <div v-if="currentDialogData.website" class="subtitle-1">
+              <a :href="formatExternalURL(currentDialogData.website)" target="_blank" class="ext">
+                {{ formatHumanURL(currentDialogData.website) }}
+              </a>
+            </div>
+          </v-col>
+        </v-card-title>
+      </template>
+      <template #text>
+        <v-card-text
+          v-if="currentDialogData && currentDialogData.description"
+          v-html="currentDialogData.description"
+          class="pre-line alt"
+        />
+      </template>
     </DialogCard>
   </div>
 </template>

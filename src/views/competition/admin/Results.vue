@@ -1,6 +1,6 @@
 <template>
   <Blades class="AdminResults" :stacks="true">
-    <Blade id="blade-groups" :active="!currentDance" class="xs12 md4 app-scroll alt">
+    <Blade id="blade-groups" :active="!currentDance" class="col-12 col-md-4 app-scroll alt">
       <ResultsList
         v-if="groups.length"
         :groups="groups"
@@ -10,7 +10,7 @@
       />
       <EmptyState
         v-else
-        icon="mdi-warning"
+        icon="mdi-alert"
         label="No age groups found"
       >
         <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }">
@@ -18,7 +18,7 @@
         </router-link>
       </EmptyState>
     </Blade>
-    <Blade id="blade-dancers" :active="currentDance" class="xs12 md4 app-scroll">
+    <Blade id="blade-dancers" :active="currentDance" class="col-12 col-md-4 app-scroll">
       <v-list v-if="currentDance" two-line>
         <DancerListItem
           v-for="dancer in currentDancers"
@@ -36,7 +36,7 @@
 
         <EmptyState
           v-if="!currentDancers.length && currentDance === callbacks"
-          icon="mdi-warning"
+          icon="mdi-alert"
           label="No dancers found"
         >
           <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dancers' } }">
@@ -45,7 +45,7 @@
         </EmptyState>
         <EmptyState
           v-if="!currentDancers.length && currentDance !== callbacks"
-          icon="mdi-warning"
+          icon="mdi-alert"
           label="No dancers to place"
         >
           <router-link :to="{ name: 'competition.admin.results', params: { groupId, danceId: callbacks[idKey] } }">
@@ -55,12 +55,12 @@
       </v-list>
       <EmptyState
         v-else
-        icon="mdi-touch-app"
+        icon="mdi-gesture-tap"
         label="Enter results"
         description="Select an age group and dance"
       />
     </Blade>
-    <Blade class="xs12 md4 app-scroll">
+    <Blade class="col-12 col-md-4 app-scroll">
       <PlacedDancerList
         v-if="currentDance && placedDancers.length"
         :admin="true"
@@ -72,7 +72,7 @@
       />
       <EmptyState
         v-else
-        icon="mdi-vertical-split"
+        icon="mdi-view-split-vertical"
         label="Order dancers"
         description="Select dancers in the order placed"
       />

@@ -1,11 +1,11 @@
 <template>
-  <RequiresPermission class="CompetitionInvite layout align-center justify-center app-scroll-frame app-scroll pa-4">
+  <RequiresPermission class="CompetitionInvite d-flex align-center justify-center app-scroll-frame app-scroll pa-4">
     <div v-if="!invite">
       <Spinner />
     </div>
     <EmptyState
       v-else-if="!invite.created"
-      icon="mdi-clear"
+      icon="mdi-close"
       label="Invite not found"
       description="Perhaps try asking to be invited again?"
     />
@@ -15,7 +15,7 @@
           icon="mdi-check"
           label="Invite accepted"
         />
-        <footer class="layout justify-center">
+        <footer class="d-flex justify-center">
           <v-btn
             color="primary"
             :to="{ name: 'competition.admin.info', params: { competitionId }}"
@@ -49,7 +49,7 @@
         label="Your Invitation"
         description="Get administrator access to this competition."
       />
-      <footer class="layout justify-center">
+      <footer class="d-flex justify-center">
         <v-btn
           color="primary"
           :loading="invite.accepted && !invite.acceptedBy"

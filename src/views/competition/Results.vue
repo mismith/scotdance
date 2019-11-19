@@ -3,7 +3,7 @@
     <Blade
       :active="!currentGroup"
       v-persist-scroll="`/competitions/${competitionId}/results`"
-      class="xs12 md4 app-scroll"
+      class="col-12 col-md-4 app-scroll"
     >
       <v-list v-if="groupedCategories.length" expand class="grouped">
         <v-list-group
@@ -12,21 +12,23 @@
           :value="isCategoryExpanded(category, groupedCategories)"
           @input="handleCategoryExpanded(category[idKey], $event)"
         >
-          <v-subheader slot="activator">
-            <v-flex>{{ category.name }}</v-flex>
-            <v-icon
-              v-if="hasFavorites(findCategoryDancers(category, dancers))"
-              color="secondary"
-            >
-              mdi-star
-            </v-icon>
-            <ResultsProgressIndicator
-              :category="category"
-              :groups="groups"
-              :dances="dances"
-              :results="results"
-            />
-          </v-subheader>
+          <template #activator>
+            <v-subheader>
+              <v-col>{{ category.name }}</v-col>
+              <v-icon
+                v-if="hasFavorites(findCategoryDancers(category, dancers))"
+                color="secondary"
+              >
+                mdi-star
+              </v-icon>
+              <ResultsProgressIndicator
+                :category="category"
+                :groups="groups"
+                :dances="dances"
+                :results="results"
+              />
+            </v-subheader>
+          </template>
 
           <v-list>
             <ResultListItem
@@ -40,30 +42,35 @@
             </ResultListItem>
             <v-list-item v-if="!category.$groups.length" class="empty">
               <v-list-item-avatar>
-                <v-icon>mdi-clear</v-icon>
+                <v-icon>mdi-close</v-icon>
               </v-list-item-avatar>
-              No more info.
+              <v-list-item-content>
+                No more info.
+              </v-list-item-content>
             </v-list-item>
           </v-list>
         </v-list-group>
       </v-list>
       <EmptyState
         v-else
-        icon="mdi-clear"
+        icon="mdi-close"
         label="No results yet"
         description="Check back later"
       />
     </Blade>
-    <Blade :active="currentGroup" class="xs12 md8">
+    <Blade :active="currentGroup" class="col-12 col-md-8">
       <div v-if="currentGroup" class="app-scroll-frame">
         <BladeToolbar
           :to="{ name: $route.name, params: { competitionId } }"
           :text="currentGroup.$name"
         >
           <v-menu offset-y left>
-            <v-btn slot="activator" icon>
-              <v-icon>mdi-more-vert</v-icon>
-            </v-btn>
+            <template #activator="{ on }">
+              <v-btn v-on="on" icon>
+                <v-icon>mdi-more-vert</v-icon>
+              </v-btn>
+            </template>
+
             <v-list>
               <v-list-item>
                 <v-list-item-action>
@@ -90,7 +97,9 @@
               :value="isDanceExpanded(dance, groupedDancers)"
               @input="handleDanceExpanded(dance[idKey], $event)"
             >
-              <v-subheader slot="activator">{{ dance.$name }}</v-subheader>
+              <template #activator>
+                <v-subheader>{{ dance.$name }}</v-subheader>
+              </template>
 
               <PlacedDancerList
                 :dance="dance"
@@ -100,9 +109,11 @@
               >
                 <v-list-item v-if="!dance.dancers.length" class="empty">
                   <v-list-item-avatar>
-                    <v-icon>mdi-clear</v-icon>
+                    <v-icon>mdi-close</v-icon>
                   </v-list-item-avatar>
-                  Results to be determined.
+                  <v-list-item-content>
+                    Results to be determined.
+                  </v-list-item-content>
                 </v-list-item>
 
                 <v-divider v-if="currentGroup.sponsor && dance[idKey] === overall[idKey]" />
@@ -130,7 +141,7 @@
       </div>
       <EmptyState
         v-else
-        icon="mdi-touch-app"
+        icon="mdi-gesture-tap"
         label="See results"
         description="Select an age group"
       />

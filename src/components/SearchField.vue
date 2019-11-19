@@ -3,9 +3,10 @@
     label="Search"
     type="search"
     v-model="value"
-    append-icon="mdi-search"
+    append-icon="mdi-magnify"
     clearable
     solo
+    hide-details
     :loading="value !== valueDebounced"
     class="SearchField"
   />

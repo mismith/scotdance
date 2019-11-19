@@ -6,7 +6,9 @@
     class="DialogCard"
     @keydown.esc.stop="handleCancel"
   >
-    <slot slot="activator" name="activator"></slot>
+    <template #activator="props">
+      <slot name="activator" v-bind="props" />
+    </template>
     <form @submit.prevent="handleSubmit" class="v-dialog--scrollable">
       <v-card>
         <slot name="title">

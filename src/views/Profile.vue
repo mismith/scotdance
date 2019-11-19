@@ -1,11 +1,11 @@
 <template>
   <form class="Profile app-scroll-frame app-scroll">
     <div class="pa-4">
-      <header class="layout align-center flex-none mb-4">
+      <header class="d-flex align-center flex-none mb-4">
         <v-avatar :size="100">
           <Gravatar :user="me" />
         </v-avatar>
-        <div class="flex pa-4">
+        <div class="d-flex pa-4">
           Avatar via <a href="https://gravatar.com/" target="_blank" class="ext">Gravatar</a>
         </div>
       </header>
@@ -32,7 +32,9 @@
         async
         @submit="changePassword"
       >
-        <v-btn slot="activator" text color="primary" class="mx-0">Change Password</v-btn>
+        <template #activator="{ on }">
+          <v-btn v-on="on" color="primary" class="mx-0">Change Password</v-btn>
+        </template>
 
         <v-text-field
           label="Current Password"
@@ -53,7 +55,7 @@
     </div>
 
     <v-spacer />
-    <footer class="layout justify-center flex-none">
+    <footer class="d-flex justify-center flex-none pa-3">
       <DialogCard
         v-model="removeActive"
         title="Are you sure?"
@@ -64,7 +66,9 @@
         async
         @submit="remove"
       >
-        <v-btn slot="activator" text color="error" class="mx-0">Delete Account</v-btn>
+        <template #activator="{ on }">
+          <v-btn v-on="on" text color="error">Delete Account</v-btn>
+        </template>
 
         <p>This will permanently delete your account and all associated data.</p>
         <p>In order to proceed, please enter your password:</p>

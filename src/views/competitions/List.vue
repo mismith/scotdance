@@ -24,7 +24,7 @@
             color="secondary"
             class="now"
           >
-            <v-chip color="secondary" small disabled class="white--text">Now</v-chip>
+            <v-chip color="secondary" small disabled style="opacity: 1;">Now</v-chip>
           </v-timeline-item>
           <CompetitionTimelineItem
             v-else
@@ -36,7 +36,7 @@
 
       <div v-if="!competitions.length">
         <EmptyState
-          icon="mdi-clear"
+          icon="mdi-close"
           label="No competitions found"
         />
       </div>

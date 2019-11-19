@@ -1,8 +1,8 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="NewDynamicField layout align-center">
-    <DynamicField :field="field" :data="data" class="flex" />
+  <form @submit.prevent="handleSubmit" class="NewDynamicField d-flex align-center">
+    <DynamicField :field="field" :data="data" class="d-flex" />
     <v-btn type="submit" icon color="primary" :disabled="!isValid">
-      <v-icon>mdi-add</v-icon>
+      <v-icon>mdi-plus</v-icon>
     </v-btn>
   </form>
 </template>

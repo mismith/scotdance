@@ -11,15 +11,15 @@
       />
     </div>
 
-    <v-toolbar v-if="pages.length > 1" dense class="pagination layout flex-none">
+    <v-toolbar v-if="pages.length > 1" dense class="pagination d-flex flex-none">
       <v-btn icon @click="page -= 1" :disabled="page <= 1">
         <v-icon>mdi-skip-previous</v-icon>
       </v-btn>
-      <v-layout align-center>
+      <v-row align-center>
         Page
         <v-select v-model="page" :items="pages" single-line hide-details class="mx-2" />
         of {{ pages.length }}
-      </v-layout>
+      </v-row>
       <v-btn icon :disabled="page >= pages.length" @click="page += 1">
         <v-icon>mdi-skip-next</v-icon>
       </v-btn>

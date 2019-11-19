@@ -3,7 +3,7 @@
     <Blade
       :active="!currentEvent"
       v-persist-scroll="`/competitions/${competitionId}/schedule`"
-      class="xs12 md4 app-scroll"
+      class="col-12 col-md-4 app-scroll"
     >
       <div v-if="schedule.days">
         <div v-for="day in toOrderedArray(schedule.days)" :key="day[idKey]">
@@ -23,10 +23,12 @@
               :value="isBlockExpanded(block[idKey], Object.keys(day.blocks), !!block.events)"
               @input="handleBlockExpanded(block[idKey], $event)"
             >
-              <v-subheader slot="activator">
-                <v-flex>{{ block.name }}</v-flex>
-                <div class="caption">{{ textify(block.description) }}</div>
-              </v-subheader>
+              <template #activator>
+                <v-subheader>
+                  <v-col>{{ block.name }}</v-col>
+                  <div class="caption">{{ textify(block.description) }}</div>
+                </v-subheader>
+              </template>
 
               <v-list two-line>
                 <v-list-item
@@ -52,29 +54,33 @@
                 </v-list-item>
                 <v-list-item v-if="!block.events" class="empty">
                   <v-list-item-avatar>
-                    <v-icon>mdi-clear</v-icon>
+                    <v-icon>mdi-close</v-icon>
                   </v-list-item-avatar>
-                  No more info.
+                  <v-list-item-content>
+                    No more info.
+                  </v-list-item-content>
                 </v-list-item>
               </v-list>
             </v-list-group>
             <v-list-item v-if="!day.blocks" class="empty">
               <v-list-item-avatar>
-                <v-icon>mdi-clear</v-icon>
+                <v-icon>mdi-close</v-icon>
               </v-list-item-avatar>
-              No more info.
+              <v-list-item-content>
+                No more info.
+              </v-list-item-content>
             </v-list-item>
           </v-list>
         </div>
       </div>
       <EmptyState
         v-else
-        icon="mdi-clear"
+        icon="mdi-close"
         label="No schedule yet"
         description="Check back later"
       />
     </Blade>
-    <Blade :active="currentEvent" class="xs12 md8">
+    <Blade :active="currentEvent" class="col-12 col-md-8">
       <div v-if="currentEvent" class="app-scroll-frame">
         <BladeToolbar
           :to="{ name: $route.name, params: { competitionId } }"
@@ -102,14 +108,16 @@
               :value="isDanceExpanded(dance[idKey], Object.keys(currentEvent.dances), !!dance.danceId)"
               @input="handleDanceExpanded(dance[idKey], $event)"
             >
-              <v-subheader slot="activator">
-                <v-flex>{{ getScheduleItemDanceName(dance, dances) }}</v-flex>
-                <div
-                  v-if="dance.description"
-                  v-html="dance.description"
-                  class="caption"
-                />
-              </v-subheader>
+              <template #activator>
+                <v-subheader>
+                  <v-col>{{ getScheduleItemDanceName(dance, dances) }}</v-col>
+                  <div
+                    v-if="dance.description"
+                    v-html="dance.description"
+                    class="caption"
+                  />
+                </v-subheader>
+              </template>
 
               <AdminPlatforms
                 :item="dance"
@@ -123,39 +131,44 @@
             </v-list-group>
             <v-list-item v-if="!currentEvent.dances && !currentEvent.description" class="empty">
               <v-list-item-avatar>
-                <v-icon>mdi-clear</v-icon>
+                <v-icon>mdi-close</v-icon>
               </v-list-item-avatar>
-              No more info.
+              <v-list-item-content>
+                No more info.
+              </v-list-item-content>
             </v-list-item>
           </v-list>
         </div>
 
         <DialogCard v-model="drawVisible">
-          <v-card-title v-if="currentDialogData" slot="title" class="layout column align-start">
-            <div class="title">Draw / Order</div>
-            <div v-if="currentDialogData.dance && currentDialogData.group" class="caption">
-              {{ currentDialogData.dance.$shortName }} • {{ currentDialogData.group.$name }}
-            </div>
-          </v-card-title>
-
-          <v-card-text slot="text" class="pa-0">
-            <v-list
-              v-if="currentDialogData && currentDialogData.dance && currentDialogData.group"
-              two-line
-            >
-              <DancerListItem
-                v-for="dancer in findDrawnDancers(currentDialogData.group, currentDialogData.dance)"
-                :key="dancer[idKey]"
-                :dancer="dancer"
-                @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] } }); drawVisible = false;"
-              />
-            </v-list>
-          </v-card-text>
+          <template #title>
+            <v-card-title v-if="currentDialogData" class="d-flex flex-column align-start">
+              <div class="title">Draw / Order</div>
+              <div v-if="currentDialogData.dance && currentDialogData.group" class="caption">
+                {{ currentDialogData.dance.$shortName }} • {{ currentDialogData.group.$name }}
+              </div>
+            </v-card-title>
+          </template>
+          <template #text>
+            <v-card-text class="pa-0">
+              <v-list
+                v-if="currentDialogData && currentDialogData.dance && currentDialogData.group"
+                two-line
+              >
+                <DancerListItem
+                  v-for="dancer in findDrawnDancers(currentDialogData.group, currentDialogData.dance)"
+                  :key="dancer[idKey]"
+                  :dancer="dancer"
+                  @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] } }); drawVisible = false;"
+                />
+              </v-list>
+            </v-card-text>
+          </template>
         </DialogCard>
       </div>
       <EmptyState
         v-else
-        icon="mdi-touch-app"
+        icon="mdi-gesture-tap"
         label="See event details"
         description="Select an event"
       />

@@ -2,7 +2,7 @@
   <div class="DancerReport">
     <header>
       <v-subheader class="title">
-        <v-flex>{{ dancer.$name }}</v-flex>
+        <v-col>{{ dancer.$name }}</v-col>
         <FavoriteDancerButton :dancer="dancer" />
       </v-subheader>
       <div class="pa-4">
@@ -13,7 +13,9 @@
     </header>
     <v-list v-if="group" expand class="grouped">
       <v-list-group :value="true">
-        <v-subheader slot="activator">Results</v-subheader>
+        <template #activator>
+          <v-subheader>Results</v-subheader>
+        </template>
 
         <v-list>
           <ResultListItem
@@ -22,25 +24,27 @@
             :place="getPlace(dancer, group, dance)"
             :to="{ name: 'competition.results', params: { groupId: group[idKey], danceId: dance[idKey] } }"
           >
-            <span slot="avatar" />
+            <template #avatar />
             {{ dance.$name }}
           </ResultListItem>
 
           <v-divider v-if="hasOverall(group)" />
           <ResultListItem
-             v-if="hasOverall(group)"
+            v-if="hasOverall(group)"
             :place="getPlace(dancer, group, overall)"
             :to="{ name: 'competition.results', params: { groupId: group[idKey], danceId: overall[idKey] } }"
           >
-            <span slot="avatar" />
+            <template #avatar />
             {{ overall.$name }}
           </ResultListItem>
 
           <v-list-item v-if="!findGroupDances(group, dances).length && !hasOverall(group)" class="empty">
             <v-list-item-avatar>
-              <v-icon>mdi-clear</v-icon>
+              <v-icon>mdi-close</v-icon>
             </v-list-item-avatar>
-            Results to be determined.
+            <v-list-item-content>
+              Results to be determined.
+            </v-list-item-content>
           </v-list-item>
         </v-list>
       </v-list-group>

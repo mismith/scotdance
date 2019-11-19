@@ -1,28 +1,34 @@
 <template>
   <DialogCard cancel-label="Later">
-    <slot name="activator" slot="activator" />
+    <template #activator="props">
+      <slot name="activator" v-bind="props" />
+    </template>
 
-    <v-card-title slot="title" class="layout">
-      <div class="title flex">Update Available</div>
-      <v-icon>mdi-system-update</v-icon>
-    </v-card-title>
-    <v-card-text slot="text" class="pa-4 primary white--text" style="position: relative;">
-      <div class="account-bg"></div>
-      <div style="position: relative; text-align: center;">
-        <div>Get the latest version of the app:</div>
-        <big>{{ currentVersion }} &rarr; {{ latestVersion }}</big>
-      </div>
-    </v-card-text>
-
-    <v-btn
-      slot="submit"
-      text
-      color="primary"
-      :href="platformSpecificAppStoreURL"
-      target="_blank"
-    >
-      Update Now
-    </v-btn>
+    <template #title>
+      <v-card-title class="d-flex">
+        <div class="title d-flex">Update Available</div>
+        <v-icon>mdi-system-update</v-icon>
+      </v-card-title>
+    </template>
+    <template #text>
+      <v-card-text class="pa-4 primary white--text" style="position: relative;">
+        <div class="account-bg"></div>
+        <div style="position: relative; text-align: center;">
+          <div>Get the latest version of the app:</div>
+          <big>{{ currentVersion }} &rarr; {{ latestVersion }}</big>
+        </div>
+      </v-card-text>
+    </template>
+    <template #submit>
+      <v-btn
+        text
+        color="primary"
+        :href="platformSpecificAppStoreURL"
+        target="_blank"
+      >
+        Update Now
+      </v-btn>
+    </template>
   </DialogCard>
 </template>
 

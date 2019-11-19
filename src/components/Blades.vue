@@ -1,7 +1,7 @@
 <template>
-  <v-layout row class="Blades app-scroll-frame" :class="{ stacks }">
+  <v-row no-gutters class="Blades app-scroll-frame" :class="{ stacks }">
     <slot />
-  </v-layout>
+  </v-row>
 </template>
 
 <script>

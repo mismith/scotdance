@@ -34,7 +34,7 @@
           <p>{{ competition.location }}</p>
         </div>
 
-        <v-layout v-if="competition.registrationURL" wrap align-center class="mb-4">
+        <div v-if="competition.registrationURL" class="d-flex align-center flex-wrap mb-4">
           <v-btn
             :href="formatExternalURL(competition.registrationURL)"
             target="_blank"
@@ -44,7 +44,7 @@
           >
             <span class="ext">Register</span>
           </v-btn>
-          <v-flex xs12 sm6 style="opacity: 0.66;">
+          <div style="opacity: 0.66;">
             <div v-if="competition.registrationStart">
               Registration open{{ $moment(competition.registrationStart).isAfter() ? 's' : 'ed'}}
               {{ $moment(competition.registrationStart).format('MMM D, YYYY \\a\\t h:mma') }}
@@ -53,8 +53,8 @@
               Registration close{{ $moment(competition.registrationEnd).isAfter() ? 's' : 'd'}}
               {{ $moment(competition.registrationEnd).format('MMM D, YYYY \\a\\t h:mma') }}
             </div>
-          </v-flex>
-        </v-layout>
+          </div>
+        </div>
 
         <div v-if="competition.links" class="mb-4">
           <v-btn
@@ -82,7 +82,9 @@
           :value="isGroupExpanded(name, Object.keys(groupedStaff))"
           @input="handleGroupExpanded(name, $event)"
         >
-          <v-subheader slot="activator">{{ name }}s</v-subheader>
+          <template #activator>
+            <v-subheader>{{ name }}s</v-subheader>
+          </template>
 
           <v-list two-line :class="{ 'long-list': group.length > 12 }">
             <DancerListItem
@@ -91,11 +93,12 @@
               :dancer="member"
               @click="setCurrentDialog(['staff', member])"
             >
-              <span slot="favorite" />
-              <v-list-item-avatar v-if="member.image" slot="avatar">
-                <img :src="member.image" />
-              </v-list-item-avatar>
-              <span v-else slot="avatar" />
+              <template #favorite />
+              <template #avatar>
+                <v-list-item-avatar v-if="member.image">
+                  <img :src="member.image" />
+                </v-list-item-avatar>
+              </template>
             </DancerListItem>
           </v-list>
         </v-list-group>

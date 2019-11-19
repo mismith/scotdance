@@ -23,6 +23,7 @@
             :dark="!!getChipColor(poolItem)"
             :disabled="getChipColor(poolItem) === null"
             :style="{ visibility: !admin && getChipColor(poolItem) === null && 'hidden' }"
+            class="ma-1"
             @click="!admin && $emit('item-click', poolItem)"
           >
             {{ poolItem.$name || poolItem.name }}
@@ -32,7 +33,7 @@
     </div>
     <EmptyState
       v-else-if="admin && !danceGroups.length"
-      icon="mdi-warning"
+      icon="mdi-alert"
       label="No dance groups found"
       >
       <router-link :to="{ name: 'competition.admin.dance-groups' }">
@@ -41,7 +42,7 @@
     </EmptyState>
     <EmptyState
       v-else-if="admin"
-      icon="mdi-warning"
+      icon="mdi-alert"
       label="No platforms found"
       >
       <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'platforms' } }">
@@ -50,17 +51,17 @@
     </EmptyState>
     <v-list-item v-else class="empty">
       <v-list-item-avatar>
-        <v-icon>mdi-clear</v-icon>
+        <v-icon>mdi-close</v-icon>
       </v-list-item-avatar>
-      No more info.
+      <v-list-item-content>
+        No more info.
+      </v-list-item-content>
     </v-list-item>
 
-    <footer v-if="admin && !isEmpty">
+    <footer v-if="admin && !isEmpty" class="pa-3">
       <v-btn text :disabled="!item.platforms" @click="handleCopy">Copy</v-btn>
       <v-btn text :disabled="clipboard.type !== 'platforms'" @click="handlePaste">Paste</v-btn>
-      <v-btn text :disabled="!judges.length" @click="handleCycleJudges">
-        Cycle Judges
-      </v-btn>
+      <v-btn text :disabled="!judges.length" @click="handleCycleJudges">Cycle Judges</v-btn>
     </footer>
   </div>
 </template>

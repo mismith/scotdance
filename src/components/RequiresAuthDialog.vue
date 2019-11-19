@@ -1,7 +1,9 @@
 <template>
   <DialogCard v-model="dialogVisible" cancel-label="Not Now" class="RequiresAuthDialog">
-    <slot slot="title" name="title" />
-    <div slot="text">
+    <template #title="props">
+      <slot name="title" v-bind="props" />
+    </template>
+    <template #text>
       <v-card-text>
         <slot />
       </v-card-text>
@@ -9,7 +11,7 @@
         <div class="account-bg"></div>
         <AccountButtons />
       </div>
-    </div>
+    </template>
   </DialogCard>
 </template>
 

@@ -1,13 +1,15 @@
 <template>
   <Blades class="CompetitionDancers alt">
-    <Blade :active="!currentDancer" class="xs12 md6">
+    <Blade :active="!currentDancer" class="col-12 col-md-6">
       <div v-if="dancers.length" class="app-scroll-frame">
         <v-toolbar>
-          <SearchField v-model="filterBy" class="flex mr-2" />
+          <SearchField v-model="filterBy" class="d-flex mr-2" />
           <v-menu @selected="sortBy">
-            <v-btn icon slot="activator">
-              <v-icon>mdi-filter-list</v-icon>
-            </v-btn>
+            <template #activator="{ on }">
+              <v-btn icon v-on="on">
+                <v-icon>mdi-filter-list</v-icon>
+              </v-btn>
+            </template>
 
             <v-list>
               <v-list-item
@@ -40,15 +42,17 @@
               :value="isGroupExpanded(groupId, groupIds)"
               @input="handleGroupExpanded(groupId, $event)"
             >
-              <v-subheader slot="activator">
-                <v-flex>{{ groupId || '?' }}</v-flex>
-                <v-icon
-                  v-if="!onlyFavorites && hasFavorites(group)"
-                  color="secondary"
-                >
-                  mdi-star
-                </v-icon>
-              </v-subheader>
+              <template #activator>
+                <v-subheader>
+                  <v-col>{{ groupId || '?' }}</v-col>
+                  <v-icon
+                    v-if="!onlyFavorites && hasFavorites(group)"
+                    color="secondary"
+                  >
+                    mdi-star
+                  </v-icon>
+                </v-subheader>
+              </template>
 
               <v-list two-line>
                 <DancerListItem
@@ -80,12 +84,12 @@
       </div>
       <EmptyState
         v-else
-        icon="mdi-clear"
+        icon="mdi-close"
         label="No dancers yet"
         description="Check back later"
       />
     </Blade>
-    <Blade :active="currentDancer" class="xs12 md6">
+    <Blade :active="currentDancer" class="col-12 col-md-6">
       <div v-if="currentDancer" class="app-scroll-frame">
         <BladeToolbar
           :to="{ name: $route.name, params: { competitionId } }"
@@ -107,7 +111,7 @@
       </div>
       <EmptyState
         v-else
-        icon="mdi-touch-app"
+        icon="mdi-gesture-tap"
         label="See dancer details"
         description="Select a dancer"
       />

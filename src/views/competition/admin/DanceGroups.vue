@@ -1,6 +1,6 @@
 <template>
   <Blades class="AdminDanceGroups" :stacks="true">
-    <Blade id="blade-groups" :active="!currentGroup" class="xs12 md4 app-scroll">
+    <Blade id="blade-groups" :active="!currentGroup" class="col-12 col-md-4 app-scroll">
       <v-list v-if="groups.length">
         <v-list-item
           v-for="group in groups"
@@ -16,7 +16,7 @@
       </v-list>
       <EmptyState
         v-else
-        icon="mdi-warning"
+        icon="mdi-alert"
         label="No age groups found"
       >
         <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }">
@@ -24,7 +24,7 @@
         </router-link>
       </EmptyState>
     </Blade>
-    <Blade id="blade-dances" :active="currentGroup" class="xs12 md4 app-scroll">
+    <Blade id="blade-dances" :active="currentGroup" class="col-12 col-md-4 app-scroll">
       <v-list v-if="currentGroup">
         <v-list-item
           v-for="dance in dances"
@@ -39,18 +39,20 @@
           </v-list-item-action>
         </v-list-item>
 
-        <footer v-if="dances.length">
+        <template v-if="dances.length">
           <v-divider />
-          <v-btn text @click="handleCopy">
-            Copy
-          </v-btn>
-          <v-btn text :disabled="clipboard.type !== 'dance-groups'" @click="handlePaste">
-            Paste
-          </v-btn>
-        </footer>
+          <footer class="pa-3">
+            <v-btn text @click="handleCopy">
+              Copy
+            </v-btn>
+            <v-btn text :disabled="clipboard.type !== 'dance-groups'" @click="handlePaste">
+              Paste
+            </v-btn>
+          </footer>
+        </template>
         <EmptyState
           v-else
-          icon="mdi-warning"
+          icon="mdi-alert"
           label="No dances found"
         >
           <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dances' } }">
@@ -65,10 +67,10 @@
         description="Pick dances for each age group"
       />
     </Blade>
-    <Blade class="xs12 md4">
+    <Blade class="col-12 col-md-4">
       <EmptyState
         v-if="!currentGroupHasDraws || !currentGroupDances.length || !currentGroupDancers.length"
-        icon="mdi-vertical-split"
+        icon="mdi-view-split-vertical"
         label="Championship draws"
         description="Specify dancer order for each dance"
       />
@@ -78,7 +80,7 @@
       <v-toolbar v-if="currentGroup">
         <v-list-item v-if="!currentGroupDances.length" class="empty">
           <v-list-item-avatar>
-            <v-icon>mdi-warning</v-icon>
+            <v-icon>mdi-alert</v-icon>
           </v-list-item-avatar>
           <v-list-item-content>
             <v-list-item-title>
@@ -92,7 +94,7 @@
 
         <v-list-item v-else-if="!currentGroupDancers.length" class="empty">
           <v-list-item-avatar>
-            <v-icon>mdi-warning</v-icon>
+            <v-icon>mdi-alert</v-icon>
           </v-list-item-avatar>
           <v-list-item-content>
             <v-list-item-title>No dancers in this age group.</v-list-item-title>

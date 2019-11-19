@@ -5,7 +5,7 @@
         :key="blade.collection"
         id="blade-root"
         v-if="blade.parent()"
-        class="xs12 md3 app-scroll alt"
+        class="col-12 col-md-3 app-scroll alt"
       >
         <BladeToolbar
           v-if="index >= 1 && blade.item()"
@@ -13,8 +13,8 @@
           :text="blades[index - 1].name(blades[index - 1].item())"
           class="hidden-sm-and-down"
         />
-        <v-subheader class="layout">
-          <v-flex style="text-transform: capitalize;">{{ blade.collection }}</v-flex>
+        <v-subheader class="d-flex">
+          <v-col style="text-transform: capitalize;">{{ blade.collection }}</v-col>
 
           <PresetPicker
             v-if="blade.presets"
@@ -22,22 +22,28 @@
             :prop="blade.name"
             @select="items => items.map(item => handleListItemCreate(blade, item))"
           >
-            <v-tooltip slot="activator" bottom>
-              <v-btn slot="activator" text fab small>
-                <v-icon>mdi-playlist-add</v-icon>
-              </v-btn>
-              <span>Add preset(s)</span>
-            </v-tooltip>
+            <template #activator="{ on: picker }">
+              <v-tooltip bottom>
+                <template #activator="{ on: tooltip }">
+                  <v-btn icon class="mx-1" v-on="Object.assign({}, tooltip, picker)">
+                    <v-icon>mdi-playlist-plus</v-icon>
+                  </v-btn>
+                </template>
+                <span>Add preset(s)</span>
+              </v-tooltip>
+            </template>
           </PresetPicker>
 
           <v-tooltip bottom>
-            <v-btn slot="activator" text fab small @click="handleListItemCreate(blade)">
-              <v-icon>mdi-add</v-icon>
-            </v-btn>
+            <template #activator="{ on }">
+              <v-btn v-on="on" icon @click="handleListItemCreate(blade)">
+                <v-icon>mdi-plus</v-icon>
+              </v-btn>
+            </template>
             <span>Add new item</span>
           </v-tooltip>
         </v-subheader>
-        <v-list>
+        <v-list avatar>
           <draggable
             :value="blade.items()"
             class="draggable"
@@ -61,9 +67,11 @@
 
           <v-list-item v-if="!blade.items().length" class="empty">
             <v-list-item-avatar>
-              <v-icon>mdi-clear</v-icon>
+              <v-icon>mdi-close</v-icon>
             </v-list-item-avatar>
-            <span>No items yet. <a @click="handleListItemCreate(blade)">Add one.</a></span>
+            <v-list-item-content>
+              No items yet. <a @click="handleListItemCreate(blade)">Add one.</a>
+            </v-list-item-content>
           </v-list-item>
         </v-list>
       </Blade>
@@ -71,7 +79,7 @@
         :key="blade.collection"
         v-if="blade.item()"
         :id="`blade-${blade.id()}`"
-        :class="`xs12 md${blade.size || 6} app-scroll`"
+        :class="`col-12 col-md-${blade.size || 6} app-scroll`"
       >
         <form @submit.prevent class="pa-4">
           <DynamicField
@@ -95,7 +103,7 @@
         </form>
 
         <v-spacer />
-        <div class="layout align-center justify-center flex-none">
+        <footer class="d-flex align-center justify-center flex-none pa-3">
           <v-btn
             v-if="getPrevBlade(blade)"
             :disabled="getPrevBlade(blade).items().length < 2"
@@ -108,12 +116,12 @@
           <v-btn text color="error" @click="handleListItemRemove(blade)">
             Delete Item
           </v-btn>
-        </div>
+        </footer>
       </Blade>
     </template>
     <Blade v-if="!currentDay">
       <EmptyState
-        icon="mdi-event-note"
+        icon="mdi-calendar-search"
         label="Edit schedule entries"
         description="Add or select an item to edit"
       />
@@ -127,9 +135,11 @@
       @cancel="confirmCreate.reject()"
       @submit="confirmCreate.resolve()"
     >
-      <div slot="text" class="app-scroll px-4">
-        <v-text-field ref="confirmCreateValue" v-model="confirmCreateValue" label="Name" />
-      </div>
+      <template #text>
+        <div class="app-scroll px-4">
+          <v-text-field ref="confirmCreateValue" v-model="confirmCreateValue" label="Name" />
+        </div>
+      </template>
     </DialogCard>
     <DialogCard
       :value="confirmMove"
@@ -141,20 +151,21 @@
       @cancel="confirmMove.reject()"
       @submit="confirmMove.resolve()"
     >
-      <v-radio-group
-        slot="text"
-        v-if="confirmMove"
-        v-model="confirmMoveValue"
-        class="app-scroll px-4"
-      >
-        <v-radio
-          v-for="item in confirmMove.prevBlade.items()"
-          :key="item[idKey]"
-          :label="confirmMove.prevBlade.name(item)"
-          :value="item[idKey]"
-          :disabled="item[idKey] === confirmMove.prevBlade.id()"
-        />
-      </v-radio-group>
+      <template #text>
+        <v-radio-group
+          v-if="confirmMove"
+          v-model="confirmMoveValue"
+          class="app-scroll px-4"
+        >
+          <v-radio
+            v-for="item in confirmMove.prevBlade.items()"
+            :key="item[idKey]"
+            :label="confirmMove.prevBlade.name(item)"
+            :value="item[idKey]"
+            :disabled="item[idKey] === confirmMove.prevBlade.id()"
+          />
+        </v-radio-group>
+      </template>
     </DialogCard>
     <DialogCard
       :value="confirmRemove"

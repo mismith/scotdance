@@ -19,21 +19,23 @@
               :key="item.title"
               v-model="item.$active"
             >
-              <v-layout slot="activator" align-center class="py-2">
-                <v-icon
-                  :color="item.$active ? 'primary' : 'grey'"
-                  :large="$vuetify.breakpoint.smAndUp"
-                  class="ml-2"
-                >
-                  {{ item.icon || 'mdi-check' }}
-                </v-icon>
-                <div class="ml-4" :class="{
-                  'subtitle-1': $vuetify.breakpoint.smAndUp,
-                  'primary--text': item.$active,
-                }">
-                  {{ item.title }}
-                </div>
-              </v-layout>
+              <template #activator>
+                <v-row align-center class="py-2">
+                  <v-icon
+                    :color="item.$active ? 'primary' : 'grey'"
+                    :large="$vuetify.breakpoint.smAndUp"
+                    class="ml-2"
+                  >
+                    {{ item.icon || 'mdi-check' }}
+                  </v-icon>
+                  <div class="ml-4" :class="{
+                    'subtitle-1': $vuetify.breakpoint.smAndUp,
+                    'primary--text': item.$active,
+                  }">
+                    {{ item.title }}
+                  </div>
+                </v-row>
+              </template>
 
               <v-card text>
                 <v-card-text v-html="item.description" />
@@ -44,7 +46,7 @@
 
         <footer class="mt-2">
           <v-btn color="primary" class="mx-0" @click="handleStart">Start</v-btn>
-          <v-btn v-if="me && me.admin" color="secondary" class="mr-0" @click="handleSkip">
+          <v-btn v-if="me && me.admin" color="secondary" class="ml-3" @click="handleSkip">
             Skip
           </v-btn>
         </footer>
@@ -60,12 +62,12 @@
           {{ step.name }}
         </v-stepper-step>
         <v-stepper-content :key="step[idKey]" :step="index + 2">
-          <div class="layout wrap">
+          <div class="d-flex flex-wrap">
             <DynamicForm
               v-model="step.$isValid"
               :fields="step.fields"
               :data="submission[step[idKey]]"
-              class="flex"
+              class="d-flex"
               @field-input="handleStepInput(step, $event)"
               @submit="handleStepSubmit(step)"
             >
@@ -80,10 +82,10 @@
                 </v-btn>
               </footer>
             </DynamicForm>
-            <div v-if="step[idKey] === 'competition'" class="flex md4 ml-6 hidden-sm-and-down">
+            <div v-if="step[idKey] === 'competition'" class="d-flex col-md-4 ml-6 hidden-sm-and-down">
               <figure class="device-frame mb-4">
-                <div class="device-frame-content application theme--light app-scroll layout column">
-                  <v-toolbar dark color="primary">
+                <div class="device-frame-content v-application theme--light app-scroll d-flex flex-column">
+                  <v-toolbar dark color="primary" class="flex-none">
                     <v-toolbar-title class="title">{{ $store.state.$package.$name }}</v-toolbar-title>
                   </v-toolbar>
                   <CompetitionInfo :competition="preview" :staff="[]" />

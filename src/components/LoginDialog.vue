@@ -39,12 +39,6 @@
       <v-alert :value="authError" type="error">
         {{ authError && authError.message }}
       </v-alert>
-
-      <v-card-actions slot="actions" class="justify-end">
-        <v-btn text @click="loginVisible = false">Cancel</v-btn>
-
-        <v-btn text color="primary" :loading="authLoading" type="submit">Login</v-btn>
-      </v-card-actions>
     </template>
     <template v-else>
       <header>
@@ -67,8 +61,17 @@
       <v-alert :value="authMessage" type="success">
         {{ authMessage }}
       </v-alert>
+    </template>
 
-      <v-card-actions slot="actions" class="justify-end">
+    <template v-if="!forgot" #actions>
+      <v-card-actions class="justify-end">
+        <v-btn text @click="loginVisible = false">Cancel</v-btn>
+
+        <v-btn text color="primary" :loading="authLoading" type="submit">Login</v-btn>
+      </v-card-actions>
+    </template>
+    <template v-else #actions>
+      <v-card-actions class="justify-end">
         <v-btn text @click="forgot = false; authError = null;">Back</v-btn>
 
         <v-btn text color="primary" :loading="authLoading" type="submit">Send</v-btn>

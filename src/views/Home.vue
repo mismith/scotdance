@@ -33,23 +33,25 @@
         <h2 class="display-1 my-4">A virtual program of events</h2>
         <p class="subtitle-1">Modernize your highland dancing experience by interacting with competition information digitally.</p>
       </header>
-      <v-layout wrap>
-        <v-flex xs12 sm4>
-          <v-icon color="primary" class="icon-people" />
-          <h2 class="title my-4">Dancers</h2>
-          <p>Search through dancers by their competition number, name, age group, etc. Then mark your favourites for easy tracking.</p>
-        </v-flex>
-        <v-flex xs12 sm4>
-          <v-icon color="primary" class="icon-clock" />
-          <h2 class="title my-4">Schedule</h2>
-          <p>Use the at-a-glance schedule to check event start times, which platforms to dance at, order of dances, and more.</p>
-        </v-flex>
-        <v-flex xs12 sm4>
-          <v-icon color="primary" class="icon-trophy" />
-          <h2 class="title my-4">Results</h2>
-          <p>Get real-time results updates—from callbacks through to placings—and review them anytime after a competition, too.</p>
-        </v-flex>
-      </v-layout>
+      <v-container>
+        <v-row>
+          <v-col class="col-12 col-sm-4">
+            <v-icon color="primary" class="icon-people" />
+            <h2 class="title my-4">Dancers</h2>
+            <p>Search through dancers by their competition number, name, age group, etc. Then mark your favourites for easy tracking.</p>
+          </v-col>
+          <v-col class="col-12 col-sm-4">
+            <v-icon color="primary" class="icon-clock" />
+            <h2 class="title my-4">Schedule</h2>
+            <p>Use the at-a-glance schedule to check event start times, which platforms to dance at, order of dances, and more.</p>
+          </v-col>
+          <v-col class="col-12 col-sm-4">
+            <v-icon color="primary" class="icon-trophy" />
+            <h2 class="title my-4">Results</h2>
+            <p>Get real-time results updates—from callbacks through to placings—and review them anytime after a competition, too.</p>
+          </v-col>
+        </v-row>
+      </v-container>
       <footer>
         <v-btn :to="{ name: 'competitions' }" color="primary" class="ma-2">
           Browse Competitions

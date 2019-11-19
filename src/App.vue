@@ -1,12 +1,12 @@
 <template>
   <v-app id="app" class="app-scroll-frame" :class="{ dev: env !== 'production' }">
     <v-app-bar app dark absolute color="primary" class="print-hide">
-      <v-toolbar-side-icon @click="menuVisible = !menuVisible">
+      <v-btn icon @click="menuVisible = !menuVisible">
         <v-badge v-model="needsUpdating" color="secondary">
-          <span slot="badge" />
+          <template #badge />
           <v-icon>mdi-menu</v-icon>
         </v-badge>
-      </v-toolbar-side-icon>
+      </v-btn>
 
       <v-toolbar-title>
         <router-link :to="{ name: 'competitions' }">{{ title }}</router-link>
@@ -19,13 +19,13 @@
         v-if="$route.params.competitionId && $store.getters.hasPermission(`competitions/${$route.params.competitionId}`) && getMirrorRoute()"
         :to="getMirrorRoute()"
       >
-        <v-icon>mdi-{{ /^competition.admin/.test($route.name) ? 'visibility' : 'edit' }}</v-icon>
+        <v-icon>mdi-{{ /^competition.admin/.test($route.name) ? 'eye' : 'pencil' }}</v-icon>
       </v-btn>
 
       <v-menu offset-y left>
-        <template v-slot:activator="{ on }">
+        <template #activator="{ on }">
           <v-btn icon v-on="on">
-            <v-icon>mdi-help</v-icon>
+            <v-icon>mdi-help-circle</v-icon>
           </v-btn>
         </template>
 
@@ -70,7 +70,14 @@
       </v-menu>
     </v-app-bar>
 
-    <v-navigation-drawer v-model="menuVisible" app absolute touchless class="app-scroll-frame">
+    <v-navigation-drawer
+      v-model="menuVisible"
+      app
+      absolute
+      touchless
+      :width="320"
+      class="app-scroll-frame"
+    >
       <header class="account-header primary flex-none">
         <div class="account-bg"></div>
         <AccountButtons v-if="!me" class="pa-4" />
@@ -83,14 +90,14 @@
             </v-list-item>
           </v-list>
           <v-list dark>
-            <v-list-group v-model="accountToggled" no-action>
-              <v-list-item slot="activator">
+            <v-list-group v-model="accountToggled">
+              <template #activator>
                 <v-list-item-content>
                   <v-list-item-title>
                     {{ me.displayName || me.email || 'Account' }}
                   </v-list-item-title>
                 </v-list-item-content>
-              </v-list-item>
+              </template>
             </v-list-group>
           </v-list>
         </template>
@@ -98,61 +105,76 @@
         <RegisterDialog />
         <LoginDialog />
         <RequiresAuthDialog name="favorites">
-          <v-card-title slot="title" class="title">
-            Track your favourites
-            <v-icon color="secondary">mdi-star</v-icon>
-          </v-card-title>
+          <template #title>
+            <v-card-title class="title">
+              Track your favourites
+              <v-icon color="secondary">mdi-star</v-icon>
+            </v-card-title>
+          </template>
 
           <p>To see the dancers you care most about <strong>featured throughout the app</strong>, you'll need an account first.</p>
           <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
         </RequiresAuthDialog>
         <RequiresAuthDialog name="submissions">
-          <v-card-title slot="title" class="title">
-            <v-flex>Submit your competition</v-flex>
-            <v-icon color="secondary">mdi-how-to-vote</v-icon>
-          </v-card-title>
+          <template #title>
+            <v-card-title class="title">
+              <v-col>Submit your competition</v-col>
+              <v-icon color="secondary">mdi-how-to-vote</v-icon>
+            </v-card-title>
+          </template>
 
           <p>To bring the app to your event, you'll need an account first.</p>
           <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
         </RequiresAuthDialog>
 
-        <v-btn text fab absolute color="white" @click="menuVisible = false">
+        <v-btn icon absolute color="white" class="ma-2" @click="menuVisible = false">
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </header>
 
       <div class="app-scroll-frame app-scroll">
-        <v-list v-if="accountToggled" class="layout column flex">
-          <v-subheader>Account</v-subheader>
+        <template v-if="accountToggled">
+          <v-list>
+            <v-subheader>Account</v-subheader>
 
-          <v-list-item :to="{ name: 'profile' }" @click="closeMenu()">
-            <v-list-item-avatar>
-              <v-icon>mdi-account-circle</v-icon>
-            </v-list-item-avatar>
-            <v-list-item-title>My Profile</v-list-item-title>
-          </v-list-item>
+            <v-list-item :to="{ name: 'profile' }" @click="closeMenu()">
+              <v-list-item-avatar>
+                <v-icon>mdi-account-circle</v-icon>
+              </v-list-item-avatar>
+              <v-list-item-content>
+                <v-list-item-title>My Profile</v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list>
 
           <v-spacer />
           <v-divider />
-          <v-list-item @click="logout().then(toggleAccount)">
-            <v-list-item-avatar>
-              <v-icon>mdi-exit-to-app</v-icon>
-            </v-list-item-avatar>
-            <v-list-item-title>Logout</v-list-item-title>
-          </v-list-item>
-        </v-list>
+          <v-list>
+            <v-list-item @click="logout().then(toggleAccount)">
+              <v-list-item-avatar>
+                <v-icon>mdi-exit-to-app</v-icon>
+              </v-list-item-avatar>
+              <v-list-item-content>
+                <v-list-item-title>Logout</v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list>
+        </template>
 
         <template v-else>
           <v-list two-line>
             <v-subheader>
-              <v-flex>
-                <router-link :to="{ name: 'competitions' }" style="color: inherit; text-decoration: none;">
+              <v-col>
+                <router-link
+                  :to="{ name: 'competitions' }"
+                  style="color: inherit; text-decoration: none;"
+                >
                   Competitions
                 </router-link>
-              </v-flex>
+              </v-col>
 
-              <v-btn :to="{ name: 'competitions.submit' }" text fab small @click="closeMenu()">
-                <v-icon>mdi-add</v-icon>
+              <v-btn :to="{ name: 'competitions.submit' }" icon @click="closeMenu()">
+                <v-icon>mdi-plus</v-icon>
               </v-btn>
             </v-subheader>
 
@@ -166,14 +188,16 @@
 
             <v-list-item v-if="!relevantCompetitions.length" class="empty">
               <v-list-item-avatar>
-                <v-icon>mdi-clear</v-icon>
+                <v-icon>mdi-close</v-icon>
               </v-list-item-avatar>
-              No competitions found.
+              <v-list-item-content>
+                No competitions found.
+              </v-list-item-content>
             </v-list-item>
 
             <footer
               v-if="competitions.length && competitions.length !== relevantCompetitions.length"
-              class="layout justify-center"
+              class="d-flex justify-center pa-3"
             >
               <v-btn text color="primary" exact :to="{ name: 'competitions' }" @click="closeMenu()">
                 View {{ competitions.length - relevantCompetitions.length }} More
@@ -187,19 +211,25 @@
             <v-subheader>Links</v-subheader>
 
             <PromptToUpdate v-if="needsUpdating">
-              <v-list-item slot="activator" color="secondary">
-                <v-list-item-avatar>
-                  <v-icon color="secondary">mdi-fiber-new</v-icon>
-                </v-list-item-avatar>
-                <v-list-item-title>Update App</v-list-item-title>
-              </v-list-item>
+              <template #activator="{ on }">
+                <v-list-item v-on="on" color="secondary">
+                  <v-list-item-avatar>
+                    <v-icon color="secondary">mdi-fiber-new</v-icon>
+                  </v-list-item-avatar>
+                  <v-list-item-content>
+                    <v-list-item-title>Update App</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </template>
             </PromptToUpdate>
 
             <v-list-item to="/" exact @click="closeMenu()">
               <v-list-item-avatar>
                 <v-icon>mdi-home</v-icon>
               </v-list-item-avatar>
-              <v-list-item-title>App Home</v-list-item-title>
+              <v-list-item-content>
+                <v-list-item-title>App Home</v-list-item-title>
+              </v-list-item-content>
             </v-list-item>
             <v-list-item
               v-if="$store.getters.hasPermission('admin')"
@@ -207,9 +237,11 @@
               @click="closeMenu()"
             >
               <v-list-item-avatar>
-                <v-icon>mdi-settings-applications</v-icon>
+                <v-icon>mdi-settings-box</v-icon>
               </v-list-item-avatar>
-              <v-list-item-title>App Admin</v-list-item-title>
+              <v-list-item-content>
+                <v-list-item-title>App Admin</v-list-item-title>
+              </v-list-item-content>
             </v-list-item>
           </v-list>
         </template>
@@ -471,12 +503,11 @@ body {
   margin-right: env(safe-area-inset-right);
   margin-bottom: env(safe-area-inset-bottom);
 }
-.application--wrap {
+.v-application--wrap {
   min-height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom)); // for iPhone-X
 }
-.application--wrap,
-.v-content__wrap,
-.v-navigation-drawer__content {
+.v-application--wrap,
+.v-content__wrap {
   @extend .app-scroll-frame;
 }
 
@@ -516,6 +547,14 @@ body {
     > .v-card__text {
       @extend .app-scroll;
     }
+  }
+}
+.v-navigation-drawer {
+  &--absolute {
+    z-index: 3 !important; // see: https://github.com/vuetifyjs/vuetify/issues/4241
+  }
+  &__content {
+    @extend .app-scroll-frame;
   }
 }
 .v-bottom-navigation.v-item-group {
@@ -592,9 +631,10 @@ body {
   &.grouped {
     background-color: transparent;
 
-    .v-list__group {
-      .v-list__group__header {
+    .v-list-group {
+      .v-list-group__header {
         .v-subheader {
+          flex: auto;
           padding-right: 0;
         }
       }

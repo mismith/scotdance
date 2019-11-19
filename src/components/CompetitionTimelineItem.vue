@@ -4,15 +4,16 @@
     :large="competition.image"
     class="CompetitionTimelineItem"
   >
-    <router-link
-      slot="icon"
-      v-if="competition.image"
-      :to="{ name: 'competition.info', params: { competitionId: competition[idKey] } }"
-    >
-      <v-avatar color="white">
-        <img :src="competition.image" role="presentation" />
-      </v-avatar>
-    </router-link>
+    <template #icon>
+      <router-link
+        v-if="competition.image"
+        :to="{ name: 'competition.info', params: { competitionId: competition[idKey] } }"
+      >
+        <v-avatar color="white">
+          <img :src="competition.image" role="presentation" />
+        </v-avatar>
+      </router-link>
+    </template>
     <router-link :to="{ name: 'competition.info', params: { competitionId: competition[idKey] } }">
       <div class="subtitle-1">{{ competition.name }}</div>
       <div class="dot-divided dimmed">
@@ -58,7 +59,7 @@ export default {
 
 <style lang="scss">
 .CompetitionTimelineItem {
-  a {
+  .v-application & a {
     color: inherit;
     text-decoration: inherit;
   }

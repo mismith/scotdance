@@ -36,25 +36,26 @@
       v-model="datePicking"
       :close-on-content-click="false"
       :open-on-click="false"
-      full-width
       offset-y
       max-width="290"
     >
-      <v-text-field
-        slot="activator"
-        v-model="value"
-        :name="field.data"
-        :label="field.title"
-        :required="field.required"
-        :disabled="field.disabled"
-        :hint="field.description"
-        :readonly="field.readonly"
-        :rules="rules"
-        browser-autocomplete="none"
-        @focus="datePicking = true"
-        @input="handleInput()"
-        @change="handleChange()"
-      />
+      <template #activator="{ on }">
+        <v-text-field
+          v-on="on"
+          v-model="value"
+          :name="field.data"
+          :label="field.title"
+          :required="field.required"
+          :disabled="field.disabled"
+          :hint="field.description"
+          :readonly="field.readonly"
+          :rules="rules"
+          autocomplete="none"
+          @focus="datePicking = true"
+          @input="handleInput()"
+          @change="handleChange()"
+        />
+      </template>
       <v-date-picker
         v-model="value"
         @input="datePicking = false; handleInput()"
@@ -77,7 +78,9 @@
       @input="handleInput()"
       @change="handleChange()"
     >
-      <div slot="prepend" v-html="field.prepend" class="mb-4" />
+      <template #prepend>
+        <div v-html="field.prepend" class="mb-4" />
+      </template>
     </v-checkbox>
 
     <v-textarea

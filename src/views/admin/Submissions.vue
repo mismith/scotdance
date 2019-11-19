@@ -1,6 +1,6 @@
 <template>
   <Blades class="AdminSubmissions">
-    <Blade :active="!currentSubmission" class="xs12 md4">
+    <Blade :active="!currentSubmission" class="col-12 col-md-4">
       <div v-if="submissions.length" class="app-scroll-frame app-scroll">
         <v-list v-if="loaded" two-line>
           <v-list-item
@@ -11,6 +11,7 @@
             <v-list-item-avatar :color="submission.approved ? 'primary' : 'secondary'">
               <v-icon>mdi-{{ submission.approved ? 'check' : 'new-releases' }}</v-icon>
             </v-list-item-avatar>
+
             <v-list-item-content>
               <v-list-item-title>
                 {{ submission.competition && submission.competition.name }}
@@ -24,6 +25,7 @@
                 {{ $moment(submission.submitted).fromNow() }}
               </v-list-item-sub-title>
             </v-list-item-content>
+
             <v-list-item-action>
               <v-icon>mdi-chevron-right</v-icon>
             </v-list-item-action>
@@ -35,26 +37,29 @@
       </div>
       <EmptyState
         v-else
-        icon="mdi-clear"
+        icon="mdi-close"
         label="No submissions found"
       />
     </Blade>
-    <Blade :active="currentSubmission" class="xs12 md8">
+    <Blade :active="currentSubmission" class="col-12 col-md-8">
       <BladeToolbar
         :to="{ name: $route.name }"
         class="hidden-md-and-up"
       />
 
       <div v-if="currentSubmission" class="app-scroll-frame app-scroll alt">
-        <v-list expand class="grouped flex">
+        <v-list expand class="grouped d-flex">
           <v-list-group
             v-for="step in steps"
             :key="step[idKey]"
             :value="true"
           >
-            <v-subheader slot="activator">
-              {{ step.name }}
-            </v-subheader>
+            <template #activator>
+              <v-subheader>
+                {{ step.name }}
+              </v-subheader>
+            </template>
+
             <DynamicForm
               v-if="currentSubmission[step[idKey]]"
               :fields="step.fields"
@@ -64,14 +69,16 @@
             />
             <v-list-item v-else class="empty">
               <v-list-item-avatar>
-                <v-icon>mdi-clear</v-icon>
+                <v-icon>mdi-close</v-icon>
               </v-list-item-avatar>
-              No more info.
+              <v-list-item-content>
+                No more info.
+              </v-list-item-content>
             </v-list-item>
           </v-list-group>
         </v-list>
         <footer class="pb-2">
-          <div class="layout align-center flex-none flex-wrap">
+          <div class="d-flex align-center flex-none flex-wrap">
             <div class="pa-4">
               <div :title="currentSubmission.submitted">
                 Submitted:
@@ -123,7 +130,7 @@
       </div>
       <EmptyState
         v-else
-        icon="mdi-touch-app"
+        icon="mdi-gesture-tap"
         label="See submission details"
         description="Select a submission"
       />

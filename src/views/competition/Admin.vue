@@ -21,9 +21,11 @@
       <v-spacer />
 
       <v-tooltip left>
-        <v-btn slot="activator" icon text color="primary" :loading="saving">
-          <v-icon>mdi-check</v-icon>
-        </v-btn>
+        <template #activator="{ on }">
+          <v-btn v-on="on" icon text color="primary" :loading="saving">
+            <v-icon>mdi-check</v-icon>
+          </v-btn>
+        </template>
         <span>{{ saving ? 'Saving...' : 'Saved' }}</span>
       </v-tooltip>
     </v-toolbar>
@@ -32,7 +34,7 @@
       <template v-if="currentSection.hot">
         <EmptyState
           v-if="inTabs('groups') && !this.categories.length"
-          icon="mdi-warning"
+          icon="mdi-alert"
           label="No categories found"
         >
           <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'categories' } }">
@@ -41,7 +43,7 @@
         </EmptyState>
         <EmptyState
           v-else-if="inTabs('dancers') && !this.groups.length"
-          icon="mdi-warning"
+          icon="mdi-alert"
           label="No age groups found"
         >
           <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }">
@@ -85,8 +87,7 @@
 
     <v-bottom-navigation
       v-if="hasPermission"
-      :value="true"
-      :active="$root.currentTab"
+      v-model="$root.currentTab"
       class="listed-only"
     >
       <v-btn

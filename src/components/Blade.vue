@@ -1,7 +1,7 @@
 <template>
-  <v-flex class="Blade app-scroll-frame" :class="{ 'blade-active': active }">
+  <v-col class="Blade app-scroll-frame" :class="{ 'blade-active': active }">
     <slot />
-  </v-flex>
+  </v-col>
 </template>
 
 <script>

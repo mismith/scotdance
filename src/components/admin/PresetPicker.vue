@@ -7,29 +7,35 @@
     class="PresetPicker"
     @submit="handleSubmit"
   >
-    <slot name="activator" slot="activator">
-      <v-btn text>Add Presets&hellip;</v-btn>
-    </slot>
-    <v-list slot="text" class="app-scroll">
-      <v-list-item
-        v-for="preset in presets"
-        :key="getValue(preset)"
-        @click="handleToggle(preset)"
-      >
-        <v-list-item-action>
-          <v-checkbox :value="selected[getValue(preset)]" />
-        </v-list-item-action>
-        <v-list-item-content>
-          <v-list-item-title>{{ getValue(preset) }}</v-list-item-title>
-        </v-list-item-content>
-      </v-list-item>
-      <v-list-item v-if="!presets.length" class="empty">
-        <v-list-item-avatar>
-          <v-icon>mdi-clear</v-icon>
-        </v-list-item-avatar>
-        <span>No presets found.</span>
-      </v-list-item>
-    </v-list>
+    <template #activator="props">
+      <slot name="activator" v-bind="props">
+        <v-btn text>Add Presets&hellip;</v-btn>
+      </slot>
+    </template>
+    <template #text>
+      <v-list class="app-scroll">
+        <v-list-item
+          v-for="preset in presets"
+          :key="getValue(preset)"
+          @click="handleToggle(preset)"
+        >
+          <v-list-item-action>
+            <v-checkbox :value="selected[getValue(preset)]" />
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>{{ getValue(preset) }}</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item v-if="!presets.length" class="empty">
+          <v-list-item-avatar>
+            <v-icon>mdi-close</v-icon>
+          </v-list-item-avatar>
+          <v-list-item-content>
+            No presets found.
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+    </template>
   </DialogCard>
 </template>
 

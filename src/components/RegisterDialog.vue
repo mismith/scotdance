@@ -32,10 +32,12 @@
       {{ authError && authError.message }}
     </v-alert>
 
-    <v-card-actions slot="actions" class="justify-end">
-      <v-btn text @click="registerVisible = false">Cancel</v-btn>
-      <v-btn text color="primary" :loading="authLoading" type="submit">Register</v-btn>
-    </v-card-actions>
+    <template #actions>
+      <v-card-actions class="justify-end">
+        <v-btn text @click="registerVisible = false">Cancel</v-btn>
+        <v-btn text color="primary" :loading="authLoading" type="submit">Register</v-btn>
+      </v-card-actions>
+    </template>
   </DialogCard>
 </template>
 

@@ -4,9 +4,11 @@
       <v-spacer />
 
       <v-tooltip left>
-        <v-btn slot="activator" icon text color="primary" :loading="saving">
-          <v-icon>mdi-check</v-icon>
-        </v-btn>
+        <template #activator="{ on }">
+          <v-btn v-on="on" icon text color="primary" :loading="saving">
+            <v-icon>mdi-check</v-icon>
+          </v-btn>
+        </template>
         <span>{{ saving ? 'Saving...' : 'Saved' }}</span>
       </v-tooltip>
     </v-toolbar>
@@ -34,7 +36,7 @@
       />
     </div>
 
-    <v-bottom-navigation v-if="hasPermission" :value="true" :active="$root.currentTab">
+    <v-bottom-navigation v-if="hasPermission" v-model="$root.currentTab">
       <v-btn
         v-for="section in sections"
         :key="section[idKey]"

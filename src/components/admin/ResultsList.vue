@@ -6,15 +6,18 @@
       :value="isGroupExpanded(group, groups)"
       @input="handleGroupExpanded(group[idKey], $event)"
     >
-      <v-subheader slot="activator">
-        <v-flex>{{ group.$name }}</v-flex>
-        <v-icon v-if="hasFavorites(findGroupDancers(group, dancers))" color="secondary">
-          mdi-star
-        </v-icon>
-        <v-icon v-if="results[group[idKey]]" color="primary">
-          mdi-{{ isInProgress(group, dances, results) ? 'check-circle-outline' : 'check-circle' }}
-        </v-icon>
-      </v-subheader>
+      <template #activator>
+        <v-subheader>
+          <v-col>{{ group.$name }}</v-col>
+          <v-icon v-if="hasFavorites(findGroupDancers(group, dancers))" color="secondary">
+            mdi-star
+          </v-icon>
+          <v-icon v-if="results[group[idKey]]" color="primary">
+            mdi-{{ isInProgress(group, dances, results) ? 'check-circle-outline' : 'check-circle' }}
+          </v-icon>
+        </v-subheader>
+      </template>
+
       <v-list class="ResultsList">
         <ResultListItem
           :dancers="findPlacedDancers(group, callbacks, dancers, results, true)"
@@ -46,7 +49,9 @@
           :class="{ active: isActive(group, overall) }"
         >
           {{ overall.$name }}
-          <v-icon class="icon-trophy" slot="icon" />
+          <template #icon>
+            <v-icon class="icon-trophy" />
+          </template>
         </ResultListItem>
       </v-list>
     </v-list-group>

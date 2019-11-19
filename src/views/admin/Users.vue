@@ -1,6 +1,6 @@
 <template>
   <Blades class="AdminUsers">
-    <Blade :active="!currentUser" class="xs12 md4">
+    <Blade :active="!currentUser" class="col-12 col-md-4">
       <div v-if="users.length" class="app-scroll-frame">
         <v-toolbar>
           <SearchField v-model="filterBy" />
@@ -28,11 +28,11 @@
       </div>
       <EmptyState
         v-else
-        icon="mdi-clear"
+        icon="mdi-close"
         label="No users found"
       />
     </Blade>
-    <Blade :active="currentUser" class="xs12 md8">
+    <Blade :active="currentUser" class="col-12 col-md-8">
       <BladeToolbar
         :to="{ name: $route.name }"
         class="hidden-md-and-up"
@@ -55,7 +55,7 @@
       </div>
       <EmptyState
         v-else
-        icon="mdi-touch-app"
+        icon="mdi-gesture-tap"
         label="See user details"
         description="Select a user"
       />

@@ -2,7 +2,10 @@
   <div class="AdminInvites alt">
     <v-list expand class="grouped">
       <v-list-group :value="true">
-        <v-subheader slot="activator">Administrators</v-subheader>
+        <template #activator>
+          <v-subheader>Administrators</v-subheader>
+        </template>
+
         <v-list two-line>
           <v-slide-y-transition group hide-on-leave>
             <v-list-item
@@ -23,9 +26,11 @@
               </v-list-item-content>
               <v-list-item-action v-if="!invite.submitted">
                 <v-tooltip fixed left>
-                  <v-btn icon slot="activator" @click="handleAdministratorDemote(invite)">
-                    <v-icon>mdi-clear</v-icon>
-                  </v-btn>
+                  <template #activator="{ on }">
+                    <v-btn icon v-on="on" @click="handleAdministratorDemote(invite)">
+                      <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                  </template>
                   <span>Remove Admin</span>
                 </v-tooltip>
               </v-list-item-action>
@@ -34,7 +39,7 @@
 
           <v-list-item>
             <v-list-item-avatar>
-              <v-icon>mdi-verified-user</v-icon>
+              <v-icon>mdi-account-key</v-icon>
             </v-list-item-avatar>
             <v-list-item-content>
               <v-list-item-title>System Administrators</v-list-item-title>
@@ -53,7 +58,10 @@
       />
 
       <v-list-group :value="true">
-        <v-subheader slot="activator">Invites</v-subheader>
+        <template #activator>
+          <v-subheader>Invites</v-subheader>
+        </template>
+
         <v-list two-line>
           <v-slide-y-transition group hide-on-leave>
             <v-list-item
@@ -66,7 +74,7 @@
                 <v-icon>mdi-{{
                   FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED, FirebaseInvites.status.EXPIRED)
                   ? 'cancel'
-                  : 'mail_outline'
+                  : 'mail-outline'
                 }}</v-icon>
               </v-list-item-avatar>
 
@@ -100,17 +108,21 @@
 
               <v-list-item-action v-if="FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED, FirebaseInvites.status.EXPIRED)">
                 <v-tooltip fixed left>
-                  <v-btn slot="activator" icon @click="handleInviteDelete(invite)">
-                    <v-icon>mdi-delete</v-icon>
-                  </v-btn>
+                  <template #activator="{ on }">
+                    <v-btn v-on="on" icon @click="handleInviteDelete(invite)">
+                      <v-icon>mdi-delete</v-icon>
+                    </v-btn>
+                  </template>
                   <span>Delete Invite</span>
                 </v-tooltip>
               </v-list-item-action>
               <v-list-item-action v-else>
                 <v-tooltip fixed left>
-                  <v-btn slot="activator" icon @click="handleInviteCancel(invite)">
-                    <v-icon>mdi-clear</v-icon>
-                  </v-btn>
+                  <template #activator="{ on }">
+                    <v-btn v-on="on" icon @click="handleInviteCancel(invite)">
+                      <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                  </template>
                   <span>Cancel Invite</span>
                 </v-tooltip>
               </v-list-item-action>
@@ -119,9 +131,11 @@
 
           <v-list-item v-if="!invites.length" class="empty">
             <v-list-item-avatar>
-              <v-icon>mdi-clear</v-icon>
+              <v-icon>mdi-close</v-icon>
             </v-list-item-avatar>
-            No pending invites.
+            <v-list-item-content>
+              No pending invites.
+            </v-list-item-content>
           </v-list-item>
           <v-divider class="mb-2" />
           <NewDynamicField

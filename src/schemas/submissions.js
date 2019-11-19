@@ -90,7 +90,7 @@ export const checklists = {
       },
       {
         title: 'have a volunteer enter results in real-time',
-        icon: 'mdi-touch-app',
+        icon: 'mdi-gesture-tap',
         description: '<p>Inputting results with the admin panel is almost the same as viewing results in the app—all that\'s required is the ability to listen (or read) and click along.</p><p>Having results sheets printouts available is crucial to not missing any announcements. It can be equally helpful to have a partner alongside you to check for mistakes.</p>',
       },
     ],

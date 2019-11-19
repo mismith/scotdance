@@ -1,6 +1,6 @@
 <template>
   <Blades class="AdminInfo" :stacks="true">
-    <Blade id="blade-subsections" class="xs12 md3 app-scroll">
+    <Blade id="blade-subsections" class="col-12 col-md-3 app-scroll">
       <v-list>
         <v-list-item
           v-for="subsection in toOrderedArray(section.subsections)"
@@ -17,7 +17,7 @@
         </v-list-item>
       </v-list>
     </Blade>
-    <Blade id="blade-form" class="xs12 md9 app-scroll app-scroll-frame">
+    <Blade id="blade-form" class="col-12 col-md-9 app-scroll app-scroll-frame">
       <template v-if="currentSubsection">
         <MiHotTable
           v-if="currentSubsection.hot"
@@ -35,7 +35,7 @@
         <AdminInvites v-else-if="inTabs('permissions')" v-bind="$props" />
 
         <v-spacer />
-        <div v-if="inTabs('general')" class="layout align-center justify-center flex-none">
+        <div v-if="inTabs('general')" class="d-flex align-center justify-center flex-none">
           <v-btn text color="error" @click="confirmRemove = true">
             Delete Competition
           </v-btn>
