@@ -119,7 +119,7 @@
           <template #title>
             <v-card-title class="title">
               <v-col>Submit your competition</v-col>
-              <v-icon color="secondary">mdi-how-to-vote</v-icon>
+              <v-icon color="secondary">mdi-vote</v-icon>
             </v-card-title>
           </template>
 
@@ -214,7 +214,7 @@
               <template #activator="{ on }">
                 <v-list-item v-on="on" color="secondary">
                   <v-list-item-avatar>
-                    <v-icon color="secondary">mdi-fiber-new</v-icon>
+                    <v-icon color="secondary">mdi-new-box</v-icon>
                   </v-list-item-avatar>
                   <v-list-item-content>
                     <v-list-item-title>Update App</v-list-item-title>
@@ -650,7 +650,7 @@ body {
 
 // drag-n-drop
 .sortable-handle {
-  .v-list__tile & {
+  .v-list-item & {
     order: -1;
     height: 100%;
     margin-left: -16px;
@@ -660,7 +660,7 @@ body {
 }
 .sortable-chosen,
 .sortable-ghost {
-  .v-list__tile {
+  .v-list-item {
     opacity: 0.5;
     border-top: dashed 2px #ccc;
     border-bottom: dashed 2px #ccc;

@@ -56,7 +56,7 @@
                 :key="item[idKey]"
                 :to="getBladeRoute(blade.params(item[idKey]))"
               >
-                <v-icon class="sortable-handle">mdi-drag-indicator</v-icon>
+                <v-icon class="sortable-handle">mdi-drag-vertical</v-icon>
                 <v-list-item-content>
                   <v-list-item-title>{{ blade.name(item) }}</v-list-item-title>
                 </v-list-item-content>

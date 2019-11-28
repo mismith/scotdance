@@ -13,7 +13,7 @@
             mdi-star
           </v-icon>
           <v-icon v-if="results[group[idKey]]" color="primary">
-            mdi-{{ isInProgress(group, dances, results) ? 'check-circle-outline' : 'check-circle' }}
+            mdi-check-circle{{ isInProgress(group, dances, results) ? '-outline' : '' }}
           </v-icon>
         </v-subheader>
       </template>

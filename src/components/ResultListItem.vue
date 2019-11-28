@@ -5,7 +5,7 @@
         :color="hasFavorites(dancers || []) ? 'secondary' : (hasResults ? 'primary' : 'grey')"
       >
         <v-icon v-if="hasResults">
-          mdi-{{ hasPlaceholderDancers ? 'done-outline' : 'check' }}
+          mdi-check{{ hasPlaceholderDancers ? '-outline' : '' }}
         </v-icon>
         <small v-else>TBD</small>
       </v-list-item-avatar>

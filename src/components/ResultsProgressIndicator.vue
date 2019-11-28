@@ -1,6 +1,6 @@
 <template>
   <v-icon v-if="hasResults" color="primary">
-    mdi-{{ isInProgress ? 'check-circle-outline' : 'check-circle' }}
+    mdi-check-circle{{ isInProgress ? '-outline' : '' }}
   </v-icon>
 </template>
 

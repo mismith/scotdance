@@ -7,7 +7,7 @@
           <v-menu @selected="sortBy">
             <template #activator="{ on }">
               <v-btn icon v-on="on">
-                <v-icon>mdi-filter-list</v-icon>
+                <v-icon>mdi-filter-variant</v-icon>
               </v-btn>
             </template>
 
@@ -27,7 +27,7 @@
             :class="{ 'secondary--text': onlyFavorites }"
             @click="onlyFavorites = !onlyFavorites"
           >
-            <v-icon>mdi-{{ onlyFavorites ? 'star' : 'star-border' }}</v-icon>
+            <v-icon>mdi-star{{ onlyFavorites ? '' : '-outline' }}</v-icon>
           </v-btn>
         </v-toolbar>
 

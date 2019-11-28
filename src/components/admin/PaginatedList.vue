@@ -6,7 +6,7 @@
       </v-list>
       <EmptyState
         v-else
-        icon="mdi-error-outline"
+        icon="mdi-alert-circle-outline"
         label="No items match"
       />
     </div>

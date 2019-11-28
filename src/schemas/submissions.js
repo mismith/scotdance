@@ -64,12 +64,12 @@ export const checklists = {
     items: [
       {
         title: 'build out competition details',
-        icon: 'mdi-assignment',
+        icon: 'mdi-clipboard-text',
         description: 'Essentially, all the information you put into a paper program goes into the app via an easy-to-use admin panel (that you\'ll gain access to once your submission is approved).',
       },
       {
         title: 'import dancer registrations',
-        icon: 'mdi-backup',
+        icon: 'mdi-cloud-upload',
         description: 'You can either upload a properly formatted Excel spreadsheet, or fill in the dancers, categories, and age groups using the admin panel\'s Excel-like interface.',
       },
     ],
@@ -80,7 +80,7 @@ export const checklists = {
     items: [
       {
         title: 'have access to a laptop or tablet',
-        icon: 'mdi-devices',
+        icon: 'mdi-cellphone-link',
         description: 'While you can technically use a phone to input results, it\'s much easier on a larger screen.',
       },
       {

@@ -45,7 +45,7 @@
     />
     <div v-else>
       <EmptyState
-        icon="mdi-drafts"
+        icon="mdi-email-open"
         label="Your Invitation"
         description="Get administrator access to this competition."
       />

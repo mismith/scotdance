@@ -62,7 +62,7 @@
       </v-list>
       <EmptyState
         v-else
-        icon="mdi-call-merge"
+        icon="mdi-source-pull"
         label="Link dances"
         description="Pick dances for each age group"
       />

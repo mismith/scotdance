@@ -24,7 +24,7 @@
         icon
         :to="{ name: 'competition.admin.info', params: { competitionId: competition[idKey] } }"
       >
-        <v-icon>mdi-edit</v-icon>
+        <v-icon>mdi-pencil</v-icon>
       </v-btn>
     </v-list-item-action>
   </v-list-item>

@@ -13,7 +13,7 @@
               :key="invite[idKey]"
             >
               <v-list-item-avatar :color="invite.submitted ? '' : 'primary'">
-                <v-icon>mdi-{{ invite.submitted ? 'check-circle' : 'check' }}</v-icon>
+                <v-icon>mdi-check{{ invite.submitted ? '-circle' : '' }}</v-icon>
               </v-list-item-avatar>
               <v-list-item-content>
                 <v-list-item-title>{{ invite.payload.email }}</v-list-item-title>
