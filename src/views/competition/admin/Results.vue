@@ -19,23 +19,23 @@
       </EmptyState>
     </Blade>
     <Blade id="blade-dancers" :active="currentDance" class="col-md-4 app-scroll">
-      <v-list v-if="currentDance" two-line>
-        <DancerListItem
-          v-for="dancer in currentDancers"
-          :key="dancer[idKey]"
-          :dancer="dancer"
-          @click="placeDancer(dancer)"
-          :class="{ placed: isPlaced(dancer, placedDancers) }"
-        />
-        <DancerListItem
-          v-if="currentDancers.length"
-          :dancer="getPlaceholderDancer()"
-          @click="placeDancer(getPlaceholderDancer())"
-          class="placeholder"
-        />
-
+      <template v-if="currentDance">
+        <v-list v-if="currentDancers.length" two-line>
+          <DancerListItem
+            v-for="dancer in currentDancers"
+            :key="dancer[idKey]"
+            :dancer="dancer"
+            @click="placeDancer(dancer)"
+            :class="{ placed: isPlaced(dancer, placedDancers) }"
+          />
+          <DancerListItem
+            :dancer="getPlaceholderDancer()"
+            @click="placeDancer(getPlaceholderDancer())"
+            class="placeholder"
+          />
+        </v-list>
         <EmptyState
-          v-if="!currentDancers.length && currentDance === callbacks"
+          v-else-if="currentDance === callbacks"
           icon="mdi-alert"
           label="No dancers found"
         >
@@ -44,7 +44,7 @@
           </router-link>
         </EmptyState>
         <EmptyState
-          v-if="!currentDancers.length && currentDance !== callbacks"
+          v-else
           icon="mdi-alert"
           label="No dancers to place"
         >
@@ -52,7 +52,7 @@
             <span class="subtitle-1">Make sure enter callbacks first &rsaquo;</span>
           </router-link>
         </EmptyState>
-      </v-list>
+      </template>
       <EmptyState
         v-else
         icon="mdi-gesture-tap"

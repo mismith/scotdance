@@ -258,7 +258,11 @@ export default {
     },
     exportResults() {
       const exportedRows = getRows(this.groups, this.dances, this.dancers, this.results);
-      saveCSV(exportedRows, { filename: `Results - ${this.competition.name}.csv` });
+      if (exportedRows.length) {
+        saveCSV(exportedRows, { filename: `Results - ${this.competition.name}.csv` });
+      } else {
+        console.warn('No results to export.'); // eslint-disable-line no-console
+      }
     },
   },
   components: {
