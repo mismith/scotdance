@@ -31,10 +31,10 @@
       >
         Administer
       </v-btn>
-      <v-chip v-if="!competition.listed" small disabled class="ml-4 black--text">
+      <v-chip v-if="!competition.listed" small disabled class="stripes black--text ml-4">
         Unlisted
       </v-chip>
-      <v-chip v-else-if="!competition.published" small disabled class="ml-4 black--text">
+      <v-chip v-else-if="!competition.published" small disabled class="stripes black--text ml-4">
         Unpublished
       </v-chip>
     </footer>
@@ -62,10 +62,6 @@ export default {
   .v-application & a {
     color: inherit;
     text-decoration: inherit;
-  }
-
-  &:not(.listed) .v-chip--disabled {
-    background: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.1) 5px, rgba(0, 0, 0, 0.1) 10px);
   }
 }
 </style>

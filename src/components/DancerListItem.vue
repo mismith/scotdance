@@ -3,7 +3,7 @@
     :to="to"
     @click="$emit('click', $event)"
     class="DancerListItem"
-    :class="{ placeholder: dancer.number === '?' }"
+    :class="{ stripes: dancer.number === '?' }"
   >
     <slot name="avatar">
       <v-list-item-avatar :color="dancer.$favorite ? 'secondary' : 'grey'">
@@ -59,11 +59,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.DancerListItem {
-  &.placeholder {
-    background: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.1) 5px, rgba(0, 0, 0, 0.1) 10px);
-  }
-}
-</style>

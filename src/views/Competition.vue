@@ -1,7 +1,11 @@
 <template>
   <div
     class="Competition app-scroll-frame"
-    :class="{listed: competition.listed, published: competition.published, 'is-admin': isAdmin }"
+    :class="{
+      listed: competition.listed,
+      published: competition.published,
+      'is-admin': isAdmin,
+    }"
   >
     <div v-if="loaded" class="app-scroll-frame">
       <div v-if="competitionExists" class="app-scroll-frame">

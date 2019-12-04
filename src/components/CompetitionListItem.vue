@@ -2,7 +2,11 @@
   <v-list-item
     :to="to"
     class="CompetitionListItem"
-    :class="{ listed: competition.listed, published: competition.published }"
+    :class="{
+      listed: competition.listed,
+      published: competition.published,
+      stripes: !competition.listed,
+    }"
   >
     <v-list-item-avatar color="white">
       <img v-if="competition.image" :src="competition.image" role="presentation" />
@@ -49,9 +53,6 @@ export default {
 
 <style lang="scss">
 .CompetitionListItem {
-  &:not(.listed) {
-    background: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.1) 5px, rgba(0, 0, 0, 0.1) 10px);
-  }
   &:not(.published) {
     opacity: 0.5;
   }

@@ -1,6 +1,13 @@
 <template>
-  <v-app id="app" class="app-scroll-frame" :class="{ dev: env !== 'production' }">
-    <v-app-bar app dark absolute color="primary" class="print-hide">
+  <v-app id="app" class="app-scroll-frame">
+    <v-app-bar
+      app
+      dark
+      absolute
+      color="primary"
+      class="print-hide"
+      :class="{ stripes: env !== 'production' }"
+    >
       <v-btn icon @click="menuVisible = !menuVisible">
         <v-badge v-model="needsUpdating" overlap color="secondary" class="blip">
           <template #badge>&nbsp;</template>
@@ -485,6 +492,10 @@ a {
       }
     }
   }
+}
+.stripes {
+  // make it obvious that we're not using prod data, or are doing some privileged action
+  background-image: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.1) 5px, rgba(0, 0, 0, 0.1) 10px) !important;
 }
 
 // app frame

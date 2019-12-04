@@ -46,7 +46,7 @@
 
         <footer class="mt-2">
           <v-btn color="primary" class="mx-0" @click="handleStart">Start</v-btn>
-          <v-btn v-if="me && me.admin" color="secondary" class="ml-3" @click="handleSkip">
+          <v-btn v-if="me && me.admin" color="secondary" class="stripes ml-3" @click="handleSkip">
             Skip
           </v-btn>
         </footer>
