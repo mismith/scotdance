@@ -2,14 +2,14 @@
   <div class="AccountButtons">
     <v-btn
       @click="$store.commit('setCurrentDialog', 'register')"
-      class="mx-0"
+      class="ma-1"
     >
       <span>Register</span>
     </v-btn>
     <v-btn
       color="secondary"
       @click="$store.commit('setCurrentDialog', 'login')"
-      class="mx-0"
+      class="ma-1"
     >
       <span>Login</span>
     </v-btn>

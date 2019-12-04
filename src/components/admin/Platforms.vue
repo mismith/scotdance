@@ -21,8 +21,10 @@
             :key="poolItem[idKey]"
             :color="getChipColor(poolItem)"
             :dark="!!getChipColor(poolItem)"
-            :disabled="getChipColor(poolItem) === null"
-            :style="{ visibility: !admin && getChipColor(poolItem) === null && 'hidden' }"
+            :style="{
+              visibility: !admin && getChipColor(poolItem) === null && 'hidden',
+              opacity: getChipColor(poolItem) === null ? 0.5 : undefined,
+            }"
             class="ma-1"
             @click="!admin && $emit('item-click', poolItem)"
           >

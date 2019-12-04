@@ -6,7 +6,7 @@
 
     <template #title>
       <v-card-title class="d-flex">
-        <div class="title d-flex">Update Available</div>
+        <div class="title flex">Update Available</div>
         <v-icon>mdi-cellphone-arrow-down</v-icon>
       </v-card-title>
     </template>

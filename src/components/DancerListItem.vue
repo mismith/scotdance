@@ -13,10 +13,10 @@
 
     <v-list-item-content>
       <v-list-item-title>{{ dancer.$name }}</v-list-item-title>
-      <v-list-item-sub-title class="dot-divided">
+      <v-list-item-subtitle class="dot-divided">
         <span v-if="dancer.$group" class="group">{{ dancer.$group.$name }}</span>
         <span v-if="detail" class="location">{{ detail }}</span>
-      </v-list-item-sub-title>
+      </v-list-item-subtitle>
     </v-list-item-content>
 
     <slot />

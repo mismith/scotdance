@@ -1,6 +1,6 @@
 <template>
   <RequiresPermission :permission="hasPermission" class="Admin app-scroll-frame">
-    <v-toolbar dense>
+    <v-toolbar dense class="flex-none">
       <v-spacer />
 
       <v-tooltip left>
@@ -58,7 +58,6 @@ import { idKey, db, toOrderedArray } from '@/helpers/firebase';
 import { getFirstExisting } from '@/helpers/router';
 import RequiresPermission from '@/components/RequiresPermission.vue';
 import MiHotTable from '@/components/admin/MiHotTable.vue';
-import DynamicForm from '@/components/admin/DynamicForm.vue';
 
 export default {
   name: 'Admin',
@@ -168,7 +167,6 @@ export default {
   },
   components: {
     RequiresPermission,
-    DynamicForm,
     MiHotTable,
   },
 };

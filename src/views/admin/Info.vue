@@ -11,7 +11,7 @@
         <v-responsive class="pa-4">
           <v-icon :size="88">mdi-calendar-multiple</v-icon>
         </v-responsive>
-        <v-card-title class="title">{{ submissions.length }} submnissions</v-card-title>
+        <v-card-title class="title">{{ submissions.length }} submissions</v-card-title>
       </v-card>
       <v-card to="users">
         <v-responsive class="pa-4">

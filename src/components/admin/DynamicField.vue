@@ -35,10 +35,10 @@
       v-else-if="field.type === 'date'"
       v-model="datePicking"
       :close-on-content-click="false"
-      :open-on-click="false"
       offset-y
       max-width="290"
     >
+      <!-- @TODO: https://github.com/vuetifyjs/vuetify/issues/9129 -->
       <template #activator="{ on }">
         <v-text-field
           v-on="on"
@@ -50,7 +50,8 @@
           :hint="field.description"
           :readonly="field.readonly"
           :rules="rules"
-          autocomplete="none"
+          append-icon="mdi-calendar"
+          :autocomplete="field.autocomplete || 'none'"
           @focus="datePicking = true"
           @input="handleInput()"
           @change="handleChange()"

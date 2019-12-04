@@ -8,7 +8,7 @@
     >
       <template #activator>
         <v-subheader>
-          <v-col>{{ group.$name }}</v-col>
+          <div class="flex">{{ group.$name }}</div>
           <v-icon v-if="hasFavorites(findGroupDancers(group, dancers))" color="secondary">
             mdi-star
           </v-icon>

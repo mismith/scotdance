@@ -1,11 +1,11 @@
 <template>
-  <Blades class="AdminSchedule" :stacks="true">
+  <Blades class="AdminSchedule" stacks>
     <template v-for="(blade, index) in blades">
       <Blade
         :key="blade.collection"
         id="blade-root"
         v-if="blade.parent()"
-        class="col-12 col-md-3 app-scroll alt"
+        class="col-md-3 app-scroll alt"
       >
         <BladeToolbar
           v-if="index >= 1 && blade.item()"
@@ -14,7 +14,9 @@
           class="hidden-sm-and-down"
         />
         <v-subheader class="d-flex">
-          <v-col style="text-transform: capitalize;">{{ blade.collection }}</v-col>
+          <div class="flex" style="text-transform: capitalize;">
+            {{ blade.collection }}
+          </div>
 
           <PresetPicker
             v-if="blade.presets"
@@ -79,7 +81,7 @@
         :key="blade.collection"
         v-if="blade.item()"
         :id="`blade-${blade.id()}`"
-        :class="`col-12 col-md-${blade.size || 6} app-scroll`"
+        :class="`col-md-${blade.size || 6} app-scroll`"
       >
         <form @submit.prevent class="pa-4">
           <DynamicField
@@ -119,7 +121,7 @@
         </footer>
       </Blade>
     </template>
-    <Blade v-if="!currentDay">
+    <Blade v-if="!currentDay" class="col-9">
       <EmptyState
         icon="mdi-calendar-search"
         label="Edit schedule entries"

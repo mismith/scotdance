@@ -2,8 +2,8 @@
   <v-app id="app" class="app-scroll-frame" :class="{ dev: env !== 'production' }">
     <v-app-bar app dark absolute color="primary" class="print-hide">
       <v-btn icon @click="menuVisible = !menuVisible">
-        <v-badge v-model="needsUpdating" color="secondary">
-          <template #badge />
+        <v-badge v-model="needsUpdating" overlap color="secondary" class="blip">
+          <template #badge>&nbsp;</template>
           <v-icon>mdi-menu</v-icon>
         </v-badge>
       </v-btn>
@@ -118,7 +118,7 @@
         <RequiresAuthDialog name="submissions">
           <template #title>
             <v-card-title class="title">
-              <v-col>Submit your competition</v-col>
+              <div class="flex">Submit your competition</div>
               <v-icon color="secondary">mdi-vote</v-icon>
             </v-card-title>
           </template>
@@ -164,14 +164,13 @@
         <template v-else>
           <v-list two-line>
             <v-subheader>
-              <v-col>
-                <router-link
-                  :to="{ name: 'competitions' }"
-                  style="color: inherit; text-decoration: none;"
-                >
-                  Competitions
-                </router-link>
-              </v-col>
+              <router-link
+                :to="{ name: 'competitions' }"
+                class="flex"
+                style="color: inherit; text-decoration: none;"
+              >
+                Competitions
+              </router-link>
 
               <v-btn :to="{ name: 'competitions.submit' }" icon @click="closeMenu()">
                 <v-icon>mdi-plus</v-icon>
@@ -212,7 +211,7 @@
 
             <PromptToUpdate v-if="needsUpdating">
               <template #activator="{ on }">
-                <v-list-item v-on="on" color="secondary">
+                <v-list-item v-on="on" color="secondary" class="v-list-item--active">
                   <v-list-item-avatar>
                     <v-icon color="secondary">mdi-new-box</v-icon>
                   </v-list-item-avatar>
@@ -503,140 +502,129 @@ body {
   margin-right: env(safe-area-inset-right);
   margin-bottom: env(safe-area-inset-bottom);
 }
-.v-application--wrap {
-  min-height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom)); // for iPhone-X
-}
-.v-application--wrap,
-.v-content__wrap {
-  @extend .app-scroll-frame;
-}
 
-#app {
-  &.dev {
-    // make it obvious that we're not using prod data
-    .v-toolbar.primary {
-      background-image: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.1) 5px, rgba(0, 0, 0, 0.1) 10px);
-    }
+.v-application {
+  &--wrap {
+    min-height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom)); // for iPhone-X
   }
-}
-
-// framework component styling
-.v-dialog {
-  &--full-height {
-    &,
-    > .v-card,
-    .v-stepper,
-    .v-stepper__items,
-    .v-stepper__content,
-    .v-stepper__wrapper,
-    .v-tabs,
-    .v-window,
-    .v-window__container,
-    .v-window-item {
-      @extend .app-scroll-frame;
-    }
-    .v-stepper__header,
-    .v-tabs-bar {
-      flex-shrink: 0;
-    }
-  }
-
-  &--scrollable > .v-card {
-    width: 100%;
-
-    > .v-card__text {
-      @extend .app-scroll;
-    }
-  }
-}
-.v-navigation-drawer {
-  &--absolute {
-    z-index: 3 !important; // see: https://github.com/vuetifyjs/vuetify/issues/4241
-  }
-  &__content {
+  &--wrap,
+  .v-content__wrap {
     @extend .app-scroll-frame;
   }
-}
-.v-bottom-navigation.v-item-group {
-  flex-shrink: 0;
-  justify-content: unset;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
 
-  // can't use justify-content: center; because then overflowing clips
-  > * {
-    &:first-child {
-      margin-left: auto;
+  // framework component styling
+  .v-dialog {
+    &--full-height {
+      &,
+      > .v-card,
+      .v-stepper,
+      .v-stepper__items,
+      .v-stepper__content,
+      .v-stepper__wrapper,
+      .v-tabs,
+      .v-window,
+      .v-window__container,
+      .v-window-item {
+        @extend .app-scroll-frame;
+      }
+      .v-stepper__header,
+      .v-tabs-bar {
+        flex-shrink: 0;
+      }
     }
-    &:last-child {
-      margin-right: auto;
-    }
-  }
-}
-.v-toolbar {
-  .v-toolbar__title {
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-  }
-  .v-toolbar__side-icon {
-    .v-badge__badge {
-      width: 16px;
-      height: 16px;
-      margin-top: 3px;
-      margin-right: 3px;
+
+    &--scrollable > .v-card {
+      width: 100%;
+
+      > .v-card__text {
+        @extend .app-scroll;
+      }
     }
   }
-}
-.v-subheader {
-  flex: none;
-
-  .v-btn {
-    margin-right: -8px;
-  }
-}
-.v-avatar {
-  overflow: hidden;
-  flex-shrink: 0;
-
-  &.primary,
-  &.secondary,
-  &.grey {
-    color: #fff;
-
-    .v-icon {
-      color: inherit;
+  .v-navigation-drawer {
+    &--absolute {
+      z-index: 10; // see: https://github.com/vuetifyjs/vuetify/issues/4241
+    }
+    &__content {
+      @extend .app-scroll-frame;
     }
   }
+  .v-bottom-navigation.v-item-group {
+    flex-shrink: 0;
+    justify-content: unset;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 
-  img {
-    width: initial;
-    height: initial;
-    max-width: 100%;
-    max-height: 100%;
-    border-radius: 0;
-  }
-}
-.v-list {
-  .v-input--switch {
-    .v-input__control {
-      margin: auto;
-    }
-    .v-input--selection-controls__input {
-      margin-right: 0;
+    // can't use justify-content: center; because then overflowing clips
+    > * {
+      &:first-child {
+        margin-left: auto;
+      }
+      &:last-child {
+        margin-right: auto;
+      }
     }
   }
+  .v-toolbar {
+    z-index: 1; // make shadow cover things beneath
 
-  &.grouped {
-    background-color: transparent;
+    &__title {
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+    }
+  }
+  .v-subheader {
+    flex: none;
 
-    .v-list-group {
-      .v-list-group__header {
-        .v-subheader {
-          flex: auto;
-          padding-right: 0;
+    .v-btn {
+      margin-right: -8px;
+    }
+  }
+  .v-avatar {
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+
+    &.primary,
+    &.secondary,
+    &.grey {
+      color: #fff;
+
+      .v-icon {
+        color: inherit;
+      }
+    }
+
+    img {
+      width: initial;
+      height: initial;
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 0;
+    }
+  }
+  .v-list {
+    &.grouped {
+      background-color: transparent;
+
+      .v-list-group {
+        .v-list-group__header {
+          .v-subheader {
+            flex: auto;
+            padding: 0;
+          }
         }
+      }
+    }
+  }
+  .v-badge {
+    &.blip {
+      .v-badge__badge {
+        min-width: 12px;
+        height: 12px;
+        font-size: 0;
       }
     }
   }
@@ -644,8 +632,22 @@ body {
 
 // tables
 .handsontable {
-  height: 100%; // height must also be defined at some point up the chain (e.g. .app-scroll-frame)
-  overflow: hidden; // enables HotTable's scrolling
+  &:not(.handsontableEditor) {
+    height: 100%; // height must also be defined at some point up the chain (e.g. .app-scroll-frame)
+    overflow: hidden; // enables HotTable's scrolling
+  }
+
+  // subtract 100 from native z-indexes to avoid covering vuetify GUI
+  .ht_clone_top {
+    z-index: 1;
+  }
+  .ht_clone_left {
+    z-index: 2;
+  }
+  .ht_clone_top_left_corner,
+  .ht_clone_bottom_left_corner {
+    z-index: 3;
+  }
 }
 
 // drag-n-drop
@@ -660,7 +662,7 @@ body {
 }
 .sortable-chosen,
 .sortable-ghost {
-  .v-list-item {
+  &.v-list-item {
     opacity: 0.5;
     border-top: dashed 2px #ccc;
     border-bottom: dashed 2px #ccc;
@@ -670,7 +672,7 @@ body {
   }
 }
 .sortable-drag {
-  opacity: 0;
+  opacity: 0 !important;
 }
 
 // component styles
@@ -692,6 +694,12 @@ body {
 
   .v-list {
     padding: 0;
+
+    &-group {
+      &.v-list-group--active {
+        color: inherit !important;
+      }
+    }
   }
   .v-btn.v-btn--absolute {
     top: 0;

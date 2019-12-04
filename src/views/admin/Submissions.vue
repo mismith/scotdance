@@ -1,6 +1,6 @@
 <template>
   <Blades class="AdminSubmissions">
-    <Blade :active="!currentSubmission" class="col-12 col-md-4">
+    <Blade :active="!currentSubmission" class="col-md-4">
       <div v-if="submissions.length" class="app-scroll-frame app-scroll">
         <v-list v-if="loaded" two-line>
           <v-list-item
@@ -16,14 +16,14 @@
               <v-list-item-title>
                 {{ submission.competition && submission.competition.name }}
               </v-list-item-title>
-              <v-list-item-sub-title v-if="submission.approved" :title="submission.approved">
+              <v-list-item-subtitle v-if="submission.approved" :title="submission.approved">
                 Approved:
                 {{ $moment(submission.approved).fromNow() }}
-              </v-list-item-sub-title>
-              <v-list-item-sub-title v-else :title="submission.submitted">
+              </v-list-item-subtitle>
+              <v-list-item-subtitle v-else :title="submission.submitted">
                 Submitted:
                 {{ $moment(submission.submitted).fromNow() }}
-              </v-list-item-sub-title>
+              </v-list-item-subtitle>
             </v-list-item-content>
 
             <v-list-item-action>
@@ -41,14 +41,14 @@
         label="No submissions found"
       />
     </Blade>
-    <Blade :active="currentSubmission" class="col-12 col-md-8">
+    <Blade :active="currentSubmission" class="col-md-8">
       <BladeToolbar
         :to="{ name: $route.name }"
         class="hidden-md-and-up"
       />
 
       <div v-if="currentSubmission" class="app-scroll-frame app-scroll alt">
-        <v-list expand class="grouped d-flex">
+        <v-list expand class="grouped">
           <v-list-group
             v-for="step in steps"
             :key="step[idKey]"
@@ -91,29 +91,31 @@
             </div>
             <v-spacer />
             <div class="pa-4" style="text-align: right;">
-              <v-btn
-                v-if="!currentSubmission.approvedBy"
-                color="primary"
-                :loading="currentSubmission.approved"
-                @click="handleApprove"
-                class="ma-0"
-              >
-                Approve
-              </v-btn>
-              <div v-if="currentSubmission.approvedBy">
-                Approval Time:
-                <strong>{{ $moment.duration($moment(currentSubmission.approved).diff(currentSubmission.submitted)).humanize() }}</strong>
-              </div>
-              <div v-if="currentSubmission.approvedBy">
-                Approved By:
-                <strong>{{ getUser(currentSubmission.approvedBy).email }}</strong>
-              </div>
+                <v-btn
+                  v-if="!currentSubmission.approvedBy"
+                  color="primary"
+                  :loading="currentSubmission.approved"
+                  @click="handleApprove"
+                  class="ma-0"
+                >
+                  Approve
+                </v-btn>
+              <template v-else>
+                <div>
+                  Approval Time:
+                  <strong>{{ $moment.duration($moment(currentSubmission.approved).diff(currentSubmission.submitted)).humanize() }}</strong>
+                </div>
+                <div>
+                  Approved By:
+                  <strong>{{ getUser(currentSubmission.approvedBy).email }}</strong>
+                </div>
+              </template>
             </div>
           </div>
           <div v-if="currentSubmission.competitionId" class="pt-0 px-4 pb-4" style="text-align: right;">
             <v-btn
               :to="{ name: 'competition.info', params: { competitionId: currentSubmission.competitionId } }"
-              class="ml-0"
+              class="mr-2"
             >
               View Competition
             </v-btn>
@@ -121,7 +123,6 @@
               v-if="currentSubmission.competitionId"
               color="primary"
               :to="{ name: 'competition.admin.info', params: { competitionId: currentSubmission.competitionId } }"
-              class="mr-0"
             >
               Administer Competition
             </v-btn>

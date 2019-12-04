@@ -3,7 +3,7 @@
     <Blade
       :active="!currentEvent"
       v-persist-scroll="`/competitions/${competitionId}/schedule`"
-      class="col-12 col-md-4 app-scroll"
+      class="col-md-4 app-scroll"
     >
       <div v-if="schedule.days">
         <div v-for="day in toOrderedArray(schedule.days)" :key="day[idKey]">
@@ -25,7 +25,7 @@
             >
               <template #activator>
                 <v-subheader>
-                  <v-col>{{ block.name }}</v-col>
+                  <div class="flex">{{ block.name }}</div>
                   <div class="caption">{{ textify(block.description) }}</div>
                 </v-subheader>
               </template>
@@ -46,7 +46,7 @@
                 >
                   <v-list-item-content>
                     <v-list-item-title>{{ event.name }}</v-list-item-title>
-                    <v-list-item-sub-title>{{ textify(event.description) }}</v-list-item-sub-title>
+                    <v-list-item-subtitle>{{ textify(event.description) }}</v-list-item-subtitle>
                   </v-list-item-content>
                   <v-icon v-if="event.dances || event.description">
                     mdi-chevron-right
@@ -80,7 +80,7 @@
         description="Check back later"
       />
     </Blade>
-    <Blade :active="currentEvent" class="col-12 col-md-8">
+    <Blade :active="currentEvent" class="col-md-8">
       <div v-if="currentEvent" class="app-scroll-frame">
         <BladeToolbar
           :to="{ name: $route.name, params: { competitionId } }"
@@ -110,7 +110,7 @@
             >
               <template #activator>
                 <v-subheader>
-                  <v-col>{{ getScheduleItemDanceName(dance, dances) }}</v-col>
+                  <div class="flex">{{ getScheduleItemDanceName(dance, dances) }}</div>
                   <div
                     v-if="dance.description"
                     v-html="dance.description"

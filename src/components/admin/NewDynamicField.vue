@@ -1,6 +1,6 @@
 <template>
   <form @submit.prevent="handleSubmit" class="NewDynamicField d-flex align-center">
-    <DynamicField :field="field" :data="data" class="d-flex" />
+    <DynamicField :field="field" :data="data" class="flex" />
     <v-btn type="submit" icon color="primary" :disabled="!isValid">
       <v-icon>mdi-plus</v-icon>
     </v-btn>

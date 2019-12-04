@@ -1,8 +1,8 @@
 <template>
   <Blades class="AdminUsers">
-    <Blade :active="!currentUser" class="col-12 col-md-4">
+    <Blade :active="!currentUser" class="col-md-4">
       <div v-if="users.length" class="app-scroll-frame">
-        <v-toolbar>
+        <v-toolbar class="flex-none">
           <SearchField v-model="filterBy" />
         </v-toolbar>
 
@@ -17,7 +17,7 @@
             </v-list-item-avatar>
             <v-list-item-content>
               <v-list-item-title>{{ user.displayName }}</v-list-item-title>
-              <v-list-item-sub-title>{{ user.uid }}</v-list-item-sub-title>
+              <v-list-item-subtitle>{{ user.uid }}</v-list-item-subtitle>
             </v-list-item-content>
             <v-icon>mdi-chevron-right</v-icon>
           </v-list-item>
@@ -32,7 +32,7 @@
         label="No users found"
       />
     </Blade>
-    <Blade :active="currentUser" class="col-12 col-md-8">
+    <Blade :active="currentUser" class="col-md-8">
       <BladeToolbar
         :to="{ name: $route.name }"
         class="hidden-md-and-up"

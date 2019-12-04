@@ -9,7 +9,7 @@
   >
     <template #activator="props">
       <slot name="activator" v-bind="props">
-        <v-btn text>Add Presets&hellip;</v-btn>
+        <v-btn v-on="props.on" text>Add Presets&hellip;</v-btn>
       </slot>
     </template>
     <template #text>

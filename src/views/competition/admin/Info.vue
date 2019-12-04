@@ -1,6 +1,6 @@
 <template>
-  <Blades class="AdminInfo" :stacks="true">
-    <Blade id="blade-subsections" class="col-12 col-md-3 app-scroll">
+  <Blades class="AdminInfo" stacks>
+    <Blade id="blade-subsections" class="col-md-3 app-scroll">
       <v-list>
         <v-list-item
           v-for="subsection in toOrderedArray(section.subsections)"
@@ -17,7 +17,7 @@
         </v-list-item>
       </v-list>
     </Blade>
-    <Blade id="blade-form" class="col-12 col-md-9 app-scroll app-scroll-frame">
+    <Blade id="blade-form" class="col-md-9 app-scroll app-scroll-frame">
       <template v-if="currentSubsection">
         <MiHotTable
           v-if="currentSubsection.hot"

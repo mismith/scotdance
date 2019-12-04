@@ -1,5 +1,5 @@
 <template>
-  <div class="AdminInvites alt">
+  <div class="AdminInvites">
     <v-list expand class="grouped">
       <v-list-group :value="true">
         <template #activator>
@@ -17,12 +17,12 @@
               </v-list-item-avatar>
               <v-list-item-content>
                 <v-list-item-title>{{ invite.payload.email }}</v-list-item-title>
-                <v-list-item-sub-title>
+                <v-list-item-subtitle>
                   {{ invite.submitted ? 'Submitted' : 'Since' }}
                   <time :title="invite.accepted">
                     {{ $moment(invite.accepted).fromNow() }}
                   </time>
-                </v-list-item-sub-title>
+                </v-list-item-subtitle>
               </v-list-item-content>
               <v-list-item-action v-if="!invite.submitted">
                 <v-tooltip fixed left>
@@ -80,7 +80,7 @@
 
               <v-list-item-content>
                 <v-list-item-title>{{ invite.payload.email }}</v-list-item-title>
-                <v-list-item-sub-title>
+                <v-list-item-subtitle>
                   <span v-if="FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED)">
                     Cancelled
                     <time :title="invite.cancelled">
@@ -103,7 +103,7 @@
                     &bull;
                     <a href="#" @click="handleInviteResend(invite)">Resend</a>
                   </span>
-                </v-list-item-sub-title>
+                </v-list-item-subtitle>
               </v-list-item-content>
 
               <v-list-item-action v-if="FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED, FirebaseInvites.status.EXPIRED)">

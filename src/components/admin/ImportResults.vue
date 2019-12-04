@@ -44,8 +44,8 @@
           </v-card-actions>
         </v-stepper-content>
         <v-stepper-content :step="2" class="pa-0">
-          <v-row class="flex-wrap app-scroll-frame app-scroll alt">
-            <div class="d-flex col-6">
+          <div class="d-flex flex-wrap app-scroll-frame app-scroll alt">
+            <div class="col-6">
               <v-subheader>Group(s)</v-subheader>
               <div v-for="datum in imported" :key="datum.file" class="px-4">
                 <v-select
@@ -58,7 +58,7 @@
                 />
               </div>
             </div>
-            <div class="d-flex col-6">
+            <div class="col-6">
               <v-subheader>Dance(s)</v-subheader>
               <div v-for="danceName in getUniqueDances(imported)" :key="danceName" class="px-4">
                 <v-select
@@ -71,7 +71,7 @@
                 />
               </div>
             </div>
-          </v-row>
+          </div>
 
           <v-divider />
           <v-card-actions class="justify-end flex-none">
@@ -88,7 +88,7 @@
         </v-stepper-content>
         <v-stepper-content :step="3" class="pa-0">
           <Blades class="stacks">
-            <Blade class="col-12 col-md-6 app-scroll alt">
+            <Blade class="col-md-6 app-scroll alt">
               <ResultsList
                 :groups="groups.filter(group => Object.keys(results).includes(group[idKey]))"
                 :dances="dances"
@@ -96,7 +96,7 @@
                 :results="results"
               />
             </Blade>
-            <Blade class="col-12 col-md-6 app-scroll alt">
+            <Blade class="col-md-6 app-scroll alt">
               <PlacedDancerList
                 v-if="placedDancers.length"
                 :dance="currentDance"

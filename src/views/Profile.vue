@@ -5,7 +5,7 @@
         <v-avatar :size="100">
           <Gravatar :user="me" />
         </v-avatar>
-        <div class="d-flex pa-4">
+        <div class="pa-4">
           Avatar via <a href="https://gravatar.com/" target="_blank" class="ext">Gravatar</a>
         </div>
       </header>

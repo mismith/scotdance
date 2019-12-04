@@ -1,6 +1,6 @@
 <template>
-  <Blades class="AdminDanceGroups" :stacks="true">
-    <Blade id="blade-groups" :active="!currentGroup" class="col-12 col-md-4 app-scroll">
+  <Blades class="AdminDanceGroups" stacks>
+    <Blade id="blade-groups" :active="!currentGroup" class="col-md-4 app-scroll">
       <v-list v-if="groups.length">
         <v-list-item
           v-for="group in groups"
@@ -24,7 +24,7 @@
         </router-link>
       </EmptyState>
     </Blade>
-    <Blade id="blade-dances" :active="currentGroup" class="col-12 col-md-4 app-scroll">
+    <Blade id="blade-dances" :active="currentGroup" class="col-md-4 app-scroll">
       <v-list v-if="currentGroup">
         <v-list-item
           v-for="dance in dances"
@@ -67,7 +67,7 @@
         description="Pick dances for each age group"
       />
     </Blade>
-    <Blade class="col-12 col-md-4">
+    <Blade class="col-md-4">
       <EmptyState
         v-if="!currentGroupHasDraws || !currentGroupDances.length || !currentGroupDancers.length"
         icon="mdi-view-split-vertical"
@@ -77,7 +77,7 @@
       <div v-else class="app-scroll app-scroll-frame">
         <HotTable :settings="hotSettings" />
       </div>
-      <v-toolbar v-if="currentGroup">
+      <v-toolbar v-if="currentGroup" class="flex-none">
         <v-list-item v-if="!currentGroupDances.length" class="empty">
           <v-list-item-avatar>
             <v-icon>mdi-alert</v-icon>
@@ -86,9 +86,9 @@
             <v-list-item-title>
               No dances toggled.
             </v-list-item-title>
-            <v-list-item-sub-title>
+            <v-list-item-subtitle>
               Enable some first.
-            </v-list-item-sub-title>
+            </v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
 
@@ -98,11 +98,11 @@
           </v-list-item-avatar>
           <v-list-item-content>
             <v-list-item-title>No dancers in this age group.</v-list-item-title>
-            <v-list-item-sub-title>
+            <v-list-item-subtitle>
               <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dancers' } }">
                 Add or import some first &rsaquo;
               </router-link>
-            </v-list-item-sub-title>
+            </v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
 

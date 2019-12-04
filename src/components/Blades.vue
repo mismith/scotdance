@@ -24,7 +24,7 @@ export default {
 
   &.stacks {
     @media (max-width: 959px) {
-      flex-direction: column;
+      display: block;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
     }

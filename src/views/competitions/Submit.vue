@@ -20,7 +20,7 @@
               v-model="item.$active"
             >
               <template #activator>
-                <v-row align-center class="py-2">
+                <div class="d-flex align-center py-2 mr-auto">
                   <v-icon
                     :color="item.$active ? 'primary' : 'grey'"
                     :large="$vuetify.breakpoint.smAndUp"
@@ -34,7 +34,7 @@
                   }">
                     {{ item.title }}
                   </div>
-                </v-row>
+                </div>
               </template>
 
               <v-card text>
@@ -67,7 +67,7 @@
               v-model="step.$isValid"
               :fields="step.fields"
               :data="submission[step[idKey]]"
-              class="d-flex"
+              class="flex"
               @field-input="handleStepInput(step, $event)"
               @submit="handleStepSubmit(step)"
             >
@@ -82,15 +82,17 @@
                 </v-btn>
               </footer>
             </DynamicForm>
-            <div v-if="step[idKey] === 'competition'" class="d-flex col-md-4 ml-6 hidden-sm-and-down">
+            <div v-if="step[idKey] === 'competition'" class="col-md-4 ml-6 hidden-sm-and-down">
               <figure class="device-frame mb-4">
                 <div class="device-frame-content v-application theme--light app-scroll d-flex flex-column">
                   <v-toolbar dark color="primary" class="flex-none">
-                    <v-toolbar-title class="title">{{ $store.state.$package.$name }}</v-toolbar-title>
+                    <v-toolbar-title class="title">
+                      {{ $store.state.$package.$name }}
+                    </v-toolbar-title>
                   </v-toolbar>
                   <CompetitionInfo :competition="preview" :staff="[]" />
                 </div>
-                <figcaption class="device-frame-caption">App Preview</figcaption>
+                <figcaption class="device-frame-caption">In-App Preview</figcaption>
               </figure>
             </div>
           </div>

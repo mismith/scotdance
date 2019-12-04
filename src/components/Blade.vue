@@ -40,7 +40,7 @@ export default {
     }
     &.stacks {
       .Blade {
-        flex: 1 0 auto;
+        height: auto;
 
         + .Blade {
           border-top: solid 6px #ccc;

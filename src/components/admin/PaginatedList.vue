@@ -11,15 +11,22 @@
       />
     </div>
 
-    <v-toolbar v-if="pages.length > 1" dense class="pagination d-flex flex-none">
+    <v-toolbar v-if="pages.length > 1" dense class="pagination flex-none">
       <v-btn icon @click="page -= 1" :disabled="page <= 1">
         <v-icon>mdi-skip-previous</v-icon>
       </v-btn>
-      <v-row align-center>
+      <div class="d-flex flex-nowrap align-center mx-auto">
         Page
-        <v-select v-model="page" :items="pages" single-line hide-details class="mx-2" />
+        <v-select
+          v-model="page"
+          :items="pages"
+          single-line
+          hide-details
+          class="mx-2"
+          style="max-width: 64px;"
+        />
         of {{ pages.length }}
-      </v-row>
+      </div>
       <v-btn icon :disabled="page >= pages.length" @click="page += 1">
         <v-icon>mdi-skip-next</v-icon>
       </v-btn>
@@ -57,8 +64,11 @@ export default {
   .pagination {
     white-space: nowrap;
 
-    .v-text-field {
-      padding-top: 0;
+    .v-toolbar__content {
+      width: 100%;
+    }
+    .v-select__selections {
+      margin-left: 16px;
     }
   }
 }

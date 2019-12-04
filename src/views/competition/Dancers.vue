@@ -1,9 +1,9 @@
 <template>
   <Blades class="CompetitionDancers alt">
-    <Blade :active="!currentDancer" class="col-12 col-md-6">
+    <Blade :active="!currentDancer" class="col-md-6">
       <div v-if="dancers.length" class="app-scroll-frame">
-        <v-toolbar>
-          <SearchField v-model="filterBy" class="d-flex mr-2" />
+        <v-toolbar class="flex-none">
+          <SearchField v-model="filterBy" class="mr-2" />
           <v-menu @selected="sortBy">
             <template #activator="{ on }">
               <v-btn icon v-on="on">
@@ -44,7 +44,7 @@
             >
               <template #activator>
                 <v-subheader>
-                  <v-col>{{ groupId || '?' }}</v-col>
+                  <div class="flex">{{ groupId || '?' }}</div>
                   <v-icon
                     v-if="!onlyFavorites && hasFavorites(group)"
                     color="secondary"
@@ -89,7 +89,7 @@
         description="Check back later"
       />
     </Blade>
-    <Blade :active="currentDancer" class="col-12 col-md-6">
+    <Blade :active="currentDancer" class="col-md-6">
       <div v-if="currentDancer" class="app-scroll-frame">
         <BladeToolbar
           :to="{ name: $route.name, params: { competitionId } }"
@@ -271,11 +271,7 @@ export default {
 .CompetitionDancers {
   .SearchField {
     .v-input__control {
-      min-height: 36px !important;
-
-      .v-input__slot {
-        margin: 0;
-      }
+      min-height: 36px;
     }
   }
 }

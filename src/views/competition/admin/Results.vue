@@ -1,6 +1,6 @@
 <template>
-  <Blades class="AdminResults" :stacks="true">
-    <Blade id="blade-groups" :active="!currentDance" class="col-12 col-md-4 app-scroll alt">
+  <Blades class="AdminResults" stacks>
+    <Blade id="blade-groups" :active="!currentDance" class="col-md-4 app-scroll alt">
       <ResultsList
         v-if="groups.length"
         :groups="groups"
@@ -18,7 +18,7 @@
         </router-link>
       </EmptyState>
     </Blade>
-    <Blade id="blade-dancers" :active="currentDance" class="col-12 col-md-4 app-scroll">
+    <Blade id="blade-dancers" :active="currentDance" class="col-md-4 app-scroll">
       <v-list v-if="currentDance" two-line>
         <DancerListItem
           v-for="dancer in currentDancers"
@@ -60,7 +60,7 @@
         description="Select an age group and dance"
       />
     </Blade>
-    <Blade class="col-12 col-md-4 app-scroll">
+    <Blade class="col-md-4 app-scroll">
       <PlacedDancerList
         v-if="currentDance && placedDancers.length"
         :admin="true"

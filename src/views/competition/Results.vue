@@ -3,7 +3,7 @@
     <Blade
       :active="!currentGroup"
       v-persist-scroll="`/competitions/${competitionId}/results`"
-      class="col-12 col-md-4 app-scroll"
+      class="col-md-4 app-scroll"
     >
       <v-list v-if="groupedCategories.length" expand class="grouped">
         <v-list-group
@@ -14,7 +14,7 @@
         >
           <template #activator>
             <v-subheader>
-              <v-col>{{ category.name }}</v-col>
+              <div class="flex">{{ category.name }}</div>
               <v-icon
                 v-if="hasFavorites(findCategoryDancers(category, dancers))"
                 color="secondary"
@@ -58,7 +58,7 @@
         description="Check back later"
       />
     </Blade>
-    <Blade :active="currentGroup" class="col-12 col-md-8">
+    <Blade :active="currentGroup" class="col-md-8">
       <div v-if="currentGroup" class="app-scroll-frame">
         <BladeToolbar
           :to="{ name: $route.name, params: { competitionId } }"
@@ -125,9 +125,9 @@
                     <v-list-item-title>
                       {{ currentGroup.sponsor }}
                     </v-list-item-title>
-                    <v-list-item-sub-title>
+                    <v-list-item-subtitle>
                       {{ currentGroup.trophy || '' }} Trophy Sponsor
-                    </v-list-item-sub-title>
+                    </v-list-item-subtitle>
                   </v-list-item-content>
                 </v-list-item>
               </PlacedDancerList>

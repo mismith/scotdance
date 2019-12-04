@@ -2,7 +2,7 @@
   <div class="DancerReport">
     <header>
       <v-subheader class="title">
-        <v-col>{{ dancer.$name }}</v-col>
+        <div class="flex">{{ dancer.$name }}</div>
         <FavoriteDancerButton :dancer="dancer" />
       </v-subheader>
       <div class="pa-4">

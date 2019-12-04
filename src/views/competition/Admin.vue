@@ -1,6 +1,6 @@
 <template>
   <RequiresPermission :permission="hasPermission" class="CompetitionAdmin app-scroll-frame">
-    <v-toolbar dense>
+    <v-toolbar dense class="flex-none">
       <div v-if="inTabs('categories', 'dancers', 'groups')">
         <v-btn text @click="showImport = true" class="hidden-xs-only">Import&hellip;</v-btn>
       </div>

@@ -6,7 +6,7 @@
       class="app-scroll-frame app-scroll"
     >
 
-      <v-timeline dense class="mx-4">
+      <v-timeline dense class="pr-3">
         <template v-for="competition in timelineCompetitions">
           <v-timeline-item
             v-if="competition.$timeline"

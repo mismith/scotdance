@@ -71,7 +71,7 @@
           <v-avatar v-if="currentDialogData.image" :size="100" class="mr-4">
             <img :src="currentDialogData.image" />
           </v-avatar>
-          <v-col>
+          <div class="flex">
             <div class="title my-4">{{ currentDialogData.$name }}</div>
             <div class="subtitle-1">{{ currentDialogData.location }}</div>
             <div v-if="currentDialogData.website" class="subtitle-1">
@@ -79,7 +79,7 @@
                 {{ formatHumanURL(currentDialogData.website) }}
               </a>
             </div>
-          </v-col>
+          </div>
         </v-card-title>
       </template>
       <template #text>

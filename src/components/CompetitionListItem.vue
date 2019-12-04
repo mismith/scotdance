@@ -11,10 +11,10 @@
 
     <v-list-item-content>
       <v-list-item-title>{{ competition.name }}</v-list-item-title>
-      <v-list-item-sub-title class="dot-divided">
+      <v-list-item-subtitle class="dot-divided">
         <span v-if="competition.date">{{ $moment(competition.date).format('MMM D, YYYY') }}</span>
         <span v-if="competition.location">{{ competition.location }}</span>
-      </v-list-item-sub-title>
+      </v-list-item-subtitle>
     </v-list-item-content>
 
     <slot />
