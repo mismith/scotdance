@@ -121,7 +121,7 @@
         </footer>
       </Blade>
     </template>
-    <Blade v-if="!currentDay" class="col-9">
+    <Blade v-if="!currentDay" class="col-md-9">
       <EmptyState
         icon="mdi-calendar-search"
         label="Edit schedule entries"

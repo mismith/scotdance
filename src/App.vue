@@ -451,8 +451,8 @@ body.has-bottom-bar {
 a {
   &.ext,
   & .ext {
-    &:after {
-      content: "\2197\00FE0E"; // append \00FE0E to prevent iOS/Android from emojifying the arrow
+    &::after {
+      content: '\2197\00FE0E'; // append \00FE0E to prevent iOS/Android from emojifying the arrow
       margin-left: 0.25em;
     }
   }
@@ -471,7 +471,7 @@ a {
   > span {
     &:not(:last-child) {
       &::after {
-        content: "•";
+        content: '•';
         display: inline-block;
         margin-left: 0.25em;
         margin-right: 0.25em;
