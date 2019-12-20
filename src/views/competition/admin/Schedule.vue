@@ -72,7 +72,18 @@
               <v-icon>mdi-close</v-icon>
             </v-list-item-avatar>
             <v-list-item-content>
-              No items yet. <a @click="handleListItemCreate(blade)">Add one.</a>
+              No items yet.
+              <PresetPicker
+                v-if="blade.presets"
+                :presets="blade.presets"
+                :prop="blade.name"
+                @select="items => items.map(item => handleListItemCreate(blade, item))"
+              >
+                <template #activator="{ on }">
+                  <a v-on="on">Add one.</a>
+                </template>
+              </PresetPicker>
+              <a v-else @click="handleListItemCreate(blade)">Add one.</a>
             </v-list-item-content>
           </v-list-item>
         </v-list>
