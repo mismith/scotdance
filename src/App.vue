@@ -238,6 +238,17 @@
               </v-list-item-content>
             </v-list-item>
             <v-list-item
+              :to="{ name: 'settings' }"
+              @click="closeMenu()"
+            >
+              <v-list-item-avatar>
+                <v-icon>mdi-settings</v-icon>
+              </v-list-item-avatar>
+              <v-list-item-content>
+                <v-list-item-title>App Settings</v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+            <v-list-item
               v-if="$store.getters.hasPermission('admin')"
               :to="{ name: 'admin.info' }"
               @click="closeMenu()"
@@ -643,6 +654,8 @@ body {
 
 // tables
 .handsontable {
+  color: black; // stay reable when in darkMode
+
   &:not(.handsontableEditor) {
     height: 100%; // height must also be defined at some point up the chain (e.g. .app-scroll-frame)
     overflow: hidden; // enables HotTable's scrolling

@@ -1,5 +1,5 @@
 <template>
-  <div class="AdminPlatforms white" :class="{ interactive: admin }">
+  <div class="AdminPlatforms" :class="{ interactive: admin }">
     <div v-if="!isEmpty" class="pools">
       <div
         v-for="pool in pools"
@@ -290,6 +290,7 @@ export default {
     opacity: 1;
   }
 }
+
 .AdminPlatforms {
   .pools {
     display: flex;

@@ -12,6 +12,9 @@ export default new Vuetify({
       light: {
         secondary: colors.pink,
       },
+      dark: {
+        secondary: colors.pink,
+      },
     },
   },
 });

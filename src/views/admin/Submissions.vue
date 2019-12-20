@@ -60,21 +60,23 @@
               </v-subheader>
             </template>
 
-            <DynamicForm
-              v-if="currentSubmission[step[idKey]]"
-              :fields="step.fields"
-              :data="currentSubmission[step[idKey]]"
-              class="white pa-4"
-              @field-change="handleChanges($event, `competitions:submissions/${submissionId}/${step[idKey]}`)"
-            />
-            <v-list-item v-else class="empty">
-              <v-list-item-avatar>
-                <v-icon>mdi-close</v-icon>
-              </v-list-item-avatar>
-              <v-list-item-content>
-                No more info.
-              </v-list-item-content>
-            </v-list-item>
+            <v-list>
+              <DynamicForm
+                v-if="currentSubmission[step[idKey]]"
+                :fields="step.fields"
+                :data="currentSubmission[step[idKey]]"
+                class="pa-4"
+                @field-change="handleChanges($event, `competitions:submissions/${submissionId}/${step[idKey]}`)"
+              />
+              <v-list-item v-else class="empty">
+                <v-list-item-avatar>
+                  <v-icon>mdi-close</v-icon>
+                </v-list-item-avatar>
+                <v-list-item-content>
+                  No more info.
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
           </v-list-group>
         </v-list>
         <footer class="pb-2">

@@ -11,9 +11,9 @@
       <v-stepper-content :step="1">
         Are you involved in organizing a competition that could benefit from {{ $store.state.$package.$name }}?<br />Simply begin the process below at least <strong>one month before</strong> your event's start date.
 
-        <v-list style="max-width: 540px;">
-          <template v-for="checklist in checklists">
-            <header :key="checklist[idKey]" v-html="checklist.title" class="mt-6 mb-4" />
+        <div v-for="checklist in checklists" :key="checklist[idKey]">
+          <header v-html="checklist.title" class="mt-6 mb-4" />
+          <v-list flat style="max-width: 540px;">
             <v-list-group
               v-for="item in checklist.items"
               :key="item.title"
@@ -41,10 +41,10 @@
                 <v-card-text v-html="item.description" />
               </v-card>
             </v-list-group>
-          </template>
-        </v-list>
+          </v-list>
+        </div>
 
-        <footer class="mt-2">
+        <footer class="mt-5">
           <v-btn color="primary" class="mx-0" @click="handleStart">Start</v-btn>
           <v-btn v-if="me && me.admin" color="secondary" class="stripes ml-3" @click="handleSkip">
             Skip

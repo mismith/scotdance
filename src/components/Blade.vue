@@ -14,6 +14,8 @@ export default {
 </script>
 
 <style lang="scss">
+@import '~vuetify/src/styles/settings/_index';
+
 .Blades {
   @media (max-width: 959px) {
     &:not(.stacks) {
@@ -43,7 +45,7 @@ export default {
         height: auto;
 
         + .Blade {
-          border-top: solid 6px #ccc;
+          border-top: solid 6px transparent;
         }
       }
     }
@@ -53,8 +55,16 @@ export default {
       flex-shrink: 0;
 
       + .Blade {
-        border-left: solid 6px #ccc;
+        border-left: solid 6px transparent;
       }
+    }
+  }
+
+  .Blade + .Blade {
+    border-color: map-get($material-theme, 'dividers');
+
+    .theme--dark & {
+      border-color: map-get($material-dark, 'dividers');
     }
   }
 }

@@ -5,6 +5,7 @@ import competitionSchema from '@/schemas/competition';
 import competitionAdminSchema from '@/schemas/competition-admin';
 
 import Home from '@/views/Home.vue';
+import Settings from '@/views/Settings.vue';
 import Profile from '@/views/Profile.vue';
 
 import Competitions from '@/views/Competitions.vue';
@@ -44,6 +45,14 @@ export default new Router({
       component: Profile,
       meta: {
         title: 'My Profile',
+      },
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: Settings,
+      meta: {
+        title: 'App Settings',
       },
     },
     {

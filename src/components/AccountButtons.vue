@@ -1,6 +1,7 @@
 <template>
   <div class="AccountButtons">
     <v-btn
+      light
       @click="$store.commit('setCurrentDialog', 'register')"
       class="ma-1"
     >
