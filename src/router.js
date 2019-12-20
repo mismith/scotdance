@@ -168,7 +168,7 @@ export default new Router({
                   component: CompetitionAdminSchedule,
                   props: true,
                   meta: {
-                    title: competitionAdminSchema.dancers.name,
+                    title: competitionAdminSchema.schedule.name,
                   },
                 },
                 {

@@ -323,9 +323,13 @@ export default {
     async title() {
       const titleChunks = await getTitleChunks(this.$route);
 
+      if (titleChunks.length > 3) {
+        return titleChunks[titleChunks.length - 3];
+      }
       if (titleChunks.length > 2) {
         return titleChunks[titleChunks.length - 2];
-      } else if (this.$route.name === 'competition.info') {
+      }
+      if (this.$route.name === 'competition.info') {
         return titleChunks[0];
       }
       return titleChunks[titleChunks.length - 1];
