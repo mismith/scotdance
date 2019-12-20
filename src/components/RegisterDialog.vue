@@ -28,7 +28,7 @@
       </a>
     </p>
 
-    <v-alert :value="authError" type="error">
+    <v-alert :value="!!authError" type="error">
       {{ authError && authError.message }}
     </v-alert>
 

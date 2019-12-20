@@ -36,7 +36,7 @@
         </a>
       </p>
 
-      <v-alert :value="authError" type="error">
+      <v-alert :value="!!authError" type="error">
         {{ authError && authError.message }}
       </v-alert>
     </template>
@@ -55,10 +55,10 @@
         autofocus
       />
 
-      <v-alert :value="authError" type="error">
+      <v-alert :value="!!authError" type="error">
         {{ authError && authError.message }}
       </v-alert>
-      <v-alert :value="authMessage" type="success">
+      <v-alert :value="!!authMessage" type="success">
         {{ authMessage }}
       </v-alert>
     </template>

@@ -48,7 +48,7 @@
           type="password"
           name="password"
         />
-        <v-alert :value="passwordError" type="error">
+        <v-alert :value="!!passwordError" type="error">
           {{ passwordError && passwordError.message }}
         </v-alert>
       </DialogCard>
@@ -78,7 +78,7 @@
           type="password"
           name="password"
         />
-        <v-alert :value="removeError" type="error">
+        <v-alert :value="!!removeError" type="error">
           {{ removeError && removeError.message }}
         </v-alert>
       </DialogCard>
