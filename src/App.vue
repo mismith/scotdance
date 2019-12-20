@@ -52,28 +52,7 @@
               <v-list-item-title class="error--text">Hide Live Chat</v-list-item-title>
             </v-list-item>
           </template>
-          <v-divider />
-          <v-list-item @click="confirmClearLocalStorage = true">
-            <v-list-item-title>Clear App Cache</v-list-item-title>
-          </v-list-item>
         </v-list>
-
-        <DialogCard
-          v-model="confirmClearLocalStorage"
-          title="Clear App Cache"
-          cancel-label="No"
-          submit-label="Yes"
-          @submit="clearLocalStorage()"
-        >
-          <p>In order to enhance performance and usability, this app stores certain settings in your device's local storage cache.</p>
-          <p>If you are ever encountering layout or navigation bugs, clearing these may help resolve certain issues related to:</p>
-          <ul class="mb-4">
-            <li>expanded/collapsed states</li>
-            <li>active/last-used screens</li>
-            <li>stored scroll positions</li>
-          </ul>
-          <p><strong>Are you sure you want to permanently erase these stored settings?</strong></p>
-        </DialogCard>
       </v-menu>
     </v-app-bar>
 
@@ -306,8 +285,6 @@ export default {
       competitionsRef: undefined,
       competitionsDataRef: undefined,
 
-      confirmClearLocalStorage: false,
-
       needsUpdating: false,
     };
   },
@@ -407,12 +384,6 @@ export default {
       this.accountToggled = accountToggled !== undefined ? accountToggled : !this.accountToggled;
     },
 
-    clearLocalStorage() {
-      if (window.localStorage) {
-        window.localStorage.clear();
-        window.location.reload();
-      }
-    },
     logout() {
       return firebase.auth().signOut();
     },

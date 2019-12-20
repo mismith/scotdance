@@ -19,6 +19,30 @@
           </v-list-item>
         </v-list-item-group>
       </v-list>
+
+      <v-subheader>Advanced</v-subheader>
+      <v-list>
+        <v-list-item @click="confirmClearLocalStorage = true">
+          <v-list-item-title class="error--text">Clear App Cache</v-list-item-title>
+        </v-list-item>
+      </v-list>
+
+      <DialogCard
+        v-model="confirmClearLocalStorage"
+        title="Clear App Cache"
+        cancel-label="No"
+        submit-label="Yes"
+        @submit="clearLocalStorage()"
+      >
+        <p>In order to enhance performance and usability, this app stores certain settings in your device's local storage cache.</p>
+        <p>If you are ever encountering layout or navigation bugs, clearing these may help resolve certain issues related to:</p>
+        <ul class="mb-4">
+          <li>expanded/collapsed states</li>
+          <li>active/last-used screens</li>
+          <li>stored scroll positions</li>
+        </ul>
+        <p><strong>Are you sure you want to permanently erase these stored settings?</strong></p>
+      </DialogCard>
     </div>
   </form>
 </template>
@@ -26,6 +50,11 @@
 <script>
 export default {
   name: 'Settings',
+  data() {
+    return {
+      confirmClearLocalStorage: false,
+    };
+  },
   localStorage: {
     darkMode: {
       type: Boolean,
@@ -38,6 +67,14 @@ export default {
         this.$vuetify.theme.dark = darkMode;
       },
       immediate: true,
+    },
+  },
+  methods: {
+    clearLocalStorage() {
+      if (window.localStorage) {
+        window.localStorage.clear();
+        window.location.reload();
+      }
     },
   },
 };
