@@ -4,13 +4,17 @@
   },
   "hosting": {
     "public": "www",
-    "headers": [{
-      "source" : "/version.json",
-      "headers" : [{
-        "key" : "Access-Control-Allow-Origin",
-        "value" : "*"
-      }]
-    }],
+    "headers": [
+      {
+        "source": "/version.json",
+        "headers": [
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "*"
+          }
+        ]
+      }
+    ],
     "rewrites": [
       {
         "source": "**",
@@ -22,6 +26,7 @@
     "predeploy": [
       "npm --prefix \"$RESOURCE_DIR\" run lint",
       "npm --prefix \"$RESOURCE_DIR\" run build"
-    ]
+    ],
+    "source": "functions"
   }
 }

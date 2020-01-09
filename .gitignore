@@ -31,6 +31,7 @@ yarn-error.log*
 info.txt
 *.log
 *.keystore
-/.firebase
+.firebase
 .runtimeconfig.json
+firebase-adminsdk.json
 /public/version.json
