@@ -2,6 +2,7 @@ import { initializeApp, database as adminDB } from 'firebase-admin';
 import { config, database as functionsDB } from 'firebase-functions';
 import Invites from './invites';
 import Submissions from './submissions';
+import { attachUserToCompetition } from './utility/competition';
 
 function initEnv(env) {
   const instance = env === 'development' ? 'scotdance-dev' : 'scotdance';
@@ -39,8 +40,22 @@ const submissionsHooks = submissions.hook(`/${env}/competitions:submissions`);
 export const competitionSubmissionCreated = submissionsHooks.onCreate;
 export const competitionSubmissionUpdated = submissionsHooks.onUpdate;
 
-// const appConfig2 = initEnv('development');
-// const submissions2 = new Submissions(appConfig2.database, appConfig2);
-// const submissionsHooks2 = submissions2.hook(`/${appConfig2.env}/competitions:submissions`);
-// export const competitionSubmissionCreated2 = submissionsHooks2.onCreate;
-// export const competitionSubmissionUpdated2 = submissionsHooks2.onUpdate;
+export const competitionDeleted = appConfig.database.ref(`/${env}/competitions/{competitionId}`)
+  .onDelete(async (before, ctx) => {
+    // remove lingering permissions links between competitions and users
+    const { db } = appConfig;
+    const { competitionId } = ctx.params;
+    const snap = await db.child(`competitions:permissions/${competitionId}`).once('value');
+    const permissions = snap.val();
+    if (!permissions) return;
+    const { users } = permissions;
+    if (!users) return;
+
+    const userIds = Object.keys(users);
+    await Promise.all(userIds.map(userId => attachUserToCompetition({
+      db,
+      userId,
+      competitionId,
+      value: null,
+    })));
+  });
