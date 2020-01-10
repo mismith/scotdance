@@ -34,7 +34,7 @@ export default {
     dancers: Array, // [] -> TBD; [...] -> show checkmark;
     hasPlaceholderDancers: Boolean, // true -> show hollow checkmark
     place: Number, // undefined -> show chevron
-    to: true,
+    to: Object,
   },
   computed: {
     hasResults() {

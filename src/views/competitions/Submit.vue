@@ -119,7 +119,6 @@ import { mapState } from 'vuex';
 import { idKey, db, toOrderedArray } from '@/helpers/firebase';
 import steps, { checklists } from '@/schemas/submissions';
 import DynamicForm from '@/components/admin/DynamicForm.vue';
-import AccountButtons from '@/components/AccountButtons.vue';
 import CompetitionInfo from '@/views/competition/Info.vue';
 
 export default {
@@ -232,7 +231,6 @@ export default {
   },
   components: {
     DynamicForm,
-    AccountButtons,
     CompetitionInfo,
   },
 };

@@ -66,7 +66,11 @@
       />
     </div>
 
-    <v-dialog v-model="showImport" content-class="v-dialog--full-height" @keydown.esc.stop="showImport = false">
+    <v-dialog
+      v-model="showImport"
+      content-class="v-dialog--full-height"
+      @keydown.esc.stop="showImport = false"
+    >
       <AdminImport
         :competition-data-ref="competitionDataRef"
         :groups="groups"

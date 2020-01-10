@@ -57,7 +57,7 @@
 export default {
   name: 'DialogCard',
   props: {
-    value: true,
+    value: Boolean,
     title: String,
     text: String,
     cancelLabel: {

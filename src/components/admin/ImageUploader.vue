@@ -32,7 +32,7 @@ export default {
   name: 'ImageUploader',
   props: {
     storagePath: String,
-    value: true,
+    value: String,
     label: String,
     hint: String,
     required: Boolean,

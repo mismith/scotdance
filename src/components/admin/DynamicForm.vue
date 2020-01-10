@@ -18,7 +18,7 @@ import DynamicField from '@/components/admin/DynamicField.vue';
 export default {
   name: 'DynamicForm',
   props: {
-    value: true,
+    value: Boolean,
     fields: Array,
     data: Object,
   },

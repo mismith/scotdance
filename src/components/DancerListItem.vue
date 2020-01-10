@@ -43,7 +43,7 @@ export default {
   props: {
     dancer: Object,
     place: Number,
-    to: true,
+    to: Object,
   },
   computed: {
     detail() {

@@ -66,7 +66,6 @@
 import { FirebaseInvites } from '@mismith/firebase-tools';
 import { idKey } from '@/helpers/firebase';
 import RequiresPermission from '@/components/RequiresPermission.vue';
-import AccountButtons from '@/components/AccountButtons.vue';
 
 export default {
   name: 'CompetitionInvite',
@@ -106,7 +105,6 @@ export default {
   },
   components: {
     RequiresPermission,
-    AccountButtons,
   },
 };
 </script>

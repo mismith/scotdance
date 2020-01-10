@@ -41,7 +41,7 @@ export default {
   name: 'CompetitionListItem',
   props: {
     competition: Object,
-    to: true,
+    to: Object,
   },
   data() {
     return {

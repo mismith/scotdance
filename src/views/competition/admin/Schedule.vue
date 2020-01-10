@@ -196,7 +196,6 @@
 import Draggable from 'vuedraggable';
 import BladeToolbar from '@/components/BladeToolbar.vue';
 import DynamicField from '@/components/admin/DynamicField.vue';
-import NewDynamicField from '@/components/admin/NewDynamicField.vue';
 import AdminPlatforms from '@/components/admin/Platforms.vue';
 import PresetPicker from '@/components/admin/PresetPicker.vue';
 import {
@@ -603,7 +602,6 @@ export default {
     Draggable,
     BladeToolbar,
     DynamicField,
-    NewDynamicField,
     AdminPlatforms,
     PresetPicker,
   },
