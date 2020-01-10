@@ -59,7 +59,6 @@
     <v-navigation-drawer
       v-model="menuVisible"
       app
-      absolute
       touchless
       :width="320"
       class="app-scroll-frame"
@@ -494,24 +493,38 @@ body,
 }
 body {
   // for iPhone-X
-  margin-top: env(safe-area-inset-top);
-  margin-left: env(safe-area-inset-left);
-  margin-right: env(safe-area-inset-right);
-  margin-bottom: env(safe-area-inset-bottom);
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+
+  background: #000;
 }
 
 .v-application {
-  &--wrap {
-    min-height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom)); // for iPhone-X
-  }
   &--wrap,
   .v-content__wrap {
     @extend .app-scroll-frame;
   }
 
   // framework component styling
+  .v-application--wrap {
+    min-height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important; // for iPhone-X
+  }
+  .v-navigation-drawer {
+    max-height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom)); // for iPhone-X
+    border-left: env(safe-area-inset-left) solid #000;
+
+    &--absolute {
+      z-index: 10; // see: https://github.com/vuetifyjs/vuetify/issues/4241
+    }
+    &__content {
+      @extend .app-scroll-frame;
+    }
+  }
   .v-dialog {
     &--full-height {
+      // @TODO: deprecate in favour of using <v-dialog fullscreen />
       &,
       > .v-card,
       .v-stepper,
@@ -536,14 +549,6 @@ body {
       > .v-card__text {
         @extend .app-scroll;
       }
-    }
-  }
-  .v-navigation-drawer {
-    &--absolute {
-      z-index: 10; // see: https://github.com/vuetifyjs/vuetify/issues/4241
-    }
-    &__content {
-      @extend .app-scroll-frame;
     }
   }
   .v-bottom-navigation.v-item-group {
