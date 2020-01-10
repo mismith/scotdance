@@ -2,7 +2,6 @@ import Vue from 'vue';
 import VueFire from 'vuefire';
 import VueAsyncComputed from 'vue-async-computed';
 import VueBodyClass from 'vue-body-class';
-import VueLocalStorage from 'vue-localstorage';
 import VueScrollTo from 'vue-scrollto';
 import { scroller } from 'vue-scrollto/src/scrollTo';
 import moment from 'moment-mini';
@@ -14,6 +13,7 @@ import { getTitleChunks } from '@/helpers/router';
 import App from '@/App.vue';
 import router from '@/router';
 import store from '@/store';
+import vuetify from '@/plugins/vuetify';
 
 import DialogCard from '@/components/DialogCard.vue';
 import Spinner from '@/components/Spinner.vue';
@@ -22,8 +22,6 @@ import Blades from '@/components/Blades.vue';
 import Blade from '@/components/Blade.vue';
 import Gravatar from '@/components/Gravatar.vue';
 
-import vuetify from './plugins/vuetify';
-import $package from '../package.json';
 
 // disable (amongst other things) vue-localstoreage verbose logging
 Vue.config.silent = true;
@@ -39,10 +37,6 @@ Vue.component('Blade', Blade);
 Vue.use(VueFire);
 Vue.use(VueAsyncComputed);
 Vue.use(VueBodyClass, router);
-Vue.use(VueLocalStorage, {
-  bind: true,
-  namespace: $package.name,
-});
 Vue.use(VueScrollTo);
 
 const $scrollAll = (element, options = {}) => {
@@ -102,10 +96,6 @@ Vue.prototype.$scrollAll = $scrollAll;
 })();
 
 // app / devices
-store.commit('setPackage', {
-  $name: 'ScotDance.app',
-  ...$package,
-});
 Vue.prototype.isApp = window.location.protocol === 'file:';
 if (Vue.prototype.isApp) {
   // allow loading cordova plugins
@@ -209,14 +199,28 @@ if (window.$crisp) {
 }
 
 new Vue({
-  router,
-  store,
-  vuetify,
-  render: h => h(App),
-
   computed: {
     currentTab() {
       return this.$route.params.tab || this.$route.name.split('.').slice(-1)[0];
     },
   },
+  localStorage: {
+    darkMode: {
+      type: Boolean,
+      default: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches,
+    },
+  },
+  watch: {
+    darkMode: {
+      handler(darkMode) {
+        this.$vuetify.theme.dark = darkMode;
+      },
+      immediate: true,
+    },
+  },
+
+  router,
+  store,
+  vuetify,
+  render: h => h(App),
 }).$mount('#app');

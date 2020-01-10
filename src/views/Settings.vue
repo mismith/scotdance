@@ -3,7 +3,7 @@
     <div class="pa-4">
       <v-subheader>UI</v-subheader>
       <v-list flat>
-        <v-list-item-group v-model="darkMode">
+        <v-list-item-group v-model="$root.darkMode">
           <v-list-item :value="true">
             <template #default="{ active }">
               <v-list-item-avatar>
@@ -13,7 +13,7 @@
                 <v-list-item-title>Dark Mode</v-list-item-title>
               </v-list-item-content>
               <v-list-item-action>
-                <v-switch v-model="active" color="primary" readonly />
+                <v-switch :input-value="active" color="primary" />
               </v-list-item-action>
             </template>
           </v-list-item>
@@ -54,20 +54,6 @@ export default {
     return {
       confirmClearLocalStorage: false,
     };
-  },
-  localStorage: {
-    darkMode: {
-      type: Boolean,
-      default: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches,
-    },
-  },
-  watch: {
-    darkMode: {
-      handler(darkMode) {
-        this.$vuetify.theme.dark = darkMode;
-      },
-      immediate: true,
-    },
   },
   methods: {
     clearLocalStorage() {

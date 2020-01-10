@@ -2,6 +2,7 @@
 
 import Vue from 'vue';
 import Vuex from 'vuex';
+import VueLocalStorage from 'vue-localstorage';
 import { get } from 'deep-property';
 import {
   getField,
@@ -15,12 +16,20 @@ import {
   idKey,
   db,
 } from '@/helpers/firebase';
+import $package from '../package.json';
 
 Vue.use(Vuex);
+Vue.use(VueLocalStorage, {
+  bind: true,
+  namespace: $package.name,
+});
 
 export default new Vuex.Store({
   state: {
-    $package: {},
+    $package: {
+      $name: 'ScotDance.app',
+      ...$package,
+    },
     $device: {
       platform: 'Web',
     },
@@ -64,9 +73,6 @@ export default new Vuex.Store({
     updateField,
     ...firebaseMutations,
 
-    setPackage(state, to) {
-      state.$package = to;
-    },
     setDevice(state, to) {
       state.$device = to;
     },
