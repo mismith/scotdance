@@ -108,7 +108,7 @@
 
         <template v-else>
           <v-switch v-model="currentGroupHasDraws" label="Enable" hide-details />
-          <v-btn text color="primary" @click="handleShuffleCurrentGroupDraws()">
+          <v-btn text color="primary" @click="handleShuffleCurrentGroupDraws()" class="ml-auto">
             Auto-Fill
           </v-btn>
         </template>
