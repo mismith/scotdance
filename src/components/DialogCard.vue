@@ -3,6 +3,7 @@
     ref="dialog"
     v-model="isOpen"
     :max-width="fullWidth ? 'none' : 300"
+    scrollable
     class="DialogCard"
     @keydown.esc.stop="handleCancel"
   >
