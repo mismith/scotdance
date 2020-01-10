@@ -34,7 +34,7 @@
         <p class="subtitle-1">Modernize your highland dancing experience by interacting with competition information digitally.</p>
       </header>
       <v-container>
-        <v-row>
+        <v-row justify="center">
           <v-col class="col-sm-4">
             <v-icon color="primary" class="icon-people" />
             <h2 class="title my-4">Dancers</h2>
@@ -154,7 +154,8 @@ export default {
     .v-icon {
       font-size: 88px;
     }
-    .flex {
+    .col {
+      min-width: 240px;
       padding: 20px;
     }
   }
