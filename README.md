@@ -69,7 +69,7 @@ Links to the admin panels needed to manage this project:
 * To upload to App Store:
 
     1. `npm run build:app`
-    2. Open project in Xcode (`platforms/ios/ScotDance.xcodeproj`)
+    2. Open project in Xcode (`platforms/ios/ScotDance.xcworkspace`)
     3. In the top menu, select "Product" > "Archive"
     4. Click "Distribute to iOS"
     5. Follow the wizard
