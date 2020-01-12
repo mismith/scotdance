@@ -88,7 +88,7 @@ export default {
         });
 
       if (firstPastEventIndex >= 0) {
-        timelineCompetitions.splice(firstPastEventIndex - 1, 0, {
+        timelineCompetitions.splice(firstPastEventIndex, 0, {
           [idKey]: '__NOW__',
         });
       }
