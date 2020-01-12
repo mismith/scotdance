@@ -104,7 +104,6 @@
           <template #title>
             <v-card-title class="title">
               <div class="flex">Submit your competition</div>
-              <v-icon color="secondary">mdi-vote</v-icon>
             </v-card-title>
           </template>
 
@@ -638,6 +637,7 @@ body {
 
   &:not(.handsontableEditor) {
     height: 100%; // height must also be defined at some point up the chain (e.g. .app-scroll-frame)
+    min-height: 240px; // for stacking blades on mobile
     overflow: hidden; // enables HotTable's scrolling
   }
 

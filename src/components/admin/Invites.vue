@@ -74,7 +74,7 @@
                 <v-icon>mdi-{{
                   FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED, FirebaseInvites.status.EXPIRED)
                   ? 'cancel'
-                  : 'mail-outline'
+                  : 'email-outline'
                 }}</v-icon>
               </v-list-item-avatar>
 

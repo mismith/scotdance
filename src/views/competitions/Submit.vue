@@ -102,7 +102,7 @@
 
     <div v-if="submitted" class="pa-4">
       <EmptyState
-        icon="mdi-mail-outline"
+        icon="mdi-email-outline"
         label="All done!"
         description="Expect a confirmation email in your inbox momentarily."
       >
