@@ -633,9 +633,9 @@ body {
 
 // tables
 .handsontable {
-  color: black; // stay reable when in darkMode
+  color: black; // stay readable when in darkMode
 
-  &:not(.handsontableEditor) {
+  &[id] {
     height: 100%; // height must also be defined at some point up the chain (e.g. .app-scroll-frame)
     min-height: 240px; // for stacking blades on mobile
     overflow: hidden; // enables HotTable's scrolling
