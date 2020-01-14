@@ -6,15 +6,16 @@ import '@mdi/font/css/materialdesignicons.css';
 
 Vue.use(Vuetify);
 
+const palette = {
+  primary: '#1976d2',
+  secondary: colors.pink,
+};
+
 export default new Vuetify({
   theme: {
     themes: {
-      light: {
-        secondary: colors.pink,
-      },
-      dark: {
-        secondary: colors.pink,
-      },
+      light: palette,
+      dark: palette,
     },
   },
 });
