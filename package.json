@@ -14,9 +14,10 @@
     "dev:android": "NODE_ENV=development npm run build && cordova emulate android",
     "dev:ios": "NODE_ENV=development npm run build && cordova emulate ios",
     "devices": "cordova run --list",
-    "build:android": "npm run build && cordova build android --release",
-    "build:app": "npm run build && cordova build --release",
+    "build:android:aab": "./platforms/android/gradlew bundle",
+    "build:android": "npm run build && cordova build android --release && npm run build:android:aab",
     "build:ios": "npm run build && cordova build ios --release",
+    "build:app": "npm run build && cordova build --release && npm run build:android:aab",
     "version": "node ./cordova-version.js",
     "release": "git commit -a -m $npm_package_version && git tag \"v${npm_package_version}\"",
     "deploy": "firebase deploy && git push origin master --tags"
