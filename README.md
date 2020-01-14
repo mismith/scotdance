@@ -82,6 +82,7 @@ Links to the admin panels needed to manage this project:
 
     1. Add both passwords in `build.json` (and save the file)
     2. `npm run build:app`
+    2. `cd platforms/android && ./gradlew bundle` to generate an .aab file (instead of apk)
     3. Revert/discard the two passwords added in `build.json`
     4. Open Google Play Console
     5. Create a new Production Release

@@ -1,5 +1,10 @@
 # Release Notes
 
+## 1.8.0 - Jan 12, 2020
+- add dark mode/theme (toggleable via Menu > App Settings), and upgrade entire UI framework
+- add various features and refinements to admin panel now that more competition submissions are coming in
+- fix and improve various bugs, styles, and layout issues like overflowing content being cut off on some devices
+
 ## 1.7.1 - Apr 14, 2019
 - results screen now auto-scrolls to live results as they appear
 - competitions listing now shows as a timeline instead of a boring list

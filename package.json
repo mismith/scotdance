@@ -1,6 +1,6 @@
 {
   "name": "scotdance",
-  "version": "1.7.1",
+  "version": "1.8.0",
   "description": "Highland dancing event tracker",
   "author": "Murray Smith <murray@mismith.info>",
   "scripts": {
@@ -40,6 +40,7 @@
     "deep-property": "^1.1.0",
     "fast-html-parser": "^1.0.1",
     "firebase": "^5.9.2",
+    "firebase-tools": "^7.12.0",
     "fuse.js": "^3.4.4",
     "handsontable": "^6.1.1",
     "lodash.find": "^4.6.0",
