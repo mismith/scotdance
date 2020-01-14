@@ -4,8 +4,8 @@
       v-if="loaded"
       v-persist-scroll="'/competitions'"
       class="app-scroll-frame app-scroll"
+      ref="scroller"
     >
-
       <v-timeline dense class="pr-3">
         <template v-for="competition in timelineCompetitions">
           <v-timeline-item
@@ -20,9 +20,11 @@
           <v-timeline-item
             v-if="competition[idKey] === '__NOW__'"
             :key="competition[idKey]"
+            id="now-marker"
             small
             color="secondary"
             class="now"
+            v-observe-visibility="handleNowVisibilityChange"
           >
             <v-chip color="secondary" small disabled style="opacity: 1;">Now</v-chip>
           </v-timeline-item>
@@ -44,6 +46,24 @@
     <div v-else class="app-scroll-frame">
       <Spinner />
     </div>
+
+    <transition :name="`slide-y${nowVisibility > 0 ? '-reverse' : ''}-transition`">
+      <v-btn
+        rounded
+        fixed
+        v-if="nowVisibility"
+        :top="nowVisibility < 0"
+        :bottom="nowVisibility > 0"
+        left
+        fab
+        small
+        color="accent"
+        style="opacity: 0.67; margin-left: 12px; margin-top: 65px;"
+        @click="handleNowClick"
+      >
+        <v-icon>mdi-chevron-{{nowVisibility > 0 ? 'down' : 'up'}}</v-icon>
+      </v-btn>
+    </transition>
   </div>
 </template>
 
@@ -62,6 +82,8 @@ export default {
       idKey,
 
       loaded: false,
+
+      nowVisibility: 0,
     };
   },
   computed: {
@@ -94,6 +116,19 @@ export default {
       }
 
       return timelineCompetitions;
+    },
+  },
+  methods: {
+    handleNowVisibilityChange(isVisible, { boundingClientRect: { top } }) {
+      const direction = top < 100 ? -1 : 1;
+      this.nowVisibility = isVisible ? 0 : direction;
+    },
+    handleNowClick() {
+      const element = document.getElementById('now-marker');
+      this.$scrollTo(element, {
+        container: this.$refs.scroller,
+        offset: -200,
+      });
     },
   },
   async created() {

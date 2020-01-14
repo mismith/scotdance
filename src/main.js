@@ -4,6 +4,7 @@ import VueAsyncComputed from 'vue-async-computed';
 import VueBodyClass from 'vue-body-class';
 import VueScrollTo from 'vue-scrollto';
 import { scroller } from 'vue-scrollto/src/scrollTo';
+import VueObserveVisibility from 'vue-observe-visibility';
 import moment from 'moment-mini';
 import 'simple-line-icons/css/simple-line-icons.css';
 
@@ -22,7 +23,6 @@ import Blades from '@/components/Blades.vue';
 import Blade from '@/components/Blade.vue';
 import Gravatar from '@/components/Gravatar.vue';
 
-
 // disable (amongst other things) vue-localstoreage verbose logging
 Vue.config.silent = true;
 
@@ -38,6 +38,7 @@ Vue.use(VueFire);
 Vue.use(VueAsyncComputed);
 Vue.use(VueBodyClass, router);
 Vue.use(VueScrollTo);
+Vue.use(VueObserveVisibility);
 
 const $scrollAll = (element, options = {}) => {
   const containers = options.container ? [options.container] : document.querySelectorAll('.app-scroll:not(.persist-scroll)');
