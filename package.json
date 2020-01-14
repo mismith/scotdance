@@ -1,6 +1,6 @@
 {
   "name": "scotdance",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "Highland dancing event tracker",
   "author": "Murray Smith <murray@mismith.info>",
   "scripts": {
@@ -14,7 +14,7 @@
     "dev:android": "NODE_ENV=development npm run build && cordova emulate android",
     "dev:ios": "NODE_ENV=development npm run build && cordova emulate ios",
     "devices": "cordova run --list",
-    "build:android:aab": "./platforms/android/gradlew bundle",
+    "build:android:aab": "cd platforms/android && ./gradlew bundle",
     "build:android": "npm run build && cordova build android --release && npm run build:android:aab",
     "build:ios": "npm run build && cordova build ios --release",
     "build:app": "npm run build && cordova build --release && npm run build:android:aab",
