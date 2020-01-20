@@ -358,6 +358,7 @@ export default {
               title: 'Dance',
               type: 'select',
               presets: this.dances.map(dance => ({ text: dance.$name, value: dance[idKey] })),
+              clearable: true,
             },
             {
               data: 'name',

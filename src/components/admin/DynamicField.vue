@@ -11,6 +11,7 @@
       :required="field.required"
       :readonly="field.readonly"
       :disabled="field.disabled"
+      :clearable="field.clearable"
       :hint="field.description"
       :rules="rules"
       @input="handleInput()"

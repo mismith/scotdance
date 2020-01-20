@@ -26,7 +26,11 @@
               <template #activator>
                 <v-subheader>
                   <div class="flex">{{ block.name }}</div>
-                  <div class="caption">{{ textify(block.description) }}</div>
+                  <div
+                    v-if="block.description"
+                    v-html="slugline(block.description)"
+                    class="caption text-truncate ml-3"
+                  />
                 </v-subheader>
               </template>
 
@@ -46,7 +50,7 @@
                 >
                   <v-list-item-content>
                     <v-list-item-title>{{ event.name }}</v-list-item-title>
-                    <v-list-item-subtitle>{{ textify(event.description) }}</v-list-item-subtitle>
+                    <v-list-item-subtitle v-html="slugline(event.description)" />
                   </v-list-item-content>
                   <v-icon v-if="event.dances || event.description">
                     mdi-chevron-right
@@ -113,21 +117,29 @@
                   <div class="flex">{{ getScheduleItemDanceName(dance, dances) }}</div>
                   <div
                     v-if="dance.description"
-                    v-html="dance.description"
-                    class="caption"
+                    v-html="slugline(dance.description)"
+                    class="caption text-truncate ml-3"
                   />
                 </v-subheader>
               </template>
 
-              <AdminPlatforms
-                :item="dance"
-                :groups="groups"
-                :dances="dances"
-                :dancers="dancers"
-                :staff="staff"
-                :platforms="platforms"
-                @item-click="handlePlatformClick($event, dance)"
-              />
+              <v-sheet>
+                <v-list-item
+                  v-if="dance.description"
+                  v-html="dance.description"
+                  class="pa-4 pre-line"
+                />
+                <AdminPlatforms
+                  v-if="dance.danceId"
+                  :item="dance"
+                  :groups="groups"
+                  :dances="dances"
+                  :dancers="dancers"
+                  :staff="staff"
+                  :platforms="platforms"
+                  @item-click="handlePlatformClick($event, dance)"
+                />
+              </v-sheet>
             </v-list-group>
             <v-list-item v-if="!currentEvent.dances && !currentEvent.description" class="empty">
               <v-list-item-avatar>
@@ -193,7 +205,7 @@ import {
   handleExpanded,
 } from '@/helpers/router';
 import {
-  textify,
+  slugline,
   findByIdKey,
   sortByKey,
   getScheduleItemDanceName,
@@ -270,7 +282,7 @@ export default {
     },
   },
   methods: {
-    textify,
+    slugline,
     findByIdKey,
     toOrderedArray,
     getScheduleItemDanceName,

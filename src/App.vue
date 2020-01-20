@@ -612,9 +612,14 @@ body {
 
       .v-list-group {
         .v-list-group__header {
-          .v-subheader {
+          > .v-subheader {
             flex: auto;
+            max-width: calc(100% - 48px); // @HACK: to avoid pushing the chevron offscreen
             padding: 0;
+
+            + .v-list-item__icon {
+              margin-left: 0;
+            }
           }
         }
       }

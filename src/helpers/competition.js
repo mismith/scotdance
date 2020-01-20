@@ -33,8 +33,8 @@ export function danceExtender(dance) {
   };
 }
 
-export function textify(html) {
-  return (html || '').replace(/<[^>]+?>/g, '').replace(/\n+/g, ' • ');
+export function slugline(html) {
+  return (html || '').split('\n')[0] || '';
 }
 
 export function isNotEmptyObject(item) {
