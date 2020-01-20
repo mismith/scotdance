@@ -326,6 +326,12 @@ export default {
               name: 'Premier',
             },
             {
+              name: 'Primary/Beginner/Novice',
+            },
+            {
+              name: 'Intermediate/Premier',
+            },
+            {
               name: 'Junior',
             },
             {
@@ -367,10 +373,10 @@ export default {
             {
               name: 'Registration',
             },
+            ...this.dances.map(dance => ({ danceId: dance[idKey] })),
             {
               name: 'Results',
             },
-            ...this.dances.map(dance => ({ danceId: dance[idKey] })),
           ],
           size: 9,
         },
