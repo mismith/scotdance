@@ -20,7 +20,7 @@
     "build:app": "npm run build && cordova build --release && npm run build:android:aab",
     "version": "node ./cordova-version.js",
     "release": "git commit -a -m $npm_package_version && git tag \"v${npm_package_version}\"",
-    "deploy": "firebase deploy && git push origin master --tags"
+    "deploy": "firebase deploy && git push origin HEAD:master --tags"
   },
   "dependencies": {
     "@handsontable/vue": "^2.0.0",
