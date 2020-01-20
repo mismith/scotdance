@@ -33,7 +33,14 @@
         @submit="changePassword"
       >
         <template #activator="{ on }">
-          <v-btn v-on="on" color="primary" class="mx-0">Change Password</v-btn>
+          <v-text-field
+            label="Password *"
+            type="password"
+            value="********"
+            readonly
+            append-icon="mdi-pencil"
+            @click:append="on.click"
+          />
         </template>
 
         <v-text-field
