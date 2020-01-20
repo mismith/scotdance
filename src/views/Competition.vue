@@ -90,7 +90,7 @@
         <v-card-text
           v-if="currentDialogData && currentDialogData.description"
           v-html="currentDialogData.description"
-          class="pre-line alt"
+          class="pre-line alt pt-3"
         />
       </template>
     </DialogCard>

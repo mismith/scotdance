@@ -55,9 +55,7 @@
             :value="true"
           >
             <template #activator>
-              <v-subheader>
-                {{ step.name }}
-              </v-subheader>
+              <v-subheader>{{ step.name }}</v-subheader>
             </template>
 
             <v-list>
