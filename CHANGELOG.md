@@ -1,5 +1,13 @@
 # Release Notes
 
+## 1.8.2 - Jan 20, 2020
+- add scrolling markers to competitons lists to make it easier to find "Now"
+- various minor UI fixes and improvements like: schedule platforms, admin presets, judge listings
+- reworked "Change Password" button to be more user-friendly (thanks to user feedback)
+
+## 1.8.1 - Jan 13, 2020
+- fix some minor bugs introduced in the previous release
+
 ## 1.8.0 - Jan 12, 2020
 - add dark mode/theme (toggleable via Menu > App Settings), and upgrade entire UI framework
 - add various features and refinements to admin panel now that more competition submissions are coming in
