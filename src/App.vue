@@ -10,7 +10,7 @@
     >
       <v-btn icon @click="menuVisible = !menuVisible">
         <v-badge v-model="needsUpdating" overlap color="secondary" class="blip">
-          <template #badge>&nbsp;</template>
+          <template #badge><span /></template>
           <v-icon>mdi-menu</v-icon>
         </v-badge>
       </v-btn>

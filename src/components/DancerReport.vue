@@ -24,7 +24,7 @@
             :place="getPlace(dancer, group, dance)"
             :to="{ name: 'competition.results', params: { groupId: group[idKey], danceId: dance[idKey] } }"
           >
-            <template #avatar />
+            <template #avatar><span /></template>
             {{ dance.$name }}
           </ResultListItem>
 
@@ -34,7 +34,7 @@
             :place="getPlace(dancer, group, overall)"
             :to="{ name: 'competition.results', params: { groupId: group[idKey], danceId: overall[idKey] } }"
           >
-            <template #avatar />
+            <template #avatar><span /></template>
             {{ overall.$name }}
           </ResultListItem>
 

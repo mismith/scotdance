@@ -93,11 +93,12 @@
               :dancer="member"
               @click="setCurrentDialog(['staff', member])"
             >
-              <template #favorite />
+              <template #favorite><span /></template>
               <template #avatar>
                 <v-list-item-avatar v-if="member.image">
                   <img :src="member.image" />
                 </v-list-item-avatar>
+                <span v-else />
               </template>
             </DancerListItem>
           </v-list>
