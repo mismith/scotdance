@@ -9,8 +9,7 @@
       :class="{ stripes: env !== 'production' }"
     >
       <v-btn icon @click="menuVisible = !menuVisible">
-        <v-badge v-model="needsUpdating" overlap color="secondary" class="blip">
-          <template #badge><span /></template>
+        <v-badge v-model="needsUpdating" content="1" color="secondary">
           <v-icon>mdi-menu</v-icon>
         </v-badge>
       </v-btn>
@@ -195,13 +194,14 @@
 
             <PromptToUpdate v-if="needsUpdating">
               <template #activator="{ on }">
-                <v-list-item v-on="on" color="secondary" class="v-list-item--active">
+                <v-list-item v-on="on">
                   <v-list-item-avatar>
-                    <v-icon color="secondary">mdi-new-box</v-icon>
+                    <v-icon>mdi-new-box</v-icon>
                   </v-list-item-avatar>
                   <v-list-item-content>
                     <v-list-item-title>Update App</v-list-item-title>
                   </v-list-item-content>
+                  <v-badge inline content="1" color="secondary" />
                 </v-list-item>
               </template>
             </PromptToUpdate>
@@ -622,15 +622,6 @@ body {
             }
           }
         }
-      }
-    }
-  }
-  .v-badge {
-    &.blip {
-      .v-badge__badge {
-        min-width: 12px;
-        height: 12px;
-        font-size: 0;
       }
     }
   }
