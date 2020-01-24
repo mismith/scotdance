@@ -40,7 +40,7 @@
         </div>
 
         <v-bottom-navigation
-          v-if="!isAdminRoute"
+          v-if="!isAdminRoute && !isSecretRoute"
           v-model="$root.currentTab"
           class="listed-only"
         >
@@ -155,18 +155,26 @@ export default {
       return this.$store.getters.hasPermission(`competitions/${this.competitionId}`);
     },
     hasPermission() {
-      return this.$root.currentTab === 'info'
-        || this.$route.name === 'competition.invite'
+      return this.isAdmin
         || this.competition.published
-        || this.isAdmin;
+        || this.isSecretRoute
+        || this.isPublicRoute;
+    },
+    isPublicRoute() {
+      return this.$route.name === 'competition.info';
+    },
+    isSecretRoute() {
+      return this.$route.name === 'competition.invite';
     },
     isAdminRoute() {
-      return this.$route.name.indexOf('.admin.') >= 0 || this.$route.name === 'competition.invite';
+      return this.$route.name.includes('.admin.');
     },
     competitionExists() {
-      return this.competition
-        && (this.competition['.value'] !== null || this.isAdminRoute)
-        && (this.competition.listed || this.isAdmin);
+      if (!this.isAdmin) {
+        if (this.competition['.value'] !== undefined) return false;
+        if (!this.competition.listed) return this.isSecretRoute;
+      }
+      return true;
     },
 
     sections() {

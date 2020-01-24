@@ -18,14 +18,14 @@
           "staff": {
             ".read": true
           },
-          ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true || root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // is PUBLISHED || has PERMISSION
-          ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // has PERMISSION
           "invites": {
             "$inviteId": {
               ".read": "auth !== null", // is AUTHED
               ".write": "auth !== null" // is AUTHED
             }
-          }
+          },
+          ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true || root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // is PUBLISHED || has PERMISSION
+          ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true" // has PERMISSION
         }
       },
       "competitions:submissions": {
