@@ -35,7 +35,7 @@
         <AdminInvites v-else-if="inTabs('permissions')" v-bind="$props" />
 
         <v-spacer />
-        <div v-if="inTabs('general')" class="d-flex align-center justify-center flex-none">
+        <div v-if="inTabs('general')" class="d-flex align-center justify-center flex-none pa-3">
           <v-btn text color="error" @click="confirmRemove = true">
             Delete Competition
           </v-btn>
