@@ -122,7 +122,7 @@ import {
   mapState,
   mapMutations,
 } from 'vuex';
-import { HotTable } from '@/helpers/admin';
+import { HotTable, licenseHot } from '@/helpers/admin';
 import { findByIdKey } from '@/helpers/competition';
 import {
   findGroupDances,
@@ -200,7 +200,7 @@ export default {
         };
       });
 
-      return {
+      return licenseHot({
         colHeaders: true,
         rowHeaders: true,
         stretchH: 'all',
@@ -219,7 +219,7 @@ export default {
           }
           return true;
         },
-      };
+      });
     },
   },
   watch: {

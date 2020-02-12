@@ -23,7 +23,7 @@
     "deploy": "firebase deploy && git push origin HEAD:master --tags"
   },
   "dependencies": {
-    "@handsontable/vue": "^2.0.0",
+    "@handsontable/vue": "^4.1.1",
     "@mdi/font": "^4.5.95",
     "@mismith/firebase-tools": "^1.4.0",
     "@outluch/v-file": "^1.0.0",
@@ -44,7 +44,7 @@
     "firebase": "^7.6.2",
     "firebase-tools": "^7.12.0",
     "fuse.js": "^3.4.4",
-    "handsontable": "^6.1.1",
+    "handsontable": "^7.3.0",
     "lodash.find": "^4.6.0",
     "lodash.groupby": "^4.6.0",
     "lodash.sortby": "^4.7.0",
