@@ -578,6 +578,8 @@ body {
   }
   .v-subheader {
     flex: none;
+    height: auto;
+    min-height: 48px;
 
     .v-btn {
       margin-right: -8px;
