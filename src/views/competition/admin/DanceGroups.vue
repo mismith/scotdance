@@ -283,9 +283,10 @@ export default {
           return b;
         };
         const dancerNumbers = this.currentGroupDancers.map(dancer => dancer.number);
+        const shouldShuffle = dance => !/(^| )Reel( |$)/i.test(dance.name);
         const draws = this.currentGroupDances.reduce((acc, dance) => ({
           ...acc,
-          [dance[idKey]]: shuffle(dancerNumbers),
+          [dance[idKey]]: shouldShuffle(dance) ? shuffle(dancerNumbers) : dancerNumbers,
         }), {});
 
         this.handleResetCurrentGroupDraws(); // wipe existing data first
