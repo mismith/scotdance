@@ -1,7 +1,9 @@
+import Vue from 'vue';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.css';
 import flatten from 'obj-flatten';
 import { idKey } from '@/helpers/firebase';
+import ImageUploaderCellRenderer from '@/components/admin/ImageUploaderCellRenderer.vue';
 
 export * from '@handsontable/vue';
 export { Handsontable };
@@ -18,6 +20,39 @@ Handsontable.cellTypes.registerCellType('textarea', {
       `<div style="max-width: 300px; max-width: 33vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${Handsontable.helper.stringify(value)}</div>`,
       cellProperties,
     ]);
+  },
+  editor: Handsontable.editors.TextEditor,
+});
+
+Handsontable.cellTypes.registerCellType('image', {
+  renderer(...args) {
+    const [hotInstance, td, row, col, prop, value, cellProperties] = args;
+    Handsontable.renderers.BaseRenderer.apply(this, args);
+
+    // skip re-rendering if value doesn't change
+    if (typeof td.hotValue !== 'undefined' && td.hotValue === value) return;
+    td.hotValue = value;
+
+    // empty old contents and add new element to render to
+    while (td.firstChild) td.firstChild.remove();
+    const el = document.createElement('div');
+    td.appendChild(el);
+
+    // eslint-disable-next-line no-new
+    new Vue({
+      el,
+      render: h => h(ImageUploaderCellRenderer, {
+        props: {
+          hotInstance,
+          td,
+          row,
+          col,
+          prop,
+          value,
+          cellProperties,
+        },
+      }),
+    });
   },
   editor: Handsontable.editors.TextEditor,
 });

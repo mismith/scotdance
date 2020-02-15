@@ -125,7 +125,7 @@ export default {
         {
           data: 'image',
           title: 'Image',
-          // type: 'image',
+          type: 'image',
         },
         {
           data: 'website',
