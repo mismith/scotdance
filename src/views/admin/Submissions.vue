@@ -91,15 +91,15 @@
             </div>
             <v-spacer />
             <div class="pa-4" style="text-align: right;">
-                <v-btn
-                  v-if="!currentSubmission.approvedBy"
-                  color="primary"
-                  :loading="currentSubmission.approved"
-                  @click="handleApprove"
-                  class="ma-0"
-                >
-                  Approve
-                </v-btn>
+              <v-btn
+                v-if="!currentSubmission.approvedBy"
+                color="primary"
+                :loading="currentSubmission.approved"
+                @click="handleApprove"
+                class="ma-0"
+              >
+                Approve
+              </v-btn>
               <template v-else>
                 <div>
                   Approval Time:
@@ -112,10 +112,10 @@
               </template>
             </div>
           </div>
-          <div v-if="currentSubmission.competitionId" class="pt-0 px-4 pb-4" style="text-align: right;">
+          <div v-if="currentSubmission.competitionId" class="pt-0 px-2 pb-2" style="text-align: right;">
             <v-btn
               :to="{ name: 'competition.info', params: { competitionId: currentSubmission.competitionId } }"
-              class="mr-2"
+              class="ma-2"
             >
               View Competition
             </v-btn>
@@ -123,6 +123,7 @@
               v-if="currentSubmission.competitionId"
               color="primary"
               :to="{ name: 'competition.admin.info', params: { competitionId: currentSubmission.competitionId } }"
+              class="ma-2"
             >
               Administer Competition
             </v-btn>
