@@ -72,7 +72,7 @@
     <DialogCard v-model="staffVisible">
       <template #title>
         <v-card-title v-if="currentDialogData" class="d-flex flex-wrap">
-          <v-avatar v-if="currentDialogData.image" :size="100" class="mr-4">
+          <v-avatar v-if="currentDialogData.image" :size="100" color="white" class="mr-4">
             <img :src="currentDialogData.image" />
           </v-avatar>
           <div class="flex">

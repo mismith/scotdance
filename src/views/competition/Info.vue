@@ -95,7 +95,7 @@
             >
               <template #favorite><span /></template>
               <template #avatar>
-                <v-list-item-avatar v-if="member.image">
+                <v-list-item-avatar v-if="member.image" color="white">
                   <img :src="member.image" />
                 </v-list-item-avatar>
                 <span v-else />
