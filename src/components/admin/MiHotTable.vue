@@ -1,5 +1,5 @@
 <template>
-  <HotTable :settings="augmentHot(settings)" :data="clonedData" class="MiHotTable" />
+  <HotTable :settings="hotSettings" :data="clonedData" class="MiHotTable" />
 </template>
 
 <script>
@@ -19,8 +19,11 @@ export default {
     data: Array,
   },
   computed: {
+    hotSettings() {
+      return this.augmentHot(this.settings);
+    },
     clonedData() {
-      const data = this.data || (this.settings && this.settings.data);
+      const data = this.data || (this.hotSettings && this.hotSettings.data);
       if (Array.isArray(data)) {
         return [...data];
       }

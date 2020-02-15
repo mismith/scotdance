@@ -120,6 +120,7 @@ export default {
         {
           data: 'description',
           title: 'Description',
+          type: 'textarea',
         },
         {
           data: 'image',
@@ -411,6 +412,7 @@ export default {
         {
           data: 'description',
           title: 'Description',
+          type: 'textarea',
         },
       ],
     },

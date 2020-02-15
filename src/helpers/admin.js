@@ -6,6 +6,22 @@ import { idKey } from '@/helpers/firebase';
 export * from '@handsontable/vue';
 export { Handsontable };
 
+Handsontable.cellTypes.registerCellType('textarea', {
+  renderer(...args) {
+    const [hotInstance, td, row, col, prop, value, cellProperties] = args;
+    Handsontable.renderers.HtmlRenderer.apply(this, [
+      hotInstance,
+      td,
+      row,
+      col,
+      prop,
+      `<div style="max-width: 300px; max-width: 33vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${Handsontable.helper.stringify(value)}</div>`,
+      cellProperties,
+    ]);
+  },
+  editor: Handsontable.editors.TextEditor,
+});
+
 export function makeKeyValuePairColumn(column, valueProp = '$name', keyProp = idKey) {
   return {
     ...column,
