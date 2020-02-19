@@ -1,10 +1,6 @@
 <template>
   <div class="Competitions app-scroll-frame">
-    <router-view
-      :competitions="competitions"
-      :competitions-ref="competitionsRef"
-      :competitions-data-ref="competitionsDataRef"
-    />
+    <router-view v-bind="$props" />
   </div>
 </template>
 

@@ -70,18 +70,14 @@ import AdminInvites from '@/components/admin/Invites.vue';
 export default {
   name: 'AdminInfo',
   props: {
-    competitionId: String,
-    subsectionId: String,
-    competitionRef: {
-      type: Object,
-      required: true,
-    },
-    competitionDataRef: {
-      type: Object,
-      required: true,
-    },
-    section: Object,
+    competitions: Array,
+    competitionsRef: Object,
     competition: Object,
+    competitionRef: Object,
+    competitionDataRef: Object,
+    competitionId: String,
+    section: Object,
+    subsectionId: String,
   },
   data() {
     return {

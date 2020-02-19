@@ -227,12 +227,18 @@ export default new Router({
           name: 'admin.submissions',
           component: AdminSubmissions,
           props: true,
+          meta: {
+            title: 'Submissions',
+          },
         },
         {
           path: 'users/:userId?',
           name: 'admin.users',
           component: AdminUsers,
           props: true,
+          meta: {
+            title: 'Users',
+          },
         },
         {
           path: ':tab',

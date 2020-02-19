@@ -12,10 +12,10 @@
         <router-view
           v-if="hasPermission"
           v-bind="{
-            competitionId,
+            ...$props,
+            competition,
             competitionRef,
             competitionDataRef,
-            competition,
             dancers,
             groups,
             categories,
@@ -121,9 +121,10 @@ import competitionSchema from '@/schemas/competition';
 export default {
   name: 'Competition',
   props: {
-    competitionId: String,
+    competitions: Array,
     competitionsRef: Object,
     competitionsDataRef: Object,
+    competitionId: String,
   },
   data() {
     return {

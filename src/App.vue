@@ -452,6 +452,7 @@ a {
     &::after {
       content: '\2197\00FE0E'; // append \00FE0E to prevent iOS/Android from emojifying the arrow
       margin-left: 0.25em;
+      text-decoration: none;
     }
   }
 }
@@ -466,13 +467,14 @@ a {
   opacity: 0.5;
 }
 .dot-divided {
-  > span {
-    &:not(:last-child) {
-      &::after {
+  > * {
+    &:not(:first-child) {
+      &::before {
         content: '•';
         display: inline-block;
         margin-left: 0.25em;
         margin-right: 0.25em;
+        text-decoration: none;
       }
     }
   }

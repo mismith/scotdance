@@ -128,16 +128,13 @@ const AdminImport = () => import(/* webpackChunkName: "AdminImport" */ '@/compon
 export default {
   name: 'CompetitionAdmin',
   props: {
+    competitions: Array,
+    competitionsRef: Object,
+    competitionsDataRef: Object,
     competitionId: String,
-    competitionRef: {
-      type: Object,
-      required: true,
-    },
-    competitionDataRef: {
-      type: Object,
-      required: true,
-    },
     competition: Object,
+    competitionRef: Object,
+    competitionDataRef: Object,
     dancers: Array,
     groups: Array,
     categories: Array,

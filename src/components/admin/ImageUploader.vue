@@ -1,6 +1,6 @@
 <template>
   <div class="ImageUploader">
-    <v-card hover max-width="300" class="flex-column align-center my-2">
+    <v-card hover max-width="300" class="flex-column justify-center align-center my-2">
       <v-progress-linear v-show="progress" v-model="progress" absolute />
       <img v-if="preview || value" :src="preview || value" :style="{ opacity: progress ? 0.25 : 1 }" />
       <div v-else class="d-flex flex-column align-center pa-4">
@@ -51,7 +51,7 @@ export default {
   }
   .v-card {
     position: relative;
-    min-height: 100px;
+    min-height: 48px;
     overflow: hidden;
 
     img {
