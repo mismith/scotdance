@@ -8,6 +8,8 @@
 export default {
   name: 'Competitions',
   props: {
+    series: Array,
+    seriesRef: Object,
     competitions: Array,
     competitionsRef: Object,
     competitionsDataRef: Object,

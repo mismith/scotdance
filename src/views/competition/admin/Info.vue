@@ -6,8 +6,10 @@
   >
     <template #form="{ currentSubsection }">
       <template v-if="currentSubsection">
+        <AdminSeries v-if="inTabs('series')" v-bind="$props" />
+        <AdminInvites v-else-if="inTabs('permissions')" v-bind="$props" />
         <MiHotTable
-          v-if="currentSubsection.hot"
+          v-else-if="currentSubsection.hot"
           :settings="currentSubsection.hot"
           :data="toOrderedArray(competition[subsectionId])"
           @change="handleInfoSubsectionChanges"
@@ -19,7 +21,6 @@
           class="pa-4"
           @field-change="handleInfoChanges"
         />
-        <AdminInvites v-else-if="inTabs('permissions')" v-bind="$props" />
 
         <v-spacer />
         <div v-if="inTabs('general')" class="d-flex align-center justify-center flex-none pa-3">
@@ -51,11 +52,14 @@ import { idKey, toOrderedArray } from '@/helpers/firebase';
 import AdminSubsections from '@/components/admin/Subsections.vue';
 import MiHotTable from '@/components/admin/MiHotTable.vue';
 import DynamicForm from '@/components/admin/DynamicForm.vue';
+import AdminSeries from '@/components/admin/Series.vue';
 import AdminInvites from '@/components/admin/Invites.vue';
 
 export default {
   name: 'CompetitionAdminInfo',
   props: {
+    series: Array,
+    seriesRef: Object,
     competitions: Array,
     competitionsRef: Object,
     competition: Object,
@@ -104,6 +108,7 @@ export default {
     AdminSubsections,
     MiHotTable,
     DynamicForm,
+    AdminSeries,
     AdminInvites,
   },
 };

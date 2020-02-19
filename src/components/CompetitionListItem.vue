@@ -8,12 +8,19 @@
       stripes: !competition.listed,
     }"
   >
-    <v-list-item-avatar v-if="competition.image" color="white">
-      <img :src="competition.image" role="presentation" />
+    <v-list-item-avatar v-if="competition.$image" color="white">
+      <img :src="competition.$image" role="presentation" />
     </v-list-item-avatar>
 
     <v-list-item-content>
-      <v-list-item-title>{{ competition.name }}</v-list-item-title>
+      <v-list-item-title class="dot-divided">
+        <span>{{ competition.name }}</span>
+        <span
+          v-if="competition.$serie"
+          v-text="competition.$serie.$name"
+          class="serie-name"
+        />
+      </v-list-item-title>
       <v-list-item-subtitle class="dot-divided">
         <span v-if="competition.date">{{ $moment(competition.date).format('MMM D, YYYY') }}</span>
         <span v-if="competition.location">{{ competition.location }}</span>
@@ -22,14 +29,16 @@
 
     <slot />
 
-    <v-list-item-action v-if="$store.getters.hasPermission(`competitions/${competition[idKey]}`)">
-      <v-btn
-        icon
-        :to="{ name: 'competition.admin.info', params: { competitionId: competition[idKey] } }"
-      >
-        <v-icon>{{ mdiPencil }}</v-icon>
-      </v-btn>
-    </v-list-item-action>
+    <slot name="action">
+      <v-list-item-action v-if="$store.getters.hasPermission(`competitions/${competition[idKey]}`)">
+        <v-btn
+          icon
+          :to="{ name: 'competition.admin.info', params: { competitionId: competition[idKey] } }"
+        >
+          <v-icon>{{ mdiPencil }}</v-icon>
+        </v-btn>
+      </v-list-item-action>
+    </slot>
 
     <slot name="append" />
   </v-list-item>

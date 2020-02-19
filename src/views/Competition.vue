@@ -110,6 +110,7 @@ import {
 import {
   sortByKey,
   groupExtender,
+  competitionExtender,
   danceExtender,
   dancerExtender,
   isNotEmptyObject,
@@ -124,6 +125,8 @@ import competitionSchema from '@/schemas/competition';
 export default {
   name: 'Competition',
   props: {
+    series: Array,
+    seriesRef: Object,
     competitions: Array,
     competitionsRef: Object,
     competitionsDataRef: Object,
@@ -188,7 +191,7 @@ export default {
     },
 
     competition() {
-      return this.competitionRaw;
+      return competitionExtender(this.competitionRaw, this.series, this.$store);
     },
     dancers() {
       return this.dancersRaw

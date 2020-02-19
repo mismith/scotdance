@@ -9,6 +9,8 @@ import Home from '@/views/Home.vue';
 import Settings from '@/views/Settings.vue';
 import Profile from '@/views/Profile.vue';
 
+import Series from '@/views/Series.vue';
+
 import Competitions from '@/views/Competitions.vue';
 import CompetitionsList from '@/views/competitions/List.vue';
 import CompetitionsSubmit from '@/views/competitions/Submit.vue';
@@ -54,6 +56,15 @@ export default new Router({
       component: Settings,
       meta: {
         title: 'App Settings',
+      },
+    },
+    {
+      path: '/series/:serieId?',
+      component: Series,
+      name: 'series',
+      props: true,
+      meta: {
+        title: 'Series',
       },
     },
     {
@@ -151,7 +162,7 @@ export default new Router({
                   redirect: 'info/general',
                 },
                 {
-                  path: 'info/:subsectionId?',
+                  path: 'info/:subsectionId?/:itemId?',
                   name: 'competition.admin.info',
                   component: CompetitionAdminInfo,
                   props: true,
