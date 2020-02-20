@@ -4,7 +4,7 @@
       <div v-if="submissions.length" class="app-scroll-frame app-scroll">
         <v-list v-if="loaded" two-line>
           <v-list-item
-            v-for="submission in submissions"
+            v-for="submission in orderedSubmissions"
             :key="submission[idKey]"
             :to="{ name: $route.name, params: { submissionId: submission[idKey] } }"
           >
@@ -164,6 +164,11 @@ export default {
     };
   },
   computed: {
+    orderedSubmissions() {
+      const orderedSubmissions = [...this.submissions];
+      orderedSubmissions.reverse();
+      return orderedSubmissions;
+    },
     currentSubmission() {
       if (this.submissionId) {
         return this.submissions.find(submission => submission[idKey] === this.submissionId);
