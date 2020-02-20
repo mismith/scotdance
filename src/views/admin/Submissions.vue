@@ -9,7 +9,7 @@
             :to="{ name: $route.name, params: { submissionId: submission[idKey] } }"
           >
             <v-list-item-avatar :color="submission.approved ? 'primary' : 'secondary'">
-              <v-icon>mdi-{{ submission.approved ? 'check' : 'alert-decagram' }}</v-icon>
+              <v-icon>mdi-{{ submission.approved ? 'check' : 'new-box' }}</v-icon>
             </v-list-item-avatar>
 
             <v-list-item-content>
