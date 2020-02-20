@@ -1,136 +1,138 @@
 <template>
   <Blades class="AdminSchedule" stacks>
     <template v-for="(blade, index) in blades">
-      <Blade
-        :key="blade.collection"
-        id="blade-root"
-        v-if="blade.parent()"
-        class="col-md-3 app-scroll alt"
-      >
-        <BladeToolbar
-          v-if="index >= 1 && blade.item()"
-          :to="getBladeRoute(blade.params())"
-          :text="blades[index - 1].name(blades[index - 1].item())"
-          class="hidden-sm-and-down"
-        />
-        <v-subheader class="d-flex">
-          <div class="flex" style="text-transform: capitalize;">
-            {{ blade.collection }}
-          </div>
-
-          <PresetPicker
-            v-if="blade.presets"
-            :presets="blade.presets"
-            :prop="blade.name"
-            @select="items => items.map(item => handleListItemCreate(blade, item))"
-          >
-            <template #activator="{ on: picker }">
-              <v-tooltip bottom>
-                <template #activator="{ on: tooltip }">
-                  <v-btn icon class="mx-1" v-on="Object.assign({}, tooltip, picker)">
-                    <v-icon>mdi-playlist-plus</v-icon>
-                  </v-btn>
-                </template>
-                <span>Add preset(s)</span>
-              </v-tooltip>
-            </template>
-          </PresetPicker>
-
-          <v-tooltip bottom>
-            <template #activator="{ on }">
-              <v-btn v-on="on" icon @click="handleListItemCreate(blade)">
-                <v-icon>mdi-plus</v-icon>
-              </v-btn>
-            </template>
-            <span>Add new item</span>
-          </v-tooltip>
-        </v-subheader>
-        <v-list avatar>
-          <draggable
-            :value="blade.items()"
-            class="draggable"
-            handle=".sortable-handle"
-            @sort="handleListItemReorder(blade, $event)"
-          >
-            <v-slide-y-transition group hide-on-leave>
-              <v-list-item
-                v-for="item in blade.items()"
-                :key="item[idKey]"
-                :to="getBladeRoute(blade.params(item[idKey]))"
-              >
-                <v-icon class="sortable-handle">mdi-drag-vertical</v-icon>
-                <v-list-item-content>
-                  <v-list-item-title>{{ blade.name(item) }}</v-list-item-title>
-                </v-list-item-content>
-                <v-icon>mdi-chevron-right</v-icon>
-              </v-list-item>
-            </v-slide-y-transition>
-          </draggable>
-
-          <v-list-item v-if="!blade.items().length" class="empty">
-            <v-list-item-avatar>
-              <v-icon>mdi-close</v-icon>
-            </v-list-item-avatar>
-            <v-list-item-content>
-              No items yet.
-              <PresetPicker
-                v-if="blade.presets"
-                :presets="blade.presets"
-                :prop="blade.name"
-                @select="items => items.map(item => handleListItemCreate(blade, item))"
-              >
-                <template #activator="{ on }">
-                  <a v-on="on">Add one.</a>
-                </template>
-              </PresetPicker>
-              <a v-else @click="handleListItemCreate(blade)">Add one.</a>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
-      </Blade>
-      <Blade
-        :key="blade.collection"
-        v-if="blade.item()"
-        :id="`blade-${blade.id()}`"
-        :class="`col-md-${blade.size || 6} app-scroll`"
-      >
-        <form @submit.prevent class="pa-4">
-          <DynamicField
-            v-for="field in blade.fields"
-            :key="field.data"
-            :field="field"
-            :data="blade.item()"
-            @change="handleListItemUpdate(blade, blade.id(), blade.item())"
+      <v-fade-transition :key="blade.collection">
+        <Blade
+          v-if="blade.parent()"
+          :id="`blade-${blade.collection}`"
+          class="col-md-3 app-scroll alt"
+        >
+          <BladeToolbar
+            v-if="index >= 1 && blade.item()"
+            :to="getBladeRoute(blade.params())"
+            :text="blades[index - 1].name(blades[index - 1].item())"
+            class="hidden-sm-and-down"
           />
-          <AdminPlatforms
-            v-if="blade.collection === 'dances' && currentDance.danceId"
-            :path="currentPath"
-            :item="currentDance"
-            :platforms="platforms"
-            :groups="groups"
-            :dances="dances"
-            :dancers="dancers"
-            :staff="staff"
-            @change="handlePlatformChanges"
-          />
-        </form>
+          <v-subheader class="d-flex">
+            <div class="flex" style="text-transform: capitalize;">
+              {{ blade.collection }}
+            </div>
 
-        <v-spacer />
-        <footer class="d-flex align-center justify-center flex-none pa-3">
-          <v-btn
-            v-if="getPrevBlade(blade)"
-            :disabled="getPrevBlade(blade).items().length < 2"
-            text
-            color="primary"
-            @click="handleListItemMove(blade, getPrevBlade(blade))"
-          >
-            Move Item
-          </v-btn>
-          <v-btn text color="error" @click="handleListItemRemove(blade)">
-            Delete Item
-          </v-btn>
-        </footer>
-      </Blade>
+            <PresetPicker
+              v-if="blade.presets"
+              :presets="blade.presets"
+              :prop="blade.name"
+              @select="items => items.map(item => handleListItemCreate(blade, item))"
+            >
+              <template #activator="{ on: picker }">
+                <v-tooltip bottom>
+                  <template #activator="{ on: tooltip }">
+                    <v-btn icon class="mx-1" v-on="Object.assign({}, tooltip, picker)">
+                      <v-icon>mdi-playlist-plus</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>Add preset(s)</span>
+                </v-tooltip>
+              </template>
+            </PresetPicker>
+
+            <v-tooltip bottom>
+              <template #activator="{ on }">
+                <v-btn v-on="on" icon @click="handleListItemCreate(blade)">
+                  <v-icon>mdi-plus</v-icon>
+                </v-btn>
+              </template>
+              <span>Add new item</span>
+            </v-tooltip>
+          </v-subheader>
+          <v-list avatar>
+            <draggable
+              :value="blade.items()"
+              class="draggable"
+              handle=".sortable-handle"
+              @sort="handleListItemReorder(blade, $event)"
+            >
+              <v-slide-y-transition group hide-on-leave>
+                <v-list-item
+                  v-for="item in blade.items()"
+                  :key="item[idKey]"
+                  :to="getBladeRoute(blade.params(item[idKey]))"
+                >
+                  <v-icon class="sortable-handle">mdi-drag-vertical</v-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>{{ blade.name(item) }}</v-list-item-title>
+                  </v-list-item-content>
+                  <v-icon>mdi-chevron-right</v-icon>
+                </v-list-item>
+              </v-slide-y-transition>
+            </draggable>
+
+            <v-list-item v-if="!blade.items().length" class="empty">
+              <v-list-item-avatar>
+                <v-icon>mdi-close</v-icon>
+              </v-list-item-avatar>
+              <v-list-item-content>
+                No items yet.
+                <PresetPicker
+                  v-if="blade.presets"
+                  :presets="blade.presets"
+                  :prop="blade.name"
+                  @select="items => items.map(item => handleListItemCreate(blade, item))"
+                >
+                  <template #activator="{ on }">
+                    <a v-on="on">Add one.</a>
+                  </template>
+                </PresetPicker>
+                <a v-else @click="handleListItemCreate(blade)">Add one.</a>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list>
+        </Blade>
+      </v-fade-transition>
+      <v-fade-transition :key="blade.collection">
+        <Blade
+          v-if="blade.item()"
+          :id="`blade-${blade.id()}`"
+          :class="`col-md-${blade.size || 6} app-scroll`"
+        >
+          <form @submit.prevent class="pa-4">
+            <DynamicField
+              v-for="field in blade.fields"
+              :key="field.data"
+              :field="field"
+              :data="blade.item()"
+              @change="handleListItemUpdate(blade, blade.id(), blade.item())"
+            />
+            <AdminPlatforms
+              v-if="blade.collection === 'dances' && currentDance.danceId"
+              :path="currentPath"
+              :item="currentDance"
+              :platforms="platforms"
+              :groups="groups"
+              :dances="dances"
+              :dancers="dancers"
+              :staff="staff"
+              @change="handlePlatformChanges"
+            />
+          </form>
+
+          <v-spacer />
+          <footer class="d-flex align-center justify-center flex-none pa-3">
+            <v-btn
+              v-if="getPrevBlade(blade)"
+              :disabled="getPrevBlade(blade).items().length < 2"
+              text
+              color="primary"
+              @click="handleListItemMove(blade, getPrevBlade(blade))"
+            >
+              Move Item
+            </v-btn>
+            <v-btn text color="error" @click="handleListItemRemove(blade)">
+              Delete Item
+            </v-btn>
+          </footer>
+        </Blade>
+      </v-fade-transition>
     </template>
     <Blade v-if="!currentDay" class="col-md-9">
       <EmptyState
@@ -416,9 +418,14 @@ export default {
   },
   watch: {
     currentPath: {
-      async handler(currentPath) {
+      async handler(currentPath, previousPath) {
+        const pathPieces = currentPath.split('/');
+        if (!pathPieces.length >= 2) return;
+        const id = (currentPath || '').length > (previousPath || '').length
+          ? pathPieces[pathPieces.length - 1]
+          : pathPieces[pathPieces.length - 2];
+
         await this.$nextTick();
-        const id = currentPath ? this.competitionDataRef.child(currentPath).key : 'root';
         const element = document.getElementById(`blade-${id}`);
         this.$scrollTo(element, {
           container: this.$el,
