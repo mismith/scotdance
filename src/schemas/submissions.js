@@ -26,7 +26,7 @@ export const submissionsFields = [
     data: 'location',
     required: true,
     title: 'Location',
-    description: 'e.g. "Calgary, AB" or "Calgary, Alberta, Canada"',
+    description: 'e.g. "Calgary, AB"',
   },
   {
     data: 'description',
