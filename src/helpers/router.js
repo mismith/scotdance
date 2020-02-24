@@ -13,7 +13,7 @@ export async function getTitleChunks(route) {
     .filter(chunk => chunk);
 }
 
-export function isExpanded(items, itemId, itemIds, expandByDefault = false) {
+export function isExpanded(items, itemId, itemIds, expandByDefault = undefined) {
   const expandeds = {
     ...items,
   };
@@ -26,7 +26,7 @@ export function isExpanded(items, itemId, itemIds, expandByDefault = false) {
     // only one item, so save a tap and expand
     return true;
   }
-  if (expandByDefault) {
+  if (expandByDefault !== undefined) {
     return expandByDefault;
   }
   // expand first item (at least)

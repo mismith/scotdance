@@ -45,6 +45,7 @@ import Draggable from 'vuedraggable';
 import DancerListItem from '@/components/DancerListItem.vue';
 import { idKey } from '@/helpers/firebase';
 import {
+  all,
   overall,
   callbacks,
   getPlace,
@@ -92,7 +93,10 @@ export default {
   },
   methods: {
     getPlace(dancer, dancers) {
-      if (this.dance[idKey] === callbacks[idKey]) return undefined; // no places in callbacks
+      if (this.dance[idKey] === callbacks[idKey] || this.dance[idKey] === all[idKey]) {
+        // no places in callbacks or all dancers list
+        return undefined;
+      }
       if (this.dance[idKey] === overall[idKey] && dancers.length <= 1) return 0; // overall winner
       return getPlace(dancer, dancers);
     },

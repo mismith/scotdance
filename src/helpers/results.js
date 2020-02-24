@@ -4,6 +4,10 @@ import {
   sortByKey,
 } from '@/helpers/competition';
 
+export const all = {
+  [idKey]: 'all',
+  $name: 'All Dancers',
+};
 export const callbacks = {
   [idKey]: 'callbacks',
   $name: 'Callbacks',

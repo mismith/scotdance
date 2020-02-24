@@ -160,6 +160,7 @@ import {
   hasFavorites,
 } from '@/helpers/competition';
 import {
+  all,
   overall,
   callbacks,
   isInProgress,
@@ -249,15 +250,21 @@ export default {
         groups.push(overall);
       }
 
-      return groups.map((dance) => {
-        const sortByNumber = dance[idKey] === callbacks[idKey];
-        const dancers = findPlacedDancers(this.currentGroup, dance, this.dancers, this.results, sortByNumber);
+      return [
+        {
+          ...all,
+          dancers: findGroupDancers(this.currentGroup, this.dancers),
+        },
+        ...groups.map((dance) => {
+          const sortByNumber = dance[idKey] === callbacks[idKey];
+          const dancers = findPlacedDancers(this.currentGroup, dance, this.dancers, this.results, sortByNumber);
 
-        return {
-          ...dance,
-          dancers,
-        };
-      });
+          return {
+            ...dance,
+            dancers,
+          };
+        }),
+      ];
     },
   },
   watch: {
@@ -291,7 +298,13 @@ export default {
 
     isDanceExpanded(item, items) {
       const itemIds = items.map(i => i[idKey]);
-      return isExpanded(this.resultsExpandedDances[this.groupId], item[idKey], itemIds, true);
+      const expandByDefault = item[idKey] !== all[idKey];
+      return isExpanded(
+        this.resultsExpandedDances[this.groupId],
+        item[idKey],
+        itemIds,
+        expandByDefault,
+      );
     },
     handleDanceExpanded(danceId, expanded) {
       this.resultsExpandedDances[this.groupId] = handleExpanded(
