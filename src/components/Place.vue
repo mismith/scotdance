@@ -6,6 +6,8 @@
 </template>
 
 <script>
+import { getOrdinal } from '@/helpers/results';
+
 export default {
   name: 'Place',
   props: {
@@ -13,23 +15,7 @@ export default {
   },
   computed: {
     ordinal() {
-      switch (`${this.place}`) {
-        case '0': {
-          return '';
-        }
-        case '1': {
-          return 'st';
-        }
-        case '2': {
-          return 'nd';
-        }
-        case '3': {
-          return 'rd';
-        }
-        default: {
-          return 'th';
-        }
-      }
+      return getOrdinal(this.place);
     },
     finalized() {
       return Number.isInteger(this.place);

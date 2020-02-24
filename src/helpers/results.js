@@ -89,6 +89,25 @@ export function getPlace(dancer, dancers) {
     return i + 1;
   }, 0);
 }
+export function getOrdinal(place) {
+  switch (`${place}`) {
+    case '0': {
+      return '';
+    }
+    case '1': {
+      return 'st';
+    }
+    case '2': {
+      return 'nd';
+    }
+    case '3': {
+      return 'rd';
+    }
+    default: {
+      return 'th';
+    }
+  }
+}
 
 export function isInProgress(group, dances = [], results = {}) {
   const groupResults = results && results[group[idKey]];
