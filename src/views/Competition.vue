@@ -229,7 +229,7 @@ export default {
         .filter(isNotEmptyObject)
         .map(platform => ({
           ...platform,
-          $name: `Platform ${platform.name}`.trim(),
+          $name: `Platform ${platform.name.replace(/^Platform /, '')}`.trim(),
         }));
     },
     draws() {
