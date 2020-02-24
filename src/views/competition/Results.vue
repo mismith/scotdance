@@ -146,7 +146,7 @@
         description="Select an age group"
       />
     </Blade>
-  </BladeS>
+  </Blades>
 </template>
 
 <script>
