@@ -2,7 +2,7 @@
   <div class="ImageUploader">
     <v-card hover max-width="300" class="flex-column justify-center align-center my-2">
       <v-progress-linear v-show="progress" v-model="progress" absolute />
-      <img v-if="preview || value" :src="preview || value" :style="{ opacity: progress ? 0.25 : 1 }" />
+      <img v-if="value" :src="value" :style="{ opacity: progress ? 0.25 : 1 }" />
       <div v-else class="d-flex flex-column align-center pa-4">
         <v-icon size="100">mdi-cloud-upload</v-icon>
         <div>Drag or Browse</div>

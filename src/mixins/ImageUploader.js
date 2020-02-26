@@ -16,7 +16,6 @@ export default {
   data() {
     return {
       progress: undefined,
-      preview: undefined,
       error: undefined,
 
       rules: [
@@ -54,22 +53,8 @@ export default {
       // start loading
       this.progress = 1;
 
-      // show preview locally while uploading
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        this.preview = event.target.result;
-
-        if (!this.storagePath) {
-          this.handleChange(this.preview);
-        }
-      };
-      reader.onerror = (err) => {
-        this.error = err && err.message;
-      };
-      reader.readAsDataURL(file);
-
-      // upload to firebase storage
       if (this.storagePath) {
+        // upload to firebase storage
         try {
           const task = buckets.child(`${this.storagePath}/${file.name}`).put(file);
           task.on('state_changed', ({ bytesTransferred, totalBytes }) => {
@@ -82,13 +67,22 @@ export default {
         } catch (err) {
           this.error = err && err.message;
         }
+      } else {
+        // load in-browser and store base64
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          this.handleChange(event.target.result);
+        };
+        reader.onerror = (err) => {
+          this.error = err && err.message;
+        };
+        reader.readAsDataURL(file);
       }
     },
 
     setValue(value = null) {
       this.error = null;
       this.progress = null;
-      this.preview = value;
       this.value = value;
     },
     handleChange(value = null) {

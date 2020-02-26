@@ -2,17 +2,17 @@
   <v-sheet light class="ImageUploaderCellRenderer d-flex align-center">
     <v-progress-linear v-show="progress" v-model="progress" absolute top />
 
-    <div v-if="preview || value" class="d-flex align-center justify-space-between">
-      <a :href="value" target="_blank" @mousedown.stop>
-        <img :src="preview || value" />
-      </a>
-      <v-btn icon x-small class="ml-auto" @mousedown.stop @click="handleChange()">
-        <v-icon x-small>mdi-close</v-icon>
+    <div v-if="value" class="d-flex flex align-center">
+      <div :style="{ backgroundImage: `url('${value}')` }" class="flex"></div>
+      <v-btn icon x-small :href="value" target="_blank" @mousedown.stop>
+        <v-icon small>mdi-link</v-icon>
+      </v-btn>
+      <v-btn icon x-small @mousedown.stop @click="handleChange()">
+        <v-icon small>mdi-close-circle</v-icon>
       </v-btn>
     </div>
-    <v-btn v-else x-small @mousedown.stop @click="$refs.file.click()">
-      <v-icon small class="mr-2">mdi-upload</v-icon>
-      Upload
+    <v-btn v-else icon x-small class="ml-auto" @mousedown.stop @click="$refs.file.click()">
+      <v-icon small>mdi-cloud-upload</v-icon>
     </v-btn>
     <input ref="file" type="file" :accept="accept" @change="handleUpload" />
   </v-sheet>
@@ -67,15 +67,11 @@ export default {
   }
   > div {
     height: 100%;
-  }
-  a {
-    display: inline-flex;
-    height: 100%;
 
-    img {
+    > div {
       height: 100%;
-      max-width: 100%;
-      vertical-align: middle;
+      background-size: contain;
+      background-repeat: no-repeat;
     }
   }
   input[type="file"] {
