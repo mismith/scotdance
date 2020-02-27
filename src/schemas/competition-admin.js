@@ -15,7 +15,7 @@ export default {
             title: 'Image',
             type: 'image',
             description: '(optional) SVG, PNG, or JPG image under 244KB',
-            storagePath: 'competitions/images',
+            storagePath: 'competitions/info',
           },
           ...submissionsFields,
           {
@@ -126,6 +126,7 @@ export default {
           data: 'image',
           title: 'Image',
           type: 'image',
+          storagePath: 'competitions/staff',
         },
         {
           data: 'website',

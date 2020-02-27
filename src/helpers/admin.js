@@ -31,12 +31,17 @@ Handsontable.cellTypes.registerCellType('image', {
 
     // skip re-rendering if value doesn't change
     if (typeof td.hotValue !== 'undefined' && td.hotValue === value) return;
-    td.hotValue = value;
+    td.hotValue = value; // @HACK: cache it on the DOM node
 
     // empty old contents and add new element to render to
     while (td.firstChild) td.firstChild.remove();
     const el = document.createElement('div');
     td.appendChild(el);
+
+    // pluck schema field props to pass to component
+    const { columns } = hotInstance.getSettings() || {};
+    const column = (columns || [])[col] || {};
+    const { storagePath, maxSize, accept } = column;
 
     // eslint-disable-next-line no-new
     new Vue({
@@ -50,6 +55,10 @@ Handsontable.cellTypes.registerCellType('image', {
           prop,
           value,
           cellProperties,
+
+          storagePath,
+          maxSize,
+          accept,
         },
       }),
     });

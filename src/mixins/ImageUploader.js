@@ -10,7 +10,7 @@ export default {
     },
     accept: {
       type: String,
-      default: 'image/svg+xml, image/png, image/jpeg',
+      default: 'image/*',
     },
   },
   data() {
@@ -27,7 +27,8 @@ export default {
           return false;
         },
         (file) => {
-          if (!this.accept.split(',').map(t => t.trim()).includes(file.type)) {
+          const types = this.accept.split(',').map(t => t.trim());
+          if (!types.some(t => new RegExp(t.replace('*', '.*')).test(file.type))) {
             return `Invalid file format (${file.type}). It must be of type(s): ${this.accept}.`;
           }
           return false;
@@ -38,9 +39,17 @@ export default {
   computed: {
     filename() {
       if (this.value) {
+        // @TODO: work for storagePath stuff too
         return decodeURIComponent(this.value).replace(/\?.*$/, '').replace(/^.*\//, '');
       }
       return '';
+    },
+  },
+  watch: {
+    error(error) {
+      if (error) {
+        this.progress = null;
+      }
     },
   },
   methods: {

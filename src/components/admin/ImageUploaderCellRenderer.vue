@@ -1,20 +1,20 @@
 <template>
   <v-sheet light class="ImageUploaderCellRenderer d-flex align-center">
-    <v-progress-linear v-show="progress" v-model="progress" absolute top />
-
     <div v-if="value" class="d-flex flex align-center">
       <div :style="{ backgroundImage: `url('${value}')` }" class="flex"></div>
       <v-btn icon x-small :href="value" target="_blank" @mousedown.stop>
-        <v-icon small>mdi-link</v-icon>
+        &nearr;
       </v-btn>
       <v-btn icon x-small @mousedown.stop @click="handleChange()">
-        <v-icon small>mdi-close-circle</v-icon>
+        <v-icon small>mdi-close</v-icon>
       </v-btn>
     </div>
     <v-btn v-else icon x-small class="ml-auto" @mousedown.stop @click="$refs.file.click()">
-      <v-icon small>mdi-cloud-upload</v-icon>
+      <v-icon small>mdi-paperclip</v-icon>
     </v-btn>
     <input ref="file" type="file" :accept="accept" @change="handleUpload" />
+
+    <v-progress-linear v-show="progress" v-model="progress" absolute bottom />
   </v-sheet>
 </template>
 
@@ -33,17 +33,12 @@ export default {
     col: Number,
     prop: String,
     cellProperties: Object,
-
-    storagePath: {
-      type: String,
-      default: 'competitions/images',
-    },
   },
   watch: {
     error(error) {
       if (error) {
         // eslint-disable-next-line no-alert
-        window.alert(error);
+        window.alert(error); // @HACK: use native alert since cell is too small to display error
       }
     },
   },
@@ -72,6 +67,7 @@ export default {
       height: 100%;
       background-size: contain;
       background-repeat: no-repeat;
+      background-position: left center;
     }
   }
   input[type="file"] {
