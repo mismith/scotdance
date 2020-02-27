@@ -3,7 +3,7 @@ import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.css';
 import flatten from 'obj-flatten';
 import { idKey } from '@/helpers/firebase';
-import ImageUploaderCellRenderer from '@/components/admin/ImageUploaderCellRenderer.vue';
+import FileUploaderCellRenderer from '@/components/admin/FileUploaderCellRenderer.vue';
 
 export * from '@handsontable/vue';
 export { Handsontable };
@@ -24,7 +24,7 @@ Handsontable.cellTypes.registerCellType('textarea', {
   editor: Handsontable.editors.TextEditor,
 });
 
-Handsontable.cellTypes.registerCellType('image', {
+Handsontable.cellTypes.registerCellType('file', {
   renderer(...args) {
     const [hotInstance, td, row, col, prop, value, cellProperties] = args;
     Handsontable.renderers.BaseRenderer.apply(this, args);
@@ -46,7 +46,7 @@ Handsontable.cellTypes.registerCellType('image', {
     // eslint-disable-next-line no-new
     new Vue({
       el,
-      render: h => h(ImageUploaderCellRenderer, {
+      render: h => h(FileUploaderCellRenderer, {
         props: {
           hotInstance,
           td,

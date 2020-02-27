@@ -13,8 +13,8 @@ export default {
           {
             data: 'image',
             title: 'Image',
-            type: 'image',
-            description: '(optional) SVG, PNG, or JPG image under 244KB',
+            type: 'file',
+            description: '(optional) Must be under 244KB in file size',
             storagePath: 'competitions/info',
           },
           ...submissionsFields,
@@ -71,8 +71,12 @@ export default {
             {
               data: 'url',
               title: 'URL',
-              // type: 'url',
+              type: 'file',
               required: true,
+
+              storagePath: 'competitions/links',
+              maxSize: 244 * 4 * 1024,
+              accept: 'application/pdf, image/*',
             },
           ],
         },
@@ -125,7 +129,7 @@ export default {
         {
           data: 'image',
           title: 'Image',
-          type: 'image',
+          type: 'file',
           storagePath: 'competitions/staff',
         },
         {

@@ -1,7 +1,9 @@
 <template>
-  <v-sheet light class="ImageUploaderCellRenderer d-flex align-center">
+  <v-sheet light class="FileUploaderCellRenderer d-flex align-center">
     <div v-if="value" class="d-flex flex align-center">
-      <div :style="{ backgroundImage: `url('${value}')` }" class="flex"></div>
+      <div :style="{ backgroundImage: `url('${value}')` }" class="flex px-1 text-truncate">
+        {{ isImage === false ? filename : '' }}
+      </div>
       <v-btn icon x-small :href="value" target="_blank" @mousedown.stop>
         &nearr;
       </v-btn>
@@ -19,12 +21,12 @@
 </template>
 
 <script>
-import ImageUploaderMixin from '@/mixins/ImageUploader';
+import FileUploaderMixin from '@/mixins/FileUploader';
 
 export default {
-  name: 'ImageUploaderCellRenderer',
+  name: 'FileUploaderCellRenderer',
   mixins: [
-    ImageUploaderMixin,
+    FileUploaderMixin,
   ],
   props: {
     hotInstance: Object,
@@ -52,7 +54,7 @@ export default {
 </script>
 
 <style lang="scss">
-.ImageUploaderCellRenderer {
+.FileUploaderCellRenderer {
   position: relative;
   height: 22px; // @HACK: avoid autoRowSize height issues
   margin: 0px -4px;
@@ -68,6 +70,7 @@ export default {
       background-size: contain;
       background-repeat: no-repeat;
       background-position: left center;
+      font-size: x-small;
     }
   }
   input[type="file"] {

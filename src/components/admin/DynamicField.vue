@@ -18,11 +18,13 @@
       @change="handleChange()"
     />
 
-    <ImageUploader
-      v-else-if="field.type === 'image'"
+    <FileUploader
+      v-else-if="field.type === 'file'"
       v-model="value"
       :name="field.data"
       :storage-path="field.storagePath"
+      :max-size="field.maxSize"
+      :accept="field.accept"
       :label="field.title"
       :required="field.required"
       :disabled="field.disabled"
@@ -120,7 +122,7 @@
 
 <script>
 import { idKey } from '@/helpers/firebase';
-import ImageUploader from '@/components/admin/ImageUploader.vue';
+import FileUploader from '@/components/admin/FileUploader.vue';
 
 export default {
   name: 'DynamicField',
@@ -168,7 +170,7 @@ export default {
     },
   },
   components: {
-    ImageUploader,
+    FileUploader,
   },
 };
 </script>

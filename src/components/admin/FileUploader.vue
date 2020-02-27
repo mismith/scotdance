@@ -1,8 +1,11 @@
 <template>
-  <div class="ImageUploader">
+  <div class="FileUploader">
     <v-card hover max-width="300" class="flex-column justify-center align-center my-2">
       <v-progress-linear v-show="progress" v-model="progress" absolute />
-      <img v-if="value" :src="value" :style="{ opacity: progress ? 0.25 : 1 }" />
+      <template v-if="value">
+        <img v-if="isImage" :src="value" />
+        <div v-else class="text-truncate pa-3">{{ filename }}</div>
+      </template>
       <div v-else class="d-flex flex-column align-center pa-4">
         <v-icon size="100">mdi-cloud-upload</v-icon>
         <div>Drag or Browse</div>
@@ -26,12 +29,12 @@
 </template>
 
 <script>
-import ImageUploaderMixin from '@/mixins/ImageUploader';
+import FileUploaderMixin from '@/mixins/FileUploader';
 
 export default {
-  name: 'ImageUploader',
+  name: 'FileUploader',
   mixins: [
-    ImageUploaderMixin,
+    FileUploaderMixin,
   ],
   props: {
     label: String,
@@ -43,7 +46,7 @@ export default {
 </script>
 
 <style lang="scss">
-.ImageUploader {
+.FileUploader {
   .v-progress-linear {
     position: absolute;
     bottom: 0;

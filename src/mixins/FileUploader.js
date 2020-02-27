@@ -17,6 +17,7 @@ export default {
     return {
       progress: undefined,
       error: undefined,
+      isImage: null,
 
       rules: [
         (file) => {
@@ -46,6 +47,20 @@ export default {
     },
   },
   watch: {
+    value: {
+      handler(value) {
+        const img = document.createElement('img');
+        this.isImage = null;
+        img.onload = () => {
+          this.isImage = true;
+        };
+        img.onerror = () => {
+          this.isImage = false;
+        };
+        img.src = value;
+      },
+      immediate: true,
+    },
     error(error) {
       if (error) {
         this.progress = null;
