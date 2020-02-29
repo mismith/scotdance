@@ -56,14 +56,14 @@
           </div>
         </div>
 
-        <div v-if="competition.links" class="mb-4">
+        <div v-if="competition.links">
           <v-btn
             v-for="link in competition.links"
             :key="link.url"
             :href="formatExternalURL(link.url)"
             target="_blank"
             color="primary"
-            class="ml-0 mr-4"
+            class="mr-4 mb-4"
           >
             <span class="ext">{{ link.name }}</span>
           </v-btn>
