@@ -523,6 +523,21 @@ body {
       @extend .app-scroll-frame;
     }
   }
+  .v-btn--absolute,
+  .v-btn--fixed {
+    &.v-btn--top {
+      top: calc(16px + env(safe-area-inset-top));
+    }
+    &.v-btn--left {
+      left: calc(16px + env(safe-area-inset-left));
+    }
+    &.v-btn--right {
+      right: calc(16px + env(safe-area-inset-right));
+    }
+    &.v-btn--bottom {
+      bottom: calc(16px + env(safe-area-inset-bottom));
+    }
+  }
   .v-dialog {
     &--full-height {
       // @TODO: deprecate in favour of using <v-dialog fullscreen />
