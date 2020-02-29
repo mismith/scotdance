@@ -554,18 +554,19 @@ body {
   }
   .v-bottom-navigation.v-item-group {
     flex-shrink: 0;
-    justify-content: unset;
+    justify-content: stretch;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 
-    // can't use justify-content: center; because then overflowing clips
     > * {
-      &:first-child {
-        margin-left: auto;
-      }
-      &:last-child {
-        margin-right: auto;
-      }
+      flex-shrink: 0;
+    }
+
+    // @HACK for safari to horizontally center tabs while allowing overflow-x
+    &::before,
+    &::after {
+      content: ' ';
+      flex: auto;
     }
   }
   .v-toolbar {
