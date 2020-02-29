@@ -60,7 +60,7 @@
     "vue-localstorage": "^0.6.2",
     "vue-observe-visibility": "^0.4.6",
     "vue-router": "^3.0.2",
-    "vue-scrollto": "^2.15.0",
+    "vue-scrollto": "^2.17.1",
     "vuedraggable": "^2.20.0",
     "vuefire": "^1.4.4",
     "vuetify": "^2.1.10",
@@ -89,6 +89,8 @@
     "outputDir": "www",
     "publicPath": "",
     "transpileDependencies": [
+      "@firebase",
+      "vue-scrollto",
       "vuetify"
     ]
   },
