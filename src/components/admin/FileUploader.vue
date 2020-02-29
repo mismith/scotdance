@@ -1,12 +1,16 @@
 <template>
   <div class="FileUploader">
-    <v-card hover max-width="300" class="flex-column justify-center align-center my-2">
+    <v-card
+      hover
+      max-width="300"
+      class="d-inline-flex flex-column justify-center align-center my-2"
+    >
       <v-progress-linear v-show="progress" v-model="progress" absolute />
       <template v-if="value">
         <img v-if="isImage" :src="value" />
         <div v-else class="text-truncate pa-3">{{ filename }}</div>
       </template>
-      <div v-else class="d-flex flex-column align-center pa-4">
+      <div v-else class="d-flex flex-column align-center py-4 px-8">
         <v-icon size="100">mdi-cloud-upload</v-icon>
         <div>Drag or Browse</div>
       </div>
