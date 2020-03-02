@@ -40,9 +40,9 @@
             target="_blank"
             color="primary"
             :disabled="$moment().isAfter(competition.registrationEnd)"
-            class="ml-0 mr-4"
+            class="mr-4"
           >
-            <span class="ext">Register</span>
+            <span class="ext text-truncate">Register</span>
           </v-btn>
           <div style="opacity: 0.66;">
             <div v-if="competition.registrationStart">
@@ -65,7 +65,7 @@
             color="primary"
             class="mr-4 mb-4"
           >
-            <span class="ext">{{ link.name }}</span>
+            <span class="ext text-truncate">{{ link.name }}</span>
           </v-btn>
         </div>
 
@@ -161,3 +161,13 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.v-btn {
+  max-width: 100%;
+
+  .v-btn__content {
+    width: 100%;
+  }
+}
+</style>
