@@ -1,5 +1,10 @@
 # Release Notes
 
+## 1.8.3 - Mar 1, 2020
+- admin panel updates including file uploading for images and links
+- add list of "All Dancers" to each results page
+- loads of minor bug fixes, styling and layout enhancements, and feature improvements
+
 ## 1.8.2 - Jan 20, 2020
 - add scrolling markers to competitons lists to make it easier to find "Now"
 - various minor UI fixes and improvements like: schedule platforms, admin presets, judge listings
