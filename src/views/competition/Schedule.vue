@@ -66,7 +66,7 @@
                 </v-list-item>
               </v-list>
             </v-list-group>
-            <v-list-item v-if="!day.blocks" class="empty">
+            <v-list-item v-if="!day.blocks && !day.description" class="empty">
               <v-list-item-avatar>
                 <v-icon>mdi-close</v-icon>
               </v-list-item-avatar>
@@ -106,41 +106,46 @@
           </header>
 
           <v-list expand class="grouped">
-            <v-list-group
-              v-for="dance in toOrderedArray(currentEvent.dances)"
-              :key="dance[idKey]"
-              :value="isDanceExpanded(dance[idKey], Object.keys(currentEvent.dances), !!dance.danceId)"
-              @input="handleDanceExpanded(dance[idKey], $event)"
-            >
-              <template #activator>
-                <v-subheader>
-                  <div class="flex">{{ getScheduleItemDanceName(dance, dances) }}</div>
-                  <div
-                    v-if="dance.description"
-                    v-html="slugline(dance.description)"
-                    class="caption text-truncate ml-3"
-                  />
-                </v-subheader>
-              </template>
+            <template v-for="dance in toOrderedArray(currentEvent.dances)">
+              <v-subheader :key="dance[idKey]" v-if="!isDanceExpandable(dance)">
+                {{ getScheduleItemDanceName(dance, dances) }}
+              </v-subheader>
+              <v-list-group
+                :key="dance[idKey]"
+                v-else
+                :value="isDanceExpanded(dance[idKey], Object.keys(currentEvent.dances), !!dance.danceId)"
+                @input="handleDanceExpanded(dance[idKey], $event)"
+              >
+                <template #activator>
+                  <v-subheader>
+                    <div class="flex">{{ getScheduleItemDanceName(dance, dances) }}</div>
+                    <div
+                      v-if="dance.description"
+                      v-html="slugline(dance.description)"
+                      class="caption text-truncate ml-3"
+                    />
+                  </v-subheader>
+                </template>
 
-              <v-sheet>
-                <v-list-item
-                  v-if="dance.description"
-                  v-html="dance.description"
-                  class="pa-4 pre-line"
-                />
-                <AdminPlatforms
-                  v-if="dance.danceId"
-                  :item="dance"
-                  :groups="groups"
-                  :dances="dances"
-                  :dancers="dancers"
-                  :staff="staff"
-                  :platforms="platforms"
-                  @item-click="handlePlatformClick($event, dance)"
-                />
-              </v-sheet>
-            </v-list-group>
+                <v-sheet>
+                  <v-list-item
+                    v-if="dance.description"
+                    v-html="dance.description"
+                    class="pa-4 pre-line"
+                  />
+                  <AdminPlatforms
+                    v-if="dance.danceId"
+                    :item="dance"
+                    :groups="groups"
+                    :dances="dances"
+                    :dancers="dancers"
+                    :staff="staff"
+                    :platforms="platforms"
+                    @item-click="handlePlatformClick($event, dance)"
+                  />
+                </v-sheet>
+              </v-list-group>
+            </template>
             <v-list-item v-if="!currentEvent.dances && !currentEvent.description" class="empty">
               <v-list-item-avatar>
                 <v-icon>mdi-close</v-icon>
@@ -324,6 +329,15 @@ export default {
       this.$localStorage.set('scheduleExpandedBlocks', this.scheduleExpandedBlocks);
     },
 
+    isDanceExpandable(dance) {
+      const dancePlatformIds = dance.platforms ? Object.keys(dance.platforms) : [];
+      return dance.description || (
+        // ensure it has (valid, i.e. not outdated) platforms
+        dance.danceId
+        && dancePlatformIds.length
+        && this.platforms.some(platform => dancePlatformIds.includes(platform[idKey]))
+      );
+    },
     isDanceExpanded(danceId, danceIds, fallback = true) {
       return isExpanded(this.scheduleExpandedDances[this.eventId], danceId, danceIds, fallback);
     },
