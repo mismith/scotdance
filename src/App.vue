@@ -572,6 +572,7 @@ body {
     justify-content: stretch;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    z-index: 1; // keep above tab contents
 
     > * {
       flex-shrink: 0;
