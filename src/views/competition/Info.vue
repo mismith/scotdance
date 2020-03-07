@@ -65,7 +65,7 @@
             color="primary"
             class="mr-4 mb-4"
           >
-            <span class="ext text-truncate">{{ link.name }}</span>
+            <span class="ext text-truncate">{{ link.name || formatHumanURL(link.url) }}</span>
           </v-btn>
         </div>
 
@@ -117,6 +117,7 @@ import {
   isExpanded,
   handleExpanded,
   formatExternalURL,
+  formatHumanURL,
 } from '@/helpers/router';
 
 export default {
@@ -144,6 +145,7 @@ export default {
   },
   methods: {
     formatExternalURL,
+    formatHumanURL,
     ...mapMutations([
       'setCurrentDialog',
     ]),

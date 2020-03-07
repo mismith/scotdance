@@ -66,7 +66,6 @@ export default {
             {
               data: 'name',
               title: 'Name',
-              required: true,
             },
             {
               data: 'url',
