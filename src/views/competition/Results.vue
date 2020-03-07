@@ -67,7 +67,7 @@
           <v-menu offset-y left>
             <template #activator="{ on }">
               <v-btn v-on="on" icon>
-                <v-icon>mdi-dots-vert</v-icon>
+                <v-icon>mdi-dots-vertical</v-icon>
               </v-btn>
             </template>
 
