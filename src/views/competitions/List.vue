@@ -1,69 +1,74 @@
 <template>
   <div class="CompetitionsList app-scroll-frame alt">
-    <div
-      v-if="loaded"
-      v-persist-scroll="'/competitions'"
-      class="app-scroll-frame app-scroll"
-      ref="scroller"
-    >
-      <v-timeline dense class="pr-3">
-        <template v-for="competition in timelineCompetitions">
-          <v-timeline-item
-            v-if="competition.$timeline"
-            :key="competition[idKey]"
-            hide-dot
-            class="mt-6"
+    <template v-if="loaded">
+      <template v-if="competitions.length">
+        <div class="app-scroll-frame" style="position: relative;">
+          <div
+            v-persist-scroll="'/competitions'"
+            class="app-scroll-frame app-scroll scroller"
+            ref="scroller"
           >
-            <span class="dimmed caption text-uppercase">{{ competition.$timeline }}</span>
-          </v-timeline-item>
+            <v-timeline v-if="timelineCompetitions.length" dense class="pr-3">
+              <template v-for="competition in timelineCompetitions">
+                <v-timeline-item
+                  v-if="competition.$timeline"
+                  :key="competition[idKey]"
+                  hide-dot
+                  class="mt-6"
+                >
+                  <span class="dimmed caption text-uppercase">{{ competition.$timeline }}</span>
+                </v-timeline-item>
 
-          <v-timeline-item
-            v-if="competition[idKey] === '__NOW__'"
-            :key="competition[idKey]"
-            id="now-marker"
-            small
-            color="secondary"
-            class="now"
-            v-observe-visibility="handleNowVisibilityChange"
-          >
-            <v-chip color="secondary" small disabled style="opacity: 1;">Now</v-chip>
-          </v-timeline-item>
-          <CompetitionTimelineItem
-            v-else
-            :key="competition[idKey]"
-            :competition="competition"
-          />
-        </template>
-      </v-timeline>
+                <v-timeline-item
+                  v-if="competition[idKey] === '__NOW__'"
+                  :key="competition[idKey]"
+                  id="now-marker"
+                  small
+                  color="secondary"
+                  class="now"
+                  v-observe-visibility="handleNowVisibilityChange"
+                >
+                  <v-chip color="secondary" small disabled style="opacity: 1;">Now</v-chip>
+                </v-timeline-item>
+                <CompetitionTimelineItem
+                  v-else
+                  :key="competition[idKey]"
+                  :competition="competition"
+                />
+              </template>
+            </v-timeline>
+          </div>
 
-      <div v-if="!competitions.length">
+          <transition :name="`slide-y${nowVisibility > 0 ? '-reverse' : ''}-transition`">
+            <v-btn
+              rounded
+              absolute
+              v-if="nowVisibility"
+              v-show="!competitionsSearchFor"
+              :top="nowVisibility < 0"
+              :bottom="nowVisibility > 0"
+              left
+              fab
+              small
+              color="accent"
+              class="now-marker"
+              @click="handleNowClick"
+            >
+              <v-icon>mdi-chevron-{{nowVisibility > 0 ? 'down' : 'up'}}</v-icon>
+            </v-btn>
+          </transition>
+        </div>
+      </template>
+      <div v-else class="app-scroll-frame">
         <EmptyState
           icon="mdi-close"
           label="No competitions found"
         />
       </div>
-    </div>
+    </template>
     <div v-else class="app-scroll-frame">
       <Spinner />
     </div>
-
-    <transition :name="`slide-y${nowVisibility > 0 ? '-reverse' : ''}-transition`">
-      <v-btn
-        rounded
-        fixed
-        v-if="nowVisibility"
-        :top="nowVisibility < 0"
-        :bottom="nowVisibility > 0"
-        left
-        fab
-        small
-        color="accent"
-        style="opacity: 0.67; margin-left: 12px; margin-top: 65px;"
-        @click="handleNowClick"
-      >
-        <v-icon>mdi-chevron-{{nowVisibility > 0 ? 'down' : 'up'}}</v-icon>
-      </v-btn>
-    </transition>
   </div>
 </template>
 
@@ -154,6 +159,13 @@ export default {
         animation: blink 1s infinite alternate;
       }
     }
+  }
+
+  .now-marker {
+    opacity: 0.67;
+    margin-left: 12px;
+    margin-top: 32px;
+    margin-bottom: 32px;
   }
 }
 </style>
