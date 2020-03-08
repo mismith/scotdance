@@ -2,14 +2,18 @@
   <div class="CompetitionsList app-scroll-frame alt">
     <template v-if="loaded">
       <template v-if="competitions.length">
+        <v-toolbar class="flex-none">
+          <SearchField v-model="competitionsSearchFor" />
+        </v-toolbar>
+
         <div class="app-scroll-frame" style="position: relative;">
           <div
             v-persist-scroll="'/competitions'"
             class="app-scroll-frame app-scroll scroller"
             ref="scroller"
           >
-            <v-timeline v-if="timelineCompetitions.length" dense class="pr-3">
-              <template v-for="competition in timelineCompetitions">
+            <v-timeline v-if="filteredTimelineCompetitions.length" dense class="pr-3">
+              <template v-for="competition in filteredTimelineCompetitions">
                 <v-timeline-item
                   v-if="competition.$timeline"
                   :key="competition[idKey]"
@@ -37,6 +41,11 @@
                 />
               </template>
             </v-timeline>
+            <EmptyState
+              v-else
+              icon="mdi-alert-circle-outline"
+              label="No competitions match"
+            />
           </div>
 
           <transition :name="`slide-y${nowVisibility > 0 ? '-reverse' : ''}-transition`">
@@ -73,14 +82,23 @@
 </template>
 
 <script>
-import CompetitionTimelineItem from '@/components/CompetitionTimelineItem.vue';
 import { idKey } from '@/helpers/firebase';
+import { searchByKeys } from '@/helpers/competition';
+import { submissionsFields } from '@/schemas/submissions';
+import SearchField from '@/components/SearchField.vue';
+import CompetitionTimelineItem from '@/components/CompetitionTimelineItem.vue';
 
 export default {
   name: 'CompetitionsList',
   props: {
     competitions: Array,
     competitionsRef: Object,
+  },
+  localStorage: {
+    competitionsSearchFor: {
+      type: String,
+      default: '',
+    },
   },
   data() {
     return {
@@ -92,6 +110,9 @@ export default {
     };
   },
   computed: {
+    searchKeys() {
+      return submissionsFields.map(({ data }) => data);
+    },
     timelineCompetitions() {
       let currentTimelineGroup;
       let firstPastEventIndex = -1;
@@ -122,6 +143,14 @@ export default {
 
       return timelineCompetitions;
     },
+    filteredTimelineCompetitions() {
+      let filtered = this.timelineCompetitions;
+
+      // filter by search term
+      filtered = searchByKeys(filtered, this.competitionsSearchFor, this.searchKeys);
+
+      return filtered;
+    },
   },
   methods: {
     handleNowVisibilityChange(isVisible, { boundingClientRect: { top } }) {
@@ -142,6 +171,7 @@ export default {
     this.loaded = true;
   },
   components: {
+    SearchField,
     CompetitionTimelineItem,
   },
 };

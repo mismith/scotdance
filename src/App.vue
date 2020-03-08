@@ -594,6 +594,12 @@ body {
         text-decoration: none;
       }
     }
+
+    .SearchField {
+      .v-input__control {
+        min-height: 36px;
+      }
+    }
   }
   .v-subheader {
     flex: none;

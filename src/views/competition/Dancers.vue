@@ -265,13 +265,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.CompetitionDancers {
-  .SearchField {
-    .v-input__control {
-      min-height: 36px;
-    }
-  }
-}
-</style>
