@@ -1,3 +1,4 @@
+import Fuse from 'fuse.js';
 import { idKey } from '@/helpers/firebase';
 
 export function findByIdKey(items, id) {
@@ -39,4 +40,14 @@ export function slugline(html) {
 
 export function isNotEmptyObject(item) {
   return Object.values(item || {}).some(v => v);
+}
+
+export function searchByKeys(items, query, searchKeys) {
+  if (query && items.length) {
+    return new Fuse(items, {
+      keys: searchKeys,
+      threshold: 0.33,
+    }).search(query);
+  }
+  return items;
 }

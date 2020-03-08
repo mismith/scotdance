@@ -7,16 +7,17 @@
           <v-menu @selected="sortBy">
             <template #activator="{ on }">
               <v-btn icon v-on="on">
-                <v-icon>mdi-filter-variant</v-icon>
+                <v-icon>mdi-sort</v-icon>
               </v-btn>
             </template>
 
             <v-list>
+              <v-subheader>Sort by:</v-subheader>
               <v-list-item
                 v-for="by in sortableBys"
                 :key="by.key"
+                :class="{ 'v-list-item--active': sortBy === by.key }"
                 @click="sortBy = by.key"
-                :class="{ 'primary--text': sortBy === by.key }"
               >
                 {{ by.name }}
               </v-list-item>
@@ -66,7 +67,7 @@
           </v-list>
           <EmptyState
             v-else-if="!onlyFavorites"
-            icon="mdi-error-outline"
+            icon="mdi-alert-circle-outline"
             label="No dancers match"
           />
           <EmptyState
@@ -120,7 +121,6 @@
 </template>
 
 <script>
-import Fuse from 'fuse.js';
 import sortBy from 'lodash.sortby';
 import groupBy from 'lodash.groupby';
 import SearchField from '@/components/SearchField.vue';
@@ -128,7 +128,7 @@ import DancerListItem from '@/components/DancerListItem.vue';
 import DancerReport from '@/components/DancerReport.vue';
 import BladeToolbar from '@/components/BladeToolbar.vue';
 import { idKey } from '@/helpers/firebase';
-import { hasFavorites } from '@/helpers/competition';
+import { searchByKeys, hasFavorites } from '@/helpers/competition';
 import {
   isExpanded,
   handleExpanded,
@@ -187,17 +187,16 @@ export default {
     sortableBy() {
       return this.sortableBys.find(({ key }) => key === this.sortBy);
     },
+    searchKeys() {
+      return this.sortableBys
+        .map(({ key, searchKey }) => searchKey || key)
+        .concat(['$name']);
+    },
     groupedDancers() {
       let filtered = this.dancers;
 
       // filter by search term
-      if (this.filterBy && filtered.length) {
-        const searchKeys = this.sortableBys.map(({ key, searchKey }) => searchKey || key).concat(['$name']);
-        filtered = new Fuse(filtered, {
-          keys: searchKeys,
-          threshold: 0.33,
-        }).search(this.filterBy);
-      }
+      filtered = searchByKeys(filtered, this.filterBy, this.searchKeys);
 
       // filter by onlyFavorites, if necessary
       if (this.onlyFavorites) {
