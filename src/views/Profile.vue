@@ -1,6 +1,6 @@
 <template>
-  <form class="Profile app-scroll-frame app-scroll">
-    <div class="pa-4">
+  <RequiresPermission class="Profile app-scroll-frame app-scroll">
+    <div v-if="me" class="pa-4">
       <header class="d-flex align-center flex-none mb-4">
         <v-avatar :size="100">
           <Gravatar :user="me" />
@@ -90,7 +90,7 @@
         </v-alert>
       </DialogCard>
     </footer>
-  </form>
+  </RequiresPermission>
 </template>
 
 <script>
@@ -100,6 +100,7 @@ import {
   idKey,
   db,
 } from '@/helpers/firebase';
+import RequiresPermission from '@/components/RequiresPermission.vue';
 
 export default {
   name: 'Profile',
@@ -180,6 +181,9 @@ export default {
         }
       }
     },
+  },
+  components: {
+    RequiresPermission,
   },
 };
 </script>
