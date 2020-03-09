@@ -8,9 +8,8 @@
       stripes: !competition.listed,
     }"
   >
-    <v-list-item-avatar color="white">
-      <img v-if="competition.image" :src="competition.image" role="presentation" />
-      <v-icon v-else>mdi-calendar</v-icon>
+    <v-list-item-avatar v-if="competition.image" color="white">
+      <img :src="competition.image" role="presentation" />
     </v-list-item-avatar>
 
     <v-list-item-content>
