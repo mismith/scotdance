@@ -65,7 +65,7 @@
 
 <script>
 import Fuse from 'fuse.js';
-import sortBy from 'lodash.sortby';
+import orderBy from 'lodash.orderby';
 import { flattenPaths } from '@/helpers/admin';
 import { idKey, db } from '@/helpers/firebase';
 import PaginatedList from '@/components/admin/PaginatedList.vue';
@@ -111,7 +111,7 @@ export default {
         }).search(this.filterBy);
       }
 
-      filtered = sortBy(filtered, ['email']);
+      filtered = orderBy(filtered, ['email']);
 
       return filtered;
     },

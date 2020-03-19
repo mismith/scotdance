@@ -121,7 +121,7 @@
 </template>
 
 <script>
-import sortBy from 'lodash.sortby';
+import orderBy from 'lodash.orderby';
 import groupBy from 'lodash.groupby';
 import SearchField from '@/components/SearchField.vue';
 import DancerListItem from '@/components/DancerListItem.vue';
@@ -205,7 +205,7 @@ export default {
 
       // sort by key
       if (this.sortBy) {
-        filtered = sortBy(filtered, [this.sortBy, '$number']);
+        filtered = orderBy(filtered, [this.sortBy, '$number']);
       }
 
       // group together
