@@ -9,7 +9,7 @@
       :class="{ stripes: env !== 'production' }"
     >
       <v-btn icon @click="menuVisible = !menuVisible">
-        <v-badge v-model="needsUpdating" content="1" color="secondary">
+        <v-badge v-model="needsUpdating" dot color="secondary">
           <v-icon>mdi-menu</v-icon>
         </v-badge>
       </v-btn>
@@ -192,20 +192,6 @@
           <v-list>
             <v-subheader>Links</v-subheader>
 
-            <PromptToUpdate v-if="needsUpdating">
-              <template #activator="{ on }">
-                <v-list-item v-on="on">
-                  <v-list-item-avatar>
-                    <v-icon>mdi-new-box</v-icon>
-                  </v-list-item-avatar>
-                  <v-list-item-content>
-                    <v-list-item-title>Update App</v-list-item-title>
-                  </v-list-item-content>
-                  <v-badge inline content="1" color="secondary" />
-                </v-list-item>
-              </template>
-            </PromptToUpdate>
-
             <v-list-item to="/" exact @click="closeMenu()">
               <v-list-item-avatar>
                 <v-icon>mdi-home</v-icon>
@@ -237,6 +223,23 @@
                 <v-list-item-title>App Admin</v-list-item-title>
               </v-list-item-content>
             </v-list-item>
+
+            <template v-if="needsUpdating">
+              <v-divider />
+              <PromptToUpdate>
+                <template #activator="{ on }">
+                  <v-list-item v-on="on">
+                    <v-list-item-avatar>
+                      <v-icon>mdi-new-box</v-icon>
+                    </v-list-item-avatar>
+                    <v-list-item-content>
+                      <v-list-item-title>Update</v-list-item-title>
+                    </v-list-item-content>
+                    <v-badge inline content="1" color="secondary" />
+                  </v-list-item>
+                </template>
+              </PromptToUpdate>
+            </template>
           </v-list>
         </template>
       </div>
