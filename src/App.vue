@@ -91,7 +91,7 @@
         <RequiresAuthDialog name="favorites">
           <template #title>
             <v-card-title class="title">
-              Track your favourites
+              <div class="flex">Track your favourites</div>
               <v-icon color="secondary">mdi-star</v-icon>
             </v-card-title>
           </template>
@@ -653,6 +653,12 @@ body {
           }
         }
       }
+    }
+  }
+  .v-card {
+    &__title {
+      flex-wrap: nowrap;
+      word-break: normal;
     }
   }
 }
