@@ -2,7 +2,7 @@
   <div class="PaginatedList app-scroll-frame">
     <div class="app-scroll-frame app-scroll">
       <v-list v-if="items.length">
-        <slot v-for="item in paginated" v-bind="item" />
+        <slot v-for="item in paginatedItems" v-bind="item" />
       </v-list>
       <EmptyState
         v-else
@@ -23,7 +23,7 @@
           single-line
           hide-details
           class="mx-2"
-          style="max-width: 64px;"
+          style="max-width: 80px;"
         />
         of {{ pages.length }}
       </div>
@@ -51,9 +51,21 @@ export default {
       const total = Math.ceil(this.items.length / this.count);
       return Array.from(Array(total + 1).keys()).slice(1); // [1...N]
     },
-    paginated() {
-      const offset = (this.page - 1) * this.count;
-      return (this.items || []).slice(offset, offset + this.count);
+    paginatedItems() {
+      const offset = this.getOffset();
+      return this.items.slice(offset, offset + this.count);
+    },
+  },
+  watch: {
+    items(items) {
+      if (this.getOffset() > items.length) {
+        this.page = 1;
+      }
+    },
+  },
+  methods: {
+    getOffset() {
+      return (this.page - 1) * this.count;
     },
   },
 };
