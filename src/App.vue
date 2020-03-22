@@ -144,6 +144,14 @@
               <v-list-item-title>Submit Competition</v-list-item-title>
             </v-list-item-content>
           </v-list-item>
+          <v-list-item :to="{ name: 'dancers' }" exact>
+            <v-list-item-avatar>
+              <v-icon class="icon-people" />
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title>Dancers</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
         </v-list>
 
         <v-spacer />

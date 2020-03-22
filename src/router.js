@@ -9,6 +9,8 @@ import Home from '@/views/Home.vue';
 import Settings from '@/views/Settings.vue';
 import Profile from '@/views/Profile.vue';
 
+import Dancers from '@/views/Dancers.vue';
+
 import Competitions from '@/views/Competitions.vue';
 import CompetitionsList from '@/views/competitions/List.vue';
 import CompetitionsSubmit from '@/views/competitions/Submit.vue';
@@ -54,6 +56,15 @@ export default new Router({
       component: Settings,
       meta: {
         title: 'App Settings',
+      },
+    },
+    {
+      path: '/dancers/:dancerSlug?',
+      name: 'dancers',
+      component: Dancers,
+      props: true,
+      meta: {
+        title: 'Dancers',
       },
     },
     {
