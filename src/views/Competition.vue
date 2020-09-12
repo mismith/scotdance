@@ -107,9 +107,10 @@ import {
   formatHumanURL,
 } from '@/helpers/router';
 import {
-  findByIdKey,
   sortByKey,
+  groupExtender,
   danceExtender,
+  dancerExtender,
   isNotEmptyObject,
 } from '@/helpers/competition';
 import {
@@ -187,24 +188,13 @@ export default {
     },
     dancers() {
       return (this.dancersRaw || [])
-        .map(dancer => ({
-          ...dancer,
-          $number: `${10000 + Number.parseInt(dancer.number, 10)}`, // prepend with leading 'zeroes', and stringify for search
-          $name: `${dancer.firstName || ''} ${dancer.lastName || ''}`.trim(),
-          $group: findByIdKey(this.groups, dancer.groupId),
-          $favorite: this.$store.getters.isFavorite('dancers', dancer[idKey]),
-        }))
+        .map(dancer => dancerExtender(dancer, this.groups, this.$store))
         .filter(isNotEmptyObject)
         .sort(sortByKey('$number')); // sort by number
     },
     groups() {
       return (this.groupsRaw || [])
-        .map((group, i) => ({
-          ...group,
-          $order: `${10000 + i}`, // prepend with leading 'zeroes'
-          $name: this.getGroupName(group),
-          $category: this.findCategory(group.categoryId),
-        }))
+        .map((group, i) => groupExtender(group, i, this.categories))
         .filter(isNotEmptyObject);
     },
     categories() {
@@ -213,7 +203,7 @@ export default {
     },
     dances() {
       return (this.dancesRaw || [])
-        .map(danceExtender)
+        .map(dance => danceExtender(dance))
         .filter(isNotEmptyObject);
     },
     staff() {
@@ -312,14 +302,6 @@ export default {
           }
         });
       this.loaded = true;
-    },
-
-    findCategory(categoryId) {
-      return findByIdKey(this.categories, categoryId);
-    },
-    getGroupName(group) {
-      const category = this.findCategory(group.categoryId);
-      return `${category ? category.name : ''} ${group.name || ''}`;
     },
   },
   created() {

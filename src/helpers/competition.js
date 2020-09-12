@@ -22,24 +22,49 @@ export function hydrateByIdKey(ids, items = []) {
   return (ids || []).map(id => findByIdKey(items, id));
 }
 
+export function getGroupName(group, categories) {
+  const category = findByIdKey(categories, group.categoryId);
+  return `${category ? category.name : ''} ${group.name || ''}`;
+}
+
 export function danceExtender(dance) {
   const name = dance.name || '';
-  const stepsString = dance.steps ? ` (${dance.steps})` : '';
+  const stepsString = dance.steps ? ` (${dance.steps.trim()})` : '';
 
   return {
     groupIds: {},
     ...dance,
-    $name: `${name}${stepsString}`.trim(),
-    $shortName: `${dance.shortName || name}${stepsString}`.trim(),
+    $name: `${name.trim()}${stepsString}`,
+    $shortName: `${(dance.shortName || name).trim()}${stepsString}`,
+  };
+}
+
+export function groupExtender(group, i, categories) {
+  return {
+    ...group,
+    $order: `${10000 + i}`, // prepend with leading 'zeroes'
+    $name: getGroupName(group, categories),
+    $category: findByIdKey(categories, group.categoryId),
+  };
+}
+
+export function dancerExtender(dancer, groups = [], $store) {
+  return {
+    ...dancer,
+    // prepend with leading 'zeroes', and stringify for search
+    $number: `${10000 + Number.parseInt(dancer.number, 10)}`,
+    $name: `${(dancer.firstName || '').trim()} ${(dancer.lastName || '').trim()}`.trim(),
+    $group: findByIdKey(groups, dancer.groupId),
+    $favorite: $store.getters.isFavorite('dancers', dancer[idKey]),
   };
 }
 
 export function slugline(html) {
-  return (html || '').split('\n')[0] || '';
+  return (html || '').split('\n')[0].trim() || '';
 }
 
 export function isNotEmptyObject(item) {
-  return Object.values(item || {}).some(v => v);
+  return Object.values(item || {}).some(Boolean);
 }
 
 export function searchByKeys(items, query, searchKeys) {

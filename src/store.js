@@ -20,8 +20,8 @@ import $package from '../package.json';
 
 Vue.use(Vuex);
 Vue.use(VueLocalStorage, {
-  bind: true,
   namespace: $package.name,
+  bind: true,
 });
 
 export default new Vuex.Store({
