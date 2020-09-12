@@ -55,8 +55,10 @@ export default {
   watch: {
     value: {
       handler(value) {
-        const img = document.createElement('img');
+        this.error = null;
+        this.progress = null;
         this.isImage = null;
+        const img = document.createElement('img');
         img.onload = () => {
           this.isImage = true;
         };
@@ -110,13 +112,8 @@ export default {
       }
     },
 
-    setValue(value = null) {
-      this.error = null;
-      this.progress = null;
-      this.value = value;
-    },
     handleChange(value = null) {
-      this.setValue(value);
+      this.value = value;
       this.$emit('update:value', value);
       this.$emit('input', value);
       this.$emit('change', value);

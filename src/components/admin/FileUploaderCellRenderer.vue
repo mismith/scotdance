@@ -46,7 +46,7 @@ export default {
   },
   methods: {
     handleChange(value = null) {
-      this.setValue(value);
+      this.value = value;
       this.hotInstance.setDataAtCell(this.row, this.col, this.value);
     },
   },
