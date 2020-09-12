@@ -33,7 +33,7 @@
     <div v-if="currentSection" class="app-scroll-frame app-scroll">
       <template v-if="currentSection.hot">
         <EmptyState
-          v-if="inTabs('groups') && !this.categories.length"
+          v-if="inTabs('groups') && !this.categories.length && !this.groups.length"
           icon="mdi-alert"
           label="No categories found"
         >
