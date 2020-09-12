@@ -30,6 +30,8 @@
         <v-icon>mdi-pencil</v-icon>
       </v-btn>
     </v-list-item-action>
+
+    <slot name="append" />
   </v-list-item>
 </template>
 

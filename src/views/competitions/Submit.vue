@@ -1,5 +1,6 @@
 <template>
   <div class="CompetitionsSubmit app-scroll-frame app-scroll alt">
+    <!-- @TODO: scrolling not working on mobile? -->
     <v-stepper v-model="currentStep" vertical class="flex-none pb-4">
       <v-stepper-step
         :step="1"

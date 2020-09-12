@@ -24,6 +24,13 @@ Vue.use(VueLocalStorage, {
   bind: true,
 });
 
+let viewed = {};
+try {
+  viewed = JSON.parse(Vue.localStorage.get('viewed')) || {};
+} catch (err) {
+  // IGNORE
+}
+
 export default new Vuex.Store({
   state: {
     $package: {
@@ -47,6 +54,8 @@ export default new Vuex.Store({
     myFavorites: undefined,
     myPermissions: undefined,
 
+    viewed,
+
     currentDialog: undefined,
     currentDialogData: undefined,
 
@@ -68,6 +77,10 @@ export default new Vuex.Store({
       }
       return get(state.myPermissions, permission.replace(/\//g, '.')) === true;
     },
+
+    isViewed: state => (type, id) => state.viewed
+      && state.viewed[type]
+      && state.viewed[type].find(item => item[0] === id),
   },
   mutations: {
     updateField,
@@ -79,6 +92,23 @@ export default new Vuex.Store({
 
     addPostLoginCallback(state, callback) {
       state.postLoginCallbacks.push(callback);
+    },
+
+    setViewed(state, [type, id, on = true, max = 5]) {
+      if (type && id) {
+        Vue.set(state.viewed, type, [
+          [id, on && Date.now()],
+          ...(state.viewed[type] || []),
+        ]
+          .filter(v => v[1]) // remove empties
+          .filter((v, i, a) => a.findIndex(vv => vv[0] === v[0]) === i) // avoid duplicates
+          .slice(0, max)); // truncate to prevent leaking
+      } else if (type) {
+        Vue.set(state.viewed, type, []);
+      } else {
+        state.viewed = {};
+      }
+      Vue.localStorage.set('viewed', JSON.stringify(state.viewed));
     },
 
     setCurrentDialog(state, to) {
@@ -157,6 +187,25 @@ export default new Vuex.Store({
       // ...while opening dialog to inform user about favorites functionality
       return commit('setCurrentDialog', 'favorites');
     },
+    togglePinnedCompetition({ state, commit }, competition) {
+      const setPinned = to => state.myFavoritesRef
+        .child('competitions')
+        .child(competition[idKey])
+        .set(to || null);
+
+      if (state.myFavoritesRef) {
+        return setPinned(!competition.$pinned);
+      }
+
+      // 'store' competition for pinning post-auth...
+      commit('addPostLoginCallback', () => {
+        setPinned(true);
+      });
+
+      // ...while opening dialog to inform user about favorites functionality
+      return commit('setCurrentDialog', 'pins');
+    },
+
     help({ state, commit }, set = undefined) {
       if (window.$crisp && state.helpAvailable) {
         if (set === false || (set === undefined && state.helpVisible)) {

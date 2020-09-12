@@ -260,6 +260,8 @@ export default {
     async loadFirebase() {
       if (!this.competitionId) return;
 
+      this.$store.commit('setViewed', ['competitions', this.competitionId]);
+
       this.loaded = false;
 
       this.competitionRef = this.competitionsRef.child(this.competitionId);

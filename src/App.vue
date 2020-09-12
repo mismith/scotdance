@@ -28,30 +28,73 @@
         <v-icon>mdi-{{ /^competition.admin/.test($route.name) ? 'eye' : 'pencil' }}</v-icon>
       </v-btn>
 
-      <v-menu offset-y left>
+      <v-menu v-model="submenuVisible" offset-y max-height="90%" max-width="calc(100% - 12px * 2)">
         <template #activator="{ on }">
           <v-btn icon v-on="on">
-            <v-icon>mdi-help-circle</v-icon>
+            <v-badge v-model="submenuIsNew" dot color="secondary">
+              <v-icon>mdi-apps</v-icon>
+            </v-badge>
           </v-btn>
         </template>
 
-        <v-list>
-          <v-list-item :to="{ name: 'home', query: { at: 'about' } }" exact>
-            <v-list-item-title>About</v-list-item-title>
-          </v-list-item>
-          <v-list-item :to="{ name: 'home', query: { at: 'faq' } }" exact>
-            <v-list-item-title>FAQs</v-list-item-title>
-          </v-list-item>
-          <template v-if="$store.state.helpAvailable">
+        <v-sheet class="app-scroll" style="max-width: 400px;">
+          <AppSubmenu
+            :competitions="competitions"
+            :visible="submenuVisible"
+          />
+        </v-sheet>
+      </v-menu>
+
+      <v-menu v-model="accountVisible" offset-y>
+        <template #activator="{ on }">
+          <v-btn icon class="mr-n2" v-on="on">
+            <v-avatar size="36">
+              <Gravatar v-if="me" :user="me" />
+              <v-icon v-else>mdi-account-circle</v-icon>
+            </v-avatar>
+          </v-btn>
+        </template>
+
+        <v-sheet>
+          <div v-if="!me" style="width: 300px; max-width: 100%;">
+            <div class="body-2 pa-4">
+              <p>To <strong>save and sync</strong> dancers, competitions, settings, and more, you'll need an account first.</p>
+              <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
+            </div>
+            <div class="pa-3 primary" style="position: relative;">
+              <div class="account-bg"></div>
+              <AccountButtons />
+            </div>
+            <v-card-actions class="justify-end pa-2">
+              <v-btn text @click="accountVisible = false">Not Now</v-btn>
+            </v-card-actions>
+          </div>
+          <template v-else>
+            <v-list>
+              <v-list-item :to="{ name: 'profile' }" @click="closeMenu()">
+                <v-list-item-avatar>
+                  <v-icon>mdi-account-circle</v-icon>
+                </v-list-item-avatar>
+                <v-list-item-content>
+                  <v-list-item-title>My Profile</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+
+            <v-spacer />
             <v-divider />
-            <v-list-item @click="help(true)">
-              <v-list-item-title>Feedback</v-list-item-title>
-            </v-list-item>
-            <v-list-item v-if="$store.state.helpVisible" @click="help(false)">
-              <v-list-item-title class="error--text">Hide Live Chat</v-list-item-title>
-            </v-list-item>
+            <v-list>
+              <v-list-item @click="logout()">
+                <v-list-item-avatar>
+                  <v-icon>mdi-exit-to-app</v-icon>
+                </v-list-item-avatar>
+                <v-list-item-content>
+                  <v-list-item-title>Logout</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
           </template>
-        </v-list>
+        </v-sheet>
       </v-menu>
     </v-app-bar>
 
@@ -62,186 +105,104 @@
       :width="320"
       class="app-scroll-frame"
     >
-      <header class="account-header primary flex-none">
-        <div class="account-bg"></div>
-        <AccountButtons v-if="!me" class="pa-4" />
-        <template v-else>
-          <v-list three-line>
-            <v-list-item class="has-avatar">
-              <v-avatar :size="64">
-                <Gravatar :user="me" />
-              </v-avatar>
-            </v-list-item>
-          </v-list>
-          <v-list dark>
-            <v-list-group v-model="accountToggled">
-              <template #activator>
-                <v-list-item-content>
-                  <v-list-item-title>
-                    {{ me.displayName || me.email || 'Account' }}
-                  </v-list-item-title>
-                </v-list-item-content>
-              </template>
-            </v-list-group>
-          </v-list>
-        </template>
-
-        <RegisterDialog />
-        <LoginDialog />
-        <RequiresAuthDialog name="favorites">
-          <template #title>
-            <v-card-title class="title">
-              <div class="flex">Track your favourites</div>
-              <v-icon color="secondary">mdi-star</v-icon>
-            </v-card-title>
-          </template>
-
-          <p>To see the dancers you care most about <strong>featured throughout the app</strong>, you'll need an account first.</p>
-          <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
-        </RequiresAuthDialog>
-        <RequiresAuthDialog name="submissions">
-          <template #title>
-            <v-card-title class="title">
-              <div class="flex">Submit your competition</div>
-            </v-card-title>
-          </template>
-
-          <p>To bring the app to your event, you'll need an account first.</p>
-          <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
-        </RequiresAuthDialog>
-
-        <v-btn icon absolute color="white" class="ma-2" @click="menuVisible = false">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </header>
+      <v-btn icon absolute class="ma-2" @click="closeMenu()">
+        <v-icon>mdi-close</v-icon>
+      </v-btn>
 
       <div class="app-scroll-frame app-scroll">
-        <template v-if="accountToggled">
-          <v-list>
-            <v-subheader>Account</v-subheader>
+        <v-subheader>Competitions</v-subheader>
+        <header class="d-flex px-2 pb-2">
+          <v-btn
+            :to="{ name: 'competitions' }"
+            exact
+            color="primary"
+            large
+            class="flex ma-2"
+            @click="closeMenu()"
+          >
+            Browse
+          </v-btn>
+          <v-btn
+            :to="{ name: 'competitions.submit' }"
+            exact
+            color="secondary"
+            large
+            class="flex ma-2"
+            @click="closeMenu()"
+          >
+            Submit
+          </v-btn>
+        </header>
 
-            <v-list-item :to="{ name: 'profile' }" @click="closeMenu()">
+        <v-spacer />
+
+        <v-list>
+          <v-subheader>{{ $store.state.$package.$name }}</v-subheader>
+
+          <v-list-item to="/" exact @click="closeMenu()">
+            <v-list-item-avatar>
+              <v-icon>mdi-home</v-icon>
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title>Home</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item
+            :to="{ name: 'settings' }"
+            @click="closeMenu()"
+          >
+            <v-list-item-avatar>
+              <v-icon>mdi-settings</v-icon>
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title>Settings</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item
+            v-if="$store.getters.hasPermission('admin')"
+            :to="{ name: 'admin.info' }"
+            @click="closeMenu()"
+          >
+            <v-list-item-avatar>
+              <v-icon>mdi-settings-box</v-icon>
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title>Admin</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+
+          <template v-if="$store.state.helpAvailable">
+            <v-list-item @click="help(true); closeMenu();">
               <v-list-item-avatar>
-                <v-icon>mdi-account-circle</v-icon>
+                <v-icon>mdi-frequently-asked-questions</v-icon>
               </v-list-item-avatar>
-              <v-list-item-content>
-                <v-list-item-title>My Profile</v-list-item-title>
-              </v-list-item-content>
+              <v-list-item-title>Feedback</v-list-item-title>
             </v-list-item>
-          </v-list>
-
-          <v-spacer />
-          <v-divider />
-          <v-list>
-            <v-list-item @click="logout().then(toggleAccount)">
-              <v-list-item-avatar>
-                <v-icon>mdi-exit-to-app</v-icon>
-              </v-list-item-avatar>
-              <v-list-item-content>
-                <v-list-item-title>Logout</v-list-item-title>
-              </v-list-item-content>
-            </v-list-item>
-          </v-list>
-        </template>
-
-        <template v-else>
-          <v-list two-line>
-            <v-subheader>
-              <router-link
-                :to="{ name: 'competitions' }"
-                class="flex"
-                style="color: inherit; text-decoration: none;"
-              >
-                Competitions
-              </router-link>
-
-              <v-btn :to="{ name: 'competitions.submit' }" icon @click="closeMenu()">
-                <v-icon>mdi-plus</v-icon>
-              </v-btn>
-            </v-subheader>
-
-            <CompetitionListItem
-              v-for="competition in relevantCompetitions"
-              :key="competition[idKey]"
-              :competition="competition"
-              :to="{ name: 'competition.info', params: { competitionId: competition[idKey] } }"
-              @click="closeMenu()"
-            />
-
-            <v-list-item v-if="!relevantCompetitions.length" class="empty">
+            <v-list-item v-if="$store.state.helpVisible" @click="help(false); closeMenu();">
               <v-list-item-avatar>
                 <v-icon>mdi-close</v-icon>
               </v-list-item-avatar>
-              <v-list-item-content>
-                No competitions found.
-              </v-list-item-content>
+              <v-list-item-title class="error--text">Hide Live Chat</v-list-item-title>
             </v-list-item>
+          </template>
 
-            <footer
-              v-if="competitions.length && competitions.length !== relevantCompetitions.length"
-              class="d-flex justify-center pa-3"
-            >
-              <v-btn text color="primary" exact :to="{ name: 'competitions' }" @click="closeMenu()">
-                View {{ competitions.length - relevantCompetitions.length }} More
-              </v-btn>
-            </footer>
-          </v-list>
-
-          <v-spacer />
-          <v-divider />
-          <v-list>
-            <v-subheader>Links</v-subheader>
-
-            <v-list-item to="/" exact @click="closeMenu()">
-              <v-list-item-avatar>
-                <v-icon>mdi-home</v-icon>
-              </v-list-item-avatar>
-              <v-list-item-content>
-                <v-list-item-title>App Home</v-list-item-title>
-              </v-list-item-content>
-            </v-list-item>
-            <v-list-item
-              :to="{ name: 'settings' }"
-              @click="closeMenu()"
-            >
-              <v-list-item-avatar>
-                <v-icon>mdi-settings</v-icon>
-              </v-list-item-avatar>
-              <v-list-item-content>
-                <v-list-item-title>App Settings</v-list-item-title>
-              </v-list-item-content>
-            </v-list-item>
-            <v-list-item
-              v-if="$store.getters.hasPermission('admin')"
-              :to="{ name: 'admin.info' }"
-              @click="closeMenu()"
-            >
-              <v-list-item-avatar>
-                <v-icon>mdi-settings-box</v-icon>
-              </v-list-item-avatar>
-              <v-list-item-content>
-                <v-list-item-title>App Admin</v-list-item-title>
-              </v-list-item-content>
-            </v-list-item>
-
-            <template v-if="needsUpdating">
-              <v-divider />
-              <PromptToUpdate>
-                <template #activator="{ on }">
-                  <v-list-item v-on="on">
-                    <v-list-item-avatar>
-                      <v-icon>mdi-new-box</v-icon>
-                    </v-list-item-avatar>
-                    <v-list-item-content>
-                      <v-list-item-title>Update</v-list-item-title>
-                    </v-list-item-content>
-                    <v-badge inline content="1" color="secondary" />
-                  </v-list-item>
-                </template>
-              </PromptToUpdate>
-            </template>
-          </v-list>
-        </template>
+          <template v-if="needsUpdating">
+            <v-divider />
+            <PromptToUpdate>
+              <template #activator="{ on }">
+                <v-list-item v-on="on">
+                  <v-list-item-avatar>
+                    <v-icon>mdi-new-box</v-icon>
+                  </v-list-item-avatar>
+                  <v-list-item-content>
+                    <v-list-item-title>Update</v-list-item-title>
+                  </v-list-item-content>
+                  <v-badge inline content="1" color="secondary" />
+                </v-list-item>
+              </template>
+            </PromptToUpdate>
+          </template>
+        </v-list>
       </div>
     </v-navigation-drawer>
 
@@ -258,6 +219,41 @@
         <Spinner />
       </div>
     </v-content>
+
+    <RegisterDialog />
+    <LoginDialog />
+    <RequiresAuthDialog name="favorites">
+      <template #title>
+        <v-card-title class="title">
+          <div class="flex">Track your favourites</div>
+          <v-icon color="secondary">mdi-star</v-icon>
+        </v-card-title>
+      </template>
+
+      <p>To see the dancers you care most about <strong>featured throughout the app</strong>, you'll need an account first.</p>
+      <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
+    </RequiresAuthDialog>
+    <RequiresAuthDialog name="pins">
+      <template #title>
+        <v-card-title class="title">
+          <div class="flex">Pin for easy access</div>
+          <v-icon color="secondary">mdi-pin</v-icon>
+        </v-card-title>
+      </template>
+
+      <p>To see the competitions you are most interested in <strong>featured more prominently</strong>, you'll need an account first.</p>
+      <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
+    </RequiresAuthDialog>
+    <RequiresAuthDialog name="submissions">
+      <template #title>
+        <v-card-title class="title">
+          <div class="flex">Submit your competition</div>
+        </v-card-title>
+      </template>
+
+      <p>To bring the app to your event, you'll need an account first.</p>
+      <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
+    </RequiresAuthDialog>
   </v-app>
 </template>
 
@@ -269,8 +265,8 @@ import RegisterDialog from '@/components/RegisterDialog.vue';
 import LoginDialog from '@/components/LoginDialog.vue';
 import RequiresAuthDialog from '@/components/RequiresAuthDialog.vue';
 import AccountButtons from '@/components/AccountButtons.vue';
-import CompetitionListItem from '@/components/CompetitionListItem.vue';
 import PromptToUpdate from '@/components/PromptToUpdate.vue';
+import AppSubmenu from '@/components/AppSubmenu.vue';
 
 export default {
   name: 'app',
@@ -280,8 +276,9 @@ export default {
       idKey,
       db,
 
-      accountToggled: false,
       menuVisible: false,
+      submenuVisible: false,
+      accountVisible: false,
 
       competitionsRef: undefined,
       competitionsDataRef: undefined,
@@ -298,26 +295,21 @@ export default {
       return this.competitionsRaw
         .map(competition => ({
           ...competition,
-          // $favorite: this.$store.getters.isFavorite('competitions', competition[idKey]),
+          $pinned: this.$store.getters.isFavorite('competitions', competition[idKey]),
+          $viewed: this.$store.getters.isViewed('competitions', competition[idKey]),
+          $relevance: Math.abs(this.$moment().diff(competition.date)),
         }))
         .filter(competition => competition.listed || this.$store.getters.hasPermission(`competitions/${competition[idKey]}`))
         .sort((a, b) => -this.$moment(a.date).diff(b.date)); // order chronologically
     },
-    relevantCompetitions() {
-      const relevantCompetitions = this.competitions.filter((competition) => {
-        // only show upcoming or up to a week old events
-        if (competition.date && this.$moment().isSameOrBefore(competition.date, 'week')) {
-          return true;
-        }
-        return false;
-      });
 
-      // limit to 10 relevant competitions at most
-      if (relevantCompetitions.length) {
-        return relevantCompetitions.slice(0, 10);
-      }
-      // fallback to showing (up to) 10 most recent competitions if no relevant ones are found
-      return this.competitions.slice(-10);
+    submenuIsNew: {
+      get() {
+        return !this.$store.getters.isViewed('ui', 'submenu');
+      },
+      set(to) {
+        return this.$store.commit('setViewed', ['ui', 'submenu', !to]);
+      },
     },
   },
   asyncComputed: {
@@ -341,6 +333,20 @@ export default {
       if (me) {
         if (window.$crisp && me.email) {
           window.$crisp.push(['set', 'user:email', me.email]);
+        }
+      }
+    },
+
+    submenuVisible(submenuVisible) {
+      if (this.submenuIsNew) {
+        if (submenuVisible) {
+          // dismiss after delay when submenu opened
+          setTimeout(() => { // @TODO: clearTimeout on close so this doesn't leak
+            this.submenuIsNew = false;
+          }, 3000);
+        } else {
+          // dismiss instantly if submenu closed
+          this.submenuIsNew = false;
         }
       }
     },
@@ -383,10 +389,6 @@ export default {
 
     closeMenu() {
       this.menuVisible = false;
-      this.accountToggled = false;
-    },
-    toggleAccount(accountToggled = undefined) {
-      this.accountToggled = accountToggled !== undefined ? accountToggled : !this.accountToggled;
     },
 
     logout() {
@@ -413,8 +415,8 @@ export default {
     LoginDialog,
     RequiresAuthDialog,
     AccountButtons,
-    CompetitionListItem,
     PromptToUpdate,
+    AppSubmenu,
   },
 };
 </script>
@@ -525,6 +527,11 @@ body {
     &__content {
       @extend .app-scroll-frame;
     }
+
+    .v-btn.v-btn--absolute {
+      top: 0;
+      right: 0;
+    }
   }
   .v-btn--absolute,
   .v-btn--fixed {
@@ -609,7 +616,7 @@ body {
     height: auto;
     min-height: 48px;
 
-    .v-btn {
+    .v-btn:not(.v-size--x-small) {
       margin-right: -8px;
     }
   }
@@ -736,10 +743,6 @@ body {
         color: inherit !important;
       }
     }
-  }
-  .v-btn.v-btn--absolute {
-    top: 0;
-    right: 0;
   }
 }
 
