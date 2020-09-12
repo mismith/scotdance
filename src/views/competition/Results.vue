@@ -109,7 +109,7 @@
               >
                 <v-list-item v-if="!dance.dancers.length" class="empty">
                   <v-list-item-avatar>
-                    <v-icon>mdi-close</v-icon>
+                    <v-icon>mdi-timer-sand</v-icon>
                   </v-list-item-avatar>
                   <v-list-item-content>
                     Results to be determined.

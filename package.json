@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@handsontable/vue": "^4.1.1",
-    "@mdi/font": "^4.5.95",
+    "@mdi/font": "^4.9.95",
     "@mismith/firebase-tools": "^1.4.0",
     "@outluch/v-file": "^1.0.0",
     "compare-versions": "^3.4.0",
