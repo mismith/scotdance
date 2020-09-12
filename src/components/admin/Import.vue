@@ -24,7 +24,7 @@
           <div class="app-scroll-frame app-scroll pa-4">
             <h3>Instructions</h3>
             <ol>
-              <li>Select the <strong>Excel spreadsheet</strong> (.xslx file) that contains the values to import.</li>
+              <li>Select the <strong>Excel spreadsheet</strong> (.xlsx file) that contains the values to import.</li>
               <li>Pick the sheet that contains a list of dancers with age grouping headers, then click <strong>Next</strong>.</li>
               <li>Double-check that all values were parsed properly&mdash;this is how data will be imported, so if anything is missing or looks broken, it will likely fail to import properly. If it looks okay, click <strong>Import</strong>.</li>
             </ol>
@@ -48,6 +48,11 @@
                 </tr>
               </tbody>
             </table>
+            <div class="pt-3">
+              <v-btn href="/examples/ScotDance-Import-Template.xlsx" download>
+                Download Template XLSX
+              </v-btn>
+            </div>
           </div>
 
           <v-divider />
