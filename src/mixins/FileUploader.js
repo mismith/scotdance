@@ -79,7 +79,7 @@ export default {
     async handleUpload({ target: { files: [file] } }) {
       if (!file) return;
 
-      this.error = this.rules.map(r => r(file)).find(v => v) || '';
+      this.error = this.rules.map(r => r(file)).find(Boolean) || '';
       if (this.error) return;
 
       // start loading

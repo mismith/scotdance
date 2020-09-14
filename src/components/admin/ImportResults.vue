@@ -213,7 +213,7 @@ export default {
       const parseDancers = string => string
         .split('\n')
         .map(line => line.match(/^\d+\s*(=)?\s+(\d+)\s+(.+?)(?:,\s*(.*?))$/))
-        .filter(v => v)
+        .filter(Boolean)
         .map(([, tie, number, $name, $location]) => ({
           number,
           $tie: !!tie,

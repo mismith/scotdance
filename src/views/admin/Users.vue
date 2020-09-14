@@ -132,7 +132,7 @@ export default {
       // @TODO: make this editable
       return flattenPaths(this.permissions[this.currentUser[idKey]])
         .map(path => this.availablePermissions.find(({ value }) => value === path))
-        .filter(v => v);
+        .filter(Boolean);
     },
   },
   methods: {

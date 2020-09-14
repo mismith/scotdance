@@ -27,7 +27,7 @@ export const getPlaceholderDancer = (timestamp = undefined) => ({
   $name: 'Dancer',
 });
 export function isPlaceholderId(dancerId) {
-  return /^\d+$/.test(dancerId);
+  return /^\d+$/.test(dancerId); // fully numeric, i.e. a timestamp
 }
 export function hasPlaceholderDancers(groupId, danceId, results = {}) {
   try {
@@ -122,7 +122,7 @@ export function isInProgress(group, dances = [], results = {}) {
       hasOverall(group) && overall,
     ];
     return dancesToCheck
-      .filter(v => v)
+      .filter(Boolean)
       .some(dance => !groupResults[dance[idKey]] || hasPlaceholderDancers(group[idKey], dance[idKey], results));
   }
   return false;

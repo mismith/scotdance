@@ -18,7 +18,7 @@
         </v-subheader>
       </template>
 
-      <v-list class="ResultsList">
+      <v-list>
         <ResultListItem
           :dancers="findPlacedDancers(group, callbacks, dancers, results, true)"
           :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], callbacks[idKey], results)"
