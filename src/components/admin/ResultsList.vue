@@ -20,7 +20,7 @@
 
       <v-list>
         <ResultListItem
-          :dancers="findPlacedDancers(group, callbacks, dancers, results, true)"
+          :dancers="findPlacedDancers(group, callbacks, dancers, results, false, true)"
           :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], callbacks[idKey], results)"
           :to="{ name: $route.name, params: { groupId: group[idKey], danceId: callbacks[idKey] } }"
           :class="{ active: isActive(group, callbacks) }"
@@ -32,7 +32,7 @@
         <ResultListItem
           v-for="dance in findGroupDances(group, dances)"
           :key="dance[idKey]"
-          :dancers="findPlacedDancers(group, dance, dancers, results)"
+          :dancers="findPlacedDancers(group, dance, dancers, results, false, true)"
           :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], dance[idKey], results)"
           :to="{ name: $route.name, params: { groupId: group[idKey], danceId: dance[idKey] } }"
           :class="{ active: isActive(group, dance) }"
@@ -43,7 +43,7 @@
         <v-divider v-if="hasOverall(group)" inset />
         <ResultListItem
           v-if="hasOverall(group)"
-          :dancers="findPlacedDancers(group, overall, dancers, results)"
+          :dancers="findPlacedDancers(group, overall, dancers, results, false, true)"
           :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], overall[idKey], results)"
           :to="{ name: $route.name, params: { groupId: group[idKey], danceId: overall[idKey] } }"
           :class="{ active: isActive(group, overall) }"

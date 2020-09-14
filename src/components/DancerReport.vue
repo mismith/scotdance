@@ -38,14 +38,12 @@
             {{ overall.$name }}
           </ResultListItem>
 
-          <v-list-item v-if="!findGroupDances(group, dances).length && !hasOverall(group)" class="empty">
-            <v-list-item-avatar>
-              <v-icon>mdi-timer-sand</v-icon>
-            </v-list-item-avatar>
-            <v-list-item-content>
-              Results to be determined.
-            </v-list-item-content>
-          </v-list-item>
+          <EmptyResults
+            v-if="!findGroupDances(group, dances).length && !hasOverall(group)"
+            :groupId="group[idKey]"
+            :danceId="overall[idKey]"
+            :results="results"
+          />
         </v-list>
       </v-list-group>
     </v-list>
@@ -55,6 +53,7 @@
 <script>
 import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue';
 import ResultListItem from '@/components/ResultListItem.vue';
+import EmptyResults from '@/components/EmptyResults.vue';
 import { idKey } from '@/helpers/firebase';
 import {
   overall,
@@ -89,7 +88,7 @@ export default {
     findGroupDances,
 
     getPlace(dancer, group, dance) {
-      if (this.results[group[idKey]] && this.results[group[idKey]][dance[idKey]]) {
+      if (this.results?.[group?.[idKey]][dance?.[idKey]]) {
         const placedDancers = findPlacedDancers(group, dance, this.dancers, this.results);
         return getPlace(dancer, placedDancers);
       }
@@ -101,6 +100,7 @@ export default {
   components: {
     FavoriteDancerButton,
     ResultListItem,
+    EmptyResults,
   },
 };
 </script>

@@ -37,6 +37,14 @@ export function hasPlaceholderDancers(groupId, danceId, results = {}) {
   }
 }
 
+export function hasExplicitlyEmptyResults(groupId, danceId, results = {}) {
+  try {
+    return results[groupId][danceId] === false;
+  } catch (err) {
+    return false;
+  }
+}
+
 export function findCategoryDancers(category, dancers = []) {
   return dancers.filter(dancer => dancer.$group && dancer.$group.categoryId === category[idKey]);
 }
@@ -46,7 +54,7 @@ export function findGroupDances(group, dances = []) {
 export function findGroupDancers(group, dancers = []) {
   return dancers.filter(dancer => dancer.groupId === group[idKey]);
 }
-export function findPlacedDancers(group, dance, dancers = [], results = {}, sortByNumber = false) {
+export function findPlacedDancers(group, dance, dancers = [], results = {}, sortByNumber = false, includeDummyForExplicitlyEmptyResults = false) {
   // get ranked dancerIds
   let placings = [];
   if (group && dance) {
@@ -55,6 +63,9 @@ export function findPlacedDancers(group, dance, dancers = [], results = {}, sort
 
     if (results && results[groupId] && results[groupId][danceId]) {
       placings = results[groupId][danceId];
+    }
+    if (includeDummyForExplicitlyEmptyResults && hasExplicitlyEmptyResults(groupId, danceId, results)) {
+      placings.push('');
     }
   }
 
@@ -123,7 +134,11 @@ export function isInProgress(group, dances = [], results = {}) {
     ];
     return dancesToCheck
       .filter(Boolean)
-      .some(dance => !groupResults[dance[idKey]] || hasPlaceholderDancers(group[idKey], dance[idKey], results));
+      .some(dance => (
+        (!groupResults[dance[idKey]]
+          && !hasExplicitlyEmptyResults(group[idKey], dance[idKey], results))
+        || hasPlaceholderDancers(group[idKey], dance[idKey], results)
+      ));
   }
   return false;
 }

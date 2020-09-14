@@ -76,6 +76,14 @@
         label="Order dancers"
         description="Select dancers in the order placed"
       />
+
+      <v-toolbar v-if="!placedDancers.length" class="flex-none">
+        <v-switch
+          v-model="currentDanceHasExplicitlyEmptyResults"
+          :label="`No ${currentDance === callbacks ? 'Callbacks' : 'Dancers Placed'}`"
+          hide-details
+        />
+      </v-toolbar>
     </Blade>
   </Blades>
 </template>
@@ -94,6 +102,7 @@ import {
   findPlacedDancers,
   getPlaceIndex,
   isPlaced,
+  hasExplicitlyEmptyResults,
 } from '@/helpers/results';
 
 export default {
@@ -148,6 +157,14 @@ export default {
       }
       return [];
     },
+    currentDanceHasExplicitlyEmptyResults: {
+      get() {
+        return hasExplicitlyEmptyResults(this.groupId, this.danceId, this.results);
+      },
+      set(isExplicitlyEmpty) {
+        this.save(isExplicitlyEmpty ? false : null);
+      },
+    },
   },
   watch: {
     currentDance: {
@@ -164,13 +181,14 @@ export default {
     getPlaceholderDancer,
     isPlaced,
 
-    save() {
+    save(set = undefined) {
       // emit changes (to be saved up the chain)
+      const value = set !== undefined ? set : this.placedDancers.map((dancer) => {
+        const dancerId = dancer[idKey];
+        return `${dancerId}${dancer.$tie ? ':tie' : ''}`;
+      });
       this.$emit('change', {
-        [`results/${this.groupId}/${this.danceId}`]: this.placedDancers.map((dancer) => {
-          const dancerId = dancer[idKey];
-          return `${dancerId}${dancer.$tie ? ':tie' : ''}`;
-        }),
+        [`results/${this.groupId}/${this.danceId}`]: value,
       });
     },
     handleTie(dancer, tie) {

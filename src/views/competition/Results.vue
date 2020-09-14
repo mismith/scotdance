@@ -35,7 +35,7 @@
               v-for="group in category.$groups"
               :key="group[idKey]"
               :to="{ name: $route.name, params: { groupId: group[idKey] } }"
-              :dancers="findPlacedDancers(group, callbacks, dancers, results)"
+              :dancers="findPlacedDancers(group, callbacks, dancers, results, false, true)"
               :has-placeholder-dancers="isInProgress(group, dances, results)"
             >
               {{ group.name || group.$name }}
@@ -107,14 +107,12 @@
                 @dancer-click="$router.push({ name: 'competition.dancers', params: { dancerId: $event[idKey] }})"
                 @dancer-added="handleDancerAdded"
               >
-                <v-list-item v-if="!dance.dancers.length" class="empty">
-                  <v-list-item-avatar>
-                    <v-icon>mdi-timer-sand</v-icon>
-                  </v-list-item-avatar>
-                  <v-list-item-content>
-                    Results to be determined.
-                  </v-list-item-content>
-                </v-list-item>
+                <EmptyResults
+                  v-if="!dance.dancers.length"
+                  :groupId="currentGroup[idKey]"
+                  :danceId="dance[idKey]"
+                  :results="results"
+                />
 
                 <v-divider v-if="currentGroup.sponsor && dance[idKey] === overall[idKey]" />
                 <v-list-item
@@ -153,6 +151,7 @@
 import ResultListItem from '@/components/ResultListItem.vue';
 import PlacedDancerList from '@/components/PlacedDancerList.vue';
 import ResultsProgressIndicator from '@/components/ResultsProgressIndicator.vue';
+import EmptyResults from '@/components/EmptyResults.vue';
 import BladeToolbar from '@/components/BladeToolbar.vue';
 import { idKey } from '@/helpers/firebase';
 import {
@@ -329,6 +328,7 @@ export default {
     ResultListItem,
     PlacedDancerList,
     ResultsProgressIndicator,
+    EmptyResults,
     BladeToolbar,
   },
 };
