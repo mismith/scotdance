@@ -114,28 +114,23 @@
                   :results="results"
                 />
 
-                <v-divider v-if="currentGroup.sponsor && dance[idKey] === overall[idKey]" />
-                <v-list-item
-                  v-if="currentGroup.sponsor && dance[idKey] === overall[idKey]"
-                  @click="showTrophy = true"
-                >
-                  <v-list-item-content>
-                    <v-list-item-title>
-                      {{ currentGroup.sponsor }}
-                    </v-list-item-title>
-                    <v-list-item-subtitle>
-                      {{ currentGroup.trophy || '' }} Trophy Sponsor
-                    </v-list-item-subtitle>
-                  </v-list-item-content>
-                </v-list-item>
+                <template v-if="currentSponsor && dance[idKey] === overall[idKey]">
+                  <v-divider />
+                  <v-list-item @click="setCurrentDialog(['staff', currentSponsor])">
+                    <v-list-item-content>
+                      <v-list-item-title>
+                        {{ currentSponsor.$name }}
+                      </v-list-item-title>
+                      <v-list-item-subtitle>
+                        {{ currentGroup.trophy || '' }} Trophy Sponsor
+                      </v-list-item-subtitle>
+                    </v-list-item-content>
+                  </v-list-item>
+                </template>
               </PlacedDancerList>
             </v-list-group>
           </v-list>
         </div>
-
-        <DialogCard v-model="showTrophy" :title="currentGroup.sponsor">
-          <div class="pre-line">{{ currentGroup.trophy || '' }} Trophy Sponsor</div>
-        </DialogCard>
       </div>
       <EmptyState
         v-else
@@ -148,12 +143,13 @@
 </template>
 
 <script>
+import { mapMutations } from 'vuex';
 import ResultListItem from '@/components/ResultListItem.vue';
 import PlacedDancerList from '@/components/PlacedDancerList.vue';
 import ResultsProgressIndicator from '@/components/ResultsProgressIndicator.vue';
 import EmptyResults from '@/components/EmptyResults.vue';
 import BladeToolbar from '@/components/BladeToolbar.vue';
-import { idKey } from '@/helpers/firebase';
+import { idKey, pushidRegex } from '@/helpers/firebase';
 import {
   findByIdKey,
   hasFavorites,
@@ -188,6 +184,7 @@ export default {
     categories: Array,
     groups: Array,
     dances: Array,
+    staff: Array,
     results: Object,
   },
   localStorage: {
@@ -211,7 +208,6 @@ export default {
       callbacks,
 
       scrollTimeout: undefined,
-      showTrophy: false,
     };
   },
   computed: {
@@ -231,6 +227,14 @@ export default {
         return findByIdKey(this.dances, this.danceId);
       }
       return null;
+    },
+    currentSponsor() {
+      const { sponsor: $name } = this.currentGroup || {};
+      if (pushidRegex.test($name)) {
+        const staff = this.staff.find(s => s[idKey] === $name);
+        if (staff) return staff;
+      }
+      return $name && { $name };
     },
 
     groupedCategories() {
@@ -285,6 +289,9 @@ export default {
     findGroupDancers,
     findCategoryDancers,
     findPlacedDancers,
+    ...mapMutations([
+      'setCurrentDialog',
+    ]),
 
     isCategoryExpanded(item, items) {
       const itemIds = items.map(i => i[idKey]);

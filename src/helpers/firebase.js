@@ -44,6 +44,9 @@ const toOrderedArray = (obj) => {
     });
 };
 
+// https://stackoverflow.com/a/36087084/888928
+const pushidRegex = /^[-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz]{20}$/;
+
 export {
   FIREBASE_ENV,
   firebase,
@@ -53,4 +56,5 @@ export {
   db,
   buckets,
   toOrderedArray,
+  pushidRegex,
 };

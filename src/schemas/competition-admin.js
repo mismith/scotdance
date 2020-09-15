@@ -330,6 +330,7 @@ export default {
         {
           data: 'sponsor',
           title: 'Trophy Sponsor',
+          type: 'dropdown',
         },
         {
           data: 'trophy',
