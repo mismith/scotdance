@@ -30,30 +30,32 @@
         :disabled="!passwordConfirm || !newPassword"
         :loading="passwordLoading"
         async
-        @submit="changePassword"
+        @submit="updatePassword"
       >
         <template #activator="{ on }">
           <v-text-field
             label="Password *"
             type="password"
             value="********"
+            required
             readonly
-            append-icon="mdi-pencil"
-            @click:append="on.click"
+            @focus="on.click"
           />
         </template>
 
         <v-text-field
-          label="Current Password"
+          label="Current Password *"
           v-model="passwordConfirm"
           type="password"
           name="password"
+          required
         />
         <v-text-field
-          label="New Password"
+          label="New Password *"
           v-model="newPassword"
           type="password"
           name="password"
+          required
         />
         <v-alert :value="!!passwordError" type="error">
           {{ passwordError && passwordError.message }}
@@ -80,10 +82,11 @@
         <p>This will permanently delete your account and all associated data.</p>
         <p>In order to proceed, please enter your password:</p>
         <v-text-field
-          label="Password"
+          label="Current Password *"
           v-model="removeConfirm"
           type="password"
           name="password"
+          required
         />
         <v-alert :value="!!removeError" type="error">
           {{ removeError && removeError.message }}
@@ -144,7 +147,7 @@ export default {
       db.child('users').child(this.me[idKey]).update(changes);
     },
 
-    async changePassword() {
+    async updatePassword() {
       this.passwordLoading = true;
       this.passwordError = null;
       if (this.me && this.passwordConfirm && this.newPassword) {
@@ -170,7 +173,10 @@ export default {
           await user.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(this.me.email, this.removeConfirm));
           await user.delete();
           await db.child('users').child(this.me[idKey]).remove();
-          await db.child('users:favorites ').child(this.me[idKey]).remove();
+          await db.child('users:favorites').child(this.me[idKey]).remove();
+          await db.child('users:permissions').child(this.me[idKey]).remove();
+          // await db.child('users:tokens').child(this.me[idKey]).remove();
+          // await db.child('users:topics').child(this.me[idKey]).remove();
 
           this.removeLoading = false;
           this.removeActive = false;
