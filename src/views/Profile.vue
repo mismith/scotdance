@@ -15,12 +15,46 @@
         v-model="me.displayName"
         @input="handleChanges('displayName')"
       />
-      <v-text-field
-        label="Email *"
-        v-model="me.email"
-        readonly
-        required
-      />
+
+      <DialogCard
+        v-model="emailActive"
+        title="Change your email"
+        cancel-label="Cancel"
+        submit-label="Change Email"
+        :disabled="!emailConfirm"
+        :loading="emailLoading"
+        async
+        @submit="updateEmail"
+      >
+        <template #activator="{ on }">
+          <v-text-field
+            label="Email *"
+            type="email"
+            v-model="me.email"
+            readonly
+            required
+            @focus="on.click"
+          />
+        </template>
+
+        <v-text-field
+          label="New Email *"
+          v-model="newEmail"
+          type="email"
+          name="email"
+          required
+        />
+        <v-text-field
+          label="Current Password *"
+          v-model="emailConfirm"
+          type="password"
+          name="password"
+          required
+        />
+        <v-alert :value="!!emailError" type="error">
+          {{ emailError && emailError.message }}
+        </v-alert>
+      </DialogCard>
 
       <DialogCard
         v-model="passwordActive"
@@ -109,6 +143,12 @@ export default {
   name: 'Profile',
   data() {
     return {
+      emailActive: false,
+      emailConfirm: undefined,
+      newEmail: undefined,
+      emailLoading: false,
+      emailError: undefined,
+
       passwordActive: false,
       passwordConfirm: undefined,
       newPassword: undefined,
@@ -127,6 +167,11 @@ export default {
     ]),
   },
   watch: {
+    emailActive() {
+      this.emailConfirm = null;
+      this.newEmail = null;
+      this.emailError = null;
+    },
     passwordActive() {
       this.passwordConfirm = null;
       this.newPassword = null;
@@ -147,6 +192,24 @@ export default {
       db.child('users').child(this.me[idKey]).update(changes);
     },
 
+    async updateEmail() {
+      this.emailLoading = true;
+      this.emailError = null;
+      if (this.me && this.emailConfirm) {
+        try {
+          const user = firebase.auth().currentUser;
+          await user.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(this.me.email, this.emailConfirm));
+          await user.updateEmail(this.newEmail);
+          await db.child('users').child(this.me[idKey]).child('email').set(this.newEmail);
+
+          this.emailLoading = false;
+          this.emailActive = false;
+        } catch (err) {
+          this.emailError = err;
+          this.emailLoading = false;
+        }
+      }
+    },
     async updatePassword() {
       this.passwordLoading = true;
       this.passwordError = null;
