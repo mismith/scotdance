@@ -137,19 +137,25 @@ export default new Vuex.Store({
     },
   },
   actions: {
-    auth: firebaseAction(({ bindFirebaseRef, state }, { uid }) => {
+    auth: firebaseAction(({ bindFirebaseRef, state }, { uid, email }) => {
       state.meRef = db.child('users').child(uid);
       state.myFavoritesRef = db.child('users:favorites').child(uid);
       state.myPermissionsRef = db.child('users:permissions').child(uid);
 
       bindFirebaseRef('me', state.meRef, {
-        async readyCallback() {
+        async readyCallback(meSnap) {
           // await 'me'
           await Vue.nextTick();
 
           // flush post-login callbacks
           state.postLoginCallbacks.forEach(callback => callback());
           state.postLoginCallbacks = [];
+
+          // ensure database email is always in sync with actual auth account email address
+          const { email: dbEmail } = meSnap.val() || {};
+          if (dbEmail !== email) {
+            state.meRef.child('email').set(email);
+          }
         },
       });
       bindFirebaseRef('myFavorites', state.myFavoritesRef);
