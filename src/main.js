@@ -41,21 +41,38 @@ Vue.use(VueBodyClass, router);
 Vue.use(VueScrollTo);
 Vue.use(VueObserveVisibility);
 
+// scrolling
 const $scrollAll = (element, options = {}) => {
-  const containers = options.container ? [options.container] : document.querySelectorAll('.app-scroll:not(.persist-scroll)');
+  const containers = options.container ? [options.container] : document.querySelectorAll(`.app-scroll${!options.force ? ':not(.persist-scroll)' : ''}`);
   Array.from(containers).forEach((container) => {
     const scrollTo = scroller();
     scrollTo(element, {
       container,
       ...options,
-      onStart: (...args) => options.onStart && options.onStart(container, ...args),
-      onCancel: (...args) => options.onCancel && options.onCancel(container, ...args),
-      onDone: (...args) => options.onDone && options.onDone(container, ...args),
+      onStart: (...args) => options.onStart?.(container, ...args),
+      onCancel: (...args) => options.onCancel?.(container, ...args),
+      onDone: (...args) => options.onDone?.(container, ...args),
     });
   });
 };
 Vue.prototype.$scrollAll = $scrollAll;
+// scroll to top on status bar tap
+window.addEventListener('statusTap', () => {
+  // stop any lingering user-initiated scroll/rubber-banding
+  const disableScrollability = (container) => {
+    container.style.overflow = 'hidden'; // eslint-disable-line no-param-reassign
+  };
+  const restoreScrollability = (container) => {
+    container.style.overflow = ''; // eslint-disable-line no-param-reassign
+  };
 
+  $scrollAll(document.body, {
+    onStart: disableScrollability,
+    onCancel: restoreScrollability,
+    onDone: restoreScrollability,
+    force: true,
+  });
+});
 (() => {
   // restore scroll positions (can't use vue-router native because of flexbox app-frame)
   const namespace = 'persist-scroll';
