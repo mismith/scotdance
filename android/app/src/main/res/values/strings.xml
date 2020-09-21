@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ScotDance</string>
+    <string name="title_activity_main">ScotDance</string>
+    <string name="package_name">info.mismith.scotdance</string>
+    <string name="custom_url_scheme">info.mismith.scotdance</string>
+</resources>

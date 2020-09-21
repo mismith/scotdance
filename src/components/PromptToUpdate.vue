@@ -45,7 +45,7 @@ export default {
   },
   computed: {
     platformSpecificAppStoreURL() {
-      switch (this.$store.state.$device.platform.toLowerCase()) {
+      switch (this.$store.state.$device?.platform?.toLowerCase()) {
         case 'ios': {
           return 'itms-apps://itunes.apple.com/app/1386475626';
         }

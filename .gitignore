@@ -1,8 +1,6 @@
-# Cordova
-/www/
-/platforms/
-/plugins/
-/public/cordova.js
+# Capacitor
+/www
+.gradle
 
 # Vue defaults
 .DS_Store
@@ -31,6 +29,7 @@ yarn-error.log*
 info.txt
 *.log
 *.keystore
+*.pepk
 .firebase
 .runtimeconfig.json
 firebase-adminsdk.json

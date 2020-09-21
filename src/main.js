@@ -7,6 +7,7 @@ import { scroller } from 'vue-scrollto/src/scrollTo';
 import VueObserveVisibility from 'vue-observe-visibility';
 import moment from 'moment-mini';
 import 'simple-line-icons/css/simple-line-icons.css';
+import { Plugins, Capacitor } from '@capacitor/core';
 
 import { firebase } from '@/helpers/firebase';
 import { getTitleChunks } from '@/helpers/router';
@@ -97,39 +98,14 @@ Vue.prototype.$scrollAll = $scrollAll;
 })();
 
 // app / devices
-Vue.prototype.isApp = window.location.protocol === 'file:';
-if (Vue.prototype.isApp) {
-  // allow loading cordova plugins
-  const cordovaScript = document.createElement('script');
-  cordovaScript.setAttribute('type', 'text/javascript');
-  cordovaScript.setAttribute('src', 'cordova.js');
-  document.body.appendChild(cordovaScript);
-
-  // once cordova plugins are ready
-  document.addEventListener('deviceready', () => {
-    window.navigator.splashscreen.hide();
-    window.StatusBar.show();
-
-    if (window.device) store.commit('setDevice', window.device);
-  });
-
-  // scroll to top on status bar tap
-  window.addEventListener('statusTap', () => {
-    // stop any lingering user-initiated scroll/rubber-banding
-    const disableScrollability = (container) => {
-      container.style.overflow = 'hidden'; // eslint-disable-line no-param-reassign
-    };
-    const restoreScrollability = (container) => {
-      container.style.overflow = ''; // eslint-disable-line no-param-reassign
-    };
-
-    $scrollAll(document.body, {
-      onStart: disableScrollability,
-      onCancel: restoreScrollability,
-      onDone: restoreScrollability,
-    });
-  });
+Vue.prototype.isApp = Capacitor.isNative;
+Plugins.Device.getInfo().then(device => store.commit('setDevice', device));
+if (Capacitor.platform === 'ios') {
+  Plugins.IosSwipeBack.enable();
 }
+window.addEventListener('load', () => {
+  Plugins.SplashScreen.hide();
+});
 
 // monitor user auth
 firebase.auth().onAuthStateChanged((me) => {

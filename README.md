@@ -16,13 +16,11 @@ Command | Description
 --- | ---
 `npm i` | install dependencies
 `npm run dev` | serve with hot reload at localhost:8080
-`npm run dev:ios` | build and emulate on iOS device
-`npm run dev:android` | build and emulate on Android device
 `npm run build` | build for production with minification
-`npm run build:ios` | build iOS for release
-`npm run build:android` | build Android for release
-`npm run build:app` | build iOS and Android for release
 `npm run lint` | show code formatting tips
+`npm run report` | open bundle size inspector
+`npm run release` | create version commit and tag in git
+`npm run deploy` | push local build to production
 
 
 ## Admin
@@ -41,18 +39,15 @@ Links to the admin panels needed to manage this project:
 * Release notes: [Changelog](./CHANGELOG.md)
 
 
-## App (Cordova)
+## App (Capacitor)
 
 ### Combined Release
 
 1. While waiting between/for any of the following steps, write release notes in `CHANGELOG.md`
-2. Increment versions via `npm run version`, which consists of:
-    1. `control.xml`
-    2. `package.json`
-    3. `package-lock.json`
-3. Deploy to app stores:
-    1. Perform steps 1-3 of the Play Store instructions
-    2. Perform steps 2-5 of the App Store instructions
+2. Adjust/increment the version in `package.json` (this will be propagated by the `sync-version` script that gets called pre-`build`)
+3. Build and Deploy to app stores:
+    1. Perform steps 1-5 of the Apple App Store instructions
+    2. Perform steps 2-4 of the Google Play Store instructions
     3. Perform steps 4-7 of the Play Store instructions
     4. Once iOS build package is processed, perform step 6 of the App Store instructions
 4. Finalize the release via `npm run release`, which consists of:
@@ -64,38 +59,27 @@ Links to the admin panels needed to manage this project:
 
 ### Apple App Store
 
-* On first setup, change Xcode to use Legacy Build System
 * Use Automatic Signing in Xcode, after setting up all certificates and provisioning profiles
 * To upload to App Store:
 
-    1. `npm run build:app`
-    2. Open project in Xcode (`platforms/ios/ScotDance.xcworkspace`)
-    3. In the top menu, select "Product" > "Archive"
+    1. `npm run build`
+    2. Open project in Xcode (`npx cap open ios`)
+    3. In the menu bar, select "Product" > "Archive"
     4. Click "Distribute to iOS"
     5. Follow the wizard
-    6. In iTunes Connect, create a New iOS Version, then complete/fill out all remaining steps/info (the new build should be processed and ready to be selected shortly)
+    6. In iTunes Connect, create a New iOS Version, then complete/fill out all remaining steps/info in form
+        - the new build should be processed and ready to be selected shortly
 
 ### Google Play Store
 
-* To build a signed `.apk` for uploading to the Play Store, place the `scotdance.keystore` (stored in a private Dropbox) in the root of this repo. You'll need to enter (then revert) two passwords every release build (since they shouldn't be committed, obviously).
+* To build a signed `.aab`, you'll need the `scotdance.keystore` file (stored in a private Dropbox).
 * To upload to Google Play:
 
-    1. Add both passwords in `build.json` (and save the file)
-    2. `npm run build:app`
-    3. Revert/discard the two passwords added in `build.json`
-    4. Open Google Play Console
-    5. Create a new Production Release
-    6. Select/Drag in `platforms/android/app/build/outputs/bundle/release/app.aab`
-    7. Complete all remaining steps/info
-
-* Steps used to generate the keystore for this project:
-    ``` bash
-    keytool -genkey -v -keystore scotdance.keystore -alias scotdance -keyalg RSA -keysize 2048 -validity 10000
-    keytool -importkeystore -srckeystore scotdance.keystore -destkeystore scotdance.keystore -deststoretype pkcs12
-
-    # to sign manually
-    cordova build android --release
-    jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore scotdance.keystore platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk scotdance
-
-    # source: https://codesundar.com/lesson/publish-cordova-apps-to-playstore/
-    ```
+    1. `npm run build`
+    2. Open project in Android Studio (`npx cap open android`)
+    3. In the menu bar, select "Build" > "Generate Signed Bundle / APK…"
+    4. Follow the wizard (choose AAB, enter keystore creds, choose release)
+    5. Open Google Play Console
+    6. Create a new Production Release
+    7. Select/Drag in `android/app/release/app-release.aab`
+    8. Complete all remaining steps/info in form

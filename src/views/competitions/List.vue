@@ -50,20 +50,20 @@
 
           <transition :name="`slide-y${nowVisibility > 0 ? '-reverse' : ''}-transition`">
             <v-btn
-              rounded
-              absolute
               v-if="nowVisibility"
               v-show="!competitionsSearchFor"
               :top="nowVisibility < 0"
               :bottom="nowVisibility > 0"
               left
-              fab
+              absolute
               small
+              fab
+              rounded
               color="accent"
               class="now-marker"
               @click="handleNowClick"
             >
-              <v-icon>mdi-chevron-{{nowVisibility > 0 ? 'down' : 'up'}}</v-icon>
+              <v-icon>mdi-chevron-{{ nowVisibility > 0 ? 'down' : 'up' }}</v-icon>
             </v-btn>
           </transition>
         </div>

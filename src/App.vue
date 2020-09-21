@@ -520,6 +520,7 @@ body {
   .v-navigation-drawer {
     max-height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom)); // for iPhone-X
     border-left: env(safe-area-inset-left) solid #000;
+    margin-top: env(safe-area-inset-top);
 
     &--absolute {
       z-index: 10; // see: https://github.com/vuetifyjs/vuetify/issues/4241
