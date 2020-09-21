@@ -64,7 +64,7 @@ export default new Router({
           name: 'competitions',
           component: CompetitionsList,
           meta: {
-            title: 'All Competitions',
+            title: 'Browse Competitions',
           },
         },
         {
