@@ -149,9 +149,9 @@ export default {
 
     rules() {
       return [
-        this.field.required ? (v => !!`${v || ''}`.trim() || 'Required.') : true,
+        this.field.required ? ((v) => !!`${v || ''}`.trim() || 'Required.') : true,
         this.field.type === 'date'
-          ? (v => /^\d\d\d\d-\d\d-\d\d$/.test(`${v || ''}`.trim()) || 'Expected format: YYYY-MM-DD')
+          ? ((v) => /^\d\d\d\d-\d\d-\d\d$/.test(`${v || ''}`.trim()) || 'Expected format: YYYY-MM-DD')
           : true,
         ...(this.field.rules || []),
       ];

@@ -146,7 +146,7 @@ export default {
   },
   methods: {
     reset() {
-      this.steps = toOrderedArray(steps).map(step => ({
+      this.steps = toOrderedArray(steps).map((step) => ({
         $isDirty: false,
         $isValid: false,
         ...step,

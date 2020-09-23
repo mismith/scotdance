@@ -2,7 +2,7 @@ import Fuse from 'fuse.js';
 import { idKey } from '@/helpers/firebase';
 
 export function findByIdKey(items, id) {
-  return items.find(item => item[idKey] === id);
+  return items.find((item) => item[idKey] === id);
 }
 
 export function sortByKey(key = idKey) {
@@ -10,7 +10,7 @@ export function sortByKey(key = idKey) {
 }
 
 export function hasFavorites(dancers) {
-  return dancers.some(dancer => dancer && dancer.$favorite);
+  return dancers.some((dancer) => dancer && dancer.$favorite);
 }
 
 export function getScheduleItemDanceName(item, dances) {
@@ -19,7 +19,7 @@ export function getScheduleItemDanceName(item, dances) {
 }
 
 export function hydrateByIdKey(ids, items = []) {
-  return (ids || []).map(id => findByIdKey(items, id));
+  return (ids || []).map((id) => findByIdKey(items, id));
 }
 
 export function getGroupName(group, categories) {

@@ -94,7 +94,7 @@ export default {
   computed: {
     currentUser() {
       if (this.userId) {
-        return this.users.find(user => user[idKey] === this.userId);
+        return this.users.find((user) => user[idKey] === this.userId);
       }
       return null;
     },
@@ -106,7 +106,7 @@ export default {
       // filter by search term
       if (this.filterBy && filtered.length && fields) {
         filtered = new Fuse(filtered, {
-          keys: fields.map(field => field.data),
+          keys: fields.map((field) => field.data),
           threshold: 0.33,
         }).search(this.filterBy);
       }
@@ -122,7 +122,7 @@ export default {
           text: 'System Administrator',
           value: 'admin',
         },
-        ...this.competitions.map(competiton => ({
+        ...this.competitions.map((competiton) => ({
           text: competiton.name,
           value: `competitons/${competiton[idKey]}`,
         })),
@@ -131,7 +131,7 @@ export default {
     selectedPermissions() {
       // @TODO: make this editable
       return flattenPaths(this.permissions[this.currentUser[idKey]])
-        .map(path => this.availablePermissions.find(({ value }) => value === path))
+        .map((path) => this.availablePermissions.find(({ value }) => value === path))
         .filter(Boolean);
     },
   },

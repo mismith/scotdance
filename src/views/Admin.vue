@@ -128,10 +128,10 @@ export default {
       });
     },
     inTabs(...tabs) {
-      return tabs.some(tab => (this.$root.currentTab) === tab);
+      return tabs.some((tab) => (this.$root.currentTab) === tab);
     },
     getSection(sectionId) {
-      return this.sections.find(section => section[idKey] === sectionId);
+      return this.sections.find((section) => section[idKey] === sectionId);
     },
 
     awaitSave(...promises) {

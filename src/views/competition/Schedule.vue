@@ -300,7 +300,7 @@ export default {
       const draw = this.draws && this.draws[group[idKey]] && this.draws[group[idKey]][dance[idKey]];
       if (draw) {
         return draw // order by draw order
-          .map(number => this.dancers.find(dancer => `${dancer.number}` === `${number}`) || getPlaceholderDancer());
+          .map((number) => this.dancers.find((dancer) => `${dancer.number}` === `${number}`) || getPlaceholderDancer());
       }
       return findGroupDancers(group, this.dancers)
         .sort(sortByKey('$number')); // order by dancer number
@@ -335,7 +335,7 @@ export default {
         // ensure it has (valid, i.e. not outdated) platforms
         dance.danceId
         && dancePlatformIds.length
-        && this.platforms.some(platform => dancePlatformIds.includes(platform[idKey]))
+        && this.platforms.some((platform) => dancePlatformIds.includes(platform[idKey]))
       );
     },
     isDanceExpanded(danceId, danceIds, fallback = true) {

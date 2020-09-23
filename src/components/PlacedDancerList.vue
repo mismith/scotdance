@@ -76,7 +76,7 @@ export default {
     async dancers(dancers, prev) {
       // if a newly added dancer, lookup and emit its DOM element
       if (dancers && prev && dancers.length > prev.length) {
-        const prevIds = prev.map(dancer => dancer[idKey]);
+        const prevIds = prev.map((dancer) => dancer[idKey]);
 
         await this.$nextTick(); // wait for the element to be mounted first
 

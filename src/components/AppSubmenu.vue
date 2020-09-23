@@ -108,7 +108,7 @@ export default {
           ),
         },
       ]
-        .filter(group => group.competitions.length);
+        .filter((group) => group.competitions.length);
     },
   },
   watch: {
@@ -128,7 +128,7 @@ export default {
 
     async unpinAll() {
       await Promise.all(this.competitions.filter(({ $pinned }) => $pinned)
-        .map(competition => this.togglePinnedCompetition(competition)));
+        .map((competition) => this.togglePinnedCompetition(competition)));
     },
 
     resetClearConfirms() {

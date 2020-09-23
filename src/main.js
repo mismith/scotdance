@@ -116,7 +116,7 @@ window.addEventListener('statusTap', () => {
 
 // app / devices
 Vue.prototype.isApp = Capacitor.isNative;
-Plugins.Device.getInfo().then(device => store.commit('setDevice', device));
+Plugins.Device.getInfo().then((device) => store.commit('setDevice', device));
 if (Capacitor.platform === 'ios') {
   Plugins.IosSwipeBack.enable();
 }
@@ -216,5 +216,5 @@ new Vue({
   router,
   store,
   vuetify,
-  render: h => h(App),
+  render: (h) => h(App),
 }).$mount('#app');

@@ -203,7 +203,7 @@ export default {
     },
     invites() {
       return this.invitesRaw
-        .filter(invite => !FirebaseInvites.is(invite, FirebaseInvites.status.ACCEPTED));
+        .filter((invite) => !FirebaseInvites.is(invite, FirebaseInvites.status.ACCEPTED));
     },
   },
   watch: {

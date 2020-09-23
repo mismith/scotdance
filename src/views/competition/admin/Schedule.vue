@@ -242,8 +242,8 @@ export default {
           items: () => toOrderedArray(this.schedule.days),
           item: () => this.currentDay,
           id: () => this.dayId,
-          params: itemId => ({ dayId: itemId }),
-          name: item => item && item.name,
+          params: (itemId) => ({ dayId: itemId }),
+          name: (item) => item && item.name,
           fields: [
             {
               data: 'name',
@@ -271,8 +271,8 @@ export default {
           items: () => toOrderedArray(this.currentDay.blocks),
           item: () => this.currentBlock,
           id: () => this.blockId,
-          params: itemId => ({ dayId: this.dayId, blockId: itemId }),
-          name: item => item && item.name,
+          params: (itemId) => ({ dayId: this.dayId, blockId: itemId }),
+          name: (item) => item && item.name,
           fields: [
             {
               data: 'name',
@@ -303,8 +303,8 @@ export default {
           items: () => toOrderedArray(this.currentBlock.events),
           item: () => this.currentEvent,
           id: () => this.eventId,
-          params: itemId => ({ dayId: this.dayId, blockId: this.blockId, eventId: itemId }),
-          name: item => item && item.name,
+          params: (itemId) => ({ dayId: this.dayId, blockId: this.blockId, eventId: itemId }),
+          name: (item) => item && item.name,
           fields: [
             {
               data: 'name',
@@ -347,19 +347,19 @@ export default {
           items: () => toOrderedArray(this.currentEvent.dances),
           item: () => this.currentDance,
           id: () => this.danceId,
-          params: itemId => ({
+          params: (itemId) => ({
             dayId: this.dayId,
             blockId: this.blockId,
             eventId: this.eventId,
             danceId: itemId,
           }),
-          name: item => item && getScheduleItemDanceName(item, this.dances),
+          name: (item) => item && getScheduleItemDanceName(item, this.dances),
           fields: [
             {
               data: 'danceId',
               title: 'Dance',
               type: 'select',
-              presets: this.dances.map(dance => ({ text: dance.$name, value: dance[idKey] })),
+              presets: this.dances.map((dance) => ({ text: dance.$name, value: dance[idKey] })),
               clearable: true,
             },
             {
@@ -376,7 +376,7 @@ export default {
             {
               name: 'Registration',
             },
-            ...this.dances.map(dance => ({ danceId: dance[idKey] })),
+            ...this.dances.map((dance) => ({ danceId: dance[idKey] })),
             {
               name: 'Results',
             },
@@ -472,10 +472,10 @@ export default {
     isBladePresetUsed(blade, preset) {
       const items = blade.items();
       return items && items
-        .find(item => blade.name(item) === blade.name(preset));
+        .find((item) => blade.name(item) === blade.name(preset));
     },
     getPrevBlade(blade) {
-      const bladeIndex = this.blades.findIndex(b => b.collection === blade.collection);
+      const bladeIndex = this.blades.findIndex((b) => b.collection === blade.collection);
       const prevBlade = this.blades[bladeIndex - 1];
       return prevBlade;
     },

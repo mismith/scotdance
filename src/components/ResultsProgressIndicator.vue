@@ -23,16 +23,16 @@ export default {
   },
   computed: {
     hasResults() {
-      return this.checkCategoryGroups(this.category, group => this.results[group[idKey]]);
+      return this.checkCategoryGroups(this.category, (group) => this.results[group[idKey]]);
     },
     isInProgress() {
-      return this.checkCategoryGroups(this.category, group => !this.results[group[idKey]] || isInProgress(group, this.dances, this.results));
+      return this.checkCategoryGroups(this.category, (group) => !this.results[group[idKey]] || isInProgress(group, this.dances, this.results));
     },
   },
   methods: {
     checkCategoryGroups(category, check = () => {}) {
       return this.groups
-        .filter(group => group.categoryId === category[idKey])
+        .filter((group) => group.categoryId === category[idKey])
         .some(check);
     },
   },

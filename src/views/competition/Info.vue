@@ -140,7 +140,7 @@ export default {
   },
   computed: {
     groupedStaff() {
-      return groupBy(this.staff.filter(member => member.type), 'type');
+      return groupBy(this.staff.filter((member) => member.type), 'type');
     },
   },
   methods: {

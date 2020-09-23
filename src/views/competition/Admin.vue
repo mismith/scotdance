@@ -178,11 +178,13 @@ export default {
                   // eslint-disable-next-line no-param-reassign
                   column.source = this.categories;
                   return makeKeyValuePairColumn(column, 'name');
-                } else if (column.data === 'groupId') {
+                }
+                if (column.data === 'groupId') {
                   // eslint-disable-next-line no-param-reassign
                   column.source = this.groups;
                   return makeKeyValuePairColumn(column);
-                } else if (column.data === 'sponsor') {
+                }
+                if (column.data === 'sponsor') {
                   // eslint-disable-next-line no-param-reassign
                   column.source = this.staff?.filter(({ type }) => type === 'Sponsor') || [];
                   return makeKeyValuePairColumn(column);
@@ -214,10 +216,10 @@ export default {
       });
     },
     inTabs(...tabs) {
-      return tabs.some(tab => this.$root.currentTab === tab);
+      return tabs.some((tab) => this.$root.currentTab === tab);
     },
     getSection(sectionId) {
-      return this.sections.find(section => section[idKey] === sectionId);
+      return this.sections.find((section) => section[idKey] === sectionId);
     },
 
     awaitSave(...promises) {

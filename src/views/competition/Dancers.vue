@@ -179,7 +179,7 @@ export default {
   computed: {
     currentDancer() {
       if (this.dancerId) {
-        return this.dancers.find(dancer => dancer[idKey] === this.dancerId);
+        return this.dancers.find((dancer) => dancer[idKey] === this.dancerId);
       }
       return null;
     },
@@ -200,7 +200,7 @@ export default {
 
       // filter by onlyFavorites, if necessary
       if (this.onlyFavorites) {
-        filtered = filtered.filter(dancer => dancer && dancer.$favorite);
+        filtered = filtered.filter((dancer) => dancer && dancer.$favorite);
       }
 
       // sort by key

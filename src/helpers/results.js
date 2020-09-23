@@ -31,7 +31,7 @@ export function isPlaceholderId(dancerId) {
 }
 export function hasPlaceholderDancers(groupId, danceId, results = {}) {
   try {
-    return results[groupId][danceId].some(dancerId => isPlaceholderId(dancerId));
+    return results[groupId][danceId].some((dancerId) => isPlaceholderId(dancerId));
   } catch (err) {
     return false;
   }
@@ -46,13 +46,13 @@ export function hasExplicitlyEmptyResults(groupId, danceId, results = {}) {
 }
 
 export function findCategoryDancers(category, dancers = []) {
-  return dancers.filter(dancer => dancer.$group && dancer.$group.categoryId === category[idKey]);
+  return dancers.filter((dancer) => dancer.$group && dancer.$group.categoryId === category[idKey]);
 }
 export function findGroupDances(group, dances = []) {
-  return dances.filter(dance => dance.groupIds && dance.groupIds[group[idKey]]);
+  return dances.filter((dance) => dance.groupIds && dance.groupIds[group[idKey]]);
 }
 export function findGroupDancers(group, dancers = []) {
-  return dancers.filter(dancer => dancer.groupId === group[idKey]);
+  return dancers.filter((dancer) => dancer.groupId === group[idKey]);
 }
 export function findPlacedDancers(group, dance, dancers = [], results = {}, sortByNumber = false, includeDummyForExplicitlyEmptyResults = false) {
   // get ranked dancerIds
@@ -91,7 +91,7 @@ export function findPlacedDancers(group, dance, dancers = [], results = {}, sort
   return placedDancers;
 }
 export function getPlaceIndex(dancer, dancers) {
-  return dancers.findIndex(d => d[idKey] === dancer[idKey]);
+  return dancers.findIndex((d) => d[idKey] === dancer[idKey]);
 }
 export function isPlaced(dancer, dancers) {
   return getPlaceIndex(dancer, dancers) >= 0;
@@ -134,7 +134,7 @@ export function isInProgress(group, dances = [], results = {}) {
     ];
     return dancesToCheck
       .filter(Boolean)
-      .some(dance => (
+      .some((dance) => (
         (!groupResults[dance[idKey]]
           && !hasExplicitlyEmptyResults(group[idKey], dance[idKey], results))
         || hasPlaceholderDancers(group[idKey], dance[idKey], results)

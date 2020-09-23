@@ -70,17 +70,17 @@ export default new Vuex.Store({
   getters: {
     getField,
 
-    isFavorite: state => (type, id) => get(state.myFavorites, `${type}.${id}`),
-    hasPermission: state => (permission) => {
+    isFavorite: (state) => (type, id) => get(state.myFavorites, `${type}.${id}`),
+    hasPermission: (state) => (permission) => {
       if (get(state.myPermissions, 'admin') === true) {
         return true;
       }
       return get(state.myPermissions, permission.replace(/\//g, '.')) === true;
     },
 
-    isViewed: state => (type, id) => state.viewed
+    isViewed: (state) => (type, id) => state.viewed
       && state.viewed[type]
-      && state.viewed[type].find(item => item[0] === id),
+      && state.viewed[type].find((item) => item[0] === id),
   },
   mutations: {
     updateField,
@@ -100,8 +100,8 @@ export default new Vuex.Store({
           [id, on && Date.now()],
           ...(state.viewed[type] || []),
         ]
-          .filter(v => v[1]) // remove empties
-          .filter((v, i, a) => a.findIndex(vv => vv[0] === v[0]) === i) // avoid duplicates
+          .filter((v) => v[1]) // remove empties
+          .filter((v, i, a) => a.findIndex((vv) => vv[0] === v[0]) === i) // avoid duplicates
           .slice(0, max)); // truncate to prevent leaking
       } else if (type) {
         Vue.set(state.viewed, type, []);
@@ -148,7 +148,7 @@ export default new Vuex.Store({
           await Vue.nextTick();
 
           // flush post-login callbacks
-          state.postLoginCallbacks.forEach(callback => callback());
+          state.postLoginCallbacks.forEach((callback) => callback());
           state.postLoginCallbacks = [];
 
           // ensure database email is always in sync with actual auth account email address
@@ -176,7 +176,7 @@ export default new Vuex.Store({
     }),
 
     toggleFavoriteDancer({ state, commit }, dancer) {
-      const setFavorite = to => state.myFavoritesRef
+      const setFavorite = (to) => state.myFavoritesRef
         .child('dancers')
         .child(dancer[idKey])
         .set(to || null);
@@ -194,7 +194,7 @@ export default new Vuex.Store({
       return commit('setCurrentDialog', 'favorites');
     },
     togglePinnedCompetition({ state, commit }, competition) {
-      const setPinned = to => state.myFavoritesRef
+      const setPinned = (to) => state.myFavoritesRef
         .child('competitions')
         .child(competition[idKey])
         .set(to || null);

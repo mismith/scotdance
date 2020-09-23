@@ -134,7 +134,8 @@ export default {
       if (this.danceId) {
         if (this.danceId === overall[idKey]) {
           return overall;
-        } else if (this.danceId === callbacks[idKey]) {
+        }
+        if (this.danceId === callbacks[idKey]) {
           return callbacks;
         }
         return findByIdKey(this.dances, this.danceId);

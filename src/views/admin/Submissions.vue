@@ -171,7 +171,7 @@ export default {
     },
     currentSubmission() {
       if (this.submissionId) {
-        return this.submissions.find(submission => submission[idKey] === this.submissionId);
+        return this.submissions.find((submission) => submission[idKey] === this.submissionId);
       }
       return null;
     },

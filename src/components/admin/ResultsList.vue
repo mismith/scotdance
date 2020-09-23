@@ -117,7 +117,7 @@ export default {
     },
 
     isGroupExpanded(item, items) {
-      const itemIds = items.map(i => i[idKey]);
+      const itemIds = items.map((i) => i[idKey]);
       return isExpanded(this.resultsExpandedGroups, item[idKey], itemIds);
     },
     handleGroupExpanded(groupId, expanded) {

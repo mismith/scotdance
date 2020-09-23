@@ -172,7 +172,7 @@ export default {
     },
 
     isEmpty() {
-      return !(this.platforms.length && this.pools.some(pool => pool.$items.length));
+      return !(this.platforms.length && this.pools.some((pool) => pool.$items.length));
     },
   },
   methods: {
@@ -180,7 +180,7 @@ export default {
       'copy',
     ]),
 
-    isJudge: item => item.type === 'Judge',
+    isJudge: (item) => item.type === 'Judge',
 
     getChipColor(poolItem) {
       if (hasFavorites(findGroupDancers(poolItem, this.dancers))) {
@@ -200,8 +200,8 @@ export default {
       if (!this.path) return; // can't save changes if we don't know where to save to
 
       // pluck items of proper type of of joined sorting array
-      const orderedGroupIds = pool.$items.filter(item => !this.isJudge(item)).map(group => group[idKey]);
-      const orderedJudgeIds = pool.$items.filter(this.isJudge).map(judge => judge[idKey]);
+      const orderedGroupIds = pool.$items.filter((item) => !this.isJudge(item)).map((group) => group[idKey]);
+      const orderedJudgeIds = pool.$items.filter(this.isJudge).map((judge) => judge[idKey]);
       this.$emit('change', {
         [`${this.path}/platforms/${pool[idKey]}/orderedGroupIds`]: orderedGroupIds,
         [`${this.path}/platforms/${pool[idKey]}/orderedJudgeIds`]: orderedJudgeIds,

@@ -181,7 +181,7 @@ export default {
         this.step += 1;
 
         // auto-pick default sheets
-        const autoDetectedSheetIndex = workbook.SheetNames.findIndex(name => /Program/i.test(name));
+        const autoDetectedSheetIndex = workbook.SheetNames.findIndex((name) => /Program/i.test(name));
         this.dancersSheetIndex = autoDetectedSheetIndex >= 0 ? autoDetectedSheetIndex : 0;
       };
       reader.readAsBinaryString(file);
@@ -226,7 +226,7 @@ export default {
           data = this.data[key].map((item) => {
             const { code, ...datum } = item;
 
-            const group = this.data.groups.find(g => `${g.code}` === `${code}`);
+            const group = this.data.groups.find((g) => `${g.code}` === `${code}`);
             if (group) datum.group = `${group.category} ${group.name}`;
 
             return datum;
@@ -246,7 +246,7 @@ export default {
     sheetToJson(sheet, options = { header: 1 }) {
       return XLSX.utils.sheet_to_json(sheet, options)
         // eslint-disable-next-line no-unused-vars
-        .filter(row => Object.entries(row).some(([k, v]) => v)); // remove empties
+        .filter((row) => Object.entries(row).some(([k, v]) => v)); // remove empties
     },
     sheetToHot(sheet, settings = {}) {
       const rows = this.sheetToJson(sheet);
@@ -307,7 +307,7 @@ export default {
       return {
         dancers,
         groups: Object.values(groups),
-        categories: categories.map(category => ({ name: category })),
+        categories: categories.map((category) => ({ name: category })),
       };
     },
     async importData(categories, groups, dancers) {
@@ -335,7 +335,7 @@ export default {
 
       const groupMappings = await Promise.all(groups.map(async (groupData) => {
         const categoryId = categoryMappings
-          .find(category => `${category.name}` === `${groupData.category}`);
+          .find((category) => `${category.name}` === `${groupData.category}`);
         const matches = {
           name: groupData.name,
           categoryId: (categoryId && categoryId[idKey]) || null,
@@ -358,7 +358,7 @@ export default {
 
       await Promise.all(dancers.map(async (dancerData) => {
         const groupId = groupMappings
-          .find(group => `${group.code}` === `${dancerData.code}`);
+          .find((group) => `${group.code}` === `${dancerData.code}`);
         const matches = {
           number: dancerData.number,
           firstName: dancerData.firstName,

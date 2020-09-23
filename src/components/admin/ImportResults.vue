@@ -186,7 +186,8 @@ export default {
       if (danceId) {
         if (danceId === overall[idKey]) {
           return overall;
-        } else if (danceId === callbacks[idKey]) {
+        }
+        if (danceId === callbacks[idKey]) {
           return callbacks;
         }
         return findByIdKey(this.dances, danceId);
@@ -205,14 +206,14 @@ export default {
     parseHTML(html) {
       const doc = HTMLParser.parse(html, { lowerCaseTagName: true });
       const strings = Array.from(doc.querySelectorAll('table tr') || [])
-        .map(tr => Array.from(tr.querySelectorAll('td'))
-          .map(td => td.structuredText)
-          .filter(cell => cell))
-        .filter(rows => rows.length)
+        .map((tr) => Array.from(tr.querySelectorAll('td'))
+          .map((td) => td.structuredText)
+          .filter((cell) => cell))
+        .filter((rows) => rows.length)
         .reduce((acc, arr) => acc.concat(arr), []);
-      const parseDancers = string => string
+      const parseDancers = (string) => string
         .split('\n')
-        .map(line => line.match(/^\d+\s*(=)?\s+(\d+)\s+(.+?)(?:,\s*(.*?))$/))
+        .map((line) => line.match(/^\d+\s*(=)?\s+(\d+)\s+(.+?)(?:,\s*(.*?))$/))
         .filter(Boolean)
         .map(([, tie, number, $name, $location]) => ({
           number,
@@ -226,15 +227,15 @@ export default {
       const group = strings.shift();
 
       // eslint-disable-next-line no-shadow
-      const callbacks = strings.find(string => /Callbacks/.test(string))
+      const callbacks = strings.find((string) => /Callbacks/.test(string))
         .split(':')[1]
         .trim()
         .split(' ')
-        .map(number => ({
+        .map((number) => ({
           number,
         }));
       // eslint-disable-next-line no-shadow
-      const overall = parseDancers(strings.find(string => /Overall Winner/.test(string))
+      const overall = parseDancers(strings.find((string) => /Overall Winner/.test(string))
         .split('\n')[1]);
 
       // clean up remaining strings
@@ -266,7 +267,7 @@ export default {
       };
     },
     async handleUpload(files) {
-      this.imported = await Promise.all(Array.from(files).map(file => new Promise((resolve, reject) => {
+      this.imported = await Promise.all(Array.from(files).map((file) => new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (event) => {
           const datum = this.parseHTML(event.target.result);
@@ -275,7 +276,7 @@ export default {
             ...datum,
           });
         };
-        reader.onerror = err => reject(err);
+        reader.onerror = (err) => reject(err);
         reader.readAsBinaryString(file);
       })));
 
@@ -328,13 +329,13 @@ export default {
       const results = {};
       imported.forEach((datum) => {
         const getResultKey = (entry) => {
-          const dancer = this.dancers.find(d => d.number === entry.number);
+          const dancer = this.dancers.find((d) => d.number === entry.number);
           const dancerId = (dancer || getPlaceholderDancer())[idKey];
           return `${dancerId}${entry.$tie ? ':tie' : ''}`;
         };
 
         const groupId = this.mapped[datum.group];
-        const danceIds = datum.dances.map(name => this.mapped[name]);
+        const danceIds = datum.dances.map((name) => this.mapped[name]);
         const dances = {};
         datum.dancers.forEach((placedDancers, index) => {
           const danceId = danceIds[index];

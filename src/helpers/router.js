@@ -10,7 +10,7 @@ export async function getTitleChunks(route) {
       }
       return match.meta.title;
     }))]
-    .filter(chunk => chunk);
+    .filter((chunk) => chunk);
 }
 
 export function isExpanded(items, itemId, itemIds, expandByDefault = undefined) {

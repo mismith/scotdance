@@ -27,11 +27,11 @@ function setVersion(v = undefined, {
   fs.writeFileSync(androidFile, android.replace(/(versionName )"[^"]+"/, replacement));
   fs.writeFileSync(iosFile, ios.replace(/(MARKETING_VERSION = )[^;]+;/g, `$1${V};`));
 
-  console.info(`${version} -> ${V}`);
+  console.info(`${version} -> ${V}`); // eslint-disable-line no-console
 }
 
 if (require.main === module) {
-  setVersion(process.argv.find(a => VERSION_REGEX.test(a)));
+  setVersion(process.argv.find((a) => VERSION_REGEX.test(a)));
 } else {
   module.exports = setVersion;
 }

@@ -107,7 +107,7 @@ export default {
     toOrderedArray,
 
     inTabs(...tabs) {
-      return tabs.some(tab => this.subsectionId === tab);
+      return tabs.some((tab) => this.subsectionId === tab);
     },
 
     async handleRemove() {

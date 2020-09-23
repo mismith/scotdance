@@ -22,14 +22,14 @@ export default {
       rules: [
         (file) => {
           if (file.size > this.maxSize) {
-            const kb = size => `${Math.round(size / 1024)}KB`;
+            const kb = (size) => `${Math.round(size / 1024)}KB`;
             return `File size is too large (${kb(file.size)}). It must be under ${kb(this.maxSize)}.`;
           }
           return false;
         },
         (file) => {
-          const types = this.accept.split(',').map(t => t.trim());
-          if (!types.some(t => new RegExp(t.replace('*', '.*')).test(file.type))) {
+          const types = this.accept.split(',').map((t) => t.trim());
+          if (!types.some((t) => new RegExp(t.replace('*', '.*')).test(file.type))) {
             return `Invalid file format (${file.type}). It must be of type(s): ${this.accept}.`;
           }
           return false;
@@ -79,7 +79,7 @@ export default {
     async handleUpload({ target: { files: [file] } }) {
       if (!file) return;
 
-      this.error = this.rules.map(r => r(file)).find(Boolean) || '';
+      this.error = this.rules.map((r) => r(file)).find(Boolean) || '';
       if (this.error) return;
 
       // start loading

@@ -188,7 +188,7 @@ export default {
     },
     dancers() {
       return (this.dancersRaw || [])
-        .map(dancer => dancerExtender(dancer, this.groups, this.$store))
+        .map((dancer) => dancerExtender(dancer, this.groups, this.$store))
         .filter(isNotEmptyObject)
         .sort(sortByKey('$number')); // sort by number
     },
@@ -203,12 +203,12 @@ export default {
     },
     dances() {
       return (this.dancesRaw || [])
-        .map(dance => danceExtender(dance))
+        .map((dance) => danceExtender(dance))
         .filter(isNotEmptyObject);
     },
     staff() {
       return (this.staffRaw || [])
-        .map(member => ({
+        .map((member) => ({
           ...member,
           $name: `${member.firstName || ''} ${member.lastName || ''}`.trim(),
         }))
@@ -217,7 +217,7 @@ export default {
     platforms() {
       return (this.platformsRaw || [])
         .filter(isNotEmptyObject)
-        .map(platform => ({
+        .map((platform) => ({
           ...platform,
           $name: `Platform ${platform.name.replace(/^Platform /, '')}`.trim(),
         }));

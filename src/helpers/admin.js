@@ -46,7 +46,7 @@ Handsontable.cellTypes.registerCellType('file', {
     // eslint-disable-next-line no-new
     new Vue({
       el,
-      render: h => h(FileUploaderCellRenderer, {
+      render: (h) => h(FileUploaderCellRenderer, {
         props: {
           hotInstance,
           td,
@@ -81,7 +81,7 @@ export function makeKeyValuePairColumn(column, valueProp = '$name', keyProp = id
       },
     },
     renderer: function renderer(...args) {
-      const item = column.source.find(i => i[keyProp] === args[5]);
+      const item = column.source.find((i) => i[keyProp] === args[5]);
       if (item) {
         // eslint-disable-next-line no-param-reassign
         args[5] = item[valueProp];
@@ -113,4 +113,4 @@ export const augmentHot = (settings = {}, data = undefined) => licenseHot({
   data,
 });
 
-export const flattenPaths = obj => Object.keys(flatten(obj, '/') || {});
+export const flattenPaths = (obj) => Object.keys(flatten(obj, '/') || {});

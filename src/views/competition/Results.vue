@@ -221,7 +221,8 @@ export default {
       if (this.danceId) {
         if (this.danceId === overall[idKey]) {
           return overall;
-        } else if (this.danceId === callbacks[idKey]) {
+        }
+        if (this.danceId === callbacks[idKey]) {
           return callbacks;
         }
         return findByIdKey(this.dances, this.danceId);
@@ -231,16 +232,16 @@ export default {
     currentSponsor() {
       const { sponsor: $name } = this.currentGroup || {};
       if (pushidRegex.test($name)) {
-        const staff = this.staff.find(s => s[idKey] === $name);
+        const staff = this.staff.find((s) => s[idKey] === $name);
         if (staff) return staff;
       }
       return $name && { $name };
     },
 
     groupedCategories() {
-      return this.categories.map(category => ({
+      return this.categories.map((category) => ({
         ...category,
-        $groups: this.groups.filter(group => group.categoryId === category[idKey]),
+        $groups: this.groups.filter((group) => group.categoryId === category[idKey]),
       }));
     },
     groupedDancers() {
@@ -294,7 +295,7 @@ export default {
     ]),
 
     isCategoryExpanded(item, items) {
-      const itemIds = items.map(i => i[idKey]);
+      const itemIds = items.map((i) => i[idKey]);
       return isExpanded(this.resultsExpandedCategories, item[idKey], itemIds, true);
     },
     handleCategoryExpanded(categoryId, expanded) {
@@ -303,7 +304,7 @@ export default {
     },
 
     isDanceExpanded(item, items) {
-      const itemIds = items.map(i => i[idKey]);
+      const itemIds = items.map((i) => i[idKey]);
       const expandByDefault = item[idKey] !== all[idKey];
       return isExpanded(
         this.resultsExpandedDances[this.groupId],

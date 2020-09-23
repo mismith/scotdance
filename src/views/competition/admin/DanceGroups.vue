@@ -252,7 +252,7 @@ export default {
     },
     handleCopy() {
       this.copy({
-        data: this.currentGroupDances.map(d => d[idKey]),
+        data: this.currentGroupDances.map((d) => d[idKey]),
         type: 'dance-groups',
       });
     },
@@ -282,8 +282,8 @@ export default {
           }
           return b;
         };
-        const dancerNumbers = this.currentGroupDancers.map(dancer => dancer.number);
-        const shouldShuffle = dance => !/(^| )Reel( |$)/i.test(dance.name); // @TODO: migrate to special cases
+        const dancerNumbers = this.currentGroupDancers.map((dancer) => dancer.number);
+        const shouldShuffle = (dance) => !/(^| )Reel( |$)/i.test(dance.name); // @TODO: migrate to special cases
         // @TODO: add special case for championships with under 6 people (no draw)
         const draws = this.currentGroupDances.reduce((acc, dance) => ({
           ...acc,

@@ -66,7 +66,7 @@ export default {
         .filter(([k, v]) => k && v)
         .map(([k]) => k);
 
-      return this.presets.filter(preset => selected.includes(this.getValue(preset)));
+      return this.presets.filter((preset) => selected.includes(this.getValue(preset)));
     },
   },
   watch: {
