@@ -206,7 +206,7 @@
       </div>
     </v-navigation-drawer>
 
-    <v-content id="main" class="app-scroll-frame">
+    <v-main id="main" class="app-scroll-frame">
       <router-view
         v-if="$store.state.me !== undefined"
         v-bind="{
@@ -218,7 +218,7 @@
       <div v-else class="app-scroll-frame">
         <Spinner />
       </div>
-    </v-content>
+    </v-main>
 
     <RegisterDialog />
     <LoginDialog />
@@ -526,7 +526,7 @@ body {
 
 .v-application {
   &--wrap,
-  .v-content__wrap {
+  .v-main__wrap {
     @extend .app-scroll-frame;
   }
 
