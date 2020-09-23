@@ -24,7 +24,7 @@
         text
         color="primary"
         :href="platformSpecificAppStoreURL"
-        target="_blank"
+        :target="platformSpecificAppStoreURL === '/' ? undefined : '_blank'"
       >
         Update Now
       </v-btn>
@@ -33,17 +33,19 @@
 </template>
 
 <script>
-import { checkForUpdates } from '@/helpers/router';
+import { mapState, mapGetters } from 'vuex';
 
 export default {
   name: 'PromptToUpdate',
-  data() {
-    return {
-      currentVersion: undefined,
-      latestVersion: undefined,
-    };
-  },
   computed: {
+    ...mapState([
+      'currentVersion',
+      'latestVersion',
+    ]),
+    ...mapGetters([
+      'needsUpdating',
+    ]),
+
     platformSpecificAppStoreURL() {
       switch (this.$store.state.$device?.platform?.toLowerCase()) {
         case 'ios': {
@@ -57,18 +59,6 @@ export default {
         }
       }
     },
-  },
-  methods: {
-    async checkForUpdates() {
-      const updates = await checkForUpdates();
-      if (updates) {
-        this.currentVersion = updates.currentVersion;
-        this.latestVersion = updates.latestVersion;
-      }
-    },
-  },
-  created() {
-    this.checkForUpdates();
   },
 };
 </script>

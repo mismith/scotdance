@@ -258,8 +258,8 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex';
-import { getTitleChunks, getFirstExisting, checkForUpdates } from '@/helpers/router';
+import { mapState, mapGetters, mapActions } from 'vuex';
+import { getTitleChunks, getFirstExisting } from '@/helpers/router';
 import {
   FIREBASE_ENV,
   idKey,
@@ -287,14 +287,21 @@ export default {
 
       competitionsRef: undefined,
       competitionsDataRef: undefined,
-
-      needsUpdating: false,
+      versions: undefined,
     };
   },
   computed: {
     ...mapState([
+      '$device',
       'me',
     ]),
+    ...mapGetters([
+      'needsUpdating',
+    ]),
+
+    latestVersion() {
+      return this.versions?.[this.$device?.platform];
+    },
 
     competitions() {
       return this.competitionsRaw
@@ -342,6 +349,10 @@ export default {
       }
     },
 
+    latestVersion(v) {
+      this.$store.commit('setLatestVersion', v);
+    },
+
     submenuVisible(submenuVisible) {
       if (this.submenuIsNew) {
         if (submenuVisible) {
@@ -367,6 +378,9 @@ export default {
 
       if (this.competitionsRaw) this.$unbind('competitionsRaw');
       this.$bindAsArray('competitionsRaw', this.competitionsRef);
+
+      if (this.versions) this.$bind('versions');
+      this.$bindAsObject('versions', db.child('versions'));
     },
 
     getMirrorRoute() {
@@ -402,8 +416,6 @@ export default {
   },
   async created() {
     this.loadFirebase();
-
-    this.needsUpdating = await checkForUpdates();
   },
   mounted() {
     // scroll to selector if specified in query string

@@ -12,6 +12,7 @@ import {
   firebaseMutations,
   firebaseAction,
 } from 'vuexfire';
+import compareVersions from 'compare-versions';
 import {
   idKey,
   db,
@@ -38,8 +39,10 @@ export default new Vuex.Store({
       ...$package,
     },
     $device: {
-      platform: 'Web',
+      platform: 'web',
     },
+    currentVersion: $package.version,
+    latestVersion: undefined,
 
     credentials: {
       email: undefined,
@@ -70,6 +73,14 @@ export default new Vuex.Store({
   getters: {
     getField,
 
+    needsUpdating: (state) => {
+      if (state.currentVersion && state.latestVersion) {
+        const needsUpdating = compareVersions(state.currentVersion, state.latestVersion) < 0;
+        return needsUpdating;
+      }
+      return false;
+    },
+
     isFavorite: (state) => (type, id) => get(state.myFavorites, `${type}.${id}`),
     hasPermission: (state) => (permission) => {
       if (get(state.myPermissions, 'admin') === true) {
@@ -88,6 +99,9 @@ export default new Vuex.Store({
 
     setDevice(state, to) {
       state.$device = to;
+    },
+    setLatestVersion(state, to) {
+      state.latestVersion = to;
     },
 
     addPostLoginCallback(state, callback) {
