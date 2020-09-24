@@ -110,29 +110,25 @@
       </v-btn>
 
       <div class="app-scroll-frame app-scroll">
-        <v-subheader>Competitions</v-subheader>
-        <header class="d-flex px-2 pb-2">
-          <v-btn
-            :to="{ name: 'competitions' }"
-            exact
-            color="primary"
-            large
-            class="flex ma-2"
-            @click="closeMenu()"
-          >
-            Browse
-          </v-btn>
-          <v-btn
-            :to="{ name: 'competitions.submit' }"
-            exact
-            color="secondary"
-            large
-            class="flex ma-2"
-            @click="closeMenu()"
-          >
-            Submit
-          </v-btn>
-        </header>
+        <v-list>
+          <v-subheader>Pages</v-subheader>
+          <v-list-item :to="{ name: 'competitions' }" exact>
+            <v-list-item-avatar>
+              <v-icon>{{ mdiCalendarMonth }}</v-icon>
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title>Browse Competitions</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item :to="{ name: 'competitions.submit' }" exact>
+            <v-list-item-avatar>
+              <v-icon>{{ mdiSend }}</v-icon>
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title>Submit Competition</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
 
         <v-spacer />
 
@@ -263,6 +259,7 @@ import { mapState, mapGetters, mapActions } from 'vuex';
 import {
   mdiAccountCircle,
   mdiApps,
+  mdiCalendarMonth,
   mdiClose,
   mdiExitToApp,
   mdiEye,
@@ -274,6 +271,7 @@ import {
   mdiPin,
   mdiCog,
   mdiCogBox,
+  mdiSend,
   mdiStar,
 } from '@mdi/js';
 import { getTitleChunks, getFirstExisting } from '@/helpers/router';
@@ -300,6 +298,7 @@ export default {
 
       mdiAccountCircle,
       mdiApps,
+      mdiCalendarMonth,
       mdiClose,
       mdiExitToApp,
       mdiEye,
@@ -311,6 +310,7 @@ export default {
       mdiPin,
       mdiCog,
       mdiCogBox,
+      mdiSend,
       mdiStar,
 
       menuVisible: false,
