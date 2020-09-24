@@ -3,7 +3,7 @@
     :section="section"
     :subsection-id="subsectionId"
     route-name="competition.admin.info"
-    class="AdminInfo"
+    class="CompetitionAdminInfo"
   >
     <template #form="{ currentSubsection }">
       <template v-if="currentSubsection">
@@ -55,7 +55,7 @@ import DynamicForm from '@/components/admin/DynamicForm.vue';
 import AdminInvites from '@/components/admin/Invites.vue';
 
 export default {
-  name: 'AdminInfo',
+  name: 'CompetitionAdminInfo',
   props: {
     competitions: Array,
     competitionsRef: Object,

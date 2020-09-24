@@ -1,5 +1,5 @@
 <template>
-  <Blades class="AdminSchedule" stacks>
+  <Blades class="CompetitionAdminSchedule" stacks>
     <template v-for="(blade, index) in blades">
       <v-fade-transition :key="blade.collection">
         <Blade
@@ -216,7 +216,7 @@ import {
 import { getScheduleItemDanceName } from '@/helpers/competition';
 
 export default {
-  name: 'AdminSchedule',
+  name: 'CompetitionAdminSchedule',
   props: {
     dayId: String,
     blockId: String,
@@ -637,7 +637,7 @@ export default {
 </script>
 
 <style lang="scss">
-.AdminSchedule {
+.CompetitionAdminSchedule {
   .sortable-handle {
     margin-right: 8px;
   }

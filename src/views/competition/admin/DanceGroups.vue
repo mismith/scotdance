@@ -1,5 +1,5 @@
 <template>
-  <Blades class="AdminDanceGroups" stacks>
+  <Blades class="CompetitionAdminDanceGroups" stacks>
     <Blade id="blade-groups" :active="!currentGroup" class="col-md-4 app-scroll">
       <v-list v-if="groups.length">
         <v-list-item
@@ -137,7 +137,7 @@ import {
 import { idKey } from '@/helpers/firebase';
 
 export default {
-  name: 'admin-dange-groups',
+  name: 'CompetitionAdminDanceGroups',
   props: {
     groupId: String,
     danceId: String,

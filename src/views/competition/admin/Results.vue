@@ -1,5 +1,5 @@
 <template>
-  <Blades class="AdminResults" stacks>
+  <Blades class="CompetitionAdminResults" stacks>
     <Blade id="blade-groups" :active="!currentDance" class="col-md-4 app-scroll alt">
       <ResultsList
         v-if="groups.length"
@@ -111,7 +111,7 @@ import {
 } from '@/helpers/results';
 
 export default {
-  name: 'AdminResults',
+  name: 'CompetitionAdminResults',
   props: {
     groupId: String,
     danceId: String,
@@ -240,7 +240,7 @@ export default {
 </script>
 
 <style lang="scss">
-.AdminResults {
+.CompetitionAdminResults {
   .ResultListItem {
     &.selected {
       background-color: rgba(0, 0, 0, 0.12);
