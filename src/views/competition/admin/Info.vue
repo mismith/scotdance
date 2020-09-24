@@ -1,23 +1,11 @@
 <template>
-  <Blades class="AdminInfo" stacks>
-    <Blade id="blade-subsections" class="col-md-3 app-scroll">
-      <v-list>
-        <v-list-item
-          v-for="subsection in toOrderedArray(section.subsections)"
-          :key="subsection[idKey]"
-          :to="{ name: 'competition.admin.info', params: { subsectionId: subsection[idKey] } }"
-        >
-          <v-list-item-avatar>
-            <v-icon :class="subsection.icon" />
-          </v-list-item-avatar>
-          <v-list-item-content>
-            <v-list-item-title>{{ subsection.name }}</v-list-item-title>
-          </v-list-item-content>
-          <v-icon>{{ mdiChevronRight }}</v-icon>
-        </v-list-item>
-      </v-list>
-    </Blade>
-    <Blade id="blade-form" class="col-md-9 app-scroll app-scroll-frame">
+  <AdminSubsections
+    :section="section"
+    :subsection-id="subsectionId"
+    route-name="competition.admin.info"
+    class="AdminInfo"
+  >
+    <template #form="{ currentSubsection }">
       <template v-if="currentSubsection">
         <MiHotTable
           v-if="currentSubsection.hot"
@@ -54,16 +42,14 @@
         :icon="mdiCog"
         label="Competition settings"
       />
-    </Blade>
-  </Blades>
+    </template>
+  </AdminSubsections>
 </template>
 
 <script>
 import { mdiChevronRight, mdiCog } from '@mdi/js';
-import {
-  idKey,
-  toOrderedArray,
-} from '@/helpers/firebase';
+import { idKey, toOrderedArray } from '@/helpers/firebase';
+import AdminSubsections from '@/components/admin/Subsections.vue';
 import MiHotTable from '@/components/admin/MiHotTable.vue';
 import DynamicForm from '@/components/admin/DynamicForm.vue';
 import AdminInvites from '@/components/admin/Invites.vue';
@@ -88,23 +74,6 @@ export default {
 
       confirmRemove: false,
     };
-  },
-  computed: {
-    currentSubsection() {
-      return (this.section.subsections || {})[this.subsectionId];
-    },
-  },
-  watch: {
-    currentSubsection: {
-      async handler(currentSubsection) {
-        // scroll to blade, if necessary
-        await this.$nextTick();
-        const id = currentSubsection ? 'form' : 'subsections';
-        const element = document.getElementById(`blade-${id}`);
-        this.$scrollTo(element, { container: this.$el });
-      },
-      immediate: true,
-    },
   },
   methods: {
     toOrderedArray,
@@ -133,6 +102,7 @@ export default {
     },
   },
   components: {
+    AdminSubsections,
     MiHotTable,
     DynamicForm,
     AdminInvites,
