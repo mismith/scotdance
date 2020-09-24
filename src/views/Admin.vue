@@ -31,6 +31,7 @@
           users,
           favorites,
           permissions,
+          versions,
         }"
         @change="handleChanges"
       />
@@ -85,6 +86,10 @@ export default {
         source: db.child('users:permissions'),
         asObject: true,
       },
+      versionsRaw: {
+        source: db.child('versions'),
+        asObject: true,
+      },
     };
   },
   computed: {
@@ -116,6 +121,13 @@ export default {
     },
     permissions() {
       return this.permissionsRaw;
+    },
+    versions() {
+      return {
+        current: this.$store.state.currentVersion,
+        latest: this.$store.state.latestVersion,
+        ...this.versionsRaw,
+      };
     },
   },
   methods: {

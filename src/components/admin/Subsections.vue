@@ -5,7 +5,7 @@
         <v-list-item
           v-for="subsection in toOrderedArray(section.subsections)"
           :key="subsection[idKey]"
-          :to="{ name: routeName, params: { subsectionId: subsection[idKey] } }"
+          :to="{ name: $route.name, params: { subsectionId: subsection[idKey] } }"
         >
           <v-list-item-avatar>
             <v-icon :class="subsection.icon.startsWith('icon-') ? subsection.icon : undefined">
@@ -34,7 +34,6 @@ export default {
   props: {
     section: Object,
     subsectionId: String,
-    routeName: String,
   },
   data() {
     return {

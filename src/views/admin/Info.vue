@@ -1,59 +1,81 @@
 <template>
-  <div class="AdminInfo app-scroll-frame app-scroll alt pa-4">
-    <div class="grid">
-      <v-card to="faqs">
-        <v-responsive class="pa-4">
-          <v-icon :size="88" class="icon-question" />
-        </v-responsive>
-        <v-card-title class="title">{{ faqs.length }} FAQs</v-card-title>
-      </v-card>
-      <v-card to="submissions">
-        <v-responsive class="pa-4">
-          <v-icon :size="88">{{ mdiCalendarMultiple }}</v-icon>
-        </v-responsive>
-        <v-card-title class="title">{{ submissions.length }} submissions</v-card-title>
-      </v-card>
-      <v-card to="users">
-        <v-responsive class="pa-4">
-          <v-icon :size="88" class="icon-people" />
-        </v-responsive>
-        <v-card-title class="title">{{ users.length }} users</v-card-title>
-      </v-card>
-    </div>
-  </div>
+  <AdminSubsections
+    :section="section"
+    :subsection-id="subsectionId"
+    class="AdminInfo"
+  >
+    <template #form="{ currentSubsection }">
+      <template v-if="currentSubsection">
+        <MiHotTable
+          v-if="currentSubsection.hot"
+          :settings="currentSubsection.hot"
+          :data="toOrderedArray(info[subsectionId])"
+          @change="handleSubsectionChange"
+        />
+        <DynamicForm
+          v-else-if="currentSubsection.fields"
+          :fields="currentSubsection.fields"
+          :data="info[subsectionId]"
+          @field-change="handleSubsectionChange"
+          class="pa-4"
+        />
+      </template>
+      <EmptyState
+        v-else
+        :icon="mdiCogBox"
+        label="App Admin"
+      />
+    </template>
+  </AdminSubsections>
 </template>
 
 <script>
-import { mdiCalendarMultiple } from '@mdi/js';
+import { mdiCogBox, mdiCalendarMultiple } from '@mdi/js';
+import { idKey, toOrderedArray } from '@/helpers/firebase';
+import AdminSubsections from '@/components/admin/Subsections.vue';
+import MiHotTable from '@/components/admin/MiHotTable.vue';
+import DynamicForm from '@/components/admin/DynamicForm.vue';
 
 export default {
   name: 'AdminInfo',
   props: {
     section: Object,
-    users: Array,
-    submissions: Array,
+    versions: Object,
     faqs: Array,
+    submissions: Array,
+    users: Array,
+    subsectionId: String,
   },
   data() {
     return {
+      idKey,
+      mdiCogBox,
       mdiCalendarMultiple,
     };
   },
+  computed: {
+    info() {
+      return {
+        versions: this.versions,
+        faqs: this.faqs,
+      };
+    },
+  },
+  methods: {
+    toOrderedArray,
+
+    handleSubsectionChange(changes) {
+      const subsectionChanges = Object.entries(changes).reduce((acc, [path, change]) => {
+        acc[`${this.subsectionId}/${path}`] = change;
+        return acc;
+      }, {});
+      this.$emit('change', subsectionChanges);
+    },
+  },
+  components: {
+    AdminSubsections,
+    MiHotTable,
+    DynamicForm,
+  },
 };
 </script>
-
-<style lang="scss">
-.AdminInfo {
-  .grid {
-    display: grid;
-    grid-gap: 12px;
-    grid-template-columns: repeat(3, minmax(200px, 1fr));
-    margin: auto;
-
-    .v-card > * {
-      justify-content: center;
-      text-align: center;
-    }
-  }
-}
-</style>

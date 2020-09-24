@@ -2,7 +2,6 @@
   <AdminSubsections
     :section="section"
     :subsection-id="subsectionId"
-    route-name="competition.admin.info"
     class="CompetitionAdminInfo"
   >
     <template #form="{ currentSubsection }">

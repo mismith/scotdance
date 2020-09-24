@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import Router from 'vue-router';
 import { db } from '@/helpers/firebase';
+import adminSchema from '@/schemas/admin';
 import competitionSchema from '@/schemas/competition';
 import competitionAdminSchema from '@/schemas/competition-admin';
 
@@ -219,8 +220,20 @@ export default new Router({
         },
         {
           path: 'info',
+          redirect: 'info/versions',
+        },
+        {
+          path: 'info/:subsectionId?',
           name: 'admin.info',
           component: AdminInfo,
+          props: true,
+          meta: {
+            title(route) {
+              const section = adminSchema.info;
+              const subsection = section.subsections[route.params.subsectionId];
+              return subsection && subsection.name;
+            },
+          },
         },
         {
           path: 'submissions/:submissionId?',
