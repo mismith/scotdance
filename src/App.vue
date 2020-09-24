@@ -162,6 +162,7 @@
             v-if="$store.getters.hasPermission('admin')"
             :to="{ name: 'admin.info' }"
             @click="closeMenu()"
+            class="stripes"
           >
             <v-list-item-avatar>
               <v-icon>{{ mdiCogBox }}</v-icon>
