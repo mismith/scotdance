@@ -88,7 +88,7 @@ export default {
     findGroupDances,
 
     getPlace(dancer, group, dance) {
-      if (this.results?.[group?.[idKey]][dance?.[idKey]]) {
+      if (this.results?.[group?.[idKey]]?.[dance?.[idKey]]) {
         const placedDancers = findPlacedDancers(group, dance, this.dancers, this.results);
         return getPlace(dancer, placedDancers);
       }
