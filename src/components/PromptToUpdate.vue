@@ -7,7 +7,7 @@
     <template #title>
       <v-card-title class="d-flex">
         <div class="title flex">Update Available</div>
-        <v-icon>mdi-cellphone-arrow-down</v-icon>
+        <v-icon>{{ mdiCellphoneArrowDown }}</v-icon>
       </v-card-title>
     </template>
     <template #text>
@@ -34,9 +34,15 @@
 
 <script>
 import { mapState, mapGetters } from 'vuex';
+import { mdiCellphoneArrowDown } from '@mdi/js';
 
 export default {
   name: 'PromptToUpdate',
+  data() {
+    return {
+      mdiCellphoneArrowDown,
+    };
+  },
   computed: {
     ...mapState([
       'currentVersion',

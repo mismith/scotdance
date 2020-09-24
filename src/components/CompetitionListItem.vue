@@ -27,7 +27,7 @@
         icon
         :to="{ name: 'competition.admin.info', params: { competitionId: competition[idKey] } }"
       >
-        <v-icon>mdi-pencil</v-icon>
+        <v-icon>{{ mdiPencil }}</v-icon>
       </v-btn>
     </v-list-item-action>
 
@@ -36,6 +36,7 @@
 </template>
 
 <script>
+import { mdiPencil } from '@mdi/js';
 import { idKey } from '@/helpers/firebase';
 
 export default {
@@ -47,6 +48,7 @@ export default {
   data() {
     return {
       idKey,
+      mdiPencil,
     };
   },
 };

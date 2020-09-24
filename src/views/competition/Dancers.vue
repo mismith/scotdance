@@ -7,7 +7,7 @@
           <v-menu @selected="sortBy">
             <template #activator="{ on }">
               <v-btn icon v-on="on">
-                <v-icon>mdi-sort</v-icon>
+                <v-icon>{{ mdiSort }}</v-icon>
               </v-btn>
             </template>
 
@@ -28,7 +28,7 @@
             :class="{ 'secondary--text': onlyFavorites }"
             @click="onlyFavorites = !onlyFavorites"
           >
-            <v-icon>mdi-star{{ onlyFavorites ? '' : '-outline' }}</v-icon>
+            <v-icon>{{ onlyFavorites ? mdiStar : mdiStarOutline }}</v-icon>
           </v-btn>
         </v-toolbar>
 
@@ -50,7 +50,7 @@
                     v-if="!onlyFavorites && hasFavorites(group)"
                     color="secondary"
                   >
-                    mdi-star
+                    {{ mdiStar }}
                   </v-icon>
                 </v-subheader>
               </template>
@@ -67,17 +67,17 @@
           </v-list>
           <EmptyState
             v-else-if="!onlyFavorites"
-            icon="mdi-alert-circle-outline"
+            :icon="mdiAlertCircleOutline"
             label="No dancers match"
           />
           <EmptyState
             v-else-if="me"
-            icon="mdi-star-half"
+            :icon="mdiStarHalf"
             label="No favourite dancers"
           />
           <EmptyState
             v-else
-            icon="mdi-star-half"
+            :icon="mdiStarHalf"
             label="No favourite dancers"
             description="Login to highlight your favourites–making them much easier to find"
           />
@@ -85,7 +85,7 @@
       </div>
       <EmptyState
         v-else
-        icon="mdi-close"
+        :icon="mdiClose"
         label="No dancers yet"
         description="Check back later"
       />
@@ -112,7 +112,7 @@
       </div>
       <EmptyState
         v-else
-        icon="mdi-gesture-tap"
+        :icon="mdiGestureTap"
         label="See dancer details"
         description="Select a dancer"
       />
@@ -123,6 +123,15 @@
 <script>
 import orderBy from 'lodash.orderby';
 import groupBy from 'lodash.groupby';
+import {
+  mdiSort,
+  mdiStar,
+  mdiStarOutline,
+  mdiStarHalf,
+  mdiAlertCircleOutline,
+  mdiClose,
+  mdiGestureTap,
+} from '@mdi/js';
 import SearchField from '@/components/SearchField.vue';
 import DancerListItem from '@/components/DancerListItem.vue';
 import DancerReport from '@/components/DancerReport.vue';
@@ -165,6 +174,13 @@ export default {
   data() {
     return {
       idKey,
+      mdiSort,
+      mdiStar,
+      mdiStarOutline,
+      mdiStarHalf,
+      mdiAlertCircleOutline,
+      mdiClose,
+      mdiGestureTap,
 
       sortableBys: [
         { key: '$group.$order', name: 'Age Group', searchKey: '$group.$name' },

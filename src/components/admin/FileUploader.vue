@@ -11,7 +11,7 @@
         <div v-else class="text-truncate pa-3">{{ filename }}</div>
       </template>
       <div v-else class="d-flex flex-column align-center py-4 px-8">
-        <v-icon size="100">mdi-cloud-upload</v-icon>
+        <v-icon size="100">{{ mdiCloudUpload }}</v-icon>
         <div>Drag or Browse</div>
       </div>
       <input type="file" :accept="accept" @change="handleUpload" />
@@ -33,6 +33,7 @@
 </template>
 
 <script>
+import { mdiCloudUpload } from '@mdi/js';
 import FileUploaderMixin from '@/mixins/FileUploader';
 
 export default {
@@ -45,6 +46,11 @@ export default {
     hint: String,
     required: Boolean,
     disabled: Boolean,
+  },
+  data() {
+    return {
+      mdiCloudUpload,
+    };
   },
 };
 </script>

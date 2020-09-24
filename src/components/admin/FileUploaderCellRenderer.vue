@@ -8,11 +8,11 @@
         &nearr;
       </v-btn>
       <v-btn icon x-small @mousedown.stop @click="handleChange()">
-        <v-icon small>mdi-close</v-icon>
+        <v-icon small>{{ mdiClose }}</v-icon>
       </v-btn>
     </div>
     <v-btn v-else icon x-small class="ml-auto" @mousedown.stop @click="$refs.file.click()">
-      <v-icon small>mdi-paperclip</v-icon>
+      <v-icon small>{{ mdiPaperclip }}</v-icon>
     </v-btn>
     <input ref="file" type="file" :accept="accept" @change="handleUpload" />
 
@@ -21,6 +21,7 @@
 </template>
 
 <script>
+import { mdiClose, mdiPaperclip } from '@mdi/js';
 import FileUploaderMixin from '@/mixins/FileUploader';
 
 export default {
@@ -35,6 +36,12 @@ export default {
     col: Number,
     prop: String,
     cellProperties: Object,
+  },
+  data() {
+    return {
+      mdiClose,
+      mdiPaperclip,
+    };
   },
   watch: {
     error(error) {

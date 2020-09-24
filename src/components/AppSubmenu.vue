@@ -35,7 +35,7 @@
                   @click.prevent.stop="togglePinnedCompetition(competition)"
                 >
                   <v-icon class="pin" :class="{ pinned: competition.$pinned }">
-                    mdi-pin{{ competition.$pinned ? '' : '-outline' }}
+                    {{ competition.$pinned ? mdiPin : mdiPinOutline }}
                   </v-icon>
                 </v-btn>
               </v-list-item-action>
@@ -50,6 +50,7 @@
 <script>
 import orderBy from 'lodash.orderby';
 import { mapMutations, mapActions } from 'vuex';
+import { mdiPin, mdiPinOutline } from '@mdi/js';
 import { idKey } from '@/helpers/firebase';
 import ConfirmClearButton from '@/components/ConfirmClearButton.vue';
 import CompetitionListItem from '@/components/CompetitionListItem.vue';
@@ -63,6 +64,8 @@ export default {
   data() {
     return {
       idKey,
+      mdiPin,
+      mdiPinOutline,
 
       clearable: {
         Pinned: {

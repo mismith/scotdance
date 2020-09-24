@@ -28,7 +28,7 @@
                 <v-tooltip bottom>
                   <template #activator="{ on: tooltip }">
                     <v-btn icon class="mx-1" v-on="Object.assign({}, tooltip, picker)">
-                      <v-icon>mdi-playlist-plus</v-icon>
+                      <v-icon>{{ mdiPlaylistPlus }}</v-icon>
                     </v-btn>
                   </template>
                   <span>Add preset(s)</span>
@@ -39,7 +39,7 @@
             <v-tooltip bottom>
               <template #activator="{ on }">
                 <v-btn v-on="on" icon @click="handleListItemCreate(blade)">
-                  <v-icon>mdi-plus</v-icon>
+                  <v-icon>{{ mdiPlus }}</v-icon>
                 </v-btn>
               </template>
               <span>Add new item</span>
@@ -58,18 +58,18 @@
                   :key="item[idKey]"
                   :to="getBladeRoute(blade.params(item[idKey]))"
                 >
-                  <v-icon class="sortable-handle">mdi-drag-vertical</v-icon>
+                  <v-icon class="sortable-handle">{{ mdiDragVertical }}</v-icon>
                   <v-list-item-content>
                     <v-list-item-title>{{ blade.name(item) }}</v-list-item-title>
                   </v-list-item-content>
-                  <v-icon>mdi-chevron-right</v-icon>
+                  <v-icon>{{ mdiChevronRight }}</v-icon>
                 </v-list-item>
               </v-slide-y-transition>
             </draggable>
 
             <v-list-item v-if="!blade.items().length" class="empty">
               <v-list-item-avatar>
-                <v-icon>mdi-close</v-icon>
+                <v-icon>{{ mdiClose }}</v-icon>
               </v-list-item-avatar>
               <v-list-item-content>
                 No items yet.
@@ -136,7 +136,7 @@
     </template>
     <Blade v-if="!currentDay" class="col-md-9">
       <EmptyState
-        icon="mdi-calendar-search"
+        :icon="mdiCalendarSearch"
         label="Edit schedule entries"
         description="Add or select an item to edit"
       />
@@ -196,6 +196,14 @@
 
 <script>
 import Draggable from 'vuedraggable';
+import {
+  mdiCalendarSearch,
+  mdiChevronRight,
+  mdiClose,
+  mdiDragVertical,
+  mdiPlaylistPlus,
+  mdiPlus,
+} from '@mdi/js';
 import BladeToolbar from '@/components/BladeToolbar.vue';
 import DynamicField from '@/components/admin/DynamicField.vue';
 import AdminPlatforms from '@/components/admin/Platforms.vue';
@@ -228,6 +236,12 @@ export default {
   data() {
     return {
       idKey,
+      mdiCalendarSearch,
+      mdiChevronRight,
+      mdiClose,
+      mdiDragVertical,
+      mdiPlaylistPlus,
+      mdiPlus,
 
       confirmCreate: undefined,
       confirmCreateValue: undefined,

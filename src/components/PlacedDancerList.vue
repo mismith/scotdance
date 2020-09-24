@@ -20,7 +20,7 @@
             v-if="draggingEnabled && dance[idKey] !== callbacks[idKey]"
             class="sortable-handle"
           >
-            mdi-drag-vertical
+            {{ mdiDragVertical }}
           </v-icon>
 
           <template #favorite>
@@ -42,6 +42,7 @@
 
 <script>
 import Draggable from 'vuedraggable';
+import { mdiDragVertical } from '@mdi/js';
 import DancerListItem from '@/components/DancerListItem.vue';
 import { idKey } from '@/helpers/firebase';
 import {
@@ -61,6 +62,7 @@ export default {
   data() {
     return {
       idKey,
+      mdiDragVertical,
       overall,
       callbacks,
 

@@ -11,12 +11,12 @@
           <v-list-item-content>
             <v-list-item-title>{{ group.$name }}</v-list-item-title>
           </v-list-item-content>
-          <v-icon>mdi-chevron-right</v-icon>
+          <v-icon>{{ mdiChevronRight }}</v-icon>
         </v-list-item>
       </v-list>
       <EmptyState
         v-else
-        icon="mdi-alert"
+        :icon="mdiAlert"
         label="No age groups found"
       >
         <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }">
@@ -52,7 +52,7 @@
         </template>
         <EmptyState
           v-else
-          icon="mdi-alert"
+          :icon="mdiAlert"
           label="No dances found"
         >
           <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dances' } }">
@@ -62,7 +62,7 @@
       </v-list>
       <EmptyState
         v-else
-        icon="mdi-source-pull"
+        :icon="mdiSourcePull"
         label="Link dances"
         description="Pick dances for each age group"
       />
@@ -70,7 +70,7 @@
     <Blade class="col-md-4">
       <EmptyState
         v-if="!currentGroupHasDraws || !currentGroupDances.length || !currentGroupDancers.length"
-        icon="mdi-view-split-vertical"
+        :icon="mdiViewSplitVertical"
         label="Championship draws"
         description="Specify dancer order for each dance"
       />
@@ -80,7 +80,7 @@
       <v-toolbar v-if="currentGroup" class="flex-none">
         <v-list-item v-if="!currentGroupDances.length" class="empty">
           <v-list-item-avatar>
-            <v-icon>mdi-alert</v-icon>
+            <v-icon>{{ mdiAlert }}</v-icon>
           </v-list-item-avatar>
           <v-list-item-content>
             <v-list-item-title>
@@ -94,7 +94,7 @@
 
         <v-list-item v-else-if="!currentGroupDancers.length" class="empty">
           <v-list-item-avatar>
-            <v-icon>mdi-alert</v-icon>
+            <v-icon>{{ mdiAlert }}</v-icon>
           </v-list-item-avatar>
           <v-list-item-content>
             <v-list-item-title>No dancers in this age group.</v-list-item-title>
@@ -122,6 +122,12 @@ import {
   mapState,
   mapMutations,
 } from 'vuex';
+import {
+  mdiAlert,
+  mdiChevronRight,
+  mdiSourcePull,
+  mdiViewSplitVertical,
+} from '@mdi/js';
 import { HotTable, licenseHot } from '@/helpers/admin';
 import { findByIdKey } from '@/helpers/competition';
 import {
@@ -144,6 +150,10 @@ export default {
   data() {
     return {
       idKey,
+      mdiAlert,
+      mdiChevronRight,
+      mdiSourcePull,
+      mdiViewSplitVertical,
 
       currentGroupDrawsEnabled: undefined,
     };

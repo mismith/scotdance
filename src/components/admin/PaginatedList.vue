@@ -6,14 +6,14 @@
       </v-list>
       <EmptyState
         v-else
-        icon="mdi-alert-circle-outline"
+        :icon="mdiAlertCircleOutline"
         label="No items match"
       />
     </div>
 
     <v-toolbar v-if="pages.length > 1" dense class="pagination flex-none">
       <v-btn icon @click="page -= 1" :disabled="page <= 1">
-        <v-icon>mdi-skip-previous</v-icon>
+        <v-icon>{{ mdiSkipPrevious }}</v-icon>
       </v-btn>
       <div class="d-flex flex-nowrap align-center mx-auto">
         Page
@@ -28,13 +28,19 @@
         of {{ pages.length }}
       </div>
       <v-btn icon :disabled="page >= pages.length" @click="page += 1">
-        <v-icon>mdi-skip-next</v-icon>
+        <v-icon>{{ mdiSkipNext }}</v-icon>
       </v-btn>
     </v-toolbar>
   </div>
 </template>
 
 <script>
+import {
+  mdiAlertCircleOutline,
+  mdiSkipNext,
+  mdiSkipPrevious,
+} from '@mdi/js';
+
 export default {
   name: 'PaginatedList',
   props: {
@@ -42,6 +48,9 @@ export default {
   },
   data() {
     return {
+      mdiAlertCircleOutline,
+      mdiSkipNext,
+      mdiSkipPrevious,
       page: 1,
       count: 50,
     };

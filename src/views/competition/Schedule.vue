@@ -53,12 +53,12 @@
                     <v-list-item-subtitle v-html="slugline(event.description)" />
                   </v-list-item-content>
                   <v-icon v-if="event.dances || event.description">
-                    mdi-chevron-right
+                    {{ mdiChevronRight }}
                   </v-icon>
                 </v-list-item>
                 <v-list-item v-if="!block.events" class="empty">
                   <v-list-item-avatar>
-                    <v-icon>mdi-close</v-icon>
+                    <v-icon>{{ mdiClose }}</v-icon>
                   </v-list-item-avatar>
                   <v-list-item-content>
                     No more info.
@@ -68,7 +68,7 @@
             </v-list-group>
             <v-list-item v-if="!day.blocks && !day.description" class="empty">
               <v-list-item-avatar>
-                <v-icon>mdi-close</v-icon>
+                <v-icon>{{ mdiClose }}</v-icon>
               </v-list-item-avatar>
               <v-list-item-content>
                 No more info.
@@ -79,7 +79,7 @@
       </div>
       <EmptyState
         v-else
-        icon="mdi-close"
+        :icon="mdiClose"
         label="No schedule yet"
         description="Check back later"
       />
@@ -148,7 +148,7 @@
             </template>
             <v-list-item v-if="!currentEvent.dances && !currentEvent.description" class="empty">
               <v-list-item-avatar>
-                <v-icon>mdi-close</v-icon>
+                <v-icon>{{ mdiClose }}</v-icon>
               </v-list-item-avatar>
               <v-list-item-content>
                 No more info.
@@ -185,7 +185,7 @@
       </div>
       <EmptyState
         v-else
-        icon="mdi-gesture-tap"
+        :icon="mdiGestureTap"
         label="See event details"
         description="Select an event"
       />
@@ -198,6 +198,11 @@ import {
   mapState,
   mapMutations,
 } from 'vuex';
+import {
+  mdiChevronRight,
+  mdiClose,
+  mdiGestureTap,
+} from '@mdi/js';
 import AdminPlatforms from '@/components/admin/Platforms.vue';
 import DancerListItem from '@/components/DancerListItem.vue';
 import BladeToolbar from '@/components/BladeToolbar.vue';
@@ -250,6 +255,9 @@ export default {
   data() {
     return {
       idKey,
+      mdiChevronRight,
+      mdiClose,
+      mdiGestureTap,
     };
   },
   computed: {

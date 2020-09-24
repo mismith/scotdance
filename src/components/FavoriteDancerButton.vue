@@ -6,17 +6,24 @@
     @click.prevent.stop="toggleFavoriteDancer(dancer)"
     class="FavoriteDancerButton"
   >
-    <v-icon>mdi-star{{ dancer.$favorite ? '' : '-outline' }}</v-icon>
+    <v-icon>{{ dancer.$favorite ? mdiStar : mdiStarOutline }}</v-icon>
   </v-btn>
 </template>
 
 <script>
 import { mapActions } from 'vuex';
+import { mdiStar, mdiStarOutline } from '@mdi/js';
 
 export default {
   name: 'FavoriteDancerButton',
   props: {
     dancer: Object,
+  },
+  data() {
+    return {
+      mdiStar,
+      mdiStarOutline,
+    };
   },
   methods: {
     ...mapActions([

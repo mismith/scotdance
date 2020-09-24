@@ -10,10 +10,10 @@
         <v-subheader>
           <div class="flex">{{ group.$name }}</div>
           <v-icon v-if="hasFavorites(findGroupDancers(group, dancers))" color="secondary">
-            mdi-star
+            {{ mdiStar }}
           </v-icon>
           <v-icon v-if="results[group[idKey]]" color="primary">
-            mdi-check-circle{{ isInProgress(group, dances, results) ? '-outline' : '' }}
+            {{ isInProgress(group, dances, results) ? mdiCheckCircleOutline : mdiCheckCircle }}
           </v-icon>
         </v-subheader>
       </template>
@@ -59,6 +59,7 @@
 </template>
 
 <script>
+import { mdiCheckCircle, mdiCheckCircleOutline, mdiStar } from '@mdi/js';
 import ResultListItem from '@/components/ResultListItem.vue';
 import { idKey } from '@/helpers/firebase';
 import { hasFavorites } from '@/helpers/competition';
@@ -94,6 +95,9 @@ export default {
   data() {
     return {
       idKey,
+      mdiCheckCircle,
+      mdiCheckCircleOutline,
+      mdiStar,
       overall,
       callbacks,
     };

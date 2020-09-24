@@ -5,14 +5,14 @@
     </div>
     <EmptyState
       v-else-if="!invite.created"
-      icon="mdi-close"
+      :icon="mdiClose"
       label="Invite not found"
       description="Perhaps try asking to be invited again?"
     />
     <div v-else-if="invite.accepted && invite.acceptedBy">
       <div v-if="$store.state.me && $store.state.me[idKey] === invite.acceptedBy">
         <EmptyState
-          icon="mdi-check"
+          :icon="mdiCheck"
           label="Invite accepted"
         />
         <footer class="d-flex justify-center">
@@ -26,26 +26,26 @@
       </div>
       <EmptyState
         v-else
-        icon="mdi-cancel"
+        :icon="mdiCancel"
         label="Invite already accepted"
         description="Perhaps try asking to be invited again?"
       />
     </div>
     <EmptyState
       v-else-if="invite.cancelled"
-      icon="mdi-cancel"
+      :icon="mdiCancel"
       label="Invite cancelled"
       description="You'll need to ask to be invited again."
     />
     <EmptyState
       v-else-if="$moment().isAfter(invite.expires)"
-      icon="mdi-timer-off"
+      :icon="mdiTimerOff"
       label="Invite expired"
       description="You'll need to ask to be invited again."
     />
     <div v-else>
       <EmptyState
-        icon="mdi-email-open"
+        :icon="mdiEmailOpen"
         label="Your Invitation"
         description="Get administrator access to this competition."
       />
@@ -63,6 +63,13 @@
 </template>
 
 <script>
+import {
+  mdiCancel,
+  mdiCheck,
+  mdiClose,
+  mdiEmailOpen,
+  mdiTimerOff,
+} from '@mdi/js';
 import { FirebaseInvites } from '@mismith/firebase-tools';
 import { idKey } from '@/helpers/firebase';
 import RequiresPermission from '@/components/RequiresPermission.vue';
@@ -80,6 +87,11 @@ export default {
   data() {
     return {
       idKey,
+      mdiCancel,
+      mdiCheck,
+      mdiClose,
+      mdiEmailOpen,
+      mdiTimerOff,
 
       firebaseInvites: new FirebaseInvites(this.competitionDataRef.child('invites')),
     };

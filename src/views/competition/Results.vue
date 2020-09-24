@@ -19,7 +19,7 @@
                 v-if="hasFavorites(findCategoryDancers(category, dancers))"
                 color="secondary"
               >
-                mdi-star
+                {{ mdiStar }}
               </v-icon>
               <ResultsProgressIndicator
                 :category="category"
@@ -42,7 +42,7 @@
             </ResultListItem>
             <v-list-item v-if="!category.$groups.length" class="empty">
               <v-list-item-avatar>
-                <v-icon>mdi-close</v-icon>
+                <v-icon>{{ mdiClose }}</v-icon>
               </v-list-item-avatar>
               <v-list-item-content>
                 No more info.
@@ -53,7 +53,7 @@
       </v-list>
       <EmptyState
         v-else
-        icon="mdi-close"
+        :icon="mdiClose"
         label="No results yet"
         description="Check back later"
       />
@@ -67,7 +67,7 @@
           <v-menu offset-y left>
             <template #activator="{ on }">
               <v-btn v-on="on" icon>
-                <v-icon>mdi-dots-vertical</v-icon>
+                <v-icon>{{ mdiDotsVertical }}</v-icon>
               </v-btn>
             </template>
 
@@ -134,7 +134,7 @@
       </div>
       <EmptyState
         v-else
-        icon="mdi-gesture-tap"
+        :icon="mdiGestureTap"
         label="See results"
         description="Select an age group"
       />
@@ -144,6 +144,12 @@
 
 <script>
 import { mapMutations } from 'vuex';
+import {
+  mdiStar,
+  mdiClose,
+  mdiDotsVertical,
+  mdiGestureTap,
+} from '@mdi/js';
 import ResultListItem from '@/components/ResultListItem.vue';
 import PlacedDancerList from '@/components/PlacedDancerList.vue';
 import ResultsProgressIndicator from '@/components/ResultsProgressIndicator.vue';
@@ -204,6 +210,10 @@ export default {
   data() {
     return {
       idKey,
+      mdiStar,
+      mdiClose,
+      mdiDotsVertical,
+      mdiGestureTap,
       overall,
       callbacks,
 

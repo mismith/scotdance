@@ -43,7 +43,7 @@
             </v-timeline>
             <EmptyState
               v-else
-              icon="mdi-alert-circle-outline"
+              :icon="mdiAlertCircleOutline"
               label="No competitions match"
             />
           </div>
@@ -63,14 +63,14 @@
               class="now-marker"
               @click="handleNowClick"
             >
-              <v-icon>mdi-chevron-{{ nowVisibility > 0 ? 'down' : 'up' }}</v-icon>
+              <v-icon>{{ nowVisibility > 0 ? mdiChevronDown : mdiChevronUp }}</v-icon>
             </v-btn>
           </transition>
         </div>
       </template>
       <div v-else class="app-scroll-frame">
         <EmptyState
-          icon="mdi-close"
+          :icon="mdiClose"
           label="No competitions found"
         />
       </div>
@@ -82,6 +82,12 @@
 </template>
 
 <script>
+import {
+  mdiAlertCircleOutline,
+  mdiChevronDown,
+  mdiChevronUp,
+  mdiClose,
+} from '@mdi/js';
 import { idKey } from '@/helpers/firebase';
 import { searchByKeys } from '@/helpers/competition';
 import { submissionsFields } from '@/schemas/submissions';
@@ -103,6 +109,10 @@ export default {
   data() {
     return {
       idKey,
+      mdiAlertCircleOutline,
+      mdiChevronDown,
+      mdiChevronUp,
+      mdiClose,
 
       loaded: false,
 

@@ -5,25 +5,31 @@
     </template>
     <template v-else-if="!$store.state.me">
       <slot name="unauthed">
-        <EmptyState icon="mdi-block-helper" label="Login required" class="flex-none mb-0" />
+        <EmptyState :icon="mdiBlockHelper" label="Login required" class="flex-none mb-0" />
         <AccountButtons class="mt-0" />
       </slot>
     </template>
     <template v-else>
       <slot name="unauthorized">
-        <EmptyState icon="mdi-block-helper" label="Access denied" />
+        <EmptyState :icon="mdiBlockHelper" label="Access denied" />
       </slot>
     </template>
   </div>
 </template>
 
 <script>
+import { mdiBlockHelper } from '@mdi/js';
 import AccountButtons from '@/components/AccountButtons.vue';
 
 export default {
   name: 'RequiresPermission',
   props: {
     permission: Boolean,
+  },
+  data() {
+    return {
+      mdiBlockHelper,
+    };
   },
   components: {
     AccountButtons,

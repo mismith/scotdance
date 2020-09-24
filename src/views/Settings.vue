@@ -7,7 +7,7 @@
           <v-list-item :value="true">
             <template #default="{ active }">
               <v-list-item-avatar>
-                <v-icon>mdi-theme-light-dark</v-icon>
+                <v-icon>{{ mdiThemeLightDark }}</v-icon>
               </v-list-item-avatar>
               <v-list-item-content>
                 <v-list-item-title>Dark Mode</v-list-item-title>
@@ -49,10 +49,13 @@
 </template>
 
 <script>
+import { mdiThemeLightDark } from '@mdi/js';
+
 export default {
   name: 'Settings',
   data() {
     return {
+      mdiThemeLightDark,
       confirmClearLocalStorage: false,
     };
   },

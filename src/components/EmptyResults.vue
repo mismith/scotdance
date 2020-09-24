@@ -1,7 +1,7 @@
 <template>
   <v-list-item class="EmptyResults empty">
     <v-list-item-avatar>
-      <v-icon>mdi-{{ hasExplicitlyEmptyResults ? 'cancel' : 'timer-sand' }}</v-icon>
+      <v-icon>{{ hasExplicitlyEmptyResults ? mdiCancel : mdiTimerSand }}</v-icon>
     </v-list-item-avatar>
     <v-list-item-content>
       <template v-if="hasExplicitlyEmptyResults">
@@ -15,6 +15,7 @@
 </template>
 
 <script>
+import { mdiCancel, mdiTimerSand } from '@mdi/js';
 import { idKey } from '@/helpers/firebase';
 import {
   callbacks,
@@ -31,6 +32,8 @@ export default {
   data() {
     return {
       idKey,
+      mdiCancel,
+      mdiTimerSand,
       callbacks,
     };
   },

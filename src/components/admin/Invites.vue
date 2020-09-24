@@ -13,7 +13,7 @@
               :key="invite[idKey]"
             >
               <v-list-item-avatar :color="invite.submitted ? '' : 'primary'">
-                <v-icon>mdi-check{{ invite.submitted ? '-circle' : '' }}</v-icon>
+                <v-icon>{{ invite.submitted ? mdiCheckCircle : mdiCheck }}</v-icon>
               </v-list-item-avatar>
               <v-list-item-content>
                 <v-list-item-title>{{ invite.payload.email }}</v-list-item-title>
@@ -28,7 +28,7 @@
                 <v-tooltip fixed left>
                   <template #activator="{ on }">
                     <v-btn icon v-on="on" @click="handleAdministratorDemote(invite)">
-                      <v-icon>mdi-close</v-icon>
+                      <v-icon>{{ mdiClose }}</v-icon>
                     </v-btn>
                   </template>
                   <span>Remove Admin</span>
@@ -39,7 +39,7 @@
 
           <v-list-item>
             <v-list-item-avatar>
-              <v-icon>mdi-account-key</v-icon>
+              <v-icon>{{ mdiAccountKey }}</v-icon>
             </v-list-item-avatar>
             <v-list-item-content>
               <v-list-item-title>System Administrators</v-list-item-title>
@@ -71,10 +71,10 @@
               <v-list-item-avatar
                 :color="FirebaseInvites.is(invite, FirebaseInvites.status.CREATED) && 'secondary'"
               >
-                <v-icon>mdi-{{
+                <v-icon>{{
                   FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED, FirebaseInvites.status.EXPIRED)
-                  ? 'cancel'
-                  : 'email-outline'
+                  ? mdiCancel
+                  : mdiEmailOutline
                 }}</v-icon>
               </v-list-item-avatar>
 
@@ -110,7 +110,7 @@
                 <v-tooltip fixed left>
                   <template #activator="{ on }">
                     <v-btn v-on="on" icon @click="handleInviteDelete(invite)">
-                      <v-icon>mdi-delete</v-icon>
+                      <v-icon>{{ mdiDelete }}</v-icon>
                     </v-btn>
                   </template>
                   <span>Delete Invite</span>
@@ -120,7 +120,7 @@
                 <v-tooltip fixed left>
                   <template #activator="{ on }">
                     <v-btn v-on="on" icon @click="handleInviteCancel(invite)">
-                      <v-icon>mdi-close</v-icon>
+                      <v-icon>{{ mdiClose }}</v-icon>
                     </v-btn>
                   </template>
                   <span>Cancel Invite</span>
@@ -131,7 +131,7 @@
 
           <v-list-item v-if="!invites.length" class="empty">
             <v-list-item-avatar>
-              <v-icon>mdi-close</v-icon>
+              <v-icon>{{ mdiClose }}</v-icon>
             </v-list-item-avatar>
             <v-list-item-content>
               No pending invites.
@@ -150,6 +150,15 @@
 </template>
 
 <script>
+import {
+  mdiAccountKey,
+  mdiCancel,
+  mdiCheck,
+  mdiCheckCircle,
+  mdiClose,
+  mdiDelete,
+  mdiEmailOutline,
+} from '@mdi/js';
 import { FirebaseInvites } from '@mismith/firebase-tools';
 import { idKey, db } from '@/helpers/firebase';
 import NewDynamicField from '@/components/admin/NewDynamicField.vue';
@@ -167,6 +176,13 @@ export default {
   data() {
     return {
       idKey,
+      mdiAccountKey,
+      mdiCancel,
+      mdiCheck,
+      mdiCheckCircle,
+      mdiClose,
+      mdiDelete,
+      mdiEmailOutline,
       FirebaseInvites,
       firebaseInvites: new FirebaseInvites(this.competitionDataRef.child('invites')),
       confirmDemote: undefined,

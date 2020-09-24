@@ -35,7 +35,7 @@
     </div>
     <EmptyState
       v-else-if="admin && !danceGroups.length"
-      icon="mdi-alert"
+      :icon="mdiAlert"
       label="No dance groups found"
       >
       <router-link :to="{ name: 'competition.admin.dance-groups' }">
@@ -44,7 +44,7 @@
     </EmptyState>
     <EmptyState
       v-else-if="admin"
-      icon="mdi-alert"
+      :icon="mdiAlert"
       label="No platforms found"
       >
       <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'platforms' } }">
@@ -53,7 +53,7 @@
     </EmptyState>
     <v-list-item v-else class="empty">
       <v-list-item-avatar>
-        <v-icon>mdi-close</v-icon>
+        <v-icon>{{ mdiClose }}</v-icon>
       </v-list-item-avatar>
       <v-list-item-content>
         No more info.
@@ -74,6 +74,7 @@ import {
   mapState,
   mapMutations,
 } from 'vuex';
+import { mdiAlert, mdiClose } from '@mdi/js';
 import {
   findByIdKey,
   hydrateByIdKey,
@@ -103,6 +104,8 @@ export default {
   data() {
     return {
       idKey,
+      mdiAlert,
+      mdiClose,
     };
   },
   computed: {

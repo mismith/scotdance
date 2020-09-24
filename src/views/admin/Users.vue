@@ -19,7 +19,7 @@
               <v-list-item-title>{{ user.displayName }}</v-list-item-title>
               <v-list-item-subtitle>{{ user.uid }}</v-list-item-subtitle>
             </v-list-item-content>
-            <v-icon>mdi-chevron-right</v-icon>
+            <v-icon>{{ mdiChevronRight }}</v-icon>
           </v-list-item>
         </PaginatedList>
         <div v-else class="app-scroll-frame">
@@ -28,7 +28,7 @@
       </div>
       <EmptyState
         v-else
-        icon="mdi-close"
+        :icon="mdiClose"
         label="No users found"
       />
     </Blade>
@@ -55,7 +55,7 @@
       </div>
       <EmptyState
         v-else
-        icon="mdi-gesture-tap"
+        :icon="mdiGestureTap"
         label="See user details"
         description="Select a user"
       />
@@ -66,6 +66,11 @@
 <script>
 import Fuse from 'fuse.js';
 import orderBy from 'lodash.orderby';
+import {
+  mdiChevronRight,
+  mdiClose,
+  mdiGestureTap,
+} from '@mdi/js';
 import { flattenPaths } from '@/helpers/admin';
 import { idKey, db } from '@/helpers/firebase';
 import PaginatedList from '@/components/admin/PaginatedList.vue';
@@ -85,6 +90,9 @@ export default {
   data() {
     return {
       idKey,
+      mdiChevronRight,
+      mdiClose,
+      mdiGestureTap,
 
       filterBy: undefined,
 

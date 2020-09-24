@@ -1,10 +1,11 @@
 <template>
   <v-icon v-if="hasResults" color="primary">
-    mdi-check-circle{{ isInProgress ? '-outline' : '' }}
+    {{ isInProgress ? mdiCheckCircleOutline : mdiCheckCircle }}
   </v-icon>
 </template>
 
 <script>
+import { mdiCheckCircle, mdiCheckCircleOutline } from '@mdi/js';
 import { idKey } from '@/helpers/firebase';
 import { isInProgress } from '@/helpers/results';
 
@@ -19,6 +20,8 @@ export default {
   data() {
     return {
       idKey,
+      mdiCheckCircle,
+      mdiCheckCircleOutline,
     };
   },
   computed: {

@@ -29,7 +29,7 @@
         />
         <div v-else class="app-scroll-frame alt">
           <EmptyState
-            icon="mdi-clock-outline"
+            :icon="mdiClockOutline"
             label="Not available yet"
             description="Check back closer to the competition date:"
           >
@@ -60,7 +60,7 @@
       </div>
       <div v-else class="app-scroll-frame alt">
         <EmptyState
-          icon="mdi-close"
+          :icon="mdiClose"
           label="No competition found"
         />
       </div>
@@ -102,6 +102,7 @@ import {
   mapState,
   mapMutations,
 } from 'vuex';
+import { mdiClockOutline, mdiClose } from '@mdi/js';
 import {
   formatExternalURL,
   formatHumanURL,
@@ -130,6 +131,8 @@ export default {
   data() {
     return {
       idKey,
+      mdiClockOutline,
+      mdiClose,
 
       competitionRef: undefined,
       competitionDataRef: undefined,

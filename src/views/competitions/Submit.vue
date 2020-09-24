@@ -27,7 +27,7 @@
                     :large="$vuetify.breakpoint.smAndUp"
                     class="ml-2"
                   >
-                    {{ item.icon || 'mdi-check' }}
+                    {{ item.icon || mdiCheck }}
                   </v-icon>
                   <div class="ml-4" :class="{
                     'subtitle-1': $vuetify.breakpoint.smAndUp,
@@ -103,7 +103,7 @@
 
     <div v-if="submitted" class="pa-4">
       <EmptyState
-        icon="mdi-email-outline"
+        :icon="mdiEmailOutline"
         label="All done!"
         description="Expect a confirmation email in your inbox momentarily."
       >
@@ -117,6 +117,7 @@
 
 <script>
 import { mapState } from 'vuex';
+import { mdiCheck, mdiEmailOutline } from '@mdi/js';
 import { idKey, db, toOrderedArray } from '@/helpers/firebase';
 import steps, { checklists } from '@/schemas/submissions';
 import DynamicForm from '@/components/admin/DynamicForm.vue';
@@ -127,6 +128,8 @@ export default {
   data() {
     return {
       idKey,
+      mdiCheck,
+      mdiEmailOutline,
 
       steps: undefined,
       currentStep: undefined,

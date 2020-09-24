@@ -13,7 +13,7 @@
           <v-list-item-content>
             <v-list-item-title>{{ subsection.name }}</v-list-item-title>
           </v-list-item-content>
-          <v-icon>mdi-chevron-right</v-icon>
+          <v-icon>{{ mdiChevronRight }}</v-icon>
         </v-list-item>
       </v-list>
     </Blade>
@@ -51,7 +51,7 @@
       </template>
       <EmptyState
         v-else
-        icon="mdi-settings"
+        :icon="mdiCog"
         label="Competition settings"
       />
     </Blade>
@@ -59,6 +59,7 @@
 </template>
 
 <script>
+import { mdiChevronRight, mdiCog } from '@mdi/js';
 import {
   idKey,
   toOrderedArray,
@@ -82,6 +83,8 @@ export default {
   data() {
     return {
       idKey,
+      mdiChevronRight,
+      mdiCog,
 
       confirmRemove: false,
     };

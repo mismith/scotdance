@@ -10,7 +10,7 @@
     >
       <v-btn icon @click="menuVisible = !menuVisible">
         <v-badge v-model="needsUpdating" dot color="secondary">
-          <v-icon>mdi-menu</v-icon>
+          <v-icon>{{ mdiMenu }}</v-icon>
         </v-badge>
       </v-btn>
 
@@ -25,14 +25,14 @@
         v-if="$route.params.competitionId && $store.getters.hasPermission(`competitions/${$route.params.competitionId}`) && getMirrorRoute()"
         :to="getMirrorRoute()"
       >
-        <v-icon>mdi-{{ /^competition.admin/.test($route.name) ? 'eye' : 'pencil' }}</v-icon>
+        <v-icon>{{ /^competition.admin/.test($route.name) ? mdiEye : mdiPencil }}</v-icon>
       </v-btn>
 
       <v-menu v-model="submenuVisible" offset-y max-height="90%" max-width="calc(100% - 12px * 2)">
         <template #activator="{ on }">
           <v-btn icon v-on="on">
             <v-badge v-model="submenuIsNew" dot color="secondary">
-              <v-icon>mdi-apps</v-icon>
+              <v-icon>{{ mdiApps }}</v-icon>
             </v-badge>
           </v-btn>
         </template>
@@ -50,7 +50,7 @@
           <v-btn icon class="mr-n2" v-on="on">
             <v-avatar size="36">
               <Gravatar v-if="me" :user="me" />
-              <v-icon v-else>mdi-account-circle</v-icon>
+              <v-icon v-else>{{ mdiAccountCircle }}</v-icon>
             </v-avatar>
           </v-btn>
         </template>
@@ -73,7 +73,7 @@
             <v-list>
               <v-list-item :to="{ name: 'profile' }" @click="closeMenu()">
                 <v-list-item-avatar>
-                  <v-icon>mdi-account-circle</v-icon>
+                  <v-icon>{{ mdiAccountCircle }}</v-icon>
                 </v-list-item-avatar>
                 <v-list-item-content>
                   <v-list-item-title>My Profile</v-list-item-title>
@@ -86,7 +86,7 @@
             <v-list>
               <v-list-item @click="logout()">
                 <v-list-item-avatar>
-                  <v-icon>mdi-exit-to-app</v-icon>
+                  <v-icon>{{ mdiExitToApp }}</v-icon>
                 </v-list-item-avatar>
                 <v-list-item-content>
                   <v-list-item-title>Logout</v-list-item-title>
@@ -106,7 +106,7 @@
       class="app-scroll-frame"
     >
       <v-btn icon absolute class="ma-2" @click="closeMenu()">
-        <v-icon>mdi-close</v-icon>
+        <v-icon>{{ mdiClose }}</v-icon>
       </v-btn>
 
       <div class="app-scroll-frame app-scroll">
@@ -141,7 +141,7 @@
 
           <v-list-item to="/" exact @click="closeMenu()">
             <v-list-item-avatar>
-              <v-icon>mdi-home</v-icon>
+              <v-icon>{{ mdiHome }}</v-icon>
             </v-list-item-avatar>
             <v-list-item-content>
               <v-list-item-title>Home</v-list-item-title>
@@ -152,7 +152,7 @@
             @click="closeMenu()"
           >
             <v-list-item-avatar>
-              <v-icon>mdi-settings</v-icon>
+              <v-icon>{{ mdiCog }}</v-icon>
             </v-list-item-avatar>
             <v-list-item-content>
               <v-list-item-title>Settings</v-list-item-title>
@@ -164,7 +164,7 @@
             @click="closeMenu()"
           >
             <v-list-item-avatar>
-              <v-icon>mdi-settings-box</v-icon>
+              <v-icon>{{ mdiCogBox }}</v-icon>
             </v-list-item-avatar>
             <v-list-item-content>
               <v-list-item-title>Admin</v-list-item-title>
@@ -174,13 +174,13 @@
           <template v-if="$store.state.helpAvailable">
             <v-list-item @click="help(true); closeMenu();">
               <v-list-item-avatar>
-                <v-icon>mdi-frequently-asked-questions</v-icon>
+                <v-icon>{{ mdiFrequentlyAskedQuestions }}</v-icon>
               </v-list-item-avatar>
               <v-list-item-title>Feedback</v-list-item-title>
             </v-list-item>
             <v-list-item v-if="$store.state.helpVisible" @click="help(false); closeMenu();">
               <v-list-item-avatar>
-                <v-icon>mdi-close</v-icon>
+                <v-icon>{{ mdiClose }}</v-icon>
               </v-list-item-avatar>
               <v-list-item-title class="error--text">Hide Live Chat</v-list-item-title>
             </v-list-item>
@@ -192,7 +192,7 @@
               <template #activator="{ on }">
                 <v-list-item v-on="on">
                   <v-list-item-avatar>
-                    <v-icon>mdi-new-box</v-icon>
+                    <v-icon>{{ mdiNewBox }}</v-icon>
                   </v-list-item-avatar>
                   <v-list-item-content>
                     <v-list-item-title>Update</v-list-item-title>
@@ -226,7 +226,7 @@
       <template #title>
         <v-card-title class="title">
           <div class="flex">Track your favourites</div>
-          <v-icon color="secondary">mdi-star</v-icon>
+          <v-icon color="secondary">{{ mdiStar }}</v-icon>
         </v-card-title>
       </template>
 
@@ -237,7 +237,7 @@
       <template #title>
         <v-card-title class="title">
           <div class="flex">Pin for easy access</div>
-          <v-icon color="secondary">mdi-pin</v-icon>
+          <v-icon color="secondary">{{ mdiPin }}</v-icon>
         </v-card-title>
       </template>
 
@@ -259,6 +259,22 @@
 
 <script>
 import { mapState, mapGetters, mapActions } from 'vuex';
+import {
+  mdiAccountCircle,
+  mdiApps,
+  mdiClose,
+  mdiExitToApp,
+  mdiEye,
+  mdiFrequentlyAskedQuestions,
+  mdiHome,
+  mdiMenu,
+  mdiNewBox,
+  mdiPencil,
+  mdiPin,
+  mdiCog,
+  mdiCogBox,
+  mdiStar,
+} from '@mdi/js';
 import { getTitleChunks, getFirstExisting } from '@/helpers/router';
 import {
   FIREBASE_ENV,
@@ -280,6 +296,21 @@ export default {
       env: FIREBASE_ENV,
       idKey,
       db,
+
+      mdiAccountCircle,
+      mdiApps,
+      mdiClose,
+      mdiExitToApp,
+      mdiEye,
+      mdiFrequentlyAskedQuestions,
+      mdiHome,
+      mdiMenu,
+      mdiNewBox,
+      mdiPencil,
+      mdiPin,
+      mdiCog,
+      mdiCogBox,
+      mdiStar,
 
       menuVisible: false,
       submenuVisible: false,
@@ -653,6 +684,7 @@ body {
       }
     }
 
+    svg,
     img {
       width: initial;
       height: initial;

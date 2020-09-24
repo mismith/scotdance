@@ -23,7 +23,7 @@
       <v-tooltip left>
         <template #activator="{ on }">
           <v-btn v-on="on" icon text color="primary" :loading="saving">
-            <v-icon>mdi-check</v-icon>
+            <v-icon>{{ mdiCheck }}</v-icon>
           </v-btn>
         </template>
         <span>{{ saving ? 'Saving...' : 'Saved' }}</span>
@@ -34,7 +34,7 @@
       <template v-if="currentSection.hot">
         <EmptyState
           v-if="inTabs('groups') && !this.categories.length && !this.groups.length"
-          icon="mdi-alert"
+          :icon="mdiAlert"
           label="No categories found"
         >
           <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'categories' } }">
@@ -43,7 +43,7 @@
         </EmptyState>
         <EmptyState
           v-else-if="inTabs('dancers') && !this.groups.length"
-          icon="mdi-alert"
+          :icon="mdiAlert"
           label="No age groups found"
         >
           <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }">
@@ -112,6 +112,7 @@
 
 <script>
 import saveCSV from 'save-csv';
+import { mdiAlert, mdiCheck } from '@mdi/js';
 import { makeKeyValuePairColumn } from '@/helpers/admin';
 import { danceExtender } from '@/helpers/competition';
 import { idKey, db, toOrderedArray } from '@/helpers/firebase';
@@ -148,6 +149,8 @@ export default {
   data() {
     return {
       idKey,
+      mdiAlert,
+      mdiCheck,
 
       showImport: false,
       // showImportResults: false,

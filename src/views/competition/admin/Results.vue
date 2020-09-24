@@ -10,7 +10,7 @@
       />
       <EmptyState
         v-else
-        icon="mdi-alert"
+        :icon="mdiAlert"
         label="No age groups found"
       >
         <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }">
@@ -36,7 +36,7 @@
         </v-list>
         <EmptyState
           v-else-if="currentDance === callbacks"
-          icon="mdi-alert"
+          :icon="mdiAlert"
           label="No dancers found"
         >
           <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dancers' } }">
@@ -45,7 +45,7 @@
         </EmptyState>
         <EmptyState
           v-else
-          icon="mdi-alert"
+          :icon="mdiAlert"
           label="No dancers to place"
         >
           <router-link :to="{ name: 'competition.admin.results', params: { groupId, danceId: callbacks[idKey] } }">
@@ -55,7 +55,7 @@
       </template>
       <EmptyState
         v-else
-        icon="mdi-gesture-tap"
+        :icon="mdiGestureTap"
         label="Enter results"
         description="Select an age group and dance"
       />
@@ -72,7 +72,7 @@
       />
       <EmptyState
         v-else
-        icon="mdi-view-split-vertical"
+        :icon="mdiViewSplitVertical"
         label="Order dancers"
         description="Select dancers in the order placed"
       />
@@ -89,6 +89,11 @@
 </template>
 
 <script>
+import {
+  mdiAlert,
+  mdiGestureTap,
+  mdiViewSplitVertical,
+} from '@mdi/js';
 import DancerListItem from '@/components/DancerListItem.vue';
 import ResultsList from '@/components/admin/ResultsList.vue';
 import PlacedDancerList from '@/components/PlacedDancerList.vue';
@@ -119,6 +124,9 @@ export default {
   data() {
     return {
       idKey,
+      mdiAlert,
+      mdiGestureTap,
+      mdiViewSplitVertical,
       overall,
       callbacks,
     };

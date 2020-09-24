@@ -104,7 +104,7 @@
               />
               <EmptyState
                 v-else
-                icon="mdi-view-split-vertical"
+                :icon="mdiViewSplitVertical"
                 label="Placed dancers"
                 description="Double-check the results to import"
               />
@@ -135,6 +135,7 @@
 import HTMLParser from 'fast-html-parser';
 import Fuse from 'fuse.js';
 import VFile from '@outluch/v-file';
+import { mdiViewSplitVertical } from '@mdi/js';
 import ResultsList from '@/components/admin/ResultsList.vue';
 import PlacedDancerList from '@/components/PlacedDancerList.vue';
 import { idKey } from '@/helpers/firebase';
@@ -163,6 +164,7 @@ export default {
   data() {
     return {
       idKey,
+      mdiViewSplitVertical,
 
       step: 1,
 

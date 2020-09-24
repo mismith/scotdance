@@ -9,7 +9,7 @@
       </v-card>
       <v-card to="submissions">
         <v-responsive class="pa-4">
-          <v-icon :size="88">mdi-calendar-multiple</v-icon>
+          <v-icon :size="88">{{ mdiCalendarMultiple }}</v-icon>
         </v-responsive>
         <v-card-title class="title">{{ submissions.length }} submissions</v-card-title>
       </v-card>
@@ -24,6 +24,8 @@
 </template>
 
 <script>
+import { mdiCalendarMultiple } from '@mdi/js';
+
 export default {
   name: 'AdminInfo',
   props: {
@@ -31,6 +33,11 @@ export default {
     users: Array,
     submissions: Array,
     faqs: Array,
+  },
+  data() {
+    return {
+      mdiCalendarMultiple,
+    };
   },
 };
 </script>

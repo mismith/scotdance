@@ -3,7 +3,7 @@
     label="Search"
     type="search"
     v-model="value"
-    append-icon="mdi-magnify"
+    :append-icon="mdiMagnify"
     clearable
     solo
     hide-details
@@ -13,6 +13,8 @@
 </template>
 
 <script>
+import { mdiMagnify } from '@mdi/js';
+
 export default {
   name: 'SearchField',
   props: {
@@ -20,6 +22,7 @@ export default {
   },
   data() {
     return {
+      mdiMagnify,
       valueDebounced: this.value,
       valueTimeout: undefined,
     };

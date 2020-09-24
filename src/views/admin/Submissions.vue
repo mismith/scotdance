@@ -9,7 +9,7 @@
             :to="{ name: $route.name, params: { submissionId: submission[idKey] } }"
           >
             <v-list-item-avatar :color="submission.approved ? 'primary' : 'secondary'">
-              <v-icon>mdi-{{ submission.approved ? 'check' : 'new-box' }}</v-icon>
+              <v-icon>{{ submission.approved ? mdiCheck : mdiNewBox }}</v-icon>
             </v-list-item-avatar>
 
             <v-list-item-content>
@@ -27,7 +27,7 @@
             </v-list-item-content>
 
             <v-list-item-action>
-              <v-icon>mdi-chevron-right</v-icon>
+              <v-icon>{{ mdiChevronRight }}</v-icon>
             </v-list-item-action>
           </v-list-item>
         </v-list>
@@ -37,7 +37,7 @@
       </div>
       <EmptyState
         v-else
-        icon="mdi-close"
+        :icon="mdiClose"
         label="No submissions found"
       />
     </Blade>
@@ -68,7 +68,7 @@
               />
               <v-list-item v-else class="empty">
                 <v-list-item-avatar>
-                  <v-icon>mdi-close</v-icon>
+                  <v-icon>{{ mdiClose }}</v-icon>
                 </v-list-item-avatar>
                 <v-list-item-content>
                   No more info.
@@ -132,7 +132,7 @@
       </div>
       <EmptyState
         v-else
-        icon="mdi-gesture-tap"
+        :icon="mdiGestureTap"
         label="See submission details"
         description="Select a submission"
       />
@@ -141,6 +141,13 @@
 </template>
 
 <script>
+import {
+  mdiCheck,
+  mdiChevronRight,
+  mdiClose,
+  mdiGestureTap,
+  mdiNewBox,
+} from '@mdi/js';
 import { idKey, db, toOrderedArray } from '@/helpers/firebase';
 import { findByIdKey } from '@/helpers/competition';
 import steps from '@/schemas/submissions';
@@ -157,6 +164,11 @@ export default {
   data() {
     return {
       idKey,
+      mdiCheck,
+      mdiChevronRight,
+      mdiClose,
+      mdiGestureTap,
+      mdiNewBox,
 
       steps: toOrderedArray(steps),
 

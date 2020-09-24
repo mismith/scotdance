@@ -6,7 +6,7 @@
       <v-tooltip left>
         <template #activator="{ on }">
           <v-btn v-on="on" icon text color="primary" :loading="saving">
-            <v-icon>mdi-check</v-icon>
+            <v-icon>{{ mdiCheck }}</v-icon>
           </v-btn>
         </template>
         <span>{{ saving ? 'Saving...' : 'Saved' }}</span>
@@ -53,6 +53,7 @@
 </template>
 
 <script>
+import { mdiCheck } from '@mdi/js';
 import adminSchema from '@/schemas/admin';
 import { idKey, db, toOrderedArray } from '@/helpers/firebase';
 import { getFirstExisting } from '@/helpers/router';
@@ -64,6 +65,7 @@ export default {
   data() {
     return {
       idKey,
+      mdiCheck,
 
       saving: false,
       savingPromises: [],

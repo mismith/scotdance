@@ -28,7 +28,7 @@
         </v-list-item>
         <v-list-item v-if="!presets.length" class="empty">
           <v-list-item-avatar>
-            <v-icon>mdi-close</v-icon>
+            <v-icon>{{ mdiClose }}</v-icon>
           </v-list-item-avatar>
           <v-list-item-content>
             No presets found.
@@ -40,6 +40,7 @@
 </template>
 
 <script>
+import { mdiClose } from '@mdi/js';
 import { idKey } from '@/helpers/firebase';
 
 export default {
@@ -54,6 +55,7 @@ export default {
   data() {
     return {
       idKey,
+      mdiClose,
 
       dialogOpen: false,
 

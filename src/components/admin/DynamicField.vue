@@ -53,7 +53,7 @@
           :hint="field.description"
           :readonly="field.readonly"
           :rules="rules"
-          append-icon="mdi-calendar"
+          :append-icon="mdiCalendar"
           :autocomplete="field.autocomplete || 'none'"
           @focus="datePicking = true"
           @input="handleInput()"
@@ -121,6 +121,7 @@
 </template>
 
 <script>
+import { mdiCalendar } from '@mdi/js';
 import { idKey } from '@/helpers/firebase';
 import FileUploader from '@/components/admin/FileUploader.vue';
 
@@ -133,6 +134,7 @@ export default {
   data() {
     return {
       idKey,
+      mdiCalendar,
 
       datePicking: false,
     };
