@@ -15,7 +15,7 @@
       </v-btn>
 
       <v-toolbar-title>
-        <router-link :to="{ name: 'competitions' }">{{ title }}</router-link>
+        <router-link :to="{ name: 'home' }">{{ title }}</router-link>
       </v-toolbar-title>
 
       <v-spacer />
