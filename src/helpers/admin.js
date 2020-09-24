@@ -100,6 +100,7 @@ export const augmentHot = (settings = {}, data = undefined) => licenseHot({
   colHeaders: true,
   rowHeaders: true,
   stretchH: 'all',
+  modifyColWidth: (w) => Math.min(w, window.width / 2), // prevent super-wide cells
   minSpareRows: 1,
   contextMenu: [
     'remove_row',
