@@ -116,6 +116,7 @@ import {
 } from '@/helpers/competition';
 import {
   idKey,
+  valueKey,
   toOrderedArray,
 } from '@/helpers/firebase';
 import competitionSchema from '@/schemas/competition';
@@ -176,7 +177,7 @@ export default {
     },
     competitionExists() {
       if (!this.isAdmin) {
-        if (this.competition['.value'] !== undefined) return false;
+        if (this.competition[valueKey] !== undefined) return false;
         if (!this.competition.listed) return this.isSecretRoute;
       }
       return true;

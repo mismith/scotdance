@@ -15,7 +15,10 @@ const config = {
 };
 const app = firebase.initializeApp(config);
 
+// https://stackoverflow.com/a/36087084/888928
+const pushidRegex = /^[-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz]{20}$/;
 const idKey = '.key';
+const valueKey = '.value';
 const db = firebase.database().ref(FIREBASE_ENV);
 
 const buckets = firebase.storage().ref(FIREBASE_ENV);
@@ -29,7 +32,7 @@ const toOrderedArray = (obj) => {
       if (typeof item === 'object') {
         Object.assign(item, value);
       } else {
-        item['.value'] = value;
+        item[valueKey] = value;
       }
       return item;
     })
@@ -44,17 +47,15 @@ const toOrderedArray = (obj) => {
     });
 };
 
-// https://stackoverflow.com/a/36087084/888928
-const pushidRegex = /^[-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz]{20}$/;
-
 export {
   FIREBASE_ENV,
   firebase,
   config,
   app,
+  pushidRegex,
   idKey,
+  valueKey,
   db,
   buckets,
   toOrderedArray,
-  pushidRegex,
 };
