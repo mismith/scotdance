@@ -2,10 +2,7 @@
   <DialogCard
     v-model="dialogOpen"
     title="Select preset(s) to add:"
-    cancel-label="Cancel"
-    submit-label="Add"
     class="PresetPicker"
-    @submit="handleSubmit"
   >
     <template #activator="props">
       <slot name="activator" v-bind="props">
@@ -19,12 +16,27 @@
           :key="getValue(preset)"
           @click="handleToggle(preset)"
         >
-          <v-list-item-action>
-            <v-checkbox :value="selected[getValue(preset)]" />
-          </v-list-item-action>
           <v-list-item-content>
             <v-list-item-title>{{ getValue(preset) }}</v-list-item-title>
           </v-list-item-content>
+          <v-list-item-action>
+            <v-scale-transition hide-on-leave origin="center center">
+              <v-icon
+                v-if="added[getValue(preset)]"
+                key="success"
+                color="success"
+              >
+                {{ mdiCheck }}
+              </v-icon>
+              <v-icon
+                v-else
+                key="default"
+                style="opacity: 0.5;"
+              >
+                {{ mdiPlus }}
+              </v-icon>
+            </v-scale-transition>
+          </v-list-item-action>
         </v-list-item>
         <v-list-item v-if="!presets.length" class="empty">
           <v-list-item-avatar>
@@ -40,7 +52,7 @@
 </template>
 
 <script>
-import { mdiClose } from '@mdi/js';
+import { mdiCheck, mdiClose, mdiPlus } from '@mdi/js';
 import { idKey } from '@/helpers/firebase';
 
 export default {
@@ -55,29 +67,14 @@ export default {
   data() {
     return {
       idKey,
+      mdiCheck,
       mdiClose,
+      mdiPlus,
+
+      added: {},
 
       dialogOpen: false,
-
-      selected: {},
     };
-  },
-  computed: {
-    selectedPresets() {
-      const selected = Object.entries(this.selected)
-        .filter(([k, v]) => k && v)
-        .map(([k]) => k);
-
-      return this.presets.filter((preset) => selected.includes(this.getValue(preset)));
-    },
-  },
-  watch: {
-    dialogOpen(isOpen) {
-      // reset on close
-      if (!isOpen) {
-        this.selected = {};
-      }
-    },
   },
   methods: {
     getValue(preset) {
@@ -87,15 +84,19 @@ export default {
       return preset[this.prop];
     },
     handleToggle(preset) {
+      // show success marker for a brief moment
       const value = this.getValue(preset);
-      this.$set(this.selected, value, !this.selected[value]);
-    },
-    handleSubmit() {
-      // trigger only selected presets
-      this.$emit('select', this.selectedPresets);
+      const reset = () => {
+        this.added[value] = null;
+        clearTimeout(this.added[value]);
+      };
+      if (this.added[value]) {
+        reset();
+      }
+      this.$set(this.added, value, setTimeout(reset, 1000));
 
-      // close
-      this.dialogOpen = false;
+      // trigger the addition
+      this.$emit('select', [preset]);
     },
   },
 };

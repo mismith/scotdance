@@ -22,7 +22,7 @@
               v-if="blade.presets"
               :presets="blade.presets"
               :prop="blade.name"
-              @select="items => items.map(item => handleListItemCreate(blade, item))"
+              @select="items => items.map(item => handleListItemCreate(blade, item, true))"
             >
               <template #activator="{ on: picker }">
                 <v-tooltip bottom>
@@ -67,23 +67,25 @@
               </v-slide-y-transition>
             </draggable>
 
-            <v-list-item v-if="!blade.items().length" class="empty">
+            <v-list-item v-show="!blade.items().length" class="empty">
               <v-list-item-avatar>
                 <v-icon>{{ mdiClose }}</v-icon>
               </v-list-item-avatar>
               <v-list-item-content>
-                No items yet.
-                <PresetPicker
-                  v-if="blade.presets"
-                  :presets="blade.presets"
-                  :prop="blade.name"
-                  @select="items => items.map(item => handleListItemCreate(blade, item))"
-                >
-                  <template #activator="{ on }">
-                    <a v-on="on">Add one.</a>
-                  </template>
-                </PresetPicker>
-                <a v-else @click="handleListItemCreate(blade)">Add one.</a>
+                <div>
+                  No items yet.
+                  <PresetPicker
+                    v-if="blade.presets"
+                    :presets="blade.presets"
+                    :prop="blade.name"
+                    @select="items => items.map(item => handleListItemCreate(blade, item, true))"
+                  >
+                    <template #activator="{ on }">
+                      <a v-on="on">Add one.</a>
+                    </template>
+                  </PresetPicker>
+                  <a v-else @click="handleListItemCreate(blade)">Add one.</a>
+                </div>
               </v-list-item-content>
             </v-list-item>
           </v-list>
@@ -208,7 +210,7 @@
     <DialogCard
       :value="confirmRemove"
       title="Delete item"
-      text="Are you sure you want to permanently delete this item?"
+      text="Are you sure you want to permanently delete this item (and all of its subitems)?"
       cancel-label="No"
       submit-label="Yes"
       @cancel="confirmRemove.reject()"
@@ -572,7 +574,7 @@ export default {
       this.$router.push(this.getBladeRoute(params));
     },
 
-    async handleListItemCreate(blade, item = undefined) {
+    async handleListItemCreate(blade, item = undefined, skipRedirect = false) {
       try {
         const itemId = db.push().key;
         const params = blade.params(itemId);
@@ -592,7 +594,7 @@ export default {
         });
 
         // redirect
-        this.goToBlade(params);
+        if (!skipRedirect) this.goToBlade(params);
       } catch (err) {
         if (err) console.error(err); // eslint-disable-line no-console
       } finally {
