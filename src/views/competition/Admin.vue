@@ -117,7 +117,7 @@ import { makeKeyValuePairColumn } from '@/helpers/admin';
 import { danceExtender } from '@/helpers/competition';
 import { idKey, db, toOrderedArray } from '@/helpers/firebase';
 import { getFirstExisting } from '@/helpers/router';
-import { getRows } from '@/helpers/results';
+import { callbacks, overall, getRows } from '@/helpers/results';
 import competitionAdminSchema from '@/schemas/competition-admin';
 import RequiresPermission from '@/components/RequiresPermission.vue';
 import MiHotTable from '@/components/admin/MiHotTable.vue';
@@ -265,10 +265,15 @@ export default {
         });
       });
     },
+    saveCSV(arrayOfObjects) {
+      return saveCSV(arrayOfObjects, {
+        filename: `${this.currentSection.name} - ${this.competition.name}.csv`,
+      });
+    },
     exportResults() {
-      const exportedRows = getRows(this.groups, this.dances, this.dancers, this.results);
-      if (exportedRows.length) {
-        saveCSV(exportedRows, { filename: `Results - ${this.competition.name}.csv` });
+      const exportedData = getRows(this.groups, [callbacks, ...this.dances, overall], this.dancers, this.results);
+      if (exportedData.length) {
+        this.saveCSV(exportedData);
       } else {
         console.warn('No results to export.'); // eslint-disable-line no-console
       }

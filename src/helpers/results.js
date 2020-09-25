@@ -61,7 +61,7 @@ export function findPlacedDancers(group, dance, dancers = [], results = {}, sort
     const groupId = group[idKey];
     const danceId = dance[idKey];
 
-    if (results && results[groupId] && results[groupId][danceId]) {
+    if (results?.[groupId]?.[danceId]) {
       placings = results[groupId][danceId];
     }
     if (includeDummyForExplicitlyEmptyResults && hasExplicitlyEmptyResults(groupId, danceId, results)) {
@@ -151,13 +151,13 @@ export function getRows(groups, dances, dancers, results) {
       placedDancers.forEach((dancer) => {
         rows.push({
           category: (group.$category && group.$category.name) || '?',
-          group: group.name || '?',
-          dance: dance.name || '?',
+          group: group.name || group.$name || '?',
+          dance: dance.name || dance.$name || '?',
           number: dancer.number || '?',
           firstName: dancer.firstName || '?',
           lastName: dancer.lastName || '?',
           location: dancer.location || '?',
-          place: getPlace(dancer, placedDancers) || '?',
+          place: dance[idKey] === callbacks[idKey] ? '' : (getPlace(dancer, placedDancers) || '?'),
         });
       });
     });
