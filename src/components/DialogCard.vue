@@ -99,20 +99,22 @@ export default {
     },
   },
   methods: {
-    async handleCancel() {
-      this.$emit('cancel');
-
+    async close() {
       await this.$nextTick();
-      this.$refs.dialog.isActive = false;
       this.isOpen = false;
+      if (this.$refs.dialog) {
+        this.$refs.dialog.isActive = false;
+      }
     },
-    async handleSubmit() {
+    handleCancel() {
+      this.$emit('cancel');
+      this.close();
+    },
+    handleSubmit() {
       this.$emit('submit');
 
       if (!this.async) {
-        await this.$nextTick();
-        this.$refs.dialog.isActive = false;
-        this.isOpen = false;
+        this.close();
       }
     },
   },
