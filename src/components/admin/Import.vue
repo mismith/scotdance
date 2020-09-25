@@ -8,8 +8,8 @@
         </v-stepper-step>
         <v-divider />
         <v-stepper-step :editable="step > 2" :complete="step > 2" :step="2">
-          Choose
-          <small>Pick which data to use</small>
+          Find
+          <small>Pick which sheet to use</small>
         </v-stepper-step>
         <v-divider />
         <v-stepper-step :step="3">
@@ -22,16 +22,8 @@
       <v-stepper-items>
         <v-stepper-content :step="1" class="pa-0">
           <div class="app-scroll-frame app-scroll pa-4">
-            <h3>Instructions</h3>
-            <ol>
-              <li>Select the <strong>Excel spreadsheet</strong> (.xlsx file) that contains the values to import.</li>
-              <li>Pick the sheet that contains a list of dancers with age grouping headers, then click <strong>Next</strong>.</li>
-              <li>Double-check that all values were parsed properly&mdash;this is how data will be imported, so if anything is missing or looks broken, it will likely fail to import properly. If it looks okay, click <strong>Import</strong>.</li>
-            </ol>
-
-            <h3>Formatting</h3>
-            <p>The spreadsheet should have the following structure:</p>
-            <table class="demo">
+            <p>The <strong>Excel spreadsheet</strong> (.xlsx file) should have the following structure:</p>
+            <table class="demo mb-3">
               <tbody v-for="category in 2" :key="category">
                 <tr>
                   <td>Category / Age Group</td>
@@ -43,27 +35,27 @@
                   <td>Last Name</td>
                   <td>Location</td>
                 </tr>
-                <tr>
-                  <td v-for="td in 4" :key="td">{{ category === 1 ? '&nbsp;' : '...' }}</td>
+                <tr v-if="category === 2">
+                  <td v-for="td in 4" :key="td">...</td>
                 </tr>
               </tbody>
             </table>
-            <div class="pt-3">
-              <v-btn href="/examples/ScotDance-Import-Template.xlsx" download>
-                Download Template XLSX
-              </v-btn>
-            </div>
+            <v-btn href="/examples/ScotDance-Import-Template.xlsx" download>
+              <v-icon left>{{ mdiFileExcel }}</v-icon>
+              Download Template
+            </v-btn>
           </div>
 
           <v-divider />
-          <v-card-actions class="justify-end flex-none">
-            <v-btn text @click="handleCancel()">Cancel</v-btn>
+          <v-card-actions class="flex-none">
+            <v-spacer />
 
+            <v-btn text @click="handleCancel()">Cancel</v-btn>
             <v-file
               accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               @change="handleUpload"
             >
-              <v-btn text color="primary">Select File</v-btn>
+              <v-btn color="primary">Select File</v-btn>
             </v-file>
           </v-card-actions>
         </v-stepper-content>
@@ -78,11 +70,13 @@
           </v-tabs>
 
           <v-divider />
-          <v-card-actions class="justify-end flex-none">
-            <v-btn text @click="handleCancel()">Cancel</v-btn>
+          <v-card-actions class="flex-none">
+            <v-btn @click="handleBack()">Previous</v-btn>
 
+            <v-spacer />
+
+            <v-btn text @click="handleCancel()">Cancel</v-btn>
             <v-btn
-              text
               color="primary"
               :disabled="dancersSheetIndex < 0"
               @click="handleChoose()"
@@ -102,11 +96,13 @@
           </v-tabs>
 
           <v-divider />
-          <v-card-actions class="justify-end flex-none">
-            <v-btn text @click="handleCancel()">Cancel</v-btn>
+          <v-card-actions class="flex-none">
+            <v-btn @click="handleBack()">Previous</v-btn>
 
+            <v-spacer />
+
+            <v-btn text @click="handleCancel()">Cancel</v-btn>
             <v-btn
-              text
               color="primary"
               :disabled="importing"
               :loading="importing"
@@ -125,6 +121,7 @@
 import XLSX from 'xlsx';
 import find from 'lodash.find';
 import VFile from '@outluch/v-file';
+import { mdiFileExcel } from '@mdi/js';
 import { idKey } from '@/helpers/firebase';
 import {
   HotTable,
@@ -144,6 +141,8 @@ export default {
   },
   data() {
     return {
+      mdiFileExcel,
+
       step: 1,
 
       workbook: undefined,
@@ -166,6 +165,9 @@ export default {
     },
   },
   methods: {
+    handleBack() {
+      this.step = Math.max(1, this.step - 1);
+    },
     handleUpload(file) {
       if (!file) return;
 
@@ -400,6 +402,7 @@ export default {
 
     td {
       width: 25%;
+      padding: 1px 4px;
       border: 1px solid #ccc;
       border-width: 1px 1px 0 0;
     }
