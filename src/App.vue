@@ -20,21 +20,35 @@
 
       <v-spacer />
 
-      <v-btn
-        icon
-        v-if="$route.params.competitionId && $store.getters.hasPermission(`competitions/${$route.params.competitionId}`) && getMirrorRoute()"
-        :to="getMirrorRoute()"
-      >
-        <v-icon>{{ /^competition.admin/.test($route.name) ? mdiEye : mdiPencil }}</v-icon>
-      </v-btn>
+      <template v-if="$route.params.competitionId && $store.getters.hasPermission(`competitions/${$route.params.competitionId}`) && getMirrorRoute()">
+        <v-tooltip bottom :open-delay="600">
+          <template #activator="{ on }">
+            <v-btn
+              icon
+              :to="getMirrorRoute()"
+              v-on="on"
+            >
+              <v-icon>{{ /^competition.admin/.test($route.name) ? mdiEye : mdiPencil }}</v-icon>
+            </v-btn>
+          </template>
+          <span>
+            {{ /^competition.admin/.test($route.name) ? 'View' : 'Edit' }} competition
+          </span>
+        </v-tooltip>
+      </template>
 
       <v-menu v-model="submenuVisible" offset-y max-height="90%" max-width="calc(100% - 12px * 2)">
-        <template #activator="{ on }">
-          <v-btn icon v-on="on">
-            <v-badge v-model="submenuIsNew" dot color="secondary">
-              <v-icon>{{ mdiApps }}</v-icon>
-            </v-badge>
-          </v-btn>
+        <template #activator="{ on: menu }">
+          <v-tooltip bottom :open-delay="600">
+            <template #activator="{ on: tooltip }">
+              <v-btn icon v-on="Object.assign({}, tooltip, menu)">
+                <v-badge v-model="submenuIsNew" dot color="secondary">
+                  <v-icon>{{ mdiDotsGrid }}</v-icon>
+                </v-badge>
+              </v-btn>
+            </template>
+            <span>Switch competitions</span>
+          </v-tooltip>
         </template>
 
         <v-sheet class="app-scroll" style="max-width: 400px;">
@@ -46,13 +60,18 @@
       </v-menu>
 
       <v-menu v-model="accountVisible" offset-y>
-        <template #activator="{ on }">
-          <v-btn icon class="mr-n2" v-on="on">
-            <v-avatar size="36">
-              <Gravatar v-if="me" :user="me" />
-              <v-icon v-else>{{ mdiAccountCircle }}</v-icon>
-            </v-avatar>
-          </v-btn>
+        <template #activator="{ on: menu }">
+          <v-tooltip bottom :open-delay="600">
+            <template #activator="{ on: tooltip }">
+              <v-btn icon class="mr-n2" v-on="Object.assign({}, tooltip, menu)">
+                <v-avatar size="36">
+                  <Gravatar v-if="me" :user="me" />
+                  <v-icon v-else>{{ mdiAccountCircle }}</v-icon>
+                </v-avatar>
+              </v-btn>
+            </template>
+            <span>Account</span>
+          </v-tooltip>
         </template>
 
         <v-sheet>
@@ -258,7 +277,7 @@
 import { mapState, mapGetters, mapActions } from 'vuex';
 import {
   mdiAccountCircle,
-  mdiApps,
+  mdiDotsGrid,
   mdiCalendarMonth,
   mdiClose,
   mdiExitToApp,
@@ -297,7 +316,7 @@ export default {
       db,
 
       mdiAccountCircle,
-      mdiApps,
+      mdiDotsGrid,
       mdiCalendarMonth,
       mdiClose,
       mdiExitToApp,
