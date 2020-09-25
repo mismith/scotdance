@@ -30,5 +30,9 @@ export default {
   flex-direction: column;
   align-items: center;
   margin: auto;
+
+  > .v-btn.v-size--default {
+    min-width: 120px;
+  }
 }
 </style>
