@@ -124,9 +124,11 @@ export default {
     },
     unassignedDanceGroups() {
       return this.danceGroups.filter((group) => {
-        return !Object.values(this.item.platforms || {}).some((platform) => {
-          return (platform.orderedGroupIds || []).includes(group[idKey]);
-        });
+        return !Object.entries(this.item.platforms || {})
+          .filter(([platformId]) => findByIdKey(this.platforms, platformId))
+          .some(([, platform]) => {
+            return (platform.orderedGroupIds || []).includes(group[idKey]);
+          });
       });
     },
     judges() {
@@ -134,16 +136,18 @@ export default {
     },
     unassignedJudges() {
       return this.judges.filter((judge) => {
-        return !Object.values(this.item.platforms || {}).some((platform) => {
-          return (platform.orderedJudgeIds || []).includes(judge[idKey]);
-        });
+        return !Object.entries(this.item.platforms || {})
+          .filter(([platformId]) => findByIdKey(this.platforms, platformId))
+          .some(([, platform]) => {
+            return (platform.orderedJudgeIds || []).includes(judge[idKey]);
+          });
       });
     },
     pools() {
       // join items into a single array for sorting
       const pools = [
         ...this.platforms.map((platform) => {
-          const poolPlatform = this.item && this.item.platforms && this.item.platforms[platform[idKey]];
+          const poolPlatform = this.item?.platforms?.[platform[idKey]];
           const $items = poolPlatform ? [
             ...hydrateByIdKey(poolPlatform.orderedJudgeIds, this.judges),
             ...hydrateByIdKey(poolPlatform.orderedGroupIds, [
@@ -232,12 +236,7 @@ export default {
       // find the first platform's first assigned judge (if any)
       let judgeIndexOffset = 0;
       this.platforms.some(({ [idKey]: platformId }) => {
-        if (
-          this.item.platforms
-          && this.item.platforms[platformId]
-          && this.item.platforms[platformId].orderedJudgeIds
-          && this.item.platforms[platformId].orderedJudgeIds.length
-        ) {
+        if (this.item?.platforms?.[platformId]?.orderedJudgeIds?.length) {
           const [judgeId] = this.item.platforms[platformId].orderedJudgeIds;
           const judgeIndex = this.judges.findIndex(({ [idKey]: id }) => id === judgeId);
           if (judgeIndex >= 0) {
