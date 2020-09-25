@@ -25,7 +25,7 @@
       </EmptyState>
     </Blade>
     <Blade id="blade-dances" :active="currentGroup" class="col-md-4 app-scroll">
-      <v-list v-if="currentGroup">
+      <v-list v-if="currentGroup && dances.length">
         <v-list-item
           v-for="dance in dances"
           :key="dance[idKey]"
@@ -39,7 +39,7 @@
           </v-list-item-action>
         </v-list-item>
 
-        <template v-if="dances.length">
+        <template>
           <v-divider />
           <footer class="pa-3">
             <v-btn text @click="handleCopy">
@@ -50,16 +50,16 @@
             </v-btn>
           </footer>
         </template>
-        <EmptyState
-          v-else
-          :icon="mdiAlert"
-          label="No dances found"
-        >
-          <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dances' } }">
-            <span class="subtitle-1">Add or import some first &rsaquo;</span>
-          </router-link>
-        </EmptyState>
       </v-list>
+      <EmptyState
+        v-else-if="currentGroup"
+        :icon="mdiAlert"
+        label="No dances found"
+      >
+        <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dances' } }">
+          <span class="subtitle-1">Add or import some first &rsaquo;</span>
+        </router-link>
+      </EmptyState>
       <EmptyState
         v-else
         :icon="mdiSourcePull"
