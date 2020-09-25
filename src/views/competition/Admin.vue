@@ -1,24 +1,23 @@
 <template>
   <RequiresPermission :permission="hasPermission" class="CompetitionAdmin app-scroll-frame">
     <v-toolbar dense class="flex-none">
-      <div v-if="inTabs('categories', 'dancers', 'groups')">
-        <v-btn text @click="showImport = true" class="hidden-xs-only">Import&hellip;</v-btn>
-      </div>
-      <div v-if="inTabs('results')">
-        <!-- <v-btn text @click="showImportResults = true" class="hidden-xs-only">Import&hellip;</v-btn> -->
-        <v-btn text @click="exportResults()">Export CSV</v-btn>
-      </div>
-
-      <div v-if="currentSection">
+      <template v-if="currentSection && currentSection.presets">
         <PresetPicker
-          v-if="currentSection.presets"
           :presets="currentSection.presets"
           :prop="currentSection[idKey] === 'dances' ? p => danceExtender(p).$name : 'name'"
           @select="addPresets"
         />
-      </div>
+      </template>
+      <template v-if="inTabs('categories', 'groups', 'dancers')">
+        <v-btn text @click="showImport = true" class="hidden-xs-only">Import&hellip;</v-btn>
+      </template>
 
       <v-spacer />
+
+      <template v-if="inTabs('results')">
+        <!-- <v-btn text @click="showImportResults = true" class="hidden-xs-only">Import&hellip;</v-btn> -->
+        <v-btn text @click="exportResults()">Export CSV</v-btn>
+      </template>
 
       <v-tooltip left>
         <template #activator="{ on }">
