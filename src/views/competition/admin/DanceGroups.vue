@@ -72,7 +72,7 @@
         v-if="!currentGroupHasDraws || !currentGroupDances.length || !currentGroupDancers.length"
         :icon="mdiViewSplitVertical"
         label="Championship draws"
-        description="Specify dancer order for each dance"
+        description="Specify dancer order for each dance (optional)"
       />
       <div v-else class="app-scroll app-scroll-frame">
         <HotTable :settings="hotSettings" />
