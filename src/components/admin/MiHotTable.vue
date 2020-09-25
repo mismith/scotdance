@@ -1,5 +1,11 @@
 <template>
-  <HotTable :settings="hotSettings" :data="clonedData" class="MiHotTable" />
+  <HotTable
+    :settings="hotSettings"
+    :data="clonedData"
+    class="MiHotTable"
+    ref="hot"
+  />
+  <!-- @HACK: allow external access thru parentComponent.$ref.<refName>.$refs.hot.hotInstance -->
 </template>
 
 <script>

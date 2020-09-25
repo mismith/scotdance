@@ -14,6 +14,9 @@
 
       <v-spacer />
 
+      <template v-if="inTabs('staff', 'dances', 'categories', 'groups', 'dancers', 'platforms')">
+        <v-btn text @click="exportHotTable()" class="hidden-xs-only">Export CSV</v-btn>
+      </template>
       <template v-if="inTabs('results')">
         <!-- <v-btn text @click="showImportResults = true" class="hidden-xs-only">Import&hellip;</v-btn> -->
         <v-btn text @click="exportResults()">Export CSV</v-btn>
@@ -51,6 +54,7 @@
         </EmptyState>
         <MiHotTable
           v-else
+          ref="hot"
           :settings="currentSection.hot"
           :data="this[$root.currentTab]"
           @change="handleHotChanges"
@@ -268,6 +272,28 @@ export default {
       return saveCSV(arrayOfObjects, {
         filename: `${this.currentSection.name} - ${this.competition.name}.csv`,
       });
+    },
+    exportHotTable() {
+      const { hotInstance } = this.$refs.hot.$refs.hot;
+      const rows = hotInstance.rootElement?.querySelector('table')?.querySelectorAll('tr');
+      const textifier = document.createElement('div');
+      const data = Array.from(rows || []).map((row) => {
+        const cells = row.querySelectorAll('td:not(:first-child), th:not(:first-child)');
+        return Array.from(cells || []).map((cell) => {
+          const html = cell.innerHTML;
+          const cleaned = html
+            .replace(/<div class="ht.*?">.*?<\/div>/sig, '') // remove dropdown arrow
+            .replace(/<a .*?href="(.*?)".*?>.*?<\/a>/sig, '$1'); // use img/link URL
+          textifier.innerHTML = cleaned;
+          return textifier.innerText.trim();
+        });
+      });
+      const [colHeaders, ...rowData] = data;
+      const exportedData = rowData.map((row) => row.reduce((acc, v, i) => {
+        acc[colHeaders[i]] = v;
+        return acc;
+      }, {}));
+      return this.saveCSV(exportedData);
     },
     exportResults() {
       const exportedData = getRows(this.groups, [callbacks, ...this.dances, overall], this.dancers, this.results);
