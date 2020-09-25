@@ -87,6 +87,20 @@
               </v-list-item-content>
             </v-list-item>
           </v-list>
+
+          <template v-if="!index">
+            <v-spacer />
+            <v-toolbar class="flex-none">
+              <v-switch
+                :input-value="isScheduleDisabled"
+                label="No Schedule"
+                hide-details
+                :readonly="!hasNoExistingSchedule && !isScheduleDisabled"
+                @click="handleScheduleDisabled"
+                @change="handleScheduleDisabled"
+              />
+            </v-toolbar>
+          </template>
         </Blade>
       </v-fade-transition>
       <v-fade-transition :key="blade.collection">
@@ -142,6 +156,15 @@
       />
     </Blade>
 
+    <DialogCard
+      :value="confirmDisable"
+      title="No Schedule"
+      text="Are you sure you want to permanently delete all schedule data, and hide the schedule tab for this competition?"
+      cancel-label="No"
+      submit-label="Yes"
+      @cancel="confirmDisable.reject()"
+      @submit="confirmDisable.resolve()"
+    />
     <DialogCard
       :value="confirmCreate"
       title="Add new item:"
@@ -214,6 +237,7 @@ import {
   toOrderedArray,
 } from '@/helpers/firebase';
 import { getScheduleItemDanceName } from '@/helpers/competition';
+import { hasNoExistingSchedule, isScheduleDisabled } from '@/helpers/schedule';
 
 export default {
   name: 'CompetitionAdminSchedule',
@@ -243,6 +267,7 @@ export default {
       mdiPlaylistPlus,
       mdiPlus,
 
+      confirmDisable: undefined,
       confirmCreate: undefined,
       confirmCreateValue: undefined,
       confirmMove: undefined,
@@ -401,6 +426,13 @@ export default {
     };
   },
   computed: {
+    hasNoExistingSchedule() {
+      return hasNoExistingSchedule(this.schedule);
+    },
+    isScheduleDisabled() {
+      return isScheduleDisabled(this.schedule);
+    },
+
     currentDay() {
       if (this.dayId && this.schedule && this.schedule.days) {
         return this.schedule.days[this.dayId];
@@ -464,6 +496,37 @@ export default {
     },
   },
   methods: {
+    async handleScheduleDisabled() {
+      const shouldDisableSchedule = !this.isScheduleDisabled;
+      const setSchedule = (v) => this.$emit('change', { schedule: v });
+      const clearSchedule = () => {
+        setSchedule(false);
+      };
+
+      if (shouldDisableSchedule) {
+        if (this.hasNoExistingSchedule) {
+          // clear without confirmation (since there's no data to lose)
+          clearSchedule();
+        } else {
+          // confirm whether we really want to clear
+          try {
+            await new Promise((resolve, reject) => {
+              this.confirmDisable = { resolve, reject };
+            });
+
+            clearSchedule();
+          } catch (err) {
+            if (err) console.error(err); // eslint-disable-line no-console
+          } finally {
+            this.confirmDisable = null;
+          }
+        }
+      } else {
+        // remove explicit disabled flag
+        setSchedule(null);
+      }
+    },
+
     getPath({
       dayId,
       blockId,

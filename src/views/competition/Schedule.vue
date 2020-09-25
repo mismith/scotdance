@@ -1,11 +1,11 @@
 <template>
-  <Blades class="CompetitionSchedule alt">
-    <Blade
-      :active="!currentEvent"
-      v-persist-scroll="`/competitions/${competitionId}/schedule`"
-      class="col-md-4 app-scroll"
-    >
-      <div v-if="schedule.days">
+  <div class="CompetitionSchedule alt app-scroll-frame">
+    <Blades v-if="schedule.days">
+      <Blade
+        :active="!currentEvent"
+        v-persist-scroll="`/competitions/${competitionId}/schedule`"
+        class="col-md-4 app-scroll"
+      >
         <div v-for="day in toOrderedArray(schedule.days)" :key="day[idKey]">
           <v-subheader class="title">
             {{ day.name || $moment(day.date).format('dddd') }}
@@ -76,121 +76,129 @@
             </v-list-item>
           </v-list>
         </div>
-      </div>
-      <EmptyState
-        v-else
-        :icon="mdiClose"
-        label="No schedule yet"
-        description="Check back later"
-      />
-    </Blade>
-    <Blade :active="currentEvent" class="col-md-8">
-      <div v-if="currentEvent" class="app-scroll-frame">
-        <BladeToolbar
-          :to="{ name: $route.name, params: { competitionId } }"
-          :text="`${currentDay.name} &rsaquo; ${currentBlock.name}`"
-          class="hidden-md-and-up"
-        />
+      </Blade>
+      <Blade :active="currentEvent" class="col-md-8">
+        <div v-if="currentEvent" class="app-scroll-frame">
+          <BladeToolbar
+            :to="{ name: $route.name, params: { competitionId } }"
+            :text="`${currentDay.name} &rsaquo; ${currentBlock.name}`"
+            class="hidden-md-and-up"
+          />
 
-        <div
-          v-persist-scroll="`/competitions/${competitionId}/schedule/${dayId}/${blockId}/${eventId}`"
-          class="app-scroll-frame app-scroll"
-        >
-          <header>
-            <v-subheader class="title">{{ currentEvent.name }}</v-subheader>
-            <div
-              v-if="currentEvent.description"
-              v-html="currentEvent.description"
-              class="pa-4 pre-line"
-            />
-          </header>
+          <div
+            v-persist-scroll="`/competitions/${competitionId}/schedule/${dayId}/${blockId}/${eventId}`"
+            class="app-scroll-frame app-scroll"
+          >
+            <header>
+              <v-subheader class="title">{{ currentEvent.name }}</v-subheader>
+              <div
+                v-if="currentEvent.description"
+                v-html="currentEvent.description"
+                class="pa-4 pre-line"
+              />
+            </header>
 
-          <v-list expand class="grouped">
-            <template v-for="dance in toOrderedArray(currentEvent.dances)">
-              <v-subheader :key="dance[idKey]" v-if="!isDanceExpandable(dance)">
-                {{ getScheduleItemDanceName(dance, dances) }}
-              </v-subheader>
-              <v-list-group
-                :key="dance[idKey]"
-                v-else
-                :value="isDanceExpanded(dance[idKey], Object.keys(currentEvent.dances), !!dance.danceId)"
-                @input="handleDanceExpanded(dance[idKey], $event)"
-              >
-                <template #activator>
-                  <v-subheader>
-                    <div class="flex">{{ getScheduleItemDanceName(dance, dances) }}</div>
-                    <div
+            <v-list expand class="grouped">
+              <template v-for="dance in toOrderedArray(currentEvent.dances)">
+                <v-subheader :key="dance[idKey]" v-if="!isDanceExpandable(dance)">
+                  {{ getScheduleItemDanceName(dance, dances) }}
+                </v-subheader>
+                <v-list-group
+                  :key="dance[idKey]"
+                  v-else
+                  :value="isDanceExpanded(dance[idKey], Object.keys(currentEvent.dances), !!dance.danceId)"
+                  @input="handleDanceExpanded(dance[idKey], $event)"
+                >
+                  <template #activator>
+                    <v-subheader>
+                      <div class="flex">{{ getScheduleItemDanceName(dance, dances) }}</div>
+                      <div
+                        v-if="dance.description"
+                        v-html="slugline(dance.description)"
+                        class="caption text-truncate ml-3"
+                      />
+                    </v-subheader>
+                  </template>
+
+                  <v-sheet>
+                    <v-list-item
                       v-if="dance.description"
-                      v-html="slugline(dance.description)"
-                      class="caption text-truncate ml-3"
+                      v-html="dance.description"
+                      class="pa-4 pre-line"
                     />
-                  </v-subheader>
-                </template>
+                    <AdminPlatforms
+                      v-if="dance.danceId"
+                      :item="dance"
+                      :groups="groups"
+                      :dances="dances"
+                      :dancers="dancers"
+                      :staff="staff"
+                      :platforms="platforms"
+                      @item-click="handlePlatformClick($event, dance)"
+                    />
+                  </v-sheet>
+                </v-list-group>
+              </template>
+              <v-list-item v-if="!currentEvent.dances && !currentEvent.description" class="empty">
+                <v-list-item-avatar>
+                  <v-icon>{{ mdiClose }}</v-icon>
+                </v-list-item-avatar>
+                <v-list-item-content>
+                  No more info.
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </div>
 
-                <v-sheet>
-                  <v-list-item
-                    v-if="dance.description"
-                    v-html="dance.description"
-                    class="pa-4 pre-line"
-                  />
-                  <AdminPlatforms
-                    v-if="dance.danceId"
-                    :item="dance"
-                    :groups="groups"
-                    :dances="dances"
-                    :dancers="dancers"
-                    :staff="staff"
-                    :platforms="platforms"
-                    @item-click="handlePlatformClick($event, dance)"
-                  />
-                </v-sheet>
-              </v-list-group>
+          <DialogCard v-model="drawVisible">
+            <template #title>
+              <v-card-title v-if="currentDialogData" class="d-flex flex-column align-start">
+                <div class="title">Draw / Order</div>
+                <div v-if="currentDialogData.dance && currentDialogData.group" class="caption">
+                  {{ currentDialogData.dance.$shortName }} • {{ currentDialogData.group.$name }}
+                </div>
+              </v-card-title>
             </template>
-            <v-list-item v-if="!currentEvent.dances && !currentEvent.description" class="empty">
-              <v-list-item-avatar>
-                <v-icon>{{ mdiClose }}</v-icon>
-              </v-list-item-avatar>
-              <v-list-item-content>
-                No more info.
-              </v-list-item-content>
-            </v-list-item>
-          </v-list>
+            <template #text>
+              <v-card-text class="pa-0">
+                <v-list
+                  v-if="currentDialogData && currentDialogData.dance && currentDialogData.group"
+                  two-line
+                >
+                  <DancerListItem
+                    v-for="dancer in findDrawnDancers(currentDialogData.group, currentDialogData.dance)"
+                    :key="dancer[idKey]"
+                    :dancer="dancer"
+                    @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] } }); drawVisible = false;"
+                  />
+                </v-list>
+              </v-card-text>
+            </template>
+          </DialogCard>
         </div>
+        <EmptyState
+          v-else
+          :icon="mdiGestureTap"
+          label="See event details"
+          description="Select an event"
+        />
+      </Blade>
+    </Blades>
 
-        <DialogCard v-model="drawVisible">
-          <template #title>
-            <v-card-title v-if="currentDialogData" class="d-flex flex-column align-start">
-              <div class="title">Draw / Order</div>
-              <div v-if="currentDialogData.dance && currentDialogData.group" class="caption">
-                {{ currentDialogData.dance.$shortName }} • {{ currentDialogData.group.$name }}
-              </div>
-            </v-card-title>
-          </template>
-          <template #text>
-            <v-card-text class="pa-0">
-              <v-list
-                v-if="currentDialogData && currentDialogData.dance && currentDialogData.group"
-                two-line
-              >
-                <DancerListItem
-                  v-for="dancer in findDrawnDancers(currentDialogData.group, currentDialogData.dance)"
-                  :key="dancer[idKey]"
-                  :dancer="dancer"
-                  @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] } }); drawVisible = false;"
-                />
-              </v-list>
-            </v-card-text>
-          </template>
-        </DialogCard>
-      </div>
-      <EmptyState
-        v-else
-        :icon="mdiGestureTap"
-        label="See event details"
-        description="Select an event"
-      />
-    </Blade>
-  </Blades>
+    <EmptyState
+      v-else-if="isScheduleDisabled"
+      :icon="mdiCalendarRemove"
+      label="No schedule"
+      description="Please see competition organizer for more information"
+    />
+
+    <EmptyState
+      v-else
+      :icon="mdiClose"
+      label="No schedule yet"
+      description="Check back later"
+    />
+  </div>
 </template>
 
 <script>
@@ -201,6 +209,7 @@ import {
 import {
   mdiChevronRight,
   mdiClose,
+  mdiCalendarRemove,
   mdiGestureTap,
 } from '@mdi/js';
 import AdminPlatforms from '@/components/admin/Platforms.vue';
@@ -224,6 +233,10 @@ import {
   getPlaceholderDancer,
   findGroupDancers,
 } from '@/helpers/results';
+import {
+  hasNoExistingSchedule,
+  isScheduleDisabled,
+} from '@/helpers/schedule';
 
 export default {
   name: 'CompetitionSchedule',
@@ -257,6 +270,7 @@ export default {
       idKey,
       mdiChevronRight,
       mdiClose,
+      mdiCalendarRemove,
       mdiGestureTap,
     };
   },
@@ -265,6 +279,13 @@ export default {
       'currentDialog',
       'currentDialogData',
     ]),
+
+    hasNoExistingSchedule() {
+      return hasNoExistingSchedule(this.schedule);
+    },
+    isScheduleDisabled() {
+      return isScheduleDisabled(this.schedule);
+    },
 
     drawVisible: {
       get() {
