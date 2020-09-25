@@ -188,30 +188,30 @@ export default {
     },
 
     competition() {
-      return this.competitionRaw || {};
+      return this.competitionRaw;
     },
     dancers() {
-      return (this.dancersRaw || [])
+      return this.dancersRaw
         .map((dancer) => dancerExtender(dancer, this.groups, this.$store))
         .filter(isNotEmptyObject)
         .sort(sortByKey('$number')); // sort by number
     },
     groups() {
-      return (this.groupsRaw || [])
+      return this.groupsRaw
         .map((group, i) => groupExtender(group, i, this.categories))
         .filter(isNotEmptyObject);
     },
     categories() {
-      return (this.categoriesRaw || [])
+      return this.categoriesRaw
         .filter(isNotEmptyObject);
     },
     dances() {
-      return (this.dancesRaw || [])
+      return this.dancesRaw
         .map((dance) => danceExtender(dance))
         .filter(isNotEmptyObject);
     },
     staff() {
-      return (this.staffRaw || [])
+      return this.staffRaw
         .map((member) => ({
           ...member,
           $name: `${member.firstName || ''} ${member.lastName || ''}`.trim(),
@@ -219,7 +219,7 @@ export default {
         .filter(isNotEmptyObject);
     },
     platforms() {
-      return (this.platformsRaw || [])
+      return this.platformsRaw
         .filter(isNotEmptyObject)
         .map((platform) => ({
           ...platform,
@@ -227,13 +227,13 @@ export default {
         }));
     },
     draws() {
-      return this.drawsRaw || {};
+      return this.drawsRaw;
     },
     schedule() {
-      return this.scheduleRaw || {};
+      return this.scheduleRaw;
     },
     results() {
-      return this.resultsRaw || {};
+      return this.resultsRaw;
     },
   },
   watch: {
