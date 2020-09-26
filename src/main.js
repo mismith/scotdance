@@ -115,7 +115,8 @@ window.addEventListener('statusTap', () => {
 })();
 
 // app / devices
-Vue.prototype.isApp = Capacitor.isNative;
+Vue.prototype.isNative = Capacitor.isNative;
+Vue.prototype.isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
 Plugins.Device.getInfo().then((device) => store.commit('setDevice', device));
 if (Capacitor.platform === 'ios') {
   Plugins.IosSwipeBack.enable();
