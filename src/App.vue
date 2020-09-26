@@ -491,9 +491,21 @@ export default {
 
 <style lang="scss">
 // extension styling overrides
-body.has-bottom-bar {
-  #crisp-chatbox {
+#crisp-chatbox {
+  > div {
+    > a {
+      right: calc(14px + env(safe-area-inset-right)) !important;
+      bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+    }
     > div {
+      top: env(safe-area-inset-top) !important;
+      left: env(safe-area-inset-left) !important;
+      right: env(safe-area-inset-right) !important;
+      bottom: env(safe-area-inset-bottom) !important;
+      height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    }
+
+    body.has-bottom-bar & {
       > a {
         margin-bottom: 56px !important;
       }
