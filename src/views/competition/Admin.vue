@@ -117,8 +117,13 @@
 import saveCSV from 'save-csv';
 import { mdiAlert, mdiCheck } from '@mdi/js';
 import { makeKeyValuePairColumn } from '@/helpers/admin';
-import { danceExtender } from '@/helpers/competition';
-import { idKey, db, toOrderedArray } from '@/helpers/firebase';
+import { findByIdKey, danceExtender } from '@/helpers/competition';
+import {
+  pushidRegex,
+  idKey,
+  db,
+  toOrderedArray,
+} from '@/helpers/firebase';
 import { getFirstExisting } from '@/helpers/router';
 import { callbacks, overall, getRows } from '@/helpers/results';
 import competitionAdminSchema from '@/schemas/competition-admin';
@@ -255,18 +260,35 @@ export default {
       this.awaitSave(this.competitionDataRef.update(changes));
     },
     handleHotChanges(changes) {
-      Object.entries(changes).forEach(([path, change]) => {
-        this.handleDataChanges({
-          [`${this.$root.currentTab}/${path}`]: change,
-        });
-      });
+      const { currentTab } = this.$root;
+      const dataChanges = Object.entries(changes).reduce((acc, [path, change]) => {
+        acc[`${currentTab}/${path}`] = change;
+
+        // make sure to remove dancer from any previously generated draws
+        if (currentTab === 'dancers' && change === null && pushidRegex.test(path)) {
+          const { number, groupId } = findByIdKey(this.dancers, path);
+          const draws = this.draws?.[groupId] || {};
+          Object.entries(draws).forEach(([danceId, dancerNumbers]) => {
+            const index = dancerNumbers.indexOf(number);
+            if (index >= 0) {
+              const newDancerNumbers = [...dancerNumbers];
+              newDancerNumbers.splice(index, 1);
+              acc[`draws/${groupId}/${danceId}`] = newDancerNumbers;
+            }
+          });
+        }
+
+        return acc;
+      }, {});
+
+      this.handleDataChanges(dataChanges);
     },
     addPresets(presets, tab = this.$root.currentTab) {
-      presets.forEach((preset) => {
-        this.handleDataChanges({
-          [`${tab}/${db.push().key}`]: preset,
-        });
-      });
+      const dataChanges = presets.reduce((acc, preset) => {
+        acc[`${tab}/${db.push().key}`] = preset;
+        return acc;
+      }, {});
+      this.handleDataChanges(dataChanges);
     },
     saveCSV(arrayOfObjects) {
       return saveCSV(arrayOfObjects, {

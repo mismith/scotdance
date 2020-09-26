@@ -326,7 +326,7 @@ export default {
     ]),
 
     findDrawnDancers(group, dance) {
-      const draw = this.draws && this.draws[group[idKey]] && this.draws[group[idKey]][dance[idKey]];
+      const draw = this.draws?.[group[idKey]]?.[dance[idKey]];
       if (draw) {
         return draw // order by draw order
           .map((number) => this.dancers.find((dancer) => `${dancer.number}` === `${number}`) || getPlaceholderDancer());

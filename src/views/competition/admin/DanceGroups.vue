@@ -200,7 +200,7 @@ export default {
       const columns = this.currentGroupDances.map((dance) => {
         const danceId = dance[idKey];
         data.forEach((row, index) => {
-          if (this.draws && this.draws[this.groupId] && this.draws[this.groupId][danceId]) {
+          if (this.draws?.[this.groupId]?.[danceId]) {
             row[danceId] = this.draws[this.groupId][danceId][index]; // eslint-disable-line no-param-reassign
           }
         });
