@@ -118,9 +118,6 @@ window.addEventListener('statusTap', () => {
 Vue.prototype.isNative = Capacitor.isNative;
 Vue.prototype.isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
 Plugins.Device.getInfo().then((device) => store.commit('setDevice', device));
-if (Capacitor.platform === 'ios') {
-  Plugins.IosSwipeBack.enable();
-}
 window.addEventListener('load', () => {
   Plugins.SplashScreen.hide();
 });
