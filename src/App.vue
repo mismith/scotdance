@@ -585,6 +585,17 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 
   background: #000;
+
+  &::before {
+    // simulate statusbar-spanning app bar on ios
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top);
+    background: #1976d2;
+  }
 }
 
 .v-application {
