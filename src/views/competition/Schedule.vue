@@ -21,7 +21,7 @@
               v-for="block in toOrderedArray(day.blocks)"
               :key="block[idKey]"
               :value="isBlockExpanded(block[idKey], Object.keys(day.blocks), !!block.events)"
-              @input="handleBlockExpanded(block[idKey], $event)"
+              @click="handleBlockExpanded(block[idKey], $event)"
             >
               <template #activator>
                 <v-subheader>
@@ -107,7 +107,7 @@
                   :key="dance[idKey]"
                   v-else
                   :value="isDanceExpanded(dance[idKey], Object.keys(currentEvent.dances), !!dance.danceId)"
-                  @input="handleDanceExpanded(dance[idKey], $event)"
+                  @click="handleDanceExpanded(dance[idKey], $event)"
                 >
                   <template #activator>
                     <v-subheader>

@@ -41,7 +41,7 @@
               v-for="(group, groupId) in groupedDancers"
               :key="groupId"
               :value="isGroupExpanded(groupId, groupIds)"
-              @input="handleGroupExpanded(groupId, $event)"
+              @click="handleGroupExpanded(groupId, $event)"
             >
               <template #activator>
                 <v-subheader>

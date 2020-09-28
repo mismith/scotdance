@@ -80,7 +80,7 @@
           v-for="(group, name) in groupedStaff"
           :key="name"
           :value="isGroupExpanded(name, Object.keys(groupedStaff))"
-          @input="handleGroupExpanded(name, $event)"
+          @click="handleGroupExpanded(name, $event)"
         >
           <template #activator>
             <v-subheader>{{ name }}s</v-subheader>

@@ -10,7 +10,7 @@
           v-for="category in groupedCategories"
           :key="category[idKey]"
           :value="isCategoryExpanded(category, groupedCategories)"
-          @input="handleCategoryExpanded(category[idKey], $event)"
+          @click="handleCategoryExpanded(category[idKey], $event)"
         >
           <template #activator>
             <v-subheader>
@@ -95,7 +95,7 @@
               :key="dance.name"
               :id="`dance-${dance[idKey]}`"
               :value="isDanceExpanded(dance, groupedDancers)"
-              @input="handleDanceExpanded(dance[idKey], $event)"
+              @click="handleDanceExpanded(dance[idKey], $event)"
             >
               <template #activator>
                 <v-subheader>{{ dance.$name }}</v-subheader>

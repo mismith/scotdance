@@ -4,7 +4,7 @@
       v-for="group in groups"
       :key="group[idKey]"
       :value="isGroupExpanded(group, groups)"
-      @input="handleGroupExpanded(group[idKey], $event)"
+      @click="handleGroupExpanded(group[idKey], $event)"
     >
       <template #activator>
         <v-subheader>
