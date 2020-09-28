@@ -124,10 +124,6 @@
       :width="320"
       class="app-scroll-frame"
     >
-      <v-btn icon absolute class="ma-2" @click="closeMenu()">
-        <v-icon>{{ mdiClose }}</v-icon>
-      </v-btn>
-
       <div class="app-scroll-frame app-scroll">
         <v-list>
           <v-subheader>Pages</v-subheader>
@@ -220,6 +216,10 @@
           </template>
         </v-list>
       </div>
+
+      <v-btn icon absolute class="ma-2" @click="closeMenu()">
+        <v-icon>{{ mdiClose }}</v-icon>
+      </v-btn>
     </v-navigation-drawer>
 
     <v-main id="main" class="app-scroll-frame">
