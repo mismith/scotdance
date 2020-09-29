@@ -1,6 +1,8 @@
 # Capacitor
 /www
 .gradle
+/resources/android
+/resources/ios
 
 # Vue defaults
 .DS_Store
