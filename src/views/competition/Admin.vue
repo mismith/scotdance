@@ -14,6 +14,10 @@
 
       <v-spacer />
 
+      <v-btn text :to="{ name: 'competition.admin.print' }">
+        Paper Program
+      </v-btn>
+
       <template v-if="inTabs('staff', 'dances', 'categories', 'groups', 'dancers', 'platforms')">
         <v-btn text @click="exportHotTable()" class="hidden-xs-only">Export CSV</v-btn>
       </template>
@@ -95,10 +99,10 @@
     <v-bottom-navigation
       v-if="hasPermission"
       v-model="$root.currentTab"
-      class="listed-only"
+      class="listed-only print-hide"
     >
       <v-btn
-        v-for="section in sections"
+        v-for="section in sections.filter(({ directAccessOnly }) => !directAccessOnly)"
         :key="section[idKey]"
         :value="section[idKey]"
         :to="getTabRoute(section[idKey])"

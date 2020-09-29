@@ -37,7 +37,7 @@
       />
     </div>
 
-    <v-bottom-navigation v-if="hasPermission" v-model="$root.currentTab">
+    <v-bottom-navigation v-if="hasPermission" v-model="$root.currentTab" class="print-hide">
       <v-btn
         v-for="section in sections"
         :key="section[idKey]"

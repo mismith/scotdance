@@ -37,6 +37,7 @@
     "firebase-tools": "^7.16.2",
     "fuse.js": "^3.6.1",
     "handsontable": "^7.3.0",
+    "html-docx-js": "^0.3.1",
     "lodash.find": "^4.6.0",
     "lodash.groupby": "^4.6.0",
     "lodash.orderby": "^4.6.0",

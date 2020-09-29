@@ -25,6 +25,7 @@ const CompetitionAdminInfo = () => import(/* webpackChunkName: "admin" */ '@/vie
 const CompetitionAdminSchedule = () => import(/* webpackChunkName: "admin" */ '@/views/competition/admin/Schedule.vue');
 const CompetitionAdminResults = () => import(/* webpackChunkName: "admin" */ '@/views/competition/admin/Results.vue');
 const CompetitionAdminDanceGroups = () => import(/* webpackChunkName: "admin" */ '@/views/competition/admin/DanceGroups.vue');
+const CompetitionAdminPrint = () => import(/* webpackChunkName: "admin" */ '@/views/competition/admin/Print.vue');
 
 const Admin = () => import(/* webpackChunkName: "admin" */ '@/views/Admin.vue');
 const AdminInfo = () => import(/* webpackChunkName: "admin" */ '@/views/admin/Info.vue');
@@ -188,6 +189,14 @@ export default new Router({
                   props: true,
                   meta: {
                     title: competitionAdminSchema['dance-groups'].name,
+                  },
+                },
+                {
+                  path: 'print',
+                  name: 'competition.admin.print',
+                  component: CompetitionAdminPrint,
+                  meta: {
+                    title: competitionAdminSchema.print.name,
                   },
                 },
                 {
