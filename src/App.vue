@@ -39,7 +39,7 @@
 
       <v-menu v-model="submenuVisible" offset-y max-height="90%" max-width="calc(100% - 12px * 2)">
         <template #activator="{ on: menu }">
-          <v-tooltip :disabled="isTouch" bottom :open-delay="600">
+          <v-tooltip :disabled="isTouch || submenuVisible" bottom :open-delay="600">
             <template #activator="{ on: tooltip }">
               <v-btn icon v-on="Object.assign({}, tooltip, menu)">
                 <v-badge v-model="submenuIsNew" dot color="secondary">
@@ -61,7 +61,7 @@
 
       <v-menu v-model="accountVisible" offset-y>
         <template #activator="{ on: menu }">
-          <v-tooltip :disabled="isTouch" bottom :open-delay="600">
+          <v-tooltip :disabled="isTouch || accountVisible" bottom :open-delay="600">
             <template #activator="{ on: tooltip }">
               <v-btn icon class="mr-n2" v-on="Object.assign({}, tooltip, menu)">
                 <v-avatar size="36">
