@@ -23,10 +23,8 @@ yarn-error.log*
 *.ntvs*
 *.njsproj
 *.sln
-*.sw*
 
 # Custom
-info.txt
 *.log
 *.keystore
 *.pepk
