@@ -609,15 +609,16 @@ body {
     min-height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important; // for iPhone-X
   }
   .v-navigation-drawer {
-    max-height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom)); // for iPhone-X
-    border-left: env(safe-area-inset-left) solid #000;
-    margin-top: env(safe-area-inset-top);
-
     &--absolute {
       z-index: 10; // see: https://github.com/vuetifyjs/vuetify/issues/4241
     }
     &__content {
       @extend .app-scroll-frame;
+
+      position: relative;
+      margin-top: env(safe-area-inset-top);
+      margin-left: env(safe-area-inset-left);
+      margin-bottom: env(safe-area-inset-bottom);
     }
 
     .v-btn.v-btn--absolute {
