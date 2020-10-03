@@ -8,6 +8,9 @@ public class ScotDance: CAPPlugin {
     @objc func setup(_ call: CAPPluginCall) {
         DispatchQueue.main.async(execute: {
             let webView = self.bridge.getWebView()
+            
+            // allow swiping from edge to go back/forward
+            webView?.allowsBackForwardNavigationGestures = true;
 
             if ProcessInfo.processInfo.arguments.contains("Screenshots") {
                 // clear localStorage to ensure theme matches device appearance
