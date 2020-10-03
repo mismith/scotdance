@@ -13,7 +13,7 @@
                 <v-list-item-title>Dark Mode</v-list-item-title>
               </v-list-item-content>
               <v-list-item-action>
-                <v-switch :input-value="active" color="primary" />
+                <v-switch :input-value="active" color="primary" aria-label="dark-mode" />
               </v-list-item-action>
             </template>
           </v-list-item>

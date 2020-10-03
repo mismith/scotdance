@@ -8,14 +8,14 @@
       class="print-hide"
       :class="{ stripes: env !== 'production' }"
     >
-      <v-btn icon @click="menuVisible = !menuVisible">
+      <v-btn icon @click="menuVisible = !menuVisible" aria-label="menu">
         <v-badge v-model="needsUpdating" dot color="secondary">
           <v-icon>{{ mdiMenu }}</v-icon>
         </v-badge>
       </v-btn>
 
       <v-toolbar-title>
-        <router-link :to="{ name: 'home' }">{{ title }}</router-link>
+        <router-link :to="{ name: 'home' }" aria-label="home">{{ title }}</router-link>
       </v-toolbar-title>
 
       <v-spacer />
@@ -27,6 +27,7 @@
               icon
               :to="getMirrorRoute()"
               v-on="on"
+              aria-label="mirror"
             >
               <v-icon>{{ /^competition.admin/.test($route.name) ? mdiEye : mdiPencil }}</v-icon>
             </v-btn>
@@ -41,7 +42,7 @@
         <template #activator="{ on: menu }">
           <v-tooltip :disabled="isTouch || submenuVisible" bottom :open-delay="600">
             <template #activator="{ on: tooltip }">
-              <v-btn icon v-on="Object.assign({}, tooltip, menu)">
+              <v-btn icon v-on="Object.assign({}, tooltip, menu)" aria-label="submenu">
                 <v-badge v-model="submenuIsNew" dot color="secondary">
                   <v-icon>{{ mdiDotsGrid }}</v-icon>
                 </v-badge>
@@ -127,7 +128,7 @@
       <div class="app-scroll-frame app-scroll">
         <v-list>
           <v-subheader>Pages</v-subheader>
-          <v-list-item :to="{ name: 'competitions' }" exact>
+          <v-list-item :to="{ name: 'competitions' }" exact aria-label="competitions">
             <v-list-item-avatar>
               <v-icon>{{ mdiCalendarMonth }}</v-icon>
             </v-list-item-avatar>
@@ -135,7 +136,7 @@
               <v-list-item-title>Browse Competitions</v-list-item-title>
             </v-list-item-content>
           </v-list-item>
-          <v-list-item :to="{ name: 'competitions.submit' }" exact>
+          <v-list-item :to="{ name: 'competitions.submit' }" exact aria-label="competitions.submit">
             <v-list-item-avatar>
               <v-icon>{{ mdiSend }}</v-icon>
             </v-list-item-avatar>
@@ -161,6 +162,7 @@
           <v-list-item
             :to="{ name: 'settings' }"
             @click="closeMenu()"
+            aria-label="settings"
           >
             <v-list-item-avatar>
               <v-icon>{{ mdiCog }}</v-icon>

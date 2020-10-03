@@ -3,6 +3,8 @@
 .gradle
 /resources/android
 /resources/ios
+/resources/screenshots
+/resources/DerivedData
 
 # Vue defaults
 .DS_Store

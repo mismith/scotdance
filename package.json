@@ -7,6 +7,7 @@
     "init": "npm run build",
     "serve": "vue-cli-service serve",
     "resources": "cordova-res ios --skip-config --copy && cordova-res android --skip-config --copy",
+    "screenshots": "bash ./ios/App/Screenshots/Screenshots.sh",
     "set-version": "node ./set-version.js",
     "postset-version": "npx cap copy",
     "sync-version": "pilfer-package version > public/version.json && npm run set-version -- $npm_package_version",
