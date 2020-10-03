@@ -14,6 +14,7 @@ class Screenshots: XCTestCase {
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.
         Screenshots.app = XCUIApplication()
+        Screenshots.app.launchArguments.append("Screenshots")
 
         // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
@@ -46,9 +47,6 @@ class Screenshots: XCTestCase {
         menuButton.tap()
         webViewsQuery/*@START_MENU_TOKEN@*/.staticTexts["competitions.submit"]/*[[".otherElements[\"Browse Competitions • ScotDance.app\"]",".otherElements[\"navigation\"]",".links.matching(identifier: \"competitions.submit\").staticTexts[\"competitions.submit\"]",".staticTexts[\"competitions.submit\"]"],[[[-1,3],[-1,2],[-1,1,2],[-1,0,1]],[[-1,3],[-1,2],[-1,1,2]],[[-1,3],[-1,2]]],[0]]@END_MENU_TOKEN@*/.tap()
         takeScreenshot("5")
-        menuButton.tap()
-        webViewsQuery/*@START_MENU_TOKEN@*/.staticTexts["settings"]/*[[".otherElements[\"Submit Competition • ScotDance.app\"]",".otherElements[\"navigation\"]",".links.matching(identifier: \"settings\").staticTexts[\"settings\"]",".staticTexts[\"settings\"]"],[[[-1,3],[-1,2],[-1,1,2],[-1,0,1]],[[-1,3],[-1,2],[-1,1,2]],[[-1,3],[-1,2]]],[0]]@END_MENU_TOKEN@*/.tap()
-        takeScreenshot("6")
     }
     
     // Adapted from: https://github.com/fastlane/fastlane/blob/master/snapshot/lib/assets/SnapshotHelper.swift

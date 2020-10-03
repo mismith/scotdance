@@ -27,6 +27,13 @@ import Gravatar from '@/components/Gravatar.vue';
 // disable (amongst other things) vue-localstoreage verbose logging
 Vue.config.silent = true;
 
+// app / devices
+Vue.prototype.isNative = Capacitor.isNative;
+Vue.prototype.isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+if (Capacitor.platform === 'ios') Plugins.ScotDance.setup();
+Plugins.Device.getInfo().then((device) => store.commit('setDevice', device));
+window.addEventListener('load', () => Plugins.SplashScreen.hide());
+
 // libs
 Vue.prototype.$moment = moment;
 Vue.component('DialogCard', DialogCard);
@@ -113,14 +120,6 @@ window.addEventListener('statusTap', () => {
     unbind,
   });
 })();
-
-// app / devices
-Vue.prototype.isNative = Capacitor.isNative;
-Vue.prototype.isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
-Plugins.Device.getInfo().then((device) => store.commit('setDevice', device));
-window.addEventListener('load', () => {
-  Plugins.SplashScreen.hide();
-});
 
 // monitor user auth
 firebase.auth().onAuthStateChanged((me) => {
