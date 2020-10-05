@@ -23,13 +23,16 @@
       <v-subheader>Advanced</v-subheader>
       <v-list>
         <v-list-item @click="confirmClearLocalStorage = true">
-          <v-list-item-title class="error--text">Clear App Cache</v-list-item-title>
+          <v-list-item-avatar>
+            <v-icon color="error">{{ mdiCached }}</v-icon>
+          </v-list-item-avatar>
+          <v-list-item-title class="error--text">Reset App Cache</v-list-item-title>
         </v-list-item>
       </v-list>
 
       <DialogCard
         v-model="confirmClearLocalStorage"
-        title="Clear App Cache"
+        title="Reset App Cache"
         cancel-label="No"
         submit-label="Yes"
         @submit="clearLocalStorage()"
@@ -49,12 +52,13 @@
 </template>
 
 <script>
-import { mdiThemeLightDark } from '@mdi/js';
+import { mdiCached, mdiThemeLightDark } from '@mdi/js';
 
 export default {
   name: 'Settings',
   data() {
     return {
+      mdiCached,
       mdiThemeLightDark,
       confirmClearLocalStorage: false,
     };
