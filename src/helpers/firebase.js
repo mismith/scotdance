@@ -2,7 +2,10 @@ import * as firebase from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/database';
 import 'firebase/storage';
+import 'firebase/messaging';
+import { requestPermission } from './notifications';
 
+// config
 const FIREBASE_ENV = process.env.NODE_ENV || 'production';
 const instance = FIREBASE_ENV === 'development' ? 'scotdance-dev' : 'scotdance';
 const config = {
@@ -15,14 +18,27 @@ const config = {
 };
 const app = firebase.initializeApp(config);
 
+// database
 // https://stackoverflow.com/a/36087084/888928
 const pushidRegex = /^[-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz]{20}$/;
 const idKey = '.key';
 const valueKey = '.value';
 const db = firebase.database().ref(FIREBASE_ENV);
 
+// storage
 const buckets = firebase.storage().ref(FIREBASE_ENV);
 
+// messaging
+// const vapidKey = 'BGR0DKFnXHVfCFhPuTlxZcYH-k1vXqdPq0_LWtWUIelTJr6Zk2B809T4UfQ-20mM2rMxmHN0JisT99-iOBW6qAQ';
+const notifications = {
+  isSupported: true || firebase.messaging.isSupported(),
+  requestPermission,
+};
+// notifications.onMessage((payload) => {
+//   console.log(payload);
+// });
+
+// utility
 const toOrderedArray = (obj) => {
   return Object.entries(obj || {})
     .map(([key, value]) => {
@@ -57,5 +73,6 @@ export {
   valueKey,
   db,
   buckets,
+  notifications,
   toOrderedArray,
 };
