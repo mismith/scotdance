@@ -71,15 +71,22 @@
               </v-btn>
             </template>
 
-            <v-list>
-              <v-list-item>
-                <v-list-item-action>
-                  <v-checkbox v-model="autoScrollResults" />
-                </v-list-item-action>
-                <v-list-item-content @click="autoScrollResults = !autoScrollResults">
-                  <v-list-item-title>Scroll to new results</v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
+            <v-list flat>
+              <v-list-item-group v-model="autoScrollResults">
+                <v-list-item :value="true" @click.stop>
+                  <template #default="{ active }">
+                    <v-list-item-avatar>
+                      <v-icon>{{ mdiPanVertical }}</v-icon>
+                    </v-list-item-avatar>
+                    <v-list-item-content>
+                      <v-list-item-title>Scroll to new results</v-list-item-title>
+                    </v-list-item-content>
+                    <v-list-item-action>
+                      <v-switch :input-value="active" color="primary" />
+                    </v-list-item-action>
+                  </template>
+                </v-list-item>
+              </v-list-item-group>
             </v-list>
           </v-menu>
         </BladeToolbar>
@@ -149,17 +156,15 @@ import {
   mdiClose,
   mdiDotsVertical,
   mdiGestureTap,
+  mdiPanVertical,
 } from '@mdi/js';
 import ResultListItem from '@/components/ResultListItem.vue';
 import PlacedDancerList from '@/components/PlacedDancerList.vue';
 import ResultsProgressIndicator from '@/components/ResultsProgressIndicator.vue';
 import EmptyResults from '@/components/EmptyResults.vue';
 import BladeToolbar from '@/components/BladeToolbar.vue';
-import { idKey, pushidRegex } from '@/helpers/firebase';
-import {
-  findByIdKey,
-  hasFavorites,
-} from '@/helpers/competition';
+import { pushidRegex, idKey } from '@/helpers/firebase';
+import { findByIdKey, hasFavorites } from '@/helpers/competition';
 import {
   all,
   overall,
@@ -214,6 +219,7 @@ export default {
       mdiClose,
       mdiDotsVertical,
       mdiGestureTap,
+      mdiPanVertical,
       overall,
       callbacks,
 
