@@ -6,6 +6,9 @@
     <template #text>
       <v-card-text>
         <slot />
+        <slot name="footer">
+          <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
+        </slot>
       </v-card-text>
       <div class="pa-3 primary" style="position: relative;">
         <div class="account-bg"></div>

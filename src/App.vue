@@ -249,7 +249,6 @@
       </template>
 
       <p>To see the dancers you care most about <strong>featured throughout the app</strong>, you'll need an account first.</p>
-      <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
     </RequiresAuthDialog>
     <RequiresAuthDialog name="pins">
       <template #title>
@@ -260,7 +259,6 @@
       </template>
 
       <p>To see the competitions you are most interested in <strong>featured more prominently</strong>, you'll need an account first.</p>
-      <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
     </RequiresAuthDialog>
     <RequiresAuthDialog name="submissions">
       <template #title>
@@ -270,7 +268,6 @@
       </template>
 
       <p>To bring the app to your event, you'll need an account first.</p>
-      <p>Fortunately, it takes <strong>less than 30 seconds</strong>—all you need is an email and password.</p>
     </RequiresAuthDialog>
   </v-app>
 </template>
@@ -279,9 +276,9 @@
 import { mapState, mapGetters, mapActions } from 'vuex';
 import {
   mdiAccountCircle,
-  mdiDotsGrid,
   mdiCalendarMonth,
   mdiClose,
+  mdiDotsGrid,
   mdiExitToApp,
   mdiEye,
   mdiFrequentlyAskedQuestions,
@@ -318,9 +315,9 @@ export default {
       db,
 
       mdiAccountCircle,
-      mdiDotsGrid,
       mdiCalendarMonth,
       mdiClose,
+      mdiDotsGrid,
       mdiExitToApp,
       mdiEye,
       mdiFrequentlyAskedQuestions,
