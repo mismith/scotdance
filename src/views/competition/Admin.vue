@@ -22,13 +22,25 @@
         <v-btn text @click="exportResults()">Export CSV</v-btn>
       </template>
 
-      <v-tooltip left>
+      <v-tooltip
+        :left="!savingError"
+        :bottom="!!savingError"
+        :color="savingError ? 'error' : undefined"
+      >
         <template #activator="{ on }">
-          <v-btn v-on="on" icon text color="primary" :loading="saving">
-            <v-icon>{{ mdiCheck }}</v-icon>
+          <v-btn
+            v-on="on"
+            icon
+            :color="savingError ? 'error' : 'primary'"
+            :loading="saving"
+          >
+            <v-icon>
+              {{ savingError ? mdiAlert : mdiCheck }}
+            </v-icon>
           </v-btn>
         </template>
-        <span>{{ saving ? 'Saving...' : 'Saved' }}</span>
+        <div v-if="savingError">{{ savingError.message }}</div>
+        <span v-else>{{ saving ? 'Saving...' : 'Saved' }}</span>
       </v-tooltip>
     </v-toolbar>
 
@@ -115,7 +127,10 @@
 
 <script>
 import saveCSV from 'save-csv';
-import { mdiAlert, mdiCheck } from '@mdi/js';
+import {
+  mdiAlert,
+  mdiCheck,
+} from '@mdi/js';
 import { makeKeyValuePairColumn } from '@/helpers/admin';
 import { findByIdKey, danceExtender } from '@/helpers/competition';
 import {
@@ -165,6 +180,7 @@ export default {
 
       saving: false,
       savingPromises: [],
+      savingError: undefined,
     };
   },
   computed: {
@@ -233,25 +249,27 @@ export default {
       return this.sections.find((section) => section[idKey] === sectionId);
     },
 
-    awaitSave(...promises) {
+    awaitSave(promise) {
+      this.savingError = null;
+
       return new Promise((resolve, reject) => {
-        this.savingPromises.push(...promises);
+        this.savingPromises.push(promise);
 
         if (this.saving) {
           clearTimeout(this.saving);
         }
         this.saving = setTimeout(() => {
           Promise.all(this.savingPromises)
-            .then(() => {
+            .then(resolve)
+            .catch(reject)
+            .finally(() => {
               this.saving = false;
-              resolve();
-            })
-            .catch((err) => {
-              this.saving = false;
-              reject(err);
             });
         }, 1000);
-      });
+      })
+        .catch((err) => {
+          this.savingError = err;
+        });
     },
     handleInfoChanges(changes) {
       this.awaitSave(this.competitionRef.update(changes));
