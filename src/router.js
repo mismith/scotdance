@@ -8,6 +8,7 @@ import competitionAdminSchema from '@/schemas/competition-admin';
 import Home from '@/views/Home.vue';
 import Settings from '@/views/Settings.vue';
 import Profile from '@/views/Profile.vue';
+import Policies from '@/views/Policies.vue';
 
 import Competitions from '@/views/Competitions.vue';
 import CompetitionsList from '@/views/competitions/List.vue';
@@ -54,6 +55,15 @@ export default new Router({
       component: Settings,
       meta: {
         title: 'App Settings',
+      },
+    },
+    {
+      path: '/policies/:policyId?',
+      name: 'policies',
+      component: Policies,
+      props: true,
+      meta: {
+        title: 'Policies',
       },
     },
     {
