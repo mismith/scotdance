@@ -46,15 +46,15 @@ Links to the admin panels needed to manage this project:
 2. Adjust/increment the version in `package.json` (this will be propagated by the `sync-version` script that gets called pre-`build`)
 3. Build and Deploy to app stores:
     1. Perform steps 1-5 of the Apple App Store instructions
-    2. Perform steps 2-4 of the Google Play Store instructions
-    3. Perform steps 4-7 of the Play Store instructions
-    4. Once iOS build package is processed, perform step 6 of the App Store instructions
+    2. Perform steps 2-8 of the Google Play Store instructions
+    3. Once iOS build package is processed, perform step 6 of the App Store instructions
 4. Finalize the release via `npm run release`, which consists of:
     1. Commit version change and release notes using the release version as the commit message (e.g. `1.0.0`)
     2. Tag the commit using the release version prepended with `v` (e.g. `v1.0.0`)
 5. Deploy to web via `npm run deploy`, which consists of:
     1. Deploy to web via `firebase deploy`
     2. Push to `master`
+6. In the Firebase Console's Realtime Database explorer, update the appropriate version numbers as apps are released: `/<env>/versions/<platform>`
 
 ### Apple App Store
 

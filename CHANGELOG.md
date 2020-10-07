@@ -1,5 +1,10 @@
 # Release Notes
 
+## 2.0.0 - Oct 5, 2020
+- rework entire app layout to make navigating between competitions easier
+- allow changing your email address
+- loads of minor improvements, bug fixes, and performance enhancements under-the-hood
+
 ## 1.8.3 - Mar 1, 2020
 - admin panel updates including file uploading for images and links
 - add list of "All Dancers" to each results page

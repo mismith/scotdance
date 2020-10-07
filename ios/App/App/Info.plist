@@ -30,7 +30,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -40,6 +40,8 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Allow sending files via Live Chat</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Allow Geolocation?</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allow uploading images in the Admin Panel, or sending files via Live Chat</string>
 	<key>UILaunchStoryboardName</key>
