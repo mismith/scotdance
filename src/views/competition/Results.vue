@@ -361,7 +361,8 @@ export default {
 <style lang="scss">
 .CompetitionResults {
   .DancerListItem {
-    .group {
+    .group,
+    .location::before {
       display: none;
     }
   }
