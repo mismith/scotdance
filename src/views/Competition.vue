@@ -227,7 +227,12 @@ export default {
         .filter(isNotEmptyObject)
         .map((platform) => ({
           ...platform,
-          $name: `Platform ${platform.name.replace(/^Platform /, '')}`.trim(),
+          $name: (
+            // @HACK: allow 'skipping' the "Platform " prefix by starting with an equals sign
+            platform.name[0] === '='
+              ? platform.name.slice(1)
+              : `Platform ${platform.name.replace(/^Platform /, '')}`
+          ).trim(),
         }));
     },
     draws() {
