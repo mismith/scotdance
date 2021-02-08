@@ -186,8 +186,8 @@
     </Blades>
 
     <EmptyState
-      v-else-if="isScheduleDisabled"
-      :icon="mdiCalendarRemove"
+      v-else-if="isTabDisabled"
+      :icon="mdiCardBulletedOffOutline"
       label="No schedule"
       description="Please see competition organizer for more information"
     />
@@ -209,7 +209,7 @@ import {
 import {
   mdiChevronRight,
   mdiClose,
-  mdiCalendarRemove,
+  mdiCardBulletedOffOutline,
   mdiGestureTap,
 } from '@mdi/js';
 import AdminPlatforms from '@/components/admin/Platforms.vue';
@@ -234,9 +234,8 @@ import {
   findGroupDancers,
 } from '@/helpers/results';
 import {
-  hasNoExistingSchedule,
-  isScheduleDisabled,
-} from '@/helpers/schedule';
+  isTabDisabled,
+} from '@/helpers/tab';
 
 export default {
   name: 'CompetitionSchedule',
@@ -270,7 +269,7 @@ export default {
       idKey,
       mdiChevronRight,
       mdiClose,
-      mdiCalendarRemove,
+      mdiCardBulletedOffOutline,
       mdiGestureTap,
     };
   },
@@ -280,11 +279,8 @@ export default {
       'currentDialogData',
     ]),
 
-    hasNoExistingSchedule() {
-      return hasNoExistingSchedule(this.schedule);
-    },
-    isScheduleDisabled() {
-      return isScheduleDisabled(this.schedule);
+    isTabDisabled() {
+      return isTabDisabled(this.schedule);
     },
 
     drawVisible: {

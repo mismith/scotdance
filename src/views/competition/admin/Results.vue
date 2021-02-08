@@ -17,6 +17,18 @@
           <span class="subtitle-1">Add or import some first &rsaquo;</span>
         </router-link>
       </EmptyState>
+
+      <v-spacer v-if="groups.length" />
+      <v-toolbar class="flex-none">
+        <v-switch
+          :input-value="isTabDisabled"
+          label="No Results"
+          hide-details
+          :readonly="!hasNoExistingTabData && !isTabDisabled"
+          @click="handleTabDisable"
+          @change="handleTabDisable"
+        />
+      </v-toolbar>
     </Blade>
     <Blade id="blade-dancers" :active="currentDance" class="col-md-4 app-scroll">
       <template v-if="currentDance">
@@ -85,6 +97,16 @@
         />
       </v-toolbar>
     </Blade>
+
+    <DialogCard
+      :value="confirmDisable"
+      title="No Results"
+      text="Are you sure you want to permanently delete all results data, and hide the results tab for this competition?"
+      cancel-label="No"
+      submit-label="Yes"
+      @cancel="confirmDisable.reject()"
+      @submit="confirmDisable.resolve()"
+    />
   </Blades>
 </template>
 
@@ -99,6 +121,7 @@ import ResultsList from '@/components/admin/ResultsList.vue';
 import PlacedDancerList from '@/components/PlacedDancerList.vue';
 import { idKey } from '@/helpers/firebase';
 import { findByIdKey } from '@/helpers/competition';
+import { hasNoExistingTabData, isTabDisabled, handleTabDisable } from '@/helpers/tab';
 import {
   overall,
   callbacks,
@@ -129,9 +152,18 @@ export default {
       mdiViewSplitVertical,
       overall,
       callbacks,
+
+      confirmDisable: undefined,
     };
   },
   computed: {
+    hasNoExistingTabData() {
+      return hasNoExistingTabData(this.results);
+    },
+    isTabDisabled() {
+      return isTabDisabled(this.results);
+    },
+
     currentGroup() {
       if (this.groupId) {
         return findByIdKey(this.groups, this.groupId);
@@ -229,6 +261,10 @@ export default {
       }
 
       this.save();
+    },
+
+    async handleTabDisable() {
+      await handleTabDisable('results', this);
     },
   },
   components: {

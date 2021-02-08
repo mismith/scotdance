@@ -1,158 +1,169 @@
 <template>
-  <Blades class="CompetitionResults alt">
-    <Blade
-      :active="!currentGroup"
-      v-persist-scroll="`/competitions/${competitionId}/results`"
-      class="col-md-4 app-scroll"
-    >
-      <v-list v-if="groupedCategories.length" expand class="grouped">
-        <v-list-group
-          v-for="category in groupedCategories"
-          :key="category[idKey]"
-          :value="isCategoryExpanded(category, groupedCategories)"
-          @click="handleCategoryExpanded(category[idKey], $event)"
-        >
-          <template #activator>
-            <v-subheader>
-              <div class="flex">{{ category.name }}</div>
-              <v-icon
-                v-if="hasFavorites(findCategoryDancers(category, dancers))"
-                color="secondary"
-              >
-                {{ mdiStar }}
-              </v-icon>
-              <ResultsProgressIndicator
-                :category="category"
-                :groups="groups"
-                :dances="dances"
-                :results="results"
-              />
-            </v-subheader>
-          </template>
-
-          <v-list>
-            <ResultListItem
-              v-for="group in category.$groups"
-              :key="group[idKey]"
-              :to="{ name: $route.name, params: { groupId: group[idKey] } }"
-              :dancers="findPlacedDancers(group, callbacks, dancers, results, false, true)"
-              :has-placeholder-dancers="isInProgress(group, dances, results)"
-            >
-              {{ group.name || group.$name }}
-            </ResultListItem>
-            <v-list-item v-if="!category.$groups.length" class="empty">
-              <v-list-item-avatar>
-                <v-icon>{{ mdiClose }}</v-icon>
-              </v-list-item-avatar>
-              <v-list-item-content>
-                No more info.
-              </v-list-item-content>
-            </v-list-item>
-          </v-list>
-        </v-list-group>
-      </v-list>
-      <EmptyState
-        v-else
-        :icon="mdiClose"
-        label="No results yet"
-        description="Check back later"
-      />
-    </Blade>
-    <Blade :active="currentGroup" class="col-md-8">
-      <div v-if="currentGroup" class="app-scroll-frame">
-        <BladeToolbar
-          :to="{ name: $route.name, params: { competitionId } }"
-          :text="currentGroup.$name"
-        >
-          <v-menu offset-y left>
-            <template #activator="{ on }">
-              <v-btn v-on="on" icon>
-                <v-icon>{{ mdiDotsVertical }}</v-icon>
-              </v-btn>
-            </template>
-
-            <v-list flat>
-              <v-list-item-group v-model="autoScrollResults">
-                <v-list-item :value="true" @click.stop>
-                  <template #default="{ active }">
-                    <v-list-item-avatar>
-                      <v-icon>{{ mdiPanVertical }}</v-icon>
-                    </v-list-item-avatar>
-                    <v-list-item-content>
-                      <v-list-item-title>Scroll to new results</v-list-item-title>
-                    </v-list-item-content>
-                    <v-list-item-action>
-                      <v-switch :input-value="active" color="primary" />
-                    </v-list-item-action>
-                  </template>
-                </v-list-item>
-              </v-list-item-group>
-            </v-list>
-          </v-menu>
-        </BladeToolbar>
-
-        <div
-          id="results-detail"
-          v-persist-scroll="`/competitions/${competitionId}/results/${groupId}`"
-          class="app-scroll-frame app-scroll"
-        >
-          <v-list expand class="grouped">
-            <v-list-group
-              v-for="dance in groupedDancers"
-              :key="dance.name"
-              :id="`dance-${dance[idKey]}`"
-              :value="isDanceExpanded(dance, groupedDancers)"
-              @click="handleDanceExpanded(dance[idKey], $event)"
-            >
-              <template #activator>
-                <v-subheader>{{ dance.$name }}</v-subheader>
-              </template>
-
-              <PlacedDancerList
-                :dance="dance"
-                :dancers="dance.dancers"
-                @dancer-click="$router.push({ name: 'competition.dancers', params: { dancerId: $event[idKey] }})"
-                @dancer-added="handleDancerAdded"
-              >
-                <EmptyResults
-                  v-if="!dance.dancers.length"
-                  :groupId="currentGroup[idKey]"
-                  :danceId="dance[idKey]"
+  <div class="CompetitionResults alt app-scroll-frame">
+    <Blades v-if="!isTabDisabled">
+      <Blade
+        :active="!currentGroup"
+        v-persist-scroll="`/competitions/${competitionId}/results`"
+        class="col-md-4 app-scroll"
+      >
+        <v-list v-if="groupedCategories.length" expand class="grouped">
+          <v-list-group
+            v-for="category in groupedCategories"
+            :key="category[idKey]"
+            :value="isCategoryExpanded(category, groupedCategories)"
+            @click="handleCategoryExpanded(category[idKey], $event)"
+          >
+            <template #activator>
+              <v-subheader>
+                <div class="flex">{{ category.name }}</div>
+                <v-icon
+                  v-if="hasFavorites(findCategoryDancers(category, dancers))"
+                  color="secondary"
+                >
+                  {{ mdiStar }}
+                </v-icon>
+                <ResultsProgressIndicator
+                  :category="category"
+                  :groups="groups"
+                  :dances="dances"
                   :results="results"
                 />
+              </v-subheader>
+            </template>
 
-                <template v-if="currentSponsor && dance[idKey] === overall[idKey]">
-                  <v-divider />
-                  <v-list-item @click="setCurrentDialog(['staff', currentSponsor])">
-                    <v-list-item-content>
-                      <v-list-item-title>
-                        {{ currentSponsor.$name }}
-                      </v-list-item-title>
-                      <v-list-item-subtitle>
-                        {{ currentGroup.trophy || '' }} Trophy Sponsor
-                      </v-list-item-subtitle>
-                    </v-list-item-content>
+            <v-list>
+              <ResultListItem
+                v-for="group in category.$groups"
+                :key="group[idKey]"
+                :to="{ name: $route.name, params: { groupId: group[idKey] } }"
+                :dancers="findPlacedDancers(group, callbacks, dancers, results, false, true)"
+                :has-placeholder-dancers="isInProgress(group, dances, results)"
+              >
+                {{ group.name || group.$name }}
+              </ResultListItem>
+              <v-list-item v-if="!category.$groups.length" class="empty">
+                <v-list-item-avatar>
+                  <v-icon>{{ mdiClose }}</v-icon>
+                </v-list-item-avatar>
+                <v-list-item-content>
+                  No more info.
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </v-list-group>
+        </v-list>
+        <EmptyState
+          v-else
+          :icon="mdiClose"
+          label="No results yet"
+          description="Check back later"
+        />
+      </Blade>
+      <Blade :active="currentGroup" class="col-md-8">
+        <div v-if="currentGroup" class="app-scroll-frame">
+          <BladeToolbar
+            :to="{ name: $route.name, params: { competitionId } }"
+            :text="currentGroup.$name"
+          >
+            <v-menu offset-y left>
+              <template #activator="{ on }">
+                <v-btn v-on="on" icon>
+                  <v-icon>{{ mdiDotsVertical }}</v-icon>
+                </v-btn>
+              </template>
+
+              <v-list flat>
+                <v-list-item-group v-model="autoScrollResults">
+                  <v-list-item :value="true" @click.stop>
+                    <template #default="{ active }">
+                      <v-list-item-avatar>
+                        <v-icon>{{ mdiPanVertical }}</v-icon>
+                      </v-list-item-avatar>
+                      <v-list-item-content>
+                        <v-list-item-title>Scroll to new results</v-list-item-title>
+                      </v-list-item-content>
+                      <v-list-item-action>
+                        <v-switch :input-value="active" color="primary" />
+                      </v-list-item-action>
+                    </template>
                   </v-list-item>
+                </v-list-item-group>
+              </v-list>
+            </v-menu>
+          </BladeToolbar>
+
+          <div
+            id="results-detail"
+            v-persist-scroll="`/competitions/${competitionId}/results/${groupId}`"
+            class="app-scroll-frame app-scroll"
+          >
+            <v-list expand class="grouped">
+              <v-list-group
+                v-for="dance in groupedDancers"
+                :key="dance.name"
+                :id="`dance-${dance[idKey]}`"
+                :value="isDanceExpanded(dance, groupedDancers)"
+                @click="handleDanceExpanded(dance[idKey], $event)"
+              >
+                <template #activator>
+                  <v-subheader>{{ dance.$name }}</v-subheader>
                 </template>
-              </PlacedDancerList>
-            </v-list-group>
-          </v-list>
+
+                <PlacedDancerList
+                  :dance="dance"
+                  :dancers="dance.dancers"
+                  @dancer-click="$router.push({ name: 'competition.dancers', params: { dancerId: $event[idKey] }})"
+                  @dancer-added="handleDancerAdded"
+                >
+                  <EmptyResults
+                    v-if="!dance.dancers.length"
+                    :groupId="currentGroup[idKey]"
+                    :danceId="dance[idKey]"
+                    :results="results"
+                  />
+
+                  <template v-if="currentSponsor && dance[idKey] === overall[idKey]">
+                    <v-divider />
+                    <v-list-item @click="setCurrentDialog(['staff', currentSponsor])">
+                      <v-list-item-content>
+                        <v-list-item-title>
+                          {{ currentSponsor.$name }}
+                        </v-list-item-title>
+                        <v-list-item-subtitle>
+                          {{ currentGroup.trophy || '' }} Trophy Sponsor
+                        </v-list-item-subtitle>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </template>
+                </PlacedDancerList>
+              </v-list-group>
+            </v-list>
+          </div>
         </div>
-      </div>
-      <EmptyState
-        v-else
-        :icon="mdiGestureTap"
-        label="See results"
-        description="Select an age group"
-      />
-    </Blade>
-  </Blades>
+
+        <EmptyState
+          v-else
+          :icon="mdiGestureTap"
+          label="See results"
+          description="Select an age group"
+        />
+      </Blade>
+    </Blades>
+
+    <EmptyState
+      v-else
+      :icon="mdiCardBulletedOffOutline"
+      label="No results"
+      description="Please see competition organizer for more information"
+    />
+  </div>
 </template>
 
 <script>
 import { mapMutations } from 'vuex';
 import {
   mdiStar,
+  mdiCardBulletedOffOutline,
   mdiClose,
   mdiDotsVertical,
   mdiGestureTap,
@@ -180,6 +191,9 @@ import {
   isExpanded,
   handleExpanded,
 } from '@/helpers/router';
+import {
+  isTabDisabled,
+} from '@/helpers/tab';
 
 export default {
   name: 'CompetitionResults',
@@ -216,6 +230,7 @@ export default {
     return {
       idKey,
       mdiStar,
+      mdiCardBulletedOffOutline,
       mdiClose,
       mdiDotsVertical,
       mdiGestureTap,
@@ -227,6 +242,10 @@ export default {
     };
   },
   computed: {
+    isTabDisabled() {
+      return isTabDisabled(this.results);
+    },
+
     currentGroup() {
       if (this.groupId) {
         return findByIdKey(this.groups, this.groupId);

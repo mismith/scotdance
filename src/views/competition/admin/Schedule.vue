@@ -94,12 +94,12 @@
             <v-spacer />
             <v-toolbar class="flex-none">
               <v-switch
-                :input-value="isScheduleDisabled"
+                :input-value="isTabDisabled"
                 label="No Schedule"
                 hide-details
-                :readonly="!hasNoExistingSchedule && !isScheduleDisabled"
-                @click="handleScheduleDisabled"
-                @change="handleScheduleDisabled"
+                :readonly="!hasNoExistingTabData && !isTabDisabled"
+                @click="handleTabDisable"
+                @change="handleTabDisable"
               />
             </v-toolbar>
           </template>
@@ -239,7 +239,7 @@ import {
   toOrderedArray,
 } from '@/helpers/firebase';
 import { getScheduleItemDanceName } from '@/helpers/competition';
-import { hasNoExistingSchedule, isScheduleDisabled } from '@/helpers/schedule';
+import { hasNoExistingTabData, isTabDisabled, handleTabDisable } from '@/helpers/tab';
 
 export default {
   name: 'CompetitionAdminSchedule',
@@ -428,11 +428,11 @@ export default {
     };
   },
   computed: {
-    hasNoExistingSchedule() {
-      return hasNoExistingSchedule(this.schedule);
+    hasNoExistingTabData() {
+      return hasNoExistingTabData(this.schedule);
     },
-    isScheduleDisabled() {
-      return isScheduleDisabled(this.schedule);
+    isTabDisabled() {
+      return isTabDisabled(this.schedule);
     },
 
     currentDay() {
@@ -498,35 +498,8 @@ export default {
     },
   },
   methods: {
-    async handleScheduleDisabled() {
-      const shouldDisableSchedule = !this.isScheduleDisabled;
-      const setSchedule = (v) => this.$emit('change', { schedule: v });
-      const clearSchedule = () => {
-        setSchedule(false);
-      };
-
-      if (shouldDisableSchedule) {
-        if (this.hasNoExistingSchedule) {
-          // clear without confirmation (since there's no data to lose)
-          clearSchedule();
-        } else {
-          // confirm whether we really want to clear
-          try {
-            await new Promise((resolve, reject) => {
-              this.confirmDisable = { resolve, reject };
-            });
-
-            clearSchedule();
-          } catch (err) {
-            if (err) console.error(err); // eslint-disable-line no-console
-          } finally {
-            this.confirmDisable = null;
-          }
-        }
-      } else {
-        // remove explicit disabled flag
-        setSchedule(null);
-      }
+    async handleTabDisable() {
+      await handleTabDisable('schedule', this);
     },
 
     getPath({
