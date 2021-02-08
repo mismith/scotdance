@@ -119,6 +119,9 @@ import {
   valueKey,
   toOrderedArray,
 } from '@/helpers/firebase';
+import {
+  isTabDisabled,
+} from '@/helpers/tab';
 import competitionSchema from '@/schemas/competition';
 
 export default {
@@ -184,7 +187,8 @@ export default {
     },
 
     sections() {
-      return toOrderedArray(competitionSchema);
+      return toOrderedArray(competitionSchema)
+        .filter((section) => !isTabDisabled(this[section[idKey]]));
     },
 
     competition() {

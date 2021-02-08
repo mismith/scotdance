@@ -1,10 +1,10 @@
 import { valueKey } from '@/helpers/firebase';
 
 export function hasNoExistingTabData(data) {
-  return data[valueKey] === null;
+  return data?.[valueKey] === null;
 }
 export function isTabDisabled(data) {
-  return data[valueKey] === false;
+  return data?.[valueKey] === false;
 }
 
 export async function handleTabDisable(slug, instance) {

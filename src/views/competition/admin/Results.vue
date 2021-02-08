@@ -22,7 +22,7 @@
       <v-toolbar class="flex-none">
         <v-switch
           :input-value="isTabDisabled"
-          label="No Results"
+          label="Turn off Results"
           hide-details
           :readonly="!hasNoExistingTabData && !isTabDisabled"
           @click="handleTabDisable"
@@ -100,8 +100,8 @@
 
     <DialogCard
       :value="confirmDisable"
-      title="No Results"
-      text="Are you sure you want to permanently delete all results data, and hide the results tab for this competition?"
+      title="Turn off Results"
+      text="Are you sure you want to permanently delete all existing results data, and publicly hide the Results tab for this competition?"
       cancel-label="No"
       submit-label="Yes"
       @cancel="confirmDisable.reject()"
