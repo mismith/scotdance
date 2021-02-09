@@ -1,5 +1,9 @@
 # Release Notes
 
+## 2.0.1 - Feb 8, 2021
+- allow admins to hide Schedule and Results tabs
+- minor bug fixes
+
 ## 2.0.0 - Oct 5, 2020
 - rework entire app layout to make navigating between competitions easier
 - allow changing your email address

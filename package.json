@@ -1,6 +1,6 @@
 {
   "name": "scotdance",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Highland dancing event tracker",
   "author": "Murray Smith <murray@mismith.info>",
   "scripts": {
