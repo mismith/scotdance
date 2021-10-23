@@ -3,6 +3,7 @@
     :small="!competition.image"
     :large="competition.image"
     class="CompetitionTimelineItem"
+    :class="{ now }"
   >
     <template #icon>
       <router-link
@@ -53,6 +54,11 @@ export default {
     return {
       idKey,
     };
+  },
+  computed: {
+    now() {
+      return this.competition.date && this.$moment(this.competition.date).isSame(this.$moment(), 'day');
+    },
   },
 };
 </script>
