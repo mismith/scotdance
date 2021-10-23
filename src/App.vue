@@ -761,6 +761,11 @@ body {
       word-break: normal;
     }
   }
+  .v-input {
+    &.theme--dark ::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+    }
+  }
 }
 
 // tables
