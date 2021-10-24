@@ -16,7 +16,7 @@
     "build": "vue-cli-service build && npx cap sync && npm run notify 'Build Complete'",
     "report": "vue-cli-service build --report && open www/report.html",
     "lint": "vue-cli-service lint",
-    "dev": "npm run serve -- --https",
+    "dev": "npm run serve -- --host localhost --https",
     "release": "git commit -a -m $npm_package_version && git tag \"v${npm_package_version}\"",
     "deploy": "firebase deploy && git push origin HEAD:master --tags"
   },
