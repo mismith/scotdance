@@ -80,7 +80,7 @@
           v-for="(group, name) in groupedStaff"
           :key="name"
           :value="isGroupExpanded(name, Object.keys(groupedStaff))"
-          @click="handleGroupExpanded(name, $event)"
+          @click="handleGroupExpanded(name)"
         >
           <template #activator>
             <v-subheader>{{ name }}s</v-subheader>
@@ -153,7 +153,7 @@ export default {
     isGroupExpanded(groupName, groupNames) {
       return isExpanded(this.infoExpandedGroups, groupName, groupNames, true);
     },
-    handleGroupExpanded(groupName, expanded) {
+    handleGroupExpanded(groupName, expanded = undefined) {
       this.infoExpandedGroups = handleExpanded(this.infoExpandedGroups, groupName, expanded);
       this.$localStorage.set('infoExpandedGroups', this.infoExpandedGroups);
     },

@@ -43,7 +43,7 @@
               :key="groupId"
               :id="`group-${groupId}`"
               :value="isGroupExpanded(groupId, groupIds)"
-              @click="handleGroupExpanded(groupId, $event)"
+              @click="handleGroupExpanded(groupId)"
             >
               <template #activator>
                 <v-subheader>
@@ -295,7 +295,7 @@ export default {
 
       return isExpanded(this.dancersExpandedGroups[this.sortBy], itemId, itemIds);
     },
-    handleGroupExpanded(groupId, expanded) {
+    handleGroupExpanded(groupId, expanded = undefined) {
       this.dancersExpandedGroups[this.sortBy] = handleExpanded(
         this.dancersExpandedGroups[this.sortBy],
         groupId,

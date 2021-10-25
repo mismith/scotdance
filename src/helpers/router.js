@@ -32,10 +32,10 @@ export function isExpanded(items, itemId, itemIds, expandByDefault = undefined) 
   return itemIds.indexOf(itemId) === 0;
 }
 
-export function handleExpanded(items, itemId, expanded) {
+export function handleExpanded(items, itemId, expanded = !items?.[itemId]) {
   const expandeds = {
     ...items,
-    [itemId]: !!expanded,
+    [itemId]: Boolean(expanded),
   };
   return expandeds;
 }

@@ -4,7 +4,7 @@
       v-for="group in groups"
       :key="group[idKey]"
       :value="isGroupExpanded(group, groups)"
-      @click="handleGroupExpanded(group[idKey], $event)"
+      @click="handleGroupExpanded(group[idKey])"
     >
       <template #activator>
         <v-subheader>
@@ -124,7 +124,7 @@ export default {
       const itemIds = items.map((i) => i[idKey]);
       return isExpanded(this.resultsExpandedGroups, item[idKey], itemIds);
     },
-    handleGroupExpanded(groupId, expanded) {
+    handleGroupExpanded(groupId, expanded = undefined) {
       this.resultsExpandedGroups = handleExpanded(this.resultsExpandedGroups, groupId, expanded);
       this.$localStorage.set('resultsExpandedGroups', this.resultsExpandedGroups);
     },

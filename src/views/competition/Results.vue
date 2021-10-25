@@ -11,7 +11,7 @@
             v-for="category in groupedCategories"
             :key="category[idKey]"
             :value="isCategoryExpanded(category, groupedCategories)"
-            @click="handleCategoryExpanded(category[idKey], $event)"
+            @click="handleCategoryExpanded(category[idKey])"
           >
             <template #activator>
               <v-subheader>
@@ -103,7 +103,7 @@
                 :key="dance.name"
                 :id="`dance-${dance[idKey]}`"
                 :value="isDanceExpanded(dance, groupedDancers)"
-                @click="handleDanceExpanded(dance[idKey], $event)"
+                @click="handleDanceExpanded(dance[idKey])"
               >
                 <template #activator>
                   <v-subheader>{{ dance.$name }}</v-subheader>
@@ -333,7 +333,7 @@ export default {
       const itemIds = items.map((i) => i[idKey]);
       return isExpanded(this.resultsExpandedCategories, item[idKey], itemIds, true);
     },
-    handleCategoryExpanded(categoryId, expanded) {
+    handleCategoryExpanded(categoryId, expanded = undefined) {
       this.resultsExpandedCategories = handleExpanded(this.resultsExpandedCategories, categoryId, expanded);
       this.$localStorage.set('resultsExpandedCategories', this.resultsExpandedCategories);
     },
@@ -348,7 +348,7 @@ export default {
         expandByDefault,
       );
     },
-    handleDanceExpanded(danceId, expanded) {
+    handleDanceExpanded(danceId, expanded = undefined) {
       this.resultsExpandedDances[this.groupId] = handleExpanded(
         this.resultsExpandedDances[this.groupId],
         danceId,

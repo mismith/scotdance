@@ -21,7 +21,7 @@
               v-for="block in toOrderedArray(day.blocks)"
               :key="block[idKey]"
               :value="isBlockExpanded(block[idKey], Object.keys(day.blocks), !!block.events)"
-              @click="handleBlockExpanded(block[idKey], $event)"
+              @click="handleBlockExpanded(block[idKey])"
             >
               <template #activator>
                 <v-subheader>
@@ -107,7 +107,7 @@
                   :key="dance[idKey]"
                   v-else
                   :value="isDanceExpanded(dance[idKey], Object.keys(currentEvent.dances), !!dance.danceId)"
-                  @click="handleDanceExpanded(dance[idKey], $event)"
+                  @click="handleDanceExpanded(dance[idKey])"
                 >
                   <template #activator>
                     <v-subheader>
@@ -349,7 +349,7 @@ export default {
     isBlockExpanded(blockId, blockIds, fallback = true) {
       return isExpanded(this.scheduleExpandedBlocks, blockId, blockIds, fallback);
     },
-    handleBlockExpanded(blockId, expanded) {
+    handleBlockExpanded(blockId, expanded = undefined) {
       this.scheduleExpandedBlocks = handleExpanded(this.scheduleExpandedBlocks, blockId, expanded);
       this.$localStorage.set('scheduleExpandedBlocks', this.scheduleExpandedBlocks);
     },
@@ -366,7 +366,7 @@ export default {
     isDanceExpanded(danceId, danceIds, fallback = true) {
       return isExpanded(this.scheduleExpandedDances[this.eventId], danceId, danceIds, fallback);
     },
-    handleDanceExpanded(danceId, expanded) {
+    handleDanceExpanded(danceId, expanded = undefined) {
       this.scheduleExpandedDances[this.eventId] = handleExpanded(
         this.scheduleExpandedDances[this.eventId],
         danceId,
