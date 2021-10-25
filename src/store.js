@@ -82,6 +82,8 @@ export default new Vuex.Store({
     },
 
     isFavorite: (state) => (type, id) => get(state.myFavorites, `${type}.${id}`),
+    favorites: (state) => (type) => get(state.myFavorites, type) || {},
+
     hasPermission: (state) => (permission) => {
       if (get(state.myPermissions, 'admin') === true) {
         return true;
@@ -190,10 +192,10 @@ export default new Vuex.Store({
     }),
 
     toggleFavoriteDancer({ state, commit }, dancer) {
-      const setFavorite = (to) => state.myFavoritesRef
+      const setFavorite = (on) => state.myFavoritesRef
         .child('dancers')
         .child(dancer[idKey])
-        .set(to || null);
+        .set(on ? (dancer.$name || true) : null);
 
       if (state.myFavoritesRef) {
         return setFavorite(!dancer.$favorite);

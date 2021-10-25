@@ -35,11 +35,13 @@
         <div
           v-persist-scroll="`/competitions/${competitionId}/dancers`"
           class="app-scroll-frame app-scroll"
+          ref="scroller"
         >
           <v-list v-if="groupIds.length" expand class="grouped">
             <v-list-group
               v-for="(group, groupId) in groupedDancers"
               :key="groupId"
+              :id="`group-${groupId}`"
               :value="isGroupExpanded(groupId, groupIds)"
               @click="handleGroupExpanded(groupId, $event)"
             >
@@ -89,6 +91,22 @@
         label="No dancers yet"
         description="Check back later"
       />
+
+      <v-banner
+        v-model="isShowingFavoriteDancerSuggestionsBanner"
+        single-line
+        v-ripple
+        @click.native="handleFavoriteDancerSuggestionsBannerClick()"
+        class="FavoriteDancerSuggestionsBanner secondary"
+      >
+        <strong>{{competitionBundle.favoriteDancerSuggestions.length}} favourite dancer suggestions</strong><br />
+        <small>based on your previous selections</small>
+        <template #actions>
+          <v-btn icon @click.stop="handleFavoriteDancerSuggestionsBannerDismiss()">
+            <v-icon>{{ mdiClose }}</v-icon>
+          </v-btn>
+        </template>
+      </v-banner>
     </Blade>
     <Blade :active="currentDancer" class="col-md-6">
       <div v-if="currentDancer" class="app-scroll-frame">
@@ -144,8 +162,11 @@ import {
   handleExpanded,
 } from '@/helpers/router';
 
+const SUGGESTIONS_NAME = 'Suggested Favourites';
+
 export default {
   name: 'CompetitionDancers',
+  inject: ['competitionBundle'],
   props: {
     competitionId: String,
     dancerId: String,
@@ -230,12 +251,29 @@ export default {
       }
 
       // group together
-      const grouped = groupBy(filtered, this.getSortGroup);
+      let grouped = groupBy(filtered, this.getSortGroup);
+
+      if (this.onlyFavorites && this.competitionBundle?.favoriteDancerSuggestions?.length) {
+        grouped = {
+          [SUGGESTIONS_NAME]: this.competitionBundle?.favoriteDancerSuggestions,
+          ...grouped,
+        };
+      }
 
       return grouped;
     },
     groupIds() {
       return Object.keys(this.groupedDancers);
+    },
+
+    isShowingFavoriteDancerSuggestionsBanner: {
+      get() {
+        return this.competitionBundle?.favoriteDancerSuggestions?.length
+          && !this.$store.getters.isViewed('favoriteDancerSuggestions', this.competitionId);
+      },
+      set(v) {
+        this.$store.commit('setViewed', ['favoriteDancerSuggestions', this.competitionId, !v, 50]);
+      },
     },
   },
   methods: {
@@ -277,6 +315,18 @@ export default {
         }
       }
     },
+
+    handleFavoriteDancerSuggestionsBannerDismiss() {
+      this.isShowingFavoriteDancerSuggestionsBanner = false;
+    },
+    async handleFavoriteDancerSuggestionsBannerClick() {
+      this.handleFavoriteDancerSuggestionsBannerDismiss();
+      this.onlyFavorites = true;
+      this.handleGroupExpanded(SUGGESTIONS_NAME, true);
+      await this.$nextTick();
+      const element = document.getElementById(`group-${SUGGESTIONS_NAME}`);
+      this.$scrollTo(element, { container: this.$refs.scroller });
+    },
   },
   components: {
     SearchField,
@@ -286,3 +336,11 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.FavoriteDancerSuggestionsBanner {
+  .v-banner__actions {
+    margin-left: 0 !important;
+  }
+}
+</style>

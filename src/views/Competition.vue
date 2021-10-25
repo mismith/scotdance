@@ -54,7 +54,9 @@
             :class="section.className"
           >
             <span>{{ section.name }}</span>
-            <v-icon :class="section.icon"></v-icon>
+            <v-badge v-model="sectionBadges[section[idKey]]" dot color="secondary" offset-x="-2" offset-y="6">
+              <v-icon :class="section.icon"></v-icon>
+            </v-badge>
           </v-btn>
         </v-bottom-navigation>
       </div>
@@ -102,7 +104,10 @@ import {
   mapState,
   mapMutations,
 } from 'vuex';
-import { mdiClockOutline, mdiClose } from '@mdi/js';
+import {
+  mdiClockOutline,
+  mdiClose,
+} from '@mdi/js';
 import {
   formatExternalURL,
   formatHumanURL,
@@ -126,6 +131,10 @@ import competitionSchema from '@/schemas/competition';
 
 export default {
   name: 'Competition',
+  reactiveProvide: {
+    name: 'competitionBundle',
+    include: ['favoriteDancerSuggestions'],
+  },
   props: {
     competitions: Array,
     competitionsRef: Object,
@@ -243,6 +252,32 @@ export default {
     },
     results() {
       return this.resultsRaw;
+    },
+
+    favoriteDancerSuggestions() {
+      const favorites = this.$store.getters.favorites('dancers');
+      const favoritedDancerIds = Object.keys(favorites);
+      const favoritedDancerNames = Object.values(favorites)
+        .filter((v) => typeof v !== 'boolean')
+        .filter((v, i, a) => a.indexOf(v) === i);
+      return this.dancers
+        .filter(({ $name }) => favoritedDancerNames.includes($name))
+        .filter((dancer) => !favoritedDancerIds.includes(dancer[idKey]));
+    },
+    sectionBadges() {
+      return Object.keys(competitionSchema).reduce((acc, key) => {
+        switch (key) {
+          case 'dancers': {
+            acc[key] = this.favoriteDancerSuggestions?.length
+              && !this.$store.getters.isViewed('favoriteDancerSuggestions', this.competitionId);
+            break;
+          }
+          default: {
+            acc[key] = false;
+          }
+        }
+        return acc;
+      }, {});
     },
   },
   watch: {

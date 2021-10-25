@@ -5,6 +5,7 @@ import VueBodyClass from 'vue-body-class';
 import VueScrollTo from 'vue-scrollto';
 import { scroller } from 'vue-scrollto/src/scrollTo';
 import VueObserveVisibility from 'vue-observe-visibility';
+import VueReactiveProvide from 'vue-reactive-provide';
 import moment from 'moment-mini';
 import 'simple-line-icons/css/simple-line-icons.css';
 import { Plugins, Capacitor } from '@capacitor/core';
@@ -47,6 +48,7 @@ Vue.use(VueAsyncComputed);
 Vue.use(VueBodyClass, router);
 Vue.use(VueScrollTo);
 Vue.use(VueObserveVisibility);
+Vue.use(VueReactiveProvide);
 
 // scrolling
 const $scrollAll = (element, options = {}) => {
