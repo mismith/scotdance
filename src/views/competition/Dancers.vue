@@ -54,6 +54,12 @@
                   >
                     {{ mdiStar }}
                   </v-icon>
+                  <v-icon
+                    v-else-if="groupId === SUGGESTIONS_NAME"
+                    color="secondary"
+                  >
+                    {{ mdiStarShooting }}
+                  </v-icon>
                 </v-subheader>
               </template>
 
@@ -147,6 +153,7 @@ import {
   mdiStar,
   mdiStarOutline,
   mdiStarHalf,
+  mdiStarShooting,
   mdiAlertCircleOutline,
   mdiClose,
   mdiGestureTap,
@@ -195,11 +202,14 @@ export default {
   },
   data() {
     return {
+      SUGGESTIONS_NAME,
+
       idKey,
       mdiSort,
       mdiStar,
       mdiStarOutline,
       mdiStarHalf,
+      mdiStarShooting,
       mdiAlertCircleOutline,
       mdiClose,
       mdiGestureTap,
