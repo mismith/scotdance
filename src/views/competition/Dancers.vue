@@ -291,7 +291,7 @@ export default {
 
     isGroupExpanded(itemId, itemIds) {
       // searching, so expand all groups
-      if (this.filterBy || this.onlyFavorites) return true;
+      if (this.filterBy || (this.onlyFavorites && itemId !== SUGGESTIONS_NAME)) return true;
 
       return isExpanded(this.dancersExpandedGroups[this.sortBy], itemId, itemIds);
     },
