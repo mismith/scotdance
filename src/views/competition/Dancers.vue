@@ -121,6 +121,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
 import orderBy from 'lodash.orderby';
 import groupBy from 'lodash.groupby';
 import {
@@ -193,6 +194,10 @@ export default {
     };
   },
   computed: {
+    ...mapState([
+      'me',
+    ]),
+
     currentDancer() {
       if (this.dancerId) {
         return this.dancers.find((dancer) => dancer[idKey] === this.dancerId);
