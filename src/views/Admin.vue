@@ -21,20 +21,7 @@
         :data="this[$root.currentTab]"
         @change="handleHotChanges"
       />
-      <router-view
-        v-else
-        v-bind="{
-          section: currentSection,
-          competitions,
-          submissions,
-          faqs,
-          users,
-          favorites,
-          permissions,
-          versions,
-        }"
-        @change="handleChanges"
-      />
+      <router-view v-else @change="handleChanges" />
     </div>
 
     <v-bottom-navigation v-if="hasPermission" v-model="$root.currentTab">
@@ -63,6 +50,19 @@ import MiHotTable from '@/components/admin/MiHotTable.vue';
 
 export default {
   name: 'Admin',
+  reactiveProvide: {
+    name: 'adminBundle',
+    include: [
+      'section',
+      'competitions',
+      'submissions',
+      'faqs',
+      'users',
+      'favorites',
+      'permissions',
+      'versions',
+    ],
+  },
   data() {
     return {
       idKey,
@@ -99,6 +99,9 @@ export default {
 
     currentSection() {
       return this.getSection(this.$root.currentTab);
+    },
+    section() { // @TODO: remove
+      return this.currentSection;
     },
 
     sections() {

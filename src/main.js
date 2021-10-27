@@ -17,6 +17,7 @@ import App from '@/App.vue';
 import router from '@/router';
 import store from '@/store';
 import vuetify from '@/plugins/vuetify';
+import VueReactiveInject from '@/plugins/reactiveInject';
 
 import DialogCard from '@/components/DialogCard.vue';
 import Spinner from '@/components/Spinner.vue';
@@ -49,6 +50,7 @@ Vue.use(VueBodyClass, router);
 Vue.use(VueScrollTo);
 Vue.use(VueObserveVisibility);
 Vue.use(VueReactiveProvide);
+Vue.use(VueReactiveInject);
 
 // scrolling
 const $scrollAll = (element, options = {}) => {

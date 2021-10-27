@@ -197,20 +197,20 @@ import {
 
 export default {
   name: 'CompetitionResults',
+  reactiveInject: {
+    competitionBundle: [
+      'competitionId',
+      'dancers',
+      'categories',
+      'groups',
+      'dances',
+      'staff',
+      'results',
+    ],
+  },
   props: {
-    competitionId: String,
     groupId: String,
     danceId: String,
-    competitionDataRef: {
-      type: Object,
-      required: true,
-    },
-    dancers: Array,
-    categories: Array,
-    groups: Array,
-    dances: Array,
-    staff: Array,
-    results: Object,
   },
   localStorage: {
     resultsExpandedCategories: {

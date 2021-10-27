@@ -91,7 +91,7 @@
                       {{ $store.state.$package.$name }}
                     </v-toolbar-title>
                   </v-toolbar>
-                  <CompetitionInfo :competition="preview" :staff="[]" />
+                  <CompetitionInfo />
                 </div>
                 <figcaption class="device-frame-caption">In-App Preview</figcaption>
               </figure>
@@ -125,6 +125,13 @@ import CompetitionInfo from '@/views/competition/Info.vue';
 
 export default {
   name: 'CompetitionsSubmit',
+  reactiveProvide: {
+    name: 'competitionBundle',
+    include: [
+      'competition',
+      'staff',
+    ],
+  },
   data() {
     return {
       idKey,
@@ -146,6 +153,13 @@ export default {
     ...mapState([
       'me',
     ]),
+
+    competition() {
+      return this.preview;
+    },
+    staff() {
+      return [];
+    },
   },
   methods: {
     reset() {

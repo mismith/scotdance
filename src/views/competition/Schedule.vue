@@ -239,20 +239,23 @@ import {
 
 export default {
   name: 'CompetitionSchedule',
+  reactiveInject: {
+    competitionBundle: [
+      'competitionId',
+      'groups',
+      'dances',
+      'dancers',
+      'staff',
+      'platforms',
+      'draws',
+      'schedule',
+    ],
+  },
   props: {
-    competitionId: String,
     dayId: String,
     blockId: String,
     eventId: String,
     danceId: String,
-
-    groups: Array,
-    dances: Array,
-    dancers: Array,
-    staff: Array,
-    platforms: Array,
-    draws: Object,
-    schedule: Object,
   },
   localStorage: {
     scheduleExpandedBlocks: {

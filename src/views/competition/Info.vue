@@ -122,10 +122,12 @@ import {
 
 export default {
   name: 'CompetitionInfo',
-  props: {
-    competitionId: String,
-    competition: Object,
-    staff: Array,
+  reactiveInject: {
+    competitionBundle: [
+      'competitionId',
+      'competition',
+      'staff',
+    ],
   },
   localStorage: {
     infoExpandedGroups: {

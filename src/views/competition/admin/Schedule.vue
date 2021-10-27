@@ -243,21 +243,21 @@ import { hasNoExistingTabData, isTabDisabled, handleTabDisable } from '@/helpers
 
 export default {
   name: 'CompetitionAdminSchedule',
+  reactiveInject: {
+    competitionBundle: [
+      'groups',
+      'dances',
+      'dancers',
+      'staff',
+      'platforms',
+      'schedule',
+    ],
+  },
   props: {
     dayId: String,
     blockId: String,
     eventId: String,
     danceId: String,
-    competitionDataRef: {
-      type: Object,
-      required: true,
-    },
-    groups: Array,
-    dances: Array,
-    dancers: Array,
-    staff: Array,
-    platforms: Array,
-    schedule: Object,
   },
   data() {
     return {

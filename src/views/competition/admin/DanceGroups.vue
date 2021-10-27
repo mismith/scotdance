@@ -138,14 +138,17 @@ import { idKey } from '@/helpers/firebase';
 
 export default {
   name: 'CompetitionAdminDanceGroups',
+  reactiveInject: {
+    competitionBundle: [
+      'groups',
+      'dances',
+      'dancers',
+      'draws',
+    ],
+  },
   props: {
     groupId: String,
     danceId: String,
-
-    groups: Array,
-    dances: Array,
-    dancers: Array,
-    draws: Object,
   },
   data() {
     return {

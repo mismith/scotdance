@@ -96,9 +96,11 @@ import CompetitionTimelineItem from '@/components/CompetitionTimelineItem.vue';
 
 export default {
   name: 'CompetitionsList',
-  props: {
-    competitions: Array,
-    competitionsRef: Object,
+  reactiveInject: {
+    competitionsBundle: [
+      'competitions',
+      'competitionsRef',
+    ],
   },
   localStorage: {
     competitionsSearchFor: {

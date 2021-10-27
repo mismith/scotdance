@@ -80,12 +80,16 @@ import BladeToolbar from '@/components/BladeToolbar.vue';
 
 export default {
   name: 'AdminUsers',
+  reactiveInject: {
+    adminBundle: [
+      'section',
+      'users',
+      'permissions',
+      'competitions',
+    ],
+  },
   props: {
     userId: String,
-    section: Object,
-    users: Array,
-    permissions: Object,
-    competitions: Array,
   },
   data() {
     return {

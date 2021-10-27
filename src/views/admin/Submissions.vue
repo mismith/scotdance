@@ -156,10 +156,14 @@ import BladeToolbar from '@/components/BladeToolbar.vue';
 
 export default {
   name: 'AdminSubmissions',
+  reactiveInject: {
+    adminBundle: [
+      'submissions',
+      'users',
+    ],
+  },
   props: {
     submissionId: String,
-    submissions: Array,
-    users: Array,
   },
   data() {
     return {

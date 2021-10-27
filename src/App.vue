@@ -225,14 +225,7 @@
     </v-navigation-drawer>
 
     <v-main id="main" class="app-scroll-frame">
-      <router-view
-        v-if="$store.state.me !== undefined"
-        v-bind="{
-          competitions,
-          competitionsRef,
-          competitionsDataRef,
-        }"
-      />
+      <router-view v-if="$store.state.me !== undefined" />
       <div v-else class="app-scroll-frame">
         <Spinner />
       </div>
@@ -308,6 +301,14 @@ import AppSubmenu from '@/components/AppSubmenu.vue';
 
 export default {
   name: 'app',
+  reactiveProvide: {
+    name: 'competitionsBundle',
+    include: [
+      'competitions',
+      'competitionsRef',
+      'competitionsDataRef',
+    ],
+  },
   data() {
     return {
       env: FIREBASE_ENV,

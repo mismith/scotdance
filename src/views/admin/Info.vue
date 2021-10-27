@@ -38,12 +38,16 @@ import DynamicForm from '@/components/admin/DynamicForm.vue';
 
 export default {
   name: 'AdminInfo',
+  reactiveInject: {
+    adminBundle: [
+      'section',
+      'versions',
+      'faqs',
+      'submissions',
+      'users',
+    ],
+  },
   props: {
-    section: Object,
-    versions: Object,
-    faqs: Array,
-    submissions: Array,
-    users: Array,
     subsectionId: String,
   },
   data() {

@@ -76,13 +76,14 @@ import RequiresPermission from '@/components/RequiresPermission.vue';
 
 export default {
   name: 'CompetitionInvite',
+  reactiveInject: {
+    competitionBundle: [
+      'competitionId',
+      'competitionDataRef',
+    ],
+  },
   props: {
-    competitionId: String,
     inviteId: String,
-    competitionDataRef: {
-      type: Object,
-      required: true,
-    },
   },
   data() {
     return {

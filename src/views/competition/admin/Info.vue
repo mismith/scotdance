@@ -19,7 +19,12 @@
           class="pa-4"
           @field-change="handleInfoChanges"
         />
-        <AdminInvites v-else-if="inTabs('permissions')" v-bind="$props" />
+        <AdminInvites
+          v-else-if="inTabs('permissions')"
+          :competition-id="competitionId"
+          :competition="competition"
+          :competition-data-ref="competitionDataRef"
+        />
 
         <v-spacer />
         <div v-if="inTabs('general')" class="d-flex align-center justify-center flex-none pa-3">
@@ -55,15 +60,17 @@ import AdminInvites from '@/components/admin/Invites.vue';
 
 export default {
   name: 'CompetitionAdminInfo',
+  reactiveInject: {
+    competitionBundle: [
+      'competitionId',
+      'competition',
+      'competitionRef',
+      'competitionDataRef',
+    ],
+  },
   props: {
-    competitions: Array,
-    competitionsRef: Object,
-    competition: Object,
-    competitionRef: Object,
-    competitionDataRef: Object,
-    competitionId: String,
-    section: Object,
     subsectionId: String,
+    section: Object,
   },
   data() {
     return {

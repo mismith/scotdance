@@ -135,14 +135,17 @@ import {
 
 export default {
   name: 'CompetitionAdminResults',
+  reactiveInject: {
+    competitionBundle: [
+      'groups',
+      'dances',
+      'dancers',
+      'results',
+    ],
+  },
   props: {
     groupId: String,
     danceId: String,
-
-    groups: Array,
-    dances: Array,
-    dancers: Array,
-    results: Object,
   },
   data() {
     return {

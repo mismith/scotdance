@@ -74,7 +74,6 @@
       </template>
       <router-view
         v-else
-        v-bind="$props"
         :section="currentSection"
         @change="handleDataChanges"
         @info-change="handleInfoChanges"
@@ -151,23 +150,22 @@ const AdminImport = () => import(/* webpackChunkName: "AdminImport" */ '@/compon
 
 export default {
   name: 'CompetitionAdmin',
-  props: {
-    competitions: Array,
-    competitionsRef: Object,
-    competitionsDataRef: Object,
-    competitionId: String,
-    competition: Object,
-    competitionRef: Object,
-    competitionDataRef: Object,
-    dancers: Array,
-    groups: Array,
-    categories: Array,
-    dances: Array,
-    staff: Array,
-    platforms: Array,
-    draws: Object,
-    schedule: Object,
-    results: Object,
+  reactiveInject: {
+    competitionBundle: [
+      'competitionId',
+      'competition',
+      'competitionRef',
+      'competitionDataRef',
+      'dancers',
+      'groups',
+      'categories',
+      'dances',
+      'staff',
+      'platforms',
+      'draws',
+      'schedule',
+      'results',
+    ],
   },
   data() {
     return {

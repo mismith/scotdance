@@ -9,24 +9,7 @@
   >
     <div v-if="loaded" class="app-scroll-frame">
       <div v-if="competitionExists" class="app-scroll-frame">
-        <router-view
-          v-if="hasPermission"
-          v-bind="{
-            ...$props,
-            competition,
-            competitionRef,
-            competitionDataRef,
-            dancers,
-            groups,
-            categories,
-            dances,
-            staff,
-            platforms,
-            draws,
-            schedule,
-            results,
-          }"
-        />
+        <router-view v-if="hasPermission" />
         <div v-else class="app-scroll-frame alt">
           <EmptyState
             :icon="mdiClockOutline"
@@ -133,12 +116,30 @@ export default {
   name: 'Competition',
   reactiveProvide: {
     name: 'competitionBundle',
-    include: ['favoriteDancerSuggestions'],
+    props: true,
+    include: [
+      'competition',
+      'competitionRef',
+      'competitionDataRef',
+      'dancers',
+      'groups',
+      'categories',
+      'dances',
+      'staff',
+      'platforms',
+      'draws',
+      'schedule',
+      'results',
+      'favoriteDancerSuggestions',
+    ],
+  },
+  reactiveInject: {
+    competitionsBundle: [
+      'competitionsRef',
+      'competitionsDataRef',
+    ],
   },
   props: {
-    competitions: Array,
-    competitionsRef: Object,
-    competitionsDataRef: Object,
     competitionId: String,
   },
   data() {

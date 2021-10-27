@@ -105,7 +105,7 @@
         @click.native="handleFavoriteDancerSuggestionsBannerClick()"
         class="FavoriteDancerSuggestionsBanner secondary"
       >
-        <strong>{{competitionBundle.favoriteDancerSuggestions.length}} favourite dancer suggestions</strong><br />
+        <strong>{{favoriteDancerSuggestions.length}} favourite dancer suggestions</strong><br />
         <small>based on your previous selections</small>
         <template #actions>
           <v-btn icon @click.stop="handleFavoriteDancerSuggestionsBannerDismiss()">
@@ -173,18 +173,18 @@ const SUGGESTIONS_NAME = 'Suggested Favourites';
 
 export default {
   name: 'CompetitionDancers',
-  inject: ['competitionBundle'],
+  reactiveInject: {
+    competitionBundle: [
+      'competitionId',
+      'dancers',
+      'dances',
+      'groups',
+      'results',
+      'favoriteDancerSuggestions',
+    ],
+  },
   props: {
-    competitionId: String,
     dancerId: String,
-    competitionDataRef: {
-      type: Object,
-      required: true,
-    },
-    dancers: Array,
-    dances: Array,
-    groups: Array,
-    results: Object,
   },
   localStorage: {
     filterBy: {
@@ -263,9 +263,9 @@ export default {
       // group together
       let grouped = groupBy(filtered, this.getSortGroup);
 
-      if (this.onlyFavorites && this.competitionBundle?.favoriteDancerSuggestions?.length) {
+      if (this.onlyFavorites && this.favoriteDancerSuggestions?.length) {
         grouped = {
-          [SUGGESTIONS_NAME]: this.competitionBundle?.favoriteDancerSuggestions,
+          [SUGGESTIONS_NAME]: this.favoriteDancerSuggestions,
           ...grouped,
         };
       }
@@ -278,7 +278,7 @@ export default {
 
     isShowingFavoriteDancerSuggestionsBanner: {
       get() {
-        return this.competitionBundle?.favoriteDancerSuggestions?.length
+        return this.favoriteDancerSuggestions?.length
           && !this.$store.getters.isViewed('favoriteDancerSuggestions', this.competitionId);
       },
       set(v) {
