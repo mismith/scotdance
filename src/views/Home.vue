@@ -78,7 +78,7 @@
     <section id="info" class="alt">
       <header>
         <h2 class="display-1 my-4">Info</h2>
-        <p>{{ $package.$name }} was created in 2017 by <a href="https://mismith.io" target="_blank" class="ext">Murray Smith</a></p>
+        <p>{{ $package.$name }} was created in 2017 by <a href="https://mismith.io" target="_blank" class="ext">Murray Rowan</a></p>
         <p>View the source code on <a href="https://github.com/mismith/scotdance" target="_blank" class="ext">GitHub</a></p>
         <p>Track development via <a href="https://trello.com/b/ZCZ8t1fH" target="_blank" class="ext">Trello</a></p>
         <p>Legal Documents: <router-link :to="{ name: 'policies' }">Policies</router-link></p>

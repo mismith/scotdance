@@ -2,7 +2,7 @@
 //  Screenshots.swift
 //  Screenshots
 //
-//  Created by Murray Smith on 2020-10-01.
+//  Created by Murray Rowan on 2020-10-01.
 //
 
 import XCTest
