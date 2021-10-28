@@ -24,13 +24,13 @@
           </v-icon>
 
           <template #favorite>
-            <v-list-action v-if="admin && dance[idKey] !== callbacks[idKey]">
+            <v-list-item-action v-if="admin && dance[idKey] !== callbacks[idKey]">
               <v-switch
                 v-show="index"
                 :input-value="dancer.$tie"
                 @click.stop="$emit('dancer-toggle', [dancer, !dancer.$tie])"
               />
-            </v-list-action>
+            </v-list-item-action>
           </template>
         </DancerListItem>
       </v-slide-y-transition>
