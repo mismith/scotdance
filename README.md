@@ -18,7 +18,6 @@ Command | Description
 `npm run dev` | serve with hot reload at localhost:8080
 `npm run build` | build for production with minification
 `npm run lint` | show code formatting tips
-`npm run report` | open bundle size inspector
 `npm run release` | create version commit and tag in git
 `npm run deploy` | push local build to production
 

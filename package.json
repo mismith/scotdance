@@ -5,18 +5,19 @@
   "author": "Murray Rowan <murray@mismith.info>",
   "scripts": {
     "init": "npm run build",
-    "serve": "vue-cli-service serve",
     "resources": "cordova-res ios --skip-config --copy && cordova-res android --skip-config --copy",
     "screenshots": "bash ./ios/App/Screenshots/Screenshots.sh",
     "set-version": "node ./set-version.js",
     "postset-version": "npx cap copy",
     "sync-version": "pilfer-package version > public/version.json && npm run set-version -- $npm_package_version",
     "notify": "node ./notify.js",
+    "lint": "eslint './src/**/*.{js,vue}'",
+    "lint:fix": "npm run lint -- --fix",
+    "dev": "vite --https --host",
+    "serve": "vite preview --https --host",
     "prebuild": "npm run sync-version",
-    "build": "vue-cli-service build && npx cap sync && npm run notify 'Build Complete'",
-    "report": "vue-cli-service build --report && open www/report.html",
-    "lint": "vue-cli-service lint",
-    "dev": "npm run serve -- --host localhost --https",
+    "build": "vite build && npx cap sync && npm run notify 'Build Complete'",
+    "report": "vite build && open stats.html",
     "release": "git commit -a -m $npm_package_version && git tag \"v${npm_package_version}\"",
     "deploy": "firebase deploy && git push origin HEAD:master --tags"
   },
@@ -46,7 +47,7 @@
     "roboto-fontface": "*",
     "save-csv": "^4.1.0",
     "simple-line-icons": "^2.5.5",
-    "vue": "^2.6.12",
+    "vue": "^2.6.14",
     "vue-async-computed": "^3.9.0",
     "vue-body-class": "^2.0.0-beta.2",
     "vue-localstorage": "^0.6.2",
@@ -63,49 +64,54 @@
     "xlsx": "^0.17.3"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "^4.5.14",
-    "@vue/cli-plugin-eslint": "^4.5.14",
-    "@vue/cli-service": "^4.5.14",
-    "@vue/eslint-config-airbnb": "^5.1.0",
-    "babel-eslint": "^10.1.0",
+    "autoprefixer": "^10.3.7",
     "cordova-res": "^0.15.1",
-    "eslint": "^6.8.0",
-    "eslint-plugin-vue": "^6.2.2",
+    "eslint": "^8.1.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-import-resolver-alias": "^1.1.2",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-vue": "^7.20.0",
     "firebase-tools": "^9.21.0",
     "lint-staged": "^11.2.4",
     "pilfer-package": "^1.0.0",
+    "rollup-plugin-visualizer": "^5.5.2",
     "sass": "^1.26.11",
-    "sass-loader": "^8.0.0",
-    "vue-cli-plugin-vuetify": "^2.0.7",
-    "vue-template-compiler": "^2.6.12",
-    "vuetify-loader": "^1.6.0"
-  },
-  "vue": {
-    "outputDir": "www",
-    "publicPath": "",
-    "transpileDependencies": [
-      "@firebase",
-      "vue-scrollto",
-      "vuetify"
-    ]
+    "unplugin-vue-components": "^0.16.0",
+    "vite": "^2.6.12",
+    "vite-plugin-eslint": "^1.3.0",
+    "vite-plugin-vue2": "^1.9.0",
+    "vue-template-compiler": "^2.6.14"
   },
   "eslintConfig": {
     "root": true,
     "env": {
       "node": true
     },
+    "parserOptions": {
+      "ecmaVersion": 2020
+    },
+    "settings": {
+      "import/resolver": {
+        "alias": {
+          "map": [
+            [
+              "@",
+              "./src"
+            ]
+          ]
+        }
+      }
+    },
     "extends": [
       "plugin:vue/essential",
-      "@vue/airbnb"
+      "airbnb-base"
     ],
-    "parserOptions": {
-      "parser": "babel-eslint"
-    },
     "rules": {
       "arrow-body-style": 0,
       "max-len": 0,
       "no-unused-vars": 1,
-      "import/no-cycle": 0
+      "import/no-cycle": 0,
+      "vue/no-mutating-props": 1
     }
   },
   "postcss": {

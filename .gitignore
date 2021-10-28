@@ -36,3 +36,4 @@ yarn-error.log*
 .runtimeconfig.json
 firebase-adminsdk.json
 /public/version.json
+/stats.html
