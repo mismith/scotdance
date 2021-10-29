@@ -105,7 +105,7 @@
 
     <v-bottom-navigation
       v-if="hasPermission"
-      v-model="$root.currentTab"
+      :value="$root.currentTab"
       class="listed-only"
     >
       <v-btn
