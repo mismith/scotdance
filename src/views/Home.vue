@@ -67,8 +67,8 @@
         <h2 class="display-1 my-4">FAQs</h2>
         <dl v-if="faqs.length">
           <template v-for="faq in faqs">
-            <dt :key="faq.question" v-html="faq.question" class="title" />
-            <dd :key="faq.answer" v-html="faq.answer" class="pre-line" />
+            <dt :key="faq.question" v-html="$sanitize(faq.question)" class="title" />
+            <dd :key="faq.answer" v-html="$sanitize(faq.answer)" class="pre-line" />
           </template>
         </dl>
         <Spinner v-else />

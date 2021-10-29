@@ -12,7 +12,7 @@
           </v-subheader>
           <div
             v-if="day.description"
-            v-html="day.description"
+            v-html="$sanitize(day.description)"
             class="pa-4 pre-line"
           />
 
@@ -28,7 +28,7 @@
                   <div class="flex">{{ block.name }}</div>
                   <div
                     v-if="block.description"
-                    v-html="slugline(block.description)"
+                    v-html="$sanitize(slugline(block.description))"
                     class="caption text-truncate ml-3"
                   />
                 </v-subheader>
@@ -50,7 +50,7 @@
                 >
                   <v-list-item-content>
                     <v-list-item-title>{{ event.name }}</v-list-item-title>
-                    <v-list-item-subtitle v-html="slugline(event.description)" />
+                    <v-list-item-subtitle v-html="$sanitize(slugline(event.description))" />
                   </v-list-item-content>
                   <v-icon v-if="event.dances || event.description">
                     {{ mdiChevronRight }}
@@ -93,7 +93,7 @@
               <v-subheader class="title">{{ currentEvent.name }}</v-subheader>
               <div
                 v-if="currentEvent.description"
-                v-html="currentEvent.description"
+                v-html="$sanitize(currentEvent.description)"
                 class="pa-4 pre-line"
               />
             </header>
@@ -114,7 +114,7 @@
                       <div class="flex">{{ getScheduleItemDanceName(dance, dances) }}</div>
                       <div
                         v-if="dance.description"
-                        v-html="slugline(dance.description)"
+                        v-html="$sanitize(slugline(dance.description))"
                         class="caption text-truncate ml-3"
                       />
                     </v-subheader>
@@ -123,7 +123,7 @@
                   <v-sheet>
                     <v-list-item
                       v-if="dance.description"
-                      v-html="dance.description"
+                      v-html="$sanitize(dance.description)"
                       class="pa-4 pre-line"
                     />
                     <AdminPlatforms

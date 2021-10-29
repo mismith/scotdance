@@ -6,6 +6,7 @@ import VueScrollTo from 'vue-scrollto';
 import { scroller } from 'vue-scrollto/src/scrollTo';
 import VueObserveVisibility from 'vue-observe-visibility';
 import VueReactiveProvide from 'vue-reactive-provide';
+import VueSanitize from 'vue-sanitize';
 import moment from 'moment-mini';
 import 'simple-line-icons/css/simple-line-icons.css';
 import { Plugins, Capacitor } from '@capacitor/core';
@@ -51,6 +52,7 @@ Vue.use(VueScrollTo);
 Vue.use(VueObserveVisibility);
 Vue.use(VueReactiveProvide);
 Vue.use(VueReactiveInject);
+Vue.use(VueSanitize);
 
 // scrolling
 const $scrollAll = (element, options = {}) => {

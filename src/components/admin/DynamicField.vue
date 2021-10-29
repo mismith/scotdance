@@ -83,7 +83,7 @@
       @change="handleChange()"
     >
       <template #prepend>
-        <div v-html="field.prepend" class="mb-4" />
+        <div v-html="$sanitize(field.prepend)" class="mb-4" />
       </template>
     </v-checkbox>
 

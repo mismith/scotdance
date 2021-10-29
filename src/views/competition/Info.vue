@@ -69,7 +69,7 @@
           </v-btn>
         </div>
 
-        <div v-if="competition.description" v-html="competition.description" class="mb-4 pre-line" />
+        <div v-if="competition.description" v-html="$sanitize(competition.description)" class="mb-4 pre-line" />
         <p v-if="competition.sobhd">
           <small><strong>SOBHD</strong> {{ competition.sobhd }}</small>
         </p>

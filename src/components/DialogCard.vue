@@ -13,13 +13,13 @@
     <form @submit.prevent="handleSubmit" class="v-dialog--scrollable">
       <v-card>
         <slot name="title">
-          <v-card-title v-if="title" v-html="title" class="title" />
+          <v-card-title v-if="title" v-html="$sanitize(title)" class="title" />
         </slot>
 
         <slot name="text">
           <v-card-text>
             <slot>
-              <div v-if="text" v-html="text"></div>
+              <div v-if="text" v-html="$sanitize(text)"></div>
             </slot>
           </v-card-text>
         </slot>

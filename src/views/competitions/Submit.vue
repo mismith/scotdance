@@ -13,7 +13,7 @@
         Are you involved in organizing a competition that could benefit from {{ $store.state.$package.$name }}?<br />Simply begin the process below at least <strong>one month before</strong> your event's start date.
 
         <div v-for="checklist in checklists" :key="checklist[idKey]">
-          <header v-html="checklist.title" class="mt-6 mb-4" />
+          <header v-html="$sanitize(checklist.title)" class="mt-6 mb-4" />
           <v-list flat style="max-width: 540px;">
             <v-list-group
               v-for="item in checklist.items"
@@ -39,7 +39,7 @@
               </template>
 
               <v-card text>
-                <v-card-text v-html="item.description" />
+                <v-card-text v-html="$sanitize(item.description)" />
               </v-card>
             </v-list-group>
           </v-list>
