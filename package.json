@@ -34,7 +34,7 @@
     "core-js": "^3.6.5",
     "deep-property": "^1.1.0",
     "fast-html-parser": "^1.0.1",
-    "firebase": "^7.22.0",
+    "firebase": "^8.10.0",
     "fuse.js": "^3.6.1",
     "handsontable": "^7.3.0",
     "lodash.find": "^4.6.0",
