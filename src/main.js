@@ -6,7 +6,7 @@ import VueScrollTo from 'vue-scrollto';
 import { scroller } from 'vue-scrollto/src/scrollTo';
 import VueObserveVisibility from 'vue-observe-visibility';
 import VueReactiveProvide from 'vue-reactive-provide';
-import VueSanitize from 'vue-sanitize';
+import sanitizeHtml from 'sanitize-html';
 import moment from 'moment-mini';
 import 'simple-line-icons/css/simple-line-icons.css';
 import { Capacitor, Plugins } from '@capacitor/core';
@@ -40,6 +40,7 @@ Device.getInfo().then((device) => store.commit('setDevice', device));
 window.addEventListener('load', () => SplashScreen.hide());
 
 // libs
+Vue.prototype.$sanitize = sanitizeHtml;
 Vue.prototype.$moment = moment;
 Vue.component('DialogCard', DialogCard);
 Vue.component('EmptyState', EmptyState);
@@ -54,7 +55,6 @@ Vue.use(VueScrollTo);
 Vue.use(VueObserveVisibility);
 Vue.use(VueReactiveProvide);
 Vue.use(VueReactiveInject);
-Vue.use(VueSanitize);
 
 // scrolling
 const $scrollAll = (element, options = {}) => {
