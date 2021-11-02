@@ -27,7 +27,7 @@ Command | Description
 Links to the admin panels needed to manage this project:
 
 * Database, Users/Auth, Hosting, SSL: [Firebase](https://console.firebase.google.com/u/0/project/firebase-scotdance/database/scotdance/data)
-* iOS app: [iTunes Connect](https://itunesconnect.apple.com/WebObjects/iTunesConnect.woa/ra/ng/app/1386475626)
+* iOS app: [App Store Connect](https://appstoreconnect.apple.com/apps/1386475626/appstore/ios/version/deliverable)
 * Android app: [Google Play Console](https://play.google.com/apps/publish/?account=6715160108161692003#AppDashboardPlace:p=info.mismith.scotdance&appid=4972780107515202457)
 * DNS: [Cloudflare](https://dash.cloudflare.com/f9b1ba7aa72b02f28e63a13fd4aa7184/scotdance.app)
 * Domain: [Namecheap](https://ap.www.namecheap.com/domains/domaincontrolpanel/scotdance.app)
@@ -63,9 +63,9 @@ Links to the admin panels needed to manage this project:
     1. `npm run build`
     2. Open project in Xcode (`npx cap open ios`)
     3. In the menu bar, select "Product" > "Archive"
-    4. Click "Distribute to iOS"
-    5. Follow the wizard
-    6. In iTunes Connect, create a New iOS Version, then complete/fill out all remaining steps/info in form
+    4. Click "Distribute App"
+    5. Follow the wizard (App Store Connect, Upload, etc.)
+    6. In App Store Connect, create a New iOS Version, then complete/fill out all remaining steps/info in form
         - the new build should be processed and ready to be selected shortly
 
 ### Google Play Store
@@ -76,7 +76,7 @@ Links to the admin panels needed to manage this project:
     1. `npm run build`
     2. Open project in Android Studio (`npx cap open android`)
     3. In the menu bar, select "Build" > "Generate Signed Bundle / APK…"
-    4. Follow the wizard (choose AAB, enter keystore creds, choose release)
+    4. Follow the wizard (AAB, enter keystore creds, choose "release", etc)
     5. Open Google Play Console
     6. Create a new Production Release
     7. Select/Drag in `android/app/release/app-release.aab`

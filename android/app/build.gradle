@@ -6,8 +6,8 @@ android {
         applicationId "info.mismith.scotdance"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 20001
-        versionName "2.0.1"
+        versionCode 30000
+        versionName "3.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

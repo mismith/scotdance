@@ -1,5 +1,10 @@
 # Release Notes
 
+## 3.0.0 - Nov 1, 2021
+- the app can now auto-suggest favourite dancers to you based on your previous selections
+- major framework upgrades to streamline things behind-the-scenes
+- various minor bug fixes and improvements
+
 ## 2.0.1 - Feb 8, 2021
 - allow admins to hide Schedule and Results tabs
 - minor bug fixes
