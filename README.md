@@ -53,7 +53,7 @@ Links to the admin panels needed to manage this project:
 5. Deploy to web via `npm run deploy`, which consists of:
     1. Deploy to web via `firebase deploy`
     2. Push to `master`
-6. In the Firebase Console's Realtime Database explorer, update the appropriate version numbers as apps are released: `/<env>/versions/<platform>`
+6. Open the ScotDance admin panel's [versions page](https://scotdance.app/#/admin/info/versions) and update the appropriate version numbers as apps are released/approved
 
 ### Apple App Store
 
