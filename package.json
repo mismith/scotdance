@@ -22,10 +22,12 @@
     "deploy": "firebase deploy && git push origin HEAD:master --tags"
   },
   "dependencies": {
-    "@capacitor/android": "^2.4.1",
-    "@capacitor/cli": "^2.4.1",
-    "@capacitor/core": "^2.4.1",
-    "@capacitor/ios": "^2.4.1",
+    "@capacitor/android": "^3.2.5",
+    "@capacitor/cli": "^3.2.5",
+    "@capacitor/core": "^3.2.5",
+    "@capacitor/device": "^1.0.5",
+    "@capacitor/ios": "^3.2.5",
+    "@capacitor/splash-screen": "^1.1.5",
     "@handsontable/vue": "^4.1.1",
     "@mdi/js": "^5.9.55",
     "@mismith/firebase-tools": "^1.4.0",

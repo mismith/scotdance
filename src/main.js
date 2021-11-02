@@ -9,7 +9,9 @@ import VueReactiveProvide from 'vue-reactive-provide';
 import VueSanitize from 'vue-sanitize';
 import moment from 'moment-mini';
 import 'simple-line-icons/css/simple-line-icons.css';
-import { Plugins, Capacitor } from '@capacitor/core';
+import { Capacitor, Plugins } from '@capacitor/core';
+import { Device } from '@capacitor/device';
+import { SplashScreen } from '@capacitor/splash-screen';
 
 import { firebase } from '@/helpers/firebase';
 import { getTitleChunks } from '@/helpers/router';
@@ -31,11 +33,11 @@ import Gravatar from '@/components/Gravatar.vue';
 Vue.config.silent = true;
 
 // app / devices
-Vue.prototype.isNative = Capacitor.isNative;
+Vue.prototype.isNative = Capacitor.isNativePlatform();
 Vue.prototype.isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
-if (Capacitor.platform === 'ios') Plugins.ScotDance.setup();
-Plugins.Device.getInfo().then((device) => store.commit('setDevice', device));
-window.addEventListener('load', () => Plugins.SplashScreen.hide());
+if (Capacitor.getPlatform() === 'ios') Plugins.ScotDance.setup();
+Device.getInfo().then((device) => store.commit('setDevice', device));
+window.addEventListener('load', () => SplashScreen.hide());
 
 // libs
 Vue.prototype.$moment = moment;

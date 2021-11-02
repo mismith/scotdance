@@ -7,7 +7,7 @@ import Capacitor
 public class ScotDance: CAPPlugin {
     @objc func setup(_ call: CAPPluginCall) {
         DispatchQueue.main.async(execute: {
-            let webView = self.bridge.getWebView()
+            let webView = self.bridge?.webView
             
             // allow swiping from edge to go back/forward
             webView?.allowsBackForwardNavigationGestures = true;
