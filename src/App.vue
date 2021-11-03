@@ -292,6 +292,7 @@ import {
   db,
   firebase,
 } from '@/helpers/firebase';
+import { competitionExtender } from '@/helpers/competition';
 import RegisterDialog from '@/components/RegisterDialog.vue';
 import LoginDialog from '@/components/LoginDialog.vue';
 import RequiresAuthDialog from '@/components/RequiresAuthDialog.vue';
@@ -307,6 +308,8 @@ export default {
       'competitions',
       'competitionsRef',
       'competitionsDataRef',
+      'series',
+      'seriesRef',
     ],
   },
   data() {
@@ -336,6 +339,7 @@ export default {
       submenuVisible: false,
       accountVisible: false,
 
+      seriesRef: undefined,
       competitionsRef: undefined,
       competitionsDataRef: undefined,
       versions: undefined,
@@ -354,14 +358,17 @@ export default {
       return this.versions?.[this.$device?.platform];
     },
 
+    series() {
+      return this.seriesRaw
+        .map((serie) => ({
+          ...serie,
+          $name: `${serie.shortName || serie.name}`.trim(),
+        }))
+        .reverse();
+    },
     competitions() {
       return this.competitionsRaw
-        .map((competition) => ({
-          ...competition,
-          $pinned: this.$store.getters.isFavorite('competitions', competition[idKey]),
-          $viewed: this.$store.getters.isViewed('competitions', competition[idKey]),
-          $relevance: Math.abs(this.$moment().diff(competition.date)),
-        }))
+        .map((competition) => competitionExtender(competition, this.series, this.$store))
         .filter((competition) => competition.listed || this.$store.getters.hasPermission(`competitions/${competition[idKey]}`))
         .sort((a, b) => -this.$moment(a.date).diff(b.date)); // order chronologically
     },
@@ -424,9 +431,12 @@ export default {
     ]),
 
     async loadFirebase() {
+      this.seriesRef = db.child('series');
       this.competitionsRef = db.child('competitions');
       this.competitionsDataRef = db.child('competitions:data');
 
+      if (this.seriesRaw) this.$unbind('seriesRaw');
+      this.$bindAsArray('seriesRaw', this.seriesRef);
       if (this.competitionsRaw) this.$unbind('competitionsRaw');
       this.$bindAsArray('competitionsRaw', this.competitionsRef);
 
@@ -843,6 +853,9 @@ body {
       }
     }
   }
+}
+.serie-name {
+  font-style: italic;
 }
 
 // print overrides

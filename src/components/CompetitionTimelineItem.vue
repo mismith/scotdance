@@ -1,22 +1,29 @@
 <template>
   <v-timeline-item
-    :small="!competition.image"
-    :large="competition.image"
+    :small="!competition.$image"
+    :large="competition.$image"
     class="CompetitionTimelineItem"
     :class="{ now }"
   >
     <template #icon>
       <router-link
-        v-if="competition.image"
+        v-if="competition.$image"
         :to="{ name: 'competition.info', params: { competitionId: competition[idKey] } }"
       >
         <v-avatar color="white">
-          <img :src="competition.image" role="presentation" />
+          <img :src="competition.$image" role="presentation" />
         </v-avatar>
       </router-link>
     </template>
     <router-link :to="{ name: 'competition.info', params: { competitionId: competition[idKey] } }">
-      <div class="subtitle-1">{{ competition.name }}</div>
+      <div class="subtitle-1 dot-divided">
+        <span>{{ competition.name }}</span>
+        <span
+          v-if="competition.$serie"
+          v-text="competition.$serie.$name"
+          class="serie-name"
+        />
+      </div>
       <div class="dot-divided dimmed">
         <span v-if="competition.date">{{ $moment(competition.date).format('MMM D, YYYY') }}</span>
         <span v-if="competition.location">{{ competition.location }}</span>

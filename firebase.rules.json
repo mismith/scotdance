@@ -7,6 +7,10 @@
       "faqs": {
         ".read": true
       },
+      "series": {
+        ".read": true,
+        ".write": "auth !== null" // @TODO: has permission to competitions included?s
+      },
       "competitions": {
         ".read": true,
         "$competitionId": {

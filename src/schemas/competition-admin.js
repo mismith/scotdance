@@ -80,8 +80,35 @@ export default {
           ],
         },
       },
-      permissions: {
+      series: {
         order: 4,
+        name: 'Series',
+        icon: 'icon-calendar',
+        fields: [
+          {
+            data: 'image',
+            title: 'Image',
+            type: 'image',
+            storagePath: 'competitions/images',
+          },
+          {
+            data: 'name',
+            title: 'Name',
+            required: true,
+          },
+          {
+            data: 'shortName',
+            title: 'Short Name',
+          },
+          {
+            data: 'description',
+            title: 'Description',
+            type: 'textarea',
+          },
+        ],
+      },
+      permissions: {
+        order: 5,
         name: 'Permissions',
         icon: 'icon-lock',
       },

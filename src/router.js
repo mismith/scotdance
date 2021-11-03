@@ -10,6 +10,8 @@ import Settings from '@/views/Settings.vue';
 import Profile from '@/views/Profile.vue';
 import Policies from '@/views/Policies.vue';
 
+import Series from '@/views/Series.vue';
+
 import Competitions from '@/views/Competitions.vue';
 import CompetitionsList from '@/views/competitions/List.vue';
 import CompetitionsSubmit from '@/views/competitions/Submit.vue';
@@ -64,6 +66,15 @@ export default new Router({
       props: true,
       meta: {
         title: 'Policies',
+      },
+    },
+    {
+      path: '/series/:serieId?',
+      name: 'series',
+      component: Series,
+      props: true,
+      meta: {
+        title: 'Series',
       },
     },
     {
@@ -161,7 +172,7 @@ export default new Router({
                   redirect: 'info/general',
                 },
                 {
-                  path: 'info/:subsectionId?',
+                  path: 'info/:subsectionId?/:itemId?',
                   name: 'competition.admin.info',
                   component: CompetitionAdminInfo,
                   props: true,

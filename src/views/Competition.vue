@@ -98,6 +98,7 @@ import {
 import {
   sortByKey,
   groupExtender,
+  competitionExtender,
   danceExtender,
   dancerExtender,
   isNotEmptyObject,
@@ -137,6 +138,7 @@ export default {
     competitionsBundle: [
       'competitionsRef',
       'competitionsDataRef',
+      'series',
     ],
   },
   props: {
@@ -202,7 +204,7 @@ export default {
     },
 
     competition() {
-      return this.competitionRaw;
+      return competitionExtender(this.competitionRaw, this.series, this.$store);
     },
     dancers() {
       return this.dancersRaw

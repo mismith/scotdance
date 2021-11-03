@@ -307,8 +307,10 @@ export default {
       this.handleDataChanges(dataChanges);
     },
     saveCSV(arrayOfObjects) {
+      const { name, $serie } = this.competition;
+      const serieSuffix = $serie ? ` - ${$serie.$name}` : '';
       return saveCSV(arrayOfObjects, {
-        filename: `${this.currentSection.name} - ${this.competition.name}.csv`,
+        filename: `${this.currentSection.name} - ${name}${serieSuffix}.csv`,
       });
     },
     exportHotTable() {

@@ -6,16 +6,24 @@
     >
       <section class="pa-4">
         <v-avatar
-          v-if="competition.image"
+          v-if="competition.$image"
           color="white"
           size="200"
           class="elevation-2 mb-4"
           :class="{ 'ml-3': $vuetify.breakpoint.mdAndUp }"
           :style="{ float: $vuetify.breakpoint.mdAndUp ? 'right' : undefined }"
         >
-          <img :src="competition.image" />
+          <img :src="competition.$image" />
         </v-avatar>
-        <h1 class="display-1 mb-4">{{ competition.name }}</h1>
+        <h1 class="display-1 mb-4 dot-divided">
+          <span>{{ competition.name }}</span>
+          <router-link
+            v-if="competition.$serie"
+            :to="{ name: 'series', params: { serieId: competition.$serie[idKey] } }"
+            v-text="competition.$serie.$name"
+            class="serie-name"
+          />
+        </h1>
         <p v-if="competition.date" class="headline">
           {{ $moment(competition.date).format('dddd, MMMM D, YYYY') }}
         </p>
@@ -69,7 +77,11 @@
           </v-btn>
         </div>
 
-        <div v-if="competition.description" v-html="$sanitize(competition.description)" class="mb-4 pre-line" />
+        <div
+          v-if="competition.description"
+          v-html="$sanitize(competition.description)"
+          class="mb-4 pre-line"
+        />
         <p v-if="competition.sobhd">
           <small><strong>SOBHD</strong> {{ competition.sobhd }}</small>
         </p>
