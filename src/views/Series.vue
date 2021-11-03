@@ -64,13 +64,18 @@
               >
                 <template #action><span /></template>
               </CompetitionListItem>
+              <EmptyState
+                v-if="!serieCompetitions.length"
+                label="@TODO: No competitions yet"
+                description="@TODO: Contact the organizer for info"
+              />
             </v-list>
           </v-list-group>
         </v-list>
       </div>
       <EmptyState
         v-else
-        icon="mdi-set-none"
+        :icon="mdiSetNone"
         label="Competition Series"
         description="Events spanning multiple days, or recurring throughout a season"
       />
@@ -79,6 +84,7 @@
 </template>
 
 <script>
+import { mdiSetNone } from '@mdi/js';
 import { idKey } from '@/helpers/firebase';
 import SerieListItem from '@/components/SerieListItem.vue';
 import CompetitionListItem from '@/components/CompetitionListItem.vue';
@@ -97,6 +103,8 @@ export default {
   },
   data() {
     return {
+      mdiSetNone,
+
       idKey,
     };
   },

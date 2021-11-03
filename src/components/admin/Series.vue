@@ -76,11 +76,13 @@
               >
                 <template #action>
                   <v-switch
+                    v-if="!(availableCompetition.serieId && availableCompetition.serieId !== serieId)"
                     class="ml-3"
                     :input-value="availableCompetition.serieId === serieId"
                     @change="v => handleToggle(serieId, availableCompetition, v)"
-                    @click.native.prevent
+                    @click.prevent
                   />
+                  <span v-else />
                 </template>
               </CompetitionListItem>
             </v-list>
@@ -224,6 +226,9 @@ export default {
     },
     async handleToggle(serieId, competition, on = serieId !== competition.serieId) {
       const val = on ? true : null;
+      if (on && competition.serieId && competition.serieId !== serieId) {
+        throw new Error('Already linked');
+      }
       await Promise.all([ // @TODO: enforce only one serie per competition
         this.competitionsRef.child(competition[idKey]).child('serieId').set(on ? serieId : null),
         this.seriesRef.child(serieId).child('competitions').child(competition[idKey]).set(val),
