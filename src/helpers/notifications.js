@@ -1,6 +1,4 @@
-import { Plugins } from '@capacitor/core';
-
-const { PushNotifications } = Plugins;
+import { PushNotifications } from '@capacitor/push-notifications';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function requestPermission() {
