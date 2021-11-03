@@ -282,6 +282,15 @@
 
       <p>To bring the app to your event, you'll need an account first.</p>
     </RequiresAuthDialog>
+    <RequiresAuthDialog name="notifications">
+      <template #title>
+        <v-card-title class="title">
+          <div class="flex">Push notifications</div>
+          <v-icon color="secondary">{{ mdiBell }}</v-icon>
+        </v-card-title>
+      </template>
+      <p>To receive notifications across all your devices, you'll need an account first.</p>
+    </RequiresAuthDialog>
   </v-app>
 </template>
 
@@ -290,6 +299,7 @@ import { mapState, mapGetters, mapActions } from 'vuex';
 import {
   mdiAccountCircle,
   mdiAccountSearch,
+  mdiBell,
   mdiCalendarMonth,
   mdiClose,
   mdiDotsGrid,
@@ -340,6 +350,7 @@ export default {
 
       mdiAccountCircle,
       mdiAccountSearch,
+      mdiBell,
       mdiCalendarMonth,
       mdiClose,
       mdiDotsGrid,

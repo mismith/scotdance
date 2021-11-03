@@ -2,6 +2,7 @@ import admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
 import Invites from './invites';
 import Submissions from './submissions';
+import Notifications from './notifications';
 import * as Dancers from './dancers';
 import { attachUserToCompetition } from './utility/competition';
 import { isCypress, isEmulator } from './utility/env';
@@ -53,6 +54,15 @@ export const competitionDeleted = appConfig.database.ref(`/${env}/competitions/{
       value: null,
     })));
   });
+
+const notifications = new Notifications(appConfig.database, appConfig);
+const tokensHooks = notifications.hookTokens(`/${env}/users:tokens`);
+const topicsHooks = notifications.hookTopics(`/${env}/users:topics`);
+const resultsHooks = notifications.hookResults(`/${env}/competitions:data/{competitionId}/results/{groupId}/{danceId}`);
+export const userTokenCreate = tokensHooks.onCreate;
+export const userTokenDelete = tokensHooks.onDelete;
+export const userTopicsUpdate = topicsHooks.onWrite;
+export const competitionResultsNotification = resultsHooks.onCreate;
 
 const dancersRef = appConfig.database.ref(`/${env}/competitions:data/{competitionId}/dancers/{dancerId}`);
 export const dancerCreated = !isCypress() && dancersRef.onCreate(Dancers.onCreate);

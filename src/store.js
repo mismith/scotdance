@@ -18,6 +18,7 @@ import $package from '@/../package.json';
 import {
   idKey,
   db,
+  notifications,
 } from '@/helpers/firebase';
 
 Vue.use(Vuex);
@@ -54,9 +55,14 @@ export default new Vuex.Store({
     meRef: undefined,
     myFavoritesRef: undefined,
     myPermissionsRef: undefined,
+    myTopicsRef: undefined,
+    myTokensRef: undefined,
+
     me: undefined,
     myFavorites: undefined,
     myPermissions: undefined,
+    myTopics: undefined,
+    myTokens: undefined,
 
     viewed,
 
@@ -92,6 +98,9 @@ export default new Vuex.Store({
         return true;
       }
       return get(state.myPermissions, permission.replace(/\//g, '.')) === true;
+    },
+    hasTopic: (state) => (topic) => {
+      return !!get(state.myTopics, topic.replace(/^\/|\/$/g, '').replace(/\//g, '.'));
     },
 
     isViewed: (state) => (type, id) => state.viewed
@@ -160,14 +169,19 @@ export default new Vuex.Store({
     },
   },
   actions: {
-    auth: firebaseAction(({ bindFirebaseRef, state }, { uid, email }) => {
+    auth: firebaseAction(async (
+      { bindFirebaseRef, state, dispatch },
+      { uid, email },
+    ) => {
       state.meRef = db.child('users').child(uid);
       state.myFavoritesRef = db.child('users:favorites').child(uid);
       state.myPermissionsRef = db.child('users:permissions').child(uid);
+      state.myTopicsRef = db.child('users:topics').child(uid);
+      state.myTokensRef = db.child('users:tokens').child(uid);
 
       bindFirebaseRef('me', state.meRef, {
         async readyCallback(meSnap) {
-          // await 'me'
+          // await 'state.me'
           await Vue.nextTick();
 
           // flush post-login callbacks
@@ -183,19 +197,39 @@ export default new Vuex.Store({
       });
       bindFirebaseRef('myFavorites', state.myFavoritesRef);
       bindFirebaseRef('myPermissions', state.myPermissionsRef);
+      bindFirebaseRef('myTopics', state.myTopicsRef);
+      bindFirebaseRef('myTokens', state.myTokensRef);
+
+      // // check to see whether this device's token is stored in firebase
+      // const [token] = await Promise.all([
+      //   notifications.getToken(),
+      //   state.myTokensRef.once('value'),
+      //   state.myTopicsRef.once('value'),
+      // ]);
+      // if (!state.myTokens[token] && state.myTopics['.value'] !== null) {
+      //   // token is missing and user is subscribed to push notifications
+      //   // so re-ask for permissions on this (new?) device right away
+      //   dispatch('prepareForNotifications');
+      // }
     }),
     unauth: firebaseAction(({ unbindFirebaseRef, state }) => {
       if (state.me) unbindFirebaseRef('me');
       if (state.myFavorites) unbindFirebaseRef('myFavorites');
       if (state.myPermissions) unbindFirebaseRef('myPermissions');
+      if (state.myTopics) unbindFirebaseRef('myTopics');
+      if (state.myTokens) unbindFirebaseRef('myTokens');
 
       state.me = null;
       state.myFavorites = null;
       state.myPermissions = null;
+      state.myTopics = null;
+      state.myTokens = null;
 
       state.meRef = null;
       state.myFavoritesRef = null;
       state.myPermissionsRef = null;
+      state.myTopicsRef = null;
+      state.myTokensRef = null;
     }),
 
     toggleFavoriteDancer({ state, commit }, dancer) {
@@ -233,6 +267,45 @@ export default new Vuex.Store({
 
       // ...while opening dialog to inform user about favorites functionality
       return commit('setCurrentDialog', 'pins');
+    },
+    async prepareForNotifications({ state }) {
+      await notifications.requestPermission();
+
+      // store token
+      const storeToken = (token) => {
+        if (token && state.myTokensRef) {
+          state.myTokensRef.child(token).set({
+            userAgent: window.navigator.userAgent,
+            created: this.$moment.format(),
+          });
+        }
+      };
+      // notifications.getToken().then(storeToken);
+      // notifications.onTokenRefresh(storeToken);
+    },
+    toggleTopicSubscription({
+      state,
+      getters,
+      commit,
+      dispatch,
+    }, [topic, value = undefined]) {
+      const setTopic = (to = undefined) => state.myTopicsRef
+        .child(topic)
+        .set(to || null);
+
+      if (state.myTopicsRef) {
+        const newValue = value || (value === undefined && !getters.hasTopic(topic));
+        if (newValue) dispatch('prepareForNotifications');
+        return setTopic(newValue);
+      }
+
+      // 'store' topic for toggling post-auth...
+      commit('addPostLoginCallback', () => {
+        setTopic(true);
+      });
+
+      // ...while opening dialog to inform user about notifications functionality
+      return commit('setCurrentDialog', 'notifications');
     },
 
     help({ state, commit }, set = undefined) {

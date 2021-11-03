@@ -3,6 +3,8 @@ import 'firebase/auth';
 import 'firebase/database';
 import 'firebase/storage';
 import 'firebase/functions';
+import 'firebase/messaging';
+import { requestPermission } from './notifications';
 
 import { isCypress, isDev } from './env';
 
@@ -26,16 +28,30 @@ if (isDev()) {
   firebase.functions().useEmulator('localhost', 5001);
 }
 
+// database
 // https://stackoverflow.com/a/36087084/888928
 export const pushidRegex = /^[-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz]{20}$/;
 export const idKey = '.key';
 export const valueKey = '.value';
 export const db = firebase.database().ref(FIREBASE_ENV);
 
+// storage
 export const buckets = firebase.storage().ref(FIREBASE_ENV);
 
+// functions
 export const fns = firebase.functions();
 
+// messaging
+// const vapidKey = 'BGR0DKFnXHVfCFhPuTlxZcYH-k1vXqdPq0_LWtWUIelTJr6Zk2B809T4UfQ-20mM2rMxmHN0JisT99-iOBW6qAQ';
+export const notifications = {
+  isSupported: true || firebase.messaging.isSupported(),
+  requestPermission,
+};
+// notifications.onMessage((payload) => {
+//   console.log(payload);
+// });
+
+// utility
 export const toOrderedArray = (obj) => {
   return Object.entries(obj || {})
     .map(([key, value]) => {

@@ -20,6 +20,25 @@
         </v-list-item-group>
       </v-list>
 
+      <v-subheader>Notifications</v-subheader>
+      <v-list flat>
+        <v-list-item-group v-model="isSubscribed">
+          <v-list-item :value="true">
+            <template #default="{ active }">
+              <v-list-item-avatar>
+                <v-icon>{{ mdiPodiumGold }}</v-icon>
+              </v-list-item-avatar>
+              <v-list-item-content>
+                <v-list-item-title>Results</v-list-item-title>
+              </v-list-item-content>
+              <v-list-item-action>
+                <v-switch :input-value="active" color="primary" />
+              </v-list-item-action>
+            </template>
+          </v-list-item>
+        </v-list-item-group>
+      </v-list>
+
       <v-subheader>Advanced</v-subheader>
       <v-list>
         <v-list-item @click="confirmClearLocalStorage = true" v-test="'reset-app-cache'">
@@ -53,18 +72,40 @@
 </template>
 
 <script>
-import { mdiCached, mdiThemeLightDark } from '@mdi/js';
+import { mapGetters, mapActions } from 'vuex';
+import { mdiCached, mdiPodiumGold, mdiThemeLightDark } from '@mdi/js';
 
 export default {
   name: 'Settings',
   data() {
     return {
       mdiCached,
+      mdiPodiumGold,
       mdiThemeLightDark,
       confirmClearLocalStorage: false,
+
+      topic: 'dancers/favourited/results',
     };
   },
+  computed: {
+    ...mapGetters([
+      'hasTopic',
+    ]),
+
+    isSubscribed: {
+      get() {
+        return this.hasTopic(this.topic);
+      },
+      set(value) {
+        return this.toggleTopicSubscription([this.topic, value]);
+      },
+    },
+  },
   methods: {
+    ...mapActions([
+      'toggleTopicSubscription',
+    ]),
+
     clearLocalStorage() {
       if (window.localStorage) {
         window.localStorage.clear();

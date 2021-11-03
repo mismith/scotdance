@@ -61,6 +61,18 @@
           ".read": "auth !== null && auth.uid === $userId", // is SELF
           ".write": "auth !== null && auth.uid === $userId && !newData.exists()" // is REMOVING OWN permissions
         }
+      },
+      "users:topics": {
+        "$userId": {
+          ".read": "auth !== null && auth.uid === $userId", // is SELF
+          ".write": "auth !== null && auth.uid === $userId" // is SELF
+        }
+      },
+      "users:tokens": {
+        "$userId": {
+          ".read": "auth !== null && auth.uid === $userId", // is SELF
+          ".write": "auth !== null && auth.uid === $userId" // is SELF
+        }
       }
     }
   }
