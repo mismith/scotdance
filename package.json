@@ -19,7 +19,7 @@
     "build": "vite build && npx cap sync && npm run notify 'Build Complete'",
     "report": "vite build && open stats.html",
     "release": "git commit -a -m $npm_package_version && git tag \"v${npm_package_version}\"",
-    "deploy": "firebase deploy && git push origin HEAD:master --tags"
+    "deploy": "firebase deploy && git push origin HEAD:main --tags"
   },
   "dependencies": {
     "@capacitor/android": "^3.2.5",

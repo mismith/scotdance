@@ -52,7 +52,7 @@ Links to the admin panels needed to manage this project:
     2. Tag the commit using the release version prepended with `v` (e.g. `v1.0.0`)
 5. Deploy to web via `npm run deploy`, which consists of:
     1. Deploy to web via `firebase deploy`
-    2. Push to `master`
+    2. Push to `main`
 6. Open the ScotDance admin panel's [versions page](https://scotdance.app/#/admin/info/versions) and update the appropriate version numbers as apps are released/approved
 
 ### Apple App Store
