@@ -43,10 +43,9 @@
               :key="groupId"
               :id="`group-${groupId}`"
               :value="isGroupExpanded(groupId, groupIds)"
-              @click="handleGroupExpanded(groupId)"
             >
               <template #activator>
-                <v-subheader>
+                <v-subheader @click.stop="handleGroupExpanded(groupId, !isGroupExpanded(groupId, groupIds))">
                   <div class="flex">{{ groupId || '?' }}</div>
                   <v-icon
                     v-if="!onlyFavorites && hasFavorites(group)"
@@ -295,12 +294,15 @@ export default {
 
       return isExpanded(this.dancersExpandedGroups[this.sortBy], itemId, itemIds);
     },
-    handleGroupExpanded(groupId, expanded = undefined) {
-      this.dancersExpandedGroups[this.sortBy] = handleExpanded(
-        this.dancersExpandedGroups[this.sortBy],
-        groupId,
-        expanded,
-      );
+    handleGroupExpanded(groupId, expanded) {
+      this.dancersExpandedGroups = {
+        ...this.dancersExpandedGroups,
+        [this.sortBy]: handleExpanded(
+          this.dancersExpandedGroups[this.sortBy],
+          groupId,
+          expanded,
+        ),
+      };
       this.$localStorage.set('dancersExpandedGroups', this.dancersExpandedGroups);
     },
 

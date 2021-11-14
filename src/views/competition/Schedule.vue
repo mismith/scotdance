@@ -21,10 +21,9 @@
               v-for="block in toOrderedArray(day.blocks)"
               :key="block[idKey]"
               :value="isBlockExpanded(block[idKey], Object.keys(day.blocks), !!block.events)"
-              @click="handleBlockExpanded(block[idKey])"
             >
               <template #activator>
-                <v-subheader>
+                <v-subheader @click.stop="handleBlockExpanded(block[idKey], !isBlockExpanded(block[idKey], Object.keys(day.blocks), !!block.events))">
                   <div class="flex">{{ block.name }}</div>
                   <div
                     v-if="block.description"
@@ -107,10 +106,9 @@
                   :key="dance[idKey]"
                   v-else
                   :value="isDanceExpanded(dance[idKey], Object.keys(currentEvent.dances), !!dance.danceId)"
-                  @click="handleDanceExpanded(dance[idKey])"
                 >
                   <template #activator>
-                    <v-subheader>
+                    <v-subheader @click.stop="handleDanceExpanded(dance[idKey], !isDanceExpanded(dance[idKey], Object.keys(currentEvent.dances), !!dance.danceId))">
                       <div class="flex">{{ getScheduleItemDanceName(dance, dances) }}</div>
                       <div
                         v-if="dance.description"
@@ -352,7 +350,7 @@ export default {
     isBlockExpanded(blockId, blockIds, fallback = true) {
       return isExpanded(this.scheduleExpandedBlocks, blockId, blockIds, fallback);
     },
-    handleBlockExpanded(blockId, expanded = undefined) {
+    handleBlockExpanded(blockId, expanded) {
       this.scheduleExpandedBlocks = handleExpanded(this.scheduleExpandedBlocks, blockId, expanded);
       this.$localStorage.set('scheduleExpandedBlocks', this.scheduleExpandedBlocks);
     },
@@ -369,12 +367,15 @@ export default {
     isDanceExpanded(danceId, danceIds, fallback = true) {
       return isExpanded(this.scheduleExpandedDances[this.eventId], danceId, danceIds, fallback);
     },
-    handleDanceExpanded(danceId, expanded = undefined) {
-      this.scheduleExpandedDances[this.eventId] = handleExpanded(
-        this.scheduleExpandedDances[this.eventId],
-        danceId,
-        expanded,
-      );
+    handleDanceExpanded(danceId, expanded) {
+      this.scheduleExpandedDances = {
+        ...this.scheduleExpandedDances,
+        [this.eventId]: handleExpanded(
+          this.scheduleExpandedDances[this.eventId],
+          danceId,
+          expanded,
+        ),
+      };
       this.$localStorage.set('scheduleExpandedDances', this.scheduleExpandedDances);
     },
   },

@@ -4,10 +4,9 @@
       v-for="group in groups"
       :key="group[idKey]"
       :value="isGroupExpanded(group, groups)"
-      @click="handleGroupExpanded(group[idKey])"
     >
       <template #activator>
-        <v-subheader>
+        <v-subheader @click.stop="handleGroupExpanded(group[idKey], !isGroupExpanded(group, groups))">
           <div class="flex">{{ group.$name }}</div>
           <v-icon v-if="hasFavorites(findGroupDancers(group, dancers))" color="secondary">
             {{ mdiStar }}
@@ -124,7 +123,7 @@ export default {
       const itemIds = items.map((i) => i[idKey]);
       return isExpanded(this.resultsExpandedGroups, item[idKey], itemIds);
     },
-    handleGroupExpanded(groupId, expanded = undefined) {
+    handleGroupExpanded(groupId, expanded) {
       this.resultsExpandedGroups = handleExpanded(this.resultsExpandedGroups, groupId, expanded);
       this.$localStorage.set('resultsExpandedGroups', this.resultsExpandedGroups);
     },

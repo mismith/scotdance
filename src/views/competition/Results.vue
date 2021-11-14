@@ -11,10 +11,9 @@
             v-for="category in groupedCategories"
             :key="category[idKey]"
             :value="isCategoryExpanded(category, groupedCategories)"
-            @click="handleCategoryExpanded(category[idKey])"
           >
             <template #activator>
-              <v-subheader>
+              <v-subheader @click.stop="handleCategoryExpanded(category[idKey], !isCategoryExpanded(category, groupedCategories))">
                 <div class="flex">{{ category.name }}</div>
                 <v-icon
                   v-if="hasFavorites(findCategoryDancers(category, dancers))"
@@ -103,10 +102,11 @@
                 :key="dance.name"
                 :id="`dance-${dance[idKey]}`"
                 :value="isDanceExpanded(dance, groupedDancers)"
-                @click="handleDanceExpanded(dance[idKey])"
               >
                 <template #activator>
-                  <v-subheader>{{ dance.$name }}</v-subheader>
+                  <v-subheader @click.stop="handleDanceExpanded(dance[idKey], !isDanceExpanded(dance, groupedDancers))">
+                    {{ dance.$name }}
+                  </v-subheader>
                 </template>
 
                 <PlacedDancerList
@@ -333,7 +333,7 @@ export default {
       const itemIds = items.map((i) => i[idKey]);
       return isExpanded(this.resultsExpandedCategories, item[idKey], itemIds, true);
     },
-    handleCategoryExpanded(categoryId, expanded = undefined) {
+    handleCategoryExpanded(categoryId, expanded) {
       this.resultsExpandedCategories = handleExpanded(this.resultsExpandedCategories, categoryId, expanded);
       this.$localStorage.set('resultsExpandedCategories', this.resultsExpandedCategories);
     },
@@ -348,12 +348,15 @@ export default {
         expandByDefault,
       );
     },
-    handleDanceExpanded(danceId, expanded = undefined) {
-      this.resultsExpandedDances[this.groupId] = handleExpanded(
-        this.resultsExpandedDances[this.groupId],
-        danceId,
-        expanded,
-      );
+    handleDanceExpanded(danceId, expanded) {
+      this.resultsExpandedDances = {
+        ...this.resultsExpandedDances,
+        [this.groupId]: handleExpanded(
+          this.resultsExpandedDances[this.groupId],
+          danceId,
+          expanded,
+        ),
+      };
       this.$localStorage.set('resultsExpandedDances', this.resultsExpandedDances);
     },
 
