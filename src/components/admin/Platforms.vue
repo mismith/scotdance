@@ -20,15 +20,22 @@
             v-for="poolItem in pool.$items"
             :key="poolItem[idKey]"
             :color="getChipColor(poolItem)"
-            :dark="!!getChipColor(poolItem)"
             :style="{
-              visibility: !admin && getChipColor(poolItem) === null && 'hidden',
-              opacity: getChipColor(poolItem) === null ? 0.5 : undefined,
+              visibility: !admin && isPlaceholder(poolItem) && 'hidden',
+              opacity: isPlaceholder(poolItem) ? 0.5 : undefined,
             }"
             class="ma-1"
             @click="!admin && $emit('item-click', poolItem)"
           >
             {{ poolItem.$name || poolItem.name }}
+
+            <v-avatar
+              v-if="!isJudge(poolItem) && !isPlaceholder(poolItem)"
+              right
+              style="background-color: rgba(255, 255, 255, 0.33);"
+            >
+              {{ getPoolItemChildCount(poolItem) }}
+            </v-avatar>
           </v-chip>
         </draggable>
       </div>
@@ -188,6 +195,7 @@ export default {
     ]),
 
     isJudge: (item) => item.type === 'Judge',
+    isPlaceholder: (item) => isPlaceholderId(item[idKey]),
 
     getChipColor(poolItem) {
       if (hasFavorites(findGroupDancers(poolItem, this.dancers))) {
@@ -196,10 +204,15 @@ export default {
       if (this.isJudge(poolItem)) {
         return 'primary';
       }
-      if (isPlaceholderId(poolItem[idKey])) {
+      if (this.isPlaceholder(poolItem)) {
         return null;
       }
       return undefined;
+    },
+
+    getPoolItemChildCount(poolItem) {
+      const dancers = findGroupDancers(poolItem, this.dancers);
+      return dancers.length;
     },
 
     handleSort(pool) {
