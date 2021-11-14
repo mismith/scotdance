@@ -15,7 +15,10 @@ import { mdiChevronLeft } from '@mdi/js';
 export default {
   name: 'BladeToolbar',
   props: {
-    text: String,
+    text: {
+      type: String,
+      required: false,
+    },
     to: [String, Object],
   },
   data() {

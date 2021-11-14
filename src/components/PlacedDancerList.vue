@@ -55,7 +55,10 @@ import {
 export default {
   name: 'PlacedDancerList',
   props: {
-    admin: Boolean,
+    admin: {
+      type: Boolean,
+      required: false,
+    },
     dance: Object,
     dancers: Array,
   },

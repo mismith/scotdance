@@ -2,7 +2,7 @@
   <div class="Home app-scroll-frame app-scroll">
     <section class="hero">
       <div>
-        <img src="@/assets/img/touchicon.png" role="presentation" width="88" height="88" />
+        <img src="@/assets/img/touchicon.png" alt="" width="88" height="88" />
         <h1 class="display-2 my-4">{{ $package.$name }}</h1>
         <p class="headline">{{ $package.description }}</p>
         <p class="subtitle-1">Skip the pen and paper—attend highland dance competitions in style with this app for your mobile device.</p>

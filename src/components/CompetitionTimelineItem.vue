@@ -11,7 +11,7 @@
         :to="{ name: 'competition.info', params: { competitionId: competition[idKey] } }"
       >
         <v-avatar color="white">
-          <img :src="competition.image" role="presentation" />
+          <img :src="competition.image" alt="" />
         </v-avatar>
       </router-link>
     </template>

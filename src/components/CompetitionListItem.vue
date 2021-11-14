@@ -9,7 +9,7 @@
     }"
   >
     <v-list-item-avatar v-if="competition.image" color="white">
-      <img :src="competition.image" role="presentation" />
+      <img :src="competition.image" alt="" />
     </v-list-item-avatar>
 
     <v-list-item-content>

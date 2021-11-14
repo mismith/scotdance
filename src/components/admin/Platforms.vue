@@ -100,7 +100,10 @@ function getPlaceholderSlot(timestamp = undefined) {
 export default {
   name: 'AdminPlatforms',
   props: {
-    path: String,
+    path: {
+      type: String,
+      required: false,
+    },
     item: Object,
     groups: Array,
     dances: Array,

@@ -42,8 +42,14 @@ export default {
   name: 'DancerListItem',
   props: {
     dancer: Object,
-    place: Number,
-    to: Object,
+    place: {
+      type: Number,
+      required: false,
+    },
+    to: {
+      type: [Object, String],
+      required: false,
+    },
   },
   computed: {
     detail() {

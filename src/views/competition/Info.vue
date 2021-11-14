@@ -13,7 +13,7 @@
           :class="{ 'ml-3': $vuetify.breakpoint.mdAndUp }"
           :style="{ float: $vuetify.breakpoint.mdAndUp ? 'right' : undefined }"
         >
-          <img :src="competition.image" />
+          <img :src="competition.image" alt="" />
         </v-avatar>
         <h1 class="display-1 mb-4">{{ competition.name }}</h1>
         <p v-if="competition.date" class="headline">
@@ -97,7 +97,7 @@
               <template #favorite><span /></template>
               <template #avatar>
                 <v-list-item-avatar v-if="member.image" color="white">
-                  <img :src="member.image" />
+                  <img :src="member.image" alt="" />
                 </v-list-item-avatar>
                 <span v-else />
               </template>

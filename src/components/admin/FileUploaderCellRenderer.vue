@@ -14,7 +14,7 @@
     <v-btn v-else icon x-small class="ml-auto" @mousedown.stop @click="$refs.file.click()">
       <v-icon small>{{ mdiPaperclip }}</v-icon>
     </v-btn>
-    <input ref="file" type="file" :accept="accept" @change="handleUpload" />
+    <input ref="file" type="file" :accept="accept" @change="handleUpload" aria-label="Upload file" />
 
     <v-progress-linear v-show="progress" v-model="progress" absolute bottom />
   </v-sheet>

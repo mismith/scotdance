@@ -32,9 +32,18 @@ import { hasFavorites } from '@/helpers/competition';
 export default {
   name: 'ResultListItem',
   props: {
-    dancers: Array, // [] -> TBD; [...] -> show checkmark;
-    hasPlaceholderDancers: Boolean, // true -> show hollow checkmark
-    place: Number, // undefined -> show chevron
+    dancers: {
+      type: Array, // [] -> TBD; [...] -> show checkmark;
+      default: () => [],
+    },
+    hasPlaceholderDancers: {
+      type: Boolean, // true -> show hollow checkmark
+      default: false,
+    },
+    place: {
+      type: Number, // undefined -> show chevron
+      required: false,
+    },
     to: Object,
   },
   data() {

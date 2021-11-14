@@ -7,14 +7,14 @@
     >
       <v-progress-linear v-show="progress" v-model="progress" absolute />
       <template v-if="value">
-        <img v-if="isImage" :src="value" />
+        <img v-if="isImage" :src="value" alt="Uploaded image" />
         <div v-else class="text-truncate pa-3">{{ filename }}</div>
       </template>
       <div v-else class="d-flex flex-column align-center py-4 px-8">
         <v-icon size="100">{{ mdiCloudUpload }}</v-icon>
         <div>Drag or Browse</div>
       </div>
-      <input type="file" :accept="accept" @change="handleUpload" />
+      <input type="file" :accept="accept" @change="handleUpload" aria-label="Upload file" />
     </v-card>
     <v-text-field
       :value="filename"

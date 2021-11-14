@@ -24,7 +24,10 @@ import AccountButtons from '@/components/AccountButtons.vue';
 export default {
   name: 'RequiresPermission',
   props: {
-    permission: Boolean,
+    permission: {
+      type: Boolean,
+      required: false,
+    },
   },
   data() {
     return {

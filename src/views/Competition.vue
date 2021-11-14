@@ -58,7 +58,7 @@
       <template #title>
         <v-card-title v-if="currentDialogData" class="d-flex flex-wrap">
           <v-avatar v-if="currentDialogData.image" :size="100" color="white" class="mr-4">
-            <img :src="currentDialogData.image" />
+            <img :src="currentDialogData.image" alt="" />
           </v-avatar>
           <div class="flex">
             <div class="title my-4">{{ currentDialogData.$name }}</div>
