@@ -77,6 +77,11 @@ export default {
       left: 0;
       opacity: 0;
       font-size: 999px;
+
+      &,
+      &::-webkit-file-upload-button {
+        cursor:pointer;
+      }
     }
   }
 }
