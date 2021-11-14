@@ -1,5 +1,10 @@
 # Release Notes
 
+## 3.0.1 - Nov 13, 2021
+- fix section expander bug where toggling wouldn't always behave or persist as expected
+- add number of dancers to schedule dance groups
+- various minor improvements like: dividing dot formatting; favourite dancer suggestions transitions
+
 ## 3.0.0 - Nov 1, 2021
 - the app can now auto-suggest favourite dancers to you based on your previous selections
 - major framework upgrades to streamline things behind-the-scenes
