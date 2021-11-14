@@ -62,14 +62,19 @@
                 </v-subheader>
               </template>
 
-              <v-list two-line>
+              <v-fade-transition
+                group
+                tag="v-list"
+                leave-absolute
+                two-line
+              >
                 <DancerListItem
                   v-for="dancer in group"
                   :key="dancer[idKey]"
                   :dancer="dancer"
                   :to="{ name: $route.name, params: { competitionId, dancerId: dancer[idKey] } }"
                 />
-              </v-list>
+              </v-fade-transition>
             </v-list-group>
           </v-list>
           <EmptyState
