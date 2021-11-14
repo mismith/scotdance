@@ -3,7 +3,8 @@ import 'firebase/auth';
 import 'firebase/database';
 import 'firebase/storage';
 
-const FIREBASE_ENV = process.env.NODE_ENV || 'production';
+export { firebase };
+export const FIREBASE_ENV = process.env.NODE_ENV || 'production';
 const instance = FIREBASE_ENV === 'development' ? 'scotdance-dev' : 'scotdance';
 const config = {
   apiKey: 'AIzaSyCxvA2RMvlCQ3WCzAqPotD8IOhnmCtQ1xM',
@@ -13,17 +14,25 @@ const config = {
   storageBucket: 'firebase-scotdance.appspot.com',
   messagingSenderId: '635645850119',
 };
-const app = firebase.initializeApp(config);
+export const app = firebase.initializeApp(config);
+
+if (FIREBASE_ENV === 'development') {
+  // port values from /firebase.json
+  firebase.auth().useEmulator(`http://localhost:${9099}/`, { disableWarnings: true });
+  firebase.database().useEmulator('localhost', 9000);
+  firebase.storage().useEmulator('localhost', 9199);
+  // firebase.functions().useEmulator("localhost", 5001);
+}
 
 // https://stackoverflow.com/a/36087084/888928
-const pushidRegex = /^[-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz]{20}$/;
-const idKey = '.key';
-const valueKey = '.value';
-const db = firebase.database().ref(FIREBASE_ENV);
+export const pushidRegex = /^[-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz]{20}$/;
+export const idKey = '.key';
+export const valueKey = '.value';
+export const db = firebase.database().ref(FIREBASE_ENV);
 
-const buckets = firebase.storage().ref(FIREBASE_ENV);
+export const buckets = firebase.storage().ref(FIREBASE_ENV);
 
-const toOrderedArray = (obj) => {
+export const toOrderedArray = (obj) => {
   return Object.entries(obj || {})
     .map(([key, value]) => {
       const item = {
@@ -45,17 +54,4 @@ const toOrderedArray = (obj) => {
       }
       return 0;
     });
-};
-
-export {
-  FIREBASE_ENV,
-  firebase,
-  config,
-  app,
-  pushidRegex,
-  idKey,
-  valueKey,
-  db,
-  buckets,
-  toOrderedArray,
 };
