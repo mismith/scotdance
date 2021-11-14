@@ -41,7 +41,7 @@ export default {
       const augmentedSettings = augmentHot(settings);
 
       if (this.data) {
-        const instance = this;
+        const vm = this;
         augmentedSettings.afterLoadData = function afterLoadData() {
           // restore sorting after data is refreshed
           const ColumnSorting = this.getPlugin('ColumnSorting');
@@ -54,7 +54,7 @@ export default {
             const keys = {};
             const getKey = (row) => {
               if (!keys[row]) {
-                const key = instance.clonedData[row] && instance.clonedData[row][idKey];
+                const key = vm.clonedData[row] && vm.clonedData[row][idKey];
                 if (!key) {
                   keys[row] = db.push().key;
                 } else {
@@ -71,7 +71,7 @@ export default {
               aggregated[`${key}/${prop.replace('.', '/')}`] = newVal || null;
             });
             if (Object.keys(aggregated).length) { // ignore if new row and no value entered
-              instance.$emit('change', aggregated);
+              vm.$emit('change', aggregated);
             }
           }
         };
@@ -79,12 +79,12 @@ export default {
           const aggregated = {};
           for (let row = index; row < index + amount; row += 1) {
             const physicalRow = this.toPhysicalRow(row); // to account for sorting
-            const key = instance.clonedData[physicalRow] && instance.clonedData[physicalRow][idKey];
+            const key = vm.clonedData[physicalRow] && vm.clonedData[physicalRow][idKey];
             if (key) {
               aggregated[key] = null;
             }
           }
-          instance.$emit('change', aggregated);
+          vm.$emit('change', aggregated);
         };
       }
 

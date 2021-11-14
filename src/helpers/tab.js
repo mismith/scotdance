@@ -7,15 +7,15 @@ export function isTabDisabled(data) {
   return data?.[valueKey] === false;
 }
 
-export async function handleTabDisable(slug, instance) {
-  const shouldDisableTab = !instance.isTabDisabled;
-  const setTabData = (v) => instance.$emit('change', { [slug]: v });
+export async function handleTabDisable(slug, vm) {
+  const shouldDisableTab = !vm.isTabDisabled;
+  const setTabData = (v) => vm.$emit('change', { [slug]: v });
   const clearTabData = () => {
     setTabData(false);
   };
 
   if (shouldDisableTab) {
-    if (instance.hasNoExistingTabData) {
+    if (vm.hasNoExistingTabData) {
       // clear without confirmation (since there's no data to lose)
       clearTabData();
     } else {
@@ -23,7 +23,7 @@ export async function handleTabDisable(slug, instance) {
       try {
         await new Promise((resolve, reject) => {
           // eslint-disable-next-line no-param-reassign
-          instance.confirmDisable = { resolve, reject };
+          vm.confirmDisable = { resolve, reject };
         });
 
         clearTabData();
@@ -31,7 +31,7 @@ export async function handleTabDisable(slug, instance) {
         if (err) console.error(err); // eslint-disable-line no-console
       } finally {
         // eslint-disable-next-line no-param-reassign
-        instance.confirmDisable = null;
+        vm.confirmDisable = null;
       }
     }
   } else {
