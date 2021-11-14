@@ -52,7 +52,7 @@ export const competitionDeleted = appConfig.database.ref(`/${env}/competitions/{
     if (!users) return;
 
     const userIds = Object.keys(users);
-    await Promise.all(userIds.map(userId => attachUserToCompetition({
+    await Promise.all(userIds.map((userId) => attachUserToCompetition({
       db,
       userId,
       competitionId,

@@ -10,7 +10,7 @@
     "postset-version": "npx cap copy",
     "sync-version": "pilfer-package version > public/version.json && npm run set-version -- $npm_package_version",
     "notify": "node ./notify.js",
-    "lint": "eslint './src/**/*.{js,vue}'",
+    "lint": "eslint './src/**/*.{js,ts,vue}'",
     "lint:fix": "npm run lint -- --fix",
     "build:functions": "npm run --prefix ./functions build",
     "emulate": "npm run build:functions && firebase emulators:start --import=./.firebase/emulator-data --export-on-exit",

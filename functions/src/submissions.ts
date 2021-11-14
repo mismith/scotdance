@@ -48,6 +48,7 @@ class Submissions {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async handleApproved(snap, ctx) {
     const submission = snap.val();
     const submissionId = snap.key;
@@ -84,7 +85,9 @@ class Submissions {
     });
   }
 
+  // eslint-disable-next-line class-methods-use-this
   async handleError(err, snap, ctx) {
+    // eslint-disable-next-line no-console
     console.error(err, snap && snap.val(), ctx);
   }
 
@@ -100,7 +103,7 @@ class Submissions {
           });
           const snap = await after.ref.once('value');
 
-          return this.handleCreate(snap, ctx);
+          return await this.handleCreate(snap, ctx);
         } catch (err) {
           return this.handleError(err, after, ctx);
         }
@@ -114,7 +117,7 @@ class Submissions {
             });
             const snap = await after.ref.once('value');
 
-            return this.handleApproved(snap, ctx);
+            return await this.handleApproved(snap, ctx);
           }
         } catch (err) {
           return this.handleError(err, after, ctx);
