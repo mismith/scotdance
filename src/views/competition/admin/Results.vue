@@ -286,7 +286,8 @@ export default {
     }
   }
   .DancerListItem {
-    .group {
+    .group,
+    .location::before {
       display: none;
     }
     &.placed {
