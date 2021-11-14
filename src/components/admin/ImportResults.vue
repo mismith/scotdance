@@ -177,22 +177,20 @@ export default {
   },
   computed: {
     currentGroup() {
-      const { groupId } = this.$route.params;
-      if (groupId) {
-        return findByIdKey(this.groups, groupId);
+      if (this.groupId) {
+        return findByIdKey(this.groups, this.groupId);
       }
       return null;
     },
     currentDance() {
-      const { danceId } = this.$route.params;
-      if (danceId) {
-        if (danceId === overall[idKey]) {
+      if (this.danceId) {
+        if (this.danceId === overall[idKey]) {
           return overall;
         }
-        if (danceId === callbacks[idKey]) {
+        if (this.danceId === callbacks[idKey]) {
           return callbacks;
         }
-        return findByIdKey(this.dances, danceId);
+        return findByIdKey(this.dances, this.danceId);
       }
       return null;
     },

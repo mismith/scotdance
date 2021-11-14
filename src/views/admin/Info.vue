@@ -1,7 +1,6 @@
 <template>
   <AdminSubsections
     :section="section"
-    :subsection-id="subsectionId"
     class="AdminInfo"
   >
     <template #form="{ currentSubsection }">
@@ -32,6 +31,7 @@
 <script>
 import { mdiCogBox, mdiCalendarMultiple } from '@mdi/js';
 import { idKey, toOrderedArray } from '@/helpers/firebase';
+import { mapRouteParams } from '@/helpers/router';
 import AdminSubsections from '@/components/admin/Subsections.vue';
 import MiHotTable from '@/components/admin/MiHotTable.vue';
 import DynamicForm from '@/components/admin/DynamicForm.vue';
@@ -47,9 +47,6 @@ export default {
       'users',
     ],
   },
-  props: {
-    subsectionId: String,
-  },
   data() {
     return {
       idKey,
@@ -58,6 +55,10 @@ export default {
     };
   },
   computed: {
+    ...mapRouteParams([
+      'subsectionId',
+    ]),
+
     info() {
       return {
         versions: this.versions,

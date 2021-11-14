@@ -61,7 +61,6 @@ export default new Router({
       path: '/policies/:policyId?',
       name: 'policies',
       component: Policies,
-      props: true,
       meta: {
         title: 'Policies',
       },
@@ -89,7 +88,6 @@ export default new Router({
         {
           path: ':competitionId',
           component: Competition,
-          props: true,
           meta: {
             async title(route) {
               const snap = await db
@@ -113,7 +111,6 @@ export default new Router({
               path: 'dancers/:dancerId?',
               name: 'competition.dancers',
               component: CompetitionDancers,
-              props: true,
               meta: {
                 title: competitionSchema.dancers.name,
               },
@@ -122,7 +119,6 @@ export default new Router({
               path: 'schedule/:dayId?/:blockId?/:eventId?/:danceId?',
               name: 'competition.schedule',
               component: CompetitionSchedule,
-              props: true,
               meta: {
                 title: competitionSchema.schedule.name,
               },
@@ -131,7 +127,6 @@ export default new Router({
               path: 'results/:groupId?/:danceId?',
               name: 'competition.results',
               component: CompetitionResults,
-              props: true,
               meta: {
                 title: competitionSchema.results.name,
               },
@@ -140,7 +135,6 @@ export default new Router({
               path: 'invites/:inviteId',
               name: 'competition.invite',
               component: CompetitionInvite,
-              props: true,
               meta: {
                 title: 'Your Invitation',
               },
@@ -164,7 +158,6 @@ export default new Router({
                   path: 'info/:subsectionId?',
                   name: 'competition.admin.info',
                   component: CompetitionAdminInfo,
-                  props: true,
                   meta: {
                     title(route) {
                       const section = competitionAdminSchema.info;
@@ -177,7 +170,6 @@ export default new Router({
                   path: 'schedule/:dayId?/:blockId?/:eventId?/:danceId?',
                   name: 'competition.admin.schedule',
                   component: CompetitionAdminSchedule,
-                  props: true,
                   meta: {
                     title: competitionAdminSchema.schedule.name,
                   },
@@ -186,7 +178,6 @@ export default new Router({
                   path: 'results/:groupId?/:danceId?',
                   name: 'competition.admin.results',
                   component: CompetitionAdminResults,
-                  props: true,
                   meta: {
                     title: competitionAdminSchema.results.name,
                   },
@@ -195,7 +186,6 @@ export default new Router({
                   path: 'dance-groups/:groupId?',
                   name: 'competition.admin.dance-groups',
                   component: CompetitionAdminDanceGroups,
-                  props: true,
                   meta: {
                     title: competitionAdminSchema['dance-groups'].name,
                   },
@@ -203,7 +193,6 @@ export default new Router({
                 {
                   path: ':tab',
                   name: 'competition.admin.tab',
-                  props: true,
                   meta: {
                     title(route) {
                       const section = competitionAdminSchema[route.params.tab];
@@ -236,7 +225,6 @@ export default new Router({
           path: 'info/:subsectionId?',
           name: 'admin.info',
           component: AdminInfo,
-          props: true,
           meta: {
             title(route) {
               const section = adminSchema.info;
@@ -249,7 +237,6 @@ export default new Router({
           path: 'submissions/:submissionId?',
           name: 'admin.submissions',
           component: AdminSubmissions,
-          props: true,
           meta: {
             title: 'Submissions',
           },
@@ -258,7 +245,6 @@ export default new Router({
           path: 'users/:userId?',
           name: 'admin.users',
           component: AdminUsers,
-          props: true,
           meta: {
             title: 'Users',
           },
@@ -266,7 +252,6 @@ export default new Router({
         {
           path: ':tab',
           name: 'admin.tab',
-          // props: true, // @TODO: why does this cause an error?
         },
       ],
     },

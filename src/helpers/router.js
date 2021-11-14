@@ -57,3 +57,13 @@ export function formatExternalURL(url) {
 export function formatHumanURL(url) {
   return (url || '').replace(/^((https?:)?\/\/)?(www\.)?/i, '');
 }
+
+export function mapRouteParams(paramNames) {
+  const computeds = paramNames.reduce((acc, paramName) => {
+    acc[paramName] = function getter() {
+      return this.$route?.params?.[paramName];
+    };
+    return acc;
+  }, {});
+  return computeds;
+}

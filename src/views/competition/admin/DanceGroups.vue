@@ -130,6 +130,7 @@ import {
 } from '@mdi/js';
 import { HotTable, licenseHot } from '@/helpers/admin';
 import { findByIdKey } from '@/helpers/competition';
+import { mapRouteParams } from '@/helpers/router';
 import {
   findGroupDances,
   findGroupDancers,
@@ -146,10 +147,6 @@ export default {
       'draws',
     ],
   },
-  props: {
-    groupId: String,
-    danceId: String,
-  },
   data() {
     return {
       idKey,
@@ -164,6 +161,9 @@ export default {
   computed: {
     ...mapState([
       'clipboard',
+    ]),
+    ...mapRouteParams([
+      'groupId',
     ]),
 
     currentGroup() {

@@ -73,6 +73,7 @@ import {
 } from '@mdi/js';
 import { flattenPaths } from '@/helpers/admin';
 import { idKey, db } from '@/helpers/firebase';
+import { mapRouteParams } from '@/helpers/router';
 import PaginatedList from '@/components/admin/PaginatedList.vue';
 import SearchField from '@/components/SearchField.vue';
 import DynamicForm from '@/components/admin/DynamicForm.vue';
@@ -88,9 +89,6 @@ export default {
       'competitions',
     ],
   },
-  props: {
-    userId: String,
-  },
   data() {
     return {
       idKey,
@@ -104,6 +102,10 @@ export default {
     };
   },
   computed: {
+    ...mapRouteParams([
+      'userId',
+    ]),
+
     currentUser() {
       if (this.userId) {
         return this.users.find((user) => user[idKey] === this.userId);

@@ -33,8 +33,15 @@
 </template>
 
 <script>
+import { mapRouteParams } from '@/helpers/router';
+
 export default {
   name: 'Policies',
+  computed: {
+    ...mapRouteParams([
+      'policyId',
+    ]),
+  },
 };
 </script>
 

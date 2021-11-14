@@ -28,12 +28,12 @@
 <script>
 import { mdiChevronRight } from '@mdi/js';
 import { idKey, toOrderedArray } from '@/helpers/firebase';
+import { mapRouteParams } from '@/helpers/router';
 
 export default {
   name: 'AdminSubsections',
   props: {
     section: Object,
-    subsectionId: String,
   },
   data() {
     return {
@@ -42,6 +42,10 @@ export default {
     };
   },
   computed: {
+    ...mapRouteParams([
+      'subsectionId',
+    ]),
+
     currentSubsection() {
       return (this.section.subsections || {})[this.subsectionId];
     },

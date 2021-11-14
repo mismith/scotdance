@@ -95,6 +95,8 @@
     </v-dialog>
     <!-- <v-dialog v-model="showImportResults" @keydown.esc.stop="showImportResults = false">
       <AdminImportResults
+        :group-id="groupId"
+        :dance-id="danceId"
         :competition-data-ref="competitionDataRef"
         :groups="groups"
         :dances="dances"
@@ -130,16 +132,28 @@ import {
   mdiAlert,
   mdiCheck,
 } from '@mdi/js';
-import { makeKeyValuePairColumn } from '@/helpers/admin';
-import { findByIdKey, danceExtender } from '@/helpers/competition';
+import {
+  makeKeyValuePairColumn,
+} from '@/helpers/admin';
+import {
+  findByIdKey,
+  danceExtender,
+} from '@/helpers/competition';
 import {
   pushidRegex,
   idKey,
   db,
   toOrderedArray,
 } from '@/helpers/firebase';
-import { getFirstExisting } from '@/helpers/router';
-import { callbacks, overall, getRows } from '@/helpers/results';
+import {
+  getFirstExisting,
+  // mapRouteParams,
+} from '@/helpers/router';
+import {
+  callbacks,
+  overall,
+  getRows,
+} from '@/helpers/results';
 import competitionAdminSchema from '@/schemas/competition-admin';
 import RequiresPermission from '@/components/RequiresPermission.vue';
 import MiHotTable from '@/components/admin/MiHotTable.vue';
@@ -182,6 +196,11 @@ export default {
     };
   },
   computed: {
+    // ...mapRouteParams([
+    //   'groupId',
+    //   'danceId',
+    // ]),
+
     hasPermission() {
       return this.$store.getters.hasPermission(`competitions/${this.competitionId}`);
     },

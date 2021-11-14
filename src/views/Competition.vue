@@ -94,6 +94,7 @@ import {
 import {
   formatExternalURL,
   formatHumanURL,
+  mapRouteParams,
 } from '@/helpers/router';
 import {
   sortByKey,
@@ -116,8 +117,8 @@ export default {
   name: 'Competition',
   reactiveProvide: {
     name: 'competitionBundle',
-    props: true,
     include: [
+      'competitionId',
       'competition',
       'competitionRef',
       'competitionDataRef',
@@ -139,9 +140,6 @@ export default {
       'competitionsDataRef',
     ],
   },
-  props: {
-    competitionId: String,
-  },
   data() {
     return {
       idKey,
@@ -159,6 +157,9 @@ export default {
       'me',
       'currentDialog',
       'currentDialogData',
+    ]),
+    ...mapRouteParams([
+      'competitionId',
     ]),
 
     staffVisible: {

@@ -190,6 +190,7 @@ import {
 import {
   isExpanded,
   handleExpanded,
+  mapRouteParams,
 } from '@/helpers/router';
 import {
   isTabDisabled,
@@ -207,10 +208,6 @@ export default {
       'staff',
       'results',
     ],
-  },
-  props: {
-    groupId: String,
-    danceId: String,
   },
   localStorage: {
     resultsExpandedCategories: {
@@ -242,6 +239,11 @@ export default {
     };
   },
   computed: {
+    ...mapRouteParams([
+      'groupId',
+      'danceId',
+    ]),
+
     isTabDisabled() {
       return isTabDisabled(this.results);
     },

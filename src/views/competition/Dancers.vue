@@ -171,6 +171,7 @@ import { searchByKeys, hasFavorites } from '@/helpers/competition';
 import {
   isExpanded,
   handleExpanded,
+  mapRouteParams,
 } from '@/helpers/router';
 
 const SUGGESTIONS_NAME = 'Suggested Favourites';
@@ -186,9 +187,6 @@ export default {
       'results',
       'favoriteDancerSuggestions',
     ],
-  },
-  props: {
-    dancerId: String,
   },
   localStorage: {
     filterBy: {
@@ -231,6 +229,9 @@ export default {
   computed: {
     ...mapState([
       'me',
+    ]),
+    ...mapRouteParams([
+      'dancerId',
     ]),
 
     currentDancer() {

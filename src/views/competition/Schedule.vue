@@ -220,6 +220,7 @@ import {
 import {
   isExpanded,
   handleExpanded,
+  mapRouteParams,
 } from '@/helpers/router';
 import {
   slugline,
@@ -249,12 +250,6 @@ export default {
       'schedule',
     ],
   },
-  props: {
-    dayId: String,
-    blockId: String,
-    eventId: String,
-    danceId: String,
-  },
   localStorage: {
     scheduleExpandedBlocks: {
       type: Object,
@@ -278,6 +273,12 @@ export default {
     ...mapState([
       'currentDialog',
       'currentDialogData',
+    ]),
+    ...mapRouteParams([
+      'dayId',
+      'blockId',
+      'eventId',
+      'danceId',
     ]),
 
     isTabDisabled() {

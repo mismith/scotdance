@@ -72,6 +72,7 @@ import {
 } from '@mdi/js';
 import { FirebaseInvites } from '@mismith/firebase-tools';
 import { idKey } from '@/helpers/firebase';
+import { mapRouteParams } from '@/helpers/router';
 import RequiresPermission from '@/components/RequiresPermission.vue';
 
 export default {
@@ -81,9 +82,6 @@ export default {
       'competitionId',
       'competitionDataRef',
     ],
-  },
-  props: {
-    inviteId: String,
   },
   data() {
     return {
@@ -98,6 +96,10 @@ export default {
     };
   },
   computed: {
+    ...mapRouteParams([
+      'inviteId',
+    ]),
+
     invite() {
       return this.inviteRaw;
     },

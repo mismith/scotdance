@@ -1,7 +1,6 @@
 <template>
   <AdminSubsections
     :section="section"
-    :subsection-id="subsectionId"
     class="CompetitionAdminInfo"
   >
     <template #form="{ currentSubsection }">
@@ -53,6 +52,7 @@
 <script>
 import { mdiChevronRight, mdiCog } from '@mdi/js';
 import { idKey, toOrderedArray } from '@/helpers/firebase';
+import { mapRouteParams } from '@/helpers/router';
 import AdminSubsections from '@/components/admin/Subsections.vue';
 import MiHotTable from '@/components/admin/MiHotTable.vue';
 import DynamicForm from '@/components/admin/DynamicForm.vue';
@@ -69,7 +69,6 @@ export default {
     ],
   },
   props: {
-    subsectionId: String,
     section: Object,
   },
   data() {
@@ -80,6 +79,11 @@ export default {
 
       confirmRemove: false,
     };
+  },
+  computed: {
+    ...mapRouteParams([
+      'subsectionId',
+    ]),
   },
   methods: {
     toOrderedArray,

@@ -150,6 +150,7 @@ import {
 } from '@mdi/js';
 import { idKey, db, toOrderedArray } from '@/helpers/firebase';
 import { findByIdKey } from '@/helpers/competition';
+import { mapRouteParams } from '@/helpers/router';
 import steps from '@/schemas/submissions';
 import DynamicForm from '@/components/admin/DynamicForm.vue';
 import BladeToolbar from '@/components/BladeToolbar.vue';
@@ -161,9 +162,6 @@ export default {
       'submissions',
       'users',
     ],
-  },
-  props: {
-    submissionId: String,
   },
   data() {
     return {
@@ -180,6 +178,10 @@ export default {
     };
   },
   computed: {
+    ...mapRouteParams([
+      'submissionId',
+    ]),
+
     orderedSubmissions() {
       const orderedSubmissions = [...this.submissions];
       orderedSubmissions.reverse();

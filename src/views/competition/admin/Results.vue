@@ -132,6 +132,7 @@ import {
   isPlaced,
   hasExplicitlyEmptyResults,
 } from '@/helpers/results';
+import { mapRouteParams } from '@/helpers/router';
 
 export default {
   name: 'CompetitionAdminResults',
@@ -142,10 +143,6 @@ export default {
       'dancers',
       'results',
     ],
-  },
-  props: {
-    groupId: String,
-    danceId: String,
   },
   data() {
     return {
@@ -160,6 +157,11 @@ export default {
     };
   },
   computed: {
+    ...mapRouteParams([
+      'groupId',
+      'danceId',
+    ]),
+
     hasNoExistingTabData() {
       return hasNoExistingTabData(this.results);
     },

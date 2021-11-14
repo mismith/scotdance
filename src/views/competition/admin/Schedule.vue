@@ -238,8 +238,17 @@ import {
   db,
   toOrderedArray,
 } from '@/helpers/firebase';
-import { getScheduleItemDanceName } from '@/helpers/competition';
-import { hasNoExistingTabData, isTabDisabled, handleTabDisable } from '@/helpers/tab';
+import {
+  getScheduleItemDanceName,
+} from '@/helpers/competition';
+import {
+  mapRouteParams,
+} from '@/helpers/router';
+import {
+  hasNoExistingTabData,
+  isTabDisabled,
+  handleTabDisable,
+} from '@/helpers/tab';
 
 export default {
   name: 'CompetitionAdminSchedule',
@@ -252,12 +261,6 @@ export default {
       'platforms',
       'schedule',
     ],
-  },
-  props: {
-    dayId: String,
-    blockId: String,
-    eventId: String,
-    danceId: String,
   },
   data() {
     return {
@@ -428,6 +431,13 @@ export default {
     };
   },
   computed: {
+    ...mapRouteParams([
+      'dayId',
+      'blockId',
+      'eventId',
+      'danceId',
+    ]),
+
     hasNoExistingTabData() {
       return hasNoExistingTabData(this.schedule);
     },
