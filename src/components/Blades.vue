@@ -14,7 +14,7 @@ export default {
 </script>
 
 <style lang="scss">
-.Blades {
+.Blades.app-scroll-frame { // double selector for extra specificity to ensure overflow-x takes effect
   position: relative;
 
   @media (min-width: 960px) {
