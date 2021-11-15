@@ -2,6 +2,7 @@ import Vue from 'vue';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.css';
 import flatten from 'obj-flatten';
+import vuetify from '@/plugins/vuetify';
 import { idKey } from '@/helpers/firebase';
 import FileUploaderCellRenderer from '@/components/admin/FileUploaderCellRenderer.vue';
 
@@ -61,6 +62,7 @@ Handsontable.cellTypes.registerCellType('file', {
           accept,
         },
       }),
+      vuetify,
     });
   },
   editor: Handsontable.editors.TextEditor,

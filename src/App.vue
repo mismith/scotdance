@@ -736,6 +736,10 @@ body {
       max-height: 100%;
       border-radius: 0;
     }
+    .v-icon__svg {
+      width: 24px;
+      height: 24px;
+    }
   }
   .v-list {
     &.grouped {
