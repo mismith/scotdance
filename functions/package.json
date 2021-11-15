@@ -4,6 +4,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
+    "dev": "npm run build -- --watch",
     "lint": "eslint './src/**/*.{js,ts}'",
     "lint:fix": "npm run lint -- --fix"
   },
