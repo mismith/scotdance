@@ -42,7 +42,7 @@ class Invites extends FirebaseInvites {
 
   async attachUserToCompetition(snap, ctx, value) {
     const invite = snap.val();
-    const userId = invite[FirebaseInvites.prop.ACCEPTED_BY];
+    const userId = invite[FirebaseInvites.keys.acceptedBy];
     if (userId) {
       const { competitionId } = ctx.params;
       await attachUserToCompetition({
