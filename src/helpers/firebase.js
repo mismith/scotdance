@@ -3,8 +3,12 @@ import 'firebase/auth';
 import 'firebase/database';
 import 'firebase/storage';
 
+export function isLocalhost() {
+  return window.location.hostname === 'localhost';
+}
+
 export { firebase };
-export const FIREBASE_ENV = process.env.NODE_ENV || 'production';
+const FIREBASE_ENV = process.env.NODE_ENV || 'production';
 const config = {
   apiKey: 'AIzaSyCxvA2RMvlCQ3WCzAqPotD8IOhnmCtQ1xM',
   authDomain: 'scotdance.firebaseapp.com',
@@ -15,7 +19,7 @@ const config = {
 };
 export const app = firebase.initializeApp(config);
 
-if (FIREBASE_ENV === 'development') {
+if (isLocalhost()) {
   // port values from /firebase.json
   firebase.auth().useEmulator(`http://localhost:${9099}/`, { disableWarnings: true });
   firebase.database().useEmulator('localhost', 9000);

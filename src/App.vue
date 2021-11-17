@@ -6,7 +6,7 @@
       absolute
       color="primary"
       class="print-hide"
-      :class="{ stripes: env !== 'production' }"
+      :class="{ stripes: isLocalhost() }"
     >
       <v-btn icon @click="menuVisible = !menuVisible" aria-label="menu">
         <v-badge v-model="needsUpdating" dot color="secondary">
@@ -285,12 +285,15 @@ import {
   mdiSend,
   mdiStar,
 } from '@mdi/js';
-import { getTitleChunks, getFirstExisting } from '@/helpers/router';
 import {
-  FIREBASE_ENV,
+  getTitleChunks,
+  getFirstExisting,
+} from '@/helpers/router';
+import {
   idKey,
   db,
   firebase,
+  isLocalhost,
 } from '@/helpers/firebase';
 import RegisterDialog from '@/components/RegisterDialog.vue';
 import LoginDialog from '@/components/LoginDialog.vue';
@@ -311,7 +314,6 @@ export default {
   },
   data() {
     return {
-      env: FIREBASE_ENV,
       idKey,
       db,
 
@@ -422,6 +424,7 @@ export default {
     ...mapActions([
       'help',
     ]),
+    isLocalhost,
 
     async loadFirebase() {
       this.competitionsRef = db.child('competitions');
