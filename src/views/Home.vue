@@ -1,6 +1,6 @@
 <template>
   <div class="Home app-scroll-frame app-scroll">
-    <section class="hero">
+    <section id="hero">
       <div>
         <img src="@/assets/img/touchicon.png" alt="" width="88" height="88" />
         <h1 class="display-2 my-4">{{ $package.$name }}</h1>
@@ -139,7 +139,7 @@ export default {
       padding: 20px;
     }
   }
-  .hero {
+  #hero {
     display: flex;
     align-items: center;
     justify-content: center;

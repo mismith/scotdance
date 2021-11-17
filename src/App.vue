@@ -869,14 +869,15 @@ body {
     margin: 0;
     border: 0;
   }
-  .home {
+  .Home {
     > * {
-      &:not(.hero) {
+      &:not(#hero) {
         display: none;
       }
-      &.hero {
+      &#hero {
         width: 5.5in;
         height: 4.25in;
+        color: initial;
 
         h1,
         p {
