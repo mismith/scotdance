@@ -1,0 +1,50 @@
+name: Test
+
+on: [push]
+
+env:
+  CYPRESS_CACHE_FOLDER: cypress/cache
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+          cache: 'npm'
+      - name: Cache node_modules
+        id: cache-node-modules
+        uses: actions/cache@v2
+        with:
+          path: node_modules/
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+      - name: Cache functions node_modules
+        id: cache-functions-node-modules
+        uses: actions/cache@v2
+        with:
+          path: functions/node_modules/
+          key: functions-node-modules-${{ hashFiles('functions/package-lock.json') }}
+      - name: Cache firebase emulators
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/firebase/emulators/
+          key: firebase-emulators-${{ hashFiles('~/.cache/firebase/emulators/**') }}
+      - name: Cache cypress binary
+        uses: actions/cache@v2
+        with:
+          path: cypress/cache/
+          key: cypress-binary-${{ hashFiles('package-lock.json') }}
+      - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm ci
+      - name: Install functions dependencies
+        if: steps.cache-functions-node-modules.outputs.cache-hit != 'true'
+        run: npm ci --prefix functions/
+      - name: Build assets
+        run: npm run build:ci
+      - name: Run tests
+        run: npm run test:ci

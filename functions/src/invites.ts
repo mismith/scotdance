@@ -4,7 +4,7 @@ import { postmark } from './utility/email';
 import { attachUserToCompetition } from './utility/competition';
 
 const dynamicLinks = new FirebaseDynamicLinks(
-  config().fb.web_api_key,
+  config().fb?.web_api_key || 'MISSING',
   'info.mismith.scotdance',
   'scotdance.page.link',
 );

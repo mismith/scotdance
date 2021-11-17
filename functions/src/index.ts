@@ -5,7 +5,7 @@ import Submissions from './submissions';
 import { attachUserToCompetition } from './utility/competition';
 
 const app = initializeApp();
-const env = config().app.env || 'production';
+const env = config().app?.env || 'production';
 const appConfig = {
   env,
   app,
