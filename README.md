@@ -15,9 +15,10 @@ Modernize your highland dancing experience by interacting with program-of-events
 Command | Description
 --- | ---
 `npm i` | install dependencies
-`npm run dev` | serve with hot reload at localhost:8080
+`npm run dev` | serve app with emulated data and hot reloading at https://localhost:3000
 `npm run build` | build for production with minification
-`npm run lint` | show code formatting tips
+`npm run lint` / `npm run lint:fix` | show code formatting tips (and fix them)
+`npm run report` | open bundle size visualizer (`stats.html`)
 `npm run release` | create version commit and tag in git
 `npm run deploy` | push local build to production
 
