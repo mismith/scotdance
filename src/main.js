@@ -13,7 +13,7 @@ import { Capacitor, Plugins } from '@capacitor/core';
 import { Device } from '@capacitor/device';
 import { SplashScreen } from '@capacitor/splash-screen';
 
-import { firebase } from '@/helpers/firebase';
+import { firebase, isLocalhost } from '@/helpers/firebase';
 import { getTitleChunks } from '@/helpers/router';
 
 import App from '@/App.vue';
@@ -195,6 +195,17 @@ if (window.$crisp) {
   }]);
 
   store.commit('setHelpAvailable', true);
+}
+
+// test helpers
+if (isLocalhost()) {
+  Vue.directive('test', {
+    bind(el, binding) {
+      el.setAttribute('data-test-id', binding.value);
+    },
+  });
+} else {
+  Vue.directive('test', {});
 }
 
 new Vue({

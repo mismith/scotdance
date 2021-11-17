@@ -83,7 +83,7 @@
         <p>Track development via <a href="https://trello.com/b/ZCZ8t1fH" target="_blank" class="ext">Trello</a></p>
         <p>Legal Documents: <router-link :to="{ name: 'policies' }">Policies</router-link></p>
         <p v-if="$store.state.helpAvailable">Contact us through <a href="#" @click.prevent="help(true)">Live Chat</a></p>
-        <p><small>{{ devicePlatform }} App v{{ $package.version || '?' }}</small></p>
+        <p v-test="'version'"><small>{{ devicePlatform }} App v{{ $package.version || '?' }}</small></p>
       </header>
     </section>
   </div>

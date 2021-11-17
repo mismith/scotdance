@@ -5,13 +5,13 @@
     </template>
     <template v-else-if="!$store.state.me">
       <slot name="unauthed">
-        <EmptyState :icon="mdiBlockHelper" label="Login required" class="flex-none mb-0" />
+        <EmptyState :icon="mdiBlockHelper" label="Login required" class="flex-none mb-0" v-test="'requiresPermissionUnauthed'" />
         <AccountButtons class="mt-0" />
       </slot>
     </template>
     <template v-else>
       <slot name="unauthorized">
-        <EmptyState :icon="mdiBlockHelper" label="Access denied" />
+        <EmptyState :icon="mdiBlockHelper" label="Access denied" v-test="'requiresPermissionUnauthorized'" />
       </slot>
     </template>
   </div>
