@@ -1,4 +1,16 @@
 beforeEach(() => {
+  cy.task('firebase-admin:auth', {
+    method: 'resetUsers',
+  });
+  cy.task('firebase-admin:database', {
+    method: 'set',
+    args: [
+      'development',
+      null,
+    ],
+  });
+
+
   cy.auth('signOut');
   cy.clearLocalStorage();
   cy.clearCookies();
@@ -37,6 +49,22 @@ describe('Competitions', () => {
 });
 
 function itShouldBeAuthGuarded() {
+  cy.task('firebase-admin:auth', {
+    method: 'createUser',
+    args: [{
+      uid: 'TEST_USER_UID',
+      email: 'test@scotdance.app',
+      password: 'WelcomeTest1',
+    }],
+  });
+  cy.task('firebase-admin:database', {
+    method: 'set',
+    args: [
+      'development/users:permissions/TEST_USER_UID/admin',
+      true,
+    ],
+  });
+
   cy.getTest('requiresPermissionUnauthed').should('exist');
   cy.auth('signInWithEmailAndPassword', ['test@scotdance.app', 'WelcomeTest1']);
   cy.getTest('requiresPermissionUnauthed').should('not.exist');

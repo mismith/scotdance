@@ -32,8 +32,7 @@ yarn-error.log*
 *.log
 *.keystore
 *.pepk
-.firebase/*
-!.firebase/emulator-data-ci
+.firebase/
 .runtimeconfig.json
 firebase-adminsdk.json
 /public/version.json
