@@ -1,19 +1,13 @@
 <template>
   <div class="RequiresPermission">
-    <template v-if="permission || $store.state.me">
-      <slot />
-    </template>
-    <template v-else-if="!$store.state.me">
-      <slot name="unauthed">
-        <EmptyState :icon="mdiBlockHelper" label="Login required" class="flex-none mb-0" v-test="'requiresPermissionUnauthed'" />
-        <AccountButtons class="mt-0" />
-      </slot>
-    </template>
-    <template v-else>
-      <slot name="unauthorized">
-        <EmptyState :icon="mdiBlockHelper" label="Access denied" v-test="'requiresPermissionUnauthorized'" />
-      </slot>
-    </template>
+    <slot v-if="permission !== undefined ? permission : $store.state.me" />
+    <slot name="unauthed" v-else-if="!$store.state.me">
+      <EmptyState :icon="mdiBlockHelper" label="Login required" class="flex-none mb-0" key="unauthed" v-test="'requiresPermissionUnauthed'" />
+      <AccountButtons class="mt-0" />
+    </slot>
+    <slot name="unauthorized" v-else>
+      <EmptyState :icon="mdiBlockHelper" label="Access denied" key="unauthorized" v-test="'requiresPermissionUnauthorized'" />
+    </slot>
   </div>
 </template>
 
@@ -27,6 +21,7 @@ export default {
     permission: {
       type: Boolean,
       required: false,
+      default: undefined,
     },
   },
   data() {
