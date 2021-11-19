@@ -17,13 +17,13 @@ module.exports = (on, config) => {
   });
 
   on('task', {
-    async 'firebase-admin:auth'({ method, args = [] }) {
+    'firebase-admin:auth': async ({ method, args = [] }) => {
       const auth = getAuth();
       let result;
       switch (method) {
         case 'resetUsers': {
           const { users } = await auth.listUsers(100); // @TODO: split into batches
-          result = await auth.deleteUsers(users.map(user => user.uid));
+          result = await auth.deleteUsers(users.map((user) => user.uid));
           break;
         }
         default: {
@@ -33,7 +33,7 @@ module.exports = (on, config) => {
       }
       return result === undefined ? null : result;
     },
-    async 'firebase-admin:database'({ method, args = [] }) {
+    'firebase-admin:database': async ({ method, args = [] }) => {
       const database = getDatabase();
       let result;
       switch (method) {

@@ -10,7 +10,7 @@
     "postset-version": "npx cap copy",
     "sync-version": "pilfer-package version > public/version.json && npm run set-version -- $npm_package_version",
     "notify": "node ./notify.js",
-    "lint": "eslint './src/**/*.{js,ts,vue}'",
+    "lint": "eslint './{src,cypress}/**/*.{js,ts,vue}'",
     "lint:fix": "npm run lint -- --fix",
     "emulate": "firebase emulators:start --import=.firebase/emulator-data --export-on-exit",
     "dev:functions": "npm run --prefix functions dev",
@@ -80,6 +80,7 @@
     "eslint": "^7.32.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-import-resolver-alias": "^1.1.2",
+    "eslint-plugin-cypress": "^2.12.1",
     "eslint-plugin-import": "^2.25.2",
     "eslint-plugin-vue": "^7.20.0",
     "firebase-admin": "^10.0.0",
@@ -117,6 +118,7 @@
       }
     },
     "extends": [
+      "plugin:cypress/recommended",
       "plugin:vue/essential",
       "airbnb-base"
     ],
@@ -125,7 +127,8 @@
       "max-len": 0,
       "no-unused-vars": 1,
       "import/no-cycle": 0,
-      "vue/no-mutating-props": 1
+      "vue/no-mutating-props": 1,
+      "import/no-extraneous-dependencies": ["error", {"devDependencies": ["**/*.test.js", "**/*.spec.js", "cypress/**/*"]}]
     }
   },
   "postcss": {
