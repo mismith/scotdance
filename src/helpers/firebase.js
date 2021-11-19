@@ -12,7 +12,7 @@ const FIREBASE_ENV = process.env.NODE_ENV || 'production';
 const config = {
   apiKey: 'AIzaSyCxvA2RMvlCQ3WCzAqPotD8IOhnmCtQ1xM',
   authDomain: 'scotdance.firebaseapp.com',
-  databaseURL: 'https://scotdance.firebaseio.com',
+  databaseURL: window.Cypress ? 'https://scotdance-cypress.firebaseio.com' : 'https://scotdance.firebaseio.com',
   projectId: 'firebase-scotdance',
   storageBucket: 'firebase-scotdance.appspot.com',
   messagingSenderId: '635645850119',

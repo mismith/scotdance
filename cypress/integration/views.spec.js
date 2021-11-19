@@ -10,7 +10,6 @@ beforeEach(() => {
     ],
   });
 
-
   cy.auth('signOut');
   cy.clearLocalStorage();
   cy.clearCookies();
@@ -48,26 +47,43 @@ describe('Competitions', () => {
   });
 });
 
-function itShouldBeAuthGuarded() {
+function itShouldBeAuthGuarded(requiresAdmin = false) {
   cy.task('firebase-admin:auth', {
     method: 'createUser',
     args: [{
-      uid: 'TEST_USER_UID',
+      uid: 'USER_UID_TEST',
       email: 'test@scotdance.app',
       password: 'WelcomeTest1',
     }],
   });
-  cy.task('firebase-admin:database', {
-    method: 'set',
-    args: [
-      'development/users:permissions/TEST_USER_UID/admin',
-      true,
-    ],
-  });
+  if (requiresAdmin) {
+    cy.task('firebase-admin:auth', {
+      method: 'createUser',
+      args: [{
+        uid: 'USER_UID_ADMIN',
+        email: 'admin@scotdance.app',
+        password: 'WelcomeAdmin1',
+      }],
+    });
+    cy.task('firebase-admin:database', {
+      method: 'set',
+      args: [
+        'development/users:permissions/USER_UID_ADMIN/admin',
+        true,
+      ],
+    });
+  }
 
   cy.getTest('requiresPermissionUnauthed').should('exist');
   cy.auth('signInWithEmailAndPassword', ['test@scotdance.app', 'WelcomeTest1']);
   cy.getTest('requiresPermissionUnauthed').should('not.exist');
+  if (requiresAdmin) {
+    cy.getTest('requiresPermissionUnauthorized').should('exist');
+    cy.auth('signOut');
+    cy.auth('signInWithEmailAndPassword', ['admin@scotdance.app', 'WelcomeAdmin1']);
+    cy.getTest('requiresPermissionUnauthorized').should('not.exist');
+    cy.getTest('requiresPermissionUnauthed').should('not.exist');
+  }
 }
 
 describe('User', () => {
@@ -80,16 +96,16 @@ describe('User', () => {
 describe('Admin', () => {
   it('Info', () => {
     cy.visit('/#/admin');
-    itShouldBeAuthGuarded();
+    itShouldBeAuthGuarded(true);
   });
 
   it('Submissions', () => {
     cy.visit('/#/admin/submissions');
-    itShouldBeAuthGuarded();
+    itShouldBeAuthGuarded(true);
   });
 
   it('Users', () => {
     cy.visit('/#/admin/users');
-    itShouldBeAuthGuarded();
+    itShouldBeAuthGuarded(true);
   });
 });

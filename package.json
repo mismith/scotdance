@@ -16,6 +16,7 @@
     "dev:functions": "npm run --prefix functions dev",
     "dev:www": "vite --https --host",
     "dev": "run-p dev:functions emulate dev:www",
+    "dev:cy": "run-p dev cy",
     "prebuild": "npm run sync-version",
     "build:functions": "npm run --prefix functions/ build",
     "build:www": "vite build",

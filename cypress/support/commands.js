@@ -5,5 +5,5 @@ Cypress.Commands.add('getTest', (id) => {
 });
 
 Cypress.Commands.add('auth', (method, args = []) => {
-  return firebase.auth()[method]?.(...args);
+  return cy.wrap(firebase.auth()[method]?.(...args));
 });

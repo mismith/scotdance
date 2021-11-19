@@ -11,10 +11,9 @@ module.exports = (on, config) => {
   process.env.FIREBASE_AUTH_EMULATOR_HOST = 'localhost:9099';
   process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
   // process.env.FIREBASE_STORAGE_EMULATOR_HOST = 'localhost:9199';
-  const projectId = 'firebase-scotdance';
   initializeApp({
-    projectId,
-    databaseURL: `http://${process.env.FIREBASE_DATABASE_EMULATOR_HOST}?ns=${projectId}`,
+    projectId: 'firebase-scotdance',
+    databaseURL: `http://${process.env.FIREBASE_DATABASE_EMULATOR_HOST}?ns=scotdance-cypress`,
   });
 
   on('task', {
