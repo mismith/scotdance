@@ -16,11 +16,13 @@ Command | Description
 --- | ---
 `npm i` | install dependencies
 `npm run dev` | serve app with emulated data and hot reloading at https://localhost:3000
-`npm run build` | build for production with minification
+`npm run dev:cy` | shortcut for running `dev` + `cy -- open`
+`npm test` | build app and run cypress tests locally (equivalently to how they will be run in CI)
 `npm run lint` / `npm run lint:fix` | show code formatting tips (and fix them)
+`npm run build` | build for release to production (including apps)
 `npm run report` | open bundle size visualizer (`stats.html`)
 `npm run release` | create version commit and tag in git
-`npm run deploy` | push local build to production
+`npm run deploy` | push local build to production and `main` git branch
 
 
 ## Admin

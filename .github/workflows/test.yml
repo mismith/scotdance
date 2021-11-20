@@ -47,4 +47,4 @@ jobs:
       - name: Build assets
         run: npm run build:ci
       - name: Run tests
-        run: npm run test:ci
+        run: npm run test:cy:ci
