@@ -3,20 +3,24 @@ import 'firebase/auth';
 import 'firebase/database';
 import 'firebase/storage';
 
+export function isLocalhost() {
+  return window.location.hostname === 'localhost';
+}
+export function isCypress() {
+  return isLocalhost() && (window.Cypress || window.location.search.includes('cypress'));
+}
+
 export { firebase };
 const config = {
   apiKey: 'AIzaSyCxvA2RMvlCQ3WCzAqPotD8IOhnmCtQ1xM',
   authDomain: 'scotdance.firebaseapp.com',
-  databaseURL: window.Cypress ? 'https://scotdance-cypress.firebaseio.com' : 'https://scotdance.firebaseio.com',
+  databaseURL: isCypress() ? 'https://scotdance-cypress.firebaseio.com' : 'https://scotdance.firebaseio.com',
   projectId: 'firebase-scotdance',
   storageBucket: 'firebase-scotdance.appspot.com',
   messagingSenderId: '635645850119',
 };
 export const app = firebase.initializeApp(config);
 
-export function isLocalhost() {
-  return window.location.hostname === 'localhost';
-}
 const FIREBASE_ENV = isLocalhost() ? 'development' : 'production';
 if (isLocalhost()) {
   // port values from /firebase.json

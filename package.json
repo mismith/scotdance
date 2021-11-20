@@ -8,7 +8,7 @@
     "dev:functions": "npm run --prefix functions/ dev",
     "dev:www": "vite --https --host",
     "dev": "run-p dev:functions emulate dev:www",
-    "dev:cy": "run-p dev \"cy -- open\"",
+    "dev:cy": "run-p dev:functions emulate \"dev:www -- --open '/?cypress'\" \"cy -- open\"",
     "cy": "CYPRESS_BASE_URL=https://localhost:3000 cypress",
     "cy:ci": "CYPRESS_BASE_URL=http://localhost:5000 cypress",
     "test:cy:ci": "firebase emulators:exec \"npm run cy:ci -- run\"",
