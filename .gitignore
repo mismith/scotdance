@@ -38,3 +38,4 @@ firebase-adminsdk.json
 /public/version.json
 /stats.html
 /cypress/videos/
+/cypress/screenshots/
