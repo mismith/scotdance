@@ -1,14 +1,8 @@
+import seed from '../helpers/seed';
+import { itShouldBeAuthGuarded } from '../helpers/user';
+
 beforeEach(() => {
-  cy.task('firebase-admin:auth', {
-    method: 'resetUsers',
-  });
-  cy.task('firebase-admin:database', {
-    method: 'set',
-    args: [
-      'development',
-      null,
-    ],
-  });
+  seed.reset();
 
   cy.auth('signOut');
   cy.clearLocalStorage();
@@ -36,55 +30,16 @@ describe('Top Level', () => {
 });
 
 describe('Competitions', () => {
-  it('List', () => {
-    cy.visit('/#/competitions');
-    cy.get('.CompetitionsList').should('exist');
-  });
-
   it('Submit', () => {
     cy.visit('/#/competitions/submit');
     cy.get('.CompetitionsSubmit').should('exist');
   });
-});
 
-function itShouldBeAuthGuarded(requiresAdmin = false) {
-  cy.task('firebase-admin:auth', {
-    method: 'createUser',
-    args: [{
-      uid: 'USER_UID_TEST',
-      email: 'test@scotdance.app',
-      password: 'WelcomeTest1',
-    }],
+  it('List', () => {
+    cy.visit('/#/competitions');
+    cy.get('.CompetitionsList').should('exist');
   });
-  if (requiresAdmin) {
-    cy.task('firebase-admin:auth', {
-      method: 'createUser',
-      args: [{
-        uid: 'USER_UID_ADMIN',
-        email: 'admin@scotdance.app',
-        password: 'WelcomeAdmin1',
-      }],
-    });
-    cy.task('firebase-admin:database', {
-      method: 'set',
-      args: [
-        'development/users:permissions/USER_UID_ADMIN/admin',
-        true,
-      ],
-    });
-  }
-
-  cy.getTest('requiresPermissionUnauthed').should('exist');
-  cy.auth('signInWithEmailAndPassword', ['test@scotdance.app', 'WelcomeTest1']);
-  cy.getTest('requiresPermissionUnauthed').should('not.exist');
-  if (requiresAdmin) {
-    cy.getTest('requiresPermissionUnauthorized').should('exist');
-    cy.auth('signOut');
-    cy.auth('signInWithEmailAndPassword', ['admin@scotdance.app', 'WelcomeAdmin1']);
-    cy.getTest('requiresPermissionUnauthorized').should('not.exist');
-    cy.getTest('requiresPermissionUnauthed').should('not.exist');
-  }
-}
+});
 
 describe('User', () => {
   it('Profile', () => {
