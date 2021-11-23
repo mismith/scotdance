@@ -1,5 +1,6 @@
 import { postmark } from './utility/email';
 import { attachUserToCompetition } from './utility/competition';
+import { isCypress, isEmulator } from './utility/env';
 
 class Submissions {
   database;
@@ -23,6 +24,8 @@ class Submissions {
   }
 
   async handleCreate(snap, ctx) {
+    if (isCypress()) return;
+
     const { submissionId } = ctx.params;
     const submission = snap.val();
     const model = this.getTemplateModel(submission);
@@ -30,7 +33,7 @@ class Submissions {
     // send emails
     await postmark.sendEmailWithTemplate({
       From: this.config.email,
-      To: this.config.env === 'development' ? this.config.email : submission.contact.email,
+      To: isEmulator() ? this.config.email : submission.contact.email,
       TemplateAlias: 'competition-submission',
       TemplateModel: model,
     });
@@ -71,10 +74,12 @@ class Submissions {
       competitionId,
     });
 
+    if (isCypress()) return;
+
     // send email
     await postmark.sendEmailWithTemplate({
       From: this.config.email,
-      To: this.config.env === 'development' ? this.config.email : contact.email,
+      To: isEmulator() ? this.config.email : contact.email,
       TemplateAlias: 'competition-submission-approved',
       TemplateModel: {
         ...model,

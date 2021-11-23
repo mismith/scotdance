@@ -1,20 +1,23 @@
-import { initializeApp, database as adminDB } from 'firebase-admin';
-import { config, database as functionsDB } from 'firebase-functions';
+import admin from 'firebase-admin';
+import * as functions from 'firebase-functions';
 import Invites from './invites';
 import Submissions from './submissions';
 import { attachUserToCompetition } from './utility/competition';
+import { isCypress, isEmulator } from './utility/env';
 
-const app = initializeApp();
-const env = config().app?.env || 'production';
+const app = admin.initializeApp({
+  databaseURL: isCypress() ? `http://${process.env.FIREBASE_DATABASE_EMULATOR_HOST}?ns=scotdance-cypress` : 'https://scotdance.firebaseio.com',
+}, 'app');
+functions.app.setEmulatedAdminApp(app);
+
+const env = isEmulator() ? 'development' : 'production';
 const appConfig = {
-  env,
-  app,
-  db: adminDB().ref(env),
-  database: functionsDB,
+  db: admin.database(app).ref(env),
+  database: isCypress() ? functions.database.instance('scotdance-cypress') : functions.database,
   name: 'ScotDance.app',
   description: 'Highland dancing event tracker',
   email: 'admin@scotdance.app',
-  url: env === 'development' ? 'https://localhost:3000' : 'https://scotdance.app',
+  url: isEmulator() ? 'https://localhost:3000' : 'https://scotdance.app',
 };
 
 const invites = new Invites(appConfig.database, appConfig);

@@ -2,6 +2,7 @@ import { config } from 'firebase-functions';
 import { FirebaseDynamicLinks, FirebaseInvites } from '@mismith/firebase-tools/dist/server';
 import { postmark } from './utility/email';
 import { attachUserToCompetition } from './utility/competition';
+import { isCypress, isEmulator } from './utility/env';
 
 const dynamicLinks = new FirebaseDynamicLinks(
   config().fb?.web_api_key || 'MISSING',
@@ -11,6 +12,8 @@ const dynamicLinks = new FirebaseDynamicLinks(
 
 class Invites extends FirebaseInvites {
   async handleCreate(snap, ctx) {
+    if (isCypress()) return;
+
     // get dynamic link
     const { competitionId, inviteId } = ctx.params;
     const url = `${this.config.url}/#/competitions/${competitionId}/invites/${inviteId}`;
@@ -22,7 +25,7 @@ class Invites extends FirebaseInvites {
     const competition = (await this.config.db.child(competitionPath).once('value')).val();
     await postmark.sendEmailWithTemplate({
       From: this.config.email,
-      To: this.config.env === 'development' ? this.config.email : invite.payload.email,
+      To: isEmulator() ? this.config.email : invite.payload.email,
       TemplateAlias: 'competition-admin-invite',
       TemplateModel: {
         app: {
