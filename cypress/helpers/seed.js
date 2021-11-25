@@ -13,6 +13,9 @@ auth.createUser = (data, isAdmin = false) => {
   });
 };
 
+database.get = (path, ...others) => {
+  return database('get', path, ...others);
+};
 database.set = (path, value, ...others) => {
   return database('set', path, value, ...others);
 };

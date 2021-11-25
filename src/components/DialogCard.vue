@@ -28,6 +28,7 @@
           <v-card-actions class="justify-end">
             <slot name="cancel">
               <v-btn
+                v-test="'dialog-card:cancel'"
                 v-if="cancelLabel !== null"
                 text
                 @click="handleCancel"
@@ -37,6 +38,7 @@
             </slot>
             <slot name="submit">
               <v-btn
+                v-test="'dialog-card:submit'"
                 v-if="submitLabel !== null"
                 text
                 color="primary"

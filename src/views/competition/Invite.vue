@@ -19,6 +19,7 @@
           <v-btn
             color="primary"
             :to="{ name: 'competition.admin.info', params: { competitionId }}"
+            v-test="'invite:administer'"
           >
             Administer Competition
           </v-btn>
@@ -54,6 +55,7 @@
           color="primary"
           :loading="invite.accepted && !invite.acceptedBy"
           @click="handleAccept"
+          v-test="'invite:accept'"
         >
           Accept
         </v-btn>

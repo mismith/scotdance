@@ -37,6 +37,7 @@ module.exports = (on, config) => {
       const database = getDatabase();
       let result;
       switch (method) {
+        case 'get':
         case 'set': {
           result = await database.ref(args[0])[method](...args.slice(1));
           break;

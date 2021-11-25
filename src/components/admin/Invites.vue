@@ -16,7 +16,9 @@
                 <v-icon>{{ invite.submitted ? mdiCheckCircle : mdiCheck }}</v-icon>
               </v-list-item-avatar>
               <v-list-item-content>
-                <v-list-item-title>{{ invite.payload.email }}</v-list-item-title>
+                <v-list-item-title v-test="`invites:admin:${invite[idKey]}:email`">
+                  {{ invite.payload.email }}
+                </v-list-item-title>
                 <v-list-item-subtitle>
                   {{ invite.submitted ? 'Submitted' : 'Since' }}
                   <time :title="invite.accepted">
@@ -27,7 +29,7 @@
               <v-list-item-action v-if="!invite.submitted">
                 <v-tooltip fixed left>
                   <template #activator="{ on }">
-                    <v-btn icon v-on="on" @click="handleAdministratorDemote(invite)">
+                    <v-btn v-test="`invites:admin:${invite[idKey]}:remove`" icon v-on="on" @click="handleAdministratorDemote(invite)">
                       <v-icon>{{ mdiClose }}</v-icon>
                     </v-btn>
                   </template>
@@ -79,7 +81,9 @@
               </v-list-item-avatar>
 
               <v-list-item-content>
-                <v-list-item-title>{{ invite.payload.email }}</v-list-item-title>
+                <v-list-item-title v-test="`invites:invite:${invite[idKey]}:email`">
+                  {{ invite.payload.email }}
+                </v-list-item-title>
                 <v-list-item-subtitle>
                   <span v-if="FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED)">
                     Cancelled
@@ -142,6 +146,7 @@
             :field="{ title: 'Invite by Email', data: 'email', type: 'email' }"
             @change="handleInviteCreate"
             class="pl-4"
+            v-test="'invites:email-field'"
           />
         </v-list>
       </v-list-group>
