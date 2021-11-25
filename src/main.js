@@ -199,10 +199,8 @@ if (window.$crisp) {
 
 // test helpers
 if (isLocalhost()) {
-  Vue.directive('test', {
-    bind(el, binding) {
-      el.setAttribute('data-test-id', binding.value);
-    },
+  Vue.directive('test', (el, { value }) => {
+    el.setAttribute('data-test-id', value);
   });
 } else {
   Vue.directive('test', {});
