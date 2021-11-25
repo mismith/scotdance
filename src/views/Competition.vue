@@ -9,13 +9,13 @@
   >
     <div v-if="loaded" class="app-scroll-frame">
       <div v-if="competitionExists" class="app-scroll-frame">
-        <router-view v-if="hasPermission" v-test="'accessState:full'" />
+        <router-view v-if="hasPermission" v-test="'competition:access-state:full'" />
         <div v-else class="app-scroll-frame alt">
           <EmptyState
             :icon="mdiClockOutline"
             label="Not available yet"
             description="Check back closer to the competition date:"
-            v-test="'accessState:partial'"
+            v-test="'competition:access-state:partial'"
           >
             <div class="title">
               {{ competition.date ? $moment(competition.date).format('dddd, MMMM D') : 'Soon' }}
@@ -48,7 +48,7 @@
         <EmptyState
           :icon="mdiClose"
           label="No competition found"
-          v-test="'accessState:notFound'"
+          v-test="'competition:access-state:notFound'"
         />
       </div>
     </div>

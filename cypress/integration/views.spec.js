@@ -1,5 +1,5 @@
 import seed from '../helpers/seed';
-import { itShouldBeAuthGuarded } from '../helpers/user';
+import { createUser } from '../helpers/user';
 
 beforeEach(() => {
   seed.reset();
@@ -7,6 +7,25 @@ beforeEach(() => {
   cy.clearLocalStorage();
   cy.clearCookies();
 });
+
+function itShouldBeAuthGuarded(requiresAdmin = false) {
+  createUser(USER_UID.TEST);
+  if (requiresAdmin) {
+    createUser(USER_UID.ADMIN);
+  }
+
+  cy.getTest('requires-permission:unauthed').should('exist');
+  cy.auth('signInWithEmailAndPassword', ['test@scotdance.app', 'WelcomeTest1']);
+  cy.getTest('requires-permission:unauthed').should('not.exist');
+
+  if (requiresAdmin) {
+    cy.getTest('requires-permission:unauthorized').should('exist');
+    cy.auth('signOut');
+    cy.auth('signInWithEmailAndPassword', ['admin@scotdance.app', 'WelcomeAdmin1']);
+    cy.getTest('requires-permission:unauthorized').should('not.exist');
+    cy.getTest('requires-permission:unauthed').should('not.exist');
+  }
+}
 
 describe('Top Level', () => {
   it('Home', () => {
@@ -19,8 +38,8 @@ describe('Top Level', () => {
   });
   it('Settings', () => {
     cy.visit('/#/settings');
-    cy.getTest('darkMode').should('exist');
-    cy.getTest('resetAppCache').should('exist');
+    cy.getTest('dark-mode').should('exist');
+    cy.getTest('reset-app-cache').should('exist');
   });
   it('Policies', () => {
     cy.visit('/#/policies');

@@ -2,11 +2,11 @@
   <div class="RequiresPermission">
     <slot v-if="permission !== undefined ? permission : $store.state.me" />
     <slot name="unauthed" v-else-if="!$store.state.me">
-      <EmptyState :icon="mdiBlockHelper" label="Login required" class="flex-none mb-0" key="unauthed" v-test="'requiresPermissionUnauthed'" />
+      <EmptyState :icon="mdiBlockHelper" label="Login required" class="flex-none mb-0" key="unauthed" v-test="'requires-permission:unauthed'" />
       <AccountButtons class="mt-0" />
     </slot>
     <slot name="unauthorized" v-else>
-      <EmptyState :icon="mdiBlockHelper" label="Access denied" key="unauthorized" v-test="'requiresPermissionUnauthorized'" />
+      <EmptyState :icon="mdiBlockHelper" label="Access denied" key="unauthorized" v-test="'requires-permission:unauthorized'" />
     </slot>
   </div>
 </template>

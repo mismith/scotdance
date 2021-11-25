@@ -105,7 +105,7 @@ describe('Competition', () => {
           }
 
           cy.visit(`/#/competitions/${competitionUid}/dancers`);
-          cy.getTest(`accessState:${accessState}`).should('exist');
+          cy.getTest(`competition:access-state:${accessState}`).should('exist');
         });
       });
     });

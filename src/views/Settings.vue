@@ -3,7 +3,7 @@
     <div class="pa-4">
       <v-subheader>UI</v-subheader>
       <v-list flat>
-        <v-list-item-group v-model="$root.darkMode" v-test="'darkMode'">
+        <v-list-item-group v-model="$root.darkMode" v-test="'dark-mode'">
           <v-list-item :value="true">
             <template #default="{ active }">
               <v-list-item-avatar>
@@ -22,7 +22,7 @@
 
       <v-subheader>Advanced</v-subheader>
       <v-list>
-        <v-list-item @click="confirmClearLocalStorage = true" v-test="'resetAppCache'">
+        <v-list-item @click="confirmClearLocalStorage = true" v-test="'reset-app-cache'">
           <v-list-item-avatar>
             <v-icon color="error">{{ mdiCached }}</v-icon>
           </v-list-item-avatar>
