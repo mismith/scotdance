@@ -1,5 +1,5 @@
 import seed from '../helpers/seed';
-import { createUser } from '../helpers/user';
+import { createUser, USER_CREDENTIALS, USER_UID } from '../helpers/user';
 
 beforeEach(() => {
   seed.reset();
@@ -15,13 +15,13 @@ function itShouldBeAuthGuarded(requiresAdmin = false) {
   }
 
   cy.getTest('requires-permission:unauthed').should('exist');
-  cy.auth('signInWithEmailAndPassword', ['test@scotdance.app', 'WelcomeTest1']);
+  cy.auth('signInWithEmailAndPassword', USER_CREDENTIALS[USER_UID.TEST]);
   cy.getTest('requires-permission:unauthed').should('not.exist');
 
   if (requiresAdmin) {
     cy.getTest('requires-permission:unauthorized').should('exist');
     cy.auth('signOut');
-    cy.auth('signInWithEmailAndPassword', ['admin@scotdance.app', 'WelcomeAdmin1']);
+    cy.auth('signInWithEmailAndPassword', USER_CREDENTIALS[USER_UID.ADMIN]);
     cy.getTest('requires-permission:unauthorized').should('not.exist');
     cy.getTest('requires-permission:unauthed').should('not.exist');
   }

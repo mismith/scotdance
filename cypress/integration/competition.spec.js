@@ -1,5 +1,5 @@
 import seed from '../helpers/seed';
-import { USER_UID, createUser } from '../helpers/user';
+import { createUser, USER_CREDENTIALS, USER_UID } from '../helpers/user';
 
 beforeEach(() => {
   seed.reset();
@@ -83,7 +83,7 @@ describe('Competition', () => {
             }
             case AUTH_STATE.AUTHED: {
               createUser(USER_UID.TEST);
-              cy.auth('signInWithEmailAndPassword', ['test@scotdance.app', 'WelcomeTest1']);
+              cy.auth('signInWithEmailAndPassword', USER_CREDENTIALS[USER_UID.TEST]);
               break;
             }
             case AUTH_STATE.PERMED: {
@@ -94,12 +94,12 @@ describe('Competition', () => {
                 seed.database.set(`development/competitions:permissions/${uid}/users/${USER_UID.TEST}`, true);
                 seed.database.set(`development/users:permissions/${USER_UID.TEST}/competitions/${uid}`, true);
               });
-              cy.auth('signInWithEmailAndPassword', ['test@scotdance.app', 'WelcomeTest1']);
+              cy.auth('signInWithEmailAndPassword', USER_CREDENTIALS[USER_UID.TEST]);
               break;
             }
             case AUTH_STATE.ADMIN: {
               createUser(USER_UID.ADMIN);
-              cy.auth('signInWithEmailAndPassword', ['admin@scotdance.app', 'WelcomeAdmin1']);
+              cy.auth('signInWithEmailAndPassword', USER_CREDENTIALS[USER_UID.ADMIN]);
               break;
             }
           }

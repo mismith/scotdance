@@ -5,10 +5,16 @@ export const USER_UID = {
   ADMIN: 'ADMIN',
 };
 
+export const USER_CREDENTIALS = {
+  [USER_UID.TEST]: ['test@scotdance.app', 'WelcomeTest1'],
+  [USER_UID.ADMIN]: ['admin@scotdance.app', 'WelcomeAdmin1'],
+}
+
 export function createUser(uid) {
+  const [email, password] = USER_CREDENTIALS[uid];
   return seed.auth.createUser({
     uid,
-    email: uid === USER_UID.ADMIN ? 'admin@scotdance.app' : 'test@scotdance.app',
-    password: uid === USER_UID.ADMIN ? 'WelcomeAdmin1' : 'WelcomeTest1',
+    email,
+    password,
   }, uid === USER_UID.ADMIN);
 }
