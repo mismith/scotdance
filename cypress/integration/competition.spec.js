@@ -1,5 +1,6 @@
 import seed from '../helpers/seed';
 import { createUser, USER_CREDENTIALS, USER_UID } from '../helpers/user';
+import { COMPETITION_UID, createCompetition } from '../helpers/competition';
 
 beforeEach(() => {
   seed.reset();
@@ -9,21 +10,11 @@ beforeEach(() => {
 });
 
 describe('Competition', () => {
-  const COMPETITION_UID = {
-    MISSING: 'MISSING',
-    UNLISTED: 'UNLISTED',
-    UNPUBLISHED: 'UNPUBLISHED',
-    PUBLIC: 'PUBLIC',
-  };
   beforeEach(() => {
     Object.values(COMPETITION_UID).forEach((uid) => {
       if (uid === COMPETITION_UID.MISSING) return;
 
-      seed.database.set(`development/competitions/${uid}`, {
-        name: `Competition ${uid}`,
-        listed: uid === COMPETITION_UID.UNPUBLISHED || uid === COMPETITION_UID.PUBLIC || null,
-        published: uid === COMPETITION_UID.PUBLIC || null,
-      });
+      createCompetition(uid);
     });
   });
 
