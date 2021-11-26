@@ -85,7 +85,7 @@
                   {{ invite.payload.email }}
                 </v-list-item-title>
                 <v-list-item-subtitle>
-                  <span v-if="FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED)">
+                  <span v-if="FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED)" v-test="`invites:invite:${invite[idKey]}:status:cancelled`">
                     Cancelled
                     <time :title="invite.cancelled">
                       {{ $moment(invite.cancelled).fromNow() }}
@@ -97,7 +97,7 @@
                       {{ $moment(invite.expires).fromNow() }}
                     </time>
                   </span>
-                  <span v-else-if="FirebaseInvites.is(invite, FirebaseInvites.status.CREATED)">
+                  <span v-else-if="FirebaseInvites.is(invite, FirebaseInvites.status.CREATED)" v-test="`invites:invite:${invite[idKey]}:status:invited`">
                     Invited
                     <time :title="invite.created">
                       {{ $moment(invite.created).fromNow() }}
@@ -105,7 +105,7 @@
                   </span>
                   <span>
                     &bull;
-                    <a href="#" @click="handleInviteResend(invite)">Resend</a>
+                    <a href="#" @click="handleInviteResend(invite)" v-test="`invites:invite:${invite[idKey]}:resend`">Resend</a>
                   </span>
                 </v-list-item-subtitle>
               </v-list-item-content>
@@ -113,7 +113,7 @@
               <v-list-item-action v-if="FirebaseInvites.is(invite, FirebaseInvites.status.CANCELLED, FirebaseInvites.status.EXPIRED)">
                 <v-tooltip fixed left>
                   <template #activator="{ on }">
-                    <v-btn v-on="on" icon @click="handleInviteDelete(invite)">
+                    <v-btn v-on="on" icon @click="handleInviteDelete(invite)" v-test="`invites:invite:${invite[idKey]}:delete`">
                       <v-icon>{{ mdiDelete }}</v-icon>
                     </v-btn>
                   </template>
@@ -123,7 +123,7 @@
               <v-list-item-action v-else>
                 <v-tooltip fixed left>
                   <template #activator="{ on }">
-                    <v-btn v-on="on" icon @click="handleInviteCancel(invite)">
+                    <v-btn v-on="on" icon @click="handleInviteCancel(invite)" v-test="`invites:invite:${invite[idKey]}:cancel`">
                       <v-icon>{{ mdiClose }}</v-icon>
                     </v-btn>
                   </template>
