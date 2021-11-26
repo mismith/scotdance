@@ -1,5 +1,5 @@
 <template>
-  <div class="AppSubmenu app-scroll-frame">
+  <div class="AppSubmenu app-scroll-frame" v-test="'app-submenu'">
     <v-list>
       <v-slide-y-transition group hide-on-leave>
         <template v-for="group in groupedCompetitions">
@@ -9,6 +9,7 @@
               v-if="clearable[group.name]"
               v-model="clearable[group.name].isConfirming"
               @confirmed="clearable[group.name].handler()"
+              v-test="`app-submenu:group.${group.name}:action-button`"
             />
             <v-btn
               v-else
@@ -17,6 +18,7 @@
               x-small
               exact
               :to="{ name: 'competitions' }"
+              v-test="`app-submenu:group.${group.name}:action-button`"
             >
               See All
             </v-btn>
@@ -26,6 +28,7 @@
             :key="competition[idKey]"
             :competition="competition"
             :to="{ name: 'competition.info', params: { competitionId: competition[idKey] } }"
+            v-test="`app-submenu:competition.${competition[idKey]}`"
           >
             <template #append>
               <v-list-item-action class="ml-0">
@@ -33,6 +36,7 @@
                   icon
                   :color="competition.$pinned ? 'accent' : undefined"
                   @click.prevent.stop="togglePinnedCompetition(competition)"
+                  v-test="`app-submenu:competition.${competition[idKey]}:pin`"
                 >
                   <v-icon class="pin" :class="{ pinned: competition.$pinned }">
                     {{ competition.$pinned ? mdiPin : mdiPinOutline }}

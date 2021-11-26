@@ -8,7 +8,7 @@
       class="print-hide"
       :class="{ stripes: isLocalhost() }"
     >
-      <v-btn icon @click="menuVisible = !menuVisible" aria-label="menu">
+      <v-btn icon @click="menuVisible = !menuVisible" aria-label="menu" v-test="'app:menu-button'">
         <v-badge v-model="needsUpdating" dot color="secondary">
           <v-icon>{{ mdiMenu }}</v-icon>
         </v-badge>
@@ -42,7 +42,7 @@
         <template #activator="{ on: menu }">
           <v-tooltip :disabled="isTouch || submenuVisible" bottom :open-delay="600">
             <template #activator="{ on: tooltip }">
-              <v-btn icon v-on="Object.assign({}, tooltip, menu)" aria-label="submenu">
+              <v-btn icon v-on="Object.assign({}, tooltip, menu)" aria-label="submenu" v-test="'app:submenu-button'">
                 <v-badge v-model="submenuIsNew" dot color="secondary">
                   <v-icon>{{ mdiDotsGrid }}</v-icon>
                 </v-badge>
@@ -60,7 +60,7 @@
         </v-sheet>
       </v-menu>
 
-      <v-menu v-model="accountVisible" offset-y>
+      <v-menu v-model="accountVisible" offset-y v-test="'app:user-menu-button'">
         <template #activator="{ on: menu }">
           <v-tooltip :disabled="isTouch || accountVisible" bottom :open-delay="600">
             <template #activator="{ on: tooltip }">
