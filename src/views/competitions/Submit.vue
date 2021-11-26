@@ -12,7 +12,7 @@
       <v-stepper-content :step="1">
         Are you involved in organizing a competition that could benefit from {{ $store.state.$package.$name }}?<br />Simply begin the process below at least <strong>one month before</strong> your event's start date.
 
-        <div v-for="checklist in checklists" :key="checklist[idKey]">
+        <div v-for="checklist in checklists" :key="checklist[idKey]" v-test="'submit:step.start'">
           <header v-html="$sanitize(checklist.title)" class="mt-6 mb-4" />
           <v-list flat style="max-width: 540px;">
             <v-list-group
@@ -46,7 +46,7 @@
         </div>
 
         <footer class="mt-5">
-          <v-btn color="primary" class="mx-0" @click="handleStart">Start</v-btn>
+          <v-btn color="primary" class="mx-0" @click="handleStart" v-test="'submit:start'">Start</v-btn>
           <v-btn v-if="me && me.admin" color="secondary" class="stripes ml-3" @click="handleSkip">
             Skip
           </v-btn>
@@ -63,7 +63,7 @@
           {{ step.name }}
         </v-stepper-step>
         <v-stepper-content :key="step[idKey]" :step="index + 2">
-          <div class="d-flex flex-wrap">
+          <div class="d-flex flex-wrap" v-test="`submit:step.${step[idKey]}`">
             <DynamicForm
               v-model="step.$isValid"
               :fields="step.fields"
@@ -78,6 +78,7 @@
                   color="primary"
                   :loading="submitting"
                   class="mx-0"
+                  v-test="`submit:step.${step[idKey]}:next`"
                 >
                   {{ step.submitLabel || 'Next' }}
                 </v-btn>
@@ -101,7 +102,7 @@
       </template>
     </v-stepper>
 
-    <div v-if="submitted" class="pa-4">
+    <div v-if="submitted" class="pa-4" v-test="'submit:submitted'">
       <EmptyState
         :icon="mdiEmailOutline"
         label="All done!"
@@ -109,7 +110,7 @@
       >
         <p class="mt-4">Your submission will be reviewed <strong>within 7 days</strong>, and you will receive another email once approved.</p>
 
-        <v-btn color="primary" @click="handleRestart">Submit Another Competition</v-btn>
+        <v-btn color="primary" @click="handleRestart" v-test="'submit:restart'">Submit Another Competition</v-btn>
       </EmptyState>
     </div>
   </div>

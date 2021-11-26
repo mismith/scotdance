@@ -4,6 +4,7 @@
       light
       @click="$store.commit('setCurrentDialog', 'register')"
       class="ma-1"
+      v-test="'account-buttons:register'"
     >
       <span>Register</span>
     </v-btn>
@@ -11,6 +12,7 @@
       color="secondary"
       @click="$store.commit('setCurrentDialog', 'login')"
       class="ma-1"
+      v-test="'account-buttons:login'"
     >
       <span>Login</span>
     </v-btn>

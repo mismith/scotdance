@@ -14,6 +14,7 @@
         v-model="email"
         required
         autofocus
+        v-test="'login-dialog:email-field'"
       />
       <v-text-field
         label="Password *"
@@ -21,6 +22,7 @@
         name="password"
         v-model="password"
         required
+        v-test="'login-dialog:password-field'"
       />
 
       <p>
