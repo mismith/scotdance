@@ -38,7 +38,7 @@
         </v-tooltip>
       </template>
 
-      <v-menu v-model="submenuVisible" offset-y max-height="90%" max-width="calc(100% - 12px * 2)">
+      <v-menu v-if="hasSubmenu" v-model="submenuVisible" offset-y max-height="90%" max-width="calc(100% - 12px * 2)">
         <template #activator="{ on: menu }">
           <v-tooltip :disabled="isTouch || submenuVisible" bottom :open-delay="600">
             <template #activator="{ on: tooltip }">
@@ -368,6 +368,9 @@ export default {
         .sort((a, b) => -this.$moment(a.date).diff(b.date)); // order chronologically
     },
 
+    hasSubmenu() {
+      return Boolean(this.competitions.length);
+    },
     submenuIsNew: {
       get() {
         return !this.$store.getters.isViewed('ui', 'submenu');

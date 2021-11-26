@@ -1,3 +1,4 @@
+import { COMPETITION_UID, createCompetition } from '../helpers/competition';
 import seed from '../helpers/seed';
 import { createUser, USER_CREDENTIALS, USER_UID } from '../helpers/user';
 
@@ -27,7 +28,26 @@ function itShouldBeAuthGuarded(requiresAdmin = false) {
   }
 }
 
-describe('Top Level', () => {
+describe('App', () => {
+  it('Navbar', () => {
+    cy.visit('/');
+    cy.getTest('app:menu-button').should('exist');
+    cy.getTest('app:submenu-button').should('not.exist');
+    cy.getTest('app:user-menu-button').should('exist');
+
+    // submenu
+    createCompetition(COMPETITION_UID.PUBLIC);
+    cy.getTest('app-submenu').should('not.exist');
+    cy.getTest('app:submenu-button').click();
+    cy.getTest('app-submenu').should('be.visible');
+    cy.getTest('app-submenu:all').click();
+    cy.getTest('app-submenu').should('not.be.visible');
+    cy.getTest('app:submenu-button').click();
+    cy.getTest('app-submenu').should('be.visible');
+    cy.getTest(`app-submenu:competition.${COMPETITION_UID.PUBLIC}`).click();
+    cy.getTest('app-submenu').should('not.be.visible');
+    cy.url().should('contain', `/#/competitions/${COMPETITION_UID.PUBLIC}`);
+  });
   it('Home', () => {
     cy.visit('/');
     cy.get('#hero').should('exist');
