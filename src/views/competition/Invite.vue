@@ -38,12 +38,12 @@
       label="Invite cancelled"
       description="You'll need to ask to be invited again."
     />
-    <EmptyState
+    <!-- <EmptyState
       v-else-if="$moment().isAfter(invite.expires)"
       :icon="mdiTimerOff"
       label="Invite expired"
       description="You'll need to ask to be invited again."
-    />
+    /> -->
     <div v-else>
       <EmptyState
         :icon="mdiEmailOpen"

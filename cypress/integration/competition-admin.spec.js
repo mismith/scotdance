@@ -88,6 +88,11 @@ describe('Competition Admin', () => {
           cy.getTest(`invites:invite:${inviteId}:resend`).click();
           cy.getTest(`invites:invite:${inviteId}:status:invited`).should('exist');
 
+          // // expired
+          // seed.database.set(`development/competitions:data/${competitionId}/invites`)
+          // cy.getTest(`invites:invite:${inviteId}:cancel`).click();
+          // cy.getTest(`invites:invite:${inviteId}:status:expired`).should('exist');
+
           // cancel
           cy.getTest(`invites:invite:${inviteId}:cancel`).click();
           cy.getTest(`invites:invite:${inviteId}:status:cancelled`).should('exist');

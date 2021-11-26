@@ -91,12 +91,12 @@
                       {{ $moment(invite.cancelled).fromNow() }}
                     </time>
                   </span>
-                  <span v-else-if="FirebaseInvites.is(invite, FirebaseInvites.status.EXPIRED)">
+                  <!-- <span v-else-if="FirebaseInvites.is(invite, FirebaseInvites.status.EXPIRED)" v-test="`invites:invite:${invite[idKey]}:status:expired`">
                     Expired
                     <time :title="invite.expires">
                       {{ $moment(invite.expires).fromNow() }}
                     </time>
-                  </span>
+                  </span> -->
                   <span v-else-if="FirebaseInvites.is(invite, FirebaseInvites.status.CREATED)" v-test="`invites:invite:${invite[idKey]}:status:invited`">
                     Invited
                     <time :title="invite.created">
