@@ -747,6 +747,12 @@ body {
       height: 24px;
     }
   }
+  .v-stepper__step__step {
+    .v-icon__svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
   .v-list {
     &.grouped {
       background-color: transparent;
