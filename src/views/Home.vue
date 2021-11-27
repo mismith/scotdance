@@ -81,8 +81,8 @@
         <p>{{ $package.$name }} was created in 2017 by <a href="https://mismith.io" target="_blank" class="ext">Murray Rowan</a></p>
         <p>View the source code on <a href="https://github.com/mismith/scotdance" target="_blank" class="ext">GitHub</a></p>
         <p>Track development via <a href="https://trello.com/b/ZCZ8t1fH" target="_blank" class="ext">Trello</a></p>
-        <p>Legal Documents: <router-link :to="{ name: 'policies' }">Policies</router-link></p>
-        <p v-if="$store.state.helpAvailable">Contact us through <a href="#" @click.prevent="help(true)">Live Chat</a></p>
+        <p>Legal documents: <router-link :to="{ name: 'policies' }">Policies</router-link></p>
+        <p v-if="$store.state.helpAvailable">Support/Feedback through <a href="#" @click.prevent="help(true)">Live Chat</a></p>
         <p v-test="'version'"><small>{{ devicePlatform }} App v{{ $package.version || '?' }}</small></p>
       </header>
     </section>
