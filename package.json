@@ -4,10 +4,10 @@
   "description": "Highland dancing event tracker",
   "author": "Murray Rowan <murray@mismith.info>",
   "scripts": {
-    "emulate": "firebase emulators:start --import=.firebase/emulator-data --export-on-exit",
+    "emulate": "firebase emulators:start --import=.firebase/emulator-data",
     "dev:functions": "npm run --prefix functions/ dev",
     "dev:www": "vite --https --host",
-    "dev": "run-p dev:functions emulate dev:www",
+    "dev": "run-p dev:functions \"emulate -- --export-on-exit\" dev:www",
     "dev:cy": "FIREBASE_CYPRESS=true run-p dev:functions emulate \"dev:www -- --open '/?cypress'\" \"cy -- open\"",
     "cy": "CYPRESS_BASE_URL=https://localhost:3000 cypress",
     "cy:ci": "CYPRESS_BASE_URL=http://localhost:5000 cypress",
