@@ -41,6 +41,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
 import { mdiCheck } from '@mdi/js';
 import adminSchema from '@/schemas/admin';
 import { idKey, db, toOrderedArray } from '@/helpers/firebase';
@@ -72,27 +73,11 @@ export default {
       savingPromises: [],
     };
   },
-  firebase() {
-    return {
-      competitionsRaw: db.child('competitions'),
-      submissionsRaw: db.child('competitions:submissions'),
-      faqsRaw: db.child('faqs'),
-      usersRaw: db.child('users'),
-      favoritesRaw: {
-        source: db.child('users:favorites'),
-        asObject: true,
-      },
-      permissionsRaw: {
-        source: db.child('users:permissions'),
-        asObject: true,
-      },
-      versionsRaw: {
-        source: db.child('versions'),
-        asObject: true,
-      },
-    };
-  },
   computed: {
+    ...mapState([
+      'me',
+    ]),
+
     hasPermission() {
       return this.$store.getters.hasPermission('admin');
     },
@@ -133,7 +118,38 @@ export default {
       };
     },
   },
+  watch: {
+    me() {
+      this.loadFirebase();
+    },
+  },
+  created() {
+    this.loadFirebase();
+  },
   methods: {
+    async loadFirebase() {
+      if (this.competitionsRaw) this.$unbind('competitionsRaw');
+      this.$bindAsArray('competitionsRaw', db.child('competitions'));
+
+      if (this.submissionsRaw) this.$unbind('submissionsRaw');
+      this.$bindAsArray('submissionsRaw', db.child('submissions'));
+
+      if (this.faqsRaw) this.$unbind('faqsRaw');
+      this.$bindAsArray('faqsRaw', db.child('faqs'));
+
+      if (this.usersRaw) this.$unbind('usersRaw');
+      this.$bindAsArray('usersRaw', db.child('users'));
+
+      if (this.favoritesRaw) this.$unbind('favoritesRaw');
+      this.$bindAsObject('favoritesRaw', db.child('users:favorites'));
+
+      if (this.permissionsRaw) this.$unbind('permissionsRaw');
+      this.$bindAsObject('permissionsRaw', db.child('users:permissions'));
+
+      if (this.versionsRaw) this.$unbind('versionsRaw');
+      this.$bindAsObject('versionsRaw', db.child('versions'));
+    },
+
     getTabRoute(tab) {
       return getFirstExisting({
         name: `admin.${tab}`,

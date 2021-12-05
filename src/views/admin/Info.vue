@@ -43,8 +43,6 @@ export default {
       'section',
       'versions',
       'faqs',
-      'submissions',
-      'users',
     ],
   },
   data() {

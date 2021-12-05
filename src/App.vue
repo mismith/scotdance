@@ -398,6 +398,8 @@ export default {
   },
   watch: {
     me(me) {
+      this.loadFirebase();
+
       if (me) {
         if (window.$crisp && me.email) {
           window.$crisp.push(['set', 'user:email', me.email]);
@@ -436,7 +438,7 @@ export default {
       if (this.competitionsRaw) this.$unbind('competitionsRaw');
       this.$bindAsArray('competitionsRaw', this.competitionsRef);
 
-      if (this.versions) this.$bind('versions');
+      if (this.versions) this.$unbind('versions');
       this.$bindAsObject('versions', db.child('versions'));
     },
 
