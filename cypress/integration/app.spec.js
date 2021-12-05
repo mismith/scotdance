@@ -158,6 +158,15 @@ describe('Competitions', () => {
     cy.getTest('submit:step.competition').should('not.be.visible');
     cy.getTest('submit:step.contact').should('not.be.visible');
     cy.getTest('submit:submitted').should('not.exist');
+
+    // allow admin's to create competitions directly
+    cy.getTest('submit:skip').should('not.exist');
+    cy.auth('signOut');
+    cy.getTest('submit:skip').should('not.exist');
+    createUser(USER_UID.ADMIN);
+    cy.auth('signInWithEmailAndPassword', USER_CREDENTIALS[USER_UID.ADMIN]);
+    cy.getTest('submit:skip').click();
+    cy.url().should('match', /competitions\/[^\/]+\/admin\/info/);
   });
 
   it('List', () => {

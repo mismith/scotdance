@@ -47,7 +47,7 @@
 
         <footer class="mt-5">
           <v-btn color="primary" class="mx-0" @click="handleStart" v-test="'submit:start'">Start</v-btn>
-          <v-btn v-if="me && me.admin" color="secondary" class="stripes ml-3" @click="handleSkip">
+          <v-btn v-if="$store.getters.hasPermission('admin')" color="secondary" class="stripes ml-3" @click="handleSkip" v-test="'submit:skip'">
             Skip
           </v-btn>
         </footer>
