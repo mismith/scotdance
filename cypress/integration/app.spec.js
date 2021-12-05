@@ -174,9 +174,40 @@ describe('User', () => {
 });
 
 describe('Admin', () => {
-  it('Info', () => {
-    cy.visit('/#/admin');
-    itShouldBeAuthGuarded(true);
+  describe('Info', () => {
+    it('Redirect from root', () => {
+      cy.visit('/#/admin');
+      cy.url().should('contain', '/#/admin/info/versions');
+    });
+    it('Redirect from subsection', () => {
+      cy.visit('/#/admin/info');
+      cy.url().should('contain', '/#/admin/info/versions');
+    });
+    it('Versions', () => {
+      const versions = {
+        web: '1.2.3',
+        ios: '4.5.6',
+        android: '7.8.9',
+      };
+      seed.database.set('development/versions', versions);
+
+      cy.visit('/#/admin/info/versions');
+      itShouldBeAuthGuarded(true);
+
+      Object.entries(versions).forEach(([name, version]) => {
+        cy.get(`input[name="${name}"]`).should('have.value', version);
+      });
+    });
+    it('FAQs', () => {
+      const faqs = [{ question: 'Foo', answer: 'Bar' }, { question: 'Baz', answer: 'Quux' }];
+      seed.database.set('development/faqs', faqs);
+
+      cy.visit('/#/admin/info/faqs');
+      itShouldBeAuthGuarded(true);
+
+      const text = faqs.reduce((acc, { question, answer }) => `${acc}${question}${answer}`, '');
+      cy.get('table.htCore tbody tr td').should('have.text', text);
+    });
   });
 
   it('Submissions', () => {
