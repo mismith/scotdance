@@ -192,8 +192,10 @@ export default {
       return this.$route.name.includes('.admin.');
     },
     competitionExists() {
-      if (this.competition[valueKey] !== undefined) return false;
-      if (!this.isAdmin && !this.competition.listed) return this.isSecretRoute;
+      if (!this.isSecretRoute) {
+        if (this.competition[valueKey] !== undefined) return false;
+        if (!this.isAdmin && !this.competition.listed) return false;
+      }
       return true;
     },
 
