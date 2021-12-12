@@ -40,7 +40,7 @@
                 </tr>
               </tbody>
             </table>
-            <v-btn href="/examples/ScotDance-Import-Template.xlsx" download>
+            <v-btn href="/examples/ScotDance-Import-Template.xlsx" download v-test="'import:download-template'">
               <v-icon left>{{ mdiFileExcel }}</v-icon>
               Download Template
             </v-btn>
@@ -54,6 +54,7 @@
             <v-file
               accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               @change="handleUpload"
+              v-test="'import:step.1:next'"
             >
               <v-btn color="primary">Select File</v-btn>
             </v-file>
@@ -80,6 +81,7 @@
               color="primary"
               :disabled="dancersSheetIndex < 0"
               @click="handleChoose()"
+              v-test="'import:step.2:next'"
             >
               Next
             </v-btn>
@@ -107,6 +109,7 @@
               :disabled="importing"
               :loading="importing"
               @click="handleReview()"
+              v-test="'import:step.3:next'"
             >
               Import
             </v-btn>

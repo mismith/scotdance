@@ -9,7 +9,7 @@
         />
       </template>
       <template v-if="inTabs('categories', 'groups', 'dancers')">
-        <v-btn text @click="showImport = true" class="hidden-xs-only">Import&hellip;</v-btn>
+        <v-btn text @click="showImport = true" class="hidden-xs-only" v-test="'admin:import'">Import&hellip;</v-btn>
       </template>
 
       <v-spacer />

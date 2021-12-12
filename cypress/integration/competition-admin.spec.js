@@ -1,3 +1,5 @@
+import path from 'path';
+
 import seed from '../helpers/seed';
 import { createUser, USER_CREDENTIALS, USER_UID } from '../helpers/user';
 
@@ -104,6 +106,41 @@ describe('Competition Admin', () => {
           cy.getTest(`invites:invite:${inviteId}:email`).should('not.exist');
         });
       });
+    });
+  });
+
+  describe('Dancers', () => {
+    beforeEach(() => {
+      cy.visit(`/#/competitions/${competitionId}/admin/dancers`);
+      isShouldBeAuthGuarded(true);
+    });
+
+    it('Import', () => {
+      seed.database.get(`development/competitions:data/${competitionId}`).as('competitionData');
+      cy.get('@competitionData').should('equal', null);
+
+      cy.getTest('admin:import').click();
+
+      cy.getTest('import:download-template').click();
+      cy.readFile(path.join(Cypress.config('downloadsFolder'), 'ScotDance-Import-Template.xlsx')).should('exist'); // @TODO: un-hardcode filename?
+
+      cy.getTest('import:step.1:next').find('input[type="file"]').attachFile('Import.xlsx').trigger('input', { force: true });
+      
+      // @TODO: test previous button
+
+      cy.getTest('import:step.2:next').click();
+      // @TODO: check multiple sheet support
+      // @TODO: test previous button
+
+      cy.getTest('import:step.3:next').click();
+      cy.get('.AdminImport').should('not.be.visible');
+      // @TODO: check 3 sheets, all with valid/good data/rows
+
+      seed.database.get(`development/competitions:data/${competitionId}`).as('competitionData');
+      cy.get('@competitionData').its('categories').then(Object.values).should('have.length', 5);
+      cy.get('@competitionData').its('groups').then(Object.values).should('have.length', 15);
+      cy.get('@competitionData').its('dancers').then(Object.values).should('have.length', 150);
+      // @TODO: check everything is PROPERLY populated
     });
   });
 });

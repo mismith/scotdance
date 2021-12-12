@@ -1,3 +1,5 @@
+import 'cypress-file-upload';
+
 import { firebase } from '../../src/helpers/firebase';
 
 Cypress.Commands.add('getTest', (id) => {
