@@ -85,13 +85,13 @@ export default {
 
       return firebase.auth()
         .createUserWithEmailAndPassword(this.email, this.password)
-        .then((me) => {
+        .then((userData) => {
           this.authLoading = false;
           this.email = null;
           this.password = null;
 
           // add to db
-          db.child('users').child(me.uid).set(me.providerData[0]);
+          db.child('users').child(userData.uid).set(userData.providerData[0]);
 
           // close dialog
           this.registerVisible = false;
