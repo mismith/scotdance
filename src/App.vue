@@ -33,7 +33,7 @@
             </v-btn>
           </template>
           <span>
-            {{ /^competition.admin/.test($route.name) ? 'View' : 'Edit' }} competition
+            {{ /^competition.admin/.test($route.name) ? 'View' : 'Administer' }} competition
           </span>
         </v-tooltip>
       </template>
