@@ -257,6 +257,7 @@
       <template #title>
         <v-card-title class="title">
           <div class="flex">Submit your competition</div>
+          <v-icon color="secondary">{{ mdiSend }}</v-icon>
         </v-card-title>
       </template>
 
