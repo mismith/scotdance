@@ -1,5 +1,5 @@
 <template>
-  <v-progress-circular v-bind="$props" indeterminate color="primary" class="Spinner" />
+  <v-progress-circular v-bind="$props" indeterminate :color="color" class="Spinner" />
 </template>
 
 <script>
@@ -13,6 +13,10 @@ export default {
     width: {
       type: Number,
       default: 4,
+    },
+    color: {
+      type: String,
+      default: 'primary',
     },
   },
 };
