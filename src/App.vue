@@ -263,6 +263,16 @@
 
       <p>To bring the app to your event, you'll need an account first.</p>
     </RequiresAuthDialog>
+    <RequiresAuthDialog name="demo">
+      <template #title>
+        <v-card-title class="title">
+          <div class="flex">Demo competition</div>
+          <v-icon color="amber">{{ mdiMonitorEye }}</v-icon>
+        </v-card-title>
+      </template>
+
+      <p>To explore a <strong>fully interactive preview</strong> of what your competition's admin panel will look like, you'll need an account first.</p>
+    </RequiresAuthDialog>
   </v-app>
 </template>
 
@@ -278,6 +288,7 @@ import {
   mdiFrequentlyAskedQuestions,
   mdiHome,
   mdiMenu,
+  mdiMonitorEye,
   mdiNewBox,
   mdiPencil,
   mdiPin,
@@ -327,6 +338,7 @@ export default {
       mdiFrequentlyAskedQuestions,
       mdiHome,
       mdiMenu,
+      mdiMonitorEye,
       mdiNewBox,
       mdiPencil,
       mdiPin,

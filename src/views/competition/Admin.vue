@@ -1,6 +1,24 @@
 <template>
   <RequiresPermission :permission="hasPermission" class="CompetitionAdmin app-scroll-frame">
     <v-toolbar dense class="flex-none">
+      <v-tooltip right v-if="demo">
+        <template #activator="{ on }">
+          <v-btn
+            v-on="on"
+            text
+            rounded
+            outlined
+            color="amber"
+            :to="{ name: 'competitions.demo' }"
+            class="mr-3"
+          >
+            <v-icon class="ml-n1 mr-3">{{ mdiMonitorEye }}</v-icon>
+            <CountdownTicker :end-timestamp="demo.started + (60 * 60 * 1000)" />
+          </v-btn>
+        </template>
+        Demo expiry
+      </v-tooltip>
+
       <template v-if="currentSection && currentSection.presets">
         <PresetPicker
           :presets="currentSection.presets"
@@ -127,10 +145,12 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
 import saveCSV from 'save-csv';
 import {
   mdiAlert,
   mdiCheck,
+  mdiMonitorEye,
 } from '@mdi/js';
 import {
   makeKeyValuePairColumn,
@@ -158,6 +178,7 @@ import competitionAdminSchema from '@/schemas/competition-admin';
 import RequiresPermission from '@/components/RequiresPermission.vue';
 import MiHotTable from '@/components/admin/MiHotTable.vue';
 import PresetPicker from '@/components/admin/PresetPicker.vue';
+import CountdownTicker from '@/components/CountdownTicker.vue';
 
 const AdminImport = () => import(/* webpackChunkName: "AdminImport" */ '@/components/admin/Import.vue');
 // const AdminImportResults = () => import(/* webpackChunkName: "AdminImport" */ '@/components/admin/ImportResults.vue');
@@ -186,6 +207,7 @@ export default {
       idKey,
       mdiAlert,
       mdiCheck,
+      mdiMonitorEye,
 
       showImport: false,
       // showImportResults: false,
@@ -196,6 +218,10 @@ export default {
     };
   },
   computed: {
+    ...mapState([
+      'me',
+    ]),
+
     // ...mapRouteParams([
     //   'groupId',
     //   'danceId',
@@ -239,6 +265,18 @@ export default {
           }
           return section;
         });
+    },
+  },
+  watch: {
+    'competition.demo': {
+      async handler(demo) {
+        if (demo) { // @TODO: what if this.me is still undefined?
+          const demoRef = db.child('users:demos').child(this.me[idKey]).child(this.competitionId);
+          if (this.demo) this.$unbind('demo');
+          this.$bindAsObject('demo', demoRef);
+        }
+      },
+      immediate: true,
     },
   },
   methods: {
@@ -367,6 +405,7 @@ export default {
     AdminImport,
     // AdminImportResults,
     PresetPicker,
+    CountdownTicker,
   },
 };
 </script>

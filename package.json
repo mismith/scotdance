@@ -43,6 +43,7 @@
     "@mismith/firebase-tools": "^1.4.1",
     "@outluch/v-file": "^1.0.0",
     "compare-versions": "^3.6.0",
+    "date-fns": "^2.27.0",
     "deep-property": "^1.1.0",
     "fast-html-parser": "^1.0.1",
     "firebase": "^8.10.0",

@@ -2,6 +2,7 @@ import admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
 import Invites from './invites';
 import Submissions from './submissions';
+import Demos from './demos';
 import { attachUserToCompetition } from './utility/competition';
 import { isCypress, isEmulator } from './utility/env';
 
@@ -31,8 +32,16 @@ const submissionsHooks = submissions.hook(`/${env}/competitions:submissions`);
 export const competitionSubmissionCreated = submissionsHooks.onCreate;
 export const competitionSubmissionUpdated = submissionsHooks.onUpdate;
 
+const demos = new Demos(appConfig.database, appConfig);
+const demosHooks = demos.hook(`/${env}/users:demos/{userId}/{competitionId}`);
+export const demoCreated = demosHooks.onCreate;
+export const demoDeleted = demosHooks.onDelete;
+export const demoStopped = demosHooks.onStop;
+
 export const competitionDeleted = appConfig.database.ref(`/${env}/competitions/{competitionId}`)
   .onDelete(async (before, ctx) => {
+    // @TODO: remove data too?
+
     // remove lingering permissions links between competitions and users
     const { db } = appConfig;
     const { competitionId } = ctx.params;

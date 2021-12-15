@@ -50,6 +50,12 @@
           ".write": "auth !== null && auth.uid === $userId" // is SELF
         }
       },
+      "users:demos": {
+        "$userId": {
+          ".read": "auth !== null && auth.uid === $userId", // is SELF
+          ".write": "auth !== null && auth.uid === $userId && !data.exists() && !newData.child('started').exists()" // is SELF and CREATING
+        }
+      },
       "users:permissions": {
         "$userId": {
           ".read": "auth !== null && auth.uid === $userId", // is SELF

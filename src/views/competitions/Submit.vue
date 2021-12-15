@@ -1,5 +1,5 @@
 <template>
-  <div class="CompetitionsSubmit app-scroll-frame app-scroll alt">
+  <div class="CompetitionsSubmit app-scroll-frame app-scroll">
     <!-- @TODO: scrolling not working on mobile? -->
     <v-stepper v-model="currentStep" vertical class="flex-none pb-4">
       <v-stepper-step
@@ -46,7 +46,8 @@
         </div>
 
         <footer class="mt-5">
-          <v-btn color="primary" class="mx-0" @click="handleStart" v-test="'submit:start'">Start</v-btn>
+          <v-btn color="primary" class="mx-0" @click="handleStart" v-test="'submit:start'">Start Submission</v-btn>
+          <v-btn color="amber" class="black--text ml-3" @click="handleDemo">Preview Admin Panel</v-btn>
           <v-btn v-if="$store.getters.hasPermission('admin')" color="secondary" class="stripes ml-3" @click="handleSkip" v-test="'submit:skip'">
             Skip
           </v-btn>
@@ -180,6 +181,23 @@ export default {
         }), {}),
       }), {});
       this.submitted = false;
+    },
+
+    handleDemo() {
+      const demo = () => {
+        this.$router.push({
+          name: 'competitions.demo',
+        });
+      };
+      if (this.$store.state.me) {
+        return demo();
+      }
+
+      // auto-advance post-auth...
+      this.$store.commit('addPostLoginCallback', demo);
+
+      // ...while opening dialog to inform user they need to login
+      return this.$store.commit('setCurrentDialog', 'demo');
     },
 
     handleStart() {

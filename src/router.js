@@ -13,6 +13,7 @@ import Policies from '@/views/Policies.vue';
 import Competitions from '@/views/Competitions.vue';
 import CompetitionsList from '@/views/competitions/List.vue';
 import CompetitionsSubmit from '@/views/competitions/Submit.vue';
+import CompetitionsDemo from '@/views/competitions/Demo.vue';
 
 import Competition from '@/views/Competition.vue';
 import CompetitionInfo from '@/views/competition/Info.vue';
@@ -83,6 +84,14 @@ export default new Router({
           component: CompetitionsSubmit,
           meta: {
             title: 'Submit Competition',
+          },
+        },
+        {
+          path: 'demo',
+          name: 'competitions.demo',
+          component: CompetitionsDemo,
+          meta: {
+            title: 'Admin panel preview',
           },
         },
         {
