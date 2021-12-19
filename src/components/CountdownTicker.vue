@@ -26,6 +26,7 @@ export default {
   data() {
     return {
       timeLeft: undefined,
+      intervalTimer: undefined,
     };
   },
   computed: {
@@ -49,17 +50,21 @@ export default {
       if (this.endTimestamp) {
         const timeLeft = this.endTimestamp - Date.now();
         this.timeLeft = Math.max(0, timeLeft);
-      } else if (this.timeLeft) {
-        this.timeLeft = 0;
-        this.stopTicker();
+
+        if (this.timeLeft <= 0) {
+          this.$emit('end');
+        } else {
+          return;
+        }
       }
+      this.stopTicker();
     },
     startTicker() {
       this.handleTick();
-      window.setInterval(this.handleTick, 1000);
+      this.intervalTimer = setInterval(this.handleTick, 1000);
     },
     stopTicker() {
-      window.clearInterval(this.handleTick);
+      clearInterval(this.intervalTimer);
     },
   },
   created() {

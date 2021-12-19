@@ -13,7 +13,10 @@
             class="mr-3"
           >
             <v-icon class="ml-n1 mr-3">{{ mdiMonitorEye }}</v-icon>
-            <CountdownTicker :end-timestamp="demo.started + (60 * 60 * 1000)" />
+            <CountdownTicker
+              :end-timestamp="demo.started + DEMO_DURATION"
+              @end="handleDemoExpire"
+            />
           </v-btn>
         </template>
         Demo expiry
@@ -170,6 +173,10 @@ import {
   // mapRouteParams,
 } from '@/helpers/router';
 import {
+  DEMO_DURATION,
+  stopDemo,
+} from '@/helpers/demos';
+import {
   callbacks,
   overall,
   getRows,
@@ -215,6 +222,9 @@ export default {
       saving: false,
       savingPromises: [],
       savingError: undefined,
+
+      DEMO_DURATION,
+      demoRef: undefined,
     };
   },
   computed: {
@@ -271,9 +281,9 @@ export default {
     'competition.demo': {
       async handler(demo) {
         if (demo) { // @TODO: what if this.me is still undefined?
-          const demoRef = db.child('users:demos').child(this.me[idKey]).child(this.competitionId);
+          this.demoRef = db.child('users:demos').child(this.me[idKey]).child(this.competitionId);
           if (this.demo) this.$unbind('demo');
-          this.$bindAsObject('demo', demoRef);
+          this.$bindAsObject('demo', this.demoRef);
         }
       },
       immediate: true,
@@ -396,6 +406,16 @@ export default {
         this.saveCSV(exportedData);
       } else {
         console.warn('No results to export.'); // eslint-disable-line no-console
+      }
+    },
+
+    async handleDemoExpire() {
+      if (this.demoRef) {
+        // @TODO: toast/alert user?
+        await stopDemo(this.demoRef);
+        this.$router.push({
+          name: 'competitions.demo',
+        });
       }
     },
   },

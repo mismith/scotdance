@@ -28,7 +28,14 @@
               </v-btn>
               <v-subheader>
                 <span>
-                  This demo competition expires in <strong><CountdownTicker :end-timestamp="demosRunning[0].started + (60 * 60 * 1000)" format="distance" /></strong>
+                  This demo competition expires in
+                  <strong>
+                    <CountdownTicker
+                      :end-timestamp="demosRunning[0].started + DEMO_DURATION"
+                      format="distance"
+                      @end="handleStop"
+                    />
+                  </strong>
 
                   <v-tooltip bottom>
                     <template #activator="{ on }">
@@ -67,7 +74,9 @@
 import { mapState } from 'vuex';
 import { formatDistanceStrict } from 'date-fns';
 import { mdiMonitorEye, mdiCloseOctagon } from '@mdi/js';
-import { idKey, db, firebase } from '@/helpers/firebase';
+import { idKey, db } from '@/helpers/firebase';
+import { DEMO_DURATION, startDemo, stopDemo } from '@/helpers/demos';
+import CountdownTicker from '@/components/CountdownTicker.vue';
 
 export default {
   name: 'CompetitionsDemo',
@@ -77,6 +86,7 @@ export default {
       mdiMonitorEye,
       mdiCloseOctagon,
 
+      DEMO_DURATION,
       demosRef: undefined,
       demoTimeLeft: undefined,
 
@@ -139,28 +149,7 @@ export default {
         this.isStarting = true;
 
         // request a new demo
-        const demoSnap = await this.demosRef.push({
-          requested: firebase.database.ServerValue.TIMESTAMP,
-        });
-
-        // wait for it to be created
-        const started = demoSnap.ref.child('started');
-        await new Promise((resolve, reject) => {
-          let off;
-          const timeout = setTimeout(() => {
-            off?.();
-            reject(new Error(`Starting demo (${demoSnap.key}) timed out`));
-          }, 10000); // 10 seconds
-          const handler = (startedSnap) => {
-            if (startedSnap.val()) {
-              clearTimeout(timeout);
-              off?.();
-              resolve();
-            }
-          };
-          off = () => started.off('value', handler);
-          started.on('value', handler);
-        });
+        const demoSnap = await startDemo(this.demosRef);
 
         // @TODO?: alert user of success / say "Go!"
 
@@ -180,14 +169,16 @@ export default {
 
     async handleStop() {
       this.isStopping = true;
-      await Promise.all(this.demosRunning.map((demo) => {
-        return this.demosRef.child(demo[idKey]).child('stopped').set(firebase.database.ServerValue.TIMESTAMP);
-      }));
+      await Promise.all(this.demosRunning.map((demo) => stopDemo(this.demosRef.child(demo[idKey]))));
+      // @TODO: alert user
       this.isStopping = false;
     },
   },
   async created() {
     this.loadFirebase();
+  },
+  components: {
+    CountdownTicker,
   },
 };
 </script>
