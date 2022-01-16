@@ -132,7 +132,7 @@ export default {
       this.$bindAsArray('competitionsRaw', db.child('competitions'));
 
       if (this.submissionsRaw) this.$unbind('submissionsRaw');
-      this.$bindAsArray('submissionsRaw', db.child('submissions'));
+      this.$bindAsArray('submissionsRaw', db.child('competitions:submissions'));
 
       if (this.faqsRaw) this.$unbind('faqsRaw');
       this.$bindAsArray('faqsRaw', db.child('faqs'));

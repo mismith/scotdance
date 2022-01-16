@@ -214,7 +214,7 @@ export default {
     },
   },
   async created() {
-    await db.child('submissions').once('value'); // @TODO: re-use existing ref somehow
+    await db.child('competitions:submissions').once('value'); // @TODO: re-use existing ref somehow
 
     this.loaded = true;
   },
