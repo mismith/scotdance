@@ -100,6 +100,20 @@ describe('App', () => {
       cy.getTest('app:submenu-button').click();
       cy.getTest('app-submenu').should('not.be.visible');
     });
+
+    it('Auth', () => {
+      cy.getTest('app:user-menu-button').click();
+      cy.getTest('account-buttons:register').click();
+      // @TODO: ensure submenu gets closed
+      cy.get('.RegisterDialog').should('exist').as('dialog');
+      // @TODO: test validation (e.g. submit while empty, submit with existing email)
+      cy.get('@dialog').getTest('register-dialog:email-field').find('input').should('be.focused').type(USER_CREDENTIALS.TEST[0]);
+      cy.get('@dialog').getTest('register-dialog:password-field').find('input').type(`${USER_CREDENTIALS.TEST[1]}{enter}`);
+      // @TODO: ensure no error message
+      cy.get('@dialog').should('not.be.visible');
+      // @TODO: test switch between Login + Register
+      // @TODO: test test forgotten password flow
+    });
   });
   it('Home', () => {
     cy.visit('/');

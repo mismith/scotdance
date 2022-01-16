@@ -12,6 +12,7 @@
       v-model="email"
       required
       autofocus
+      v-test="'register-dialog:email-field'"
     />
     <v-text-field
       label="Password *"
@@ -19,6 +20,7 @@
       name="password"
       v-model="password"
       required
+      v-test="'register-dialog:password-field'"
     />
 
     <p>
@@ -85,13 +87,13 @@ export default {
 
       return firebase.auth()
         .createUserWithEmailAndPassword(this.email, this.password)
-        .then((userData) => {
+        .then(({ user }) => {
           this.authLoading = false;
           this.email = null;
           this.password = null;
 
           // add to db
-          db.child('users').child(userData.uid).set(userData.providerData[0]);
+          db.child('users').child(user.uid).set(user.providerData[0]);
 
           // close dialog
           this.registerVisible = false;

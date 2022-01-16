@@ -60,11 +60,11 @@
         </v-sheet>
       </v-menu>
 
-      <v-menu v-model="accountVisible" offset-y v-test="'app:user-menu-button'">
+      <v-menu v-model="accountVisible" offset-y>
         <template #activator="{ on: menu }">
           <v-tooltip :disabled="isTouch || accountVisible" bottom :open-delay="600">
             <template #activator="{ on: tooltip }">
-              <v-btn icon class="mr-n2" v-on="Object.assign({}, tooltip, menu)">
+              <v-btn icon class="mr-n2" v-on="Object.assign({}, tooltip, menu)" v-test="'app:user-menu-button'">
                 <v-avatar size="36">
                   <Gravatar v-if="me" :user="me" />
                   <v-icon v-else>{{ mdiAccountCircle }}</v-icon>
