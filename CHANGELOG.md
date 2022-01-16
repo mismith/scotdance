@@ -1,5 +1,10 @@
 # Release Notes
 
+## 3.1.0 - Jan 16, 2022
+- fixes an error message being shown (erroneously) on all new user registrations
+- this is a MAJOR behind-the-scenes release - it updates and improves many of the app's core building blocks
+- the outcome is a notably more stable app; this includes a number of minor bug fixes discovered through the addition of automated code testing software
+
 ## 3.0.1 - Nov 13, 2021
 - fix section expander bug where toggling wouldn't always behave or persist as expected
 - add number of dancers to schedule dance groups

@@ -65,7 +65,7 @@ Links to the admin panels needed to manage this project:
 
     1. `npm run build`
     2. Open project in Xcode (`npx cap open ios`)
-    3. In the menu bar, select "Product" > "Archive"
+    3. In the menu bar, select "Product" > "Archive" (if you can't select it, make sure you are targeting "Any iOS Device")
     4. Click "Distribute App"
     5. Follow the wizard (App Store Connect, Upload, etc.)
     6. In App Store Connect, create a New iOS Version, then complete/fill out all remaining steps/info in form
