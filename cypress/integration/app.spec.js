@@ -107,7 +107,8 @@ describe('App', () => {
       // @TODO: ensure submenu gets closed
       cy.get('.RegisterDialog').should('exist').as('dialog');
       // @TODO: test validation (e.g. submit while empty, submit with existing email)
-      cy.get('@dialog').getTest('register-dialog:email-field').find('input').should('be.focused').type(USER_CREDENTIALS.TEST[0]);
+      cy.get('@dialog').getTest('register-dialog:email-field').find('input').should('be.focused');
+      cy.get('@dialog').getTest('register-dialog:email-field').find('input').type(USER_CREDENTIALS.TEST[0]);
       cy.get('@dialog').getTest('register-dialog:password-field').find('input').type(`${USER_CREDENTIALS.TEST[1]}{enter}`);
       // @TODO: ensure no error message
       cy.get('@dialog').should('not.be.visible');
@@ -138,7 +139,7 @@ describe('Competitions', () => {
   it('Submit', () => {
     cy.visit('/#/competitions/submit');
     cy.get('.CompetitionsSubmit').should('exist');
-    
+
     cy.getTest('submit:start').click();
 
     loginAs(USER_UID.TEST);
@@ -180,7 +181,7 @@ describe('Competitions', () => {
     createUser(USER_UID.ADMIN);
     cy.auth('signInWithEmailAndPassword', USER_CREDENTIALS[USER_UID.ADMIN]);
     cy.getTest('submit:skip').click();
-    cy.url().should('match', /competitions\/[^\/]+\/admin\/info/);
+    cy.url().should('match', /competitions\/[^/]+\/admin\/info/);
   });
 
   it('List', () => {

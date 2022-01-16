@@ -73,7 +73,7 @@ describe('Competition Admin', () => {
 
           // test removing self from being an admin
           cy.getTest(`invites:admin:${inviteId}:remove`).click();
-          cy.getTest(`dialog-card:submit`).click();
+          cy.getTest('dialog-card:submit').click();
           cy.getTest('competition:access-state:notFound').should('exist');
         });
       });
@@ -125,7 +125,7 @@ describe('Competition Admin', () => {
       cy.readFile(path.join(Cypress.config('downloadsFolder'), 'ScotDance-Import-Template.xlsx')).should('exist'); // @TODO: un-hardcode filename?
 
       cy.getTest('import:step.1:next').find('input[type="file"]').attachFile('Import.xlsx').trigger('input', { force: true });
-      
+
       // @TODO: test previous button
 
       cy.getTest('import:step.2:next').click();

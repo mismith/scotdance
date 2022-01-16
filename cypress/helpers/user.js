@@ -10,7 +10,7 @@ export const USER_CREDENTIALS = {
   [USER_UID.TEST]: ['test@scotdance.app', 'WelcomeTest1'],
   [USER_UID.OTHER]: ['other@scotdance.app', 'WelcomeOther1'],
   [USER_UID.ADMIN]: ['admin@scotdance.app', 'WelcomeAdmin1'],
-}
+};
 
 export function createUser(uid) {
   const [email, password] = USER_CREDENTIALS[uid];
