@@ -4,18 +4,18 @@
     :class="{
       listed: competition.listed,
       published: competition.published,
-      'is-admin': isAdmin,
+      'is-competition-admin': isCompetitionAdmin,
     }"
   >
     <div v-if="loaded" class="app-scroll-frame">
-      <div v-if="competitionExists" class="app-scroll-frame">
+      <div v-if="competitionExists || (isAdmin && isAdminRoute)" class="app-scroll-frame">
         <router-view v-if="hasPermission" v-test="'competition:access-state:full'" />
         <div v-else class="app-scroll-frame alt">
           <EmptyState
             :icon="mdiClockOutline"
             label="Not available yet"
             description="Check back closer to the competition date:"
-            v-test="'competition:access-state:partial'"
+            v-test="'competition:access-state:publicOnly'"
           >
             <div class="title">
               {{ competition.date ? $moment(competition.date).format('dddd, MMMM D') : 'Soon' }}
@@ -174,10 +174,13 @@ export default {
     },
 
     isAdmin() {
+      return this.$store.getters.hasPermission('admin');
+    },
+    isCompetitionAdmin() {
       return this.$store.getters.hasPermission(`competitions/${this.competitionId}`);
     },
     hasPermission() {
-      return this.isAdmin
+      return this.isCompetitionAdmin
         || this.competition.published
         || this.isSecretRoute
         || this.isPublicRoute;
@@ -194,7 +197,7 @@ export default {
     competitionExists() {
       if (!this.isSecretRoute) {
         if (this.competition[valueKey] !== undefined) return false;
-        if (!this.isAdmin && !this.competition.listed) return false;
+        if (!this.isCompetitionAdmin && !this.competition.listed) return false;
       }
       return true;
     },
@@ -366,7 +369,7 @@ export default {
 
 <style lang="scss">
 .Competition {
-  &.is-admin {
+  &.is-competition-admin {
     &:not(.listed) .listed-only,
     &.listed:not(.published) .published-only {
       background-image: repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.1) 5px, rgba(0, 0, 0, 0.1) 10px) !important;

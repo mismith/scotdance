@@ -182,6 +182,7 @@ describe('Competitions', () => {
     cy.auth('signInWithEmailAndPassword', USER_CREDENTIALS[USER_UID.ADMIN]);
     cy.getTest('submit:skip').click();
     cy.url().should('match', /competitions\/[^/]+\/admin\/info/);
+    cy.getTest('competition:access-state:full').should('exist');
   });
 
   it('List', () => {
