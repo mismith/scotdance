@@ -109,6 +109,7 @@
         description="Expect a confirmation email in your inbox momentarily."
       >
         <p class="mt-4">Your submission will be reviewed <strong>within 7 days</strong>, and you will receive another email once approved.</p>
+        <p>(Check your spam in the meantime, just in case.)</p>
 
         <v-btn color="primary" @click="handleRestart" v-test="'submit:restart'">Submit Another Competition</v-btn>
       </EmptyState>
