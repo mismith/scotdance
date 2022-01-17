@@ -1,5 +1,8 @@
 # Release Notes
 
+## 3.1.0 - Jan 17, 2022
+- fixes a major bug that caused the app to show a loading spinner indefinitely
+
 ## 3.1.0 - Jan 16, 2022
 - fixes an error message being shown (erroneously) on all new user registrations
 - this is a MAJOR behind-the-scenes release - it updates and improves many of the app's core building blocks
