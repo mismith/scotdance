@@ -61,7 +61,7 @@
             <v-list>
               <DynamicForm
                 v-if="currentSubmission[step[idKey]]"
-                :fields="step.fields"
+                :fields="step.fields.map(field => ({ readonly: currentSubmission.approved, ...field }))"
                 :data="currentSubmission[step[idKey]]"
                 class="pa-4"
                 @field-change="handleChanges($event, `competitions:submissions/${submissionId}/${step[idKey]}`)"
