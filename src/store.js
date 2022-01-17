@@ -13,11 +13,12 @@ import {
   firebaseAction,
 } from 'vuexfire';
 import compareVersions from 'compare-versions';
+
+import $package from '@/../package.json';
 import {
   idKey,
   db,
 } from '@/helpers/firebase';
-import $package from '../package.json';
 
 Vue.use(Vuex);
 Vue.use(VueLocalStorage, {

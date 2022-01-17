@@ -14,7 +14,7 @@ import { Device } from '@capacitor/device';
 import { SplashScreen } from '@capacitor/splash-screen';
 
 import { firebase, isLocalhost } from '@/helpers/firebase';
-import { getTitleChunks } from '@/helpers/router';
+import { getTitleChunks, setTitle } from '@/helpers/router';
 
 import App from '@/App.vue';
 import router from '@/router';
@@ -166,13 +166,18 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
-  // set page title
-  const titleChunks = await getTitleChunks(to);
-  document.title = titleChunks.reverse().join(' • ');
-
   return next();
 });
-router.afterEach((to) => {
+router.afterEach(async (to) => {
+  try {
+    // set page title
+    const titleChunks = await getTitleChunks(to);
+    setTitle(titleChunks);
+  } catch (error) {
+    // this is nice-to-have functionality, so don't abort the flow below if something fails
+    console.error(error);
+  }
+
   // store route/tab states for restoring (e.g. on app re-open)
   const routeInfo = Vue.localStorage.get('routeInfo', {});
   routeInfo.$current = to.name;

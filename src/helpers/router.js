@@ -11,6 +11,9 @@ export async function getTitleChunks(route) {
     }))]
     .filter((chunk) => chunk);
 }
+export function setTitle(titleChunks) {
+  document.title = titleChunks.reverse().join(' • ');
+}
 
 export function isExpanded(items, itemId, itemIds, expandByDefault = undefined) {
   const expandeds = {
