@@ -13,7 +13,8 @@ import { Capacitor, Plugins } from '@capacitor/core';
 import { Device } from '@capacitor/device';
 import { SplashScreen } from '@capacitor/splash-screen';
 
-import { firebase, isLocalhost } from '@/helpers/firebase';
+import { isDev } from '@/helpers/env';
+import { firebase } from '@/helpers/firebase';
 import { getTitleChunks, setTitle } from '@/helpers/router';
 
 import App from '@/App.vue';
@@ -175,6 +176,7 @@ router.afterEach(async (to) => {
     setTitle(titleChunks);
   } catch (error) {
     // this is nice-to-have functionality, so don't abort the flow below if something fails
+    // eslint-disable-next-line no-console
     console.error(error);
   }
 
@@ -203,7 +205,7 @@ if (window.$crisp) {
 }
 
 // test helpers
-if (isLocalhost()) {
+if (isDev()) {
   Vue.directive('test', (el, { value }) => {
     el.setAttribute('data-test-id', value);
   });

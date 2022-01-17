@@ -3,12 +3,7 @@ import 'firebase/auth';
 import 'firebase/database';
 import 'firebase/storage';
 
-export function isLocalhost() {
-  return window.location.hostname === 'localhost';
-}
-export function isCypress() {
-  return isLocalhost() && (window.Cypress || window.location.search.includes('cypress'));
-}
+import { isCypress, isDev } from './env';
 
 export { firebase };
 const config = {
@@ -21,8 +16,8 @@ const config = {
 };
 export const app = firebase.initializeApp(config);
 
-const FIREBASE_ENV = isLocalhost() ? 'development' : 'production';
-if (isLocalhost()) {
+const FIREBASE_ENV = isDev() ? 'development' : 'production';
+if (isDev()) {
   // port values from /firebase.json
   firebase.auth().useEmulator(`http://localhost:${9099}/`, { disableWarnings: true });
   firebase.database().useEmulator('localhost', 9000);

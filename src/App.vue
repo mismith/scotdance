@@ -6,7 +6,7 @@
       absolute
       color="primary"
       class="print-hide"
-      :class="{ stripes: isLocalhost() }"
+      :class="{ stripes: isDev() }"
     >
       <v-btn icon @click="menuVisible = !menuVisible" aria-label="menu" v-test="'app:menu-button'">
         <v-badge v-model="needsUpdating" dot color="secondary">
@@ -294,8 +294,8 @@ import {
   idKey,
   db,
   firebase,
-  isLocalhost,
 } from '@/helpers/firebase';
+import { isDev } from '@/helpers/env';
 import RegisterDialog from '@/components/RegisterDialog.vue';
 import LoginDialog from '@/components/LoginDialog.vue';
 import RequiresAuthDialog from '@/components/RequiresAuthDialog.vue';
@@ -430,7 +430,7 @@ export default {
     ...mapActions([
       'help',
     ]),
-    isLocalhost,
+    isDev,
 
     async loadFirebase() {
       this.competitionsRef = db.child('competitions');
