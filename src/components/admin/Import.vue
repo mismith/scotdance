@@ -250,8 +250,7 @@ export default {
     },
     sheetToJson(sheet, options = { header: 1 }) {
       return XLSX.utils.sheet_to_json(sheet, options)
-        // eslint-disable-next-line no-unused-vars
-        .filter((row) => Object.entries(row).some(([k, v]) => v)); // remove empties
+        .filter((row) => Object.entries(row).some(([, v]) => v)); // remove empties
     },
     sheetToHot(sheet, settings = {}) {
       const rows = this.sheetToJson(sheet);
@@ -279,12 +278,12 @@ export default {
       const categories = [];
       let currentCode;
       dancersData.forEach((datum) => {
-        if (!datum.number) return; // skip blanks
+        if (!datum.number || !String(datum.number).trim()) return; // skip blanks
         if (!/^\d+$/.test(datum.number)) {
           currentCode = Object.keys(groups).length + 1;
 
           // parse group and category from section header
-          const title = (datum.number || '').trim();
+          const title = String(datum.number).trim();
           const category = title.replace(/\d(.*)$/, '').trim();
           const name = title.replace(category, '').trim();
           if (categories.indexOf(category) < 0) {
