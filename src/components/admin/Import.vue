@@ -299,9 +299,9 @@ export default {
           // dancer
           dancers.push({
             number: datum.number,
-            firstName: datum.firstName || '',
-            lastName: datum.lastName || '',
-            location: datum.location || '',
+            firstName: String(datum.firstName).trim() || '',
+            lastName: String(datum.lastName).trim() || '',
+            location: String(datum.location).trim() || '',
             code: currentCode,
           });
         }
@@ -339,7 +339,7 @@ export default {
 
       const groupMappings = await Promise.all(groups.map(async (groupData) => {
         const categoryId = categoryMappings
-          .find((category) => `${category.name}` === `${groupData.category}`);
+          .find((category) => String(category.name) === String(groupData.category));
         const matches = {
           name: groupData.name,
           categoryId: (categoryId && categoryId[idKey]) || null,
@@ -362,7 +362,7 @@ export default {
 
       await Promise.all(dancers.map(async (dancerData) => {
         const groupId = groupMappings
-          .find((group) => `${group.code}` === `${dancerData.code}`);
+          .find((group) => String(group.code) === String(dancerData.code));
         const matches = {
           number: dancerData.number,
           firstName: dancerData.firstName,
