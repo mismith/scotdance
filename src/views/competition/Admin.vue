@@ -332,8 +332,7 @@ export default {
       });
     },
     exportHotTable() {
-      const { hotInstance } = this.$refs.hot.$refs.hot;
-      const rows = hotInstance.rootElement?.querySelector('table')?.querySelectorAll('tr');
+      const rows = this.$refs.hot?.hotInstance?.rootElement?.querySelector('table')?.querySelectorAll('tr');
       const textifier = document.createElement('div');
       const data = Array.from(rows || []).map((row) => {
         const cells = row.querySelectorAll('td:not(:first-child), th:not(:first-child)');

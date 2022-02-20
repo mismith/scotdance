@@ -1,11 +1,10 @@
 <template>
   <HotTable
     :settings="hotSettings"
-    :data="clonedData"
+    :data="hotData"
     class="MiHotTable"
     ref="hot"
   />
-  <!-- @HACK: allow external access thru parentComponent.$ref.<refName>.$refs.hot.hotInstance -->
 </template>
 
 <script>
@@ -26,14 +25,19 @@ export default {
   },
   computed: {
     hotSettings() {
-      return this.augmentHot(this.settings);
+      const { data, ...settings } = this.settings;
+      return this.augmentHot(settings);
     },
-    clonedData() {
-      const data = this.data || (this.hotSettings && this.hotSettings.data);
-      if (Array.isArray(data)) {
-        return [...data];
-      }
-      return data;
+    hotData() {
+      return [...this.data || this.hotSettings?.data];
+    },
+    hotInstance() {
+      return this.$refs.hot?.hotInstance;
+    },
+  },
+  watch: {
+    hotData(data) {
+      this.hotInstance?.updateData(data);
     },
   },
   methods: {
@@ -48,7 +52,7 @@ export default {
             const keys = {};
             const getKey = (row) => {
               if (!keys[row]) {
-                const key = vm.clonedData[row] && vm.clonedData[row][idKey];
+                const key = vm.hotData[row] && vm.hotData[row][idKey];
                 if (!key) {
                   keys[row] = db.push().key;
                 } else {
@@ -73,7 +77,7 @@ export default {
           const aggregated = {};
           for (let row = index; row < index + amount; row += 1) {
             const physicalRow = this.toPhysicalRow(row); // to account for sorting
-            const key = vm.clonedData[physicalRow] && vm.clonedData[physicalRow][idKey];
+            const key = vm.hotData[physicalRow] && vm.hotData[physicalRow][idKey];
             if (key) {
               aggregated[key] = null;
             }
