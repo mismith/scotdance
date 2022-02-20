@@ -1,7 +1,85 @@
 import Vue from 'vue';
-import Handsontable from 'handsontable';
+import Handsontable from 'handsontable/base';
 import 'handsontable/dist/handsontable.full.css';
 import flatten from 'obj-flatten';
+
+import {
+  registerEditor,
+  // AutocompleteEditor,
+  BaseEditor,
+  // CheckboxEditor,
+  // DateEditor,
+  DropdownEditor,
+  // HandsontableEditor,
+  // NumericEditor,
+  // PasswordEditor,
+  // SelectEditor,
+  TextEditor,
+} from 'handsontable/editors';
+import {
+  registerRenderer,
+  baseRenderer,
+  autocompleteRenderer,
+  // checkboxRenderer,
+  htmlRenderer,
+  // numericRenderer,
+  // passwordRenderer,
+  textRenderer,
+} from 'handsontable/renderers';
+import {
+  registerCellType,
+  // AutocompleteCellType,
+  // CheckboxCellType,
+  // DateCellType,
+  DropdownCellType,
+  HandsontableCellType,
+  // NumericCellType,
+  // PasswordCellType,
+  TextCellType,
+  // TimeCellType,
+} from 'handsontable/cellTypes';
+import {
+  registerPlugin,
+  AutoColumnSize,
+  // AutoRowSize,
+  Autofill,
+  // BasePlugin,
+  // BindRowsWithHeaders,
+  // CollapsibleColumns,
+  ColumnSorting,
+  // ColumnSummary,
+  // Comments,
+  ContextMenu,
+  CopyPaste,
+  // CustomBorders,
+  DragToScroll,
+  // DropdownMenu,
+  // ExportFile,
+  // Filters,
+  // Formulas,
+  // HiddenColumns,
+  // HiddenRows,
+  // ManualColumnFreeze,
+  // ManualColumnMove,
+  ManualColumnResize,
+  // ManualRowMove,
+  // ManualRowResize,
+  // MergeCells,
+  // MultiColumnSorting,
+  // MultipleSelectionHandles,
+  // NestedHeaders,
+  // NestedRows,
+  // PersistentState,
+  // Search,
+  // TouchScroll,
+  // TrimRows,
+  UndoRedo,
+} from 'handsontable/plugins';
+import {
+  registerLanguageDictionary,
+  enUS,
+} from 'handsontable/i18n';
+
 import vuetify from '@/plugins/vuetify';
 import { idKey } from '@/helpers/firebase';
 import FileUploaderCellRenderer from '@/components/admin/FileUploaderCellRenderer.vue';
@@ -9,26 +87,49 @@ import FileUploaderCellRenderer from '@/components/admin/FileUploaderCellRendere
 export * from '@handsontable/vue';
 export { Handsontable };
 
-Handsontable.cellTypes.registerCellType('textarea', {
+registerLanguageDictionary(enUS);
+
+registerEditor(BaseEditor);
+registerEditor(DropdownEditor);
+registerEditor(TextEditor);
+
+registerRenderer(baseRenderer);
+registerRenderer(htmlRenderer);
+registerRenderer(textRenderer);
+
+registerCellType(DropdownCellType);
+registerCellType(HandsontableCellType);
+registerCellType(TextCellType);
+
+registerPlugin(AutoColumnSize);
+registerPlugin(Autofill);
+registerPlugin(ColumnSorting);
+registerPlugin(ContextMenu);
+registerPlugin(CopyPaste);
+registerPlugin(DragToScroll);
+registerPlugin(ManualColumnResize);
+registerPlugin(UndoRedo);
+
+registerCellType('textarea', {
   renderer(...args) {
     const [hotInstance, td, row, col, prop, value, cellProperties] = args;
-    Handsontable.renderers.HtmlRenderer.apply(this, [
+    htmlRenderer.apply(this, [
       hotInstance,
       td,
       row,
       col,
       prop,
-      `<div style="max-width: 300px; max-width: 33vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${Handsontable.helper.stringify(value)}</div>`,
+      `<div style="max-width: 300px; max-width: 33vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${value || ''}</div>`,
       cellProperties,
     ]);
   },
-  editor: Handsontable.editors.TextEditor,
+  editor: TextEditor,
 });
 
-Handsontable.cellTypes.registerCellType('file', {
+registerCellType('file', {
   renderer(...args) {
     const [hotInstance, td, row, col, prop, value, cellProperties] = args;
-    Handsontable.renderers.BaseRenderer.apply(this, args);
+    baseRenderer.apply(this, args);
 
     // skip re-rendering if value doesn't change
     if (typeof td.hotValue !== 'undefined' && td.hotValue === value) return;
@@ -65,7 +166,7 @@ Handsontable.cellTypes.registerCellType('file', {
       vuetify,
     });
   },
-  editor: Handsontable.editors.TextEditor,
+  editor: TextEditor,
 });
 
 export function makeKeyValuePairColumn(column, valueProp = '$name', keyProp = idKey) {
@@ -74,12 +175,17 @@ export function makeKeyValuePairColumn(column, valueProp = '$name', keyProp = id
     type: 'handsontable',
     handsontable: {
       autoColumnSize: true,
-      data: column.source,
+      data: column.source.map((datum) => ({
+        // makeKeyValuePairColumnId becuse `.key` seems to get mutated by handsontable
+        // into `{ "": { key: undefined } }`
+        makeKeyValuePairColumnId: datum[keyProp],
+        ...datum,
+      })),
       columns: [{ data: valueProp }],
       getValue: function getValue() {
         const [[startRowIndex]] = this.getSelected();
         const data = this.getSourceDataAtRow(startRowIndex);
-        return data && data[keyProp];
+        return data && data.makeKeyValuePairColumnId;
       },
     },
     renderer: function renderer(...args) {
@@ -88,7 +194,7 @@ export function makeKeyValuePairColumn(column, valueProp = '$name', keyProp = id
         // eslint-disable-next-line no-param-reassign
         args[5] = item[valueProp];
       }
-      Handsontable.renderers.HandsontableRenderer.apply(this, args);
+      autocompleteRenderer.apply(this, args);
     },
   };
 }
@@ -104,12 +210,20 @@ export const augmentHot = (settings = {}, data = undefined) => licenseHot({
   stretchH: 'all',
   modifyColWidth: (w) => Math.min(w, window.width / 2), // prevent super-wide cells
   minSpareRows: 1,
+
+  // plugins
+  autoColumnSize: true,
+  columnSorting: true,
   contextMenu: [
     'remove_row',
+    '---------',
+    'undo',
+    'redo',
   ],
-  sortIndicator: true,
-  columnSorting: true,
+  copyPaste: true,
+  dragToScroll: true,
   manualColumnResize: true,
+  undo: true,
 
   ...settings,
 

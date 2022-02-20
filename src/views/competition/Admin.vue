@@ -67,6 +67,7 @@
         <MiHotTable
           v-else
           ref="hot"
+          :key="currentSection[idKey]"
           :settings="currentSection.hot"
           :data="this[$root.currentTab]"
           @change="handleHotChanges"

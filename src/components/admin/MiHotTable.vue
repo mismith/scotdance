@@ -42,12 +42,6 @@ export default {
 
       if (this.data) {
         const vm = this;
-        augmentedSettings.afterLoadData = function afterLoadData() {
-          // restore sorting after data is refreshed
-          const ColumnSorting = this.getPlugin('ColumnSorting');
-          const sortConfig = ColumnSorting.getSortConfig();
-          if (sortConfig.length) ColumnSorting.sort(sortConfig);
-        };
         augmentedSettings.beforeChange = function beforeChange(changes, source) {
           if (source !== 'loadData') {
             // store/retrieve to avoid adding a new db entry per change (instead of per new row)

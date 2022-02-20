@@ -60,6 +60,7 @@
             </v-file>
           </v-card-actions>
         </v-stepper-content>
+
         <v-stepper-content :step="2" class="pa-0">
           <v-tabs v-if="workbook" v-model="dancersSheetIndex" show-arrows>
             <v-tab v-for="(sheetName, sheetIndex) of workbook.SheetNames" :key="sheetIndex">
@@ -87,6 +88,7 @@
             </v-btn>
           </v-card-actions>
         </v-stepper-content>
+
         <v-stepper-content :step="3" class="pa-0">
           <v-tabs v-if="data" v-model="dataTabIndex" show-arrows>
             <v-tab v-for="key of dataKeys" :key="key">
@@ -179,15 +181,15 @@ export default {
         const data = event.target.result;
         const workbook = read(data, { type: 'binary' });
 
+        // auto-pick default sheets
+        const autoDetectedSheetIndex = workbook.SheetNames.findIndex((name) => /Program/i.test(name));
+        this.dancersSheetIndex = autoDetectedSheetIndex >= 0 ? autoDetectedSheetIndex : 0;
+
         // store for processing
         this.$set(this, 'workbook', workbook);
 
         // move to next step
         this.step += 1;
-
-        // auto-pick default sheets
-        const autoDetectedSheetIndex = workbook.SheetNames.findIndex((name) => /Program/i.test(name));
-        this.dancersSheetIndex = autoDetectedSheetIndex >= 0 ? autoDetectedSheetIndex : 0;
       };
       reader.readAsBinaryString(file);
     },
@@ -207,14 +209,14 @@ export default {
 
       await this.importData(categories, groups, dancers);
 
-      // close dialog
-      this.$emit('done');
-      this.step = 1;
+      this.handleCancel();
     },
     handleCancel() {
       // close dialog
       this.$emit('done');
       this.step = 1;
+      this.data = undefined;
+      this.workbook = undefined;
     },
 
     toReviewHot(key) {
@@ -248,11 +250,11 @@ export default {
         readOnly: true,
       }, data);
     },
-    sheetToJson(sheet, options = { header: 1 }) {
+    sheetToJson(sheet, options = { header: 1, raw: true, defval: null }) {
       return utils.sheet_to_json(sheet, options)
-        .filter((row) => Object.entries(row).some(([, v]) => v)); // remove empties
+        .filter((row) => Object.values(row).some(Boolean)); // remove empties
     },
-    sheetToHot(sheet, settings = {}) {
+    sheetToHot(sheet) {
       const rows = this.sheetToJson(sheet);
       const minCols = rows.reduce((num, row) => Math.max(num, row.length), 0);
 
@@ -260,7 +262,6 @@ export default {
         minCols,
         minSpareRows: 0,
         readOnly: true,
-        ...settings,
       }, rows);
     },
     parseSpreadsheet(dancersSheet) {
@@ -299,9 +300,9 @@ export default {
           // dancer
           dancers.push({
             number: datum.number,
-            firstName: String(datum.firstName).trim() || '',
-            lastName: String(datum.lastName).trim() || '',
-            location: String(datum.location).trim() || '',
+            firstName: String(datum.firstName || '').trim(),
+            lastName: String(datum.lastName || '').trim(),
+            location: String(datum.location || '').trim(),
             code: currentCode,
           });
         }
@@ -365,9 +366,9 @@ export default {
           .find((group) => String(group.code) === String(dancerData.code));
         const matches = {
           number: dancerData.number,
-          firstName: dancerData.firstName,
-          lastName: dancerData.lastName,
-          location: dancerData.location,
+          firstName: dancerData.firstName || null,
+          lastName: dancerData.lastName || null,
+          location: dancerData.location || null,
         };
         const dancer = find(this.dancers, matches) || matches;
         dancer.groupId = (groupId && groupId[idKey]) || dancer.groupId || null;
