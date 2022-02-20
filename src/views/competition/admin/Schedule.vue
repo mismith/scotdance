@@ -23,18 +23,7 @@
               :presets="blade.presets"
               :prop="blade.name"
               @select="items => items.map(item => handleListItemCreate(blade, item, true))"
-            >
-              <template #activator="{ on: picker }">
-                <v-tooltip bottom>
-                  <template #activator="{ on: tooltip }">
-                    <v-btn icon class="mx-1" v-on="Object.assign({}, tooltip, picker)">
-                      <v-icon>{{ mdiPlaylistPlus }}</v-icon>
-                    </v-btn>
-                  </template>
-                  <span>Add preset(s)</span>
-                </v-tooltip>
-              </template>
-            </PresetPicker>
+            />
 
             <v-tooltip bottom>
               <template #activator="{ on }">
@@ -226,7 +215,6 @@ import {
   mdiChevronRight,
   mdiClose,
   mdiDragVertical,
-  mdiPlaylistPlus,
   mdiPlus,
 } from '@mdi/js';
 import BladeToolbar from '@/components/BladeToolbar.vue';
@@ -269,7 +257,6 @@ export default {
       mdiChevronRight,
       mdiClose,
       mdiDragVertical,
-      mdiPlaylistPlus,
       mdiPlus,
 
       confirmDisable: undefined,

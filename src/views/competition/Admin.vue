@@ -1,47 +1,65 @@
 <template>
   <RequiresPermission :permission="hasPermission" class="CompetitionAdmin app-scroll-frame">
     <v-toolbar dense class="flex-none">
-      <template v-if="currentSection && currentSection.presets">
-        <PresetPicker
-          :presets="currentSection.presets"
-          :prop="currentSection[idKey] === 'dances' ? p => danceExtender(p).$name : 'name'"
-          @select="addPresets"
-        />
-      </template>
-      <template v-if="inTabs('categories', 'groups', 'dancers')">
-        <v-btn text @click="showImport = true" class="hidden-xs-only" v-test="'admin:import'">Import&hellip;</v-btn>
-      </template>
-
-      <v-spacer />
-
-      <template v-if="inTabs('staff', 'dances', 'categories', 'groups', 'dancers', 'platforms')">
-        <v-btn text @click="exportHotTable()" class="hidden-xs-only">Export CSV</v-btn>
-      </template>
-      <template v-if="inTabs('results')">
-        <!-- <v-btn text @click="showImportResults = true" class="hidden-xs-only">Import&hellip;</v-btn> -->
-        <v-btn text @click="exportResults()">Export CSV</v-btn>
-      </template>
-
-      <v-tooltip
-        :left="!savingError"
-        :bottom="!!savingError"
-        :color="savingError ? 'error' : undefined"
-      >
-        <template #activator="{ on }">
-          <v-btn
-            v-on="on"
-            icon
-            :color="savingError ? 'error' : 'primary'"
-            :loading="saving"
-          >
-            <v-icon>
-              {{ savingError ? mdiAlert : mdiCheck }}
-            </v-icon>
-          </v-btn>
+      <div class="d-flex flex-sm-grow-1" style="flex-basis: 33%;">
+        <template v-if="currentSection && currentSection.presets">
+          <PresetPicker
+            :presets="currentSection.presets"
+            :prop="currentSection[idKey] === 'dances' ? p => danceExtender(p).$name : 'name'"
+            @select="addPresets"
+          />
         </template>
-        <div v-if="savingError">{{ savingError.message }}</div>
-        <span v-else>{{ saving ? 'Saving...' : 'Saved' }}</span>
-      </v-tooltip>
+        <v-tooltip bottom>
+          <template #activator="{ on }">
+            <v-btn icon v-on="on" @click="showImport = true" class="hidden-xs-only" v-test="'admin:import'">
+              <v-icon>{{ mdiImport }}</v-icon>
+            </v-btn>
+          </template>
+          Import XLSX
+        </v-tooltip>
+      </div>
+      <div class="d-flex flex-sm-grow-1 justify-center" style="flex-basis: 33%;">
+      </div>
+      <div class="d-flex flex-sm-grow-1 justify-end" style="flex-basis: 33%;">
+        <template v-if="inTabs('staff', 'dances', 'categories', 'groups', 'dancers', 'platforms')">
+          <v-tooltip bottom>
+            <template #activator="{ on }">
+              <v-btn icon v-on="on" class="hidden-xs-only" @click="exportHotTable()">
+                <v-icon>{{ mdiExport }}</v-icon>
+              </v-btn>
+            </template>
+            Export CSV
+          </v-tooltip>
+        </template>
+        <template v-if="inTabs('results')">
+          <!-- <v-btn text @click="showImportResults = true" class="hidden-xs-only">Import&hellip;</v-btn> -->
+          <v-tooltip bottom>
+            <template #activator="{ on }">
+              <v-btn icon v-on="on" @click="exportResults()">
+                <v-icon>{{ mdiExport }}</v-icon>
+              </v-btn>
+            </template>
+            Export CSV
+          </v-tooltip>
+        </template>
+
+        <v-tooltip bottom :color="savingError ? 'error' : undefined">
+          <template #activator="{ on }">
+            <v-btn
+              v-on="on"
+              icon
+              :color="savingError ? 'error' : 'primary'"
+              :loading="saving"
+            >
+              <v-icon>
+                {{ savingError ? mdiAlert : mdiCheck }}
+              </v-icon>
+            </v-btn>
+          </template>
+          <div v-if="savingError">{{ savingError.message }}</div>
+          <span v-else>{{ saving ? 'Saving...' : 'Saved' }}</span>
+        </v-tooltip>
+      </div>
     </v-toolbar>
 
     <div v-if="currentSection" class="app-scroll-frame app-scroll">
@@ -132,6 +150,8 @@ import saveCSV from 'save-csv';
 import {
   mdiAlert,
   mdiCheck,
+  mdiExport,
+  mdiImport,
 } from '@mdi/js';
 import {
   makeKeyValuePairColumn,
@@ -187,6 +207,8 @@ export default {
       idKey,
       mdiAlert,
       mdiCheck,
+      mdiExport,
+      mdiImport,
 
       showImport: false,
       // showImportResults: false,
@@ -370,3 +392,10 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.CompetitionAdmin > .v-toolbar .v-toolbar__content .v-btn.v-btn--icon.v-size--default {
+  width: 36px;
+  height: 36px;
+}
+</style>

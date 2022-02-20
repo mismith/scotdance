@@ -6,7 +6,14 @@
   >
     <template #activator="props">
       <slot name="activator" v-bind="props">
-        <v-btn v-on="props.on" text>Add Presets&hellip;</v-btn>
+        <v-tooltip bottom>
+          <template #activator="{ on: tooltip }">
+            <v-btn icon class="mx-1" v-on="Object.assign({}, tooltip, props.on)">
+              <v-icon>{{ mdiPlaylistPlus }}</v-icon>
+            </v-btn>
+          </template>
+          <span>Add preset(s)</span>
+        </v-tooltip>
       </slot>
     </template>
     <template #text>
@@ -52,7 +59,12 @@
 </template>
 
 <script>
-import { mdiCheck, mdiClose, mdiPlus } from '@mdi/js';
+import {
+  mdiCheck,
+  mdiClose,
+  mdiPlaylistPlus,
+  mdiPlus,
+} from '@mdi/js';
 import { idKey } from '@/helpers/firebase';
 
 export default {
@@ -69,6 +81,7 @@ export default {
       idKey,
       mdiCheck,
       mdiClose,
+      mdiPlaylistPlus,
       mdiPlus,
 
       added: {},
