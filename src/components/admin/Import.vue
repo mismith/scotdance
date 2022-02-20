@@ -121,7 +121,7 @@
 </template>
 
 <script>
-import XLSX from 'xlsx';
+import { read, utils } from 'xlsx';
 import find from 'lodash.find';
 import VFile from '@outluch/v-file';
 import { mdiFileExcel } from '@mdi/js';
@@ -177,7 +177,7 @@ export default {
       const reader = new FileReader();
       reader.onload = (event) => {
         const data = event.target.result;
-        const workbook = XLSX.read(data, { type: 'binary' });
+        const workbook = read(data, { type: 'binary' });
 
         // store for processing
         this.$set(this, 'workbook', workbook);
@@ -249,7 +249,7 @@ export default {
       }, data);
     },
     sheetToJson(sheet, options = { header: 1 }) {
-      return XLSX.utils.sheet_to_json(sheet, options)
+      return utils.sheet_to_json(sheet, options)
         .filter((row) => Object.entries(row).some(([, v]) => v)); // remove empties
     },
     sheetToHot(sheet, settings = {}) {
