@@ -19,6 +19,10 @@ export default {
   name: 'SearchField',
   props: {
     value: String,
+    debounce: {
+      type: Number,
+      default: 300,
+    },
   },
   data() {
     return {
@@ -32,7 +36,7 @@ export default {
       clearTimeout(this.valueTimeout);
       this.valueTimeout = setTimeout(() => {
         this.valueDebounced = value || '';
-      }, 300);
+      }, this.debounce);
     },
     valueDebounced(valueDebounced) {
       this.$emit('input', valueDebounced);
