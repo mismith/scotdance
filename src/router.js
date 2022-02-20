@@ -21,16 +21,16 @@ import CompetitionSchedule from '@/views/competition/Schedule.vue';
 import CompetitionResults from '@/views/competition/Results.vue';
 import CompetitionInvite from '@/views/competition/Invite.vue';
 
-const CompetitionAdmin = () => import(/* webpackChunkName: "admin" */ '@/views/competition/Admin.vue');
-const CompetitionAdminInfo = () => import(/* webpackChunkName: "admin" */ '@/views/competition/admin/Info.vue');
-const CompetitionAdminSchedule = () => import(/* webpackChunkName: "admin" */ '@/views/competition/admin/Schedule.vue');
-const CompetitionAdminResults = () => import(/* webpackChunkName: "admin" */ '@/views/competition/admin/Results.vue');
-const CompetitionAdminDanceGroups = () => import(/* webpackChunkName: "admin" */ '@/views/competition/admin/DanceGroups.vue');
+const CompetitionAdmin = () => import('@/views/competition/Admin.vue');
+const CompetitionAdminInfo = () => import('@/views/competition/admin/Info.vue');
+const CompetitionAdminSchedule = () => import('@/views/competition/admin/Schedule.vue');
+const CompetitionAdminResults = () => import('@/views/competition/admin/Results.vue');
+const CompetitionAdminDanceGroups = () => import('@/views/competition/admin/DanceGroups.vue');
 
-const Admin = () => import(/* webpackChunkName: "admin" */ '@/views/Admin.vue');
-const AdminInfo = () => import(/* webpackChunkName: "admin" */ '@/views/admin/Info.vue');
-const AdminSubmissions = () => import(/* webpackChunkName: "admin" */ '@/views/admin/Submissions.vue');
-const AdminUsers = () => import(/* webpackChunkName: "admin" */ '@/views/admin/Users.vue');
+const Admin = () => import('@/views/Admin.vue');
+const AdminInfo = () => import('@/views/admin/Info.vue');
+const AdminSubmissions = () => import('@/views/admin/Submissions.vue');
+const AdminUsers = () => import('@/views/admin/Users.vue');
 
 Vue.use(Router);
 
