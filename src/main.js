@@ -7,7 +7,7 @@ import { scroller } from 'vue-scrollto/src/scrollTo';
 import VueObserveVisibility from 'vue-observe-visibility';
 import VueReactiveProvide from 'vue-reactive-provide';
 import sanitizeHtml from 'sanitize-html';
-import moment from 'moment-mini';
+import moment from 'moment';
 import 'simple-line-icons/css/simple-line-icons.css';
 import { Capacitor, Plugins } from '@capacitor/core';
 import { Device } from '@capacitor/device';

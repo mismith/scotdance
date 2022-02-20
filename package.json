@@ -52,7 +52,7 @@
     "lodash.groupby": "^4.6.0",
     "lodash.orderby": "^4.6.0",
     "md5": "^2.3.0",
-    "moment-mini": "^2.24.0",
+    "moment": "^2.24.0",
     "node-notifier": "^8.0.2",
     "obj-flatten": "^2.0.6",
     "roboto-fontface": "*",
