@@ -13,7 +13,13 @@
         <template v-if="hasImport">
           <v-tooltip bottom>
             <template #activator="{ on }">
-              <v-btn icon v-on="on" class="hidden-xs-only" v-test="'admin:import'" @click="showImport = true">
+              <v-btn
+                v-test="'admin:toolbar.import'"
+                v-on="on"
+                icon
+                class="hidden-xs-only"
+                @click="showImport = true"
+              >
                 <v-icon>{{ mdiImport }}</v-icon>
               </v-btn>
             </template>
@@ -22,29 +28,34 @@
         </template>
       </div>
       <div class="d-flex flex-sm-grow-1 justify-center" style="flex-basis: 33%;">
-        <template v-if="currentSection.hot">
-          <SearchField
-            v-model="searchQuery"
-            :debounce="0"
-            style="min-width: 128px; max-width: 300px;"
-          />
-        </template>
+        <SearchField
+          v-test="'admin:toolbar.hot-search'"
+          v-if="hasHotData"
+          v-model="searchQuery"
+          :debounce="0"
+          style="min-width: 128px; max-width: 300px;"
+        />
       </div>
       <div class="d-flex flex-sm-grow-1 justify-end" style="flex-basis: 33%;">
-        <template v-if="hasExport">
-          <v-tooltip bottom>
-            <template #activator="{ on }">
-              <v-btn icon v-on="on" class="hidden-xs-only" @click="isTab('results') ? exportResults() : exportHotTable()">
-                <v-icon>{{ mdiExport }}</v-icon>
-              </v-btn>
-            </template>
-            Export CSV
-          </v-tooltip>
-        </template>
+        <v-tooltip v-if="hasHotData" bottom>
+          <template #activator="{ on }">
+            <v-btn
+              v-test="'admin:toolbar.export'"
+              v-on="on"
+              icon
+              class="hidden-xs-only"
+              @click="isTab('results') ? exportResults() : exportHotTable()"
+            >
+              <v-icon>{{ mdiExport }}</v-icon>
+            </v-btn>
+          </template>
+          Export CSV
+        </v-tooltip>
 
         <v-tooltip bottom :color="savingError ? 'error' : undefined">
           <template #activator="{ on }">
             <v-btn
+              v-test="'admin:toolbar.saved'"
               v-on="on"
               icon
               :color="savingError ? 'error' : 'primary'"
@@ -66,6 +77,7 @@
       <template v-if="currentSection.hot">
         <MiHotTable
           v-if="!hasMissingPrereqs"
+          v-test="'admin:hot'"
           ref="hot"
           :key="currentSection[idKey]"
           :settings="currentSection.hot"
@@ -73,26 +85,40 @@
           @change="handleHotChanges"
         />
         <div
-          v-if="!hotData || !hotData.length"
+          v-if="!hasHotData"
           class="d-flex align-center justify-center pt-12 pb-16"
           style="position: absolute; width: 100%; height: 100%; pointer-events: none;"
         >
           <EmptyState
+            v-test="'admin:hot.empty-state'"
             :icon="mdiTableAlert"
             :label="`No ${(currentSection.name || 'data').toLowerCase()} yet`"
             style="pointer-events: auto;"
           >
-            <p v-if="hasMissingPrereqs && inTabs('groups')">
+            <p
+              v-if="hasMissingPrereqs && inTabs('groups')"
+              v-test="'admin:hot.empty-state.groups'"
+            >
               You need to have
-              <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'categories' } }"><strong>categories</strong></router-link>
+              <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'categories' } }">
+                <strong>categories</strong>
+              </router-link>
               before you can add <strong>age groups</strong>, or you can:
             </p>
-            <p v-else-if="hasMissingPrereqs && inTabs('dancers')">
+            <p
+              v-else-if="hasMissingPrereqs && inTabs('dancers')"
+              v-test="'admin:hot.empty-state.dancers'"
+            >
               You need to have
-              <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }"><strong>age groups</strong></router-link>
+              <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }">
+                <strong>age groups</strong>
+              </router-link>
               before you can add <strong>dancers</strong>, or you can:
             </p>
-            <p v-else>
+            <p
+              v-else
+              v-test="'admin:hot.empty-state.other'"
+            >
               <strong>Type</strong> and/or <strong>copy-paste</strong> data into the rows above<!--
               --><span v-if="hasPresets || hasImport">, or you can:</span><!--
               --><span v-else> to get started.</span>
@@ -100,6 +126,7 @@
             <div>
               <v-btn
                 v-if="hasPresets"
+                v-test="'admin:hot.empty-state.presets'"
                 v-on="on"
                 color="primary"
                 class="ma-1"
@@ -110,6 +137,7 @@
               </v-btn>
               <v-btn
                 v-if="hasImport"
+                v-test="'admin:hot.empty-state.import'"
                 v-on="on"
                 color="primary"
                 class="ma-1"
@@ -311,9 +339,6 @@ export default {
     hasImport() {
       return this.inTabs('categories', 'groups', 'dancers');
     },
-    hasExport() {
-      return Boolean(this.currentSection?.hot);
-    },
 
     hotData() {
       const data = this[this.$root.currentTab];
@@ -322,6 +347,9 @@ export default {
         return searchByKeys(data, this.searchQuery, searchKeys);
       }
       return data;
+    },
+    hasHotData() {
+      return Boolean(this.hotData?.length);
     },
   },
   watch: {

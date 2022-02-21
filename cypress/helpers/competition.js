@@ -16,14 +16,18 @@ export function createCompetition(uid) {
   });
 }
 
+export function grantUserCompetitionPermissions(competitionId, userId) {
+  seed.database.set(`development/competitions:permissions/${competitionId}/users/${userId}`, true);
+  seed.database.set(`development/users:permissions/${userId}/competitions/${competitionId}`, true);
+}
+
 export function itShouldBeAuthGuarded(competitionId, userId, requiresPerms = false) {
   createUser(userId);
   cy.getTest('competition:access-state:notFound').should('exist');
   cy.auth('signInWithEmailAndPassword', USER_CREDENTIALS[userId]);
 
   if (requiresPerms) {
-    seed.database.set(`development/competitions:permissions/${competitionId}/users/${userId}`, true);
-    seed.database.set(`development/users:permissions/${userId}/competitions/${competitionId}`, true);
+    grantUserCompetitionPermissions(competitionId, userId);
     cy.getTest('requires-permission:unauthorized').should('not.exist');
   }
 

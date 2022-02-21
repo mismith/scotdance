@@ -1,8 +1,17 @@
 import path from 'path';
 
 import seed from '../../../helpers/seed';
-import { createCompetition, itShouldBeAuthGuarded, COMPETITION_UID } from '../../../helpers/competition';
-import { createUser, USER_CREDENTIALS, USER_UID } from '../../../helpers/user';
+import {
+  createCompetition,
+  grantUserCompetitionPermissions,
+  itShouldBeAuthGuarded,
+  COMPETITION_UID,
+} from '../../../helpers/competition';
+import {
+  createUser,
+  USER_CREDENTIALS,
+  USER_UID,
+} from '../../../helpers/user';
 
 beforeEach(() => {
   seed.reset();
@@ -103,7 +112,7 @@ describe('Competition Admin', () => {
     seed.database.get(`development/competitions:data/${competitionId}`).as('competitionData');
     cy.get('@competitionData').should('equal', null);
 
-    cy.getTest('admin:import').click();
+    cy.getTest('admin:toolbar.import').click();
 
     cy.getTest('import:download-template').click();
     cy.readFile(path.join(Cypress.config('downloadsFolder'), 'ScotDance-Import-Template.xlsx')).should('exist'); // @TODO: un-hardcode filename?
@@ -125,5 +134,183 @@ describe('Competition Admin', () => {
     cy.get('@competitionData').its('groups').then(Object.values).should('have.length', 15);
     cy.get('@competitionData').its('dancers').then(Object.values).should('have.length', 150);
     // @TODO: check everything is PROPERLY populated
+  });
+
+  describe('Tables views', () => {
+    beforeEach(() => {
+      createUser(userId);
+      grantUserCompetitionPermissions(competitionId, userId);
+      cy.auth('signInWithEmailAndPassword', USER_CREDENTIALS[userId]);
+    });
+
+    describe('Empty states', () => {
+      const TOOLBAR = {
+        PRESETS: 'preset-picker:button',
+        IMPORT: 'admin:toolbar.import',
+        SEARCH: 'admin:toolbar.hot-search',
+        EXPORT: 'admin:toolbar.export',
+        SAVED: 'admin:toolbar.saved',
+      };
+      const HOT = {
+        HOT: 'admin:hot',
+        EMPTY: 'admin:hot.empty-state',
+        GROUPS: 'admin:hot.empty-state.groups',
+        DANCERS: 'admin:hot.empty-state.dancers',
+        OTHER: 'admin:hot.empty-state.other',
+        PRESETS: 'admin:hot.empty-state.presets',
+        IMPORT: 'admin:hot.empty-state.import',
+      };
+      const map = {
+        staff: {
+          [TOOLBAR.PRESETS]: false,
+          [TOOLBAR.IMPORT]: false,
+          [TOOLBAR.SEARCH]: [false, true],
+          [TOOLBAR.EXPORT]: [false, true],
+          [TOOLBAR.SAVED]: true,
+          [HOT.HOT]: true,
+          [HOT.EMPTY]: [true, false],
+          [HOT.GROUPS]: false,
+          [HOT.DANCERS]: false,
+          [HOT.OTHER]: [true, false],
+          [HOT.PRESETS]: false,
+          [HOT.IMPORT]: false,
+        },
+        dances: {
+          [TOOLBAR.PRESETS]: true,
+          [TOOLBAR.IMPORT]: false,
+          [TOOLBAR.SEARCH]: [false, true],
+          [TOOLBAR.EXPORT]: [false, true],
+          [TOOLBAR.SAVED]: true,
+          [HOT.HOT]: true,
+          [HOT.EMPTY]: [true, false],
+          [HOT.GROUPS]: false,
+          [HOT.DANCERS]: false,
+          [HOT.OTHER]: [true, false],
+          [HOT.PRESETS]: [true, false],
+          [HOT.IMPORT]: false,
+        },
+        categories: {
+          [TOOLBAR.PRESETS]: true,
+          [TOOLBAR.IMPORT]: true,
+          [TOOLBAR.SEARCH]: [false, true],
+          [TOOLBAR.EXPORT]: [false, true],
+          [TOOLBAR.SAVED]: true,
+          [HOT.HOT]: true,
+          [HOT.EMPTY]: [true, false],
+          [HOT.GROUPS]: false,
+          [HOT.DANCERS]: false,
+          [HOT.OTHER]: [true, false],
+          [HOT.PRESETS]: [true, false],
+          [HOT.IMPORT]: [true, false],
+        },
+        groups: {
+          [TOOLBAR.PRESETS]: [false, true, true],
+          [TOOLBAR.IMPORT]: true,
+          [TOOLBAR.SEARCH]: [false, true],
+          [TOOLBAR.EXPORT]: [false, true],
+          [TOOLBAR.SAVED]: true,
+          [HOT.HOT]: [false, true, true],
+          [HOT.EMPTY]: [true, false],
+          [HOT.GROUPS]: [true, false, false],
+          [HOT.DANCERS]: false,
+          [HOT.OTHER]: [false, false, true],
+          [HOT.PRESETS]: [false, false, true],
+          [HOT.IMPORT]: [true, false],
+        },
+        dancers: {
+          [TOOLBAR.PRESETS]: false,
+          [TOOLBAR.IMPORT]: true,
+          [TOOLBAR.SEARCH]: [false, true],
+          [TOOLBAR.EXPORT]: [false, true],
+          [TOOLBAR.SAVED]: true,
+          [HOT.HOT]: [false, true, true],
+          [HOT.EMPTY]: [true, false],
+          [HOT.GROUPS]: false,
+          [HOT.DANCERS]: [true, false, false],
+          [HOT.OTHER]: [false, false, true],
+          [HOT.PRESETS]: false,
+          [HOT.IMPORT]: [true, false],
+        },
+        platforms: {
+          [TOOLBAR.PRESETS]: true,
+          [TOOLBAR.IMPORT]: false,
+          [TOOLBAR.SEARCH]: [false, true],
+          [TOOLBAR.EXPORT]: [false, true],
+          [TOOLBAR.SAVED]: true,
+          [HOT.HOT]: true,
+          [HOT.EMPTY]: [true, false],
+          [HOT.GROUPS]: false,
+          [HOT.DANCERS]: false,
+          [HOT.OTHER]: [true, false],
+          [HOT.PRESETS]: [true, false],
+          [HOT.IMPORT]: false,
+        },
+      };
+      const addData = {
+        staff() {
+          seed.database.set(`development/competitions:data/${competitionId}/staff/STAFF`, {
+            firstName: 'Staff',
+          });
+        },
+        dances() {
+          seed.database.set(`development/competitions:data/${competitionId}/dances/DANCE`, {
+            name: 'Dance',
+          });
+        },
+        categories() {
+          seed.database.set(`development/competitions:data/${competitionId}/categories/CATEGORY`, {
+            name: 'Category',
+          });
+        },
+        groups() {
+          seed.database.set(`development/competitions:data/${competitionId}/groups/GROUP`, {
+            name: 'Group',
+          });
+        },
+        dancers() {
+          seed.database.set(`development/competitions:data/${competitionId}/dancers/DANCER`, {
+            firstName: 'Dancer',
+          });
+        },
+        platforms() {
+          seed.database.set(`development/competitions:data/${competitionId}/platforms/PLATFORM`, {
+            name: 'Platform',
+          });
+        },
+      };
+      const preReqs = {
+        groups() {
+          addData.categories();
+        },
+        dancers() {
+          addData.groups();
+        },
+      };
+      const CASES = [
+        'empty',
+        'with data',
+        'has prereqs',
+      ];
+
+      CASES.forEach((cond, i) => {
+        it(cond, () => {
+          Object.entries(map).forEach(([page, config]) => {
+            if (i === 1) {
+              addData[page]?.();
+            } else if (i === 2) {
+              preReqs[page]?.();
+            }
+            cy.visit(`/#/competitions/${competitionId}/admin/${page}`);
+            Object.entries(config).forEach(([selector, condition]) => {
+              let visible = condition;
+              if (Array.isArray(visible)) {
+                visible = visible[i] === undefined ? visible[0] : visible[i];
+              }
+              cy.getTest(selector).should(visible ? 'be.visible' : 'not.exist');
+            });
+          });
+        });
+      });
+    });
   });
 });

@@ -8,7 +8,12 @@
       <slot name="activator" v-bind="props">
         <v-tooltip bottom>
           <template #activator="{ on: tooltip }">
-            <v-btn icon class="mx-1" v-on="Object.assign({}, tooltip, props.on)">
+            <v-btn
+              v-test="'preset-picker:button'"
+              v-on="Object.assign({}, tooltip, props.on)"
+              icon
+              class="mx-1"
+            >
               <v-icon>{{ mdiPlaylistPlus }}</v-icon>
             </v-btn>
           </template>
