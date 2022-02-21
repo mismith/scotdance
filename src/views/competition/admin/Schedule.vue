@@ -84,7 +84,7 @@
             <v-toolbar class="flex-none">
               <v-switch
                 :input-value="isTabDisabled"
-                label="Turn off Schedule"
+                label="Hide schedule tab"
                 hide-details
                 :readonly="!hasNoExistingTabData && !isTabDisabled"
                 @click="handleTabDisable"
@@ -149,7 +149,7 @@
 
     <DialogCard
       :value="confirmDisable"
-      title="Turn off Schedule"
+      title="Hide schedule tab"
       text="Are you sure you want to permanently delete all existing schedule data, and publicly hide the Schedule tab for this competition?"
       cancel-label="No"
       submit-label="Yes"
