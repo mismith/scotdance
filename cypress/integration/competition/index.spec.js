@@ -1,6 +1,6 @@
-import seed from '../helpers/seed';
-import { createUser, USER_CREDENTIALS, USER_UID } from '../helpers/user';
-import { COMPETITION_UID, createCompetition } from '../helpers/competition';
+import seed from '../../helpers/seed';
+import { createUser, USER_CREDENTIALS, USER_UID } from '../../helpers/user';
+import { COMPETITION_UID, createCompetition } from '../../helpers/competition';
 
 beforeEach(() => {
   seed.reset();
