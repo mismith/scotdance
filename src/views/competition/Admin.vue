@@ -2,40 +2,32 @@
   <RequiresPermission :permission="hasPermission" class="CompetitionAdmin app-scroll-frame">
     <v-toolbar dense class="flex-none">
       <div class="d-flex flex-sm-grow-1" style="flex-basis: 33%;">
-        <template v-if="currentSection && currentSection.presets">
+        <template v-if="hasPresets">
           <PresetPicker
+            ref="presetPicker"
             :presets="currentSection.presets"
             :prop="currentSection[idKey] === 'dances' ? p => danceExtender(p).$name : 'name'"
             @select="addPresets"
           />
         </template>
-        <v-tooltip bottom>
-          <template #activator="{ on }">
-            <v-btn icon v-on="on" @click="showImport = true" class="hidden-xs-only" v-test="'admin:import'">
-              <v-icon>{{ mdiImport }}</v-icon>
-            </v-btn>
-          </template>
-          Import XLSX
-        </v-tooltip>
+        <template v-if="hasImport">
+          <v-tooltip bottom>
+            <template #activator="{ on }">
+              <v-btn icon v-on="on" class="hidden-xs-only" v-test="'admin:import'" @click="showImport = true">
+                <v-icon>{{ mdiImport }}</v-icon>
+              </v-btn>
+            </template>
+            Import spreadsheet
+          </v-tooltip>
+        </template>
       </div>
       <div class="d-flex flex-sm-grow-1 justify-center" style="flex-basis: 33%;">
       </div>
       <div class="d-flex flex-sm-grow-1 justify-end" style="flex-basis: 33%;">
-        <template v-if="inTabs('staff', 'dances', 'categories', 'groups', 'dancers', 'platforms')">
+        <template v-if="hasExport">
           <v-tooltip bottom>
             <template #activator="{ on }">
-              <v-btn icon v-on="on" class="hidden-xs-only" @click="exportHotTable()">
-                <v-icon>{{ mdiExport }}</v-icon>
-              </v-btn>
-            </template>
-            Export CSV
-          </v-tooltip>
-        </template>
-        <template v-if="inTabs('results')">
-          <!-- <v-btn text @click="showImportResults = true" class="hidden-xs-only">Import&hellip;</v-btn> -->
-          <v-tooltip bottom>
-            <template #activator="{ on }">
-              <v-btn icon v-on="on" @click="exportResults()">
+              <v-btn icon v-on="on" class="hidden-xs-only" @click="isTab('results') ? exportResults() : exportHotTable()">
                 <v-icon>{{ mdiExport }}</v-icon>
               </v-btn>
             </template>
@@ -50,6 +42,7 @@
               icon
               :color="savingError ? 'error' : 'primary'"
               :loading="saving"
+              class="mr-n2 ml-2"
             >
               <v-icon>
                 {{ savingError ? mdiAlert : mdiCheck }}
@@ -62,34 +55,65 @@
       </div>
     </v-toolbar>
 
-    <div v-if="currentSection" class="app-scroll-frame app-scroll">
+    <div v-if="currentSection" class="app-scroll-frame app-scroll" style="position: relative;">
       <template v-if="currentSection.hot">
-        <EmptyState
-          v-if="inTabs('groups') && !this.categories.length && !this.groups.length"
-          :icon="mdiAlert"
-          label="No categories found"
-        >
-          <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'categories' } }">
-            <span class="subtitle-1">Add or import some first &rsaquo;</span>
-          </router-link>
-        </EmptyState>
-        <EmptyState
-          v-else-if="inTabs('dancers') && !this.groups.length"
-          :icon="mdiAlert"
-          label="No age groups found"
-        >
-          <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }">
-            <span class="subtitle-1">Add or import some first &rsaquo;</span>
-          </router-link>
-        </EmptyState>
         <MiHotTable
-          v-else
+          v-if="!hasMissingPrereqs"
           ref="hot"
           :key="currentSection[idKey]"
           :settings="currentSection.hot"
-          :data="this[$root.currentTab]"
+          :data="hotData"
           @change="handleHotChanges"
         />
+        <div
+          v-if="!hotData || !hotData.length"
+          class="d-flex align-center justify-center pt-12 pb-16"
+          style="position: absolute; width: 100%; height: 100%; pointer-events: none;"
+        >
+          <EmptyState
+            :icon="mdiTableAlert"
+            :label="`No ${(currentSection.name || 'data').toLowerCase()} yet`"
+            style="pointer-events: auto;"
+          >
+            <p v-if="hasMissingPrereqs && inTabs('groups')">
+              You need to have
+              <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'categories' } }"><strong>categories</strong></router-link>
+              before you can add <strong>age groups</strong>, or you can:
+            </p>
+            <p v-else-if="hasMissingPrereqs && inTabs('dancers')">
+              You need to have
+              <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }"><strong>age groups</strong></router-link>
+              before you can add <strong>dancers</strong>, or you can:
+            </p>
+            <p v-else>
+              <strong>Type</strong> and/or <strong>copy-paste</strong> data into the rows above<!--
+              --><span v-if="hasPresets || hasImport">, or you can:</span><!--
+              --><span v-else> to get started.</span>
+            </p>
+            <div>
+              <v-btn
+                v-if="hasPresets"
+                v-on="on"
+                color="primary"
+                class="ma-1"
+                @click="$refs.presetPicker.show()"
+              >
+                <v-icon class="mr-2">{{ mdiPlaylistPlus }}</v-icon>
+                Add preset(s)
+              </v-btn>
+              <v-btn
+                v-if="hasImport"
+                v-on="on"
+                color="primary"
+                class="ma-1"
+                @click="showImport = true"
+              >
+                <v-icon class="mr-2">{{ mdiImport }}</v-icon>
+                Import spreadsheet
+              </v-btn>
+            </div>
+          </EmptyState>
+        </div>
       </template>
       <router-view
         v-else
@@ -152,6 +176,8 @@ import {
   mdiCheck,
   mdiExport,
   mdiImport,
+  mdiPlaylistPlus,
+  mdiTableAlert,
 } from '@mdi/js';
 import {
   makeKeyValuePairColumn,
@@ -209,6 +235,8 @@ export default {
       mdiCheck,
       mdiExport,
       mdiImport,
+      mdiPlaylistPlus,
+      mdiTableAlert,
 
       showImport: false,
       // showImportResults: false,
@@ -226,10 +254,6 @@ export default {
 
     hasPermission() {
       return this.$store.getters.hasPermission(`competitions/${this.competitionId}`);
-    },
-
-    currentSection() {
-      return this.getSection(this.$root.currentTab);
     },
 
     sections() {
@@ -263,6 +287,29 @@ export default {
           return section;
         });
     },
+    currentSection() {
+      return this.getSection(this.$root.currentTab);
+    },
+
+    hasMissingPrereqs() {
+      return (this.inTabs('groups') && !this.categories.length && !this.groups.length)
+        || (this.inTabs('dancers') && !this.groups.length);
+    },
+    hasPresets() {
+      return Boolean(this.currentSection?.presets?.length) && !this.hasMissingPrereqs;
+    },
+    hasImport() {
+      return this.inTabs('categories', 'groups', 'dancers');
+    },
+    hasExport() {
+      return Boolean(this.currentSection?.hot);
+    },
+
+    hotData() {
+      const data = this[this.$root.currentTab];
+      return data;
+    },
+  },
   },
   methods: {
     danceExtender,

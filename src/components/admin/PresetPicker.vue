@@ -111,6 +111,9 @@ export default {
       // trigger the addition
       this.$emit('select', [preset]);
     },
+    show() {
+      this.dialogOpen = true;
+    },
   },
 };
 </script>
