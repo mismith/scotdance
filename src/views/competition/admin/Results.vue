@@ -89,7 +89,7 @@
         description="Select dancers in the order placed"
       />
 
-      <v-toolbar v-if="currentDance && !placedDancers.length" class="flex-none">
+      <v-toolbar v-if="currentGroup && currentDance && !placedDancers.length" class="flex-none">
         <v-switch
           v-model="currentDanceHasExplicitlyEmptyResults"
           :label="`No ${currentDance === callbacks ? 'Callbacks' : 'Dancers Placed'}`"
