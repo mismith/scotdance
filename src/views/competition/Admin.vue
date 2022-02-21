@@ -22,6 +22,13 @@
         </template>
       </div>
       <div class="d-flex flex-sm-grow-1 justify-center" style="flex-basis: 33%;">
+        <template v-if="currentSection.hot">
+          <SearchField
+            v-model="searchQuery"
+            :debounce="0"
+            style="min-width: 128px; max-width: 300px;"
+          />
+        </template>
       </div>
       <div class="d-flex flex-sm-grow-1 justify-end" style="flex-basis: 33%;">
         <template v-if="hasExport">
@@ -181,10 +188,12 @@ import {
 } from '@mdi/js';
 import {
   makeKeyValuePairColumn,
+  accumulateKeys,
 } from '@/helpers/admin';
 import {
   findByIdKey,
   danceExtender,
+  searchByKeys,
 } from '@/helpers/competition';
 import {
   pushidRegex,
@@ -240,6 +249,7 @@ export default {
 
       showImport: false,
       // showImportResults: false,
+      searchQuery: '',
 
       saving: false,
       savingPromises: [],
@@ -307,9 +317,21 @@ export default {
 
     hotData() {
       const data = this[this.$root.currentTab];
+      if (this.searchQuery && data?.[0]) {
+        const searchKeys = accumulateKeys(data[0]);
+        return searchByKeys(data, this.searchQuery, searchKeys);
+      }
       return data;
     },
   },
+  watch: {
+    async searchQuery(query) {
+      const { hotInstance } = this.$refs.hot || {};
+      const search = hotInstance?.getPlugin('search');
+      await this.$nextTick();
+      search?.query(query);
+      hotInstance?.render();
+    },
   },
   methods: {
     danceExtender,

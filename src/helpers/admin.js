@@ -70,7 +70,7 @@ import {
   // NestedHeaders,
   // NestedRows,
   // PersistentState,
-  // Search,
+  Search,
   // TouchScroll,
   // TrimRows,
   UndoRedo,
@@ -108,6 +108,7 @@ registerPlugin(ContextMenu);
 registerPlugin(CopyPaste);
 registerPlugin(DragToScroll);
 registerPlugin(ManualColumnResize);
+registerPlugin(Search);
 registerPlugin(UndoRedo);
 
 registerCellType('textarea', {
@@ -223,6 +224,7 @@ export const augmentHot = (settings = {}, data = undefined) => licenseHot({
   copyPaste: true,
   dragToScroll: true,
   manualColumnResize: true,
+  search: true,
   undo: true,
 
   ...settings,
@@ -231,3 +233,13 @@ export const augmentHot = (settings = {}, data = undefined) => licenseHot({
 });
 
 export const flattenPaths = (obj) => Object.keys(flatten(obj, '/') || {});
+
+export function accumulateKeys(obj) {
+  return Object.entries(obj).reduce((acc, [key, value]) => {
+    acc.push(key);
+    if (value && typeof value === 'object') {
+      acc.push(...accumulateKeys(value).map((k) => `${key}.${k}`));
+    }
+    return acc;
+  }, []);
+}
