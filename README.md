@@ -65,6 +65,7 @@ Links to the admin panels needed to manage this project:
 
     1. `npm run build`
     2. Open project in Xcode (`npx cap open ios`)
+        - Once open, consider running the app in a simulator to ensure everything is working well
     3. In the menu bar, select "Product" > "Archive" (if you can't select it, make sure you are targeting "Any iOS Device")
     4. Click "Distribute App"
     5. Follow the wizard (App Store Connect, Upload, etc.)
@@ -78,6 +79,7 @@ Links to the admin panels needed to manage this project:
 
     1. `npm run build`
     2. Open project in Android Studio (`npx cap open android`)
+        - Once open, consider running the app in a simulator to ensure everything is working well
     3. In the menu bar, select "Build" > "Generate Signed Bundle / APK…"
     4. Follow the wizard (AAB, enter keystore creds, choose "release", etc)
     5. Open Google Play Console

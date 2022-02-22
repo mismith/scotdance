@@ -1,6 +1,6 @@
 {
   "name": "scotdance",
-  "version": "3.1.1",
+  "version": "3.2.0",
   "description": "Highland dancing event tracker",
   "author": "Murray Rowan <murray@mismith.info>",
   "scripts": {
@@ -23,9 +23,9 @@
     "notify": "node ./notify.js",
     "resources": "cordova-res ios --skip-config --copy && cordova-res android --skip-config --copy",
     "screenshots": "bash ./ios/App/Screenshots/Screenshots.sh",
-    "build:functions": "npm run --prefix functions/ build",
     "build:www": "vite build",
-    "build:ci": "npm run build:functions && npm run build:www",
+    "build:functions": "npm run --prefix functions/ build",
+    "build:ci": "npm run build:www && npm run build:functions",
     "build": "npm run sync-version && npm test && npx cap sync && npm run notify 'Build Complete'",
     "report": "npm run build:www && open stats.html",
     "release": "git commit -a -m $npm_package_version && git tag \"v${npm_package_version}\"",

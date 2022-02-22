@@ -1,6 +1,12 @@
 # Release Notes
 
-## 3.1.0 - Jan 17, 2022
+## 3.2.0 - Feb 21, 2022
+- major upgrades to the admin panel:
+  - table view overhaul: fix column sorting, add undo/redo, polish UI
+  - improve usability by adding more guidance for new admin users
+  - rework UI to allow searching/filtering within tables, along with a streamlined toolbar
+
+## 3.1.1 - Jan 17, 2022
 - fixes a major bug that caused the app to show a loading spinner indefinitely
 
 ## 3.1.0 - Jan 16, 2022
