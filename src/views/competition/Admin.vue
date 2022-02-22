@@ -1,33 +1,30 @@
 <template>
   <RequiresPermission :permission="hasPermission" class="CompetitionAdmin app-scroll-frame">
     <v-toolbar dense class="flex-none">
-      <div class="d-flex flex-sm-grow-1" style="flex-basis: 33%;">
-        <template v-if="hasPresets">
-          <PresetPicker
-            ref="presetPicker"
-            :presets="currentSection.presets"
-            :prop="currentSection[idKey] === 'dances' ? p => danceExtender(p).$name : 'name'"
-            @select="addPresets"
-          />
-        </template>
-        <template v-if="hasImport">
-          <v-tooltip bottom>
-            <template #activator="{ on }">
-              <v-btn
-                v-test="'admin:toolbar.import'"
-                v-on="on"
-                icon
-                class="hidden-xs-only"
-                @click="showImport = true"
-              >
-                <v-icon>{{ mdiImport }}</v-icon>
-              </v-btn>
-            </template>
-            Import spreadsheet
-          </v-tooltip>
-        </template>
+      <div class="d-flex justify-start ml-n2" style="flex-grow: 1;">
+        <PresetPicker
+          v-if="hasPresets"
+          ref="presetPicker"
+          :presets="currentSection.presets"
+          :prop="currentSection[idKey] === 'dances' ? p => danceExtender(p).$name : 'name'"
+          @select="addPresets"
+        />
+
+        <v-tooltip v-if="hasImport" bottom>
+          <template #activator="{ on }">
+            <v-btn
+              v-test="'admin:toolbar.import'"
+              v-on="on"
+              icon
+              @click="showImport = true"
+            >
+              <v-icon>{{ mdiTableArrowLeft }}</v-icon>
+            </v-btn>
+          </template>
+          Import spreadsheet
+        </v-tooltip>
       </div>
-      <div class="d-flex flex-sm-grow-1 justify-center" style="flex-basis: 33%;">
+      <div class="d-flex justify-center mx-2" style="flex-grow: 2;">
         <SearchField
           v-test="'admin:toolbar.hot-search'"
           v-if="hasHotData"
@@ -36,17 +33,16 @@
           style="min-width: 128px; max-width: 300px;"
         />
       </div>
-      <div class="d-flex flex-sm-grow-1 justify-end" style="flex-basis: 33%;">
-        <v-tooltip v-if="hasHotData" bottom>
+      <div class="d-flex justify-end mr-n2" style="flex-grow: 1;">
+        <v-tooltip v-if="hasExport" bottom>
           <template #activator="{ on }">
             <v-btn
               v-test="'admin:toolbar.export'"
               v-on="on"
               icon
-              class="hidden-xs-only"
               @click="isTab('results') ? exportResults() : exportHotTable()"
             >
-              <v-icon>{{ mdiExport }}</v-icon>
+              <v-icon>{{ mdiTableArrowRight }}</v-icon>
             </v-btn>
           </template>
           Export CSV
@@ -60,7 +56,6 @@
               icon
               :color="savingError ? 'error' : 'primary'"
               :loading="saving"
-              class="mr-n2 ml-2"
             >
               <v-icon>
                 {{ savingError ? mdiAlert : mdiCheck }}
@@ -103,7 +98,8 @@
               <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'categories' } }">
                 <strong>categories</strong>
               </router-link>
-              before you can add <strong>age groups</strong>, or you can:
+              before you can add <strong>age groups</strong><!--
+              --><span v-if="hasPresets || hasImport">, or you can:</span>
             </p>
             <p
               v-else-if="hasMissingPrereqs && inTabs('dancers')"
@@ -113,7 +109,8 @@
               <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'groups' } }">
                 <strong>age groups</strong>
               </router-link>
-              before you can add <strong>dancers</strong>, or you can:
+              before you can add <strong>dancers</strong><!--
+              --><span v-if="hasPresets || hasImport">, or you can:</span>
             </p>
             <p
               v-else
@@ -121,7 +118,7 @@
             >
               <strong>Type</strong> and/or <strong>copy-paste</strong> data into the rows above<!--
               --><span v-if="hasPresets || hasImport">, or you can:</span><!--
-              --><span v-else> to get started.</span>
+              --><span v-else> to get started</span>
             </p>
             <div>
               <v-btn
@@ -209,8 +206,8 @@ import saveCSV from 'save-csv';
 import {
   mdiAlert,
   mdiCheck,
-  mdiExport,
-  mdiImport,
+  mdiTableArrowLeft,
+  mdiTableArrowRight,
   mdiPlaylistPlus,
   mdiTableAlert,
 } from '@mdi/js';
@@ -270,8 +267,8 @@ export default {
       idKey,
       mdiAlert,
       mdiCheck,
-      mdiExport,
-      mdiImport,
+      mdiTableArrowLeft,
+      mdiTableArrowRight,
       mdiPlaylistPlus,
       mdiTableAlert,
 
@@ -329,17 +326,6 @@ export default {
       return this.getSection(this.$root.currentTab);
     },
 
-    hasMissingPrereqs() {
-      return (this.inTabs('groups') && !this.categories.length && !this.groups.length)
-        || (this.inTabs('dancers') && !this.groups.length);
-    },
-    hasPresets() {
-      return Boolean(this.currentSection?.presets?.length) && !this.hasMissingPrereqs;
-    },
-    hasImport() {
-      return this.inTabs('categories', 'groups', 'dancers');
-    },
-
     hotData() {
       const data = this[this.$root.currentTab];
       if (this.searchQuery && data?.[0]) {
@@ -349,16 +335,32 @@ export default {
       return data;
     },
     hasHotData() {
-      return Boolean(this.hotData?.length);
+      return Boolean(this[this.$root.currentTab]?.length);
+    },
+    hasMissingPrereqs() {
+      return (this.inTabs('groups') && !this.categories.length && !this.groups.length)
+        || (this.inTabs('dancers') && !this.groups.length);
+    },
+    hasPresets() {
+      return Boolean(this.currentSection?.presets?.length) && !this.hasMissingPrereqs;
+    },
+    hasImport() {
+      return this.inTabs('categories', 'groups', 'dancers') && this.$vuetify.breakpoint.smAndUp;
+    },
+    hasExport() {
+      return this.hasHotData && this.$vuetify.breakpoint.smAndUp;
     },
   },
   watch: {
     async searchQuery(query) {
+      await this.$nextTick();
       const { hotInstance } = this.$refs.hot || {};
       const search = hotInstance?.getPlugin('search');
-      await this.$nextTick();
       search?.query(query);
       hotInstance?.render();
+    },
+    '$root.currentTab': function currentTab() {
+      this.searchQuery = '';
     },
   },
   methods: {
