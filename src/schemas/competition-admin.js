@@ -444,4 +444,9 @@ export default {
     ...competitionSchema.results,
     order: 10,
   },
+  print: {
+    order: 11,
+    name: 'Paper Program',
+    directAccessOnly: true,
+  },
 };

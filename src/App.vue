@@ -123,7 +123,7 @@
       app
       touchless
       :width="320"
-      class="app-scroll-frame"
+      class="app-scroll-frame print-hide"
     >
       <div class="app-scroll-frame app-scroll">
         <v-list>
@@ -865,38 +865,28 @@ body {
 }
 
 // print overrides
-.print-show {
-  display: none !important;
+@media not print {
+  .print-show {
+    display: none !important;
+  }
 }
 @media print {
+  .print-hide {
+    display: none !important;
+  }
+
   html,
   body,
   #app,
-  #main {
-    width: 11in;
-    height: 8.5in;
-    background-color: transparent !important;
-    overflow: hidden;
+  #main,
+  .app-scroll {
+    background-color: unset;
+    color: unset;
+    height: unset;
+    overflow: unset;
     padding: 0;
     margin: 0;
     border: 0;
-  }
-  .Home {
-    > * {
-      &:not(#hero) {
-        display: none;
-      }
-      &#hero {
-        width: 5.5in;
-        height: 4.25in;
-        color: initial;
-
-        h1,
-        p {
-          margin: 10px;
-        }
-      }
-    }
   }
 
   .print-show {

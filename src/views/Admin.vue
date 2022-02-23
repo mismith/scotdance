@@ -24,7 +24,7 @@
       <router-view v-else @change="handleChanges" />
     </div>
 
-    <v-bottom-navigation v-if="hasPermission" :value="$root.currentTab">
+    <v-bottom-navigation v-if="hasPermission" :value="$root.currentTab" class="print-hide">
       <v-btn
         v-for="section in sections"
         :key="section[idKey]"

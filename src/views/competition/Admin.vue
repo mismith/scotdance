@@ -23,6 +23,10 @@
           </template>
           Import spreadsheet
         </v-tooltip>
+
+        <v-btn text :to="{ name: 'competition.admin.print' }">
+          Paper Program
+        </v-btn>
       </div>
       <div class="d-flex justify-center mx-2" style="flex-grow: 2;">
         <SearchField
@@ -183,10 +187,10 @@
     <v-bottom-navigation
       v-if="hasPermission"
       :value="$root.currentTab"
-      class="listed-only"
+      class="listed-only print-hide"
     >
       <v-btn
-        v-for="section in sections"
+        v-for="section in sections.filter(({ directAccessOnly }) => !directAccessOnly)"
         :key="section[idKey]"
         :value="section[idKey]"
         :to="getTabRoute(section[idKey])"

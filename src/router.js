@@ -26,6 +26,7 @@ const CompetitionAdminInfo = () => import('@/views/competition/admin/Info.vue');
 const CompetitionAdminSchedule = () => import('@/views/competition/admin/Schedule.vue');
 const CompetitionAdminResults = () => import('@/views/competition/admin/Results.vue');
 const CompetitionAdminDanceGroups = () => import('@/views/competition/admin/DanceGroups.vue');
+const CompetitionAdminPrint = () => import('@/views/competition/admin/Print.vue');
 
 const Admin = () => import('@/views/Admin.vue');
 const AdminInfo = () => import('@/views/admin/Info.vue');
@@ -188,6 +189,14 @@ export default new Router({
                   component: CompetitionAdminDanceGroups,
                   meta: {
                     title: competitionAdminSchema['dance-groups'].name,
+                  },
+                },
+                {
+                  path: 'print',
+                  name: 'competition.admin.print',
+                  component: CompetitionAdminPrint,
+                  meta: {
+                    title: competitionAdminSchema.print.name,
                   },
                 },
                 {

@@ -26,7 +26,7 @@
         <v-bottom-navigation
           v-if="!isAdminRoute && !isSecretRoute"
           v-model="$root.currentTab"
-          class="listed-only"
+          class="listed-only print-hide"
         >
           <v-btn
             v-for="section in sections"
