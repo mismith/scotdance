@@ -28,7 +28,7 @@
             <template v-if="dance.danceId">
               <tr :key="dance[idKey]">
                 <th>
-                  {{ findByIdKey(dances, dance.danceId).$shortName }}
+                  {{ (findByIdKey(dances, dance.danceId) || {}).$shortName }}
                 </th>
                 <th v-for="platform in toOrderedArray(dance.platforms)" :key="platform[idKey]">
                   <span
@@ -69,12 +69,14 @@ import { findByIdKey } from '@/helpers/competition';
 
 export default {
   name: 'CompetitionAdminPrintSchedule',
-  props: {
-    groups: Array,
-    dances: Array,
-    staff: Array,
-    platforms: Array,
-    schedule: Object,
+  reactiveInject: {
+    competitionBundle: [
+      'groups',
+      'dances',
+      'staff',
+      'platforms',
+      'schedule',
+    ],
   },
   data() {
     return {

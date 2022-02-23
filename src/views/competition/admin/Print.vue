@@ -54,15 +54,8 @@
           <hr class="pb" />
         </section>
 
-        <CompetitionAdminPrintSchedule
-          ref="schedule"
-          v-bind="{ groups, dances, staff, platforms, schedule }"
-        />
-
-        <CompetitionAdminPrintResults
-          ref="results"
-          v-bind="{ dancers, groups, dances, draws, results }"
-        />
+        <CompetitionAdminPrintSchedule ref="schedule" />
+        <CompetitionAdminPrintResults ref="results" />
       </div>
     </Blade>
   </Blades>
@@ -70,30 +63,25 @@
 
 <script>
 import groupBy from 'lodash.groupby';
-import { asBlob } from 'html-docx-js/dist/html-docx';
+// import HTMLtoDOCX from 'html-to-docx';
 // import { firebase } from '@/helpers/firebase';
 import CompetitionAdminPrintSchedule from '@/views/competition/admin/print/Schedule.vue';
 import CompetitionAdminPrintResults from '@/views/competition/admin/print/Results.vue';
 
 export default {
   name: 'CompetitionAdminPrint',
-  props: {
-    // competitions: Array,
-    // competitionsRef: Object,
-    // competitionsDataRef: Object,
-    // competitionId: String,
-    competition: Object,
-    // competitionRef: Object,
-    // competitionDataRef: Object,
-    dancers: Array,
-    groups: Array,
-    // categories: Array,
-    dances: Array,
-    staff: Array,
-    platforms: Array,
-    draws: Object,
-    schedule: Object,
-    results: Object,
+  reactiveInject: {
+    competitionBundle: [
+      'competition',
+      'dancers',
+      'groups',
+      'dances',
+      'staff',
+      'platforms',
+      'draws',
+      'schedule',
+      'results',
+    ],
   },
   computed: {
     groupedStaff() {
@@ -120,9 +108,12 @@ export default {
       window.URL.revokeObjectURL(url);
       a.remove();
     },
-    handleExportDocx() {
+    async handleExportDocx() {
       const html = this.generateHtmlForExport();
-      const docx = asBlob(html);
+      console.log(html);
+      const docx = html.toString();
+      // const docx = await HTMLtoDOCX(html);
+      console.log(docx);
       return this.forceDownload(docx, 'docx');
     },
     async handleExportGoogleDoc() {

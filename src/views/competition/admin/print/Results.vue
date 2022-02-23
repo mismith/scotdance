@@ -124,12 +124,14 @@ import {
 
 export default {
   name: 'CompetitionAdminPrintResults',
-  props: {
-    dancers: Array,
-    groups: Array,
-    dances: Array,
-    draws: Object,
-    results: Object,
+  reactiveInject: {
+    competitionBundle: [
+      'dancers',
+      'groups',
+      'dances',
+      'draws',
+      'results',
+    ],
   },
   data() {
     return {
