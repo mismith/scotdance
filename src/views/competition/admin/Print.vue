@@ -1,72 +1,58 @@
 <template>
   <Blades class="CompetitionAdminPrint app-scroll-frame">
-    <Blade class="col-md-4">
-      Controls
-    </Blade>
-    <Blade class="col-md-8">
-      <v-toolbar dense class="print-hide">
+    <Blade class="col-md-3">
+      <v-subheader>Settings</v-subheader>
+
+      <v-subheader>Schedule</v-subheader>
+      <div class="px-4">
+        <v-switch v-model="isEventInfoInTableHeaders" label="Event info in table headers" />
+      </div>
+
+      <v-subheader>Export</v-subheader>
+      <div class="px-4">
         <v-btn class="mr-2" @click="handleExportDocx()">
-          <v-icon class="mr-3">mdi-file-word</v-icon>
+          <v-icon class="mr-3">{{ mdiFileWord }}</v-icon>
           Export for Word
         </v-btn>
         <v-btn v-on="on" class="mr-2" @click="handleExportGoogleDoc()">
-          <v-icon class="mr-3">mdi-google-drive</v-icon>
-          Export for Google Docs
+          <v-icon class="mr-3"> {{ mdiGoogleDrive }}</v-icon>
+          Export for Docs
         </v-btn>
         <!-- Open/Upload the generated <code>.html</code> file in Google Docs -->
         <!--<v-btn class="mr-2" @click="handlePrint()">
           <v-icon class="mr-3">mdi-printer</v-icon>
           Print
         </v-btn>-->
-      </v-toolbar>
-
-      <div class="app-scroll">
-        <section ref="info">
-          <img v-if="competition.image" :src="competition.image" class="md-4" />
-          <h1 class="display-1 mb-4">{{ competition.name }}</h1>
-          <h2 v-if="competition.date" class="mb-4">
-            {{ $moment(competition.date).format('dddd, MMMM D, YYYY') }}
-          </h2>
-          <h4 class="mb-4">
-            <div v-if="competition.venue">{{ competition.venue }}</div>
-            <div v-if="competition.address">{{ competition.address }}</div>
-            <div>{{ competition.location }}</div>
-          </h4>
-
-          <div v-if="competition.description" v-html="competition.description" class="mb-4 pre-line" />
-          <div v-if="competition.sobhd" class="mb-4">
-            <small>{{ competition.sobhd }}</small>
-          </div>
-
-          <article
-            v-for="(group, name) in groupedStaff"
-            :key="name"
-            class="mb-4"
-          >
-            <header>
-              <h4>{{ name }}s</h4>
-            </header>
-
-            <div v-for="member in group" :key="member[idKey]">
-              {{ member.$name }}<template v-if="member.location">, {{ member.location}}</template>
-            </div>
-          </article>
-          <hr class="pb" />
-        </section>
-
-        <CompetitionAdminPrintSchedule ref="schedule" />
-        <CompetitionAdminPrintResults ref="results" />
       </div>
+    </Blade>
+    <Blade class="col-md-9">
+      <v-sheet light class="app-scroll-frame app-scroll">
+        <PrintInfo
+          ref="info"
+        />
+        <PrintSchedule
+          ref="schedule"
+          :event-info-in-table-headers="isEventInfoInTableHeaders"
+        />
+        <PrintResults
+          ref="results"
+        />
+      </v-sheet>
     </Blade>
   </Blades>
 </template>
 
 <script>
 import groupBy from 'lodash.groupby';
+import {
+  mdiFileWord,
+  mdiGoogleDrive,
+} from '@mdi/js';
 // import HTMLtoDOCX from 'html-to-docx';
 // import { firebase } from '@/helpers/firebase';
-import CompetitionAdminPrintSchedule from '@/views/competition/admin/print/Schedule.vue';
-import CompetitionAdminPrintResults from '@/views/competition/admin/print/Results.vue';
+import PrintInfo from '@/components/print/Info.vue';
+import PrintSchedule from '@/components/print/Schedule.vue';
+import PrintResults from '@/components/print/Results.vue';
 
 export default {
   name: 'CompetitionAdminPrint',
@@ -82,6 +68,14 @@ export default {
       'schedule',
       'results',
     ],
+  },
+  data() {
+    return {
+      mdiFileWord,
+      mdiGoogleDrive,
+
+      isEventInfoInTableHeaders: false,
+    };
   },
   computed: {
     groupedStaff() {
@@ -130,8 +124,9 @@ export default {
     // },
   },
   components: {
-    CompetitionAdminPrintSchedule,
-    CompetitionAdminPrintResults,
+    PrintInfo,
+    PrintSchedule,
+    PrintResults,
   },
 };
 </script>

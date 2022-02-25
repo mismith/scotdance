@@ -96,6 +96,17 @@ function getPlaceholderSlot(timestamp = undefined) {
     name: 'Spacer',
   };
 }
+function getPlatformItems(platform, { judges = [], danceGroups = [] }) {
+  return platform ? [
+    ...hydrateByIdKey(platform.orderedJudgeIds, judges),
+    ...hydrateByIdKey(platform.orderedGroupIds, [
+      ...danceGroups,
+      ...(platform.orderedGroupIds || [])
+        .filter(isPlaceholderId)
+        .map(getPlaceholderSlot),
+    ]),
+  ].filter(Boolean) : [];
+}
 
 export default {
   name: 'AdminPlatforms',
@@ -158,15 +169,10 @@ export default {
       const pools = [
         ...this.platforms.map((platform) => {
           const poolPlatform = this.item?.platforms?.[platform[idKey]];
-          const $items = poolPlatform ? [
-            ...hydrateByIdKey(poolPlatform.orderedJudgeIds, this.judges),
-            ...hydrateByIdKey(poolPlatform.orderedGroupIds, [
-              ...this.danceGroups,
-              ...(poolPlatform.orderedGroupIds || [])
-                .filter(isPlaceholderId)
-                .map(getPlaceholderSlot),
-            ]),
-          ].filter(Boolean) : [];
+          const $items = getPlatformItems(poolPlatform, {
+            judges: this.judges,
+            danceGroups: this.danceGroups,
+          });
           return {
             ...platform,
             $items,

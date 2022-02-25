@@ -1,5 +1,5 @@
 <template>
-  <div class="CompetitionAdminPrintResults">
+  <div class="PrintResults">
     <section v-for="group in augmentedGroups" :key="group[idKey]">
       <header>
         <h2>{{ group.$name }}</h2>
@@ -99,7 +99,7 @@
               {{ dancer[prop] }}
             </td>
             <td v-for="dance in group.$dances" :key="dance[idKey]">
-              {{ dance.$draw[index] }}
+              {{ dance.$draw && dance.$draw[index] }}
             </td>
           </tr>
         </table>
@@ -123,7 +123,7 @@ import {
 } from '@/helpers/results';
 
 export default {
-  name: 'CompetitionAdminPrintResults',
+  name: 'PrintResults',
   reactiveInject: {
     competitionBundle: [
       'dancers',
