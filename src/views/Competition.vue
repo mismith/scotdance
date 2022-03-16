@@ -243,12 +243,12 @@ export default {
         .filter(isNotEmptyObject)
         .map((platform) => ({
           ...platform,
-          $name: (
+          $name: platform.name ? (
             // @HACK: allow 'skipping' the "Platform " prefix by starting with an equals sign
             platform.name[0] === '='
               ? platform.name.slice(1)
               : `Platform ${platform.name.replace(/^Platform /, '')}`
-          ).trim(),
+          ).trim() : '',
         }));
     },
     draws() {
