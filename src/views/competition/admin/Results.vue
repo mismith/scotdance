@@ -92,7 +92,7 @@
       <v-toolbar v-if="currentGroup && currentDance && !placedDancers.length" class="flex-none">
         <v-switch
           v-model="currentDanceHasExplicitlyEmptyResults"
-          :label="`No ${currentDance === callbacks ? 'Callbacks' : 'Dancers Placed'}`"
+          :label="`No ${currentDance === callbacks ? 'callbacks' : 'dancers placed'}`"
           hide-details
         />
       </v-toolbar>

@@ -24,10 +24,11 @@
           </v-icon>
 
           <template #favorite>
-            <v-list-item-action v-if="admin && dance[idKey] !== callbacks[idKey]">
+            <v-list-item-action v-if="admin && dance[idKey] !== callbacks[idKey]" class="ml-3">
               <v-switch
                 v-show="index"
                 :input-value="dancer.$tie"
+                class="tieSwitch"
                 @click.stop="$emit('dancer-toggle', [dancer, !dancer.$tie])"
               />
             </v-list-item-action>
@@ -117,3 +118,18 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.PlacedDancerList {
+  .tieSwitch {
+    .v-input--switch__thumb {
+      &::before {
+        content: "TIE";
+        color: black;
+        font-size: 8px;
+        letter-spacing: 0.1em;
+      }
+    }
+  }
+}
+</style>
