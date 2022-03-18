@@ -112,7 +112,7 @@
                 <PlacedDancerList
                   :dance="dance"
                   :dancers="dance.$placedDancers"
-                  @dancer-click="$router.push({ name: 'competition.dancers', params: { dancerId: $event[idKey] }})"
+                  as-links
                   @dancer-added="handleDancerAdded"
                 >
                   <EmptyResults
@@ -140,7 +140,7 @@
                   v-if="dance.$pointedDancers && dance.$pointedDancers.length"
                   :dance="dance"
                   :dancers="dance.$pointedDancers"
-                  @dancer-click="$router.push({ name: 'competition.dancers', params: { dancerId: $event[idKey] }})"
+                  as-links
                 >
                   <template #prepend>
                     <v-divider />

@@ -14,6 +14,7 @@
           :key="dancer[idKey]"
           :dancer="dancer"
           :place="getPlace(dancer, dancers)"
+          :to="asLinks && !isPlaceholderId(dancer[idKey]) && { name: 'competition.dancers', params: { dancerId: dancer[idKey] }}"
           @click="$emit('dancer-click', dancer)"
           @mounted="handleDancerMounted(dancer, $event)"
         >
@@ -53,6 +54,7 @@ import {
   overall,
   callbacks,
   getPlace,
+  isPlaceholderId,
 } from '@/helpers/results';
 
 export default {
@@ -60,6 +62,10 @@ export default {
   props: {
     admin: {
       type: [Boolean, String],
+      required: false,
+    },
+    asLinks: {
+      type: Boolean,
       required: false,
     },
     dance: Object,
@@ -100,6 +106,8 @@ export default {
     },
   },
   methods: {
+    isPlaceholderId,
+
     getPlace(dancer, dancers) {
       if (this.dance[idKey] === callbacks[idKey] || this.dance[idKey] === all[idKey]) {
         // no places in callbacks or all dancers list
