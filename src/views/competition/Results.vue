@@ -144,7 +144,7 @@
                 >
                   <template #prepend>
                     <v-divider />
-                    <v-subheader>Championship Points</v-subheader>
+                    <ChampionshipPointsSubheader />
                   </template>
                 </PlacedDancerList>
               </v-list-group>
@@ -185,6 +185,7 @@ import PlacedDancerList from '@/components/PlacedDancerList.vue';
 import ResultsProgressIndicator from '@/components/ResultsProgressIndicator.vue';
 import EmptyResults from '@/components/EmptyResults.vue';
 import BladeToolbar from '@/components/BladeToolbar.vue';
+import ChampionshipPointsSubheader from '@/components/ChampionshipPointsSubheader.vue';
 import { pushidRegex, idKey } from '@/helpers/firebase';
 import { findByIdKey, hasFavorites } from '@/helpers/competition';
 import {
@@ -393,6 +394,7 @@ export default {
     ResultsProgressIndicator,
     EmptyResults,
     BladeToolbar,
+    ChampionshipPointsSubheader,
   },
 };
 </script>

@@ -98,7 +98,7 @@
       />
       <template v-if="currentDance && pointedDancers.length">
         <v-spacer />
-        <v-subheader>Championship Points</v-subheader>
+        <ChampionshipPointsSubheader />
         <PlacedDancerList
           admin="nodrag"
           :dance="currentDance"
@@ -141,10 +141,12 @@ import {
   mdiViewSplitVertical,
   mdiCardsDiamond,
   mdiCardsDiamondOutline,
+  mdiInformationVariant,
 } from '@mdi/js';
 import DancerListItem from '@/components/DancerListItem.vue';
 import ResultsList from '@/components/admin/ResultsList.vue';
 import PlacedDancerList from '@/components/PlacedDancerList.vue';
+import ChampionshipPointsSubheader from '@/components/ChampionshipPointsSubheader.vue';
 import { idKey } from '@/helpers/firebase';
 import { findByIdKey } from '@/helpers/competition';
 import { hasNoExistingTabData, isTabDisabled, handleTabDisable } from '@/helpers/tab';
@@ -180,6 +182,7 @@ export default {
       mdiViewSplitVertical,
       mdiCardsDiamond,
       mdiCardsDiamondOutline,
+      mdiInformationVariant,
       overall,
       callbacks,
 
@@ -337,6 +340,7 @@ export default {
     DancerListItem,
     ResultsList,
     PlacedDancerList,
+    ChampionshipPointsSubheader,
   },
 };
 </script>
