@@ -129,13 +129,7 @@
           v-persist-scroll="`/competitions/${competitionId}/dancers/${dancerId}`"
           class="app-scroll-frame app-scroll"
         >
-          <DancerReport
-            :dancer="currentDancer"
-            :dancers="dancers"
-            :dances="dances"
-            :groups="groups"
-            :results="results"
-          />
+          <DancerReport :dancer="currentDancer" />
         </div>
       </div>
       <EmptyState

@@ -75,15 +75,18 @@ export default {
   name: 'DancerReport',
   reactiveInject: {
     competitionBundle: [
+      'dancers',
+      'dances',
+      'groups',
+      'results',
       'points',
     ],
   },
   props: {
-    dancer: Object,
-    dancers: Array,
-    dances: Array,
-    groups: Array,
-    results: Object,
+    dancer: {
+      type: Object,
+      required: true,
+    },
   },
   data() {
     return {
