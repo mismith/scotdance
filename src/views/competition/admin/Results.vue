@@ -38,13 +38,27 @@
             :key="dancer[idKey]"
             :dancer="dancer"
             @click="placeDancer(dancer)"
-            :class="{ placed: isPlaced(dancer, placedDancers) }"
-          />
+            :class="{ placed: isPlaced(dancer, placedDancers), pointed: isPointed(dancer) }"
+          >
+            <template #favorite>
+              <v-btn v-if="isActualDance && !isPlaced(dancer, placedDancers)" icon @click.stop="pointDancer(dancer)">
+                <v-icon>{{ isPointed(dancer) ? mdiCardsDiamond : mdiCardsDiamondOutline }}</v-icon>
+              </v-btn>
+              <span v-else />
+            </template>
+          </DancerListItem>
           <DancerListItem
             :dancer="getPlaceholderDancer()"
             @click="placeDancer(getPlaceholderDancer())"
             class="placeholder"
-          />
+          >
+            <template #favorite>
+              <v-btn v-if="isActualDance" icon @click.stop="pointDancer(getPlaceholderDancer())">
+                <v-icon>{{ mdiCardsDiamondOutline }}</v-icon>
+              </v-btn>
+              <span v-else />
+            </template>
+          </DancerListItem>
         </v-list>
         <EmptyState
           v-else-if="currentDance === callbacks"
@@ -75,21 +89,31 @@
     <Blade class="col-md-4 app-scroll">
       <PlacedDancerList
         v-if="currentDance && placedDancers.length"
-        :admin="true"
+        admin
         :dance="currentDance"
         :dancers="placedDancers"
         @dancer-click="placeDancer($event)"
         @dancer-toggle="handleTie($event[0], $event[1])"
         @dancer-reorder="handleDrag($event)"
       />
+      <template v-if="currentDance && pointedDancers.length">
+        <v-spacer />
+        <v-subheader>Championship Points</v-subheader>
+        <PlacedDancerList
+          admin="nodrag"
+          :dance="currentDance"
+          :dancers="pointedDancers"
+          @dancer-click="pointDancer($event)"
+        />
+      </template>
       <EmptyState
-        v-else
+        v-if="!currentDance || !(placedDancers.length || pointedDancers.length)"
         :icon="mdiViewSplitVertical"
         label="Order dancers"
         description="Select dancers in the order placed"
       />
 
-      <v-toolbar v-if="currentGroup && currentDance && !placedDancers.length" class="flex-none">
+      <v-toolbar v-if="currentGroup && currentDance && !(placedDancers.length || pointedDancers.length)" class="flex-none">
         <v-switch
           v-model="currentDanceHasExplicitlyEmptyResults"
           :label="`No ${currentDance === callbacks ? 'callbacks' : 'dancers placed'}`"
@@ -115,6 +139,8 @@ import {
   mdiAlert,
   mdiGestureTap,
   mdiViewSplitVertical,
+  mdiCardsDiamond,
+  mdiCardsDiamondOutline,
 } from '@mdi/js';
 import DancerListItem from '@/components/DancerListItem.vue';
 import ResultsList from '@/components/admin/ResultsList.vue';
@@ -127,6 +153,7 @@ import {
   callbacks,
   getPlaceholderDancer,
   findGroupDancers,
+  findPointedDancers,
   findPlacedDancers,
   getPlaceIndex,
   isPlaced,
@@ -142,6 +169,7 @@ export default {
       'dances',
       'dancers',
       'results',
+      'points',
     ],
   },
   data() {
@@ -150,6 +178,8 @@ export default {
       mdiAlert,
       mdiGestureTap,
       mdiViewSplitVertical,
+      mdiCardsDiamond,
+      mdiCardsDiamondOutline,
       overall,
       callbacks,
 
@@ -187,6 +217,9 @@ export default {
       }
       return null;
     },
+    isActualDance() {
+      return ![overall, callbacks].some(({ [idKey]: id }) => id === this.danceId);
+    },
     currentDancers() {
       if (this.currentGroup && this.currentDance) {
         if (this.currentDance[idKey] === callbacks[idKey]) {
@@ -200,6 +233,12 @@ export default {
       if (this.currentGroup && this.currentDance) {
         const sortByNumber = this.currentDance[idKey] === callbacks[idKey];
         return findPlacedDancers(this.currentGroup, this.currentDance, this.dancers, this.results, sortByNumber);
+      }
+      return [];
+    },
+    pointedDancers() {
+      if (this.groupId && this.danceId) {
+        return findPointedDancers(this.points?.[this.groupId]?.[this.danceId], this.dancers);
       }
       return [];
     },
@@ -268,6 +307,28 @@ export default {
       this.save();
     },
 
+    getPointedDancerIds(judgeId = 'combined') {
+      return this.points?.[this.groupId]?.[this.danceId]?.[judgeId] || [];
+    },
+    isPointed(dancer, judgeId = 'combined') {
+      return this.getPointedDancerIds(judgeId).includes(dancer[idKey]);
+    },
+    pointDancer(dancer, judgeId = 'combined') {
+      const pointedDancerIds = this.getPointedDancerIds(judgeId);
+      const pointIndex = pointedDancerIds.indexOf(dancer[idKey]);
+      if (pointIndex >= 0) {
+        // remove
+        pointedDancerIds.splice(pointIndex, 1);
+      } else {
+        // add
+        pointedDancerIds.push(`${dancer[idKey]}`);
+      }
+
+      this.$emit('change', {
+        [`points/${this.groupId}/${this.danceId}/${judgeId}`]: pointedDancerIds,
+      });
+    },
+
     async handleTabDisable() {
       await handleTabDisable('results', this);
     },
@@ -294,6 +355,16 @@ export default {
     }
     &.placed {
       opacity: 0.33;
+    }
+    &.pointed {
+      pointer-events: none;
+
+      > *:not(.v-btn) {
+        opacity: 0.33;
+      }
+      > .v-btn {
+        pointer-events: auto;
+      }
     }
   }
 }

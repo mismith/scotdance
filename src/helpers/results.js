@@ -54,6 +54,27 @@ export function findGroupDances(group, dances = []) {
 export function findGroupDancers(group, dancers = []) {
   return dancers.filter((dancer) => dancer.groupId === group[idKey]);
 }
+export function getAugmentedDancers(dancerIds, dancers = []) {
+  return dancerIds.map((dancerIdWithOptionalModifier) => {
+    const [dancerId, modifier] = `${dancerIdWithOptionalModifier}`.split(':');
+    const dancer = findByIdKey(dancers, dancerId) || getPlaceholderDancer(dancerId);
+
+    return {
+      ...dancer,
+      $tie: modifier === 'tie',
+    };
+  });
+}
+export function findPointedDancers(dancePoints, dancers = []) {
+  const dancerIds = Object.values(dancePoints || {})
+    .flatMap((v) => v)
+    .filter((v, i, a) => a.indexOf(v) === i);
+  const pointedDancers = getAugmentedDancers(dancerIds, dancers).sort(sortByKey('$number'));
+  return pointedDancers.map((dancer) => ({
+    ...dancer,
+    $points: true,
+  }));
+}
 export function findPlacedDancers(group, dance, dancers = [], results = {}, sortByNumber = false, includeDummyForExplicitlyEmptyResults = false) {
   // get ranked dancerIds
   let placings = [];
@@ -70,21 +91,7 @@ export function findPlacedDancers(group, dance, dancers = [], results = {}, sort
   }
 
   // transform ranked dancerIds into ordered array of dancer objects
-  const placedDancers = placings.map((result) => {
-    const [dancerId, modifier] = result.split(':');
-    const placeholderDancer = getPlaceholderDancer(dancerId);
-    const dancer = isPlaceholderId(dancerId)
-      ? placeholderDancer
-      : findByIdKey(dancers, dancerId);
-
-    if (!dancer) {
-      return placeholderDancer;
-    }
-    return {
-      ...dancer,
-      $tie: modifier === 'tie',
-    };
-  });
+  const placedDancers = getAugmentedDancers(placings, dancers);
   if (sortByNumber) {
     return placedDancers.sort(sortByKey('$number'));
   }

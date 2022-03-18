@@ -133,6 +133,7 @@ export default {
       'draws',
       'schedule',
       'results',
+      'points',
       'favoriteDancerSuggestions',
     ],
   },
@@ -260,6 +261,9 @@ export default {
     results() {
       return this.resultsRaw;
     },
+    points() {
+      return this.pointsRaw;
+    },
 
     favoriteDancerSuggestions() {
       const favorites = this.$store.getters.favorites('dancers');
@@ -345,6 +349,8 @@ export default {
       this.$bindAsObject('scheduleRaw', this.competitionDataRef.child('schedule'));
       if (this.resultsRaw) this.$unbind('resultsRaw');
       this.$bindAsObject('resultsRaw', this.competitionDataRef.child('results'));
+      if (this.pointsRaw) this.$unbind('pointsRaw');
+      this.$bindAsObject('pointsRaw', this.competitionDataRef.child('points'));
 
       await Promise.all([
         this.competitionRef.once('value'),

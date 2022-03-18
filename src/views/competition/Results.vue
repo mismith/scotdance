@@ -111,12 +111,12 @@
 
                 <PlacedDancerList
                   :dance="dance"
-                  :dancers="dance.dancers"
+                  :dancers="dance.$placedDancers"
                   @dancer-click="$router.push({ name: 'competition.dancers', params: { dancerId: $event[idKey] }})"
                   @dancer-added="handleDancerAdded"
                 >
                   <EmptyResults
-                    v-if="!dance.dancers.length"
+                    v-if="!dance.$placedDancers.length"
                     :groupId="currentGroup[idKey]"
                     :danceId="dance[idKey]"
                     :results="results"
@@ -134,6 +134,17 @@
                         </v-list-item-subtitle>
                       </v-list-item-content>
                     </v-list-item>
+                  </template>
+                </PlacedDancerList>
+                <PlacedDancerList
+                  v-if="dance.$pointedDancers && dance.$pointedDancers.length"
+                  :dance="dance"
+                  :dancers="dance.$pointedDancers"
+                  @dancer-click="$router.push({ name: 'competition.dancers', params: { dancerId: $event[idKey] }})"
+                >
+                  <template #prepend>
+                    <v-divider />
+                    <v-subheader>Championship Points</v-subheader>
                   </template>
                 </PlacedDancerList>
               </v-list-group>
@@ -184,6 +195,7 @@ import {
   findGroupDances,
   findGroupDancers,
   findCategoryDancers,
+  findPointedDancers,
   findPlacedDancers,
   hasOverall,
 } from '@/helpers/results';
@@ -207,6 +219,7 @@ export default {
       'dances',
       'staff',
       'results',
+      'points',
     ],
   },
   localStorage: {
@@ -294,15 +307,17 @@ export default {
       return [
         {
           ...all,
-          dancers: findGroupDancers(this.currentGroup, this.dancers),
+          $placedDancers: findGroupDancers(this.currentGroup, this.dancers),
         },
         ...groups.map((dance) => {
           const sortByNumber = dance[idKey] === callbacks[idKey];
-          const dancers = findPlacedDancers(this.currentGroup, dance, this.dancers, this.results, sortByNumber);
+          const placedDancers = findPlacedDancers(this.currentGroup, dance, this.dancers, this.results, sortByNumber);
+          const pointedDancers = findPointedDancers(this.points?.[this.currentGroup[idKey]]?.[dance[idKey]], this.dancers);
 
           return {
             ...dance,
-            dancers,
+            $placedDancers: placedDancers,
+            $pointedDancers: pointedDancers,
           };
         }),
       ];

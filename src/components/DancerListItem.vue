@@ -22,18 +22,20 @@
     <slot />
 
     <slot name="favorite">
-      <v-list-item-action>
+      <v-list-item-action v-if="!isPlaceholderDancer">
         <FavoriteDancerButton :dancer="dancer" @click.stop />
       </v-list-item-action>
     </slot>
     <v-list-item-action v-if="place !== undefined">
-      <place v-if="place > 0" :place="place" />
+      <v-icon v-if="dancer.$points" class="mr-3 my-3">{{ mdiCardsDiamond }}</v-icon>
+      <Place v-else-if="place > 0" :place="place" />
       <v-icon v-else-if="place === 0" color="primary" class="icon-trophy" />
     </v-list-item-action>
   </v-list-item>
 </template>
 
 <script>
+import { mdiCardsDiamond } from '@mdi/js';
 import { formatHumanURL } from '@/helpers/router';
 import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue';
 import Place from '@/components/Place.vue';
@@ -50,6 +52,11 @@ export default {
       type: [Object, String],
       required: false,
     },
+  },
+  data() {
+    return {
+      mdiCardsDiamond,
+    };
   },
   computed: {
     detail() {

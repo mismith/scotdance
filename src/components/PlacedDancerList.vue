@@ -1,5 +1,6 @@
 <template>
   <v-list two-line class="PlacedDancerList">
+    <slot name="prepend" />
     <draggable
       v-model="dancers"
       handle=".sortable-handle"
@@ -24,7 +25,7 @@
           </v-icon>
 
           <template #favorite>
-            <v-list-item-action v-if="admin && dance[idKey] !== callbacks[idKey]" class="ml-3">
+            <v-list-item-action v-if="admin && dance[idKey] !== callbacks[idKey] && !dancer.$points" class="ml-3">
               <v-switch
                 v-show="index"
                 :input-value="dancer.$tie"
@@ -32,6 +33,7 @@
                 @click.stop="$emit('dancer-toggle', [dancer, !dancer.$tie])"
               />
             </v-list-item-action>
+            <span v-else-if="admin" />
           </template>
         </DancerListItem>
       </v-slide-y-transition>
@@ -57,7 +59,7 @@ export default {
   name: 'PlacedDancerList',
   props: {
     admin: {
-      type: Boolean,
+      type: [Boolean, String],
       required: false,
     },
     dance: Object,
@@ -75,7 +77,7 @@ export default {
   },
   computed: {
     draggingEnabled() {
-      return !!this.admin;
+      return this.admin && this.admin !== 'nodrag';
     },
   },
   watch: {

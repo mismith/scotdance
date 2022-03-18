@@ -17,29 +17,35 @@
           <v-subheader>Results</v-subheader>
         </template>
 
-        <v-list>
+        <v-list two-line>
           <ResultListItem
-            v-for="dance in findGroupDances(group, dances)"
+            v-for="dance in groupDances"
             :key="dance[idKey]"
-            :place="getPlace(dancer, group, dance)"
             :to="{ name: 'competition.results', params: { groupId: group[idKey], danceId: dance[idKey] } }"
           >
             <template #avatar><span /></template>
             {{ dance.$name }}
+            <template #icon>
+              <v-icon v-if="isPointed(dance)" class="mr-3 my-3">{{ mdiCardsDiamond }}</v-icon>
+              <Place v-else :place="getPlace(dancer, group, dance)" />
+            </template>
           </ResultListItem>
 
           <v-divider v-if="hasOverall(group)" />
           <ResultListItem
             v-if="hasOverall(group)"
-            :place="getPlace(dancer, group, overall)"
             :to="{ name: 'competition.results', params: { groupId: group[idKey], danceId: overall[idKey] } }"
           >
             <template #avatar><span /></template>
             {{ overall.$name }}
+            <template #icon>
+              <v-icon v-if="isPointed(overall)" class="mr-3 my-3">{{ mdiCardsDiamond }}</v-icon>
+              <Place v-else :place="getPlace(dancer, group, overall)" />
+            </template>
           </ResultListItem>
 
           <EmptyResults
-            v-if="!findGroupDances(group, dances).length && !hasOverall(group)"
+            v-if="!groupDances.length && !hasOverall(group)"
             :groupId="group[idKey]"
             :danceId="overall[idKey]"
             :results="results"
@@ -51,9 +57,11 @@
 </template>
 
 <script>
+import { mdiCardsDiamond } from '@mdi/js';
 import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue';
 import ResultListItem from '@/components/ResultListItem.vue';
 import EmptyResults from '@/components/EmptyResults.vue';
+import Place from '@/components/Place.vue';
 import { idKey } from '@/helpers/firebase';
 import {
   overall,
@@ -65,6 +73,11 @@ import {
 
 export default {
   name: 'DancerReport',
+  reactiveInject: {
+    competitionBundle: [
+      'points',
+    ],
+  },
   props: {
     dancer: Object,
     dancers: Array,
@@ -77,16 +90,18 @@ export default {
       idKey,
       overall,
       hasOverall,
+      mdiCardsDiamond,
     };
   },
   computed: {
     group() {
       return this.dancer && this.dancer.$group;
     },
+    groupDances() {
+      return findGroupDances(this.group, this.dances);
+    },
   },
   methods: {
-    findGroupDances,
-
     getPlace(dancer, group, dance) {
       if (this.results?.[group?.[idKey]]?.[dance?.[idKey]]) {
         const placedDancers = findPlacedDancers(group, dance, this.dancers, this.results);
@@ -96,11 +111,17 @@ export default {
       // no results yet
       return null;
     },
+    isPointed(dance) {
+      return Object.values(this.points?.[this.group?.[idKey]]?.[dance?.[idKey]] || {})
+        .flatMap((v) => v) // any dance
+        .some((dancerId) => dancerId === this.dancer?.[idKey]);
+    },
   },
   components: {
     FavoriteDancerButton,
     ResultListItem,
     EmptyResults,
+    Place,
   },
 };
 </script>

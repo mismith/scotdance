@@ -17,8 +17,7 @@
 
     <v-list-item-action>
       <slot name="icon">
-        <place v-if="place !== undefined" :place="place" />
-        <v-icon v-else>{{ mdiChevronRight }}</v-icon>
+        <v-icon>{{ mdiChevronRight }}</v-icon>
       </slot>
     </v-list-item-action>
   </v-list-item>
@@ -26,7 +25,6 @@
 
 <script>
 import { mdiCheck, mdiCheckOutline, mdiChevronRight } from '@mdi/js';
-import Place from '@/components/Place.vue';
 import { hasFavorites } from '@/helpers/competition';
 
 export default {
@@ -39,10 +37,6 @@ export default {
     hasPlaceholderDancers: {
       type: Boolean, // true -> show hollow checkmark
       default: false,
-    },
-    place: {
-      type: Number, // undefined -> show chevron
-      required: false,
     },
     to: Object,
   },
@@ -60,9 +54,6 @@ export default {
   },
   methods: {
     hasFavorites,
-  },
-  components: {
-    Place,
   },
 };
 </script>
