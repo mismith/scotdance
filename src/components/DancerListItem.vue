@@ -12,7 +12,14 @@
     </slot>
 
     <v-list-item-content>
-      <v-list-item-title>{{ dancer.$name }}</v-list-item-title>
+      <v-list-item-title>
+        {{ dancer.$name }}
+        <HelpTip v-if="isPlaceholderDancer">
+          This is a <em>placeholder</em> dancer.<br />
+          <br />
+          Typically, competition organizers will use this to denote that a dancer is missing, invalid, misheard, or otherwise problematic—and should be fixed later.
+        </HelpTip>
+      </v-list-item-title>
       <v-list-item-subtitle class="dot-divided">
         <span v-if="dancer.$group" class="group">{{ dancer.$group.$name }}</span>
         <span v-if="detail" class="location">{{ detail }}</span>
@@ -37,13 +44,19 @@
 <script>
 import { mdiCardsDiamond } from '@mdi/js';
 import { formatHumanURL } from '@/helpers/router';
+import { isPlaceholderId } from '@/helpers/results';
+import { idKey } from '@/helpers/firebase';
 import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue';
 import Place from '@/components/Place.vue';
+import HelpTip from '@/components/HelpTip.vue';
 
 export default {
   name: 'DancerListItem',
   props: {
-    dancer: Object,
+    dancer: {
+      type: Object,
+      required: true,
+    },
     place: {
       type: Number,
       required: false,
@@ -62,6 +75,9 @@ export default {
     detail() {
       return this.dancer.location || formatHumanURL(this.dancer.website);
     },
+    isPlaceholderDancer() {
+      return isPlaceholderId(this.dancer[idKey]);
+    },
   },
   mounted() {
     this.$emit('mounted', this.$el);
@@ -69,6 +85,7 @@ export default {
   components: {
     FavoriteDancerButton,
     Place,
+    HelpTip,
   },
 };
 </script>
