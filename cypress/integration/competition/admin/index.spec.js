@@ -145,7 +145,7 @@ describe('Competition Admin', () => {
 
     describe('Empty states', () => {
       const TOOLBAR = {
-        PRESETS: 'preset-picker:button',
+        PRESETS: 'admin:toolbar.addPreset',
         IMPORT: 'admin:toolbar.import',
         SEARCH: 'admin:toolbar.hot-search',
         EXPORT: 'admin:toolbar.export',

@@ -1,30 +1,37 @@
 <template>
   <RequiresPermission :permission="hasPermission" class="CompetitionAdmin app-scroll-frame">
     <v-toolbar dense class="flex-none">
-      <div class="d-flex justify-start ml-n2" style="flex-grow: 1;">
+      <div class="d-flex justify-start ml-n2" style="flex-basis: 33%;">
         <PresetPicker
           v-if="hasPresets"
           ref="presetPicker"
           :presets="currentSection.presets"
           :prop="currentSection[idKey] === 'dances' ? p => danceExtender(p).$name : 'name'"
           @select="addPresets"
-        />
-
-        <v-tooltip v-if="hasImport" bottom>
+        >
           <template #activator="{ on }">
             <v-btn
-              v-test="'admin:toolbar.import'"
               v-on="on"
-              icon
-              @click="showImport = true"
+              v-test="'admin:toolbar.addPreset'"
+              text
             >
-              <v-icon>{{ mdiTableArrowLeft }}</v-icon>
+              <v-icon class="mr-2">{{ mdiPlaylistPlus }}</v-icon>
+              Add
             </v-btn>
           </template>
-          Import spreadsheet
-        </v-tooltip>
+        </PresetPicker>
+
+        <v-btn
+          v-if="hasImport"
+          v-test="'admin:toolbar.import'"
+          text
+          @click="showImport = true"
+        >
+          <v-icon class="mr-2">{{ mdiImport }}</v-icon>
+          Import
+        </v-btn>
       </div>
-      <div class="d-flex justify-center mx-2" style="flex-grow: 2;">
+      <div class="d-flex justify-center mx-2" style="flex-basis: 33%;">
         <SearchField
           v-test="'admin:toolbar.hot-search'"
           v-if="hasHotData"
@@ -33,20 +40,16 @@
           style="min-width: 128px; max-width: 300px;"
         />
       </div>
-      <div class="d-flex justify-end mr-n2" style="flex-grow: 1;">
-        <v-tooltip v-if="hasExport" bottom>
-          <template #activator="{ on }">
-            <v-btn
-              v-test="'admin:toolbar.export'"
-              v-on="on"
-              icon
-              @click="isTab('results') ? exportResults() : exportHotTable()"
-            >
-              <v-icon>{{ mdiTableArrowRight }}</v-icon>
-            </v-btn>
-          </template>
-          Export CSV
-        </v-tooltip>
+      <div class="d-flex justify-end mr-n2" style="flex-basis: 33%;">
+        <v-btn
+          v-if="hasExport"
+          v-test="'admin:toolbar.export'"
+          text
+          @click="inTabs('results') ? exportResults() : exportHotTable()"
+        >
+          <v-icon class="mr-2">{{ mdiExport }}</v-icon>
+          Export
+        </v-btn>
 
         <v-tooltip bottom :color="savingError ? 'error' : undefined">
           <template #activator="{ on }">
@@ -207,8 +210,8 @@ import saveCSV from 'save-csv';
 import {
   mdiAlert,
   mdiCheck,
-  mdiTableArrowLeft,
-  mdiTableArrowRight,
+  mdiImport,
+  mdiExport,
   mdiPlaylistPlus,
   mdiTableAlert,
 } from '@mdi/js';
@@ -269,8 +272,8 @@ export default {
       idKey,
       mdiAlert,
       mdiCheck,
-      mdiTableArrowLeft,
-      mdiTableArrowRight,
+      mdiImport,
+      mdiExport,
       mdiPlaylistPlus,
       mdiTableAlert,
 
@@ -350,7 +353,7 @@ export default {
       return this.inTabs('categories', 'groups', 'dancers') && this.$vuetify.breakpoint.smAndUp;
     },
     hasExport() {
-      return this.hasHotData && this.$vuetify.breakpoint.smAndUp;
+      return (this.inTabs('results') || this.hasHotData) && this.$vuetify.breakpoint.smAndUp;
     },
   },
   watch: {
