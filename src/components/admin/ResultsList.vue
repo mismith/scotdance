@@ -21,7 +21,7 @@
         <ResultListItem
           :dancers="findPlacedDancers(group, callbacks, dancers, results, false, true)"
           :to="{ name: $route.name, params: { groupId: group[idKey], danceId: callbacks[idKey] } }"
-          :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], callbacks[idKey], results)"
+          :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], callbacks[idKey], results, points)"
           :class="{ active: isActive(group, callbacks) }"
         >
           {{ callbacks.$name }}
@@ -33,7 +33,7 @@
           :key="dance[idKey]"
           :dancers="findPlacedDancers(group, dance, dancers, results, false, true)"
           :to="{ name: $route.name, params: { groupId: group[idKey], danceId: dance[idKey] } }"
-          :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], dance[idKey], results)"
+          :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], dance[idKey], results, points)"
           :class="{ active: isActive(group, dance) }"
         >
           {{ dance.$name }}
@@ -44,7 +44,7 @@
           v-if="hasOverall(group)"
           :dancers="findPlacedDancers(group, overall, dancers, results, false, true)"
           :to="{ name: $route.name, params: { groupId: group[idKey], danceId: overall[idKey] } }"
-          :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], overall[idKey], results)"
+          :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], overall[idKey], results, points)"
           :class="{ active: isActive(group, overall) }"
         >
           {{ overall.$name }}
@@ -84,6 +84,7 @@ export default {
     dances: Array,
     dancers: Array,
     results: Object,
+    points: Object,
   },
   localStorage: {
     resultsExpandedGroups: {

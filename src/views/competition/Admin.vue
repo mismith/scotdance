@@ -176,6 +176,8 @@
         :groups="groups"
         :dances="dances"
         :dancers="dancers"
+        :results="results"
+        :points="points"
         @done="showImportResults = false"
       />
     </v-dialog> -->
@@ -260,6 +262,7 @@ export default {
       'draws',
       'schedule',
       'results',
+      'points',
     ],
   },
   data() {

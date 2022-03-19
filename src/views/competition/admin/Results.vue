@@ -7,6 +7,7 @@
         :dances="dances"
         :dancers="dancers"
         :results="results"
+        :points="points"
       />
       <EmptyState
         v-else
