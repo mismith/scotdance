@@ -151,7 +151,7 @@
           <DialogCard v-model="drawVisible">
             <template #title>
               <v-card-title v-if="currentDialogData" class="d-flex flex-column align-start">
-                <div class="title">Draw / Order</div>
+                <div class="title">Dancer {{ getDraw(currentDialogData.group, currentDialogData.dance) ? 'Draw' : 'Order' }}</div>
                 <div v-if="currentDialogData.dance && currentDialogData.group" class="caption">
                   {{ currentDialogData.dance.$shortName }} • {{ currentDialogData.group.$name }}
                 </div>
@@ -324,8 +324,11 @@ export default {
       'setCurrentDialog',
     ]),
 
+    getDraw(group, dance) {
+      return this.draws?.[group?.[idKey]]?.[dance?.[idKey]];
+    },
     findDrawnDancers(group, dance) {
-      const draw = this.draws?.[group[idKey]]?.[dance[idKey]];
+      const draw = this.getDraw(group, dance);
       if (draw) {
         return draw // order by draw order
           .map((number) => this.dancers.find((dancer) => `${dancer.number}` === `${number}`) || getPlaceholderDancer());
