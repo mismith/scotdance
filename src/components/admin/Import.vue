@@ -21,29 +21,33 @@
 
       <v-stepper-items>
         <v-stepper-content :step="1" class="pa-0">
-          <div class="app-scroll-frame app-scroll pa-4">
-            <p>The <strong>Excel spreadsheet</strong> (.xlsx file) should have the following structure:</p>
-            <table class="demo mb-3">
-              <tbody v-for="category in 2" :key="category">
-                <tr>
-                  <td>Category / Age Group</td>
-                  <td v-for="td in 3" :key="td">&nbsp;</td>
-                </tr>
-                <tr v-for="dancer in 3" :key="dancer">
-                  <td>Dancer Number</td>
-                  <td>First Name</td>
-                  <td>Last Name</td>
-                  <td>Location</td>
-                </tr>
-                <tr v-if="category === 2">
-                  <td v-for="td in 4" :key="td">...</td>
-                </tr>
-              </tbody>
-            </table>
-            <v-btn href="/examples/ScotDance-Import-Template.xlsx" download v-test="'import:download-template'">
-              <v-icon left>{{ mdiFileExcel }}</v-icon>
-              Download Template
-            </v-btn>
+          <div class="app-scroll-frame app-scroll">
+            <div class="pa-4 ma-auto">
+              <p>The <strong>Excel spreadsheet</strong> (.xlsx file) should have the following structure:</p>
+              <table class="demo mb-3">
+                <tbody v-for="category in 2" :key="category">
+                  <tr>
+                    <td>Category / Age Group</td>
+                    <td v-for="td in 3" :key="td">&nbsp;</td>
+                  </tr>
+                  <tr v-for="dancer in 3" :key="dancer">
+                    <td>Dancer Number</td>
+                    <td>First Name</td>
+                    <td>Last Name</td>
+                    <td>Location</td>
+                  </tr>
+                  <tr v-if="category === 2">
+                    <td v-for="td in 4" :key="td">...</td>
+                  </tr>
+                </tbody>
+              </table>
+              <footer class="text-center">
+                <v-btn href="/examples/ScotDance-Import-Template.xlsx" download v-test="'import:download-template'">
+                  <v-icon left>{{ mdiFileExcel }}</v-icon>
+                  Download Template
+                </v-btn>
+              </footer>
+            </div>
           </div>
 
           <v-divider />
