@@ -3,7 +3,7 @@
     :to="to"
     @click="$emit('click', $event)"
     class="DancerListItem"
-    :class="{ stripes: dancer.number === '?' }"
+    :class="{ stripes: isPlaceholderDancer }"
   >
     <slot name="avatar">
       <v-list-item-avatar :color="dancer.$favorite ? 'secondary' : 'grey'">

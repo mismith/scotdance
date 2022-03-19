@@ -12,7 +12,7 @@
             {{ mdiStar }}
           </v-icon>
           <v-icon v-if="results[group[idKey]]" color="primary">
-            {{ isInProgress(group, dances, results) ? mdiCheckCircleOutline : mdiCheckCircle }}
+            {{ isGroupInProgress(group, dances, results) ? mdiProgressCheck : mdiCheckCircle }}
           </v-icon>
         </v-subheader>
       </template>
@@ -20,8 +20,8 @@
       <v-list>
         <ResultListItem
           :dancers="findPlacedDancers(group, callbacks, dancers, results, false, true)"
-          :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], callbacks[idKey], results)"
           :to="{ name: $route.name, params: { groupId: group[idKey], danceId: callbacks[idKey] } }"
+          :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], callbacks[idKey], results)"
           :class="{ active: isActive(group, callbacks) }"
         >
           {{ callbacks.$name }}
@@ -32,8 +32,8 @@
           v-for="dance in findGroupDances(group, dances)"
           :key="dance[idKey]"
           :dancers="findPlacedDancers(group, dance, dancers, results, false, true)"
-          :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], dance[idKey], results)"
           :to="{ name: $route.name, params: { groupId: group[idKey], danceId: dance[idKey] } }"
+          :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], dance[idKey], results)"
           :class="{ active: isActive(group, dance) }"
         >
           {{ dance.$name }}
@@ -43,8 +43,8 @@
         <ResultListItem
           v-if="hasOverall(group)"
           :dancers="findPlacedDancers(group, overall, dancers, results, false, true)"
-          :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], overall[idKey], results)"
           :to="{ name: $route.name, params: { groupId: group[idKey], danceId: overall[idKey] } }"
+          :has-placeholder-dancers="hasPlaceholderDancers(group[idKey], overall[idKey], results)"
           :class="{ active: isActive(group, overall) }"
         >
           {{ overall.$name }}
@@ -58,7 +58,7 @@
 </template>
 
 <script>
-import { mdiCheckCircle, mdiCheckCircleOutline, mdiStar } from '@mdi/js';
+import { mdiCheckCircle, mdiProgressCheck, mdiStar } from '@mdi/js';
 import ResultListItem from '@/components/ResultListItem.vue';
 import { idKey } from '@/helpers/firebase';
 import { hasFavorites } from '@/helpers/competition';
@@ -66,7 +66,7 @@ import {
   overall,
   callbacks,
   hasPlaceholderDancers,
-  isInProgress,
+  isGroupInProgress,
   findGroupDances,
   findGroupDancers,
   findPlacedDancers,
@@ -95,7 +95,7 @@ export default {
     return {
       idKey,
       mdiCheckCircle,
-      mdiCheckCircleOutline,
+      mdiProgressCheck,
       mdiStar,
       overall,
       callbacks,
@@ -104,7 +104,7 @@ export default {
   methods: {
     hasFavorites,
     hasPlaceholderDancers,
-    isInProgress,
+    isGroupInProgress,
     findGroupDances,
     findGroupDancers,
     findPlacedDancers,

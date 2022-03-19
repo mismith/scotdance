@@ -131,7 +131,7 @@ export function getOrdinal(place) {
   }
 }
 
-export function isInProgress(group, dances = [], results = {}) {
+export function isGroupInProgress(group, dances = [], results = {}) {
   const groupResults = results && results[group[idKey]];
   if (groupResults) {
     const dancesToCheck = [
@@ -142,9 +142,8 @@ export function isInProgress(group, dances = [], results = {}) {
     return dancesToCheck
       .filter(Boolean)
       .some((dance) => (
-        (!groupResults[dance[idKey]]
-          && !hasExplicitlyEmptyResults(group[idKey], dance[idKey], results))
-        || hasPlaceholderDancers(group[idKey], dance[idKey], results)
+        !groupResults[dance[idKey]]
+          && !hasExplicitlyEmptyResults(group[idKey], dance[idKey], results)
       ));
   }
   return false;

@@ -36,7 +36,8 @@
                 :key="group[idKey]"
                 :to="{ name: $route.name, params: { groupId: group[idKey] } }"
                 :dancers="findPlacedDancers(group, callbacks, dancers, results, false, true)"
-                :has-placeholder-dancers="isInProgress(group, dances, results)"
+                :in-progress="isGroupInProgress(group, dances, results)"
+                :has-placeholder-dancers="findGroupDances(group, dances).some((dance) => hasPlaceholderDancers(group[idKey], dance[idKey], results))"
               >
                 {{ group.name || group.$name }}
               </ResultListItem>
@@ -192,12 +193,13 @@ import {
   all,
   overall,
   callbacks,
-  isInProgress,
+  isGroupInProgress,
   findGroupDances,
   findGroupDancers,
   findCategoryDancers,
   findPointedDancers,
   findPlacedDancers,
+  hasPlaceholderDancers,
   hasOverall,
 } from '@/helpers/results';
 import {
@@ -339,10 +341,12 @@ export default {
   },
   methods: {
     hasFavorites,
-    isInProgress,
+    isGroupInProgress,
+    findGroupDances,
     findGroupDancers,
     findCategoryDancers,
     findPlacedDancers,
+    hasPlaceholderDancers,
     ...mapMutations([
       'setCurrentDialog',
     ]),

@@ -1,13 +1,13 @@
 <template>
   <v-icon v-if="hasResults" color="primary">
-    {{ isInProgress ? mdiCheckCircleOutline : mdiCheckCircle }}
+    {{ inProgress ? mdiProgressCheck : mdiCheckCircle }}
   </v-icon>
 </template>
 
 <script>
-import { mdiCheckCircle, mdiCheckCircleOutline } from '@mdi/js';
+import { mdiCheckCircle, mdiProgressCheck } from '@mdi/js';
 import { idKey } from '@/helpers/firebase';
-import { isInProgress } from '@/helpers/results';
+import { isGroupInProgress } from '@/helpers/results';
 
 export default {
   name: 'ResultsProgressIndicator',
@@ -21,15 +21,15 @@ export default {
     return {
       idKey,
       mdiCheckCircle,
-      mdiCheckCircleOutline,
+      mdiProgressCheck,
     };
   },
   computed: {
     hasResults() {
       return this.checkCategoryGroups(this.category, (group) => this.results[group[idKey]]);
     },
-    isInProgress() {
-      return this.checkCategoryGroups(this.category, (group) => !this.results[group[idKey]] || isInProgress(group, this.dances, this.results));
+    inProgress() {
+      return this.checkCategoryGroups(this.category, (group) => !this.results[group[idKey]] || isGroupInProgress(group, this.dances, this.results));
     },
   },
   methods: {
