@@ -166,7 +166,8 @@
                   <DancerListItem
                     v-for="dancer in findDrawnDancers(currentDialogData.group, currentDialogData.dance)"
                     :key="dancer[idKey]"
-                    :dancer="dancer"
+                    :dancer="{ ...dancer, $group: undefined }"
+                    class="DancerListItem--draw"
                     @click="$router.push({ name: 'competition.dancers', params: { dancerId: dancer[idKey] } }); drawVisible = false;"
                   />
                 </v-list>
