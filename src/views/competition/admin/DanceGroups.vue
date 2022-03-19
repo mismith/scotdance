@@ -75,7 +75,7 @@
         description="(optional) Specify dancer order for each dance"
       />
       <div v-else class="app-scroll app-scroll-frame">
-        <HotTable :settings="hotSettings" />
+        <HotTable ref="hot" :key="groupId" :settings="hotSettings" />
       </div>
       <v-toolbar v-if="currentGroup" class="flex-none">
         <v-list-item v-if="!currentGroupDances.length" class="empty">
@@ -198,6 +198,9 @@ export default {
       },
     },
 
+    hotInstance() {
+      return this.$refs.hot?.hotInstance;
+    },
     hotSettings() {
       const data = this.currentGroupDancers.map(() => ({}));
       const columns = this.currentGroupDances.map((dance) => {
@@ -247,6 +250,9 @@ export default {
         this.$scrollTo(element, { container: this.$el });
       },
       immediate: true,
+    },
+    hotSettings({ data }) {
+      this.hotInstance?.updateData(data);
     },
   },
   methods: {
