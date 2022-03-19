@@ -60,7 +60,7 @@
               @change="handleUpload"
               v-test="'import:step.1:next'"
             >
-              <v-btn color="primary">Select File</v-btn>
+              <v-btn color="primary" :disabled="isUploading" :loading="isUploading">Select File</v-btn>
             </v-file>
           </v-card-actions>
         </v-stepper-content>
@@ -112,8 +112,8 @@
             <v-btn text @click="handleCancel()">Cancel</v-btn>
             <v-btn
               color="primary"
-              :disabled="importing"
-              :loading="importing"
+              :disabled="isImporting"
+              :loading="isImporting"
               @click="handleReview()"
               v-test="'import:step.3:next'"
             >
@@ -159,7 +159,8 @@ export default {
       dataTabIndex: 0,
       data: undefined,
 
-      importing: false,
+      isUploading: false,
+      isImporting: false,
     };
   },
   computed: {
@@ -177,8 +178,11 @@ export default {
     handleBack() {
       this.step = Math.max(1, this.step - 1);
     },
-    handleUpload(file) {
+    async handleUpload(file) {
       if (!file) return;
+
+      this.isUploading = true;
+      await this.$nextTick();
 
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -194,6 +198,7 @@ export default {
 
         // move to next step
         this.step += 1;
+        this.isUploading = false;
       };
       reader.readAsBinaryString(file);
     },
@@ -328,7 +333,7 @@ export default {
       };
     },
     async importData(categories, groups, dancers) {
-      this.importing = true;
+      this.isImporting = true;
       await this.$nextTick();
 
       const categoryMappings = await Promise.all(categories.map(async (categoryData) => {
@@ -398,7 +403,7 @@ export default {
         };
       }));
 
-      this.importing = false;
+      this.isImporting = false;
     },
   },
   components: {
