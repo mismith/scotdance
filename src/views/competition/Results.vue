@@ -37,7 +37,11 @@
                 :to="{ name: $route.name, params: { groupId: group[idKey] } }"
                 :dancers="findPlacedDancers(group, callbacks, dancers, results, false, true)"
                 :in-progress="isGroupInProgress(group, dances, results)"
-                :has-placeholder-dancers="findGroupDances(group, dances).some((dance) => hasPlaceholderDancers(group[idKey], dance[idKey], results))"
+                :has-placeholder-dancers="
+                  findGroupDances(group, dances).some(
+                    (dance) => hasPlaceholderDancers(group[idKey], dance[idKey], results, points)
+                  )
+                "
               >
                 {{ group.name || group.$name }}
               </ResultListItem>

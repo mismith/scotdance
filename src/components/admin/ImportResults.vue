@@ -94,6 +94,7 @@
                 :dances="dances"
                 :dancers="dancers"
                 :results="results"
+                :points="points"
               />
             </Blade>
             <Blade class="col-md-6 app-scroll alt">
@@ -160,6 +161,7 @@ export default {
     groups: Array,
     dances: Array,
     dancers: Array,
+    points: Object,
   },
   data() {
     return {

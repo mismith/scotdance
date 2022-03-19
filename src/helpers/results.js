@@ -29,9 +29,11 @@ export const getPlaceholderDancer = (timestamp = undefined) => ({
 export function isPlaceholderId(dancerId) {
   return /^\d+$/.test(dancerId); // fully numeric, i.e. a timestamp
 }
-export function hasPlaceholderDancers(groupId, danceId, results = {}) {
+export function hasPlaceholderDancers(groupId, danceId, results = {}, points = {}) {
   try {
-    return results[groupId][danceId].some((dancerId) => isPlaceholderId(dancerId));
+    const check = (dancerId) => isPlaceholderId(dancerId);
+    return results?.[groupId]?.[danceId]?.some(check)
+      || Object.values(points?.[groupId]?.[danceId] || {}).flatMap((v) => v).some(check);
   } catch (err) {
     return false;
   }
