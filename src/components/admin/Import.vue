@@ -127,7 +127,7 @@
 </template>
 
 <script>
-import { read, utils } from 'xlsx';
+import { utils } from 'xlsx';
 import find from 'lodash.find';
 import VFile from '@outluch/v-file';
 import { mdiFileExcel } from '@mdi/js';
@@ -136,6 +136,10 @@ import {
   HotTable,
   licenseHot,
 } from '@/helpers/admin';
+// eslint-disable-next-line
+import XLSXWorker from '../../workers/xlsx?worker';
+
+const xlsxWorker = new XLSXWorker();
 
 export default {
   name: 'AdminImport',
@@ -182,25 +186,25 @@ export default {
       if (!file) return;
 
       this.isUploading = true;
-      await this.$nextTick();
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const data = event.target.result;
-        const workbook = read(data, { type: 'binary' });
+      const workbook = await new Promise((resolve, reject) => {
+        xlsxWorker.onmessage = ({ data }) => {
+          if (data.workbook) return resolve(data.workbook);
+          return reject(data.error || data);
+        };
+        xlsxWorker.postMessage({ method: 'readFile', args: [file] });
+      });
 
-        // auto-pick default sheets
-        const autoDetectedSheetIndex = workbook.SheetNames.findIndex((name) => /Program/i.test(name));
-        this.dancersSheetIndex = autoDetectedSheetIndex >= 0 ? autoDetectedSheetIndex : 0;
+      // auto-pick default sheets
+      const autoDetectedSheetIndex = workbook.SheetNames.findIndex((name) => /Program/i.test(name));
+      this.dancersSheetIndex = autoDetectedSheetIndex >= 0 ? autoDetectedSheetIndex : 0;
 
-        // store for processing
-        this.$set(this, 'workbook', workbook);
+      // store for processing
+      this.$set(this, 'workbook', workbook);
 
-        // move to next step
-        this.step += 1;
-        this.isUploading = false;
-      };
-      reader.readAsBinaryString(file);
+      // move to next step
+      this.step += 1;
+      this.isUploading = false;
     },
     handleChoose() {
       // store for reviewing
