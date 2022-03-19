@@ -71,7 +71,7 @@
               {{ sheetName }}
             </v-tab>
             <v-tabs-items class="app-scroll-frame">
-              <HotTable :key="dancersSheetIndex" :settings="sheetToHot(dancersSheet)" />
+              <HotTable v-if="step === 2" :key="dancersSheetIndex" :settings="sheetToHot(dancersSheet)" />
             </v-tabs-items>
           </v-tabs>
 
@@ -99,7 +99,7 @@
               {{ key }}
             </v-tab>
             <v-tabs-items class="app-scroll-frame">
-              <HotTable :key="dataTabIndex" :settings="toReviewHot(dataKeys[dataTabIndex])" />
+              <HotTable v-if="step === 3" :key="dataTabIndex" :settings="toReviewHot(dataKeys[dataTabIndex])" />
             </v-tabs-items>
           </v-tabs>
 
@@ -134,7 +134,7 @@ import { mdiFileExcel } from '@mdi/js';
 import { idKey } from '@/helpers/firebase';
 import {
   HotTable,
-  augmentHot,
+  licenseHot,
 } from '@/helpers/admin';
 
 export default {
@@ -248,25 +248,33 @@ export default {
           data = this.data[key];
         }
       }
-      return augmentHot({
+      return licenseHot({
         colHeaders: Object.keys((data && data[0]) || {}),
-        minSpareRows: 0,
+        rowHeaders: true,
+        stretchH: 'all',
         readOnly: true,
-      }, data);
+        data: [...data],
+      });
     },
     sheetToJson(sheet, options = { header: 1, raw: true, defval: null }) {
-      return utils.sheet_to_json(sheet, options)
-        .filter((row) => Object.values(row).some(Boolean)); // remove empties
+      const nonEmptyRows = utils.sheet_to_json(sheet, options)
+        .filter((row) => Object.values(row).some((v) => v !== options.defval));
+      const numPopulatedCols = nonEmptyRows.reduce((num, row) => Math.max(num, row.length), 0);
+      const rowsWithTrailingEmptiesRemoved = nonEmptyRows.map(
+        (row) => (Array.isArray(row) ? row.slice(0, numPopulatedCols) : row),
+      );
+      return rowsWithTrailingEmptiesRemoved;
     },
     sheetToHot(sheet) {
       const rows = this.sheetToJson(sheet);
-      const minCols = rows.reduce((num, row) => Math.max(num, row.length), 0);
 
-      return augmentHot({
-        minCols,
-        minSpareRows: 0,
+      return licenseHot({
+        colHeaders: true,
+        rowHeaders: true,
+        stretchH: 'all',
         readOnly: true,
-      }, rows);
+        data: [...rows],
+      });
     },
     parseSpreadsheet(dancersSheet) {
       const dancersData = this.sheetToJson(dancersSheet, {
