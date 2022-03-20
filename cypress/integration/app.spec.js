@@ -169,12 +169,14 @@ describe('Competitions', () => {
     // success + reset
     cy.getTest('submit:submitted').should('be.visible');
     cy.getTest('submit:restart').click({ force: true });
-    cy.getTest('submit:step.start').should('be.visible');
-    cy.getTest('submit:step.competition').should('not.be.visible');
+    cy.getTest('submit:step.start').should('not.be.visible');
+    cy.getTest('submit:step.competition').should('be.visible');
     cy.getTest('submit:step.contact').should('not.be.visible');
     cy.getTest('submit:submitted').should('not.exist');
+    // @TODO: check all carried over fields
 
     // allow admin's to create competitions directly
+    cy.reload();
     cy.getTest('submit:skip').should('not.exist');
     cy.auth('signOut');
     cy.getTest('submit:skip').should('not.exist');

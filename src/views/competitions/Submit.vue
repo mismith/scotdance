@@ -119,6 +119,7 @@
 
 <script>
 import { mapState } from 'vuex';
+import pick from 'lodash.pick';
 import { mdiCheck, mdiEmailOutline } from '@mdi/js';
 import { idKey, db, toOrderedArray } from '@/helpers/firebase';
 import steps, { checklists } from '@/schemas/submissions';
@@ -234,7 +235,21 @@ export default {
     },
 
     async handleRestart() {
+      const previousSubmission = { ...this.submission };
       this.reset();
+      this.submission.competition = {
+        date: this.$moment(previousSubmission.competition.date, 'YYYY-MM-DD').add(1, 'day').format('YYYY-MM-DD'),
+        ...pick(previousSubmission.competition, [
+          'venue',
+          'address',
+          'location',
+        ]),
+      };
+      this.submission.contact = pick(previousSubmission.contact, [
+        'name',
+        'email',
+      ]);
+      this.currentStep += 1;
     },
 
     async handleSkip() {
