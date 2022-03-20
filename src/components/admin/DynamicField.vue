@@ -155,6 +155,9 @@ export default {
         this.field.type === 'date'
           ? ((v) => /^\d\d\d\d-\d\d-\d\d$/.test(`${v || ''}`.trim()) || 'Expected format: YYYY-MM-DD')
           : true,
+        this.field.type === 'email'
+          ? ((v) => /^[^\s@,]+@[^\s@,]+$/.test(`${v || ''}`.trim()) || 'Invalid email address')
+          : true,
         ...(this.field.rules || []),
       ];
     },
