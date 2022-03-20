@@ -1,5 +1,10 @@
 # Release Notes
 
+## 3.2.1 - Mar 20, 2022
+- add support for Championship Points in results tab
+- various minor improvements like: help tips, in progress / dancer missing styles, draw dialog tweaks
+- various admin panel bug fixes: draw table saving, empty platforms crashing app, import wizard columns missing, etc.
+
 ## 3.2.0 - Feb 21, 2022
 - major upgrades to the admin panel:
   - table view overhaul: fix column sorting, add undo/redo, polish UI
