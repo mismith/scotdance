@@ -64,7 +64,6 @@
 </template>
 
 <script>
-import Fuse from 'fuse.js';
 import orderBy from 'lodash.orderby';
 import {
   mdiChevronRight,
@@ -74,6 +73,7 @@ import {
 import { flattenPaths } from '@/helpers/admin';
 import { idKey, db } from '@/helpers/firebase';
 import { mapRouteParams } from '@/helpers/router';
+import { searchByKeys } from '@/helpers/competition';
 import PaginatedList from '@/components/admin/PaginatedList.vue';
 import SearchField from '@/components/SearchField.vue';
 import DynamicForm from '@/components/admin/DynamicForm.vue';
@@ -119,10 +119,7 @@ export default {
 
       // filter by search term
       if (this.filterBy && filtered.length && fields) {
-        filtered = new Fuse(filtered, {
-          keys: fields.map((field) => field.data),
-          threshold: 0.33,
-        }).search(this.filterBy);
+        filtered = searchByKeys(filtered, this.filterBy, fields.map((field) => field.data));
       }
 
       filtered = orderBy(filtered, ['email']);

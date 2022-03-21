@@ -69,10 +69,12 @@ export function isNotEmptyObject(item) {
 
 export function searchByKeys(items, query, searchKeys) {
   if (query && items.length) {
-    return new Fuse(items, {
+    const results = new Fuse(items, {
       keys: searchKeys,
       threshold: 0.33,
+      ignoreLocation: true,
     }).search(query);
+    return results.map(({ item }) => item);
   }
   return items;
 }

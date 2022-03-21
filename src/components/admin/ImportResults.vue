@@ -292,11 +292,11 @@ export default {
       });
       this.imported.forEach((datum) => {
         // pre-select default picks, if possible, based on fuzzy string matches
-        const [group] = groupFuse.search(datum.group);
+        const [{ item: group } = {}] = groupFuse.search(datum.group);
         if (group) this.mapped[datum.group] = group[idKey];
 
         datum.dances.forEach((danceName) => {
-          const [dance] = danceFuse.search(danceName);
+          const [{ item: dance } = {}] = danceFuse.search(danceName);
           if (dance) this.mapped[danceName] = dance[idKey];
         });
       });

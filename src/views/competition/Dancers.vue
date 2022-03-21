@@ -4,7 +4,7 @@
       <div v-if="dancers.length" class="app-scroll-frame">
         <v-toolbar class="flex-none">
           <SearchField v-model="filterBy" class="mr-2" />
-          <v-menu @selected="sortBy">
+          <v-menu @selected="sortBy" offset-y>
             <template #activator="{ on }">
               <v-btn icon v-on="on">
                 <v-icon>{{ mdiSort }}</v-icon>
