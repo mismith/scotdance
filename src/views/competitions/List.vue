@@ -32,7 +32,7 @@
                   class="now"
                   v-observe-visibility="handleNowVisibilityChange"
                 >
-                  <v-chip color="secondary" small disabled style="opacity: 1;">Now</v-chip>
+                  <MarkerChip small>Now</MarkerChip>
                 </v-timeline-item>
                 <CompetitionTimelineItem
                   v-else
@@ -93,6 +93,7 @@ import { searchByKeys } from '@/helpers/competition';
 import { submissionsFields } from '@/schemas/submissions';
 import SearchField from '@/components/SearchField.vue';
 import CompetitionTimelineItem from '@/components/CompetitionTimelineItem.vue';
+import MarkerChip from '@/components/MarkerChip.vue';
 
 export default {
   name: 'CompetitionsList',
@@ -185,24 +186,13 @@ export default {
   components: {
     SearchField,
     CompetitionTimelineItem,
+    MarkerChip,
   },
 };
 </script>
 
 <style lang="scss">
-@keyframes blink {
-  0% { opacity: 100%; }
-  100% { opacity: 0%; }
-}
 .CompetitionsList {
-  .v-timeline-item.now {
-    .v-timeline-item__dot {
-      .v-timeline-item__inner-dot {
-        animation: blink 1s infinite alternate;
-      }
-    }
-  }
-
   .now-marker {
     opacity: 0.67;
     margin-left: 12px;

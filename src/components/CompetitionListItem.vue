@@ -13,7 +13,10 @@
     </v-list-item-avatar>
 
     <v-list-item-content>
-      <v-list-item-title>{{ competition.name }}</v-list-item-title>
+      <v-list-item-title>
+        {{ competition.name }}
+        <MarkerChip v-if="this.$moment(competition.date).isSame(this.$moment(), 'day')" />
+      </v-list-item-title>
       <v-list-item-subtitle class="dot-divided">
         <span v-if="competition.date">{{ $moment(competition.date).format('MMM D, YYYY') }}</span>
         <span v-if="competition.location">{{ competition.location }}</span>
@@ -37,6 +40,7 @@
 
 <script>
 import { mdiPencil } from '@mdi/js';
+import MarkerChip from '@/components/MarkerChip.vue';
 import { idKey } from '@/helpers/firebase';
 
 export default {
@@ -50,6 +54,9 @@ export default {
       idKey,
       mdiPencil,
     };
+  },
+  components: {
+    MarkerChip,
   },
 };
 </script>

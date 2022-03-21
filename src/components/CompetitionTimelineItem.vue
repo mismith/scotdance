@@ -16,8 +16,11 @@
       </router-link>
     </template>
     <router-link :to="{ name: 'competition.info', params: { competitionId: competition[idKey] } }">
-      <div class="subtitle-1">{{ competition.name }}</div>
-      <div class="dot-divided dimmed">
+      <div class="subtitle-1">
+        {{ competition.name }}
+        <MarkerChip v-if="this.$moment(competition.date).isSame(this.$moment(), 'day')" />
+      </div>
+      <div class="body-2 dot-divided dimmed">
         <span v-if="competition.date">{{ $moment(competition.date).format('MMM D, YYYY') }}</span>
         <span v-if="competition.location">{{ competition.location }}</span>
       </div>
@@ -43,6 +46,7 @@
 </template>
 
 <script>
+import MarkerChip from '@/components/MarkerChip.vue';
 import { idKey } from '@/helpers/firebase';
 
 export default {
@@ -59,6 +63,9 @@ export default {
     now() {
       return this.competition.date && this.$moment(this.competition.date).isSame(this.$moment(), 'day');
     },
+  },
+  components: {
+    MarkerChip,
   },
 };
 </script>
