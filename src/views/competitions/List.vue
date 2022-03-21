@@ -3,7 +3,57 @@
     <template v-if="loaded">
       <template v-if="competitions.length">
         <v-toolbar class="flex-none">
-          <SearchField v-model="competitionsSearchFor" />
+          <SearchField v-model="competitionsSearchFor" class="mr-2" />
+          <v-menu v-model="isLocationFilterOpen" offset-y :close-on-content-click="false" max-width="300" max-height="75vh">
+            <template #activator="{ on, attrs }">
+              <v-btn icon v-on="on" v-bind="attrs">
+                <v-badge
+                  :value="Boolean(competitionsLocationFilter.length)"
+                  :content="competitionsLocationFilter.length"
+                  color="secondary"
+                  :offset-x="8"
+                  :offset-y="8"
+                >
+                  <v-icon>{{ mdiEarth }}</v-icon>
+                </v-badge>
+              </v-btn>
+            </template>
+
+            <v-card>
+              <v-subheader>Locations:</v-subheader>
+              <v-list>
+                <v-list-item-group
+                  v-model="competitionsLocationFilter"
+                  multiple
+                >
+                  <v-list-item
+                    v-for="location in locations"
+                    :key="location"
+                    :value="location"
+                  >
+                    <template v-slot:default="{ active }">
+                      <v-list-item-action>
+                        <v-checkbox
+                          :input-value="active"
+                          color="primary"
+                        />
+                      </v-list-item-action>
+                      <v-list-item-content>
+                        <v-list-item-title>{{ location }}</v-list-item-title>
+                      </v-list-item-content>
+                    </template>
+                  </v-list-item>
+                </v-list-item-group>
+              </v-list>
+              <v-card tile style="position: sticky; bottom: 0;">
+                <v-divider />
+                <v-card-actions>
+                  <v-btn text @click="competitionsLocationFilter = []; isLocationFilterOpen = false;">Clear</v-btn>
+                  <v-btn text color="primary" class="ml-auto" @click="isLocationFilterOpen = false">Done</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-card>
+          </v-menu>
         </v-toolbar>
 
         <div class="app-scroll-frame" style="position: relative;">
@@ -24,7 +74,7 @@
                 </v-timeline-item>
 
                 <v-timeline-item
-                  v-if="competition[idKey] === '__NOW__'"
+                  v-if="competition[idKey] === NOW_MARKER"
                   :key="competition[idKey]"
                   id="now-marker"
                   small
@@ -45,7 +95,11 @@
               v-else
               :icon="mdiAlertCircleOutline"
               label="No competitions match"
-            />
+            >
+              <div v-if="competitionsLocationFilter.length">
+                Try searching in <a @click="competitionsLocationFilter = []">all locations</a>
+              </div>
+            </EmptyState>
           </div>
 
           <transition :name="`slide-y${nowVisibility > 0 ? '-reverse' : ''}-transition`">
@@ -82,11 +136,13 @@
 </template>
 
 <script>
+import groupBy from 'lodash.groupby';
 import {
   mdiAlertCircleOutline,
   mdiChevronDown,
   mdiChevronUp,
   mdiClose,
+  mdiEarth,
 } from '@mdi/js';
 import { idKey } from '@/helpers/firebase';
 import { searchByKeys } from '@/helpers/competition';
@@ -94,6 +150,8 @@ import { submissionsFields } from '@/schemas/submissions';
 import SearchField from '@/components/SearchField.vue';
 import CompetitionTimelineItem from '@/components/CompetitionTimelineItem.vue';
 import MarkerChip from '@/components/MarkerChip.vue';
+
+const NOW_MARKER = '__NOW__';
 
 export default {
   name: 'CompetitionsList',
@@ -108,28 +166,53 @@ export default {
       type: String,
       default: '',
     },
+    competitionsLocationFilter: {
+      type: Array,
+      default: [],
+    },
   },
   data() {
     return {
+      NOW_MARKER,
       idKey,
       mdiAlertCircleOutline,
       mdiChevronDown,
       mdiChevronUp,
       mdiClose,
+      mdiEarth,
 
       loaded: false,
 
       nowVisibility: 0,
+      isLocationFilterOpen: false,
     };
   },
   computed: {
+    locations() {
+      return Object.keys(groupBy(this.competitions, 'location'));
+    },
     searchKeys() {
       return submissionsFields.map(({ data }) => data);
     },
-    timelineCompetitions() {
+    filteredCompetitions() {
+      let filtered = this.competitions;
+
+      // filter by location(s)
+      if (this.competitionsLocationFilter?.length) {
+        filtered = filtered.filter(({ [idKey]: id, location }) => id === NOW_MARKER || this.competitionsLocationFilter.includes(location));
+      }
+
+      // filter by search term
+      if (this.competitionsSearchFor?.trim()) {
+        filtered = searchByKeys(filtered, this.competitionsSearchFor.trim(), this.searchKeys);
+      }
+
+      return filtered;
+    },
+    filteredTimelineCompetitions() {
       let currentTimelineGroup;
       let firstPastEventIndex = -1;
-      const timelineCompetitions = this.competitions
+      const filteredTimelineCompetitions = this.filteredCompetitions
         .map((competition, index) => {
           const $date = this.$moment(competition.date);
           let timelineGroup = $date.format('MMMM YYYY');
@@ -149,20 +232,12 @@ export default {
         });
 
       if (firstPastEventIndex >= 0) {
-        timelineCompetitions.splice(firstPastEventIndex, 0, {
-          [idKey]: '__NOW__',
+        filteredTimelineCompetitions.splice(firstPastEventIndex, 0, {
+          [idKey]: NOW_MARKER,
         });
       }
 
-      return timelineCompetitions;
-    },
-    filteredTimelineCompetitions() {
-      let filtered = this.timelineCompetitions;
-
-      // filter by search term
-      filtered = searchByKeys(filtered, this.competitionsSearchFor, this.searchKeys);
-
-      return filtered;
+      return filteredTimelineCompetitions;
     },
   },
   methods: {

@@ -42,8 +42,9 @@
         <ul class="mb-4">
           <li>expanded/collapsed states</li>
           <li>active/last-used screens</li>
-          <li>stored scroll positions</li>
+          <li>scroll positions</li>
           <li>recent views</li>
+          <li>search queries and/or filters</li>
         </ul>
         <p><strong>Are you sure you want to permanently erase these stored settings?</strong></p>
       </DialogCard>
