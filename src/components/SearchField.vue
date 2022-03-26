@@ -7,7 +7,7 @@
     clearable
     solo
     hide-details
-    :loading="value !== valueDebounced"
+    :loading="loading || value !== valueDebounced"
     class="SearchField"
   />
 </template>
@@ -22,6 +22,10 @@ export default {
     debounce: {
       type: Number,
       default: 300,
+    },
+    loading: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {
@@ -41,6 +45,9 @@ export default {
     valueDebounced(valueDebounced) {
       this.$emit('input', valueDebounced);
     },
+  },
+  beforeDestroy() {
+    clearTimeout(this.valueTimeout);
   },
 };
 </script>
