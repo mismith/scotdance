@@ -790,6 +790,13 @@ body {
         filter: invert(1);
     }
   }
+  &.theme--dark {
+    .v-avatar {
+      &.grey {
+        color: black;
+      }
+    }
+  }
 }
 
 // tables
