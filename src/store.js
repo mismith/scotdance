@@ -82,7 +82,7 @@ export default new Vuex.Store({
       return false;
     },
 
-    isFavorite: (state) => (type, id) => get(state.myFavorites, `${type}.${id}`),
+    isFavorite: (state) => (type, id) => Boolean(get(state.myFavorites, `${type}.${id}`)),
     favorites: (state) => (type) => get(state.myFavorites, type) || {},
 
     hasPermission: (state) => (permission) => {
