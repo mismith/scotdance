@@ -37,6 +37,8 @@ export default {
   },
   watch: {
     value(value) {
+      if (value === this.valueDebounced) return;
+
       clearTimeout(this.valueTimeout);
       this.valueTimeout = setTimeout(() => {
         this.valueDebounced = value || '';
