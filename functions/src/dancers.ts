@@ -2,11 +2,13 @@ import { config, https } from 'firebase-functions';
 import Typesense from 'typesense';
 import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 
+import { isEmulator } from './utility/env';
+
 const client = new Typesense.Client({
   nodes: [{
-    host: `${config().typesense?.cluster_id}-1.a1.typesense.net`,
-    port: 443,
-    protocol: 'https',
+    host: isEmulator() ? 'localhost' : `${config().typesense?.cluster_id}-1.a1.typesense.net`,
+    port: isEmulator() ? 8108 : 443,
+    protocol: isEmulator() ? 'http' : 'https',
   }],
   apiKey: config().typesense?.admin_api_key || 'MISSING',
   connectionTimeoutSeconds: 2,
