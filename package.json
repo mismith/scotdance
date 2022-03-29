@@ -15,7 +15,7 @@
     "dev:cy:ci": "npm run build:www && npm run test:cy:ci",
     "cy": "CYPRESS_BASE_URL=https://localhost:3000 cypress",
     "cy:ci": "CYPRESS_BASE_URL=http://localhost:5050 cypress",
-    "test:cy:ci": "FIREBASE_CYPRESS=true firebase emulators:exec \"npm run emulate:typesense & npm run cy:ci -- run\"",
+    "test:cy:ci": "FIREBASE_CYPRESS=true firebase emulators:exec \"npm run cy:ci -- run\"",
     "test": "npm run lint && npm run build:ci && npm run test:cy:ci",
     "lint:www": "eslint './{src,cypress}/**/*.{js,ts,vue}'",
     "lint:functions": "npm run --prefix functions/ lint",
