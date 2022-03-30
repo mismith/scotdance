@@ -5,7 +5,7 @@
   "author": "Murray Rowan <murray@mismith.info>",
   "scripts": {
     "emulate:firebase": "firebase emulators:start --import=.firebase/emulator-data",
-    "emulate:typesense": "./typesense-server --log-dir .typesense/logs --data-dir .typesense/emulator-data --api-key=xyz --enable-cors",
+    "emulate:typesense": "./typesense-server --log-dir .typesense/logs --data-dir .typesense/emulator-data --listen-port=8108 --api-key=xyz --enable-cors",
     "emulate": "run-p emulate:firebase emulate:typesense",
     "dev:functions": "npm run --prefix functions/ dev",
     "dev:www": "vite --https --host",

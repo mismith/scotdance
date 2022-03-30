@@ -2,7 +2,7 @@ import { config, https } from 'firebase-functions';
 import Typesense from 'typesense';
 import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 
-import { isEmulator } from './utility/env';
+import { isCypress, isEmulator } from './utility/env';
 
 const client = new Typesense.Client({
   nodes: [{
@@ -10,7 +10,7 @@ const client = new Typesense.Client({
     port: isEmulator() ? 8108 : 443,
     protocol: isEmulator() ? 'http' : 'https',
   }],
-  apiKey: config().typesense?.admin_api_key || 'MISSING',
+  apiKey: isEmulator() ? 'xyz' : config().typesense?.admin_api_key,
   connectionTimeoutSeconds: 2,
 });
 const schema: CollectionCreateSchema = {
@@ -49,22 +49,42 @@ function dancerExtender(dancer, { dancerId, competitionId }) {
 }
 
 export async function onCreate(snap, ctx) {
+  if (isCypress()) return;
+
   const { dancerId, competitionId } = ctx.params;
   const doc = dancerExtender(snap.val(), { dancerId, competitionId });
-  return client.collections('dancers').documents().create(doc);
+  await client.collections('dancers').documents().create(doc);
 }
 export async function onUpdate({ after: snap }, ctx) {
+  if (isCypress()) return;
+
   const { dancerId, competitionId } = ctx.params;
   const doc = dancerExtender(snap.val(), { dancerId, competitionId });
-  return client.collections('dancers').documents(dancerId).update(doc);
+  await client.collections('dancers').documents(dancerId).update(doc);
 }
 export async function onDelete(snap, ctx) {
+  if (isCypress()) return;
+
   const { dancerId } = ctx.params;
-  return client.collections('dancers').documents(dancerId).delete();
+  await client.collections('dancers').documents(dancerId).delete();
 }
 
-export function reindex(db) {
-  return async function onCall(data, ctx) {
+export async function onSearch(searchParams, ctx) {
+  if (!ctx.auth?.uid) throw new https.HttpsError('unauthenticated', '');
+
+  try {
+    const response = await client.collections('dancers').documents().search({
+      query_by: '$name',
+      ...searchParams,
+    });
+    return response;
+  } catch (error) {
+    throw new https.HttpsError('invalid-argument', error?.message, error);
+  }
+}
+
+export function getOnReindex(db) {
+  return async function onReindex(data, ctx) {
     if (!ctx.auth?.uid) throw new https.HttpsError('unauthenticated', '');
     const isAdmin = (await db.child(`users:permissions/${ctx.auth.uid}/admin`).get()).val();
     if (!isAdmin) throw new https.HttpsError('permission-denied', '');
@@ -87,17 +107,4 @@ export function reindex(db) {
 
     return documents;
   };
-}
-export async function search(searchParams, ctx) {
-  if (!ctx.auth?.uid) throw new https.HttpsError('unauthenticated', '');
-
-  try {
-    const response = await client.collections('dancers').documents().search({
-      query_by: '$name',
-      ...searchParams,
-    });
-    return response;
-  } catch (error) {
-    throw new https.HttpsError('invalid-argument', error?.message, error);
-  }
 }

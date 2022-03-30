@@ -54,12 +54,10 @@ export const competitionDeleted = appConfig.database.ref(`/${env}/competitions/{
     })));
   });
 
-export const dancerCreated = appConfig.database.ref(`/${env}/competitions:data/{competitionId}/dancers/{dancerId}`)
-  .onCreate(Dancers.onCreate);
-export const dancerUpdated = appConfig.database.ref(`/${env}/competitions:data/{competitionId}/dancers/{dancerId}`)
-  .onUpdate(Dancers.onUpdate);
-export const dancerDeleted = appConfig.database.ref(`/${env}/competitions:data/{competitionId}/dancers/{dancerId}`)
-  .onDelete(Dancers.onDelete);
-export const reindexDancers = functions.https.onCall(Dancers.reindex(appConfig.db));
-export const searchDancers = functions.https.onCall(Dancers.search);
+const dancersRef = appConfig.database.ref(`/${env}/competitions:data/{competitionId}/dancers/{dancerId}`);
+export const dancerCreated = !isCypress() && dancersRef.onCreate(Dancers.onCreate);
+export const dancerUpdated = !isCypress() && dancersRef.onUpdate(Dancers.onUpdate);
+export const dancerDeleted = !isCypress() && dancersRef.onDelete(Dancers.onDelete);
+export const searchDancers = functions.https.onCall(Dancers.onSearch);
+export const reindexDancers = functions.https.onCall(Dancers.getOnReindex(appConfig.db));
 
