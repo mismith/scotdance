@@ -71,6 +71,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
 import { mdiChevronRight, mdiClose, mdiMagnify } from '@mdi/js';
 import orderBy from 'lodash.orderby';
 import groupBy from 'lodash.groupby';
@@ -122,8 +123,12 @@ export default {
     };
   },
   computed: {
+    ...mapState([
+      'me',
+    ]),
+
     results() {
-      return this.searchResults?.grouped_hits?.map((group, index) => {
+      return this.searchResults?.grouped_hits?.map((group) => {
         const name = group?.group_key[0] || '';
         return {
           name,
@@ -166,6 +171,11 @@ export default {
     },
   },
   watch: {
+    async me() {
+      if (this.q) {
+        await this.search(this.q);
+      }
+    },
     '$route.query.q': {
       handler(q) {
         if (this.q !== q) {
@@ -196,18 +206,21 @@ export default {
       immediate: true,
     },
     s: {
-      handler(s) {
+      async handler(s) {
         if (s !== this.$route.query.s) {
           this.$router.replace({ name: this.$route.name, query: { ...this.$route.query, s } });
         }
+
+        this.hydrateCurrentResult();
+
+        // scroll to details, if necessary
+        await this.$nextTick();
+        this.$scrollTo(this.$refs.detailsRef.$el, { container: this.$refs.bladesRef.$el });
       },
       immediate: true,
     },
-    currentResult: {
-      handler() {
-        this.hydrateCurrentResult();
-      },
-      immediate: true,
+    currentResult() {
+      this.hydrateCurrentResult(true);
     },
   },
   methods: {
@@ -226,12 +239,18 @@ export default {
       }
       this.isSearching = false;
     },
-    async hydrateCurrentResult() {
-      this.dancers = undefined; // clear old values while loading
-      this.isLoading = true;
+    async hydrateCurrentResult(isRefresh = false) {
+      // clear old values while loading from new result
+      const dancers = isRefresh ? this.dancers : this.currentResult?.dancers;
+      if (!isRefresh) {
+        this.dancers = undefined;
+        this.isLoading = true;
+      }
+
       try {
-        this.dancers = this.currentResult?.dancers && await Promise.all(
-          this.currentResult.dancers.map(async (dancer, i) => {
+        const start = Date.now();
+        this.dancers = dancers && await Promise.all(
+          dancers.map(async (dancer, i) => {
             const groups = [];
             if (dancer.$competitionId && dancer.groupId) {
               const groupPath = `${dancer.$competitionId}/groups/${dancer.groupId}`;
@@ -247,6 +266,11 @@ export default {
             return dancerExtender(dancer, groups, this.$store);
           }),
         );
+        const elapsed = Date.now() - start;
+        const minLoading = 1000;
+        if (elapsed < minLoading) {
+          await new Promise((resolve) => setTimeout(resolve, Math.max(0, minLoading - elapsed)));
+        }
       } catch (error) {
         console.error(error); // eslint-disable-line no-console
       }

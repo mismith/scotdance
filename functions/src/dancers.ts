@@ -3,13 +3,13 @@ import Typesense from 'typesense';
 import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 
 const client = new Typesense.Client({
-  'nodes': [{
-    'host': `${config().typesense?.cluster_id}-1.a1.typesense.net`,
-    'port': 443,
-    'protocol': 'https',
+  nodes: [{
+    host: `${config().typesense?.cluster_id}-1.a1.typesense.net`,
+    port: 443,
+    protocol: 'https',
   }],
-  'apiKey': config().typesense?.admin_api_key || 'MISSING',
-  'connectionTimeoutSeconds': 2,
+  apiKey: config().typesense?.admin_api_key || 'MISSING',
+  connectionTimeoutSeconds: 2,
 });
 const schema: CollectionCreateSchema = {
   name: 'dancers',
@@ -35,7 +35,7 @@ const schema: CollectionCreateSchema = {
       facet: true,
     },
   ],
-}
+};
 
 function dancerExtender(dancer, { dancerId, competitionId }) {
   return {
@@ -84,7 +84,7 @@ export function reindex(db) {
     await client.collections('dancers').documents().import(documents, { action: 'upsert' });
 
     return documents;
-  }
+  };
 }
 export async function search(searchParams, ctx) {
   if (!ctx.auth?.uid) throw new https.HttpsError('unauthenticated', '');
