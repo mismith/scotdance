@@ -194,6 +194,13 @@ describe('Competitions', () => {
   });
 });
 
+describe('Dancers', () => {
+  it('Search', () => {
+    cy.visit('/#/dancers');
+    itShouldBeAuthGuarded();
+  });
+});
+
 describe('User', () => {
   it('Profile', () => {
     cy.visit('/#/profile');
@@ -262,6 +269,11 @@ describe('Admin', () => {
       cy.getTest('competition:access-state:full').should('exist');
       cy.go('back');
     });
+  });
+
+  it('Dancers', () => {
+    cy.visit('/#/admin/dancers');
+    itShouldBeAuthGuarded(true);
   });
 
   it('Users', () => {
