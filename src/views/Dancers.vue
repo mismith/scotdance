@@ -281,6 +281,9 @@ export default {
       this.isLoading = false;
     },
   },
+  mounted() {
+    this.$store.commit('setViewed', ['ui', 'dancers', true]);
+  },
   components: {
     RequiresPermission,
     SearchField,

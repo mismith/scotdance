@@ -9,7 +9,7 @@
       :class="{ stripes: isDev() }"
     >
       <v-btn icon @click="menuVisible = !menuVisible" aria-label="menu" v-test="'app:menu-button'">
-        <v-badge v-model="needsUpdating" dot color="secondary">
+        <v-badge :value="menuIsNew" dot color="secondary">
           <v-icon>{{ mdiMenu }}</v-icon>
         </v-badge>
       </v-btn>
@@ -152,6 +152,9 @@
             <v-list-item-content>
               <v-list-item-title>Search Dancers</v-list-item-title>
             </v-list-item-content>
+            <v-list-item-action v-if="dancersIsNew">
+              <v-badge inline dot color="secondary" />
+            </v-list-item-action>
           </v-list-item>
         </v-list>
 
@@ -381,6 +384,12 @@ export default {
         .sort((a, b) => -this.$moment(a.date).diff(b.date)); // order chronologically
     },
 
+    dancersIsNew() {
+      return !this.$store.getters.isViewed('ui', 'dancers');
+    },
+    menuIsNew() {
+      return this.dancersIsNew || this.needsUpdating;
+    },
     hasSubmenu() {
       return Boolean(this.competitions.length);
     },
