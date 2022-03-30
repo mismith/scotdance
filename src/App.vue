@@ -220,7 +220,7 @@
                   <v-list-item-content>
                     <v-list-item-title>Update</v-list-item-title>
                   </v-list-item-content>
-                  <v-badge inline content="1" color="secondary" />
+                  <v-badge inline content="!" color="secondary" />
                 </v-list-item>
               </template>
             </PromptToUpdate>
