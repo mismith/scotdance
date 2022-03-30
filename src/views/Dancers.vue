@@ -194,10 +194,12 @@ export default {
     },
     q: {
       handler(q) {
+        if (!this.me) return;
+
         if (q !== this.$route.query.q) {
           this.$router.replace({ name: this.$route.name, query: { ...this.$route.query, q } });
         }
-        if (!q) {
+        if (!q && this.s) {
           this.$router.replace({ name: this.$route.name, query: { ...this.$router.query, s: '' } });
         }
 
@@ -207,6 +209,8 @@ export default {
     },
     s: {
       async handler(s) {
+        if (!this.me) return;
+
         if (s !== this.$route.query.s) {
           this.$router.replace({ name: this.$route.name, query: { ...this.$route.query, s } });
         }
@@ -215,7 +219,7 @@ export default {
 
         // scroll to details, if necessary
         await this.$nextTick();
-        this.$scrollTo(this.$refs.detailsRef.$el, { container: this.$refs.bladesRef.$el });
+        this.$scrollTo(this.$refs.detailsRef?.$el, { container: this.$refs.bladesRef.$el });
       },
       immediate: true,
     },
