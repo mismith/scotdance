@@ -2,6 +2,7 @@ import firebase from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/database';
 import 'firebase/storage';
+import 'firebase/functions';
 
 import { isCypress, isDev } from './env';
 
@@ -22,7 +23,7 @@ if (isDev()) {
   firebase.auth().useEmulator(`http://localhost:${9099}/`, { disableWarnings: true });
   firebase.database().useEmulator('localhost', 9000);
   firebase.storage().useEmulator('localhost', 9199);
-  // firebase.functions().useEmulator("localhost", 5001);
+  firebase.functions().useEmulator('localhost', 5001);
 }
 
 // https://stackoverflow.com/a/36087084/888928
@@ -32,6 +33,8 @@ export const valueKey = '.value';
 export const db = firebase.database().ref(FIREBASE_ENV);
 
 export const buckets = firebase.storage().ref(FIREBASE_ENV);
+
+export const fns = firebase.functions();
 
 export const toOrderedArray = (obj) => {
   return Object.entries(obj || {})

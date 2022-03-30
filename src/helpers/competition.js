@@ -63,6 +63,18 @@ export function slugline(html) {
   return (html || '').split('\n')[0].trim() || '';
 }
 
+export function slugify(text) {
+  return text
+    ? text.toLowerCase().replace(/[^a-z-]/g, '-').replace(/-{2,}/g, '-').replace(/^-|-$/g, '')
+    : '';
+}
+
+export function initialify(name) {
+  const initials = name.replace(/(?<!^|[ -])./ig, '').split('');
+  if (initials.length > 3) initials.splice(1, initials.length - 2);
+  return initials.join('');
+}
+
 export function isNotEmptyObject(item) {
   return Object.values(item || {}).some(Boolean);
 }

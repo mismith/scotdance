@@ -40,3 +40,4 @@ firebase-adminsdk.json
 /cypress/videos/
 /cypress/screenshots/
 /cypress/downloads/
+.typesense/

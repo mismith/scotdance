@@ -144,6 +144,15 @@
               <v-list-item-title>Submit Competition</v-list-item-title>
             </v-list-item-content>
           </v-list-item>
+          <v-divider />
+          <v-list-item :to="{ name: 'dancers' }" exact>
+            <v-list-item-avatar>
+              <v-icon>{{ mdiAccountSearch }}</v-icon>
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title>Search Dancers</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
         </v-list>
 
         <v-spacer />
@@ -270,6 +279,7 @@
 import { mapState, mapGetters, mapActions } from 'vuex';
 import {
   mdiAccountCircle,
+  mdiAccountSearch,
   mdiCalendarMonth,
   mdiClose,
   mdiDotsGrid,
@@ -319,6 +329,7 @@ export default {
       db,
 
       mdiAccountCircle,
+      mdiAccountSearch,
       mdiCalendarMonth,
       mdiClose,
       mdiDotsGrid,

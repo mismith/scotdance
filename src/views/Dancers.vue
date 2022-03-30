@@ -1,0 +1,260 @@
+<template>
+  <Blades class="Dancers app-scroll-frame app-scroll" stacks>
+    <Blade class="col-md-4 app-scroll-frame">
+      <v-toolbar class="flex-none">
+        <SearchField v-model="q" :loading="isSearching" />
+      </v-toolbar>
+      <v-list v-if="results.length">
+        <v-list-item
+          v-for="result in results"
+          :key="result.name"
+          :to="{ name: $route.name, query: { ...$route.query, s: result.name } }"
+          exact
+        >
+          <v-list-item-avatar :color="result.dancers.some(({ $favorite }) => $favorite) ? 'secondary' : 'grey'">
+            {{ result.initials }}
+          </v-list-item-avatar>
+          <v-list-item-content>
+            <v-list-item-title>{{ result.name }}</v-list-item-title>
+          </v-list-item-content>
+          <v-icon>{{ mdiChevronRight }}</v-icon>
+        </v-list-item>
+      </v-list>
+      <EmptyState
+        v-else-if="q && !isSearching"
+        :icon="mdiClose"
+        label="No dancers found"
+      />
+    </Blade>
+    <Blade class="col-md-8 app-scroll">
+      <v-list v-if="currentResult" expand class="grouped">
+        <v-list-group
+          v-for="group in currentResultGroups"
+          :key="group[idKey]"
+          :value="true"
+        >
+          <template #activator>
+            <v-subheader>
+              <div class="flex text-truncate pr-3">
+                {{ group.competition.name }}
+              </div>
+              <div class="dot-divided text-truncate">
+                <span v-if="group.competition.date">{{ $moment(group.competition.date).format('MMM D, YYYY') }}</span>
+                <span v-if="group.competition.location">{{ group.competition.location }}</span>
+              </div>
+            </v-subheader>
+          </template>
+
+          <v-list two-line>
+            <DancerListItem
+              v-for="dancer in group.dancers"
+              :key="dancer[idKey]"
+              :dancer="dancer"
+              :loading="isLoading"
+              :to="{ name: 'competition.dancers', params: { competitionId: dancer.$competitionId, dancerId: dancer[idKey] } }"
+            >
+              <Spinner v-if="isLoading" size="32" />
+            </DancerListItem>
+          </v-list>
+        </v-list-group>
+      </v-list>
+      <EmptyState
+        v-else
+        :icon="mdiMagnify"
+        label="Search for dancers"
+        description="Discover which competitions they have participated in"
+      />
+    </Blade>
+  </Blades>
+</template>
+
+<script>
+import { mdiChevronRight, mdiClose, mdiMagnify } from '@mdi/js';
+import orderBy from 'lodash.orderby';
+import groupBy from 'lodash.groupby';
+import { idKey, fns } from '@/helpers/firebase';
+import {
+  findByIdKey,
+  groupExtender,
+  dancerExtender,
+  initialify,
+} from '@/helpers/competition';
+import SearchField from '@/components/SearchField.vue';
+import DancerListItem from '@/components/DancerListItem.vue';
+import EmptyState from '@/components/EmptyState.vue';
+import Spinner from '@/components/Spinner.vue';
+
+const searchDancers = fns.httpsCallable('searchDancers');
+
+export default {
+  name: 'Dancers',
+  reactiveInject: {
+    competitionsBundle: [
+      'competitions',
+      'competitionsDataRef',
+    ],
+  },
+  localStorage: {
+    q: {
+      type: String,
+      default: '',
+    },
+    s: {
+      type: String,
+      default: '',
+    },
+  },
+  data() {
+    return {
+      mdiChevronRight,
+      mdiClose,
+      mdiMagnify,
+
+      idKey,
+
+      isSearching: false,
+      searchResults: [],
+      isLoading: false,
+      dancers: undefined,
+    };
+  },
+  computed: {
+    results() {
+      return this.searchResults?.grouped_hits?.map((group, index) => {
+        const name = group?.group_key[0] || '';
+        return {
+          name,
+          initials: initialify(name),
+          dancers: group.hits?.map(({ document: { id, ...data } }) => {
+            const dancer = {
+              [idKey]: id,
+              ...data,
+            };
+            // extend to allow showing favorites immediately
+            return dancerExtender(dancer, [], this.$store);
+          }),
+        };
+      }) || [];
+    },
+    currentResult() {
+      return this.results?.find(({ name }) => name === this.s);
+    },
+    currentResultGroups() {
+      if (this.dancers || this.currentResult) {
+        const grouped = groupBy(this.dancers || this.currentResult.dancers, (dancer) => dancer.$competitionId);
+        const currentResultGroups = Object.entries(grouped)
+          .reduce((acc, [competitionId, dancers]) => {
+            return acc.concat({
+              [idKey]: competitionId,
+              competition: findByIdKey(this.competitions, competitionId),
+              dancers,
+            });
+          }, []);
+        return orderBy(
+          currentResultGroups,
+          [
+            ['competition', 'date'],
+            ['competition', idKey],
+          ],
+          ['desc'],
+        );
+      }
+      return [];
+    },
+  },
+  watch: {
+    '$route.query.q': {
+      handler(q) {
+        if (this.q !== q) {
+          this.q = q || '';
+        }
+      },
+      immediate: true,
+    },
+    '$route.query.s': {
+      handler(s) {
+        if (this.s !== s) {
+          this.s = s || '';
+        }
+      },
+      immediate: true,
+    },
+    q: {
+      handler(q) {
+        if (q !== this.$route.query.q) {
+          this.$router.replace({ name: this.$route.name, query: { ...this.$route.query, q } });
+        }
+        if (!q) {
+          this.$router.replace({ name: this.$route.name, query: { ...this.$router.query, s: '' } });
+        }
+
+        this.search(q);
+      },
+      immediate: true,
+    },
+    s: {
+      handler(s) {
+        if (s !== this.$route.query.s) {
+          this.$router.replace({ name: this.$route.name, query: { ...this.$route.query, s } });
+        }
+      },
+      immediate: true,
+    },
+    currentResult: {
+      handler() {
+        this.hydrateCurrentResult();
+      },
+      immediate: true,
+    },
+  },
+  methods: {
+    async search(q) {
+      this.isSearching = true;
+      try {
+        if (q) {
+          const { data } = await searchDancers({ q, group_by: '$name', group_limit: 99 });
+          this.$set(this, 'searchResults', data);
+        } else {
+          this.$set(this, 'searchResults', []);
+          await this.$nextTick();
+        }
+      } catch (error) {
+        console.error(error); // eslint-disable-line no-console
+      }
+      this.isSearching = false;
+    },
+    async hydrateCurrentResult() {
+      this.dancers = undefined; // clear old values while loading
+      this.isLoading = true;
+      try {
+        this.dancers = this.currentResult?.dancers && await Promise.all(
+          this.currentResult.dancers.map(async (dancer, i) => {
+            const groups = [];
+            if (dancer.$competitionId && dancer.groupId) {
+              const groupPath = `${dancer.$competitionId}/groups/${dancer.groupId}`;
+              const group = (await this.competitionsDataRef.child(groupPath).get()).val();
+              const categories = [];
+              if (group?.categoryId) {
+                const categoryPath = `${dancer.$competitionId}/categories/${group.categoryId}`;
+                const category = (await this.competitionsDataRef.child(categoryPath).get()).val();
+                categories.push({ [idKey]: group.categoryId, ...category });
+              }
+              groups.push(groupExtender({ [idKey]: dancer.groupId, ...group }, i, categories));
+            }
+            return dancerExtender(dancer, groups, this.$store);
+          }),
+        );
+      } catch (error) {
+        console.error(error); // eslint-disable-line no-console
+      }
+      this.isLoading = false;
+    },
+  },
+  components: {
+    SearchField,
+    DancerListItem,
+    EmptyState,
+    Spinner,
+  },
+};
+</script>
