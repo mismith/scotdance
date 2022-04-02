@@ -30,37 +30,42 @@
       />
     </Blade>
     <Blade ref="detailsRef" class="col-md-8 app-scroll">
-      <v-list v-if="currentResult && me" expand class="grouped">
-        <v-list-group
-          v-for="group in currentResultGroups"
-          :key="group[idKey]"
-          :value="true"
-        >
-          <template #activator>
-            <v-subheader>
-              <div class="flex text-truncate pr-3">
-                {{ group.competition.name }}
-              </div>
-              <div class="dot-divided text-truncate">
-                <span v-if="group.competition.date">{{ $moment(group.competition.date).format('MMM D, YYYY') }}</span>
-                <span v-if="group.competition.location">{{ group.competition.location }}</span>
-              </div>
-            </v-subheader>
-          </template>
+      <template v-if="currentResult && me">
+        <v-list expand class="grouped">
+          <v-list-group
+            v-for="group in currentResultGroups"
+            :key="group[idKey]"
+            :value="true"
+          >
+            <template #activator>
+              <v-subheader>
+                <div class="flex text-truncate pr-3">
+                  {{ group.competition.name }}
+                </div>
+                <div class="dot-divided text-truncate">
+                  <span v-if="group.competition.date">{{ $moment(group.competition.date).format('MMM D, YYYY') }}</span>
+                  <span v-if="group.competition.location">{{ group.competition.location }}</span>
+                </div>
+              </v-subheader>
+            </template>
 
-          <v-list two-line>
-            <DancerListItem
-              v-for="dancer in group.dancers"
-              :key="dancer[idKey]"
-              :dancer="dancer"
-              :loading="isLoading"
-              :to="{ name: 'competition.dancers', params: { competitionId: dancer.$competitionId, dancerId: dancer[idKey] } }"
-            >
-              <Spinner v-if="isLoading" size="32" />
-            </DancerListItem>
-          </v-list>
-        </v-list-group>
-      </v-list>
+            <v-list two-line>
+              <DancerListItem
+                v-for="dancer in group.dancers"
+                :key="dancer[idKey]"
+                :dancer="dancer"
+                :loading="isLoading"
+                :to="{ name: 'competition.dancers', params: { competitionId: dancer.$competitionId, dancerId: dancer[idKey] } }"
+              >
+                <Spinner v-if="isLoading" size="32" />
+              </DancerListItem>
+            </v-list>
+          </v-list-group>
+        </v-list>
+        <footer class="d-flex justify-center pa-3 mb-3">
+          <v-btn text small color="error" @click="handleReportProblem">Report a Problem</v-btn>
+        </footer>
+      </template>
       <EmptyState
         v-else
         :icon="mdiMagnify"
@@ -72,7 +77,7 @@
 </template>
 
 <script>
-import { mapState } from 'vuex';
+import { mapActions, mapState } from 'vuex';
 import { mdiChevronRight, mdiClose, mdiMagnify } from '@mdi/js';
 import orderBy from 'lodash.orderby';
 import groupBy from 'lodash.groupby';
@@ -233,6 +238,10 @@ export default {
     },
   },
   methods: {
+    ...mapActions([
+      'help',
+    ]),
+
     async search(q) {
       this.isSearching = true;
       try {
@@ -284,6 +293,17 @@ export default {
         console.error(error); // eslint-disable-line no-console
       }
       this.isLoading = false;
+    },
+
+    handleReportProblem() {
+      const canGetHelp = this.help(true) !== undefined;
+      if (!canGetHelp) return;
+
+      window.$crisp.push([
+        'do',
+        'message:send',
+        ['text', `I think there might be something wrong on this page: ${window.location.href}`],
+      ]);
     },
   },
   components: {

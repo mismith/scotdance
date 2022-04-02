@@ -234,12 +234,16 @@ export default new Vuex.Store({
         if (set === false || (set === undefined && state.helpVisible)) {
           window.$crisp.push(['do', 'chat:hide']);
           commit('setHelpVisible', false);
-        } else if (set === true || (set === undefined && !state.helpVisible)) {
+          return false;
+        }
+        if (set === true || (set === undefined && !state.helpVisible)) {
           window.$crisp.push(['do', 'chat:show']);
           commit('setHelpVisible', true);
           window.$crisp.push(['do', 'chat:open']);
+          return true;
         }
       }
+      return undefined;
     },
   },
 });
