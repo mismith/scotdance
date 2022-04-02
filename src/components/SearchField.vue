@@ -3,13 +3,14 @@
     v-bind="$attrs"
     label="Search"
     type="search"
-    v-model="value"
+    :value="value"
     :append-icon="mdiMagnify"
     clearable
     solo
     hide-details
     :loading="loading || value !== valueDebounced"
     class="SearchField"
+    @input="handleInput"
   />
 </template>
 
@@ -36,17 +37,20 @@ export default {
       valueTimeout: undefined,
     };
   },
-  watch: {
-    value(value) {
+  methods: {
+    handleInput(value) {
+      // skip if unnecessary
       if (value === this.valueDebounced) return;
 
+      // show loader immediately
+      this.valueDebounced = undefined;
+
+      // delay emiting @input until debounced
       clearTimeout(this.valueTimeout);
       this.valueTimeout = setTimeout(() => {
         this.valueDebounced = value || '';
+        this.$emit('input', this.valueDebounced);
       }, this.debounce);
-    },
-    valueDebounced(valueDebounced) {
-      this.$emit('input', valueDebounced);
     },
   },
   beforeDestroy() {
