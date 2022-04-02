@@ -69,24 +69,40 @@ export async function onDelete(snap, ctx) {
   await client.collections('dancers').documents(dancerId).delete();
 }
 
-export async function onSearch(searchParams, ctx) {
-  if (!ctx.auth?.uid) throw new https.HttpsError('unauthenticated', '');
+export function getOnSearch(db) {
+  return async function onSearch(searchParams, ctx) {
+    if (!ctx.auth?.uid) throw new https.HttpsError('unauthenticated', '');
 
-  try {
-    const response = await client.collections('dancers').documents().search({
-      query_by: '$name',
-      ...searchParams,
-    });
-    return response;
-  } catch (error) {
-    throw new https.HttpsError('invalid-argument', error?.message, error);
+    // aggregate a list of all competition ids this user has access too
+    const permissions = (await db.child(`users:permissions/${ctx.auth.uid}`).get()).val();
+    const competitions = (await db.child('competitions').get()).val();
+    const authorizedCompeitionIds = Object.entries(competitions || {})
+      .map(([competitionId, { published }]: any) => (
+        published
+          || permissions?.admin === true
+          || permissions?.competitions?.[competitionId] === true
+        ) && competitionId
+      )
+      .filter(Boolean);
+
+    try {
+      const response = await client.collections('dancers').documents().search({
+        query_by: '$name',
+        filter_by: `$competitionId:[${authorizedCompeitionIds.join()}]`,
+        ...searchParams,
+      });
+      return response;
+    } catch (error) {
+      throw new https.HttpsError('invalid-argument', error?.message, error);
+    }
   }
 }
 
 export function getOnReindex(db) {
   return async function onReindex(data, ctx) {
     if (!ctx.auth?.uid) throw new https.HttpsError('unauthenticated', '');
-    const isAdmin = (await db.child(`users:permissions/${ctx.auth.uid}/admin`).get()).val();
+    const isAdmin = (await db.child(`users:permissions/${ctx.auth.uid}/admin`).get())
+      .val() === true;
     if (!isAdmin) throw new https.HttpsError('permission-denied', '');
 
     // reset the collection
