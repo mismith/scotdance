@@ -1,5 +1,6 @@
 <template>
   <v-text-field
+    v-bind="$attrs"
     label="Search"
     type="search"
     v-model="value"

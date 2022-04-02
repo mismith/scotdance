@@ -1,73 +1,74 @@
 <template>
-  <RequiresPermission class="Dancers app-scroll-frame">
-    <Blades ref="bladesRef" class="app-scroll-frame app-scroll" stacks>
-      <Blade class="col-md-4 app-scroll-frame">
-        <v-toolbar class="flex-none">
-          <SearchField v-model="q" :loading="isSearching" />
-        </v-toolbar>
-        <v-list v-if="results.length" class="app-scroll">
-          <v-list-item
-            v-for="result in results"
-            :key="result.name"
-            :to="{ name: $route.name, query: { ...$route.query, s: result.name } }"
-            exact
-          >
-            <v-list-item-avatar :color="result.dancers.some(({ $favorite }) => $favorite) ? 'secondary' : 'grey'">
-              {{ result.initials }}
-            </v-list-item-avatar>
-            <v-list-item-content>
-              <v-list-item-title>{{ result.name }}</v-list-item-title>
-            </v-list-item-content>
-            <v-icon>{{ mdiChevronRight }}</v-icon>
-          </v-list-item>
-        </v-list>
-        <EmptyState
-          v-else-if="q && !isSearching"
-          :icon="mdiClose"
-          label="No dancers match"
-        />
-      </Blade>
-      <Blade ref="detailsRef" class="col-md-8 app-scroll">
-        <v-list v-if="currentResult" expand class="grouped">
-          <v-list-group
-            v-for="group in currentResultGroups"
-            :key="group[idKey]"
-            :value="true"
-          >
-            <template #activator>
-              <v-subheader>
-                <div class="flex text-truncate pr-3">
-                  {{ group.competition.name }}
-                </div>
-                <div class="dot-divided text-truncate">
-                  <span v-if="group.competition.date">{{ $moment(group.competition.date).format('MMM D, YYYY') }}</span>
-                  <span v-if="group.competition.location">{{ group.competition.location }}</span>
-                </div>
-              </v-subheader>
-            </template>
+  <Blades class="Dancers app-scroll-frame app-scroll" stacks>
+    <Blade class="col-md-4 app-scroll-frame">
+      <v-toolbar class="flex-none">
+        <SearchField v-model="q" :loading="isSearching" :disabled="!me" />
+      </v-toolbar>
+      <template v-if="!me">
+        <RequiresPermission class="ma-auto pa-4 pb-8" />
+      </template>
+      <v-list v-else-if="results.length" class="app-scroll">
+        <v-list-item
+          v-for="result in results"
+          :key="result.name"
+          :to="{ name: $route.name, query: { ...$route.query, s: result.name } }"
+          exact
+        >
+          <v-list-item-avatar :color="result.dancers.some(({ $favorite }) => $favorite) ? 'secondary' : 'grey'">
+            {{ result.initials }}
+          </v-list-item-avatar>
+          <v-list-item-content>
+            <v-list-item-title>{{ result.name }}</v-list-item-title>
+          </v-list-item-content>
+          <v-icon>{{ mdiChevronRight }}</v-icon>
+        </v-list-item>
+      </v-list>
+      <EmptyState
+        v-else-if="q && !isSearching"
+        :icon="mdiClose"
+        label="No dancers match"
+      />
+    </Blade>
+    <Blade ref="detailsRef" class="col-md-8 app-scroll">
+      <v-list v-if="currentResult && me" expand class="grouped">
+        <v-list-group
+          v-for="group in currentResultGroups"
+          :key="group[idKey]"
+          :value="true"
+        >
+          <template #activator>
+            <v-subheader>
+              <div class="flex text-truncate pr-3">
+                {{ group.competition.name }}
+              </div>
+              <div class="dot-divided text-truncate">
+                <span v-if="group.competition.date">{{ $moment(group.competition.date).format('MMM D, YYYY') }}</span>
+                <span v-if="group.competition.location">{{ group.competition.location }}</span>
+              </div>
+            </v-subheader>
+          </template>
 
-            <v-list two-line>
-              <DancerListItem
-                v-for="dancer in group.dancers"
-                :key="dancer[idKey]"
-                :dancer="dancer"
-                :loading="isLoading"
-                :to="{ name: 'competition.dancers', params: { competitionId: dancer.$competitionId, dancerId: dancer[idKey] } }"
-              >
-                <Spinner v-if="isLoading" size="32" />
-              </DancerListItem>
-            </v-list>
-          </v-list-group>
-        </v-list>
-        <EmptyState
-          v-else
-          :icon="mdiMagnify"
-          label="Search for dancers"
-          description="Discover which competitions they have participated in"
-        />
-      </Blade>
-    </Blades>
-  </RequiresPermission>
+          <v-list two-line>
+            <DancerListItem
+              v-for="dancer in group.dancers"
+              :key="dancer[idKey]"
+              :dancer="dancer"
+              :loading="isLoading"
+              :to="{ name: 'competition.dancers', params: { competitionId: dancer.$competitionId, dancerId: dancer[idKey] } }"
+            >
+              <Spinner v-if="isLoading" size="32" />
+            </DancerListItem>
+          </v-list>
+        </v-list-group>
+      </v-list>
+      <EmptyState
+        v-else
+        :icon="mdiMagnify"
+        label="Search for dancers"
+        description="Discover which competitions they have participated in"
+      />
+    </Blade>
+  </Blades>
 </template>
 
 <script>
@@ -152,11 +153,15 @@ export default {
         const grouped = groupBy(this.dancers || this.currentResult.dancers, (dancer) => dancer.$competitionId);
         const currentResultGroups = Object.entries(grouped)
           .reduce((acc, [competitionId, dancers]) => {
-            return acc.concat({
-              [idKey]: competitionId,
-              competition: findByIdKey(this.competitions, competitionId),
-              dancers,
-            });
+            const competition = findByIdKey(this.competitions, competitionId);
+            if (competition) {
+              return acc.concat({
+                [idKey]: competitionId,
+                competition,
+                dancers,
+              });
+            }
+            return acc;
           }, []);
         return orderBy(
           currentResultGroups,
@@ -219,7 +224,7 @@ export default {
 
         // scroll to details, if necessary
         await this.$nextTick();
-        this.$scrollTo(this.$refs.detailsRef?.$el, { container: this.$refs.bladesRef.$el });
+        this.$scrollTo(this.$refs.detailsRef?.$el, { container: this.$el });
       },
       immediate: true,
     },
@@ -285,11 +290,11 @@ export default {
     this.$store.commit('setViewed', ['ui', 'dancers', true]);
   },
   components: {
-    RequiresPermission,
     SearchField,
     DancerListItem,
     EmptyState,
     Spinner,
+    RequiresPermission,
   },
 };
 </script>
