@@ -52,7 +52,7 @@
           </v-tooltip>
         </template>
 
-        <v-sheet class="app-scroll" style="max-width: 400px;">
+        <v-sheet class="app-scroll" style="max-width: 400px;" @click="submenuIsNew = false">
           <AppSubmenu
             :competitions="competitions"
             :visible="submenuVisible"
@@ -145,7 +145,7 @@
             </v-list-item-content>
           </v-list-item>
           <v-divider />
-          <v-list-item :to="{ name: 'dancers' }" exact>
+          <v-list-item :to="{ name: 'dancers' }" exact @click="$store.commit('setViewed', ['ui', 'menu.dancers', true])">
             <v-list-item-avatar>
               <v-icon>{{ mdiAccountSearch }}</v-icon>
             </v-list-item-avatar>
@@ -384,11 +384,11 @@ export default {
         .sort((a, b) => -this.$moment(a.date).diff(b.date)); // order chronologically
     },
 
-    dancersIsNew() {
-      return !this.$store.getters.isViewed('ui', 'dancers');
-    },
     menuIsNew() {
       return this.dancersIsNew || this.needsUpdating;
+    },
+    dancersIsNew() {
+      return !this.$store.getters.isViewed('ui', 'menu.dancers');
     },
     hasSubmenu() {
       return Boolean(this.competitions.length);
