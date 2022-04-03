@@ -75,7 +75,7 @@
 
                 <v-timeline-item
                   v-if="competition[idKey] === NOW_MARKER"
-                  :key="competition[idKey]"
+                  :key="`${competition[idKey]}-now`"
                   id="now-marker"
                   small
                   color="secondary"

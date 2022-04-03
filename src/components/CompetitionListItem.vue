@@ -13,9 +13,11 @@
     </v-list-item-avatar>
 
     <v-list-item-content>
-      <v-list-item-title>
-        {{ competition.name }}
-        <MarkerChip v-if="this.$moment(competition.date).isSame(this.$moment(), 'day')" />
+      <v-list-item-title class="d-flex align-center">
+        <span class="text-truncate">
+          {{ competition.name }}
+        </span>
+        <MarkerChip v-if="this.$moment(competition.date).isSame(this.$moment(), 'day')" class="ml-2" />
       </v-list-item-title>
       <v-list-item-subtitle class="dot-divided">
         <span v-if="competition.date">{{ $moment(competition.date).format('MMM D, YYYY') }}</span>

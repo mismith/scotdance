@@ -18,7 +18,7 @@
     <router-link :to="{ name: 'competition.info', params: { competitionId: competition[idKey] } }">
       <div class="subtitle-1">
         {{ competition.name }}
-        <MarkerChip v-if="this.$moment(competition.date).isSame(this.$moment(), 'day')" />
+        <MarkerChip v-if="this.$moment(competition.date).isSame(this.$moment(), 'day')" class="ml-1 mb-1" />
       </div>
       <div class="body-2 dot-divided dimmed">
         <span v-if="competition.date">{{ $moment(competition.date).format('MMM D, YYYY') }}</span>

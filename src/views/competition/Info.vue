@@ -16,8 +16,9 @@
           <img :src="competition.image" alt="" />
         </v-avatar>
         <h1 class="display-1 mb-4">{{ competition.name }}</h1>
-        <p v-if="competition.date" class="headline">
+        <p v-if="competition.date" class="headline d-flex align-center">
           {{ $moment(competition.date).format('dddd, MMMM D, YYYY') }}
+          <MarkerChip v-if="this.$moment(competition.date).isSame(this.$moment(), 'day')" class="ml-2" />
         </p>
         <div class="subtitle-1">
           <div v-if="competition.venue">
@@ -120,6 +121,7 @@ import {
   formatExternalURL,
   formatHumanURL,
 } from '@/helpers/router';
+import MarkerChip from '@/components/MarkerChip.vue';
 
 export default {
   name: 'CompetitionInfo',
@@ -163,6 +165,7 @@ export default {
   },
   components: {
     DancerListItem,
+    MarkerChip,
   },
 };
 </script>
