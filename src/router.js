@@ -175,7 +175,7 @@ export default new Router({
                   },
                 },
                 {
-                  path: 'results/:groupId?/:danceId?',
+                  path: 'results/:groupId?/:danceId?/:tabId?',
                   name: 'competition.admin.results',
                   component: CompetitionAdminResults,
                   meta: {

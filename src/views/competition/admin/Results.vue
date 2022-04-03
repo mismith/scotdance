@@ -33,15 +33,15 @@
     </Blade>
     <Blade id="blade-dancers" :active="currentDance" class="col-md-4 app-scroll-frame">
       <template v-if="currentDance">
-        <v-tabs v-model="tab" fixed-tabs class="flex-none">
-          <v-tab>Placings</v-tab>
-          <v-tab>
+        <v-tabs fixed-tabs class="flex-none">
+          <v-tab :to="{ params: { tabId: null } }">Placings</v-tab>
+          <v-tab :to="{ params: { tabId: 'points' } }">
             Points
           </v-tab>
         </v-tabs>
         <v-divider />
-        <v-tabs-items v-model="tab" class="app-scroll-frame">
-          <v-tab-item class="app-scroll-frame app-scroll">
+        <v-tabs-items :value="tabId" class="app-scroll-frame">
+          <v-tab-item value="placings" class="app-scroll-frame app-scroll">
             <v-list v-if="currentDancers.length" two-line>
               <DancerListItem
                 v-for="dancer in currentDancers"
@@ -85,7 +85,7 @@
               </router-link>
             </EmptyState>
           </v-tab-item>
-          <v-tab-item class="app-scroll-frame app-scroll">
+          <v-tab-item value="points" class="app-scroll-frame app-scroll">
             <v-list v-if="currentDancers.length" two-line>
               <DancerListItem
                 v-for="dancer in currentDancers"
@@ -140,7 +140,7 @@
       />
     </Blade>
     <Blade class="col-md-4 app-scroll">
-      <template v-if="!tab">
+      <template v-if="tabId === 'placings'">
         <PlacedDancerList
           v-if="currentDance && placedDancers.length"
           admin
@@ -165,7 +165,7 @@
           />
         </v-toolbar>
       </template>
-      <template v-else>
+      <template v-else-if="tabId === 'points'">
         <PlacedDancerList
           v-if="currentDance && pointedDancers.length"
           admin="nodrag"
@@ -245,7 +245,6 @@ export default {
       overall,
       callbacks,
 
-      tab: undefined,
       confirmDisable: undefined,
     };
   },
@@ -254,6 +253,10 @@ export default {
       'groupId',
       'danceId',
     ]),
+
+    tabId() {
+      return this.$route.params.tabId || 'placings';
+    },
 
     hasNoExistingTabData() {
       return hasNoExistingTabData(this.results);
@@ -285,7 +288,7 @@ export default {
     },
     currentDancers() {
       if (this.currentGroup && this.currentDance) {
-        if (this.currentDance[idKey] === callbacks[idKey] || this.tab) {
+        if (this.currentDance[idKey] === callbacks[idKey] || this.tabId === 'points') {
           return findGroupDancers(this.currentGroup, this.dancers);
         }
         return findPlacedDancers(this.currentGroup, callbacks, this.dancers, this.results, true);
