@@ -3,7 +3,7 @@
     :to="to"
     @click="$emit('click', $event)"
     class="DancerListItem"
-    :class="{ stripes: isPlaceholderDancer }"
+    :class="{ stripes: isPlaceholderDancer, disabled }"
   >
     <slot name="avatar">
       <v-list-item-avatar :color="dancer.$favorite ? 'secondary' : 'grey'">
@@ -65,6 +65,10 @@ export default {
       type: [Object, String],
       required: false,
     },
+    disabled: {
+      type: Boolean,
+      required: false,
+    },
   },
   data() {
     return {
@@ -89,3 +93,11 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.DancerListItem {
+  &.disabled {
+    pointer-events: none;
+  }
+}
+</style>

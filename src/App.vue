@@ -661,14 +661,12 @@ body {
       .v-stepper__items,
       .v-stepper__content,
       .v-stepper__wrapper,
-      .v-tabs,
       .v-window,
       .v-window__container,
       .v-window-item {
         @extend .app-scroll-frame;
       }
-      .v-stepper__header,
-      .v-tabs-bar {
+      .v-stepper__header {
         flex-shrink: 0;
       }
     }

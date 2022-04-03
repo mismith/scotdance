@@ -31,54 +31,106 @@
         />
       </v-toolbar>
     </Blade>
-    <Blade id="blade-dancers" :active="currentDance" class="col-md-4 app-scroll">
+    <Blade id="blade-dancers" :active="currentDance" class="col-md-4 app-scroll-frame">
       <template v-if="currentDance">
-        <v-list v-if="currentDancers.length" two-line>
-          <DancerListItem
-            v-for="dancer in currentDancers"
-            :key="dancer[idKey]"
-            :dancer="dancer"
-            @click="placeDancer(dancer)"
-            :class="{ placed: isPlaced(dancer, placedDancers), pointed: isPointed(dancer) }"
-          >
-            <template #favorite>
-              <v-btn v-if="isActualDance && !isPlaced(dancer, placedDancers)" icon @click.stop="pointDancer(dancer)">
-                <v-icon>{{ isPointed(dancer) ? mdiCardsDiamond : mdiCardsDiamondOutline }}</v-icon>
-              </v-btn>
-              <span v-else />
-            </template>
-          </DancerListItem>
-          <DancerListItem
-            :dancer="getPlaceholderDancer()"
-            @click="placeDancer(getPlaceholderDancer())"
-            class="placeholder"
-          >
-            <template #favorite>
-              <v-btn v-if="isActualDance" icon @click.stop="pointDancer(getPlaceholderDancer())">
-                <v-icon>{{ mdiCardsDiamondOutline }}</v-icon>
-              </v-btn>
-              <span v-else />
-            </template>
-          </DancerListItem>
-        </v-list>
-        <EmptyState
-          v-else-if="currentDance === callbacks"
-          :icon="mdiAlert"
-          label="No dancers found"
-        >
-          <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dancers' } }">
-            <span class="subtitle-1">Add dancers with this age group first &rsaquo;</span>
-          </router-link>
-        </EmptyState>
-        <EmptyState
-          v-else
-          :icon="mdiAlert"
-          label="No dancers to place"
-        >
-          <router-link :to="{ name: 'competition.admin.results', params: { groupId, danceId: callbacks[idKey] } }">
-            <span class="subtitle-1">Make sure enter callbacks first &rsaquo;</span>
-          </router-link>
-        </EmptyState>
+        <v-tabs v-model="tab" fixed-tabs class="flex-none">
+          <v-tab>Placings</v-tab>
+          <v-tab>
+            Points
+          </v-tab>
+        </v-tabs>
+        <v-divider />
+        <v-tabs-items v-model="tab" class="app-scroll-frame">
+          <v-tab-item class="app-scroll-frame app-scroll">
+            <v-list v-if="currentDancers.length" two-line>
+              <DancerListItem
+                v-for="dancer in currentDancers"
+                :key="dancer[idKey]"
+                :dancer="dancer"
+                :disabled="isPointed(dancer)"
+                :class="{ dimmed: isPlaced(dancer, placedDancers) || isPointed(dancer) }"
+                @click="placeDancer(dancer)"
+              >
+                <template #favorite>
+                  <v-icon v-if="isPointed(dancer)">{{ mdiCardsDiamond }}</v-icon>
+                  <span v-else />
+                </template>
+              </DancerListItem>
+              <DancerListItem
+                :dancer="getPlaceholderDancer()"
+                @click="placeDancer(getPlaceholderDancer())"
+                class="placeholder"
+              >
+                <template #favorite>
+                  <span />
+                </template>
+              </DancerListItem>
+            </v-list>
+            <EmptyState
+              v-else-if="currentDance === callbacks"
+              :icon="mdiAlert"
+              label="No dancers found"
+            >
+              <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dancers' } }">
+                <span class="subtitle-1">Add dancers with this age group first &rsaquo;</span>
+              </router-link>
+            </EmptyState>
+            <EmptyState
+              v-else
+              :icon="mdiAlert"
+              label="No dancers to place"
+            >
+              <router-link :to="{ name: 'competition.admin.results', params: { groupId, danceId: callbacks[idKey] } }">
+                <span class="subtitle-1">Make sure enter callbacks first &rsaquo;</span>
+              </router-link>
+            </EmptyState>
+          </v-tab-item>
+          <v-tab-item class="app-scroll-frame app-scroll">
+            <v-list v-if="currentDancers.length" two-line>
+              <DancerListItem
+                v-for="dancer in currentDancers"
+                :key="dancer[idKey]"
+                :dancer="dancer"
+                :disabled="isPlaced(dancer, placedDancers)"
+                :class="{ dimmed: isPlaced(dancer, placedDancers) || isPointed(dancer) }"
+                @click="pointDancer(dancer)"
+              >
+                <template #favorite>
+                  <v-icon v-if="isPointed(dancer)">{{ mdiCardsDiamond }}</v-icon>
+                  <v-icon v-else-if="!isPlaced(dancer, placedDancers)">{{ mdiCardsDiamondOutline }}</v-icon>
+                  <span v-else />
+                </template>
+              </DancerListItem>
+              <DancerListItem
+                :dancer="getPlaceholderDancer()"
+                @click="pointDancer(getPlaceholderDancer())"
+                class="placeholder"
+              >
+                <template #favorite>
+                  <span />
+                </template>
+              </DancerListItem>
+            </v-list>
+            <EmptyState
+              v-else-if="currentDance === callbacks"
+              :icon="mdiAlert"
+              label="No dancers found"
+            >
+              <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dancers' } }">
+                <span class="subtitle-1">Add dancers with this age group first &rsaquo;</span>
+              </router-link>
+            </EmptyState>
+            <EmptyState
+              v-else
+              :icon="mdiAlert"
+              label="No dancers to place"
+            >
+              <router-link :to="{ name: 'competition.admin.results', params: { groupId, danceId: callbacks[idKey] } }">
+                <span class="subtitle-1">Make sure enter callbacks first &rsaquo;</span>
+              </router-link>
+            </EmptyState>
+          </v-tab-item>
+        </v-tabs-items>
       </template>
       <EmptyState
         v-else
@@ -88,39 +140,46 @@
       />
     </Blade>
     <Blade class="col-md-4 app-scroll">
-      <PlacedDancerList
-        v-if="currentDance && placedDancers.length"
-        admin
-        :dance="currentDance"
-        :dancers="placedDancers"
-        @dancer-click="placeDancer($event)"
-        @dancer-toggle="handleTie($event[0], $event[1])"
-        @dancer-reorder="handleDrag($event)"
-      />
-      <template v-if="currentDance && pointedDancers.length">
-        <v-spacer />
-        <ChampionshipPointsSubheader />
+      <template v-if="!tab">
         <PlacedDancerList
+          v-if="currentDance && placedDancers.length"
+          admin
+          :dance="currentDance"
+          :dancers="placedDancers"
+          @dancer-click="placeDancer($event)"
+          @dancer-toggle="handleTie($event[0], $event[1])"
+          @dancer-reorder="handleDrag($event)"
+        />
+        <EmptyState
+          v-else
+          :icon="mdiViewSplitVertical"
+          label="Order dancers"
+          description="Select dancers in the order placed"
+        />
+
+        <v-toolbar v-if="currentGroup && currentDance && !placedDancers.length" class="flex-none">
+          <v-switch
+            v-model="currentDanceHasExplicitlyEmptyResults"
+            :label="`No ${currentDance === callbacks ? 'callbacks' : 'dancers placed'}`"
+            hide-details
+          />
+        </v-toolbar>
+      </template>
+      <template v-else>
+        <PlacedDancerList
+          v-if="currentDance && pointedDancers.length"
           admin="nodrag"
           :dance="currentDance"
           :dancers="pointedDancers"
           @dancer-click="pointDancer($event)"
         />
-      </template>
-      <EmptyState
-        v-if="!currentDance || !(placedDancers.length || pointedDancers.length)"
-        :icon="mdiViewSplitVertical"
-        label="Order dancers"
-        description="Select dancers in the order placed"
-      />
-
-      <v-toolbar v-if="currentGroup && currentDance && !(placedDancers.length || pointedDancers.length)" class="flex-none">
-        <v-switch
-          v-model="currentDanceHasExplicitlyEmptyResults"
-          :label="`No ${currentDance === callbacks ? 'callbacks' : 'dancers placed'}`"
-          hide-details
+        <EmptyState
+          v-else
+          :icon="mdiCardsDiamondOutline"
+          label="Championship points"
+          description="Select dancers who didn't quite place"
         />
-      </v-toolbar>
+      </template>
     </Blade>
 
     <DialogCard
@@ -147,7 +206,6 @@ import {
 import DancerListItem from '@/components/DancerListItem.vue';
 import ResultsList from '@/components/admin/ResultsList.vue';
 import PlacedDancerList from '@/components/PlacedDancerList.vue';
-import ChampionshipPointsSubheader from '@/components/ChampionshipPointsSubheader.vue';
 import { idKey } from '@/helpers/firebase';
 import { findByIdKey } from '@/helpers/competition';
 import { hasNoExistingTabData, isTabDisabled, handleTabDisable } from '@/helpers/tab';
@@ -187,6 +245,7 @@ export default {
       overall,
       callbacks,
 
+      tab: undefined,
       confirmDisable: undefined,
     };
   },
@@ -226,7 +285,7 @@ export default {
     },
     currentDancers() {
       if (this.currentGroup && this.currentDance) {
-        if (this.currentDance[idKey] === callbacks[idKey]) {
+        if (this.currentDance[idKey] === callbacks[idKey] || this.tab) {
           return findGroupDancers(this.currentGroup, this.dancers);
         }
         return findPlacedDancers(this.currentGroup, callbacks, this.dancers, this.results, true);
@@ -341,13 +400,16 @@ export default {
     DancerListItem,
     ResultsList,
     PlacedDancerList,
-    ChampionshipPointsSubheader,
   },
 };
 </script>
 
 <style lang="scss">
 .CompetitionAdminResults {
+  .v-tabs-items {
+    background-color: transparent;
+  }
+
   .ResultListItem {
     &.selected {
       background-color: rgba(0, 0, 0, 0.12);
@@ -358,18 +420,8 @@ export default {
     .location::before {
       display: none;
     }
-    &.placed {
+    &.dimmed {
       opacity: 0.33;
-    }
-    &.pointed {
-      pointer-events: none;
-
-      > *:not(.v-btn) {
-        opacity: 0.33;
-      }
-      > .v-btn {
-        pointer-events: auto;
-      }
     }
   }
 }

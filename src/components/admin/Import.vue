@@ -70,10 +70,10 @@
             <v-tab v-for="(sheetName, sheetIndex) of workbook.SheetNames" :key="sheetIndex">
               {{ sheetName }}
             </v-tab>
-            <v-tabs-items class="app-scroll-frame">
-              <HotTable v-if="step === 2" :key="dancersSheetIndex" :settings="sheetToHot(dancersSheet)" />
-            </v-tabs-items>
           </v-tabs>
+          <v-tabs-items class="app-scroll-frame">
+            <HotTable v-if="step === 2" :key="dancersSheetIndex" :settings="sheetToHot(dancersSheet)" />
+          </v-tabs-items>
 
           <v-divider />
           <v-card-actions class="flex-none">
@@ -98,10 +98,10 @@
             <v-tab v-for="key of dataKeys" :key="key">
               {{ key }}
             </v-tab>
-            <v-tabs-items class="app-scroll-frame">
-              <HotTable v-if="step === 3" :key="dataTabIndex" :settings="toReviewHot(dataKeys[dataTabIndex])" />
-            </v-tabs-items>
           </v-tabs>
+          <v-tabs-items class="app-scroll-frame">
+            <HotTable v-if="step === 3" :key="dataTabIndex" :settings="toReviewHot(dataKeys[dataTabIndex])" />
+          </v-tabs-items>
 
           <v-divider />
           <v-card-actions class="flex-none">
