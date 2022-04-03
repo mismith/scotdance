@@ -37,6 +37,7 @@
           <v-tab :to="{ params: { tabId: null } }">Placings</v-tab>
           <v-tab :to="{ params: { tabId: 'points' } }">
             Points
+            <HelpTip tip="championship-points" />
           </v-tab>
         </v-tabs>
         <v-divider />
@@ -176,7 +177,7 @@
         <EmptyState
           v-else
           :icon="mdiCardsDiamondOutline"
-          label="Championship points"
+          label="Championship Points"
           description="Select dancers who didn't quite place"
         />
       </template>
@@ -206,6 +207,8 @@ import {
 import DancerListItem from '@/components/DancerListItem.vue';
 import ResultsList from '@/components/admin/ResultsList.vue';
 import PlacedDancerList from '@/components/PlacedDancerList.vue';
+import HelpTip from '@/components/HelpTip.vue';
+
 import { idKey } from '@/helpers/firebase';
 import { findByIdKey } from '@/helpers/competition';
 import { hasNoExistingTabData, isTabDisabled, handleTabDisable } from '@/helpers/tab';
@@ -403,6 +406,7 @@ export default {
     DancerListItem,
     ResultsList,
     PlacedDancerList,
+    HelpTip,
   },
 };
 </script>

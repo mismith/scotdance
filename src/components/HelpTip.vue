@@ -13,7 +13,14 @@
         <v-icon small>{{ mdiInformationVariant }}</v-icon>
       </v-btn>
     </template>
-    <slot />
+    <slot>
+      <template v-if="tip === 'championship-points'">
+        <strong>Championship Points</strong> highlight dancers who were placed by <em>at least one judge</em>—but whose combined score from <em>all judges</em> didn't result in an actual placing.
+      </template>
+      <template v-else-if="tip === 'placeholder-dancer'">
+          A <strong>placeholder dancer</strong> is a temporary stand-in for a dancer whose number/info is missing, invalid, misheard, or is otherwise problematic for some reason.
+      </template>
+    </slot>
   </v-tooltip>
 </template>
 
@@ -21,6 +28,12 @@
 import { mdiInformationVariant } from '@mdi/js';
 
 export default {
+  props: {
+    tip: {
+      type: String,
+      required: false,
+    },
+  },
   data() {
     const isTouchMediaQueryList = window.matchMedia('(hover: none), (pointer: coarse)');
     return {

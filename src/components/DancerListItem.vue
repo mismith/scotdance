@@ -14,11 +14,7 @@
     <v-list-item-content>
       <v-list-item-title>
         {{ dancer.$name }}
-        <HelpTip v-if="isPlaceholderDancer">
-          This is a <em>placeholder</em> dancer.<br />
-          <br />
-          Typically, competition organizers will use this to denote that a dancer is missing, invalid, misheard, or otherwise problematic—and should be fixed later.
-        </HelpTip>
+        <HelpTip v-if="isPlaceholderDancer" tip="placeholder-dancer" />
       </v-list-item-title>
       <v-list-item-subtitle class="dot-divided">
         <span v-if="dancer.$group" class="group">{{ dancer.$group.$name }}</span>
