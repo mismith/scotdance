@@ -189,7 +189,8 @@ export default {
   },
   computed: {
     locations() {
-      return Object.keys(groupBy(this.competitions, 'location'));
+      const locations = Object.keys(groupBy(this.competitions, 'location')).sort();
+      return locations;
     },
     searchKeys() {
       return submissionsFields.map(({ data }) => data);

@@ -361,6 +361,7 @@ export default {
       return this.competitionsRaw
         .map((competition) => ({
           ...competition,
+          location: competition.location?.trim(),
           $pinned: this.$store.getters.isFavorite('competitions', competition[idKey]),
           $viewed: this.$store.getters.isViewed('competitions', competition[idKey]),
           $relevance: Math.abs(this.$moment().diff(competition.date)),
