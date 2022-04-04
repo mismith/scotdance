@@ -4,7 +4,7 @@
       <template v-if="competitions.length">
         <v-toolbar class="flex-none">
           <SearchField v-model="competitionsSearchFor" class="mr-2" />
-          <v-menu v-model="isLocationFilterOpen" offset-y :close-on-content-click="false" max-width="300" max-height="75vh">
+          <v-menu v-model="isLocationFilterOpen" right offset-y :close-on-content-click="false" min-width="200" max-width="300" max-height="75vh">
             <template #activator="{ on, attrs }">
               <v-btn icon v-on="on" v-bind="attrs">
                 <v-badge
@@ -21,30 +21,14 @@
 
             <v-card>
               <v-subheader>Locations:</v-subheader>
-              <v-list>
-                <v-list-item-group
-                  v-model="competitionsLocationFilter"
-                  multiple
-                >
-                  <v-list-item
-                    v-for="location in locations"
-                    :key="location"
-                    :value="location"
-                  >
-                    <template v-slot:default="{ active }">
-                      <v-list-item-action>
-                        <v-checkbox
-                          :input-value="active"
-                          color="primary"
-                        />
-                      </v-list-item-action>
-                      <v-list-item-content>
-                        <v-list-item-title>{{ location }}</v-list-item-title>
-                      </v-list-item-content>
-                    </template>
-                  </v-list-item>
-                </v-list-item-group>
-              </v-list>
+              <v-treeview
+                v-model="competitionsLocationFilter"
+                :items="locationsItems"
+                selection-color="primary"
+                selectable
+                open-all
+                class="mr-3"
+              />
               <v-card tile style="position: sticky; bottom: 0;">
                 <v-divider />
                 <v-card-actions>
@@ -189,8 +173,27 @@ export default {
   },
   computed: {
     locations() {
-      const locations = Object.keys(groupBy(this.competitions, 'location')).sort();
+      const locations = Object.keys(groupBy(this.competitions || [], 'location') || {}).sort();
       return locations;
+    },
+    locationsItems() {
+      const groups = this.locations?.map((location) => {
+        const id = location.trim();
+        const [, place, area] = id.match(/(.*?)\s*,\s*([A-Z][A-Z])$/i) || [undefined, id];
+        return {
+          id,
+          area: area?.trim() || '',
+          place: place?.trim() || '',
+        };
+      });
+      const items = Object.entries(groupBy(groups, 'area') || {}).map(([area, group]) => ({
+        id: area || group[0]?.id,
+        name: area || group[0]?.place,
+        children: area
+          ? group.map(({ id, place }) => ({ id, name: place })).sort((a, b) => a.name.localeCompare(b.name))
+          : undefined,
+      }));
+      return items.sort((a, b) => a.name.localeCompare(b.name));
     },
     searchKeys() {
       return submissionsFields.map(({ data }) => data);
@@ -200,7 +203,9 @@ export default {
 
       // filter by location(s)
       if (this.competitionsLocationFilter?.length) {
-        filtered = filtered.filter(({ [idKey]: id, location }) => id === NOW_MARKER || this.competitionsLocationFilter.includes(location));
+        filtered = filtered.filter(
+          ({ location }) => this.competitionsLocationFilter.includes(location),
+        );
       }
 
       // filter by search term
