@@ -8,6 +8,7 @@
     "dev:functions": "npm run --prefix functions/ dev",
     "dev:www": "vite --https --host",
     "dev": "run-p dev:functions \"emulate -- --export-on-exit\" dev:www",
+    "dev:production": "run-p dev:functions \"emulate -- --export-on-exit\" \"dev:www -- --open '/?production'\"",
     "dev:cy": "FIREBASE_CYPRESS=true run-p dev:functions emulate \"dev:www -- --open '/?cypress'\" \"cy -- open\"",
     "dev:cy:ci": "npm run build:www && npm run test:cy:ci",
     "cy": "CYPRESS_BASE_URL=https://localhost:3000 cypress",
