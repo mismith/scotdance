@@ -62,7 +62,7 @@
             class="app-scroll-frame app-scroll scroller"
             ref="scroller"
           >
-            <v-timeline v-if="filteredTimelineCompetitions.length" dense class="pr-3">
+            <v-timeline v-if="filteredTimelineCompetitions.length > 1" dense class="pr-3">
               <template v-for="competition in filteredTimelineCompetitions">
                 <v-timeline-item
                   v-if="competition.$timeline"
@@ -222,7 +222,7 @@ export default {
           } else {
             timelineGroup = undefined;
           }
-          if (firstPastEventIndex <= 0 && $date.isBefore()) {
+          if (firstPastEventIndex < 0 && $date.isBefore()) {
             firstPastEventIndex = index;
           }
 
@@ -234,6 +234,10 @@ export default {
 
       if (firstPastEventIndex >= 0) {
         filteredTimelineCompetitions.splice(firstPastEventIndex, 0, {
+          [idKey]: NOW_MARKER,
+        });
+      } else {
+        filteredTimelineCompetitions.push({
           [idKey]: NOW_MARKER,
         });
       }
