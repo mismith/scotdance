@@ -1,5 +1,10 @@
 # Release Notes
 
+## 3.3.0 - Apr 3, 2022
+- allow filtering competitions by location on Browse page
+- minor improvements like: make it easier to tell which competition are currently ongoing
+- various bug fixes like: allow awarding Championship Points to dancers who were not in callbacks; better dancer search matching
+
 ## 3.2.1 - Mar 20, 2022
 - add support for Championship Points in results tab
 - various minor improvements like: help tips, in progress / dancer missing styles, draw dialog tweaks
