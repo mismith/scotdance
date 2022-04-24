@@ -6,6 +6,7 @@ import VueScrollTo from 'vue-scrollto';
 import { scroller } from 'vue-scrollto/src/scrollTo';
 import VueObserveVisibility from 'vue-observe-visibility';
 import VueReactiveProvide from 'vue-reactive-provide';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import sanitizeHtml from 'sanitize-html';
 import moment from 'moment';
 import 'simple-line-icons/css/simple-line-icons.css';
@@ -14,7 +15,6 @@ import { Device } from '@capacitor/device';
 import { SplashScreen } from '@capacitor/splash-screen';
 
 import { isDev } from '@/helpers/env';
-import { firebase } from '@/helpers/firebase';
 import { getTitleChunks, setTitle } from '@/helpers/router';
 
 import App from '@/App.vue';
@@ -131,7 +131,7 @@ window.addEventListener('statusTap', () => {
 })();
 
 // monitor user auth
-firebase.auth().onAuthStateChanged((me) => {
+onAuthStateChanged(getAuth(), (me) => {
   if (me) {
     store.dispatch('auth', me);
   } else {

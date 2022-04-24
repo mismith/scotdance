@@ -1,11 +1,10 @@
-import firebase from 'firebase/app';
-import 'firebase/auth';
-import 'firebase/database';
-import 'firebase/storage';
+import firebase from 'firebase/compat/app';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import 'firebase/compat/database';
+import 'firebase/compat/storage';
 
 import { isCypress, isDev } from './env';
 
-export { firebase };
 const config = {
   apiKey: 'AIzaSyCxvA2RMvlCQ3WCzAqPotD8IOhnmCtQ1xM',
   authDomain: 'scotdance.firebaseapp.com',
@@ -19,7 +18,7 @@ export const app = firebase.initializeApp(config);
 const FIREBASE_ENV = isDev() ? 'development' : 'production';
 if (isDev()) {
   // port values from /firebase.json
-  firebase.auth().useEmulator(`http://localhost:${9099}/`, { disableWarnings: true });
+  connectAuthEmulator(getAuth(), `http://localhost:${9099}/`, { disableWarnings: true });
   firebase.database().useEmulator('localhost', 9000);
   firebase.storage().useEmulator('localhost', 9199);
   // firebase.functions().useEmulator("localhost", 5001);

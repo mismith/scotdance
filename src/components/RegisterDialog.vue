@@ -45,10 +45,8 @@
 
 <script>
 import { mapFields } from 'vuex-map-fields';
-import {
-  firebase,
-  db,
-} from '@/helpers/firebase';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { db } from '@/helpers/firebase';
 
 export default {
   name: 'RegisterDialog',
@@ -85,15 +83,14 @@ export default {
       this.authLoading = true;
       this.authError = null;
 
-      return firebase.auth()
-        .createUserWithEmailAndPassword(this.email, this.password)
-        .then(({ user }) => {
+      return createUserWithEmailAndPassword(getAuth(), this.email, this.password)
+        .then((me) => {
           this.authLoading = false;
           this.email = null;
           this.password = null;
 
           // add to db
-          db.child('users').child(user.uid).set(user.providerData[0]);
+          db.child('users').child(me.uid).set(me.providerData[0]);
 
           // close dialog
           this.registerVisible = false;

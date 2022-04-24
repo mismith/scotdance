@@ -132,8 +132,8 @@
 
 <script>
 import { mapState } from 'vuex';
+import { getAuth, EmailAuthProvider } from 'firebase/auth';
 import {
-  firebase,
   idKey,
   db,
 } from '@/helpers/firebase';
@@ -197,8 +197,8 @@ export default {
       this.emailError = null;
       if (this.me && this.emailConfirm) {
         try {
-          const user = firebase.auth().currentUser;
-          await user.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(this.me.email, this.emailConfirm));
+          const user = getAuth().currentUser;
+          await user.reauthenticateWithCredential(EmailAuthProvider.credential(this.me.email, this.emailConfirm));
           await user.updateEmail(this.newEmail);
           await db.child('users').child(this.me[idKey]).child('email').set(this.newEmail);
 
@@ -215,8 +215,8 @@ export default {
       this.passwordError = null;
       if (this.me && this.passwordConfirm && this.newPassword) {
         try {
-          const user = firebase.auth().currentUser;
-          await user.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(this.me.email, this.passwordConfirm));
+          const user = getAuth().currentUser;
+          await user.reauthenticateWithCredential(EmailAuthProvider.credential(this.me.email, this.passwordConfirm));
           await user.updatePassword(this.newPassword);
 
           this.passwordLoading = false;
@@ -232,8 +232,8 @@ export default {
       this.removeError = null;
       if (this.me && this.removeConfirm) {
         try {
-          const user = firebase.auth().currentUser;
-          await user.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(this.me.email, this.removeConfirm));
+          const user = getAuth().currentUser;
+          await user.reauthenticateWithCredential(EmailAuthProvider.credential(this.me.email, this.removeConfirm));
           await user.delete();
           await db.child('users').child(this.me[idKey]).remove();
           await db.child('users:favorites').child(this.me[idKey]).remove();
