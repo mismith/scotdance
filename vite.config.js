@@ -25,8 +25,8 @@ export default defineConfig({
           firebase: [
             'firebase/compat/app',
             'firebase/compat/database',
-            'firebase/compat/storage',
             'firebase/auth',
+            'firebase/storage',
           ],
           vuetify: ['vuetify', 'vuetify/lib'],
         },

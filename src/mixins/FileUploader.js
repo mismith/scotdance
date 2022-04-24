@@ -1,4 +1,6 @@
-import { buckets } from '@/helpers/firebase';
+import { uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+
+import { buckets, getStorageRef } from '@/helpers/firebase';
 
 export default {
   props: {
@@ -88,12 +90,12 @@ export default {
       if (this.storagePath) {
         // upload to firebase storage
         try {
-          const task = buckets.child(`${this.storagePath}/${file.name}`).put(file);
+          const task = uploadBytesResumable(getStorageRef(buckets, `${this.storagePath}/${file.name}`), file);
           task.on('state_changed', ({ bytesTransferred, totalBytes }) => {
             this.progress = (bytesTransferred / totalBytes) * 100 || 1;
           });
           const snap = await task;
-          const url = await snap.ref.getDownloadURL();
+          const url = await getDownloadURL(snap.ref);
 
           this.handleChange(url);
         } catch (err) {
