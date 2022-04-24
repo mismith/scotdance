@@ -84,7 +84,7 @@
 
 <script>
 import { mapFields } from 'vuex-map-fields';
-import { firebase } from '@/helpers/firebase';
+import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 
 export default {
   name: 'LoginDialog',
@@ -126,8 +126,7 @@ export default {
       this.authLoading = true;
       this.authError = null;
 
-      return firebase.auth()
-        .signInWithEmailAndPassword(this.email, this.password)
+      return signInWithEmailAndPassword(getAuth(), this.email, this.password)
         .then(() => {
           this.authLoading = false;
           this.email = null;
@@ -147,8 +146,7 @@ export default {
       this.authLoading = true;
       this.authError = null;
 
-      return firebase.auth()
-        .sendPasswordResetEmail(this.email)
+      return sendPasswordResetEmail(getAuth(), this.email)
         .then(() => {
           this.authLoading = false;
           this.email = null;

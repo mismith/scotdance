@@ -268,6 +268,7 @@
 
 <script>
 import { mapState, mapGetters, mapActions } from 'vuex';
+import { getAuth, signOut } from 'firebase/auth';
 import {
   mdiAccountCircle,
   mdiCalendarMonth,
@@ -293,7 +294,6 @@ import {
 import {
   idKey,
   db,
-  firebase,
 } from '@/helpers/firebase';
 import { isDev } from '@/helpers/env';
 import RegisterDialog from '@/components/RegisterDialog.vue';
@@ -472,7 +472,7 @@ export default {
     },
 
     logout() {
-      return firebase.auth().signOut();
+      return signOut(getAuth());
     },
   },
   async created() {
