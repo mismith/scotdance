@@ -1,7 +1,7 @@
 import firebase from 'firebase/compat/app';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import 'firebase/compat/database';
-import 'firebase/compat/storage';
+import { connectStorageEmulator, getStorage, ref as getStorageRef } from 'firebase/storage';
 
 import { isCypress, isDev } from './env';
 
@@ -20,7 +20,7 @@ if (isDev()) {
   // port values from /firebase.json
   connectAuthEmulator(getAuth(), `http://localhost:${9099}/`, { disableWarnings: true });
   firebase.database().useEmulator('localhost', 9000);
-  firebase.storage().useEmulator('localhost', 9199);
+  connectStorageEmulator(getStorage(), 'localhost', 9199);
   // firebase.functions().useEmulator("localhost", 5001);
 }
 
@@ -30,7 +30,8 @@ export const idKey = '.key';
 export const valueKey = '.value';
 export const db = firebase.database().ref(FIREBASE_ENV);
 
-export const buckets = firebase.storage().ref(FIREBASE_ENV);
+export const buckets = getStorageRef(getStorage(), FIREBASE_ENV);
+export { getStorageRef };
 
 export const toOrderedArray = (obj) => {
   return Object.entries(obj || {})
