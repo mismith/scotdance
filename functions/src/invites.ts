@@ -1,5 +1,6 @@
 import { config } from 'firebase-functions';
 import { FirebaseDynamicLinks, FirebaseInvites } from '@mismith/firebase-tools/dist/server';
+
 import { postmark } from './utility/email';
 import { attachUserToCompetition } from './utility/competition';
 import { isCypress, isEmulator } from './utility/env';
@@ -54,6 +55,8 @@ class Invites extends FirebaseInvites {
         competitionId,
         value,
       });
+    } else {
+      console.warn(`[attachUserToCompetition]: missing acceptedBy userId`);
     }
   }
 
