@@ -3,7 +3,7 @@ name: Test
 on:
   push:
     branches-ignore:
-      - 'dependabot/*'
+      - 'dependabot/**'
 
 env:
   CYPRESS_CACHE_FOLDER: cypress/cache

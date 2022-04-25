@@ -1,5 +1,6 @@
 import { COMPETITION_UID, createCompetition } from '../helpers/competition';
 import seed from '../helpers/seed';
+import { createSubmission, SUBMISSION_UID } from '../helpers/submission';
 import { createUser, USER_CREDENTIALS, USER_UID } from '../helpers/user';
 
 beforeEach(() => {
@@ -240,6 +241,27 @@ describe('Admin', () => {
   it('Submissions', () => {
     cy.visit('/#/admin/submissions');
     itShouldBeAuthGuarded(true);
+
+    cy.getTest('submissions:empty').should('exist');
+
+    createSubmission(SUBMISSION_UID.SUBMITTED);
+    cy.getTest('submissions:empty').should('not.exist');
+    cy.getTest(`submissions:submission:${SUBMISSION_UID.SUBMITTED}`).should('contain.text', 'Submitted');
+    cy.getTest(`submissions:submission:${SUBMISSION_UID.SUBMITTED}`).click();
+    cy.url().should('contain', `/#/admin/submissions/${SUBMISSION_UID.SUBMITTED}`);
+    cy.getTest('submissions:approve').click();
+    cy.getTest('submissions:approve').should('not.exist');
+
+    seed.database.get(`development/competitions:submissions/${SUBMISSION_UID.SUBMITTED}/competitionId`).then((competitionId) => {
+      cy.getTest('submissions:view').click();
+      cy.url().should('contain', `/#/competitions/${competitionId}/info`);
+      cy.getTest('competition:access-state:full').should('exist');
+      cy.go('back');
+      cy.getTest('submissions:administer').click();
+      cy.url().should('contain', `/#/competitions/${competitionId}/admin/info`);
+      cy.getTest('competition:access-state:full').should('exist');
+      cy.go('back');
+    });
   });
 
   it('Users', () => {

@@ -7,6 +7,7 @@
             v-for="submission in orderedSubmissions"
             :key="submission[idKey]"
             :to="{ name: $route.name, params: { submissionId: submission[idKey] } }"
+            v-test="`submissions:submission:${submission[idKey]}`"
           >
             <v-list-item-avatar :color="submission.approved ? 'primary' : 'secondary'">
               <v-icon>{{ submission.approved ? mdiCheck : mdiNewBox }}</v-icon>
@@ -39,6 +40,7 @@
         v-else
         :icon="mdiClose"
         label="No submissions found"
+        v-test="'submissions:empty'"
       />
     </Blade>
     <Blade :active="currentSubmission" class="col-md-8">
@@ -97,6 +99,7 @@
                 :loading="currentSubmission.approved"
                 @click="handleApprove"
                 class="ma-0"
+                v-test="'submissions:approve'"
               >
                 Approve
               </v-btn>
@@ -116,6 +119,7 @@
             <v-btn
               :to="{ name: 'competition.info', params: { competitionId: currentSubmission.competitionId } }"
               class="ma-2"
+              v-test="'submissions:view'"
             >
               View Competition
             </v-btn>
@@ -124,6 +128,7 @@
               color="primary"
               :to="{ name: 'competition.admin.info', params: { competitionId: currentSubmission.competitionId } }"
               class="ma-2"
+              v-test="'submissions:administer'"
             >
               Administer Competition
             </v-btn>
