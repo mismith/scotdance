@@ -83,7 +83,7 @@
           @change="handleHotChanges"
         />
         <div
-          v-if="!hasHotData"
+          v-if="hasMissingPrereqs || !hasHotData"
           class="d-flex align-center justify-center pt-12 pb-16"
           style="position: absolute; width: 100%; height: 100%; pointer-events: none;"
         >
