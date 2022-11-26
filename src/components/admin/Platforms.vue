@@ -71,6 +71,18 @@
       <v-btn text :disabled="!item.platforms" @click="handleCopy">Copy</v-btn>
       <v-btn text :disabled="clipboard.type !== 'platforms'" @click="handlePaste">Paste</v-btn>
       <v-btn text :disabled="!judges.length" @click="handleCycleJudges">Cycle Judges</v-btn>
+      <HelpTip>
+        Drag each <strong>Age Group</strong> into the <strong>Platform</strong> in the order it will danced. You can use the "Spacer" helper to push certain dances down, like when a group doesn't perform a particular dance.<br />
+        <br />
+        <strong>Significantly speed up this process</strong> by filling out your platform dances <em>once</em>, then:
+        <ol>
+          <li><span class="text-button">Copy</span></li>
+          <li>navigate to the next dance in the list</li>
+          <li><span class="text-button">Paste</span></li>
+          <li><span class="text-button">Cycle Judges</span></li>
+        </ol>
+        Repeat for each dance with similar structure.
+      </HelpTip>
     </footer>
   </div>
 </template>
@@ -82,6 +94,7 @@ import {
   mapMutations,
 } from 'vuex';
 import { mdiAlert, mdiClose } from '@mdi/js';
+import HelpTip from '@/components/HelpTip.vue';
 import {
   findByIdKey,
   hydrateByIdKey,
@@ -285,6 +298,7 @@ export default {
   },
   components: {
     Draggable,
+    HelpTip,
   },
 };
 </script>
