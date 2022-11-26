@@ -14,6 +14,7 @@ export const submissionsFields = [
     required: true,
     title: 'Name',
     description: 'e.g. "Canadian Championships 2018"',
+    isDescriptionPersistent: true,
   },
   {
     data: 'date',
@@ -21,33 +22,39 @@ export const submissionsFields = [
     title: 'Date',
     type: 'date',
     description: 'e.g. "2018-07-30"',
+    isDescriptionPersistent: true,
   },
   {
     data: 'venue',
     title: 'Venue Name',
     description: 'e.g. "Telus Convention Centre"',
+    isDescriptionPersistent: true,
   },
   {
     data: 'address',
     title: 'Venue Address',
     description: 'e.g. "120 9th Ave SE"',
+    isDescriptionPersistent: true,
   },
   {
     data: 'location',
     required: true,
     title: 'Location',
     description: 'e.g. "Calgary, AB"',
+    isDescriptionPersistent: true,
   },
   {
     data: 'description',
     title: 'Description',
     type: 'textarea',
     description: '(optional) Any other important info you wish to highlight',
+    isDescriptionPersistent: true,
   },
   {
     data: 'sobhd',
     title: 'RSOBHD Registration Number',
     description: 'e.g. "C-AB-CO-12-3456"',
+    isDescriptionPersistent: true,
   },
 ];
 
@@ -133,6 +140,7 @@ export default {
         title: 'Message',
         type: 'textarea',
         description: '(optional) Any questions, notes, or feedback?',
+        isDescriptionPersistent: true,
       },
       {
         data: 'disclaimer',
