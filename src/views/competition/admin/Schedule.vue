@@ -22,7 +22,7 @@
               v-if="blade.presets"
               :presets="blade.presets"
               :prop="blade.name"
-              @select="items => items.map(item => handleListItemCreate(blade, item, true))"
+              @select="items => items.map(item => handleListItemCreate(blade, item, blade.items().length))"
             />
 
             <v-tooltip bottom>
@@ -67,7 +67,7 @@
                     v-if="blade.presets"
                     :presets="blade.presets"
                     :prop="blade.name"
-                    @select="items => items.map(item => handleListItemCreate(blade, item, true))"
+                    @select="items => items.map(item => handleListItemCreate(blade, item, blade.items().length))"
                   >
                     <template #activator="{ on }">
                       <a v-on="on">Add one.</a>
