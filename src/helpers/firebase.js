@@ -51,7 +51,10 @@ export const toOrderedArray = (obj) => {
         if (Number.isInteger(a.order) && Number.isInteger(b.order)) {
           return a.order - b.order;
         }
-        return (a[idKey] || '').localeCompare(b[idKey] || '');
+        const aId = a[idKey] || '';
+        const bId = b[idKey] || '';
+        if (aId < bId) return -1;
+        if (aId > bId) return 1;
       }
       return 0;
     });
