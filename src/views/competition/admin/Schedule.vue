@@ -412,6 +412,7 @@ export default {
             {
               data: 'name',
               title: 'Name',
+              description: '(optional) Use a custom name (i.e. when not linked to a specific dance in the Dances tab)',
             },
             {
               data: 'description',
