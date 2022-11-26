@@ -775,6 +775,9 @@ body {
         }
       }
     }
+    &.theme--light {
+      color: #1976d2 !important;
+    }
   }
   .v-card {
     &__title {
