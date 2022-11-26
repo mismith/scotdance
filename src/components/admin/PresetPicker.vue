@@ -4,6 +4,8 @@
     title="Select preset(s) to add:"
     class="PresetPicker"
   >
+    <template #title><slot name="title" /></template>
+
     <template #activator="props">
       <slot name="activator" v-bind="props">
         <v-tooltip bottom>

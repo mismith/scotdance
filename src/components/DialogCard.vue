@@ -13,7 +13,10 @@
     <form @submit.prevent="handleSubmit" class="v-dialog--scrollable">
       <v-card>
         <slot name="title">
-          <v-card-title v-if="title" v-html="$sanitize(title)" class="title" />
+          <v-card-title v-if="title" v-html="$sanitize(title)" />
+        </slot>
+        <slot name="subtitle">
+          <v-card-subtitle v-if="subtitle" v-html="$sanitize(subtitle)" />
         </slot>
 
         <slot name="text">
@@ -61,7 +64,14 @@ export default {
   name: 'DialogCard',
   props: {
     value: Boolean,
-    title: String,
+    title: {
+      type: String,
+      required: false,
+    },
+    subtitle: {
+      type: String,
+      required: false,
+    },
     text: String,
     cancelLabel: {
       type: String,

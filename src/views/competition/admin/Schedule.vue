@@ -16,6 +16,8 @@
           <v-subheader class="d-flex">
             <div class="flex" style="text-transform: capitalize;">
               {{ blade.collection }}
+
+              <HelpTip v-if="blade.helpTip"><div v-html="blade.helpTip" /></HelpTip>
             </div>
 
             <PresetPicker
@@ -24,7 +26,14 @@
               :presets="blade.presets"
               :prop="blade.name"
               @select="items => items.map(item => handleListItemCreate(blade, item, blade.items().length))"
-            />
+            >
+              <template #title>
+                <v-card-title>
+                  Select {{ blade.collection || 'preset' }}(s) to add:
+                  <HelpTip v-if="blade.helpTip"><div v-html="blade.helpTip" /></HelpTip>
+                </v-card-title>
+              </template>
+            </PresetPicker>
 
             <v-tooltip bottom>
               <template #activator="{ on }">
@@ -236,6 +245,7 @@ import BladeToolbar from '@/components/BladeToolbar.vue';
 import DynamicField from '@/components/admin/DynamicField.vue';
 import AdminPlatforms from '@/components/admin/Platforms.vue';
 import PresetPicker from '@/components/admin/PresetPicker.vue';
+import HelpTip from '@/components/HelpTip.vue';
 import {
   idKey,
   db,
@@ -285,6 +295,9 @@ export default {
       blades: [
         {
           collection: 'days',
+          helpTip: `The <strong>day of the week</strong> your event takes place.<br />
+            <br />
+            Generally there is only one day per competition, but it's possible to split all the events over multiple days too.`,
           parent: () => this.schedule,
           items: () => toOrderedArray(this.schedule.days),
           item: () => this.currentDay,
@@ -314,6 +327,9 @@ export default {
         },
         {
           collection: 'blocks',
+          helpTip: `The <strong>sections of the day</strong> that group different events together.<br />
+            <br />
+            Often blocks will have their own start time and/or results ceremony. They break up a full day event into smaller, discrete chunks.`,
           parent: () => this.currentDay,
           items: () => toOrderedArray(this.currentDay.blocks),
           item: () => this.currentBlock,
@@ -346,6 +362,9 @@ export default {
         },
         {
           collection: 'events',
+          helpTip: `Groupings of <strong>similar ages/categories</strong>—all of which generally perform the same dances.<br />
+            <br />
+            Events can also be used for "special" cases like category-spanning or feature dances.`,
           parent: () => this.currentBlock,
           items: () => toOrderedArray(this.currentBlock.events),
           item: () => this.currentEvent,
@@ -390,6 +409,9 @@ export default {
         },
         {
           collection: 'dances',
+          helpTip: `The list of <strong>dances and/or ceremonies</strong> that comprise each event.<br />
+            <br />
+            Dances you've input in the Dances tab for this competition will appear here and should each be added in the order they will be performed. You should likely call out when Results will happen (generally at the end), and, if there is a Registration window, you can put that first, too.`,
           parent: () => this.currentEvent,
           items: () => toOrderedArray(this.currentEvent.dances),
           item: () => this.currentDance,
@@ -684,6 +706,7 @@ export default {
     DynamicField,
     AdminPlatforms,
     PresetPicker,
+    HelpTip,
   },
 };
 </script>
