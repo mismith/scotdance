@@ -46,7 +46,7 @@ export const submissionsFields = [
   },
   {
     data: 'sobhd',
-    title: 'SOBHD Registration Number',
+    title: 'RSOBHD Registration Number',
     description: 'e.g. "C-AB-CO-12-3456"',
   },
 ];
@@ -139,7 +139,7 @@ export default {
         title: 'I acknowledge',
         type: 'checkbox',
         required: true,
-        prepend: 'Please note that this is a volunteer-run app, and as such it can offer <strong>no warranty of any kind</strong>.',
+        prepend: 'Please note that this is a volunteer-run app, and as such it can offer <strong>no guarantees of any kind</strong>.',
       },
     ],
     submitLabel: 'Submit',
