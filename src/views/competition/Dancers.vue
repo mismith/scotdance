@@ -53,12 +53,15 @@
                   >
                     {{ mdiStar }}
                   </v-icon>
-                  <v-icon
-                    v-else-if="groupId === SUGGESTIONS_NAME"
+                  <v-btn
+                    v-else-if="groupId === SUGGESTIONS_NAME && isGroupExpanded(groupId, groupIds)"
                     color="secondary"
+                    small
+                    @click.stop="handleFavoriteAll(group)"
                   >
-                    {{ mdiStarShooting }}
-                  </v-icon>
+                    <v-icon class="mr-2">{{ mdiStarShooting }}</v-icon>
+                    Favourite All
+                  </v-btn>
                 </v-subheader>
               </template>
 
@@ -143,7 +146,7 @@
 </template>
 
 <script>
-import { mapState } from 'vuex';
+import { mapActions, mapState } from 'vuex';
 import orderBy from 'lodash.orderby';
 import groupBy from 'lodash.groupby';
 import {
@@ -286,6 +289,9 @@ export default {
     },
   },
   methods: {
+    ...mapActions([
+      'toggleFavoriteDancer',
+    ]),
     hasFavorites,
 
     isGroupExpanded(itemId, itemIds) {
@@ -338,6 +344,9 @@ export default {
       await this.$nextTick();
       const element = document.getElementById(`group-${SUGGESTIONS_NAME}`);
       this.$scrollTo(element, { container: this.$refs.scroller });
+    },
+    handleFavoriteAll(dancers) {
+      dancers.map((dancer) => this.toggleFavoriteDancer(dancer));
     },
   },
   components: {
