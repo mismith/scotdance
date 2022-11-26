@@ -20,6 +20,7 @@
 
             <PresetPicker
               v-if="blade.presets"
+              ref="presetPicker"
               :presets="blade.presets"
               :prop="blade.name"
               @select="items => items.map(item => handleListItemCreate(blade, item, blade.items().length))"
@@ -142,9 +143,22 @@
     <Blade v-if="!currentDay" class="col-md-9">
       <EmptyState
         :icon="mdiCalendarSearch"
-        label="Edit schedule entries"
-        description="Add or select an item to edit"
-      />
+        label="Build out your event schedule"
+      >
+        <p>
+          To get started you can:
+        </p>
+        <div>
+          <v-btn
+            color="primary"
+            class="ma-1"
+            @click="$refs.presetPicker[0].show()"
+          >
+            <v-icon class="mr-2">{{ mdiPlaylistPlus }}</v-icon>
+            Add preset(s)
+          </v-btn>
+        </div>
+      </EmptyState>
     </Blade>
 
     <DialogCard
@@ -215,6 +229,7 @@ import {
   mdiChevronRight,
   mdiClose,
   mdiDragVertical,
+  mdiPlaylistPlus,
   mdiPlus,
 } from '@mdi/js';
 import BladeToolbar from '@/components/BladeToolbar.vue';
@@ -257,6 +272,7 @@ export default {
       mdiChevronRight,
       mdiClose,
       mdiDragVertical,
+      mdiPlaylistPlus,
       mdiPlus,
 
       confirmDisable: undefined,
