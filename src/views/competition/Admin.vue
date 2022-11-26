@@ -127,7 +127,6 @@
               <v-btn
                 v-if="hasPresets"
                 v-test="'admin:hot.empty-state.presets'"
-                v-on="on"
                 color="primary"
                 class="ma-1"
                 @click="$refs.presetPicker.show()"
