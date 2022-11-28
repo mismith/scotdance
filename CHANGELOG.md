@@ -1,5 +1,10 @@
 # Release Notes
 
+## 3.3.1 - Nov 27, 2022
+- add "Favourite All" button to suggested favourite dancers section
+- various competition admin panel improvements, bug fixes, and help tips added
+- misc little touch ups, renames, clean ups, etc
+
 ## 3.3.0 - Apr 3, 2022
 - allow filtering competitions by location on Browse page
 - minor improvements like: make it easier to tell which competition are currently ongoing
