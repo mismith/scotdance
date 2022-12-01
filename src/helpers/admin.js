@@ -194,6 +194,11 @@ export function makeKeyValuePairColumn(column, valueProp = '$name', keyProp = id
       if (item) {
         // eslint-disable-next-line no-param-reassign
         args[5] = item[valueProp];
+        // eslint-disable-next-line no-param-reassign
+        args[6].valid = true;
+      } else if (args[5]) {
+        // eslint-disable-next-line no-param-reassign
+        args[6].valid = false;
       }
       autocompleteRenderer.apply(this, args);
     },
