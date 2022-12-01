@@ -11,35 +11,12 @@
       />
     </div>
 
-    <v-toolbar v-if="pages.length > 1" dense class="pagination flex-none">
-      <v-btn icon @click="page -= 1" :disabled="page <= 1">
-        <v-icon>{{ mdiSkipPrevious }}</v-icon>
-      </v-btn>
-      <div class="d-flex flex-nowrap align-center mx-auto">
-        Page
-        <v-select
-          v-model="page"
-          :items="pages"
-          single-line
-          hide-details
-          class="mx-2"
-          style="max-width: 80px;"
-        />
-        of {{ pages.length }}
-      </div>
-      <v-btn icon :disabled="page >= pages.length" @click="page += 1">
-        <v-icon>{{ mdiSkipNext }}</v-icon>
-      </v-btn>
-    </v-toolbar>
+    <Pagination v-model="page" :pages="pages" />
   </div>
 </template>
 
 <script>
-import {
-  mdiAlertCircleOutline,
-  mdiSkipNext,
-  mdiSkipPrevious,
-} from '@mdi/js';
+import Pagination from './Pagination.vue';
 
 export default {
   name: 'PaginatedList',
@@ -48,34 +25,31 @@ export default {
   },
   data() {
     return {
-      mdiAlertCircleOutline,
-      mdiSkipNext,
-      mdiSkipPrevious,
       page: 1,
-      count: 50,
+      itemsPerPage: 50,
     };
   },
   computed: {
     pages() {
-      const total = Math.ceil(this.items.length / this.count);
+      const total = Math.ceil(this.items.length / this.itemsPerPage);
       return Array.from(Array(total + 1).keys()).slice(1); // [1...N]
     },
+    offset() {
+      return (this.page - 1) * this.itemsPerPage;
+    },
     paginatedItems() {
-      const offset = this.getOffset();
-      return this.items.slice(offset, offset + this.count);
+      return this.items.slice(this.offset, this.offset + this.itemsPerPage);
     },
   },
   watch: {
     items(items) {
-      if (this.getOffset() > items.length) {
+      if (this.offset > items.length) {
         this.page = 1;
       }
     },
   },
-  methods: {
-    getOffset() {
-      return (this.page - 1) * this.count;
-    },
+  components: {
+    Pagination,
   },
 };
 </script>

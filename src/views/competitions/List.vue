@@ -46,7 +46,7 @@
             class="app-scroll-frame app-scroll scroller"
             ref="scroller"
           >
-            <v-timeline v-if="filteredTimelineCompetitions.length > 1" dense class="pr-3">
+            <v-timeline v-if="filteredTimelineCompetitions.length > 1" dense class="flex pr-3">
               <template v-for="competition in filteredTimelineCompetitions">
                 <v-timeline-item
                   v-if="competition.$timeline"
@@ -85,6 +85,7 @@
               </div>
             </EmptyState>
           </div>
+          <Pagination v-model="competitionsPage" :pages="pages" />
 
           <transition :name="`slide-y${nowVisibility > 0 ? '-reverse' : ''}-transition`">
             <v-btn
@@ -134,6 +135,7 @@ import { submissionsFields } from '@/schemas/submissions';
 import SearchField from '@/components/SearchField.vue';
 import CompetitionTimelineItem from '@/components/CompetitionTimelineItem.vue';
 import MarkerChip from '@/components/MarkerChip.vue';
+import Pagination from '@/components/admin/Pagination.vue';
 
 const NOW_MARKER = '__NOW__';
 
@@ -154,6 +156,10 @@ export default {
       type: Array,
       default: [],
     },
+    competitionsPage: {
+      type: Number,
+      default: 1,
+    },
   },
   data() {
     return {
@@ -169,6 +175,8 @@ export default {
 
       nowVisibility: 0,
       isLocationFilterOpen: false,
+
+      competitionsPerPage: 50,
     };
   },
   computed: {
@@ -195,6 +203,7 @@ export default {
       }));
       return items.sort((a, b) => a.name.localeCompare(b.name));
     },
+
     searchKeys() {
       return submissionsFields.map(({ data }) => data);
     },
@@ -215,10 +224,22 @@ export default {
 
       return filtered;
     },
+
+    pages() {
+      const total = Math.ceil(this.filteredCompetitions.length / this.competitionsPerPage);
+      return Array.from(Array(total + 1).keys()).slice(1); // [1...N]
+    },
+    offset() {
+      return (this.competitionsPage - 1) * this.competitionsPerPage;
+    },
+    paginatedCompetitions() {
+      return this.filteredCompetitions.slice(this.offset, this.offset + this.competitionsPerPage);
+    },
+
     filteredTimelineCompetitions() {
       let currentTimelineGroup;
       let firstPastEventIndex = -1;
-      const filteredTimelineCompetitions = this.filteredCompetitions
+      const filteredTimelineCompetitions = this.paginatedCompetitions
         .map((competition, index) => {
           const $date = this.$moment(competition.date);
           let timelineGroup = $date.format('MMMM YYYY');
@@ -250,6 +271,12 @@ export default {
       return filteredTimelineCompetitions;
     },
   },
+  watch: {
+    async competitionsPage(v) {
+      await this.$nextTick();
+      this.$scrollTo(document.body, { container: this.$refs.scroller });
+    },
+  },
   methods: {
     handleNowVisibilityChange(isVisible, { boundingClientRect: { top } }) {
       const direction = top < 100 ? -1 : 1;
@@ -272,6 +299,7 @@ export default {
     SearchField,
     CompetitionTimelineItem,
     MarkerChip,
+    Pagination,
   },
 };
 </script>
