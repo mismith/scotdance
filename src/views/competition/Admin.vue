@@ -457,25 +457,13 @@ export default {
       });
     },
     exportHotTable() {
-      const rows = this.$refs.hot?.hotInstance?.rootElement?.querySelector('table')?.querySelectorAll('tr');
-      const textifier = document.createElement('div');
-      const data = Array.from(rows || []).map((row) => {
-        const cells = row.querySelectorAll('td:not(:first-child), th:not(:first-child)');
-        return Array.from(cells || []).map((cell) => {
-          const html = cell.innerHTML;
-          const cleaned = html
-            .replace(/<div class="ht.*?">.*?<\/div>/sig, '') // remove dropdown arrow
-            .replace(/<a .*?href="(.*?)".*?>.*?<\/a>/sig, '$1'); // use img/link URL
-          textifier.innerHTML = cleaned;
-          return textifier.innerText.trim();
-        });
+      const formattedData = this.hotData.map((row) => {
+        return this.currentSection.hot.columns.reduce((acc, { data, title, source }) => {
+          acc[title] = source?.find(({ [idKey]: id }) => row[data] === id)?.$name || row[data];
+          return acc;
+        }, {});
       });
-      const [colHeaders, ...rowData] = data;
-      const exportedData = rowData.map((row) => row.reduce((acc, v, i) => {
-        acc[colHeaders[i]] = v;
-        return acc;
-      }, {}));
-      return this.saveCSV(exportedData);
+      this.saveCSV(formattedData);
     },
     exportResults() {
       const exportedData = getRows(this.groups, [callbacks, ...this.dances, overall], this.dancers, this.results);
