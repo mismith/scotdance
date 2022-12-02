@@ -20,6 +20,20 @@ export function hasOverall(group) {
   return group.$category && group.$category.name !== 'Primary';
 }
 
+export function hasExplicitlyEmptyResults(groupId, danceId, results = {}) {
+  try {
+    return results[groupId][danceId] === false;
+  } catch (err) {
+    return false;
+  }
+}
+
+export function isDancerPointed(points, groupId, danceId, dancerId, checkFn = (dId) => dId === dancerId) {
+  return Object.values(points?.[groupId]?.[danceId] || {})
+    .flatMap((v) => v) // any judge
+    .some(checkFn);
+}
+
 export const getPlaceholderDancer = (timestamp = undefined) => ({
   [idKey]: timestamp || Date.now(),
   number: '?',
@@ -33,15 +47,7 @@ export function hasPlaceholderDancers(groupId, danceId, results = {}, points = {
   try {
     const check = (dancerId) => isPlaceholderId(dancerId);
     return results?.[groupId]?.[danceId]?.some(check)
-      || Object.values(points?.[groupId]?.[danceId] || {}).flatMap((v) => v).some(check);
-  } catch (err) {
-    return false;
-  }
-}
-
-export function hasExplicitlyEmptyResults(groupId, danceId, results = {}) {
-  try {
-    return results[groupId][danceId] === false;
+      || isDancerPointed(points, groupId, danceId, undefined, check);
   } catch (err) {
     return false;
   }
@@ -67,6 +73,7 @@ export function getAugmentedDancers(dancerIds, dancers = []) {
     };
   });
 }
+
 export function findPointedDancers(dancePoints, dancers = []) {
   const dancerIds = Object.values(dancePoints || {})
     .flatMap((v) => v)
@@ -77,6 +84,7 @@ export function findPointedDancers(dancePoints, dancers = []) {
     $points: true,
   }));
 }
+
 export function findPlacedDancers(group, dance, dancers = [], results = {}, sortByNumber = false, includeDummyForExplicitlyEmptyResults = false) {
   // get ranked dancerIds
   let placings = [];
@@ -151,21 +159,24 @@ export function isGroupInProgress(group, dances = [], results = {}) {
   return false;
 }
 
-export function getRows(groups, dances, dancers, results) {
+export function getRows(groups, dances, dancers, results, points) {
   const rows = [];
   groups.forEach((group) => {
     dances.forEach((dance) => {
       const placedDancers = findPlacedDancers(group, dance, dancers, results);
-      placedDancers.forEach((dancer) => {
+      const pointedDancers = findPointedDancers(points?.[group[idKey]]?.[dance[idKey]], dancers);
+      [...placedDancers, ...pointedDancers].forEach((dancer) => {
         rows.push({
-          category: (group.$category && group.$category.name) || '?',
-          group: group.name || group.$name || '?',
-          dance: dance.name || dance.$name || '?',
-          number: dancer.number || '?',
-          firstName: dancer.firstName || '?',
-          lastName: dancer.lastName || '?',
-          location: dancer.location || '?',
-          place: dance[idKey] === callbacks[idKey] ? '' : (getPlace(dancer, placedDancers) || '?'),
+          /* eslint-disable quote-props */
+          'Category': group.$category?.name,
+          'Age Group': group.name,
+          'Dance': dance.$name || dance.name,
+          'Dancer Number': dancer.number || '?',
+          'First Name': dancer.firstName || '?',
+          'Last Name': dancer.lastName || '?',
+          'Location': dancer.location || '?',
+          'Place': isDancerPointed(points, group[idKey], dance[idKey], dancer[idKey]) ? '♦' : (dance[idKey] !== callbacks[idKey] && getPlace(dancer, placedDancers)) || undefined,
+          /* eslint-enable quote-props */
         });
       });
     });

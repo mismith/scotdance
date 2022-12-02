@@ -466,7 +466,7 @@ export default {
       this.saveCSV(formattedData);
     },
     exportResults() {
-      const exportedData = getRows(this.groups, [callbacks, ...this.dances, overall], this.dancers, this.results);
+      const exportedData = getRows(this.groups, [callbacks, ...this.dances, overall], this.dancers, this.results, this.points);
       if (exportedData.length) {
         this.saveCSV(exportedData);
       } else {

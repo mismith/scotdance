@@ -69,6 +69,7 @@ import {
   findGroupDances,
   findPlacedDancers,
   getPlace,
+  isDancerPointed,
 } from '@/helpers/results';
 
 export default {
@@ -115,9 +116,7 @@ export default {
       return null;
     },
     isPointed(dance) {
-      return Object.values(this.points?.[this.group?.[idKey]]?.[dance?.[idKey]] || {})
-        .flatMap((v) => v) // any dance
-        .some((dancerId) => dancerId === this.dancer?.[idKey]);
+      return isDancerPointed(this.points, this.group?.[idKey], dance?.[idKey], this.dancer?.[idKey]);
     },
   },
   components: {
