@@ -64,8 +64,9 @@ export default {
 
             const aggregated = {};
             changes.forEach(([row, prop, , newVal]) => {
+              if (!prop || typeof prop !== 'string') return; // skip if overflowing columns
               const physicalRow = this.toPhysicalRow(row); // to account for sorting
-              const key = getKey(physicalRow);
+              const key = getKey(physicalRow !== null ? physicalRow : row); // null -> new addition
               aggregated[`${key}/${prop.replace('.', '/')}`] = newVal || null;
             });
             if (Object.keys(aggregated).length) { // ignore if new row and no value entered
