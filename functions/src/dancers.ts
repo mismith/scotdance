@@ -6,12 +6,12 @@ import { isCypress, isEmulator } from './utility/env';
 
 const client = new Typesense.Client({
   nodes: [{
-    host: isEmulator() ? 'localhost' : `${config().typesense?.cluster_id}-1.a1.typesense.net`,
+    host: isEmulator() ? 'localhost' : config().typesense?.host,
     port: isEmulator() ? 8108 : 443,
     protocol: isEmulator() ? 'http' : 'https',
   }],
-  apiKey: isEmulator() ? 'xyz' : config().typesense?.admin_api_key,
-  connectionTimeoutSeconds: 2,
+  apiKey: isEmulator() ? 'xyz' : config().typesense?.api_key,
+  connectionTimeoutSeconds: 60,
 });
 const schema: CollectionCreateSchema = {
   name: 'dancers',
