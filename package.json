@@ -32,7 +32,6 @@
     "build:ci": "npm run build:www && npm run build:functions",
     "build": "npm run sync-version && npm test && npx cap sync && npm run notify 'Build Complete'",
     "report": "npm run build:www && open stats.html",
-    "preview": "vite preview --port 5555",
     "release": "git commit -a -m $npm_package_version && git tag \"v${npm_package_version}\"",
     "deploy": "firebase deploy && git push origin HEAD:main --tags"
   },
