@@ -81,8 +81,7 @@ export function getOnSearch(db) {
         published
           || permissions?.admin === true
           || permissions?.competitions?.[competitionId] === true
-        ) && competitionId
-      )
+      ) && competitionId)
       .filter(Boolean);
 
     try {
@@ -95,7 +94,7 @@ export function getOnSearch(db) {
     } catch (error) {
       throw new https.HttpsError('invalid-argument', error?.message, error);
     }
-  }
+  };
 }
 
 export function getOnReindex(db) {

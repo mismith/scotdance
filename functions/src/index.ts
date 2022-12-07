@@ -60,4 +60,3 @@ export const dancerUpdated = !isCypress() && dancersRef.onUpdate(Dancers.onUpdat
 export const dancerDeleted = !isCypress() && dancersRef.onDelete(Dancers.onDelete);
 export const searchDancers = functions.https.onCall(Dancers.getOnSearch(appConfig.db));
 export const reindexDancers = functions.https.onCall(Dancers.getOnReindex(appConfig.db));
-
