@@ -144,7 +144,6 @@
               <v-list-item-title>Submit Competition</v-list-item-title>
             </v-list-item-content>
           </v-list-item>
-          <v-divider />
           <v-list-item v-if="featureFlagSearchDancers" :to="{ name: 'dancers' }" exact @click="$store.commit('setViewed', ['ui', 'menu.dancers', true])">
             <v-list-item-avatar>
               <v-icon>{{ mdiAccountSearch }}</v-icon>
@@ -154,6 +153,9 @@
             </v-list-item-content>
             <v-list-item-action v-if="dancersIsNew">
               <v-badge inline dot color="secondary" />
+            </v-list-item-action>
+            <v-list-item-action v-else>
+              <v-chip x-small color="amber black--text" class="px-2">BETA</v-chip>
             </v-list-item-action>
           </v-list-item>
         </v-list>

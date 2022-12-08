@@ -73,7 +73,7 @@ export default new Router({
       name: 'dancers',
       component: Dancers,
       meta: {
-        title: 'Dancers',
+        title: 'Search Dancers',
       },
     },
     {
