@@ -57,6 +57,9 @@ Vue.use(VueObserveVisibility);
 Vue.use(VueReactiveProvide);
 Vue.use(VueReactiveInject);
 
+// feature flags
+store.dispatch('bindFeatureFlags');
+
 // scrolling
 const $scrollAll = (element, options = {}) => {
   const containers = options.container ? [options.container] : document.querySelectorAll(`.app-scroll${!options.force ? ':not(.persist-scroll)' : ''}`);

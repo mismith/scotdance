@@ -10,6 +10,9 @@
       "faqs": {
         ".read": true
       },
+      "featureFlags": {
+        ".read": true
+      },
       "competitions": {
         ".read": true,
         "$competitionId": {

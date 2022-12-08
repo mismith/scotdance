@@ -70,6 +70,8 @@ export default new Vuex.Store({
 
     helpAvailable: false,
     helpVisible: false,
+
+    featureFlags: undefined,
   },
   getters: {
     getField,
@@ -95,6 +97,10 @@ export default new Vuex.Store({
     isViewed: (state) => (type, id) => state.viewed
       && state.viewed[type]
       && state.viewed[type].find((item) => item[0] === id),
+
+    getFeatureFlag: (state) => (flagId, defaultValue = false) => {
+      return state.featureFlags?.[flagId] || defaultValue;
+    },
   },
   mutations: {
     updateField,
@@ -245,5 +251,9 @@ export default new Vuex.Store({
       }
       return undefined;
     },
+
+    bindFeatureFlags: firebaseAction(({ bindFirebaseRef }) => {
+      bindFirebaseRef('featureFlags', db.child('featureFlags'));
+    }),
   },
 });
