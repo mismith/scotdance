@@ -237,6 +237,9 @@ export default {
       this.hydrateCurrentResult(true);
     },
   },
+  mounted() {
+    this.$store.commit('setViewed', ['ui', 'search-dancers', true]);
+  },
   methods: {
     ...mapActions([
       'help',

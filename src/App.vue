@@ -149,7 +149,6 @@
             v-test="'app-menu:dancers'"
             :to="{ name: 'dancers' }"
             exact
-            @click="$store.commit('setViewed', ['ui', 'menu.dancers', true])"
           >
             <v-list-item-avatar>
               <v-icon>{{ mdiAccountSearch }}</v-icon>
@@ -157,7 +156,7 @@
             <v-list-item-content>
               <v-list-item-title>Search Dancers</v-list-item-title>
             </v-list-item-content>
-            <v-list-item-action v-if="dancersIsNew">
+            <v-list-item-action v-if="searchDancersIsNew">
               <v-badge inline dot color="secondary" />
             </v-list-item-action>
             <v-list-item-action v-else>
@@ -396,10 +395,10 @@ export default {
     },
 
     menuIsNew() {
-      return this.dancersIsNew || this.needsUpdating;
+      return this.searchDancersIsNew || this.needsUpdating;
     },
-    dancersIsNew() {
-      return !this.$store.getters.isViewed('ui', 'menu.dancers');
+    searchDancersIsNew() {
+      return !this.$store.getters.isViewed('ui', 'search-dancers');
     },
     hasSubmenu() {
       return Boolean(this.competitions.length);
