@@ -144,7 +144,13 @@
               <v-list-item-title>Submit Competition</v-list-item-title>
             </v-list-item-content>
           </v-list-item>
-          <v-list-item v-if="featureFlagSearchDancers" :to="{ name: 'dancers' }" exact @click="$store.commit('setViewed', ['ui', 'menu.dancers', true])">
+          <v-list-item
+            v-if="featureFlagSearchDancers"
+            v-test="'app-menu:dancers'"
+            :to="{ name: 'dancers' }"
+            exact
+            @click="$store.commit('setViewed', ['ui', 'menu.dancers', true])"
+          >
             <v-list-item-avatar>
               <v-icon>{{ mdiAccountSearch }}</v-icon>
             </v-list-item-avatar>

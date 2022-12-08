@@ -2,7 +2,7 @@
   <Blades class="Dancers app-scroll-frame app-scroll" stacks>
     <Blade class="col-md-4 app-scroll-frame">
       <v-toolbar class="flex-none">
-        <SearchField v-model="q" :loading="isSearching" :disabled="!me" />
+        <SearchField v-model="q" :loading="isSearching" :disabled="!me" v-test="'search-dancers:search-field'" />
       </v-toolbar>
       <template v-if="!me">
         <RequiresPermission class="ma-auto pa-4 pb-8" />

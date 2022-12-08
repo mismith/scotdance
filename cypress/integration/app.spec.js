@@ -195,9 +195,24 @@ describe('Competitions', () => {
 });
 
 describe('Dancers', () => {
-  it('Search', () => {
-    cy.visit('/#/dancers');
-    itShouldBeAuthGuarded();
+  describe('Search', () => {
+    it('Feature flag', () => {
+      cy.visit('/');
+      cy.getTest('app:menu-button').click();
+      seed.database.set(`development/featureFlags/search-dancers`, false).then(() => {
+        cy.getTest('app-menu:dancers').should('not.exist');
+
+        seed.database.set(`development/featureFlags/search-dancers`, true).then(() => {
+          cy.getTest('app-menu:dancers').should('exist');
+        });
+      });
+    });
+    it('Auth guard', () => {
+      cy.visit('/#/dancers');
+      cy.getTest('search-dancers:search-field').find('input').should('be.disabled');
+      itShouldBeAuthGuarded();
+      cy.getTest('search-dancers:search-field').find('input').should('not.be.disabled');
+    });
   });
 });
 
