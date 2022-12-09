@@ -199,10 +199,10 @@ describe('Dancers', () => {
     it('Feature flag', () => {
       cy.visit('/');
       cy.getTest('app:menu-button').click();
-      seed.database.set(`development/featureFlags/search-dancers`, false).then(() => {
+      seed.database.set('development/featureFlags/search-dancers', false).then(() => {
         cy.getTest('app-menu:dancers').should('not.exist');
 
-        seed.database.set(`development/featureFlags/search-dancers`, true).then(() => {
+        seed.database.set('development/featureFlags/search-dancers', true).then(() => {
           cy.getTest('app-menu:dancers').should('exist');
         });
       });

@@ -272,7 +272,7 @@ export default {
     },
   },
   watch: {
-    async competitionsPage(v) {
+    async competitionsPage() {
       await this.$nextTick();
       this.$scrollTo(document.body, { container: this.$refs.scroller });
     },
