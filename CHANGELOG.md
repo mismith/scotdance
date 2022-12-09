@@ -1,5 +1,13 @@
 # Release Notes
 
+## 3.4.0 - Dec 8, 2022
+- you can now track dancers across competitions using the "Search Dancers" page!
+- add pagination to Competitions page (to reduce the amount of scrolling needed)
+- some big admin table improvements and fixes:
+  - copy/pasting (e.g. from Google Sheets) into a fresh table is fixed
+  - exported tables now include all data, not just visible data
+  - invalid dropdown cells are now clearly marked as such
+
 ## 3.3.1 - Nov 27, 2022
 - add "Favourite All" button to suggested favourite dancers section
 - various competition admin panel improvements, bug fixes, and help tips added
