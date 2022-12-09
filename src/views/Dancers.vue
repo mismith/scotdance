@@ -63,7 +63,7 @@
           </v-list-group>
         </v-list>
         <footer class="d-flex justify-center pa-3 mb-3">
-          <v-btn text small color="error" @click="handleReportProblem">Report a Problem</v-btn>
+          <v-btn text small color="error" @click="handleReportMismatch">Report a Mismatch</v-btn>
         </footer>
       </template>
       <EmptyState
@@ -298,14 +298,14 @@ export default {
       this.isLoading = false;
     },
 
-    handleReportProblem() {
+    handleReportMismatch() {
       const canGetHelp = this.help(true) !== undefined;
       if (!canGetHelp) return;
 
       window.$crisp.push([
         'do',
         'message:send',
-        ['text', `I think there might be something wrong on this page: ${window.location.href}`],
+        ['text', `I think there might be a mismatch on this page: ${window.location.href}`],
       ]);
     },
   },
