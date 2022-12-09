@@ -20,7 +20,10 @@ import { mdiMagnify } from '@mdi/js';
 export default {
   name: 'SearchField',
   props: {
-    value: String,
+    value: {
+      type: String,
+      default: '',
+    },
     debounce: {
       type: Number,
       default: 300,
@@ -37,6 +40,11 @@ export default {
       valueTimeout: undefined,
     };
   },
+  watch: {
+    value(v) {
+      this.handleInput(v);
+    },
+  },
   methods: {
     handleInput(value) {
       // skip if unnecessary
@@ -50,6 +58,7 @@ export default {
       this.valueTimeout = setTimeout(() => {
         this.valueDebounced = value || '';
         this.$emit('input', this.valueDebounced);
+        this.valueTimeout = null;
       }, this.debounce);
     },
   },
