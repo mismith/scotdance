@@ -57,7 +57,7 @@
 
     <footer v-if="featureFlagSearchDancers" class="mt-auto pa-4 pb-8 text-center">
       <p class="caption">This dancer may appear in other competitions. To track their progress:</p>
-      <v-btn :to="{ name: 'dancers', query: { q: dancer.$name, s: dancer.$name } }" color="secondary">
+      <v-btn :to="{ name: 'dancers', query: { q: dancer.$name, s: dancer.$name } }" color="primary">
         <v-icon class="mr-2">{{ mdiAccountSearch }}</v-icon>
         Search Dancers
       </v-btn>
