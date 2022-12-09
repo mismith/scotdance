@@ -10,6 +10,8 @@ import Settings from '@/views/Settings.vue';
 import Profile from '@/views/Profile.vue';
 import Policies from '@/views/Policies.vue';
 
+import Dancers from '@/views/Dancers.vue';
+
 import Competitions from '@/views/Competitions.vue';
 import CompetitionsList from '@/views/competitions/List.vue';
 import CompetitionsSubmit from '@/views/competitions/Submit.vue';
@@ -30,6 +32,7 @@ const CompetitionAdminDanceGroups = () => import('@/views/competition/admin/Danc
 const Admin = () => import('@/views/Admin.vue');
 const AdminInfo = () => import('@/views/admin/Info.vue');
 const AdminSubmissions = () => import('@/views/admin/Submissions.vue');
+const AdminDancers = () => import('@/views/admin/Dancers.vue');
 const AdminUsers = () => import('@/views/admin/Users.vue');
 
 Vue.use(Router);
@@ -63,6 +66,14 @@ export default new Router({
       component: Policies,
       meta: {
         title: 'Policies',
+      },
+    },
+    {
+      path: '/dancers',
+      name: 'dancers',
+      component: Dancers,
+      meta: {
+        title: 'Search Dancers',
       },
     },
     {
@@ -247,6 +258,14 @@ export default new Router({
           component: AdminUsers,
           meta: {
             title: 'Users',
+          },
+        },
+        {
+          path: 'dancers',
+          name: 'admin.dancers',
+          component: AdminDancers,
+          meta: {
+            title: 'Dancers',
           },
         },
         {

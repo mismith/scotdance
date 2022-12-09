@@ -70,6 +70,8 @@ export default new Vuex.Store({
 
     helpAvailable: false,
     helpVisible: false,
+
+    featureFlags: undefined,
   },
   getters: {
     getField,
@@ -82,7 +84,7 @@ export default new Vuex.Store({
       return false;
     },
 
-    isFavorite: (state) => (type, id) => get(state.myFavorites, `${type}.${id}`),
+    isFavorite: (state) => (type, id) => Boolean(get(state.myFavorites, `${type}.${id}`)),
     favorites: (state) => (type) => get(state.myFavorites, type) || {},
 
     hasPermission: (state) => (permission) => {
@@ -95,6 +97,10 @@ export default new Vuex.Store({
     isViewed: (state) => (type, id) => state.viewed
       && state.viewed[type]
       && state.viewed[type].find((item) => item[0] === id),
+
+    getFeatureFlag: (state) => (flagId, defaultValue = false) => {
+      return state.featureFlags?.[flagId] || defaultValue;
+    },
   },
   mutations: {
     updateField,
@@ -234,12 +240,20 @@ export default new Vuex.Store({
         if (set === false || (set === undefined && state.helpVisible)) {
           window.$crisp.push(['do', 'chat:hide']);
           commit('setHelpVisible', false);
-        } else if (set === true || (set === undefined && !state.helpVisible)) {
+          return false;
+        }
+        if (set === true || (set === undefined && !state.helpVisible)) {
           window.$crisp.push(['do', 'chat:show']);
           commit('setHelpVisible', true);
           window.$crisp.push(['do', 'chat:open']);
+          return true;
         }
       }
+      return undefined;
     },
+
+    bindFeatureFlags: firebaseAction(({ bindFirebaseRef }) => {
+      bindFirebaseRef('featureFlags', db.child('featureFlags'));
+    }),
   },
 });

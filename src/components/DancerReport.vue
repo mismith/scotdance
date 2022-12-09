@@ -1,5 +1,5 @@
 <template>
-  <div class="DancerReport">
+  <div class="DancerReport app-scroll-frame app-scroll">
     <header>
       <v-subheader class="title">
         <div class="flex">{{ dancer.$name }}</div>
@@ -11,6 +11,7 @@
         <div class="location">{{ dancer.location }}</div>
       </div>
     </header>
+
     <v-list v-if="group" expand class="grouped">
       <v-list-group :value="true">
         <template #activator>
@@ -53,11 +54,22 @@
         </v-list>
       </v-list-group>
     </v-list>
+
+    <footer v-if="featureFlagSearchDancers" class="mt-auto pa-4 pb-8 text-center">
+      <p class="caption">This dancer may appear in other competitions. To track their progress:</p>
+      <v-btn :to="{ name: 'dancers', query: { q: dancer.$name, s: dancer.$name } }" color="primary">
+        <v-icon class="mr-2">{{ mdiAccountSearch }}</v-icon>
+        Search Dancers
+      </v-btn>
+    </footer>
   </div>
 </template>
 
 <script>
-import { mdiCardsDiamond } from '@mdi/js';
+import {
+  mdiAccountSearch,
+  mdiCardsDiamond,
+} from '@mdi/js';
 import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue';
 import ResultListItem from '@/components/ResultListItem.vue';
 import EmptyResults from '@/components/EmptyResults.vue';
@@ -94,10 +106,14 @@ export default {
       idKey,
       overall,
       hasOverall,
+      mdiAccountSearch,
       mdiCardsDiamond,
     };
   },
   computed: {
+    featureFlagSearchDancers() {
+      return this.$store.getters.getFeatureFlag('search-dancers');
+    },
     group() {
       return this.dancer && this.dancer.$group;
     },

@@ -1,14 +1,16 @@
 <template>
   <v-text-field
+    v-bind="$attrs"
     label="Search"
     type="search"
-    v-model="value"
+    :value="value"
     :append-icon="mdiMagnify"
     clearable
     solo
     hide-details
-    :loading="value !== valueDebounced"
+    :loading="loading || value !== valueDebounced"
     class="SearchField"
+    @input="handleInput"
   />
 </template>
 
@@ -18,10 +20,17 @@ import { mdiMagnify } from '@mdi/js';
 export default {
   name: 'SearchField',
   props: {
-    value: String,
+    value: {
+      type: String,
+      default: '',
+    },
     debounce: {
       type: Number,
       default: 300,
+    },
+    loading: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {
@@ -32,15 +41,29 @@ export default {
     };
   },
   watch: {
-    value(value) {
+    value(v) {
+      this.handleInput(v);
+    },
+  },
+  methods: {
+    handleInput(value) {
+      // skip if unnecessary
+      if (value === this.valueDebounced) return;
+
+      // show loader immediately
+      this.valueDebounced = undefined;
+
+      // delay emiting @input until debounced
       clearTimeout(this.valueTimeout);
       this.valueTimeout = setTimeout(() => {
         this.valueDebounced = value || '';
+        this.$emit('input', this.valueDebounced);
+        this.valueTimeout = null;
       }, this.debounce);
     },
-    valueDebounced(valueDebounced) {
-      this.$emit('input', valueDebounced);
-    },
+  },
+  beforeDestroy() {
+    clearTimeout(this.valueTimeout);
   },
 };
 </script>

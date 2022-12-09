@@ -4,7 +4,13 @@
       ".read": "root.child($environment).child('users:permissions').child(auth.uid).child('admin').val() === true", // is ADMIN
       ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('admin').val() === true", // is ADMIN
 
+      "versions": {
+        ".read": true
+      },
       "faqs": {
+        ".read": true
+      },
+      "featureFlags": {
         ".read": true
       },
       "competitions": {

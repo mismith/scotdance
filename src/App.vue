@@ -9,7 +9,7 @@
       :class="{ stripes: isDev() }"
     >
       <v-btn icon @click="menuVisible = !menuVisible" aria-label="menu" v-test="'app:menu-button'">
-        <v-badge v-model="needsUpdating" dot color="secondary">
+        <v-badge :value="menuIsNew" dot color="secondary">
           <v-icon>{{ mdiMenu }}</v-icon>
         </v-badge>
       </v-btn>
@@ -52,7 +52,7 @@
           </v-tooltip>
         </template>
 
-        <v-sheet class="app-scroll" style="max-width: 400px;">
+        <v-sheet class="app-scroll" style="max-width: 400px;" @click="submenuIsNew = false">
           <AppSubmenu
             :competitions="competitions"
             :visible="submenuVisible"
@@ -144,6 +144,25 @@
               <v-list-item-title>Submit Competition</v-list-item-title>
             </v-list-item-content>
           </v-list-item>
+          <v-list-item
+            v-if="featureFlagSearchDancers"
+            v-test="'app-menu:dancers'"
+            :to="{ name: 'dancers' }"
+            exact
+          >
+            <v-list-item-avatar>
+              <v-icon>{{ mdiAccountSearch }}</v-icon>
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title>Search Dancers</v-list-item-title>
+            </v-list-item-content>
+            <v-list-item-action v-if="searchDancersIsNew">
+              <v-badge inline dot color="secondary" />
+            </v-list-item-action>
+            <v-list-item-action v-else>
+              <v-chip x-small color="amber black--text" class="px-2">BETA</v-chip>
+            </v-list-item-action>
+          </v-list-item>
         </v-list>
 
         <v-spacer />
@@ -211,7 +230,7 @@
                   <v-list-item-content>
                     <v-list-item-title>Update</v-list-item-title>
                   </v-list-item-content>
-                  <v-badge inline content="1" color="secondary" />
+                  <v-badge inline content="!" color="secondary" />
                 </v-list-item>
               </template>
             </PromptToUpdate>
@@ -270,6 +289,7 @@
 import { mapState, mapGetters, mapActions } from 'vuex';
 import {
   mdiAccountCircle,
+  mdiAccountSearch,
   mdiCalendarMonth,
   mdiClose,
   mdiDotsGrid,
@@ -319,6 +339,7 @@ export default {
       db,
 
       mdiAccountCircle,
+      mdiAccountSearch,
       mdiCalendarMonth,
       mdiClose,
       mdiDotsGrid,
@@ -352,6 +373,9 @@ export default {
     ...mapGetters([
       'needsUpdating',
     ]),
+    featureFlagSearchDancers() {
+      return this.$store.getters.getFeatureFlag('search-dancers');
+    },
 
     latestVersion() {
       return this.versions?.[this.$device?.platform];
@@ -370,6 +394,12 @@ export default {
         .sort((a, b) => -this.$moment(a.date).diff(b.date)); // order chronologically
     },
 
+    menuIsNew() {
+      return this.searchDancersIsNew || this.needsUpdating;
+    },
+    searchDancersIsNew() {
+      return !this.$store.getters.isViewed('ui', 'search-dancers');
+    },
     hasSubmenu() {
       return Boolean(this.competitions.length);
     },
@@ -788,6 +818,13 @@ body {
   .v-input {
     &.theme--dark ::-webkit-calendar-picker-indicator {
         filter: invert(1);
+    }
+  }
+  &.theme--dark {
+    .v-avatar {
+      &.grey {
+        color: black;
+      }
     }
   }
 }

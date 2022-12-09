@@ -54,8 +54,13 @@ export default {
     name: 'Submissions',
     icon: 'icon-plus',
   },
-  users: {
+  dancers: {
     order: 3,
+    name: 'Dancers',
+    icon: 'icon-user',
+  },
+  users: {
+    order: 4,
     name: 'Users',
     icon: 'icon-people',
     fields: [

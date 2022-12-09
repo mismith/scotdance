@@ -2,6 +2,7 @@ import admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
 import Invites from './invites';
 import Submissions from './submissions';
+import * as Dancers from './dancers';
 import { attachUserToCompetition } from './utility/competition';
 import { isCypress, isEmulator } from './utility/env';
 
@@ -52,3 +53,10 @@ export const competitionDeleted = appConfig.database.ref(`/${env}/competitions/{
       value: null,
     })));
   });
+
+const dancersRef = appConfig.database.ref(`/${env}/competitions:data/{competitionId}/dancers/{dancerId}`);
+export const dancerCreated = !isCypress() && dancersRef.onCreate(Dancers.onCreate);
+export const dancerUpdated = !isCypress() && dancersRef.onUpdate(Dancers.onUpdate);
+export const dancerDeleted = !isCypress() && dancersRef.onDelete(Dancers.onDelete);
+export const searchDancers = functions.https.onCall(Dancers.getOnSearch(appConfig.db));
+export const reindexDancers = functions.https.onCall(Dancers.getOnReindex(appConfig.db));
