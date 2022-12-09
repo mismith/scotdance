@@ -11,13 +11,22 @@
 export default {
   name: 'EmptyState',
   props: {
-    icon: String,
+    icon: {
+      type: String,
+      required: false,
+    },
     iconSize: {
       type: [Number, String],
       default: 200,
     },
-    label: String,
-    description: String,
+    label: {
+      type: String,
+      required: false,
+    },
+    description: {
+      type: String,
+      required: false,
+    },
   },
 };
 </script>
