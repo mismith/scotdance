@@ -70,9 +70,14 @@ export function slugify(text) {
 }
 
 export function initialify(name) {
-  const initials = name.replace(/(?<!^|[ -])./ig, '').split('');
-  if (initials.length > 3) initials.splice(1, initials.length - 2);
-  return initials.join('');
+  const allNames = name.trim().split(' ');
+  const initials = allNames.reduce((acc, curr, index) => {
+    if (index === 0 || index === allNames.length - 1) {
+      return `${acc}${curr.charAt(0).toUpperCase()}`;
+    }
+    return acc;
+  }, '');
+  return initials.substring(0, 3);
 }
 
 export function isNotEmptyObject(item) {
