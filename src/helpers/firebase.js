@@ -44,7 +44,7 @@ export const fns = firebase.functions();
 // messaging
 // const vapidKey = 'BGR0DKFnXHVfCFhPuTlxZcYH-k1vXqdPq0_LWtWUIelTJr6Zk2B809T4UfQ-20mM2rMxmHN0JisT99-iOBW6qAQ';
 export const notifications = {
-  isSupported: true || firebase.messaging.isSupported(),
+  isSupported: firebase.messaging.isSupported(),
   requestPermission,
 };
 // notifications.onMessage((payload) => {
