@@ -1,5 +1,8 @@
 # Release Notes
 
+## 3.4.1 - Dec 9, 2022
+- fix critical bug that caused the app not to load in Safari/iOS
+
 ## 3.4.0 - Dec 8, 2022
 - you can now track dancers across competitions using the "Search Dancers" page!
 - add pagination to Competitions page (to reduce the amount of scrolling needed)
