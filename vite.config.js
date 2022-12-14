@@ -1,6 +1,7 @@
 import path from 'path';
 import { defineConfig } from 'vite';
-import { createVuePlugin } from 'vite-plugin-vue2';
+import mkcert from'vite-plugin-mkcert';
+import vue from '@vitejs/plugin-vue2';
 import ViteComponents from 'unplugin-vue-components/vite';
 import { VuetifyResolver } from 'unplugin-vue-components/resolvers';
 import eslintPlugin from 'vite-plugin-eslint';
@@ -35,15 +36,13 @@ export default defineConfig({
     },
   },
   plugins: [
-    createVuePlugin(),
+    mkcert(),
+    vue(),
     ViteComponents({
         resolvers: [
           (name) => !customVuetifyLikeComponents.includes(name) && VuetifyResolver()(name),
         ],
     }),
-    eslintPlugin({
-      cache: false, // it was getting stale and causing false positives
-      throwOnWarning: false,
-    }),
+    eslintPlugin(),
   ],
 });

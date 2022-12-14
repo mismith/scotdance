@@ -15,7 +15,7 @@ Modernize your highland dancing experience by interacting with program-of-events
 Command | Description
 --- | ---
 `npm i` | install dependencies
-`npm run dev` | serve app with emulated data and hot reloading at https://localhost:3000
+`npm run dev` | serve app with emulated data and hot reloading at https://localhost:5173
 `npm run dev:cy` | shortcut for running `dev` + `cy -- open`
 `npm test` | build app and run cypress tests locally (equivalently to how they will be run in CI)
 `npm run lint` / `npm run lint:fix` | show code formatting tips (and fix them)
