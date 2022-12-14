@@ -85,7 +85,7 @@
     "@vitejs/plugin-vue2": "^2.2.0",
     "autoprefixer": "^10.3.7",
     "cordova-res": "^0.15.4",
-    "cypress": "^9.5.4",
+    "cypress": "^12.1.0",
     "cypress-file-upload": "^5.0.8",
     "eslint": "^8.29.0",
     "eslint-config-airbnb-base": "^15.0.0",
