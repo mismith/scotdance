@@ -449,7 +449,7 @@ export default {
           // dismiss after delay when submenu opened
           setTimeout(() => { // @TODO: clearTimeout on close so this doesn't leak
             this.submenuIsNew = false;
-          }, 3000);
+          }, 3 * 1000);
         } else {
           // dismiss instantly if submenu closed
           this.submenuIsNew = false;

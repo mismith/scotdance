@@ -13,7 +13,7 @@
     "dev:production": "run-p dev:functions \"emulate:firebase -- --export-on-exit\" emulate:typesense \"dev:www -- --open '/?production'\"",
     "dev:cy": "FIREBASE_CYPRESS=true run-p dev:functions emulate \"dev:www -- --open '/?cypress'\" \"cy -- open\"",
     "dev:cy:ci": "npm run build:www && npm run test:cy:ci",
-    "cy": "CYPRESS_BASE_URL=https://localhost:3000 cypress",
+    "cy": "CYPRESS_BASE_URL=https://localhost:5173 cypress",
     "cy:ci": "CYPRESS_BASE_URL=http://localhost:5050 cypress",
     "test:cy:ci": "FIREBASE_CYPRESS=true firebase emulators:exec \"npm run cy:ci -- run\"",
     "test": "npm run lint && npm run build:ci && npm run test:cy:ci",
@@ -65,7 +65,7 @@
     "sanitize-html": "^2.5.2",
     "save-csv": "^4.1.0",
     "simple-line-icons": "^2.5.5",
-    "vue": "^2.6.14",
+    "vue": "^2.7.14",
     "vue-async-computed": "^3.9.0",
     "vue-body-class": "^2.0.0-beta.2",
     "vue-localstorage": "^0.6.2",
@@ -82,6 +82,7 @@
     "xlsx": "^0.18.2"
   },
   "devDependencies": {
+    "@vitejs/plugin-vue2": "^2.2.0",
     "autoprefixer": "^10.3.7",
     "cordova-res": "^0.15.4",
     "cypress": "^9.5.4",
@@ -101,10 +102,10 @@
     "rollup-plugin-visualizer": "^5.5.2",
     "sass": "^1.26.11",
     "unplugin-vue-components": "^0.16.0",
-    "vite": "^2.6.12",
-    "vite-plugin-eslint": "^1.3.0",
-    "vite-plugin-vue2": "^1.9.0",
-    "vue-template-compiler": "^2.6.14"
+    "vite": "^3.2.5",
+    "vite-plugin-eslint": "^1.8.1",
+    "vite-plugin-mkcert": "^1.10.1",
+    "vue-template-compiler": "^2.7.14"
   },
   "eslintConfig": {
     "root": true,

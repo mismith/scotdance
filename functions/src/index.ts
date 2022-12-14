@@ -20,7 +20,7 @@ const appConfig = {
   name: 'ScotDance.app',
   description: 'Highland dancing event tracker',
   email: 'admin@scotdance.app',
-  url: isEmulator() ? 'https://localhost:3000' : 'https://scotdance.app',
+  url: isEmulator() ? 'https://localhost:5173' : 'https://scotdance.app',
 };
 
 const invites = new Invites(appConfig.database, appConfig);
