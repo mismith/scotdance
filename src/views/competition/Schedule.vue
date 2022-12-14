@@ -49,7 +49,9 @@
                 >
                   <v-list-item-content>
                     <v-list-item-title>{{ event.name }}</v-list-item-title>
-                    <v-list-item-subtitle v-html="$sanitize(slugline(event.description))" />
+                    <v-list-item-subtitle v-if="event.description">
+                      <div v-html="$sanitize(slugline(event.description))" />
+                    </v-list-item-subtitle>
                   </v-list-item-content>
                   <v-icon v-if="event.dances || event.description">
                     {{ mdiChevronRight }}
@@ -121,9 +123,10 @@
                   <v-sheet>
                     <v-list-item
                       v-if="dance.description"
-                      v-html="$sanitize(dance.description)"
                       class="pa-4 pre-line"
-                    />
+                    >
+                      <div v-html="$sanitize(dance.description)" />
+                    </v-list-item>
                     <AdminPlatforms
                       v-if="dance.danceId"
                       :item="dance"

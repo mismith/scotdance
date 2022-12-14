@@ -48,7 +48,7 @@ export function groupExtender(group, i, categories) {
   };
 }
 
-export function dancerExtender(dancer, groups = [], $store) {
+export function dancerExtender(dancer, groups, $store) {
   return {
     ...dancer,
     // prepend with leading 'zeroes', and stringify for search

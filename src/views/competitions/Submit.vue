@@ -39,7 +39,9 @@
               </template>
 
               <v-card text>
-                <v-card-text v-html="$sanitize(item.description)" />
+                <v-card-text>
+                  <div v-html="$sanitize(item.description)" />
+                </v-card-text>
               </v-card>
             </v-list-group>
           </v-list>

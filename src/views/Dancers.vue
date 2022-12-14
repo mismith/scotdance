@@ -123,6 +123,7 @@ export default {
       idKey,
 
       isSearching: false,
+      searchTimer: undefined,
       searchResults: [],
       isLoading: false,
       dancers: undefined,
@@ -290,7 +291,10 @@ export default {
         const elapsed = Date.now() - start;
         const minLoading = 1000;
         if (elapsed < minLoading) {
-          await new Promise((resolve) => setTimeout(resolve, Math.max(0, minLoading - elapsed)));
+          clearTimeout(this.searchTimer);
+          await new Promise((resolve) => {
+            this.searchTimer = setTimeout(resolve, Math.max(0, minLoading - elapsed));
+          });
         }
       } catch (error) {
         console.error(error); // eslint-disable-line no-console
@@ -308,6 +312,9 @@ export default {
         ['text', `I think there might be a mismatch on this page: ${window.location.href}`],
       ]);
     },
+  },
+  beforeDestroy() {
+    clearTimeout(this.searchTimer);
   },
   components: {
     SearchField,
