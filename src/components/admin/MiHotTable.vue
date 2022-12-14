@@ -31,7 +31,7 @@ export default {
       return this.augmentHot(settings);
     },
     hotData() {
-      return [...this.data || this.hotSettings?.data];
+      return [...(this.data || this.hotSettings?.data || [])];
     },
     hotInstance() {
       return this.$refs.hot?.hotInstance;

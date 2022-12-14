@@ -76,9 +76,10 @@
       <template #text>
         <v-card-text
           v-if="currentDialogData && currentDialogData.description"
-          v-html="$sanitize(currentDialogData.description)"
           class="pre-line alt pt-3"
-        />
+        >
+          <div v-html="$sanitize(currentDialogData.description)" />
+        </v-card-text>
       </template>
     </DialogCard>
   </div>

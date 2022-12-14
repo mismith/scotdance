@@ -69,7 +69,7 @@ describe('Competition', () => {
       Object.entries(tests).forEach(([competitionUid, accessState]) => {
         it(`Access state: ${competitionUid}`, () => {
           switch (authState) {
-            default:
+            default: // eslint-disable-line default-case-last
             case AUTH_STATE.UNAUTHED: {
               break;
             }
