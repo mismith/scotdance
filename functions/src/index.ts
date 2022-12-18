@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase-admin/app';
-import { getDatabase } from 'firebase-admin/database'
+import { getDatabase } from 'firebase-admin/database';
 import * as functions from 'firebase-functions';
 import Invites from './invites';
 import Submissions from './submissions';
