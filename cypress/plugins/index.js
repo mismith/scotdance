@@ -9,7 +9,7 @@ module.exports = (on, config) => {
   // `config` is the resolved Cypress config
 
   process.env.FIREBASE_AUTH_EMULATOR_HOST = '127.0.0.1:9099';
-  process.env.FIREBASE_DATABASE_EMULATOR_HOST = '127.0.0.1:9000';
+  process.env.FIREBASE_DATABASE_EMULATOR_HOST = '127.0.0.1:9009';
   // process.env.FIREBASE_STORAGE_EMULATOR_HOST = '127.0.0.1:9199';
   initializeApp({
     projectId: 'firebase-scotdance',
