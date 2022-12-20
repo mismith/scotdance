@@ -43,7 +43,7 @@
       "port": 5001
     },
     "database": {
-      "port": 9000
+      "port": 9009
     },
     "storage": {
       "port": 9199
