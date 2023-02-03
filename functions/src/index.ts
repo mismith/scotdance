@@ -10,9 +10,6 @@ import { isCypress, isEmulator } from './utility/env';
 const app = initializeApp({
   databaseURL: isCypress() ? `http://${process.env.FIREBASE_DATABASE_EMULATOR_HOST}?ns=scotdance-cypress` : 'https://scotdance.firebaseio.com',
 }, 'app');
-if (isEmulator()) {
-  functions.app.setEmulatedAdminApp(app);
-}
 
 const env = isEmulator() ? 'development' : 'production';
 const appConfig = {
