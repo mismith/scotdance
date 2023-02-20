@@ -76,7 +76,7 @@ export function getOnSearch(db) {
     // aggregate a list of all competition ids this user has access too
     const permissions = (await db.child(`users:permissions/${ctx.auth.uid}`).get()).val();
     const competitions = (await db.child('competitions').get()).val();
-    const authorizedCompeitionIds = Object.entries(competitions || {})
+    const authorizedCompetitionIds = Object.entries(competitions || {})
       .map(([competitionId, { published }]: any) => (
         published
           || permissions?.admin === true
@@ -85,12 +85,17 @@ export function getOnSearch(db) {
       .filter(Boolean);
 
     try {
-      const response = await client.collections('dancers').documents().search({
-        query_by: '$name',
-        filter_by: `$competitionId:[${authorizedCompeitionIds.join()}]`,
-        ...searchParams,
+      const response = await client.multiSearch.perform({
+        searches: [
+          {
+            collection: 'dancers',
+            query_by: '$name',
+            filter_by: `$competitionId:[${authorizedCompetitionIds.join()}]`,
+            ...searchParams,
+          },
+        ],
       });
-      return response;
+      return response?.results?.[0];
     } catch (error) {
       throw new https.HttpsError('invalid-argument', error?.message, error);
     }
