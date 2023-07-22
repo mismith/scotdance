@@ -62,7 +62,7 @@ import {
   // ManualColumnFreeze,
   // ManualColumnMove,
   ManualColumnResize,
-  // ManualRowMove,
+  ManualRowMove,
   // ManualRowResize,
   // MergeCells,
   // MultiColumnSorting,
@@ -108,6 +108,7 @@ registerPlugin(ContextMenu);
 registerPlugin(CopyPaste);
 registerPlugin(DragToScroll);
 registerPlugin(ManualColumnResize);
+registerPlugin(ManualRowMove);
 registerPlugin(Search);
 registerPlugin(UndoRedo);
 

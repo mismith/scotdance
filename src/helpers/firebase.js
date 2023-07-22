@@ -30,6 +30,7 @@ if (isDev()) {
 export const pushidRegex = /^[-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz]{20}$/;
 export const idKey = '.key';
 export const valueKey = '.value';
+export const orderByKey = '_order';
 export const db = firebase.database().ref(FIREBASE_ENV);
 
 export const buckets = firebase.storage().ref(FIREBASE_ENV);

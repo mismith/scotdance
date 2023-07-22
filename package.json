@@ -46,6 +46,7 @@
     "@mdi/js": "^5.9.55",
     "@mismith/firebase-tools": "^1.4.1",
     "@outluch/v-file": "^1.0.0",
+    "array-move-multiple": "^1.0.5",
     "compare-versions": "^3.6.0",
     "deep-property": "^1.1.0",
     "fast-html-parser": "^1.0.1",

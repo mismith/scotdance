@@ -8,8 +8,10 @@
 </template>
 
 <script>
+import { arrayMoveByIndex } from 'array-move-multiple';
 import {
   idKey,
+  orderByKey,
   db,
 } from '@/helpers/firebase';
 import {
@@ -84,6 +86,21 @@ export default {
             }
           }
           vm.$emit('change', aggregated);
+        };
+        augmentedSettings.beforeRowMove = function beforeRowMove(movedRowIndexes, finalIndex) {
+          const beforeReorderIds = this.getData().map((row, index) => {
+            const physicalRowIndex = this.toPhysicalRow(index); // to account for sorting
+            return vm.hotData[physicalRowIndex] && vm.hotData[physicalRowIndex][idKey];
+          }).filter(Boolean);
+          const afterReorderIds = arrayMoveByIndex(beforeReorderIds, movedRowIndexes, finalIndex);
+          const changes = afterReorderIds.reduce((acc, id, index) => {
+            if (id) {
+              acc[`${id}/${orderByKey}`] = index;
+            }
+            return acc;
+          }, {});
+          vm.$emit('change', changes);
+          return false; // don't update UI (wait for data change to do so, otherwise it get out of sync)
         };
       }
 

@@ -108,6 +108,7 @@ import {
 import {
   idKey,
   valueKey,
+  orderByKey,
   toOrderedArray,
 } from '@/helpers/firebase';
 import {
@@ -333,15 +334,15 @@ export default {
       if (this.dancersRaw) this.$unbind('dancersRaw');
       this.$bindAsArray('dancersRaw', this.competitionDataRef.child('dancers'));
       if (this.groupsRaw) this.$unbind('groupsRaw');
-      this.$bindAsArray('groupsRaw', this.competitionDataRef.child('groups'));
+      this.$bindAsArray('groupsRaw', this.competitionDataRef.child('groups').orderByChild(orderByKey));
       if (this.categoriesRaw) this.$unbind('categoriesRaw');
-      this.$bindAsArray('categoriesRaw', this.competitionDataRef.child('categories'));
+      this.$bindAsArray('categoriesRaw', this.competitionDataRef.child('categories').orderByChild(orderByKey));
       if (this.dancesRaw) this.$unbind('dancesRaw');
-      this.$bindAsArray('dancesRaw', this.competitionDataRef.child('dances'));
+      this.$bindAsArray('dancesRaw', this.competitionDataRef.child('dances').orderByChild(orderByKey));
       if (this.staffRaw) this.$unbind('staffRaw');
-      this.$bindAsArray('staffRaw', this.competitionDataRef.child('staff'));
+      this.$bindAsArray('staffRaw', this.competitionDataRef.child('staff').orderByChild(orderByKey));
       if (this.platformsRaw) this.$unbind('platformsRaw');
-      this.$bindAsArray('platformsRaw', this.competitionDataRef.child('platforms'));
+      this.$bindAsArray('platformsRaw', this.competitionDataRef.child('platforms').orderByChild(orderByKey));
       // data objects
       if (this.drawsRaw) this.$unbind('drawsRaw');
       this.$bindAsObject('drawsRaw', this.competitionDataRef.child('draws'));

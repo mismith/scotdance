@@ -92,6 +92,7 @@ export default {
     name: 'Attribution',
     icon: 'icon-heart',
     hot: {
+      manualRowMove: true,
       columns: [
         {
           data: 'type',
@@ -144,6 +145,7 @@ export default {
     name: 'Dances',
     icon: 'icon-music-tone-alt',
     hot: {
+      manualRowMove: true,
       columns: [
         {
           data: 'name',
@@ -278,6 +280,7 @@ export default {
     name: 'Categories',
     icon: 'icon-graduation',
     hot: {
+      manualRowMove: true,
       columns: [
         {
           data: 'name',
@@ -315,6 +318,7 @@ export default {
     name: 'Age Groups',
     icon: 'icon-organization',
     hot: {
+      manualRowMove: true,
       columns: [
         {
           data: 'categoryId',
@@ -408,6 +412,7 @@ export default {
     icon: 'icon-layers',
     className: 'published-only',
     hot: {
+      manualRowMove: true,
       columns: [
         {
           data: 'name',
