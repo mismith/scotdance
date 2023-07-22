@@ -187,7 +187,7 @@ export default {
     locationsItems() {
       const groups = this.locations?.map((location) => {
         const id = location.trim();
-        const [, place, area] = id.match(/(.*?)\s*,\s*([A-Z][A-Z])$/i) || [undefined, id];
+        const [, place, area] = id.match(/^(.*)\s*,\s*(.*?)$/i) || [undefined, id];
         return {
           id,
           area: area?.trim() || '',
