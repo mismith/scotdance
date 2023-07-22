@@ -57,7 +57,6 @@ export default {
       'section',
       'competitions',
       'submissions',
-      'faqs',
       'users',
       'favorites',
       'permissions',
@@ -98,9 +97,6 @@ export default {
     submissions() {
       return this.submissionsRaw;
     },
-    faqs() {
-      return this.faqsRaw;
-    },
     users() {
       return this.usersRaw;
     },
@@ -133,9 +129,6 @@ export default {
 
       if (this.submissionsRaw) this.$unbind('submissionsRaw');
       this.$bindAsArray('submissionsRaw', db.child('competitions:submissions'));
-
-      if (this.faqsRaw) this.$unbind('faqsRaw');
-      this.$bindAsArray('faqsRaw', db.child('faqs'));
 
       if (this.usersRaw) this.$unbind('usersRaw');
       this.$bindAsArray('usersRaw', db.child('users'));

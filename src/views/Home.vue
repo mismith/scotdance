@@ -67,25 +67,54 @@
 
     <section id="faq">
       <header>
-        <h2 class="display-1 my-4">FAQs</h2>
-        <dl v-if="faqs.length">
-          <template v-for="faq in faqs">
-            <dt :key="faq.question" v-html="$sanitize(faq.question)" class="title" />
-            <dd :key="faq.answer" v-html="$sanitize(faq.answer)" class="pre-line" />
-          </template>
+        <h2 class="display-1 my-4"><abbr title="Frequently Asked Questions">FAQs</abbr></h2>
+        <dl>
+          <dt class="title">
+            Is there a cost associated with using this site/app at my local competition?
+          </dt>
+          <dd class="pre-line">
+            No! All competition data is user-submitted—and you can use it as a competition organizer or competition attendee for free anywhere in the world. There is no plan for this to ever change.
+          </dd>
+
+          <dt class="title">
+            Is ScotDance.app affiliated with any association, organization, governing body, or particular competition(s)?
+          </dt>
+          <dd class="pre-line">
+            No, it is a completely independent, not-for-profit, volunteer run endeavour.
+          </dd>
+
+          <dt class="title">
+            Do I need to download or install anything to get access?
+          </dt>
+          <dd class="pre-line">
+            No, it's entirely optional to use the App/Play Store distributed apps; everything works exactly the same in a web browser on whatever device(s) you own (e.g. by visiting <a href="http://www.scotdance.app">www.scotdance.app</a>). Of course, it's handy to have a dedicated place for easy access, so installing a mobile app makes that possible.
+          </dd>
+
+          <dt class="title">
+            Is it safe to use? Are you harvesting my data? Are there privacy concerns with having this information available online?
+          </dt>
+          <dd class="pre-line">
+            This service is, in plain words, completely legitimate. It checks all the security boxes you would/should expect, and does nothing remotely nefarious with the (minimal) data it does collect from you. Furthermore, since all competition data is user-submitted, it's conceptually equivalent to uploading scanned or exported results PDFs to a dance association's website—just made more convenient, hopefully. You can also read more details on the <RouterLink :to="{ name: 'policies' }">Policies</RouterLink> page.
+          </dd>
+
+          <dt class="title">
+            Why are dancers I've favourited <v-icon color="secondary">{{ mdiStar }}</v-icon> in one competition not favourited in all competitions?
+          </dt>
+          <dd class="pre-line">
+            Since dancer numbers are unique for each competition—and names, locations, and ages can be misspelled or change over time—it's very difficult (for a computer) to distinguish "Jane Doe" in Competition A from "Jane Doe" in Competition B. So until this app can be connected more directly to registrations, it's unfortunately necessary to re-favourite dancers for each competition.
+          </dd>
         </dl>
-        <Spinner v-else />
       </header>
     </section>
 
     <section id="info" class="alt">
       <header>
         <h2 class="display-1 my-4">Info</h2>
-        <p>{{ $package.$name }} was created in 2017 by <a href="https://mismith.io" target="_blank" class="ext">Murray Rowan</a></p>
+        <p>{{ $package.$name }} (2017-{{ currentYear }}) by <a href="https://mismith.io" target="_blank" class="ext">Murray Rowan</a></p>
         <p>View the source code on <a href="https://github.com/mismith/scotdance" target="_blank" class="ext">GitHub</a></p>
         <p>Track development via <a href="https://trello.com/b/ZCZ8t1fH" target="_blank" class="ext">Trello</a></p>
-        <p>Legal documents: <router-link :to="{ name: 'policies' }">Policies</router-link></p>
-        <p v-if="$store.state.helpAvailable">Support/Feedback through <a href="#" @click.prevent="help(true)">Live Chat</a></p>
+        <p v-if="$store.state.helpAvailable">Support/Feedback: <a href="#" @click.prevent="help(true)">Live Chat / Email</a></p>
+        <p>Legal: <router-link :to="{ name: 'policies' }">Policies</router-link></p>
         <p v-test="'version'"><small>{{ devicePlatform }} App v{{ $package.version || '?' }}</small></p>
       </header>
     </section>
@@ -93,16 +122,18 @@
 </template>
 
 <script>
+import { mdiStar } from '@mdi/js';
 import {
   mapState,
   mapActions,
 } from 'vuex';
-import { db } from '@/helpers/firebase';
 
 export default {
   name: 'Home',
-  firebase: {
-    faqs: db.child('faqs'),
+  data() {
+    return {
+      mdiStar,
+    };
   },
   computed: {
     ...mapState([
@@ -110,6 +141,9 @@ export default {
       '$device',
     ]),
 
+    currentYear() {
+      return new Date().getFullYear();
+    },
     devicePlatform() {
       switch (this.$device?.platform?.toLowerCase()) {
         case 'ios': return 'iOS';
@@ -183,7 +217,7 @@ export default {
         margin: 12px 0;
       }
       dt {
-        margin-top: 24px;
+        margin-top: 48px;
       }
     }
   }

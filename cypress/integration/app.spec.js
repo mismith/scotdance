@@ -248,16 +248,6 @@ describe('Admin', () => {
         cy.get(`input[name="${name}"]`).should('have.value', version);
       });
     });
-    it('FAQs', () => {
-      const faqs = [{ question: 'Foo', answer: 'Bar' }, { question: 'Baz', answer: 'Quux' }];
-      seed.database.set('development/faqs', faqs);
-
-      cy.visit('/#/admin/info/faqs');
-      itShouldBeAuthGuarded(true);
-
-      const text = faqs.reduce((acc, { question, answer }) => `${acc}${question}${answer}`, '');
-      cy.get('table.htCore tbody tr td').should('have.text', text);
-    });
   });
 
   it('Submissions', () => {

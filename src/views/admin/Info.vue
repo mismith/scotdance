@@ -42,7 +42,6 @@ export default {
     adminBundle: [
       'section',
       'versions',
-      'faqs',
     ],
   },
   data() {
@@ -60,7 +59,6 @@ export default {
     info() {
       return {
         versions: this.versions,
-        faqs: this.faqs,
       };
     },
   },

@@ -30,23 +30,6 @@ export default {
           },
         ],
       },
-      faqs: {
-        order: 2,
-        name: 'FAQs',
-        icon: 'icon-question',
-        hot: {
-          columns: [
-            {
-              data: 'question',
-              title: 'Question',
-            },
-            {
-              data: 'answer',
-              title: 'Answer',
-            },
-          ],
-        },
-      },
     },
   },
   submissions: {
