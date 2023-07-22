@@ -534,6 +534,8 @@ export default {
 #crisp-chatbox {
   > div {
     > a {
+      top: auto !important;
+      left: auto !important;
       right: calc(14px + env(safe-area-inset-right)) !important;
       bottom: calc(14px + env(safe-area-inset-bottom)) !important;
     }
