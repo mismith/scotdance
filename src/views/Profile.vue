@@ -33,7 +33,7 @@
             v-model="me.email"
             readonly
             required
-            @focus="on.click"
+            @focus="$event.target.blur(); on.click($event);"
           />
         </template>
 
@@ -73,7 +73,7 @@
             value="********"
             required
             readonly
-            @focus="on.click"
+            @focus="$event.target.blur(); on.click($event);"
           />
         </template>
 
