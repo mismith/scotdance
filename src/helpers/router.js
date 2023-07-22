@@ -54,11 +54,15 @@ export function getFirstExisting(...routes) {
 }
 
 export function formatExternalURL(url) {
-  return (url || '').replace(/^(?:http(s?):\/\/)?/i, 'http$1://');
+  if (!url) return '';
+  if (url.startsWith('mailto:')) return url;
+  return url.replace(/^(?:http(s?):\/\/)?/i, 'http$1://');
 }
 
 export function formatHumanURL(url) {
-  return (url || '').replace(/^((https?:)?\/\/)?(www\.)?/i, '');
+  if (!url) return '';
+  if (url.startsWith('mailto:')) return url.replace(/^mailto:/i, '');
+  return url.replace(/^((https?:)?\/\/)?(www\.)?/i, '');
 }
 
 export function mapRouteParams(paramNames) {
