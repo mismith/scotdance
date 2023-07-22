@@ -226,14 +226,12 @@ export default {
 
         beforeChange: (changes, source) => {
           if (source !== 'loadData') {
+            const acc = {};
             changes.forEach(([index, danceId, , dancerNumber]) => {
-              this.$emit('change', {
-                [`draws/${this.groupId}/${danceId}/${index}`]: dancerNumber,
-              });
+              acc[`draws/${this.groupId}/${danceId}/${index}`] = dancerNumber;
             });
-            return false;
+            this.$emit('change', acc);
           }
-          return true;
         },
       });
     },
