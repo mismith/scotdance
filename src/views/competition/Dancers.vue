@@ -65,10 +65,11 @@
                 </v-subheader>
               </template>
 
-              <v-fade-transition
-                group
+              <component
+                :is="filterBy ? 'v-list' : 'v-fade-transition'"
                 tag="v-list"
                 leave-absolute
+                group
                 two-line
               >
                 <DancerListItem
@@ -77,7 +78,7 @@
                   :dancer="dancer"
                   :to="{ name: $route.name, params: { competitionId, dancerId: dancer[idKey] } }"
                 />
-              </v-fade-transition>
+              </component>
             </v-list-group>
           </v-list>
           <EmptyState
