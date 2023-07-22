@@ -57,10 +57,10 @@
           :readonly="field.readonly"
           :rules="rules"
           :append-icon="mdiCalendar"
-          :autocomplete="field.autocomplete || 'none'"
-          @focus="datePicking = true"
+          :autocomplete="field.autocomplete || 'off'"
           @input="handleInput()"
           @change="handleChange()"
+          @click:append="datePicking = true"
         />
       </template>
       <v-date-picker
