@@ -1,5 +1,10 @@
 # Release Notes
 
+## 3.5.0 - Jul 22, 2023
+- various fixes and improvements: allow cancelling edit email & password dialogs, better location nesting, date picker auto-opening, fix live chat button clickable area, fix Draws table editing & copy/pasting, improve long Dancers list performance
+- admin: allow reordering table rows for: groups, categories, dances, attribution, & platforms
+- admin: allow using `mailto:`/emails for Registration URL and competition Links
+
 ## 3.4.1 - Dec 9, 2022
 - fix critical bug that caused the app not to load in Safari/iOS
 

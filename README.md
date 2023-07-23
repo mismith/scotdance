@@ -71,7 +71,7 @@ Links to the admin panels needed to manage this project:
     4. Click "Distribute App"
     5. Follow the wizard (App Store Connect, Upload, etc.)
     6. In App Store Connect, create a New iOS Version, then complete/fill out all remaining steps/info in form
-        - the new build should be processed and ready to be selected shortly (~15-30 mins)
+        - the new build should be processed and ready to be selected shortly (~15 mins)
 
 ### Google Play Store
 
