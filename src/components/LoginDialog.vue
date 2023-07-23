@@ -18,11 +18,13 @@
       />
       <v-text-field
         label="Password *"
-        type="password"
+        :type="isPasswordVisible ? 'text' : 'password'"
         name="password"
         v-model="password"
         required
         v-test="'login-dialog:password-field'"
+        :append-icon="isPasswordVisible ? mdiEyeOff : mdiEye"
+        @click:append="isPasswordVisible = !isPasswordVisible"
       />
 
       <p>
@@ -83,6 +85,7 @@
 </template>
 
 <script>
+import { mdiEye, mdiEyeOff } from '@mdi/js';
 import { mapFields } from 'vuex-map-fields';
 import { firebase } from '@/helpers/firebase';
 
@@ -90,9 +93,13 @@ export default {
   name: 'LoginDialog',
   data() {
     return {
+      mdiEye,
+      mdiEyeOff,
+
       authLoading: false,
       authError: undefined,
       authMessage: undefined,
+      isPasswordVisible: false,
 
       forgot: false,
     };

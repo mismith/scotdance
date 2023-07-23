@@ -15,12 +15,14 @@
       v-test="'register-dialog:email-field'"
     />
     <v-text-field
-      label="Password *"
-      type="password"
+      label="New Password *"
+      :type="isPasswordVisible ? 'text' : 'password'"
       name="password"
       v-model="password"
       required
       v-test="'register-dialog:password-field'"
+      :append-icon="isPasswordVisible ? mdiEyeOff : mdiEye"
+      @click:append="isPasswordVisible = !isPasswordVisible"
     />
 
     <p>
@@ -44,6 +46,7 @@
 </template>
 
 <script>
+import { mdiEye, mdiEyeOff } from '@mdi/js';
 import { mapFields } from 'vuex-map-fields';
 import {
   firebase,
@@ -54,8 +57,12 @@ export default {
   name: 'RegisterDialog',
   data() {
     return {
+      mdiEye,
+      mdiEyeOff,
+
       authLoading: false,
       authError: undefined,
+      isPasswordVisible: false,
     };
   },
   computed: {

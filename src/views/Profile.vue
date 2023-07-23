@@ -47,9 +47,11 @@
         <v-text-field
           label="Current Password *"
           v-model="emailConfirm"
-          type="password"
+          :type="isNewEmailPasswordVisible ? 'text' : 'password'"
           name="password"
           required
+          :append-icon="isNewEmailPasswordVisible ? mdiEyeOff : mdiEye"
+          @click:append="isNewEmailPasswordVisible = !isNewEmailPasswordVisible"
         />
         <v-alert :value="!!emailError" type="error">
           {{ emailError && emailError.message }}
@@ -80,16 +82,20 @@
         <v-text-field
           label="Current Password *"
           v-model="passwordConfirm"
-          type="password"
+          :type="isPasswordConfirmVisible ? 'text' : 'password'"
           name="password"
           required
+          :append-icon="isPasswordConfirmVisible ? mdiEyeOff : mdiEye"
+          @click:append="isPasswordConfirmVisible = !isPasswordConfirmVisible"
         />
         <v-text-field
           label="New Password *"
           v-model="newPassword"
-          type="password"
-          name="password"
+          :type="isNewPasswordVisible ? 'text' : 'password'"
+          name="newPassword"
           required
+          :append-icon="isNewPasswordVisible ? mdiEyeOff : mdiEye"
+          @click:append="isNewPasswordVisible = !isNewPasswordVisible"
         />
         <v-alert :value="!!passwordError" type="error">
           {{ passwordError && passwordError.message }}
@@ -118,9 +124,11 @@
         <v-text-field
           label="Current Password *"
           v-model="removeConfirm"
-          type="password"
+          :type="isDeleteAccountPasswordVisible ? 'text' : 'password'"
           name="password"
           required
+          :append-icon="isDeleteAccountPasswordVisible ? mdiEyeOff : mdiEye"
+          @click:append="isDeleteAccountPasswordVisible = !isDeleteAccountPasswordVisible"
         />
         <v-alert :value="!!removeError" type="error">
           {{ removeError && removeError.message }}
@@ -132,6 +140,7 @@
 
 <script>
 import { mapState } from 'vuex';
+import { mdiEye, mdiEyeOff } from '@mdi/js';
 import {
   firebase,
   idKey,
@@ -143,18 +152,25 @@ export default {
   name: 'Profile',
   data() {
     return {
+      mdiEye,
+      mdiEyeOff,
+
       emailActive: false,
       emailConfirm: undefined,
       newEmail: undefined,
       emailLoading: false,
       emailError: undefined,
+      isNewEmailPasswordVisible: false,
 
       passwordActive: false,
       passwordConfirm: undefined,
+      isPasswordConfirmVisible: false,
       newPassword: undefined,
+      isNewPasswordVisible: false,
       passwordLoading: false,
       passwordError: undefined,
 
+      isDeleteAccountPasswordVisible: false,
       removeActive: false,
       removeConfirm: undefined,
       removeLoading: false,
