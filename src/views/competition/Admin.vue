@@ -124,27 +124,40 @@
               --><span v-else> to get started</span>
             </p>
             <div>
-              <v-btn
-                v-if="hasPresets"
-                v-test="'admin:hot.empty-state.presets'"
-                color="primary"
-                class="ma-1"
-                @click="$refs.presetPicker.show()"
-              >
-                <v-icon class="mr-2">{{ mdiPlaylistPlus }}</v-icon>
-                Add preset(s)
-              </v-btn>
-              <v-btn
-                v-if="hasImport"
-                v-test="'admin:hot.empty-state.import'"
-                v-on="on"
-                color="primary"
-                class="ma-1"
-                @click="showImport = true"
-              >
-                <v-icon class="mr-2">{{ mdiImport }}</v-icon>
-                Import spreadsheet
-              </v-btn>
+              <template v-if="hasPresets">
+                <v-btn
+                  v-test="'admin:hot.empty-state.presets'"
+                  color="primary"
+                  class="ma-1"
+                  @click="$refs.presetPicker.show()"
+                >
+                  <v-icon class="mr-2">{{ mdiPlaylistPlus }}</v-icon>
+                  Add preset(s)
+                </v-btn>
+                <HelpTip v-if="!hasImport" tip="presets" />
+              </template>
+              <template v-if="hasImport">
+                <v-btn
+                  v-test="'admin:hot.empty-state.import'"
+                  v-on="on"
+                  color="primary"
+                  class="ma-1"
+                  @click="showImport = true"
+                >
+                  <v-icon class="mr-2">{{ mdiImport }}</v-icon>
+                  Import spreadsheet
+                </v-btn>
+                <v-alert
+                  prominent
+                  shaped
+                  color="amber black--text"
+                  :icon="mdiInformationVariant"
+                  class="ma-1 mt-4 text-left"
+                >
+                  <p>Almost always, you should import your list of <strong>Dancers</strong> from a spreadsheet.</p>
+                  <p class="mb-0">This will also create and link the necessary <strong>Age Groups</strong> and <strong>Categories</strong>,<br /> so there's usually no need to fill those in beforehand.</p>
+                </v-alert>
+              </template>
             </div>
           </EmptyState>
         </div>
@@ -213,6 +226,7 @@ import {
   mdiExport,
   mdiPlaylistPlus,
   mdiTableAlert,
+  mdiInformationVariant,
 } from '@mdi/js';
 import {
   makeKeyValuePairColumn,
@@ -242,6 +256,7 @@ import competitionAdminSchema from '@/schemas/competition-admin';
 import RequiresPermission from '@/components/RequiresPermission.vue';
 import MiHotTable from '@/components/admin/MiHotTable.vue';
 import PresetPicker from '@/components/admin/PresetPicker.vue';
+import HelpTip from '@/components/HelpTip.vue';
 
 const AdminImport = () => import('@/components/admin/Import.vue');
 // const AdminImportResults = () => import('@/components/admin/ImportResults.vue');
@@ -275,6 +290,7 @@ export default {
       mdiExport,
       mdiPlaylistPlus,
       mdiTableAlert,
+      mdiInformationVariant,
 
       showImport: false,
       // showImportResults: false,
@@ -480,6 +496,7 @@ export default {
     AdminImport,
     // AdminImportResults,
     PresetPicker,
+    HelpTip,
   },
 };
 </script>
@@ -488,5 +505,8 @@ export default {
 .CompetitionAdmin > .v-toolbar .v-toolbar__content .v-btn.v-btn--icon.v-size--default {
   width: 36px;
   height: 36px;
+}
+.CompetitionAdmin .v-alert .v-icon {
+  color: inherit;
 }
 </style>

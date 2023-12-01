@@ -172,6 +172,7 @@
             <v-icon class="mr-2">{{ mdiPlaylistPlus }}</v-icon>
             Add preset(s)
           </v-btn>
+          <HelpTip tip="presets" />
         </div>
       </EmptyState>
     </Blade>
