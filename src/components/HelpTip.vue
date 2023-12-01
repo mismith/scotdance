@@ -3,11 +3,11 @@
     <template #activator="{ on }">
       <v-btn
         v-on="on"
-        icon
-        x-small
-        outlined
-        color="amber"
+        fab
+        elevation="0"
+        color="amber black--text"
         class="ml-2"
+        style="width: 20px; height: 20px;"
         @click="(e) => isTouch && e.stopPropagation()"
       >
         <v-icon small>{{ mdiInformationVariant }}</v-icon>
