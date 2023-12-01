@@ -1,6 +1,6 @@
 <template>
   <form class="Policies app-scroll-frame app-scroll pa-4">
-    <v-sheet id="privacy" class="px-8 py-4" style="max-width: 800px; margin: 0 auto;">
+    <v-sheet id="privacy" class="px-8 py-4 mb-4" style="max-width: 800px; margin: 0 auto;">
       <h2 class="subtitle">Privacy Policy</h2>
       <div>
         <p><em>ScotDance.app</em> uses enterprise-grade services and industry-standard security practices for storing and communicating all data. <em>ScotDance.app</em> does not share, sell, or advertise with user data in any capacity.</p>
@@ -25,6 +25,20 @@
           <li>this information is publicly shareable, given that you are explicitly entering into the system</li>
           <li>any potentially sensitive information input is done so at your own discretion</li>
         </ul>
+
+        <br />
+        <v-divider />
+
+        <p>If desired, you can <strong>permanently delete your <em>ScotDance.app</em> account</strong> and all associated data. To do so:</p>
+        <ol>
+          <li>log into your account,</li>
+          <li>visit the <router-link :to="{ name: 'profile' }">My Profile</router-link> page,</li>
+          <li>select "Delete Account",</li>
+          <li>enter your password into the confirmation dialog.</li>
+        </ol>
+
+        <br />
+        <v-divider />
 
         <p>Additionally, a complete list of third-party products/services used to administer <em>ScotDance.app</em> is available <a href="https://github.com/mismith/scotdance#admin" target="_blank">on Github</a>.</p>
       </div>
