@@ -11,7 +11,7 @@
 import { arrayMoveByIndex } from 'array-move-multiple';
 import {
   idKey,
-  orderByKey,
+  userDragOrderKey,
   db,
 } from '@/helpers/firebase';
 import {
@@ -95,7 +95,7 @@ export default {
           const afterReorderIds = arrayMoveByIndex(beforeReorderIds, movedRowIndexes, finalIndex);
           const changes = afterReorderIds.reduce((acc, id, index) => {
             if (id) {
-              acc[`${id}/${orderByKey}`] = index;
+              acc[`${id}/${userDragOrderKey}`] = index;
             }
             return acc;
           }, {});

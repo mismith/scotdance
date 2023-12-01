@@ -108,8 +108,8 @@ import {
 import {
   idKey,
   valueKey,
-  orderByKey,
   toOrderedArray,
+  sortByUserDragOrder,
 } from '@/helpers/firebase';
 import {
   isTabDisabled,
@@ -219,39 +219,49 @@ export default {
         .sort(sortByKey('$number')); // sort by number
     },
     groups() {
-      return this.groupsRaw
-        .map((group, i) => groupExtender(group, i, this.categories))
-        .filter(isNotEmptyObject);
+      return sortByUserDragOrder(
+        this.groupsRaw
+          .map((group, i) => groupExtender(group, i, this.categories))
+          .filter(isNotEmptyObject),
+      );
     },
     categories() {
-      return this.categoriesRaw
-        .filter(isNotEmptyObject);
+      return sortByUserDragOrder(
+        this.categoriesRaw
+          .filter(isNotEmptyObject),
+      );
     },
     dances() {
-      return this.dancesRaw
-        .map((dance) => danceExtender(dance))
-        .filter(isNotEmptyObject);
+      return sortByUserDragOrder(
+        this.dancesRaw
+          .map((dance) => danceExtender(dance))
+          .filter(isNotEmptyObject),
+      );
     },
     staff() {
-      return this.staffRaw
-        .map((member) => ({
-          ...member,
-          $name: `${member.firstName || ''} ${member.lastName || ''}`.trim(),
-        }))
-        .filter(isNotEmptyObject);
+      return sortByUserDragOrder(
+        this.staffRaw
+          .map((member) => ({
+            ...member,
+            $name: `${member.firstName || ''} ${member.lastName || ''}`.trim(),
+          }))
+          .filter(isNotEmptyObject),
+      );
     },
     platforms() {
-      return this.platformsRaw
-        .filter(isNotEmptyObject)
-        .map((platform) => ({
-          ...platform,
-          $name: platform.name ? (
-            // @HACK: allow 'skipping' the "Platform " prefix by starting with an equals sign
-            platform.name[0] === '='
-              ? platform.name.slice(1)
-              : `Platform ${platform.name.replace(/^Platform /, '')}`
-          ).trim() : '',
-        }));
+      return sortByUserDragOrder(
+        this.platformsRaw
+          .filter(isNotEmptyObject)
+          .map((platform) => ({
+            ...platform,
+            $name: platform.name ? (
+              // @HACK: allow 'skipping' the "Platform " prefix by starting with an equals sign
+              platform.name[0] === '='
+                ? platform.name.slice(1)
+                : `Platform ${platform.name.replace(/^Platform /, '')}`
+            ).trim() : '',
+          })),
+      );
     },
     draws() {
       return this.drawsRaw;
@@ -334,15 +344,15 @@ export default {
       if (this.dancersRaw) this.$unbind('dancersRaw');
       this.$bindAsArray('dancersRaw', this.competitionDataRef.child('dancers'));
       if (this.groupsRaw) this.$unbind('groupsRaw');
-      this.$bindAsArray('groupsRaw', this.competitionDataRef.child('groups').orderByChild(orderByKey));
+      this.$bindAsArray('groupsRaw', this.competitionDataRef.child('groups'));
       if (this.categoriesRaw) this.$unbind('categoriesRaw');
-      this.$bindAsArray('categoriesRaw', this.competitionDataRef.child('categories').orderByChild(orderByKey));
+      this.$bindAsArray('categoriesRaw', this.competitionDataRef.child('categories'));
       if (this.dancesRaw) this.$unbind('dancesRaw');
-      this.$bindAsArray('dancesRaw', this.competitionDataRef.child('dances').orderByChild(orderByKey));
+      this.$bindAsArray('dancesRaw', this.competitionDataRef.child('dances'));
       if (this.staffRaw) this.$unbind('staffRaw');
-      this.$bindAsArray('staffRaw', this.competitionDataRef.child('staff').orderByChild(orderByKey));
+      this.$bindAsArray('staffRaw', this.competitionDataRef.child('staff'));
       if (this.platformsRaw) this.$unbind('platformsRaw');
-      this.$bindAsArray('platformsRaw', this.competitionDataRef.child('platforms').orderByChild(orderByKey));
+      this.$bindAsArray('platformsRaw', this.competitionDataRef.child('platforms'));
       // data objects
       if (this.drawsRaw) this.$unbind('drawsRaw');
       this.$bindAsObject('drawsRaw', this.competitionDataRef.child('draws'));

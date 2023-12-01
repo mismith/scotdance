@@ -3,6 +3,7 @@ import 'firebase/auth';
 import 'firebase/database';
 import 'firebase/storage';
 import 'firebase/functions';
+import orderBy from 'lodash.orderby';
 
 import { isCypress, isDev } from './env';
 
@@ -30,7 +31,7 @@ if (isDev()) {
 export const pushidRegex = /^[-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz]{20}$/;
 export const idKey = '.key';
 export const valueKey = '.value';
-export const orderByKey = '_order';
+export const userDragOrderKey = '_order';
 export const db = firebase.database().ref(FIREBASE_ENV);
 
 export const buckets = firebase.storage().ref(FIREBASE_ENV);
@@ -63,3 +64,14 @@ export const toOrderedArray = (obj) => {
       return 0;
     });
 };
+
+export function sortByUserDragOrder(array) {
+  return orderBy(
+    array
+      .map((item, i, arr) => ({
+        _order: arr.length,
+        ...item,
+      })),
+    [userDragOrderKey, idKey],
+  );
+}
