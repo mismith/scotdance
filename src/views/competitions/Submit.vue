@@ -178,7 +178,7 @@ export default {
         ...submission,
         [step[idKey]]: (step.fields || []).reduce((fields, field) => ({
           ...fields,
-          [field.data]: field.default || null,
+          [field.data]: (typeof field.default === 'function' ? field.default(this) : field.default) || null,
         }), {}),
       }), {});
       this.submitted = false;
@@ -187,13 +187,13 @@ export default {
     handleStart() {
       const start = () => {
         this.submission.contact = {
-          name: this.$store.state.me.displayName,
-          email: this.$store.state.me.email,
           ...this.submission.contact,
+          name: this.me.displayName,
+          email: this.me.email,
         };
         this.currentStep += 1;
       };
-      if (this.$store.state.me) {
+      if (this.me) {
         return start();
       }
 

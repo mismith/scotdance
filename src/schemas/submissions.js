@@ -127,13 +127,18 @@ export default {
       {
         data: 'name',
         title: 'Your Name',
+        default: (vm) => vm.me?.displayName,
         required: true,
       },
       {
         data: 'email',
         title: 'Your Email',
         type: 'email',
+        description: 'This is the email on your current account, and it won\'t be displayed publicly.',
+        isDescriptionPersistent: true,
+        default: (vm) => vm.me?.email,
         required: true,
+        disabled: true,
       },
       {
         data: 'message',
