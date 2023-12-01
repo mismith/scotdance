@@ -79,6 +79,12 @@
                     :prop="blade.name"
                     @select="items => items.map(item => handleListItemCreate(blade, item, blade.items().length))"
                   >
+                    <template #title>
+                      <v-card-title>
+                        Select {{ blade.collection || 'preset' }}(s) to add:
+                        <HelpTip v-if="blade.helpTip"><div v-html="blade.helpTip" /></HelpTip>
+                      </v-card-title>
+                    </template>
                     <template #activator="{ on }">
                       <a v-on="on">Add one.</a>
                     </template>
