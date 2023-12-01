@@ -25,21 +25,41 @@
             <div class="pa-4 ma-auto">
               <p>The <strong>Excel spreadsheet</strong> (.xlsx file) should have the following structure:</p>
               <table class="demo mb-3">
-                <tbody v-for="category in 2" :key="category">
-                  <tr>
-                    <td>Category / Age Group</td>
-                    <td v-for="td in 3" :key="td">&nbsp;</td>
-                  </tr>
-                  <tr v-for="dancer in 3" :key="dancer">
-                    <td>Dancer Number</td>
-                    <td>First Name</td>
-                    <td>Last Name</td>
-                    <td>Location</td>
-                  </tr>
-                  <tr v-if="category === 2">
-                    <td v-for="td in 4" :key="td">...</td>
-                  </tr>
-                </tbody>
+                <tr>
+                  <td><span>Premier 16 & Under 18 Years</span></td>
+                  <td v-for="td in 3" :key="td">&nbsp;</td>
+                </tr>
+                <tr>
+                  <td>214</td><td>Lizzie</td><td>Dickinson</td><td>Brookfort, BC</td>
+                </tr>
+                <tr>
+                  <td>333</td><td>Carrie</td><td>Yundt</td><td>Dillanfort, AB</td>
+                </tr>
+                <tr>
+                  <td>193</td><td>Reece</td><td>Goodwin</td><td>Hillsstad, ON</td>
+                </tr>
+                <tr>
+                  <td v-for="td in 4" :key="td">&nbsp;</td>
+                </tr>
+                <tr v-if="category === 2">
+                  <td v-for="td in 4" :key="td">...</td>
+                </tr>
+                <tr>
+                  <td><span>Premier 18 Years & Over</span></td>
+                  <td v-for="td in 3" :key="td">&nbsp;</td>
+                </tr>
+                <tr>
+                  <td>123</td><td>Braeden</td><td>Hudson</td><td>Port Angelo, NS</td>
+                </tr>
+                <tr>
+                  <td>494</td><td>Jaylin</td><td>Nienow</td><td>Quigleybury, MB</td>
+                </tr>
+                <tr>
+                  <td>661</td><td>Anne</td><td>Dietrich</td><td>Sept-Îles, QC</td>
+                </tr>
+                <tr>
+                  <td v-for="td in 4" :key="td">...</td>
+                </tr>
               </table>
               <footer class="text-center">
                 <v-btn href="/examples/ScotDance-Import-Template.xlsx" download v-test="'import:download-template'">
@@ -425,6 +445,12 @@ export default {
       padding: 1px 4px;
       border: 1px solid #ccc;
       border-width: 1px 1px 0 0;
+      white-space: nowrap;
+
+      > span {
+        position: absolute;
+        line-height: 0;
+      }
     }
   }
 }
