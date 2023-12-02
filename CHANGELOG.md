@@ -1,5 +1,9 @@
 # Release Notes
 
+## 3.6.0 - Dec 2, 2023
+- various minor UX improvements: allow toggling password visibility; fix/avoid an issue with mismatched email when submitting a competition; improve helper tip contrast in light mode; add account deletion policy details
+- enhancements to the competition admin experience: fix a bug that caused new rows to appear above drag-reordered rows; generally improve guidance for using presets + importing spreadsheets
+
 ## 3.5.0 - Jul 22, 2023
 - various fixes and improvements: allow cancelling edit email & password dialogs, better location nesting, date picker auto-opening, fix live chat button clickable area, fix Draws table editing & copy/pasting, improve long Dancers list performance
 - admin: allow reordering table rows for: groups, categories, dances, attribution, & platforms

@@ -69,7 +69,7 @@ Links to the admin panels needed to manage this project:
         - Once open, consider running the app in a simulator to ensure everything is working well
     3. In the menu bar, select "Product" > "Archive" (if you can't select it, make sure you are targeting "Any iOS Device")
     4. Click "Distribute App"
-    5. Follow the wizard (App Store Connect, Upload, etc.)
+    5. Follow the wizard ("Test Flight & App Store", etc.)
     6. In App Store Connect, create a New iOS Version, then complete/fill out all remaining steps/info in form
         - the new build should be processed and ready to be selected shortly (~15 mins)
 
@@ -82,7 +82,7 @@ Links to the admin panels needed to manage this project:
     2. Open project in Android Studio (`npx cap open android`)
         - Once open, consider running the app in a simulator to ensure everything is working well
     3. In the menu bar, select "Build" > "Generate Signed Bundle / APK…"
-    4. Follow the wizard (AAB, enter keystore creds, choose "release", etc)
+    4. Follow the wizard (AAB, "release", etc.)
     5. Open Google Play Console
     6. Create a new Production Release
     7. Select/Drag in `android/app/release/app-release.aab`
