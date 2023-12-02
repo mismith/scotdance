@@ -1,7 +1,12 @@
 import { COMPETITION_UID, createCompetition } from '../helpers/competition';
 import seed from '../helpers/seed';
 import { createSubmission, SUBMISSION_UID } from '../helpers/submission';
-import { createUser, USER_CREDENTIALS, USER_UID } from '../helpers/user';
+import {
+  createUser,
+  USER_CREDENTIALS,
+  USER_DISPLAY_NAMES,
+  USER_UID,
+} from '../helpers/user';
 
 beforeEach(() => {
   seed.reset();
@@ -160,9 +165,9 @@ describe('Competitions', () => {
     cy.getTest('submit:step.contact').should('be.visible');
     cy.getTest('submit:step.contact:next').click();
     cy.getTest('submit:step.contact').find('form').as('form');
-    cy.get('@form').find(':invalid').should('have.length', 3);
-    cy.get('@form').find('input[name=name]').type('First Last', { force: true });
-    cy.get('@form').find('input[name=email]').type(USER_CREDENTIALS[USER_UID.TEST][0], { force: true });
+    cy.get('@form').find(':invalid').should('have.length', 1);
+    cy.get('@form').find('input[name=name]').should('have.value', USER_DISPLAY_NAMES[USER_UID.TEST]);
+    cy.get('@form').find('input[name=email]').should('have.value', USER_CREDENTIALS[USER_UID.TEST][0]);
     cy.get('@form').find('input[name=disclaimer]').check({ force: true });
     cy.get('@form').find(':invalid').should('have.length', 0);
     cy.getTest('submit:step.contact:next').click({ force: true });

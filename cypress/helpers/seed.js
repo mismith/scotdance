@@ -5,8 +5,17 @@ function database(method, ...args) {
   return cy.task('firebase-admin:database', { method, args });
 }
 
-auth.createUser = (data, isAdmin = false) => {
-  auth('createUser', data).then(({ uid }) => {
+auth.createUser = (
+  {
+    uid,
+    email,
+    password,
+    displayName = null,
+  },
+  isAdmin = false,
+) => {
+  auth('createUser', { uid, email, password }).then(() => {
+    database.set(`development/users/${uid}`, { email, displayName });
     if (isAdmin) {
       database.set(`development/users:permissions/${uid}/admin`, true);
     }
