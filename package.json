@@ -99,7 +99,7 @@
     "pilfer-package": "^1.0.0",
     "postcss": "^8.4.27",
     "rollup-plugin-visualizer": "^5.8.3",
-    "sass": "^1.26.12",
+    "sass": "1.32",
     "unplugin-vue-components": "^0.16.0",
     "vite": "^3.2.7",
     "vite-plugin-eslint": "^1.8.1",
