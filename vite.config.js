@@ -5,7 +5,7 @@ import vue from '@vitejs/plugin-vue2';
 import ViteComponents from 'unplugin-vue-components/vite';
 import { VuetifyResolver } from 'unplugin-vue-components/resolvers';
 import eslintPlugin from 'vite-plugin-eslint';
-import visualizer from 'rollup-plugin-visualizer';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 const customVuetifyLikeComponents = [
   'VFile',
@@ -39,9 +39,9 @@ export default defineConfig({
     mkcert(),
     vue(),
     ViteComponents({
-        resolvers: [
-          (name) => !customVuetifyLikeComponents.includes(name) && VuetifyResolver()(name),
-        ],
+      resolvers: [
+        (name) => !customVuetifyLikeComponents.includes(name) && VuetifyResolver(name),
+      ],
     }),
     eslintPlugin(),
   ],
