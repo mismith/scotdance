@@ -161,8 +161,8 @@
     "not ie <= 11"
   ],
   "engines": {
-    "node": "18",
-    "npm": "9"
+    "node": ">=18",
+    "npm": ">=9"
   },
   "license": "MIT",
   "repository": {
