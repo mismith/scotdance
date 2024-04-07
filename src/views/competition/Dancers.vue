@@ -361,6 +361,8 @@ export default {
 
 <style lang="scss">
 .FavoriteDancerSuggestionsBanner {
+  cursor: pointer;
+
   .v-banner__actions {
     margin-left: 0 !important;
   }
