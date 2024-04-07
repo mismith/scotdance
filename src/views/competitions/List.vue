@@ -310,7 +310,7 @@ export default {
     opacity: 0.67;
     margin-left: 12px;
     margin-top: 32px;
-    margin-bottom: 32px;
+    margin-bottom: 32px + 48px;
   }
 }
 </style>
