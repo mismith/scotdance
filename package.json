@@ -51,7 +51,7 @@
     "deep-property": "^1.1.0",
     "fast-html-parser": "^1.0.1",
     "firebase": "^8.10.0",
-    "fuse.js": "^6.5.3",
+    "fuse.js": "^7.0.0",
     "handsontable": "^11.1.0",
     "lodash.find": "^4.6.0",
     "lodash.groupby": "^4.6.0",
