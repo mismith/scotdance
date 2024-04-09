@@ -64,6 +64,7 @@ export default {
 .FileUploaderCellRenderer {
   position: relative;
   height: 22px; // @HACK: avoid autoRowSize height issues
+  background-color: transparent !important; // to let htInvalid coloring show through
   margin: 0px -4px;
 
   .v-progress-linear {

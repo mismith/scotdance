@@ -27,6 +27,9 @@ import {
   textRenderer,
 } from 'handsontable/renderers';
 import {
+  autocompleteValidator,
+} from 'handsontable/validators';
+import {
   registerCellType,
   // AutocompleteCellType,
   // CheckboxCellType,
@@ -169,6 +172,7 @@ registerCellType('file', {
     });
   },
   editor: TextEditor,
+  validator: autocompleteValidator,
 });
 
 export function makeKeyValuePairColumn(column, valueProp = '$name', keyProp = idKey) {

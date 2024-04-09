@@ -75,6 +75,11 @@ export default {
               vm.$emit('change', aggregated);
             }
           }
+          this.validateRows(changes.map(([row]) => row));
+        };
+        augmentedSettings.afterLoadData = async function afterLoadData(data) {
+          await vm.$nextTick(); // wait for data to be loaded
+          this.validateRows(data.length ? [...Array(data.length - (augmentedSettings.minSpareRows) || 0).keys()] : []);
         };
         augmentedSettings.beforeRemoveRow = function beforeRemoveRow(index, amount) {
           const aggregated = {};
@@ -103,6 +108,14 @@ export default {
           return false; // don't update UI (wait for data change to do so, otherwise it get out of sync)
         };
       }
+
+      augmentedSettings.columns = (augmentedSettings.columns || []).map((column) => {
+        if (column.required && !column.validator) {
+          // eslint-disable-next-line no-param-reassign
+          column.validator = (value, callback) => callback(Boolean(value));
+        }
+        return column;
+      });
 
       return augmentedSettings;
     },

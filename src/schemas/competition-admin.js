@@ -109,17 +109,14 @@ export default {
         {
           data: 'firstName',
           title: 'First Name',
-          required: true,
         },
         {
           data: 'lastName',
           title: 'Last Name',
-          required: true,
         },
         {
           data: 'location',
           title: 'Location',
-          required: true,
         },
         {
           data: 'description',
@@ -384,12 +381,10 @@ export default {
         {
           data: 'lastName',
           title: 'Last Name',
-          required: true,
         },
         {
           data: 'location',
           title: 'Location',
-          required: true,
         },
         {
           data: 'groupId',
