@@ -1,4 +1,5 @@
 import firebase from 'firebase/app';
+import 'firebase/analytics';
 import 'firebase/auth';
 import 'firebase/database';
 import 'firebase/storage';
@@ -15,8 +16,11 @@ const config = {
   projectId: 'firebase-scotdance',
   storageBucket: 'firebase-scotdance.appspot.com',
   messagingSenderId: '635645850119',
+  appId: '1:635645850119:web:96255e79df76024e0e70a2',
+  measurementId: 'G-SFLYLX3P6L',
 };
 export const app = firebase.initializeApp(config);
+export const analytics = firebase.analytics(app);
 
 const FIREBASE_ENV = isDev() ? 'development' : 'production';
 if (isDev()) {
