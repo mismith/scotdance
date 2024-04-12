@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: scotdance-typesense
+    env: docker
+    dockerfilePath: ./Dockerfile.typesense
+    repo: https://github.com/mismith/scotdance.git
+    plan: starter
+    healthCheckPath: /health
+    disk:
+      name: typesense-data
+      mountPath: /app/typesense-data
+      sizeGB: 1
