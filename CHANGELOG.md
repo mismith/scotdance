@@ -1,5 +1,10 @@
 # Release Notes
 
+## 3.7.0 - Apr 11, 2024
+- admin: highlight invalid table cells
+- fix some minor bugs
+- upgrade of bunch of internals, including some more preparaton for relaunch the "Search Dancers" page
+
 ## 3.6.0 - Dec 2, 2023
 - various minor UX improvements: allow toggling password visibility; fix/avoid an issue with mismatched email when submitting a competition; improve helper tip contrast in light mode; add account deletion policy details
 - enhancements to the competition admin experience: fix a bug that caused new rows to appear above drag-reordered rows; generally improve guidance for using presets + importing spreadsheets
