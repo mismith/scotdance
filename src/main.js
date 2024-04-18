@@ -14,7 +14,7 @@ import { Device } from '@capacitor/device';
 import { SplashScreen } from '@capacitor/splash-screen';
 
 import { isDev } from '@/helpers/env';
-import { firebase } from '@/helpers/firebase';
+import { analytics, firebase } from '@/helpers/firebase';
 import { getTitleChunks, setTitle } from '@/helpers/router';
 
 import App from '@/App.vue';
@@ -137,6 +137,9 @@ window.addEventListener('statusTap', () => {
 firebase.auth().onAuthStateChanged((me) => {
   if (me) {
     store.dispatch('auth', me);
+    if (me?.uid) {
+      analytics.setUserId(me.uid);
+    }
   } else {
     store.dispatch('unauth');
   }
@@ -172,7 +175,7 @@ router.beforeEach(async (to, from, next) => {
 
   return next();
 });
-router.afterEach(async (to) => {
+router.afterEach(async (to, from) => {
   try {
     // set page title
     const titleChunks = await getTitleChunks(to);
@@ -192,6 +195,15 @@ router.afterEach(async (to) => {
     },
   };
   Vue.localStorage.set('routeInfo', routeInfo);
+
+  if (to?.fullPath !== from?.fullPath) {
+    // see index.html for where the default page_view is disabled
+    analytics.logEvent('page_view', {
+      page_title: document.title,
+      page_location: window.location.href,
+      page_path: to.fullPath,
+    });
+  }
 });
 
 // hide by default (e.g. until navbar help icon is clicked)
