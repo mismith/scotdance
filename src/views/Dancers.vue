@@ -305,7 +305,7 @@ export default {
       window.$crisp.push([
         'do',
         'message:send',
-        ['text', `I think there might be a mismatch on this page: ${window.location.href}`],
+        ['text', `I think there might be a mismatch on this page: ${this.$route.fullPath}`],
       ]);
     },
   },
