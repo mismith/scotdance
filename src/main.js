@@ -137,7 +137,7 @@ window.addEventListener('statusTap', () => {
 firebase.auth().onAuthStateChanged((me) => {
   if (me) {
     store.dispatch('auth', me);
-    if (me?.uid) {
+    if (analytics && me?.uid) {
       analytics.setUserId(me.uid);
     }
   } else {
@@ -196,7 +196,7 @@ router.afterEach(async (to, from) => {
   };
   Vue.localStorage.set('routeInfo', routeInfo);
 
-  if (to?.fullPath !== from?.fullPath) {
+  if (analytics && to?.fullPath !== from?.fullPath) {
     // see index.html for where the default page_view is disabled
     analytics.logEvent('page_view', {
       page_title: document.title,
