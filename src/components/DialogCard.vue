@@ -4,7 +4,7 @@
     v-model="isOpen"
     :max-width="fullWidth ? 'none' : 300"
     scrollable
-    class="DialogCard"
+    :content-class="`DialogCard ${contentClass || ''}`"
     @keydown.esc.stop="handleCancel"
   >
     <template #activator="props">
@@ -85,6 +85,7 @@ export default {
     disabled: Boolean,
     fullWidth: Boolean,
     async: Boolean,
+    contentClass: String,
   },
   computed: {
     isOpen: {

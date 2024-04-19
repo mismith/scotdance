@@ -4,7 +4,7 @@
     async
     @cancel="forgot = false"
     @submit="forgot ? reset() : login()"
-    class="LoginDialog"
+    content-class="LoginDialog"
   >
     <template v-if="!forgot">
       <v-text-field

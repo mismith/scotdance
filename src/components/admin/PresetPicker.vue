@@ -2,7 +2,7 @@
   <DialogCard
     v-model="dialogOpen"
     title="Select preset(s) to add:"
-    class="PresetPicker"
+    content-class="PresetPicker"
   >
     <template #title><slot name="title" /></template>
 

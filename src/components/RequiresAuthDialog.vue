@@ -1,5 +1,5 @@
 <template>
-  <DialogCard v-model="dialogVisible" cancel-label="Not Now" class="RequiresAuthDialog">
+  <DialogCard v-model="dialogVisible" cancel-label="Not Now" content-class="RequiresAuthDialog">
     <template #title="props">
       <slot name="title" v-bind="props" />
     </template>

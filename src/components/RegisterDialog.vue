@@ -3,7 +3,7 @@
     v-model="registerVisible"
     async
     @submit="register"
-    class="RegisterDialog"
+    content-class="RegisterDialog"
   >
     <v-text-field
       label="Email *"
