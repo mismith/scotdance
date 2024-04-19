@@ -87,7 +87,7 @@
 
         <v-stepper-content :step="2" class="pa-0">
           <v-tabs v-if="workbook" v-model="dancersSheetIndex" show-arrows>
-            <v-tab v-for="(sheetName, sheetIndex) of workbook.SheetNames" :key="sheetIndex">
+            <v-tab v-for="(sheetName, sheetIndex) of workbook.SheetNames" :key="sheetIndex" v-test="'import:step.2:tabs'">
               {{ sheetName }}
             </v-tab>
           </v-tabs>

@@ -121,6 +121,7 @@ describe('Competition Admin', () => {
 
     // @TODO: test previous button
 
+    cy.getTest('import:step.2:tabs').should('have.length.gt', 1);
     cy.getTest('import:step.2:next').click();
     // @TODO: check multiple sheet support
     // @TODO: test previous button
