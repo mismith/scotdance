@@ -37,9 +37,9 @@ export default defineConfig({
   plugins: [
     createVuePlugin(),
     ViteComponents({
-        resolvers: [
-          (name) => !customVuetifyLikeComponents.includes(name) && VuetifyResolver()(name),
-        ],
+      resolvers: [
+        (name) => !customVuetifyLikeComponents.includes(name) && VuetifyResolver()(name),
+      ],
     }),
     eslintPlugin({
       cache: false, // it was getting stale and causing false positives
