@@ -198,7 +198,7 @@ export default {
     },
     competitionExists() {
       if (!this.isSecretRoute) {
-        if (this.competition[valueKey] !== undefined && this.competition[valueKey] !== null) return false;
+        if (this.competition[valueKey] !== undefined) return false;
         if (!this.isCompetitionAdmin && !this.competition.listed) return false;
       }
       return true;
