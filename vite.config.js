@@ -22,7 +22,7 @@ export default defineConfig({
       ],
       output: {
         manualChunks: {
-          firebase: ['firebase'],
+          firebase: ['firebase/compat'],
           vuetify: ['vuetify', 'vuetify/lib'],
         },
       },
