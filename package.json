@@ -5,7 +5,7 @@
   "author": "Murray Rowan <murray@mismith.info>",
   "scripts": {
     "is:cy": "touch ./functions/IS_CYPRESS",
-    "not:cy": "rm ./functions/IS_CYPRESS",
+    "not:cy": "rm -rf ./functions/IS_CYPRESS",
     "emulate:firebase": "firebase emulators:start --import=.firebase/emulator-data",
     "emulate:typesense": "./typesense-server --log-dir .typesense/logs --data-dir .typesense/emulator-data --listen-port=8108 --api-key=xyz --enable-cors",
     "dev:functions": "npm run --prefix functions/ dev",
