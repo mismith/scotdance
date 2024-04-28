@@ -1,5 +1,8 @@
 # Release Notes
 
+## 3.7.1 - Apr 27, 2024
+- various minor improvements, fixes, upgrades, and tests
+
 ## 3.7.0 - Apr 11, 2024
 - admin: highlight invalid table cells
 - fix some minor bugs
