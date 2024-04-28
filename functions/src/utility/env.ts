@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readFileSync } from 'fs';
 
 export function isEmulator() {
   return Boolean(process.env.FUNCTIONS_EMULATOR);
@@ -7,8 +7,8 @@ export function isEmulator() {
 export function isCypress() {
   try {
     readFileSync('./IS_CYPRESS', 'utf8');
-  return true;
+    return true;
   } catch (e) {
-  return false;
+    return false;
   }
 }
