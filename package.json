@@ -31,7 +31,7 @@
     "build:www": "vite build",
     "build:functions": "npm run --prefix functions/ build",
     "build:ci": "npm run build:www && npm run build:functions",
-    "build": "npm run sync-version && npx cap sync && npm run notify 'Build Complete'",
+    "build": "npm run lint && npm run sync-version && npx cap sync && npm run notify 'Build Complete'",
     "report": "npm run build:www && open stats.html",
     "release": "git commit -a -m $npm_package_version && git tag \"v${npm_package_version}\"",
     "deploy": "firebase deploy && git push origin HEAD:main --tags"
