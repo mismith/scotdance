@@ -72,6 +72,15 @@
               @field-input="handleStepInput(step, $event)"
               @submit="handleStepSubmit(step)"
             >
+              <template #field="{ field, attrs, on }">
+                <DynamicField
+                  v-if="field.data === 'venue'"
+                  v-bind="attrs"
+                  v-on="on"
+                  :field="{ ...field, type: 'place' }"
+                  @place-pick="handleVenuePick"
+                />
+              </template>
               <footer class="mt-2">
                 <v-btn
                   type="submit"
@@ -122,9 +131,10 @@ import { mapState } from 'vuex';
 import pick from 'lodash.pick';
 import { mdiCheck, mdiEmailOutline } from '@mdi/js';
 import { idKey, db, toOrderedArray } from '@/helpers/firebase';
+import { getPlaceFields } from '@/helpers/maps';
 import steps, { checklists } from '@/schemas/submissions';
-import DynamicForm from '@/components/admin/DynamicForm.vue';
 import CompetitionInfo from '@/views/competition/Info.vue';
+import DynamicForm from '@/components/admin/DynamicForm.vue';
 
 export default {
   name: 'CompetitionsSubmit',
@@ -204,6 +214,22 @@ export default {
       return this.$store.commit('setCurrentDialog', 'submissions');
     },
 
+    handleVenuePick(placeObject) {
+      const data = this.submission.competition;
+      const { venue, address, location } = getPlaceFields(placeObject);
+      data.venue = venue;
+      if (!data.address) {
+        data.address = address;
+      }
+      if (!data.location) {
+        data.location = location;
+      }
+
+      this.preview = {
+        ...this.preview,
+        ...data,
+      };
+    },
     handleStepInput(step, change) {
       step.$isDirty = true; // eslint-disable-line no-param-reassign
 
