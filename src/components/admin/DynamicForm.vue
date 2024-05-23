@@ -1,5 +1,5 @@
 <template>
-  <v-form ref="form" v-model="value" class="DynamicForm" @submit.prevent="handleSubmit">
+  <v-form ref="form" v-model="modelValue" class="DynamicForm" @submit.prevent="handleSubmit">
     <DynamicField
       v-for="field in fields"
       :key="field.data"
@@ -25,10 +25,15 @@ export default {
     fields: Array,
     data: Object,
   },
-  watch: {
-    value(v) {
+  computed: {
+    modelValue: {
+      get() {
+        return this.value;
+      },
+      set(v) {
       this.$emit('input', v);
     },
+  },
   },
   methods: {
     handleInput(change) {
