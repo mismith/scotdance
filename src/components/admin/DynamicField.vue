@@ -107,6 +107,34 @@
       @change="handleChange()"
     />
 
+    <v-combobox
+      v-else-if="field.type === 'place'"
+      :value="value"
+      :name="field.data"
+      :label="field.title"
+      :required="field.required"
+      :readonly="field.readonly"
+      :disabled="field.disabled"
+      :hint="field.description"
+      :persistent-hint="field.isDescriptionPersistent"
+      :rules="rules"
+      :loading="placesLoading"
+      :items="placeSuggestions"
+      no-filter
+      item-text="displayName"
+      @update:search-input="handlePlaceSearchInput"
+      @change="handlePlaceChange"
+    >
+      <template #item="{ item, on, attrs }">
+        <v-list-item v-on="on" v-bind="attrs">
+          <v-list-item-content>
+            <v-list-item-title>{{ item.displayName }}</v-list-item-title>
+            <v-list-item-subtitle>{{ item.formattedAddress }}</v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+      </template>
+    </v-combobox>
+
     <v-text-field
       v-else
       v-model="value"
@@ -127,8 +155,10 @@
 
 <script>
 import { mdiCalendar } from '@mdi/js';
+import debounce from 'lodash.debounce';
 import { idKey } from '@/helpers/firebase';
 import FileUploader from '@/components/admin/FileUploader.vue';
+import { searchForPlaces } from '@/helpers/maps';
 
 export default {
   name: 'DynamicField',
@@ -142,6 +172,9 @@ export default {
       mdiCalendar,
 
       datePicking: false,
+
+      placesLoading: false,
+      placeSuggestions: [],
     };
   },
   computed: {
@@ -168,15 +201,40 @@ export default {
     },
   },
   methods: {
-    handleInput() {
+    handleInput(value = undefined) {
       this.$emit('input', {
-        [this.field.data]: this.data[this.field.data],
+        [this.field.data]: value !== undefined ? value : this.data[this.field.data],
       });
     },
-    handleChange() {
+    handleChange(value = undefined) {
       this.$emit('change', {
-        [this.field.data]: this.data[this.field.data],
+        [this.field.data]: value !== undefined ? value : this.data[this.field.data],
       });
+    },
+
+    searchForPlaces: debounce(async function placeSearch(place) {
+      this.placesLoading = true;
+      const placeSuggestions = await searchForPlaces(place);
+      this.placeSuggestions = placeSuggestions;
+      this.placesLoading = false;
+    }, 300),
+    handlePlaceSearchInput(placeString) {
+      if (placeString && placeString !== this.value) {
+        this.searchForPlaces(placeString);
+      }
+      this.handleInput(placeString);
+    },
+    async handlePlaceChange(placeObject) {
+      this.searchForPlaces.cancel?.(); // TODO: does this ever work?
+      this.placesLoading = false;
+
+      if (typeof placeObject === 'object' && placeObject.displayName) {
+        this.value = placeObject.displayName;
+        this.handleChange(placeObject.displayName);
+        this.$emit('place-pick', placeObject);
+      } else {
+        this.handleChange();
+      }
     },
   },
   components: {
