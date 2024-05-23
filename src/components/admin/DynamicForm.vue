@@ -1,13 +1,16 @@
 <template>
   <v-form ref="form" v-model="modelValue" class="DynamicForm" @submit.prevent="handleSubmit">
-    <DynamicField
-      v-for="field in fields"
-      :key="field.data"
-      :field="field"
-      :data="data"
-      @input="handleInput"
-      @change="handleChange"
-    />
+    <template v-for="field in fields">
+      <slot name="field" v-bind="{ field, attrs: { key: field.data, field, data }, on: { input: handleInput, change: handleChange} }">
+        <DynamicField
+          :key="field.data"
+          :field="field"
+          :data="data"
+          @input="handleInput"
+          @change="handleChange"
+        />
+      </slot>
+    </template>
     <slot />
   </v-form>
 </template>
@@ -31,9 +34,9 @@ export default {
         return this.value;
       },
       set(v) {
-      this.$emit('input', v);
+        this.$emit('input', v);
+      },
     },
-  },
   },
   methods: {
     handleInput(change) {
