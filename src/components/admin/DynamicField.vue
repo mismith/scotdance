@@ -15,6 +15,7 @@
       :hint="field.description"
       :persistent-hint="field.isDescriptionPersistent"
       :rules="rules"
+      :color="warning ? 'warning' : undefined"
       @input="handleInput()"
       @change="handleChange()"
     />
@@ -32,6 +33,7 @@
       :hint="field.description"
       :persistent-hint="field.isDescriptionPersistent"
       :rules="rules"
+      :color="warning ? 'warning' : undefined"
       @input="handleInput()"
       @change="handleChange()"
     />
@@ -56,6 +58,7 @@
           :persistent-hint="field.isDescriptionPersistent"
           :readonly="field.readonly"
           :rules="rules"
+          :color="warning ? 'warning' : undefined"
           :append-icon="mdiCalendar"
           :autocomplete="field.autocomplete || 'off'"
           @input="handleInput()"
@@ -81,6 +84,7 @@
       :hint="field.description"
       persistent-hint
       :rules="rules"
+      :color="warning ? 'warning' : undefined"
       style="flex-direction: column;"
       @input="handleInput()"
       @change="handleChange()"
@@ -101,6 +105,7 @@
       :hint="field.description"
       :persistent-hint="field.isDescriptionPersistent"
       :rules="rules"
+      :color="warning ? 'warning' : undefined"
       rows="1"
       auto-grow
       @input="handleInput()"
@@ -118,6 +123,7 @@
       :hint="field.description"
       :persistent-hint="field.isDescriptionPersistent"
       :rules="rules"
+      :color="warning ? 'warning' : undefined"
       :loading="placesLoading"
       :items="placeSuggestions"
       no-filter
@@ -147,14 +153,20 @@
       :hint="field.description"
       :persistent-hint="field.isDescriptionPersistent"
       :rules="rules"
+      :color="warning ? 'warning' : undefined"
       @input="handleInput()"
       @change="handleChange()"
     />
+
+    <aside v-if="warning" class="warning--text d-flex align-center caption">
+      <v-icon size="12" class="mr-1" style="color: inherit">{{ mdiAlert }}</v-icon>
+      {{ warning }}
+    </aside>
   </div>
 </template>
 
 <script>
-import { mdiCalendar } from '@mdi/js';
+import { mdiAlert, mdiCalendar } from '@mdi/js';
 import debounce from 'lodash.debounce';
 import { idKey } from '@/helpers/firebase';
 import FileUploader from '@/components/admin/FileUploader.vue';
@@ -169,6 +181,7 @@ export default {
   data() {
     return {
       idKey,
+      mdiAlert,
       mdiCalendar,
 
       datePicking: false,
@@ -198,6 +211,9 @@ export default {
           : true,
         ...(this.field.rules || []),
       ];
+    },
+    warning() {
+      return this.value && this.field.warningRules?.map((rule) => rule(this.value)).find((v) => typeof v === 'string');
     },
   },
   methods: {

@@ -42,6 +42,9 @@ export const submissionsFields = [
     title: 'Location',
     description: 'e.g. "Calgary, AB"',
     isDescriptionPersistent: true,
+    warningRules: [
+      (v) => /^.*?[^\s], [A-Z]{2}$/.test(v) || 'Format doesn\'t match exactly, which may delay approval',
+    ],
   },
   {
     data: 'description',
@@ -55,6 +58,9 @@ export const submissionsFields = [
     title: 'RSOBHD Registration Number',
     description: 'e.g. "C-AB-CO-12-3456"',
     isDescriptionPersistent: true,
+    warningRules: [
+      (v) => /^C-[A-Z]{2}-CO-\d{2}-\d{4}$/.test(v) || 'Format doesn\'t match exactly, which may delay approval',
+    ],
   },
 ];
 
