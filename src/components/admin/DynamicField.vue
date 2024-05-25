@@ -244,11 +244,12 @@ export default {
       this.searchForPlaces.cancel?.(); // TODO: does this ever work?
       this.placesLoading = false;
 
-      if (typeof placeObject === 'object' && placeObject.displayName) {
-        this.value = placeObject.displayName;
-        this.handleChange(placeObject.displayName);
+      if (typeof placeObject === 'object') {
+        // emit place-pick event instead of usual change event
         this.$emit('place-pick', placeObject);
       } else {
+        // use text verbatim
+        this.value = placeObject;
         this.handleChange();
       }
     },

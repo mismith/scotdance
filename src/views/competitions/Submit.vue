@@ -74,11 +74,11 @@
             >
               <template #field="{ field, attrs, on }">
                 <DynamicField
-                  v-if="field.data === 'venue'"
+                  v-if="field.data === 'venue' || field.data === 'address'"
                   v-bind="attrs"
                   v-on="on"
                   :field="{ ...field, type: 'place' }"
-                  @place-pick="handleVenuePick"
+                  @place-pick="(placeObject) => handlePlacePick(placeObject, field.data)"
                 />
               </template>
               <footer class="mt-2">
@@ -214,11 +214,13 @@ export default {
       return this.$store.commit('setCurrentDialog', 'submissions');
     },
 
-    handleVenuePick(placeObject) {
+    handlePlacePick(placeObject, type) {
       const data = this.submission.competition;
       const { venue, address, location } = getPlaceFields(placeObject);
-      data.venue = venue;
-      if (!data.address) {
+      if (type === 'venue' || !data.venue) {
+        data.venue = venue;
+      }
+      if (type === 'address' || !data.address) {
         data.address = address;
       }
       if (!data.location) {
