@@ -66,9 +66,7 @@
             <div class="title my-4">{{ currentDialogData.$name }}</div>
             <div class="subtitle-1">{{ currentDialogData.location }}</div>
             <div v-if="currentDialogData.website" class="subtitle-1">
-              <a :href="formatExternalURL(currentDialogData.website)" target="_blank" class="ext">
-                {{ formatHumanURL(currentDialogData.website) }}
-              </a>
+              <a :href="formatExternalURL(currentDialogData.website)" target="_blank" class="ext">{{ formatHumanURL(currentDialogData.website) }}</a>
             </div>
           </div>
         </v-card-title>

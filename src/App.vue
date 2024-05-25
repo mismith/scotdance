@@ -578,8 +578,11 @@ a {
   & .ext {
     &::after {
       content: '\2197\00FE0E'; // append \00FE0E to prevent iOS/Android from emojifying the arrow
+      display: inline-block;
       margin-left: 0.25em;
+      font-size: 0.67em;
       text-decoration: none;
+      vertical-align: middle;
     }
   }
 }

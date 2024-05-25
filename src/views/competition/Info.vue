@@ -27,9 +27,7 @@
               :href="`https://maps.google.com/?q=${competition.venue},+${competition.address},+${competition.location}`"
               target="_blank"
               class="ext"
-            >
-              {{ competition.venue }}
-            </a>
+            >{{ competition.venue }}</a>
             <span v-else>{{ competition.venue }}</span>
           </div>
           <p>{{ competition.location }}</p>
