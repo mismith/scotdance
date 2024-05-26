@@ -1,5 +1,10 @@
 # Release Notes
 
+## 3.8.0 - May 25, 2024
+- add Google Maps autocomplete to submission form
+- add extra warnings about mis-formatted submission fields leading to delayed approvals
+- tweak style of external links arrow
+
 ## 3.7.1 - Apr 27, 2024
 - various minor improvements, fixes, upgrades, and tests
 
