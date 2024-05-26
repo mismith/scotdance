@@ -16,10 +16,10 @@
         </p>
         <div v-if="!isNative" class="store-badges">
           <a href="https://itunes.apple.com/us/app/scotdance/id1386475626?mt=8" target="_blank" class="ma-2">
-            <img src="@/assets/img/app-store.svg" alt="Download on the App Store" />
+            <img src="@/assets/img/app-store.svg?url" alt="Download on the App Store" />
           </a>
           <a href="https://play.google.com/store/apps/details?id=info.mismith.scotdance" target="_blank" class="ma-2">
-            <img src="@/assets/img/play-store.svg" alt="Get it on Google Play" />
+            <img src="@/assets/img/play-store.svg?url" alt="Get it on Google Play" />
           </a>
           <p class="caption">
             (or access everything directly from your mobile/desktop web browser)
