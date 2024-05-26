@@ -1,5 +1,8 @@
 # Release Notes
 
+## 3.8.1 - May 25, 2024
+- fix broken app store images
+
 ## 3.8.0 - May 25, 2024
 - add Google Maps autocomplete to submission form
 - add extra warnings about mis-formatted submission fields leading to delayed approvals
