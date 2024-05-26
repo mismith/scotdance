@@ -139,6 +139,14 @@
           </v-list-item-content>
         </v-list-item>
       </template>
+      <template #append-item>
+        <v-list-item>
+          <v-list-item-subtitle style="text-align: right;">
+            Powered by
+            <GoogleLogo alt="Google" width="48" height="16" class="google-logo" />
+          </v-list-item-subtitle>
+        </v-list-item>
+      </template>
     </v-combobox>
 
     <v-text-field
@@ -168,9 +176,11 @@
 <script>
 import { mdiAlert, mdiCalendar } from '@mdi/js';
 import debounce from 'lodash.debounce';
+
+import GoogleLogo from '@/assets/img/google-logo.svg';
 import { idKey } from '@/helpers/firebase';
-import FileUploader from '@/components/admin/FileUploader.vue';
 import { searchForPlaces } from '@/helpers/maps';
+import FileUploader from '@/components/admin/FileUploader.vue';
 
 export default {
   name: 'DynamicField',
@@ -256,6 +266,7 @@ export default {
   },
   components: {
     FileUploader,
+    GoogleLogo,
   },
 };
 </script>
@@ -269,6 +280,14 @@ export default {
         margin-left: 0.25em;
       }
     }
+  }
+}
+.google-logo {
+  display: inline-block;
+  vertical-align: middle;
+
+  path {
+    fill: currentColor;
   }
 }
 </style>

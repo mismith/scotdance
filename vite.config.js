@@ -1,6 +1,7 @@
 import path from 'path';
 import { defineConfig } from 'vite';
 import { createVuePlugin } from 'vite-plugin-vue2';
+import { createSvgPlugin } from 'vite-plugin-vue2-svg';
 import ViteComponents from 'unplugin-vue-components/vite';
 import { VuetifyResolver } from 'unplugin-vue-components/resolvers';
 import eslintPlugin from 'vite-plugin-eslint';
@@ -36,6 +37,7 @@ export default defineConfig({
   },
   plugins: [
     createVuePlugin(),
+    createSvgPlugin(),
     ViteComponents({
       resolvers: [
         (name) => !customVuetifyLikeComponents.includes(name) && VuetifyResolver()(name),
