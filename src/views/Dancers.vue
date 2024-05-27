@@ -31,6 +31,12 @@
     </Blade>
     <Blade ref="detailsRef" class="col-md-8 app-scroll">
       <template v-if="currentResult && me">
+        <header v-if="allDancers.length > 1" class="d-flex justify-end pa-4">
+          <v-btn small color="secondary" :outlined="isAllFavorited" @click="handleFavoriteAll(!isAllFavorited)">
+            <v-icon class="mr-2">{{ mdiStarShooting }}</v-icon>
+            {{isAllFavorited ? 'Unfavourite' : 'Favourite'}} all
+          </v-btn>
+        </header>
         <v-list expand class="grouped">
           <v-list-group
             v-for="group in currentResultGroups"
@@ -78,7 +84,12 @@
 
 <script>
 import { mapActions, mapState } from 'vuex';
-import { mdiChevronRight, mdiClose, mdiMagnify } from '@mdi/js';
+import {
+  mdiChevronRight,
+  mdiClose,
+  mdiMagnify,
+  mdiStarShooting,
+} from '@mdi/js';
 import orderBy from 'lodash.orderby';
 import groupBy from 'lodash.groupby';
 import { idKey, fns } from '@/helpers/firebase';
@@ -123,6 +134,7 @@ export default {
       mdiChevronRight,
       mdiClose,
       mdiMagnify,
+      mdiStarShooting,
 
       idKey,
 
@@ -182,6 +194,13 @@ export default {
         );
       }
       return [];
+    },
+
+    allDancers() {
+      return this.currentResultGroups.flatMap((group) => group.dancers);
+    },
+    isAllFavorited() {
+      return this.currentResultGroups.every((group) => group.dancers.every(({ $favorite }) => $favorite));
     },
   },
   watch: {
@@ -247,6 +266,7 @@ export default {
   methods: {
     ...mapActions([
       'help',
+      'toggleFavoriteDancer',
     ]),
 
     async search(q) {
@@ -311,6 +331,12 @@ export default {
         console.error(error); // eslint-disable-line no-console
       }
       this.isLoading = false;
+    },
+
+    async handleFavoriteAll(on = true) {
+      await Promise.all(this.currentResultGroups
+        .flatMap((group) => group.dancers
+          .map((dancer) => this.toggleFavoriteDancer({ ...dancer, $favorite: !on }))));
     },
 
     handleReportMismatch() {
