@@ -249,7 +249,12 @@ export default {
       this.isSearching = true;
       try {
         if (q) {
-          const { data } = await searchDancers({ q, group_by: '$name', group_limit: 99 });
+          const { data } = await searchDancers({
+            q,
+            group_by: '$name',
+            group_limit: 99,
+            per_page: 99,
+          });
           this.$set(this, 'searchResults', data);
         } else {
           this.$set(this, 'searchResults', []);

@@ -89,10 +89,10 @@ export function getOnSearch(db) {
       const response = await client.multiSearch.perform({
         searches: [
           {
+            ...searchParams,
             collection: 'dancers',
             query_by: '$name',
             filter_by: Array.isArray(authorizedCompetitionIds) ? `$competitionId:[${authorizedCompetitionIds.join()}]` : undefined,
-            ...searchParams,
           },
         ],
       });
