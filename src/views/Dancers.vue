@@ -95,6 +95,10 @@ import EmptyState from '@/components/EmptyState.vue';
 import Spinner from '@/components/Spinner.vue';
 
 const searchDancers = fns.httpsCallable('searchDancers');
+const cache = {
+  groups: {},
+  categories: {},
+};
 
 export default {
   name: 'Dancers',
@@ -280,11 +284,17 @@ export default {
             const groups = [];
             if (dancer.$competitionId && dancer.groupId) {
               const groupPath = `${dancer.$competitionId}/groups/${dancer.groupId}`;
-              const group = (await this.competitionsDataRef.child(groupPath).get()).val();
+              const group = cache.groups[groupPath] || (await this.competitionsDataRef.child(groupPath).get()).val();
+              if (!cache.groups[groupPath]) {
+                cache.groups[groupPath] = group;
+              }
               const categories = [];
               if (group?.categoryId) {
                 const categoryPath = `${dancer.$competitionId}/categories/${group.categoryId}`;
-                const category = (await this.competitionsDataRef.child(categoryPath).get()).val();
+                const category = cache.categories[categoryPath] || (await this.competitionsDataRef.child(categoryPath).get()).val();
+                if (!cache.categories[categoryPath]) {
+                  cache.categories[categoryPath] = category;
+                }
                 categories.push({ [idKey]: group.categoryId, ...category });
               }
               groups.push(groupExtender({ [idKey]: dancer.groupId, ...group }, i, categories));
@@ -294,7 +304,7 @@ export default {
         );
         const elapsed = Date.now() - start;
         const minLoading = 1000;
-        if (elapsed < minLoading) {
+        if (elapsed > 50 && elapsed < minLoading) {
           await new Promise((resolve) => setTimeout(resolve, Math.max(0, minLoading - elapsed)));
         }
       } catch (error) {
