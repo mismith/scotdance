@@ -3,6 +3,7 @@ import Typesense from 'typesense';
 import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 
 import { isCypress, isEmulator } from './utility/env';
+import { ensureAdmin } from './utility/competition';
 
 const client = new Typesense.Client({
   nodes: [{
@@ -104,10 +105,7 @@ export function getOnSearch(db) {
 
 export function getOnReindex(db) {
   return async function onReindex(data, ctx) {
-    if (!ctx.auth?.uid) throw new https.HttpsError('unauthenticated', '');
-    const isAdmin = (await db.child(`users:permissions/${ctx.auth.uid}/admin`).get())
-      .val() === true;
-    if (!isAdmin) throw new https.HttpsError('permission-denied', '');
+    await ensureAdmin(ctx, db);
 
     // reset the collection
     await client.collections('dancers').delete().catch(() => {});
