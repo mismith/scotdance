@@ -76,14 +76,14 @@ export function getOnSearch(db) {
 
     // aggregate a list of all competition ids this user has access too
     const permissions = (await db.child(`users:permissions/${ctx.auth.uid}`).get()).val();
-    const competitions = (await db.child('competitions').get()).val();
-    const authorizedCompetitionIds = Object.entries(competitions || {})
-      .map(([competitionId, { published }]: any) => (
-        published
-          || permissions?.admin === true
-          || permissions?.competitions?.[competitionId] === true
-      ) && competitionId)
-      .filter(Boolean);
+    let authorizedCompetitionIds;
+    if (permissions?.admin !== true) {
+      const competitionsPublished = (await db.child('competitions:published').get()).val();
+      authorizedCompetitionIds = [
+        ...Object.keys(competitionsPublished || {}),
+        ...Object.keys(permissions?.competitions || {}),
+      ];
+    }
 
     try {
       const response = await client.multiSearch.perform({
@@ -91,7 +91,7 @@ export function getOnSearch(db) {
           {
             collection: 'dancers',
             query_by: '$name',
-            filter_by: `$competitionId:[${authorizedCompetitionIds.join()}]`,
+            filter_by: Array.isArray(authorizedCompetitionIds) ? `$competitionId:[${authorizedCompetitionIds.join()}]` : undefined,
             ...searchParams,
           },
         ],

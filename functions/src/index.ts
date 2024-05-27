@@ -3,7 +3,7 @@ import * as functions from 'firebase-functions';
 import Invites from './invites';
 import Submissions from './submissions';
 import * as Dancers from './dancers';
-import { attachUserToCompetition } from './utility/competition';
+import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isCypress, isEmulator } from './utility/env';
 
 const app = admin.initializeApp({
@@ -53,6 +53,29 @@ export const competitionDeleted = appConfig.database.ref(`/${env}/competitions/{
       value: null,
     })));
   });
+export const competitionPublishedChanged = appConfig.database.ref(`/${env}/competitions/{competitionId}/published`).onWrite(async (change, ctx) => {
+  const { competitionId } = ctx.params;
+  const ref = appConfig.db.child(`competitions:published/${competitionId}`);
+  const isPublished = change.after.val();
+  if (isPublished) {
+    await ref.set(true);
+  } else {
+    await ref.remove();
+  }
+});
+export const reindexCompetitionsPublished = functions.https.onCall(async (data, ctx) => {
+  await ensureAdmin(ctx, appConfig.db);
+
+  const competitions: any[] = (await appConfig.db.child('competitions').get()).val();
+  const competitionsPublished = Object.entries(competitions || {})
+    .filter(([, { published }]) => published)
+    .reduce((acc, [competitionId]) => {
+      acc[competitionId] = true;
+      return acc;
+    }, {});
+  await appConfig.db.child('competitions:published').set(competitionsPublished);
+  return competitionsPublished;
+});
 
 const dancersRef = appConfig.database.ref(`/${env}/competitions:data/{competitionId}/dancers/{dancerId}`);
 export const dancerCreated = !isCypress() && dancersRef.onCreate(Dancers.onCreate);
