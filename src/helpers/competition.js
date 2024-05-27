@@ -24,7 +24,7 @@ export function hydrateByIdKey(ids, items = []) {
 
 export function getGroupName(group, categories) {
   const category = findByIdKey(categories, group.categoryId);
-  return `${category ? category.name : ''} ${group.name || ''}`.trim();
+  return `${category?.name || ''} ${group.name || ''}`.trim();
 }
 
 export function danceExtender(dance) {
