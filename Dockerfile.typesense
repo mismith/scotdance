@@ -1,9 +1,5 @@
 FROM typesense/typesense:0.23.1
 
-# Configure Typesense
 ENV TYPESENSE_DATA_DIR=/app/typesense-data
 ENV TYPESENSE_ENABLE_CORS=true
 # ENV TYPESENSE_API_KEY is stored in Render.com env vars
-
-EXPOSE 8108
-EXPOSE 443
