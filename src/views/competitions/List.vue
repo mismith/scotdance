@@ -1,6 +1,6 @@
 <template>
   <div class="CompetitionsList app-scroll-frame alt">
-    <template v-if="loaded">
+    <template v-if="competitions">
       <template v-if="competitions.length">
         <v-toolbar class="flex-none">
           <SearchField v-model="competitionsSearchFor" class="mr-2" />
@@ -46,7 +46,7 @@
             class="app-scroll-frame app-scroll scroller"
             ref="scroller"
           >
-            <v-timeline v-if="filteredTimelineCompetitions.length > 1" dense class="flex pr-3">
+            <v-timeline v-if="filteredTimelineCompetitions.length > 1" dense class="flex pr-3 d-flex flex-column">
               <template v-for="competition in filteredTimelineCompetitions">
                 <v-timeline-item
                   v-if="competition.$timeline"
@@ -74,18 +74,23 @@
                   :competition="competition"
                 />
               </template>
+              <v-timeline-item v-if="!allCompetitions" small :icon="mdiDotsVertical" color="grey" class="align-center mt-auto">
+                <v-btn x-small @click="setAllCompetitions(true)">Load archived competitions</v-btn>
+              </v-timeline-item>
             </v-timeline>
             <EmptyState
               v-else
               :icon="mdiAlertCircleOutline"
               label="No competitions match"
             >
-              <div v-if="competitionsLocationFilter.length">
-                Try searching in <a @click="competitionsLocationFilter = []">all locations</a>
+              <div v-if="competitionsLocationFilter.length || !allCompetitions">
+                Try searching in
+                <a v-if="competitionsLocationFilter.length" @click="competitionsLocationFilter = []">all locations</a>
+                <template v-if="competitionsLocationFilter.length && !allCompetitions"> and/or </template>
+                <a v-if="!allCompetitions" @click="setAllCompetitions(true)">archived competitions</a>
               </div>
             </EmptyState>
           </div>
-          <Pagination v-model="competitionsPage" :pages="pages" />
 
           <transition :name="`slide-y${nowVisibility > 0 ? '-reverse' : ''}-transition`">
             <v-btn
@@ -122,11 +127,13 @@
 
 <script>
 import groupBy from 'lodash.groupby';
+import { mapState, mapMutations } from 'vuex';
 import {
   mdiAlertCircleOutline,
   mdiChevronDown,
   mdiChevronUp,
   mdiClose,
+  mdiDotsVertical,
   mdiEarth,
 } from '@mdi/js';
 import { idKey } from '@/helpers/firebase';
@@ -135,7 +142,6 @@ import { submissionsFields } from '@/schemas/submissions';
 import SearchField from '@/components/SearchField.vue';
 import CompetitionTimelineItem from '@/components/CompetitionTimelineItem.vue';
 import MarkerChip from '@/components/MarkerChip.vue';
-import Pagination from '@/components/admin/Pagination.vue';
 
 const NOW_MARKER = '__NOW__';
 
@@ -156,10 +162,6 @@ export default {
       type: Array,
       default: [],
     },
-    competitionsPage: {
-      type: Number,
-      default: 1,
-    },
   },
   data() {
     return {
@@ -169,17 +171,18 @@ export default {
       mdiChevronDown,
       mdiChevronUp,
       mdiClose,
+      mdiDotsVertical,
       mdiEarth,
-
-      loaded: false,
 
       nowVisibility: 0,
       isLocationFilterOpen: false,
-
-      competitionsPerPage: 50,
     };
   },
   computed: {
+    ...mapState([
+      'allCompetitions',
+    ]),
+
     locations() {
       const locations = Object.keys(groupBy(this.competitions || [], 'location') || {}).sort();
       return locations;
@@ -224,22 +227,10 @@ export default {
 
       return filtered;
     },
-
-    pages() {
-      const total = Math.ceil(this.filteredCompetitions.length / this.competitionsPerPage);
-      return Array.from(Array(total + 1).keys()).slice(1); // [1...N]
-    },
-    offset() {
-      return (this.competitionsPage - 1) * this.competitionsPerPage;
-    },
-    paginatedCompetitions() {
-      return this.filteredCompetitions.slice(this.offset, this.offset + this.competitionsPerPage);
-    },
-
     filteredTimelineCompetitions() {
       let currentTimelineGroup;
       let firstPastEventIndex = -1;
-      const filteredTimelineCompetitions = this.paginatedCompetitions
+      const filteredTimelineCompetitions = this.filteredCompetitions
         .map((competition, index) => {
           const $date = this.$moment(competition.date);
           let timelineGroup = $date.format('MMMM YYYY');
@@ -271,16 +262,11 @@ export default {
       return filteredTimelineCompetitions;
     },
   },
-  watch: {
-    filteredCompetitions() {
-      this.competitionsPage = 1;
-    },
-    async competitionsPage() {
-      await this.$nextTick();
-      this.$scrollTo(document.body, { container: this.$refs.scroller });
-    },
-  },
   methods: {
+    ...mapMutations([
+      'setAllCompetitions',
+    ]),
+
     handleNowVisibilityChange(isVisible, { boundingClientRect: { top } }) {
       const direction = top < 100 ? -1 : 1;
       this.nowVisibility = isVisible ? 0 : direction;
@@ -293,16 +279,10 @@ export default {
       });
     },
   },
-  async created() {
-    await this.competitionsRef.once('value');
-
-    this.loaded = true;
-  },
   components: {
     SearchField,
     CompetitionTimelineItem,
     MarkerChip,
-    Pagination,
   },
 };
 </script>

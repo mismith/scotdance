@@ -17,7 +17,8 @@
         ".read": true,
         "$competitionId": {
           ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true" // has PERMISSION
-        }
+        },
+        ".indexOn": ["date"]
       },
       "competitions:data": {
         "$competitionId": {

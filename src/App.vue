@@ -369,6 +369,7 @@ export default {
     ...mapState([
       '$device',
       'me',
+      'allCompetitions',
     ]),
     ...mapGetters([
       'needsUpdating',
@@ -456,6 +457,10 @@ export default {
         }
       }
     },
+
+    allCompetitions() {
+      this.loadCompetitions();
+    },
   },
   methods: {
     ...mapActions([
@@ -463,12 +468,20 @@ export default {
     ]),
     isDev,
 
-    async loadFirebase() {
+    loadCompetitions() {
+      if (this.competitionsRaw) this.$unbind('competitionsRaw');
+      if (this.allCompetitions) {
+        this.$bindAsArray('competitionsRaw', this.competitionsRef);
+      } else {
+        const startAt = this.$moment().subtract(3, 'month').format('YYYY-MM-DD');
+        this.$bindAsArray('competitionsRaw', this.competitionsRef.orderByChild('date').startAt(startAt));
+      }
+    },
+    loadFirebase() {
       this.competitionsRef = db.child('competitions');
       this.competitionsDataRef = db.child('competitions:data');
 
-      if (this.competitionsRaw) this.$unbind('competitionsRaw');
-      this.$bindAsArray('competitionsRaw', this.competitionsRef);
+      this.loadCompetitions();
 
       if (this.versions) this.$unbind('versions');
       this.$bindAsObject('versions', db.child('versions'));

@@ -59,6 +59,7 @@ export default new Vuex.Store({
     myPermissions: undefined,
 
     viewed,
+    allCompetitions: window.sessionStorage?.getItem(`${$package.name}.allCompetitions`) === 'true',
 
     currentDialog: undefined,
     currentDialogData: undefined,
@@ -132,6 +133,16 @@ export default new Vuex.Store({
         state.viewed = {};
       }
       Vue.localStorage.set('viewed', JSON.stringify(state.viewed));
+    },
+    setAllCompetitions(state, to) {
+      state.allCompetitions = to;
+
+      const key = `${$package.name}.allCompetitions`;
+      if (to) {
+        window.sessionStorage?.setItem(key, 'true');
+      } else {
+        window.sessionStorage?.removeItem(key);
+      }
     },
 
     setCurrentDialog(state, to) {
