@@ -272,6 +272,9 @@ export default {
     },
   },
   watch: {
+    filteredCompetitions() {
+      this.competitionsPage = 1;
+    },
     async competitionsPage() {
       await this.$nextTick();
       this.$scrollTo(document.body, { container: this.$refs.scroller });
