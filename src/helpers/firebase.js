@@ -84,4 +84,9 @@ export const cache = {
   competitions: {},
   categories: {},
   groups: {},
+  reset() {
+    this.competitions = {};
+    this.categories = {};
+    this.groups = {};
+  },
 };

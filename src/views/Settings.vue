@@ -46,6 +46,7 @@
           <li>recent views</li>
           <li>search queries and/or filters</li>
           <li>competition listings in Browse Competitions</li>
+          <li>competition data in Search Dancers</li>
         </ul>
         <p><strong>Are you sure you want to permanently erase these stored settings?</strong></p>
       </DialogCard>
@@ -55,6 +56,7 @@
 
 <script>
 import { mdiCached, mdiThemeLightDark } from '@mdi/js';
+import { cache } from '@/helpers/firebase';
 
 export default {
   name: 'Settings',
@@ -67,6 +69,7 @@ export default {
   },
   methods: {
     resetAppCache() {
+      cache.reset();
       window.localStorage?.clear();
       window.sessionStorage?.clear();
       window.location.reload(true);
