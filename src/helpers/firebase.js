@@ -79,3 +79,9 @@ export function sortByUserDragOrder(array) {
     [userDragOrderKey, idKey],
   );
 }
+
+export const cache = {
+  competitions: {},
+  categories: {},
+  groups: {},
+};

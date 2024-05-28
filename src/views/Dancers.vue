@@ -92,9 +92,8 @@ import {
 } from '@mdi/js';
 import orderBy from 'lodash.orderby';
 import groupBy from 'lodash.groupby';
-import { idKey, fns } from '@/helpers/firebase';
+import { idKey, fns, cache } from '@/helpers/firebase';
 import {
-  findByIdKey,
   groupExtender,
   dancerExtender,
   initialify,
@@ -106,16 +105,12 @@ import EmptyState from '@/components/EmptyState.vue';
 import Spinner from '@/components/Spinner.vue';
 
 const searchDancers = fns.httpsCallable('searchDancers');
-const cache = {
-  groups: {},
-  categories: {},
-};
 
 export default {
   name: 'Dancers',
   reactiveInject: {
     competitionsBundle: [
-      'competitions',
+      'competitionsRef',
       'competitionsDataRef',
     ],
   },
@@ -169,14 +164,26 @@ export default {
     currentResult() {
       return this.results?.find(({ name }) => name === this.s);
     },
-    currentResultGroups() {
-      if (this.dancers || this.currentResult) {
+
+    allDancers() {
+      return this.currentResultGroups.flatMap((group) => group.dancers);
+    },
+    isAllFavorited() {
+      return this.currentResultGroups.every((group) => group.dancers.every(({ $favorite }) => $favorite));
+    },
+  },
+  asyncComputed: {
+    async currentResultGroups() {
+      if (this.dancers || this.currentResult?.dancers) {
         const grouped = groupBy(this.dancers || this.currentResult.dancers, (dancer) => dancer.$competitionId);
-        const currentResultGroups = Object.entries(grouped)
-          .reduce((acc, [competitionId, dancers]) => {
-            const competition = findByIdKey(this.competitions, competitionId);
+        const currentResultGroups = await Object.entries(grouped)
+          .reduce(async (acc, [competitionId, dancers]) => {
+            const competition = cache.competitions[competitionId] || (await this.competitionsRef.child(competitionId).get()).val();
+            if (!cache.competitions[competitionId]) {
+              cache.competitions[competitionId] = competition;
+            }
             if (competition) {
-              return acc.concat({
+              return (await acc).concat({
                 [idKey]: competitionId,
                 competition,
                 dancers,
@@ -194,13 +201,6 @@ export default {
         );
       }
       return [];
-    },
-
-    allDancers() {
-      return this.currentResultGroups.flatMap((group) => group.dancers);
-    },
-    isAllFavorited() {
-      return this.currentResultGroups.every((group) => group.dancers.every(({ $favorite }) => $favorite));
     },
   },
   watch: {
@@ -248,8 +248,6 @@ export default {
           this.$router.replace({ name: this.$route.name, query: { ...this.$route.query, s } });
         }
 
-        this.hydrateCurrentResult();
-
         // scroll to details, if necessary
         await this.$nextTick();
         this.$scrollTo(this.$refs.detailsRef?.$el, { container: this.$el });
@@ -257,7 +255,7 @@ export default {
       immediate: true,
     },
     currentResult() {
-      this.hydrateCurrentResult(true);
+      this.hydrateCurrentResult();
     },
   },
   mounted() {
@@ -289,18 +287,17 @@ export default {
       }
       this.isSearching = false;
     },
-    async hydrateCurrentResult(isRefresh = false) {
+    async hydrateCurrentResult() {
+      if (!this.currentResult?.dancers) return;
+
       // clear old values while loading from new result
-      const dancers = isRefresh ? this.dancers : this.currentResult?.dancers;
-      if (!isRefresh) {
-        this.dancers = undefined;
-        this.isLoading = true;
-      }
+      this.dancers = undefined;
+      this.isLoading = true;
 
       try {
         const start = Date.now();
-        this.dancers = dancers && await Promise.all(
-          dancers.map(async (dancer, i) => {
+        this.dancers = await Promise.all(
+          this.currentResult.dancers.map(async (dancer, i) => {
             const groups = [];
             if (dancer.$competitionId && dancer.groupId) {
               const groupPath = `${dancer.$competitionId}/groups/${dancer.groupId}`;
