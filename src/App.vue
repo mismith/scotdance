@@ -316,6 +316,7 @@ import {
   firebase,
 } from '@/helpers/firebase';
 import { isDev } from '@/helpers/env';
+import { competitionExtender } from '@/helpers/competition';
 import RegisterDialog from '@/components/RegisterDialog.vue';
 import LoginDialog from '@/components/LoginDialog.vue';
 import RequiresAuthDialog from '@/components/RequiresAuthDialog.vue';
@@ -384,13 +385,7 @@ export default {
 
     competitions() {
       return this.competitionsRaw
-        .map((competition) => ({
-          ...competition,
-          location: competition.location?.trim(),
-          $pinned: this.$store.getters.isFavorite('competitions', competition[idKey]),
-          $viewed: this.$store.getters.isViewed('competitions', competition[idKey]),
-          $relevance: Math.abs(this.$moment().diff(competition.date)),
-        }))
+        .map((competition) => competitionExtender(competition, this.$store))
         .filter((competition) => competition.listed || this.$store.getters.hasPermission(`competitions/${competition[idKey]}`))
         .sort((a, b) => -this.$moment(a.date).diff(b.date)); // order chronologically
     },

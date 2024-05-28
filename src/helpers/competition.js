@@ -1,4 +1,5 @@
 import Fuse from 'fuse.js';
+import moment from 'moment';
 import { idKey } from '@/helpers/firebase';
 
 export function findByIdKey(items, id) {
@@ -25,6 +26,16 @@ export function hydrateByIdKey(ids, items = []) {
 export function getGroupName(group, categories) {
   const category = findByIdKey(categories, group.categoryId);
   return `${category?.name || ''} ${group.name || ''}`.trim();
+}
+
+export function competitionExtender(competition, $store) {
+  return {
+    ...competition,
+    location: competition.location?.trim(),
+    $pinned: $store.getters.isFavorite('competitions', competition[idKey]),
+    $viewed: $store.getters.isViewed('competitions', competition[idKey]),
+    $relevance: Math.abs(moment().diff(competition.date)),
+  };
 }
 
 export function danceExtender(dance) {
