@@ -22,7 +22,7 @@
 
       <v-subheader>Advanced</v-subheader>
       <v-list>
-        <v-list-item @click="confirmClearLocalStorage = true" v-test="'reset-app-cache'">
+        <v-list-item @click="confirmResetAppCache = true" v-test="'reset-app-cache'">
           <v-list-item-avatar>
             <v-icon color="error">{{ mdiCached }}</v-icon>
           </v-list-item-avatar>
@@ -31,13 +31,13 @@
       </v-list>
 
       <DialogCard
-        v-model="confirmClearLocalStorage"
+        v-model="confirmResetAppCache"
         title="Reset App Cache"
         cancel-label="No"
         submit-label="Yes"
-        @submit="clearLocalStorage()"
+        @submit="resetAppCache()"
       >
-        <p>In order to enhance performance and usability, this app stores certain settings in your device's local storage cache.</p>
+        <p>In order to enhance performance and usability, this app stores certain settings in your device's local and session storage caches.</p>
         <p>If you are ever encountering layout or navigation bugs, clearing these may help resolve certain issues related to:</p>
         <ul class="mb-4">
           <li>expanded/collapsed states</li>
@@ -45,6 +45,7 @@
           <li>scroll positions</li>
           <li>recent views</li>
           <li>search queries and/or filters</li>
+          <li>competition listings in Browse Competitions</li>
         </ul>
         <p><strong>Are you sure you want to permanently erase these stored settings?</strong></p>
       </DialogCard>
@@ -61,15 +62,14 @@ export default {
     return {
       mdiCached,
       mdiThemeLightDark,
-      confirmClearLocalStorage: false,
+      confirmResetAppCache: false,
     };
   },
   methods: {
-    clearLocalStorage() {
-      if (window.localStorage) {
-        window.localStorage.clear();
-        window.location.reload(true);
-      }
+    resetAppCache() {
+      window.localStorage?.clear();
+      window.sessionStorage?.clear();
+      window.location.reload(true);
     },
   },
 };
