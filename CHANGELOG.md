@@ -1,5 +1,10 @@
 # Release Notes
 
+## 3.9.0 - Jun 2, 2024
+- various Search Dancers performance enhancements and usability improvements, e.g.:
+  - add Favourite All Dancers button
+- don't load competitions older than 3 months by default to speed up load times
+
 ## 3.8.1 - May 25, 2024
 - fix broken app store images
 

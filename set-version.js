@@ -19,7 +19,7 @@ function setVersion(v = undefined, {
   const { version } = JSON.parse(pkg);
   const incrementPatch = (_, m, n, p) => `${m}.${n}.${Number.parseInt(p, 10) + 1}`;
   const V = v || version.replace(VERSION_REGEX, incrementPatch);
-  const code = V.split('.').map((n, i) => (i ? n.padStart(2, '0') : n)).join('');
+  const code = V.split('.').map((n, i) => (i ? n.padStart(3, '0') : n)).join('');
 
   // do some very naive/brittle find-and-replaces
   const replacement = `$1"${V}"`;
