@@ -2,28 +2,14 @@
 //  PluginViewController.swift
 //  App
 //
-//  Created by Murray Rowan on 2024-08-04.
+//  Created by Murray Rowan on 2024-08-05.
 //
 
 import UIKit
+import Capacitor
 
-class PluginViewController: UIViewController {
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-
-        // Do any additional setup after loading the view.
+class PluginViewController: CAPBridgeViewController {
+    override open func capacitorDidLoad() {
+        bridge?.registerPluginInstance(ScotDancePlugin())
     }
-    
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
-    }
-    */
-
 }

@@ -9,7 +9,7 @@ import VueReactiveProvide from 'vue-reactive-provide';
 import sanitizeHtml from 'sanitize-html';
 import moment from 'moment';
 import 'simple-line-icons/css/simple-line-icons.css';
-import { Capacitor, Plugins } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Device } from '@capacitor/device';
 import { SplashScreen } from '@capacitor/splash-screen';
 
@@ -36,7 +36,9 @@ Vue.config.silent = true;
 // app / devices
 Vue.prototype.isNative = Capacitor.isNativePlatform();
 Vue.prototype.isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
-if (Capacitor.getPlatform() === 'ios') Plugins.ScotDance.setup();
+if (Capacitor.getPlatform() === 'ios') {
+  registerPlugin('ScotDance');
+}
 Device.getInfo().then((device) => store.commit('setDevice', device));
 window.addEventListener('load', () => SplashScreen.hide());
 

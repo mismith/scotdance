@@ -14,10 +14,10 @@
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		645EC087272F76A3008461D3 /* public in Resources */ = {isa = PBXBuildFile; fileRef = 645EC086272F76A3008461D3 /* public */; };
+		649F97122C60A6F400DED92D /* PluginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 649F97112C60A6F400DED92D /* PluginViewController.swift */; };
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
 		E00485E42528211B00DDC998 /* Screenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = E00485E32528211B00DDC998 /* Screenshots.swift */; };
 		E04229BC2529210000FE57E3 /* ScotDance.swift in Sources */ = {isa = PBXBuildFile; fileRef = E04229BB2529210000FE57E3 /* ScotDance.swift */; };
-		E04229C32529217000FE57E3 /* ScotDance.m in Sources */ = {isa = PBXBuildFile; fileRef = E04229C22529217000FE57E3 /* ScotDance.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -40,6 +40,7 @@
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		645EC086272F76A3008461D3 /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
+		649F97112C60A6F400DED92D /* PluginViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PluginViewController.swift; path = App/PluginViewController.swift; sourceTree = "<group>"; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
 		E00485D7252820D000DDC998 /* Screenshots.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Screenshots.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -48,7 +49,6 @@
 		E00485E9252821A300DDC998 /* Screenshots.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = Screenshots.sh; sourceTree = "<group>"; };
 		E04229BB2529210000FE57E3 /* ScotDance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScotDance.swift; sourceTree = "<group>"; };
 		E04229C12529217000FE57E3 /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
-		E04229C22529217000FE57E3 /* ScotDance.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ScotDance.m; sourceTree = "<group>"; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -82,6 +82,7 @@
 		504EC2FB1FED79650016851F = {
 			isa = PBXGroup;
 			children = (
+				649F97112C60A6F400DED92D /* PluginViewController.swift */,
 				504EC3061FED79650016851F /* App */,
 				E00485D8252820D000DDC998 /* Screenshots */,
 				504EC3051FED79650016851F /* Products */,
@@ -138,7 +139,6 @@
 			isa = PBXGroup;
 			children = (
 				E04229BB2529210000FE57E3 /* ScotDance.swift */,
-				E04229C22529217000FE57E3 /* ScotDance.m */,
 				E04229C12529217000FE57E3 /* App-Bridging-Header.h */,
 			);
 			path = ScotDance;
@@ -290,7 +290,7 @@
 			files = (
 				E04229BC2529210000FE57E3 /* ScotDance.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
-				E04229C32529217000FE57E3 /* ScotDance.m in Sources */,
+				649F97122C60A6F400DED92D /* PluginViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -455,7 +455,7 @@
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = info.mismith.scotdance;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OBJC_BRIDGING_HEADER = "App/ScotDance/App-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;

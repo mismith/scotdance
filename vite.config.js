@@ -45,7 +45,6 @@ export default defineConfig({
     }),
     eslintPlugin({
       cache: false, // it was getting stale and causing false positives
-      throwOnWarning: false,
     }),
   ],
 });
