@@ -1,7 +1,6 @@
 {
 	"appId": "info.mismith.scotdance",
 	"appName": "ScotDance",
-	"bundledWebRuntime": false,
 	"npmClient": "npm",
 	"webDir": "www",
 	"plugins": {
