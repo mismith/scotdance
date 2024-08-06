@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
+import fs from 'fs';
 
 const VERSION_REGEX = /^(\d+)\.(\d+)\.(\d+)$/;
 
@@ -33,8 +33,4 @@ function setVersion(v = undefined, {
   console.info(`${version} -> ${V}`); // eslint-disable-line no-console
 }
 
-if (require.main === module) {
-  setVersion(process.argv.find((a) => VERSION_REGEX.test(a)));
-} else {
-  module.exports = setVersion;
-}
+setVersion(process.argv.find((a) => VERSION_REGEX.test(a)));

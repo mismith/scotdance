@@ -1,11 +1,10 @@
 import path from 'path';
 import { defineConfig } from 'vite';
-import { createVuePlugin } from 'vite-plugin-vue2';
+import vue from '@vitejs/plugin-vue2';
 import { createSvgPlugin } from 'vite-plugin-vue2-svg';
 import ViteComponents from 'unplugin-vue-components/vite';
-import { VuetifyResolver } from 'unplugin-vue-components/resolvers';
-import eslintPlugin from 'vite-plugin-eslint';
-import visualizer from 'rollup-plugin-visualizer';
+import eslint from 'vite-plugin-eslint';
+import mkcert from 'vite-plugin-mkcert';
 
 const customVuetifyLikeComponents = [
   'VFile',
@@ -18,9 +17,6 @@ export default defineConfig({
   build: {
     outDir: 'www',
     rollupOptions: {
-      plugins: [
-        visualizer(),
-      ],
       output: {
         manualChunks: {
           firebase: ['firebase/compat'],
@@ -31,20 +27,34 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      '@': path.resolve(import.meta.dirname, 'src'),
       '~vuetify': 'vuetify',
     },
   },
   plugins: [
-    createVuePlugin(),
+    vue(),
     createSvgPlugin(),
     ViteComponents({
       resolvers: [
-        (name) => !customVuetifyLikeComponents.includes(name) && VuetifyResolver()(name),
+        {
+          type: 'component',
+          resolve: (name) => {
+            if (!customVuetifyLikeComponents.includes(name) && name.match(/^V[A-Z]/)) {
+              return { name, from: 'vuetify/lib' };
+            }
+            return undefined;
+          },
+        },
       ],
+      version: 2.7,
     }),
-    eslintPlugin({
+    eslint({
       cache: false, // it was getting stale and causing false positives
     }),
+    mkcert(),
   ],
+  server: {
+    port: 3000,
+    host: true,
+  },
 });
