@@ -31,46 +31,51 @@
     </Blade>
     <Blade ref="detailsRef" class="col-md-8 app-scroll">
       <template v-if="currentResult && me">
-        <header v-if="allDancers.length > 1" class="d-flex justify-end pa-4">
-          <v-btn small color="secondary" :outlined="isAllFavorited" @click="handleFavoriteAll(!isAllFavorited)">
-            <v-icon class="mr-2">{{ mdiStarShooting }}</v-icon>
-            {{isAllFavorited ? 'Unfavourite' : 'Favourite'}} all
-          </v-btn>
-        </header>
-        <v-list expand class="grouped">
-          <v-list-group
-            v-for="group in currentResultGroups"
-            :key="group[idKey]"
-            :value="true"
-          >
-            <template #activator>
-              <v-subheader>
-                <div class="flex text-truncate pr-3">
-                  {{ group.competition.name }}
-                </div>
-                <div class="dot-divided text-truncate">
-                  <span v-if="group.competition.date">{{ $moment(group.competition.date).format('MMM D, YYYY') }}</span>
-                  <span v-if="group.competition.location">{{ group.competition.location }}</span>
-                </div>
-              </v-subheader>
-            </template>
+        <template v-if="allDancers.length">
+          <header v-if="allDancers.length > 1" class="d-flex justify-end pa-4">
+            <v-btn small color="secondary" :outlined="isAllFavorited" @click="handleFavoriteAll(!isAllFavorited)">
+              <v-icon class="mr-2">{{ mdiStarShooting }}</v-icon>
+              {{isAllFavorited ? 'Unfavourite' : 'Favourite'}} all
+            </v-btn>
+          </header>
+          <v-list expand class="grouped">
+            <v-list-group
+              v-for="group in currentResultGroups"
+              :key="group[idKey]"
+              :value="true"
+            >
+              <template #activator>
+                <v-subheader>
+                  <div class="flex text-truncate pr-3">
+                    {{ group.competition.name }}
+                  </div>
+                  <div class="dot-divided text-truncate">
+                    <span v-if="group.competition.date">{{ $moment(group.competition.date).format('MMM D, YYYY') }}</span>
+                    <span v-if="group.competition.location">{{ group.competition.location }}</span>
+                  </div>
+                </v-subheader>
+              </template>
 
-            <v-list two-line>
-              <DancerListItem
-                v-for="dancer in group.dancers"
-                :key="dancer[idKey]"
-                :dancer="dancer"
-                :loading="isLoading"
-                :to="{ name: 'competition.dancers', params: { competitionId: dancer.$competitionId, dancerId: dancer[idKey] } }"
-              >
-                <Spinner v-if="isLoading" size="32" />
-              </DancerListItem>
-            </v-list>
-          </v-list-group>
-        </v-list>
-        <footer class="d-flex justify-center pa-3 mb-3">
-          <v-btn text small color="error" @click="handleReportMismatch">Report a Mismatch</v-btn>
-        </footer>
+              <v-list two-line>
+                <DancerListItem
+                  v-for="dancer in group.dancers"
+                  :key="dancer[idKey]"
+                  :dancer="dancer"
+                  :loading="isLoading"
+                  :to="{ name: 'competition.dancers', params: { competitionId: dancer.$competitionId, dancerId: dancer[idKey] } }"
+                >
+                  <Spinner v-if="isLoading" size="32" />
+                </DancerListItem>
+              </v-list>
+            </v-list-group>
+          </v-list>
+          <footer class="d-flex justify-center pa-3 mb-3 mt-auto">
+            <v-btn text small color="error" @click="handleReportMismatch">Report a Mismatch</v-btn>
+          </footer>
+        </template>
+        <div v-else class="app-scroll-frame">
+          <Spinner />
+        </div>
       </template>
       <EmptyState
         v-else
