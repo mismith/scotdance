@@ -1,14 +1,9 @@
 import path from 'path';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue2';
-import { createSvgPlugin } from 'vite-plugin-vue2-svg';
 import ViteComponents from 'unplugin-vue-components/vite';
 import eslint from 'vite-plugin-eslint';
 import mkcert from 'vite-plugin-mkcert';
-
-const customVuetifyLikeComponents = [
-  'VFile',
-];
 
 export default defineConfig({
   define: {
@@ -40,12 +35,14 @@ export default defineConfig({
   },
   plugins: [
     vue(),
-    createSvgPlugin(),
     ViteComponents({
       resolvers: [
         {
           type: 'component',
           resolve: (name) => {
+            const customVuetifyLikeComponents = [
+              'VFile',
+            ];
             if (!customVuetifyLikeComponents.includes(name) && name.match(/^V[A-Z]/)) {
               return { name, from: 'vuetify/lib' };
             }
