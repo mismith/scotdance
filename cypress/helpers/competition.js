@@ -13,6 +13,7 @@ export function createCompetition(uid) {
     name: `Competition ${uid}`,
     listed: uid === COMPETITION_UID.UNPUBLISHED || uid === COMPETITION_UID.PUBLIC || null,
     published: uid === COMPETITION_UID.PUBLIC || null,
+    date: new Date().toISOString(),
   });
 }
 
