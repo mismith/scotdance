@@ -19,7 +19,14 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          firebase: ['firebase/compat'],
+          firebase: [
+            'firebase/compat/app',
+            'firebase/compat/analytics',
+            'firebase/compat/auth',
+            'firebase/compat/database',
+            'firebase/compat/storage',
+            'firebase/compat/functions',
+          ],
           vuetify: ['vuetify', 'vuetify/lib'],
         },
       },
