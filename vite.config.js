@@ -5,7 +5,6 @@ import { createSvgPlugin } from 'vite-plugin-vue2-svg';
 import ViteComponents from 'unplugin-vue-components/vite';
 import { VuetifyResolver } from 'unplugin-vue-components/resolvers';
 import eslintPlugin from 'vite-plugin-eslint';
-import visualizer from 'rollup-plugin-visualizer';
 
 const customVuetifyLikeComponents = [
   'VFile',
@@ -18,9 +17,6 @@ export default defineConfig({
   build: {
     outDir: 'www',
     rollupOptions: {
-      plugins: [
-        visualizer(),
-      ],
       output: {
         manualChunks: {
           firebase: ['firebase/compat'],
