@@ -12,5 +12,9 @@
 			"backgroundColor": "#ffffff",
 			"launchAutoHide": false
 		}
-	}
+	},
+	"packageClassList": [
+		"DevicePlugin",
+		"SplashScreenPlugin"
+	]
 }
