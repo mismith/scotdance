@@ -265,7 +265,7 @@
       "subtype" : "49mm"
     },
     {
-      "filename" : "icon-1024.png",
+      "filename" : "AppIcon-512@2x.png",
       "idiom" : "watch-marketing",
       "scale" : "1x",
       "size" : "1024x1024"
