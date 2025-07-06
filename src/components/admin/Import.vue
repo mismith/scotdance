@@ -406,6 +406,7 @@ export default {
           firstName: dancerData.firstName || null,
           lastName: dancerData.lastName || null,
           location: dancerData.location || null,
+          groupId: (groupId && groupId[idKey]) || null,
         };
         const dancer = find(this.dancers, matches) || matches;
         dancer.groupId = (groupId && groupId[idKey]) || dancer.groupId || null;
