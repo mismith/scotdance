@@ -1,5 +1,8 @@
 # Release Notes
 
+## 3.10.1 - Jul 5, 2025
+- fix bug in admin panel when importing dancers with duplicate details but different groups
+
 ## 3.10.0 - Sep 7, 2024
 - fix long delay when loading a dancer in Search Dancers
 - various upgrades under the hood

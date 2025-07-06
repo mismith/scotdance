@@ -24,11 +24,11 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/splash-screen"
 
 SPEC CHECKSUMS:
-  Capacitor: 8941aba4364ba9d1b22188569001f2ce45cc2b00
+  Capacitor: 7b38922425a542e0b5936c8f72ea89d876dd4df1
   CapacitorCordova: 8f2cc8d8d3619c566e9418fe8772064a94266106
-  CapacitorDevice: 7097a1deb4224b77fd13a6e60a355d0062a5d772
-  CapacitorSplashScreen: 250df9ef8014fac5c7c1fd231f0f8b1d8f0b5624
+  CapacitorDevice: da1884f895e17992648b27f6c8ee2be72cd0ce2e
+  CapacitorSplashScreen: b46e61cc4345d73d510530b0c845a30e3602db40
 
 PODFILE CHECKSUM: 2f36f3a2a1684128c1f6b8774ec1a42c01a523bc
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2
