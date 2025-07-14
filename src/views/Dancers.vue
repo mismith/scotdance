@@ -70,7 +70,18 @@
             </v-list-group>
           </v-list>
           <footer class="d-flex justify-center pa-3 mb-3 mt-auto">
-            <v-btn text small color="error" @click="handleReportMismatch">Report a Mismatch</v-btn>
+            <v-btn text small color="error" @click="confirmReportMismatch = true">Report a Mismatch</v-btn>
+            <DialogCard
+              :value="confirmReportMismatch"
+              title="Report a Mismatch"
+              cancel-label="No"
+              submit-label="Yes"
+              @cancel="confirmReportMismatch = false"
+              @submit="handleReportMismatch"
+            >
+              <p>This will start a support chat where you can explain what specifically looks wrong.</p>
+              <p>Are you sure you want to report a mismatch for this dancer?</p>
+            </DialogCard>
           </footer>
         </template>
         <div v-else class="app-scroll-frame">
@@ -142,6 +153,8 @@ export default {
       searchResults: [],
       isLoading: false,
       dancers: undefined,
+
+      confirmReportMismatch: undefined,
     };
   },
   computed: {
@@ -348,7 +361,12 @@ export default {
       window.$crisp.push([
         'do',
         'message:send',
-        ['text', `I think there might be a mismatch on this page: ${this.$route.fullPath}`],
+        ['text', `I think there might be a mismatch on this page: https://scotdance.app/#${this.$route.fullPath}`],
+      ]);
+      window.$crisp.push([
+        'do',
+        'message:show',
+        ['text', 'Got it! What specifically looks wrong to you?'],
       ]);
     },
   },
