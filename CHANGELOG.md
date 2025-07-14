@@ -1,5 +1,8 @@
 # Release Notes
 
+## 3.10.2 - Jul 14, 2025
+- improve Report a Mismatch flow to add a confirmation and avoid confusing people
+
 ## 3.10.1 - Jul 5, 2025
 - fix bug in admin panel when importing dancers with duplicate details but different groups
 

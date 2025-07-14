@@ -76,7 +76,7 @@ Links to the admin panels needed to manage this project:
 
 ### Google Play Store
 
-* To build a signed `.aab`, you'll need the `scotdance.keystore` file (stored in a private Dropbox).
+* To build a signed `.aab`, you'll need the `scotdance.keystore` file (stored in a private iCloud).
 * To upload to Google Play:
 
     1. `npm run build`
