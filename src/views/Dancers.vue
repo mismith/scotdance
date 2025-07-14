@@ -84,7 +84,7 @@
             </DialogCard>
           </footer>
         </template>
-        <div v-else class="app-scroll-frame">
+        <div v-else class="app-scroll-frame" style="min-height: 25dvh;">
           <Spinner />
         </div>
       </template>
