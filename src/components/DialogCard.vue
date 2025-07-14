@@ -6,6 +6,7 @@
     scrollable
     :content-class="`DialogCard ${contentClass || ''}`"
     @keydown.esc.stop="handleCancel"
+    @click:outside="handleCancel"
   >
     <template #activator="props">
       <slot name="activator" v-bind="props" />
