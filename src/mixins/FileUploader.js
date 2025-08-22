@@ -41,7 +41,7 @@ export default {
     filename() {
       if (this.value) {
         // @TODO: work for storagePath stuff too
-        if (this.value.includes('firebasestorage.googleapis.com')) {
+        if (this.value.includes('firebasestorage')) {
           return decodeURIComponent(this.value).replace(/\?.*$/, '').replace(/^.*\//, '');
         }
         if (this.value.includes('base64')) {
