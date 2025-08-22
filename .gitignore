@@ -45,3 +45,4 @@ IS_CYPRESS
 
 resources/ios/**/*
 resources/android/**/*
+*.profraw

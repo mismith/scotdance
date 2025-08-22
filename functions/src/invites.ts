@@ -1,14 +1,7 @@
-import { config } from 'firebase-functions';
-import { FirebaseDynamicLinks, FirebaseInvites } from '@mismith/firebase-tools/dist/server';
+import { FirebaseInvites } from '@mismith/firebase-tools/dist/server';
 import { postmark } from './utility/email';
 import { attachUserToCompetition } from './utility/competition';
 import { isCypress, isEmulator } from './utility/env';
-
-const dynamicLinks = new FirebaseDynamicLinks(
-  config().fb?.web_api_key || 'MISSING',
-  'info.mismith.scotdance',
-  'scotdance.page.link',
-);
 
 class Invites extends FirebaseInvites {
   async handleCreate(snap, ctx) {
@@ -16,8 +9,7 @@ class Invites extends FirebaseInvites {
 
     // get dynamic link
     const { competitionId, inviteId } = ctx.params;
-    const url = `${this.config.url}/#/competitions/${competitionId}/invites/${inviteId}`;
-    const link = await dynamicLinks.getShortLink(url, true);
+    const link = `${this.config.url}/#/competitions/${competitionId}/invites/${inviteId}`;
 
     // send email
     const invite = snap.val();
