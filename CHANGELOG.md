@@ -1,5 +1,8 @@
 # Release Notes
 
+## 3.11.0 - Aug 22, 2025
+- remove/replace some deprecated internal dependencies
+
 ## 3.10.2 - Jul 14, 2025
 - improve Report a Mismatch flow to add a confirmation and avoid confusing people
 
