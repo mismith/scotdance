@@ -1,5 +1,8 @@
 # Release Notes
 
+## 3.11.1 - Oct 20, 2025
+- resolve a bug with Live Chat window and button positioning (thanks Katie!)
+
 ## 3.11.0 - Aug 22, 2025
 - remove/replace some deprecated internal dependencies
 
