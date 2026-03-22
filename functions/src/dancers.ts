@@ -1,19 +1,26 @@
-import { config, https } from 'firebase-functions';
+import { https } from 'firebase-functions';
 import Typesense from 'typesense';
 import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 
 import { isCypress, isEmulator } from './utility/env';
 import { ensureAdmin } from './utility/competition';
+import { getConfig } from './utility/config';
 
-const client = new Typesense.Client({
-  nodes: [{
-    host: isEmulator() ? 'localhost' : config().typesense?.host,
-    port: isEmulator() ? 8108 : 443,
-    protocol: isEmulator() ? 'http' : 'https',
-  }],
-  apiKey: isEmulator() ? 'xyz' : config().typesense?.api_key,
-  connectionTimeoutSeconds: 60,
-});
+let typesenseClient: InstanceType<typeof Typesense.Client>;
+function getTypesense() {
+  if (!typesenseClient) {
+    typesenseClient = new Typesense.Client({
+      nodes: [{
+        host: isEmulator() ? 'localhost' : getConfig().typesense?.host,
+        port: isEmulator() ? 8108 : 443,
+        protocol: isEmulator() ? 'http' : 'https',
+      }],
+      apiKey: isEmulator() ? 'xyz' : getConfig().typesense?.api_key,
+      connectionTimeoutSeconds: 60,
+    });
+  }
+  return typesenseClient;
+}
 const schema: CollectionCreateSchema = {
   name: 'dancers',
   fields: [
@@ -54,20 +61,20 @@ export async function onCreate(snap, ctx) {
 
   const { dancerId, competitionId } = ctx.params;
   const doc = dancerExtender(snap.val(), { dancerId, competitionId });
-  await client.collections('dancers').documents().create(doc);
+  await getTypesense().collections('dancers').documents().create(doc);
 }
 export async function onUpdate({ after: snap }, ctx) {
   if (isCypress()) return;
 
   const { dancerId, competitionId } = ctx.params;
   const doc = dancerExtender(snap.val(), { dancerId, competitionId });
-  await client.collections('dancers').documents(dancerId).update(doc);
+  await getTypesense().collections('dancers').documents(dancerId).update(doc);
 }
 export async function onDelete(snap, ctx) {
   if (isCypress()) return;
 
   const { dancerId } = ctx.params;
-  await client.collections('dancers').documents(dancerId).delete();
+  await getTypesense().collections('dancers').documents(dancerId).delete();
 }
 
 export function getOnSearch(db) {
@@ -86,7 +93,7 @@ export function getOnSearch(db) {
     }
 
     try {
-      const response = await client.multiSearch.perform({
+      const response = await getTypesense().multiSearch.perform({
         searches: [
           {
             ...searchParams,
@@ -108,8 +115,8 @@ export function getOnReindex(db) {
     await ensureAdmin(ctx, db);
 
     // reset the collection
-    await client.collections('dancers').delete().catch(() => {});
-    await client.collections().create(schema);
+    await getTypesense().collections('dancers').delete().catch(() => {});
+    await getTypesense().collections().create(schema);
 
     // populate it with dancer data
     const competitions = (await db.child('competitions').get()).val();
@@ -121,7 +128,7 @@ export function getOnReindex(db) {
         );
       },
     ))));
-    await client.collections('dancers').documents().import(documents, { action: 'upsert' });
+    await getTypesense().collections('dancers').documents().import(documents, { action: 'upsert' });
 
     return documents;
   };

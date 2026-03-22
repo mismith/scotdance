@@ -1,5 +1,5 @@
 import { FirebaseInvites } from '@mismith/firebase-tools/dist/server';
-import { postmark } from './utility/email';
+import { getPostmark } from './utility/email';
 import { attachUserToCompetition } from './utility/competition';
 import { isCypress, isEmulator } from './utility/env';
 
@@ -15,7 +15,7 @@ class Invites extends FirebaseInvites {
     const invite = snap.val();
     const competitionPath = `competitions/${competitionId}`;
     const competition = (await this.config.db.child(competitionPath).once('value')).val();
-    await postmark.sendEmailWithTemplate({
+    await getPostmark().sendEmailWithTemplate({
       From: this.config.email,
       To: isEmulator() ? this.config.email : invite.payload.email,
       TemplateAlias: 'competition-admin-invite',

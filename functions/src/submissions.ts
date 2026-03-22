@@ -1,4 +1,4 @@
-import { postmark } from './utility/email';
+import { getPostmark } from './utility/email';
 import { attachUserToCompetition } from './utility/competition';
 import { isCypress, isEmulator } from './utility/env';
 
@@ -31,13 +31,13 @@ class Submissions {
     const model = this.getTemplateModel(submission);
 
     // send emails
-    await postmark.sendEmailWithTemplate({
+    await getPostmark().sendEmailWithTemplate({
       From: this.config.email,
       To: isEmulator() ? this.config.email : submission.contact.email,
       TemplateAlias: 'competition-submission',
       TemplateModel: model,
     });
-    await postmark.sendEmailWithTemplate({
+    await getPostmark().sendEmailWithTemplate({
       From: this.config.email,
       ReplyTo: submission.contact.email,
       To: this.config.email,
@@ -77,7 +77,7 @@ class Submissions {
     if (isCypress()) return;
 
     // send email
-    await postmark.sendEmailWithTemplate({
+    await getPostmark().sendEmailWithTemplate({
       From: this.config.email,
       To: isEmulator() ? this.config.email : contact.email,
       TemplateAlias: 'competition-submission-approved',

@@ -5,6 +5,7 @@ import Submissions from './submissions';
 import * as Dancers from './dancers';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isCypress, isEmulator } from './utility/env';
+import { runtimeConfig } from './utility/config';
 
 const app = admin.initializeApp({
   databaseURL: isCypress() ? `http://${process.env.FIREBASE_DATABASE_EMULATOR_HOST}?ns=scotdance-cypress` : 'https://scotdance.firebaseio.com',
@@ -23,13 +24,18 @@ const appConfig = {
   url: isEmulator() ? 'https://localhost:3000' : 'https://scotdance.app',
 };
 
-const invites = new Invites(appConfig.database, appConfig);
+const configRunWith = { secrets: [runtimeConfig] };
+const configDatabase = isCypress()
+  ? functions.runWith(configRunWith).database.instance('scotdance-cypress')
+  : functions.runWith(configRunWith).database;
+
+const invites = new Invites(configDatabase, appConfig);
 const invitesHooks = invites.hook(`/${env}/competitions:data/{competitionId}/invites`);
 export const competitionInviteCreated = invitesHooks.onCreate;
 export const competitionInviteUpdated = invitesHooks.onUpdate;
 export const competitionInviteDeleted = invitesHooks.onDelete;
 
-const submissions = new Submissions(appConfig.database, appConfig);
+const submissions = new Submissions(configDatabase, appConfig);
 const submissionsHooks = submissions.hook(`/${env}/competitions:submissions`);
 export const competitionSubmissionCreated = submissionsHooks.onCreate;
 export const competitionSubmissionUpdated = submissionsHooks.onUpdate;
@@ -77,9 +83,10 @@ export const reindexCompetitionsPublished = functions.https.onCall(async (data, 
   return competitionsPublished;
 });
 
-const dancersRef = appConfig.database.ref(`/${env}/competitions:data/{competitionId}/dancers/{dancerId}`);
+const dancersRef = configDatabase.ref(`/${env}/competitions:data/{competitionId}/dancers/{dancerId}`);
 export const dancerCreated = !isCypress() && dancersRef.onCreate(Dancers.onCreate);
 export const dancerUpdated = !isCypress() && dancersRef.onUpdate(Dancers.onUpdate);
 export const dancerDeleted = !isCypress() && dancersRef.onDelete(Dancers.onDelete);
-export const searchDancers = functions.https.onCall(Dancers.getOnSearch(appConfig.db));
-export const reindexDancers = functions.https.onCall(Dancers.getOnReindex(appConfig.db));
+const configHttps = functions.runWith(configRunWith).https;
+export const searchDancers = configHttps.onCall(Dancers.getOnSearch(appConfig.db));
+export const reindexDancers = configHttps.onCall(Dancers.getOnReindex(appConfig.db));
