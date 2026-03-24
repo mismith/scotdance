@@ -325,6 +325,13 @@ export default {
       };
     },
 
+    bindAndAwait(key, type, ref) {
+      if (this[key]) this.$unbind(key);
+      return new Promise((resolve, reject) => {
+        const method = type === 'array' ? '$bindAsArray' : '$bindAsObject';
+        this[method](key, ref, (err) => reject(err), () => resolve());
+      });
+    },
     async loadFirebase() {
       if (!this.competitionId) return;
 
@@ -335,35 +342,18 @@ export default {
       this.competitionRef = this.competitionsRef.child(this.competitionId);
       this.competitionDataRef = this.competitionsDataRef.child(this.competitionId);
 
-      // info object
-      if (this.competitionRaw) this.$unbind('competitionRaw');
-      this.$bindAsObject('competitionRaw', this.competitionRef);
-      // data arrays
-      if (this.dancersRaw) this.$unbind('dancersRaw');
-      this.$bindAsArray('dancersRaw', this.competitionDataRef.child('dancers'));
-      if (this.groupsRaw) this.$unbind('groupsRaw');
-      this.$bindAsArray('groupsRaw', this.competitionDataRef.child('groups'));
-      if (this.categoriesRaw) this.$unbind('categoriesRaw');
-      this.$bindAsArray('categoriesRaw', this.competitionDataRef.child('categories'));
-      if (this.dancesRaw) this.$unbind('dancesRaw');
-      this.$bindAsArray('dancesRaw', this.competitionDataRef.child('dances'));
-      if (this.staffRaw) this.$unbind('staffRaw');
-      this.$bindAsArray('staffRaw', this.competitionDataRef.child('staff'));
-      if (this.platformsRaw) this.$unbind('platformsRaw');
-      this.$bindAsArray('platformsRaw', this.competitionDataRef.child('platforms'));
-      // data objects
-      if (this.drawsRaw) this.$unbind('drawsRaw');
-      this.$bindAsObject('drawsRaw', this.competitionDataRef.child('draws'));
-      if (this.scheduleRaw) this.$unbind('scheduleRaw');
-      this.$bindAsObject('scheduleRaw', this.competitionDataRef.child('schedule'));
-      if (this.resultsRaw) this.$unbind('resultsRaw');
-      this.$bindAsObject('resultsRaw', this.competitionDataRef.child('results'));
-      if (this.pointsRaw) this.$unbind('pointsRaw');
-      this.$bindAsObject('pointsRaw', this.competitionDataRef.child('points'));
-
       await Promise.all([
-        this.competitionRef.once('value'),
-        this.competitionDataRef.once('value'),
+        this.bindAndAwait('competitionRaw', 'object', this.competitionRef),
+        this.bindAndAwait('dancersRaw', 'array', this.competitionDataRef.child('dancers')),
+        this.bindAndAwait('groupsRaw', 'array', this.competitionDataRef.child('groups')),
+        this.bindAndAwait('categoriesRaw', 'array', this.competitionDataRef.child('categories')),
+        this.bindAndAwait('dancesRaw', 'array', this.competitionDataRef.child('dances')),
+        this.bindAndAwait('staffRaw', 'array', this.competitionDataRef.child('staff')),
+        this.bindAndAwait('platformsRaw', 'array', this.competitionDataRef.child('platforms')),
+        this.bindAndAwait('drawsRaw', 'object', this.competitionDataRef.child('draws')),
+        this.bindAndAwait('scheduleRaw', 'object', this.competitionDataRef.child('schedule')),
+        this.bindAndAwait('resultsRaw', 'object', this.competitionDataRef.child('results')),
+        this.bindAndAwait('pointsRaw', 'object', this.competitionDataRef.child('points')),
       ])
         .catch((err) => {
           if (err.code === 'PERMISSION_DENIED') {
