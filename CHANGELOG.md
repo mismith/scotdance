@@ -1,5 +1,8 @@
 # Release Notes
 
+## 3.12.0 - Mar 31, 2026
+- allow placing dancers in reverse order (e.g. for Championships) — thanks for the suggestion Kim!
+
 ## 3.11.1 - Oct 20, 2025
 - resolve a bug with Live Chat window and button positioning (thanks Katie!)
 
