@@ -43,48 +43,85 @@
         <v-divider />
         <v-tabs-items :value="tabId" class="app-scroll-frame">
           <v-tab-item value="placings" class="app-scroll-frame app-scroll">
-            <v-list v-if="currentDancers.length" two-line>
-              <DancerListItem
-                v-for="dancer in currentDancers"
-                :key="dancer[idKey]"
-                :dancer="dancer"
-                :disabled="isPointed(dancer)"
-                :class="{ dimmed: isPlaced(dancer, placedDancers) || isPointed(dancer) }"
-                @click="placeDancer(dancer)"
+            <template v-if="pickingReversePlace">
+              <v-list two-line>
+                <v-list-item disabled>
+                  <v-list-item-avatar color="primary">
+                    <v-icon dark>{{ mdiSortDescending }}</v-icon>
+                  </v-list-item-avatar>
+                  <v-list-item-content>
+                    <v-list-item-title class="subtitle-1">Select starting place</v-list-item-title>
+                    <v-list-item-subtitle>How many places are being awarded?</v-list-item-subtitle>
+                  </v-list-item-content>
+                </v-list-item>
+                <v-divider />
+                <v-list-item
+                  v-for="n in currentDancers.length"
+                  :key="n"
+                  :disabled="n < 2"
+                  :class="{ dimmed: n < 2, 'v-list-item--active': n === currentReverseFrom }"
+                  @click="n >= 2 && handleReversePlacePick(n)"
+                >
+                  <v-list-item-avatar>
+                    <span class="subtitle-1 font-weight-bold">{{ n }}{{ getOrdinal(n) }}</span>
+                  </v-list-item-avatar>
+                  <v-list-item-content>
+                    <v-list-item-title>{{ n }} {{ n === 1 ? 'place' : 'places' }}</v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </v-list>
+            </template>
+            <template v-else>
+              <v-list v-if="currentDancers.length" two-line>
+                <v-list-item v-if="isReversed" class="reverse-indicator">
+                  <v-list-item-content>
+                    <v-list-item-subtitle>
+                      Entering from {{ currentReverseFrom }}{{ getOrdinal(currentReverseFrom) }} place
+                    </v-list-item-subtitle>
+                  </v-list-item-content>
+                </v-list-item>
+                <DancerListItem
+                  v-for="dancer in currentDancers"
+                  :key="dancer[idKey]"
+                  :dancer="dancer"
+                  :disabled="isPointed(dancer)"
+                  :class="{ dimmed: isPlaced(dancer, placedDancers) || isPointed(dancer) }"
+                  @click="placeDancer(dancer)"
+                >
+                  <template #favorite>
+                    <v-icon v-if="isPointed(dancer)">{{ mdiCardsDiamond }}</v-icon>
+                    <span v-else />
+                  </template>
+                </DancerListItem>
+                <DancerListItem
+                  :dancer="getPlaceholderDancer()"
+                  @click="placeDancer(getPlaceholderDancer())"
+                  class="placeholder"
+                >
+                  <template #favorite>
+                    <span />
+                  </template>
+                </DancerListItem>
+              </v-list>
+              <EmptyState
+                v-else-if="currentDance === callbacks"
+                :icon="mdiAlert"
+                label="No dancers found"
               >
-                <template #favorite>
-                  <v-icon v-if="isPointed(dancer)">{{ mdiCardsDiamond }}</v-icon>
-                  <span v-else />
-                </template>
-              </DancerListItem>
-              <DancerListItem
-                :dancer="getPlaceholderDancer()"
-                @click="placeDancer(getPlaceholderDancer())"
-                class="placeholder"
+                <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dancers' } }">
+                  <span class="subtitle-1">Add dancers with this age group first &rsaquo;</span>
+                </router-link>
+              </EmptyState>
+              <EmptyState
+                v-else
+                :icon="mdiAlert"
+                label="No dancers to place"
               >
-                <template #favorite>
-                  <span />
-                </template>
-              </DancerListItem>
-            </v-list>
-            <EmptyState
-              v-else-if="currentDance === callbacks"
-              :icon="mdiAlert"
-              label="No dancers found"
-            >
-              <router-link :to="{ name: 'competition.admin.tab', params: { tab: 'dancers' } }">
-                <span class="subtitle-1">Add dancers with this age group first &rsaquo;</span>
-              </router-link>
-            </EmptyState>
-            <EmptyState
-              v-else
-              :icon="mdiAlert"
-              label="No dancers to place"
-            >
-              <router-link :to="{ name: 'competition.admin.results', params: { groupId, danceId: callbacks[idKey] } }">
-                <span class="subtitle-1">Make sure enter callbacks first &rsaquo;</span>
-              </router-link>
-            </EmptyState>
+                <router-link :to="{ name: 'competition.admin.results', params: { groupId, danceId: callbacks[idKey] } }">
+                  <span class="subtitle-1">Make sure enter callbacks first &rsaquo;</span>
+                </router-link>
+              </EmptyState>
+            </template>
           </v-tab-item>
           <v-tab-item value="points" class="app-scroll-frame app-scroll">
             <v-list v-if="currentDancers.length" two-line>
@@ -132,6 +169,27 @@
             </EmptyState>
           </v-tab-item>
         </v-tabs-items>
+        <v-spacer v-if="isActualPlacingDance" />
+        <v-toolbar v-if="isActualPlacingDance" class="flex-none">
+          <v-switch
+            :input-value="isReversed || pickingReversePlace"
+            label="Championship"
+            hide-details
+            @change="handleReverseToggle"
+          />
+          <HelpTip>
+            <strong>Championship</strong> mode enters results in reverse order (e.g. 6th, 5th, …, 1st), as is traditional for championship announcements.
+          </HelpTip>
+          <v-btn
+            v-if="isReversed && !pickingReversePlace"
+            icon
+            small
+            class="ml-2"
+            @click="pickingReversePlace = true"
+          >
+            <v-icon small>{{ mdiPencil }}</v-icon>
+          </v-btn>
+        </v-toolbar>
       </template>
       <EmptyState
         v-else
@@ -147,6 +205,7 @@
           admin
           :dance="currentDance"
           :dancers="placedDancers"
+          :reverse-from="currentReverseFrom"
           @dancer-click="placeDancer($event)"
           @dancer-toggle="handleTie($event[0], $event[1])"
           @dancer-reorder="handleDrag($event)"
@@ -155,7 +214,7 @@
           v-else
           :icon="mdiViewSplitVertical"
           label="Order dancers"
-          description="Select dancers in the order placed"
+          :description="isReversed ? `Select dancers from ${currentReverseFrom}${getOrdinal(currentReverseFrom)} place` : 'Select dancers in the order placed'"
         />
 
         <v-toolbar v-if="currentGroup && currentDance && !placedDancers.length" class="flex-none">
@@ -203,6 +262,8 @@ import {
   mdiCardsDiamond,
   mdiCardsDiamondOutline,
   mdiInformationVariant,
+  mdiSortDescending,
+  mdiPencil,
 } from '@mdi/js';
 import DancerListItem from '@/components/DancerListItem.vue';
 import ResultsList from '@/components/admin/ResultsList.vue';
@@ -215,11 +276,14 @@ import { hasNoExistingTabData, isTabDisabled, handleTabDisable } from '@/helpers
 import {
   overall,
   callbacks,
+  reversePrefix,
+  serializePlacedDancers,
   getPlaceholderDancer,
   findGroupDancers,
   findPointedDancers,
   findPlacedDancers,
   getPlaceIndex,
+  getOrdinal,
   isPlaced,
   hasExplicitlyEmptyResults,
 } from '@/helpers/results';
@@ -245,10 +309,13 @@ export default {
       mdiCardsDiamond,
       mdiCardsDiamondOutline,
       mdiInformationVariant,
+      mdiSortDescending,
+      mdiPencil,
       overall,
       callbacks,
 
       confirmDisable: undefined,
+      pickingReversePlace: false,
     };
   },
   computed: {
@@ -286,9 +353,6 @@ export default {
       }
       return null;
     },
-    isActualDance() {
-      return ![overall, callbacks].some(({ [idKey]: id }) => id === this.danceId);
-    },
     currentDancers() {
       if (this.currentGroup && this.currentDance) {
         if (this.currentDance[idKey] === callbacks[idKey] || this.tabId === 'points') {
@@ -304,6 +368,17 @@ export default {
         return findPlacedDancers(this.currentGroup, this.currentDance, this.dancers, this.results, sortByNumber);
       }
       return [];
+    },
+    currentReverseFrom() {
+      return this.placedDancers.$reverseFrom || null;
+    },
+    isReversed() {
+      return !!this.currentReverseFrom;
+    },
+    isActualPlacingDance() {
+      return this.currentDance
+        && this.currentDance[idKey] !== callbacks[idKey]
+        && this.currentDance[idKey] !== overall[idKey];
     },
     pointedDancers() {
       if (this.groupId && this.danceId) {
@@ -323,6 +398,7 @@ export default {
   watch: {
     currentDance: {
       async handler(currentDance) {
+        this.pickingReversePlace = false;
         await this.$nextTick();
         const id = currentDance ? 'dancers' : 'groups';
         const element = document.getElementById(`blade-${id}`);
@@ -335,12 +411,11 @@ export default {
     getPlaceholderDancer,
     isPlaced,
 
-    save(set = undefined) {
-      // emit changes (to be saved up the chain)
-      const value = set !== undefined ? set : this.placedDancers.map((dancer) => {
-        const dancerId = dancer[idKey];
-        return `${dancerId}${dancer.$tie ? ':tie' : ''}`;
-      });
+    save(set = undefined, { reverseFrom = this.currentReverseFrom } = {}) {
+      let value = set !== undefined ? set : serializePlacedDancers(this.placedDancers);
+      if (Array.isArray(value) && reverseFrom) {
+        value = [`${reversePrefix}${reverseFrom}`, ...value];
+      }
       this.$emit('change', {
         [`results/${this.groupId}/${this.danceId}`]: value,
       });
@@ -356,8 +431,13 @@ export default {
     handleDrag({ oldIndex, newIndex }) {
       this.placedDancers.splice(newIndex, 0, this.placedDancers.splice(oldIndex, 1)[0]);
 
-      // can't be tied if at top of list
-      if (newIndex === 0 || oldIndex === 0) {
+      // can't be tied if at the edge (first entry in normal, last entry in reverse)
+      if (this.isReversed) {
+        const last = this.placedDancers.length - 1;
+        if (newIndex === last || oldIndex === last) {
+          this.placedDancers[last].$tie = false;
+        }
+      } else if (newIndex === 0 || oldIndex === 0) {
         this.placedDancers[0].$tie = false;
       }
 
@@ -396,6 +476,21 @@ export default {
       this.$emit('change', {
         [`points/${this.groupId}/${this.danceId}/${judgeId}`]: pointedDancerIds,
       });
+    },
+
+    getOrdinal,
+
+    handleReverseToggle(on) {
+      if (on) {
+        this.pickingReversePlace = true;
+      } else {
+        this.pickingReversePlace = false;
+        this.save(undefined, { reverseFrom: null });
+      }
+    },
+    handleReversePlacePick(n) {
+      this.pickingReversePlace = false;
+      this.save(undefined, { reverseFrom: n });
     },
 
     async handleTabDisable() {

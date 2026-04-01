@@ -2,15 +2,15 @@
   <v-list two-line class="PlacedDancerList">
     <slot name="prepend" />
     <draggable
-      v-model="dancers"
+      v-model="displayDancers"
       handle=".sortable-handle"
       :disabled="!draggingEnabled"
-      @sort="$emit('dancer-reorder', $event)"
+      @sort="handleSort"
       class="draggable"
     >
       <v-slide-y-transition group hide-on-leave>
         <DancerListItem
-          v-for="(dancer, index) in dancers"
+          v-for="(dancer, index) in displayDancers"
           :key="dancer[idKey]"
           :dancer="dancer"
           :place="getPlace(dancer, dancers)"
@@ -28,10 +28,10 @@
           <template #favorite>
             <v-list-item-action v-if="admin && dance[idKey] !== callbacks[idKey] && !dancer.$points" class="ml-3">
               <v-switch
-                v-show="index"
-                :input-value="dancer.$tie"
+                v-show="reverseFrom ? index !== 0 : index"
+                :input-value="reverseFrom ? (displayDancers[index - 1] && displayDancers[index - 1].$tie) : dancer.$tie"
                 class="tieSwitch"
-                @click.stop="$emit('dancer-toggle', [dancer, !dancer.$tie])"
+                @click.stop="handleTieToggle(index, dancer)"
               />
             </v-list-item-action>
             <span v-else-if="admin" />
@@ -54,6 +54,7 @@ import {
   overall,
   callbacks,
   getPlace,
+  getReversePlace,
   isPlaceholderId,
 } from '@/helpers/results';
 
@@ -70,6 +71,10 @@ export default {
     },
     dance: Object,
     dancers: Array,
+    reverseFrom: {
+      type: Number,
+      required: false,
+    },
   },
   data() {
     return {
@@ -84,6 +89,17 @@ export default {
   computed: {
     draggingEnabled() {
       return this.admin && this.admin !== 'nodrag';
+    },
+    displayDancers: {
+      get() {
+        if (this.reverseFrom) {
+          return [...this.dancers].reverse();
+        }
+        return this.dancers;
+      },
+      set() {
+        // handled via @sort event, not v-model mutation
+      },
     },
   },
   watch: {
@@ -108,10 +124,35 @@ export default {
   methods: {
     isPlaceholderId,
 
+    handleSort(event) {
+      if (this.reverseFrom) {
+        const n = this.dancers.length - 1;
+        this.$emit('dancer-reorder', {
+          oldIndex: n - event.oldIndex,
+          newIndex: n - event.newIndex,
+        });
+      } else {
+        this.$emit('dancer-reorder', event);
+      }
+    },
+
+    handleTieToggle(displayIndex, dancer) {
+      if (this.reverseFrom) {
+        // in reverse mode, tie controls the dancer above in display (next in data)
+        const aboveDancer = this.displayDancers[displayIndex - 1];
+        this.$emit('dancer-toggle', [aboveDancer, !aboveDancer.$tie]);
+      } else {
+        this.$emit('dancer-toggle', [dancer, !dancer.$tie]);
+      }
+    },
+
     getPlace(dancer, dancers) {
       if (this.dance[idKey] === callbacks[idKey] || this.dance[idKey] === all[idKey]) {
         // no places in callbacks or all dancers list
         return undefined;
+      }
+      if (this.reverseFrom) {
+        return getReversePlace(dancer, dancers, this.reverseFrom);
       }
       if (this.dance[idKey] === overall[idKey] && dancers.length <= 1) return 0; // overall winner
       return getPlace(dancer, dancers);

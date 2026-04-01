@@ -20,6 +20,18 @@ export function hasOverall(group) {
   return group.$category && group.$category.name !== 'Primary';
 }
 
+export const reversePrefix = 'reverse:';
+
+export function parseReverseMarker(placings) {
+  if (placings?.length && typeof placings[0] === 'string' && placings[0].startsWith(reversePrefix)) {
+    return {
+      reverseFrom: parseInt(placings[0].slice(reversePrefix.length), 10),
+      dancerIds: placings.slice(1),
+    };
+  }
+  return { reverseFrom: null, dancerIds: placings || [] };
+}
+
 export function hasExplicitlyEmptyResults(groupId, danceId, results = {}) {
   try {
     return results[groupId][danceId] === false;
@@ -85,15 +97,26 @@ export function findPointedDancers(dancePoints, dancers = []) {
   }));
 }
 
+export function serializePlacedDancers(dancers) {
+  return dancers.map((dancer) => {
+    const dancerId = dancer[idKey];
+    return `${dancerId}${dancer.$tie ? ':tie' : ''}`;
+  });
+}
+
 export function findPlacedDancers(group, dance, dancers = [], results = {}, sortByNumber = false, includeDummyForExplicitlyEmptyResults = false) {
   // get ranked dancerIds
   let placings = [];
+  let reverseFrom = null;
   if (group && dance) {
     const groupId = group[idKey];
     const danceId = dance[idKey];
 
     if (results?.[groupId]?.[danceId]) {
-      placings = results[groupId][danceId];
+      const raw = results[groupId][danceId];
+      const parsed = parseReverseMarker(Array.isArray(raw) ? raw : []);
+      placings = parsed.dancerIds;
+      reverseFrom = parsed.reverseFrom;
     }
     if (includeDummyForExplicitlyEmptyResults && hasExplicitlyEmptyResults(groupId, danceId, results)) {
       placings.push('');
@@ -105,6 +128,7 @@ export function findPlacedDancers(group, dance, dancers = [], results = {}, sort
   if (sortByNumber) {
     return placedDancers.sort(sortByKey('$number'));
   }
+  placedDancers.$reverseFrom = reverseFrom;
   return placedDancers;
 }
 export function getPlaceIndex(dancer, dancers) {
@@ -120,6 +144,16 @@ export function getPlace(dancer, dancers) {
     if (d.$tie) return place;
     return i + 1;
   }, 0);
+}
+export function getReversePlace(dancer, dancers, totalPlaces) {
+  const dancerIndex = getPlaceIndex(dancer, dancers);
+  if (dancerIndex < 0) return 0;
+  // find the end of this dancer's tie group — the best place is totalPlaces minus that index
+  const rest = dancers.slice(dancerIndex + 1);
+  const nextGroupOffset = rest.findIndex((d) => !d.$tie);
+  const groupEnd = nextGroupOffset < 0 ? dancers.length - 1 : dancerIndex + nextGroupOffset;
+  const place = totalPlaces - groupEnd;
+  return place > 0 ? place : undefined;
 }
 export function getOrdinal(place) {
   switch (`${place}`) {
@@ -159,6 +193,16 @@ export function isGroupInProgress(group, dances = [], results = {}) {
   return false;
 }
 
+function getDisplayPlace(dancer, placedDancers, dance, points, groupId) {
+  if (isDancerPointed(points, groupId, dance[idKey], dancer[idKey])) return '♦';
+  if (dance[idKey] === callbacks[idKey]) return undefined;
+  const { $reverseFrom } = placedDancers;
+  const place = $reverseFrom
+    ? getReversePlace(dancer, placedDancers, $reverseFrom)
+    : getPlace(dancer, placedDancers);
+  return place || undefined;
+}
+
 export function getRows(groups, dances, dancers, results, points) {
   const rows = [];
   groups.forEach((group) => {
@@ -175,7 +219,7 @@ export function getRows(groups, dances, dancers, results, points) {
           'First Name': dancer.firstName || '?',
           'Last Name': dancer.lastName || '?',
           'Location': dancer.location || '?',
-          'Place': isDancerPointed(points, group[idKey], dance[idKey], dancer[idKey]) ? '♦' : (dance[idKey] !== callbacks[idKey] && getPlace(dancer, placedDancers)) || undefined,
+          'Place': getDisplayPlace(dancer, placedDancers, dance, points, group[idKey]),
           /* eslint-enable quote-props */
         });
       });

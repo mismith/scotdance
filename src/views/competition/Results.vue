@@ -117,6 +117,7 @@
                 <PlacedDancerList
                   :dance="dance"
                   :dancers="dance.$placedDancers"
+                  :reverse-from="dance.$reverseFrom"
                   as-links
                   @dancer-added="handleDancerAdded"
                 >
@@ -327,6 +328,7 @@ export default {
           return {
             ...dance,
             $placedDancers: placedDancers,
+            $reverseFrom: placedDancers.$reverseFrom || null,
             $pointedDancers: pointedDancers,
           };
         }),
