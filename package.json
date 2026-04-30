@@ -38,11 +38,11 @@
     "deploy": "firebase deploy && git push origin HEAD:main --tags"
   },
   "dependencies": {
-    "@capacitor/android": "^6.1.1",
-    "@capacitor/core": "^6.1.1",
-    "@capacitor/device": "6.0.1",
-    "@capacitor/ios": "^6.1.1",
-    "@capacitor/splash-screen": "6.0.2",
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/device": "^8.0.0",
+    "@capacitor/ios": "^8.0.0",
+    "@capacitor/splash-screen": "^8.0.0",
     "@googlemaps/js-api-loader": "^1.16.6",
     "@handsontable/vue": "^11.1.0",
     "@mdi/js": "^5.9.55",
@@ -85,7 +85,7 @@
     "xlsx": "^0.18.2"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.1.1",
+    "@capacitor/cli": "^8.0.0",
     "@vitejs/plugin-vue2": "^2.3.1",
     "autoprefixer": "^10.3.7",
     "cypress": "^13.8.0",
@@ -97,7 +97,7 @@
     "eslint-plugin-import": "^2.25.2",
     "eslint-plugin-vue": "^7.20.0",
     "firebase-admin": "^10.0.2",
-    "firebase-tools": "^13.7.1",
+    "firebase-tools": "^15.16.0",
     "lint-staged": "^11.2.4",
     "npm-run-all": "^4.1.5",
     "pilfer-package": "^1.0.0",

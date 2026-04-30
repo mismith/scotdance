@@ -1,8 +1,8 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "info.mismith.scotdance"
-    compileSdk rootProject.ext.compileSdkVersion
+    namespace = "info.mismith.scotdance"
+    compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "info.mismith.scotdance"
         minSdkVersion rootProject.ext.minSdkVersion
