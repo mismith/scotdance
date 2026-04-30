@@ -34,3 +34,43 @@ export interface StaffMember {
 
 export const staffMemberName = (m: StaffMember) =>
   `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim();
+
+export interface Category {
+  id: string;
+  name?: string;
+  _order?: number;
+}
+
+export interface Group {
+  id: string;
+  name?: string;
+  categoryId?: string;
+  _order?: number;
+}
+
+export interface EnrichedGroup extends Group {
+  fullName: string;
+  category?: Category;
+}
+
+export interface Dancer {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  number?: number;
+  groupId?: string;
+  location?: string;
+  image?: string;
+  _order?: number;
+}
+
+export interface EnrichedDancer extends Dancer {
+  fullName: string;
+  group?: EnrichedGroup;
+}
+
+export const dancerFullName = (d: Pick<Dancer, 'firstName' | 'lastName'>) =>
+  `${d.firstName ?? ''} ${d.lastName ?? ''}`.trim();
+
+export const groupFullName = (g: Group, category?: Category) =>
+  `${category?.name ?? ''} ${g.name ?? ''}`.trim();

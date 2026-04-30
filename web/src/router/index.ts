@@ -16,6 +16,16 @@ const routes: RouteRecordRaw[] = [
         name: 'competition.info',
         component: () => import('@/views/competition/Info.vue'),
       },
+      {
+        path: 'dancers',
+        name: 'competition.dancers',
+        component: () => import('@/views/competition/Dancers.vue'),
+      },
+      {
+        path: 'dancers/:dancerId',
+        name: 'competition.dancer',
+        component: () => import('@/views/competition/Dancer.vue'),
+      },
     ],
   },
 ];
