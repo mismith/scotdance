@@ -1,7 +1,17 @@
 import { inject, provide, ref, watch, type InjectionKey, type Ref } from 'vue';
 import { get, child, ref as dbRefFn } from 'firebase/database';
 import { database, dataRef } from '@/firebase';
-import type { Competition, StaffMember } from '@/types/competition';
+import {
+  dancerFullName,
+  groupFullName,
+  type Category,
+  type Competition,
+  type Dancer,
+  type EnrichedDancer,
+  type EnrichedGroup,
+  type Group,
+  type StaffMember,
+} from '@/types/competition';
 
 interface CompetitionContext {
   competitionId: Ref<string>;
@@ -11,6 +21,8 @@ interface CompetitionContext {
   error: Ref<Error | null>;
   staff: Ref<StaffMember[]>;
   loadStaff: () => Promise<void>;
+  dancers: Ref<EnrichedDancer[]>;
+  loadDancers: () => Promise<void>;
 }
 
 const competitionKey = Symbol('competition') as InjectionKey<CompetitionContext>;
@@ -21,9 +33,16 @@ function competitionMetaRef(id: string) {
   return child(dataRef('competitions'), id);
 }
 
+function competitionDataPath(id: string, section: string) {
+  return `${NAMESPACE}/competitions:data/${id}/${section}`;
+}
+
 function competitionStaffRef(id: string) {
-  // RTDB path uses `competitions:data` (sibling to `competitions`)
-  return dbRefFn(database, `${NAMESPACE}/competitions:data/${id}/staff`);
+  return dbRefFn(database, competitionDataPath(id, 'staff'));
+}
+
+function competitionSectionRef(id: string, section: 'dancers' | 'groups' | 'categories') {
+  return dbRefFn(database, competitionDataPath(id, section));
 }
 
 function snapshotToArray<T extends { id: string }>(value: Record<string, Omit<T, 'id'>> | null): T[] {
@@ -37,8 +56,10 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
   const loading = ref(false);
   const error = ref<Error | null>(null);
   const staff = ref<StaffMember[]>([]);
+  const dancers = ref<EnrichedDancer[]>([]);
 
   let staffLoaded = false;
+  let dancersLoaded = false;
 
   async function loadMeta() {
     if (!competitionId.value) return;
@@ -48,6 +69,8 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     competition.value = null;
     staff.value = [];
     staffLoaded = false;
+    dancers.value = [];
+    dancersLoaded = false;
     try {
       const snap = await get(competitionMetaRef(competitionId.value));
       const value = snap.val() as Competition | null;
@@ -76,6 +99,42 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     }
   }
 
+  async function loadDancers() {
+    if (dancersLoaded || !competitionId.value) return;
+    const id = competitionId.value;
+    try {
+      const [dancersSnap, groupsSnap, categoriesSnap] = await Promise.all([
+        get(competitionSectionRef(id, 'dancers')),
+        get(competitionSectionRef(id, 'groups')),
+        get(competitionSectionRef(id, 'categories')),
+      ]);
+
+      const rawDancers = snapshotToArray<Dancer>(dancersSnap.val());
+      const rawGroups = snapshotToArray<Group>(groupsSnap.val());
+      const rawCategories = snapshotToArray<Category>(categoriesSnap.val());
+
+      const categoriesById = new Map(rawCategories.map((c) => [c.id, c]));
+      const enrichedGroupsById = new Map<string, EnrichedGroup>(
+        rawGroups.map((g) => {
+          const category = g.categoryId ? categoriesById.get(g.categoryId) : undefined;
+          return [g.id, { ...g, category, fullName: groupFullName(g, category) }];
+        }),
+      );
+
+      dancers.value = rawDancers
+        .filter((d) => d.firstName || d.lastName)
+        .map<EnrichedDancer>((d) => ({
+          ...d,
+          fullName: dancerFullName(d),
+          group: d.groupId ? enrichedGroupsById.get(d.groupId) : undefined,
+        }));
+
+      dancersLoaded = true;
+    } catch (e) {
+      error.value = e as Error;
+    }
+  }
+
   watch(competitionId, loadMeta, { immediate: true });
 
   const ctx: CompetitionContext = {
@@ -86,6 +145,8 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     error,
     staff,
     loadStaff,
+    dancers,
+    loadDancers,
   };
 
   provide(competitionKey, ctx);

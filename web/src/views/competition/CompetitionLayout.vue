@@ -10,6 +10,7 @@ const { competition, notFound, loading, error } = provideCompetition(toRef(compe
 
 const tabs = [
   { name: 'Info', to: 'competition.info' },
+  { name: 'Dancers', to: 'competition.dancers' },
 ];
 </script>
 
