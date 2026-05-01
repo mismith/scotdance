@@ -10,6 +10,17 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/firebase/') || id.includes('node_modules/@firebase/')) {
+            return 'firebase';
+          }
+        },
+      },
+    },
+  },
   server: {
     port: 3000,
     host: true,
