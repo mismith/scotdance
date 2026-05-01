@@ -7,6 +7,8 @@
   "author": "Murray Rowan <murray@mismith.info>",
   "scripts": {
     "dev": "vite",
+    "emulate": "cd .. && firebase emulators:start --import=.firebase/emulator-data --export-on-exit",
+    "local": "concurrently -k -n emulate,vite -c blue,green \"npm:emulate\" \"vite --mode emulator\"",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit",
@@ -33,6 +35,7 @@
     "@types/node": "^22.10.0",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/tsconfig": "^0.7.0",
+    "concurrently": "^9.2.1",
     "tailwindcss": "^4.0.0",
     "typescript": "~5.7.0",
     "vite": "^6.0.0",
