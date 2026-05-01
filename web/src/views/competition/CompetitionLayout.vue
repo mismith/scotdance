@@ -2,6 +2,7 @@
 import { computed, toRef } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
 import { provideCompetition } from '@/composables/useCompetition';
+import AccountButton from '@/components/AccountButton.vue';
 
 const route = useRoute();
 const competitionId = computed(() => String(route.params.competitionId ?? ''));
@@ -32,6 +33,7 @@ const tabs = [
             {{ competition.location }}
           </p>
         </div>
+        <AccountButton />
       </div>
       <nav class="max-w-3xl mx-auto px-4 flex gap-1">
         <RouterLink

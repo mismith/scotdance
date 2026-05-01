@@ -2,6 +2,7 @@
 import { computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useCompetition } from '@/composables/useCompetition';
+import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue';
 
 const route = useRoute();
 const { competitionId, dancers, loadDancers } = useCompetition();
@@ -42,7 +43,10 @@ const dancer = computed(() => dancers.value.find((d) => d.id === dancerId.value)
         <div class="text-xs uppercase tracking-wide text-muted-foreground">
           #{{ dancer.number ?? '?' }}
         </div>
-        <h2 class="text-2xl font-semibold">{{ dancer.fullName || '?' }}</h2>
+        <div class="flex items-center gap-2">
+          <h2 class="text-2xl font-semibold flex-1 min-w-0 truncate">{{ dancer.fullName || '?' }}</h2>
+          <FavoriteDancerButton :dancer="dancer" size="md" />
+        </div>
         <div v-if="dancer.group" class="text-sm">
           {{ dancer.group.fullName }}
         </div>
@@ -51,9 +55,5 @@ const dancer = computed(() => dancers.value.find((d) => d.id === dancerId.value)
         </div>
       </div>
     </header>
-
-    <p v-if="dancer" class="text-xs text-muted-foreground">
-      Cross-competition results report coming in a follow-up port.
-    </p>
   </article>
 </template>

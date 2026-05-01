@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useCompetition } from '@/composables/useCompetition';
 import type { EnrichedDancer } from '@/types/competition';
+import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue';
 
 const { competitionId, dancers, loadDancers } = useCompetition();
 
@@ -80,22 +81,25 @@ const grouped = computed<DancerGroupRow[]>(() => {
       </h3>
       <ul class="divide-y border rounded-md">
         <li v-for="dancer in group.members" :key="dancer.id">
-          <RouterLink
-            :to="{ name: 'competition.dancer', params: { competitionId, dancerId: dancer.id } }"
-            class="flex items-center gap-3 p-3 hover:bg-accent"
-          >
-            <div
-              class="size-8 rounded-full bg-muted text-xs font-mono flex items-center justify-center text-muted-foreground shrink-0"
+          <div class="flex items-center">
+            <RouterLink
+              :to="{ name: 'competition.dancer', params: { competitionId, dancerId: dancer.id } }"
+              class="flex items-center gap-3 p-3 flex-1 min-w-0 hover:bg-accent"
             >
-              {{ dancer.number ?? '–' }}
-            </div>
-            <div class="min-w-0 flex-1">
-              <div class="font-medium truncate">{{ dancer.fullName || '?' }}</div>
-              <div v-if="dancer.location" class="text-xs text-muted-foreground truncate">
-                {{ dancer.location }}
+              <div
+                class="size-8 rounded-full bg-muted text-xs font-mono flex items-center justify-center text-muted-foreground shrink-0"
+              >
+                {{ dancer.number ?? '–' }}
               </div>
-            </div>
-          </RouterLink>
+              <div class="min-w-0 flex-1">
+                <div class="font-medium truncate">{{ dancer.fullName || '?' }}</div>
+                <div v-if="dancer.location" class="text-xs text-muted-foreground truncate">
+                  {{ dancer.location }}
+                </div>
+              </div>
+            </RouterLink>
+            <FavoriteDancerButton :dancer="dancer" class="mr-2" />
+          </div>
         </li>
       </ul>
     </section>
