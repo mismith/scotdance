@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { onClickOutside } from '@vueuse/core';
 import { useRouter } from 'vue-router';
-import { LogIn, LogOut, User } from 'lucide-vue-next';
+import { LogOut, User } from 'lucide-vue-next';
 import { useAuthStore } from '@/stores/auth';
 import { useMeStore } from '@/stores/me';
 import { gravatarUrl } from '@/lib/gravatar';
@@ -68,7 +68,7 @@ async function handleSignOut() {
       >
         {{ initial }}
       </span>
-      <LogIn v-else class="size-5 mr-1 ml-1" />
+      <User v-else class="size-5 mr-1 ml-1" />
     </button>
 
     <div
