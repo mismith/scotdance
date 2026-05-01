@@ -13,8 +13,10 @@ import {
   type EnrichedDancer,
   type EnrichedGroup,
   type Group,
+  type Platform,
   type PointsTree,
   type ResultsTree,
+  type Schedule,
   type StaffMember,
 } from '@/types/competition';
 
@@ -34,6 +36,9 @@ interface CompetitionContext {
   results: Ref<ResultsTree>;
   points: Ref<PointsTree>;
   loadResults: () => Promise<void>;
+  schedule: Ref<Schedule | null>;
+  platforms: Ref<Platform[]>;
+  loadSchedule: () => Promise<void>;
 }
 
 const competitionKey = Symbol('competition') as InjectionKey<CompetitionContext>;
@@ -54,7 +59,15 @@ function competitionStaffRef(id: string) {
 
 function competitionSectionRef(
   id: string,
-  section: 'dancers' | 'groups' | 'categories' | 'dances' | 'results' | 'points',
+  section:
+    | 'dancers'
+    | 'groups'
+    | 'categories'
+    | 'dances'
+    | 'results'
+    | 'points'
+    | 'schedule'
+    | 'platforms',
 ) {
   return dbRefFn(database, competitionDataPath(id, section));
 }
@@ -76,10 +89,13 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
   const dances = ref<EnrichedDance[]>([]);
   const results = ref<ResultsTree>({});
   const points = ref<PointsTree>({});
+  const schedule = ref<Schedule | null>(null);
+  const platforms = ref<Platform[]>([]);
 
   let staffLoaded = false;
   let dancersLoaded = false;
   let resultsLoaded = false;
+  let scheduleLoaded = false;
 
   async function loadMeta() {
     if (!competitionId.value) return;
@@ -97,6 +113,9 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     results.value = {};
     points.value = {};
     resultsLoaded = false;
+    schedule.value = null;
+    platforms.value = [];
+    scheduleLoaded = false;
     try {
       const snap = await get(competitionMetaRef(competitionId.value));
       const value = snap.val() as Competition | null;
@@ -192,6 +211,24 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     }
   }
 
+  async function loadSchedule() {
+    if (scheduleLoaded || !competitionId.value) return;
+    const id = competitionId.value;
+    try {
+      const [scheduleSnap, platformsSnap] = await Promise.all([
+        get(competitionSectionRef(id, 'schedule')),
+        get(competitionSectionRef(id, 'platforms')),
+      ]);
+      schedule.value = (scheduleSnap.val() as Schedule | null) ?? null;
+      platforms.value = snapshotToArray<Platform>(platformsSnap.val()).sort(
+        (a, b) => (a._order ?? 0) - (b._order ?? 0),
+      );
+      scheduleLoaded = true;
+    } catch (e) {
+      error.value = e as Error;
+    }
+  }
+
   watch(competitionId, loadMeta, { immediate: true });
 
   const ctx: CompetitionContext = {
@@ -210,6 +247,9 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     results,
     points,
     loadResults,
+    schedule,
+    platforms,
+    loadSchedule,
   };
 
   provide(competitionKey, ctx);

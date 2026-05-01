@@ -29,6 +29,13 @@ const dateTimeAt = new Intl.DateTimeFormat('en-US', {
   minute: '2-digit',
 });
 
+const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'long' });
+
+export function formatWeekday(value: number | string | undefined | null): string {
+  if (value == null) return '';
+  return weekday.format(new Date(value));
+}
+
 export function formatLongDate(value: number | string | undefined | null): string {
   if (value == null) return '';
   return dayMonthYear.format(new Date(value));

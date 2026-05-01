@@ -32,6 +32,16 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/competition/Dancer.vue'),
       },
       {
+        path: 'schedule',
+        name: 'competition.schedule',
+        component: () => import('@/views/competition/Schedule.vue'),
+      },
+      {
+        path: 'schedule/:dayId/:blockId/:eventId',
+        name: 'competition.event',
+        component: () => import('@/views/competition/Event.vue'),
+      },
+      {
         path: 'results',
         name: 'competition.results',
         component: () => import('@/views/competition/Results.vue'),
