@@ -1,17 +1,22 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { onKeyStroke } from '@vueuse/core';
 import { useRoute, RouterLink } from 'vue-router';
-import { CalendarDays, Home, Menu, X } from 'lucide-vue-next';
+import { CalendarDays, Home, Menu, User, X } from 'lucide-vue-next';
+import { useAuthStore } from '@/stores/auth';
 import AccountMenu from './AccountMenu.vue';
 
 const drawerOpen = ref(false);
 const route = useRoute();
+const auth = useAuthStore();
 
-const navItems = [
-  { name: 'Home', to: { name: 'home' }, icon: Home },
-  { name: 'Competitions', to: { name: 'competitions' }, icon: CalendarDays },
-];
+const navItems = computed(() => {
+  const items: Array<{ name: string; to: { name: string }; icon: typeof Home }> = [
+    { name: 'Home', to: { name: 'home' }, icon: Home },
+    { name: 'Competitions', to: { name: 'competitions' }, icon: CalendarDays },
+  ];
+  return items;
+});
 
 watch(() => route.fullPath, () => {
   drawerOpen.value = false;
@@ -24,7 +29,7 @@ onKeyStroke('Escape', () => {
 
 <template>
   <div class="min-h-svh flex flex-col">
-    <header class="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b">
+    <header class="sticky top-0 z-30 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80 border-b">
       <div class="max-w-3xl mx-auto px-2 sm:px-4 h-14 flex items-center gap-2">
         <button
           type="button"

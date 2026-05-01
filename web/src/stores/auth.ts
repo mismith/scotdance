@@ -1,15 +1,28 @@
 import { defineStore } from 'pinia';
 import { computed, ref, watch } from 'vue';
 import {
+  EmailAuthProvider,
   createUserWithEmailAndPassword,
+  deleteUser,
+  reauthenticateWithCredential,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
+  updateEmail,
+  updatePassword,
+  updateProfile,
 } from 'firebase/auth';
+import { ref as dbRef, remove, set, update } from 'firebase/database';
 import { useCurrentUser } from 'vuefire';
-import { auth } from '@/firebase';
+import { auth, database } from '@/firebase';
 
 type PostLoginAction = () => void | Promise<void>;
+
+const NAMESPACE = import.meta.env.VITE_FIREBASE_DATA_NAMESPACE || 'production';
+
+function userPath(uid: string, child = '') {
+  return `${NAMESPACE}/users/${uid}${child ? `/${child}` : ''}`;
+}
 
 export const useAuthStore = defineStore('auth', () => {
   const user = useCurrentUser();
@@ -80,6 +93,48 @@ export const useAuthStore = defineStore('auth', () => {
     await signOut(auth);
   }
 
+  async function reauthenticate(currentPassword: string) {
+    const u = auth.currentUser;
+    if (!u || !u.email) throw new Error('Not signed in');
+    const credential = EmailAuthProvider.credential(u.email, currentPassword);
+    await reauthenticateWithCredential(u, credential);
+  }
+
+  async function updateDisplayName(name: string) {
+    const u = auth.currentUser;
+    if (!u) throw new Error('Not signed in');
+    await updateProfile(u, { displayName: name || null });
+    await update(dbRef(database, userPath(u.uid)), { displayName: name || null });
+  }
+
+  async function updateUserEmail(newEmail: string, currentPassword: string) {
+    await reauthenticate(currentPassword);
+    const u = auth.currentUser;
+    if (!u) throw new Error('Not signed in');
+    await updateEmail(u, newEmail);
+    await set(dbRef(database, userPath(u.uid, 'email')), newEmail);
+  }
+
+  async function updateUserPassword(newPassword: string, currentPassword: string) {
+    await reauthenticate(currentPassword);
+    const u = auth.currentUser;
+    if (!u) throw new Error('Not signed in');
+    await updatePassword(u, newPassword);
+  }
+
+  async function deleteAccount(currentPassword: string) {
+    await reauthenticate(currentPassword);
+    const u = auth.currentUser;
+    if (!u) throw new Error('Not signed in');
+    const uid = u.uid;
+    await deleteUser(u);
+    await Promise.all([
+      remove(dbRef(database, `${NAMESPACE}/users/${uid}`)),
+      remove(dbRef(database, `${NAMESPACE}/users:favorites/${uid}`)),
+      remove(dbRef(database, `${NAMESPACE}/users:permissions/${uid}`)),
+    ]);
+  }
+
   return {
     user,
     isSignedIn,
@@ -95,5 +150,9 @@ export const useAuthStore = defineStore('auth', () => {
     registerWithEmail,
     resetPassword,
     signOut: signOutUser,
+    updateDisplayName,
+    updateUserEmail,
+    updateUserPassword,
+    deleteAccount,
   };
 });
