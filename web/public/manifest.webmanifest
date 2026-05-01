@@ -1,0 +1,35 @@
+{
+  "name": "ScotDance.app",
+  "short_name": "ScotDance",
+  "description": "Highland dance event tracker — competitions, dancers, and live results.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#1976d2",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/img/touchicon.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "/img/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/img/icon-1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/img/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
