@@ -16,6 +16,11 @@ const tabs: Array<{ name: string; to: string; matches: string[] }> = [
     matches: ['competition.dancers', 'competition.dancer'],
   },
   {
+    name: 'Schedule',
+    to: 'competition.schedule',
+    matches: ['competition.schedule', 'competition.event'],
+  },
+  {
     name: 'Results',
     to: 'competition.results',
     matches: ['competition.results', 'competition.group'],

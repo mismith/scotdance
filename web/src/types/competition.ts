@@ -111,3 +111,52 @@ export const groupHasOverall = (group?: EnrichedGroup) =>
 export type DancePlacing = string;
 export type ResultsTree = Record<string, Record<string, DancePlacing[] | false | undefined>>;
 export type PointsTree = Record<string, Record<string, Record<string, string[]>>>;
+
+export interface Platform {
+  id: string;
+  name?: string;
+  _order?: number;
+}
+
+export interface SchedulePlatform {
+  orderedGroupIds?: string[];
+  orderedJudgeIds?: string[];
+}
+
+export interface ScheduleDance {
+  id: string;
+  order?: number;
+  name?: string;
+  description?: string;
+  danceId?: string;
+  platforms?: Record<string, SchedulePlatform>;
+}
+
+export interface ScheduleEvent {
+  id: string;
+  order?: number;
+  name?: string;
+  description?: string;
+  dances?: Record<string, Omit<ScheduleDance, 'id'>>;
+}
+
+export interface ScheduleBlock {
+  id: string;
+  order?: number;
+  name?: string;
+  description?: string;
+  events?: Record<string, Omit<ScheduleEvent, 'id'>>;
+}
+
+export interface ScheduleDay {
+  id: string;
+  order?: number;
+  name?: string;
+  date?: number;
+  description?: string;
+  blocks?: Record<string, Omit<ScheduleBlock, 'id'>>;
+}
+
+export interface Schedule {
+  days?: Record<string, Omit<ScheduleDay, 'id'>>;
+}
