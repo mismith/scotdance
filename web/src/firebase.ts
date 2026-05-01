@@ -22,7 +22,7 @@ export const database = getDatabase(firebaseApp);
 export const storage = getStorage(firebaseApp);
 export const functions = getFunctions(firebaseApp);
 
-if (import.meta.env.VITE_USE_EMULATORS === 'true') {
+if (import.meta.env.MODE === 'emulator') {
   connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
   connectDatabaseEmulator(database, 'localhost', 9009);
   connectStorageEmulator(storage, 'localhost', 9199);
