@@ -23,18 +23,24 @@ export const useFavoritesStore = defineStore('favorites', () => {
     return Boolean(competitions.value[id]);
   }
 
-  async function toggleDancer(id: string, name?: string) {
+  async function setDancer(id: string, on: boolean, name?: string) {
     if (!auth.uid) throw new Error('Not signed in');
     const path = `${NAMESPACE}/users:favorites/${auth.uid}/dancers/${id}`;
-    const current = dancers.value[id];
-    await set(dbRef(database, path), current ? null : (name || true));
+    await set(dbRef(database, path), on ? (name || true) : null);
+  }
+
+  async function setCompetition(id: string, on: boolean) {
+    if (!auth.uid) throw new Error('Not signed in');
+    const path = `${NAMESPACE}/users:favorites/${auth.uid}/competitions/${id}`;
+    await set(dbRef(database, path), on ? true : null);
+  }
+
+  async function toggleDancer(id: string, name?: string) {
+    await setDancer(id, !dancers.value[id], name);
   }
 
   async function toggleCompetition(id: string) {
-    if (!auth.uid) throw new Error('Not signed in');
-    const path = `${NAMESPACE}/users:favorites/${auth.uid}/competitions/${id}`;
-    const current = competitions.value[id];
-    await set(dbRef(database, path), current ? null : true);
+    await setCompetition(id, !competitions.value[id]);
   }
 
   watch(
@@ -64,6 +70,8 @@ export const useFavoritesStore = defineStore('favorites', () => {
     competitions,
     isFavoriteDancer,
     isFavoriteCompetition,
+    setDancer,
+    setCompetition,
     toggleDancer,
     toggleCompetition,
   };

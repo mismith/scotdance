@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import {
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
@@ -9,6 +9,8 @@ import {
 import { useCurrentUser } from 'vuefire';
 import { auth } from '@/firebase';
 
+type PostLoginAction = () => void | Promise<void>;
+
 export const useAuthStore = defineStore('auth', () => {
   const user = useCurrentUser();
   const isSignedIn = computed(() => !!user.value);
@@ -17,6 +19,7 @@ export const useAuthStore = defineStore('auth', () => {
   const photoURL = computed(() => user.value?.photoURL ?? null);
 
   const loginDialogOpen = ref(false);
+  const pendingActions = ref<PostLoginAction[]>([]);
 
   function openLogin() {
     loginDialogOpen.value = true;
@@ -25,6 +28,41 @@ export const useAuthStore = defineStore('auth', () => {
   function closeLogin() {
     loginDialogOpen.value = false;
   }
+
+  function enqueueAfterLogin(action: PostLoginAction) {
+    pendingActions.value.push(action);
+  }
+
+  async function flushPendingActions() {
+    if (!pendingActions.value.length) return;
+    const actions = pendingActions.value.slice();
+    pendingActions.value = [];
+    for (const action of actions) {
+      try {
+        await action();
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('Post-login action failed:', e);
+      }
+    }
+  }
+
+  function requireSignIn(action: PostLoginAction) {
+    if (isSignedIn.value) {
+      return action();
+    }
+    enqueueAfterLogin(action);
+    openLogin();
+    return undefined;
+  }
+
+  watch(isSignedIn, (signedIn) => {
+    if (signedIn) {
+      void flushPendingActions();
+    } else {
+      pendingActions.value = [];
+    }
+  });
 
   async function signInWithEmail(email: string, password: string) {
     await signInWithEmailAndPassword(auth, email, password);
@@ -51,6 +89,8 @@ export const useAuthStore = defineStore('auth', () => {
     loginDialogOpen,
     openLogin,
     closeLogin,
+    enqueueAfterLogin,
+    requireSignIn,
     signInWithEmail,
     registerWithEmail,
     resetPassword,
