@@ -8,10 +8,24 @@ const competitionId = computed(() => String(route.params.competitionId ?? ''));
 
 const { competition, notFound, loading, error } = provideCompetition(toRef(competitionId));
 
-const tabs = [
-  { name: 'Info', to: 'competition.info' },
-  { name: 'Dancers', to: 'competition.dancers' },
+const tabs: Array<{ name: string; to: string; matches: string[] }> = [
+  { name: 'Info', to: 'competition.info', matches: ['competition.info'] },
+  {
+    name: 'Dancers',
+    to: 'competition.dancers',
+    matches: ['competition.dancers', 'competition.dancer'],
+  },
+  {
+    name: 'Results',
+    to: 'competition.results',
+    matches: ['competition.results', 'competition.group'],
+  },
 ];
+
+const activeTab = computed(() => {
+  const name = String(route.name ?? '');
+  return tabs.find((t) => t.matches.includes(name))?.to;
+});
 </script>
 
 <template>
@@ -38,8 +52,12 @@ const tabs = [
           v-for="tab in tabs"
           :key="tab.to"
           :to="{ name: tab.to, params: { competitionId } }"
-          class="px-3 py-2 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground"
-          active-class="!border-primary !text-foreground"
+          :class="[
+            'px-3 py-2 text-sm font-medium border-b-2 text-muted-foreground hover:text-foreground',
+            activeTab === tab.to
+              ? 'border-primary text-foreground'
+              : 'border-transparent',
+          ]"
         >
           {{ tab.name }}
         </RouterLink>
