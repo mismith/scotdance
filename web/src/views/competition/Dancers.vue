@@ -228,7 +228,7 @@ function dismissSuggestions() {
         :aria-pressed="onlyFavorites"
         :class="[
           'p-2 rounded-md border hover:bg-accent transition-colors',
-          onlyFavorites ? 'text-yellow-500 border-yellow-500' : 'text-muted-foreground',
+          onlyFavorites ? 'text-secondary border-secondary' : 'text-muted-foreground',
         ]"
         @click="onlyFavorites = !onlyFavorites"
       >
@@ -238,10 +238,10 @@ function dismissSuggestions() {
 
     <div
       v-if="showSuggestionsBanner"
-      class="flex items-center gap-3 px-4 py-3 rounded-md border border-yellow-500/40 bg-yellow-500/10 cursor-pointer hover:bg-yellow-500/15"
+      class="flex items-center gap-3 px-4 py-3 rounded-md border border-secondary/40 bg-secondary/10 cursor-pointer hover:bg-secondary/15"
       @click="activateSuggestions"
     >
-      <Star class="size-5 text-yellow-500 fill-current shrink-0" />
+      <Star class="size-5 text-secondary fill-current shrink-0" />
       <div class="flex-1 min-w-0">
         <div class="font-semibold text-sm">
           {{ suggestions.length }} favourite dancer {{ suggestions.length === 1 ? 'suggestion' : 'suggestions' }}
@@ -250,7 +250,7 @@ function dismissSuggestions() {
       </div>
       <button
         type="button"
-        class="p-1 rounded-md hover:bg-yellow-500/20"
+        class="p-1 rounded-md hover:bg-secondary/20"
         title="Dismiss"
         @click.stop="dismissSuggestions"
       >
@@ -285,14 +285,14 @@ function dismissSuggestions() {
         <button
           v-if="group.isSuggestions && isExpanded(group)"
           type="button"
-          class="px-2 py-1 rounded-md bg-yellow-500 text-white text-xs font-medium hover:opacity-90"
+          class="px-2 py-1 rounded-md bg-secondary text-secondary-foreground text-xs font-medium hover:opacity-90"
           @click.stop="favoriteAll(group.members)"
         >
           Favourite All
         </button>
         <Star
           v-else-if="!onlyFavorites && groupHasFavorite(group)"
-          class="size-4 text-yellow-500 fill-current"
+          class="size-4 text-secondary fill-current"
         />
         <span class="text-xs font-normal normal-case tracking-normal">
           {{ group.members.length }}

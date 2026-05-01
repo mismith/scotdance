@@ -5,7 +5,6 @@ import Fuse from 'fuse.js';
 import { ChevronDown, Filter, Pin } from 'lucide-vue-next';
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions';
 import { useFavoritesStore } from '@/stores/favorites';
-import AccountButton from '@/components/AccountButton.vue';
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue';
 import { formatShortDate, isPast } from '@/lib/format';
 
@@ -120,14 +119,9 @@ function clearLocations() {
 </script>
 
 <template>
-  <div class="min-h-svh flex flex-col">
-    <header class="border-b">
-      <div class="max-w-3xl mx-auto p-4 flex items-center gap-4">
-        <h1 class="text-lg font-semibold flex-1">Competitions</h1>
-        <AccountButton />
-      </div>
-
-      <div class="max-w-3xl mx-auto px-4 pb-3 flex flex-wrap items-center gap-2">
+  <div class="flex-1 flex flex-col">
+    <header class="border-b bg-background">
+      <div class="max-w-3xl mx-auto px-4 py-3 flex flex-wrap items-center gap-2">
         <input
           v-model="filter"
           type="search"
@@ -185,7 +179,7 @@ function clearLocations() {
           :aria-pressed="onlyPinned"
           :class="[
             'p-2 rounded-md border hover:bg-accent transition-colors',
-            onlyPinned ? 'text-yellow-500 border-yellow-500' : 'text-muted-foreground',
+            onlyPinned ? 'text-secondary border-secondary' : 'text-muted-foreground',
           ]"
           @click="onlyPinned = !onlyPinned"
         >
@@ -246,7 +240,7 @@ function clearLocations() {
           <span class="flex-1 text-left">{{ group.groupName }}</span>
           <Pin
             v-if="!onlyPinned && groupHasPin(group)"
-            class="size-4 text-yellow-500 fill-current"
+            class="size-4 text-secondary fill-current"
           />
           <span class="text-xs font-normal normal-case tracking-normal">
             {{ group.members.length }}
