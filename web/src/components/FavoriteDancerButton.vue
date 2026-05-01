@@ -21,11 +21,14 @@ const sizeClass = computed(() => (props.size === 'md' ? 'size-5' : 'size-4'));
 async function handleClick(e: Event) {
   e.preventDefault();
   e.stopPropagation();
+  const name = dancerFullName(props.dancer);
   if (!auth.isSignedIn) {
+    // queue force-on; if the user signs in, they get the favorite they wanted
+    auth.enqueueAfterLogin(() => favorites.setDancer(props.dancer.id, true, name));
     auth.openLogin();
     return;
   }
-  await favorites.toggleDancer(props.dancer.id, dancerFullName(props.dancer));
+  await favorites.toggleDancer(props.dancer.id, name);
 }
 </script>
 

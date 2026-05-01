@@ -174,13 +174,16 @@ function groupHasFavorite(group: DancerGroupRow) {
 }
 
 async function favoriteAll(dancersToFavorite: EnrichedDancer[]) {
+  const apply = () =>
+    Promise.all(
+      dancersToFavorite.map((d) => favorites.setDancer(d.id, true, d.fullName)),
+    );
   if (!auth.isSignedIn) {
+    auth.enqueueAfterLogin(apply);
     auth.openLogin();
     return;
   }
-  await Promise.all(
-    dancersToFavorite.map((d) => favorites.toggleDancer(d.id, d.fullName)),
-  );
+  await apply();
 }
 
 function activateSuggestions() {
