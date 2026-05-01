@@ -74,3 +74,40 @@ export const dancerFullName = (d: Pick<Dancer, 'firstName' | 'lastName'>) =>
 
 export const groupFullName = (g: Group, category?: Category) =>
   `${category?.name ?? ''} ${g.name ?? ''}`.trim();
+
+export interface Dance {
+  id: string;
+  name?: string;
+  shortName?: string;
+  steps?: string;
+  groupIds?: Record<string, boolean>;
+  _order?: number;
+}
+
+export interface EnrichedDance extends Dance {
+  fullName: string;
+}
+
+export const danceFullName = (d: Pick<Dance, 'name' | 'steps'>) => {
+  const name = (d.name ?? '').trim();
+  const steps = (d.steps ?? '').trim();
+  return steps ? `${name} (${steps})` : name;
+};
+
+export const OVERALL_ID = 'overall';
+
+export const overallDance: EnrichedDance = {
+  id: OVERALL_ID,
+  fullName: 'Overall',
+};
+
+export const groupHasOverall = (group?: EnrichedGroup) =>
+  Boolean(group?.category && group.category.name !== 'Primary');
+
+// Raw RTDB shapes:
+// results[groupId][danceId] = string[] (with optional first "reverse:N" marker, dancers as "id" or "id:tie")
+//                             | false  (explicitly empty)
+// points[groupId][danceId][judgeId] = string[]
+export type DancePlacing = string;
+export type ResultsTree = Record<string, Record<string, DancePlacing[] | false | undefined>>;
+export type PointsTree = Record<string, Record<string, Record<string, string[]>>>;
