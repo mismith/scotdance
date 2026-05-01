@@ -39,7 +39,7 @@ async function handleClick(e: Event) {
     :title="auth.isSignedIn ? (isFavorite ? 'Unfavorite' : 'Favorite') : 'Sign in to favorite'"
     :class="[
       'p-2 rounded-md hover:bg-accent transition-colors',
-      isFavorite ? 'text-yellow-500' : 'text-muted-foreground hover:text-foreground',
+      isFavorite ? 'text-secondary' : 'text-muted-foreground hover:text-foreground',
     ]"
   >
     <Star :class="[sizeClass, isFavorite && 'fill-current']" />

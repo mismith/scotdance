@@ -34,7 +34,7 @@ async function handleClick(e: Event) {
     :title="auth.isSignedIn ? (isPinned ? 'Unpin' : 'Pin') : 'Sign in to pin'"
     :class="[
       'p-2 rounded-md hover:bg-accent transition-colors',
-      isPinned ? 'text-yellow-500' : 'text-muted-foreground hover:text-foreground',
+      isPinned ? 'text-secondary' : 'text-muted-foreground hover:text-foreground',
     ]"
   >
     <Pin :class="[sizeClass, isPinned && 'fill-current']" />

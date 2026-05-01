@@ -2,7 +2,6 @@
 import { computed, toRef } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
 import { provideCompetition } from '@/composables/useCompetition';
-import AccountButton from '@/components/AccountButton.vue';
 
 const route = useRoute();
 const competitionId = computed(() => String(route.params.competitionId ?? ''));
@@ -16,8 +15,8 @@ const tabs = [
 </script>
 
 <template>
-  <div class="min-h-svh flex flex-col">
-    <header class="border-b">
+  <div class="flex-1 flex flex-col">
+    <header class="border-b bg-background">
       <div class="max-w-3xl mx-auto p-4 flex items-center gap-4">
         <img
           v-if="competition?.image"
@@ -33,7 +32,6 @@ const tabs = [
             {{ competition.location }}
           </p>
         </div>
-        <AccountButton />
       </div>
       <nav class="max-w-3xl mx-auto px-4 flex gap-1">
         <RouterLink
