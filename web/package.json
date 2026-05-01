@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "vite",
     "emulate": "cd .. && firebase emulators:start --import=.firebase/emulator-data --export-on-exit",
-    "local": "concurrently -k -n emulate,vite -c blue,green \"npm:emulate\" \"vite --mode emulator\"",
+    "emulate:typesense": "cd .. && ./typesense-server --log-dir .typesense/logs --data-dir .typesense/emulator-data --listen-port=8108 --api-key=xyz --enable-cors",
+    "local": "concurrently -k -n fb,ts,vite -c blue,yellow,green \"npm:emulate\" \"npm:emulate:typesense\" \"vite --mode emulator\"",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit",

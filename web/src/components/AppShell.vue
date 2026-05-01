@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { onKeyStroke } from '@vueuse/core';
 import { useRoute, RouterLink } from 'vue-router';
-import { CalendarDays, Home, Menu, User, X } from 'lucide-vue-next';
+import { CalendarDays, Home, Menu, Users, X } from 'lucide-vue-next';
 import { useAuthStore } from '@/stores/auth';
 import AccountMenu from './AccountMenu.vue';
 
@@ -14,6 +14,7 @@ const navItems = computed(() => {
   const items: Array<{ name: string; to: { name: string }; icon: typeof Home }> = [
     { name: 'Home', to: { name: 'home' }, icon: Home },
     { name: 'Competitions', to: { name: 'competitions' }, icon: CalendarDays },
+    { name: 'Dancers', to: { name: 'dancers' }, icon: Users },
   ];
   return items;
 });
