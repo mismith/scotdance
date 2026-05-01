@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useLocalStorage } from '@vueuse/core';
 import Fuse from 'fuse.js';
-import { ChevronDown, Filter, Pin } from 'lucide-vue-next';
+import { Filter, Pin } from 'lucide-vue-next';
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions';
-import { useAuthStore } from '@/stores/auth';
 import { useFavoritesStore } from '@/stores/favorites';
 import AccountButton from '@/components/AccountButton.vue';
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue';
-import { formatShortDate, isPast } from '@/lib/format';
-
-const NOW_MARKER_ID = '__NOW__';
+import { formatShortDate } from '@/lib/format';
 
 const includeArchived = useLocalStorage('competitions:includeArchived', false);
 const filter = useLocalStorage('competitions:filter', '');
@@ -20,7 +17,6 @@ const locationFilterOpen = ref(false);
 
 const { competitions, loading } = useCompetitions(includeArchived);
 
-const auth = useAuthStore();
 const favorites = useFavoritesStore();
 
 const fuse = computed(
@@ -40,7 +36,7 @@ const locations = computed(() => {
   return [...set].sort((a, b) => a.localeCompare(b));
 });
 
-const filteredCompetitions = computed(() => {
+const filteredCompetitions = computed<CompetitionListItem[]>(() => {
   let list = competitions.value;
   if (locationFilter.value.length) {
     list = list.filter((c) => c.location && locationFilter.value.includes(c.location));
@@ -56,44 +52,6 @@ const filteredCompetitions = computed(() => {
   return list;
 });
 
-interface TimelineRow {
-  type: 'header' | 'now' | 'item';
-  key: string;
-  label?: string;
-  competition?: CompetitionListItem;
-}
-
-function monthKey(d?: number | string) {
-  if (d == null) return '';
-  const date = new Date(d);
-  return `${date.toLocaleString('en-US', { month: 'long' })} ${date.getFullYear()}`;
-}
-
-const timelineRows = computed<TimelineRow[]>(() => {
-  const rows: TimelineRow[] = [];
-  let currentMonth = '';
-  let nowInserted = false;
-
-  for (const c of filteredCompetitions.value) {
-    const month = monthKey(c.date);
-    if (month && month !== currentMonth) {
-      currentMonth = month;
-      rows.push({ type: 'header', key: `header:${month}`, label: month });
-    }
-    if (!nowInserted && c.date && !isPast(c.date)) {
-      rows.push({ type: 'now', key: NOW_MARKER_ID });
-      nowInserted = true;
-    }
-    rows.push({ type: 'item', key: c.id, competition: c });
-  }
-
-  if (!nowInserted && filteredCompetitions.value.length) {
-    rows.push({ type: 'now', key: NOW_MARKER_ID });
-  }
-
-  return rows;
-});
-
 function toggleLocation(location: string) {
   const set = new Set(locationFilter.value);
   if (set.has(location)) set.delete(location);
@@ -104,15 +62,6 @@ function toggleLocation(location: string) {
 function clearLocations() {
   locationFilter.value = [];
 }
-
-onMounted(() => {
-  // Scroll the now marker into view shortly after data loads
-  const tryScroll = () => {
-    const el = document.getElementById('now-marker');
-    if (el) el.scrollIntoView({ block: 'center', behavior: 'instant' as ScrollBehavior });
-  };
-  setTimeout(tryScroll, 200);
-});
 </script>
 
 <template>
@@ -227,68 +176,43 @@ onMounted(() => {
         </div>
       </div>
 
-      <ol v-else class="relative pl-6 border-l">
-        <li
-          v-for="row in timelineRows"
-          :key="row.key"
-          class="relative"
-          :class="[
-            row.type === 'header' && 'mt-6 first:mt-0',
-            row.type === 'now' && 'my-4',
-            row.type === 'item' && 'mb-3',
-          ]"
-        >
-          <template v-if="row.type === 'header'">
-            <div class="text-xs font-semibold text-muted-foreground uppercase tracking-wide -ml-6 pl-6">
-              {{ row.label }}
-            </div>
-          </template>
-          <template v-else-if="row.type === 'now'">
-            <span
-              id="now-marker"
-              class="absolute -left-[7px] top-1/2 -translate-y-1/2 size-3 rounded-full bg-amber-500 ring-4 ring-amber-500/20"
-            />
-            <div class="ml-2 inline-block px-2 py-0.5 text-xs rounded-full bg-amber-500 text-white font-semibold">
-              Now
-            </div>
-          </template>
-          <template v-else-if="row.competition">
-            <span class="absolute -left-[5px] top-4 size-2 rounded-full bg-muted-foreground/40" />
-            <article class="flex items-center">
-              <RouterLink
-                :to="{ name: 'competition.info', params: { competitionId: row.competition.id } }"
-                class="flex-1 min-w-0 flex items-center gap-3 p-3 rounded-md hover:bg-accent"
-              >
-                <img
-                  v-if="row.competition.image"
-                  :src="row.competition.image"
-                  :alt="row.competition.name ?? ''"
-                  class="size-12 rounded-md object-cover bg-muted shrink-0"
-                />
-                <div v-else class="size-12 rounded-md bg-muted shrink-0" />
-                <div class="min-w-0 flex-1">
-                  <div class="font-medium truncate">{{ row.competition.name ?? '?' }}</div>
-                  <div class="text-xs text-muted-foreground truncate">
-                    <span v-if="row.competition.date">{{ formatShortDate(row.competition.date) }}</span>
-                    <span v-if="row.competition.date && row.competition.location"> · </span>
-                    <span v-if="row.competition.location">{{ row.competition.location }}</span>
-                  </div>
+      <ul v-else class="divide-y border rounded-md">
+        <li v-for="competition in filteredCompetitions" :key="competition.id">
+          <div class="flex items-center">
+            <RouterLink
+              :to="{ name: 'competition.info', params: { competitionId: competition.id } }"
+              class="flex-1 min-w-0 flex items-center gap-3 p-3 hover:bg-accent"
+            >
+              <img
+                v-if="competition.image"
+                :src="competition.image"
+                :alt="competition.name ?? ''"
+                class="size-12 rounded-md object-cover bg-muted shrink-0"
+              />
+              <div v-else class="size-12 rounded-md bg-muted shrink-0" />
+              <div class="min-w-0 flex-1">
+                <div class="font-medium truncate">{{ competition.name ?? '?' }}</div>
+                <div class="text-xs text-muted-foreground truncate">
+                  <span v-if="competition.date">{{ formatShortDate(competition.date) }}</span>
+                  <span v-if="competition.date && competition.location"> · </span>
+                  <span v-if="competition.location">{{ competition.location }}</span>
                 </div>
-              </RouterLink>
-              <FavoriteCompetitionButton :competition-id="row.competition.id" class="mr-2" />
-            </article>
-          </template>
+              </div>
+            </RouterLink>
+            <FavoriteCompetitionButton :competition-id="competition.id" class="mr-2" />
+          </div>
         </li>
-        <li v-if="!includeArchived" class="mt-4 -ml-1">
-          <button
-            type="button"
-            class="text-xs underline text-muted-foreground hover:text-foreground"
-            @click="includeArchived = true"
-          >
-            Load archived competitions
-          </button>
-        </li>
-      </ol>
+      </ul>
+
+      <div v-if="filteredCompetitions.length && !includeArchived" class="mt-4 text-center">
+        <button
+          type="button"
+          class="text-xs underline text-muted-foreground hover:text-foreground"
+          @click="includeArchived = true"
+        >
+          Load archived competitions
+        </button>
+      </div>
     </main>
   </div>
 </template>
