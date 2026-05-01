@@ -2,14 +2,19 @@ import { inject, provide, ref, watch, type InjectionKey, type Ref } from 'vue';
 import { get, child, ref as dbRefFn } from 'firebase/database';
 import { database, dataRef } from '@/firebase';
 import {
+  danceFullName,
   dancerFullName,
   groupFullName,
   type Category,
   type Competition,
+  type Dance,
   type Dancer,
+  type EnrichedDance,
   type EnrichedDancer,
   type EnrichedGroup,
   type Group,
+  type PointsTree,
+  type ResultsTree,
   type StaffMember,
 } from '@/types/competition';
 
@@ -23,6 +28,10 @@ interface CompetitionContext {
   loadStaff: () => Promise<void>;
   dancers: Ref<EnrichedDancer[]>;
   loadDancers: () => Promise<void>;
+  dances: Ref<EnrichedDance[]>;
+  results: Ref<ResultsTree>;
+  points: Ref<PointsTree>;
+  loadResults: () => Promise<void>;
 }
 
 const competitionKey = Symbol('competition') as InjectionKey<CompetitionContext>;
@@ -41,7 +50,10 @@ function competitionStaffRef(id: string) {
   return dbRefFn(database, competitionDataPath(id, 'staff'));
 }
 
-function competitionSectionRef(id: string, section: 'dancers' | 'groups' | 'categories') {
+function competitionSectionRef(
+  id: string,
+  section: 'dancers' | 'groups' | 'categories' | 'dances' | 'results' | 'points',
+) {
   return dbRefFn(database, competitionDataPath(id, section));
 }
 
@@ -57,9 +69,13 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
   const error = ref<Error | null>(null);
   const staff = ref<StaffMember[]>([]);
   const dancers = ref<EnrichedDancer[]>([]);
+  const dances = ref<EnrichedDance[]>([]);
+  const results = ref<ResultsTree>({});
+  const points = ref<PointsTree>({});
 
   let staffLoaded = false;
   let dancersLoaded = false;
+  let resultsLoaded = false;
 
   async function loadMeta() {
     if (!competitionId.value) return;
@@ -71,6 +87,10 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     staffLoaded = false;
     dancers.value = [];
     dancersLoaded = false;
+    dances.value = [];
+    results.value = {};
+    points.value = {};
+    resultsLoaded = false;
     try {
       const snap = await get(competitionMetaRef(competitionId.value));
       const value = snap.val() as Competition | null;
@@ -135,6 +155,30 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     }
   }
 
+  async function loadResults() {
+    if (resultsLoaded || !competitionId.value) return;
+    const id = competitionId.value;
+    try {
+      const [dancesSnap, resultsSnap, pointsSnap] = await Promise.all([
+        get(competitionSectionRef(id, 'dances')),
+        get(competitionSectionRef(id, 'results')),
+        get(competitionSectionRef(id, 'points')),
+      ]);
+
+      const rawDances = snapshotToArray<Dance>(dancesSnap.val());
+      dances.value = rawDances
+        .map<EnrichedDance>((d) => ({ ...d, fullName: danceFullName(d) }))
+        .sort((a, b) => (a._order ?? 0) - (b._order ?? 0));
+
+      results.value = (resultsSnap.val() as ResultsTree | null) ?? {};
+      points.value = (pointsSnap.val() as PointsTree | null) ?? {};
+
+      resultsLoaded = true;
+    } catch (e) {
+      error.value = e as Error;
+    }
+  }
+
   watch(competitionId, loadMeta, { immediate: true });
 
   const ctx: CompetitionContext = {
@@ -147,6 +191,10 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     loadStaff,
     dancers,
     loadDancers,
+    dances,
+    results,
+    points,
+    loadResults,
   };
 
   provide(competitionKey, ctx);
