@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, nextTick, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useLocalStorage } from '@vueuse/core';
 import { ChevronDown } from 'lucide-vue-next';
@@ -116,6 +116,29 @@ function toggle(danceId: string) {
     [groupId.value]: { ...current, [danceId]: !isExpanded(danceId) },
   };
 }
+
+function focusHashTarget() {
+  const match = route.hash.match(/^#dance-(.+)$/);
+  if (!match) return;
+  const danceId = match[1];
+  const current = expanded.value[groupId.value] ?? {};
+  if (!current[danceId]) {
+    expanded.value = {
+      ...expanded.value,
+      [groupId.value]: { ...current, [danceId]: true },
+    };
+  }
+  nextTick(() => {
+    const el = document.getElementById(`dance-${danceId}`);
+    el?.scrollIntoView({ block: 'start' });
+  });
+}
+
+watch(
+  () => [groupId.value, route.hash, sections.value.length] as const,
+  () => focusHashTarget(),
+  { immediate: true },
+);
 </script>
 
 <template>
@@ -139,7 +162,12 @@ function toggle(danceId: string) {
         <h2 class="text-2xl font-semibold">{{ group.name || group.fullName }}</h2>
       </header>
 
-      <section v-for="section in sections" :key="section.dance.id" class="space-y-2">
+      <section
+        v-for="section in sections"
+        :id="`dance-${section.dance.id}`"
+        :key="section.dance.id"
+        class="space-y-2 scroll-mt-20"
+      >
         <button
           type="button"
           class="w-full flex items-center gap-2 px-1 py-1 text-sm font-semibold text-muted-foreground uppercase tracking-wide hover:text-foreground"

@@ -92,17 +92,22 @@ const placedRows = computed(() =>
           No dances scheduled for this group.
         </div>
         <ul v-else class="divide-y border rounded-md">
-          <li
-            v-for="row in placedRows"
-            :key="row.dance.id"
-            class="flex items-center gap-3 p-3"
-          >
-            <Place
-              :place="row.result.place"
-              :tied="row.result.tied"
-              :pointed="row.result.pointed"
-            />
-            <div class="font-medium flex-1 min-w-0 truncate">{{ row.dance.fullName }}</div>
+          <li v-for="row in placedRows" :key="row.dance.id">
+            <RouterLink
+              :to="{
+                name: 'competition.group',
+                params: { competitionId, groupId: dancer.group.id },
+                hash: `#dance-${row.dance.id}`,
+              }"
+              class="flex items-center gap-3 p-3 hover:bg-accent"
+            >
+              <Place
+                :place="row.result.place"
+                :tied="row.result.tied"
+                :pointed="row.result.pointed"
+              />
+              <div class="font-medium flex-1 min-w-0 truncate">{{ row.dance.fullName }}</div>
+            </RouterLink>
           </li>
         </ul>
       </section>
