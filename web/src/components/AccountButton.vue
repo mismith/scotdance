@@ -8,7 +8,7 @@ async function handleClick() {
   if (auth.isSignedIn) {
     await auth.signOut();
   } else {
-    await auth.signInWithGoogle();
+    auth.openLogin();
   }
 }
 </script>
@@ -17,7 +17,7 @@ async function handleClick() {
   <button
     type="button"
     @click="handleClick"
-    :title="auth.isSignedIn ? `Sign out (${auth.displayName ?? 'signed in'})` : 'Sign in with Google'"
+    :title="auth.isSignedIn ? `Sign out (${auth.displayName ?? 'signed in'})` : 'Sign in'"
     class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm hover:bg-accent text-muted-foreground hover:text-foreground"
   >
     <img
