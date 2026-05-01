@@ -27,6 +27,8 @@ interface CompetitionContext {
   staff: Ref<StaffMember[]>;
   loadStaff: () => Promise<void>;
   dancers: Ref<EnrichedDancer[]>;
+  categories: Ref<Category[]>;
+  groups: Ref<EnrichedGroup[]>;
   loadDancers: () => Promise<void>;
   dances: Ref<EnrichedDance[]>;
   results: Ref<ResultsTree>;
@@ -69,6 +71,8 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
   const error = ref<Error | null>(null);
   const staff = ref<StaffMember[]>([]);
   const dancers = ref<EnrichedDancer[]>([]);
+  const categories = ref<Category[]>([]);
+  const groups = ref<EnrichedGroup[]>([]);
   const dances = ref<EnrichedDance[]>([]);
   const results = ref<ResultsTree>({});
   const points = ref<PointsTree>({});
@@ -86,6 +90,8 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     staff.value = [];
     staffLoaded = false;
     dancers.value = [];
+    categories.value = [];
+    groups.value = [];
     dancersLoaded = false;
     dances.value = [];
     results.value = {};
@@ -141,6 +147,13 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
         }),
       );
 
+      categories.value = [...rawCategories].sort(
+        (a, b) => (a._order ?? 0) - (b._order ?? 0),
+      );
+      groups.value = [...enrichedGroupsById.values()].sort(
+        (a, b) => (a._order ?? 0) - (b._order ?? 0),
+      );
+
       dancers.value = rawDancers
         .filter((d) => d.firstName || d.lastName)
         .map<EnrichedDancer>((d) => ({
@@ -190,6 +203,8 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     staff,
     loadStaff,
     dancers,
+    categories,
+    groups,
     loadDancers,
     dances,
     results,
