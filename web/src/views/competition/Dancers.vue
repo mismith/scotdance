@@ -175,8 +175,8 @@ function groupHasFavorite(group: DancerGroupRow) {
 
 async function favoriteAll(dancersToFavorite: EnrichedDancer[]) {
   if (!auth.isSignedIn) {
-    await auth.signInWithGoogle();
-    if (!auth.isSignedIn) return;
+    auth.openLogin();
+    return;
   }
   await Promise.all(
     dancersToFavorite.map((d) => favorites.toggleDancer(d.id, d.fullName)),

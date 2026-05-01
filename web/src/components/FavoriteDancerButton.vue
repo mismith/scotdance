@@ -22,8 +22,8 @@ async function handleClick(e: Event) {
   e.preventDefault();
   e.stopPropagation();
   if (!auth.isSignedIn) {
-    await auth.signInWithGoogle();
-    if (!auth.isSignedIn) return;
+    auth.openLogin();
+    return;
   }
   await favorites.toggleDancer(props.dancer.id, dancerFullName(props.dancer));
 }
