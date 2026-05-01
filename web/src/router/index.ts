@@ -7,6 +7,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/Home.vue'),
   },
   {
+    path: '/competitions',
+    name: 'competitions',
+    component: () => import('@/views/competitions/CompetitionsList.vue'),
+  },
+  {
     path: '/competitions/:competitionId',
     component: () => import('@/views/competition/CompetitionLayout.vue'),
     children: [
