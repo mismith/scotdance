@@ -1,0 +1,8 @@
+dist
+dist-ssr
+coverage
+node_modules
+public
+*.min.*
+package-lock.json
+stats.html

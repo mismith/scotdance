@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { onKeyStroke } from '@vueuse/core';
-import { useRoute, RouterLink } from 'vue-router';
+import { computed, ref, watch } from 'vue'
+import { onKeyStroke } from '@vueuse/core'
+import { useRoute, RouterLink } from 'vue-router'
 import {
   ArrowDownToLine,
   CalendarDays,
@@ -12,25 +12,25 @@ import {
   Sun,
   Users,
   X,
-} from '@lucide/vue';
-import { useUpdate } from '@/composables/useUpdate';
-import { useTheme, type Theme } from '@/composables/useTheme';
-import AccountMenu from './AccountMenu.vue';
+} from '@lucide/vue'
+import { useUpdate } from '@/composables/useUpdate'
+import { useTheme, type Theme } from '@/composables/useTheme'
+import AccountMenu from './AccountMenu.vue'
 
-const drawerOpen = ref(false);
-const route = useRoute();
-const update = useUpdate();
-const { theme } = useTheme();
+const drawerOpen = ref(false)
+const route = useRoute()
+const update = useUpdate()
+const { theme } = useTheme()
 
 const themeOptions: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
   { value: 'light', label: 'Light', icon: Sun },
   { value: 'auto', label: 'System', icon: Monitor },
   { value: 'dark', label: 'Dark', icon: Moon },
-];
+]
 
 function openUpdateDialog() {
-  drawerOpen.value = false;
-  update.openDialog();
+  drawerOpen.value = false
+  update.openDialog()
 }
 
 const navItems = computed(() => {
@@ -38,20 +38,20 @@ const navItems = computed(() => {
     { name: 'Home', to: { name: 'home' }, icon: Home },
     { name: 'Competitions', to: { name: 'competitions' }, icon: CalendarDays },
     { name: 'Dancers', to: { name: 'dancers' }, icon: Users },
-  ];
-  return items;
-});
+  ]
+  return items
+})
 
 watch(
   () => route.fullPath,
   () => {
-    drawerOpen.value = false;
+    drawerOpen.value = false
   },
-);
+)
 
 onKeyStroke('Escape', () => {
-  if (drawerOpen.value) drawerOpen.value = false;
-});
+  if (drawerOpen.value) drawerOpen.value = false
+})
 </script>
 
 <template>
@@ -92,7 +92,11 @@ onKeyStroke('Escape', () => {
       enter-from-class="opacity-0"
       leave-to-class="opacity-0"
     >
-      <div v-if="drawerOpen" class="fixed inset-0 z-40 bg-black/50" @click="drawerOpen = false" />
+      <div
+        v-if="drawerOpen"
+        class="fixed inset-0 z-40 bg-black/50"
+        @click="drawerOpen = false"
+      />
     </transition>
 
     <transition
