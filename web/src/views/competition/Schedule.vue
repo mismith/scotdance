@@ -1,39 +1,37 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
-import { useLocalStorage } from '@vueuse/core';
-import { ChevronDown, ChevronRight } from '@lucide/vue';
-import { useCompetition } from '@/composables/useCompetition';
-import { blocks, days, events, slugline } from '@/lib/schedule';
-import { formatWeekday } from '@/lib/format';
+import { computed, onMounted } from 'vue'
+import { useLocalStorage } from '@vueuse/core'
+import { ChevronDown, ChevronRight } from '@lucide/vue'
+import { useCompetition } from '@/composables/useCompetition'
+import { blocks, days, events, slugline } from '@/lib/schedule'
+import { formatWeekday } from '@/lib/format'
 
-const { competitionId, schedule, loadSchedule } = useCompetition();
+const { competitionId, schedule, loadSchedule } = useCompetition()
 
-onMounted(loadSchedule);
+onMounted(loadSchedule)
 
-const dayList = computed(() => days(schedule.value));
+const dayList = computed(() => days(schedule.value))
 
 const expanded = useLocalStorage<Record<string, Record<string, boolean>>>(
   'schedule:expandedBlocks',
   {},
-);
+)
 
 function isExpanded(dayId: string, blockId: string, hasEvents: boolean): boolean {
-  const map = expanded.value[dayId] ?? {};
-  if (blockId in map) return map[blockId];
-  return hasEvents;
+  const map = expanded.value[dayId] ?? {}
+  if (blockId in map) return map[blockId]
+  return hasEvents
 }
 
 function toggle(dayId: string, blockId: string, hasEvents: boolean) {
-  const current = expanded.value[dayId] ?? {};
+  const current = expanded.value[dayId] ?? {}
   expanded.value = {
     ...expanded.value,
     [dayId]: { ...current, [blockId]: !isExpanded(dayId, blockId, hasEvents) },
-  };
+  }
 }
 
-const isEmpty = computed(
-  () => schedule.value !== null && dayList.value.length === 0,
-);
+const isEmpty = computed(() => schedule.value !== null && dayList.value.length === 0)
 </script>
 
 <template>
@@ -50,7 +48,7 @@ const isEmpty = computed(
         </h2>
         <p
           v-if="day.description"
-          class="text-sm text-muted-foreground whitespace-pre-line mt-1"
+          class="text-muted-foreground mt-1 text-sm whitespace-pre-line"
         >
           {{ day.description }}
         </p>
@@ -59,7 +57,7 @@ const isEmpty = computed(
       <div v-for="block in blocks(day)" :key="block.id" class="space-y-2">
         <button
           type="button"
-          class="w-full flex items-center gap-2 px-1 py-1 text-sm font-semibold text-muted-foreground uppercase tracking-wide hover:text-foreground"
+          class="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1 py-1 text-sm font-semibold tracking-wide uppercase"
           @click="toggle(day.id, block.id, !!block.events)"
         >
           <ChevronDown
@@ -71,7 +69,7 @@ const isEmpty = computed(
           <span class="flex-1 text-left">{{ block.name || 'Block' }}</span>
           <span
             v-if="block.description"
-            class="text-xs font-normal normal-case tracking-normal text-muted-foreground truncate max-w-[50%]"
+            class="text-muted-foreground max-w-[50%] truncate text-xs font-normal tracking-normal normal-case"
           >
             {{ slugline(block.description) }}
           </span>
@@ -79,13 +77,9 @@ const isEmpty = computed(
 
         <ul
           v-if="isExpanded(day.id, block.id, !!block.events)"
-          class="divide-y border rounded-md"
+          class="divide-y rounded-md border"
         >
-          <li
-            v-for="event in events(block)"
-            :key="event.id"
-            class="flex items-center"
-          >
+          <li v-for="event in events(block)" :key="event.id" class="flex items-center">
             <RouterLink
               :to="{
                 name: 'competition.event',
@@ -96,21 +90,21 @@ const isEmpty = computed(
                   eventId: event.id,
                 },
               }"
-              class="flex items-center gap-3 p-3 flex-1 min-w-0 hover:bg-accent"
+              class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 p-3"
             >
               <div class="min-w-0 flex-1">
-                <div class="font-medium truncate">{{ event.name || 'Event' }}</div>
+                <div class="truncate font-medium">{{ event.name || 'Event' }}</div>
                 <div
                   v-if="event.description"
-                  class="text-xs text-muted-foreground truncate"
+                  class="text-muted-foreground truncate text-xs"
                 >
                   {{ slugline(event.description) }}
                 </div>
               </div>
-              <ChevronRight class="size-4 text-muted-foreground shrink-0" />
+              <ChevronRight class="text-muted-foreground size-4 shrink-0" />
             </RouterLink>
           </li>
-          <li v-if="!events(block).length" class="p-3 text-sm text-muted-foreground">
+          <li v-if="!events(block).length" class="text-muted-foreground p-3 text-sm">
             No events.
           </li>
         </ul>

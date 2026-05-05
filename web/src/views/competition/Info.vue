@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
-import { useCompetition } from '@/composables/useCompetition';
-import { staffMemberName, type StaffMember } from '@/types/competition';
+import { computed, onMounted } from 'vue'
+import { useCompetition } from '@/composables/useCompetition'
+import { staffMemberName, type StaffMember } from '@/types/competition'
 import {
   formatExternalURL,
   formatHumanURL,
@@ -9,51 +9,51 @@ import {
   formatDateTime,
   isPast,
   isSameDay,
-} from '@/lib/format';
+} from '@/lib/format'
 
-const { competition, staff, loadStaff } = useCompetition();
+const { competition, staff, loadStaff } = useCompetition()
 
-onMounted(loadStaff);
+onMounted(loadStaff)
 
-const isToday = computed(() => isSameDay(competition.value?.date));
+const isToday = computed(() => isSameDay(competition.value?.date))
 
 const registrationOpen = computed(() => {
-  const end = competition.value?.registrationEnd;
-  return end == null || !isPast(end);
-});
+  const end = competition.value?.registrationEnd
+  return end == null || !isPast(end)
+})
 
 const registrationStatus = computed(() => {
-  const c = competition.value;
-  if (!c) return null;
-  const lines: string[] = [];
+  const c = competition.value
+  if (!c) return null
+  const lines: string[] = []
   if (c.registrationStart) {
-    const verb = isPast(c.registrationStart) ? 'opened' : 'opens';
-    lines.push(`Registration ${verb} ${formatDateTime(c.registrationStart)}`);
+    const verb = isPast(c.registrationStart) ? 'opened' : 'opens'
+    lines.push(`Registration ${verb} ${formatDateTime(c.registrationStart)}`)
   }
   if (c.registrationEnd) {
-    const verb = isPast(c.registrationEnd) ? 'closed' : 'closes';
-    lines.push(`Registration ${verb} ${formatDateTime(c.registrationEnd)}`);
+    const verb = isPast(c.registrationEnd) ? 'closed' : 'closes'
+    lines.push(`Registration ${verb} ${formatDateTime(c.registrationEnd)}`)
   }
-  return lines.length ? lines : null;
-});
+  return lines.length ? lines : null
+})
 
 const mapsHref = computed(() => {
-  const c = competition.value;
-  if (!c?.venue) return null;
-  const parts = [c.venue, c.address, c.location].filter(Boolean).join(', ');
-  return `https://maps.google.com/?q=${encodeURIComponent(parts)}`;
-});
+  const c = competition.value
+  if (!c?.venue) return null
+  const parts = [c.venue, c.address, c.location].filter(Boolean).join(', ')
+  return `https://maps.google.com/?q=${encodeURIComponent(parts)}`
+})
 
 const groupedStaff = computed(() => {
-  const groups = new Map<string, StaffMember[]>();
+  const groups = new Map<string, StaffMember[]>()
   for (const member of staff.value) {
-    if (!member.type) continue;
-    const list = groups.get(member.type) ?? [];
-    list.push(member);
-    groups.set(member.type, list);
+    if (!member.type) continue
+    const list = groups.get(member.type) ?? []
+    list.push(member)
+    groups.set(member.type, list)
   }
-  return [...groups.entries()].map(([type, members]) => ({ type, members }));
-});
+  return [...groups.entries()].map(([type, members]) => ({ type, members }))
+})
 </script>
 
 <template>
@@ -63,28 +63,30 @@ const groupedStaff = computed(() => {
         v-if="competition.image"
         :src="competition.image"
         :alt="competition.name ?? ''"
-        class="size-40 rounded-md object-cover bg-muted shadow"
+        class="bg-muted size-40 rounded-md object-cover shadow"
       />
-      <div class="flex-1 min-w-0 space-y-2">
+      <div class="min-w-0 flex-1 space-y-2">
         <h2 class="text-2xl font-semibold">{{ competition.name }}</h2>
-        <p v-if="competition.date" class="text-base flex items-center gap-2">
+        <p v-if="competition.date" class="flex items-center gap-2 text-base">
           {{ formatLongDate(competition.date) }}
           <span
             v-if="isToday"
-            class="inline-block px-2 py-0.5 text-xs rounded-full bg-primary text-primary-foreground"
-          >Today</span>
+            class="bg-primary text-primary-foreground inline-block rounded-full px-2 py-0.5 text-xs"
+            >Today</span
+          >
         </p>
-        <div v-if="competition.venue" class="text-sm text-muted-foreground">
+        <div v-if="competition.venue" class="text-muted-foreground text-sm">
           <a
             v-if="mapsHref"
             :href="mapsHref"
             target="_blank"
             rel="noopener"
-            class="underline hover:text-foreground"
-          >{{ competition.venue }}</a>
+            class="hover:text-foreground underline"
+            >{{ competition.venue }}</a
+          >
           <span v-else>{{ competition.venue }}</span>
         </div>
-        <div v-if="competition.location" class="text-sm text-muted-foreground">
+        <div v-if="competition.location" class="text-muted-foreground text-sm">
           {{ competition.location }}
         </div>
       </div>
@@ -96,11 +98,11 @@ const groupedStaff = computed(() => {
         target="_blank"
         rel="noopener"
         :aria-disabled="!registrationOpen"
-        class="inline-flex items-center px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 aria-disabled:opacity-50 aria-disabled:pointer-events-none"
+        class="bg-primary text-primary-foreground inline-flex items-center rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 aria-disabled:pointer-events-none aria-disabled:opacity-50"
       >
         Register
       </a>
-      <ul v-if="registrationStatus" class="text-xs text-muted-foreground space-y-0.5">
+      <ul v-if="registrationStatus" class="text-muted-foreground space-y-0.5 text-xs">
         <li v-for="line in registrationStatus" :key="line">{{ line }}</li>
       </ul>
     </section>
@@ -112,26 +114,31 @@ const groupedStaff = computed(() => {
         :href="formatExternalURL(link.url)"
         target="_blank"
         rel="noopener"
-        class="inline-flex items-center px-3 py-1.5 rounded-md border text-sm hover:bg-accent"
+        class="hover:bg-accent inline-flex items-center rounded-md border px-3 py-1.5 text-sm"
       >
         {{ link.name || formatHumanURL(link.url) }}
       </a>
     </section>
 
-    <section v-if="competition.description" class="prose prose-sm max-w-none whitespace-pre-line">
+    <section
+      v-if="competition.description"
+      class="prose prose-sm max-w-none whitespace-pre-line"
+    >
       {{ competition.description }}
     </section>
 
-    <p v-if="competition.sobhd" class="text-xs text-muted-foreground">
+    <p v-if="competition.sobhd" class="text-muted-foreground text-xs">
       <strong>RSOBHD</strong> {{ competition.sobhd }}
     </p>
 
     <section v-if="groupedStaff.length" class="space-y-4">
       <div v-for="group in groupedStaff" :key="group.type">
-        <h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+        <h3
+          class="text-muted-foreground mb-2 text-sm font-semibold tracking-wide uppercase"
+        >
           {{ group.type }}s
         </h3>
-        <ul class="divide-y border rounded-md">
+        <ul class="divide-y rounded-md border">
           <li
             v-for="member in group.members"
             :key="member.id"
@@ -141,12 +148,12 @@ const groupedStaff = computed(() => {
               v-if="member.image"
               :src="member.image"
               :alt="staffMemberName(member)"
-              class="size-10 rounded-full object-cover bg-muted"
+              class="bg-muted size-10 rounded-full object-cover"
             />
-            <div v-else class="size-10 rounded-full bg-muted" />
+            <div v-else class="bg-muted size-10 rounded-full" />
             <div class="min-w-0 flex-1">
-              <div class="font-medium truncate">{{ staffMemberName(member) }}</div>
-              <div v-if="member.location" class="text-xs text-muted-foreground truncate">
+              <div class="truncate font-medium">{{ staffMemberName(member) }}</div>
+              <div v-if="member.location" class="text-muted-foreground truncate text-xs">
                 {{ member.location }}
               </div>
             </div>

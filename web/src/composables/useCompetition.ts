@@ -1,6 +1,6 @@
-import { inject, provide, ref, watch, type InjectionKey, type Ref } from 'vue';
-import { get, child, ref as dbRefFn } from 'firebase/database';
-import { database, dataRef } from '@/firebase';
+import { inject, provide, ref, watch, type InjectionKey, type Ref } from 'vue'
+import { get, child, ref as dbRefFn } from 'firebase/database'
+import { database, dataRef } from '@/firebase'
 import {
   danceFullName,
   dancerFullName,
@@ -18,43 +18,43 @@ import {
   type ResultsTree,
   type Schedule,
   type StaffMember,
-} from '@/types/competition';
+} from '@/types/competition'
 
 interface CompetitionContext {
-  competitionId: Ref<string>;
-  competition: Ref<Competition | null>;
-  notFound: Ref<boolean>;
-  loading: Ref<boolean>;
-  error: Ref<Error | null>;
-  staff: Ref<StaffMember[]>;
-  loadStaff: () => Promise<void>;
-  dancers: Ref<EnrichedDancer[]>;
-  categories: Ref<Category[]>;
-  groups: Ref<EnrichedGroup[]>;
-  loadDancers: () => Promise<void>;
-  dances: Ref<EnrichedDance[]>;
-  results: Ref<ResultsTree>;
-  points: Ref<PointsTree>;
-  loadResults: () => Promise<void>;
-  schedule: Ref<Schedule | null>;
-  platforms: Ref<Platform[]>;
-  loadSchedule: () => Promise<void>;
+  competitionId: Ref<string>
+  competition: Ref<Competition | null>
+  notFound: Ref<boolean>
+  loading: Ref<boolean>
+  error: Ref<Error | null>
+  staff: Ref<StaffMember[]>
+  loadStaff: () => Promise<void>
+  dancers: Ref<EnrichedDancer[]>
+  categories: Ref<Category[]>
+  groups: Ref<EnrichedGroup[]>
+  loadDancers: () => Promise<void>
+  dances: Ref<EnrichedDance[]>
+  results: Ref<ResultsTree>
+  points: Ref<PointsTree>
+  loadResults: () => Promise<void>
+  schedule: Ref<Schedule | null>
+  platforms: Ref<Platform[]>
+  loadSchedule: () => Promise<void>
 }
 
-const competitionKey = Symbol('competition') as InjectionKey<CompetitionContext>;
+const competitionKey = Symbol('competition') as InjectionKey<CompetitionContext>
 
-const NAMESPACE = import.meta.env.VITE_FIREBASE_DATA_NAMESPACE || 'production';
+const NAMESPACE = import.meta.env.VITE_FIREBASE_DATA_NAMESPACE || 'production'
 
 function competitionMetaRef(id: string) {
-  return child(dataRef('competitions'), id);
+  return child(dataRef('competitions'), id)
 }
 
 function competitionDataPath(id: string, section: string) {
-  return `${NAMESPACE}/competitions:data/${id}/${section}`;
+  return `${NAMESPACE}/competitions:data/${id}/${section}`
 }
 
 function competitionStaffRef(id: string) {
-  return dbRefFn(database, competitionDataPath(id, 'staff'));
+  return dbRefFn(database, competitionDataPath(id, 'staff'))
 }
 
 function competitionSectionRef(
@@ -69,109 +69,111 @@ function competitionSectionRef(
     | 'schedule'
     | 'platforms',
 ) {
-  return dbRefFn(database, competitionDataPath(id, section));
+  return dbRefFn(database, competitionDataPath(id, section))
 }
 
-function snapshotToArray<T extends { id: string }>(value: Record<string, Omit<T, 'id'>> | null): T[] {
-  if (!value) return [];
-  return Object.entries(value).map(([id, v]) => ({ id, ...v } as T));
+function snapshotToArray<T extends { id: string }>(
+  value: Record<string, Omit<T, 'id'>> | null,
+): T[] {
+  if (!value) return []
+  return Object.entries(value).map(([id, v]) => ({ id, ...v }) as T)
 }
 
 export function provideCompetition(competitionId: Ref<string>): CompetitionContext {
-  const competition = ref<Competition | null>(null);
-  const notFound = ref(false);
-  const loading = ref(false);
-  const error = ref<Error | null>(null);
-  const staff = ref<StaffMember[]>([]);
-  const dancers = ref<EnrichedDancer[]>([]);
-  const categories = ref<Category[]>([]);
-  const groups = ref<EnrichedGroup[]>([]);
-  const dances = ref<EnrichedDance[]>([]);
-  const results = ref<ResultsTree>({});
-  const points = ref<PointsTree>({});
-  const schedule = ref<Schedule | null>(null);
-  const platforms = ref<Platform[]>([]);
+  const competition = ref<Competition | null>(null)
+  const notFound = ref(false)
+  const loading = ref(false)
+  const error = ref<Error | null>(null)
+  const staff = ref<StaffMember[]>([])
+  const dancers = ref<EnrichedDancer[]>([])
+  const categories = ref<Category[]>([])
+  const groups = ref<EnrichedGroup[]>([])
+  const dances = ref<EnrichedDance[]>([])
+  const results = ref<ResultsTree>({})
+  const points = ref<PointsTree>({})
+  const schedule = ref<Schedule | null>(null)
+  const platforms = ref<Platform[]>([])
 
-  let staffLoaded = false;
-  let dancersLoaded = false;
-  let resultsLoaded = false;
-  let scheduleLoaded = false;
+  let staffLoaded = false
+  let dancersLoaded = false
+  let resultsLoaded = false
+  let scheduleLoaded = false
 
   async function loadMeta() {
-    if (!competitionId.value) return;
-    loading.value = true;
-    error.value = null;
-    notFound.value = false;
-    competition.value = null;
-    staff.value = [];
-    staffLoaded = false;
-    dancers.value = [];
-    categories.value = [];
-    groups.value = [];
-    dancersLoaded = false;
-    dances.value = [];
-    results.value = {};
-    points.value = {};
-    resultsLoaded = false;
-    schedule.value = null;
-    platforms.value = [];
-    scheduleLoaded = false;
+    if (!competitionId.value) return
+    loading.value = true
+    error.value = null
+    notFound.value = false
+    competition.value = null
+    staff.value = []
+    staffLoaded = false
+    dancers.value = []
+    categories.value = []
+    groups.value = []
+    dancersLoaded = false
+    dances.value = []
+    results.value = {}
+    points.value = {}
+    resultsLoaded = false
+    schedule.value = null
+    platforms.value = []
+    scheduleLoaded = false
     try {
-      const snap = await get(competitionMetaRef(competitionId.value));
-      const value = snap.val() as Competition | null;
+      const snap = await get(competitionMetaRef(competitionId.value))
+      const value = snap.val() as Competition | null
       if (!value || typeof value !== 'object') {
-        notFound.value = true;
+        notFound.value = true
       } else {
-        competition.value = value;
+        competition.value = value
       }
     } catch (e) {
-      error.value = e as Error;
+      error.value = e as Error
     } finally {
-      loading.value = false;
+      loading.value = false
     }
   }
 
   async function loadStaff() {
-    if (staffLoaded || !competitionId.value) return;
+    if (staffLoaded || !competitionId.value) return
     try {
-      const snap = await get(competitionStaffRef(competitionId.value));
+      const snap = await get(competitionStaffRef(competitionId.value))
       staff.value = snapshotToArray<StaffMember>(snap.val()).sort(
         (a, b) => (a._order ?? 0) - (b._order ?? 0),
-      );
-      staffLoaded = true;
+      )
+      staffLoaded = true
     } catch (e) {
-      error.value = e as Error;
+      error.value = e as Error
     }
   }
 
   async function loadDancers() {
-    if (dancersLoaded || !competitionId.value) return;
-    const id = competitionId.value;
+    if (dancersLoaded || !competitionId.value) return
+    const id = competitionId.value
     try {
       const [dancersSnap, groupsSnap, categoriesSnap] = await Promise.all([
         get(competitionSectionRef(id, 'dancers')),
         get(competitionSectionRef(id, 'groups')),
         get(competitionSectionRef(id, 'categories')),
-      ]);
+      ])
 
-      const rawDancers = snapshotToArray<Dancer>(dancersSnap.val());
-      const rawGroups = snapshotToArray<Group>(groupsSnap.val());
-      const rawCategories = snapshotToArray<Category>(categoriesSnap.val());
+      const rawDancers = snapshotToArray<Dancer>(dancersSnap.val())
+      const rawGroups = snapshotToArray<Group>(groupsSnap.val())
+      const rawCategories = snapshotToArray<Category>(categoriesSnap.val())
 
-      const categoriesById = new Map(rawCategories.map((c) => [c.id, c]));
+      const categoriesById = new Map(rawCategories.map((c) => [c.id, c]))
       const enrichedGroupsById = new Map<string, EnrichedGroup>(
         rawGroups.map((g) => {
-          const category = g.categoryId ? categoriesById.get(g.categoryId) : undefined;
-          return [g.id, { ...g, category, fullName: groupFullName(g, category) }];
+          const category = g.categoryId ? categoriesById.get(g.categoryId) : undefined
+          return [g.id, { ...g, category, fullName: groupFullName(g, category) }]
         }),
-      );
+      )
 
       categories.value = [...rawCategories].sort(
         (a, b) => (a._order ?? 0) - (b._order ?? 0),
-      );
+      )
       groups.value = [...enrichedGroupsById.values()].sort(
         (a, b) => (a._order ?? 0) - (b._order ?? 0),
-      );
+      )
 
       dancers.value = rawDancers
         .filter((d) => d.firstName || d.lastName)
@@ -179,57 +181,57 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
           ...d,
           fullName: dancerFullName(d),
           group: d.groupId ? enrichedGroupsById.get(d.groupId) : undefined,
-        }));
+        }))
 
-      dancersLoaded = true;
+      dancersLoaded = true
     } catch (e) {
-      error.value = e as Error;
+      error.value = e as Error
     }
   }
 
   async function loadResults() {
-    if (resultsLoaded || !competitionId.value) return;
-    const id = competitionId.value;
+    if (resultsLoaded || !competitionId.value) return
+    const id = competitionId.value
     try {
       const [dancesSnap, resultsSnap, pointsSnap] = await Promise.all([
         get(competitionSectionRef(id, 'dances')),
         get(competitionSectionRef(id, 'results')),
         get(competitionSectionRef(id, 'points')),
-      ]);
+      ])
 
-      const rawDances = snapshotToArray<Dance>(dancesSnap.val());
+      const rawDances = snapshotToArray<Dance>(dancesSnap.val())
       dances.value = rawDances
         .map<EnrichedDance>((d) => ({ ...d, fullName: danceFullName(d) }))
-        .sort((a, b) => (a._order ?? 0) - (b._order ?? 0));
+        .sort((a, b) => (a._order ?? 0) - (b._order ?? 0))
 
-      results.value = (resultsSnap.val() as ResultsTree | null) ?? {};
-      points.value = (pointsSnap.val() as PointsTree | null) ?? {};
+      results.value = (resultsSnap.val() as ResultsTree | null) ?? {}
+      points.value = (pointsSnap.val() as PointsTree | null) ?? {}
 
-      resultsLoaded = true;
+      resultsLoaded = true
     } catch (e) {
-      error.value = e as Error;
+      error.value = e as Error
     }
   }
 
   async function loadSchedule() {
-    if (scheduleLoaded || !competitionId.value) return;
-    const id = competitionId.value;
+    if (scheduleLoaded || !competitionId.value) return
+    const id = competitionId.value
     try {
       const [scheduleSnap, platformsSnap] = await Promise.all([
         get(competitionSectionRef(id, 'schedule')),
         get(competitionSectionRef(id, 'platforms')),
-      ]);
-      schedule.value = (scheduleSnap.val() as Schedule | null) ?? null;
+      ])
+      schedule.value = (scheduleSnap.val() as Schedule | null) ?? null
       platforms.value = snapshotToArray<Platform>(platformsSnap.val()).sort(
         (a, b) => (a._order ?? 0) - (b._order ?? 0),
-      );
-      scheduleLoaded = true;
+      )
+      scheduleLoaded = true
     } catch (e) {
-      error.value = e as Error;
+      error.value = e as Error
     }
   }
 
-  watch(competitionId, loadMeta, { immediate: true });
+  watch(competitionId, loadMeta, { immediate: true })
 
   const ctx: CompetitionContext = {
     competitionId,
@@ -250,16 +252,18 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     schedule,
     platforms,
     loadSchedule,
-  };
+  }
 
-  provide(competitionKey, ctx);
-  return ctx;
+  provide(competitionKey, ctx)
+  return ctx
 }
 
 export function useCompetition(): CompetitionContext {
-  const ctx = inject(competitionKey);
+  const ctx = inject(competitionKey)
   if (!ctx) {
-    throw new Error('useCompetition() must be called inside a route under /competitions/:competitionId');
+    throw new Error(
+      'useCompetition() must be called inside a route under /competitions/:competitionId',
+    )
   }
-  return ctx;
+  return ctx
 }

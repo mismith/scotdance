@@ -1,5 +1,5 @@
-import { defineStore } from 'pinia';
-import { computed, ref, watch } from 'vue';
+import { defineStore } from 'pinia'
+import { computed, ref, watch } from 'vue'
 import {
   EmailAuthProvider,
   createUserWithEmailAndPassword,
@@ -11,128 +11,127 @@ import {
   updateEmail,
   updatePassword,
   updateProfile,
-} from 'firebase/auth';
-import { ref as dbRef, remove, set, update } from 'firebase/database';
-import { useCurrentUser } from 'vuefire';
-import { auth, database } from '@/firebase';
+} from 'firebase/auth'
+import { ref as dbRef, remove, set, update } from 'firebase/database'
+import { useCurrentUser } from 'vuefire'
+import { auth, database } from '@/firebase'
 
-type PostLoginAction = () => void | Promise<void>;
+type PostLoginAction = () => void | Promise<void>
 
-const NAMESPACE = import.meta.env.VITE_FIREBASE_DATA_NAMESPACE || 'production';
+const NAMESPACE = import.meta.env.VITE_FIREBASE_DATA_NAMESPACE || 'production'
 
 function userPath(uid: string, child = '') {
-  return `${NAMESPACE}/users/${uid}${child ? `/${child}` : ''}`;
+  return `${NAMESPACE}/users/${uid}${child ? `/${child}` : ''}`
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = useCurrentUser();
-  const isSignedIn = computed(() => !!user.value);
-  const uid = computed(() => user.value?.uid ?? null);
-  const displayName = computed(() => user.value?.displayName ?? user.value?.email ?? null);
-  const photoURL = computed(() => user.value?.photoURL ?? null);
+  const user = useCurrentUser()
+  const isSignedIn = computed(() => !!user.value)
+  const uid = computed(() => user.value?.uid ?? null)
+  const displayName = computed(() => user.value?.displayName ?? user.value?.email ?? null)
+  const photoURL = computed(() => user.value?.photoURL ?? null)
 
-  const loginDialogOpen = ref(false);
-  const pendingActions = ref<PostLoginAction[]>([]);
+  const loginDialogOpen = ref(false)
+  const pendingActions = ref<PostLoginAction[]>([])
 
   function openLogin() {
-    loginDialogOpen.value = true;
+    loginDialogOpen.value = true
   }
 
   function closeLogin() {
-    loginDialogOpen.value = false;
+    loginDialogOpen.value = false
   }
 
   function enqueueAfterLogin(action: PostLoginAction) {
-    pendingActions.value.push(action);
+    pendingActions.value.push(action)
   }
 
   async function flushPendingActions() {
-    if (!pendingActions.value.length) return;
-    const actions = pendingActions.value.slice();
-    pendingActions.value = [];
+    if (!pendingActions.value.length) return
+    const actions = pendingActions.value.slice()
+    pendingActions.value = []
     for (const action of actions) {
       try {
-        await action();
+        await action()
       } catch (e) {
-        // eslint-disable-next-line no-console
-        console.warn('Post-login action failed:', e);
+        console.warn('Post-login action failed:', e)
       }
     }
   }
 
   function requireSignIn(action: PostLoginAction) {
     if (isSignedIn.value) {
-      return action();
+      return action()
     }
-    enqueueAfterLogin(action);
-    openLogin();
-    return undefined;
+    enqueueAfterLogin(action)
+    openLogin()
+    return undefined
   }
 
   watch(isSignedIn, (signedIn) => {
     if (signedIn) {
-      void flushPendingActions();
+      void flushPendingActions()
     } else {
-      pendingActions.value = [];
+      pendingActions.value = []
     }
-  });
+  })
 
   async function signInWithEmail(email: string, password: string) {
-    await signInWithEmailAndPassword(auth, email, password);
+    await signInWithEmailAndPassword(auth, email, password)
   }
 
   async function registerWithEmail(email: string, password: string) {
-    await createUserWithEmailAndPassword(auth, email, password);
+    await createUserWithEmailAndPassword(auth, email, password)
   }
 
   async function resetPassword(email: string) {
-    await sendPasswordResetEmail(auth, email);
+    await sendPasswordResetEmail(auth, email)
   }
 
   async function signOutUser() {
-    await signOut(auth);
+    await signOut(auth)
   }
 
   async function reauthenticate(currentPassword: string) {
-    const u = auth.currentUser;
-    if (!u || !u.email) throw new Error('Not signed in');
-    const credential = EmailAuthProvider.credential(u.email, currentPassword);
-    await reauthenticateWithCredential(u, credential);
+    const u = auth.currentUser
+    if (!u || !u.email) throw new Error('Not signed in')
+    const credential = EmailAuthProvider.credential(u.email, currentPassword)
+    await reauthenticateWithCredential(u, credential)
   }
 
   async function updateDisplayName(name: string) {
-    const u = auth.currentUser;
-    if (!u) throw new Error('Not signed in');
-    await updateProfile(u, { displayName: name || null });
-    await update(dbRef(database, userPath(u.uid)), { displayName: name || null });
+    const u = auth.currentUser
+    if (!u) throw new Error('Not signed in')
+    await updateProfile(u, { displayName: name || null })
+    await update(dbRef(database, userPath(u.uid)), { displayName: name || null })
   }
 
   async function updateUserEmail(newEmail: string, currentPassword: string) {
-    await reauthenticate(currentPassword);
-    const u = auth.currentUser;
-    if (!u) throw new Error('Not signed in');
-    await updateEmail(u, newEmail);
-    await set(dbRef(database, userPath(u.uid, 'email')), newEmail);
+    await reauthenticate(currentPassword)
+    const u = auth.currentUser
+    if (!u) throw new Error('Not signed in')
+    await updateEmail(u, newEmail)
+    await set(dbRef(database, userPath(u.uid, 'email')), newEmail)
   }
 
   async function updateUserPassword(newPassword: string, currentPassword: string) {
-    await reauthenticate(currentPassword);
-    const u = auth.currentUser;
-    if (!u) throw new Error('Not signed in');
-    await updatePassword(u, newPassword);
+    await reauthenticate(currentPassword)
+    const u = auth.currentUser
+    if (!u) throw new Error('Not signed in')
+    await updatePassword(u, newPassword)
   }
 
   async function deleteAccount(currentPassword: string) {
-    await reauthenticate(currentPassword);
-    const u = auth.currentUser;
-    if (!u) throw new Error('Not signed in');
-    const uid = u.uid;
-    await deleteUser(u);
+    await reauthenticate(currentPassword)
+    const u = auth.currentUser
+    if (!u) throw new Error('Not signed in')
+    const uid = u.uid
+    await deleteUser(u)
     await Promise.all([
       remove(dbRef(database, `${NAMESPACE}/users/${uid}`)),
       remove(dbRef(database, `${NAMESPACE}/users:favorites/${uid}`)),
       remove(dbRef(database, `${NAMESPACE}/users:permissions/${uid}`)),
-    ]);
+    ])
   }
 
   return {
@@ -154,5 +153,5 @@ export const useAuthStore = defineStore('auth', () => {
     updateUserEmail,
     updateUserPassword,
     deleteAccount,
-  };
-});
+  }
+})
