@@ -5,6 +5,7 @@ import { VueFire, VueFireAuth, VueFireDatabaseOptionsAPI } from 'vuefire';
 import App from './App.vue';
 import { router } from './router';
 import { firebaseApp } from './firebase';
+import './composables/useTheme';
 import './style.css';
 
 const app = createApp(App);
@@ -22,7 +23,9 @@ app.config.errorHandler = (err, _instance, info) => {
 
 router.onError((err) => {
   const message = err instanceof Error ? err.message : String(err);
-  if (/Failed to fetch dynamically imported module|Importing a module script failed/i.test(message)) {
+  if (
+    /Failed to fetch dynamically imported module|Importing a module script failed/i.test(message)
+  ) {
     window.location.reload();
     return;
   }
