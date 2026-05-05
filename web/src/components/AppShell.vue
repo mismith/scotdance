@@ -2,13 +2,20 @@
 import { computed, ref, watch } from 'vue';
 import { onKeyStroke } from '@vueuse/core';
 import { useRoute, RouterLink } from 'vue-router';
-import { CalendarDays, Home, Menu, Users, X } from 'lucide-vue-next';
+import { ArrowDownToLine, CalendarDays, Home, Menu, Users, X } from 'lucide-vue-next';
 import { useAuthStore } from '@/stores/auth';
+import { useUpdate } from '@/composables/useUpdate';
 import AccountMenu from './AccountMenu.vue';
 
 const drawerOpen = ref(false);
 const route = useRoute();
 const auth = useAuthStore();
+const update = useUpdate();
+
+function openUpdateDialog() {
+  drawerOpen.value = false;
+  update.openDialog();
+}
 
 const navItems = computed(() => {
   const items: Array<{ name: string; to: { name: string }; icon: typeof Home }> = [
@@ -34,12 +41,17 @@ onKeyStroke('Escape', () => {
       <div class="max-w-3xl mx-auto px-2 sm:px-4 h-14 flex items-center gap-2">
         <button
           type="button"
-          class="p-2 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground"
+          class="relative p-2 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground"
           title="Menu"
           aria-label="Open menu"
           @click="drawerOpen = true"
         >
           <Menu class="size-5" />
+          <span
+            v-if="update.updateAvailable"
+            class="absolute top-1.5 right-1.5 size-2 rounded-full bg-secondary ring-2 ring-background"
+            aria-hidden="true"
+          />
         </button>
         <RouterLink
           :to="{ name: 'home' }"
@@ -102,6 +114,17 @@ onKeyStroke('Escape', () => {
             <span>{{ item.name }}</span>
           </RouterLink>
         </nav>
+        <div v-if="update.updateAvailable" class="p-2 border-t">
+          <button
+            type="button"
+            class="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-accent text-left"
+            @click="openUpdateDialog"
+          >
+            <ArrowDownToLine class="size-4 text-secondary" />
+            <span class="flex-1">Update available</span>
+            <span class="size-2 rounded-full bg-secondary" aria-hidden="true" />
+          </button>
+        </div>
       </aside>
     </transition>
   </div>
