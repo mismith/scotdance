@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { onKeyStroke } from '@vueuse/core';
 import { useRoute, RouterLink } from 'vue-router';
-import { ArrowDownToLine, CalendarDays, Home, Menu, Users, X } from 'lucide-vue-next';
+import { ArrowDownToLine, CalendarDays, Home, Menu, Users, X } from '@lucide/vue';
 import { useAuthStore } from '@/stores/auth';
 import { useUpdate } from '@/composables/useUpdate';
 import AccountMenu from './AccountMenu.vue';

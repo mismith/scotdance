@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
 import { useLocalStorage } from '@vueuse/core';
-import { ChevronDown, ChevronRight } from 'lucide-vue-next';
+import { ChevronDown, ChevronRight } from '@lucide/vue';
 import { useCompetition } from '@/composables/useCompetition';
 import { blocks, days, events, slugline } from '@/lib/schedule';
 import { formatWeekday } from '@/lib/format';

@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useLocalStorage } from '@vueuse/core';
 import Fuse from 'fuse.js';
-import { ChevronDown, Star, X } from 'lucide-vue-next';
+import { ChevronDown, Star, X } from '@lucide/vue';
 import { useCompetition } from '@/composables/useCompetition';
 import { useAuthStore } from '@/stores/auth';
 import { useFavoritesStore } from '@/stores/favorites';

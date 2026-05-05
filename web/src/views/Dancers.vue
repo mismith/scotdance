@@ -2,7 +2,7 @@
 import { computed, ref, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { refDebounced } from '@vueuse/core';
-import { ChevronDown, Loader2, Search, Star, X } from 'lucide-vue-next';
+import { ChevronDown, Loader2, Search, Star, X } from '@lucide/vue';
 import { useAuthStore } from '@/stores/auth';
 import { useFavoritesStore } from '@/stores/favorites';
 import {

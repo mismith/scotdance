@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useLocalStorage } from '@vueuse/core';
-import { ChevronDown } from 'lucide-vue-next';
+import { ChevronDown } from '@lucide/vue';
 import { useCompetition } from '@/composables/useCompetition';
 import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue';
 import Place from '@/components/Place.vue';

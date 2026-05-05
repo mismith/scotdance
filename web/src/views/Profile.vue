@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, watchEffect } from 'vue';
 import { useRouter } from 'vue-router';
-import { Eye, EyeOff } from 'lucide-vue-next';
+import { Eye, EyeOff } from '@lucide/vue';
 import { useAuthStore } from '@/stores/auth';
 import { useMeStore } from '@/stores/me';
 import { gravatarUrl } from '@/lib/gravatar';

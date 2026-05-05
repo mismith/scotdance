@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { Eye, EyeOff, X } from 'lucide-vue-next';
+import { Eye, EyeOff, X } from '@lucide/vue';
 import { useAuthStore } from '@/stores/auth';
 
 type Mode = 'login' | 'register' | 'forgot';

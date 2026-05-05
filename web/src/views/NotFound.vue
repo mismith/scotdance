@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute, RouterLink } from 'vue-router';
-import { CircleSlash, Home } from 'lucide-vue-next';
+import { CircleSlash, Home } from '@lucide/vue';
 
 const props = defineProps<{
   title?: string;

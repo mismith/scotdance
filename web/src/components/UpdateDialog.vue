@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowDownToLine, X } from 'lucide-vue-next';
+import { ArrowDownToLine, X } from '@lucide/vue';
 import { useUpdate } from '@/composables/useUpdate';
 
 const update = useUpdate();

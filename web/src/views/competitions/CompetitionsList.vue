@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue';
 import { useLocalStorage } from '@vueuse/core';
 import Fuse from 'fuse.js';
-import { ChevronDown, Filter, Pin } from 'lucide-vue-next';
+import { ChevronDown, Filter, Pin } from '@lucide/vue';
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions';
 import { useFavoritesStore } from '@/stores/favorites';
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue';

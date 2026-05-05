@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { onClickOutside } from '@vueuse/core';
 import { useRouter } from 'vue-router';
-import { LogOut, User } from 'lucide-vue-next';
+import { LogOut, User } from '@lucide/vue';
 import { useAuthStore } from '@/stores/auth';
 import { useMeStore } from '@/stores/me';
 import { gravatarUrl } from '@/lib/gravatar';
