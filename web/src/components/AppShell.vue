@@ -13,14 +13,12 @@ import {
   Users,
   X,
 } from '@lucide/vue';
-import { useAuthStore } from '@/stores/auth';
 import { useUpdate } from '@/composables/useUpdate';
 import { useTheme, type Theme } from '@/composables/useTheme';
 import AccountMenu from './AccountMenu.vue';
 
 const drawerOpen = ref(false);
 const route = useRoute();
-const auth = useAuthStore();
 const update = useUpdate();
 const { theme } = useTheme();
 
