@@ -7,14 +7,14 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/Home.vue'),
   },
   {
-    path: '/competitions',
-    name: 'competitions',
-    component: () => import('@/views/competitions/CompetitionsList.vue'),
-  },
-  {
     path: '/dancers',
     name: 'dancers',
     component: () => import('@/views/Dancers.vue'),
+  },
+  {
+    path: '/competitions',
+    name: 'competitions',
+    component: () => import('@/views/competitions/CompetitionsList.vue'),
   },
   {
     path: '/competitions/:competitionId',
@@ -62,6 +62,11 @@ const routes: RouteRecordRaw[] = [
     path: '/profile',
     name: 'profile',
     component: () => import('@/views/Profile.vue'),
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('@/views/NotFound.vue'),
   },
 ];
 

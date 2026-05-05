@@ -16,4 +16,17 @@ app.use(VueFire, {
   modules: [VueFireAuth(), VueFireDatabaseOptionsAPI()],
 });
 
+app.config.errorHandler = (err, _instance, info) => {
+  console.error('[vue:error]', info, err);
+};
+
+router.onError((err) => {
+  const message = err instanceof Error ? err.message : String(err);
+  if (/Failed to fetch dynamically imported module|Importing a module script failed/i.test(message)) {
+    window.location.reload();
+    return;
+  }
+  console.error('[router:error]', err);
+});
+
 app.mount('#app');
