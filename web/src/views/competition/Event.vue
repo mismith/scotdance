@@ -2,7 +2,7 @@
 import { computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useLocalStorage } from '@vueuse/core';
-import { ChevronDown, Star } from 'lucide-vue-next';
+import { ChevronDown, Star } from '@lucide/vue';
 import { useCompetition } from '@/composables/useCompetition';
 import { dances as eventDances, getScheduleDanceName } from '@/lib/schedule';
 import { findGroupDancers } from '@/lib/results';

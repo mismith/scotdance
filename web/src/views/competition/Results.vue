@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
 import { useLocalStorage } from '@vueuse/core';
-import { Check, ChevronDown, ChevronRight, CircleDashed, Loader2, Star } from 'lucide-vue-next';
+import { Check, ChevronDown, ChevronRight, CircleDashed, Loader2, Star } from '@lucide/vue';
 import { useCompetition } from '@/composables/useCompetition';
 import { useFavoritesStore } from '@/stores/favorites';
 import {

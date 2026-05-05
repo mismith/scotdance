@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Star } from 'lucide-vue-next';
+import { Star } from '@lucide/vue';
 import { useAuthStore } from '@/stores/auth';
 import { useFavoritesStore } from '@/stores/favorites';
 import type { Dancer } from '@/types/competition';
