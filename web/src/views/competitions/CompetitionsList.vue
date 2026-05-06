@@ -124,7 +124,7 @@ function groupHasPin(group: CompetitionGroupRow) {
       </div>
       <AccountMenu />
     </header>
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-4 p-4 pt-0">
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-4 p-4 pt-2">
       <div class="bg-chip text-muted-foreground inline-flex rounded-lg p-1">
         <RouterLink
           v-for="mode in viewModes"
