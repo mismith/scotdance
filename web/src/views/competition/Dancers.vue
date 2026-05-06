@@ -316,7 +316,7 @@ function dismissSuggestions() {
                 {{ dancer.number ?? '–' }}
               </div>
               <div class="min-w-0 flex-1">
-                <div class="truncate font-medium">{{ dancer.fullName || '?' }}</div>
+                <div class="font-serif truncate font-medium tracking-tight">{{ dancer.fullName || '?' }}</div>
                 <div
                   v-if="dancer.location"
                   class="text-muted-foreground truncate text-xs"

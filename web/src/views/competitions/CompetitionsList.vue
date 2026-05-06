@@ -214,7 +214,11 @@ function groupHasPin(group: CompetitionGroupRow) {
                     :size="48"
                   />
                   <div class="min-w-0 flex-1">
-                    <div class="truncate font-medium">{{ competition.name ?? '?' }}</div>
+                    <div
+                      class="font-serif truncate text-base font-medium tracking-tight"
+                    >
+                      {{ competition.name ?? '?' }}
+                    </div>
                     <div class="text-muted-foreground truncate text-xs">
                       <span v-if="competition.date">{{
                         formatShortDate(competition.date)

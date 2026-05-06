@@ -157,7 +157,9 @@ const loaded = computed(() => groups.value.length > 0)
               />
               <CircleDashed v-else class="size-4 opacity-60" />
             </span>
-            <span class="min-w-0 flex-1 truncate font-medium">
+            <span
+              class="font-serif min-w-0 flex-1 truncate text-base font-medium tracking-tight"
+            >
               {{ group.name || group.fullName }}
             </span>
             <Star

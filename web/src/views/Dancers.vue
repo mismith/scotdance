@@ -263,7 +263,7 @@ function clearSearch() {
               {{ group.initials }}
             </span>
             <div class="min-w-0 flex-1">
-              <div class="truncate font-medium">{{ group.name || '?' }}</div>
+              <div class="font-serif truncate font-medium tracking-tight">{{ group.name || '?' }}</div>
               <div class="text-muted-foreground text-xs">
                 {{ group.dancers.length }}
                 {{ group.dancers.length === 1 ? 'competition' : 'competitions' }}
@@ -346,7 +346,7 @@ function clearSearch() {
                       {{ dancer.number ?? '–' }}
                     </div>
                     <div class="min-w-0 flex-1">
-                      <div class="truncate font-medium">{{ dancer.fullName || '?' }}</div>
+                      <div class="font-serif truncate font-medium tracking-tight">{{ dancer.fullName || '?' }}</div>
                       <div
                         v-if="dancer.location"
                         class="text-muted-foreground truncate text-xs"
