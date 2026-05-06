@@ -22,7 +22,7 @@ const initials = computed(() => {
 <template>
   <div class="flex flex-1 flex-col">
     <header
-      class="top-safe sticky z-30 overflow-hidden text-white"
+      class="sticky top-0 z-30 overflow-hidden pt-safe text-white"
       style="
         background-image: linear-gradient(
           160deg,

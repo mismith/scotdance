@@ -5,6 +5,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import {
   ArrowDownToLine,
   CalendarDays,
+  Home,
   Monitor,
   Moon,
   MoreHorizontal,
@@ -92,6 +93,16 @@ const themeOptions: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
             class="bg-nav/90 text-nav-foreground absolute right-0 bottom-full z-40 mb-2 w-64 space-y-3 rounded-3xl border border-white/10 p-3 shadow-lg backdrop-blur-xl"
             role="menu"
           >
+            <RouterLink
+              :to="{ name: 'home' }"
+              class="flex w-full items-center gap-2 rounded-md p-2 text-sm hover:bg-nav-foreground/10"
+              role="menuitem"
+              @click="moreOpen = false"
+            >
+              <Home class="size-4" />
+              <span class="flex-1">Home</span>
+            </RouterLink>
+
             <div>
               <div
                 class="mb-1.5 text-[10px] font-semibold tracking-[0.14em] uppercase opacity-60"
