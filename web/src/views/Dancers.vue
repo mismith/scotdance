@@ -341,7 +341,7 @@ function clearSearch() {
                     class="hover:bg-accent flex items-center gap-3 p-3"
                   >
                     <div
-                      class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-xs"
+                      class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-xs tabular-nums"
                     >
                       {{ dancer.number ?? '–' }}
                     </div>

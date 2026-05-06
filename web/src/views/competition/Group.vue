@@ -216,7 +216,7 @@ watch(
                   class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 p-3"
                 >
                   <div
-                    class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-xs"
+                    class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-xs tabular-nums"
                   >
                     {{ dancer.number ?? '–' }}
                   </div>
@@ -254,7 +254,7 @@ watch(
                   class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 p-3"
                 >
                   <div
-                    class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-xs"
+                    class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-xs tabular-nums"
                   >
                     {{ entry.dancer.number ?? '–' }}
                   </div>
@@ -309,7 +309,7 @@ watch(
                   class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 p-3"
                 >
                   <div
-                    class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-xs"
+                    class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-xs tabular-nums"
                   >
                     {{ row.dancer.number ?? '–' }}
                   </div>
@@ -367,7 +367,7 @@ watch(
                     class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 p-3"
                   >
                     <div
-                      class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-xs"
+                      class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-xs tabular-nums"
                     >
                       {{ dancer.number ?? '–' }}
                     </div>

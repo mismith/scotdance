@@ -199,7 +199,7 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
                 >
                   <span
                     :class="[
-                      'inline-flex size-6 shrink-0 items-center justify-center rounded-full font-mono text-xs',
+                      'inline-flex size-6 shrink-0 items-center justify-center rounded-full font-mono text-xs tabular-nums',
                       groupHasFavorite(group)
                         ? 'bg-secondary text-secondary-foreground'
                         : 'bg-muted text-muted-foreground',
