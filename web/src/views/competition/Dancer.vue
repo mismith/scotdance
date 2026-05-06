@@ -52,7 +52,7 @@ const placedRows = computed(() =>
 
 <template>
   <article class="space-y-6">
-    <div v-if="!dancers.length" class="text-muted-foreground text-sm">Loading…</div>
+    <div v-if="!dancers.length" class="text-muted-foreground font-serif italic text-sm">Loading…</div>
 
     <div v-else-if="!dancer" class="text-muted-foreground text-sm">Dancer not found.</div>
 

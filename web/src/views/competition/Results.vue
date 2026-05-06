@@ -97,7 +97,7 @@ const loaded = computed(() => groups.value.length > 0)
 
 <template>
   <div class="space-y-4">
-    <div v-if="!loaded" class="text-muted-foreground text-sm">Loading…</div>
+    <div v-if="!loaded" class="text-muted-foreground font-serif italic text-sm">Loading…</div>
 
     <div v-else-if="!hasAnyResults" class="text-muted-foreground text-sm">
       No results posted yet. Check back later.

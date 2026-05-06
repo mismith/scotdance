@@ -118,7 +118,7 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
 
 <template>
   <article class="space-y-6">
-    <div v-if="schedule === null" class="text-muted-foreground text-sm">Loading…</div>
+    <div v-if="schedule === null" class="text-muted-foreground font-serif italic text-sm">Loading…</div>
 
     <div v-else-if="!event" class="text-muted-foreground text-sm">Event not found.</div>
 

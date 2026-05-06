@@ -161,7 +161,7 @@ watch(
 
 <template>
   <article class="space-y-6">
-    <div v-if="!groups.length" class="text-muted-foreground text-sm">Loading…</div>
+    <div v-if="!groups.length" class="text-muted-foreground font-serif italic text-sm">Loading…</div>
 
     <div v-else-if="!group" class="text-muted-foreground text-sm">Group not found.</div>
 
