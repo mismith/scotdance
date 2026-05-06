@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Pin } from '@lucide/vue'
+import { Star } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
 
@@ -12,7 +12,7 @@ const props = defineProps<{
 const auth = useAuthStore()
 const favorites = useFavoritesStore()
 
-const isPinned = computed(() => favorites.isFavoriteCompetition(props.competitionId))
+const isFavorite = computed(() => favorites.isFavoriteCompetition(props.competitionId))
 const sizeClass = computed(() => (props.size === 'md' ? 'size-5' : 'size-4'))
 
 async function handleClick(e: Event) {
@@ -30,13 +30,19 @@ async function handleClick(e: Event) {
 <template>
   <button
     type="button"
-    :title="auth.isSignedIn ? (isPinned ? 'Unpin' : 'Pin') : 'Sign in to pin'"
+    :title="
+      auth.isSignedIn
+        ? isFavorite
+          ? 'Unfavourite'
+          : 'Favourite'
+        : 'Sign in to favourite'
+    "
     :class="[
       'hover:bg-accent rounded-md p-2 transition-colors',
-      isPinned ? 'text-secondary' : 'text-muted-foreground hover:text-foreground',
+      isFavorite ? 'text-secondary' : 'text-muted-foreground hover:text-foreground',
     ]"
     @click="handleClick"
   >
-    <Pin :class="[sizeClass, isPinned && 'fill-current']" />
+    <Star :class="[sizeClass, isFavorite && 'fill-current']" />
   </button>
 </template>
