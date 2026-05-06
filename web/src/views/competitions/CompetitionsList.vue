@@ -9,7 +9,7 @@ import AccountMenu from '@/components/AccountMenu.vue'
 import CompChip from '@/components/CompChip.vue'
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue'
 import HeroCompCard from '@/components/HeroCompCard.vue'
-import { formatShortDate, isPast, isSameDay } from '@/lib/format'
+import { formatRelative, formatShortDate, isPast, isSameDay } from '@/lib/format'
 
 type ViewMode = 'list' | 'map' | 'calendar'
 
@@ -225,6 +225,12 @@ function groupHasPin(group: CompetitionGroupRow) {
                       }}</span>
                       <span v-if="competition.date && competition.location"> · </span>
                       <span v-if="competition.location">{{ competition.location }}</span>
+                    </div>
+                    <div
+                      v-if="competition.date && !isPast(competition.date)"
+                      class="text-muted-foreground/80 mt-0.5 truncate text-[11px]"
+                    >
+                      {{ formatRelative(competition.date) }}
                     </div>
                   </div>
                 </RouterLink>
