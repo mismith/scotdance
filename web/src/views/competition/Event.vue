@@ -124,13 +124,12 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
 
     <template v-else>
       <header>
-        <div class="text-muted-foreground text-xs tracking-wide uppercase">
-          {{ day?.name }} <span v-if="block?.name">› {{ block.name }}</span>
+        <div
+          class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
+        >
+          {{ day?.name }} <span v-if="block?.name">· {{ block.name }}</span>
         </div>
-        <h2 class="font-serif text-3xl font-medium tracking-tight leading-[1.04]">
-          {{ event.name || 'Event' }}
-        </h2>
-        <p v-if="event.description" class="mt-2 text-sm whitespace-pre-line">
+        <p v-if="event.description" class="mt-3 text-sm whitespace-pre-line">
           {{ event.description }}
         </p>
       </header>
