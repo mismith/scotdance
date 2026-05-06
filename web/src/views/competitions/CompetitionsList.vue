@@ -2,16 +2,17 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
-import { CalendarDays, ChevronDown, List, Map as MapIcon, Star } from '@lucide/vue'
+import { CalendarDays, List, Map as MapIcon, Star } from '@lucide/vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import { useFavoritesStore } from '@/stores/favorites'
 import AccountMenu from '@/components/AccountMenu.vue'
 import CompChip from '@/components/CompChip.vue'
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue'
 import HeroCompCard from '@/components/HeroCompCard.vue'
-import { formatRelative, formatShortDate, isPast, isSameDay } from '@/lib/format'
+import { formatRelative, isPast, isSameDay } from '@/lib/format'
 
 type ViewMode = 'list' | 'map' | 'calendar'
+type Filter = 'upcoming' | 'past' | 'all'
 
 const route = useRoute()
 
@@ -35,11 +36,18 @@ const viewModes: Array<{ id: ViewMode; label: string; icon: typeof List }> = [
   { id: 'calendar', label: 'Calendar', icon: CalendarDays },
 ]
 
+const filter = computed<Filter>(() => {
+  const f = String(route.query.f ?? 'upcoming')
+  return f === 'past' || f === 'all' ? f : 'upcoming'
+})
+
+const filterTabs: Array<{ id: Filter; label: string }> = [
+  { id: 'upcoming', label: 'Upcoming' },
+  { id: 'past', label: 'Past' },
+  { id: 'all', label: 'All' },
+]
+
 const includeArchived = useLocalStorage('competitions:includeArchived', false)
-const expandedByGroup = useLocalStorage<Record<string, boolean>>(
-  'competitions:expandedByGroup',
-  {},
-)
 
 const { competitions, loading } = useCompetitions(includeArchived)
 
@@ -56,53 +64,27 @@ const featuredComp = computed<CompetitionListItem | null>(() => {
   return upcoming[0] ?? null
 })
 
-interface CompetitionGroupRow {
-  groupName: string
-  groupOrder: number
-  hasFuture: boolean
-  members: CompetitionListItem[]
-}
-
-function monthKey(d?: number | string) {
-  if (d == null) return { name: 'Undated', order: Number.POSITIVE_INFINITY }
-  const date = new Date(d)
-  return {
-    name: `${date.toLocaleString('en-US', { month: 'long' })} ${date.getFullYear()}`,
-    order: date.getFullYear() * 100 + date.getMonth(),
+const filteredCompetitions = computed<CompetitionListItem[]>(() => {
+  const list = competitions.value.slice()
+  if (filter.value === 'upcoming') {
+    return list
+      .filter((c) => c.date && !isPast(c.date))
+      .sort((a, b) => Number(a.date ?? 0) - Number(b.date ?? 0))
   }
-}
-
-const grouped = computed<CompetitionGroupRow[]>(() => {
-  const map = new Map<string, CompetitionGroupRow>()
-  for (const c of competitions.value) {
-    const { name, order } = monthKey(c.date)
-    let row = map.get(name)
-    if (!row) {
-      row = { groupName: name, groupOrder: order, hasFuture: false, members: [] }
-      map.set(name, row)
-    }
-    row.members.push(c)
-    if (c.date && !isPast(c.date)) row.hasFuture = true
+  if (filter.value === 'past') {
+    return list
+      .filter((c) => c.date && isPast(c.date) && !isSameDay(c.date))
+      .sort((a, b) => Number(b.date ?? 0) - Number(a.date ?? 0))
   }
-  return [...map.values()].sort((a, b) => a.groupOrder - b.groupOrder)
+  return list.sort((a, b) => Number(a.date ?? 0) - Number(b.date ?? 0))
 })
 
-function isExpanded(group: CompetitionGroupRow) {
-  if (group.groupName in expandedByGroup.value)
-    return expandedByGroup.value[group.groupName]
-  return group.hasFuture || grouped.value.length <= 1
-}
-
-function toggleExpanded(group: CompetitionGroupRow) {
-  expandedByGroup.value = {
-    ...expandedByGroup.value,
-    [group.groupName]: !isExpanded(group),
-  }
-}
-
-function groupHasPin(group: CompetitionGroupRow) {
-  return group.members.some((c) => favorites.isFavoriteCompetition(c.id))
-}
+const featuredId = computed(() => featuredComp.value?.id ?? null)
+const visibleCompetitions = computed(() =>
+  filter.value === 'upcoming'
+    ? filteredCompetitions.value.filter((c) => c.id !== featuredId.value)
+    : filteredCompetitions.value,
+)
 </script>
 
 <template>
@@ -124,8 +106,8 @@ function groupHasPin(group: CompetitionGroupRow) {
       </div>
       <AccountMenu />
     </header>
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-4 p-4 pt-6">
-      <div class="bg-chip text-muted-foreground inline-flex rounded-lg p-1">
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-5 p-4 pt-6">
+      <div class="bg-chip inline-flex rounded-lg p-1">
         <RouterLink
           v-for="mode in viewModes"
           :key="mode.id"
@@ -135,7 +117,7 @@ function groupHasPin(group: CompetitionGroupRow) {
             'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
             view === mode.id
               ? 'bg-card text-foreground shadow-sm'
-              : 'hover:text-foreground',
+              : 'text-muted-foreground hover:text-foreground',
           ]"
         >
           <component :is="mode.icon" class="size-3.5" />
@@ -145,102 +127,117 @@ function groupHasPin(group: CompetitionGroupRow) {
 
       <div
         v-if="view === 'map'"
-        class="text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm"
+        class="text-muted-foreground font-serif rounded-2xl border border-dashed p-8 text-center text-sm italic"
       >
         Map view — stub.
       </div>
       <div
         v-else-if="view === 'calendar'"
-        class="text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm"
+        class="text-muted-foreground font-serif rounded-2xl border border-dashed p-8 text-center text-sm italic"
       >
         Calendar view — stub.
       </div>
 
       <template v-else>
-        <HeroCompCard v-if="featuredComp" :competition="featuredComp" />
+        <HeroCompCard v-if="featuredComp && filter === 'upcoming'" :competition="featuredComp" />
 
-        <div v-if="loading && !competitions.length" class="text-muted-foreground text-sm">
+        <div class="bg-chip flex rounded-lg p-1">
+          <RouterLink
+            v-for="tab in filterTabs"
+            :key="tab.id"
+            :to="{ query: { ...route.query, f: tab.id === 'upcoming' ? undefined : tab.id } }"
+            replace
+            :class="[
+              'flex-1 rounded-md py-1.5 text-center text-xs font-medium transition-colors',
+              filter === tab.id
+                ? 'bg-card text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground',
+            ]"
+          >
+            {{ tab.label }}
+          </RouterLink>
+        </div>
+
+        <div
+          v-if="loading && !competitions.length"
+          class="text-muted-foreground font-serif text-sm italic"
+        >
           Loading…
         </div>
         <div
           v-else-if="!competitions.length"
-          class="text-muted-foreground space-y-2 text-sm"
+          class="text-muted-foreground space-y-2 font-serif text-sm italic"
         >
           <div>No competitions found.</div>
           <button
             v-if="!includeArchived"
             type="button"
-            class="hover:text-foreground underline"
+            class="hover:text-foreground not-italic font-sans text-xs underline"
             @click="includeArchived = true"
           >
             Load archived competitions
           </button>
         </div>
+        <div
+          v-else-if="!visibleCompetitions.length"
+          class="text-muted-foreground font-serif text-sm italic"
+        >
+          <span v-if="filter === 'upcoming'">No upcoming competitions.</span>
+          <span v-else-if="filter === 'past'">No past competitions on record.</span>
+          <span v-else>No competitions match.</span>
+        </div>
 
-        <section v-for="group in grouped" :key="group.groupName" class="space-y-2">
-          <button
-            type="button"
-            class="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1 py-1 text-xs font-bold tracking-[0.14em] uppercase"
-            @click="toggleExpanded(group)"
+        <ul v-else class="divide-y border-y">
+          <li
+            v-for="competition in visibleCompetitions"
+            :key="competition.id"
+            class="flex items-start"
           >
-            <ChevronDown
-              :class="[
-                'size-4 transition-transform',
-                isExpanded(group) ? '' : '-rotate-90',
-              ]"
-            />
-            <span class="flex-1 text-left">{{ group.groupName }}</span>
-            <Star
-              v-if="groupHasPin(group)"
-              class="text-secondary size-4 fill-current"
-            />
-            <span class="text-xs font-normal tracking-normal normal-case">
-              {{ group.members.length }}
-            </span>
-          </button>
-          <ul v-if="isExpanded(group)" class="divide-y rounded-md border">
-            <li v-for="competition in group.members" :key="competition.id">
-              <div class="flex items-center">
-                <RouterLink
-                  :to="{
-                    name: 'competition.info',
-                    params: { competitionId: competition.id },
-                  }"
-                  class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 p-3"
+            <RouterLink
+              :to="{
+                name: 'competition.info',
+                params: { competitionId: competition.id },
+              }"
+              class="hover:bg-accent flex min-w-0 flex-1 items-start gap-3 p-3"
+            >
+              <CompChip
+                :name="competition.name"
+                :image="competition.image"
+                :size="48"
+              />
+              <div class="min-w-0 flex-1 pt-0.5">
+                <div
+                  class="font-serif text-[15px] font-medium tracking-tight leading-tight line-clamp-2"
                 >
-                  <CompChip
-                    :name="competition.name"
-                    :image="competition.image"
-                    :size="48"
-                  />
-                  <div class="min-w-0 flex-1">
-                    <div
-                      class="font-serif truncate text-base font-medium tracking-tight"
-                    >
-                      {{ competition.name ?? '?' }}
-                    </div>
-                    <div class="text-muted-foreground truncate text-xs tabular-nums">
-                      <span v-if="competition.date">{{
-                        formatShortDate(competition.date)
-                      }}</span>
-                      <span v-if="competition.date && competition.location"> · </span>
-                      <span v-if="competition.location">{{ competition.location }}</span>
-                    </div>
-                    <div
-                      v-if="competition.date && !isPast(competition.date)"
-                      class="text-muted-foreground/80 mt-0.5 truncate text-[11px]"
-                    >
-                      {{ formatRelative(competition.date) }}
-                    </div>
-                  </div>
-                </RouterLink>
-                <FavoriteCompetitionButton :competition-id="competition.id" class="mr-2" />
+                  {{ competition.name ?? '?' }}
+                </div>
+                <div
+                  v-if="competition.location"
+                  class="text-muted-foreground mt-1 truncate text-[11.5px]"
+                >
+                  {{ competition.location }}
+                </div>
+                <div
+                  class="text-muted-foreground/80 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] tabular-nums"
+                >
+                  <span v-if="competition.date">{{
+                    formatRelative(competition.date)
+                  }}</span>
+                  <span
+                    v-if="favorites.isFavoriteCompetition(competition.id)"
+                    class="text-secondary inline-flex items-center gap-1 font-semibold tracking-[0.06em]"
+                  >
+                    <Star class="size-3 fill-current" />
+                    Favourited
+                  </span>
+                </div>
               </div>
-            </li>
-          </ul>
-        </section>
+            </RouterLink>
+            <FavoriteCompetitionButton :competition-id="competition.id" class="mr-2 mt-2" />
+          </li>
+        </ul>
 
-        <div v-if="grouped.length && !includeArchived" class="pt-2 text-center">
+        <div v-if="competitions.length && !includeArchived" class="pt-2 text-center">
           <button
             type="button"
             class="text-muted-foreground hover:text-foreground text-xs underline"
