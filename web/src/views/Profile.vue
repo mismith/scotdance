@@ -121,7 +121,7 @@ const submitDisabled = computed(() => {
 <template>
   <div v-if="auth.isSignedIn" class="flex flex-1 flex-col">
     <header
-      class="bg-background/85 top-safe sticky backdrop-blur-xl z-20 mx-auto flex w-full max-w-3xl items-end justify-between gap-3 p-4 pb-3"
+      class="bg-background top-safe sticky z-20 mx-auto flex w-full max-w-3xl items-end justify-between gap-3 p-4 pb-3"
     >
       <div class="min-w-0 flex-1">
         <div
