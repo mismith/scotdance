@@ -43,7 +43,7 @@ const isEmpty = computed(() => schedule.value !== null && dayList.value.length =
 
     <section v-for="day in dayList" :key="day.id" class="space-y-4">
       <header>
-        <h2 class="text-lg font-semibold">
+        <h2 class="font-serif text-2xl font-medium tracking-tight">
           {{ day.name || formatWeekday(day.date) || 'Day' }}
         </h2>
         <p
@@ -93,7 +93,9 @@ const isEmpty = computed(() => schedule.value !== null && dayList.value.length =
               class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 p-3"
             >
               <div class="min-w-0 flex-1">
-                <div class="truncate font-medium">{{ event.name || 'Event' }}</div>
+                <div class="font-serif truncate text-base font-medium tracking-tight">
+                  {{ event.name || 'Event' }}
+                </div>
                 <div
                   v-if="event.description"
                   class="text-muted-foreground truncate text-xs"

@@ -157,10 +157,14 @@ watch(
 
     <template v-else>
       <header>
-        <div class="text-muted-foreground text-xs tracking-wide uppercase">
+        <div
+          class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
+        >
           {{ group.category?.name }}
         </div>
-        <h2 class="text-2xl font-semibold">{{ group.name || group.fullName }}</h2>
+        <h2 class="font-serif text-3xl font-medium tracking-tight leading-[1.04]">
+          {{ group.name || group.fullName }}
+        </h2>
       </header>
 
       <section
@@ -210,7 +214,7 @@ watch(
                     {{ dancer.number ?? '–' }}
                   </div>
                   <div class="min-w-0 flex-1">
-                    <div class="truncate font-medium">{{ dancer.fullName || '?' }}</div>
+                    <div class="font-serif truncate font-medium tracking-tight">{{ dancer.fullName || '?' }}</div>
                     <div
                       v-if="dancer.location"
                       class="text-muted-foreground truncate text-xs"
@@ -248,7 +252,7 @@ watch(
                     {{ entry.dancer.number ?? '–' }}
                   </div>
                   <div class="min-w-0 flex-1">
-                    <div class="truncate font-medium">
+                    <div class="font-serif truncate font-medium tracking-tight">
                       {{ entry.dancer.fullName || '?' }}
                     </div>
                     <div
@@ -303,7 +307,7 @@ watch(
                     {{ row.dancer.number ?? '–' }}
                   </div>
                   <div class="min-w-0 flex-1">
-                    <div class="truncate font-medium">
+                    <div class="font-serif truncate font-medium tracking-tight">
                       {{ row.dancer.fullName || '?' }}
                     </div>
                     <div
@@ -361,7 +365,7 @@ watch(
                       {{ dancer.number ?? '–' }}
                     </div>
                     <div class="min-w-0 flex-1">
-                      <div class="truncate font-medium">{{ dancer.fullName || '?' }}</div>
+                      <div class="font-serif truncate font-medium tracking-tight">{{ dancer.fullName || '?' }}</div>
                       <div
                         v-if="dancer.location"
                         class="text-muted-foreground truncate text-xs"

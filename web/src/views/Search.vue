@@ -95,29 +95,41 @@ const examples = [
     </header>
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-0">
     <section class="space-y-3">
-      <h2 class="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+      <h2
+        class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
+      >
         Suggested searches
       </h2>
       <ul class="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <li
           v-for="preset in presets"
           :key="preset.kicker"
-          class="hover:bg-accent flex cursor-pointer flex-col gap-1 rounded-md border p-3"
+          class="bg-card hover:bg-accent flex min-h-24 cursor-pointer flex-col gap-1.5 rounded-xl border p-3"
         >
           <div class="flex items-center justify-between">
-            <span class="text-primary text-xs font-semibold tracking-wide uppercase">
+            <span
+              class="text-primary text-[10px] font-semibold tracking-[0.14em] uppercase"
+            >
               {{ preset.kicker }}
             </span>
-            <span class="text-muted-foreground text-xs font-mono">{{ preset.count }}</span>
+            <span class="text-primary font-serif text-sm font-medium tabular-nums">
+              {{ preset.count }}
+            </span>
           </div>
-          <div class="text-sm font-medium">{{ preset.title }}</div>
-          <div class="text-muted-foreground text-xs">{{ preset.sub }}</div>
+          <div
+            class="font-serif text-base font-medium tracking-tight leading-tight"
+          >
+            {{ preset.title }}
+          </div>
+          <div class="text-muted-foreground text-xs leading-snug">{{ preset.sub }}</div>
         </li>
       </ul>
     </section>
 
     <section class="space-y-2">
-      <h2 class="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+      <h2
+        class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
+      >
         Or just type a name
       </h2>
       <ul class="divide-y rounded-md border">
@@ -128,7 +140,9 @@ const examples = [
         >
           <Search class="text-muted-foreground size-4 shrink-0" />
           <div class="min-w-0 flex-1">
-            <div class="truncate text-sm font-medium">&ldquo;{{ example.q }}&rdquo;</div>
+            <div class="font-serif truncate text-sm font-medium tracking-tight">
+              &ldquo;{{ example.q }}&rdquo;
+            </div>
             <div class="text-muted-foreground truncate text-xs">
               → {{ example.match }}
             </div>

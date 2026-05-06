@@ -66,7 +66,9 @@ const placedRows = computed(() =>
             #{{ dancer.number ?? '?' }}
           </div>
           <div class="flex items-center gap-2">
-            <h2 class="min-w-0 flex-1 truncate text-2xl font-semibold">
+            <h2
+              class="font-serif min-w-0 flex-1 truncate text-3xl font-medium tracking-tight leading-[1.04]"
+            >
               {{ dancer.fullName || '?' }}
             </h2>
             <FavoriteDancerButton :dancer="dancer" size="md" />
@@ -100,7 +102,7 @@ const placedRows = computed(() =>
                 :tied="row.result.tied"
                 :pointed="row.result.pointed"
               />
-              <div class="min-w-0 flex-1 truncate font-medium">
+              <div class="font-serif min-w-0 flex-1 truncate font-medium tracking-tight">
                 {{ row.dance.fullName }}
               </div>
             </RouterLink>

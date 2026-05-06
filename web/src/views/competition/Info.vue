@@ -66,7 +66,9 @@ const groupedStaff = computed(() => {
         class="bg-muted size-40 rounded-md object-cover shadow"
       />
       <div class="min-w-0 flex-1 space-y-2">
-        <h2 class="text-2xl font-semibold">{{ competition.name }}</h2>
+        <h2 class="font-serif text-3xl font-medium tracking-tight leading-[1.04]">
+          {{ competition.name }}
+        </h2>
         <p v-if="competition.date" class="flex items-center gap-2 text-base">
           {{ formatLongDate(competition.date) }}
           <span
