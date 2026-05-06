@@ -151,13 +151,6 @@ watch(
 
 <template>
   <article class="space-y-6">
-    <RouterLink
-      :to="{ name: 'competition.results', params: { competitionId } }"
-      class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm"
-    >
-      ← All groups
-    </RouterLink>
-
     <div v-if="!groups.length" class="text-muted-foreground text-sm">Loading…</div>
 
     <div v-else-if="!group" class="text-muted-foreground text-sm">Group not found.</div>

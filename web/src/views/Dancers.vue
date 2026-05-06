@@ -2,9 +2,10 @@
 import { computed, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
-import { ChevronDown, Loader2, Search, Star, X } from '@lucide/vue'
+import { ArrowRight, ChevronDown, Loader2, Search, Star, X } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
+import AccountMenu from '@/components/AccountMenu.vue'
 import {
   searchDancers,
   type SearchDancerGroup,
@@ -161,6 +162,14 @@ function selectName(name: string) {
   selectedName.value = selectedName.value === name ? '' : name
 }
 
+// Provisional: slug-by-name until cross-comp dancer identity is settled.
+function dancerSlug(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
 function clearSearch() {
   q.value = ''
   selectedName.value = ''
@@ -168,13 +177,19 @@ function clearSearch() {
 </script>
 
 <template>
-  <main class="mx-auto w-full max-w-3xl flex-1 space-y-4 p-4">
-    <header class="space-y-1">
-      <h2 class="text-lg font-semibold">Dancers</h2>
-      <p class="text-muted-foreground text-sm">
-        Search across every published competition.
-      </p>
+  <div class="flex flex-1 flex-col">
+    <header
+      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-start justify-between gap-3 p-4"
+    >
+      <div class="space-y-1">
+        <h2 class="text-lg font-semibold">Dancers</h2>
+        <p class="text-muted-foreground text-sm">
+          Search across every published competition.
+        </p>
+      </div>
+      <AccountMenu />
     </header>
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-4 p-4 pt-0">
 
     <div class="relative">
       <Search
@@ -259,8 +274,19 @@ function clearSearch() {
             v-if="selectedName === group.name"
             class="bg-muted/30 space-y-3 border-t px-3 pb-3"
           >
-            <div v-if="group.dancers.length > 1" class="flex justify-end pt-3">
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-3">
+              <RouterLink
+                :to="{ name: 'dancer.info', params: { dancerId: dancerSlug(group.name) } }"
+                class="hover:bg-accent inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium"
+              >
+                View profile
+                <span class="text-muted-foreground text-[10px] tracking-wide uppercase"
+                  >(stub)</span
+                >
+                <ArrowRight class="size-3.5" />
+              </RouterLink>
               <button
+                v-if="group.dancers.length > 1"
                 type="button"
                 class="hover:bg-accent inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium"
                 @click="favoriteAllSelected"
@@ -337,5 +363,6 @@ function clearSearch() {
         Start typing to search.
       </div>
     </template>
-  </main>
+    </main>
+  </div>
 </template>

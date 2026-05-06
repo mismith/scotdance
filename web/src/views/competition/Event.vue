@@ -12,7 +12,6 @@ import { useFavoritesStore } from '@/stores/favorites'
 
 const route = useRoute()
 const {
-  competitionId,
   schedule,
   platforms,
   groups,
@@ -109,13 +108,6 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
 
 <template>
   <article class="space-y-6">
-    <RouterLink
-      :to="{ name: 'competition.schedule', params: { competitionId } }"
-      class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm"
-    >
-      ← Schedule
-    </RouterLink>
-
     <div v-if="schedule === null" class="text-muted-foreground text-sm">Loading…</div>
 
     <div v-else-if="!event" class="text-muted-foreground text-sm">Event not found.</div>
