@@ -221,7 +221,7 @@ const submitDisabled = computed(() => {
       <div
         class="bg-background relative w-full max-w-sm space-y-4 rounded-lg border p-6 shadow-lg"
       >
-        <h2 class="text-lg font-semibold">
+        <h2 class="font-serif text-xl font-medium tracking-tight">
           <template v-if="modal === 'email'">Change your email</template>
           <template v-else-if="modal === 'password'">Change your password</template>
           <template v-else>Delete your account</template>

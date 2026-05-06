@@ -73,17 +73,19 @@ async function handleSignOut() {
 
     <div
       v-if="open && auth.isSignedIn"
-      class="bg-background absolute top-full right-0 z-40 mt-1 w-64 rounded-md border p-1 shadow-lg"
+      class="bg-nav/90 text-nav-foreground absolute top-full right-0 z-40 mt-2 w-64 rounded-2xl border border-white/10 p-1 shadow-lg backdrop-blur-xl"
     >
-      <div class="border-b px-3 py-2">
-        <div class="text-muted-foreground text-xs">Signed in as</div>
-        <div class="truncate text-sm font-medium">
+      <div class="border-b border-white/10 px-3 py-2">
+        <div class="text-[10px] font-semibold tracking-[0.14em] uppercase opacity-60">
+          Signed in as
+        </div>
+        <div class="font-serif truncate text-sm font-medium tracking-tight">
           {{ me.displayName ?? me.email ?? '—' }}
         </div>
       </div>
       <button
         type="button"
-        class="hover:bg-accent flex w-full items-center gap-2 rounded px-3 py-2 text-sm"
+        class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-nav-foreground/10"
         @click="goProfile"
       >
         <User class="size-4" />
@@ -91,7 +93,7 @@ async function handleSignOut() {
       </button>
       <button
         type="button"
-        class="hover:bg-accent flex w-full items-center gap-2 rounded px-3 py-2 text-sm"
+        class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-nav-foreground/10"
         @click="handleSignOut"
       >
         <LogOut class="size-4" />
