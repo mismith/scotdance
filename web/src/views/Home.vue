@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
 import AccountMenu from '@/components/AccountMenu.vue'
 </script>
 
@@ -25,13 +24,6 @@ import AccountMenu from '@/components/AccountMenu.vue'
             Browse competitions, dancers, and live results.
           </p>
         </div>
-
-        <RouterLink
-          :to="{ name: 'competitions' }"
-          class="bg-primary text-primary-foreground inline-flex items-center rounded-md px-4 py-2 text-sm font-medium hover:opacity-90"
-        >
-          Browse competitions
-        </RouterLink>
       </div>
     </main>
   </div>
