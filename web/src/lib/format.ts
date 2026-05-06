@@ -68,3 +68,26 @@ export function isPast(value: number | string | undefined | null): boolean {
   if (value == null) return false
   return new Date(value).getTime() < Date.now()
 }
+
+const relativeTime = new Intl.RelativeTimeFormat('en-US', {
+  numeric: 'auto',
+  style: 'long',
+})
+
+const MS = {
+  day: 86_400_000,
+  week: 7 * 86_400_000,
+  month: 30 * 86_400_000,
+  year: 365 * 86_400_000,
+}
+
+export function formatRelative(value: number | string | undefined | null): string {
+  if (value == null) return ''
+  const diff = new Date(value).getTime() - Date.now()
+  const abs = Math.abs(diff)
+  if (abs < MS.day) return diff > 0 ? 'Today' : 'Today'
+  if (abs < MS.week) return relativeTime.format(Math.round(diff / MS.day), 'day')
+  if (abs < MS.month) return relativeTime.format(Math.round(diff / MS.week), 'week')
+  if (abs < MS.year) return relativeTime.format(Math.round(diff / MS.month), 'month')
+  return relativeTime.format(Math.round(diff / MS.year), 'year')
+}
