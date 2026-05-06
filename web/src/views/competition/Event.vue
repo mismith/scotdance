@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 import { ChevronDown, Star } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
+import { injectChromeTitle } from '@/composables/useChromeTitle'
 import { dances as eventDances, getScheduleDanceName } from '@/lib/schedule'
 import { findGroupDancers } from '@/lib/results'
 import { staffMemberName } from '@/types/competition'
@@ -36,6 +37,15 @@ const eventId = computed(() => String(route.params.eventId ?? ''))
 const day = computed(() => schedule.value?.days?.[dayId.value] ?? null)
 const block = computed(() => day.value?.blocks?.[blockId.value] ?? null)
 const event = computed(() => block.value?.events?.[eventId.value] ?? null)
+
+const chromeTitle = injectChromeTitle()
+watch(
+  event,
+  (e) => {
+    chromeTitle.value = e?.name ?? null
+  },
+  { immediate: true },
+)
 
 const eventDanceList = computed(() =>
   event.value ? eventDances({ dances: event.value.dances }) : [],

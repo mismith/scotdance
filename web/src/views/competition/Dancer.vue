@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCompetition } from '@/composables/useCompetition'
+import { injectChromeTitle } from '@/composables/useChromeTitle'
 import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue'
 import Place from '@/components/Place.vue'
 import { findGroupDances, getDancerPlace } from '@/lib/results'
@@ -18,6 +19,15 @@ onMounted(async () => {
 
 const dancerId = computed(() => String(route.params.dancerId ?? ''))
 const dancer = computed(() => dancers.value.find((d) => d.id === dancerId.value) ?? null)
+
+const chromeTitle = injectChromeTitle()
+watch(
+  dancer,
+  (d) => {
+    chromeTitle.value = d?.fullName ?? null
+  },
+  { immediate: true },
+)
 
 const groupDances = computed(() => {
   if (!dancer.value?.group) return []
