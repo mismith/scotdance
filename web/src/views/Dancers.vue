@@ -2,7 +2,7 @@
 import { computed, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
-import { ArrowRight, ChevronDown, Loader2, Search, Star, X } from '@lucide/vue'
+import { ArrowRight, ChevronRight, Loader2, Search, Star, X } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
 import AccountMenu from '@/components/AccountMenu.vue'
@@ -196,180 +196,201 @@ function clearSearch() {
       </div>
       <AccountMenu />
     </header>
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-4 p-4 pt-6">
-
-    <div class="relative">
-      <Search
-        class="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2"
-      />
-      <input
-        v-model="q"
-        type="search"
-        placeholder="Search by name…"
-        :disabled="!auth.isSignedIn"
-        class="bg-background focus:ring-ring w-full rounded-md border py-2 pr-9 pl-9 text-sm focus:ring-2 focus:outline-none disabled:opacity-50"
-      />
-      <button
-        v-if="q"
-        type="button"
-        class="hover:bg-accent text-muted-foreground absolute top-1/2 right-2 -translate-y-1/2 rounded-md p-1"
-        title="Clear"
-        @click="clearSearch"
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-6">
+      <div
+        class="bg-card flex h-12 items-center gap-3 rounded-full border px-4 shadow-sm"
       >
-        <X class="size-4" />
-      </button>
-    </div>
-
-    <div v-if="!auth.isSignedIn" class="space-y-3 rounded-md border p-6 text-center">
-      <p class="text-muted-foreground text-sm">
-        Sign in to search dancers across competitions.
-      </p>
-      <button
-        type="button"
-        class="bg-primary text-primary-foreground inline-flex items-center rounded-md px-4 py-2 text-sm font-medium hover:opacity-90"
-        @click="auth.openLogin"
-      >
-        Sign in
-      </button>
-    </div>
-
-    <template v-else>
-      <div v-if="error" class="text-destructive text-sm">{{ error.message }}</div>
-
-      <div v-if="searching" class="text-muted-foreground flex items-center gap-2 text-sm">
-        <Loader2 class="size-4 animate-spin" />
-        Searching…
+        <Search class="text-muted-foreground size-4 shrink-0" />
+        <input
+          v-model="q"
+          type="search"
+          placeholder="Search by name…"
+          :disabled="!auth.isSignedIn"
+          class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-sm focus:outline-none disabled:opacity-50"
+        />
+        <button
+          v-if="q"
+          type="button"
+          class="text-muted-foreground hover:text-foreground -mr-1 rounded-full p-1"
+          title="Clear"
+          @click="clearSearch"
+        >
+          <X class="size-4" />
+        </button>
       </div>
 
-      <div v-else-if="q.trim() && !results.length" class="text-muted-foreground text-sm">
-        No dancers match.
+      <div
+        v-if="!auth.isSignedIn"
+        class="bg-card space-y-3 rounded-2xl border p-6 text-center"
+      >
+        <p class="font-serif text-base">Sign in to search dancers across competitions.</p>
+        <button
+          type="button"
+          class="bg-primary text-primary-foreground inline-flex items-center rounded-full px-5 py-2 text-sm font-medium hover:opacity-90"
+          @click="auth.openLogin"
+        >
+          Sign in
+        </button>
       </div>
 
-      <ul v-if="results.length" class="divide-y rounded-md border">
-        <li v-for="group in results" :key="group.name">
-          <button
-            type="button"
-            class="hover:bg-accent flex w-full items-center gap-3 p-3 text-left"
-            @click="selectName(group.name)"
-          >
-            <span
-              :class="[
-                'flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
-                group.dancers.some((d) => favorites.isFavoriteDancer(d.id))
-                  ? 'bg-secondary text-secondary-foreground'
-                  : 'bg-muted text-muted-foreground',
-              ]"
+      <template v-else>
+        <div v-if="error" class="text-destructive text-sm">{{ error.message }}</div>
+
+        <div
+          v-if="searching"
+          class="text-muted-foreground flex items-center gap-2 font-serif text-sm italic"
+        >
+          <Loader2 class="size-4 animate-spin" />
+          Searching…
+        </div>
+
+        <div
+          v-else-if="q.trim() && !results.length"
+          class="text-muted-foreground font-serif text-sm italic"
+        >
+          No dancers match.
+        </div>
+
+        <ul v-if="results.length" class="divide-y border-y">
+          <li v-for="group in results" :key="group.name">
+            <button
+              type="button"
+              class="hover:bg-accent flex w-full items-center gap-3 px-1 py-3 text-left"
+              @click="selectName(group.name)"
             >
-              {{ group.initials }}
-            </span>
-            <div class="min-w-0 flex-1">
-              <div class="font-serif truncate font-medium tracking-tight">{{ group.name || '?' }}</div>
-              <div class="text-muted-foreground text-xs">
-                {{ group.dancers.length }}
-                {{ group.dancers.length === 1 ? 'competition' : 'competitions' }}
-              </div>
-            </div>
-            <ChevronDown
-              :class="[
-                'text-muted-foreground size-4 shrink-0 transition-transform',
-                selectedName === group.name ? '' : '-rotate-90',
-              ]"
-            />
-          </button>
-
-          <div
-            v-if="selectedName === group.name"
-            class="bg-muted/30 space-y-3 border-t px-3 pb-3"
-          >
-            <div class="flex flex-wrap items-center justify-between gap-2 pt-3">
-              <RouterLink
-                :to="{ name: 'dancer.info', params: { dancerId: dancerSlug(group.name) } }"
-                class="hover:bg-accent inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium"
+              <span
+                :class="[
+                  'flex size-10 shrink-0 items-center justify-center rounded-full font-serif text-sm font-medium',
+                  group.dancers.some((d) => favorites.isFavoriteDancer(d.id))
+                    ? 'bg-secondary text-secondary-foreground'
+                    : 'bg-muted text-muted-foreground',
+                ]"
               >
-                View profile
-                <span class="text-muted-foreground text-[10px] tracking-wide uppercase"
-                  >(stub)</span
+                {{ group.initials }}
+              </span>
+              <div class="min-w-0 flex-1">
+                <div
+                  class="font-serif truncate text-base font-medium tracking-tight"
                 >
-                <ArrowRight class="size-3.5" />
-              </RouterLink>
-              <button
-                v-if="group.dancers.length > 1"
-                type="button"
-                class="hover:bg-accent inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium"
-                @click="favoriteAllSelected"
-              >
-                <Star
-                  :class="[
-                    'size-3.5',
-                    allSelectedFavorited
-                      ? 'text-secondary fill-current'
-                      : 'text-muted-foreground',
-                  ]"
-                />
-                {{ allSelectedFavorited ? 'Unfavourite all' : 'Favourite all' }}
-              </button>
-            </div>
+                  {{ group.name || '?' }}
+                </div>
+                <div
+                  class="text-muted-foreground mt-0.5 flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.14em] uppercase"
+                >
+                  <span class="tabular-nums">{{ group.dancers.length }}</span>
+                  <span>{{ group.dancers.length === 1 ? 'comp' : 'comps' }}</span>
+                </div>
+              </div>
+              <ChevronRight
+                :class="[
+                  'text-muted-foreground size-4 shrink-0 transition-transform',
+                  selectedName === group.name ? 'rotate-90' : '',
+                ]"
+              />
+            </button>
 
             <div
-              v-for="comp in dancersByCompetition"
-              :key="comp.competitionId"
-              class="space-y-1"
+              v-if="selectedName === group.name"
+              class="bg-muted/40 space-y-4 rounded-xl px-3 pt-3 pb-4 mb-3"
             >
-              <div
-                class="text-muted-foreground flex items-baseline gap-2 px-1 text-xs font-semibold tracking-wide uppercase"
-              >
-                <span class="truncate">
-                  {{ comp.competition?.name ?? 'Loading…' }}
-                </span>
-                <span
-                  v-if="comp.competition?.date"
-                  class="text-muted-foreground/70 text-[10px] tracking-normal normal-case"
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <RouterLink
+                  :to="{ name: 'dancer.info', params: { dancerId: dancerSlug(group.name) } }"
+                  class="bg-card hover:bg-accent inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium"
                 >
-                  {{ formatShortDate(comp.competition.date) }}
-                </span>
-              </div>
-              <ul class="bg-background divide-y rounded-md border">
-                <li v-for="dancer in comp.dancers" :key="dancer.id">
-                  <RouterLink
-                    :to="{
-                      name: 'competition.dancer',
-                      params: {
-                        competitionId: dancer.competitionId,
-                        dancerId: dancer.id,
-                      },
-                    }"
-                    class="hover:bg-accent flex items-center gap-3 p-3"
+                  View profile
+                  <span
+                    class="text-muted-foreground text-[10px] tracking-[0.14em] uppercase"
+                    >(stub)</span
                   >
-                    <div
-                      class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-xs tabular-nums"
-                    >
-                      {{ dancer.number ?? '–' }}
-                    </div>
-                    <div class="min-w-0 flex-1">
-                      <div class="font-serif truncate font-medium tracking-tight">{{ dancer.fullName || '?' }}</div>
-                      <div
-                        v-if="dancer.location"
-                        class="text-muted-foreground truncate text-xs"
-                      >
-                        {{ dancer.location }}
-                      </div>
-                    </div>
-                    <Star
-                      v-if="favorites.isFavoriteDancer(dancer.id)"
-                      class="text-secondary size-4 shrink-0 fill-current"
-                    />
-                  </RouterLink>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </li>
-      </ul>
+                  <ArrowRight class="size-3.5" />
+                </RouterLink>
+                <button
+                  v-if="group.dancers.length > 1"
+                  type="button"
+                  class="bg-card hover:bg-accent inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium"
+                  @click="favoriteAllSelected"
+                >
+                  <Star
+                    :class="[
+                      'size-3.5',
+                      allSelectedFavorited
+                        ? 'text-secondary fill-current'
+                        : 'text-muted-foreground',
+                    ]"
+                  />
+                  {{ allSelectedFavorited ? 'Unfavourite all' : 'Favourite all' }}
+                </button>
+              </div>
 
-      <div v-else-if="!q.trim()" class="text-muted-foreground text-sm">
-        Start typing to search.
-      </div>
-    </template>
+              <div
+                v-for="comp in dancersByCompetition"
+                :key="comp.competitionId"
+                class="space-y-1.5"
+              >
+                <div
+                  class="text-muted-foreground flex items-baseline gap-2 px-1 text-[10px] font-bold tracking-[0.14em] uppercase"
+                >
+                  <span class="truncate">
+                    {{ comp.competition?.name ?? 'Loading…' }}
+                  </span>
+                  <span
+                    v-if="comp.competition?.date"
+                    class="text-muted-foreground/60 text-[10px] tabular-nums tracking-normal normal-case"
+                  >
+                    {{ formatShortDate(comp.competition.date) }}
+                  </span>
+                </div>
+                <ul class="bg-card divide-y rounded-xl border">
+                  <li v-for="dancer in comp.dancers" :key="dancer.id">
+                    <RouterLink
+                      :to="{
+                        name: 'competition.dancer',
+                        params: {
+                          competitionId: dancer.competitionId,
+                          dancerId: dancer.id,
+                        },
+                      }"
+                      class="hover:bg-accent flex items-center gap-3 p-3"
+                    >
+                      <div
+                        class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums"
+                      >
+                        {{ dancer.number ?? '–' }}
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <div
+                          class="font-serif truncate text-sm font-medium tracking-tight"
+                        >
+                          {{ dancer.fullName || '?' }}
+                        </div>
+                        <div
+                          v-if="dancer.location"
+                          class="text-muted-foreground truncate text-xs"
+                        >
+                          {{ dancer.location }}
+                        </div>
+                      </div>
+                      <Star
+                        v-if="favorites.isFavoriteDancer(dancer.id)"
+                        class="text-secondary size-4 shrink-0 fill-current"
+                      />
+                      <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+                    </RouterLink>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </li>
+        </ul>
+
+        <div
+          v-else-if="!q.trim()"
+          class="text-muted-foreground font-serif text-sm italic"
+        >
+          Start typing to search.
+        </div>
+      </template>
     </main>
   </div>
 </template>
