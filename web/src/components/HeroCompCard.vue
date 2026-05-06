@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { isSameDay } from '@/lib/format'
+import { formatRelative, isSameDay } from '@/lib/format'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 
 const props = defineProps<{
@@ -11,19 +11,24 @@ const live = computed(() => isSameDay(props.competition.date))
 const mark = computed(
   () => (props.competition.name ?? '').trim().charAt(0).toUpperCase() || '?',
 )
-const eyebrow = computed(() => {
+const kicker = computed(() => {
+  if (live.value) return 'Happening now'
+  if (props.competition.date) return `Next up · ${formatRelative(props.competition.date)}`
+  return 'Upcoming'
+})
+const meta = computed(() => {
   const c = props.competition
-  if (live.value) {
-    return ['Today', c.location].filter(Boolean).join(' · ')
-  }
+  if (live.value) return c.location ?? null
   if (c.date) {
     const date = new Date(c.date)
-    const formatted = date
-      .toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
-      .toUpperCase()
+    const formatted = date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    })
     return [formatted, c.location].filter(Boolean).join(' · ')
   }
-  return c.location ?? 'Upcoming'
+  return c.location ?? null
 })
 </script>
 
@@ -69,13 +74,14 @@ const eyebrow = computed(() => {
       </div>
       <div class="absolute bottom-3 left-4 right-4">
         <div class="text-[11px] font-semibold tracking-[0.14em] uppercase opacity-90">
-          {{ eyebrow }}
+          {{ kicker }}
         </div>
         <div
           class="font-serif mt-1 text-lg font-medium leading-tight tracking-tight line-clamp-2"
         >
           {{ competition.name ?? 'Competition' }}
         </div>
+        <div v-if="meta" class="mt-1 text-[11px] opacity-80">{{ meta }}</div>
       </div>
     </div>
   </RouterLink>

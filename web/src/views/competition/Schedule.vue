@@ -36,7 +36,7 @@ const isEmpty = computed(() => schedule.value !== null && dayList.value.length =
 
 <template>
   <div class="space-y-8">
-    <div v-if="schedule === null" class="text-muted-foreground text-sm">Loading…</div>
+    <div v-if="schedule === null" class="text-muted-foreground font-serif italic text-sm">Loading…</div>
     <div v-else-if="isEmpty" class="text-muted-foreground text-sm">
       No schedule yet. Check back later.
     </div>
