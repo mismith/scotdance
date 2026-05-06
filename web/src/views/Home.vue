@@ -5,7 +5,7 @@ import AccountMenu from '@/components/AccountMenu.vue'
 <template>
   <div class="flex flex-1 flex-col">
     <header
-      class="bg-background top-safe sticky z-20 mx-auto flex w-full max-w-3xl items-center justify-end p-4"
+      class="bg-background/85 top-safe sticky backdrop-blur-xl z-20 mx-auto flex w-full max-w-3xl items-center justify-end p-4"
     >
       <AccountMenu />
     </header>

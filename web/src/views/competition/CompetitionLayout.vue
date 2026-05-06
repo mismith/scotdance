@@ -56,7 +56,7 @@ const chromeTitle = computed(
          neutral so main starts cleanly after the hero. Backdrop blur
          shows hero (then content) through pills as you scroll. -->
     <div
-      class="top-safe sticky z-30 -mt-22 mb-11 mx-auto flex w-full max-w-3xl items-center gap-2 px-3"
+      class="top-safe sticky z-30 -mt-15 mb-4 mx-auto flex w-full max-w-3xl items-center gap-2 px-3"
     >
       <RouterLink
         v-if="backTo"
@@ -96,7 +96,7 @@ const chromeTitle = computed(
       </div>
     </div>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 p-4 pt-2">
+    <main class="mx-auto w-full max-w-3xl flex-1 p-4 pt-0">
       <div v-if="loading" class="text-muted-foreground font-serif italic text-sm">Loading…</div>
       <div v-else-if="notFound" class="text-muted-foreground text-sm">
         No competition found.

@@ -70,22 +70,22 @@ const examples = [
 <template>
   <div class="flex flex-1 flex-col">
     <header
-      class="bg-background top-safe sticky z-20 mx-auto flex w-full max-w-3xl items-center gap-2 p-4"
+      class="top-safe sticky z-20 mx-auto flex w-full max-w-3xl items-center gap-2 p-3"
     >
-      <div class="relative flex-1">
-        <Search
-          class="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2"
-        />
+      <div
+        class="bg-nav/90 text-nav-foreground flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full border border-white/10 px-4 shadow-md backdrop-blur-xl"
+      >
+        <Search class="size-4 shrink-0 opacity-80" />
         <input
           v-model="q"
           type="search"
           placeholder="Search dancers, comps, organizations…"
-          class="bg-background focus:ring-ring w-full rounded-md border py-2 pr-3 pl-9 text-sm focus:ring-2 focus:outline-none"
+          class="placeholder:text-nav-foreground/50 min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
         />
       </div>
       <button
         type="button"
-        class="hover:bg-accent text-muted-foreground hover:text-foreground rounded-md p-2"
+        class="bg-nav/90 text-nav-foreground flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 shadow-md backdrop-blur-xl hover:opacity-90"
         title="Close search"
         aria-label="Close search"
         @click="close"
