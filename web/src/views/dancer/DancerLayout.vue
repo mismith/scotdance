@@ -65,7 +65,7 @@ const initials = computed(() => {
         </h1>
       </div>
       <div
-        class="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-zinc-950/55 text-white shadow-md backdrop-blur-xl"
+        class="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-zinc-950/55 text-white shadow-md backdrop-blur-xl [&_button]:text-white/85 [&_button]:hover:bg-white/10! [&_button]:hover:text-white"
       >
         <AccountMenu />
       </div>

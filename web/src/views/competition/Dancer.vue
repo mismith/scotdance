@@ -57,37 +57,34 @@ const placedRows = computed(() =>
     <div v-else-if="!dancer" class="text-muted-foreground text-sm">Dancer not found.</div>
 
     <template v-else>
-      <header class="flex flex-wrap gap-6">
+      <header class="flex items-center gap-4">
         <img
           v-if="dancer.image"
           :src="dancer.image"
           :alt="dancer.fullName"
-          class="bg-muted size-32 rounded-full object-cover shadow"
+          class="bg-muted size-20 rounded-full object-cover shadow"
         />
         <div
           v-else
-          class="bg-muted text-muted-foreground flex size-32 items-center justify-center rounded-full font-mono text-2xl"
+          class="bg-muted text-muted-foreground flex size-20 items-center justify-center rounded-full font-mono text-xl tabular-nums"
         >
           {{ dancer.number ?? '–' }}
         </div>
 
-        <div class="min-w-0 flex-1 space-y-2">
-          <div class="text-muted-foreground text-xs tracking-wide uppercase">
+        <div class="min-w-0 flex-1 space-y-1">
+          <div
+            class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase tabular-nums"
+          >
             #{{ dancer.number ?? '?' }}
           </div>
-          <div class="flex items-center gap-2">
-            <h2
-              class="font-serif min-w-0 flex-1 truncate text-3xl font-medium tracking-tight leading-[1.04]"
-            >
-              {{ dancer.fullName || '?' }}
-            </h2>
-            <FavoriteDancerButton :dancer="dancer" size="md" />
+          <div v-if="dancer.group" class="font-serif text-base font-medium tracking-tight">
+            {{ dancer.group.fullName }}
           </div>
-          <div v-if="dancer.group" class="text-sm">{{ dancer.group.fullName }}</div>
           <div v-if="dancer.location" class="text-muted-foreground text-sm">
             {{ dancer.location }}
           </div>
         </div>
+        <FavoriteDancerButton :dancer="dancer" size="md" />
       </header>
 
       <section v-if="dancer.group" class="space-y-2">

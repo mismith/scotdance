@@ -166,15 +166,12 @@ watch(
     <div v-else-if="!group" class="text-muted-foreground text-sm">Group not found.</div>
 
     <template v-else>
-      <header>
+      <header v-if="group.category?.name">
         <div
           class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
         >
-          {{ group.category?.name }}
+          {{ group.category.name }}
         </div>
-        <h2 class="font-serif text-3xl font-medium tracking-tight leading-[1.04]">
-          {{ group.name || group.fullName }}
-        </h2>
       </header>
 
       <section
