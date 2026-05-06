@@ -24,11 +24,10 @@ const mark = computed(
 
 <template>
   <div class="flex flex-1 flex-col">
-    <!-- Sticky editorial chrome — gradient blue + giant letter watermark
-         all in one sticky surface. No separate hero band that could leave
-         a visible stripe when scrolled. -->
-    <header
-      class="sticky top-0 z-20 overflow-hidden text-white"
+    <!-- Hero band — gradient + giant letter watermark. Scrolls away under
+         the floating chrome below. -->
+    <div
+      class="relative h-32 shrink-0 overflow-hidden text-white"
       style="
         background-image: linear-gradient(
           135deg,
@@ -39,23 +38,33 @@ const mark = computed(
     >
       <span
         aria-hidden="true"
-        class="font-serif pointer-events-none absolute -right-4 -top-6 select-none font-medium leading-none text-white/10"
-        style="font-size: 9rem; letter-spacing: -0.4rem"
+        class="font-serif pointer-events-none absolute -right-6 -top-6 select-none font-medium leading-none text-white/10"
+        style="font-size: 14rem; letter-spacing: -0.5rem"
       >
         {{ mark }}
       </span>
-      <div class="relative mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
-        <RouterLink
-          v-if="backTo"
-          :to="{ name: backTo, params: { competitionId } }"
-          class="rounded-full p-2 text-white/80 hover:bg-white/10 hover:text-white"
-          title="Back"
-          aria-label="Back"
-        >
-          <ChevronLeft class="size-5" />
-        </RouterLink>
+    </div>
+
+    <!-- Floating chrome — three sticky pills sitting over the hero, then
+         over content as the page scrolls. Backdrop blur means content
+         shows through when the hero is gone. -->
+    <div
+      class="sticky top-3 z-30 -mt-20 mx-auto flex w-full max-w-3xl items-center gap-2 px-3"
+    >
+      <RouterLink
+        v-if="backTo"
+        :to="{ name: backTo, params: { competitionId } }"
+        class="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-zinc-950/55 text-white shadow-md backdrop-blur-xl hover:bg-zinc-950/70"
+        title="Back"
+        aria-label="Back"
+      >
+        <ChevronLeft class="size-5" />
+      </RouterLink>
+      <div
+        class="flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-full border border-white/15 bg-zinc-950/55 pr-3.5 pl-1.5 text-white shadow-md backdrop-blur-xl"
+      >
         <div
-          class="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/15 backdrop-blur-md"
+          class="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15"
         >
           <img
             v-if="competition?.image"
@@ -63,23 +72,22 @@ const mark = computed(
             :alt="competition.name ?? ''"
             class="size-full object-cover"
           />
-          <span v-else class="font-serif text-base font-medium leading-none">
+          <span v-else class="font-serif text-sm font-medium leading-none">
             {{ mark }}
           </span>
         </div>
-        <div class="min-w-0 flex-1">
-          <h1
-            class="font-serif truncate text-base font-medium tracking-tight leading-[1.1]"
-          >
-            {{ competition?.name ?? (loading ? 'Loading…' : 'Competition') }}
-          </h1>
-          <p v-if="competition?.location" class="truncate text-[11px] text-white/70">
-            {{ competition.location }}
-          </p>
-        </div>
+        <h1
+          class="font-serif min-w-0 flex-1 truncate text-sm font-medium tracking-tight leading-tight"
+        >
+          {{ competition?.name ?? (loading ? 'Loading…' : 'Competition') }}
+        </h1>
+      </div>
+      <div
+        class="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-zinc-950/55 text-white shadow-md backdrop-blur-xl"
+      >
         <AccountMenu />
       </div>
-    </header>
+    </div>
 
     <main class="mx-auto w-full max-w-3xl flex-1 p-4">
       <div v-if="loading" class="text-muted-foreground text-sm">Loading…</div>

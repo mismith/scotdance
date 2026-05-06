@@ -21,8 +21,9 @@ const initials = computed(() => {
 
 <template>
   <div class="flex flex-1 flex-col">
-    <header
-      class="sticky top-0 z-20 overflow-hidden text-white"
+    <!-- Pink hero band -->
+    <div
+      class="relative h-32 shrink-0 overflow-hidden text-white"
       style="
         background-image: linear-gradient(
           160deg,
@@ -42,23 +43,33 @@ const initials = computed(() => {
           );
         "
       />
-      <div class="relative mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
+    </div>
+
+    <!-- Floating chrome (no chevron — bottom-nav home button leaves the
+         dancer profile) -->
+    <div
+      class="sticky top-3 z-30 -mt-20 mx-auto flex w-full max-w-3xl items-center gap-2 px-3"
+    >
+      <div
+        class="flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-full border border-white/15 bg-zinc-950/55 pr-3.5 pl-1.5 text-white shadow-md backdrop-blur-xl"
+      >
         <div
-          class="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/15 backdrop-blur-md"
+          class="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/15"
         >
-          <span class="text-xs font-semibold uppercase">{{ initials || '?' }}</span>
+          <span class="text-[10px] font-semibold uppercase">{{ initials || '?' }}</span>
         </div>
-        <div class="min-w-0 flex-1">
-          <h1
-            class="font-serif truncate text-base font-medium tracking-tight leading-[1.1]"
-          >
-            {{ displayName || 'Dancer' }}
-          </h1>
-          <p class="truncate font-mono text-[11px] text-white/60">{{ dancerId }}</p>
-        </div>
+        <h1
+          class="font-serif min-w-0 flex-1 truncate text-sm font-medium tracking-tight leading-tight"
+        >
+          {{ displayName || 'Dancer' }}
+        </h1>
+      </div>
+      <div
+        class="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-zinc-950/55 text-white shadow-md backdrop-blur-xl"
+      >
         <AccountMenu />
       </div>
-    </header>
+    </div>
 
     <main class="mx-auto w-full max-w-3xl flex-1 p-4">
       <RouterView />
