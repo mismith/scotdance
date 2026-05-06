@@ -12,6 +12,33 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/Dancers.vue'),
   },
   {
+    path: '/dancers/:dancerId',
+    component: () => import('@/views/dancer/DancerLayout.vue'),
+    children: [
+      { path: '', redirect: { name: 'dancer.info' } },
+      {
+        path: 'info',
+        name: 'dancer.info',
+        component: () => import('@/views/dancer/Info.vue'),
+      },
+      {
+        path: 'schedule',
+        name: 'dancer.schedule',
+        component: () => import('@/views/dancer/Schedule.vue'),
+      },
+      {
+        path: 'results',
+        name: 'dancer.results',
+        component: () => import('@/views/dancer/Results.vue'),
+      },
+    ],
+  },
+  {
+    path: '/search',
+    name: 'search',
+    component: () => import('@/views/Search.vue'),
+  },
+  {
     path: '/competitions',
     name: 'competitions',
     component: () => import('@/views/competitions/CompetitionsList.vue'),

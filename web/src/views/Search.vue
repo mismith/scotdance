@@ -1,0 +1,142 @@
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { Search, X } from '@lucide/vue'
+
+const router = useRouter()
+const q = ref('')
+
+function close() {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.replace({ name: 'competitions' })
+  }
+}
+
+interface Preset {
+  kicker: string
+  title: string
+  sub: string
+  count: number
+}
+
+const presets: Preset[] = [
+  {
+    kicker: 'Near you',
+    title: 'This weekend within 200 km',
+    sub: 'Cobourg, Pickering, Hamilton',
+    count: 3,
+  },
+  {
+    kicker: 'Championships',
+    title: 'Major championships, this season',
+    sub: 'Canadians, Cowal, Worlds',
+    count: 6,
+  },
+  {
+    kicker: 'Open now',
+    title: 'Registration open',
+    sub: 'Comps accepting entries today',
+    count: 14,
+  },
+  {
+    kicker: 'Multi-day',
+    title: 'Weekend-long competitions',
+    sub: 'For families travelling',
+    count: 11,
+  },
+  {
+    kicker: 'First-timer',
+    title: 'Beginner & Novice friendly',
+    sub: 'Smaller fields, pre-Premier',
+    count: 22,
+  },
+  {
+    kicker: 'Province',
+    title: 'In Ontario',
+    sub: 'Your home province',
+    count: 18,
+  },
+]
+
+const examples = [
+  { q: 'Aileen', match: 'Aileen Stewart · Premier dancer' },
+  { q: 'Maxville', match: 'Glengarry Highland Games at Maxville' },
+  { q: 'Premier G3', match: 'Premier G3 results · last 30 days' },
+]
+</script>
+
+<template>
+  <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4">
+    <div class="flex items-center gap-2">
+      <div class="relative flex-1">
+        <Search
+          class="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2"
+        />
+        <input
+          v-model="q"
+          type="search"
+          placeholder="Search dancers, comps, organizations…"
+          class="bg-background focus:ring-ring w-full rounded-md border py-2 pr-3 pl-9 text-sm focus:ring-2 focus:outline-none"
+        />
+      </div>
+      <button
+        type="button"
+        class="hover:bg-accent text-muted-foreground hover:text-foreground rounded-md p-2"
+        title="Close search"
+        aria-label="Close search"
+        @click="close"
+      >
+        <X class="size-5" />
+      </button>
+    </div>
+
+    <section class="space-y-3">
+      <h2 class="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+        Suggested searches
+      </h2>
+      <ul class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <li
+          v-for="preset in presets"
+          :key="preset.kicker"
+          class="hover:bg-accent flex cursor-pointer flex-col gap-1 rounded-md border p-3"
+        >
+          <div class="flex items-center justify-between">
+            <span class="text-primary text-xs font-semibold tracking-wide uppercase">
+              {{ preset.kicker }}
+            </span>
+            <span class="text-muted-foreground text-xs font-mono">{{ preset.count }}</span>
+          </div>
+          <div class="text-sm font-medium">{{ preset.title }}</div>
+          <div class="text-muted-foreground text-xs">{{ preset.sub }}</div>
+        </li>
+      </ul>
+    </section>
+
+    <section class="space-y-2">
+      <h2 class="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+        Or just type a name
+      </h2>
+      <ul class="divide-y rounded-md border">
+        <li
+          v-for="example in examples"
+          :key="example.q"
+          class="hover:bg-accent flex cursor-pointer items-center gap-3 p-3"
+        >
+          <Search class="text-muted-foreground size-4 shrink-0" />
+          <div class="min-w-0 flex-1">
+            <div class="truncate text-sm font-medium">&ldquo;{{ example.q }}&rdquo;</div>
+            <div class="text-muted-foreground truncate text-xs">
+              → {{ example.match }}
+            </div>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <p class="text-muted-foreground text-xs">
+      Search overlay — stub. Presets and examples are placeholders.
+    </p>
+  </main>
+</template>

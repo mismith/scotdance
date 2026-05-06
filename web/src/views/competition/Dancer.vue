@@ -42,13 +42,6 @@ const placedRows = computed(() =>
 
 <template>
   <article class="space-y-6">
-    <RouterLink
-      :to="{ name: 'competition.dancers', params: { competitionId } }"
-      class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm"
-    >
-      ← All dancers
-    </RouterLink>
-
     <div v-if="!dancers.length" class="text-muted-foreground text-sm">Loading…</div>
 
     <div v-else-if="!dancer" class="text-muted-foreground text-sm">Dancer not found.</div>
