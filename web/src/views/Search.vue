@@ -93,7 +93,7 @@ const examples = [
         <X class="size-5" />
       </button>
     </header>
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-2">
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-6">
     <section class="space-y-3">
       <h2
         class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
