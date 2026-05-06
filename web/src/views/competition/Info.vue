@@ -58,39 +58,32 @@ const groupedStaff = computed(() => {
 
 <template>
   <article v-if="competition" class="space-y-6">
-    <header class="flex flex-wrap gap-6">
-      <img
-        v-if="competition.image"
-        :src="competition.image"
-        :alt="competition.name ?? ''"
-        class="bg-muted size-40 rounded-md object-cover shadow"
-      />
-      <div class="min-w-0 flex-1 space-y-2">
-        <h2 class="font-serif text-3xl font-medium tracking-tight leading-[1.04]">
-          {{ competition.name }}
-        </h2>
-        <p v-if="competition.date" class="flex items-center gap-2 text-base">
-          {{ formatLongDate(competition.date) }}
-          <span
-            v-if="isToday"
-            class="bg-primary text-primary-foreground inline-block rounded-full px-2 py-0.5 text-xs"
-            >Today</span
-          >
-        </p>
-        <div v-if="competition.venue" class="text-muted-foreground text-sm">
-          <a
-            v-if="mapsHref"
-            :href="mapsHref"
-            target="_blank"
-            rel="noopener"
-            class="hover:text-foreground underline"
-            >{{ competition.venue }}</a
-          >
-          <span v-else>{{ competition.venue }}</span>
-        </div>
-        <div v-if="competition.location" class="text-muted-foreground text-sm">
-          {{ competition.location }}
-        </div>
+    <!-- Layout chrome already shows the comp identity. Here we surface the
+         meta + key actions only. -->
+    <header class="space-y-2">
+      <div
+        v-if="competition.date"
+        class="flex flex-wrap items-center gap-2 font-serif text-lg font-medium tracking-tight"
+      >
+        {{ formatLongDate(competition.date) }}
+        <span
+          v-if="isToday"
+          class="bg-secondary text-secondary-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-[0.14em] uppercase"
+        >
+          <span class="size-1.5 animate-pulse rounded-full bg-current" />
+          Today
+        </span>
+      </div>
+      <div v-if="competition.venue" class="text-muted-foreground text-sm">
+        <a
+          v-if="mapsHref"
+          :href="mapsHref"
+          target="_blank"
+          rel="noopener"
+          class="hover:text-foreground underline"
+          >{{ competition.venue }}</a
+        >
+        <span v-else>{{ competition.venue }}</span>
       </div>
     </header>
 
@@ -136,7 +129,7 @@ const groupedStaff = computed(() => {
     <section v-if="groupedStaff.length" class="space-y-4">
       <div v-for="group in groupedStaff" :key="group.type">
         <h3
-          class="text-muted-foreground mb-2 text-sm font-semibold tracking-wide uppercase"
+          class="text-muted-foreground mb-2 text-[11px] font-semibold tracking-[0.14em] uppercase"
         >
           {{ group.type }}s
         </h3>
@@ -154,7 +147,11 @@ const groupedStaff = computed(() => {
             />
             <div v-else class="bg-muted size-10 rounded-full" />
             <div class="min-w-0 flex-1">
-              <div class="truncate font-medium">{{ staffMemberName(member) }}</div>
+              <div
+                class="font-serif truncate text-base font-medium tracking-tight"
+              >
+                {{ staffMemberName(member) }}
+              </div>
               <div v-if="member.location" class="text-muted-foreground truncate text-xs">
                 {{ member.location }}
               </div>
