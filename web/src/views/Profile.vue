@@ -119,27 +119,43 @@ const submitDisabled = computed(() => {
 </script>
 
 <template>
-  <main v-if="auth.isSignedIn" class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4">
-    <header class="flex items-center gap-4">
-      <img
-        v-if="avatarUrl"
-        :src="avatarUrl"
-        alt=""
-        class="bg-muted size-20 rounded-full object-cover"
-      />
-      <div v-else class="bg-muted size-20 rounded-full" />
-      <div class="text-muted-foreground text-xs">
-        Avatar via
-        <a
-          href="https://gravatar.com/"
-          target="_blank"
-          rel="noopener"
-          class="hover:text-foreground underline"
+  <div v-if="auth.isSignedIn" class="flex flex-1 flex-col">
+    <header
+      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-end justify-between gap-3 p-4 pb-3"
+    >
+      <div class="min-w-0 flex-1">
+        <div
+          class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
         >
-          Gravatar
-        </a>
+          Account
+        </div>
+        <h1 class="font-serif text-3xl font-medium tracking-tight leading-[1.04]">
+          Profile
+        </h1>
       </div>
     </header>
+
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-0">
+      <section class="flex items-center gap-4">
+        <img
+          v-if="avatarUrl"
+          :src="avatarUrl"
+          alt=""
+          class="bg-muted size-20 rounded-full object-cover"
+        />
+        <div v-else class="bg-muted size-20 rounded-full" />
+        <div class="text-muted-foreground text-xs">
+          Avatar via
+          <a
+            href="https://gravatar.com/"
+            target="_blank"
+            rel="noopener"
+            class="hover:text-foreground underline"
+          >
+            Gravatar
+          </a>
+        </div>
+      </section>
 
     <section class="space-y-2">
       <label class="block space-y-1">
@@ -300,5 +316,6 @@ const submitDisabled = computed(() => {
         </form>
       </div>
     </div>
-  </main>
+    </main>
+  </div>
 </template>

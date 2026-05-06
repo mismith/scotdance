@@ -23,7 +23,7 @@ const tone = computed(() => {
 <template>
   <span
     :class="[
-      'inline-flex h-9 min-w-9 items-center justify-center rounded-md border px-2 font-mono text-sm font-medium tabular-nums',
+      'font-serif inline-flex h-9 min-w-9 items-center justify-center rounded-md border px-2 text-base font-medium tabular-nums tracking-tight',
       tone,
     ]"
     :title="tied ? 'Tied' : undefined"
@@ -31,7 +31,7 @@ const tone = computed(() => {
     <template v-if="pointed">♦</template>
     <template v-else-if="place != null">
       <span>{{ place }}</span>
-      <sup class="ml-0.5 text-[0.6rem]">{{ ordinal }}</sup>
+      <sup class="ml-0.5 text-[0.55rem] font-medium">{{ ordinal }}</sup>
       <span v-if="tied" class="ml-0.5 text-xs">=</span>
     </template>
     <template v-else>—</template>
