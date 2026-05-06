@@ -82,7 +82,7 @@ const themeOptions: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
             <span class="text-[10px]">More</span>
             <span
               v-if="update.updateAvailable"
-              class="bg-secondary absolute top-1 right-1 size-2 rounded-full"
+              class="bg-secondary absolute top-1 right-1 size-2 animate-pulse rounded-full"
               aria-hidden="true"
             />
           </button>
@@ -136,7 +136,7 @@ const themeOptions: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
             >
               <ArrowDownToLine class="text-secondary size-4" />
               <span class="flex-1">Update available</span>
-              <span class="bg-secondary size-2 rounded-full" aria-hidden="true" />
+              <span class="bg-secondary size-2 animate-pulse rounded-full" aria-hidden="true" />
             </button>
           </div>
         </div>
