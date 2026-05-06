@@ -88,7 +88,7 @@ const placedRows = computed(() =>
       </header>
 
       <section v-if="dancer.group" class="space-y-2">
-        <h3 class="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
+        <h3 class="text-muted-foreground text-xs font-bold tracking-[0.14em] uppercase">
           Results
         </h3>
         <div v-if="!groupDances.length" class="text-muted-foreground text-sm">
