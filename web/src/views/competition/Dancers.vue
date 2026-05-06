@@ -277,7 +277,7 @@ function dismissSuggestions() {
     <section v-for="group in grouped" :key="group.groupName" class="space-y-2">
       <button
         type="button"
-        class="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1 py-1 text-sm font-semibold tracking-wide uppercase"
+        class="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1 py-1 text-xs font-bold tracking-[0.14em] uppercase"
         @click="toggleExpanded(group)"
       >
         <ChevronDown
