@@ -96,7 +96,7 @@ const chromeTitle = computed(
       </div>
     </div>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 p-4 pt-0">
+    <main class="mx-auto w-full max-w-3xl flex-1 p-4 pt-6">
       <div v-if="loading" class="text-muted-foreground font-serif italic text-sm">Loading…</div>
       <div v-else-if="notFound" class="text-muted-foreground text-sm">
         No competition found.

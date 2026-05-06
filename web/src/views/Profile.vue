@@ -135,7 +135,7 @@ const submitDisabled = computed(() => {
       </div>
     </header>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-0">
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-2">
       <section class="flex items-center gap-4">
         <img
           v-if="avatarUrl"
