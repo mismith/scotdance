@@ -3,6 +3,7 @@ import { computed, toRef } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { ChevronLeft } from '@lucide/vue'
 import AccountMenu from '@/components/AccountMenu.vue'
+import CompChip from '@/components/CompChip.vue'
 import { provideCompetition } from '@/composables/useCompetition'
 
 const route = useRoute()
@@ -33,14 +34,16 @@ const backTo = computed(() => drillDownParent[String(route.name ?? '')] ?? null)
         >
           <ChevronLeft class="size-5" />
         </RouterLink>
-        <img
-          v-if="competition?.image"
-          :src="competition.image"
-          :alt="competition.name ?? ''"
-          class="bg-muted size-12 rounded-md object-cover"
+        <CompChip
+          :name="competition?.name"
+          :image="competition?.image"
+          :size="44"
+          :radius="10"
         />
         <div class="min-w-0 flex-1">
-          <h1 class="truncate text-base font-semibold">
+          <h1
+            class="font-serif truncate text-lg font-medium tracking-tight leading-[1.1]"
+          >
             {{ competition?.name ?? (loading ? 'Loading…' : 'Competition') }}
           </h1>
           <p v-if="competition?.location" class="text-muted-foreground truncate text-xs">
