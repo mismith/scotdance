@@ -27,7 +27,10 @@ const update = useUpdate()
       </button>
 
       <div class="flex items-center gap-3 border-b px-6 py-4">
-        <h2 id="update-dialog-title" class="flex-1 text-lg font-semibold">
+        <h2
+          id="update-dialog-title"
+          class="font-serif flex-1 text-xl font-medium tracking-tight"
+        >
           Update Available
         </h2>
         <ArrowDownToLine class="text-muted-foreground size-5" />

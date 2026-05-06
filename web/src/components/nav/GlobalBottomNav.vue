@@ -89,17 +89,17 @@ const themeOptions: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
 
           <div
             v-if="moreOpen"
-            class="bg-popover text-popover-foreground absolute right-0 bottom-full z-40 mb-2 w-64 space-y-3 rounded-md border p-3 shadow-lg"
+            class="bg-nav/90 text-nav-foreground absolute right-0 bottom-full z-40 mb-2 w-64 space-y-3 rounded-2xl border border-white/10 p-3 shadow-lg backdrop-blur-xl"
             role="menu"
           >
             <div>
               <div
-                class="text-muted-foreground mb-1.5 text-[10px] font-semibold tracking-wide uppercase"
+                class="mb-1.5 text-[10px] font-semibold tracking-[0.14em] uppercase opacity-60"
               >
                 Theme
               </div>
               <div
-                class="bg-chip grid grid-cols-3 gap-1 rounded-lg p-1"
+                class="grid grid-cols-3 gap-1 rounded-lg bg-nav-foreground/10 p-1"
                 role="radiogroup"
                 aria-label="Theme"
               >
@@ -112,8 +112,8 @@ const themeOptions: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
                   :class="[
                     'flex items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors',
                     theme === opt.value
-                      ? 'bg-card text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground',
+                      ? 'bg-nav-foreground/20 shadow-sm'
+                      : 'opacity-70 hover:opacity-100',
                   ]"
                   @click="theme = opt.value"
                 >
@@ -126,7 +126,7 @@ const themeOptions: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
             <button
               v-if="update.updateAvailable"
               type="button"
-              class="hover:bg-accent flex w-full items-center gap-2 rounded-md border p-2 text-left text-sm"
+              class="flex w-full items-center gap-2 rounded-md border border-white/10 bg-nav-foreground/5 p-2 text-left text-sm hover:bg-nav-foreground/10"
               @click="
                 () => {
                   moreOpen = false

@@ -85,11 +85,18 @@ async function submit() {
         <X class="size-4" />
       </button>
 
-      <h2 class="text-lg font-semibold">
-        <template v-if="mode === 'login'">Sign in</template>
-        <template v-else-if="mode === 'register'">Create account</template>
-        <template v-else>Reset password</template>
-      </h2>
+      <div class="space-y-1">
+        <div
+          class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
+        >
+          ScotDance.app
+        </div>
+        <h2 class="font-serif text-2xl font-medium tracking-tight leading-[1.04]">
+          <template v-if="mode === 'login'">Sign in</template>
+          <template v-else-if="mode === 'register'">Create account</template>
+          <template v-else>Reset password</template>
+        </h2>
+      </div>
 
       <form class="space-y-3" @submit.prevent="submit">
         <label class="block space-y-1">
