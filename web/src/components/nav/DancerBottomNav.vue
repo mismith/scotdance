@@ -35,7 +35,7 @@ const activeTab = computed(() => {
 
 <template>
   <nav
-    class="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-3"
+    class="pointer-events-none fixed inset-x-0 bottom-safe z-30 flex justify-center px-3"
   >
     <div class="pointer-events-auto flex items-center gap-2">
       <RouterLink

@@ -17,7 +17,7 @@ const navMode = computed<'competition' | 'dancer' | 'none' | 'global'>(() => {
 </script>
 
 <template>
-  <div class="flex min-h-svh flex-col pb-24">
+  <div class="flex min-h-svh flex-col pb-safe-nav">
     <slot />
 
     <CompetitionBottomNav v-if="navMode === 'competition'" />

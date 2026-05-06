@@ -70,7 +70,7 @@ const examples = [
 <template>
   <div class="flex flex-1 flex-col">
     <header
-      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-center gap-2 p-4"
+      class="bg-background top-safe sticky z-20 mx-auto flex w-full max-w-3xl items-center gap-2 p-4"
     >
       <div class="relative flex-1">
         <Search
