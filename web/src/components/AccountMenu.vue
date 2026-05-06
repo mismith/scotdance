@@ -73,7 +73,7 @@ async function handleSignOut() {
 
     <div
       v-if="open && auth.isSignedIn"
-      class="bg-nav/90 text-nav-foreground absolute top-full right-0 z-40 mt-2 w-64 rounded-2xl border border-white/10 p-1 shadow-lg backdrop-blur-xl"
+      class="bg-nav/90 text-nav-foreground absolute top-full right-0 z-40 mt-2 w-64 rounded-3xl border border-white/10 p-1 shadow-lg backdrop-blur-xl"
     >
       <div class="border-b border-white/10 px-3 py-2">
         <div class="text-[10px] font-semibold tracking-[0.14em] uppercase opacity-60">

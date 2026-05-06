@@ -89,7 +89,7 @@ const themeOptions: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
 
           <div
             v-if="moreOpen"
-            class="bg-nav/90 text-nav-foreground absolute right-0 bottom-full z-40 mb-2 w-64 space-y-3 rounded-2xl border border-white/10 p-3 shadow-lg backdrop-blur-xl"
+            class="bg-nav/90 text-nav-foreground absolute right-0 bottom-full z-40 mb-2 w-64 space-y-3 rounded-3xl border border-white/10 p-3 shadow-lg backdrop-blur-xl"
             role="menu"
           >
             <div>
