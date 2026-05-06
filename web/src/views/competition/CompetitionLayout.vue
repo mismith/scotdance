@@ -56,7 +56,7 @@ const chromeTitle = computed(
          neutral so main starts cleanly after the hero. Backdrop blur
          shows hero (then content) through pills as you scroll. -->
     <div
-      class="sticky top-3 z-30 -mt-22 mb-11 mx-auto flex w-full max-w-3xl items-center gap-2 px-3"
+      class="top-safe sticky z-30 -mt-22 mb-11 mx-auto flex w-full max-w-3xl items-center gap-2 px-3"
     >
       <RouterLink
         v-if="backTo"

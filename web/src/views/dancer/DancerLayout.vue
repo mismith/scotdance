@@ -48,7 +48,7 @@ const initials = computed(() => {
     <!-- Floating chrome (no chevron — bottom-nav home button leaves the
          dancer profile) -->
     <div
-      class="sticky top-3 z-30 -mt-20 mx-auto flex w-full max-w-3xl items-center gap-2 px-3"
+      class="top-safe sticky z-30 -mt-22 mb-11 mx-auto flex w-full max-w-3xl items-center gap-2 px-3"
     >
       <div
         class="flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-full border border-white/15 bg-zinc-950/55 pr-3.5 pl-1.5 text-white shadow-md backdrop-blur-xl"

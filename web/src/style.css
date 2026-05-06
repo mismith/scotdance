@@ -117,4 +117,16 @@
       'rlig' 1,
       'calt' 1;
   }
+
+  /* Safe-area-aware utilities. The floating chrome at top should clear the
+     iOS status bar; the bottom nav should clear the home indicator. */
+  .top-safe {
+    top: max(0.75rem, env(safe-area-inset-top));
+  }
+  .bottom-safe {
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+  .pb-safe-nav {
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+  }
 }
