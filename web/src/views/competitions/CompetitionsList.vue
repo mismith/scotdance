@@ -125,16 +125,16 @@ function groupHasPin(group: CompetitionGroupRow) {
       <AccountMenu />
     </header>
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-4 p-4 pt-0">
-      <div class="bg-muted text-muted-foreground inline-flex rounded-md p-1">
+      <div class="bg-chip text-muted-foreground inline-flex rounded-lg p-1">
         <RouterLink
           v-for="mode in viewModes"
           :key="mode.id"
           :to="{ query: { ...route.query, view: mode.id === 'list' ? undefined : mode.id } }"
           replace
           :class="[
-            'inline-flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-medium transition-colors',
+            'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
             view === mode.id
-              ? 'bg-background text-foreground shadow-sm'
+              ? 'bg-card text-foreground shadow-sm'
               : 'hover:text-foreground',
           ]"
         >

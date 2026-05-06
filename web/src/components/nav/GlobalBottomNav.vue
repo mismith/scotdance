@@ -99,7 +99,7 @@ const themeOptions: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
                 Theme
               </div>
               <div
-                class="bg-muted grid grid-cols-3 gap-1 rounded-md p-1"
+                class="bg-chip grid grid-cols-3 gap-1 rounded-lg p-1"
                 role="radiogroup"
                 aria-label="Theme"
               >
@@ -110,9 +110,9 @@ const themeOptions: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
                   role="radio"
                   :aria-checked="theme === opt.value"
                   :class="[
-                    'flex items-center justify-center gap-1.5 rounded-sm py-1.5 text-xs font-medium transition-colors',
+                    'flex items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors',
                     theme === opt.value
-                      ? 'bg-background text-foreground shadow-sm'
+                      ? 'bg-card text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground',
                   ]"
                   @click="theme = opt.value"
