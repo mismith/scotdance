@@ -11,9 +11,17 @@ const dancerId = computed(() => String(route.params.dancerId ?? ''))
   <div class="flex flex-1 flex-col">
     <header class="bg-background sticky top-0 z-20 border-b">
       <div class="mx-auto flex max-w-3xl items-center gap-3 p-4">
-        <div class="bg-muted size-12 rounded-full" />
+        <div
+          class="text-secondary-foreground bg-secondary flex size-11 shrink-0 items-center justify-center rounded-full"
+        >
+          <span class="font-serif text-base font-medium leading-none">?</span>
+        </div>
         <div class="min-w-0 flex-1">
-          <h1 class="truncate text-base font-semibold">Dancer</h1>
+          <h1
+            class="font-serif truncate text-lg font-medium tracking-tight leading-[1.1]"
+          >
+            Dancer
+          </h1>
           <p class="text-muted-foreground truncate font-mono text-xs">{{ dancerId }}</p>
         </div>
         <AccountMenu />

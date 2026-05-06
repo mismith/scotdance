@@ -144,12 +144,13 @@ async function favoriteAllSelected() {
   if (!selectedGroup.value) return
   const target = !allSelectedFavorited.value
   const items = selectedGroup.value.dancers.slice()
-  const apply = () =>
-    Promise.all(
+  const apply = async () => {
+    await Promise.all(
       items.map((d) =>
         favorites.setDancer(d.id, target, target ? d.fullName : undefined),
       ),
     )
+  }
   if (!auth.isSignedIn) {
     auth.enqueueAfterLogin(apply)
     auth.openLogin()
@@ -179,13 +180,19 @@ function clearSearch() {
 <template>
   <div class="flex flex-1 flex-col">
     <header
-      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-start justify-between gap-3 p-4"
+      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-end justify-between gap-3 p-4 pb-3"
     >
-      <div class="space-y-1">
-        <h2 class="text-lg font-semibold">Dancers</h2>
-        <p class="text-muted-foreground text-sm">
-          Search across every published competition.
-        </p>
+      <div class="min-w-0 flex-1 space-y-1">
+        <div
+          class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
+        >
+          Across every comp
+        </div>
+        <h1
+          class="font-serif text-3xl font-medium tracking-tight leading-[1.04]"
+        >
+          Dancers
+        </h1>
       </div>
       <AccountMenu />
     </header>

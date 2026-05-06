@@ -25,40 +25,51 @@
   --color-ring: var(--ring);
   --color-nav: var(--nav);
   --color-nav-foreground: var(--nav-foreground);
+  /* Editorial extras (used for hero strips, progress bars, "now/live" callouts) */
+  --color-blue-paper: var(--blue-paper);
+  --color-pink-paper: var(--pink-paper);
+  --color-chip: var(--chip);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --font-serif:
+    'Newsreader', 'New York', Georgia, ui-serif, serif;
 }
 
+/* Light mode — "Cream paper" palette from editorial v5: warm off-white
+   canvas (#f5f1ea), near-black ink, brand blue + pink as accents. */
 :root {
   color-scheme: light;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: oklch(0.945 0.012 85);
+  --foreground: oklch(0.18 0.005 250);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.18 0.005 250);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  /* Brand: Material Blue 700 (#1976d2) */
-  --primary: oklch(0.554 0.143 251);
-  --primary-foreground: oklch(0.985 0 0);
-  /* Brand: Material Pink 500 (#e91e63) — used for favorites/pins/badges */
-  --secondary: oklch(0.626 0.225 13);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.18 0.005 250);
+  /* Editorial blue (#2c5d87) — deeper than Material Blue 700 */
+  --primary: oklch(0.42 0.09 245);
+  --primary-foreground: oklch(1 0 0);
+  /* Editorial pink (#c5527a) — used for favourites/pins/live callouts */
+  --secondary: oklch(0.55 0.15 5);
+  --secondary-foreground: oklch(1 0 0);
+  --muted: oklch(0.92 0.012 85);
+  --muted-foreground: oklch(0.45 0.01 250);
+  --accent: oklch(0.92 0.012 85);
+  --accent-foreground: oklch(0.18 0.005 250);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.554 0.143 251);
+  --border: oklch(0.88 0.012 85);
+  --input: oklch(0.88 0.012 85);
+  --ring: oklch(0.42 0.09 245);
   --radius: 0.625rem;
-  /* Floating bottom nav — theme-stable near-black with cream foreground.
-     Same dark dock in both light + dark per editorial v5. */
+  /* Floating bottom dock — near-black pill on cream paper. */
   --nav: oklch(0.18 0.008 250);
   --nav-foreground: oklch(0.95 0.012 85);
+  /* Editorial accent surfaces */
+  --blue-paper: oklch(0.91 0.02 245);
+  --pink-paper: oklch(0.91 0.04 5);
+  --chip: oklch(0.92 0.012 85);
 }
 
 /* Dark mode — "Deep Ink" palette from editorial v5: warm near-black,
@@ -90,6 +101,10 @@
      visible without relying on glass/blur. */
   --nav: oklch(0.95 0.012 85);
   --nav-foreground: oklch(0.18 0.008 250);
+  /* Editorial accent surfaces — tinted dark paper for callouts */
+  --blue-paper: oklch(0.27 0.05 245);
+  --pink-paper: oklch(0.25 0.06 5);
+  --chip: oklch(0.225 0.008 80);
 }
 
 @layer base {

@@ -52,7 +52,7 @@ const themeOptions: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
   >
     <div class="pointer-events-auto flex items-center gap-2">
       <div
-        class="bg-nav text-nav-foreground flex items-center gap-1 rounded-full p-1 shadow-lg"
+        class="bg-nav/90 text-nav-foreground backdrop-blur-xl flex items-center gap-1 rounded-full p-1 shadow-lg"
       >
         <RouterLink
           v-for="tab in tabs"
@@ -144,7 +144,7 @@ const themeOptions: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
 
       <RouterLink
         :to="{ name: 'search' }"
-        class="bg-nav text-nav-foreground flex size-12 items-center justify-center rounded-full shadow-lg hover:opacity-90"
+        class="bg-nav/90 text-nav-foreground backdrop-blur-xl flex size-12 items-center justify-center rounded-full shadow-lg hover:opacity-90"
         title="Search"
         aria-label="Search"
       >

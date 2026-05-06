@@ -6,12 +6,24 @@ import { CalendarDays, ChevronDown, List, Map as MapIcon, Pin } from '@lucide/vu
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import { useFavoritesStore } from '@/stores/favorites'
 import AccountMenu from '@/components/AccountMenu.vue'
+import CompChip from '@/components/CompChip.vue'
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue'
-import { formatShortDate, isPast } from '@/lib/format'
+import HeroCompCard from '@/components/HeroCompCard.vue'
+import { formatShortDate, isPast, isSameDay } from '@/lib/format'
 
 type ViewMode = 'list' | 'map' | 'calendar'
 
 const route = useRoute()
+
+const today = computed(() =>
+  new Date()
+    .toLocaleDateString('en-US', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    })
+    .toUpperCase(),
+)
 const view = computed<ViewMode>(() => {
   const v = String(route.query.view ?? 'list')
   return v === 'map' || v === 'calendar' ? v : 'list'
@@ -32,6 +44,17 @@ const expandedByGroup = useLocalStorage<Record<string, boolean>>(
 const { competitions, loading } = useCompetitions(includeArchived)
 
 const favorites = useFavoritesStore()
+
+const featuredComp = computed<CompetitionListItem | null>(() => {
+  const list = competitions.value
+  if (!list.length) return null
+  const live = list.find((c) => c.date && isSameDay(c.date))
+  if (live) return live
+  const upcoming = list
+    .filter((c) => c.date && !isPast(c.date))
+    .sort((a, b) => Number(a.date ?? 0) - Number(b.date ?? 0))
+  return upcoming[0] ?? null
+})
 
 interface CompetitionGroupRow {
   groupName: string
@@ -85,9 +108,20 @@ function groupHasPin(group: CompetitionGroupRow) {
 <template>
   <div class="flex flex-1 flex-col">
     <header
-      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-center justify-between p-4"
+      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-end justify-between gap-3 p-4 pb-3"
     >
-      <h1 class="text-lg font-semibold">Competitions</h1>
+      <div class="min-w-0 flex-1">
+        <div
+          class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
+        >
+          {{ today }}
+        </div>
+        <h1
+          class="font-serif text-3xl font-medium tracking-tight leading-[1.04]"
+        >
+          Competitions
+        </h1>
+      </div>
       <AccountMenu />
     </header>
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-4 p-4 pt-0">
@@ -123,6 +157,8 @@ function groupHasPin(group: CompetitionGroupRow) {
       </div>
 
       <template v-else>
+        <HeroCompCard v-if="featuredComp" :competition="featuredComp" />
+
         <div v-if="loading && !competitions.length" class="text-muted-foreground text-sm">
           Loading…
         </div>
@@ -172,13 +208,11 @@ function groupHasPin(group: CompetitionGroupRow) {
                   }"
                   class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 p-3"
                 >
-                  <img
-                    v-if="competition.image"
-                    :src="competition.image"
-                    :alt="competition.name ?? ''"
-                    class="bg-muted size-12 shrink-0 rounded-md object-cover"
+                  <CompChip
+                    :name="competition.name"
+                    :image="competition.image"
+                    :size="48"
                   />
-                  <div v-else class="bg-muted size-12 shrink-0 rounded-md" />
                   <div class="min-w-0 flex-1">
                     <div class="truncate font-medium">{{ competition.name ?? '?' }}</div>
                     <div class="text-muted-foreground truncate text-xs">
