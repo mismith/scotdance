@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
-import { CalendarDays, ChevronDown, List, Map as MapIcon, Pin } from '@lucide/vue'
+import { CalendarDays, ChevronDown, List, Map as MapIcon, Star } from '@lucide/vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import { useFavoritesStore } from '@/stores/favorites'
 import AccountMenu from '@/components/AccountMenu.vue'
@@ -190,7 +190,7 @@ function groupHasPin(group: CompetitionGroupRow) {
               ]"
             />
             <span class="flex-1 text-left">{{ group.groupName }}</span>
-            <Pin
+            <Star
               v-if="groupHasPin(group)"
               class="text-secondary size-4 fill-current"
             />

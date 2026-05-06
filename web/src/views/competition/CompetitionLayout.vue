@@ -23,11 +23,12 @@ const mark = computed(
 </script>
 
 <template>
-  <div class="relative flex flex-1 flex-col">
-    <!-- Editorial hero band: gradient blue + giant letter watermark.
-         Scrolls away under the sticky chrome. -->
-    <div
-      class="from-primary relative h-32 overflow-hidden text-white"
+  <div class="flex flex-1 flex-col">
+    <!-- Sticky editorial chrome — gradient blue + giant letter watermark
+         all in one sticky surface. No separate hero band that could leave
+         a visible stripe when scrolled. -->
+    <header
+      class="sticky top-0 z-20 overflow-hidden text-white"
       style="
         background-image: linear-gradient(
           135deg,
@@ -38,19 +39,12 @@ const mark = computed(
     >
       <span
         aria-hidden="true"
-        class="font-serif pointer-events-none absolute -right-6 -top-4 select-none font-medium leading-none text-white/10"
-        style="font-size: 14rem; letter-spacing: -0.5rem"
+        class="font-serif pointer-events-none absolute -right-4 -top-6 select-none font-medium leading-none text-white/10"
+        style="font-size: 9rem; letter-spacing: -0.4rem"
       >
         {{ mark }}
       </span>
-    </div>
-
-    <!-- Floating dark-glass chrome — sticks to viewport top, sits over hero
-         while scrolled to top, then floats over content below. -->
-    <header
-      class="sticky top-0 z-20 -mt-32 border-b border-white/15 bg-zinc-950/55 text-white backdrop-blur-xl"
-    >
-      <div class="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
+      <div class="relative mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
         <RouterLink
           v-if="backTo"
           :to="{ name: backTo, params: { competitionId } }"
@@ -61,7 +55,7 @@ const mark = computed(
           <ChevronLeft class="size-5" />
         </RouterLink>
         <div
-          class="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/15 backdrop-blur-md"
+          class="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/15 backdrop-blur-md"
         >
           <img
             v-if="competition?.image"
