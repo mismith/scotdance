@@ -52,20 +52,20 @@ const activeTab = computed(() => {
     <div class="pointer-events-auto flex items-center gap-2">
       <RouterLink
         :to="{ name: 'competitions' }"
-        class="bg-foreground text-background hover:opacity-90 flex size-12 items-center justify-center rounded-full shadow-lg"
+        class="bg-nav text-nav-foreground hover:opacity-90 flex size-12 items-center justify-center rounded-full shadow-lg"
         title="Back to Competitions"
         aria-label="Back to Competitions"
       >
         <LayoutGrid class="size-5" />
       </RouterLink>
-      <div class="bg-foreground text-background flex items-center gap-1 rounded-full p-1 shadow-lg">
+      <div class="bg-nav text-nav-foreground flex items-center gap-1 rounded-full p-1 shadow-lg">
         <RouterLink
           v-for="tab in tabs"
           :key="tab.to"
           :to="{ name: tab.to, params: { competitionId } }"
           :class="[
             'flex flex-col items-center gap-0.5 rounded-full px-4 py-1 text-xs font-medium transition-colors',
-            activeTab === tab.to ? 'bg-background/10' : 'opacity-70 hover:opacity-100',
+            activeTab === tab.to ? 'bg-nav-foreground/10' : 'opacity-70 hover:opacity-100',
           ]"
         >
           <component :is="tab.icon" class="size-4" />

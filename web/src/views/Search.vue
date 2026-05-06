@@ -68,8 +68,10 @@ const examples = [
 </script>
 
 <template>
-  <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4">
-    <div class="flex items-center gap-2">
+  <div class="flex flex-1 flex-col">
+    <header
+      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-center gap-2 p-4"
+    >
       <div class="relative flex-1">
         <Search
           class="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2"
@@ -90,8 +92,8 @@ const examples = [
       >
         <X class="size-5" />
       </button>
-    </div>
-
+    </header>
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-0">
     <section class="space-y-3">
       <h2 class="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
         Suggested searches
@@ -138,5 +140,6 @@ const examples = [
     <p class="text-muted-foreground text-xs">
       Search overlay — stub. Presets and examples are placeholders.
     </p>
-  </main>
+    </main>
+  </div>
 </template>

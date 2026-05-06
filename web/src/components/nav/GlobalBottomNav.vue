@@ -52,7 +52,7 @@ const themeOptions: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
   >
     <div class="pointer-events-auto flex items-center gap-2">
       <div
-        class="bg-foreground text-background flex items-center gap-1 rounded-full p-1 shadow-lg"
+        class="bg-nav text-nav-foreground flex items-center gap-1 rounded-full p-1 shadow-lg"
       >
         <RouterLink
           v-for="tab in tabs"
@@ -60,7 +60,7 @@ const themeOptions: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
           :to="tab.to"
           :class="[
             'flex flex-col items-center gap-0.5 rounded-full px-4 py-1 text-xs font-medium transition-colors',
-            tab.isActive() ? 'bg-background/10' : 'opacity-70 hover:opacity-100',
+            tab.isActive() ? 'bg-nav-foreground/10' : 'opacity-70 hover:opacity-100',
           ]"
         >
           <component :is="tab.icon" class="size-4" />
@@ -72,7 +72,7 @@ const themeOptions: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
             type="button"
             :class="[
               'flex flex-col items-center gap-0.5 rounded-full px-4 py-1 text-xs font-medium transition-colors',
-              moreOpen ? 'bg-background/10' : 'opacity-70 hover:opacity-100',
+              moreOpen ? 'bg-nav-foreground/10' : 'opacity-70 hover:opacity-100',
             ]"
             :aria-expanded="moreOpen"
             aria-haspopup="menu"
@@ -89,7 +89,7 @@ const themeOptions: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
 
           <div
             v-if="moreOpen"
-            class="bg-background text-foreground absolute right-0 bottom-full z-40 mb-2 w-64 space-y-3 rounded-md border p-3 shadow-lg"
+            class="bg-popover text-popover-foreground absolute right-0 bottom-full z-40 mb-2 w-64 space-y-3 rounded-md border p-3 shadow-lg"
             role="menu"
           >
             <div>
@@ -144,7 +144,7 @@ const themeOptions: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
 
       <RouterLink
         :to="{ name: 'search' }"
-        class="bg-foreground text-background flex size-12 items-center justify-center rounded-full shadow-lg hover:opacity-90"
+        class="bg-nav text-nav-foreground flex size-12 items-center justify-center rounded-full shadow-lg hover:opacity-90"
         title="Search"
         aria-label="Search"
       >
