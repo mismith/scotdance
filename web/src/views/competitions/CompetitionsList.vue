@@ -108,7 +108,7 @@ function groupHasPin(group: CompetitionGroupRow) {
 <template>
   <div class="flex flex-1 flex-col">
     <header
-      class="bg-background top-safe sticky z-20 mx-auto flex w-full max-w-3xl items-end justify-between gap-3 p-4 pb-3"
+      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-end justify-between gap-3 p-4 pt-safe pb-3"
     >
       <div class="min-w-0 flex-1">
         <div
