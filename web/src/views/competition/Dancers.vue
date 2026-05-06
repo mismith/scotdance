@@ -207,19 +207,23 @@ function dismissSuggestions() {
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="space-y-5">
     <div class="flex flex-wrap items-center gap-2">
-      <input
-        v-model="filter"
-        type="search"
-        placeholder="Search dancers…"
-        class="bg-background focus:ring-ring min-w-0 flex-1 rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
-      />
+      <div
+        class="bg-card flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full border px-4 shadow-sm"
+      >
+        <input
+          v-model="filter"
+          type="search"
+          placeholder="Search dancers…"
+          class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
+        />
+      </div>
       <label class="text-muted-foreground text-xs">
         <span class="sr-only">Sort by</span>
         <select
           v-model="sortBy"
-          class="bg-background focus:ring-ring rounded-md border px-2 py-2 text-sm focus:ring-2 focus:outline-none"
+          class="bg-card focus:ring-ring h-11 rounded-full border px-3 text-sm shadow-sm focus:ring-2 focus:outline-none"
         >
           <option v-for="by in sortableBys" :key="by.key" :value="by.key">
             {{ by.label }}
@@ -231,8 +235,10 @@ function dismissSuggestions() {
         :title="onlyFavorites ? 'Show all dancers' : 'Show only favorites'"
         :aria-pressed="onlyFavorites"
         :class="[
-          'hover:bg-accent rounded-md border p-2 transition-colors',
-          onlyFavorites ? 'text-secondary border-secondary' : 'text-muted-foreground',
+          'flex size-11 items-center justify-center rounded-full border shadow-sm transition-colors',
+          onlyFavorites
+            ? 'text-secondary border-secondary bg-secondary/10'
+            : 'text-muted-foreground bg-card hover:bg-accent',
         ]"
         @click="onlyFavorites = !onlyFavorites"
       >
@@ -242,12 +248,12 @@ function dismissSuggestions() {
 
     <div
       v-if="showSuggestionsBanner"
-      class="border-secondary/40 bg-secondary/10 hover:bg-secondary/15 flex cursor-pointer items-center gap-3 rounded-md border px-4 py-3"
+      class="border-secondary/40 bg-secondary/10 hover:bg-secondary/15 flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3"
       @click="activateSuggestions"
     >
       <Star class="text-secondary size-5 shrink-0 fill-current" />
       <div class="min-w-0 flex-1">
-        <div class="text-sm font-semibold">
+        <div class="font-serif text-sm font-medium tracking-tight">
           {{ suggestions.length }} favourite dancer
           {{ suggestions.length === 1 ? 'suggestion' : 'suggestions' }}
         </div>
@@ -255,7 +261,7 @@ function dismissSuggestions() {
       </div>
       <button
         type="button"
-        class="hover:bg-secondary/20 rounded-md p-1"
+        class="hover:bg-secondary/20 rounded-full p-1"
         title="Dismiss"
         @click.stop="dismissSuggestions"
       >
@@ -263,21 +269,27 @@ function dismissSuggestions() {
       </button>
     </div>
 
-    <div v-if="!dancers.length" class="text-muted-foreground text-sm">
+    <div
+      v-if="!dancers.length"
+      class="text-muted-foreground font-serif text-sm italic"
+    >
       No dancers loaded yet.
     </div>
-    <div v-else-if="!grouped.length" class="text-muted-foreground text-sm">
+    <div
+      v-else-if="!grouped.length"
+      class="text-muted-foreground font-serif text-sm italic"
+    >
       <template v-if="onlyFavorites && !auth.isSignedIn">
-        Sign in to see your favorite dancers.
+        Sign in to see your favourite dancers.
       </template>
-      <template v-else-if="onlyFavorites">No favorite dancers.</template>
+      <template v-else-if="onlyFavorites">No favourite dancers.</template>
       <template v-else>No matches.</template>
     </div>
 
     <section v-for="group in grouped" :key="group.groupName" class="space-y-2">
       <button
         type="button"
-        class="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1 py-1 text-xs font-bold tracking-[0.14em] uppercase"
+        class="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1 py-1 text-[11px] font-bold tracking-[0.14em] uppercase"
         @click="toggleExpanded(group)"
       >
         <ChevronDown
@@ -287,20 +299,20 @@ function dismissSuggestions() {
         <button
           v-if="group.isSuggestions && isExpanded(group)"
           type="button"
-          class="bg-secondary text-secondary-foreground rounded-md px-2 py-1 text-xs font-medium hover:opacity-90"
+          class="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-[11px] font-medium tracking-normal normal-case hover:opacity-90"
           @click.stop="favoriteAll(group.members)"
         >
-          Favourite All
+          Favourite all
         </button>
         <Star
           v-else-if="!onlyFavorites && groupHasFavorite(group)"
           class="text-secondary size-4 fill-current"
         />
-        <span class="text-xs font-normal tracking-normal normal-case">
+        <span class="text-[11px] font-normal tabular-nums tracking-normal normal-case">
           {{ group.members.length }}
         </span>
       </button>
-      <ul v-if="isExpanded(group)" class="divide-y rounded-md border">
+      <ul v-if="isExpanded(group)" class="divide-y border-y">
         <li v-for="dancer in group.members" :key="dancer.id">
           <div class="flex items-center">
             <RouterLink
@@ -308,24 +320,28 @@ function dismissSuggestions() {
                 name: 'competition.dancer',
                 params: { competitionId, dancerId: dancer.id },
               }"
-              class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 p-3"
+              class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
             >
               <div
-                class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-xs tabular-nums"
+                class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums"
               >
                 {{ dancer.number ?? '–' }}
               </div>
               <div class="min-w-0 flex-1">
-                <div class="font-serif truncate font-medium tracking-tight">{{ dancer.fullName || '?' }}</div>
+                <div
+                  class="font-serif truncate text-[15px] font-medium tracking-tight"
+                >
+                  {{ dancer.fullName || '?' }}
+                </div>
                 <div
                   v-if="dancer.location"
-                  class="text-muted-foreground truncate text-xs"
+                  class="text-muted-foreground truncate text-[11.5px]"
                 >
                   {{ dancer.location }}
                 </div>
               </div>
             </RouterLink>
-            <FavoriteDancerButton :dancer="dancer" class="mr-2" />
+            <FavoriteDancerButton :dancer="dancer" class="mr-1" />
           </div>
         </li>
       </ul>

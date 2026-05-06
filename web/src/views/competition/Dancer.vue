@@ -54,7 +54,12 @@ const placedRows = computed(() =>
   <article class="space-y-6">
     <div v-if="!dancers.length" class="text-muted-foreground font-serif italic text-sm">Loading…</div>
 
-    <div v-else-if="!dancer" class="text-muted-foreground text-sm">Dancer not found.</div>
+    <div
+      v-else-if="!dancer"
+      class="text-muted-foreground font-serif text-sm italic"
+    >
+      Dancer not found.
+    </div>
 
     <template v-else>
       <header class="flex items-center gap-4">
@@ -88,13 +93,18 @@ const placedRows = computed(() =>
       </header>
 
       <section v-if="dancer.group" class="space-y-2">
-        <h3 class="text-muted-foreground text-xs font-bold tracking-[0.14em] uppercase">
+        <h3
+          class="text-muted-foreground px-1 text-[11px] font-bold tracking-[0.14em] uppercase"
+        >
           Results
         </h3>
-        <div v-if="!groupDances.length" class="text-muted-foreground text-sm">
+        <div
+          v-if="!groupDances.length"
+          class="text-muted-foreground font-serif text-sm italic"
+        >
           No dances scheduled for this group.
         </div>
-        <ul v-else class="divide-y rounded-md border">
+        <ul v-else class="divide-y border-y">
           <li v-for="row in placedRows" :key="row.dance.id">
             <RouterLink
               :to="{
@@ -102,14 +112,16 @@ const placedRows = computed(() =>
                 params: { competitionId, groupId: dancer.group.id },
                 hash: `#dance-${row.dance.id}`,
               }"
-              class="hover:bg-accent flex items-center gap-3 p-3"
+              class="hover:bg-accent flex items-center gap-3 px-1 py-3"
             >
               <Place
                 :place="row.result.place"
                 :tied="row.result.tied"
                 :pointed="row.result.pointed"
               />
-              <div class="font-serif min-w-0 flex-1 truncate font-medium tracking-tight">
+              <div
+                class="font-serif min-w-0 flex-1 truncate text-[15px] font-medium tracking-tight"
+              >
                 {{ row.dance.fullName }}
               </div>
             </RouterLink>

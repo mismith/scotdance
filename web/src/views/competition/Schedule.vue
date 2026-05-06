@@ -77,7 +77,7 @@ const isEmpty = computed(() => schedule.value !== null && dayList.value.length =
 
         <ul
           v-if="isExpanded(day.id, block.id, !!block.events)"
-          class="divide-y rounded-md border"
+          class="divide-y border-y"
         >
           <li v-for="event in events(block)" :key="event.id" class="flex items-center">
             <RouterLink
@@ -90,15 +90,17 @@ const isEmpty = computed(() => schedule.value !== null && dayList.value.length =
                   eventId: event.id,
                 },
               }"
-              class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 p-3"
+              class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
             >
               <div class="min-w-0 flex-1">
-                <div class="font-serif truncate text-base font-medium tracking-tight">
+                <div
+                  class="font-serif truncate text-[15px] font-medium tracking-tight leading-tight"
+                >
                   {{ event.name || 'Event' }}
                 </div>
                 <div
                   v-if="event.description"
-                  class="text-muted-foreground truncate text-xs"
+                  class="text-muted-foreground mt-1 truncate text-[11.5px]"
                 >
                   {{ slugline(event.description) }}
                 </div>
@@ -106,7 +108,10 @@ const isEmpty = computed(() => schedule.value !== null && dayList.value.length =
               <ChevronRight class="text-muted-foreground size-4 shrink-0" />
             </RouterLink>
           </li>
-          <li v-if="!events(block).length" class="text-muted-foreground p-3 text-sm">
+          <li
+            v-if="!events(block).length"
+            class="text-muted-foreground font-serif px-1 py-3 text-sm italic"
+          >
             No events.
           </li>
         </ul>
