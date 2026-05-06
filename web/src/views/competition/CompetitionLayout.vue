@@ -4,6 +4,7 @@ import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { ChevronLeft } from '@lucide/vue'
 import AccountMenu from '@/components/AccountMenu.vue'
 import { provideCompetition } from '@/composables/useCompetition'
+import { provideChromeTitle } from '@/composables/useChromeTitle'
 
 const route = useRoute()
 const competitionId = computed(() => String(route.params.competitionId ?? ''))
@@ -19,6 +20,11 @@ const backTo = computed(() => drillDownParent[String(route.name ?? '')] ?? null)
 
 const mark = computed(
   () => (competition.value?.name ?? '').trim().charAt(0).toUpperCase() || '?',
+)
+
+const chromeOverride = provideChromeTitle()
+const chromeTitle = computed(
+  () => chromeOverride.value ?? competition.value?.name ?? (loading.value ? 'Loading…' : 'Competition'),
 )
 </script>
 
@@ -45,11 +51,12 @@ const mark = computed(
       </span>
     </div>
 
-    <!-- Floating chrome — three sticky pills sitting over the hero, then
-         over content as the page scrolls. Backdrop blur means content
-         shows through when the hero is gone. -->
+    <!-- Floating chrome — three sticky pills. Negative margin pulls them
+         up to vertically center over the hero; matching mb keeps flow
+         neutral so main starts cleanly after the hero. Backdrop blur
+         shows hero (then content) through pills as you scroll. -->
     <div
-      class="sticky top-3 z-30 -mt-20 mx-auto flex w-full max-w-3xl items-center gap-2 px-3"
+      class="sticky top-3 z-30 -mt-22 mb-11 mx-auto flex w-full max-w-3xl items-center gap-2 px-3"
     >
       <RouterLink
         v-if="backTo"
@@ -79,7 +86,7 @@ const mark = computed(
         <h1
           class="font-serif min-w-0 flex-1 truncate text-sm font-medium tracking-tight leading-tight"
         >
-          {{ competition?.name ?? (loading ? 'Loading…' : 'Competition') }}
+          {{ chromeTitle }}
         </h1>
       </div>
       <div
@@ -89,7 +96,7 @@ const mark = computed(
       </div>
     </div>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 p-4">
+    <main class="mx-auto w-full max-w-3xl flex-1 p-4 pt-2">
       <div v-if="loading" class="text-muted-foreground text-sm">Loading…</div>
       <div v-else-if="notFound" class="text-muted-foreground text-sm">
         No competition found.

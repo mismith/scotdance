@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 import { ChevronDown } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
+import { injectChromeTitle } from '@/composables/useChromeTitle'
 import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue'
 import Place from '@/components/Place.vue'
 import {
@@ -41,6 +42,15 @@ onMounted(async () => {
 
 const groupId = computed(() => String(route.params.groupId ?? ''))
 const group = computed(() => groups.value.find((g) => g.id === groupId.value) ?? null)
+
+const chromeTitle = injectChromeTitle()
+watch(
+  group,
+  (g) => {
+    chromeTitle.value = g?.name ?? g?.fullName ?? null
+  },
+  { immediate: true },
+)
 
 const allDance: EnrichedDance = { id: ALL_ID, fullName: 'All Dancers' }
 const callbacksDance: EnrichedDance = { id: CALLBACKS_ID, fullName: 'Callbacks' }
