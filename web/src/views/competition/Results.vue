@@ -99,14 +99,17 @@ const loaded = computed(() => groups.value.length > 0)
   <div class="space-y-4">
     <div v-if="!loaded" class="text-muted-foreground font-serif italic text-sm">Loading…</div>
 
-    <div v-else-if="!hasAnyResults" class="text-muted-foreground text-sm">
+    <div
+      v-else-if="!hasAnyResults"
+      class="text-muted-foreground font-serif text-sm italic"
+    >
       No results posted yet. Check back later.
     </div>
 
     <section v-for="row in groupedCategories" :key="row.category.id" class="space-y-2">
       <button
         type="button"
-        class="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1 py-1 text-xs font-bold tracking-[0.14em] uppercase"
+        class="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1 py-1 text-[11px] font-bold tracking-[0.14em] uppercase"
         @click="toggle(row.category)"
       >
         <ChevronDown
@@ -120,13 +123,16 @@ const loaded = computed(() => groups.value.length > 0)
           v-if="categoryHasFavorite(row.category)"
           class="text-secondary size-4 fill-current"
         />
-        <span class="text-xs font-normal tracking-normal normal-case">
+        <span class="text-[11px] font-normal tabular-nums tracking-normal normal-case">
           {{ row.groups.length }}
         </span>
       </button>
 
-      <ul v-if="isExpanded(row.category)" class="divide-y rounded-md border">
-        <li v-if="!row.groups.length" class="text-muted-foreground p-3 text-sm">
+      <ul v-if="isExpanded(row.category)" class="divide-y border-y">
+        <li
+          v-if="!row.groups.length"
+          class="text-muted-foreground font-serif px-1 py-3 text-sm italic"
+        >
           No groups.
         </li>
         <li v-for="group in row.groups" :key="group.id">
@@ -135,7 +141,7 @@ const loaded = computed(() => groups.value.length > 0)
               name: 'competition.group',
               params: { competitionId, groupId: group.id },
             }"
-            class="hover:bg-accent flex items-center gap-3 p-3"
+            class="hover:bg-accent flex items-center gap-3 px-1 py-3"
           >
             <span
               :class="[
@@ -157,11 +163,26 @@ const loaded = computed(() => groups.value.length > 0)
               />
               <CircleDashed v-else class="size-4 opacity-60" />
             </span>
-            <span
-              class="font-serif min-w-0 flex-1 truncate text-base font-medium tracking-tight"
-            >
-              {{ group.name || group.fullName }}
-            </span>
+            <div class="min-w-0 flex-1">
+              <div
+                class="font-serif truncate text-[15px] font-medium tracking-tight"
+              >
+                {{ group.name || group.fullName }}
+              </div>
+              <div
+                v-if="groupStatus(group).state !== 'done'"
+                :class="[
+                  'mt-0.5 text-[11px] font-bold tracking-[0.14em] uppercase',
+                  groupStatus(group).state === 'in-progress'
+                    ? 'text-primary'
+                    : 'text-muted-foreground/70',
+                ]"
+              >
+                {{
+                  groupStatus(group).state === 'in-progress' ? 'In progress' : 'TBD'
+                }}
+              </div>
+            </div>
             <Star
               v-if="groupHasFavorite(group)"
               class="text-secondary size-4 fill-current"

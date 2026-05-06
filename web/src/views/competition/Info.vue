@@ -93,7 +93,7 @@ const groupedStaff = computed(() => {
         target="_blank"
         rel="noopener"
         :aria-disabled="!registrationOpen"
-        class="bg-primary text-primary-foreground inline-flex items-center rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 aria-disabled:pointer-events-none aria-disabled:opacity-50"
+        class="bg-primary text-primary-foreground inline-flex items-center rounded-full px-5 py-2 text-sm font-medium hover:opacity-90 aria-disabled:pointer-events-none aria-disabled:opacity-50"
       >
         Register
       </a>
@@ -109,7 +109,7 @@ const groupedStaff = computed(() => {
         :href="formatExternalURL(link.url)"
         target="_blank"
         rel="noopener"
-        class="hover:bg-accent inline-flex items-center rounded-md border px-3 py-1.5 text-sm"
+        class="bg-card hover:bg-accent inline-flex items-center rounded-full border px-3 py-1.5 text-sm"
       >
         {{ link.name || formatHumanURL(link.url) }}
       </a>
@@ -133,11 +133,11 @@ const groupedStaff = computed(() => {
         >
           {{ group.type }}s
         </h3>
-        <ul class="divide-y rounded-md border">
+        <ul class="divide-y border-y">
           <li
             v-for="member in group.members"
             :key="member.id"
-            class="flex items-center gap-3 p-3"
+            class="flex items-center gap-3 px-1 py-3"
           >
             <img
               v-if="member.image"
@@ -148,11 +148,14 @@ const groupedStaff = computed(() => {
             <div v-else class="bg-muted size-10 rounded-full" />
             <div class="min-w-0 flex-1">
               <div
-                class="font-serif truncate text-base font-medium tracking-tight"
+                class="font-serif truncate text-[15px] font-medium tracking-tight"
               >
                 {{ staffMemberName(member) }}
               </div>
-              <div v-if="member.location" class="text-muted-foreground truncate text-xs">
+              <div
+                v-if="member.location"
+                class="text-muted-foreground truncate text-[11.5px]"
+              >
                 {{ member.location }}
               </div>
             </div>

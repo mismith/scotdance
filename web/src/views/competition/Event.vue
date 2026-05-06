@@ -120,7 +120,12 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
   <article class="space-y-6">
     <div v-if="schedule === null" class="text-muted-foreground font-serif italic text-sm">Loading…</div>
 
-    <div v-else-if="!event" class="text-muted-foreground text-sm">Event not found.</div>
+    <div
+      v-else-if="!event"
+      class="text-muted-foreground font-serif text-sm italic"
+    >
+      Event not found.
+    </div>
 
     <template v-else>
       <header>
@@ -134,14 +139,17 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
         </p>
       </header>
 
-      <div v-if="!eventDanceList.length" class="text-muted-foreground text-sm">
+      <div
+        v-if="!eventDanceList.length"
+        class="text-muted-foreground font-serif text-sm italic"
+      >
         No dances scheduled.
       </div>
 
       <section v-for="dance in eventDanceList" :key="dance.id" class="space-y-2">
         <button
           type="button"
-          class="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1 py-1 text-xs font-bold tracking-[0.14em] uppercase"
+          class="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1 py-1 text-[11px] font-bold tracking-[0.14em] uppercase"
           :disabled="!danceHasContent(dance)"
           @click="toggle(dance.id, danceHasContent(dance))"
         >
@@ -173,10 +181,10 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
             <div
               v-for="pool in buildPools(dance)"
               :key="pool.id"
-              class="space-y-3 rounded-md border p-3"
+              class="bg-card space-y-3 rounded-2xl border p-4"
             >
               <div
-                class="text-muted-foreground text-xs font-semibold tracking-wide uppercase"
+                class="text-muted-foreground text-[11px] font-bold tracking-[0.14em] uppercase"
               >
                 {{ pool.name }}
               </div>
@@ -217,7 +225,10 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
             </div>
           </div>
 
-          <div v-else-if="dance.danceId" class="text-muted-foreground px-1 text-xs">
+          <div
+            v-else-if="dance.danceId"
+            class="text-muted-foreground font-serif px-1 text-xs italic"
+          >
             Platforms not yet assigned.
           </div>
         </div>

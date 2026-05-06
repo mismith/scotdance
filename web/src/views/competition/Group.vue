@@ -182,7 +182,7 @@ watch(
       >
         <button
           type="button"
-          class="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1 py-1 text-xs font-bold tracking-[0.14em] uppercase"
+          class="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1 py-1 text-[11px] font-bold tracking-[0.14em] uppercase"
           @click="toggle(section.dance.id)"
         >
           <ChevronDown
@@ -194,7 +194,7 @@ watch(
           <span class="flex-1 text-left">{{ section.dance.fullName }}</span>
           <span
             v-if="section.count != null"
-            class="text-xs font-normal tracking-normal normal-case"
+            class="text-[11px] font-normal tabular-nums tracking-normal normal-case"
           >
             {{ section.count }}
           </span>
@@ -202,7 +202,7 @@ watch(
 
         <div v-if="isExpanded(section.dance.id)">
           <template v-if="section.kind === 'all'">
-            <ul v-if="section.all?.length" class="divide-y rounded-md border">
+            <ul v-if="section.all?.length" class="divide-y border-y">
               <li
                 v-for="dancer in section.all"
                 :key="dancer.id"
@@ -213,18 +213,18 @@ watch(
                     name: 'competition.dancer',
                     params: { competitionId, dancerId: dancer.id },
                   }"
-                  class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 p-3"
+                  class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
                 >
                   <div
-                    class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-xs tabular-nums"
+                    class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums"
                   >
                     {{ dancer.number ?? '–' }}
                   </div>
                   <div class="min-w-0 flex-1">
-                    <div class="font-serif truncate font-medium tracking-tight">{{ dancer.fullName || '?' }}</div>
+                    <div class="font-serif truncate text-[15px] font-medium tracking-tight">{{ dancer.fullName || '?' }}</div>
                     <div
                       v-if="dancer.location"
-                      class="text-muted-foreground truncate text-xs"
+                      class="text-muted-foreground truncate text-[11.5px]"
                     >
                       {{ dancer.location }}
                     </div>
@@ -233,13 +233,13 @@ watch(
                 <FavoriteDancerButton :dancer="dancer" class="mr-2" />
               </li>
             </ul>
-            <div v-else class="text-muted-foreground px-1 text-sm">
+            <div v-else class="text-muted-foreground font-serif px-1 text-sm italic">
               No dancers in this group.
             </div>
           </template>
 
           <template v-else-if="section.kind === 'callbacks'">
-            <ul v-if="section.callback?.hasResults" class="divide-y rounded-md border">
+            <ul v-if="section.callback?.hasResults" class="divide-y border-y">
               <li
                 v-for="entry in section.callback.dancers"
                 :key="entry.dancerId"
@@ -251,20 +251,20 @@ watch(
                     name: 'competition.dancer',
                     params: { competitionId, dancerId: entry.dancer.id },
                   }"
-                  class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 p-3"
+                  class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
                 >
                   <div
-                    class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-xs tabular-nums"
+                    class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums"
                   >
                     {{ entry.dancer.number ?? '–' }}
                   </div>
                   <div class="min-w-0 flex-1">
-                    <div class="font-serif truncate font-medium tracking-tight">
+                    <div class="font-serif truncate text-[15px] font-medium tracking-tight">
                       {{ entry.dancer.fullName || '?' }}
                     </div>
                     <div
                       v-if="entry.dancer.location"
-                      class="text-muted-foreground truncate text-xs"
+                      class="text-muted-foreground truncate text-[11.5px]"
                     >
                       {{ entry.dancer.location }}
                     </div>
@@ -272,7 +272,7 @@ watch(
                 </RouterLink>
                 <div
                   v-else
-                  class="text-muted-foreground flex flex-1 items-center gap-3 p-3 text-sm"
+                  class="text-muted-foreground flex flex-1 items-center gap-3 px-1 py-3 text-sm"
                 >
                   Unknown dancer
                 </div>
@@ -283,7 +283,7 @@ watch(
                 />
               </li>
             </ul>
-            <div v-else class="text-muted-foreground px-1 text-sm">
+            <div v-else class="text-muted-foreground font-serif px-1 text-sm italic">
               {{
                 section.callback?.explicitlyEmpty
                   ? 'No callbacks for this group.'
@@ -293,7 +293,7 @@ watch(
           </template>
 
           <template v-else>
-            <ul v-if="section.placings?.hasResults" class="divide-y rounded-md border">
+            <ul v-if="section.placings?.hasResults" class="divide-y border-y">
               <li
                 v-for="row in section.placings.rows"
                 :key="row.dancerId"
@@ -306,20 +306,20 @@ watch(
                     name: 'competition.dancer',
                     params: { competitionId, dancerId: row.dancer.id },
                   }"
-                  class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 p-3"
+                  class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
                 >
                   <div
-                    class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-xs tabular-nums"
+                    class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums"
                   >
                     {{ row.dancer.number ?? '–' }}
                   </div>
                   <div class="min-w-0 flex-1">
-                    <div class="font-serif truncate font-medium tracking-tight">
+                    <div class="font-serif truncate text-[15px] font-medium tracking-tight">
                       {{ row.dancer.fullName || '?' }}
                     </div>
                     <div
                       v-if="row.dancer.location"
-                      class="text-muted-foreground truncate text-xs"
+                      class="text-muted-foreground truncate text-[11.5px]"
                     >
                       {{ row.dancer.location }}
                     </div>
@@ -327,7 +327,7 @@ watch(
                 </RouterLink>
                 <div
                   v-else
-                  class="text-muted-foreground flex flex-1 items-center gap-3 p-3 text-sm"
+                  class="text-muted-foreground flex flex-1 items-center gap-3 px-1 py-3 text-sm"
                 >
                   Unknown dancer
                 </div>
@@ -338,7 +338,7 @@ watch(
                 />
               </li>
             </ul>
-            <div v-else class="text-muted-foreground px-1 text-sm">
+            <div v-else class="text-muted-foreground font-serif px-1 text-sm italic">
               {{
                 section.placings?.explicitlyEmpty
                   ? 'No placings for this dance.'
@@ -348,11 +348,11 @@ watch(
 
             <div v-if="section.pointed.length" class="mt-3 space-y-2">
               <div
-                class="text-muted-foreground px-1 text-xs font-semibold tracking-wide uppercase"
+                class="text-muted-foreground px-1 text-[11px] font-bold tracking-[0.14em] uppercase"
               >
                 Championship Points
               </div>
-              <ul class="divide-y rounded-md border">
+              <ul class="divide-y border-y">
                 <li
                   v-for="dancer in section.pointed"
                   :key="dancer.id"
@@ -364,18 +364,18 @@ watch(
                       name: 'competition.dancer',
                       params: { competitionId, dancerId: dancer.id },
                     }"
-                    class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 p-3"
+                    class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
                   >
                     <div
-                      class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-xs tabular-nums"
+                      class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums"
                     >
                       {{ dancer.number ?? '–' }}
                     </div>
                     <div class="min-w-0 flex-1">
-                      <div class="font-serif truncate font-medium tracking-tight">{{ dancer.fullName || '?' }}</div>
+                      <div class="font-serif truncate text-[15px] font-medium tracking-tight">{{ dancer.fullName || '?' }}</div>
                       <div
                         v-if="dancer.location"
-                        class="text-muted-foreground truncate text-xs"
+                        class="text-muted-foreground truncate text-[11.5px]"
                       >
                         {{ dancer.location }}
                       </div>

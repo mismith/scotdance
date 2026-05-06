@@ -7,6 +7,7 @@ import { useCompetitions, type CompetitionListItem } from '@/composables/useComp
 import { useFavoritesStore } from '@/stores/favorites'
 import AccountMenu from '@/components/AccountMenu.vue'
 import CompChip from '@/components/CompChip.vue'
+import CompetitionsCalendar from '@/components/CompetitionsCalendar.vue'
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue'
 import HeroCompCard from '@/components/HeroCompCard.vue'
 import { formatRelative, isPast, isSameDay } from '@/lib/format'
@@ -131,12 +132,10 @@ const visibleCompetitions = computed(() =>
       >
         Map view — stub.
       </div>
-      <div
+      <CompetitionsCalendar
         v-else-if="view === 'calendar'"
-        class="text-muted-foreground font-serif rounded-2xl border border-dashed p-8 text-center text-sm italic"
-      >
-        Calendar view — stub.
-      </div>
+        :competitions="competitions"
+      />
 
       <template v-else>
         <HeroCompCard v-if="featuredComp && filter === 'upcoming'" :competition="featuredComp" />
