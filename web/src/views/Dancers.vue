@@ -196,7 +196,7 @@ function clearSearch() {
       </div>
       <AccountMenu />
     </header>
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-4 p-4 pt-2">
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-4 p-4 pt-6">
 
     <div class="relative">
       <Search

@@ -64,7 +64,7 @@ const initials = computed(() => {
       </div>
     </header>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 p-4">
+    <main class="mx-auto w-full max-w-3xl flex-1 p-4 pt-8">
       <RouterView />
     </main>
   </div>
