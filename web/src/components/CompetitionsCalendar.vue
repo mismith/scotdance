@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import type { RouteLocationRaw } from 'vue-router'
 import { ChevronLeft, ChevronRight } from '@lucide/vue'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 import { formatRelative } from '@/lib/format'
 
-const props = defineProps<{
-  competitions: CompetitionListItem[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    competitions: CompetitionListItem[]
+    linkTo?: (c: CompetitionListItem) => RouteLocationRaw
+  }>(),
+  {
+    linkTo: (c: CompetitionListItem) => ({
+      name: 'competition.info',
+      params: { competitionId: c.id },
+    }),
+  },
+)
 
 const today = startOfDay(new Date())
 
@@ -157,7 +167,7 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
         @click="selectDay(cell)"
       >
         <span
-          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] font-medium"
+          class="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-[-60%] font-medium"
         >
           {{ cell.date.getDate() }}
         </span>
@@ -183,10 +193,7 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
       <ul class="divide-y border-t border-b">
         <li v-for="competition in upcoming" :key="competition.id">
           <RouterLink
-            :to="{
-              name: 'competition.info',
-              params: { competitionId: competition.id },
-            }"
+            :to="props.linkTo(competition)"
             class="hover:bg-accent flex items-center gap-4 px-1 py-3"
           >
             <div class="text-secondary w-10 shrink-0 text-center">

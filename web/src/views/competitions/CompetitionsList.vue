@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { useLocalStorage } from '@vueuse/core'
-import { CalendarDays, List, Map as MapIcon, Star } from '@lucide/vue'
+import { onClickOutside, useLocalStorage } from '@vueuse/core'
+import { Check, ChevronDown, ListFilter, Star } from '@lucide/vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import { useFavoritesStore } from '@/stores/favorites'
 import AccountMenu from '@/components/AccountMenu.vue'
@@ -10,9 +10,9 @@ import CompChip from '@/components/CompChip.vue'
 import CompetitionsCalendar from '@/components/CompetitionsCalendar.vue'
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue'
 import HeroCompCard from '@/components/HeroCompCard.vue'
+import ViewModeTabs, { type ViewMode } from '@/components/ViewModeTabs.vue'
 import { formatRelative, isPast, isSameDay } from '@/lib/format'
 
-type ViewMode = 'list' | 'map' | 'calendar'
 type Filter = 'upcoming' | 'past' | 'all'
 
 const route = useRoute()
@@ -31,22 +31,24 @@ const view = computed<ViewMode>(() => {
   return v === 'map' || v === 'calendar' ? v : 'list'
 })
 
-const viewModes: Array<{ id: ViewMode; label: string; icon: typeof List }> = [
-  { id: 'list', label: 'List', icon: List },
-  { id: 'map', label: 'Map', icon: MapIcon },
-  { id: 'calendar', label: 'Calendar', icon: CalendarDays },
-]
-
 const filter = computed<Filter>(() => {
   const f = String(route.query.f ?? 'upcoming')
   return f === 'past' || f === 'all' ? f : 'upcoming'
 })
 
-const filterTabs: Array<{ id: Filter; label: string }> = [
+const filterOptions: Array<{ id: Filter; label: string }> = [
   { id: 'upcoming', label: 'Upcoming' },
   { id: 'past', label: 'Past' },
   { id: 'all', label: 'All' },
 ]
+
+const filterLabel = computed(
+  () => filterOptions.find((o) => o.id === filter.value)?.label ?? 'Upcoming',
+)
+
+const filterMenuRef = ref<HTMLElement | null>(null)
+const filterOpen = ref(false)
+onClickOutside(filterMenuRef, () => (filterOpen.value = false))
 
 const includeArchived = useLocalStorage('competitions:includeArchived', false)
 
@@ -108,22 +110,44 @@ const visibleCompetitions = computed(() =>
       <AccountMenu />
     </header>
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-5 p-4 pt-6">
-      <div class="bg-chip inline-flex rounded-lg p-1">
-        <RouterLink
-          v-for="mode in viewModes"
-          :key="mode.id"
-          :to="{ query: { ...route.query, view: mode.id === 'list' ? undefined : mode.id } }"
-          replace
-          :class="[
-            'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-            view === mode.id
-              ? 'bg-card text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground',
-          ]"
-        >
-          <component :is="mode.icon" class="size-3.5" />
-          {{ mode.label }}
-        </RouterLink>
+      <div class="flex items-center justify-between gap-2">
+        <ViewModeTabs :current="view" />
+        <div ref="filterMenuRef" class="relative">
+          <button
+            type="button"
+            class="bg-chip text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium"
+            @click="filterOpen = !filterOpen"
+          >
+            <ListFilter class="size-3.5" />
+            {{ filterLabel }}
+            <ChevronDown class="size-3 opacity-60" />
+          </button>
+          <div
+            v-if="filterOpen"
+            class="bg-card absolute right-0 top-full z-30 mt-1 w-36 overflow-hidden rounded-lg border shadow-md"
+          >
+            <RouterLink
+              v-for="opt in filterOptions"
+              :key="opt.id"
+              :to="{ query: { ...route.query, f: opt.id === 'upcoming' ? undefined : opt.id } }"
+              replace
+              :class="[
+                'hover:bg-accent flex items-center gap-2 px-3 py-2 text-xs',
+                filter === opt.id
+                  ? 'text-foreground font-medium'
+                  : 'text-muted-foreground',
+              ]"
+              @click="filterOpen = false"
+            >
+              <Check
+                v-if="filter === opt.id"
+                class="size-3"
+              />
+              <span v-else class="size-3" />
+              {{ opt.label }}
+            </RouterLink>
+          </div>
+        </div>
       </div>
 
       <div
@@ -139,23 +163,6 @@ const visibleCompetitions = computed(() =>
 
       <template v-else>
         <HeroCompCard v-if="featuredComp && filter === 'upcoming'" :competition="featuredComp" />
-
-        <div class="bg-chip flex rounded-lg p-1">
-          <RouterLink
-            v-for="tab in filterTabs"
-            :key="tab.id"
-            :to="{ query: { ...route.query, f: tab.id === 'upcoming' ? undefined : tab.id } }"
-            replace
-            :class="[
-              'flex-1 rounded-md py-1.5 text-center text-xs font-medium transition-colors',
-              filter === tab.id
-                ? 'bg-card text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground',
-            ]"
-          >
-            {{ tab.label }}
-          </RouterLink>
-        </div>
 
         <div
           v-if="loading && !competitions.length"
