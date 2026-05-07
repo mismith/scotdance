@@ -23,8 +23,6 @@ import {
   type EnrichedDancer,
 } from '@/types/competition'
 
-const ALL_ID = 'all'
-
 const route = useRoute()
 const {
   competitionId,
@@ -59,13 +57,12 @@ watch(
   { immediate: true },
 )
 
-const allDance: EnrichedDance = { id: ALL_ID, fullName: 'All Dancers' }
 const callbacksDance: EnrichedDance = { id: CALLBACKS_ID, fullName: 'Callbacks' }
 const overallDance: EnrichedDance = { id: OVERALL_ID, fullName: 'Overall' }
 
 const danceList = computed<EnrichedDance[]>(() => {
   if (!group.value) return []
-  const list: EnrichedDance[] = [allDance, callbacksDance]
+  const list: EnrichedDance[] = [callbacksDance]
   list.push(...findGroupDances(group.value, dances.value))
   if (groupHasOverall(group.value)) list.push(overallDance)
   return list
@@ -83,9 +80,8 @@ const groupDancers = computed<EnrichedDancer[]>(() => {
 
 interface DanceSection {
   dance: EnrichedDance
-  kind: 'all' | 'callbacks' | 'placings'
+  kind: 'callbacks' | 'placings'
   count: number | null
-  all?: EnrichedDancer[]
   callback?: ReturnType<typeof getCallbackResults>
   placings?: ReturnType<typeof getDanceResults>
   pointed: ReturnType<typeof findPointedDancers>
@@ -94,15 +90,6 @@ interface DanceSection {
 const sections = computed<DanceSection[]>(() => {
   if (!group.value) return []
   return danceList.value.map<DanceSection>((dance) => {
-    if (dance.id === ALL_ID) {
-      return {
-        dance,
-        kind: 'all',
-        count: groupDancers.value.length,
-        all: groupDancers.value,
-        pointed: [],
-      }
-    }
     if (dance.id === CALLBACKS_ID) {
       const callback = getCallbackResults(group.value!.id, dancers.value, results.value)
       return {
@@ -123,6 +110,60 @@ const sections = computed<DanceSection[]>(() => {
   })
 })
 
+const callbacksSection = computed(() =>
+  sections.value.find((s): s is DanceSection & { kind: 'callbacks' } => s.kind === 'callbacks'),
+)
+const callbacksHasResults = computed(
+  () => !!callbacksSection.value?.callback?.hasResults,
+)
+
+const showAllInCallbacks = useLocalStorage<Record<string, boolean>>(
+  'results:showAllInCallbacks',
+  {},
+)
+
+const isShowingAll = computed(() => {
+  if (groupId.value in showAllInCallbacks.value) {
+    return showAllInCallbacks.value[groupId.value]
+  }
+  return !callbacksHasResults.value
+})
+
+function toggleShowAll() {
+  showAllInCallbacks.value = {
+    ...showAllInCallbacks.value,
+    [groupId.value]: !isShowingAll.value,
+  }
+}
+
+interface CallbackRow {
+  key: string
+  dancer: EnrichedDancer | null
+  dimmed: boolean
+}
+
+const callbackRows = computed<CallbackRow[]>(() => {
+  const callback = callbacksSection.value?.callback
+  const calledBack = callback?.dancers ?? []
+  const calledBackIds = new Set(calledBack.map((e) => e.dancerId))
+
+  if (!isShowingAll.value) {
+    return calledBack.map((e) => ({ key: e.dancerId, dancer: e.dancer, dimmed: false }))
+  }
+
+  const rows: CallbackRow[] = calledBack.map((e) => ({
+    key: e.dancerId,
+    dancer: e.dancer,
+    dimmed: false,
+  }))
+  for (const d of groupDancers.value) {
+    if (!calledBackIds.has(d.id)) {
+      rows.push({ key: d.id, dancer: d, dimmed: callbacksHasResults.value })
+    }
+  }
+  return rows
+})
+
 const expanded = useLocalStorage<Record<string, Record<string, boolean>>>(
   'results:expandedDances',
   {},
@@ -131,7 +172,7 @@ const expanded = useLocalStorage<Record<string, Record<string, boolean>>>(
 function isExpanded(danceId: string): boolean {
   const map = expanded.value[groupId.value] ?? {}
   if (danceId in map) return map[danceId]
-  return danceId !== ALL_ID
+  return true
 }
 
 function toggle(danceId: string) {
@@ -196,80 +237,55 @@ watch(
             {{ section.dance.fullName }}
           </span>
           <span
-            v-if="section.count != null"
+            v-if="section.kind === 'callbacks'"
             class="text-muted-foreground self-center text-[11px] font-semibold tabular-nums"
           >
-            {{ section.count }}
+            {{
+              section.callback?.hasResults ? section.count : groupDancers.length
+            }}
           </span>
         </button>
 
         <SmoothCollapse :open="isExpanded(section.dance.id)">
-          <template v-if="section.kind === 'all'">
-            <ul v-if="section.all?.length" class="divide-y border-y">
+          <template v-if="section.kind === 'callbacks'">
+            <p
+              v-if="!section.callback?.hasResults && !isShowingAll"
+              class="text-muted-foreground font-serif px-1 text-sm italic"
+            >
+              {{
+                section.callback?.explicitlyEmpty
+                  ? 'No callbacks for this group.'
+                  : 'Not yet posted.'
+              }}
+            </p>
+            <ul v-if="callbackRows.length" class="divide-y border-y">
               <li
-                v-for="dancer in section.all"
-                :key="dancer.id"
-                class="flex items-center"
+                v-for="row in callbackRows"
+                :key="row.key"
+                :class="['flex items-center', row.dimmed && 'opacity-40']"
               >
                 <RouterLink
+                  v-if="row.dancer"
                   :to="{
                     name: 'competition.dancer',
-                    params: { competitionId, dancerId: dancer.id },
+                    params: { competitionId, dancerId: row.dancer.id },
                   }"
                   class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
                 >
                   <div
                     class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums"
                   >
-                    {{ dancer.number ?? '–' }}
-                  </div>
-                  <div class="min-w-0 flex-1">
-                    <div class="font-serif truncate text-[15px] font-medium tracking-tight">{{ dancer.fullName || '?' }}</div>
-                    <div
-                      v-if="dancer.location"
-                      class="text-muted-foreground truncate text-[11.5px]"
-                    >
-                      {{ dancer.location }}
-                    </div>
-                  </div>
-                </RouterLink>
-                <FavoriteDancerButton :dancer="dancer" class="mr-2" />
-              </li>
-            </ul>
-            <div v-else class="text-muted-foreground font-serif px-1 text-sm italic">
-              No dancers in this group.
-            </div>
-          </template>
-
-          <template v-else-if="section.kind === 'callbacks'">
-            <ul v-if="section.callback?.hasResults" class="divide-y border-y">
-              <li
-                v-for="entry in section.callback.dancers"
-                :key="entry.dancerId"
-                class="flex items-center"
-              >
-                <RouterLink
-                  v-if="entry.dancer"
-                  :to="{
-                    name: 'competition.dancer',
-                    params: { competitionId, dancerId: entry.dancer.id },
-                  }"
-                  class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
-                >
-                  <div
-                    class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums"
-                  >
-                    {{ entry.dancer.number ?? '–' }}
+                    {{ row.dancer.number ?? '–' }}
                   </div>
                   <div class="min-w-0 flex-1">
                     <div class="font-serif truncate text-[15px] font-medium tracking-tight">
-                      {{ entry.dancer.fullName || '?' }}
+                      {{ row.dancer.fullName || '?' }}
                     </div>
                     <div
-                      v-if="entry.dancer.location"
+                      v-if="row.dancer.location"
                       class="text-muted-foreground truncate text-[11.5px]"
                     >
-                      {{ entry.dancer.location }}
+                      {{ row.dancer.location }}
                     </div>
                   </div>
                 </RouterLink>
@@ -280,19 +296,23 @@ watch(
                   Unknown dancer
                 </div>
                 <FavoriteDancerButton
-                  v-if="entry.dancer"
-                  :dancer="entry.dancer"
+                  v-if="row.dancer"
+                  :dancer="row.dancer"
                   class="mr-2"
                 />
               </li>
             </ul>
-            <div v-else class="text-muted-foreground font-serif px-1 text-sm italic">
+            <button
+              type="button"
+              class="text-muted-foreground hover:text-foreground mt-2 px-1 py-1 text-xs font-medium"
+              @click="toggleShowAll"
+            >
               {{
-                section.callback?.explicitlyEmpty
-                  ? 'No callbacks for this group.'
-                  : 'Not yet posted.'
+                isShowingAll
+                  ? 'Show callbacks only'
+                  : `Show all ${groupDancers.length} dancers`
               }}
-            </div>
+            </button>
           </template>
 
           <template v-else>
