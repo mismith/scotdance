@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ArrowDownToLine, X } from '@lucide/vue'
 import { useUpdate } from '@/composables/useUpdate'
 
 const update = useUpdate()
@@ -15,50 +14,40 @@ const update = useUpdate()
     @click.self="update.closeDialog()"
   >
     <div
-      class="bg-background relative w-full max-w-sm overflow-hidden rounded-lg border shadow-lg"
+      class="bg-background relative w-full max-w-sm space-y-4 rounded-lg border p-6 shadow-lg"
     >
-      <button
-        type="button"
-        class="hover:bg-accent text-muted-foreground absolute top-2 right-2 z-10 rounded-md p-1"
-        title="Close"
-        @click="update.closeDialog()"
+      <h2
+        id="update-dialog-title"
+        class="font-serif text-xl font-medium tracking-tight"
       >
-        <X class="size-4" />
-      </button>
-
-      <div class="flex items-center gap-3 border-b px-6 py-4">
-        <h2
-          id="update-dialog-title"
-          class="font-serif flex-1 text-xl font-medium tracking-tight"
-        >
-          Update Available
-        </h2>
-        <ArrowDownToLine class="text-muted-foreground size-5" />
+        Update available
+      </h2>
+      <p class="text-muted-foreground text-sm">
+        A newer version of the app is ready to install.
+      </p>
+      <div
+        class="text-muted-foreground flex items-baseline justify-center gap-2 text-sm tabular-nums"
+      >
+        <span>{{ update.currentVersion }}</span>
+        <span aria-hidden="true">→</span>
+        <span class="text-foreground font-medium">
+          {{ update.latestVersion ?? '…' }}
+        </span>
       </div>
-
-      <div class="bg-primary text-primary-foreground space-y-2 px-6 py-6 text-center">
-        <p class="text-sm opacity-90">Get the latest version of the app:</p>
-        <p class="text-xl font-semibold tabular-nums">
-          <span class="opacity-80">{{ update.currentVersion }}</span>
-          <span class="mx-2 opacity-60">&rarr;</span>
-          <span>{{ update.latestVersion ?? '…' }}</span>
-        </p>
-      </div>
-
-      <div class="flex justify-end gap-2 px-4 py-3">
+      <div class="flex items-center justify-end gap-2 pt-2">
         <button
           type="button"
-          class="hover:bg-accent text-muted-foreground rounded-md px-3 py-1.5 text-sm"
+          class="hover:bg-accent text-muted-foreground rounded-md px-3 py-2 text-sm"
           @click="update.closeDialog()"
         >
           Later
         </button>
         <button
           type="button"
-          class="bg-primary text-primary-foreground rounded-md px-4 py-1.5 text-sm font-medium hover:opacity-90"
+          class="bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm font-medium hover:opacity-90"
           @click="update.applyUpdate()"
         >
-          Update Now
+          Update now
         </button>
       </div>
     </div>
