@@ -326,7 +326,7 @@ function dismissSuggestions() {
         </span>
       </button>
       <SmoothCollapse :open="isExpanded(group)">
-        <ul class="divide-y border-y">
+        <ul class="border-b">
         <li v-for="dancer in group.members" :key="dancer.id">
           <div class="flex items-center">
             <RouterLink
@@ -354,7 +354,7 @@ function dismissSuggestions() {
                 </div>
                 <div
                   v-if="dancer.location"
-                  class="text-muted-foreground truncate text-[11.5px]"
+                  class="text-muted-foreground font-serif truncate text-[11px] italic"
                 >
                   {{ dancer.location }}
                 </div>

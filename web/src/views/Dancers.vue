@@ -215,9 +215,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
 
       <template v-else>
         <section v-if="favoriteEntries.length" class="space-y-2">
-          <SectionHeader label="Favourites" :count="favoriteEntries.length">
-            <Star class="text-secondary size-3 fill-current" />
-          </SectionHeader>
+          <SectionHeader label="Favourites" :count="favoriteEntries.length" />
           <ul>
             <li v-for="entry in favoriteEntries" :key="entry.name">
               <RouterLink
@@ -247,7 +245,6 @@ const showSearch = computed(() => q.value.trim().length > 0)
                     }}</span>
                   </div>
                 </div>
-                <Star class="text-secondary size-4 shrink-0 fill-current" />
                 <ChevronRight class="text-muted-foreground size-4 shrink-0" />
               </RouterLink>
             </li>

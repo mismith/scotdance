@@ -277,7 +277,7 @@ watch(
                   : 'Not yet posted.'
               }}
             </p>
-            <ul v-if="callbackRows.length" class="divide-y border-y">
+            <ul v-if="callbackRows.length" class="border-b">
               <li
                 v-for="row in callbackRows"
                 :key="row.key"
@@ -335,7 +335,7 @@ watch(
           </template>
 
           <template v-else>
-            <ul v-if="section.placings?.hasResults" class="divide-y border-y">
+            <ul v-if="section.placings?.hasResults" class="border-b">
               <li
                 v-for="row in section.placings.rows"
                 :key="row.dancerId"
@@ -394,7 +394,7 @@ watch(
               >
                 Championship Points
               </div>
-              <ul class="divide-y border-y">
+              <ul class="border-b">
                 <li
                   v-for="dancer in section.pointed"
                   :key="dancer.id"
