@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { CalendarDays, Info, Trophy, Users } from '@lucide/vue'
+import { Info, Trophy, Users } from '@lucide/vue'
 
 const route = useRoute()
 const dancerId = computed(() => String(route.params.dancerId ?? ''))
@@ -13,12 +13,6 @@ const tabs: Array<{
   matches: string[]
 }> = [
   { name: 'Info', to: 'dancer.info', icon: Info, matches: ['dancer.info'] },
-  {
-    name: 'Schedule',
-    to: 'dancer.schedule',
-    icon: CalendarDays,
-    matches: ['dancer.schedule'],
-  },
   {
     name: 'Results',
     to: 'dancer.results',
