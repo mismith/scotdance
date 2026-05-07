@@ -70,22 +70,22 @@ const examples = [
 <template>
   <div class="flex flex-1 flex-col">
     <header
-      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-center gap-2 p-3 pt-safe"
+      class="bg-background pt-safe sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-center gap-2 p-3"
     >
       <div
-        class="bg-nav/90 text-nav-foreground flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full border border-white/10 px-4 shadow-md backdrop-blur-xl"
+        class="bg-nav/90 text-nav-foreground flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full border border-white/10 px-4 shadow-md backdrop-blur-xl [view-transition-class:fixed-height] [view-transition-name:nav-left]"
       >
         <Search class="size-4 shrink-0 opacity-80" />
         <input
           v-model="q"
           type="search"
-          placeholder="Search dancers, comps, organizations…"
+          placeholder="Search"
           class="placeholder:text-nav-foreground/50 min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
         />
       </div>
       <button
         type="button"
-        class="bg-nav/90 text-nav-foreground flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 shadow-md backdrop-blur-xl hover:opacity-90"
+        class="bg-nav/90 text-nav-foreground flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 shadow-md backdrop-blur-xl [view-transition-class:fixed-height] [view-transition-name:nav-right] hover:opacity-90"
         title="Close search"
         aria-label="Close search"
         @click="close"
@@ -94,66 +94,64 @@ const examples = [
       </button>
     </header>
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-6">
-    <section class="space-y-3">
-      <h2
-        class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
-      >
-        Suggested searches
-      </h2>
-      <ul class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <li
-          v-for="preset in presets"
-          :key="preset.kicker"
-          class="bg-card hover:bg-accent flex min-h-24 cursor-pointer flex-col gap-1.5 rounded-xl border p-3"
+      <section class="space-y-3">
+        <h2
+          class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
         >
-          <div class="flex items-center justify-between">
-            <span
-              class="text-primary text-[10px] font-semibold tracking-[0.14em] uppercase"
-            >
-              {{ preset.kicker }}
-            </span>
-            <span class="text-primary font-serif text-sm font-medium tabular-nums">
-              {{ preset.count }}
-            </span>
-          </div>
-          <div
-            class="font-serif text-base font-medium tracking-tight leading-tight"
+          Suggested searches
+        </h2>
+        <ul class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <li
+            v-for="preset in presets"
+            :key="preset.kicker"
+            class="bg-card hover:bg-accent flex min-h-24 cursor-pointer flex-col gap-1.5 rounded-xl border p-3"
           >
-            {{ preset.title }}
-          </div>
-          <div class="text-muted-foreground text-xs leading-snug">{{ preset.sub }}</div>
-        </li>
-      </ul>
-    </section>
+            <div class="flex items-center justify-between">
+              <span
+                class="text-primary text-[10px] font-semibold tracking-[0.14em] uppercase"
+              >
+                {{ preset.kicker }}
+              </span>
+              <span class="text-primary font-serif text-sm font-medium tabular-nums">
+                {{ preset.count }}
+              </span>
+            </div>
+            <div class="font-serif text-base leading-tight font-medium tracking-tight">
+              {{ preset.title }}
+            </div>
+            <div class="text-muted-foreground text-xs leading-snug">{{ preset.sub }}</div>
+          </li>
+        </ul>
+      </section>
 
-    <section class="space-y-2">
-      <h2
-        class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
-      >
-        Or just type a name
-      </h2>
-      <ul class="divide-y rounded-md border">
-        <li
-          v-for="example in examples"
-          :key="example.q"
-          class="hover:bg-accent flex cursor-pointer items-center gap-3 p-3"
+      <section class="space-y-2">
+        <h2
+          class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
         >
-          <Search class="text-muted-foreground size-4 shrink-0" />
-          <div class="min-w-0 flex-1">
-            <div class="font-serif truncate text-sm font-medium tracking-tight">
-              &ldquo;{{ example.q }}&rdquo;
+          Or just type a name
+        </h2>
+        <ul class="divide-y rounded-md border">
+          <li
+            v-for="example in examples"
+            :key="example.q"
+            class="hover:bg-accent flex cursor-pointer items-center gap-3 p-3"
+          >
+            <Search class="text-muted-foreground size-4 shrink-0" />
+            <div class="min-w-0 flex-1">
+              <div class="truncate font-serif text-sm font-medium tracking-tight">
+                &ldquo;{{ example.q }}&rdquo;
+              </div>
+              <div class="text-muted-foreground truncate text-xs">
+                → {{ example.match }}
+              </div>
             </div>
-            <div class="text-muted-foreground truncate text-xs">
-              → {{ example.match }}
-            </div>
-          </div>
-        </li>
-      </ul>
-    </section>
+          </li>
+        </ul>
+      </section>
 
-    <p class="text-muted-foreground text-xs">
-      Search overlay — stub. Presets and examples are placeholders.
-    </p>
+      <p class="text-muted-foreground text-xs">
+        Search overlay — stub. Presets and examples are placeholders.
+      </p>
     </main>
   </div>
 </template>
