@@ -243,19 +243,19 @@ const monthGroups = computed<MonthGroup[]>(() => {
                     </div>
                     <div
                       v-if="competition.location"
-                      class="text-muted-foreground mt-1 truncate text-[11.5px]"
+                      class="text-muted-foreground font-serif truncate text-[11px] italic"
                     >
                       {{ competition.location }}
                     </div>
                     <div
-                      class="text-muted-foreground/80 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] tabular-nums"
+                      class="text-muted-foreground/80 font-serif flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] italic"
                     >
                       <span v-if="competition.date">{{
                         formatRelative(competition.date)
                       }}</span>
                       <span
                         v-if="favorites.isFavoriteCompetition(competition.id)"
-                        class="text-secondary inline-flex items-center gap-1 font-semibold tracking-[0.06em]"
+                        class="text-secondary inline-flex items-center gap-1 font-semibold not-italic tracking-[0.06em]"
                       >
                         <Star class="size-3 fill-current" />
                         Favourited
