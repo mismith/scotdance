@@ -110,9 +110,9 @@ const visibleCompetitions = computed(() =>
       <AccountMenu />
     </header>
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-5 p-4 pt-6">
-      <div class="flex items-center justify-between gap-2">
+      <div class="flex flex-wrap items-center gap-2">
         <ViewModeTabs :current="view" />
-        <div ref="filterMenuRef" class="relative">
+        <div ref="filterMenuRef" class="relative ml-auto">
           <button
             type="button"
             class="bg-chip text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 rounded-lg px-3 py-2.5 text-xs font-medium"
