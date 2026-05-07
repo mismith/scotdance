@@ -167,9 +167,9 @@ const groupedStaff = computed(() => {
           <div class="flex min-w-0 flex-1 flex-col justify-center gap-1">
             <div
               v-if="competition.venue"
-              class="flex items-start gap-1.5"
+              class="flex items-center gap-1.5"
             >
-              <MapPin class="text-muted-foreground mt-1 size-3.5 shrink-0" />
+              <MapPin class="text-muted-foreground size-3.5 shrink-0" />
               <span
                 class="font-serif text-[15px] leading-snug font-medium tracking-tight"
               >
