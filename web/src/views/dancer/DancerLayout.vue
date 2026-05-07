@@ -1,21 +1,24 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, toRef } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import AccountMenu from '@/components/AccountMenu.vue'
+import { provideDancerProfile } from '@/composables/useDancerProfile'
 
 const route = useRoute()
 const dancerId = computed(() => String(route.params.dancerId ?? ''))
 
-const displayName = computed(() =>
-  dancerId.value
-    .split('-')
-    .filter(Boolean)
-    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-    .join(' '),
+const { displayName, location, groupName, loading, notFound } = provideDancerProfile(
+  toRef(dancerId),
 )
+
 const initials = computed(() => {
   const parts = displayName.value.split(' ').filter(Boolean)
   return (parts[0]?.charAt(0) ?? '?') + (parts.at(-1)?.charAt(0) ?? '')
+})
+
+const subtitle = computed(() => {
+  const parts = [groupName.value, location.value].filter(Boolean)
+  return parts.length ? parts.join(' · ') : null
 })
 </script>
 
@@ -44,9 +47,9 @@ const initials = computed(() => {
       />
       <div class="relative mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
         <div
-          class="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/15"
+          class="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/15 font-serif text-sm font-medium"
         >
-          <span class="text-[11px] font-semibold uppercase">{{ initials || '?' }}</span>
+          {{ initials || '?' }}
         </div>
         <div class="min-w-0 flex-1">
           <h1
@@ -54,7 +57,9 @@ const initials = computed(() => {
           >
             {{ displayName || 'Dancer' }}
           </h1>
-          <p class="truncate font-mono text-[11px] text-white/60">{{ dancerId }}</p>
+          <p class="truncate text-[11px] text-white/70">
+            {{ subtitle || 'Across every comp' }}
+          </p>
         </div>
         <div
           class="[&_button]:text-white/85 [&_button]:hover:bg-white/10! [&_button]:hover:text-white"
@@ -64,8 +69,20 @@ const initials = computed(() => {
       </div>
     </header>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 p-4 pt-8">
-      <RouterView />
+    <main class="mx-auto w-full max-w-3xl flex-1 p-4 pt-6">
+      <div
+        v-if="loading"
+        class="text-muted-foreground font-serif text-sm italic"
+      >
+        Searching across competitions…
+      </div>
+      <div
+        v-else-if="notFound"
+        class="text-muted-foreground font-serif text-sm italic"
+      >
+        No record of {{ displayName }} found across the comps we know about.
+      </div>
+      <RouterView v-else />
     </main>
   </div>
 </template>
