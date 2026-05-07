@@ -5,12 +5,14 @@ import { refDebounced } from '@vueuse/core'
 import { ChevronRight, Loader2, Search, Star, X } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
+import { useRecentDancers } from '@/composables/useRecentDancers'
 import { searchDancers, type SearchDancerGroup } from '@/lib/searchDancers'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const favorites = useFavoritesStore()
+const recentDancers = useRecentDancers()
 
 const q = ref(String(route.query.q ?? ''))
 const qDebounced = refDebounced(q, 250)
@@ -84,6 +86,18 @@ function dancerSlug(name: string) {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
 }
+
+function initialsOf(name: string) {
+  const parts = name.split(/\s+/).filter(Boolean)
+  const first = parts[0]?.charAt(0).toUpperCase() ?? '?'
+  const last = parts.length > 1 ? parts.at(-1)!.charAt(0).toUpperCase() : ''
+  return `${first}${last}` || '?'
+}
+
+const recentList = computed(() => {
+  const favoriteNames = new Set(favoriteEntries.value.map((e) => e.name))
+  return recentDancers.recent.value.filter((r) => !favoriteNames.has(r.name))
+})
 
 function clearSearch() {
   q.value = ''
@@ -244,8 +258,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
           </ul>
         </section>
 
-        <section
-          v-else
+        <section v-else-if="!recentList.length"
           class="bg-card space-y-3 rounded-2xl border p-6 text-center"
         >
           <Star class="text-muted-foreground mx-auto size-6" />
@@ -256,6 +269,43 @@ const showSearch = computed(() => q.value.trim().length > 0)
             Star a dancer in any comp and they'll show up across every comp they're
             entered in. Type a name above to start.
           </p>
+        </section>
+
+        <section v-if="recentList.length" class="space-y-2">
+          <div
+            class="text-muted-foreground flex items-baseline justify-between px-1 text-[11px] font-bold tracking-[0.14em] uppercase"
+          >
+            <span>Recently viewed · {{ recentList.length }}</span>
+            <button
+              type="button"
+              class="hover:text-foreground tracking-normal normal-case text-[11px] font-normal"
+              @click="recentDancers.clear()"
+            >
+              Clear
+            </button>
+          </div>
+          <ul class="divide-y border-y">
+            <li v-for="entry in recentList" :key="entry.slug">
+              <RouterLink
+                :to="{ name: 'dancer.info', params: { dancerId: entry.slug } }"
+                class="hover:bg-accent flex w-full items-center gap-3 px-1 py-3 text-left"
+              >
+                <span
+                  class="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-full font-serif text-sm font-medium"
+                >
+                  {{ initialsOf(entry.name) }}
+                </span>
+                <div class="min-w-0 flex-1">
+                  <div
+                    class="font-serif truncate text-base font-medium tracking-tight"
+                  >
+                    {{ entry.name }}
+                  </div>
+                </div>
+                <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+              </RouterLink>
+            </li>
+          </ul>
         </section>
       </template>
     </main>

@@ -2,6 +2,7 @@ import { computed, inject, provide, ref, shallowRef, watch, type InjectionKey, t
 import { searchDancers, type SearchDancerHit } from '@/lib/searchDancers'
 import { fetchCompetitionMeta } from '@/lib/competitionMeta'
 import { isPast } from '@/lib/format'
+import { useRecentDancers } from '@/composables/useRecentDancers'
 import type { Competition } from '@/types/competition'
 
 export interface DancerAppearance {
@@ -16,7 +17,6 @@ export interface UseDancerProfile {
   appearances: Ref<DancerAppearance[]>
   upcoming: Ref<DancerAppearance[]>
   past: Ref<DancerAppearance[]>
-  groupName: Ref<string | null>
   location: Ref<string | null>
   compsThisYear: Ref<number>
   totalComps: Ref<number>
@@ -136,11 +136,6 @@ function createDancerProfile(slug: Ref<string>): UseDancerProfile {
     ),
   )
 
-  const groupName = computed(() => {
-    const recent = appearances.value.find((a) => a.hit.groupId)
-    return recent?.hit.groupId ?? null
-  })
-
   const location = computed(() => {
     const withLocation = appearances.value.find((a) => a.hit.location)
     return withLocation?.hit.location ?? null
@@ -157,6 +152,17 @@ function createDancerProfile(slug: Ref<string>): UseDancerProfile {
 
   const totalComps = computed(() => appearances.value.length)
 
+  const recent = useRecentDancers()
+  watch(
+    [slug, displayName, notFound, () => hits.value.length],
+    ([s, name, missing, hitCount]) => {
+      if (!s || missing || !hitCount) return
+      const trimmed = name?.trim()
+      if (!trimmed) return
+      recent.record(s, trimmed)
+    },
+  )
+
   return {
     loading,
     notFound,
@@ -164,7 +170,6 @@ function createDancerProfile(slug: Ref<string>): UseDancerProfile {
     appearances,
     upcoming,
     past,
-    groupName,
     location,
     compsThisYear,
     totalComps,
