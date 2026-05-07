@@ -5,7 +5,6 @@ import { onClickOutside, useLocalStorage } from '@vueuse/core'
 import { Check, ChevronDown, ListFilter, Star } from '@lucide/vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import { useFavoritesStore } from '@/stores/favorites'
-import AccountMenu from '@/components/AccountMenu.vue'
 import CompChip from '@/components/CompChip.vue'
 import CompetitionsCalendar from '@/components/CompetitionsCalendar.vue'
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue'
@@ -93,21 +92,18 @@ const visibleCompetitions = computed(() =>
 <template>
   <div class="flex flex-1 flex-col">
     <header
-      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-end justify-between gap-3 p-4 pt-safe pb-3"
+      class="bg-background sticky top-0 z-20 mx-auto w-full max-w-3xl p-4 pt-safe pb-3"
     >
-      <div class="min-w-0 flex-1">
-        <div
-          class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
-        >
-          {{ today }}
-        </div>
-        <h1
-          class="font-serif text-3xl font-medium tracking-tight leading-[1.04]"
-        >
-          Competitions
-        </h1>
+      <div
+        class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
+      >
+        {{ today }}
       </div>
-      <AccountMenu />
+      <h1
+        class="font-serif text-3xl font-medium tracking-tight leading-[1.04]"
+      >
+        Competitions
+      </h1>
     </header>
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-5 p-4 pt-6">
       <div class="flex flex-wrap items-center gap-2">

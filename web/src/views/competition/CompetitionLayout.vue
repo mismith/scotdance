@@ -2,7 +2,6 @@
 import { computed, toRef } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { ChevronLeft } from '@lucide/vue'
-import AccountMenu from '@/components/AccountMenu.vue'
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue'
 import ShareButton from '@/components/ShareButton.vue'
 import { provideCompetition } from '@/composables/useCompetition'
@@ -88,7 +87,6 @@ const chromeTitle = computed(
             :title="competition?.name ?? undefined"
             :text="competition?.name ?? undefined"
           />
-          <AccountMenu />
         </div>
       </div>
     </header>

@@ -1,14 +1,5 @@
-<script setup lang="ts">
-import AccountMenu from '@/components/AccountMenu.vue'
-</script>
-
 <template>
   <div class="flex flex-1 flex-col">
-    <header
-      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-center justify-end p-4 pt-safe"
-    >
-      <AccountMenu />
-    </header>
     <main class="mx-auto flex w-full max-w-3xl flex-1 items-center p-8">
       <div class="w-full space-y-6 text-center">
         <div class="space-y-3">
