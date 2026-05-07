@@ -47,7 +47,13 @@ const chromeTitle = injectChromeTitle()
 watch(
   group,
   (g) => {
-    chromeTitle.value = g?.name ?? g?.fullName ?? null
+    if (!g) {
+      chromeTitle.value = null
+      return
+    }
+    const name = g.name ?? g.fullName ?? null
+    const cat = g.category?.name ?? null
+    chromeTitle.value = [cat, name].filter(Boolean).join(' · ') || null
   },
   { immediate: true },
 )
@@ -166,14 +172,6 @@ watch(
     <div v-else-if="!group" class="text-muted-foreground text-sm">Group not found.</div>
 
     <template v-else>
-      <header v-if="group.category?.name">
-        <div
-          class="text-muted-foreground font-serif text-sm font-medium tracking-tight"
-        >
-          {{ group.category.name }}
-        </div>
-      </header>
-
       <section
         v-for="section in sections"
         :id="`dance-${section.dance.id}`"
