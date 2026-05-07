@@ -5,7 +5,6 @@ import { refDebounced } from '@vueuse/core'
 import { ChevronRight, Loader2, Search, Star, X } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
-import AccountMenu from '@/components/AccountMenu.vue'
 import { searchDancers, type SearchDancerGroup } from '@/lib/searchDancers'
 
 const route = useRoute()
@@ -96,21 +95,18 @@ const showSearch = computed(() => q.value.trim().length > 0)
 <template>
   <div class="flex flex-1 flex-col">
     <header
-      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-end justify-between gap-3 p-4 pt-safe pb-3"
+      class="bg-background sticky top-0 z-20 mx-auto w-full max-w-3xl p-4 pt-safe pb-3"
     >
-      <div class="min-w-0 flex-1">
-        <div
-          class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
-        >
-          Across every comp
-        </div>
-        <h1
-          class="font-serif text-3xl font-medium tracking-tight leading-[1.04]"
-        >
-          Dancers
-        </h1>
+      <div
+        class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
+      >
+        Across every comp
       </div>
-      <AccountMenu />
+      <h1
+        class="font-serif text-3xl font-medium tracking-tight leading-[1.04]"
+      >
+        Dancers
+      </h1>
     </header>
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-6">
       <div

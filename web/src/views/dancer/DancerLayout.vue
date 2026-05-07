@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, toRef } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
-import AccountMenu from '@/components/AccountMenu.vue'
 import { provideDancerProfile } from '@/composables/useDancerProfile'
 
 const route = useRoute()
@@ -60,11 +59,6 @@ const subtitle = computed(() => {
           <p class="truncate text-[11px] text-white/70">
             {{ subtitle || 'Across every comp' }}
           </p>
-        </div>
-        <div
-          class="[&_button]:text-white/85 [&_button]:hover:bg-white/10! [&_button]:hover:text-white"
-        >
-          <AccountMenu />
         </div>
       </div>
     </header>
