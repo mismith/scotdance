@@ -114,7 +114,7 @@ function goProfile() {
             <MoreHorizontal class="size-4" />
             <span class="text-[10px]">More</span>
             <span
-              v-if="update.updateAvailable"
+              v-if="update.updateAvailable && !moreOpen"
               class="bg-secondary absolute top-1 right-1 size-2 animate-pulse rounded-full"
               aria-hidden="true"
             />
@@ -217,7 +217,12 @@ function goProfile() {
 
             <RouterLink
               :to="{ name: 'home' }"
-              class="mt-3 flex w-full items-center gap-2 rounded-md p-2 text-sm hover:bg-nav-foreground/10"
+              :class="[
+                'mt-3 flex w-full items-center gap-2 rounded-md p-2 text-sm transition-colors',
+                route.path === '/'
+                  ? 'bg-nav-foreground/10'
+                  : 'hover:bg-nav-foreground/10',
+              ]"
               role="menuitem"
               @click="moreOpen = false"
             >
@@ -228,7 +233,7 @@ function goProfile() {
             <button
               v-if="update.updateAvailable"
               type="button"
-              class="mt-1 flex w-full items-center gap-2 rounded-md border border-white/10 bg-nav-foreground/5 p-2 text-left text-sm hover:bg-nav-foreground/10"
+              class="hover:bg-nav-foreground/10 mt-1 flex w-full items-center gap-2 rounded-md p-2 text-left text-sm transition-colors"
               role="menuitem"
               @click="
                 () => {
@@ -237,7 +242,7 @@ function goProfile() {
                 }
               "
             >
-              <ArrowDownToLine class="text-secondary size-4" />
+              <ArrowDownToLine class="size-4" />
               <span class="flex-1">Update available</span>
               <span class="bg-secondary size-2 animate-pulse rounded-full" aria-hidden="true" />
             </button>
