@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { startViewTransition } from '@/lib/transition'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -100,4 +101,10 @@ const routes: RouteRecordRaw[] = [
 export const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+
+router.beforeResolve(async (_to, from) => {
+  if (from.matched.length === 0) return
+  const transition = startViewTransition()
+  await transition.captured
 })
