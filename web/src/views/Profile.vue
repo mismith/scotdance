@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
-import { Eye, EyeOff } from '@lucide/vue'
+import { Eye, EyeOff, LogOut } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 import { gravatarUrl } from '@/lib/gravatar'
@@ -85,6 +85,11 @@ function openModal(kind: Exclude<ModalKind, null>) {
 
 function closeModal() {
   modal.value = null
+}
+
+async function handleSignOut() {
+  await auth.signOut()
+  router.replace({ name: 'home' })
 }
 
 async function submitModal() {
@@ -200,7 +205,15 @@ const submitDisabled = computed(() => {
       </label>
     </section>
 
-    <section class="flex justify-center pt-6">
+    <section class="flex flex-col items-center gap-4 pt-6">
+      <button
+        type="button"
+        class="hover:bg-accent inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm"
+        @click="handleSignOut"
+      >
+        <LogOut class="size-4" />
+        Sign out
+      </button>
       <button
         type="button"
         class="text-destructive text-sm hover:underline"
