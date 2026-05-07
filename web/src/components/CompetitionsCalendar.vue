@@ -95,6 +95,13 @@ function shiftMonth(delta: number) {
   cursor.value = next
 }
 
+function goToToday() {
+  cursor.value = new Date(today.getFullYear(), today.getMonth(), 1)
+  selected.value = new Date(today)
+}
+
+defineExpose({ goToToday })
+
 function isSelected(d: Date) {
   return (
     d.getFullYear() === selected.value.getFullYear() &&
