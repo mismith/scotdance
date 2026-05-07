@@ -2,7 +2,7 @@
 import { computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
-import { ChevronDown, Star } from '@lucide/vue'
+import { ChevronDown } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { injectChromeTitle } from '@/composables/useChromeTitle'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
@@ -219,10 +219,6 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
                     {{ groupDancerCount(group) }}
                   </span>
                   <span class="truncate">{{ group.name || group.fullName }}</span>
-                  <Star
-                    v-if="groupHasFavorite(group)"
-                    class="text-secondary size-3 shrink-0 fill-current"
-                  />
                 </li>
               </ul>
             </div>

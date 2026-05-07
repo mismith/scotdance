@@ -81,7 +81,7 @@ const isEmpty = computed(() => schedule.value !== null && dayList.value.length =
         </button>
 
         <SmoothCollapse :open="isExpanded(day.id, block.id, !!block.events)">
-          <ul class="divide-y border-y">
+          <ul class="border-b">
           <li v-for="event in events(block)" :key="event.id" class="flex items-center">
             <RouterLink
               :to="{

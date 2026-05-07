@@ -7,7 +7,6 @@ import {
   ChevronRight,
   CircleDashed,
   Loader2,
-  Star,
 } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useFavoritesStore } from '@/stores/favorites'
@@ -142,7 +141,7 @@ const loaded = computed(() => groups.value.length > 0)
       </button>
 
       <SmoothCollapse :open="isExpanded(row.category)">
-        <ul class="divide-y border-y">
+        <ul class="border-b">
         <li
           v-if="!row.groups.length"
           class="text-muted-foreground font-serif px-1 py-3 text-sm italic"
@@ -197,10 +196,6 @@ const loaded = computed(() => groups.value.length > 0)
                 }}
               </div>
             </div>
-            <Star
-              v-if="groupHasFavorite(group)"
-              class="text-secondary size-4 fill-current"
-            />
             <ChevronRight class="text-muted-foreground size-4" />
           </RouterLink>
         </li>
