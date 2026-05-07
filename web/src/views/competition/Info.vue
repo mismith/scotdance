@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import { MapPin } from '@lucide/vue'
+import { ChevronRight, MapPin } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import SectionHeader from '@/components/SectionHeader.vue'
 import { staffMemberName, type StaffMember } from '@/types/competition'
@@ -161,28 +161,33 @@ const groupedStaff = computed(() => {
             {{ yearLabel }}
           </div>
         </div>
-        <div class="flex flex-1 flex-col justify-center gap-1 p-3">
-          <div
-            v-if="competition.venue"
-            class="font-serif text-[15px] leading-snug font-medium tracking-tight"
-          >
-            {{ competition.venue }}
+        <component
+          :is="mapsHref ? 'a' : 'div'"
+          :href="mapsHref ?? undefined"
+          :target="mapsHref ? '_blank' : undefined"
+          :rel="mapsHref ? 'noopener' : undefined"
+          class="flex flex-1 items-center gap-2 p-3"
+        >
+          <div class="flex min-w-0 flex-1 flex-col justify-center gap-1">
+            <div
+              v-if="competition.venue"
+              class="font-serif text-[15px] leading-snug font-medium tracking-tight"
+            >
+              {{ competition.venue }}
+            </div>
+            <div
+              v-if="addressLine"
+              class="text-muted-foreground inline-flex items-center gap-1.5 text-[11.5px]"
+            >
+              <MapPin class="size-3 shrink-0" />
+              <span class="truncate">{{ addressLine }}</span>
+            </div>
           </div>
-          <component
-            :is="mapsHref ? 'a' : 'div'"
-            v-if="addressLine"
-            :href="mapsHref ?? undefined"
-            target="_blank"
-            rel="noopener"
-            :class="[
-              'text-muted-foreground inline-flex items-center gap-1.5 text-[11.5px]',
-              mapsHref && 'hover:text-foreground',
-            ]"
-          >
-            <MapPin class="size-3 shrink-0" />
-            <span class="truncate">{{ addressLine }}</span>
-          </component>
-        </div>
+          <ChevronRight
+            v-if="mapsHref"
+            class="text-muted-foreground size-4 shrink-0"
+          />
+        </component>
       </div>
     </section>
 
@@ -252,7 +257,7 @@ const groupedStaff = computed(() => {
     <!-- Staff as two-column credits -->
     <section v-for="group in groupedStaff" :key="group.type" class="space-y-3">
       <SectionHeader :label="`${group.type}s`" :count="group.members.length" />
-      <div class="columns-2 gap-4 [column-fill:balance]">
+      <div class="columns-2 gap-4 px-1 [column-fill:balance]">
         <div
           v-for="member in group.members"
           :key="member.id"
