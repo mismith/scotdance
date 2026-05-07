@@ -5,9 +5,9 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import {
   ArrowDownToLine,
   CalendarDays,
+  ChevronRight,
   Home,
   LogIn,
-  LogOut,
   Monitor,
   Moon,
   MoreHorizontal,
@@ -73,11 +73,6 @@ function handleSignIn() {
   auth.openLogin()
 }
 
-async function handleSignOut() {
-  moreOpen.value = false
-  await auth.signOut()
-}
-
 function goProfile() {
   moreOpen.value = false
   router.push({ name: 'profile' })
@@ -86,11 +81,11 @@ function goProfile() {
 
 <template>
   <nav
-    class="pointer-events-none fixed inset-x-0 bottom-safe z-30 flex justify-center px-3"
+    class="pointer-events-none fixed inset-x-0 bottom-safe z-30 px-3"
   >
-    <div class="pointer-events-auto flex items-center gap-2">
+    <div class="mx-auto flex max-w-3xl items-center justify-between">
       <div
-        class="bg-nav/90 text-nav-foreground backdrop-blur-xl flex items-center gap-1 rounded-full p-1 shadow-lg"
+        class="pointer-events-auto bg-nav/90 text-nav-foreground backdrop-blur-xl flex items-center gap-1 rounded-full p-1 shadow-lg [view-transition-name:nav-left] [view-transition-class:fixed-height]"
       >
         <RouterLink
           v-for="tab in tabs"
@@ -127,7 +122,7 @@ function goProfile() {
 
           <div
             v-if="moreOpen"
-            class="bg-nav/90 text-nav-foreground absolute right-0 bottom-full z-40 mb-2 w-72 rounded-3xl border border-white/10 p-3 shadow-lg backdrop-blur-xl"
+            class="bg-nav/90 text-nav-foreground absolute right-0 bottom-full z-40 mb-2 w-64 max-w-[calc(100vw-1.5rem)] rounded-3xl border border-white/10 p-3 shadow-lg backdrop-blur-xl"
             role="menu"
           >
             <!-- Account + theme section -->
@@ -153,14 +148,24 @@ function goProfile() {
                 </span>
                 <span class="min-w-0 flex-1">
                   <span
+                    v-if="me.displayName"
                     class="font-serif block truncate text-sm font-medium tracking-tight"
                   >
-                    {{ me.displayName ?? me.email ?? '—' }}
+                    {{ me.displayName }}
                   </span>
-                  <span class="block truncate text-[10px] opacity-60">
-                    View profile
+                  <span
+                    v-if="me.email"
+                    :class="[
+                      'block truncate',
+                      me.displayName
+                        ? 'text-[10px] opacity-60'
+                        : 'font-serif text-sm font-medium tracking-tight',
+                    ]"
+                  >
+                    {{ me.email }}
                   </span>
                 </span>
+                <ChevronRight class="size-4 opacity-60" />
               </button>
 
               <button
@@ -185,47 +190,29 @@ function goProfile() {
                 </span>
               </button>
 
-              <div>
-                <div
-                  class="mb-1.5 px-1 text-[10px] font-semibold tracking-[0.14em] uppercase opacity-60"
-                >
-                  Theme
-                </div>
-                <div
-                  class="grid grid-cols-3 gap-1 rounded-lg bg-nav-foreground/10 p-1"
-                  role="radiogroup"
-                  aria-label="Theme"
-                >
-                  <button
-                    v-for="opt in themeOptions"
-                    :key="opt.value"
-                    type="button"
-                    role="radio"
-                    :aria-checked="theme === opt.value"
-                    :class="[
-                      'flex items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors',
-                      theme === opt.value
-                        ? 'bg-nav-foreground/20 shadow-sm'
-                        : 'opacity-70 hover:opacity-100',
-                    ]"
-                    @click="theme = opt.value"
-                  >
-                    <component :is="opt.icon" class="size-3.5" />
-                    <span>{{ opt.label }}</span>
-                  </button>
-                </div>
-              </div>
-
-              <button
-                v-if="auth.isSignedIn"
-                type="button"
-                class="flex w-full items-center gap-2 rounded-md p-2 text-sm hover:bg-nav-foreground/10"
-                role="menuitem"
-                @click="handleSignOut"
+              <div
+                class="grid grid-cols-3 gap-1 rounded-lg bg-nav-foreground/10 p-1"
+                role="radiogroup"
+                aria-label="Theme"
               >
-                <LogOut class="size-4" />
-                <span class="flex-1 text-left">Sign out</span>
-              </button>
+                <button
+                  v-for="opt in themeOptions"
+                  :key="opt.value"
+                  type="button"
+                  role="radio"
+                  :aria-checked="theme === opt.value"
+                  :class="[
+                    'flex items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors',
+                    theme === opt.value
+                      ? 'bg-nav-foreground/20 shadow-sm'
+                      : 'opacity-70 hover:opacity-100',
+                  ]"
+                  @click="theme = opt.value"
+                >
+                  <component :is="opt.icon" class="size-3.5" />
+                  <span>{{ opt.label }}</span>
+                </button>
+              </div>
             </div>
 
             <RouterLink
@@ -260,7 +247,7 @@ function goProfile() {
 
       <RouterLink
         :to="{ name: 'search' }"
-        class="bg-nav/90 text-nav-foreground backdrop-blur-xl flex size-12 items-center justify-center rounded-full shadow-lg hover:opacity-90"
+        class="pointer-events-auto bg-nav/90 text-nav-foreground backdrop-blur-xl flex size-12 items-center justify-center rounded-full shadow-lg hover:opacity-90 [view-transition-name:nav-right] [view-transition-class:fixed-height]"
         title="Search"
         aria-label="Search"
       >
