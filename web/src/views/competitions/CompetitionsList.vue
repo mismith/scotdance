@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { onClickOutside, useLocalStorage } from '@vueuse/core'
-import { Check, ChevronDown, ListFilter, Star } from '@lucide/vue'
+import { Check, ChevronDown, ListFilter } from '@lucide/vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
-import { useFavoritesStore } from '@/stores/favorites'
 import CompChip from '@/components/CompChip.vue'
 import CompetitionsCalendar from '@/components/CompetitionsCalendar.vue'
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue'
@@ -43,8 +42,6 @@ onClickOutside(filterMenuRef, () => (filterOpen.value = false))
 const includeArchived = useLocalStorage('competitions:includeArchived', false)
 
 const { competitions, loading } = useCompetitions(includeArchived)
-
-const favorites = useFavoritesStore()
 
 const featuredComp = computed<CompetitionListItem | null>(() => {
   const list = competitions.value
@@ -248,18 +245,10 @@ const monthGroups = computed<MonthGroup[]>(() => {
                       {{ competition.location }}
                     </div>
                     <div
-                      class="text-muted-foreground/80 font-serif flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] italic"
+                      v-if="competition.date"
+                      class="text-muted-foreground/80 font-serif text-[11px] italic"
                     >
-                      <span v-if="competition.date">{{
-                        formatRelative(competition.date)
-                      }}</span>
-                      <span
-                        v-if="favorites.isFavoriteCompetition(competition.id)"
-                        class="text-secondary inline-flex items-center gap-1 font-semibold not-italic tracking-[0.06em]"
-                      >
-                        <Star class="size-3 fill-current" />
-                        Favourited
-                      </span>
+                      {{ formatRelative(competition.date) }}
                     </div>
                   </div>
                 </RouterLink>
