@@ -2,18 +2,11 @@
 import { computed, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
-import { ArrowRight, ChevronRight, Loader2, Search, Star, X } from '@lucide/vue'
+import { ChevronRight, Loader2, Search, Star, X } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
 import AccountMenu from '@/components/AccountMenu.vue'
-import {
-  searchDancers,
-  type SearchDancerGroup,
-  type SearchDancerHit,
-} from '@/lib/searchDancers'
-import { fetchCompetitionMeta } from '@/lib/competitionMeta'
-import type { Competition } from '@/types/competition'
-import { formatShortDate } from '@/lib/format'
+import { searchDancers, type SearchDancerGroup } from '@/lib/searchDancers'
 
 const route = useRoute()
 const router = useRouter()
@@ -21,7 +14,6 @@ const auth = useAuthStore()
 const favorites = useFavoritesStore()
 
 const q = ref(String(route.query.q ?? ''))
-const selectedName = ref(String(route.query.s ?? ''))
 const qDebounced = refDebounced(q, 250)
 
 const searching = ref(false)
@@ -35,45 +27,24 @@ watch(
     if (value !== q.value) q.value = value
   },
 )
-watch(
-  () => route.query.s,
-  (next) => {
-    const value = String(next ?? '')
-    if (value !== selectedName.value) selectedName.value = value
-  },
-)
 
 watch(q, (value) => {
   if (value !== String(route.query.q ?? '')) {
     router.replace({ query: { ...route.query, q: value || undefined } })
-  }
-  if (!value && selectedName.value) {
-    selectedName.value = ''
-  }
-})
-
-watch(selectedName, (value) => {
-  if (value !== String(route.query.s ?? '')) {
-    router.replace({ query: { ...route.query, s: value || undefined } })
   }
 })
 
 watch(
   [qDebounced, () => auth.isSignedIn],
   async ([value, signedIn]) => {
-    if (!signedIn) {
-      results.value = []
-      return
-    }
-    if (!value.trim()) {
+    if (!signedIn || !value.trim()) {
       results.value = []
       return
     }
     searching.value = true
     error.value = null
     try {
-      const groups = await searchDancers(value)
-      results.value = groups
+      results.value = await searchDancers(value)
     } catch (e) {
       error.value = e as Error
       results.value = []
@@ -84,86 +55,30 @@ watch(
   { immediate: true },
 )
 
-const selectedGroup = computed<SearchDancerGroup | null>(
-  () => results.value.find((g) => g.name === selectedName.value) ?? null,
-)
-
-const compMeta = ref<Record<string, Competition | null>>({})
-
-watch(
-  selectedGroup,
-  async (group) => {
-    if (!group) return
-    const ids = [...new Set(group.dancers.map((d) => d.competitionId))].filter(
-      (id) => !(id in compMeta.value),
-    )
-    if (!ids.length) return
-    const fetched = await Promise.all(ids.map((id) => fetchCompetitionMeta(id)))
-    const next = { ...compMeta.value }
-    ids.forEach((id, i) => {
-      next[id] = fetched[i]
-    })
-    compMeta.value = next
-  },
-  { immediate: true },
-)
-
-interface CompetitionGroup {
-  competitionId: string
-  competition: Competition | null
-  dancers: SearchDancerHit[]
+interface FavoriteEntry {
+  name: string
+  initials: string
+  count: number
 }
 
-const dancersByCompetition = computed<CompetitionGroup[]>(() => {
-  if (!selectedGroup.value) return []
-  const map = new Map<string, SearchDancerHit[]>()
-  for (const dancer of selectedGroup.value.dancers) {
-    const list = map.get(dancer.competitionId) ?? []
-    list.push(dancer)
-    map.set(dancer.competitionId, list)
+const favoriteEntries = computed<FavoriteEntry[]>(() => {
+  const grouped = new Map<string, number>()
+  for (const value of Object.values(favorites.dancers)) {
+    if (!value) continue
+    const name = typeof value === 'string' ? value.trim() : '?'
+    if (!name) continue
+    grouped.set(name, (grouped.get(name) ?? 0) + 1)
   }
-  return [...map.entries()]
-    .map<CompetitionGroup>(([competitionId, list]) => ({
-      competitionId,
-      competition: compMeta.value[competitionId] ?? null,
-      dancers: list,
-    }))
-    .sort((a, b) => {
-      const dateA = a.competition?.date ?? 0
-      const dateB = b.competition?.date ?? 0
-      return dateB - dateA
+  return [...grouped.entries()]
+    .map<FavoriteEntry>(([name, count]) => {
+      const parts = name.split(/\s+/).filter(Boolean)
+      const first = parts[0]?.charAt(0).toUpperCase() ?? '?'
+      const last = parts.length > 1 ? parts.at(-1)!.charAt(0).toUpperCase() : ''
+      return { name, initials: `${first}${last}` || '?', count }
     })
+    .sort((a, b) => a.name.localeCompare(b.name))
 })
 
-const allSelectedFavorited = computed(() => {
-  if (!selectedGroup.value?.dancers.length) return false
-  return selectedGroup.value.dancers.every((d) => favorites.isFavoriteDancer(d.id))
-})
-
-async function favoriteAllSelected() {
-  if (!selectedGroup.value) return
-  const target = !allSelectedFavorited.value
-  const items = selectedGroup.value.dancers.slice()
-  const apply = async () => {
-    await Promise.all(
-      items.map((d) =>
-        favorites.setDancer(d.id, target, target ? d.fullName : undefined),
-      ),
-    )
-  }
-  if (!auth.isSignedIn) {
-    auth.enqueueAfterLogin(apply)
-    auth.openLogin()
-    return
-  }
-  await apply()
-}
-
-function selectName(name: string) {
-  selectedName.value = selectedName.value === name ? '' : name
-}
-
-// Provisional: slug-by-name until cross-comp dancer identity is settled.
 function dancerSlug(name: string) {
   return name
     .toLowerCase()
@@ -173,8 +88,9 @@ function dancerSlug(name: string) {
 
 function clearSearch() {
   q.value = ''
-  selectedName.value = ''
 }
+
+const showSearch = computed(() => q.value.trim().length > 0)
 </script>
 
 <template>
@@ -223,7 +139,9 @@ function clearSearch() {
         v-if="!auth.isSignedIn"
         class="bg-card space-y-3 rounded-2xl border p-6 text-center"
       >
-        <p class="font-serif text-base">Sign in to search dancers across competitions.</p>
+        <p class="font-serif text-base">
+          Sign in to find and follow dancers across comps.
+        </p>
         <button
           type="button"
           class="bg-primary text-primary-foreground inline-flex items-center rounded-full px-5 py-2 text-sm font-medium hover:opacity-90"
@@ -233,7 +151,7 @@ function clearSearch() {
         </button>
       </div>
 
-      <template v-else>
+      <template v-else-if="showSearch">
         <div v-if="error" class="text-destructive text-sm">{{ error.message }}</div>
 
         <div
@@ -245,26 +163,23 @@ function clearSearch() {
         </div>
 
         <div
-          v-else-if="q.trim() && !results.length"
+          v-else-if="!results.length"
           class="text-muted-foreground font-serif text-sm italic"
         >
           No dancers match.
         </div>
 
-        <ul v-if="results.length" class="divide-y border-y">
+        <ul v-else class="divide-y border-y">
           <li v-for="group in results" :key="group.name">
-            <button
-              type="button"
+            <RouterLink
+              :to="{
+                name: 'dancer.info',
+                params: { dancerId: dancerSlug(group.name) },
+              }"
               class="hover:bg-accent flex w-full items-center gap-3 px-1 py-3 text-left"
-              @click="selectName(group.name)"
             >
               <span
-                :class="[
-                  'flex size-10 shrink-0 items-center justify-center rounded-full font-serif text-sm font-medium',
-                  group.dancers.some((d) => favorites.isFavoriteDancer(d.id))
-                    ? 'bg-secondary text-secondary-foreground'
-                    : 'bg-muted text-muted-foreground',
-                ]"
+                class="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-full font-serif text-sm font-medium"
               >
                 {{ group.initials }}
               </span>
@@ -281,115 +196,71 @@ function clearSearch() {
                   <span>{{ group.dancers.length === 1 ? 'comp' : 'comps' }}</span>
                 </div>
               </div>
-              <ChevronRight
-                :class="[
-                  'text-muted-foreground size-4 shrink-0 transition-transform',
-                  selectedName === group.name ? 'rotate-90' : '',
-                ]"
-              />
-            </button>
-
-            <div
-              v-if="selectedName === group.name"
-              class="bg-muted/40 space-y-4 rounded-xl px-3 pt-3 pb-4 mb-3"
-            >
-              <div class="flex flex-wrap items-center justify-between gap-2">
-                <RouterLink
-                  :to="{ name: 'dancer.info', params: { dancerId: dancerSlug(group.name) } }"
-                  class="bg-card hover:bg-accent inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium"
-                >
-                  View profile
-                  <span
-                    class="text-muted-foreground text-[10px] tracking-[0.14em] uppercase"
-                    >(stub)</span
-                  >
-                  <ArrowRight class="size-3.5" />
-                </RouterLink>
-                <button
-                  v-if="group.dancers.length > 1"
-                  type="button"
-                  class="bg-card hover:bg-accent inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium"
-                  @click="favoriteAllSelected"
-                >
-                  <Star
-                    :class="[
-                      'size-3.5',
-                      allSelectedFavorited
-                        ? 'text-secondary fill-current'
-                        : 'text-muted-foreground',
-                    ]"
-                  />
-                  {{ allSelectedFavorited ? 'Unfavourite all' : 'Favourite all' }}
-                </button>
-              </div>
-
-              <div
-                v-for="comp in dancersByCompetition"
-                :key="comp.competitionId"
-                class="space-y-1.5"
-              >
-                <div
-                  class="text-muted-foreground flex items-baseline gap-2 px-1 text-[10px] font-bold tracking-[0.14em] uppercase"
-                >
-                  <span class="truncate">
-                    {{ comp.competition?.name ?? 'Loading…' }}
-                  </span>
-                  <span
-                    v-if="comp.competition?.date"
-                    class="text-muted-foreground/60 text-[10px] tabular-nums tracking-normal normal-case"
-                  >
-                    {{ formatShortDate(comp.competition.date) }}
-                  </span>
-                </div>
-                <ul class="bg-card divide-y rounded-xl border">
-                  <li v-for="dancer in comp.dancers" :key="dancer.id">
-                    <RouterLink
-                      :to="{
-                        name: 'competition.dancer',
-                        params: {
-                          competitionId: dancer.competitionId,
-                          dancerId: dancer.id,
-                        },
-                      }"
-                      class="hover:bg-accent flex items-center gap-3 p-3"
-                    >
-                      <div
-                        class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums"
-                      >
-                        {{ dancer.number ?? '–' }}
-                      </div>
-                      <div class="min-w-0 flex-1">
-                        <div
-                          class="font-serif truncate text-sm font-medium tracking-tight"
-                        >
-                          {{ dancer.fullName || '?' }}
-                        </div>
-                        <div
-                          v-if="dancer.location"
-                          class="text-muted-foreground truncate text-xs"
-                        >
-                          {{ dancer.location }}
-                        </div>
-                      </div>
-                      <Star
-                        v-if="favorites.isFavoriteDancer(dancer.id)"
-                        class="text-secondary size-4 shrink-0 fill-current"
-                      />
-                      <ChevronRight class="text-muted-foreground size-4 shrink-0" />
-                    </RouterLink>
-                  </li>
-                </ul>
-              </div>
-            </div>
+              <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+            </RouterLink>
           </li>
         </ul>
+      </template>
 
-        <div
-          v-else-if="!q.trim()"
-          class="text-muted-foreground font-serif text-sm italic"
+      <template v-else>
+        <section v-if="favoriteEntries.length" class="space-y-2">
+          <div
+            class="text-muted-foreground flex items-baseline justify-between px-1 text-[11px] font-bold tracking-[0.14em] uppercase"
+          >
+            <span>Your favourites · {{ favoriteEntries.length }}</span>
+            <span class="text-secondary tabular-nums normal-case tracking-normal">
+              ★
+            </span>
+          </div>
+          <ul class="divide-y border-y">
+            <li v-for="entry in favoriteEntries" :key="entry.name">
+              <RouterLink
+                :to="{
+                  name: 'dancer.info',
+                  params: { dancerId: dancerSlug(entry.name) },
+                }"
+                class="hover:bg-accent flex w-full items-center gap-3 px-1 py-3 text-left"
+              >
+                <span
+                  class="bg-secondary text-secondary-foreground flex size-10 shrink-0 items-center justify-center rounded-full font-serif text-sm font-medium"
+                >
+                  {{ entry.initials }}
+                </span>
+                <div class="min-w-0 flex-1">
+                  <div
+                    class="font-serif truncate text-base font-medium tracking-tight"
+                  >
+                    {{ entry.name }}
+                  </div>
+                  <div
+                    class="text-muted-foreground mt-0.5 flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.14em] uppercase"
+                  >
+                    <span class="tabular-nums">{{ entry.count }}</span>
+                    <span>{{
+                      entry.count === 1 ? 'comp favourited' : 'comps favourited'
+                    }}</span>
+                  </div>
+                </div>
+                <Star class="text-secondary size-4 shrink-0 fill-current" />
+                <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+              </RouterLink>
+            </li>
+          </ul>
+        </section>
+
+        <section
+          v-else
+          class="bg-card space-y-3 rounded-2xl border p-6 text-center"
         >
-          Start typing to search.
-        </div>
+          <Star class="text-muted-foreground mx-auto size-6" />
+          <div class="font-serif text-base font-medium tracking-tight">
+            Follow your dancers here
+          </div>
+          <p class="text-muted-foreground text-sm">
+            Star a dancer in any comp and they'll show up across every comp they're
+            entered in. Type a name above to start.
+          </p>
+        </section>
       </template>
     </main>
   </div>

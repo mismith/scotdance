@@ -1,8 +1,118 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { ChevronRight } from '@lucide/vue'
+import { useDancerProfile } from '@/composables/useDancerProfile'
+import CompChip from '@/components/CompChip.vue'
+
+const profile = useDancerProfile()
+
+const tiles = computed(() => [
+  {
+    k: 'Total comps',
+    v: profile.totalComps.value > 0 ? String(profile.totalComps.value) : '—',
+  },
+  {
+    k: 'This year',
+    v: profile.compsThisYear.value > 0 ? String(profile.compsThisYear.value) : '—',
+  },
+  {
+    k: 'Upcoming',
+    v: profile.upcoming.value.length > 0 ? String(profile.upcoming.value.length) : '—',
+  },
+  {
+    k: 'Past',
+    v: profile.past.value.length > 0 ? String(profile.past.value.length) : '—',
+  },
+])
+
+const recentComp = computed(() => profile.appearances.value[0] ?? null)
+const groupLabel = computed(() => recentComp.value?.hit.groupId ?? null)
+</script>
+
 <template>
-  <article class="space-y-4">
-    <h2 class="text-lg font-semibold">Info</h2>
-    <p class="text-muted-foreground text-sm">
-      Cross-competition dancer profile — stub. Backend aggregation to be decided.
+  <article class="space-y-6">
+    <section>
+      <div class="grid grid-cols-2 gap-2">
+        <div
+          v-for="t in tiles"
+          :key="t.k"
+          class="bg-card rounded-2xl border px-4 py-3"
+        >
+          <div
+            class="text-muted-foreground text-[10px] font-bold tracking-[0.14em] uppercase"
+          >
+            {{ t.k }}
+          </div>
+          <div
+            class="font-serif mt-1 text-2xl font-medium tabular-nums tracking-tight"
+          >
+            {{ t.v }}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section v-if="profile.location.value || groupLabel" class="space-y-2">
+      <h2
+        class="text-muted-foreground px-1 text-[11px] font-bold tracking-[0.14em] uppercase"
+      >
+        Most recent
+      </h2>
+      <div class="bg-card space-y-1 rounded-2xl border p-4">
+        <div v-if="groupLabel" class="text-[11px] tracking-[0.06em] uppercase">
+          <span class="text-muted-foreground">Category </span>
+          <span class="text-foreground font-semibold">{{ groupLabel }}</span>
+        </div>
+        <div
+          v-if="profile.location.value"
+          class="font-serif text-[15px] font-medium tracking-tight"
+        >
+          {{ profile.location.value }}
+        </div>
+      </div>
+    </section>
+
+    <section v-if="recentComp" class="space-y-2">
+      <h2
+        class="text-muted-foreground px-1 text-[11px] font-bold tracking-[0.14em] uppercase"
+      >
+        Last seen at
+      </h2>
+      <RouterLink
+        :to="{
+          name: 'competition.dancer',
+          params: {
+            competitionId: recentComp.hit.competitionId,
+            dancerId: recentComp.hit.id,
+          },
+        }"
+        class="bg-card hover:bg-accent flex items-center gap-3 rounded-2xl border p-3"
+      >
+        <CompChip
+          :name="recentComp.competition?.name"
+          :image="recentComp.competition?.image"
+          :size="40"
+        />
+        <div class="min-w-0 flex-1">
+          <div
+            class="font-serif truncate text-[15px] font-medium tracking-tight"
+          >
+            {{ recentComp.competition?.name ?? 'Loading…' }}
+          </div>
+          <div
+            v-if="recentComp.hit.number != null"
+            class="text-muted-foreground text-[11.5px] tabular-nums"
+          >
+            #{{ recentComp.hit.number }}
+          </div>
+        </div>
+        <ChevronRight class="text-muted-foreground size-4" />
+      </RouterLink>
+    </section>
+
+    <p class="text-muted-foreground text-[11px]">
+      Cross-comp profile is matched by name. Identity may be approximate when names
+      are shared.
     </p>
   </article>
 </template>
