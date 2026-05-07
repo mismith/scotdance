@@ -86,7 +86,7 @@ const chromeTitle = computed(
       </div>
     </header>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 p-4 pt-8">
+    <main class="mx-auto w-full max-w-3xl flex-1 p-4 pt-6">
       <div v-if="loading" class="text-muted-foreground font-serif italic text-sm">
         Loading…
       </div>
