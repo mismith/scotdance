@@ -122,7 +122,7 @@ function goProfile() {
 
           <div
             v-if="moreOpen"
-            class="bg-nav/90 text-nav-foreground absolute right-0 bottom-full z-40 mb-2 w-64 max-w-[calc(100vw-1.5rem)] rounded-3xl border border-white/10 p-3 shadow-lg backdrop-blur-xl"
+            class="bg-nav/90 text-nav-foreground absolute left-1/2 bottom-full z-40 mb-2 w-64 max-w-[calc(100vw-1.5rem)] -translate-x-1/2 rounded-3xl border border-white/10 p-3 shadow-lg backdrop-blur-xl"
             role="menu"
           >
             <!-- Account + theme section -->
