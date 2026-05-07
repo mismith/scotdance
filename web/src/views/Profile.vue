@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
-import { Eye, EyeOff, LogOut } from '@lucide/vue'
+import { Eye, EyeOff, LogOut, Pencil } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 import { gravatarUrl } from '@/lib/gravatar'
@@ -126,7 +126,7 @@ const submitDisabled = computed(() => {
 <template>
   <div v-if="auth.isSignedIn" class="flex flex-1 flex-col">
     <header
-      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-end justify-between gap-3 p-4 pt-safe pb-3"
+      class="bg-background pt-safe sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-end justify-between gap-3 p-4 pb-3"
     >
       <div class="min-w-0 flex-1">
         <div
@@ -134,13 +134,13 @@ const submitDisabled = computed(() => {
         >
           Account
         </div>
-        <h1 class="font-serif text-3xl font-medium tracking-tight leading-[1.04]">
+        <h1 class="font-serif text-3xl leading-[1.04] font-medium tracking-tight">
           Profile
         </h1>
       </div>
     </header>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-6">
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-0">
       <section class="flex items-center gap-4">
         <img
           v-if="avatarUrl"
@@ -162,173 +162,175 @@ const submitDisabled = computed(() => {
         </div>
       </section>
 
-    <section class="space-y-2">
-      <label class="block space-y-1">
-        <span class="text-muted-foreground text-xs">Display name</span>
-        <input
-          v-model="displayName"
-          type="text"
-          class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
-          @input="onDisplayNameInput"
-          @blur="saveDisplayName"
-        />
-      </label>
-      <p v-if="displayNameSaving" class="text-muted-foreground text-xs">Saving…</p>
-      <p v-if="displayNameError" class="text-destructive text-xs">
-        {{ displayNameError }}
-      </p>
-    </section>
-
-    <section class="space-y-2">
-      <label class="block space-y-1">
-        <span class="text-muted-foreground text-xs">Email</span>
-        <button
-          type="button"
-          class="bg-background hover:bg-accent w-full rounded-md border px-3 py-2 text-left text-sm"
-          @click="openModal('email')"
-        >
-          {{ me.email ?? '—' }}
-        </button>
-      </label>
-    </section>
-
-    <section class="space-y-2">
-      <label class="block space-y-1">
-        <span class="text-muted-foreground text-xs">Password</span>
-        <button
-          type="button"
-          class="bg-background hover:bg-accent w-full rounded-md border px-3 py-2 text-left font-mono text-sm"
-          @click="openModal('password')"
-        >
-          ••••••••
-        </button>
-      </label>
-    </section>
-
-    <section class="flex flex-col items-center gap-4 pt-6">
-      <button
-        type="button"
-        class="hover:bg-accent inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm"
-        @click="handleSignOut"
-      >
-        <LogOut class="size-4" />
-        Sign out
-      </button>
-      <button
-        type="button"
-        class="text-destructive text-sm hover:underline"
-        @click="openModal('delete')"
-      >
-        Delete account
-      </button>
-    </section>
-
-    <!-- Email/Password/Delete modals share the same shell -->
-    <div
-      v-if="modal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      role="dialog"
-      aria-modal="true"
-      @click.self="closeModal"
-    >
-      <div
-        class="bg-background relative w-full max-w-sm space-y-4 rounded-lg border p-6 shadow-lg"
-      >
-        <h2 class="font-serif text-xl font-medium tracking-tight">
-          <template v-if="modal === 'email'">Change your email</template>
-          <template v-else-if="modal === 'password'">Change your password</template>
-          <template v-else>Delete your account</template>
-        </h2>
-
-        <p v-if="modal === 'delete'" class="text-muted-foreground text-sm">
-          This will permanently delete your account and all associated data.
+      <section class="space-y-2">
+        <label class="block space-y-1">
+          <span class="text-muted-foreground text-xs">Display name</span>
+          <input
+            v-model="displayName"
+            type="text"
+            class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
+            @input="onDisplayNameInput"
+            @blur="saveDisplayName"
+          />
+        </label>
+        <p v-if="displayNameSaving" class="text-muted-foreground text-xs">Saving…</p>
+        <p v-if="displayNameError" class="text-destructive text-xs">
+          {{ displayNameError }}
         </p>
+      </section>
 
-        <form class="space-y-3" @submit.prevent="submitModal">
-          <label v-if="modal === 'email'" class="block space-y-1">
-            <span class="text-muted-foreground text-xs">New email</span>
-            <input
-              v-model="newEmail"
-              type="email"
-              autocomplete="email"
-              required
-              autofocus
-              class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
-            />
-          </label>
+      <section class="space-y-2">
+        <label class="block space-y-1">
+          <span class="text-muted-foreground text-xs">Email</span>
+          <button
+            type="button"
+            class="bg-background hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-sm"
+            @click="openModal('email')"
+          >
+            <span class="truncate">{{ me.email ?? '—' }}</span>
+            <Pencil class="text-muted-foreground size-3.5 shrink-0" />
+          </button>
+        </label>
+      </section>
 
-          <label v-if="modal === 'password'" class="block space-y-1">
-            <span class="text-muted-foreground text-xs">New password</span>
-            <div class="relative">
+      <section class="space-y-2">
+        <label class="block space-y-1">
+          <span class="text-muted-foreground text-xs">Password</span>
+          <button
+            type="button"
+            class="bg-background hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-sm"
+            @click="openModal('password')"
+          >
+            <span class="font-mono">••••••••</span>
+            <Pencil class="text-muted-foreground size-3.5 shrink-0" />
+          </button>
+        </label>
+      </section>
+
+      <section class="flex flex-col items-center gap-4 pt-6">
+        <button
+          type="button"
+          class="hover:bg-accent inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm"
+          @click="handleSignOut"
+        >
+          <LogOut class="size-4" />
+          Sign out
+        </button>
+        <button
+          type="button"
+          class="text-destructive text-sm hover:underline"
+          @click="openModal('delete')"
+        >
+          Delete account
+        </button>
+      </section>
+
+      <!-- Email/Password/Delete modals share the same shell -->
+      <div
+        v-if="modal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        role="dialog"
+        aria-modal="true"
+        @click.self="closeModal"
+      >
+        <div
+          class="bg-background relative w-full max-w-sm space-y-4 rounded-lg border p-6 shadow-lg"
+        >
+          <h2 class="font-serif text-xl font-medium tracking-tight">
+            <template v-if="modal === 'email'">Change your email</template>
+            <template v-else-if="modal === 'password'">Change your password</template>
+            <template v-else>Delete your account</template>
+          </h2>
+
+          <p v-if="modal === 'delete'" class="text-muted-foreground text-sm">
+            This will permanently delete your account and all associated data.
+          </p>
+
+          <form class="space-y-3" @submit.prevent="submitModal">
+            <label v-if="modal === 'email'" class="block space-y-1">
+              <span class="text-muted-foreground text-xs">New email</span>
               <input
-                v-model="newPassword"
-                :type="showNewPassword ? 'text' : 'password'"
-                autocomplete="new-password"
+                v-model="newEmail"
+                type="email"
+                autocomplete="email"
                 required
-                class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 pr-10 text-sm focus:ring-2 focus:outline-none"
+                autofocus
+                class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
               />
+            </label>
+
+            <label v-if="modal === 'password'" class="block space-y-1">
+              <span class="text-muted-foreground text-xs">New password</span>
+              <div class="relative">
+                <input
+                  v-model="newPassword"
+                  :type="showNewPassword ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  required
+                  class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 pr-10 text-sm focus:ring-2 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  tabindex="-1"
+                  class="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2 p-1"
+                  @click="showNewPassword = !showNewPassword"
+                >
+                  <component :is="showNewPassword ? EyeOff : Eye" class="size-4" />
+                </button>
+              </div>
+            </label>
+
+            <label class="block space-y-1">
+              <span class="text-muted-foreground text-xs">Current password</span>
+              <div class="relative">
+                <input
+                  v-model="currentPassword"
+                  :type="showCurrentPassword ? 'text' : 'password'"
+                  autocomplete="current-password"
+                  required
+                  :autofocus="modal !== 'email'"
+                  class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 pr-10 text-sm focus:ring-2 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  tabindex="-1"
+                  class="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2 p-1"
+                  @click="showCurrentPassword = !showCurrentPassword"
+                >
+                  <component :is="showCurrentPassword ? EyeOff : Eye" class="size-4" />
+                </button>
+              </div>
+            </label>
+
+            <p v-if="modalError" class="text-destructive text-sm">{{ modalError }}</p>
+
+            <div class="flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
-                tabindex="-1"
-                class="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2 p-1"
-                @click="showNewPassword = !showNewPassword"
+                class="hover:bg-accent text-muted-foreground rounded-md px-3 py-2 text-sm"
+                @click="closeModal"
               >
-                <component :is="showNewPassword ? EyeOff : Eye" class="size-4" />
+                Cancel
               </button>
-            </div>
-          </label>
-
-          <label class="block space-y-1">
-            <span class="text-muted-foreground text-xs">Current password</span>
-            <div class="relative">
-              <input
-                v-model="currentPassword"
-                :type="showCurrentPassword ? 'text' : 'password'"
-                autocomplete="current-password"
-                required
-                :autofocus="modal !== 'email'"
-                class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 pr-10 text-sm focus:ring-2 focus:outline-none"
-              />
               <button
-                type="button"
-                tabindex="-1"
-                class="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2 p-1"
-                @click="showCurrentPassword = !showCurrentPassword"
+                type="submit"
+                :disabled="submitDisabled"
+                :class="[
+                  'rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50',
+                  modal === 'delete'
+                    ? 'bg-destructive text-destructive-foreground'
+                    : 'bg-primary text-primary-foreground',
+                ]"
               >
-                <component :is="showCurrentPassword ? EyeOff : Eye" class="size-4" />
+                <template v-if="submitting">Working…</template>
+                <template v-else-if="modal === 'email'">Change email</template>
+                <template v-else-if="modal === 'password'">Change password</template>
+                <template v-else>Delete account</template>
               </button>
             </div>
-          </label>
-
-          <p v-if="modalError" class="text-destructive text-sm">{{ modalError }}</p>
-
-          <div class="flex items-center justify-end gap-2 pt-2">
-            <button
-              type="button"
-              class="hover:bg-accent text-muted-foreground rounded-md px-3 py-2 text-sm"
-              @click="closeModal"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              :disabled="submitDisabled"
-              :class="[
-                'rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50',
-                modal === 'delete'
-                  ? 'bg-destructive text-destructive-foreground'
-                  : 'bg-primary text-primary-foreground',
-              ]"
-            >
-              <template v-if="submitting">Working…</template>
-              <template v-else-if="modal === 'email'">Change email</template>
-              <template v-else-if="modal === 'password'">Change password</template>
-              <template v-else>Delete account</template>
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
-    </div>
     </main>
   </div>
 </template>
