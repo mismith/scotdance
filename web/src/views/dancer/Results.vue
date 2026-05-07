@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { ChevronRight } from '@lucide/vue'
+import SectionHeader from '@/components/SectionHeader.vue'
 import { useDancerProfile } from '@/composables/useDancerProfile'
 import { formatRelative } from '@/lib/format'
 
@@ -45,12 +46,8 @@ const past = computed(() => profile.past.value)
     </section>
 
     <section v-if="past.length" class="space-y-2">
-      <h2
-        class="text-muted-foreground px-1 text-[11px] font-bold tracking-[0.14em] uppercase"
-      >
-        Past comps · {{ past.length }}
-      </h2>
-      <ul class="divide-y border-y">
+      <SectionHeader label="Past" :count="past.length" />
+      <ul>
         <li v-for="a in past" :key="a.hit.id" class="flex items-center">
           <RouterLink
             :to="{

@@ -2,6 +2,7 @@
 import { computed, onMounted } from 'vue'
 import { MapPin } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
+import SectionHeader from '@/components/SectionHeader.vue'
 import { staffMemberName, type StaffMember } from '@/types/competition'
 import {
   formatExternalURL,
@@ -132,13 +133,11 @@ const groupedStaff = computed(() => {
           v-if="competition.date"
           class="bg-background flex w-20 shrink-0 flex-col items-center justify-center border-r py-3"
         >
-          <div
-            class="text-muted-foreground text-[10px] font-bold tracking-[0.14em]"
-          >
+          <div class="text-muted-foreground text-[10px] font-bold tracking-[0.14em]">
             {{ monthLabel }}
           </div>
           <div
-            class="font-serif text-4xl font-medium leading-none tracking-tight tabular-nums"
+            class="font-serif text-4xl leading-none font-medium tracking-tight tabular-nums"
           >
             {{ dayLabel }}
           </div>
@@ -154,7 +153,7 @@ const groupedStaff = computed(() => {
         <div class="flex flex-1 flex-col justify-center gap-1 p-3">
           <div
             v-if="competition.venue"
-            class="font-serif text-[15px] font-medium tracking-tight leading-snug"
+            class="font-serif text-[15px] leading-snug font-medium tracking-tight"
           >
             {{ competition.venue }}
           </div>
@@ -192,7 +191,7 @@ const groupedStaff = computed(() => {
         class="bg-card flex flex-col items-center rounded-xl border py-2.5 shadow-sm"
       >
         <div
-          class="font-serif text-2xl font-medium leading-none tracking-tight tabular-nums"
+          class="font-serif text-2xl leading-none font-medium tracking-tight tabular-nums"
         >
           {{ stat.value }}
         </div>
@@ -241,26 +240,19 @@ const groupedStaff = computed(() => {
 
     <!-- Staff as two-column credits -->
     <section v-for="group in groupedStaff" :key="group.type" class="space-y-3">
-      <div
-        class="text-muted-foreground flex items-center gap-3 text-[11px] font-bold tracking-[0.14em] uppercase"
-      >
-        <span>{{ group.type }}s · {{ group.members.length }}</span>
-        <span class="border-border flex-1 border-t" />
-      </div>
+      <SectionHeader :label="`${group.type}s`" :count="group.members.length" />
       <div class="columns-2 gap-4 [column-fill:balance]">
         <div
           v-for="member in group.members"
           :key="member.id"
           class="mb-2 break-inside-avoid"
         >
-          <div
-            class="font-serif text-[14px] font-medium tracking-tight leading-tight"
-          >
+          <div class="font-serif text-[14px] leading-tight font-medium tracking-tight">
             {{ staffMemberName(member) }}
           </div>
           <div
             v-if="member.location"
-            class="font-serif text-muted-foreground text-[11px] italic"
+            class="text-muted-foreground font-serif text-[11px] italic"
           >
             {{ member.location }}
           </div>
@@ -274,7 +266,7 @@ const groupedStaff = computed(() => {
       class="text-muted-foreground flex items-center justify-between pt-2 text-[11px]"
     >
       <span class="font-serif italic">RSOBHD sanctioned</span>
-      <span class="tabular-nums tracking-wider">{{ competition.sobhd }}</span>
+      <span class="tracking-wider tabular-nums">{{ competition.sobhd }}</span>
     </div>
   </article>
 </template>
