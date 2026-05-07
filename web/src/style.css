@@ -133,3 +133,10 @@
     padding-bottom: calc(6rem + env(safe-area-inset-bottom));
   }
 }
+
+@layer utilities {
+  ::view-transition-old(.fixed-height),
+  ::view-transition-new(.fixed-height) {
+    height: 100%;
+  }
+}
