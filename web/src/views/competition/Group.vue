@@ -167,8 +167,10 @@ watch(
 
     <template v-else>
       <header v-if="group.category?.name">
-        <div class="text-muted-foreground font-serif text-sm italic tracking-tight">
-          In {{ group.category.name }}
+        <div
+          class="text-muted-foreground font-serif text-sm font-medium tracking-tight"
+        >
+          {{ group.category.name }}
         </div>
       </header>
 
