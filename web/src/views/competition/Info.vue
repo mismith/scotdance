@@ -4,6 +4,7 @@ import { MapPin } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import SectionHeader from '@/components/SectionHeader.vue'
 import { staffMemberName, type StaffMember } from '@/types/competition'
+import { blocks, days, events } from '@/lib/schedule'
 import {
   formatExternalURL,
   formatHumanURL,
@@ -17,8 +18,9 @@ const {
   staff,
   loadStaff,
   dancers,
-  categories,
   loadDancers,
+  dances,
+  loadResults,
   schedule,
   loadSchedule,
 } = useCompetition()
@@ -26,7 +28,18 @@ const {
 onMounted(() => {
   loadStaff()
   loadDancers()
+  loadResults()
   loadSchedule()
+})
+
+const eventCount = computed(() => {
+  if (!schedule.value) return 0
+  return days(schedule.value).reduce(
+    (total, day) =>
+      total +
+      blocks(day).reduce((sum, block) => sum + events(block).length, 0),
+    0,
+  )
 })
 
 const isToday = computed(() => isSameDay(competition.value?.date))
@@ -87,23 +100,21 @@ const registrationStatus = computed(() => {
   return lines.length ? lines : null
 })
 
-const scheduleDayCount = computed(() => {
-  const days = schedule.value?.days
-  return days ? Object.keys(days).length : 0
-})
-
 const stats = computed(() => {
   const list: Array<{ value: string; label: string }> = []
   if (dancers.value.length) {
     list.push({ value: String(dancers.value.length), label: 'Dancers' })
   }
-  if (categories.value.length) {
-    list.push({ value: String(categories.value.length), label: 'Categories' })
-  }
-  if (scheduleDayCount.value) {
+  if (eventCount.value) {
     list.push({
-      value: String(scheduleDayCount.value),
-      label: scheduleDayCount.value === 1 ? 'Day' : 'Days',
+      value: String(eventCount.value),
+      label: eventCount.value === 1 ? 'Event' : 'Events',
+    })
+  }
+  if (dances.value.length) {
+    list.push({
+      value: String(dances.value.length),
+      label: dances.value.length === 1 ? 'Dance' : 'Dances',
     })
   }
   return list
