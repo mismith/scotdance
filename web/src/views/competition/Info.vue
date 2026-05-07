@@ -47,11 +47,11 @@ const dayLabel = computed(() => {
   return d == null ? '' : String(new Date(d).getDate())
 })
 
-const weekdayLabel = computed(() => {
+const yearLabel = computed(() => {
   const d = competition.value?.date
   if (d == null) return ''
   if (isToday.value) return 'TODAY'
-  return new Date(d).toLocaleString('en-US', { weekday: 'short' }).toUpperCase()
+  return String(new Date(d).getFullYear())
 })
 
 const addressLine = computed(() => {
@@ -147,7 +147,7 @@ const groupedStaff = computed(() => {
               datePast ? 'text-muted-foreground' : 'text-secondary',
             ]"
           >
-            {{ weekdayLabel }}
+            {{ yearLabel }}
           </div>
         </div>
         <div class="flex flex-1 flex-col justify-center gap-1 p-3">
