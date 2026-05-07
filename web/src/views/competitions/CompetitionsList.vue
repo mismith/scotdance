@@ -115,7 +115,7 @@ const visibleCompetitions = computed(() =>
         <div ref="filterMenuRef" class="relative">
           <button
             type="button"
-            class="bg-chip text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium"
+            class="bg-chip text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 rounded-lg px-3 py-2.5 text-xs font-medium"
             @click="filterOpen = !filterOpen"
           >
             <ListFilter class="size-3.5" />
