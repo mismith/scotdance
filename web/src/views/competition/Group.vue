@@ -322,7 +322,6 @@ watch(
                 :key="row.dancerId"
                 class="flex items-center"
               >
-                <Place :place="row.place" :tied="row.tied" class="ml-3" />
                 <RouterLink
                   v-if="row.dancer"
                   :to="{
@@ -354,6 +353,7 @@ watch(
                 >
                   Unknown dancer
                 </div>
+                <Place :place="row.place" :tied="row.tied" class="mr-2" />
                 <FavoriteDancerButton
                   v-if="row.dancer"
                   :dancer="row.dancer"
@@ -381,7 +381,6 @@ watch(
                   :key="dancer.id"
                   class="flex items-center"
                 >
-                  <Place :place="null" pointed class="ml-3" />
                   <RouterLink
                     :to="{
                       name: 'competition.dancer',
@@ -404,6 +403,7 @@ watch(
                       </div>
                     </div>
                   </RouterLink>
+                  <Place :place="null" pointed class="mr-2" />
                   <FavoriteDancerButton :dancer="dancer" class="mr-2" />
                 </li>
               </ul>
