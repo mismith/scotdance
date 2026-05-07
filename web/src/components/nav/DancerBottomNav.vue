@@ -34,26 +34,28 @@ const activeTab = computed(() => {
 </script>
 
 <template>
-  <nav
-    class="pointer-events-none fixed inset-x-0 bottom-safe z-30 px-3"
-  >
+  <nav class="bottom-safe pointer-events-none fixed inset-x-0 z-30 px-3">
     <div class="mx-auto flex max-w-3xl items-center justify-between">
       <RouterLink
         :to="{ name: 'dancers' }"
-        class="pointer-events-auto bg-nav/90 text-nav-foreground backdrop-blur-xl hover:opacity-90 flex size-12 items-center justify-center rounded-full shadow-lg [view-transition-name:nav-left] [view-transition-class:fixed-height]"
+        class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-12 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-class:fixed-height] [view-transition-name:nav-left] hover:opacity-90"
         title="Back to Dancers"
         aria-label="Back to Dancers"
       >
         <Users class="size-5" />
       </RouterLink>
-      <div class="pointer-events-auto bg-nav/90 text-nav-foreground backdrop-blur-xl flex items-center gap-1 rounded-full p-1 shadow-lg [view-transition-name:nav-right] [view-transition-class:fixed-height]">
+      <div
+        class="bg-nav/90 text-nav-foreground pointer-events-auto flex items-center gap-1 rounded-full p-1 shadow-lg backdrop-blur-xl [view-transition-class:fixed-height] [view-transition-name:nav-right]"
+      >
         <RouterLink
           v-for="tab in tabs"
           :key="tab.to"
           :to="{ name: tab.to, params: { dancerId } }"
           :class="[
             'flex flex-col items-center gap-0.5 rounded-full px-4 py-1 text-xs font-medium transition-colors',
-            activeTab === tab.to ? 'bg-nav-foreground/10' : 'opacity-70 hover:opacity-100',
+            activeTab === tab.to
+              ? 'bg-nav-foreground/10'
+              : 'opacity-70 hover:opacity-100',
           ]"
         >
           <component :is="tab.icon" class="size-4" />
