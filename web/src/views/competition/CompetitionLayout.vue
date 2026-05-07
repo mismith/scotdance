@@ -35,7 +35,7 @@ const chromeTitle = computed(
 <template>
   <div class="flex flex-1 flex-col">
     <header
-      class="sticky top-0 z-30 overflow-hidden pt-safe text-white"
+      class="pt-safe sticky top-0 z-30 overflow-hidden text-white"
       style="
         background-image: linear-gradient(
           135deg,
@@ -46,7 +46,7 @@ const chromeTitle = computed(
     >
       <span
         aria-hidden="true"
-        class="font-serif pointer-events-none absolute -right-4 -top-6 select-none font-medium leading-none text-white/10"
+        class="pointer-events-none absolute -top-6 -right-4 font-serif leading-none font-medium text-white/10 select-none"
         style="font-size: 9rem; letter-spacing: -0.4rem"
       >
         {{ mark }}
@@ -55,7 +55,7 @@ const chromeTitle = computed(
         <RouterLink
           v-if="backTo"
           :to="{ name: backTo, params: { competitionId } }"
-          class="hover:bg-white/10 -ml-1 rounded-full p-2 text-white/80 hover:text-white"
+          class="-ml-1 rounded-full p-2 text-white/80 hover:bg-white/10 hover:text-white"
           title="Back"
           aria-label="Back"
         >
@@ -70,12 +70,12 @@ const chromeTitle = computed(
             :alt="competition.name ?? ''"
             class="size-full object-cover"
           />
-          <span v-else class="font-serif text-base font-medium leading-none">
+          <span v-else class="font-serif text-base leading-none font-medium">
             {{ mark }}
           </span>
         </div>
         <h1
-          class="font-serif min-w-0 flex-1 truncate text-lg font-medium tracking-tight leading-tight"
+          class="min-w-0 flex-1 truncate font-serif text-lg leading-tight font-medium tracking-tight"
         >
           {{ chromeTitle }}
         </h1>
@@ -91,8 +91,8 @@ const chromeTitle = computed(
       </div>
     </header>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 p-4 pt-6">
-      <div v-if="loading" class="text-muted-foreground font-serif italic text-sm">
+    <main class="mx-auto w-full max-w-3xl flex-1 p-4">
+      <div v-if="loading" class="text-muted-foreground font-serif text-sm italic">
         Loading…
       </div>
       <div v-else-if="notFound" class="text-muted-foreground text-sm">
