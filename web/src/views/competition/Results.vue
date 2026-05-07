@@ -62,10 +62,14 @@ function toggle(category: Category) {
   }
 }
 
-function categoryHasFavorite(category: Category): boolean {
-  return dancers.value.some(
-    (d) => d.group?.categoryId === category.id && favorites.isFavoriteDancer(d.id),
-  )
+function categoryFavoriteCount(category: Category): number {
+  return groups.value.filter(
+    (g) =>
+      g.categoryId === category.id &&
+      findGroupDancers(g.id, dancers.value).some((d) =>
+        favorites.isFavoriteDancer(d.id),
+      ),
+  ).length
 }
 
 function groupHasFavorite(group: EnrichedGroup): boolean {
@@ -124,14 +128,16 @@ const loaded = computed(() => groups.value.length > 0)
         >
           {{ row.category.name || '?' }}
         </span>
-        <Star
-          v-if="categoryHasFavorite(row.category)"
-          class="text-secondary size-4 self-center fill-current"
-        />
         <span
           class="text-muted-foreground self-center text-[11px] font-semibold tabular-nums"
         >
-          {{ row.groups.length }}
+          <template v-if="categoryFavoriteCount(row.category) > 0">
+            <span class="text-secondary">{{
+              categoryFavoriteCount(row.category)
+            }}</span
+            >/<span>{{ row.groups.length }}</span>
+          </template>
+          <template v-else>{{ row.groups.length }}</template>
         </span>
       </button>
 

@@ -7,8 +7,10 @@ import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue'
 import Place from '@/components/Place.vue'
 import { findGroupDances, getDancerPlace } from '@/lib/results'
 import { groupHasOverall, overallDance } from '@/types/competition'
+import { useFavoritesStore } from '@/stores/favorites'
 
 const route = useRoute()
+const favorites = useFavoritesStore()
 const { competitionId, dancers, dances, results, points, loadDancers, loadResults } =
   useCompetition()
 
@@ -71,7 +73,12 @@ const placedRows = computed(() =>
         />
         <div
           v-else
-          class="bg-muted text-muted-foreground flex size-20 items-center justify-center rounded-full font-mono text-xl tabular-nums"
+          :class="[
+            'flex size-20 items-center justify-center rounded-full font-mono text-xl tabular-nums',
+            favorites.isFavoriteDancer(dancer.id)
+              ? 'bg-secondary text-secondary-foreground'
+              : 'bg-muted text-muted-foreground',
+          ]"
         >
           {{ dancer.number ?? '–' }}
         </div>

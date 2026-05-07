@@ -5,9 +5,9 @@ import { useLocalStorage } from '@vueuse/core'
 import { ChevronDown } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { injectChromeTitle } from '@/composables/useChromeTitle'
-import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue'
 import Place from '@/components/Place.vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
+import { useFavoritesStore } from '@/stores/favorites'
 import {
   CALLBACKS_ID,
   findGroupDancers,
@@ -24,6 +24,7 @@ import {
 } from '@/types/competition'
 
 const route = useRoute()
+const favorites = useFavoritesStore()
 const {
   competitionId,
   groups,
@@ -116,6 +117,16 @@ const callbacksSection = computed(() =>
 const callbacksHasResults = computed(
   () => !!callbacksSection.value?.callback?.hasResults,
 )
+
+const callbackFavoriteCount = computed(() => {
+  const callback = callbacksSection.value?.callback
+  if (callback?.hasResults) {
+    return callback.dancers.filter(
+      (e) => e.dancer && favorites.isFavoriteDancer(e.dancer.id),
+    ).length
+  }
+  return groupDancers.value.filter((d) => favorites.isFavoriteDancer(d.id)).length
+})
 
 const showAllInCallbacks = useLocalStorage<Record<string, boolean>>(
   'results:showAllInCallbacks',
@@ -240,9 +251,17 @@ watch(
             v-if="section.kind === 'callbacks'"
             class="text-muted-foreground self-center text-[11px] font-semibold tabular-nums"
           >
-            {{
-              section.callback?.hasResults ? section.count : groupDancers.length
-            }}
+            <template v-if="callbackFavoriteCount > 0">
+              <span class="text-secondary">{{ callbackFavoriteCount }}</span
+              >/<span>{{
+                section.callback?.hasResults ? section.count : groupDancers.length
+              }}</span>
+            </template>
+            <template v-else>
+              {{
+                section.callback?.hasResults ? section.count : groupDancers.length
+              }}
+            </template>
           </span>
         </button>
 
@@ -273,7 +292,12 @@ watch(
                   class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
                 >
                   <div
-                    class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums"
+                    :class="[
+                      'flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums',
+                      favorites.isFavoriteDancer(row.dancer.id)
+                        ? 'bg-secondary text-secondary-foreground'
+                        : 'bg-muted text-muted-foreground',
+                    ]"
                   >
                     {{ row.dancer.number ?? '–' }}
                   </div>
@@ -295,11 +319,6 @@ watch(
                 >
                   Unknown dancer
                 </div>
-                <FavoriteDancerButton
-                  v-if="row.dancer"
-                  :dancer="row.dancer"
-                  class="mr-2"
-                />
               </li>
             </ul>
             <button
@@ -331,7 +350,12 @@ watch(
                   class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
                 >
                   <div
-                    class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums"
+                    :class="[
+                      'flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums',
+                      favorites.isFavoriteDancer(row.dancer.id)
+                        ? 'bg-secondary text-secondary-foreground'
+                        : 'bg-muted text-muted-foreground',
+                    ]"
                   >
                     {{ row.dancer.number ?? '–' }}
                   </div>
@@ -353,12 +377,7 @@ watch(
                 >
                   Unknown dancer
                 </div>
-                <Place :place="row.place" :tied="row.tied" class="mr-2" />
-                <FavoriteDancerButton
-                  v-if="row.dancer"
-                  :dancer="row.dancer"
-                  class="mr-2"
-                />
+                <Place :place="row.place" :tied="row.tied" class="mr-3" />
               </li>
             </ul>
             <div v-else class="text-muted-foreground font-serif px-1 text-sm italic">
@@ -389,7 +408,12 @@ watch(
                     class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
                   >
                     <div
-                      class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums"
+                      :class="[
+                        'flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums',
+                        favorites.isFavoriteDancer(dancer.id)
+                          ? 'bg-secondary text-secondary-foreground'
+                          : 'bg-muted text-muted-foreground',
+                      ]"
                     >
                       {{ dancer.number ?? '–' }}
                     </div>
@@ -403,8 +427,7 @@ watch(
                       </div>
                     </div>
                   </RouterLink>
-                  <Place :place="null" pointed class="mr-2" />
-                  <FavoriteDancerButton :dancer="dancer" class="mr-2" />
+                  <Place :place="null" pointed class="mr-3" />
                 </li>
               </ul>
             </div>
