@@ -8,6 +8,7 @@ import CompChip from '@/components/CompChip.vue'
 import CompetitionsCalendar from '@/components/CompetitionsCalendar.vue'
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue'
 import HeroCompCard from '@/components/HeroCompCard.vue'
+import SectionHeader from '@/components/SectionHeader.vue'
 import ViewModeTabs, { type ViewMode } from '@/components/ViewModeTabs.vue'
 import { formatRelative, isPast, isSameDay } from '@/lib/format'
 
@@ -77,6 +78,32 @@ const visibleCompetitions = computed(() =>
     ? filteredCompetitions.value.filter((c) => c.id !== featuredId.value)
     : filteredCompetitions.value,
 )
+
+interface MonthGroup {
+  key: string
+  label: string
+  members: CompetitionListItem[]
+}
+
+const monthGroups = computed<MonthGroup[]>(() => {
+  const groups = new Map<string, MonthGroup>()
+  for (const c of visibleCompetitions.value) {
+    const d = c.date ? new Date(c.date) : null
+    const key = d
+      ? `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`
+      : 'undated'
+    const label = d
+      ? `${d.toLocaleString('en-US', { month: 'long' })} ${d.getFullYear()}`
+      : 'Undated'
+    let g = groups.get(key)
+    if (!g) {
+      g = { key, label, members: [] }
+      groups.set(key, g)
+    }
+    g.members.push(c)
+  }
+  return [...groups.values()]
+})
 </script>
 
 <template>
@@ -183,55 +210,64 @@ const visibleCompetitions = computed(() =>
           <span v-else>No competitions match.</span>
         </div>
 
-        <ul v-else class="divide-y border-y">
-          <li
-            v-for="competition in visibleCompetitions"
-            :key="competition.id"
-            class="flex items-start"
+        <template v-else>
+          <section
+            v-for="group in monthGroups"
+            :key="group.key"
+            class="space-y-2"
           >
-            <RouterLink
-              :to="{
-                name: 'competition.info',
-                params: { competitionId: competition.id },
-              }"
-              class="hover:bg-accent flex min-w-0 flex-1 items-start gap-3 p-3"
-            >
-              <CompChip
-                :name="competition.name"
-                :image="competition.image"
-                :size="48"
-              />
-              <div class="min-w-0 flex-1 pt-0.5">
-                <div
-                  class="font-serif text-[15px] font-medium tracking-tight leading-tight line-clamp-2"
+            <SectionHeader :label="group.label" :count="group.members.length" />
+            <ul>
+              <li
+                v-for="competition in group.members"
+                :key="competition.id"
+                class="flex items-start"
+              >
+                <RouterLink
+                  :to="{
+                    name: 'competition.info',
+                    params: { competitionId: competition.id },
+                  }"
+                  class="hover:bg-accent flex min-w-0 flex-1 items-start gap-3 p-3"
                 >
-                  {{ competition.name ?? '?' }}
-                </div>
-                <div
-                  v-if="competition.location"
-                  class="text-muted-foreground mt-1 truncate text-[11.5px]"
-                >
-                  {{ competition.location }}
-                </div>
-                <div
-                  class="text-muted-foreground/80 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] tabular-nums"
-                >
-                  <span v-if="competition.date">{{
-                    formatRelative(competition.date)
-                  }}</span>
-                  <span
-                    v-if="favorites.isFavoriteCompetition(competition.id)"
-                    class="text-secondary inline-flex items-center gap-1 font-semibold tracking-[0.06em]"
-                  >
-                    <Star class="size-3 fill-current" />
-                    Favourited
-                  </span>
-                </div>
-              </div>
-            </RouterLink>
-            <FavoriteCompetitionButton :competition-id="competition.id" class="mr-2 mt-2" />
-          </li>
-        </ul>
+                  <CompChip
+                    :name="competition.name"
+                    :image="competition.image"
+                    :size="48"
+                  />
+                  <div class="min-w-0 flex-1 pt-0.5">
+                    <div
+                      class="font-serif text-[15px] font-medium tracking-tight leading-tight line-clamp-2"
+                    >
+                      {{ competition.name ?? '?' }}
+                    </div>
+                    <div
+                      v-if="competition.location"
+                      class="text-muted-foreground mt-1 truncate text-[11.5px]"
+                    >
+                      {{ competition.location }}
+                    </div>
+                    <div
+                      class="text-muted-foreground/80 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] tabular-nums"
+                    >
+                      <span v-if="competition.date">{{
+                        formatRelative(competition.date)
+                      }}</span>
+                      <span
+                        v-if="favorites.isFavoriteCompetition(competition.id)"
+                        class="text-secondary inline-flex items-center gap-1 font-semibold tracking-[0.06em]"
+                      >
+                        <Star class="size-3 fill-current" />
+                        Favourited
+                      </span>
+                    </div>
+                  </div>
+                </RouterLink>
+                <FavoriteCompetitionButton :competition-id="competition.id" class="mr-2 mt-2" />
+              </li>
+            </ul>
+          </section>
+        </template>
 
         <div v-if="competitions.length && !includeArchived" class="pt-2 text-center">
           <button

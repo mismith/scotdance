@@ -6,6 +6,7 @@ import { ChevronRight, Loader2, Search, Star, X } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useRecentDancers } from '@/composables/useRecentDancers'
+import SectionHeader from '@/components/SectionHeader.vue'
 import { searchDancers, type SearchDancerGroup } from '@/lib/searchDancers'
 
 const route = useRoute()
@@ -214,15 +215,10 @@ const showSearch = computed(() => q.value.trim().length > 0)
 
       <template v-else>
         <section v-if="favoriteEntries.length" class="space-y-2">
-          <div
-            class="text-muted-foreground flex items-baseline justify-between px-1 text-[11px] font-bold tracking-[0.14em] uppercase"
-          >
-            <span>Your favourites · {{ favoriteEntries.length }}</span>
-            <span class="text-secondary tabular-nums normal-case tracking-normal">
-              ★
-            </span>
-          </div>
-          <ul class="divide-y border-y">
+          <SectionHeader label="Favourites" :count="favoriteEntries.length">
+            <Star class="text-secondary size-3 fill-current" />
+          </SectionHeader>
+          <ul>
             <li v-for="entry in favoriteEntries" :key="entry.name">
               <RouterLink
                 :to="{
@@ -272,10 +268,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
         </section>
 
         <section v-if="recentList.length" class="space-y-2">
-          <div
-            class="text-muted-foreground flex items-baseline justify-between px-1 text-[11px] font-bold tracking-[0.14em] uppercase"
-          >
-            <span>Recently viewed · {{ recentList.length }}</span>
+          <SectionHeader label="Recently viewed" :count="recentList.length">
             <button
               type="button"
               class="hover:text-foreground tracking-normal normal-case text-[11px] font-normal"
@@ -283,8 +276,8 @@ const showSearch = computed(() => q.value.trim().length > 0)
             >
               Clear
             </button>
-          </div>
-          <ul class="divide-y border-y">
+          </SectionHeader>
+          <ul>
             <li v-for="entry in recentList" :key="entry.slug">
               <RouterLink
                 :to="{ name: 'dancer.info', params: { dancerId: entry.slug } }"
