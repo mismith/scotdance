@@ -12,7 +12,7 @@
             Highland dance, tracked.
           </h2>
           <p class="text-muted-foreground font-serif text-lg">
-            Browse competitions, dancers, and live results.
+            Browse competitions, track dancers, and view results in real-time.
           </p>
         </div>
       </div>
