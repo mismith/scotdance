@@ -176,8 +176,8 @@ function toggleExpanded(group: DancerGroupRow) {
   }
 }
 
-function groupHasFavorite(group: DancerGroupRow) {
-  return group.members.some((d) => favorites.isFavoriteDancer(d.id))
+function groupFavoriteCount(group: DancerGroupRow) {
+  return group.members.filter((d) => favorites.isFavoriteDancer(d.id)).length
 }
 
 async function favoriteAll(dancersToFavorite: EnrichedDancer[]) {
@@ -312,14 +312,17 @@ function dismissSuggestions() {
         >
           Favourite all
         </button>
-        <Star
-          v-else-if="!onlyFavorites && groupHasFavorite(group)"
-          class="text-secondary size-4 self-center fill-current"
-        />
         <span
+          v-else
           class="text-muted-foreground self-center text-[11px] font-semibold tabular-nums"
         >
-          {{ group.members.length }}
+          <template
+            v-if="!onlyFavorites && !group.isSuggestions && groupFavoriteCount(group) > 0"
+          >
+            <span class="text-secondary">{{ groupFavoriteCount(group) }}</span
+            >/<span>{{ group.members.length }}</span>
+          </template>
+          <template v-else>{{ group.members.length }}</template>
         </span>
       </button>
       <SmoothCollapse :open="isExpanded(group)">
@@ -334,7 +337,12 @@ function dismissSuggestions() {
               class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
             >
               <div
-                class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums"
+                :class="[
+                  'flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums',
+                  favorites.isFavoriteDancer(dancer.id)
+                    ? 'bg-secondary text-secondary-foreground'
+                    : 'bg-muted text-muted-foreground',
+                ]"
               >
                 {{ dancer.number ?? '–' }}
               </div>
