@@ -14,16 +14,16 @@ const tabs: Array<{
 }> = [
   { name: 'Info', to: 'competition.info', icon: Info, matches: ['competition.info'] },
   {
-    name: 'Schedule',
-    to: 'competition.schedule',
-    icon: CalendarDays,
-    matches: ['competition.schedule', 'competition.event'],
-  },
-  {
     name: 'Dancers',
     to: 'competition.dancers',
     icon: Users,
     matches: ['competition.dancers', 'competition.dancer'],
+  },
+  {
+    name: 'Schedule',
+    to: 'competition.schedule',
+    icon: CalendarDays,
+    matches: ['competition.schedule', 'competition.event'],
   },
   {
     name: 'Results',
