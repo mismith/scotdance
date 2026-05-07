@@ -146,22 +146,24 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
         No dances scheduled.
       </div>
 
-      <section v-for="dance in eventDanceList" :key="dance.id" class="space-y-2">
+      <section v-for="dance in eventDanceList" :key="dance.id" class="space-y-1">
         <button
           type="button"
-          class="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1 py-1 text-[11px] font-bold tracking-[0.14em] uppercase"
+          class="hover:text-secondary flex w-full items-baseline gap-2 px-1 py-2 text-left disabled:hover:text-foreground"
           :disabled="!danceHasContent(dance)"
           @click="toggle(dance.id, danceHasContent(dance))"
         >
           <ChevronDown
             v-if="danceHasContent(dance)"
             :class="[
-              'size-4 transition-transform',
+              'text-muted-foreground size-4 shrink-0 self-center transition-transform',
               isExpanded(dance.id, danceHasContent(dance)) ? '' : '-rotate-90',
             ]"
           />
           <span v-else class="size-4 shrink-0" />
-          <span class="flex-1 text-left">
+          <span
+            class="font-serif min-w-0 flex-1 truncate text-[17px] font-medium tracking-tight leading-tight"
+          >
             {{ getScheduleDanceName(dance, dances) || 'Dance' }}
           </span>
         </button>

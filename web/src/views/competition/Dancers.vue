@@ -286,29 +286,38 @@ function dismissSuggestions() {
       <template v-else>No matches.</template>
     </div>
 
-    <section v-for="group in grouped" :key="group.groupName" class="space-y-2">
+    <section v-for="group in grouped" :key="group.groupName" class="space-y-1">
       <button
         type="button"
-        class="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1 py-1 text-[11px] font-bold tracking-[0.14em] uppercase"
+        class="hover:text-secondary flex w-full items-baseline gap-2 px-1 py-2 text-left"
         @click="toggleExpanded(group)"
       >
         <ChevronDown
-          :class="['size-4 transition-transform', isExpanded(group) ? '' : '-rotate-90']"
+          :class="[
+            'text-muted-foreground size-4 shrink-0 self-center transition-transform',
+            isExpanded(group) ? '' : '-rotate-90',
+          ]"
         />
-        <span class="flex-1 text-left">{{ group.groupName }}</span>
+        <span
+          class="font-serif min-w-0 flex-1 truncate text-[17px] font-medium tracking-tight leading-tight"
+        >
+          {{ group.groupName }}
+        </span>
         <button
           v-if="group.isSuggestions && isExpanded(group)"
           type="button"
-          class="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-[11px] font-medium tracking-normal normal-case hover:opacity-90"
+          class="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-[11px] font-medium hover:opacity-90"
           @click.stop="favoriteAll(group.members)"
         >
           Favourite all
         </button>
         <Star
           v-else-if="!onlyFavorites && groupHasFavorite(group)"
-          class="text-secondary size-4 fill-current"
+          class="text-secondary size-4 self-center fill-current"
         />
-        <span class="text-[11px] font-normal tabular-nums tracking-normal normal-case">
+        <span
+          class="text-muted-foreground self-center text-[11px] font-semibold tabular-nums"
+        >
           {{ group.members.length }}
         </span>
       </button>
