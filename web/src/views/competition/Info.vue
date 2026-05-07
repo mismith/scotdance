@@ -1,21 +1,70 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import { MapPin } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { staffMemberName, type StaffMember } from '@/types/competition'
 import {
   formatExternalURL,
   formatHumanURL,
-  formatLongDate,
   formatDateTime,
   isPast,
   isSameDay,
 } from '@/lib/format'
 
-const { competition, staff, loadStaff } = useCompetition()
+const {
+  competition,
+  staff,
+  loadStaff,
+  dancers,
+  categories,
+  loadDancers,
+  schedule,
+  loadSchedule,
+} = useCompetition()
 
-onMounted(loadStaff)
+onMounted(() => {
+  loadStaff()
+  loadDancers()
+  loadSchedule()
+})
 
 const isToday = computed(() => isSameDay(competition.value?.date))
+const datePast = computed(() => {
+  const d = competition.value?.date
+  return d != null && isPast(d) && !isSameDay(d)
+})
+
+const monthLabel = computed(() => {
+  const d = competition.value?.date
+  return d == null
+    ? ''
+    : new Date(d).toLocaleString('en-US', { month: 'short' }).toUpperCase()
+})
+
+const dayLabel = computed(() => {
+  const d = competition.value?.date
+  return d == null ? '' : String(new Date(d).getDate())
+})
+
+const weekdayLabel = computed(() => {
+  const d = competition.value?.date
+  if (d == null) return ''
+  if (isToday.value) return 'TODAY'
+  return new Date(d).toLocaleString('en-US', { weekday: 'short' }).toUpperCase()
+})
+
+const addressLine = computed(() => {
+  const c = competition.value
+  if (!c) return ''
+  return [c.address, c.location].filter(Boolean).join(' · ')
+})
+
+const mapsHref = computed(() => {
+  const c = competition.value
+  if (!c?.venue && !c?.address && !c?.location) return null
+  const parts = [c.venue, c.address, c.location].filter(Boolean).join(', ')
+  return `https://maps.google.com/?q=${encodeURIComponent(parts)}`
+})
 
 const registrationOpen = computed(() => {
   const end = competition.value?.registrationEnd
@@ -37,11 +86,26 @@ const registrationStatus = computed(() => {
   return lines.length ? lines : null
 })
 
-const mapsHref = computed(() => {
-  const c = competition.value
-  if (!c?.venue) return null
-  const parts = [c.venue, c.address, c.location].filter(Boolean).join(', ')
-  return `https://maps.google.com/?q=${encodeURIComponent(parts)}`
+const scheduleDayCount = computed(() => {
+  const days = schedule.value?.days
+  return days ? Object.keys(days).length : 0
+})
+
+const stats = computed(() => {
+  const list: Array<{ value: string; label: string }> = []
+  if (dancers.value.length) {
+    list.push({ value: String(dancers.value.length), label: 'Dancers' })
+  }
+  if (categories.value.length) {
+    list.push({ value: String(categories.value.length), label: 'Categories' })
+  }
+  if (scheduleDayCount.value) {
+    list.push({
+      value: String(scheduleDayCount.value),
+      label: scheduleDayCount.value === 1 ? 'Day' : 'Days',
+    })
+  }
+  return list
 })
 
 const groupedStaff = computed(() => {
@@ -57,35 +121,88 @@ const groupedStaff = computed(() => {
 </script>
 
 <template>
-  <article v-if="competition" class="space-y-6">
-    <!-- Layout chrome already shows the comp identity. Here we surface the
-         meta + key actions only. -->
-    <header class="space-y-2">
+  <article v-if="competition" class="space-y-5">
+    <!-- Date / Venue card -->
+    <section
+      v-if="competition.date || competition.venue"
+      class="bg-card overflow-hidden rounded-2xl border shadow-sm"
+    >
+      <div class="flex items-stretch">
+        <div
+          v-if="competition.date"
+          class="bg-background flex w-20 shrink-0 flex-col items-center justify-center border-r py-3"
+        >
+          <div
+            class="text-muted-foreground text-[10px] font-bold tracking-[0.14em]"
+          >
+            {{ monthLabel }}
+          </div>
+          <div
+            class="font-serif text-4xl font-medium leading-none tracking-tight tabular-nums"
+          >
+            {{ dayLabel }}
+          </div>
+          <div
+            :class="[
+              'mt-1 text-[10px] font-bold tracking-[0.12em]',
+              datePast ? 'text-muted-foreground' : 'text-secondary',
+            ]"
+          >
+            {{ weekdayLabel }}
+          </div>
+        </div>
+        <div class="flex flex-1 flex-col justify-center gap-1 p-3">
+          <div
+            v-if="competition.venue"
+            class="font-serif text-[15px] font-medium tracking-tight leading-snug"
+          >
+            {{ competition.venue }}
+          </div>
+          <component
+            :is="mapsHref ? 'a' : 'div'"
+            v-if="addressLine"
+            :href="mapsHref ?? undefined"
+            target="_blank"
+            rel="noopener"
+            :class="[
+              'text-muted-foreground inline-flex items-center gap-1.5 text-[11.5px]',
+              mapsHref && 'hover:text-foreground',
+            ]"
+          >
+            <MapPin class="size-3 shrink-0" />
+            <span class="truncate">{{ addressLine }}</span>
+          </component>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stat tiles -->
+    <section
+      v-if="stats.length"
+      :class="[
+        'grid gap-2',
+        stats.length === 1 && 'grid-cols-1',
+        stats.length === 2 && 'grid-cols-2',
+        stats.length >= 3 && 'grid-cols-3',
+      ]"
+    >
       <div
-        v-if="competition.date"
-        class="flex flex-wrap items-center gap-2 font-serif text-lg font-medium tracking-tight"
+        v-for="stat in stats"
+        :key="stat.label"
+        class="bg-card flex flex-col items-center rounded-xl border py-2.5 shadow-sm"
       >
-        {{ formatLongDate(competition.date) }}
-        <span
-          v-if="isToday"
-          class="bg-secondary text-secondary-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-[0.14em] uppercase"
+        <div
+          class="font-serif text-2xl font-medium leading-none tracking-tight tabular-nums"
         >
-          <span class="size-1.5 animate-pulse rounded-full bg-current" />
-          Today
-        </span>
-      </div>
-      <div v-if="competition.venue" class="text-muted-foreground text-sm">
-        <a
-          v-if="mapsHref"
-          :href="mapsHref"
-          target="_blank"
-          rel="noopener"
-          class="hover:text-foreground underline"
-          >{{ competition.venue }}</a
+          {{ stat.value }}
+        </div>
+        <div
+          class="text-muted-foreground mt-1 text-[10px] font-bold tracking-[0.14em] uppercase"
         >
-        <span v-else>{{ competition.venue }}</span>
+          {{ stat.label }}
+        </div>
       </div>
-    </header>
+    </section>
 
     <section v-if="competition.registrationURL" class="space-y-2">
       <a
@@ -122,46 +239,42 @@ const groupedStaff = computed(() => {
       {{ competition.description }}
     </section>
 
-    <p v-if="competition.sobhd" class="text-muted-foreground text-xs">
-      <strong>RSOBHD</strong> {{ competition.sobhd }}
-    </p>
-
-    <section v-if="groupedStaff.length" class="space-y-4">
-      <div v-for="group in groupedStaff" :key="group.type">
-        <h3
-          class="text-muted-foreground mb-2 text-[11px] font-semibold tracking-[0.14em] uppercase"
+    <!-- Staff as two-column credits -->
+    <section v-for="group in groupedStaff" :key="group.type" class="space-y-3">
+      <div
+        class="text-muted-foreground flex items-center gap-3 text-[11px] font-bold tracking-[0.14em] uppercase"
+      >
+        <span>{{ group.type }}s · {{ group.members.length }}</span>
+        <span class="border-border flex-1 border-t" />
+      </div>
+      <div class="columns-2 gap-4 [column-fill:balance]">
+        <div
+          v-for="member in group.members"
+          :key="member.id"
+          class="mb-2 break-inside-avoid"
         >
-          {{ group.type }}s
-        </h3>
-        <ul class="divide-y border-y">
-          <li
-            v-for="member in group.members"
-            :key="member.id"
-            class="flex items-center gap-3 px-1 py-3"
+          <div
+            class="font-serif text-[14px] font-medium tracking-tight leading-tight"
           >
-            <img
-              v-if="member.image"
-              :src="member.image"
-              :alt="staffMemberName(member)"
-              class="bg-muted size-10 rounded-full object-cover"
-            />
-            <div v-else class="bg-muted size-10 rounded-full" />
-            <div class="min-w-0 flex-1">
-              <div
-                class="font-serif truncate text-[15px] font-medium tracking-tight"
-              >
-                {{ staffMemberName(member) }}
-              </div>
-              <div
-                v-if="member.location"
-                class="text-muted-foreground truncate text-[11.5px]"
-              >
-                {{ member.location }}
-              </div>
-            </div>
-          </li>
-        </ul>
+            {{ staffMemberName(member) }}
+          </div>
+          <div
+            v-if="member.location"
+            class="font-serif text-muted-foreground text-[11px] italic"
+          >
+            {{ member.location }}
+          </div>
+        </div>
       </div>
     </section>
+
+    <!-- Sanction footer -->
+    <div
+      v-if="competition.sobhd"
+      class="text-muted-foreground flex items-center justify-between pt-2 text-[11px]"
+    >
+      <span class="font-serif italic">RSOBHD sanctioned</span>
+      <span class="tabular-nums tracking-wider">{{ competition.sobhd }}</span>
+    </div>
   </article>
 </template>
