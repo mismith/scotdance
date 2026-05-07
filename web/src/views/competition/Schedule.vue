@@ -54,22 +54,26 @@ const isEmpty = computed(() => schedule.value !== null && dayList.value.length =
         </p>
       </header>
 
-      <div v-for="block in blocks(day)" :key="block.id" class="space-y-2">
+      <div v-for="block in blocks(day)" :key="block.id" class="space-y-1">
         <button
           type="button"
-          class="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1 py-1 text-xs font-bold tracking-[0.14em] uppercase"
+          class="hover:text-secondary flex w-full items-baseline gap-2 px-1 py-2 text-left"
           @click="toggle(day.id, block.id, !!block.events)"
         >
           <ChevronDown
             :class="[
-              'size-4 transition-transform',
+              'text-muted-foreground size-4 shrink-0 self-center transition-transform',
               isExpanded(day.id, block.id, !!block.events) ? '' : '-rotate-90',
             ]"
           />
-          <span class="flex-1 text-left">{{ block.name || 'Block' }}</span>
+          <span
+            class="font-serif min-w-0 flex-1 truncate text-[17px] font-medium tracking-tight leading-tight"
+          >
+            {{ block.name || 'Block' }}
+          </span>
           <span
             v-if="block.description"
-            class="text-muted-foreground max-w-[50%] truncate text-xs font-normal tracking-normal normal-case"
+            class="text-muted-foreground max-w-[40%] truncate text-[11.5px]"
           >
             {{ slugline(block.description) }}
           </span>

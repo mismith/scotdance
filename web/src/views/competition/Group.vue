@@ -178,23 +178,27 @@ watch(
         v-for="section in sections"
         :id="`dance-${section.dance.id}`"
         :key="section.dance.id"
-        class="scroll-mt-20 space-y-2"
+        class="scroll-mt-20 space-y-1"
       >
         <button
           type="button"
-          class="text-muted-foreground hover:text-foreground flex w-full items-center gap-2 px-1 py-1 text-[11px] font-bold tracking-[0.14em] uppercase"
+          class="hover:text-secondary flex w-full items-baseline gap-2 px-1 py-2 text-left"
           @click="toggle(section.dance.id)"
         >
           <ChevronDown
             :class="[
-              'size-4 transition-transform',
+              'text-muted-foreground size-4 shrink-0 self-center transition-transform',
               isExpanded(section.dance.id) ? '' : '-rotate-90',
             ]"
           />
-          <span class="flex-1 text-left">{{ section.dance.fullName }}</span>
+          <span
+            class="font-serif min-w-0 flex-1 truncate text-[17px] font-medium tracking-tight leading-tight"
+          >
+            {{ section.dance.fullName }}
+          </span>
           <span
             v-if="section.count != null"
-            class="text-[11px] font-normal tabular-nums tracking-normal normal-case"
+            class="text-muted-foreground self-center text-[11px] font-semibold tabular-nums"
           >
             {{ section.count }}
           </span>
