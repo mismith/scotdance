@@ -12,9 +12,6 @@ const ordinal = computed(() => (props.place != null ? getOrdinalSuffix(props.pla
 
 const tone = computed(() => {
   if (props.pointed) return 'bg-amber-100 text-amber-900 border-amber-300'
-  if (props.place === 1) return 'bg-yellow-100 text-yellow-900 border-yellow-300'
-  if (props.place === 2) return 'bg-zinc-100 text-zinc-900 border-zinc-300'
-  if (props.place === 3) return 'bg-orange-100 text-orange-900 border-orange-300'
   if (props.place != null) return 'bg-muted text-muted-foreground border-transparent'
   return 'bg-transparent text-muted-foreground border-dashed border-muted-foreground/40'
 })
@@ -30,9 +27,9 @@ const tone = computed(() => {
   >
     <template v-if="pointed">♦</template>
     <template v-else-if="place != null">
+      <span v-if="tied" class="text-muted-foreground/70 mr-0.5 text-[0.7em] font-semibold">T</span>
       <span>{{ place }}</span>
       <sup class="ml-0.5 text-[0.55rem] font-medium">{{ ordinal }}</sup>
-      <span v-if="tied" class="ml-0.5 text-xs">=</span>
     </template>
     <template v-else>—</template>
   </span>
