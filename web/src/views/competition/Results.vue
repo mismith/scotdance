@@ -13,6 +13,7 @@ import { useCompetition } from '@/composables/useCompetition'
 import { useFavoritesStore } from '@/stores/favorites'
 import { findGroupDancers, hasGroupAnyResults, isGroupInProgress } from '@/lib/results'
 import type { Category, EnrichedGroup } from '@/types/competition'
+import SmoothCollapse from '@/components/SmoothCollapse.vue'
 
 const {
   competitionId,
@@ -134,7 +135,8 @@ const loaded = computed(() => groups.value.length > 0)
         </span>
       </button>
 
-      <ul v-if="isExpanded(row.category)" class="divide-y border-y">
+      <SmoothCollapse :open="isExpanded(row.category)">
+        <ul class="divide-y border-y">
         <li
           v-if="!row.groups.length"
           class="text-muted-foreground font-serif px-1 py-3 text-sm italic"
@@ -197,6 +199,7 @@ const loaded = computed(() => groups.value.length > 0)
           </RouterLink>
         </li>
       </ul>
+      </SmoothCollapse>
     </section>
   </div>
 </template>
