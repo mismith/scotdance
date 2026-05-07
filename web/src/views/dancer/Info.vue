@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { ChevronRight } from '@lucide/vue'
 import { useDancerProfile } from '@/composables/useDancerProfile'
 import CompChip from '@/components/CompChip.vue'
+import SectionHeader from '@/components/SectionHeader.vue'
 
 const profile = useDancerProfile()
 
@@ -52,11 +53,7 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
     </section>
 
     <section v-if="recentComp" class="space-y-2">
-      <h2
-        class="text-muted-foreground px-1 text-[11px] font-bold tracking-[0.14em] uppercase"
-      >
-        Last seen at
-      </h2>
+      <SectionHeader label="Last seen at" />
       <RouterLink
         :to="{
           name: 'competition.dancer',
@@ -65,7 +62,7 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
             dancerId: recentComp.hit.id,
           },
         }"
-        class="bg-card hover:bg-accent flex items-center gap-3 rounded-2xl border p-3"
+        class="hover:bg-accent flex items-center gap-3 px-2 py-3"
       >
         <CompChip
           :name="recentComp.competition?.name"
@@ -74,18 +71,18 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
         />
         <div class="min-w-0 flex-1">
           <div
-            class="font-serif truncate text-[15px] font-medium tracking-tight"
+            class="font-serif truncate text-[15px] leading-tight font-medium tracking-tight"
           >
             {{ recentComp.competition?.name ?? 'Loading…' }}
           </div>
           <div
             v-if="recentComp.hit.number != null"
-            class="text-muted-foreground text-[11.5px] tabular-nums"
+            class="text-muted-foreground mt-1 text-[11.5px] tabular-nums"
           >
             #{{ recentComp.hit.number }}
           </div>
         </div>
-        <ChevronRight class="text-muted-foreground size-4" />
+        <ChevronRight class="text-muted-foreground size-4 shrink-0" />
       </RouterLink>
     </section>
 
