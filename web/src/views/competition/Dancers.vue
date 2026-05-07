@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
 import type { EnrichedDancer } from '@/types/competition'
 import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue'
+import SmoothCollapse from '@/components/SmoothCollapse.vue'
 
 const SUGGESTIONS_NAME = 'Suggested Favourites'
 
@@ -321,7 +322,8 @@ function dismissSuggestions() {
           {{ group.members.length }}
         </span>
       </button>
-      <ul v-if="isExpanded(group)" class="divide-y border-y">
+      <SmoothCollapse :open="isExpanded(group)">
+        <ul class="divide-y border-y">
         <li v-for="dancer in group.members" :key="dancer.id">
           <div class="flex items-center">
             <RouterLink
@@ -354,6 +356,7 @@ function dismissSuggestions() {
           </div>
         </li>
       </ul>
+      </SmoothCollapse>
     </section>
   </div>
 </template>

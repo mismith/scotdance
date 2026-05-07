@@ -7,6 +7,7 @@ import { useCompetition } from '@/composables/useCompetition'
 import { injectChromeTitle } from '@/composables/useChromeTitle'
 import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue'
 import Place from '@/components/Place.vue'
+import SmoothCollapse from '@/components/SmoothCollapse.vue'
 import {
   CALLBACKS_ID,
   findGroupDancers,
@@ -202,7 +203,7 @@ watch(
           </span>
         </button>
 
-        <div v-if="isExpanded(section.dance.id)">
+        <SmoothCollapse :open="isExpanded(section.dance.id)">
           <template v-if="section.kind === 'all'">
             <ul v-if="section.all?.length" class="divide-y border-y">
               <li
@@ -388,7 +389,7 @@ watch(
               </ul>
             </div>
           </template>
-        </div>
+        </SmoothCollapse>
       </section>
     </template>
   </article>

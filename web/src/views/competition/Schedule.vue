@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { blocks, days, events, slugline } from '@/lib/schedule'
 import { formatWeekday } from '@/lib/format'
+import SmoothCollapse from '@/components/SmoothCollapse.vue'
 
 const { competitionId, schedule, loadSchedule } = useCompetition()
 
@@ -79,10 +80,8 @@ const isEmpty = computed(() => schedule.value !== null && dayList.value.length =
           </span>
         </button>
 
-        <ul
-          v-if="isExpanded(day.id, block.id, !!block.events)"
-          class="divide-y border-y"
-        >
+        <SmoothCollapse :open="isExpanded(day.id, block.id, !!block.events)">
+          <ul class="divide-y border-y">
           <li v-for="event in events(block)" :key="event.id" class="flex items-center">
             <RouterLink
               :to="{
@@ -119,6 +118,7 @@ const isEmpty = computed(() => schedule.value !== null && dayList.value.length =
             No events.
           </li>
         </ul>
+        </SmoothCollapse>
       </div>
     </section>
   </div>

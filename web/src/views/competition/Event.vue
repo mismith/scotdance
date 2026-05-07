@@ -5,6 +5,7 @@ import { useLocalStorage } from '@vueuse/core'
 import { ChevronDown, Star } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { injectChromeTitle } from '@/composables/useChromeTitle'
+import SmoothCollapse from '@/components/SmoothCollapse.vue'
 import { dances as eventDances, getScheduleDanceName } from '@/lib/schedule'
 import { findGroupDancers } from '@/lib/results'
 import { staffMemberName } from '@/types/competition'
@@ -168,10 +169,10 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
           </span>
         </button>
 
-        <div
-          v-if="danceHasContent(dance) && isExpanded(dance.id, danceHasContent(dance))"
-          class="space-y-3"
+        <SmoothCollapse
+          :open="danceHasContent(dance) && isExpanded(dance.id, danceHasContent(dance))"
         >
+          <div class="space-y-3">
           <p v-if="dance.description" class="px-1 text-sm whitespace-pre-line">
             {{ dance.description }}
           </p>
@@ -233,7 +234,8 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
           >
             Platforms not yet assigned.
           </div>
-        </div>
+          </div>
+        </SmoothCollapse>
       </section>
     </template>
   </article>
