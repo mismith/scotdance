@@ -106,20 +106,18 @@ const monthGroups = computed<MonthGroup[]>(() => {
 <template>
   <div class="flex flex-1 flex-col">
     <header
-      class="bg-background sticky top-0 z-20 mx-auto w-full max-w-3xl p-4 pt-safe pb-3"
+      class="bg-background pt-safe sticky top-0 z-20 mx-auto w-full max-w-3xl p-4 pb-3"
     >
       <div
         class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
       >
         {{ today }}
       </div>
-      <h1
-        class="font-serif text-3xl font-medium tracking-tight leading-[1.04]"
-      >
+      <h1 class="font-serif text-3xl leading-[1.04] font-medium tracking-tight">
         Competitions
       </h1>
     </header>
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-5 p-4 pt-6">
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-5 p-4 pt-0">
       <div class="flex flex-wrap items-center gap-2">
         <ViewModeTabs v-model="view" />
         <div v-if="view !== 'calendar'" ref="filterMenuRef" class="relative ml-auto">
@@ -134,7 +132,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
           </button>
           <div
             v-if="filterOpen"
-            class="bg-card absolute right-0 top-full z-30 mt-1 w-36 overflow-hidden rounded-lg border shadow-md"
+            class="bg-card absolute top-full right-0 z-30 mt-1 w-36 overflow-hidden rounded-lg border shadow-md"
           >
             <button
               v-for="opt in filterOptions"
@@ -153,10 +151,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
                 }
               "
             >
-              <Check
-                v-if="filter === opt.id"
-                class="size-3"
-              />
+              <Check v-if="filter === opt.id" class="size-3" />
               <span v-else class="size-3" />
               {{ opt.label }}
             </button>
@@ -166,7 +161,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
 
       <div
         v-if="view === 'map'"
-        class="text-muted-foreground font-serif rounded-2xl border border-dashed p-8 text-center text-sm italic"
+        class="text-muted-foreground rounded-2xl border border-dashed p-8 text-center font-serif text-sm italic"
       >
         Map view — stub.
       </div>
@@ -176,7 +171,10 @@ const monthGroups = computed<MonthGroup[]>(() => {
       />
 
       <template v-else>
-        <HeroCompCard v-if="featuredComp && filter === 'upcoming'" :competition="featuredComp" />
+        <HeroCompCard
+          v-if="featuredComp && filter === 'upcoming'"
+          :competition="featuredComp"
+        />
 
         <div
           v-if="loading && !competitions.length"
@@ -192,7 +190,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
           <button
             v-if="!includeArchived"
             type="button"
-            class="hover:text-foreground not-italic font-sans text-xs underline"
+            class="hover:text-foreground font-sans text-xs not-italic underline"
             @click="includeArchived = true"
           >
             Load archived competitions
@@ -208,11 +206,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
         </div>
 
         <template v-else>
-          <section
-            v-for="group in monthGroups"
-            :key="group.key"
-            class="space-y-2"
-          >
+          <section v-for="group in monthGroups" :key="group.key" class="space-y-2">
             <SectionHeader :label="group.label" :count="group.members.length" />
             <ul>
               <li
@@ -234,13 +228,13 @@ const monthGroups = computed<MonthGroup[]>(() => {
                   />
                   <div class="min-w-0 flex-1 pt-0.5">
                     <div
-                      class="font-serif text-[15px] font-medium tracking-tight leading-tight line-clamp-2"
+                      class="line-clamp-2 font-serif text-[15px] leading-tight font-medium tracking-tight"
                     >
                       {{ competition.name ?? '?' }}
                     </div>
                     <div
                       v-if="competition.location"
-                      class="text-muted-foreground font-serif truncate text-[11px] italic"
+                      class="text-muted-foreground truncate font-serif text-[11px] italic"
                     >
                       {{ competition.location }}
                     </div>
@@ -252,7 +246,10 @@ const monthGroups = computed<MonthGroup[]>(() => {
                     </div>
                   </div>
                 </RouterLink>
-                <FavoriteCompetitionButton :competition-id="competition.id" class="mr-2 mt-2" />
+                <FavoriteCompetitionButton
+                  :competition-id="competition.id"
+                  class="mt-2 mr-2"
+                />
               </li>
             </ul>
           </section>

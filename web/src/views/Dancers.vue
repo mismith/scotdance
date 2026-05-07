@@ -137,20 +137,18 @@ const showSearch = computed(() => q.value.trim().length > 0)
 <template>
   <div class="flex flex-1 flex-col">
     <header
-      class="bg-background sticky top-0 z-20 mx-auto w-full max-w-3xl p-4 pt-safe pb-3"
+      class="bg-background pt-safe sticky top-0 z-20 mx-auto w-full max-w-3xl p-4 pb-3"
     >
       <div
         class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
       >
         Across every comp
       </div>
-      <h1
-        class="font-serif text-3xl font-medium tracking-tight leading-[1.04]"
-      >
+      <h1 class="font-serif text-3xl leading-[1.04] font-medium tracking-tight">
         Dancers
       </h1>
     </header>
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-6">
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-0">
       <div
         class="bg-card flex h-12 items-center gap-3 rounded-full border px-4 shadow-sm"
       >
@@ -222,9 +220,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
                 {{ group.initials }}
               </span>
               <div class="min-w-0 flex-1">
-                <div
-                  class="font-serif truncate text-base font-medium tracking-tight"
-                >
+                <div class="truncate font-serif text-base font-medium tracking-tight">
                   {{ group.name || '?' }}
                 </div>
                 <div
@@ -258,14 +254,12 @@ const showSearch = computed(() => q.value.trim().length > 0)
                   {{ entry.initials }}
                 </span>
                 <div class="min-w-0 flex-1">
-                  <div
-                    class="font-serif truncate text-base font-medium tracking-tight"
-                  >
+                  <div class="truncate font-serif text-base font-medium tracking-tight">
                     {{ entry.name }}
                   </div>
                   <div
                     v-if="locationByName.get(entry.name)"
-                    class="text-muted-foreground font-serif truncate text-[11px] italic"
+                    class="text-muted-foreground truncate font-serif text-[11px] italic"
                   >
                     {{ locationByName.get(entry.name) }}
                   </div>
@@ -276,7 +270,8 @@ const showSearch = computed(() => q.value.trim().length > 0)
           </ul>
         </section>
 
-        <section v-else-if="!recentList.length"
+        <section
+          v-else-if="!recentList.length"
           class="bg-card space-y-3 rounded-2xl border p-6 text-center"
         >
           <Star class="text-muted-foreground mx-auto size-6" />
@@ -293,7 +288,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
           <SectionHeader label="Recently viewed" :count="recentList.length">
             <button
               type="button"
-              class="hover:text-foreground tracking-normal normal-case text-[11px] font-normal"
+              class="hover:text-foreground text-[11px] font-normal tracking-normal normal-case"
               @click="recentDancers.clear()"
             >
               Clear
@@ -311,9 +306,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
                   {{ initialsOf(entry.name) }}
                 </span>
                 <div class="min-w-0 flex-1">
-                  <div
-                    class="font-serif truncate text-base font-medium tracking-tight"
-                  >
+                  <div class="truncate font-serif text-base font-medium tracking-tight">
                     {{ entry.name }}
                   </div>
                 </div>
