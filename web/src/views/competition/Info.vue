@@ -67,12 +67,6 @@ const yearLabel = computed(() => {
   return String(new Date(d).getFullYear())
 })
 
-const addressLine = computed(() => {
-  const c = competition.value
-  if (!c) return ''
-  return [c.address, c.location].filter(Boolean).join(' · ')
-})
-
 const mapsHref = computed(() => {
   const c = competition.value
   if (!c?.venue && !c?.address && !c?.location) return null
@@ -142,19 +136,21 @@ const groupedStaff = computed(() => {
       <div class="flex items-stretch">
         <div
           v-if="competition.date"
-          class="bg-background flex w-20 shrink-0 flex-col items-center justify-center border-r py-3"
+          class="bg-background flex w-20 shrink-0 flex-col items-center justify-center gap-1 border-r py-4"
         >
-          <div class="text-muted-foreground text-[10px] font-bold tracking-[0.14em]">
+          <div
+            class="text-muted-foreground text-[10px] font-bold tracking-[0.14em] uppercase"
+          >
             {{ monthLabel }}
           </div>
           <div
-            class="font-serif text-4xl leading-none font-medium tracking-tight tabular-nums"
+            class="font-serif text-[40px] leading-none font-medium tracking-tight tabular-nums"
           >
             {{ dayLabel }}
           </div>
           <div
             :class="[
-              'mt-1 text-[10px] font-bold tracking-[0.12em]',
+              'text-[10px] font-bold tracking-[0.14em] tabular-nums',
               datePast ? 'text-muted-foreground' : 'text-secondary',
             ]"
           >
@@ -171,16 +167,21 @@ const groupedStaff = computed(() => {
           <div class="flex min-w-0 flex-1 flex-col justify-center gap-1">
             <div
               v-if="competition.venue"
-              class="font-serif text-[15px] leading-snug font-medium tracking-tight"
+              class="flex items-start gap-1.5"
             >
-              {{ competition.venue }}
+              <MapPin class="text-muted-foreground mt-1 size-3.5 shrink-0" />
+              <span
+                class="font-serif text-[15px] leading-snug font-medium tracking-tight"
+              >
+                {{ competition.venue }}
+              </span>
             </div>
             <div
-              v-if="addressLine"
-              class="text-muted-foreground inline-flex items-center gap-1.5 text-[11.5px]"
+              v-if="competition.address || competition.location"
+              class="text-muted-foreground space-y-0.5 pl-5 text-[11.5px]"
             >
-              <MapPin class="size-3 shrink-0" />
-              <span class="truncate">{{ addressLine }}</span>
+              <div v-if="competition.address">{{ competition.address }}</div>
+              <div v-if="competition.location">{{ competition.location }}</div>
             </div>
           </div>
           <ChevronRight
