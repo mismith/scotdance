@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { CalendarDays, Info, LayoutGrid, Trophy } from '@lucide/vue'
+import { CalendarDays, Info, Trophy, Users } from '@lucide/vue'
 
 const route = useRoute()
 const dancerId = computed(() => String(route.params.dancerId ?? ''))
@@ -44,7 +44,7 @@ const activeTab = computed(() => {
         title="Back to Dancers"
         aria-label="Back to Dancers"
       >
-        <LayoutGrid class="size-5" />
+        <Users class="size-5" />
       </RouterLink>
       <div class="pointer-events-auto bg-nav/90 text-nav-foreground backdrop-blur-xl flex items-center gap-1 rounded-full p-1 shadow-lg [view-transition-name:nav-right] [view-transition-class:fixed-height]">
         <RouterLink
