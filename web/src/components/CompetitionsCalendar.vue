@@ -201,7 +201,7 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
         <li v-for="competition in upcoming" :key="competition.id">
           <RouterLink
             :to="props.linkTo(competition)"
-            class="hover:bg-accent flex items-center gap-4 px-1 py-3"
+            class="flex items-center gap-4 px-1 py-3"
           >
             <div class="text-secondary w-10 shrink-0 text-center">
               <div class="font-serif text-2xl leading-none">

@@ -58,7 +58,7 @@ const isEmpty = computed(() => schedule.value !== null && dayList.value.length =
       <div v-for="block in blocks(day)" :key="block.id" class="space-y-1">
         <button
           type="button"
-          class="hover:text-secondary flex w-full items-baseline gap-2 px-1 py-2 text-left"
+          class="flex w-full items-baseline gap-2 px-1 py-2 text-left"
           @click="toggle(day.id, block.id, !!block.events)"
         >
           <ChevronDown
@@ -93,7 +93,7 @@ const isEmpty = computed(() => schedule.value !== null && dayList.value.length =
                   eventId: event.id,
                 },
               }"
-              class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
+              class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
             >
               <div class="min-w-0 flex-1">
                 <div

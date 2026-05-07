@@ -150,7 +150,7 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
       <section v-for="dance in eventDanceList" :key="dance.id" class="space-y-1">
         <button
           type="button"
-          class="hover:text-secondary flex w-full items-baseline gap-2 px-1 py-2 text-left disabled:hover:text-foreground"
+          class="flex w-full items-baseline gap-2 px-1 py-2 text-left"
           :disabled="!danceHasContent(dance)"
           @click="toggle(dance.id, danceHasContent(dance))"
         >

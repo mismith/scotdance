@@ -290,7 +290,7 @@ function dismissSuggestions() {
     <section v-for="group in grouped" :key="group.groupName" class="space-y-1">
       <button
         type="button"
-        class="hover:text-secondary flex w-full items-baseline gap-2 px-1 py-2 text-left"
+        class="flex w-full items-baseline gap-2 px-1 py-2 text-left"
         @click="toggleExpanded(group)"
       >
         <ChevronDown
@@ -334,7 +334,7 @@ function dismissSuggestions() {
                 name: 'competition.dancer',
                 params: { competitionId, dancerId: dancer.id },
               }"
-              class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
+              class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
             >
               <div
                 :class="[
