@@ -23,11 +23,6 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/dancer/Info.vue'),
       },
       {
-        path: 'schedule',
-        name: 'dancer.schedule',
-        component: () => import('@/views/dancer/Schedule.vue'),
-      },
-      {
         path: 'results',
         name: 'dancer.results',
         component: () => import('@/views/dancer/Results.vue'),

@@ -62,7 +62,7 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
             dancerId: recentComp.hit.id,
           },
         }"
-        class="hover:bg-accent flex items-center gap-3 px-2 py-3"
+        class="flex items-center gap-3 px-2 py-3"
       >
         <CompChip
           :name="recentComp.competition?.name"
