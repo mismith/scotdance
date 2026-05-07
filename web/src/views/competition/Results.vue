@@ -113,7 +113,7 @@ const loaded = computed(() => groups.value.length > 0)
     <section v-for="row in groupedCategories" :key="row.category.id" class="space-y-1">
       <button
         type="button"
-        class="hover:text-secondary flex w-full items-baseline gap-2 px-1 py-2 text-left"
+        class="flex w-full items-baseline gap-2 px-1 py-2 text-left"
         @click="toggle(row.category)"
       >
         <ChevronDown
@@ -154,7 +154,7 @@ const loaded = computed(() => groups.value.length > 0)
               name: 'competition.group',
               params: { competitionId, groupId: group.id },
             }"
-            class="hover:bg-accent flex items-center gap-3 px-1 py-3"
+            class="flex items-center gap-3 px-1 py-3"
           >
             <span
               :class="[

@@ -212,7 +212,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
                 name: 'dancer.info',
                 params: { dancerId: dancerSlug(group.name) },
               }"
-              class="hover:bg-accent flex w-full items-center gap-3 px-1 py-3 text-left"
+              class="flex w-full items-center gap-3 px-1 py-3 text-left"
             >
               <span
                 class="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-full font-serif text-sm font-medium"
@@ -246,7 +246,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
                   name: 'dancer.info',
                   params: { dancerId: dancerSlug(entry.name) },
                 }"
-                class="hover:bg-accent flex w-full items-center gap-3 px-1 py-3 text-left"
+                class="flex w-full items-center gap-3 px-1 py-3 text-left"
               >
                 <span
                   class="bg-secondary text-secondary-foreground flex size-10 shrink-0 items-center justify-center rounded-full font-serif text-sm font-medium"
@@ -298,7 +298,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
             <li v-for="entry in recentList" :key="entry.slug">
               <RouterLink
                 :to="{ name: 'dancer.info', params: { dancerId: entry.slug } }"
-                class="hover:bg-accent flex w-full items-center gap-3 px-1 py-3 text-left"
+                class="flex w-full items-center gap-3 px-1 py-3 text-left"
               >
                 <span
                   class="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-full font-serif text-sm font-medium"

@@ -230,7 +230,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
                     name: 'competition.info',
                     params: { competitionId: competition.id },
                   }"
-                  class="hover:bg-accent flex min-w-0 flex-1 items-start gap-3 py-3 pr-3 pl-1"
+                  class="flex min-w-0 flex-1 items-start gap-3 py-3 pr-3 pl-1"
                 >
                   <CompChip
                     :name="competition.name"

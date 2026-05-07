@@ -119,7 +119,7 @@ const placedRows = computed(() =>
                 params: { competitionId, groupId: dancer.group.id },
                 hash: `#dance-${row.dance.id}`,
               }"
-              class="hover:bg-accent flex items-center gap-3 px-1 py-3"
+              class="flex items-center gap-3 px-1 py-3"
             >
               <div
                 class="font-serif min-w-0 flex-1 truncate text-[15px] font-medium tracking-tight"
