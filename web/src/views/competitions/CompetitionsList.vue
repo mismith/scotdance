@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRoute } from 'vue-router'
 import { onClickOutside, useLocalStorage } from '@vueuse/core'
 import { Check, ChevronDown, ListFilter, Star } from '@lucide/vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
@@ -14,8 +13,6 @@ import { formatRelative, isPast, isSameDay } from '@/lib/format'
 
 type Filter = 'upcoming' | 'past' | 'all'
 
-const route = useRoute()
-
 const today = computed(() =>
   new Date()
     .toLocaleDateString('en-US', {
@@ -25,15 +22,8 @@ const today = computed(() =>
     })
     .toUpperCase(),
 )
-const view = computed<ViewMode>(() => {
-  const v = String(route.query.view ?? 'list')
-  return v === 'map' || v === 'calendar' ? v : 'list'
-})
-
-const filter = computed<Filter>(() => {
-  const f = String(route.query.f ?? 'upcoming')
-  return f === 'past' || f === 'all' ? f : 'upcoming'
-})
+const view = useLocalStorage<ViewMode>('competitions:view', 'list')
+const filter = useLocalStorage<Filter>('competitions:filter', 'upcoming')
 
 const filterOptions: Array<{ id: Filter; label: string }> = [
   { id: 'upcoming', label: 'Upcoming' },
@@ -107,7 +97,7 @@ const visibleCompetitions = computed(() =>
     </header>
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-5 p-4 pt-6">
       <div class="flex flex-wrap items-center gap-2">
-        <ViewModeTabs :current="view" />
+        <ViewModeTabs v-model="view" />
         <div ref="filterMenuRef" class="relative ml-auto">
           <button
             type="button"
@@ -122,18 +112,22 @@ const visibleCompetitions = computed(() =>
             v-if="filterOpen"
             class="bg-card absolute right-0 top-full z-30 mt-1 w-36 overflow-hidden rounded-lg border shadow-md"
           >
-            <RouterLink
+            <button
               v-for="opt in filterOptions"
               :key="opt.id"
-              :to="{ query: { ...route.query, f: opt.id === 'upcoming' ? undefined : opt.id } }"
-              replace
+              type="button"
               :class="[
-                'hover:bg-accent flex items-center gap-2 px-3 py-2 text-xs',
+                'hover:bg-accent flex w-full items-center gap-2 px-3 py-2 text-left text-xs',
                 filter === opt.id
                   ? 'text-foreground font-medium'
                   : 'text-muted-foreground',
               ]"
-              @click="filterOpen = false"
+              @click="
+                () => {
+                  filter = opt.id
+                  filterOpen = false
+                }
+              "
             >
               <Check
                 v-if="filter === opt.id"
@@ -141,7 +135,7 @@ const visibleCompetitions = computed(() =>
               />
               <span v-else class="size-3" />
               {{ opt.label }}
-            </RouterLink>
+            </button>
           </div>
         </div>
       </div>

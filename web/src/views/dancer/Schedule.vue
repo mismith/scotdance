@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useLocalStorage } from '@vueuse/core'
 import { ChevronRight } from '@lucide/vue'
 import { useDancerProfile, type DancerAppearance } from '@/composables/useDancerProfile'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
@@ -11,10 +12,7 @@ import { isSameDay } from '@/lib/format'
 const profile = useDancerProfile()
 const route = useRoute()
 
-const view = computed<ViewMode>(() => {
-  const v = String(route.query.view ?? 'list')
-  return v === 'map' || v === 'calendar' ? v : 'list'
-})
+const view = useLocalStorage<ViewMode>('dancer:schedule:view', 'list')
 
 interface DatedAppearance extends DancerAppearance {
   day: string
@@ -59,7 +57,7 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
 
 <template>
   <article class="space-y-5">
-    <ViewModeTabs :current="view" />
+    <ViewModeTabs v-model="view" />
 
     <div
       v-if="view === 'map'"
