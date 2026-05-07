@@ -4,7 +4,6 @@ import { RouterLink, useRoute } from 'vue-router'
 import {
   CalendarDays,
   Info,
-  LayoutGrid,
   Trophy,
   Users,
 } from '@lucide/vue'
@@ -56,7 +55,7 @@ const activeTab = computed(() => {
         title="Back to Competitions"
         aria-label="Back to Competitions"
       >
-        <LayoutGrid class="size-5" />
+        <CalendarDays class="size-5" />
       </RouterLink>
       <div class="pointer-events-auto bg-nav/90 text-nav-foreground backdrop-blur-xl flex items-center gap-1 rounded-full p-1 shadow-lg [view-transition-name:nav-right] [view-transition-class:fixed-height]">
         <RouterLink
