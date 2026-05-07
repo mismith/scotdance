@@ -81,6 +81,33 @@ const favoriteEntries = computed<FavoriteEntry[]>(() => {
     .sort((a, b) => a.name.localeCompare(b.name))
 })
 
+const locationByName = shallowRef(new Map<string, string>())
+
+watch(
+  favoriteEntries,
+  async (entries) => {
+    const todo = entries.filter((e) => !locationByName.value.has(e.name))
+    if (!todo.length) return
+    const results = await Promise.all(
+      todo.map(async (e) => {
+        try {
+          const groups = await searchDancers(e.name)
+          const match =
+            groups.find((g) => g.name.toLowerCase() === e.name.toLowerCase()) ?? groups[0]
+          const loc = match?.dancers.find((d) => d.location)?.location ?? ''
+          return [e.name, loc] as const
+        } catch {
+          return [e.name, ''] as const
+        }
+      }),
+    )
+    const next = new Map(locationByName.value)
+    for (const [name, loc] of results) next.set(name, loc)
+    locationByName.value = next
+  },
+  { immediate: true },
+)
+
 function dancerSlug(name: string) {
   return name
     .toLowerCase()
@@ -237,12 +264,10 @@ const showSearch = computed(() => q.value.trim().length > 0)
                     {{ entry.name }}
                   </div>
                   <div
-                    class="text-muted-foreground mt-0.5 flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.14em] uppercase"
+                    v-if="locationByName.get(entry.name)"
+                    class="text-muted-foreground font-serif truncate text-[11px] italic"
                   >
-                    <span class="tabular-nums">{{ entry.count }}</span>
-                    <span>{{
-                      entry.count === 1 ? 'comp favourited' : 'comps favourited'
-                    }}</span>
+                    {{ locationByName.get(entry.name) }}
                   </div>
                 </div>
                 <ChevronRight class="text-muted-foreground size-4 shrink-0" />
