@@ -4,7 +4,6 @@ import { useRoute } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 import { ChevronDown } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
-import { injectChromeTitle } from '@/composables/useChromeTitle'
 import Place from '@/components/Place.vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
 import { useFavoritesStore } from '@/stores/favorites'
@@ -42,21 +41,6 @@ onMounted(async () => {
 
 const groupId = computed(() => String(route.params.groupId ?? ''))
 const group = computed(() => groups.value.find((g) => g.id === groupId.value) ?? null)
-
-const chromeTitle = injectChromeTitle()
-watch(
-  group,
-  (g) => {
-    if (!g) {
-      chromeTitle.value = null
-      return
-    }
-    const name = g.name ?? g.fullName ?? null
-    const cat = g.category?.name ?? null
-    chromeTitle.value = [cat, name].filter(Boolean).join(' · ') || null
-  },
-  { immediate: true },
-)
 
 const callbacksDance: EnrichedDance = { id: CALLBACKS_ID, fullName: 'Callbacks' }
 const overallDance: EnrichedDance = { id: OVERALL_ID, fullName: 'Overall' }
@@ -225,6 +209,18 @@ watch(
     <div v-else-if="!group" class="text-muted-foreground text-sm">Group not found.</div>
 
     <template v-else>
+      <header class="space-y-2">
+        <div
+          v-if="group.category?.name"
+          class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
+        >
+          {{ group.category.name }}
+        </div>
+        <h1 class="font-serif text-3xl leading-[1.04] font-medium tracking-tight">
+          {{ group.name ?? group.fullName ?? 'Group' }}
+        </h1>
+      </header>
+
       <section
         v-for="section in sections"
         :id="`dance-${section.dance.id}`"

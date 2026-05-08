@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Check, Share2 } from '@lucide/vue'
+import { Check, Share } from '@lucide/vue'
 
 const props = defineProps<{
   title?: string
@@ -40,10 +40,10 @@ async function handleClick() {
     type="button"
     :title="justCopied ? 'Link copied' : 'Share'"
     aria-label="Share"
-    class="hover:bg-accent text-muted-foreground hover:text-foreground rounded-md p-2 transition-colors"
+    class="hover:bg-accent rounded-md p-2 transition-colors"
     @click="handleClick"
   >
     <Check v-if="justCopied" class="size-4" />
-    <Share2 v-else class="size-4" />
+    <Share v-else class="size-4" />
   </button>
 </template>

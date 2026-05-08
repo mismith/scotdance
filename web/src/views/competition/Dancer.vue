@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCompetition } from '@/composables/useCompetition'
-import { injectChromeTitle } from '@/composables/useChromeTitle'
 import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue'
 import Place from '@/components/Place.vue'
 import { findGroupDances, getDancerPlace } from '@/lib/results'
@@ -21,15 +20,6 @@ onMounted(async () => {
 
 const dancerId = computed(() => String(route.params.dancerId ?? ''))
 const dancer = computed(() => dancers.value.find((d) => d.id === dancerId.value) ?? null)
-
-const chromeTitle = injectChromeTitle()
-watch(
-  dancer,
-  (d) => {
-    chromeTitle.value = d?.fullName ?? null
-  },
-  { immediate: true },
-)
 
 const groupDances = computed(() => {
   if (!dancer.value?.group) return []
@@ -64,44 +54,55 @@ const placedRows = computed(() =>
     </div>
 
     <template v-else>
-      <header class="flex items-center gap-4">
-        <img
-          v-if="dancer.image"
-          :src="dancer.image"
-          :alt="dancer.fullName"
-          class="bg-muted size-20 rounded-full object-cover shadow"
-        />
-        <div
-          v-else
-          :class="[
-            'flex size-20 items-center justify-center rounded-full font-mono text-xl tabular-nums',
-            favorites.isFavoriteDancer(dancer.id)
-              ? 'bg-secondary text-secondary-foreground'
-              : 'bg-muted text-muted-foreground',
-          ]"
-        >
-          {{ dancer.number ?? '–' }}
-        </div>
-
-        <div class="min-w-0 flex-1 space-y-1">
+      <header class="space-y-3">
+        <div class="flex items-start gap-4">
+          <img
+            v-if="dancer.image"
+            :src="dancer.image"
+            :alt="dancer.fullName"
+            class="bg-muted size-20 shrink-0 rounded-full object-cover shadow"
+          />
           <div
-            class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase tabular-nums"
+            v-else
+            :class="[
+              'flex size-20 shrink-0 items-center justify-center rounded-full font-mono text-xl tabular-nums',
+              favorites.isFavoriteDancer(dancer.id)
+                ? 'bg-secondary text-secondary-foreground'
+                : 'bg-muted text-muted-foreground',
+            ]"
           >
-            #{{ dancer.number ?? '?' }}
+            {{ dancer.number ?? '–' }}
           </div>
-          <div v-if="dancer.group" class="font-serif text-base font-medium tracking-tight">
-            {{ dancer.group.fullName }}
+
+          <div class="min-w-0 flex-1 space-y-1 pt-1">
+            <div
+              class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase tabular-nums"
+            >
+              Dancer<span v-if="dancer.number != null"> · #{{ dancer.number }}</span>
+            </div>
+            <h1 class="font-serif text-3xl leading-[1.04] font-medium tracking-tight">
+              {{ dancer.fullName }}
+            </h1>
+            <div
+              v-if="dancer.group"
+              class="text-muted-foreground font-serif text-sm italic"
+            >
+              {{ dancer.group.fullName }}<span v-if="dancer.location"> · {{ dancer.location }}</span>
+            </div>
+            <div
+              v-else-if="dancer.location"
+              class="text-muted-foreground font-serif text-sm italic"
+            >
+              {{ dancer.location }}
+            </div>
           </div>
-          <div v-if="dancer.location" class="text-muted-foreground text-sm">
-            {{ dancer.location }}
-          </div>
+          <FavoriteDancerButton :dancer="dancer" size="md" />
         </div>
-        <FavoriteDancerButton :dancer="dancer" size="md" />
       </header>
 
       <section v-if="dancer.group" class="space-y-2">
         <h3
-          class="text-muted-foreground px-1 text-[11px] font-bold tracking-[0.14em] uppercase"
+          class="text-foreground/65 px-1 text-[11px] font-bold tracking-[0.14em] uppercase"
         >
           Results
         </h3>

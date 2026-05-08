@@ -39,7 +39,7 @@ async function handleClick(e: Event) {
     "
     :class="[
       'hover:bg-accent rounded-md p-2 transition-colors',
-      isFavorite ? 'text-secondary' : 'text-muted-foreground hover:text-foreground',
+      isFavorite ? 'text-secondary' : 'opacity-70 hover:opacity-100',
     ]"
     @click="handleClick"
   >

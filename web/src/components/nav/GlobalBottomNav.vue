@@ -83,7 +83,7 @@ function goProfile() {
   <nav class="bottom-safe pointer-events-none fixed inset-x-0 z-30 px-3">
     <div class="mx-auto flex max-w-3xl items-center justify-between">
       <div
-        class="bg-nav/90 text-nav-foreground pointer-events-auto rounded-full p-1 shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-group:contain] [view-transition-name:nav-left]"
+        class="bg-nav/90 text-nav-foreground pointer-events-auto rounded-full p-1 shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-left]"
       >
         <div class="flex items-center gap-1 [view-transition-name:match-element]">
           <RouterLink
@@ -253,7 +253,7 @@ function goProfile() {
 
       <RouterLink
         :to="{ name: 'search' }"
-        class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-12 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-group:contain] [view-transition-name:nav-right] hover:opacity-90"
+        class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-12 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-right] hover:opacity-90"
         title="Search"
         aria-label="Search"
       >
