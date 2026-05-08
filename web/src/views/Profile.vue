@@ -130,7 +130,7 @@ const submitDisabled = computed(() => {
     >
       <div class="min-w-0 flex-1">
         <div
-          class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
+          class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
         >
           Account
         </div>

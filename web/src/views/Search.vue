@@ -100,7 +100,7 @@ const examples = [
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-0">
       <section class="space-y-3">
         <h2
-          class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
+          class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
         >
           Suggested searches
         </h2>
@@ -130,7 +130,7 @@ const examples = [
 
       <section class="space-y-2">
         <h2
-          class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
+          class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
         >
           Or just type a name
         </h2>

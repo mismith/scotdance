@@ -150,7 +150,7 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
     </div>
 
     <div
-      class="text-muted-foreground grid grid-cols-7 text-[10px] font-semibold tracking-[0.14em] uppercase"
+      class="text-foreground/65 grid grid-cols-7 text-[10px] font-semibold tracking-[0.14em] uppercase"
     >
       <div v-for="(label, i) in dowLabels" :key="i" class="py-1 text-center">
         {{ label }}
@@ -193,7 +193,7 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
     <section v-if="upcoming.length" class="space-y-3 pt-2">
       <div
-        class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
+        class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
       >
         Upcoming
       </div>

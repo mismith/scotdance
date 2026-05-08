@@ -187,7 +187,7 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
               class="bg-card space-y-3 rounded-2xl border p-4"
             >
               <div
-                class="text-muted-foreground text-[11px] font-bold tracking-[0.14em] uppercase"
+                class="text-foreground/65 text-[11px] font-bold tracking-[0.14em] uppercase"
               >
                 {{ pool.name }}
               </div>
