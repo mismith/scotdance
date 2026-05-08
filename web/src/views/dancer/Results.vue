@@ -123,7 +123,7 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
                   dancerId: a.hit.id,
                 },
               }"
-              class="flex flex-1 items-center gap-4 px-2 py-3"
+              class="flex min-w-0 flex-1 items-center gap-4 px-2 py-3"
             >
               <div class="w-10 shrink-0 text-center">
                 <div
@@ -180,7 +180,7 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
                   dancerId: a.hit.id,
                 },
               }"
-              class="flex flex-1 items-center gap-4 px-2 py-3"
+              class="flex min-w-0 flex-1 items-center gap-4 px-2 py-3"
             >
               <div class="w-10 shrink-0 text-center opacity-60">
                 <div
