@@ -87,7 +87,7 @@ async function submit() {
 
       <div class="space-y-1">
         <div
-          class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
+          class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
         >
           ScotDance.app
         </div>

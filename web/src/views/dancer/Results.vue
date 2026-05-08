@@ -72,7 +72,7 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
           class="bg-card rounded-2xl border px-3 py-3 text-center"
         >
           <div
-            class="text-muted-foreground text-[10px] font-bold tracking-[0.14em] uppercase"
+            class="text-foreground/65 text-[10px] font-bold tracking-[0.14em] uppercase"
           >
             {{ t.k }}
           </div>

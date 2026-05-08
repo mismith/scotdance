@@ -111,7 +111,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
       class="bg-background pt-safe sticky top-0 z-20 mx-auto w-full max-w-3xl p-4 pb-3"
     >
       <div
-        class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
+        class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
       >
         {{ today }}
       </div>

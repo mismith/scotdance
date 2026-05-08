@@ -115,6 +115,8 @@
     font-feature-settings:
       'rlig' 1,
       'calt' 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: auto;
   }
 
   /* Safe-area-aware utilities. The floating chrome at top should clear the

@@ -139,7 +139,7 @@ const groupedStaff = computed(() => {
           class="bg-background flex w-20 shrink-0 flex-col items-center justify-center gap-1 border-r py-4"
         >
           <div
-            class="text-muted-foreground text-[10px] font-bold tracking-[0.14em] uppercase"
+            class="text-foreground/65 text-[10px] font-bold tracking-[0.14em] uppercase"
           >
             {{ monthLabel }}
           </div>
@@ -213,7 +213,7 @@ const groupedStaff = computed(() => {
           {{ stat.value }}
         </div>
         <div
-          class="text-muted-foreground mt-1 text-[10px] font-bold tracking-[0.14em] uppercase"
+          class="text-foreground/65 mt-1 text-[10px] font-bold tracking-[0.14em] uppercase"
         >
           {{ stat.label }}
         </div>

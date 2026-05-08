@@ -39,7 +39,7 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
           class="bg-card rounded-2xl border px-4 py-3"
         >
           <div
-            class="text-muted-foreground text-[10px] font-bold tracking-[0.14em] uppercase"
+            class="text-foreground/65 text-[10px] font-bold tracking-[0.14em] uppercase"
           >
             {{ t.k }}
           </div>

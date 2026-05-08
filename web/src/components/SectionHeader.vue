@@ -7,7 +7,7 @@ defineProps<{
 
 <template>
   <div
-    class="text-muted-foreground flex items-center gap-3 px-1 text-[11px] font-bold tracking-[0.14em] uppercase"
+    class="text-foreground/65 flex items-center gap-3 px-1 text-[11px] font-bold tracking-[0.14em] uppercase"
   >
     <span class="flex items-baseline gap-1.5">
       <span>{{ label }}</span>
