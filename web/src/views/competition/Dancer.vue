@@ -76,9 +76,9 @@ const placedRows = computed(() =>
 
           <div class="min-w-0 flex-1 space-y-1 pt-1">
             <div
-              class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase tabular-nums"
+              class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
             >
-              Dancer<span v-if="dancer.number != null"> · #{{ dancer.number }}</span>
+              Dancer
             </div>
             <h1 class="font-serif text-3xl leading-[1.04] font-medium tracking-tight">
               {{ dancer.fullName }}

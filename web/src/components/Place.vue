@@ -18,25 +18,30 @@ const tone = computed(() => {
 </script>
 
 <template>
-  <span class="inline-flex flex-col items-center" :title="tied ? 'Tied' : undefined">
-    <span
-      :class="[
-        'font-serif inline-flex h-9 min-w-9 items-center justify-center rounded-md border px-2 text-base font-medium tabular-nums tracking-tight',
-        tone,
-      ]"
-    >
-      <template v-if="pointed">♦</template>
-      <template v-else-if="place != null">
+  <span
+    :title="tied ? 'Tied' : undefined"
+    :class="[
+      'inline-flex h-9 min-w-9 flex-col items-center justify-center rounded-md border px-2 font-serif leading-none font-medium tracking-tight tabular-nums',
+      tone,
+    ]"
+  >
+    <template v-if="pointed">
+      <span class="text-base">♦</span>
+    </template>
+    <template v-else-if="place != null">
+      <span class="inline-flex items-baseline text-base">
         <span>{{ place }}</span>
-        <sup class="ml-0.5 text-[0.55rem] font-medium">{{ ordinal }}</sup>
-      </template>
-      <template v-else>—</template>
-    </span>
-    <span
-      v-if="tied"
-      class="text-muted-foreground/70 mt-0.5 text-[9px] font-bold tracking-[0.14em] uppercase"
-    >
-      Tie
-    </span>
+        <sup class="ml-0.5 text-[0.55rem]">{{ ordinal }}</sup>
+      </span>
+      <span
+        v-if="tied"
+        class="-mt-1 font-sans text-[10px] font-bold tracking-[0.08em] uppercase opacity-60"
+      >
+        Tie
+      </span>
+    </template>
+    <template v-else>
+      <span class="text-base">—</span>
+    </template>
   </span>
 </template>
