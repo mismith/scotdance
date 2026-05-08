@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, toRef } from 'vue'
-import { RouterLink, RouterView, useRoute } from 'vue-router'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { ChevronLeft } from '@lucide/vue'
 import CompChip from '@/components/CompChip.vue'
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue'
@@ -27,7 +27,20 @@ const DRILL_DOWN_PARENT: Record<string, string> = {
 }
 
 const route = useRoute()
+const router = useRouter()
 const competitionId = computed(() => String(route.params.competitionId ?? ''))
+
+function onBackClick(event: MouseEvent, navigate: (e?: MouseEvent) => void) {
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+    return
+  }
+  if (window.history.state?.back) {
+    event.preventDefault()
+    router.back()
+    return
+  }
+  navigate(event)
+}
 
 const { competition, notFound, loading, error } = provideCompetition(toRef(competitionId))
 
@@ -44,12 +57,19 @@ const locationLabel = computed(() => competition.value?.location ?? '')
       <div class="mx-auto flex max-w-3xl items-center gap-2 pt-3">
         <RouterLink
           v-if="backTo"
+          v-slot="{ href, navigate }"
           :to="{ name: backTo, params: { competitionId } }"
-          class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-name:nav-back] hover:opacity-90"
-          title="Back"
-          aria-label="Back"
+          custom
         >
-          <ChevronLeft class="size-5" />
+          <a
+            :href="href"
+            class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-name:nav-back] hover:opacity-90"
+            title="Back"
+            aria-label="Back"
+            @click="onBackClick($event, navigate)"
+          >
+            <ChevronLeft class="size-5" />
+          </a>
         </RouterLink>
 
         <RouterLink
