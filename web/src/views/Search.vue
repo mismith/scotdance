@@ -81,7 +81,7 @@ const examples = [
             v-model="q"
             type="search"
             placeholder="Search"
-            class="placeholder:text-nav-foreground/50 min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
+            class="placeholder:text-nav-foreground/50 min-w-0 flex-1 bg-transparent text-sm focus:outline-none [&::-webkit-search-cancel-button]:hidden"
           />
         </div>
       </div>
