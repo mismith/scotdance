@@ -44,29 +44,33 @@ const activeTab = computed(() => {
     <div class="mx-auto flex max-w-3xl items-center justify-between">
       <RouterLink
         :to="{ name: 'competitions' }"
-        class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-12 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-class:fixed-height] [view-transition-name:nav-left] hover:opacity-90"
+        class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-12 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-group:contain] [view-transition-name:nav-left] hover:opacity-90"
         title="Back to Competitions"
         aria-label="Back to Competitions"
       >
-        <CalendarDays class="size-5" />
+        <span class="[view-transition-name:match-element]">
+          <CalendarDays class="size-5" />
+        </span>
       </RouterLink>
       <div
-        class="bg-nav/90 text-nav-foreground pointer-events-auto flex items-center gap-1 rounded-full p-1 shadow-lg backdrop-blur-xl [view-transition-class:fixed-height] [view-transition-name:nav-right]"
+        class="bg-nav/90 text-nav-foreground pointer-events-auto rounded-full p-1 shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-group:contain] [view-transition-name:nav-right]"
       >
-        <RouterLink
-          v-for="tab in tabs"
-          :key="tab.to"
-          :to="{ name: tab.to, params: { competitionId } }"
-          :class="[
-            'flex flex-col items-center gap-0.5 rounded-full px-4 py-1 text-xs font-medium transition-colors',
-            activeTab === tab.to
-              ? 'bg-nav-foreground/10'
-              : 'opacity-70 hover:opacity-100',
-          ]"
-        >
-          <component :is="tab.icon" class="size-4" />
-          <span class="text-[10px]">{{ tab.name }}</span>
-        </RouterLink>
+        <div class="flex items-center gap-1 [view-transition-name:match-element]">
+          <RouterLink
+            v-for="tab in tabs"
+            :key="tab.to"
+            :to="{ name: tab.to, params: { competitionId } }"
+            :class="[
+              'flex flex-col items-center gap-0.5 rounded-full px-4 py-1 text-xs font-medium transition-colors',
+              activeTab === tab.to
+                ? 'bg-nav-foreground/10'
+                : 'opacity-70 hover:opacity-100',
+            ]"
+          >
+            <component :is="tab.icon" class="size-4" />
+            <span class="text-[10px]">{{ tab.name }}</span>
+          </RouterLink>
+        </div>
       </div>
     </div>
   </nav>

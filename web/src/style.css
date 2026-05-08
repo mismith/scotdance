@@ -33,8 +33,7 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-serif:
-    'Newsreader', 'New York', Georgia, ui-serif, serif;
+  --font-serif: 'Newsreader', 'New York', Georgia, ui-serif, serif;
 }
 
 /* Light mode — "Cream paper" palette from editorial v5: warm off-white
@@ -135,8 +134,34 @@
 }
 
 @layer utilities {
-  ::view-transition-old(.fixed-height),
-  ::view-transition-new(.fixed-height) {
-    height: 100%;
+  :root {
+    --vt-ease-rubber-band: cubic-bezier(0.34, 1.3, 0.64, 1);
+  }
+  /* Bram's bg/fg-split View Transitions technique. Outer pill gets nav-left
+     / nav-right and its image-pair is hidden; the bg morphs purely via the
+     animated keyframe so the rounded corners stay clean at every frame.
+     Inner content uses match-element names and cross-fades on top.
+     https://www.bram.us/2025/03/11/view-transitions-border-radius/ */
+  @keyframes vt-nav-pill {
+    from,
+    to {
+      border-radius: 9999px;
+      background: color-mix(in oklch, var(--color-nav) 90%, transparent);
+    }
+  }
+  ::view-transition-group(nav-left) {
+    animation-name: -ua-view-transition-group-anim-nav-left, vt-nav-pill;
+    animation-timing-function: var(--vt-ease-rubber-band);
+  }
+  ::view-transition-group(nav-right) {
+    animation-name: -ua-view-transition-group-anim-nav-right, vt-nav-pill;
+    animation-timing-function: var(--vt-ease-rubber-band);
+  }
+  ::view-transition-image-pair(nav-left),
+  ::view-transition-image-pair(nav-right) {
+    display: none;
+  }
+  ::view-transition-group-children(.clip) {
+    overflow: clip;
   }
 }
