@@ -75,26 +75,26 @@
    editorial paper inverted; accents lifted for AA contrast. */
 .dark {
   color-scheme: dark;
-  --background: oklch(0.155 0.008 80);
+  --background: oklch(0.19 0.014 15);
   --foreground: oklch(0.95 0.012 85);
-  --card: oklch(0.205 0.008 80);
+  --card: oklch(0.235 0.014 15);
   --card-foreground: oklch(0.95 0.012 85);
-  --popover: oklch(0.25 0.005 75);
+  --popover: oklch(0.27 0.012 15);
   --popover-foreground: oklch(0.95 0.012 85);
   /* Lifted blue (#7eb6e4) for AA on dark */
   --primary: oklch(0.745 0.09 245);
-  --primary-foreground: oklch(0.155 0.008 80);
+  --primary-foreground: oklch(0.19 0.014 15);
   /* Lifted pink (#e98aac) */
   --secondary: oklch(0.74 0.12 5);
-  --secondary-foreground: oklch(0.155 0.008 80);
-  --muted: oklch(0.205 0.008 80);
-  --muted-foreground: oklch(0.71 0.013 80);
-  --accent: oklch(0.25 0.005 75);
+  --secondary-foreground: oklch(0.19 0.014 15);
+  --muted: oklch(0.235 0.014 15);
+  --muted-foreground: oklch(0.71 0.018 15);
+  --accent: oklch(0.27 0.012 15);
   --accent-foreground: oklch(0.95 0.012 85);
   --destructive: oklch(0.55 0.18 25);
   --destructive-foreground: oklch(0.95 0.012 85);
-  --border: oklch(0.3 0.008 80);
-  --input: oklch(0.3 0.008 80);
+  --border: oklch(0.32 0.014 15);
+  --input: oklch(0.32 0.014 15);
   --ring: oklch(0.745 0.09 245);
   /* Inverted in dark mode — cream pill on dark bg so the dock stays
      visible without relying on glass/blur. */
@@ -103,7 +103,7 @@
   /* Editorial accent surfaces — tinted dark paper for callouts */
   --blue-paper: oklch(0.27 0.05 245);
   --pink-paper: oklch(0.25 0.06 5);
-  --chip: oklch(0.225 0.008 80);
+  --chip: oklch(0.255 0.014 15);
 }
 
 @layer base {
