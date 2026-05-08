@@ -6,6 +6,12 @@ import CompChip from '@/components/CompChip.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 
 const profile = useDancerProfile()
+const { displayName, location } = profile
+
+const initials = computed(() => {
+  const parts = displayName.value.split(' ').filter(Boolean)
+  return (parts[0]?.charAt(0) ?? '?') + (parts.at(-1)?.charAt(0) ?? '')
+})
 
 const tiles = computed(() => [
   {
@@ -31,6 +37,27 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
 
 <template>
   <article class="space-y-6">
+    <header class="space-y-3 pr-16">
+      <div
+        class="bg-muted text-muted-foreground flex size-20 items-center justify-center rounded-full font-serif text-2xl font-medium [view-transition-name:nav-avatar]"
+      >
+        {{ initials || '?' }}
+      </div>
+      <div class="space-y-1">
+        <h1
+          class="font-serif text-3xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
+        >
+          {{ displayName }}
+        </h1>
+        <p
+          v-if="location"
+          class="text-muted-foreground font-serif text-sm italic [view-transition-name:nav-location]"
+        >
+          {{ location }}
+        </p>
+      </div>
+    </header>
+
     <section>
       <div class="grid grid-cols-2 gap-2">
         <div
