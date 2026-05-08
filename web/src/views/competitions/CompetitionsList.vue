@@ -245,13 +245,13 @@ const monthGroups = computed<MonthGroup[]>(() => {
                     </div>
                     <div
                       v-if="competition.location"
-                      class="text-muted-foreground truncate font-serif text-[11px] italic"
+                      class="text-muted-foreground truncate font-serif text-xs italic"
                     >
                       {{ competition.location }}
                     </div>
                     <div
                       v-if="competition.date"
-                      class="text-muted-foreground/80 font-serif text-[11px] italic"
+                      class="text-muted-foreground/80 font-serif text-xs italic"
                     >
                       {{ formatRelative(competition.date) }}
                     </div>

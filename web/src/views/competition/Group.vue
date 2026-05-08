@@ -302,12 +302,12 @@ watch(
                     {{ row.dancer.number ?? '–' }}
                   </div>
                   <div class="min-w-0 flex-1">
-                    <div class="font-serif truncate text-[15px] font-medium tracking-tight">
+                    <div class="font-serif truncate text-[15px] leading-tight font-medium tracking-tight">
                       {{ row.dancer.fullName || '?' }}
                     </div>
                     <div
                       v-if="row.dancer.location"
-                      class="text-muted-foreground truncate text-[11.5px]"
+                      class="text-muted-foreground truncate text-xs"
                     >
                       {{ row.dancer.location }}
                     </div>
@@ -360,12 +360,12 @@ watch(
                     {{ row.dancer.number ?? '–' }}
                   </div>
                   <div class="min-w-0 flex-1">
-                    <div class="font-serif truncate text-[15px] font-medium tracking-tight">
+                    <div class="font-serif truncate text-[15px] leading-tight font-medium tracking-tight">
                       {{ row.dancer.fullName || '?' }}
                     </div>
                     <div
                       v-if="row.dancer.location"
-                      class="text-muted-foreground truncate text-[11.5px]"
+                      class="text-muted-foreground truncate text-xs"
                     >
                       {{ row.dancer.location }}
                     </div>
@@ -418,10 +418,10 @@ watch(
                       {{ dancer.number ?? '–' }}
                     </div>
                     <div class="min-w-0 flex-1">
-                      <div class="font-serif truncate text-[15px] font-medium tracking-tight">{{ dancer.fullName || '?' }}</div>
+                      <div class="font-serif truncate text-[15px] leading-tight font-medium tracking-tight">{{ dancer.fullName || '?' }}</div>
                       <div
                         v-if="dancer.location"
-                        class="text-muted-foreground truncate text-[11.5px]"
+                        class="text-muted-foreground truncate text-xs"
                       >
                         {{ dancer.location }}
                       </div>

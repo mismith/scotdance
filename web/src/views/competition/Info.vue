@@ -269,7 +269,7 @@ const groupedStaff = computed(() => {
           </div>
           <div
             v-if="member.location"
-            class="text-muted-foreground font-serif text-[11px] italic"
+            class="text-muted-foreground font-serif text-xs italic"
           >
             {{ member.location }}
           </div>
