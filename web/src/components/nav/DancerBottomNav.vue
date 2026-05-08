@@ -32,7 +32,7 @@ const activeTab = computed(() => {
     <div class="mx-auto flex max-w-3xl items-center justify-between">
       <RouterLink
         :to="{ name: 'dancers' }"
-        class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-12 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-group:contain] [view-transition-name:nav-left] hover:opacity-90"
+        class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-12 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
         title="Back to Dancers"
         aria-label="Back to Dancers"
       >
@@ -41,7 +41,7 @@ const activeTab = computed(() => {
         </span>
       </RouterLink>
       <div
-        class="bg-nav/90 text-nav-foreground pointer-events-auto rounded-full p-1 shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-group:contain] [view-transition-name:nav-right]"
+        class="bg-nav/90 text-nav-foreground pointer-events-auto rounded-full p-1 shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-right]"
       >
         <div class="flex items-center gap-1 [view-transition-name:match-element]">
           <RouterLink

@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 import { ChevronDown } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
-import { injectChromeTitle } from '@/composables/useChromeTitle'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
 import { dances as eventDances, getScheduleDanceName } from '@/lib/schedule'
 import { findGroupDancers } from '@/lib/results'
@@ -38,15 +37,6 @@ const eventId = computed(() => String(route.params.eventId ?? ''))
 const day = computed(() => schedule.value?.days?.[dayId.value] ?? null)
 const block = computed(() => day.value?.blocks?.[blockId.value] ?? null)
 const event = computed(() => block.value?.events?.[eventId.value] ?? null)
-
-const chromeTitle = injectChromeTitle()
-watch(
-  event,
-  (e) => {
-    chromeTitle.value = e?.name ?? null
-  },
-  { immediate: true },
-)
 
 const eventDanceList = computed(() =>
   event.value ? eventDances({ dances: event.value.dances }) : [],
@@ -129,13 +119,19 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
     </div>
 
     <template v-else>
-      <header>
+      <header class="space-y-2">
         <div
-          class="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase"
+          class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
         >
-          {{ day?.name }} <span v-if="block?.name">· {{ block.name }}</span>
+          {{ day?.name }}<span v-if="block?.name"> · {{ block.name }}</span>
         </div>
-        <p v-if="event.description" class="mt-3 text-sm whitespace-pre-line">
+        <h1 class="font-serif text-3xl leading-[1.04] font-medium tracking-tight">
+          {{ event.name ?? 'Event' }}
+        </h1>
+        <p
+          v-if="event.description"
+          class="text-muted-foreground text-sm whitespace-pre-line"
+        >
           {{ event.description }}
         </p>
       </header>

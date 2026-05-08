@@ -2,6 +2,7 @@
 import { computed, onMounted } from 'vue'
 import { ChevronRight, MapPin } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
+import CompChip from '@/components/CompChip.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import { staffMemberName, type StaffMember } from '@/types/competition'
 import { blocks, days, events } from '@/lib/schedule'
@@ -128,6 +129,21 @@ const groupedStaff = computed(() => {
 
 <template>
   <article v-if="competition" class="space-y-5">
+    <header class="space-y-3 pr-16">
+      <CompChip
+        :name="competition.name"
+        :image="competition.image"
+        :size="72"
+        :radius="16"
+        class="[view-transition-name:nav-avatar]"
+      />
+      <h1
+        class="font-serif text-3xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
+      >
+        {{ competition.name ?? '?' }}
+      </h1>
+    </header>
+
     <!-- Date / Venue card -->
     <section
       v-if="competition.date || competition.venue"
@@ -136,25 +152,29 @@ const groupedStaff = computed(() => {
       <div class="flex items-stretch">
         <div
           v-if="competition.date"
-          class="bg-background flex w-20 shrink-0 flex-col items-center justify-center gap-1 border-r py-4"
+          class="bg-background flex w-20 shrink-0 items-stretch border-r py-4"
         >
           <div
-            class="text-foreground/65 text-[10px] font-bold tracking-[0.14em] uppercase"
+            class="flex flex-1 flex-col items-center justify-center gap-1 [view-transition-name:nav-date]"
           >
-            {{ monthLabel }}
-          </div>
-          <div
-            class="font-serif text-[40px] leading-none font-medium tracking-tight tabular-nums"
-          >
-            {{ dayLabel }}
-          </div>
-          <div
-            :class="[
-              'text-[10px] font-bold tracking-[0.14em] tabular-nums',
-              datePast ? 'text-muted-foreground' : 'text-secondary',
-            ]"
-          >
-            {{ yearLabel }}
+            <div
+              class="text-foreground/65 text-[10px] font-bold tracking-[0.14em] uppercase"
+            >
+              {{ monthLabel }}
+            </div>
+            <div
+              class="font-serif text-[40px] leading-none font-medium tracking-tight tabular-nums"
+            >
+              {{ dayLabel }}
+            </div>
+            <div
+              :class="[
+                'text-[10px] font-bold tracking-[0.14em] tabular-nums',
+                datePast ? 'text-muted-foreground' : 'text-secondary',
+              ]"
+            >
+              {{ yearLabel }}
+            </div>
           </div>
         </div>
         <component
@@ -162,32 +182,36 @@ const groupedStaff = computed(() => {
           :href="mapsHref ?? undefined"
           :target="mapsHref ? '_blank' : undefined"
           :rel="mapsHref ? 'noopener' : undefined"
-          class="flex flex-1 items-center gap-2 p-3"
+          class="flex flex-1 items-center p-3"
         >
-          <div class="flex min-w-0 flex-1 flex-col justify-center gap-1">
-            <div
-              v-if="competition.venue"
-              class="flex items-center gap-1.5"
-            >
-              <MapPin class="text-muted-foreground size-3.5 shrink-0" />
-              <span
-                class="font-serif text-[15px] leading-snug font-medium tracking-tight"
+          <div
+            class="flex flex-1 items-center gap-2 [view-transition-name:nav-location]"
+          >
+            <div class="flex min-w-0 flex-1 flex-col justify-center gap-1">
+              <div
+                v-if="competition.venue"
+                class="flex items-center gap-1.5"
               >
-                {{ competition.venue }}
-              </span>
+                <MapPin class="text-muted-foreground size-3.5 shrink-0" />
+                <span
+                  class="font-serif text-[15px] leading-snug font-medium tracking-tight"
+                >
+                  {{ competition.venue }}
+                </span>
+              </div>
+              <div
+                v-if="competition.address || competition.location"
+                class="text-muted-foreground space-y-0.5 pl-5 text-[11.5px]"
+              >
+                <div v-if="competition.address">{{ competition.address }}</div>
+                <div v-if="competition.location">{{ competition.location }}</div>
+              </div>
             </div>
-            <div
-              v-if="competition.address || competition.location"
-              class="text-muted-foreground space-y-0.5 pl-5 text-[11.5px]"
-            >
-              <div v-if="competition.address">{{ competition.address }}</div>
-              <div v-if="competition.location">{{ competition.location }}</div>
-            </div>
+            <ChevronRight
+              v-if="mapsHref"
+              class="text-muted-foreground size-4 shrink-0"
+            />
           </div>
-          <ChevronRight
-            v-if="mapsHref"
-            class="text-muted-foreground size-4 shrink-0"
-          />
         </component>
       </div>
     </section>

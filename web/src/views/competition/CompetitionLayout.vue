@@ -2,96 +2,109 @@
 import { computed, toRef } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { ChevronLeft } from '@lucide/vue'
+import CompChip from '@/components/CompChip.vue'
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue'
 import ShareButton from '@/components/ShareButton.vue'
 import { provideCompetition } from '@/composables/useCompetition'
-import { provideChromeTitle } from '@/composables/useChromeTitle'
+import { formatShortDate } from '@/lib/format'
+
+type ChromeMode = 'info' | 'top-level' | 'drill-down'
+
+const MODE_BY_ROUTE: Record<string, ChromeMode> = {
+  'competition.info': 'info',
+  'competition.dancers': 'top-level',
+  'competition.schedule': 'top-level',
+  'competition.results': 'top-level',
+  'competition.dancer': 'drill-down',
+  'competition.event': 'drill-down',
+  'competition.group': 'drill-down',
+}
+
+const DRILL_DOWN_PARENT: Record<string, string> = {
+  'competition.dancer': 'competition.dancers',
+  'competition.event': 'competition.schedule',
+  'competition.group': 'competition.results',
+}
 
 const route = useRoute()
 const competitionId = computed(() => String(route.params.competitionId ?? ''))
 
 const { competition, notFound, loading, error } = provideCompetition(toRef(competitionId))
 
-const drillDownParent: Record<string, string> = {
-  'competition.event': 'competition.schedule',
-  'competition.group': 'competition.results',
-  'competition.dancer': 'competition.dancers',
-}
-const backTo = computed(() => drillDownParent[String(route.name ?? '')] ?? null)
+const mode = computed<ChromeMode>(() => MODE_BY_ROUTE[String(route.name ?? '')] ?? 'info')
+const backTo = computed(() => DRILL_DOWN_PARENT[String(route.name ?? '')] ?? null)
 
-const mark = computed(
-  () => (competition.value?.name ?? '').trim().charAt(0).toUpperCase() || '?',
-)
-
-const chromeOverride = provideChromeTitle()
-const chromeTitle = computed(
-  () =>
-    chromeOverride.value ??
-    competition.value?.name ??
-    (loading.value ? 'Loading…' : 'Competition'),
-)
+const dateLabel = computed(() => formatShortDate(competition.value?.date))
+const locationLabel = computed(() => competition.value?.location ?? '')
 </script>
 
 <template>
   <div class="flex flex-1 flex-col">
-    <header
-      class="pt-safe sticky top-0 z-30 overflow-hidden text-white"
-      style="
-        background-image: linear-gradient(
-          135deg,
-          color-mix(in oklch, var(--primary) 75%, black) 0%,
-          var(--primary) 100%
-        );
-      "
-    >
-      <span
-        aria-hidden="true"
-        class="pointer-events-none absolute -top-6 -right-4 font-serif leading-none font-medium text-white/10 select-none"
-        style="font-size: 9rem; letter-spacing: -0.4rem"
-      >
-        {{ mark }}
-      </span>
-      <div class="relative mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
+    <nav class="pt-safe pointer-events-none fixed inset-x-0 top-0 z-30 px-3">
+      <div class="mx-auto flex max-w-3xl items-center gap-2 pt-3">
         <RouterLink
           v-if="backTo"
           :to="{ name: backTo, params: { competitionId } }"
-          class="-ml-1 rounded-full p-2 text-white/80 hover:bg-white/10 hover:text-white"
+          class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-name:nav-back] hover:opacity-90"
           title="Back"
           aria-label="Back"
         >
           <ChevronLeft class="size-5" />
         </RouterLink>
-        <div
-          class="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/15"
+
+        <RouterLink
+          v-if="mode !== 'info'"
+          :to="{ name: 'competition.info', params: { competitionId } }"
+          class="bg-nav/90 text-nav-foreground pointer-events-auto flex min-w-0 flex-1 items-center gap-2 rounded-full p-1 pr-4 shadow-lg backdrop-blur-xl [view-transition-class:fixed-height] [view-transition-group:contain] [view-transition-name:nav-pill] hover:opacity-90"
+          :title="competition?.name ?? ''"
         >
-          <img
-            v-if="competition?.image"
-            :src="competition.image"
-            :alt="competition.name ?? ''"
-            class="size-full object-cover"
+          <CompChip
+            :name="competition?.name"
+            :image="competition?.image"
+            :size="40"
+            :radius="999"
+            class="[view-transition-name:nav-avatar]"
           />
-          <span v-else class="font-serif text-base leading-none font-medium">
-            {{ mark }}
-          </span>
-        </div>
-        <h1
-          class="min-w-0 flex-1 truncate font-serif text-lg leading-tight font-medium tracking-tight"
-        >
-          {{ chromeTitle }}
-        </h1>
+          <div class="min-w-0 flex-1">
+            <div
+              class="truncate font-serif text-sm leading-tight font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
+            >
+              {{ competition?.name ?? (loading ? 'Loading…' : 'Competition') }}
+            </div>
+            <div
+              v-if="dateLabel || locationLabel"
+              class="truncate text-[10px] leading-tight opacity-70"
+            >
+              <span v-if="dateLabel" class="[view-transition-name:nav-date]">{{
+                dateLabel
+              }}</span>
+              <span v-if="locationLabel" class="[view-transition-name:nav-location]">
+                <template v-if="dateLabel"> · </template>{{ locationLabel }}
+              </span>
+            </div>
+          </div>
+        </RouterLink>
+
+        <div v-else class="min-w-0 flex-1" />
+
         <div
-          class="flex items-center gap-0.5 [&_button]:text-white/85 [&_button]:hover:bg-white/10! [&_button]:hover:text-white"
+          class="bg-nav/90 text-nav-foreground pointer-events-auto flex h-12 shrink-0 items-center gap-0.5 rounded-full px-1.5 shadow-lg backdrop-blur-xl [view-transition-class:clip_fixed-height] [view-transition-group:contain] [view-transition-name:nav-actions]"
         >
-          <FavoriteCompetitionButton :competition-id="competitionId" />
+          <FavoriteCompetitionButton
+            v-if="mode === 'info'"
+            :competition-id="competitionId"
+            class="flex! size-9 items-center justify-center p-0! [view-transition-name:match-element]"
+          />
           <ShareButton
             :title="competition?.name ?? undefined"
             :text="competition?.name ?? undefined"
+            class="flex! size-9 items-center justify-center p-0! [view-transition-name:match-element]"
           />
         </div>
       </div>
-    </header>
+    </nav>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 p-4">
+    <main class="pt-safe-nav mx-auto w-full max-w-3xl flex-1 px-4 pb-4">
       <div v-if="loading" class="text-muted-foreground font-serif text-sm italic">
         Loading…
       </div>
