@@ -37,8 +37,7 @@ const eventCount = computed(() => {
   if (!schedule.value) return 0
   return days(schedule.value).reduce(
     (total, day) =>
-      total +
-      blocks(day).reduce((sum, block) => sum + events(block).length, 0),
+      total + blocks(day).reduce((sum, block) => sum + events(block).length, 0),
     0,
   )
 })
@@ -184,15 +183,10 @@ const groupedStaff = computed(() => {
           :rel="mapsHref ? 'noopener' : undefined"
           class="flex flex-1 items-center p-3"
         >
-          <div
-            class="flex flex-1 items-center gap-2 [view-transition-name:nav-location]"
-          >
+          <div class="flex flex-1 items-center gap-2 [view-transition-name:nav-location]">
             <div class="flex min-w-0 flex-1 flex-col justify-center gap-1">
-              <div
-                v-if="competition.venue"
-                class="flex items-center gap-1.5"
-              >
-                <MapPin class="text-muted-foreground size-3.5 shrink-0" />
+              <div v-if="competition.venue" class="flex items-center gap-1.5">
+                <MapPin class="text-muted-foreground -mt-1 size-4 shrink-0" />
                 <span
                   class="font-serif text-[15px] leading-snug font-medium tracking-tight"
                 >
@@ -207,10 +201,7 @@ const groupedStaff = computed(() => {
                 <div v-if="competition.location">{{ competition.location }}</div>
               </div>
             </div>
-            <ChevronRight
-              v-if="mapsHref"
-              class="text-muted-foreground size-4 shrink-0"
-            />
+            <ChevronRight v-if="mapsHref" class="text-muted-foreground size-4 shrink-0" />
           </div>
         </component>
       </div>
