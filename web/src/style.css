@@ -209,7 +209,9 @@
   ::view-transition-group(nav-avatar),
   ::view-transition-group(nav-name),
   ::view-transition-group(nav-date),
-  ::view-transition-group(nav-location) {
+  ::view-transition-group(nav-location),
+  ::view-transition-group(nav-left-active),
+  ::view-transition-group(nav-right-active) {
     animation-timing-function: var(--vt-ease-rubber-band);
   }
 

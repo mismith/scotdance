@@ -91,8 +91,10 @@ function goProfile() {
             :key="tab.name"
             :to="tab.to"
             :class="[
-              'flex flex-col items-center gap-0.5 rounded-full px-4 py-1 text-xs font-medium transition-colors',
-              tab.isActive() ? 'bg-nav-foreground/10' : 'opacity-70 hover:opacity-100',
+              'relative isolate flex flex-col items-center gap-0.5 rounded-full px-4 py-1 text-xs font-medium transition-colors',
+              tab.isActive()
+                ? `before:absolute before:inset-0 before:-z-10 before:rounded-full before:bg-nav-foreground/10 before:content-[''] before:[view-transition-name:nav-left-active]`
+                : 'opacity-70 hover:opacity-100',
             ]"
           >
             <component :is="tab.icon" class="size-4" />
@@ -103,8 +105,10 @@ function goProfile() {
             <button
               type="button"
               :class="[
-                'flex flex-col items-center gap-0.5 rounded-full px-4 py-1 text-xs font-medium transition-colors',
-                moreOpen ? 'bg-nav-foreground/10' : 'opacity-70 hover:opacity-100',
+                'relative isolate flex flex-col items-center gap-0.5 rounded-full px-4 py-1 text-xs font-medium transition-colors',
+                moreOpen
+                  ? `before:absolute before:inset-0 before:-z-10 before:rounded-full before:bg-nav-foreground/10 before:content-[''] before:[view-transition-name:nav-left-active]`
+                  : 'opacity-70 hover:opacity-100',
               ]"
               :aria-expanded="moreOpen"
               aria-haspopup="menu"

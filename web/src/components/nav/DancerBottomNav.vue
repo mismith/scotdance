@@ -49,9 +49,9 @@ const activeTab = computed(() => {
             :key="tab.to"
             :to="{ name: tab.to, params: { dancerId } }"
             :class="[
-              'flex flex-col items-center gap-0.5 rounded-full px-4 py-1 text-xs font-medium transition-colors',
+              'relative isolate flex flex-col items-center gap-0.5 rounded-full px-4 py-1 text-xs font-medium transition-colors',
               activeTab === tab.to
-                ? 'bg-nav-foreground/10'
+                ? `before:absolute before:inset-0 before:-z-10 before:rounded-full before:bg-nav-foreground/10 before:content-[''] before:[view-transition-name:nav-right-active]`
                 : 'opacity-70 hover:opacity-100',
             ]"
           >
