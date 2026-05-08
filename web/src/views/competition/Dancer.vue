@@ -122,7 +122,7 @@ const placedRows = computed(() =>
               class="flex items-center gap-3 px-1 py-3"
             >
               <div
-                class="font-serif min-w-0 flex-1 truncate text-[15px] font-medium tracking-tight"
+                class="font-serif min-w-0 flex-1 truncate text-[15px] leading-tight font-medium tracking-tight"
               >
                 {{ row.dance.fullName }}
               </div>

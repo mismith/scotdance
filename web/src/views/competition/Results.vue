@@ -178,7 +178,7 @@ const loaded = computed(() => groups.value.length > 0)
             </span>
             <div class="min-w-0 flex-1">
               <div
-                class="font-serif truncate text-[15px] font-medium tracking-tight"
+                class="font-serif truncate text-[15px] leading-tight font-medium tracking-tight"
               >
                 {{ group.name || group.fullName }}
               </div>

@@ -219,7 +219,7 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
             </div>
             <div class="min-w-0 flex-1">
               <div
-                class="font-serif truncate text-base font-medium tracking-tight"
+                class="font-serif truncate text-[15px] leading-tight font-medium tracking-tight"
               >
                 {{ competition.name ?? '?' }}
               </div>

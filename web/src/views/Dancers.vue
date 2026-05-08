@@ -115,6 +115,10 @@ function dancerSlug(name: string) {
     .replace(/^-|-$/g, '')
 }
 
+function locationOf(group: SearchDancerGroup) {
+  return group.dancers.find((d) => d.location)?.location ?? ''
+}
+
 function initialsOf(name: string) {
   const parts = name.split(/\s+/).filter(Boolean)
   const first = parts[0]?.charAt(0).toUpperCase() ?? '?'
@@ -158,7 +162,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
           type="search"
           placeholder="Search by name…"
           :disabled="!auth.isSignedIn"
-          class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-sm focus:outline-none disabled:opacity-50"
+          class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-sm focus:outline-none disabled:opacity-50 [&::-webkit-search-cancel-button]:hidden"
         />
         <button
           v-if="q"
@@ -205,35 +209,40 @@ const showSearch = computed(() => q.value.trim().length > 0)
           No dancers match.
         </div>
 
-        <ul v-else class="divide-y border-y">
-          <li v-for="group in results" :key="group.name">
-            <RouterLink
-              :to="{
-                name: 'dancer.info',
-                params: { dancerId: dancerSlug(group.name) },
-              }"
-              class="flex w-full items-center gap-3 px-1 py-3 text-left"
-            >
-              <span
-                class="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-full font-serif text-sm font-medium"
+        <section v-else class="space-y-2">
+          <SectionHeader label="Results" :count="results.length" />
+          <ul>
+            <li v-for="group in results" :key="group.name">
+              <RouterLink
+                :to="{
+                  name: 'dancer.info',
+                  params: { dancerId: dancerSlug(group.name) },
+                }"
+                class="flex w-full items-center gap-3 px-1 py-3 text-left"
               >
-                {{ group.initials }}
-              </span>
-              <div class="min-w-0 flex-1">
-                <div class="truncate font-serif text-base font-medium tracking-tight">
-                  {{ group.name || '?' }}
-                </div>
-                <div
-                  class="text-muted-foreground mt-0.5 flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.14em] uppercase"
+                <span
+                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium"
                 >
-                  <span class="tabular-nums">{{ group.dancers.length }}</span>
-                  <span>{{ group.dancers.length === 1 ? 'comp' : 'comps' }}</span>
+                  {{ group.initials }}
+                </span>
+                <div class="min-w-0 flex-1">
+                  <div
+                    class="truncate font-serif text-[15px] leading-tight font-medium tracking-tight"
+                  >
+                    {{ group.name || '?' }}
+                  </div>
+                  <div
+                    v-if="locationOf(group)"
+                    class="text-muted-foreground truncate font-serif text-xs italic"
+                  >
+                    {{ locationOf(group) }}
+                  </div>
                 </div>
-              </div>
-              <ChevronRight class="text-muted-foreground size-4 shrink-0" />
-            </RouterLink>
-          </li>
-        </ul>
+                <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+              </RouterLink>
+            </li>
+          </ul>
+        </section>
       </template>
 
       <template v-else>
@@ -249,17 +258,19 @@ const showSearch = computed(() => q.value.trim().length > 0)
                 class="flex w-full items-center gap-3 px-1 py-3 text-left"
               >
                 <span
-                  class="bg-secondary text-secondary-foreground flex size-10 shrink-0 items-center justify-center rounded-full font-serif text-sm font-medium"
+                  class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium"
                 >
                   {{ entry.initials }}
                 </span>
                 <div class="min-w-0 flex-1">
-                  <div class="truncate font-serif text-base font-medium tracking-tight">
+                  <div
+                    class="truncate font-serif text-[15px] leading-tight font-medium tracking-tight"
+                  >
                     {{ entry.name }}
                   </div>
                   <div
                     v-if="locationByName.get(entry.name)"
-                    class="text-muted-foreground truncate font-serif text-[11px] italic"
+                    class="text-muted-foreground truncate font-serif text-xs italic"
                   >
                     {{ locationByName.get(entry.name) }}
                   </div>
@@ -301,12 +312,14 @@ const showSearch = computed(() => q.value.trim().length > 0)
                 class="flex w-full items-center gap-3 px-1 py-3 text-left"
               >
                 <span
-                  class="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-full font-serif text-sm font-medium"
+                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium"
                 >
                   {{ initialsOf(entry.name) }}
                 </span>
                 <div class="min-w-0 flex-1">
-                  <div class="truncate font-serif text-base font-medium tracking-tight">
+                  <div
+                    class="truncate font-serif text-[15px] leading-tight font-medium tracking-tight"
+                  >
                     {{ entry.name }}
                   </div>
                 </div>

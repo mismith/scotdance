@@ -348,13 +348,13 @@ function dismissSuggestions() {
               </div>
               <div class="min-w-0 flex-1">
                 <div
-                  class="font-serif truncate text-[15px] font-medium tracking-tight"
+                  class="font-serif truncate text-[15px] leading-tight font-medium tracking-tight"
                 >
                   {{ dancer.fullName || '?' }}
                 </div>
                 <div
                   v-if="dancer.location"
-                  class="text-muted-foreground font-serif truncate text-[11px] italic"
+                  class="text-muted-foreground font-serif truncate text-xs italic"
                 >
                   {{ dancer.location }}
                 </div>
