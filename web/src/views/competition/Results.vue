@@ -162,7 +162,7 @@ const loaded = computed(() => groups.value.length > 0)
                 groupStatus(group).state === 'done'
                   ? groupHasFavorite(group)
                     ? 'bg-secondary text-secondary-foreground'
-                    : 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground'
                   : groupStatus(group).state === 'in-progress'
                     ? 'border border-amber-300 bg-amber-100 text-amber-900'
                     : 'bg-muted text-muted-foreground',
