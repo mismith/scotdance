@@ -140,19 +140,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
 
 <template>
   <div class="flex flex-1 flex-col">
-    <header
-      class="bg-background pt-safe sticky top-0 z-20 mx-auto w-full max-w-3xl p-4 pb-3"
-    >
-      <div
-        class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
-      >
-        Across every comp
-      </div>
-      <h1 class="font-serif text-3xl leading-[1.04] font-medium tracking-tight">
-        Dancers
-      </h1>
-    </header>
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-0">
+    <main class="pt-safe mx-auto w-full max-w-3xl flex-1 space-y-6 p-4">
       <div
         class="bg-card flex h-12 items-center gap-3 rounded-full border px-4 shadow-sm"
       >

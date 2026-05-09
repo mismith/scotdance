@@ -13,15 +13,6 @@ import { formatRelative, isPast, isSameDay } from '@/lib/format'
 
 type Filter = 'upcoming' | 'past' | 'all'
 
-const today = computed(() =>
-  new Date()
-    .toLocaleDateString('en-US', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-    })
-    .toUpperCase(),
-)
 const view = useLocalStorage<ViewMode>('competitions:view', 'list')
 const filter = useLocalStorage<Filter>('competitions:filter', 'upcoming')
 
@@ -107,19 +98,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
 
 <template>
   <div class="flex flex-1 flex-col">
-    <header
-      class="bg-background pt-safe sticky top-0 z-20 mx-auto w-full max-w-3xl p-4 pb-3"
-    >
-      <div
-        class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
-      >
-        {{ today }}
-      </div>
-      <h1 class="font-serif text-3xl leading-[1.04] font-medium tracking-tight">
-        Competitions
-      </h1>
-    </header>
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-5 p-4 pt-0">
+    <main class="pt-safe mx-auto w-full max-w-3xl flex-1 space-y-5 p-4">
       <div class="flex flex-wrap items-center gap-2">
         <ViewModeTabs v-model="view" />
         <button
