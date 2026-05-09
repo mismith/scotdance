@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useCompetition } from '@/composables/useCompetition'
 import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue'
 import Place from '@/components/Place.vue'
+import SectionHeader from '@/components/SectionHeader.vue'
 import { findGroupDances, getDancerPlace } from '@/lib/results'
 import { groupHasOverall, overallDance } from '@/types/competition'
 import { useFavoritesStore } from '@/stores/favorites'
@@ -44,76 +45,72 @@ const placedRows = computed(() =>
 
 <template>
   <article class="space-y-6">
-    <div v-if="!dancers.length" class="text-muted-foreground font-serif italic text-sm">Loading…</div>
+    <div v-if="!dancers.length" class="text-muted-foreground font-serif text-lg italic">
+      Loading…
+    </div>
 
-    <div
-      v-else-if="!dancer"
-      class="text-muted-foreground font-serif text-sm italic"
-    >
+    <div v-else-if="!dancer" class="text-muted-foreground font-serif text-lg italic">
       Dancer not found.
     </div>
 
     <template v-else>
-      <header class="space-y-3">
-        <div class="flex items-start gap-4">
-          <img
-            v-if="dancer.image"
-            :src="dancer.image"
-            :alt="dancer.fullName"
-            class="bg-muted size-20 shrink-0 rounded-full object-cover shadow"
-          />
-          <div
-            v-else
-            :class="[
-              'flex size-20 shrink-0 items-center justify-center rounded-full font-mono text-xl tabular-nums',
-              favorites.isFavoriteDancer(dancer.id)
-                ? 'bg-secondary text-secondary-foreground'
-                : 'bg-muted text-muted-foreground',
-            ]"
-          >
-            {{ dancer.number ?? '–' }}
-          </div>
+      <header class="relative space-y-3">
+        <FavoriteDancerButton
+          :dancer="dancer"
+          size="md"
+          class="float-right -mr-1 flex size-12 items-center justify-center rounded-full"
+        />
+        <img
+          v-if="dancer.image"
+          :src="dancer.image"
+          :alt="dancer.fullName"
+          class="bg-muted size-20 shrink-0 rounded-full object-cover shadow"
+        />
+        <div
+          v-else
+          :class="[
+            'flex size-20 shrink-0 items-center justify-center rounded-full font-mono text-3xl tabular-nums',
+            favorites.isFavoriteDancer(dancer.id)
+              ? 'bg-secondary text-secondary-foreground'
+              : 'bg-muted text-muted-foreground',
+          ]"
+        >
+          {{ dancer.number ?? '–' }}
+        </div>
 
-          <div class="min-w-0 flex-1 space-y-1 pt-1">
-            <div
-              class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
-            >
-              Dancer
-            </div>
-            <h1 class="font-serif text-3xl leading-[1.04] font-medium tracking-tight">
-              {{ dancer.fullName }}
-            </h1>
-            <div
-              v-if="dancer.group"
-              class="text-muted-foreground font-serif text-sm italic"
-            >
-              {{ dancer.group.fullName }}<span v-if="dancer.location"> · {{ dancer.location }}</span>
-            </div>
-            <div
-              v-else-if="dancer.location"
-              class="text-muted-foreground font-serif text-sm italic"
-            >
-              {{ dancer.location }}
-            </div>
+        <div class="min-w-0">
+          <h1 class="mb-1 font-serif text-4xl leading-[1.04] font-medium tracking-tight">
+            {{ dancer.fullName }}
+          </h1>
+          <div
+            v-if="dancer.location"
+            class="text-muted-foreground font-serif text-lg italic"
+          >
+            {{ dancer.location }}
           </div>
-          <FavoriteDancerButton :dancer="dancer" size="md" />
+          <div
+            v-if="dancer.group"
+            class="text-muted-foreground font-serif text-sm italic"
+          >
+            {{ dancer.group.fullName }}
+          </div>
         </div>
       </header>
 
       <section v-if="dancer.group" class="space-y-2">
-        <h3
-          class="text-foreground/65 px-1 text-[11px] font-bold tracking-[0.14em] uppercase"
-        >
-          Results
-        </h3>
+        <SectionHeader label="Results" />
         <div
           v-if="!groupDances.length"
-          class="text-muted-foreground font-serif text-sm italic"
+          class="text-muted-foreground font-serif text-lg italic"
         >
           No dances scheduled for this group.
         </div>
-        <ul v-else class="divide-y border-y">
-          <li v-for="row in placedRows" :key="row.dance.id">
+        <ul v-else>
+          <li
+            v-for="row in placedRows"
+            :key="row.dance.id"
+            :class="row.dance.id === overallDance.id ? 'mt-1 border-t pt-1' : ''"
+          >
             <RouterLink
               :to="{
                 name: 'competition.group',
@@ -123,7 +120,7 @@ const placedRows = computed(() =>
               class="flex items-center gap-3 px-1 py-3"
             >
               <div
-                class="font-serif min-w-0 flex-1 truncate text-[15px] leading-tight font-medium tracking-tight"
+                class="min-w-0 flex-1 truncate font-serif leading-tight font-medium tracking-tight"
               >
                 {{ row.dance.fullName }}
               </div>
