@@ -3,7 +3,9 @@ import { computed, ref } from 'vue'
 import type { RouteLocationRaw } from 'vue-router'
 import { ChevronLeft, ChevronRight } from '@lucide/vue'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
-import { formatRelative } from '@/lib/format'
+import CompetitionRow from '@/components/CompetitionRow.vue'
+import SectionHeader from '@/components/SectionHeader.vue'
+import { useFavoritesStore } from '@/stores/favorites'
 
 const props = withDefaults(
   defineProps<{
@@ -18,10 +20,12 @@ const props = withDefaults(
   },
 )
 
+const favorites = useFavoritesStore()
+
 const today = startOfDay(new Date())
 
 const cursor = ref(new Date(today.getFullYear(), today.getMonth(), 1))
-const selected = ref<Date>(new Date(today))
+const selected = ref<Date | null>(new Date(today))
 
 function startOfDay(d: Date) {
   const x = new Date(d)
@@ -63,16 +67,19 @@ const calendarCells = computed(() => {
     inMonth: boolean
     isToday: boolean
     eventCount: number
+    favCount: number
   }> = []
   for (let i = 0; i < rows * 7; i++) {
     const d = new Date(start)
     d.setDate(start.getDate() + i)
     const inMonth = d.getMonth() === cursor.value.getMonth()
+    const dayEvents = inMonth ? (eventsByDay.value.get(d.getDate()) ?? []) : []
     cells.push({
       date: d,
       inMonth,
       isToday: d.getTime() === today.getTime(),
-      eventCount: inMonth ? (eventsByDay.value.get(d.getDate())?.length ?? 0) : 0,
+      eventCount: dayEvents.length,
+      favCount: dayEvents.filter((c) => favorites.isFavoriteCompetition(c.id)).length,
     })
   }
   return cells
@@ -82,17 +89,36 @@ const monthLabel = computed(() =>
   cursor.value.toLocaleString('en-US', { month: 'long', year: 'numeric' }),
 )
 
-const upcoming = computed(() => {
-  const anchor = selected.value.getTime()
-  return props.competitions
-    .filter((c) => c.date && new Date(c.date).getTime() >= anchor)
-    .slice(0, 8)
+const visibleCompetitions = computed(() => {
+  if (selected.value) {
+    const dayStart = startOfDay(selected.value).getTime()
+    const dayEnd = dayStart + 86_400_000
+    return props.competitions.filter((c) => {
+      if (!c.date) return false
+      const t = new Date(c.date).getTime()
+      return t >= dayStart && t < dayEnd
+    })
+  }
+  return [...monthEvents.value].sort(
+    (a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime(),
+  )
 })
+
+const sectionLabel = computed(() =>
+  selected.value
+    ? selected.value.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      })
+    : monthLabel.value,
+)
 
 function shiftMonth(delta: number) {
   const next = new Date(cursor.value)
   next.setMonth(next.getMonth() + delta)
   cursor.value = next
+  selected.value = null
 }
 
 function goToToday() {
@@ -103,6 +129,7 @@ function goToToday() {
 defineExpose({ goToToday })
 
 function isSelected(d: Date) {
+  if (!selected.value) return false
   return (
     d.getFullYear() === selected.value.getFullYear() &&
     d.getMonth() === selected.value.getMonth() &&
@@ -113,8 +140,10 @@ function isSelected(d: Date) {
 function selectDay(cell: { date: Date; inMonth: boolean }) {
   if (!cell.inMonth) {
     cursor.value = new Date(cell.date.getFullYear(), cell.date.getMonth(), 1)
+    selected.value = startOfDay(cell.date)
+    return
   }
-  selected.value = startOfDay(cell.date)
+  selected.value = isSelected(cell.date) ? null : startOfDay(cell.date)
 }
 
 const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -122,31 +151,26 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
 <template>
   <div class="space-y-5">
-    <div class="flex items-end justify-between gap-3">
-      <div class="flex items-center gap-1">
-        <button
-          type="button"
-          aria-label="Previous month"
-          class="text-muted-foreground hover:text-foreground -ml-2 rounded-md p-2"
-          @click="shiftMonth(-1)"
-        >
-          <ChevronLeft class="size-4" />
-        </button>
-        <h2 class="font-serif text-4xl font-medium tracking-tight">
-          {{ monthLabel }}
-        </h2>
-        <button
-          type="button"
-          aria-label="Next month"
-          class="text-muted-foreground hover:text-foreground rounded-md p-2"
-          @click="shiftMonth(1)"
-        >
-          <ChevronRight class="size-4" />
-        </button>
-      </div>
-      <div class="text-muted-foreground tabular-nums">
-        {{ monthEvents.length }} {{ monthEvents.length === 1 ? 'event' : 'events' }}
-      </div>
+    <div class="flex items-center justify-center gap-1">
+      <button
+        type="button"
+        aria-label="Previous month"
+        class="text-muted-foreground hover:text-foreground rounded-md p-2"
+        @click="shiftMonth(-1)"
+      >
+        <ChevronLeft class="size-4" />
+      </button>
+      <h2 class="font-serif text-4xl font-medium tracking-tight">
+        {{ monthLabel }}
+      </h2>
+      <button
+        type="button"
+        aria-label="Next month"
+        class="text-muted-foreground hover:text-foreground rounded-md p-2"
+        @click="shiftMonth(1)"
+      >
+        <ChevronRight class="size-4" />
+      </button>
     </div>
 
     <div
@@ -167,9 +191,8 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
           !cell.inMonth && 'text-muted-foreground/40',
           cell.inMonth && !cell.eventCount && !isSelected(cell.date) && 'hover:bg-accent',
           cell.eventCount && !isSelected(cell.date) && 'bg-card shadow-sm hover:shadow',
-          isSelected(cell.date) && cell.eventCount && 'bg-pink-paper shadow-sm',
-          isSelected(cell.date) && !cell.eventCount && 'ring-1 ring-foreground/30',
-          cell.isToday && !isSelected(cell.date) && 'ring-1 ring-foreground/30',
+          isSelected(cell.date) && 'bg-blue-paper shadow-sm',
+          cell.isToday && !isSelected(cell.date) && 'ring-foreground/30 ring-1',
         ]"
         @click="selectDay(cell)"
       >
@@ -180,59 +203,38 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
         </span>
         <span
           v-if="cell.eventCount"
-          class="absolute bottom-1.5 left-1/2 flex -translate-x-1/2 gap-0.5"
+          class="text-primary absolute bottom-1.5 left-1/2 flex -translate-x-1/2 items-center gap-0.5"
         >
           <span
-            v-for="n in Math.min(cell.eventCount, 3)"
-            :key="n"
+            v-for="n in Math.min(cell.favCount, 3)"
+            :key="`f${n}`"
             class="bg-secondary size-1 rounded-full"
           />
+          <span
+            v-for="n in Math.max(0, Math.min(cell.eventCount, 3) - cell.favCount)"
+            :key="`e${n}`"
+            class="bg-primary size-1 rounded-full"
+          />
+          <span
+            v-if="cell.eventCount > 3"
+            class="-mt-[2.5px] -mr-1 text-xs leading-none font-bold"
+            aria-hidden="true"
+            >+</span
+          >
         </span>
       </button>
     </div>
 
-    <section v-if="upcoming.length" class="space-y-3 pt-2">
-      <div
-        class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase"
-      >
-        Upcoming
-      </div>
-      <ul class="divide-y border-t border-b">
-        <li v-for="competition in upcoming" :key="competition.id">
-          <RouterLink
-            :to="props.linkTo(competition)"
-            class="flex items-center gap-4 px-1 py-3"
-          >
-            <div class="text-secondary w-10 shrink-0 text-center">
-              <div class="font-serif text-4xl leading-none">
-                {{ new Date(competition.date!).getDate() }}
-              </div>
-              <div
-                class="mt-0.5 text-xs font-medium tracking-[0.18em] uppercase"
-              >
-                {{
-                  new Date(competition.date!).toLocaleString('en-US', {
-                    month: 'short',
-                  })
-                }}
-              </div>
-            </div>
-            <div class="min-w-0 flex-1">
-              <div
-                class="font-serif truncate leading-tight font-medium tracking-tight"
-              >
-                {{ competition.name ?? '?' }}
-              </div>
-              <div class="text-muted-foreground truncate text-sm">
-                <span v-if="competition.location">{{ competition.location }}</span>
-                <span v-if="competition.location && competition.date"> · </span>
-                <span v-if="competition.date">{{
-                  formatRelative(competition.date)
-                }}</span>
-              </div>
-            </div>
-          </RouterLink>
-        </li>
+    <section v-if="visibleCompetitions.length" class="space-y-2 pt-2">
+      <SectionHeader :label="sectionLabel" :count="visibleCompetitions.length" />
+      <ul>
+        <CompetitionRow
+          v-for="competition in visibleCompetitions"
+          :key="competition.id"
+          :competition="competition"
+          :to="props.linkTo(competition)"
+          :show-relative-date="!selected"
+        />
       </ul>
     </section>
   </div>
