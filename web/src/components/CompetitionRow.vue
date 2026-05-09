@@ -1,0 +1,45 @@
+<script setup lang="ts">
+import type { RouteLocationRaw } from 'vue-router'
+import type { CompetitionListItem } from '@/composables/useCompetitions'
+import CompChip from '@/components/CompChip.vue'
+import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue'
+import { formatRelative } from '@/lib/format'
+
+withDefaults(
+  defineProps<{
+    competition: CompetitionListItem
+    to: RouteLocationRaw
+    showRelativeDate?: boolean
+  }>(),
+  { showRelativeDate: true },
+)
+</script>
+
+<template>
+  <li class="flex items-start">
+    <RouterLink
+      :to="to"
+      class="flex min-w-0 flex-1 items-start gap-3 py-3 pr-3 pl-1"
+    >
+      <CompChip :name="competition.name" :image="competition.image" :size="48" />
+      <div class="min-w-0 flex-1 pt-0.5">
+        <div class="line-clamp-2 font-serif leading-tight font-medium tracking-tight">
+          {{ competition.name ?? '?' }}
+        </div>
+        <div
+          v-if="competition.location"
+          class="text-muted-foreground truncate font-serif text-sm italic"
+        >
+          {{ competition.location }}
+        </div>
+        <div
+          v-if="showRelativeDate && competition.date"
+          class="text-muted-foreground/80 text-xs"
+        >
+          {{ formatRelative(competition.date) }}
+        </div>
+      </div>
+    </RouterLink>
+    <FavoriteCompetitionButton :competition-id="competition.id" class="mt-2 mr-2" />
+  </li>
+</template>
