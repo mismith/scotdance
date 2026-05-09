@@ -5,7 +5,8 @@ import { version as currentVersion } from '../../package.json'
 import { dataRef } from '@/firebase'
 
 // Hardcoded until Capacitor is wired; then read Capacitor.getPlatform() for ios/android.
-const PLATFORM = 'web'
+export type Platform = 'web' | 'ios' | 'android'
+export const PLATFORM: Platform = 'web'
 
 const latestVersion = ref<string | null>(null)
 const dialogOpen = ref(false)
