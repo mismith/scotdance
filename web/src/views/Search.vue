@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Search, X } from '@lucide/vue'
 
 const router = useRouter()
 const q = ref('')
+const inputEl = ref<HTMLInputElement | null>(null)
+
+onMounted(() => inputEl.value?.focus())
 
 function close() {
   if (window.history.length > 1) {
@@ -78,6 +81,7 @@ const examples = [
         <div class="flex h-full items-center gap-2 [view-transition-name:match-element]">
           <Search class="size-4 shrink-0 opacity-80" />
           <input
+            ref="inputEl"
             v-model="q"
             type="search"
             placeholder="Search"
