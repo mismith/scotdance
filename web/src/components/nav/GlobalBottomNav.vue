@@ -125,7 +125,7 @@ function goProfile() {
 
             <div
               v-if="moreOpen"
-              class="bg-nav/90 text-nav-foreground absolute bottom-full left-1/2 z-40 mb-2 w-64 max-w-[calc(100vw-1.5rem)] -translate-x-1/2 rounded-3xl border border-white/10 p-3 shadow-lg backdrop-blur-xl"
+              class="bg-nav/90 text-nav-foreground absolute bottom-full left-1/2 z-40 mb-2 w-72 max-w-[calc(100vw-1.5rem)] -translate-x-1/2 rounded-3xl border border-white/10 p-3 shadow-lg backdrop-blur-xl"
               role="menu"
             >
               <!-- Account + theme section -->
@@ -145,14 +145,14 @@ function goProfile() {
                   />
                   <span
                     v-else
-                    class="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-full text-xs font-medium"
+                    class="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-full font-medium"
                   >
                     {{ initial }}
                   </span>
                   <span class="min-w-0 flex-1">
                     <span
                       v-if="me.displayName"
-                      class="block truncate font-serif text-sm font-medium tracking-tight"
+                      class="block truncate font-serif text-lg font-medium tracking-tight"
                     >
                       {{ me.displayName }}
                     </span>
@@ -161,8 +161,8 @@ function goProfile() {
                       :class="[
                         'block truncate',
                         me.displayName
-                          ? 'text-[10px] opacity-60'
-                          : 'font-serif text-sm font-medium tracking-tight',
+                          ? 'opacity-60'
+                          : 'font-serif text-lg font-medium tracking-tight',
                       ]"
                     >
                       {{ me.email }}
@@ -174,21 +174,12 @@ function goProfile() {
                 <button
                   v-else
                   type="button"
-                  class="hover:bg-nav-foreground/10 flex w-full items-center gap-2.5 rounded-xl p-2 text-left"
+                  class="hover:bg-nav-foreground/10 flex w-full items-center gap-2 rounded-md p-2 text-left text-sm transition-colors"
                   role="menuitem"
                   @click="handleSignIn"
                 >
-                  <span
-                    class="bg-nav-foreground/10 flex size-9 items-center justify-center rounded-full"
-                  >
-                    <LogIn class="size-4" />
-                  </span>
-                  <span class="min-w-0 flex-1">
-                    <span class="block font-serif text-sm font-medium tracking-tight">
-                      Sign in
-                    </span>
-                    <span class="block text-[10px] opacity-60"> To save favourites </span>
-                  </span>
+                  <LogIn class="size-4" />
+                  <span class="flex-1">Sign in</span>
                 </button>
 
                 <div
@@ -203,15 +194,15 @@ function goProfile() {
                     role="radio"
                     :aria-checked="theme === opt.value"
                     :class="[
-                      'flex items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors',
+                      'flex items-center justify-center gap-1.5 rounded-md py-1.5 font-medium transition-colors',
                       theme === opt.value
                         ? 'bg-nav-foreground/20 shadow-sm'
                         : 'opacity-70 hover:opacity-100',
                     ]"
                     @click="theme = opt.value"
                   >
-                    <component :is="opt.icon" class="size-3.5" />
-                    <span>{{ opt.label }}</span>
+                    <component :is="opt.icon" class="size-4" />
+                    <span class="text-sm">{{ opt.label }}</span>
                   </button>
                 </div>
               </div>
