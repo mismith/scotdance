@@ -7,6 +7,7 @@ import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vu
 import ShareButton from '@/components/ShareButton.vue'
 import { provideCompetition } from '@/composables/useCompetition'
 import { formatShortDate } from '@/lib/format'
+import { preferBackClick } from '@/lib/smartBack'
 
 type ChromeMode = 'info' | 'top-level' | 'drill-down'
 
@@ -29,24 +30,6 @@ const DRILL_DOWN_PARENT: Record<string, string> = {
 const route = useRoute()
 const router = useRouter()
 const competitionId = computed(() => String(route.params.competitionId ?? ''))
-
-function onBackClick(event: MouseEvent, navigate: (e?: MouseEvent) => void) {
-  if (
-    event.metaKey ||
-    event.ctrlKey ||
-    event.shiftKey ||
-    event.altKey ||
-    event.button !== 0
-  ) {
-    return
-  }
-  if (window.history.state?.back) {
-    event.preventDefault()
-    router.back()
-    return
-  }
-  navigate(event)
-}
 
 const { competition, notFound, loading, error } = provideCompetition(toRef(competitionId))
 
@@ -72,7 +55,7 @@ const locationLabel = computed(() => competition.value?.location ?? '')
             class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-name:nav-back] hover:opacity-90"
             title="Back"
             aria-label="Back"
-            @click="onBackClick($event, navigate)"
+            @click="preferBackClick(router, $event, navigate)"
           >
             <ChevronLeft class="size-5" />
           </a>
