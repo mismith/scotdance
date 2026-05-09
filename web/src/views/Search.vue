@@ -76,7 +76,7 @@ const examples = [
       class="bg-background pt-safe sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-center gap-2 p-3"
     >
       <div
-        class="bg-nav/90 text-nav-foreground h-12 min-w-0 flex-1 rounded-full border border-white/10 px-4 shadow-md backdrop-blur-xl [view-transition-class:clip] [view-transition-group:contain] [view-transition-name:nav-left]"
+        class="bg-nav/90 text-nav-foreground h-12 min-w-0 flex-1 rounded-full border border-white/10 px-4 shadow-md backdrop-blur-xl [view-transition-name:nav-left]"
       >
         <div class="flex h-full items-center gap-2 [view-transition-name:match-element]">
           <Search class="size-4 shrink-0 opacity-80" />
@@ -91,7 +91,7 @@ const examples = [
       </div>
       <button
         type="button"
-        class="bg-nav/90 text-nav-foreground flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 shadow-md backdrop-blur-xl [view-transition-class:clip] [view-transition-group:contain] [view-transition-name:nav-right] hover:opacity-90"
+        class="bg-nav/90 text-nav-foreground flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 shadow-md backdrop-blur-xl [view-transition-name:nav-right] hover:opacity-90"
         title="Close search"
         aria-label="Close search"
         @click="close"

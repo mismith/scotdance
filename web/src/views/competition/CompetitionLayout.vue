@@ -31,7 +31,13 @@ const router = useRouter()
 const competitionId = computed(() => String(route.params.competitionId ?? ''))
 
 function onBackClick(event: MouseEvent, navigate: (e?: MouseEvent) => void) {
-  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+  if (
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey ||
+    event.button !== 0
+  ) {
     return
   }
   if (window.history.state?.back) {
@@ -75,7 +81,7 @@ const locationLabel = computed(() => competition.value?.location ?? '')
         <RouterLink
           v-if="mode !== 'info'"
           :to="{ name: 'competition.info', params: { competitionId } }"
-          class="bg-nav/90 text-nav-foreground pointer-events-auto flex min-w-0 flex-1 items-center gap-2 rounded-full p-1 pr-4 shadow-lg backdrop-blur-xl [view-transition-class:fixed-height] [view-transition-group:contain] [view-transition-name:nav-pill] hover:opacity-90"
+          class="bg-nav/90 text-nav-foreground pointer-events-auto flex min-w-0 flex-1 items-center gap-2 rounded-full p-1 pr-4 shadow-lg backdrop-blur-xl [view-transition-name:nav-pill] hover:opacity-90"
           :title="competition?.name ?? ''"
         >
           <CompChip
@@ -108,17 +114,17 @@ const locationLabel = computed(() => competition.value?.location ?? '')
         <div v-else class="min-w-0 flex-1" />
 
         <div
-          class="bg-nav/90 text-nav-foreground pointer-events-auto flex h-12 shrink-0 items-center gap-0.5 rounded-full px-1.5 shadow-lg backdrop-blur-xl [view-transition-class:clip_fixed-height] [view-transition-group:contain] [view-transition-name:nav-actions]"
+          class="bg-nav/90 text-nav-foreground pointer-events-auto flex h-12 shrink-0 items-center gap-0.5 rounded-full px-1.5 shadow-lg backdrop-blur-xl [view-transition-class:fixed-height] [view-transition-name:nav-actions]"
         >
           <FavoriteCompetitionButton
             v-if="mode === 'info'"
             :competition-id="competitionId"
-            class="flex! size-9 items-center justify-center rounded-full! p-0! hover:bg-nav-foreground/10! [view-transition-name:match-element]"
+            class="hover:bg-nav-foreground/10! flex! size-9 items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
           />
           <ShareButton
             :title="competition?.name ?? undefined"
             :text="competition?.name ?? undefined"
-            class="flex! size-9 items-center justify-center rounded-full! p-0! hover:bg-nav-foreground/10! [view-transition-name:match-element]"
+            class="hover:bg-nav-foreground/10! flex! size-9 items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
           />
         </div>
       </div>
