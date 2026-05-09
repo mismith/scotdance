@@ -70,7 +70,7 @@ const activeTab = computed(() => {
             :key="tab.to"
             :to="{ name: tab.to, params: { competitionId } }"
             :class="[
-              'relative isolate flex h-14 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-4 font-medium transition-colors',
+              'relative isolate flex h-14 min-w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-3 font-medium transition-colors',
               activeTab === tab.to
                 ? `before:bg-nav-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:content-[''] before:[view-transition-name:nav-right-active]`
                 : 'opacity-70 hover:opacity-100',
