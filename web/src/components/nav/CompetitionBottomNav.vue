@@ -51,7 +51,7 @@ const activeTab = computed(() => {
       >
         <a
           :href="href"
-          class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-12 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
+          class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-16 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
           title="Back to Competitions"
           aria-label="Back to Competitions"
           @click="smartBackClick(router, $event, r.fullPath, navigate)"
@@ -70,7 +70,7 @@ const activeTab = computed(() => {
             :key="tab.to"
             :to="{ name: tab.to, params: { competitionId } }"
             :class="[
-              'relative isolate flex h-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-full px-4 font-medium transition-colors',
+              'relative isolate flex h-14 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-4 font-medium transition-colors',
               activeTab === tab.to
                 ? `before:bg-nav-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:content-[''] before:[view-transition-name:nav-right-active]`
                 : 'opacity-70 hover:opacity-100',
