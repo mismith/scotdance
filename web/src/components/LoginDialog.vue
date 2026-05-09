@@ -87,11 +87,11 @@ async function submit() {
 
       <div class="space-y-1">
         <div
-          class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
+          class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase"
         >
           ScotDance.app
         </div>
-        <h2 class="font-serif text-2xl font-medium tracking-tight leading-[1.04]">
+        <h2 class="font-serif text-4xl font-medium tracking-tight leading-[1.04]">
           <template v-if="mode === 'login'">Sign in</template>
           <template v-else-if="mode === 'register'">Create account</template>
           <template v-else>Reset password</template>
@@ -100,7 +100,7 @@ async function submit() {
 
       <form class="space-y-3" @submit.prevent="submit">
         <label class="block space-y-1">
-          <span class="text-muted-foreground text-xs">Email</span>
+          <span class="text-muted-foreground">Email</span>
           <input
             v-model="email"
             type="email"
@@ -108,12 +108,12 @@ async function submit() {
             autocomplete="email"
             required
             autofocus
-            class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
+            class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
           />
         </label>
 
         <label v-if="mode !== 'forgot'" class="block space-y-1">
-          <span class="text-muted-foreground text-xs">Password</span>
+          <span class="text-muted-foreground">Password</span>
           <div class="relative">
             <input
               v-model="password"
@@ -121,7 +121,7 @@ async function submit() {
               name="password"
               :autocomplete="mode === 'register' ? 'new-password' : 'current-password'"
               required
-              class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 pr-10 text-sm focus:ring-2 focus:outline-none"
+              class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 pr-10 focus:ring-2 focus:outline-none"
             />
             <button
               type="button"
@@ -134,13 +134,13 @@ async function submit() {
           </div>
         </label>
 
-        <p v-if="errorMessage" class="text-destructive text-sm">{{ errorMessage }}</p>
-        <p v-if="successMessage" class="text-sm text-emerald-600">{{ successMessage }}</p>
+        <p v-if="errorMessage" class="text-destructive text-lg">{{ errorMessage }}</p>
+        <p v-if="successMessage" class="text-lg text-emerald-600">{{ successMessage }}</p>
 
         <button
           type="submit"
           :disabled="submitting"
-          class="bg-primary text-primary-foreground inline-flex w-full items-center justify-center rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
+          class="bg-primary text-primary-foreground inline-flex w-full items-center justify-center rounded-md px-4 py-2 text-lg font-medium hover:opacity-90 disabled:opacity-50"
         >
           <template v-if="submitting">Working…</template>
           <template v-else-if="mode === 'login'">Sign in</template>
@@ -149,7 +149,7 @@ async function submit() {
         </button>
       </form>
 
-      <div class="text-muted-foreground space-y-1 text-xs">
+      <div class="text-muted-foreground space-y-1">
         <template v-if="mode === 'login'">
           <p>
             Need an account?

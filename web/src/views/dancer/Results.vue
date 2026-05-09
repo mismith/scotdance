@@ -72,13 +72,13 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
           class="bg-card rounded-2xl border px-3 py-3 text-center"
         >
           <div
-            class="text-foreground/65 text-[10px] font-bold tracking-[0.14em] uppercase"
+            class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase"
           >
             {{ t.k }}
           </div>
           <div
             :class="[
-              'font-serif mt-1 text-2xl font-medium tabular-nums tracking-tight',
+              'font-serif mt-1 text-4xl font-medium tabular-nums tracking-tight',
               t.accent,
             ]"
           >
@@ -86,7 +86,7 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
           </div>
         </div>
       </div>
-      <p class="text-muted-foreground mt-2 px-1 text-[11px]">
+      <p class="text-muted-foreground mt-2 px-1">
         Aggregated stats across comps need per-comp results loaded — coming soon.
       </p>
     </section>
@@ -95,7 +95,7 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
 
     <div
       v-if="view === 'map'"
-      class="text-muted-foreground font-serif rounded-2xl border border-dashed p-8 text-center text-sm italic"
+      class="text-muted-foreground font-serif rounded-2xl border border-dashed p-8 text-center text-lg italic"
     >
       Map view — stub.
     </div>
@@ -128,28 +128,28 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
               <div class="w-10 shrink-0 text-center">
                 <div
                   :class="[
-                    'font-serif text-2xl font-medium leading-none tabular-nums',
+                    'font-serif text-4xl font-medium leading-none tabular-nums',
                     a.isLive ? 'text-secondary' : '',
                   ]"
                 >
                   {{ a.day }}
                 </div>
                 <div
-                  class="text-muted-foreground mt-1 text-[10px] font-bold tracking-[0.12em] uppercase"
+                  class="text-muted-foreground mt-1 text-sm font-bold tracking-[0.12em] uppercase"
                 >
                   {{ a.month }}
                 </div>
               </div>
               <div class="min-w-0 flex-1">
                 <div
-                  class="font-serif truncate text-[15px] font-medium tracking-tight leading-tight"
+                  class="font-serif truncate font-medium tracking-tight leading-tight"
                 >
                   {{ a.competition?.name ?? 'Loading…' }}
                 </div>
                 <div
-                  class="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 text-[11.5px]"
+                  class="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 font-serif text-sm italic"
                 >
-                  <span v-if="a.hit.number != null" class="tabular-nums"
+                  <span v-if="a.hit.number != null" class="tabular-nums not-italic"
                     >#{{ a.hit.number }}</span
                   >
                   <span v-if="a.competition?.location">{{
@@ -157,7 +157,7 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
                   }}</span>
                   <span
                     v-if="a.isLive"
-                    class="text-secondary text-[11px] font-bold tracking-[0.12em] uppercase"
+                    class="text-secondary font-sans text-sm font-bold not-italic tracking-[0.12em] uppercase"
                     >Dancing now</span
                   >
                 </div>
@@ -184,25 +184,25 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
             >
               <div class="w-10 shrink-0 text-center opacity-60">
                 <div
-                  class="font-serif text-2xl font-medium leading-none tabular-nums"
+                  class="font-serif text-4xl font-medium leading-none tabular-nums"
                 >
                   {{ a.day }}
                 </div>
                 <div
-                  class="text-muted-foreground mt-1 text-[10px] font-bold tracking-[0.12em] uppercase"
+                  class="text-muted-foreground mt-1 text-sm font-bold tracking-[0.12em] uppercase"
                 >
                   {{ a.month }}
                 </div>
               </div>
               <div class="min-w-0 flex-1 opacity-80">
                 <div
-                  class="font-serif truncate text-[15px] font-medium tracking-tight leading-tight"
+                  class="font-serif truncate font-medium tracking-tight leading-tight"
                 >
                   {{ a.competition?.name ?? 'Loading…' }}
                 </div>
                 <div
                   v-if="a.hit.number != null"
-                  class="text-muted-foreground mt-1 text-[11.5px] tabular-nums"
+                  class="text-muted-foreground mt-1 font-serif text-sm tabular-nums italic"
                 >
                   #{{ a.hit.number }}
                 </div>
@@ -215,7 +215,7 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
 
       <div
         v-if="!upcoming.length && !past.length"
-        class="text-muted-foreground font-serif text-sm italic"
+        class="text-muted-foreground font-serif text-lg italic"
       >
         No appearances on record.
       </div>

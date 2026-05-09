@@ -130,11 +130,11 @@ const submitDisabled = computed(() => {
     >
       <div class="min-w-0 flex-1">
         <div
-          class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
+          class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase"
         >
           Account
         </div>
-        <h1 class="font-serif text-3xl leading-[1.04] font-medium tracking-tight">
+        <h1 class="font-serif text-4xl leading-[1.04] font-medium tracking-tight">
           Profile
         </h1>
       </div>
@@ -149,7 +149,7 @@ const submitDisabled = computed(() => {
           class="bg-muted size-20 rounded-full object-cover"
         />
         <div v-else class="bg-muted size-20 rounded-full" />
-        <div class="text-muted-foreground text-xs">
+        <div class="text-muted-foreground">
           Avatar via
           <a
             href="https://gravatar.com/"
@@ -164,27 +164,27 @@ const submitDisabled = computed(() => {
 
       <section class="space-y-2">
         <label class="block space-y-1">
-          <span class="text-muted-foreground text-xs">Display name</span>
+          <span class="text-muted-foreground">Display name</span>
           <input
             v-model="displayName"
             type="text"
-            class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
+            class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
             @input="onDisplayNameInput"
             @blur="saveDisplayName"
           />
         </label>
-        <p v-if="displayNameSaving" class="text-muted-foreground text-xs">Saving…</p>
-        <p v-if="displayNameError" class="text-destructive text-xs">
+        <p v-if="displayNameSaving" class="text-muted-foreground">Saving…</p>
+        <p v-if="displayNameError" class="text-destructive">
           {{ displayNameError }}
         </p>
       </section>
 
       <section class="space-y-2">
         <label class="block space-y-1">
-          <span class="text-muted-foreground text-xs">Email</span>
+          <span class="text-muted-foreground">Email</span>
           <button
             type="button"
-            class="bg-background hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-sm"
+            class="bg-background hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-lg"
             @click="openModal('email')"
           >
             <span class="truncate">{{ me.email ?? '—' }}</span>
@@ -195,10 +195,10 @@ const submitDisabled = computed(() => {
 
       <section class="space-y-2">
         <label class="block space-y-1">
-          <span class="text-muted-foreground text-xs">Password</span>
+          <span class="text-muted-foreground">Password</span>
           <button
             type="button"
-            class="bg-background hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-sm"
+            class="bg-background hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-lg"
             @click="openModal('password')"
           >
             <span class="font-mono">••••••••</span>
@@ -210,7 +210,7 @@ const submitDisabled = computed(() => {
       <section class="flex flex-col items-center gap-4 pt-6">
         <button
           type="button"
-          class="hover:bg-accent inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm"
+          class="hover:bg-accent inline-flex items-center gap-2 rounded-full border px-4 py-2 text-lg"
           @click="handleSignOut"
         >
           <LogOut class="size-4" />
@@ -218,7 +218,7 @@ const submitDisabled = computed(() => {
         </button>
         <button
           type="button"
-          class="text-destructive text-sm hover:underline"
+          class="text-destructive text-lg hover:underline"
           @click="openModal('delete')"
         >
           Delete account
@@ -236,38 +236,38 @@ const submitDisabled = computed(() => {
         <div
           class="bg-background relative w-full max-w-sm space-y-4 rounded-lg border p-6 shadow-lg"
         >
-          <h2 class="font-serif text-xl font-medium tracking-tight">
+          <h2 class="font-serif text-3xl font-medium tracking-tight">
             <template v-if="modal === 'email'">Change your email</template>
             <template v-else-if="modal === 'password'">Change your password</template>
             <template v-else>Delete your account</template>
           </h2>
 
-          <p v-if="modal === 'delete'" class="text-muted-foreground text-sm">
+          <p v-if="modal === 'delete'" class="text-muted-foreground text-lg">
             This will permanently delete your account and all associated data.
           </p>
 
           <form class="space-y-3" @submit.prevent="submitModal">
             <label v-if="modal === 'email'" class="block space-y-1">
-              <span class="text-muted-foreground text-xs">New email</span>
+              <span class="text-muted-foreground">New email</span>
               <input
                 v-model="newEmail"
                 type="email"
                 autocomplete="email"
                 required
                 autofocus
-                class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
+                class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
               />
             </label>
 
             <label v-if="modal === 'password'" class="block space-y-1">
-              <span class="text-muted-foreground text-xs">New password</span>
+              <span class="text-muted-foreground">New password</span>
               <div class="relative">
                 <input
                   v-model="newPassword"
                   :type="showNewPassword ? 'text' : 'password'"
                   autocomplete="new-password"
                   required
-                  class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 pr-10 text-sm focus:ring-2 focus:outline-none"
+                  class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 pr-10 focus:ring-2 focus:outline-none"
                 />
                 <button
                   type="button"
@@ -281,7 +281,7 @@ const submitDisabled = computed(() => {
             </label>
 
             <label class="block space-y-1">
-              <span class="text-muted-foreground text-xs">Current password</span>
+              <span class="text-muted-foreground">Current password</span>
               <div class="relative">
                 <input
                   v-model="currentPassword"
@@ -289,7 +289,7 @@ const submitDisabled = computed(() => {
                   autocomplete="current-password"
                   required
                   :autofocus="modal !== 'email'"
-                  class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 pr-10 text-sm focus:ring-2 focus:outline-none"
+                  class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 pr-10 focus:ring-2 focus:outline-none"
                 />
                 <button
                   type="button"
@@ -302,12 +302,12 @@ const submitDisabled = computed(() => {
               </div>
             </label>
 
-            <p v-if="modalError" class="text-destructive text-sm">{{ modalError }}</p>
+            <p v-if="modalError" class="text-destructive text-lg">{{ modalError }}</p>
 
             <div class="flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
-                class="hover:bg-accent text-muted-foreground rounded-md px-3 py-2 text-sm"
+                class="hover:bg-accent text-muted-foreground rounded-md px-3 py-2 text-lg"
                 @click="closeModal"
               >
                 Cancel
@@ -316,7 +316,7 @@ const submitDisabled = computed(() => {
                 type="submit"
                 :disabled="submitDisabled"
                 :class="[
-                  'rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50',
+                  'rounded-md px-4 py-2 text-lg font-medium hover:opacity-90 disabled:opacity-50',
                   modal === 'delete'
                     ? 'bg-destructive text-destructive-foreground'
                     : 'bg-primary text-primary-foreground',

@@ -204,19 +204,19 @@ watch(
 
 <template>
   <article class="space-y-6">
-    <div v-if="!groups.length" class="text-muted-foreground font-serif italic text-sm">Loading…</div>
+    <div v-if="!groups.length" class="text-muted-foreground font-serif italic text-lg">Loading…</div>
 
-    <div v-else-if="!group" class="text-muted-foreground text-sm">Group not found.</div>
+    <div v-else-if="!group" class="text-muted-foreground text-lg">Group not found.</div>
 
     <template v-else>
       <header class="space-y-2">
         <div
           v-if="group.category?.name"
-          class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
+          class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase"
         >
           {{ group.category.name }}
         </div>
-        <h1 class="font-serif text-3xl leading-[1.04] font-medium tracking-tight">
+        <h1 class="font-serif text-4xl leading-[1.04] font-medium tracking-tight">
           {{ group.name ?? group.fullName ?? 'Group' }}
         </h1>
       </header>
@@ -239,13 +239,13 @@ watch(
             ]"
           />
           <span
-            class="font-serif min-w-0 flex-1 truncate text-[17px] font-medium tracking-tight leading-tight"
+            class="font-serif min-w-0 flex-1 truncate text-2xl font-medium tracking-tight leading-tight"
           >
             {{ section.dance.fullName }}
           </span>
           <span
             v-if="section.kind === 'callbacks'"
-            class="text-muted-foreground self-center text-[11px] font-semibold tabular-nums"
+            class="text-muted-foreground self-center font-semibold tabular-nums"
           >
             <template v-if="callbackFavoriteCount > 0">
               <span class="text-secondary">{{ callbackFavoriteCount }}</span
@@ -265,7 +265,7 @@ watch(
           <template v-if="section.kind === 'callbacks'">
             <p
               v-if="!section.callback?.hasResults && !isShowingAll"
-              class="text-muted-foreground font-serif px-1 text-sm italic"
+              class="text-muted-foreground font-serif px-1 text-lg italic"
             >
               {{
                 section.callback?.explicitlyEmpty
@@ -273,61 +273,65 @@ watch(
                   : 'Not yet posted.'
               }}
             </p>
-            <ul v-if="callbackRows.length" class="border-b">
-              <li
-                v-for="row in callbackRows"
-                :key="row.key"
-                :class="['flex items-center', row.dimmed && 'opacity-40']"
-              >
-                <RouterLink
-                  v-if="row.dancer"
-                  :to="{
-                    name: 'competition.dancer',
-                    params: { competitionId, dancerId: row.dancer.id },
-                  }"
-                  class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
+            <div v-if="callbackRows.length" class="border-b pb-3">
+              <ul>
+                <li
+                  v-for="row in callbackRows"
+                  :key="row.key"
+                  :class="['flex items-center', row.dimmed && 'opacity-40']"
                 >
-                  <div
-                    :class="[
-                      'flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums',
-                      favorites.isFavoriteDancer(row.dancer.id)
-                        ? 'bg-secondary text-secondary-foreground'
-                        : 'bg-muted text-muted-foreground',
-                    ]"
+                  <RouterLink
+                    v-if="row.dancer"
+                    :to="{
+                      name: 'competition.dancer',
+                      params: { competitionId, dancerId: row.dancer.id },
+                    }"
+                    class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
                   >
-                    {{ row.dancer.number ?? '–' }}
-                  </div>
-                  <div class="min-w-0 flex-1">
-                    <div class="font-serif truncate text-[15px] leading-tight font-medium tracking-tight">
-                      {{ row.dancer.fullName || '?' }}
-                    </div>
                     <div
-                      v-if="row.dancer.location"
-                      class="text-muted-foreground truncate text-xs"
+                      :class="[
+                        'flex size-9 shrink-0 items-center justify-center rounded-full font-serif font-medium tabular-nums',
+                        favorites.isFavoriteDancer(row.dancer.id)
+                          ? 'bg-secondary text-secondary-foreground'
+                          : 'bg-muted text-muted-foreground',
+                      ]"
                     >
-                      {{ row.dancer.location }}
+                      {{ row.dancer.number ?? '–' }}
                     </div>
+                    <div class="min-w-0 flex-1">
+                      <div class="font-serif truncate leading-tight font-medium tracking-tight">
+                        {{ row.dancer.fullName || '?' }}
+                      </div>
+                      <div
+                        v-if="row.dancer.location"
+                        class="text-muted-foreground font-serif truncate text-sm italic"
+                      >
+                        {{ row.dancer.location }}
+                      </div>
+                    </div>
+                  </RouterLink>
+                  <div
+                    v-else
+                    class="text-muted-foreground flex flex-1 items-center gap-3 px-1 py-3 text-lg"
+                  >
+                    Unknown dancer
                   </div>
-                </RouterLink>
-                <div
-                  v-else
-                  class="text-muted-foreground flex flex-1 items-center gap-3 px-1 py-3 text-sm"
+                </li>
+              </ul>
+              <div class="mt-3 flex justify-center">
+                <button
+                  type="button"
+                  class="bg-card hover:bg-accent text-muted-foreground hover:text-foreground inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors"
+                  @click="toggleShowAll"
                 >
-                  Unknown dancer
-                </div>
-              </li>
-            </ul>
-            <button
-              type="button"
-              class="text-muted-foreground hover:text-foreground mt-2 px-1 py-1 text-xs font-medium"
-              @click="toggleShowAll"
-            >
-              {{
-                isShowingAll
-                  ? 'Show callbacks only'
-                  : `Show all ${groupDancers.length} dancers`
-              }}
-            </button>
+                  {{
+                    isShowingAll
+                      ? 'Show callbacks only'
+                      : `Show all ${groupDancers.length} dancers`
+                  }}
+                </button>
+              </div>
+            </div>
           </template>
 
           <template v-else>
@@ -347,7 +351,7 @@ watch(
                 >
                   <div
                     :class="[
-                      'flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums',
+                      'flex size-9 shrink-0 items-center justify-center rounded-full font-serif font-medium tabular-nums',
                       favorites.isFavoriteDancer(row.dancer.id)
                         ? 'bg-secondary text-secondary-foreground'
                         : 'bg-muted text-muted-foreground',
@@ -356,12 +360,12 @@ watch(
                     {{ row.dancer.number ?? '–' }}
                   </div>
                   <div class="min-w-0 flex-1">
-                    <div class="font-serif truncate text-[15px] leading-tight font-medium tracking-tight">
+                    <div class="font-serif truncate leading-tight font-medium tracking-tight">
                       {{ row.dancer.fullName || '?' }}
                     </div>
                     <div
                       v-if="row.dancer.location"
-                      class="text-muted-foreground truncate text-xs"
+                      class="text-muted-foreground font-serif truncate text-sm italic"
                     >
                       {{ row.dancer.location }}
                     </div>
@@ -369,14 +373,14 @@ watch(
                 </RouterLink>
                 <div
                   v-else
-                  class="text-muted-foreground flex flex-1 items-center gap-3 px-1 py-3 text-sm"
+                  class="text-muted-foreground flex flex-1 items-center gap-3 px-1 py-3 text-lg"
                 >
                   Unknown dancer
                 </div>
                 <Place :place="row.place" :tied="row.tied" class="mr-3" />
               </li>
             </ul>
-            <div v-else class="text-muted-foreground font-serif px-1 text-sm italic">
+            <div v-else class="text-muted-foreground font-serif px-1 text-lg italic">
               {{
                 section.placings?.explicitlyEmpty
                   ? 'No placings for this dance.'
@@ -386,7 +390,7 @@ watch(
 
             <div v-if="section.pointed.length" class="mt-3 space-y-2">
               <div
-                class="text-foreground/65 px-1 text-[11px] font-bold tracking-[0.14em] uppercase"
+                class="text-foreground/65 px-1 text-xs font-medium tracking-[0.18em] uppercase"
               >
                 Championship Points
               </div>
@@ -405,7 +409,7 @@ watch(
                   >
                     <div
                       :class="[
-                        'flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums',
+                        'flex size-9 shrink-0 items-center justify-center rounded-full font-serif font-medium tabular-nums',
                         favorites.isFavoriteDancer(dancer.id)
                           ? 'bg-secondary text-secondary-foreground'
                           : 'bg-muted text-muted-foreground',
@@ -414,10 +418,10 @@ watch(
                       {{ dancer.number ?? '–' }}
                     </div>
                     <div class="min-w-0 flex-1">
-                      <div class="font-serif truncate text-[15px] leading-tight font-medium tracking-tight">{{ dancer.fullName || '?' }}</div>
+                      <div class="font-serif truncate leading-tight font-medium tracking-tight">{{ dancer.fullName || '?' }}</div>
                       <div
                         v-if="dancer.location"
-                        class="text-muted-foreground truncate text-xs"
+                        class="text-muted-foreground truncate text-sm"
                       >
                         {{ dancer.location }}
                       </div>

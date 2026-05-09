@@ -137,7 +137,7 @@ const groupedStaff = computed(() => {
         class="[view-transition-name:nav-avatar]"
       />
       <h1
-        class="font-serif text-3xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
+        class="font-serif text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
       >
         {{ competition.name ?? '?' }}
       </h1>
@@ -151,24 +151,22 @@ const groupedStaff = computed(() => {
       <div class="flex items-stretch">
         <div
           v-if="competition.date"
-          class="bg-background flex w-20 shrink-0 items-stretch border-r py-4"
+          class="bg-background flex min-w-28 shrink-0 items-stretch border-r py-4"
         >
           <div
             class="flex flex-1 flex-col items-center justify-center gap-1 [view-transition-name:nav-date]"
           >
-            <div
-              class="text-foreground/65 text-[10px] font-bold tracking-[0.14em] uppercase"
-            >
+            <div class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase">
               {{ monthLabel }}
             </div>
             <div
-              class="font-serif text-[40px] leading-none font-medium tracking-tight tabular-nums"
+              class="font-serif text-5xl leading-none font-medium tracking-tight tabular-nums"
             >
               {{ dayLabel }}
             </div>
             <div
               :class="[
-                'text-[10px] font-bold tracking-[0.14em] tabular-nums',
+                'text-sm font-bold tracking-[0.14em] tabular-nums',
                 datePast ? 'text-muted-foreground' : 'text-secondary',
               ]"
             >
@@ -186,16 +184,14 @@ const groupedStaff = computed(() => {
           <div class="flex flex-1 items-center gap-2 [view-transition-name:nav-location]">
             <div class="flex min-w-0 flex-1 flex-col justify-center gap-1">
               <div v-if="competition.venue" class="flex items-center gap-1.5">
-                <MapPin class="text-muted-foreground -mt-1 size-4 shrink-0" />
-                <span
-                  class="font-serif text-[15px] leading-snug font-medium tracking-tight"
-                >
+                <MapPin class="text-muted-foreground -mt-1 size-6 shrink-0" />
+                <span class="font-serif text-xl leading-snug font-medium tracking-tight">
                   {{ competition.venue }}
                 </span>
               </div>
               <div
                 v-if="competition.address || competition.location"
-                class="text-muted-foreground space-y-0.5 pl-5 text-[11.5px]"
+                class="text-muted-foreground space-y-0.5 pl-8 text-sm"
               >
                 <div v-if="competition.address">{{ competition.address }}</div>
                 <div v-if="competition.location">{{ competition.location }}</div>
@@ -223,12 +219,12 @@ const groupedStaff = computed(() => {
         class="bg-card flex flex-col items-center rounded-xl border py-2.5 shadow-sm"
       >
         <div
-          class="font-serif text-2xl leading-none font-medium tracking-tight tabular-nums"
+          class="font-serif text-4xl leading-none font-medium tracking-tight tabular-nums"
         >
           {{ stat.value }}
         </div>
         <div
-          class="text-foreground/65 mt-1 text-[10px] font-bold tracking-[0.14em] uppercase"
+          class="text-foreground/65 mt-1 text-xs font-medium tracking-[0.18em] uppercase"
         >
           {{ stat.label }}
         </div>
@@ -241,11 +237,11 @@ const groupedStaff = computed(() => {
         target="_blank"
         rel="noopener"
         :aria-disabled="!registrationOpen"
-        class="bg-primary text-primary-foreground inline-flex items-center rounded-full px-5 py-2 text-sm font-medium hover:opacity-90 aria-disabled:pointer-events-none aria-disabled:opacity-50"
+        class="bg-primary text-primary-foreground inline-flex items-center rounded-full px-5 py-2 text-lg font-medium hover:opacity-90 aria-disabled:pointer-events-none aria-disabled:opacity-50"
       >
         Register
       </a>
-      <ul v-if="registrationStatus" class="text-muted-foreground space-y-0.5 text-xs">
+      <ul v-if="registrationStatus" class="text-muted-foreground space-y-0.5">
         <li v-for="line in registrationStatus" :key="line">{{ line }}</li>
       </ul>
     </section>
@@ -257,7 +253,7 @@ const groupedStaff = computed(() => {
         :href="formatExternalURL(link.url)"
         target="_blank"
         rel="noopener"
-        class="bg-card hover:bg-accent inline-flex items-center rounded-full border px-3 py-1.5 text-sm"
+        class="bg-card hover:bg-accent inline-flex items-center rounded-full border px-3 py-1.5 text-lg"
       >
         {{ link.name || formatHumanURL(link.url) }}
       </a>
@@ -279,7 +275,7 @@ const groupedStaff = computed(() => {
           :key="member.id"
           class="mb-2 break-inside-avoid"
         >
-          <div class="font-serif text-[14px] leading-tight font-medium tracking-tight">
+          <div class="font-serif leading-tight font-medium tracking-tight">
             {{ staffMemberName(member) }}
           </div>
           <div
@@ -295,7 +291,7 @@ const groupedStaff = computed(() => {
     <!-- Sanction footer -->
     <div
       v-if="competition.sobhd"
-      class="text-muted-foreground flex items-center justify-between pt-2 text-[11px]"
+      class="text-muted-foreground flex items-center justify-between pt-2"
     >
       <span class="font-serif italic">RSOBHD sanctioned</span>
       <span class="tracking-wider tabular-nums">{{ competition.sobhd }}</span>

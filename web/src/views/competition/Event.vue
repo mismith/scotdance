@@ -109,11 +109,11 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
 
 <template>
   <article class="space-y-6">
-    <div v-if="schedule === null" class="text-muted-foreground font-serif italic text-sm">Loading…</div>
+    <div v-if="schedule === null" class="text-muted-foreground font-serif italic text-lg">Loading…</div>
 
     <div
       v-else-if="!event"
-      class="text-muted-foreground font-serif text-sm italic"
+      class="text-muted-foreground font-serif text-lg italic"
     >
       Event not found.
     </div>
@@ -121,16 +121,16 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
     <template v-else>
       <header class="space-y-2">
         <div
-          class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
+          class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase"
         >
           {{ day?.name }}<span v-if="block?.name"> · {{ block.name }}</span>
         </div>
-        <h1 class="font-serif text-3xl leading-[1.04] font-medium tracking-tight">
+        <h1 class="font-serif text-4xl leading-[1.04] font-medium tracking-tight">
           {{ event.name ?? 'Event' }}
         </h1>
         <p
           v-if="event.description"
-          class="text-muted-foreground text-sm whitespace-pre-line"
+          class="text-muted-foreground text-lg whitespace-pre-line"
         >
           {{ event.description }}
         </p>
@@ -138,7 +138,7 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
 
       <div
         v-if="!eventDanceList.length"
-        class="text-muted-foreground font-serif text-sm italic"
+        class="text-muted-foreground font-serif text-lg italic"
       >
         No dances scheduled.
       </div>
@@ -159,7 +159,7 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
           />
           <span v-else class="size-4 shrink-0" />
           <span
-            class="font-serif min-w-0 flex-1 truncate text-[17px] font-medium tracking-tight leading-tight"
+            class="font-serif min-w-0 flex-1 truncate text-2xl font-medium tracking-tight leading-tight"
           >
             {{ getScheduleDanceName(dance, dances) || 'Dance' }}
           </span>
@@ -169,7 +169,7 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
           :open="danceHasContent(dance) && isExpanded(dance.id, danceHasContent(dance))"
         >
           <div class="space-y-3">
-          <p v-if="dance.description" class="px-1 text-sm whitespace-pre-line">
+          <p v-if="dance.description" class="px-1 text-lg whitespace-pre-line">
             {{ dance.description }}
           </p>
 
@@ -183,7 +183,7 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
               class="bg-card space-y-3 rounded-2xl border p-4"
             >
               <div
-                class="text-foreground/65 text-[11px] font-bold tracking-[0.14em] uppercase"
+                class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase"
               >
                 {{ pool.name }}
               </div>
@@ -192,7 +192,7 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
                 <span
                   v-for="judge in pool.judges"
                   :key="judge.id"
-                  class="bg-primary/10 text-primary inline-flex items-center rounded-full px-2 py-1 text-xs font-medium"
+                  class="bg-primary/10 text-primary inline-flex items-center rounded-full px-2 py-1 font-medium"
                 >
                   {{ staffMemberName(judge) || 'Judge' }}
                 </span>
@@ -202,11 +202,11 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
                 <li
                   v-for="group in pool.groups"
                   :key="group.id"
-                  class="flex items-center gap-2 text-sm"
+                  class="flex items-center gap-2 text-lg"
                 >
                   <span
                     :class="[
-                      'inline-flex size-6 shrink-0 items-center justify-center rounded-full font-mono text-xs tabular-nums',
+                      'inline-flex size-6 shrink-0 items-center justify-center rounded-full font-mono tabular-nums',
                       groupHasFavorite(group)
                         ? 'bg-secondary text-secondary-foreground'
                         : 'bg-muted text-muted-foreground',
@@ -222,7 +222,7 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
 
           <div
             v-else-if="dance.danceId"
-            class="text-muted-foreground font-serif px-1 text-xs italic"
+            class="text-muted-foreground font-serif px-1 italic"
           >
             Platforms not yet assigned.
           </div>

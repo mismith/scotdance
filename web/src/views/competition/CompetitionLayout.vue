@@ -93,13 +93,13 @@ const locationLabel = computed(() => competition.value?.location ?? '')
           />
           <div class="min-w-0 flex-1">
             <div
-              class="truncate font-serif text-sm leading-tight font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
+              class="truncate font-serif text-lg leading-none font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
             >
               {{ competition?.name ?? (loading ? 'Loading…' : 'Competition') }}
             </div>
             <div
               v-if="dateLabel || locationLabel"
-              class="truncate text-[10px] leading-tight opacity-70"
+              class="mt-1 truncate text-xs leading-none opacity-70"
             >
               <span v-if="dateLabel" class="[view-transition-name:nav-date]">{{
                 dateLabel
@@ -131,13 +131,13 @@ const locationLabel = computed(() => competition.value?.location ?? '')
     </nav>
 
     <main class="pt-safe-nav mx-auto w-full max-w-3xl flex-1 px-4 pb-4">
-      <div v-if="loading" class="text-muted-foreground font-serif text-sm italic">
+      <div v-if="loading" class="text-muted-foreground font-serif text-lg italic">
         Loading…
       </div>
-      <div v-else-if="notFound" class="text-muted-foreground text-sm">
+      <div v-else-if="notFound" class="text-muted-foreground text-lg">
         No competition found.
       </div>
-      <div v-else-if="error" class="text-destructive text-sm">{{ error.message }}</div>
+      <div v-else-if="error" class="text-destructive text-lg">{{ error.message }}</div>
       <RouterView v-else />
     </main>
   </div>
