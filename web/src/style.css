@@ -183,29 +183,14 @@
     animation-name: -ua-view-transition-group-anim-nav-right, vt-nav-pill;
     animation-timing-function: var(--vt-ease-rubber-band);
   }
-  ::view-transition-group(nav-actions) {
-    animation-name: -ua-view-transition-group-anim-nav-actions, vt-nav-pill;
-    animation-timing-function: var(--vt-ease-rubber-band);
-  }
-  ::view-transition-group(nav-pill):has(
-    ::view-transition-old(nav-pill):not(:only-child),
-    ::view-transition-new(nav-pill):not(:only-child)
-  ) {
-    animation-name: -ua-view-transition-group-anim-nav-pill, vt-nav-pill;
-    animation-timing-function: var(--vt-ease-rubber-band);
-  }
   ::view-transition-image-pair(nav-left),
-  ::view-transition-image-pair(nav-right),
-  ::view-transition-image-pair(nav-actions),
-  ::view-transition-image-pair(nav-pill):has(
-    ::view-transition-old(nav-pill):not(:only-child),
-    ::view-transition-new(nav-pill):not(:only-child)
-  ) {
+  ::view-transition-image-pair(nav-right) {
     display: none;
   }
   /* Chip + title + date + location morph between the big editorial header on
      Info and the compact pill content on subpages — share the rubber-band
      easing so the motion stays in family with the floating pills. */
+  ::view-transition-group(nav-pill),
   ::view-transition-group(nav-avatar),
   ::view-transition-group(nav-name),
   ::view-transition-group(nav-date),
@@ -214,27 +199,33 @@
   ::view-transition-group(nav-right-active) {
     animation-timing-function: var(--vt-ease-rubber-band);
   }
+  ::view-transition-group(nav-avatar),
+  ::view-transition-group(nav-name),
+  ::view-transition-group(nav-date),
+  ::view-transition-group(nav-location) {
+    z-index: 1;
+  }
 
   /* Shared slide-in/out for any element appearing/disappearing from the left
      of the floating top chrome (back button, name pill). */
   @keyframes vt-slide-in {
     from {
       opacity: 0;
-      transform: translateX(-100%);
+      transform: translateX(-50%);
     }
   }
   @keyframes vt-slide-out {
     to {
       opacity: 0;
-      transform: translateX(-100%);
+      transform: translateX(-50%);
     }
   }
-  ::view-transition-new(nav-back),
-  ::view-transition-new(nav-pill):only-child {
-    animation: vt-slide-in 0.4s var(--vt-ease-rubber-band) both;
+  ::view-transition-new(nav-back) {
+    animation-name: vt-slide-in;
+    animation-timing-function: var(--vt-ease-rubber-band);
   }
-  ::view-transition-old(nav-back),
-  ::view-transition-old(nav-pill):only-child {
-    animation: vt-slide-out 0.4s var(--vt-ease-rubber-band) both;
+  ::view-transition-old(nav-back) {
+    animation-name: vt-slide-out;
+    animation-timing-function: var(--vt-ease-rubber-band);
   }
 }

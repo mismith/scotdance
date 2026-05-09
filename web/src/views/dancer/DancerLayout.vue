@@ -27,7 +27,7 @@ const initials = computed(() => {
         <RouterLink
           v-if="!isInfo"
           :to="{ name: 'dancer.info', params: { dancerId } }"
-          class="bg-nav/90 text-nav-foreground pointer-events-auto flex min-w-0 flex-1 items-center gap-2 rounded-full p-1 pr-4 shadow-lg backdrop-blur-xl [view-transition-class:fixed-height] [view-transition-group:contain] [view-transition-name:nav-pill] hover:opacity-90"
+          class="bg-nav/90 text-nav-foreground pointer-events-auto flex min-w-0 flex-1 items-center gap-2 rounded-full p-1 pr-4 shadow-lg backdrop-blur-xl [view-transition-name:nav-pill] hover:opacity-90"
           :title="displayName"
         >
           <div
@@ -53,18 +53,18 @@ const initials = computed(() => {
         <div v-else class="min-w-0 flex-1" />
 
         <div
-          class="bg-nav/90 text-nav-foreground pointer-events-auto flex h-12 shrink-0 items-center gap-0.5 rounded-full px-1.5 shadow-lg backdrop-blur-xl [view-transition-class:clip_fixed-height] [view-transition-group:contain] [view-transition-name:nav-actions]"
+          class="bg-nav/90 text-nav-foreground pointer-events-auto flex h-12 shrink-0 items-center gap-0.5 rounded-full px-1.5 shadow-lg backdrop-blur-xl [view-transition-class:fixed-height] [view-transition-name:nav-actions]"
         >
           <FavoriteDancerProfileButton
             v-if="isInfo"
             :appearances="appearances"
             :name="displayName"
-            class="flex! size-9 items-center justify-center rounded-full! p-0! hover:bg-nav-foreground/10! [view-transition-name:match-element]"
+            class="hover:bg-nav-foreground/10! flex! size-9 items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
           />
           <ShareButton
             :title="displayName || undefined"
             :text="displayName || undefined"
-            class="flex! size-9 items-center justify-center rounded-full! p-0! hover:bg-nav-foreground/10! [view-transition-name:match-element]"
+            class="hover:bg-nav-foreground/10! flex! size-9 items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
           />
         </div>
       </div>
