@@ -210,7 +210,7 @@ function goProfile() {
               <RouterLink
                 :to="{ name: 'home' }"
                 :class="[
-                  'mt-3 flex w-full items-center gap-2 rounded-md p-2 text-sm transition-colors',
+                  'mt-3 flex w-full items-center gap-3 rounded-lg p-2.5 text-base font-medium transition-colors',
                   route.path === '/'
                     ? 'bg-nav-foreground/10'
                     : 'hover:bg-nav-foreground/10',
@@ -218,14 +218,14 @@ function goProfile() {
                 role="menuitem"
                 @click="moreOpen = false"
               >
-                <Home class="size-4" />
+                <Home class="size-5" />
                 <span class="flex-1">Home</span>
               </RouterLink>
 
               <button
                 v-if="update.updateAvailable"
                 type="button"
-                class="hover:bg-nav-foreground/10 mt-1 flex w-full items-center gap-2 rounded-md p-2 text-left text-sm transition-colors"
+                class="hover:bg-nav-foreground/10 mt-1 flex w-full items-center gap-3 rounded-lg p-2.5 text-left text-base font-medium transition-colors"
                 role="menuitem"
                 @click="
                   () => {
@@ -234,7 +234,7 @@ function goProfile() {
                   }
                 "
               >
-                <ArrowDownToLine class="size-4" />
+                <ArrowDownToLine class="size-5" />
                 <span class="flex-1">Update available</span>
                 <span
                   class="bg-secondary size-2 animate-pulse rounded-full"
