@@ -51,7 +51,7 @@ async function handleClick() {
     :disabled="!dancerIds.length"
     :class="[
       'rounded-md p-2 transition-colors',
-      isFavorite && 'text-current',
+      isFavorite && 'text-secondary',
     ]"
     @click="handleClick"
   >

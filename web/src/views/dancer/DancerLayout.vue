@@ -31,19 +31,19 @@ const initials = computed(() => {
           :title="displayName"
         >
           <div
-            class="bg-nav-foreground/15 flex size-10 shrink-0 items-center justify-center rounded-full font-serif text-sm font-medium [view-transition-name:nav-avatar]"
+            class="bg-nav-foreground/15 flex size-10 shrink-0 items-center justify-center rounded-full font-serif text-lg font-medium [view-transition-name:nav-avatar]"
           >
             {{ initials || '?' }}
           </div>
           <div class="min-w-0 flex-1">
             <div
-              class="truncate font-serif text-sm leading-tight font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
+              class="truncate font-serif text-lg leading-none font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
             >
               {{ displayName || (loading ? 'Loading…' : 'Dancer') }}
             </div>
             <div
               v-if="location"
-              class="truncate text-[10px] leading-tight opacity-70 [view-transition-name:nav-location]"
+              class="mt-1 truncate text-xs leading-none opacity-70 [view-transition-name:nav-location]"
             >
               {{ location }}
             </div>
@@ -71,10 +71,10 @@ const initials = computed(() => {
     </nav>
 
     <main class="pt-safe-nav mx-auto w-full max-w-3xl flex-1 px-4 pb-4">
-      <div v-if="loading" class="text-muted-foreground font-serif text-sm italic">
+      <div v-if="loading" class="text-muted-foreground font-serif text-lg italic">
         Searching across competitions…
       </div>
-      <div v-else-if="notFound" class="text-muted-foreground font-serif text-sm italic">
+      <div v-else-if="notFound" class="text-muted-foreground font-serif text-lg italic">
         No record of {{ displayName }} found across the comps we know about.
       </div>
       <RouterView v-else />

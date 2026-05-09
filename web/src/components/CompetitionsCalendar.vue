@@ -132,7 +132,7 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
         >
           <ChevronLeft class="size-4" />
         </button>
-        <h2 class="font-serif text-2xl font-medium tracking-tight">
+        <h2 class="font-serif text-4xl font-medium tracking-tight">
           {{ monthLabel }}
         </h2>
         <button
@@ -144,13 +144,13 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
           <ChevronRight class="size-4" />
         </button>
       </div>
-      <div class="text-muted-foreground text-xs tabular-nums">
+      <div class="text-muted-foreground tabular-nums">
         {{ monthEvents.length }} {{ monthEvents.length === 1 ? 'event' : 'events' }}
       </div>
     </div>
 
     <div
-      class="text-foreground/65 grid grid-cols-7 text-[10px] font-semibold tracking-[0.14em] uppercase"
+      class="text-foreground/65 grid grid-cols-7 text-xs font-medium tracking-[0.18em] uppercase"
     >
       <div v-for="(label, i) in dowLabels" :key="i" class="py-1 text-center">
         {{ label }}
@@ -163,7 +163,7 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
         :key="i"
         type="button"
         :class="[
-          'relative aspect-square rounded-lg text-sm tabular-nums transition-colors',
+          'relative aspect-square rounded-lg text-lg tabular-nums transition-colors',
           !cell.inMonth && 'text-muted-foreground/40',
           cell.inMonth && !cell.eventCount && !isSelected(cell.date) && 'hover:bg-accent',
           cell.eventCount && !isSelected(cell.date) && 'bg-card shadow-sm hover:shadow',
@@ -193,7 +193,7 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
     <section v-if="upcoming.length" class="space-y-3 pt-2">
       <div
-        class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
+        class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase"
       >
         Upcoming
       </div>
@@ -204,11 +204,11 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
             class="flex items-center gap-4 px-1 py-3"
           >
             <div class="text-secondary w-10 shrink-0 text-center">
-              <div class="font-serif text-2xl leading-none">
+              <div class="font-serif text-4xl leading-none">
                 {{ new Date(competition.date!).getDate() }}
               </div>
               <div
-                class="mt-0.5 text-[10px] font-semibold tracking-[0.14em] uppercase"
+                class="mt-0.5 text-xs font-medium tracking-[0.18em] uppercase"
               >
                 {{
                   new Date(competition.date!).toLocaleString('en-US', {
@@ -219,11 +219,11 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
             </div>
             <div class="min-w-0 flex-1">
               <div
-                class="font-serif truncate text-[15px] leading-tight font-medium tracking-tight"
+                class="font-serif truncate leading-tight font-medium tracking-tight"
               >
                 {{ competition.name ?? '?' }}
               </div>
-              <div class="text-muted-foreground truncate text-xs">
+              <div class="text-muted-foreground truncate text-sm">
                 <span v-if="competition.location">{{ competition.location }}</span>
                 <span v-if="competition.location && competition.date"> · </span>
                 <span v-if="competition.date">{{

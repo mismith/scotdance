@@ -104,7 +104,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
         <button
           v-if="view === 'calendar'"
           type="button"
-          class="bg-chip text-muted-foreground hover:text-foreground ml-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-2.5 text-xs font-medium"
+          class="bg-chip text-muted-foreground hover:text-foreground ml-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-2.5 font-medium"
           @click="calendarRef?.goToToday()"
         >
           Today
@@ -112,7 +112,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
         <div v-else ref="filterMenuRef" class="relative ml-auto">
           <button
             type="button"
-            class="bg-chip text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 rounded-lg px-3 py-2.5 text-xs font-medium"
+            class="bg-chip text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 rounded-lg px-3 py-2.5 font-medium"
             @click="filterOpen = !filterOpen"
           >
             <ListFilter class="size-3.5" />
@@ -128,7 +128,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
               :key="opt.id"
               type="button"
               :class="[
-                'hover:bg-accent flex w-full items-center gap-2 px-3 py-2 text-left text-xs',
+                'hover:bg-accent flex w-full items-center gap-2 px-3 py-2 text-left',
                 filter === opt.id
                   ? 'text-foreground font-medium'
                   : 'text-muted-foreground',
@@ -150,7 +150,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
 
       <div
         v-if="view === 'map'"
-        class="text-muted-foreground rounded-2xl border border-dashed p-8 text-center font-serif text-sm italic"
+        class="text-muted-foreground rounded-2xl border border-dashed p-8 text-center font-serif text-lg italic"
       >
         Map view — stub.
       </div>
@@ -168,19 +168,19 @@ const monthGroups = computed<MonthGroup[]>(() => {
 
         <div
           v-if="loading && !competitions.length"
-          class="text-muted-foreground font-serif text-sm italic"
+          class="text-muted-foreground font-serif text-lg italic"
         >
           Loading…
         </div>
         <div
           v-else-if="!competitions.length"
-          class="text-muted-foreground space-y-2 font-serif text-sm italic"
+          class="text-muted-foreground space-y-2 font-serif text-lg italic"
         >
           <div>No competitions found.</div>
           <button
             v-if="!includeArchived"
             type="button"
-            class="hover:text-foreground font-sans text-xs not-italic underline"
+            class="hover:text-foreground font-sans not-italic underline"
             @click="includeArchived = true"
           >
             Load archived competitions
@@ -188,7 +188,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
         </div>
         <div
           v-else-if="!visibleCompetitions.length"
-          class="text-muted-foreground font-serif text-sm italic"
+          class="text-muted-foreground font-serif text-lg italic"
         >
           <span v-if="filter === 'upcoming'">No upcoming competitions.</span>
           <span v-else-if="filter === 'past'">No past competitions on record.</span>
@@ -218,19 +218,19 @@ const monthGroups = computed<MonthGroup[]>(() => {
                   />
                   <div class="min-w-0 flex-1 pt-0.5">
                     <div
-                      class="line-clamp-2 font-serif text-[15px] leading-tight font-medium tracking-tight"
+                      class="line-clamp-2 font-serif leading-tight font-medium tracking-tight"
                     >
                       {{ competition.name ?? '?' }}
                     </div>
                     <div
                       v-if="competition.location"
-                      class="text-muted-foreground truncate font-serif text-xs italic"
+                      class="text-muted-foreground truncate font-serif text-sm italic"
                     >
                       {{ competition.location }}
                     </div>
                     <div
                       v-if="competition.date"
-                      class="text-muted-foreground/80 font-serif text-xs italic"
+                      class="text-muted-foreground/80 text-xs"
                     >
                       {{ formatRelative(competition.date) }}
                     </div>
@@ -248,7 +248,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
         <div v-if="competitions.length && !includeArchived" class="pt-2 text-center">
           <button
             type="button"
-            class="text-muted-foreground hover:text-foreground text-xs underline"
+            class="text-muted-foreground hover:text-foreground underline"
             @click="includeArchived = true"
           >
             Load archived competitions

@@ -150,7 +150,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
           type="search"
           placeholder="Search by name…"
           :disabled="!auth.isSignedIn"
-          class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-sm focus:outline-none disabled:opacity-50 [&::-webkit-search-cancel-button]:hidden"
+          class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent focus:outline-none disabled:opacity-50 [&::-webkit-search-cancel-button]:hidden"
         />
         <button
           v-if="q"
@@ -167,12 +167,12 @@ const showSearch = computed(() => q.value.trim().length > 0)
         v-if="!auth.isSignedIn"
         class="bg-card space-y-3 rounded-2xl border p-6 text-center"
       >
-        <p class="font-serif text-base">
+        <p class="font-serif text-xl">
           Sign in to find and follow dancers across comps.
         </p>
         <button
           type="button"
-          class="bg-primary text-primary-foreground inline-flex items-center rounded-full px-5 py-2 text-sm font-medium hover:opacity-90"
+          class="bg-primary text-primary-foreground inline-flex items-center rounded-full px-5 py-2 text-lg font-medium hover:opacity-90"
           @click="auth.openLogin"
         >
           Sign in
@@ -180,11 +180,11 @@ const showSearch = computed(() => q.value.trim().length > 0)
       </div>
 
       <template v-else-if="showSearch">
-        <div v-if="error" class="text-destructive text-sm">{{ error.message }}</div>
+        <div v-if="error" class="text-destructive text-lg">{{ error.message }}</div>
 
         <div
           v-if="searching"
-          class="text-muted-foreground flex items-center gap-2 font-serif text-sm italic"
+          class="text-muted-foreground flex items-center gap-2 font-serif text-lg italic"
         >
           <Loader2 class="size-4 animate-spin" />
           Searching…
@@ -192,7 +192,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
 
         <div
           v-else-if="!results.length"
-          class="text-muted-foreground font-serif text-sm italic"
+          class="text-muted-foreground font-serif text-lg italic"
         >
           No dancers match.
         </div>
@@ -209,19 +209,19 @@ const showSearch = computed(() => q.value.trim().length > 0)
                 class="flex w-full items-center gap-3 px-1 py-3 text-left"
               >
                 <span
-                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium"
+                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif font-medium"
                 >
                   {{ group.initials }}
                 </span>
                 <div class="min-w-0 flex-1">
                   <div
-                    class="truncate font-serif text-[15px] leading-tight font-medium tracking-tight"
+                    class="truncate font-serif leading-tight font-medium tracking-tight"
                   >
                     {{ group.name || '?' }}
                   </div>
                   <div
                     v-if="locationOf(group)"
-                    class="text-muted-foreground truncate font-serif text-xs italic"
+                    class="text-muted-foreground truncate font-serif text-sm italic"
                   >
                     {{ locationOf(group) }}
                   </div>
@@ -246,19 +246,19 @@ const showSearch = computed(() => q.value.trim().length > 0)
                 class="flex w-full items-center gap-3 px-1 py-3 text-left"
               >
                 <span
-                  class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium"
+                  class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif font-medium"
                 >
                   {{ entry.initials }}
                 </span>
                 <div class="min-w-0 flex-1">
                   <div
-                    class="truncate font-serif text-[15px] leading-tight font-medium tracking-tight"
+                    class="truncate font-serif leading-tight font-medium tracking-tight"
                   >
                     {{ entry.name }}
                   </div>
                   <div
                     v-if="locationByName.get(entry.name)"
-                    class="text-muted-foreground truncate font-serif text-xs italic"
+                    class="text-muted-foreground truncate font-serif text-sm italic"
                   >
                     {{ locationByName.get(entry.name) }}
                   </div>
@@ -274,10 +274,10 @@ const showSearch = computed(() => q.value.trim().length > 0)
           class="bg-card space-y-3 rounded-2xl border p-6 text-center"
         >
           <Star class="text-muted-foreground mx-auto size-6" />
-          <div class="font-serif text-base font-medium tracking-tight">
+          <div class="font-serif text-xl font-medium tracking-tight">
             Follow your dancers here
           </div>
-          <p class="text-muted-foreground text-sm">
+          <p class="text-muted-foreground text-lg">
             Star a dancer in any comp and they'll show up across every comp they're
             entered in. Type a name above to start.
           </p>
@@ -287,7 +287,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
           <SectionHeader label="Recently viewed" :count="recentList.length">
             <button
               type="button"
-              class="hover:text-foreground text-[11px] font-normal tracking-normal normal-case"
+              class="hover:text-foreground font-normal tracking-normal normal-case"
               @click="recentDancers.clear()"
             >
               Clear
@@ -300,13 +300,13 @@ const showSearch = computed(() => q.value.trim().length > 0)
                 class="flex w-full items-center gap-3 px-1 py-3 text-left"
               >
                 <span
-                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium"
+                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif font-medium"
                 >
                   {{ initialsOf(entry.name) }}
                 </span>
                 <div class="min-w-0 flex-1">
                   <div
-                    class="truncate font-serif text-[15px] leading-tight font-medium tracking-tight"
+                    class="truncate font-serif leading-tight font-medium tracking-tight"
                   >
                     {{ entry.name }}
                   </div>

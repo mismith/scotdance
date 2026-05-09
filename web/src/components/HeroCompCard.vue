@@ -70,18 +70,18 @@ const meta = computed(() => {
         class="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-white/15 px-2 py-1 backdrop-blur-md"
       >
         <span class="size-1.5 rounded-full bg-white animate-pulse" />
-        <span class="text-[10px] font-bold tracking-widest">RESULTS UPDATING</span>
+        <span class="font-bold tracking-widest">RESULTS UPDATING</span>
       </div>
       <div class="absolute bottom-3 left-4 right-4">
-        <div class="text-[11px] font-semibold tracking-[0.14em] uppercase opacity-90">
+        <div class="text-xs font-medium tracking-[0.18em] uppercase opacity-90">
           {{ kicker }}
         </div>
         <div
-          class="font-serif mt-1 text-lg font-medium leading-tight tracking-tight line-clamp-2"
+          class="font-serif mt-1 text-2xl font-medium leading-tight tracking-tight line-clamp-2"
         >
           {{ competition.name ?? 'Competition' }}
         </div>
-        <div v-if="meta" class="mt-1 text-[11px] opacity-80">{{ meta }}</div>
+        <div v-if="meta" class="mt-1 opacity-80">{{ meta }}</div>
       </div>
     </div>
   </RouterLink>

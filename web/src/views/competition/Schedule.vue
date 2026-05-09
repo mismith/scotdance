@@ -37,19 +37,21 @@ const isEmpty = computed(() => schedule.value !== null && dayList.value.length =
 
 <template>
   <div class="space-y-8">
-    <div v-if="schedule === null" class="text-muted-foreground font-serif italic text-sm">Loading…</div>
-    <div v-else-if="isEmpty" class="text-muted-foreground text-sm">
+    <div v-if="schedule === null" class="text-muted-foreground font-serif text-lg italic">
+      Loading…
+    </div>
+    <div v-else-if="isEmpty" class="text-muted-foreground text-lg">
       No schedule yet. Check back later.
     </div>
 
     <section v-for="day in dayList" :key="day.id" class="space-y-4">
       <header>
-        <h2 class="font-serif text-2xl font-medium tracking-tight">
+        <h2 class="font-serif text-3xl font-medium tracking-tight">
           {{ day.name || formatWeekday(day.date) || 'Day' }}
         </h2>
         <p
           v-if="day.description"
-          class="text-muted-foreground mt-1 text-sm whitespace-pre-line"
+          class="text-muted-foreground mt-1 text-lg whitespace-pre-line"
         >
           {{ day.description }}
         </p>
@@ -68,13 +70,13 @@ const isEmpty = computed(() => schedule.value !== null && dayList.value.length =
             ]"
           />
           <span
-            class="font-serif min-w-0 flex-1 truncate text-[17px] font-medium tracking-tight leading-tight"
+            class="min-w-0 flex-1 truncate font-serif text-2xl leading-tight font-medium tracking-tight"
           >
             {{ block.name || 'Block' }}
           </span>
           <span
             v-if="block.description"
-            class="text-muted-foreground max-w-[40%] truncate text-[11.5px]"
+            class="text-muted-foreground max-w-[40%] truncate text-xs"
           >
             {{ slugline(block.description) }}
           </span>
@@ -82,42 +84,42 @@ const isEmpty = computed(() => schedule.value !== null && dayList.value.length =
 
         <SmoothCollapse :open="isExpanded(day.id, block.id, !!block.events)">
           <ul class="border-b">
-          <li v-for="event in events(block)" :key="event.id" class="flex items-center">
-            <RouterLink
-              :to="{
-                name: 'competition.event',
-                params: {
-                  competitionId,
-                  dayId: day.id,
-                  blockId: block.id,
-                  eventId: event.id,
-                },
-              }"
-              class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
+            <li v-for="event in events(block)" :key="event.id" class="flex items-center">
+              <RouterLink
+                :to="{
+                  name: 'competition.event',
+                  params: {
+                    competitionId,
+                    dayId: day.id,
+                    blockId: block.id,
+                    eventId: event.id,
+                  },
+                }"
+                class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
+              >
+                <div class="min-w-0 flex-1">
+                  <div
+                    class="truncate font-serif leading-tight font-medium tracking-tight"
+                  >
+                    {{ event.name || 'Event' }}
+                  </div>
+                  <div
+                    v-if="event.description"
+                    class="text-muted-foreground mt-1 truncate text-xs"
+                  >
+                    {{ slugline(event.description) }}
+                  </div>
+                </div>
+                <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+              </RouterLink>
+            </li>
+            <li
+              v-if="!events(block).length"
+              class="text-muted-foreground px-1 py-3 font-serif text-lg italic"
             >
-              <div class="min-w-0 flex-1">
-                <div
-                  class="font-serif truncate text-[15px] font-medium tracking-tight leading-tight"
-                >
-                  {{ event.name || 'Event' }}
-                </div>
-                <div
-                  v-if="event.description"
-                  class="text-muted-foreground mt-1 truncate text-[11.5px]"
-                >
-                  {{ slugline(event.description) }}
-                </div>
-              </div>
-              <ChevronRight class="text-muted-foreground size-4 shrink-0" />
-            </RouterLink>
-          </li>
-          <li
-            v-if="!events(block).length"
-            class="text-muted-foreground font-serif px-1 py-3 text-sm italic"
-          >
-            No events.
-          </li>
-        </ul>
+              No events.
+            </li>
+          </ul>
         </SmoothCollapse>
       </div>
     </section>

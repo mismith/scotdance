@@ -26,22 +26,22 @@ const tone = computed(() => {
     ]"
   >
     <template v-if="pointed">
-      <span class="text-base">♦</span>
+      <span class="text-xl">♦</span>
     </template>
     <template v-else-if="place != null">
-      <span class="inline-flex items-baseline text-base">
+      <span class="inline-flex items-baseline text-xl">
         <span>{{ place }}</span>
-        <sup class="ml-0.5 text-[0.55rem]">{{ ordinal }}</sup>
+        <sup class="ml-0.5">{{ ordinal }}</sup>
       </span>
       <span
         v-if="tied"
-        class="-mt-1 font-sans text-[10px] font-bold tracking-[0.08em] uppercase opacity-60"
+        class="-mt-1 font-sans text-sm font-bold tracking-[0.08em] uppercase opacity-60"
       >
         Tie
       </span>
     </template>
     <template v-else>
-      <span class="text-base">—</span>
+      <span class="text-xl">—</span>
     </template>
   </span>
 </template>

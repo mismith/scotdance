@@ -101,11 +101,11 @@ const loaded = computed(() => groups.value.length > 0)
 
 <template>
   <div class="space-y-4">
-    <div v-if="!loaded" class="text-muted-foreground font-serif italic text-sm">Loading…</div>
+    <div v-if="!loaded" class="text-muted-foreground font-serif italic text-lg">Loading…</div>
 
     <div
       v-else-if="!hasAnyResults"
-      class="text-muted-foreground font-serif text-sm italic"
+      class="text-muted-foreground font-serif text-lg italic"
     >
       No results posted yet. Check back later.
     </div>
@@ -123,12 +123,12 @@ const loaded = computed(() => groups.value.length > 0)
           ]"
         />
         <span
-          class="font-serif min-w-0 flex-1 truncate text-[17px] font-medium tracking-tight leading-tight"
+          class="font-serif min-w-0 flex-1 truncate text-2xl font-medium tracking-tight leading-tight"
         >
           {{ row.category.name || '?' }}
         </span>
         <span
-          class="text-muted-foreground self-center text-[11px] font-semibold tabular-nums"
+          class="text-muted-foreground self-center font-semibold tabular-nums"
         >
           <template v-if="categoryFavoriteCount(row.category) > 0">
             <span class="text-secondary">{{
@@ -144,7 +144,7 @@ const loaded = computed(() => groups.value.length > 0)
         <ul class="border-b">
         <li
           v-if="!row.groups.length"
-          class="text-muted-foreground font-serif px-1 py-3 text-sm italic"
+          class="text-muted-foreground font-serif px-1 py-3 text-lg italic"
         >
           No groups.
         </li>
@@ -158,7 +158,7 @@ const loaded = computed(() => groups.value.length > 0)
           >
             <span
               :class="[
-                'flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-medium',
+                'flex size-9 shrink-0 items-center justify-center rounded-full font-medium',
                 groupStatus(group).state === 'done'
                   ? groupHasFavorite(group)
                     ? 'bg-secondary text-secondary-foreground'
@@ -178,14 +178,14 @@ const loaded = computed(() => groups.value.length > 0)
             </span>
             <div class="min-w-0 flex-1">
               <div
-                class="font-serif truncate text-[15px] leading-tight font-medium tracking-tight"
+                class="font-serif truncate leading-tight font-medium tracking-tight"
               >
                 {{ group.name || group.fullName }}
               </div>
               <div
                 v-if="groupStatus(group).state !== 'done'"
                 :class="[
-                  'mt-0.5 text-[11px] font-bold tracking-[0.14em] uppercase',
+                  'mt-0.5 text-xs font-medium tracking-[0.18em] uppercase',
                   groupStatus(group).state === 'in-progress'
                     ? 'text-primary'
                     : 'text-muted-foreground/70',

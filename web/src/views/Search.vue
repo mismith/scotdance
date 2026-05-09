@@ -85,7 +85,7 @@ const examples = [
             v-model="q"
             type="search"
             placeholder="Search"
-            class="placeholder:text-nav-foreground/50 min-w-0 flex-1 bg-transparent text-sm focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+            class="placeholder:text-nav-foreground/50 min-w-0 flex-1 bg-transparent focus:outline-none [&::-webkit-search-cancel-button]:hidden"
           />
         </div>
       </div>
@@ -104,7 +104,7 @@ const examples = [
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-0">
       <section class="space-y-3">
         <h2
-          class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
+          class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase"
         >
           Suggested searches
         </h2>
@@ -116,25 +116,25 @@ const examples = [
           >
             <div class="flex items-center justify-between">
               <span
-                class="text-primary text-[10px] font-semibold tracking-[0.14em] uppercase"
+                class="text-primary text-xs font-medium tracking-[0.18em] uppercase"
               >
                 {{ preset.kicker }}
               </span>
-              <span class="text-primary font-serif text-sm font-medium tabular-nums">
+              <span class="text-primary font-serif text-lg font-medium tabular-nums">
                 {{ preset.count }}
               </span>
             </div>
-            <div class="font-serif text-base leading-tight font-medium tracking-tight">
+            <div class="font-serif leading-tight font-medium tracking-tight">
               {{ preset.title }}
             </div>
-            <div class="text-muted-foreground text-xs leading-snug">{{ preset.sub }}</div>
+            <div class="text-muted-foreground leading-snug">{{ preset.sub }}</div>
           </li>
         </ul>
       </section>
 
       <section class="space-y-2">
         <h2
-          class="text-foreground/65 text-[11px] font-semibold tracking-[0.14em] uppercase"
+          class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase"
         >
           Or just type a name
         </h2>
@@ -146,10 +146,10 @@ const examples = [
           >
             <Search class="text-muted-foreground size-4 shrink-0" />
             <div class="min-w-0 flex-1">
-              <div class="truncate font-serif text-sm font-medium tracking-tight">
+              <div class="truncate font-serif text-lg font-medium tracking-tight">
                 &ldquo;{{ example.q }}&rdquo;
               </div>
-              <div class="text-muted-foreground truncate text-xs">
+              <div class="text-muted-foreground truncate">
                 → {{ example.match }}
               </div>
             </div>
@@ -157,7 +157,7 @@ const examples = [
         </ul>
       </section>
 
-      <p class="text-muted-foreground text-xs">
+      <p class="text-muted-foreground">
         Search overlay — stub. Presets and examples are placeholders.
       </p>
     </main>

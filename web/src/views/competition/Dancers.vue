@@ -217,14 +217,14 @@ function dismissSuggestions() {
           v-model="filter"
           type="search"
           placeholder="Search dancers…"
-          class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-sm focus:outline-none"
+          class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent focus:outline-none"
         />
       </div>
-      <label class="text-muted-foreground text-xs">
+      <label class="text-muted-foreground">
         <span class="sr-only">Sort by</span>
         <select
           v-model="sortBy"
-          class="bg-card focus:ring-ring h-11 rounded-full border px-3 text-sm shadow-sm focus:ring-2 focus:outline-none"
+          class="bg-card focus:ring-ring h-11 rounded-full border px-3 shadow-sm focus:ring-2 focus:outline-none"
         >
           <option v-for="by in sortableBys" :key="by.key" :value="by.key">
             {{ by.label }}
@@ -254,11 +254,11 @@ function dismissSuggestions() {
     >
       <Star class="text-secondary size-5 shrink-0 fill-current" />
       <div class="min-w-0 flex-1">
-        <div class="font-serif text-sm font-medium tracking-tight">
+        <div class="font-serif text-lg font-medium tracking-tight">
           {{ suggestions.length }} favourite dancer
           {{ suggestions.length === 1 ? 'suggestion' : 'suggestions' }}
         </div>
-        <div class="text-muted-foreground text-xs">based on your previous selections</div>
+        <div class="text-muted-foreground">based on your previous selections</div>
       </div>
       <button
         type="button"
@@ -272,13 +272,13 @@ function dismissSuggestions() {
 
     <div
       v-if="!dancers.length"
-      class="text-muted-foreground font-serif text-sm italic"
+      class="text-muted-foreground font-serif text-lg italic"
     >
       No dancers loaded yet.
     </div>
     <div
       v-else-if="!grouped.length"
-      class="text-muted-foreground font-serif text-sm italic"
+      class="text-muted-foreground font-serif text-lg italic"
     >
       <template v-if="onlyFavorites && !auth.isSignedIn">
         Sign in to see your favourite dancers.
@@ -300,21 +300,21 @@ function dismissSuggestions() {
           ]"
         />
         <span
-          class="font-serif min-w-0 flex-1 truncate text-[17px] font-medium tracking-tight leading-tight"
+          class="font-serif min-w-0 flex-1 truncate text-2xl font-medium tracking-tight leading-tight"
         >
           {{ group.groupName }}
         </span>
         <button
           v-if="group.isSuggestions && isExpanded(group)"
           type="button"
-          class="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-[11px] font-medium hover:opacity-90"
+          class="bg-secondary text-secondary-foreground rounded-full px-3 py-1 font-medium hover:opacity-90"
           @click.stop="favoriteAll(group.members)"
         >
           Favourite all
         </button>
         <span
           v-else
-          class="text-muted-foreground self-center text-[11px] font-semibold tabular-nums"
+          class="text-muted-foreground self-center font-semibold tabular-nums"
         >
           <template
             v-if="!onlyFavorites && !group.isSuggestions && groupFavoriteCount(group) > 0"
@@ -338,7 +338,7 @@ function dismissSuggestions() {
             >
               <div
                 :class="[
-                  'flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-xs font-medium tabular-nums',
+                  'flex size-9 shrink-0 items-center justify-center rounded-full font-serif font-medium tabular-nums',
                   favorites.isFavoriteDancer(dancer.id)
                     ? 'bg-secondary text-secondary-foreground'
                     : 'bg-muted text-muted-foreground',
@@ -348,13 +348,13 @@ function dismissSuggestions() {
               </div>
               <div class="min-w-0 flex-1">
                 <div
-                  class="font-serif truncate text-[15px] leading-tight font-medium tracking-tight"
+                  class="font-serif truncate leading-tight font-medium tracking-tight"
                 >
                   {{ dancer.fullName || '?' }}
                 </div>
                 <div
                   v-if="dancer.location"
-                  class="text-muted-foreground font-serif truncate text-xs italic"
+                  class="text-muted-foreground font-serif truncate text-sm italic"
                 >
                   {{ dancer.location }}
                 </div>

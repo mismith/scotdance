@@ -22,12 +22,12 @@ const message = computed(() => {
     <div class="flex flex-col items-center gap-4 py-16 text-center">
       <CircleSlash class="text-muted-foreground size-16" />
       <div class="space-y-1">
-        <h2 class="text-lg font-semibold">{{ heading }}</h2>
-        <p class="text-muted-foreground text-sm">{{ message }}</p>
+        <h2 class="text-2xl font-semibold">{{ heading }}</h2>
+        <p class="text-muted-foreground text-lg">{{ message }}</p>
       </div>
       <RouterLink
         :to="{ name: 'home' }"
-        class="bg-primary text-primary-foreground inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium hover:opacity-90"
+        class="bg-primary text-primary-foreground inline-flex items-center gap-2 rounded-md px-4 py-2 text-lg font-medium hover:opacity-90"
       >
         <Home class="size-4" />
         Go home
