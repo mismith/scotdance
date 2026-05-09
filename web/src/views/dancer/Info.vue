@@ -2,16 +2,22 @@
 import { computed } from 'vue'
 import { ChevronRight } from '@lucide/vue'
 import { useDancerProfile } from '@/composables/useDancerProfile'
+import { useFavoritesStore } from '@/stores/favorites'
 import CompChip from '@/components/CompChip.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 
 const profile = useDancerProfile()
-const { displayName, location } = profile
+const { displayName, location, appearances } = profile
+const favorites = useFavoritesStore()
 
 const initials = computed(() => {
   const parts = displayName.value.split(' ').filter(Boolean)
   return (parts[0]?.charAt(0) ?? '?') + (parts.at(-1)?.charAt(0) ?? '')
 })
+
+const isFavorite = computed(() =>
+  appearances.value.some((a) => favorites.isFavoriteDancer(a.hit.id)),
+)
 
 const tiles = computed(() => [
   {
@@ -39,19 +45,24 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
   <article class="space-y-6">
     <header class="space-y-3 pr-16">
       <div
-        class="bg-muted text-muted-foreground flex size-20 items-center justify-center rounded-full font-serif text-2xl font-medium [view-transition-name:nav-avatar]"
+        :class="[
+          'flex size-20 items-center justify-center rounded-full font-serif text-4xl font-medium [view-transition-name:nav-avatar]',
+          isFavorite
+            ? 'bg-secondary text-secondary-foreground'
+            : 'bg-muted text-muted-foreground',
+        ]"
       >
         {{ initials || '?' }}
       </div>
       <div class="space-y-1">
         <h1
-          class="font-serif text-3xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
+          class="font-serif text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
         >
           {{ displayName }}
         </h1>
         <p
           v-if="location"
-          class="text-muted-foreground font-serif text-sm italic [view-transition-name:nav-location]"
+          class="text-muted-foreground font-serif text-lg italic [view-transition-name:nav-location]"
         >
           {{ location }}
         </p>
@@ -66,12 +77,12 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
           class="bg-card rounded-2xl border px-4 py-3"
         >
           <div
-            class="text-foreground/65 text-[10px] font-bold tracking-[0.14em] uppercase"
+            class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase"
           >
             {{ t.k }}
           </div>
           <div
-            class="font-serif mt-1 text-2xl font-medium tabular-nums tracking-tight"
+            class="font-serif mt-1 text-4xl font-medium tabular-nums tracking-tight"
           >
             {{ t.v }}
           </div>
@@ -98,13 +109,13 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
         />
         <div class="min-w-0 flex-1">
           <div
-            class="font-serif truncate text-[15px] leading-tight font-medium tracking-tight"
+            class="font-serif truncate leading-tight font-medium tracking-tight"
           >
             {{ recentComp.competition?.name ?? 'Loading…' }}
           </div>
           <div
             v-if="recentComp.hit.number != null"
-            class="text-muted-foreground mt-1 text-[11.5px] tabular-nums"
+            class="text-muted-foreground mt-1 text-sm tabular-nums"
           >
             #{{ recentComp.hit.number }}
           </div>
@@ -113,7 +124,7 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
       </RouterLink>
     </section>
 
-    <p class="text-muted-foreground text-[11px]">
+    <p class="text-muted-foreground">
       Cross-comp profile is matched by name. Identity may be approximate when names
       are shared.
     </p>
