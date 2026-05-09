@@ -43,20 +43,20 @@ const activeTab = computed(() => {
       <div
         class="bg-nav/90 text-nav-foreground pointer-events-auto rounded-full p-1 shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-right]"
       >
-        <div class="flex items-center gap-1 [view-transition-name:match-element]">
+        <div class="flex items-center [view-transition-name:match-element]">
           <RouterLink
             v-for="tab in tabs"
             :key="tab.to"
             :to="{ name: tab.to, params: { dancerId } }"
             :class="[
-              'relative isolate flex flex-col items-center gap-0.5 rounded-full px-4 py-1 text-xs font-medium transition-colors',
+              'relative isolate flex h-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-full px-4 font-medium transition-colors',
               activeTab === tab.to
-                ? `before:absolute before:inset-0 before:-z-10 before:rounded-full before:bg-nav-foreground/10 before:content-[''] before:[view-transition-name:nav-right-active]`
+                ? `before:bg-nav-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:content-[''] before:[view-transition-name:nav-right-active]`
                 : 'opacity-70 hover:opacity-100',
             ]"
           >
-            <component :is="tab.icon" class="size-4" />
-            <span class="text-[10px]">{{ tab.name }}</span>
+            <component :is="tab.icon" class="size-5" />
+            <span class="text-xs leading-none">{{ tab.name }}</span>
           </RouterLink>
         </div>
       </div>
