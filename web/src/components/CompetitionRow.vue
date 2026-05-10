@@ -3,15 +3,15 @@ import type { RouteLocationRaw } from 'vue-router'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 import CompChip from '@/components/CompChip.vue'
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue'
-import { formatRelative } from '@/lib/format'
+import { formatShortDate, isSameDay } from '@/lib/format'
 
 withDefaults(
   defineProps<{
     competition: CompetitionListItem
     to: RouteLocationRaw
-    showRelativeDate?: boolean
+    showDate?: boolean
   }>(),
-  { showRelativeDate: true },
+  { showDate: true },
 )
 </script>
 
@@ -32,12 +32,17 @@ withDefaults(
         >
           {{ competition.location }}
         </div>
-        <div
-          v-if="showRelativeDate && competition.date"
-          class="text-item-meta text-muted-foreground/80"
-        >
-          {{ formatRelative(competition.date) }}
-        </div>
+        <template v-if="showDate && competition.date">
+          <div
+            v-if="isSameDay(competition.date)"
+            class="text-item-meta text-secondary font-medium"
+          >
+            Today
+          </div>
+          <div v-else class="text-item-meta text-muted-foreground/80">
+            {{ formatShortDate(competition.date) }}
+          </div>
+        </template>
       </div>
     </RouterLink>
     <FavoriteCompetitionButton :competition-id="competition.id" class="mt-2 mr-2" />

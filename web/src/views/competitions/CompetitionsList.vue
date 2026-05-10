@@ -8,7 +8,7 @@ import CompetitionsCalendar from '@/components/CompetitionsCalendar.vue'
 import HeroCompCard from '@/components/HeroCompCard.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import ViewModeTabs, { type ViewMode } from '@/components/ViewModeTabs.vue'
-import { isPast, isSameDay } from '@/lib/format'
+import { isBeforeToday, isSameDay, parseDate } from '@/lib/format'
 
 type Filter = 'upcoming' | 'past' | 'all'
 
@@ -41,7 +41,7 @@ const featuredComp = computed<CompetitionListItem | null>(() => {
   const live = list.find((c) => c.date && isSameDay(c.date))
   if (live) return live
   const upcoming = list
-    .filter((c) => c.date && !isPast(c.date))
+    .filter((c) => c.date && !isBeforeToday(c.date))
     .sort((a, b) => Number(a.date ?? 0) - Number(b.date ?? 0))
   return upcoming[0] ?? null
 })
@@ -50,12 +50,12 @@ const filteredCompetitions = computed<CompetitionListItem[]>(() => {
   const list = competitions.value.slice()
   if (filter.value === 'upcoming') {
     return list
-      .filter((c) => c.date && !isPast(c.date))
+      .filter((c) => c.date && !isBeforeToday(c.date))
       .sort((a, b) => Number(a.date ?? 0) - Number(b.date ?? 0))
   }
   if (filter.value === 'past') {
     return list
-      .filter((c) => c.date && isPast(c.date) && !isSameDay(c.date))
+      .filter((c) => c.date && isBeforeToday(c.date) && !isSameDay(c.date))
       .sort((a, b) => Number(b.date ?? 0) - Number(a.date ?? 0))
   }
   return list.sort((a, b) => Number(a.date ?? 0) - Number(b.date ?? 0))
@@ -77,7 +77,7 @@ interface MonthGroup {
 const monthGroups = computed<MonthGroup[]>(() => {
   const groups = new Map<string, MonthGroup>()
   for (const c of visibleCompetitions.value) {
-    const d = c.date ? new Date(c.date) : null
+    const d = c.date ? parseDate(c.date) : null
     const key = d
       ? `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`
       : 'undated'

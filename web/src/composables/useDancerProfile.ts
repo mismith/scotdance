@@ -1,7 +1,7 @@
 import { computed, inject, provide, ref, shallowRef, watch, type InjectionKey, type Ref } from 'vue'
 import { searchDancers, type SearchDancerHit } from '@/lib/searchDancers'
 import { fetchCompetitionMeta } from '@/lib/competitionMeta'
-import { isPast } from '@/lib/format'
+import { isBeforeToday } from '@/lib/format'
 import { useRecentDancers } from '@/composables/useRecentDancers'
 import type { Competition } from '@/types/competition'
 
@@ -124,7 +124,7 @@ function createDancerProfile(slug: Ref<string>): UseDancerProfile {
 
   const upcoming = computed(() =>
     appearances.value
-      .filter((a) => a.competition?.date && !isPast(a.competition.date))
+      .filter((a) => a.competition?.date && !isBeforeToday(a.competition.date))
       .sort(
         (a, b) =>
           Number(a.competition?.date ?? 0) - Number(b.competition?.date ?? 0),
@@ -132,7 +132,7 @@ function createDancerProfile(slug: Ref<string>): UseDancerProfile {
   )
   const past = computed(() =>
     appearances.value.filter(
-      (a) => a.competition?.date && isPast(a.competition.date),
+      (a) => a.competition?.date && isBeforeToday(a.competition.date),
     ),
   )
 
