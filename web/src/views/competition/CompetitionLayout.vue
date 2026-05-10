@@ -102,12 +102,12 @@ const locationLabel = computed(() => competition.value?.location ?? '')
           <FavoriteCompetitionButton
             v-if="mode === 'info'"
             :competition-id="competitionId"
-            class="hover:bg-nav-foreground/10! flex! size-9 items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
+            class="hover:bg-nav-foreground/10! flex! size-9! items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
           />
           <ShareButton
             :title="competition?.name ?? undefined"
             :text="competition?.name ?? undefined"
-            class="hover:bg-nav-foreground/10! flex! size-9 items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
+            class="hover:bg-nav-foreground/10! flex! size-9! items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
           />
         </div>
       </div>

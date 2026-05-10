@@ -57,8 +57,7 @@ const placedRows = computed(() =>
       <header class="relative space-y-3">
         <FavoriteDancerButton
           :dancer="dancer"
-          size="md"
-          class="float-right -mr-1 flex size-12 items-center justify-center rounded-full"
+          class="float-right flex size-12 items-center justify-center rounded-full"
         />
         <img
           v-if="dancer.image"
@@ -124,9 +123,7 @@ const placedRows = computed(() =>
                 :tied="row.result.tied"
                 :pointed="row.result.pointed"
               />
-              <div
-                class="text-item-title min-w-0 flex-1 truncate"
-              >
+              <div class="text-item-title min-w-0 flex-1 truncate">
                 {{ row.dance.fullName }}
               </div>
             </RouterLink>

@@ -78,7 +78,7 @@ async function submit() {
     >
       <button
         type="button"
-        class="hover:bg-accent text-muted-foreground absolute top-2 right-2 rounded-md p-1"
+        class="hover:bg-accent text-muted-foreground absolute top-2 right-2 flex size-11 items-center justify-center rounded-full"
         title="Close"
         @click="auth.closeLogin()"
       >
@@ -126,7 +126,7 @@ async function submit() {
             <button
               type="button"
               tabindex="-1"
-              class="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2 p-1"
+              class="text-muted-foreground hover:text-foreground hover:bg-accent absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1"
               @click="passwordVisible = !passwordVisible"
             >
               <component :is="passwordVisible ? EyeOff : Eye" class="size-4" />

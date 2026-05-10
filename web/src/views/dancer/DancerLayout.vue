@@ -59,12 +59,12 @@ const initials = computed(() => {
             v-if="isInfo"
             :appearances="appearances"
             :name="displayName"
-            class="hover:bg-nav-foreground/10! flex! size-9 items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
+            class="hover:bg-nav-foreground/10! flex! size-9! items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
           />
           <ShareButton
             :title="displayName || undefined"
             :text="displayName || undefined"
-            class="hover:bg-nav-foreground/10! flex! size-9 items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
+            class="hover:bg-nav-foreground/10! flex! size-9! items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
           />
         </div>
       </div>
