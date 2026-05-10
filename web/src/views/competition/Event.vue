@@ -2,8 +2,8 @@
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
-import { ChevronDown } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
+import DisclosureHeader from '@/components/DisclosureHeader.vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
 import { dances as eventDances, getScheduleDanceName } from '@/lib/schedule'
 import { findGroupDancers } from '@/lib/results'
@@ -144,26 +144,12 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
       </div>
 
       <section v-for="dance in eventDanceList" :key="dance.id" class="space-y-1">
-        <button
-          type="button"
-          class="flex w-full items-baseline gap-2 px-1 py-2 text-left"
+        <DisclosureHeader
+          :label="getScheduleDanceName(dance, dances) || 'Dance'"
+          :expanded="isExpanded(dance.id, danceHasContent(dance))"
           :disabled="!danceHasContent(dance)"
-          @click="toggle(dance.id, danceHasContent(dance))"
-        >
-          <ChevronDown
-            v-if="danceHasContent(dance)"
-            :class="[
-              'text-muted-foreground size-4 shrink-0 self-center transition-transform',
-              isExpanded(dance.id, danceHasContent(dance)) ? '' : '-rotate-90',
-            ]"
-          />
-          <span v-else class="size-4 shrink-0" />
-          <span
-            class="text-disclosure-heading min-w-0 flex-1 truncate"
-          >
-            {{ getScheduleDanceName(dance, dances) || 'Dance' }}
-          </span>
-        </button>
+          @toggle="toggle(dance.id, danceHasContent(dance))"
+        />
 
         <SmoothCollapse
           :open="danceHasContent(dance) && isExpanded(dance.id, danceHasContent(dance))"

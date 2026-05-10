@@ -2,11 +2,12 @@
 import { computed, onMounted, ref } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import Fuse from 'fuse.js'
-import { ChevronDown, Star, X } from '@lucide/vue'
+import { Star, X } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
 import type { EnrichedDancer } from '@/types/competition'
+import DisclosureHeader from '@/components/DisclosureHeader.vue'
 import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
 
@@ -288,34 +289,12 @@ function dismissSuggestions() {
     </div>
 
     <section v-for="group in grouped" :key="group.groupName" class="space-y-1">
-      <button
-        type="button"
-        class="flex w-full items-baseline gap-2 px-1 py-2 text-left"
-        @click="toggleExpanded(group)"
+      <DisclosureHeader
+        :label="group.groupName"
+        :expanded="isExpanded(group)"
+        @toggle="toggleExpanded(group)"
       >
-        <ChevronDown
-          :class="[
-            'text-muted-foreground size-4 shrink-0 self-center transition-transform',
-            isExpanded(group) ? '' : '-rotate-90',
-          ]"
-        />
-        <span
-          class="text-disclosure-heading min-w-0 flex-1 truncate"
-        >
-          {{ group.groupName }}
-        </span>
-        <button
-          v-if="group.isSuggestions && isExpanded(group)"
-          type="button"
-          class="bg-secondary text-secondary-foreground rounded-full px-3 py-1 font-medium hover:opacity-90"
-          @click.stop="favoriteAll(group.members)"
-        >
-          Favourite all
-        </button>
-        <span
-          v-else
-          class="text-muted-foreground self-center font-semibold tabular-nums"
-        >
+        <template #count>
           <template
             v-if="!onlyFavorites && !group.isSuggestions && groupFavoriteCount(group) > 0"
           >
@@ -323,10 +302,19 @@ function dismissSuggestions() {
             >/<span>{{ group.members.length }}</span>
           </template>
           <template v-else>{{ group.members.length }}</template>
-        </span>
-      </button>
+        </template>
+      </DisclosureHeader>
       <SmoothCollapse :open="isExpanded(group)">
-        <ul class="border-b">
+        <div v-if="group.isSuggestions" class="flex justify-end px-1 pb-2">
+          <button
+            type="button"
+            class="bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm font-medium hover:opacity-90"
+            @click="favoriteAll(group.members)"
+          >
+            Favourite all
+          </button>
+        </div>
+        <ul>
         <li v-for="dancer in group.members" :key="dancer.id">
           <div class="flex items-center">
             <RouterLink
