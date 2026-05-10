@@ -304,7 +304,13 @@ watch(
                   </div>
                 </li>
               </ul>
-              <div class="mt-3 flex justify-center">
+              <div
+                v-if="
+                  (section.callback?.dancers.length ?? 0) > 0 &&
+                  (section.callback?.dancers.length ?? 0) < groupDancers.length
+                "
+                class="mt-3 flex justify-center"
+              >
                 <button
                   type="button"
                   class="bg-card hover:bg-accent text-muted-foreground hover:text-foreground inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors"
