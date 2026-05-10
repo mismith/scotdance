@@ -109,13 +109,13 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
         />
         <div class="min-w-0 flex-1">
           <div
-            class="font-serif truncate leading-tight font-medium tracking-tight"
+            class="text-item-title truncate"
           >
             {{ recentComp.competition?.name ?? 'Loading…' }}
           </div>
           <div
             v-if="recentComp.hit.number != null"
-            class="text-muted-foreground mt-1 text-sm tabular-nums"
+            class="text-item-subtitle text-muted-foreground mt-1 tabular-nums"
           >
             #{{ recentComp.hit.number }}
           </div>

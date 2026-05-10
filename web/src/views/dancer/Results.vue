@@ -142,12 +142,12 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
               </div>
               <div class="min-w-0 flex-1">
                 <div
-                  class="font-serif truncate font-medium tracking-tight leading-tight"
+                  class="text-item-title truncate"
                 >
                   {{ a.competition?.name ?? 'Loading…' }}
                 </div>
                 <div
-                  class="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 font-serif text-sm italic"
+                  class="text-item-subtitle text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2"
                 >
                   <span v-if="a.hit.number != null" class="tabular-nums not-italic"
                     >#{{ a.hit.number }}</span
@@ -196,13 +196,13 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
               </div>
               <div class="min-w-0 flex-1 opacity-80">
                 <div
-                  class="font-serif truncate font-medium tracking-tight leading-tight"
+                  class="text-item-title truncate"
                 >
                   {{ a.competition?.name ?? 'Loading…' }}
                 </div>
                 <div
                   v-if="a.hit.number != null"
-                  class="text-muted-foreground mt-1 font-serif text-sm tabular-nums italic"
+                  class="text-item-subtitle text-muted-foreground mt-1 tabular-nums"
                 >
                   #{{ a.hit.number }}
                 </div>

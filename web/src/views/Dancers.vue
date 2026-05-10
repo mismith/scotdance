@@ -215,13 +215,13 @@ const showSearch = computed(() => q.value.trim().length > 0)
                 </span>
                 <div class="min-w-0 flex-1">
                   <div
-                    class="truncate font-serif leading-tight font-medium tracking-tight"
+                    class="text-item-title truncate"
                   >
                     {{ group.name || '?' }}
                   </div>
                   <div
                     v-if="locationOf(group)"
-                    class="text-muted-foreground truncate font-serif text-sm italic"
+                    class="text-item-subtitle text-muted-foreground truncate"
                   >
                     {{ locationOf(group) }}
                   </div>
@@ -252,13 +252,13 @@ const showSearch = computed(() => q.value.trim().length > 0)
                 </span>
                 <div class="min-w-0 flex-1">
                   <div
-                    class="truncate font-serif leading-tight font-medium tracking-tight"
+                    class="text-item-title truncate"
                   >
                     {{ entry.name }}
                   </div>
                   <div
                     v-if="locationByName.get(entry.name)"
-                    class="text-muted-foreground truncate font-serif text-sm italic"
+                    class="text-item-subtitle text-muted-foreground truncate"
                   >
                     {{ locationByName.get(entry.name) }}
                   </div>
@@ -306,7 +306,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
                 </span>
                 <div class="min-w-0 flex-1">
                   <div
-                    class="truncate font-serif leading-tight font-medium tracking-tight"
+                    class="text-item-title truncate"
                   >
                     {{ entry.name }}
                   </div>

@@ -104,7 +104,7 @@ const examples = [
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-0">
       <section class="space-y-3">
         <h2
-          class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase"
+          class="text-foreground/65 text-sm font-medium tracking-[0.18em] uppercase"
         >
           Suggested searches
         </h2>
@@ -124,7 +124,7 @@ const examples = [
                 {{ preset.count }}
               </span>
             </div>
-            <div class="font-serif leading-tight font-medium tracking-tight">
+            <div class="text-item-title">
               {{ preset.title }}
             </div>
             <div class="text-muted-foreground leading-snug">{{ preset.sub }}</div>
@@ -134,7 +134,7 @@ const examples = [
 
       <section class="space-y-2">
         <h2
-          class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase"
+          class="text-foreground/65 text-sm font-medium tracking-[0.18em] uppercase"
         >
           Or just type a name
         </h2>
