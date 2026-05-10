@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from '@lucide/vue'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 import CompetitionRow from '@/components/CompetitionRow.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
+import { parseDate } from '@/lib/format'
 import { useFavoritesStore } from '@/stores/favorites'
 
 const props = withDefaults(
@@ -36,7 +37,7 @@ function startOfDay(d: Date) {
 const monthEvents = computed(() =>
   props.competitions.filter((c) => {
     if (!c.date) return false
-    const d = new Date(c.date)
+    const d = parseDate(c.date)
     return (
       d.getFullYear() === cursor.value.getFullYear() &&
       d.getMonth() === cursor.value.getMonth()
@@ -47,7 +48,7 @@ const monthEvents = computed(() =>
 const eventsByDay = computed(() => {
   const m = new Map<number, CompetitionListItem[]>()
   for (const c of monthEvents.value) {
-    const d = new Date(c.date!).getDate()
+    const d = parseDate(c.date!).getDate()
     const list = m.get(d) ?? []
     list.push(c)
     m.set(d, list)
@@ -95,12 +96,12 @@ const visibleCompetitions = computed(() => {
     const dayEnd = dayStart + 86_400_000
     return props.competitions.filter((c) => {
       if (!c.date) return false
-      const t = new Date(c.date).getTime()
+      const t = parseDate(c.date).getTime()
       return t >= dayStart && t < dayEnd
     })
   }
   return [...monthEvents.value].sort(
-    (a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime(),
+    (a, b) => parseDate(a.date!).getTime() - parseDate(b.date!).getTime(),
   )
 })
 
@@ -155,7 +156,7 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
       <button
         type="button"
         aria-label="Previous month"
-        class="text-muted-foreground hover:text-foreground rounded-md p-2"
+        class="text-muted-foreground hover:text-foreground hover:bg-accent flex size-11 items-center justify-center rounded-full"
         @click="shiftMonth(-1)"
       >
         <ChevronLeft class="size-4" />
@@ -166,7 +167,7 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
       <button
         type="button"
         aria-label="Next month"
-        class="text-muted-foreground hover:text-foreground rounded-md p-2"
+        class="text-muted-foreground hover:text-foreground hover:bg-accent flex size-11 items-center justify-center rounded-full"
         @click="shiftMonth(1)"
       >
         <ChevronRight class="size-4" />
@@ -233,7 +234,7 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
           :key="competition.id"
           :competition="competition"
           :to="props.linkTo(competition)"
-          :show-relative-date="!selected"
+          :show-date="!selected"
         />
       </ul>
     </section>

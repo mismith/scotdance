@@ -8,7 +8,7 @@ import type { CompetitionListItem } from '@/composables/useCompetitions'
 import CompetitionsCalendar from '@/components/CompetitionsCalendar.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import ViewModeTabs, { type ViewMode } from '@/components/ViewModeTabs.vue'
-import { isSameDay } from '@/lib/format'
+import { isSameDay, parseDate } from '@/lib/format'
 
 const profile = useDancerProfile()
 const route = useRoute()
@@ -31,7 +31,7 @@ function dated(list: DancerAppearance[]): DatedAppearance[] {
   return list
     .filter((a) => a.competition?.date)
     .map<DatedAppearance>((a) => {
-      const d = new Date(a.competition!.date!)
+      const d = parseDate(a.competition!.date!)
       return {
         ...a,
         day: String(d.getDate()),

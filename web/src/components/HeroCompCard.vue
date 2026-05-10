@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { formatRelative, isSameDay } from '@/lib/format'
+import { formatRelative, isSameDay, parseDate } from '@/lib/format'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 
 const props = defineProps<{
@@ -20,7 +20,7 @@ const meta = computed(() => {
   const c = props.competition
   if (live.value) return c.location ?? null
   if (c.date) {
-    const date = new Date(c.date)
+    const date = parseDate(c.date)
     const formatted = date.toLocaleDateString('en-US', {
       weekday: 'short',
       day: 'numeric',

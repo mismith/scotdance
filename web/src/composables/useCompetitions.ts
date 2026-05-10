@@ -2,6 +2,7 @@ import { computed, ref, watch, type Ref } from 'vue'
 import { get, orderByChild, query, ref as dbRef, startAt } from 'firebase/database'
 import { database } from '@/firebase'
 import { useMeStore } from '@/stores/me'
+import { parseDate } from '@/lib/format'
 import type { Competition } from '@/types/competition'
 
 const NAMESPACE = import.meta.env.VITE_FIREBASE_DATA_NAMESPACE || 'production'
@@ -35,8 +36,8 @@ export function useCompetitions(includeArchived: Ref<boolean>) {
       rawCompetitions.value = Object.entries(val)
         .map<CompetitionListItem>(([id, c]) => ({ id, ...c }))
         .sort((a, b) => {
-          const aD = a.date ? new Date(a.date).getTime() : 0
-          const bD = b.date ? new Date(b.date).getTime() : 0
+          const aD = a.date ? parseDate(a.date).getTime() : 0
+          const bD = b.date ? parseDate(b.date).getTime() : 0
           return aD - bD
         })
     } catch (e) {

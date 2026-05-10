@@ -10,8 +10,10 @@ import {
   formatExternalURL,
   formatHumanURL,
   formatDateTime,
+  isBeforeToday,
   isPast,
   isSameDay,
+  parseDate,
 } from '@/lib/format'
 
 const {
@@ -45,26 +47,26 @@ const eventCount = computed(() => {
 const isToday = computed(() => isSameDay(competition.value?.date))
 const datePast = computed(() => {
   const d = competition.value?.date
-  return d != null && isPast(d) && !isSameDay(d)
+  return d != null && isBeforeToday(d)
 })
 
 const monthLabel = computed(() => {
   const d = competition.value?.date
   return d == null
     ? ''
-    : new Date(d).toLocaleString('en-US', { month: 'short' }).toUpperCase()
+    : parseDate(d).toLocaleString('en-US', { month: 'short' }).toUpperCase()
 })
 
 const dayLabel = computed(() => {
   const d = competition.value?.date
-  return d == null ? '' : String(new Date(d).getDate())
+  return d == null ? '' : String(parseDate(d).getDate())
 })
 
 const yearLabel = computed(() => {
   const d = competition.value?.date
   if (d == null) return ''
   if (isToday.value) return 'TODAY'
-  return String(new Date(d).getFullYear())
+  return String(parseDate(d).getFullYear())
 })
 
 const mapsHref = computed(() => {
