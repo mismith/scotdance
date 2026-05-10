@@ -8,15 +8,12 @@ import { dancerFullName } from '@/types/competition'
 
 const props = defineProps<{
   dancer: Pick<Dancer, 'id' | 'firstName' | 'lastName'>
-  size?: 'sm' | 'md'
 }>()
 
 const auth = useAuthStore()
 const favorites = useFavoritesStore()
 
 const isFavorite = computed(() => favorites.isFavoriteDancer(props.dancer.id))
-
-const sizeClass = computed(() => (props.size === 'md' ? 'size-5' : 'size-4'))
 
 async function handleClick(e: Event) {
   e.preventDefault()
@@ -39,11 +36,11 @@ async function handleClick(e: Event) {
       auth.isSignedIn ? (isFavorite ? 'Unfavorite' : 'Favorite') : 'Sign in to favorite'
     "
     :class="[
-      'hover:bg-accent rounded-md p-2 transition-colors',
+      'hover:bg-accent flex size-11 items-center justify-center rounded-full transition-colors',
       isFavorite ? 'text-secondary' : 'text-muted-foreground hover:text-foreground',
     ]"
     @click="handleClick"
   >
-    <Star :class="[sizeClass, isFavorite && 'fill-current']" />
+    <Star :class="['size-5', isFavorite && 'fill-current']" />
   </button>
 </template>

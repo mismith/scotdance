@@ -272,7 +272,7 @@ const submitDisabled = computed(() => {
                 <button
                   type="button"
                   tabindex="-1"
-                  class="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2 p-1"
+                  class="text-muted-foreground hover:text-foreground hover:bg-accent absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1"
                   @click="showNewPassword = !showNewPassword"
                 >
                   <component :is="showNewPassword ? EyeOff : Eye" class="size-4" />
@@ -294,7 +294,7 @@ const submitDisabled = computed(() => {
                 <button
                   type="button"
                   tabindex="-1"
-                  class="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2 p-1"
+                  class="text-muted-foreground hover:text-foreground hover:bg-accent absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1"
                   @click="showCurrentPassword = !showCurrentPassword"
                 >
                   <component :is="showCurrentPassword ? EyeOff : Eye" class="size-4" />

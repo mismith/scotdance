@@ -40,7 +40,7 @@ async function handleClick() {
     type="button"
     :title="justCopied ? 'Link copied' : 'Share'"
     aria-label="Share"
-    class="hover:bg-accent rounded-md p-2 transition-colors"
+    class="hover:bg-accent flex size-9 items-center justify-center rounded-full transition-colors"
     @click="handleClick"
   >
     <Check v-if="justCopied" class="size-4" />

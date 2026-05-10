@@ -20,9 +20,7 @@ const isFavorite = computed(() =>
 )
 
 async function applyAll(on: boolean) {
-  await Promise.all(
-    dancerIds.value.map((id) => favorites.setDancer(id, on, props.name)),
-  )
+  await Promise.all(dancerIds.value.map((id) => favorites.setDancer(id, on, props.name)))
 }
 
 async function handleClick() {
@@ -50,7 +48,7 @@ async function handleClick() {
     aria-label="Favourite"
     :disabled="!dancerIds.length"
     :class="[
-      'rounded-md p-2 transition-colors',
+      'flex size-11 items-center justify-center rounded-full transition-colors',
       isFavorite && 'text-secondary',
     ]"
     @click="handleClick"
