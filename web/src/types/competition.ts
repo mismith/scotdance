@@ -102,7 +102,10 @@ export const overallDance: EnrichedDance = {
 }
 
 export const groupHasOverall = (group?: EnrichedGroup) =>
-  Boolean(group?.category && group.category.name !== 'Primary')
+  Boolean(
+    group?.category?.name &&
+      !group.category.name.trim().toLowerCase().startsWith('primary'),
+  )
 
 // Raw RTDB shapes:
 // results[groupId][danceId] = string[] (with optional first "reverse:N" marker, dancers as "id" or "id:tie")
