@@ -298,9 +298,16 @@ watch(
                   </RouterLink>
                   <div
                     v-else
-                    class="text-muted-foreground flex flex-1 items-center gap-3 px-1 py-3 text-lg"
+                    class="flex flex-1 items-center gap-3 px-1 py-3"
                   >
-                    Unknown dancer
+                    <div
+                      class="border-muted-foreground/30 text-muted-foreground/60 flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed font-serif font-medium"
+                    >
+                      —
+                    </div>
+                    <div class="text-item-title text-muted-foreground truncate italic">
+                      Unknown dancer
+                    </div>
                   </div>
                 </li>
               </ul>
@@ -366,9 +373,16 @@ watch(
                 </RouterLink>
                 <div
                   v-else
-                  class="text-muted-foreground flex flex-1 items-center py-3 pr-1 text-lg"
+                  class="flex min-w-0 flex-1 items-center gap-3 py-3 pr-1"
                 >
-                  Unknown dancer
+                  <div
+                    class="border-muted-foreground/30 text-muted-foreground/60 flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed font-serif font-medium"
+                  >
+                    —
+                  </div>
+                  <div class="text-item-title text-muted-foreground truncate italic">
+                    Unknown dancer
+                  </div>
                 </div>
               </li>
             </ul>
