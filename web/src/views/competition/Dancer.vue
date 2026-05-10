@@ -119,16 +119,16 @@ const placedRows = computed(() =>
               }"
               class="flex items-center gap-3 px-1 py-3"
             >
-              <div
-                class="min-w-0 flex-1 truncate font-serif leading-tight font-medium tracking-tight"
-              >
-                {{ row.dance.fullName }}
-              </div>
               <Place
                 :place="row.result.place"
                 :tied="row.result.tied"
                 :pointed="row.result.pointed"
               />
+              <div
+                class="text-item-title min-w-0 flex-1 truncate"
+              >
+                {{ row.dance.fullName }}
+              </div>
             </RouterLink>
           </li>
         </ul>

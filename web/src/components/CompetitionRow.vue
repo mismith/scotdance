@@ -23,18 +23,18 @@ withDefaults(
     >
       <CompChip :name="competition.name" :image="competition.image" :size="48" />
       <div class="min-w-0 flex-1 pt-0.5">
-        <div class="line-clamp-2 font-serif leading-tight font-medium tracking-tight">
+        <div class="text-item-title line-clamp-2">
           {{ competition.name ?? '?' }}
         </div>
         <div
           v-if="competition.location"
-          class="text-muted-foreground truncate font-serif text-sm italic"
+          class="text-item-subtitle text-muted-foreground truncate"
         >
           {{ competition.location }}
         </div>
         <div
           v-if="showRelativeDate && competition.date"
-          class="text-muted-foreground/80 text-xs"
+          class="text-item-meta text-muted-foreground/80"
         >
           {{ formatRelative(competition.date) }}
         </div>

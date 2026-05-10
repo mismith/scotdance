@@ -275,12 +275,12 @@ const groupedStaff = computed(() => {
           :key="member.id"
           class="mb-2 break-inside-avoid"
         >
-          <div class="font-serif leading-tight font-medium tracking-tight">
+          <div class="text-item-title">
             {{ staffMemberName(member) }}
           </div>
           <div
             v-if="member.location"
-            class="text-muted-foreground font-serif text-xs italic"
+            class="text-item-subtitle text-muted-foreground"
           >
             {{ member.location }}
           </div>

@@ -239,7 +239,7 @@ watch(
             ]"
           />
           <span
-            class="font-serif min-w-0 flex-1 truncate text-2xl font-medium tracking-tight leading-tight"
+            class="text-disclosure-heading min-w-0 flex-1 truncate"
           >
             {{ section.dance.fullName }}
           </span>
@@ -299,12 +299,12 @@ watch(
                       {{ row.dancer.number ?? '–' }}
                     </div>
                     <div class="min-w-0 flex-1">
-                      <div class="font-serif truncate leading-tight font-medium tracking-tight">
+                      <div class="text-item-title truncate">
                         {{ row.dancer.fullName || '?' }}
                       </div>
                       <div
                         v-if="row.dancer.location"
-                        class="text-muted-foreground font-serif truncate text-sm italic"
+                        class="text-item-subtitle text-muted-foreground truncate"
                       >
                         {{ row.dancer.location }}
                       </div>
@@ -341,13 +341,14 @@ watch(
                 :key="row.dancerId"
                 class="flex items-center"
               >
+                <Place :place="row.place" :tied="row.tied" class="ml-1 mr-2" />
                 <RouterLink
                   v-if="row.dancer"
                   :to="{
                     name: 'competition.dancer',
                     params: { competitionId, dancerId: row.dancer.id },
                   }"
-                  class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
+                  class="flex min-w-0 flex-1 items-center gap-3 py-3 pr-1"
                 >
                   <div
                     :class="[
@@ -360,12 +361,12 @@ watch(
                     {{ row.dancer.number ?? '–' }}
                   </div>
                   <div class="min-w-0 flex-1">
-                    <div class="font-serif truncate leading-tight font-medium tracking-tight">
+                    <div class="text-item-title truncate">
                       {{ row.dancer.fullName || '?' }}
                     </div>
                     <div
                       v-if="row.dancer.location"
-                      class="text-muted-foreground font-serif truncate text-sm italic"
+                      class="text-item-subtitle text-muted-foreground truncate"
                     >
                       {{ row.dancer.location }}
                     </div>
@@ -373,11 +374,10 @@ watch(
                 </RouterLink>
                 <div
                   v-else
-                  class="text-muted-foreground flex flex-1 items-center gap-3 px-1 py-3 text-lg"
+                  class="text-muted-foreground flex flex-1 items-center py-3 pr-1 text-lg"
                 >
                   Unknown dancer
                 </div>
-                <Place :place="row.place" :tied="row.tied" class="mr-3" />
               </li>
             </ul>
             <div v-else class="text-muted-foreground font-serif px-1 text-lg italic">
@@ -390,7 +390,7 @@ watch(
 
             <div v-if="section.pointed.length" class="mt-3 space-y-2">
               <div
-                class="text-foreground/65 px-1 text-xs font-medium tracking-[0.18em] uppercase"
+                class="text-foreground/65 px-1 text-sm font-medium tracking-[0.18em] uppercase"
               >
                 Championship Points
               </div>
@@ -400,12 +400,13 @@ watch(
                   :key="dancer.id"
                   class="flex items-center"
                 >
+                  <Place :place="null" pointed class="ml-1 mr-2" />
                   <RouterLink
                     :to="{
                       name: 'competition.dancer',
                       params: { competitionId, dancerId: dancer.id },
                     }"
-                    class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
+                    class="flex min-w-0 flex-1 items-center gap-3 py-3 pr-1"
                   >
                     <div
                       :class="[
@@ -418,16 +419,15 @@ watch(
                       {{ dancer.number ?? '–' }}
                     </div>
                     <div class="min-w-0 flex-1">
-                      <div class="font-serif truncate leading-tight font-medium tracking-tight">{{ dancer.fullName || '?' }}</div>
+                      <div class="text-item-title truncate">{{ dancer.fullName || '?' }}</div>
                       <div
                         v-if="dancer.location"
-                        class="text-muted-foreground truncate text-sm"
+                        class="text-item-subtitle text-muted-foreground truncate"
                       >
                         {{ dancer.location }}
                       </div>
                     </div>
                   </RouterLink>
-                  <Place :place="null" pointed class="mr-3" />
                 </li>
               </ul>
             </div>

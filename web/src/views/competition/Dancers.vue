@@ -300,7 +300,7 @@ function dismissSuggestions() {
           ]"
         />
         <span
-          class="font-serif min-w-0 flex-1 truncate text-2xl font-medium tracking-tight leading-tight"
+          class="text-disclosure-heading min-w-0 flex-1 truncate"
         >
           {{ group.groupName }}
         </span>
@@ -348,13 +348,13 @@ function dismissSuggestions() {
               </div>
               <div class="min-w-0 flex-1">
                 <div
-                  class="font-serif truncate leading-tight font-medium tracking-tight"
+                  class="text-item-title truncate"
                 >
                   {{ dancer.fullName || '?' }}
                 </div>
                 <div
                   v-if="dancer.location"
-                  class="text-muted-foreground font-serif truncate text-sm italic"
+                  class="text-item-subtitle text-muted-foreground truncate"
                 >
                   {{ dancer.location }}
                 </div>

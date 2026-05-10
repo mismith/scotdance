@@ -123,7 +123,7 @@ const loaded = computed(() => groups.value.length > 0)
           ]"
         />
         <span
-          class="font-serif min-w-0 flex-1 truncate text-2xl font-medium tracking-tight leading-tight"
+          class="text-disclosure-heading min-w-0 flex-1 truncate"
         >
           {{ row.category.name || '?' }}
         </span>
@@ -178,7 +178,7 @@ const loaded = computed(() => groups.value.length > 0)
             </span>
             <div class="min-w-0 flex-1">
               <div
-                class="font-serif truncate leading-tight font-medium tracking-tight"
+                class="text-item-title truncate"
               >
                 {{ group.name || group.fullName }}
               </div>

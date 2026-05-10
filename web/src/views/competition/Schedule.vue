@@ -70,7 +70,7 @@ const isEmpty = computed(() => schedule.value !== null && dayList.value.length =
             ]"
           />
           <span
-            class="min-w-0 flex-1 truncate font-serif text-2xl leading-tight font-medium tracking-tight"
+            class="text-disclosure-heading min-w-0 flex-1 truncate"
           >
             {{ block.name || 'Block' }}
           </span>
@@ -99,13 +99,13 @@ const isEmpty = computed(() => schedule.value !== null && dayList.value.length =
               >
                 <div class="min-w-0 flex-1">
                   <div
-                    class="truncate font-serif leading-tight font-medium tracking-tight"
+                    class="text-item-title truncate"
                   >
                     {{ event.name || 'Event' }}
                   </div>
                   <div
                     v-if="event.description"
-                    class="text-muted-foreground mt-1 truncate text-xs"
+                    class="text-item-meta text-muted-foreground mt-1 truncate"
                   >
                     {{ slugline(event.description) }}
                   </div>
