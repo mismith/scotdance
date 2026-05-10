@@ -1,6 +1,16 @@
-import { inject, provide, ref, watch, type InjectionKey, type Ref } from 'vue'
+import {
+  computed,
+  inject,
+  provide,
+  ref,
+  watch,
+  type ComputedRef,
+  type InjectionKey,
+  type Ref,
+} from 'vue'
 import { get, child, ref as dbRefFn } from 'firebase/database'
 import { database, dataRef } from '@/firebase'
+import { useMeStore } from '@/stores/me'
 import {
   danceFullName,
   dancerFullName,
@@ -22,8 +32,8 @@ import {
 
 interface CompetitionContext {
   competitionId: Ref<string>
-  competition: Ref<Competition | null>
-  notFound: Ref<boolean>
+  competition: ComputedRef<Competition | null>
+  notFound: ComputedRef<boolean>
   loading: Ref<boolean>
   error: Ref<Error | null>
   staff: Ref<StaffMember[]>
@@ -80,10 +90,23 @@ function snapshotToArray<T extends { id: string }>(
 }
 
 export function provideCompetition(competitionId: Ref<string>): CompetitionContext {
-  const competition = ref<Competition | null>(null)
-  const notFound = ref(false)
+  const me = useMeStore()
+  const rawCompetition = ref<Competition | null>(null)
+  const docExists = ref(false)
   const loading = ref(false)
   const error = ref<Error | null>(null)
+
+  const isVisible = (c: Competition) => me.isAdmin || c.published === true
+  const competition = computed<Competition | null>(() => {
+    const c = rawCompetition.value
+    return c && isVisible(c) ? c : null
+  })
+  const notFound = computed(() => {
+    if (loading.value) return false
+    if (!docExists.value) return true
+    const c = rawCompetition.value
+    return !!c && !isVisible(c)
+  })
   const staff = ref<StaffMember[]>([])
   const dancers = ref<EnrichedDancer[]>([])
   const categories = ref<Category[]>([])
@@ -103,8 +126,8 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     if (!competitionId.value) return
     loading.value = true
     error.value = null
-    notFound.value = false
-    competition.value = null
+    docExists.value = false
+    rawCompetition.value = null
     staff.value = []
     staffLoaded = false
     dancers.value = []
@@ -121,10 +144,9 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     try {
       const snap = await get(competitionMetaRef(competitionId.value))
       const value = snap.val() as Competition | null
-      if (!value || typeof value !== 'object') {
-        notFound.value = true
-      } else {
-        competition.value = value
+      if (value && typeof value === 'object') {
+        docExists.value = true
+        rawCompetition.value = value
       }
     } catch (e) {
       error.value = e as Error
