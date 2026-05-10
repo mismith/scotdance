@@ -8,7 +8,7 @@ import { formatWeekday } from '@/lib/format'
 import DisclosureHeader from '@/components/DisclosureHeader.vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
 
-const { competitionId, schedule, loadSchedule } = useCompetition()
+const { competitionId, schedule, loadSchedule, hasSchedule } = useCompetition()
 
 onMounted(loadSchedule)
 
@@ -33,15 +33,20 @@ function toggle(dayId: string, blockId: string, hasEvents: boolean) {
   }
 }
 
-const isEmpty = computed(() => schedule.value !== null && dayList.value.length === 0)
 </script>
 
 <template>
   <div class="space-y-8">
-    <div v-if="schedule === null" class="text-muted-foreground font-serif text-lg italic">
+    <div
+      v-if="hasSchedule === null"
+      class="text-muted-foreground font-serif text-lg italic"
+    >
       Loading…
     </div>
-    <div v-else-if="isEmpty" class="text-muted-foreground text-lg">
+    <div
+      v-else-if="hasSchedule === false"
+      class="text-muted-foreground font-serif text-lg italic"
+    >
       No schedule yet. Check back later.
     </div>
 

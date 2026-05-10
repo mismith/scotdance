@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, toRef } from 'vue'
+import { computed, onMounted, toRef } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { ChevronLeft } from '@lucide/vue'
 import CompChip from '@/components/CompChip.vue'
+import CompetitionBottomNav from '@/components/nav/CompetitionBottomNav.vue'
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue'
 import ShareButton from '@/components/ShareButton.vue'
 import { provideCompetition } from '@/composables/useCompetition'
@@ -31,7 +32,13 @@ const route = useRoute()
 const router = useRouter()
 const competitionId = computed(() => String(route.params.competitionId ?? ''))
 
-const { competition, notFound, loading, error } = provideCompetition(toRef(competitionId))
+const { competition, notFound, loading, error, loadSchedule } = provideCompetition(
+  toRef(competitionId),
+)
+
+// Trigger schedule load eagerly so the bottom nav can decide whether to show
+// the Schedule tab without waiting for the user to visit it.
+onMounted(loadSchedule)
 
 const mode = computed<ChromeMode>(() => MODE_BY_ROUTE[String(route.name ?? '')] ?? 'info')
 const backTo = computed(() => DRILL_DOWN_PARENT[String(route.name ?? '')] ?? null)
@@ -123,5 +130,7 @@ const locationLabel = computed(() => competition.value?.location ?? '')
       <div v-else-if="error" class="text-destructive text-lg">{{ error.message }}</div>
       <RouterView v-else />
     </main>
+
+    <CompetitionBottomNav />
   </div>
 </template>

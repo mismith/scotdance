@@ -3,12 +3,15 @@ import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { CalendarDays, Info, Trophy, Users } from '@lucide/vue'
 import { smartBackClick } from '@/lib/smartBack'
+import { useCompetition } from '@/composables/useCompetition'
 
 const route = useRoute()
 const router = useRouter()
 const competitionId = computed(() => String(route.params.competitionId ?? ''))
 
-const tabs: Array<{
+const { hasSchedule } = useCompetition()
+
+const allTabs: Array<{
   name: string
   to: string
   icon: typeof Info
@@ -35,9 +38,15 @@ const tabs: Array<{
   },
 ]
 
+// hasSchedule === false means resolved-and-empty/disabled. While unresolved
+// (null), keep the tab visible to avoid a flicker on initial load.
+const tabs = computed(() =>
+  allTabs.filter((t) => t.to !== 'competition.schedule' || hasSchedule.value !== false),
+)
+
 const activeTab = computed(() => {
   const name = String(route.name ?? '')
-  return tabs.find((t) => t.matches.includes(name))?.to
+  return tabs.value.find((t) => t.matches.includes(name))?.to
 })
 </script>
 

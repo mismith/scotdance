@@ -29,6 +29,7 @@ import {
   type Schedule,
   type StaffMember,
 } from '@/types/competition'
+import { days as scheduleDays } from '@/lib/schedule'
 
 interface CompetitionContext {
   competitionId: Ref<string>
@@ -49,6 +50,8 @@ interface CompetitionContext {
   schedule: Ref<Schedule | null>
   platforms: Ref<Platform[]>
   loadSchedule: () => Promise<void>
+  /** null while unresolved; true if schedule has at least one day; false if missing or admin-disabled. */
+  hasSchedule: ComputedRef<boolean | null>
 }
 
 const competitionKey = Symbol('competition') as InjectionKey<CompetitionContext>
@@ -115,12 +118,19 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
   const results = ref<ResultsTree>({})
   const points = ref<PointsTree>({})
   const schedule = ref<Schedule | null>(null)
+  const scheduleResolved = ref(false)
   const platforms = ref<Platform[]>([])
 
   let staffLoaded = false
   let dancersLoaded = false
   let resultsLoaded = false
   let scheduleLoaded = false
+
+  const hasSchedule = computed<boolean | null>(() => {
+    if (!scheduleResolved.value) return null
+    if (!schedule.value) return false
+    return scheduleDays(schedule.value).length > 0
+  })
 
   async function loadMeta() {
     if (!competitionId.value) return
@@ -139,6 +149,7 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     points.value = {}
     resultsLoaded = false
     schedule.value = null
+    scheduleResolved.value = false
     platforms.value = []
     scheduleLoaded = false
     try {
@@ -243,7 +254,11 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
         get(competitionSectionRef(id, 'schedule')),
         get(competitionSectionRef(id, 'platforms')),
       ])
-      schedule.value = (scheduleSnap.val() as Schedule | null) ?? null
+      // RTDB stores `false` for admin-disabled sections and `null` for never-created.
+      // Both render as "no schedule" downstream.
+      const sval = scheduleSnap.val()
+      schedule.value = sval && typeof sval === 'object' ? (sval as Schedule) : null
+      scheduleResolved.value = true
       platforms.value = snapshotToArray<Platform>(platformsSnap.val()).sort(
         (a, b) => (a._order ?? 0) - (b._order ?? 0),
       )
@@ -274,6 +289,7 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     schedule,
     platforms,
     loadSchedule,
+    hasSchedule,
   }
 
   provide(competitionKey, ctx)

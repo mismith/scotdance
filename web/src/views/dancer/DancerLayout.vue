@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, toRef } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
+import DancerBottomNav from '@/components/nav/DancerBottomNav.vue'
 import FavoriteDancerProfileButton from '@/components/FavoriteDancerProfileButton.vue'
 import ShareButton from '@/components/ShareButton.vue'
 import { provideDancerProfile } from '@/composables/useDancerProfile'
@@ -79,5 +80,7 @@ const initials = computed(() => {
       </div>
       <RouterView v-else />
     </main>
+
+    <DancerBottomNav />
   </div>
 </template>
