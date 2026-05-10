@@ -2,8 +2,8 @@
 import { computed, nextTick, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
-import { ChevronDown } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
+import DisclosureHeader from '@/components/DisclosureHeader.vue'
 import Place from '@/components/Place.vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
 import { useFavoritesStore } from '@/stores/favorites'
@@ -227,26 +227,12 @@ watch(
         :key="section.dance.id"
         class="space-y-1"
       >
-        <button
-          type="button"
-          class="flex w-full items-baseline gap-2 px-1 py-2 text-left"
-          @click="toggle(section.dance.id)"
+        <DisclosureHeader
+          :label="section.dance.fullName ?? ''"
+          :expanded="isExpanded(section.dance.id)"
+          @toggle="toggle(section.dance.id)"
         >
-          <ChevronDown
-            :class="[
-              'text-muted-foreground size-4 shrink-0 self-center transition-transform',
-              isExpanded(section.dance.id) ? '' : '-rotate-90',
-            ]"
-          />
-          <span
-            class="text-disclosure-heading min-w-0 flex-1 truncate"
-          >
-            {{ section.dance.fullName }}
-          </span>
-          <span
-            v-if="section.kind === 'callbacks'"
-            class="text-muted-foreground self-center font-semibold tabular-nums"
-          >
+          <template v-if="section.kind === 'callbacks'" #count>
             <template v-if="callbackFavoriteCount > 0">
               <span class="text-secondary">{{ callbackFavoriteCount }}</span
               >/<span>{{
@@ -258,8 +244,8 @@ watch(
                 section.callback?.hasResults ? section.count : groupDancers.length
               }}
             </template>
-          </span>
-        </button>
+          </template>
+        </DisclosureHeader>
 
         <SmoothCollapse :open="isExpanded(section.dance.id)">
           <template v-if="section.kind === 'callbacks'">
@@ -273,7 +259,7 @@ watch(
                   : 'Not yet posted.'
               }}
             </p>
-            <div v-if="callbackRows.length" class="border-b pb-3">
+            <div v-if="callbackRows.length" class="pb-3">
               <ul>
                 <li
                   v-for="row in callbackRows"
@@ -335,7 +321,7 @@ watch(
           </template>
 
           <template v-else>
-            <ul v-if="section.placings?.hasResults" class="border-b">
+            <ul v-if="section.placings?.hasResults">
               <li
                 v-for="row in section.placings.rows"
                 :key="row.dancerId"
@@ -394,7 +380,7 @@ watch(
               >
                 Championship Points
               </div>
-              <ul class="border-b">
+              <ul>
                 <li
                   v-for="dancer in section.pointed"
                   :key="dancer.id"

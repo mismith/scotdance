@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
-import { ChevronDown, ChevronRight } from '@lucide/vue'
+import { ChevronRight } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { blocks, days, events, slugline } from '@/lib/schedule'
 import { formatWeekday } from '@/lib/format'
+import DisclosureHeader from '@/components/DisclosureHeader.vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
 
 const { competitionId, schedule, loadSchedule } = useCompetition()
@@ -58,32 +59,21 @@ const isEmpty = computed(() => schedule.value !== null && dayList.value.length =
       </header>
 
       <div v-for="block in blocks(day)" :key="block.id" class="space-y-1">
-        <button
-          type="button"
-          class="flex w-full items-baseline gap-2 px-1 py-2 text-left"
-          @click="toggle(day.id, block.id, !!block.events)"
+        <DisclosureHeader
+          :label="block.name || 'Block'"
+          :expanded="isExpanded(day.id, block.id, !!block.events)"
+          @toggle="toggle(day.id, block.id, !!block.events)"
         >
-          <ChevronDown
-            :class="[
-              'text-muted-foreground size-4 shrink-0 self-center transition-transform',
-              isExpanded(day.id, block.id, !!block.events) ? '' : '-rotate-90',
-            ]"
-          />
-          <span
-            class="text-disclosure-heading min-w-0 flex-1 truncate"
-          >
-            {{ block.name || 'Block' }}
-          </span>
           <span
             v-if="block.description"
-            class="text-muted-foreground max-w-[40%] truncate text-xs"
+            class="text-muted-foreground max-w-[40%] truncate text-sm"
           >
             {{ slugline(block.description) }}
           </span>
-        </button>
+        </DisclosureHeader>
 
         <SmoothCollapse :open="isExpanded(day.id, block.id, !!block.events)">
-          <ul class="border-b">
+          <ul>
             <li v-for="event in events(block)" :key="event.id" class="flex items-center">
               <RouterLink
                 :to="{

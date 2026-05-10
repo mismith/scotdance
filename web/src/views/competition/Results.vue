@@ -3,7 +3,6 @@ import { computed, onMounted } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import {
   Check,
-  ChevronDown,
   ChevronRight,
   CircleDashed,
   Loader2,
@@ -12,6 +11,7 @@ import { useCompetition } from '@/composables/useCompetition'
 import { useFavoritesStore } from '@/stores/favorites'
 import { findGroupDancers, hasGroupAnyResults, isGroupInProgress } from '@/lib/results'
 import type { Category, EnrichedGroup } from '@/types/competition'
+import DisclosureHeader from '@/components/DisclosureHeader.vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
 
 const {
@@ -111,25 +111,12 @@ const loaded = computed(() => groups.value.length > 0)
     </div>
 
     <section v-for="row in groupedCategories" :key="row.category.id" class="space-y-1">
-      <button
-        type="button"
-        class="flex w-full items-baseline gap-2 px-1 py-2 text-left"
-        @click="toggle(row.category)"
+      <DisclosureHeader
+        :label="row.category.name || '?'"
+        :expanded="isExpanded(row.category)"
+        @toggle="toggle(row.category)"
       >
-        <ChevronDown
-          :class="[
-            'text-muted-foreground size-4 shrink-0 self-center transition-transform',
-            isExpanded(row.category) ? '' : '-rotate-90',
-          ]"
-        />
-        <span
-          class="text-disclosure-heading min-w-0 flex-1 truncate"
-        >
-          {{ row.category.name || '?' }}
-        </span>
-        <span
-          class="text-muted-foreground self-center font-semibold tabular-nums"
-        >
+        <template #count>
           <template v-if="categoryFavoriteCount(row.category) > 0">
             <span class="text-secondary">{{
               categoryFavoriteCount(row.category)
@@ -137,11 +124,11 @@ const loaded = computed(() => groups.value.length > 0)
             >/<span>{{ row.groups.length }}</span>
           </template>
           <template v-else>{{ row.groups.length }}</template>
-        </span>
-      </button>
+        </template>
+      </DisclosureHeader>
 
       <SmoothCollapse :open="isExpanded(row.category)">
-        <ul class="border-b">
+        <ul>
         <li
           v-if="!row.groups.length"
           class="text-muted-foreground font-serif px-1 py-3 text-lg italic"
