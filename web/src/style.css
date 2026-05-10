@@ -110,6 +110,12 @@
   * {
     @apply border-border;
   }
+  /* Keep hash-anchored / scrollIntoView targets clear of the floating top
+     and bottom chrome. Magnitudes mirror .pt-safe-nav / .pb-safe-nav. */
+  html {
+    scroll-padding-top: calc(5rem + env(safe-area-inset-top));
+    scroll-padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+  }
   body {
     @apply bg-background text-foreground;
     font-feature-settings:

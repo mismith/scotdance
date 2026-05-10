@@ -225,7 +225,7 @@ watch(
         v-for="section in sections"
         :id="`dance-${section.dance.id}`"
         :key="section.dance.id"
-        class="scroll-mt-20 space-y-1"
+        class="space-y-1"
       >
         <button
           type="button"
