@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 import { useCompetition } from '@/composables/useCompetition'
 import DisclosureHeader from '@/components/DisclosureHeader.vue'
+import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue'
 import Place from '@/components/Place.vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
 import { useFavoritesStore } from '@/stores/favorites'
@@ -266,36 +267,38 @@ watch(
                   :key="row.key"
                   :class="['flex items-center', row.dimmed && 'opacity-40']"
                 >
-                  <RouterLink
-                    v-if="row.dancer"
-                    :to="{
-                      name: 'competition.dancer',
-                      params: { competitionId, dancerId: row.dancer.id },
-                    }"
-                    class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
-                  >
-                    <div
-                      :class="[
-                        'flex size-9 shrink-0 items-center justify-center rounded-full font-serif font-medium tabular-nums',
-                        favorites.isFavoriteDancer(row.dancer.id)
-                          ? 'bg-secondary text-secondary-foreground'
-                          : 'bg-muted text-muted-foreground',
-                      ]"
+                  <template v-if="row.dancer">
+                    <RouterLink
+                      :to="{
+                        name: 'competition.dancer',
+                        params: { competitionId, dancerId: row.dancer.id },
+                      }"
+                      class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
                     >
-                      {{ row.dancer.number ?? '–' }}
-                    </div>
-                    <div class="min-w-0 flex-1">
-                      <div class="text-item-title truncate">
-                        {{ row.dancer.fullName || '?' }}
-                      </div>
                       <div
-                        v-if="row.dancer.location"
-                        class="text-item-subtitle text-muted-foreground truncate"
+                        :class="[
+                          'flex size-9 shrink-0 items-center justify-center rounded-full font-serif font-medium tabular-nums',
+                          favorites.isFavoriteDancer(row.dancer.id)
+                            ? 'bg-secondary text-secondary-foreground'
+                            : 'bg-muted text-muted-foreground',
+                        ]"
                       >
-                        {{ row.dancer.location }}
+                        {{ row.dancer.number ?? '–' }}
                       </div>
-                    </div>
-                  </RouterLink>
+                      <div class="min-w-0 flex-1">
+                        <div class="text-item-title truncate">
+                          {{ row.dancer.fullName || '?' }}
+                        </div>
+                        <div
+                          v-if="row.dancer.location"
+                          class="text-item-subtitle text-muted-foreground truncate"
+                        >
+                          {{ row.dancer.location }}
+                        </div>
+                      </div>
+                    </RouterLink>
+                    <FavoriteDancerButton :dancer="row.dancer" class="mr-1" />
+                  </template>
                   <div
                     v-else
                     class="flex flex-1 items-center gap-3 px-1 py-3"
