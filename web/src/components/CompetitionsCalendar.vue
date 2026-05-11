@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { RouteLocationRaw } from 'vue-router'
-import { ChevronLeft, ChevronRight } from '@lucide/vue'
+import { CalendarOff, ChevronLeft, ChevronRight } from '@lucide/vue'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 import CompetitionRow from '@/components/CompetitionRow.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { parseDate } from '@/lib/format'
@@ -60,7 +61,7 @@ const eventsByDay = computed(() => {
 
 const calendarCells = computed(() => {
   const first = new Date(cursor.value.getFullYear(), cursor.value.getMonth(), 1)
-  const startDow = first.getDay()
+  const startDow = (first.getDay() + 6) % 7
   const last = new Date(cursor.value.getFullYear(), cursor.value.getMonth() + 1, 0)
   const rows = Math.ceil((startDow + last.getDate()) / 7)
   const start = new Date(first)
@@ -149,83 +150,88 @@ function selectDay(cell: { date: Date; inMonth: boolean }) {
   selected.value = isSelected(cell.date) ? null : startOfDay(cell.date)
 }
 
-const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 </script>
 
 <template>
   <div class="space-y-5">
-    <div class="flex items-center justify-center gap-1">
-      <button
-        type="button"
-        aria-label="Previous month"
-        class="text-muted-foreground hover:text-foreground hover:bg-accent flex size-11 items-center justify-center rounded-full"
-        @click="shiftMonth(-1)"
-      >
-        <ChevronLeft class="size-4" />
-      </button>
-      <h2 class="font-serif text-4xl font-medium tracking-tight">
-        {{ monthLabel }}
-      </h2>
-      <button
-        type="button"
-        aria-label="Next month"
-        class="text-muted-foreground hover:text-foreground hover:bg-accent flex size-11 items-center justify-center rounded-full"
-        @click="shiftMonth(1)"
-      >
-        <ChevronRight class="size-4" />
-      </button>
-    </div>
-
-    <div
-      class="text-foreground/65 grid grid-cols-7 text-xs font-medium tracking-[0.18em] uppercase"
-    >
-      <div v-for="(label, i) in dowLabels" :key="i" class="py-1 text-center">
-        {{ label }}
+    <div class="mx-auto max-w-sm space-y-5">
+      <div class="flex items-center justify-center gap-1">
+        <button
+          type="button"
+          aria-label="Previous month"
+          class="text-muted-foreground hover:text-foreground hover:bg-accent flex size-11 items-center justify-center rounded-full"
+          @click="shiftMonth(-1)"
+        >
+          <ChevronLeft class="size-4" />
+        </button>
+        <h2 class="font-serif text-4xl font-medium tracking-tight">
+          {{ monthLabel }}
+        </h2>
+        <button
+          type="button"
+          aria-label="Next month"
+          class="text-muted-foreground hover:text-foreground hover:bg-accent flex size-11 items-center justify-center rounded-full"
+          @click="shiftMonth(1)"
+        >
+          <ChevronRight class="size-4" />
+        </button>
       </div>
-    </div>
 
-    <div class="grid grid-cols-7 gap-1">
-      <button
-        v-for="(cell, i) in calendarCells"
-        :key="i"
-        type="button"
-        :class="[
-          'relative aspect-square rounded-lg text-lg tabular-nums transition-colors',
-          !cell.inMonth && 'text-muted-foreground/40',
-          cell.inMonth && !cell.eventCount && !isSelected(cell.date) && 'hover:bg-accent',
-          cell.eventCount && !isSelected(cell.date) && 'bg-card shadow-sm hover:shadow',
-          isSelected(cell.date) && 'bg-blue-paper shadow-sm',
-          cell.isToday && !isSelected(cell.date) && 'ring-foreground/30 ring-1',
-        ]"
-        @click="selectDay(cell)"
+      <div
+        class="text-foreground/65 grid grid-cols-7 text-xs font-medium tracking-[0.18em] uppercase"
       >
-        <span
-          class="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-[-60%] font-medium"
+        <div v-for="(label, i) in dowLabels" :key="i" class="py-1 text-center">
+          {{ label }}
+        </div>
+      </div>
+
+      <div class="grid grid-cols-7 gap-1">
+        <button
+          v-for="(cell, i) in calendarCells"
+          :key="i"
+          type="button"
+          :class="[
+            'relative aspect-square rounded-lg text-lg tabular-nums transition-colors',
+            !cell.inMonth && 'text-muted-foreground/40',
+            cell.inMonth &&
+              !cell.eventCount &&
+              !isSelected(cell.date) &&
+              'hover:bg-accent',
+            cell.eventCount && !isSelected(cell.date) && 'bg-card shadow-sm hover:shadow',
+            isSelected(cell.date) && 'bg-blue-paper shadow-sm',
+            cell.isToday && !isSelected(cell.date) && 'ring-foreground/30 ring-1',
+          ]"
+          @click="selectDay(cell)"
         >
-          {{ cell.date.getDate() }}
-        </span>
-        <span
-          v-if="cell.eventCount"
-          class="text-primary absolute bottom-1.5 left-1/2 flex -translate-x-1/2 items-center gap-0.5"
-        >
           <span
-            v-for="n in Math.min(cell.favCount, 3)"
-            :key="`f${n}`"
-            class="bg-secondary size-1 rounded-full"
-          />
-          <span
-            v-for="n in Math.max(0, Math.min(cell.eventCount, 3) - cell.favCount)"
-            :key="`e${n}`"
-            class="bg-primary size-1 rounded-full"
-          />
-          <span
-            v-if="cell.eventCount > 3"
-            class="-mt-[2.5px] -mr-1 text-xs leading-none font-bold"
-            aria-hidden="true"
-            >+</span
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-[-60%] font-medium"
           >
-        </span>
-      </button>
+            {{ cell.date.getDate() }}
+          </span>
+          <span
+            v-if="cell.eventCount"
+            class="text-primary absolute bottom-1.5 left-1/2 flex -translate-x-1/2 items-center gap-0.5"
+          >
+            <span
+              v-for="n in Math.min(cell.favCount, 3)"
+              :key="`f${n}`"
+              class="bg-secondary size-1 rounded-full"
+            />
+            <span
+              v-for="n in Math.max(0, Math.min(cell.eventCount, 3) - cell.favCount)"
+              :key="`e${n}`"
+              class="bg-primary size-1 rounded-full"
+            />
+            <span
+              v-if="cell.eventCount > 3"
+              class="-mt-[2.5px] -mr-1 text-xs leading-none font-bold"
+              aria-hidden="true"
+              >+</span
+            >
+          </span>
+        </button>
+      </div>
     </div>
 
     <section v-if="visibleCompetitions.length" class="space-y-2 pt-2">
@@ -241,12 +247,7 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
       </ul>
     </section>
 
-    <div
-      v-else-if="loading"
-      class="space-y-3 pt-2"
-      aria-busy="true"
-      aria-live="polite"
-    >
+    <div v-else-if="loading" class="space-y-3 pt-2" aria-busy="true" aria-live="polite">
       <span class="sr-only">Loading competitions…</span>
       <div v-for="i in 3" :key="i" class="flex items-start gap-3 py-3">
         <Skeleton class="size-12 shrink-0 rounded-xl!" />
@@ -256,5 +257,11 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
         </div>
       </div>
     </div>
+
+    <EmptyState
+      v-else-if="selected"
+      :icon="CalendarOff"
+      :title="`Nothing on ${sectionLabel}`"
+    />
   </div>
 </template>
