@@ -2,11 +2,12 @@
 import { computed, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
-import { ChevronRight, Loader2, Search, Star, X } from '@lucide/vue'
+import { ChevronRight, Search, Star, X } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useRecentDancers } from '@/composables/useRecentDancers'
 import SectionHeader from '@/components/SectionHeader.vue'
+import Skeleton from '@/components/Skeleton.vue'
 import { searchDancers, type SearchDancerGroup } from '@/lib/searchDancers'
 
 const route = useRoute()
@@ -184,10 +185,18 @@ const showSearch = computed(() => q.value.trim().length > 0)
 
         <div
           v-if="searching"
-          class="text-muted-foreground flex items-center gap-2 font-serif text-lg italic"
+          class="space-y-3"
+          aria-busy="true"
+          aria-live="polite"
         >
-          <Loader2 class="size-4 animate-spin" />
-          Searching…
+          <span class="sr-only">Searching dancers…</span>
+          <div v-for="i in 4" :key="i" class="flex items-center gap-3 py-3">
+            <Skeleton class="size-9 shrink-0 rounded-full!" />
+            <div class="flex-1 space-y-2">
+              <Skeleton class="h-5 w-2/3" />
+              <Skeleton class="h-4 w-1/3" />
+            </div>
+          </div>
         </div>
 
         <div
@@ -251,9 +260,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
                   {{ entry.initials }}
                 </span>
                 <div class="min-w-0 flex-1">
-                  <div
-                    class="text-item-title truncate"
-                  >
+                  <div class="text-item-title truncate">
                     {{ entry.name }}
                   </div>
                   <div
@@ -262,6 +269,10 @@ const showSearch = computed(() => q.value.trim().length > 0)
                   >
                     {{ locationByName.get(entry.name) }}
                   </div>
+                  <Skeleton
+                    v-else-if="!locationByName.has(entry.name)"
+                    class="mt-1 h-4 w-32"
+                  />
                 </div>
                 <ChevronRight class="text-muted-foreground size-4 shrink-0" />
               </RouterLink>

@@ -4,8 +4,11 @@ import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { ChevronLeft } from '@lucide/vue'
 import CompChip from '@/components/CompChip.vue'
 import CompetitionBottomNav from '@/components/nav/CompetitionBottomNav.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue'
 import ShareButton from '@/components/ShareButton.vue'
+import Skeleton from '@/components/Skeleton.vue'
+import { CalendarX } from '@lucide/vue'
 import { provideCompetition } from '@/composables/useCompetition'
 import { formatShortDate } from '@/lib/format'
 import { preferBackClick } from '@/lib/smartBack'
@@ -113,7 +116,6 @@ const locationLabel = computed(() => competition.value?.location ?? '')
           />
           <ShareButton
             :title="competition?.name ?? undefined"
-            :text="competition?.name ?? undefined"
             class="hover:bg-nav-foreground/10! flex! size-9! items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
           />
         </div>
@@ -121,12 +123,23 @@ const locationLabel = computed(() => competition.value?.location ?? '')
     </nav>
 
     <main class="pt-safe-nav mx-auto w-full max-w-3xl flex-1 px-4 pb-4">
-      <div v-if="loading" class="text-muted-foreground font-serif text-lg italic">
-        Loading…
+      <div v-if="loading" class="space-y-5" aria-busy="true" aria-live="polite">
+        <span class="sr-only">Loading competition…</span>
+        <header class="space-y-3 pr-16">
+          <Skeleton class="size-18 rounded-2xl!" />
+          <Skeleton class="h-9 w-3/4" />
+        </header>
+        <Skeleton class="h-24 w-full rounded-2xl!" />
+        <div class="grid grid-cols-3 gap-2">
+          <Skeleton v-for="i in 3" :key="i" class="h-16 rounded-xl!" />
+        </div>
       </div>
-      <div v-else-if="notFound" class="text-muted-foreground text-lg">
-        No competition found.
-      </div>
+      <EmptyState
+        v-else-if="notFound"
+        :icon="CalendarX"
+        title="No competition found"
+        description="This competition may not be public yet, or the link is no longer valid."
+      />
       <div v-else-if="error" class="text-destructive text-lg">{{ error.message }}</div>
       <RouterView v-else />
     </main>

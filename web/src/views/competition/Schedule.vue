@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
-import { ChevronRight } from '@lucide/vue'
+import { CalendarDays, ChevronRight } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { blocks, days, events, slugline } from '@/lib/schedule'
 import { formatWeekday } from '@/lib/format'
 import DisclosureHeader from '@/components/DisclosureHeader.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import Skeleton from '@/components/Skeleton.vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
 
 const { competitionId, schedule, loadSchedule, hasSchedule } = useCompetition()
@@ -37,18 +39,19 @@ function toggle(dayId: string, blockId: string, hasEvents: boolean) {
 
 <template>
   <div class="space-y-8">
-    <div
-      v-if="hasSchedule === null"
-      class="text-muted-foreground font-serif text-lg italic"
-    >
-      Loading…
+    <div v-if="hasSchedule === null" class="space-y-6" aria-busy="true" aria-live="polite">
+      <span class="sr-only">Loading schedule…</span>
+      <div v-for="i in 2" :key="i" class="space-y-3">
+        <Skeleton class="h-7 w-1/3" />
+        <Skeleton v-for="j in 3" :key="j" class="h-12 w-full" />
+      </div>
     </div>
-    <div
+    <EmptyState
       v-else-if="hasSchedule === false"
-      class="text-muted-foreground font-serif text-lg italic"
-    >
-      No schedule yet. Check back later.
-    </div>
+      :icon="CalendarDays"
+      title="No schedule yet"
+      description="The competition organizers haven’t posted a schedule. Check back closer to the date."
+    />
 
     <section v-for="day in dayList" :key="day.id" class="space-y-4">
       <header>
