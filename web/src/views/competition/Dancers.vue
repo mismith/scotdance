@@ -2,13 +2,15 @@
 import { computed, onMounted, ref } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import Fuse from 'fuse.js'
-import { Star, X } from '@lucide/vue'
+import { Star, Users, X } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
 import type { EnrichedDancer } from '@/types/competition'
 import DisclosureHeader from '@/components/DisclosureHeader.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue'
+import Skeleton from '@/components/Skeleton.vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
 
 const SUGGESTIONS_NAME = 'Suggested Favourites'
@@ -17,7 +19,11 @@ const { competitionId, dancers, loadDancers } = useCompetition()
 const auth = useAuthStore()
 const favorites = useFavoritesStore()
 
-onMounted(loadDancers)
+const loaded = ref(false)
+onMounted(async () => {
+  await loadDancers()
+  loaded.value = true
+})
 
 type SortKey = 'group' | 'number' | 'location' | 'firstName' | 'lastName'
 
@@ -271,21 +277,39 @@ function dismissSuggestions() {
       </button>
     </div>
 
-    <div
-      v-if="!dancers.length"
-      class="text-muted-foreground font-serif text-lg italic"
-    >
-      No dancers loaded yet.
+    <div v-if="!loaded" class="space-y-6" aria-busy="true" aria-live="polite">
+      <span class="sr-only">Loading dancers…</span>
+      <div v-for="i in 2" :key="i" class="space-y-3">
+        <Skeleton class="h-7 w-1/3" />
+        <div v-for="j in 4" :key="j" class="flex items-center gap-3">
+          <Skeleton class="size-9 rounded-full!" />
+          <Skeleton class="h-5 flex-1" />
+        </div>
+      </div>
     </div>
+    <EmptyState
+      v-else-if="!dancers.length"
+      :icon="Users"
+      title="No dancers yet"
+      description="The dancer list hasn’t been posted. Check back closer to the competition."
+    />
+    <EmptyState
+      v-else-if="!grouped.length && onlyFavorites && !auth.isSignedIn"
+      :icon="Star"
+      title="Sign in to see your favourites"
+      description="Your favourited dancers stay in sync once you sign in."
+    />
+    <EmptyState
+      v-else-if="!grouped.length && onlyFavorites"
+      :icon="Star"
+      title="No favourite dancers"
+      description="Star a dancer to follow them through this competition."
+    />
     <div
       v-else-if="!grouped.length"
       class="text-muted-foreground font-serif text-lg italic"
     >
-      <template v-if="onlyFavorites && !auth.isSignedIn">
-        Sign in to see your favourite dancers.
-      </template>
-      <template v-else-if="onlyFavorites">No favourite dancers.</template>
-      <template v-else>No matches.</template>
+      No matches.
     </div>
 
     <section v-for="group in grouped" :key="group.groupName" class="space-y-1">

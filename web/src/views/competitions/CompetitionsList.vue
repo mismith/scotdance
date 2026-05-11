@@ -7,6 +7,7 @@ import CompetitionRow from '@/components/CompetitionRow.vue'
 import CompetitionsCalendar from '@/components/CompetitionsCalendar.vue'
 import HeroCompCard from '@/components/HeroCompCard.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
+import Skeleton from '@/components/Skeleton.vue'
 import ViewModeTabs, { type ViewMode } from '@/components/ViewModeTabs.vue'
 import { isBeforeToday, isSameDay, parseDate } from '@/lib/format'
 
@@ -157,6 +158,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
         v-else-if="view === 'calendar'"
         ref="calendarRef"
         :competitions="competitions"
+        :loading="loading"
       />
 
       <template v-else>
@@ -167,9 +169,18 @@ const monthGroups = computed<MonthGroup[]>(() => {
 
         <div
           v-if="loading && !competitions.length"
-          class="text-muted-foreground font-serif text-lg italic"
+          class="space-y-3"
+          aria-busy="true"
+          aria-live="polite"
         >
-          Loading…
+          <span class="sr-only">Loading competitions…</span>
+          <div v-for="i in 5" :key="i" class="flex items-start gap-3 py-3">
+            <Skeleton class="size-12 shrink-0 rounded-xl!" />
+            <div class="flex-1 space-y-2 pt-1">
+              <Skeleton class="h-5 w-3/4" />
+              <Skeleton class="h-4 w-1/2" />
+            </div>
+          </div>
         </div>
         <div
           v-else-if="!competitions.length"

@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from '@lucide/vue'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 import CompetitionRow from '@/components/CompetitionRow.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
+import Skeleton from '@/components/Skeleton.vue'
 import { parseDate } from '@/lib/format'
 import { useFavoritesStore } from '@/stores/favorites'
 
@@ -12,6 +13,7 @@ const props = withDefaults(
   defineProps<{
     competitions: CompetitionListItem[]
     linkTo?: (c: CompetitionListItem) => RouteLocationRaw
+    loading?: boolean
   }>(),
   {
     linkTo: (c: CompetitionListItem) => ({
@@ -238,5 +240,21 @@ const dowLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
         />
       </ul>
     </section>
+
+    <div
+      v-else-if="loading"
+      class="space-y-3 pt-2"
+      aria-busy="true"
+      aria-live="polite"
+    >
+      <span class="sr-only">Loading competitions…</span>
+      <div v-for="i in 3" :key="i" class="flex items-start gap-3 py-3">
+        <Skeleton class="size-12 shrink-0 rounded-xl!" />
+        <div class="flex-1 space-y-2 pt-1">
+          <Skeleton class="h-5 w-3/4" />
+          <Skeleton class="h-4 w-1/2" />
+        </div>
+      </div>
+    </div>
   </div>
 </template>

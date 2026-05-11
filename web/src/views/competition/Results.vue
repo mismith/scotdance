@@ -6,12 +6,15 @@ import {
   ChevronRight,
   CircleDashed,
   Loader2,
+  Trophy,
 } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useFavoritesStore } from '@/stores/favorites'
 import { findGroupDancers, hasGroupAnyResults, isGroupInProgress } from '@/lib/results'
 import type { Category, EnrichedGroup } from '@/types/competition'
 import DisclosureHeader from '@/components/DisclosureHeader.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import Skeleton from '@/components/Skeleton.vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
 
 const {
@@ -101,14 +104,20 @@ const loaded = computed(() => groups.value.length > 0)
 
 <template>
   <div class="space-y-4">
-    <div v-if="!loaded" class="text-muted-foreground font-serif italic text-lg">Loading…</div>
-
-    <div
-      v-else-if="!hasAnyResults"
-      class="text-muted-foreground font-serif text-lg italic"
-    >
-      No results posted yet. Check back later.
+    <div v-if="!loaded" class="space-y-6" aria-busy="true" aria-live="polite">
+      <span class="sr-only">Loading results…</span>
+      <div v-for="i in 2" :key="i" class="space-y-3">
+        <Skeleton class="h-7 w-1/3" />
+        <Skeleton v-for="j in 3" :key="j" class="h-12 w-full" />
+      </div>
     </div>
+
+    <EmptyState
+      v-else-if="!hasAnyResults"
+      :icon="Trophy"
+      title="No results posted yet"
+      description="Live updates will appear here as they’re announced. Check back during the competition."
+    />
 
     <section v-for="row in groupedCategories" :key="row.category.id" class="space-y-1">
       <DisclosureHeader

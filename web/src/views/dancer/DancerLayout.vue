@@ -4,6 +4,9 @@ import { RouterLink, RouterView, useRoute } from 'vue-router'
 import DancerBottomNav from '@/components/nav/DancerBottomNav.vue'
 import FavoriteDancerProfileButton from '@/components/FavoriteDancerProfileButton.vue'
 import ShareButton from '@/components/ShareButton.vue'
+import Skeleton from '@/components/Skeleton.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import { UserSearch } from '@lucide/vue'
 import { provideDancerProfile } from '@/composables/useDancerProfile'
 
 const route = useRoute()
@@ -64,7 +67,6 @@ const initials = computed(() => {
           />
           <ShareButton
             :title="displayName || undefined"
-            :text="displayName || undefined"
             class="hover:bg-nav-foreground/10! flex! size-9! items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
           />
         </div>
@@ -72,12 +74,27 @@ const initials = computed(() => {
     </nav>
 
     <main class="pt-safe-nav mx-auto w-full max-w-3xl flex-1 px-4 pb-4">
-      <div v-if="loading" class="text-muted-foreground font-serif text-lg italic">
-        Searching across competitions…
+      <div v-if="loading" class="space-y-5" aria-busy="true" aria-live="polite">
+        <span class="sr-only">Searching across competitions…</span>
+        <header class="space-y-3 pr-16">
+          <Skeleton class="size-20 rounded-full!" />
+          <Skeleton class="h-9 w-3/4" />
+          <Skeleton class="h-5 w-1/2" />
+        </header>
+        <div class="grid grid-cols-2 gap-2">
+          <Skeleton v-for="i in 4" :key="i" class="h-20" />
+        </div>
+        <div class="space-y-2">
+          <Skeleton class="h-3 w-24" />
+          <Skeleton class="h-14 w-full" />
+        </div>
       </div>
-      <div v-else-if="notFound" class="text-muted-foreground font-serif text-lg italic">
-        No record of {{ displayName }} found across the comps we know about.
-      </div>
+      <EmptyState
+        v-else-if="notFound"
+        :icon="UserSearch"
+        :title="`No record of ${displayName}`"
+        description="We couldn’t find this dancer across the competitions we know about."
+      />
       <RouterView v-else />
     </main>
 
