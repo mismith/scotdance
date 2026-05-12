@@ -80,7 +80,9 @@ function goProfile() {
 </script>
 
 <template>
-  <nav class="bottom-[max(0.75rem,var(--safe-bottom))] pointer-events-none fixed inset-x-0 z-30 px-3">
+  <nav
+    class="pointer-events-none fixed inset-x-0 bottom-[max(0.75rem,var(--safe-bottom))] z-30 px-3"
+  >
     <div class="mx-auto flex max-w-3xl items-center justify-between">
       <div
         class="bg-nav/90 text-nav-foreground pointer-events-auto rounded-full p-1 shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-left]"
@@ -93,7 +95,7 @@ function goProfile() {
             :class="[
               'relative isolate flex h-14 min-w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-3 font-sans font-medium transition-colors',
               tab.isActive()
-                ? `before:bg-nav-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:content-[''] before:[view-transition-name:nav-left-active]`
+                ? `before:bg-nav-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:[view-transition-name:nav-left-active]`
                 : 'opacity-70 hover:opacity-100',
             ]"
           >
@@ -107,7 +109,7 @@ function goProfile() {
               :class="[
                 'relative isolate flex h-14 min-w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-3 font-sans font-medium transition-colors',
                 moreOpen
-                  ? `before:bg-nav-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:content-[''] before:[view-transition-name:nav-left-active]`
+                  ? `before:bg-nav-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:[view-transition-name:nav-left-active]`
                   : 'opacity-70 hover:opacity-100',
               ]"
               :aria-expanded="moreOpen"
