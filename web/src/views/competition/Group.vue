@@ -205,7 +205,7 @@ watch(
 
 <template>
   <article class="space-y-6">
-    <div v-if="!groups.length" class="text-muted-foreground font-serif italic text-lg">Loading…</div>
+    <div v-if="!groups.length" class="text-muted-foreground italic text-lg">Loading…</div>
 
     <div v-else-if="!group" class="text-muted-foreground text-lg">Group not found.</div>
 
@@ -213,11 +213,11 @@ watch(
       <header class="space-y-2">
         <div
           v-if="group.category?.name"
-          class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase"
+          class="text-foreground/65 text-xs text-eyebrow"
         >
           {{ group.category.name }}
         </div>
-        <h1 class="font-serif text-4xl leading-[1.04] font-medium tracking-tight">
+        <h1 class="text-4xl leading-[1.04] font-medium tracking-tight">
           {{ group.name ?? group.fullName ?? 'Group' }}
         </h1>
       </header>
@@ -231,28 +231,20 @@ watch(
         <DisclosureHeader
           :label="section.dance.fullName ?? ''"
           :expanded="isExpanded(section.dance.id)"
+          :count="
+            section.kind === 'callbacks'
+              ? ((section.callback?.hasResults ? section.count : groupDancers.length) ?? 0)
+              : null
+          "
+          :favs="section.kind === 'callbacks' ? callbackFavoriteCount : undefined"
           @toggle="toggle(section.dance.id)"
-        >
-          <template v-if="section.kind === 'callbacks'" #count>
-            <template v-if="callbackFavoriteCount > 0">
-              <span class="text-secondary">{{ callbackFavoriteCount }}</span
-              >/<span>{{
-                section.callback?.hasResults ? section.count : groupDancers.length
-              }}</span>
-            </template>
-            <template v-else>
-              {{
-                section.callback?.hasResults ? section.count : groupDancers.length
-              }}
-            </template>
-          </template>
-        </DisclosureHeader>
+        />
 
         <SmoothCollapse :open="isExpanded(section.dance.id)">
           <template v-if="section.kind === 'callbacks'">
             <p
               v-if="!section.callback?.hasResults && !isShowingAll"
-              class="text-muted-foreground font-serif px-1 text-lg italic"
+              class="text-muted-foreground px-1 text-lg italic"
             >
               {{
                 section.callback?.explicitlyEmpty
@@ -277,7 +269,7 @@ watch(
                     >
                       <div
                         :class="[
-                          'flex size-9 shrink-0 items-center justify-center rounded-full font-serif font-medium tabular-nums',
+                          'flex size-9 shrink-0 items-center justify-center rounded-full font-medium tabular-nums',
                           favorites.isFavoriteDancer(row.dancer.id)
                             ? 'bg-secondary text-secondary-foreground'
                             : 'bg-muted text-muted-foreground',
@@ -304,7 +296,7 @@ watch(
                     class="flex flex-1 items-center gap-3 px-1 py-3"
                   >
                     <div
-                      class="border-muted-foreground/30 text-muted-foreground/60 flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed font-serif font-medium"
+                      class="border-muted-foreground/30 text-muted-foreground/60 flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed font-medium"
                     >
                       —
                     </div>
@@ -354,7 +346,7 @@ watch(
                 >
                   <div
                     :class="[
-                      'flex size-9 shrink-0 items-center justify-center rounded-full font-serif font-medium tabular-nums',
+                      'flex size-9 shrink-0 items-center justify-center rounded-full font-medium tabular-nums',
                       favorites.isFavoriteDancer(row.dancer.id)
                         ? 'bg-secondary text-secondary-foreground'
                         : 'bg-muted text-muted-foreground',
@@ -379,7 +371,7 @@ watch(
                   class="flex min-w-0 flex-1 items-center gap-3 py-3 pr-1"
                 >
                   <div
-                    class="border-muted-foreground/30 text-muted-foreground/60 flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed font-serif font-medium"
+                    class="border-muted-foreground/30 text-muted-foreground/60 flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed font-medium"
                   >
                     —
                   </div>
@@ -389,7 +381,7 @@ watch(
                 </div>
               </li>
             </ul>
-            <div v-else class="text-muted-foreground font-serif px-1 text-lg italic">
+            <div v-else class="text-muted-foreground px-1 text-lg italic">
               {{
                 section.placings?.explicitlyEmpty
                   ? 'No placings for this dance.'
@@ -399,7 +391,7 @@ watch(
 
             <div v-if="section.pointed.length" class="mt-3 space-y-2">
               <div
-                class="text-foreground/65 px-1 text-sm font-medium tracking-[0.18em] uppercase"
+                class="text-foreground/65 px-1 text-sm text-eyebrow"
               >
                 Championship Points
               </div>
@@ -419,7 +411,7 @@ watch(
                   >
                     <div
                       :class="[
-                        'flex size-9 shrink-0 items-center justify-center rounded-full font-serif font-medium tabular-nums',
+                        'flex size-9 shrink-0 items-center justify-center rounded-full font-medium tabular-nums',
                         favorites.isFavoriteDancer(dancer.id)
                           ? 'bg-secondary text-secondary-foreground'
                           : 'bg-muted text-muted-foreground',
