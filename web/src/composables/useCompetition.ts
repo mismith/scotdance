@@ -30,6 +30,7 @@ import {
   type StaffMember,
 } from '@/types/competition'
 import { days as scheduleDays } from '@/lib/schedule'
+import { peekCompetition } from '@/composables/useCompetitions'
 
 interface CompetitionContext {
   competitionId: Ref<string>
@@ -134,10 +135,8 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
 
   async function loadMeta() {
     if (!competitionId.value) return
-    loading.value = true
+    const id = competitionId.value
     error.value = null
-    docExists.value = false
-    rawCompetition.value = null
     staff.value = []
     staffLoaded = false
     dancers.value = []
@@ -152,12 +151,30 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     scheduleResolved.value = false
     platforms.value = []
     scheduleLoaded = false
+
+    // Seed from the list cache so Info.vue can render its header on the
+    // first frame (no skeleton phase → no DOM swap → view transitions from
+    // the list don't get skipped by a duplicate `view-transition-name`).
+    const seed = peekCompetition(id)
+    if (seed) {
+      rawCompetition.value = seed
+      docExists.value = true
+      loading.value = false
+    } else {
+      rawCompetition.value = null
+      docExists.value = false
+      loading.value = true
+    }
+
     try {
-      const snap = await get(competitionMetaRef(competitionId.value))
+      const snap = await get(competitionMetaRef(id))
       const value = snap.val() as Competition | null
       if (value && typeof value === 'object') {
         docExists.value = true
         rawCompetition.value = value
+      } else {
+        docExists.value = false
+        rawCompetition.value = null
       }
     } catch (e) {
       error.value = e as Error

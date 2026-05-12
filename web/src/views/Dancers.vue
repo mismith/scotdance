@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
 import { ChevronRight, Search, Star, X } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
@@ -11,6 +11,7 @@ import { useRecentDancers } from '@/composables/useRecentDancers'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import type { SearchDancerGroup } from '@/lib/searchDancers'
+import { useVtScope } from '@/lib/viewTransitionFocus'
 
 const route = useRoute()
 const router = useRouter()
@@ -110,6 +111,8 @@ function clearSearch() {
 }
 
 const showSearch = computed(() => q.value.trim().length > 0)
+
+const vt = useVtScope('dancer')
 </script>
 
 <template>
@@ -188,27 +191,36 @@ const showSearch = computed(() => q.value.trim().length > 0)
                   name: 'dancer.info',
                   params: { dancerId: dancerSlug(group.name) },
                 }"
-                class="flex w-full items-center gap-3 px-1 py-3 text-left"
+                v-slot="{ href, navigate }"
+                custom
               >
-                <span
-                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium"
+                <a
+                  :href="href"
+                  class="flex w-full items-center gap-3 px-1 py-3 text-left"
+                  @click="vt.onNavigate($event, navigate, dancerSlug(group.name))"
                 >
-                  {{ group.initials }}
-                </span>
-                <div class="min-w-0 flex-1">
-                  <div
-                    class="text-item-title truncate"
+                  <span
+                    class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
+                    :style="{ viewTransitionName: vt.name(dancerSlug(group.name), 'avatar') }"
                   >
-                    {{ group.name || '?' }}
+                    {{ group.initials }}
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <div
+                      class="text-item-title truncate [view-transition-class:fit_nav-title]"
+                      :style="{ viewTransitionName: vt.name(dancerSlug(group.name), 'name') }"
+                    >
+                      {{ group.name || '?' }}
+                    </div>
+                    <div
+                      v-if="locationOf(group)"
+                      class="text-item-subtitle text-muted-foreground truncate"
+                    >
+                      {{ locationOf(group) }}
+                    </div>
                   </div>
-                  <div
-                    v-if="locationOf(group)"
-                    class="text-item-subtitle text-muted-foreground truncate"
-                  >
-                    {{ locationOf(group) }}
-                  </div>
-                </div>
-                <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+                  <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+                </a>
               </RouterLink>
             </li>
           </ul>
@@ -225,29 +237,40 @@ const showSearch = computed(() => q.value.trim().length > 0)
                   name: 'dancer.info',
                   params: { dancerId: dancerSlug(entry.name) },
                 }"
-                class="flex w-full items-center gap-3 px-1 py-3 text-left"
+                v-slot="{ href, navigate }"
+                custom
               >
-                <span
-                  class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium"
+                <a
+                  :href="href"
+                  class="flex w-full items-center gap-3 px-1 py-3 text-left"
+                  @click="vt.onNavigate($event, navigate, dancerSlug(entry.name))"
                 >
-                  {{ entry.initials }}
-                </span>
-                <div class="min-w-0 flex-1">
-                  <div class="text-item-title truncate">
-                    {{ entry.name }}
-                  </div>
-                  <div
-                    v-if="locationByName.get(entry.name)"
-                    class="text-item-subtitle text-muted-foreground truncate"
+                  <span
+                    class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
+                    :style="{ viewTransitionName: vt.name(dancerSlug(entry.name), 'avatar') }"
                   >
-                    {{ locationByName.get(entry.name) }}
+                    {{ entry.initials }}
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <div
+                      class="text-item-title truncate [view-transition-class:fit_nav-title]"
+                      :style="{ viewTransitionName: vt.name(dancerSlug(entry.name), 'name') }"
+                    >
+                      {{ entry.name }}
+                    </div>
+                    <div
+                      v-if="locationByName.get(entry.name)"
+                      class="text-item-subtitle text-muted-foreground truncate"
+                    >
+                      {{ locationByName.get(entry.name) }}
+                    </div>
+                    <Skeleton
+                      v-else-if="!locationByName.has(entry.name)"
+                      class="mt-1 h-4 w-32"
+                    />
                   </div>
-                  <Skeleton
-                    v-else-if="!locationByName.has(entry.name)"
-                    class="mt-1 h-4 w-32"
-                  />
-                </div>
-                <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+                  <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+                </a>
               </RouterLink>
             </li>
           </ul>
@@ -281,21 +304,30 @@ const showSearch = computed(() => q.value.trim().length > 0)
             <li v-for="entry in recentList" :key="entry.slug">
               <RouterLink
                 :to="{ name: 'dancer.info', params: { dancerId: entry.slug } }"
-                class="flex w-full items-center gap-3 px-1 py-3 text-left"
+                v-slot="{ href, navigate }"
+                custom
               >
-                <span
-                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium"
+                <a
+                  :href="href"
+                  class="flex w-full items-center gap-3 px-1 py-3 text-left"
+                  @click="vt.onNavigate($event, navigate, entry.slug)"
                 >
-                  {{ initialsOf(entry.name) }}
-                </span>
-                <div class="min-w-0 flex-1">
-                  <div
-                    class="text-item-title truncate"
+                  <span
+                    class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
+                    :style="{ viewTransitionName: vt.name(entry.slug, 'avatar') }"
                   >
-                    {{ entry.name }}
+                    {{ initialsOf(entry.name) }}
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <div
+                      class="text-item-title truncate [view-transition-class:fit_nav-title]"
+                      :style="{ viewTransitionName: vt.name(entry.slug, 'name') }"
+                    >
+                      {{ entry.name }}
+                    </div>
                   </div>
-                </div>
-                <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+                  <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+                </a>
               </RouterLink>
             </li>
           </ul>

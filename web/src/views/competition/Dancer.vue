@@ -8,6 +8,7 @@ import SectionHeader from '@/components/SectionHeader.vue'
 import { findGroupDances, getDancerPlace } from '@/lib/results'
 import { groupHasOverall, overallDance } from '@/types/competition'
 import { useFavoritesStore } from '@/stores/favorites'
+import { useVtScope } from '@/lib/viewTransitionFocus'
 
 const route = useRoute()
 const favorites = useFavoritesStore()
@@ -20,6 +21,10 @@ onMounted(async () => {
 })
 
 const dancerId = computed(() => String(route.params.dancerId ?? ''))
+
+// Tag the current dancer as the view-transition source so back-nav re-tags
+// the right row before the list remounts.
+useVtScope('comp-dancer').syncFocus(dancerId)
 const dancer = computed(() => dancers.value.find((d) => d.id === dancerId.value) ?? null)
 
 const groupDances = computed(() => {
@@ -63,12 +68,12 @@ const placedRows = computed(() =>
           v-if="dancer.image"
           :src="dancer.image"
           :alt="dancer.fullName"
-          class="bg-muted size-20 shrink-0 rounded-full object-cover shadow"
+          class="bg-muted size-20 shrink-0 rounded-full object-cover shadow [view-transition-class:nav-avatar] [view-transition-name:comp-dancer-avatar]"
         />
         <div
           v-else
           :class="[
-            'flex size-20 shrink-0 items-center justify-center rounded-full font-mono text-3xl tabular-nums',
+            'flex size-20 shrink-0 items-center justify-center rounded-full font-mono text-3xl tabular-nums [view-transition-class:nav-avatar] [view-transition-name:comp-dancer-avatar]',
             favorites.isFavoriteDancer(dancer.id)
               ? 'bg-secondary text-secondary-foreground'
               : 'bg-muted text-muted-foreground',
@@ -78,7 +83,9 @@ const placedRows = computed(() =>
         </div>
 
         <div class="min-w-0">
-          <h1 class="mb-1 text-4xl leading-[1.04] font-medium tracking-tight">
+          <h1
+            class="mb-1 text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit_nav-title] [view-transition-name:comp-dancer-name]"
+          >
             {{ dancer.fullName }}
           </h1>
           <div

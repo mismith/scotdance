@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, toRef } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
+import { useVtScope } from '@/lib/viewTransitionFocus'
 import { ChevronLeft } from '@lucide/vue'
 import CompChip from '@/components/CompChip.vue'
 import CompetitionBottomNav from '@/components/nav/CompetitionBottomNav.vue'
@@ -34,6 +35,10 @@ const DRILL_DOWN_PARENT: Record<string, string> = {
 const route = useRoute()
 const router = useRouter()
 const competitionId = computed(() => String(route.params.competitionId ?? ''))
+
+// Tag the current competition as the view-transition source for the list so
+// back-nav re-tags the right row before it remounts.
+useVtScope('comp').syncFocus(competitionId)
 
 const { competition, notFound, loading, error, loadSchedule } = provideCompetition(
   toRef(competitionId),
@@ -80,11 +85,11 @@ const locationLabel = computed(() => competition.value?.location ?? '')
           <CompChip
             :name="competition?.name"
             :image="competition?.image"
-            class="size-10 rounded-full [view-transition-name:nav-avatar]"
+            class="size-10 rounded-full [view-transition-class:nav-avatar] [view-transition-name:comp-avatar]"
           />
           <div class="min-w-0 flex-1">
             <div
-              class="truncate text-lg leading-none font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
+              class="truncate text-lg leading-none font-medium tracking-tight [view-transition-class:fit_nav-title] [view-transition-name:comp-name]"
             >
               {{ competition?.name ?? (loading ? 'Loading…' : 'Competition') }}
             </div>
@@ -92,10 +97,8 @@ const locationLabel = computed(() => competition.value?.location ?? '')
               v-if="dateLabel || locationLabel"
               class="mt-1 truncate text-xs leading-none opacity-70"
             >
-              <span v-if="dateLabel" class="[view-transition-name:nav-date]">{{
-                dateLabel
-              }}</span>
-              <span v-if="locationLabel" class="[view-transition-name:nav-location]">
+              <span v-if="dateLabel">{{ dateLabel }}</span>
+              <span v-if="locationLabel">
                 <template v-if="dateLabel"> · </template>{{ locationLabel }}
               </span>
             </div>

@@ -245,22 +245,21 @@ html:has([data-route='home']) {
   ::view-transition-image-pair(nav-right) {
     display: none;
   }
-  /* Chip + title + date + location morph between the big editorial header on
-     Info and the compact pill content on subpages — share the rubber-band
-     easing so the motion stays in family with the floating pills. */
+  /* Chip + title morph between the big editorial header on Info and the
+     compact pill content on subpages — share the rubber-band easing so the
+     motion stays in family with the floating pills. Entity-specific names
+     ({comp,dancer}-{pill,avatar,title}) prevent cross-entity matches; the
+     `.entity-*` view-transition-classes scope CSS without growing as more
+     entities land. */
   ::view-transition-group(nav-pill),
-  ::view-transition-group(nav-avatar),
-  ::view-transition-group(nav-name),
-  ::view-transition-group(nav-date),
-  ::view-transition-group(nav-location),
+  ::view-transition-group(.nav-avatar),
+  ::view-transition-group(.nav-title),
   ::view-transition-group(nav-left-active),
   ::view-transition-group(nav-right-active) {
     animation-timing-function: var(--vt-ease-rubber-band);
   }
-  ::view-transition-group(nav-avatar),
-  ::view-transition-group(nav-name),
-  ::view-transition-group(nav-date),
-  ::view-transition-group(nav-location) {
+  ::view-transition-group(.nav-avatar),
+  ::view-transition-group(.nav-title) {
     z-index: 1;
   }
 

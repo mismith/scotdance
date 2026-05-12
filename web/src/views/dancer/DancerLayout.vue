@@ -4,13 +4,17 @@ import { RouterLink, RouterView, useRoute } from 'vue-router'
 import DancerBottomNav from '@/components/nav/DancerBottomNav.vue'
 import FavoriteDancerProfileButton from '@/components/FavoriteDancerProfileButton.vue'
 import ShareButton from '@/components/ShareButton.vue'
-import Skeleton from '@/components/Skeleton.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { UserSearch } from '@lucide/vue'
 import { provideDancerProfile } from '@/composables/useDancerProfile'
+import { useVtScope } from '@/lib/viewTransitionFocus'
 
 const route = useRoute()
 const dancerId = computed(() => String(route.params.dancerId ?? ''))
+
+// Tag the current dancer as the view-transition source so back-nav re-tags
+// the right row before the list remounts.
+useVtScope('dancer').syncFocus(dancerId)
 
 const { displayName, location, appearances, loading, notFound } = provideDancerProfile(
   toRef(dancerId),
@@ -35,19 +39,19 @@ const initials = computed(() => {
           :title="displayName"
         >
           <div
-            class="bg-nav-foreground/15 flex size-10 shrink-0 items-center justify-center rounded-full text-lg font-medium [view-transition-name:nav-avatar]"
+            class="bg-nav-foreground/15 flex size-10 shrink-0 items-center justify-center rounded-full text-lg font-medium [view-transition-class:nav-avatar] [view-transition-name:dancer-avatar]"
           >
             {{ initials || '?' }}
           </div>
           <div class="min-w-0 flex-1">
             <div
-              class="truncate text-lg leading-none font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
+              class="truncate text-lg leading-none font-medium tracking-tight [view-transition-class:fit_nav-title] [view-transition-name:dancer-name]"
             >
               {{ displayName || (loading ? 'Loading…' : 'Dancer') }}
             </div>
             <div
               v-if="location"
-              class="mt-1 truncate text-xs leading-none opacity-70 [view-transition-name:nav-location]"
+              class="mt-1 truncate text-xs leading-none opacity-70"
             >
               {{ location }}
             </div>
@@ -74,23 +78,8 @@ const initials = computed(() => {
     </nav>
 
     <main class="pt-(--chrome-top) mx-auto w-full max-w-3xl flex-1 px-4 pb-4">
-      <div v-if="loading" class="space-y-5" aria-busy="true" aria-live="polite">
-        <span class="sr-only">Searching across competitions…</span>
-        <header class="space-y-3 pr-16">
-          <Skeleton class="size-20 rounded-full!" />
-          <Skeleton class="h-9 w-3/4" />
-          <Skeleton class="h-5 w-1/2" />
-        </header>
-        <div class="grid grid-cols-2 gap-2">
-          <Skeleton v-for="i in 4" :key="i" class="h-20" />
-        </div>
-        <div class="space-y-2">
-          <Skeleton class="h-3 w-24" />
-          <Skeleton class="h-14 w-full" />
-        </div>
-      </div>
       <EmptyState
-        v-else-if="notFound"
+        v-if="!loading && notFound"
         :icon="UserSearch"
         :title="`No record of ${displayName}`"
         description="We couldn’t find this dancer across the competitions we know about."

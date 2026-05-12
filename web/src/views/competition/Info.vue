@@ -149,10 +149,10 @@ function closeStaff() {
       <CompChip
         :name="competition.name"
         :image="competition.image"
-        class="size-18 rounded-2xl [view-transition-name:nav-avatar]"
+        class="size-18 rounded-2xl [view-transition-class:nav-avatar] [view-transition-name:comp-avatar]"
       />
       <h1
-        class="text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
+        class="text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit_nav-title] [view-transition-name:comp-name]"
       >
         {{ competition.name ?? '?' }}
       </h1>
@@ -169,7 +169,7 @@ function closeStaff() {
           class="bg-background flex min-w-28 shrink-0 items-stretch border-r py-4"
         >
           <div
-            class="flex flex-1 flex-col items-center justify-center gap-1 [view-transition-name:nav-date]"
+            class="flex flex-1 flex-col items-center justify-center gap-1"
           >
             <div class="text-foreground/65 text-xs text-eyebrow">
               {{ monthLabel }}
@@ -196,7 +196,7 @@ function closeStaff() {
           :rel="mapsHref ? 'noopener' : undefined"
           class="flex flex-1 items-center p-3"
         >
-          <div class="flex flex-1 items-center gap-2 [view-transition-name:nav-location]">
+          <div class="flex flex-1 items-center gap-2">
             <div class="flex min-w-0 flex-1 flex-col justify-center gap-1">
               <div v-if="competition.venue" class="flex items-center gap-1.5">
                 <MapPin class="text-muted-foreground -mt-1 size-6 shrink-0" />

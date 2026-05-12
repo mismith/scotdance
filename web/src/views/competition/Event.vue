@@ -13,6 +13,7 @@ import { findGroupDancers } from '@/lib/results'
 import { staffMemberName } from '@/types/competition'
 import type { EnrichedGroup, ScheduleDance, StaffMember } from '@/types/competition'
 import { useFavoritesStore } from '@/stores/favorites'
+import { useVtScope } from '@/lib/viewTransitionFocus'
 
 const route = useRoute()
 const {
@@ -37,12 +38,20 @@ const dayId = computed(() => String(route.params.dayId ?? ''))
 const blockId = computed(() => String(route.params.blockId ?? ''))
 const eventId = computed(() => String(route.params.eventId ?? ''))
 
+// Tag the current event as the view-transition source so back-nav re-tags
+// the right row before Schedule remounts.
+useVtScope('event').syncFocus(eventId)
+
 const day = computed(() => schedule.value?.days?.[dayId.value] ?? null)
 const block = computed(() => day.value?.blocks?.[blockId.value] ?? null)
 const event = computed(() => block.value?.events?.[eventId.value] ?? null)
 
 const eventDanceList = computed(() =>
   event.value ? eventDances({ dances: event.value.dances }) : [],
+)
+
+const wrappableEventName = computed(() =>
+  (event.value?.name ?? 'Event').replace(/\//g, '/​'),
 )
 
 const expanded = useLocalStorage<Record<string, Record<string, boolean>>>(
@@ -156,8 +165,10 @@ function closeJudge() {
         <div class="text-foreground/65 text-xs text-eyebrow">
           {{ day?.name }}<span v-if="block?.name"> · {{ block.name }}</span>
         </div>
-        <h1 class="text-4xl leading-[1.04] font-medium tracking-tight">
-          {{ event.name ?? 'Event' }}
+        <h1
+          class="text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit_nav-title] [view-transition-name:event-name]"
+        >
+          {{ wrappableEventName }}
         </h1>
         <p
           v-if="event.description"

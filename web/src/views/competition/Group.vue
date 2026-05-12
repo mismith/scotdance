@@ -22,6 +22,7 @@ import {
   type EnrichedDance,
   type EnrichedDancer,
 } from '@/types/competition'
+import { useVtScope } from '@/lib/viewTransitionFocus'
 
 const route = useRoute()
 const favorites = useFavoritesStore()
@@ -41,6 +42,10 @@ onMounted(async () => {
 })
 
 const groupId = computed(() => String(route.params.groupId ?? ''))
+
+// Tag the current group as the view-transition source so back-nav re-tags
+// the right row before Results remounts.
+useVtScope('group').syncFocus(groupId)
 const group = computed(() => groups.value.find((g) => g.id === groupId.value) ?? null)
 
 const callbacksDance: EnrichedDance = { id: CALLBACKS_ID, fullName: 'Callbacks' }
@@ -217,7 +222,9 @@ watch(
         >
           {{ group.category.name }}
         </div>
-        <h1 class="text-4xl leading-[1.04] font-medium tracking-tight">
+        <h1
+          class="text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit_nav-title] [view-transition-name:group-name]"
+        >
           {{ group.name ?? group.fullName ?? 'Group' }}
         </h1>
       </header>
