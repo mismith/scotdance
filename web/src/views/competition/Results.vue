@@ -64,16 +64,6 @@ function toggle(category: Category) {
   }
 }
 
-function categoryFavoriteCount(category: Category): number {
-  return groups.value.filter(
-    (g) =>
-      g.categoryId === category.id &&
-      findGroupDancers(g.id, dancers.value).some((d) =>
-        favorites.isFavoriteDancer(d.id),
-      ),
-  ).length
-}
-
 function groupHasFavorite(group: EnrichedGroup): boolean {
   return findGroupDancers(group.id, dancers.value).some((d) =>
     favorites.isFavoriteDancer(d.id),
@@ -124,23 +114,13 @@ const loaded = computed(() => groups.value.length > 0)
         :label="row.category.name || '?'"
         :expanded="isExpanded(row.category)"
         @toggle="toggle(row.category)"
-      >
-        <template #count>
-          <template v-if="categoryFavoriteCount(row.category) > 0">
-            <span class="text-secondary">{{
-              categoryFavoriteCount(row.category)
-            }}</span
-            >/<span>{{ row.groups.length }}</span>
-          </template>
-          <template v-else>{{ row.groups.length }}</template>
-        </template>
-      </DisclosureHeader>
+      />
 
       <SmoothCollapse :open="isExpanded(row.category)">
         <ul>
         <li
           v-if="!row.groups.length"
-          class="text-muted-foreground font-serif px-1 py-3 text-lg italic"
+          class="text-muted-foreground px-1 py-3 text-lg italic"
         >
           No groups.
         </li>
@@ -181,7 +161,7 @@ const loaded = computed(() => groups.value.length > 0)
               <div
                 v-if="groupStatus(group).state !== 'done'"
                 :class="[
-                  'mt-0.5 text-xs font-medium tracking-[0.18em] uppercase',
+                  'mt-0.5 text-xs text-eyebrow',
                   groupStatus(group).state === 'in-progress'
                     ? 'text-primary'
                     : 'text-muted-foreground/70',

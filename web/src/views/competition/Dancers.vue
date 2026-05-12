@@ -261,7 +261,7 @@ function dismissSuggestions() {
     >
       <Star class="text-secondary size-5 shrink-0 fill-current" />
       <div class="min-w-0 flex-1">
-        <div class="font-serif text-lg font-medium tracking-tight">
+        <div class="text-lg font-medium tracking-tight">
           {{ suggestions.length }} favourite dancer
           {{ suggestions.length === 1 ? 'suggestion' : 'suggestions' }}
         </div>
@@ -307,7 +307,7 @@ function dismissSuggestions() {
     />
     <div
       v-else-if="!grouped.length"
-      class="text-muted-foreground font-serif text-lg italic"
+      class="text-muted-foreground text-lg italic"
     >
       No matches.
     </div>
@@ -316,18 +316,12 @@ function dismissSuggestions() {
       <DisclosureHeader
         :label="group.groupName"
         :expanded="isExpanded(group)"
+        :count="group.members.length"
+        :favs="
+          !onlyFavorites && !group.isSuggestions ? groupFavoriteCount(group) : 0
+        "
         @toggle="toggleExpanded(group)"
-      >
-        <template #count>
-          <template
-            v-if="!onlyFavorites && !group.isSuggestions && groupFavoriteCount(group) > 0"
-          >
-            <span class="text-secondary">{{ groupFavoriteCount(group) }}</span
-            >/<span>{{ group.members.length }}</span>
-          </template>
-          <template v-else>{{ group.members.length }}</template>
-        </template>
-      </DisclosureHeader>
+      />
       <SmoothCollapse :open="isExpanded(group)">
         <div v-if="group.isSuggestions" class="flex justify-end px-1 pb-2">
           <button
@@ -350,7 +344,7 @@ function dismissSuggestions() {
             >
               <div
                 :class="[
-                  'flex size-9 shrink-0 items-center justify-center rounded-full font-serif font-medium tabular-nums',
+                  'flex size-9 shrink-0 items-center justify-center rounded-full font-medium tabular-nums',
                   favorites.isFavoriteDancer(dancer.id)
                     ? 'bg-secondary text-secondary-foreground'
                     : 'bg-muted text-muted-foreground',
