@@ -96,11 +96,15 @@ const routes: RouteRecordRaw[] = [
 export const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior(to, from, savedPosition) {
+  scrollBehavior(to, _from, savedPosition) {
     // Override CSS scroll-behavior:smooth — route-change scrolls should be instant
     // (smooth animation gets cancelled by DOM changes from lazy-loaded components)
     if (savedPosition) return { ...savedPosition, behavior: 'instant' }
-    if (to.hash) return { el: to.hash, behavior: 'instant' }
+    // Hash scrolls are handled per-view (e.g. Group.vue#focusHashTarget) so
+    // they can wait for async data and apply the chrome offset themselves.
+    // Returning false here prevents Vue Router's native scrollIntoView from
+    // racing and clobbering the view's manual scroll.
+    if (to.hash) return false
     return { top: 0, behavior: 'instant' }
   },
 })
