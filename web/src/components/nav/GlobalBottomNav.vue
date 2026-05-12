@@ -80,7 +80,7 @@ function goProfile() {
 </script>
 
 <template>
-  <nav class="bottom-safe pointer-events-none fixed inset-x-0 z-30 px-3">
+  <nav class="bottom-[max(0.75rem,var(--safe-bottom))] pointer-events-none fixed inset-x-0 z-30 px-3">
     <div class="mx-auto flex max-w-3xl items-center justify-between">
       <div
         class="bg-nav/90 text-nav-foreground pointer-events-auto rounded-full p-1 shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-left]"
