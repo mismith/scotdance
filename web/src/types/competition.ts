@@ -79,7 +79,7 @@ export interface Dance {
   id: string
   name?: string
   shortName?: string
-  steps?: string
+  steps?: string | number
   groupIds?: Record<string, boolean>
   _order?: number
 }
@@ -89,8 +89,8 @@ export interface EnrichedDance extends Dance {
 }
 
 export const danceFullName = (d: Pick<Dance, 'name' | 'steps'>) => {
-  const name = (d.name ?? '').trim()
-  const steps = (d.steps ?? '').trim()
+  const name = String(d.name ?? '').trim()
+  const steps = String(d.steps ?? '').trim()
   return steps ? `${name} (${steps})` : name
 }
 

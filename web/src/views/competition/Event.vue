@@ -168,7 +168,7 @@ function closeJudge() {
       </header>
 
       <div
-        v-if="!eventDanceList.length"
+        v-if="!eventDanceList.length && !event.description"
         class="text-muted-foreground text-lg italic"
       >
         No dances scheduled.
@@ -185,7 +185,7 @@ function closeJudge() {
         <SmoothCollapse
           :open="danceHasContent(dance) && isExpanded(dance.id, danceHasContent(dance))"
         >
-          <div class="space-y-3 pl-7">
+          <div class="space-y-3 pl-12">
             <p v-if="dance.description" class="text-lg whitespace-pre-line">
               {{ dance.description }}
             </p>
