@@ -276,4 +276,10 @@
     animation-name: vt-slide-out;
     animation-timing-function: var(--vt-ease-rubber-band);
   }
+
+  /* Lock background scroll while any native <dialog> is open. showModal()
+     handles focus trap + inertness, but not scroll — this fills the gap. */
+  html:has(dialog[open]) {
+    overflow: hidden;
+  }
 }
