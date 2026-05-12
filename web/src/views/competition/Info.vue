@@ -12,6 +12,7 @@ import {
   formatExternalURL,
   formatHumanURL,
   formatDateTime,
+  formatMonthAbbrev,
   isBeforeToday,
   isPast,
   isSameDay,
@@ -56,7 +57,7 @@ const monthLabel = computed(() => {
   const d = competition.value?.date
   return d == null
     ? ''
-    : parseDate(d).toLocaleString('en-US', { month: 'short' }).toUpperCase()
+    : formatMonthAbbrev(d).toUpperCase()
 })
 
 const dayLabel = computed(() => {
