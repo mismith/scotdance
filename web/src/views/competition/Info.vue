@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ChevronRight, MapPin } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import CompChip from '@/components/CompChip.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
+import StaffAvatar from '@/components/StaffAvatar.vue'
+import StaffDialog from '@/components/StaffDialog.vue'
 import { staffMemberName, type StaffMember } from '@/types/competition'
 import { blocks, days, events } from '@/lib/schedule'
 import {
@@ -124,8 +126,20 @@ const groupedStaff = computed(() => {
     list.push(member)
     groups.set(member.type, list)
   }
-  return [...groups.entries()].map(([type, members]) => ({ type, members }))
+  return [...groups.entries()].map(([type, members]) => ({
+    type,
+    members,
+    showAvatars: members.length > 0 && members.every((m) => !!m.image),
+  }))
 })
+
+const activeStaff = ref<StaffMember | null>(null)
+function openStaff(member: StaffMember) {
+  activeStaff.value = member
+}
+function closeStaff() {
+  activeStaff.value = null
+}
 </script>
 
 <template>
@@ -272,23 +286,30 @@ const groupedStaff = computed(() => {
     <section v-for="group in groupedStaff" :key="group.type" class="space-y-3">
       <SectionHeader :label="`${group.type}s`" :count="group.members.length" />
       <div class="columns-2 gap-4 px-1 [column-fill:balance]">
-        <div
+        <button
           v-for="member in group.members"
           :key="member.id"
-          class="mb-2 break-inside-avoid"
+          type="button"
+          class="mb-2 flex w-full break-inside-avoid items-center gap-3 rounded-md py-1 text-left hover:bg-accent/40"
+          @click="openStaff(member)"
         >
-          <div class="text-item-title">
-            {{ staffMemberName(member) }}
+          <StaffAvatar v-if="group.showAvatars" :member="member" :size="40" />
+          <div class="min-w-0 flex-1">
+            <div class="text-item-title truncate">
+              {{ staffMemberName(member) }}
+            </div>
+            <div
+              v-if="member.location"
+              class="text-item-subtitle text-muted-foreground truncate"
+            >
+              {{ member.location }}
+            </div>
           </div>
-          <div
-            v-if="member.location"
-            class="text-item-subtitle text-muted-foreground"
-          >
-            {{ member.location }}
-          </div>
-        </div>
+        </button>
       </div>
     </section>
+
+    <StaffDialog :member="activeStaff" @close="closeStaff" />
 
     <!-- Sanction footer -->
     <div
