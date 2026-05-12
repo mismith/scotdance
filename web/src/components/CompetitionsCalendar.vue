@@ -115,29 +115,48 @@ const sectionLabel = computed(() =>
   selected.value ? formatWeekdayShortDate(selected.value) : monthLabel.value,
 )
 
-// When the selected day has no comps, surface the next upcoming day so the
-// user can jump forward without scrubbing the calendar.
-const upcomingDay = computed(() => {
-  if (!selected.value || visibleCompetitions.value.length) return null
-  const after = startOfDay(selected.value).getTime() + 86_400_000
-  const future = props.competitions
-    .filter((c) => c.date && parseDate(c.date).getTime() >= after)
-    .sort((a, b) => parseDate(a.date!).getTime() - parseDate(b.date!).getTime())
-  const first = future[0]
+function adjacentDay(direction: 'next' | 'prev') {
+  if (!selected.value) return null
+  const anchor = startOfDay(selected.value).getTime()
+  const bound = direction === 'next' ? anchor + 86_400_000 : anchor
+  const matches = props.competitions
+    .filter((c) => {
+      if (!c.date) return false
+      const t = parseDate(c.date).getTime()
+      return direction === 'next' ? t >= bound : t < bound
+    })
+    .sort((a, b) => {
+      const at = parseDate(a.date!).getTime()
+      const bt = parseDate(b.date!).getTime()
+      return direction === 'next' ? at - bt : bt - at
+    })
+  const first = matches[0]
   if (!first) return null
   const dayStart = startOfDay(parseDate(first.date!)).getTime()
   const dayEnd = dayStart + 86_400_000
-  const comps = future.filter((c) => {
-    const t = parseDate(c.date!).getTime()
-    return t >= dayStart && t < dayEnd
-  })
+  const comps = props.competitions
+    .filter((c) => {
+      if (!c.date) return false
+      const t = parseDate(c.date).getTime()
+      return t >= dayStart && t < dayEnd
+    })
+    .sort((a, b) => parseDate(a.date!).getTime() - parseDate(b.date!).getTime())
   return {
     date: new Date(dayStart),
     label: formatWeekdayShortDate(new Date(dayStart)),
     comps,
     favCount: comps.filter((c) => favorites.isFavoriteCompetition(c.id)).length,
   }
-})
+}
+
+// When the selected day has no comps, surface the next upcoming day so the
+// user can jump forward without scrubbing the calendar.
+const upcomingDay = computed(() =>
+  visibleCompetitions.value.length ? null : adjacentDay('next'),
+)
+
+// Always offer a peek at the previous day with comps so users can scan back.
+const previousDay = computed(() => adjacentDay('prev'))
 
 function shiftMonth(delta: number) {
   const next = new Date(cursor.value)
@@ -260,22 +279,40 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
       </div>
     </div>
 
-    <section v-if="visibleCompetitions.length" class="space-y-2 pt-2">
-      <SectionHeader
-        :label="sectionLabel"
-        :count="visibleCompetitions.length"
-        :favs="visibleFavCount"
-      />
-      <ul>
-        <CompetitionRow
-          v-for="competition in visibleCompetitions"
-          :key="competition.id"
-          :competition="competition"
-          :to="props.linkTo(competition)"
-          :show-date="!selected"
+    <template v-if="visibleCompetitions.length">
+      <section class="space-y-2 pt-2">
+        <SectionHeader
+          :label="sectionLabel"
+          :count="visibleCompetitions.length"
+          :favs="visibleFavCount"
         />
-      </ul>
-    </section>
+        <ul>
+          <CompetitionRow
+            v-for="competition in visibleCompetitions"
+            :key="competition.id"
+            :competition="competition"
+            :to="props.linkTo(competition)"
+            :show-date="!selected"
+          />
+        </ul>
+      </section>
+      <section v-if="selected && previousDay" class="space-y-2 pt-2">
+        <SectionHeader
+          :label="`Previous · ${previousDay.label}`"
+          :count="previousDay.comps.length"
+          :favs="previousDay.favCount"
+        />
+        <ul>
+          <CompetitionRow
+            v-for="competition in previousDay.comps"
+            :key="competition.id"
+            :competition="competition"
+            :to="props.linkTo(competition)"
+            :show-date="false"
+          />
+        </ul>
+      </section>
+    </template>
 
     <div v-else-if="loading" class="space-y-3 pt-2" aria-busy="true" aria-live="polite">
       <span class="sr-only">Loading competitions…</span>
@@ -303,6 +340,22 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
         <ul>
           <CompetitionRow
             v-for="competition in upcomingDay.comps"
+            :key="competition.id"
+            :competition="competition"
+            :to="props.linkTo(competition)"
+            :show-date="false"
+          />
+        </ul>
+      </section>
+      <section v-if="previousDay" class="space-y-2 pt-2">
+        <SectionHeader
+          :label="`Previous · ${previousDay.label}`"
+          :count="previousDay.comps.length"
+          :favs="previousDay.favCount"
+        />
+        <ul>
+          <CompetitionRow
+            v-for="competition in previousDay.comps"
             :key="competition.id"
             :competition="competition"
             :to="props.linkTo(competition)"
