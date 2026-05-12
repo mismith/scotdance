@@ -46,6 +46,10 @@ const groupId = computed(() => String(route.params.groupId ?? ''))
 // Tag the current group as the view-transition source so back-nav re-tags
 // the right row before Results remounts.
 useVtScope('group').syncFocus(groupId)
+
+// Outgoing transitions to per-competition dancer detail (placings, callbacks,
+// championship-point rows all link to competition.dancer).
+const vtDancer = useVtScope('comp-dancer')
 const group = computed(() => groups.value.find((g) => g.id === groupId.value) ?? null)
 
 const callbacksDance: EnrichedDance = { id: CALLBACKS_ID, fullName: 'Callbacks' }
@@ -272,29 +276,40 @@ watch(
                         name: 'competition.dancer',
                         params: { competitionId, dancerId: row.dancer.id },
                       }"
-                      class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
+                      v-slot="{ href, navigate }"
+                      custom
                     >
-                      <div
-                        :class="[
-                          'flex size-9 shrink-0 items-center justify-center rounded-full font-medium tabular-nums',
-                          favorites.isFavoriteDancer(row.dancer.id)
-                            ? 'bg-secondary text-secondary-foreground'
-                            : 'bg-muted text-muted-foreground',
-                        ]"
+                      <a
+                        :href="href"
+                        class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
+                        @click="vtDancer.onNavigate($event, navigate, row.dancer!.id, `${section.dance.id}:${row.dancer!.id}`)"
                       >
-                        {{ row.dancer.number ?? '–' }}
-                      </div>
-                      <div class="min-w-0 flex-1">
-                        <div class="text-item-title truncate">
-                          {{ row.dancer.fullName || '?' }}
-                        </div>
                         <div
-                          v-if="row.dancer.location"
-                          class="text-item-subtitle text-muted-foreground truncate"
+                          :class="[
+                            'flex size-9 shrink-0 items-center justify-center rounded-full font-medium tabular-nums [view-transition-class:nav-avatar]',
+                            favorites.isFavoriteDancer(row.dancer.id)
+                              ? 'bg-secondary text-secondary-foreground'
+                              : 'bg-muted text-muted-foreground',
+                          ]"
+                          :style="{ viewTransitionName: vtDancer.name(row.dancer.id, 'avatar', `${section.dance.id}:${row.dancer.id}`) }"
                         >
-                          {{ row.dancer.location }}
+                          {{ row.dancer.number ?? '–' }}
                         </div>
-                      </div>
+                        <div class="min-w-0 flex-1">
+                          <div
+                            class="text-item-title truncate [view-transition-class:fit_nav-title]"
+                            :style="{ viewTransitionName: vtDancer.name(row.dancer.id, 'name', `${section.dance.id}:${row.dancer.id}`) }"
+                          >
+                            {{ row.dancer.fullName || '?' }}
+                          </div>
+                          <div
+                            v-if="row.dancer.location"
+                            class="text-item-subtitle text-muted-foreground truncate"
+                          >
+                            {{ row.dancer.location }}
+                          </div>
+                        </div>
+                      </a>
                     </RouterLink>
                     <FavoriteDancerButton :dancer="row.dancer" class="mr-1" />
                   </template>
@@ -349,29 +364,40 @@ watch(
                     name: 'competition.dancer',
                     params: { competitionId, dancerId: row.dancer.id },
                   }"
-                  class="flex min-w-0 flex-1 items-center gap-3 py-3 pr-1"
+                  v-slot="{ href, navigate }"
+                  custom
                 >
-                  <div
-                    :class="[
-                      'flex size-9 shrink-0 items-center justify-center rounded-full font-medium tabular-nums',
-                      favorites.isFavoriteDancer(row.dancer.id)
-                        ? 'bg-secondary text-secondary-foreground'
-                        : 'bg-muted text-muted-foreground',
-                    ]"
+                  <a
+                    :href="href"
+                    class="flex min-w-0 flex-1 items-center gap-3 py-3 pr-1"
+                    @click="vtDancer.onNavigate($event, navigate, row.dancer!.id, `${section.dance.id}:${row.dancer!.id}`)"
                   >
-                    {{ row.dancer.number ?? '–' }}
-                  </div>
-                  <div class="min-w-0 flex-1">
-                    <div class="text-item-title truncate">
-                      {{ row.dancer.fullName || '?' }}
-                    </div>
                     <div
-                      v-if="row.dancer.location"
-                      class="text-item-subtitle text-muted-foreground truncate"
+                      :class="[
+                        'flex size-9 shrink-0 items-center justify-center rounded-full font-medium tabular-nums [view-transition-class:nav-avatar]',
+                        favorites.isFavoriteDancer(row.dancer.id)
+                          ? 'bg-secondary text-secondary-foreground'
+                          : 'bg-muted text-muted-foreground',
+                      ]"
+                      :style="{ viewTransitionName: vtDancer.name(row.dancer.id, 'avatar', `${section.dance.id}:${row.dancer.id}`) }"
                     >
-                      {{ row.dancer.location }}
+                      {{ row.dancer.number ?? '–' }}
                     </div>
-                  </div>
+                    <div class="min-w-0 flex-1">
+                      <div
+                        class="text-item-title truncate [view-transition-class:fit_nav-title]"
+                        :style="{ viewTransitionName: vtDancer.name(row.dancer.id, 'name', `${section.dance.id}:${row.dancer.id}`) }"
+                      >
+                        {{ row.dancer.fullName || '?' }}
+                      </div>
+                      <div
+                        v-if="row.dancer.location"
+                        class="text-item-subtitle text-muted-foreground truncate"
+                      >
+                        {{ row.dancer.location }}
+                      </div>
+                    </div>
+                  </a>
                 </RouterLink>
                 <div
                   v-else
@@ -414,27 +440,40 @@ watch(
                       name: 'competition.dancer',
                       params: { competitionId, dancerId: dancer.id },
                     }"
-                    class="flex min-w-0 flex-1 items-center gap-3 py-3 pr-1"
+                    v-slot="{ href, navigate }"
+                    custom
                   >
-                    <div
-                      :class="[
-                        'flex size-9 shrink-0 items-center justify-center rounded-full font-medium tabular-nums',
-                        favorites.isFavoriteDancer(dancer.id)
-                          ? 'bg-secondary text-secondary-foreground'
-                          : 'bg-muted text-muted-foreground',
-                      ]"
+                    <a
+                      :href="href"
+                      class="flex min-w-0 flex-1 items-center gap-3 py-3 pr-1"
+                      @click="vtDancer.onNavigate($event, navigate, dancer.id, `${section.dance.id}:pointed:${dancer.id}`)"
                     >
-                      {{ dancer.number ?? '–' }}
-                    </div>
-                    <div class="min-w-0 flex-1">
-                      <div class="text-item-title truncate">{{ dancer.fullName || '?' }}</div>
                       <div
-                        v-if="dancer.location"
-                        class="text-item-subtitle text-muted-foreground truncate"
+                        :class="[
+                          'flex size-9 shrink-0 items-center justify-center rounded-full font-medium tabular-nums [view-transition-class:nav-avatar]',
+                          favorites.isFavoriteDancer(dancer.id)
+                            ? 'bg-secondary text-secondary-foreground'
+                            : 'bg-muted text-muted-foreground',
+                        ]"
+                        :style="{ viewTransitionName: vtDancer.name(dancer.id, 'avatar', `${section.dance.id}:pointed:${dancer.id}`) }"
                       >
-                        {{ dancer.location }}
+                        {{ dancer.number ?? '–' }}
                       </div>
-                    </div>
+                      <div class="min-w-0 flex-1">
+                        <div
+                          class="text-item-title truncate [view-transition-class:fit_nav-title]"
+                          :style="{ viewTransitionName: vtDancer.name(dancer.id, 'name', `${section.dance.id}:pointed:${dancer.id}`) }"
+                        >
+                          {{ dancer.fullName || '?' }}
+                        </div>
+                        <div
+                          v-if="dancer.location"
+                          class="text-item-subtitle text-muted-foreground truncate"
+                        >
+                          {{ dancer.location }}
+                        </div>
+                      </div>
+                    </a>
                   </RouterLink>
                 </li>
               </ul>
