@@ -7,7 +7,7 @@ import CompetitionRow from '@/components/CompetitionRow.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
-import { parseDate } from '@/lib/format'
+import { formatMonthYear, formatWeekdayShortDate, parseDate } from '@/lib/format'
 import { useFavoritesStore } from '@/stores/favorites'
 
 const props = withDefaults(
@@ -89,9 +89,7 @@ const calendarCells = computed(() => {
   return cells
 })
 
-const monthLabel = computed(() =>
-  cursor.value.toLocaleString('en-US', { month: 'long', year: 'numeric' }),
-)
+const monthLabel = computed(() => formatMonthYear(cursor.value))
 
 const visibleCompetitions = computed(() => {
   if (selected.value) {
@@ -113,13 +111,7 @@ const visibleFavCount = computed(
 )
 
 const sectionLabel = computed(() =>
-  selected.value
-    ? selected.value.toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-      })
-    : monthLabel.value,
+  selected.value ? formatWeekdayShortDate(selected.value) : monthLabel.value,
 )
 
 function shiftMonth(delta: number) {

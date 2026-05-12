@@ -42,28 +42,42 @@ function calendarDayDiff(a: Date, b: Date): number {
   )
 }
 
-const dayMonthYear = new Intl.DateTimeFormat('en-US', {
+// Locale is undefined on purpose — Intl falls back to the host (browser /
+// Capacitor WebView) locale, which is what the user expects on their device.
+const dayMonthYear = new Intl.DateTimeFormat(undefined, {
   weekday: 'long',
   month: 'long',
   day: 'numeric',
   year: 'numeric',
 })
 
-const monthDayYear = new Intl.DateTimeFormat('en-US', {
+const monthDayYear = new Intl.DateTimeFormat(undefined, {
   month: 'short',
   day: 'numeric',
   year: 'numeric',
 })
 
-const dateTimeAt = new Intl.DateTimeFormat('en-US', {
-  month: 'short',
-  day: 'numeric',
-  year: 'numeric',
-  hour: 'numeric',
-  minute: '2-digit',
+// Combined date+time uses the locale's native joiner — Intl picks the
+// separator (comma, "at", "à", etc.) that matches the host locale.
+const dateTime = new Intl.DateTimeFormat(undefined, {
+  dateStyle: 'medium',
+  timeStyle: 'short',
 })
 
-const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'long' })
+const weekday = new Intl.DateTimeFormat(undefined, { weekday: 'long' })
+
+const monthYear = new Intl.DateTimeFormat(undefined, {
+  month: 'long',
+  year: 'numeric',
+})
+
+const weekdayShortDate = new Intl.DateTimeFormat(undefined, {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+})
+
+const monthAbbrev = new Intl.DateTimeFormat(undefined, { month: 'short' })
 
 export function formatWeekday(value: number | string | undefined | null): string {
   if (value == null) return ''
@@ -82,7 +96,24 @@ export function formatShortDate(value: number | string | undefined | null): stri
 
 export function formatDateTime(value: number | string | undefined | null): string {
   if (value == null) return ''
-  return dateTimeAt.format(parseDate(value)).replace(', ', ' at ')
+  return dateTime.format(parseDate(value))
+}
+
+export function formatMonthYear(value: number | string | Date | undefined | null): string {
+  if (value == null) return ''
+  return monthYear.format(value instanceof Date ? value : parseDate(value))
+}
+
+export function formatWeekdayShortDate(
+  value: number | string | Date | undefined | null,
+): string {
+  if (value == null) return ''
+  return weekdayShortDate.format(value instanceof Date ? value : parseDate(value))
+}
+
+export function formatMonthAbbrev(value: number | string | Date | undefined | null): string {
+  if (value == null) return ''
+  return monthAbbrev.format(value instanceof Date ? value : parseDate(value))
 }
 
 export function isSameDay(
@@ -113,7 +144,7 @@ export function isBeforeToday(value: number | string | undefined | null): boolea
   return calendarDayDiff(parseDate(value), new Date()) < 0
 }
 
-const relativeTime = new Intl.RelativeTimeFormat('en-US', {
+const relativeTime = new Intl.RelativeTimeFormat(undefined, {
   numeric: 'auto',
   style: 'long',
 })
