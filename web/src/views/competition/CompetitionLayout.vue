@@ -80,9 +80,7 @@ const locationLabel = computed(() => competition.value?.location ?? '')
           <CompChip
             :name="competition?.name"
             :image="competition?.image"
-            :size="40"
-            :radius="999"
-            class="[view-transition-name:nav-avatar]"
+            class="size-10 rounded-full [view-transition-name:nav-avatar]"
           />
           <div class="min-w-0 flex-1">
             <div

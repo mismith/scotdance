@@ -21,7 +21,11 @@ withDefaults(
       :to="to"
       class="flex min-w-0 flex-1 items-start gap-3 py-3 pr-3 pl-1"
     >
-      <CompChip :name="competition.name" :image="competition.image" :size="48" />
+      <CompChip
+        :name="competition.name"
+        :image="competition.image"
+        class="size-12 rounded-xl"
+      />
       <div class="min-w-0 flex-1 pt-0.5">
         <div class="text-item-title line-clamp-2">
           {{ competition.name ?? '?' }}
