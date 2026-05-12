@@ -139,7 +139,7 @@ const groupedStaff = computed(() => {
         class="[view-transition-name:nav-avatar]"
       />
       <h1
-        class="font-serif text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
+        class="text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
       >
         {{ competition.name ?? '?' }}
       </h1>
@@ -158,11 +158,11 @@ const groupedStaff = computed(() => {
           <div
             class="flex flex-1 flex-col items-center justify-center gap-1 [view-transition-name:nav-date]"
           >
-            <div class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase">
+            <div class="text-foreground/65 text-xs text-eyebrow">
               {{ monthLabel }}
             </div>
             <div
-              class="font-serif text-5xl leading-none font-medium tracking-tight tabular-nums"
+              class="text-5xl leading-none font-medium tracking-tight tabular-nums"
             >
               {{ dayLabel }}
             </div>
@@ -187,7 +187,7 @@ const groupedStaff = computed(() => {
             <div class="flex min-w-0 flex-1 flex-col justify-center gap-1">
               <div v-if="competition.venue" class="flex items-center gap-1.5">
                 <MapPin class="text-muted-foreground -mt-1 size-6 shrink-0" />
-                <span class="font-serif text-xl leading-snug font-medium tracking-tight">
+                <span class="text-xl leading-snug font-medium tracking-tight">
                   {{ competition.venue }}
                 </span>
               </div>
@@ -221,12 +221,12 @@ const groupedStaff = computed(() => {
         class="bg-card flex flex-col items-center rounded-xl border py-2.5 shadow-sm"
       >
         <div
-          class="font-serif text-4xl leading-none font-medium tracking-tight tabular-nums"
+          class="text-4xl leading-none font-medium tracking-tight tabular-nums"
         >
           {{ stat.value }}
         </div>
         <div
-          class="text-foreground/65 mt-1 text-xs font-medium tracking-[0.18em] uppercase"
+          class="text-foreground/65 mt-1 text-xs text-eyebrow"
         >
           {{ stat.label }}
         </div>
@@ -295,7 +295,7 @@ const groupedStaff = computed(() => {
       v-if="competition.sobhd"
       class="text-muted-foreground flex items-center justify-between pt-2"
     >
-      <span class="font-serif italic">RSOBHD sanctioned</span>
+      <span class="italic">RSOBHD sanctioned</span>
       <span class="tracking-wider tabular-nums">{{ competition.sobhd }}</span>
     </div>
   </article>

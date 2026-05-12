@@ -168,12 +168,12 @@ const showSearch = computed(() => q.value.trim().length > 0)
         v-if="!auth.isSignedIn"
         class="bg-card space-y-3 rounded-2xl border p-6 text-center"
       >
-        <p class="font-serif text-xl">
+        <p class="text-xl">
           Sign in to find and follow dancers across comps.
         </p>
         <button
           type="button"
-          class="bg-primary text-primary-foreground inline-flex items-center rounded-full px-5 py-2 text-lg font-medium hover:opacity-90"
+          class="bg-primary text-primary-foreground inline-flex items-center rounded-full px-4 py-2 font-medium hover:opacity-90"
           @click="auth.openLogin"
         >
           Sign in
@@ -201,7 +201,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
 
         <div
           v-else-if="!results.length"
-          class="text-muted-foreground font-serif text-lg italic"
+          class="text-muted-foreground text-lg italic"
         >
           No dancers match.
         </div>
@@ -218,7 +218,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
                 class="flex w-full items-center gap-3 px-1 py-3 text-left"
               >
                 <span
-                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif font-medium"
+                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium"
                 >
                   {{ group.initials }}
                 </span>
@@ -255,7 +255,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
                 class="flex w-full items-center gap-3 px-1 py-3 text-left"
               >
                 <span
-                  class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif font-medium"
+                  class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium"
                 >
                   {{ entry.initials }}
                 </span>
@@ -285,7 +285,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
           class="bg-card space-y-3 rounded-2xl border p-6 text-center"
         >
           <Star class="text-muted-foreground mx-auto size-6" />
-          <div class="font-serif text-xl font-medium tracking-tight">
+          <div class="text-xl font-medium tracking-tight">
             Follow your dancers here
           </div>
           <p class="text-muted-foreground text-lg">
@@ -311,7 +311,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
                 class="flex w-full items-center gap-3 px-1 py-3 text-left"
               >
                 <span
-                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-serif font-medium"
+                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium"
                 >
                   {{ initialsOf(entry.name) }}
                 </span>

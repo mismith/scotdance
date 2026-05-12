@@ -130,11 +130,11 @@ const submitDisabled = computed(() => {
     >
       <div class="min-w-0 flex-1">
         <div
-          class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase"
+          class="text-foreground/65 text-xs text-eyebrow"
         >
           Account
         </div>
-        <h1 class="font-serif text-4xl leading-[1.04] font-medium tracking-tight">
+        <h1 class="text-4xl leading-[1.04] font-medium tracking-tight">
           Profile
         </h1>
       </div>
@@ -184,7 +184,7 @@ const submitDisabled = computed(() => {
           <span class="text-muted-foreground">Email</span>
           <button
             type="button"
-            class="bg-background hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-lg"
+            class="bg-background hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left"
             @click="openModal('email')"
           >
             <span class="truncate">{{ me.email ?? '—' }}</span>
@@ -198,7 +198,7 @@ const submitDisabled = computed(() => {
           <span class="text-muted-foreground">Password</span>
           <button
             type="button"
-            class="bg-background hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-lg"
+            class="bg-background hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left"
             @click="openModal('password')"
           >
             <span class="font-mono">••••••••</span>
@@ -207,18 +207,18 @@ const submitDisabled = computed(() => {
         </label>
       </section>
 
-      <section class="flex flex-col items-center gap-4 pt-6">
+      <section class="flex flex-col items-center gap-3 pt-6">
         <button
           type="button"
-          class="hover:bg-accent inline-flex items-center gap-2 rounded-full border px-4 py-2 text-lg"
+          class="hover:bg-accent inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm"
           @click="handleSignOut"
         >
-          <LogOut class="size-4" />
+          <LogOut class="size-3.5" />
           Sign out
         </button>
         <button
           type="button"
-          class="text-destructive text-lg hover:underline"
+          class="text-destructive text-sm hover:underline"
           @click="openModal('delete')"
         >
           Delete account
@@ -236,7 +236,7 @@ const submitDisabled = computed(() => {
         <div
           class="bg-background relative w-full max-w-sm space-y-4 rounded-lg border p-6 shadow-lg"
         >
-          <h2 class="font-serif text-3xl font-medium tracking-tight">
+          <h2 class="text-3xl font-medium tracking-tight">
             <template v-if="modal === 'email'">Change your email</template>
             <template v-else-if="modal === 'password'">Change your password</template>
             <template v-else>Delete your account</template>
@@ -307,7 +307,7 @@ const submitDisabled = computed(() => {
             <div class="flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
-                class="hover:bg-accent text-muted-foreground rounded-md px-3 py-2 text-lg"
+                class="hover:bg-accent text-muted-foreground rounded-md px-3 py-1.5 text-sm"
                 @click="closeModal"
               >
                 Cancel
@@ -316,7 +316,7 @@ const submitDisabled = computed(() => {
                 type="submit"
                 :disabled="submitDisabled"
                 :class="[
-                  'rounded-md px-4 py-2 text-lg font-medium hover:opacity-90 disabled:opacity-50',
+                  'rounded-md px-3 py-1.5 text-sm font-medium hover:opacity-90 disabled:opacity-50',
                   modal === 'delete'
                     ? 'bg-destructive text-destructive-foreground'
                     : 'bg-primary text-primary-foreground',

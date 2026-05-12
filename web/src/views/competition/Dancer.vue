@@ -45,11 +45,11 @@ const placedRows = computed(() =>
 
 <template>
   <article class="space-y-6">
-    <div v-if="!dancers.length" class="text-muted-foreground font-serif text-lg italic">
+    <div v-if="!dancers.length" class="text-muted-foreground text-lg italic">
       Loading…
     </div>
 
-    <div v-else-if="!dancer" class="text-muted-foreground font-serif text-lg italic">
+    <div v-else-if="!dancer" class="text-muted-foreground text-lg italic">
       Dancer not found.
     </div>
 
@@ -78,18 +78,18 @@ const placedRows = computed(() =>
         </div>
 
         <div class="min-w-0">
-          <h1 class="mb-1 font-serif text-4xl leading-[1.04] font-medium tracking-tight">
+          <h1 class="mb-1 text-4xl leading-[1.04] font-medium tracking-tight">
             {{ dancer.fullName }}
           </h1>
           <div
             v-if="dancer.location"
-            class="text-muted-foreground font-serif text-lg italic"
+            class="text-muted-foreground text-lg italic"
           >
             {{ dancer.location }}
           </div>
           <div
             v-if="dancer.group"
-            class="text-muted-foreground font-serif text-sm italic"
+            class="text-muted-foreground text-sm italic"
           >
             {{ dancer.group.fullName }}
           </div>
@@ -100,7 +100,7 @@ const placedRows = computed(() =>
         <SectionHeader label="Results" />
         <div
           v-if="!groupDances.length"
-          class="text-muted-foreground font-serif text-lg italic"
+          class="text-muted-foreground text-lg italic"
         >
           No dances scheduled for this group.
         </div>

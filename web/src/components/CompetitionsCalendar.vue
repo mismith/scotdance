@@ -108,6 +108,10 @@ const visibleCompetitions = computed(() => {
   )
 })
 
+const visibleFavCount = computed(
+  () => visibleCompetitions.value.filter((c) => favorites.isFavoriteCompetition(c.id)).length,
+)
+
 const sectionLabel = computed(() =>
   selected.value
     ? selected.value.toLocaleDateString('en-US', {
@@ -165,7 +169,7 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
         >
           <ChevronLeft class="size-4" />
         </button>
-        <h2 class="font-serif text-4xl font-medium tracking-tight">
+        <h2 class="text-4xl font-medium tracking-tight">
           {{ monthLabel }}
         </h2>
         <button
@@ -179,7 +183,7 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
       </div>
 
       <div
-        class="text-foreground/65 grid grid-cols-7 text-xs font-medium tracking-[0.18em] uppercase"
+        class="text-foreground/65 grid grid-cols-7 text-xs text-eyebrow"
       >
         <div v-for="(label, i) in dowLabels" :key="i" class="py-1 text-center">
           {{ label }}
@@ -235,7 +239,11 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
     </div>
 
     <section v-if="visibleCompetitions.length" class="space-y-2 pt-2">
-      <SectionHeader :label="sectionLabel" :count="visibleCompetitions.length" />
+      <SectionHeader
+        :label="sectionLabel"
+        :count="visibleCompetitions.length"
+        :favs="visibleFavCount"
+      />
       <ul>
         <CompetitionRow
           v-for="competition in visibleCompetitions"

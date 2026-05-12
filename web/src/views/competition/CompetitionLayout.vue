@@ -86,7 +86,7 @@ const locationLabel = computed(() => competition.value?.location ?? '')
           />
           <div class="min-w-0 flex-1">
             <div
-              class="truncate font-serif text-lg leading-none font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
+              class="truncate text-lg leading-none font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
             >
               {{ competition?.name ?? (loading ? 'Loading…' : 'Competition') }}
             </div>

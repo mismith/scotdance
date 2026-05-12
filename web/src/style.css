@@ -117,12 +117,22 @@
     scroll-padding-bottom: calc(6rem + env(safe-area-inset-bottom));
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-serif;
     font-feature-settings:
       'rlig' 1,
       'calt' 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: auto;
+  }
+
+  /* Form controls + buttons stay sans so action chrome reads as functional
+     UI, not editorial copy. Explicit `font-serif` on a child still wins
+     (e.g. age-group labels inside the platforms-table buttons). */
+  button,
+  input,
+  select,
+  textarea {
+    @apply font-sans;
   }
 
   /* Safe-area-aware utilities. The floating chrome at top should clear the
@@ -154,12 +164,18 @@
     @apply font-serif text-base italic;
   }
   .text-item-meta {
-    @apply text-sm;
+    @apply font-sans text-sm;
   }
   /* Heading for collapsible disclosure sections (schedule day blocks,
      group dance sections, event dance sections). */
   .text-disclosure-heading {
     @apply font-serif text-xl leading-tight font-medium tracking-tight;
+  }
+  /* Eyebrow / kicker label — small-caps editorial label. Font-sans is
+     explicit since body default is serif. Color and size are left to
+     the caller (most use text-foreground/65 + text-xs). */
+  .text-eyebrow {
+    @apply font-sans font-medium tracking-[0.18em] uppercase;
   }
 
   :root {

@@ -72,13 +72,13 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
           class="bg-card rounded-2xl border px-3 py-3 text-center"
         >
           <div
-            class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase"
+            class="text-foreground/65 text-xs text-eyebrow"
           >
             {{ t.k }}
           </div>
           <div
             :class="[
-              'font-serif mt-1 text-4xl font-medium tabular-nums tracking-tight',
+              'mt-1 text-4xl font-medium tabular-nums tracking-tight',
               t.accent,
             ]"
           >
@@ -95,7 +95,7 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
 
     <div
       v-if="view === 'map'"
-      class="text-muted-foreground font-serif rounded-2xl border border-dashed p-8 text-center text-lg italic"
+      class="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-lg italic"
     >
       Map view — stub.
     </div>
@@ -128,7 +128,7 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
               <div class="w-10 shrink-0 text-center">
                 <div
                   :class="[
-                    'font-serif text-4xl font-medium leading-none tabular-nums',
+                    'text-4xl font-medium leading-none tabular-nums',
                     a.isLive ? 'text-secondary' : '',
                   ]"
                 >
@@ -184,7 +184,7 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
             >
               <div class="w-10 shrink-0 text-center opacity-60">
                 <div
-                  class="font-serif text-4xl font-medium leading-none tabular-nums"
+                  class="text-4xl font-medium leading-none tabular-nums"
                 >
                   {{ a.day }}
                 </div>
@@ -215,7 +215,7 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
 
       <div
         v-if="!upcoming.length && !past.length"
-        class="text-muted-foreground font-serif text-lg italic"
+        class="text-muted-foreground text-lg italic"
       >
         No appearances on record.
       </div>

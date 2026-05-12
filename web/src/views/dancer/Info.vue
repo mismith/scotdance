@@ -46,7 +46,7 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
     <header class="space-y-3 pr-16">
       <div
         :class="[
-          'flex size-20 items-center justify-center rounded-full font-serif text-4xl font-medium [view-transition-name:nav-avatar]',
+          'flex size-20 items-center justify-center rounded-full text-4xl font-medium [view-transition-name:nav-avatar]',
           isFavorite
             ? 'bg-secondary text-secondary-foreground'
             : 'bg-muted text-muted-foreground',
@@ -56,13 +56,13 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
       </div>
       <div class="space-y-1">
         <h1
-          class="font-serif text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
+          class="text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
         >
           {{ displayName }}
         </h1>
         <p
           v-if="location"
-          class="text-muted-foreground font-serif text-lg italic [view-transition-name:nav-location]"
+          class="text-muted-foreground text-lg italic [view-transition-name:nav-location]"
         >
           {{ location }}
         </p>
@@ -77,12 +77,12 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
           class="bg-card rounded-2xl border px-4 py-3"
         >
           <div
-            class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase"
+            class="text-foreground/65 text-xs text-eyebrow"
           >
             {{ t.k }}
           </div>
           <div
-            class="font-serif mt-1 text-4xl font-medium tabular-nums tracking-tight"
+            class="mt-1 text-4xl font-medium tabular-nums tracking-tight"
           >
             {{ t.v }}
           </div>

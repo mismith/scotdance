@@ -53,7 +53,7 @@ const fontSize = computed(() => Math.round(props.size * 0.42))
         "
       />
       <span
-        class="font-serif relative font-medium leading-none"
+        class="relative font-medium leading-none"
         :style="{ fontSize: `${fontSize}px` }"
       >
         {{ mark }}

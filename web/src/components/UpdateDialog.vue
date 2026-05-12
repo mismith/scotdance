@@ -18,7 +18,7 @@ const update = useUpdate()
     >
       <h2
         id="update-dialog-title"
-        class="font-serif text-3xl font-medium tracking-tight"
+        class="text-3xl font-medium tracking-tight"
       >
         Update available
       </h2>
@@ -37,14 +37,14 @@ const update = useUpdate()
       <div class="flex items-center justify-end gap-2 pt-2">
         <button
           type="button"
-          class="hover:bg-accent text-muted-foreground rounded-md px-3 py-2 text-lg"
+          class="hover:bg-accent text-muted-foreground rounded-md px-3 py-1.5 text-sm"
           @click="update.closeDialog()"
         >
           Later
         </button>
         <button
           type="button"
-          class="bg-primary text-primary-foreground rounded-md px-4 py-2 text-lg font-medium hover:opacity-90"
+          class="bg-primary text-primary-foreground rounded-md px-3 py-1.5 text-sm font-medium hover:opacity-90"
           @click="update.applyUpdate()"
         >
           Update now

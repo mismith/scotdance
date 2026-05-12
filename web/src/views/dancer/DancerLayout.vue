@@ -35,13 +35,13 @@ const initials = computed(() => {
           :title="displayName"
         >
           <div
-            class="bg-nav-foreground/15 flex size-10 shrink-0 items-center justify-center rounded-full font-serif text-lg font-medium [view-transition-name:nav-avatar]"
+            class="bg-nav-foreground/15 flex size-10 shrink-0 items-center justify-center rounded-full text-lg font-medium [view-transition-name:nav-avatar]"
           >
             {{ initials || '?' }}
           </div>
           <div class="min-w-0 flex-1">
             <div
-              class="truncate font-serif text-lg leading-none font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
+              class="truncate text-lg leading-none font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
             >
               {{ displayName || (loading ? 'Loading…' : 'Dancer') }}
             </div>
