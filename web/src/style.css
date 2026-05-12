@@ -75,6 +75,13 @@
   --chrome-bottom: calc(6rem + var(--safe-bottom));
 }
 
+/* Home has no floating top chrome — drop the 5rem so #features anchors land
+   flush at the top of the viewport. Kept outside @layer base so it sits in
+   the same precedence tier as the :root defaults above. */
+html:has([data-route='home']) {
+  --chrome-top: var(--safe-top);
+}
+
 /* Dark mode — "Deep Ink" palette from editorial v5: warm near-black,
    editorial paper inverted; accents lifted for AA contrast. */
 .dark {
