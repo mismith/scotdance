@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 import {
   Check,
@@ -16,6 +17,7 @@ import DisclosureHeader from '@/components/DisclosureHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
+import { useVtScope } from '@/lib/viewTransitionFocus'
 
 const {
   competitionId,
@@ -90,6 +92,8 @@ const hasAnyResults = computed(() =>
 )
 
 const loaded = computed(() => groups.value.length > 0)
+
+const vt = useVtScope('group')
 </script>
 
 <template>
@@ -130,49 +134,57 @@ const loaded = computed(() => groups.value.length > 0)
               name: 'competition.group',
               params: { competitionId, groupId: group.id },
             }"
-            class="flex items-center gap-3 px-1 py-3"
+            v-slot="{ href, navigate }"
+            custom
           >
-            <span
-              :class="[
-                'flex size-9 shrink-0 items-center justify-center rounded-full font-medium',
-                groupStatus(group).state === 'done'
-                  ? groupHasFavorite(group)
-                    ? 'bg-secondary text-secondary-foreground'
-                    : 'bg-muted text-muted-foreground'
-                  : groupStatus(group).state === 'in-progress'
-                    ? 'border border-amber-300 bg-amber-100 text-amber-900'
-                    : 'bg-muted text-muted-foreground',
-              ]"
-              :title="groupStatus(group).label"
+            <a
+              :href="href"
+              class="flex items-center gap-3 px-1 py-3"
+              @click="vt.onNavigate($event, navigate, group.id)"
             >
-              <Check v-if="groupStatus(group).state === 'done'" class="size-4" />
-              <Loader2
-                v-else-if="groupStatus(group).state === 'in-progress'"
-                class="size-4 animate-spin"
-              />
-              <CircleDashed v-else class="size-4 opacity-60" />
-            </span>
-            <div class="min-w-0 flex-1">
-              <div
-                class="text-item-title truncate"
-              >
-                {{ group.name || group.fullName }}
-              </div>
-              <div
-                v-if="groupStatus(group).state !== 'done'"
+              <span
                 :class="[
-                  'mt-0.5 text-xs text-eyebrow',
-                  groupStatus(group).state === 'in-progress'
-                    ? 'text-primary'
-                    : 'text-muted-foreground/70',
+                  'flex size-9 shrink-0 items-center justify-center rounded-full font-medium',
+                  groupStatus(group).state === 'done'
+                    ? groupHasFavorite(group)
+                      ? 'bg-secondary text-secondary-foreground'
+                      : 'bg-muted text-muted-foreground'
+                    : groupStatus(group).state === 'in-progress'
+                      ? 'border border-amber-300 bg-amber-100 text-amber-900'
+                      : 'bg-muted text-muted-foreground',
                 ]"
+                :title="groupStatus(group).label"
               >
-                {{
-                  groupStatus(group).state === 'in-progress' ? 'In progress' : 'TBD'
-                }}
+                <Check v-if="groupStatus(group).state === 'done'" class="size-4" />
+                <Loader2
+                  v-else-if="groupStatus(group).state === 'in-progress'"
+                  class="size-4 animate-spin"
+                />
+                <CircleDashed v-else class="size-4 opacity-60" />
+              </span>
+              <div class="min-w-0 flex-1">
+                <div
+                  class="text-item-title truncate [view-transition-class:fit_nav-title]"
+                  :style="{ viewTransitionName: vt.name(group.id, 'name') }"
+                >
+                  {{ group.name || group.fullName }}
+                </div>
+                <div
+                  v-if="groupStatus(group).state !== 'done'"
+                  :class="[
+                    'mt-0.5 text-xs text-eyebrow',
+                    groupStatus(group).state === 'in-progress'
+                      ? 'text-primary'
+                      : 'text-muted-foreground/70',
+                  ]"
+                >
+                  {{
+                    groupStatus(group).state === 'in-progress' ? 'In progress' : 'TBD'
+                  }}
+                </div>
               </div>
-            </div>
-            <ChevronRight class="text-muted-foreground size-4" />
+              <ChevronRight class="text-muted-foreground size-4" />
+            </a>
           </RouterLink>
         </li>
       </ul>

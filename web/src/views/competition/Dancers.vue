@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 import Fuse from 'fuse.js'
 import { Star, Users, X } from '@lucide/vue'
@@ -12,6 +13,7 @@ import EmptyState from '@/components/EmptyState.vue'
 import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
+import { useVtScope } from '@/lib/viewTransitionFocus'
 
 const SUGGESTIONS_NAME = 'Suggested Favourites'
 
@@ -212,6 +214,8 @@ function dismissSuggestions() {
     [competitionId.value]: true,
   }
 }
+
+const vt = useVtScope('comp-dancer')
 </script>
 
 <template>
@@ -340,31 +344,40 @@ function dismissSuggestions() {
                 name: 'competition.dancer',
                 params: { competitionId, dancerId: dancer.id },
               }"
-              class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
+              v-slot="{ href, navigate }"
+              custom
             >
-              <div
-                :class="[
-                  'flex size-9 shrink-0 items-center justify-center rounded-full font-medium tabular-nums',
-                  favorites.isFavoriteDancer(dancer.id)
-                    ? 'bg-secondary text-secondary-foreground'
-                    : 'bg-muted text-muted-foreground',
-                ]"
+              <a
+                :href="href"
+                class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
+                @click="vt.onNavigate($event, navigate, dancer.id)"
               >
-                {{ dancer.number ?? '–' }}
-              </div>
-              <div class="min-w-0 flex-1">
                 <div
-                  class="text-item-title truncate"
+                  :class="[
+                    'flex size-9 shrink-0 items-center justify-center rounded-full font-medium tabular-nums [view-transition-class:nav-avatar]',
+                    favorites.isFavoriteDancer(dancer.id)
+                      ? 'bg-secondary text-secondary-foreground'
+                      : 'bg-muted text-muted-foreground',
+                  ]"
+                  :style="{ viewTransitionName: vt.name(dancer.id, 'avatar') }"
                 >
-                  {{ dancer.fullName || '?' }}
+                  {{ dancer.number ?? '–' }}
                 </div>
-                <div
-                  v-if="dancer.location"
-                  class="text-item-subtitle text-muted-foreground truncate"
-                >
-                  {{ dancer.location }}
+                <div class="min-w-0 flex-1">
+                  <div
+                    class="text-item-title truncate [view-transition-class:fit_nav-title]"
+                    :style="{ viewTransitionName: vt.name(dancer.id, 'name') }"
+                  >
+                    {{ dancer.fullName || '?' }}
+                  </div>
+                  <div
+                    v-if="dancer.location"
+                    class="text-item-subtitle text-muted-foreground truncate"
+                  >
+                    {{ dancer.location }}
+                  </div>
                 </div>
-              </div>
+              </a>
             </RouterLink>
             <FavoriteDancerButton :dancer="dancer" class="mr-1" />
           </div>

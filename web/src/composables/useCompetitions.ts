@@ -58,6 +58,20 @@ async function fetchInto(entry: CacheEntry, includeArchived: boolean) {
   return entry.inFlight
 }
 
+// Synchronous lookup from already-fetched competition lists. Returns the
+// cached list item if either cache contains it, else null. Used to render
+// header content (name, image) instantly on the detail page so view
+// transitions from the list have something to morph into before the
+// per-competition fetch resolves.
+export function peekCompetition(id: string | null | undefined): CompetitionListItem | null {
+  if (!id) return null
+  return (
+    recentCache.data.value.find((c) => c.id === id) ??
+    archivedCache.data.value.find((c) => c.id === id) ??
+    null
+  )
+}
+
 export function useCompetitions(includeArchived: Ref<boolean>) {
   const me = useMeStore()
 

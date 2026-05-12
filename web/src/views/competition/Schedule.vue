@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 import { CalendarDays, ChevronRight, ClipboardList, Table, Trophy } from '@lucide/vue'
 import type { FunctionalComponent } from 'vue'
@@ -11,6 +12,7 @@ import DisclosureHeader from '@/components/DisclosureHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
+import { useVtScope } from '@/lib/viewTransitionFocus'
 
 const { competitionId, schedule, loadSchedule, hasSchedule } = useCompetition()
 
@@ -47,6 +49,7 @@ function eventIcon(event: ScheduleEvent): FunctionalComponent | null {
   return null
 }
 
+const vt = useVtScope('event')
 </script>
 
 <template>
@@ -105,30 +108,38 @@ function eventIcon(event: ScheduleEvent): FunctionalComponent | null {
                     eventId: event.id,
                   },
                 }"
-                class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
+                v-slot="{ href, navigate }"
+                custom
               >
-                <span
-                  v-if="eventIcon(event)"
-                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full"
-                  aria-hidden="true"
+                <a
+                  :href="href"
+                  class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
+                  @click="vt.onNavigate($event, navigate, event.id)"
                 >
-                  <component :is="eventIcon(event)" class="size-4" />
-                </span>
-                <span v-else class="size-9 shrink-0" aria-hidden="true" />
-                <div class="min-w-0 flex-1">
-                  <div
-                    class="text-item-title truncate"
+                  <span
+                    v-if="eventIcon(event)"
+                    class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full"
+                    aria-hidden="true"
                   >
-                    {{ event.name || 'Event' }}
+                    <component :is="eventIcon(event)" class="size-4" />
+                  </span>
+                  <span v-else class="size-9 shrink-0" aria-hidden="true" />
+                  <div class="min-w-0 flex-1">
+                    <div
+                      class="text-item-title truncate [view-transition-class:fit_nav-title]"
+                      :style="{ viewTransitionName: vt.name(event.id, 'name') }"
+                    >
+                      {{ event.name || 'Event' }}
+                    </div>
+                    <div
+                      v-if="event.description"
+                      class="text-item-meta text-muted-foreground mt-1 truncate"
+                    >
+                      {{ slugline(event.description) }}
+                    </div>
                   </div>
-                  <div
-                    v-if="event.description"
-                    class="text-item-meta text-muted-foreground mt-1 truncate"
-                  >
-                    {{ slugline(event.description) }}
-                  </div>
-                </div>
-                <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+                  <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+                </a>
               </RouterLink>
             </li>
             <li

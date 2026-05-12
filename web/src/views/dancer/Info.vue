@@ -5,9 +5,10 @@ import { useDancerProfile } from '@/composables/useDancerProfile'
 import { useFavoritesStore } from '@/stores/favorites'
 import CompChip from '@/components/CompChip.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
+import Skeleton from '@/components/Skeleton.vue'
 
 const profile = useDancerProfile()
-const { displayName, location, appearances } = profile
+const { displayName, location, appearances, loading } = profile
 const favorites = useFavoritesStore()
 
 const initials = computed(() => {
@@ -46,7 +47,7 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
     <header class="space-y-3 pr-16">
       <div
         :class="[
-          'flex size-20 items-center justify-center rounded-full text-4xl font-medium [view-transition-name:nav-avatar]',
+          'flex size-20 items-center justify-center rounded-full text-4xl font-medium [view-transition-class:nav-avatar] [view-transition-name:dancer-avatar]',
           isFavorite
             ? 'bg-secondary text-secondary-foreground'
             : 'bg-muted text-muted-foreground',
@@ -56,13 +57,13 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
       </div>
       <div class="space-y-1">
         <h1
-          class="text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"
+          class="text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit_nav-title] [view-transition-name:dancer-name]"
         >
           {{ displayName }}
         </h1>
         <p
           v-if="location"
-          class="text-muted-foreground text-lg italic [view-transition-name:nav-location]"
+          class="text-muted-foreground text-lg italic"
         >
           {{ location }}
         </p>
@@ -71,26 +72,30 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
 
     <section>
       <div class="grid grid-cols-2 gap-2">
+        <template v-if="loading">
+          <Skeleton v-for="i in 4" :key="i" class="h-20 rounded-2xl!" />
+        </template>
         <div
           v-for="t in tiles"
+          v-else
           :key="t.k"
           class="bg-card rounded-2xl border px-4 py-3"
         >
-          <div
-            class="text-foreground/65 text-xs text-eyebrow"
-          >
+          <div class="text-foreground/65 text-xs text-eyebrow">
             {{ t.k }}
           </div>
-          <div
-            class="mt-1 text-4xl font-medium tabular-nums tracking-tight"
-          >
+          <div class="mt-1 text-4xl font-medium tabular-nums tracking-tight">
             {{ t.v }}
           </div>
         </div>
       </div>
     </section>
 
-    <section v-if="recentComp" class="space-y-2">
+    <section v-if="loading" class="space-y-2">
+      <Skeleton class="h-3 w-24" />
+      <Skeleton class="h-14 w-full" />
+    </section>
+    <section v-else-if="recentComp" class="space-y-2">
       <SectionHeader label="Last seen at" />
       <RouterLink
         :to="{
@@ -108,9 +113,7 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
           class="size-10 rounded-xl"
         />
         <div class="min-w-0 flex-1">
-          <div
-            class="text-item-title truncate"
-          >
+          <div class="text-item-title truncate">
             {{ recentComp.competition?.name ?? 'Loading…' }}
           </div>
           <div
