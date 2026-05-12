@@ -1,27 +1,28 @@
 <script setup lang="ts">
-import { computed, ref, shallowRef, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
 import { ChevronRight, Search, Star, X } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
+import { useDancersStore } from '@/stores/dancers'
 import { useRecentDancers } from '@/composables/useRecentDancers'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
-import { searchDancers, type SearchDancerGroup } from '@/lib/searchDancers'
+import type { SearchDancerGroup } from '@/lib/searchDancers'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const favorites = useFavoritesStore()
+const dancers = useDancersStore()
 const recentDancers = useRecentDancers()
+
+const { results, searching, searchError: error, locationByName } = storeToRefs(dancers)
 
 const q = ref(String(route.query.q ?? ''))
 const qDebounced = refDebounced(q, 250)
-
-const searching = ref(false)
-const results = shallowRef<SearchDancerGroup[]>([])
-const error = ref<Error | null>(null)
 
 watch(
   () => route.query.q,
@@ -39,21 +40,12 @@ watch(q, (value) => {
 
 watch(
   [qDebounced, () => auth.isSignedIn],
-  async ([value, signedIn]) => {
-    if (!signedIn || !value.trim()) {
-      results.value = []
+  ([value, signedIn]) => {
+    if (!signedIn) {
+      dancers.reset()
       return
     }
-    searching.value = true
-    error.value = null
-    try {
-      results.value = await searchDancers(value)
-    } catch (e) {
-      error.value = e as Error
-      results.value = []
-    } finally {
-      searching.value = false
-    }
+    dancers.search(value)
   },
   { immediate: true },
 )
@@ -67,8 +59,8 @@ interface FavoriteEntry {
 const favoriteEntries = computed<FavoriteEntry[]>(() => {
   const grouped = new Map<string, number>()
   for (const value of Object.values(favorites.dancers)) {
-    if (!value) continue
-    const name = typeof value === 'string' ? value.trim() : '?'
+    if (typeof value !== 'string') continue
+    const name = value.trim()
     if (!name) continue
     grouped.set(name, (grouped.get(name) ?? 0) + 1)
   }
@@ -82,29 +74,10 @@ const favoriteEntries = computed<FavoriteEntry[]>(() => {
     .sort((a, b) => a.name.localeCompare(b.name))
 })
 
-const locationByName = shallowRef(new Map<string, string>())
-
 watch(
   favoriteEntries,
-  async (entries) => {
-    const todo = entries.filter((e) => !locationByName.value.has(e.name))
-    if (!todo.length) return
-    const results = await Promise.all(
-      todo.map(async (e) => {
-        try {
-          const groups = await searchDancers(e.name)
-          const match =
-            groups.find((g) => g.name.toLowerCase() === e.name.toLowerCase()) ?? groups[0]
-          const loc = match?.dancers.find((d) => d.location)?.location ?? ''
-          return [e.name, loc] as const
-        } catch {
-          return [e.name, ''] as const
-        }
-      }),
-    )
-    const next = new Map(locationByName.value)
-    for (const [name, loc] of results) next.set(name, loc)
-    locationByName.value = next
+  (entries) => {
+    dancers.resolveLocations(entries.map((e) => e.name))
   },
   { immediate: true },
 )
