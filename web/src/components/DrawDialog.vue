@@ -49,14 +49,9 @@ const groupDancers = computed<EnrichedDancer[]>(() => {
 </script>
 
 <template>
-  <Dialog
-    :open="isOpen"
-    variant="sheet"
-    size="md"
-    @close="emit('close')"
-  >
+  <Dialog :open="isOpen" variant="sheet" size="md" @close="emit('close')">
     <template v-if="displayGroup" #header>
-      <div class="text-foreground/65 text-xs text-eyebrow">
+      <div class="text-foreground/65 text-eyebrow text-xs">
         Draw<span v-if="breadcrumb"> · {{ breadcrumb }}</span>
       </div>
       <h2 class="text-2xl leading-tight font-medium tracking-tight">
@@ -65,18 +60,11 @@ const groupDancers = computed<EnrichedDancer[]>(() => {
     </template>
 
     <template v-if="displayGroup">
-      <p
-        v-if="!groupDancers.length"
-        class="text-muted-foreground p-4 text-lg italic"
-      >
+      <p v-if="!groupDancers.length" class="text-muted-foreground p-4 text-lg italic">
         Draw not yet posted.
       </p>
       <ul v-else class="p-2">
-        <li
-          v-for="dancer in groupDancers"
-          :key="dancer.id"
-          class="flex items-center"
-        >
+        <li v-for="dancer in groupDancers" :key="dancer.id" class="flex items-center">
           <RouterLink
             :to="{
               name: 'competition.dancer',

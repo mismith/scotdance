@@ -30,7 +30,9 @@ const activeTab = computed(() => {
 </script>
 
 <template>
-  <nav class="bottom-[max(0.75rem,var(--safe-bottom))] pointer-events-none fixed inset-x-0 z-30 px-3">
+  <nav
+    class="pointer-events-none fixed inset-x-0 bottom-[max(0.75rem,var(--safe-bottom))] z-30 px-3"
+  >
     <div class="mx-auto flex max-w-3xl items-center justify-between">
       <RouterLink v-slot="{ href, route: r, navigate }" :to="{ name: 'dancers' }" custom>
         <a
@@ -56,7 +58,7 @@ const activeTab = computed(() => {
             :class="[
               'relative isolate flex h-14 min-w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-3 font-sans font-medium transition-colors',
               activeTab === tab.to
-                ? `before:bg-nav-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:content-[''] before:[view-transition-name:nav-right-active]`
+                ? `before:bg-nav-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:[view-transition-name:nav-right-active]`
                 : 'opacity-70 hover:opacity-100',
             ]"
           >
