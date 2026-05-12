@@ -5,6 +5,7 @@ import { Check, ChevronDown, ListFilter } from '@lucide/vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import CompetitionRow from '@/components/CompetitionRow.vue'
 import CompetitionsCalendar from '@/components/CompetitionsCalendar.vue'
+import CompetitionsMap from '@/views/competitions/CompetitionsMap.vue'
 import HeroCompCard from '@/components/HeroCompCard.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
@@ -103,7 +104,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
 
 <template>
   <div class="flex flex-1 flex-col">
-    <main class="pt-safe mx-auto w-full max-w-3xl flex-1 space-y-5 p-4">
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-5 p-4">
       <div class="flex flex-wrap items-center gap-2">
         <ViewModeTabs v-model="view" />
         <button
@@ -153,12 +154,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
         </div>
       </div>
 
-      <div
-        v-if="view === 'map'"
-        class="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-lg italic"
-      >
-        Map view — stub.
-      </div>
+      <CompetitionsMap v-if="view === 'map'" />
       <CompetitionsCalendar
         v-else-if="view === 'calendar'"
         ref="calendarRef"

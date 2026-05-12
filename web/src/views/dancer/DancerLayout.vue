@@ -26,7 +26,7 @@ const initials = computed(() => {
 
 <template>
   <div class="flex flex-1 flex-col">
-    <nav class="pt-safe pointer-events-none fixed inset-x-0 top-0 z-30 px-3">
+    <nav class="pt-(--safe-top) pointer-events-none fixed inset-x-0 top-0 z-30 px-3">
       <div class="mx-auto flex max-w-3xl items-center gap-2 pt-3">
         <RouterLink
           v-if="!isInfo"
@@ -73,7 +73,7 @@ const initials = computed(() => {
       </div>
     </nav>
 
-    <main class="pt-safe-nav mx-auto w-full max-w-3xl flex-1 px-4 pb-4">
+    <main class="pt-(--chrome-top) mx-auto w-full max-w-3xl flex-1 px-4 pb-4">
       <div v-if="loading" class="space-y-5" aria-busy="true" aria-live="polite">
         <span class="sr-only">Searching across competitions…</span>
         <header class="space-y-3 pr-16">

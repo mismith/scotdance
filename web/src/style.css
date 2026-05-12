@@ -65,6 +65,14 @@
   --blue-paper: oklch(0.91 0.02 245);
   --pink-paper: oklch(0.91 0.04 5);
   --chip: oklch(0.92 0.012 85);
+  /* Expose env(safe-area-inset-*) as custom props so other rules and JS can
+     read them without re-spelling env(). */
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+  /* Total inset needed to clear the floating top/bottom chrome — chrome
+     height + safe-area inset. */
+  --chrome-top: calc(5rem + var(--safe-top));
+  --chrome-bottom: calc(6rem + var(--safe-bottom));
 }
 
 /* Dark mode — "Deep Ink" palette from editorial v5: warm near-black,
@@ -123,10 +131,10 @@
     @apply border-border;
   }
   /* Keep hash-anchored / scrollIntoView targets clear of the floating top
-     and bottom chrome. Magnitudes mirror .pt-safe-nav / .pb-safe-nav. */
+     and bottom chrome. --chrome-* already includes safe-area inset. */
   html {
-    scroll-padding-top: calc(5rem + env(safe-area-inset-top));
-    scroll-padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+    scroll-padding-top: var(--chrome-top);
+    scroll-padding-bottom: var(--chrome-bottom);
   }
   body {
     @apply bg-background text-foreground font-serif;
@@ -145,24 +153,6 @@
   select,
   textarea {
     @apply font-sans;
-  }
-
-  /* Safe-area-aware utilities. The floating chrome at top should clear the
-     iOS status bar; the bottom nav should clear the home indicator. */
-  .top-safe {
-    top: max(0.75rem, env(safe-area-inset-top));
-  }
-  .pt-safe {
-    padding-top: env(safe-area-inset-top);
-  }
-  .bottom-safe {
-    bottom: max(0.75rem, env(safe-area-inset-bottom));
-  }
-  .pb-safe-nav {
-    padding-bottom: calc(6rem + env(safe-area-inset-bottom));
-  }
-  .pt-safe-nav {
-    padding-top: calc(5rem + env(safe-area-inset-top));
   }
 }
 

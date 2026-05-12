@@ -114,7 +114,7 @@ const showSearch = computed(() => q.value.trim().length > 0)
 
 <template>
   <div class="flex flex-1 flex-col">
-    <main class="pt-safe mx-auto w-full max-w-3xl flex-1 space-y-6 p-4">
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4">
       <div
         class="bg-card flex h-12 items-center gap-3 rounded-full border px-4 shadow-sm"
       >
