@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import {
-  CalendarDays,
-  ChevronDown,
-  ChevronRight,
-  Trophy,
-  Users,
-} from '@lucide/vue'
+import { CalendarDays, ChevronDown, ChevronRight, Trophy, Users } from '@lucide/vue'
 import { PLATFORM } from '@/composables/useUpdate'
 import { version } from '../../package.json'
 
@@ -20,22 +14,19 @@ const features = [
     n: '01',
     icon: Users,
     title: 'Dancers',
-    body:
-      'Search by number, name, or age group. Mark favourites for quick access throughout the day.',
+    body: 'Search by number, name, or age group. Mark favourites for quick access throughout the day.',
   },
   {
     n: '02',
     icon: CalendarDays,
     title: 'Schedule',
-    body:
-      'Event start times, platform assignments, and the order of dances — at a glance.',
+    body: 'Event start times, platform assignments, and the order of dances — at a glance.',
   },
   {
     n: '03',
     icon: Trophy,
     title: 'Results',
-    body:
-      'Callbacks and placings, posted as they are announced. Archived for review after the competition.',
+    body: 'Callbacks and placings, posted as they are announced. Archived for review after the competition.',
   },
 ]
 
@@ -54,10 +45,10 @@ const faqs: { q: string; a: string }[] = [
   },
   {
     q: 'Is it safe to use? Are you harvesting my data? Are there privacy concerns with having this information available online?',
-    a: 'This service is, in plain words, completely legitimate. It checks all the security boxes you would/should expect, and does nothing remotely nefarious with the (minimal) data it does collect from you. Furthermore, since all competition data is user-submitted, it\'s conceptually equivalent to uploading scanned or exported results PDFs to a dance association\'s website—just made more convenient, hopefully.',
+    a: "This service is, in plain words, completely legitimate. It checks all the security boxes you would/should expect, and does nothing remotely nefarious with the (minimal) data it does collect from you. Furthermore, since all competition data is user-submitted, it's conceptually equivalent to uploading scanned or exported results PDFs to a dance association's website—just made more convenient, hopefully.",
   },
   {
-    q: 'Why are dancers I\'ve favourited ★ in one competition not favourited in all competitions?',
+    q: "Why are dancers I've favourited ★ in one competition not favourited in all competitions?",
     a: 'Since dancer numbers are unique for each competition—and names, locations, and ages can be misspelled or change over time—it\'s very difficult (for a computer) to distinguish "Jane Doe" in Competition A from "Jane Doe" in Competition B. So until this app can be connected more directly to registrations, it\'s unfortunately necessary to re-favourite dancers for each competition.',
   },
 ]
@@ -72,70 +63,50 @@ function scrollToFeatures(e: Event) {
 <template>
   <div class="flex flex-1 flex-col">
     <!-- HERO -->
-    <section
-      class="relative flex min-h-svh flex-col items-center justify-center px-6"
-    >
+    <section class="relative flex min-h-svh flex-col items-center justify-center px-6">
       <header
         class="absolute inset-x-0 top-0 flex flex-col items-center gap-2 pt-8 text-center"
       >
-        <img
-          src="/img/touchicon.png"
-          alt=""
-          class="size-10 rounded-md shadow-sm"
-        />
-        <div class="font-serif text-lg">ScotDance.app</div>
+        <img src="/img/touchicon.png" alt="" class="size-10 rounded-md shadow-sm" />
+        <div class="text-lg">ScotDance.app</div>
       </header>
 
       <div class="mb-32 space-y-5 text-center">
-        <h1
-          class="font-serif text-6xl font-medium tracking-tight md:text-8xl"
-        >
+        <h1 class="text-6xl font-medium tracking-tight md:text-8xl">
           Highland dance,<br />tracked.
         </h1>
-        <p
-          class="text-muted-foreground mx-auto max-w-xl font-serif text-xl md:text-2xl"
-        >
+        <p class="text-muted-foreground mx-auto max-w-2xl text-xl md:text-2xl">
           Browse competitions, follow dancers, and see results as they happen.
         </p>
       </div>
 
       <a
         href="#features"
-        @click="scrollToFeatures"
         class="text-muted-foreground hover:text-foreground absolute inset-x-0 mx-auto flex w-fit flex-col items-center gap-1.5 transition-colors"
         :style="{ bottom: 'calc(7rem + env(safe-area-inset-bottom))' }"
         aria-label="Scroll to features"
+        @click="scrollToFeatures"
       >
-        <span
-          class="text-[10px] font-semibold tracking-[0.25em] uppercase"
-        >
-          Discover
-        </span>
+        <span class="text-eyebrow text-[10px]"> Discover </span>
         <ChevronDown class="size-4 animate-bounce" />
       </a>
     </section>
 
     <!-- FEATURES -->
     <section
-      ref="featuresRef"
       id="features"
+      ref="featuresRef"
       class="border-border/60 border-t px-6 py-24 md:py-32"
     >
       <div class="mx-auto w-full max-w-5xl">
         <header class="mb-16 max-w-2xl space-y-4">
-          <div
-            class="text-foreground/65 text-xs font-semibold tracking-[0.2em] uppercase"
-          >
-            What it does
-          </div>
-          <h2
-            class="font-serif text-4xl font-medium tracking-tight md:text-5xl"
-          >
+          <div class="text-foreground/65 text-eyebrow text-xs">What it does</div>
+          <h2 class="text-4xl font-medium tracking-tight md:text-5xl">
             A virtual program of events, in your pocket.
           </h2>
-          <p class="text-muted-foreground font-serif text-lg md:text-xl">
-            Schedules, dancers, and results in a single place — kept in sync
-            as the day unfolds.
+          <p class="text-muted-foreground text-lg md:text-xl">
+            Schedules, dancers, and results in a single place — kept in sync as the day
+            unfolds.
           </p>
         </header>
 
@@ -147,15 +118,13 @@ function scrollToFeatures(e: Event) {
           >
             <div class="flex items-baseline justify-between">
               <span
-                class="font-serif text-foreground/40 text-3xl font-medium tracking-tight tabular-nums"
+                class="text-foreground/40 text-3xl font-medium tracking-tight tabular-nums"
               >
                 {{ f.n }}
               </span>
               <component :is="f.icon" class="text-primary size-6" />
             </div>
-            <h3
-              class="font-serif text-2xl font-medium tracking-tight md:text-3xl"
-            >
+            <h3 class="text-2xl font-medium tracking-tight md:text-3xl">
               {{ f.title }}
             </h3>
             <p class="text-muted-foreground leading-relaxed">{{ f.body }}</p>
@@ -169,25 +138,15 @@ function scrollToFeatures(e: Event) {
       v-if="isWeb"
       class="bg-muted/40 border-border/60 border-t px-6 py-24 md:py-32"
     >
-      <div
-        class="mx-auto flex w-full max-w-4xl flex-col items-center gap-10 text-center"
-      >
+      <div class="mx-auto flex w-full max-w-4xl flex-col items-center gap-10 text-center">
         <div class="space-y-4">
-          <div
-            class="text-foreground/65 text-xs font-semibold tracking-[0.2em] uppercase"
-          >
-            Take it with you
-          </div>
-          <h2
-            class="font-serif text-4xl font-medium tracking-tight md:text-5xl"
-          >
+          <div class="text-foreground/65 text-eyebrow text-xs">Take it with you</div>
+          <h2 class="text-4xl font-medium tracking-tight md:text-5xl">
             From the warm-up to the awards.
           </h2>
-          <p
-            class="text-muted-foreground mx-auto max-w-xl font-serif text-lg md:text-xl"
-          >
-            Install it on your phone for one-tap access — or just bookmark
-            it in any browser.
+          <p class="text-muted-foreground mx-auto max-w-xl text-lg md:text-xl">
+            Install it on your phone for one-tap access — or just bookmark it in any
+            browser.
           </p>
         </div>
 
@@ -199,11 +158,7 @@ function scrollToFeatures(e: Event) {
             class="transition-opacity hover:opacity-80"
             aria-label="Download on the App Store"
           >
-            <img
-              src="/img/app-store.svg"
-              alt="Download on the App Store"
-              class="h-12"
-            />
+            <img src="/img/app-store.svg" alt="Download on the App Store" class="h-12" />
           </a>
           <a
             href="https://play.google.com/store/apps/details?id=info.mismith.scotdance"
@@ -212,11 +167,7 @@ function scrollToFeatures(e: Event) {
             class="transition-opacity hover:opacity-80"
             aria-label="Get it on Google Play"
           >
-            <img
-              src="/img/play-store.svg"
-              alt="Get it on Google Play"
-              class="h-12"
-            />
+            <img src="/img/play-store.svg" alt="Get it on Google Play" class="h-12" />
           </a>
         </div>
 
@@ -234,16 +185,8 @@ function scrollToFeatures(e: Event) {
     <section class="border-border/60 border-t px-6 py-24 md:py-32">
       <div class="mx-auto w-full max-w-3xl">
         <header class="mb-12 space-y-4">
-          <div
-            class="text-foreground/65 text-xs font-semibold tracking-[0.2em] uppercase"
-          >
-            Common questions
-          </div>
-          <h2
-            class="font-serif text-4xl font-medium tracking-tight md:text-5xl"
-          >
-            FAQs
-          </h2>
+          <div class="text-foreground/65 text-eyebrow text-xs">Common questions</div>
+          <h2 class="text-4xl font-medium tracking-tight md:text-5xl">FAQs</h2>
         </header>
 
         <dl class="border-border/60 border-t">
@@ -253,15 +196,15 @@ function scrollToFeatures(e: Event) {
             class="border-border/60 group border-b"
           >
             <summary
-              class="flex cursor-pointer items-baseline gap-4 py-6 list-none [&::-webkit-details-marker]:hidden"
+              class="flex cursor-pointer list-none items-baseline gap-4 py-6 [&::-webkit-details-marker]:hidden"
             >
               <span
-                class="font-serif text-foreground/40 w-8 shrink-0 font-medium tabular-nums"
+                class="text-foreground/40 w-8 shrink-0 font-medium tabular-nums"
               >
                 {{ String(i + 1).padStart(2, '0') }}
               </span>
               <dt
-                class="font-serif flex-1 text-xl font-medium tracking-tight md:text-2xl"
+                class="flex-1 text-xl font-medium tracking-tight md:text-2xl"
               >
                 {{ item.q }}
               </dt>
@@ -285,27 +228,22 @@ function scrollToFeatures(e: Event) {
       >
         <div class="space-y-4">
           <div class="flex items-center gap-3">
-            <img
-              src="/img/touchicon.png"
-              alt=""
-              class="size-8 rounded-md"
-            />
-            <div class="font-serif text-lg">ScotDance.app</div>
+            <img src="/img/touchicon.png" alt="" class="size-8 rounded-md" />
+            <div class="text-lg">ScotDance.app</div>
           </div>
-          <p class="text-muted-foreground max-w-md font-serif text-base leading-relaxed">
+          <p class="text-muted-foreground max-w-md text-base leading-relaxed">
             A volunteer-run project for the highland dance community, by
             <a
               href="https://mismith.io"
               target="_blank"
               rel="noopener"
               class="text-foreground hover:text-primary underline-offset-4 hover:underline"
-            >Murray Rowan</a>, since 2017.
+              >Murray Rowan</a
+            >, since 2017.
           </p>
         </div>
 
-        <div
-          class="text-muted-foreground flex flex-col gap-2 text-sm md:items-end"
-        >
+        <div class="text-muted-foreground flex flex-col gap-2 text-sm md:items-end">
           <a
             href="https://github.com/mismith/scotdance"
             target="_blank"

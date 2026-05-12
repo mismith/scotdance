@@ -49,7 +49,7 @@ const meta = computed(() => {
     >
       <span
         aria-hidden="true"
-        class="font-serif pointer-events-none absolute -right-6 -top-4 select-none font-medium leading-none text-white/10"
+        class="pointer-events-none absolute -right-6 -top-4 select-none font-medium leading-none text-white/10"
         style="font-size: 12rem; letter-spacing: -0.5rem"
       >
         {{ mark }}
@@ -73,11 +73,11 @@ const meta = computed(() => {
         <span class="font-bold tracking-widest">RESULTS UPDATING</span>
       </div>
       <div class="absolute bottom-3 left-4 right-4">
-        <div class="text-xs font-medium tracking-[0.18em] uppercase opacity-90">
+        <div class="text-xs text-eyebrow opacity-90">
           {{ kicker }}
         </div>
         <div
-          class="font-serif mt-1 text-2xl font-medium leading-tight tracking-tight line-clamp-2"
+          class="mt-1 text-2xl font-medium leading-tight tracking-tight line-clamp-2"
         >
           {{ competition.name ?? 'Competition' }}
         </div>

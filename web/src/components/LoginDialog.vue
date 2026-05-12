@@ -87,11 +87,11 @@ async function submit() {
 
       <div class="space-y-1">
         <div
-          class="text-foreground/65 text-xs font-medium tracking-[0.18em] uppercase"
+          class="text-foreground/65 text-xs text-eyebrow"
         >
           ScotDance.app
         </div>
-        <h2 class="font-serif text-4xl font-medium tracking-tight leading-[1.04]">
+        <h2 class="text-4xl font-medium tracking-tight leading-[1.04]">
           <template v-if="mode === 'login'">Sign in</template>
           <template v-else-if="mode === 'register'">Create account</template>
           <template v-else>Reset password</template>
@@ -140,7 +140,7 @@ async function submit() {
         <button
           type="submit"
           :disabled="submitting"
-          class="bg-primary text-primary-foreground inline-flex w-full items-center justify-center rounded-md px-4 py-2 text-lg font-medium hover:opacity-90 disabled:opacity-50"
+          class="bg-primary text-primary-foreground inline-flex w-full items-center justify-center rounded-md px-4 py-2 font-medium hover:opacity-90 disabled:opacity-50"
         >
           <template v-if="submitting">Working…</template>
           <template v-else-if="mode === 'login'">Sign in</template>

@@ -55,7 +55,7 @@ function toggle(dayId: string, blockId: string, hasEvents: boolean) {
 
     <section v-for="day in dayList" :key="day.id" class="space-y-4">
       <header>
-        <h2 class="font-serif text-3xl font-medium tracking-tight">
+        <h2 class="text-3xl font-medium tracking-tight">
           {{ day.name || formatWeekday(day.date) || 'Day' }}
         </h2>
         <p
@@ -113,7 +113,7 @@ function toggle(dayId: string, blockId: string, hasEvents: boolean) {
             </li>
             <li
               v-if="!events(block).length"
-              class="text-muted-foreground px-1 py-3 font-serif text-lg italic"
+              class="text-muted-foreground px-1 py-3 text-lg italic"
             >
               No events.
             </li>

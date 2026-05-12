@@ -17,10 +17,10 @@ defineProps<{
       <component :is="icon" class="size-6" />
     </div>
     <div class="space-y-2">
-      <div class="font-serif text-2xl font-medium tracking-tight">{{ title }}</div>
+      <div class="text-2xl font-medium tracking-tight">{{ title }}</div>
       <p
         v-if="description"
-        class="text-muted-foreground mx-auto max-w-sm font-serif text-base"
+        class="text-muted-foreground mx-auto max-w-sm text-base"
       >
         {{ description }}
       </p>

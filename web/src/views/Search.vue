@@ -104,7 +104,7 @@ const examples = [
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-0">
       <section class="space-y-3">
         <h2
-          class="text-foreground/65 text-sm font-medium tracking-[0.18em] uppercase"
+          class="text-foreground/65 text-sm text-eyebrow"
         >
           Suggested searches
         </h2>
@@ -116,11 +116,11 @@ const examples = [
           >
             <div class="flex items-center justify-between">
               <span
-                class="text-primary text-xs font-medium tracking-[0.18em] uppercase"
+                class="text-primary text-xs text-eyebrow"
               >
                 {{ preset.kicker }}
               </span>
-              <span class="text-primary font-serif text-lg font-medium tabular-nums">
+              <span class="text-primary text-lg font-medium tabular-nums">
                 {{ preset.count }}
               </span>
             </div>
@@ -134,7 +134,7 @@ const examples = [
 
       <section class="space-y-2">
         <h2
-          class="text-foreground/65 text-sm font-medium tracking-[0.18em] uppercase"
+          class="text-foreground/65 text-sm text-eyebrow"
         >
           Or just type a name
         </h2>
@@ -146,7 +146,7 @@ const examples = [
           >
             <Search class="text-muted-foreground size-4 shrink-0" />
             <div class="min-w-0 flex-1">
-              <div class="truncate font-serif text-lg font-medium tracking-tight">
+              <div class="truncate text-lg font-medium tracking-tight">
                 &ldquo;{{ example.q }}&rdquo;
               </div>
               <div class="text-muted-foreground truncate">

@@ -10,6 +10,7 @@ import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import ViewModeTabs, { type ViewMode } from '@/components/ViewModeTabs.vue'
 import { isBeforeToday, isSameDay, parseDate } from '@/lib/format'
+import { useFavoritesStore } from '@/stores/favorites'
 
 type Filter = 'upcoming' | 'past' | 'all'
 
@@ -69,10 +70,13 @@ const visibleCompetitions = computed(() =>
     : filteredCompetitions.value,
 )
 
+const favorites = useFavoritesStore()
+
 interface MonthGroup {
   key: string
   label: string
   members: CompetitionListItem[]
+  favCount: number
 }
 
 const monthGroups = computed<MonthGroup[]>(() => {
@@ -87,10 +91,11 @@ const monthGroups = computed<MonthGroup[]>(() => {
       : 'Undated'
     let g = groups.get(key)
     if (!g) {
-      g = { key, label, members: [] }
+      g = { key, label, members: [], favCount: 0 }
       groups.set(key, g)
     }
     g.members.push(c)
+    if (favorites.isFavoriteCompetition(c.id)) g.favCount++
   }
   return [...groups.values()]
 })
@@ -150,7 +155,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
 
       <div
         v-if="view === 'map'"
-        class="text-muted-foreground rounded-2xl border border-dashed p-8 text-center font-serif text-lg italic"
+        class="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-lg italic"
       >
         Map view — stub.
       </div>
@@ -184,7 +189,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
         </div>
         <div
           v-else-if="!competitions.length"
-          class="text-muted-foreground space-y-2 font-serif text-lg italic"
+          class="text-muted-foreground space-y-2 text-lg italic"
         >
           <div>No competitions found.</div>
           <button
@@ -198,7 +203,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
         </div>
         <div
           v-else-if="!visibleCompetitions.length"
-          class="text-muted-foreground font-serif text-lg italic"
+          class="text-muted-foreground text-lg italic"
         >
           <span v-if="filter === 'upcoming'">No upcoming competitions.</span>
           <span v-else-if="filter === 'past'">No past competitions on record.</span>
@@ -207,7 +212,11 @@ const monthGroups = computed<MonthGroup[]>(() => {
 
         <template v-else>
           <section v-for="group in monthGroups" :key="group.key" class="space-y-2">
-            <SectionHeader :label="group.label" :count="group.members.length" />
+            <SectionHeader
+              :label="group.label"
+              :count="group.members.length"
+              :favs="group.favCount"
+            />
             <ul>
               <CompetitionRow
                 v-for="competition in group.members"

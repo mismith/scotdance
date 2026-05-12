@@ -19,7 +19,7 @@ const modes: Array<{ id: ViewMode; label: string; icon: typeof List }> = [
       :key="mode.id"
       type="button"
       :class="[
-        'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-colors',
+        'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 font-sans font-medium transition-colors',
         model === mode.id
           ? 'bg-card text-foreground shadow-sm'
           : 'text-muted-foreground hover:text-foreground',
