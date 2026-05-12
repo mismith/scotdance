@@ -125,7 +125,7 @@ function goProfile() {
 
             <div
               v-if="moreOpen"
-              class="bg-nav/90 text-nav-foreground absolute bottom-full left-1/2 z-40 mb-2 w-72 max-w-[calc(100vw-1.5rem)] -translate-x-1/2 rounded-3xl border border-white/10 p-3 shadow-lg backdrop-blur-xl"
+              class="bg-nav/90 text-nav-foreground absolute bottom-full left-1/2 z-40 mb-2 w-72 max-w-[calc(100vw-1.5rem)] -translate-x-1/2 rounded-3xl border border-white/10 p-3 font-sans shadow-lg backdrop-blur-xl"
               role="menu"
             >
               <!-- Account + theme section -->
@@ -133,7 +133,7 @@ function goProfile() {
                 <button
                   v-if="auth.isSignedIn"
                   type="button"
-                  class="hover:bg-nav-foreground/10 flex w-full items-center gap-2.5 rounded-xl p-2 text-left"
+                  class="flex w-full items-center gap-2.5 rounded-xl p-2 text-left opacity-70 transition-opacity hover:opacity-100"
                   role="menuitem"
                   @click="goProfile"
                 >
@@ -152,7 +152,7 @@ function goProfile() {
                   <span class="min-w-0 flex-1">
                     <span
                       v-if="me.displayName"
-                      class="block truncate font-serif text-lg font-medium tracking-tight"
+                      class="block truncate text-base font-medium"
                     >
                       {{ me.displayName }}
                     </span>
@@ -160,9 +160,7 @@ function goProfile() {
                       v-if="me.email"
                       :class="[
                         'block truncate',
-                        me.displayName
-                          ? 'opacity-60'
-                          : 'font-serif text-lg font-medium tracking-tight',
+                        me.displayName ? 'text-sm opacity-60' : 'text-base font-medium',
                       ]"
                     >
                       {{ me.email }}
@@ -174,7 +172,7 @@ function goProfile() {
                 <button
                   v-else
                   type="button"
-                  class="hover:bg-nav-foreground/10 flex w-full items-center gap-2 rounded-md p-2 text-left text-sm transition-colors"
+                  class="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm opacity-70 transition-opacity hover:opacity-100"
                   role="menuitem"
                   @click="handleSignIn"
                 >
@@ -210,10 +208,10 @@ function goProfile() {
               <RouterLink
                 :to="{ name: 'home' }"
                 :class="[
-                  'mt-3 flex w-full items-center gap-3 rounded-lg p-2.5 text-base font-medium transition-colors',
+                  'mt-3 flex w-full items-center gap-3 rounded-lg p-2.5 text-base font-medium transition-opacity',
                   route.path === '/'
                     ? 'bg-nav-foreground/10'
-                    : 'hover:bg-nav-foreground/10',
+                    : 'opacity-70 hover:opacity-100',
                 ]"
                 role="menuitem"
                 @click="moreOpen = false"
@@ -225,7 +223,7 @@ function goProfile() {
               <button
                 v-if="update.updateAvailable"
                 type="button"
-                class="hover:bg-nav-foreground/10 mt-1 flex w-full items-center gap-3 rounded-lg p-2.5 text-left text-base font-medium transition-colors"
+                class="mt-1 flex w-full items-center gap-3 rounded-lg p-2.5 text-left text-base font-medium opacity-70 transition-opacity hover:opacity-100"
                 role="menuitem"
                 @click="
                   () => {
