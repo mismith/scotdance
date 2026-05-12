@@ -252,7 +252,7 @@ function scrollToFeatures(e: Event) {
           >
             Source on GitHub →
           </a>
-          <div class="text-foreground/50 text-xs tabular-nums">
+          <div class="text-foreground/50 font-sans text-xs tabular-nums">
             {{ platformLabel }} · v{{ version }}
           </div>
         </div>
