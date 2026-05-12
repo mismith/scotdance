@@ -4,7 +4,6 @@ import type { RouteLocationRaw } from 'vue-router'
 import { CalendarOff, ChevronLeft, ChevronRight } from '@lucide/vue'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 import CompetitionRow from '@/components/CompetitionRow.vue'
-import EmptyState from '@/components/EmptyState.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { formatMonthYear, formatWeekdayShortDate, parseDate } from '@/lib/format'
@@ -113,6 +112,10 @@ const visibleFavCount = computed(
 
 const sectionLabel = computed(() =>
   selected.value ? formatWeekdayShortDate(selected.value) : monthLabel.value,
+)
+
+const selectedIsToday = computed(
+  () => !!selected.value && selected.value.getTime() === today.getTime(),
 )
 
 function adjacentDay(direction: 'next' | 'prev') {
@@ -326,11 +329,17 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
     </div>
 
     <template v-else-if="selected">
-      <EmptyState
-        :icon="CalendarOff"
-        :title="`Nothing on ${sectionLabel}`"
-        class="py-4!"
-      />
+      <section class="space-y-2 pt-2">
+        <SectionHeader :label="sectionLabel" />
+        <div class="text-muted-foreground flex items-center gap-3 py-3 pr-3 pl-1">
+          <div class="flex size-12 shrink-0 items-center justify-center">
+            <CalendarOff class="size-6" />
+          </div>
+          <div class="text-item-title">
+            {{ selectedIsToday ? 'Nothing today.' : 'Nothing on this day.' }}
+          </div>
+        </div>
+      </section>
       <section v-if="upcomingDay" class="space-y-2 pt-2">
         <SectionHeader
           :label="`Upcoming · ${upcomingDay.label}`"
