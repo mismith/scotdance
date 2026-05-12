@@ -32,8 +32,6 @@ const filterMenuRef = ref<HTMLElement | null>(null)
 const filterOpen = ref(false)
 onClickOutside(filterMenuRef, () => (filterOpen.value = false))
 
-const calendarRef = ref<InstanceType<typeof CompetitionsCalendar> | null>(null)
-
 const includeArchived = useLocalStorage('competitions:includeArchived', false)
 
 const { competitions, loading } = useCompetitions(includeArchived)
@@ -107,15 +105,11 @@ const monthGroups = computed<MonthGroup[]>(() => {
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-5 p-4">
       <div class="flex flex-wrap items-center gap-2">
         <ViewModeTabs v-model="view" />
-        <button
-          v-if="view === 'calendar'"
-          type="button"
-          class="bg-chip text-muted-foreground hover:text-foreground ml-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-2.5 font-medium"
-          @click="calendarRef?.goToToday()"
+        <div
+          v-if="view !== 'calendar'"
+          ref="filterMenuRef"
+          class="relative ml-auto"
         >
-          Today
-        </button>
-        <div v-else ref="filterMenuRef" class="relative ml-auto">
           <button
             type="button"
             class="bg-chip text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 rounded-lg px-3 py-2.5 font-medium"
@@ -157,7 +151,6 @@ const monthGroups = computed<MonthGroup[]>(() => {
       <CompetitionsMap v-if="view === 'map'" />
       <CompetitionsCalendar
         v-else-if="view === 'calendar'"
-        ref="calendarRef"
         :competitions="competitions"
         :loading="loading"
       />
