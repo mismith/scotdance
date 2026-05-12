@@ -107,12 +107,37 @@ const visibleCompetitions = computed(() => {
 })
 
 const visibleFavCount = computed(
-  () => visibleCompetitions.value.filter((c) => favorites.isFavoriteCompetition(c.id)).length,
+  () =>
+    visibleCompetitions.value.filter((c) => favorites.isFavoriteCompetition(c.id)).length,
 )
 
 const sectionLabel = computed(() =>
   selected.value ? formatWeekdayShortDate(selected.value) : monthLabel.value,
 )
+
+// When the selected day has no comps, surface the next upcoming day so the
+// user can jump forward without scrubbing the calendar.
+const upcomingDay = computed(() => {
+  if (!selected.value || visibleCompetitions.value.length) return null
+  const after = startOfDay(selected.value).getTime() + 86_400_000
+  const future = props.competitions
+    .filter((c) => c.date && parseDate(c.date).getTime() >= after)
+    .sort((a, b) => parseDate(a.date!).getTime() - parseDate(b.date!).getTime())
+  const first = future[0]
+  if (!first) return null
+  const dayStart = startOfDay(parseDate(first.date!)).getTime()
+  const dayEnd = dayStart + 86_400_000
+  const comps = future.filter((c) => {
+    const t = parseDate(c.date!).getTime()
+    return t >= dayStart && t < dayEnd
+  })
+  return {
+    date: new Date(dayStart),
+    label: formatWeekdayShortDate(new Date(dayStart)),
+    comps,
+    favCount: comps.filter((c) => favorites.isFavoriteCompetition(c.id)).length,
+  }
+})
 
 function shiftMonth(delta: number) {
   const next = new Date(cursor.value)
@@ -152,31 +177,36 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 <template>
   <div class="space-y-5">
     <div class="mx-auto max-w-sm space-y-5">
-      <div class="flex items-center justify-center gap-1">
-        <button
-          type="button"
-          aria-label="Previous month"
-          class="text-muted-foreground hover:text-foreground hover:bg-accent flex size-11 items-center justify-center rounded-full"
-          @click="shiftMonth(-1)"
-        >
-          <ChevronLeft class="size-4" />
-        </button>
-        <h2 class="text-4xl font-medium tracking-tight">
+      <div class="flex items-center gap-1">
+        <h2 class="flex-1 text-4xl font-medium tracking-tight">
           {{ monthLabel }}
         </h2>
         <button
           type="button"
+          aria-label="Previous month"
+          class="bg-chip text-muted-foreground hover:text-foreground flex h-9 items-center justify-center rounded-full px-2.5"
+          @click="shiftMonth(-1)"
+        >
+          <ChevronLeft class="size-4" />
+        </button>
+        <button
+          type="button"
+          class="bg-chip text-muted-foreground hover:text-foreground flex h-9 items-center rounded-full px-3 font-medium"
+          @click="goToToday"
+        >
+          Today
+        </button>
+        <button
+          type="button"
           aria-label="Next month"
-          class="text-muted-foreground hover:text-foreground hover:bg-accent flex size-11 items-center justify-center rounded-full"
+          class="bg-chip text-muted-foreground hover:text-foreground flex h-9 items-center justify-center rounded-full px-2.5"
           @click="shiftMonth(1)"
         >
           <ChevronRight class="size-4" />
         </button>
       </div>
 
-      <div
-        class="text-foreground/65 grid grid-cols-7 text-xs text-eyebrow"
-      >
+      <div class="text-foreground/65 text-eyebrow grid grid-cols-7 text-xs">
         <div v-for="(label, i) in dowLabels" :key="i" class="py-1 text-center">
           {{ label }}
         </div>
@@ -196,7 +226,7 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
               'hover:bg-accent',
             cell.eventCount && !isSelected(cell.date) && 'bg-card shadow-sm hover:shadow',
             isSelected(cell.date) && 'bg-blue-paper shadow-sm',
-            cell.isToday && !isSelected(cell.date) && 'ring-foreground/30 ring-1',
+            cell.isToday && 'ring-secondary ring-2',
           ]"
           @click="selectDay(cell)"
         >
@@ -258,10 +288,28 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
       </div>
     </div>
 
-    <EmptyState
-      v-else-if="selected"
-      :icon="CalendarOff"
-      :title="`Nothing on ${sectionLabel}`"
-    />
+    <template v-else-if="selected">
+      <EmptyState
+        :icon="CalendarOff"
+        :title="`Nothing on ${sectionLabel}`"
+        class="py-4!"
+      />
+      <section v-if="upcomingDay" class="space-y-2 pt-2">
+        <SectionHeader
+          :label="`Upcoming · ${upcomingDay.label}`"
+          :count="upcomingDay.comps.length"
+          :favs="upcomingDay.favCount"
+        />
+        <ul>
+          <CompetitionRow
+            v-for="competition in upcomingDay.comps"
+            :key="competition.id"
+            :competition="competition"
+            :to="props.linkTo(competition)"
+            :show-date="false"
+          />
+        </ul>
+      </section>
+    </template>
   </div>
 </template>
