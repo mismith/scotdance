@@ -29,10 +29,6 @@
   --color-blue-paper: var(--blue-paper);
   --color-pink-paper: var(--pink-paper);
   --color-chip: var(--chip);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
   --font-serif: 'Newsreader', 'New York', Georgia, ui-serif, serif;
 }
 
@@ -105,6 +101,22 @@
   --pink-paper: oklch(0.25 0.06 5);
   --chip: oklch(0.255 0.014 15);
 }
+
+/* @supports (corner-shape: squircle) {
+  :root {
+    --radius-sm: 0.75rem;
+    --radius-md: 1rem;
+    --radius-lg: 1.25rem;
+    --radius-xl: 1.5rem;
+    --radius-2xl: 1.75rem;
+    --radius-3xl: 2rem;
+  }
+  *,
+  *::before,
+  *::after {
+    corner-shape: superellipse(1.5);
+  }
+} */
 
 @layer base {
   * {
@@ -220,6 +232,7 @@
     from,
     to {
       border-radius: 9999px;
+      /* corner-shape: superellipse(1.5); */
       background: color-mix(in oklch, var(--color-nav) 90%, transparent);
     }
   }

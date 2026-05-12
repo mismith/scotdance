@@ -148,9 +148,7 @@ function closeStaff() {
       <CompChip
         :name="competition.name"
         :image="competition.image"
-        :size="72"
-        :radius="16"
-        class="[view-transition-name:nav-avatar]"
+        class="size-18 rounded-2xl [view-transition-name:nav-avatar]"
       />
       <h1
         class="text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit] [view-transition-name:nav-name]"

@@ -5,25 +5,19 @@ const props = withDefaults(
   defineProps<{
     name?: string | null
     image?: string | null
-    size?: number
-    radius?: number
   }>(),
   {
     name: '',
     image: null,
-    size: 48,
-    radius: 12,
   },
 )
 
 const mark = computed(() => (props.name ?? '').trim().charAt(0).toUpperCase() || '?')
-const fontSize = computed(() => Math.round(props.size * 0.42))
 </script>
 
 <template>
   <div
-    :style="{ width: `${size}px`, height: `${size}px`, borderRadius: `${radius}px` }"
-    class="text-primary-foreground relative flex shrink-0 items-center justify-center overflow-hidden"
+    class="text-primary-foreground @container relative flex shrink-0 items-center justify-center overflow-hidden"
   >
     <img
       v-if="image"
@@ -52,10 +46,7 @@ const fontSize = computed(() => Math.round(props.size * 0.42))
           );
         "
       />
-      <span
-        class="relative font-medium leading-none"
-        :style="{ fontSize: `${fontSize}px` }"
-      >
+      <span class="relative font-medium leading-none" style="font-size: 42cqw">
         {{ mark }}
       </span>
     </template>

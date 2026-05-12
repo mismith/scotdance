@@ -105,7 +105,7 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
         <CompChip
           :name="recentComp.competition?.name"
           :image="recentComp.competition?.image"
-          :size="40"
+          class="size-10 rounded-xl"
         />
         <div class="min-w-0 flex-1">
           <div
