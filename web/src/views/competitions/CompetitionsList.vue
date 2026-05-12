@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { onClickOutside, useLocalStorage } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
-import { Check, SlidersVertical } from '@lucide/vue'
+import { SlidersVertical } from '@lucide/vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import CompetitionRow from '@/components/CompetitionRow.vue'
 import CompetitionsCalendar from '@/components/CompetitionsCalendar.vue'
@@ -31,7 +31,9 @@ const filtersMenuRef = ref<HTMLElement | null>(null)
 const filtersOpen = ref(false)
 onClickOutside(filtersMenuRef, () => (filtersOpen.value = false))
 
-const includeArchived = useLocalStorage('competitions:includeArchived', false)
+// "Upcoming" doesn't need archived data; "Past" / "All" do. Tying these together
+// avoids a separate toggle — "All" already means everything.
+const includeArchived = computed(() => filter.value !== 'upcoming')
 
 const { competitions, loading } = useCompetitions(includeArchived)
 
@@ -219,14 +221,13 @@ const monthGroups = computed<MonthGroup[]>(() => {
                   :key="opt.id"
                   type="button"
                   :class="[
-                    'flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-sm font-medium',
+                    'flex flex-1 items-center justify-center rounded-md px-2 py-1.5 text-sm font-medium',
                     filter === opt.id
                       ? 'bg-card text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground',
                   ]"
                   @click="filter = opt.id"
                 >
-                  <Check v-if="filter === opt.id" class="size-3" />
                   {{ opt.label }}
                 </button>
               </div>
@@ -272,17 +273,9 @@ const monthGroups = computed<MonthGroup[]>(() => {
         </div>
         <div
           v-else-if="!competitions.length"
-          class="text-muted-foreground space-y-2 text-lg italic"
+          class="text-muted-foreground text-lg italic"
         >
-          <div>No competitions found.</div>
-          <button
-            v-if="!includeArchived"
-            type="button"
-            class="hover:text-foreground font-sans not-italic underline"
-            @click="includeArchived = true"
-          >
-            Load archived competitions
-          </button>
+          No competitions found.
         </div>
         <div
           v-else-if="!visibleCompetitions.length"
@@ -315,15 +308,6 @@ const monthGroups = computed<MonthGroup[]>(() => {
           </section>
         </template>
 
-        <div v-if="competitions.length && !includeArchived" class="pt-2 text-center">
-          <button
-            type="button"
-            class="text-muted-foreground hover:text-foreground underline"
-            @click="includeArchived = true"
-          >
-            Load archived competitions
-          </button>
-        </div>
       </template>
     </main>
   </div>
