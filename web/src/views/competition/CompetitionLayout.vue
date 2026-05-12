@@ -57,7 +57,7 @@ const locationLabel = computed(() => competition.value?.location ?? '')
 
 <template>
   <div class="flex flex-1 flex-col">
-    <nav class="pt-(--safe-top) pointer-events-none fixed inset-x-0 top-0 z-30 px-3">
+    <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-3 pt-(--safe-top)">
       <div class="mx-auto flex max-w-3xl items-center gap-2 pt-3">
         <RouterLink
           v-if="backTo"
@@ -79,7 +79,7 @@ const locationLabel = computed(() => competition.value?.location ?? '')
         <RouterLink
           v-if="mode !== 'info'"
           :to="{ name: 'competition.info', params: { competitionId } }"
-          class="bg-nav/90 text-nav-foreground pointer-events-auto flex min-w-0 flex-1 items-center gap-2 rounded-full p-1 pr-4 shadow-lg backdrop-blur-xl [view-transition-name:nav-pill] hover:opacity-90"
+          class="bg-nav/90 text-nav-foreground pointer-events-auto flex min-w-0 flex-1 items-center gap-2 rounded-full p-1 pr-4 shadow-lg backdrop-blur-xl [view-transition-class:fixed-height] [view-transition-name:nav-pill] hover:opacity-90"
           :title="competition?.name ?? ''"
         >
           <CompChip
@@ -123,7 +123,7 @@ const locationLabel = computed(() => competition.value?.location ?? '')
       </div>
     </nav>
 
-    <main class="pt-(--chrome-top) mx-auto w-full max-w-3xl flex-1 px-4 pb-4">
+    <main class="mx-auto w-full max-w-3xl flex-1 px-4 pt-(--chrome-top) pb-4">
       <div v-if="loading" class="space-y-5" aria-busy="true" aria-live="polite">
         <span class="sr-only">Loading competition…</span>
         <header class="space-y-3 pr-16">

@@ -30,12 +30,12 @@ const initials = computed(() => {
 
 <template>
   <div class="flex flex-1 flex-col">
-    <nav class="pt-(--safe-top) pointer-events-none fixed inset-x-0 top-0 z-30 px-3">
+    <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-3 pt-(--safe-top)">
       <div class="mx-auto flex max-w-3xl items-center gap-2 pt-3">
         <RouterLink
           v-if="!isInfo"
           :to="{ name: 'dancer.info', params: { dancerId } }"
-          class="bg-nav/90 text-nav-foreground pointer-events-auto flex min-w-0 flex-1 items-center gap-2 rounded-full p-1 pr-4 shadow-lg backdrop-blur-xl [view-transition-name:nav-pill] hover:opacity-90"
+          class="bg-nav/90 text-nav-foreground pointer-events-auto flex min-w-0 flex-1 items-center gap-2 rounded-full p-1 pr-4 shadow-lg backdrop-blur-xl [view-transition-class:fixed-height] [view-transition-name:nav-pill] hover:opacity-90"
           :title="displayName"
         >
           <div
@@ -49,10 +49,7 @@ const initials = computed(() => {
             >
               {{ displayName || (loading ? 'Loading…' : 'Dancer') }}
             </div>
-            <div
-              v-if="location"
-              class="mt-1 truncate text-xs leading-none opacity-70"
-            >
+            <div v-if="location" class="mt-1 truncate text-xs leading-none opacity-70">
               {{ location }}
             </div>
           </div>
@@ -77,7 +74,7 @@ const initials = computed(() => {
       </div>
     </nav>
 
-    <main class="pt-(--chrome-top) mx-auto w-full max-w-3xl flex-1 px-4 pb-4">
+    <main class="mx-auto w-full max-w-3xl flex-1 px-4 pt-(--chrome-top) pb-4">
       <EmptyState
         v-if="!loading && notFound"
         :icon="UserSearch"
