@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
-import { CalendarDays, ChevronRight } from '@lucide/vue'
+import { CalendarDays, ChevronRight, ClipboardList, Table, Trophy } from '@lucide/vue'
+import type { FunctionalComponent } from 'vue'
 import { useCompetition } from '@/composables/useCompetition'
-import { blocks, days, events, slugline } from '@/lib/schedule'
+import { blocks, dances, days, events, slugline } from '@/lib/schedule'
+import type { ScheduleEvent } from '@/types/competition'
 import { formatWeekday } from '@/lib/format'
 import DisclosureHeader from '@/components/DisclosureHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -33,6 +35,16 @@ function toggle(dayId: string, blockId: string, hasEvents: boolean) {
     ...expanded.value,
     [dayId]: { ...current, [blockId]: !isExpanded(dayId, blockId, hasEvents) },
   }
+}
+
+function eventIcon(event: ScheduleEvent): FunctionalComponent | null {
+  const name = event.name ?? ''
+  if (/results?|awards?/i.test(name)) return Trophy as unknown as FunctionalComponent
+  if (/registration|check[- ]?in/i.test(name))
+    return ClipboardList as unknown as FunctionalComponent
+  if (dances(event).some((d) => Boolean(d.danceId)))
+    return Table as unknown as FunctionalComponent
+  return null
 }
 
 </script>
@@ -95,6 +107,14 @@ function toggle(dayId: string, blockId: string, hasEvents: boolean) {
                 }"
                 class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
               >
+                <span
+                  v-if="eventIcon(event)"
+                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full"
+                  aria-hidden="true"
+                >
+                  <component :is="eventIcon(event)" class="size-4" />
+                </span>
+                <span v-else class="size-9 shrink-0" aria-hidden="true" />
                 <div class="min-w-0 flex-1">
                   <div
                     class="text-item-title truncate"
