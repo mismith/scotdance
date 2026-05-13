@@ -3,6 +3,7 @@ import { computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 import {
+  AlertTriangle,
   Check,
   ChevronRight,
   CircleDashed,
@@ -11,7 +12,12 @@ import {
 } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useFavoritesStore } from '@/stores/favorites'
-import { findGroupDancers, hasGroupAnyResults, isGroupInProgress } from '@/lib/results'
+import {
+  findGroupDancers,
+  groupHasPlaceholderDancers,
+  hasGroupAnyResults,
+  isGroupInProgress,
+} from '@/lib/results'
 import type { Category, EnrichedGroup } from '@/types/competition'
 import DisclosureHeader from '@/components/DisclosureHeader.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -26,6 +32,7 @@ const {
   dancers,
   dances,
   results,
+  points,
   loadDancers,
   loadResults,
 } = useCompetition()
@@ -70,6 +77,10 @@ function groupHasFavorite(group: EnrichedGroup): boolean {
   return findGroupDancers(group.id, dancers.value).some((d) =>
     favorites.isFavoriteDancer(d.id),
   )
+}
+
+function groupHasUnknownDancers(group: EnrichedGroup): boolean {
+  return groupHasPlaceholderDancers(group, results.value, points.value)
 }
 
 interface GroupStatus {
@@ -164,10 +175,15 @@ const vt = useVtScope('group')
               </span>
               <div class="min-w-0 flex-1">
                 <div
-                  class="text-item-title truncate [view-transition-class:fit_nav-title]"
+                  class="text-item-title flex items-center gap-1.5 truncate [view-transition-class:fit_nav-title]"
                   :style="{ viewTransitionName: vt.name(group.id, 'name') }"
                 >
-                  {{ group.name || group.fullName }}
+                  <span class="truncate">{{ group.name || group.fullName }}</span>
+                  <AlertTriangle
+                    v-if="groupHasUnknownDancers(group)"
+                    class="size-3.5 shrink-0 text-amber-500"
+                    title="Contains unknown dancers — some placements couldn't be matched to a registered dancer."
+                  />
                 </div>
                 <div
                   v-if="groupStatus(group).state !== 'done'"

@@ -236,6 +236,49 @@ function dancesForGroup(group: EnrichedGroup, dances: EnrichedDance[]): Enriched
   return list
 }
 
+// Unmatched dancer IDs are stored as a JS timestamp (fully numeric string).
+// Real IDs are Firebase push keys (alphanumeric).
+export function isPlaceholderDancerId(id: string | undefined | null): boolean {
+  return !!id && /^\d+$/.test(id)
+}
+
+export function groupHasPlaceholderDancers(
+  group: EnrichedGroup,
+  results: ResultsTree,
+  points: PointsTree,
+): boolean {
+  const groupResults = results?.[group.id]
+  const groupPoints = points?.[group.id]
+  // Walk whatever's actually in the tree — some legacy data has results stored
+  // under (groupId, danceId) combos where the dance isn't claimed in groupIds,
+  // and we still want to surface placeholders there.
+  if (groupResults && typeof groupResults === 'object') {
+    for (const raw of Object.values(groupResults)) {
+      if (!Array.isArray(raw)) continue
+      for (const entry of raw) {
+        if (typeof entry !== 'string') continue
+        if (entry.startsWith(REVERSE_PREFIX)) continue
+        const dancerId = entry.endsWith(TIE_SUFFIX)
+          ? entry.slice(0, -TIE_SUFFIX.length)
+          : entry
+        if (isPlaceholderDancerId(dancerId)) return true
+      }
+    }
+  }
+  if (groupPoints && typeof groupPoints === 'object') {
+    for (const dancePoints of Object.values(groupPoints)) {
+      if (!dancePoints || typeof dancePoints !== 'object') continue
+      for (const judgeIds of Object.values(dancePoints)) {
+        if (!Array.isArray(judgeIds)) continue
+        for (const dancerId of judgeIds) {
+          if (isPlaceholderDancerId(dancerId)) return true
+        }
+      }
+    }
+  }
+  return false
+}
+
 export function hasGroupAnyResults(
   group: EnrichedGroup,
   dances: EnrichedDance[],
