@@ -270,6 +270,7 @@ function closeJudge() {
 
     <DrawDialog
       :group="drawGroup"
+      :dance="drawDance"
       :event-name="event?.name ?? undefined"
       :dance-name="drawDanceName"
       @close="closeDraw"

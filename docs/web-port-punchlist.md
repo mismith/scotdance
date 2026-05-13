@@ -31,18 +31,18 @@ Admin-only gaps are intentionally omitted (e.g. status badges, tie-edit toggle, 
 - [ ] **`EmptyResults` differentiation** — "No Dancers Placed" vs "No Callbacks" vs "TBD" (new shows generic "Not yet posted") ([EmptyResults.vue:7-12](../src/components/EmptyResults.vue))
 - [ ] **Trophy sponsor line in Overall** — `{{ currentGroup.trophy }} Trophy Sponsor` ([Results.vue:131-143](../src/views/competition/Results.vue))
 - [ ] **Auto-scroll-to-new-results toggle** in Results menu ([Results.vue:80-96,394-401](../src/views/competition/Results.vue))
-- [ ] **"All Dancers" pseudo-dance** showing full group roster ([Results.vue:319-322](../src/views/competition/Results.vue))
+- [x] **"All Dancers" pseudo-dance** showing full group roster ([Results.vue:319-322](../src/views/competition/Results.vue))
 - [ ] **Category-level favorite star** — `mdiStar` next to category name if any group inside has favorites ([Results.vue:20-22](../src/views/competition/Results.vue))
 - [x] **Placeholder dancer striped pattern** + HelpTip explaining placeholder dancers — solved differently: new app renders unmatched dancers as an explicit "Unknown dancer" row with dashed-border avatar ([Group.vue:316-328](../web/src/views/competition/Group.vue)), which is more legible than the old stripe. HelpTip explainer deferred to the HelpTip system port (line 44).
 - [ ] **Pre-open accordion on group page** when arriving from a dancer dance link (new uses hash anchor only) ([DancerReportResults.vue:5-6](../src/components/DancerReportResults.vue))
 
 ### Cross-cutting
-- [ ] **PWA update prompt** with version diff + platform-aware store link (`itms-apps://` / `market://` / web reload) ([PromptToUpdate.vue:14-19,55-66](../src/components/PromptToUpdate.vue), [store.js:80-86](../src/store.js))
+- [x] **PWA update prompt** with version diff + platform-aware store link (`itms-apps://` / `market://` / web reload) ([PromptToUpdate.vue:14-19,55-66](../src/components/PromptToUpdate.vue), [store.js:80-86](../src/store.js))
 - [ ] **Crisp live chat integration** — feedback menu, mismatch reporting, support channel ([App.vue:207-220,432-434](../src/App.vue), [store.js:249-264](../src/store.js))
 - [ ] **`RequiresAuthDialog`** — "Track your favourites", "Pin for easy access", "Submit your competition" with explanatory copy + AccountButtons ([RequiresAuthDialog.vue](../src/components/RequiresAuthDialog.vue), [App.vue:255-284](../src/App.vue))
 - [ ] **Wire favorite/pin toggles into post-login queue** — `auth.ts` has the queue; `favorites.ts:toggleDancer`/`toggleCompetition` don't use it for unauth case ([store.js:212-247](../src/store.js))
 - [ ] **`HelpTip` system** — context tooltips for `championship-points`, `placeholder-dancer`, `presets` ([HelpTip.vue](../src/components/HelpTip.vue))
-- [ ] **Settings page** — dark mode toggle + "Reset app cache" with explanation ([Settings.vue](../src/views/Settings.vue))
+- [x] **Settings page** — dark mode toggle + "Reset app cache" with explanation ([Settings.vue](../src/views/Settings.vue))
 - [x] **Policies / Privacy / Terms page** — legally meaningful ([Policies.vue](../src/views/Policies.vue))
 - [ ] **Feature flags** bound from Firebase `/featureFlags` + "viewed history" badges for new menu items ([store.js:98-104,121-136,266-268](../src/store.js))
 
@@ -65,7 +65,7 @@ Risk shipping broken-looking pages.
 - [ ] **`competitionExtender.$relevance`** — `Math.abs(now - date)` for "nearest to today" sort tiebreaker ([competition.js:31-39](../src/helpers/competition.js))
 - [x] **`sortByUserDragOrder`** — new app already read `_order`, but used `?? 0` so unset items collided with explicit `_order = 0` at the front (real regression in 1 dances + 1 staff comp). Replaced with shared `byDragOrder` helper that sinks unset items to end (matches old `arr.length` fallback), tiebreak by push id. Applied to staff, categories, groups, dances, platforms ([useCompetition.ts](../web/src/composables/useCompetition.ts)).
 - [ ] **Submission form `warningRules`** — client-side regex warnings for location format ("City, AB") and RSOBHD number format ([schemas/submissions.js](../src/schemas/submissions.js))
-- [ ] **`drawDialog` placeholder fallback** — verify new `DrawDialog` substitutes `getPlaceholderDancer()` for missing draw entries ([Schedule.vue:150-176](../src/views/competition/Schedule.vue))
+- [x] **`drawDialog` placeholder fallback** — bigger than the punchlist suggested: new app didn't load `draws` at all and DrawDialog was rendering group roster regardless of dance. Added `DrawsTree` type, fetched `draws` in `loadSchedule`, exposed via context. DrawDialog now reads `draws[group.id][dance.danceId]`, renders dancers in draw order, falls back to group-by-number when no draw exists, switches header label "Draw" ↔ "Order", and renders unmatched draw numbers as dashed-avatar "Unknown dancer" rows ([DrawDialog.vue](../web/src/components/DrawDialog.vue), [useCompetition.ts](../web/src/composables/useCompetition.ts), [Event.vue](../web/src/views/competition/Event.vue)). 6/16 dev comps have draws data.
 
 ---
 

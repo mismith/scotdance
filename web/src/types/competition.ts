@@ -11,6 +11,11 @@ export interface Competition {
   venue?: string
   address?: string
   location?: string
+  lat?: number
+  lng?: number
+  country?: string
+  region?: string
+  locality?: string
   registrationURL?: string
   registrationStart?: number
   registrationEnd?: number
@@ -117,6 +122,9 @@ export type ResultsTree = Record<
   Record<string, DancePlacing[] | false | undefined>
 >
 export type PointsTree = Record<string, Record<string, Record<string, string[]>>>
+
+// draws[groupId][danceId] = string[] of dancer numbers in draw order.
+export type DrawsTree = Record<string, Record<string, string[] | undefined>>
 
 export interface Platform {
   id: string
