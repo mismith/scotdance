@@ -56,7 +56,7 @@ const locationLabel = computed(() => competition.value?.location ?? '')
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col">
+  <div class="flex flex-1 flex-col pb-(--chrome-bottom)">
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-3 pt-(--safe-top)">
       <div class="mx-auto flex max-w-3xl items-center gap-2 pt-3">
         <RouterLink

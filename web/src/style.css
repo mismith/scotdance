@@ -76,7 +76,9 @@
   /* Total inset needed to clear the floating top/bottom chrome — chrome
      height + safe-area inset. */
   --chrome-top: calc(5rem + var(--safe-top));
-  --chrome-bottom: calc(6rem + var(--safe-bottom));
+  /* Sized so the nav pill (4rem tall) sits with a 0.75rem gap above and
+     below — plus the device's own safe-area inset for the home indicator. */
+  --chrome-bottom: calc(5.5rem + var(--safe-bottom));
 }
 
 /* Home has no floating top chrome — drop the 5rem so #features anchors land

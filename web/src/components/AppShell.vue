@@ -17,7 +17,7 @@ const showGlobalNav = computed(() => {
 </script>
 
 <template>
-  <div class="flex min-h-svh flex-col pb-(--chrome-bottom)">
+  <div class="flex min-h-dvh flex-col">
     <slot />
 
     <GlobalBottomNav v-if="showGlobalNav" />
