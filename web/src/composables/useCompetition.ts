@@ -227,11 +227,17 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
 
       dancers.value = rawDancers
         .filter((d) => d.firstName || d.lastName)
-        .map<EnrichedDancer>((d) => ({
-          ...d,
-          fullName: dancerFullName(d),
-          group: d.groupId ? enrichedGroupsById.get(d.groupId) : undefined,
-        }))
+        .map<EnrichedDancer>((d) => {
+          // RTDB stores `number` as a string; coerce so numeric sort works.
+          const parsed =
+            typeof d.number === 'string' ? Number.parseInt(d.number, 10) : d.number
+          return {
+            ...d,
+            number: Number.isFinite(parsed as number) ? (parsed as number) : undefined,
+            fullName: dancerFullName(d),
+            group: d.groupId ? enrichedGroupsById.get(d.groupId) : undefined,
+          }
+        })
 
       dancersLoaded = true
     } catch (e) {
