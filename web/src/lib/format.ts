@@ -8,6 +8,15 @@ export function formatHumanURL(url: string): string {
   return url.replace(/^https?:\/\//i, '').replace(/\/$/, '')
 }
 
+// First + last word initial. "John Doe" → "JD", "Madonna" → "M", "" → "?".
+export function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return '?'
+  const first = parts[0][0]?.toUpperCase() ?? ''
+  const last = parts.length > 1 ? (parts.at(-1)?.[0]?.toUpperCase() ?? '') : ''
+  return `${first}${last}` || '?'
+}
+
 const MS_PER_DAY = 86_400_000
 
 /**

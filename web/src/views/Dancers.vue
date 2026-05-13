@@ -10,6 +10,7 @@ import { useDancersStore } from '@/stores/dancers'
 import { useRecentDancers } from '@/composables/useRecentDancers'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import { initialsOf } from '@/lib/format'
 import type { SearchDancerGroup } from '@/lib/searchDancers'
 import { useVtScope } from '@/lib/viewTransitionFocus'
 
@@ -66,12 +67,7 @@ const favoriteEntries = computed<FavoriteEntry[]>(() => {
     grouped.set(name, (grouped.get(name) ?? 0) + 1)
   }
   return [...grouped.entries()]
-    .map<FavoriteEntry>(([name, count]) => {
-      const parts = name.split(/\s+/).filter(Boolean)
-      const first = parts[0]?.charAt(0).toUpperCase() ?? '?'
-      const last = parts.length > 1 ? parts.at(-1)!.charAt(0).toUpperCase() : ''
-      return { name, initials: `${first}${last}` || '?', count }
-    })
+    .map<FavoriteEntry>(([name, count]) => ({ name, initials: initialsOf(name), count }))
     .sort((a, b) => a.name.localeCompare(b.name))
 })
 
@@ -92,13 +88,6 @@ function dancerSlug(name: string) {
 
 function locationOf(group: SearchDancerGroup) {
   return group.dancers.find((d) => d.location)?.location ?? ''
-}
-
-function initialsOf(name: string) {
-  const parts = name.split(/\s+/).filter(Boolean)
-  const first = parts[0]?.charAt(0).toUpperCase() ?? '?'
-  const last = parts.length > 1 ? parts.at(-1)!.charAt(0).toUpperCase() : ''
-  return `${first}${last}` || '?'
 }
 
 const recentList = computed(() => {

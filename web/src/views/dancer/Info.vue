@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { ChevronRight } from '@lucide/vue'
 import { useDancerProfile } from '@/composables/useDancerProfile'
 import { useFavoritesStore } from '@/stores/favorites'
+import { initialsOf } from '@/lib/format'
 import CompChip from '@/components/CompChip.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
@@ -11,10 +12,7 @@ const profile = useDancerProfile()
 const { displayName, location, appearances, loading } = profile
 const favorites = useFavoritesStore()
 
-const initials = computed(() => {
-  const parts = displayName.value.split(' ').filter(Boolean)
-  return (parts[0]?.charAt(0) ?? '?') + (parts.at(-1)?.charAt(0) ?? '')
-})
+const initials = computed(() => initialsOf(displayName.value))
 
 const isFavorite = computed(() =>
   appearances.value.some((a) => favorites.isFavoriteDancer(a.hit.id)),
