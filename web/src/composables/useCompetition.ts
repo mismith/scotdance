@@ -93,6 +93,15 @@ function snapshotToArray<T extends { id: string }>(
   return Object.entries(value).map(([id, v]) => ({ id, ...v }) as T)
 }
 
+// Mirrors old sortByUserDragOrder: items without `_order` sink to the end
+// (rather than colliding with explicit `_order = 0`), ties broken by push id.
+function byDragOrder<T extends { id: string; _order?: number }>(a: T, b: T) {
+  const ao = a._order ?? Number.POSITIVE_INFINITY
+  const bo = b._order ?? Number.POSITIVE_INFINITY
+  if (ao !== bo) return ao - bo
+  return a.id.localeCompare(b.id)
+}
+
 export function provideCompetition(competitionId: Ref<string>): CompetitionContext {
   const me = useMeStore()
   const rawCompetition = ref<Competition | null>(null)
@@ -187,9 +196,7 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     if (staffLoaded || !competitionId.value) return
     try {
       const snap = await get(competitionStaffRef(competitionId.value))
-      staff.value = snapshotToArray<StaffMember>(snap.val()).sort(
-        (a, b) => (a._order ?? 0) - (b._order ?? 0),
-      )
+      staff.value = snapshotToArray<StaffMember>(snap.val()).sort(byDragOrder)
       staffLoaded = true
     } catch (e) {
       error.value = e as Error
@@ -218,12 +225,8 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
         }),
       )
 
-      categories.value = [...rawCategories].sort(
-        (a, b) => (a._order ?? 0) - (b._order ?? 0),
-      )
-      groups.value = [...enrichedGroupsById.values()].sort(
-        (a, b) => (a._order ?? 0) - (b._order ?? 0),
-      )
+      categories.value = [...rawCategories].sort(byDragOrder)
+      groups.value = [...enrichedGroupsById.values()].sort(byDragOrder)
 
       dancers.value = rawDancers
         .filter((d) => d.firstName || d.lastName)
@@ -258,7 +261,7 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
       const rawDances = snapshotToArray<Dance>(dancesSnap.val())
       dances.value = rawDances
         .map<EnrichedDance>((d) => ({ ...d, fullName: danceFullName(d) }))
-        .sort((a, b) => (a._order ?? 0) - (b._order ?? 0))
+        .sort(byDragOrder)
 
       results.value = (resultsSnap.val() as ResultsTree | null) ?? {}
       points.value = (pointsSnap.val() as PointsTree | null) ?? {}
@@ -282,9 +285,7 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
       const sval = scheduleSnap.val()
       schedule.value = sval && typeof sval === 'object' ? (sval as Schedule) : null
       scheduleResolved.value = true
-      platforms.value = snapshotToArray<Platform>(platformsSnap.val()).sort(
-        (a, b) => (a._order ?? 0) - (b._order ?? 0),
-      )
+      platforms.value = snapshotToArray<Platform>(platformsSnap.val()).sort(byDragOrder)
       scheduleLoaded = true
     } catch (e) {
       error.value = e as Error
