@@ -189,7 +189,7 @@ function scrollToFeatures(e: Event) {
           <h2 class="text-4xl font-medium tracking-tight md:text-5xl">FAQs</h2>
         </header>
 
-        <dl class="border-border/60 border-t">
+        <div class="border-border/60 border-t">
           <details
             v-for="(item, i) in faqs"
             :key="i"
@@ -201,19 +201,19 @@ function scrollToFeatures(e: Event) {
               <span class="text-foreground/40 w-8 shrink-0 font-medium tabular-nums">
                 {{ String(i + 1).padStart(2, '0') }}
               </span>
-              <dt class="flex-1 text-xl font-medium tracking-tight md:text-2xl">
+              <span class="flex-1 text-xl font-medium tracking-tight md:text-2xl">
                 {{ item.q }}
-              </dt>
+              </span>
               <ChevronDown
                 class="text-muted-foreground mt-1 size-5 shrink-0 transition-transform group-open:rotate-180"
               />
             </summary>
-            <dd
+            <div
               class="text-muted-foreground pr-9 pb-6 pl-12 leading-relaxed"
               v-html="item.a"
             />
           </details>
-        </dl>
+        </div>
       </div>
     </section>
 
