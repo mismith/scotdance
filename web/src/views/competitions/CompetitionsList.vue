@@ -44,7 +44,6 @@ const {
   region: locRegion,
   locality: locLocality,
   near: locNear,
-  enableNearMe,
 } = useLocationFilter()
 
 const showLocationSection = computed(() => view.value !== 'map')
@@ -74,9 +73,11 @@ function readFromQuery(): void {
   }
   if (typeof q.region === 'string') locRegion.value = q.region
   if (typeof q.locality === 'string') locLocality.value = q.locality
-  if (q.near === '1') {
-    if (!locNear.value) enableNearMe()
-  } else if (q.near !== undefined) {
+  // Never auto-enable Near me from the URL: iOS standalone PWAs silently
+  // block any geolocation request that isn't tied to a fresh user gesture,
+  // so resuming on mount would leave the toggle stuck on with no coords.
+  // The watch below will strip `near=1` from the URL on the next tick.
+  if (q.near !== undefined && locNear.value) {
     locNear.value = false
   }
   syncing = false

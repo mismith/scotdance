@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
-import type { Map as MaplibreMap, Marker } from 'maplibre-gl'
+import maplibregl, { type Map as MaplibreMap, type Marker as MaplibreMarker } from 'maplibre-gl'
 import Supercluster from 'supercluster'
 import { useLocalStorage } from '@vueuse/core'
-import { MapPinOff } from '@lucide/vue'
-import EmptyState from '@/components/EmptyState.vue'
 import MapVenueSheet from '@/components/MapVenueSheet.vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import { useFavoritesStore } from '@/stores/favorites'
 import { isBeforeToday, isSameDay } from '@/lib/format'
-import { createMap } from '@/lib/maplibre'
+import { createMap, persistCamera } from '@/lib/maplibre'
 import { groupByVenue, type VenueGroup } from '@/lib/venues'
 
 type Filter = 'upcoming' | 'past' | 'all'
@@ -17,7 +15,7 @@ type Filter = 'upcoming' | 'past' | 'all'
 const filter = useLocalStorage<Filter>('competitions:filter', 'upcoming')
 const includeArchived = computed(() => filter.value !== 'upcoming')
 
-const { competitions, loading } = useCompetitions(includeArchived)
+const { competitions } = useCompetitions(includeArchived)
 
 const dateFiltered = computed<CompetitionListItem[]>(() => {
   if (filter.value === 'upcoming')
@@ -37,8 +35,6 @@ const activeVenue = ref<VenueGroup | null>(null)
 
 const venueGroups = computed<VenueGroup[]>(() => groupByVenue(dateFiltered.value))
 
-const hasPins = computed(() => venueGroups.value.length > 0)
-
 interface PinProps {
   cluster: false
   idx: number
@@ -52,7 +48,7 @@ interface ClusterProps {
 type Feature = GeoJSON.Feature<GeoJSON.Point, PinProps | ClusterProps>
 
 const cluster = shallowRef<Supercluster<PinProps, ClusterProps> | null>(null)
-const markers = new Map<string, Marker>()
+const markers = new Map<string, MaplibreMarker>()
 
 function rebuildCluster(): void {
   const sc = new Supercluster<PinProps, ClusterProps>({
@@ -74,11 +70,10 @@ function clearMarkers(): void {
   markers.clear()
 }
 
-async function renderMarkers(): Promise<void> {
+function renderMarkers(): void {
   const map = mapInstance.value
   const sc = cluster.value
   if (!map || !sc) return
-  const { Marker } = await import('maplibre-gl')
 
   const b = map.getBounds()
   const bbox: [number, number, number, number] = [
@@ -123,7 +118,10 @@ async function renderMarkers(): Promise<void> {
       })
     }
 
-    const marker = new Marker({ element: el, anchor: props.cluster ? 'center' : 'bottom' })
+    const marker = new maplibregl.Marker({
+      element: el,
+      anchor: props.cluster ? 'center' : 'bottom',
+    })
       .setLngLat([lng, lat])
       .addTo(map)
     markers.set(key, marker)
@@ -137,32 +135,67 @@ async function renderMarkers(): Promise<void> {
   }
 }
 
-function fitToPins(): void {
-  const map = mapInstance.value
-  const groups = venueGroups.value
-  if (!map || groups.length === 0) return
-  if (groups.length === 1) {
-    map.easeTo({ center: [groups[0].lng, groups[0].lat], zoom: 9 })
-    return
-  }
-  import('maplibre-gl').then(({ LngLatBounds }) => {
-    const bounds = new LngLatBounds()
-    for (const g of groups) bounds.extend([g.lng, g.lat])
-    map.fitBounds(bounds, { padding: 48, maxZoom: 9, duration: 0 })
-  })
+// Resolve a CSS length variable to pixels — used to tell MapLibre how much
+// of the viewport is occluded by the floating bottom nav.
+function cssLengthPx(name: string): number {
+  const probe = document.createElement('div')
+  probe.style.cssText = `position:absolute;visibility:hidden;height:var(${name})`
+  document.body.appendChild(probe)
+  const px = probe.getBoundingClientRect().height
+  probe.remove()
+  return px
 }
 
-onMounted(async () => {
+onMounted(() => {
   if (!mapContainer.value) return
-  const map = await createMap(mapContainer.value)
+  const map = createMap(mapContainer.value)
   mapInstance.value = map
+  // Reserve the bottom chrome (floating nav) as occluded area so fitBounds,
+  // GeolocateControl pans, and popups all stay above it.
+  map.setPadding({ top: 0, bottom: cssLengthPx('--chrome-bottom'), left: 0, right: 0 })
+  const geolocate = new maplibregl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: true },
+    showUserLocation: true,
+    fitBoundsOptions: { maxZoom: 12, duration: 400 },
+  })
+  map.addControl(geolocate, 'top-right')
+
+  // Show a one-shot user-location dot on load if permission is already
+  // granted — without GeolocateControl.trigger()'s pan animation, which
+  // would overwrite the restored camera. Uses stock MapLibre CSS so it's
+  // visually identical to the control-painted dot.
+  let userMarker: maplibregl.Marker | null = null
+  navigator.permissions
+    ?.query({ name: 'geolocation' as PermissionName })
+    .then((status) => {
+      if (status.state !== 'granted') return
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const el = document.createElement('div')
+        el.className = 'maplibregl-user-location-dot'
+        userMarker = new maplibregl.Marker({ element: el })
+          .setLngLat([pos.coords.longitude, pos.coords.latitude])
+          .addTo(map)
+      })
+    })
+    .catch(() => {})
+  geolocate.on('geolocate', () => {
+    userMarker?.remove()
+    userMarker = null
+  })
   map.on('load', () => {
     mapReady.value = true
+    // MapLibre's compact attribution starts expanded; collapse it on load
+    // so it doesn't eat half the bottom of the map until first interaction.
+    map.getContainer()
+      .querySelector('.maplibregl-ctrl-attrib.maplibregl-compact-show')
+      ?.classList.remove('maplibregl-compact-show')
     rebuildCluster()
-    fitToPins()
     renderMarkers()
   })
-  map.on('moveend', renderMarkers)
+  map.on('moveend', () => {
+    persistCamera(map)
+    renderMarkers()
+  })
   map.on('zoomend', renderMarkers)
 })
 
@@ -181,22 +214,8 @@ watch(venueGroups, () => {
 </script>
 
 <template>
-  <div class="relative h-[70vh] min-h-100 overflow-hidden rounded-2xl border">
-    <div ref="mapContainer" class="absolute inset-0" />
-
-    <div
-      v-if="mapReady && !hasPins && !loading"
-      class="bg-background/90 absolute inset-x-4 top-1/2 -translate-y-1/2 rounded-2xl border p-6 backdrop-blur"
-    >
-      <EmptyState
-        :icon="MapPinOff"
-        title="No venues to show"
-        description="No competitions have coordinates yet — try again after the backfill runs."
-      />
-    </div>
-
-    <MapVenueSheet :venue="activeVenue" @close="activeVenue = null" />
-  </div>
+  <div ref="mapContainer" class="relative flex-1 overflow-hidden" />
+  <MapVenueSheet :venue="activeVenue" @close="activeVenue = null" />
 </template>
 
 <style>
@@ -259,5 +278,12 @@ watch(venueGroups, () => {
 }
 .map-cluster:hover {
   transform: scale(1.05);
+}
+
+/* Lift the map's bottom chrome (attribution, scale, etc.) above the
+   floating app nav so it stays legible and tappable. */
+.maplibregl-ctrl-bottom-right,
+.maplibregl-ctrl-bottom-left {
+  bottom: var(--chrome-bottom);
 }
 </style>
