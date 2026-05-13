@@ -175,6 +175,8 @@ export function getDanceResults(
     }
   })
 
+  if (reverseFrom != null) rows.reverse()
+
   return { rows, reverseFrom, explicitlyEmpty, hasResults: rows.length > 0 }
 }
 
