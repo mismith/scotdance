@@ -19,6 +19,7 @@ import {
   type Competition,
   type Dance,
   type Dancer,
+  type DrawsTree,
   type EnrichedDance,
   type EnrichedDancer,
   type EnrichedGroup,
@@ -50,6 +51,7 @@ interface CompetitionContext {
   loadResults: () => Promise<void>
   schedule: Ref<Schedule | null>
   platforms: Ref<Platform[]>
+  draws: Ref<DrawsTree>
   loadSchedule: () => Promise<void>
   /** null while unresolved; true if schedule has at least one day; false if missing or admin-disabled. */
   hasSchedule: ComputedRef<boolean | null>
@@ -81,7 +83,8 @@ function competitionSectionRef(
     | 'results'
     | 'points'
     | 'schedule'
-    | 'platforms',
+    | 'platforms'
+    | 'draws',
 ) {
   return dbRefFn(database, competitionDataPath(id, section))
 }
@@ -130,6 +133,7 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
   const schedule = ref<Schedule | null>(null)
   const scheduleResolved = ref(false)
   const platforms = ref<Platform[]>([])
+  const draws = ref<DrawsTree>({})
 
   let staffLoaded = false
   let dancersLoaded = false
@@ -276,9 +280,10 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     if (scheduleLoaded || !competitionId.value) return
     const id = competitionId.value
     try {
-      const [scheduleSnap, platformsSnap] = await Promise.all([
+      const [scheduleSnap, platformsSnap, drawsSnap] = await Promise.all([
         get(competitionSectionRef(id, 'schedule')),
         get(competitionSectionRef(id, 'platforms')),
+        get(competitionSectionRef(id, 'draws')),
       ])
       // RTDB stores `false` for admin-disabled sections and `null` for never-created.
       // Both render as "no schedule" downstream.
@@ -286,6 +291,8 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
       schedule.value = sval && typeof sval === 'object' ? (sval as Schedule) : null
       scheduleResolved.value = true
       platforms.value = snapshotToArray<Platform>(platformsSnap.val()).sort(byDragOrder)
+      const dval = drawsSnap.val()
+      draws.value = dval && typeof dval === 'object' ? (dval as DrawsTree) : {}
       scheduleLoaded = true
     } catch (e) {
       error.value = e as Error
@@ -312,6 +319,7 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     loadResults,
     schedule,
     platforms,
+    draws,
     loadSchedule,
     hasSchedule,
   }
