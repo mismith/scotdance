@@ -131,7 +131,7 @@ import { mapState } from 'vuex';
 import pick from 'lodash.pick';
 import { mdiCheck, mdiEmailOutline } from '@mdi/js';
 import { idKey, db, toOrderedArray } from '@/helpers/firebase';
-import { getPlaceFields } from '@/helpers/maps';
+import { extractPlaceFields } from '@/helpers/maps';
 import steps, { checklists } from '@/schemas/submissions';
 import CompetitionInfo from '@/views/competition/Info.vue';
 import DynamicForm from '@/components/admin/DynamicForm.vue';
@@ -216,16 +216,20 @@ export default {
 
     handlePlacePick(placeObject, type) {
       const data = this.submission.competition;
-      const { venue, address, location } = getPlaceFields(placeObject);
+      const fields = extractPlaceFields(placeObject);
       if (type === 'venue' || !data.venue) {
-        data.venue = venue;
+        data.venue = fields.venue;
       }
       if (type === 'address' || !data.address) {
-        data.address = address;
+        data.address = fields.address;
       }
       if (!data.location) {
-        data.location = location;
+        data.location = fields.location;
       }
+      // coords + country are intrinsic to the chosen place: always overwrite
+      data.lat = fields.lat;
+      data.lng = fields.lng;
+      data.country = fields.country;
 
       this.preview = {
         ...this.preview,

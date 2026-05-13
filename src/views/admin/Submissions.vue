@@ -67,7 +67,17 @@
                 :data="currentSubmission[step[idKey]]"
                 class="pa-4"
                 @field-change="handleChanges($event, `competitions:submissions/${submissionId}/${step[idKey]}`)"
-              />
+              >
+                <template #field="{ field, attrs, on }">
+                  <DynamicField
+                    v-if="step[idKey] === 'competition' && (field.data === 'venue' || field.data === 'address')"
+                    v-bind="attrs"
+                    v-on="on"
+                    :field="{ ...field, type: 'place', readonly: currentSubmission.approved }"
+                    @place-pick="handlePlacePick($event, step[idKey])"
+                  />
+                </template>
+              </DynamicForm>
               <v-list-item v-else class="empty">
                 <v-list-item-avatar>
                   <v-icon>{{ mdiClose }}</v-icon>
@@ -155,9 +165,11 @@ import {
 } from '@mdi/js';
 import { idKey, db, toOrderedArray } from '@/helpers/firebase';
 import { findByIdKey } from '@/helpers/competition';
+import { extractPlaceFields } from '@/helpers/maps';
 import { mapRouteParams } from '@/helpers/router';
 import steps from '@/schemas/submissions';
 import DynamicForm from '@/components/admin/DynamicForm.vue';
+import DynamicField from '@/components/admin/DynamicField.vue';
 import BladeToolbar from '@/components/BladeToolbar.vue';
 
 export default {
@@ -211,6 +223,13 @@ export default {
         });
       });
     },
+    handlePlacePick(placeObject, stepId) {
+      // reviewer re-pick = corrective: overwrite all six fields.
+      this.handleChanges(
+        extractPlaceFields(placeObject),
+        `competitions:submissions/${this.submissionId}/${stepId}`,
+      );
+    },
 
     handleApprove() {
       this.$emit('change', {
@@ -225,6 +244,7 @@ export default {
   },
   components: {
     DynamicForm,
+    DynamicField,
     BladeToolbar,
   },
 };

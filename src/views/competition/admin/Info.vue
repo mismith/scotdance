@@ -17,7 +17,17 @@
           :data="competition"
           class="pa-4"
           @field-change="handleInfoChanges"
-        />
+        >
+          <template #field="{ field, attrs, on }">
+            <DynamicField
+              v-if="field.data === 'venue' || field.data === 'address'"
+              v-bind="attrs"
+              v-on="on"
+              :field="{ ...field, type: 'place' }"
+              @place-pick="handlePlacePick"
+            />
+          </template>
+        </DynamicForm>
         <AdminInvites
           v-else-if="inTabs('permissions')"
           :competition-id="competitionId"
@@ -52,10 +62,12 @@
 <script>
 import { mdiChevronRight, mdiCog } from '@mdi/js';
 import { idKey, toOrderedArray } from '@/helpers/firebase';
+import { extractPlaceFields } from '@/helpers/maps';
 import { mapRouteParams } from '@/helpers/router';
 import AdminSubsections from '@/components/admin/Subsections.vue';
 import MiHotTable from '@/components/admin/MiHotTable.vue';
 import DynamicForm from '@/components/admin/DynamicForm.vue';
+import DynamicField from '@/components/admin/DynamicField.vue';
 import AdminInvites from '@/components/admin/Invites.vue';
 
 export default {
@@ -110,11 +122,16 @@ export default {
         });
       });
     },
+    handlePlacePick(placeObject) {
+      // admin re-pick = corrective action: overwrite all six fields.
+      this.handleInfoChanges(extractPlaceFields(placeObject));
+    },
   },
   components: {
     AdminSubsections,
     MiHotTable,
     DynamicForm,
+    DynamicField,
     AdminInvites,
   },
 };

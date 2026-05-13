@@ -3,9 +3,10 @@ import * as functions from 'firebase-functions';
 import Invites from './invites';
 import Submissions from './submissions';
 import * as Dancers from './dancers';
+import { runBackfillCoords } from './backfillCoords';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isCypress, isEmulator } from './utility/env';
-import { runtimeConfig } from './utility/config';
+import { runtimeConfig, geocodingApiKey } from './utility/config';
 
 const app = admin.initializeApp({
   databaseURL: isCypress() ? `http://${process.env.FIREBASE_DATABASE_EMULATOR_HOST}?ns=scotdance-cypress` : 'https://scotdance.firebaseio.com',
@@ -69,6 +70,21 @@ export const competitionPublishedChanged = appConfig.database.ref(`/${env}/compe
     await ref.remove();
   }
 });
+// Admin-triggered one-off (or re-run) backfill of lat/lng/country on competition
+// records that lack them. Geocodes via the Google Geocoding API.
+// Pass `{ dryRun: true }` to log proposed writes without persisting.
+export const backfillCoords = functions
+  .runWith({ secrets: [geocodingApiKey], timeoutSeconds: 540, memory: '512MB' })
+  .https.onCall(async (data, ctx) => {
+    await ensureAdmin(ctx, appConfig.db);
+    const dryRun = Boolean(data?.dryRun);
+    return runBackfillCoords(
+      appConfig.db.child('competitions'),
+      geocodingApiKey.value(),
+      dryRun,
+    );
+  });
+
 export const reindexCompetitionsPublished = functions.https.onCall(async (data, ctx) => {
   await ensureAdmin(ctx, appConfig.db);
 

@@ -1,4 +1,4 @@
-import { mdiCounter } from '@mdi/js';
+import { mdiCounter, mdiMapMarkerRadius } from '@mdi/js';
 
 export default {
   info: {
@@ -29,6 +29,11 @@ export default {
             title: 'Android ',
           },
         ],
+      },
+      geolocation: {
+        order: 2,
+        name: 'Geolocation',
+        icon: mdiMapMarkerRadius,
       },
     },
   },
