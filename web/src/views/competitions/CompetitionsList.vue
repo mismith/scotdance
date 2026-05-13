@@ -115,6 +115,10 @@ const locationFiltered = computed<CompetitionListItem[]>(() =>
     : competitions.value,
 )
 
+function dateMs(c: { date?: number | string }) {
+  return c.date ? parseDate(c.date).getTime() : 0
+}
+
 const featuredComp = computed<CompetitionListItem | null>(() => {
   const list = locationFiltered.value
   if (!list.length) return null
@@ -122,7 +126,7 @@ const featuredComp = computed<CompetitionListItem | null>(() => {
   if (live) return live
   const upcoming = list
     .filter((c) => c.date && !isBeforeToday(c.date))
-    .sort((a, b) => Number(a.date ?? 0) - Number(b.date ?? 0))
+    .sort((a, b) => dateMs(a) - dateMs(b))
   return upcoming[0] ?? null
 })
 
@@ -131,14 +135,14 @@ const filteredCompetitions = computed<CompetitionListItem[]>(() => {
   if (filter.value === 'upcoming') {
     return list
       .filter((c) => c.date && !isBeforeToday(c.date))
-      .sort((a, b) => Number(a.date ?? 0) - Number(b.date ?? 0))
+      .sort((a, b) => dateMs(a) - dateMs(b))
   }
   if (filter.value === 'past') {
     return list
       .filter((c) => c.date && isBeforeToday(c.date) && !isSameDay(c.date))
-      .sort((a, b) => Number(b.date ?? 0) - Number(a.date ?? 0))
+      .sort((a, b) => dateMs(b) - dateMs(a))
   }
-  return list.sort((a, b) => Number(a.date ?? 0) - Number(b.date ?? 0))
+  return list.sort((a, b) => dateMs(a) - dateMs(b))
 })
 
 const featuredId = computed(() => featuredComp.value?.id ?? null)
@@ -180,9 +184,26 @@ const monthGroups = computed<MonthGroup[]>(() => {
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col">
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-5 p-4">
-      <div class="flex flex-wrap items-center gap-2">
+  <div
+    :class="[
+      'flex flex-1 flex-col',
+      view === 'map' ? 'h-dvh' : 'pb-(--chrome-bottom)',
+    ]"
+  >
+    <main
+      :class="[
+        'w-full flex-1',
+        view === 'map'
+          ? 'flex flex-col'
+          : 'mx-auto max-w-3xl space-y-5 p-4',
+      ]"
+    >
+      <div
+        :class="[
+          'flex flex-wrap items-center gap-2',
+          view === 'map' ? 'mx-auto w-full max-w-3xl p-4' : '',
+        ]"
+      >
         <ViewModeTabs v-model="view" />
         <div ref="filtersMenuRef" class="relative ml-auto">
           <div class="bg-chip inline-flex rounded-lg p-1">
