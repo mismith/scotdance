@@ -1,5 +1,6 @@
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '@/firebase'
+import { initialsOf } from '@/lib/format'
 
 interface RawHit {
   document?: {
@@ -42,14 +43,6 @@ export interface SearchDancerGroup {
   name: string
   initials: string
   dancers: SearchDancerHit[]
-}
-
-function initialsOf(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (!parts.length) return '?'
-  const first = parts[0][0]?.toUpperCase() ?? ''
-  const last = parts.length > 1 ? (parts[parts.length - 1][0]?.toUpperCase() ?? '') : ''
-  return `${first}${last}` || '?'
 }
 
 const responseCache = new Map<string, SearchDancerGroup[]>()

@@ -7,6 +7,7 @@ import ShareButton from '@/components/ShareButton.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { UserSearch } from '@lucide/vue'
 import { provideDancerProfile } from '@/composables/useDancerProfile'
+import { initialsOf } from '@/lib/format'
 import { useVtScope } from '@/lib/viewTransitionFocus'
 
 const route = useRoute()
@@ -22,10 +23,7 @@ const { displayName, location, appearances, loading, notFound } = provideDancerP
 
 const isInfo = computed(() => String(route.name ?? '') === 'dancer.info')
 
-const initials = computed(() => {
-  const parts = displayName.value.split(' ').filter(Boolean)
-  return (parts[0]?.charAt(0) ?? '?') + (parts.at(-1)?.charAt(0) ?? '')
-})
+const initials = computed(() => initialsOf(displayName.value))
 </script>
 
 <template>
