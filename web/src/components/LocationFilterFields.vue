@@ -13,8 +13,8 @@ const {
   region,
   locality,
   near,
-  geo,
   geoCoords,
+  locationError,
   enableNearMe,
   disableNearMe,
   clear,
@@ -40,16 +40,18 @@ function toggleNear(): void {
           ? 'bg-primary text-primary-foreground'
           : 'bg-chip text-foreground hover:bg-accent',
       ]"
-      :disabled="geo.error.value !== null"
       @click="toggleNear"
     >
       <LocateFixed class="size-4 shrink-0" />
       <span class="flex-1">{{ near ? 'Near me · on' : 'Use my location' }}</span>
       <span v-if="near && !geoCoords" class="text-xs opacity-80">locating…</span>
     </button>
-    <div v-if="geo.error.value" class="text-muted-foreground px-1 text-xs">
-      Location unavailable.
-    </div>
+    <p v-if="locationError === 'denied'" class="text-muted-foreground px-1 text-xs">
+      Location permission denied. Enable it in your device settings to use Near me.
+    </p>
+    <p v-else-if="locationError" class="text-muted-foreground px-1 text-xs">
+      Couldn't get your location. Tap again to retry.
+    </p>
 
     <div class="space-y-2">
       <label class="block">
