@@ -63,7 +63,7 @@ Risk shipping broken-looking pages.
 - [ ] **`hasPlaceholderDancers()` propagation** — flag groups containing unmatched timestamp-IDs so UI can warn ([results.js:49-66](../src/helpers/results.js), [ResultListItem.vue:40-43](../src/components/ResultListItem.vue))
 - [ ] **`getFirstExisting()` route guard** — prevent crashes when deep-linking to a route the user lacks perms for ([router.js:46-54](../src/helpers/router.js))
 - [ ] **`competitionExtender.$relevance`** — `Math.abs(now - date)` for "nearest to today" sort tiebreaker ([competition.js:31-39](../src/helpers/competition.js))
-- [ ] **`sortByUserDragOrder`** — read `_order` field for user drag-reorder persistence (e.g. staff list) ([firebase.js:72-81](../src/helpers/firebase.js))
+- [x] **`sortByUserDragOrder`** — new app already read `_order`, but used `?? 0` so unset items collided with explicit `_order = 0` at the front (real regression in 1 dances + 1 staff comp). Replaced with shared `byDragOrder` helper that sinks unset items to end (matches old `arr.length` fallback), tiebreak by push id. Applied to staff, categories, groups, dances, platforms ([useCompetition.ts](../web/src/composables/useCompetition.ts)).
 - [ ] **Submission form `warningRules`** — client-side regex warnings for location format ("City, AB") and RSOBHD number format ([schemas/submissions.js](../src/schemas/submissions.js))
 - [ ] **`drawDialog` placeholder fallback** — verify new `DrawDialog` substitutes `getPlaceholderDancer()` for missing draw entries ([Schedule.vue:150-176](../src/views/competition/Schedule.vue))
 
@@ -71,7 +71,7 @@ Risk shipping broken-looking pages.
 
 ## Smaller polish losses
 
-- [ ] **Sticky month headers** on the timeline (new month sections scroll off-screen)
+- [x] **Sticky month headers** on the timeline (new month sections scroll off-screen)
 - [ ] **`slugify(text)`** helper
 - [ ] **`initialify(name)`** helper (3-char initials for avatars)
 - [ ] **Generic fuzzy `searchByKeys()`** (Fuse, 0.33 threshold) — new only has dancer search
@@ -79,7 +79,7 @@ Risk shipping broken-looking pages.
 - [ ] **`isExpanded/handleExpanded`** for persistent accordion state per item
 - [ ] **Status-bar tap → scroll-to-top** on iOS native ([main.js:80-96](../src/main.js))
 - [ ] **iOS/Android splash + `Device.getInfo()`** platform detection ([main.js:37-42](../src/main.js))
-- [ ] **Vuetify→Tailwind icon swap** — visual badges flatter; consider restoring color/contrast for placing chips
+- [x] **Vuetify→Tailwind icon swap** — visual badges flatter; consider restoring color/contrast for placing chips
 
 ---
 
