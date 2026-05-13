@@ -58,7 +58,7 @@ Risk shipping broken-looking pages.
 
 ## Bug-fix regressions (solved-bug risks)
 
-- [ ] **Dancer number sorting** — pad `$number` for lexical sort. Without this, dancers numbered 2, 10, 100 sort as 10, 100, 2 ([competition.js:62-71](../src/helpers/competition.js))
+- [x] **Dancer number sorting** — ~~pad `$number` for lexical sort~~ new app sorts numerically, but `dancer.number` arrives from RTDB as a string and `Number.isFinite('2')` is false → all dancers collapsed to `Infinity`. Fixed by coercing `.number` to `number | undefined` in `loadDancers` ([useCompetition.ts](../web/src/composables/useCompetition.ts)).
 - [ ] **Group order pre-padding** — old set `$order = String(10000 + i)`; verify `toOrderedArray` handles missing `.order` field ([competition.js:53-60](../src/helpers/competition.js))
 - [ ] **`hasPlaceholderDancers()` propagation** — flag groups containing unmatched timestamp-IDs so UI can warn ([results.js:49-66](../src/helpers/results.js), [ResultListItem.vue:40-43](../src/components/ResultListItem.vue))
 - [ ] **`getFirstExisting()` route guard** — prevent crashes when deep-linking to a route the user lacks perms for ([router.js:46-54](../src/helpers/router.js))
