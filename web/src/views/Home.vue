@@ -45,7 +45,7 @@ const faqs: { q: string; a: string }[] = [
   },
   {
     q: 'Is it safe to use? Are you harvesting my data? Are there privacy concerns with having this information available online?',
-    a: "This service is, in plain words, completely legitimate. It checks all the security boxes you would/should expect, and does nothing remotely nefarious with the (minimal) data it does collect from you. Furthermore, since all competition data is user-submitted, it's conceptually equivalent to uploading scanned or exported results PDFs to a dance association's website—just made more convenient, hopefully.",
+    a: 'This service is, in plain words, completely legitimate. It checks all the security boxes you would/should expect, and does nothing remotely nefarious with the (minimal) data it does collect from you. Furthermore, since all competition data is user-submitted, it\'s conceptually equivalent to uploading scanned or exported results PDFs to a dance association\'s website—just made more convenient, hopefully. You can also read more details on the <a href="/policies" class="underline underline-offset-4">Policies</a> page.',
   },
   {
     q: "Why are dancers I've favourited ★ in one competition not favourited in all competitions?",
@@ -198,14 +198,10 @@ function scrollToFeatures(e: Event) {
             <summary
               class="flex cursor-pointer list-none items-baseline gap-4 py-6 [&::-webkit-details-marker]:hidden"
             >
-              <span
-                class="text-foreground/40 w-8 shrink-0 font-medium tabular-nums"
-              >
+              <span class="text-foreground/40 w-8 shrink-0 font-medium tabular-nums">
                 {{ String(i + 1).padStart(2, '0') }}
               </span>
-              <dt
-                class="flex-1 text-xl font-medium tracking-tight md:text-2xl"
-              >
+              <dt class="flex-1 text-xl font-medium tracking-tight md:text-2xl">
                 {{ item.q }}
               </dt>
               <ChevronDown
@@ -243,14 +239,20 @@ function scrollToFeatures(e: Event) {
           </p>
         </div>
 
-        <div class="text-muted-foreground flex flex-col gap-2 text-sm md:items-end">
+        <div class="text-muted-foreground flex flex-col text-sm md:items-end">
+          <RouterLink
+            :to="{ name: 'policies' }"
+            class="hover:text-foreground transition-colors"
+          >
+            Policies
+          </RouterLink>
           <a
             href="https://github.com/mismith/scotdance"
             target="_blank"
             rel="noopener"
             class="hover:text-foreground transition-colors"
           >
-            Source on GitHub →
+            Source code
           </a>
           <div class="text-foreground/50 font-sans text-xs tabular-nums">
             {{ platformLabel }} · v{{ version }}
