@@ -1,7 +1,7 @@
 import { computed, inject, provide, ref, shallowRef, watch, type InjectionKey, type Ref } from 'vue'
 import { searchDancers, type SearchDancerHit } from '@/lib/searchDancers'
 import { fetchCompetitionMeta } from '@/lib/competitionMeta'
-import { isBeforeToday } from '@/lib/format'
+import { isBeforeToday, parseDate } from '@/lib/format'
 import { useRecentDancers } from '@/composables/useRecentDancers'
 import type { Competition } from '@/types/competition'
 
@@ -116,19 +116,20 @@ function createDancerProfile(slug: Ref<string>): UseDancerProfile {
         competition: compMeta.value[hit.competitionId] ?? null,
       }))
       .sort((a, b) => {
-        const da = a.competition?.date ?? 0
-        const db = b.competition?.date ?? 0
-        return Number(db) - Number(da)
+        const da = a.competition?.date ? parseDate(a.competition.date).getTime() : 0
+        const db = b.competition?.date ? parseDate(b.competition.date).getTime() : 0
+        return db - da
       })
   })
 
   const upcoming = computed(() =>
     appearances.value
       .filter((a) => a.competition?.date && !isBeforeToday(a.competition.date))
-      .sort(
-        (a, b) =>
-          Number(a.competition?.date ?? 0) - Number(b.competition?.date ?? 0),
-      ),
+      .sort((a, b) => {
+        const da = a.competition?.date ? parseDate(a.competition.date).getTime() : 0
+        const db = b.competition?.date ? parseDate(b.competition.date).getTime() : 0
+        return da - db
+      }),
   )
   const past = computed(() =>
     appearances.value.filter(
