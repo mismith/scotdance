@@ -108,9 +108,41 @@ export function useLocationFilter() {
     return true
   }
 
+  // "any filter value is set" — drives the Clear button so users can always
+  // escape, even when their set value matches no loaded comp.
   const isActive = computed(
     () => Boolean(country.value || region.value || locality.value || near.value),
   )
+
+  // Context-aware variant. A filter whose target value doesn't appear in
+  // `comps` (e.g. the TZ-guessed country before backfill populates data) is
+  // silently no-op'd, so first-time visitors don't land on an empty list.
+  function filterFor(comps: CompetitionListItem[]) {
+    const has = (key: 'country' | 'region' | 'locality', val: string) =>
+      comps.some((c) => c[key] === val)
+    const effCountry = country.value && has('country', country.value) ? country.value : null
+    const effRegion = region.value && has('region', region.value) ? region.value : null
+    const effLocality = locality.value && has('locality', locality.value) ? locality.value : null
+    const effNear = near.value && geoCoords.value ? true : false
+    const effectiveActive = Boolean(effCountry || effRegion || effLocality || effNear)
+    function predicate(c: CompetitionListItem): boolean {
+      if (effCountry && c.country !== effCountry) return false
+      if (effRegion && c.region !== effRegion) return false
+      if (effLocality && c.locality !== effLocality) return false
+      if (effNear && geoCoords.value) {
+        if (!Number.isFinite(c.lat) || !Number.isFinite(c.lng)) return false
+        const d = haversineKm(
+          geoCoords.value.lat,
+          geoCoords.value.lng,
+          c.lat as number,
+          c.lng as number,
+        )
+        if (d > NEAR_ME_KM) return false
+      }
+      return true
+    }
+    return { predicate, isActive: effectiveActive }
+  }
 
   function deriveOptions(comps: CompetitionListItem[]): {
     countries: string[]
@@ -150,6 +182,7 @@ export function useLocationFilter() {
     disableNearMe,
     clear,
     matches,
+    filterFor,
     isActive,
     deriveOptions,
     NEAR_ME_KM,

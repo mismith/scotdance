@@ -38,20 +38,23 @@ const includeArchived = computed(() => filter.value !== 'upcoming')
 const { competitions, loading } = useCompetitions(includeArchived)
 
 const {
-  matches: matchesLocation,
-  isActive: locationFilterActive,
+  filterFor: locationFilterFor,
   country: locCountry,
   region: locRegion,
   locality: locLocality,
   near: locNear,
 } = useLocationFilter()
 
+// Effective filter (no-ops if values don't match any loaded comp). Drives
+// both the predicate and the "is this filter actually doing anything" UI.
+const effectiveLocationFilter = computed(() => locationFilterFor(competitions.value))
+
 const showLocationSection = computed(() => view.value !== 'map')
 const showDateSection = computed(() => view.value !== 'calendar')
 const dateFilterActive = computed(() => filter.value !== 'upcoming')
 const activeFilterCount = computed(
   () =>
-    (showLocationSection.value && locationFilterActive.value ? 1 : 0) +
+    (showLocationSection.value && effectiveLocationFilter.value.isActive ? 1 : 0) +
     (showDateSection.value && dateFilterActive.value ? 1 : 0),
 )
 
@@ -110,11 +113,10 @@ watch(
   },
 )
 
-const locationFiltered = computed<CompetitionListItem[]>(() =>
-  locationFilterActive.value
-    ? competitions.value.filter(matchesLocation)
-    : competitions.value,
-)
+const locationFiltered = computed<CompetitionListItem[]>(() => {
+  const ef = effectiveLocationFilter.value
+  return ef.isActive ? competitions.value.filter(ef.predicate) : competitions.value
+})
 
 function dateMs(c: { date?: number | string }) {
   return c.date ? parseDate(c.date).getTime() : 0
@@ -303,7 +305,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
           v-else-if="!visibleCompetitions.length"
           class="text-muted-foreground space-y-2 text-lg italic"
         >
-          <div v-if="locationFilterActive">No competitions match this location.</div>
+          <div v-if="effectiveLocationFilter.isActive">No competitions match this location.</div>
           <div v-else-if="filter === 'upcoming'">No upcoming competitions.</div>
           <div v-else-if="filter === 'past'">No past competitions on record.</div>
           <div v-else>No competitions match.</div>
