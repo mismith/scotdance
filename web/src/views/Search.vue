@@ -71,7 +71,7 @@ const examples = [
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col">
+  <div class="flex flex-1 flex-col pb-(--chrome-bottom)">
     <header
       class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-center gap-2 p-3"
     >

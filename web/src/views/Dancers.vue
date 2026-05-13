@@ -116,7 +116,7 @@ const vt = useVtScope('dancer')
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col">
+  <div class="flex flex-1 flex-col pb-(--chrome-bottom)">
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4">
       <div
         class="bg-card flex h-12 items-center gap-3 rounded-full border px-4 shadow-sm"

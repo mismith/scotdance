@@ -61,9 +61,9 @@ function scrollToFeatures(e: Event) {
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col" data-route="home">
+  <div class="flex flex-1 flex-col pb-(--chrome-bottom)" data-route="home">
     <!-- HERO -->
-    <section class="relative flex min-h-svh flex-col items-center justify-center px-6">
+    <section class="relative flex min-h-dvh flex-col items-center justify-center px-6">
       <header
         class="absolute inset-x-0 top-0 flex flex-col items-center gap-2 pt-8 text-center"
       >
