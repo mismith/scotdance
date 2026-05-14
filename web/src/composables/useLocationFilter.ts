@@ -7,9 +7,8 @@ export type LocationMode = 'nearby' | 'region' | 'worldwide'
 export type GeoPermissionState = 'unknown' | 'prompt' | 'granted' | 'denied'
 
 const DEFAULT_RADIUS_KM = 300
-const MIN_RADIUS_KM = 50
+const MIN_RADIUS_KM = 5
 const MAX_RADIUS_KM = 5000
-const RADIUS_STEP_KM = 50
 
 // First-visit default: if we can guess a country from TZ/locale, start in
 // Region mode with that country pre-set. Otherwise Worldwide.
@@ -201,6 +200,5 @@ export function useLocationFilter() {
     isActive,
     MIN_RADIUS_KM,
     MAX_RADIUS_KM,
-    RADIUS_STEP_KM,
   }
 }

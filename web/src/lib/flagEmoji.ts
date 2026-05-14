@@ -40,11 +40,3 @@ export function countryFlag(country: string | null | undefined): string | null {
   return iso ? isoToEmoji(iso) : null
 }
 
-// Region falls back to the country's flag for V1 — the dance markets each
-// have one country, so showing 🇨🇦 for "Alberta" reads correctly.
-export function regionFlag(
-  country: string | null | undefined,
-  _region: string | null | undefined,
-): string | null {
-  return countryFlag(country)
-}
