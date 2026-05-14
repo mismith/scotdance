@@ -4,10 +4,13 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
 import {
   Building,
+  CalendarDays,
   ChevronRight,
+  Home,
   Map as MapIcon,
   MapPin,
   Search as SearchIcon,
+  Users,
   X,
 } from '@lucide/vue'
 import SectionHeader from '@/components/SectionHeader.vue'
@@ -24,6 +27,7 @@ import type { CompetitionListItem } from '@/composables/useCompetitions'
 import { useVtScope } from '@/lib/viewTransitionFocus'
 import { useLocationFilter } from '@/composables/useLocationFilter'
 import { useRecentSearches } from '@/composables/useRecentSearches'
+import { backPath, preferBackClick } from '@/lib/smartBack'
 
 const vt = useVtScope('dancer')
 
@@ -56,6 +60,32 @@ const expanded = reactive<Record<SearchEntityType, boolean>>({
 
 const locationFilter = useLocationFilter()
 const recentSearches = useRecentSearches()
+
+// Pick the back-button destination from history. /search is a leaf — the
+// history.back entry doesn't change while we're here, so resolving once at
+// setup is enough.
+const backInfo = (() => {
+  const back = backPath()
+  if (back === '/') {
+    return {
+      icon: Home,
+      label: 'Back to Home',
+      to: { name: 'home' as const },
+    }
+  }
+  if (back && back.startsWith('/dancers')) {
+    return {
+      icon: Users,
+      label: 'Back to Dancers',
+      to: { name: 'dancers' as const },
+    }
+  }
+  return {
+    icon: CalendarDays,
+    label: 'Back to Competitions',
+    to: { name: 'competitions' as const },
+  }
+})()
 
 onMounted(() => inputEl.value?.focus())
 
@@ -168,14 +198,6 @@ function handleLocationTap(group: SearchLocationGroup) {
   router.push({ name: 'competitions' })
 }
 
-function close() {
-  if (window.history.length > 1) {
-    router.back()
-  } else {
-    router.replace({ name: 'competitions' })
-  }
-}
-
 const hasQuery = computed(() => q.value.trim().length > 0)
 const competitions = computed(() => results.value.competitions)
 const dancers = computed(() => results.value.dancers)
@@ -193,43 +215,7 @@ const hasAnyResults = computed(
 
 <template>
   <div class="flex flex-1 flex-col pb-(--chrome-bottom)">
-    <header
-      class="pointer-events-none sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-center gap-2 p-4 *:pointer-events-auto"
-    >
-      <div
-        class="bg-nav/90 text-nav-foreground flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full border border-white/10 px-4 shadow-md backdrop-blur-xl [view-transition-name:nav-left]"
-      >
-        <SearchIcon class="size-4 shrink-0 opacity-80" />
-        <input
-          ref="inputEl"
-          v-model="q"
-          type="search"
-          placeholder="Search"
-          class="placeholder:text-nav-foreground/50 min-w-0 flex-1 bg-transparent focus:outline-none [&::-webkit-search-cancel-button]:hidden"
-        />
-        <button
-          v-if="q"
-          type="button"
-          class="text-nav-foreground/70 hover:text-nav-foreground -mr-2 size-7 shrink-0 rounded-full p-1"
-          title="Clear"
-          aria-label="Clear search"
-          @click="clearSearch"
-        >
-          <X class="size-4" />
-        </button>
-      </div>
-      <button
-        type="button"
-        class="bg-nav/90 text-nav-foreground flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 shadow-md backdrop-blur-xl [view-transition-name:nav-right] hover:opacity-90"
-        title="Close search"
-        aria-label="Close search"
-        @click="close"
-      >
-        <X class="size-5" />
-      </button>
-    </header>
-
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-0">
+    <main class="mx-auto flex w-full max-w-3xl flex-1 flex-col space-y-6 p-4">
       <div v-if="error" class="text-destructive text-lg">{{ error.message }}</div>
 
       <template v-if="hasQuery">
@@ -425,44 +411,91 @@ const hasAnyResults = computed(
       </template>
 
       <template v-else>
-        <p class="text-muted-foreground text-lg italic">
-          Try a competition, a place, a dancer, or a judge.
-        </p>
-        <section v-if="recentSearches.recent.value.length" class="space-y-2">
-          <SectionHeader label="Recent searches">
-            <button
-              type="button"
-              class="hover:text-foreground font-normal tracking-normal normal-case"
-              @click="recentSearches.clear()"
-            >
-              Clear
-            </button>
-          </SectionHeader>
-          <ul class="flex flex-wrap gap-2">
-            <li v-for="term in recentSearches.recent.value" :key="term">
-              <span
-                class="bg-card hover:bg-accent inline-flex items-center gap-1 rounded-full border pl-3 pr-1 py-1 text-sm"
+        <div class="flex flex-1 flex-col">
+          <section v-if="recentSearches.recent.value.length" class="space-y-2">
+            <SectionHeader label="Recent searches">
+              <button
+                type="button"
+                class="hover:text-foreground font-normal tracking-normal normal-case"
+                @click="recentSearches.clear()"
               >
-                <button
-                  type="button"
-                  class="text-foreground"
-                  @click="q = term"
+                Clear
+              </button>
+            </SectionHeader>
+            <ul class="flex flex-wrap gap-2">
+              <li v-for="term in recentSearches.recent.value" :key="term">
+                <span
+                  class="bg-card hover:bg-accent inline-flex items-center gap-1 rounded-full border pl-3 pr-1 py-1 text-sm"
                 >
-                  {{ term }}
-                </button>
-                <button
-                  type="button"
-                  class="text-muted-foreground hover:text-foreground flex size-6 items-center justify-center rounded-full"
-                  :aria-label="`Remove ${term} from recent`"
-                  @click="recentSearches.remove(term)"
-                >
-                  <X class="size-3" />
-                </button>
-              </span>
-            </li>
-          </ul>
-        </section>
+                  <button
+                    type="button"
+                    class="text-foreground"
+                    @click="q = term"
+                  >
+                    {{ term }}
+                  </button>
+                  <button
+                    type="button"
+                    class="text-muted-foreground hover:text-foreground flex size-6 items-center justify-center rounded-full"
+                    :aria-label="`Remove ${term} from recent`"
+                    @click="recentSearches.remove(term)"
+                  >
+                    <X class="size-3" />
+                  </button>
+                </span>
+              </li>
+            </ul>
+          </section>
+          <p class="text-muted-foreground mt-auto text-lg italic">
+            Try a competition, a place, a dancer, or a judge.
+          </p>
+        </div>
       </template>
     </main>
+
+    <nav class="pointer-events-none fixed inset-x-0 bottom-(--nav-bottom) z-30 px-3">
+      <div class="mx-auto flex max-w-3xl items-center gap-2">
+        <RouterLink
+          v-slot="{ href, navigate }"
+          :to="backInfo.to"
+          custom
+        >
+          <a
+            :href="href"
+            class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
+            :title="backInfo.label"
+            :aria-label="backInfo.label"
+            @click="preferBackClick(router, $event, navigate)"
+          >
+            <span class="[view-transition-name:match-element]">
+              <component :is="backInfo.icon" class="size-5" />
+            </span>
+          </a>
+        </RouterLink>
+
+        <div
+          class="bg-nav/90 text-nav-foreground pointer-events-auto flex h-16 min-w-0 flex-1 items-center gap-2 rounded-full px-5 shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-right]"
+        >
+          <SearchIcon class="size-5 shrink-0 opacity-80 [view-transition-name:nav-right-icon]" />
+          <input
+            ref="inputEl"
+            v-model="q"
+            type="search"
+            placeholder="Search"
+            class="placeholder:text-nav-foreground/50 min-w-0 flex-1 bg-transparent text-base focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+          />
+          <button
+            v-if="q"
+            type="button"
+            class="text-nav-foreground/70 hover:text-nav-foreground flex size-7 shrink-0 items-center justify-center rounded-full"
+            title="Clear"
+            aria-label="Clear search"
+            @click="clearSearch"
+          >
+            <X class="size-4" />
+          </button>
+        </div>
+      </div>
+    </nav>
   </div>
 </template>

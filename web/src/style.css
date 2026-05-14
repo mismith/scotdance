@@ -260,7 +260,8 @@ html:has([data-route='home']) {
   }
   ::view-transition-group(nav-pill),
   ::view-transition-group(nav-left-active),
-  ::view-transition-group(nav-right-active) {
+  ::view-transition-group(nav-right-active),
+  ::view-transition-group(nav-right-icon) {
     animation-timing-function: var(--ease-rubber-band);
   }
   ::view-transition-group(.nav-avatar),
