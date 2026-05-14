@@ -73,30 +73,33 @@
      read them without re-spelling env(). */
   --safe-top: env(safe-area-inset-top);
   --safe-bottom: env(safe-area-inset-bottom);
-  /* Where the floating top nav sits. Reclaims a small portion of
-     safe-area-inset-top (smaller reduction than --nav-bottom because the
-     status bar has live text/icons we don't want to crowd). Floors at
-     0.75rem so devices without an inset still get a gap. */
-  --nav-top: max(0.75rem, calc(var(--safe-top) - 0.75rem));
+  /* Where the floating top nav sits. Honours the full safe-area inset
+     (status bar has live text/icons we don't want to crowd), floored at
+     1rem so devices without an inset still get a breathing gap from the
+     viewport edge. Nav content sits directly at this offset — no inner
+     pt added by consumers. */
+  --nav-top: max(1rem, var(--safe-top));
   /* How far the floating bottom nav sits from the screen edge. Honours
      only a portion of safe-area-inset-bottom (which is generous — the
      home indicator itself is ~5pt and Apple reserves ~34pt around it)
      so the pill rides closer to the bottom, Slack-style. */
-  --nav-bottom: max(0.75rem, calc(var(--safe-bottom) - 1.25rem));
-  /* Total inset content needs above/below the nav: nav chrome height
-     (incl. breathing room) + wherever the pill is anchored. Composing
-     against --nav-* (instead of --safe-*) shifts content toward the
-     edge by the same amount the nav itself moved, preserving the
-     original content-to-nav gap. */
-  --chrome-top: calc(5rem + var(--nav-top));
-  --chrome-bottom: calc(5.5rem + var(--nav-bottom));
+  --nav-bottom: max(1rem, calc(var(--safe-bottom) - 1rem));
+  /* The exact bottom edge of the floating top nav and top edge of the
+     floating bottom nav — i.e. where their visible content ends. No
+     breathing room baked in; pages add their own gap (typically +1rem)
+     via calc() at the use site. Top nav content = size-12 (3rem). Bottom
+     nav content = size-16 Search button or h-14+p-1 pill (~4rem). */
+  --chrome-top: calc(3rem + var(--nav-top));
+  --chrome-bottom: calc(4rem + var(--nav-bottom));
 }
 
-/* Home has no floating top chrome — drop the 5rem so #features anchors land
-   flush at the top of the viewport. Kept outside @layer base so it sits in
-   the same precedence tier as the :root defaults above. */
+/* Home has no floating top chrome — zero out both --chrome-top and
+   scroll-padding-top so #features anchors land flush at the viewport
+   top with no inset. Kept outside @layer base so it sits in the same
+   precedence tier as the :root defaults. */
 html:has([data-route='home']) {
-  --chrome-top: var(--safe-top);
+  --chrome-top: 0px;
+  scroll-padding-top: 0;
 }
 
 /* Dark mode — "Deep Ink" palette from editorial v5: warm near-black,
@@ -155,10 +158,11 @@ html:has([data-route='home']) {
     @apply border-border;
   }
   /* Keep hash-anchored / scrollIntoView targets clear of the floating top
-     and bottom chrome. --chrome-* already includes safe-area inset. */
+     and bottom chrome — +1rem so anchored content doesn't land flush
+     against the nav edge. --chrome-* already includes safe-area inset. */
   html {
-    scroll-padding-top: var(--chrome-top);
-    scroll-padding-bottom: var(--chrome-bottom);
+    scroll-padding-top: calc(var(--chrome-top) + 1rem);
+    scroll-padding-bottom: calc(var(--chrome-bottom) + 1rem);
   }
   body {
     @apply bg-background text-foreground font-serif;

@@ -51,7 +51,7 @@ function onBackdropClick(e: MouseEvent) {
       size === 'sm' ? 'w-full md:max-w-sm' : 'w-full md:max-w-md',
       // Layout per variant.
       variant === 'center' &&
-        'fixed inset-x-0 top-(--chrome-top) bottom-(--chrome-bottom) m-auto h-fit rounded-3xl p-6 shadow-lg max-h-[calc(100svh-var(--chrome-top)-var(--chrome-bottom)-2rem)] max-md:max-w-[calc(100vw-2rem)]',
+        'fixed inset-x-0 top-[calc(var(--chrome-top)+1rem)] bottom-[calc(var(--chrome-bottom)+1rem)] m-auto h-fit rounded-3xl p-6 shadow-lg max-h-[calc(100svh-var(--chrome-top)-var(--chrome-bottom)-4rem)] max-md:max-w-[calc(100vw-2rem)]',
       variant === 'sheet' && [
         'flex flex-col shadow-lg',
         // Mobile: pinned to bottom, full-bleed, top-rounded, overflow-visible
@@ -61,7 +61,7 @@ function onBackdropClick(e: MouseEvent) {
         // rubber-band overshoot doesn't expose the backdrop underneath.
         'max-md:after:pointer-events-none max-md:after:absolute max-md:after:inset-x-0 max-md:after:top-full max-md:after:h-32 max-md:after:bg-background',
         // Desktop: match center (chrome-aware centered card).
-        'md:fixed md:inset-x-0 md:top-(--chrome-top) md:bottom-(--chrome-bottom) md:m-auto md:h-fit md:max-h-[calc(100vh-var(--chrome-top)-var(--chrome-bottom)-2rem)] md:rounded-3xl',
+        'md:fixed md:inset-x-0 md:top-[calc(var(--chrome-top)+1rem)] md:bottom-[calc(var(--chrome-bottom)+1rem)] md:m-auto md:h-fit md:max-h-[calc(100vh-var(--chrome-top)-var(--chrome-bottom)-4rem)] md:rounded-3xl',
       ],
       // Closed (resting) state — also the exit target.
       'opacity-0',

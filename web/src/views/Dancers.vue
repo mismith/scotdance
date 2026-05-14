@@ -106,7 +106,7 @@ const vt = useVtScope('dancer')
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col pb-(--chrome-bottom)">
+  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4">
       <div class="flex items-center gap-2">
         <div

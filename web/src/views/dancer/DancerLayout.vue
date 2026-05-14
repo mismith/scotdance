@@ -27,9 +27,9 @@ const initials = computed(() => initialsOf(displayName.value))
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col pb-(--chrome-bottom)">
+  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
-      <div class="mx-auto flex max-w-3xl items-center gap-2 pt-4">
+      <div class="mx-auto flex max-w-3xl items-center gap-2">
         <RouterLink
           v-if="!isInfo"
           :to="{ name: 'dancer.info', params: { dancerId } }"
@@ -72,7 +72,7 @@ const initials = computed(() => initialsOf(displayName.value))
       </div>
     </nav>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 px-4 pt-(--chrome-top) pb-4">
+    <main class="mx-auto w-full max-w-3xl flex-1 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-4">
       <EmptyState
         v-if="!loading && notFound"
         :icon="UserSearch"
