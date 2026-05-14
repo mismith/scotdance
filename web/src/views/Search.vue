@@ -2,7 +2,14 @@
 import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
-import { ChevronRight, Search as SearchIcon, X } from '@lucide/vue'
+import {
+  Building,
+  ChevronRight,
+  Map as MapIcon,
+  MapPin,
+  Search as SearchIcon,
+  X,
+} from '@lucide/vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import CompetitionRow from '@/components/CompetitionRow.vue'
@@ -11,9 +18,12 @@ import {
   type SearchAllResults,
   type SearchEntityType,
   type SearchCompetitionHit,
+  type SearchLocationGroup,
 } from '@/lib/searchAll'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 import { useVtScope } from '@/lib/viewTransitionFocus'
+import { useLocationFilter } from '@/composables/useLocationFilter'
+import { useRecentSearches } from '@/composables/useRecentSearches'
 
 const vt = useVtScope('dancer')
 
@@ -31,6 +41,7 @@ const empty: SearchAllResults = {
   competitions: { hits: [], total: 0 },
   dancers: { groups: [], total: 0 },
   judges: { groups: [], total: 0 },
+  locations: { groups: [], total: 0 },
 }
 
 const results = shallowRef<SearchAllResults>(empty)
@@ -40,7 +51,11 @@ const expanded = reactive<Record<SearchEntityType, boolean>>({
   competitions: false,
   dancers: false,
   judges: false,
+  locations: false,
 })
+
+const locationFilter = useLocationFilter()
+const recentSearches = useRecentSearches()
 
 onMounted(() => inputEl.value?.focus())
 
@@ -60,6 +75,7 @@ watch(q, (value) => {
   expanded.competitions = false
   expanded.dancers = false
   expanded.judges = false
+  expanded.locations = false
 })
 
 async function runSearch(text: string) {
@@ -75,6 +91,7 @@ async function runSearch(text: string) {
     const out = await searchAll({ q: trimmed, perGroup: DEFAULT_PER_GROUP })
     if (q.value.trim() !== trimmed) return
     results.value = out
+    recentSearches.record(trimmed)
   } catch (e) {
     if (q.value.trim() !== trimmed) return
     error.value = e as Error
@@ -125,6 +142,32 @@ function clearSearch() {
   inputEl.value?.focus()
 }
 
+function locationIcon(kind: SearchLocationGroup['kind']) {
+  if (kind === 'venue') return Building
+  if (kind === 'region') return MapIcon
+  return MapPin
+}
+
+function locationCountLabel(count: number) {
+  return count === 1 ? '1 competition' : `${count} competitions`
+}
+
+function handleLocationTap(group: SearchLocationGroup) {
+  if (group.kind === 'venue') {
+    router.push({
+      name: 'competition.info',
+      params: { competitionId: group.sampleCompId },
+    })
+    return
+  }
+  locationFilter.setRegion({
+    country: group.country ?? null,
+    region: group.region ?? null,
+    locality: group.kind === 'locality' ? group.locality ?? group.name : null,
+  })
+  router.push({ name: 'competitions' })
+}
+
 function close() {
   if (window.history.length > 1) {
     router.back()
@@ -137,10 +180,12 @@ const hasQuery = computed(() => q.value.trim().length > 0)
 const competitions = computed(() => results.value.competitions)
 const dancers = computed(() => results.value.dancers)
 const judges = computed(() => results.value.judges)
+const locations = computed(() => results.value.locations)
 
 const hasAnyResults = computed(
   () =>
     competitions.value.hits.length > 0
+      || locations.value.groups.length > 0
       || dancers.value.groups.length > 0
       || judges.value.groups.length > 0,
 )
@@ -149,7 +194,7 @@ const hasAnyResults = computed(
 <template>
   <div class="flex flex-1 flex-col pb-(--chrome-bottom)">
     <header
-      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-center gap-2 p-4"
+      class="pointer-events-none sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-center gap-2 p-4 *:pointer-events-auto"
     >
       <div
         class="bg-nav/90 text-nav-foreground flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full border border-white/10 px-4 shadow-md backdrop-blur-xl [view-transition-name:nav-left]"
@@ -159,7 +204,7 @@ const hasAnyResults = computed(
           ref="inputEl"
           v-model="q"
           type="search"
-          placeholder="Search competitions, dancers, judges…"
+          placeholder="Search"
           class="placeholder:text-nav-foreground/50 min-w-0 flex-1 bg-transparent focus:outline-none [&::-webkit-search-cancel-button]:hidden"
         />
         <button
@@ -232,6 +277,48 @@ const hasAnyResults = computed(
               @click="expandGroup('competitions')"
             >
               See all {{ competitions.total }} →
+            </button>
+          </section>
+
+          <section v-if="locations.groups.length" class="space-y-2">
+            <SectionHeader label="Locations" :count="locations.total" />
+            <ul>
+              <li v-for="group in locations.groups" :key="`${group.kind}:${group.name}`">
+                <button
+                  type="button"
+                  class="hover:bg-accent flex w-full items-center gap-3 rounded-lg px-1 py-3 text-left"
+                  @click="handleLocationTap(group)"
+                >
+                  <span
+                    :class="[
+                      'flex size-9 shrink-0 items-center justify-center rounded-full',
+                      group.kind === 'venue' && 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+                      group.kind === 'locality' && 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
+                      group.kind === 'region' && 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+                    ]"
+                  >
+                    <component :is="locationIcon(group.kind)" class="size-4" />
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-item-title truncate">
+                      {{ group.name }}
+                    </div>
+                    <div class="text-item-subtitle text-muted-foreground truncate">
+                      <span v-if="group.parentLabel">{{ group.parentLabel }} · </span>
+                      <span>{{ locationCountLabel(group.count) }}</span>
+                    </div>
+                  </div>
+                  <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+                </button>
+              </li>
+            </ul>
+            <button
+              v-if="!expanded.locations && locations.total > locations.groups.length"
+              type="button"
+              class="text-primary hover:text-primary/80 px-1 py-2 text-sm font-medium"
+              @click="expandGroup('locations')"
+            >
+              See all {{ locations.total }} →
             </button>
           </section>
 
@@ -339,8 +426,42 @@ const hasAnyResults = computed(
 
       <template v-else>
         <p class="text-muted-foreground text-lg italic">
-          Type a name to find competitions, dancers, or judges.
+          Try a competition, a place, a dancer, or a judge.
         </p>
+        <section v-if="recentSearches.recent.value.length" class="space-y-2">
+          <SectionHeader label="Recent searches">
+            <button
+              type="button"
+              class="hover:text-foreground font-normal tracking-normal normal-case"
+              @click="recentSearches.clear()"
+            >
+              Clear
+            </button>
+          </SectionHeader>
+          <ul class="flex flex-wrap gap-2">
+            <li v-for="term in recentSearches.recent.value" :key="term">
+              <span
+                class="bg-card hover:bg-accent inline-flex items-center gap-1 rounded-full border pl-3 pr-1 py-1 text-sm"
+              >
+                <button
+                  type="button"
+                  class="text-foreground"
+                  @click="q = term"
+                >
+                  {{ term }}
+                </button>
+                <button
+                  type="button"
+                  class="text-muted-foreground hover:text-foreground flex size-6 items-center justify-center rounded-full"
+                  :aria-label="`Remove ${term} from recent`"
+                  @click="recentSearches.remove(term)"
+                >
+                  <X class="size-3" />
+                </button>
+              </span>
+            </li>
+          </ul>
+        </section>
       </template>
     </main>
   </div>
