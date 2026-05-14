@@ -11,7 +11,7 @@
     "emulate:typesense": "./typesense-server --log-dir .typesense/logs --data-dir .typesense/emulator-data --listen-port=8108 --api-key=xyz --enable-cors",
     "dev:functions": "npm run --prefix functions/ dev",
     "dev:www": "vite",
-    "dev:production": "run-p not:cy dev:functions \"emulate:firebase -- --export-on-exit\" emulate:typesense \"dev:www -- --open --browser=chrome --e2e '/?production'\"",
+    "dev:production": "run-p not:cy dev:functions \"emulate:firebase -- --export-on-exit\" emulate:typesense \"dev:www -- --open '/?production'\"",
     "dev": "run-p not:cy dev:functions \"emulate:firebase -- --export-on-exit\" emulate:typesense dev:www",
     "dev:cy": "run-p is:cy dev:functions emulate:firebase emulate:typesense \"dev:www -- --open '/?cypress'\" \"cy -- open --browser=chrome --e2e\"",
     "dev:cy:ci": "run-s build:www test:cy:ci",
@@ -35,7 +35,7 @@
     "build": "npm run lint && npm run build:ci && npm run sync-version && npx cap sync && npm run notify 'Build Complete'",
     "report": "npx vite-bundle-visualizer && open stats.html",
     "release": "git commit -a -m $npm_package_version && git tag \"v${npm_package_version}\"",
-    "deploy": "firebase deploy && git push origin HEAD:main --tags"
+    "deploy": "firebase deploy --only hosting:production,functions,database,storage && git push origin HEAD:main --tags"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",
