@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { onClickOutside, onKeyStroke } from '@vueuse/core'
+import { onKeyStroke } from '@vueuse/core'
 import { RouterLink, useRoute } from 'vue-router'
 import {
   ArrowDownToLine,
@@ -16,8 +16,6 @@ const route = useRoute()
 const update = useUpdate()
 
 const moreOpen = ref(false)
-const moreRef = ref<HTMLElement | null>(null)
-onClickOutside(moreRef, () => (moreOpen.value = false))
 onKeyStroke('Escape', () => (moreOpen.value = false))
 
 const tabs = [
@@ -37,9 +35,7 @@ const tabs = [
 </script>
 
 <template>
-  <nav
-    class="pointer-events-none fixed inset-x-0 bottom-(--nav-bottom) z-30 px-4"
-  >
+  <nav class="pointer-events-none fixed inset-x-0 bottom-(--nav-bottom) z-30 px-4">
     <div class="mx-auto flex max-w-3xl items-center justify-between">
       <div
         class="bg-nav/90 text-nav-foreground pointer-events-auto rounded-full p-1 shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-left]"
@@ -60,7 +56,7 @@ const tabs = [
             <span class="text-xs leading-none">{{ tab.name }}</span>
           </RouterLink>
 
-          <div ref="moreRef" class="relative">
+          <div class="relative">
             <button
               type="button"
               :class="[
@@ -82,53 +78,86 @@ const tabs = [
               />
             </button>
 
-            <div
-              v-if="moreOpen"
-              class="bg-nav/90 text-nav-foreground absolute bottom-full left-1/2 z-40 mb-2 w-72 max-w-[calc(100vw-1.5rem)] -translate-x-1/2 rounded-3xl border border-white/10 p-3 font-sans shadow-lg backdrop-blur-xl"
-              role="menu"
+            <!-- Backdrop: outside-click absorber so taps below the menu don't
+                 activate page content. -->
+            <Transition
+              enter-active-class="transition ease-out"
+              enter-from-class="opacity-0"
+              enter-to-class="opacity-100"
+              leave-active-class="transition ease-out"
+              leave-from-class="opacity-100"
+              leave-to-class="opacity-0"
             >
-              <RouterLink
-                :to="{ name: 'home' }"
-                :class="[
-                  'flex w-full items-center gap-3 rounded-lg p-2.5 text-base font-medium transition-opacity',
-                  route.path === '/'
-                    ? 'bg-nav-foreground/10'
-                    : 'opacity-70 hover:opacity-100',
-                ]"
-                role="menuitem"
+              <div
+                v-if="moreOpen"
+                class="pointer-events-auto fixed inset-0 z-40"
+                aria-hidden="true"
                 @click="moreOpen = false"
-              >
-                <Home class="size-5" />
-                <span class="flex-1">Home</span>
-              </RouterLink>
+              />
+            </Transition>
 
-              <button
-                v-if="update.updateAvailable"
-                type="button"
-                class="mt-1 flex w-full items-center gap-3 rounded-lg p-2.5 text-left text-base font-medium opacity-70 transition-opacity hover:opacity-100"
-                role="menuitem"
-                @click="
-                  () => {
-                    moreOpen = false
-                    update.openDialog()
-                  }
-                "
+            <!-- Menu overlay: morphs out of the More button position
+                 (bottom-center of the overlay box) via clip-path. -->
+            <Transition
+              enter-active-class="transition-[clip-path,opacity] ease-out"
+              enter-from-class="opacity-0 [clip-path:inset(calc(100%-3.5rem)_calc(50%-2rem)_0_calc(50%-2rem)_round_1.75rem)]"
+              enter-to-class="opacity-100 [clip-path:inset(0_0_0_0_round_1.5rem)]"
+              leave-active-class="transition-[clip-path,opacity] ease-out"
+              leave-from-class="opacity-100 [clip-path:inset(0_0_0_0_round_1.5rem)]"
+              leave-to-class="opacity-0 [clip-path:inset(calc(100%-3.5rem)_calc(50%-2rem)_0_calc(50%-2rem)_round_1.75rem)]"
+            >
+              <div
+                v-if="moreOpen"
+                class="absolute bottom-full left-1/2 z-50 mb-2 w-72 max-w-[calc(100vw-1.5rem)] -translate-x-1/2"
+                role="menu"
               >
-                <ArrowDownToLine class="size-5" />
-                <span class="flex-1">Update available</span>
-                <span
-                  class="bg-secondary size-2 animate-pulse rounded-full"
-                  aria-hidden="true"
-                />
-              </button>
-            </div>
+                <div
+                  class="bg-nav/90 text-nav-foreground w-full overflow-hidden rounded-3xl border border-white/10 p-3 font-sans shadow-lg backdrop-blur-xl"
+                >
+                  <RouterLink
+                    :to="{ name: 'home' }"
+                    :class="[
+                      'flex w-full items-center gap-3 rounded-lg p-2.5 text-base font-medium transition-opacity',
+                      route.path === '/'
+                        ? 'bg-nav-foreground/10'
+                        : 'opacity-70 hover:opacity-100',
+                    ]"
+                    role="menuitem"
+                    @click="moreOpen = false"
+                  >
+                    <Home class="size-5" />
+                    <span class="flex-1">Home</span>
+                  </RouterLink>
+
+                  <button
+                    v-if="update.updateAvailable"
+                    type="button"
+                    class="mt-1 flex w-full items-center gap-3 rounded-lg p-2.5 text-left text-base font-medium opacity-70 transition-opacity hover:opacity-100"
+                    role="menuitem"
+                    @click="
+                      () => {
+                        moreOpen = false
+                        update.openDialog()
+                      }
+                    "
+                  >
+                    <ArrowDownToLine class="size-5" />
+                    <span class="flex-1">Update available</span>
+                    <span
+                      class="bg-secondary size-2 animate-pulse rounded-full"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
+              </div>
+            </Transition>
           </div>
         </div>
       </div>
 
       <RouterLink
         :to="{ name: 'search' }"
-        class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-16 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-right] hover:opacity-90"
+        class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-right] hover:opacity-90"
         title="Search"
         aria-label="Search"
       >
