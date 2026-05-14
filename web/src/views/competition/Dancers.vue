@@ -340,11 +340,11 @@ const vt = useVtScope('comp-dancer')
         <li v-for="dancer in group.members" :key="dancer.id">
           <div class="flex items-center">
             <RouterLink
+              v-slot="{ href, navigate }"
               :to="{
                 name: 'competition.dancer',
                 params: { competitionId, dancerId: dancer.id },
               }"
-              v-slot="{ href, navigate }"
               custom
             >
               <a

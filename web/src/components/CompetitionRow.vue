@@ -20,7 +20,7 @@ const vt = useVtScope('comp')
 
 <template>
   <li class="flex items-start">
-    <RouterLink :to="to" v-slot="{ href, navigate }" custom>
+    <RouterLink v-slot="{ href, navigate }" :to="to" custom>
       <a
         :href="href"
         class="flex min-w-0 flex-1 items-start gap-3 py-3 pr-3 pl-1"
