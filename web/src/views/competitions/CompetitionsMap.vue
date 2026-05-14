@@ -331,4 +331,38 @@ watch(venueGroups, () => {
 .maplibregl-ctrl-bottom-left {
   bottom: var(--chrome-bottom);
 }
+
+/* Restyle the locate-me control to match the floating nav island pill
+   style (bg-nav/90, shadow, blur, fully round). Scoped via :has() so it
+   only hits the geolocate group, not other controls. */
+.maplibregl-ctrl-group:has(> .maplibregl-ctrl-geolocate) {
+  background: color-mix(in oklab, var(--nav) 90%, transparent);
+  color: var(--nav-foreground);
+  border: none;
+  border-radius: 9999px;
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  overflow: hidden;
+}
+.maplibregl-ctrl-group:has(> .maplibregl-ctrl-geolocate) > button {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 9999px;
+  transition: opacity 150ms ease;
+}
+.maplibregl-ctrl-group:has(> .maplibregl-ctrl-geolocate) > button:hover {
+  background: transparent;
+  opacity: 0.9;
+}
+/* The default MapLibre icon ships as a dark SVG. Invert it in light mode
+   so it reads on the near-black nav bg; leave as-is in dark mode where
+   the nav is cream and the dark icon already contrasts. */
+html:not(.dark) .maplibregl-ctrl-group:has(> .maplibregl-ctrl-geolocate) .maplibregl-ctrl-icon {
+  filter: invert(1);
+}
 </style>
