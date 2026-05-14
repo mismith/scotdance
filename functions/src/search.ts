@@ -20,8 +20,8 @@ function getTypesense() {
   return typesenseClient;
 }
 
-type EntityType = 'competitions' | 'dancers' | 'judges';
-const ALL_TYPES: EntityType[] = ['competitions', 'dancers', 'judges'];
+type EntityType = 'competitions' | 'dancers' | 'judges' | 'locations';
+const ALL_TYPES: EntityType[] = ['competitions', 'dancers', 'judges', 'locations'];
 
 interface SearchAllParams {
   q?: string;
@@ -29,12 +29,19 @@ interface SearchAllParams {
   types?: EntityType[];
 }
 
+function emptyOut() {
+  return {
+    competitions: null,
+    dancers: null,
+    judges: null,
+    locations: null,
+  };
+}
+
 export function getOnSearchAll(db: any) {
   return async function onSearchAll(params: SearchAllParams, ctx: any) {
     const q = (params?.q || '').trim();
-    if (!q) {
-      return { competitions: null, dancers: null, judges: null };
-    }
+    if (!q) return emptyOut();
 
     const perGroup = Math.min(Math.max(params?.perGroup ?? 5, 1), 50);
     const types = (params?.types && params.types.length ? params.types : ALL_TYPES)
@@ -65,42 +72,67 @@ export function getOnSearchAll(db: any) {
     const childFilter = isAdmin ? undefined : `$competitionId:[${idList}]`;
 
     // Short-circuit: non-admin with no authorized comps → nothing to search.
-    if (!isAdmin && (authorizedCompIds || []).length === 0) {
-      return { competitions: null, dancers: null, judges: null };
-    }
+    if (!isAdmin && (authorizedCompIds || []).length === 0) return emptyOut();
 
-    const searches = types.map((type) => {
+    // Build searches and remember which result slot each one targets.
+    const slots: Array<
+    { key: 'competitions' | 'dancers' | 'judges' }
+    | { key: 'locations'; kind: 'venue' | 'locality' | 'region' }
+    > = [];
+    const searches: any[] = [];
+
+    types.forEach((type) => {
       if (type === 'competitions') {
-        return {
+        slots.push({ key: 'competitions' });
+        searches.push({
           collection: 'competitions',
           q,
           query_by: 'name,venue,location,locality,region,country',
           filter_by: compFilter,
           per_page: perGroup,
-        };
+        });
+      } else if (type === 'dancers' || type === 'judges') {
+        slots.push({ key: type });
+        searches.push({
+          collection: type,
+          q,
+          query_by: '$name,firstName,lastName',
+          filter_by: childFilter,
+          per_page: perGroup,
+          group_by: '$name',
+          group_limit: 5,
+        });
+      } else if (type === 'locations') {
+        // Three sub-queries — one per place kind. Each is scoped to its own
+        // field so a comp-name match doesn't surface its parent locality.
+        (['venue', 'locality', 'region'] as const).forEach((kind) => {
+          slots.push({ key: 'locations', kind });
+          searches.push({
+            collection: 'competitions',
+            q,
+            query_by: kind,
+            filter_by: compFilter,
+            per_page: perGroup,
+            group_by: kind,
+            group_limit: 3,
+          });
+        });
       }
-      // dancers + judges share shape
-      return {
-        collection: type,
-        q,
-        query_by: '$name,firstName,lastName',
-        filter_by: childFilter,
-        per_page: perGroup,
-        group_by: '$name',
-        group_limit: 5,
-      };
     });
 
     try {
       const response = await getTypesense().multiSearch.perform({ searches });
       const results = response?.results || [];
-      const out: Record<EntityType, unknown> = {
-        competitions: null,
-        dancers: null,
-        judges: null,
-      };
-      types.forEach((type, i) => {
-        out[type] = results[i] ?? null;
+      const out: any = emptyOut();
+      slots.forEach((slot, i) => {
+        const result = results[i] ?? null;
+        if (slot.key === 'locations') {
+          if (!out.locations) out.locations = { venues: null, localities: null, regions: null };
+          const bucket = `${slot.kind}s` as 'venues' | 'localities' | 'regions';
+          out.locations[bucket] = result;
+        } else {
+          out[slot.key] = result;
+        }
       });
       return out;
     } catch (error: any) {

@@ -26,7 +26,9 @@ export const schema: CollectionCreateSchema = {
   fields: [
     { name: '$name', type: 'string', facet: true },
     { name: 'name', type: 'string', optional: true },
-    { name: 'venue', type: 'string', optional: true },
+    {
+      name: 'venue', type: 'string', optional: true, facet: true,
+    },
     { name: 'location', type: 'string', optional: true },
     {
       name: 'country', type: 'string', optional: true, facet: true,
@@ -34,7 +36,9 @@ export const schema: CollectionCreateSchema = {
     {
       name: 'region', type: 'string', optional: true, facet: true,
     },
-    { name: 'locality', type: 'string', optional: true },
+    {
+      name: 'locality', type: 'string', optional: true, facet: true,
+    },
     { name: 'date', type: 'int64', optional: true },
     {
       name: 'published', type: 'bool', facet: true, optional: true,
