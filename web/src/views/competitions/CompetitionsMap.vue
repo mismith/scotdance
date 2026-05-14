@@ -256,13 +256,16 @@ watch(venueGroups, () => {
 .maplibregl-ctrl-bottom-left {
   bottom: var(--chrome-bottom, 0px);
 }
+/* Match the floating header's horizontal inset: 1rem from the viewport
+   edge on narrow screens, then snap to the 48rem content lane on wide
+   screens. Keeps the locate-me button centered under the avatar. */
 .maplibregl-ctrl-top-right,
 .maplibregl-ctrl-bottom-right {
-  right: max(0px, calc((100vw - 48rem) / 2));
+  right: max(1rem, calc((100vw - 48rem) / 2));
 }
 .maplibregl-ctrl-top-left,
 .maplibregl-ctrl-bottom-left {
-  left: max(0px, calc((100vw - 48rem) / 2));
+  left: max(1rem, calc((100vw - 48rem) / 2));
 }
 .map-pin {
   display: block;
@@ -336,6 +339,11 @@ watch(venueGroups, () => {
    style (bg-nav/90, shadow, blur, fully round). Scoped via :has() so it
    only hits the geolocate group, not other controls. */
 .maplibregl-ctrl-group:has(> .maplibregl-ctrl-geolocate) {
+  /* Zero out MapLibre's default 10px outer margin so the button sits
+     exactly at the corner container's edge — which is itself aligned to
+     the avatar above by the .maplibregl-ctrl-{top,bottom}-{right,left}
+     overrides. */
+  margin: 0;
   background: color-mix(in oklab, var(--nav) 90%, transparent);
   color: var(--nav-foreground);
   border: none;
