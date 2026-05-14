@@ -272,11 +272,11 @@ watch(
                 >
                   <template v-if="row.dancer">
                     <RouterLink
+                      v-slot="{ href, navigate }"
                       :to="{
                         name: 'competition.dancer',
                         params: { competitionId, dancerId: row.dancer.id },
                       }"
-                      v-slot="{ href, navigate }"
                       custom
                     >
                       <a
@@ -360,11 +360,11 @@ watch(
                 <Place :place="row.place" :tied="row.tied" class="ml-1 mr-2" />
                 <RouterLink
                   v-if="row.dancer"
+                  v-slot="{ href, navigate }"
                   :to="{
                     name: 'competition.dancer',
                     params: { competitionId, dancerId: row.dancer.id },
                   }"
-                  v-slot="{ href, navigate }"
                   custom
                 >
                   <a
@@ -436,11 +436,11 @@ watch(
                 >
                   <Place :place="null" pointed class="ml-1 mr-2" />
                   <RouterLink
+                    v-slot="{ href, navigate }"
                     :to="{
                       name: 'competition.dancer',
                       params: { competitionId, dancerId: dancer.id },
                     }"
-                    v-slot="{ href, navigate }"
                     custom
                   >
                     <a

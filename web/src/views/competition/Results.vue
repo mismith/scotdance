@@ -141,11 +141,11 @@ const vt = useVtScope('group')
         </li>
         <li v-for="group in row.groups" :key="group.id">
           <RouterLink
+            v-slot="{ href, navigate }"
             :to="{
               name: 'competition.group',
               params: { competitionId, groupId: group.id },
             }"
-            v-slot="{ href, navigate }"
             custom
           >
             <a

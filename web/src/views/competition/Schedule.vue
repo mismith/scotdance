@@ -99,6 +99,7 @@ const vt = useVtScope('event')
           <ul>
             <li v-for="event in events(block)" :key="event.id" class="flex items-center">
               <RouterLink
+                v-slot="{ href, navigate }"
                 :to="{
                   name: 'competition.event',
                   params: {
@@ -108,7 +109,6 @@ const vt = useVtScope('event')
                     eventId: event.id,
                   },
                 }"
-                v-slot="{ href, navigate }"
                 custom
               >
                 <a

@@ -180,11 +180,11 @@ const vt = useVtScope('dancer')
           <ul>
             <li v-for="group in results" :key="group.name">
               <RouterLink
+                v-slot="{ href, navigate }"
                 :to="{
                   name: 'dancer.info',
                   params: { dancerId: dancerSlug(group.name) },
                 }"
-                v-slot="{ href, navigate }"
                 custom
               >
                 <a
@@ -226,11 +226,11 @@ const vt = useVtScope('dancer')
           <ul>
             <li v-for="entry in favoriteEntries" :key="entry.name">
               <RouterLink
+                v-slot="{ href, navigate }"
                 :to="{
                   name: 'dancer.info',
                   params: { dancerId: dancerSlug(entry.name) },
                 }"
-                v-slot="{ href, navigate }"
                 custom
               >
                 <a
@@ -296,8 +296,8 @@ const vt = useVtScope('dancer')
           <ul>
             <li v-for="entry in recentList" :key="entry.slug">
               <RouterLink
-                :to="{ name: 'dancer.info', params: { dancerId: entry.slug } }"
                 v-slot="{ href, navigate }"
+                :to="{ name: 'dancer.info', params: { dancerId: entry.slug } }"
                 custom
               >
                 <a
