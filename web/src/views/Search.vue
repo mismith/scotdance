@@ -214,7 +214,7 @@ const hasAnyResults = computed(
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col pb-(--chrome-bottom)">
+  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
     <main class="mx-auto flex w-full max-w-3xl flex-1 flex-col space-y-6 p-4">
       <div v-if="error" class="text-destructive text-lg">{{ error.message }}</div>
 

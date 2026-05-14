@@ -147,12 +147,12 @@ function renderMarkers(): void {
   }
 }
 
-// Resolve a CSS length variable to pixels. Used to feed our --chrome-bottom
-// safe-area into MapLibre's per-call camera padding (e.g. so the pan
+// Resolve a CSS length expression to pixels. Used to feed our chrome
+// inset into MapLibre's per-call camera padding (e.g. so the pan
 // triggered by "locate me" lands above the floating nav, not behind it).
-function cssLengthPx(name: string): number {
+function cssLengthPx(expr: string): number {
   const probe = document.createElement('div')
-  probe.style.cssText = `position:absolute;visibility:hidden;height:var(${name})`
+  probe.style.cssText = `position:absolute;visibility:hidden;height:${expr}`
   document.body.appendChild(probe)
   const px = probe.getBoundingClientRect().height
   probe.remove()
@@ -168,7 +168,7 @@ onMounted(() => {
   watch(isDark, (dark) => {
     map.setStyle(styleUrlFor(dark))
   })
-  const chromeBottom = cssLengthPx('--chrome-bottom')
+  const chromeBottom = cssLengthPx('calc(var(--chrome-bottom) + 1rem)')
   const geolocate = new maplibregl.GeolocateControl({
     positionOptions: { enableHighAccuracy: true },
     showUserLocation: true,
@@ -242,19 +242,26 @@ watch(venueGroups, () => {
 </template>
 
 <style>
-/* Inset MapLibre's built-in control corners so they sit inside the safe
-   area defined by our floating app chrome — bottom nav today, floating
-   header above. The map canvas itself still goes edge-to-edge; only the
-   controls move. On desktop, also constrain horizontally to the same
-   max-w-3xl (48rem) content lane the floating header lives in so the
-   locate-me / attribution don't fly to the viewport edges. */
+/* Inset MapLibre's built-in control corners so they sit ~1rem outside
+   the floating app chrome — bottom nav + in-map header above. The map
+   canvas itself still goes edge-to-edge; only the controls move. On
+   desktop, also constrain horizontally to the same max-w-3xl (48rem)
+   content lane the floating header lives in so the locate-me /
+   attribution don't fly to the viewport edges. */
 .maplibregl-ctrl-top-right,
 .maplibregl-ctrl-top-left {
-  top: var(--chrome-top, 0px);
+  top: calc(var(--chrome-top) + 1rem);
 }
 .maplibregl-ctrl-bottom-right,
 .maplibregl-ctrl-bottom-left {
-  bottom: var(--chrome-bottom, 0px);
+  bottom: calc(var(--chrome-bottom) + 1rem);
+}
+/* Zero MapLibre's default 10px outer margin on the attribution control so
+   it sits exactly at the corner container's edge (matches the geolocate
+   override below). */
+.maplibregl-ctrl-bottom-right > .maplibregl-ctrl-attrib,
+.maplibregl-ctrl-bottom-left > .maplibregl-ctrl-attrib {
+  margin: 0;
 }
 /* Match the floating header's horizontal inset: 1rem from the viewport
    edge on narrow screens, then snap to the 48rem content lane on wide
@@ -326,13 +333,6 @@ watch(venueGroups, () => {
 }
 .map-cluster:hover {
   transform: scale(1.05);
-}
-
-/* Lift the map's bottom chrome (attribution, scale, etc.) above the
-   floating app nav so it stays legible and tappable. */
-.maplibregl-ctrl-bottom-right,
-.maplibregl-ctrl-bottom-left {
-  bottom: var(--chrome-bottom);
 }
 
 /* Restyle the locate-me control to match the floating nav island pill

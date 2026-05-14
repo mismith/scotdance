@@ -165,7 +165,10 @@ const monthGroups = computed<MonthGroup[]>(() => {
 
 <template>
   <div
-    :class="['flex flex-1 flex-col', view === 'map' ? 'h-dvh' : 'pb-(--chrome-bottom)']"
+    :class="[
+      'flex flex-1 flex-col',
+      view === 'map' ? 'h-dvh' : 'pb-[calc(var(--chrome-bottom)+1rem)]',
+    ]"
   >
     <main
       :class="[
@@ -176,7 +179,9 @@ const monthGroups = computed<MonthGroup[]>(() => {
       <div
         :class="[
           'flex h-12 items-center gap-2',
-          view === 'map' ? 'absolute inset-x-4 top-4 z-10 mx-auto max-w-3xl' : 'relative',
+          view === 'map'
+            ? 'absolute inset-x-4 top-(--nav-top) z-10 mx-auto max-w-3xl'
+            : 'relative',
         ]"
       >
         <div class="flex items-center gap-2 rounded-3xl border p-1">
