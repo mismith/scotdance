@@ -181,7 +181,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
       >
         <div class="flex items-center gap-2 rounded-3xl border p-1">
           <ViewModePill v-model="view" />
-          <LocationPill v-if="view !== 'map'" />
+          <LocationPill v-if="view !== 'map'" :competitions="competitions" />
           <DatePill v-if="view !== 'calendar'" v-model="filter" />
         </div>
         <div

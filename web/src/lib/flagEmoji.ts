@@ -21,7 +21,7 @@ const NAME_TO_ISO: Record<string, string> = {
   'south africa': 'ZA',
 }
 
-function isoFor(value: string | null | undefined): string | null {
+export function isoFor(value: string | null | undefined): string | null {
   if (!value) return null
   const trimmed = value.trim()
   if (!trimmed) return null
