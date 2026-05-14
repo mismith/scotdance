@@ -114,8 +114,12 @@ export const router = createRouter({
   },
 })
 
-router.beforeResolve(async (_to, from) => {
+router.beforeResolve(async (to, from) => {
   if (from.matched.length === 0) return
+  // Skip transition for same-route query-only changes (e.g. typing into a
+  // search input that syncs ?q= to the URL) — the snapshot/replay would
+  // flicker visible text on each keystroke.
+  if (to.name === from.name && to.path === from.path) return
   const transition = startViewTransition()
   await transition.captured
 })

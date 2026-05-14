@@ -2,7 +2,9 @@ import { httpsCallable } from 'firebase/functions'
 import { functions } from '@/firebase'
 import { initialsOf } from '@/lib/format'
 
-export type SearchEntityType = 'competitions' | 'dancers' | 'judges'
+export type SearchEntityType = 'competitions' | 'dancers' | 'judges' | 'locations'
+
+export type LocationKind = 'venue' | 'locality' | 'region'
 
 interface RawCompetitionDoc {
   id?: string
@@ -44,10 +46,17 @@ interface RawSearchResult<D> {
   found?: number
 }
 
+interface RawLocationsBlock {
+  venues: RawSearchResult<RawCompetitionDoc> | null
+  localities: RawSearchResult<RawCompetitionDoc> | null
+  regions: RawSearchResult<RawCompetitionDoc> | null
+}
+
 interface RawSearchAllResponse {
   competitions: RawSearchResult<RawCompetitionDoc> | null
   dancers: RawSearchResult<RawPersonDoc> | null
   judges: RawSearchResult<RawPersonDoc> | null
+  locations: RawLocationsBlock | null
 }
 
 export interface SearchCompetitionHit {
@@ -67,10 +76,22 @@ export interface SearchPersonGroup {
   image?: string
 }
 
+export interface SearchLocationGroup {
+  kind: LocationKind
+  name: string
+  parentLabel?: string
+  count: number
+  sampleCompId: string
+  country?: string
+  region?: string
+  locality?: string
+}
+
 export interface SearchAllResults {
   competitions: { hits: SearchCompetitionHit[]; total: number }
   dancers: { groups: SearchPersonGroup[]; total: number }
   judges: { groups: SearchPersonGroup[]; total: number }
+  locations: { groups: SearchLocationGroup[]; total: number }
 }
 
 interface CallParams {
@@ -133,6 +154,66 @@ function mapPeople(
   return { groups, total: result.found ?? groups.length }
 }
 
+function parentLabelFor(kind: LocationKind, sample: RawCompetitionDoc | undefined): string | undefined {
+  if (!sample) return undefined
+  if (kind === 'venue') {
+    // Venue's parent is its locality + region (city, province)
+    return [sample.locality, sample.region].filter(Boolean).join(', ') || sample.country || undefined
+  }
+  if (kind === 'locality') {
+    // Locality's parent is region + country
+    return [sample.region, sample.country].filter(Boolean).join(', ') || undefined
+  }
+  // region's parent is country
+  return sample.country || undefined
+}
+
+function mapLocationsBucket(
+  kind: LocationKind,
+  result: RawSearchResult<RawCompetitionDoc> | null,
+): SearchLocationGroup[] {
+  if (!result) return []
+  return (result.grouped_hits ?? [])
+    .map<SearchLocationGroup | null>((g) => {
+      const name = (g.group_key?.[0] ?? '').trim()
+      if (!name) return null
+      const hits = (g.hits ?? []).map((h) => h.document).filter((d): d is RawCompetitionDoc => !!d)
+      const sample = hits[0]
+      if (!sample?.id) return null
+      return {
+        kind,
+        name,
+        parentLabel: parentLabelFor(kind, sample),
+        count: hits.length,
+        sampleCompId: sample.id,
+        country: sample.country,
+        region: sample.region,
+        locality: sample.locality,
+      }
+    })
+    .filter((g): g is SearchLocationGroup => g !== null)
+}
+
+function mapLocations(block: RawLocationsBlock | null): SearchAllResults['locations'] {
+  if (!block) return { groups: [], total: 0 }
+  const merged = [
+    ...mapLocationsBucket('region', block.regions),
+    ...mapLocationsBucket('locality', block.localities),
+    ...mapLocationsBucket('venue', block.venues),
+  ]
+  // Dedupe identical name+kind (rare but possible across buckets, e.g. a
+  // venue and a locality sharing a name).
+  const seen = new Set<string>()
+  const groups = merged.filter((g) => {
+    const k = `${g.kind}::${g.name.toLowerCase()}`
+    if (seen.has(k)) return false
+    seen.add(k)
+    return true
+  })
+  groups.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+  return { groups, total: groups.length }
+}
+
 export async function searchAll(params: CallParams): Promise<SearchAllResults> {
   const trimmed = params.q.trim()
   if (!trimmed) {
@@ -140,6 +221,7 @@ export async function searchAll(params: CallParams): Promise<SearchAllResults> {
       competitions: { hits: [], total: 0 },
       dancers: { groups: [], total: 0 },
       judges: { groups: [], total: 0 },
+      locations: { groups: [], total: 0 },
     }
   }
   const key = cacheKey({ ...params, q: trimmed })
@@ -154,6 +236,7 @@ export async function searchAll(params: CallParams): Promise<SearchAllResults> {
         competitions: mapCompetitions(data?.competitions ?? null),
         dancers: mapPeople(data?.dancers ?? null),
         judges: mapPeople(data?.judges ?? null),
+        locations: mapLocations(data?.locations ?? null),
       }
       responseCache.set(key, out)
       return out
