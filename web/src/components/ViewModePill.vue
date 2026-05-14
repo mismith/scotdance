@@ -24,7 +24,7 @@ function select(id: ViewMode, close: () => void) {
 <template>
   <ExpandingPill id="viewmode" :aria-label="`View: ${current.label}`">
     <template #compact>
-      <component :is="current.icon" class="size-4" />
+      <component :is="current.icon" class="size-5" />
     </template>
 
     <template #expanded="{ close }">
@@ -41,7 +41,7 @@ function select(id: ViewMode, close: () => void) {
           ]"
           @click="select(mode.id, close)"
         >
-          <component :is="mode.icon" class="size-4" />
+          <component :is="mode.icon" class="hidden size-4 md:inline-block" />
           {{ mode.label }}
         </button>
       </div>

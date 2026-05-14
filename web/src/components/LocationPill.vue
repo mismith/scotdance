@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Globe, LocateFixed, MapPin } from '@lucide/vue'
+import { Globe, Locate, Scan } from '@lucide/vue'
 import ExpandingPill from '@/components/ExpandingPill.vue'
 import { useLocationFilter, type LocationMode } from '@/composables/useLocationFilter'
 import { countryFlag, regionFlag } from '@/lib/flagEmoji'
@@ -25,21 +25,21 @@ const {
 
 type CompactDisplay =
   | { kind: 'flag'; emoji: string }
-  | { kind: 'icon'; icon: typeof MapPin }
+  | { kind: 'icon'; icon: typeof Locate }
 
 const compact = computed<CompactDisplay>(() => {
-  if (mode.value === 'nearby') return { kind: 'icon', icon: LocateFixed }
+  if (mode.value === 'nearby') return { kind: 'icon', icon: Locate }
   if (mode.value === 'region') {
-    if (locality.value) return { kind: 'icon', icon: MapPin }
+    if (locality.value) return { kind: 'icon', icon: Locate }
     if (region.value) {
       const flag = regionFlag(country.value, region.value)
       if (flag) return { kind: 'flag', emoji: flag }
-      return { kind: 'icon', icon: MapPin }
+      return { kind: 'icon', icon: Locate }
     }
     if (country.value) {
       const flag = countryFlag(country.value)
       if (flag) return { kind: 'flag', emoji: flag }
-      return { kind: 'icon', icon: MapPin }
+      return { kind: 'icon', icon: Locate }
     }
   }
   return { kind: 'icon', icon: Globe }
@@ -57,10 +57,10 @@ const ariaLabel = computed(() => {
   return 'Location: worldwide'
 })
 
-const options: Array<{ id: LocationMode; label: string }> = [
-  { id: 'nearby', label: 'Nearby' },
-  { id: 'region', label: 'Region' },
-  { id: 'worldwide', label: 'Worldwide' },
+const options: Array<{ id: LocationMode; label: string; icon: typeof Globe }> = [
+  { id: 'nearby', label: 'Nearby', icon: Locate },
+  { id: 'region', label: 'Region', icon: Scan },
+  { id: 'worldwide', label: 'Worldwide', icon: Globe },
 ]
 
 function select(id: LocationMode): void {
@@ -124,10 +124,10 @@ function clearRegion(): void {
 <template>
   <ExpandingPill id="location" :aria-label="ariaLabel">
     <template #compact>
-      <span v-if="compact.kind === 'flag'" class="text-base leading-none">
+      <span v-if="compact.kind === 'flag'" class="text-xl leading-none">
         {{ compact.emoji }}
       </span>
-      <component :is="compact.icon" v-else class="size-4" />
+      <component :is="compact.icon" v-else class="size-5" />
     </template>
 
     <template #expanded>
@@ -140,13 +140,14 @@ function clearRegion(): void {
             :key="opt.id"
             type="button"
             :class="[
-              'inline-flex h-10 flex-1 items-center justify-center rounded-full px-4 font-sans text-sm font-medium transition-colors',
+              'inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full px-4 font-sans text-sm font-medium transition-colors',
               mode === opt.id
                 ? 'bg-nav-foreground/15'
                 : 'opacity-70 hover:opacity-100',
             ]"
             @click="select(opt.id)"
           >
+            <component :is="opt.icon" class="hidden size-4 md:inline-block" />
             {{ opt.label }}
           </button>
         </div>
