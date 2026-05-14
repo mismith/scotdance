@@ -28,7 +28,7 @@ const initials = computed(() => initialsOf(displayName.value))
 
 <template>
   <div class="flex flex-1 flex-col pb-(--chrome-bottom)">
-    <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--safe-top)">
+    <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
       <div class="mx-auto flex max-w-3xl items-center gap-2 pt-4">
         <RouterLink
           v-if="!isInfo"
