@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import { Globe, Locate, LandPlot, X } from '@lucide/vue'
 import ExpandingPill from '@/components/ExpandingPill.vue'
 import NearbyRadiusMap from '@/components/NearbyRadiusMap.vue'
@@ -113,6 +113,8 @@ function defaultRegionCountry(): string | null {
   return quickCountries.value[0]?.value ?? null
 }
 
+const pillRef = useTemplateRef<{ close: () => void }>('pill')
+
 function select(id: LocationMode): void {
   if (id === mode.value) return
   if (id === 'nearby') setNearby()
@@ -125,7 +127,11 @@ function select(id: LocationMode): void {
       }
     }
     setRegion()
-  } else setWorldwide()
+  } else {
+    // Worldwide has no sub-options to configure — collapse the pill.
+    setWorldwide()
+    pillRef.value?.close()
+  }
 }
 
 // Region quick-picks: countries that actually exist in loaded comps, by count.
@@ -199,7 +205,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
 </script>
 
 <template>
-  <ExpandingPill id="location" :aria-label="ariaLabel">
+  <ExpandingPill id="location" ref="pill" :aria-label="ariaLabel">
     <template #compact>
       <span v-if="compact.kind === 'flag'" class="text-xl leading-none">
         {{ compact.emoji }}
