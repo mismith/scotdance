@@ -6,6 +6,7 @@ import {
   Building,
   CalendarDays,
   ChevronRight,
+  Gavel,
   Home,
   Map as MapIcon,
   MapPin,
@@ -14,6 +15,8 @@ import {
   X,
 } from '@lucide/vue'
 import SectionHeader from '@/components/SectionHeader.vue'
+import DisclosureHeader from '@/components/DisclosureHeader.vue'
+import SmoothCollapse from '@/components/SmoothCollapse.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import CompetitionRow from '@/components/CompetitionRow.vue'
 import {
@@ -27,6 +30,7 @@ import type { CompetitionListItem } from '@/composables/useCompetitions'
 import { useVtScope } from '@/lib/viewTransitionFocus'
 import { useLocationFilter } from '@/composables/useLocationFilter'
 import { useRecentSearches } from '@/composables/useRecentSearches'
+import { useSearchExamples } from '@/composables/useSearchExamples'
 import { backPath, preferBackClick } from '@/lib/smartBack'
 
 const vt = useVtScope('dancer')
@@ -60,6 +64,52 @@ const expanded = reactive<Record<SearchEntityType, boolean>>({
 
 const locationFilter = useLocationFilter()
 const recentSearches = useRecentSearches()
+const searchExamples = useSearchExamples()
+
+interface ExampleCardConfig {
+  key: 'competitions' | 'places' | 'dancers' | 'judges'
+  label: string
+  icon: typeof CalendarDays
+  iconClass: string
+}
+
+const exampleCards: ExampleCardConfig[] = [
+  {
+    key: 'competitions',
+    label: 'Competitions',
+    icon: CalendarDays,
+    iconClass: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300',
+  },
+  {
+    key: 'places',
+    label: 'Places',
+    icon: MapPin,
+    iconClass: 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
+  },
+  {
+    key: 'dancers',
+    label: 'Dancers',
+    icon: Users,
+    iconClass: 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
+  },
+  {
+    key: 'judges',
+    label: 'Judges',
+    icon: Gavel,
+    iconClass: 'bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300',
+  },
+]
+
+const hasExamples = computed(() =>
+  exampleCards.some((c) => searchExamples.examples.value[c.key].length > 0),
+)
+
+const suggestionExpanded = reactive<Record<ExampleCardConfig['key'], boolean>>({
+  competitions: true,
+  places: true,
+  dancers: true,
+  judges: true,
+})
 
 // Pick the back-button destination from history. /search is a leaf — the
 // history.back entry doesn't change while we're here, so resolving once at
@@ -411,7 +461,7 @@ const hasAnyResults = computed(
       </template>
 
       <template v-else>
-        <div class="flex flex-1 flex-col">
+        <div class="flex flex-1 flex-col gap-6">
           <section v-if="recentSearches.recent.value.length" class="space-y-2">
             <SectionHeader label="Recent searches">
               <button
@@ -446,9 +496,50 @@ const hasAnyResults = computed(
               </li>
             </ul>
           </section>
-          <p class="text-muted-foreground mt-auto text-lg italic">
-            Try a competition, a place, a dancer, or a judge.
-          </p>
+
+          <section v-if="hasExamples" class="space-y-2">
+            <h2 class="font-serif text-3xl font-medium tracking-tight">
+              Suggestions
+            </h2>
+            <template v-for="card in exampleCards" :key="card.key">
+              <section
+                v-if="searchExamples.examples.value[card.key].length"
+                class="space-y-1"
+              >
+                <DisclosureHeader
+                  :label="card.label"
+                  :expanded="suggestionExpanded[card.key]"
+                  @toggle="suggestionExpanded[card.key] = !suggestionExpanded[card.key]"
+                />
+                <SmoothCollapse :open="suggestionExpanded[card.key]">
+                  <ul>
+                    <li
+                      v-for="term in searchExamples.examples.value[card.key]"
+                      :key="term"
+                    >
+                      <button
+                        type="button"
+                        class="hover:bg-accent flex w-full items-center gap-3 rounded-lg px-1 py-1.5 text-left"
+                        @click="q = term"
+                      >
+                        <span
+                          :class="[
+                            'flex size-8 shrink-0 items-center justify-center rounded-full',
+                            card.iconClass,
+                          ]"
+                        >
+                          <component :is="card.icon" class="size-3.5" />
+                        </span>
+                        <div class="text-item-title min-w-0 flex-1 truncate">
+                          {{ term }}
+                        </div>
+                      </button>
+                    </li>
+                  </ul>
+                </SmoothCollapse>
+              </section>
+            </template>
+          </section>
         </div>
       </template>
     </main>
