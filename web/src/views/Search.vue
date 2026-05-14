@@ -188,7 +188,11 @@ async function expandGroup(type: SearchEntityType) {
   if (!trimmed) return
   expanded[type] = true
   try {
-    const out = await searchAll({ q: trimmed, perGroup: EXPANDED_PER_GROUP, types: [type] })
+    const out = await searchAll({
+      q: trimmed,
+      perGroup: EXPANDED_PER_GROUP,
+      types: [type],
+    })
     if (q.value.trim() !== trimmed) return
     results.value = {
       ...results.value,
@@ -243,7 +247,7 @@ function handleLocationTap(group: SearchLocationGroup) {
   locationFilter.setRegion({
     country: group.country ?? null,
     region: group.region ?? null,
-    locality: group.kind === 'locality' ? group.locality ?? group.name : null,
+    locality: group.kind === 'locality' ? (group.locality ?? group.name) : null,
   })
   router.push({ name: 'competitions' })
 }
@@ -256,10 +260,10 @@ const locations = computed(() => results.value.locations)
 
 const hasAnyResults = computed(
   () =>
-    competitions.value.hits.length > 0
-      || locations.value.groups.length > 0
-      || dancers.value.groups.length > 0
-      || judges.value.groups.length > 0,
+    competitions.value.hits.length > 0 ||
+    locations.value.groups.length > 0 ||
+    dancers.value.groups.length > 0 ||
+    judges.value.groups.length > 0,
 )
 </script>
 
@@ -307,7 +311,9 @@ const hasAnyResults = computed(
               />
             </ul>
             <button
-              v-if="!expanded.competitions && competitions.total > competitions.hits.length"
+              v-if="
+                !expanded.competitions && competitions.total > competitions.hits.length
+              "
               type="button"
               class="text-primary hover:text-primary/80 px-1 py-2 text-sm font-medium"
               @click="expandGroup('competitions')"
@@ -328,9 +334,12 @@ const hasAnyResults = computed(
                   <span
                     :class="[
                       'flex size-9 shrink-0 items-center justify-center rounded-full',
-                      group.kind === 'venue' && 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
-                      group.kind === 'locality' && 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
-                      group.kind === 'region' && 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+                      group.kind === 'venue' &&
+                        'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+                      group.kind === 'locality' &&
+                        'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
+                      group.kind === 'region' &&
+                        'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
                     ]"
                   >
                     <component :is="locationIcon(group.kind)" class="size-4" />
@@ -363,11 +372,11 @@ const hasAnyResults = computed(
             <ul>
               <li v-for="group in dancers.groups" :key="group.name">
                 <RouterLink
+                  v-slot="{ href, navigate }"
                   :to="{
                     name: 'dancer.info',
                     params: { dancerId: dancerSlug(group.name) },
                   }"
-                  v-slot="{ href, navigate }"
                   custom
                 >
                   <a
@@ -377,14 +386,18 @@ const hasAnyResults = computed(
                   >
                     <span
                       class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
-                      :style="{ viewTransitionName: vt.name(dancerSlug(group.name), 'avatar') }"
+                      :style="{
+                        viewTransitionName: vt.name(dancerSlug(group.name), 'avatar'),
+                      }"
                     >
                       {{ group.initials }}
                     </span>
                     <div class="min-w-0 flex-1">
                       <div
                         class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                        :style="{ viewTransitionName: vt.name(dancerSlug(group.name), 'name') }"
+                        :style="{
+                          viewTransitionName: vt.name(dancerSlug(group.name), 'name'),
+                        }"
                       >
                         {{ group.name || '?' }}
                       </div>
@@ -413,7 +426,10 @@ const hasAnyResults = computed(
           <section v-if="judges.groups.length" class="space-y-2">
             <SectionHeader label="Judges" :count="judges.total" />
             <ul>
-              <li v-for="group in judges.groups" :key="group.name + group.competitionIds[0]">
+              <li
+                v-for="group in judges.groups"
+                :key="group.name + group.competitionIds[0]"
+              >
                 <RouterLink
                   :to="{
                     name: 'competition.info',
@@ -425,7 +441,11 @@ const hasAnyResults = computed(
                     v-if="group.image"
                     class="size-9 shrink-0 overflow-hidden rounded-full"
                   >
-                    <img :src="group.image" :alt="group.name" class="size-full object-cover" />
+                    <img
+                      :src="group.image"
+                      :alt="group.name"
+                      class="size-full object-cover"
+                    />
                   </span>
                   <span
                     v-else
@@ -475,13 +495,9 @@ const hasAnyResults = computed(
             <ul class="flex flex-wrap gap-2">
               <li v-for="term in recentSearches.recent.value" :key="term">
                 <span
-                  class="bg-card hover:bg-accent inline-flex items-center gap-1 rounded-full border pl-3 pr-1 py-1 text-sm"
+                  class="bg-card hover:bg-accent inline-flex items-center gap-1 rounded-full border py-1 pr-1 pl-3 text-sm"
                 >
-                  <button
-                    type="button"
-                    class="text-foreground"
-                    @click="q = term"
-                  >
+                  <button type="button" class="text-foreground" @click="q = term">
                     {{ term }}
                   </button>
                   <button
@@ -544,13 +560,9 @@ const hasAnyResults = computed(
       </template>
     </main>
 
-    <nav class="pointer-events-none fixed inset-x-0 bottom-(--nav-bottom) z-30 px-3">
+    <nav class="pointer-events-none fixed inset-x-0 bottom-(--nav-bottom) z-30 px-4">
       <div class="mx-auto flex max-w-3xl items-center gap-2">
-        <RouterLink
-          v-slot="{ href, navigate }"
-          :to="backInfo.to"
-          custom
-        >
+        <RouterLink v-slot="{ href, navigate }" :to="backInfo.to" custom>
           <a
             :href="href"
             class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
@@ -567,7 +579,9 @@ const hasAnyResults = computed(
         <div
           class="bg-nav/90 text-nav-foreground pointer-events-auto flex h-16 min-w-0 flex-1 items-center gap-2 rounded-full px-5 shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-right]"
         >
-          <SearchIcon class="size-5 shrink-0 opacity-80 [view-transition-name:nav-right-icon]" />
+          <SearchIcon
+            class="size-5 shrink-0 opacity-80 [view-transition-name:nav-right-icon]"
+          />
           <input
             ref="inputEl"
             v-model="q"

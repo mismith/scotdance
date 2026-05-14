@@ -62,7 +62,7 @@ const tabs = [
               :class="[
                 'relative isolate flex h-14 min-w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-3 font-sans font-medium transition-colors',
                 moreOpen
-                  ? `before:bg-nav-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:[view-transition-name:nav-left-active]`
+                  ? `before:bg-nav-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full`
                   : 'opacity-70 hover:opacity-100',
               ]"
               :aria-expanded="moreOpen"
@@ -79,22 +79,25 @@ const tabs = [
             </button>
 
             <!-- Backdrop: outside-click absorber so taps below the menu don't
-                 activate page content. -->
-            <Transition
-              enter-active-class="transition ease-out"
-              enter-from-class="opacity-0"
-              enter-to-class="opacity-100"
-              leave-active-class="transition ease-out"
-              leave-from-class="opacity-100"
-              leave-to-class="opacity-0"
-            >
-              <div
-                v-if="moreOpen"
-                class="pointer-events-auto fixed inset-0 z-40"
-                aria-hidden="true"
-                @click="moreOpen = false"
-              />
-            </Transition>
+                 activate page content. Teleported to <body> so the nav's
+                 backdrop-blur stacking context doesn't trap it. -->
+            <Teleport to="body">
+              <Transition
+                enter-active-class="transition ease-out"
+                enter-from-class="opacity-0"
+                enter-to-class="opacity-100"
+                leave-active-class="transition ease-out"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
+              >
+                <div
+                  v-if="moreOpen"
+                  class="fixed inset-0 z-40"
+                  aria-hidden="true"
+                  @click="moreOpen = false"
+                />
+              </Transition>
+            </Teleport>
 
             <!-- Menu overlay: morphs out of the More button position
                  (bottom-center of the overlay box) via clip-path. -->
