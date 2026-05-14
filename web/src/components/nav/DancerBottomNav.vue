@@ -31,7 +31,7 @@ const activeTab = computed(() => {
 
 <template>
   <nav
-    class="pointer-events-none fixed inset-x-0 bottom-[max(0.75rem,var(--safe-bottom))] z-30 px-3"
+    class="pointer-events-none fixed inset-x-0 bottom-(--nav-bottom) z-30 px-3"
   >
     <div class="mx-auto flex max-w-3xl items-center justify-between">
       <RouterLink v-slot="{ href, route: r, navigate }" :to="{ name: 'dancers' }" custom>

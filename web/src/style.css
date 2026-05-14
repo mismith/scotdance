@@ -73,12 +73,23 @@
      read them without re-spelling env(). */
   --safe-top: env(safe-area-inset-top);
   --safe-bottom: env(safe-area-inset-bottom);
-  /* Total inset needed to clear the floating top/bottom chrome — chrome
-     height + safe-area inset. */
-  --chrome-top: calc(5rem + var(--safe-top));
-  /* Sized so the nav pill (4rem tall) sits with a 0.75rem gap above and
-     below — plus the device's own safe-area inset for the home indicator. */
-  --chrome-bottom: calc(5.5rem + var(--safe-bottom));
+  /* Where the floating top nav sits. Reclaims a small portion of
+     safe-area-inset-top (smaller reduction than --nav-bottom because the
+     status bar has live text/icons we don't want to crowd). Floors at
+     0.75rem so devices without an inset still get a gap. */
+  --nav-top: max(0.75rem, calc(var(--safe-top) - 0.75rem));
+  /* How far the floating bottom nav sits from the screen edge. Honours
+     only a portion of safe-area-inset-bottom (which is generous — the
+     home indicator itself is ~5pt and Apple reserves ~34pt around it)
+     so the pill rides closer to the bottom, Slack-style. */
+  --nav-bottom: max(0.75rem, calc(var(--safe-bottom) - 1.25rem));
+  /* Total inset content needs above/below the nav: nav chrome height
+     (incl. breathing room) + wherever the pill is anchored. Composing
+     against --nav-* (instead of --safe-*) shifts content toward the
+     edge by the same amount the nav itself moved, preserving the
+     original content-to-nav gap. */
+  --chrome-top: calc(5rem + var(--nav-top));
+  --chrome-bottom: calc(5.5rem + var(--nav-bottom));
 }
 
 /* Home has no floating top chrome — drop the 5rem so #features anchors land
