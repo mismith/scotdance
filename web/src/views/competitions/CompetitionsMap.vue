@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
-import maplibregl, { type Map as MaplibreMap, type Marker as MaplibreMarker } from 'maplibre-gl'
+import maplibregl, {
+  type Map as MaplibreMap,
+  type Marker as MaplibreMarker,
+} from 'maplibre-gl'
 import Supercluster from 'supercluster'
 import { useLocalStorage } from '@vueuse/core'
 import MapVenueSheet from '@/components/MapVenueSheet.vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import { useFavoritesStore } from '@/stores/favorites'
 import { isBeforeToday, isSameDay } from '@/lib/format'
-import { createMap, persistCamera } from '@/lib/maplibre'
+import { createMap, persistCamera, styleUrlFor } from '@/lib/maplibre'
+import { useTheme } from '@/composables/useTheme'
 import { groupByVenue, type VenueGroup } from '@/lib/venues'
 
 type Filter = 'upcoming' | 'past' | 'all'
@@ -27,6 +31,7 @@ const dateFiltered = computed<CompetitionListItem[]>(() => {
   return competitions.value
 })
 const favorites = useFavoritesStore()
+const { isDark } = useTheme()
 
 const mapContainer = ref<HTMLElement | null>(null)
 const mapInstance = shallowRef<MaplibreMap | null>(null)
@@ -88,9 +93,7 @@ function renderMarkers(): void {
   for (const f of features) {
     const [lng, lat] = f.geometry.coordinates
     const props = f.properties
-    const key = props.cluster
-      ? `c:${props.cluster_id}`
-      : `p:${(props as PinProps).idx}`
+    const key = props.cluster ? `c:${props.cluster_id}` : `p:${(props as PinProps).idx}`
     seen.add(key)
 
     if (markers.has(key)) continue
@@ -108,9 +111,7 @@ function renderMarkers(): void {
     } else {
       const idx = (props as PinProps).idx
       const group = venueGroups.value[idx]
-      const isFav = group.competitions.some((c) =>
-        favorites.isFavoriteCompetition(c.id),
-      )
+      const isFav = group.competitions.some((c) => favorites.isFavoriteCompetition(c.id))
       el.className = `map-pin ${isFav ? 'is-fav' : ''}`
       el.setAttribute('aria-label', group.venue || 'Venue')
       el.addEventListener('click', () => {
@@ -148,11 +149,14 @@ function cssLengthPx(name: string): number {
 
 onMounted(() => {
   if (!mapContainer.value) return
-  const map = createMap(mapContainer.value)
+  const map = createMap(mapContainer.value, { style: styleUrlFor(isDark.value) })
   mapInstance.value = map
   // Reserve the bottom chrome (floating nav) as occluded area so fitBounds,
   // GeolocateControl pans, and popups all stay above it.
   map.setPadding({ top: 0, bottom: cssLengthPx('--chrome-bottom'), left: 0, right: 0 })
+  watch(isDark, (dark) => {
+    map.setStyle(styleUrlFor(dark))
+  })
   const geolocate = new maplibregl.GeolocateControl({
     positionOptions: { enableHighAccuracy: true },
     showUserLocation: true,
@@ -186,7 +190,8 @@ onMounted(() => {
     mapReady.value = true
     // MapLibre's compact attribution starts expanded; collapse it on load
     // so it doesn't eat half the bottom of the map until first interaction.
-    map.getContainer()
+    map
+      .getContainer()
       .querySelector('.maplibregl-ctrl-attrib.maplibregl-compact-show')
       ?.classList.remove('maplibregl-compact-show')
     rebuildCluster()

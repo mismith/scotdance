@@ -3,8 +3,15 @@ import maplibregl, { type Map as MaplibreMap, type MapOptions } from 'maplibre-g
 import { guessUserCountry } from '@/lib/locale'
 
 // OpenFreeMap free public tiles — no auth, attribution required. To swap to
-// MapTiler or Stadia, only this URL changes; the renderer code stays put.
-const TILE_STYLE_URL = 'https://tiles.openfreemap.org/styles/positron'
+// MapTiler or Stadia, only these URLs change; the renderer code stays put.
+const STYLE_URLS = {
+  light: 'https://tiles.openfreemap.org/styles/bright',
+  dark: 'https://tiles.openfreemap.org/styles/dark',
+} as const
+
+export function styleUrlFor(dark: boolean): string {
+  return dark ? STYLE_URLS.dark : STYLE_URLS.light
+}
 
 // Country-centred starting views for the Highland-dance markets. Zoom is set
 // so the whole country roughly fits on a phone-sized viewport.
@@ -19,7 +26,10 @@ const COUNTRY_CAMERA: Record<string, { center: [number, number]; zoom: number }>
 }
 
 const guessed = guessUserCountry()
-const initial = (guessed && COUNTRY_CAMERA[guessed]) || { center: [0, 20] as [number, number], zoom: 1 }
+const initial = (guessed && COUNTRY_CAMERA[guessed]) || {
+  center: [0, 20] as [number, number],
+  zoom: 1,
+}
 export const DEFAULT_CENTER: [number, number] = initial.center
 export const DEFAULT_ZOOM = initial.zoom
 
@@ -36,11 +46,11 @@ function readPersistedCamera(): PersistedCamera | null {
     if (!raw) return null
     const data = JSON.parse(raw)
     if (
-      Array.isArray(data?.center)
-      && data.center.length === 2
-      && Number.isFinite(data.center[0])
-      && Number.isFinite(data.center[1])
-      && Number.isFinite(data?.zoom)
+      Array.isArray(data?.center) &&
+      data.center.length === 2 &&
+      Number.isFinite(data.center[0]) &&
+      Number.isFinite(data.center[1]) &&
+      Number.isFinite(data?.zoom)
     ) {
       return data as PersistedCamera
     }
@@ -70,7 +80,7 @@ export function createMap(
   const persisted = readPersistedCamera()
   const map = new maplibregl.Map({
     container,
-    style: TILE_STYLE_URL,
+    style: styleUrlFor(false),
     center: persisted?.center ?? DEFAULT_CENTER,
     zoom: persisted?.zoom ?? DEFAULT_ZOOM,
     attributionControl: { compact: true },
