@@ -81,7 +81,7 @@ function goProfile() {
 
 <template>
   <nav
-    class="pointer-events-none fixed inset-x-0 bottom-[max(0.75rem,var(--safe-bottom))] z-30 px-3"
+    class="pointer-events-none fixed inset-x-0 bottom-[max(1rem,var(--safe-bottom))] z-30 px-4"
   >
     <div class="mx-auto flex max-w-3xl items-center justify-between">
       <div

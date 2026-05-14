@@ -73,7 +73,7 @@ const examples = [
 <template>
   <div class="flex flex-1 flex-col pb-(--chrome-bottom)">
     <header
-      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-center gap-2 p-3"
+      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-center gap-2 p-4"
     >
       <div
         class="bg-nav/90 text-nav-foreground h-12 min-w-0 flex-1 rounded-full border border-white/10 px-4 shadow-md backdrop-blur-xl [view-transition-name:nav-left]"
