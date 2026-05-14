@@ -136,8 +136,9 @@ function renderMarkers(): void {
   }
 }
 
-// Resolve a CSS length variable to pixels — used to tell MapLibre how much
-// of the viewport is occluded by the floating bottom nav.
+// Resolve a CSS length variable to pixels. Used to feed our --chrome-bottom
+// safe-area into MapLibre's per-call camera padding (e.g. so the pan
+// triggered by "locate me" lands above the floating nav, not behind it).
 function cssLengthPx(name: string): number {
   const probe = document.createElement('div')
   probe.style.cssText = `position:absolute;visibility:hidden;height:var(${name})`
@@ -151,16 +152,22 @@ onMounted(() => {
   if (!mapContainer.value) return
   const map = createMap(mapContainer.value, { style: styleUrlFor(isDark.value) })
   mapInstance.value = map
-  // Reserve the bottom chrome (floating nav) as occluded area so fitBounds,
-  // GeolocateControl pans, and popups all stay above it.
-  map.setPadding({ top: 0, bottom: cssLengthPx('--chrome-bottom'), left: 0, right: 0 })
+  // Swap the basemap when the app theme flips. setStyle keeps DOM markers
+  // and camera position; only the tile style is replaced.
   watch(isDark, (dark) => {
     map.setStyle(styleUrlFor(dark))
   })
+  const chromeBottom = cssLengthPx('--chrome-bottom')
   const geolocate = new maplibregl.GeolocateControl({
     positionOptions: { enableHighAccuracy: true },
     showUserLocation: true,
-    fitBoundsOptions: { maxZoom: 12, duration: 400 },
+    // Per-call padding (vs persistent map.setPadding) — only affects this
+    // pan, doesn't shift the camera vanishing point afterwards.
+    fitBoundsOptions: {
+      maxZoom: 12,
+      duration: 400,
+      padding: { top: 0, bottom: chromeBottom, left: 0, right: 0 },
+    },
   })
   map.addControl(geolocate, 'top-right')
 
@@ -224,6 +231,28 @@ watch(venueGroups, () => {
 </template>
 
 <style>
+/* Inset MapLibre's built-in control corners so they sit inside the safe
+   area defined by our floating app chrome — bottom nav today, floating
+   header above. The map canvas itself still goes edge-to-edge; only the
+   controls move. On desktop, also constrain horizontally to the same
+   max-w-3xl (48rem) content lane the floating header lives in so the
+   locate-me / attribution don't fly to the viewport edges. */
+.maplibregl-ctrl-top-right,
+.maplibregl-ctrl-top-left {
+  top: var(--chrome-top, 0px);
+}
+.maplibregl-ctrl-bottom-right,
+.maplibregl-ctrl-bottom-left {
+  bottom: var(--chrome-bottom, 0px);
+}
+.maplibregl-ctrl-top-right,
+.maplibregl-ctrl-bottom-right {
+  right: max(0px, calc((100vw - 48rem) / 2));
+}
+.maplibregl-ctrl-top-left,
+.maplibregl-ctrl-bottom-left {
+  left: max(0px, calc((100vw - 48rem) / 2));
+}
 .map-pin {
   display: block;
   width: 22px;
