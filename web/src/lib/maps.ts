@@ -35,7 +35,10 @@ export interface PickedRegion {
   label: string
 }
 
-export async function fetchRegionSuggestions(input: string): Promise<PlaceSuggestion[]> {
+export async function fetchRegionSuggestions(
+  input: string,
+  countryIso?: string | null,
+): Promise<PlaceSuggestion[]> {
   const trimmed = input.trim()
   if (!trimmed) return []
   const { AutocompleteSuggestion, AutocompleteSessionToken } = await getPlacesLib()
@@ -44,6 +47,7 @@ export async function fetchRegionSuggestions(input: string): Promise<PlaceSugges
     input: trimmed,
     sessionToken,
     includedPrimaryTypes: ['country', 'administrative_area_level_1', 'locality'],
+    ...(countryIso ? { includedRegionCodes: [countryIso] } : {}),
   })
   return suggestions
     .map((s) => s.placePrediction)
