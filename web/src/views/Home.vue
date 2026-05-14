@@ -247,20 +247,23 @@ function scrollToFeatures(e: Event) {
         </div>
 
         <div class="text-muted-foreground flex flex-col text-sm md:items-end">
-          <RouterLink
-            :to="{ name: 'policies' }"
-            class="hover:text-foreground transition-colors"
-          >
-            Policies
-          </RouterLink>
-          <a
-            href="https://github.com/mismith/scotdance"
-            target="_blank"
-            rel="noopener"
-            class="hover:text-foreground transition-colors"
-          >
-            Source code
-          </a>
+          <div>
+            <RouterLink
+              :to="{ name: 'policies' }"
+              class="hover:text-foreground transition-colors"
+            >
+              Policies
+            </RouterLink>
+            ·
+            <a
+              href="https://github.com/mismith/scotdance"
+              target="_blank"
+              rel="noopener"
+              class="hover:text-foreground transition-colors"
+            >
+              Source code
+            </a>
+          </div>
           <div class="text-foreground/50 font-sans text-xs tabular-nums">
             {{ platformLabel }} · v{{ version }}
           </div>
