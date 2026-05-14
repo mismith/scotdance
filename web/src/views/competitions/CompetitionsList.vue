@@ -1,65 +1,48 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { onClickOutside, useLocalStorage } from '@vueuse/core'
+import { computed, onMounted, watch } from 'vue'
+import { useLocalStorage } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
-import { SlidersVertical } from '@lucide/vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
+import AccountAvatarButton from '@/components/AccountAvatarButton.vue'
+import { useAnyPillOpen } from '@/composables/useExpandedPill'
 import CompetitionRow from '@/components/CompetitionRow.vue'
 import CompetitionsCalendar from '@/components/CompetitionsCalendar.vue'
 import CompetitionsMap from '@/views/competitions/CompetitionsMap.vue'
+import DatePill, { type DateFilter } from '@/components/DatePill.vue'
 import HeroCompCard from '@/components/HeroCompCard.vue'
-import LocationFilterFields from '@/components/LocationFilterFields.vue'
+import LocationPill from '@/components/LocationPill.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
-import ViewModeTabs, { type ViewMode } from '@/components/ViewModeTabs.vue'
+import ViewModePill, { type ViewMode } from '@/components/ViewModePill.vue'
 import { useLocationFilter } from '@/composables/useLocationFilter'
-import { isBeforeToday, isSameDay, parseDate } from '@/lib/format'
+import { daysFromToday, isBeforeToday, isSameDay, parseDate } from '@/lib/format'
 import { useFavoritesStore } from '@/stores/favorites'
 
-type Filter = 'upcoming' | 'past' | 'all'
-
 const view = useLocalStorage<ViewMode>('competitions:view', 'list')
-const filter = useLocalStorage<Filter>('competitions:filter', 'upcoming')
+const filter = useLocalStorage<DateFilter>('competitions:filter', 'current')
 
-const filterOptions: Array<{ id: Filter; label: string }> = [
-  { id: 'upcoming', label: 'Upcoming' },
-  { id: 'past', label: 'Past' },
-  { id: 'all', label: 'All' },
-]
+const anyPillOpen = useAnyPillOpen()
 
-const filtersMenuRef = ref<HTMLElement | null>(null)
-const filtersOpen = ref(false)
-onClickOutside(filtersMenuRef, () => (filtersOpen.value = false))
+// Only "Archived" and "All" need archived data; "Relevant" and "Upcoming" don't
+// look further back than a week, so the un-archived feed is enough.
+const includeArchived = computed(
+  () => filter.value === 'archived' || filter.value === 'all',
+)
 
-// "Upcoming" doesn't need archived data; "Past" / "All" do. Tying these together
-// avoids a separate toggle — "All" already means everything.
-const includeArchived = computed(() => filter.value !== 'upcoming')
+// "Current" window: past week through next month.
+const CURRENT_PAST_DAYS = -7
+const CURRENT_FUTURE_DAYS = 30
 
 const { competitions, loading } = useCompetitions(includeArchived)
 
-const {
-  filterFor: locationFilterFor,
-  country: locCountry,
-  region: locRegion,
-  locality: locLocality,
-  near: locNear,
-} = useLocationFilter()
+const { filterFor: locationFilterFor } = useLocationFilter()
 
 // Effective filter (no-ops if values don't match any loaded comp). Drives
 // both the predicate and the "is this filter actually doing anything" UI.
 const effectiveLocationFilter = computed(() => locationFilterFor(competitions.value))
 
-const showLocationSection = computed(() => view.value !== 'map')
-const showDateSection = computed(() => view.value !== 'calendar')
-const dateFilterActive = computed(() => filter.value !== 'upcoming')
-const activeFilterCount = computed(
-  () =>
-    (showLocationSection.value && effectiveLocationFilter.value.isActive ? 1 : 0) +
-    (showDateSection.value && dateFilterActive.value ? 1 : 0),
-)
-
-// URL <-> state sync (Decision 6). One-way on mount (URL hydrates state if
-// params present), then refs ↔ URL with a flag to prevent the obvious loop.
+// URL <-> view-tab sync only. Location lives in localStorage; URL sync was
+// fragile around iOS PWA geolocation gestures.
 const route = useRoute()
 const router = useRouter()
 let syncing = false
@@ -70,40 +53,20 @@ function readFromQuery(): void {
   if (q.view === 'calendar' || q.view === 'map' || q.view === 'list') {
     view.value = q.view
   }
-  if (typeof q.country === 'string') locCountry.value = q.country
-  else if (q.country === undefined && route.path === '/competitions') {
-    // explicit URL has no country → respect localStorage default
-  }
-  if (typeof q.region === 'string') locRegion.value = q.region
-  if (typeof q.locality === 'string') locLocality.value = q.locality
-  // Never auto-enable Near me from the URL: iOS standalone PWAs silently
-  // block any geolocation request that isn't tied to a fresh user gesture,
-  // so resuming on mount would leave the toggle stuck on with no coords.
-  // The watch below will strip `near=1` from the URL on the next tick.
-  if (q.near !== undefined && locNear.value) {
-    locNear.value = false
-  }
   syncing = false
 }
 
 onMounted(readFromQuery)
 
-watch(
-  [view, locCountry, locRegion, locLocality, locNear],
-  () => {
-    if (syncing) return
-    router.replace({
-      query: {
-        ...route.query,
-        view: view.value === 'list' ? undefined : view.value,
-        country: locCountry.value || undefined,
-        region: locRegion.value || undefined,
-        locality: locLocality.value || undefined,
-        near: locNear.value ? '1' : undefined,
-      },
-    })
-  },
-)
+watch(view, () => {
+  if (syncing) return
+  router.replace({
+    query: {
+      ...route.query,
+      view: view.value === 'list' ? undefined : view.value,
+    },
+  })
+})
 
 watch(
   () => route.query,
@@ -140,17 +103,31 @@ const filteredCompetitions = computed<CompetitionListItem[]>(() => {
       .filter((c) => c.date && !isBeforeToday(c.date))
       .sort((a, b) => dateMs(a) - dateMs(b))
   }
-  if (filter.value === 'past') {
+  if (filter.value === 'current') {
     return list
-      .filter((c) => c.date && isBeforeToday(c.date) && !isSameDay(c.date))
+      .filter((c) => {
+        const d = daysFromToday(c.date)
+        return d !== null && d >= CURRENT_PAST_DAYS && d <= CURRENT_FUTURE_DAYS
+      })
+      .sort((a, b) => dateMs(a) - dateMs(b))
+  }
+  if (filter.value === 'archived') {
+    return list
+      .filter((c) => {
+        const d = daysFromToday(c.date)
+        return d !== null && d < CURRENT_PAST_DAYS
+      })
       .sort((a, b) => dateMs(b) - dateMs(a))
   }
   return list.sort((a, b) => dateMs(a) - dateMs(b))
 })
 
+const showFeatured = computed(
+  () => filter.value === 'upcoming' || filter.value === 'current',
+)
 const featuredId = computed(() => featuredComp.value?.id ?? null)
 const visibleCompetitions = computed(() =>
-  filter.value === 'upcoming'
+  showFeatured.value
     ? filteredCompetitions.value.filter((c) => c.id !== featuredId.value)
     : filteredCompetitions.value,
 )
@@ -188,82 +165,32 @@ const monthGroups = computed<MonthGroup[]>(() => {
 
 <template>
   <div
-    :class="[
-      'flex flex-1 flex-col',
-      view === 'map' ? 'h-dvh' : 'pb-(--chrome-bottom)',
-    ]"
+    :class="['flex flex-1 flex-col', view === 'map' ? 'h-dvh' : 'pb-(--chrome-bottom)']"
   >
     <main
       :class="[
         'w-full flex-1',
-        view === 'map'
-          ? 'flex flex-col'
-          : 'mx-auto max-w-3xl space-y-5 p-4',
+        view === 'map' ? 'relative flex flex-col' : 'mx-auto max-w-3xl space-y-5 p-4',
       ]"
     >
       <div
         :class="[
-          'flex flex-wrap items-center gap-2',
-          view === 'map' ? 'mx-auto w-full max-w-3xl p-4' : '',
+          'flex h-12 items-center gap-2',
+          view === 'map' ? 'absolute inset-x-4 top-4 z-10 mx-auto max-w-3xl' : 'relative',
         ]"
       >
-        <ViewModeTabs v-model="view" />
-        <div ref="filtersMenuRef" class="relative ml-auto">
-          <div class="bg-chip inline-flex rounded-lg p-1">
-            <button
-              type="button"
-              :class="[
-                'inline-flex min-h-9 items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-colors',
-                activeFilterCount
-                  ? 'text-primary'
-                  : 'text-muted-foreground hover:text-foreground',
-              ]"
-              @click="filtersOpen = !filtersOpen"
-            >
-              <SlidersVertical class="size-3.5" />
-              <span class="max-md:sr-only">Filters</span>
-              <span
-                v-if="activeFilterCount"
-                class="bg-primary text-primary-foreground inline-flex size-4 items-center justify-center rounded-full text-[10px] font-bold"
-              >
-                {{ activeFilterCount }}
-              </span>
-            </button>
-          </div>
-
-          <div
-            v-if="filtersOpen"
-            class="bg-card absolute top-full right-0 z-30 mt-1 w-72 space-y-4 overflow-hidden rounded-xl border p-3 shadow-md"
-          >
-            <div v-if="showDateSection" class="space-y-1.5">
-              <div class="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                Show
-              </div>
-              <div class="bg-chip flex gap-1 rounded-lg p-1">
-                <button
-                  v-for="opt in filterOptions"
-                  :key="opt.id"
-                  type="button"
-                  :class="[
-                    'flex flex-1 items-center justify-center rounded-md px-2 py-1.5 text-sm font-medium',
-                    filter === opt.id
-                      ? 'bg-card text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground',
-                  ]"
-                  @click="filter = opt.id"
-                >
-                  {{ opt.label }}
-                </button>
-              </div>
-            </div>
-
-            <div v-if="showLocationSection" class="space-y-1.5">
-              <div class="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                Location
-              </div>
-              <LocationFilterFields :competitions="competitions" />
-            </div>
-          </div>
+        <div class="flex items-center gap-2 rounded-3xl border p-1">
+          <ViewModePill v-model="view" />
+          <LocationPill v-if="view !== 'map'" />
+          <DatePill v-if="view !== 'calendar'" v-model="filter" />
+        </div>
+        <div
+          :class="[
+            'ml-auto transition-opacity',
+            anyPillOpen ? 'pointer-events-none opacity-0' : '',
+          ]"
+        >
+          <AccountAvatarButton />
         </div>
       </div>
 
@@ -275,10 +202,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
       />
 
       <template v-else>
-        <HeroCompCard
-          v-if="featuredComp && filter === 'upcoming'"
-          :competition="featuredComp"
-        />
+        <HeroCompCard v-if="featuredComp && showFeatured" :competition="featuredComp" />
 
         <div
           v-if="loading && !competitions.length"
@@ -305,9 +229,14 @@ const monthGroups = computed<MonthGroup[]>(() => {
           v-else-if="!visibleCompetitions.length"
           class="text-muted-foreground space-y-2 text-lg italic"
         >
-          <div v-if="effectiveLocationFilter.isActive">No competitions match this location.</div>
+          <div v-if="effectiveLocationFilter.isActive">
+            No competitions match this location.
+          </div>
           <div v-else-if="filter === 'upcoming'">No upcoming competitions.</div>
-          <div v-else-if="filter === 'past'">No past competitions on record.</div>
+          <div v-else-if="filter === 'current'">
+            Nothing current — try Upcoming or All.
+          </div>
+          <div v-else-if="filter === 'archived'">No archived competitions on record.</div>
           <div v-else>No competitions match.</div>
         </div>
 
@@ -331,7 +260,6 @@ const monthGroups = computed<MonthGroup[]>(() => {
             </ul>
           </section>
         </template>
-
       </template>
     </main>
   </div>

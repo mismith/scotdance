@@ -153,6 +153,12 @@ export function isBeforeToday(value: number | string | undefined | null): boolea
   return calendarDayDiff(parseDate(value), new Date()) < 0
 }
 
+/** Calendar days from today (negative = past, 0 = today, positive = future). */
+export function daysFromToday(value: number | string | undefined | null): number | null {
+  if (value == null) return null
+  return calendarDayDiff(parseDate(value), new Date())
+}
+
 const relativeTime = new Intl.RelativeTimeFormat(undefined, {
   numeric: 'auto',
   style: 'long',

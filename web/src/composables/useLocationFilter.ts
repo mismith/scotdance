@@ -1,36 +1,32 @@
-import { computed, effectScope, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 import { guessUserCountry } from '@/lib/locale'
 
-const NEAR_ME_KM = 300
+export type LocationMode = 'nearby' | 'region' | 'worldwide'
 
-// Module-level singletons so the list and calendar share the same filter state.
-// Country/region/locality persist across reloads. `near` deliberately does NOT
-// persist — iOS standalone (Add to Home Screen) PWAs silently block any
-// geolocation request that isn't tied to a fresh user gesture, so resuming
-// "Near me" on app launch would leave the toggle stuck on with no coords.
-// First-visit country defaults to a timezone/locale guess; user can clear.
-const country = useLocalStorage<string | null>('competitions:location.country', guessUserCountry())
+const DEFAULT_RADIUS_KM = 300
+const MIN_RADIUS_KM = 50
+const MAX_RADIUS_KM = 5000
+const RADIUS_STEP_KM = 50
+
+// First-visit default: if we can guess a country from TZ/locale, start in
+// Region mode with that country pre-set. Otherwise Worldwide.
+const initialCountry = guessUserCountry()
+const initialMode: LocationMode = initialCountry ? 'region' : 'worldwide'
+
+// Module-level singletons so the pill + filtering share state across the app.
+const mode = useLocalStorage<LocationMode>('competitions:location.mode', initialMode)
+const radius = useLocalStorage<number>('competitions:location.radius', DEFAULT_RADIUS_KM)
+const country = useLocalStorage<string | null>('competitions:location.country', initialCountry)
 const region = useLocalStorage<string | null>('competitions:location.region', null)
 const locality = useLocalStorage<string | null>('competitions:location.locality', null)
-const near = ref(false)
+
+// Non-persistent: coords are tied to a fresh user gesture (iOS PWA rule).
 const coords = ref<{ lat: number; lng: number } | null>(null)
 const locationLoading = ref(false)
 type LocationErrorKind = 'denied' | 'unavailable' | 'timeout'
 const locationError = ref<LocationErrorKind | null>(null)
-
-// Cascade-clear: selecting a new country wipes the now-orphaned region/locality.
-// Detached scope so the watchers stick around outside any component lifecycle.
-effectScope(true).run(() => {
-  watch(country, () => {
-    if (region.value !== null) region.value = null
-    if (locality.value !== null) locality.value = null
-  })
-  watch(region, () => {
-    if (locality.value !== null) locality.value = null
-  })
-})
 
 function toRad(deg: number): number {
   return (deg * Math.PI) / 180
@@ -46,12 +42,11 @@ function haversineKm(aLat: number, aLng: number, bLat: number, bLng: number): nu
 }
 
 // Must be invoked synchronously inside a user gesture (click/tap handler).
-// Uses getCurrentPosition (one-shot) instead of watchPosition — more reliable
-// in iOS standalone PWAs and we only need a single fix for the Near-me filter.
+// One-shot getCurrentPosition — watchPosition is unreliable in iOS standalone.
 function requestCurrentPosition(): void {
   if (!navigator.geolocation) {
     locationError.value = 'unavailable'
-    near.value = false
+    mode.value = 'worldwide'
     return
   }
   locationLoading.value = true
@@ -66,125 +61,94 @@ function requestCurrentPosition(): void {
       if (err.code === err.PERMISSION_DENIED) locationError.value = 'denied'
       else if (err.code === err.TIMEOUT) locationError.value = 'timeout'
       else locationError.value = 'unavailable'
-      near.value = false
+      mode.value = 'worldwide'
     },
     { enableHighAccuracy: true, timeout: 15000, maximumAge: 60_000 },
   )
 }
 
 export function useLocationFilter() {
-  const geoCoords = computed(() => coords.value)
-
-  function enableNearMe(): void {
-    near.value = true
+  function setNearby(): void {
+    mode.value = 'nearby'
     requestCurrentPosition()
   }
-  function disableNearMe(): void {
-    near.value = false
-    coords.value = null
+  function setRegion(parts?: {
+    country?: string | null
+    region?: string | null
+    locality?: string | null
+  }): void {
+    if (parts) {
+      country.value = parts.country ?? null
+      region.value = parts.region ?? null
+      locality.value = parts.locality ?? null
+    }
+    mode.value = 'region'
     locationError.value = null
   }
-  function clear(): void {
-    country.value = null
-    region.value = null
-    locality.value = null
-    disableNearMe()
+  function setWorldwide(): void {
+    mode.value = 'worldwide'
+    locationError.value = null
+  }
+  function setRadius(km: number): void {
+    radius.value = km
   }
 
-  function matches(c: CompetitionListItem): boolean {
-    if (country.value && c.country !== country.value) return false
-    if (region.value && c.region !== region.value) return false
-    if (locality.value && c.locality !== locality.value) return false
-    if (near.value && geoCoords.value) {
-      if (!Number.isFinite(c.lat) || !Number.isFinite(c.lng)) return false
-      const d = haversineKm(
-        geoCoords.value.lat,
-        geoCoords.value.lng,
-        c.lat as number,
-        c.lng as number,
-      )
-      if (d > NEAR_ME_KM) return false
-    }
-    return true
-  }
+  const isActive = computed(() => mode.value !== 'worldwide')
 
-  // "any filter value is set" — drives the Clear button so users can always
-  // escape, even when their set value matches no loaded comp.
-  const isActive = computed(
-    () => Boolean(country.value || region.value || locality.value || near.value),
-  )
-
-  // Context-aware variant. A filter whose target value doesn't appear in
-  // `comps` (e.g. the TZ-guessed country before backfill populates data) is
+  // Context-aware predicate. Defensive guards mean filters that point at
+  // values absent from `comps` (e.g. TZ-guessed country before backfill) are
   // silently no-op'd, so first-time visitors don't land on an empty list.
   function filterFor(comps: CompetitionListItem[]) {
+    if (mode.value === 'worldwide') {
+      return { predicate: () => true, isActive: false }
+    }
+    if (mode.value === 'nearby') {
+      const c = coords.value
+      if (!c) return { predicate: () => true, isActive: false }
+      const r = radius.value
+      return {
+        predicate(comp: CompetitionListItem): boolean {
+          if (!Number.isFinite(comp.lat) || !Number.isFinite(comp.lng)) return false
+          return haversineKm(c.lat, c.lng, comp.lat as number, comp.lng as number) <= r
+        },
+        isActive: true,
+      }
+    }
+    // region mode
     const has = (key: 'country' | 'region' | 'locality', val: string) =>
       comps.some((c) => c[key] === val)
     const effCountry = country.value && has('country', country.value) ? country.value : null
     const effRegion = region.value && has('region', region.value) ? region.value : null
     const effLocality = locality.value && has('locality', locality.value) ? locality.value : null
-    const effNear = near.value && geoCoords.value ? true : false
-    const effectiveActive = Boolean(effCountry || effRegion || effLocality || effNear)
-    function predicate(c: CompetitionListItem): boolean {
-      if (effCountry && c.country !== effCountry) return false
-      if (effRegion && c.region !== effRegion) return false
-      if (effLocality && c.locality !== effLocality) return false
-      if (effNear && geoCoords.value) {
-        if (!Number.isFinite(c.lat) || !Number.isFinite(c.lng)) return false
-        const d = haversineKm(
-          geoCoords.value.lat,
-          geoCoords.value.lng,
-          c.lat as number,
-          c.lng as number,
-        )
-        if (d > NEAR_ME_KM) return false
-      }
-      return true
-    }
-    return { predicate, isActive: effectiveActive }
-  }
-
-  function deriveOptions(comps: CompetitionListItem[]): {
-    countries: string[]
-    regions: string[]
-    localities: string[]
-  } {
-    const countries = new Set<string>()
-    const regions = new Set<string>()
-    const localities = new Set<string>()
-    for (const c of comps) {
-      if (c.country) countries.add(c.country)
-      if (c.country === country.value && c.region) regions.add(c.region)
-      if (
-        c.country === country.value
-        && c.region === region.value
-        && c.locality
-      ) {
-        localities.add(c.locality)
-      }
-    }
+    const effectiveActive = Boolean(effCountry || effRegion || effLocality)
     return {
-      countries: [...countries].sort(),
-      regions: [...regions].sort(),
-      localities: [...localities].sort(),
+      predicate(c: CompetitionListItem): boolean {
+        if (effCountry && c.country !== effCountry) return false
+        if (effRegion && c.region !== effRegion) return false
+        if (effLocality && c.locality !== effLocality) return false
+        return true
+      },
+      isActive: effectiveActive,
     }
   }
 
   return {
+    mode,
+    radius,
     country,
     region,
     locality,
-    near,
-    geoCoords,
+    coords,
     locationError,
     locationLoading,
-    enableNearMe,
-    disableNearMe,
-    clear,
-    matches,
+    setNearby,
+    setRegion,
+    setWorldwide,
+    setRadius,
     filterFor,
     isActive,
-    deriveOptions,
-    NEAR_ME_KM,
+    MIN_RADIUS_KM,
+    MAX_RADIUS_KM,
+    RADIUS_STEP_KM,
   }
 }
