@@ -23,10 +23,13 @@ export const storage = getStorage(firebaseApp)
 export const functions = getFunctions(firebaseApp)
 
 if (import.meta.env.MODE === 'emulator') {
-  connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true })
-  connectDatabaseEmulator(database, 'localhost', 9009)
-  connectStorageEmulator(storage, 'localhost', 9199)
-  connectFunctionsEmulator(functions, 'localhost', 5001)
+  // Use the host the page was served from so LAN devices (phones via --host) hit
+  // the dev machine, not themselves.
+  const host = window.location.hostname
+  connectAuthEmulator(auth, `http://${host}:9099`, { disableWarnings: true })
+  connectDatabaseEmulator(database, host, 9009)
+  connectStorageEmulator(storage, host, 9199)
+  connectFunctionsEmulator(functions, host, 5001)
 }
 
 export const dataRef = (path: string = '') =>

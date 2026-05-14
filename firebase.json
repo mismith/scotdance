@@ -34,21 +34,27 @@
   },
   "emulators": {
     "ui": {
-      "enabled": true
+      "enabled": true,
+      "host": "0.0.0.0"
     },
     "auth": {
+      "host": "0.0.0.0",
       "port": 9099
     },
     "functions": {
+      "host": "0.0.0.0",
       "port": 5001
     },
     "database": {
+      "host": "0.0.0.0",
       "port": 9009
     },
     "storage": {
+      "host": "0.0.0.0",
       "port": 9199
     },
     "hosting": {
+      "host": "0.0.0.0",
       "port": 5050
     }
   }
