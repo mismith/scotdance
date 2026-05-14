@@ -32,7 +32,6 @@ const CompetitionAdminDanceGroups = () => import('@/views/competition/admin/Danc
 const Admin = () => import('@/views/Admin.vue');
 const AdminInfo = () => import('@/views/admin/Info.vue');
 const AdminSubmissions = () => import('@/views/admin/Submissions.vue');
-const AdminDancers = () => import('@/views/admin/Dancers.vue');
 const AdminUsers = () => import('@/views/admin/Users.vue');
 
 Vue.use(Router);
@@ -258,14 +257,6 @@ export default new Router({
           component: AdminUsers,
           meta: {
             title: 'Users',
-          },
-        },
-        {
-          path: 'dancers',
-          name: 'admin.dancers',
-          component: AdminDancers,
-          meta: {
-            title: 'Dancers',
           },
         },
         {

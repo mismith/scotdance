@@ -3,6 +3,9 @@ import * as functions from 'firebase-functions/v1';
 import Invites from './invites';
 import Submissions from './submissions';
 import * as Dancers from './dancers';
+import * as Competitions from './competitions';
+import * as Judges from './judges';
+import { getOnSearchAll } from './search';
 import { runBackfillCoords } from './backfillCoords';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isCypress, isEmulator } from './utility/env';
@@ -106,3 +109,20 @@ export const dancerDeleted = !isCypress() && dancersRef.onDelete(Dancers.onDelet
 const configHttps = functions.runWith(configRunWith).https;
 export const searchDancers = configHttps.onCall(Dancers.getOnSearch(appConfig.db));
 export const reindexDancers = configHttps.onCall(Dancers.getOnReindex(appConfig.db));
+
+const competitionsIndexRef = configDatabase.ref(`/${env}/competitions/{competitionId}`);
+export const competitionIndexCreated = !isCypress()
+  && competitionsIndexRef.onCreate(Competitions.onCreate);
+export const competitionIndexUpdated = !isCypress()
+  && competitionsIndexRef.onUpdate(Competitions.onUpdate);
+export const competitionIndexDeleted = !isCypress()
+  && competitionsIndexRef.onDelete(Competitions.onDelete);
+export const reindexCompetitions = configHttps.onCall(Competitions.getOnReindex(appConfig.db));
+
+const judgesRef = configDatabase.ref(`/${env}/competitions:data/{competitionId}/staff/{staffId}`);
+export const judgeCreated = !isCypress() && judgesRef.onCreate(Judges.onCreate);
+export const judgeUpdated = !isCypress() && judgesRef.onUpdate(Judges.onUpdate);
+export const judgeDeleted = !isCypress() && judgesRef.onDelete(Judges.onDelete);
+export const reindexJudges = configHttps.onCall(Judges.getOnReindex(appConfig.db));
+
+export const searchAll = configHttps.onCall(getOnSearchAll(appConfig.db));
