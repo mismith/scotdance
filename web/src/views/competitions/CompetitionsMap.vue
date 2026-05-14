@@ -9,25 +9,36 @@ import { useLocalStorage } from '@vueuse/core'
 import MapVenueSheet from '@/components/MapVenueSheet.vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import { useFavoritesStore } from '@/stores/favorites'
-import { isBeforeToday, isSameDay } from '@/lib/format'
+import { daysFromToday, isBeforeToday } from '@/lib/format'
 import { createMap, persistCamera, styleUrlFor } from '@/lib/maplibre'
 import { useTheme } from '@/composables/useTheme'
 import { groupByVenue, type VenueGroup } from '@/lib/venues'
 
-type Filter = 'upcoming' | 'past' | 'all'
+type Filter = 'archived' | 'current' | 'upcoming' | 'all'
 // Shared with CompetitionsList — picking a date scope here applies everywhere.
-const filter = useLocalStorage<Filter>('competitions:filter', 'upcoming')
-const includeArchived = computed(() => filter.value !== 'upcoming')
+const filter = useLocalStorage<Filter>('competitions:filter', 'current')
+const includeArchived = computed(
+  () => filter.value === 'archived' || filter.value === 'all',
+)
 
 const { competitions } = useCompetitions(includeArchived)
+
+const CURRENT_PAST_DAYS = -7
+const CURRENT_FUTURE_DAYS = 30
 
 const dateFiltered = computed<CompetitionListItem[]>(() => {
   if (filter.value === 'upcoming')
     return competitions.value.filter((c) => c.date && !isBeforeToday(c.date))
-  if (filter.value === 'past')
-    return competitions.value.filter(
-      (c) => c.date && isBeforeToday(c.date) && !isSameDay(c.date),
-    )
+  if (filter.value === 'current')
+    return competitions.value.filter((c) => {
+      const d = daysFromToday(c.date)
+      return d !== null && d >= CURRENT_PAST_DAYS && d <= CURRENT_FUTURE_DAYS
+    })
+  if (filter.value === 'archived')
+    return competitions.value.filter((c) => {
+      const d = daysFromToday(c.date)
+      return d !== null && d < CURRENT_PAST_DAYS
+    })
   return competitions.value
 })
 const favorites = useFavoritesStore()
