@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { Globe, Locate, LandPlot, X } from '@lucide/vue'
 import ExpandingPill from '@/components/ExpandingPill.vue'
+import NearbyRadiusMap from '@/components/NearbyRadiusMap.vue'
 import { useLocationFilter, type LocationMode } from '@/composables/useLocationFilter'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 import { countryFlag, isoFor } from '@/lib/flagEmoji'
@@ -28,8 +29,39 @@ const {
   availableCountries,
   MIN_RADIUS_KM,
   MAX_RADIUS_KM,
-  RADIUS_STEP_KM,
 } = useLocationFilter()
+
+// Log-scale slider: most of the travel is in the 50–500km zone where users
+// actually live, then it accelerates to continent-scale at the high end.
+// The <input type=range> still operates on a linear 0–1000 abstract position;
+// we convert in both directions on bind/input.
+const SLIDER_STEPS = 1000
+const MIN_LOG = Math.log(MIN_RADIUS_KM)
+const MAX_LOG = Math.log(MAX_RADIUS_KM)
+
+function snapKm(km: number): number {
+  // Looser precision at larger radii — keeps the displayed values "nice"
+  // without snapping so coarsely that the ring jumps.
+  if (km < 100) return Math.round(km / 5) * 5
+  if (km < 1000) return Math.round(km / 10) * 10
+  return Math.round(km / 50) * 50
+}
+
+function positionToKm(pos: number): number {
+  const ratio = pos / SLIDER_STEPS
+  return snapKm(Math.exp(MIN_LOG + ratio * (MAX_LOG - MIN_LOG)))
+}
+
+function kmToPosition(km: number): number {
+  const ratio = (Math.log(km) - MIN_LOG) / (MAX_LOG - MIN_LOG)
+  return Math.round(ratio * SLIDER_STEPS)
+}
+
+const sliderPosition = computed(() => kmToPosition(radius.value))
+
+function onSliderInput(e: Event): void {
+  setRadius(positionToKm(Number((e.target as HTMLInputElement).value)))
+}
 
 type CompactDisplay =
   | { kind: 'flag'; emoji: string }
@@ -197,23 +229,17 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
 
         <!-- Nearby editor -->
         <div v-if="mode === 'nearby'" class="space-y-2 px-3 pt-1 pb-3">
-          <!-- Has a fix: show the slider -->
+          <!-- Has a fix: map preview ring + slider -->
           <template v-if="coords">
+            <NearbyRadiusMap :lat="coords.lat" :lng="coords.lng" :radius-km="radius" />
             <input
               type="range"
-              :min="MIN_RADIUS_KM"
-              :max="MAX_RADIUS_KM"
-              :step="RADIUS_STEP_KM"
-              :value="radius"
+              :min="0"
+              :max="SLIDER_STEPS"
+              :value="sliderPosition"
               class="w-full"
-              @input="setRadius(Number(($event.target as HTMLInputElement).value))"
+              @input="onSliderInput"
             />
-            <div
-              class="text-muted-foreground flex justify-between text-[10px] tabular-nums"
-            >
-              <span>{{ MIN_RADIUS_KM }}km</span>
-              <span>{{ MAX_RADIUS_KM }}km</span>
-            </div>
           </template>
 
           <!-- Locating -->
