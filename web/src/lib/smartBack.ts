@@ -10,7 +10,7 @@ function isPlainClick(event: MouseEvent) {
   )
 }
 
-function backPath() {
+export function backPath() {
   return (window.history.state as { back?: string } | null)?.back ?? null
 }
 

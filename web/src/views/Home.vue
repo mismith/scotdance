@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { CalendarDays, ChevronDown, ChevronRight, Trophy, Users } from '@lucide/vue'
+import AccountAvatarButton from '@/components/AccountAvatarButton.vue'
 import { PLATFORM } from '@/composables/useUpdate'
 import { version } from '../../package.json'
 
@@ -62,6 +63,12 @@ function scrollToFeatures(e: Event) {
 
 <template>
   <div class="flex flex-1 flex-col pb-(--chrome-bottom)" data-route="home">
+    <div
+      class="pointer-events-none fixed inset-x-0 top-(--safe-top) z-40 mx-auto mt-4 flex max-w-3xl justify-end px-4"
+    >
+      <AccountAvatarButton class="pointer-events-auto" />
+    </div>
+
     <!-- HERO -->
     <section class="relative flex min-h-dvh flex-col items-center justify-center px-6">
       <header

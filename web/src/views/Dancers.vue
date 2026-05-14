@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useDancersStore } from '@/stores/dancers'
 import { useRecentDancers } from '@/composables/useRecentDancers'
+import AccountAvatarButton from '@/components/AccountAvatarButton.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { initialsOf } from '@/lib/format'
@@ -107,26 +108,29 @@ const vt = useVtScope('dancer')
 <template>
   <div class="flex flex-1 flex-col pb-(--chrome-bottom)">
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4">
-      <div
-        class="bg-card flex h-12 items-center gap-3 rounded-full border px-4 shadow-sm"
-      >
-        <Search class="text-muted-foreground size-4 shrink-0" />
-        <input
-          v-model="q"
-          type="search"
-          placeholder="Search by name…"
-          :disabled="!auth.isSignedIn"
-          class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent focus:outline-none disabled:opacity-50 [&::-webkit-search-cancel-button]:hidden"
-        />
-        <button
-          v-if="q"
-          type="button"
-          class="text-muted-foreground hover:text-foreground -mr-1 rounded-full p-1"
-          title="Clear"
-          @click="clearSearch"
+      <div class="flex items-center gap-2">
+        <div
+          class="bg-card flex h-12 flex-1 items-center gap-3 rounded-full border px-4 shadow-sm"
         >
-          <X class="size-4" />
-        </button>
+          <Search class="text-muted-foreground size-4 shrink-0" />
+          <input
+            v-model="q"
+            type="search"
+            placeholder="Search by name…"
+            :disabled="!auth.isSignedIn"
+            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent focus:outline-none disabled:opacity-50 [&::-webkit-search-cancel-button]:hidden"
+          />
+          <button
+            v-if="q"
+            type="button"
+            class="text-muted-foreground hover:text-foreground -mr-1 rounded-full p-1"
+            title="Clear"
+            @click="clearSearch"
+          >
+            <X class="size-4" />
+          </button>
+        </div>
+        <AccountAvatarButton />
       </div>
 
       <div
