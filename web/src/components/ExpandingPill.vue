@@ -75,7 +75,7 @@ defineExpose({ open, close })
   <!-- Expanded overlay: morphs out of the compact pill's slot via clip-path.
        --pill-x and --pill-w are set on the element by applyPillRect. -->
   <Transition
-    enter-active-class="transition-all ease-rubber-band"
+    enter-active-class="transition-all ease-out"
     enter-from-class="[clip-path:inset(4px_calc(100%-var(--pill-x,0px)-var(--pill-w,0px))_4px_var(--pill-x,0px)_round_1.5rem)]"
     enter-to-class="[clip-path:inset(0_0_0_0_round_1.5rem)]"
     leave-active-class="transition-all ease-out"
