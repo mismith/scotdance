@@ -18,6 +18,59 @@
           @field-change="handleSubsectionChange"
           class="pa-4"
         />
+        <div v-else-if="subsectionId === 'indexes'" class="pa-4">
+          <div class="ma-auto d-flex flex-column" style="gap: 1.5rem; max-width: 560px;">
+            <div class="d-flex flex-column" style="gap: 0.5rem;">
+              <v-btn
+                :loading="indexJobs.competitionsPublished.loading"
+                @click="runReindex('competitionsPublished')"
+              >
+                Re-Index Published Competitions
+              </v-btn>
+              <div v-if="indexJobs.competitionsPublished.count != null" class="caption grey--text">
+                {{ indexJobs.competitionsPublished.count.toLocaleString() }} published competitions
+              </div>
+            </div>
+
+            <div class="d-flex flex-column" style="gap: 0.5rem;">
+              <v-btn
+                :loading="indexJobs.competitions.loading"
+                @click="runReindex('competitions')"
+              >
+                Re-Index Competitions
+              </v-btn>
+              <div v-if="indexJobs.competitions.count != null" class="caption grey--text">
+                {{ indexJobs.competitions.count.toLocaleString() }} competitions in index
+              </div>
+            </div>
+
+            <div class="d-flex flex-column" style="gap: 0.5rem;">
+              <v-btn
+                :loading="indexJobs.dancers.loading"
+                @click="runReindex('dancers')"
+              >
+                Re-Index Dancers
+              </v-btn>
+              <div v-if="indexJobs.dancers.count != null" class="caption grey--text">
+                {{ indexJobs.dancers.count.toLocaleString() }} dancers in index
+              </div>
+            </div>
+
+            <div class="d-flex flex-column" style="gap: 0.5rem;">
+              <v-btn
+                :loading="indexJobs.judges.loading"
+                @click="runReindex('judges')"
+              >
+                Re-Index Judges
+              </v-btn>
+              <div v-if="indexJobs.judges.count != null" class="caption grey--text">
+                {{ indexJobs.judges.count.toLocaleString() }} judges in index
+              </div>
+            </div>
+
+            <v-alert :value="Boolean(hasError)" type="error">{{ hasError }}</v-alert>
+          </div>
+        </div>
         <div v-else-if="subsectionId === 'geolocation'" class="pa-4">
           <div class="ma-auto d-flex flex-column" style="gap: 1.5rem; max-width: 560px;">
             <div v-if="statsLoading" class="text-center grey--text">Counting…</div>
@@ -112,6 +165,16 @@ import MiHotTable from '@/components/admin/MiHotTable.vue';
 import DynamicForm from '@/components/admin/DynamicForm.vue';
 
 const backfillCoords = fns.httpsCallable('backfillCoords');
+const reindexCallables = {
+  competitionsPublished: fns.httpsCallable('reindexCompetitionsPublished'),
+  competitions: fns.httpsCallable('reindexCompetitions'),
+  dancers: fns.httpsCallable('reindexDancers'),
+  judges: fns.httpsCallable('reindexJudges'),
+};
+function reindexCount(key, data) {
+  if (key === 'competitionsPublished') return Object.keys(data || {}).length;
+  return Array.isArray(data) ? data.length : 0;
+}
 
 export default {
   name: 'AdminInfo',
@@ -134,6 +197,13 @@ export default {
 
       stats: null,
       statsLoading: false,
+
+      indexJobs: {
+        competitionsPublished: { loading: false, count: null },
+        competitions: { loading: false, count: null },
+        dancers: { loading: false, count: null },
+        judges: { loading: false, count: null },
+      },
     };
   },
   watch: {
@@ -164,6 +234,21 @@ export default {
         return acc;
       }, {});
       this.$emit('change', subsectionChanges);
+    },
+
+    async runReindex(key) {
+      const job = this.indexJobs[key];
+      if (!job || job.loading) return;
+      this.hasError = false;
+      job.loading = true;
+      try {
+        const { data } = await reindexCallables[key]();
+        job.count = reindexCount(key, data);
+      } catch (error) {
+        this.hasError = error?.message || error;
+        console.error(error); // eslint-disable-line no-console
+      }
+      job.loading = false;
     },
 
     async handleBackfillCoords(dryRun) {
