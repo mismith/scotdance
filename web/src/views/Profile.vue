@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { computed, ref, watch, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
-import { Eye, EyeOff, LogOut, Pencil } from '@lucide/vue'
+import { Eye, EyeOff, LogOut, Pencil, X } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 import { gravatarUrl } from '@/lib/gravatar'
 import Dialog from '@/components/Dialog.vue'
+import { backPath } from '@/lib/smartBack'
 
 const auth = useAuthStore()
 const me = useMeStore()
 const router = useRouter()
+
+const canGoBack = !!backPath()
 
 watchEffect(() => {
   if (!auth.isSignedIn) {
@@ -139,6 +142,15 @@ const submitDisabled = computed(() => {
           Profile
         </h1>
       </div>
+      <button
+        v-if="canGoBack"
+        type="button"
+        class="bg-chip text-foreground hover:bg-accent flex size-11 shrink-0 items-center justify-center self-start rounded-full"
+        aria-label="Back"
+        @click="router.back()"
+      >
+        <X class="size-5" />
+      </button>
     </header>
 
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-0">

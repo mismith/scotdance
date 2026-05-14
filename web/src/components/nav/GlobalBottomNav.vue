@@ -1,32 +1,19 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { ref } from 'vue'
 import { onClickOutside, onKeyStroke } from '@vueuse/core'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import {
   ArrowDownToLine,
   CalendarDays,
-  ChevronRight,
   Home,
-  LogIn,
-  Monitor,
-  Moon,
   MoreHorizontal,
   Search,
-  Sun,
   Users,
 } from '@lucide/vue'
-import { useTheme, type Theme } from '@/composables/useTheme'
 import { useUpdate } from '@/composables/useUpdate'
-import { useAuthStore } from '@/stores/auth'
-import { useMeStore } from '@/stores/me'
-import { gravatarUrl } from '@/lib/gravatar'
 
 const route = useRoute()
-const router = useRouter()
 const update = useUpdate()
-const { theme } = useTheme()
-const auth = useAuthStore()
-const me = useMeStore()
 
 const moreOpen = ref(false)
 const moreRef = ref<HTMLElement | null>(null)
@@ -47,36 +34,6 @@ const tabs = [
     isActive: () => route.path.startsWith('/dancers'),
   },
 ]
-
-const themeOptions: Array<{ value: Theme; label: string; icon: typeof Sun }> = [
-  { value: 'light', label: 'Light', icon: Sun },
-  { value: 'auto', label: 'System', icon: Monitor },
-  { value: 'dark', label: 'Dark', icon: Moon },
-]
-
-const initial = computed(() => {
-  const name = me.displayName ?? me.email ?? ''
-  return (name[0] ?? '?').toUpperCase()
-})
-
-const avatarUrl = ref<string | null>(null)
-watch(
-  () => me.email,
-  async (email) => {
-    avatarUrl.value = await gravatarUrl(email, 56)
-  },
-  { immediate: true },
-)
-
-function handleSignIn() {
-  moreOpen.value = false
-  auth.openLogin()
-}
-
-function goProfile() {
-  moreOpen.value = false
-  router.push({ name: 'profile' })
-}
 </script>
 
 <template>
@@ -130,87 +87,10 @@ function goProfile() {
               class="bg-nav/90 text-nav-foreground absolute bottom-full left-1/2 z-40 mb-2 w-72 max-w-[calc(100vw-1.5rem)] -translate-x-1/2 rounded-3xl border border-white/10 p-3 font-sans shadow-lg backdrop-blur-xl"
               role="menu"
             >
-              <!-- Account + theme section -->
-              <div class="space-y-3 border-b border-white/10 pb-3">
-                <button
-                  v-if="auth.isSignedIn"
-                  type="button"
-                  class="flex w-full items-center gap-2.5 rounded-xl p-2 text-left opacity-70 transition-opacity hover:opacity-100"
-                  role="menuitem"
-                  @click="goProfile"
-                >
-                  <img
-                    v-if="avatarUrl"
-                    :src="avatarUrl"
-                    :alt="me.displayName ?? me.email ?? ''"
-                    class="bg-muted size-9 rounded-full"
-                  />
-                  <span
-                    v-else
-                    class="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-full font-medium"
-                  >
-                    {{ initial }}
-                  </span>
-                  <span class="min-w-0 flex-1">
-                    <span
-                      v-if="me.displayName"
-                      class="block truncate text-base font-medium"
-                    >
-                      {{ me.displayName }}
-                    </span>
-                    <span
-                      v-if="me.email"
-                      :class="[
-                        'block truncate',
-                        me.displayName ? 'text-sm opacity-60' : 'text-base font-medium',
-                      ]"
-                    >
-                      {{ me.email }}
-                    </span>
-                  </span>
-                  <ChevronRight class="size-4 opacity-60" />
-                </button>
-
-                <button
-                  v-else
-                  type="button"
-                  class="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm opacity-70 transition-opacity hover:opacity-100"
-                  role="menuitem"
-                  @click="handleSignIn"
-                >
-                  <LogIn class="size-4" />
-                  <span class="flex-1">Sign in</span>
-                </button>
-
-                <div
-                  class="bg-nav-foreground/10 grid grid-cols-3 gap-1 rounded-lg p-1"
-                  role="radiogroup"
-                  aria-label="Theme"
-                >
-                  <button
-                    v-for="opt in themeOptions"
-                    :key="opt.value"
-                    type="button"
-                    role="radio"
-                    :aria-checked="theme === opt.value"
-                    :class="[
-                      'flex items-center justify-center gap-1.5 rounded-md py-1.5 font-medium transition-colors',
-                      theme === opt.value
-                        ? 'bg-nav-foreground/20 shadow-sm'
-                        : 'opacity-70 hover:opacity-100',
-                    ]"
-                    @click="theme = opt.value"
-                  >
-                    <component :is="opt.icon" class="size-4" />
-                    <span class="text-sm">{{ opt.label }}</span>
-                  </button>
-                </div>
-              </div>
-
               <RouterLink
                 :to="{ name: 'home' }"
                 :class="[
-                  'mt-3 flex w-full items-center gap-3 rounded-lg p-2.5 text-base font-medium transition-opacity',
+                  'flex w-full items-center gap-3 rounded-lg p-2.5 text-base font-medium transition-opacity',
                   route.path === '/'
                     ? 'bg-nav-foreground/10'
                     : 'opacity-70 hover:opacity-100',
