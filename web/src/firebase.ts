@@ -5,14 +5,14 @@ import { getStorage, connectStorageEmulator, ref as storageRef } from 'firebase/
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions'
 
 export const firebaseApp = initializeApp({
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+  apiKey: 'AIzaSyCxvA2RMvlCQ3WCzAqPotD8IOhnmCtQ1xM',
+  authDomain: 'scotdance.firebaseapp.com',
+  databaseURL: 'https://scotdance.firebaseio.com',
+  projectId: 'firebase-scotdance',
+  storageBucket: 'firebase-scotdance.appspot.com',
+  messagingSenderId: '635645850119',
+  appId: '1:635645850119:web:96255e79df76024e0e70a2',
+  measurementId: 'G-SFLYLX3P6L',
 })
 
 const NAMESPACE = import.meta.env.VITE_FIREBASE_DATA_NAMESPACE || 'production'
