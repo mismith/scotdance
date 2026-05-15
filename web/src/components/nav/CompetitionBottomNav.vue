@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { CalendarDays, Calendars, Info, Trophy, Users } from '@lucide/vue'
-import { smartBackClick } from '@/lib/smartBack'
+import { smartBackClick } from '@/lib/back'
 import { useCompetition } from '@/composables/useCompetition'
 
 const route = useRoute()

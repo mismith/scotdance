@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { Info, Trophy, Users } from '@lucide/vue'
-import { smartBackClick } from '@/lib/smartBack'
+import { smartBackClick } from '@/lib/back'
 
 const route = useRoute()
 const router = useRouter()

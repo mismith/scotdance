@@ -11,8 +11,8 @@ import ShareButton from '@/components/ShareButton.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { CalendarX } from '@lucide/vue'
 import { provideCompetition } from '@/composables/useCompetition'
+import { preferBackClick, useExternalBack } from '@/lib/back'
 import { formatShortDate } from '@/lib/format'
-import { preferBackClick } from '@/lib/smartBack'
 
 type ChromeMode = 'info' | 'top-level' | 'drill-down'
 
@@ -51,6 +51,13 @@ onMounted(loadSchedule)
 const mode = computed<ChromeMode>(() => MODE_BY_ROUTE[String(route.name ?? '')] ?? 'info')
 const backTo = computed(() => DRILL_DOWN_PARENT[String(route.name ?? '')] ?? null)
 
+// Drill-down has its own in-comp back button, so only surface the external
+// back chevron on info/top-level routes.
+const externalBack = useExternalBack({ name: 'competitions' })
+const showExternalBack = computed(
+  () => mode.value !== 'drill-down' && externalBack.show.value,
+)
+
 const dateLabel = computed(() => formatShortDate(competition.value?.date))
 const locationLabel = computed(() => competition.value?.location ?? '')
 </script>
@@ -59,6 +66,23 @@ const locationLabel = computed(() => competition.value?.location ?? '')
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
       <div class="mx-auto flex max-w-3xl items-center gap-2">
+        <RouterLink
+          v-if="showExternalBack && externalBack.to.value"
+          v-slot="{ href, navigate }"
+          :to="externalBack.to.value"
+          custom
+        >
+          <a
+            :href="href"
+            class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-name:nav-back] hover:opacity-90"
+            title="Back"
+            aria-label="Back"
+            @click="preferBackClick(router, $event, navigate)"
+          >
+            <ChevronLeft class="size-5" />
+          </a>
+        </RouterLink>
+
         <RouterLink
           v-if="backTo"
           v-slot="{ href, navigate }"

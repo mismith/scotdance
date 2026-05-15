@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 import { gravatarUrl } from '@/lib/gravatar'
 import Dialog from '@/components/Dialog.vue'
-import { backPath } from '@/lib/smartBack'
+import { backPath } from '@/lib/back'
 
 const auth = useAuthStore()
 const me = useMeStore()
