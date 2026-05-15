@@ -328,25 +328,21 @@ watch(
                   </div>
                 </li>
               </ul>
-              <div
+              <button
                 v-if="
                   (section.callback?.dancers.length ?? 0) > 0 &&
                   (section.callback?.dancers.length ?? 0) < groupDancers.length
                 "
-                class="mt-3 flex justify-center"
+                type="button"
+                class="text-primary hover:text-primary/80 px-1 py-2 text-sm font-medium"
+                @click="toggleShowAll"
               >
-                <button
-                  type="button"
-                  class="bg-card hover:bg-accent text-muted-foreground hover:text-foreground inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors"
-                  @click="toggleShowAll"
-                >
-                  {{
-                    isShowingAll
-                      ? 'Show callbacks only'
-                      : `Show all ${groupDancers.length} dancers`
-                  }}
-                </button>
-              </div>
+                {{
+                  isShowingAll
+                    ? '← Show callbacks only'
+                    : `Show all ${groupDancers.length} dancers →`
+                }}
+              </button>
             </div>
           </template>
 
