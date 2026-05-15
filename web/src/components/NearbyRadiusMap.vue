@@ -140,5 +140,5 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="container" class="border-nav-foreground/10 h-28 w-full overflow-hidden rounded-xl border" />
+  <div ref="container" class="border-nav-foreground/10 aspect-3/2 w-full overflow-hidden rounded-xl border" />
 </template>
