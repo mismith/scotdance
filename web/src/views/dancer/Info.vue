@@ -55,7 +55,7 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
       </div>
       <div class="space-y-1">
         <h1
-          class="text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit_nav-title] [view-transition-name:dancer-name]"
+          class="text-title [view-transition-class:fit_nav-title] [view-transition-name:dancer-name]"
         >
           {{ displayName }}
         </h1>

@@ -3,15 +3,15 @@ import { RouterLink } from 'vue-router'
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col" data-route="policies">
+  <div
+    class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]"
+    data-route="policies"
+  >
     <header
-      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-end justify-between gap-3 p-4 pb-3"
+      class="mx-auto flex w-full max-w-3xl items-start justify-between gap-3 p-4 pb-3"
     >
       <div class="min-w-0 flex-1">
-        <div class="text-foreground/65 text-eyebrow text-xs">Legal</div>
-        <h1 class="text-4xl leading-[1.04] font-medium tracking-tight">
-          Policies
-        </h1>
+        <h1 class="text-title">Policies</h1>
       </div>
     </header>
 

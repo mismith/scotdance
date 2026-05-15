@@ -201,6 +201,11 @@ html:has([data-route='home']) {
   .text-disclosure-heading {
     @apply font-serif text-xl leading-tight font-medium tracking-tight;
   }
+  /* Page title — large display heading used in route headers
+     (Policies, Profile, competition Info/Group/Event/Dancer, etc.). */
+  .text-title {
+    @apply text-4xl leading-[1.04] font-medium tracking-tight;
+  }
   /* Eyebrow / kicker label — small-caps editorial label. Font-sans is
      explicit since body default is serif. Color and size are left to
      the caller (most use text-foreground/65 + text-xs). */
