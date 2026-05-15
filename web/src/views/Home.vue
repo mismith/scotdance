@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { CalendarDays, ChevronDown, ChevronRight, Trophy, Users } from '@lucide/vue'
+import { Timeline, ChevronDown, ChevronRight, Trophy, Users } from '@lucide/vue'
 import { PLATFORM } from '@/composables/useUpdate'
 import { version } from '../../package.json'
 
@@ -18,7 +18,7 @@ const features = [
   },
   {
     n: '02',
-    icon: CalendarDays,
+    icon: Timeline,
     title: 'Schedule',
     body: 'Event start times, platform assignments, and the order of dances — at a glance.',
   },
@@ -75,8 +75,8 @@ function scrollToFeatures(e: Event) {
       </header>
 
       <div class="mb-32 space-y-5 text-center">
-        <h1 class="text-6xl font-medium tracking-tight md:text-8xl">
-          Highland dance,<br />tracked.
+        <h1 class="text-5xl font-medium tracking-tight text-balance md:text-7xl">
+          Highland dance,<br />in your pocket.
         </h1>
         <p class="text-muted-foreground mx-auto max-w-2xl text-xl md:text-2xl">
           Browse competitions, follow dancers, and see results as they happen.
@@ -105,7 +105,7 @@ function scrollToFeatures(e: Event) {
         <header class="mb-16 max-w-2xl space-y-4">
           <div class="text-foreground/65 text-eyebrow text-xs">What it does</div>
           <h2 class="text-4xl font-medium tracking-tight md:text-5xl">
-            A virtual program of events, in your pocket.
+            A program of events, without the paper.
           </h2>
           <p class="text-muted-foreground text-lg md:text-xl">
             Schedules, dancers, and results in a single place — kept in sync as the day
