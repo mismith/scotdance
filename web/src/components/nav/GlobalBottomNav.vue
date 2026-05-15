@@ -38,7 +38,7 @@ const tabs = [
   <nav class="pointer-events-none fixed inset-x-0 bottom-(--nav-bottom) z-30 px-4">
     <div class="mx-auto flex max-w-3xl items-center justify-between">
       <div
-        class="bg-nav/90 text-nav-foreground pointer-events-auto rounded-full p-1 shadow-lg [view-transition-class:clip] [view-transition-name:nav-left]"
+        class="bg-card/90 text-card-foreground pointer-events-auto rounded-full p-1 shadow-lg [view-transition-class:clip] [view-transition-name:nav-left]"
       >
         <div class="flex items-center [view-transition-name:match-element]">
           <RouterLink
@@ -48,7 +48,7 @@ const tabs = [
             :class="[
               'relative isolate flex h-14 min-w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-3 font-sans font-medium transition-colors',
               tab.isActive()
-                ? `before:bg-nav-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:[view-transition-name:nav-left-active]`
+                ? `before:bg-card-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:[view-transition-name:nav-left-active]`
                 : 'opacity-70 hover:opacity-100',
             ]"
           >
@@ -62,7 +62,7 @@ const tabs = [
               :class="[
                 'relative isolate flex h-14 min-w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-3 font-sans font-medium transition-colors',
                 moreOpen
-                  ? `before:bg-nav-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full`
+                  ? `before:bg-card-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full`
                   : 'opacity-70 hover:opacity-100',
               ]"
               :aria-expanded="moreOpen"
@@ -112,14 +112,14 @@ const tabs = [
                 role="menu"
               >
                 <div
-                  class="bg-nav/90 text-nav-foreground w-full overflow-hidden rounded-3xl border border-white/10 p-3 font-sans shadow-lg backdrop-blur-xl"
+                  class="bg-card/90 text-card-foreground w-full overflow-hidden rounded-3xl p-3 font-sans shadow-lg"
                 >
                   <RouterLink
                     :to="{ name: 'home' }"
                     :class="[
                       'flex w-full items-center gap-3 rounded-lg p-2.5 text-base font-medium transition-opacity',
                       route.path === '/'
-                        ? 'bg-nav-foreground/10'
+                        ? 'bg-card-foreground/10'
                         : 'opacity-70 hover:opacity-100',
                     ]"
                     role="menuitem"
@@ -157,7 +157,7 @@ const tabs = [
 
       <RouterLink
         :to="{ name: 'search' }"
-        class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-right] hover:opacity-90"
+        class="bg-card/90 text-card-foreground pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full shadow-lg [view-transition-class:clip] [view-transition-name:nav-right] hover:opacity-90"
         title="Search"
         aria-label="Search"
       >

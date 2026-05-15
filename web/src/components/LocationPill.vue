@@ -224,7 +224,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
             type="button"
             :class="[
               'inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full px-4 font-sans text-sm font-medium transition-colors',
-              mode === opt.id ? 'bg-nav-foreground/15' : 'opacity-70 hover:opacity-100',
+              mode === opt.id ? 'bg-card-foreground/15' : 'opacity-70 hover:opacity-100',
             ]"
             @click="select(opt.id)"
           >
@@ -265,14 +265,14 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
             <div class="flex gap-2">
               <button
                 type="button"
-                class="bg-nav-foreground/15 hover:bg-nav-foreground/25 inline-flex h-10 flex-1 items-center justify-center rounded-full px-4 text-sm font-medium transition-colors"
+                class="bg-card-foreground/15 hover:bg-card-foreground/25 inline-flex h-10 flex-1 items-center justify-center rounded-full px-4 text-sm font-medium transition-colors"
                 @click="requestPosition"
               >
                 Retry
               </button>
               <button
                 type="button"
-                class="hover:bg-nav-foreground/10 text-muted-foreground hover:text-foreground inline-flex h-10 flex-1 items-center justify-center rounded-full px-4 text-sm transition-colors"
+                class="hover:bg-card-foreground/10 text-muted-foreground hover:text-foreground inline-flex h-10 flex-1 items-center justify-center rounded-full px-4 text-sm transition-colors"
                 @click="setWorldwide"
               >
                 Use Worldwide
@@ -287,7 +287,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
             </p>
             <button
               type="button"
-              class="bg-nav-foreground/15 hover:bg-nav-foreground/25 inline-flex h-10 w-full items-center justify-center rounded-full px-4 text-sm font-medium transition-colors"
+              class="bg-card-foreground/15 hover:bg-card-foreground/25 inline-flex h-10 w-full items-center justify-center rounded-full px-4 text-sm font-medium transition-colors"
               @click="requestPosition"
             >
               Try again
@@ -303,7 +303,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
             </p>
             <button
               type="button"
-              class="bg-nav-foreground/15 hover:bg-nav-foreground/25 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-full px-4 text-sm font-medium transition-colors"
+              class="bg-card-foreground/15 hover:bg-card-foreground/25 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-full px-4 text-sm font-medium transition-colors"
               @click="requestPosition"
             >
               <Locate class="size-4" />
@@ -323,8 +323,8 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
               :class="[
                 'inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors',
                 country === qc.value
-                  ? 'bg-nav-foreground/15'
-                  : 'bg-nav-foreground/5 opacity-80 hover:opacity-100',
+                  ? 'bg-card-foreground/15'
+                  : 'bg-card-foreground/5 opacity-80 hover:opacity-100',
               ]"
               @click="pickCountry(qc.value)"
             >
@@ -344,7 +344,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
               placeholder="Narrow to a city or province…"
               autocomplete="off"
               :class="[
-                'bg-nav-foreground/10 border-nav-foreground/15 text-nav-foreground placeholder:text-nav-foreground/55 w-full rounded-full border px-4 py-2 text-base focus:outline-none',
+                'bg-card-foreground/10 border-card-foreground/15 text-card-foreground placeholder:text-card-foreground/55 w-full rounded-full border px-4 py-2 text-base focus:outline-none',
                 region || locality ? 'pr-10' : '',
                 '[&::-webkit-search-cancel-button]:hidden',
               ]"
@@ -362,22 +362,22 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
           </div>
           <ul
             v-if="suggestions.length"
-            class="border-nav-foreground/10 max-h-56 overflow-y-auto rounded-lg border"
+            class="border-card-foreground/10 max-h-56 overflow-y-auto rounded-lg border"
           >
             <li v-for="s in suggestions" :key="s.placeId">
               <button
                 type="button"
-                class="text-nav-foreground hover:bg-nav-foreground/10 w-full px-3 py-2 text-left"
+                class="text-card-foreground hover:bg-card-foreground/10 w-full px-3 py-2 text-left"
                 @click="pickSuggestion(s)"
               >
                 <div class="text-sm">{{ s.primaryText }}</div>
-                <div v-if="s.secondaryText" class="text-nav-foreground/65 text-xs">
+                <div v-if="s.secondaryText" class="text-card-foreground/65 text-xs">
                   {{ s.secondaryText }}
                 </div>
               </button>
             </li>
           </ul>
-          <p v-else-if="searching" class="text-nav-foreground/65 text-xs">Searching…</p>
+          <p v-else-if="searching" class="text-card-foreground/65 text-xs">Searching…</p>
         </div>
       </div>
     </template>

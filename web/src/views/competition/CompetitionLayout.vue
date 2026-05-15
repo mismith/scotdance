@@ -74,7 +74,7 @@ const locationLabel = computed(() => competition.value?.location ?? '')
         >
           <a
             :href="href"
-            class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-name:nav-back] hover:opacity-90"
+            class="bg-card/90 text-card-foreground pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full shadow-lg [view-transition-name:nav-back] hover:opacity-90"
             title="Back"
             aria-label="Back"
             @click="preferBackClick(router, $event, navigate)"
@@ -91,7 +91,7 @@ const locationLabel = computed(() => competition.value?.location ?? '')
         >
           <a
             :href="href"
-            class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-name:nav-back] hover:opacity-90"
+            class="bg-card/90 text-card-foreground pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full shadow-lg [view-transition-name:nav-back] hover:opacity-90"
             title="Back"
             aria-label="Back"
             @click="preferBackClick(router, $event, navigate)"
@@ -103,7 +103,7 @@ const locationLabel = computed(() => competition.value?.location ?? '')
         <RouterLink
           v-if="mode !== 'info'"
           :to="{ name: 'competition.info', params: { competitionId } }"
-          class="bg-nav/90 text-nav-foreground pointer-events-auto flex min-w-0 flex-1 items-center gap-2 rounded-full p-1 pr-4 shadow-lg backdrop-blur-xl [view-transition-class:fixed-height] [view-transition-name:nav-pill] hover:opacity-90"
+          class="bg-card/90 text-card-foreground pointer-events-auto flex min-w-0 flex-1 items-center gap-2 rounded-full p-1 pr-4 shadow-lg [view-transition-class:fixed-height] [view-transition-name:nav-pill] hover:opacity-90"
           :title="competition?.name ?? ''"
         >
           <CompChip
@@ -132,16 +132,16 @@ const locationLabel = computed(() => competition.value?.location ?? '')
         <div v-else class="min-w-0 flex-1" />
 
         <div
-          class="bg-nav/90 text-nav-foreground pointer-events-auto flex h-12 shrink-0 items-center gap-0.5 rounded-full px-1.5 shadow-lg backdrop-blur-xl [view-transition-class:fixed-height] [view-transition-name:nav-actions]"
+          class="bg-card/90 text-card-foreground pointer-events-auto flex h-12 shrink-0 items-center gap-0.5 rounded-full px-1.5 shadow-lg [view-transition-class:fixed-height] [view-transition-name:nav-actions]"
         >
           <FavoriteCompetitionButton
             v-if="mode === 'info'"
             :competition-id="competitionId"
-            class="hover:bg-nav-foreground/10! flex! size-9! items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
+            class="hover:bg-card-foreground/10! flex! size-9! items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
           />
           <ShareButton
             :title="competition?.name ?? undefined"
-            class="hover:bg-nav-foreground/10! flex! size-9! items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
+            class="hover:bg-card-foreground/10! flex! size-9! items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
           />
         </div>
       </div>

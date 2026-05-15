@@ -37,7 +37,7 @@ function select(id: DateFilter, close: () => void) {
           :class="[
             'inline-flex h-10 flex-auto items-center justify-center rounded-full px-3 font-sans text-sm font-medium transition-colors',
             model === opt.id
-              ? 'bg-nav-foreground/15'
+              ? 'bg-card-foreground/15'
               : 'opacity-70 hover:opacity-100',
           ]"
           @click="select(opt.id, close)"

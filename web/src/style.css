@@ -23,8 +23,6 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-nav: var(--nav);
-  --color-nav-foreground: var(--nav-foreground);
   /* Editorial extras (used for hero strips, progress bars, "now/live" callouts) */
   --color-blue-paper: var(--blue-paper);
   --color-pink-paper: var(--pink-paper);
@@ -62,9 +60,6 @@
   --input: oklch(0.88 0.012 85);
   --ring: oklch(0.42 0.09 245);
   --radius: 0.625rem;
-  /* Floating bottom dock — near-black pill on cream paper. */
-  --nav: oklch(0.18 0.008 250);
-  --nav-foreground: oklch(0.95 0.012 85);
   /* Editorial accent surfaces */
   --blue-paper: oklch(0.91 0.02 245);
   --pink-paper: oklch(0.91 0.04 5);
@@ -127,10 +122,6 @@ html:has([data-route='home']) {
   --border: oklch(0.32 0.014 15);
   --input: oklch(0.32 0.014 15);
   --ring: oklch(0.745 0.09 245);
-  /* Inverted in dark mode — cream pill on dark bg so the dock stays
-     visible without relying on glass/blur. */
-  --nav: oklch(0.95 0.012 85);
-  --nav-foreground: oklch(0.18 0.008 250);
   /* Editorial accent surfaces — tinted dark paper for callouts */
   --blue-paper: oklch(0.27 0.05 245);
   --pink-paper: oklch(0.25 0.06 5);
@@ -252,7 +243,7 @@ html:has([data-route='home']) {
     to {
       border-radius: 9999px;
       /* corner-shape: superellipse(1.5); */
-      background: color-mix(in oklch, var(--color-nav) 90%, transparent);
+      background: color-mix(in oklch, var(--color-card) 90%, transparent);
     }
   }
   ::view-transition-group(nav-left) {

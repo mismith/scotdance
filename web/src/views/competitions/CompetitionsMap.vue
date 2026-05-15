@@ -334,7 +334,7 @@ watch(venueGroups, () => {
 }
 
 /* Restyle the locate-me control to match the floating nav island pill
-   style (bg-nav/90, shadow, blur, fully round). Scoped via :has() so it
+   style (bg-card/90, shadow, blur, fully round). Scoped via :has() so it
    only hits the geolocate group, not other controls. */
 .maplibregl-ctrl-group:has(> .maplibregl-ctrl-geolocate) {
   /* Zero out MapLibre's default 10px outer margin so the button sits
@@ -342,8 +342,8 @@ watch(venueGroups, () => {
      the avatar above by the .maplibregl-ctrl-{top,bottom}-{right,left}
      overrides. */
   margin: 0;
-  background: color-mix(in oklab, var(--nav) 90%, transparent);
-  color: var(--nav-foreground);
+  background: color-mix(in oklab, var(--card) 90%, transparent);
+  color: var(--card-foreground);
   border: none;
   border-radius: 9999px;
   box-shadow:

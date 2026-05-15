@@ -51,7 +51,7 @@ defineExpose({ open, close })
     ref="compact"
     type="button"
     :class="[
-      'bg-nav/90 text-nav-foreground pointer-events-auto inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full px-4 font-sans text-sm font-medium whitespace-nowrap shadow-lg backdrop-blur-xl transition-opacity hover:opacity-90',
+      'bg-card-foreground/10 hover:bg-card-foreground/15 pointer-events-auto inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full px-4 font-sans text-sm font-medium whitespace-nowrap transition-colors',
       anyOpen ? 'pointer-events-none opacity-0' : '',
     ]"
     :aria-label="ariaLabel"
@@ -88,7 +88,7 @@ defineExpose({ open, close })
   >
     <div v-if="isOpen" class="absolute top-0 right-14 left-0 z-50">
       <div
-        class="bg-nav/90 text-nav-foreground min-h-12 w-full overflow-x-auto rounded-3xl border border-white/10 shadow-lg backdrop-blur-xl"
+        class="bg-card/90 text-card-foreground min-h-12 w-full overflow-x-auto rounded-3xl shadow-lg"
       >
         <slot name="expanded" :close="close" />
       </div>
@@ -105,7 +105,7 @@ defineExpose({ open, close })
     <button
       v-if="isOpen"
       type="button"
-      class="bg-nav/90 text-nav-foreground pointer-events-auto absolute top-0 right-0 z-60 flex size-12 items-center justify-center rounded-full shadow-lg backdrop-blur-xl hover:opacity-90"
+      class="bg-card/90 text-card-foreground pointer-events-auto absolute top-0 right-0 z-60 flex size-12 items-center justify-center rounded-full shadow-lg hover:opacity-90"
       aria-label="Close"
       @click="close"
     >
