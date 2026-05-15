@@ -94,7 +94,7 @@
    precedence tier as the :root defaults. */
 html:has([data-route='home']) {
   --chrome-top: 0px;
-  scroll-padding-top: 0;
+  @apply scroll-pt-0;
 }
 
 /* Dark mode — "Deep Ink" palette from editorial v5: warm near-black,
@@ -128,8 +128,9 @@ html:has([data-route='home']) {
   --chip: oklch(0.255 0.014 15);
 }
 
-/* @supports (corner-shape: squircle) {
+@supports (corner-shape: squircle) {
   :root {
+    --corner-shape: superellipse(1.5);
     --radius-sm: 0.75rem;
     --radius-md: 1rem;
     --radius-lg: 1.25rem;
@@ -140,9 +141,9 @@ html:has([data-route='home']) {
   *,
   *::before,
   *::after {
-    corner-shape: superellipse(1.5);
+    corner-shape: var(--corner-shape);
   }
-} */
+}
 
 @layer base {
   * {
@@ -152,8 +153,7 @@ html:has([data-route='home']) {
      and bottom chrome — +1rem so anchored content doesn't land flush
      against the nav edge. --chrome-* already includes safe-area inset. */
   html {
-    scroll-padding-top: calc(var(--chrome-top) + 1rem);
-    scroll-padding-bottom: calc(var(--chrome-bottom) + 1rem);
+    @apply scroll-pt-[calc(var(--chrome-top)+1rem)] scroll-pb-[calc(var(--chrome-bottom)+1rem)];
   }
   body {
     @apply bg-background text-foreground font-serif;
@@ -175,121 +175,134 @@ html:has([data-route='home']) {
   }
 }
 
-@layer utilities {
-  /* Shared list-row typography. Compose with structural classes
-     (truncate, line-clamp-*, color, mt-*). */
-  .text-item-title {
-    @apply font-serif text-lg leading-tight font-medium tracking-tight;
-  }
-  .text-item-subtitle {
-    @apply font-serif text-base italic;
-  }
-  .text-item-meta {
-    @apply font-sans text-sm;
-  }
-  /* Heading for collapsible disclosure sections (schedule day blocks,
-     group dance sections, event dance sections). */
-  .text-disclosure-heading {
-    @apply font-serif text-xl leading-tight font-medium tracking-tight;
-  }
-  /* Page title — large display heading used in route headers
-     (Policies, Profile, competition Info/Group/Event/Dancer, etc.). */
-  .text-title {
-    @apply text-4xl leading-[1.04] font-medium tracking-tight;
-  }
-  /* Eyebrow / kicker label — small-caps editorial label. Font-sans is
-     explicit since body default is serif. Color and size are left to
-     the caller (most use text-foreground/65 + text-xs). */
-  .text-eyebrow {
-    @apply font-sans font-medium tracking-[0.18em] uppercase;
-  }
+/* Floating-nav chrome surface — frosted, elevated card. Used on every
+   floating top/bottom nav container, expanded overlay, standalone
+   button (back/avatar/search), and search bar. Compose with shape
+   (rounded-full / rounded-3xl), layout, sizing. */
+@utility floating-nav {
+  @apply bg-card/75 text-card-foreground shadow-lg backdrop-blur;
+}
 
-  /* Skeleton shimmer — diagonal band sweeping left-to-right across the box.
-     Used by Skeleton.vue. translateX(200%) takes the band from -100% (just
-     off the left edge) to +100% (just off the right). */
-  @keyframes skeleton-shimmer {
-    100% {
-      transform: translateX(200%);
-    }
-  }
-  ::view-transition-group(*) {
-    /* Keep the floating dock's backdrop blur from interfering with the slide. */
-    backdrop-filter: blur(0);
-  }
-  ::view-transition-group-children(.clip) {
-    overflow: clip;
-  }
-  /* Anchor text/image snapshots top-left at natural size so they don't squish
-     while the parent group's width changes. */
-  ::view-transition-old(.fit),
-  ::view-transition-new(.fit) {
-    object-fit: none;
-    object-position: top left;
-  }
-  /* Lock snapshot to the group's full height so it doesn't compress
-     vertically while the group width interpolates. */
-  ::view-transition-old(.fixed-height),
-  ::view-transition-new(.fixed-height) {
-    height: 100%;
-  }
+/* Page title — large display heading used in route headers
+   (Policies, Profile, competition Info/Group/Event/Dancer, etc.). */
+@utility text-title {
+  @apply text-4xl leading-[1.04] font-medium tracking-tight;
+}
 
-  /* Bram's bg/fg-split View Transitions technique. Outer pill gets nav-left
-     / nav-right and its image-pair is hidden; the bg morphs purely via the
-     animated keyframe so the rounded corners stay clean at every frame.
-     Inner content uses match-element names and cross-fades on top.
-     https://www.bram.us/2025/03/11/view-transitions-border-radius/ */
-  @keyframes vt-nav-pill {
-    from,
-    to {
-      border-radius: 9999px;
-      /* corner-shape: superellipse(1.5); */
-      background: color-mix(in oklch, var(--color-card) 90%, transparent);
-    }
-  }
-  ::view-transition-group(nav-left) {
-    animation-name: -ua-view-transition-group-anim-nav-left, vt-nav-pill;
-    animation-timing-function: var(--ease-rubber-band);
-  }
-  ::view-transition-group(nav-right) {
-    animation-name: -ua-view-transition-group-anim-nav-right, vt-nav-pill;
-    animation-timing-function: var(--ease-rubber-band);
-  }
-  ::view-transition-image-pair(nav-left),
-  ::view-transition-image-pair(nav-right) {
-    display: none;
-  }
-  ::view-transition-group(nav-pill),
-  ::view-transition-group(nav-left-active),
-  ::view-transition-group(nav-right-active),
-  ::view-transition-group(nav-right-icon) {
-    animation-timing-function: var(--ease-rubber-band);
-  }
-  ::view-transition-group(.nav-avatar),
-  ::view-transition-group(.nav-title) {
-    animation-timing-function: var(--ease-rubber-band);
-    z-index: 1;
-  }
+/* Eyebrow / kicker label — small-caps editorial label. Font-sans is
+   explicit since body default is serif. Color and size are left to
+   the caller (most use text-foreground/65 + text-xs). */
+@utility text-eyebrow {
+  @apply font-sans font-medium tracking-[0.18em] uppercase;
+}
 
-  /* Shared slide-in/out for any element appearing/disappearing from the left
-     of the floating top chrome (back button, name pill). */
-  @keyframes vt-slide-in {
-    from {
-      opacity: 0;
-      transform: translateX(-50%);
-    }
+/* Shared list-row typography. Compose with structural classes
+   (truncate, line-clamp-*, color, mt-*). */
+@utility text-item-title {
+  @apply font-serif text-lg leading-tight font-medium tracking-tight;
+}
+@utility text-item-subtitle {
+  @apply font-serif text-base italic;
+}
+@utility text-item-meta {
+  @apply font-sans text-sm;
+}
+
+/* Heading for collapsible disclosure sections (schedule day blocks,
+   group dance sections, event dance sections). */
+@utility text-disclosure-heading {
+  @apply font-serif text-xl leading-tight font-medium tracking-tight;
+}
+
+/* Skeleton shimmer — diagonal band sweeping left-to-right across the box.
+   Used by Skeleton.vue. translateX(200%) takes the band from -100% (just
+   off the left edge) to +100% (just off the right). */
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(200%);
   }
-  @keyframes vt-slide-out {
-    to {
-      opacity: 0;
-      transform: translateX(-50%);
-    }
+}
+
+::view-transition-group(*) {
+  /* Keep the floating dock's backdrop blur from interfering with the slide. */
+  @apply backdrop-blur-none;
+}
+::view-transition-group-children(.clip) {
+  @apply overflow-clip;
+}
+/* Anchor text/image snapshots top-left at natural size so they don't squish
+   while the parent group's width changes. */
+::view-transition-old(.fit),
+::view-transition-new(.fit) {
+  @apply object-none object-top-left;
+}
+/* Lock snapshot to the group's full height so it doesn't compress
+   vertically while the group width interpolates. */
+::view-transition-old(.fixed-height),
+::view-transition-new(.fixed-height) {
+  @apply h-full;
+}
+
+/* Bram's bg/fg-split View Transitions technique. Outer pill gets nav-left
+   / nav-right and its image-pair is hidden; the bg morphs purely via the
+   animated keyframe so the rounded corners stay clean at every frame.
+   Inner content uses match-element names and cross-fades on top.
+   https://www.bram.us/2025/03/11/view-transitions-border-radius/ */
+@keyframes vt-nav-pill {
+  from,
+  to {
+    corner-shape: var(--corner-shape);
+    /* @apply floating-nav rounded-full — manually expanded; keep in sync. */
+    background: color-mix(in oklab, var(--color-card) 75%, transparent);
+    color: var(--color-card-foreground);
+    box-shadow: var(--shadow-lg);
+    backdrop-filter: blur(8px);
+    border-radius: 9999px;
   }
-  ::view-transition-new(nav-back):only-child {
-    animation-name: vt-slide-in;
-    animation-timing-function: var(--ease-rubber-band);
+}
+::view-transition-group(nav-left) {
+  animation-name: -ua-view-transition-group-anim-nav-left, vt-nav-pill;
+  animation-timing-function: var(--ease-rubber-band);
+}
+::view-transition-group(nav-right) {
+  animation-name: -ua-view-transition-group-anim-nav-right, vt-nav-pill;
+  animation-timing-function: var(--ease-rubber-band);
+}
+::view-transition-image-pair(nav-left),
+::view-transition-image-pair(nav-right) {
+  @apply hidden;
+}
+::view-transition-group(nav-pill),
+::view-transition-group(nav-left-active),
+::view-transition-group(nav-right-active),
+::view-transition-group(nav-right-icon) {
+  animation-timing-function: var(--ease-rubber-band);
+}
+::view-transition-group(.nav-avatar),
+::view-transition-group(.nav-title) {
+  animation-timing-function: var(--ease-rubber-band);
+  @apply z-1;
+}
+
+/* Shared slide-in/out for any element appearing/disappearing from the left
+   of the floating top chrome (back button, name pill). */
+@keyframes vt-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%);
   }
-  ::view-transition-old(nav-back):only-child {
-    animation-name: vt-slide-out;
-    animation-timing-function: var(--ease-rubber-band);
+}
+@keyframes vt-slide-out {
+  to {
+    opacity: 0;
+    transform: translateX(-50%);
   }
+}
+::view-transition-new(nav-back):only-child {
+  animation-name: vt-slide-in;
+  animation-timing-function: var(--ease-rubber-band);
+}
+::view-transition-old(nav-back):only-child {
+  animation-name: vt-slide-out;
+  animation-timing-function: var(--ease-rubber-band);
 }

@@ -60,7 +60,7 @@ const activeTab = computed(() => {
       >
         <a
           :href="href"
-          class="bg-card/90 text-card-foreground pointer-events-auto flex size-16 items-center justify-center rounded-full shadow-lg [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
+          class="floating-nav pointer-events-auto flex size-16 items-center justify-center rounded-full [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
           title="Back to Competitions"
           aria-label="Back to Competitions"
           @click="smartBackClick(router, $event, r.fullPath, navigate)"
@@ -71,24 +71,22 @@ const activeTab = computed(() => {
         </a>
       </RouterLink>
       <div
-        class="bg-card/90 text-card-foreground pointer-events-auto rounded-full p-1 shadow-lg [view-transition-class:clip] [view-transition-name:nav-right]"
+        class="floating-nav pointer-events-auto flex items-center rounded-full p-1 [view-transition-class:clip] [view-transition-name:nav-right]"
       >
-        <div class="flex items-center [view-transition-name:match-element]">
-          <RouterLink
-            v-for="tab in tabs"
-            :key="tab.to"
-            :to="{ name: tab.to, params: { competitionId } }"
-            :class="[
-              'relative isolate flex h-14 min-w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-3 font-sans font-medium transition-colors',
-              activeTab === tab.to
-                ? `before:bg-card-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:[view-transition-name:nav-right-active]`
-                : 'opacity-70 hover:opacity-100',
-            ]"
-          >
-            <component :is="tab.icon" class="size-5" />
-            <span class="text-xs leading-none">{{ tab.name }}</span>
-          </RouterLink>
-        </div>
+        <RouterLink
+          v-for="tab in tabs"
+          :key="tab.to"
+          :to="{ name: tab.to, params: { competitionId } }"
+          :class="[
+            'relative isolate flex h-14 min-w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-3 font-sans font-medium transition-colors [view-transition-name:match-element]',
+            activeTab === tab.to
+              ? `before:bg-card-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:[view-transition-class:fixed-height] before:[view-transition-name:nav-right-active]`
+              : 'opacity-70 hover:opacity-100',
+          ]"
+        >
+          <component :is="tab.icon" class="size-5" />
+          <span class="text-xs leading-none">{{ tab.name }}</span>
+        </RouterLink>
       </div>
     </div>
   </nav>

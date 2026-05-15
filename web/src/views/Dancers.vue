@@ -110,7 +110,7 @@ const vt = useVtScope('dancer')
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
       <div class="pointer-events-auto mx-auto flex max-w-3xl items-center gap-2">
         <div
-          class="bg-card/90 text-card-foreground flex h-12 flex-1 items-center gap-3 rounded-full px-4 shadow-lg"
+          class="floating-nav flex h-12 flex-1 items-center gap-3 rounded-full px-4"
         >
           <Search class="size-4 shrink-0 opacity-70" />
           <input

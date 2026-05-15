@@ -60,7 +60,7 @@ async function handleSignOut() {
     <button
       type="button"
       :class="[
-        'bg-card/90 text-card-foreground pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full shadow-lg transition-opacity hover:opacity-90',
+        'floating-nav pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full transition-opacity hover:opacity-90',
         open ? 'pointer-events-none opacity-0' : '',
       ]"
       :aria-label="auth.isSignedIn ? 'Account menu' : 'Sign in'"
@@ -117,7 +117,7 @@ async function handleSignOut() {
         role="menu"
       >
         <div
-          class="bg-card/90 text-card-foreground min-h-12 w-full space-y-1 overflow-hidden rounded-3xl p-2 shadow-lg"
+          class="floating-nav min-h-12 w-full space-y-1 overflow-hidden rounded-3xl p-2"
         >
           <div
             v-if="auth.isSignedIn"
@@ -226,7 +226,7 @@ async function handleSignOut() {
       <button
         v-if="open"
         type="button"
-        class="bg-card/90 text-card-foreground pointer-events-auto absolute top-0 right-0 z-60 flex size-12 items-center justify-center rounded-full shadow-lg hover:opacity-90"
+        class="floating-nav pointer-events-auto absolute top-0 right-0 z-60 flex size-12 items-center justify-center rounded-full hover:opacity-90"
         aria-label="Close"
         @click="open = false"
       >
