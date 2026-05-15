@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { CalendarDays, Info, Trophy, Users } from '@lucide/vue'
+import { CalendarDays, Calendars, Info, Trophy, Users } from '@lucide/vue'
 import { smartBackClick } from '@/lib/smartBack'
 import { useCompetition } from '@/composables/useCompetition'
 
@@ -68,7 +68,7 @@ const activeTab = computed(() => {
           @click="smartBackClick(router, $event, r.fullPath, navigate)"
         >
           <span class="[view-transition-name:match-element]">
-            <CalendarDays class="size-5" />
+            <Calendars class="size-5" />
           </span>
         </a>
       </RouterLink>
