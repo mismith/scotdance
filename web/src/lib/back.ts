@@ -62,14 +62,20 @@ export function preferBackClick(
 export function useExternalBack(sectionRoute: RouteLocationRaw) {
   const route = useRoute()
   const router = useRouter()
-  const sectionPath = router.resolve(sectionRoute).fullPath
+  // Compare path only — list URLs carry query state (?q=, ?view=) that
+  // shouldn't make the back chevron think we came from elsewhere.
+  const sectionPath = router.resolve(sectionRoute).path
 
   const to = ref<string | null>(backPath())
   watch(() => route.fullPath, () => {
     to.value = backPath()
   })
 
-  const show = computed(() => to.value !== null && to.value !== sectionPath)
+  const show = computed(() => {
+    if (to.value === null) return false
+    const path = to.value.split(/[?#]/)[0]
+    return path !== sectionPath
+  })
 
   return { to, show }
 }
