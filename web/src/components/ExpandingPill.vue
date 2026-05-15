@@ -36,7 +36,9 @@ function applyPillRect(el: Element) {
   if (!c) return
   const target = el as HTMLElement
   target.style.setProperty('--pill-x', `${c.offsetLeft}px`)
+  target.style.setProperty('--pill-y', `${c.offsetTop}px`)
   target.style.setProperty('--pill-w', `${c.offsetWidth}px`)
+  target.style.setProperty('--pill-h', `${c.offsetHeight}px`)
 }
 
 defineExpose({ open, close })
@@ -76,11 +78,11 @@ defineExpose({ open, close })
        --pill-x and --pill-w are set on the element by applyPillRect. -->
   <Transition
     enter-active-class="transition-all ease-out"
-    enter-from-class="[clip-path:inset(4px_calc(100%-var(--pill-x,0px)-var(--pill-w,0px))_4px_var(--pill-x,0px)_round_1.5rem)]"
+    enter-from-class="[clip-path:inset(var(--pill-y,4px)_calc(100%-var(--pill-x,0px)-var(--pill-w,0px))_calc(100%-var(--pill-y,4px)-var(--pill-h,2.5rem))_var(--pill-x,0px)_round_1.5rem)]"
     enter-to-class="[clip-path:inset(0_0_0_0_round_1.5rem)]"
     leave-active-class="transition-all ease-out"
     leave-from-class="[clip-path:inset(0_0_0_0_round_1.5rem)]"
-    leave-to-class="[clip-path:inset(4px_calc(100%-var(--pill-x,0px)-var(--pill-w,0px))_4px_var(--pill-x,0px)_round_1.5rem)]"
+    leave-to-class="[clip-path:inset(var(--pill-y,4px)_calc(100%-var(--pill-x,0px)-var(--pill-w,0px))_calc(100%-var(--pill-y,4px)-var(--pill-h,2.5rem))_var(--pill-x,0px)_round_1.5rem)]"
     @before-enter="applyPillRect"
     @before-leave="applyPillRect"
   >
