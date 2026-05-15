@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Timeline, ChevronDown, ChevronRight, Trophy, Users } from '@lucide/vue'
+import { Timeline, ChevronDown, Trophy, Users } from '@lucide/vue'
 import { PLATFORM } from '@/composables/useUpdate'
 import { version } from '../../package.json'
 
@@ -102,7 +102,7 @@ function scrollToFeatures(e: Event) {
       class="border-border/60 border-t px-6 py-24 md:py-32"
     >
       <div class="mx-auto w-full max-w-5xl">
-        <header class="mb-16 max-w-2xl space-y-4">
+        <header class="mb-16 space-y-4">
           <div class="text-foreground/65 text-eyebrow text-xs">What it does</div>
           <h2 class="text-4xl font-medium tracking-tight md:text-5xl">
             A program of events, without the paper.
@@ -176,10 +176,9 @@ function scrollToFeatures(e: Event) {
 
         <RouterLink
           :to="{ name: 'competitions' }"
-          class="text-foreground/70 hover:text-foreground inline-flex items-center gap-1 text-sm font-medium transition-colors"
+          class="text-primary hover:text-primary/80 px-1 py-2 font-sans text-sm font-medium"
         >
-          Continue in your browser
-          <ChevronRight class="size-4" />
+          Continue in your browser →
         </RouterLink>
       </div>
     </section>
