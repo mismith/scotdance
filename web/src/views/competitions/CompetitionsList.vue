@@ -164,8 +164,8 @@ const monthGroups = computed<MonthGroup[]>(() => {
     ]"
   >
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
-      <div class="pointer-events-auto mx-auto flex h-12 max-w-3xl items-center gap-2">
-        <div class="bg-card/90 flex items-center gap-2 rounded-3xl border p-1 shadow-lg backdrop-blur-xl">
+      <div class="pointer-events-auto relative mx-auto flex h-12 max-w-3xl items-center gap-2">
+        <div class="bg-card/90 flex items-center gap-2 rounded-3xl border p-1 shadow-lg">
           <ViewModePill v-model="view" />
           <LocationPill v-if="view !== 'map'" :competitions="competitions" />
           <DatePill v-if="view !== 'calendar'" v-model="filter" />
