@@ -344,7 +344,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
               placeholder="Narrow to a city or province…"
               autocomplete="off"
               :class="[
-                'bg-background/50 border-nav-foreground/15 placeholder:text-muted-foreground/70 w-full rounded-full border px-4 py-2 text-base focus:outline-none',
+                'bg-nav-foreground/10 border-nav-foreground/15 text-nav-foreground placeholder:text-nav-foreground/55 w-full rounded-full border px-4 py-2 text-base focus:outline-none',
                 region || locality ? 'pr-10' : '',
                 '[&::-webkit-search-cancel-button]:hidden',
               ]"
@@ -367,17 +367,17 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
             <li v-for="s in suggestions" :key="s.placeId">
               <button
                 type="button"
-                class="hover:bg-nav-foreground/10 w-full px-3 py-2 text-left"
+                class="text-nav-foreground hover:bg-nav-foreground/10 w-full px-3 py-2 text-left"
                 @click="pickSuggestion(s)"
               >
                 <div class="text-sm">{{ s.primaryText }}</div>
-                <div v-if="s.secondaryText" class="text-muted-foreground text-xs">
+                <div v-if="s.secondaryText" class="text-nav-foreground/65 text-xs">
                   {{ s.secondaryText }}
                 </div>
               </button>
             </li>
           </ul>
-          <p v-else-if="searching" class="text-muted-foreground text-xs">Searching…</p>
+          <p v-else-if="searching" class="text-nav-foreground/65 text-xs">Searching…</p>
         </div>
       </div>
     </template>
