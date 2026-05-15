@@ -668,16 +668,18 @@ watch(qForRecent, (value) => {
         <div
           class="floating-nav pointer-events-auto flex h-16 min-w-0 flex-1 items-center gap-2 rounded-full px-5 [view-transition-class:clip] [view-transition-name:nav-right]"
         >
-          <SearchIcon
-            class="size-5 shrink-0 opacity-80 [view-transition-name:nav-right-icon]"
-          />
-          <input
-            ref="inputEl"
-            v-model="q"
-            type="search"
-            placeholder="Search"
-            class="placeholder:text-card-foreground/50 min-w-0 flex-1 bg-transparent text-base focus:outline-none [&::-webkit-search-cancel-button]:hidden"
-          />
+          <div
+            class="flex items-center gap-2 [view-transition-class:fit] [view-transition-name:nav-right-icon]"
+          >
+            <SearchIcon class="size-5 shrink-0 opacity-80" />
+            <input
+              ref="inputEl"
+              v-model="q"
+              type="search"
+              placeholder="Search"
+              class="-my-0.5 min-w-0 flex-1 bg-transparent text-base focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+            />
+          </div>
           <button
             v-if="q"
             type="button"
