@@ -104,7 +104,7 @@ async function handleSignOut() {
     <!-- Menu overlay: morphs out of the avatar position (top-right corner
          of the overlay box) via clip-path. -->
     <Transition
-      enter-active-class="transition-[clip-path,opacity] ease-out"
+      enter-active-class="transition-[clip-path,opacity] ease-rubber-band"
       enter-from-class="opacity-0 [clip-path:inset(0_0_calc(100%-3rem)_calc(100%-3rem)_round_1.5rem)]"
       enter-to-class="opacity-100 [clip-path:inset(0_0_0_0_round_1.5rem)]"
       leave-active-class="transition-[clip-path,opacity] ease-out"
