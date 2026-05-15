@@ -22,6 +22,7 @@ import DisclosureHeader from '@/components/DisclosureHeader.vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import CompetitionRow from '@/components/CompetitionRow.vue'
+import AccountAvatarButton from '@/components/AccountAvatarButton.vue'
 import {
   searchAll,
   type SearchAllResults,
@@ -289,6 +290,11 @@ watch(qForRecent, (value) => {
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
+    <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
+      <div class="pointer-events-auto mx-auto flex max-w-3xl justify-end">
+        <AccountAvatarButton />
+      </div>
+    </nav>
     <main class="mx-auto flex w-full max-w-3xl flex-1 flex-col space-y-6 p-4">
       <div v-if="error" class="text-destructive text-lg">{{ error.message }}</div>
 
@@ -313,7 +319,7 @@ watch(qForRecent, (value) => {
         </div>
 
         <template v-else>
-          <div>
+          <div class="pr-14">
             <h2 class="font-serif text-3xl font-medium tracking-tight">Search results</h2>
             <p class="text-muted-foreground truncate text-sm">for “{{ q }}”</p>
           </div>
@@ -508,7 +514,7 @@ watch(qForRecent, (value) => {
       <template v-else>
         <div class="flex flex-1 flex-col gap-6">
           <section v-if="showSuggestions" class="space-y-2">
-            <h2 class="font-serif text-3xl font-medium tracking-tight">Suggestions</h2>
+            <h2 class="font-serif text-3xl font-medium tracking-tight pr-14">Suggestions</h2>
 
             <section v-if="hasRecent" class="space-y-1">
               <DisclosureHeader
