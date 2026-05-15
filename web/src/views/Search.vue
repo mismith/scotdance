@@ -289,7 +289,7 @@ watch(qForRecent, (value) => {
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
+  <div class="flex flex-1 flex-col pt-2 pb-[calc(var(--chrome-bottom)+1rem)]">
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
       <div class="pointer-events-auto mx-auto flex max-w-3xl justify-end">
         <AccountAvatarButton />
@@ -514,7 +514,9 @@ watch(qForRecent, (value) => {
       <template v-else>
         <div class="flex flex-1 flex-col gap-6">
           <section v-if="showSuggestions" class="space-y-2">
-            <h2 class="font-serif text-3xl font-medium tracking-tight pr-14">Suggestions</h2>
+            <h2 class="pr-14 font-serif text-3xl font-medium tracking-tight">
+              Suggestions
+            </h2>
 
             <section v-if="hasRecent" class="space-y-1">
               <DisclosureHeader
