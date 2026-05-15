@@ -4,7 +4,8 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
 import {
   Building,
-  CalendarDays,
+  Calendar,
+  Calendars,
   ChevronRight,
   Gavel,
   History,
@@ -12,6 +13,7 @@ import {
   Map as MapIcon,
   MapPin,
   Search as SearchIcon,
+  User,
   Users,
   X,
 } from '@lucide/vue'
@@ -70,7 +72,7 @@ const searchExamples = useSearchExamples()
 interface ExampleCardConfig {
   key: 'competitions' | 'places' | 'dancers' | 'judges'
   label: string
-  icon: typeof CalendarDays
+  icon: typeof Calendar
   iconClass: string
 }
 
@@ -78,7 +80,7 @@ const exampleCards: ExampleCardConfig[] = [
   {
     key: 'competitions',
     label: 'Competitions',
-    icon: CalendarDays,
+    icon: Calendar,
     iconClass: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300',
   },
   {
@@ -90,7 +92,7 @@ const exampleCards: ExampleCardConfig[] = [
   {
     key: 'dancers',
     label: 'Dancers',
-    icon: Users,
+    icon: User,
     iconClass: 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
   },
   {
@@ -138,7 +140,7 @@ const backInfo = (() => {
     }
   }
   return {
-    icon: CalendarDays,
+    icon: Calendars,
     label: 'Back to Competitions',
     to: { name: 'competitions' as const },
   }

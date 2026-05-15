@@ -4,7 +4,7 @@ import { onKeyStroke } from '@vueuse/core'
 import { RouterLink, useRoute } from 'vue-router'
 import {
   ArrowDownToLine,
-  CalendarDays,
+  Calendars,
   Home,
   MoreHorizontal,
   Search,
@@ -22,7 +22,7 @@ const tabs = [
   {
     name: 'Competitions',
     to: { name: 'competitions' },
-    icon: CalendarDays,
+    icon: Calendars,
     isActive: () => route.path.startsWith('/competitions'),
   },
   {
