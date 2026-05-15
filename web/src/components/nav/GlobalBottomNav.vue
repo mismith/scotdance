@@ -38,7 +38,7 @@ const tabs = [
   <nav class="pointer-events-none fixed inset-x-0 bottom-(--nav-bottom) z-30 px-4">
     <div class="mx-auto flex max-w-3xl items-center justify-between">
       <div
-        class="bg-nav/90 text-nav-foreground pointer-events-auto rounded-full p-1 shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-left]"
+        class="bg-nav/90 text-nav-foreground pointer-events-auto rounded-full p-1 shadow-lg [view-transition-class:clip] [view-transition-name:nav-left]"
       >
         <div class="flex items-center [view-transition-name:match-element]">
           <RouterLink
@@ -78,26 +78,23 @@ const tabs = [
               />
             </button>
 
-            <!-- Backdrop: outside-click absorber so taps below the menu don't
-                 activate page content. Teleported to <body> so the nav's
-                 backdrop-blur stacking context doesn't trap it. -->
-            <Teleport to="body">
-              <Transition
-                enter-active-class="transition ease-out"
-                enter-from-class="opacity-0"
-                enter-to-class="opacity-100"
-                leave-active-class="transition ease-out"
-                leave-from-class="opacity-100"
-                leave-to-class="opacity-0"
-              >
-                <div
-                  v-if="moreOpen"
-                  class="fixed inset-0 z-40"
-                  aria-hidden="true"
-                  @click="moreOpen = false"
-                />
-              </Transition>
-            </Teleport>
+            <!-- Backdrop: outside-click absorber so taps below the menu
+                 don't activate page content. -->
+            <Transition
+              enter-active-class="transition ease-out"
+              enter-from-class="opacity-0"
+              enter-to-class="opacity-100"
+              leave-active-class="transition ease-out"
+              leave-from-class="opacity-100"
+              leave-to-class="opacity-0"
+            >
+              <div
+                v-if="moreOpen"
+                class="pointer-events-auto fixed inset-0 z-40"
+                aria-hidden="true"
+                @click="moreOpen = false"
+              />
+            </Transition>
 
             <!-- Menu overlay: morphs out of the More button position
                  (bottom-center of the overlay box) via clip-path. -->
