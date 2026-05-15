@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch, watchEffect } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Eye, EyeOff, LogOut, Pencil, X } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
@@ -13,13 +13,6 @@ const me = useMeStore()
 const router = useRouter()
 
 const canGoBack = !!backPath()
-
-watchEffect(() => {
-  if (!auth.isSignedIn) {
-    auth.openLogin()
-    router.replace({ name: 'home' })
-  }
-})
 
 const avatarUrl = ref<string | null>(null)
 watch(
@@ -128,10 +121,7 @@ const submitDisabled = computed(() => {
 </script>
 
 <template>
-  <div
-    v-if="auth.isSignedIn"
-    class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]"
-  >
+  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
     <header
       class="mx-auto flex w-full max-w-3xl items-start justify-between gap-3 p-4 pb-3"
     >
