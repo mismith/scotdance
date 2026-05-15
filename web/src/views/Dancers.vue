@@ -110,20 +110,20 @@ const vt = useVtScope('dancer')
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
       <div class="pointer-events-auto mx-auto flex max-w-3xl items-center gap-2">
         <div
-          class="bg-card/90 flex h-12 flex-1 items-center gap-3 rounded-full border px-4 shadow-lg backdrop-blur-xl"
+          class="bg-card/90 text-card-foreground flex h-12 flex-1 items-center gap-3 rounded-full px-4 shadow-lg"
         >
-          <Search class="text-muted-foreground size-4 shrink-0" />
+          <Search class="size-4 shrink-0 opacity-70" />
           <input
             v-model="q"
             type="search"
             placeholder="Search by name…"
             :disabled="!auth.isSignedIn"
-            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent focus:outline-none disabled:opacity-50 [&::-webkit-search-cancel-button]:hidden"
+            class="placeholder:text-card-foreground/55 min-w-0 flex-1 bg-transparent focus:outline-none disabled:opacity-50 [&::-webkit-search-cancel-button]:hidden"
           />
           <button
             v-if="q"
             type="button"
-            class="text-muted-foreground hover:text-foreground -mr-1 rounded-full p-1"
+            class="text-card-foreground/70 hover:text-card-foreground -mr-1 rounded-full p-1"
             title="Clear"
             @click="clearSearch"
           >

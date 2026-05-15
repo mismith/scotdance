@@ -36,7 +36,7 @@ function select(id: ViewMode, close: () => void) {
           :class="[
             'inline-flex h-10 flex-auto items-center justify-center gap-1.5 rounded-full px-3 font-sans text-sm font-medium transition-colors',
             model === mode.id
-              ? 'bg-nav-foreground/15'
+              ? 'bg-card-foreground/15'
               : 'opacity-70 hover:opacity-100',
           ]"
           @click="select(mode.id, close)"

@@ -164,8 +164,12 @@ const monthGroups = computed<MonthGroup[]>(() => {
     ]"
   >
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
-      <div class="pointer-events-auto relative mx-auto flex h-12 max-w-3xl items-center gap-2">
-        <div class="bg-card/90 flex items-center gap-2 rounded-3xl border p-1 shadow-lg">
+      <div
+        class="pointer-events-auto relative mx-auto flex h-12 max-w-3xl items-center gap-2"
+      >
+        <div
+          class="bg-card/90 text-card-foreground flex items-center gap-1 rounded-full p-1 shadow-lg"
+        >
           <ViewModePill v-model="view" />
           <LocationPill v-if="view !== 'map'" :competitions="competitions" />
           <DatePill v-if="view !== 'calendar'" v-model="filter" />
@@ -188,7 +192,6 @@ const monthGroups = computed<MonthGroup[]>(() => {
           : 'mx-auto max-w-3xl space-y-5 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-4',
       ]"
     >
-
       <CompetitionsMap v-if="view === 'map'" />
       <CompetitionsCalendar
         v-else-if="view === 'calendar'"

@@ -654,7 +654,7 @@ watch(qForRecent, (value) => {
         <RouterLink v-slot="{ href, navigate }" :to="backInfo.to" custom>
           <a
             :href="href"
-            class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
+            class="bg-card/90 text-card-foreground pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full shadow-lg [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
             :title="backInfo.label"
             :aria-label="backInfo.label"
             @click="preferBackClick(router, $event, navigate)"
@@ -666,7 +666,7 @@ watch(qForRecent, (value) => {
         </RouterLink>
 
         <div
-          class="bg-nav/90 text-nav-foreground pointer-events-auto flex h-16 min-w-0 flex-1 items-center gap-2 rounded-full px-5 shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-right]"
+          class="bg-card/90 text-card-foreground pointer-events-auto flex h-16 min-w-0 flex-1 items-center gap-2 rounded-full px-5 shadow-lg [view-transition-class:clip] [view-transition-name:nav-right]"
         >
           <SearchIcon
             class="size-5 shrink-0 opacity-80 [view-transition-name:nav-right-icon]"
@@ -676,12 +676,12 @@ watch(qForRecent, (value) => {
             v-model="q"
             type="search"
             placeholder="Search"
-            class="placeholder:text-nav-foreground/50 min-w-0 flex-1 bg-transparent text-base focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+            class="placeholder:text-card-foreground/50 min-w-0 flex-1 bg-transparent text-base focus:outline-none [&::-webkit-search-cancel-button]:hidden"
           />
           <button
             v-if="q"
             type="button"
-            class="text-nav-foreground/70 hover:text-nav-foreground -mr-3 flex size-10 shrink-0 items-center justify-center rounded-full"
+            class="text-card-foreground/70 hover:text-card-foreground -mr-3 flex size-10 shrink-0 items-center justify-center rounded-full"
             title="Clear"
             aria-label="Clear search"
             @click="clearSearch"

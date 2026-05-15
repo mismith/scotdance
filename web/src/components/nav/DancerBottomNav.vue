@@ -37,7 +37,7 @@ const activeTab = computed(() => {
       <RouterLink v-slot="{ href, route: r, navigate }" :to="{ name: 'dancers' }" custom>
         <a
           :href="href"
-          class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-16 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
+          class="bg-card/90 text-card-foreground pointer-events-auto flex size-16 items-center justify-center rounded-full shadow-lg [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
           title="Back to Dancers"
           aria-label="Back to Dancers"
           @click="smartBackClick(router, $event, r.fullPath, navigate)"
@@ -48,7 +48,7 @@ const activeTab = computed(() => {
         </a>
       </RouterLink>
       <div
-        class="bg-nav/90 text-nav-foreground pointer-events-auto rounded-full p-1 shadow-lg backdrop-blur-xl [view-transition-class:clip] [view-transition-name:nav-right]"
+        class="bg-card/90 text-card-foreground pointer-events-auto rounded-full p-1 shadow-lg [view-transition-class:clip] [view-transition-name:nav-right]"
       >
         <div class="flex items-center [view-transition-name:match-element]">
           <RouterLink
@@ -58,7 +58,7 @@ const activeTab = computed(() => {
             :class="[
               'relative isolate flex h-14 min-w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-3 font-sans font-medium transition-colors',
               activeTab === tab.to
-                ? `before:bg-nav-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:[view-transition-name:nav-right-active]`
+                ? `before:bg-card-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:[view-transition-name:nav-right-active]`
                 : 'opacity-70 hover:opacity-100',
             ]"
           >
