@@ -88,15 +88,6 @@
   --chrome-bottom: calc(4rem + var(--nav-bottom));
 }
 
-/* Home has no floating top chrome — zero out both --chrome-top and
-   scroll-padding-top so #features anchors land flush at the viewport
-   top with no inset. Kept outside @layer base so it sits in the same
-   precedence tier as the :root defaults. */
-html:has([data-route='home']) {
-  --chrome-top: 0px;
-  @apply scroll-pt-0;
-}
-
 /* Dark mode — "Deep Ink" palette from editorial v5: warm near-black,
    editorial paper inverted; accents lifted for AA contrast. */
 .dark {

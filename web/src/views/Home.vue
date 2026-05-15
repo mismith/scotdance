@@ -267,3 +267,15 @@ function scrollToFeatures(e: Event) {
     </footer>
   </div>
 </template>
+
+<style>
+@reference '../style.css';
+
+/* Home has no floating top chrome — zero out scroll-padding-top so
+   #features anchors land flush at the viewport top with no inset.
+   :has() gates on home being mounted (root has data-route="home"),
+   so this naturally turns off when navigating away. */
+html:has([data-route='home']) {
+  @apply scroll-pt-0;
+}
+</style>
