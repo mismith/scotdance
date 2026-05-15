@@ -9,12 +9,12 @@ import { useLocalStorage } from '@vueuse/core'
 import MapVenueSheet from '@/components/MapVenueSheet.vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import { useFavoritesStore } from '@/stores/favorites'
-import { daysFromToday, isBeforeToday } from '@/lib/format'
+import { daysFromToday } from '@/lib/format'
 import { createMap, persistCamera, styleUrlFor } from '@/lib/maplibre'
 import { useTheme } from '@/composables/useTheme'
 import { groupByVenue, type VenueGroup } from '@/lib/venues'
 
-type Filter = 'archived' | 'current' | 'upcoming' | 'all'
+type Filter = 'archived' | 'current' | 'all'
 // Shared with CompetitionsList — picking a date scope here applies everywhere.
 const filter = useLocalStorage<Filter>('competitions:filter', 'current')
 const includeArchived = computed(
@@ -27,8 +27,6 @@ const CURRENT_PAST_DAYS = -7
 const CURRENT_FUTURE_DAYS = 30
 
 const dateFiltered = computed<CompetitionListItem[]>(() => {
-  if (filter.value === 'upcoming')
-    return competitions.value.filter((c) => c.date && !isBeforeToday(c.date))
   if (filter.value === 'current')
     return competitions.value.filter((c) => {
       const d = daysFromToday(c.date)
