@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { CalendarDays, Calendars, Info, Trophy, Users } from '@lucide/vue'
+import { Calendars, Info, Timeline, Trophy, Users } from '@lucide/vue'
 import { smartBackClick } from '@/lib/back'
 import { useCompetition } from '@/composables/useCompetition'
 
@@ -27,7 +27,7 @@ const allTabs: Array<{
   {
     name: 'Schedule',
     to: 'competition.schedule',
-    icon: CalendarDays,
+    icon: Timeline,
     matches: ['competition.schedule', 'competition.event'],
   },
   {
@@ -51,9 +51,7 @@ const activeTab = computed(() => {
 </script>
 
 <template>
-  <nav
-    class="pointer-events-none fixed inset-x-0 bottom-(--nav-bottom) z-30 px-3"
-  >
+  <nav class="pointer-events-none fixed inset-x-0 bottom-(--nav-bottom) z-30 px-3">
     <div class="mx-auto flex max-w-3xl items-center justify-between">
       <RouterLink
         v-slot="{ href, route: r, navigate }"
