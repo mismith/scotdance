@@ -227,7 +227,7 @@ watch(
           {{ group.category.name }}
         </div>
         <h1
-          class="text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit_nav-title] [view-transition-name:group-name]"
+          class="text-title [view-transition-class:fit_nav-title] [view-transition-name:group-name]"
         >
           {{ group.name ?? group.fullName ?? 'Group' }}
         </h1>

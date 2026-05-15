@@ -166,7 +166,7 @@ function closeJudge() {
           {{ day?.name }}<span v-if="block?.name"> · {{ block.name }}</span>
         </div>
         <h1
-          class="text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit_nav-title] [view-transition-name:event-name]"
+          class="text-title [view-transition-class:fit_nav-title] [view-transition-name:event-name]"
         >
           {{ wrappableEventName }}
         </h1>

@@ -128,24 +128,20 @@ const submitDisabled = computed(() => {
 </script>
 
 <template>
-  <div v-if="auth.isSignedIn" class="flex flex-1 flex-col">
+  <div
+    v-if="auth.isSignedIn"
+    class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]"
+  >
     <header
-      class="bg-background sticky top-0 z-20 mx-auto flex w-full max-w-3xl items-end justify-between gap-3 p-4 pb-3"
+      class="mx-auto flex w-full max-w-3xl items-start justify-between gap-3 p-4 pb-3"
     >
       <div class="min-w-0 flex-1">
-        <div
-          class="text-foreground/65 text-xs text-eyebrow"
-        >
-          Account
-        </div>
-        <h1 class="text-4xl leading-[1.04] font-medium tracking-tight">
-          Profile
-        </h1>
+        <h1 class="text-title">Profile</h1>
       </div>
       <button
         v-if="canGoBack"
         type="button"
-        class="bg-chip text-foreground hover:bg-accent flex size-11 shrink-0 items-center justify-center self-start rounded-full"
+        class="bg-chip text-foreground hover:bg-accent flex size-11 shrink-0 items-center justify-center rounded-full"
         aria-label="Back"
         @click="router.back()"
       >

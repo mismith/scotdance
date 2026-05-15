@@ -84,7 +84,7 @@ const placedRows = computed(() =>
 
         <div class="min-w-0">
           <h1
-            class="mb-1 text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit_nav-title] [view-transition-name:comp-dancer-name]"
+            class="text-title mb-1 [view-transition-class:fit_nav-title] [view-transition-name:comp-dancer-name]"
           >
             {{ dancer.fullName }}
           </h1>

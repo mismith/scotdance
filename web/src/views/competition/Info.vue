@@ -152,7 +152,7 @@ function closeStaff() {
         class="size-18 rounded-2xl [view-transition-class:nav-avatar] [view-transition-name:comp-avatar]"
       />
       <h1
-        class="text-4xl leading-[1.04] font-medium tracking-tight [view-transition-class:fit_nav-title] [view-transition-name:comp-name]"
+        class="text-title [view-transition-class:fit_nav-title] [view-transition-name:comp-name]"
       >
         {{ competition.name ?? '?' }}
       </h1>

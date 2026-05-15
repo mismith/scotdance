@@ -72,7 +72,7 @@ async function submit() {
       <div class="text-foreground/65 text-xs text-eyebrow">
         ScotDance.app
       </div>
-      <h2 class="text-4xl font-medium tracking-tight leading-[1.04]">
+      <h2 class="text-title">
         <template v-if="mode === 'login'">Sign in</template>
         <template v-else-if="mode === 'register'">Create account</template>
         <template v-else>Reset password</template>
