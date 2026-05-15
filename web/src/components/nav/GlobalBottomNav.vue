@@ -98,7 +98,7 @@ const tabs = [
           <!-- Menu overlay: morphs out of the More button position
                  (bottom-center of the overlay box) via clip-path. -->
           <Transition
-            enter-active-class="transition-[clip-path,opacity] ease-out"
+            enter-active-class="transition-[clip-path,opacity] ease-rubber-band"
             enter-from-class="opacity-0 [clip-path:inset(calc(100%-3.5rem)_calc(50%-2rem)_0_calc(50%-2rem)_round_1.75rem)]"
             enter-to-class="opacity-100 [clip-path:inset(0_0_0_0_round_1.5rem)]"
             leave-active-class="transition-[clip-path,opacity] ease-out"

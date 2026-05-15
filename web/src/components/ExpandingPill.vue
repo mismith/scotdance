@@ -68,7 +68,7 @@ defineExpose({ open, close })
   <!-- Backdrop: invisible click absorber so an "outside click" closes the
          pill instead of activating links/map/list rows below. -->
   <Transition
-    enter-active-class="transition ease-out"
+    enter-active-class="transition ease-rubber-band"
     enter-from-class="opacity-0"
     enter-to-class="opacity-100"
     leave-active-class="transition ease-out"
@@ -83,7 +83,7 @@ defineExpose({ open, close })
        block due to its backdrop-filter) and anchor to the full row width. -->
   <Teleport to="[data-pill-overlay-host]" defer>
     <Transition
-      enter-active-class="transition-all ease-out"
+      enter-active-class="transition-all ease-rubber-band"
       enter-from-class="[clip-path:inset(var(--pill-y,4px)_calc(100%-var(--pill-x,0px)-var(--pill-w,0px))_calc(100%-var(--pill-y,4px)-var(--pill-h,2.5rem))_var(--pill-x,0px)_round_1.5rem)]"
       enter-to-class="[clip-path:inset(0_0_0_0_round_1.5rem)]"
       leave-active-class="transition-all ease-out"
@@ -93,9 +93,7 @@ defineExpose({ open, close })
       @before-leave="applyPillRect"
     >
       <div v-if="isOpen" class="absolute top-0 right-14 left-0 z-50">
-        <div
-          class="floating-nav min-h-12 w-full overflow-x-auto rounded-3xl"
-        >
+        <div class="floating-nav min-h-12 w-full overflow-x-auto rounded-3xl">
           <slot name="expanded" :close="close" />
         </div>
       </div>
