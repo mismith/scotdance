@@ -1,20 +1,16 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue'
+import { computed, reactive, ref, shallowRef, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
 import {
   Building,
   Calendar,
-  Calendars,
   ChevronRight,
   Gavel,
   History,
-  Home,
   Map as MapIcon,
   MapPin,
-  Search as SearchIcon,
   User,
-  Users,
   X,
 } from '@lucide/vue'
 import SectionHeader from '@/components/SectionHeader.vue'
@@ -35,15 +31,17 @@ import { useVtScope } from '@/lib/viewTransitionFocus'
 import { useLocationFilter } from '@/composables/useLocationFilter'
 import { useRecentSearches } from '@/composables/useRecentSearches'
 import { useSearchExamples } from '@/composables/useSearchExamples'
-import { backPath, preferBackClick } from '@/lib/back'
+import { useGlobalSearch } from '@/composables/useGlobalSearch'
 
 const vt = useVtScope('dancer')
 
 const route = useRoute()
 const router = useRouter()
-const inputEl = ref<HTMLInputElement | null>(null)
 
-const q = ref(String(route.query.q ?? ''))
+// q + the underlying input live in GlobalBottomNav so the element persists
+// across route changes (required for iOS to keep the keyboard up on entry).
+const { q } = useGlobalSearch()
+q.value = String(route.query.q ?? '')
 const qDebounced = refDebounced(q, 250)
 // Longer idle than the search debounce so partial keystrokes don't all
 // land in Recent — only what the user actually pauses on.
@@ -125,34 +123,6 @@ const hasRecent = computed(() => recentSearches.recent.value.length > 0)
 const showSuggestions = computed(
   () => hasRecent.value || hasExamples.value || searchExamples.loading.value,
 )
-
-// Pick the back-button destination from history. /search is a leaf — the
-// history.back entry doesn't change while we're here, so resolving once at
-// setup is enough.
-const backInfo = (() => {
-  const back = backPath()
-  if (back === '/') {
-    return {
-      icon: Home,
-      label: 'Back to Home',
-      to: { name: 'home' as const },
-    }
-  }
-  if (back && back.startsWith('/dancers')) {
-    return {
-      icon: Users,
-      label: 'Back to Dancers',
-      to: { name: 'dancers' as const },
-    }
-  }
-  return {
-    icon: Calendars,
-    label: 'Back to Competitions',
-    to: { name: 'competitions' as const },
-  }
-})()
-
-onMounted(() => inputEl.value?.focus())
 
 watch(
   () => route.query.q,
@@ -248,11 +218,6 @@ function competitionListItem(hit: SearchCompetitionHit): CompetitionListItem {
     date: hit.date,
     image: hit.image,
   }
-}
-
-function clearSearch() {
-  q.value = ''
-  inputEl.value?.focus()
 }
 
 function locationIcon(kind: SearchLocationGroup['kind']) {
@@ -648,50 +613,5 @@ watch(qForRecent, (value) => {
         </div>
       </template>
     </main>
-
-    <nav class="pointer-events-none fixed inset-x-0 bottom-(--nav-bottom) z-30 px-4">
-      <div class="mx-auto flex max-w-3xl items-center gap-2">
-        <RouterLink v-slot="{ href, navigate }" :to="backInfo.to" custom>
-          <a
-            :href="href"
-            class="floating-nav pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
-            :title="backInfo.label"
-            :aria-label="backInfo.label"
-            @click="preferBackClick(router, $event, navigate)"
-          >
-            <span class="[view-transition-name:match-element]">
-              <component :is="backInfo.icon" class="size-5" />
-            </span>
-          </a>
-        </RouterLink>
-
-        <div
-          class="floating-nav pointer-events-auto flex h-16 min-w-0 flex-1 items-center gap-2 rounded-full px-5 [view-transition-class:clip] [view-transition-name:nav-right]"
-        >
-          <div
-            class="flex items-center gap-2 [view-transition-class:fit] [view-transition-name:nav-right-icon]"
-          >
-            <SearchIcon class="size-5 shrink-0 opacity-80" />
-            <input
-              ref="inputEl"
-              v-model="q"
-              type="search"
-              placeholder="Search"
-              class="-my-0.5 min-w-0 flex-1 bg-transparent text-base focus:outline-none [&::-webkit-search-cancel-button]:hidden"
-            />
-          </div>
-          <button
-            v-if="q"
-            type="button"
-            class="text-card-foreground/70 hover:text-card-foreground -mr-3 flex size-10 shrink-0 items-center justify-center rounded-full"
-            title="Clear"
-            aria-label="Clear search"
-            @click="clearSearch"
-          >
-            <X class="size-5" />
-          </button>
-        </div>
-      </div>
-    </nav>
   </div>
 </template>
