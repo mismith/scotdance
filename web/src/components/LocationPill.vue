@@ -207,7 +207,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
 <template>
   <ExpandingPill id="location" ref="pill" :aria-label="ariaLabel">
     <template #compact>
-      <span v-if="compact.kind === 'flag'" class="text-xl leading-none">
+      <span v-if="compact.kind === 'flag'" class="-mx-1 text-2xl leading-none">
         {{ compact.emoji }}
       </span>
       <component :is="compact.icon" v-else class="size-5" />
@@ -321,14 +321,14 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
               :key="qc.value"
               type="button"
               :class="[
-                'inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors',
+                'inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors',
                 country === qc.value
                   ? 'bg-nav-foreground/15'
                   : 'bg-nav-foreground/5 opacity-80 hover:opacity-100',
               ]"
               @click="pickCountry(qc.value)"
             >
-              <span class="text-base leading-none">
+              <span class="-mx-1 text-2xl leading-none">
                 {{ countryFlag(qc.value) ?? '🌐' }}
               </span>
               <span class="hidden md:inline">{{ qc.value }}</span>
