@@ -173,6 +173,20 @@ html:has([data-route='home']) {
   textarea {
     @apply font-sans;
   }
+
+  /* Content fade-out under floating top/bottom nav — gradient overlays
+     that ease page content into the background color before it reaches
+     the nav edge. Sits below the nav (z-20 < nav z-30) and above page
+     content. Heights track --chrome-{top,bottom}; home route zeros out
+     --chrome-top so the top fade collapses to nothing there. */
+  body::before {
+    content: '';
+    @apply from-background via-background/75 pointer-events-none fixed inset-x-0 top-0 z-20 h-[calc(var(--chrome-top)+1rem)] bg-linear-to-b to-transparent;
+  }
+  body::after {
+    content: '';
+    @apply from-background via-background/75 pointer-events-none fixed inset-x-0 bottom-0 z-20 h-[calc(var(--chrome-bottom)+1rem)] bg-linear-to-t to-transparent;
+  }
 }
 
 /* Floating-nav chrome surface — frosted, elevated card. Used on every
