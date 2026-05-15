@@ -107,10 +107,10 @@ const vt = useVtScope('dancer')
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4">
-      <div class="flex items-center gap-2">
+    <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
+      <div class="pointer-events-auto mx-auto flex max-w-3xl items-center gap-2">
         <div
-          class="bg-card flex h-12 flex-1 items-center gap-3 rounded-full border px-4 shadow-sm"
+          class="bg-card/90 flex h-12 flex-1 items-center gap-3 rounded-full border px-4 shadow-lg backdrop-blur-xl"
         >
           <Search class="text-muted-foreground size-4 shrink-0" />
           <input
@@ -132,6 +132,8 @@ const vt = useVtScope('dancer')
         </div>
         <AccountAvatarButton />
       </div>
+    </nav>
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-4">
 
       <div
         v-if="!auth.isSignedIn"

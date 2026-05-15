@@ -163,21 +163,9 @@ const monthGroups = computed<MonthGroup[]>(() => {
       view === 'map' ? 'h-dvh' : 'pb-[calc(var(--chrome-bottom)+1rem)]',
     ]"
   >
-    <main
-      :class="[
-        'w-full flex-1',
-        view === 'map' ? 'relative flex flex-col' : 'mx-auto max-w-3xl space-y-5 p-4',
-      ]"
-    >
-      <div
-        :class="[
-          'flex h-12 items-center gap-2',
-          view === 'map'
-            ? 'absolute inset-x-4 top-(--nav-top) z-10 mx-auto max-w-3xl'
-            : 'relative',
-        ]"
-      >
-        <div class="flex items-center gap-2 rounded-3xl border p-1">
+    <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
+      <div class="pointer-events-auto mx-auto flex h-12 max-w-3xl items-center gap-2">
+        <div class="bg-card/90 flex items-center gap-2 rounded-3xl border p-1 shadow-lg backdrop-blur-xl">
           <ViewModePill v-model="view" />
           <LocationPill v-if="view !== 'map'" :competitions="competitions" />
           <DatePill v-if="view !== 'calendar'" v-model="filter" />
@@ -191,6 +179,15 @@ const monthGroups = computed<MonthGroup[]>(() => {
           <AccountAvatarButton />
         </div>
       </div>
+    </nav>
+    <main
+      :class="[
+        'w-full flex-1',
+        view === 'map'
+          ? 'relative flex flex-col'
+          : 'mx-auto max-w-3xl space-y-5 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-4',
+      ]"
+    >
 
       <CompetitionsMap v-if="view === 'map'" />
       <CompetitionsCalendar
