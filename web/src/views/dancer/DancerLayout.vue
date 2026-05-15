@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { computed, toRef } from 'vue'
-import { RouterLink, RouterView, useRoute } from 'vue-router'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import DancerBottomNav from '@/components/nav/DancerBottomNav.vue'
 import FavoriteDancerProfileButton from '@/components/FavoriteDancerProfileButton.vue'
 import ShareButton from '@/components/ShareButton.vue'
 import EmptyState from '@/components/EmptyState.vue'
-import { UserSearch } from '@lucide/vue'
+import { ChevronLeft, UserSearch } from '@lucide/vue'
 import { provideDancerProfile } from '@/composables/useDancerProfile'
+import { preferBackClick, useExternalBack } from '@/lib/back'
 import { initialsOf } from '@/lib/format'
 import { useVtScope } from '@/lib/viewTransitionFocus'
 
 const route = useRoute()
+const router = useRouter()
 const dancerId = computed(() => String(route.params.dancerId ?? ''))
 
 // Tag the current dancer as the view-transition source so back-nav re-tags
@@ -24,12 +26,31 @@ const { displayName, location, appearances, loading, notFound } = provideDancerP
 const isInfo = computed(() => String(route.name ?? '') === 'dancer.info')
 
 const initials = computed(() => initialsOf(displayName.value))
+
+const externalBack = useExternalBack({ name: 'dancers' })
 </script>
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
       <div class="mx-auto flex max-w-3xl items-center gap-2">
+        <RouterLink
+          v-if="externalBack.show.value && externalBack.to.value"
+          v-slot="{ href, navigate }"
+          :to="externalBack.to.value"
+          custom
+        >
+          <a
+            :href="href"
+            class="bg-nav/90 text-nav-foreground pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full shadow-lg backdrop-blur-xl [view-transition-name:nav-back] hover:opacity-90"
+            title="Back"
+            aria-label="Back"
+            @click="preferBackClick(router, $event, navigate)"
+          >
+            <ChevronLeft class="size-5" />
+          </a>
+        </RouterLink>
+
         <RouterLink
           v-if="!isInfo"
           :to="{ name: 'dancer.info', params: { dancerId } }"

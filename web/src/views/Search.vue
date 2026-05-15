@@ -34,7 +34,7 @@ import { useVtScope } from '@/lib/viewTransitionFocus'
 import { useLocationFilter } from '@/composables/useLocationFilter'
 import { useRecentSearches } from '@/composables/useRecentSearches'
 import { useSearchExamples } from '@/composables/useSearchExamples'
-import { backPath, preferBackClick } from '@/lib/smartBack'
+import { backPath, preferBackClick } from '@/lib/back'
 
 const vt = useVtScope('dancer')
 

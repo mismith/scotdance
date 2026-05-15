@@ -1,4 +1,5 @@
-import type { Router } from 'vue-router'
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter, type RouteLocationRaw, type Router } from 'vue-router'
 
 function isPlainClick(event: MouseEvent) {
   return (
@@ -51,4 +52,24 @@ export function preferBackClick(
     return
   }
   navigate(event)
+}
+
+/**
+ * For section layouts whose bottom-left button anchors the section list:
+ * surface a top-left chevron back when browser-back goes elsewhere (e.g.
+ * arrived from /search). Skip when redundant with the section anchor.
+ */
+export function useExternalBack(sectionRoute: RouteLocationRaw) {
+  const route = useRoute()
+  const router = useRouter()
+  const sectionPath = router.resolve(sectionRoute).fullPath
+
+  const to = ref<string | null>(backPath())
+  watch(() => route.fullPath, () => {
+    to.value = backPath()
+  })
+
+  const show = computed(() => to.value !== null && to.value !== sectionPath)
+
+  return { to, show }
 }
