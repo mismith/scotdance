@@ -74,7 +74,10 @@ export function useExternalBack(sectionRoute: RouteLocationRaw) {
   const show = computed(() => {
     if (to.value === null) return false
     const path = to.value.split(/[?#]/)[0]
-    return path !== sectionPath
+    // Hide when back stays inside this section (list URL + any detail tab
+    // under it — e.g. /competitions/X/dancers → /competitions/X/info is
+    // tab-switching, not external-back).
+    return path !== sectionPath && !path.startsWith(sectionPath + '/')
   })
 
   return { to, show }
