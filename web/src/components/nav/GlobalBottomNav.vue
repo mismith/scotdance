@@ -157,7 +157,9 @@ const tabs = [
         title="Search"
         aria-label="Search"
       >
-        <Search class="size-5 [view-transition-name:nav-right-icon]" />
+        <Search
+          class="size-5 [view-transition-class:fit] [view-transition-name:nav-right-icon]"
+        />
       </RouterLink>
     </div>
   </nav>
