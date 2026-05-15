@@ -44,6 +44,9 @@ const inputEl = ref<HTMLInputElement | null>(null)
 
 const q = ref(String(route.query.q ?? ''))
 const qDebounced = refDebounced(q, 250)
+// Longer idle than the search debounce so partial keystrokes don't all
+// land in Recent — only what the user actually pauses on.
+const qForRecent = refDebounced(q, 2000)
 
 const DEFAULT_PER_GROUP = 5
 const EXPANDED_PER_GROUP = 50
@@ -107,13 +110,15 @@ const hasExamples = computed(() =>
   exampleCards.some((c) => searchExamples.examples.value[c.key].length > 0),
 )
 
-const suggestionExpanded = reactive<Record<ExampleCardConfig['key'] | 'recent', boolean>>({
-  recent: true,
-  competitions: true,
-  places: true,
-  dancers: true,
-  judges: true,
-})
+const suggestionExpanded = reactive<Record<ExampleCardConfig['key'] | 'recent', boolean>>(
+  {
+    recent: true,
+    competitions: true,
+    places: true,
+    dancers: true,
+    judges: true,
+  },
+)
 
 const hasRecent = computed(() => recentSearches.recent.value.length > 0)
 const showSuggestions = computed(
@@ -180,7 +185,6 @@ async function runSearch(text: string) {
     const out = await searchAll({ q: trimmed, perGroup: DEFAULT_PER_GROUP })
     if (q.value.trim() !== trimmed) return
     results.value = out
-    recentSearches.record(trimmed)
   } catch (e) {
     if (q.value.trim() !== trimmed) return
     error.value = e as Error
@@ -274,6 +278,13 @@ const hasAnyResults = computed(
     dancers.value.groups.length > 0 ||
     judges.value.groups.length > 0,
 )
+
+// Save to Recent only after the user idles for 2s on a query that yielded
+// results — keeps garbage and mid-typing partials out of the list.
+watch(qForRecent, (value) => {
+  if (!hasAnyResults.value) return
+  recentSearches.record(value)
+})
 </script>
 
 <template>
@@ -302,11 +313,16 @@ const hasAnyResults = computed(
         </div>
 
         <template v-else>
+          <div>
+            <h2 class="font-serif text-3xl font-medium tracking-tight">Search results</h2>
+            <p class="text-muted-foreground truncate text-sm">for “{{ q }}”</p>
+          </div>
+
           <div
             v-if="!hasAnyResults && !searching"
             class="text-muted-foreground text-lg italic"
           >
-            Nothing matches “{{ q }}”.
+            No matches.
           </div>
 
           <section v-if="competitions.hits.length" class="space-y-2">
@@ -637,7 +653,7 @@ const hasAnyResults = computed(
           <button
             v-if="q"
             type="button"
-            class="text-nav-foreground/70 hover:text-nav-foreground flex size-7 shrink-0 items-center justify-center rounded-full"
+            class="text-nav-foreground/70 hover:text-nav-foreground -mr-3 flex size-10 shrink-0 items-center justify-center rounded-full"
             title="Clear"
             aria-label="Clear search"
             @click="clearSearch"
