@@ -23,8 +23,8 @@ const filter = useLocalStorage<DateFilter>('competitions:filter', 'current')
 
 const anyPillOpen = useAnyPillOpen()
 
-// Only "Archived" and "All" need archived data; "Relevant" and "Upcoming" don't
-// look further back than a week, so the un-archived feed is enough.
+// Only "Archived" and "All" need archived data; "Current" doesn't look further
+// back than a week, so the un-archived feed is enough.
 const includeArchived = computed(
   () => filter.value === 'archived' || filter.value === 'all',
 )
@@ -98,11 +98,6 @@ const featuredComp = computed<CompetitionListItem | null>(() => {
 
 const filteredCompetitions = computed<CompetitionListItem[]>(() => {
   const list = locationFiltered.value.slice()
-  if (filter.value === 'upcoming') {
-    return list
-      .filter((c) => c.date && !isBeforeToday(c.date))
-      .sort((a, b) => dateMs(a) - dateMs(b))
-  }
   if (filter.value === 'current') {
     return list
       .filter((c) => {
@@ -122,9 +117,7 @@ const filteredCompetitions = computed<CompetitionListItem[]>(() => {
   return list.sort((a, b) => dateMs(a) - dateMs(b))
 })
 
-const showFeatured = computed(
-  () => filter.value === 'upcoming' || filter.value === 'current',
-)
+const showFeatured = computed(() => filter.value === 'current')
 const featuredId = computed(() => featuredComp.value?.id ?? null)
 const visibleCompetitions = computed(() =>
   showFeatured.value
@@ -237,10 +230,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
           <div v-if="effectiveLocationFilter.isActive">
             No competitions match this location.
           </div>
-          <div v-else-if="filter === 'upcoming'">No upcoming competitions.</div>
-          <div v-else-if="filter === 'current'">
-            Nothing current — try Upcoming or All.
-          </div>
+          <div v-else-if="filter === 'current'">Nothing current — try All.</div>
           <div v-else-if="filter === 'archived'">No archived competitions on record.</div>
           <div v-else>No competitions match.</div>
         </div>

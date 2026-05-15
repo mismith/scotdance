@@ -2,14 +2,13 @@
 import { computed } from 'vue'
 import ExpandingPill from '@/components/ExpandingPill.vue'
 
-export type DateFilter = 'archived' | 'current' | 'upcoming' | 'all'
+export type DateFilter = 'archived' | 'current' | 'all'
 
 const model = defineModel<DateFilter>({ required: true })
 
 const options: Array<{ id: DateFilter; label: string }> = [
   { id: 'archived', label: 'Archived' },
   { id: 'current', label: 'Current' },
-  { id: 'upcoming', label: 'Upcoming' },
   { id: 'all', label: 'All' },
 ]
 
