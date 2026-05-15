@@ -1,22 +1,30 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { onKeyStroke } from '@vueuse/core'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import {
   ArrowDownToLine,
   Calendars,
   Home,
   MoreHorizontal,
-  Search,
+  Search as SearchIcon,
   Users,
+  X,
 } from '@lucide/vue'
 import { useUpdate } from '@/composables/useUpdate'
+import { useGlobalSearch } from '@/composables/useGlobalSearch'
+import { backPath, preferBackClick } from '@/lib/back'
 
 const route = useRoute()
+const router = useRouter()
 const update = useUpdate()
+
+const { q, inputEl } = useGlobalSearch()
 
 const moreOpen = ref(false)
 onKeyStroke('Escape', () => (moreOpen.value = false))
+
+const isSearch = computed(() => route.name === 'search')
 
 const tabs = [
   {
@@ -32,12 +40,64 @@ const tabs = [
     isActive: () => route.path.startsWith('/dancers'),
   },
 ]
+
+// /search is a leaf — the back-target is whichever route we came from. Resolve
+// each time isSearch flips on so re-entering /search after navigating away
+// picks a fresh target.
+const backInfo = computed(() => {
+  const back = backPath()
+  if (back === '/') {
+    return { icon: Home, label: 'Back to Home', to: { name: 'home' as const } }
+  }
+  if (back && back.startsWith('/dancers')) {
+    return { icon: Users, label: 'Back to Dancers', to: { name: 'dancers' as const } }
+  }
+  return {
+    icon: Calendars,
+    label: 'Back to Competitions',
+    to: { name: 'competitions' as const },
+  }
+})
+
+// Tapping the search pill on a non-/search route: the <label> natively focuses
+// the input (iOS opens the keyboard), then we push the route. The input itself
+// is the same DOM node on /search, so focus carries through the route change.
+function onSearchPillClick() {
+  if (isSearch.value) return
+  router.push({ name: 'search' })
+}
+
+function clearSearch() {
+  q.value = ''
+  inputEl.value?.focus()
+}
 </script>
 
 <template>
   <nav class="pointer-events-none fixed inset-x-0 bottom-(--nav-bottom) z-30 px-4">
-    <div class="mx-auto flex max-w-3xl items-center justify-between">
+    <div
+      :class="[
+        'mx-auto flex max-w-3xl items-center gap-2',
+        isSearch ? '' : 'justify-between',
+      ]"
+    >
+      <!-- LEFT pill: tabs+More on browse routes, Back on /search -->
+      <RouterLink v-if="isSearch" v-slot="{ href, navigate }" :to="backInfo.to" custom>
+        <a
+          :href="href"
+          class="floating-nav pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
+          :title="backInfo.label"
+          :aria-label="backInfo.label"
+          @click="preferBackClick(router, $event, navigate)"
+        >
+          <span class="[view-transition-name:match-element]">
+            <component :is="backInfo.icon" class="size-5" />
+          </span>
+        </a>
+      </RouterLink>
+
       <div
+        v-else
         class="floating-nav pointer-events-auto flex items-center rounded-full p-1 [view-transition-class:clip] [view-transition-name:nav-left]"
       >
         <RouterLink
@@ -77,8 +137,6 @@ const tabs = [
             />
           </button>
 
-          <!-- Backdrop: outside-click absorber so taps below the menu
-                 don't activate page content. -->
           <Transition
             enter-active-class="transition ease-out"
             enter-from-class="opacity-0"
@@ -95,8 +153,6 @@ const tabs = [
             />
           </Transition>
 
-          <!-- Menu overlay: morphs out of the More button position
-                 (bottom-center of the overlay box) via clip-path. -->
           <Transition
             enter-active-class="transition-[clip-path,opacity] ease-rubber-band"
             enter-from-class="opacity-0 [clip-path:inset(calc(100%-3.5rem)_calc(50%-2rem)_0_calc(50%-2rem)_round_1.75rem)]"
@@ -151,16 +207,51 @@ const tabs = [
         </div>
       </div>
 
-      <RouterLink
-        :to="{ name: 'search' }"
-        class="floating-nav pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full [view-transition-class:clip] [view-transition-name:nav-right] hover:opacity-90"
-        title="Search"
-        aria-label="Search"
+      <!-- RIGHT pill: same DOM node across routes so iOS keyboard survives the
+           home → /search nav. <label> wraps the input so a tap focuses it
+           natively (gesture-bound), then onSearchPillClick pushes the route. -->
+      <label
+        :class="[
+          'floating-nav pointer-events-auto flex items-center [view-transition-class:clip] [view-transition-name:nav-right] hover:opacity-90',
+          isSearch
+            ? 'h-16 min-w-0 flex-1 gap-2 rounded-full px-5'
+            : 'size-16 shrink-0 justify-center rounded-full',
+        ]"
+        :aria-label="isSearch ? undefined : 'Search'"
+        :title="isSearch ? undefined : 'Search'"
+        @click="onSearchPillClick"
       >
-        <Search
-          class="size-5 [view-transition-class:fit] [view-transition-name:nav-right-icon]"
-        />
-      </RouterLink>
+        <span
+          :class="[
+            'flex items-center [view-transition-class:fit] [view-transition-name:nav-right-icon]',
+            isSearch ? 'min-w-0 flex-1 gap-2' : 'gap-0',
+          ]"
+        >
+          <SearchIcon class="size-5 shrink-0 opacity-80" />
+          <input
+            ref="inputEl"
+            v-model="q"
+            type="search"
+            placeholder="Search"
+            aria-label="Search"
+            :tabindex="isSearch ? 0 : -1"
+            :class="[
+              'bg-transparent text-base focus:outline-none [&::-webkit-search-cancel-button]:hidden',
+              isSearch ? '-my-0.5 min-w-0 flex-1' : 'pointer-events-none h-0 w-0 p-0 opacity-0',
+            ]"
+          />
+        </span>
+        <button
+          v-if="isSearch && q"
+          type="button"
+          class="text-card-foreground/70 hover:text-card-foreground -mr-3 flex size-10 shrink-0 items-center justify-center rounded-full"
+          title="Clear"
+          aria-label="Clear search"
+          @click.stop.prevent="clearSearch"
+        >
+          <X class="size-5" />
+        </button>
+      </label>
     </div>
   </nav>
 </template>
