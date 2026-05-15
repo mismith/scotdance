@@ -7,6 +7,7 @@ import {
   CalendarDays,
   ChevronRight,
   Gavel,
+  History,
   Home,
   Map as MapIcon,
   MapPin,
@@ -104,12 +105,18 @@ const hasExamples = computed(() =>
   exampleCards.some((c) => searchExamples.examples.value[c.key].length > 0),
 )
 
-const suggestionExpanded = reactive<Record<ExampleCardConfig['key'], boolean>>({
+const suggestionExpanded = reactive<Record<ExampleCardConfig['key'] | 'recent', boolean>>({
+  recent: true,
   competitions: true,
   places: true,
   dancers: true,
   judges: true,
 })
+
+const hasRecent = computed(() => recentSearches.recent.value.length > 0)
+const showSuggestions = computed(
+  () => hasRecent.value || hasExamples.value || searchExamples.loading.value,
+)
 
 // Pick the back-button destination from history. /search is a leaf — the
 // history.back entry doesn't change while we're here, so resolving once at
@@ -482,44 +489,63 @@ const hasAnyResults = computed(
 
       <template v-else>
         <div class="flex flex-1 flex-col gap-6">
-          <section v-if="recentSearches.recent.value.length" class="space-y-2">
-            <SectionHeader label="Recent searches">
-              <button
-                type="button"
-                class="hover:text-foreground font-normal tracking-normal normal-case"
-                @click="recentSearches.clear()"
-              >
-                Clear
-              </button>
-            </SectionHeader>
-            <ul class="flex flex-wrap gap-2">
-              <li v-for="term in recentSearches.recent.value" :key="term">
-                <span
-                  class="bg-card hover:bg-accent inline-flex items-center gap-1 rounded-full border py-1 pr-1 pl-3 text-sm"
-                >
-                  <button type="button" class="text-foreground" @click="q = term">
-                    {{ term }}
-                  </button>
-                  <button
-                    type="button"
-                    class="text-muted-foreground hover:text-foreground flex size-6 items-center justify-center rounded-full"
-                    :aria-label="`Remove ${term} from recent`"
-                    @click="recentSearches.remove(term)"
-                  >
-                    <X class="size-3" />
-                  </button>
-                </span>
-              </li>
-            </ul>
-          </section>
+          <section v-if="showSuggestions" class="space-y-2">
+            <h2 class="font-serif text-3xl font-medium tracking-tight">Suggestions</h2>
 
-          <section v-if="hasExamples" class="space-y-2">
-            <h2 class="font-serif text-3xl font-medium tracking-tight">
-              Suggestions
-            </h2>
+            <section v-if="hasRecent" class="space-y-1">
+              <DisclosureHeader
+                label="Recent"
+                :expanded="suggestionExpanded.recent"
+                @toggle="suggestionExpanded.recent = !suggestionExpanded.recent"
+              >
+                <button
+                  type="button"
+                  class="text-muted-foreground hover:text-foreground font-sans text-sm font-normal tracking-normal normal-case"
+                  @click.stop="recentSearches.clear()"
+                >
+                  Clear
+                </button>
+              </DisclosureHeader>
+              <SmoothCollapse :open="suggestionExpanded.recent">
+                <ul>
+                  <li
+                    v-for="term in recentSearches.recent.value"
+                    :key="term"
+                    class="flex items-center"
+                  >
+                    <button
+                      type="button"
+                      class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1 py-1.5 text-left"
+                      @click="q = term"
+                    >
+                      <span
+                        class="flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 dark:bg-zinc-500/15 dark:text-zinc-300"
+                      >
+                        <History class="size-3.5" />
+                      </span>
+                      <div class="text-item-title min-w-0 flex-1 truncate">
+                        {{ term }}
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      class="text-muted-foreground hover:bg-accent hover:text-foreground flex size-9 shrink-0 items-center justify-center rounded-full"
+                      :aria-label="`Remove ${term} from recent`"
+                      @click="recentSearches.remove(term)"
+                    >
+                      <X class="size-4" />
+                    </button>
+                  </li>
+                </ul>
+              </SmoothCollapse>
+            </section>
+
             <template v-for="card in exampleCards" :key="card.key">
               <section
-                v-if="searchExamples.examples.value[card.key].length"
+                v-if="
+                  searchExamples.examples.value[card.key].length ||
+                  searchExamples.loading.value
+                "
                 class="space-y-1"
               >
                 <DisclosureHeader
@@ -528,7 +554,12 @@ const hasAnyResults = computed(
                   @toggle="suggestionExpanded[card.key] = !suggestionExpanded[card.key]"
                 />
                 <SmoothCollapse :open="suggestionExpanded[card.key]">
-                  <ul>
+                  <ul
+                    v-if="
+                      searchExamples.examples.value[card.key].length &&
+                      !searchExamples.loading.value
+                    "
+                  >
                     <li
                       v-for="term in searchExamples.examples.value[card.key]"
                       :key="term"
@@ -550,6 +581,18 @@ const hasAnyResults = computed(
                           {{ term }}
                         </div>
                       </button>
+                    </li>
+                  </ul>
+                  <ul v-else aria-hidden="true">
+                    <li
+                      v-for="i in 3"
+                      :key="i"
+                      class="flex w-full items-center gap-3 px-1 py-1.5"
+                    >
+                      <Skeleton class="size-8 shrink-0 rounded-full!" />
+                      <Skeleton
+                        :class="['h-5', i === 1 ? 'w-2/3' : i === 2 ? 'w-1/2' : 'w-3/5']"
+                      />
                     </li>
                   </ul>
                 </SmoothCollapse>
@@ -597,7 +640,7 @@ const hasAnyResults = computed(
             aria-label="Clear search"
             @click="clearSearch"
           >
-            <X class="size-4" />
+            <X class="size-5" />
           </button>
         </div>
       </div>

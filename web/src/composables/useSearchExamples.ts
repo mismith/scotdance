@@ -31,26 +31,32 @@ const examples = ref<SearchExamples>({
   dancers: [],
   judges: [],
 })
-const loading = ref(false)
+// Start true so consumers can render skeletons immediately — we always intend
+// to load, even before the competitions list is available.
+const loading = ref(true)
 let loaded = false
 
-function pushUnique(key: Key, value: string | undefined | null) {
+function pushUnique(target: SearchExamples, key: Key, value: string | undefined | null) {
   if (!value) return
   const v = value.trim()
   if (!v) return
-  if (isFull(examples.value, key)) return
-  const arr = examples.value[key]
-  if (arr.some((x) => x.toLowerCase() === v.toLowerCase())) return
-  examples.value = {
-    ...examples.value,
-    [key]: [...arr, v],
-  }
+  if (target[key].length >= TARGET) return
+  if (target[key].some((x) => x.toLowerCase() === v.toLowerCase())) return
+  target[key].push(v)
 }
 
 async function load(list: CompetitionListItem[]) {
-  if (loaded || loading.value || !list.length) return
+  if (loaded || !list.length) return
+  loaded = true
 
-  loading.value = true
+  // Accumulate into a local object and swap atomically at the end, so the UI
+  // doesn't flash with partially-filled categories during the awaited fetches.
+  const next: SearchExamples = {
+    competitions: [],
+    places: [],
+    dancers: [],
+    judges: [],
+  }
 
   const sorted = [...list].sort((a, b) => {
     const aD = a.date ? parseDate(a.date).getTime() : 0
@@ -59,16 +65,16 @@ async function load(list: CompetitionListItem[]) {
   })
 
   for (const comp of sorted) {
-    if (allFull(examples.value)) break
+    if (allFull(next)) break
 
-    pushUnique('competitions', comp.name)
+    pushUnique(next, 'competitions', comp.name)
     // Try the most-specific place fields first.
-    pushUnique('places', comp.locality)
-    pushUnique('places', comp.venue)
-    pushUnique('places', comp.region)
+    pushUnique(next, 'places', comp.locality)
+    pushUnique(next, 'places', comp.venue)
+    pushUnique(next, 'places', comp.region)
 
-    const needDancers = !isFull(examples.value, 'dancers')
-    const needJudges = !isFull(examples.value, 'judges')
+    const needDancers = !isFull(next, 'dancers')
+    const needJudges = !isFull(next, 'judges')
     if (!needDancers && !needJudges) continue
 
     try {
@@ -82,25 +88,27 @@ async function load(list: CompetitionListItem[]) {
       ])
 
       if (dancersSnap) {
-        const dancers = (dancersSnap.val() as Record<
-          string,
-          { firstName?: string; lastName?: string }
-        > | null) ?? {}
+        const dancers =
+          (dancersSnap.val() as Record<
+            string,
+            { firstName?: string; lastName?: string }
+          > | null) ?? {}
         Object.values(dancers).forEach((d) => {
           const name = `${d?.firstName ?? ''} ${d?.lastName ?? ''}`.trim()
-          pushUnique('dancers', name)
+          pushUnique(next, 'dancers', name)
         })
       }
 
       if (staffSnap) {
-        const staff = (staffSnap.val() as Record<
-          string,
-          { firstName?: string; lastName?: string; type?: string }
-        > | null) ?? {}
+        const staff =
+          (staffSnap.val() as Record<
+            string,
+            { firstName?: string; lastName?: string; type?: string }
+          > | null) ?? {}
         Object.values(staff).forEach((s) => {
           if (s?.type !== 'Judge') return
           const name = `${s?.firstName ?? ''} ${s?.lastName ?? ''}`.trim()
-          pushUnique('judges', name)
+          pushUnique(next, 'judges', name)
         })
       }
     } catch {
@@ -108,8 +116,8 @@ async function load(list: CompetitionListItem[]) {
     }
   }
 
+  examples.value = next
   loading.value = false
-  loaded = true
 }
 
 export function useSearchExamples() {
