@@ -173,13 +173,21 @@ watch(q, (value) => {
   expanded.locations = false
 })
 
+// Dedupes back-to-back searches for the same term (e.g. a click fires the
+// search instantly, then the debounce watcher fires 250ms later with the
+// same value). Reset on error so retries still work.
+let lastQueried = ''
+
 async function runSearch(text: string) {
   const trimmed = text.trim()
   if (!trimmed) {
     results.value = empty
     error.value = null
+    lastQueried = ''
     return
   }
+  if (trimmed === lastQueried) return
+  lastQueried = trimmed
   searching.value = true
   error.value = null
   try {
@@ -190,12 +198,19 @@ async function runSearch(text: string) {
     if (q.value.trim() !== trimmed) return
     error.value = e as Error
     results.value = empty
+    lastQueried = ''
   } finally {
     if (q.value.trim() === trimmed) searching.value = false
   }
 }
 
 watch(qDebounced, (value) => runSearch(value), { immediate: true })
+
+// Suggestion taps shouldn't wait on the typing debounce — fire the search now.
+function selectTerm(term: string) {
+  q.value = term
+  runSearch(term)
+}
 
 async function expandGroup(type: SearchEntityType) {
   const trimmed = q.value.trim()
@@ -267,6 +282,11 @@ function handleLocationTap(group: SearchLocationGroup) {
 }
 
 const hasQuery = computed(() => q.value.trim().length > 0)
+// Covers the debounce gap so clicking a suggestion doesn't flash "No matches"
+// before the search fires.
+const isLoading = computed(
+  () => searching.value || (hasQuery.value && q.value.trim() !== qDebounced.value.trim()),
+)
 const competitions = computed(() => results.value.competitions)
 const dancers = computed(() => results.value.dancers)
 const judges = computed(() => results.value.judges)
@@ -299,8 +319,13 @@ watch(qForRecent, (value) => {
       <div v-if="error" class="text-destructive text-lg">{{ error.message }}</div>
 
       <template v-if="hasQuery">
+        <div class="pr-14">
+          <h2 class="font-serif text-3xl font-medium tracking-tight">Search results</h2>
+          <p class="text-muted-foreground truncate text-sm">for “{{ q }}”</p>
+        </div>
+
         <div
-          v-if="searching && !hasAnyResults"
+          v-if="isLoading && !hasAnyResults"
           class="space-y-6"
           aria-busy="true"
           aria-live="polite"
@@ -319,13 +344,8 @@ watch(qForRecent, (value) => {
         </div>
 
         <template v-else>
-          <div class="pr-14">
-            <h2 class="font-serif text-3xl font-medium tracking-tight">Search results</h2>
-            <p class="text-muted-foreground truncate text-sm">for “{{ q }}”</p>
-          </div>
-
           <div
-            v-if="!hasAnyResults && !searching"
+            v-if="!hasAnyResults && !isLoading"
             class="text-muted-foreground text-lg italic"
           >
             No matches.
@@ -542,7 +562,7 @@ watch(qForRecent, (value) => {
                     <button
                       type="button"
                       class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1 py-1.5 text-left"
-                      @click="q = term"
+                      @click="selectTerm(term)"
                     >
                       <span
                         class="flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 dark:bg-zinc-500/15 dark:text-zinc-300"
@@ -593,7 +613,7 @@ watch(qForRecent, (value) => {
                       <button
                         type="button"
                         class="hover:bg-accent flex w-full items-center gap-3 rounded-lg px-1 py-1.5 text-left"
-                        @click="q = term"
+                        @click="selectTerm(term)"
                       >
                         <span
                           :class="[
