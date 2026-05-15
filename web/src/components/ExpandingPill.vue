@@ -27,18 +27,22 @@ watch(isOpen, (v) => {
   else emit('close')
 })
 
-// Measure the compact pill's slot in the row so the overlay can morph
-// out of (and back into) that exact position with clip-path. Runs on
-// both enter and leave so the leave clip targets wherever the pill
-// currently lives.
+// Measure the compact pill relative to the overlay host (the row), not
+// its own offsetParent. The overlay is teleported up to the row so its
+// coordinate space is the row, not the outer pill — keep clip-path math
+// in the same frame so the morph still emerges from the compact slot.
 function applyPillRect(el: Element) {
   const c = compactRef.value
   if (!c) return
   const target = el as HTMLElement
-  target.style.setProperty('--pill-x', `${c.offsetLeft}px`)
-  target.style.setProperty('--pill-y', `${c.offsetTop}px`)
-  target.style.setProperty('--pill-w', `${c.offsetWidth}px`)
-  target.style.setProperty('--pill-h', `${c.offsetHeight}px`)
+  const host = target.parentElement
+  if (!host) return
+  const cRect = c.getBoundingClientRect()
+  const hRect = host.getBoundingClientRect()
+  target.style.setProperty('--pill-x', `${cRect.left - hRect.left}px`)
+  target.style.setProperty('--pill-y', `${cRect.top - hRect.top}px`)
+  target.style.setProperty('--pill-w', `${cRect.width}px`)
+  target.style.setProperty('--pill-h', `${cRect.height}px`)
 }
 
 defineExpose({ open, close })
@@ -74,42 +78,45 @@ defineExpose({ open, close })
     <div v-if="isOpen" class="fixed inset-0 z-40" aria-hidden="true" @click="close" />
   </Transition>
 
-  <!-- Expanded overlay: morphs out of the compact pill's slot via clip-path.
-       --pill-x and --pill-w are set on the element by applyPillRect. -->
-  <Transition
-    enter-active-class="transition-all ease-out"
-    enter-from-class="[clip-path:inset(var(--pill-y,4px)_calc(100%-var(--pill-x,0px)-var(--pill-w,0px))_calc(100%-var(--pill-y,4px)-var(--pill-h,2.5rem))_var(--pill-x,0px)_round_1.5rem)]"
-    enter-to-class="[clip-path:inset(0_0_0_0_round_1.5rem)]"
-    leave-active-class="transition-all ease-out"
-    leave-from-class="[clip-path:inset(0_0_0_0_round_1.5rem)]"
-    leave-to-class="[clip-path:inset(var(--pill-y,4px)_calc(100%-var(--pill-x,0px)-var(--pill-w,0px))_calc(100%-var(--pill-y,4px)-var(--pill-h,2.5rem))_var(--pill-x,0px)_round_1.5rem)]"
-    @before-enter="applyPillRect"
-    @before-leave="applyPillRect"
-  >
-    <div v-if="isOpen" class="absolute top-0 right-14 left-0 z-50">
-      <div
-        class="bg-card/90 text-card-foreground min-h-12 w-full overflow-x-auto rounded-3xl shadow-lg"
-      >
-        <slot name="expanded" :close="close" />
-      </div>
-    </div>
-  </Transition>
-
-  <!-- X cancel button: lives where the avatar normally sits. -->
-  <Transition
-    enter-active-class="transition-all delay-75 ease-rubber-band"
-    enter-from-class="opacity-0 scale-50"
-    leave-active-class="transition-all ease-out"
-    leave-to-class="opacity-0 scale-50"
-  >
-    <button
-      v-if="isOpen"
-      type="button"
-      class="bg-card/90 text-card-foreground pointer-events-auto absolute top-0 right-0 z-60 flex size-12 items-center justify-center rounded-full shadow-lg hover:opacity-90"
-      aria-label="Close"
-      @click="close"
+  <!-- Expanded overlay + X cancel are teleported up to the row so they
+       can extend wider than the outer pill (which is now a containing
+       block due to its backdrop-filter) and anchor to the full row width. -->
+  <Teleport to="[data-pill-overlay-host]" defer>
+    <Transition
+      enter-active-class="transition-all ease-out"
+      enter-from-class="[clip-path:inset(var(--pill-y,4px)_calc(100%-var(--pill-x,0px)-var(--pill-w,0px))_calc(100%-var(--pill-y,4px)-var(--pill-h,2.5rem))_var(--pill-x,0px)_round_1.5rem)]"
+      enter-to-class="[clip-path:inset(0_0_0_0_round_1.5rem)]"
+      leave-active-class="transition-all ease-out"
+      leave-from-class="[clip-path:inset(0_0_0_0_round_1.5rem)]"
+      leave-to-class="[clip-path:inset(var(--pill-y,4px)_calc(100%-var(--pill-x,0px)-var(--pill-w,0px))_calc(100%-var(--pill-y,4px)-var(--pill-h,2.5rem))_var(--pill-x,0px)_round_1.5rem)]"
+      @before-enter="applyPillRect"
+      @before-leave="applyPillRect"
     >
-      <X class="size-5" />
-    </button>
-  </Transition>
+      <div v-if="isOpen" class="absolute top-0 right-14 left-0 z-50">
+        <div
+          class="floating-nav min-h-12 w-full overflow-x-auto rounded-3xl"
+        >
+          <slot name="expanded" :close="close" />
+        </div>
+      </div>
+    </Transition>
+
+    <!-- X cancel button: lives where the avatar normally sits. -->
+    <Transition
+      enter-active-class="transition-all delay-75 ease-rubber-band"
+      enter-from-class="opacity-0 scale-50"
+      leave-active-class="transition-all ease-out"
+      leave-to-class="opacity-0 scale-50"
+    >
+      <button
+        v-if="isOpen"
+        type="button"
+        class="floating-nav pointer-events-auto absolute top-0 right-0 z-60 flex size-12 items-center justify-center rounded-full hover:opacity-90"
+        aria-label="Close"
+        @click="close"
+      >
+        <X class="size-5" />
+      </button>
+    </Transition>
+  </Teleport>
 </template>

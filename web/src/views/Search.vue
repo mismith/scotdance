@@ -654,7 +654,7 @@ watch(qForRecent, (value) => {
         <RouterLink v-slot="{ href, navigate }" :to="backInfo.to" custom>
           <a
             :href="href"
-            class="bg-card/90 text-card-foreground pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full shadow-lg [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
+            class="floating-nav pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
             :title="backInfo.label"
             :aria-label="backInfo.label"
             @click="preferBackClick(router, $event, navigate)"
@@ -666,7 +666,7 @@ watch(qForRecent, (value) => {
         </RouterLink>
 
         <div
-          class="bg-card/90 text-card-foreground pointer-events-auto flex h-16 min-w-0 flex-1 items-center gap-2 rounded-full px-5 shadow-lg [view-transition-class:clip] [view-transition-name:nav-right]"
+          class="floating-nav pointer-events-auto flex h-16 min-w-0 flex-1 items-center gap-2 rounded-full px-5 [view-transition-class:clip] [view-transition-name:nav-right]"
         >
           <SearchIcon
             class="size-5 shrink-0 opacity-80 [view-transition-name:nav-right-icon]"

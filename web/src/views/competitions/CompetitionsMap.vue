@@ -240,6 +240,10 @@ watch(venueGroups, () => {
 </template>
 
 <style>
+/* Tailwind v4 isolates SFC <style> blocks — reference the main stylesheet
+   so @apply can see our custom utilities (like .floating-nav). */
+@reference '../../style.css';
+
 /* Inset MapLibre's built-in control corners so they sit ~1rem outside
    the floating app chrome — bottom nav + in-map header above. The map
    canvas itself still goes edge-to-edge; only the controls move. On
@@ -248,127 +252,87 @@ watch(venueGroups, () => {
    attribution don't fly to the viewport edges. */
 .maplibregl-ctrl-top-right,
 .maplibregl-ctrl-top-left {
-  top: calc(var(--chrome-top) + 1rem);
+  @apply top-[calc(var(--chrome-top)+1rem)];
 }
 .maplibregl-ctrl-bottom-right,
 .maplibregl-ctrl-bottom-left {
-  bottom: calc(var(--chrome-bottom) + 1rem);
+  @apply bottom-[calc(var(--chrome-bottom)+1rem)];
 }
 /* Zero MapLibre's default 10px outer margin on the attribution control so
    it sits exactly at the corner container's edge (matches the geolocate
    override below). */
 .maplibregl-ctrl-bottom-right > .maplibregl-ctrl-attrib,
 .maplibregl-ctrl-bottom-left > .maplibregl-ctrl-attrib {
-  margin: 0;
+  @apply m-0;
 }
 /* Match the floating header's horizontal inset: 1rem from the viewport
    edge on narrow screens, then snap to the 48rem content lane on wide
    screens. Keeps the locate-me button centered under the avatar. */
 .maplibregl-ctrl-top-right,
 .maplibregl-ctrl-bottom-right {
-  right: max(1rem, calc((100vw - 48rem) / 2));
+  @apply right-[max(1rem,calc((100vw-48rem)/2))];
 }
 .maplibregl-ctrl-top-left,
 .maplibregl-ctrl-bottom-left {
-  left: max(1rem, calc((100vw - 48rem) / 2));
+  @apply left-[max(1rem,calc((100vw-48rem)/2))];
 }
 .map-pin {
-  display: block;
-  width: 22px;
-  height: 28px;
-  border: none;
-  padding: 0;
-  background: transparent;
-  cursor: pointer;
+  @apply block w-[22px] h-[28px] border-none p-0 bg-transparent cursor-pointer origin-bottom transition-transform duration-[120ms] ease-[ease];
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
-  transform-origin: 50% 100%;
-  transition: transform 120ms ease;
 }
 .map-pin::before {
   content: '';
-  display: block;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 2px solid white;
-  background: var(--primary, #1e88e5);
+  @apply block w-[22px] h-[22px] rounded-full border-2 border-white bg-primary;
 }
 .map-pin::after {
   content: '';
-  display: block;
-  width: 0;
-  height: 0;
-  margin: -6px auto 0;
+  @apply block w-0 h-0 mx-auto -mt-[6px] mb-0;
+  /* CSS-triangle trick: transparent side borders + colored top border
+     forms a downward-pointing arrow. Keep raw — Tailwind border utils
+     can express it but the multi-side shorthand reads worse. */
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-top: 8px solid var(--primary, #1e88e5);
+  border-top: 8px solid var(--color-primary);
 }
 .map-pin.is-fav::before {
-  background: var(--secondary, #ec407a);
+  @apply bg-secondary;
 }
 .map-pin.is-fav::after {
-  border-top-color: var(--secondary, #ec407a);
+  @apply border-t-secondary;
 }
 .map-pin:hover {
-  transform: scale(1.1);
+  @apply scale-110;
 }
 
 .map-cluster {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 36px;
-  height: 36px;
-  padding: 0 10px;
-  border: 2px solid white;
-  border-radius: 999px;
-  background: var(--primary, #1e88e5);
-  color: white;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  @apply flex items-center justify-center min-w-9 h-9 px-[10px] py-0 border-2 border-white rounded-full bg-primary text-white font-semibold tabular-nums cursor-pointer shadow-[0_2px_6px_rgba(0,0,0,0.25)];
 }
 .map-cluster:hover {
-  transform: scale(1.05);
+  @apply scale-105;
 }
 
-/* Restyle the locate-me control to match the floating nav island pill
-   style (bg-card/90, shadow, blur, fully round). Scoped via :has() so it
-   only hits the geolocate group, not other controls. */
+/* Restyle the locate-me control to match the .floating-nav utility
+   (frosted card, blur, shadow, fully round). Targeting a MapLibre-rendered
+   DOM node we can't class — :has() scopes it to the geolocate group. */
 .maplibregl-ctrl-group:has(> .maplibregl-ctrl-geolocate) {
   /* Zero out MapLibre's default 10px outer margin so the button sits
      exactly at the corner container's edge — which is itself aligned to
      the avatar above by the .maplibregl-ctrl-{top,bottom}-{right,left}
      overrides. */
-  margin: 0;
-  background: color-mix(in oklab, var(--card) 90%, transparent);
-  color: var(--card-foreground);
-  border: none;
-  border-radius: 9999px;
-  box-shadow:
-    0 10px 15px -3px rgb(0 0 0 / 0.1),
-    0 4px 6px -4px rgb(0 0 0 / 0.1);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  overflow: hidden;
+  @apply floating-nav m-0 overflow-hidden rounded-full border-0;
 }
 .maplibregl-ctrl-group:has(> .maplibregl-ctrl-geolocate) > button {
-  width: 2.5rem;
-  height: 2.5rem;
-  background: transparent;
-  border: none;
-  border-radius: 9999px;
-  transition: opacity 150ms ease;
+  @apply w-10 h-10 bg-transparent border-none rounded-full transition-opacity duration-150 ease-[ease];
 }
 .maplibregl-ctrl-group:has(> .maplibregl-ctrl-geolocate) > button:hover {
-  background: transparent;
-  opacity: 0.9;
+  @apply bg-transparent opacity-90;
 }
-/* The default MapLibre icon ships as a dark SVG. Invert it in light mode
-   so it reads on the near-black nav bg; leave as-is in dark mode where
-   the nav is cream and the dark icon already contrasts. */
-html:not(.dark) .maplibregl-ctrl-group:has(> .maplibregl-ctrl-geolocate) .maplibregl-ctrl-icon {
-  filter: invert(1);
+/* The default MapLibre icon ships as a dark SVG. Invert it in dark mode
+   so it reads on the dark card bg; leave as-is in light mode where the
+   card is white and the dark icon already contrasts. */
+.dark
+  .maplibregl-ctrl-group:has(> .maplibregl-ctrl-geolocate)
+  .maplibregl-ctrl-icon {
+  @apply invert;
 }
 </style>
