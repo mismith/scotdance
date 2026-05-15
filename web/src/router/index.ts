@@ -1,5 +1,13 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { getCurrentUser } from 'vuefire'
 import { startViewTransition } from '@/lib/transition'
+import { useAuthStore } from '@/stores/auth'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    requiresAuth?: boolean
+  }
+}
 
 const routes: RouteRecordRaw[] = [
   {
@@ -85,6 +93,7 @@ const routes: RouteRecordRaw[] = [
     path: '/profile',
     name: 'profile',
     component: () => import('@/views/Profile.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/policies',
@@ -112,6 +121,15 @@ export const router = createRouter({
     if (to.hash) return false
     return { top: 0, behavior: 'instant' }
   },
+})
+
+router.beforeEach(async (to) => {
+  if (!to.matched.some((r) => r.meta.requiresAuth)) return
+  const user = await getCurrentUser()
+  if (!user) {
+    useAuthStore().openLogin()
+    return { name: 'home' }
+  }
 })
 
 router.beforeResolve(async (to, from) => {
