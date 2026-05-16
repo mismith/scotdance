@@ -14,6 +14,7 @@ import {
 import { useUpdate } from '@/composables/useUpdate'
 import { useGlobalSearch } from '@/composables/useGlobalSearch'
 import { backPath, preferBackClick } from '@/lib/back'
+import { isIos } from '@/lib/platform'
 
 const route = useRoute()
 const router = useRouter()
@@ -74,7 +75,12 @@ function clearSearch() {
 </script>
 
 <template>
-  <nav class="pointer-events-none fixed inset-x-0 bottom-(--nav-bottom) z-30 px-4">
+  <nav
+    :class="[
+      'pointer-events-none inset-x-0 bottom-(--nav-bottom) z-30 px-4',
+      isSearch && isIos ? 'absolute' : 'fixed',
+    ]"
+  >
     <div
       :class="[
         'mx-auto flex max-w-3xl items-center gap-2',
@@ -236,8 +242,10 @@ function clearSearch() {
             aria-label="Search"
             :tabindex="isSearch ? 0 : -1"
             :class="[
-              'bg-transparent text-base focus:outline-none [&::-webkit-search-cancel-button]:hidden',
-              isSearch ? '-my-0.5 min-w-0 flex-1' : 'pointer-events-none h-0 w-0 p-0 opacity-0',
+              'bg-transparent text-lg focus:outline-none [&::-webkit-search-cancel-button]:hidden',
+              isSearch
+                ? '-my-0.5 min-w-0 flex-1'
+                : 'pointer-events-none h-0 w-0 p-0 opacity-0',
             ]"
           />
         </span>
