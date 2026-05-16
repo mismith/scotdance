@@ -82,6 +82,7 @@ export interface SearchLocationGroup {
   parentLabel?: string
   count: number
   sampleCompId: string
+  competitionIds: string[]
   country?: string
   region?: string
   locality?: string
@@ -180,12 +181,16 @@ function mapLocationsBucket(
       const hits = (g.hits ?? []).map((h) => h.document).filter((d): d is RawCompetitionDoc => !!d)
       const sample = hits[0]
       if (!sample?.id) return null
+      const competitionIds = Array.from(
+        new Set(hits.map((d) => d.id).filter((id): id is string => !!id)),
+      )
       return {
         kind,
         name,
         parentLabel: parentLabelFor(kind, sample),
-        count: hits.length,
+        count: competitionIds.length,
         sampleCompId: sample.id,
+        competitionIds,
         country: sample.country,
         region: sample.region,
         locality: sample.locality,

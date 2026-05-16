@@ -6,7 +6,8 @@ import maplibregl, {
 } from 'maplibre-gl'
 import Supercluster from 'supercluster'
 import { useLocalStorage } from '@vueuse/core'
-import MapVenueSheet from '@/components/MapVenueSheet.vue'
+import { MapPin } from '@lucide/vue'
+import CompetitionPickerSheet from '@/components/CompetitionPickerSheet.vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import { useFavoritesStore } from '@/stores/favorites'
 import { daysFromToday } from '@/lib/format'
@@ -236,7 +237,14 @@ watch(venueGroups, () => {
 
 <template>
   <div ref="mapContainer" class="relative flex-1 overflow-hidden" />
-  <MapVenueSheet :venue="activeVenue" @close="activeVenue = null" />
+  <CompetitionPickerSheet
+    :open="activeVenue !== null"
+    :title="activeVenue?.venue || 'Venue'"
+    :subtitle="activeVenue?.location"
+    :icon="MapPin"
+    :competitions="activeVenue?.competitions ?? []"
+    @close="activeVenue = null"
+  />
 </template>
 
 <style>
