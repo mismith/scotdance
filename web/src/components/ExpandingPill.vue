@@ -55,7 +55,7 @@ defineExpose({ open, close })
     ref="compact"
     type="button"
     :class="[
-      'bg-card-foreground/10 hover:bg-card-foreground/15 pointer-events-auto inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full px-4 font-sans text-sm font-medium whitespace-nowrap transition-colors',
+      'hover:bg-card-foreground/15 pointer-events-auto inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-3xl px-4 font-sans text-sm font-medium whitespace-nowrap transition-colors',
       anyOpen ? 'pointer-events-none opacity-0' : '',
     ]"
     :aria-label="ariaLabel"
