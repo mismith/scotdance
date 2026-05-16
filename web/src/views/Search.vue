@@ -10,6 +10,7 @@ import {
   History,
   Map as MapIcon,
   MapPin,
+  Music,
   User,
   X,
 } from '@lucide/vue'
@@ -58,6 +59,7 @@ const empty: SearchAllResults = {
   competitions: { hits: [], total: 0 },
   dancers: { groups: [], total: 0 },
   judges: { groups: [], total: 0 },
+  pipers: { groups: [], total: 0 },
   locations: { groups: [], total: 0 },
 }
 
@@ -68,6 +70,7 @@ const expanded = reactive<Record<SearchEntityType, boolean>>({
   competitions: false,
   dancers: false,
   judges: false,
+  pipers: false,
   locations: false,
 })
 
@@ -76,7 +79,7 @@ const recentSearches = useRecentSearches()
 const searchExamples = useSearchExamples()
 
 interface ExampleCardConfig {
-  key: 'competitions' | 'places' | 'dancers' | 'judges'
+  key: 'competitions' | 'places' | 'dancers' | 'judges' | 'pipers'
   label: string
   icon: typeof Calendar
   iconClass: string
@@ -107,6 +110,12 @@ const exampleCards: ExampleCardConfig[] = [
     icon: Gavel,
     iconClass: 'bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300',
   },
+  {
+    key: 'pipers',
+    label: 'Pipers',
+    icon: Music,
+    iconClass: 'bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300',
+  },
 ]
 
 const hasExamples = computed(() =>
@@ -120,6 +129,7 @@ const suggestionExpanded = reactive<Record<ExampleCardConfig['key'] | 'recent', 
     places: true,
     dancers: true,
     judges: true,
+    pipers: true,
   },
 )
 
@@ -144,6 +154,7 @@ watch(q, (value) => {
   expanded.competitions = false
   expanded.dancers = false
   expanded.judges = false
+  expanded.pipers = false
   expanded.locations = false
 })
 
@@ -237,7 +248,7 @@ function locationCountLabel(count: number) {
 interface PickerState {
   title: string
   subtitle: string
-  icon: typeof Gavel | typeof Building
+  icon: typeof Gavel | typeof Building | typeof Music
   competitionIds: string[]
 }
 const picker = ref<PickerState | null>(null)
@@ -252,6 +263,20 @@ function handleJudgeTap(group: SearchPersonGroup) {
     title: group.name || 'Judge',
     subtitle: `${ids.length} competitions`,
     icon: Gavel,
+    competitionIds: ids,
+  }
+}
+
+function handlePiperTap(group: SearchPersonGroup) {
+  const ids = group.competitionIds
+  if (ids.length === 1) {
+    router.push({ name: 'competition.info', params: { competitionId: ids[0] } })
+    return
+  }
+  picker.value = {
+    title: group.name || 'Piper',
+    subtitle: `${ids.length} competitions`,
+    icon: Music,
     competitionIds: ids,
   }
 }
@@ -290,6 +315,7 @@ const isLoading = computed(
 const competitions = computed(() => results.value.competitions)
 const dancers = computed(() => results.value.dancers)
 const judges = computed(() => results.value.judges)
+const pipers = computed(() => results.value.pipers)
 const locations = computed(() => results.value.locations)
 
 const hasAnyResults = computed(
@@ -297,7 +323,8 @@ const hasAnyResults = computed(
     competitions.value.hits.length > 0 ||
     locations.value.groups.length > 0 ||
     dancers.value.groups.length > 0 ||
-    judges.value.groups.length > 0,
+    judges.value.groups.length > 0 ||
+    pipers.value.groups.length > 0,
 )
 
 // Save to Recent only after the user idles for 2s on a query that yielded
@@ -594,6 +621,63 @@ if (isIos) {
               @click="expandGroup('judges')"
             >
               See all {{ judges.total }} →
+            </button>
+          </section>
+
+          <section v-if="pipers.groups.length" class="space-y-2">
+            <SectionHeader label="Pipers" :count="pipers.total" />
+            <ul>
+              <li
+                v-for="group in pipers.groups"
+                :key="group.name + group.competitionIds[0]"
+              >
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-3 px-1 py-3 text-left"
+                  @click="handlePiperTap(group)"
+                >
+                  <span
+                    v-if="group.image"
+                    class="size-9 shrink-0 overflow-hidden rounded-full"
+                  >
+                    <img
+                      :src="group.image"
+                      :alt="group.name"
+                      class="size-full object-cover"
+                    />
+                  </span>
+                  <span
+                    v-else
+                    class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium"
+                  >
+                    {{ group.initials }}
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <div class="text-item-title truncate">
+                      {{ group.name || '?' }}
+                    </div>
+                    <div
+                      v-if="group.location || group.competitionIds.length > 1"
+                      class="text-item-subtitle text-muted-foreground truncate"
+                    >
+                      <span v-if="group.location">{{ group.location }}</span>
+                      <span v-if="group.location && group.competitionIds.length > 1"> · </span>
+                      <span v-if="group.competitionIds.length > 1">
+                        {{ group.competitionIds.length }} competitions
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+                </button>
+              </li>
+            </ul>
+            <button
+              v-if="!expanded.pipers && pipers.total > pipers.groups.length"
+              type="button"
+              class="text-primary hover:text-primary/80 px-1 py-2 text-sm font-medium"
+              @click="expandGroup('pipers')"
+            >
+              See all {{ pipers.total }} →
             </button>
           </section>
         </template>

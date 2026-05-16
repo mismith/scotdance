@@ -20,8 +20,8 @@ function getTypesense() {
   return typesenseClient;
 }
 
-type EntityType = 'competitions' | 'dancers' | 'judges' | 'locations';
-const ALL_TYPES: EntityType[] = ['competitions', 'dancers', 'judges', 'locations'];
+type EntityType = 'competitions' | 'dancers' | 'judges' | 'pipers' | 'locations';
+const ALL_TYPES: EntityType[] = ['competitions', 'dancers', 'judges', 'pipers', 'locations'];
 
 interface SearchAllParams {
   q?: string;
@@ -34,6 +34,7 @@ function emptyOut() {
     competitions: null,
     dancers: null,
     judges: null,
+    pipers: null,
     locations: null,
   };
 }
@@ -76,7 +77,7 @@ export function getOnSearchAll(db: any) {
 
     // Build searches and remember which result slot each one targets.
     const slots: Array<
-    { key: 'competitions' | 'dancers' | 'judges' }
+    { key: 'competitions' | 'dancers' | 'judges' | 'pipers' }
     | { key: 'locations'; kind: 'venue' | 'locality' | 'region' }
     > = [];
     const searches: any[] = [];
@@ -91,7 +92,7 @@ export function getOnSearchAll(db: any) {
           filter_by: compFilter,
           per_page: perGroup,
         });
-      } else if (type === 'dancers' || type === 'judges') {
+      } else if (type === 'dancers' || type === 'judges' || type === 'pipers') {
         slots.push({ key: type });
         searches.push({
           collection: type,
