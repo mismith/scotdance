@@ -171,7 +171,7 @@
    button (back/avatar/search), and search bar. Compose with shape
    (rounded-full / rounded-3xl), layout, sizing. */
 @utility floating-nav {
-  @apply bg-card/75 text-card-foreground shadow-lg backdrop-blur;
+  @apply bg-card/75 text-card-foreground border shadow-lg backdrop-blur;
 }
 
 /* Page title — large display heading used in route headers
@@ -249,6 +249,8 @@
     box-shadow: var(--shadow-lg);
     backdrop-filter: blur(8px);
     border-radius: 9999px;
+    border: 1px solid var(--color-border);
+    box-sizing: border-box;
   }
 }
 ::view-transition-group(nav-left) {
