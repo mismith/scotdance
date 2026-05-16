@@ -722,7 +722,7 @@ if (isIos) {
                         <History class="size-3.5" />
                       </span>
                       <div class="text-item-title min-w-0 flex-1 truncate">
-                        {{ term }}
+                        “{{ term }}”
                       </div>
                     </button>
                     <button
@@ -776,7 +776,7 @@ if (isIos) {
                           <component :is="card.icon" class="size-3.5" />
                         </span>
                         <div class="text-item-title min-w-0 flex-1 truncate">
-                          {{ term }}
+                          “{{ term }}”
                         </div>
                       </button>
                     </li>
