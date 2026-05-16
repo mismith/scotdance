@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, shallowRef, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { refDebounced } from '@vueuse/core'
+import { refDebounced, useEventListener } from '@vueuse/core'
 import {
   Building,
   Calendar,
@@ -32,6 +32,7 @@ import { useLocationFilter } from '@/composables/useLocationFilter'
 import { useRecentSearches } from '@/composables/useRecentSearches'
 import { useSearchExamples } from '@/composables/useSearchExamples'
 import { useGlobalSearch } from '@/composables/useGlobalSearch'
+import { isIos } from '@/lib/platform'
 
 const vt = useVtScope('dancer')
 
@@ -42,6 +43,7 @@ const router = useRouter()
 // across route changes (required for iOS to keep the keyboard up on entry).
 const { q } = useGlobalSearch()
 q.value = String(route.query.q ?? '')
+
 const qDebounced = refDebounced(q, 250)
 // Longer idle than the search debounce so partial keystrokes don't all
 // land in Recent — only what the user actually pauses on.
@@ -271,10 +273,76 @@ watch(qForRecent, (value) => {
   if (!hasAnyResults.value) return
   recentSearches.record(value)
 })
+
+// iOS-only workarounds: every other platform respects `position: fixed`
+// when the keyboard is up. data-ios on <html> gates the sized-container
+// CSS rule below; the listeners drive --vv-height, --nav-bottom, and the
+// documentElement scroll lock.
+if (isIos) {
+  document.documentElement.dataset.ios = ''
+
+  // Mirror visualViewport.height to --vv-height so html tracks the
+  // visible area as the keyboard slides in/out.
+  const updateVvHeight = () => {
+    const vv = window.visualViewport
+    if (!vv) return
+    document.documentElement.style.setProperty('--vv-height', `${vv.height}px`)
+  }
+  if (window.visualViewport) {
+    useEventListener(window.visualViewport, 'resize', updateVvHeight)
+  }
+  updateVvHeight()
+
+  // Keyboard up = an input is focused. Collapse --nav-bottom to 0 so the
+  // nav sits flush against the keyboard top; restore on blur. Also check
+  // initial state — the input is often focused before Search.vue mounts
+  // (label-induced focus on home → router.push), so the first focusin
+  // event has already fired by the time we subscribe.
+  const ae = document.activeElement
+  if (ae instanceof HTMLInputElement || ae instanceof HTMLTextAreaElement) {
+    document.documentElement.style.setProperty('--nav-bottom', '0px')
+  }
+  useEventListener(
+    document,
+    'focusin',
+    (e) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        document.documentElement.style.setProperty('--nav-bottom', '0px')
+      }
+    },
+    true,
+  )
+  useEventListener(
+    document,
+    'focusout',
+    (e) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        document.documentElement.style.removeProperty('--nav-bottom')
+      }
+    },
+    true,
+  )
+
+  // iOS scrolls documentElement on focus to "reveal" the input even
+  // though our input is in fixed bottom chrome. Revert any scroll.
+  useEventListener(
+    window,
+    'scroll',
+    () => {
+      if (document.documentElement.scrollTop !== 0) {
+        document.documentElement.scrollTop = 0
+      }
+    },
+    { passive: true },
+  )
+}
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col pt-2 pb-[calc(var(--chrome-bottom)+1rem)]">
+  <div
+    data-route="search"
+    class="flex flex-1 flex-col pt-2 pb-[calc(var(--chrome-bottom)+1rem)]"
+  >
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
       <div class="pointer-events-auto mx-auto flex max-w-3xl justify-end">
         <AccountAvatarButton />
@@ -615,3 +683,17 @@ watch(qForRecent, (value) => {
     </main>
   </div>
 </template>
+
+<style>
+@reference '../style.css';
+
+html[data-ios]:has([data-route='search']) {
+  position: relative;
+  height: var(--vv-height);
+  overflow: hidden;
+}
+html[data-ios]:has([data-route='search']) body {
+  height: 100%;
+  overflow-y: auto;
+}
+</style>
