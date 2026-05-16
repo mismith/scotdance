@@ -259,25 +259,15 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
             class="space-y-2"
           >
             <p class="text-muted-foreground text-xs">
-              Location access is blocked. Enable it in your browser or device settings,
-              then tap Retry.
+              Location is blocked. Enable it in your device settings, then retry.
             </p>
-            <div class="flex gap-2">
-              <button
-                type="button"
-                class="bg-card-foreground/15 hover:bg-card-foreground/25 inline-flex h-10 flex-1 items-center justify-center rounded-full px-4 text-sm font-medium transition-colors"
-                @click="requestPosition"
-              >
-                Retry
-              </button>
-              <button
-                type="button"
-                class="hover:bg-card-foreground/10 text-muted-foreground hover:text-foreground inline-flex h-10 flex-1 items-center justify-center rounded-full px-4 text-sm transition-colors"
-                @click="setWorldwide"
-              >
-                Use Worldwide
-              </button>
-            </div>
+            <button
+              type="button"
+              class="bg-card-foreground/15 hover:bg-card-foreground/25 inline-flex h-10 w-full items-center justify-center rounded-full px-4 text-sm font-medium transition-colors"
+              @click="requestPosition"
+            >
+              Retry
+            </button>
           </div>
 
           <!-- Timeout / unavailable -->
@@ -298,8 +288,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
                the OS prompt — make the user opt in with an explicit tap. -->
           <div v-else class="space-y-2">
             <p class="text-muted-foreground text-xs">
-              Show competitions near you. We'll only ask for your location when you tap
-              below.
+              Filter results to those within range of you.
             </p>
             <button
               type="button"

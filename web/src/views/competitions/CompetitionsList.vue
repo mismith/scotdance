@@ -169,7 +169,10 @@ const monthGroups = computed<MonthGroup[]>(() => {
         class="pointer-events-auto relative mx-auto flex h-12 max-w-3xl items-center gap-2"
       >
         <div
-          class="floating-nav flex items-center gap-1 rounded-full p-1"
+          :class="[
+            'floating-nav flex items-center rounded-3xl p-1 transition-opacity',
+            anyPillOpen ? 'pointer-events-none opacity-0' : '',
+          ]"
         >
           <ViewModePill v-model="view" />
           <LocationPill v-if="view !== 'map'" :competitions="competitions" />
