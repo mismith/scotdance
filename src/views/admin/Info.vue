@@ -68,6 +68,18 @@
               </div>
             </div>
 
+            <div class="d-flex flex-column" style="gap: 0.5rem;">
+              <v-btn
+                :loading="indexJobs.pipers.loading"
+                @click="runReindex('pipers')"
+              >
+                Re-Index Pipers
+              </v-btn>
+              <div v-if="indexJobs.pipers.count != null" class="caption grey--text">
+                {{ indexJobs.pipers.count.toLocaleString() }} pipers in index
+              </div>
+            </div>
+
             <v-alert :value="Boolean(hasError)" type="error">{{ hasError }}</v-alert>
           </div>
         </div>
@@ -170,6 +182,7 @@ const reindexCallables = {
   competitions: fns.httpsCallable('reindexCompetitions'),
   dancers: fns.httpsCallable('reindexDancers'),
   judges: fns.httpsCallable('reindexJudges'),
+  pipers: fns.httpsCallable('reindexPipers'),
 };
 function reindexCount(key, data) {
   if (key === 'competitionsPublished') return Object.keys(data || {}).length;
@@ -203,6 +216,7 @@ export default {
         competitions: { loading: false, count: null },
         dancers: { loading: false, count: null },
         judges: { loading: false, count: null },
+        pipers: { loading: false, count: null },
       },
     };
   },

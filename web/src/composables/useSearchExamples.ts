@@ -13,6 +13,7 @@ export interface SearchExamples {
   places: string[]
   dancers: string[]
   judges: string[]
+  pipers: string[]
 }
 
 type Key = keyof SearchExamples
@@ -30,6 +31,7 @@ const examples = ref<SearchExamples>({
   places: [],
   dancers: [],
   judges: [],
+  pipers: [],
 })
 // Start true so consumers can render skeletons immediately — we always intend
 // to load, even before the competitions list is available.
@@ -56,6 +58,7 @@ async function load(list: CompetitionListItem[]) {
     places: [],
     dancers: [],
     judges: [],
+    pipers: [],
   }
 
   const sorted = [...list].sort((a, b) => {
@@ -75,14 +78,15 @@ async function load(list: CompetitionListItem[]) {
 
     const needDancers = !isFull(next, 'dancers')
     const needJudges = !isFull(next, 'judges')
-    if (!needDancers && !needJudges) continue
+    const needPipers = !isFull(next, 'pipers')
+    if (!needDancers && !needJudges && !needPipers) continue
 
     try {
       const [dancersSnap, staffSnap] = await Promise.all([
         needDancers
           ? get(dbRef(database, `${NAMESPACE}/competitions:data/${comp.id}/dancers`))
           : Promise.resolve(null),
-        needJudges
+        needJudges || needPipers
           ? get(dbRef(database, `${NAMESPACE}/competitions:data/${comp.id}/staff`))
           : Promise.resolve(null),
       ])
@@ -106,9 +110,9 @@ async function load(list: CompetitionListItem[]) {
             { firstName?: string; lastName?: string; type?: string }
           > | null) ?? {}
         Object.values(staff).forEach((s) => {
-          if (s?.type !== 'Judge') return
           const name = `${s?.firstName ?? ''} ${s?.lastName ?? ''}`.trim()
-          pushUnique(next, 'judges', name)
+          if (s?.type === 'Judge') pushUnique(next, 'judges', name)
+          else if (s?.type === 'Piper') pushUnique(next, 'pipers', name)
         })
       }
     } catch {

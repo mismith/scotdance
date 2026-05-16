@@ -2,7 +2,7 @@ import { httpsCallable } from 'firebase/functions'
 import { functions } from '@/firebase'
 import { initialsOf } from '@/lib/format'
 
-export type SearchEntityType = 'competitions' | 'dancers' | 'judges' | 'locations'
+export type SearchEntityType = 'competitions' | 'dancers' | 'judges' | 'pipers' | 'locations'
 
 export type LocationKind = 'venue' | 'locality' | 'region'
 
@@ -56,6 +56,7 @@ interface RawSearchAllResponse {
   competitions: RawSearchResult<RawCompetitionDoc> | null
   dancers: RawSearchResult<RawPersonDoc> | null
   judges: RawSearchResult<RawPersonDoc> | null
+  pipers: RawSearchResult<RawPersonDoc> | null
   locations: RawLocationsBlock | null
 }
 
@@ -92,6 +93,7 @@ export interface SearchAllResults {
   competitions: { hits: SearchCompetitionHit[]; total: number }
   dancers: { groups: SearchPersonGroup[]; total: number }
   judges: { groups: SearchPersonGroup[]; total: number }
+  pipers: { groups: SearchPersonGroup[]; total: number }
   locations: { groups: SearchLocationGroup[]; total: number }
 }
 
@@ -226,6 +228,7 @@ export async function searchAll(params: CallParams): Promise<SearchAllResults> {
       competitions: { hits: [], total: 0 },
       dancers: { groups: [], total: 0 },
       judges: { groups: [], total: 0 },
+      pipers: { groups: [], total: 0 },
       locations: { groups: [], total: 0 },
     }
   }
@@ -241,6 +244,7 @@ export async function searchAll(params: CallParams): Promise<SearchAllResults> {
         competitions: mapCompetitions(data?.competitions ?? null),
         dancers: mapPeople(data?.dancers ?? null),
         judges: mapPeople(data?.judges ?? null),
+        pipers: mapPeople(data?.pipers ?? null),
         locations: mapLocations(data?.locations ?? null),
       }
       responseCache.set(key, out)

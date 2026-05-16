@@ -5,6 +5,7 @@ import Submissions from './submissions';
 import * as Dancers from './dancers';
 import * as Competitions from './competitions';
 import * as Judges from './judges';
+import * as Pipers from './pipers';
 import { getOnSearchAll } from './search';
 import { runBackfillCoords } from './backfillCoords';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
@@ -124,5 +125,11 @@ export const judgeCreated = !isCypress() && judgesRef.onCreate(Judges.onCreate);
 export const judgeUpdated = !isCypress() && judgesRef.onUpdate(Judges.onUpdate);
 export const judgeDeleted = !isCypress() && judgesRef.onDelete(Judges.onDelete);
 export const reindexJudges = configHttps.onCall(Judges.getOnReindex(appConfig.db));
+
+const pipersRef = configDatabase.ref(`/${env}/competitions:data/{competitionId}/staff/{staffId}`);
+export const piperCreated = !isCypress() && pipersRef.onCreate(Pipers.onCreate);
+export const piperUpdated = !isCypress() && pipersRef.onUpdate(Pipers.onUpdate);
+export const piperDeleted = !isCypress() && pipersRef.onDelete(Pipers.onDelete);
+export const reindexPipers = configHttps.onCall(Pipers.getOnReindex(appConfig.db));
 
 export const searchAll = configHttps.onCall(getOnSearchAll(appConfig.db));
