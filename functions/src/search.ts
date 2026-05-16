@@ -114,7 +114,9 @@ export function getOnSearchAll(db: any) {
             filter_by: compFilter,
             per_page: perGroup,
             group_by: kind,
-            group_limit: 3,
+            // High enough to capture all comps for any one venue/locality/region
+            // so the picker sheet gets the full list (not just a sample).
+            group_limit: 50,
           });
         });
       }
