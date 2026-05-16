@@ -18,6 +18,7 @@ import DisclosureHeader from '@/components/DisclosureHeader.vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import CompetitionRow from '@/components/CompetitionRow.vue'
+import CompetitionPickerSheet from '@/components/CompetitionPickerSheet.vue'
 import AccountAvatarButton from '@/components/AccountAvatarButton.vue'
 import {
   searchAll,
@@ -25,6 +26,7 @@ import {
   type SearchEntityType,
   type SearchCompetitionHit,
   type SearchLocationGroup,
+  type SearchPersonGroup,
 } from '@/lib/searchAll'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 import { useVtScope } from '@/lib/viewTransitionFocus'
@@ -232,12 +234,43 @@ function locationCountLabel(count: number) {
   return count === 1 ? '1 competition' : `${count} competitions`
 }
 
+interface PickerState {
+  title: string
+  subtitle: string
+  icon: typeof Gavel | typeof Building
+  competitionIds: string[]
+}
+const picker = ref<PickerState | null>(null)
+
+function handleJudgeTap(group: SearchPersonGroup) {
+  const ids = group.competitionIds
+  if (ids.length === 1) {
+    router.push({ name: 'competition.info', params: { competitionId: ids[0] } })
+    return
+  }
+  picker.value = {
+    title: group.name || 'Judge',
+    subtitle: `${ids.length} competitions`,
+    icon: Gavel,
+    competitionIds: ids,
+  }
+}
+
 function handleLocationTap(group: SearchLocationGroup) {
   if (group.kind === 'venue') {
-    router.push({
-      name: 'competition.info',
-      params: { competitionId: group.sampleCompId },
-    })
+    const ids = group.competitionIds.length
+      ? group.competitionIds
+      : [group.sampleCompId]
+    if (ids.length === 1) {
+      router.push({ name: 'competition.info', params: { competitionId: ids[0] } })
+      return
+    }
+    picker.value = {
+      title: group.name,
+      subtitle: `${ids.length} competitions`,
+      icon: Building,
+      competitionIds: ids,
+    }
     return
   }
   locationFilter.setRegion({
@@ -412,7 +445,7 @@ if (isIos) {
               <li v-for="group in locations.groups" :key="`${group.kind}:${group.name}`">
                 <button
                   type="button"
-                  class="hover:bg-accent flex w-full items-center gap-3 rounded-lg px-1 py-3 text-left"
+                  class="flex w-full items-center gap-3 px-1 py-3 text-left"
                   @click="handleLocationTap(group)"
                 >
                   <span
@@ -514,12 +547,10 @@ if (isIos) {
                 v-for="group in judges.groups"
                 :key="group.name + group.competitionIds[0]"
               >
-                <RouterLink
-                  :to="{
-                    name: 'competition.info',
-                    params: { competitionId: group.competitionIds[0] },
-                  }"
+                <button
+                  type="button"
                   class="flex w-full items-center gap-3 px-1 py-3 text-left"
+                  @click="handleJudgeTap(group)"
                 >
                   <span
                     v-if="group.image"
@@ -542,14 +573,18 @@ if (isIos) {
                       {{ group.name || '?' }}
                     </div>
                     <div
-                      v-if="group.location"
+                      v-if="group.location || group.competitionIds.length > 1"
                       class="text-item-subtitle text-muted-foreground truncate"
                     >
-                      {{ group.location }}
+                      <span v-if="group.location">{{ group.location }}</span>
+                      <span v-if="group.location && group.competitionIds.length > 1"> · </span>
+                      <span v-if="group.competitionIds.length > 1">
+                        {{ group.competitionIds.length }} competitions
+                      </span>
                     </div>
                   </div>
                   <ChevronRight class="text-muted-foreground size-4 shrink-0" />
-                </RouterLink>
+                </button>
               </li>
             </ul>
             <button
@@ -681,6 +716,15 @@ if (isIos) {
         </div>
       </template>
     </main>
+
+    <CompetitionPickerSheet
+      :open="picker !== null"
+      :title="picker?.title ?? ''"
+      :subtitle="picker?.subtitle"
+      :icon="picker?.icon"
+      :competition-ids="picker?.competitionIds ?? []"
+      @close="picker = null"
+    />
   </div>
 </template>
 
