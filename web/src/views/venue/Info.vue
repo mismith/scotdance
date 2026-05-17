@@ -1,24 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ChevronRight } from '@lucide/vue'
-import { useDancerProfile } from '@/composables/useDancerProfile'
-import { useFavoritesStore } from '@/stores/favorites'
-import { initialsOf } from '@/lib/format'
+import { School, ChevronRight } from '@lucide/vue'
+import { useVenueProfile } from '@/composables/useVenueProfile'
 import CompChip from '@/components/CompChip.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
 
-const profile = useDancerProfile()
-const { displayName, location, image, appearances, loading } = profile
-const favorites = useFavoritesStore()
-
-const initials = computed(() => initialsOf(displayName.value))
-
-const isFavorite = computed(() =>
-  appearances.value.some(
-    (a) => a.raw.dancerId && favorites.isFavoriteDancer(a.raw.dancerId),
-  ),
-)
+const profile = useVenueProfile()
+const { name, locationLine, loading } = profile
 
 const tiles = computed(() => [
   {
@@ -46,32 +35,21 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
   <article class="space-y-6">
     <header class="space-y-3 pr-16">
       <div
-        :class="[
-          'flex size-20 items-center justify-center overflow-hidden rounded-full text-4xl font-medium [view-transition-class:nav-avatar] [view-transition-name:dancer-avatar]',
-          isFavorite
-            ? 'bg-secondary text-secondary-foreground'
-            : 'bg-muted text-muted-foreground',
-        ]"
+        class="bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 flex size-20 items-center justify-center rounded-full [view-transition-class:nav-avatar] [view-transition-name:venue-avatar]"
       >
-        <img
-          v-if="image"
-          :src="image"
-          :alt="displayName"
-          class="size-full object-cover"
-        />
-        <template v-else>{{ initials || '?' }}</template>
+        <School class="size-10" />
       </div>
       <div class="space-y-1">
         <h1
-          class="text-title [view-transition-class:fit_nav-title] [view-transition-name:dancer-name]"
+          class="text-title [view-transition-class:fit_nav-title] [view-transition-name:venue-name]"
         >
-          {{ displayName }}
+          {{ name }}
         </h1>
         <p
-          v-if="location"
+          v-if="locationLine"
           class="text-muted-foreground text-lg italic"
         >
-          {{ location }}
+          {{ locationLine }}
         </p>
       </div>
     </header>
@@ -102,14 +80,11 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
       <Skeleton class="h-14 w-full" />
     </section>
     <section v-else-if="recentComp" class="space-y-2">
-      <SectionHeader label="Last seen at" />
+      <SectionHeader label="Most recent" />
       <RouterLink
         :to="{
-          name: 'competition.dancer',
-          params: {
-            competitionId: recentComp.raw.competitionId,
-            dancerId: recentComp.raw.dancerId,
-          },
+          name: 'competition.info',
+          params: { competitionId: recentComp.raw.competitionId },
         }"
         class="flex items-center gap-3 px-2 py-3"
       >
@@ -122,20 +97,9 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
           <div class="text-item-title truncate">
             {{ recentComp.competition?.name ?? 'Loading…' }}
           </div>
-          <div
-            v-if="recentComp.raw.number != null"
-            class="text-item-subtitle text-muted-foreground mt-1 tabular-nums"
-          >
-            #{{ recentComp.raw.number }}
-          </div>
         </div>
         <ChevronRight class="text-muted-foreground size-4 shrink-0" />
       </RouterLink>
     </section>
-
-    <p class="text-muted-foreground">
-      Cross-comp profile is matched by name. Identity may be approximate when names
-      are shared.
-    </p>
   </article>
 </template>

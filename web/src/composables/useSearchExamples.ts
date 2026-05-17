@@ -10,6 +10,7 @@ const TARGET = 3
 
 export interface SearchExamples {
   competitions: string[]
+  venues: string[]
   places: string[]
   dancers: string[]
   judges: string[]
@@ -28,6 +29,7 @@ function allFull(examples: SearchExamples): boolean {
 
 const examples = ref<SearchExamples>({
   competitions: [],
+  venues: [],
   places: [],
   dancers: [],
   judges: [],
@@ -49,79 +51,87 @@ function pushUnique(target: SearchExamples, key: Key, value: string | undefined 
 
 async function load(list: CompetitionListItem[]) {
   if (loaded || !list.length) return
-  loaded = true
 
   // Accumulate into a local object and swap atomically at the end, so the UI
   // doesn't flash with partially-filled categories during the awaited fetches.
   const next: SearchExamples = {
     competitions: [],
+    venues: [],
     places: [],
     dancers: [],
     judges: [],
     pipers: [],
   }
 
-  const sorted = [...list].sort((a, b) => {
-    const aD = a.date ? parseDate(a.date).getTime() : 0
-    const bD = b.date ? parseDate(b.date).getTime() : 0
-    return bD - aD
-  })
+  try {
+    const sorted = [...list].sort((a, b) => {
+      const aD = a.date ? parseDate(a.date).getTime() : 0
+      const bD = b.date ? parseDate(b.date).getTime() : 0
+      return bD - aD
+    })
 
-  for (const comp of sorted) {
-    if (allFull(next)) break
+    for (const comp of sorted) {
+      if (allFull(next)) break
 
-    pushUnique(next, 'competitions', comp.name)
-    // Try the most-specific place fields first.
-    pushUnique(next, 'places', comp.locality)
-    pushUnique(next, 'places', comp.venue)
-    pushUnique(next, 'places', comp.region)
+      pushUnique(next, 'competitions', comp.name)
+      // Split so suggestions mirror the entity model: venues get their own
+      // section (they're first-class entities with profile pages); locality and
+      // region go under Places (they filter the comp list but aren't entities).
+      pushUnique(next, 'venues', comp.venue)
+      pushUnique(next, 'places', comp.locality)
+      pushUnique(next, 'places', comp.region)
 
-    const needDancers = !isFull(next, 'dancers')
-    const needJudges = !isFull(next, 'judges')
-    const needPipers = !isFull(next, 'pipers')
-    if (!needDancers && !needJudges && !needPipers) continue
+      const needDancers = !isFull(next, 'dancers')
+      const needJudges = !isFull(next, 'judges')
+      const needPipers = !isFull(next, 'pipers')
+      if (!needDancers && !needJudges && !needPipers) continue
 
-    try {
-      const [dancersSnap, staffSnap] = await Promise.all([
-        needDancers
-          ? get(dbRef(database, `${NAMESPACE}/competitions:data/${comp.id}/dancers`))
-          : Promise.resolve(null),
-        needJudges || needPipers
-          ? get(dbRef(database, `${NAMESPACE}/competitions:data/${comp.id}/staff`))
-          : Promise.resolve(null),
-      ])
+      try {
+        const [dancersSnap, staffSnap] = await Promise.all([
+          needDancers
+            ? get(dbRef(database, `${NAMESPACE}/competitions:data/${comp.id}/dancers`))
+            : Promise.resolve(null),
+          needJudges || needPipers
+            ? get(dbRef(database, `${NAMESPACE}/competitions:data/${comp.id}/staff`))
+            : Promise.resolve(null),
+        ])
 
-      if (dancersSnap) {
-        const dancers =
-          (dancersSnap.val() as Record<
-            string,
-            { firstName?: string; lastName?: string }
-          > | null) ?? {}
-        Object.values(dancers).forEach((d) => {
-          const name = `${d?.firstName ?? ''} ${d?.lastName ?? ''}`.trim()
-          pushUnique(next, 'dancers', name)
-        })
+        if (dancersSnap) {
+          const dancers =
+            (dancersSnap.val() as Record<
+              string,
+              { firstName?: string; lastName?: string }
+            > | null) ?? {}
+          Object.values(dancers).forEach((d) => {
+            const name = `${d?.firstName ?? ''} ${d?.lastName ?? ''}`.trim()
+            pushUnique(next, 'dancers', name)
+          })
+        }
+
+        if (staffSnap) {
+          const staff =
+            (staffSnap.val() as Record<
+              string,
+              { firstName?: string; lastName?: string; type?: string }
+            > | null) ?? {}
+          Object.values(staff).forEach((s) => {
+            const name = `${s?.firstName ?? ''} ${s?.lastName ?? ''}`.trim()
+            if (s?.type === 'Judge') pushUnique(next, 'judges', name)
+            else if (s?.type === 'Piper') pushUnique(next, 'pipers', name)
+          })
+        }
+      } catch {
+        // Quietly skip — likely permission-gated for anonymous users.
       }
-
-      if (staffSnap) {
-        const staff =
-          (staffSnap.val() as Record<
-            string,
-            { firstName?: string; lastName?: string; type?: string }
-          > | null) ?? {}
-        Object.values(staff).forEach((s) => {
-          const name = `${s?.firstName ?? ''} ${s?.lastName ?? ''}`.trim()
-          if (s?.type === 'Judge') pushUnique(next, 'judges', name)
-          else if (s?.type === 'Piper') pushUnique(next, 'pipers', name)
-        })
-      }
-    } catch {
-      // Quietly skip — likely permission-gated for anonymous users.
     }
-  }
 
-  examples.value = next
-  loading.value = false
+    examples.value = next
+    loaded = true
+  } finally {
+    // Always release the skeleton, even if the loop above threw — otherwise
+    // one bad iteration would brick the suggestions UI forever.
+    loading.value = false
+  }
 }
 
 export function useSearchExamples() {

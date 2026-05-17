@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
 import { ChevronRight, Search, Star, X } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
@@ -13,7 +13,9 @@ import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { initialsOf } from '@/lib/format'
 import type { SearchDancerGroup } from '@/lib/searchDancers'
-import { useVtScope } from '@/lib/viewTransitionFocus'
+import { lookupEntityId } from '@/lib/entityIndex'
+import { useEntityIdMap } from '@/composables/useEntityIdMap'
+import { focusVt, useVtScope } from '@/lib/viewTransitionFocus'
 
 const route = useRoute()
 const router = useRouter()
@@ -80,13 +82,6 @@ watch(
   { immediate: true },
 )
 
-function dancerSlug(name: string) {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-}
-
 function locationOf(group: SearchDancerGroup) {
   return group.dancers.find((d) => d.location)?.location ?? ''
 }
@@ -103,6 +98,29 @@ function clearSearch() {
 const showSearch = computed(() => q.value.trim().length > 0)
 
 const vt = useVtScope('dancer')
+const dancerIds = useEntityIdMap('dancers')
+
+// Pre-resolve IDs for visible rows so view-transition names are ready by the
+// time the user clicks.
+watch(results, (list) => list.forEach((g: { name: string }) => dancerIds.resolve(g.name)))
+watch(favoriteEntries, (list) => list.forEach((e) => dancerIds.resolve(e.name)))
+
+async function navigateToDancer(id: string) {
+  focusVt('dancer', id)
+  await nextTick()
+  router.push({ name: 'dancer.info', params: { dancerId: id } })
+}
+
+async function openDancer(name: string) {
+  const id = dancerIds.get(name) ?? (await lookupEntityId('dancers', name))
+  if (!id) return
+  dancerIds.map[name] = id
+  await navigateToDancer(id)
+}
+
+async function openDancerById(id: string) {
+  await navigateToDancer(id)
+}
 </script>
 
 <template>
@@ -181,42 +199,31 @@ const vt = useVtScope('dancer')
           <SectionHeader label="Results" :count="results.length" />
           <ul>
             <li v-for="group in results" :key="group.name">
-              <RouterLink
-                v-slot="{ href, navigate }"
-                :to="{
-                  name: 'dancer.info',
-                  params: { dancerId: dancerSlug(group.name) },
-                }"
-                custom
+              <button
+                type="button"
+                class="flex w-full items-center gap-3 px-1 py-3 text-left"
+                @click="openDancer(group.name)"
               >
-                <a
-                  :href="href"
-                  class="flex w-full items-center gap-3 px-1 py-3 text-left"
-                  @click="vt.onNavigate($event, navigate, dancerSlug(group.name))"
+                <span
+                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
+                  :style="{ viewTransitionName: vt.name(dancerIds.get(group.name), 'avatar') }"
                 >
-                  <span
-                    class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
-                    :style="{ viewTransitionName: vt.name(dancerSlug(group.name), 'avatar') }"
+                  {{ group.initials }}
+                </span>
+                <div class="min-w-0 flex-1">
+                  <div
+                    class="text-item-title truncate [view-transition-class:fit_nav-title]"
+                    :style="{ viewTransitionName: vt.name(dancerIds.get(group.name), 'name') }"
+                  >{{ group.name || '?' }}</div>
+                  <div
+                    v-if="locationOf(group)"
+                    class="text-item-subtitle text-muted-foreground truncate"
                   >
-                    {{ group.initials }}
-                  </span>
-                  <div class="min-w-0 flex-1">
-                    <div
-                      class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                      :style="{ viewTransitionName: vt.name(dancerSlug(group.name), 'name') }"
-                    >
-                      {{ group.name || '?' }}
-                    </div>
-                    <div
-                      v-if="locationOf(group)"
-                      class="text-item-subtitle text-muted-foreground truncate"
-                    >
-                      {{ locationOf(group) }}
-                    </div>
+                    {{ locationOf(group) }}
                   </div>
-                  <ChevronRight class="text-muted-foreground size-4 shrink-0" />
-                </a>
-              </RouterLink>
+                </div>
+                <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+              </button>
             </li>
           </ul>
         </section>
@@ -227,46 +234,35 @@ const vt = useVtScope('dancer')
           <SectionHeader label="Favourites" :count="favoriteEntries.length" />
           <ul>
             <li v-for="entry in favoriteEntries" :key="entry.name">
-              <RouterLink
-                v-slot="{ href, navigate }"
-                :to="{
-                  name: 'dancer.info',
-                  params: { dancerId: dancerSlug(entry.name) },
-                }"
-                custom
+              <button
+                type="button"
+                class="flex w-full items-center gap-3 px-1 py-3 text-left"
+                @click="openDancer(entry.name)"
               >
-                <a
-                  :href="href"
-                  class="flex w-full items-center gap-3 px-1 py-3 text-left"
-                  @click="vt.onNavigate($event, navigate, dancerSlug(entry.name))"
+                <span
+                  class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
+                  :style="{ viewTransitionName: vt.name(dancerIds.get(entry.name), 'avatar') }"
                 >
-                  <span
-                    class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
-                    :style="{ viewTransitionName: vt.name(dancerSlug(entry.name), 'avatar') }"
+                  {{ entry.initials }}
+                </span>
+                <div class="min-w-0 flex-1">
+                  <div
+                    class="text-item-title truncate [view-transition-class:fit_nav-title]"
+                    :style="{ viewTransitionName: vt.name(dancerIds.get(entry.name), 'name') }"
+                  >{{ entry.name }}</div>
+                  <div
+                    v-if="locationByName.get(entry.name)"
+                    class="text-item-subtitle text-muted-foreground truncate"
                   >
-                    {{ entry.initials }}
-                  </span>
-                  <div class="min-w-0 flex-1">
-                    <div
-                      class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                      :style="{ viewTransitionName: vt.name(dancerSlug(entry.name), 'name') }"
-                    >
-                      {{ entry.name }}
-                    </div>
-                    <div
-                      v-if="locationByName.get(entry.name)"
-                      class="text-item-subtitle text-muted-foreground truncate"
-                    >
-                      {{ locationByName.get(entry.name) }}
-                    </div>
-                    <Skeleton
-                      v-else-if="!locationByName.has(entry.name)"
-                      class="mt-1 h-4 w-32"
-                    />
+                    {{ locationByName.get(entry.name) }}
                   </div>
-                  <ChevronRight class="text-muted-foreground size-4 shrink-0" />
-                </a>
-              </RouterLink>
+                  <Skeleton
+                    v-else-if="!locationByName.has(entry.name)"
+                    class="mt-1 h-4 w-32"
+                  />
+                </div>
+                <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+              </button>
             </li>
           </ul>
         </section>
@@ -296,34 +292,26 @@ const vt = useVtScope('dancer')
             </button>
           </SectionHeader>
           <ul>
-            <li v-for="entry in recentList" :key="entry.slug">
-              <RouterLink
-                v-slot="{ href, navigate }"
-                :to="{ name: 'dancer.info', params: { dancerId: entry.slug } }"
-                custom
+            <li v-for="entry in recentList" :key="entry.id">
+              <button
+                type="button"
+                class="flex w-full items-center gap-3 px-1 py-3 text-left"
+                @click="openDancerById(entry.id)"
               >
-                <a
-                  :href="href"
-                  class="flex w-full items-center gap-3 px-1 py-3 text-left"
-                  @click="vt.onNavigate($event, navigate, entry.slug)"
+                <span
+                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
+                  :style="{ viewTransitionName: vt.name(entry.id, 'avatar') }"
                 >
-                  <span
-                    class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
-                    :style="{ viewTransitionName: vt.name(entry.slug, 'avatar') }"
-                  >
-                    {{ initialsOf(entry.name) }}
-                  </span>
-                  <div class="min-w-0 flex-1">
-                    <div
-                      class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                      :style="{ viewTransitionName: vt.name(entry.slug, 'name') }"
-                    >
-                      {{ entry.name }}
-                    </div>
-                  </div>
-                  <ChevronRight class="text-muted-foreground size-4 shrink-0" />
-                </a>
-              </RouterLink>
+                  {{ initialsOf(entry.name) }}
+                </span>
+                <div class="min-w-0 flex-1">
+                  <div
+                    class="text-item-title truncate [view-transition-class:fit_nav-title]"
+                    :style="{ viewTransitionName: vt.name(entry.id, 'name') }"
+                  >{{ entry.name }}</div>
+                </div>
+                <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+              </button>
             </li>
           </ul>
         </section>

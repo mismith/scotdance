@@ -1,24 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { ChevronRight } from '@lucide/vue'
-import { useDancerProfile } from '@/composables/useDancerProfile'
-import { useFavoritesStore } from '@/stores/favorites'
+import { usePiperProfile } from '@/composables/usePiperProfile'
 import { initialsOf } from '@/lib/format'
 import CompChip from '@/components/CompChip.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
 
-const profile = useDancerProfile()
-const { displayName, location, image, appearances, loading } = profile
-const favorites = useFavoritesStore()
+const profile = usePiperProfile()
+const { displayName, location, image, bio, loading } = profile
 
 const initials = computed(() => initialsOf(displayName.value))
-
-const isFavorite = computed(() =>
-  appearances.value.some(
-    (a) => a.raw.dancerId && favorites.isFavoriteDancer(a.raw.dancerId),
-  ),
-)
 
 const tiles = computed(() => [
   {
@@ -46,12 +38,7 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
   <article class="space-y-6">
     <header class="space-y-3 pr-16">
       <div
-        :class="[
-          'flex size-20 items-center justify-center overflow-hidden rounded-full text-4xl font-medium [view-transition-class:nav-avatar] [view-transition-name:dancer-avatar]',
-          isFavorite
-            ? 'bg-secondary text-secondary-foreground'
-            : 'bg-muted text-muted-foreground',
-        ]"
+        class="bg-muted text-muted-foreground flex size-20 items-center justify-center overflow-hidden rounded-full text-4xl font-medium [view-transition-class:nav-avatar] [view-transition-name:piper-avatar]"
       >
         <img
           v-if="image"
@@ -63,7 +50,7 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
       </div>
       <div class="space-y-1">
         <h1
-          class="text-title [view-transition-class:fit_nav-title] [view-transition-name:dancer-name]"
+          class="text-title [view-transition-class:fit_nav-title] [view-transition-name:piper-name]"
         >
           {{ displayName }}
         </h1>
@@ -75,6 +62,11 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
         </p>
       </div>
     </header>
+
+    <section v-if="bio" class="space-y-2">
+      <SectionHeader label="Bio" />
+      <p class="text-foreground/90 wrap-break-word whitespace-pre-wrap">{{ bio }}</p>
+    </section>
 
     <section>
       <div class="grid grid-cols-2 gap-2">
@@ -102,14 +94,11 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
       <Skeleton class="h-14 w-full" />
     </section>
     <section v-else-if="recentComp" class="space-y-2">
-      <SectionHeader label="Last seen at" />
+      <SectionHeader label="Most recent" />
       <RouterLink
         :to="{
-          name: 'competition.dancer',
-          params: {
-            competitionId: recentComp.raw.competitionId,
-            dancerId: recentComp.raw.dancerId,
-          },
+          name: 'competition.info',
+          params: { competitionId: recentComp.raw.competitionId },
         }"
         class="flex items-center gap-3 px-2 py-3"
       >
@@ -121,12 +110,6 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
         <div class="min-w-0 flex-1">
           <div class="text-item-title truncate">
             {{ recentComp.competition?.name ?? 'Loading…' }}
-          </div>
-          <div
-            v-if="recentComp.raw.number != null"
-            class="text-item-subtitle text-muted-foreground mt-1 tabular-nums"
-          >
-            #{{ recentComp.raw.number }}
           </div>
         </div>
         <ChevronRight class="text-muted-foreground size-4 shrink-0" />

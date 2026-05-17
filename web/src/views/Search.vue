@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { computed, reactive, ref, shallowRef, watch } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { computed, nextTick, reactive, ref, shallowRef, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { refDebounced, useEventListener } from '@vueuse/core'
 import {
-  Building,
   Calendar,
+  ChevronLeft,
   ChevronRight,
   Gavel,
   History,
-  Map as MapIcon,
   MapPin,
+  MapPinned,
   Music,
+  School,
   User,
   X,
 } from '@lucide/vue'
@@ -19,25 +20,25 @@ import DisclosureHeader from '@/components/DisclosureHeader.vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import CompetitionRow from '@/components/CompetitionRow.vue'
-import CompetitionPickerSheet from '@/components/CompetitionPickerSheet.vue'
 import AccountAvatarButton from '@/components/AccountAvatarButton.vue'
 import {
   searchAll,
   type SearchAllResults,
   type SearchEntityType,
   type SearchCompetitionHit,
-  type SearchLocationGroup,
+  type SearchPlaceGroup,
   type SearchPersonGroup,
 } from '@/lib/searchAll'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
-import { useVtScope } from '@/lib/viewTransitionFocus'
 import { useLocationFilter } from '@/composables/useLocationFilter'
 import { useRecentSearches } from '@/composables/useRecentSearches'
 import { useSearchExamples } from '@/composables/useSearchExamples'
 import { useGlobalSearch } from '@/composables/useGlobalSearch'
 import { isIos } from '@/lib/platform'
-
-const vt = useVtScope('dancer')
+import { startViewTransition } from '@/lib/transition'
+import { lookupEntityId, lookupVenueId } from '@/lib/entityIndex'
+import { useEntityIdMap, useVenueIdMap } from '@/composables/useEntityIdMap'
+import { focusVt, useVtScope } from '@/lib/viewTransitionFocus'
 
 const route = useRoute()
 const router = useRouter()
@@ -60,7 +61,7 @@ const empty: SearchAllResults = {
   dancers: { groups: [], total: 0 },
   judges: { groups: [], total: 0 },
   pipers: { groups: [], total: 0 },
-  locations: { groups: [], total: 0 },
+  places: { groups: [], total: 0 },
 }
 
 const results = shallowRef<SearchAllResults>(empty)
@@ -71,7 +72,7 @@ const expanded = reactive<Record<SearchEntityType, boolean>>({
   dancers: false,
   judges: false,
   pipers: false,
-  locations: false,
+  places: false,
 })
 
 const locationFilter = useLocationFilter()
@@ -79,7 +80,7 @@ const recentSearches = useRecentSearches()
 const searchExamples = useSearchExamples()
 
 interface ExampleCardConfig {
-  key: 'competitions' | 'places' | 'dancers' | 'judges' | 'pipers'
+  key: 'competitions' | 'venues' | 'places' | 'dancers' | 'judges' | 'pipers'
   label: string
   icon: typeof Calendar
   iconClass: string
@@ -91,12 +92,6 @@ const exampleCards: ExampleCardConfig[] = [
     label: 'Competitions',
     icon: Calendar,
     iconClass: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300',
-  },
-  {
-    key: 'places',
-    label: 'Places',
-    icon: MapPin,
-    iconClass: 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
   },
   {
     key: 'dancers',
@@ -116,6 +111,18 @@ const exampleCards: ExampleCardConfig[] = [
     icon: Music,
     iconClass: 'bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300',
   },
+  {
+    key: 'venues',
+    label: 'Venues',
+    icon: School,
+    iconClass: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+  },
+  {
+    key: 'places',
+    label: 'Places',
+    icon: MapPin,
+    iconClass: 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
+  },
 ]
 
 const hasExamples = computed(() =>
@@ -126,6 +133,7 @@ const suggestionExpanded = reactive<Record<ExampleCardConfig['key'] | 'recent', 
   {
     recent: true,
     competitions: true,
+    venues: true,
     places: true,
     dancers: true,
     judges: true,
@@ -155,7 +163,7 @@ watch(q, (value) => {
   expanded.dancers = false
   expanded.judges = false
   expanded.pipers = false
-  expanded.locations = false
+  expanded.places = false
 })
 
 // Dedupes back-to-back searches for the same term (e.g. a click fires the
@@ -192,9 +200,21 @@ async function runSearch(text: string) {
 watch(qDebounced, (value) => runSearch(value), { immediate: true })
 
 // Suggestion taps shouldn't wait on the typing debounce — fire the search now.
+// Wrapped in startViewTransition so the title and back button morph from the
+// suggestions state to the results state. (Router replace fires too via the
+// `q` watcher, but the router skips VTs on query-only nav, so we drive it
+// from here.)
+//
+// runSearch is called *inside* the VT callback after q.value is set, so its
+// internal staleness check (`q.value.trim() !== trimmed`) doesn't trip on a
+// stale read. Doing it outside races the VT's deferred mutation and leaves
+// `searching = true` if the check bails.
 function selectTerm(term: string) {
-  q.value = term
-  runSearch(term)
+  startViewTransition(async () => {
+    q.value = term
+    await nextTick()
+    void runSearch(term)
+  })
 }
 
 async function expandGroup(type: SearchEntityType) {
@@ -217,11 +237,25 @@ async function expandGroup(type: SearchEntityType) {
   }
 }
 
-function dancerSlug(name: string) {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
+// ─── View-transition setup ──────────────────────────────────────────────────
+// Each scope's name → aggregate-id map is pre-resolved as results arrive so
+// the row's `:style="vt.name(...)"` has a real ID to morph from at click time.
+const judgeVt = useVtScope('judge')
+const piperVt = useVtScope('piper')
+const dancerVt = useVtScope('dancer')
+const venueVt = useVtScope('venue')
+const judgeIds = useEntityIdMap('judges')
+const piperIds = useEntityIdMap('pipers')
+const dancerIds = useEntityIdMap('dancers')
+const venueIds = useVenueIdMap()
+
+async function handleDancerTap(name: string) {
+  const id = dancerIds.get(name) ?? (await lookupEntityId('dancers', name))
+  if (!id) return
+  dancerIds.map[name] = id
+  focusVt('dancer', id)
+  await nextTick()
+  router.push({ name: 'dancer.info', params: { dancerId: id } })
 }
 
 function competitionListItem(hit: SearchCompetitionHit): CompetitionListItem {
@@ -235,67 +269,43 @@ function competitionListItem(hit: SearchCompetitionHit): CompetitionListItem {
   }
 }
 
-function locationIcon(kind: SearchLocationGroup['kind']) {
-  if (kind === 'venue') return Building
-  if (kind === 'region') return MapIcon
+function placeIcon(kind: SearchPlaceGroup['kind']) {
+  if (kind === 'venue') return School
+  if (kind === 'region') return MapPinned
   return MapPin
 }
 
-function locationCountLabel(count: number) {
+function placeCountLabel(count: number) {
   return count === 1 ? '1 competition' : `${count} competitions`
 }
 
-interface PickerState {
-  title: string
-  subtitle: string
-  icon: typeof Gavel | typeof Building | typeof Music
-  competitionIds: string[]
-}
-const picker = ref<PickerState | null>(null)
-
-function handleJudgeTap(group: SearchPersonGroup) {
-  const ids = group.competitionIds
-  if (ids.length === 1) {
-    router.push({ name: 'competition.info', params: { competitionId: ids[0] } })
-    return
-  }
-  picker.value = {
-    title: group.name || 'Judge',
-    subtitle: `${ids.length} competitions`,
-    icon: Gavel,
-    competitionIds: ids,
-  }
+async function handleJudgeTap(group: SearchPersonGroup) {
+  const id = judgeIds.get(group.name) ?? (await lookupEntityId('judges', group.name))
+  if (!id) return
+  judgeIds.map[group.name] = id
+  focusVt('judge', id)
+  await nextTick()
+  router.push({ name: 'judge.info', params: { judgeId: id } })
 }
 
-function handlePiperTap(group: SearchPersonGroup) {
-  const ids = group.competitionIds
-  if (ids.length === 1) {
-    router.push({ name: 'competition.info', params: { competitionId: ids[0] } })
-    return
-  }
-  picker.value = {
-    title: group.name || 'Piper',
-    subtitle: `${ids.length} competitions`,
-    icon: Music,
-    competitionIds: ids,
-  }
+async function handlePiperTap(group: SearchPersonGroup) {
+  const id = piperIds.get(group.name) ?? (await lookupEntityId('pipers', group.name))
+  if (!id) return
+  piperIds.map[group.name] = id
+  focusVt('piper', id)
+  await nextTick()
+  router.push({ name: 'piper.info', params: { piperId: id } })
 }
 
-function handleLocationTap(group: SearchLocationGroup) {
+async function handlePlaceTap(group: SearchPlaceGroup) {
   if (group.kind === 'venue') {
-    const ids = group.competitionIds.length
-      ? group.competitionIds
-      : [group.sampleCompId]
-    if (ids.length === 1) {
-      router.push({ name: 'competition.info', params: { competitionId: ids[0] } })
-      return
-    }
-    picker.value = {
-      title: group.name,
-      subtitle: `${ids.length} competitions`,
-      icon: Building,
-      competitionIds: ids,
-    }
+    const locality = group.locality ?? null
+    const id =
+      venueIds.get(group.name, locality) ?? (await lookupVenueId(group.name, locality))
+    if (!id) return
+    focusVt('venue', id)
+    await nextTick()
+    router.push({ name: 'venue.info', params: { venueId: id } })
     return
   }
   locationFilter.setRegion({
@@ -304,6 +314,17 @@ function handleLocationTap(group: SearchLocationGroup) {
     locality: group.kind === 'locality' ? (group.locality ?? group.name) : null,
   })
   router.push({ name: 'competitions' })
+}
+
+// Top-left back: clears the search (mirrors the X in the bottom search bar).
+// Only shown when there's a query, so dismissing /search entirely is left to
+// the bottom-nav left pill. Wrapped in startViewTransition so the title and
+// back button morph between the suggestions/results states.
+function onTopBackClick() {
+  startViewTransition(async () => {
+    q.value = ''
+    await nextTick()
+  })
 }
 
 const hasQuery = computed(() => q.value.trim().length > 0)
@@ -316,12 +337,23 @@ const competitions = computed(() => results.value.competitions)
 const dancers = computed(() => results.value.dancers)
 const judges = computed(() => results.value.judges)
 const pipers = computed(() => results.value.pipers)
-const locations = computed(() => results.value.locations)
+const places = computed(() => results.value.places)
+
+// Pre-resolve aggregate IDs for visible groups so list rows can render with
+// view-transition-names ready at click time (no async gap during morph).
+watch(judges, (r) => r.groups.forEach((g) => judgeIds.resolve(g.name)))
+watch(pipers, (r) => r.groups.forEach((g) => piperIds.resolve(g.name)))
+watch(dancers, (r) => r.groups.forEach((g) => dancerIds.resolve(g.name)))
+watch(places, (r) => {
+  r.groups.forEach((g) => {
+    if (g.kind === 'venue') venueIds.resolve(g.name, g.locality ?? null)
+  })
+})
 
 const hasAnyResults = computed(
   () =>
     competitions.value.hits.length > 0 ||
-    locations.value.groups.length > 0 ||
+    places.value.groups.length > 0 ||
     dancers.value.groups.length > 0 ||
     judges.value.groups.length > 0 ||
     pipers.value.groups.length > 0,
@@ -366,7 +398,10 @@ if (isIos) {
     document,
     'focusin',
     (e) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
         document.documentElement.style.setProperty('--nav-bottom', '0px')
       }
     },
@@ -376,7 +411,10 @@ if (isIos) {
     document,
     'focusout',
     (e) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
         document.documentElement.style.removeProperty('--nav-bottom')
       }
     },
@@ -404,7 +442,18 @@ if (isIos) {
     class="flex flex-1 flex-col pt-2 pb-[calc(var(--chrome-bottom)+1rem)]"
   >
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
-      <div class="pointer-events-auto mx-auto flex max-w-3xl justify-end">
+      <div class="pointer-events-auto mx-auto flex max-w-3xl justify-between">
+        <button
+          v-if="hasQuery"
+          type="button"
+          class="floating-nav flex size-12 shrink-0 items-center justify-center rounded-full transition-opacity [view-transition-name:nav-back] hover:opacity-90"
+          title="Clear search"
+          aria-label="Clear search"
+          @click="onTopBackClick"
+        >
+          <ChevronLeft class="size-5" />
+        </button>
+        <span v-else aria-hidden="true" />
         <AccountAvatarButton />
       </div>
     </nav>
@@ -412,8 +461,12 @@ if (isIos) {
       <div v-if="error" class="text-destructive text-lg">{{ error.message }}</div>
 
       <template v-if="hasQuery">
-        <div class="pr-14">
-          <h2 class="font-serif text-3xl font-medium tracking-tight">Search results</h2>
+        <div class="px-14">
+          <h2
+            class="font-serif text-3xl font-medium tracking-tight [view-transition-class:fit] [view-transition-name:search-title]"
+          >
+            Search results
+          </h2>
           <p class="text-muted-foreground truncate text-sm">for “{{ q }}”</p>
         </div>
 
@@ -466,18 +519,18 @@ if (isIos) {
             </button>
           </section>
 
-          <section v-if="locations.groups.length" class="space-y-2">
-            <SectionHeader label="Locations" :count="locations.total" />
+          <section v-if="places.groups.length" class="space-y-2">
+            <SectionHeader label="Places" :count="places.total" />
             <ul>
-              <li v-for="group in locations.groups" :key="`${group.kind}:${group.name}`">
+              <li v-for="group in places.groups" :key="`${group.kind}:${group.name}`">
                 <button
                   type="button"
                   class="flex w-full items-center gap-3 px-1 py-3 text-left"
-                  @click="handleLocationTap(group)"
+                  @click="handlePlaceTap(group)"
                 >
                   <span
                     :class="[
-                      'flex size-9 shrink-0 items-center justify-center rounded-full',
+                      'flex size-9 shrink-0 items-center justify-center rounded-full [view-transition-class:nav-avatar]',
                       group.kind === 'venue' &&
                         'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
                       group.kind === 'locality' &&
@@ -485,16 +538,38 @@ if (isIos) {
                       group.kind === 'region' &&
                         'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
                     ]"
+                    :style="
+                      group.kind === 'venue'
+                        ? {
+                            viewTransitionName: venueVt.name(
+                              venueIds.get(group.name, group.locality ?? null),
+                              'avatar',
+                            ),
+                          }
+                        : undefined
+                    "
                   >
-                    <component :is="locationIcon(group.kind)" class="size-4" />
+                    <component :is="placeIcon(group.kind)" class="size-4" />
                   </span>
                   <div class="min-w-0 flex-1">
-                    <div class="text-item-title truncate">
+                    <div
+                      class="text-item-title truncate [view-transition-class:fit_nav-title]"
+                      :style="
+                        group.kind === 'venue'
+                          ? {
+                              viewTransitionName: venueVt.name(
+                                venueIds.get(group.name, group.locality ?? null),
+                                'name',
+                              ),
+                            }
+                          : undefined
+                      "
+                    >
                       {{ group.name }}
                     </div>
                     <div class="text-item-subtitle text-muted-foreground truncate">
                       <span v-if="group.parentLabel">{{ group.parentLabel }} · </span>
-                      <span>{{ locationCountLabel(group.count) }}</span>
+                      <span>{{ placeCountLabel(group.count) }}</span>
                     </div>
                   </div>
                   <ChevronRight class="text-muted-foreground size-4 shrink-0" />
@@ -502,12 +577,12 @@ if (isIos) {
               </li>
             </ul>
             <button
-              v-if="!expanded.locations && locations.total > locations.groups.length"
+              v-if="!expanded.places && places.total > places.groups.length"
               type="button"
               class="text-primary hover:text-primary/80 px-1 py-2 text-sm font-medium"
-              @click="expandGroup('locations')"
+              @click="expandGroup('places')"
             >
-              See all {{ locations.total }} →
+              See all {{ places.total }} →
             </button>
           </section>
 
@@ -515,46 +590,43 @@ if (isIos) {
             <SectionHeader label="Dancers" :count="dancers.total" />
             <ul>
               <li v-for="group in dancers.groups" :key="group.name">
-                <RouterLink
-                  v-slot="{ href, navigate }"
-                  :to="{
-                    name: 'dancer.info',
-                    params: { dancerId: dancerSlug(group.name) },
-                  }"
-                  custom
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-3 px-1 py-3 text-left"
+                  @click="handleDancerTap(group.name)"
                 >
-                  <a
-                    :href="href"
-                    class="flex w-full items-center gap-3 px-1 py-3 text-left"
-                    @click="vt.onNavigate($event, navigate, dancerSlug(group.name))"
+                  <span
+                    class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
+                    :style="{
+                      viewTransitionName: dancerVt.name(
+                        dancerIds.get(group.name),
+                        'avatar',
+                      ),
+                    }"
                   >
-                    <span
-                      class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
+                    {{ group.initials }}
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <div
+                      class="text-item-title truncate [view-transition-class:fit_nav-title]"
                       :style="{
-                        viewTransitionName: vt.name(dancerSlug(group.name), 'avatar'),
+                        viewTransitionName: dancerVt.name(
+                          dancerIds.get(group.name),
+                          'name',
+                        ),
                       }"
                     >
-                      {{ group.initials }}
-                    </span>
-                    <div class="min-w-0 flex-1">
-                      <div
-                        class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                        :style="{
-                          viewTransitionName: vt.name(dancerSlug(group.name), 'name'),
-                        }"
-                      >
-                        {{ group.name || '?' }}
-                      </div>
-                      <div
-                        v-if="group.location"
-                        class="text-item-subtitle text-muted-foreground truncate"
-                      >
-                        {{ group.location }}
-                      </div>
+                      {{ group.name || '?' }}
                     </div>
-                    <ChevronRight class="text-muted-foreground size-4 shrink-0" />
-                  </a>
-                </RouterLink>
+                    <div
+                      v-if="group.location"
+                      class="text-item-subtitle text-muted-foreground truncate"
+                    >
+                      {{ group.location }}
+                    </div>
+                  </div>
+                  <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+                </button>
               </li>
             </ul>
             <button
@@ -581,7 +653,13 @@ if (isIos) {
                 >
                   <span
                     v-if="group.image"
-                    class="size-9 shrink-0 overflow-hidden rounded-full"
+                    class="size-9 shrink-0 overflow-hidden rounded-full [view-transition-class:nav-avatar]"
+                    :style="{
+                      viewTransitionName: judgeVt.name(
+                        judgeIds.get(group.name),
+                        'avatar',
+                      ),
+                    }"
                   >
                     <img
                       :src="group.image"
@@ -591,12 +669,26 @@ if (isIos) {
                   </span>
                   <span
                     v-else
-                    class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium"
+                    class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
+                    :style="{
+                      viewTransitionName: judgeVt.name(
+                        judgeIds.get(group.name),
+                        'avatar',
+                      ),
+                    }"
                   >
                     {{ group.initials }}
                   </span>
                   <div class="min-w-0 flex-1">
-                    <div class="text-item-title truncate">
+                    <div
+                      class="text-item-title truncate [view-transition-class:fit_nav-title]"
+                      :style="{
+                        viewTransitionName: judgeVt.name(
+                          judgeIds.get(group.name),
+                          'name',
+                        ),
+                      }"
+                    >
                       {{ group.name || '?' }}
                     </div>
                     <div
@@ -604,7 +696,9 @@ if (isIos) {
                       class="text-item-subtitle text-muted-foreground truncate"
                     >
                       <span v-if="group.location">{{ group.location }}</span>
-                      <span v-if="group.location && group.competitionIds.length > 1"> · </span>
+                      <span v-if="group.location && group.competitionIds.length > 1">
+                        ·
+                      </span>
                       <span v-if="group.competitionIds.length > 1">
                         {{ group.competitionIds.length }} competitions
                       </span>
@@ -638,7 +732,13 @@ if (isIos) {
                 >
                   <span
                     v-if="group.image"
-                    class="size-9 shrink-0 overflow-hidden rounded-full"
+                    class="size-9 shrink-0 overflow-hidden rounded-full [view-transition-class:nav-avatar]"
+                    :style="{
+                      viewTransitionName: piperVt.name(
+                        piperIds.get(group.name),
+                        'avatar',
+                      ),
+                    }"
                   >
                     <img
                       :src="group.image"
@@ -648,12 +748,26 @@ if (isIos) {
                   </span>
                   <span
                     v-else
-                    class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium"
+                    class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
+                    :style="{
+                      viewTransitionName: piperVt.name(
+                        piperIds.get(group.name),
+                        'avatar',
+                      ),
+                    }"
                   >
                     {{ group.initials }}
                   </span>
                   <div class="min-w-0 flex-1">
-                    <div class="text-item-title truncate">
+                    <div
+                      class="text-item-title truncate [view-transition-class:fit_nav-title]"
+                      :style="{
+                        viewTransitionName: piperVt.name(
+                          piperIds.get(group.name),
+                          'name',
+                        ),
+                      }"
+                    >
                       {{ group.name || '?' }}
                     </div>
                     <div
@@ -661,7 +775,9 @@ if (isIos) {
                       class="text-item-subtitle text-muted-foreground truncate"
                     >
                       <span v-if="group.location">{{ group.location }}</span>
-                      <span v-if="group.location && group.competitionIds.length > 1"> · </span>
+                      <span v-if="group.location && group.competitionIds.length > 1">
+                        ·
+                      </span>
                       <span v-if="group.competitionIds.length > 1">
                         {{ group.competitionIds.length }} competitions
                       </span>
@@ -686,7 +802,9 @@ if (isIos) {
       <template v-else>
         <div class="flex flex-1 flex-col gap-6">
           <section v-if="showSuggestions" class="space-y-2">
-            <h2 class="pr-14 font-serif text-3xl font-medium tracking-tight">
+            <h2
+              class="pr-14 font-serif text-3xl font-medium tracking-tight [view-transition-class:fit] [view-transition-name:search-title]"
+            >
               Suggestions
             </h2>
 
@@ -800,15 +918,6 @@ if (isIos) {
         </div>
       </template>
     </main>
-
-    <CompetitionPickerSheet
-      :open="picker !== null"
-      :title="picker?.title ?? ''"
-      :subtitle="picker?.subtitle"
-      :icon="picker?.icon"
-      :competition-ids="picker?.competitionIds ?? []"
-      @close="picker = null"
-    />
   </div>
 </template>
 

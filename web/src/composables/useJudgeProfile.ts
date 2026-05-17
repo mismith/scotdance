@@ -11,70 +11,62 @@ import { child, get } from 'firebase/database'
 import { dataRef } from '@/firebase'
 import { fetchCompetitionMeta } from '@/lib/competitionMeta'
 import { isBeforeToday, parseDate } from '@/lib/format'
-import { useRecentDancers } from '@/composables/useRecentDancers'
 import { insertEntityAggregate } from '@/composables/useEntityAggregates'
 import type { Competition } from '@/types/competition'
 
-// ─── Aggregate-backed dancer profile ─────────────────────────────────────────
-// Replaces the v1 slug-based composable (which re-ran Typesense searches on
-// every page load) with a single read of `/dancers/{dancerId}`. The route
-// param `:dancerId` is now the Firebase push key of the aggregate, not a
-// name slug — see ADR-0003 §13.
-
-export interface DancerAppearanceRaw {
+export interface JudgeAppearanceRaw {
   competitionId?: string
-  /** Per-comp dancer record id (push key under competitions:data/.../dancers). */
-  dancerId?: string
+  staffId?: string
   firstName?: string | null
   lastName?: string | null
   image?: string | null
+  bio?: string | null
   location?: string | null
-  number?: number | null
 }
 
-export interface DancerAggregate {
+export interface JudgeAggregate {
   name?: string
   appearanceCount?: number
-  appearances?: Record<string, DancerAppearanceRaw>
+  appearances?: Record<string, JudgeAppearanceRaw>
 }
 
-export interface DancerAppearance {
-  /** {compId}:{perCompDancerId} */
+export interface JudgeAppearance {
   key: string
-  raw: DancerAppearanceRaw
+  raw: JudgeAppearanceRaw
   competition: Competition | null
 }
 
-export interface UseDancerProfile {
+export interface UseJudgeProfile {
   loading: Ref<boolean>
   notFound: Ref<boolean>
   displayName: Ref<string>
   image: Ref<string | null>
+  bio: Ref<string | null>
   location: Ref<string | null>
-  appearances: Ref<DancerAppearance[]>
-  upcoming: Ref<DancerAppearance[]>
-  past: Ref<DancerAppearance[]>
+  appearances: Ref<JudgeAppearance[]>
+  upcoming: Ref<JudgeAppearance[]>
+  past: Ref<JudgeAppearance[]>
   totalComps: Ref<number>
   compsThisYear: Ref<number>
 }
 
-const KEY: InjectionKey<UseDancerProfile> = Symbol('dancerProfile')
+const KEY: InjectionKey<UseJudgeProfile> = Symbol('judgeProfile')
 
-export function provideDancerProfile(dancerId: Ref<string>): UseDancerProfile {
-  const profile = createDancerProfile(dancerId)
+export function provideJudgeProfile(judgeId: Ref<string>): UseJudgeProfile {
+  const profile = createJudgeProfile(judgeId)
   provide(KEY, profile)
   return profile
 }
 
-export function useDancerProfile(): UseDancerProfile {
+export function useJudgeProfile(): UseJudgeProfile {
   const injected = inject(KEY, null)
-  if (!injected) throw new Error('useDancerProfile() called outside DancerLayout')
+  if (!injected) throw new Error('useJudgeProfile() called outside JudgeLayout')
   return injected
 }
 
 function latestNonNull<T>(
-  list: DancerAppearance[],
-  pick: (a: DancerAppearance) => T | null | undefined,
+  list: JudgeAppearance[],
+  pick: (a: JudgeAppearance) => T | null | undefined,
 ): T | null {
   for (const a of list) {
     const v = pick(a)
@@ -83,15 +75,14 @@ function latestNonNull<T>(
   return null
 }
 
-function createDancerProfile(dancerId: Ref<string>): UseDancerProfile {
-  const recent = useRecentDancers()
+function createJudgeProfile(judgeId: Ref<string>): UseJudgeProfile {
   const loading = ref(false)
   const notFound = ref(false)
-  const aggregate = ref<DancerAggregate | null>(null)
+  const aggregate = ref<JudgeAggregate | null>(null)
   const compMeta = ref<Record<string, Competition | null>>({})
 
   watch(
-    dancerId,
+    judgeId,
     async (id) => {
       if (!id) {
         aggregate.value = null
@@ -101,18 +92,14 @@ function createDancerProfile(dancerId: Ref<string>): UseDancerProfile {
       loading.value = true
       notFound.value = false
       try {
-        const snap = await get(child(dataRef('dancers'), id))
+        const snap = await get(child(dataRef('judges'), id))
         const value = snap.val()
         if (value && typeof value === 'object') {
-          const agg = value as DancerAggregate
-          aggregate.value = agg
-          insertEntityAggregate('dancers', id, agg)
-          // Record into recentDancers eagerly so back-nav to /dancers has the
-          // row in place for the view-transition. The deferred watcher below
-          // also calls this on later displayName changes; calling sync here
-          // covers the back-before-displayName-settles case.
-          const eagerName = agg.name?.trim()
-          if (eagerName) recent.record(id, eagerName)
+          aggregate.value = value as JudgeAggregate
+          // Seed the /judges list cache with this row so back-nav from the
+          // detail page has a real row in the DOM for the view-transition
+          // morph to land on (without paying for a full list fetch).
+          insertEntityAggregate('judges', id, value as JudgeAggregate)
         } else {
           aggregate.value = null
           notFound.value = true
@@ -127,6 +114,7 @@ function createDancerProfile(dancerId: Ref<string>): UseDancerProfile {
     { immediate: true },
   )
 
+  // Fetch comp meta for every appearance (cached by fetchCompetitionMeta).
   watch(
     aggregate,
     async (agg) => {
@@ -149,10 +137,11 @@ function createDancerProfile(dancerId: Ref<string>): UseDancerProfile {
     { immediate: true },
   )
 
-  const appearances = computed<DancerAppearance[]>(() => {
+  // Sorted: most recent (or future) first → past in descending order.
+  const appearances = computed<JudgeAppearance[]>(() => {
     const apps = aggregate.value?.appearances || {}
     return Object.entries(apps)
-      .map<DancerAppearance>(([key, raw]) => ({
+      .map<JudgeAppearance>(([key, raw]) => ({
         key,
         raw,
         competition: raw.competitionId
@@ -187,10 +176,11 @@ function createDancerProfile(dancerId: Ref<string>): UseDancerProfile {
     const fn = latestNonNull(apps, (a) => a.raw.firstName) ?? ''
     const ln = latestNonNull(apps, (a) => a.raw.lastName) ?? ''
     const composed = `${fn} ${ln}`.trim()
-    return composed || aggregate.value?.name?.trim() || 'Dancer'
+    return composed || aggregate.value?.name?.trim() || 'Judge'
   })
 
   const image = computed(() => latestNonNull(appearances.value, (a) => a.raw.image))
+  const bio = computed(() => latestNonNull(appearances.value, (a) => a.raw.bio))
   const location = computed(() => latestNonNull(appearances.value, (a) => a.raw.location))
 
   const totalComps = computed(() => {
@@ -214,21 +204,12 @@ function createDancerProfile(dancerId: Ref<string>): UseDancerProfile {
     return ids.size
   })
 
-  watch(
-    [dancerId, displayName, notFound],
-    ([id, name, missing]) => {
-      if (!id || missing) return
-      const trimmed = name?.trim()
-      if (!trimmed || trimmed === 'Dancer') return
-      recent.record(id, trimmed)
-    },
-  )
-
   return {
     loading,
     notFound,
     displayName,
     image,
+    bio,
     location,
     appearances,
     upcoming,
