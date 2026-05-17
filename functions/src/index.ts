@@ -6,6 +6,7 @@ import * as Dancers from './dancers';
 import * as Competitions from './competitions';
 import * as Judges from './judges';
 import * as Pipers from './pipers';
+import * as Venues from './venues';
 import { getOnSearchAll } from './search';
 import { runBackfillCoords } from './backfillCoords';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
@@ -104,32 +105,57 @@ export const reindexCompetitionsPublished = functions.https.onCall(async (data, 
 });
 
 const dancersRef = configDatabase.ref(`/${env}/competitions:data/{competitionId}/dancers/{dancerId}`);
-export const dancerCreated = !isCypress() && dancersRef.onCreate(Dancers.onCreate);
-export const dancerUpdated = !isCypress() && dancersRef.onUpdate(Dancers.onUpdate);
-export const dancerDeleted = !isCypress() && dancersRef.onDelete(Dancers.onDelete);
+export const dancerCreated = !isCypress() && dancersRef.onCreate(Dancers.getOnCreate(appConfig.db));
+export const dancerUpdated = !isCypress() && dancersRef.onUpdate(Dancers.getOnUpdate(appConfig.db));
+export const dancerDeleted = !isCypress() && dancersRef.onDelete(Dancers.getOnDelete(appConfig.db));
 const configHttps = functions.runWith(configRunWith).https;
 export const searchDancers = configHttps.onCall(Dancers.getOnSearch(appConfig.db));
 export const reindexDancers = configHttps.onCall(Dancers.getOnReindex(appConfig.db));
+export const backfillDancerAggregates = configHttps.onCall(
+  Dancers.getOnBackfillAggregates(appConfig.db),
+);
 
 const competitionsIndexRef = configDatabase.ref(`/${env}/competitions/{competitionId}`);
+// One trigger per event, composed: Typesense indexing + venue aggregate.
+const venueOnCreate = Venues.getOnCreate(appConfig.db);
+const venueOnUpdate = Venues.getOnUpdate(appConfig.db);
+const venueOnDelete = Venues.getOnDelete(appConfig.db);
 export const competitionIndexCreated = !isCypress()
-  && competitionsIndexRef.onCreate(Competitions.onCreate);
+  && competitionsIndexRef.onCreate(async (snap, ctx) => {
+    await Competitions.onCreate(snap, ctx);
+    await venueOnCreate(snap, ctx);
+  });
 export const competitionIndexUpdated = !isCypress()
-  && competitionsIndexRef.onUpdate(Competitions.onUpdate);
+  && competitionsIndexRef.onUpdate(async (change, ctx) => {
+    await Competitions.onUpdate(change, ctx);
+    await venueOnUpdate(change, ctx);
+  });
 export const competitionIndexDeleted = !isCypress()
-  && competitionsIndexRef.onDelete(Competitions.onDelete);
+  && competitionsIndexRef.onDelete(async (snap, ctx) => {
+    await Competitions.onDelete(snap, ctx);
+    await venueOnDelete(snap, ctx);
+  });
 export const reindexCompetitions = configHttps.onCall(Competitions.getOnReindex(appConfig.db));
+export const backfillVenueAggregates = configHttps.onCall(
+  Venues.getOnBackfillAggregates(appConfig.db),
+);
 
 const judgesRef = configDatabase.ref(`/${env}/competitions:data/{competitionId}/staff/{staffId}`);
-export const judgeCreated = !isCypress() && judgesRef.onCreate(Judges.onCreate);
-export const judgeUpdated = !isCypress() && judgesRef.onUpdate(Judges.onUpdate);
-export const judgeDeleted = !isCypress() && judgesRef.onDelete(Judges.onDelete);
+export const judgeCreated = !isCypress() && judgesRef.onCreate(Judges.getOnCreate(appConfig.db));
+export const judgeUpdated = !isCypress() && judgesRef.onUpdate(Judges.getOnUpdate(appConfig.db));
+export const judgeDeleted = !isCypress() && judgesRef.onDelete(Judges.getOnDelete(appConfig.db));
 export const reindexJudges = configHttps.onCall(Judges.getOnReindex(appConfig.db));
+export const backfillJudgeAggregates = configHttps.onCall(
+  Judges.getOnBackfillAggregates(appConfig.db),
+);
 
 const pipersRef = configDatabase.ref(`/${env}/competitions:data/{competitionId}/staff/{staffId}`);
-export const piperCreated = !isCypress() && pipersRef.onCreate(Pipers.onCreate);
-export const piperUpdated = !isCypress() && pipersRef.onUpdate(Pipers.onUpdate);
-export const piperDeleted = !isCypress() && pipersRef.onDelete(Pipers.onDelete);
+export const piperCreated = !isCypress() && pipersRef.onCreate(Pipers.getOnCreate(appConfig.db));
+export const piperUpdated = !isCypress() && pipersRef.onUpdate(Pipers.getOnUpdate(appConfig.db));
+export const piperDeleted = !isCypress() && pipersRef.onDelete(Pipers.getOnDelete(appConfig.db));
 export const reindexPipers = configHttps.onCall(Pipers.getOnReindex(appConfig.db));
+export const backfillPiperAggregates = configHttps.onCall(
+  Pipers.getOnBackfillAggregates(appConfig.db),
+);
 
 export const searchAll = configHttps.onCall(getOnSearchAll(appConfig.db));

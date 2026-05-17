@@ -1,26 +1,11 @@
 import { https } from 'firebase-functions/v1';
-import Typesense from 'typesense';
 import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 
-import { isCypress, isEmulator } from './utility/env';
+import { isCypress } from './utility/env';
 import { ensureAdmin } from './utility/competition';
-import { getConfig } from './utility/config';
+import { getTypesense } from './utility/typesense';
+import { createAggregator, type AggregatorConfig } from './utility/aggregate';
 
-let typesenseClient: InstanceType<typeof Typesense.Client>;
-function getTypesense() {
-  if (!typesenseClient) {
-    typesenseClient = new Typesense.Client({
-      nodes: [{
-        host: isEmulator() ? 'localhost' : getConfig().typesense?.host,
-        port: isEmulator() ? 8108 : 443,
-        protocol: isEmulator() ? 'http' : 'https',
-      }],
-      apiKey: isEmulator() ? 'xyz' : getConfig().typesense?.api_key,
-      connectionTimeoutSeconds: 60,
-    });
-  }
-  return typesenseClient;
-}
 const schema: CollectionCreateSchema = {
   name: 'dancers',
   fields: [
@@ -56,25 +41,91 @@ function dancerExtender(dancer, { dancerId, competitionId }) {
   };
 }
 
-export async function onCreate(snap, ctx) {
-  if (isCypress()) return;
-
-  const { dancerId, competitionId } = ctx.params;
-  const doc = dancerExtender(snap.val(), { dancerId, competitionId });
-  await getTypesense().collections('dancers').documents().create(doc);
+interface DancerRecord {
+  firstName?: string
+  lastName?: string
+  image?: string
+  location?: string
+  number?: number | string
+  dancerId?: string
 }
-export async function onUpdate({ after: snap }, ctx) {
-  if (isCypress()) return;
 
-  const { dancerId, competitionId } = ctx.params;
-  const doc = dancerExtender(snap.val(), { dancerId, competitionId });
-  await getTypesense().collections('dancers').documents(dancerId).update(doc);
+interface DancerAppearance {
+  competitionId: string
+  dancerId: string | null
+  firstName: string | null
+  lastName: string | null
+  image: string | null
+  location: string | null
+  number: number | null
 }
-export async function onDelete(snap, ctx) {
-  if (isCypress()) return;
 
-  const { dancerId } = ctx.params;
-  await getTypesense().collections('dancers').documents(dancerId).delete();
+function dancerName(d: DancerRecord): string {
+  return `${(d.firstName || '').trim()} ${(d.lastName || '').trim()}`.trim();
+}
+
+const aggregatorConfig: AggregatorConfig<DancerRecord, DancerAppearance> = {
+  namespace: 'dancers',
+  sectionName: 'dancers',
+  recordIdParam: 'dancerId',
+  backPointerField: 'dancerId',
+  // Every dancer record contributes — no type filter like staff has.
+  predicate: (d): d is DancerRecord => !!d,
+  nameOf: dancerName,
+  nameFromAppearance: (a) => `${(a.firstName || '').trim()} ${(a.lastName || '').trim()}`.trim(),
+  toAppearance: (dancer, { competitionId, recordId }) => ({
+    competitionId,
+    // The per-comp dancer push key. NOT the aggregate id — that's the key of
+    // /dancers/{aggregateId}/appearances/{compId:dancerId}.
+    dancerId: recordId,
+    firstName: dancer.firstName ?? null,
+    lastName: dancer.lastName ?? null,
+    image: dancer.image ?? null,
+    location: dancer.location ?? null,
+    number: typeof dancer.number === 'string'
+      ? Number.parseInt(dancer.number, 10) || null
+      : dancer.number ?? null,
+  }),
+};
+
+export function getOnCreate(db: any) {
+  const agg = createAggregator(db, aggregatorConfig);
+  return async function onCreate(snap: any, ctx: any) {
+    if (isCypress()) return;
+    const { dancerId, competitionId } = ctx.params;
+    const doc = dancerExtender(snap.val(), { dancerId, competitionId });
+    await getTypesense().collections('dancers').documents().upsert(doc);
+    await agg.onCreate(snap, ctx);
+  };
+}
+
+export function getOnUpdate(db: any) {
+  const agg = createAggregator(db, aggregatorConfig);
+  return async function onUpdate(change: any, ctx: any) {
+    if (isCypress()) return;
+    const { dancerId, competitionId } = ctx.params;
+    const doc = dancerExtender(change.after.val(), { dancerId, competitionId });
+    await getTypesense().collections('dancers').documents().upsert(doc);
+    await agg.onUpdate(change, ctx);
+  };
+}
+
+export function getOnDelete(db: any) {
+  const agg = createAggregator(db, aggregatorConfig);
+  return async function onDelete(snap: any, ctx: any) {
+    if (isCypress()) return;
+    const { dancerId } = ctx.params;
+    await getTypesense().collections('dancers').documents(dancerId).delete().catch(() => {});
+    await agg.onDelete(snap, ctx);
+  };
+}
+
+export function getOnBackfillAggregates(db: any) {
+  const agg = createAggregator(db, aggregatorConfig);
+  return async function onBackfillAggregates(_data: unknown, ctx: any) {
+    await ensureAdmin(ctx, db);
+    return agg.backfill();
+  };
 }
 
 export function getOnSearch(db) {
