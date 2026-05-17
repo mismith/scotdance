@@ -1,27 +1,9 @@
 import { https } from 'firebase-functions';
-import Typesense from 'typesense';
 
-import { isEmulator } from './utility/env';
-import { getConfig } from './utility/config';
+import { getTypesense } from './utility/typesense';
 
-let typesenseClient: InstanceType<typeof Typesense.Client>;
-function getTypesense() {
-  if (!typesenseClient) {
-    typesenseClient = new Typesense.Client({
-      nodes: [{
-        host: isEmulator() ? 'localhost' : getConfig().typesense?.host,
-        port: isEmulator() ? 8108 : 443,
-        protocol: isEmulator() ? 'http' : 'https',
-      }],
-      apiKey: isEmulator() ? 'xyz' : getConfig().typesense?.api_key,
-      connectionTimeoutSeconds: 60,
-    });
-  }
-  return typesenseClient;
-}
-
-type EntityType = 'competitions' | 'dancers' | 'judges' | 'pipers' | 'locations';
-const ALL_TYPES: EntityType[] = ['competitions', 'dancers', 'judges', 'pipers', 'locations'];
+type EntityType = 'competitions' | 'dancers' | 'judges' | 'pipers' | 'places';
+const ALL_TYPES: EntityType[] = ['competitions', 'dancers', 'judges', 'pipers', 'places'];
 
 interface SearchAllParams {
   q?: string;
@@ -35,7 +17,7 @@ function emptyOut() {
     dancers: null,
     judges: null,
     pipers: null,
-    locations: null,
+    places: null,
   };
 }
 
@@ -78,7 +60,7 @@ export function getOnSearchAll(db: any) {
     // Build searches and remember which result slot each one targets.
     const slots: Array<
     { key: 'competitions' | 'dancers' | 'judges' | 'pipers' }
-    | { key: 'locations'; kind: 'venue' | 'locality' | 'region' }
+    | { key: 'places'; kind: 'venue' | 'locality' | 'region' }
     > = [];
     const searches: any[] = [];
 
@@ -103,11 +85,11 @@ export function getOnSearchAll(db: any) {
           group_by: '$name',
           group_limit: 5,
         });
-      } else if (type === 'locations') {
+      } else if (type === 'places') {
         // Three sub-queries — one per place kind. Each is scoped to its own
         // field so a comp-name match doesn't surface its parent locality.
         (['venue', 'locality', 'region'] as const).forEach((kind) => {
-          slots.push({ key: 'locations', kind });
+          slots.push({ key: 'places', kind });
           searches.push({
             collection: 'competitions',
             q,
@@ -129,10 +111,10 @@ export function getOnSearchAll(db: any) {
       const out: any = emptyOut();
       slots.forEach((slot, i) => {
         const result = results[i] ?? null;
-        if (slot.key === 'locations') {
-          if (!out.locations) out.locations = { venues: null, localities: null, regions: null };
+        if (slot.key === 'places') {
+          if (!out.places) out.places = { venues: null, localities: null, regions: null };
           const bucket = `${slot.kind}s` as 'venues' | 'localities' | 'regions';
-          out.locations[bucket] = result;
+          out.places[bucket] = result;
         } else {
           out[slot.key] = result;
         }

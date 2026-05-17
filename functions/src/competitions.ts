@@ -1,25 +1,8 @@
-import Typesense from 'typesense';
 import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 
-import { isCypress, isEmulator } from './utility/env';
+import { isCypress } from './utility/env';
 import { ensureAdmin } from './utility/competition';
-import { getConfig } from './utility/config';
-
-let typesenseClient: InstanceType<typeof Typesense.Client>;
-function getTypesense() {
-  if (!typesenseClient) {
-    typesenseClient = new Typesense.Client({
-      nodes: [{
-        host: isEmulator() ? 'localhost' : getConfig().typesense?.host,
-        port: isEmulator() ? 8108 : 443,
-        protocol: isEmulator() ? 'http' : 'https',
-      }],
-      apiKey: isEmulator() ? 'xyz' : getConfig().typesense?.api_key,
-      connectionTimeoutSeconds: 60,
-    });
-  }
-  return typesenseClient;
-}
+import { getTypesense } from './utility/typesense';
 
 export const schema: CollectionCreateSchema = {
   name: 'competitions',

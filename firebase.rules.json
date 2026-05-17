@@ -20,6 +20,30 @@
         },
         ".indexOn": ["date"]
       },
+      "judges": {
+        ".read": true
+      },
+      "judges:index": {
+        ".read": true
+      },
+      "pipers": {
+        ".read": true
+      },
+      "pipers:index": {
+        ".read": true
+      },
+      "venues": {
+        ".read": true
+      },
+      "venues:index": {
+        ".read": true
+      },
+      "dancers": {
+        ".read": true
+      },
+      "dancers:index": {
+        ".read": true
+      },
       "competitions:data": {
         "$competitionId": {
           "staff": {
