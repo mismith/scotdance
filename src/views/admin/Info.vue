@@ -83,6 +83,40 @@
             <v-alert :value="Boolean(hasError)" type="error">{{ hasError }}</v-alert>
           </div>
         </div>
+        <div v-else-if="subsectionId === 'aggregators'" class="pa-4">
+          <div class="ma-auto d-flex flex-column" style="gap: 1.5rem; max-width: 560px;">
+            <p class="caption grey--text mb-0">
+              Rebuilds the /{entity} and /{entity}:index aggregate trees from per-comp
+              records. Idempotent — safe to re-run.
+            </p>
+
+            <div
+              v-for="entity in aggregatorEntities"
+              :key="entity.key"
+              class="d-flex flex-column"
+              style="gap: 0.5rem;"
+            >
+              <v-btn
+                :loading="aggregatorJobs[entity.key].loading"
+                @click="runBackfillAggregate(entity.key)"
+              >
+                Backfill {{ entity.label }}
+              </v-btn>
+              <div
+                v-if="aggregatorJobs[entity.key].result"
+                class="caption grey--text"
+              >
+                {{ aggregatorJobs[entity.key].result.linked.toLocaleString() }} {{ entity.label.toLowerCase() }} indexed
+                <template v-if="aggregatorJobs[entity.key].result.skipped">
+                  · {{ aggregatorJobs[entity.key].result.skipped.toLocaleString() }} {{ entity.ignoredLabel }}
+                </template>
+                · {{ aggregatorJobs[entity.key].result.competitions.toLocaleString() }} competitions scanned
+              </div>
+            </div>
+
+            <v-alert :value="Boolean(hasError)" type="error">{{ hasError }}</v-alert>
+          </div>
+        </div>
         <div v-else-if="subsectionId === 'geolocation'" class="pa-4">
           <div class="ma-auto d-flex flex-column" style="gap: 1.5rem; max-width: 560px;">
             <div v-if="statsLoading" class="text-center grey--text">Counting…</div>
@@ -189,6 +223,21 @@ function reindexCount(key, data) {
   return Array.isArray(data) ? data.length : 0;
 }
 
+// Aggregator backfills — rebuild /{entity} and /{entity}:index trees from
+// per-comp records. Functions live in functions/src/{judges,pipers,venues,dancers}.ts.
+const aggregatorCallables = {
+  judges: fns.httpsCallable('backfillJudgeAggregates'),
+  pipers: fns.httpsCallable('backfillPiperAggregates'),
+  venues: fns.httpsCallable('backfillVenueAggregates'),
+  dancers: fns.httpsCallable('backfillDancerAggregates'),
+};
+const aggregatorEntitiesList = [
+  { key: 'judges', label: 'Judges', ignoredLabel: 'staff not marked as judges' },
+  { key: 'pipers', label: 'Pipers', ignoredLabel: 'staff not marked as pipers' },
+  { key: 'venues', label: 'Venues', ignoredLabel: 'competitions without a venue' },
+  { key: 'dancers', label: 'Dancers', ignoredLabel: 'dancers with no name' },
+];
+
 export default {
   name: 'AdminInfo',
   reactiveInject: {
@@ -217,6 +266,14 @@ export default {
         dancers: { loading: false, count: null },
         judges: { loading: false, count: null },
         pipers: { loading: false, count: null },
+      },
+
+      aggregatorEntities: aggregatorEntitiesList,
+      aggregatorJobs: {
+        judges: { loading: false, result: null },
+        pipers: { loading: false, result: null },
+        venues: { loading: false, result: null },
+        dancers: { loading: false, result: null },
       },
     };
   },
@@ -258,6 +315,27 @@ export default {
       try {
         const { data } = await reindexCallables[key]();
         job.count = reindexCount(key, data);
+      } catch (error) {
+        this.hasError = error?.message || error;
+        console.error(error); // eslint-disable-line no-console
+      }
+      job.loading = false;
+    },
+
+    async runBackfillAggregate(key) {
+      const job = this.aggregatorJobs[key];
+      if (!job || job.loading) return;
+      this.hasError = false;
+      job.loading = true;
+      try {
+        const { data } = await aggregatorCallables[key]();
+        // Functions return { linked, skipped, competitions }; defensive defaults
+        // so the UI doesn't blow up if a future change drops a field.
+        this.$set(job, 'result', {
+          linked: data?.linked ?? 0,
+          skipped: data?.skipped ?? 0,
+          competitions: data?.competitions ?? 0,
+        });
       } catch (error) {
         this.hasError = error?.message || error;
         console.error(error); // eslint-disable-line no-console

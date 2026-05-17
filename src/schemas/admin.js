@@ -1,4 +1,9 @@
-import { mdiCounter, mdiDatabaseRefresh, mdiMapMarkerRadius } from '@mdi/js';
+import {
+  mdiAccountGroup,
+  mdiCounter,
+  mdiDatabaseRefresh,
+  mdiMapMarkerRadius,
+} from '@mdi/js';
 
 export default {
   info: {
@@ -35,8 +40,13 @@ export default {
         name: 'Indexes',
         icon: mdiDatabaseRefresh,
       },
-      geolocation: {
+      aggregators: {
         order: 3,
+        name: 'Aggregators',
+        icon: mdiAccountGroup,
+      },
+      geolocation: {
+        order: 4,
         name: 'Geolocation',
         icon: mdiMapMarkerRadius,
       },
