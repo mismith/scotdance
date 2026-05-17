@@ -13,7 +13,11 @@ const props = defineProps<{
 const auth = useAuthStore()
 const favorites = useFavoritesStore()
 
-const dancerIds = computed(() => props.appearances.map((a) => a.hit.id))
+const dancerIds = computed(() =>
+  props.appearances
+    .map((a) => a.raw.dancerId)
+    .filter((id): id is string => !!id),
+)
 
 const isFavorite = computed(() =>
   dancerIds.value.some((id) => favorites.isFavoriteDancer(id)),

@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import maplibregl, {
   type Map as MaplibreMap,
   type Marker as MaplibreMarker,
 } from 'maplibre-gl'
 import Supercluster from 'supercluster'
 import { useLocalStorage } from '@vueuse/core'
-import { MapPin } from '@lucide/vue'
-import CompetitionPickerSheet from '@/components/CompetitionPickerSheet.vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import { useFavoritesStore } from '@/stores/favorites'
 import { daysFromToday } from '@/lib/format'
@@ -46,7 +45,7 @@ const { isDark } = useTheme()
 const mapContainer = ref<HTMLElement | null>(null)
 const mapInstance = shallowRef<MaplibreMap | null>(null)
 const mapReady = ref(false)
-const activeVenue = ref<VenueGroup | null>(null)
+const router = useRouter()
 
 const venueGroups = computed<VenueGroup[]>(() => groupByVenue(dateFiltered.value))
 
@@ -125,7 +124,21 @@ function renderMarkers(): void {
       el.className = `map-pin ${isFav ? 'is-fav' : ''}`
       el.setAttribute('aria-label', group.venue || 'Venue')
       el.addEventListener('click', () => {
-        activeVenue.value = group
+        // Venues now have first-class profiles. Any comp at this pin carries
+        // the back-pointer (`venueId`) populated by the trigger/backfill. Fall
+        // back to opening the first comp directly if no aggregate is linked
+        // yet (e.g. pre-backfill).
+        const venueId = group.competitions
+          .map((c) => (c as { venueId?: string }).venueId)
+          .find((id): id is string => !!id)
+        if (venueId) {
+          router.push({ name: 'venue.info', params: { venueId } })
+        } else if (group.competitions[0]) {
+          router.push({
+            name: 'competition.info',
+            params: { competitionId: group.competitions[0].id },
+          })
+        }
       })
     }
 
@@ -237,14 +250,6 @@ watch(venueGroups, () => {
 
 <template>
   <div ref="mapContainer" class="relative flex-1 overflow-hidden" />
-  <CompetitionPickerSheet
-    :open="activeVenue !== null"
-    :title="activeVenue?.venue || 'Venue'"
-    :subtitle="activeVenue?.location"
-    :icon="MapPin"
-    :competitions="activeVenue?.competitions ?? []"
-    @close="activeVenue = null"
-  />
 </template>
 
 <style>

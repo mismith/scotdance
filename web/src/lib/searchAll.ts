@@ -2,9 +2,9 @@ import { httpsCallable } from 'firebase/functions'
 import { functions } from '@/firebase'
 import { initialsOf } from '@/lib/format'
 
-export type SearchEntityType = 'competitions' | 'dancers' | 'judges' | 'pipers' | 'locations'
+export type SearchEntityType = 'competitions' | 'dancers' | 'judges' | 'pipers' | 'places'
 
-export type LocationKind = 'venue' | 'locality' | 'region'
+export type PlaceKind = 'venue' | 'locality' | 'region'
 
 interface RawCompetitionDoc {
   id?: string
@@ -46,7 +46,7 @@ interface RawSearchResult<D> {
   found?: number
 }
 
-interface RawLocationsBlock {
+interface RawPlacesBlock {
   venues: RawSearchResult<RawCompetitionDoc> | null
   localities: RawSearchResult<RawCompetitionDoc> | null
   regions: RawSearchResult<RawCompetitionDoc> | null
@@ -57,7 +57,7 @@ interface RawSearchAllResponse {
   dancers: RawSearchResult<RawPersonDoc> | null
   judges: RawSearchResult<RawPersonDoc> | null
   pipers: RawSearchResult<RawPersonDoc> | null
-  locations: RawLocationsBlock | null
+  places: RawPlacesBlock | null
 }
 
 export interface SearchCompetitionHit {
@@ -77,8 +77,8 @@ export interface SearchPersonGroup {
   image?: string
 }
 
-export interface SearchLocationGroup {
-  kind: LocationKind
+export interface SearchPlaceGroup {
+  kind: PlaceKind
   name: string
   parentLabel?: string
   count: number
@@ -94,7 +94,7 @@ export interface SearchAllResults {
   dancers: { groups: SearchPersonGroup[]; total: number }
   judges: { groups: SearchPersonGroup[]; total: number }
   pipers: { groups: SearchPersonGroup[]; total: number }
-  locations: { groups: SearchLocationGroup[]; total: number }
+  places: { groups: SearchPlaceGroup[]; total: number }
 }
 
 interface CallParams {
@@ -157,7 +157,7 @@ function mapPeople(
   return { groups, total: result.found ?? groups.length }
 }
 
-function parentLabelFor(kind: LocationKind, sample: RawCompetitionDoc | undefined): string | undefined {
+function parentLabelFor(kind: PlaceKind, sample: RawCompetitionDoc | undefined): string | undefined {
   if (!sample) return undefined
   if (kind === 'venue') {
     // Venue's parent is its locality + region (city, province)
@@ -171,13 +171,13 @@ function parentLabelFor(kind: LocationKind, sample: RawCompetitionDoc | undefine
   return sample.country || undefined
 }
 
-function mapLocationsBucket(
-  kind: LocationKind,
+function mapPlacesBucket(
+  kind: PlaceKind,
   result: RawSearchResult<RawCompetitionDoc> | null,
-): SearchLocationGroup[] {
+): SearchPlaceGroup[] {
   if (!result) return []
   return (result.grouped_hits ?? [])
-    .map<SearchLocationGroup | null>((g) => {
+    .map<SearchPlaceGroup | null>((g) => {
       const name = (g.group_key?.[0] ?? '').trim()
       if (!name) return null
       const hits = (g.hits ?? []).map((h) => h.document).filter((d): d is RawCompetitionDoc => !!d)
@@ -198,15 +198,15 @@ function mapLocationsBucket(
         locality: sample.locality,
       }
     })
-    .filter((g): g is SearchLocationGroup => g !== null)
+    .filter((g): g is SearchPlaceGroup => g !== null)
 }
 
-function mapLocations(block: RawLocationsBlock | null): SearchAllResults['locations'] {
+function mapPlaces(block: RawPlacesBlock | null): SearchAllResults['places'] {
   if (!block) return { groups: [], total: 0 }
   const merged = [
-    ...mapLocationsBucket('region', block.regions),
-    ...mapLocationsBucket('locality', block.localities),
-    ...mapLocationsBucket('venue', block.venues),
+    ...mapPlacesBucket('region', block.regions),
+    ...mapPlacesBucket('locality', block.localities),
+    ...mapPlacesBucket('venue', block.venues),
   ]
   // Dedupe identical name+kind (rare but possible across buckets, e.g. a
   // venue and a locality sharing a name).
@@ -229,7 +229,7 @@ export async function searchAll(params: CallParams): Promise<SearchAllResults> {
       dancers: { groups: [], total: 0 },
       judges: { groups: [], total: 0 },
       pipers: { groups: [], total: 0 },
-      locations: { groups: [], total: 0 },
+      places: { groups: [], total: 0 },
     }
   }
   const key = cacheKey({ ...params, q: trimmed })
@@ -245,7 +245,7 @@ export async function searchAll(params: CallParams): Promise<SearchAllResults> {
         dancers: mapPeople(data?.dancers ?? null),
         judges: mapPeople(data?.judges ?? null),
         pipers: mapPeople(data?.pipers ?? null),
-        locations: mapLocations(data?.locations ?? null),
+        places: mapPlaces(data?.places ?? null),
       }
       responseCache.set(key, out)
       return out

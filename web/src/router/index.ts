@@ -1,11 +1,25 @@
+import type { Component } from 'vue'
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
+import { Calendars, Gavel, Home, Music, School, Users } from '@lucide/vue'
 import { startViewTransition } from '@/lib/transition'
 import { useAuthStore } from '@/stores/auth'
 
 declare module 'vue-router' {
   interface RouteMeta {
     requiresAuth?: boolean
+    /**
+     * Layout renders its own bottom nav (e.g. competition info tabs, dancer
+     * profile tabs). AppShell skips GlobalBottomNav so the two don't stack.
+     */
+    ownsBottomNav?: boolean
+    /**
+     * Marks this route as a navigable section. The icon/label are surfaced
+     * by chrome that needs to refer to the section dynamically — e.g. the
+     * /search bottom-left "back to {wherever you came from}" pill.
+     */
+    sectionIcon?: Component
+    sectionLabel?: string
   }
 }
 
@@ -14,15 +28,36 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     name: 'home',
     component: () => import('@/views/Home.vue'),
+    meta: { sectionIcon: Home, sectionLabel: 'About ScotDance.app' },
   },
   {
     path: '/dancers',
     name: 'dancers',
     component: () => import('@/views/Dancers.vue'),
+    meta: { sectionIcon: Users, sectionLabel: 'Dancers' },
+  },
+  {
+    path: '/judges',
+    name: 'judges',
+    component: () => import('@/views/Judges.vue'),
+    meta: { sectionIcon: Gavel, sectionLabel: 'Judges' },
+  },
+  {
+    path: '/pipers',
+    name: 'pipers',
+    component: () => import('@/views/Pipers.vue'),
+    meta: { sectionIcon: Music, sectionLabel: 'Pipers' },
+  },
+  {
+    path: '/venues',
+    name: 'venues',
+    component: () => import('@/views/Venues.vue'),
+    meta: { sectionIcon: School, sectionLabel: 'Venues' },
   },
   {
     path: '/dancers/:dancerId',
     component: () => import('@/views/dancer/DancerLayout.vue'),
+    meta: { ownsBottomNav: true },
     children: [
       { path: '', redirect: { name: 'dancer.info' } },
       {
@@ -38,6 +73,60 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: '/judges/:judgeId',
+    component: () => import('@/views/judge/JudgeLayout.vue'),
+    meta: { ownsBottomNav: true },
+    children: [
+      { path: '', redirect: { name: 'judge.info' } },
+      {
+        path: 'info',
+        name: 'judge.info',
+        component: () => import('@/views/judge/Info.vue'),
+      },
+      {
+        path: 'results',
+        name: 'judge.results',
+        component: () => import('@/views/judge/Results.vue'),
+      },
+    ],
+  },
+  {
+    path: '/pipers/:piperId',
+    component: () => import('@/views/piper/PiperLayout.vue'),
+    meta: { ownsBottomNav: true },
+    children: [
+      { path: '', redirect: { name: 'piper.info' } },
+      {
+        path: 'info',
+        name: 'piper.info',
+        component: () => import('@/views/piper/Info.vue'),
+      },
+      {
+        path: 'results',
+        name: 'piper.results',
+        component: () => import('@/views/piper/Results.vue'),
+      },
+    ],
+  },
+  {
+    path: '/venues/:venueId',
+    component: () => import('@/views/venue/VenueLayout.vue'),
+    meta: { ownsBottomNav: true },
+    children: [
+      { path: '', redirect: { name: 'venue.info' } },
+      {
+        path: 'info',
+        name: 'venue.info',
+        component: () => import('@/views/venue/Info.vue'),
+      },
+      {
+        path: 'results',
+        name: 'venue.results',
+        component: () => import('@/views/venue/Results.vue'),
+      },
+    ],
+  },
+  {
     path: '/search',
     name: 'search',
     component: () => import('@/views/Search.vue'),
@@ -46,10 +135,12 @@ const routes: RouteRecordRaw[] = [
     path: '/competitions',
     name: 'competitions',
     component: () => import('@/views/competitions/CompetitionsList.vue'),
+    meta: { sectionIcon: Calendars, sectionLabel: 'Competitions' },
   },
   {
     path: '/competitions/:competitionId',
     component: () => import('@/views/competition/CompetitionLayout.vue'),
+    meta: { ownsBottomNav: true },
     children: [
       { path: '', redirect: { name: 'competition.info' } },
       {

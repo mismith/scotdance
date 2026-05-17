@@ -1,20 +1,18 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { onKeyStroke } from '@vueuse/core'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import {
   ArrowDownToLine,
-  Calendars,
-  Home,
   MoreHorizontal,
   Search as SearchIcon,
-  Users,
   X,
 } from '@lucide/vue'
 import { useUpdate } from '@/composables/useUpdate'
 import { useGlobalSearch } from '@/composables/useGlobalSearch'
 import { backPath, preferBackClick } from '@/lib/back'
 import { isIos } from '@/lib/platform'
+import { sectionMeta } from '@/lib/sectionMeta'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,35 +26,58 @@ onKeyStroke('Escape', () => (moreOpen.value = false))
 const isSearch = computed(() => route.name === 'search')
 
 const tabs = [
-  {
-    name: 'Competitions',
-    to: { name: 'competitions' },
-    icon: Calendars,
-    isActive: () => route.path.startsWith('/competitions'),
-  },
-  {
-    name: 'Dancers',
-    to: { name: 'dancers' },
-    icon: Users,
-    isActive: () => route.path.startsWith('/dancers'),
-  },
+  { ...sectionMeta('competitions'), isActive: () => route.path.startsWith('/competitions') },
+  { ...sectionMeta('dancers'), isActive: () => route.path.startsWith('/dancers') },
 ]
 
-// /search is a leaf — the back-target is whichever route we came from. Resolve
-// each time isSearch flips on so re-entering /search after navigating away
-// picks a fresh target.
+const entityLinks = [
+  sectionMeta('judges'),
+  sectionMeta('pipers'),
+  sectionMeta('venues'),
+]
+
+const homeLink = sectionMeta('home')
+
+// Show the More button as active when its dropdown is open OR the current
+// route is one of the links nested inside it (entity links + the home/About
+// link at the top).
+const moreActive = computed(
+  () =>
+    moreOpen.value
+    || route.path === homeLink.path
+    || entityLinks.some((e) => route.path.startsWith(e.path)),
+)
+
+// /search is a leaf — the back-target is whichever route we came from. We
+// track it via a ref updated on every nav (rather than reading window.history
+// inline from a computed), since `window.history.state` isn't a reactive
+// source and a computed wouldn't otherwise know to refresh.
+const previousFullPath = ref<string | null>(backPath())
+watch(() => route.fullPath, () => { previousFullPath.value = backPath() })
+
+// Resolves the back path to the section that owns it (via the deepest matched
+// route carrying `sectionIcon` meta). No hardcoded list — adding a new
+// section is just adding meta to its route.
+const competitionsLink = sectionMeta('competitions')
 const backInfo = computed(() => {
-  const back = backPath()
-  if (back === '/') {
-    return { icon: Home, label: 'Back to Home', to: { name: 'home' as const } }
+  const back = previousFullPath.value
+  if (back) {
+    const matched = router.resolve(back).matched
+    const section = [...matched].reverse().find((r) => r.meta.sectionIcon && r.name)
+    if (section) {
+      return {
+        icon: section.meta.sectionIcon!,
+        label: `Back to ${section.meta.sectionLabel ?? String(section.name)}`,
+        to: { name: section.name as string },
+      }
+    }
   }
-  if (back && back.startsWith('/dancers')) {
-    return { icon: Users, label: 'Back to Dancers', to: { name: 'dancers' as const } }
-  }
+  // Deep-link entry to /search with no resolvable previous: send them to the
+  // primary landing section.
   return {
-    icon: Calendars,
-    label: 'Back to Competitions',
-    to: { name: 'competitions' as const },
+    icon: competitionsLink.icon,
+    label: `Back to ${competitionsLink.label}`,
+    to: competitionsLink.to,
   }
 })
 
@@ -108,7 +129,7 @@ function clearSearch() {
       >
         <RouterLink
           v-for="tab in tabs"
-          :key="tab.name"
+          :key="tab.label"
           :to="tab.to"
           :class="[
             'relative isolate flex h-14 min-w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-3 font-sans font-medium transition-colors [view-transition-name:match-element]',
@@ -118,7 +139,7 @@ function clearSearch() {
           ]"
         >
           <component :is="tab.icon" class="size-5" />
-          <span class="text-xs leading-none">{{ tab.name }}</span>
+          <span class="text-xs leading-none">{{ tab.label }}</span>
         </RouterLink>
 
         <div class="relative [view-transition-name:match-element]">
@@ -126,8 +147,8 @@ function clearSearch() {
             type="button"
             :class="[
               'relative isolate flex h-14 min-w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-3 font-sans font-medium transition-colors',
-              moreOpen
-                ? `before:bg-card-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:[view-transition-class:fixed-height] before:[view-transition-name:nav-right-active]`
+              moreActive
+                ? `before:bg-card-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:[view-transition-class:fixed-height] before:[view-transition-name:nav-left-active]`
                 : 'opacity-70 hover:opacity-100',
             ]"
             :aria-expanded="moreOpen"
@@ -174,7 +195,7 @@ function clearSearch() {
             >
               <div class="floating-nav w-full overflow-hidden rounded-3xl p-3 font-sans">
                 <RouterLink
-                  :to="{ name: 'home' }"
+                  :to="homeLink.to"
                   :class="[
                     'flex w-full items-center gap-3 rounded-lg p-2.5 text-base font-medium transition-opacity',
                     route.path === '/'
@@ -184,8 +205,8 @@ function clearSearch() {
                   role="menuitem"
                   @click="moreOpen = false"
                 >
-                  <Home class="size-5" />
-                  <span class="flex-1">Home</span>
+                  <component :is="homeLink.icon" class="size-5" />
+                  <span class="flex-1">{{ homeLink.label }}</span>
                 </RouterLink>
 
                 <button
@@ -207,6 +228,26 @@ function clearSearch() {
                     aria-hidden="true"
                   />
                 </button>
+
+                <hr class="border-card-foreground/10 my-2" />
+
+                <RouterLink
+                  v-for="(entity, i) in entityLinks"
+                  :key="entity.label"
+                  :to="entity.to"
+                  :class="[
+                    'flex w-full items-center gap-3 rounded-lg p-2.5 text-base font-medium transition-opacity',
+                    i > 0 && 'mt-1',
+                    route.path.startsWith(entity.path)
+                      ? 'bg-card-foreground/10'
+                      : 'opacity-70 hover:opacity-100',
+                  ]"
+                  role="menuitem"
+                  @click="moreOpen = false"
+                >
+                  <component :is="entity.icon" class="size-5" />
+                  <span class="flex-1">{{ entity.label }}</span>
+                </RouterLink>
               </div>
             </div>
           </Transition>

@@ -1,108 +1,56 @@
 <script setup lang="ts">
 import { computed, toRef } from 'vue'
-import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
-import DancerBottomNav from '@/components/nav/DancerBottomNav.vue'
+import { useRoute } from 'vue-router'
+import EntityLayout from '@/components/EntityLayout.vue'
 import FavoriteDancerProfileButton from '@/components/FavoriteDancerProfileButton.vue'
-import ShareButton from '@/components/ShareButton.vue'
-import EmptyState from '@/components/EmptyState.vue'
-import { ChevronLeft, UserSearch } from '@lucide/vue'
 import { provideDancerProfile } from '@/composables/useDancerProfile'
-import { preferBackClick, useExternalBack } from '@/lib/back'
+import { useFavoritesStore } from '@/stores/favorites'
 import { initialsOf } from '@/lib/format'
 import { useVtScope } from '@/lib/viewTransitionFocus'
 
 const route = useRoute()
-const router = useRouter()
 const dancerId = computed(() => String(route.params.dancerId ?? ''))
 
-// Tag the current dancer as the view-transition source so back-nav re-tags
-// the right row before the list remounts.
 useVtScope('dancer').syncFocus(dancerId)
 
-const { displayName, location, appearances, loading, notFound } = provideDancerProfile(
-  toRef(dancerId),
-)
+const { displayName, location, image, appearances, loading, notFound } =
+  provideDancerProfile(toRef(dancerId))
 
-const isInfo = computed(() => String(route.name ?? '') === 'dancer.info')
-
+const favorites = useFavoritesStore()
 const initials = computed(() => initialsOf(displayName.value))
-
-const externalBack = useExternalBack({ name: 'dancers' })
+const isFavorite = computed(() =>
+  appearances.value.some(
+    (a) => a.raw.dancerId && favorites.isFavoriteDancer(a.raw.dancerId),
+  ),
+)
+const isInfo = computed(() => String(route.name ?? '') === 'dancer.info')
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
-    <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
-      <div class="mx-auto flex max-w-3xl items-center gap-2">
-        <RouterLink
-          v-if="externalBack.show.value && externalBack.to.value"
-          v-slot="{ href, navigate }"
-          :to="externalBack.to.value"
-          custom
-        >
-          <a
-            :href="href"
-            class="floating-nav pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full [view-transition-name:nav-back] hover:opacity-90"
-            title="Back"
-            aria-label="Back"
-            @click="preferBackClick(router, $event, navigate)"
-          >
-            <ChevronLeft class="size-5" />
-          </a>
-        </RouterLink>
-
-        <RouterLink
-          v-if="!isInfo"
-          :to="{ name: 'dancer.info', params: { dancerId } }"
-          class="floating-nav pointer-events-auto flex min-w-0 flex-1 items-center gap-2 rounded-full p-1 pr-4 [view-transition-class:fixed-height] [view-transition-name:nav-pill] hover:opacity-90"
-          :title="displayName"
-        >
-          <div
-            class="bg-card-foreground/15 flex size-10 shrink-0 items-center justify-center rounded-full text-lg font-medium [view-transition-class:nav-avatar] [view-transition-name:dancer-avatar]"
-          >
-            {{ initials || '?' }}
-          </div>
-          <div class="min-w-0 flex-1">
-            <div
-              class="truncate text-lg leading-none font-medium tracking-tight [view-transition-class:fit_nav-title] [view-transition-name:dancer-name]"
-            >
-              {{ displayName || (loading ? 'Loading…' : 'Dancer') }}
-            </div>
-            <div v-if="location" class="mt-1 truncate text-xs leading-none opacity-70">
-              {{ location }}
-            </div>
-          </div>
-        </RouterLink>
-
-        <div v-else class="min-w-0 flex-1" />
-
-        <div
-          class="floating-nav pointer-events-auto flex h-12 shrink-0 items-center gap-0.5 rounded-full px-1.5 [view-transition-class:fixed-height] [view-transition-name:nav-actions]"
-        >
-          <FavoriteDancerProfileButton
-            v-if="isInfo"
-            :appearances="appearances"
-            :name="displayName"
-            class="hover:bg-card-foreground/10! flex! size-9! items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
-          />
-          <ShareButton
-            :title="displayName || undefined"
-            class="hover:bg-card-foreground/10! flex! size-9! items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
-          />
-        </div>
-      </div>
-    </nav>
-
-    <main class="mx-auto w-full max-w-3xl flex-1 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-4">
-      <EmptyState
-        v-if="!loading && notFound"
-        :icon="UserSearch"
-        :title="`No record of ${displayName}`"
-        description="We couldn’t find this dancer across the competitions we know about."
+  <EntityLayout
+    scope="dancer"
+    :id="dancerId"
+    id-param="dancerId"
+    route-prefix="dancer"
+    section-route-name="dancers"
+    :display-name="displayName"
+    :subtitle="location"
+    :image="image"
+    :initials="initials"
+    :is-favorite="isFavorite"
+    :loading="loading"
+    :not-found="notFound"
+    :empty-title="`No record of ${displayName}`"
+    empty-description="We couldn’t find this dancer across the competitions we know about."
+    results-tab-label="Results"
+  >
+    <template #actions>
+      <FavoriteDancerProfileButton
+        v-if="isInfo"
+        :appearances="appearances"
+        :name="displayName"
+        class="hover:bg-card-foreground/10! flex! size-9! items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
       />
-      <RouterView v-else />
-    </main>
-
-    <DancerBottomNav />
-  </div>
+    </template>
+  </EntityLayout>
 </template>

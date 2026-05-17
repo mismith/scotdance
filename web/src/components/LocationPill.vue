@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
-import { Globe, Locate, LandPlot, X } from '@lucide/vue'
+import { Globe, Locate, MapPinned, X } from '@lucide/vue'
 import ExpandingPill from '@/components/ExpandingPill.vue'
 import NearbyRadiusMap from '@/components/NearbyRadiusMap.vue'
 import { useLocationFilter, type LocationMode } from '@/composables/useLocationFilter'
@@ -72,11 +72,11 @@ const compact = computed<CompactDisplay>(() => {
   if (mode.value === 'region') {
     // Narrowed beyond country → use the Region tab's own icon to signal
     // "specific zone within the country" rather than a misleading flag.
-    if (locality.value || region.value) return { kind: 'icon', icon: LandPlot }
+    if (locality.value || region.value) return { kind: 'icon', icon: MapPinned }
     if (country.value) {
       const flag = countryFlag(country.value)
       if (flag) return { kind: 'flag', emoji: flag }
-      return { kind: 'icon', icon: LandPlot }
+      return { kind: 'icon', icon: MapPinned }
     }
   }
   return { kind: 'icon', icon: Globe }
@@ -96,7 +96,7 @@ const ariaLabel = computed(() => {
 
 const options: Array<{ id: LocationMode; label: string; icon: typeof Globe }> = [
   { id: 'nearby', label: 'Nearby', icon: Locate },
-  { id: 'region', label: 'Region', icon: LandPlot },
+  { id: 'region', label: 'Region', icon: MapPinned },
   { id: 'worldwide', label: 'Worldwide', icon: Globe },
 ]
 
