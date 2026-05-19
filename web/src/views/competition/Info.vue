@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { ChevronRight, MapPin } from '@lucide/vue'
+import { ChevronRight, MapPin, Star } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import CompChip from '@/components/CompChip.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
@@ -313,11 +313,15 @@ function closeStaff() {
             v-if="group.showAvatars"
             :member="member"
             :size="40"
-            :favorite="isFavoriteStaff(member)"
           />
           <div class="min-w-0 flex-1">
-            <div class="text-item-title truncate">
-              {{ staffMemberName(member) }}
+            <div class="text-item-title flex items-center gap-1.5 truncate">
+              <span class="truncate">{{ staffMemberName(member) }}</span>
+              <Star
+                v-if="isFavoriteStaff(member)"
+                class="text-secondary size-3.5 shrink-0 fill-current"
+                aria-label="Favourite"
+              />
             </div>
             <div
               v-if="member.location"

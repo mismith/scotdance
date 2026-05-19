@@ -11,7 +11,6 @@ import {
   staffMemberName,
   type StaffMember,
 } from '@/types/competition'
-import { useFavoritesStore } from '@/stores/favorites'
 
 const props = defineProps<{ member: StaffMember | null }>()
 const emit = defineEmits<{ close: [] }>()
@@ -32,23 +31,13 @@ const name = computed(() =>
 const entityRef = computed(() =>
   displayMember.value ? staffEntityRef(displayMember.value) : null,
 )
-const favorites = useFavoritesStore()
-const isFavorite = computed(() =>
-  entityRef.value
-    ? favorites.isFavorite(entityRef.value.type, entityRef.value.id)
-    : false,
-)
 </script>
 
 <template>
   <Dialog :open="isOpen" variant="sheet" size="md" @close="emit('close')">
     <template v-if="displayMember" #header>
       <div class="flex items-center gap-3">
-        <StaffAvatar
-          :member="displayMember"
-          :size="56"
-          :favorite="isFavorite"
-        />
+        <StaffAvatar :member="displayMember" :size="56" />
         <div class="min-w-0 flex-1 space-y-0.5">
           <div
             v-if="displayMember.type"

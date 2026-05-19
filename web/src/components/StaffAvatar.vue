@@ -3,8 +3,8 @@ import { computed } from 'vue'
 import { staffMemberName, type StaffMember } from '@/types/competition'
 
 const props = withDefaults(
-  defineProps<{ member: StaffMember; size?: number; favorite?: boolean }>(),
-  { size: 40, favorite: false },
+  defineProps<{ member: StaffMember; size?: number }>(),
+  { size: 40 },
 )
 
 const name = computed(() => staffMemberName(props.member))
@@ -16,9 +16,6 @@ const name = computed(() => staffMemberName(props.member))
     :src="member.image"
     :alt="name"
     :style="{ width: `${size}px`, height: `${size}px` }"
-    :class="[
-      'shrink-0 rounded-full object-cover',
-      favorite ? 'bg-secondary ring-secondary ring-2' : 'bg-muted',
-    ]"
+    class="bg-muted shrink-0 rounded-full object-cover"
   />
 </template>
