@@ -20,6 +20,7 @@
     "report": "REPORT=true vite build"
   },
   "dependencies": {
+    "@floating-ui/vue": "^1.1.11",
     "@googlemaps/js-api-loader": "^2.0.2",
     "@lucide/vue": "^1.14.0",
     "@unhead/vue": "^3.1.0",
