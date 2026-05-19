@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, watch, type Ref } from 'vue'
-import { ref as dbRef, onValue, set } from 'firebase/database'
+import { ref as dbRef, onValue, set, update } from 'firebase/database'
 import { database } from '@/firebase'
+import { lookupEntityId } from '@/lib/entityIndex'
 import { useAuthStore } from './auth'
 
 const NAMESPACE = import.meta.env.VITE_FIREBASE_DATA_NAMESPACE || 'production'
@@ -26,11 +27,9 @@ const ALL_TYPES: FavoriteType[] = [
 // denormed display name (kept so the favourites section on each list page can
 // render before the slim index for that entity loads).
 //
-// Note on key shape: competitions and the new judges/pipers/venues key by
-// AGGREGATE id (one entity = one favourite). Dancers still key by per-comp
-// dancer id (legacy from before aggregates existed) — FavoriteDancerProfileButton
-// fans out across all of a dancer's per-comp ids. Migration to aggregate id
-// for dancers is tracked as a separate user-data migration.
+// All types now key by AGGREGATE id (one entity = one favourite). Legacy
+// dancer favourites (pre-aggregator) keyed by per-comp dancer id are migrated
+// to aggregate id on first load — see migrateDancerFavourites below.
 
 export const useFavoritesStore = defineStore('favorites', () => {
   const auth = useAuthStore()
@@ -102,12 +101,17 @@ export const useFavoritesStore = defineStore('favorites', () => {
         return
       }
       const r = dbRef(database, `${NAMESPACE}/users:favorites/${uid}`)
+      let migrated = false
       unsubscribe = onValue(r, (snap) => {
         const val =
           (snap.val() as Partial<
             Record<FavoriteType, Record<string, FavoriteValue>>
           > | null) ?? {}
         for (const t of ALL_TYPES) refs[t].value = val[t] ?? {}
+        if (!migrated) {
+          migrated = true
+          void migrateDancerFavourites(uid, val.dancers ?? {})
+        }
       })
     },
     { immediate: true },
@@ -132,3 +136,28 @@ export const useFavoritesStore = defineStore('favorites', () => {
     toggleCompetition,
   }
 })
+
+// One-time per-session migration of dancer favourites from per-comp ids to
+// aggregate ids. Pre-aggregator, FavoriteDancerButton keyed by the per-comp
+// dancer push key; the value was the denormed dancer name. We resolve the
+// name → aggregate id via /dancers:index, then rewrite the entry under the
+// aggregate id (atomic multi-path update).
+//
+// Idempotent: entries whose key already matches the resolved aggregate id are
+// skipped (no Firebase writes). Entries whose value isn't a string (no name
+// to resolve) are left alone — orphan, but rare and harmless.
+async function migrateDancerFavourites(
+  uid: string,
+  dancersMap: Record<string, FavoriteValue>,
+): Promise<void> {
+  const updates: Record<string, FavoriteValue | null> = {}
+  for (const [key, value] of Object.entries(dancersMap)) {
+    if (typeof value !== 'string') continue
+    const aggId = await lookupEntityId('dancers', value)
+    if (!aggId || aggId === key) continue
+    updates[`dancers/${aggId}`] = value
+    updates[`dancers/${key}`] = null
+  }
+  if (!Object.keys(updates).length) return
+  await update(dbRef(database, `${NAMESPACE}/users:favorites/${uid}`), updates)
+}
