@@ -110,6 +110,9 @@
                 <template v-if="aggregatorJobs[entity.key].result.skipped">
                   · {{ aggregatorJobs[entity.key].result.skipped.toLocaleString() }} {{ entity.ignoredLabel }}
                 </template>
+                <template v-if="aggregatorJobs[entity.key].result.pruned">
+                  · {{ aggregatorJobs[entity.key].result.pruned.toLocaleString() }} pruned
+                </template>
                 · {{ aggregatorJobs[entity.key].result.competitions.toLocaleString() }} competitions scanned
               </div>
             </div>
@@ -329,11 +332,12 @@ export default {
       job.loading = true;
       try {
         const { data } = await aggregatorCallables[key]();
-        // Functions return { linked, skipped, competitions }; defensive defaults
-        // so the UI doesn't blow up if a future change drops a field.
+        // Functions return { linked, skipped, pruned, competitions }; defensive
+        // defaults so the UI doesn't blow up if a future change drops a field.
         this.$set(job, 'result', {
           linked: data?.linked ?? 0,
           skipped: data?.skipped ?? 0,
+          pruned: data?.pruned ?? 0,
           competitions: data?.competitions ?? 0,
         });
       } catch (error) {

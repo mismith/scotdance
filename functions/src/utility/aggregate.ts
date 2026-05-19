@@ -85,7 +85,12 @@ export interface AggregatorHandlers {
   onCreate(snap: any, ctx: any): Promise<void>
   onUpdate(change: any, ctx: any): Promise<void>
   onDelete(snap: any, ctx: any): Promise<void>
-  backfill(): Promise<{ linked: number; skipped: number; competitions: number }>
+  backfill(): Promise<{
+    linked: number
+    skipped: number
+    pruned: number
+    competitions: number
+  }>
 }
 
 function appearanceKey(ctx: AppearanceCtx): string {
@@ -291,19 +296,22 @@ export function createAggregator<R, A extends Record<string, any>>(
       await unlinkAppearance(entityId, ctxFor(ctx.params));
     },
     async backfill() {
-      await db.child(namespace).remove();
-      await db.child(`${namespace}:index`).remove();
+      // Idempotent: preserves existing aggregate push keys across runs by
+      // re-using whatever the index already points at. Replaces each touched
+      // aggregate's `appearances` map atomically with the current source-of-
+      // truth, then prunes aggregates whose source records no longer exist.
+      //
+      // Back-pointer writes are intentionally skipped: each would re-fire the
+      // source trigger and overwhelm the emulator. Live triggers populate the
+      // back-pointer on the next legitimate edit. Reverse lookup uses
+      // /{namespace}:index in the meantime.
       const competitions = (await db.child('competitions').get()).val() || {};
       const compIds = Object.keys(competitions);
+      const newAppearancesByEntity = new Map<string, Record<string, A>>();
       let linked = 0;
       let skipped = 0;
-      // Back-pointer writes are intentionally skipped here: each would re-fire
-      // the source trigger and overwhelm the emulator. Live triggers populate
-      // the back-pointer on the next legitimate edit. Reverse lookup uses
-      // /{namespace}:index in the meantime.
       for (const competitionId of compIds) {
         const records = await iterate(db, competitionId, competitions[competitionId]);
-        const aggregatesTouched = new Set<string>();
         for (const [recordId, record] of records) {
           if (!matches(record)) {
             skipped += 1;
@@ -315,15 +323,28 @@ export function createAggregator<R, A extends Record<string, any>>(
             continue;
           }
           const ctx: AppearanceCtx = { competitionId, recordId };
-          await db
-            .child(`${namespace}/${entityId}/appearances/${appearanceKey(ctx)}`)
-            .set(toAppearance(record, ctx));
-          aggregatesTouched.add(entityId);
+          const bucket = newAppearancesByEntity.get(entityId) ?? {};
+          bucket[appearanceKey(ctx)] = toAppearance(record, ctx);
+          newAppearancesByEntity.set(entityId, bucket);
           linked += 1;
         }
-        for (const id of aggregatesTouched) await recomputeAggregate(id);
       }
-      return { linked, skipped, competitions: compIds.length };
+      // Replace each touched aggregate's appearances atomically + recompute.
+      for (const [entityId, apps] of newAppearancesByEntity) {
+        await db.child(`${namespace}/${entityId}/appearances`).set(apps);
+        await recomputeAggregate(entityId);
+      }
+      // Sweep aggregates whose source is gone — empty their appearances, then
+      // recomputeAggregate's count===0 branch removes the agg + index entry.
+      const existing = (await db.child(namespace).get()).val() || {};
+      let pruned = 0;
+      for (const entityId of Object.keys(existing)) {
+        if (newAppearancesByEntity.has(entityId)) continue;
+        await db.child(`${namespace}/${entityId}/appearances`).set({});
+        await recomputeAggregate(entityId);
+        pruned += 1;
+      }
+      return { linked, skipped, pruned, competitions: compIds.length };
     },
   };
 }
