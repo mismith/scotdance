@@ -12,6 +12,7 @@ import { dataRef } from '@/firebase'
 import { fetchCompetitionMeta } from '@/lib/competitionMeta'
 import { isBeforeToday, parseDate } from '@/lib/format'
 import { insertEntityAggregate } from '@/composables/useEntityAggregates'
+import { useRecentEntities } from '@/composables/useRecentEntities'
 import type { Competition } from '@/types/competition'
 
 export interface VenueAppearanceRaw {
@@ -75,6 +76,7 @@ export function useVenueProfile(): UseVenueProfile {
 }
 
 function createVenueProfile(venueId: Ref<string>): UseVenueProfile {
+  const recent = useRecentEntities('venues')
   const loading = ref(false)
   const notFound = ref(false)
   const aggregate = ref<VenueAggregate | null>(null)
@@ -94,8 +96,11 @@ function createVenueProfile(venueId: Ref<string>): UseVenueProfile {
         const snap = await get(child(dataRef('venues'), id))
         const value = snap.val()
         if (value && typeof value === 'object') {
-          aggregate.value = value as VenueAggregate
-          insertEntityAggregate('venues', id, value as VenueAggregate)
+          const agg = value as VenueAggregate
+          aggregate.value = agg
+          insertEntityAggregate('venues', id, agg)
+          const eagerName = agg.name?.trim()
+          if (eagerName) recent.record(id, eagerName)
         } else {
           aggregate.value = null
           notFound.value = true

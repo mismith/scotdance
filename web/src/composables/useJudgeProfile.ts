@@ -12,6 +12,7 @@ import { dataRef } from '@/firebase'
 import { fetchCompetitionMeta } from '@/lib/competitionMeta'
 import { isBeforeToday, parseDate } from '@/lib/format'
 import { insertEntityAggregate } from '@/composables/useEntityAggregates'
+import { useRecentEntities } from '@/composables/useRecentEntities'
 import type { Competition } from '@/types/competition'
 
 export interface JudgeAppearanceRaw {
@@ -76,6 +77,7 @@ function latestNonNull<T>(
 }
 
 function createJudgeProfile(judgeId: Ref<string>): UseJudgeProfile {
+  const recent = useRecentEntities('judges')
   const loading = ref(false)
   const notFound = ref(false)
   const aggregate = ref<JudgeAggregate | null>(null)
@@ -95,11 +97,14 @@ function createJudgeProfile(judgeId: Ref<string>): UseJudgeProfile {
         const snap = await get(child(dataRef('judges'), id))
         const value = snap.val()
         if (value && typeof value === 'object') {
-          aggregate.value = value as JudgeAggregate
+          const agg = value as JudgeAggregate
+          aggregate.value = agg
           // Seed the /judges list cache with this row so back-nav from the
           // detail page has a real row in the DOM for the view-transition
           // morph to land on (without paying for a full list fetch).
-          insertEntityAggregate('judges', id, value as JudgeAggregate)
+          insertEntityAggregate('judges', id, agg)
+          const eagerName = agg.name?.trim()
+          if (eagerName) recent.record(id, eagerName)
         } else {
           aggregate.value = null
           notFound.value = true
