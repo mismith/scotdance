@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
-import { CircleSlash, Home } from '@lucide/vue'
+import { CircleSlash, Info } from '@lucide/vue'
 
 const props = defineProps<{
   title?: string
@@ -26,10 +26,10 @@ const message = computed(() => {
         <p class="text-muted-foreground text-lg">{{ message }}</p>
       </div>
       <RouterLink
-        :to="{ name: 'home' }"
+        :to="{ name: 'about' }"
         class="bg-primary text-primary-foreground inline-flex items-center gap-2 rounded-md px-4 py-2 text-lg font-medium hover:opacity-90"
       >
-        <Home class="size-4" />
+        <Info class="size-4" />
         Go home
       </RouterLink>
     </div>

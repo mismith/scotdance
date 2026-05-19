@@ -36,15 +36,15 @@ const entityLinks = [
   sectionMeta('venues'),
 ]
 
-const homeLink = sectionMeta('home')
+const aboutLink = sectionMeta('about')
 
 // Show the More button as active when its dropdown is open OR the current
-// route is one of the links nested inside it (entity links + the home/About
+// route is one of the links nested inside it (entity links + the About
 // link at the top).
 const moreActive = computed(
   () =>
     moreOpen.value
-    || route.path === homeLink.path
+    || route.path === aboutLink.path
     || entityLinks.some((e) => route.path.startsWith(e.path)),
 )
 
@@ -195,7 +195,7 @@ function clearSearch() {
             >
               <div class="floating-nav w-full overflow-hidden rounded-3xl p-3 font-sans">
                 <RouterLink
-                  :to="homeLink.to"
+                  :to="aboutLink.to"
                   :class="[
                     'flex w-full items-center gap-3 rounded-lg p-2.5 text-base font-medium transition-opacity',
                     route.path === '/'
@@ -205,8 +205,8 @@ function clearSearch() {
                   role="menuitem"
                   @click="moreOpen = false"
                 >
-                  <component :is="homeLink.icon" class="size-5" />
-                  <span class="flex-1">{{ homeLink.label }}</span>
+                  <component :is="aboutLink.icon" class="size-5" />
+                  <span class="flex-1">{{ aboutLink.label }}</span>
                 </RouterLink>
 
                 <button
@@ -255,7 +255,7 @@ function clearSearch() {
       </div>
 
       <!-- RIGHT pill: same DOM node across routes so iOS keyboard survives the
-           home → /search nav. <label> wraps the input so a tap focuses it
+           about → /search nav. <label> wraps the input so a tap focuses it
            natively (gesture-bound), then onSearchPillClick pushes the route. -->
       <label
         :class="[

@@ -86,7 +86,7 @@ function closeModal() {
 
 async function handleSignOut() {
   await auth.signOut()
-  router.replace({ name: 'home' })
+  router.replace({ name: 'about' })
 }
 
 async function submitModal() {
@@ -100,7 +100,7 @@ async function submitModal() {
     } else if (modal.value === 'delete') {
       await auth.deleteAccount(currentPassword.value)
       closeModal()
-      router.replace({ name: 'home' })
+      router.replace({ name: 'about' })
       return
     }
     closeModal()
