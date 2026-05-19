@@ -1,33 +1,9 @@
-import { useLocalStorage } from '@vueuse/core'
+import { useRecentEntities } from './useRecentEntities'
 
-// Storage key bumped (v2) so old slug-keyed entries don't render as broken
-// links after the Phase 5 hard-cut from slug URLs to aggregate IDs.
-export interface RecentDancer {
-  id: string
-  name: string
-  viewedAt: number
-}
-
-const MAX = 10
-const STORAGE_KEY = 'dancers:recent:v2'
-
-const recent = useLocalStorage<RecentDancer[]>(STORAGE_KEY, [])
-
+// Back-compat alias — predates the multi-entity generalization. New callers
+// should use `useRecentEntities('dancers')` directly.
 export function useRecentDancers() {
-  function record(id: string, name: string) {
-    if (!id || !name) return
-    const next = recent.value.filter((r) => r.id !== id)
-    next.unshift({ id, name, viewedAt: Date.now() })
-    recent.value = next.slice(0, MAX)
-  }
-
-  function clear() {
-    recent.value = []
-  }
-
-  function remove(id: string) {
-    recent.value = recent.value.filter((r) => r.id !== id)
-  }
-
-  return { recent, record, clear, remove }
+  return useRecentEntities('dancers')
 }
+
+export type { RecentEntity as RecentDancer } from './useRecentEntities'

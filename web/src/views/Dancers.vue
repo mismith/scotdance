@@ -252,7 +252,7 @@ async function openDancerById(id: string) {
         </section>
 
         <section v-if="recentList.length" class="space-y-2">
-          <SectionHeader label="Recently viewed" :count="recentList.length">
+          <SectionHeader label="Recently viewed">
             <button
               type="button"
               class="hover:text-foreground font-normal tracking-normal normal-case"

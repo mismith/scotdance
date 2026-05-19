@@ -11,6 +11,7 @@ import {
   useEntityAggregates,
   type AggregateRow,
 } from '@/composables/useEntityAggregates'
+import { useRecentEntities } from '@/composables/useRecentEntities'
 import { useFavoritesStore, type FavoriteType } from '@/stores/favorites'
 
 // Generic alphabetical list of /{namespace} aggregates. Each entity's index
@@ -42,17 +43,20 @@ const loading = entry.loading
 const error = entry.error
 
 const favorites = useFavoritesStore()
+const recent = useRecentEntities(props.namespace)
 
 const sorted = computed(() =>
   [...aggregates.value].sort((a, b) => (a.agg.name ?? '').localeCompare(b.agg.name ?? '')),
 )
+
+const aggCache = computed(() => new Map(aggregates.value.map((r) => [r.id, r.agg])))
 
 // Favourites: cross-reference the slim cache for subtitle data; fall back to
 // the denormed name stored alongside the favourite when the entity isn't in
 // the cache yet (e.g. recently favourited but list still loading).
 const favoriteRows = computed(() => {
   const map = favorites.byType(props.namespace as FavoriteType)
-  const cache = new Map(aggregates.value.map((r) => [r.id, r.agg]))
+  const cache = aggCache.value
   return Object.entries(map)
     .filter(([, v]) => Boolean(v))
     .map(([id, v]) => ({
@@ -60,6 +64,19 @@ const favoriteRows = computed(() => {
       agg: cache.get(id) ?? ({ name: typeof v === 'string' ? v : '' } as AggregateRow),
     }))
     .sort((a, b) => (a.agg.name ?? '').localeCompare(b.agg.name ?? ''))
+})
+
+// Recently viewed: filter out anything already starred so users don't see the
+// same row twice in the top two sections.
+const recentRows = computed(() => {
+  const favIds = new Set(Object.keys(favorites.byType(props.namespace as FavoriteType)))
+  const cache = aggCache.value
+  return recent.recent.value
+    .filter((r) => !favIds.has(r.id))
+    .map((r) => ({
+      id: r.id,
+      agg: cache.get(r.id) ?? ({ name: r.name } as AggregateRow),
+    }))
 })
 
 async function open(id: string) {
@@ -104,7 +121,7 @@ async function open(id: string) {
         </div>
 
         <section v-if="favoriteRows.length" class="space-y-2">
-          <SectionHeader label="Favourites" :count="favoriteRows.length" />
+          <SectionHeader label="Favourites" />
           <ul>
             <li v-for="row in favoriteRows" :key="row.id">
               <button
@@ -114,6 +131,49 @@ async function open(id: string) {
               >
                 <span
                   class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full font-medium [view-transition-class:nav-avatar]"
+                  :style="{ viewTransitionName: vt.name(row.id, 'avatar') }"
+                >
+                  <component :is="section.icon" v-if="section.icon" class="size-4" />
+                </span>
+                <div class="min-w-0 flex-1">
+                  <div
+                    class="text-item-title truncate [view-transition-class:fit_nav-title]"
+                    :style="{ viewTransitionName: vt.name(row.id, 'name') }"
+                  >
+                    {{ row.agg.name || '?' }}
+                  </div>
+                  <div
+                    v-if="subtitleOf(row.agg)"
+                    class="text-item-subtitle text-muted-foreground truncate"
+                  >
+                    {{ subtitleOf(row.agg) }}
+                  </div>
+                </div>
+                <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+              </button>
+            </li>
+          </ul>
+        </section>
+
+        <section v-if="recentRows.length" class="space-y-2">
+          <SectionHeader label="Recently viewed">
+            <button
+              type="button"
+              class="hover:text-foreground font-normal tracking-normal normal-case"
+              @click="recent.clear()"
+            >
+              Clear
+            </button>
+          </SectionHeader>
+          <ul>
+            <li v-for="row in recentRows" :key="row.id">
+              <button
+                type="button"
+                class="flex w-full items-center gap-3 px-1 py-3 text-left"
+                @click="open(row.id)"
+              >
+                <span
+                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full font-medium [view-transition-class:nav-avatar]"
                   :style="{ viewTransitionName: vt.name(row.id, 'avatar') }"
                 >
                   <component :is="section.icon" v-if="section.icon" class="size-4" />

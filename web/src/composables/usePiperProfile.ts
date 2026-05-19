@@ -12,6 +12,7 @@ import { dataRef } from '@/firebase'
 import { fetchCompetitionMeta } from '@/lib/competitionMeta'
 import { isBeforeToday, parseDate } from '@/lib/format'
 import { insertEntityAggregate } from '@/composables/useEntityAggregates'
+import { useRecentEntities } from '@/composables/useRecentEntities'
 import type { Competition } from '@/types/competition'
 
 export interface PiperAppearanceRaw {
@@ -76,6 +77,7 @@ function latestNonNull<T>(
 }
 
 function createPiperProfile(piperId: Ref<string>): UsePiperProfile {
+  const recent = useRecentEntities('pipers')
   const loading = ref(false)
   const notFound = ref(false)
   const aggregate = ref<PiperAggregate | null>(null)
@@ -95,8 +97,11 @@ function createPiperProfile(piperId: Ref<string>): UsePiperProfile {
         const snap = await get(child(dataRef('pipers'), id))
         const value = snap.val()
         if (value && typeof value === 'object') {
-          aggregate.value = value as PiperAggregate
-          insertEntityAggregate('pipers', id, value as PiperAggregate)
+          const agg = value as PiperAggregate
+          aggregate.value = agg
+          insertEntityAggregate('pipers', id, agg)
+          const eagerName = (agg as { name?: string }).name?.trim() || agg.$name?.trim()
+          if (eagerName) recent.record(id, eagerName)
         } else {
           aggregate.value = null
           notFound.value = true
