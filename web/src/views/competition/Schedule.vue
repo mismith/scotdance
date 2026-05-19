@@ -6,6 +6,7 @@ import { CalendarDays, ChevronRight, ClipboardList, Table, Trophy } from '@lucid
 import type { FunctionalComponent } from 'vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { blocks, dances, days, events, slugline } from '@/lib/schedule'
+import { sanitizeRichText } from '@/lib/sanitize'
 import type { ScheduleEvent } from '@/types/competition'
 import { formatWeekday } from '@/lib/format'
 import DisclosureHeader from '@/components/DisclosureHeader.vue'
@@ -73,12 +74,11 @@ const vt = useVtScope('event')
         <h2 class="text-3xl font-medium tracking-tight">
           {{ day.name || formatWeekday(day.date) || 'Day' }}
         </h2>
-        <p
+        <div
           v-if="day.description"
-          class="text-muted-foreground mt-1 text-lg whitespace-pre-line"
-        >
-          {{ day.description }}
-        </p>
+          class="text-muted-foreground mt-1 text-lg"
+          v-html="sanitizeRichText(day.description)"
+        />
       </header>
 
       <div v-for="block in blocks(day)" :key="block.id" class="space-y-1">

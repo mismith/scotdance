@@ -4,6 +4,7 @@ import { ExternalLink } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
 import StaffAvatar from '@/components/StaffAvatar.vue'
 import { formatExternalURL, formatHumanURL } from '@/lib/format'
+import { sanitizeRichText } from '@/lib/sanitize'
 import { staffMemberName, type StaffMember } from '@/types/competition'
 
 const props = defineProps<{ member: StaffMember | null }>()
@@ -52,12 +53,11 @@ const name = computed(() =>
           {{ displayMember.location }}
         </div>
 
-        <p
+        <div
           v-if="displayMember.description"
-          class="text-lg whitespace-pre-line"
-        >
-          {{ displayMember.description }}
-        </p>
+          class="text-lg"
+          v-html="sanitizeRichText(displayMember.description)"
+        />
 
         <a
           v-if="displayMember.website"
