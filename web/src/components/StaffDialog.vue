@@ -2,10 +2,16 @@
 import { computed, ref, watch } from 'vue'
 import { ExternalLink } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
+import FavoriteButton from '@/components/FavoriteButton.vue'
 import StaffAvatar from '@/components/StaffAvatar.vue'
 import { formatExternalURL, formatHumanURL } from '@/lib/format'
 import { sanitizeRichText } from '@/lib/sanitize'
-import { staffMemberName, type StaffMember } from '@/types/competition'
+import {
+  staffEntityRef,
+  staffMemberName,
+  type StaffMember,
+} from '@/types/competition'
+import { useFavoritesStore } from '@/stores/favorites'
 
 const props = defineProps<{ member: StaffMember | null }>()
 const emit = defineEmits<{ close: [] }>()
@@ -23,13 +29,26 @@ const isOpen = computed(() => !!props.member)
 const name = computed(() =>
   displayMember.value ? staffMemberName(displayMember.value) : '',
 )
+const entityRef = computed(() =>
+  displayMember.value ? staffEntityRef(displayMember.value) : null,
+)
+const favorites = useFavoritesStore()
+const isFavorite = computed(() =>
+  entityRef.value
+    ? favorites.isFavorite(entityRef.value.type, entityRef.value.id)
+    : false,
+)
 </script>
 
 <template>
   <Dialog :open="isOpen" variant="sheet" size="md" @close="emit('close')">
     <template v-if="displayMember" #header>
       <div class="flex items-center gap-3">
-        <StaffAvatar :member="displayMember" :size="56" />
+        <StaffAvatar
+          :member="displayMember"
+          :size="56"
+          :favorite="isFavorite"
+        />
         <div class="min-w-0 flex-1 space-y-0.5">
           <div
             v-if="displayMember.type"
@@ -41,6 +60,13 @@ const name = computed(() =>
             {{ name || '?' }}
           </h2>
         </div>
+        <FavoriteButton
+          v-if="entityRef"
+          :type="entityRef.type"
+          :id="entityRef.id"
+          :name="name"
+          class="-mr-2 shrink-0"
+        />
       </div>
     </template>
 
@@ -76,6 +102,17 @@ const name = computed(() =>
         >
           No bio yet.
         </p>
+
+        <RouterLink
+          v-if="entityRef"
+          :to="{
+            name: `${entityRef.routePrefix}.info`,
+            params: { [entityRef.idParam]: entityRef.id },
+          }"
+          class="text-primary hover:text-primary/80 inline-block px-1 py-2 text-sm font-medium"
+        >
+          View profile →
+        </RouterLink>
       </div>
     </template>
   </Dialog>
