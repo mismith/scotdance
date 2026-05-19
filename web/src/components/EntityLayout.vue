@@ -6,6 +6,7 @@ import EmptyState from '@/components/EmptyState.vue'
 import { ChevronLeft, Info, Trophy } from '@lucide/vue'
 import { preferBackClick, smartBackClick, useExternalBack } from '@/lib/back'
 import { sectionMeta } from '@/lib/sectionMeta'
+import { usePageTitle } from '@/composables/usePageTitle'
 
 // Shared shell for entity profile pages (judge / piper / venue / dancer).
 // Per-entity wrappers just pass props + drive the data composable; everything
@@ -23,7 +24,7 @@ const props = withDefaults(
     routePrefix: string
     /** Route name of the section index this profile belongs to (e.g. 'judges').
      *  Drives the bottom-left back pill's icon, label, and target — all read
-     *  from the route's sectionIcon/sectionLabel meta. */
+     *  from the route's icon/title meta. */
     sectionRouteName: string
     displayName: string
     subtitle?: string | null
@@ -69,6 +70,15 @@ const activeTab = computed(() => {
   const name = String(route.name ?? '')
   return tabs.value.find((t) => t.to === name)?.to
 })
+const activeTabLabel = computed(
+  () => tabs.value.find((t) => t.to === activeTab.value)?.name,
+)
+
+usePageTitle(() => [
+  activeTabLabel.value,
+  props.notFound ? 'Not found' : props.displayName,
+  section.value.label,
+])
 
 const params = computed(() => ({ [props.idParam]: props.id }))
 

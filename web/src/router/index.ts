@@ -14,12 +14,12 @@ declare module 'vue-router' {
      */
     ownsBottomNav?: boolean
     /**
-     * Marks this route as a navigable section. The icon/label are surfaced
-     * by chrome that needs to refer to the section dynamically — e.g. the
-     * /search bottom-left "back to {wherever you came from}" pill.
+     * Human-readable name for this route. Used as the page title fallback
+     * and the back-pill label when navigating away. Routes with `icon` set
+     * are treated as navigable sections by chrome (GlobalBottomNav, etc.).
      */
-    sectionIcon?: Component
-    sectionLabel?: string
+    title?: string
+    icon?: Component
   }
 }
 
@@ -28,31 +28,31 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     name: 'home',
     component: () => import('@/views/Home.vue'),
-    meta: { sectionIcon: Home, sectionLabel: 'About ScotDance.app' },
+    meta: { icon: Home, title: 'About ScotDance.app' },
   },
   {
     path: '/dancers',
     name: 'dancers',
     component: () => import('@/views/Dancers.vue'),
-    meta: { sectionIcon: Users, sectionLabel: 'Dancers' },
+    meta: { icon: Users, title: 'Dancers' },
   },
   {
     path: '/judges',
     name: 'judges',
     component: () => import('@/views/Judges.vue'),
-    meta: { sectionIcon: Gavel, sectionLabel: 'Judges' },
+    meta: { icon: Gavel, title: 'Judges' },
   },
   {
     path: '/pipers',
     name: 'pipers',
     component: () => import('@/views/Pipers.vue'),
-    meta: { sectionIcon: Music, sectionLabel: 'Pipers' },
+    meta: { icon: Music, title: 'Pipers' },
   },
   {
     path: '/venues',
     name: 'venues',
     component: () => import('@/views/Venues.vue'),
-    meta: { sectionIcon: School, sectionLabel: 'Venues' },
+    meta: { icon: School, title: 'Venues' },
   },
   {
     path: '/dancers/:dancerId',
@@ -130,12 +130,13 @@ const routes: RouteRecordRaw[] = [
     path: '/search',
     name: 'search',
     component: () => import('@/views/Search.vue'),
+    meta: { title: 'Search' },
   },
   {
     path: '/competitions',
     name: 'competitions',
     component: () => import('@/views/competitions/CompetitionsList.vue'),
-    meta: { sectionIcon: Calendars, sectionLabel: 'Competitions' },
+    meta: { icon: Calendars, title: 'Competitions' },
   },
   {
     path: '/competitions/:competitionId',
@@ -184,17 +185,19 @@ const routes: RouteRecordRaw[] = [
     path: '/profile',
     name: 'profile',
     component: () => import('@/views/Profile.vue'),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, title: 'Profile' },
   },
   {
     path: '/policies',
     name: 'policies',
     component: () => import('@/views/Policies.vue'),
+    meta: { title: 'Policies' },
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: () => import('@/views/NotFound.vue'),
+    meta: { title: 'Not found' },
   },
 ]
 

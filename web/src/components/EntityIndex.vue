@@ -18,7 +18,7 @@ import {
 
 const props = defineProps<{
   /** RTDB namespace, e.g. 'judges'. Doubles as the section route name — page
-   *  title + avatar icon are pulled from its sectionLabel/sectionIcon meta. */
+   *  title + avatar icon are pulled from its title/icon meta. */
   namespace: string
   /** VT scope name used by the corresponding {Entity}Layout. */
   vtScope: string

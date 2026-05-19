@@ -13,6 +13,17 @@ import { CalendarX } from '@lucide/vue'
 import { provideCompetition } from '@/composables/useCompetition'
 import { preferBackClick, useExternalBack } from '@/lib/back'
 import { formatShortDate } from '@/lib/format'
+import { usePageTitle } from '@/composables/usePageTitle'
+
+const TAB_LABEL_BY_ROUTE: Record<string, string> = {
+  'competition.info': 'Info',
+  'competition.dancers': 'Dancers',
+  'competition.schedule': 'Schedule',
+  'competition.results': 'Results',
+  'competition.dancer': 'Dancers',
+  'competition.event': 'Schedule',
+  'competition.group': 'Results',
+}
 
 type ChromeMode = 'info' | 'top-level' | 'drill-down'
 
@@ -60,6 +71,12 @@ const showExternalBack = computed(
 
 const dateLabel = computed(() => formatShortDate(competition.value?.date))
 const locationLabel = computed(() => competition.value?.location ?? '')
+
+usePageTitle(() => [
+  TAB_LABEL_BY_ROUTE[String(route.name ?? '')],
+  notFound.value ? 'Not found' : competition.value?.name,
+  'Competitions',
+])
 </script>
 
 <template>

@@ -22,6 +22,7 @@
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",
     "@lucide/vue": "^1.14.0",
+    "@unhead/vue": "^3.1.0",
     "@vueuse/core": "^14.3.0",
     "@vueuse/router": "^14.3.0",
     "compare-versions": "^6.1.1",
