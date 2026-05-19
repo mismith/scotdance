@@ -1,7 +1,8 @@
 import type { Component } from 'vue'
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
-import { Calendars, Gavel, Home, Music, School, Users } from '@lucide/vue'
+import { Calendars, Gavel, Music, School, Users } from '@lucide/vue'
+import TouchIcon from '@/components/TouchIcon.vue'
 import { startViewTransition } from '@/lib/transition'
 import { useAuthStore } from '@/stores/auth'
 
@@ -26,9 +27,9 @@ declare module 'vue-router' {
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    name: 'home',
-    component: () => import('@/views/Home.vue'),
-    meta: { icon: Home, title: 'About ScotDance.app' },
+    name: 'about',
+    component: () => import('@/views/About.vue'),
+    meta: { icon: TouchIcon, title: 'About ScotDance.app' },
   },
   {
     path: '/dancers',
@@ -222,7 +223,7 @@ router.beforeEach(async (to) => {
   const user = await getCurrentUser()
   if (!user) {
     useAuthStore().openLogin()
-    return { name: 'home' }
+    return { name: 'about' }
   }
 })
 

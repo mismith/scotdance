@@ -63,7 +63,7 @@ function scrollToFeatures(e: Event) {
 <template>
   <div
     class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]"
-    data-route="home"
+    data-route="about"
   >
     <!-- HERO -->
     <section class="relative flex min-h-dvh flex-col items-center justify-center px-6">
@@ -271,11 +271,11 @@ function scrollToFeatures(e: Event) {
 <style>
 @reference '../style.css';
 
-/* Home has no floating top chrome — zero out scroll-padding-top so
+/* About has no floating top chrome — zero out scroll-padding-top so
    #features anchors land flush at the viewport top with no inset.
-   :has() gates on home being mounted (root has data-route="home"),
+   :has() gates on about being mounted (root has data-route="about"),
    so this naturally turns off when navigating away. */
-html:has([data-route='home']) {
+html:has([data-route='about']) {
   @apply scroll-pt-0;
 }
 </style>
