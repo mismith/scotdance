@@ -2,7 +2,9 @@
 import { computed, toRef } from 'vue'
 import { useRoute } from 'vue-router'
 import EntityLayout from '@/components/EntityLayout.vue'
+import FavoriteButton from '@/components/FavoriteButton.vue'
 import { providePiperProfile } from '@/composables/usePiperProfile'
+import { useFavoritesStore } from '@/stores/favorites'
 import { initialsOf } from '@/lib/format'
 import { useVtScope } from '@/lib/viewTransitionFocus'
 
@@ -15,7 +17,10 @@ const { displayName, location, image, loading, notFound } = providePiperProfile(
   toRef(piperId),
 )
 
+const favorites = useFavoritesStore()
 const initials = computed(() => initialsOf(displayName.value))
+const isFavorite = computed(() => favorites.isFavorite('pipers', piperId.value))
+const isInfo = computed(() => String(route.name ?? '') === 'piper.info')
 </script>
 
 <template>
@@ -29,9 +34,20 @@ const initials = computed(() => initialsOf(displayName.value))
     :subtitle="location"
     :image="image"
     :initials="initials"
+    :is-favorite="isFavorite"
     :loading="loading"
     :not-found="notFound"
     empty-title="No record of this piper"
     empty-description="This piper profile doesn’t exist or has no appearances."
-  />
+  >
+    <template #actions>
+      <FavoriteButton
+        v-if="isInfo"
+        type="pipers"
+        :id="piperId"
+        :name="displayName"
+        class="hover:bg-card-foreground/10! flex! size-9! items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
+      />
+    </template>
+  </EntityLayout>
 </template>
