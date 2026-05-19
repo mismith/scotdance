@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import EntityIndex from '@/components/EntityIndex.vue'
 
-function subtitleOf(agg: { appearanceCount?: number }) {
+function subtitleOf(agg: { appearanceCount?: number; location?: string | null }) {
   const n = agg.appearanceCount ?? 0
-  return n === 1 ? '1 competition' : `${n} competitions`
+  const comps = n === 1 ? '1 competition' : `${n} competitions`
+  return agg.location ? `${agg.location} · ${comps}` : comps
 }
 </script>
 

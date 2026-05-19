@@ -52,7 +52,11 @@ async function readIndex(namespace: string, key: string): Promise<string | null>
         try {
           const snap = await get(child(dataRef(`${namespace}:index`), key))
           const v = snap.val()
-          return typeof v === 'string' && v ? v : null
+          // Legacy entries stored a bare id string; new entries are slim
+          // objects with `.id`.
+          if (typeof v === 'string' && v) return v
+          if (v && typeof v === 'object' && typeof v.id === 'string') return v.id
+          return null
         } catch {
           return null
         }
