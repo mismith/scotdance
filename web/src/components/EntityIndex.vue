@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { ChevronRight } from '@lucide/vue'
 import AccountAvatarButton from '@/components/AccountAvatarButton.vue'
+import FavoriteButton from '@/components/FavoriteButton.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { sectionMeta } from '@/lib/sectionMeta'
@@ -79,8 +79,12 @@ const recentRows = computed(() => {
     }))
 })
 
-async function open(id: string) {
-  focusVt(props.vtScope, id)
+function isFav(id: string): boolean {
+  return favorites.isFavorite(props.namespace as FavoriteType, id)
+}
+
+async function open(id: string, rowKey: string) {
+  focusVt(props.vtScope, id, rowKey)
   await nextTick()
   router.push({ name: `${props.routePrefix}.info`, params: { [props.idParam]: id } })
 }
@@ -123,22 +127,22 @@ async function open(id: string) {
         <section v-if="favoriteRows.length" class="space-y-2">
           <SectionHeader label="Favourites" />
           <ul>
-            <li v-for="row in favoriteRows" :key="row.id">
+            <li v-for="row in favoriteRows" :key="row.id" class="flex items-center">
               <button
                 type="button"
-                class="flex w-full items-center gap-3 px-1 py-3 text-left"
-                @click="open(row.id)"
+                class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3 text-left"
+                @click="open(row.id, 'favourites')"
               >
                 <span
                   class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full font-medium [view-transition-class:nav-avatar]"
-                  :style="{ viewTransitionName: vt.name(row.id, 'avatar') }"
+                  :style="{ viewTransitionName: vt.name(row.id, 'avatar', 'favourites') }"
                 >
                   <component :is="section.icon" v-if="section.icon" class="size-4" />
                 </span>
                 <div class="min-w-0 flex-1">
                   <div
                     class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                    :style="{ viewTransitionName: vt.name(row.id, 'name') }"
+                    :style="{ viewTransitionName: vt.name(row.id, 'name', 'favourites') }"
                   >
                     {{ row.agg.name || '?' }}
                   </div>
@@ -149,8 +153,13 @@ async function open(id: string) {
                     {{ subtitleOf(row.agg) }}
                   </div>
                 </div>
-                <ChevronRight class="text-muted-foreground size-4 shrink-0" />
               </button>
+              <FavoriteButton
+                :type="(props.namespace as FavoriteType)"
+                :id="row.id"
+                :name="row.agg.name"
+                class="mr-1"
+              />
             </li>
           </ul>
         </section>
@@ -166,22 +175,27 @@ async function open(id: string) {
             </button>
           </SectionHeader>
           <ul>
-            <li v-for="row in recentRows" :key="row.id">
+            <li v-for="row in recentRows" :key="row.id" class="flex items-center">
               <button
                 type="button"
-                class="flex w-full items-center gap-3 px-1 py-3 text-left"
-                @click="open(row.id)"
+                class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3 text-left"
+                @click="open(row.id, 'recent')"
               >
                 <span
-                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full font-medium [view-transition-class:nav-avatar]"
-                  :style="{ viewTransitionName: vt.name(row.id, 'avatar') }"
+                  :class="[
+                    'flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full font-medium [view-transition-class:nav-avatar]',
+                    isFav(row.id)
+                      ? 'bg-secondary text-secondary-foreground'
+                      : 'bg-muted text-muted-foreground',
+                  ]"
+                  :style="{ viewTransitionName: vt.name(row.id, 'avatar', 'recent') }"
                 >
                   <component :is="section.icon" v-if="section.icon" class="size-4" />
                 </span>
                 <div class="min-w-0 flex-1">
                   <div
                     class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                    :style="{ viewTransitionName: vt.name(row.id, 'name') }"
+                    :style="{ viewTransitionName: vt.name(row.id, 'name', 'recent') }"
                   >
                     {{ row.agg.name || '?' }}
                   </div>
@@ -192,8 +206,13 @@ async function open(id: string) {
                     {{ subtitleOf(row.agg) }}
                   </div>
                 </div>
-                <ChevronRight class="text-muted-foreground size-4 shrink-0" />
               </button>
+              <FavoriteButton
+                :type="(props.namespace as FavoriteType)"
+                :id="row.id"
+                :name="row.agg.name"
+                class="mr-1"
+              />
             </li>
           </ul>
         </section>
@@ -201,22 +220,27 @@ async function open(id: string) {
         <section v-if="sorted.length" class="space-y-2">
           <SectionHeader label="All" :count="sorted.length" />
           <ul>
-            <li v-for="row in sorted" :key="row.id">
+            <li v-for="row in sorted" :key="row.id" class="flex items-center">
               <button
                 type="button"
-                class="flex w-full items-center gap-3 px-1 py-3 text-left"
-                @click="open(row.id)"
+                class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3 text-left"
+                @click="open(row.id, 'all')"
               >
                 <span
-                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full font-medium [view-transition-class:nav-avatar]"
-                  :style="{ viewTransitionName: vt.name(row.id, 'avatar') }"
+                  :class="[
+                    'flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full font-medium [view-transition-class:nav-avatar]',
+                    isFav(row.id)
+                      ? 'bg-secondary text-secondary-foreground'
+                      : 'bg-muted text-muted-foreground',
+                  ]"
+                  :style="{ viewTransitionName: vt.name(row.id, 'avatar', 'all') }"
                 >
                   <component :is="section.icon" v-if="section.icon" class="size-4" />
                 </span>
                 <div class="min-w-0 flex-1">
                   <div
                     class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                    :style="{ viewTransitionName: vt.name(row.id, 'name') }"
+                    :style="{ viewTransitionName: vt.name(row.id, 'name', 'all') }"
                   >
                     {{ row.agg.name || '?' }}
                   </div>
@@ -227,8 +251,13 @@ async function open(id: string) {
                     {{ subtitleOf(row.agg) }}
                   </div>
                 </div>
-                <ChevronRight class="text-muted-foreground size-4 shrink-0" />
               </button>
+              <FavoriteButton
+                :type="(props.namespace as FavoriteType)"
+                :id="row.id"
+                :name="row.agg.name"
+                class="mr-1"
+              />
             </li>
           </ul>
         </section>

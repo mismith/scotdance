@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
 import { ChevronRight, Search, Star, X } from '@lucide/vue'
+import FavoriteButton from '@/components/FavoriteButton.vue'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useDancersStore } from '@/stores/dancers'
 import { useRecentDancers } from '@/composables/useRecentDancers'
@@ -203,10 +204,10 @@ async function openDancerById(id: string) {
         <section v-if="favoriteEntries.length" class="space-y-2">
           <SectionHeader label="Favourites" :count="favoriteEntries.length" />
           <ul>
-            <li v-for="entry in favoriteEntries" :key="entry.name">
+            <li v-for="entry in favoriteEntries" :key="entry.name" class="flex items-center">
               <button
                 type="button"
-                class="flex w-full items-center gap-3 px-1 py-3 text-left"
+                class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3 text-left"
                 @click="openDancer(entry.name)"
               >
                 <span
@@ -231,8 +232,14 @@ async function openDancerById(id: string) {
                     class="mt-1 h-4 w-32"
                   />
                 </div>
-                <ChevronRight class="text-muted-foreground size-4 shrink-0" />
               </button>
+              <FavoriteButton
+                v-if="dancerIds.get(entry.name)"
+                type="dancers"
+                :id="dancerIds.get(entry.name) || ''"
+                :name="entry.name"
+                class="mr-1"
+              />
             </li>
           </ul>
         </section>
@@ -262,10 +269,10 @@ async function openDancerById(id: string) {
             </button>
           </SectionHeader>
           <ul>
-            <li v-for="entry in recentList" :key="entry.id">
+            <li v-for="entry in recentList" :key="entry.id" class="flex items-center">
               <button
                 type="button"
-                class="flex w-full items-center gap-3 px-1 py-3 text-left"
+                class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3 text-left"
                 @click="openDancerById(entry.id)"
               >
                 <span
@@ -280,8 +287,13 @@ async function openDancerById(id: string) {
                     :style="{ viewTransitionName: vt.name(entry.id, 'name') }"
                   >{{ entry.name }}</div>
                 </div>
-                <ChevronRight class="text-muted-foreground size-4 shrink-0" />
               </button>
+              <FavoriteButton
+                type="dancers"
+                :id="entry.id"
+                :name="entry.name"
+                class="mr-1"
+              />
             </li>
           </ul>
         </section>
