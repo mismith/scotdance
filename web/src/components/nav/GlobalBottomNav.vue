@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { onKeyStroke } from '@vueuse/core'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import {
   ArrowDownToLine,
@@ -8,6 +7,7 @@ import {
   Search as SearchIcon,
   X,
 } from '@lucide/vue'
+import Popover from '@/components/Popover.vue'
 import { useUpdate } from '@/composables/useUpdate'
 import { useGlobalSearch } from '@/composables/useGlobalSearch'
 import { backPath, preferBackClick } from '@/lib/back'
@@ -21,7 +21,6 @@ const update = useUpdate()
 const { q, inputEl } = useGlobalSearch()
 
 const moreOpen = ref(false)
-onKeyStroke('Escape', () => (moreOpen.value = false))
 
 const isSearch = computed(() => route.name === 'search')
 
@@ -142,116 +141,91 @@ function clearSearch() {
           <span class="text-xs leading-none">{{ tab.label }}</span>
         </RouterLink>
 
-        <div class="relative [view-transition-name:match-element]">
-          <button
-            type="button"
-            :class="[
-              'relative isolate flex h-14 min-w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-3 font-sans font-medium transition-colors',
-              moreActive
-                ? `before:bg-card-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:[view-transition-class:fixed-height] before:[view-transition-name:nav-left-active]`
-                : 'opacity-70 hover:opacity-100',
-            ]"
-            :aria-expanded="moreOpen"
-            aria-haspopup="menu"
-            @click="moreOpen = !moreOpen"
-          >
-            <MoreHorizontal class="size-5" />
-            <span class="text-xs leading-none">More</span>
-            <span
-              v-if="update.updateAvailable && !moreOpen"
-              class="bg-secondary absolute top-1 right-1 size-2 animate-pulse rounded-full"
-              aria-hidden="true"
-            />
-          </button>
-
-          <Transition
-            enter-active-class="transition ease-out"
-            enter-from-class="opacity-0"
-            enter-to-class="opacity-100"
-            leave-active-class="transition ease-out"
-            leave-from-class="opacity-100"
-            leave-to-class="opacity-0"
-          >
-            <div
-              v-if="moreOpen"
-              class="pointer-events-auto fixed inset-0 z-40"
-              aria-hidden="true"
-              @click="moreOpen = false"
-            />
-          </Transition>
-
-          <Transition
-            enter-active-class="transition-[clip-path,opacity] ease-rubber-band"
-            enter-from-class="opacity-0 [clip-path:inset(calc(100%-3.5rem)_calc(50%-2rem)_0_calc(50%-2rem)_round_1.75rem)]"
-            enter-to-class="opacity-100 [clip-path:inset(0_0_0_0_round_1.5rem)]"
-            leave-active-class="transition-[clip-path,opacity] ease-out"
-            leave-from-class="opacity-100 [clip-path:inset(0_0_0_0_round_1.5rem)]"
-            leave-to-class="opacity-0 [clip-path:inset(calc(100%-3.5rem)_calc(50%-2rem)_0_calc(50%-2rem)_round_1.75rem)]"
-          >
-            <div
-              v-if="moreOpen"
-              class="absolute bottom-full left-1/2 z-50 mb-2 -ml-36 w-72 max-w-[calc(100vw-1.5rem)]"
-              role="menu"
-            >
-              <div class="floating-nav w-full overflow-hidden rounded-3xl p-3 font-sans">
-                <RouterLink
-                  :to="aboutLink.to"
-                  :class="[
-                    'flex w-full items-center gap-3 rounded-lg p-2.5 text-base font-medium transition-opacity',
-                    route.path === '/'
-                      ? 'bg-card-foreground/10'
-                      : 'opacity-70 hover:opacity-100',
-                  ]"
-                  role="menuitem"
-                  @click="moreOpen = false"
-                >
-                  <component :is="aboutLink.icon" class="size-5" />
-                  <span class="flex-1">{{ aboutLink.label }}</span>
-                </RouterLink>
-
-                <button
-                  v-if="update.updateAvailable"
-                  type="button"
-                  class="mt-1 flex w-full items-center gap-3 rounded-lg p-2.5 text-left text-base font-medium opacity-70 transition-opacity hover:opacity-100"
-                  role="menuitem"
-                  @click="
-                    () => {
-                      moreOpen = false
-                      update.openDialog()
-                    }
-                  "
-                >
-                  <ArrowDownToLine class="size-5" />
-                  <span class="flex-1">Update available</span>
-                  <span
-                    class="bg-secondary size-2 animate-pulse rounded-full"
-                    aria-hidden="true"
-                  />
-                </button>
-
-                <hr class="border-card-foreground/10 my-2" />
-
-                <RouterLink
-                  v-for="(entity, i) in entityLinks"
-                  :key="entity.label"
-                  :to="entity.to"
-                  :class="[
-                    'flex w-full items-center gap-3 rounded-lg p-2.5 text-base font-medium transition-opacity',
-                    i > 0 && 'mt-1',
-                    route.path.startsWith(entity.path)
-                      ? 'bg-card-foreground/10'
-                      : 'opacity-70 hover:opacity-100',
-                  ]"
-                  role="menuitem"
-                  @click="moreOpen = false"
-                >
-                  <component :is="entity.icon" class="size-5" />
-                  <span class="flex-1">{{ entity.label }}</span>
-                </RouterLink>
-              </div>
+        <Popover v-model:open="moreOpen" placement="top" :offset-px="8">
+          <template #trigger="{ triggerRef, toggle, isOpen }">
+            <div :ref="triggerRef" class="relative [view-transition-name:match-element]">
+              <button
+                type="button"
+                :class="[
+                  'relative isolate flex h-14 min-w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-3 font-sans font-medium transition-colors',
+                  moreActive
+                    ? `before:bg-card-foreground/10 before:absolute before:inset-0 before:-z-10 before:rounded-full before:[view-transition-class:fixed-height] before:[view-transition-name:nav-left-active]`
+                    : 'opacity-70 hover:opacity-100',
+                ]"
+                :aria-expanded="isOpen"
+                aria-haspopup="menu"
+                @click="toggle"
+              >
+                <MoreHorizontal class="size-5" />
+                <span class="text-xs leading-none">More</span>
+                <span
+                  v-if="update.updateAvailable && !isOpen"
+                  class="bg-secondary absolute top-1 right-1 size-2 animate-pulse rounded-full"
+                  aria-hidden="true"
+                />
+              </button>
             </div>
-          </Transition>
-        </div>
+          </template>
+
+          <template #default="{ close }">
+            <div class="w-72 max-w-[calc(100vw-1.5rem)] p-3 font-sans" role="menu">
+              <RouterLink
+                :to="aboutLink.to"
+                :class="[
+                  'flex w-full items-center gap-3 rounded-lg p-2.5 text-base font-medium transition-opacity',
+                  route.path === '/'
+                    ? 'bg-card-foreground/10'
+                    : 'opacity-70 hover:opacity-100',
+                ]"
+                role="menuitem"
+                @click="close"
+              >
+                <component :is="aboutLink.icon" class="size-5" />
+                <span class="flex-1">{{ aboutLink.label }}</span>
+              </RouterLink>
+
+              <button
+                v-if="update.updateAvailable"
+                type="button"
+                class="mt-1 flex w-full items-center gap-3 rounded-lg p-2.5 text-left text-base font-medium opacity-70 transition-opacity hover:opacity-100"
+                role="menuitem"
+                @click="
+                  () => {
+                    close()
+                    update.openDialog()
+                  }
+                "
+              >
+                <ArrowDownToLine class="size-5" />
+                <span class="flex-1">Update available</span>
+                <span
+                  class="bg-secondary size-2 animate-pulse rounded-full"
+                  aria-hidden="true"
+                />
+              </button>
+
+              <hr class="border-card-foreground/10 my-2" />
+
+              <RouterLink
+                v-for="(entity, i) in entityLinks"
+                :key="entity.label"
+                :to="entity.to"
+                :class="[
+                  'flex w-full items-center gap-3 rounded-lg p-2.5 text-base font-medium transition-opacity',
+                  i > 0 && 'mt-1',
+                  route.path.startsWith(entity.path)
+                    ? 'bg-card-foreground/10'
+                    : 'opacity-70 hover:opacity-100',
+                ]"
+                role="menuitem"
+                @click="close"
+              >
+                <component :is="entity.icon" class="size-5" />
+                <span class="flex-1">{{ entity.label }}</span>
+              </RouterLink>
+            </div>
+          </template>
+        </Popover>
       </div>
 
       <!-- RIGHT pill: same DOM node across routes so iOS keyboard survives the
