@@ -7,5 +7,5 @@ const props = defineProps<{
 </script>
 
 <template>
-  <FavoriteButton type="competitions" :id="props.competitionId" />
+  <FavoriteButton :id="props.competitionId" type="competitions" />
 </template>

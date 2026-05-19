@@ -51,8 +51,8 @@ const entityRef = computed(() =>
         </div>
         <FavoriteButton
           v-if="entityRef"
-          :type="entityRef.type"
           :id="entityRef.id"
+          :type="entityRef.type"
           :name="name"
           class="-mr-2 shrink-0"
         />

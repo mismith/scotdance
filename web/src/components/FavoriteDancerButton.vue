@@ -12,5 +12,5 @@ const name = computed(() => dancerFullName(props.dancer))
 </script>
 
 <template>
-  <FavoriteButton type="dancers" :id="props.dancer.id" :name="name" />
+  <FavoriteButton :id="props.dancer.id" type="dancers" :name="name" />
 </template>

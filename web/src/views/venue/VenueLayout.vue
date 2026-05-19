@@ -22,8 +22,8 @@ const isInfo = computed(() => String(route.name ?? '') === 'venue.info')
 
 <template>
   <EntityLayout
-    scope="venue"
     :id="venueId"
+    scope="venue"
     id-param="venueId"
     route-prefix="venue"
     section-route-name="venues"
@@ -39,8 +39,8 @@ const isInfo = computed(() => String(route.name ?? '') === 'venue.info')
     <template #actions>
       <FavoriteButton
         v-if="isInfo"
-        type="venues"
         :id="venueId"
+        type="venues"
         :name="name"
         class="hover:bg-card-foreground/10! flex! size-9! items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
       />
