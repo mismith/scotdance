@@ -100,6 +100,13 @@ const placedRows = computed(() =>
           >
             {{ dancer.group.fullName }}
           </div>
+          <RouterLink
+            v-if="dancer.dancerId"
+            :to="{ name: 'dancer.info', params: { dancerId: dancer.dancerId } }"
+            class="text-primary hover:text-primary/80 mt-1 inline-block px-1 py-1 text-sm font-medium"
+          >
+            View profile →
+          </RouterLink>
         </div>
       </header>
 

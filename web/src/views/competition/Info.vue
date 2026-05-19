@@ -6,7 +6,12 @@ import CompChip from '@/components/CompChip.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import StaffAvatar from '@/components/StaffAvatar.vue'
 import StaffDialog from '@/components/StaffDialog.vue'
-import { staffMemberName, type StaffMember } from '@/types/competition'
+import {
+  staffEntityRef,
+  staffMemberName,
+  type StaffMember,
+} from '@/types/competition'
+import { useFavoritesStore } from '@/stores/favorites'
 import { blocks, days, events } from '@/lib/schedule'
 import {
   formatExternalURL,
@@ -120,6 +125,13 @@ const stats = computed(() => {
   return list
 })
 
+const favorites = useFavoritesStore()
+
+function isFavoriteStaff(member: StaffMember): boolean {
+  const ref = staffEntityRef(member)
+  return ref ? favorites.isFavorite(ref.type, ref.id) : false
+}
+
 const groupedStaff = computed(() => {
   const groups = new Map<string, StaffMember[]>()
   for (const member of staff.value) {
@@ -132,6 +144,7 @@ const groupedStaff = computed(() => {
     type,
     members,
     showAvatars: members.length > 0 && members.every((m) => !!m.image),
+    favs: members.reduce((n, m) => n + (isFavoriteStaff(m) ? 1 : 0), 0),
   }))
 })
 
@@ -283,7 +296,11 @@ function closeStaff() {
 
     <!-- Staff as two-column credits -->
     <section v-for="group in groupedStaff" :key="group.type" class="space-y-3">
-      <SectionHeader :label="`${group.type}s`" :count="group.members.length" />
+      <SectionHeader
+        :label="`${group.type}s`"
+        :count="group.members.length"
+        :favs="group.favs"
+      />
       <div class="columns-2 gap-4 px-1 [column-fill:balance]">
         <button
           v-for="member in group.members"
@@ -292,7 +309,12 @@ function closeStaff() {
           class="mb-2 flex w-full break-inside-avoid items-center gap-3 rounded-md py-1 text-left hover:bg-accent/40"
           @click="openStaff(member)"
         >
-          <StaffAvatar v-if="group.showAvatars" :member="member" :size="40" />
+          <StaffAvatar
+            v-if="group.showAvatars"
+            :member="member"
+            :size="40"
+            :favorite="isFavoriteStaff(member)"
+          />
           <div class="min-w-0 flex-1">
             <div class="text-item-title truncate">
               {{ staffMemberName(member) }}

@@ -34,11 +34,33 @@ export interface StaffMember {
   description?: string
   location?: string
   website?: string
+  /** Back-pointer to the matching aggregate entity, written by the aggregator. */
+  judgeId?: string
+  piperId?: string
   _order?: number
 }
 
 export const staffMemberName = (m: StaffMember) =>
   `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim()
+
+// Maps a staff record to its aggregate-entity favourite namespace + id, when
+// the aggregator has matched it. Returns null for unmatched/other staff types.
+export type StaffEntityRef = {
+  type: 'judges' | 'pipers'
+  id: string
+  routePrefix: 'judge' | 'piper'
+  idParam: 'judgeId' | 'piperId'
+}
+
+export function staffEntityRef(m: StaffMember): StaffEntityRef | null {
+  if (m.judgeId) {
+    return { type: 'judges', id: m.judgeId, routePrefix: 'judge', idParam: 'judgeId' }
+  }
+  if (m.piperId) {
+    return { type: 'pipers', id: m.piperId, routePrefix: 'piper', idParam: 'piperId' }
+  }
+  return null
+}
 
 export interface Category {
   id: string
@@ -66,6 +88,8 @@ export interface Dancer {
   groupId?: string
   location?: string
   image?: string
+  /** Back-pointer to the aggregate dancer profile, written by the aggregator. */
+  dancerId?: string
   _order?: number
 }
 
