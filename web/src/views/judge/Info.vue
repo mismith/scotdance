@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { ChevronRight } from '@lucide/vue'
 import { useJudgeProfile } from '@/composables/useJudgeProfile'
 import { initialsOf } from '@/lib/format'
+import { sanitizeRichText } from '@/lib/sanitize'
 import CompChip from '@/components/CompChip.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
@@ -65,7 +66,10 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
 
     <section v-if="bio" class="space-y-2">
       <SectionHeader label="Bio" />
-      <p class="text-foreground/90 wrap-break-word whitespace-pre-wrap">{{ bio }}</p>
+      <div
+        class="text-foreground/90 wrap-break-word"
+        v-html="sanitizeRichText(bio)"
+      />
     </section>
 
     <section>
