@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, shallowRef } from 'vue'
-import { searchDancers, type SearchDancerGroup } from '@/lib/searchDancers'
+import { searchAll, type SearchPersonGroup } from '@/lib/searchAll'
 
 export const useDancersStore = defineStore('dancers', () => {
   const query = ref('')
-  const results = shallowRef<SearchDancerGroup[]>([])
+  const results = shallowRef<SearchPersonGroup[]>([])
   const searching = ref(false)
   const searchError = ref<Error | null>(null)
   const locationByName = shallowRef(new Map<string, string>())
@@ -21,9 +21,9 @@ export const useDancersStore = defineStore('dancers', () => {
     searching.value = true
     searchError.value = null
     try {
-      const out = await searchDancers(trimmed)
+      const out = await searchAll({ q: trimmed, types: ['dancers'] })
       if (query.value !== trimmed) return
-      results.value = out
+      results.value = out.dancers.groups
     } catch (e) {
       if (query.value !== trimmed) return
       searchError.value = e as Error
@@ -46,11 +46,11 @@ export const useDancersStore = defineStore('dancers', () => {
     const resolved = await Promise.all(
       todo.map(async (name) => {
         try {
-          const groups = await searchDancers(name)
+          const out = await searchAll({ q: name, types: ['dancers'] })
           const match =
-            groups.find((g) => g.name.toLowerCase() === name.toLowerCase()) ??
-            groups[0]
-          return [name, match?.dancers.find((d) => d.location)?.location ?? ''] as const
+            out.dancers.groups.find((g) => g.name.toLowerCase() === name.toLowerCase()) ??
+            out.dancers.groups[0]
+          return [name, match?.location ?? ''] as const
         } catch {
           return [name, ''] as const
         }

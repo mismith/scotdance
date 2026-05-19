@@ -4,7 +4,6 @@ import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
 import { ChevronRight, Search, Star, X } from '@lucide/vue'
-import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useDancersStore } from '@/stores/dancers'
 import { useRecentDancers } from '@/composables/useRecentDancers'
@@ -12,14 +11,12 @@ import AccountAvatarButton from '@/components/AccountAvatarButton.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { initialsOf } from '@/lib/format'
-import type { SearchDancerGroup } from '@/lib/searchDancers'
 import { lookupEntityId } from '@/lib/entityIndex'
 import { useEntityIdMap } from '@/composables/useEntityIdMap'
 import { focusVt, useVtScope } from '@/lib/viewTransitionFocus'
 
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
 const favorites = useFavoritesStore()
 const dancers = useDancersStore()
 const recentDancers = useRecentDancers()
@@ -43,17 +40,7 @@ watch(q, (value) => {
   }
 })
 
-watch(
-  [qDebounced, () => auth.isSignedIn],
-  ([value, signedIn]) => {
-    if (!signedIn) {
-      dancers.reset()
-      return
-    }
-    dancers.search(value)
-  },
-  { immediate: true },
-)
+watch(qDebounced, (value) => dancers.search(value), { immediate: true })
 
 interface FavoriteEntry {
   name: string
@@ -82,8 +69,8 @@ watch(
   { immediate: true },
 )
 
-function locationOf(group: SearchDancerGroup) {
-  return group.dancers.find((d) => d.location)?.location ?? ''
+function locationOf(group: { location?: string }) {
+  return group.location ?? ''
 }
 
 const recentList = computed(() => {
@@ -135,8 +122,7 @@ async function openDancerById(id: string) {
             v-model="q"
             type="search"
             placeholder="Search by name…"
-            :disabled="!auth.isSignedIn"
-            class="placeholder:text-card-foreground/55 min-w-0 flex-1 bg-transparent focus:outline-none disabled:opacity-50 [&::-webkit-search-cancel-button]:hidden"
+            class="placeholder:text-card-foreground/55 min-w-0 flex-1 bg-transparent focus:outline-none [&::-webkit-search-cancel-button]:hidden"
           />
           <button
             v-if="q"
@@ -153,23 +139,7 @@ async function openDancerById(id: string) {
     </nav>
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-4">
 
-      <div
-        v-if="!auth.isSignedIn"
-        class="bg-card space-y-3 rounded-2xl border p-6 text-center"
-      >
-        <p class="text-xl">
-          Sign in to find and follow dancers across comps.
-        </p>
-        <button
-          type="button"
-          class="bg-primary text-primary-foreground inline-flex items-center rounded-full px-4 py-2 font-medium hover:opacity-90"
-          @click="auth.openLogin"
-        >
-          Sign in
-        </button>
-      </div>
-
-      <template v-else-if="showSearch">
+      <template v-if="showSearch">
         <div v-if="error" class="text-destructive text-lg">{{ error.message }}</div>
 
         <div
