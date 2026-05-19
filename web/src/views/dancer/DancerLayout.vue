@@ -2,7 +2,7 @@
 import { computed, toRef } from 'vue'
 import { useRoute } from 'vue-router'
 import EntityLayout from '@/components/EntityLayout.vue'
-import FavoriteDancerProfileButton from '@/components/FavoriteDancerProfileButton.vue'
+import FavoriteButton from '@/components/FavoriteButton.vue'
 import { provideDancerProfile } from '@/composables/useDancerProfile'
 import { useFavoritesStore } from '@/stores/favorites'
 import { initialsOf } from '@/lib/format'
@@ -13,16 +13,12 @@ const dancerId = computed(() => String(route.params.dancerId ?? ''))
 
 useVtScope('dancer').syncFocus(dancerId)
 
-const { displayName, location, image, appearances, loading, notFound } =
+const { displayName, location, image, loading, notFound } =
   provideDancerProfile(toRef(dancerId))
 
 const favorites = useFavoritesStore()
 const initials = computed(() => initialsOf(displayName.value))
-const isFavorite = computed(() =>
-  appearances.value.some(
-    (a) => a.raw.dancerId && favorites.isFavoriteDancer(a.raw.dancerId),
-  ),
-)
+const isFavorite = computed(() => favorites.isFavorite('dancers', dancerId.value))
 const isInfo = computed(() => String(route.name ?? '') === 'dancer.info')
 </script>
 
@@ -45,9 +41,10 @@ const isInfo = computed(() => String(route.name ?? '') === 'dancer.info')
     results-tab-label="Results"
   >
     <template #actions>
-      <FavoriteDancerProfileButton
+      <FavoriteButton
         v-if="isInfo"
-        :appearances="appearances"
+        type="dancers"
+        :id="dancerId"
         :name="displayName"
         class="hover:bg-card-foreground/10! flex! size-9! items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
       />
