@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Star } from '@lucide/vue'
-import { useAuthStore } from '@/stores/auth'
-import { useFavoritesStore } from '@/stores/favorites'
+import FavoriteButton from './FavoriteButton.vue'
 import type { Dancer } from '@/types/competition'
 import { dancerFullName } from '@/types/competition'
 
@@ -10,37 +8,9 @@ const props = defineProps<{
   dancer: Pick<Dancer, 'id' | 'firstName' | 'lastName'>
 }>()
 
-const auth = useAuthStore()
-const favorites = useFavoritesStore()
-
-const isFavorite = computed(() => favorites.isFavoriteDancer(props.dancer.id))
-
-async function handleClick(e: Event) {
-  e.preventDefault()
-  e.stopPropagation()
-  const name = dancerFullName(props.dancer)
-  if (!auth.isSignedIn) {
-    // queue force-on; if the user signs in, they get the favorite they wanted
-    auth.enqueueAfterLogin(() => favorites.setDancer(props.dancer.id, true, name))
-    auth.openLogin()
-    return
-  }
-  await favorites.toggleDancer(props.dancer.id, name)
-}
+const name = computed(() => dancerFullName(props.dancer))
 </script>
 
 <template>
-  <button
-    type="button"
-    :title="
-      auth.isSignedIn ? (isFavorite ? 'Unfavorite' : 'Favorite') : 'Sign in to favorite'
-    "
-    :class="[
-      'hover:bg-accent flex size-11 items-center justify-center rounded-full transition-colors',
-      isFavorite ? 'text-secondary' : 'text-muted-foreground hover:text-foreground',
-    ]"
-    @click="handleClick"
-  >
-    <Star :class="['size-5', isFavorite && 'fill-current']" />
-  </button>
+  <FavoriteButton type="dancers" :id="props.dancer.id" :name="name" />
 </template>
