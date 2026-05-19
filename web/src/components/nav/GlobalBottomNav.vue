@@ -56,18 +56,18 @@ const previousFullPath = ref<string | null>(backPath())
 watch(() => route.fullPath, () => { previousFullPath.value = backPath() })
 
 // Resolves the back path to the section that owns it (via the deepest matched
-// route carrying `sectionIcon` meta). No hardcoded list — adding a new
-// section is just adding meta to its route.
+// route carrying an `icon` meta). No hardcoded list — adding a new section is
+// just adding meta to its route.
 const competitionsLink = sectionMeta('competitions')
 const backInfo = computed(() => {
   const back = previousFullPath.value
   if (back) {
     const matched = router.resolve(back).matched
-    const section = [...matched].reverse().find((r) => r.meta.sectionIcon && r.name)
+    const section = [...matched].reverse().find((r) => r.meta.icon && r.name)
     if (section) {
       return {
-        icon: section.meta.sectionIcon!,
-        label: `Back to ${section.meta.sectionLabel ?? String(section.name)}`,
+        icon: section.meta.icon!,
+        label: `Back to ${section.meta.title ?? String(section.name)}`,
         to: { name: section.name as string },
       }
     }

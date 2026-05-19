@@ -1,10 +1,19 @@
 <script setup lang="ts">
 import { watchEffect } from 'vue'
 import { useResizeObserver, useScroll } from '@vueuse/core'
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
+import { useHead } from '@unhead/vue'
 import AppShell from '@/components/AppShell.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import UpdateDialog from '@/components/UpdateDialog.vue'
+import { buildTitle } from '@/composables/usePageTitle'
+
+// Default page title from route meta. Component-level usePageTitle calls
+// (e.g. entity layouts) stack on top and override; when they unmount Unhead
+// falls back here. Keep this in Unhead — not document.title — so writes are
+// reconciled together.
+const route = useRoute()
+useHead({ title: () => buildTitle([route.meta.title]) })
 
 // Reflect window scroll-edge state on <html> for the chrome-fade overlays
 // below. arrivedState only recomputes when y changes, so on async content
