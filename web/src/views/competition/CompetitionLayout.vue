@@ -11,6 +11,7 @@ import ShareButton from '@/components/ShareButton.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { CalendarX } from '@lucide/vue'
 import { provideCompetition } from '@/composables/useCompetition'
+import { useFavoritesStore } from '@/stores/favorites'
 import { preferBackClick, useExternalBack } from '@/lib/back'
 import { formatShortDate } from '@/lib/format'
 import { usePageTitle } from '@/composables/usePageTitle'
@@ -53,6 +54,11 @@ useVtScope('comp').syncFocus(competitionId)
 
 const { competition, notFound, loading, error, loadSchedule } = provideCompetition(
   toRef(competitionId),
+)
+
+const favorites = useFavoritesStore()
+const isFavorite = computed(() =>
+  favorites.isFavorite('competitions', competitionId.value),
 )
 
 // Trigger schedule load eagerly so the bottom nav can decide whether to show
@@ -126,6 +132,7 @@ usePageTitle(() => [
           <CompChip
             :name="competition?.name"
             :image="competition?.image"
+            :favorite="isFavorite"
             class="size-10 rounded-full [view-transition-class:nav-avatar] [view-transition-name:comp-avatar]"
           />
           <div class="min-w-0 flex-1">

@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 import CompChip from '@/components/CompChip.vue'
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue'
+import { useFavoritesStore } from '@/stores/favorites'
 import { formatShortDate, isSameDay } from '@/lib/format'
 import { useVtScope } from '@/lib/viewTransitionFocus'
 
@@ -16,6 +18,8 @@ const props = withDefaults(
 )
 
 const vt = useVtScope('comp')
+const favorites = useFavoritesStore()
+const isFavorite = computed(() => favorites.isFavorite('competitions', props.competition.id))
 </script>
 
 <template>
@@ -29,6 +33,7 @@ const vt = useVtScope('comp')
         <CompChip
           :name="competition.name"
           :image="competition.image"
+          :favorite="isFavorite"
           class="size-12 rounded-xl [view-transition-class:nav-avatar]"
           :style="{ viewTransitionName: vt.name(competition.id, 'avatar') }"
         />

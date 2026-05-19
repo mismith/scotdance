@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { ChevronRight } from '@lucide/vue'
 import { usePiperProfile } from '@/composables/usePiperProfile'
+import { useFavoritesStore } from '@/stores/favorites'
 import { initialsOf } from '@/lib/format'
 import { sanitizeRichText } from '@/lib/sanitize'
 import CompChip from '@/components/CompChip.vue'
@@ -11,6 +12,7 @@ import Skeleton from '@/components/Skeleton.vue'
 const profile = usePiperProfile()
 const { displayName, location, image, bio, loading } = profile
 
+const favorites = useFavoritesStore()
 const initials = computed(() => initialsOf(displayName.value))
 
 const tiles = computed(() => [
@@ -109,6 +111,7 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
         <CompChip
           :name="recentComp.competition?.name"
           :image="recentComp.competition?.image"
+          :favorite="favorites.isFavorite('competitions', recentComp.raw.competitionId ?? '')"
           class="size-10 rounded-xl"
         />
         <div class="min-w-0 flex-1">

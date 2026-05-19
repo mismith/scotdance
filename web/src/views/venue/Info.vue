@@ -2,12 +2,15 @@
 import { computed } from 'vue'
 import { School, ChevronRight } from '@lucide/vue'
 import { useVenueProfile } from '@/composables/useVenueProfile'
+import { useFavoritesStore } from '@/stores/favorites'
 import CompChip from '@/components/CompChip.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
 
 const profile = useVenueProfile()
 const { name, locationLine, loading } = profile
+
+const favorites = useFavoritesStore()
 
 const tiles = computed(() => [
   {
@@ -91,6 +94,7 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
         <CompChip
           :name="recentComp.competition?.name"
           :image="recentComp.competition?.image"
+          :favorite="favorites.isFavorite('competitions', recentComp.raw.competitionId ?? '')"
           class="size-10 rounded-xl"
         />
         <div class="min-w-0 flex-1">

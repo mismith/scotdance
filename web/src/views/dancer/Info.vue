@@ -116,6 +116,7 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
         <CompChip
           :name="recentComp.competition?.name"
           :image="recentComp.competition?.image"
+          :favorite="favorites.isFavorite('competitions', recentComp.raw.competitionId ?? '')"
           class="size-10 rounded-xl"
         />
         <div class="min-w-0 flex-1">
