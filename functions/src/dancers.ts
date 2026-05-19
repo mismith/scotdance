@@ -86,6 +86,27 @@ const aggregatorConfig: AggregatorConfig<DancerRecord, DancerAppearance> = {
       ? Number.parseInt(dancer.number, 10) || null
       : dancer.number ?? null,
   }),
+  // Denorm name/image/location onto the agg root so the slim index can carry
+  // them. "Latest" is approximate — first-non-null in appearance iteration
+  // order, since appearances don't carry a date. Profile pages still do the
+  // proper date-sorted pick client-side via comp meta.
+  recomputeFromAppearances: (apps) => {
+    const pick = <K extends keyof DancerAppearance>(f: K): DancerAppearance[K] | null => {
+      const hit = apps.find((a) => a[f] != null && a[f] !== '');
+      return hit ? hit[f] : null;
+    };
+    const firstName = pick('firstName') ?? '';
+    const lastName = pick('lastName') ?? '';
+    return {
+      name: `${firstName} ${lastName}`.trim(),
+      image: pick('image'),
+      location: pick('location'),
+    };
+  },
+  slimFields: (agg) => ({
+    image: agg.image ?? null,
+    location: agg.location ?? null,
+  }),
 };
 
 export function getOnCreate(db: any) {

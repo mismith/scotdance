@@ -52,6 +52,13 @@ export interface AggregatorConfig<R, A extends Record<string, any>> {
   identityKeyFromAppearance?: (appearance: A) => string
   /** Extra fields written into the aggregate on first creation. */
   seedAggregate?: (record: R) => Record<string, unknown>
+  /**
+   * Extra fields projected into the slim `/{namespace}:index/{key}` entry.
+   * The list view reads `:index` so it can render without pulling each
+   * aggregate's full `appearances` map. Defaults to none — index entries
+   * always include `id`, `name`, `appearanceCount`.
+   */
+  slimFields?: (agg: any) => Record<string, unknown>
   /** Per-appearance denorm. */
   toAppearance: (record: R, ctx: AppearanceCtx) => A
   /**
@@ -103,6 +110,14 @@ export function createAggregator<R, A extends Record<string, any>>(
     recomputeFromAppearances,
     sectionName,
   } = config;
+  const slimFields = config.slimFields ?? (() => ({}));
+
+  const buildIndexEntry = (id: string, agg: any) => ({
+    id,
+    name: agg.name ?? '',
+    appearanceCount: agg.appearanceCount ?? 0,
+    ...slimFields(agg),
+  });
 
   const identityKey = config.identityKey ?? ((r: R) => normalizeName(nameOf(r)));
   const identityKeyFromAppearance =
@@ -131,7 +146,14 @@ export function createAggregator<R, A extends Record<string, any>>(
     if (!key || key.startsWith('|') || key.endsWith('|')) return null;
     const indexRef = db.child(`${namespace}:index/${key}`);
     const existing = (await indexRef.get()).val();
-    if (typeof existing === 'string' && existing) return existing;
+    // Legacy entries stored a bare id string; new entries are objects with `.id`.
+    const existingId =
+      typeof existing === 'string'
+        ? existing
+        : typeof existing?.id === 'string'
+          ? existing.id
+          : null;
+    if (existingId) return existingId;
     // Race: concurrent writes for the same key may create orphans. Pruned by
     // recompute when the last appearance is removed.
     const newRef = db.child(namespace).push();
@@ -140,13 +162,14 @@ export function createAggregator<R, A extends Record<string, any>>(
     // `_identity` is stored so we can remove the right /{ns}:index entry when
     // the last appearance unlinks. Re-deriving from the aggregate's denormed
     // fields is fragile (some are renamed: firstName/lastName → name).
-    await newRef.set({
+    const initialAgg = {
       ...seed,
       name: nameOf(record),
       _identity: key,
       appearanceCount: 0,
-    });
-    await indexRef.set(id);
+    };
+    await newRef.set(initialAgg);
+    await indexRef.set(buildIndexEntry(id, initialAgg));
     return id;
   }
 
@@ -181,6 +204,13 @@ export function createAggregator<R, A extends Record<string, any>>(
     const update: Record<string, unknown> = { ...refreshed, appearanceCount: count };
     if (!agg._identity && identity) update._identity = identity;
     await aggRef.update(update);
+
+    if (identity) {
+      const merged = { ...agg, ...update };
+      await db
+        .child(`${namespace}:index/${identity}`)
+        .set(buildIndexEntry(entityId, merged));
+    }
   }
 
   async function linkAppearance(entityId: string, ctx: AppearanceCtx, record: R) {

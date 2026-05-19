@@ -60,6 +60,14 @@ const aggregatorConfig: AggregatorConfig<CompRecord, VenueAppearance> = {
     region: c.region ?? null,
     country: c.country ?? null,
   }),
+  // List view's subtitle uses locality/region/country — keep them in the slim
+  // index entry so the list renders without pulling each venue's full
+  // appearances map.
+  slimFields: (agg) => ({
+    locality: agg.locality ?? null,
+    region: agg.region ?? null,
+    country: agg.country ?? null,
+  }),
   toAppearance: (c, { competitionId }) => ({
     competitionId,
     venue: c.venue ?? null,

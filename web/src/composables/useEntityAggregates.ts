@@ -2,14 +2,17 @@ import { ref, type Ref } from 'vue'
 import { get } from 'firebase/database'
 import { dataRef } from '@/firebase'
 
-// Module-scoped per-namespace cache for entity aggregates (judges, pipers,
-// venues, dancers). The aggregates ref survives component unmounts so:
+// Module-scoped per-namespace cache for entity list rows (judges, pipers,
+// venues, dancers). The list reads the slim `/{namespace}:index` node (each
+// entry is `{ id, name, appearanceCount, ...entitySpecific }`) — NOT the full
+// `/{namespace}` aggregates, which carry an `appearances` map and are
+// orders-of-magnitude larger. Profile pages load the full aggregate
+// separately.
+//
+// The cache survives component unmounts so:
 //  - Repeat visits to /{section} render synchronously (no skeleton flash).
 //  - Back-navigation from a detail page lands the view-transition on the
 //    real list row instead of an empty-list snapshot.
-//
-// Detail pages pre-warm by calling `preloadEntityAggregates(namespace)` on
-// mount, so by the time the user taps "back to {section}" the list is ready.
 
 export interface AggregateRow {
   name?: string
@@ -42,6 +45,13 @@ function entryFor(namespace: string): EntityAggregatesEntry {
   return entry
 }
 
+interface SlimIndexEntry {
+  id?: string
+  name?: string
+  appearanceCount?: number
+  [key: string]: unknown
+}
+
 async function loadInto(namespace: string): Promise<void> {
   const entry = entryFor(namespace)
   if (entry.inFlight) return entry.inFlight
@@ -49,9 +59,19 @@ async function loadInto(namespace: string): Promise<void> {
   entry.error.value = null
   entry.inFlight = (async () => {
     try {
-      const snap = await get(dataRef(namespace))
-      const value = (snap.val() as Record<string, AggregateRow> | null) ?? {}
-      entry.data.value = Object.entries(value).map(([id, agg]) => ({ id, agg }))
+      const snap = await get(dataRef(`${namespace}:index`))
+      const value = (snap.val() as Record<string, unknown> | null) ?? {}
+      const rows: Array<{ id: string; agg: AggregateRow }> = []
+      for (const v of Object.values(value)) {
+        // Legacy entries were bare id strings (no name/count) — skip; they get
+        // upgraded to slim objects on the next trigger fire or backfill run.
+        if (!v || typeof v !== 'object') continue
+        const slim = v as SlimIndexEntry
+        if (!slim.id) continue
+        const { id, ...agg } = slim
+        rows.push({ id, agg: agg as AggregateRow })
+      }
+      entry.data.value = rows
       entry.loaded = true
     } catch (e) {
       entry.error.value = e as Error
