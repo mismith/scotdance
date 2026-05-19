@@ -196,6 +196,15 @@ export function createStaffEntity(config: StaffEntityConfig) {
     };
   }
 
+  function getOnBackfillBackPointers(db: any) {
+    const agg = createAggregator(db, aggregatorConfig);
+    return async function onBackfillBackPointers(data: unknown, ctx: any) {
+      await ensureAdmin(ctx, db);
+      const opts = (data ?? {}) as { batchSize?: number };
+      return agg.backfillBackPointers(opts);
+    };
+  }
+
   return {
     schema,
     getOnCreate,
@@ -203,5 +212,6 @@ export function createStaffEntity(config: StaffEntityConfig) {
     getOnDelete,
     getOnReindex,
     getOnBackfillAggregates,
+    getOnBackfillBackPointers,
   };
 }

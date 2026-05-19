@@ -114,6 +114,9 @@ export const reindexDancers = configHttps.onCall(Dancers.getOnReindex(appConfig.
 export const backfillDancerAggregates = configHttps.onCall(
   Dancers.getOnBackfillAggregates(appConfig.db),
 );
+export const backfillDancerBackPointers = configHttps.onCall(
+  Dancers.getOnBackfillBackPointers(appConfig.db),
+);
 
 const competitionsIndexRef = configDatabase.ref(`/${env}/competitions/{competitionId}`);
 // One trigger per event, composed: Typesense indexing + venue aggregate.
@@ -139,6 +142,9 @@ export const reindexCompetitions = configHttps.onCall(Competitions.getOnReindex(
 export const backfillVenueAggregates = configHttps.onCall(
   Venues.getOnBackfillAggregates(appConfig.db),
 );
+export const backfillVenueBackPointers = configHttps.onCall(
+  Venues.getOnBackfillBackPointers(appConfig.db),
+);
 
 const judgesRef = configDatabase.ref(`/${env}/competitions:data/{competitionId}/staff/{staffId}`);
 export const judgeCreated = !isCypress() && judgesRef.onCreate(Judges.getOnCreate(appConfig.db));
@@ -148,6 +154,9 @@ export const reindexJudges = configHttps.onCall(Judges.getOnReindex(appConfig.db
 export const backfillJudgeAggregates = configHttps.onCall(
   Judges.getOnBackfillAggregates(appConfig.db),
 );
+export const backfillJudgeBackPointers = configHttps.onCall(
+  Judges.getOnBackfillBackPointers(appConfig.db),
+);
 
 const pipersRef = configDatabase.ref(`/${env}/competitions:data/{competitionId}/staff/{staffId}`);
 export const piperCreated = !isCypress() && pipersRef.onCreate(Pipers.getOnCreate(appConfig.db));
@@ -156,6 +165,9 @@ export const piperDeleted = !isCypress() && pipersRef.onDelete(Pipers.getOnDelet
 export const reindexPipers = configHttps.onCall(Pipers.getOnReindex(appConfig.db));
 export const backfillPiperAggregates = configHttps.onCall(
   Pipers.getOnBackfillAggregates(appConfig.db),
+);
+export const backfillPiperBackPointers = configHttps.onCall(
+  Pipers.getOnBackfillBackPointers(appConfig.db),
 );
 
 export const searchAll = configHttps.onCall(getOnSearchAll(appConfig.db));
