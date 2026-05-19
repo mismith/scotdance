@@ -5,10 +5,13 @@ const props = withDefaults(
   defineProps<{
     name?: string | null
     image?: string | null
+    /** Renders the chip in the secondary (favourite) color treatment. */
+    favorite?: boolean
   }>(),
   {
     name: '',
     image: null,
+    favorite: false,
   },
 )
 
@@ -17,7 +20,12 @@ const mark = computed(() => (props.name ?? '').trim().charAt(0).toUpperCase() ||
 
 <template>
   <div
-    class="text-primary-foreground @container relative flex shrink-0 items-center justify-center overflow-hidden"
+    :class="[
+      '@container relative flex shrink-0 items-center justify-center overflow-hidden',
+      favorite
+        ? 'bg-secondary text-secondary-foreground'
+        : 'bg-primary text-primary-foreground',
+    ]"
   >
     <img
       v-if="image"
@@ -28,23 +36,7 @@ const mark = computed(() => (props.name ?? '').trim().charAt(0).toUpperCase() ||
     <template v-else>
       <div
         class="absolute inset-0"
-        style="
-          background-image: linear-gradient(
-            135deg,
-            color-mix(in oklch, var(--primary) 80%, black) 0%,
-            var(--primary) 100%
-          );
-        "
-      />
-      <div
-        class="absolute inset-0"
-        style="
-          background-image: radial-gradient(
-            70% 60% at 30% 20%,
-            rgba(255, 255, 255, 0.18) 0%,
-            transparent 70%
-          );
-        "
+        style="background-image: radial-gradient(70% 60% at 30% 20%, rgba(255, 255, 255, 0.18) 0%, transparent 70%);"
       />
       <span class="relative font-medium leading-none" style="font-size: 42cqw">
         {{ mark }}

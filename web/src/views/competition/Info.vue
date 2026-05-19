@@ -26,6 +26,7 @@ import {
 import { sanitizeRichText } from '@/lib/sanitize'
 
 const {
+  competitionId,
   competition,
   staff,
   loadStaff,
@@ -126,6 +127,9 @@ const stats = computed(() => {
 })
 
 const favorites = useFavoritesStore()
+const isFavoriteComp = computed(() =>
+  favorites.isFavorite('competitions', competitionId.value),
+)
 
 function isFavoriteStaff(member: StaffMember): boolean {
   const ref = staffEntityRef(member)
@@ -163,6 +167,7 @@ function closeStaff() {
       <CompChip
         :name="competition.name"
         :image="competition.image"
+        :favorite="isFavoriteComp"
         class="size-18 rounded-2xl [view-transition-class:nav-avatar] [view-transition-name:comp-avatar]"
       />
       <h1
