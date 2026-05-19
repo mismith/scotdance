@@ -118,3 +118,12 @@ export function getOnBackfillAggregates(db: any) {
     return agg.backfill();
   };
 }
+
+export function getOnBackfillBackPointers(db: any) {
+  const agg = createAggregator(db, aggregatorConfig);
+  return async function onBackfillBackPointers(data: unknown, ctx: any) {
+    await ensureAdmin(ctx, db);
+    const opts = (data ?? {}) as { batchSize?: number };
+    return agg.backfillBackPointers(opts);
+  };
+}

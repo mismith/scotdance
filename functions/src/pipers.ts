@@ -15,4 +15,5 @@ export const {
   getOnDelete,
   getOnReindex,
   getOnBackfillAggregates,
+  getOnBackfillBackPointers,
 } = entity;

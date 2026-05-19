@@ -91,6 +91,13 @@ export interface AggregatorHandlers {
     pruned: number
     competitions: number
   }>
+  backfillBackPointers(opts?: { batchSize?: number }): Promise<{
+    written: number
+    alreadySet: number
+    unmatched: number
+    competitions: number
+    batches: number
+  }>
 }
 
 function appearanceKey(ctx: AppearanceCtx): string {
@@ -263,6 +270,18 @@ export function createAggregator<R, A extends Record<string, any>>(
 
     const newKey = identityKey(record);
     const oldKey = wasMatch && prev ? identityKey(prev) : '';
+
+    // Short-circuit: identity unchanged + the appearance payload is identical
+    // → the write only touched fields the aggregate doesn't care about (e.g.
+    // a back-pointer write from backfillBackPointers). Skip the appearance
+    // overwrite + recompute. Without this, batched back-pointer writes would
+    // re-run recomputeAggregate for every touched record.
+    if (wasMatch && prev && oldKey === newKey) {
+      const prevApp = JSON.stringify(toAppearance(prev, ctx));
+      const newApp = JSON.stringify(toAppearance(record, ctx));
+      if (prevApp === newApp) return;
+    }
+
     const oldId: string | undefined = (prev as any)?.[backPointerField];
 
     if (oldId && oldKey === newKey) {
@@ -301,10 +320,11 @@ export function createAggregator<R, A extends Record<string, any>>(
       // aggregate's `appearances` map atomically with the current source-of-
       // truth, then prunes aggregates whose source records no longer exist.
       //
-      // Back-pointer writes are intentionally skipped: each would re-fire the
-      // source trigger and overwhelm the emulator. Live triggers populate the
-      // back-pointer on the next legitimate edit. Reverse lookup uses
-      // /{namespace}:index in the meantime.
+      // Back-pointer writes are intentionally skipped here — that's
+      // `backfillBackPointers`' job. Running them in one pass meant every
+      // back-pointer write re-fired the source trigger and re-ran the full
+      // recompute. The dedicated pass relies on the back-pointer-only
+      // short-circuit in `maintainOnWrite` to keep amplification cheap.
       const competitions = (await db.child('competitions').get()).val() || {};
       const compIds = Object.keys(competitions);
       const newAppearancesByEntity = new Map<string, Record<string, A>>();
@@ -345,6 +365,101 @@ export function createAggregator<R, A extends Record<string, any>>(
         pruned += 1;
       }
       return { linked, skipped, pruned, competitions: compIds.length };
+    },
+    async backfillBackPointers(opts?: { batchSize?: number }) {
+      // Writes the back-pointer field (e.g. `judgeId`) onto every source record
+      // that matches an existing aggregate but has it missing/stale. Prereq:
+      // `backfill()` has run so /{namespace} + /{namespace}:index are populated.
+      //
+      // Each write fires the source trigger. Step 1's short-circuit in
+      // `maintainOnWrite` makes those fires near-free (no appearance overwrite,
+      // no aggregate recompute) — provided the appearance payload is identical
+      // to what's already stored, which it will be since the appearance was
+      // built from the same record during the prior `backfill()`.
+      //
+      // Writes are batched via multi-path `update()` calls (default 500 paths
+      // per batch). Re-runs are cheap: `alreadySet` short-circuits anything
+      // that already has the right pointer, so running this is effectively its
+      // own preview.
+      const batchSize = Math.max(1, opts?.batchSize ?? 500);
+
+      // Read-only resolution: aggregate id is found via /{namespace}:index
+      // keyed by identityKey(record). No aggregates are created here — if the
+      // index has no entry, the record is `unmatched` (a signal the regular
+      // backfill needs to run first).
+      const indexSnap = await db.child(`${namespace}:index`).get();
+      const rawIndex = (indexSnap.val() as Record<string, unknown> | null) ?? {};
+      const aggIdByKey = new Map<string, string>();
+      for (const [key, val] of Object.entries(rawIndex)) {
+        const id =
+          typeof val === 'string'
+            ? val
+            : typeof (val as any)?.id === 'string'
+              ? (val as any).id
+              : null;
+        if (id) aggIdByKey.set(key, id);
+      }
+
+      const competitions = (await db.child('competitions').get()).val() || {};
+      const compIds = Object.keys(competitions);
+
+      let written = 0;
+      let alreadySet = 0;
+      let unmatched = 0;
+      let batches = 0;
+      let batch: Record<string, string> = {};
+      let batchCount = 0;
+
+      async function flush() {
+        if (batchCount === 0) return;
+        await db.update(batch);
+        batches += 1;
+        batch = {};
+        batchCount = 0;
+      }
+
+      function pathFor(competitionId: string, recordId: string | null): string {
+        // Venues: back-pointer lives on the comp meta itself.
+        if (recordId === null) {
+          return `competitions/${competitionId}/${backPointerField}`;
+        }
+        // Staff + dancers: under competitions:data/{compId}/{section}/{recordId}.
+        if (!sectionName) {
+          throw new Error(
+            `backfillBackPointers: ${namespace} has recordIdParam but no sectionName`,
+          );
+        }
+        return `competitions:data/${competitionId}/${sectionName}/${recordId}/${backPointerField}`;
+      }
+
+      for (const competitionId of compIds) {
+        const records = await iterate(db, competitionId, competitions[competitionId]);
+        for (const [recordId, record] of records) {
+          if (!matches(record)) continue;
+          const key = identityKey(record);
+          if (!key || key.startsWith('|') || key.endsWith('|')) {
+            unmatched += 1;
+            continue;
+          }
+          const targetId = aggIdByKey.get(key);
+          if (!targetId) {
+            unmatched += 1;
+            continue;
+          }
+          const existing = (record as any)?.[backPointerField];
+          if (existing === targetId) {
+            alreadySet += 1;
+            continue;
+          }
+          batch[pathFor(competitionId, recordId)] = targetId;
+          batchCount += 1;
+          written += 1;
+          if (batchCount >= batchSize) await flush();
+        }
+      }
+      await flush();
+
+      return { written, alreadySet, unmatched, competitions: compIds.length, batches };
     },
   };
 }
