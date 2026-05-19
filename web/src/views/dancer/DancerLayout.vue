@@ -28,8 +28,8 @@ const isInfo = computed(() => String(route.name ?? '') === 'dancer.info')
 
 <template>
   <EntityLayout
-    scope="dancer"
     :id="dancerId"
+    scope="dancer"
     id-param="dancerId"
     route-prefix="dancer"
     section-route-name="dancers"
