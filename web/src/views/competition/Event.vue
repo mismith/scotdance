@@ -14,6 +14,7 @@ import { staffMemberName } from '@/types/competition'
 import type { EnrichedGroup, ScheduleDance, StaffMember } from '@/types/competition'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useVtScope } from '@/lib/viewTransitionFocus'
+import { sanitizeRichText } from '@/lib/sanitize'
 
 const route = useRoute()
 const {
@@ -170,12 +171,11 @@ function closeJudge() {
         >
           {{ wrappableEventName }}
         </h1>
-        <p
+        <div
           v-if="event.description"
-          class="text-muted-foreground text-lg whitespace-pre-line"
-        >
-          {{ event.description }}
-        </p>
+          class="text-muted-foreground text-lg"
+          v-html="sanitizeRichText(event.description)"
+        />
       </header>
 
       <div
@@ -197,9 +197,11 @@ function closeJudge() {
           :open="danceHasContent(dance) && isExpanded(dance.id, danceHasContent(dance))"
         >
           <div class="space-y-3 pl-12">
-            <p v-if="dance.description" class="text-lg whitespace-pre-line">
-              {{ dance.description }}
-            </p>
+            <div
+              v-if="dance.description"
+              class="text-lg"
+              v-html="sanitizeRichText(dance.description)"
+            />
 
             <div
               v-if="dance.danceId && buildPools(dance).length"

@@ -5,6 +5,7 @@ import type {
   ScheduleDay,
   ScheduleEvent,
 } from '@/types/competition'
+import { stripTags } from '@/lib/sanitize'
 
 interface Ordered {
   id: string
@@ -59,5 +60,7 @@ export function getScheduleDanceName(
 
 export function slugline(text: string | undefined): string {
   if (!text) return ''
-  return text.split('\n')[0]?.trim() ?? ''
+  // Strip any organizer-authored HTML before truncating to a single line —
+  // tags would otherwise survive as literal text or, worse, break truncate.
+  return stripTags(text).split('\n')[0]?.trim() ?? ''
 }

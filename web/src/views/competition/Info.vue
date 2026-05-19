@@ -18,6 +18,7 @@ import {
   isSameDay,
   parseDate,
 } from '@/lib/format'
+import { sanitizeRichText } from '@/lib/sanitize'
 
 const {
   competition,
@@ -276,10 +277,9 @@ function closeStaff() {
 
     <section
       v-if="competition.description"
-      class="prose prose-sm max-w-none whitespace-pre-line"
-    >
-      {{ competition.description }}
-    </section>
+      class="prose prose-sm max-w-none"
+      v-html="sanitizeRichText(competition.description)"
+    />
 
     <!-- Staff as two-column credits -->
     <section v-for="group in groupedStaff" :key="group.type" class="space-y-3">
