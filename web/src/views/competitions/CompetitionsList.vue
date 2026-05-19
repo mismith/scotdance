@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, useTemplateRef, watch } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import AccountAvatarButton from '@/components/AccountAvatarButton.vue'
 import { useAnyPillOpen } from '@/composables/useExpandedPill'
+import { providePillRow } from '@/composables/usePillRow'
 import CompetitionRow from '@/components/CompetitionRow.vue'
 import CompetitionsCalendar from '@/components/CompetitionsCalendar.vue'
 import CompetitionsMap from '@/views/competitions/CompetitionsMap.vue'
@@ -22,6 +23,9 @@ const view = useLocalStorage<ViewMode>('competitions:view', 'list')
 const filter = useLocalStorage<DateFilter>('competitions:filter', 'current')
 
 const anyPillOpen = useAnyPillOpen()
+
+const rowRef = useTemplateRef<HTMLElement>('row')
+providePillRow(rowRef)
 
 // Only "Archived" and "All" need archived data; "Current" doesn't look further
 // back than a week, so the un-archived feed is enough.
@@ -165,7 +169,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
   >
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
       <div
-        data-pill-overlay-host
+        ref="row"
         class="pointer-events-auto relative mx-auto flex h-12 max-w-3xl items-center gap-2"
       >
         <div
