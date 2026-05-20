@@ -1,9 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Timeline, ChevronDown, Trophy, Users } from '@lucide/vue'
+import {
+  Timeline,
+  ChevronDown,
+  Trophy,
+  Users,
+  IdCard,
+  CalendarDays,
+} from '@lucide/vue'
+import { useCrisp } from '@/composables/useCrisp'
 import { PLATFORM } from '@/composables/useUpdate'
 import { version } from '../../package.json'
+
+const crisp = useCrisp()
 
 const platformLabel =
   PLATFORM === 'ios' ? 'iOS' : PLATFORM === 'android' ? 'Android' : 'Web'
@@ -20,7 +30,7 @@ const features = [
     n: '02',
     icon: Timeline,
     title: 'Schedule',
-    body: 'Event start times, platform assignments, and the order of dances — at a glance.',
+    body: 'Event start times, platform assignments, and the order of dances, at a glance.',
   },
   {
     n: '03',
@@ -30,10 +40,25 @@ const features = [
   },
 ]
 
+const aggregatorFeatures = [
+  {
+    n: '04',
+    icon: IdCard,
+    title: 'Profiles',
+    body: 'A profile for each dancer, judge, and piper. Easy to track placings, appearances, and history.',
+  },
+  {
+    n: '05',
+    icon: CalendarDays,
+    title: 'Seasons',
+    body: "The season's calendar: past, current, and upcoming competitions, in a list or on a map.",
+  },
+]
+
 const faqs: { q: string; a: string }[] = [
   {
     q: 'Is there a cost associated with using this site/app at my local competition?',
-    a: 'No! All competition data is user-submitted—and you can use it as a competition organizer or competition attendee for free anywhere in the world. There is no plan for this to ever change.',
+    a: 'No! All competition data is user-submitted, and you can use it as a competition organizer or competition attendee for free anywhere in the world. There is no plan for this to ever change.',
   },
   {
     q: 'Is ScotDance.app affiliated with any association, organization, governing body, or particular competition(s)?',
@@ -41,15 +66,11 @@ const faqs: { q: string; a: string }[] = [
   },
   {
     q: 'Do I need to download or install anything to get access?',
-    a: 'No, it\'s entirely optional to use the App/Play Store distributed apps; everything works exactly the same in a web browser on whatever device(s) you own (e.g. by visiting <a href="http://www.scotdance.app" class="underline underline-offset-4">www.scotdance.app</a>). Of course, it\'s handy to have a dedicated place for easy access, so installing a mobile app makes that possible.',
+    a: 'No, it\'s entirely optional to use the App/Play Store distributed apps; everything works exactly the same in a web browser on whatever device(s) you own (e.g. by visiting <a href="http://www.scotdance.app" class="underline underline-offset-4 transition-colors hover:text-foreground">www.scotdance.app</a>). Of course, it\'s handy to have a dedicated place for easy access, so installing a mobile app makes that possible.',
   },
   {
     q: 'Is it safe to use? Are you harvesting my data? Are there privacy concerns with having this information available online?',
-    a: 'This service is, in plain words, completely legitimate. It checks all the security boxes you would/should expect, and does nothing remotely nefarious with the (minimal) data it does collect from you. Furthermore, since all competition data is user-submitted, it\'s conceptually equivalent to uploading scanned or exported results PDFs to a dance association\'s website—just made more convenient, hopefully. You can also read more details on the <a href="/policies" class="underline underline-offset-4">Policies</a> page.',
-  },
-  {
-    q: "Why are dancers I've favourited ★ in one competition not favourited in all competitions?",
-    a: 'Since dancer numbers are unique for each competition—and names, locations, and ages can be misspelled or change over time—it\'s very difficult (for a computer) to distinguish "Jane Doe" in Competition A from "Jane Doe" in Competition B. So until this app can be connected more directly to registrations, it\'s unfortunately necessary to re-favourite dancers for each competition.',
+    a: 'This service is, in plain words, completely legitimate. It checks all the security boxes you would/should expect, and does nothing remotely nefarious with the (minimal) data it does collect from you. Furthermore, since all competition data is user-submitted, it\'s conceptually equivalent to uploading scanned or exported results PDFs to a dance association\'s website, just made more convenient, hopefully. You can also read more details on the <a href="/policies" class="underline underline-offset-4 transition-colors hover:text-foreground">Policies</a> page.',
   },
 ]
 
@@ -103,12 +124,12 @@ function scrollToFeatures(e: Event) {
     >
       <div class="mx-auto w-full max-w-5xl">
         <header class="mb-16 space-y-4">
-          <div class="text-foreground/65 text-eyebrow text-xs">What it does</div>
+          <div class="text-foreground/65 text-eyebrow text-xs">On the day</div>
           <h2 class="text-4xl font-medium tracking-tight md:text-5xl">
             A program of events, without the paper.
           </h2>
           <p class="text-muted-foreground text-lg md:text-xl">
-            Schedules, dancers, and results in a single place — kept in sync as the day
+            Schedules, dancers, and results in a single place, kept in sync as the day
             unfolds.
           </p>
         </header>
@@ -116,6 +137,43 @@ function scrollToFeatures(e: Event) {
         <div class="grid gap-12 md:grid-cols-3 md:gap-10">
           <article
             v-for="f in features"
+            :key="f.n"
+            class="border-border/60 flex flex-col gap-4 border-t pt-6"
+          >
+            <div class="flex items-baseline justify-between">
+              <span
+                class="text-foreground/40 text-3xl font-medium tracking-tight tabular-nums"
+              >
+                {{ f.n }}
+              </span>
+              <component :is="f.icon" class="text-primary size-6" />
+            </div>
+            <h3 class="text-2xl font-medium tracking-tight md:text-3xl">
+              {{ f.title }}
+            </h3>
+            <p class="text-muted-foreground leading-relaxed">{{ f.body }}</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- AGGREGATOR / CROSS-COMPETITION -->
+    <section class="border-border/60 border-t px-6 py-24 md:py-32">
+      <div class="mx-auto w-full max-w-5xl">
+        <header class="mb-16 space-y-4">
+          <div class="text-foreground/65 text-eyebrow text-xs">Over the years</div>
+          <h2 class="text-4xl font-medium tracking-tight md:text-5xl">
+            A record across competitions, not just one.
+          </h2>
+          <p class="text-muted-foreground text-lg md:text-xl">
+            Profiles, appearances, and placings in one record, kept together as
+            competitions come and go.
+          </p>
+        </header>
+
+        <div class="grid gap-12 md:grid-cols-2 md:gap-10">
+          <article
+            v-for="f in aggregatorFeatures"
             :key="f.n"
             class="border-border/60 flex flex-col gap-4 border-t pt-6"
           >
@@ -148,7 +206,7 @@ function scrollToFeatures(e: Event) {
             From the warm-up to the awards.
           </h2>
           <p class="text-muted-foreground mx-auto max-w-xl text-lg md:text-xl">
-            Install it on your phone for one-tap access — or just bookmark it in any
+            Install it on your phone for one-tap access, or just bookmark it in any
             browser.
           </p>
         </div>
@@ -229,23 +287,32 @@ function scrollToFeatures(e: Event) {
             <img src="/img/touchicon.png" alt="" class="size-8 rounded-md" />
             <div class="text-lg">ScotDance.app</div>
           </div>
-          <p class="text-muted-foreground max-w-md text-base leading-relaxed">
-            A volunteer-run project for the highland dance community, by
+          <p class="text-muted-foreground max-w-sm text-base leading-snug">
+            A volunteer-run project for the highland dance community. By
             <a
               href="https://mismith.io"
               target="_blank"
               rel="noopener"
-              class="text-foreground hover:text-primary underline-offset-4 hover:underline"
+              class="underline underline-offset-4 hover:text-foreground transition-colors"
               >Murray Rowan</a
             >, since 2017.
           </p>
         </div>
 
-        <div class="text-muted-foreground flex flex-col text-sm md:items-end">
+        <div class="text-muted-foreground flex flex-col gap-2 text-sm md:items-end">
           <div>
+            <button
+              v-if="crisp.available"
+              type="button"
+              class="cursor-pointer font-serif underline underline-offset-4 transition-colors hover:text-foreground"
+              @click="crisp.show()"
+            >
+              Support
+            </button>
+            <template v-if="crisp.available"> · </template>
             <RouterLink
               :to="{ name: 'policies' }"
-              class="hover:text-foreground transition-colors"
+              class="underline underline-offset-4 transition-colors hover:text-foreground"
             >
               Policies
             </RouterLink>
@@ -254,7 +321,7 @@ function scrollToFeatures(e: Event) {
               href="https://github.com/mismith/scotdance"
               target="_blank"
               rel="noopener"
-              class="hover:text-foreground transition-colors"
+              class="underline underline-offset-4 transition-colors hover:text-foreground"
             >
               Source code
             </a>
