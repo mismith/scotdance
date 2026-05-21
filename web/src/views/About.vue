@@ -1,14 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import {
-  Timeline,
-  ChevronDown,
-  Trophy,
-  Users,
-  IdCard,
-  CalendarDays,
-} from '@lucide/vue'
+import { Timeline, ChevronDown, Trophy, Users, IdCard, Compass } from '@lucide/vue'
 import { useCrisp } from '@/composables/useCrisp'
 import { PLATFORM } from '@/composables/useUpdate'
 import { version } from '../../package.json'
@@ -21,19 +14,19 @@ const isWeb = PLATFORM === 'web'
 
 const features = [
   {
-    n: '01',
+    eyebrow: 'Find',
     icon: Users,
     title: 'Dancers',
     body: 'Search by number, name, or age group. Mark favourites for quick access throughout the day.',
   },
   {
-    n: '02',
+    eyebrow: 'Check',
     icon: Timeline,
-    title: 'Schedule',
-    body: 'Event start times, platform assignments, and the order of dances, at a glance.',
+    title: 'Schedules',
+    body: 'See start times, platforms, and the order of dances. Championship draws included.',
   },
   {
-    n: '03',
+    eyebrow: 'Watch',
     icon: Trophy,
     title: 'Results',
     body: 'Callbacks and placings, posted as they are announced. Archived for review after the competition.',
@@ -42,16 +35,16 @@ const features = [
 
 const aggregatorFeatures = [
   {
-    n: '04',
+    eyebrow: 'Follow',
     icon: IdCard,
     title: 'Profiles',
-    body: 'A profile for each dancer, judge, and piper. Easy to track placings, appearances, and history.',
+    body: 'A dedicated page for every dancer, judge, and piper. Track things more seamlessly than ever before.',
   },
   {
-    n: '05',
-    icon: CalendarDays,
-    title: 'Seasons',
-    body: "The season's calendar: past, current, and upcoming competitions, in a list or on a map.",
+    eyebrow: 'Explore',
+    icon: Compass,
+    title: 'Visuals',
+    body: "Navigate competitions in a calendar view, or move around on a map. Use habits you've already learned to interact with the highland dance world.",
   },
 ]
 
@@ -124,12 +117,12 @@ function scrollToFeatures(e: Event) {
     >
       <div class="mx-auto w-full max-w-5xl">
         <header class="mb-16 space-y-4">
-          <div class="text-foreground/65 text-eyebrow text-xs">On the day</div>
-          <h2 class="text-4xl font-medium tracking-tight md:text-5xl">
+          <div class="text-foreground text-eyebrow text-sm">On the day</div>
+          <h2 class="text-5xl font-medium tracking-tight md:text-5xl">
             A program of events, without the paper.
           </h2>
           <p class="text-muted-foreground text-lg md:text-xl">
-            Schedules, dancers, and results in a single place, kept in sync as the day
+            Dancers, schedules, and results in a single place, kept in sync as the day
             unfolds.
           </p>
         </header>
@@ -137,20 +130,20 @@ function scrollToFeatures(e: Event) {
         <div class="grid gap-12 md:grid-cols-3 md:gap-10">
           <article
             v-for="f in features"
-            :key="f.n"
+            :key="f.title"
             class="border-border/60 flex flex-col gap-4 border-t pt-6"
           >
-            <div class="flex items-baseline justify-between">
-              <span
-                class="text-foreground/40 text-3xl font-medium tracking-tight tabular-nums"
-              >
-                {{ f.n }}
-              </span>
-              <component :is="f.icon" class="text-primary size-6" />
+            <div class="flex items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="text-foreground/65 text-eyebrow text-xs">
+                  {{ f.eyebrow }}
+                </div>
+                <h3 class="text-2xl font-medium tracking-tight md:text-3xl">
+                  {{ f.title }}
+                </h3>
+              </div>
+              <component :is="f.icon" class="text-primary size-8 shrink-0" />
             </div>
-            <h3 class="text-2xl font-medium tracking-tight md:text-3xl">
-              {{ f.title }}
-            </h3>
             <p class="text-muted-foreground leading-relaxed">{{ f.body }}</p>
           </article>
         </div>
@@ -161,33 +154,32 @@ function scrollToFeatures(e: Event) {
     <section class="border-border/60 border-t px-6 py-24 md:py-32">
       <div class="mx-auto w-full max-w-5xl">
         <header class="mb-16 space-y-4">
-          <div class="text-foreground/65 text-eyebrow text-xs">Over the years</div>
-          <h2 class="text-4xl font-medium tracking-tight md:text-5xl">
-            A record across competitions, not just one.
+          <div class="text-foreground text-eyebrow text-sm">Over the years</div>
+          <h2 class="text-5xl font-medium tracking-tight md:text-5xl">
+            Multiple sources, stitched together.
           </h2>
           <p class="text-muted-foreground text-lg md:text-xl">
-            Profiles, appearances, and placings in one record, kept together as
-            competitions come and go.
+            Years of competition data, pulled together and made handy when you need it.
           </p>
         </header>
 
         <div class="grid gap-12 md:grid-cols-2 md:gap-10">
           <article
             v-for="f in aggregatorFeatures"
-            :key="f.n"
+            :key="f.title"
             class="border-border/60 flex flex-col gap-4 border-t pt-6"
           >
-            <div class="flex items-baseline justify-between">
-              <span
-                class="text-foreground/40 text-3xl font-medium tracking-tight tabular-nums"
-              >
-                {{ f.n }}
-              </span>
-              <component :is="f.icon" class="text-primary size-6" />
+            <div class="flex items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="text-foreground/65 text-eyebrow text-xs">
+                  {{ f.eyebrow }}
+                </div>
+                <h3 class="text-2xl font-medium tracking-tight md:text-3xl">
+                  {{ f.title }}
+                </h3>
+              </div>
+              <component :is="f.icon" class="text-primary size-8 shrink-0" />
             </div>
-            <h3 class="text-2xl font-medium tracking-tight md:text-3xl">
-              {{ f.title }}
-            </h3>
             <p class="text-muted-foreground leading-relaxed">{{ f.body }}</p>
           </article>
         </div>
@@ -201,13 +193,12 @@ function scrollToFeatures(e: Event) {
     >
       <div class="mx-auto flex w-full max-w-4xl flex-col items-center gap-10 text-center">
         <div class="space-y-4">
-          <div class="text-foreground/65 text-eyebrow text-xs">Take it with you</div>
-          <h2 class="text-4xl font-medium tracking-tight md:text-5xl">
+          <div class="text-foreground text-eyebrow text-sm">Take it with you</div>
+          <h2 class="text-5xl font-medium tracking-tight md:text-5xl">
             From the warm-up to the awards.
           </h2>
           <p class="text-muted-foreground mx-auto max-w-xl text-lg md:text-xl">
-            Install it on your phone for one-tap access, or just bookmark it in any
-            browser.
+            Install it on your phone, or just bookmark it in any browser.
           </p>
         </div>
 
@@ -245,8 +236,8 @@ function scrollToFeatures(e: Event) {
     <section class="border-border/60 border-t px-6 py-24 md:py-32">
       <div class="mx-auto w-full max-w-3xl">
         <header class="mb-12 space-y-4">
-          <div class="text-foreground/65 text-eyebrow text-xs">Common questions</div>
-          <h2 class="text-4xl font-medium tracking-tight md:text-5xl">FAQs</h2>
+          <div class="text-foreground text-eyebrow text-sm">Common questions</div>
+          <h2 class="text-5xl font-medium tracking-tight md:text-5xl">FAQs</h2>
         </header>
 
         <div class="border-border/60 border-t">
@@ -293,7 +284,7 @@ function scrollToFeatures(e: Event) {
               href="https://mismith.io"
               target="_blank"
               rel="noopener"
-              class="underline underline-offset-4 hover:text-foreground transition-colors"
+              class="hover:text-foreground underline underline-offset-4 transition-colors"
               >Murray Rowan</a
             >, since 2017.
           </p>
@@ -304,7 +295,7 @@ function scrollToFeatures(e: Event) {
             <button
               v-if="crisp.available"
               type="button"
-              class="cursor-pointer font-serif underline underline-offset-4 transition-colors hover:text-foreground"
+              class="hover:text-foreground cursor-pointer font-serif underline underline-offset-4 transition-colors"
               @click="crisp.show()"
             >
               Support
@@ -312,7 +303,7 @@ function scrollToFeatures(e: Event) {
             <template v-if="crisp.available"> · </template>
             <RouterLink
               :to="{ name: 'policies' }"
-              class="underline underline-offset-4 transition-colors hover:text-foreground"
+              class="hover:text-foreground underline underline-offset-4 transition-colors"
             >
               Policies
             </RouterLink>
@@ -321,7 +312,7 @@ function scrollToFeatures(e: Event) {
               href="https://github.com/mismith/scotdance"
               target="_blank"
               rel="noopener"
-              class="underline underline-offset-4 transition-colors hover:text-foreground"
+              class="hover:text-foreground underline underline-offset-4 transition-colors"
             >
               Source code
             </a>
