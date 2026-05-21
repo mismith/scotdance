@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { RouterLink } from 'vue-router'
-import { Timeline, ChevronDown, Trophy, Users, IdCard, Compass } from '@lucide/vue'
+import { nextTick, onMounted, ref, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { Timeline, ChevronDown, Trophy, Users, IdCard, Compass, Link } from '@lucide/vue'
+import SmoothCollapse from '@/components/SmoothCollapse.vue'
 import { useCrisp } from '@/composables/useCrisp'
 import { PLATFORM } from '@/composables/useUpdate'
 import { version } from '../../package.json'
@@ -48,20 +49,29 @@ const aggregatorFeatures = [
   },
 ]
 
-const faqs: { q: string; a: string }[] = [
+const faqs: { id: string; q: string; a?: string }[] = [
   {
+    id: 'free',
     q: 'Is there a cost associated with using this site/app at my local competition?',
     a: 'No! All competition data is user-submitted, and you can use it as a competition organizer or competition attendee for free anywhere in the world. There is no plan for this to ever change.',
   },
   {
+    id: 'worldwide',
+    q: 'Can I use this in any country?',
+    // Rendered inline in template so the support link can call crisp.show()
+  },
+  {
+    id: 'independence',
     q: 'Is ScotDance.app affiliated with any association, organization, governing body, or particular competition(s)?',
     a: 'No, it is a completely independent, not-for-profit, volunteer run endeavour.',
   },
   {
+    id: 'download',
     q: 'Do I need to download or install anything to get access?',
     a: 'No, it\'s entirely optional to use the App/Play Store distributed apps; everything works exactly the same in a web browser on whatever device(s) you own (e.g. by visiting <a href="http://www.scotdance.app" class="underline underline-offset-4 transition-colors hover:text-foreground">www.scotdance.app</a>). Of course, it\'s handy to have a dedicated place for easy access, so installing a mobile app makes that possible.',
   },
   {
+    id: 'privacy',
     q: 'Is it safe to use? Are you harvesting my data? Are there privacy concerns with having this information available online?',
     a: 'This service is, in plain words, completely legitimate. It checks all the security boxes you would/should expect, and does nothing remotely nefarious with the (minimal) data it does collect from you. Furthermore, since all competition data is user-submitted, it\'s conceptually equivalent to uploading scanned or exported results PDFs to a dance association\'s website, just made more convenient, hopefully. You can also read more details on the <a href="/policies" class="underline underline-offset-4 transition-colors hover:text-foreground">Policies</a> page.',
   },
@@ -72,6 +82,40 @@ function scrollToFeatures(e: Event) {
   e.preventDefault()
   featuresRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
+
+const route = useRoute()
+const router = useRouter()
+const openFaqs = ref(new Set<string>())
+
+function isOpen(id: string) {
+  return openFaqs.value.has(id)
+}
+function toggle(id: string) {
+  const next = new Set(openFaqs.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  openFaqs.value = next
+}
+function scrollToFaq(id: string) {
+  document
+    .getElementById(`faq-${id}`)
+    ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+function onLinkClick(id: string) {
+  if (!isOpen(id)) toggle(id)
+  router.replace({ hash: `#faq-${id}` })
+  scrollToFaq(id)
+}
+function applyHash(hash: string) {
+  const match = hash.match(/^#faq-(.+)$/)
+  if (!match) return
+  const id = match[1]
+  if (!faqs.some((f) => f.id === id)) return
+  if (!isOpen(id)) toggle(id)
+  nextTick(() => scrollToFaq(id))
+}
+onMounted(() => applyHash(route.hash))
+watch(() => route.hash, applyHash)
 </script>
 
 <template>
@@ -241,29 +285,68 @@ function scrollToFeatures(e: Event) {
         </header>
 
         <div class="border-border/60 border-t">
-          <details
+          <div
             v-for="(item, i) in faqs"
-            :key="i"
-            class="border-border/60 group border-b"
+            :id="`faq-${item.id}`"
+            :key="item.id"
+            class="border-border/60 group/faq relative scroll-mt-4 border-b"
           >
-            <summary
-              class="flex cursor-pointer list-none items-baseline gap-4 py-6 [&::-webkit-details-marker]:hidden"
+            <button
+              type="button"
+              class="flex w-full cursor-pointer items-baseline gap-4 py-6 pr-20 text-left"
+              :aria-expanded="isOpen(item.id)"
+              :aria-controls="`faq-panel-${item.id}`"
+              @click="toggle(item.id)"
             >
               <span class="text-foreground/40 w-8 shrink-0 font-medium tabular-nums">
                 {{ String(i + 1).padStart(2, '0') }}
               </span>
-              <span class="flex-1 text-xl font-medium tracking-tight md:text-2xl">
+              <span
+                :id="`faq-q-${item.id}`"
+                class="flex-1 font-serif text-xl font-medium tracking-tight md:text-2xl"
+              >
                 {{ item.q }}
               </span>
               <ChevronDown
-                class="text-muted-foreground mt-1 size-5 shrink-0 transition-transform group-open:rotate-180"
+                class="text-muted-foreground absolute top-7 right-0 size-5 transition-transform"
+                :class="isOpen(item.id) && 'rotate-180'"
               />
-            </summary>
-            <div
-              class="text-muted-foreground pr-9 pb-6 pl-12 leading-relaxed"
-              v-html="item.a"
-            />
-          </details>
+            </button>
+            <a
+              :href="`#faq-${item.id}`"
+              class="text-muted-foreground hover:text-foreground absolute top-8 right-8 opacity-0 transition-opacity group-hover/faq:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
+              :aria-label="`Link to: ${item.q}`"
+              @click.prevent="onLinkClick(item.id)"
+            >
+              <Link class="size-3.5" />
+            </a>
+            <SmoothCollapse
+              :id="`faq-panel-${item.id}`"
+              role="region"
+              :aria-labelledby="`faq-q-${item.id}`"
+              :open="isOpen(item.id)"
+            >
+              <div
+                v-if="item.id === 'worldwide'"
+                class="text-muted-foreground pr-9 pb-6 pl-12 leading-relaxed"
+              >
+                Yes, anywhere in the world. Curiously, usage in the United States has been
+                very light so far. If you've got a theory why, please
+                <button
+                  type="button"
+                  class="hover:text-foreground cursor-pointer font-serif underline underline-offset-4 transition-colors"
+                  @click="crisp.show()"
+                >
+                  get in touch</button
+                >.
+              </div>
+              <div
+                v-else
+                class="text-muted-foreground pr-9 pb-6 pl-12 leading-relaxed"
+                v-html="item.a"
+              />
+            </SmoothCollapse>
+          </div>
         </div>
       </div>
     </section>
