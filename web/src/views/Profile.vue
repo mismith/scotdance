@@ -1,18 +1,16 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { Eye, EyeOff, LogOut, Pencil, X } from '@lucide/vue'
+import { Eye, EyeOff, LogOut, Pencil } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 import { gravatarUrl } from '@/lib/gravatar'
 import Dialog from '@/components/Dialog.vue'
-import { backPath } from '@/lib/back'
+import TopBackButton from '@/components/nav/TopBackButton.vue'
 
 const auth = useAuthStore()
 const me = useMeStore()
 const router = useRouter()
-
-const canGoBack = !!backPath()
 
 const avatarUrl = ref<string | null>(null)
 watch(
@@ -122,24 +120,14 @@ const submitDisabled = computed(() => {
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
-    <header
-      class="mx-auto flex w-full max-w-3xl items-start justify-between gap-3 p-4 pb-3"
-    >
-      <div class="min-w-0 flex-1">
-        <h1 class="text-title">Profile</h1>
+    <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
+      <div class="mx-auto flex max-w-3xl items-center gap-2">
+        <TopBackButton />
       </div>
-      <button
-        v-if="canGoBack"
-        type="button"
-        class="bg-chip text-foreground hover:bg-accent flex size-11 shrink-0 items-center justify-center rounded-full"
-        aria-label="Back"
-        @click="router.back()"
-      >
-        <X class="size-5" />
-      </button>
-    </header>
+    </nav>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-0">
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-[calc(var(--chrome-top)+1rem)]">
+      <h1 class="text-title">Profile</h1>
       <section class="flex items-center gap-4">
         <img
           v-if="avatarUrl"

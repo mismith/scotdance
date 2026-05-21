@@ -3,6 +3,7 @@ import { nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { Timeline, ChevronDown, Trophy, Users, IdCard, Compass, Link } from '@lucide/vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
+import TopBackButton from '@/components/nav/TopBackButton.vue'
 import { useCrisp } from '@/composables/useCrisp'
 import { PLATFORM } from '@/composables/useUpdate'
 import { version } from '../../package.json'
@@ -123,6 +124,12 @@ watch(() => route.hash, applyHash)
     class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]"
     data-route="about"
   >
+    <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
+      <div class="mx-auto flex max-w-3xl">
+        <TopBackButton />
+      </div>
+    </nav>
+
     <!-- HERO -->
     <section class="relative flex min-h-dvh flex-col items-center justify-center px-6">
       <header

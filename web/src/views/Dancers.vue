@@ -11,6 +11,7 @@ import { useRecentDancers } from '@/composables/useRecentDancers'
 import AccountAvatarButton from '@/components/AccountAvatarButton.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import TopBackButton from '@/components/nav/TopBackButton.vue'
 import { initialsOf } from '@/lib/format'
 import { lookupEntityId } from '@/lib/entityIndex'
 import { useEntityIdMap } from '@/composables/useEntityIdMap'
@@ -115,8 +116,9 @@ async function openDancerById(id: string) {
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
       <div class="pointer-events-auto mx-auto flex max-w-3xl items-center gap-2">
+        <TopBackButton />
         <div
-          class="floating-nav flex h-12 flex-1 items-center gap-3 rounded-full px-4"
+          class="floating-nav flex h-12 min-w-0 flex-1 items-center gap-3 rounded-full px-4"
         >
           <Search class="size-4 shrink-0 opacity-70" />
           <input
