@@ -21,6 +21,7 @@ import SmoothCollapse from '@/components/SmoothCollapse.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import CompetitionRow from '@/components/CompetitionRow.vue'
 import AccountAvatarButton from '@/components/AccountAvatarButton.vue'
+import TopBackButton from '@/components/nav/TopBackButton.vue'
 import {
   searchAll,
   type SearchAllResults,
@@ -453,7 +454,7 @@ if (isIos) {
         >
           <ChevronLeft class="size-5" />
         </button>
-        <span v-else aria-hidden="true" />
+        <TopBackButton v-else />
         <AccountAvatarButton />
       </div>
     </nav>
@@ -803,7 +804,7 @@ if (isIos) {
         <div class="flex flex-1 flex-col gap-6">
           <section v-if="showSuggestions" class="space-y-2">
             <h2
-              class="pr-14 font-serif text-3xl font-medium tracking-tight [view-transition-class:fit] [view-transition-name:search-title]"
+              class="px-14 font-serif text-3xl font-medium tracking-tight [view-transition-class:fit] [view-transition-name:search-title]"
             >
               Suggestions
             </h2>

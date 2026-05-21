@@ -14,6 +14,7 @@ import HeroCompCard from '@/components/HeroCompCard.vue'
 import LocationPill from '@/components/LocationPill.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import TopBackButton from '@/components/nav/TopBackButton.vue'
 import ViewModePill, { type ViewMode } from '@/components/ViewModePill.vue'
 import { useLocationFilter } from '@/composables/useLocationFilter'
 import { daysFromToday, isBeforeToday, isSameDay, parseDate } from '@/lib/format'
@@ -172,6 +173,12 @@ const monthGroups = computed<MonthGroup[]>(() => {
         ref="row"
         class="pointer-events-auto relative mx-auto flex h-12 max-w-3xl items-center gap-2"
       >
+        <TopBackButton
+          :class="[
+            'transition-opacity',
+            anyPillOpen ? 'pointer-events-none opacity-0' : '',
+          ]"
+        />
         <div
           :class="[
             'floating-nav flex items-center rounded-3xl p-1 transition-opacity',

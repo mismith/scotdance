@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import { computed, onMounted, toRef } from 'vue'
-import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { useVtScope } from '@/lib/viewTransitionFocus'
-import { ChevronLeft } from '@lucide/vue'
+import { CalendarX } from '@lucide/vue'
 import CompChip from '@/components/CompChip.vue'
 import CompetitionBottomNav from '@/components/nav/CompetitionBottomNav.vue'
+import TopBackButton from '@/components/nav/TopBackButton.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vue'
 import ShareButton from '@/components/ShareButton.vue'
 import Skeleton from '@/components/Skeleton.vue'
-import { CalendarX } from '@lucide/vue'
 import { provideCompetition } from '@/composables/useCompetition'
 import { useFavoritesStore } from '@/stores/favorites'
-import { preferBackClick, useExternalBack } from '@/lib/back'
 import { formatShortDate } from '@/lib/format'
 import { usePageTitle } from '@/composables/usePageTitle'
 
@@ -38,14 +37,7 @@ const MODE_BY_ROUTE: Record<string, ChromeMode> = {
   'competition.group': 'drill-down',
 }
 
-const DRILL_DOWN_PARENT: Record<string, string> = {
-  'competition.dancer': 'competition.dancers',
-  'competition.event': 'competition.schedule',
-  'competition.group': 'competition.results',
-}
-
 const route = useRoute()
-const router = useRouter()
 const competitionId = computed(() => String(route.params.competitionId ?? ''))
 
 // Tag the current competition as the view-transition source for the list so
@@ -66,14 +58,6 @@ const isFavorite = computed(() =>
 onMounted(loadSchedule)
 
 const mode = computed<ChromeMode>(() => MODE_BY_ROUTE[String(route.name ?? '')] ?? 'info')
-const backTo = computed(() => DRILL_DOWN_PARENT[String(route.name ?? '')] ?? null)
-
-// Drill-down has its own in-comp back button, so only surface the external
-// back chevron on info/top-level routes.
-const externalBack = useExternalBack({ name: 'competitions' })
-const showExternalBack = computed(
-  () => mode.value !== 'drill-down' && externalBack.show.value,
-)
 
 const dateLabel = computed(() => formatShortDate(competition.value?.date))
 const locationLabel = computed(() => competition.value?.location ?? '')
@@ -89,39 +73,7 @@ usePageTitle(() => [
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
       <div class="mx-auto flex max-w-3xl items-center gap-2">
-        <RouterLink
-          v-if="showExternalBack && externalBack.to.value"
-          v-slot="{ href, navigate }"
-          :to="externalBack.to.value"
-          custom
-        >
-          <a
-            :href="href"
-            class="floating-nav pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full [view-transition-name:nav-back] hover:opacity-90"
-            title="Back"
-            aria-label="Back"
-            @click="preferBackClick(router, $event, navigate)"
-          >
-            <ChevronLeft class="size-5" />
-          </a>
-        </RouterLink>
-
-        <RouterLink
-          v-if="backTo"
-          v-slot="{ href, navigate }"
-          :to="{ name: backTo, params: { competitionId } }"
-          custom
-        >
-          <a
-            :href="href"
-            class="floating-nav pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full [view-transition-name:nav-back] hover:opacity-90"
-            title="Back"
-            aria-label="Back"
-            @click="preferBackClick(router, $event, navigate)"
-          >
-            <ChevronLeft class="size-5" />
-          </a>
-        </RouterLink>
+        <TopBackButton />
 
         <RouterLink
           v-if="mode !== 'info'"

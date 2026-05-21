@@ -2,9 +2,10 @@
 import { computed, type Component } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import ShareButton from '@/components/ShareButton.vue'
+import TopBackButton from '@/components/nav/TopBackButton.vue'
 import EmptyState from '@/components/EmptyState.vue'
-import { ChevronLeft, Info, Trophy } from '@lucide/vue'
-import { preferBackClick, smartBackClick, useExternalBack } from '@/lib/back'
+import { Info, Trophy } from '@lucide/vue'
+import { smartBackClick } from '@/lib/back'
 import { sectionMeta } from '@/lib/sectionMeta'
 import { usePageTitle } from '@/composables/usePageTitle'
 
@@ -56,8 +57,6 @@ const router = useRouter()
 
 const section = computed(() => sectionMeta(props.sectionRouteName))
 
-const externalBack = useExternalBack(section.value.to)
-
 const infoRoute = computed(() => `${props.routePrefix}.info`)
 const resultsRoute = computed(() => `${props.routePrefix}.results`)
 const isInfo = computed(() => String(route.name ?? '') === infoRoute.value)
@@ -91,22 +90,7 @@ const nameVtName = computed(() => `${props.scope}-name`)
     <!-- Top nav: back / pill / actions -->
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
       <div class="mx-auto flex max-w-3xl items-center gap-2">
-        <RouterLink
-          v-if="externalBack.show.value && externalBack.to.value"
-          v-slot="{ href, navigate }"
-          :to="externalBack.to.value"
-          custom
-        >
-          <a
-            :href="href"
-            class="floating-nav pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full [view-transition-name:nav-back] hover:opacity-90"
-            title="Back"
-            aria-label="Back"
-            @click="preferBackClick(router, $event, navigate)"
-          >
-            <ChevronLeft class="size-5" />
-          </a>
-        </RouterLink>
+        <TopBackButton />
 
         <RouterLink
           v-if="!isInfo"

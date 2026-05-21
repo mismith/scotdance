@@ -10,7 +10,7 @@ import {
 import Popover from '@/components/Popover.vue'
 import { useUpdate } from '@/composables/useUpdate'
 import { useGlobalSearch } from '@/composables/useGlobalSearch'
-import { backPath, preferBackClick } from '@/lib/back'
+import { backPath, smartBackClick } from '@/lib/back'
 import { isIos } from '@/lib/platform'
 import { sectionMeta } from '@/lib/sectionMeta'
 
@@ -108,13 +108,13 @@ function clearSearch() {
       ]"
     >
       <!-- LEFT pill: tabs+More on browse routes, Back on /search -->
-      <RouterLink v-if="isSearch" v-slot="{ href, navigate }" :to="backInfo.to" custom>
+      <RouterLink v-if="isSearch" v-slot="{ href, route, navigate }" :to="backInfo.to" custom>
         <a
           :href="href"
           class="floating-nav pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
           :title="backInfo.label"
           :aria-label="backInfo.label"
-          @click="preferBackClick(router, $event, navigate)"
+          @click="smartBackClick(router, $event, route.fullPath, navigate)"
         >
           <span class="[view-transition-name:match-element]">
             <component :is="backInfo.icon" class="size-5" />

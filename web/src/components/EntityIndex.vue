@@ -5,6 +5,7 @@ import AccountAvatarButton from '@/components/AccountAvatarButton.vue'
 import FavoriteButton from '@/components/FavoriteButton.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import TopBackButton from '@/components/nav/TopBackButton.vue'
 import { sectionMeta } from '@/lib/sectionMeta'
 import { focusVt, useVtScope } from '@/lib/viewTransitionFocus'
 import {
@@ -93,15 +94,16 @@ async function open(id: string, rowKey: string) {
 <template>
   <div class="flex flex-1 flex-col pt-2 pb-[calc(var(--chrome-bottom)+1rem)]">
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
-      <div class="pointer-events-auto mx-auto flex max-w-3xl justify-end">
+      <div class="pointer-events-auto mx-auto flex max-w-3xl items-center gap-2">
+        <TopBackButton />
+        <h1 class="min-w-0 flex-1 truncate font-serif text-3xl font-medium tracking-tight">
+          {{ section.label }}
+        </h1>
         <AccountAvatarButton />
       </div>
     </nav>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4">
-      <h1 class="pr-14 font-serif text-3xl font-medium tracking-tight">
-        {{ section.label }}
-      </h1>
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-[calc(var(--chrome-top)+1rem)]">
 
       <div v-if="error" class="text-destructive text-lg">{{ error.message }}</div>
 
