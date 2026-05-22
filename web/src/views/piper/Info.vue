@@ -16,11 +16,12 @@ const { displayName, location, image, bio, loading } = profile
 const favorites = useFavoritesStore()
 const initials = computed(() => initialsOf(displayName.value))
 
+const resultsRoute = { name: 'piper.results' }
 const tiles = computed(() => [
-  { label: 'Total comps', value: profile.totalComps.value },
+  { label: 'Total', value: profile.totalComps.value, to: resultsRoute },
   { label: 'This year', value: profile.compsThisYear.value },
-  { label: 'Upcoming', value: profile.upcoming.value.length },
-  { label: 'Past', value: profile.past.value.length },
+  { label: 'Upcoming', value: profile.upcoming.value.length, to: resultsRoute },
+  { label: 'Past', value: profile.past.value.length, to: resultsRoute },
 ])
 
 const recentComp = computed(() => profile.appearances.value[0] ?? null)
@@ -63,7 +64,7 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
       />
     </section>
 
-    <StatGrid :stats="tiles" :loading="loading" />
+    <StatGrid header="Competitions" :stats="tiles" :loading="loading" />
 
     <section v-if="loading" class="space-y-2">
       <Skeleton class="h-3 w-24" />
