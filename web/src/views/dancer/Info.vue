@@ -1,12 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ChevronRight } from '@lucide/vue'
-import { useDancerProfile } from '@/composables/useDancerProfile'
+import { useDancerProfile, type DancerAppearance } from '@/composables/useDancerProfile'
 import { useFavoritesStore } from '@/stores/favorites'
-import { initialsOf } from '@/lib/format'
-import CompChip from '@/components/CompChip.vue'
-import SectionHeader from '@/components/SectionHeader.vue'
-import Skeleton from '@/components/Skeleton.vue'
+import { formatMonthAbbrev, initialsOf } from '@/lib/format'
 import StatGrid from '@/components/StatGrid.vue'
 
 const profile = useDancerProfile()
@@ -21,15 +17,43 @@ const isFavorite = computed(() =>
   ),
 )
 
-const resultsRoute = { name: 'dancer.results' }
-const tiles = computed(() => [
-  { label: 'Total', value: profile.totalComps.value, to: resultsRoute },
-  { label: 'This year', value: profile.compsThisYear.value },
-  { label: 'Upcoming', value: profile.upcoming.value.length, to: resultsRoute },
-  { label: 'Past', value: profile.past.value.length, to: resultsRoute },
-])
+function compDancerRoute(a: DancerAppearance | null) {
+  if (!a?.raw.competitionId || !a.raw.dancerId) return undefined
+  return {
+    name: 'competition.dancer',
+    params: {
+      competitionId: a.raw.competitionId,
+      dancerId: a.raw.dancerId,
+    },
+  }
+}
 
-const recentComp = computed(() => profile.appearances.value[0] ?? null)
+const tiles = computed(() => {
+  const first = profile.firstSeen.value
+  const last = profile.lastSeen.value
+  const firstDate = profile.firstSeenDate.value
+  const lastDate = profile.lastSeenDate.value
+  return [
+    {
+      label: 'Competitions',
+      value: profile.totalComps.value,
+      to: { name: 'dancer.results' },
+    },
+    { label: 'Venues', value: profile.venueCount.value },
+    {
+      label: 'First seen',
+      caption: firstDate ? formatMonthAbbrev(firstDate).toUpperCase() : undefined,
+      value: firstDate ? firstDate.getFullYear() : null,
+      to: compDancerRoute(first),
+    },
+    {
+      label: 'Last seen',
+      caption: lastDate ? formatMonthAbbrev(lastDate).toUpperCase() : undefined,
+      value: lastDate ? lastDate.getFullYear() : null,
+      to: compDancerRoute(last),
+    },
+  ]
+})
 </script>
 
 <template>
@@ -66,47 +90,7 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
       </div>
     </header>
 
-    <section class="space-y-2">
-      <SectionHeader label="Competitions" />
-      <StatGrid :stats="tiles" :loading="loading" />
-    </section>
-
-    <section v-if="loading" class="space-y-2">
-      <Skeleton class="h-3 w-24" />
-      <Skeleton class="h-14 w-full" />
-    </section>
-    <section v-else-if="recentComp" class="space-y-2">
-      <SectionHeader label="Last seen at" />
-      <RouterLink
-        :to="{
-          name: 'competition.dancer',
-          params: {
-            competitionId: recentComp.raw.competitionId,
-            dancerId: recentComp.raw.dancerId,
-          },
-        }"
-        class="flex items-center gap-3 px-2 py-3"
-      >
-        <CompChip
-          :name="recentComp.competition?.name"
-          :image="recentComp.competition?.image"
-          :favorite="favorites.isFavorite('competitions', recentComp.raw.competitionId ?? '')"
-          class="size-10 rounded-xl"
-        />
-        <div class="min-w-0 flex-1">
-          <div class="text-item-title truncate">
-            {{ recentComp.competition?.name ?? 'Loading…' }}
-          </div>
-          <div
-            v-if="recentComp.raw.number != null"
-            class="text-item-subtitle text-muted-foreground mt-1 tabular-nums"
-          >
-            #{{ recentComp.raw.number }}
-          </div>
-        </div>
-        <ChevronRight class="text-muted-foreground size-4 shrink-0" />
-      </RouterLink>
-    </section>
+    <StatGrid :stats="tiles" :loading="loading" />
 
     <p class="text-muted-foreground">
       Cross-comp profile is matched by name. Identity may be approximate when names

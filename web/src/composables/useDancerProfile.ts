@@ -56,6 +56,11 @@ export interface UseDancerProfile {
   past: Ref<DancerAppearance[]>
   totalComps: Ref<number>
   compsThisYear: Ref<number>
+  firstSeen: Ref<DancerAppearance | null>
+  firstSeenDate: Ref<Date | null>
+  lastSeen: Ref<DancerAppearance | null>
+  lastSeenDate: Ref<Date | null>
+  venueCount: Ref<number>
 }
 
 const KEY: InjectionKey<UseDancerProfile> = Symbol('dancerProfile')
@@ -214,6 +219,56 @@ function createDancerProfile(dancerId: Ref<string>): UseDancerProfile {
     return ids.size
   })
 
+  const firstSeen = computed<DancerAppearance | null>(() => {
+    let best: DancerAppearance | null = null
+    let bestT = Infinity
+    for (const a of appearances.value) {
+      const d = a.competition?.date
+      if (!d) continue
+      const t = parseDate(d).getTime()
+      if (t < bestT) {
+        bestT = t
+        best = a
+      }
+    }
+    return best
+  })
+
+  const firstSeenDate = computed<Date | null>(() => {
+    const d = firstSeen.value?.competition?.date
+    return d ? parseDate(d) : null
+  })
+
+  const lastSeen = computed<DancerAppearance | null>(() => {
+    let best: DancerAppearance | null = null
+    let bestT = -Infinity
+    for (const a of appearances.value) {
+      const d = a.competition?.date
+      if (!d) continue
+      if (!isBeforeToday(d)) continue
+      const t = parseDate(d).getTime()
+      if (t > bestT) {
+        bestT = t
+        best = a
+      }
+    }
+    return best
+  })
+
+  const lastSeenDate = computed<Date | null>(() => {
+    const d = lastSeen.value?.competition?.date
+    return d ? parseDate(d) : null
+  })
+
+  const venueCount = computed(() => {
+    const venues = new Set<string>()
+    for (const a of appearances.value) {
+      const v = a.competition?.venue?.trim()
+      if (v) venues.add(v.toLowerCase())
+    }
+    return venues.size
+  })
+
   watch(
     [dancerId, displayName, notFound],
     ([id, name, missing]) => {
@@ -235,5 +290,10 @@ function createDancerProfile(dancerId: Ref<string>): UseDancerProfile {
     past,
     totalComps,
     compsThisYear,
+    firstSeen,
+    firstSeenDate,
+    lastSeen,
+    lastSeenDate,
+    venueCount,
   }
 }
