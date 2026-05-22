@@ -3,11 +3,13 @@ import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import {
   ArrowDownToLine,
+  LifeBuoy,
   MoreHorizontal,
   Search as SearchIcon,
   X,
 } from '@lucide/vue'
 import Popover from '@/components/Popover.vue'
+import { useCrisp } from '@/composables/useCrisp'
 import { useUpdate } from '@/composables/useUpdate'
 import { useGlobalSearch } from '@/composables/useGlobalSearch'
 import { backPath, smartBackClick } from '@/lib/back'
@@ -17,6 +19,7 @@ import { sectionMeta } from '@/lib/sectionMeta'
 const route = useRoute()
 const router = useRouter()
 const update = useUpdate()
+const crisp = useCrisp()
 
 const { q, inputEl } = useGlobalSearch()
 
@@ -159,7 +162,7 @@ function clearSearch() {
                 <MoreHorizontal class="size-5" />
                 <span class="text-xs leading-none">More</span>
                 <span
-                  v-if="update.updateAvailable && !isOpen"
+                  v-if="(update.updateAvailable || crisp.unread > 0) && !isOpen"
                   class="bg-secondary absolute top-1 right-1 size-2 animate-pulse rounded-full"
                   aria-hidden="true"
                 />
@@ -199,6 +202,27 @@ function clearSearch() {
                 <ArrowDownToLine class="size-5" />
                 <span class="flex-1">Update available</span>
                 <span
+                  class="bg-secondary size-2 animate-pulse rounded-full"
+                  aria-hidden="true"
+                />
+              </button>
+
+              <button
+                v-if="crisp.available"
+                type="button"
+                class="mt-1 flex w-full items-center gap-3 rounded-lg p-2.5 text-left text-base font-medium opacity-70 transition-opacity hover:opacity-100"
+                role="menuitem"
+                @click="
+                  () => {
+                    close()
+                    crisp.open()
+                  }
+                "
+              >
+                <LifeBuoy class="size-5" />
+                <span class="flex-1">Support</span>
+                <span
+                  v-if="crisp.unread > 0"
                   class="bg-secondary size-2 animate-pulse rounded-full"
                   aria-hidden="true"
                 />

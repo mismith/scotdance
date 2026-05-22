@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { watchEffect } from 'vue'
+import { watch, watchEffect } from 'vue'
 import { useResizeObserver, useScroll } from '@vueuse/core'
 import { RouterView, useRoute } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import AppShell from '@/components/AppShell.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
+import SupportLauncher from '@/components/SupportLauncher.vue'
 import UpdateDialog from '@/components/UpdateDialog.vue'
 import { buildTitle } from '@/composables/usePageTitle'
+import { useCrisp } from '@/composables/useCrisp'
+import { useMeStore } from '@/stores/me'
 
 // Default page title from route meta. Component-level usePageTitle calls
 // (e.g. entity layouts) stack on top and override; when they unmount Unhead
@@ -29,12 +32,20 @@ watchEffect(() => {
   root.dataset.scrollAtTop = String(arrivedState.top)
   root.dataset.scrollAtBottom = String(arrivedState.bottom)
 })
+
+// Pass the signed-in user's email to Crisp so support has context. Lives
+// here (rather than inside useCrisp) so the composable stays decoupled
+// from pinia — Crisp wiring is pure SDK calls, app-state glue is here.
+const crisp = useCrisp()
+const me = useMeStore()
+watch(() => me.email, (email) => crisp.setUserEmail(email), { immediate: true })
 </script>
 
 <template>
   <AppShell>
     <RouterView />
   </AppShell>
+  <SupportLauncher />
   <LoginDialog />
   <UpdateDialog />
 </template>

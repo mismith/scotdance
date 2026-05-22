@@ -27,6 +27,7 @@
     "@vueuse/core": "^14.3.0",
     "@vueuse/router": "^14.3.0",
     "compare-versions": "^6.1.1",
+    "crisp-sdk-web": "^1.1.2",
     "dompurify": "^3.4.5",
     "firebase": "^12.12.1",
     "fuse.js": "^7.3.0",
