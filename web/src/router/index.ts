@@ -11,7 +11,7 @@ declare module 'vue-router' {
     requiresAuth?: boolean
     /**
      * Layout renders its own bottom nav (e.g. competition info tabs, dancer
-     * profile tabs). AppShell skips GlobalBottomNav so the two don't stack.
+     * profile tabs). App skips GlobalBottomNav so the two don't stack.
      */
     ownsBottomNav?: boolean
     /**
