@@ -12,7 +12,6 @@ import ShareButton from '@/components/ShareButton.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { provideCompetition } from '@/composables/useCompetition'
 import { useFavoritesStore } from '@/stores/favorites'
-import { formatShortDate } from '@/lib/format'
 import { usePageTitle } from '@/composables/usePageTitle'
 
 const TAB_LABEL_BY_ROUTE: Record<string, string> = {
@@ -59,9 +58,6 @@ onMounted(loadSchedule)
 
 const mode = computed<ChromeMode>(() => MODE_BY_ROUTE[String(route.name ?? '')] ?? 'info')
 
-const dateLabel = computed(() => formatShortDate(competition.value?.date))
-const locationLabel = computed(() => competition.value?.location ?? '')
-
 usePageTitle(() => [
   TAB_LABEL_BY_ROUTE[String(route.name ?? '')],
   notFound.value ? 'Not found' : competition.value?.name,
@@ -93,14 +89,8 @@ usePageTitle(() => [
             >
               {{ competition?.name ?? (loading ? 'Loading…' : 'Competition') }}
             </div>
-            <div
-              v-if="dateLabel || locationLabel"
-              class="mt-1 truncate text-xs leading-none opacity-70"
-            >
-              <span v-if="dateLabel">{{ dateLabel }}</span>
-              <span v-if="locationLabel">
-                <template v-if="dateLabel"> · </template>{{ locationLabel }}
-              </span>
+            <div class="mt-1 truncate text-xs leading-none opacity-70">
+              Competition
             </div>
           </div>
         </RouterLink>

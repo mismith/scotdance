@@ -28,7 +28,6 @@ const props = withDefaults(
      *  from the route's icon/title meta. */
     sectionRouteName: string
     displayName: string
-    subtitle?: string | null
     image?: string | null
     /** Icon shown in the avatar when no image. Falls back to initials. */
     fallbackIcon?: Component
@@ -45,12 +44,19 @@ const props = withDefaults(
   }>(),
   {
     resultsTabLabel: 'Competitions',
-    subtitle: null,
     image: null,
     initials: '',
     isFavorite: false,
   },
 )
+
+const TYPE_LABEL: Record<typeof props.scope, string> = {
+  judge: 'Judge',
+  piper: 'Piper',
+  venue: 'Venue',
+  dancer: 'Dancer',
+}
+const typeLabel = computed(() => TYPE_LABEL[props.scope])
 
 const route = useRoute()
 const router = useRouter()
@@ -125,11 +131,8 @@ const nameVtName = computed(() => `${props.scope}-name`)
             >
               {{ displayName || (loading ? 'Loading…' : '') }}
             </div>
-            <div
-              v-if="subtitle"
-              class="mt-1 truncate text-xs leading-none opacity-70"
-            >
-              {{ subtitle }}
+            <div class="mt-1 truncate text-xs leading-none opacity-70">
+              {{ typeLabel }}
             </div>
           </div>
         </RouterLink>

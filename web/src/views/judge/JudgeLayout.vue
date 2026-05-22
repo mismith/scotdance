@@ -13,9 +13,7 @@ const judgeId = computed(() => String(route.params.judgeId ?? ''))
 
 useVtScope('judge').syncFocus(judgeId)
 
-const { displayName, location, image, loading, notFound } = provideJudgeProfile(
-  toRef(judgeId),
-)
+const { displayName, image, loading, notFound } = provideJudgeProfile(toRef(judgeId))
 
 const favorites = useFavoritesStore()
 const initials = computed(() => initialsOf(displayName.value))
@@ -31,7 +29,6 @@ const isInfo = computed(() => String(route.name ?? '') === 'judge.info')
     route-prefix="judge"
     section-route-name="judges"
     :display-name="displayName"
-    :subtitle="location"
     :image="image"
     :initials="initials"
     :is-favorite="isFavorite"
