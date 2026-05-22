@@ -12,7 +12,9 @@ import { RouterLink } from 'vue-router'
       </div>
     </header>
 
-    <main class="prose-policies mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-0">
+    <main
+      class="text-muted-foreground [&_:is(strong,em)]:text-foreground mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-0"
+    >
       <section id="privacy" class="space-y-4">
         <h2 class="text-2xl font-medium tracking-tight">Privacy Policy</h2>
 
@@ -113,13 +115,3 @@ import { RouterLink } from 'vue-router'
     </main>
   </div>
 </template>
-
-<style scoped>
-.prose-policies {
-  color: var(--color-muted-foreground);
-}
-.prose-policies strong,
-.prose-policies em {
-  color: var(--color-foreground);
-}
-</style>

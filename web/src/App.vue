@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { watch, watchEffect } from 'vue'
+import { computed, watch, watchEffect } from 'vue'
 import { useResizeObserver, useScroll } from '@vueuse/core'
 import { RouterView, useRoute } from 'vue-router'
 import { useHead } from '@unhead/vue'
-import AppShell from '@/components/AppShell.vue'
+import GlobalBottomNav from '@/components/nav/GlobalBottomNav.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import SupportLauncher from '@/components/SupportLauncher.vue'
 import UpdateDialog from '@/components/UpdateDialog.vue'
@@ -17,6 +17,15 @@ import { useMeStore } from '@/stores/me'
 // reconciled together.
 const route = useRoute()
 useHead({ title: () => buildTitle([route.meta.title]) })
+
+// Routes that own their own bottom nav (entity layouts, competition layout)
+// opt out via `meta.ownsBottomNav` — declared once on the layout route, applies
+// to every child. Avoids brittle name-prefix matching against future entities.
+// /search keeps GlobalBottomNav so the search input stays mounted across the
+// home ↔ search transition — required for iOS to keep the soft keyboard up.
+const showGlobalNav = computed(
+  () => !route.matched.some((r) => r.meta.ownsBottomNav),
+)
 
 // Reflect window scroll-edge state on <html> for the chrome-fade overlays
 // below. arrivedState only recomputes when y changes, so on async content
@@ -42,9 +51,11 @@ watch(() => me.email, (email) => crisp.setUserEmail(email), { immediate: true })
 </script>
 
 <template>
-  <AppShell>
+  <div class="flex min-h-dvh flex-col">
     <RouterView />
-  </AppShell>
+
+    <GlobalBottomNav v-if="showGlobalNav" />
+  </div>
   <SupportLauncher />
   <LoginDialog />
   <UpdateDialog />
