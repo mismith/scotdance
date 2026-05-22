@@ -59,7 +59,7 @@ const faqs: { id: string; q: string; a?: string }[] = [
   {
     id: 'worldwide',
     q: 'Can I use this in any country?',
-    // Rendered inline in template so the support link can call crisp.show()
+    // Rendered inline in template so the support link can call crisp.open()
   },
   {
     id: 'independence',
@@ -342,7 +342,7 @@ watch(() => route.hash, applyHash)
                 <button
                   type="button"
                   class="hover:text-foreground cursor-pointer font-serif underline underline-offset-4 transition-colors"
-                  @click="crisp.show()"
+                  @click="crisp.open()"
                 >
                   get in touch</button
                 >.
@@ -386,7 +386,7 @@ watch(() => route.hash, applyHash)
               v-if="crisp.available"
               type="button"
               class="hover:text-foreground cursor-pointer font-serif underline underline-offset-4 transition-colors"
-              @click="crisp.show()"
+              @click="crisp.open()"
             >
               Support
             </button>
