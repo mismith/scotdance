@@ -10,7 +10,18 @@ import {
 import { child, get } from 'firebase/database'
 import { dataRef } from '@/firebase'
 import { fetchCompetitionMeta } from '@/lib/competitionMeta'
-import { isBeforeToday, parseDate } from '@/lib/format'
+import {
+  appearanceDate,
+  buildAppearances,
+  countCompsThisYear,
+  countTotalComps,
+  countUniqueVenues,
+  filterPast,
+  filterUpcoming,
+  findFirstSeen,
+  findLastSeen,
+  latestNonNull,
+} from '@/lib/appearanceStats'
 import { useRecentDancers } from '@/composables/useRecentDancers'
 import { insertEntityAggregate } from '@/composables/useEntityAggregates'
 import type { Competition } from '@/types/competition'
@@ -75,17 +86,6 @@ export function useDancerProfile(): UseDancerProfile {
   const injected = inject(KEY, null)
   if (!injected) throw new Error('useDancerProfile() called outside DancerLayout')
   return injected
-}
-
-function latestNonNull<T>(
-  list: DancerAppearance[],
-  pick: (a: DancerAppearance) => T | null | undefined,
-): T | null {
-  for (const a of list) {
-    const v = pick(a)
-    if (v != null && v !== '') return v as T
-  }
-  return null
 }
 
 function createDancerProfile(dancerId: Ref<string>): UseDancerProfile {
@@ -154,38 +154,11 @@ function createDancerProfile(dancerId: Ref<string>): UseDancerProfile {
     { immediate: true },
   )
 
-  const appearances = computed<DancerAppearance[]>(() => {
-    const apps = aggregate.value?.appearances || {}
-    return Object.entries(apps)
-      .map<DancerAppearance>(([key, raw]) => ({
-        key,
-        raw,
-        competition: raw.competitionId
-          ? compMeta.value[raw.competitionId] ?? null
-          : null,
-      }))
-      .sort((a, b) => {
-        const da = a.competition?.date ? parseDate(a.competition.date).getTime() : 0
-        const db = b.competition?.date ? parseDate(b.competition.date).getTime() : 0
-        return db - da
-      })
-  })
-
-  const upcoming = computed(() =>
-    appearances.value
-      .filter((a) => a.competition?.date && !isBeforeToday(a.competition.date))
-      .sort((a, b) => {
-        const da = a.competition?.date ? parseDate(a.competition.date).getTime() : 0
-        const db = b.competition?.date ? parseDate(b.competition.date).getTime() : 0
-        return da - db
-      }),
+  const appearances = computed<DancerAppearance[]>(() =>
+    buildAppearances(aggregate.value?.appearances, compMeta.value),
   )
-
-  const past = computed(() =>
-    appearances.value.filter(
-      (a) => a.competition?.date && isBeforeToday(a.competition.date),
-    ),
-  )
+  const upcoming = computed(() => filterUpcoming(appearances.value))
+  const past = computed(() => filterPast(appearances.value))
 
   const displayName = computed(() => {
     const apps = appearances.value
@@ -198,76 +171,13 @@ function createDancerProfile(dancerId: Ref<string>): UseDancerProfile {
   const image = computed(() => latestNonNull(appearances.value, (a) => a.raw.image))
   const location = computed(() => latestNonNull(appearances.value, (a) => a.raw.location))
 
-  const totalComps = computed(() => {
-    const ids = new Set<string>()
-    for (const a of appearances.value) {
-      if (a.raw.competitionId) ids.add(a.raw.competitionId)
-    }
-    return ids.size
-  })
-
-  const compsThisYear = computed(() => {
-    const year = new Date().getFullYear()
-    const ids = new Set<string>()
-    for (const a of appearances.value) {
-      const d = a.competition?.date
-      if (!d) continue
-      if (parseDate(d).getFullYear() === year && a.raw.competitionId) {
-        ids.add(a.raw.competitionId)
-      }
-    }
-    return ids.size
-  })
-
-  const firstSeen = computed<DancerAppearance | null>(() => {
-    let best: DancerAppearance | null = null
-    let bestT = Infinity
-    for (const a of appearances.value) {
-      const d = a.competition?.date
-      if (!d) continue
-      const t = parseDate(d).getTime()
-      if (t < bestT) {
-        bestT = t
-        best = a
-      }
-    }
-    return best
-  })
-
-  const firstSeenDate = computed<Date | null>(() => {
-    const d = firstSeen.value?.competition?.date
-    return d ? parseDate(d) : null
-  })
-
-  const lastSeen = computed<DancerAppearance | null>(() => {
-    let best: DancerAppearance | null = null
-    let bestT = -Infinity
-    for (const a of appearances.value) {
-      const d = a.competition?.date
-      if (!d) continue
-      if (!isBeforeToday(d)) continue
-      const t = parseDate(d).getTime()
-      if (t > bestT) {
-        bestT = t
-        best = a
-      }
-    }
-    return best
-  })
-
-  const lastSeenDate = computed<Date | null>(() => {
-    const d = lastSeen.value?.competition?.date
-    return d ? parseDate(d) : null
-  })
-
-  const venueCount = computed(() => {
-    const venues = new Set<string>()
-    for (const a of appearances.value) {
-      const v = a.competition?.venue?.trim()
-      if (v) venues.add(v.toLowerCase())
-    }
-    return venues.size
-  })
+  const totalComps = computed(() => countTotalComps(appearances.value))
+  const compsThisYear = computed(() => countCompsThisYear(appearances.value))
+  const firstSeen = computed(() => findFirstSeen(appearances.value))
+  const firstSeenDate = computed(() => appearanceDate(firstSeen.value))
+  const lastSeen = computed(() => findLastSeen(appearances.value))
+  const lastSeenDate = computed(() => appearanceDate(lastSeen.value))
+  const venueCount = computed(() => countUniqueVenues(appearances.value))
 
   watch(
     [dancerId, displayName, notFound],
