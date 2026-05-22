@@ -4,7 +4,7 @@ import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import ShareButton from '@/components/ShareButton.vue'
 import TopBackButton from '@/components/nav/TopBackButton.vue'
 import EmptyState from '@/components/EmptyState.vue'
-import { Info, Trophy } from '@lucide/vue'
+import { Calendars, Info } from '@lucide/vue'
 import { smartBackClick } from '@/lib/back'
 import { sectionMeta } from '@/lib/sectionMeta'
 import { usePageTitle } from '@/composables/usePageTitle'
@@ -12,6 +12,8 @@ import { usePageTitle } from '@/composables/usePageTitle'
 // Shared shell for entity profile pages (judge / piper / venue / dancer).
 // Per-entity wrappers just pass props + drive the data composable; everything
 // else (header, empty state, RouterView, tabs, share button) lives here.
+
+type Tab = { name: string; to: string; icon: Component }
 
 const props = withDefaults(
   defineProps<{
@@ -21,7 +23,7 @@ const props = withDefaults(
     id: string
     /** Route param key — e.g. 'judgeId', 'dancerId'. */
     idParam: string
-    /** Route name prefix — info/results derive from this, e.g. 'judge' → 'judge.info'. */
+    /** Route name prefix. Drives default tabs (`{prefix}.info`, `{prefix}.competitions`). */
     routePrefix: string
     /** Route name of the section index this profile belongs to (e.g. 'judges').
      *  Drives the bottom-left back pill's icon, label, and target — all read
@@ -37,13 +39,13 @@ const props = withDefaults(
     notFound: boolean
     emptyTitle: string
     emptyDescription: string
-    /** Label for the second (non-Info) tab. Defaults to "Competitions". */
-    resultsTabLabel?: string
+    /** Bottom-right nav tabs. First tab is treated as the "home" tab (top-nav
+     *  name pill hides when active). Defaults to Info + Competitions. */
+    tabs?: Tab[]
     /** Apply favorite color treatment to the avatar (dancer pattern). */
     isFavorite?: boolean
   }>(),
   {
-    resultsTabLabel: 'Competitions',
     image: null,
     initials: '',
     isFavorite: false,
@@ -63,20 +65,20 @@ const router = useRouter()
 
 const section = computed(() => sectionMeta(props.sectionRouteName))
 
-const infoRoute = computed(() => `${props.routePrefix}.info`)
-const resultsRoute = computed(() => `${props.routePrefix}.results`)
-const isInfo = computed(() => String(route.name ?? '') === infoRoute.value)
-
-const tabs = computed(() => [
-  { name: 'Info', to: infoRoute.value, icon: Info },
-  { name: props.resultsTabLabel, to: resultsRoute.value, icon: Trophy },
-])
+const resolvedTabs = computed<Tab[]>(
+  () =>
+    props.tabs ?? [
+      { name: 'Info', to: `${props.routePrefix}.info`, icon: Info },
+      { name: 'Competitions', to: `${props.routePrefix}.competitions`, icon: Calendars },
+    ],
+)
+const isInfo = computed(() => String(route.name ?? '') === resolvedTabs.value[0]?.to)
 const activeTab = computed(() => {
   const name = String(route.name ?? '')
-  return tabs.value.find((t) => t.to === name)?.to
+  return resolvedTabs.value.find((t) => t.to === name)?.to
 })
 const activeTabLabel = computed(
-  () => tabs.value.find((t) => t.to === activeTab.value)?.name,
+  () => resolvedTabs.value.find((t) => t.to === activeTab.value)?.name,
 )
 
 usePageTitle(() => [
@@ -99,8 +101,8 @@ const nameVtName = computed(() => `${props.scope}-name`)
         <TopBackButton />
 
         <RouterLink
-          v-if="!isInfo"
-          :to="{ name: infoRoute, params }"
+          v-if="!isInfo && resolvedTabs[0]"
+          :to="{ name: resolvedTabs[0].to, params }"
           class="floating-nav pointer-events-auto flex min-w-0 flex-1 items-center gap-2 rounded-full p-1 pr-4 [view-transition-class:fixed-height] [view-transition-name:nav-pill] hover:opacity-90"
           :title="displayName"
         >
@@ -181,7 +183,7 @@ const nameVtName = computed(() => `${props.scope}-name`)
           class="floating-nav pointer-events-auto flex items-center rounded-full p-1 [view-transition-class:clip] [view-transition-name:nav-right]"
         >
           <RouterLink
-            v-for="tab in tabs"
+            v-for="tab in resolvedTabs"
             :key="tab.to"
             :to="{ name: tab.to, params }"
             :class="[

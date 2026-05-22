@@ -1,12 +1,18 @@
 <script setup lang="ts">
 import { computed, toRef } from 'vue'
 import { useRoute } from 'vue-router'
+import { Info, Trophy } from '@lucide/vue'
 import EntityLayout from '@/components/EntityLayout.vue'
 import FavoriteButton from '@/components/FavoriteButton.vue'
 import { provideDancerProfile } from '@/composables/useDancerProfile'
 import { useFavoritesStore } from '@/stores/favorites'
 import { initialsOf } from '@/lib/format'
 import { useVtScope } from '@/lib/viewTransitionFocus'
+
+const tabs = [
+  { name: 'Info', to: 'dancer.info', icon: Info },
+  { name: 'Results', to: 'dancer.results', icon: Trophy },
+]
 
 const route = useRoute()
 const dancerId = computed(() => String(route.params.dancerId ?? ''))
@@ -36,7 +42,7 @@ const isInfo = computed(() => String(route.name ?? '') === 'dancer.info')
     :not-found="notFound"
     :empty-title="`No record of ${displayName}`"
     empty-description="We couldn’t find this dancer across the competitions we know about."
-    results-tab-label="Results"
+    :tabs="tabs"
   >
     <template #actions>
       <FavoriteButton

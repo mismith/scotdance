@@ -11,7 +11,7 @@ import { formatMonthAbbrev, isSameDay, parseDate } from '@/lib/format'
 
 const profile = useJudgeProfile()
 
-const view = useLocalStorage<ViewMode>('judge:results:view', 'list')
+const view = useLocalStorage<ViewMode>('judge:competitions:view', 'list')
 
 interface DatedAppearance extends JudgeAppearance {
   day: string

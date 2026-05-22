@@ -2,24 +2,24 @@
 import { computed } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import { ChevronRight } from '@lucide/vue'
-import { usePiperProfile, type PiperAppearance } from '@/composables/usePiperProfile'
+import { useVenueProfile, type VenueAppearance } from '@/composables/useVenueProfile'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 import CompetitionsCalendar from '@/components/CompetitionsCalendar.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import ViewModeTabs, { type ViewMode } from '@/components/ViewModeTabs.vue'
 import { formatMonthAbbrev, isSameDay, parseDate } from '@/lib/format'
 
-const profile = usePiperProfile()
+const profile = useVenueProfile()
 
-const view = useLocalStorage<ViewMode>('piper:results:view', 'list')
+const view = useLocalStorage<ViewMode>('venue:competitions:view', 'list')
 
-interface DatedAppearance extends PiperAppearance {
+interface DatedAppearance extends VenueAppearance {
   day: string
   month: string
   isLive: boolean
 }
 
-function dated(list: PiperAppearance[]): DatedAppearance[] {
+function dated(list: VenueAppearance[]): DatedAppearance[] {
   return list
     .filter((a) => a.competition?.date)
     .map<DatedAppearance>((a) => {
@@ -36,7 +36,7 @@ function dated(list: PiperAppearance[]): DatedAppearance[] {
 const upcoming = computed(() => dated(profile.upcoming.value))
 const past = computed(() => dated(profile.past.value))
 
-const piperCompetitions = computed<CompetitionListItem[]>(() => {
+const venueCompetitions = computed<CompetitionListItem[]>(() => {
   const seen = new Set<string>()
   const list: CompetitionListItem[] = []
   for (const a of profile.appearances.value) {
@@ -67,7 +67,7 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
 
     <CompetitionsCalendar
       v-else-if="view === 'calendar'"
-      :competitions="piperCompetitions"
+      :competitions="venueCompetitions"
       :link-to="calendarLinkTo"
     />
 
@@ -107,17 +107,10 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
                   {{ a.competition?.name ?? 'Loading…' }}
                 </div>
                 <div
-                  v-if="a.competition?.location || a.isLive"
-                  class="text-item-subtitle text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2"
+                  v-if="a.isLive"
+                  class="text-item-subtitle text-secondary mt-1 font-sans text-sm font-bold not-italic tracking-[0.12em] uppercase"
                 >
-                  <span v-if="a.competition?.location">{{
-                    a.competition.location
-                  }}</span>
-                  <span
-                    v-if="a.isLive"
-                    class="text-secondary font-sans text-sm font-bold not-italic tracking-[0.12em] uppercase"
-                    >Piping now</span
-                  >
+                  Live now
                 </div>
               </div>
               <ChevronRight class="text-muted-foreground size-4 shrink-0" />
@@ -151,12 +144,6 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
                 <div class="text-item-title truncate">
                   {{ a.competition?.name ?? 'Loading…' }}
                 </div>
-                <div
-                  v-if="a.competition?.location"
-                  class="text-item-subtitle text-muted-foreground mt-1"
-                >
-                  {{ a.competition.location }}
-                </div>
               </div>
               <ChevronRight class="text-muted-foreground size-4 shrink-0" />
             </RouterLink>
@@ -168,7 +155,7 @@ const calendarLinkTo = (c: CompetitionListItem) => ({
         v-if="!upcoming.length && !past.length"
         class="text-muted-foreground text-lg italic"
       >
-        No appearances on record.
+        No competitions on record.
       </div>
     </template>
   </article>
