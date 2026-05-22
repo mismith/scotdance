@@ -13,9 +13,7 @@ const piperId = computed(() => String(route.params.piperId ?? ''))
 
 useVtScope('piper').syncFocus(piperId)
 
-const { displayName, location, image, loading, notFound } = providePiperProfile(
-  toRef(piperId),
-)
+const { displayName, image, loading, notFound } = providePiperProfile(toRef(piperId))
 
 const favorites = useFavoritesStore()
 const initials = computed(() => initialsOf(displayName.value))
@@ -31,7 +29,6 @@ const isInfo = computed(() => String(route.name ?? '') === 'piper.info')
     route-prefix="piper"
     section-route-name="pipers"
     :display-name="displayName"
-    :subtitle="location"
     :image="image"
     :initials="initials"
     :is-favorite="isFavorite"

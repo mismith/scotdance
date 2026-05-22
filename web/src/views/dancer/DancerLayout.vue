@@ -13,8 +13,7 @@ const dancerId = computed(() => String(route.params.dancerId ?? ''))
 
 useVtScope('dancer').syncFocus(dancerId)
 
-const { displayName, location, image, loading, notFound } =
-  provideDancerProfile(toRef(dancerId))
+const { displayName, image, loading, notFound } = provideDancerProfile(toRef(dancerId))
 
 const favorites = useFavoritesStore()
 const initials = computed(() => initialsOf(displayName.value))
@@ -30,7 +29,6 @@ const isInfo = computed(() => String(route.name ?? '') === 'dancer.info')
     route-prefix="dancer"
     section-route-name="dancers"
     :display-name="displayName"
-    :subtitle="location"
     :image="image"
     :initials="initials"
     :is-favorite="isFavorite"

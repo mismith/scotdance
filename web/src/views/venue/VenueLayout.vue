@@ -13,7 +13,7 @@ const venueId = computed(() => String(route.params.venueId ?? ''))
 
 useVtScope('venue').syncFocus(venueId)
 
-const { name, locationLine, loading, notFound } = provideVenueProfile(toRef(venueId))
+const { name, loading, notFound } = provideVenueProfile(toRef(venueId))
 
 const favorites = useFavoritesStore()
 const isFavorite = computed(() => favorites.isFavorite('venues', venueId.value))
@@ -28,7 +28,6 @@ const isInfo = computed(() => String(route.name ?? '') === 'venue.info')
     route-prefix="venue"
     section-route-name="venues"
     :display-name="name"
-    :subtitle="locationLine"
     :fallback-icon="School"
     :is-favorite="isFavorite"
     :loading="loading"
