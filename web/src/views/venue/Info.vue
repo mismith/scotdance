@@ -47,7 +47,10 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
       </div>
     </header>
 
-    <StatGrid header="Competitions" :stats="tiles" :loading="loading" />
+    <section class="space-y-2">
+      <SectionHeader label="Competitions" />
+      <StatGrid :stats="tiles" :loading="loading" />
+    </section>
 
     <section v-if="loading" class="space-y-2">
       <Skeleton class="h-3 w-24" />
