@@ -85,9 +85,9 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/judge/Info.vue'),
       },
       {
-        path: 'results',
-        name: 'judge.results',
-        component: () => import('@/views/judge/Results.vue'),
+        path: 'competitions',
+        name: 'judge.competitions',
+        component: () => import('@/views/judge/Competitions.vue'),
       },
     ],
   },
@@ -103,10 +103,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/piper/Info.vue'),
       },
       {
-        path: 'results',
-        name: 'piper.results',
-        component: () => import('@/views/piper/Results.vue'),
+        path: 'competitions',
+        name: 'piper.competitions',
+        component: () => import('@/views/piper/Competitions.vue'),
       },
+      { path: 'results', redirect: { name: 'piper.competitions' } },
     ],
   },
   {
@@ -121,10 +122,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/venue/Info.vue'),
       },
       {
-        path: 'results',
-        name: 'venue.results',
-        component: () => import('@/views/venue/Results.vue'),
+        path: 'competitions',
+        name: 'venue.competitions',
+        component: () => import('@/views/venue/Competitions.vue'),
       },
+      { path: 'results', redirect: { name: 'venue.competitions' } },
     ],
   },
   {
