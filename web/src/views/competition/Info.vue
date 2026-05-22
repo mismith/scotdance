@@ -6,6 +6,7 @@ import CompChip from '@/components/CompChip.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import StaffAvatar from '@/components/StaffAvatar.vue'
 import StaffDialog from '@/components/StaffDialog.vue'
+import StatGrid from '@/components/StatGrid.vue'
 import {
   staffEntityRef,
   staffMemberName,
@@ -238,32 +239,7 @@ function closeStaff() {
     </section>
 
     <!-- Stat tiles -->
-    <section
-      v-if="stats.length"
-      :class="[
-        'grid gap-2',
-        stats.length === 1 && 'grid-cols-1',
-        stats.length === 2 && 'grid-cols-2',
-        stats.length >= 3 && 'grid-cols-3',
-      ]"
-    >
-      <div
-        v-for="stat in stats"
-        :key="stat.label"
-        class="bg-card flex flex-col items-center rounded-xl border py-2.5 shadow-sm"
-      >
-        <div
-          class="text-4xl leading-none font-medium tracking-tight tabular-nums"
-        >
-          {{ stat.value }}
-        </div>
-        <div
-          class="text-foreground/65 mt-1 text-xs text-eyebrow"
-        >
-          {{ stat.label }}
-        </div>
-      </div>
-    </section>
+    <StatGrid v-if="stats.length" :stats="stats" />
 
     <section v-if="competition.registrationURL" class="space-y-2">
       <a
