@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
-import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
 
 interface Stat {
@@ -13,11 +12,10 @@ interface Stat {
 const props = withDefaults(
   defineProps<{
     stats: Stat[]
-    header?: string
     cols?: 1 | 2 | 3
     loading?: boolean
   }>(),
-  { header: undefined, cols: undefined, loading: false },
+  { cols: undefined, loading: false },
 )
 
 const colCount = computed<1 | 2 | 3>(() => {
@@ -45,8 +43,7 @@ function display(value: Stat['value']): string {
 </script>
 
 <template>
-  <div class="space-y-2">
-    <SectionHeader v-if="header" :label="header" />
+  <div>
     <div
       v-for="(row, rowIdx) in rows"
       :key="rowIdx"
