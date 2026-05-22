@@ -61,7 +61,7 @@ function display(value: Stat['value']): string {
         v-for="stat in row"
         :key="stat.label"
         :to="stat.to"
-        class="flex flex-col items-center justify-center gap-1 px-3 py-4"
+        class="flex flex-col items-center justify-center gap-1 px-3 py-4 text-center"
       >
         <div
           v-if="stat.caption"
@@ -73,7 +73,7 @@ function display(value: Stat['value']): string {
           <Skeleton v-if="loading" class="h-9 w-10" />
           <template v-else>{{ display(stat.value) }}</template>
         </div>
-        <div class="text-foreground/65 mt-1 text-xs text-eyebrow">
+        <div class="text-foreground/65 mt-1 flex h-8 items-start text-xs text-eyebrow">
           {{ stat.label }}
         </div>
       </component>

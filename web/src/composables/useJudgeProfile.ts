@@ -10,7 +10,18 @@ import {
 import { child, get } from 'firebase/database'
 import { dataRef } from '@/firebase'
 import { fetchCompetitionMeta } from '@/lib/competitionMeta'
-import { isBeforeToday, parseDate } from '@/lib/format'
+import {
+  appearanceDate,
+  buildAppearances,
+  countCompsThisYear,
+  countTotalComps,
+  countUniqueVenues,
+  filterPast,
+  filterUpcoming,
+  findFirstSeen,
+  findLastSeen,
+  latestNonNull,
+} from '@/lib/appearanceStats'
 import { insertEntityAggregate } from '@/composables/useEntityAggregates'
 import { useRecentEntities } from '@/composables/useRecentEntities'
 import type { Competition } from '@/types/competition'
@@ -49,6 +60,11 @@ export interface UseJudgeProfile {
   past: Ref<JudgeAppearance[]>
   totalComps: Ref<number>
   compsThisYear: Ref<number>
+  firstSeen: Ref<JudgeAppearance | null>
+  firstSeenDate: Ref<Date | null>
+  lastSeen: Ref<JudgeAppearance | null>
+  lastSeenDate: Ref<Date | null>
+  venueCount: Ref<number>
 }
 
 const KEY: InjectionKey<UseJudgeProfile> = Symbol('judgeProfile')
@@ -63,17 +79,6 @@ export function useJudgeProfile(): UseJudgeProfile {
   const injected = inject(KEY, null)
   if (!injected) throw new Error('useJudgeProfile() called outside JudgeLayout')
   return injected
-}
-
-function latestNonNull<T>(
-  list: JudgeAppearance[],
-  pick: (a: JudgeAppearance) => T | null | undefined,
-): T | null {
-  for (const a of list) {
-    const v = pick(a)
-    if (v != null && v !== '') return v as T
-  }
-  return null
 }
 
 function createJudgeProfile(judgeId: Ref<string>): UseJudgeProfile {
@@ -142,39 +147,11 @@ function createJudgeProfile(judgeId: Ref<string>): UseJudgeProfile {
     { immediate: true },
   )
 
-  // Sorted: most recent (or future) first → past in descending order.
-  const appearances = computed<JudgeAppearance[]>(() => {
-    const apps = aggregate.value?.appearances || {}
-    return Object.entries(apps)
-      .map<JudgeAppearance>(([key, raw]) => ({
-        key,
-        raw,
-        competition: raw.competitionId
-          ? compMeta.value[raw.competitionId] ?? null
-          : null,
-      }))
-      .sort((a, b) => {
-        const da = a.competition?.date ? parseDate(a.competition.date).getTime() : 0
-        const db = b.competition?.date ? parseDate(b.competition.date).getTime() : 0
-        return db - da
-      })
-  })
-
-  const upcoming = computed(() =>
-    appearances.value
-      .filter((a) => a.competition?.date && !isBeforeToday(a.competition.date))
-      .sort((a, b) => {
-        const da = a.competition?.date ? parseDate(a.competition.date).getTime() : 0
-        const db = b.competition?.date ? parseDate(b.competition.date).getTime() : 0
-        return da - db
-      }),
+  const appearances = computed<JudgeAppearance[]>(() =>
+    buildAppearances(aggregate.value?.appearances, compMeta.value),
   )
-
-  const past = computed(() =>
-    appearances.value.filter(
-      (a) => a.competition?.date && isBeforeToday(a.competition.date),
-    ),
-  )
+  const upcoming = computed(() => filterUpcoming(appearances.value))
+  const past = computed(() => filterPast(appearances.value))
 
   const displayName = computed(() => {
     const apps = appearances.value
@@ -188,26 +165,14 @@ function createJudgeProfile(judgeId: Ref<string>): UseJudgeProfile {
   const bio = computed(() => latestNonNull(appearances.value, (a) => a.raw.bio))
   const location = computed(() => latestNonNull(appearances.value, (a) => a.raw.location))
 
-  const totalComps = computed(() => {
-    const ids = new Set<string>()
-    for (const a of appearances.value) {
-      if (a.raw.competitionId) ids.add(a.raw.competitionId)
-    }
-    return ids.size
-  })
+  const totalComps = computed(() => countTotalComps(appearances.value))
+  const compsThisYear = computed(() => countCompsThisYear(appearances.value))
 
-  const compsThisYear = computed(() => {
-    const year = new Date().getFullYear()
-    const ids = new Set<string>()
-    for (const a of appearances.value) {
-      const d = a.competition?.date
-      if (!d) continue
-      if (parseDate(d).getFullYear() === year && a.raw.competitionId) {
-        ids.add(a.raw.competitionId)
-      }
-    }
-    return ids.size
-  })
+  const firstSeen = computed(() => findFirstSeen(appearances.value))
+  const firstSeenDate = computed(() => appearanceDate(firstSeen.value))
+  const lastSeen = computed(() => findLastSeen(appearances.value))
+  const lastSeenDate = computed(() => appearanceDate(lastSeen.value))
+  const venueCount = computed(() => countUniqueVenues(appearances.value))
 
   return {
     loading,
@@ -221,5 +186,10 @@ function createJudgeProfile(judgeId: Ref<string>): UseJudgeProfile {
     past,
     totalComps,
     compsThisYear,
+    firstSeen,
+    firstSeenDate,
+    lastSeen,
+    lastSeenDate,
+    venueCount,
   }
 }

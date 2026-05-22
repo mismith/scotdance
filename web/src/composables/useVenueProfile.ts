@@ -10,7 +10,16 @@ import {
 import { child, get } from 'firebase/database'
 import { dataRef } from '@/firebase'
 import { fetchCompetitionMeta } from '@/lib/competitionMeta'
-import { isBeforeToday, parseDate } from '@/lib/format'
+import {
+  appearanceDate,
+  buildAppearances,
+  countCompsThisYear,
+  countTotalComps,
+  filterPast,
+  filterUpcoming,
+  findFirstSeen,
+  findLastSeen,
+} from '@/lib/appearanceStats'
 import { insertEntityAggregate } from '@/composables/useEntityAggregates'
 import { useRecentEntities } from '@/composables/useRecentEntities'
 import type { Competition } from '@/types/competition'
@@ -59,6 +68,10 @@ export interface UseVenueProfile {
   past: Ref<VenueAppearance[]>
   totalComps: Ref<number>
   compsThisYear: Ref<number>
+  firstSeen: Ref<VenueAppearance | null>
+  firstSeenDate: Ref<Date | null>
+  lastSeen: Ref<VenueAppearance | null>
+  lastSeenDate: Ref<Date | null>
 }
 
 const KEY: InjectionKey<UseVenueProfile> = Symbol('venueProfile')
@@ -137,38 +150,11 @@ function createVenueProfile(venueId: Ref<string>): UseVenueProfile {
     { immediate: true },
   )
 
-  const appearances = computed<VenueAppearance[]>(() => {
-    const apps = aggregate.value?.appearances || {}
-    return Object.entries(apps)
-      .map<VenueAppearance>(([key, raw]) => ({
-        key,
-        raw,
-        competition: raw.competitionId
-          ? compMeta.value[raw.competitionId] ?? null
-          : null,
-      }))
-      .sort((a, b) => {
-        const da = a.competition?.date ? parseDate(a.competition.date).getTime() : 0
-        const db = b.competition?.date ? parseDate(b.competition.date).getTime() : 0
-        return db - da
-      })
-  })
-
-  const upcoming = computed(() =>
-    appearances.value
-      .filter((a) => a.competition?.date && !isBeforeToday(a.competition.date))
-      .sort((a, b) => {
-        const da = a.competition?.date ? parseDate(a.competition.date).getTime() : 0
-        const db = b.competition?.date ? parseDate(b.competition.date).getTime() : 0
-        return da - db
-      }),
+  const appearances = computed<VenueAppearance[]>(() =>
+    buildAppearances(aggregate.value?.appearances, compMeta.value),
   )
-
-  const past = computed(() =>
-    appearances.value.filter(
-      (a) => a.competition?.date && isBeforeToday(a.competition.date),
-    ),
-  )
+  const upcoming = computed(() => filterUpcoming(appearances.value))
+  const past = computed(() => filterPast(appearances.value))
 
   const name = computed(() => aggregate.value?.name?.trim() || 'Venue')
   const locality = computed(() => aggregate.value?.locality ?? null)
@@ -182,26 +168,13 @@ function createVenueProfile(venueId: Ref<string>): UseVenueProfile {
     return parts.length ? parts.join(', ') : null
   })
 
-  const totalComps = computed(() => {
-    const ids = new Set<string>()
-    for (const a of appearances.value) {
-      if (a.raw.competitionId) ids.add(a.raw.competitionId)
-    }
-    return ids.size
-  })
+  const totalComps = computed(() => countTotalComps(appearances.value))
+  const compsThisYear = computed(() => countCompsThisYear(appearances.value))
 
-  const compsThisYear = computed(() => {
-    const year = new Date().getFullYear()
-    const ids = new Set<string>()
-    for (const a of appearances.value) {
-      const d = a.competition?.date
-      if (!d) continue
-      if (parseDate(d).getFullYear() === year && a.raw.competitionId) {
-        ids.add(a.raw.competitionId)
-      }
-    }
-    return ids.size
-  })
+  const firstSeen = computed(() => findFirstSeen(appearances.value))
+  const firstSeenDate = computed(() => appearanceDate(firstSeen.value))
+  const lastSeen = computed(() => findLastSeen(appearances.value))
+  const lastSeenDate = computed(() => appearanceDate(lastSeen.value))
 
   return {
     loading,
@@ -218,5 +191,9 @@ function createVenueProfile(venueId: Ref<string>): UseVenueProfile {
     past,
     totalComps,
     compsThisYear,
+    firstSeen,
+    firstSeenDate,
+    lastSeen,
+    lastSeenDate,
   }
 }

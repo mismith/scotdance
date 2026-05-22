@@ -1,27 +1,46 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { School, ChevronRight } from '@lucide/vue'
-import { useVenueProfile } from '@/composables/useVenueProfile'
-import { useFavoritesStore } from '@/stores/favorites'
-import CompChip from '@/components/CompChip.vue'
-import SectionHeader from '@/components/SectionHeader.vue'
-import Skeleton from '@/components/Skeleton.vue'
+import { School } from '@lucide/vue'
+import { useVenueProfile, type VenueAppearance } from '@/composables/useVenueProfile'
+import { formatMonthAbbrev } from '@/lib/format'
 import StatGrid from '@/components/StatGrid.vue'
 
 const profile = useVenueProfile()
 const { name, locationLine, loading } = profile
 
-const favorites = useFavoritesStore()
+function compRoute(a: VenueAppearance | null) {
+  if (!a?.raw.competitionId) return undefined
+  return {
+    name: 'competition.info',
+    params: { competitionId: a.raw.competitionId },
+  }
+}
 
-const resultsRoute = { name: 'venue.results' }
-const tiles = computed(() => [
-  { label: 'Total', value: profile.totalComps.value, to: resultsRoute },
-  { label: 'This year', value: profile.compsThisYear.value },
-  { label: 'Upcoming', value: profile.upcoming.value.length, to: resultsRoute },
-  { label: 'Past', value: profile.past.value.length, to: resultsRoute },
-])
-
-const recentComp = computed(() => profile.appearances.value[0] ?? null)
+const tiles = computed(() => {
+  const first = profile.firstSeen.value
+  const last = profile.lastSeen.value
+  const firstDate = profile.firstSeenDate.value
+  const lastDate = profile.lastSeenDate.value
+  return [
+    {
+      label: 'Competitions',
+      value: profile.totalComps.value,
+      to: { name: 'venue.competitions' },
+    },
+    {
+      label: 'First seen',
+      caption: firstDate ? formatMonthAbbrev(firstDate).toUpperCase() : undefined,
+      value: firstDate ? firstDate.getFullYear() : null,
+      to: compRoute(first),
+    },
+    {
+      label: 'Last seen',
+      caption: lastDate ? formatMonthAbbrev(lastDate).toUpperCase() : undefined,
+      value: lastDate ? lastDate.getFullYear() : null,
+      to: compRoute(last),
+    },
+  ]
+})
 </script>
 
 <template>
@@ -47,37 +66,6 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
       </div>
     </header>
 
-    <section class="space-y-2">
-      <SectionHeader label="Competitions" />
-      <StatGrid :stats="tiles" :loading="loading" />
-    </section>
-
-    <section v-if="loading" class="space-y-2">
-      <Skeleton class="h-3 w-24" />
-      <Skeleton class="h-14 w-full" />
-    </section>
-    <section v-else-if="recentComp" class="space-y-2">
-      <SectionHeader label="Most recent" />
-      <RouterLink
-        :to="{
-          name: 'competition.info',
-          params: { competitionId: recentComp.raw.competitionId },
-        }"
-        class="flex items-center gap-3 px-2 py-3"
-      >
-        <CompChip
-          :name="recentComp.competition?.name"
-          :image="recentComp.competition?.image"
-          :favorite="favorites.isFavorite('competitions', recentComp.raw.competitionId ?? '')"
-          class="size-10 rounded-xl"
-        />
-        <div class="min-w-0 flex-1">
-          <div class="text-item-title truncate">
-            {{ recentComp.competition?.name ?? 'Loading…' }}
-          </div>
-        </div>
-        <ChevronRight class="text-muted-foreground size-4 shrink-0" />
-      </RouterLink>
-    </section>
+    <StatGrid :stats="tiles" :loading="loading" />
   </article>
 </template>
