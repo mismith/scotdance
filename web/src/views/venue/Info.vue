@@ -6,6 +6,7 @@ import { useFavoritesStore } from '@/stores/favorites'
 import CompChip from '@/components/CompChip.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import StatGrid from '@/components/StatGrid.vue'
 
 const profile = useVenueProfile()
 const { name, locationLine, loading } = profile
@@ -13,22 +14,10 @@ const { name, locationLine, loading } = profile
 const favorites = useFavoritesStore()
 
 const tiles = computed(() => [
-  {
-    k: 'Total comps',
-    v: profile.totalComps.value > 0 ? String(profile.totalComps.value) : '—',
-  },
-  {
-    k: 'This year',
-    v: profile.compsThisYear.value > 0 ? String(profile.compsThisYear.value) : '—',
-  },
-  {
-    k: 'Upcoming',
-    v: profile.upcoming.value.length > 0 ? String(profile.upcoming.value.length) : '—',
-  },
-  {
-    k: 'Past',
-    v: profile.past.value.length > 0 ? String(profile.past.value.length) : '—',
-  },
+  { label: 'Total comps', value: profile.totalComps.value },
+  { label: 'This year', value: profile.compsThisYear.value },
+  { label: 'Upcoming', value: profile.upcoming.value.length },
+  { label: 'Past', value: profile.past.value.length },
 ])
 
 const recentComp = computed(() => profile.appearances.value[0] ?? null)
@@ -57,26 +46,7 @@ const recentComp = computed(() => profile.appearances.value[0] ?? null)
       </div>
     </header>
 
-    <section>
-      <div class="grid grid-cols-2 gap-2">
-        <template v-if="loading">
-          <Skeleton v-for="i in 4" :key="i" class="h-20 rounded-2xl!" />
-        </template>
-        <div
-          v-for="t in tiles"
-          v-else
-          :key="t.k"
-          class="bg-card rounded-2xl border px-4 py-3"
-        >
-          <div class="text-foreground/65 text-xs text-eyebrow">
-            {{ t.k }}
-          </div>
-          <div class="mt-1 text-4xl font-medium tabular-nums tracking-tight">
-            {{ t.v }}
-          </div>
-        </div>
-      </div>
-    </section>
+    <StatGrid :stats="tiles" :loading="loading" />
 
     <section v-if="loading" class="space-y-2">
       <Skeleton class="h-3 w-24" />

@@ -6,6 +6,7 @@ import { useDancerProfile, type DancerAppearance } from '@/composables/useDancer
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 import CompetitionsCalendar from '@/components/CompetitionsCalendar.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
+import StatGrid from '@/components/StatGrid.vue'
 import ViewModeTabs, { type ViewMode } from '@/components/ViewModeTabs.vue'
 import { formatMonthAbbrev, isSameDay, parseDate } from '@/lib/format'
 
@@ -14,9 +15,9 @@ const profile = useDancerProfile()
 const view = useLocalStorage<ViewMode>('dancer:results:view', 'list')
 
 const tiles = computed(() => [
-  { k: '1st', v: '—', accent: 'text-secondary' },
-  { k: 'Top 3', v: '—', accent: 'text-primary' },
-  { k: 'Avg', v: '—', accent: 'text-foreground' },
+  { label: '1st', value: null },
+  { label: 'Top 3', value: null },
+  { label: 'Avg', value: null },
 ])
 
 interface DatedAppearance extends DancerAppearance {
@@ -78,27 +79,7 @@ const calendarLinkTo = (c: CompetitionListItem) => {
 <template>
   <article class="space-y-5">
     <section>
-      <div class="grid grid-cols-3 gap-2">
-        <div
-          v-for="t in tiles"
-          :key="t.k"
-          class="bg-card rounded-2xl border px-3 py-3 text-center"
-        >
-          <div
-            class="text-foreground/65 text-xs text-eyebrow"
-          >
-            {{ t.k }}
-          </div>
-          <div
-            :class="[
-              'mt-1 text-4xl font-medium tabular-nums tracking-tight',
-              t.accent,
-            ]"
-          >
-            {{ t.v }}
-          </div>
-        </div>
-      </div>
+      <StatGrid :stats="tiles" />
       <p class="text-muted-foreground mt-2 px-1">
         Aggregated stats across comps need per-comp results loaded — coming soon.
       </p>
