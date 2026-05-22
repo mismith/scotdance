@@ -108,20 +108,30 @@ const registrationStatus = computed(() => {
 })
 
 const stats = computed(() => {
-  const list: Array<{ value: string; label: string }> = []
+  const list: Array<{
+    value: string
+    label: string
+    to?: { name: string }
+  }> = []
   if (dancers.value.length) {
-    list.push({ value: String(dancers.value.length), label: 'Dancers' })
+    list.push({
+      value: String(dancers.value.length),
+      label: 'Dancers',
+      to: { name: 'competition.dancers' },
+    })
   }
   if (eventCount.value) {
     list.push({
       value: String(eventCount.value),
       label: eventCount.value === 1 ? 'Event' : 'Events',
+      to: { name: 'competition.schedule' },
     })
   }
   if (dances.value.length) {
     list.push({
       value: String(dances.value.length),
       label: dances.value.length === 1 ? 'Dance' : 'Dances',
+      to: { name: 'competition.results' },
     })
   }
   return list

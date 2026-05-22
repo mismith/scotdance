@@ -1,19 +1,23 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { RouterLink, type RouteLocationRaw } from 'vue-router'
+import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
 
 interface Stat {
   label: string
   value: string | number | null | undefined
+  to?: RouteLocationRaw
 }
 
 const props = withDefaults(
   defineProps<{
     stats: Stat[]
+    header?: string
     cols?: 1 | 2 | 3
     loading?: boolean
   }>(),
-  { cols: undefined, loading: false },
+  { header: undefined, cols: undefined, loading: false },
 )
 
 const colCount = computed<1 | 2 | 3>(() => {
@@ -41,7 +45,8 @@ function display(value: Stat['value']): string {
 </script>
 
 <template>
-  <div>
+  <div class="space-y-2">
+    <SectionHeader v-if="header" :label="header" />
     <div
       v-for="(row, rowIdx) in rows"
       :key="rowIdx"
@@ -53,9 +58,11 @@ function display(value: Stat['value']): string {
         rowIdx > 0 && 'border-border border-t',
       ]"
     >
-      <div
+      <component
+        :is="stat.to ? RouterLink : 'div'"
         v-for="stat in row"
         :key="stat.label"
+        :to="stat.to"
         class="flex flex-col items-center gap-2 px-3 py-4"
       >
         <div class="text-4xl leading-none font-medium tracking-tight tabular-nums">
@@ -65,7 +72,7 @@ function display(value: Stat['value']): string {
         <div class="text-foreground/65 text-xs text-eyebrow">
           {{ stat.label }}
         </div>
-      </div>
+      </component>
     </div>
   </div>
 </template>
