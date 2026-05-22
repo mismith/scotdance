@@ -11,7 +11,7 @@
     "dev": "concurrently -k -n fn,web -c magenta,green \"npm:dev:functions\" \"npm:dev:web\"",
     "emulate:firebase": "cd .. && firebase emulators:start --import=.firebase/emulator-data --export-on-exit=.firebase/emulator-data",
     "emulate:typesense": "cd .. && ./typesense-server --log-dir .typesense/logs --data-dir .typesense/emulator-data --listen-port=8108 --api-key=xyz --enable-cors",
-    "local": "concurrently -k -n fn,fb,ts,web -c magenta,blue,yellow,green  \"npm:dev:functions\" \"npm:emulate:firebase\" \"npm:emulate:typesense\" \"vite --mode emulator\"",
+    "local": "cd .. && firebase emulators:exec --import=.firebase/emulator-data --export-on-exit=.firebase/emulator-data 'cd web && concurrently -k -n fn,ts,web -c magenta,yellow,green npm:dev:functions npm:emulate:typesense \"vite --mode emulator\"'",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit",
