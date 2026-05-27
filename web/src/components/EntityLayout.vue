@@ -8,6 +8,7 @@ import { Calendars, Info } from '@lucide/vue'
 import { smartBackClick } from '@/lib/back'
 import { sectionMeta } from '@/lib/sectionMeta'
 import { usePageTitle } from '@/composables/usePageTitle'
+import { provideInfoHeader } from '@/composables/useScrolledPast'
 
 // Shared shell for entity profile pages (judge / piper / venue / dancer).
 // Per-entity wrappers just pass props + drive the data composable; everything
@@ -89,8 +90,32 @@ usePageTitle(() => [
 
 const params = computed(() => ({ [props.idParam]: props.id }))
 
-const avatarVtName = computed(() => `${props.scope}-avatar`)
-const nameVtName = computed(() => `${props.scope}-name`)
+// Per-scope literals so Tailwind can detect them at build time. Maps to one
+// arbitrary class per scope — kept here rather than templated into a single
+// `[view-transition-name:${scope}-avatar]` because Tailwind only generates
+// rules for class strings it can see statically.
+const SCOPE_AVATAR_VT_CLASS: Record<typeof props.scope, string> = {
+  judge: '[view-transition-name:judge-avatar]',
+  piper: '[view-transition-name:piper-avatar]',
+  venue: '[view-transition-name:venue-avatar]',
+  dancer: '[view-transition-name:dancer-avatar]',
+}
+const SCOPE_NAME_VT_CLASS: Record<typeof props.scope, string> = {
+  judge: '[view-transition-name:judge-name]',
+  piper: '[view-transition-name:piper-name]',
+  venue: '[view-transition-name:venue-name]',
+  dancer: '[view-transition-name:dancer-name]',
+}
+const avatarVtClass = computed(() => SCOPE_AVATAR_VT_CLASS[props.scope])
+const nameVtClass = computed(() => SCOPE_NAME_VT_CLASS[props.scope])
+
+// Child Info component registers its <header> ref via this provide; once the
+// header scrolls past the fixed nav, the small-title name pill fades in.
+// The child reads `scrolledPast` to drop its own VT name classes while the
+// pill is the visible representation, so only one element ever owns a given
+// view-transition-name at VT capture time.
+const { scrolledPast: scrolledPastInfoHeader } = provideInfoHeader()
+const showNamePill = computed(() => !isInfo.value || scrolledPastInfoHeader.value)
 </script>
 
 <template>
@@ -100,46 +125,57 @@ const nameVtName = computed(() => `${props.scope}-name`)
       <div class="mx-auto flex max-w-3xl items-center gap-2">
         <TopBackButton />
 
-        <RouterLink
-          v-if="!isInfo && resolvedTabs[0]"
-          :to="{ name: resolvedTabs[0].to, params }"
-          class="floating-nav pointer-events-auto flex min-w-0 flex-1 items-center gap-2 rounded-full p-1 pr-4 [view-transition-class:fixed-height] [view-transition-name:nav-pill] hover:opacity-90"
-          :title="displayName"
-        >
-          <div
+        <div class="min-w-0 flex-1">
+          <RouterLink
+            v-if="resolvedTabs[0]"
+            :to="{ name: resolvedTabs[0].to, params }"
             :class="[
-              'flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full text-lg font-medium [view-transition-class:nav-avatar]',
-              isFavorite ? 'bg-secondary text-secondary-foreground' : 'bg-card-foreground/15',
+              'floating-nav ease-rubber-band flex w-full items-center gap-2 rounded-full p-1 pr-4 transition [view-transition-class:fixed-height]',
+              showNamePill
+                ? 'pointer-events-auto translate-y-0 opacity-100 [view-transition-name:nav-pill] hover:opacity-90'
+                : 'pointer-events-none -translate-y-full opacity-0',
             ]"
-            :style="{ viewTransitionName: avatarVtName }"
+            :title="displayName"
           >
-            <img
-              v-if="image"
-              :src="image"
-              :alt="displayName"
-              class="size-full object-cover"
-            />
-            <component
-              :is="fallbackIcon"
-              v-else-if="fallbackIcon"
-              class="size-5"
-            />
-            <template v-else>{{ initials || '?' }}</template>
-          </div>
-          <div class="min-w-0 flex-1">
             <div
-              class="truncate text-lg leading-none font-medium tracking-tight [view-transition-class:fit_nav-title]"
-              :style="{ viewTransitionName: nameVtName }"
+              :class="[
+                'flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full text-lg font-medium [view-transition-class:nav-avatar]',
+                isFavorite
+                  ? 'bg-secondary text-secondary-foreground'
+                  : 'bg-card-foreground/15',
+                showNamePill && avatarVtClass,
+              ]"
             >
-              {{ displayName || (loading ? 'Loading…' : '') }}
+              <img
+                v-if="image"
+                :src="image"
+                :alt="displayName"
+                class="size-full object-cover"
+              />
+              <component :is="fallbackIcon" v-else-if="fallbackIcon" class="size-5" />
+              <template v-else>{{ initials || '?' }}</template>
             </div>
-            <div class="mt-1 truncate text-xs leading-none opacity-70">
-              {{ typeLabel }}
+            <div class="min-w-0 flex-1">
+              <div
+                :class="[
+                  'truncate text-lg leading-none font-medium tracking-tight [view-transition-class:fit_nav-title]',
+                  showNamePill && nameVtClass,
+                ]"
+              >
+                {{ displayName || (loading ? 'Loading…' : '') }}
+              </div>
+              <div
+                :class="[
+                  'mt-1 truncate text-xs leading-none opacity-70',
+                  showNamePill &&
+                    '[view-transition-class:fit] [view-transition-name:nav-subtitle]',
+                ]"
+              >
+                {{ typeLabel }}
+              </div>
             </div>
-          </div>
-        </RouterLink>
-
-        <div v-else class="min-w-0 flex-1" />
+          </RouterLink>
+        </div>
 
         <div
           class="floating-nav pointer-events-auto flex h-12 shrink-0 items-center gap-0.5 rounded-full px-1.5 [view-transition-class:fixed-height] [view-transition-name:nav-actions]"
@@ -153,7 +189,9 @@ const nameVtName = computed(() => `${props.scope}-name`)
       </div>
     </nav>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-4">
+    <main
+      class="mx-auto w-full max-w-3xl flex-1 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-4"
+    >
       <EmptyState
         v-if="!loading && notFound"
         :icon="section.icon"

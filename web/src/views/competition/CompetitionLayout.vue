@@ -11,6 +11,7 @@ import FavoriteCompetitionButton from '@/components/FavoriteCompetitionButton.vu
 import ShareButton from '@/components/ShareButton.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { provideCompetition } from '@/composables/useCompetition'
+import { provideInfoHeader } from '@/composables/useScrolledPast'
 import { useFavoritesStore } from '@/stores/favorites'
 import { usePageTitle } from '@/composables/usePageTitle'
 
@@ -58,6 +59,14 @@ onMounted(loadSchedule)
 
 const mode = computed<ChromeMode>(() => MODE_BY_ROUTE[String(route.name ?? '')] ?? 'info')
 
+// Child Info component registers its <header> ref via this provide; once the
+// header scrolls past the fixed nav, the small-title name pill fades in.
+// The child reads `scrolledPast` to drop its own VT name classes while the
+// pill is the visible representation, so only one element ever owns a given
+// view-transition-name at VT capture time.
+const { scrolledPast: scrolledPastInfoHeader } = provideInfoHeader()
+const showNamePill = computed(() => mode.value !== 'info' || scrolledPastInfoHeader.value)
+
 usePageTitle(() => [
   TAB_LABEL_BY_ROUTE[String(route.name ?? '')],
   notFound.value ? 'Not found' : competition.value?.name,
@@ -68,34 +77,44 @@ usePageTitle(() => [
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
-      <div class="mx-auto flex max-w-3xl items-center gap-2">
+      <div class="mx-auto flex h-12 max-w-3xl items-center gap-2">
         <TopBackButton />
 
-        <RouterLink
-          v-if="mode !== 'info'"
-          :to="{ name: 'competition.info', params: { competitionId } }"
-          class="floating-nav pointer-events-auto flex min-w-0 flex-1 items-center gap-2 rounded-full p-1 pr-4 [view-transition-class:fixed-height] [view-transition-name:nav-pill] hover:opacity-90"
-          :title="competition?.name ?? ''"
-        >
-          <CompChip
-            :name="competition?.name"
-            :image="competition?.image"
-            :favorite="isFavorite"
-            class="size-10 rounded-full [view-transition-class:nav-avatar] [view-transition-name:comp-avatar]"
-          />
-          <div class="min-w-0 flex-1">
-            <div
-              class="truncate text-lg leading-none font-medium tracking-tight [view-transition-class:fit_nav-title] [view-transition-name:comp-name]"
-            >
-              {{ competition?.name ?? (loading ? 'Loading…' : 'Competition') }}
+        <div class="min-w-0 flex-1">
+          <RouterLink
+            :to="{ name: 'competition.info', params: { competitionId } }"
+            :class="[
+              'floating-nav flex w-full items-center gap-2 rounded-full p-1 pr-4 [view-transition-class:fixed-height_fit] transition ease-rubber-band',
+              showNamePill
+                ? 'pointer-events-auto translate-y-0 opacity-100 [view-transition-name:nav-pill] hover:opacity-90'
+                : 'pointer-events-none -translate-y-full opacity-0',
+            ]"
+            :title="competition?.name ?? ''"
+          >
+            <CompChip
+              :name="competition?.name"
+              :image="competition?.image"
+              :favorite="isFavorite"
+              :class="[
+                'size-10 rounded-full [view-transition-class:nav-avatar]',
+                showNamePill && '[view-transition-name:comp-avatar]',
+              ]"
+            />
+            <div class="min-w-0 flex-1">
+              <div
+                :class="[
+                  'truncate text-lg leading-none font-medium tracking-tight [view-transition-class:fit_nav-title]',
+                  showNamePill && '[view-transition-name:comp-name]',
+                ]"
+              >
+                {{ competition?.name ?? (loading ? 'Loading…' : 'Competition') }}
+              </div>
+              <div class="mt-1 truncate text-xs leading-none opacity-70">
+                Competition
+              </div>
             </div>
-            <div class="mt-1 truncate text-xs leading-none opacity-70">
-              Competition
-            </div>
-          </div>
-        </RouterLink>
-
-        <div v-else class="min-w-0 flex-1" />
+          </RouterLink>
+        </div>
 
         <div
           class="floating-nav pointer-events-auto flex h-12 shrink-0 items-center gap-0.5 rounded-full px-1.5 [view-transition-class:fixed-height] [view-transition-name:nav-actions]"
@@ -113,7 +132,9 @@ usePageTitle(() => [
       </div>
     </nav>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-4">
+    <main
+      class="mx-auto w-full max-w-3xl flex-1 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-4"
+    >
       <div v-if="loading" class="space-y-5" aria-busy="true" aria-live="polite">
         <span class="sr-only">Loading competition…</span>
         <header class="space-y-3 pr-16">
