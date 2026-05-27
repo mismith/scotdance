@@ -38,6 +38,7 @@ async function handleClick(e: Event) {
 
 <template>
   <button
+    v-tap-feedback
     type="button"
     :title="
       auth.isSignedIn

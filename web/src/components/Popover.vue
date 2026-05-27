@@ -271,6 +271,7 @@ function onBeforeLeave(el: Element) {
       <button
         v-if="isOpen && closable"
         ref="closeBtn"
+        v-tap-feedback
         type="button"
         :style="closeBtnStyles"
         class="floating-nav pointer-events-auto z-60 flex size-12 items-center justify-center rounded-full hover:opacity-90"

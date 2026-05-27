@@ -59,6 +59,7 @@ const activeTab = computed(() => {
         custom
       >
         <a
+          v-tap-feedback
           :href="href"
           class="floating-nav pointer-events-auto flex size-16 items-center justify-center rounded-full [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
           title="Back to Competitions"
@@ -76,6 +77,7 @@ const activeTab = computed(() => {
         <RouterLink
           v-for="tab in tabs"
           :key="tab.to"
+          v-tap-feedback
           :to="{ name: tab.to, params: { competitionId } }"
           :class="[
             'relative isolate flex h-14 min-w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-3 font-sans font-medium transition-colors [view-transition-name:match-element]',

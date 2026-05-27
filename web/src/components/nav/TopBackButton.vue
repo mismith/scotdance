@@ -16,6 +16,7 @@ function onClick(event: MouseEvent) {
 <template>
   <button
     v-if="canGoBack"
+    v-tap-feedback
     type="button"
     class="floating-nav pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full [view-transition-name:nav-back] hover:opacity-90"
     title="Back"

@@ -32,6 +32,7 @@ function select(id: ViewMode, close: () => void) {
         <button
           v-for="mode in modes"
           :key="mode.id"
+          v-tap-feedback
           type="button"
           :class="[
             'inline-flex h-10 flex-auto items-center justify-center gap-1.5 rounded-full px-3 font-sans text-sm font-medium transition-colors',
