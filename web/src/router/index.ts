@@ -204,20 +204,54 @@ const routes: RouteRecordRaw[] = [
   },
 ]
 
+// Persisted scroll positions keyed by route.fullPath. Covers cases that
+// vue-router's native savedPosition doesn't: in-app pushes back to a list,
+// and iOS-PWA cold resume after the WebView was evicted.
+const SCROLL_KEY = 'scroll-positions'
+const readScrollPositions = (): Record<string, number> => {
+  try { return JSON.parse(localStorage.getItem(SCROLL_KEY) ?? '{}') } catch { return {} }
+}
+const writeScrollPositions = (m: Record<string, number>) => {
+  try { localStorage.setItem(SCROLL_KEY, JSON.stringify(m)) } catch { /* quota / private mode */ }
+}
+
 export const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior(to, _from, savedPosition) {
+  scrollBehavior(to, from, savedPosition) {
     // Override CSS scroll-behavior:smooth — route-change scrolls should be instant
     // (smooth animation gets cancelled by DOM changes from lazy-loaded components)
     if (savedPosition) return { ...savedPosition, behavior: 'instant' }
+    // Query/hash-only nav on the same route (e.g. typing into a filter) must
+    // not move scroll — otherwise every keystroke snaps to top.
+    if (from && to.path === from.path) return false
     // Hash scrolls are handled per-view (e.g. Group.vue#focusHashTarget) so
     // they can wait for async data and apply the chrome offset themselves.
     // Returning false here prevents Vue Router's native scrollIntoView from
     // racing and clobbering the view's manual scroll.
     if (to.hash) return false
+    const stored = readScrollPositions()[to.fullPath]
+    if (stored != null) return { top: stored, behavior: 'instant' }
     return { top: 0, behavior: 'instant' }
   },
+})
+
+router.beforeEach((to, from) => {
+  if (!from.fullPath) return
+  if (to.path === from.path) return
+  const m = readScrollPositions()
+  m[from.fullPath] = window.scrollY
+  writeScrollPositions(m)
+})
+
+// iOS standalone PWAs get suspended without firing beforeEach. pagehide is
+// the last reliable hook before the WebView is evicted, so flush here too.
+addEventListener('pagehide', () => {
+  const path = router.currentRoute.value.fullPath
+  if (!path) return
+  const m = readScrollPositions()
+  m[path] = window.scrollY
+  writeScrollPositions(m)
 })
 
 router.beforeEach(async (to) => {
