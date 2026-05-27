@@ -37,6 +37,7 @@ async function handleClick() {
 
 <template>
   <button
+    v-tap-feedback
     type="button"
     :title="justCopied ? 'Link copied' : 'Share'"
     aria-label="Share"

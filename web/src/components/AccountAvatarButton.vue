@@ -54,6 +54,7 @@ async function handleSignOut(close: () => void) {
     <template #trigger="{ triggerRef, toggle, isOpen }">
       <button
         :ref="triggerRef"
+        v-tap-feedback
         type="button"
         :class="[
           'floating-nav pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full transition-opacity hover:opacity-90',
@@ -161,6 +162,7 @@ async function handleSignOut(close: () => void) {
           <button
             v-for="opt in themeOptions"
             :key="opt.value"
+            v-tap-feedback
             type="button"
             role="radio"
             :aria-checked="theme === opt.value"

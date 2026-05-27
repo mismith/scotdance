@@ -46,6 +46,7 @@ function confirmDismiss() {
             </button>
 
             <button
+              v-tap-feedback
               type="button"
               class="floating-nav pointer-events-auto absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full hover:opacity-90"
               title="Dismiss"

@@ -37,6 +37,7 @@ function select(id: DateFilter, close: () => void) {
         <button
           v-for="opt in options"
           :key="opt.id"
+          v-tap-feedback
           type="button"
           :class="[
             'inline-flex h-10 flex-auto items-center justify-center rounded-full px-3 font-sans text-sm font-medium transition-colors',

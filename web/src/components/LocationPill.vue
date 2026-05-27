@@ -226,6 +226,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
           <button
             v-for="opt in options"
             :key="opt.id"
+            v-tap-feedback
             type="button"
             :class="[
               'inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full px-4 font-sans text-sm font-medium transition-colors',
@@ -313,6 +314,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
             <button
               v-for="qc in quickCountries"
               :key="qc.value"
+              v-tap-feedback
               type="button"
               :class="[
                 'inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors',
@@ -346,6 +348,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
             />
             <button
               v-if="region || locality"
+              v-tap-feedback
               type="button"
               aria-label="Clear region/city"
               class="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-full"

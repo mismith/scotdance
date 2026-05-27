@@ -6,6 +6,7 @@ import { VueFire, VueFireAuth, VueFireDatabaseOptionsAPI } from 'vuefire'
 import App from './App.vue'
 import { router } from './router'
 import { firebaseApp } from './firebase'
+import { vTapFeedback } from './directives/tapFeedback'
 import './composables/useTheme'
 import './style.css'
 
@@ -18,6 +19,8 @@ app.use(VueFire, {
   firebaseApp,
   modules: [VueFireAuth(), VueFireDatabaseOptionsAPI()],
 })
+
+app.directive('tap-feedback', vTapFeedback)
 
 app.config.errorHandler = (err, _instance, info) => {
   console.error('[vue:error]', info, err)

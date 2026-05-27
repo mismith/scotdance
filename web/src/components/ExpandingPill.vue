@@ -49,6 +49,7 @@ defineExpose({ open, close })
     <template #trigger>
       <button
         ref="compact"
+        v-tap-feedback
         type="button"
         :class="[
           'hover:bg-card-foreground/15 pointer-events-auto relative inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-3xl px-4 font-sans text-sm font-medium whitespace-nowrap transition-colors',

@@ -446,6 +446,7 @@ if (isIos) {
       <div class="pointer-events-auto mx-auto flex max-w-3xl justify-between">
         <button
           v-if="hasQuery"
+          v-tap-feedback
           type="button"
           class="floating-nav flex size-12 shrink-0 items-center justify-center rounded-full transition-opacity [view-transition-name:nav-back] hover:opacity-90"
           title="Clear search"

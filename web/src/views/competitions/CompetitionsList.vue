@@ -242,6 +242,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
           >
             <button
               v-if="showTitlePill"
+              v-tap-feedback
               type="button"
               class="floating-nav pointer-events-auto flex h-12 w-full items-center rounded-full px-5 text-left hover:opacity-90"
               @click="scrollToTop"
@@ -273,7 +274,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
     >
       <div
         :ref="setPillRow"
-        class="mx-auto flex h-12 max-w-3xl items-center justify-center"
+        class="mx-auto flex h-12 max-w-3xl items-center"
       >
         <div class="floating-nav pointer-events-auto flex items-center rounded-3xl p-1">
           <ViewModePill v-model="view" />

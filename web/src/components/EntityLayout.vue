@@ -128,6 +128,7 @@ const showNamePill = computed(() => !isInfo.value || scrolledPastInfoHeader.valu
         <div class="min-w-0 flex-1">
           <RouterLink
             v-if="resolvedTabs[0]"
+            v-tap-feedback
             :to="{ name: resolvedTabs[0].to, params }"
             :class="[
               'floating-nav ease-rubber-band flex w-full items-center gap-2 rounded-full p-1 pr-4 transition [view-transition-class:fixed-height]',
@@ -206,6 +207,7 @@ const showNamePill = computed(() => !isInfo.value || scrolledPastInfoHeader.valu
       <div class="mx-auto flex max-w-3xl items-center justify-between">
         <RouterLink v-slot="{ href, route: r, navigate }" :to="section.to" custom>
           <a
+            v-tap-feedback
             :href="href"
             class="floating-nav pointer-events-auto flex size-16 items-center justify-center rounded-full [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
             :title="`Back to ${section.label}`"
@@ -223,6 +225,7 @@ const showNamePill = computed(() => !isInfo.value || scrolledPastInfoHeader.valu
           <RouterLink
             v-for="tab in resolvedTabs"
             :key="tab.to"
+            v-tap-feedback
             :to="{ name: tab.to, params }"
             :class="[
               'relative isolate flex h-14 min-w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-3 font-sans font-medium transition-colors [view-transition-name:match-element]',

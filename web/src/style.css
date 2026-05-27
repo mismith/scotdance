@@ -175,6 +175,55 @@
   @apply bg-card/75 text-card-foreground border shadow-lg backdrop-blur;
 }
 
+/* Liquid-glass-style press feedback for floating-nav targets. Applied via
+   the v-tap-feedback directive, which sets data-tap-feedback on mount,
+   data-tapping during a press, and --tap-x / --tap-y for the gradient
+   origin. :active is the primary trigger so feedback works even without
+   the directive; [data-tapping] keeps the press visible past iOS's
+   :active timing and uses the captured touch coords. The ::after inherits
+   the host border-radius so the highlight is clipped to the rounded
+   shape without forcing overflow:hidden. */
+/* Asymmetric timing: scale-up + gradient-in are instant so the feedback is
+   visible even when the press triggers an immediate route change (the view-
+   transition snapshot then captures the scaled state). Scale-down + gradient-
+   out animate over 220ms for a soft release. */
+[data-tap-feedback] {
+  scale: 1;
+  transition: scale 220ms cubic-bezier(0.2, 0, 0, 1);
+}
+[data-tap-feedback]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  /* Tight bright core (~20px) with a wide dim halo (~80px) — reads as a
+     spotlight under the finger rather than a flat tint, and stays balanced
+     across small tabs and wide pills alike. */
+  background: radial-gradient(
+    80px circle at var(--tap-x, 50%) var(--tap-y, 50%),
+    color-mix(in oklab, var(--card-foreground) 45%, transparent) 0%,
+    color-mix(in oklab, var(--card-foreground) 14%, transparent) 25%,
+    transparent 65%
+  );
+  opacity: 0;
+  transition: opacity 220ms ease-out;
+}
+[data-tap-feedback][data-tapping] {
+  scale: 1.06;
+  transition: none;
+}
+[data-tap-feedback][data-tapping]::after {
+  opacity: 1;
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-tap-feedback]:active,
+  [data-tap-feedback][data-tapping] {
+    scale: 1;
+  }
+}
+
 /* Page title — large display heading used in route headers
    (Policies, Profile, competition Info/Group/Event/Dancer, etc.). */
 @utility text-title {

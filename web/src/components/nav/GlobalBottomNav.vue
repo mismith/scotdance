@@ -113,6 +113,7 @@ function clearSearch() {
       <!-- LEFT pill: tabs+More on browse routes, Back on /search -->
       <RouterLink v-if="isSearch" v-slot="{ href, route, navigate }" :to="backInfo.to" custom>
         <a
+          v-tap-feedback
           :href="href"
           class="floating-nav pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full [view-transition-class:clip] [view-transition-name:nav-left] hover:opacity-90"
           :title="backInfo.label"
@@ -132,6 +133,7 @@ function clearSearch() {
         <RouterLink
           v-for="tab in tabs"
           :key="tab.label"
+          v-tap-feedback
           :to="tab.to"
           :class="[
             'relative isolate flex h-14 min-w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-3 font-sans font-medium transition-colors [view-transition-name:match-element]',
@@ -148,6 +150,7 @@ function clearSearch() {
           <template #trigger="{ triggerRef, toggle, isOpen }">
             <div :ref="triggerRef" class="relative [view-transition-name:match-element]">
               <button
+                v-tap-feedback
                 type="button"
                 :class="[
                   'relative isolate flex h-14 min-w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-full px-3 font-sans font-medium transition-colors',
@@ -256,6 +259,7 @@ function clearSearch() {
            about → /search nav. <label> wraps the input so a tap focuses it
            natively (gesture-bound), then onSearchPillClick pushes the route. -->
       <label
+        v-tap-feedback
         :class="[
           'floating-nav pointer-events-auto flex items-center [view-transition-class:clip] [view-transition-name:nav-right] hover:opacity-90',
           isSearch
@@ -290,6 +294,7 @@ function clearSearch() {
         </span>
         <button
           v-if="isSearch && q"
+          v-tap-feedback
           type="button"
           class="text-card-foreground/70 hover:text-card-foreground -mr-3 flex size-10 shrink-0 items-center justify-center rounded-full"
           title="Clear"

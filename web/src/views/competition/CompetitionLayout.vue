@@ -82,6 +82,7 @@ usePageTitle(() => [
 
         <div class="min-w-0 flex-1">
           <RouterLink
+            v-tap-feedback
             :to="{ name: 'competition.info', params: { competitionId } }"
             :class="[
               'floating-nav flex w-full items-center gap-2 rounded-full p-1 pr-4 [view-transition-class:fixed-height_fit] transition ease-rubber-band',
