@@ -3,8 +3,15 @@ import { computed } from 'vue'
 import { usePiperProfile, type PiperAppearance } from '@/composables/usePiperProfile'
 import { formatMonthAbbrev, initialsOf } from '@/lib/format'
 import { sanitizeRichText } from '@/lib/sanitize'
+import {
+  injectInfoHeaderScrolledPast,
+  injectInfoHeaderSetter,
+} from '@/composables/useScrolledPast'
 import SectionHeader from '@/components/SectionHeader.vue'
 import StatGrid from '@/components/StatGrid.vue'
+
+const setHeader = injectInfoHeaderSetter()
+const scrolledPast = injectInfoHeaderScrolledPast()
 
 const profile = usePiperProfile()
 const { displayName, location, image, bio, loading } = profile
@@ -49,9 +56,12 @@ const tiles = computed(() => {
 
 <template>
   <article class="space-y-6">
-    <header class="space-y-3 pr-16">
+    <header :ref="setHeader" class="space-y-3 pr-16">
       <div
-        class="bg-muted text-muted-foreground flex size-20 items-center justify-center overflow-hidden rounded-full text-4xl font-medium [view-transition-class:nav-avatar] [view-transition-name:piper-avatar]"
+        :class="[
+          'bg-muted text-muted-foreground flex size-20 items-center justify-center overflow-hidden rounded-full text-4xl font-medium [view-transition-class:nav-avatar]',
+          !scrolledPast && '[view-transition-name:piper-avatar]',
+        ]"
       >
         <img
           v-if="image"
@@ -63,7 +73,10 @@ const tiles = computed(() => {
       </div>
       <div class="space-y-1">
         <h1
-          class="text-title [view-transition-class:fit_nav-title] [view-transition-name:piper-name]"
+          :class="[
+            'text-title [view-transition-class:fit_nav-title]',
+            !scrolledPast && '[view-transition-name:piper-name]',
+          ]"
         >
           {{ displayName }}
         </h1>

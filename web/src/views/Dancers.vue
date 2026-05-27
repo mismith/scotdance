@@ -8,6 +8,7 @@ import FavoriteButton from '@/components/FavoriteButton.vue'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useDancersStore } from '@/stores/dancers'
 import { useRecentDancers } from '@/composables/useRecentDancers'
+import { useScrolledPast } from '@/composables/useScrolledPast'
 import AccountAvatarButton from '@/components/AccountAvatarButton.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
@@ -110,15 +111,59 @@ async function openDancer(name: string) {
 async function openDancerById(id: string) {
   await navigateToDancer(id)
 }
+
+const titleAnchor = ref<HTMLElement | null>(null)
+const scrolledPastTitle = useScrolledPast(titleAnchor)
+
+const queryPreview = computed(() => q.value.trim())
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 </script>
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
-      <div class="pointer-events-auto mx-auto flex max-w-3xl items-center gap-2">
+      <div class="mx-auto flex h-12 max-w-3xl items-center gap-2">
         <TopBackButton />
+        <div class="min-w-0 flex-1">
+          <Transition
+            enter-active-class="transition ease-rubber-band"
+            enter-from-class="-translate-y-full opacity-0"
+            leave-active-class="transition ease-out"
+            leave-to-class="-translate-y-full opacity-0"
+          >
+            <button
+              v-if="scrolledPastTitle"
+              type="button"
+              class="floating-nav pointer-events-auto flex h-12 w-full items-center rounded-full px-5 text-left hover:opacity-90"
+              @click="scrollToTop"
+            >
+              <span class="min-w-0 flex-1">
+                <span
+                  class="block truncate font-serif text-lg leading-none font-medium tracking-tight"
+                >
+                  Dancers
+                </span>
+                <span
+                  v-if="queryPreview"
+                  class="mt-1 block truncate font-serif text-xs leading-none opacity-70"
+                >
+                  {{ queryPreview }}
+                </span>
+              </span>
+            </button>
+          </Transition>
+        </div>
+        <AccountAvatarButton />
+      </div>
+    </nav>
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-4">
+      <header ref="titleAnchor" class="space-y-3">
+        <h1 class="text-title">Dancers</h1>
         <div
-          class="floating-nav flex h-12 min-w-0 flex-1 items-center gap-3 rounded-full px-4"
+          class="floating-nav flex h-12 items-center gap-3 rounded-full px-4"
         >
           <Search class="size-4 shrink-0 opacity-70" />
           <input
@@ -137,10 +182,7 @@ async function openDancerById(id: string) {
             <X class="size-4" />
           </button>
         </div>
-        <AccountAvatarButton />
-      </div>
-    </nav>
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-4">
+      </header>
 
       <template v-if="showSearch">
         <div v-if="error" class="text-destructive text-lg">{{ error.message }}</div>

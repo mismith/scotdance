@@ -3,7 +3,14 @@ import { computed } from 'vue'
 import { useDancerProfile, type DancerAppearance } from '@/composables/useDancerProfile'
 import { useFavoritesStore } from '@/stores/favorites'
 import { formatMonthAbbrev, initialsOf } from '@/lib/format'
+import {
+  injectInfoHeaderScrolledPast,
+  injectInfoHeaderSetter,
+} from '@/composables/useScrolledPast'
 import StatGrid from '@/components/StatGrid.vue'
+
+const setHeader = injectInfoHeaderSetter()
+const scrolledPast = injectInfoHeaderScrolledPast()
 
 const profile = useDancerProfile()
 const { displayName, location, image, appearances, loading } = profile
@@ -58,13 +65,14 @@ const tiles = computed(() => {
 
 <template>
   <article class="space-y-6">
-    <header class="space-y-3 pr-16">
+    <header :ref="setHeader" class="space-y-3 pr-16">
       <div
         :class="[
-          'flex size-20 items-center justify-center overflow-hidden rounded-full text-4xl font-medium [view-transition-class:nav-avatar] [view-transition-name:dancer-avatar]',
+          'flex size-20 items-center justify-center overflow-hidden rounded-full text-4xl font-medium [view-transition-class:nav-avatar]',
           isFavorite
             ? 'bg-secondary text-secondary-foreground'
             : 'bg-muted text-muted-foreground',
+          !scrolledPast && '[view-transition-name:dancer-avatar]',
         ]"
       >
         <img
@@ -77,7 +85,10 @@ const tiles = computed(() => {
       </div>
       <div class="space-y-1">
         <h1
-          class="text-title [view-transition-class:fit_nav-title] [view-transition-name:dancer-name]"
+          :class="[
+            'text-title [view-transition-class:fit_nav-title]',
+            !scrolledPast && '[view-transition-name:dancer-name]',
+          ]"
         >
           {{ displayName }}
         </h1>

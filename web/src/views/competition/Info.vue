@@ -25,6 +25,13 @@ import {
   parseDate,
 } from '@/lib/format'
 import { sanitizeRichText } from '@/lib/sanitize'
+import {
+  injectInfoHeaderScrolledPast,
+  injectInfoHeaderSetter,
+} from '@/composables/useScrolledPast'
+
+const setHeader = injectInfoHeaderSetter()
+const scrolledPast = injectInfoHeaderScrolledPast()
 
 const {
   competitionId,
@@ -174,15 +181,21 @@ function closeStaff() {
 
 <template>
   <article v-if="competition" class="space-y-5">
-    <header class="space-y-3 pr-16">
+    <header :ref="setHeader" class="space-y-3 pr-16">
       <CompChip
         :name="competition.name"
         :image="competition.image"
         :favorite="isFavoriteComp"
-        class="size-18 rounded-2xl [view-transition-class:nav-avatar] [view-transition-name:comp-avatar]"
+        :class="[
+          'size-18 rounded-2xl [view-transition-class:nav-avatar]',
+          !scrolledPast && '[view-transition-name:comp-avatar]',
+        ]"
       />
       <h1
-        class="text-title [view-transition-class:fit_nav-title] [view-transition-name:comp-name]"
+        :class="[
+          'text-title [view-transition-class:fit_nav-title]',
+          !scrolledPast && '[view-transition-name:comp-name]',
+        ]"
       >
         {{ competition.name ?? '?' }}
       </h1>

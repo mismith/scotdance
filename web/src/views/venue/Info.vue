@@ -3,7 +3,14 @@ import { computed } from 'vue'
 import { School } from '@lucide/vue'
 import { useVenueProfile, type VenueAppearance } from '@/composables/useVenueProfile'
 import { formatMonthAbbrev } from '@/lib/format'
+import {
+  injectInfoHeaderScrolledPast,
+  injectInfoHeaderSetter,
+} from '@/composables/useScrolledPast'
 import StatGrid from '@/components/StatGrid.vue'
+
+const setHeader = injectInfoHeaderSetter()
+const scrolledPast = injectInfoHeaderScrolledPast()
 
 const profile = useVenueProfile()
 const { name, locationLine, loading } = profile
@@ -45,15 +52,21 @@ const tiles = computed(() => {
 
 <template>
   <article class="space-y-6">
-    <header class="space-y-3 pr-16">
+    <header :ref="setHeader" class="space-y-3 pr-16">
       <div
-        class="bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 flex size-20 items-center justify-center rounded-full [view-transition-class:nav-avatar] [view-transition-name:venue-avatar]"
+        :class="[
+          'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 flex size-20 items-center justify-center rounded-full [view-transition-class:nav-avatar]',
+          !scrolledPast && '[view-transition-name:venue-avatar]',
+        ]"
       >
         <School class="size-10" />
       </div>
       <div class="space-y-1">
         <h1
-          class="text-title [view-transition-class:fit_nav-title] [view-transition-name:venue-name]"
+          :class="[
+            'text-title [view-transition-class:fit_nav-title]',
+            !scrolledPast && '[view-transition-name:venue-name]',
+          ]"
         >
           {{ name }}
         </h1>

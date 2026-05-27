@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, useTemplateRef, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import AccountAvatarButton from '@/components/AccountAvatarButton.vue'
-import { useAnyPillOpen } from '@/composables/useExpandedPill'
-import { providePillRow } from '@/composables/usePillRow'
 import CompetitionRow from '@/components/CompetitionRow.vue'
 import CompetitionsCalendar from '@/components/CompetitionsCalendar.vue'
 import CompetitionsMap from '@/views/competitions/CompetitionsMap.vue'
@@ -16,6 +14,8 @@ import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import TopBackButton from '@/components/nav/TopBackButton.vue'
 import ViewModePill, { type ViewMode } from '@/components/ViewModePill.vue'
+import { providePillRow } from '@/composables/usePillRow'
+import { useScrolledPast } from '@/composables/useScrolledPast'
 import { useLocationFilter } from '@/composables/useLocationFilter'
 import { daysFromToday, isBeforeToday, isSameDay, parseDate } from '@/lib/format'
 import { useFavoritesStore } from '@/stores/favorites'
@@ -23,10 +23,25 @@ import { useFavoritesStore } from '@/stores/favorites'
 const view = useLocalStorage<ViewMode>('competitions:view', 'list')
 const filter = useLocalStorage<DateFilter>('competitions:filter', 'current')
 
-const anyPillOpen = useAnyPillOpen()
+// In-flow title acts as the anchor for the small-title pill reveal: once the
+// large title scrolls under the fixed nav, the pill fades in.
+const titleAnchor = ref<HTMLElement | null>(null)
+const scrolledPastTitle = useScrolledPast(titleAnchor)
+// Map mode has nothing scrolling, so the in-flow title isn't rendered — force
+// the pill on so users still see the page label.
+const showTitlePill = computed(() => view.value === 'map' || scrolledPastTitle.value)
 
-const rowRef = useTemplateRef<HTMLElement>('row')
-providePillRow(rowRef)
+// ExpandingPill popovers anchor to whichever pill-row container is currently
+// mounted (in-flow header for list/calendar, floating overlay for map).
+const pillRowEl = ref<HTMLElement | null>(null)
+providePillRow(pillRowEl)
+function setPillRow(el: unknown) {
+  pillRowEl.value = (el as HTMLElement | null) ?? null
+}
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 
 // Only "Archived" and "All" need archived data; "Current" doesn't look further
 // back than a week, so the un-archived feed is enough.
@@ -40,7 +55,36 @@ const CURRENT_FUTURE_DAYS = 30
 
 const { competitions, loading } = useCompetitions(includeArchived)
 
-const { filterFor: locationFilterFor } = useLocationFilter()
+const {
+  filterFor: locationFilterFor,
+  mode: locationMode,
+  country: locationCountry,
+  region: locationRegion,
+  locality: locationLocality,
+} = useLocationFilter()
+
+const viewLabel = computed(() =>
+  view.value === 'map' ? 'Map' : view.value === 'calendar' ? 'Calendar' : 'List',
+)
+const dateLabel = computed(() =>
+  filter.value === 'archived' ? 'Archived' : filter.value === 'all' ? 'All' : 'Current',
+)
+const locationLabel = computed(() => {
+  if (locationMode.value === 'nearby') return 'Nearby'
+  if (locationMode.value === 'worldwide') return 'Worldwide'
+  return (
+    locationLocality.value || locationRegion.value || locationCountry.value || 'Region'
+  )
+})
+const pillSubtitle = computed(() =>
+  [
+    viewLabel.value,
+    view.value !== 'map' ? locationLabel.value : null,
+    view.value !== 'calendar' ? dateLabel.value : null,
+  ]
+    .filter(Boolean)
+    .join(' • '),
+)
 
 // Effective filter (no-ops if values don't match any loaded comp). Drives
 // both the predicate and the "is this filter actually doing anything" UI.
@@ -169,36 +213,57 @@ const monthGroups = computed<MonthGroup[]>(() => {
     ]"
   >
     <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
-      <div
-        ref="row"
-        class="pointer-events-auto relative mx-auto flex h-12 max-w-3xl items-center gap-2"
-      >
-        <TopBackButton
-          :class="[
-            'transition-opacity',
-            anyPillOpen ? 'pointer-events-none opacity-0' : '',
-          ]"
-        />
-        <div
-          :class="[
-            'floating-nav flex items-center rounded-3xl p-1 transition-opacity',
-            anyPillOpen ? 'pointer-events-none opacity-0' : '',
-          ]"
-        >
-          <ViewModePill v-model="view" />
-          <LocationPill v-if="view !== 'map'" :competitions="competitions" />
-          <DatePill v-if="view !== 'calendar'" v-model="filter" />
+      <div class="mx-auto flex h-12 max-w-3xl items-center gap-2">
+        <TopBackButton />
+        <div class="min-w-0 flex-1">
+          <Transition
+            enter-active-class="transition ease-rubber-band"
+            enter-from-class="-translate-y-full opacity-0"
+            leave-active-class="transition ease-out"
+            leave-to-class="-translate-y-full opacity-0"
+          >
+            <button
+              v-if="showTitlePill"
+              type="button"
+              class="floating-nav pointer-events-auto flex h-12 w-full items-center rounded-full px-5 text-left hover:opacity-90"
+              @click="scrollToTop"
+            >
+              <span class="min-w-0 flex-1">
+                <span
+                  class="block truncate font-serif text-lg leading-none font-medium tracking-tight"
+                >
+                  Competitions
+                </span>
+                <span
+                  class="mt-1 block truncate font-serif text-xs leading-none opacity-70"
+                >
+                  {{ pillSubtitle }}
+                </span>
+              </span>
+            </button>
+          </Transition>
         </div>
-        <div
-          :class="[
-            'ml-auto transition-opacity',
-            anyPillOpen ? 'pointer-events-none opacity-0' : '',
-          ]"
-        >
-          <AccountAvatarButton />
+        <AccountAvatarButton />
+      </div>
+    </nav>
+
+    <!-- Map mode: floating pill overlay (no in-flow chrome — map is full-bleed) -->
+    <nav
+      v-if="view === 'map'"
+      class="pointer-events-none fixed inset-x-0 z-30 px-4"
+      :style="{ top: 'calc(var(--nav-top) + 3.5rem)' }"
+    >
+      <div
+        :ref="setPillRow"
+        class="mx-auto flex h-12 max-w-3xl items-center justify-center"
+      >
+        <div class="floating-nav pointer-events-auto flex items-center rounded-3xl p-1">
+          <ViewModePill v-model="view" />
+          <DatePill v-model="filter" />
         </div>
       </div>
     </nav>
+
     <main
       :class="[
         'w-full flex-1',
@@ -208,67 +273,83 @@ const monthGroups = computed<MonthGroup[]>(() => {
       ]"
     >
       <CompetitionsMap v-if="view === 'map'" />
-      <CompetitionsCalendar
-        v-else-if="view === 'calendar'"
-        :competitions="locationFiltered"
-        :loading="loading"
-      />
 
       <template v-else>
-        <HeroCompCard v-if="featuredComp && showFeatured" :competition="featuredComp" />
-
-        <div
-          v-if="loading && !competitions.length"
-          class="space-y-3"
-          aria-busy="true"
-          aria-live="polite"
-        >
-          <span class="sr-only">Loading competitions…</span>
-          <div v-for="i in 5" :key="i" class="flex items-start gap-3 py-3">
-            <Skeleton class="size-12 shrink-0 rounded-xl!" />
-            <div class="flex-1 space-y-2 pt-1">
-              <Skeleton class="h-5 w-3/4" />
-              <Skeleton class="h-4 w-1/2" />
+        <header ref="titleAnchor" class="space-y-3">
+          <h1 class="text-title">Competitions</h1>
+          <div :ref="setPillRow" class="relative flex">
+            <div class="floating-nav flex items-center rounded-3xl p-1">
+              <ViewModePill v-model="view" />
+              <LocationPill :competitions="competitions" />
+              <DatePill v-if="view !== 'calendar'" v-model="filter" />
             </div>
           </div>
-        </div>
-        <div
-          v-else-if="!competitions.length"
-          class="text-muted-foreground text-lg italic"
-        >
-          No competitions found.
-        </div>
-        <div
-          v-else-if="!visibleCompetitions.length"
-          class="text-muted-foreground space-y-2 text-lg italic"
-        >
-          <div v-if="effectiveLocationFilter.isActive">
-            No competitions match this location.
-          </div>
-          <div v-else-if="filter === 'current'">Nothing current — try All.</div>
-          <div v-else-if="filter === 'archived'">No archived competitions on record.</div>
-          <div v-else>No competitions match.</div>
-        </div>
+        </header>
+
+        <CompetitionsCalendar
+          v-if="view === 'calendar'"
+          :competitions="locationFiltered"
+          :loading="loading"
+        />
 
         <template v-else>
-          <section v-for="group in monthGroups" :key="group.key" class="space-y-2">
-            <SectionHeader
-              :label="group.label"
-              :count="group.members.length"
-              :favs="group.favCount"
-            />
-            <ul>
-              <CompetitionRow
-                v-for="competition in group.members"
-                :key="competition.id"
-                :competition="competition"
-                :to="{
-                  name: 'competition.info',
-                  params: { competitionId: competition.id },
-                }"
+          <HeroCompCard v-if="featuredComp && showFeatured" :competition="featuredComp" />
+
+          <div
+            v-if="loading && !competitions.length"
+            class="space-y-3"
+            aria-busy="true"
+            aria-live="polite"
+          >
+            <span class="sr-only">Loading competitions…</span>
+            <div v-for="i in 5" :key="i" class="flex items-start gap-3 py-3">
+              <Skeleton class="size-12 shrink-0 rounded-xl!" />
+              <div class="flex-1 space-y-2 pt-1">
+                <Skeleton class="h-5 w-3/4" />
+                <Skeleton class="h-4 w-1/2" />
+              </div>
+            </div>
+          </div>
+          <div
+            v-else-if="!competitions.length"
+            class="text-muted-foreground text-lg italic"
+          >
+            No competitions found.
+          </div>
+          <div
+            v-else-if="!visibleCompetitions.length"
+            class="text-muted-foreground space-y-2 text-lg italic"
+          >
+            <div v-if="effectiveLocationFilter.isActive">
+              No competitions match this location.
+            </div>
+            <div v-else-if="filter === 'current'">Nothing current — try All.</div>
+            <div v-else-if="filter === 'archived'">
+              No archived competitions on record.
+            </div>
+            <div v-else>No competitions match.</div>
+          </div>
+
+          <template v-else>
+            <section v-for="group in monthGroups" :key="group.key" class="space-y-2">
+              <SectionHeader
+                :label="group.label"
+                :count="group.members.length"
+                :favs="group.favCount"
               />
-            </ul>
-          </section>
+              <ul>
+                <CompetitionRow
+                  v-for="competition in group.members"
+                  :key="competition.id"
+                  :competition="competition"
+                  :to="{
+                    name: 'competition.info',
+                    params: { competitionId: competition.id },
+                  }"
+                />
+              </ul>
+            </section>
+          </template>
         </template>
       </template>
     </main>
