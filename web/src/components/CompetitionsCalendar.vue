@@ -6,7 +6,12 @@ import type { CompetitionListItem } from '@/composables/useCompetitions'
 import CompetitionRow from '@/components/CompetitionRow.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
-import { formatMonthYear, formatWeekdayShortDate, parseDate } from '@/lib/format'
+import {
+  formatMonthYear,
+  formatShortDate,
+  formatWeekdayShortDate,
+  parseDate,
+} from '@/lib/format'
 import { useFavoritesStore } from '@/stores/favorites'
 
 const props = withDefaults(
@@ -137,6 +142,7 @@ function adjacentDay(direction: 'next' | 'prev') {
   if (!first) return null
   const dayStart = startOfDay(parseDate(first.date!)).getTime()
   const dayEnd = dayStart + 86_400_000
+  const day = new Date(dayStart)
   const comps = props.competitions
     .filter((c) => {
       if (!c.date) return false
@@ -144,9 +150,10 @@ function adjacentDay(direction: 'next' | 'prev') {
       return t >= dayStart && t < dayEnd
     })
     .sort((a, b) => parseDate(a.date!).getTime() - parseDate(b.date!).getTime())
+  const sameYear = day.getFullYear() === cursor.value.getFullYear()
   return {
-    date: new Date(dayStart),
-    label: formatWeekdayShortDate(new Date(dayStart)),
+    date: day,
+    label: sameYear ? formatWeekdayShortDate(day) : formatShortDate(day.getTime()),
     comps,
     favCount: comps.filter((c) => favorites.isFavoriteCompetition(c.id)).length,
   }
