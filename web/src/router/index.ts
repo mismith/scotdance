@@ -1,5 +1,11 @@
 import type { Component } from 'vue'
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import {
+  createRouter,
+  createWebHistory,
+  isNavigationFailure,
+  NavigationFailureType,
+  type RouteRecordRaw,
+} from 'vue-router'
 import { getCurrentUser } from 'vuefire'
 import { Calendars, Gavel, Music, School, Users } from '@lucide/vue'
 import TouchIcon from '@/components/TouchIcon.vue'
@@ -261,6 +267,15 @@ router.beforeEach(async (to) => {
     useAuthStore().openLogin()
     return { name: 'about' }
   }
+})
+
+// Tapping a link to the page you're already on (e.g. the active bottom-nav
+// tab) is a duplicated navigation — vue-router skips scrollBehavior, so
+// catch the failure here and scroll to top instead.
+router.afterEach((_to, _from, failure) => {
+  if (!isNavigationFailure(failure, NavigationFailureType.duplicated)) return
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
+  window.scrollTo({ top: 0, behavior: reduce ? 'instant' : 'smooth' })
 })
 
 router.beforeResolve(async (to, from) => {
