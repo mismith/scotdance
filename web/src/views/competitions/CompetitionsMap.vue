@@ -1,44 +1,31 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, type RouteLocationRaw } from 'vue-router'
 import maplibregl, {
   type Map as MaplibreMap,
   type Marker as MaplibreMarker,
 } from 'maplibre-gl'
 import Supercluster from 'supercluster'
-import { useLocalStorage } from '@vueuse/core'
-import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
+import type { CompetitionListItem } from '@/composables/useCompetitions'
 import { useFavoritesStore } from '@/stores/favorites'
-import { daysFromToday } from '@/lib/format'
 import { createMap, persistCamera, styleUrlFor } from '@/lib/maplibre'
 import { useTheme } from '@/composables/useTheme'
 import { groupByVenue, type VenueGroup } from '@/lib/venues'
 
-type Filter = 'archived' | 'current' | 'all'
-// Shared with CompetitionsList — picking a date scope here applies everywhere.
-const filter = useLocalStorage<Filter>('competitions:filter', 'current')
-const includeArchived = computed(
-  () => filter.value === 'archived' || filter.value === 'all',
+const props = withDefaults(
+  defineProps<{
+    competitions: CompetitionListItem[]
+    /** Pin click destination. When omitted, falls back to venue.info (if the
+     *  comp carries a venueId back-pointer) or competition.info. */
+    linkTo?: (c: CompetitionListItem) => RouteLocationRaw
+    /** Full-bleed mode (main competitions list). When false, the map is
+     *  embedded in a content column (subtab map view) — controls drop their
+     *  app-chrome insets and default to MapLibre's corner positions. */
+    fullscreen?: boolean
+  }>(),
+  { linkTo: undefined, fullscreen: true },
 )
 
-const { competitions } = useCompetitions(includeArchived)
-
-const CURRENT_PAST_DAYS = -7
-const CURRENT_FUTURE_DAYS = 30
-
-const dateFiltered = computed<CompetitionListItem[]>(() => {
-  if (filter.value === 'current')
-    return competitions.value.filter((c) => {
-      const d = daysFromToday(c.date)
-      return d !== null && d >= CURRENT_PAST_DAYS && d <= CURRENT_FUTURE_DAYS
-    })
-  if (filter.value === 'archived')
-    return competitions.value.filter((c) => {
-      const d = daysFromToday(c.date)
-      return d !== null && d < CURRENT_PAST_DAYS
-    })
-  return competitions.value
-})
 const favorites = useFavoritesStore()
 const { isDark } = useTheme()
 
@@ -47,7 +34,7 @@ const mapInstance = shallowRef<MaplibreMap | null>(null)
 const mapReady = ref(false)
 const router = useRouter()
 
-const venueGroups = computed<VenueGroup[]>(() => groupByVenue(dateFiltered.value))
+const venueGroups = computed<VenueGroup[]>(() => groupByVenue(props.competitions))
 
 interface PinProps {
   cluster: false
@@ -124,19 +111,24 @@ function renderMarkers(): void {
       el.className = `map-pin ${isFav ? 'is-fav' : ''}`
       el.setAttribute('aria-label', group.venue || 'Venue')
       el.addEventListener('click', () => {
-        // Venues now have first-class profiles. Any comp at this pin carries
-        // the back-pointer (`venueId`) populated by the trigger/backfill. Fall
-        // back to opening the first comp directly if no aggregate is linked
-        // yet (e.g. pre-backfill).
+        const first = group.competitions[0]
+        if (!first) return
+        // Caller-provided destination wins (e.g. dancer.results sends pins to
+        // competition.dancer). Otherwise: venues have first-class profiles, so
+        // prefer the venueId back-pointer when present; fall back to the comp.
+        if (props.linkTo) {
+          router.push(props.linkTo(first))
+          return
+        }
         const venueId = group.competitions
           .map((c) => (c as { venueId?: string }).venueId)
           .find((id): id is string => !!id)
         if (venueId) {
           router.push({ name: 'venue.info', params: { venueId } })
-        } else if (group.competitions[0]) {
+        } else {
           router.push({
             name: 'competition.info',
-            params: { competitionId: group.competitions[0].id },
+            params: { competitionId: first.id },
           })
         }
       })
@@ -249,7 +241,13 @@ watch(venueGroups, () => {
 </script>
 
 <template>
-  <div ref="mapContainer" class="relative flex-1 overflow-hidden" />
+  <div
+    ref="mapContainer"
+    :class="[
+      'comp-map relative overflow-hidden',
+      fullscreen ? 'comp-map--fullscreen flex-1' : 'comp-map--embedded',
+    ]"
+  />
 </template>
 
 <style>
@@ -257,36 +255,29 @@ watch(venueGroups, () => {
    so @apply can see our custom utilities (like .floating-nav). */
 @reference '../../style.css';
 
-/* Inset MapLibre's built-in control corners so they sit ~1rem outside
-   the floating app chrome — bottom nav + in-map header above. The map
-   canvas itself still goes edge-to-edge; only the controls move. On
-   desktop, also constrain horizontally to the same max-w-3xl (48rem)
-   content lane the floating header lives in so the locate-me /
-   attribution don't fly to the viewport edges. */
-.maplibregl-ctrl-top-right,
-.maplibregl-ctrl-top-left {
+/* Full-bleed mode: inset MapLibre's built-in control corners so they sit
+   ~1rem outside the floating app chrome — bottom nav + in-map header
+   above. On desktop, also constrain horizontally to the same max-w-3xl
+   (48rem) content lane the floating header lives in. Embedded mode
+   (subtab map) keeps MapLibre's default corner positions. */
+.comp-map--fullscreen .maplibregl-ctrl-top-right,
+.comp-map--fullscreen .maplibregl-ctrl-top-left {
   @apply top-[calc(var(--chrome-top)+1rem)];
 }
-.maplibregl-ctrl-bottom-right,
-.maplibregl-ctrl-bottom-left {
+.comp-map--fullscreen .maplibregl-ctrl-bottom-right,
+.comp-map--fullscreen .maplibregl-ctrl-bottom-left {
   @apply bottom-[calc(var(--chrome-bottom)+1rem)];
 }
-/* Zero MapLibre's default 10px outer margin on the attribution control so
-   it sits exactly at the corner container's edge (matches the geolocate
-   override below). */
-.maplibregl-ctrl-bottom-right > .maplibregl-ctrl-attrib,
-.maplibregl-ctrl-bottom-left > .maplibregl-ctrl-attrib {
+.comp-map--fullscreen .maplibregl-ctrl-bottom-right > .maplibregl-ctrl-attrib,
+.comp-map--fullscreen .maplibregl-ctrl-bottom-left > .maplibregl-ctrl-attrib {
   @apply m-0;
 }
-/* Match the floating header's horizontal inset: 1rem from the viewport
-   edge on narrow screens, then snap to the 48rem content lane on wide
-   screens. Keeps the locate-me button centered under the avatar. */
-.maplibregl-ctrl-top-right,
-.maplibregl-ctrl-bottom-right {
+.comp-map--fullscreen .maplibregl-ctrl-top-right,
+.comp-map--fullscreen .maplibregl-ctrl-bottom-right {
   @apply right-[max(1rem,calc((100vw-48rem)/2))];
 }
-.maplibregl-ctrl-top-left,
-.maplibregl-ctrl-bottom-left {
+.comp-map--fullscreen .maplibregl-ctrl-top-left,
+.comp-map--fullscreen .maplibregl-ctrl-bottom-left {
   @apply left-[max(1rem,calc((100vw-48rem)/2))];
 }
 .map-pin {
@@ -324,26 +315,20 @@ watch(venueGroups, () => {
   @apply scale-105;
 }
 
-/* Restyle the locate-me control to match the .floating-nav utility
-   (frosted card, blur, shadow, fully round). Targeting a MapLibre-rendered
-   DOM node we can't class — :has() scopes it to the geolocate group. */
-.maplibregl-ctrl-group:has(> .maplibregl-ctrl-geolocate) {
-  /* Zero out MapLibre's default 10px outer margin so the button sits
-     exactly at the corner container's edge — which is itself aligned to
-     the avatar above by the .maplibregl-ctrl-{top,bottom}-{right,left}
-     overrides. */
+/* Full-bleed only: restyle the locate-me control to match the
+   .floating-nav utility (frosted card, blur, shadow, fully round). The
+   embedded map keeps MapLibre's stock control chrome. */
+.comp-map--fullscreen .maplibregl-ctrl-group:has(> .maplibregl-ctrl-geolocate) {
   @apply floating-nav m-0 overflow-hidden rounded-full border-0;
 }
-.maplibregl-ctrl-group:has(> .maplibregl-ctrl-geolocate) > button {
+.comp-map--fullscreen .maplibregl-ctrl-group:has(> .maplibregl-ctrl-geolocate) > button {
   @apply w-10 h-10 bg-transparent border-none rounded-full transition-opacity duration-150 ease-[ease];
 }
-.maplibregl-ctrl-group:has(> .maplibregl-ctrl-geolocate) > button:hover {
+.comp-map--fullscreen .maplibregl-ctrl-group:has(> .maplibregl-ctrl-geolocate) > button:hover {
   @apply bg-transparent opacity-90;
 }
-/* The default MapLibre icon ships as a dark SVG. Invert it in dark mode
-   so it reads on the dark card bg; leave as-is in light mode where the
-   card is white and the dark icon already contrasts. */
 .dark
+  .comp-map--fullscreen
   .maplibregl-ctrl-group:has(> .maplibregl-ctrl-geolocate)
   .maplibregl-ctrl-icon {
   @apply invert;

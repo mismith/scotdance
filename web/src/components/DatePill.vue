@@ -23,7 +23,11 @@ function select(id: DateFilter, close: () => void) {
 </script>
 
 <template>
-  <ExpandingPill id="date" :aria-label="`Date filter: ${currentLabel}`">
+  <ExpandingPill
+    id="date"
+    :aria-label="`Date filter: ${currentLabel}`"
+    :active="model !== 'all'"
+  >
     <template #compact>
       <span>{{ currentLabel }}</span>
     </template>

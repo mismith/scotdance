@@ -279,8 +279,8 @@ function scrollToTop() {
               </button>
               <FavoriteButton
                 v-if="dancerIds.get(entry.name)"
-                type="dancers"
                 :id="dancerIds.get(entry.name) || ''"
+                type="dancers"
                 :name="entry.name"
                 class="mr-1"
               />
@@ -333,8 +333,8 @@ function scrollToTop() {
                 </div>
               </button>
               <FavoriteButton
-                type="dancers"
                 :id="entry.id"
+                type="dancers"
                 :name="entry.name"
                 class="mr-1"
               />

@@ -205,7 +205,12 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
 </script>
 
 <template>
-  <ExpandingPill id="location" ref="pill" :aria-label="ariaLabel">
+  <ExpandingPill
+    id="location"
+    ref="pill"
+    :aria-label="ariaLabel"
+    :active="mode !== 'worldwide'"
+  >
     <template #compact>
       <span v-if="compact.kind === 'flag'" class="-mx-1 text-2xl leading-none">
         {{ compact.emoji }}

@@ -7,6 +7,9 @@ import { injectPillRow } from '@/composables/usePillRow'
 const props = defineProps<{
   id: string
   ariaLabel?: string
+  /** Show a small accent dot on the compact button to signal that this
+   *  pill is narrowing results from a "show everything" baseline. */
+  active?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -48,7 +51,7 @@ defineExpose({ open, close })
         ref="compact"
         type="button"
         :class="[
-          'hover:bg-card-foreground/15 pointer-events-auto inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-3xl px-4 font-sans text-sm font-medium whitespace-nowrap transition-colors',
+          'hover:bg-card-foreground/15 pointer-events-auto relative inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-3xl px-4 font-sans text-sm font-medium whitespace-nowrap transition-colors',
           anyOpen ? 'pointer-events-none opacity-0' : '',
         ]"
         :aria-label="ariaLabel"
@@ -56,6 +59,11 @@ defineExpose({ open, close })
         @click="toggle"
       >
         <slot name="compact" />
+        <span
+          v-if="active"
+          aria-hidden="true"
+          class="bg-secondary ring-card pointer-events-none absolute top-1 right-1 size-2 rounded-full ring-2"
+        />
       </button>
     </template>
 

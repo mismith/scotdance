@@ -186,8 +186,8 @@ function scrollToTop() {
                 </div>
               </button>
               <FavoriteButton
-                :type="(props.namespace as FavoriteType)"
                 :id="row.id"
+                :type="(props.namespace as FavoriteType)"
                 :name="row.agg.name"
                 class="mr-1"
               />
@@ -239,8 +239,8 @@ function scrollToTop() {
                 </div>
               </button>
               <FavoriteButton
-                :type="(props.namespace as FavoriteType)"
                 :id="row.id"
+                :type="(props.namespace as FavoriteType)"
                 :name="row.agg.name"
                 class="mr-1"
               />
@@ -284,8 +284,8 @@ function scrollToTop() {
                 </div>
               </button>
               <FavoriteButton
-                :type="(props.namespace as FavoriteType)"
                 :id="row.id"
+                :type="(props.namespace as FavoriteType)"
                 :name="row.agg.name"
                 class="mr-1"
               />

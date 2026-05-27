@@ -44,6 +44,7 @@ const isFavorite = computed(() => favorites.isFavorite('competitions', props.com
           >
             {{ competition.name ?? '?' }}
           </div>
+          <slot name="meta" />
           <div
             v-if="competition.location"
             class="text-item-subtitle text-muted-foreground truncate"
