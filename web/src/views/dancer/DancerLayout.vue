@@ -47,8 +47,8 @@ const isInfo = computed(() => String(route.name ?? '') === 'dancer.info')
     <template #actions>
       <FavoriteButton
         v-if="isInfo"
-        type="dancers"
         :id="dancerId"
+        type="dancers"
         :name="displayName"
         class="hover:bg-card-foreground/10! flex! size-9! items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
       />

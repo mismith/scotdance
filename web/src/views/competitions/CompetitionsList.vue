@@ -174,6 +174,24 @@ const visibleCompetitions = computed(() =>
     : filteredCompetitions.value,
 )
 
+// Map view ignores the location filter — the map IS the geographic browser,
+// narrowing it by Nearby/Region would collapse the very thing it's for.
+const mapCompetitions = computed<CompetitionListItem[]>(() => {
+  if (filter.value === 'current') {
+    return competitions.value.filter((c) => {
+      const d = daysFromToday(c.date)
+      return d !== null && d >= CURRENT_PAST_DAYS && d <= CURRENT_FUTURE_DAYS
+    })
+  }
+  if (filter.value === 'archived') {
+    return competitions.value.filter((c) => {
+      const d = daysFromToday(c.date)
+      return d !== null && d < CURRENT_PAST_DAYS
+    })
+  }
+  return competitions.value
+})
+
 const favorites = useFavoritesStore()
 
 interface MonthGroup {
@@ -272,7 +290,7 @@ const monthGroups = computed<MonthGroup[]>(() => {
           : 'mx-auto max-w-3xl space-y-5 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-4',
       ]"
     >
-      <CompetitionsMap v-if="view === 'map'" />
+      <CompetitionsMap v-if="view === 'map'" :competitions="mapCompetitions" />
 
       <template v-else>
         <header ref="titleAnchor" class="space-y-3">
