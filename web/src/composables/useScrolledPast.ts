@@ -7,18 +7,17 @@ import {
 } from 'vue'
 import { useIntersectionObserver } from '@vueuse/core'
 
-// True as soon as `target` starts sliding under the fixed top chrome.
-// Drives the "small title pill fades into the fixed nav once the in-flow
-// large title scrolls past" pattern (iOS Mail / Notes style).
+// True once `target`'s top edge scrolls above the viewport top. Drives the
+// "small title pill fades into the fixed nav once the in-flow large title
+// scrolls past" pattern (iOS Mail / Notes style).
 //
-// threshold:1 + a negative top rootMargin equal to --chrome-top: the pill
-// flips ON the moment any part of the title crosses under the fixed nav,
-// keeping the page label visible somewhere at all times.
+// threshold:1 + no rootMargin: the pill flips ON the moment the title's
+// top edge crosses y=0 of the viewport. Triggering at the chrome's bottom
+// edge instead would fire while the in-flow title is still partly visible
+// behind the frosted chrome — looks like a duplicate label.
 export function useScrolledPast(
   target: Readonly<Ref<HTMLElement | null>>,
-  options: { topOffsetPx?: number } = {},
 ): Ref<boolean> {
-  const { topOffsetPx = 80 } = options
   const scrolledPast = ref(false)
   useIntersectionObserver(
     target,
@@ -26,7 +25,7 @@ export function useScrolledPast(
       if (!entry) return
       scrolledPast.value = entry.intersectionRatio < 1
     },
-    { rootMargin: `-${topOffsetPx}px 0px 0px 0px`, threshold: 1 },
+    { threshold: 1 },
   )
   return scrolledPast
 }
