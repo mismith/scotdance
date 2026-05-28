@@ -218,7 +218,7 @@
   transition: opacity 220ms ease-out;
 }
 [data-tap-feedback][data-tapping] {
-  scale: 1.06;
+  scale: var(--tap-scale, 1.06);
   transition: none;
 }
 [data-tap-feedback][data-tapping]::after {

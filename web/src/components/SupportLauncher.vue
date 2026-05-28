@@ -29,6 +29,7 @@ function confirmDismiss() {
         >
           <div v-if="crisp.ongoing && !crisp.dismissed" class="relative mb-2">
             <button
+              v-tap-feedback
               type="button"
               class="pointer-events-auto relative flex size-10 items-center justify-center rounded-full bg-[#28a52d] text-white shadow-lg transition-transform hover:scale-105"
               title="Resume support chat"
