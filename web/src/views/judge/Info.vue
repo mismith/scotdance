@@ -89,6 +89,8 @@ const tiles = computed(() => {
       </div>
     </header>
 
+    <StatGrid :stats="tiles" :loading="loading" />
+
     <section v-if="bio" class="space-y-2">
       <SectionHeader label="Bio" />
       <div
@@ -96,8 +98,6 @@ const tiles = computed(() => {
         v-html="sanitizeRichText(bio)"
       />
     </section>
-
-    <StatGrid :stats="tiles" :loading="loading" />
 
     <p class="text-muted-foreground">
       Cross-comp profile is matched by name. Identity may be approximate when names
