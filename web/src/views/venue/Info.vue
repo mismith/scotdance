@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { School } from '@lucide/vue'
 import { useVenueProfile, type VenueAppearance } from '@/composables/useVenueProfile'
+import { useFavoritesStore } from '@/stores/favorites'
 import { formatMonthAbbrev } from '@/lib/format'
 import {
   injectInfoHeaderScrolledPast,
@@ -12,8 +14,13 @@ import StatGrid from '@/components/StatGrid.vue'
 const setHeader = injectInfoHeaderSetter()
 const scrolledPast = injectInfoHeaderScrolledPast()
 
+const route = useRoute()
 const profile = useVenueProfile()
 const { name, locationLine, loading } = profile
+const favorites = useFavoritesStore()
+const isFavorite = computed(() =>
+  favorites.isFavorite('venues', String(route.params.venueId ?? '')),
+)
 
 function compRoute(a: VenueAppearance | null) {
   if (!a?.raw.competitionId) return undefined
@@ -55,7 +62,10 @@ const tiles = computed(() => {
     <header :ref="setHeader" class="space-y-3 pr-16">
       <div
         :class="[
-          'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 flex size-20 items-center justify-center rounded-full [view-transition-class:nav-avatar]',
+          'flex size-20 items-center justify-center rounded-full [view-transition-class:nav-avatar]',
+          isFavorite
+            ? 'bg-secondary text-secondary-foreground'
+            : 'bg-muted text-muted-foreground',
           !scrolledPast && '[view-transition-name:venue-avatar]',
         ]"
       >

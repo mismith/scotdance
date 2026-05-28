@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useDancerProfile, type DancerAppearance } from '@/composables/useDancerProfile'
 import { useFavoritesStore } from '@/stores/favorites'
 import { formatMonthAbbrev, initialsOf } from '@/lib/format'
@@ -12,16 +13,15 @@ import StatGrid from '@/components/StatGrid.vue'
 const setHeader = injectInfoHeaderSetter()
 const scrolledPast = injectInfoHeaderScrolledPast()
 
+const route = useRoute()
 const profile = useDancerProfile()
-const { displayName, location, image, appearances, loading } = profile
+const { displayName, location, image, loading } = profile
 const favorites = useFavoritesStore()
 
 const initials = computed(() => initialsOf(displayName.value))
 
 const isFavorite = computed(() =>
-  appearances.value.some(
-    (a) => a.raw.dancerId && favorites.isFavoriteDancer(a.raw.dancerId),
-  ),
+  favorites.isFavorite('dancers', String(route.params.dancerId ?? '')),
 )
 
 function compDancerRoute(a: DancerAppearance | null) {

@@ -40,6 +40,7 @@ import { startViewTransition } from '@/lib/transition'
 import { lookupEntityId, lookupVenueId } from '@/lib/entityIndex'
 import { useEntityIdMap, useVenueIdMap } from '@/composables/useEntityIdMap'
 import { focusVt, useVtScope } from '@/lib/viewTransitionFocus'
+import { useFavoritesStore } from '@/stores/favorites'
 
 const route = useRoute()
 const router = useRouter()
@@ -79,51 +80,21 @@ const expanded = reactive<Record<SearchEntityType, boolean>>({
 const locationFilter = useLocationFilter()
 const recentSearches = useRecentSearches()
 const searchExamples = useSearchExamples()
+const favorites = useFavoritesStore()
 
 interface ExampleCardConfig {
   key: 'competitions' | 'venues' | 'places' | 'dancers' | 'judges' | 'pipers'
   label: string
   icon: typeof Calendar
-  iconClass: string
 }
 
 const exampleCards: ExampleCardConfig[] = [
-  {
-    key: 'competitions',
-    label: 'Competitions',
-    icon: Calendar,
-    iconClass: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300',
-  },
-  {
-    key: 'dancers',
-    label: 'Dancers',
-    icon: User,
-    iconClass: 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
-  },
-  {
-    key: 'judges',
-    label: 'Judges',
-    icon: Gavel,
-    iconClass: 'bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300',
-  },
-  {
-    key: 'pipers',
-    label: 'Pipers',
-    icon: Music,
-    iconClass: 'bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300',
-  },
-  {
-    key: 'venues',
-    label: 'Venues',
-    icon: School,
-    iconClass: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
-  },
-  {
-    key: 'places',
-    label: 'Places',
-    icon: MapPin,
-    iconClass: 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
-  },
+  { key: 'competitions', label: 'Competitions', icon: Calendar },
+  { key: 'dancers', label: 'Dancers', icon: User },
+  { key: 'judges', label: 'Judges', icon: Gavel },
+  { key: 'pipers', label: 'Pipers', icon: Music },
+  { key: 'venues', label: 'Venues', icon: School },
+  { key: 'places', label: 'Places', icon: MapPin },
 ]
 
 const hasExamples = computed(() =>
@@ -296,6 +267,24 @@ async function handlePiperTap(group: SearchPersonGroup) {
   focusVt('piper', id)
   await nextTick()
   router.push({ name: 'piper.info', params: { piperId: id } })
+}
+
+function isJudgeFavorite(group: SearchPersonGroup): boolean {
+  const id = judgeIds.get(group.name)
+  return id ? favorites.isFavorite('judges', id) : false
+}
+function isPiperFavorite(group: SearchPersonGroup): boolean {
+  const id = piperIds.get(group.name)
+  return id ? favorites.isFavorite('pipers', id) : false
+}
+function isDancerFavorite(group: SearchPersonGroup): boolean {
+  const id = dancerIds.get(group.name)
+  return id ? favorites.isFavorite('dancers', id) : false
+}
+function isPlaceFavorite(group: SearchPlaceGroup): boolean {
+  if (group.kind !== 'venue') return false
+  const id = venueIds.get(group.name, group.locality ?? null)
+  return id ? favorites.isFavorite('venues', id) : false
 }
 
 async function handlePlaceTap(group: SearchPlaceGroup) {
@@ -533,12 +522,9 @@ if (isIos) {
                   <span
                     :class="[
                       'flex size-9 shrink-0 items-center justify-center rounded-full [view-transition-class:nav-avatar]',
-                      group.kind === 'venue' &&
-                        'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
-                      group.kind === 'locality' &&
-                        'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
-                      group.kind === 'region' &&
-                        'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+                      isPlaceFavorite(group)
+                        ? 'bg-secondary text-secondary-foreground'
+                        : 'bg-muted text-muted-foreground',
                     ]"
                     :style="
                       group.kind === 'venue'
@@ -598,7 +584,12 @@ if (isIos) {
                   @click="handleDancerTap(group.name)"
                 >
                   <span
-                    class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
+                    :class="[
+                      'flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]',
+                      isDancerFavorite(group)
+                        ? 'bg-secondary text-secondary-foreground'
+                        : 'bg-muted text-muted-foreground',
+                    ]"
                     :style="{
                       viewTransitionName: dancerVt.name(
                         dancerIds.get(group.name),
@@ -671,7 +662,12 @@ if (isIos) {
                   </span>
                   <span
                     v-else
-                    class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
+                    :class="[
+                      'flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]',
+                      isJudgeFavorite(group)
+                        ? 'bg-secondary text-secondary-foreground'
+                        : 'bg-muted text-muted-foreground',
+                    ]"
                     :style="{
                       viewTransitionName: judgeVt.name(
                         judgeIds.get(group.name),
@@ -750,7 +746,12 @@ if (isIos) {
                   </span>
                   <span
                     v-else
-                    class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
+                    :class="[
+                      'flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]',
+                      isPiperFavorite(group)
+                        ? 'bg-secondary text-secondary-foreground'
+                        : 'bg-muted text-muted-foreground',
+                    ]"
                     :style="{
                       viewTransitionName: piperVt.name(
                         piperIds.get(group.name),
@@ -837,7 +838,7 @@ if (isIos) {
                       @click="selectTerm(term)"
                     >
                       <span
-                        class="flex size-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 dark:bg-zinc-500/15 dark:text-zinc-300"
+                        class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full"
                       >
                         <History class="size-3.5" />
                       </span>
@@ -888,10 +889,7 @@ if (isIos) {
                         @click="selectTerm(term)"
                       >
                         <span
-                          :class="[
-                            'flex size-8 shrink-0 items-center justify-center rounded-full',
-                            card.iconClass,
-                          ]"
+                          class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full"
                         >
                           <component :is="card.icon" class="size-3.5" />
                         </span>

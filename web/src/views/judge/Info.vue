@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useJudgeProfile, type JudgeAppearance } from '@/composables/useJudgeProfile'
+import { useFavoritesStore } from '@/stores/favorites'
 import { formatMonthAbbrev, initialsOf } from '@/lib/format'
 import { sanitizeRichText } from '@/lib/sanitize'
 import {
@@ -13,10 +15,15 @@ import StatGrid from '@/components/StatGrid.vue'
 const setHeader = injectInfoHeaderSetter()
 const scrolledPast = injectInfoHeaderScrolledPast()
 
+const route = useRoute()
 const profile = useJudgeProfile()
 const { displayName, location, image, bio, loading } = profile
+const favorites = useFavoritesStore()
 
 const initials = computed(() => initialsOf(displayName.value))
+const isFavorite = computed(() =>
+  favorites.isFavorite('judges', String(route.params.judgeId ?? '')),
+)
 
 function compRoute(a: JudgeAppearance | null) {
   if (!a?.raw.competitionId) return undefined
@@ -59,7 +66,10 @@ const tiles = computed(() => {
     <header :ref="setHeader" class="space-y-3 pr-16">
       <div
         :class="[
-          'bg-muted text-muted-foreground flex size-20 items-center justify-center overflow-hidden rounded-full text-4xl font-medium [view-transition-class:nav-avatar]',
+          'flex size-20 items-center justify-center overflow-hidden rounded-full text-4xl font-medium [view-transition-class:nav-avatar]',
+          isFavorite
+            ? 'bg-secondary text-secondary-foreground'
+            : 'bg-muted text-muted-foreground',
           !scrolledPast && '[view-transition-name:judge-avatar]',
         ]"
       >
