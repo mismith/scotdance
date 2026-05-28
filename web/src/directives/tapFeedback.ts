@@ -23,13 +23,15 @@ export const vTapFeedback: ObjectDirective<TapFeedbackEl> = {
     if (getComputedStyle(el).position === 'static') {
       el.style.position = 'relative'
     }
-    // Defer the attribute by one frame so the ::after pseudo-element is
-    // created in a quiet frame. Some browsers fire transitions on initial
-    // pseudo-element creation, producing a fade-in flash on every mount —
-    // visible when several v-tap-feedback elements mount at once
-    // (e.g. crossing a route into a page with multiple ExpandingPills).
+    // Mount the ::after immediately, then enable transitions next frame.
+    // If transitions are live the moment the pseudo-element is created,
+    // Safari animates it from its UA-default opacity to 0 over 220ms —
+    // visible as a phantom press-release on every button. Normally hidden
+    // under the view-transition snapshot, but exposed on iOS swipe-back
+    // (where we skip the VT).
+    el.setAttribute('data-tap-feedback', '')
     const raf = requestAnimationFrame(() =>
-      el.setAttribute('data-tap-feedback', ''),
+      el.setAttribute('data-tap-feedback-ready', ''),
     )
 
     const onDown = (e: PointerEvent) => {
