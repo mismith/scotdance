@@ -12,6 +12,10 @@ function setOrigin(el: HTMLElement, e: PointerEvent) {
   const rect = el.getBoundingClientRect()
   el.style.setProperty('--tap-x', `${e.clientX - rect.left}px`)
   el.style.setProperty('--tap-y', `${e.clientY - rect.top}px`)
+  // Floor the visible growth at ~6px so the scale reads on small (size-12)
+  // buttons too — 6% of 48px is only ~3px, which is imperceptible.
+  const shorter = Math.min(rect.width, rect.height)
+  el.style.setProperty('--tap-scale', String(Math.max(1.06, 1 + 6 / shorter)))
 }
 
 export const vTapFeedback: ObjectDirective<TapFeedbackEl> = {
