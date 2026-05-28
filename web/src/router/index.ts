@@ -221,6 +221,18 @@ const writeScrollPositions = (m: Record<string, number>) => {
   try { localStorage.setItem(SCROLL_KEY, JSON.stringify(m)) } catch { /* quota / private mode */ }
 }
 
+// Persisted last-visited route, so cold-boot to '/' (e.g. PWA/Capacitor icon
+// launch after the WebView was evicted) can resume where the user left off.
+type SavedRoute = { params: Record<string, string>; query: Record<string, string> }
+type RouteInfo = { $current?: string; [name: string]: SavedRoute | string | undefined }
+const ROUTE_INFO_KEY = 'route-info'
+const readRouteInfo = (): RouteInfo => {
+  try { return JSON.parse(localStorage.getItem(ROUTE_INFO_KEY) ?? '{}') } catch { return {} }
+}
+const writeRouteInfo = (m: RouteInfo) => {
+  try { localStorage.setItem(ROUTE_INFO_KEY, JSON.stringify(m)) } catch { /* quota / private mode */ }
+}
+
 export const router = createRouter({
   history: createWebHistory(),
   routes,
@@ -240,6 +252,20 @@ export const router = createRouter({
     if (stored != null) return { top: stored, behavior: 'instant' }
     return { top: 0, behavior: 'instant' }
   },
+})
+
+// Cold-boot restore: if launching into '/' with a saved last route, resume
+// there. Must run before other guards so the redirected target gets the
+// normal requiresAuth / scroll treatment.
+router.beforeEach((to, from) => {
+  if (from.name) return
+  if (to.name !== 'about') return
+  const info = readRouteInfo()
+  const last = info.$current
+  if (!last || last === 'about') return
+  const saved = info[last]
+  if (!saved || typeof saved === 'string') return
+  return { name: last, params: saved.params, query: saved.query }
 })
 
 router.beforeEach((to, from) => {
@@ -267,6 +293,18 @@ router.beforeEach(async (to) => {
     useAuthStore().openLogin()
     return { name: 'about' }
   }
+})
+
+router.afterEach((to) => {
+  if (!to.name) return
+  const name = String(to.name)
+  const info = readRouteInfo()
+  info.$current = name
+  info[name] = {
+    params: { ...to.params } as Record<string, string>,
+    query: { ...to.query } as Record<string, string>,
+  }
+  writeRouteInfo(info)
 })
 
 // Tapping a link to the page you're already on (e.g. the active bottom-nav
