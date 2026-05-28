@@ -316,12 +316,28 @@ router.afterEach((_to, _from, failure) => {
   window.scrollTo({ top: 0, behavior: reduce ? 'instant' : 'smooth' })
 })
 
+// iOS swipe-back (and any other UA-driven traverse animation) already paints
+// the destination before our guards run. Running our own VT on top would
+// snapshot the already-arrived page and animate it to itself — a one-frame
+// flicker. The Navigation API tells us this happened via hasUAVisualTransition.
+let skipNextViewTransition = false
+const nav = (window as Window & { navigation?: EventTarget }).navigation
+nav?.addEventListener('navigate', (event) => {
+  if ((event as Event & { hasUAVisualTransition?: boolean }).hasUAVisualTransition) {
+    skipNextViewTransition = true
+  }
+})
+
 router.beforeResolve(async (to, from) => {
   if (from.matched.length === 0) return
   // Skip transition for same-route query-only changes (e.g. typing into a
   // search input that syncs ?q= to the URL) — the snapshot/replay would
   // flicker visible text on each keystroke.
   if (to.name === from.name && to.path === from.path) return
+  if (skipNextViewTransition) {
+    skipNextViewTransition = false
+    return
+  }
   const transition = startViewTransition()
   await transition.captured
 })
