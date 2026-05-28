@@ -189,6 +189,12 @@
    out animate over 220ms for a soft release. */
 [data-tap-feedback] {
   scale: 1;
+}
+/* Transitions deferred until the next frame (see directives/tapFeedback.ts)
+   so the ::after pseudo doesn't animate from its initial style on creation —
+   that flash is normally hidden by the VT snapshot, but exposed when VT is
+   skipped (e.g. iOS swipe-back). */
+[data-tap-feedback-ready] {
   /* Multi-property shorthand so consumer `transition` utility classes can
      still drive opacity/translate animations alongside the tap-release
      scale. Without listing them here, `transition: scale 220ms ...` resets
@@ -215,6 +221,8 @@
     transparent 65%
   );
   opacity: 0;
+}
+[data-tap-feedback-ready]::after {
   transition: opacity 220ms ease-out;
 }
 [data-tap-feedback][data-tapping] {
