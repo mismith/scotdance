@@ -189,7 +189,15 @@
    out animate over 220ms for a soft release. */
 [data-tap-feedback] {
   scale: 1;
-  transition: scale 220ms cubic-bezier(0.2, 0, 0, 1);
+  /* Multi-property shorthand so consumer `transition` utility classes can
+     still drive opacity/translate animations alongside the tap-release
+     scale. Without listing them here, `transition: scale 220ms ...` resets
+     transition-property to scale-only and snaps the rest — breaking e.g.
+     the nav title pill's slide/fade-in reveal. */
+  transition:
+    scale 220ms cubic-bezier(0.2, 0, 0, 1),
+    opacity var(--default-transition-duration) var(--ease-rubber-band),
+    translate var(--default-transition-duration) var(--ease-rubber-band);
 }
 [data-tap-feedback]::after {
   content: '';
