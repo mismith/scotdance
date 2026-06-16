@@ -55,8 +55,10 @@ export default defineConfig({
     eslint({
       cache: false, // it was getting stale and causing false positives
     }),
-    mkcert(),
-  ],
+    // HTTP dev server by default (Safari blocks http emulator calls from an
+    // https page as mixed content). Enable HTTPS with VITE_HTTPS=1 when needed.
+    process.env.VITE_HTTPS === '1' && mkcert(),
+  ].filter(Boolean),
   server: {
     port: 3000,
     host: true,
