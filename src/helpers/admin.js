@@ -1,4 +1,5 @@
 import Vue from 'vue';
+import { Capacitor } from '@capacitor/core';
 import Handsontable from 'handsontable/base';
 import 'handsontable/dist/handsontable.full.css';
 import flatten from 'obj-flatten';
@@ -13,7 +14,7 @@ import {
   // HandsontableEditor,
   // NumericEditor,
   // PasswordEditor,
-  // SelectEditor,
+  SelectEditor,
   TextEditor,
 } from 'handsontable/editors';
 import {
@@ -94,6 +95,7 @@ registerLanguageDictionary(enUS);
 
 registerEditor(BaseEditor);
 registerEditor(DropdownEditor);
+registerEditor(SelectEditor);
 registerEditor(TextEditor);
 
 registerRenderer(baseRenderer);
@@ -176,6 +178,42 @@ registerCellType('file', {
 });
 
 export function makeKeyValuePairColumn(column, valueProp = '$name', keyProp = idKey) {
+  // Display the value (e.g. category name) while storing the key (id), and flag
+  // ids that don't resolve to a source item as invalid. Shared by both editors.
+  function renderer(...args) {
+    const item = column.source.find((i) => i[keyProp] === args[5]);
+    if (item) {
+      // eslint-disable-next-line no-param-reassign
+      args[5] = item[valueProp];
+      // eslint-disable-next-line no-param-reassign
+      args[6].valid = true;
+    } else if (args[5]) {
+      // eslint-disable-next-line no-param-reassign
+      args[6].valid = false;
+    }
+    autocompleteRenderer.apply(this, args);
+  }
+
+  // Touch devices (the native app, mobile Safari, tablets) can't use the nested
+  // table editor's typing/scrolling without trapping the soft keyboard. Detect a
+  // coarse pointer (plus the native app, belt-and-braces) and swap in a native
+  // <select> (opens the OS picker: scrollable, no keyboard). Devices with a fine
+  // pointer (desktop) keep the searchable type-to-filter editor below.
+  const isTouch = Capacitor.isNativePlatform()
+    || (typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches);
+  if (isTouch) {
+    const { type, handsontable, ...rest } = column;
+    return {
+      ...rest,
+      editor: SelectEditor,
+      selectOptions: column.source.reduce((acc, datum) => {
+        acc[datum[keyProp]] = datum[valueProp];
+        return acc;
+      }, { '': '—' }), // leading blank option allows clearing the cell
+      renderer,
+    };
+  }
+
   return {
     ...column,
     type: 'handsontable',
@@ -194,19 +232,7 @@ export function makeKeyValuePairColumn(column, valueProp = '$name', keyProp = id
         return data && data.makeKeyValuePairColumnId;
       },
     },
-    renderer: function renderer(...args) {
-      const item = column.source.find((i) => i[keyProp] === args[5]);
-      if (item) {
-        // eslint-disable-next-line no-param-reassign
-        args[5] = item[valueProp];
-        // eslint-disable-next-line no-param-reassign
-        args[6].valid = true;
-      } else if (args[5]) {
-        // eslint-disable-next-line no-param-reassign
-        args[6].valid = false;
-      }
-      autocompleteRenderer.apply(this, args);
-    },
+    renderer,
   };
 }
 
