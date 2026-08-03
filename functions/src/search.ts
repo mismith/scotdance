@@ -1,4 +1,4 @@
-import { https } from 'firebase-functions';
+import { https } from 'firebase-functions/v1';
 
 import { getTypesense } from './utility/typesense';
 
