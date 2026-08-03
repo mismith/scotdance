@@ -1,5 +1,9 @@
 # Release Notes
 
+## 3.13.0 - Aug 2, 2026
+- make dropdowns easier to use on phones and tablets in the admin panel
+- behind-the-scenes upgrades to keep the app up to date
+
 ## 3.12.0 - Mar 31, 2026
 - allow placing dancers in reverse order (e.g. for Championships) — thanks for the suggestion Kim!
 
