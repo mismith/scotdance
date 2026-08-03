@@ -1,4 +1,4 @@
-import { https } from 'firebase-functions';
+import { https } from 'firebase-functions/v1';
 import Typesense from 'typesense';
 import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 
