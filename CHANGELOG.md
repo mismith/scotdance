@@ -1,7 +1,7 @@
 # Release Notes
 
-## 3.14.0 - Sep 9, 2026
-- behind-the-scenes maintenance and security improvements
+## 3.14.1 - Sep 9, 2026
+- minor fixes and behind-the-scenes improvements
 
 ## 3.13.0 - Aug 2, 2026
 - make dropdowns easier to use on phones and tablets in the admin panel
