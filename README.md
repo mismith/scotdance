@@ -31,7 +31,7 @@ Links to the admin panels needed to manage this project:
 
 * Database, Users/Auth, Hosting, SSL: [Firebase](https://console.firebase.google.com/u/0/project/firebase-scotdance/database/scotdance/data)
 * iOS app: [App Store Connect](https://appstoreconnect.apple.com/apps/1386475626/appstore/ios/version/deliverable)
-* Android app: [Google Play Console](https://play.google.com/console/u/0/developers/6715160108161692003/app/4972780107515202457/app-dashboard)
+* Android app: [Google Play Console](https://play.google.com/console/u/1/developers/6715160108161692003/app/4972780107515202457/tracks/production)
 * DNS: [Cloudflare](https://dash.cloudflare.com/f9b1ba7aa72b02f28e63a13fd4aa7184/scotdance.app)
 * Domain: [Namecheap](https://ap.www.namecheap.com/domains/domaincontrolpanel/scotdance.app)
 * Email hosting (alias): [GSuite](https://admin.google.com)
