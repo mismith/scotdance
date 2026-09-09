@@ -37,6 +37,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Allow sending files via Live Chat</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Shows Highland dancing competitions near you, sorted by distance, when you choose the Nearby location filter.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allow uploading images in the Admin Panel, or sending files via Live Chat</string>
 	<key>UILaunchStoryboardName</key>
