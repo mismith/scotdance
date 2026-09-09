@@ -6,6 +6,7 @@
   "description": "Highland dancing event tracker",
   "author": "Murray Rowan <murray@mismith.info>",
   "scripts": {
+    "init": "cp -n .env.example .env.local",
     "dev:functions": "npm --prefix ../functions run dev",
     "dev:web": "vite",
     "dev": "concurrently -k -n fn,web -c magenta,green \"npm:dev:functions\" \"npm:dev:web\"",
