@@ -143,7 +143,7 @@
         <v-list-item>
           <v-list-item-subtitle style="text-align: right;">
             Powered by
-            <GoogleLogo alt="Google" width="48" height="16" class="google-logo" />
+            <img src="@/assets/img/google-logo.svg?url" alt="Google" width="48" height="16" class="google-logo" />
           </v-list-item-subtitle>
         </v-list-item>
       </template>
@@ -177,7 +177,6 @@
 import { mdiAlert, mdiCalendar } from '@mdi/js';
 import debounce from 'lodash.debounce';
 
-import GoogleLogo from '@/assets/img/google-logo.svg';
 import { idKey } from '@/helpers/firebase';
 import { searchForPlaces } from '@/helpers/maps';
 import FileUploader from '@/components/admin/FileUploader.vue';
@@ -266,7 +265,6 @@ export default {
   },
   components: {
     FileUploader,
-    GoogleLogo,
   },
 };
 </script>
@@ -285,9 +283,5 @@ export default {
 .google-logo {
   display: inline-block;
   vertical-align: middle;
-
-  path {
-    fill: currentColor;
-  }
 }
 </style>
