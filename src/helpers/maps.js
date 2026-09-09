@@ -1,10 +1,16 @@
+// Google Maps Platform key. It's a client-side key by design (it ships in the
+// bundle), so the real spend controls are in Google Cloud: API restriction to
+// Places API (New) and a daily quota cap. Keep it out of git: set
+// VITE_GOOGLE_MAPS_API_KEY in a gitignored .env.local (see .env.example).
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? '';
+
 let MapsLoader;
 let PlaceApi;
 export async function getPlaceApi() {
   if (!MapsLoader) {
     const { Loader } = await import('@googlemaps/js-api-loader');
     MapsLoader = new Loader({
-      apiKey: 'AIzaSyD_lDzvFtOTJVXGUAWLAMtGnwa63lyDg8A',
+      apiKey: GOOGLE_MAPS_API_KEY,
       libraries: ['places'],
     });
   }

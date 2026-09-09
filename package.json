@@ -5,6 +5,7 @@
   "description": "Highland dancing event tracker",
   "author": "Murray Rowan <murray@mismith.info>",
   "scripts": {
+    "init": "cp -n .env.example .env.local",
     "is:cy": "touch ./functions/IS_CYPRESS",
     "not:cy": "rm -rf ./functions/IS_CYPRESS",
     "emulate:firebase": "firebase emulators:start --import=.firebase/emulator-data",
