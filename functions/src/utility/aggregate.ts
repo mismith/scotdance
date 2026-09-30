@@ -100,6 +100,13 @@ export interface AggregatorHandlers {
   }>
 }
 
+/** An index entry's aggregate id: legacy entries are a bare string, new ones `{ id }`. */
+function indexedId(entry: unknown): string | null {
+  if (typeof entry === 'string') return entry;
+  const id = (entry as { id?: unknown } | null)?.id;
+  return typeof id === 'string' ? id : null;
+}
+
 function appearanceKey(ctx: AppearanceCtx): string {
   return ctx.recordId === null
     ? ctx.competitionId
@@ -132,20 +139,17 @@ export function createAggregator<R, A extends Record<string, any>>(
   });
 
   const identityKey = config.identityKey ?? ((r: R) => normalizeName(nameOf(r)));
-  const identityKeyFromAppearance =
-    config.identityKeyFromAppearance
+  const identityKeyFromAppearance = config.identityKeyFromAppearance
     ?? ((a: A) => (nameFromAppearance ? normalizeName(nameFromAppearance(a)) : ''));
 
   // A record only contributes if it passes the predicate AND has a display
   // name. Folding the name check in here ensures that clearing a name (e.g.
   // both firstName and lastName set to '') is treated as "no longer matches"
   // and the old appearance gets unlinked.
-  const matches = (r: R | null | undefined): r is R =>
-    !!r && predicate(r) && !!nameOf(r);
+  const matches = (r: R | null | undefined): r is R => !!r && predicate(r) && !!nameOf(r);
 
-  const iterate =
-    config.iterate ??
-    (async (innerDb: any, competitionId: string) => {
+  const iterate = config.iterate
+    ?? (async (innerDb: any, competitionId: string) => {
       if (!sectionName) return [];
       const records = (await innerDb
         .child(`competitions:data/${competitionId}/${sectionName}`)
@@ -159,12 +163,7 @@ export function createAggregator<R, A extends Record<string, any>>(
     const indexRef = db.child(`${namespace}:index/${key}`);
     const existing = (await indexRef.get()).val();
     // Legacy entries stored a bare id string; new entries are objects with `.id`.
-    const existingId =
-      typeof existing === 'string'
-        ? existing
-        : typeof existing?.id === 'string'
-          ? existing.id
-          : null;
+    const existingId = indexedId(existing);
     if (existingId) return existingId;
     // Race: concurrent writes for the same key may create orphans. Pruned by
     // recompute when the last appearance is removed.
@@ -198,6 +197,7 @@ export function createAggregator<R, A extends Record<string, any>>(
     // it from their first appearance (the appearance carries the same fields
     // identity is built from). Captured *before* the empty-check so cleanup
     // can use it even when this is the last unlink.
+    // eslint-disable-next-line no-underscore-dangle
     let identity = agg._identity as string | undefined;
     if (!identity && list.length) {
       const derived = identityKeyFromAppearance(list[0]);
@@ -214,6 +214,7 @@ export function createAggregator<R, A extends Record<string, any>>(
       ? recomputeFromAppearances(list)
       : { name: nameFromAppearance?.(list[0]) || agg.name || '' };
     const update: Record<string, unknown> = { ...refreshed, appearanceCount: count };
+    // eslint-disable-next-line no-underscore-dangle
     if (!agg._identity && identity) update._identity = identity;
     await aggRef.update(update);
 
@@ -314,6 +315,9 @@ export function createAggregator<R, A extends Record<string, any>>(
       if (!entityId) return;
       await unlinkAppearance(entityId, ctxFor(ctx.params));
     },
+    // The backfills walk every competition one at a time on purpose: running
+    // them in parallel would flood RTDB with writes (and re-fire triggers).
+    /* eslint-disable no-await-in-loop, no-restricted-syntax, no-continue */
     async backfill() {
       // Idempotent: preserves existing aggregate push keys across runs by
       // re-using whatever the index already points at. Replaces each touched
@@ -364,7 +368,9 @@ export function createAggregator<R, A extends Record<string, any>>(
         await recomputeAggregate(entityId);
         pruned += 1;
       }
-      return { linked, skipped, pruned, competitions: compIds.length };
+      return {
+        linked, skipped, pruned, competitions: compIds.length,
+      };
     },
     async backfillBackPointers(opts?: { batchSize?: number }) {
       // Writes the back-pointer field (e.g. `judgeId`) onto every source record
@@ -391,12 +397,7 @@ export function createAggregator<R, A extends Record<string, any>>(
       const rawIndex = (indexSnap.val() as Record<string, unknown> | null) ?? {};
       const aggIdByKey = new Map<string, string>();
       for (const [key, val] of Object.entries(rawIndex)) {
-        const id =
-          typeof val === 'string'
-            ? val
-            : typeof (val as any)?.id === 'string'
-              ? (val as any).id
-              : null;
+        const id = indexedId(val);
         if (id) aggIdByKey.set(key, id);
       }
 
@@ -459,7 +460,10 @@ export function createAggregator<R, A extends Record<string, any>>(
       }
       await flush();
 
-      return { written, alreadySet, unmatched, competitions: compIds.length, batches };
+      return {
+        written, alreadySet, unmatched, competitions: compIds.length, batches,
+      };
     },
   };
+  /* eslint-enable no-await-in-loop, no-restricted-syntax, no-continue */
 }

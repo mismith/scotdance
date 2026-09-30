@@ -11,6 +11,7 @@ import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { blocks, dances as eventDances, days, events, slugline } from '@/lib/schedule'
 import { sanitizeRichText } from '@/lib/sanitize'
 import { formatWeekday } from '@/lib/format'
+import { competitionPhase } from '@/lib/dancerDay'
 import type { EnrichedDancer, ScheduleEvent } from '@/types/competition'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
@@ -28,7 +29,10 @@ const {
   loadDancers,
   loadResults,
   hasSchedule,
+  competition,
 } = useCompetition()
+// A competition that's over and never posted a schedule shouldn't promise one.
+const isOver = computed(() => competitionPhase(competition.value?.date) === 'after')
 const { followedByGroup } = useCompetitionDays()
 const following = useFollowing()
 
@@ -87,7 +91,7 @@ const dayList = computed(() =>
   <div class="space-y-3">
     <header :ref="setHeader" class="space-y-1">
       <h1 class="text-display">Schedule</h1>
-      <p class="text-muted-foreground text-sm">Times are approximate. Awards are usually given at the end of each session.</p>
+      <p v-if="hasSchedule" class="text-muted-foreground text-sm">Times are approximate. Awards are usually given at the end of each session.</p>
     </header>
 
     <div v-if="hasSchedule === null || !ready" class="space-y-2" aria-busy="true">
@@ -96,8 +100,12 @@ const dayList = computed(() =>
     <EmptyState
       v-else-if="hasSchedule === false"
       :icon="CalendarDays"
-      title="No schedule yet"
-      description="Organisers usually post it a few days before the competition. Platforms and dancing order appear here when they do."
+:title="isOver ? 'No schedule was posted' : 'No schedule yet'"
+      :description="
+        isOver
+          ? 'This competition didn’t post one here. Its results are under Results.'
+          : 'Organisers usually post it a few days before the competition. Platforms and dancing order appear here when they do.'
+      "
     />
 
     <section v-for="d in dayList" :key="d.day.id" class="space-y-3">

@@ -136,7 +136,8 @@ export function getOnDelete(db: any) {
   return async function onDelete(snap: any, ctx: any) {
     if (isCypress()) return;
     const { dancerId } = ctx.params;
-    await getTypesense().collections('dancers').documents(dancerId).delete().catch(() => {});
+    await getTypesense().collections('dancers').documents(dancerId).delete()
+      .catch(() => {});
     await agg.onDelete(snap, ctx);
   };
 }

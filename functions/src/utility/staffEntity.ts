@@ -63,8 +63,9 @@ export function createStaffEntity(config: StaffEntityConfig) {
     ],
   };
 
-  const isMatch = (m: StaffRecord | null | undefined): m is StaffRecord =>
-    !!m && m.type === staffType;
+  const isMatch = (m: StaffRecord | null | undefined): m is StaffRecord => (
+    !!m && m.type === staffType
+  );
 
   function docFor(member: StaffRecord, ctx: { competitionId: string; staffId: string }) {
     return {
@@ -79,7 +80,8 @@ export function createStaffEntity(config: StaffEntityConfig) {
   }
 
   async function safeDelete(docId: string) {
-    await getTypesense().collections(namespace).documents(docId).delete().catch(() => {});
+    await getTypesense().collections(namespace).documents(docId).delete()
+      .catch(() => {});
   }
 
   const aggregatorConfig: AggregatorConfig<StaffRecord, StaffAppearance> = {
@@ -178,7 +180,9 @@ export function createStaffEntity(config: StaffEntityConfig) {
           const staff = (await db.child(`competitions:data/${competitionId}/staff`).get()).val() || {};
           return Object.entries(staff)
             .filter(([, member]) => isMatch(member as StaffRecord))
-            .map(([staffId, member]) => docFor(member as StaffRecord, { competitionId, staffId })) as never;
+            .map(([staffId, member]) => (
+              docFor(member as StaffRecord, { competitionId, staffId })
+            )) as never;
         },
       ))));
       if (documents.length) {

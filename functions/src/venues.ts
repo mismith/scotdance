@@ -83,8 +83,9 @@ const aggregatorConfig: AggregatorConfig<CompRecord, VenueAppearance> = {
   // shift over time; this keeps the aggregate showing current values.
   recomputeFromAppearances: (apps) => {
     const sorted = [...apps].sort((a, b) => (b.date ?? 0) - (a.date ?? 0));
-    const pick = <K extends keyof VenueAppearance>(f: K) =>
-      sorted.find((a) => a[f] != null)?.[f] ?? null;
+    const pick = <K extends keyof VenueAppearance>(f: K) => (
+      sorted.find((a) => a[f] != null)?.[f] ?? null
+    );
     return {
       name: pick('venue'),
       locality: pick('locality'),
