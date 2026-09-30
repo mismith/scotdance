@@ -56,7 +56,10 @@ glass tab bar, Back out of a competition, dark mode, large text.
 - [ ] Old app's router base `/admin`, asset paths updated
 - [ ] `capacitor.config.json` `webDir`: `www` → `web/dist`; `npx cap sync`
 - [ ] Cache headers: HTML `no-cache`, hashed assets `immutable`
-- [ ] Rebuild and submit the iOS and Android apps (text-zoom and haptics plugins are already installed)
+- [ ] Rebuild and submit the iOS and Android apps (all plugins are already installed)
+  - iOS uses Swift Package Manager now: open `ios/App/App.xcodeproj` (no workspace, no `pod install`)
+  - The update prompt compares `web/package.json`'s version with `versions/ios` and `versions/android` in the database; `set-version.js` only bumps the root and native versions, so bump `web/package.json` to match
+  - Smoke test on a device: splash hides, status bar follows dark mode, Android Back closes sheets, airplane mode opens the last saved data
 - [ ] "Manage competitions" in v4 opens `/admin`
 - [ ] Privacy page mentions the private colour picks
 
