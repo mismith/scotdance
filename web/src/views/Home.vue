@@ -302,12 +302,6 @@ const { freshKey: liveFresh } = useLiveAlertState()
             />
           </template>
         </ul>
-        <RouterLink
-          :to="{ name: 'competitions' }"
-          class="bg-card border-strong flex h-12 items-center justify-center gap-2 rounded-xl border text-base font-bold"
-        >
-          <CalendarDays class="size-5" /> All competitions
-        </RouterLink>
       </section>
 
       <!-- Latest results, when nothing personal is on -->
@@ -322,6 +316,14 @@ const { freshKey: liveFresh } = useLiveAlertState()
           />
         </ul>
       </section>
+
+      <!-- Always a way into every competition, however quiet Home is. -->
+      <RouterLink
+        :to="{ name: 'competitions' }"
+        class="bg-card border-strong flex h-12 items-center justify-center gap-2 rounded-xl border text-base font-bold"
+      >
+        <CalendarDays class="size-5" /> All competitions
+      </RouterLink>
     </main>
   </div>
 </template>
