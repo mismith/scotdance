@@ -82,6 +82,24 @@ const compact = computed<CompactDisplay>(() => {
   return { kind: 'icon', icon: Globe }
 })
 
+// The trigger says where you're looking, in words.
+const compactLabel = computed(() => {
+  if (mode.value === 'nearby') return `Within ${radius.value} km`
+  if (mode.value === 'region') {
+    if (locality.value || region.value) return locality.value || region.value
+    const c = country.value
+    if (c && /^[A-Z]{2}$/.test(c)) {
+      try {
+        return new Intl.DisplayNames(undefined, { type: 'region' }).of(c) ?? c
+      } catch {
+        return c
+      }
+    }
+    return c || 'Choose region'
+  }
+  return 'Everywhere'
+})
+
 const regionSummary = computed(() => {
   const parts = [locality.value, region.value, country.value].filter(Boolean)
   return parts.join(', ')
@@ -97,7 +115,7 @@ const ariaLabel = computed(() => {
 const options: Array<{ id: LocationMode; label: string; icon: typeof Globe }> = [
   { id: 'nearby', label: 'Nearby', icon: Locate },
   { id: 'region', label: 'Region', icon: MapPinned },
-  { id: 'worldwide', label: 'Worldwide', icon: Globe },
+  { id: 'worldwide', label: 'Everywhere', icon: Globe },
 ]
 
 // Choose a sensible default country when the user enters Region mode with
@@ -212,10 +230,8 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
     :active="mode !== 'worldwide'"
   >
     <template #compact>
-      <span v-if="compact.kind === 'flag'" class="-mx-1 text-2xl leading-none">
-        {{ compact.emoji }}
-      </span>
-      <component :is="compact.icon" v-else class="size-5" />
+      <component :is="compact.kind === 'icon' ? compact.icon : MapPinned" class="text-primary size-[1.125rem] shrink-0" />
+      <span class="truncate">{{ compactLabel }}</span>
     </template>
 
     <template #expanded>

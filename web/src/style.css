@@ -3,6 +3,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -23,112 +24,159 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  /* Editorial extras (used for hero strips, progress bars, "now/live" callouts) */
+  --color-strong: var(--strong);
+  /* Tinted surfaces for callouts and selected states */
   --color-blue-paper: var(--blue-paper);
   --color-pink-paper: var(--pink-paper);
   --color-chip: var(--chip);
-  --font-serif: 'Newsreader', 'New York', Georgia, ui-serif, serif;
-  /* Match the spec's default view-transition duration so CSS transitions
-     stay in family with route morphs. */
-  --default-transition-duration: 250ms;
+  /* Status language: every state is shape + colour + a word */
+  --color-next: var(--next);
+  --color-next-foreground: var(--next-foreground);
+  --color-done: var(--done);
+  --color-done-foreground: var(--done-foreground);
+  --color-live: var(--live);
+  --color-live-paper: var(--live-paper);
+  /* Placings 1–3 are medals; 4–6 are ribbons */
+  --color-gold: var(--gold);
+  --color-silver: var(--silver);
+  --color-bronze: var(--bronze);
+  --color-ribbon: var(--ribbon);
+  --color-ribbon-foreground: var(--ribbon-foreground);
+  --color-medal-ink: #12161b;
+  /* The number card is always paper, even in dark mode */
+  --color-paper: var(--paper);
+  --color-paper-ink: #0e1114;
+  /* One family everywhere: Atkinson Hyperlegible Next was drawn for
+     low-vision readers and keeps 1/l/I, 0/O and 3/6/8 distinct, which
+     matters when the most important thing on screen is a number.
+     --font-serif is aliased to the same stack so legacy `font-serif`
+     classes stop switching faces. */
+  --font-sans: 'Atkinson Hyperlegible Next Variable', 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: var(--font-sans);
+  --font-mono: 'Atkinson Hyperlegible Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --default-transition-duration: 220ms;
   --ease-rubber-band: cubic-bezier(0.34, 1.3, 0.64, 1);
   --animate-pop: pop 450ms ease-out;
+  --animate-medal: medal 900ms cubic-bezier(0.2, 0.9, 0.3, 1.3);
 }
 
-/* Light mode — "Cream paper" palette from editorial v5: warm off-white
-   canvas (#f5f1ea), near-black ink, brand blue + pink as accents. */
+/* Light is the default: dark text on light reads better for older eyes and
+   in daylight. Surfaces are opaque; nothing important sits on glass. */
 :root {
   color-scheme: light;
-  --background: oklch(0.945 0.012 85);
-  --foreground: oklch(0.18 0.005 250);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.005 250);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.005 250);
-  /* Editorial blue (#2c5d87) — deeper than Material Blue 700 */
-  --primary: oklch(0.42 0.09 245);
-  --primary-foreground: oklch(1 0 0);
-  /* Editorial pink (#c5527a) — used for favourites/pins/live callouts */
-  --secondary: oklch(0.55 0.15 5);
-  --secondary-foreground: oklch(1 0 0);
-  --muted: oklch(0.92 0.012 85);
-  --muted-foreground: oklch(0.45 0.01 250);
-  --accent: oklch(0.92 0.012 85);
-  --accent-foreground: oklch(0.18 0.005 250);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.88 0.012 85);
-  --input: oklch(0.88 0.012 85);
-  --ring: oklch(0.42 0.09 245);
-  --radius: 0.625rem;
-  /* Editorial accent surfaces */
-  --blue-paper: oklch(0.91 0.02 245);
-  --pink-paper: oklch(0.91 0.04 5);
-  --chip: oklch(0.92 0.012 85);
-  /* Expose env(safe-area-inset-*) as custom props so other rules and JS can
-     read them without re-spelling env(). */
+  --background: #f2f4f7;
+  --foreground: #12161b;
+  --card: #ffffff;
+  --card-foreground: #12161b;
+  --popover: #ffffff;
+  --popover-foreground: #12161b;
+  /* Saltire blue (Pantone 300) */
+  --primary: #0065bd;
+  --primary-foreground: #ffffff;
+  /* Royal Stewart red: following + "today" */
+  --secondary: #b0102c;
+  --secondary-foreground: #ffffff;
+  --muted: #e9edf2;
+  --muted-foreground: #454e59;
+  --accent: #e9edf2;
+  --accent-foreground: #12161b;
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+  --border: #d3dae2;
+  --input: #8c96a3;
+  --strong: #8c96a3;
+  --ring: #0065bd;
+  --radius: 0.75rem;
+  --blue-paper: #e1ecf8;
+  --pink-paper: #fbe4e8;
+  --chip: #e9edf2;
+  --next: #ffefc7;
+  --next-foreground: #7a4600;
+  --done: #ddf2e2;
+  --done-foreground: #145c2b;
+  --live: #b0102c;
+  --live-paper: #fbe4e8;
+  --gold: #f2c641;
+  --silver: #d5dbe2;
+  --bronze: #e3a777;
+  --ribbon: #e1ecf8;
+  --ribbon-foreground: #00457f;
+  --paper: #ffffff;
+  --paper-edge: #c9d0d8;
+  /* Followed-dancer sash colours, drawn from tartans: Royal Stewart,
+     Black Watch, heather, MacLeod gold, Saltire. White text passes AA. */
+  --dancer-1: #b0102c;
+  --dancer-2: #1d6a48;
+  --dancer-3: #6a3fa0;
+  --dancer-4: #8a5f00;
+  --dancer-5: #0065bd;
+  /* Tartan sett drawn over a dancer's colour (sash, number card band) */
+  --tartan:
+    repeating-linear-gradient(90deg, rgb(0 0 0 / 0.24) 0 3px, transparent 3px 9px, rgb(255 255 255 / 0.3) 9px 10px, transparent 10px 16px),
+    repeating-linear-gradient(0deg, rgb(0 0 0 / 0.24) 0 3px, transparent 3px 9px, rgb(255 255 255 / 0.3) 9px 10px, transparent 10px 16px);
   --safe-top: env(safe-area-inset-top);
   --safe-bottom: env(safe-area-inset-bottom);
-  /* Where the floating top nav sits. Honours the full safe-area inset
-     (status bar has live text/icons we don't want to crowd), floored at
-     1rem so devices without an inset still get a breathing gap from the
-     viewport edge. Nav content sits directly at this offset — no inner
-     pt added by consumers. */
-  --nav-top: max(1rem, var(--safe-top));
-  /* How far the floating bottom nav sits from the screen edge. Honours
-     only a portion of safe-area-inset-bottom (which is generous — the
-     home indicator itself is ~5pt and Apple reserves ~34pt around it)
-     so the pill rides closer to the bottom, Slack-style. */
-  --nav-bottom: max(1rem, calc(var(--safe-bottom) - 1rem));
-  /* The exact bottom edge of the floating top nav and top edge of the
-     floating bottom nav — i.e. where their visible content ends. No
-     breathing room baked in; pages add their own gap (typically +1rem)
-     via calc() at the use site. Top nav content = size-12 (3rem). Bottom
-     nav content = size-16 Search button or h-14+p-1 pill (~4rem). */
-  --chrome-top: calc(3rem + var(--nav-top));
-  --chrome-bottom: calc(4rem + var(--nav-bottom));
+  /* Opaque chrome: a 3.5rem app bar under the status bar, and a 3.5rem tab
+     bar above the home indicator. Pages pad by these. */
+  --nav-top: var(--safe-top);
+  --nav-bottom: 0px;
+  --chrome-top: calc(3.5rem + var(--safe-top));
+  --chrome-bottom: calc(3.5rem + max(0.25rem, var(--safe-bottom)));
 }
 
-/* Dark mode — "Deep Ink" palette from editorial v5: warm near-black,
-   editorial paper inverted; accents lifted for AA contrast. */
 .dark {
   color-scheme: dark;
-  --background: oklch(0.19 0.014 15);
-  --foreground: oklch(0.95 0.012 85);
-  --card: oklch(0.235 0.014 15);
-  --card-foreground: oklch(0.95 0.012 85);
-  --popover: oklch(0.27 0.012 15);
-  --popover-foreground: oklch(0.95 0.012 85);
-  /* Lifted blue (#7eb6e4) for AA on dark */
-  --primary: oklch(0.745 0.09 245);
-  --primary-foreground: oklch(0.19 0.014 15);
-  /* Lifted pink (#e98aac) */
-  --secondary: oklch(0.74 0.12 5);
-  --secondary-foreground: oklch(0.19 0.014 15);
-  --muted: oklch(0.235 0.014 15);
-  --muted-foreground: oklch(0.71 0.018 15);
-  --accent: oklch(0.27 0.012 15);
-  --accent-foreground: oklch(0.95 0.012 85);
-  --destructive: oklch(0.55 0.18 25);
-  --destructive-foreground: oklch(0.95 0.012 85);
-  --border: oklch(0.32 0.014 15);
-  --input: oklch(0.32 0.014 15);
-  --ring: oklch(0.745 0.09 245);
-  /* Editorial accent surfaces — tinted dark paper for callouts */
-  --blue-paper: oklch(0.27 0.05 245);
-  --pink-paper: oklch(0.25 0.06 5);
-  --chip: oklch(0.255 0.014 15);
+  --background: #0c0f13;
+  --foreground: #eef2f6;
+  --card: #161b21;
+  --card-foreground: #eef2f6;
+  --popover: #1f262e;
+  --popover-foreground: #eef2f6;
+  --primary: #62aaf0;
+  --primary-foreground: #06121e;
+  --secondary: #ff7088;
+  --secondary-foreground: #1a0509;
+  --muted: #1f262e;
+  --muted-foreground: #b4beca;
+  --accent: #1f262e;
+  --accent-foreground: #eef2f6;
+  --destructive: #ff8a7a;
+  --destructive-foreground: #1a0509;
+  --border: #2b343e;
+  --input: #5d6875;
+  --strong: #5d6875;
+  --ring: #62aaf0;
+  --blue-paper: #11263a;
+  --pink-paper: #3a1119;
+  --chip: #1f262e;
+  --next: #3a2a07;
+  --next-foreground: #ffd27a;
+  --done: #0f2c19;
+  --done-foreground: #86dda0;
+  --live: #ff7088;
+  --live-paper: #3a1119;
+  --ribbon: #1c3148;
+  --ribbon-foreground: #bbdcfb;
+  --paper: #f7f5ef;
+  --paper-edge: #f7f5ef;
+  --dancer-1: #e0435e;
+  --dancer-2: #3fa676;
+  --dancer-3: #9b75d6;
+  --dancer-4: #d9a21b;
+  --dancer-5: #62aaf0;
+}
+
+/* The OS Increase Contrast setting: no grey text, heavier edges. */
+@media (prefers-contrast: more) {
+  :root {
+    --muted-foreground: var(--foreground);
+    --border: var(--strong);
+  }
 }
 
 @supports (corner-shape: squircle) {
   :root {
     --corner-shape: superellipse(1.5);
-    --radius-sm: 0.75rem;
-    --radius-md: 1rem;
-    --radius-lg: 1.25rem;
-    --radius-xl: 1.5rem;
-    --radius-2xl: 1.75rem;
-    --radius-3xl: 2rem;
   }
   *,
   *::before,
@@ -141,38 +189,35 @@
   * {
     @apply border-border;
   }
-  /* Keep hash-anchored / scrollIntoView targets clear of the floating top
-     and bottom chrome — +1rem so anchored content doesn't land flush
-     against the nav edge. --chrome-* already includes safe-area inset. */
   html {
     @apply scroll-pt-[calc(var(--chrome-top)+1rem)] scroll-pb-[calc(var(--chrome-bottom)+1rem)];
+    -webkit-text-size-adjust: 100%;
   }
   body {
-    @apply bg-background text-foreground font-serif;
-    font-feature-settings:
-      'rlig' 1,
-      'calt' 1;
+    @apply bg-background text-foreground font-sans;
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: auto;
+    -moz-osx-font-smoothing: grayscale;
   }
-
-  /* Form controls + buttons stay sans so action chrome reads as functional
-     UI, not editorial copy. Explicit `font-serif` on a child still wins
-     (e.g. age-group labels inside the platforms-table buttons). */
   button,
   input,
   select,
   textarea {
     @apply font-sans;
   }
+  :focus-visible {
+    @apply outline-ring outline-3 outline-offset-2;
+  }
 }
 
-/* Floating-nav chrome surface — frosted, elevated card. Used on every
-   floating top/bottom nav container, expanded overlay, standalone
-   button (back/avatar/search), and search bar. Compose with shape
-   (rounded-full / rounded-3xl), layout, sizing. */
+/* Chrome surface (app bar, tab bar, standalone buttons). Opaque on purpose:
+   NN/g found text over translucent glass becomes illegible. */
 @utility floating-nav {
-  @apply bg-card/75 text-card-foreground border shadow-lg backdrop-blur;
+  @apply bg-card text-card-foreground border shadow-sm;
+}
+
+/* Tartan sash over a dancer colour set in --dc. */
+@utility sash {
+  background: var(--tartan), var(--dc, var(--primary));
 }
 
 /* Liquid-glass-style press feedback for floating-nav targets. Applied via
@@ -240,35 +285,39 @@
   }
 }
 
-/* Page title — large display heading used in route headers
-   (Policies, Profile, competition Info/Group/Event/Dancer, etc.). */
+/* Type scale (80% of the Front Row prototype, with body floored at 16px):
+   display 26 / title 21 / heading 17 / list 16 / body 16 / secondary 14 /
+   caption 12. All rem-based, so the in-app Text size setting and browser
+   zoom scale everything together. */
+@utility text-display {
+  @apply text-[1.625rem] leading-tight font-extrabold tracking-[-0.02em];
+}
 @utility text-title {
-  @apply text-4xl leading-[1.04] font-medium tracking-tight;
+  @apply text-[1.3125rem] leading-tight font-extrabold tracking-[-0.015em];
+}
+@utility text-heading {
+  @apply text-[1.0625rem] leading-snug font-bold;
 }
 
-/* Eyebrow / kicker label — small-caps editorial label. Font-sans is
-   explicit since body default is serif. Color and size are left to
-   the caller (most use text-foreground/65 + text-xs). */
+/* Small label above a heading. Sentence case, bold, no letter-spacing
+   games: uppercase tracked micro-labels are hard to read. */
 @utility text-eyebrow {
-  @apply font-sans font-medium tracking-[0.18em] uppercase;
+  @apply font-sans font-bold tracking-normal normal-case;
 }
 
-/* Shared list-row typography. Compose with structural classes
-   (truncate, line-clamp-*, color, mt-*). */
+/* Shared list-row typography. */
 @utility text-item-title {
-  @apply font-serif text-lg leading-tight font-medium tracking-tight;
+  @apply text-base leading-snug font-semibold;
 }
 @utility text-item-subtitle {
-  @apply font-serif text-base italic;
+  @apply text-sm leading-snug;
 }
 @utility text-item-meta {
-  @apply font-sans text-sm;
+  @apply text-sm;
 }
 
-/* Heading for collapsible disclosure sections (schedule day blocks,
-   group dance sections, event dance sections). */
 @utility text-disclosure-heading {
-  @apply font-serif text-xl leading-tight font-medium tracking-tight;
+  @apply text-[1.0625rem] leading-snug font-bold;
 }
 
 /* Skeleton shimmer — diagonal band sweeping left-to-right across the box.
@@ -277,6 +326,31 @@
 @keyframes skeleton-shimmer {
   100% {
     transform: translateX(200%);
+  }
+}
+
+/* A placing arriving: the medal flips in. */
+@keyframes medal {
+  0% {
+    transform: rotateY(90deg) scale(0.6);
+  }
+  60% {
+    transform: rotateY(-12deg) scale(1.12);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes live-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--live) 60%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
   }
 }
 
@@ -334,10 +408,9 @@
   to {
     corner-shape: var(--corner-shape);
     /* @apply floating-nav rounded-full — manually expanded; keep in sync. */
-    background: color-mix(in oklab, var(--color-card) 75%, transparent);
+    background: var(--color-card);
     color: var(--color-card-foreground);
     box-shadow: var(--shadow-lg);
-    backdrop-filter: blur(8px);
     border-radius: 9999px;
     border: 1px solid var(--color-border);
     box-sizing: border-box;

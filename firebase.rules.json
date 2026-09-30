@@ -46,6 +46,9 @@
       },
       "competitions:data": {
         "$competitionId": {
+          "dancers": {
+            ".indexOn": ["groupId"] // result alerts look up a group's entries
+          },
           "staff": {
             ".read": true
           },
@@ -79,6 +82,12 @@
         "$userId": {
           ".read": "auth !== null && auth.uid === $userId", // is SELF
           ".write": "auth !== null && auth.uid === $userId" // is SELF
+        }
+      },
+      "users:tokens": {
+        "$userId": {
+          ".read": "auth !== null && auth.uid === $userId", // is SELF
+          ".write": "auth !== null && auth.uid === $userId" // is SELF: device push tokens
         }
       },
       "users:permissions": {

@@ -12,7 +12,7 @@ import { dances as eventDances, getScheduleDanceName } from '@/lib/schedule'
 import { findGroupDancers } from '@/lib/results'
 import { staffMemberName } from '@/types/competition'
 import type { EnrichedGroup, ScheduleDance, StaffMember } from '@/types/competition'
-import { useFavoritesStore } from '@/stores/favorites'
+import { useFollowing } from '@/composables/useFollowing'
 import { useVtScope } from '@/lib/viewTransitionFocus'
 import { sanitizeRichText } from '@/lib/sanitize'
 
@@ -29,7 +29,7 @@ const {
   loadResults,
   loadStaff,
 } = useCompetition()
-const favorites = useFavoritesStore()
+const following = useFollowing()
 
 onMounted(async () => {
   await Promise.all([loadSchedule(), loadDancers(), loadResults(), loadStaff()])
@@ -114,9 +114,7 @@ function groupDancerCount(group: EnrichedGroup): number {
 }
 
 function groupFavoriteCount(group: EnrichedGroup): number {
-  return findGroupDancers(group.id, dancers.value).filter((d) =>
-    favorites.isFavoriteDancer(d.id),
-  ).length
+  return findGroupDancers(group.id, dancers.value).filter((d) => following.isFollowing(d)).length
 }
 
 const drawGroup = ref<EnrichedGroup | null>(null)
@@ -149,14 +147,14 @@ function closeJudge() {
   <article class="space-y-6">
     <div
       v-if="schedule === null"
-      class="text-muted-foreground text-lg italic"
+      class="text-muted-foreground text-base"
     >
       Loading…
     </div>
 
     <div
       v-else-if="!event"
-      class="text-muted-foreground text-lg italic"
+      class="text-muted-foreground text-base"
     >
       Event not found.
     </div>
@@ -180,7 +178,7 @@ function closeJudge() {
 
       <div
         v-if="!eventDanceList.length && !event.description"
-        class="text-muted-foreground text-lg italic"
+        class="text-muted-foreground text-base"
       >
         No dances scheduled.
       </div>
@@ -221,7 +219,7 @@ function closeJudge() {
                     </div>
                     <div
                       v-if="pool.judges.length"
-                      class="text-muted-foreground mt-1 text-sm italic"
+                      class="text-muted-foreground mt-1 text-sm"
                     >
                       <template
                         v-for="(judge, i) in pool.judges"
@@ -261,7 +259,7 @@ function closeJudge() {
 
             <div
               v-else-if="dance.danceId"
-              class="text-muted-foreground italic"
+              class="text-muted-foreground"
             >
               Platforms not yet assigned.
             </div>

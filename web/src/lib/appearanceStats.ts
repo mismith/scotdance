@@ -1,4 +1,5 @@
 import { isBeforeToday, parseDate } from '@/lib/format'
+import { now } from '@/lib/now'
 import type { Competition } from '@/types/competition'
 
 interface RawAppearance {
@@ -74,7 +75,7 @@ export function countTotalComps(list: AppearanceLike[]): number {
 }
 
 export function countCompsThisYear(list: AppearanceLike[]): number {
-  const year = new Date().getFullYear()
+  const year = now().getFullYear()
   const ids = new Set<string>()
   for (const a of list) {
     const d = a.competition?.date

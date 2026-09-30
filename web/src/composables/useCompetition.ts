@@ -1,6 +1,7 @@
 import {
   computed,
   inject,
+  onScopeDispose,
   provide,
   ref,
   watch,
@@ -8,22 +9,19 @@ import {
   type InjectionKey,
   type Ref,
 } from 'vue'
-import { get, child, ref as dbRefFn } from 'firebase/database'
-import { database, dataRef } from '@/firebase'
+import { get, child } from 'firebase/database'
+import { dataRef } from '@/firebase'
+import { fetchDancers, fetchResults, fetchSchedule, fetchStaff, subscribeResults } from '@/lib/competitionData'
+import { daysFromToday } from '@/lib/format'
+import { nowMs } from '@/lib/now'
 import { useMeStore } from '@/stores/me'
 import {
-  danceFullName,
-  dancerFullName,
-  groupFullName,
   type Category,
   type Competition,
-  type Dance,
-  type Dancer,
   type DrawsTree,
   type EnrichedDance,
   type EnrichedDancer,
   type EnrichedGroup,
-  type Group,
   type Platform,
   type PointsTree,
   type ResultsTree,
@@ -55,54 +53,16 @@ interface CompetitionContext {
   loadSchedule: () => Promise<void>
   /** null while unresolved; true if schedule has at least one day; false if missing or admin-disabled. */
   hasSchedule: ComputedRef<boolean | null>
+  /** Results stream live (competition is today). */
+  isLive: ComputedRef<boolean>
+  /** When the live results last changed, ms. */
+  liveResultsAt: Ref<number | null>
 }
 
 const competitionKey = Symbol('competition') as InjectionKey<CompetitionContext>
 
-const NAMESPACE = import.meta.env.VITE_FIREBASE_DATA_NAMESPACE || 'production'
-
 function competitionMetaRef(id: string) {
   return child(dataRef('competitions'), id)
-}
-
-function competitionDataPath(id: string, section: string) {
-  return `${NAMESPACE}/competitions:data/${id}/${section}`
-}
-
-function competitionStaffRef(id: string) {
-  return dbRefFn(database, competitionDataPath(id, 'staff'))
-}
-
-function competitionSectionRef(
-  id: string,
-  section:
-    | 'dancers'
-    | 'groups'
-    | 'categories'
-    | 'dances'
-    | 'results'
-    | 'points'
-    | 'schedule'
-    | 'platforms'
-    | 'draws',
-) {
-  return dbRefFn(database, competitionDataPath(id, section))
-}
-
-function snapshotToArray<T extends { id: string }>(
-  value: Record<string, Omit<T, 'id'>> | null,
-): T[] {
-  if (!value) return []
-  return Object.entries(value).map(([id, v]) => ({ id, ...v }) as T)
-}
-
-// Mirrors old sortByUserDragOrder: items without `_order` sink to the end
-// (rather than colliding with explicit `_order = 0`), ties broken by push id.
-function byDragOrder<T extends { id: string; _order?: number }>(a: T, b: T) {
-  const ao = a._order ?? Number.POSITIVE_INFINITY
-  const bo = b._order ?? Number.POSITIVE_INFINITY
-  if (ao !== bo) return ao - bo
-  return a.id.localeCompare(b.id)
 }
 
 export function provideCompetition(competitionId: Ref<string>): CompetitionContext {
@@ -199,8 +159,7 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
   async function loadStaff() {
     if (staffLoaded || !competitionId.value) return
     try {
-      const snap = await get(competitionStaffRef(competitionId.value))
-      staff.value = snapshotToArray<StaffMember>(snap.val()).sort(byDragOrder)
+      staff.value = await fetchStaff(competitionId.value)
       staffLoaded = true
     } catch (e) {
       error.value = e as Error
@@ -211,41 +170,11 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     if (dancersLoaded || !competitionId.value) return
     const id = competitionId.value
     try {
-      const [dancersSnap, groupsSnap, categoriesSnap] = await Promise.all([
-        get(competitionSectionRef(id, 'dancers')),
-        get(competitionSectionRef(id, 'groups')),
-        get(competitionSectionRef(id, 'categories')),
-      ])
-
-      const rawDancers = snapshotToArray<Dancer>(dancersSnap.val())
-      const rawGroups = snapshotToArray<Group>(groupsSnap.val())
-      const rawCategories = snapshotToArray<Category>(categoriesSnap.val())
-
-      const categoriesById = new Map(rawCategories.map((c) => [c.id, c]))
-      const enrichedGroupsById = new Map<string, EnrichedGroup>(
-        rawGroups.map((g) => {
-          const category = g.categoryId ? categoriesById.get(g.categoryId) : undefined
-          return [g.id, { ...g, category, fullName: groupFullName(g, category) }]
-        }),
-      )
-
-      categories.value = [...rawCategories].sort(byDragOrder)
-      groups.value = [...enrichedGroupsById.values()].sort(byDragOrder)
-
-      dancers.value = rawDancers
-        .filter((d) => d.firstName || d.lastName)
-        .map<EnrichedDancer>((d) => {
-          // RTDB stores `number` as a string; coerce so numeric sort works.
-          const parsed =
-            typeof d.number === 'string' ? Number.parseInt(d.number, 10) : d.number
-          return {
-            ...d,
-            number: Number.isFinite(parsed as number) ? (parsed as number) : undefined,
-            fullName: dancerFullName(d),
-            group: d.groupId ? enrichedGroupsById.get(d.groupId) : undefined,
-          }
-        })
-
+      const bundle = await fetchDancers(id)
+      if (id !== competitionId.value) return
+      dancers.value = bundle.dancers
+      groups.value = bundle.groups
+      categories.value = bundle.categories
       dancersLoaded = true
     } catch (e) {
       error.value = e as Error
@@ -256,20 +185,14 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     if (resultsLoaded || !competitionId.value) return
     const id = competitionId.value
     try {
-      const [dancesSnap, resultsSnap, pointsSnap] = await Promise.all([
-        get(competitionSectionRef(id, 'dances')),
-        get(competitionSectionRef(id, 'results')),
-        get(competitionSectionRef(id, 'points')),
-      ])
-
-      const rawDances = snapshotToArray<Dance>(dancesSnap.val())
-      dances.value = rawDances
-        .map<EnrichedDance>((d) => ({ ...d, fullName: danceFullName(d) }))
-        .sort(byDragOrder)
-
-      results.value = (resultsSnap.val() as ResultsTree | null) ?? {}
-      points.value = (pointsSnap.val() as PointsTree | null) ?? {}
-
+      const bundle = await fetchResults(id)
+      if (id !== competitionId.value) return
+      dances.value = bundle.dances
+      // A live subscription may already have delivered newer trees.
+      if (!liveResultsAt.value) {
+        results.value = bundle.results
+        points.value = bundle.points
+      }
       resultsLoaded = true
     } catch (e) {
       error.value = e as Error
@@ -280,24 +203,45 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     if (scheduleLoaded || !competitionId.value) return
     const id = competitionId.value
     try {
-      const [scheduleSnap, platformsSnap, drawsSnap] = await Promise.all([
-        get(competitionSectionRef(id, 'schedule')),
-        get(competitionSectionRef(id, 'platforms')),
-        get(competitionSectionRef(id, 'draws')),
-      ])
-      // RTDB stores `false` for admin-disabled sections and `null` for never-created.
-      // Both render as "no schedule" downstream.
-      const sval = scheduleSnap.val()
-      schedule.value = sval && typeof sval === 'object' ? (sval as Schedule) : null
+      const bundle = await fetchSchedule(id)
+      if (id !== competitionId.value) return
+      schedule.value = bundle.schedule
       scheduleResolved.value = true
-      platforms.value = snapshotToArray<Platform>(platformsSnap.val()).sort(byDragOrder)
-      const dval = drawsSnap.val()
-      draws.value = dval && typeof dval === 'object' ? (dval as DrawsTree) : {}
+      platforms.value = bundle.platforms
+      draws.value = bundle.draws
       scheduleLoaded = true
     } catch (e) {
       error.value = e as Error
     }
   }
+
+  // On competition day (and the day either side, for late entry), results
+  // stream in live instead of being read once.
+  const isLive = computed(() => {
+    const d = competition.value?.date
+    if (d == null) return false
+    const diff = daysFromToday(d)
+    return diff != null && diff >= -1 && diff <= 0
+  })
+  const liveResultsAt = ref<number | null>(null)
+  let stopLive: (() => void) | null = null
+  watch(
+    [competitionId, isLive],
+    ([id, live]) => {
+      stopLive?.()
+      stopLive = null
+      liveResultsAt.value = null
+      if (!id || !live) return
+      stopLive = subscribeResults(id, (bundle) => {
+        if (id !== competitionId.value) return
+        results.value = bundle.results
+        points.value = bundle.points
+        liveResultsAt.value = nowMs()
+      })
+    },
+    { immediate: true },
+  )
+  onScopeDispose(() => stopLive?.())
 
   watch(competitionId, loadMeta, { immediate: true })
 
@@ -322,6 +266,8 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     draws,
     loadSchedule,
     hasSchedule,
+    isLive,
+    liveResultsAt,
   }
 
   provide(competitionKey, ctx)

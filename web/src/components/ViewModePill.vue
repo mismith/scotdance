@@ -24,7 +24,8 @@ function select(id: ViewMode, close: () => void) {
 <template>
   <ExpandingPill id="viewmode" :aria-label="`View: ${current.label}`">
     <template #compact>
-      <component :is="current.icon" class="size-5" />
+      <component :is="current.icon" class="text-primary size-[1.125rem]" />
+      {{ current.label }}
     </template>
 
     <template #expanded="{ close }">

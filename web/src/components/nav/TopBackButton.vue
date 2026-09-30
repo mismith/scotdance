@@ -1,28 +1,47 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
 import { ChevronLeft } from '@lucide/vue'
-import { useCanGoBack } from '@/lib/back'
+import { backPath, useCanGoBack } from '@/lib/back'
+import { backLabelFor } from '@/lib/backLabels'
 
+// Labelled Back: says where it goes. When there's no in-app history (a deep
+// link, a cold start), it falls back to `fallback` so a parent opening a
+// shared results link still has a way out.
+const props = defineProps<{
+  fallback?: { to: RouteLocationRaw; label: string }
+}>()
+
+const route = useRoute()
 const router = useRouter()
 const canGoBack = useCanGoBack()
+
+const label = computed(() => {
+  void route.fullPath
+  if (canGoBack.value) return backLabelFor(backPath())
+  return props.fallback?.label ?? 'Back'
+})
+
+const visible = computed(() => canGoBack.value || !!props.fallback)
 
 function onClick(event: MouseEvent) {
   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
   event.preventDefault()
-  router.back()
+  if (canGoBack.value) router.back()
+  else if (props.fallback) router.push(props.fallback.to)
 }
 </script>
 
 <template>
   <button
-    v-if="canGoBack"
+    v-if="visible"
     v-tap-feedback
     type="button"
-    class="floating-nav pointer-events-auto flex size-12 shrink-0 items-center justify-center rounded-full [view-transition-name:nav-back] hover:opacity-90"
-    title="Back"
-    aria-label="Back"
+    class="bg-card text-primary pointer-events-auto flex h-11 max-w-[55vw] shrink-0 items-center gap-0.5 rounded-full border pr-4 pl-2 text-[0.9375rem] font-bold shadow-sm [view-transition-name:nav-back] hover:bg-accent"
+    :aria-label="`Back to ${label}`"
     @click="onClick"
   >
-    <ChevronLeft class="size-5" />
+    <ChevronLeft class="size-5 shrink-0" stroke-width="2.5" />
+    <span class="truncate">{{ label }}</span>
   </button>
 </template>

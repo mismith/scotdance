@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, useTemplateRef, watch } from 'vue'
+import { ChevronDown } from '@lucide/vue'
 import Popover from '@/components/Popover.vue'
 import { useExpandedPill } from '@/composables/useExpandedPill'
 import { injectPillRow } from '@/composables/usePillRow'
@@ -52,7 +53,7 @@ defineExpose({ open, close })
         v-tap-feedback
         type="button"
         :class="[
-          'hover:bg-card-foreground/15 pointer-events-auto relative inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-3xl px-4 font-sans text-sm font-medium whitespace-nowrap transition-colors',
+          'bg-card hover:bg-accent pointer-events-auto relative inline-flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-full border px-4 font-sans text-[0.9375rem] font-bold whitespace-nowrap shadow-sm transition-colors',
           anyOpen ? 'pointer-events-none opacity-0' : '',
         ]"
         :aria-label="ariaLabel"
@@ -60,11 +61,7 @@ defineExpose({ open, close })
         @click="toggle"
       >
         <slot name="compact" />
-        <span
-          v-if="active"
-          aria-hidden="true"
-          class="bg-secondary ring-card pointer-events-none absolute top-1 right-1 size-2 rounded-full ring-2"
-        />
+        <ChevronDown class="text-muted-foreground -mr-1 size-4 shrink-0" aria-hidden="true" />
       </button>
     </template>
 

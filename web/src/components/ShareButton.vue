@@ -39,12 +39,11 @@ async function handleClick() {
   <button
     v-tap-feedback
     type="button"
-    :title="justCopied ? 'Link copied' : 'Share'"
-    aria-label="Share"
-    class="hover:bg-accent flex size-9 items-center justify-center rounded-full transition-colors"
+    class="bg-card hover:bg-accent flex h-11 items-center gap-1.5 rounded-full border px-4 text-[0.9375rem] font-bold shadow-sm transition-colors"
     @click="handleClick"
   >
-    <Check v-if="justCopied" class="size-4" />
-    <Share v-else class="size-4" />
+    <Check v-if="justCopied" class="size-[1.125rem]" />
+    <Share v-else class="size-[1.125rem]" />
+    {{ justCopied ? 'Link copied' : 'Share' }}
   </button>
 </template>

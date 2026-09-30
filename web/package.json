@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@floating-ui/vue": "^1.1.11",
+    "@fontsource-variable/atkinson-hyperlegible-next": "^5.3.0",
     "@googlemaps/js-api-loader": "^2.0.2",
     "@lucide/vue": "^1.14.0",
     "@unhead/vue": "^3.1.0",

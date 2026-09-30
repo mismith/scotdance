@@ -231,7 +231,7 @@ const emptyStateMessage = computed(() => {
         </div>
       </div>
 
-      <div v-else-if="emptyStateMessage" class="text-muted-foreground text-lg italic">
+      <div v-else-if="emptyStateMessage" class="text-muted-foreground text-base">
         {{ emptyStateMessage }}
       </div>
 

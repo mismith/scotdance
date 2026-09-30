@@ -3,7 +3,7 @@ import { nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { Timeline, ChevronDown, Trophy, Users, IdCard, Compass, Link } from '@lucide/vue'
 import SmoothCollapse from '@/components/SmoothCollapse.vue'
-import TopBackButton from '@/components/nav/TopBackButton.vue'
+import AppBar from '@/components/nav/AppBar.vue'
 import { useCrisp } from '@/composables/useCrisp'
 import { PLATFORM } from '@/composables/useUpdate'
 import { version } from '../../package.json'
@@ -19,19 +19,19 @@ const features = [
     eyebrow: 'Find',
     icon: Users,
     title: 'Dancers',
-    body: 'Search by number, name, or age group. Mark favourites for quick access throughout the day.',
+    body: 'Search by number, name, or age group. Follow your dancers to see their day at a glance.',
   },
   {
     eyebrow: 'Check',
     icon: Timeline,
     title: 'Schedules',
-    body: 'See start times, platforms, and the order of dances. Championship draws included.',
+    body: 'See sessions, platforms, and the dancing order. Championship draws included.',
   },
   {
     eyebrow: 'Watch',
     icon: Trophy,
     title: 'Results',
-    body: 'Callbacks and placings, posted as they are announced. Archived for review after the competition.',
+    body: 'Callbacks and placings as soon as they’re entered, with an alert for the dancers you follow.',
   },
 ]
 
@@ -79,10 +79,6 @@ const faqs: { id: string; q: string; a?: string }[] = [
 ]
 
 const featuresRef = ref<HTMLElement | null>(null)
-function scrollToFeatures(e: Event) {
-  e.preventDefault()
-  featuresRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
 
 const route = useRoute()
 const router = useRouter()
@@ -124,52 +120,45 @@ watch(() => route.hash, applyHash)
     class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]"
     data-route="about"
   >
-    <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
-      <div class="mx-auto flex max-w-3xl">
-        <TopBackButton />
-      </div>
-    </nav>
+    <AppBar title="About ScotDance" :fallback="{ to: { name: 'more' }, label: 'More' }" />
 
     <!-- HERO -->
-    <section class="relative flex min-h-dvh flex-col items-center justify-center px-6">
+    <section class="relative flex min-h-[70dvh] flex-col items-center justify-center px-6 pt-(--chrome-top)">
       <header
-        class="absolute inset-x-0 top-0 flex flex-col items-center gap-2 pt-8 text-center"
+        class="absolute inset-x-0 top-(--chrome-top) flex flex-col items-center gap-2 pt-4 text-center"
       >
         <img src="/img/touchicon.png" alt="" class="size-10 rounded-md shadow-sm" />
         <div class="text-lg">ScotDance.app</div>
       </header>
 
       <div class="mb-32 space-y-5 text-center">
-        <h1 class="text-5xl font-medium tracking-tight text-balance md:text-7xl">
+        <h1 class="text-[2.5rem] leading-tight font-extrabold tracking-tight text-balance md:text-6xl">
           Highland dance,<br />in your pocket.
         </h1>
-        <p class="text-muted-foreground mx-auto max-w-2xl text-xl md:text-2xl">
+        <p class="text-muted-foreground mx-auto max-w-2xl text-lg md:text-xl">
           Browse competitions, follow dancers, and see results as they happen.
         </p>
       </div>
 
-      <a
-        href="#features"
-        class="text-muted-foreground hover:text-foreground absolute inset-x-0 mx-auto flex w-fit flex-col items-center gap-1.5 transition-colors"
-        :style="{ bottom: 'calc(7rem + env(safe-area-inset-bottom))' }"
-        aria-label="Scroll to features"
-        @click="scrollToFeatures"
+      <RouterLink
+        :to="{ name: 'home' }"
+        class="bg-primary text-primary-foreground absolute inset-x-0 mx-auto flex h-12 w-fit items-center gap-2 rounded-xl px-6 text-base font-bold"
+        :style="{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }"
       >
-        <span class="text-eyebrow text-[10px]"> Discover </span>
-        <ChevronDown class="size-4 animate-bounce" />
-      </a>
+        Go to your dancers
+      </RouterLink>
     </section>
 
     <!-- FEATURES -->
     <section
       id="features"
       ref="featuresRef"
-      class="border-border/60 border-t px-6 py-24 md:py-32"
+      class="border-border/60 border-t px-6 py-16 md:py-24"
     >
       <div class="mx-auto w-full max-w-5xl">
         <header class="mb-16 space-y-4">
           <div class="text-foreground text-eyebrow text-sm">On the day</div>
-          <h2 class="text-5xl font-medium tracking-tight md:text-5xl">
+          <h2 class="text-[2rem] leading-tight font-extrabold tracking-tight">
             A program of events, without the paper.
           </h2>
           <p class="text-muted-foreground text-lg md:text-xl">
@@ -189,7 +178,7 @@ watch(() => route.hash, applyHash)
                 <div class="text-foreground/65 text-eyebrow text-xs">
                   {{ f.eyebrow }}
                 </div>
-                <h3 class="text-2xl font-medium tracking-tight md:text-3xl">
+                <h3 class="text-xl font-extrabold">
                   {{ f.title }}
                 </h3>
               </div>
@@ -202,11 +191,11 @@ watch(() => route.hash, applyHash)
     </section>
 
     <!-- AGGREGATOR / CROSS-COMPETITION -->
-    <section class="border-border/60 border-t px-6 py-24 md:py-32">
+    <section class="border-border/60 border-t px-6 py-16 md:py-24">
       <div class="mx-auto w-full max-w-5xl">
         <header class="mb-16 space-y-4">
           <div class="text-foreground text-eyebrow text-sm">Over the years</div>
-          <h2 class="text-5xl font-medium tracking-tight md:text-5xl">
+          <h2 class="text-[2rem] leading-tight font-extrabold tracking-tight">
             Multiple sources, stitched together.
           </h2>
           <p class="text-muted-foreground text-lg md:text-xl">
@@ -225,7 +214,7 @@ watch(() => route.hash, applyHash)
                 <div class="text-foreground/65 text-eyebrow text-xs">
                   {{ f.eyebrow }}
                 </div>
-                <h3 class="text-2xl font-medium tracking-tight md:text-3xl">
+                <h3 class="text-xl font-extrabold">
                   {{ f.title }}
                 </h3>
               </div>
@@ -240,12 +229,12 @@ watch(() => route.hash, applyHash)
     <!-- DOWNLOAD / CTA — web only; in-app this is redundant -->
     <section
       v-if="isWeb"
-      class="bg-muted/40 border-border/60 border-t px-6 py-24 md:py-32"
+      class="bg-muted/40 border-border/60 border-t px-6 py-16 md:py-24"
     >
       <div class="mx-auto flex w-full max-w-4xl flex-col items-center gap-10 text-center">
         <div class="space-y-4">
           <div class="text-foreground text-eyebrow text-sm">Take it with you</div>
-          <h2 class="text-5xl font-medium tracking-tight md:text-5xl">
+          <h2 class="text-[2rem] leading-tight font-extrabold tracking-tight">
             From the warm-up to the awards.
           </h2>
           <p class="text-muted-foreground mx-auto max-w-xl text-lg md:text-xl">
@@ -278,17 +267,17 @@ watch(() => route.hash, applyHash)
           :to="{ name: 'competitions' }"
           class="text-primary hover:text-primary/80 px-1 py-2 font-sans text-sm font-medium"
         >
-          Continue in your browser →
+          Keep using it in your browser
         </RouterLink>
       </div>
     </section>
 
     <!-- FAQ -->
-    <section class="border-border/60 border-t px-6 py-24 md:py-32">
+    <section id="faqs" class="border-border/60 scroll-mt-(--chrome-top) border-t px-6 py-16 md:py-24">
       <div class="mx-auto w-full max-w-3xl">
         <header class="mb-12 space-y-4">
           <div class="text-foreground text-eyebrow text-sm">Common questions</div>
-          <h2 class="text-5xl font-medium tracking-tight md:text-5xl">FAQs</h2>
+          <h2 class="text-[2rem] leading-tight font-extrabold tracking-tight">FAQs</h2>
         </header>
 
         <div class="border-border/60 border-t">

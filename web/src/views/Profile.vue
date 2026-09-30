@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 import { gravatarUrl } from '@/lib/gravatar'
 import Dialog from '@/components/Dialog.vue'
-import TopBackButton from '@/components/nav/TopBackButton.vue'
+import AppBar from '@/components/nav/AppBar.vue'
 
 const auth = useAuthStore()
 const me = useMeStore()
@@ -120,14 +120,10 @@ const submitDisabled = computed(() => {
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
-    <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
-      <div class="mx-auto flex max-w-3xl items-center gap-2">
-        <TopBackButton />
-      </div>
-    </nav>
+    <AppBar title="Account" :fallback="{ to: { name: 'more' }, label: 'More' }" />
 
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-[calc(var(--chrome-top)+1rem)]">
-      <h1 class="text-title">Profile</h1>
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-[calc(var(--chrome-top)+0.25rem)]">
+      <h1 class="text-display">Account</h1>
       <section class="flex items-center gap-4">
         <img
           v-if="avatarUrl"

@@ -17,7 +17,6 @@ const { name, loading, notFound } = provideVenueProfile(toRef(venueId))
 
 const favorites = useFavoritesStore()
 const isFavorite = computed(() => favorites.isFavorite('venues', venueId.value))
-const isInfo = computed(() => String(route.name ?? '') === 'venue.info')
 </script>
 
 <template>
@@ -37,11 +36,10 @@ const isInfo = computed(() => String(route.name ?? '') === 'venue.info')
   >
     <template #actions>
       <FavoriteButton
-        v-if="isInfo"
         :id="venueId"
         type="venues"
         :name="name"
-        class="hover:bg-card-foreground/10! flex! size-9! items-center justify-center rounded-full! p-0! [view-transition-name:match-element]"
+        labelled
       />
     </template>
   </EntityLayout>

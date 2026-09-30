@@ -25,7 +25,8 @@ export function useScrolledPast(
       if (!entry) return
       scrolledPast.value = entry.intersectionRatio < 1
     },
-    { threshold: 1 },
+    // Flip once the title slides under the opaque app bar (3.5rem + notch).
+    { threshold: 1, rootMargin: '-56px 0px 0px 0px' },
   )
   return scrolledPast
 }

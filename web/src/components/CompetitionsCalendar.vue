@@ -13,6 +13,7 @@ import {
   parseDate,
 } from '@/lib/format'
 import { useFavoritesStore } from '@/stores/favorites'
+import { now } from '@/lib/now'
 
 const props = withDefaults(
   defineProps<{
@@ -30,7 +31,7 @@ const props = withDefaults(
 
 const favorites = useFavoritesStore()
 
-const today = startOfDay(new Date())
+const today = startOfDay(now())
 
 const cursor = ref(new Date(today.getFullYear(), today.getMonth(), 1))
 const selected = ref<Date | null>(new Date(today))

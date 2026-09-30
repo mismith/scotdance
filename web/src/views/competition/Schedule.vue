@@ -1,156 +1,153 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { useLocalStorage } from '@vueuse/core'
-import { CalendarDays, ChevronRight, ClipboardList, Table, Trophy } from '@lucide/vue'
-import type { FunctionalComponent } from 'vue'
+import { CalendarDays, Check, ChevronRight, Star } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
-import { blocks, dances, days, events, slugline } from '@/lib/schedule'
+import { useCompetitionDays } from '@/composables/useCompetitionDays'
+import { useFollowing } from '@/composables/useFollowing'
+import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
+import { blocks, dances as eventDances, days, events, slugline } from '@/lib/schedule'
 import { sanitizeRichText } from '@/lib/sanitize'
-import type { ScheduleEvent } from '@/types/competition'
 import { formatWeekday } from '@/lib/format'
-import DisclosureHeader from '@/components/DisclosureHeader.vue'
+import type { EnrichedDancer, ScheduleEvent } from '@/types/competition'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
-import SmoothCollapse from '@/components/SmoothCollapse.vue'
-import { useVtScope } from '@/lib/viewTransitionFocus'
 
-const { competitionId, schedule, loadSchedule, hasSchedule } = useCompetition()
+// Every session open, in order. Events that include someone you follow say
+// so, and events whose results are all posted say "Results in". The tab is
+// always here, even before a schedule is posted, so it never moves.
+const setHeader = injectInfoHeaderSetter()
+const {
+  competitionId,
+  schedule,
+  platforms,
+  results,
+  loadSchedule,
+  loadDancers,
+  loadResults,
+  hasSchedule,
+} = useCompetition()
+const { followedByGroup } = useCompetitionDays()
+const following = useFollowing()
 
-onMounted(loadSchedule)
+const ready = ref(false)
+onMounted(async () => {
+  await Promise.all([loadSchedule(), loadDancers(), loadResults()])
+  ready.value = true
+})
 
-const dayList = computed(() => days(schedule.value))
+const platformName = computed(() => new Map(platforms.value.map((p) => [p.id, p.name ?? ''])))
 
-const expanded = useLocalStorage<Record<string, Record<string, boolean>>>(
-  'schedule:expandedBlocks',
-  {},
-)
-
-function isExpanded(dayId: string, blockId: string, hasEvents: boolean): boolean {
-  const map = expanded.value[dayId] ?? {}
-  if (blockId in map) return map[blockId]
-  return hasEvents
+interface EventInfo {
+  mine: Array<{ dancer: EnrichedDancer; color: string | null; platform: string | null }>
+  posted: number
+  total: number
 }
 
-function toggle(dayId: string, blockId: string, hasEvents: boolean) {
-  const current = expanded.value[dayId] ?? {}
-  expanded.value = {
-    ...expanded.value,
-    [dayId]: { ...current, [blockId]: !isExpanded(dayId, blockId, hasEvents) },
+function info(event: ScheduleEvent): EventInfo {
+  const mine = new Map<string, EventInfo['mine'][number]>()
+  let posted = 0
+  let total = 0
+  for (const sd of eventDances(event)) {
+    if (!sd.danceId || !sd.platforms) continue
+    for (const [pid, slot] of Object.entries(sd.platforms)) {
+      for (const gid of slot.orderedGroupIds ?? []) {
+        total++
+        const raw = results.value?.[gid]?.[sd.danceId]
+        if (raw === false || (Array.isArray(raw) && raw.length)) posted++
+        for (const d of followedByGroup.value.get(gid) ?? []) {
+          if (!mine.has(d.id))
+            mine.set(d.id, {
+              dancer: d,
+              color: following.colorFor(d.dancerId),
+              platform: platformName.value.get(pid) || null,
+            })
+        }
+      }
+    }
   }
+  return { mine: [...mine.values()], posted, total }
 }
 
-function eventIcon(event: ScheduleEvent): FunctionalComponent | null {
-  const name = event.name ?? ''
-  if (/results?|awards?/i.test(name)) return Trophy as unknown as FunctionalComponent
-  if (/registration|check[- ]?in/i.test(name))
-    return ClipboardList as unknown as FunctionalComponent
-  if (dances(event).some((d) => Boolean(d.danceId)))
-    return Table as unknown as FunctionalComponent
-  return null
-}
-
-const vt = useVtScope('event')
+const dayList = computed(() =>
+  days(schedule.value).map((day) => ({
+    day,
+    blocks: blocks(day).map((block) => ({
+      block,
+      time: slugline(block.description),
+      events: events(block).map((event) => ({ event, info: info(event) })),
+    })),
+  })),
+)
 </script>
 
 <template>
-  <div class="space-y-8">
-    <div v-if="hasSchedule === null" class="space-y-6" aria-busy="true" aria-live="polite">
-      <span class="sr-only">Loading schedule…</span>
-      <div v-for="i in 2" :key="i" class="space-y-3">
-        <Skeleton class="h-7 w-1/3" />
-        <Skeleton v-for="j in 3" :key="j" class="h-12 w-full" />
-      </div>
+  <div class="space-y-3">
+    <header :ref="setHeader" class="space-y-1">
+      <h1 class="text-display">Schedule</h1>
+      <p class="text-muted-foreground text-sm">Times are approximate. Awards are usually given at the end of each session.</p>
+    </header>
+
+    <div v-if="hasSchedule === null || !ready" class="space-y-2" aria-busy="true">
+      <Skeleton v-for="i in 5" :key="i" class="h-14 w-full rounded-xl!" />
     </div>
     <EmptyState
       v-else-if="hasSchedule === false"
       :icon="CalendarDays"
       title="No schedule yet"
-      description="The competition organizers haven’t posted a schedule. Check back closer to the date."
+      description="Organisers usually post it a few days before the competition. Platforms and dancing order appear here when they do."
     />
 
-    <section v-for="day in dayList" :key="day.id" class="space-y-4">
-      <header>
-        <h2 class="text-3xl font-medium tracking-tight">
-          {{ day.name || formatWeekday(day.date) || 'Day' }}
-        </h2>
-        <div
-          v-if="day.description"
-          class="text-muted-foreground mt-1 text-lg"
-          v-html="sanitizeRichText(day.description)"
-        />
-      </header>
+    <section v-for="d in dayList" :key="d.day.id" class="space-y-3">
+      <h2 v-if="dayList.length > 1" class="text-title pt-2">
+        {{ d.day.name || formatWeekday(d.day.date) || 'Day' }}
+      </h2>
+      <div
+        v-if="d.day.description"
+        class="text-muted-foreground text-[0.9375rem]"
+        v-html="sanitizeRichText(d.day.description)"
+      />
 
-      <div v-for="block in blocks(day)" :key="block.id" class="space-y-1">
-        <DisclosureHeader
-          :label="block.name || 'Block'"
-          :expanded="isExpanded(day.id, block.id, !!block.events)"
-          @toggle="toggle(day.id, block.id, !!block.events)"
+      <section v-for="b in d.blocks" :key="b.block.id">
+        <h3
+          class="bg-background sticky top-(--chrome-top) z-10 flex items-baseline justify-between gap-2 py-2 text-[1.0625rem] font-extrabold"
         >
-          <span
-            v-if="block.description"
-            class="text-muted-foreground max-w-[40%] truncate text-sm"
-          >
-            {{ slugline(block.description) }}
-          </span>
-        </DisclosureHeader>
-
-        <SmoothCollapse :open="isExpanded(day.id, block.id, !!block.events)">
-          <ul>
-            <li v-for="event in events(block)" :key="event.id" class="flex items-center">
-              <RouterLink
-                v-slot="{ href, navigate }"
-                :to="{
-                  name: 'competition.event',
-                  params: {
-                    competitionId,
-                    dayId: day.id,
-                    blockId: block.id,
-                    eventId: event.id,
-                  },
-                }"
-                custom
-              >
-                <a
-                  :href="href"
-                  class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
-                  @click="vt.onNavigate($event, navigate, event.id)"
-                >
-                  <span
-                    v-if="eventIcon(event)"
-                    class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full"
-                    aria-hidden="true"
-                  >
-                    <component :is="eventIcon(event)" class="size-4" />
-                  </span>
-                  <span v-else class="size-9 shrink-0" aria-hidden="true" />
-                  <div class="min-w-0 flex-1">
-                    <div
-                      class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                      :style="{ viewTransitionName: vt.name(event.id, 'name') }"
-                    >
-                      {{ event.name || 'Event' }}
-                    </div>
-                    <div
-                      v-if="event.description"
-                      class="text-item-meta text-muted-foreground mt-1 truncate"
-                    >
-                      {{ slugline(event.description) }}
-                    </div>
-                  </div>
-                  <ChevronRight class="text-muted-foreground size-4 shrink-0" />
-                </a>
-              </RouterLink>
-            </li>
-            <li
-              v-if="!events(block).length"
-              class="text-muted-foreground px-1 py-3 text-lg italic"
+          <span class="truncate">{{ b.block.name || 'Session' }}</span>
+          <span v-if="b.time" class="text-muted-foreground shrink-0 text-sm font-bold tabular-nums">{{ b.time }}</span>
+        </h3>
+        <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+          <li v-for="{ event, info: i } in b.events" :key="event.id">
+            <RouterLink
+              :to="{
+                name: 'competition.event',
+                params: { competitionId, dayId: d.day.id, blockId: b.block.id, eventId: event.id },
+              }"
+              class="relative flex min-h-14 items-center gap-3 py-2.5 pr-2 pl-4 hover:bg-accent"
+              :style="i.mine.length ? { '--dc': i.mine[0].color ?? 'var(--primary)' } : undefined"
             >
-              No events.
-            </li>
-          </ul>
-        </SmoothCollapse>
-      </div>
+              <span v-if="i.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
+              <span class="min-w-0 flex-1">
+                <span class="block text-base leading-snug font-bold">{{ event.name || 'Event' }}</span>
+                <span v-if="event.description" class="text-muted-foreground block truncate text-sm">
+                  {{ slugline(event.description) }}
+                </span>
+                <span v-for="m in i.mine" :key="m.dancer.id" class="mt-1 flex items-center gap-1 text-sm font-bold">
+                  <Star class="size-3.5 fill-current" :style="{ color: m.color ?? 'var(--primary)' }" />
+                  {{ m.dancer.firstName }} · {{ m.dancer.number }}<template v-if="m.platform"> · Platform {{ m.platform }}</template>
+                </span>
+              </span>
+              <span
+                v-if="i.total && i.posted === i.total"
+                class="bg-done text-done-foreground inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-[0.8125rem] font-bold"
+              >
+                <Check class="size-3.5" stroke-width="3" /> Results in
+              </span>
+              <ChevronRight class="text-muted-foreground size-5 shrink-0" />
+            </RouterLink>
+          </li>
+          <li v-if="!b.events.length" class="text-muted-foreground px-4 py-3 text-base">Nothing listed yet.</li>
+        </ul>
+      </section>
     </section>
   </div>
 </template>

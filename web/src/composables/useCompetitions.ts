@@ -3,6 +3,7 @@ import { get, orderByChild, query, ref as dbRef, startAt } from 'firebase/databa
 import { database } from '@/firebase'
 import { useMeStore } from '@/stores/me'
 import { parseDate } from '@/lib/format'
+import { now } from '@/lib/now'
 import type { Competition } from '@/types/competition'
 
 const NAMESPACE = import.meta.env.VITE_FIREBASE_DATA_NAMESPACE || 'production'
@@ -12,7 +13,7 @@ export interface CompetitionListItem extends Competition {
 }
 
 function recentCutoffDateString(): string {
-  const d = new Date()
+  const d = now()
   d.setMonth(d.getMonth() - 3)
   return d.toISOString().slice(0, 10)
 }

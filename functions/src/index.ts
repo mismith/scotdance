@@ -8,6 +8,7 @@ import * as Judges from './judges';
 import * as Pipers from './pipers';
 import * as Venues from './venues';
 import { getOnSearchAll } from './search';
+import * as Notifications from './notifications';
 import { runBackfillCoords } from './backfillCoords';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isCypress, isEmulator } from './utility/env';
@@ -171,3 +172,30 @@ export const backfillPiperBackPointers = configHttps.onCall(
 );
 
 export const searchAll = configHttps.onCall(getOnSearchAll(appConfig.db));
+
+// Result alerts: notify followers of a dancer when their placings are posted.
+export const notifyFollowersOnResult = !isCypress() && configDatabase
+  .ref(`/${env}/competitions:data/{competitionId}/results/{groupId}/{danceId}`)
+  .onWrite(Notifications.getOnResultsWritten(appConfig.db, app, isEmulator()));
+export const followerIndexOnFavorite = !isCypress() && configDatabase
+  .ref(`/${env}/users:favorites/{uid}/dancers/{dancerId}`)
+  .onWrite(Notifications.getOnFavoriteWritten(appConfig.db));
+export const backfillFollowers = configHttps.onCall(async (data, ctx) => {
+  await ensureAdmin(ctx, appConfig.db);
+  return Notifications.getOnBackfillFollowers(appConfig.db)();
+});
+export const followerIndexOnCompetitionFavorite = !isCypress() && configDatabase
+  .ref(`/${env}/users:favorites/{uid}/competitions/{competitionId}`)
+  .onWrite(Notifications.getOnCompetitionFavoriteWritten(appConfig.db));
+export const notifyFollowersOnPublished = !isCypress() && configDatabase
+  .ref(`/${env}/competitions/{competitionId}/published`)
+  .onWrite(Notifications.getOnCompetitionPublished(appConfig.db, app, isEmulator()));
+// 06:30 Eastern. Most competitions are in North America; per-competition time
+// zones would need a zone on each competition (not in the data yet).
+export const morningSummaries = !isCypress() && functions.pubsub
+  .schedule('30 6 * * *')
+  .timeZone('America/Toronto')
+  .onRun(async () => {
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Toronto' }).format(new Date());
+    return Notifications.sendMorningSummaries(appConfig.db, app, isEmulator(), today);
+  });

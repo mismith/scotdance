@@ -46,7 +46,7 @@ function onBackdropClick(e: MouseEvent) {
     :inert="!open"
     :class="[
       // Reset native dialog defaults.
-      'bg-background max-h-full max-w-full border-0 p-0 text-inherit',
+      'bg-card max-h-full max-w-full border-0 p-0 text-inherit',
       // Width by size prop.
       size === 'sm' ? 'w-full md:max-w-sm' : 'w-full md:max-w-md',
       // Layout per variant.
@@ -59,7 +59,7 @@ function onBackdropClick(e: MouseEvent) {
         'max-md:fixed max-md:inset-x-0 max-md:top-auto max-md:bottom-0 max-md:m-0 max-md:max-h-[calc(100svh-3rem)] max-md:rounded-t-3xl max-md:overflow-visible',
         // Mobile: visual-only background extension below the sheet so the
         // rubber-band overshoot doesn't expose the backdrop underneath.
-        'max-md:after:pointer-events-none max-md:after:absolute max-md:after:inset-x-0 max-md:after:top-full max-md:after:h-32 max-md:after:bg-background',
+        'max-md:after:pointer-events-none max-md:after:absolute max-md:after:inset-x-0 max-md:after:top-full max-md:after:h-32 max-md:after:bg-card',
         // Desktop: match center (chrome-aware centered card).
         'md:fixed md:inset-x-0 md:top-[calc(var(--chrome-top)+1rem)] md:bottom-[calc(var(--chrome-bottom)+1rem)] md:m-auto md:h-fit md:max-h-[calc(100vh-var(--chrome-top)-var(--chrome-bottom)-4rem)] md:rounded-3xl',
       ],
@@ -88,7 +88,7 @@ function onBackdropClick(e: MouseEvent) {
   >
     <header
       v-if="variant === 'sheet' && slots.header"
-      class="flex items-start gap-3 border-b p-4 pr-2"
+      class="flex items-center gap-3 border-b p-4 pr-3"
     >
       <div class="min-w-0 flex-1 space-y-1">
         <slot name="header" />
@@ -96,18 +96,17 @@ function onBackdropClick(e: MouseEvent) {
       <button
         v-if="closable"
         type="button"
-        title="Close"
-        class="hover:bg-accent text-muted-foreground flex size-11 shrink-0 items-center justify-center rounded-full"
+        class="bg-card hover:bg-accent flex h-11 shrink-0 items-center rounded-full border px-4 text-[0.9375rem] font-bold"
         @click="emit('close')"
       >
-        <X class="size-4" />
+        Close
       </button>
     </header>
 
     <button
       v-if="closable && !(variant === 'sheet' && slots.header)"
       type="button"
-      title="Close"
+      aria-label="Close"
       class="hover:bg-accent text-muted-foreground absolute top-2 right-2 z-10 flex size-11 items-center justify-center rounded-full"
       @click="emit('close')"
     >

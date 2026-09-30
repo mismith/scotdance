@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import AccountAvatarButton from '@/components/AccountAvatarButton.vue'
 import FavoriteButton from '@/components/FavoriteButton.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
-import TopBackButton from '@/components/nav/TopBackButton.vue'
+import AppBar from '@/components/nav/AppBar.vue'
 import { sectionMeta } from '@/lib/sectionMeta'
 import { focusVt, useVtScope } from '@/lib/viewTransitionFocus'
 import {
@@ -93,43 +92,15 @@ async function open(id: string, rowKey: string) {
 
 const titleAnchor = ref<HTMLElement | null>(null)
 const scrolledPastTitle = useScrolledPast(titleAnchor)
-
-function scrollToTop() {
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
 </script>
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
-    <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
-      <div class="mx-auto flex h-12 max-w-3xl items-center gap-2">
-        <TopBackButton />
-        <div class="min-w-0 flex-1">
-          <Transition
-            enter-active-class="transition ease-rubber-band"
-            enter-from-class="-translate-y-full opacity-0"
-            leave-active-class="transition ease-out"
-            leave-to-class="-translate-y-full opacity-0"
-          >
-            <button
-              v-if="scrolledPastTitle"
-              type="button"
-              class="floating-nav pointer-events-auto flex h-12 w-full items-center rounded-full px-5 text-left hover:opacity-90"
-              @click="scrollToTop"
-            >
-              <span class="truncate font-serif text-lg font-medium tracking-tight">
-                {{ section.label }}
-              </span>
-            </button>
-          </Transition>
-        </div>
-        <AccountAvatarButton />
-      </div>
-    </nav>
+    <AppBar :title="section.label" :show-title="scrolledPastTitle" :fallback="{ to: { name: 'more' }, label: 'More' }" />
 
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-[calc(var(--chrome-top)+1rem)]">
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-[calc(var(--chrome-top)+0.25rem)]">
       <header ref="titleAnchor">
-        <h1 class="text-title">
+        <h1 class="text-display">
           {{ section.label }}
         </h1>
       </header>
@@ -150,13 +121,13 @@ function scrollToTop() {
 
         <div
           v-else-if="!sorted.length"
-          class="text-muted-foreground text-lg italic"
+          class="text-muted-foreground text-base"
         >
           {{ emptyMessage || `No ${section.label.toLowerCase()} yet.` }}
         </div>
 
         <section v-if="favoriteRows.length" class="space-y-2">
-          <SectionHeader label="Favourites" />
+          <SectionHeader label="Following" />
           <ul>
             <li v-for="row in favoriteRows" :key="row.id" class="flex items-center">
               <button

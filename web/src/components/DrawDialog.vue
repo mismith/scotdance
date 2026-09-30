@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useCompetition } from '@/composables/useCompetition'
-import { useFavoritesStore } from '@/stores/favorites'
+import { useFollowing } from '@/composables/useFollowing'
 import { findGroupDancers } from '@/lib/results'
 import type {
   EnrichedDancer,
   EnrichedGroup,
   ScheduleDance,
 } from '@/types/competition'
-import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue'
+import FollowButton from '@/components/FollowButton.vue'
+import NumberCard from '@/components/NumberCard.vue'
+import { getOrdinalSuffix } from '@/lib/results'
 import Dialog from '@/components/Dialog.vue'
 
 const props = defineProps<{
@@ -27,7 +29,7 @@ const emit = defineEmits<{
 }>()
 
 const { competitionId, dancers, draws } = useCompetition()
-const favorites = useFavoritesStore()
+const following = useFollowing()
 
 const dancerNumberValue = (d: EnrichedDancer) =>
   d.number != null && Number.isFinite(d.number) ? d.number : Number.POSITIVE_INFINITY
@@ -97,66 +99,59 @@ const drawRows = computed<DrawRow[]>(() => {
 <template>
   <Dialog :open="isOpen" variant="sheet" size="md" @close="emit('close')">
     <template v-if="displayGroup" #header>
-      <div class="text-foreground/65 text-eyebrow text-xs">
-        {{ hasRealDraw ? 'Draw' : 'Order'
-        }}<span v-if="breadcrumb"> · {{ breadcrumb }}</span>
-      </div>
-      <h2 class="text-2xl leading-tight font-medium tracking-tight">
-        {{ displayGroup.name ?? displayGroup.fullName ?? 'Group' }}
-      </h2>
+      <p class="text-muted-foreground text-sm font-bold">
+        {{ hasRealDraw ? 'Dancing order' : 'By number (order not posted)' }}<span v-if="breadcrumb"> · {{ breadcrumb }}</span>
+      </p>
+      <h2 class="text-title">{{ displayGroup.fullName ?? displayGroup.name ?? 'Group' }}</h2>
     </template>
 
     <template v-if="displayGroup">
-      <p v-if="!drawRows.length" class="text-muted-foreground p-4 text-lg italic">
-        Draw not yet posted.
+      <p v-if="!drawRows.length" class="text-muted-foreground p-4 text-base">
+        The dancing order hasn’t been posted yet.
       </p>
-      <ul v-else class="p-2">
-        <li v-for="row in drawRows" :key="row.key" class="flex items-center">
+      <ol v-else class="divide-y pb-[calc(1rem+var(--safe-bottom))]">
+        <li
+          v-for="(row, i) in drawRows"
+          :key="row.key"
+          class="relative flex min-h-14 items-center gap-2.5 pr-2 pl-3"
+          :style="
+            row.dancer && following.isFollowing(row.dancer)
+              ? { '--dc': following.colorFor(row.dancer.dancerId) ?? 'var(--primary)', backgroundColor: 'color-mix(in srgb, var(--dc) 9%, var(--card))' }
+              : undefined
+          "
+        >
+          <span
+            v-if="row.dancer && following.isFollowing(row.dancer)"
+            class="sash absolute inset-y-0 left-0 w-1.5"
+            aria-hidden="true"
+          />
+          <span v-if="hasRealDraw" class="text-muted-foreground w-9 shrink-0 text-right text-sm font-bold tabular-nums">
+            {{ i + 1 }}{{ getOrdinalSuffix(i + 1) }}
+          </span>
           <template v-if="row.dancer">
+            <NumberCard
+              :number="row.dancer.number"
+              size="xs"
+              :color="following.isFollowing(row.dancer) ? following.colorFor(row.dancer.dancerId) : null"
+            />
             <RouterLink
-              :to="{
-                name: 'competition.dancer',
-                params: { competitionId, dancerId: row.dancer.id },
-              }"
-              class="flex min-w-0 flex-1 items-center gap-3 px-2 py-2.5"
+              :to="{ name: 'competition.dancer', params: { competitionId, dancerId: row.dancer.id } }"
+              class="min-w-0 flex-1 py-2"
               @click="emit('close')"
             >
-              <div
-                :class="[
-                  'flex size-9 shrink-0 items-center justify-center rounded-full font-medium tabular-nums',
-                  favorites.isFavoriteDancer(row.dancer.id)
-                    ? 'bg-secondary text-secondary-foreground'
-                    : 'bg-muted text-muted-foreground',
-                ]"
-              >
-                {{ row.dancer.number ?? '–' }}
-              </div>
-              <div class="min-w-0 flex-1">
-                <div class="text-item-title truncate">
-                  {{ row.dancer.fullName || '?' }}
-                </div>
-                <div
-                  v-if="row.dancer.location"
-                  class="text-item-subtitle text-muted-foreground truncate"
-                >
-                  {{ row.dancer.location }}
-                </div>
-              </div>
+              <span class="block truncate text-base font-semibold">{{ row.dancer.fullName || '?' }}</span>
+              <span v-if="row.dancer.location" class="text-muted-foreground block truncate text-sm">
+                {{ row.dancer.location }}
+              </span>
             </RouterLink>
-            <FavoriteDancerButton :dancer="row.dancer" class="mr-1" />
+            <FollowButton :dancer="row.dancer" />
           </template>
-          <div v-else class="flex min-w-0 flex-1 items-center gap-3 px-2 py-2.5">
-            <div
-              class="border-muted-foreground/30 text-muted-foreground/60 flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed font-medium tabular-nums"
-            >
-              {{ row.number }}
-            </div>
-            <div class="text-item-title text-muted-foreground truncate italic">
-              Unknown dancer
-            </div>
-          </div>
+          <template v-else>
+            <NumberCard :number="row.number" size="xs" />
+            <span class="text-muted-foreground flex-1 text-base">Not on the dancer list</span>
+          </template>
         </li>
-      </ul>
+      </ol>
     </template>
   </Dialog>
 </template>

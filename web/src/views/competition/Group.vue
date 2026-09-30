@@ -1,481 +1,252 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import { useLocalStorage } from '@vueuse/core'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
+import { Clock, Hourglass, Star, Trophy } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
-import DisclosureHeader from '@/components/DisclosureHeader.vue'
-import FavoriteDancerButton from '@/components/FavoriteDancerButton.vue'
-import Place from '@/components/Place.vue'
-import SmoothCollapse from '@/components/SmoothCollapse.vue'
-import { useFavoritesStore } from '@/stores/favorites'
+import { useCompetitionDays } from '@/composables/useCompetitionDays'
+import { useFollowing } from '@/composables/useFollowing'
+import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
+import { usePageTitle } from '@/composables/usePageTitle'
+import Medal from '@/components/Medal.vue'
+import NumberCard from '@/components/NumberCard.vue'
+import StepsHelp from '@/components/StepsHelp.vue'
 import {
-  CALLBACKS_ID,
   findGroupDancers,
-  findPointedDancers,
   findGroupDances,
+  findPointedDancers,
   getCallbackResults,
   getDanceResults,
 } from '@/lib/results'
-import {
-  OVERALL_ID,
-  groupHasOverall,
-  type EnrichedDance,
-  type EnrichedDancer,
-} from '@/types/competition'
-import { useVtScope } from '@/lib/viewTransitionFocus'
+import { competitionPhase, scheduleIndex } from '@/lib/dancerDay'
+import { OVERALL_ID, groupHasOverall, type EnrichedDance, type EnrichedDancer } from '@/types/competition'
 
 const route = useRoute()
-const favorites = useFavoritesStore()
+const setHeader = injectInfoHeaderSetter()
 const {
   competitionId,
+  competition,
   groups,
   dancers,
   dances,
   results,
   points,
+  schedule,
+  platforms,
   loadDancers,
   loadResults,
+  loadSchedule,
 } = useCompetition()
+const { dayFor } = useCompetitionDays()
+const following = useFollowing()
 
-onMounted(async () => {
-  await Promise.all([loadDancers(), loadResults()])
-})
+onMounted(() => Promise.all([loadDancers(), loadResults(), loadSchedule()]))
 
 const groupId = computed(() => String(route.params.groupId ?? ''))
-
-// Tag the current group as the view-transition source so back-nav re-tags
-// the right row before Results remounts.
-useVtScope('group').syncFocus(groupId)
-
-// Outgoing transitions to per-competition dancer detail (placings, callbacks,
-// championship-point rows all link to competition.dancer).
-const vtDancer = useVtScope('comp-dancer')
 const group = computed(() => groups.value.find((g) => g.id === groupId.value) ?? null)
 
-const callbacksDance: EnrichedDance = { id: CALLBACKS_ID, fullName: 'Callbacks' }
-const overallDance: EnrichedDance = { id: OVERALL_ID, fullName: 'Overall' }
+usePageTitle(() => [group.value?.fullName, competition.value?.name])
+
+const phase = computed(() => competitionPhase(competition.value?.date))
+const groupDancers = computed(() =>
+  [...findGroupDancers(groupId.value, dancers.value)].sort(
+    (a, b) => (a.number ?? Infinity) - (b.number ?? Infinity),
+  ),
+)
+
+const followedHere = computed(() => groupDancers.value.filter((d) => following.isFollowing(d)))
+const colorOf = (d: EnrichedDancer | null) => (d && following.isFollowing(d) ? following.colorFor(d.dancerId) : null)
+
+// Where and when, from the schedule (first slot this group dances).
+const where = computed(() => {
+  if (!group.value) return null
+  const idx = scheduleIndex(schedule.value, platforms.value)
+  const slot = findGroupDances(group.value, dances.value)
+    .map((d) => idx.byGroupDance.get(`${group.value!.id}:${d.id}`))
+    .find(Boolean)
+  if (!slot) return null
+  return [slot.platformName ? `Platform ${slot.platformName}` : null, slot.blockName, slot.blockTime]
+    .filter(Boolean)
+    .join(' · ')
+})
+
+// Per-dance state for the group, borrowed from the first followed dancer's
+// day where possible (so "waiting" vs "next" matches their card), otherwise
+// from any dancer in the group.
+const sample = computed(() => followedHere.value[0] ?? groupDancers.value[0] ?? null)
+const stateByDance = computed(() => {
+  const m = new Map<string, string>()
+  if (!sample.value) return m
+  const day = dayFor(sample.value)
+  for (const s of day.dances) m.set(s.dance.id, s.state)
+  return m
+})
 
 const danceList = computed<EnrichedDance[]>(() => {
   if (!group.value) return []
-  const list: EnrichedDance[] = [callbacksDance]
-  list.push(...findGroupDances(group.value, dances.value))
-  if (groupHasOverall(group.value)) list.push(overallDance)
+  const list = [...findGroupDances(group.value, dances.value)]
+  if (groupHasOverall(group.value)) list.push({ id: OVERALL_ID, fullName: 'Overall', name: 'Overall' })
   return list
 })
 
-const dancerNumberValue = (d: EnrichedDancer) =>
-  d.number != null && Number.isFinite(d.number) ? d.number : Number.POSITIVE_INFINITY
+const callbacks = computed(() => getCallbackResults(groupId.value, dancers.value, results.value))
+const showAllCallbacks = ref(false)
 
-const groupDancers = computed<EnrichedDancer[]>(() => {
-  if (!group.value) return []
-  return [...findGroupDancers(group.value.id, dancers.value)].sort(
-    (a, b) => dancerNumberValue(a) - dancerNumberValue(b),
-  )
-})
-
-interface DanceSection {
-  dance: EnrichedDance
-  kind: 'callbacks' | 'placings'
-  count: number | null
-  callback?: ReturnType<typeof getCallbackResults>
-  placings?: ReturnType<typeof getDanceResults>
-  pointed: ReturnType<typeof findPointedDancers>
-}
-
-const sections = computed<DanceSection[]>(() => {
-  if (!group.value) return []
-  return danceList.value.map<DanceSection>((dance) => {
-    if (dance.id === CALLBACKS_ID) {
-      const callback = getCallbackResults(group.value!.id, dancers.value, results.value)
-      return {
-        dance,
-        kind: 'callbacks',
-        count: callback.dancers.length,
-        callback,
-        pointed: [],
-      }
-    }
-    return {
-      dance,
-      kind: 'placings',
-      count: null,
-      placings: getDanceResults(group.value!.id, dance.id, dancers.value, results.value),
-      pointed: findPointedDancers(points.value, group.value!.id, dance.id, dancers.value),
-    }
-  })
-})
-
-const callbacksSection = computed(() =>
-  sections.value.find((s): s is DanceSection & { kind: 'callbacks' } => s.kind === 'callbacks'),
-)
-const callbacksHasResults = computed(
-  () => !!callbacksSection.value?.callback?.hasResults,
+const sections = computed(() =>
+  danceList.value.map((dance) => ({
+    dance,
+    placings: getDanceResults(groupId.value, dance.id, dancers.value, results.value),
+    pointed: findPointedDancers(points.value, groupId.value, dance.id, dancers.value),
+    state: stateByDance.value.get(dance.id) ?? null,
+  })),
 )
 
-const callbackFavoriteCount = computed(() => {
-  const callback = callbacksSection.value?.callback
-  if (callback?.hasResults) {
-    return callback.dancers.filter(
-      (e) => e.dancer && favorites.isFavoriteDancer(e.dancer.id),
-    ).length
-  }
-  return groupDancers.value.filter((d) => favorites.isFavoriteDancer(d.id)).length
-})
-
-const showAllInCallbacks = useLocalStorage<Record<string, boolean>>(
-  'results:showAllInCallbacks',
-  {},
-)
-
-const isShowingAll = computed(() => {
-  if (groupId.value in showAllInCallbacks.value) {
-    return showAllInCallbacks.value[groupId.value]
-  }
-  return !callbacksHasResults.value
-})
-
-function toggleShowAll() {
-  showAllInCallbacks.value = {
-    ...showAllInCallbacks.value,
-    [groupId.value]: !isShowingAll.value,
-  }
-}
-
-interface CallbackRow {
-  key: string
-  dancer: EnrichedDancer | null
-  dimmed: boolean
-}
-
-const callbackRows = computed<CallbackRow[]>(() => {
-  const callback = callbacksSection.value?.callback
-  const calledBack = callback?.dancers ?? []
-  const calledBackIds = new Set(calledBack.map((e) => e.dancerId))
-
-  if (!isShowingAll.value) {
-    return calledBack.map((e) => ({ key: e.dancerId, dancer: e.dancer, dimmed: false }))
-  }
-
-  const rows: CallbackRow[] = calledBack.map((e) => ({
-    key: e.dancerId,
-    dancer: e.dancer,
-    dimmed: false,
-  }))
-  for (const d of groupDancers.value) {
-    if (!calledBackIds.has(d.id)) {
-      rows.push({ key: d.id, dancer: d, dimmed: callbacksHasResults.value })
-    }
-  }
-  return rows
-})
-
-const expanded = useLocalStorage<Record<string, Record<string, boolean>>>(
-  'results:expandedDances',
-  {},
-)
-
-function isExpanded(danceId: string): boolean {
-  const map = expanded.value[groupId.value] ?? {}
-  if (danceId in map) return map[danceId]
-  return true
-}
-
-function toggle(danceId: string) {
-  const current = expanded.value[groupId.value] ?? {}
-  expanded.value = {
-    ...expanded.value,
-    [groupId.value]: { ...current, [danceId]: !isExpanded(danceId) },
-  }
-}
-
-function focusHashTarget() {
+function focusHash() {
   const match = route.hash.match(/^#dance-(.+)$/)
   if (!match) return
-  const danceId = match[1]
-  const current = expanded.value[groupId.value] ?? {}
-  if (!current[danceId]) {
-    expanded.value = {
-      ...expanded.value,
-      [groupId.value]: { ...current, [danceId]: true },
-    }
-  }
-  nextTick(() => {
-    const el = document.getElementById(`dance-${danceId}`)
-    el?.scrollIntoView({ block: 'start' })
-  })
+  nextTick(() => document.getElementById(`dance-${match[1]}`)?.scrollIntoView({ block: 'start' }))
 }
-
-watch(
-  () => [groupId.value, route.hash, sections.value.length] as const,
-  () => focusHashTarget(),
-  { immediate: true },
-)
+watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { immediate: true })
 </script>
 
 <template>
-  <article class="space-y-6">
-    <div v-if="!groups.length" class="text-muted-foreground italic text-lg">Loading…</div>
-
-    <div v-else-if="!group" class="text-muted-foreground text-lg">Group not found.</div>
+  <article class="space-y-4">
+    <p v-if="!groups.length" class="text-muted-foreground py-6 text-base">Loading…</p>
+    <p v-else-if="!group" class="text-muted-foreground py-6 text-base">
+      This age group isn’t listed any more. Go back to Results to see the current list.
+    </p>
 
     <template v-else>
-      <header class="space-y-2">
-        <div
-          v-if="group.category?.name"
-          class="text-foreground/65 text-xs text-eyebrow"
-        >
-          {{ group.category.name }}
-        </div>
-        <h1
-          class="text-title [view-transition-class:fit_nav-title] [view-transition-name:group-name]"
-        >
-          {{ group.name ?? group.fullName ?? 'Group' }}
-        </h1>
+      <header :ref="setHeader" class="space-y-1">
+        <p v-if="group.category?.name" class="text-muted-foreground text-sm font-bold">{{ group.category.name }}</p>
+        <h1 class="text-display">{{ group.name || group.fullName }}</h1>
+        <p class="text-muted-foreground text-sm">
+          {{ [where, `${groupDancers.length} dancers`].filter(Boolean).join(' · ') }}
+        </p>
+        <p v-if="followedHere.length" class="flex flex-wrap items-center gap-1.5 pt-1 text-sm font-bold">
+          <span v-for="d in followedHere" :key="d.id" class="inline-flex items-center gap-1">
+            <Star class="size-4 fill-current" :style="{ color: colorOf(d) ?? 'var(--primary)' }" />
+            {{ d.fullName }} · {{ d.number }}
+          </span>
+        </p>
       </header>
 
+      <!-- Callbacks -->
       <section
-        v-for="section in sections"
-        :id="`dance-${section.dance.id}`"
-        :key="section.dance.id"
-        class="space-y-1"
+        v-if="callbacks.hasResults || callbacks.explicitlyEmpty"
+        id="dance-callbacks"
+        class="bg-card scroll-mt-[calc(var(--chrome-top)+0.75rem)] overflow-hidden rounded-2xl border shadow-sm"
       >
-        <DisclosureHeader
-          :label="section.dance.fullName ?? ''"
-          :expanded="isExpanded(section.dance.id)"
-          :count="
-            section.kind === 'callbacks'
-              ? ((section.callback?.hasResults ? section.count : groupDancers.length) ?? 0)
-              : null
-          "
-          :favs="section.kind === 'callbacks' ? callbackFavoriteCount : undefined"
-          @toggle="toggle(section.dance.id)"
-        />
-
-        <SmoothCollapse :open="isExpanded(section.dance.id)">
-          <template v-if="section.kind === 'callbacks'">
-            <p
-              v-if="!section.callback?.hasResults && !isShowingAll"
-              class="text-muted-foreground px-1 text-lg italic"
-            >
-              {{
-                section.callback?.explicitlyEmpty
-                  ? 'No callbacks for this group.'
-                  : 'Not yet posted.'
-              }}
-            </p>
-            <div v-if="callbackRows.length" class="pb-3">
-              <ul>
-                <li
-                  v-for="row in callbackRows"
-                  :key="row.key"
-                  :class="['flex items-center', row.dimmed && 'opacity-40']"
-                >
-                  <template v-if="row.dancer">
-                    <RouterLink
-                      v-slot="{ href, navigate }"
-                      :to="{
-                        name: 'competition.dancer',
-                        params: { competitionId, dancerId: row.dancer.id },
-                      }"
-                      custom
-                    >
-                      <a
-                        :href="href"
-                        class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3"
-                        @click="vtDancer.onNavigate($event, navigate, row.dancer!.id, `${section.dance.id}:${row.dancer!.id}`)"
-                      >
-                        <div
-                          :class="[
-                            'flex size-9 shrink-0 items-center justify-center rounded-full font-medium tabular-nums [view-transition-class:nav-avatar]',
-                            favorites.isFavoriteDancer(row.dancer.id)
-                              ? 'bg-secondary text-secondary-foreground'
-                              : 'bg-muted text-muted-foreground',
-                          ]"
-                          :style="{ viewTransitionName: vtDancer.name(row.dancer.id, 'avatar', `${section.dance.id}:${row.dancer.id}`) }"
-                        >
-                          {{ row.dancer.number ?? '–' }}
-                        </div>
-                        <div class="min-w-0 flex-1">
-                          <div
-                            class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                            :style="{ viewTransitionName: vtDancer.name(row.dancer.id, 'name', `${section.dance.id}:${row.dancer.id}`) }"
-                          >
-                            {{ row.dancer.fullName || '?' }}
-                          </div>
-                          <div
-                            v-if="row.dancer.location"
-                            class="text-item-subtitle text-muted-foreground truncate"
-                          >
-                            {{ row.dancer.location }}
-                          </div>
-                        </div>
-                      </a>
-                    </RouterLink>
-                    <FavoriteDancerButton :dancer="row.dancer" class="mr-1" />
-                  </template>
-                  <div
-                    v-else
-                    class="flex flex-1 items-center gap-3 px-1 py-3"
-                  >
-                    <div
-                      class="border-muted-foreground/30 text-muted-foreground/60 flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed font-medium"
-                    >
-                      —
-                    </div>
-                    <div class="text-item-title text-muted-foreground truncate italic">
-                      Unknown dancer
-                    </div>
-                  </div>
-                </li>
-              </ul>
-              <button
-                v-if="
-                  (section.callback?.dancers.length ?? 0) > 0 &&
-                  (section.callback?.dancers.length ?? 0) < groupDancers.length
-                "
-                type="button"
-                class="text-primary hover:text-primary/80 px-1 py-2 text-sm font-medium"
-                @click="toggleShowAll"
+        <header class="flex items-center justify-between gap-2 border-b px-4 py-3">
+          <h2 class="text-heading">Callbacks</h2>
+          <span class="text-muted-foreground text-sm font-semibold">{{ callbacks.dancers.length }} called back</span>
+        </header>
+        <p class="text-muted-foreground px-4 pt-3 text-sm">Dancers invited back to dance again in the final round.</p>
+        <p v-if="callbacks.explicitlyEmpty" class="px-4 py-3 text-base">No callbacks for this group.</p>
+        <ul class="divide-y">
+          <li
+            v-for="row in showAllCallbacks
+              ? groupDancers.map((d) => ({ dancerId: d.id, dancer: d as EnrichedDancer | null }))
+              : callbacks.dancers"
+            :key="row.dancerId"
+            :class="[
+              'relative flex min-h-12 items-center gap-3 px-4 py-1.5',
+              showAllCallbacks && !callbacks.dancers.some((c) => c.dancerId === row.dancerId) && 'opacity-45',
+            ]"
+            :style="colorOf(row.dancer) ? { '--dc': colorOf(row.dancer)!, backgroundColor: 'color-mix(in srgb, var(--dc) 9%, var(--card))' } : undefined"
+          >
+            <span v-if="colorOf(row.dancer)" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
+            <template v-if="row.dancer">
+              <NumberCard :number="row.dancer.number" size="xs" :color="colorOf(row.dancer)" />
+              <RouterLink
+                :to="{ name: 'competition.dancer', params: { competitionId, dancerId: row.dancer.id } }"
+                class="min-w-0 flex-1 truncate text-base font-semibold"
               >
-                {{
-                  isShowingAll
-                    ? '← Show callbacks only'
-                    : `Show all ${groupDancers.length} dancers →`
-                }}
-              </button>
-            </div>
-          </template>
+                {{ row.dancer.fullName }}
+              </RouterLink>
+            </template>
+            <span v-else class="text-muted-foreground text-base">Unknown dancer</span>
+          </li>
+        </ul>
+        <button
+          v-if="callbacks.dancers.length && callbacks.dancers.length < groupDancers.length"
+          type="button"
+          class="text-primary h-12 w-full border-t text-[0.9375rem] font-bold"
+          @click="showAllCallbacks = !showAllCallbacks"
+        >
+          {{ showAllCallbacks ? 'Show callbacks only' : `Show all ${groupDancers.length} dancers` }}
+        </button>
+      </section>
 
+      <!-- Dances + overall -->
+      <section
+        v-for="s in sections"
+        :id="`dance-${s.dance.id}`"
+        :key="s.dance.id"
+        class="bg-card scroll-mt-[calc(var(--chrome-top)+0.75rem)] overflow-hidden rounded-2xl border shadow-sm"
+      >
+        <header class="flex items-center justify-between gap-2 border-b py-2.5 pr-2.5 pl-4">
+          <h2 class="text-heading flex items-center gap-2">
+            <Trophy v-if="s.dance.id === OVERALL_ID" class="text-primary size-5" />
+            {{ s.dance.name || s.dance.fullName }}
+          </h2>
+          <StepsHelp :steps="s.dance.steps" :dance="s.dance.name" />
+        </header>
+
+        <ul v-if="s.placings.hasResults" class="divide-y">
+          <li
+            v-for="row in s.placings.rows"
+            :key="row.dancerId"
+            class="relative flex min-h-13 items-center gap-2.5 px-3 py-1.5"
+            :style="colorOf(row.dancer) ? { '--dc': colorOf(row.dancer)!, backgroundColor: 'color-mix(in srgb, var(--dc) 9%, var(--card))' } : undefined"
+          >
+            <span v-if="colorOf(row.dancer)" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
+            <Medal :place="row.place" :tied="row.tied" />
+            <template v-if="row.dancer">
+              <NumberCard :number="row.dancer.number" size="xs" :color="colorOf(row.dancer)" />
+              <RouterLink
+                :to="{ name: 'competition.dancer', params: { competitionId, dancerId: row.dancer.id } }"
+                class="min-w-0 flex-1"
+              >
+                <span class="block truncate text-base font-semibold">{{ row.dancer.fullName }}</span>
+                <span v-if="row.dancer.location" class="text-muted-foreground block truncate text-sm">{{ row.dancer.location }}</span>
+              </RouterLink>
+              <Star
+                v-if="colorOf(row.dancer)"
+                class="size-5 shrink-0 fill-current"
+                :style="{ color: colorOf(row.dancer)! }"
+                aria-label="Following"
+              />
+            </template>
+            <span v-else class="text-muted-foreground text-base">Unknown dancer</span>
+          </li>
+        </ul>
+        <div v-else class="text-muted-foreground flex items-start gap-3 px-4 py-4 text-base">
+          <template v-if="s.placings.explicitlyEmpty">No placings for this dance.</template>
+          <template v-else-if="s.dance.id === OVERALL_ID">
+            <Clock class="mt-0.5 size-5 shrink-0" />
+            <span>Posted after all the dances are in.</span>
+          </template>
+          <template v-else-if="s.state === 'waiting'">
+            <Hourglass class="mt-0.5 size-5 shrink-0" />
+            <span><b class="text-foreground">Danced. Waiting for results.</b><br />Placings appear here as soon as they’re entered.</span>
+          </template>
+          <template v-else-if="s.state === 'next'">
+            <Clock class="mt-0.5 size-5 shrink-0" />
+            <span><b class="text-foreground">Up next.</b> Not danced yet.</span>
+          </template>
+          <template v-else-if="phase === 'after'">No result was posted for this dance.</template>
           <template v-else>
-            <ul v-if="section.placings?.hasResults">
-              <li
-                v-for="row in section.placings.rows"
-                :key="row.dancerId"
-                class="flex items-center"
-              >
-                <Place :place="row.place" :tied="row.tied" class="ml-1 mr-2" />
-                <RouterLink
-                  v-if="row.dancer"
-                  v-slot="{ href, navigate }"
-                  :to="{
-                    name: 'competition.dancer',
-                    params: { competitionId, dancerId: row.dancer.id },
-                  }"
-                  custom
-                >
-                  <a
-                    :href="href"
-                    class="flex min-w-0 flex-1 items-center gap-3 py-3 pr-1"
-                    @click="vtDancer.onNavigate($event, navigate, row.dancer!.id, `${section.dance.id}:${row.dancer!.id}`)"
-                  >
-                    <div
-                      :class="[
-                        'flex size-9 shrink-0 items-center justify-center rounded-full font-medium tabular-nums [view-transition-class:nav-avatar]',
-                        favorites.isFavoriteDancer(row.dancer.id)
-                          ? 'bg-secondary text-secondary-foreground'
-                          : 'bg-muted text-muted-foreground',
-                      ]"
-                      :style="{ viewTransitionName: vtDancer.name(row.dancer.id, 'avatar', `${section.dance.id}:${row.dancer.id}`) }"
-                    >
-                      {{ row.dancer.number ?? '–' }}
-                    </div>
-                    <div class="min-w-0 flex-1">
-                      <div
-                        class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                        :style="{ viewTransitionName: vtDancer.name(row.dancer.id, 'name', `${section.dance.id}:${row.dancer.id}`) }"
-                      >
-                        {{ row.dancer.fullName || '?' }}
-                      </div>
-                      <div
-                        v-if="row.dancer.location"
-                        class="text-item-subtitle text-muted-foreground truncate"
-                      >
-                        {{ row.dancer.location }}
-                      </div>
-                    </div>
-                  </a>
-                </RouterLink>
-                <div
-                  v-else
-                  class="flex min-w-0 flex-1 items-center gap-3 py-3 pr-1"
-                >
-                  <div
-                    class="border-muted-foreground/30 text-muted-foreground/60 flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed font-medium"
-                  >
-                    —
-                  </div>
-                  <div class="text-item-title text-muted-foreground truncate italic">
-                    Unknown dancer
-                  </div>
-                </div>
-              </li>
-            </ul>
-            <div v-else class="text-muted-foreground px-1 text-lg italic">
-              {{
-                section.placings?.explicitlyEmpty
-                  ? 'No placings for this dance.'
-                  : 'Not yet posted.'
-              }}
-            </div>
-
-            <div v-if="section.pointed.length" class="mt-3 space-y-2">
-              <div
-                class="text-foreground/65 px-1 text-sm text-eyebrow"
-              >
-                Championship Points
-              </div>
-              <ul>
-                <li
-                  v-for="dancer in section.pointed"
-                  :key="dancer.id"
-                  class="flex items-center"
-                >
-                  <Place :place="null" pointed class="ml-1 mr-2" />
-                  <RouterLink
-                    v-slot="{ href, navigate }"
-                    :to="{
-                      name: 'competition.dancer',
-                      params: { competitionId, dancerId: dancer.id },
-                    }"
-                    custom
-                  >
-                    <a
-                      :href="href"
-                      class="flex min-w-0 flex-1 items-center gap-3 py-3 pr-1"
-                      @click="vtDancer.onNavigate($event, navigate, dancer.id, `${section.dance.id}:pointed:${dancer.id}`)"
-                    >
-                      <div
-                        :class="[
-                          'flex size-9 shrink-0 items-center justify-center rounded-full font-medium tabular-nums [view-transition-class:nav-avatar]',
-                          favorites.isFavoriteDancer(dancer.id)
-                            ? 'bg-secondary text-secondary-foreground'
-                            : 'bg-muted text-muted-foreground',
-                        ]"
-                        :style="{ viewTransitionName: vtDancer.name(dancer.id, 'avatar', `${section.dance.id}:pointed:${dancer.id}`) }"
-                      >
-                        {{ dancer.number ?? '–' }}
-                      </div>
-                      <div class="min-w-0 flex-1">
-                        <div
-                          class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                          :style="{ viewTransitionName: vtDancer.name(dancer.id, 'name', `${section.dance.id}:pointed:${dancer.id}`) }"
-                        >
-                          {{ dancer.fullName || '?' }}
-                        </div>
-                        <div
-                          v-if="dancer.location"
-                          class="text-item-subtitle text-muted-foreground truncate"
-                        >
-                          {{ dancer.location }}
-                        </div>
-                      </div>
-                    </a>
-                  </RouterLink>
-                </li>
-              </ul>
-            </div>
+            <Clock class="mt-0.5 size-5 shrink-0" />
+            <span>Not danced yet.</span>
           </template>
-        </SmoothCollapse>
+        </div>
+
+        <div v-if="s.pointed.length" class="border-t px-4 py-3">
+          <p class="text-sm font-bold">Championship points</p>
+          <p class="text-muted-foreground text-sm">
+            {{ s.pointed.map((d) => `${d.number ?? ''} ${d.fullName}`.trim()).join(', ') }}
+          </p>
+        </div>
       </section>
     </template>
   </article>

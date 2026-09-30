@@ -10,7 +10,7 @@ defineProps<{
 
 <template>
   <div
-    class="text-foreground/65 flex items-center gap-3 px-1 text-eyebrow"
+    class="flex items-center gap-3 px-1 pt-2 text-[1.0625rem] font-extrabold"
   >
     <span>{{ label }}</span>
     <span class="border-border flex-1 border-t" aria-hidden="true" />
@@ -21,7 +21,7 @@ defineProps<{
     />
     <span
       v-else-if="count != null && count !== ''"
-      class="tabular-nums"
+      class="text-muted-foreground text-sm font-semibold tabular-nums"
     >{{ count }}</span>
     <slot />
   </div>

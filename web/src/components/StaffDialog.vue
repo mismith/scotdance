@@ -87,7 +87,7 @@ const entityRef = computed(() =>
 
         <p
           v-if="!displayMember.description && !displayMember.website"
-          class="text-muted-foreground italic"
+          class="text-muted-foreground"
         >
           No bio yet.
         </p>

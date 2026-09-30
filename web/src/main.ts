@@ -8,6 +8,7 @@ import { router } from './router'
 import { firebaseApp } from './firebase'
 import { vTapFeedback } from './directives/tapFeedback'
 import './composables/useTheme'
+import '@fontsource-variable/atkinson-hyperlegible-next/wght.css'
 import './style.css'
 
 const app = createApp(App)

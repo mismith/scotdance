@@ -1,3 +1,5 @@
+import { now, nowMs } from '@/lib/now'
+
 export function formatExternalURL(url: string): string {
   if (!url) return ''
   return /^https?:\/\//i.test(url) ? url : `https://${url}`
@@ -127,7 +129,7 @@ export function formatMonthAbbrev(value: number | string | Date | undefined | nu
 
 export function isSameDay(
   a: number | string | undefined | null,
-  b: Date = new Date(),
+  b: Date = now(),
 ): boolean {
   if (a == null) return false
   return calendarDayDiff(parseDate(a), b) === 0
@@ -140,7 +142,7 @@ export function isSameDay(
  */
 export function isPast(value: number | string | undefined | null): boolean {
   if (value == null) return false
-  return parseDate(value).getTime() < Date.now()
+  return parseDate(value).getTime() < nowMs()
 }
 
 /**
@@ -150,13 +152,13 @@ export function isPast(value: number | string | undefined | null): boolean {
  */
 export function isBeforeToday(value: number | string | undefined | null): boolean {
   if (value == null) return false
-  return calendarDayDiff(parseDate(value), new Date()) < 0
+  return calendarDayDiff(parseDate(value), now()) < 0
 }
 
 /** Calendar days from today (negative = past, 0 = today, positive = future). */
 export function daysFromToday(value: number | string | undefined | null): number | null {
   if (value == null) return null
-  return calendarDayDiff(parseDate(value), new Date())
+  return calendarDayDiff(parseDate(value), now())
 }
 
 const relativeTime = new Intl.RelativeTimeFormat(undefined, {
@@ -166,7 +168,7 @@ const relativeTime = new Intl.RelativeTimeFormat(undefined, {
 
 export function formatRelative(value: number | string | undefined | null): string {
   if (value == null) return ''
-  const days = calendarDayDiff(parseDate(value), new Date())
+  const days = calendarDayDiff(parseDate(value), now())
   const abs = Math.abs(days)
   if (abs < 7) return relativeTime.format(days, 'day')
   if (abs < 30) return relativeTime.format(Math.round(days / 7), 'week')

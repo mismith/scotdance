@@ -2,6 +2,13 @@ import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import {
   EmailAuthProvider,
+  getAdditionalUserInfo,
+  GoogleAuthProvider,
+  OAuthProvider,
+  isSignInWithEmailLink,
+  sendSignInLinkToEmail,
+  signInWithEmailLink,
+  signInWithPopup,
   createUserWithEmailAndPassword,
   deleteUser,
   reauthenticateWithCredential,
@@ -18,6 +25,12 @@ import { auth, database } from '@/firebase'
 
 type PostLoginAction = () => void | Promise<void>
 
+/** Why sign-in was asked for, so the sheet can say so ("Sign in to follow Emma"). */
+export interface LoginReason {
+  reason: 'follow' | 'favorite' | 'alerts' | 'account'
+  name?: string
+}
+
 const NAMESPACE = import.meta.env.VITE_FIREBASE_DATA_NAMESPACE || 'production'
 
 function userPath(uid: string, child = '') {
@@ -32,9 +45,14 @@ export const useAuthStore = defineStore('auth', () => {
   const photoURL = computed(() => user.value?.photoURL ?? null)
 
   const loginDialogOpen = ref(false)
+  const loginReason = ref<LoginReason | null>(null)
+  /** Set when an account was just created: the reason it happened, if any. */
+  const newAccount = ref<{ reason: LoginReason['reason'] | null } | null>(null)
+  const markNew = () => (newAccount.value = { reason: loginReason.value?.reason ?? null })
   const pendingActions = ref<PostLoginAction[]>([])
 
-  function openLogin() {
+  function openLogin(reason: LoginReason | null = null) {
+    loginReason.value = reason
     loginDialogOpen.value = true
   }
 
@@ -59,12 +77,12 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function requireSignIn(action: PostLoginAction) {
+  function requireSignIn(action: PostLoginAction, reason: LoginReason | null = null) {
     if (isSignedIn.value) {
       return action()
     }
     enqueueAfterLogin(action)
-    openLogin()
+    openLogin(reason)
     return undefined
   }
 
@@ -80,8 +98,63 @@ export const useAuthStore = defineStore('auth', () => {
     await signInWithEmailAndPassword(auth, email, password)
   }
 
+  // Apple / Google via popup on the web. The native apps need the
+  // @capacitor-firebase/authentication plugin for these (popups don't open
+  // inside a WebView); until then they fall back to email.
+  async function signInWithProvider(provider: 'apple' | 'google') {
+    const p =
+      provider === 'google'
+        ? new GoogleAuthProvider()
+        : new OAuthProvider('apple.com')
+    if (provider === 'apple') (p as OAuthProvider).addScope('email')
+    const cred = await signInWithPopup(auth, p)
+    if (getAdditionalUserInfo(cred)?.isNewUser) markNew()
+  }
+
+  // Passwordless: email a one-time sign-in link. The address is remembered
+  // on this device so opening the link here needs no retyping.
+  const EMAIL_FOR_LINK = 'auth:emailForLink'
+  async function sendSignInLink(email: string) {
+    await sendSignInLinkToEmail(auth, email, {
+      url: `${window.location.origin}/?signin=link`,
+      handleCodeInApp: true,
+    })
+    try {
+      localStorage.setItem(EMAIL_FOR_LINK, email)
+    } catch {
+      /* private mode */
+    }
+  }
+
+  /** Call once on start-up: finishes an email-link sign-in if this is one. */
+  async function completeEmailLinkSignIn(): Promise<boolean> {
+    const href = window.location.href
+    if (!isSignInWithEmailLink(auth, href)) return false
+    let email: string | null = null
+    try {
+      email = localStorage.getItem(EMAIL_FOR_LINK)
+    } catch {
+      /* private mode */
+    }
+    if (!email) email = window.prompt('Confirm your email address to finish signing in') ?? null
+    if (!email) return false
+    const cred = await signInWithEmailLink(auth, email, href)
+    if (getAdditionalUserInfo(cred)?.isNewUser) markNew()
+    try {
+      localStorage.removeItem(EMAIL_FOR_LINK)
+    } catch {
+      /* private mode */
+    }
+    const url = new URL(href)
+    for (const k of ['apiKey', 'oobCode', 'mode', 'lang', 'signin', 'continueUrl'])
+      url.searchParams.delete(k)
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash)
+    return true
+  }
+
   async function registerWithEmail(email: string, password: string) {
     await createUserWithEmailAndPassword(auth, email, password)
+    markNew()
   }
 
   async function resetPassword(email: string) {
@@ -141,11 +214,16 @@ export const useAuthStore = defineStore('auth', () => {
     displayName,
     photoURL,
     loginDialogOpen,
+    loginReason,
+    newAccount,
     openLogin,
     closeLogin,
     enqueueAfterLogin,
     requireSignIn,
     signInWithEmail,
+    signInWithProvider,
+    sendSignInLink,
+    completeEmailLinkSignIn,
     registerWithEmail,
     resetPassword,
     signOut: signOutUser,

@@ -92,7 +92,7 @@ const tiles = computed(() => {
         </h1>
         <p
           v-if="location"
-          class="text-muted-foreground text-lg italic"
+          class="text-muted-foreground text-base"
         >
           {{ location }}
         </p>

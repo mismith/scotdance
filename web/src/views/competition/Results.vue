@@ -1,210 +1,197 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { useLocalStorage } from '@vueuse/core'
-import {
-  AlertTriangle,
-  Check,
-  ChevronRight,
-  CircleDashed,
-  Loader2,
-  Trophy,
-} from '@lucide/vue'
+import { AlertTriangle, Check, ChevronRight, Star, Trophy } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
-import { useFavoritesStore } from '@/stores/favorites'
-import {
-  findGroupDancers,
-  groupHasPlaceholderDancers,
-  hasGroupAnyResults,
-  isGroupInProgress,
-} from '@/lib/results'
-import type { Category, EnrichedGroup } from '@/types/competition'
-import DisclosureHeader from '@/components/DisclosureHeader.vue'
+import { useCompetitionDays } from '@/composables/useCompetitionDays'
+import { useFollowing } from '@/composables/useFollowing'
+import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
+import { findGroupDances, groupHasPlaceholderDancers } from '@/lib/results'
+import { OVERALL_ID, groupHasOverall, type EnrichedGroup } from '@/types/competition'
 import EmptyState from '@/components/EmptyState.vue'
+import Medal from '@/components/Medal.vue'
 import Skeleton from '@/components/Skeleton.vue'
-import SmoothCollapse from '@/components/SmoothCollapse.vue'
-import { useVtScope } from '@/lib/viewTransitionFocus'
 
+// Results without digging: every age group is visible at once (no
+// accordions), with how many of its dances are posted and, for the people
+// you follow, their placings right in the list.
+const setHeader = injectInfoHeaderSetter()
 const {
   competitionId,
   categories,
   groups,
-  dancers,
   dances,
   results,
   points,
   loadDancers,
   loadResults,
+  loadSchedule,
+  isLive,
 } = useCompetition()
-const favorites = useFavoritesStore()
+const { followedByGroup, dayFor } = useCompetitionDays()
+const following = useFollowing()
 
+const loaded = ref(false)
 onMounted(async () => {
-  await Promise.all([loadDancers(), loadResults()])
+  await Promise.all([loadDancers(), loadResults(), loadSchedule()])
+  loaded.value = true
 })
 
-interface CategoryRow {
-  category: Category
-  groups: EnrichedGroup[]
+const onlyMine = ref(false)
+
+function isPosted(groupId: string, danceId: string) {
+  const raw = results.value?.[groupId]?.[danceId]
+  return raw === false || (Array.isArray(raw) && raw.length > 0)
 }
 
-const groupedCategories = computed<CategoryRow[]>(() =>
-  categories.value.map((category) => ({
-    category,
-    groups: groups.value.filter((g) => g.categoryId === category.id),
-  })),
-)
-
-const expanded = useLocalStorage<Record<string, Record<string, boolean>>>(
-  'results:expandedCategories',
-  {},
-)
-
-function isExpanded(category: Category): boolean {
-  const map = expanded.value[competitionId.value] ?? {}
-  if (category.id in map) return map[category.id]
-  return groupedCategories.value.length <= 1
+interface Row {
+  group: EnrichedGroup
+  total: number
+  posted: number
+  unknown: boolean
+  mine: Array<{ key: string; name: string; color: string | null; medals: Array<{ id: string; place: number; tied: boolean }> }>
 }
 
-function toggle(category: Category) {
-  const current = expanded.value[competitionId.value] ?? {}
-  expanded.value = {
-    ...expanded.value,
-    [competitionId.value]: { ...current, [category.id]: !isExpanded(category) },
+function rowFor(group: EnrichedGroup): Row {
+  const ids = findGroupDances(group, dances.value).map((d) => d.id)
+  if (groupHasOverall(group)) ids.push(OVERALL_ID)
+  const followed = followedByGroup.value.get(group.id) ?? []
+  return {
+    group,
+    total: ids.length,
+    posted: ids.filter((id) => isPosted(group.id, id)).length,
+    unknown: groupHasPlaceholderDancers(group, results.value, points.value),
+    mine: followed.map((d) => {
+      const day = dayFor(d)
+      const all = [...day.dances, ...(day.overall ? [day.overall] : [])]
+      return {
+        key: d.id,
+        name: d.firstName ?? d.fullName,
+        color: following.colorFor(d.dancerId),
+        medals: all
+          .filter((s) => s.state === 'placed' && s.place != null)
+          .map((s) => ({ id: s.dance.id, place: s.place!, tied: s.tied })),
+      }
+    }),
   }
 }
 
-function groupHasFavorite(group: EnrichedGroup): boolean {
-  return findGroupDancers(group.id, dancers.value).some((d) =>
-    favorites.isFavoriteDancer(d.id),
-  )
-}
-
-function groupHasUnknownDancers(group: EnrichedGroup): boolean {
-  return groupHasPlaceholderDancers(group, results.value, points.value)
-}
-
-interface GroupStatus {
-  state: 'tbd' | 'in-progress' | 'done'
-  label: string
-}
-
-function groupStatus(group: EnrichedGroup): GroupStatus {
-  if (isGroupInProgress(group, dances.value, results.value)) {
-    return { state: 'in-progress', label: 'In progress' }
-  }
-  if (hasGroupAnyResults(group, dances.value, results.value)) {
-    return { state: 'done', label: 'Results posted' }
-  }
-  return { state: 'tbd', label: 'TBD' }
-}
-
-const hasAnyResults = computed(() =>
-  groups.value.some((g) => hasGroupAnyResults(g, dances.value, results.value)),
+const sections = computed(() =>
+  categories.value
+    .map((category) => {
+      let rows = groups.value.filter((g) => g.categoryId === category.id).map(rowFor)
+      if (onlyMine.value) rows = rows.filter((r) => r.mine.length)
+      return { category, rows }
+    })
+    .filter((s) => s.rows.length),
 )
 
-const loaded = computed(() => groups.value.length > 0)
+const totals = computed(() => {
+  let total = 0
+  let posted = 0
+  for (const g of groups.value) {
+    const r = rowFor(g)
+    total += r.total
+    posted += r.posted
+  }
+  return { total, posted }
+})
 
-const vt = useVtScope('group')
+const anyFollowedHere = computed(() => followedByGroup.value.size > 0)
 </script>
 
 <template>
-  <div class="space-y-4">
-    <div v-if="!loaded" class="space-y-6" aria-busy="true" aria-live="polite">
-      <span class="sr-only">Loading results…</span>
-      <div v-for="i in 2" :key="i" class="space-y-3">
-        <Skeleton class="h-7 w-1/3" />
-        <Skeleton v-for="j in 3" :key="j" class="h-12 w-full" />
+  <div class="space-y-3">
+    <header :ref="setHeader" class="space-y-2">
+      <h1 class="text-display">Results</h1>
+      <div v-if="totals.total" class="space-y-1.5">
+        <div class="bg-muted h-2.5 overflow-hidden rounded-full border" aria-hidden="true">
+          <div
+            class="bg-done-foreground h-full rounded-full transition-[width] duration-500"
+            :style="{ width: `${Math.round((totals.posted / totals.total) * 100)}%` }"
+          />
+        </div>
+        <p class="text-muted-foreground text-sm">
+          <b class="text-foreground">{{ totals.posted }} of {{ totals.total }}</b> results posted
+          <template v-if="isLive"> · updating live</template>
+        </p>
       </div>
-    </div>
+    </header>
 
+    <button
+      v-if="anyFollowedHere"
+      type="button"
+      role="switch"
+      :aria-checked="onlyMine"
+      class="bg-card flex h-11 w-full items-center gap-2 rounded-xl border px-3 text-left text-[0.9375rem] font-bold"
+      @click="onlyMine = !onlyMine"
+    >
+      <Star :class="['size-4 shrink-0', onlyMine ? 'text-primary fill-current' : 'text-muted-foreground']" />
+      <span class="flex-1">Only my dancers’ age groups</span>
+      <span
+        :class="[
+          'relative h-6 w-10 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform',
+          onlyMine ? 'bg-primary after:translate-x-4' : 'bg-strong',
+        ]"
+        aria-hidden="true"
+      />
+    </button>
+
+    <div v-if="!loaded" class="space-y-2" aria-busy="true">
+      <Skeleton v-for="i in 6" :key="i" class="h-14 w-full rounded-xl!" />
+    </div>
     <EmptyState
-      v-else-if="!hasAnyResults"
+      v-else-if="!groups.length"
       :icon="Trophy"
-      title="No results posted yet"
-      description="Live updates will appear here as they’re announced. Check back during the competition."
+      title="No results yet"
+      description="Placings appear here as soon as they’re entered at the competition."
     />
 
-    <section v-for="row in groupedCategories" :key="row.category.id" class="space-y-1">
-      <DisclosureHeader
-        :label="row.category.name || '?'"
-        :expanded="isExpanded(row.category)"
-        @toggle="toggle(row.category)"
-      />
-
-      <SmoothCollapse :open="isExpanded(row.category)">
-        <ul>
-        <li
-          v-if="!row.groups.length"
-          class="text-muted-foreground px-1 py-3 text-lg italic"
-        >
-          No groups.
-        </li>
-        <li v-for="group in row.groups" :key="group.id">
+    <section v-for="s in sections" :key="s.category.id">
+      <h2 class="bg-background sticky top-(--chrome-top) z-10 py-2 text-[1.0625rem] font-extrabold">
+        {{ s.category.name || 'Other' }}
+      </h2>
+      <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+        <li v-for="r in s.rows" :key="r.group.id">
           <RouterLink
-            v-slot="{ href, navigate }"
-            :to="{
-              name: 'competition.group',
-              params: { competitionId, groupId: group.id },
-            }"
-            custom
+            :to="{ name: 'competition.group', params: { competitionId, groupId: r.group.id } }"
+            class="relative flex min-h-14 items-center gap-3 py-2 pr-2 pl-4 hover:bg-accent"
+            :style="r.mine.length ? { '--dc': r.mine[0].color ?? 'var(--primary)' } : undefined"
           >
-            <a
-              :href="href"
-              class="flex items-center gap-3 px-1 py-3"
-              @click="vt.onNavigate($event, navigate, group.id)"
-            >
-              <span
-                :class="[
-                  'flex size-9 shrink-0 items-center justify-center rounded-full font-medium',
-                  groupStatus(group).state === 'done'
-                    ? groupHasFavorite(group)
-                      ? 'bg-secondary text-secondary-foreground'
-                      : 'bg-muted text-muted-foreground'
-                    : groupStatus(group).state === 'in-progress'
-                      ? 'border border-amber-300 bg-amber-100 text-amber-900'
-                      : 'bg-muted text-muted-foreground',
-                ]"
-                :title="groupStatus(group).label"
-              >
-                <Check v-if="groupStatus(group).state === 'done'" class="size-4" />
-                <Loader2
-                  v-else-if="groupStatus(group).state === 'in-progress'"
-                  class="size-4 animate-spin"
+            <span v-if="r.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
+            <span class="min-w-0 flex-1">
+              <span class="flex items-center gap-1.5 text-base font-bold">
+                <span class="truncate">{{ r.group.name || r.group.fullName }}</span>
+                <AlertTriangle
+                  v-if="r.unknown"
+                  class="text-next-foreground size-4 shrink-0"
+                  aria-label="Some placings couldn’t be matched to a dancer"
                 />
-                <CircleDashed v-else class="size-4 opacity-60" />
               </span>
-              <div class="min-w-0 flex-1">
-                <div
-                  class="text-item-title flex items-center gap-1.5 truncate [view-transition-class:fit_nav-title]"
-                  :style="{ viewTransitionName: vt.name(group.id, 'name') }"
-                >
-                  <span class="truncate">{{ group.name || group.fullName }}</span>
-                  <AlertTriangle
-                    v-if="groupHasUnknownDancers(group)"
-                    class="size-3.5 shrink-0 text-amber-500"
-                    title="Contains unknown dancers — some placements couldn't be matched to a registered dancer."
-                  />
-                </div>
-                <div
-                  v-if="groupStatus(group).state !== 'done'"
-                  :class="[
-                    'mt-0.5 text-xs text-eyebrow',
-                    groupStatus(group).state === 'in-progress'
-                      ? 'text-primary'
-                      : 'text-muted-foreground/70',
-                  ]"
-                >
-                  {{
-                    groupStatus(group).state === 'in-progress' ? 'In progress' : 'TBD'
-                  }}
-                </div>
-              </div>
-              <ChevronRight class="text-muted-foreground size-4" />
-            </a>
+              <span v-for="m in r.mine" :key="m.key" class="mt-1 flex flex-wrap items-center gap-1">
+                <Star class="size-3.5 fill-current" :style="{ color: m.color ?? 'var(--primary)' }" />
+                <span class="text-sm font-bold">{{ m.name }}</span>
+                <Medal v-for="x in m.medals" :key="x.id" :place="x.place" :tied="x.tied" size="sm" />
+                <span v-if="!m.medals.length" class="text-muted-foreground text-sm">no placings yet</span>
+              </span>
+            </span>
+            <span
+              v-if="r.total && r.posted === r.total"
+              class="bg-done text-done-foreground inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-[0.8125rem] font-bold"
+            >
+              <Check class="size-3.5" stroke-width="3" /> All in
+            </span>
+            <span
+              v-else-if="r.posted"
+              class="bg-done text-done-foreground inline-flex h-7 shrink-0 items-center rounded-full px-2.5 text-[0.8125rem] font-bold whitespace-nowrap"
+            >
+              {{ r.posted }} of {{ r.total }} in
+            </span>
+            <span v-else class="text-muted-foreground shrink-0 text-[0.8125rem] font-semibold">Not yet</span>
+            <ChevronRight class="text-muted-foreground size-5 shrink-0" />
           </RouterLink>
         </li>
       </ul>
-      </SmoothCollapse>
     </section>
   </div>
 </template>

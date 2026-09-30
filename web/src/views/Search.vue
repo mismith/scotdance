@@ -1,62 +1,53 @@
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref, shallowRef, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { refDebounced, useEventListener } from '@vueuse/core'
-import {
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  Gavel,
-  History,
-  MapPin,
-  MapPinned,
-  Music,
-  School,
-  User,
-  X,
-} from '@lucide/vue'
-import SectionHeader from '@/components/SectionHeader.vue'
-import DisclosureHeader from '@/components/DisclosureHeader.vue'
-import SmoothCollapse from '@/components/SmoothCollapse.vue'
-import Skeleton from '@/components/Skeleton.vue'
-import CompetitionRow from '@/components/CompetitionRow.vue'
-import AccountAvatarButton from '@/components/AccountAvatarButton.vue'
-import TopBackButton from '@/components/nav/TopBackButton.vue'
+import { computed, nextTick, ref, shallowRef, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { refDebounced } from '@vueuse/core'
+import { ChevronRight, Clock, Gavel, MapPin, Music, Search, User, X } from '@lucide/vue'
+import AppBar from '@/components/nav/AppBar.vue'
+import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
+import FollowButton from '@/components/FollowButton.vue'
+import NumberCard from '@/components/NumberCard.vue'
+import { useScrolledPast } from '@/composables/useScrolledPast'
+import { usePageTitle } from '@/composables/usePageTitle'
+import { useCompetitions } from '@/composables/useCompetitions'
+import { useFollowing } from '@/composables/useFollowing'
+import { useRecentSearches } from '@/composables/useRecentSearches'
+import { useLocationFilter } from '@/composables/useLocationFilter'
+import { useFavoritesStore } from '@/stores/favorites'
+import { fetchDancers } from '@/lib/competitionData'
+import { daysFromToday, formatShortDate } from '@/lib/format'
+import { lookupEntityId, lookupVenueId } from '@/lib/entityIndex'
 import {
   searchAll,
   type SearchAllResults,
   type SearchEntityType,
-  type SearchCompetitionHit,
-  type SearchPlaceGroup,
   type SearchPersonGroup,
+  type SearchPlaceGroup,
 } from '@/lib/searchAll'
-import type { CompetitionListItem } from '@/composables/useCompetitions'
-import { useLocationFilter } from '@/composables/useLocationFilter'
-import { useRecentSearches } from '@/composables/useRecentSearches'
-import { useSearchExamples } from '@/composables/useSearchExamples'
-import { useGlobalSearch } from '@/composables/useGlobalSearch'
-import { isIos } from '@/lib/platform'
-import { startViewTransition } from '@/lib/transition'
-import { lookupEntityId, lookupVenueId } from '@/lib/entityIndex'
-import { useEntityIdMap, useVenueIdMap } from '@/composables/useEntityIdMap'
-import { focusVt, useVtScope } from '@/lib/viewTransitionFocus'
-import { useFavoritesStore } from '@/stores/favorites'
+import type { EnrichedDancer } from '@/types/competition'
+
+usePageTitle(['Search'])
 
 const route = useRoute()
 const router = useRouter()
+const following = useFollowing()
+const favorites = useFavoritesStore()
+const recentSearches = useRecentSearches()
+const locationFilter = useLocationFilter()
 
-// q + the underlying input live in GlobalBottomNav so the element persists
-// across route changes (required for iOS to keep the keyboard up on entry).
-const { q } = useGlobalSearch()
-q.value = String(route.query.q ?? '')
+const titleEl = ref<HTMLElement | null>(null)
+const scrolledPast = useScrolledPast(titleEl)
 
+type Mode = 'name' | 'number'
+const mode = ref<Mode>(route.query.by === 'number' ? 'number' : 'name')
+watch(mode, (m) => router.replace({ query: { ...route.query, by: m === 'number' ? 'number' : undefined } }))
+
+// ─── By name (every competition) ────────────────────────────────────────────
+const q = ref(String(route.query.q ?? ''))
 const qDebounced = refDebounced(q, 250)
-// Longer idle than the search debounce so partial keystrokes don't all
-// land in Recent — only what the user actually pauses on.
 const qForRecent = refDebounced(q, 2000)
-
-const DEFAULT_PER_GROUP = 5
-const EXPANDED_PER_GROUP = 50
+watch(q, (v) => router.replace({ query: { ...route.query, q: v || undefined } }))
+watch(qForRecent, (v) => v.trim().length > 2 && recentSearches.record(v))
 
 const empty: SearchAllResults = {
   competitions: { hits: [], total: 0 },
@@ -65,872 +56,353 @@ const empty: SearchAllResults = {
   pipers: { groups: [], total: 0 },
   places: { groups: [], total: 0 },
 }
-
 const results = shallowRef<SearchAllResults>(empty)
 const searching = ref(false)
-const error = ref<Error | null>(null)
-const expanded = reactive<Record<SearchEntityType, boolean>>({
-  competitions: false,
-  dancers: false,
-  judges: false,
-  pipers: false,
-  places: false,
-})
+const failed = ref(false)
 
-const locationFilter = useLocationFilter()
-const recentSearches = useRecentSearches()
-const searchExamples = useSearchExamples()
-const favorites = useFavoritesStore()
-
-interface ExampleCardConfig {
-  key: 'competitions' | 'venues' | 'places' | 'dancers' | 'judges' | 'pipers'
-  label: string
-  icon: typeof Calendar
-}
-
-const exampleCards: ExampleCardConfig[] = [
-  { key: 'competitions', label: 'Competitions', icon: Calendar },
-  { key: 'dancers', label: 'Dancers', icon: User },
-  { key: 'judges', label: 'Judges', icon: Gavel },
-  { key: 'pipers', label: 'Pipers', icon: Music },
-  { key: 'venues', label: 'Venues', icon: School },
-  { key: 'places', label: 'Places', icon: MapPin },
-]
-
-const hasExamples = computed(() =>
-  exampleCards.some((c) => searchExamples.examples.value[c.key].length > 0),
-)
-
-const suggestionExpanded = reactive<Record<ExampleCardConfig['key'] | 'recent', boolean>>(
-  {
-    recent: true,
-    competitions: true,
-    venues: true,
-    places: true,
-    dancers: true,
-    judges: true,
-    pipers: true,
-  },
-)
-
-const hasRecent = computed(() => recentSearches.recent.value.length > 0)
-const showSuggestions = computed(
-  () => hasRecent.value || hasExamples.value || searchExamples.loading.value,
-)
-
-watch(
-  () => route.query.q,
-  (next) => {
-    const value = String(next ?? '')
-    if (value !== q.value) q.value = value
-  },
-)
-
-watch(q, (value) => {
-  if (value !== String(route.query.q ?? '')) {
-    router.replace({ query: { ...route.query, q: value || undefined } })
-  }
-  // any change to the typed query resets expansion
-  expanded.competitions = false
-  expanded.dancers = false
-  expanded.judges = false
-  expanded.pipers = false
-  expanded.places = false
-})
-
-// Dedupes back-to-back searches for the same term (e.g. a click fires the
-// search instantly, then the debounce watcher fires 250ms later with the
-// same value). Reset on error so retries still work.
-let lastQueried = ''
-
-async function runSearch(text: string) {
-  const trimmed = text.trim()
-  if (!trimmed) {
+async function run(text: string, perGroup = 5, types?: SearchEntityType[]) {
+  const t = text.trim()
+  if (!t) {
     results.value = empty
-    error.value = null
-    lastQueried = ''
+    failed.value = false
     return
   }
-  if (trimmed === lastQueried) return
-  lastQueried = trimmed
   searching.value = true
-  error.value = null
+  failed.value = false
   try {
-    const out = await searchAll({ q: trimmed, perGroup: DEFAULT_PER_GROUP })
-    if (q.value.trim() !== trimmed) return
-    results.value = out
-  } catch (e) {
-    if (q.value.trim() !== trimmed) return
-    error.value = e as Error
+    const out = await searchAll({ q: t, perGroup, types })
+    if (q.value.trim() !== t) return
+    results.value = types ? { ...results.value, ...Object.fromEntries(types.map((k) => [k, out[k]])) } : out
+  } catch {
+    if (q.value.trim() !== t) return
+    failed.value = true
     results.value = empty
-    lastQueried = ''
   } finally {
-    if (q.value.trim() === trimmed) searching.value = false
+    if (q.value.trim() === t) searching.value = false
   }
 }
+watch(qDebounced, (v) => run(v), { immediate: true })
 
-watch(qDebounced, (value) => runSearch(value), { immediate: true })
+const hasQuery = computed(() => q.value.trim().length > 0)
+const loadingName = computed(() => searching.value || (hasQuery.value && q.value.trim() !== qDebounced.value.trim()))
+const nothing = computed(() => {
+  const r = results.value
+  return (
+    !r.dancers.groups.length &&
+    !r.competitions.hits.length &&
+    !r.judges.groups.length &&
+    !r.pipers.groups.length &&
+    !r.places.groups.length
+  )
+})
 
-// Suggestion taps shouldn't wait on the typing debounce — fire the search now.
-// Wrapped in startViewTransition so the title and back button morph from the
-// suggestions state to the results state. (Router replace fires too via the
-// `q` watcher, but the router skips VTs on query-only nav, so we drive it
-// from here.)
-//
-// runSearch is called *inside* the VT callback after q.value is set, so its
-// internal staleness check (`q.value.trim() !== trimmed`) doesn't trip on a
-// stale read. Doing it outside races the VT's deferred mutation and leaves
-// `searching = true` if the check bails.
-function selectTerm(term: string) {
-  startViewTransition(async () => {
-    q.value = term
-    await nextTick()
-    void runSearch(term)
-  })
-}
-
-async function expandGroup(type: SearchEntityType) {
-  const trimmed = q.value.trim()
-  if (!trimmed) return
-  expanded[type] = true
-  try {
-    const out = await searchAll({
-      q: trimmed,
-      perGroup: EXPANDED_PER_GROUP,
-      types: [type],
-    })
-    if (q.value.trim() !== trimmed) return
-    results.value = {
-      ...results.value,
-      [type]: out[type],
-    }
-  } catch (e) {
-    error.value = e as Error
-  }
-}
-
-// ─── View-transition setup ──────────────────────────────────────────────────
-// Each scope's name → aggregate-id map is pre-resolved as results arrive so
-// the row's `:style="vt.name(...)"` has a real ID to morph from at click time.
-const judgeVt = useVtScope('judge')
-const piperVt = useVtScope('piper')
-const dancerVt = useVtScope('dancer')
-const venueVt = useVtScope('venue')
-const judgeIds = useEntityIdMap('judges')
-const piperIds = useEntityIdMap('pipers')
-const dancerIds = useEntityIdMap('dancers')
-const venueIds = useVenueIdMap()
-
-async function handleDancerTap(name: string) {
-  const id = dancerIds.get(name) ?? (await lookupEntityId('dancers', name))
+async function openPerson(type: 'dancers' | 'judges' | 'pipers', g: SearchPersonGroup) {
+  const id = await lookupEntityId(type, g.name)
   if (!id) return
-  dancerIds.map[name] = id
-  focusVt('dancer', id)
-  await nextTick()
-  router.push({ name: 'dancer.info', params: { dancerId: id } })
+  const name = type === 'dancers' ? 'dancer.info' : type === 'judges' ? 'judge.info' : 'piper.info'
+  const param = type === 'dancers' ? 'dancerId' : type === 'judges' ? 'judgeId' : 'piperId'
+  router.push({ name, params: { [param]: id } })
 }
 
-function competitionListItem(hit: SearchCompetitionHit): CompetitionListItem {
-  return {
-    id: hit.id,
-    name: hit.name,
-    venue: hit.venue,
-    location: hit.location,
-    date: hit.date,
-    image: hit.image,
-  }
-}
-
-function placeIcon(kind: SearchPlaceGroup['kind']) {
-  if (kind === 'venue') return School
-  if (kind === 'region') return MapPinned
-  return MapPin
-}
-
-function placeCountLabel(count: number) {
-  return count === 1 ? '1 competition' : `${count} competitions`
-}
-
-async function handleJudgeTap(group: SearchPersonGroup) {
-  const id = judgeIds.get(group.name) ?? (await lookupEntityId('judges', group.name))
-  if (!id) return
-  judgeIds.map[group.name] = id
-  focusVt('judge', id)
-  await nextTick()
-  router.push({ name: 'judge.info', params: { judgeId: id } })
-}
-
-async function handlePiperTap(group: SearchPersonGroup) {
-  const id = piperIds.get(group.name) ?? (await lookupEntityId('pipers', group.name))
-  if (!id) return
-  piperIds.map[group.name] = id
-  focusVt('piper', id)
-  await nextTick()
-  router.push({ name: 'piper.info', params: { piperId: id } })
-}
-
-function isJudgeFavorite(group: SearchPersonGroup): boolean {
-  const id = judgeIds.get(group.name)
-  return id ? favorites.isFavorite('judges', id) : false
-}
-function isPiperFavorite(group: SearchPersonGroup): boolean {
-  const id = piperIds.get(group.name)
-  return id ? favorites.isFavorite('pipers', id) : false
-}
-function isDancerFavorite(group: SearchPersonGroup): boolean {
-  const id = dancerIds.get(group.name)
-  return id ? favorites.isFavorite('dancers', id) : false
-}
-function isPlaceFavorite(group: SearchPlaceGroup): boolean {
-  if (group.kind !== 'venue') return false
-  const id = venueIds.get(group.name, group.locality ?? null)
-  return id ? favorites.isFavorite('venues', id) : false
-}
-
-async function handlePlaceTap(group: SearchPlaceGroup) {
-  if (group.kind === 'venue') {
-    const locality = group.locality ?? null
-    const id =
-      venueIds.get(group.name, locality) ?? (await lookupVenueId(group.name, locality))
-    if (!id) return
-    focusVt('venue', id)
-    await nextTick()
-    router.push({ name: 'venue.info', params: { venueId: id } })
+async function openPlace(g: SearchPlaceGroup) {
+  if (g.kind === 'venue') {
+    const id = await lookupVenueId(g.name, g.locality ?? null)
+    if (id) router.push({ name: 'venue.info', params: { venueId: id } })
     return
   }
   locationFilter.setRegion({
-    country: group.country ?? null,
-    region: group.region ?? null,
-    locality: group.kind === 'locality' ? (group.locality ?? group.name) : null,
+    country: g.country ?? null,
+    region: g.region ?? null,
+    locality: g.kind === 'locality' ? (g.locality ?? g.name) : null,
   })
   router.push({ name: 'competitions' })
 }
 
-// Top-left back: clears the search (mirrors the X in the bottom search bar).
-// Only shown when there's a query, so dismissing /search entirely is left to
-// the bottom-nav left pill. Wrapped in startViewTransition so the title and
-// back button morph between the suggestions/results states.
-function onTopBackClick() {
-  startViewTransition(async () => {
-    q.value = ''
-    await nextTick()
-  })
-}
-
-const hasQuery = computed(() => q.value.trim().length > 0)
-// Covers the debounce gap so clicking a suggestion doesn't flash "No matches"
-// before the search fires.
-const isLoading = computed(
-  () => searching.value || (hasQuery.value && q.value.trim() !== qDebounced.value.trim()),
+// ─── By number (one competition) ────────────────────────────────────────────
+// Numbers change at every competition, so number search always looks inside
+// one. Default: today's competition, else the nearest one.
+const { competitions } = useCompetitions(ref(false))
+const candidates = computed(() =>
+  [...competitions.value]
+    .filter((c) => {
+      const d = daysFromToday(c.date)
+      return d != null && d >= -30 && d <= 30
+    })
+    .sort((a, b) => Math.abs(daysFromToday(a.date) ?? 99) - Math.abs(daysFromToday(b.date) ?? 99)),
 )
-const competitions = computed(() => results.value.competitions)
-const dancers = computed(() => results.value.dancers)
-const judges = computed(() => results.value.judges)
-const pipers = computed(() => results.value.pipers)
-const places = computed(() => results.value.places)
+const competitionId = ref<string>(String(route.query.in ?? ''))
+watch(
+  candidates,
+  (list) => {
+    if (!competitionId.value && list[0]) competitionId.value = list[0].id
+  },
+  { immediate: true },
+)
+watch(competitionId, (id) => router.replace({ query: { ...route.query, in: id || undefined } }))
 
-// Pre-resolve aggregate IDs for visible groups so list rows can render with
-// view-transition-names ready at click time (no async gap during morph).
-watch(judges, (r) => r.groups.forEach((g) => judgeIds.resolve(g.name)))
-watch(pipers, (r) => r.groups.forEach((g) => piperIds.resolve(g.name)))
-watch(dancers, (r) => r.groups.forEach((g) => dancerIds.resolve(g.name)))
-watch(places, (r) => {
-  r.groups.forEach((g) => {
-    if (g.kind === 'venue') venueIds.resolve(g.name, g.locality ?? null)
-  })
-})
-
-const hasAnyResults = computed(
-  () =>
-    competitions.value.hits.length > 0 ||
-    places.value.groups.length > 0 ||
-    dancers.value.groups.length > 0 ||
-    judges.value.groups.length > 0 ||
-    pipers.value.groups.length > 0,
+const entries = shallowRef<EnrichedDancer[]>([])
+watch(
+  competitionId,
+  async (id) => {
+    entries.value = []
+    if (!id) return
+    try {
+      const b = await fetchDancers(id)
+      if (id === competitionId.value) entries.value = b.dancers
+    } catch {
+      entries.value = []
+    }
+  },
+  { immediate: true },
 )
 
-// Save to Recent only after the user idles for 2s on a query that yielded
-// results — keeps garbage and mid-typing partials out of the list.
-watch(qForRecent, (value) => {
-  if (!hasAnyResults.value) return
-  recentSearches.record(value)
+const num = ref('')
+// One row per person: someone entered in two age groups has one number.
+const numberMatches = computed(() => {
+  if (!num.value) return []
+  const byPerson = new Map<string, { dancer: EnrichedDancer; groups: string[] }>()
+  for (const d of entries.value) {
+    if (d.number == null || !String(d.number).startsWith(num.value)) continue
+    const key = d.dancerId ?? `${d.number}:${d.fullName}`
+    const hit = byPerson.get(key)
+    if (hit) hit.groups.push(d.group?.fullName ?? '')
+    else byPerson.set(key, { dancer: d, groups: [d.group?.fullName ?? ''] })
+  }
+  return [...byPerson.values()].sort((a, b) => (a.dancer.number ?? 0) - (b.dancer.number ?? 0)).slice(0, 12)
 })
+const competitionName = computed(() => candidates.value.find((c) => c.id === competitionId.value)?.name ?? '')
 
-// iOS-only workarounds: every other platform respects `position: fixed`
-// when the keyboard is up. data-ios on <html> gates the sized-container
-// CSS rule below; the listeners drive --vv-height, --nav-bottom, and the
-// documentElement scroll lock.
-if (isIos) {
-  document.documentElement.dataset.ios = ''
-
-  // Mirror visualViewport.height to --vv-height so html tracks the
-  // visible area as the keyboard slides in/out.
-  const updateVvHeight = () => {
-    const vv = window.visualViewport
-    if (!vv) return
-    document.documentElement.style.setProperty('--vv-height', `${vv.height}px`)
-  }
-  if (window.visualViewport) {
-    useEventListener(window.visualViewport, 'resize', updateVvHeight)
-  }
-  updateVvHeight()
-
-  // Keyboard up = an input is focused. Collapse --nav-bottom to 0 so the
-  // nav sits flush against the keyboard top; restore on blur. Also check
-  // initial state — the input is often focused before Search.vue mounts
-  // (label-induced focus on home → router.push), so the first focusin
-  // event has already fired by the time we subscribe.
-  const ae = document.activeElement
-  if (ae instanceof HTMLInputElement || ae instanceof HTMLTextAreaElement) {
-    document.documentElement.style.setProperty('--nav-bottom', '0px')
-  }
-  useEventListener(
-    document,
-    'focusin',
-    (e) => {
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
-      ) {
-        document.documentElement.style.setProperty('--nav-bottom', '0px')
-      }
-    },
-    true,
-  )
-  useEventListener(
-    document,
-    'focusout',
-    (e) => {
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
-      ) {
-        document.documentElement.style.removeProperty('--nav-bottom')
-      }
-    },
-    true,
-  )
-
-  // iOS scrolls documentElement on focus to "reveal" the input even
-  // though our input is in fixed bottom chrome. Revert any scroll.
-  useEventListener(
-    window,
-    'scroll',
-    () => {
-      if (document.documentElement.scrollTop !== 0) {
-        document.documentElement.scrollTop = 0
-      }
-    },
-    { passive: true },
-  )
-}
+const nameInput = ref<HTMLInputElement | null>(null)
+const numberInput = ref<HTMLInputElement | null>(null)
+watch(mode, async (m) => {
+  await nextTick()
+  if (m === 'name') nameInput.value?.focus()
+  else numberInput.value?.focus()
+})
 </script>
 
 <template>
-  <div
-    data-route="search"
-    class="flex flex-1 flex-col pt-2 pb-[calc(var(--chrome-bottom)+1rem)]"
-  >
-    <nav class="pointer-events-none fixed inset-x-0 top-0 z-30 px-4 pt-(--nav-top)">
-      <div class="pointer-events-auto mx-auto flex max-w-3xl justify-between">
+  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
+    <AppBar title="Search" :show-title="scrolledPast" :back="false" />
+
+    <main class="mx-auto w-full max-w-3xl space-y-3 px-4 pt-[calc(var(--chrome-top)+0.25rem)]">
+      <header ref="titleEl">
+        <h1 class="text-display">Search</h1>
+      </header>
+
+      <div class="bg-muted grid grid-cols-2 rounded-xl border p-1" role="group" aria-label="Search by">
         <button
-          v-if="hasQuery"
-          v-tap-feedback
+          v-for="m in (['name', 'number'] as const)"
+          :key="m"
           type="button"
-          class="floating-nav flex size-12 shrink-0 items-center justify-center rounded-full transition-opacity [view-transition-name:nav-back] hover:opacity-90"
-          title="Clear search"
-          aria-label="Clear search"
-          @click="onTopBackClick"
+          :aria-pressed="mode === m"
+          :class="[
+            'h-10 rounded-lg text-[0.9375rem] font-bold transition-colors',
+            mode === m ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground',
+          ]"
+          @click="mode = m"
         >
-          <ChevronLeft class="size-5" />
+          {{ m === 'name' ? 'By name' : 'By number' }}
         </button>
-        <TopBackButton v-else />
-        <AccountAvatarButton />
       </div>
-    </nav>
-    <main class="mx-auto flex w-full max-w-3xl flex-1 flex-col space-y-6 p-4">
-      <div v-if="error" class="text-destructive text-lg">{{ error.message }}</div>
 
-      <template v-if="hasQuery">
-        <div class="px-14">
-          <h2
-            class="font-serif text-3xl font-medium tracking-tight [view-transition-class:fit] [view-transition-name:search-title]"
+      <!-- By name -->
+      <template v-if="mode === 'name'">
+        <label class="bg-card border-strong focus-within:border-primary flex h-12 items-center gap-2 rounded-xl border-2 px-3">
+          <Search class="text-muted-foreground size-5 shrink-0" />
+          <input
+            ref="nameInput"
+            v-model="q"
+            type="search"
+            enterkeyhint="search"
+            autocomplete="off"
+            placeholder="Dancer, competition, judge or town"
+            aria-label="Search"
+            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none [&::-webkit-search-cancel-button]:hidden"
+          />
+          <button
+            v-if="q"
+            type="button"
+            class="text-muted-foreground -mr-1 flex size-10 items-center justify-center rounded-full"
+            aria-label="Clear search"
+            @click="q = ''"
           >
-            Search results
-          </h2>
-          <p class="text-muted-foreground truncate text-sm">for “{{ q }}”</p>
-        </div>
+            <X class="size-5" />
+          </button>
+        </label>
 
-        <div
-          v-if="isLoading && !hasAnyResults"
-          class="space-y-6"
-          aria-busy="true"
-          aria-live="polite"
-        >
-          <span class="sr-only">Searching…</span>
-          <section v-for="i in 3" :key="i" class="space-y-2">
-            <Skeleton class="h-4 w-32" />
-            <div v-for="j in 3" :key="j" class="flex items-center gap-3 py-3">
-              <Skeleton class="size-9 shrink-0 rounded-full!" />
-              <div class="flex-1 space-y-2">
-                <Skeleton class="h-5 w-2/3" />
-                <Skeleton class="h-4 w-1/3" />
-              </div>
-            </div>
+        <template v-if="!hasQuery">
+          <section v-if="recentSearches.recent.value.length" class="space-y-2">
+            <h2 class="text-heading flex items-baseline justify-between pt-1">
+              Recent
+              <button type="button" class="text-primary text-[0.9375rem] font-bold" @click="recentSearches.clear()">
+                Clear
+              </button>
+            </h2>
+            <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+              <li v-for="r in recentSearches.recent.value" :key="r">
+                <button type="button" class="flex min-h-12 w-full items-center gap-3 px-4 text-left hover:bg-accent" @click="q = r">
+                  <Clock class="text-muted-foreground size-5" />
+                  <span class="flex-1 text-base font-semibold">{{ r }}</span>
+                </button>
+              </li>
+            </ul>
           </section>
+          <p class="text-muted-foreground px-1 text-[0.9375rem]">
+            Know the number on their card? Use <button type="button" class="text-primary font-bold" @click="mode = 'number'">By number</button>.
+          </p>
+        </template>
+
+        <div v-else-if="failed" class="bg-card space-y-3 rounded-2xl border p-4 text-center shadow-sm">
+          <p class="text-base font-semibold">Search isn’t working right now. Check your connection.</p>
+          <button type="button" class="bg-primary text-primary-foreground h-12 rounded-xl px-6 font-bold" @click="run(q)">
+            Try again
+          </button>
         </div>
+        <p v-else-if="loadingName && nothing" class="text-muted-foreground py-4 text-center text-base">Searching…</p>
+        <p v-else-if="nothing" class="text-muted-foreground py-4 text-center text-base">
+          Nothing matches “{{ q }}”. Check the spelling, or try just a first or last name.
+        </p>
 
         <template v-else>
-          <div
-            v-if="!hasAnyResults && !isLoading"
-            class="text-muted-foreground text-lg italic"
-          >
-            No matches.
-          </div>
+          <section v-if="results.dancers.groups.length" class="space-y-2">
+            <h2 class="text-heading pt-1">Dancers</h2>
+            <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+              <li v-for="g in results.dancers.groups" :key="g.name">
+                <button type="button" class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-accent" @click="openPerson('dancers', g)">
+                  <span class="bg-blue-paper text-primary flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-extrabold">{{ g.initials }}</span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-base font-bold">{{ g.name }}</span>
+                    <span class="text-muted-foreground block truncate text-sm">
+                      {{ [g.location, `${g.competitionIds.length} competition${g.competitionIds.length === 1 ? '' : 's'}`].filter(Boolean).join(' · ') }}
+                    </span>
+                  </span>
+                  <ChevronRight class="text-muted-foreground size-5" />
+                </button>
+              </li>
+            </ul>
+            <button
+              v-if="results.dancers.total > results.dancers.groups.length"
+              type="button"
+              class="text-primary h-11 w-full text-[0.9375rem] font-bold"
+              @click="run(q, 50, ['dancers'])"
+            >
+              Show all {{ results.dancers.total }} dancers
+            </button>
+          </section>
 
-          <section v-if="competitions.hits.length" class="space-y-2">
-            <SectionHeader label="Competitions" :count="competitions.total" />
-            <ul>
-              <CompetitionRow
-                v-for="hit in competitions.hits"
-                :key="hit.id"
-                :competition="competitionListItem(hit)"
-                :to="{ name: 'competition.info', params: { competitionId: hit.id } }"
+          <section v-if="results.competitions.hits.length" class="space-y-2">
+            <h2 class="text-heading pt-1">Competitions</h2>
+            <ul class="divide-y overflow-hidden rounded-2xl border shadow-sm">
+              <CompetitionDateRow
+                v-for="c in results.competitions.hits"
+                :key="c.id"
+                :competition="c"
+                :to="{ name: 'competition.info', params: { competitionId: c.id } }"
+                :followed="favorites.isFavorite('competitions', c.id)"
               />
             </ul>
-            <button
-              v-if="
-                !expanded.competitions && competitions.total > competitions.hits.length
-              "
-              type="button"
-              class="text-primary hover:text-primary/80 px-1 py-2 text-sm font-medium"
-              @click="expandGroup('competitions')"
-            >
-              See all {{ competitions.total }} →
-            </button>
           </section>
 
-          <section v-if="places.groups.length" class="space-y-2">
-            <SectionHeader label="Places" :count="places.total" />
-            <ul>
-              <li v-for="group in places.groups" :key="`${group.kind}:${group.name}`">
-                <button
-                  type="button"
-                  class="flex w-full items-center gap-3 px-1 py-3 text-left"
-                  @click="handlePlaceTap(group)"
-                >
-                  <span
-                    :class="[
-                      'flex size-9 shrink-0 items-center justify-center rounded-full [view-transition-class:nav-avatar]',
-                      isPlaceFavorite(group)
-                        ? 'bg-secondary text-secondary-foreground'
-                        : 'bg-muted text-muted-foreground',
-                    ]"
-                    :style="
-                      group.kind === 'venue'
-                        ? {
-                            viewTransitionName: venueVt.name(
-                              venueIds.get(group.name, group.locality ?? null),
-                              'avatar',
-                            ),
-                          }
-                        : undefined
-                    "
-                  >
-                    <component :is="placeIcon(group.kind)" class="size-4" />
+          <section v-for="t in (['judges', 'pipers'] as const)" v-show="results[t].groups.length" :key="t" class="space-y-2">
+            <h2 class="text-heading pt-1">{{ t === 'judges' ? 'Judges' : 'Pipers' }}</h2>
+            <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+              <li v-for="g in results[t].groups" :key="g.name">
+                <button type="button" class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-accent" @click="openPerson(t, g)">
+                  <component :is="t === 'judges' ? Gavel : Music" class="text-primary size-5 shrink-0" />
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-base font-bold">{{ g.name }}</span>
+                    <span v-if="g.location" class="text-muted-foreground block truncate text-sm">{{ g.location }}</span>
                   </span>
-                  <div class="min-w-0 flex-1">
-                    <div
-                      class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                      :style="
-                        group.kind === 'venue'
-                          ? {
-                              viewTransitionName: venueVt.name(
-                                venueIds.get(group.name, group.locality ?? null),
-                                'name',
-                              ),
-                            }
-                          : undefined
-                      "
-                    >
-                      {{ group.name }}
-                    </div>
-                    <div class="text-item-subtitle text-muted-foreground truncate">
-                      <span v-if="group.parentLabel">{{ group.parentLabel }} · </span>
-                      <span>{{ placeCountLabel(group.count) }}</span>
-                    </div>
-                  </div>
-                  <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+                  <ChevronRight class="text-muted-foreground size-5" />
                 </button>
               </li>
             </ul>
-            <button
-              v-if="!expanded.places && places.total > places.groups.length"
-              type="button"
-              class="text-primary hover:text-primary/80 px-1 py-2 text-sm font-medium"
-              @click="expandGroup('places')"
-            >
-              See all {{ places.total }} →
-            </button>
           </section>
 
-          <section v-if="dancers.groups.length" class="space-y-2">
-            <SectionHeader label="Dancers" :count="dancers.total" />
-            <ul>
-              <li v-for="group in dancers.groups" :key="group.name">
-                <button
-                  type="button"
-                  class="flex w-full items-center gap-3 px-1 py-3 text-left"
-                  @click="handleDancerTap(group.name)"
-                >
-                  <span
-                    :class="[
-                      'flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]',
-                      isDancerFavorite(group)
-                        ? 'bg-secondary text-secondary-foreground'
-                        : 'bg-muted text-muted-foreground',
-                    ]"
-                    :style="{
-                      viewTransitionName: dancerVt.name(
-                        dancerIds.get(group.name),
-                        'avatar',
-                      ),
-                    }"
-                  >
-                    {{ group.initials }}
+          <section v-if="results.places.groups.length" class="space-y-2">
+            <h2 class="text-heading pt-1">Places</h2>
+            <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+              <li v-for="g in results.places.groups" :key="`${g.kind}:${g.name}`">
+                <button type="button" class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-accent" @click="openPlace(g)">
+                  <MapPin class="text-primary size-5 shrink-0" />
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-base font-bold">{{ g.name }}</span>
+                    <span class="text-muted-foreground block truncate text-sm">
+                      {{ [g.parentLabel, `${g.count} competition${g.count === 1 ? '' : 's'}`].filter(Boolean).join(' · ') }}
+                    </span>
                   </span>
-                  <div class="min-w-0 flex-1">
-                    <div
-                      class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                      :style="{
-                        viewTransitionName: dancerVt.name(
-                          dancerIds.get(group.name),
-                          'name',
-                        ),
-                      }"
-                    >
-                      {{ group.name || '?' }}
-                    </div>
-                    <div
-                      v-if="group.location"
-                      class="text-item-subtitle text-muted-foreground truncate"
-                    >
-                      {{ group.location }}
-                    </div>
-                  </div>
-                  <ChevronRight class="text-muted-foreground size-4 shrink-0" />
+                  <ChevronRight class="text-muted-foreground size-5" />
                 </button>
               </li>
             </ul>
-            <button
-              v-if="!expanded.dancers && dancers.total > dancers.groups.length"
-              type="button"
-              class="text-primary hover:text-primary/80 px-1 py-2 text-sm font-medium"
-              @click="expandGroup('dancers')"
-            >
-              See all {{ dancers.total }} →
-            </button>
-          </section>
-
-          <section v-if="judges.groups.length" class="space-y-2">
-            <SectionHeader label="Judges" :count="judges.total" />
-            <ul>
-              <li
-                v-for="group in judges.groups"
-                :key="group.name + group.competitionIds[0]"
-              >
-                <button
-                  type="button"
-                  class="flex w-full items-center gap-3 px-1 py-3 text-left"
-                  @click="handleJudgeTap(group)"
-                >
-                  <span
-                    v-if="group.image"
-                    class="size-9 shrink-0 overflow-hidden rounded-full [view-transition-class:nav-avatar]"
-                    :style="{
-                      viewTransitionName: judgeVt.name(
-                        judgeIds.get(group.name),
-                        'avatar',
-                      ),
-                    }"
-                  >
-                    <img
-                      :src="group.image"
-                      :alt="group.name"
-                      class="size-full object-cover"
-                    />
-                  </span>
-                  <span
-                    v-else
-                    :class="[
-                      'flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]',
-                      isJudgeFavorite(group)
-                        ? 'bg-secondary text-secondary-foreground'
-                        : 'bg-muted text-muted-foreground',
-                    ]"
-                    :style="{
-                      viewTransitionName: judgeVt.name(
-                        judgeIds.get(group.name),
-                        'avatar',
-                      ),
-                    }"
-                  >
-                    {{ group.initials }}
-                  </span>
-                  <div class="min-w-0 flex-1">
-                    <div
-                      class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                      :style="{
-                        viewTransitionName: judgeVt.name(
-                          judgeIds.get(group.name),
-                          'name',
-                        ),
-                      }"
-                    >
-                      {{ group.name || '?' }}
-                    </div>
-                    <div
-                      v-if="group.location || group.competitionIds.length > 1"
-                      class="text-item-subtitle text-muted-foreground truncate"
-                    >
-                      <span v-if="group.location">{{ group.location }}</span>
-                      <span v-if="group.location && group.competitionIds.length > 1">
-                        ·
-                      </span>
-                      <span v-if="group.competitionIds.length > 1">
-                        {{ group.competitionIds.length }} competitions
-                      </span>
-                    </div>
-                  </div>
-                  <ChevronRight class="text-muted-foreground size-4 shrink-0" />
-                </button>
-              </li>
-            </ul>
-            <button
-              v-if="!expanded.judges && judges.total > judges.groups.length"
-              type="button"
-              class="text-primary hover:text-primary/80 px-1 py-2 text-sm font-medium"
-              @click="expandGroup('judges')"
-            >
-              See all {{ judges.total }} →
-            </button>
-          </section>
-
-          <section v-if="pipers.groups.length" class="space-y-2">
-            <SectionHeader label="Pipers" :count="pipers.total" />
-            <ul>
-              <li
-                v-for="group in pipers.groups"
-                :key="group.name + group.competitionIds[0]"
-              >
-                <button
-                  type="button"
-                  class="flex w-full items-center gap-3 px-1 py-3 text-left"
-                  @click="handlePiperTap(group)"
-                >
-                  <span
-                    v-if="group.image"
-                    class="size-9 shrink-0 overflow-hidden rounded-full [view-transition-class:nav-avatar]"
-                    :style="{
-                      viewTransitionName: piperVt.name(
-                        piperIds.get(group.name),
-                        'avatar',
-                      ),
-                    }"
-                  >
-                    <img
-                      :src="group.image"
-                      :alt="group.name"
-                      class="size-full object-cover"
-                    />
-                  </span>
-                  <span
-                    v-else
-                    :class="[
-                      'flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]',
-                      isPiperFavorite(group)
-                        ? 'bg-secondary text-secondary-foreground'
-                        : 'bg-muted text-muted-foreground',
-                    ]"
-                    :style="{
-                      viewTransitionName: piperVt.name(
-                        piperIds.get(group.name),
-                        'avatar',
-                      ),
-                    }"
-                  >
-                    {{ group.initials }}
-                  </span>
-                  <div class="min-w-0 flex-1">
-                    <div
-                      class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                      :style="{
-                        viewTransitionName: piperVt.name(
-                          piperIds.get(group.name),
-                          'name',
-                        ),
-                      }"
-                    >
-                      {{ group.name || '?' }}
-                    </div>
-                    <div
-                      v-if="group.location || group.competitionIds.length > 1"
-                      class="text-item-subtitle text-muted-foreground truncate"
-                    >
-                      <span v-if="group.location">{{ group.location }}</span>
-                      <span v-if="group.location && group.competitionIds.length > 1">
-                        ·
-                      </span>
-                      <span v-if="group.competitionIds.length > 1">
-                        {{ group.competitionIds.length }} competitions
-                      </span>
-                    </div>
-                  </div>
-                  <ChevronRight class="text-muted-foreground size-4 shrink-0" />
-                </button>
-              </li>
-            </ul>
-            <button
-              v-if="!expanded.pipers && pipers.total > pipers.groups.length"
-              type="button"
-              class="text-primary hover:text-primary/80 px-1 py-2 text-sm font-medium"
-              @click="expandGroup('pipers')"
-            >
-              See all {{ pipers.total }} →
-            </button>
           </section>
         </template>
       </template>
 
+      <!-- By number: the phone's own number pad, via inputmode. -->
       <template v-else>
-        <div class="flex flex-1 flex-col gap-6">
-          <section v-if="showSuggestions" class="space-y-2">
-            <h2
-              class="px-14 font-serif text-3xl font-medium tracking-tight [view-transition-class:fit] [view-transition-name:search-title]"
+        <label class="block space-y-1">
+          <span class="text-muted-foreground text-sm font-bold">Looking in</span>
+          <select
+            v-model="competitionId"
+            class="bg-card border-strong h-12 w-full rounded-xl border-2 px-3 text-base font-bold outline-none"
+          >
+            <option v-if="!candidates.length" value="">No competitions this month</option>
+            <option v-for="c in candidates" :key="c.id" :value="c.id">
+              {{ c.name }}{{ c.date ? ` · ${formatShortDate(c.date)}` : '' }}
+            </option>
+          </select>
+        </label>
+
+        <label class="block space-y-1">
+          <span class="text-muted-foreground text-sm font-bold">Number on their card</span>
+          <input
+            ref="numberInput"
+            v-model="num"
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            autocomplete="off"
+            enterkeyhint="search"
+            maxlength="5"
+            placeholder="e.g. 134"
+            class="bg-card border-strong focus:border-primary placeholder:text-muted-foreground h-16 w-full rounded-2xl border-2 text-center text-[2rem] font-extrabold tracking-wider tabular-nums outline-none placeholder:text-xl placeholder:font-semibold placeholder:tracking-normal"
+            @input="num = num.replace(/\D/g, '')"
+          />
+        </label>
+
+        <ul v-if="numberMatches.length" class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+          <li v-for="{ dancer: d, groups } in numberMatches" :key="d.id" class="flex items-center gap-2 pr-2">
+            <RouterLink
+              :to="{ name: 'competition.dancer', params: { competitionId, dancerId: d.id } }"
+              class="flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 pl-3"
             >
-              Suggestions
-            </h2>
+              <NumberCard
+                :number="d.number"
+                size="xs"
+                :color="following.isFollowing(d) ? following.colorFor(d.dancerId) : null"
+              />
+              <span class="min-w-0">
+                <span class="block truncate text-base font-semibold">{{ d.fullName }}</span>
+                <span class="text-muted-foreground block truncate text-sm">{{ groups.filter(Boolean).join(' · ') }}</span>
+              </span>
+            </RouterLink>
+            <FollowButton :dancer="d" />
+          </li>
+        </ul>
+        <p v-else-if="num && entries.length" class="text-muted-foreground text-center text-base">
+          No dancer with number {{ num }} at {{ competitionName }}.
+        </p>
+        <p v-else-if="num && !entries.length" class="text-muted-foreground text-center text-base">
+          The dancer list for {{ competitionName }} hasn’t been posted yet.
+        </p>
 
-            <section v-if="hasRecent" class="space-y-1">
-              <DisclosureHeader
-                label="Recent"
-                :expanded="suggestionExpanded.recent"
-                @toggle="suggestionExpanded.recent = !suggestionExpanded.recent"
-              >
-                <button
-                  type="button"
-                  class="text-muted-foreground hover:text-foreground font-sans text-sm font-normal tracking-normal normal-case"
-                  @click.stop="recentSearches.clear()"
-                >
-                  Clear
-                </button>
-              </DisclosureHeader>
-              <SmoothCollapse :open="suggestionExpanded.recent">
-                <ul>
-                  <li
-                    v-for="term in recentSearches.recent.value"
-                    :key="term"
-                    class="flex items-center"
-                  >
-                    <button
-                      type="button"
-                      class="hover:bg-accent flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1 py-1.5 text-left"
-                      @click="selectTerm(term)"
-                    >
-                      <span
-                        class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full"
-                      >
-                        <History class="size-3.5" />
-                      </span>
-                      <div class="text-item-title min-w-0 flex-1 truncate">
-                        “{{ term }}”
-                      </div>
-                    </button>
-                    <button
-                      type="button"
-                      class="text-muted-foreground hover:bg-accent hover:text-foreground flex size-9 shrink-0 items-center justify-center rounded-full"
-                      :aria-label="`Remove ${term} from recent`"
-                      @click="recentSearches.remove(term)"
-                    >
-                      <X class="size-4" />
-                    </button>
-                  </li>
-                </ul>
-              </SmoothCollapse>
-            </section>
-
-            <template v-for="card in exampleCards" :key="card.key">
-              <section
-                v-if="
-                  searchExamples.examples.value[card.key].length ||
-                  searchExamples.loading.value
-                "
-                class="space-y-1"
-              >
-                <DisclosureHeader
-                  :label="card.label"
-                  :expanded="suggestionExpanded[card.key]"
-                  @toggle="suggestionExpanded[card.key] = !suggestionExpanded[card.key]"
-                />
-                <SmoothCollapse :open="suggestionExpanded[card.key]">
-                  <ul
-                    v-if="
-                      searchExamples.examples.value[card.key].length &&
-                      !searchExamples.loading.value
-                    "
-                  >
-                    <li
-                      v-for="term in searchExamples.examples.value[card.key]"
-                      :key="term"
-                    >
-                      <button
-                        type="button"
-                        class="hover:bg-accent flex w-full items-center gap-3 rounded-lg px-1 py-1.5 text-left"
-                        @click="selectTerm(term)"
-                      >
-                        <span
-                          class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full"
-                        >
-                          <component :is="card.icon" class="size-3.5" />
-                        </span>
-                        <div class="text-item-title min-w-0 flex-1 truncate">
-                          “{{ term }}”
-                        </div>
-                      </button>
-                    </li>
-                  </ul>
-                  <ul v-else aria-hidden="true">
-                    <li
-                      v-for="i in 3"
-                      :key="i"
-                      class="flex w-full items-center gap-3 px-1 py-1.5"
-                    >
-                      <Skeleton class="size-8 shrink-0 rounded-full!" />
-                      <Skeleton
-                        :class="['h-5', i === 1 ? 'w-2/3' : i === 2 ? 'w-1/2' : 'w-3/5']"
-                      />
-                    </li>
-                  </ul>
-                </SmoothCollapse>
-              </section>
-            </template>
-          </section>
-        </div>
+        <p class="text-muted-foreground flex items-center gap-2 px-1 text-sm">
+          <User class="size-4 shrink-0" />
+          Numbers change at every competition, so this looks in one competition at a time.
+        </p>
       </template>
     </main>
   </div>
 </template>
-
-<style>
-@reference '../style.css';
-
-html[data-ios]:has([data-route='search']) {
-  position: relative;
-  height: var(--vv-height);
-  overflow: hidden;
-}
-html[data-ios]:has([data-route='search']) body {
-  height: 100%;
-  overflow-y: auto;
-}
-</style>

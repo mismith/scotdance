@@ -7,10 +7,10 @@ import {
   type RouteRecordRaw,
 } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
-import { Calendars, Gavel, Music, School, Users } from '@lucide/vue'
-import TouchIcon from '@/components/TouchIcon.vue'
+import { CalendarDays, CircleEllipsis, Gavel, House, Info, Music, School, Users } from '@lucide/vue'
 import { startViewTransition } from '@/lib/transition'
 import { useAuthStore } from '@/stores/auth'
+import { recordBackLabel } from '@/lib/backLabels'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -33,9 +33,21 @@ declare module 'vue-router' {
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
+    name: 'home',
+    component: () => import('@/views/Home.vue'),
+    meta: { icon: House, title: 'Home' },
+  },
+  {
+    path: '/about',
     name: 'about',
     component: () => import('@/views/About.vue'),
-    meta: { icon: TouchIcon, title: 'About ScotDance.app' },
+    meta: { icon: Info, title: 'About ScotDance.app' },
+  },
+  {
+    path: '/more',
+    name: 'more',
+    component: () => import('@/views/More.vue'),
+    meta: { icon: CircleEllipsis, title: 'More' },
   },
   {
     path: '/dancers',
@@ -64,26 +76,21 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/dancers/:dancerId',
     component: () => import('@/views/dancer/DancerLayout.vue'),
-    meta: { ownsBottomNav: true },
-    children: [
+        children: [
       { path: '', redirect: { name: 'dancer.info' } },
       {
         path: 'info',
         name: 'dancer.info',
         component: () => import('@/views/dancer/Info.vue'),
       },
-      {
-        path: 'results',
-        name: 'dancer.results',
-        component: () => import('@/views/dancer/Results.vue'),
-      },
+      // One page now; old links to /results land on it.
+      { path: 'results', name: 'dancer.results', redirect: { name: 'dancer.info' } },
     ],
   },
   {
     path: '/judges/:judgeId',
     component: () => import('@/views/judge/JudgeLayout.vue'),
-    meta: { ownsBottomNav: true },
-    children: [
+        children: [
       { path: '', redirect: { name: 'judge.info' } },
       {
         path: 'info',
@@ -100,8 +107,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/pipers/:piperId',
     component: () => import('@/views/piper/PiperLayout.vue'),
-    meta: { ownsBottomNav: true },
-    children: [
+        children: [
       { path: '', redirect: { name: 'piper.info' } },
       {
         path: 'info',
@@ -119,8 +125,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/venues/:venueId',
     component: () => import('@/views/venue/VenueLayout.vue'),
-    meta: { ownsBottomNav: true },
-    children: [
+        children: [
       { path: '', redirect: { name: 'venue.info' } },
       {
         path: 'info',
@@ -145,7 +150,7 @@ const routes: RouteRecordRaw[] = [
     path: '/competitions',
     name: 'competitions',
     component: () => import('@/views/competitions/CompetitionsList.vue'),
-    meta: { icon: Calendars, title: 'Competitions' },
+    meta: { icon: CalendarDays, title: 'Competitions' },
   },
   {
     path: '/competitions/:competitionId',
@@ -194,7 +199,7 @@ const routes: RouteRecordRaw[] = [
     path: '/profile',
     name: 'profile',
     component: () => import('@/views/Profile.vue'),
-    meta: { requiresAuth: true, title: 'Profile' },
+    meta: { requiresAuth: true, title: 'Account' },
   },
   {
     path: '/policies',
@@ -224,7 +229,7 @@ const writeScrollPositions = (m: Record<string, number>) => {
 // Persisted last-visited route, so cold-boot to '/' (e.g. PWA/Capacitor icon
 // launch after the WebView was evicted) can resume where the user left off.
 type SavedRoute = { params: Record<string, string>; query: Record<string, string> }
-type RouteInfo = { $current?: string; [name: string]: SavedRoute | string | undefined }
+type RouteInfo = { $current?: string; $at?: string; [name: string]: SavedRoute | string | undefined }
 const ROUTE_INFO_KEY = 'route-info'
 const readRouteInfo = (): RouteInfo => {
   try { return JSON.parse(localStorage.getItem(ROUTE_INFO_KEY) ?? '{}') } catch { return {} }
@@ -254,18 +259,26 @@ export const router = createRouter({
   },
 })
 
-// Cold-boot restore: if launching into '/' with a saved last route, resume
-// there. Must run before other guards so the redirected target gets the
-// normal requiresAuth / scroll treatment.
+// Cold-boot restore: resume where the user left off only if they were here
+// recently (e.g. the app was evicted mid-competition). After a break, open on
+// Home, which is where their dancers are.
+const RESUME_WINDOW_MS = 2 * 60 * 60 * 1000
 router.beforeEach((to, from) => {
   if (from.name) return
-  if (to.name !== 'about') return
+  if (to.name !== 'home') return
   const info = readRouteInfo()
   const last = info.$current
-  if (!last || last === 'about') return
+  if (!last || last === 'home') return
+  const at = Number(info.$at ?? 0)
+  if (!at || Date.now() - at > RESUME_WINDOW_MS) return
   const saved = info[last]
   if (!saved || typeof saved === 'string') return
   return { name: last, params: saved.params, query: saved.query }
+})
+
+// Remember what the page being left was called, so Back can say where it goes.
+router.beforeEach((to, from) => {
+  if (from.name && to.fullPath !== from.fullPath) recordBackLabel(from.fullPath, document.title)
 })
 
 router.beforeEach((to, from) => {
@@ -291,7 +304,7 @@ router.beforeEach(async (to) => {
   const user = await getCurrentUser()
   if (!user) {
     useAuthStore().openLogin()
-    return { name: 'about' }
+    return { name: 'home' }
   }
 })
 
@@ -300,6 +313,7 @@ router.afterEach((to) => {
   const name = String(to.name)
   const info = readRouteInfo()
   info.$current = name
+  info.$at = String(Date.now())
   info[name] = {
     params: { ...to.params } as Record<string, string>,
     query: { ...to.query } as Record<string, string>,

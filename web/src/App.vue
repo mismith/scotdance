@@ -1,15 +1,21 @@
 <script setup lang="ts">
-import { computed, watch, watchEffect } from 'vue'
-import { useResizeObserver, useScroll } from '@vueuse/core'
+import { computed, onMounted, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import GlobalBottomNav from '@/components/nav/GlobalBottomNav.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
+import AlertsSheet from '@/components/AlertsSheet.vue'
+import AlertBanner from '@/components/AlertBanner.vue'
+import RolesSheet from '@/components/RolesSheet.vue'
+import { useRoles } from '@/composables/useRoles'
+import { startLiveAlerts } from '@/composables/useLiveAlerts'
 import SupportLauncher from '@/components/SupportLauncher.vue'
 import UpdateDialog from '@/components/UpdateDialog.vue'
 import { buildTitle } from '@/composables/usePageTitle'
 import { useCrisp } from '@/composables/useCrisp'
 import { useMeStore } from '@/stores/me'
+import { useDisplayPrefs } from '@/composables/useDisplayPrefs'
+import { useAuthStore } from '@/stores/auth'
 
 // Default page title from route meta. Component-level usePageTitle calls
 // (e.g. entity layouts) stack on top and override; when they unmount Unhead
@@ -27,19 +33,19 @@ const showGlobalNav = computed(
   () => !route.matched.some((r) => r.meta.ownsBottomNav),
 )
 
-// Reflect window scroll-edge state on <html> for the chrome-fade overlays
-// below. arrivedState only recomputes when y changes, so on async content
-// (route morphs, lazy lists) we'd see stale values — nudge it via a
-// synthetic scroll event whenever the body resizes.
-const { arrivedState } = useScroll(window)
-useResizeObserver(document.body, () => {
-  window.dispatchEvent(new Event('scroll'))
-})
+// Text size and contrast preferences (More › Display) live on <html>.
+useDisplayPrefs()
 
-watchEffect(() => {
-  const root = document.documentElement
-  root.dataset.scrollAtTop = String(arrivedState.top)
-  root.dataset.scrollAtBottom = String(arrivedState.bottom)
+// Asks new accounts how they use the app (see useRoles).
+useRoles()
+
+// Placing alerts for followed dancers while the app is open.
+startLiveAlerts()
+
+// Finish a passwordless sign-in when the app is opened from the emailed link.
+const auth = useAuthStore()
+onMounted(() => {
+  auth.completeEmailLinkSignIn().catch((e) => console.warn('[auth] email link', e))
 })
 
 // Pass the signed-in user's email to Crisp so support has context. Lives
@@ -58,31 +64,8 @@ watch(() => me.email, (email) => crisp.setUserEmail(email), { immediate: true })
   </div>
   <SupportLauncher />
   <LoginDialog />
+  <AlertsSheet />
+  <AlertBanner />
+  <RolesSheet />
   <UpdateDialog />
 </template>
-
-<style>
-@reference './style.css';
-
-/* Content fade-out under floating top/bottom nav — gradient overlays
-   that ease page content into the background color before it reaches
-   the nav edge. Sits below the nav (z-20 < nav z-30) and above page
-   content. Heights track --chrome-{top,bottom}; home route zeros out
-   --chrome-top so the top fade collapses to nothing there.
-   Co-located with the scroll-edge JS above so the data-attr contract
-   between them lives in one file. */
-body::before {
-  content: '';
-  @apply from-background via-background/75 pointer-events-none fixed inset-x-0 top-0 z-20 h-[calc(var(--chrome-top)+1rem)] bg-linear-to-b to-transparent transition-opacity;
-}
-body::after {
-  content: '';
-  @apply from-background via-background/75 pointer-events-none fixed inset-x-0 bottom-0 z-20 h-[calc(var(--chrome-bottom)+1rem)] bg-linear-to-t to-transparent transition-opacity;
-}
-/* Fade the overlay out when there's nothing scrolled past that edge.
-   Keeps short pages and end-of-list crisp. */
-html[data-scroll-at-top='true'] body::before,
-html[data-scroll-at-bottom='true'] body::after {
-  @apply opacity-0;
-}
-</style>

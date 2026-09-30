@@ -1,37 +1,33 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { ChevronRight, MapPin, Star } from '@lucide/vue'
+import { RouterLink } from 'vue-router'
+import { useIntervalFn } from '@vueuse/core'
+import { ChevronRight, Clock, ExternalLink, MapPin, Search, Star, Users } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
+import { useCompetitionDays } from '@/composables/useCompetitionDays'
 import CompChip from '@/components/CompChip.vue'
-import SectionHeader from '@/components/SectionHeader.vue'
+import DancerDayCard from '@/components/DancerDayCard.vue'
+import { useLiveAlertState } from '@/composables/useLiveAlerts'
+import FavoriteButton from '@/components/FavoriteButton.vue'
 import StaffAvatar from '@/components/StaffAvatar.vue'
 import StaffDialog from '@/components/StaffDialog.vue'
-import StatGrid from '@/components/StatGrid.vue'
-import {
-  staffEntityRef,
-  staffMemberName,
-  type StaffMember,
-} from '@/types/competition'
+import { staffEntityRef, staffMemberName, type StaffMember } from '@/types/competition'
+import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
-import { blocks, days, events } from '@/lib/schedule'
+import { blocks, days } from '@/lib/schedule'
 import {
+  formatDateTime,
   formatExternalURL,
   formatHumanURL,
-  formatDateTime,
-  formatMonthAbbrev,
-  isBeforeToday,
+  formatLongDate,
+  formatRelative,
   isPast,
-  isSameDay,
-  parseDate,
 } from '@/lib/format'
 import { sanitizeRichText } from '@/lib/sanitize'
-import {
-  injectInfoHeaderScrolledPast,
-  injectInfoHeaderSetter,
-} from '@/composables/useScrolledPast'
+import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
+import { nowMs } from '@/lib/now'
 
 const setHeader = injectInfoHeaderSetter()
-const scrolledPast = injectInfoHeaderScrolledPast()
 
 const {
   competitionId,
@@ -44,47 +40,38 @@ const {
   loadResults,
   schedule,
   loadSchedule,
+  isLive,
+  liveResultsAt,
 } = useCompetition()
+const { phase, followedHere } = useCompetitionDays()
+const auth = useAuthStore()
+const favorites = useFavoritesStore()
 
-onMounted(() => {
+const ready = ref(false)
+onMounted(async () => {
   loadStaff()
-  loadDancers()
-  loadResults()
-  loadSchedule()
+  await Promise.all([loadDancers(), loadResults(), loadSchedule()])
+  ready.value = true
 })
 
-const eventCount = computed(() => {
-  if (!schedule.value) return 0
-  return days(schedule.value).reduce(
-    (total, day) =>
-      total + blocks(day).reduce((sum, block) => sum + events(block).length, 0),
-    0,
-  )
+const kicker = computed(() => {
+  const c = competition.value
+  if (!c) return ''
+  const where = c.location ? ` · ${c.location}` : ''
+  if (phase.value === 'today') return `Today${where}`
+  if (c.date == null) return c.location ?? ''
+  const rel = formatRelative(c.date)
+  return `${formatLongDate(c.date)}${phase.value === 'before' ? ` · ${rel}` : ''}`
 })
 
-const isToday = computed(() => isSameDay(competition.value?.date))
-const datePast = computed(() => {
-  const d = competition.value?.date
-  return d != null && isBeforeToday(d)
-})
-
-const monthLabel = computed(() => {
-  const d = competition.value?.date
-  return d == null
-    ? ''
-    : formatMonthAbbrev(d).toUpperCase()
-})
-
-const dayLabel = computed(() => {
-  const d = competition.value?.date
-  return d == null ? '' : String(parseDate(d).getDate())
-})
-
-const yearLabel = computed(() => {
-  const d = competition.value?.date
-  if (d == null) return ''
-  if (isToday.value) return 'TODAY'
-  return String(parseDate(d).getFullYear())
+// "Updated 2 min ago" on a live day, refreshed each minute.
+const tick = ref(nowMs())
+useIntervalFn(() => (tick.value = nowMs()), 60_000)
+const updatedLabel = computed(() => {
+  void tick.value
+  if (!isLive.value || !liveResultsAt.value) return null
+  const mins = Math.max(0, Math.round((nowMs() - liveResultsAt.value) / 60_000))
+  return mins < 1 ? 'Results updating live' : `Results updating live · checked ${mins} min ago`
 })
 
 const mapsHref = computed(() => {
@@ -94,259 +81,242 @@ const mapsHref = computed(() => {
   return `https://maps.google.com/?q=${encodeURIComponent(parts)}`
 })
 
+const registrationLines = computed(() => {
+  const c = competition.value
+  if (!c) return []
+  const lines: string[] = []
+  if (c.registrationStart)
+    lines.push(`Registration ${isPast(c.registrationStart) ? 'opened' : 'opens'} ${formatDateTime(c.registrationStart)}`)
+  if (c.registrationEnd)
+    lines.push(`Registration ${isPast(c.registrationEnd) ? 'closed' : 'closes'} ${formatDateTime(c.registrationEnd)}`)
+  return lines
+})
 const registrationOpen = computed(() => {
   const end = competition.value?.registrationEnd
   return end == null || !isPast(end)
 })
 
-const registrationStatus = computed(() => {
-  const c = competition.value
-  if (!c) return null
-  const lines: string[] = []
-  if (c.registrationStart) {
-    const verb = isPast(c.registrationStart) ? 'opened' : 'opens'
-    lines.push(`Registration ${verb} ${formatDateTime(c.registrationStart)}`)
-  }
-  if (c.registrationEnd) {
-    const verb = isPast(c.registrationEnd) ? 'closed' : 'closes'
-    lines.push(`Registration ${verb} ${formatDateTime(c.registrationEnd)}`)
-  }
-  return lines.length ? lines : null
-})
-
-const stats = computed(() => {
-  const list: Array<{
-    value: string
-    label: string
-    to?: { name: string }
-  }> = []
-  if (dancers.value.length) {
-    list.push({
-      value: String(dancers.value.length),
-      label: 'Dancers',
-      to: { name: 'competition.dancers' },
-    })
-  }
-  if (eventCount.value) {
-    list.push({
-      value: String(eventCount.value),
-      label: eventCount.value === 1 ? 'Event' : 'Events',
-      to: { name: 'competition.schedule' },
-    })
-  }
-  if (dances.value.length) {
-    list.push({
-      value: String(dances.value.length),
-      label: dances.value.length === 1 ? 'Dance' : 'Dances',
-      to: { name: 'competition.results' },
-    })
-  }
-  return list
-})
-
-const favorites = useFavoritesStore()
-const isFavoriteComp = computed(() =>
-  favorites.isFavorite('competitions', competitionId.value),
+// Sessions: the schedule's blocks, with the time organisers put in their
+// description ("8:00 am").
+const sessions = computed(() =>
+  days(schedule.value).flatMap((day, di, all) =>
+    blocks(day).map((b) => ({
+      id: `${day.id}:${b.id}`,
+      day: all.length > 1 ? day.name : null,
+      name: b.name || 'Session',
+      time: (b.description ?? '').replace(/<[^>]*>/g, ' ').split('\n')[0]?.trim().slice(0, 40) || null,
+    })),
+  ),
 )
 
-function isFavoriteStaff(member: StaffMember): boolean {
-  const ref = staffEntityRef(member)
-  return ref ? favorites.isFavorite(ref.type, ref.id) : false
-}
-
-const groupedStaff = computed(() => {
+const staffGroups = computed(() => {
   const groups = new Map<string, StaffMember[]>()
-  for (const member of staff.value) {
-    if (!member.type) continue
-    const list = groups.get(member.type) ?? []
-    list.push(member)
-    groups.set(member.type, list)
+  for (const m of staff.value) {
+    if (!m.type) continue
+    groups.set(m.type, [...(groups.get(m.type) ?? []), m])
   }
-  return [...groups.entries()].map(([type, members]) => ({
-    type,
-    members,
-    showAvatars: members.length > 0 && members.every((m) => !!m.image),
-    favs: members.reduce((n, m) => n + (isFavoriteStaff(m) ? 1 : 0), 0),
-  }))
+  return [...groups.entries()].map(([type, members]) => ({ type, members }))
 })
-
+function isFavoriteStaff(m: StaffMember) {
+  const r = staffEntityRef(m)
+  return r ? favorites.isFavorite(r.type, r.id) : false
+}
 const activeStaff = ref<StaffMember | null>(null)
-function openStaff(member: StaffMember) {
-  activeStaff.value = member
-}
-function closeStaff() {
-  activeStaff.value = null
-}
+const { freshKey: liveFresh } = useLiveAlertState()
 </script>
 
 <template>
   <article v-if="competition" class="space-y-5">
-    <header :ref="setHeader" class="space-y-3 pr-16">
-      <CompChip
-        :name="competition.name"
-        :image="competition.image"
-        :favorite="isFavoriteComp"
-        :class="[
-          'size-18 rounded-2xl [view-transition-class:nav-avatar]',
-          !scrolledPast && '[view-transition-name:comp-avatar]',
-        ]"
-      />
-      <h1
-        :class="[
-          'text-title [view-transition-class:fit_nav-title]',
-          !scrolledPast && '[view-transition-name:comp-name]',
-        ]"
-      >
-        {{ competition.name ?? '?' }}
-      </h1>
+    <header :ref="setHeader" class="space-y-2">
+      <div class="flex items-start gap-3">
+        <CompChip
+          :name="competition.name"
+          :image="competition.image"
+          class="size-14 shrink-0 rounded-xl"
+        />
+        <div class="min-w-0 flex-1">
+          <p
+            :class="[
+              'flex items-center gap-1.5 text-sm font-bold',
+              phase === 'today' ? 'text-live' : 'text-muted-foreground',
+            ]"
+          >
+            <span v-if="phase === 'today'" class="bg-live size-2 animate-[live-pulse_2s_infinite] rounded-full" />
+            {{ kicker }}
+          </p>
+          <h1 class="text-display">{{ competition.name ?? 'Competition' }}</h1>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <FavoriteButton
+          :id="competitionId"
+          type="competitions"
+          :name="competition.name"
+          labelled
+        />
+        <p v-if="updatedLabel" class="text-done-foreground text-sm font-bold">{{ updatedLabel }}</p>
+      </div>
     </header>
 
-    <!-- Date / Venue card -->
+    <!-- Your dancers here -->
+    <section v-if="followedHere.length" class="space-y-3">
+      <h2 class="text-heading">Your dancers here</h2>
+      <DancerDayCard
+        v-for="f in followedHere"
+        :key="f.personId"
+        :days="f.days"
+        :fresh="liveFresh"
+        :competition-id="competitionId"
+        :color="f.color"
+      />
+    </section>
     <section
-      v-if="competition.date || competition.venue"
-      class="bg-card overflow-hidden rounded-2xl border shadow-sm"
+      v-else-if="ready && dancers.length"
+      class="bg-card flex items-center gap-3 rounded-2xl border p-4 shadow-sm"
     >
-      <div class="flex items-stretch">
-        <div
-          v-if="competition.date"
-          class="bg-background flex min-w-28 shrink-0 items-stretch border-r py-4"
-        >
-          <div
-            class="flex flex-1 flex-col items-center justify-center gap-1"
-          >
-            <div class="text-foreground/65 text-xs text-eyebrow">
-              {{ monthLabel }}
-            </div>
-            <div
-              class="text-5xl leading-none font-medium tracking-tight tabular-nums"
-            >
-              {{ dayLabel }}
-            </div>
-            <div
-              :class="[
-                'text-sm font-bold tracking-[0.14em] tabular-nums',
-                datePast ? 'text-muted-foreground' : 'text-secondary',
-              ]"
-            >
-              {{ yearLabel }}
-            </div>
-          </div>
-        </div>
-        <component
-          :is="mapsHref ? 'a' : 'div'"
-          :href="mapsHref ?? undefined"
-          :target="mapsHref ? '_blank' : undefined"
-          :rel="mapsHref ? 'noopener' : undefined"
-          class="flex flex-1 items-center p-3"
-        >
-          <div class="flex flex-1 items-center gap-2">
-            <div class="flex min-w-0 flex-1 flex-col justify-center gap-1">
-              <div v-if="competition.venue" class="flex items-center gap-1.5">
-                <MapPin class="text-muted-foreground -mt-1 size-6 shrink-0" />
-                <span class="text-xl leading-snug font-medium tracking-tight">
-                  {{ competition.venue }}
-                </span>
-              </div>
-              <div
-                v-if="competition.address || competition.location"
-                class="text-muted-foreground space-y-0.5 pl-8 text-sm"
-              >
-                <div v-if="competition.address">{{ competition.address }}</div>
-                <div v-if="competition.location">{{ competition.location }}</div>
-              </div>
-            </div>
-            <ChevronRight v-if="mapsHref" class="text-muted-foreground size-4 shrink-0" />
-          </div>
-        </component>
-      </div>
+      <span class="bg-blue-paper text-primary flex size-11 shrink-0 items-center justify-center rounded-full">
+        <Star class="size-5" />
+      </span>
+      <p class="min-w-0 flex-1 text-[0.9375rem] leading-snug">
+        <b>Is your dancer here?</b>
+        {{ auth.isSignedIn ? 'Follow them to see their day on this page.' : 'Find them, then follow them to see their day here.' }}
+      </p>
+      <RouterLink
+        :to="{ name: 'competition.dancers', params: { competitionId } }"
+        class="bg-primary text-primary-foreground flex h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-[0.9375rem] font-bold"
+      >
+        <Search class="size-4" /> Find
+      </RouterLink>
     </section>
 
-    <!-- Stat tiles -->
-    <StatGrid v-if="stats.length" :stats="stats" />
+    <!-- When and where -->
+    <section class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+      <div v-if="competition.date" class="flex items-center gap-3 p-4">
+        <Clock class="text-primary size-5 shrink-0" />
+        <div>
+          <p class="text-base font-bold">{{ formatLongDate(competition.date) }}</p>
+          <p v-if="sessions[0]?.time" class="text-muted-foreground text-sm">
+            Starts {{ sessions[0].time }}. Times are approximate.
+          </p>
+        </div>
+      </div>
+      <div v-if="competition.venue || competition.address || competition.location" class="flex items-center gap-3 p-4">
+        <MapPin class="text-primary size-5 shrink-0" />
+        <div class="min-w-0 flex-1">
+          <p v-if="competition.venue" class="text-base font-bold">{{ competition.venue }}</p>
+          <p class="text-muted-foreground text-sm">
+            {{ [competition.address, competition.location].filter(Boolean).join(', ') }}
+          </p>
+        </div>
+        <a
+          v-if="mapsHref"
+          :href="mapsHref"
+          target="_blank"
+          rel="noopener"
+          class="bg-card border-strong flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-[0.9375rem] font-bold"
+        >
+          Directions
+        </a>
+      </div>
+      <RouterLink
+        v-if="dancers.length"
+        :to="{ name: 'competition.dancers', params: { competitionId } }"
+        class="flex items-center gap-3 p-4 hover:bg-accent"
+      >
+        <Users class="text-primary size-5 shrink-0" />
+        <span class="flex-1 text-base font-bold">
+          {{ dancers.length }} dancers<template v-if="dances.length">, {{ dances.length }} dances</template>
+        </span>
+        <ChevronRight class="text-muted-foreground size-5" />
+      </RouterLink>
+    </section>
 
-    <section v-if="competition.registrationURL" class="space-y-2">
+    <!-- Sessions -->
+    <section v-if="sessions.length" class="space-y-3">
+      <h2 class="text-heading flex items-baseline justify-between">
+        Sessions
+        <RouterLink
+          :to="{ name: 'competition.schedule', params: { competitionId } }"
+          class="text-primary text-[0.9375rem] font-bold"
+        >
+          Full schedule
+        </RouterLink>
+      </h2>
+      <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+        <li v-for="s in sessions" :key="s.id" class="flex items-center gap-3 px-4 py-3">
+          <span class="bg-muted flex min-w-16 shrink-0 justify-center rounded-lg px-2 py-1 text-sm font-extrabold tabular-nums">
+            {{ s.time ?? '—' }}
+          </span>
+          <span class="min-w-0">
+            <span class="block text-base font-bold">{{ s.name }}</span>
+            <span v-if="s.day" class="text-muted-foreground block text-sm">{{ s.day }}</span>
+          </span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Registration + links -->
+    <section v-if="competition.registrationURL || competition.links?.length" class="space-y-2">
       <a
+        v-if="competition.registrationURL"
         :href="formatExternalURL(competition.registrationURL)"
         target="_blank"
         rel="noopener"
         :aria-disabled="!registrationOpen"
-        class="bg-primary text-primary-foreground inline-flex items-center rounded-full px-5 py-2 text-lg font-medium hover:opacity-90 aria-disabled:pointer-events-none aria-disabled:opacity-50"
+        class="bg-primary text-primary-foreground flex h-12 items-center justify-center gap-2 rounded-xl text-base font-bold aria-disabled:pointer-events-none aria-disabled:opacity-50"
       >
-        Register
+        Register <ExternalLink class="size-4" />
       </a>
-      <ul v-if="registrationStatus" class="text-muted-foreground space-y-0.5">
-        <li v-for="line in registrationStatus" :key="line">{{ line }}</li>
-      </ul>
-    </section>
-
-    <section v-if="competition.links?.length" class="flex flex-wrap gap-2">
-      <a
-        v-for="link in competition.links"
-        :key="link.url"
-        :href="formatExternalURL(link.url)"
-        target="_blank"
-        rel="noopener"
-        class="bg-card hover:bg-accent inline-flex items-center rounded-full border px-3 py-1.5 text-lg"
-      >
-        {{ link.name || formatHumanURL(link.url) }}
-      </a>
+      <p v-for="line in registrationLines" :key="line" class="text-muted-foreground text-sm">{{ line }}</p>
+      <div v-if="competition.links?.length" class="flex flex-wrap gap-2 pt-1">
+        <a
+          v-for="link in competition.links"
+          :key="link.url"
+          :href="formatExternalURL(link.url)"
+          target="_blank"
+          rel="noopener"
+          class="bg-card border-strong inline-flex h-11 items-center gap-1.5 rounded-full border px-4 text-[0.9375rem] font-bold"
+        >
+          {{ link.name || formatHumanURL(link.url) }} <ExternalLink class="size-4" />
+        </a>
+      </div>
     </section>
 
     <section
       v-if="competition.description"
-      class="prose prose-sm max-w-none"
+      class="text-base leading-relaxed [&_a]:text-primary [&_a]:underline [&_p+p]:mt-3"
       v-html="sanitizeRichText(competition.description)"
     />
 
-    <!-- Staff as two-column credits -->
-    <section v-for="group in groupedStaff" :key="group.type" class="space-y-3">
-      <SectionHeader
-        :label="`${group.type}s`"
-        :count="group.members.length"
-        :favs="group.favs"
-      />
-      <div class="columns-2 gap-4 px-1 [column-fill:balance]">
-        <button
-          v-for="member in group.members"
-          :key="member.id"
-          type="button"
-          class="mb-2 flex w-full break-inside-avoid items-center gap-3 rounded-md py-1 text-left hover:bg-accent/40"
-          @click="openStaff(member)"
-        >
-          <StaffAvatar
-            v-if="group.showAvatars"
-            :member="member"
-            :size="40"
-          />
-          <div class="min-w-0 flex-1">
-            <div class="text-item-title flex items-center gap-1.5 truncate">
-              <span class="truncate">{{ staffMemberName(member) }}</span>
-              <Star
-                v-if="isFavoriteStaff(member)"
-                class="text-secondary size-3.5 shrink-0 fill-current"
-                aria-label="Favourite"
-              />
-            </div>
-            <div
-              v-if="member.location"
-              class="text-item-subtitle text-muted-foreground truncate"
-            >
-              {{ member.location }}
-            </div>
-          </div>
-        </button>
-      </div>
+    <!-- Judges, pipers, and other staff -->
+    <section v-for="g in staffGroups" :key="g.type" class="space-y-3">
+      <h2 class="text-heading">{{ g.type }}s <span class="text-muted-foreground text-sm font-semibold">{{ g.members.length }}</span></h2>
+      <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+        <li v-for="m in g.members" :key="m.id">
+          <button
+            type="button"
+            class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-accent"
+            @click="activeStaff = m"
+          >
+            <StaffAvatar :member="m" :size="36" />
+            <span class="min-w-0 flex-1">
+              <span class="flex items-center gap-1.5 text-base font-bold">
+                <span class="truncate">{{ staffMemberName(m) }}</span>
+                <Star v-if="isFavoriteStaff(m)" class="text-primary size-4 shrink-0 fill-current" aria-label="Following" />
+              </span>
+              <span v-if="m.location" class="text-muted-foreground block truncate text-sm">{{ m.location }}</span>
+            </span>
+            <ChevronRight class="text-muted-foreground size-5 shrink-0" />
+          </button>
+        </li>
+      </ul>
     </section>
 
-    <StaffDialog :member="activeStaff" @close="closeStaff" />
+    <StaffDialog :member="activeStaff" @close="activeStaff = null" />
 
-    <!-- Sanction footer -->
-    <div
-      v-if="competition.sobhd"
-      class="text-muted-foreground flex items-center justify-between pt-2"
-    >
-      <span class="italic">RSOBHD sanctioned</span>
-      <span class="tracking-wider tabular-nums">{{ competition.sobhd }}</span>
-    </div>
+    <p v-if="competition.sobhd" class="text-muted-foreground flex justify-between pt-2 text-sm">
+      <span>RSOBHD sanctioned</span>
+      <span class="font-bold tabular-nums">{{ competition.sobhd }}</span>
+    </p>
   </article>
 </template>

@@ -10,6 +10,8 @@ const props = defineProps<{
   /** Denormed display name stored alongside the favourite — lets list pages
    *  show favourites before the slim index for that entity loads. */
   name?: string
+  /** Show the word ("Follow" / "Following") next to the star. */
+  labelled?: boolean
 }>()
 
 const auth = useAuthStore()
@@ -25,7 +27,7 @@ async function handleClick(e: Event) {
     auth.enqueueAfterLogin(() =>
       favorites.setFavorite(props.type, props.id, true, props.name),
     )
-    auth.openLogin()
+    auth.openLogin({ reason: 'favorite', name: props.name })
     return
   }
   await favorites.toggle(props.type, props.id, props.name)
@@ -40,27 +42,23 @@ async function handleClick(e: Event) {
   <button
     v-tap-feedback
     type="button"
-    :title="
-      auth.isSignedIn
-        ? isFavorite
-          ? 'Unfavourite'
-          : 'Favourite'
-        : 'Sign in to favourite'
-    "
-    aria-label="Favourite"
+    :aria-pressed="isFavorite"
+    :aria-label="labelled ? undefined : isFavorite ? 'Following' : 'Follow'"
     :class="[
-      'hover:bg-accent flex size-11 items-center justify-center rounded-full transition-colors',
-      isFavorite ? 'text-secondary' : 'opacity-70 hover:opacity-100',
+      'flex shrink-0 items-center justify-center rounded-full transition-colors',
+      labelled
+        ? [
+            'h-11 gap-1.5 border px-4 text-[0.9375rem] font-bold',
+            isFavorite ? 'bg-primary border-primary text-primary-foreground' : 'bg-card border-strong hover:bg-accent',
+          ]
+        : ['size-11 hover:bg-accent', isFavorite ? 'text-primary' : 'text-muted-foreground'],
     ]"
     @click="handleClick"
   >
     <Star
-      :class="[
-        'size-5',
-        isFavorite && 'fill-current',
-        animating && 'animate-pop',
-      ]"
+      :class="['size-5', isFavorite && 'fill-current', animating && 'animate-pop']"
       @animationend="animating = false"
     />
+    <template v-if="labelled">{{ isFavorite ? 'Following' : 'Follow' }}</template>
   </button>
 </template>
