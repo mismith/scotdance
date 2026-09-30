@@ -7,6 +7,7 @@ import App from './App.vue'
 import { router } from './router'
 import { firebaseApp } from './firebase'
 import { vTapFeedback } from './directives/tapFeedback'
+import { setupNative } from './lib/native'
 import './composables/useTheme'
 import '@fontsource-variable/atkinson-hyperlegible-next/wght.css'
 import './style.css'
@@ -37,7 +38,8 @@ router.onError((err) => {
     window.location.reload()
     return
   }
-  console.error('[router:error]', err)
+  console.error('[router:error]', message, err)
 })
 
 app.mount('#app')
+setupNative()

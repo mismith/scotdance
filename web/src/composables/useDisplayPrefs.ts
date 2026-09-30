@@ -1,3 +1,5 @@
+import { nativePlugin } from '@/lib/native'
+
 // Text size follows the phone, not an in-app setting.
 //
 // On the web, the browser's own zoom and text settings already apply (all
@@ -12,12 +14,7 @@ interface TextZoomPlugin {
   set(opts: { value: number }): Promise<void>
 }
 
-function textZoom(): TextZoomPlugin | null {
-  const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; Plugins?: Record<string, unknown> } })
-    .Capacitor
-  if (!cap?.isNativePlatform?.()) return null
-  return (cap.Plugins?.TextZoom as TextZoomPlugin | undefined) ?? null
-}
+const textZoom = () => nativePlugin<TextZoomPlugin>('TextZoom')
 
 let applied = false
 

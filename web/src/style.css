@@ -108,8 +108,10 @@
   --dancer-6: #00707a;
   --dancer-7: #b0266e;
   --dancer-8: #b04a00;
-  --safe-top: env(safe-area-inset-top);
-  --safe-bottom: env(safe-area-inset-bottom);
+  /* The Android app injects --safe-area-inset-* (Capacitor SystemBars) for
+     WebViews that don't report env() insets edge-to-edge. */
+  --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top));
+  --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom));
   /* Opaque chrome: a 3.5rem app bar under the status bar, and a 3.5rem tab
      bar above the home indicator. Pages pad by these. */
   --nav-top: var(--safe-top);

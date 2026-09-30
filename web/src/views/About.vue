@@ -5,15 +5,15 @@ import { RouterLink, useRoute } from 'vue-router'
 import { CalendarDays, ChevronDown, GraduationCap, Heart, Search, Star, Trophy, Users } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import { useCrisp } from '@/composables/useCrisp'
-import { PLATFORM } from '@/composables/useUpdate'
+import { platform } from '@/lib/native'
 import { version } from '../../package.json'
 
 // About ScotDance, organised by who it's for. The common questions keep
 // their #faq-… links so older shared links still land on the right answer.
 const crisp = useCrisp()
-const isWeb = PLATFORM === 'web'
+const isWeb = platform === 'web'
 const year = new Date().getFullYear()
-const platformLabel = PLATFORM === 'ios' ? 'iOS' : PLATFORM === 'android' ? 'Android' : 'Web'
+const platformLabel = platform === 'ios' ? 'iOS' : platform === 'android' ? 'Android' : 'Web'
 
 // One line per role, about the same length, each in its own colour.
 const roles = [
