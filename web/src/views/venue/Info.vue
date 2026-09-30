@@ -5,6 +5,7 @@ import { MapPin } from '@lucide/vue'
 import { useVenueProfile } from '@/composables/useVenueProfile'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import FavoriteButton from '@/components/FavoriteButton.vue'
+import MapPreview from '@/components/MapPreview.vue'
 import ProfileCompetitions from '@/components/ProfileCompetitions.vue'
 
 // A venue: where it is, how to get there, and what's on there.
@@ -56,6 +57,14 @@ const items = computed(() => {
         <MapPin class="size-4" /> Directions
       </a>
     </div>
+
+    <MapPreview
+      v-if="p.lat.value != null && p.lng.value != null"
+      :lat="p.lat.value"
+      :lng="p.lng.value"
+      :href="mapsHref"
+      class="h-48 rounded-2xl border shadow-sm"
+    />
 
     <ProfileCompetitions :items="items" :loading="p.loading.value" empty-text="No competitions listed here yet." />
   </article>

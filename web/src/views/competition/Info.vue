@@ -7,6 +7,7 @@ import { ChevronRight, Clock, ExternalLink, MapPin, Search, Star, Users } from '
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
 import DateTile from '@/components/DateTile.vue'
+import MapPreview from '@/components/MapPreview.vue'
 import DancerDayCard from '@/components/DancerDayCard.vue'
 import { useLiveAlertState } from '@/composables/useLiveAlerts'
 import FavoriteButton from '@/components/FavoriteButton.vue'
@@ -203,23 +204,32 @@ const { freshKey: liveFresh } = useLiveAlertState()
           </p>
         </div>
       </div>
-      <div v-if="competition.venue || competition.address || competition.location" class="flex items-center gap-3 p-4">
-        <MapPin class="text-primary size-5 shrink-0" />
-        <div class="min-w-0 flex-1">
-          <p v-if="competition.venue" class="text-base font-bold">{{ competition.venue }}</p>
-          <p class="text-muted-foreground text-sm">
-            {{ [competition.address, competition.location].filter(Boolean).join(', ') }}
-          </p>
+      <div v-if="competition.venue || competition.address || competition.location" class="space-y-3 p-4">
+        <div class="flex items-center gap-3">
+          <MapPin class="text-primary size-5 shrink-0" />
+          <div class="min-w-0 flex-1">
+            <p v-if="competition.venue" class="text-base font-bold">{{ competition.venue }}</p>
+            <p class="text-muted-foreground text-sm">
+              {{ [competition.address, competition.location].filter(Boolean).join(', ') }}
+            </p>
+          </div>
+          <a
+            v-if="mapsHref"
+            :href="mapsHref"
+            target="_blank"
+            rel="noopener"
+            class="bg-card border-strong flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-[0.9375rem] font-bold"
+          >
+            Directions
+          </a>
         </div>
-        <a
-          v-if="mapsHref"
+        <MapPreview
+          v-if="Number.isFinite(competition.lat) && Number.isFinite(competition.lng)"
+          :lat="competition.lat!"
+          :lng="competition.lng!"
           :href="mapsHref"
-          target="_blank"
-          rel="noopener"
-          class="bg-card border-strong flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-[0.9375rem] font-bold"
-        >
-          Directions
-        </a>
+          class="h-40 rounded-xl"
+        />
       </div>
       <RouterLink
         v-if="dancers.length"
