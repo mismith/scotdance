@@ -1,5 +1,6 @@
-import { get, onValue, ref as dbRef } from 'firebase/database'
+import { ref as dbRef } from 'firebase/database'
 import { database } from '@/firebase'
+import { getSaved, onReconnect, onValueSaved } from '@/lib/offline'
 import {
   danceFullName,
   dancerFullName,
@@ -82,6 +83,11 @@ const caches = {
   staff: new Map<string, Promise<StaffMember[]>>(),
 }
 
+// Anything read while offline may be a saved copy: fetch afresh next time.
+onReconnect(() => {
+  for (const map of Object.values(caches)) map.clear()
+})
+
 function cached<T>(map: Map<string, Promise<T>>, id: string, load: () => Promise<T>) {
   let p = map.get(id)
   if (!p) {
@@ -96,9 +102,9 @@ function cached<T>(map: Map<string, Promise<T>>, id: string, load: () => Promise
 export function fetchDancers(id: string): Promise<DancersBundle> {
   return cached(caches.dancers, id, async () => {
     const [dancersSnap, groupsSnap, categoriesSnap] = await Promise.all([
-      get(sectionRef(id, 'dancers')),
-      get(sectionRef(id, 'groups')),
-      get(sectionRef(id, 'categories')),
+      getSaved(sectionRef(id, 'dancers')),
+      getSaved(sectionRef(id, 'groups')),
+      getSaved(sectionRef(id, 'categories')),
     ])
     const rawDancers = snapshotToArray<Dancer>(dancersSnap.val())
     const rawGroups = snapshotToArray<Group>(groupsSnap.val())
@@ -143,9 +149,9 @@ function toResults(resultsVal: unknown, pointsVal: unknown) {
 export function fetchResults(id: string): Promise<ResultsBundle> {
   return cached(caches.results, id, async () => {
     const [dancesSnap, resultsSnap, pointsSnap] = await Promise.all([
-      get(sectionRef(id, 'dances')),
-      get(sectionRef(id, 'results')),
-      get(sectionRef(id, 'points')),
+      getSaved(sectionRef(id, 'dances')),
+      getSaved(sectionRef(id, 'results')),
+      getSaved(sectionRef(id, 'points')),
     ])
     const dances = snapshotToArray<Dance>(dancesSnap.val())
       .map<EnrichedDance>((d) => ({ ...d, fullName: danceFullName(d) }))
@@ -157,9 +163,9 @@ export function fetchResults(id: string): Promise<ResultsBundle> {
 export function fetchSchedule(id: string): Promise<ScheduleBundle> {
   return cached(caches.schedule, id, async () => {
     const [scheduleSnap, platformsSnap, drawsSnap] = await Promise.all([
-      get(sectionRef(id, 'schedule')),
-      get(sectionRef(id, 'platforms')),
-      get(sectionRef(id, 'draws')),
+      getSaved(sectionRef(id, 'schedule')),
+      getSaved(sectionRef(id, 'platforms')),
+      getSaved(sectionRef(id, 'draws')),
     ])
     // RTDB stores `false` for admin-disabled sections and `null` for never-created.
     const sval = scheduleSnap.val()
@@ -174,7 +180,7 @@ export function fetchSchedule(id: string): Promise<ScheduleBundle> {
 
 export function fetchStaff(id: string): Promise<StaffMember[]> {
   return cached(caches.staff, id, async () => {
-    const snap = await get(sectionRef(id, 'staff'))
+    const snap = await getSaved(sectionRef(id, 'staff'))
     return snapshotToArray<StaffMember>(snap.val()).sort(byDragOrder)
   })
 }
@@ -195,12 +201,12 @@ export function subscribeResults(
   const emit = () => {
     if (gotResults && gotPoints) cb(toResults(results, points))
   }
-  const offResults = onValue(sectionRef(id, 'results'), (snap) => {
+  const offResults = onValueSaved(sectionRef(id, 'results'), (snap) => {
     results = snap.val()
     gotResults = true
     emit()
   })
-  const offPoints = onValue(sectionRef(id, 'points'), (snap) => {
+  const offPoints = onValueSaved(sectionRef(id, 'points'), (snap) => {
     points = snap.val()
     gotPoints = true
     emit()

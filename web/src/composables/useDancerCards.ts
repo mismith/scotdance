@@ -1,6 +1,7 @@
 import { computed, onScopeDispose, ref, shallowRef, watch, type Ref } from 'vue'
-import { child, get } from 'firebase/database'
+import { child } from 'firebase/database'
 import { dataRef } from '@/firebase'
+import { getSaved, onReconnect } from '@/lib/offline'
 import { fetchCompetitionMeta } from '@/lib/competitionMeta'
 import {
   fetchDancers,
@@ -43,10 +44,12 @@ export interface DancerCard {
 }
 
 const aggCache = new Map<string, Promise<DancerAggregate | null>>()
+onReconnect(() => aggCache.clear())
+
 export function fetchAggregate(id: string) {
   let p = aggCache.get(id)
   if (!p) {
-    p = get(child(dataRef('dancers'), id))
+    p = getSaved(child(dataRef('dancers'), id))
       .then((s) => (s.val() && typeof s.val() === 'object' ? (s.val() as DancerAggregate) : null))
       .catch(() => null)
     aggCache.set(id, p)

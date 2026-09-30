@@ -9,8 +9,9 @@ import {
   type InjectionKey,
   type Ref,
 } from 'vue'
-import { get, child } from 'firebase/database'
+import { child } from 'firebase/database'
 import { dataRef } from '@/firebase'
+import { getSaved } from '@/lib/offline'
 import { fetchDancers, fetchResults, fetchSchedule, fetchStaff, subscribeResults } from '@/lib/competitionData'
 import { daysFromToday } from '@/lib/format'
 import { nowMs } from '@/lib/now'
@@ -140,7 +141,7 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     }
 
     try {
-      const snap = await get(competitionMetaRef(id))
+      const snap = await getSaved(competitionMetaRef(id))
       const value = snap.val() as Competition | null
       if (value && typeof value === 'object') {
         docExists.value = true

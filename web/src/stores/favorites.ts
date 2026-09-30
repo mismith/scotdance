@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, watch, type Ref } from 'vue'
-import { ref as dbRef, onValue, set, update } from 'firebase/database'
+import { ref as dbRef, set, update } from 'firebase/database'
 import { database } from '@/firebase'
 import { lookupEntityId } from '@/lib/entityIndex'
+import { onValueSaved } from '@/lib/offline'
 import { useAuthStore } from './auth'
 
 const NAMESPACE = import.meta.env.VITE_FIREBASE_DATA_NAMESPACE || 'production'
@@ -102,7 +103,7 @@ export const useFavoritesStore = defineStore('favorites', () => {
       }
       const r = dbRef(database, `${NAMESPACE}/users:favorites/${uid}`)
       let migrated = false
-      unsubscribe = onValue(r, (snap) => {
+      unsubscribe = onValueSaved(r, (snap) => {
         const val =
           (snap.val() as Partial<
             Record<FavoriteType, Record<string, FavoriteValue>>

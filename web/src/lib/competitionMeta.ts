@@ -1,14 +1,16 @@
-import { child, get } from 'firebase/database'
+import { child } from 'firebase/database'
 import { dataRef } from '@/firebase'
+import { getSaved, onReconnect } from '@/lib/offline'
 import type { Competition } from '@/types/competition'
 
 const cache = new Map<string, Promise<Competition | null>>()
+onReconnect(() => cache.clear())
 
 export function fetchCompetitionMeta(id: string): Promise<Competition | null> {
   if (!cache.has(id)) {
     const promise = (async () => {
       try {
-        const snap = await get(child(dataRef('competitions'), id))
+        const snap = await getSaved(child(dataRef('competitions'), id))
         const value = snap.val()
         return value && typeof value === 'object' ? (value as Competition) : null
       } catch {

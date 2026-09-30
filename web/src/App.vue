@@ -5,6 +5,7 @@ import { useHead } from '@unhead/vue'
 import GlobalBottomNav from '@/components/nav/GlobalBottomNav.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import AlertBanner from '@/components/AlertBanner.vue'
+import OfflineNotice from '@/components/OfflineNotice.vue'
 import RolesSheet from '@/components/RolesSheet.vue'
 import { useRoles } from '@/composables/useRoles'
 import { startLiveAlerts } from '@/composables/useLiveAlerts'
@@ -64,6 +65,7 @@ watch(() => me.email, (email) => crisp.setUserEmail(email), { immediate: true })
   <SupportLauncher />
   <LoginDialog />
   <AlertBanner />
+  <OfflineNotice />
   <RolesSheet />
   <UpdateDialog />
 </template>

@@ -1,6 +1,7 @@
 import { computed, ref, watch, type Ref } from 'vue'
-import { get, orderByChild, query, ref as dbRef, startAt } from 'firebase/database'
+import { orderByChild, query, ref as dbRef, startAt } from 'firebase/database'
 import { database } from '@/firebase'
+import { getSaved, onReconnect } from '@/lib/offline'
 import { useMeStore } from '@/stores/me'
 import { parseDate } from '@/lib/format'
 import { now } from '@/lib/now'
@@ -27,6 +28,10 @@ interface CacheEntry {
 const recentCache: CacheEntry = { data: ref([]), loaded: false, inFlight: null }
 const archivedCache: CacheEntry = { data: ref([]), loaded: false, inFlight: null }
 const loading = ref(false)
+onReconnect(() => {
+  recentCache.loaded = false
+  archivedCache.loaded = false
+})
 const error = ref<Error | null>(null)
 
 async function fetchInto(entry: CacheEntry, includeArchived: boolean) {
@@ -39,7 +44,8 @@ async function fetchInto(entry: CacheEntry, includeArchived: boolean) {
   error.value = null
   entry.inFlight = (async () => {
     try {
-      const snap = await get(q)
+      // The recent query's start date moves daily, so save it under a fixed name.
+      const snap = await getSaved(q, includeArchived ? 'competitions:all' : 'competitions:recent')
       const val = (snap.val() as Record<string, Competition> | null) ?? {}
       entry.data.value = Object.entries(val)
         .map<CompetitionListItem>(([id, c]) => ({ id, ...c }))

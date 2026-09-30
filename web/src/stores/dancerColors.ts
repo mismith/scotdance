@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
-import { onValue, set } from 'firebase/database'
+import { set } from 'firebase/database'
 import { dataRef } from '@/firebase'
+import { onValueSaved } from '@/lib/offline'
 import { useAuthStore } from './auth'
 
 // The colour you've chosen for each dancer you follow, if any
@@ -34,7 +35,7 @@ export const useDancerColorsStore = defineStore('dancerColors', () => {
       off = null
       chosen.value = {}
       if (uid) {
-        off = onValue(
+        off = onValueSaved(
           dataRef(`users:dancerColors/${uid}`),
           (snap) => {
             const all = (snap.val() ?? {}) as Record<string, string>
