@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 import { gravatarUrl } from '@/lib/gravatar'
 import Dialog from '@/components/Dialog.vue'
+import { useMorph } from '@/lib/morph'
 import AppBar from '@/components/nav/AppBar.vue'
 import { ROLES, useRoles } from '@/composables/useRoles'
 
@@ -62,6 +63,8 @@ async function saveDisplayName() {
 // Modal state
 type ModalKind = 'email' | 'password' | 'delete' | null
 const modal = ref<ModalKind>(null)
+// The sheet grows out of the row that opened it (lib/morph).
+const sheet = useMorph()
 const newEmail = ref('')
 const newPassword = ref('')
 const currentPassword = ref('')
@@ -79,10 +82,11 @@ function openModal(kind: Exclude<ModalKind, null>) {
   showNewPassword.value = false
   submitting.value = false
   modalError.value = null
+  sheet.show()
 }
 
 function closeModal() {
-  modal.value = null
+  sheet.hide().then(() => (modal.value = null))
 }
 
 async function handleSignOut() {
@@ -131,7 +135,7 @@ const submitDisabled = computed(() => {
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
-    <AppBar title="Account" :fallback="{ to: { name: 'more' }, label: 'More' }" />
+    <AppBar title="Account" :fallback="{ to: { name: 'settings' }, label: 'Settings' }" />
 
     <main class="mx-auto w-full max-w-3xl space-y-5 px-4 pt-[calc(var(--chrome-top)+0.25rem)]">
       <header class="flex items-center gap-4">
@@ -199,7 +203,7 @@ const submitDisabled = computed(() => {
       </div>
     </main>
 
-    <Dialog :open="!!modal" variant="sheet" @close="closeModal">
+    <Dialog :open="sheet.open" :morph="sheet" variant="sheet" @close="closeModal">
       <template #header>
         <h2 class="text-title">
           <template v-if="modal === 'email'">Change your email</template>

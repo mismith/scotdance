@@ -112,7 +112,7 @@ watch(() => route.hash, applyHash)
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
-    <AppBar title="About ScotDance" :fallback="{ to: { name: 'more' }, label: 'More' }" />
+    <AppBar title="About ScotDance" :fallback="{ to: { name: 'home' }, label: 'Home' }" />
 
     <main class="mx-auto w-full max-w-3xl space-y-8 px-4 pt-[calc(var(--chrome-top)+0.5rem)]">
       <header class="space-y-3">

@@ -5,7 +5,7 @@ import { RouterLink } from 'vue-router'
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
-    <AppBar title="Privacy and terms" :fallback="{ to: { name: 'more' }, label: 'More' }" />
+    <AppBar title="Privacy and terms" :fallback="{ to: { name: 'settings' }, label: 'Settings' }" />
 
     <main
       class="[&_:is(strong,em)]:text-foreground mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 pt-[calc(var(--chrome-top)+0.25rem)] text-base leading-relaxed text-muted-foreground"

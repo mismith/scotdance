@@ -24,7 +24,7 @@ async function save() {
 </script>
 
 <template>
-  <Dialog :open="r.sheetOpen.value" variant="sheet" @close="r.close()">
+  <Dialog :open="r.sheetOpen.value" :morph="r.sheet" variant="sheet" @close="r.close()">
     <template #header>
       <h2 class="text-title">How do you use ScotDance?</h2>
     </template>

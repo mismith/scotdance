@@ -68,6 +68,10 @@
   --background: #f2f4f7;
   --foreground: #12161b;
   --card: #ffffff;
+  /* Frosted chrome (tab bar): a hint of the page through it, a lit top edge. */
+  --glass: color-mix(in oklab, var(--card) 72%, transparent);
+  --glass-edge: rgb(255 255 255 / 0.6);
+  --glass-line: rgb(0 0 0 / 0.08);
   --card-foreground: #12161b;
   --popover: #ffffff;
   --popover-foreground: #12161b;
@@ -88,6 +92,8 @@
   --strong: #8c96a3;
   --ring: #0065bd;
   --radius: 0.75rem;
+  /* Subtler than a full squircle (superellipse(2)), so corners stay soft. */
+  --corner-shape: superellipse(1.5);
   --blue-paper: #e1ecf8;
   --pink-paper: #fbe4e8;
   --chip: #e9edf2;
@@ -118,7 +124,7 @@
   --nav-top: var(--safe-top);
   --nav-bottom: 0px;
   --chrome-top: calc(3.5rem + var(--safe-top));
-  --chrome-bottom: calc(3.5rem + max(0.25rem, var(--safe-bottom)));
+  --chrome-bottom: calc(4.5rem + max(0.5rem, var(--safe-bottom)));
 }
 
 .dark {
@@ -126,6 +132,9 @@
   --background: #0c0f13;
   --foreground: #eef2f6;
   --card: #161b21;
+  --glass: color-mix(in oklab, var(--card) 78%, transparent);
+  --glass-edge: rgb(255 255 255 / 0.1);
+  --glass-line: rgb(255 255 255 / 0.1);
   --card-foreground: #eef2f6;
   --popover: #1f262e;
   --popover-foreground: #eef2f6;
@@ -171,17 +180,6 @@
   }
 }
 
-@supports (corner-shape: squircle) {
-  :root {
-    --corner-shape: superellipse(1.5);
-  }
-  *,
-  *::before,
-  *::after {
-    corner-shape: var(--corner-shape);
-  }
-}
-
 @layer base {
   * {
     @apply border-border;
@@ -210,6 +208,50 @@
    NN/g found text over translucent glass becomes illegible. */
 @utility floating-nav {
   @apply bg-card text-card-foreground border shadow-sm;
+}
+
+/* Continuous (squircle-like) corners, as on iOS, for every rounded-* size
+   except rounded-full: a squircle turns circles and capsules squarish. These
+   merge into Tailwind's own rounded-* utilities. Browsers without
+   corner-shape ignore it and keep plain round corners. */
+@utility rounded-sm {
+  corner-shape: var(--corner-shape);
+}
+@utility rounded-md {
+  corner-shape: var(--corner-shape);
+}
+@utility rounded-lg {
+  corner-shape: var(--corner-shape);
+}
+@utility rounded-xl {
+  corner-shape: var(--corner-shape);
+}
+@utility rounded-2xl {
+  corner-shape: var(--corner-shape);
+}
+@utility rounded-3xl {
+  corner-shape: var(--corner-shape);
+}
+@utility rounded-t-3xl {
+  corner-shape: var(--corner-shape);
+}
+
+/* Frosted glass for floating chrome, after iOS 26: the page blurs and
+   brightens through it, with a lit top edge and a soft shadow. Labels sit
+   on a mostly opaque surface so they stay easy to read. Opaque when the
+   system asks for less transparency. */
+@utility glass {
+  background: var(--glass);
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  border: 1px solid var(--glass-line);
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge),
+    0 8px 28px rgb(0 0 0 / 0.14),
+    0 1px 3px rgb(0 0 0 / 0.08);
+  @media (prefers-reduced-transparency: reduce) {
+    background: var(--card);
+  }
 }
 
 /* A dancer's colour, for thin bars and bands. A tartan's cloth turns to
@@ -339,10 +381,6 @@
   }
 }
 
-::view-transition-group(*) {
-  /* Keep the floating dock's backdrop blur from interfering with the slide. */
-  @apply backdrop-blur-none;
-}
 ::view-transition-group-children(.clip) {
   @apply overflow-clip;
 }
@@ -422,4 +460,138 @@
 ::view-transition-old(nav-back):only-child {
   animation-name: vt-slide-out;
   animation-timing-function: var(--ease-rubber-band);
+}
+
+/* Morph (lib/morph.ts): a trigger grows into the sheet or menu it opens and
+   shrinks back into it on close. Same bg/fg split as the nav pills above:
+   the group paints a surface whose corners and colour go from the trigger's
+   to the target's (set as --morph-* on <html> per morph) and clips the two
+   snapshots, which cross-fade on top at their natural size so text never
+   squashes. Reduce Motion skips the transition entirely. */
+@keyframes vt-morph-surface {
+  from {
+    border-radius: var(--morph-from-radius);
+    corner-shape: var(--morph-from-corner);
+    background: var(--morph-from-bg);
+  }
+  to {
+    border-radius: var(--morph-to-radius);
+    corner-shape: var(--morph-to-corner);
+    background: var(--morph-to-bg);
+  }
+}
+@keyframes vt-morph-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes vt-morph-in {
+  from {
+    opacity: 0;
+  }
+}
+/* Snappy, not a flourish: 150ms, with a little rubber-band overshoot. */
+::view-transition-group(morph) {
+  animation-name: -ua-view-transition-group-anim-morph, vt-morph-surface;
+  animation-duration: 150ms;
+  animation-timing-function: var(--ease-rubber-band);
+  overflow: clip;
+}
+:active-view-transition-type(morph)::view-transition-old(root),
+:active-view-transition-type(morph)::view-transition-new(root) {
+  animation-duration: 150ms;
+}
+::view-transition-old(morph),
+::view-transition-new(morph) {
+  @apply size-full object-none object-top-left;
+}
+::view-transition-old(morph) {
+  animation: vt-morph-out 60ms ease-out both;
+}
+::view-transition-new(morph) {
+  animation: vt-morph-in 100ms 30ms ease-out both;
+}
+
+/* The tab bar pill keeps its place between the app's tabs and a
+   competition's, resizing as the exit button pops in beside it. */
+::view-transition-group(tabbar),
+::view-transition-group(tabbar-exit) {
+  animation-duration: 150ms;
+  animation-timing-function: var(--ease-rubber-band);
+}
+/* A snapshot is taken with nothing behind it, so the glass would go flat
+   mid-transition; blur the page behind the moving bar instead. */
+::view-transition-group(tabbar),
+::view-transition-group(tabbar-exit) {
+  backdrop-filter: blur(24px) saturate(1.8);
+  border-radius: 9999px;
+}
+/* Chrome copies (and animates) an element's backdrop-filter onto its
+   transition group but not its rounded corners, hence the radius above.
+   While the exit button buds in or out, the group sits still at full size,
+   so its blur moves to the budding image pair instead. */
+:active-view-transition-type(enter-competition)::view-transition-group(tabbar-exit),
+:active-view-transition-type(leave-competition)::view-transition-group(tabbar-exit) {
+  backdrop-filter: none;
+}
+:active-view-transition-type(enter-competition)::view-transition-image-pair(tabbar-exit),
+:active-view-transition-type(leave-competition)::view-transition-image-pair(tabbar-exit) {
+  backdrop-filter: blur(24px) saturate(1.8);
+  clip-path: inset(0 round 9999px);
+}
+::view-transition-old(tabbar),
+::view-transition-new(tabbar) {
+  @apply h-full object-cover object-right;
+}
+/* The exit button buds off the pill's edge like a droplet splitting away
+   (macOS Spotlight's buttons do this): it starts squeezed inside the pill,
+   stretches as it pulls free, then settles round. Closing reverses it. */
+@keyframes vt-bud-in {
+  0% {
+    opacity: 0;
+    translate: 2.5rem 0;
+    scale: 0.35 0.55;
+    filter: blur(6px);
+  }
+  55% {
+    opacity: 1;
+    translate: -0.25rem 0;
+    scale: 1.12 0.92;
+    filter: blur(0);
+  }
+  80% {
+    scale: 0.97 1.03;
+  }
+  100% {
+    translate: 0 0;
+    scale: 1 1;
+  }
+}
+@keyframes vt-bud-out {
+  0% {
+    translate: 0 0;
+    scale: 1 1;
+  }
+  40% {
+    scale: 1.1 0.9;
+  }
+  100% {
+    opacity: 0;
+    translate: 2.5rem 0;
+    scale: 0.35 0.55;
+    filter: blur(6px);
+  }
+}
+/* Animate the image pair, not the group: the group is positioned by a
+   transform that scale/translate would multiply (it'd fly in from above).
+   The pair carries the frosted backdrop, so the glass moves with it. */
+:active-view-transition-type(enter-competition)::view-transition-image-pair(tabbar-exit) {
+  animation: vt-bud-in 260ms ease-out both;
+}
+:active-view-transition-type(leave-competition)::view-transition-image-pair(tabbar-exit) {
+  animation: vt-bud-out 180ms ease-in both;
+}
+:active-view-transition-type(enter-competition)::view-transition-new(tabbar-exit),
+:active-view-transition-type(leave-competition)::view-transition-old(tabbar-exit) {
+  animation: none;
 }

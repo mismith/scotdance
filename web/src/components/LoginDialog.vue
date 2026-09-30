@@ -118,7 +118,7 @@ const reset = () =>
 </script>
 
 <template>
-  <Dialog :open="auth.loginDialogOpen" variant="sheet" @close="auth.closeLogin()">
+  <Dialog :open="auth.loginDialogOpen" :morph="auth.loginSheet" variant="sheet" @close="auth.closeLogin()">
     <template #header>
       <h2 class="text-title">
         <template v-if="step === 'choose'">{{ heading }}</template>

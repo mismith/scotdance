@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useMorph } from '@/lib/morph'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useIntervalFn } from '@vueuse/core'
@@ -122,6 +123,7 @@ function isFavoriteStaff(m: StaffMember) {
   return r ? favorites.isFavorite(r.type, r.id) : false
 }
 const activeStaff = ref<StaffMember | null>(null)
+const staffSheet = useMorph()
 const { freshKey: liveFresh } = useLiveAlertState()
 </script>
 
@@ -293,7 +295,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
           <button
             type="button"
             class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-accent"
-            @click="activeStaff = m"
+            @click="(activeStaff = m), staffSheet.show($event)"
           >
             <StaffAvatar :member="m" :size="36" />
             <span class="min-w-0 flex-1">
@@ -309,7 +311,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
       </ul>
     </section>
 
-    <StaffDialog :member="activeStaff" @close="activeStaff = null" />
+    <StaffDialog :member="activeStaff" :morph="staffSheet" @close="staffSheet.hide().then(() => (activeStaff = null))" />
 
     <p v-if="competition.sobhd" class="text-muted-foreground flex justify-between pt-2 text-sm">
       <span>RSOBHD sanctioned</span>

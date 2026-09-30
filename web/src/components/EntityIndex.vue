@@ -106,7 +106,7 @@ const scrolledPastTitle = useScrolledPast(titleAnchor)
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
-    <AppBar :title="section.label" :show-title="scrolledPastTitle" :fallback="{ to: { name: 'more' }, label: 'More' }" />
+    <AppBar :title="section.label" :show-title="scrolledPastTitle" :fallback="{ to: { name: 'home' }, label: 'Home' }" />
 
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-4 px-4 pt-[calc(var(--chrome-top)+0.25rem)]">
       <header ref="titleAnchor" class="space-y-3">
@@ -167,7 +167,10 @@ const scrolledPastTitle = useScrolledPast(titleAnchor)
           </h2>
           <div v-for="[letter, rows] in letters" :key="letter">
             <h3 class="bg-background text-muted-foreground sticky top-(--chrome-top) z-10 py-1.5 text-sm font-extrabold">{{ letter }}</h3>
-            <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm [content-visibility:auto] [contain-intrinsic-size:auto_300px]">
+            <ul
+              class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm [content-visibility:auto]"
+              :style="{ containIntrinsicSize: `auto calc(${rows.length} * 3.8125rem + 2px)` }"
+            >
               <li v-for="row in rows" :key="row.id" class="flex items-center pr-1">
                 <button type="button" class="flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 pl-4 text-left" @click="open(row.id, 'all')">
                   <span class="min-w-0 flex-1">

@@ -3,17 +3,21 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { CalendarDays, CircleEllipsis, House, Search } from '@lucide/vue'
 import TabBar, { type TabItem } from '@/components/nav/TabBar.vue'
+import MoreMenu from '@/components/nav/MoreMenu.vue'
+import { useMorph } from '@/lib/morph'
 import { useCrisp } from '@/composables/useCrisp'
 import { useUpdate } from '@/composables/useUpdate'
 
 // Home · Competitions · Search · More. Always visible outside a competition,
-// always labelled, never hidden behind a menu (NN/g: hidden navigation cut
-// discoverability by over 20%).
+// always labelled. More opens a menu that grows out of the tab: one tap to
+// Settings or a people list, without a page in between.
 const route = useRoute()
 const update = useUpdate()
 const crisp = useCrisp()
 
-const MORE_PREFIXES = ['/more', '/about', '/judges', '/pipers', '/venues', '/dancers', '/profile', '/policies']
+const menu = useMorph()
+
+const MORE_PREFIXES = ['/settings', '/about', '/judges', '/pipers', '/venues', '/dancers', '/profile', '/policies']
 
 const items = computed<TabItem[]>(() => {
   const path = route.path
@@ -29,8 +33,8 @@ const items = computed<TabItem[]>(() => {
     {
       label: 'More',
       icon: CircleEllipsis,
-      to: { name: 'more' },
-      active: MORE_PREFIXES.some((p) => path.startsWith(p)),
+      onClick: (e: MouseEvent) => menu.toggle(e),
+      active: menu.open || MORE_PREFIXES.some((p) => path.startsWith(p)),
       badge: update.updateAvailable || crisp.unread > 0,
     },
   ]
@@ -39,4 +43,5 @@ const items = computed<TabItem[]>(() => {
 
 <template>
   <TabBar :items="items" label="App" />
+  <MoreMenu :menu="menu" />
 </template>

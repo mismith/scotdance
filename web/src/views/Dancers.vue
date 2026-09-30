@@ -52,7 +52,7 @@ async function openByName(name: string) {
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
-    <AppBar title="Dancers" :show-title="scrolledPast" :fallback="{ to: { name: 'more' }, label: 'More' }" />
+    <AppBar title="Dancers" :show-title="scrolledPast" :fallback="{ to: { name: 'home' }, label: 'Home' }" />
 
     <main class="mx-auto w-full max-w-3xl space-y-4 px-4 pt-[calc(var(--chrome-top)+0.25rem)]">
       <header ref="titleEl" class="space-y-3">

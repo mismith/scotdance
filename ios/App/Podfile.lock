@@ -4,6 +4,8 @@ PODS:
   - CapacitorCordova (8.3.1)
   - CapacitorDevice (8.0.2):
     - Capacitor
+  - CapacitorHaptics (8.0.2):
+    - Capacitor
   - CapacitorSplashScreen (8.0.1):
     - Capacitor
   - CapacitorTextZoom (8.0.1):
@@ -13,6 +15,7 @@ DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorDevice (from `../../node_modules/@capacitor/device`)"
+  - "CapacitorHaptics (from `../../node_modules/@capacitor/haptics`)"
   - "CapacitorSplashScreen (from `../../node_modules/@capacitor/splash-screen`)"
   - "CapacitorTextZoom (from `../../node_modules/@capacitor/text-zoom`)"
 
@@ -23,6 +26,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/ios"
   CapacitorDevice:
     :path: "../../node_modules/@capacitor/device"
+  CapacitorHaptics:
+    :path: "../../node_modules/@capacitor/haptics"
   CapacitorSplashScreen:
     :path: "../../node_modules/@capacitor/splash-screen"
   CapacitorTextZoom:
@@ -32,9 +37,10 @@ SPEC CHECKSUMS:
   Capacitor: 46dbaa89c1d1cd121b9fc2dc839c1f39cc49e326
   CapacitorCordova: 9010447fe25e869705fcf525e5f490facde87608
   CapacitorDevice: 14cba6f88d1c3074cbf825fea977c8c526453ff8
+  CapacitorHaptics: 296f771ecd89c7a1bd92a7b6826a7d268e2e70f5
   CapacitorSplashScreen: 4b46c72298db552b3c57ce021ef028b6dc7f1fa7
   CapacitorTextZoom: b3c80b09abef831245bc3434b1c03aa898ad4762
 
-PODFILE CHECKSUM: 6d29eb8cac89c4393bae20287bdbf14df93f496f
+PODFILE CHECKSUM: 944daa224e3e8219de41518116e63dc7948e607b
 
 COCOAPODS: 1.16.2

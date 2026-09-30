@@ -2,13 +2,14 @@
 import { computed, ref, watch } from 'vue'
 import { Check, Palette, Search, X } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
+import type { Morph } from '@/lib/morph'
 import TartanSwatch from '@/components/TartanSwatch.vue'
 import TartanBuilder from '@/components/TartanBuilder.vue'
 import { useTartansStore } from '@/stores/tartans'
 import { useDancerLooksStore } from '@/stores/dancerLooks'
 
 // Choosing the tartan a dancer wears. Pick from the list, or make one.
-const props = defineProps<{ open: boolean; dancerId: string; dancerName: string; currentId: string | null }>()
+const props = defineProps<{ open: boolean; morph?: Morph; dancerId: string; dancerName: string; currentId: string | null }>()
 const emit = defineEmits<{ close: []; saved: [tartanId: string | null] }>()
 
 const tartans = useTartansStore()
@@ -55,7 +56,7 @@ function onCreated(id: string) {
 </script>
 
 <template>
-  <Dialog :open="open" variant="sheet" size="md" @close="emit('close')">
+  <Dialog :open="open" :morph="morph" variant="sheet" size="md" @close="emit('close')">
     <template #header>
       <h2 class="text-title">{{ view === 'build' ? 'Make a tartan' : `${first}’s tartan` }}</h2>
     </template>

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { CircleHelp } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
+import { useMorph } from '@/lib/morph'
 
 // "4 steps" / "2+1 steps", tappable. Parents read "Highland Fling (4)" as four
 // dancers or fourth place; this spells it out and explains it on tap.
 const props = defineProps<{ steps: string | number | null | undefined; dance?: string }>()
-const open = ref(false)
+const sheet = useMorph()
 const text = String(props.steps ?? '').trim()
 const plus = text.includes('+')
 </script>
@@ -17,11 +17,11 @@ const plus = text.includes('+')
     type="button"
     class="bg-muted text-muted-foreground inline-flex h-9 shrink-0 items-center gap-1 rounded-full px-3 text-sm font-bold"
     :aria-label="`${text} steps. What are steps?`"
-    @click.stop.prevent="open = true"
+    @click.stop.prevent="sheet.show"
   >
     {{ text }} steps <CircleHelp class="size-4" />
   </button>
-  <Dialog :open="open" variant="sheet" @close="open = false">
+  <Dialog :open="sheet.open" :morph="sheet" variant="sheet" @close="sheet.hide()">
     <template #header>
       <h2 class="text-title">What are steps?</h2>
     </template>
@@ -38,7 +38,7 @@ const plus = text.includes('+')
       <button
         type="button"
         class="bg-primary text-primary-foreground h-12 w-full rounded-xl text-base font-bold"
-        @click="open = false"
+        @click="sheet.hide()"
       >
         Got it
       </button>

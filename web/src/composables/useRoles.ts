@@ -1,8 +1,9 @@
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import { ref as dbRef, update } from 'firebase/database'
 import { database } from '@/firebase'
 import { useAuthStore } from '@/stores/auth'
+import { useMorph } from '@/lib/morph'
 import { useMeStore } from '@/stores/me'
 
 // "Which of these describe you?" Pick any: dancer, parent, teacher, organiser.
@@ -21,7 +22,9 @@ export const ROLES: Array<{ id: Role; label: string; hint: string }> = [
 ]
 
 const NAMESPACE = import.meta.env.VITE_FIREBASE_DATA_NAMESPACE || 'production'
-const sheetOpen = ref(false)
+// The roles sheet grows out of the row that opened it (see lib/morph).
+const sheet = useMorph()
+const sheetOpen = computed(() => sheet.open)
 const pending = useLocalStorage('roles:pending', false)
 let watching = false
 
@@ -47,10 +50,10 @@ export function useRoles() {
   }
 
   function open() {
-    sheetOpen.value = true
+    sheet.show()
   }
   function close() {
-    sheetOpen.value = false
+    sheet.hide()
     pending.value = false
   }
 
@@ -62,12 +65,12 @@ export function useRoles() {
       () => auth.newAccount,
       (n) => {
         if (!n) return
-        if (n.reason === null || n.reason === 'account') setTimeout(() => (sheetOpen.value = true), 500)
+        if (n.reason === null || n.reason === 'account') setTimeout(() => sheet.show(null), 500)
         else pending.value = true
         auth.newAccount = null
       },
     )
   }
 
-  return { roles, answered, has, save, open, close, sheetOpen, pending }
+  return { roles, answered, has, save, open, close, sheet, sheetOpen, pending }
 }

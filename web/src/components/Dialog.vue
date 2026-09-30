@@ -1,15 +1,19 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, useSlots, watch } from 'vue'
+import { computed, onMounted, ref, useSlots, watch } from 'vue'
 import { X } from '@lucide/vue'
+import { morphSupported, type Morph } from '@/lib/morph'
 
 const props = withDefaults(
   defineProps<{
     open: boolean
-    variant?: 'center' | 'sheet'
+    /** sheet: slides up on phones. menu: a small panel above the tab bar's right end. */
+    variant?: 'center' | 'sheet' | 'menu'
     size?: 'sm' | 'md'
     closable?: boolean
+    /** Grow out of (and shrink back into) whatever opened it. See lib/morph. */
+    morph?: Morph
   }>(),
-  { variant: 'center', size: 'sm', closable: true },
+  { variant: 'center', size: 'sm', closable: true, morph: undefined },
 )
 
 const emit = defineEmits<{ close: [] }>()
@@ -24,16 +28,20 @@ function sync(open: boolean) {
   else if (!open && el.open) el.close()
 }
 
+// Post-flush, so a morph's snapshot sees the dialog already open or closed.
 watch(
   () => props.open,
-  (open) => {
-    nextTick(() => sync(open))
-  },
+  (open) => sync(open),
+  { flush: 'post' },
 )
 
 onMounted(() => {
+  props.morph?.setTarget(dialogRef.value)
   if (props.open) sync(true)
 })
+
+// When a morph animates the opening, the dialog's own slide/fade would fight it.
+const morphing = computed(() => !!props.morph && morphSupported)
 
 function onBackdropClick(e: MouseEvent) {
   if (e.target === dialogRef.value) emit('close')
@@ -48,7 +56,9 @@ function onBackdropClick(e: MouseEvent) {
       // Reset native dialog defaults.
       'bg-card max-h-full max-w-full border-0 p-0 text-inherit',
       // Width by size prop.
-      size === 'sm' ? 'w-full md:max-w-sm' : 'w-full md:max-w-md',
+      variant !== 'menu' && (size === 'sm' ? 'w-full md:max-w-sm' : 'w-full md:max-w-md'),
+      variant === 'menu' &&
+        'fixed top-auto bottom-[calc(var(--chrome-bottom)+0.5rem)] left-auto right-[max(0.75rem,calc((100vw-32rem)/2))] m-0 w-72 max-w-[calc(100vw-1.5rem)] max-h-[calc(100svh-var(--chrome-top)-var(--chrome-bottom)-1rem)] origin-bottom-right overflow-y-auto rounded-3xl border shadow-lg',
       // Layout per variant.
       variant === 'center' &&
         'fixed inset-x-0 top-[calc(var(--chrome-top)+1rem)] bottom-[calc(var(--chrome-bottom)+1rem)] m-auto h-fit rounded-3xl p-6 shadow-lg max-h-[calc(100svh-var(--chrome-top)-var(--chrome-bottom)-4rem)] max-md:max-w-[calc(100vw-2rem)]',
@@ -65,26 +75,30 @@ function onBackdropClick(e: MouseEvent) {
       ],
       // Closed (resting) state — also the exit target.
       'opacity-0',
-      variant === 'center' && 'scale-95',
+      variant !== 'sheet' && 'scale-95',
       variant === 'sheet' && 'max-md:translate-y-full md:scale-95',
       // Open state.
       'open:opacity-100',
-      variant === 'center' && 'open:scale-100',
+      variant !== 'sheet' && 'open:scale-100',
       variant === 'sheet' && 'max-md:open:translate-y-0 md:open:scale-100',
       // Entry from-state via @starting-style.
       'starting:open:opacity-0',
-      variant === 'center' && 'starting:open:scale-95',
+      variant !== 'sheet' && 'starting:open:scale-95',
       variant === 'sheet' &&
         'max-md:starting:open:translate-y-full md:starting:open:scale-95',
       // Transition — explicit property list incl. display so transition-discrete
       // can defer display:none until the visible properties finish animating.
-      'ease-rubber-band transition-[opacity,translate,scale,display] transition-discrete',
+      // A morph animates it instead (the page cross-fades the backdrop).
+      morphing
+        ? 'transition-none'
+        : 'ease-rubber-band transition-[opacity,translate,scale,display] transition-discrete backdrop:transition-opacity',
       // Backdrop.
-      'backdrop:bg-black/50 backdrop:opacity-0 open:backdrop:opacity-100 starting:open:backdrop:opacity-0',
-      'backdrop:transition-opacity',
+      variant === 'menu' ? 'backdrop:bg-black/20' : 'backdrop:bg-black/50',
+      'backdrop:opacity-0 open:backdrop:opacity-100 starting:open:backdrop:opacity-0',
       'motion-reduce:transition-none motion-reduce:backdrop:transition-none',
     ]"
     @click="onBackdropClick"
+    @cancel.prevent="emit('close')"
   >
     <header
       v-if="variant === 'sheet' && slots.header"
@@ -104,7 +118,7 @@ function onBackdropClick(e: MouseEvent) {
     </header>
 
     <button
-      v-if="closable && !(variant === 'sheet' && slots.header)"
+      v-if="closable && variant !== 'menu' && !(variant === 'sheet' && slots.header)"
       type="button"
       aria-label="Close"
       class="hover:bg-accent text-muted-foreground absolute top-2 right-2 z-10 flex size-11 items-center justify-center rounded-full"
@@ -116,6 +130,7 @@ function onBackdropClick(e: MouseEvent) {
     <div v-if="variant === 'sheet'" class="overflow-y-auto">
       <slot />
     </div>
+    <slot v-else-if="variant === 'menu'" />
     <div v-else class="space-y-4">
       <slot />
     </div>

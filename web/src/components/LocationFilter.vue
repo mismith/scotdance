@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { Check, ChevronDown, Globe, Locate, MapPinned, X } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
+import { useMorph } from '@/lib/morph'
 import NearbyRadiusMap from '@/components/NearbyRadiusMap.vue'
 import { useLocationFilter, type LocationMode } from '@/composables/useLocationFilter'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
@@ -136,7 +137,7 @@ function defaultRegionCountry(): string | null {
   return quickCountries.value[0]?.value ?? null
 }
 
-const open = ref(false)
+const sheet = useMorph()
 
 function select(id: LocationMode): void {
   if (id === mode.value) return
@@ -153,7 +154,7 @@ function select(id: LocationMode): void {
   } else {
     // Everywhere has nothing more to set, so close the sheet.
     setWorldwide()
-    open.value = false
+    sheet.hide()
   }
 }
 
@@ -168,7 +169,7 @@ function buildNarrowLabel(loc: string | null, reg: string | null): string {
 
 function pickCountry(value: string): void {
   if (mode.value === 'region' && country.value === value && !region.value && !locality.value) {
-    open.value = false
+    sheet.hide()
     return
   }
   setRegion({ country: value, region: null, locality: null })
@@ -225,7 +226,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
     })
     inputValue.value = buildNarrowLabel(picked.locality, picked.region)
     suggestions.value = []
-    open.value = false
+    sheet.hide()
   } catch (e) {
     console.error('[places]', e)
   }
@@ -238,7 +239,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
     class="bg-card border-strong flex h-11 min-w-0 items-center gap-1.5 rounded-full border px-4 text-[0.9375rem] font-bold"
     :aria-label="ariaLabel"
     aria-haspopup="dialog"
-    @click="open = true"
+    @click="sheet.show"
   >
     <span v-if="compact.kind === 'flag'" class="text-lg leading-none">{{ compact.emoji }}</span>
     <component :is="compact.icon" v-else class="text-primary size-[1.125rem] shrink-0" />
@@ -246,7 +247,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
     <ChevronDown class="text-muted-foreground size-4 shrink-0" />
   </button>
 
-  <Dialog :open="open" variant="sheet" @close="open = false">
+  <Dialog :open="sheet.open" :morph="sheet" variant="sheet" @close="sheet.hide()">
     <template #header>
       <h2 class="text-title">Where to look</h2>
     </template>
@@ -334,7 +335,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
           </button>
         </li>
       </ul>
-      <button type="button" class="bg-primary text-primary-foreground h-12 w-full rounded-xl text-base font-bold" @click="open = false">Done</button>
+      <button type="button" class="bg-primary text-primary-foreground h-12 w-full rounded-xl text-base font-bold" @click="sheet.hide()">Done</button>
     </div>
   </Dialog>
 </template>

@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { CalendarDays, Check, ChevronDown, List, Map as MapIcon } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
+import { useMorph } from '@/lib/morph'
 
 export type ViewMode = 'list' | 'map' | 'calendar'
 
 const model = defineModel<ViewMode>({ required: true })
-const open = ref(false)
+const sheet = useMorph()
 
 const modes: Array<{ id: ViewMode; label: string; hint: string; icon: typeof List }> = [
   { id: 'list', label: 'List', hint: 'By month, soonest first', icon: List },
@@ -17,7 +18,7 @@ const current = computed(() => modes.find((m) => m.id === model.value) ?? modes[
 
 function pick(id: ViewMode) {
   model.value = id
-  open.value = false
+  sheet.hide()
 }
 </script>
 
@@ -27,14 +28,14 @@ function pick(id: ViewMode) {
     class="bg-card border-strong flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-[0.9375rem] font-bold"
     :aria-label="`Show as ${current.label}`"
     aria-haspopup="dialog"
-    @click="open = true"
+    @click="sheet.show"
   >
     <component :is="current.icon" class="text-primary size-[1.125rem]" />
     {{ current.label }}
     <ChevronDown class="text-muted-foreground size-4" />
   </button>
 
-  <Dialog :open="open" variant="sheet" @close="open = false">
+  <Dialog :open="sheet.open" :morph="sheet" variant="sheet" @close="sheet.hide()">
     <template #header>
       <h2 class="text-title">Show competitions as</h2>
     </template>

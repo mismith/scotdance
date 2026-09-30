@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useMorph } from '@/lib/morph'
 import MyDancerLine from '@/components/MyDancerLine.vue'
 import ResultsMark from '@/components/ResultsMark.vue'
 import { computed, onMounted, ref } from 'vue'
@@ -134,6 +135,18 @@ const drawGroup = ref<EnrichedGroup | null>(null)
 const drawDance = ref<ScheduleDance | null>(null)
 const drawDanceName = computed(() => (drawDance.value ? getScheduleDanceName(drawDance.value, dances.value) : ''))
 const activeJudge = ref<StaffMember | null>(null)
+// Both sheets grow out of the row or name that opened them (lib/morph).
+const drawSheet = useMorph()
+const judgeSheet = useMorph()
+function openDraw(e: MouseEvent, group: EnrichedGroup, dance: ScheduleDance) {
+  drawGroup.value = group
+  drawDance.value = dance
+  drawSheet.show(e)
+}
+function openJudge(e: MouseEvent, judge: StaffMember) {
+  activeJudge.value = judge
+  judgeSheet.show(e)
+}
 </script>
 
 <template>
@@ -188,7 +201,7 @@ const activeJudge = ref<StaffMember | null>(null)
             <span class="text-base font-extrabold">Platform {{ p.name }}</span>
             <span v-if="p.judges.length" class="text-muted-foreground text-sm">
               <template v-for="(j, ji) in p.judges" :key="j.id">
-                <button type="button" class="hover:text-foreground font-semibold underline-offset-2 hover:underline" @click="activeJudge = j">
+                <button type="button" class="hover:text-foreground font-semibold underline-offset-2 hover:underline" @click="openJudge($event, j)">
                   {{ staffMemberName(j) || 'Judge' }}</button><span v-if="ji < p.judges.length - 1">, </span>
               </template>
             </span>
@@ -204,7 +217,7 @@ const activeJudge = ref<StaffMember | null>(null)
                 "
                 class="relative flex min-h-14 w-full items-center gap-3 py-2 pr-2 pl-4 text-left hover:bg-accent"
                 :style="g.mine.length ? { '--dc': g.mine[0].color ?? 'var(--primary)' } : undefined"
-                @click="!g.posted && ((drawGroup = g.group), (drawDance = s.sd))"
+                @click="!g.posted && openDraw($event, g.group, s.sd)"
               >
                 <span v-if="g.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
                 <span class="min-w-0 flex-1">
@@ -234,8 +247,9 @@ const activeJudge = ref<StaffMember | null>(null)
       :dance="drawDance"
       :event-name="event?.name ?? undefined"
       :dance-name="drawDanceName"
-      @close="drawGroup = null"
+      :morph="drawSheet"
+      @close="drawSheet.hide().then(() => (drawGroup = null))"
     />
-    <StaffDialog :member="activeJudge" @close="activeJudge = null" />
+    <StaffDialog :member="activeJudge" :morph="judgeSheet" @close="judgeSheet.hide().then(() => (activeJudge = null))" />
   </article>
 </template>

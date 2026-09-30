@@ -184,8 +184,11 @@ const followedCount = computed(() => dancers.value.filter((d) => following.isFol
         <span class="truncate">{{ s.label }}</span>
         <span class="text-muted-foreground shrink-0 text-sm font-semibold">{{ s.rows.length }}</span>
       </h2>
+      <!-- Off-screen sections skip rendering; their size estimate is exact
+           (rows × row height) so Back restores to the same dancer. -->
       <ul
-        class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm [content-visibility:auto] [contain-intrinsic-size:auto_600px]"
+        class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm [content-visibility:auto]"
+        :style="{ containIntrinsicSize: `auto calc(${s.rows.length} * 3.8125rem + 2px)` }"
       >
         <li
           v-for="d in s.rows"

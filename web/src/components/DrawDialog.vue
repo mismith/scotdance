@@ -12,12 +12,14 @@ import FollowButton from '@/components/FollowButton.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import { getOrdinalSuffix } from '@/lib/results'
 import Dialog from '@/components/Dialog.vue'
+import type { Morph } from '@/lib/morph'
 
 const props = defineProps<{
   group: EnrichedGroup | null
   dance?: ScheduleDance | null
   eventName?: string
   danceName?: string
+  morph?: Morph
 }>()
 
 const breadcrumb = computed(() =>
@@ -53,7 +55,7 @@ watch(
   { immediate: true },
 )
 
-const isOpen = computed(() => !!props.group)
+const isOpen = computed(() => (props.morph ? props.morph.open : !!props.group))
 
 interface DrawRow {
   key: string
@@ -97,7 +99,7 @@ const drawRows = computed<DrawRow[]>(() => {
 </script>
 
 <template>
-  <Dialog :open="isOpen" variant="sheet" size="md" @close="emit('close')">
+  <Dialog :open="isOpen" :morph="morph" variant="sheet" size="md" @close="emit('close')">
     <template v-if="displayGroup" #header>
       <p class="text-muted-foreground text-sm font-bold">
         {{ hasRealDraw ? 'Dancing order' : 'By number (order not posted)' }}<span v-if="breadcrumb"> · {{ breadcrumb }}</span>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import {
   ArrowDownToLine,
@@ -7,15 +7,10 @@ import {
   ChevronRight,
   ExternalLink,
   FileText,
-  Gavel,
   Info,
   LifeBuoy,
-  LogOut,
   MessageCircleQuestion,
-  Music,
-  School,
   Sun,
-  Users,
 } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import { useScrolledPast } from '@/composables/useScrolledPast'
@@ -24,18 +19,14 @@ import { useTheme, type Theme } from '@/composables/useTheme'
 import { useAlerts } from '@/composables/useAlerts'
 import { useCrisp } from '@/composables/useCrisp'
 import { useUpdate } from '@/composables/useUpdate'
-import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
-import { ROLES, useRoles } from '@/composables/useRoles'
-import { gravatarUrl } from '@/lib/gravatar'
-import { initialsOf } from '@/lib/format'
+import { useRoles } from '@/composables/useRoles'
 
-// Everything that isn't a competition or a dancer, as plain labelled rows:
-// account, notifications, display, the people lists, help. Settings that
-// change how the app looks are controls right here, not another screen.
-usePageTitle(['More'])
+// Settings: alerts, appearance, help and the fine print. Your account (and
+// how you use ScotDance, and signing out) lives on the Account page; the
+// everyday places are in the More menu on the tab bar.
+usePageTitle(['Settings'])
 
-const auth = useAuthStore()
 const me = useMeStore()
 const alerts = useAlerts()
 const crisp = useCrisp()
@@ -45,14 +36,6 @@ const { theme } = useTheme()
 const titleEl = ref<HTMLElement | null>(null)
 const scrolledPast = useScrolledPast(titleEl)
 
-const avatar = ref<string | null>(null)
-watch(
-  () => me.email,
-  async (email) => (avatar.value = await gravatarUrl(email, 96)),
-  { immediate: true },
-)
-const initials = computed(() => initialsOf(me.displayName ?? me.email ?? '?'))
-
 const THEMES: Array<{ id: Theme; label: string }> = [
   { id: 'auto', label: 'Automatic' },
   { id: 'light', label: 'Light' },
@@ -60,10 +43,6 @@ const THEMES: Array<{ id: Theme; label: string }> = [
 ]
 
 const roles = useRoles()
-const rolesLabel = computed(() => {
-  const picked = ROLES.filter((r) => roles.has(r.id)).map((r) => r.label)
-  return picked.length ? picked.join(', ') : 'Not answered yet'
-})
 const canManage = computed(
   () => me.isAdmin || roles.has('organizer') || Object.keys(me.permissions?.competitions ?? {}).length > 0,
 )
@@ -73,46 +52,12 @@ const rowClass = 'flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left ho
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
-    <AppBar title="More" :show-title="scrolledPast" :back="false" />
+    <AppBar title="Settings" :show-title="scrolledPast" :fallback="{ to: { name: 'home' }, label: 'Home' }" />
 
     <main class="mx-auto w-full max-w-3xl space-y-5 px-4 pt-[calc(var(--chrome-top)+0.25rem)]">
       <header ref="titleEl">
-        <h1 class="text-display">More</h1>
+        <h1 class="text-display">Settings</h1>
       </header>
-
-      <!-- Account -->
-      <section class="bg-card overflow-hidden rounded-2xl border shadow-sm">
-        <template v-if="auth.isSignedIn">
-          <RouterLink :to="{ name: 'profile' }" :class="rowClass">
-            <img v-if="avatar" :src="avatar" alt="" class="size-12 shrink-0 rounded-full" />
-            <span v-else class="bg-primary text-primary-foreground flex size-12 shrink-0 items-center justify-center rounded-full text-lg font-extrabold">
-              {{ initials }}
-            </span>
-            <span class="min-w-0 flex-1">
-              <span class="block truncate text-[1.0625rem] font-extrabold">{{ me.displayName ?? 'Your account' }}</span>
-              <span class="text-muted-foreground block truncate text-sm">{{ me.email }}</span>
-            </span>
-            <ChevronRight class="text-muted-foreground size-5" />
-          </RouterLink>
-          <button type="button" :class="[rowClass, 'border-t']" @click="roles.open()">
-            <span class="min-w-0 flex-1">
-              <span class="block text-base font-bold">How you use ScotDance</span>
-              <span class="text-muted-foreground block truncate text-sm">{{ rolesLabel }}</span>
-            </span>
-            <ChevronRight class="text-muted-foreground size-5" />
-          </button>
-        </template>
-        <div v-else class="space-y-3 p-4">
-          <p class="text-base"><b>Not signed in.</b> Sign in to follow dancers and get alerts.</p>
-          <button
-            type="button"
-            class="bg-primary text-primary-foreground h-12 w-full rounded-xl text-base font-bold"
-            @click="auth.openLogin({ reason: 'account' })"
-          >
-            Sign in
-          </button>
-        </div>
-      </section>
 
       <!-- Alerts -->
       <section class="space-y-2">
@@ -161,33 +106,6 @@ const rowClass = 'flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left ho
         </div>
       </section>
 
-      <!-- Browse -->
-      <section class="space-y-2">
-        <h2 class="text-heading">Browse</h2>
-        <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
-          <li>
-            <RouterLink :to="{ name: 'dancers' }" :class="rowClass">
-              <Users class="text-primary size-5" /><span class="flex-1 text-base font-bold">Dancers</span><ChevronRight class="text-muted-foreground size-5" />
-            </RouterLink>
-          </li>
-          <li>
-            <RouterLink :to="{ name: 'judges' }" :class="rowClass">
-              <Gavel class="text-primary size-5" /><span class="flex-1 text-base font-bold">Judges</span><ChevronRight class="text-muted-foreground size-5" />
-            </RouterLink>
-          </li>
-          <li>
-            <RouterLink :to="{ name: 'pipers' }" :class="rowClass">
-              <Music class="text-primary size-5" /><span class="flex-1 text-base font-bold">Pipers</span><ChevronRight class="text-muted-foreground size-5" />
-            </RouterLink>
-          </li>
-          <li>
-            <RouterLink :to="{ name: 'venues' }" :class="rowClass">
-              <School class="text-primary size-5" /><span class="flex-1 text-base font-bold">Venues</span><ChevronRight class="text-muted-foreground size-5" />
-            </RouterLink>
-          </li>
-        </ul>
-      </section>
-
       <!-- Help -->
       <section class="space-y-2">
         <h2 class="text-heading">Help</h2>
@@ -225,11 +143,6 @@ const rowClass = 'flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left ho
             <a href="/admin" target="_blank" rel="noopener" :class="rowClass">
               <ExternalLink class="text-primary size-5" /><span class="flex-1 text-base font-bold">Manage competitions</span>
             </a>
-          </li>
-          <li v-if="auth.isSignedIn">
-            <button type="button" :class="rowClass" @click="auth.signOut()">
-              <LogOut class="text-destructive size-5" /><span class="text-destructive flex-1 text-base font-bold">Sign out</span>
-            </button>
           </li>
         </ul>
       </section>

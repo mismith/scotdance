@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { ExternalLink } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
+import type { Morph } from '@/lib/morph'
 import FavoriteButton from '@/components/FavoriteButton.vue'
 import StaffAvatar from '@/components/StaffAvatar.vue'
 import { formatExternalURL, formatHumanURL } from '@/lib/format'
@@ -12,7 +13,7 @@ import {
   type StaffMember,
 } from '@/types/competition'
 
-const props = defineProps<{ member: StaffMember | null }>()
+const props = defineProps<{ member: StaffMember | null; morph?: Morph }>()
 const emit = defineEmits<{ close: [] }>()
 
 const displayMember = ref<StaffMember | null>(null)
@@ -24,7 +25,7 @@ watch(
   { immediate: true },
 )
 
-const isOpen = computed(() => !!props.member)
+const isOpen = computed(() => (props.morph ? props.morph.open : !!props.member))
 const name = computed(() =>
   displayMember.value ? staffMemberName(displayMember.value) : '',
 )
@@ -34,7 +35,7 @@ const entityRef = computed(() =>
 </script>
 
 <template>
-  <Dialog :open="isOpen" variant="sheet" size="md" @close="emit('close')">
+  <Dialog :open="isOpen" :morph="morph" variant="sheet" size="md" @close="emit('close')">
     <template v-if="displayMember" #header>
       <div class="flex items-center gap-3">
         <StaffAvatar :member="displayMember" :size="56" />

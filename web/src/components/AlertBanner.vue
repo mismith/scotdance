@@ -38,7 +38,7 @@ function open() {
     >
       <div class="bg-card flex items-stretch gap-1 rounded-2xl border shadow-xl">
         <button type="button" class="flex min-w-0 flex-1 items-center gap-3 p-3 text-left" @click="open">
-          <span class="bg-primary flex size-10 shrink-0 items-center justify-center rounded-[10px]" aria-hidden="true">
+          <span class="bg-primary flex size-10 shrink-0 items-center justify-center rounded-lg" aria-hidden="true">
             <svg viewBox="0 0 40 40" class="size-10"><path d="M9 9 31 31M31 9 9 31" stroke="#fff" stroke-width="5.5" /></svg>
           </span>
           <span class="min-w-0">

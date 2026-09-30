@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import TartanPicker from '@/components/TartanPicker.vue'
+import { useMorph } from '@/lib/morph'
 import TartanSwatch from '@/components/TartanSwatch.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useDancerLooksStore } from '@/stores/dancerLooks'
@@ -28,11 +29,11 @@ const tartanName = computed(() => tartan.value?.name ?? '')
 const suffix = computed(() => (/tartan$/i.test(tartanName.value) ? '' : ' tartan'))
 const agreed = computed(() => !!pickId.value && pickId.value === publicId.value)
 
-const pickerOpen = ref(false)
+const picker = useMorph()
 const justSet = ref(false)
-function openPicker() {
-  if (auth.isSignedIn) pickerOpen.value = true
-  else auth.requireSignIn(() => (pickerOpen.value = true), { reason: 'account' })
+function openPicker(e: MouseEvent) {
+  if (auth.isSignedIn) picker.show(e)
+  else auth.requireSignIn(() => picker.show(null), { reason: 'account' })
 }
 </script>
 
@@ -67,11 +68,12 @@ function openPicker() {
     </div>
 
     <TartanPicker
-      :open="pickerOpen"
+      :open="picker.open"
+      :morph="picker"
       :dancer-id="dancerId"
       :dancer-name="dancerName"
       :current-id="pickId"
-      @close="pickerOpen = false"
+      @close="picker.hide()"
       @saved="(id) => (justSet = !!id)"
     />
   </section>

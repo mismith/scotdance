@@ -56,6 +56,10 @@ export function startViewTransition(
         await callback()
       })
     }
+    // A transition cut short (a new navigation mid-way) rejects these; that's
+    // expected, so don't let it surface as an unhandled error.
+    native.ready.catch(() => {})
+    native.finished.catch(() => {})
     handle.updateCallbackDone = native.updateCallbackDone
     handle.ready = native.ready
     handle.finished = native.finished

@@ -22,6 +22,7 @@ import {
 } from 'firebase/auth'
 import { ref as dbRef, remove, set, update } from 'firebase/database'
 import { useCurrentUser } from 'vuefire'
+import { useMorph } from '@/lib/morph'
 import { auth, database } from '@/firebase'
 
 type PostLoginAction = () => void | Promise<void>
@@ -45,7 +46,9 @@ export const useAuthStore = defineStore('auth', () => {
   const displayName = computed(() => user.value?.displayName ?? user.value?.email ?? null)
   const photoURL = computed(() => user.value?.photoURL ?? null)
 
-  const loginDialogOpen = ref(false)
+  // The sign-in sheet grows out of whatever asked for it (a Follow button…).
+  const loginSheet = useMorph()
+  const loginDialogOpen = computed(() => loginSheet.open)
   const loginReason = ref<LoginReason | null>(null)
   /** Set when an account was just created: the reason it happened, if any. */
   const newAccount = ref<{ reason: LoginReason['reason'] | null } | null>(null)
@@ -54,11 +57,11 @@ export const useAuthStore = defineStore('auth', () => {
 
   function openLogin(reason: LoginReason | null = null) {
     loginReason.value = reason
-    loginDialogOpen.value = true
+    loginSheet.show()
   }
 
   function closeLogin() {
-    loginDialogOpen.value = false
+    loginSheet.hide()
   }
 
   function enqueueAfterLogin(action: PostLoginAction) {
@@ -233,6 +236,7 @@ export const useAuthStore = defineStore('auth', () => {
     displayName,
     photoURL,
     loginDialogOpen,
+    loginSheet,
     loginReason,
     newAccount,
     hasPassword,

@@ -7,7 +7,7 @@ import {
   type RouteRecordRaw,
 } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
-import { CalendarDays, CircleEllipsis, Gavel, House, Info, Music, School, Users } from '@lucide/vue'
+import { CalendarDays, Gavel, House, Info, Music, School, Settings, Users } from '@lucide/vue'
 import { startViewTransition } from '@/lib/transition'
 import { trackCompetitionEntry } from '@/lib/competitionExit'
 import { useAuthStore } from '@/stores/auth'
@@ -45,11 +45,13 @@ const routes: RouteRecordRaw[] = [
     meta: { icon: Info, title: 'About ScotDance.app' },
   },
   {
-    path: '/more',
-    name: 'more',
-    component: () => import('@/views/More.vue'),
-    meta: { icon: CircleEllipsis, title: 'More' },
+    path: '/settings',
+    name: 'settings',
+    component: () => import('@/views/Settings.vue'),
+    meta: { icon: Settings, title: 'Settings' },
   },
+  // The More tab is a menu now; old links land on Settings.
+  { path: '/more', redirect: { name: 'settings' } },
   {
     path: '/dancers',
     name: 'dancers',
@@ -227,13 +229,28 @@ const writeRouteInfo = (m: RouteInfo) => {
   try { localStorage.setItem(ROUTE_INFO_KEY, JSON.stringify(m)) } catch { /* quota / private mode */ }
 }
 
+// Going back, the page is often still loading its data, so it's too short to
+// scroll to where you were and the browser clamps to the top. Wait (briefly)
+// until it's tall enough, then restore.
+function whenTallEnough(top: number, timeout = 2000): Promise<void> {
+  return new Promise((resolve) => {
+    const start = performance.now()
+    const check = () => {
+      const room = document.documentElement.scrollHeight - window.innerHeight
+      if (room >= top || performance.now() - start > timeout) resolve()
+      else requestAnimationFrame(check)
+    }
+    check()
+  })
+}
+
 export const router = createRouter({
   history: createWebHistory(),
   routes,
   scrollBehavior(to, from, savedPosition) {
     // Override CSS scroll-behavior:smooth — route-change scrolls should be instant
     // (smooth animation gets cancelled by DOM changes from lazy-loaded components)
-    if (savedPosition) return { ...savedPosition, behavior: 'instant' }
+    if (savedPosition) return whenTallEnough(savedPosition.top).then(() => ({ ...savedPosition, behavior: 'instant' }))
     // Query/hash-only nav on the same route (e.g. typing into a filter) must
     // not move scroll — otherwise every keystroke snaps to top.
     if (from && to.path === from.path) return false
@@ -243,7 +260,7 @@ export const router = createRouter({
     // racing and clobbering the view's manual scroll.
     if (to.hash) return false
     const stored = readScrollPositions()[to.fullPath]
-    if (stored != null) return { top: stored, behavior: 'instant' }
+    if (stored != null) return whenTallEnough(stored).then(() => ({ top: stored, behavior: 'instant' as const }))
     return { top: 0, behavior: 'instant' }
   },
 })
@@ -343,6 +360,10 @@ router.beforeResolve(async (to, from) => {
     skipNextViewTransition = false
     return
   }
-  const transition = startViewTransition()
+  // Crossing into or out of a competition, the tab bar's exit button buds
+  // off the pill or merges back into it (style.css, vt-bud-*).
+  const inComp = (r: typeof to) => r.matched.some((m) => m.meta.ownsBottomNav)
+  const types = inComp(to) && !inComp(from) ? ['enter-competition'] : !inComp(to) && inComp(from) ? ['leave-competition'] : []
+  const transition = startViewTransition(undefined, types)
   await transition.captured
 })
