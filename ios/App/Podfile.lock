@@ -1,12 +1,12 @@
 PODS:
-  - Capacitor (8.3.1):
+  - Capacitor (8.5.2):
     - CapacitorCordova
-  - CapacitorCordova (8.3.1)
-  - CapacitorDevice (8.0.2):
+  - CapacitorCordova (8.5.2)
+  - CapacitorDevice (8.0.3):
     - Capacitor
   - CapacitorHaptics (8.0.2):
     - Capacitor
-  - CapacitorSplashScreen (8.0.1):
+  - CapacitorSplashScreen (8.0.2):
     - Capacitor
   - CapacitorTextZoom (8.0.1):
     - Capacitor
@@ -34,11 +34,11 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/text-zoom"
 
 SPEC CHECKSUMS:
-  Capacitor: 46dbaa89c1d1cd121b9fc2dc839c1f39cc49e326
-  CapacitorCordova: 9010447fe25e869705fcf525e5f490facde87608
-  CapacitorDevice: 14cba6f88d1c3074cbf825fea977c8c526453ff8
+  Capacitor: 89067779e14fb7ea56af07b4817f45d1f0c2a269
+  CapacitorCordova: 5bec5648cbd09a176ce34ce5e7b6cdabb2c8a327
+  CapacitorDevice: 708e742b60a61572cd593e44c809592e8f31da14
   CapacitorHaptics: 296f771ecd89c7a1bd92a7b6826a7d268e2e70f5
-  CapacitorSplashScreen: 4b46c72298db552b3c57ce021ef028b6dc7f1fa7
+  CapacitorSplashScreen: 7bf61c2001557ff9e195e601c6b87344480d3c65
   CapacitorTextZoom: b3c80b09abef831245bc3434b1c03aa898ad4762
 
 PODFILE CHECKSUM: 944daa224e3e8219de41518116e63dc7948e607b
