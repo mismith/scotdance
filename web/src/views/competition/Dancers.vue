@@ -36,7 +36,9 @@ const SORTS: Array<{ key: SortKey; label: string }> = [
 
 const query = ref('')
 const sortBy = useLocalStorage<SortKey>('dancers:sort:v4', 'group')
-const onlyMine = ref(false)
+// Remembered across competitions; ignored where none of your dancers are entered.
+const onlyMine = useLocalStorage('dancers:onlyMine', false)
+const anyFollowedHere = computed(() => dancers.value.some((d) => following.isFollowing(d)))
 
 const num = (d: EnrichedDancer) => (d.number != null && Number.isFinite(d.number) ? d.number : Infinity)
 
@@ -58,7 +60,7 @@ const filtered = computed(() => {
     const hit = new Set(fuse.value.search(q).map((r) => r.item.id))
     list = list.filter((d) => hit.has(d.id))
   }
-  if (onlyMine.value) list = list.filter((d) => following.isFollowing(d))
+  if (onlyMine.value && anyFollowedHere.value) list = list.filter((d) => following.isFollowing(d))
   return list
 })
 
@@ -134,6 +136,7 @@ const followedCount = computed(() => dancers.value.filter((d) => following.isFol
 
     <div class="flex items-center gap-2">
       <button
+        v-if="anyFollowedHere"
         type="button"
         role="switch"
         :aria-checked="onlyMine"

@@ -2,6 +2,7 @@
 import MyDancerLine from '@/components/MyDancerLine.vue'
 import ResultsMark from '@/components/ResultsMark.vue'
 import { computed, onMounted, ref } from 'vue'
+import { useLocalStorage } from '@vueuse/core'
 import { RouterLink } from 'vue-router'
 import { AlertTriangle, ChevronRight, Star, Trophy } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
@@ -39,7 +40,9 @@ onMounted(async () => {
   loaded.value = true
 })
 
-const onlyMine = ref(false)
+// Remembered across competitions: most people only ever want their own.
+// Ignored where none of your dancers are entered, so the list is never empty.
+const onlyMine = useLocalStorage('results:onlyMine', false)
 
 function isPosted(groupId: string, danceId: string) {
   const raw = results.value?.[groupId]?.[danceId]
@@ -82,7 +85,7 @@ const sections = computed(() =>
   categories.value
     .map((category) => {
       let rows = groups.value.filter((g) => g.categoryId === category.id).map(rowFor)
-      if (onlyMine.value) rows = rows.filter((r) => r.mine.length)
+      if (onlyMine.value && anyFollowedHere.value) rows = rows.filter((r) => r.mine.length)
       return { category, rows }
     })
     .filter((s) => s.rows.length),
