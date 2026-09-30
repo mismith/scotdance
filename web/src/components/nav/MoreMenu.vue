@@ -45,7 +45,8 @@ function run(action: () => void) {
   action()
 }
 
-const row = 'flex min-h-12 w-full items-center gap-3 px-4 py-2 text-left text-base font-bold hover:bg-accent'
+// Focus ring drawn inside the row, so the menu's rounded edge can't clip it.
+const row = 'flex min-h-12 w-full items-center gap-3 px-4 py-2 text-left text-base font-bold hover:bg-accent focus-visible:-outline-offset-2'
 </script>
 
 <template>

@@ -3,7 +3,7 @@ import LogoMark from '@/components/LogoMark.vue'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
-import { CalendarDays, ChevronRight, Search, Sparkles, Star, X } from '@lucide/vue'
+import { CalendarDays, ChevronRight, Search, Sparkles, X } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
 import DancerDayCard from '@/components/DancerDayCard.vue'
@@ -84,7 +84,7 @@ const whoIsDancing = (names: string[]) =>
 
 // Coming up: competitions your dancers are entered in, plus competitions you
 // follow, soonest first.
-const { competitions: recentCompetitions } = useCompetitions(ref(false))
+const { competitions: recentCompetitions, loading: competitionsLoading } = useCompetitions(ref(false))
 const comingUp = computed(() => {
   const map = new Map<string, { id: string; competition: Competition; dancers: Map<string, string>; followed: boolean }>()
   if (!showingRecent.value) {
@@ -115,6 +115,12 @@ const comingUp = computed(() => {
 // If nothing personal is coming up, show what's next anywhere.
 const nextAnywhere = computed(() =>
   recentCompetitions.value.filter((c) => competitionPhase(c.date) !== 'after').slice(0, 3),
+)
+
+// With nothing personal to show, the latest finished competitions keep Home
+// alive between competition days.
+const latestResults = computed(() =>
+  recentCompetitions.value.filter((c) => competitionPhase(c.date) === 'after').slice(-3).reverse(),
 )
 
 const cardColor = (card: DancerCard) => (showingRecent.value ? null : following.colorFor(card.id))
@@ -193,30 +199,32 @@ const { freshKey: liveFresh } = useLiveAlertState()
         </span>
       </RouterLink>
 
-      <!-- Signed out -->
+      <!-- Nobody followed yet: the pitch, then something to look at -->
       <section
-        v-if="!auth.isSignedIn"
-        class="bg-card space-y-3 rounded-2xl border p-4 shadow-sm"
+        v-if="!followedPeople.length"
+        class="bg-primary text-primary-foreground relative overflow-hidden rounded-3xl p-5 shadow-sm"
       >
-        <h2 class="text-heading">See your dancer’s day at a glance</h2>
-        <p class="text-muted-foreground text-[0.9375rem]">
+        <LogoMark class="pointer-events-none absolute -right-6 -bottom-10 size-48 rotate-[-8deg] opacity-[0.13]" />
+        <h2 class="text-title relative">See your dancer’s day at a glance</h2>
+        <p class="relative mt-1.5 text-[0.9375rem] font-semibold opacity-90">
           Follow your dancers to see their platform, dancing order and placings here, and get an alert when results
           are posted.
         </p>
-        <div class="grid grid-cols-2 gap-2">
+        <div class="relative mt-4 flex flex-wrap gap-2">
+          <RouterLink
+            :to="{ name: 'search' }"
+            class="bg-primary-foreground text-primary flex h-12 items-center gap-2 rounded-full px-5 text-base font-extrabold"
+          >
+            <Search class="size-5" /> Find a dancer
+          </RouterLink>
           <button
+            v-if="!auth.isSignedIn"
             type="button"
-            class="bg-primary text-primary-foreground h-12 rounded-xl text-base font-bold"
+            class="border-primary-foreground/60 flex h-12 items-center rounded-full border-2 px-5 text-base font-bold"
             @click="auth.openLogin({ reason: 'account' })"
           >
             Sign in
           </button>
-          <RouterLink
-            :to="{ name: 'search' }"
-            class="bg-card border-strong flex h-12 items-center justify-center gap-2 rounded-xl border text-base font-bold"
-          >
-            <Search class="size-5" /> Find a dancer
-          </RouterLink>
         </div>
       </section>
 
@@ -267,30 +275,13 @@ const { freshKey: liveFresh } = useLiveAlertState()
         </template>
       </section>
 
-      <!-- Signed in, following nobody -->
-      <section
-        v-else-if="auth.isSignedIn"
-        class="bg-card flex flex-col items-center gap-3 rounded-2xl border p-6 text-center shadow-sm"
-      >
-        <span class="bg-blue-paper text-primary flex size-12 items-center justify-center rounded-full">
-          <Star class="size-6" />
-        </span>
-        <h2 class="text-heading">Follow a dancer</h2>
-        <p class="text-muted-foreground max-w-xs text-[0.9375rem]">
-          Their platform, dancing order and placings will show up here on competition day.
-        </p>
-        <RouterLink
-          :to="{ name: 'search' }"
-          class="bg-primary text-primary-foreground flex h-12 items-center gap-2 rounded-xl px-5 text-base font-bold"
-        >
-          <Search class="size-5" /> Find a dancer
-        </RouterLink>
-      </section>
-
       <!-- Coming up -->
-      <section v-if="comingUp.length || nextAnywhere.length" class="space-y-3">
+      <section v-if="comingUp.length || nextAnywhere.length || competitionsLoading" class="space-y-3">
         <h2 class="text-heading pt-2">{{ comingUp.length ? 'Coming up' : 'Next competitions' }}</h2>
-        <ul class="divide-y overflow-hidden rounded-2xl border shadow-sm">
+        <div v-if="competitionsLoading && !comingUp.length && !nextAnywhere.length" class="space-y-2" aria-busy="true">
+          <Skeleton v-for="i in 3" :key="i" class="h-16 w-full rounded-2xl!" />
+        </div>
+        <ul v-else class="divide-y overflow-hidden rounded-2xl border shadow-sm">
           <template v-if="comingUp.length">
             <CompetitionDateRow
               v-for="c in comingUp"
@@ -317,6 +308,19 @@ const { freshKey: liveFresh } = useLiveAlertState()
         >
           <CalendarDays class="size-5" /> All competitions
         </RouterLink>
+      </section>
+
+      <!-- Latest results, when nothing personal is on -->
+      <section v-if="showingRecent && latestResults.length" class="space-y-3">
+        <h2 class="text-heading pt-2">Latest results</h2>
+        <ul class="divide-y overflow-hidden rounded-2xl border shadow-sm">
+          <CompetitionDateRow
+            v-for="c in latestResults"
+            :key="c.id"
+            :competition="c"
+            :to="{ name: 'competition.results', params: { competitionId: c.id } }"
+          />
+        </ul>
       </section>
     </main>
   </div>

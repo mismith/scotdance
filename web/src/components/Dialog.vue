@@ -24,7 +24,12 @@ const dialogRef = ref<HTMLDialogElement | null>(null)
 function sync(open: boolean) {
   const el = dialogRef.value
   if (!el) return
-  if (open && !el.open) el.showModal()
+  if (open && !el.open) {
+    el.showModal()
+    // Take focus on the dialog itself, not its first button: otherwise iOS
+    // draws a focus ring on that button the moment a sheet or menu opens.
+    el.focus({ preventScroll: true })
+  }
   else if (!open && el.open) el.close()
 }
 
@@ -51,10 +56,12 @@ function onBackdropClick(e: MouseEvent) {
 <template>
   <dialog
     ref="dialogRef"
+    tabindex="-1"
     :inert="!open"
     :class="[
-      // Reset native dialog defaults.
-      'bg-card max-h-full max-w-full border-0 p-0 text-inherit',
+      // Reset native dialog defaults. The dialog itself takes focus on open
+      // (see sync), so it draws no ring of its own.
+      'bg-card max-h-full max-w-full border-0 p-0 text-inherit outline-none',
       // Width by size prop.
       variant !== 'menu' && (size === 'sm' ? 'w-full md:max-w-sm' : 'w-full md:max-w-md'),
       variant === 'menu' &&
