@@ -42,7 +42,7 @@ function onClick(event: MouseEvent) {
     v-if="visible"
     v-tap-feedback
     type="button"
-    class="bg-card text-primary pointer-events-auto flex h-11 max-w-[55vw] shrink-0 items-center gap-0.5 rounded-full border pr-4 pl-2 text-[0.9375rem] font-bold shadow-sm [view-transition-name:nav-back] hover:bg-accent"
+    class="bg-card text-primary pointer-events-auto flex h-11 max-w-[42vw] shrink-0 items-center gap-0.5 rounded-full border pr-4 pl-2 text-[0.9375rem] font-bold shadow-sm [view-transition-name:nav-back] hover:bg-accent"
     :aria-label="`Back to ${label}`"
     @click="onClick"
   >

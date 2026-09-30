@@ -4,17 +4,26 @@ import TopBackButton from '@/components/nav/TopBackButton.vue'
 
 // The one top bar. Opaque, 3.5rem, under the status bar. Left: a labelled
 // Back button (when there's somewhere to go back to). Middle: a small title
-// that appears once the page's own big title has scrolled away. Right: text
-// actions via the `actions` slot.
+// (and optional subtitle) that appears once the page's own big title has
+// scrolled away, or always when `showTitle` says so. Right: text actions via
+// the `actions` slot.
+//
+// `titleVt` names the title for view transitions, so a page's big title can
+// shrink into the bar; it's only applied while the title is showing, so the
+// name is never on two elements at once.
 withDefaults(
   defineProps<{
     title?: string | null
+    subtitle?: string | null
     showTitle?: boolean
+    /** Border under the bar; defaults to `showTitle` (i.e. once scrolled). */
+    scrolled?: boolean
+    titleVt?: string | null
     back?: boolean
     fallback?: { to: RouteLocationRaw; label: string }
     exit?: { delta?: number; to?: RouteLocationRaw; label: string } | null
   }>(),
-  { title: null, showTitle: false, back: true, fallback: undefined, exit: null },
+  { title: null, subtitle: null, showTitle: false, scrolled: undefined, titleVt: null, back: true, fallback: undefined, exit: null },
 )
 
 const scrollTop = () => {
@@ -26,20 +35,26 @@ const scrollTop = () => {
 <template>
   <nav
     class="bg-background/100 fixed inset-x-0 top-0 z-30 border-b border-transparent pt-(--safe-top) transition-colors data-[scrolled=true]:border-border"
-    :data-scrolled="showTitle"
+    :data-scrolled="scrolled ?? showTitle"
   >
     <div class="mx-auto flex h-14 max-w-3xl items-center gap-2 px-3">
       <TopBackButton v-if="back" :fallback="fallback" :exit="exit" />
       <button
         type="button"
         :class="[
-          'min-w-0 flex-1 truncate text-left text-[1.0625rem] font-bold transition-opacity',
+          'min-w-0 flex-1 text-left transition-opacity',
           showTitle && title ? 'opacity-100' : 'pointer-events-none opacity-0',
         ]"
         :tabindex="showTitle && title ? 0 : -1"
         @click="scrollTop"
       >
-        {{ title }}
+        <span
+          :class="['block truncate font-bold', subtitle ? 'text-[0.9375rem] leading-tight' : 'text-[1.0625rem]']"
+          :style="showTitle && titleVt ? { viewTransitionName: titleVt } : undefined"
+        >
+          {{ title }}
+        </span>
+        <span v-if="subtitle" class="text-muted-foreground block truncate text-xs font-semibold">{{ subtitle }}</span>
       </button>
       <div class="flex shrink-0 items-center gap-1.5">
         <slot name="actions" />

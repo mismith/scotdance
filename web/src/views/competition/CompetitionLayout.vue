@@ -13,6 +13,8 @@ import { provideInfoHeader } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { competitionEntry, historyPosition } from '@/lib/competitionExit'
 import { backLabelFor } from '@/lib/backLabels'
+import { competitionPhase } from '@/lib/dancerDay'
+import { formatShortDate } from '@/lib/format'
 
 const TAB_LABEL_BY_ROUTE: Record<string, string> = {
   'competition.info': 'Overview',
@@ -34,11 +36,20 @@ onMounted(loadSchedule)
 
 const reload = () => window.location.reload()
 
-// Each tab registers its big in-page title; once it scrolls under the app
-// bar, the competition name appears there instead.
+// Each page registers its big in-page title (for the bar's border once it
+// scrolls under). The competition name and date sit in the bar on every page
+// but Overview, whose own big title shrinks into the bar as you leave it
+// (shared view-transition name) or scroll past it.
 const { scrolledPast } = provideInfoHeader()
 
 const isTopTab = computed(() => String(route.name ?? '') in TAB_LABEL_BY_ROUTE)
+const isOverview = computed(() => route.name === 'competition.info')
+const subtitle = computed(() => {
+  const c = competition.value
+  if (!c) return null
+  const when = competitionPhase(c.date) === 'today' ? 'Today' : formatShortDate(c.date)
+  return [when, c.location].filter(Boolean).join(' · ') || null
+})
 
 // On a tab, Back leaves the competition in one tap: to wherever you came
 // from, or the competitions list for a deep link. Deeper pages step back
@@ -64,7 +75,10 @@ usePageTitle(() => [
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
     <AppBar
       :title="competition?.name"
-      :show-title="scrolledPast"
+      :subtitle="subtitle"
+      :show-title="!isOverview || scrolledPast"
+      :scrolled="scrolledPast"
+      title-vt="competition-title"
       :fallback="{ to: { name: 'competitions' }, label: 'Competitions' }"
       :exit="exit"
     >

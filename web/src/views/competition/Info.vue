@@ -25,10 +25,12 @@ import {
   isPast,
 } from '@/lib/format'
 import { sanitizeRichText } from '@/lib/sanitize'
-import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
+import { injectInfoHeaderScrolledPast, injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { nowMs } from '@/lib/now'
 
 const setHeader = injectInfoHeaderSetter()
+// Owns the shared title name until it scrolls under the bar (AppBar `titleVt`).
+const scrolledPast = injectInfoHeaderScrolledPast()
 
 const {
   competitionId,
@@ -143,7 +145,9 @@ const { freshKey: liveFresh } = useLiveAlertState()
             <span v-if="phase === 'today'" class="bg-live size-2 animate-[live-pulse_2s_infinite] rounded-full" />
             {{ kicker }}
           </p>
-          <h1 class="text-display">{{ competition.name ?? 'Competition' }}</h1>
+          <h1 class="text-display" :style="scrolledPast ? undefined : { viewTransitionName: 'competition-title' }">
+            {{ competition.name ?? 'Competition' }}
+          </h1>
         </div>
       </div>
       <div class="flex flex-wrap items-center gap-2">
