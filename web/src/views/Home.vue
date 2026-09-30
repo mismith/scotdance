@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LogoMark from '@/components/LogoMark.vue'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
@@ -178,10 +179,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
         :to="{ name: 'competition.info', params: { competitionId: t.competitionId } }"
         class="bg-primary text-primary-foreground relative block overflow-hidden rounded-2xl p-4 shadow-sm"
       >
-        <span
-          aria-hidden="true"
-          class="pointer-events-none absolute -top-8 -right-8 size-36 bg-[linear-gradient(45deg,transparent_44%,rgb(255_255_255/0.14)_44%_56%,transparent_56%),linear-gradient(-45deg,transparent_44%,rgb(255_255_255/0.14)_44%_56%,transparent_56%)]"
-        />
+        <LogoMark class="pointer-events-none absolute -right-4 -bottom-8 size-36 rotate-[-8deg] opacity-[0.13]" />
         <span class="flex items-center gap-2 text-sm font-bold">
           <span class="size-2 animate-[live-pulse_2s_infinite] rounded-full bg-current" />
           Today<template v-if="t.competition.location"> · {{ t.competition.location }}</template>

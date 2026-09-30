@@ -32,7 +32,7 @@ const showGlobalNav = computed(
   () => !route.matched.some((r) => r.meta.ownsBottomNav),
 )
 
-// Text size and contrast preferences (More › Display) live on <html>.
+// Appearance and text size preferences (Settings) live on <html>.
 useDisplayPrefs()
 
 // Asks new accounts how they use the app (see useRoles).

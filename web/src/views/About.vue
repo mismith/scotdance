@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import LogoMark from '@/components/LogoMark.vue'
 import { nextTick, onMounted, ref, watch } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { CalendarDays, ChevronDown, GraduationCap, Heart, Link, Search, Star, Trophy, Users } from '@lucide/vue'
+import { RouterLink, useRoute } from 'vue-router'
+import { CalendarDays, ChevronDown, GraduationCap, Heart, Search, Star, Trophy, Users } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import { useCrisp } from '@/composables/useCrisp'
 import { PLATFORM } from '@/composables/useUpdate'
@@ -11,81 +12,56 @@ import { version } from '../../package.json'
 // their #faq-… links so older shared links still land on the right answer.
 const crisp = useCrisp()
 const isWeb = PLATFORM === 'web'
+const year = new Date().getFullYear()
 const platformLabel = PLATFORM === 'ios' ? 'iOS' : PLATFORM === 'android' ? 'Android' : 'Web'
 
+// One line per role, about the same length, each in its own colour.
 const roles = [
-  {
-    icon: Heart,
-    title: 'Parents',
-    points: [
-      'Follow your dancers and see their day on Home: platform, dancing order, placings',
-      'Placings as soon as they’re posted, with an alert while the app is open',
-      'Every competition they’ve danced at, in one place',
-      'Add the tartan your dancer wears',
-    ],
-  },
-  {
-    icon: Star,
-    title: 'Dancers',
-    points: ['Your schedule and results, without the paper', 'Look back at every competition you’ve danced'],
-  },
-  {
-    icon: GraduationCap,
-    title: 'Teachers',
-    points: ['Follow a whole class and see everyone at a glance', 'Who’s dancing next, and where'],
-  },
-  {
-    icon: CalendarDays,
-    title: 'Organisers',
-    points: ['Publish dancers, schedule and results for free', 'Parents stop asking “when is she on?”'],
-  },
+  { icon: Heart, title: 'Parents', color: 'var(--dancer-1)', line: 'Follow your dancers and see their results as they happen.' },
+  { icon: Star, title: 'Dancers', color: 'var(--dancer-4)', line: 'Your schedule and results, without the paper.' },
+  { icon: GraduationCap, title: 'Teachers', color: 'var(--dancer-2)', line: 'Follow your whole class and see everyone at a glance.' },
+  { icon: CalendarDays, title: 'Organisers', color: 'var(--dancer-5)', line: 'Saves hours of work and paper, and keeps every result on record for later.' },
 ]
 
 const steps = [
-  { icon: Search, title: 'Find your dancer', body: 'Search by name, or type the number on their card.' },
-  { icon: Star, title: 'Tap Follow', body: 'Their day appears on Home, and in every competition they enter.' },
-  { icon: Trophy, title: 'Watch it come in', body: 'Placings appear as they’re entered, with an alert while the app is open.' },
+  { icon: Search, title: 'Find your dancer', body: 'Search by name or number, or browse by age group.' },
+  { icon: Star, title: 'Tap Follow', body: 'Their day shows up on Home, and in every competition they enter.' },
+  { icon: Trophy, title: 'Watch it come in', body: 'Callbacks and placings, posted as they’re announced.' },
 ]
 
 const faqs: { id: string; q: string; a?: string }[] = [
   {
     id: 'free',
-    q: 'Does it cost anything?',
-    a: 'No. ScotDance is free for families, dancers, teachers and organisers anywhere in the world, and there are no plans to change that.',
+    q: 'Is there a cost to use it at my local competition?',
+    a: 'No! All competition data is user-submitted, and you can use it as a competition organiser or attendee for free, anywhere in the world. There is no plan for this to ever change.',
   },
   {
     id: 'results',
     q: 'Where do the results come from?',
-    a: 'Organisers and scrutineers enter them at the competition. They appear here as soon as they’re entered, which can be a little after they’re announced.',
+    a: 'Organisers and scrutineers enter them at the competition, so they show up here as soon as they’re entered. That can be a little after they’re announced.',
   },
   {
     id: 'worldwide',
-    q: 'Can I use it in any country?',
+    q: 'Can I use this in any country?',
   },
   {
     id: 'independence',
-    q: 'Is ScotDance part of an association or governing body?',
-    a: 'No. It’s independent, not-for-profit and run by a volunteer.',
+    q: 'Is ScotDance affiliated with any association, governing body or competition?',
+    a: 'No, it’s a completely independent, not-for-profit, volunteer-run endeavour.',
   },
   {
     id: 'download',
-    q: 'Do I need to install anything?',
-    a: 'No. Everything works the same in a web browser at <a href="https://scotdance.app" class="text-primary underline">scotdance.app</a>. The App Store and Google Play apps are there if you’d like it on your home screen.',
-  },
-  {
-    id: 'tartans',
-    q: 'Where do the tartans come from?',
-    a: 'Each one is drawn by the app from its threadcount, the stripe recipe weavers use. The built-in setts come from <a href="https://commons.wikimedia.org/wiki/Category:Tartans" class="text-primary underline">Wikimedia Commons</a>, mostly charted by Micheletb (CC BY-SA 4.0), with others by SMcCandlish (CC0), Sg647112c and Celtus (CC BY-SA 2.5), and a few in the public domain. Tartans you make yourself are only ever shown to you.',
+    q: 'Do I need to download or install anything?',
+    a: 'No, the App Store and Google Play apps are entirely optional. Everything works exactly the same in a web browser on whatever device you own, at <a href="https://scotdance.app" class="text-primary underline">scotdance.app</a>. Of course, it’s handy to have it on your home screen, so the apps make that easy.',
   },
   {
     id: 'privacy',
-    q: 'Is my information safe?',
-    a: 'Yes. ScotDance collects very little about you, and doesn’t sell or share it. Competition information comes from organisers, much like a results sheet posted online. The <a href="/policies" class="text-primary underline">privacy and terms</a> page has the details.',
+    q: 'Is it safe to use? What about my data?',
+    a: 'In plain words: yes, it’s completely legitimate. It checks all the security boxes you’d expect, and does nothing nefarious with the (minimal) data it collects. Since all competition data is user-submitted, it’s much like results PDFs posted on an association’s website, just more convenient, hopefully. There are more details on the <a href="/policies" class="text-primary underline">privacy and terms</a> page.',
   },
 ]
 
 const route = useRoute()
-const router = useRouter()
 const open = ref(new Set<string>())
 const toggle = (id: string) => {
   const next = new Set(open.value)
@@ -103,9 +79,6 @@ function applyHash(hash: string) {
   if (!open.value.has(id)) toggle(id)
   nextTick(() => document.getElementById(`faq-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
 }
-function linkTo(id: string) {
-  router.replace({ hash: `#faq-${id}` })
-}
 onMounted(() => applyHash(route.hash))
 watch(() => route.hash, applyHash)
 </script>
@@ -115,15 +88,16 @@ watch(() => route.hash, applyHash)
     <AppBar title="About ScotDance" :fallback="{ to: { name: 'home' }, label: 'Home' }" />
 
     <main class="mx-auto w-full max-w-3xl space-y-8 px-4 pt-[calc(var(--chrome-top)+0.5rem)]">
-      <header class="space-y-3">
-        <img src="/img/touchicon.png" alt="" class="size-14 rounded-2xl shadow-sm" />
-        <h1 class="text-display">Highland dance competitions, dancers and results, in one place.</h1>
-        <p class="text-muted-foreground text-base">
-          Free, independent and run by a volunteer since 2017.
+      <header class="bg-primary text-primary-foreground relative overflow-hidden rounded-3xl p-5 shadow-sm">
+        <LogoMark class="pointer-events-none absolute -right-6 -bottom-10 size-52 rotate-[-8deg] opacity-[0.13]" />
+        <img src="/img/touchicon.png" alt="" class="relative size-12 rounded-xl shadow-sm" />
+        <h1 class="text-display relative mt-4 text-[1.5625rem] text-balance">From the warm-up to the awards.</h1>
+        <p class="relative mt-2 text-base font-semibold opacity-90">
+          Browse competitions, follow dancers, and see results as they happen. Free, anywhere in the world.
         </p>
         <RouterLink
           :to="{ name: 'home' }"
-          class="bg-primary text-primary-foreground inline-flex h-12 items-center gap-2 rounded-xl px-5 text-base font-bold"
+          class="bg-primary-foreground text-primary relative mt-4 inline-flex h-12 items-center gap-2 rounded-full px-5 text-base font-extrabold"
         >
           <Users class="size-5" /> Go to your dancers
         </RouterLink>
@@ -131,14 +105,18 @@ watch(() => route.hash, applyHash)
 
       <section class="space-y-3">
         <h2 class="text-title">Made for</h2>
-        <div class="grid gap-3 sm:grid-cols-2">
-          <article v-for="r in roles" :key="r.title" class="bg-card space-y-2 rounded-2xl border p-4 shadow-sm">
-            <h3 class="text-heading flex items-center gap-2">
-              <component :is="r.icon" class="text-primary size-5" /> {{ r.title }}
-            </h3>
-            <ul class="text-muted-foreground list-disc space-y-1 pl-5 text-[0.9375rem] marker:text-primary">
-              <li v-for="p in r.points" :key="p">{{ p }}</li>
-            </ul>
+        <div class="grid grid-cols-2 gap-3">
+          <article
+            v-for="r in roles"
+            :key="r.title"
+            class="space-y-2 rounded-2xl p-4"
+            :style="{ background: `color-mix(in srgb, ${r.color} 12%, var(--card))` }"
+          >
+            <span class="flex size-11 items-center justify-center rounded-full text-white shadow-sm" :style="{ background: r.color }">
+              <component :is="r.icon" class="size-5" stroke-width="2.4" />
+            </span>
+            <h3 class="text-heading">{{ r.title }}</h3>
+            <p class="text-[0.9375rem] leading-snug">{{ r.line }}</p>
           </article>
         </div>
       </section>
@@ -160,7 +138,7 @@ watch(() => route.hash, applyHash)
 
       <section v-if="isWeb" class="bg-card space-y-3 rounded-2xl border p-4 text-center shadow-sm">
         <h2 class="text-heading">Get the app</h2>
-        <p class="text-muted-foreground text-[0.9375rem]">Or keep using it here in your browser. It’s the same either way.</p>
+        <p class="text-muted-foreground text-[0.9375rem]">Install it on your phone, or just bookmark it in any browser.</p>
         <div class="flex flex-wrap justify-center gap-3">
           <a href="https://apps.apple.com/us/app/scotdance/id1386475626" target="_blank" rel="noopener" aria-label="Download on the App Store">
             <img src="/img/app-store.svg" alt="Download on the App Store" class="h-11" />
@@ -178,7 +156,7 @@ watch(() => route.hash, applyHash)
             <div class="flex items-center">
               <button
                 type="button"
-                class="flex min-h-14 flex-1 items-center gap-3 py-3 pl-4 text-left"
+                class="flex min-h-14 flex-1 items-center gap-3 py-3 pr-4 pl-4 text-left"
                 :aria-expanded="open.has(f.id)"
                 :aria-controls="`faq-panel-${f.id}`"
                 @click="toggle(f.id)"
@@ -186,18 +164,11 @@ watch(() => route.hash, applyHash)
                 <span class="flex-1 text-base font-bold">{{ f.q }}</span>
                 <ChevronDown :class="['text-muted-foreground size-5 shrink-0 transition-transform', open.has(f.id) && 'rotate-180']" />
               </button>
-              <button
-                type="button"
-                class="text-muted-foreground flex size-11 shrink-0 items-center justify-center"
-                :aria-label="`Link to this answer`"
-                @click="linkTo(f.id)"
-              >
-                <Link class="size-4" />
-              </button>
             </div>
             <div v-if="open.has(f.id)" :id="`faq-panel-${f.id}`" class="text-muted-foreground px-4 pb-4 text-[0.9375rem] leading-relaxed">
               <template v-if="f.id === 'worldwide'">
-                Yes, anywhere in the world. If there’s something that would help where you dance,
+                Yes, anywhere in the world. Curiously, usage in the United States has been very light so far. If you’ve got a
+                theory why, please
                 <button v-if="crisp.available" type="button" class="text-primary font-bold underline" @click="crisp.open()">get in touch</button><template v-else>get in touch</template>.
               </template>
               <span v-else v-html="f.a" />
@@ -208,8 +179,10 @@ watch(() => route.hash, applyHash)
 
       <footer class="text-muted-foreground space-y-2 pb-4 text-center text-sm">
         <p>
-          Made by <a href="https://mismith.io" target="_blank" rel="noopener" class="text-primary font-bold">Murray Rowan</a>
-          for the Highland dance community.
+          Built by a Highland dance family, for Highland dance families.
+        </p>
+        <p>
+          © 2017–{{ year }} <a href="https://mismith.io" target="_blank" rel="noopener" class="text-foreground font-bold hover:underline">Murray Rowan</a>
         </p>
         <p class="flex flex-wrap justify-center gap-x-3">
           <button v-if="crisp.available" type="button" class="text-primary font-bold" @click="crisp.open()">Help</button>

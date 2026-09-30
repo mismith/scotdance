@@ -44,9 +44,6 @@
       "dancers:index": {
         ".read": true
       },
-      "dancers:profiles": {
-        ".read": true // written only by the tartan consensus function
-      },
       "competitions:data": {
         "$competitionId": {
           "staff": {
@@ -84,20 +81,11 @@
           ".write": "auth !== null && auth.uid === $userId" // is SELF
         }
       },
-      "users:tartanPicks": {
+      "users:dancerColors": {
         "$userId": {
           ".read": "auth !== null && auth.uid === $userId", // is SELF
           ".write": "auth !== null && auth.uid === $userId", // is SELF
-          "$dancerId": { ".validate": "newData.isString() && newData.val().length <= 64" }
-        }
-      },
-      "users:tartans": {
-        "$userId": {
-          ".read": "auth !== null && auth.uid === $userId", // is SELF
-          "$tartanId": {
-            ".write": "auth !== null && auth.uid === $userId", // is SELF
-            ".validate": "newData.hasChildren(['name', 'threadcount', 'palette', 'createdAt']) && newData.child('name').isString() && newData.child('name').val().length <= 60 && newData.child('threadcount').isString() && newData.child('threadcount').val().length <= 600"
-          }
+          "$dancerId": { ".validate": "newData.isString() && newData.val().length <= 16" }
         }
       },
       "users:permissions": {

@@ -8,7 +8,7 @@ import { useFollowing } from '@/composables/useFollowing'
 import { useCrisp } from '@/composables/useCrisp'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import DancerDayCard from '@/components/DancerDayCard.vue'
-import DancerTartan from '@/components/DancerTartan.vue'
+import DancerColorPicker from '@/components/DancerColorPicker.vue'
 import DateTile from '@/components/DateTile.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import Medal from '@/components/Medal.vue'
@@ -91,7 +91,7 @@ function medals(cid: string) {
       <img v-if="profile.image.value" :src="profile.image.value" :alt="name" class="size-16 shrink-0 rounded-full object-cover" />
       <span
         v-else
-        class="cloth flex size-16 shrink-0 items-center justify-center rounded-full text-xl font-extrabold text-white [text-shadow:0_1px_3px_rgb(0_0_0/0.7)]"
+        class="sash flex size-16 shrink-0 items-center justify-center rounded-full text-xl font-extrabold text-white"
         :style="following.paint(dancerId, 'var(--strong)')"
       >
         {{ initials }}
@@ -109,7 +109,7 @@ function medals(cid: string) {
       <DancerDayCard :days="focus.days" :competition-id="focus.competitionId" :color="color" />
     </section>
 
-    <DancerTartan :dancer-id="dancerId" :dancer-name="name" />
+    <DancerColorPicker :dancer-id="dancerId" :dancer-name="name" />
 
     <section class="space-y-2">
       <h2 class="text-heading flex items-baseline justify-between pt-1">

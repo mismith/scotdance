@@ -60,7 +60,7 @@ async function save() {
       <p class="text-muted-foreground text-sm leading-relaxed">
         ScotDance uses this to fit the app to you. Teachers get a compact list for following a whole class, and
         organisers get quick access to their competitions. It also tells the volunteer who builds ScotDance who it’s
-        for, so the next features help the right people. Change it any time in More.
+        for, so the next features help the right people. Change it any time in your account.
       </p>
       <button
         type="button"
