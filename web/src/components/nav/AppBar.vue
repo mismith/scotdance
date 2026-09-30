@@ -12,8 +12,9 @@ withDefaults(
     showTitle?: boolean
     back?: boolean
     fallback?: { to: RouteLocationRaw; label: string }
+    exit?: { delta?: number; to?: RouteLocationRaw; label: string } | null
   }>(),
-  { title: null, showTitle: false, back: true, fallback: undefined },
+  { title: null, showTitle: false, back: true, fallback: undefined, exit: null },
 )
 
 const scrollTop = () => {
@@ -28,7 +29,7 @@ const scrollTop = () => {
     :data-scrolled="showTitle"
   >
     <div class="mx-auto flex h-14 max-w-3xl items-center gap-2 px-3">
-      <TopBackButton v-if="back" :fallback="fallback" />
+      <TopBackButton v-if="back" :fallback="fallback" :exit="exit" />
       <button
         type="button"
         :class="[

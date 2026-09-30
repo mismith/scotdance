@@ -111,10 +111,6 @@
   --dancer-3: #6a3fa0;
   --dancer-4: #8a5f00;
   --dancer-5: #0065bd;
-  /* Tartan sett drawn over a dancer's colour (sash, number card band) */
-  --tartan:
-    repeating-linear-gradient(90deg, rgb(0 0 0 / 0.24) 0 3px, transparent 3px 9px, rgb(255 255 255 / 0.3) 9px 10px, transparent 10px 16px),
-    repeating-linear-gradient(0deg, rgb(0 0 0 / 0.24) 0 3px, transparent 3px 9px, rgb(255 255 255 / 0.3) 9px 10px, transparent 10px 16px);
   --safe-top: env(safe-area-inset-top);
   --safe-bottom: env(safe-area-inset-bottom);
   /* Opaque chrome: a 3.5rem app bar under the status bar, and a 3.5rem tab
@@ -216,75 +212,28 @@
   @apply bg-card text-card-foreground border shadow-sm;
 }
 
-/* A dancer's sash: their real tartan (--sash, set by paint()) or a
-   generic sett over their colour (--dc). */
+/* A dancer's colour, for thin bars and bands. A tartan's cloth turns to
+   noise at that size, so bars stay a solid colour (the tartan's main one). */
 @utility sash {
-  background: var(--sash, var(--tartan)), var(--dc, var(--primary));
+  background: var(--dc, var(--primary));
+}
+/* The real cloth, for surfaces big enough to show it (an avatar, a swatch):
+   the dancer's tartan (--sash, set by paint()) over their colour. */
+@utility cloth {
+  background: var(--sash, none), var(--dc, var(--primary));
 }
 
-/* Liquid-glass-style press feedback for floating-nav targets. Applied via
-   the v-tap-feedback directive, which sets data-tap-feedback on mount,
-   data-tapping during a press, and --tap-x / --tap-y for the gradient
-   origin. :active is the primary trigger so feedback works even without
-   the directive; [data-tapping] keeps the press visible past iOS's
-   :active timing and uses the captured touch coords. The ::after inherits
-   the host border-radius so the highlight is clipped to the rounded
-   shape without forcing overflow:hidden. */
-/* Asymmetric timing: scale-up + gradient-in are instant so the feedback is
-   visible even when the press triggers an immediate route change (the view-
-   transition snapshot then captures the scaled state). Scale-down + gradient-
-   out animate over 220ms for a soft release. */
-[data-tap-feedback] {
-  scale: 1;
-}
-/* Transitions deferred until the next frame (see directives/tapFeedback.ts)
-   so the ::after pseudo doesn't animate from its initial style on creation —
-   that flash is normally hidden by the VT snapshot, but exposed when VT is
-   skipped (e.g. iOS swipe-back). */
+/* Press feedback: the control dims while pressed, like a native button.
+   Applied via the v-tap-feedback directive, which sets data-tapping during
+   a press so the dim outlasts iOS's brief :active. */
 [data-tap-feedback-ready] {
-  /* Multi-property shorthand so consumer `transition` utility classes can
-     still drive opacity/translate animations alongside the tap-release
-     scale. Without listing them here, `transition: scale 220ms ...` resets
-     transition-property to scale-only and snaps the rest — breaking e.g.
-     the nav title pill's slide/fade-in reveal. */
   transition:
-    scale 220ms cubic-bezier(0.2, 0, 0, 1),
-    opacity var(--default-transition-duration) var(--ease-rubber-band),
+    opacity 180ms ease-out,
     translate var(--default-transition-duration) var(--ease-rubber-band);
 }
-[data-tap-feedback]::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  /* Tight bright core (~20px) with a wide dim halo (~80px) — reads as a
-     spotlight under the finger rather than a flat tint, and stays balanced
-     across small tabs and wide pills alike. */
-  background: radial-gradient(
-    80px circle at var(--tap-x, 50%) var(--tap-y, 50%),
-    color-mix(in oklab, var(--card-foreground) 45%, transparent) 0%,
-    color-mix(in oklab, var(--card-foreground) 14%, transparent) 25%,
-    transparent 65%
-  );
-  opacity: 0;
-}
-[data-tap-feedback-ready]::after {
-  transition: opacity 220ms ease-out;
-}
 [data-tap-feedback][data-tapping] {
-  scale: var(--tap-scale, 1.06);
+  opacity: 0.6;
   transition: none;
-}
-[data-tap-feedback][data-tapping]::after {
-  opacity: 1;
-  transition: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  [data-tap-feedback]:active,
-  [data-tap-feedback][data-tapping] {
-    scale: 1;
-  }
 }
 
 /* Type scale (80% of the Front Row prototype, with body floored at 16px):

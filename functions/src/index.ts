@@ -9,6 +9,7 @@ import * as Pipers from './pipers';
 import * as Venues from './venues';
 import { getOnSearchAll } from './search';
 import { runBackfillCoords } from './backfillCoords';
+import { onTartanPick } from './tartans';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isCypress, isEmulator } from './utility/env';
 import { runtimeConfig, geocodingApiKey } from './utility/config';
@@ -65,6 +66,13 @@ export const competitionDeleted = appConfig.database.ref(`/${env}/competitions/{
       value: null,
     })));
   });
+export const tartanPickWritten = appConfig.database.ref(`/${env}/users:tartanPicks/{userId}/{dancerId}`)
+  .onWrite((change, ctx) => onTartanPick(
+    appConfig.db,
+    ctx.params.userId,
+    ctx.params.dancerId,
+    change.after.val(),
+  ));
 export const competitionPublishedChanged = appConfig.database.ref(`/${env}/competitions/{competitionId}/published`).onWrite(async (change, ctx) => {
   const { competitionId } = ctx.params;
   const ref = appConfig.db.child(`competitions:published/${competitionId}`);

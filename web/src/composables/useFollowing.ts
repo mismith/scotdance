@@ -85,7 +85,7 @@ export function useFollowing() {
 
   /** Inline style for anything drawn in a dancer's colours (see `sash`). */
   function paint(aggregateId: string | undefined | null, fallback = 'var(--primary)') {
-    return { '--dc': colorFor(aggregateId) ?? fallback, '--sash': sashFor(aggregateId) ?? 'var(--tartan)' }
+    return { '--dc': colorFor(aggregateId) ?? fallback, '--sash': sashFor(aggregateId) ?? 'none' }
   }
 
   function isFollowing(d: FollowableDancer | string | null | undefined): boolean {

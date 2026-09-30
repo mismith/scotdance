@@ -7,7 +7,8 @@ import TabBar, { type TabItem } from '@/components/nav/TabBar.vue'
 // Inside a competition the bar swaps to the competition's own tabs, exactly as
 // v3 did, with v3's names and order. Info became Overview because it now
 // leads with your dancers. Schedule always shows, even when empty, so the
-// landmarks never move.
+// landmarks never move. Switching tabs replaces history rather than adding
+// to it, like a native tab bar, so Back never steps through tabs.
 const route = useRoute()
 const competitionId = computed(() => String(route.params.competitionId ?? ''))
 
@@ -44,5 +45,5 @@ const items = computed<TabItem[]>(() =>
 </script>
 
 <template>
-  <TabBar :items="items" label="Competition" />
+  <TabBar :items="items" label="Competition" replace />
 </template>

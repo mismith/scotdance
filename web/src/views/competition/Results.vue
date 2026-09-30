@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import MyDancerLine from '@/components/MyDancerLine.vue'
+import ResultsMark from '@/components/ResultsMark.vue'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { AlertTriangle, Check, ChevronRight, Star, Trophy } from '@lucide/vue'
+import { AlertTriangle, ChevronRight, Star, Trophy } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
 import { useFollowing } from '@/composables/useFollowing'
@@ -49,7 +51,7 @@ interface Row {
   total: number
   posted: number
   unknown: boolean
-  mine: Array<{ key: string; name: string; color: string | null; sash: string | null; medals: Array<{ id: string; place: number; tied: boolean }> }>
+  mine: Array<{ key: string; name: string; color: string | null; medals: Array<{ id: string; place: number; tied: boolean }> }>
 }
 
 function rowFor(group: EnrichedGroup): Row {
@@ -67,7 +69,7 @@ function rowFor(group: EnrichedGroup): Row {
       return {
         key: d.id,
         name: d.firstName ?? d.fullName,
-        color: following.colorFor(d.dancerId), sash: following.sashFor(d.dancerId),
+        color: following.colorFor(d.dancerId),
         medals: all
           .filter((s) => s.state === 'placed' && s.place != null)
           .map((s) => ({ id: s.dance.id, place: s.place!, tied: s.tied })),
@@ -156,7 +158,7 @@ const anyFollowedHere = computed(() => followedByGroup.value.size > 0)
           <RouterLink
             :to="{ name: 'competition.group', params: { competitionId, groupId: r.group.id } }"
             class="relative flex min-h-14 items-center gap-3 py-2 pr-2 pl-4 hover:bg-accent"
-            :style="r.mine.length ? { '--dc': r.mine[0].color ?? 'var(--primary)', '--sash': r.mine[0].sash ?? 'var(--tartan)' } : undefined"
+            :style="r.mine.length ? { '--dc': r.mine[0].color ?? 'var(--primary)' } : undefined"
           >
             <span v-if="r.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
             <span class="min-w-0 flex-1">
@@ -168,26 +170,21 @@ const anyFollowedHere = computed(() => followedByGroup.value.size > 0)
                   aria-label="Some placings couldn’t be matched to a dancer"
                 />
               </span>
-              <span v-for="m in r.mine" :key="m.key" class="mt-1 flex flex-wrap items-center gap-1">
-                <Star class="size-3.5 fill-current" :style="{ color: m.color ?? 'var(--primary)' }" />
-                <span class="text-sm font-bold">{{ m.name }}</span>
-                <Medal v-for="x in m.medals" :key="x.id" :place="x.place" :tied="x.tied" size="sm" />
-                <span v-if="!m.medals.length" class="text-muted-foreground text-sm">no placings yet</span>
-              </span>
+              <MyDancerLine
+                v-for="m in r.mine"
+                :key="m.key"
+                :color="m.color"
+                :name="m.name"
+                :details="[m.medals.length ? null : 'No placings yet']"
+                class="mt-1"
+              >
+                <span v-if="m.medals.length" class="flex items-center gap-1">
+                  <Medal v-for="x in m.medals.slice(0, 3)" :key="x.id" :place="x.place" :tied="x.tied" size="sm" />
+                  <span v-if="m.medals.length > 3" class="text-muted-foreground text-sm font-semibold">+{{ m.medals.length - 3 }}</span>
+                </span>
+              </MyDancerLine>
             </span>
-            <span
-              v-if="r.total && r.posted === r.total"
-              class="bg-done text-done-foreground inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-[0.8125rem] font-bold"
-            >
-              <Check class="size-3.5" stroke-width="3" /> All in
-            </span>
-            <span
-              v-else-if="r.posted"
-              class="bg-done text-done-foreground inline-flex h-7 shrink-0 items-center rounded-full px-2.5 text-[0.8125rem] font-bold whitespace-nowrap"
-            >
-              {{ r.posted }} of {{ r.total }} in
-            </span>
-            <span v-else class="text-muted-foreground shrink-0 text-[0.8125rem] font-semibold">Not yet</span>
+            <ResultsMark :posted="r.posted" :total="r.total" />
             <ChevronRight class="text-muted-foreground size-5 shrink-0" />
           </RouterLink>
         </li>

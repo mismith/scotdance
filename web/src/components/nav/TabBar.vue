@@ -13,7 +13,7 @@ export interface TabItem {
   badge?: boolean
 }
 
-defineProps<{ items: TabItem[]; label: string }>()
+defineProps<{ items: TabItem[]; label: string; replace?: boolean }>()
 </script>
 
 <template>
@@ -30,12 +30,12 @@ defineProps<{ items: TabItem[]; label: string }>()
         :key="item.label"
         v-tap-feedback
         :to="item.to"
+        :replace="replace"
         :aria-current="item.active ? 'page' : undefined"
         :class="[
           'relative flex flex-col items-center justify-center gap-0.5 rounded-xl text-[min(0.6875rem,12px)] leading-none font-bold',
           item.active ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
         ]"
-        style="--tap-scale: 1"
       >
         <span
           :class="[

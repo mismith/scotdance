@@ -41,7 +41,7 @@ const pickedTartan = computed(() => tartans.get(picked.value))
 async function save(id: string | null) {
   saving.value = true
   try {
-    await looks.setTartan(props.dancerId, id)
+    await looks.setPick(props.dancerId, id)
     emit('saved', id)
     emit('close')
   } finally {
@@ -116,8 +116,7 @@ function onCreated(id: string) {
             <TartanSwatch :tartan="t" :scale="0.35" class="size-12 shrink-0 rounded-xl border shadow-inner" />
             <span class="min-w-0 flex-1">
               <span class="block truncate text-base font-bold">{{ t.name }}</span>
-              <span v-if="t.status === 'pending'" class="text-muted-foreground block text-sm">Yours · waiting to be checked</span>
-              <span v-else-if="t.status === 'declined'" class="text-muted-foreground block text-sm">Yours · only you can see it</span>
+              <span v-if="t.custom" class="text-muted-foreground block text-sm">Made by you</span>
             </span>
             <Check v-if="picked === t.id" class="text-primary size-6 shrink-0" stroke-width="3" />
           </button>
@@ -148,7 +147,7 @@ function onCreated(id: string) {
           :disabled="saving"
           @click="save(null)"
         >
-          Remove {{ first }}’s tartan
+          Clear your pick
         </button>
       </div>
     </div>

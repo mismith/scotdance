@@ -8,10 +8,9 @@ import AppBar from '@/components/nav/AppBar.vue'
 import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
 import CompetitionsCalendar from '@/components/CompetitionsCalendar.vue'
 import EmptyState from '@/components/EmptyState.vue'
-import LocationPill from '@/components/LocationPill.vue'
+import LocationFilter from '@/components/LocationFilter.vue'
 import Skeleton from '@/components/Skeleton.vue'
-import ViewModePill, { type ViewMode } from '@/components/ViewModePill.vue'
-import { providePillRow } from '@/composables/usePillRow'
+import ViewModeButton, { type ViewMode } from '@/components/ViewModeButton.vue'
 import { useScrolledPast } from '@/composables/useScrolledPast'
 import { useLocationFilter } from '@/composables/useLocationFilter'
 import { useFollowedCompetitions } from '@/composables/useFollowedCompetitions'
@@ -29,9 +28,6 @@ const range = useLocalStorage<Range>('competitions:range', 'upcoming')
 
 const titleEl = ref<HTMLElement | null>(null)
 const scrolledPast = useScrolledPast(titleEl)
-
-const pillRowEl = ref<HTMLElement | null>(null)
-providePillRow(pillRowEl)
 
 const includeArchived = computed(() => range.value === 'past')
 const { competitions, loading } = useCompetitions(includeArchived)
@@ -132,9 +128,9 @@ const mapCompetitions = computed(() =>
         </button>
       </div>
 
-      <div ref="pillRowEl" class="relative z-20 flex gap-2">
-        <LocationPill v-if="view !== 'map'" :competitions="competitions" />
-        <ViewModePill v-model="view" />
+      <div class="flex gap-2">
+        <LocationFilter v-if="view !== 'map'" :competitions="competitions" />
+        <ViewModeButton v-model="view" />
       </div>
 
       <CompetitionsMap v-if="view === 'map'" :competitions="mapCompetitions" class="-mx-4 flex-1" />

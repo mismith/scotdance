@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import MyDancerLine from '@/components/MyDancerLine.vue'
+import ResultsMark from '@/components/ResultsMark.vue'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { CalendarDays, Check, ChevronRight, Star } from '@lucide/vue'
+import { CalendarDays, ChevronRight } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
 import { useFollowing } from '@/composables/useFollowing'
@@ -39,7 +41,7 @@ onMounted(async () => {
 const platformName = computed(() => new Map(platforms.value.map((p) => [p.id, p.name ?? ''])))
 
 interface EventInfo {
-  mine: Array<{ dancer: EnrichedDancer; color: string | null; sash: string | null; platform: string | null }>
+  mine: Array<{ dancer: EnrichedDancer; color: string | null; platform: string | null }>
   posted: number
   total: number
 }
@@ -59,7 +61,7 @@ function info(event: ScheduleEvent): EventInfo {
           if (!mine.has(d.id))
             mine.set(d.id, {
               dancer: d,
-              color: following.colorFor(d.dancerId), sash: following.sashFor(d.dancerId),
+              color: following.colorFor(d.dancerId),
               platform: platformName.value.get(pid) || null,
             })
         }
@@ -123,7 +125,7 @@ const dayList = computed(() =>
                 params: { competitionId, dayId: d.day.id, blockId: b.block.id, eventId: event.id },
               }"
               class="relative flex min-h-14 items-center gap-3 py-2.5 pr-2 pl-4 hover:bg-accent"
-              :style="i.mine.length ? { '--dc': i.mine[0].color ?? 'var(--primary)', '--sash': i.mine[0].sash ?? 'var(--tartan)' } : undefined"
+              :style="i.mine.length ? { '--dc': i.mine[0].color ?? 'var(--primary)' } : undefined"
             >
               <span v-if="i.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
               <span class="min-w-0 flex-1">
@@ -131,17 +133,16 @@ const dayList = computed(() =>
                 <span v-if="event.description" class="text-muted-foreground block truncate text-sm">
                   {{ slugline(event.description) }}
                 </span>
-                <span v-for="m in i.mine" :key="m.dancer.id" class="mt-1 flex items-center gap-1 text-sm font-bold">
-                  <Star class="size-3.5 fill-current" :style="{ color: m.color ?? 'var(--primary)' }" />
-                  {{ m.dancer.firstName }} · #{{ m.dancer.number }}<template v-if="m.platform"> · Platform {{ m.platform }}</template>
-                </span>
+                <MyDancerLine
+                  v-for="m in i.mine"
+                  :key="m.dancer.id"
+                  :color="m.color"
+                  :name="m.dancer.firstName ?? ''"
+                  :details="[`#${m.dancer.number}`, m.platform ? `Platform ${m.platform}` : null]"
+                  class="mt-1"
+                />
               </span>
-              <span
-                v-if="i.total && i.posted === i.total"
-                class="bg-done text-done-foreground inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-[0.8125rem] font-bold"
-              >
-                <Check class="size-3.5" stroke-width="3" /> Results in
-              </span>
+              <ResultsMark :posted="i.posted" :total="i.total" />
               <ChevronRight class="text-muted-foreground size-5 shrink-0" />
             </RouterLink>
           </li>

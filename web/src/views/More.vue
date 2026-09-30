@@ -14,7 +14,6 @@ import {
   MessageCircleQuestion,
   Music,
   School,
-  ShieldCheck,
   Sun,
   Users,
 } from '@lucide/vue'
@@ -220,11 +219,6 @@ const rowClass = 'flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left ho
           <li>
             <RouterLink :to="{ name: 'policies' }" :class="rowClass">
               <FileText class="text-primary size-5" /><span class="flex-1 text-base font-bold">Privacy and terms</span><ChevronRight class="text-muted-foreground size-5" />
-            </RouterLink>
-          </li>
-          <li v-if="me.isAdmin">
-            <RouterLink :to="{ name: 'review' }" :class="rowClass">
-              <ShieldCheck class="text-primary size-5" /><span class="flex-1 text-base font-bold">Requests to check</span><ChevronRight class="text-muted-foreground size-5" />
             </RouterLink>
           </li>
           <li v-if="canManage">

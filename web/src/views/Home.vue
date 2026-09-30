@@ -85,7 +85,7 @@ const whoIsDancing = (names: string[]) =>
 // follow, soonest first.
 const { competitions: recentCompetitions } = useCompetitions(ref(false))
 const comingUp = computed(() => {
-  const map = new Map<string, { id: string; competition: Competition; dancers: Set<string>; followed: boolean }>()
+  const map = new Map<string, { id: string; competition: Competition; dancers: Map<string, string>; followed: boolean }>()
   if (!showingRecent.value) {
     for (const c of cards.value) {
       const list = [...c.upcoming]
@@ -93,8 +93,8 @@ const comingUp = computed(() => {
         list.unshift({ competitionId: c.focus.competitionId, competition: c.focus.competition })
       }
       for (const u of list) {
-        const e = map.get(u.competitionId) ?? { id: u.competitionId, competition: u.competition, dancers: new Set(), followed: false }
-        e.dancers.add(c.name.split(' ')[0])
+        const e = map.get(u.competitionId) ?? { id: u.competitionId, competition: u.competition, dancers: new Map(), followed: false }
+        e.dancers.set(c.id, c.name.split(' ')[0])
         map.set(u.competitionId, e)
       }
     }
@@ -102,7 +102,7 @@ const comingUp = computed(() => {
   for (const comp of recentCompetitions.value) {
     if (!favorites.isFavorite('competitions', comp.id)) continue
     if (competitionPhase(comp.date) !== 'before') continue
-    const e = map.get(comp.id) ?? { id: comp.id, competition: comp, dancers: new Set(), followed: true }
+    const e = map.get(comp.id) ?? { id: comp.id, competition: comp, dancers: new Map(), followed: true }
     e.followed = true
     map.set(comp.id, e)
   }
@@ -117,7 +117,6 @@ const nextAnywhere = computed(() =>
 )
 
 const cardColor = (card: DancerCard) => (showingRecent.value ? null : following.colorFor(card.id))
-const cardSash = (card: DancerCard) => (showingRecent.value ? null : following.sashFor(card.id))
 
 const whatsNewDismissed = useLocalStorage('home:whatsNew:v4', false)
 
@@ -237,7 +236,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
         </template>
 
         <ul v-if="compact && cards.length" class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
-          <DancerCompactRow v-for="card in cards" :key="card.id" :card="card" :color="cardColor(card)" :sash="cardSash(card)" />
+          <DancerCompactRow v-for="card in cards" :key="card.id" :card="card" :color="cardColor(card)" />
         </ul>
         <template v-for="card in compact ? [] : cards" :key="card.id">
           <template v-if="card.focus && card.focus.days.length">
@@ -246,7 +245,6 @@ const { freshKey: liveFresh } = useLiveAlertState()
               :fresh="liveFresh"
               :competition-id="card.focus.competitionId"
               :color="cardColor(card)"
-              :sash="cardSash(card)"
               :competition-name="
                 card.focus.phase === 'today'
                   ? null
@@ -259,7 +257,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
             v-else
             :to="{ name: 'dancer.info', params: { dancerId: card.id } }"
             class="bg-card flex items-center gap-3 overflow-hidden rounded-2xl border p-4 shadow-sm"
-            :style="{ '--dc': cardColor(card) ?? 'var(--strong)', '--sash': cardSash(card) ?? 'var(--tartan)' }"
+            :style="{ '--dc': cardColor(card) ?? 'var(--strong)'}"
           >
             <span class="sash h-10 w-1.5 shrink-0 rounded-full" aria-hidden="true" />
             <span class="min-w-0 flex-1">
@@ -301,7 +299,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
               :key="c.id"
               :competition="c.competition"
               :to="{ name: 'competition.info', params: { competitionId: c.id } }"
-              :dancers="[...c.dancers]"
+              :dancers="[...c.dancers].map(([id, name]) => ({ id, name }))"
               :followed="c.followed"
             />
           </template>

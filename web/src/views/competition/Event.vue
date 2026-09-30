@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import MyDancerLine from '@/components/MyDancerLine.vue'
+import ResultsMark from '@/components/ResultsMark.vue'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { Check, ChevronRight, Clock, ListOrdered, Star } from '@lucide/vue'
+import { ChevronRight, Clock } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useFollowing } from '@/composables/useFollowing'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
@@ -57,7 +59,7 @@ const blockTime = computed(() => slugline(block.value?.description))
 interface GroupRow {
   group: EnrichedGroup
   count: number
-  mine: Array<{ dancer: EnrichedDancer; color: string | null; sash: string | null; pos: number | null }>
+  mine: Array<{ dancer: EnrichedDancer; color: string | null; pos: number | null }>
   posted: boolean
 }
 interface PlatformRow {
@@ -99,7 +101,7 @@ function platformsFor(sd: ScheduleDance): PlatformRow[] {
               .filter((d) => following.isFollowing(d))
               .map((d) => ({
                 dancer: d,
-                color: following.colorFor(d.dancerId), sash: following.sashFor(d.dancerId),
+                color: following.colorFor(d.dancerId),
                 pos: sd.danceId ? drawPos(d, g.id, sd.danceId) : null,
               })),
           }
@@ -192,7 +194,7 @@ const activeJudge = ref<StaffMember | null>(null)
             </span>
           </div>
           <ul class="divide-y">
-            <li v-for="(g, gi) in p.groups" :key="g.group.id">
+            <li v-for="g in p.groups" :key="g.group.id">
               <component
                 :is="g.posted ? RouterLink : 'button'"
                 v-bind="
@@ -201,28 +203,24 @@ const activeJudge = ref<StaffMember | null>(null)
                     : { type: 'button' }
                 "
                 class="relative flex min-h-14 w-full items-center gap-3 py-2 pr-2 pl-4 text-left hover:bg-accent"
-                :style="g.mine.length ? { '--dc': g.mine[0].color ?? 'var(--primary)', '--sash': g.mine[0].sash ?? 'var(--tartan)' } : undefined"
+                :style="g.mine.length ? { '--dc': g.mine[0].color ?? 'var(--primary)' } : undefined"
                 @click="!g.posted && ((drawGroup = g.group), (drawDance = s.sd))"
               >
                 <span v-if="g.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
-                <span class="text-muted-foreground w-6 shrink-0 text-center text-sm font-bold tabular-nums">{{ gi + 1 }}</span>
                 <span class="min-w-0 flex-1">
                   <span class="block text-base font-bold">{{ g.group.fullName }}</span>
                   <span class="text-muted-foreground block text-sm">{{ g.count }} dancers</span>
-                  <span v-for="m in g.mine" :key="m.dancer.id" class="mt-0.5 flex items-center gap-1 text-sm font-bold">
-                    <Star class="size-3.5 fill-current" :style="{ color: m.color ?? 'var(--primary)' }" />
-                    {{ m.dancer.firstName }} · #{{ m.dancer.number }}<template v-if="m.pos"> · {{ m.pos }}{{ getOrdinalSuffix(m.pos) }} to dance</template>
-                  </span>
+                  <MyDancerLine
+                    v-for="m in g.mine"
+                    :key="m.dancer.id"
+                    :color="m.color"
+                    :name="m.dancer.firstName ?? ''"
+                    :details="[`#${m.dancer.number}`, m.pos ? `${m.pos}${getOrdinalSuffix(m.pos)} to dance` : null]"
+                    class="mt-1"
+                  />
                 </span>
-                <span
-                  v-if="g.posted"
-                  class="bg-done text-done-foreground inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-[0.8125rem] font-bold"
-                >
-                  <Check class="size-3.5" stroke-width="3" /> Results
-                </span>
-                <span v-else class="text-primary inline-flex shrink-0 items-center gap-1 text-[0.8125rem] font-bold">
-                  <ListOrdered class="size-4" /> Order
-                </span>
+                <ResultsMark v-if="g.posted" :posted="1" :total="1" />
+                <span v-else class="text-primary shrink-0 text-sm font-bold">Order</span>
                 <ChevronRight class="text-muted-foreground size-5 shrink-0" />
               </component>
             </li>

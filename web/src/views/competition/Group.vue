@@ -202,7 +202,7 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
             :style="rowStyle(row.dancer)"
           >
             <span v-if="colorOf(row.dancer)" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
-            <Medal :place="row.place" :tied="row.tied" />
+            <span class="flex w-[4.5rem] shrink-0"><Medal :place="row.place" :tied="row.tied" /></span>
             <template v-if="row.dancer">
               <NumberCard :number="row.dancer.number" size="xs" :color="colorOf(row.dancer)" />
               <RouterLink

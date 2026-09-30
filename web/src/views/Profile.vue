@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { ChevronRight, Eye, EyeOff, LogOut } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
@@ -8,32 +8,11 @@ import { gravatarUrl } from '@/lib/gravatar'
 import Dialog from '@/components/Dialog.vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import { ROLES, useRoles } from '@/composables/useRoles'
-import TartanSwatch from '@/components/TartanSwatch.vue'
-import { useGuardiansStore } from '@/stores/guardians'
-import { useDancerLooksStore } from '@/stores/dancerLooks'
-import { useTartansStore } from '@/stores/tartans'
 
 const auth = useAuthStore()
 const me = useMeStore()
 const router = useRouter()
 const roles = useRoles()
-const guardians = useGuardiansStore()
-const looks = useDancerLooksStore()
-const tartans = useTartansStore()
-// Dancers you've linked (or asked to), with their tartan when it's set.
-const linkedDancers = computed(() => {
-  const ids = Object.keys(guardians.linked)
-  looks.ensure(ids)
-  return ids
-    .map((id) => {
-      const status = guardians.claimFor(id)?.status ?? 'pending'
-      const tartan = tartans.get(looks.tartanIdOf(id))
-      const detail =
-        status === 'approved' ? (tartan ? tartan.name : 'No tartan chosen yet') : status === 'pending' ? 'Waiting to be checked' : 'Couldn’t be confirmed'
-      return { id, name: guardians.linked[id], tartan, detail }
-    })
-    .sort((a, b) => a.name.localeCompare(b.name))
-})
 const rolesLabel = computed(() => ROLES.filter((r) => roles.has(r.id)).map((r) => r.label).join(', ') || 'Not answered yet')
 
 const avatarUrl = ref<string | null>(null)
@@ -209,22 +188,6 @@ const submitDisabled = computed(() => {
           </button>
         </li>
       </ul>
-
-      <section v-if="linkedDancers.length" class="space-y-2">
-        <h2 class="text-heading pt-1">Your dancers</h2>
-        <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
-          <li v-for="d in linkedDancers" :key="d.id">
-            <RouterLink :to="{ name: 'dancer.info', params: { dancerId: d.id } }" class="flex min-h-16 items-center gap-3 px-4 py-2 hover:bg-accent">
-              <TartanSwatch :tartan="d.tartan" :scale="0.35" class="size-10 shrink-0 rounded-full border" />
-              <span class="min-w-0 flex-1">
-                <span class="block truncate text-base font-bold">{{ d.name }}</span>
-                <span class="text-muted-foreground block truncate text-sm">{{ d.detail }}</span>
-              </span>
-              <ChevronRight class="text-muted-foreground size-5" />
-            </RouterLink>
-          </li>
-        </ul>
-      </section>
 
       <div class="space-y-2">
         <button type="button" class="bg-card border-strong flex h-12 w-full items-center justify-center gap-2 rounded-xl border text-base font-bold" @click="handleSignOut">

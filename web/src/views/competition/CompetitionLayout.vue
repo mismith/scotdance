@@ -11,6 +11,8 @@ import Skeleton from '@/components/Skeleton.vue'
 import { provideCompetition } from '@/composables/useCompetition'
 import { provideInfoHeader } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
+import { competitionEntry, historyPosition } from '@/lib/competitionExit'
+import { backLabelFor } from '@/lib/backLabels'
 
 const TAB_LABEL_BY_ROUTE: Record<string, string> = {
   'competition.info': 'Overview',
@@ -38,6 +40,18 @@ const { scrolledPast } = provideInfoHeader()
 
 const isTopTab = computed(() => String(route.name ?? '') in TAB_LABEL_BY_ROUTE)
 
+// On a tab, Back leaves the competition in one tap: to wherever you came
+// from, or the competitions list for a deep link. Deeper pages step back
+// normally (a group back to Results).
+const exit = computed(() => {
+  void route.fullPath
+  if (!isTopTab.value) return null
+  const e = competitionEntry.value
+  const delta = e && e.competitionId === competitionId.value && e.back ? e.position - 1 - historyPosition() : 0
+  if (e?.back && delta < 0) return { delta, label: backLabelFor(e.back) }
+  return { to: { name: 'competitions' }, label: 'Competitions' }
+})
+
 // Drill-down pages (a group, a dancer, an event) set their own title; the
 // top-level tabs are titled "Tab • Competition" so Back reads e.g. "Results".
 usePageTitle(() => [
@@ -52,6 +66,7 @@ usePageTitle(() => [
       :title="competition?.name"
       :show-title="scrolledPast"
       :fallback="{ to: { name: 'competitions' }, label: 'Competitions' }"
+      :exit="exit"
     >
       <template #actions>
         <ShareButton :title="competition?.name ?? undefined" />

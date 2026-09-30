@@ -7,8 +7,7 @@ import { LOOM_COLOURS, parseThreadcount, stripesToTartan, tartanProblem } from '
 
 // Make a tartan that isn't in the list: stripe by stripe from the centre out
 // (mirrored, like most tartans), or by typing a threadcount. Drawn, never
-// uploaded, so it looks crisp everywhere and there's nothing to moderate
-// but the name.
+// uploaded, so it looks crisp everywhere. Only its maker sees it.
 const emit = defineEmits<{ created: [id: string]; cancel: [] }>()
 const tartans = useTartansStore()
 
@@ -181,7 +180,7 @@ async function save() {
 
     <p v-if="problem" class="text-base font-semibold">{{ problem }}</p>
     <p class="text-muted-foreground text-sm">
-      You’ll see it straight away. Everyone else sees it once it’s been checked.
+      Tartans you make are just for you.
     </p>
     <p v-if="error" class="text-destructive text-base font-semibold" role="alert">{{ error }}</p>
     <button

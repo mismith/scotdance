@@ -150,7 +150,7 @@ const scrolledPastTitle = useScrolledPast(titleAnchor)
                     <span v-if="subtitleOf(row.agg)" class="text-muted-foreground block truncate text-sm">{{ subtitleOf(row.agg) }}</span>
                   </span>
                   </button>
-                <FavoriteButton :id="row.id" :type="(props.namespace as FavoriteType)" :name="row.agg.name" labelled compact class="mr-1" />
+                <FavoriteButton :id="row.id" :type="(props.namespace as FavoriteType)" :name="row.agg.name" class="mr-1" />
               </li>
             </ul>
           </section>
@@ -175,7 +175,7 @@ const scrolledPastTitle = useScrolledPast(titleAnchor)
                     <span v-if="subtitleOf(row.agg)" class="text-muted-foreground block truncate text-sm">{{ subtitleOf(row.agg) }}</span>
                   </span>
                   </button>
-                <FavoriteButton :id="row.id" :type="(props.namespace as FavoriteType)" :name="row.agg.name" labelled compact class="mr-1" />
+                <FavoriteButton :id="row.id" :type="(props.namespace as FavoriteType)" :name="row.agg.name" class="mr-1" />
               </li>
             </ul>
           </div>

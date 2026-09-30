@@ -10,6 +10,8 @@ import { backLabelFor } from '@/lib/backLabels'
 // shared results link still has a way out.
 const props = defineProps<{
   fallback?: { to: RouteLocationRaw; label: string }
+  /** Overrides history: jump `delta` entries, or go to `to`. */
+  exit?: { delta?: number; to?: RouteLocationRaw; label: string } | null
 }>()
 
 const route = useRoute()
@@ -18,16 +20,19 @@ const canGoBack = useCanGoBack()
 
 const label = computed(() => {
   void route.fullPath
+  if (props.exit) return props.exit.label
   if (canGoBack.value) return backLabelFor(backPath())
   return props.fallback?.label ?? 'Back'
 })
 
-const visible = computed(() => canGoBack.value || !!props.fallback)
+const visible = computed(() => !!props.exit || canGoBack.value || !!props.fallback)
 
 function onClick(event: MouseEvent) {
   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
   event.preventDefault()
-  if (canGoBack.value) router.back()
+  if (props.exit?.delta) router.go(props.exit.delta)
+  else if (props.exit?.to) router.push(props.exit.to)
+  else if (canGoBack.value) router.back()
   else if (props.fallback) router.push(props.fallback.to)
 }
 </script>

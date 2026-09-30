@@ -38,7 +38,6 @@ const entries = computed(() => {
 const color = computed(() =>
   dancer.value && following.isFollowing(dancer.value) ? following.colorFor(dancer.value.dancerId) : null,
 )
-const sash = computed(() => (color.value ? following.sashFor(dancer.value?.dancerId) : null))
 const firstName = computed(() => dancer.value?.firstName || dancer.value?.fullName || 'this dancer')
 
 function detail(s: DanceStatus): string | null {
@@ -63,7 +62,7 @@ function detail(s: DanceStatus): string | null {
 
     <template v-else>
       <header :ref="setHeader" class="flex items-center gap-4">
-        <NumberCard :number="dancer.number" :color="color" :sash="sash" size="md" />
+        <NumberCard :number="dancer.number" :color="color" size="md" />
         <div class="min-w-0">
           <h1 class="text-display">{{ dancer.fullName }}</h1>
           <p class="text-muted-foreground text-sm">

@@ -9,6 +9,7 @@ import {
 import { getCurrentUser } from 'vuefire'
 import { CalendarDays, CircleEllipsis, Gavel, House, Info, Music, School, Users } from '@lucide/vue'
 import { startViewTransition } from '@/lib/transition'
+import { trackCompetitionEntry } from '@/lib/competitionExit'
 import { useAuthStore } from '@/stores/auth'
 import { recordBackLabel } from '@/lib/backLabels'
 
@@ -190,12 +191,6 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, title: 'Account' },
   },
   {
-    path: '/review',
-    name: 'review',
-    component: () => import('@/views/Review.vue'),
-    meta: { requiresAuth: true, title: 'Requests to check' },
-  },
-  {
     path: '/policies',
     name: 'policies',
     component: () => import('@/views/Policies.vue'),
@@ -301,6 +296,8 @@ router.beforeEach(async (to) => {
     return { name: 'home' }
   }
 })
+
+trackCompetitionEntry(router)
 
 router.afterEach((to) => {
   if (!to.name) return

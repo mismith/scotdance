@@ -14,6 +14,7 @@
 	},
 	"packageClassList": [
 		"DevicePlugin",
-		"SplashScreenPlugin"
+		"SplashScreenPlugin",
+		"TextZoomPlugin"
 	]
 }

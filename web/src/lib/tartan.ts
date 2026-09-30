@@ -23,10 +23,8 @@ export interface Tartan {
   sourceUrl?: string
   licence?: string
   author?: string
-  /** Custom tartans stay private to their creator until approved. */
-  status?: 'approved' | 'pending' | 'declined'
-  declined?: boolean
-  createdBy?: string
+  /** Made by you in the app; only you see it. */
+  custom?: boolean
 }
 
 interface Stripe {

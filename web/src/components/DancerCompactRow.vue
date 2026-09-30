@@ -10,7 +10,7 @@ import type { DancerCard } from '@/composables/useDancerCards'
 
 // One line per followed dancer, for people following many (a teacher's
 // class): number at the relevant competition, name, and one status line.
-const props = defineProps<{ card: DancerCard; color: string | null; sash?: string | null }>()
+const props = defineProps<{ card: DancerCard; color: string | null }>()
 
 const f = computed(() => props.card.focus)
 const day = computed(() => f.value?.days.find((d) => d.dances.length) ?? f.value?.days[0] ?? null)
@@ -43,7 +43,7 @@ const to = computed(() =>
 
 <template>
   <li>
-    <RouterLink :to="to" class="relative flex min-h-14 items-center gap-3 py-2 pr-2 pl-4 hover:bg-accent" :style="{ '--dc': color ?? 'var(--strong)', '--sash': (color && sash) || 'var(--tartan)' }">
+    <RouterLink :to="to" class="relative flex min-h-14 items-center gap-3 py-2 pr-2 pl-4 hover:bg-accent" :style="{ '--dc': color ?? 'var(--strong)' }">
       <span class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
       <NumberCard v-if="day" :number="day.dancer.number" size="xs" :color="color" />
       <span class="min-w-0 flex-1">

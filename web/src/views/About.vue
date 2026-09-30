@@ -21,7 +21,7 @@ const roles = [
       'Follow your dancers and see their day on Home: platform, dancing order, placings',
       'Placings as soon as they’re posted, with an alert while the app is open',
       'Every competition they’ve danced at, in one place',
-      'Link your dancer and add the tartan they dance in',
+      'Add the tartan your dancer wears',
     ],
   },
   {
@@ -71,6 +71,11 @@ const faqs: { id: string; q: string; a?: string }[] = [
     id: 'download',
     q: 'Do I need to install anything?',
     a: 'No. Everything works the same in a web browser at <a href="https://scotdance.app" class="text-primary underline">scotdance.app</a>. The App Store and Google Play apps are there if you’d like it on your home screen.',
+  },
+  {
+    id: 'tartans',
+    q: 'Where do the tartans come from?',
+    a: 'Each one is drawn by the app from its threadcount, the stripe recipe weavers use. The built-in setts come from <a href="https://commons.wikimedia.org/wiki/Category:Tartans" class="text-primary underline">Wikimedia Commons</a>, mostly charted by Micheletb (CC BY-SA 4.0), with others by SMcCandlish (CC0), Sg647112c and Celtus (CC BY-SA 2.5), and a few in the public domain. Tartans you make yourself are only ever shown to you.',
   },
   {
     id: 'privacy',

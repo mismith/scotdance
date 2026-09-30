@@ -12,8 +12,6 @@ const props = defineProps<{
   name?: string
   /** Show the word ("Follow" / "Following") next to the star. */
   labelled?: boolean
-  /** Compact labelled pill for list rows. */
-  compact?: boolean
 }>()
 
 const auth = useAuthStore()
@@ -45,15 +43,13 @@ async function handleClick(e: Event) {
     v-tap-feedback
     type="button"
     :aria-pressed="isFavorite"
-    :aria-label="labelled ? undefined : isFavorite ? 'Following' : 'Follow'"
+    :aria-label="labelled ? undefined : `${isFavorite ? 'Following' : 'Follow'}${name ? ` ${name}` : ''}`"
     :class="[
       'flex shrink-0 items-center justify-center rounded-full transition-colors',
       labelled
         ? [
-            compact
-              ? 'relative h-9 gap-1.5 border pr-3.5 pl-2.5 text-sm font-bold after:absolute after:-inset-1 after:content-[\'\']'
-              : 'h-11 gap-1.5 border px-4 text-[0.9375rem] font-bold',
-            isFavorite ? 'bg-primary border-primary text-primary-foreground' : 'bg-card border-strong hover:bg-accent',
+            'h-11 gap-1.5 border px-4 text-[0.9375rem] font-bold',
+            isFavorite ? 'bg-blue-paper text-primary border-transparent' : 'bg-primary border-primary text-primary-foreground',
           ]
         : ['size-11 hover:bg-accent', isFavorite ? 'text-primary' : 'text-muted-foreground'],
     ]"

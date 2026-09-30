@@ -5,7 +5,7 @@ import { useIntervalFn } from '@vueuse/core'
 import { ChevronRight, Clock, ExternalLink, MapPin, Search, Star, Users } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
-import CompChip from '@/components/CompChip.vue'
+import DateTile from '@/components/DateTile.vue'
 import DancerDayCard from '@/components/DancerDayCard.vue'
 import { useLiveAlertState } from '@/composables/useLiveAlerts'
 import FavoriteButton from '@/components/FavoriteButton.vue'
@@ -129,11 +129,8 @@ const { freshKey: liveFresh } = useLiveAlertState()
   <article v-if="competition" class="space-y-5">
     <header :ref="setHeader" class="space-y-2">
       <div class="flex items-start gap-3">
-        <CompChip
-          :name="competition.name"
-          :image="competition.image"
-          class="size-14 shrink-0 rounded-xl"
-        />
+        <img v-if="competition.image" :src="competition.image" alt="" class="size-14 shrink-0 rounded-xl object-cover" />
+        <DateTile v-else :date="competition.date" class="h-14" />
         <div class="min-w-0 flex-1">
           <p
             :class="[
@@ -168,7 +165,6 @@ const { freshKey: liveFresh } = useLiveAlertState()
         :fresh="liveFresh"
         :competition-id="competitionId"
         :color="f.color"
-        :sash="f.sash"
       />
     </section>
     <section

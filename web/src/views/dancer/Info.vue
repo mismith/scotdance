@@ -9,10 +9,11 @@ import { useCrisp } from '@/composables/useCrisp'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import DancerDayCard from '@/components/DancerDayCard.vue'
 import DancerTartan from '@/components/DancerTartan.vue'
+import DateTile from '@/components/DateTile.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import Medal from '@/components/Medal.vue'
 import { fetchEntrySummary, type EntrySummary } from '@/lib/entrySummary'
-import { formatMonthAbbrev, initialsOf, isSameDay, parseDate } from '@/lib/format'
+import { initialsOf, isSameDay } from '@/lib/format'
 import type { Competition } from '@/types/competition'
 
 // A dancer across every competition. Their number is different at each one,
@@ -26,7 +27,6 @@ const crisp = useCrisp()
 const dancerId = computed(() => String(route.params.dancerId ?? ''))
 const name = computed(() => profile.displayName.value)
 const color = computed(() => following.colorFor(dancerId.value))
-const sash = computed(() => following.sashFor(dancerId.value))
 const initials = computed(() => initialsOf(name.value))
 const subtitle = computed(() => {
   const n = profile.totalComps.value
@@ -91,7 +91,7 @@ function medals(cid: string) {
       <img v-if="profile.image.value" :src="profile.image.value" :alt="name" class="size-16 shrink-0 rounded-full object-cover" />
       <span
         v-else
-        class="sash flex size-16 shrink-0 items-center justify-center rounded-full text-xl font-extrabold text-white [text-shadow:0_1px_3px_rgb(0_0_0/0.7)]"
+        class="cloth flex size-16 shrink-0 items-center justify-center rounded-full text-xl font-extrabold text-white [text-shadow:0_1px_3px_rgb(0_0_0/0.7)]"
         :style="following.paint(dancerId, 'var(--strong)')"
       >
         {{ initials }}
@@ -106,7 +106,7 @@ function medals(cid: string) {
 
     <section v-if="focus && focus.days.length" class="space-y-2">
       <h2 class="text-heading pt-1">{{ focusLabel }}</h2>
-      <DancerDayCard :days="focus.days" :competition-id="focus.competitionId" :color="color" :sash="sash" />
+      <DancerDayCard :days="focus.days" :competition-id="focus.competitionId" :color="color" />
     </section>
 
     <DancerTartan :dancer-id="dancerId" :dancer-name="name" />
@@ -127,13 +127,7 @@ function medals(cid: string) {
             "
             class="flex min-h-16 items-center gap-3 px-3 py-2.5 hover:bg-accent"
           >
-            <span class="bg-muted flex w-12 shrink-0 flex-col items-center rounded-xl py-1 leading-none">
-              <template v-if="r.competition.date">
-                <span class="text-live text-[0.6875rem] font-extrabold uppercase">{{ formatMonthAbbrev(r.competition.date) }}</span>
-                <span class="text-xl font-extrabold tabular-nums">{{ parseDate(r.competition.date).getDate() }}</span>
-                <span class="text-muted-foreground text-[0.6875rem] font-bold">{{ parseDate(r.competition.date).getFullYear() }}</span>
-              </template>
-            </span>
+            <DateTile :date="r.competition.date" below="year" />
             <span class="min-w-0 flex-1">
               <span class="line-clamp-2 text-base leading-snug font-bold">{{ r.competition.name }}</span>
               <span class="text-muted-foreground block truncate text-sm">

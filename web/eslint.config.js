@@ -17,6 +17,8 @@ export default defineConfigWithVueTs(
   {
     rules: {
       'vue/multi-word-component-names': 'off',
+      // A component used in a template but never imported renders nothing, silently.
+      'vue/no-undef-components': ['error', { ignorePatterns: ['^Router(Link|View)$'] }],
     },
   },
 );
