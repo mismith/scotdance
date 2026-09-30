@@ -274,7 +274,7 @@ router.beforeEach((to, from) => {
   if (to.name !== 'home') return
   const info = readRouteInfo()
   const last = info.$current
-  if (!last || last === 'home') return
+  if (!last || last === 'home' || last === 'not-found') return
   const at = Number(info.$at ?? 0)
   if (!at || Date.now() - at > RESUME_WINDOW_MS) return
   const saved = info[last]
@@ -317,7 +317,8 @@ router.beforeEach(async (to) => {
 trackCompetitionEntry(router)
 
 router.afterEach((to) => {
-  if (!to.name) return
+  // Never resume onto a dead link.
+  if (!to.name || to.name === 'not-found') return
   const name = String(to.name)
   const info = readRouteInfo()
   info.$current = name
