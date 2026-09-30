@@ -36,13 +36,6 @@
   --color-done-foreground: var(--done-foreground);
   --color-live: var(--live);
   --color-live-paper: var(--live-paper);
-  /* Placings 1–3 are medals; 4–6 are ribbons */
-  --color-gold: var(--gold);
-  --color-silver: var(--silver);
-  --color-bronze: var(--bronze);
-  --color-ribbon: var(--ribbon);
-  --color-ribbon-foreground: var(--ribbon-foreground);
-  --color-medal-ink: #12161b;
   /* The number card is always paper, even in dark mode */
   --color-paper: var(--paper);
   --color-paper-ink: #0e1114;
@@ -102,11 +95,6 @@
   --done-foreground: #145c2b;
   --live: #b0102c;
   --live-paper: #fbe4e8;
-  --gold: #f2c641;
-  --silver: #d5dbe2;
-  --bronze: #e3a777;
-  --ribbon: #e1ecf8;
-  --ribbon-foreground: #00457f;
   --paper: #ffffff;
   --paper-edge: #c9d0d8;
   /* Followed dancers' colours (see stores/dancerColors). The first five are
@@ -164,8 +152,6 @@
   --done-foreground: #86dda0;
   --live: #ff7088;
   --live-paper: #3a1119;
-  --ribbon: #1c3148;
-  --ribbon-foreground: #bbdcfb;
   --paper: #f7f5ef;
   --paper-edge: #f7f5ef;
   --dancer-1: #e0435e;
@@ -321,7 +307,7 @@
   }
 }
 
-/* A placing arriving: the medal flips in. */
+/* A placing arriving: the rosette flips in. */
 @keyframes medal {
   0% {
     transform: rotateY(90deg) scale(0.6);
