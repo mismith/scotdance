@@ -49,7 +49,7 @@ interface Row {
   total: number
   posted: number
   unknown: boolean
-  mine: Array<{ key: string; name: string; color: string | null; medals: Array<{ id: string; place: number; tied: boolean }> }>
+  mine: Array<{ key: string; name: string; color: string | null; sash: string | null; medals: Array<{ id: string; place: number; tied: boolean }> }>
 }
 
 function rowFor(group: EnrichedGroup): Row {
@@ -67,7 +67,7 @@ function rowFor(group: EnrichedGroup): Row {
       return {
         key: d.id,
         name: d.firstName ?? d.fullName,
-        color: following.colorFor(d.dancerId),
+        color: following.colorFor(d.dancerId), sash: following.sashFor(d.dancerId),
         medals: all
           .filter((s) => s.state === 'placed' && s.place != null)
           .map((s) => ({ id: s.dance.id, place: s.place!, tied: s.tied })),
@@ -156,7 +156,7 @@ const anyFollowedHere = computed(() => followedByGroup.value.size > 0)
           <RouterLink
             :to="{ name: 'competition.group', params: { competitionId, groupId: r.group.id } }"
             class="relative flex min-h-14 items-center gap-3 py-2 pr-2 pl-4 hover:bg-accent"
-            :style="r.mine.length ? { '--dc': r.mine[0].color ?? 'var(--primary)' } : undefined"
+            :style="r.mine.length ? { '--dc': r.mine[0].color ?? 'var(--primary)', '--sash': r.mine[0].sash ?? 'var(--tartan)' } : undefined"
           >
             <span v-if="r.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
             <span class="min-w-0 flex-1">

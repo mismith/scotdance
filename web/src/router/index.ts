@@ -97,11 +97,7 @@ const routes: RouteRecordRaw[] = [
         name: 'judge.info',
         component: () => import('@/views/judge/Info.vue'),
       },
-      {
-        path: 'competitions',
-        name: 'judge.competitions',
-        component: () => import('@/views/judge/Competitions.vue'),
-      },
+      { path: 'competitions', name: 'judge.competitions', redirect: { name: 'judge.info' } },
     ],
   },
   {
@@ -114,11 +110,7 @@ const routes: RouteRecordRaw[] = [
         name: 'piper.info',
         component: () => import('@/views/piper/Info.vue'),
       },
-      {
-        path: 'competitions',
-        name: 'piper.competitions',
-        component: () => import('@/views/piper/Competitions.vue'),
-      },
+      { path: 'competitions', name: 'piper.competitions', redirect: { name: 'piper.info' } },
       { path: 'results', redirect: { name: 'piper.competitions' } },
     ],
   },
@@ -132,11 +124,7 @@ const routes: RouteRecordRaw[] = [
         name: 'venue.info',
         component: () => import('@/views/venue/Info.vue'),
       },
-      {
-        path: 'competitions',
-        name: 'venue.competitions',
-        component: () => import('@/views/venue/Competitions.vue'),
-      },
+      { path: 'competitions', name: 'venue.competitions', redirect: { name: 'venue.info' } },
       { path: 'results', redirect: { name: 'venue.competitions' } },
     ],
   },
@@ -202,10 +190,16 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, title: 'Account' },
   },
   {
+    path: '/review',
+    name: 'review',
+    component: () => import('@/views/Review.vue'),
+    meta: { requiresAuth: true, title: 'Requests to check' },
+  },
+  {
     path: '/policies',
     name: 'policies',
     component: () => import('@/views/Policies.vue'),
-    meta: { title: 'Policies' },
+    meta: { title: 'Privacy and terms' },
   },
   {
     path: '/:pathMatch(.*)*',

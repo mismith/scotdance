@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import type { RouteLocationRaw } from 'vue-router'
 import { CalendarOff, ChevronLeft, ChevronRight } from '@lucide/vue'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
-import CompetitionRow from '@/components/CompetitionRow.vue'
+import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import {
@@ -208,20 +208,20 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
   <div class="space-y-5">
     <div class="mx-auto max-w-sm space-y-5">
       <div class="flex items-center gap-1">
-        <h2 class="flex-1 text-4xl font-medium tracking-tight">
+        <h2 class="text-title flex-1">
           {{ monthLabel }}
         </h2>
         <button
           type="button"
           aria-label="Previous month"
-          class="bg-chip text-muted-foreground hover:text-foreground flex h-9 items-center justify-center rounded-full px-2.5"
+          class="bg-card border-strong flex size-11 items-center justify-center rounded-full border"
           @click="shiftMonth(-1)"
         >
-          <ChevronLeft class="size-4" />
+          <ChevronLeft class="size-5" />
         </button>
         <button
           type="button"
-          class="bg-chip text-muted-foreground hover:text-foreground flex h-9 items-center rounded-full px-3 font-medium"
+          class="bg-card border-strong flex h-11 items-center rounded-full border px-4 font-bold"
           @click="goToToday"
         >
           Today
@@ -229,14 +229,14 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
         <button
           type="button"
           aria-label="Next month"
-          class="bg-chip text-muted-foreground hover:text-foreground flex h-9 items-center justify-center rounded-full px-2.5"
+          class="bg-card border-strong flex size-11 items-center justify-center rounded-full border"
           @click="shiftMonth(1)"
         >
-          <ChevronRight class="size-4" />
+          <ChevronRight class="size-5" />
         </button>
       </div>
 
-      <div class="text-foreground/65 text-eyebrow grid grid-cols-7 text-xs">
+      <div class="text-muted-foreground grid grid-cols-7 text-xs font-bold">
         <div v-for="(label, i) in dowLabels" :key="i" class="py-1 text-center">
           {{ label }}
         </div>
@@ -248,7 +248,7 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
           :key="i"
           type="button"
           :class="[
-            'relative aspect-square rounded-lg text-lg tabular-nums transition-colors',
+            'relative aspect-square rounded-lg text-base font-bold tabular-nums transition-colors',
             !cell.inMonth && 'text-muted-foreground/40',
             cell.inMonth &&
               !cell.eventCount &&
@@ -256,7 +256,7 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
               'hover:bg-accent',
             cell.eventCount && !isSelected(cell.date) && 'bg-card shadow-sm hover:shadow',
             isSelected(cell.date) && 'bg-blue-paper shadow-sm',
-            cell.isToday && 'ring-secondary ring-2',
+            cell.isToday && 'ring-live ring-2',
           ]"
           @click="selectDay(cell)"
         >
@@ -272,12 +272,12 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
             <span
               v-for="n in Math.min(cell.favCount, 3)"
               :key="`f${n}`"
-              class="bg-secondary size-1 rounded-full"
+              class="bg-done-foreground size-1.5 rounded-full"
             />
             <span
               v-for="n in Math.max(0, Math.min(cell.eventCount, 3) - cell.favCount)"
               :key="`e${n}`"
-              class="bg-primary size-1 rounded-full"
+              class="bg-primary size-1.5 rounded-full"
             />
             <span
               v-if="cell.eventCount > 3"
@@ -297,13 +297,12 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
           :count="visibleCompetitions.length"
           :favs="visibleFavCount"
         />
-        <ul>
-          <CompetitionRow
+        <ul class="divide-y overflow-hidden rounded-2xl border shadow-sm">
+          <CompetitionDateRow
             v-for="competition in visibleCompetitions"
             :key="competition.id"
             :competition="competition"
             :to="props.linkTo(competition)"
-            :show-date="!selected"
           />
         </ul>
       </section>
@@ -313,13 +312,12 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
           :count="previousDay.comps.length"
           :favs="previousDay.favCount"
         />
-        <ul>
-          <CompetitionRow
+        <ul class="divide-y overflow-hidden rounded-2xl border shadow-sm">
+          <CompetitionDateRow
             v-for="competition in previousDay.comps"
             :key="competition.id"
             :competition="competition"
             :to="props.linkTo(competition)"
-            :show-date="false"
           />
         </ul>
       </section>
@@ -354,13 +352,12 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
           :count="upcomingDay.comps.length"
           :favs="upcomingDay.favCount"
         />
-        <ul>
-          <CompetitionRow
+        <ul class="divide-y overflow-hidden rounded-2xl border shadow-sm">
+          <CompetitionDateRow
             v-for="competition in upcomingDay.comps"
             :key="competition.id"
             :competition="competition"
             :to="props.linkTo(competition)"
-            :show-date="false"
           />
         </ul>
       </section>
@@ -370,13 +367,12 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
           :count="previousDay.comps.length"
           :favs="previousDay.favCount"
         />
-        <ul>
-          <CompetitionRow
+        <ul class="divide-y overflow-hidden rounded-2xl border shadow-sm">
+          <CompetitionDateRow
             v-for="competition in previousDay.comps"
             :key="competition.id"
             :competition="competition"
             :to="props.linkTo(competition)"
-            :show-date="false"
           />
         </ul>
       </section>

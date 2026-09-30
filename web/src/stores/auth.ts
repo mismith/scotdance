@@ -12,6 +12,7 @@ import {
   createUserWithEmailAndPassword,
   deleteUser,
   reauthenticateWithCredential,
+  reauthenticateWithPopup,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
@@ -165,11 +166,29 @@ export const useAuthStore = defineStore('auth', () => {
     await signOut(auth)
   }
 
-  async function reauthenticate(currentPassword: string) {
+  // How this account signs in, for the Account page.
+  const providers = computed(() => user.value?.providerData.map((p) => p.providerId) ?? [])
+  const hasPassword = computed(() => providers.value.includes('password'))
+  const signInMethod = computed(() => {
+    if (providers.value.includes('apple.com')) return 'Apple'
+    if (providers.value.includes('google.com')) return 'Google'
+    if (hasPassword.value) return 'Email and password'
+    return 'Email link'
+  })
+
+  // Sensitive changes need a recent sign-in: the password if there is one,
+  // otherwise a quick re-sign-in with Apple or Google. Email-link accounts
+  // just try; Firebase says so if they need to sign in again.
+  async function reauthenticate(currentPassword?: string) {
     const u = auth.currentUser
-    if (!u || !u.email) throw new Error('Not signed in')
-    const credential = EmailAuthProvider.credential(u.email, currentPassword)
-    await reauthenticateWithCredential(u, credential)
+    if (!u) throw new Error('Not signed in')
+    if (hasPassword.value && u.email) {
+      await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, currentPassword ?? ''))
+    } else if (providers.value.includes('google.com')) {
+      await reauthenticateWithPopup(u, new GoogleAuthProvider())
+    } else if (providers.value.includes('apple.com')) {
+      await reauthenticateWithPopup(u, new OAuthProvider('apple.com'))
+    }
   }
 
   async function updateDisplayName(name: string) {
@@ -179,7 +198,7 @@ export const useAuthStore = defineStore('auth', () => {
     await update(dbRef(database, userPath(u.uid)), { displayName: name || null })
   }
 
-  async function updateUserEmail(newEmail: string, currentPassword: string) {
+  async function updateUserEmail(newEmail: string, currentPassword?: string) {
     await reauthenticate(currentPassword)
     const u = auth.currentUser
     if (!u) throw new Error('Not signed in')
@@ -194,7 +213,7 @@ export const useAuthStore = defineStore('auth', () => {
     await updatePassword(u, newPassword)
   }
 
-  async function deleteAccount(currentPassword: string) {
+  async function deleteAccount(currentPassword?: string) {
     await reauthenticate(currentPassword)
     const u = auth.currentUser
     if (!u) throw new Error('Not signed in')
@@ -216,6 +235,8 @@ export const useAuthStore = defineStore('auth', () => {
     loginDialogOpen,
     loginReason,
     newAccount,
+    hasPassword,
+    signInMethod,
     openLogin,
     closeLogin,
     enqueueAfterLogin,

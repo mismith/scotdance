@@ -116,7 +116,7 @@ const drawRows = computed<DrawRow[]>(() => {
           class="relative flex min-h-14 items-center gap-2.5 pr-2 pl-3"
           :style="
             row.dancer && following.isFollowing(row.dancer)
-              ? { '--dc': following.colorFor(row.dancer.dancerId) ?? 'var(--primary)', backgroundColor: 'color-mix(in srgb, var(--dc) 9%, var(--card))' }
+              ? { ...following.paint(row.dancer.dancerId), backgroundColor: 'color-mix(in srgb, var(--dc) 9%, var(--card))' }
               : undefined
           "
         >

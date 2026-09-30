@@ -1,300 +1,134 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
-import { ChevronRight, Search, Star, X } from '@lucide/vue'
-import FavoriteButton from '@/components/FavoriteButton.vue'
-import { useFavoritesStore } from '@/stores/favorites'
+import { ChevronRight, Search, X } from '@lucide/vue'
+import AppBar from '@/components/nav/AppBar.vue'
+import FollowButton from '@/components/FollowButton.vue'
+import Skeleton from '@/components/Skeleton.vue'
 import { useDancersStore } from '@/stores/dancers'
+import { useFavoritesStore } from '@/stores/favorites'
+import { useFollowing } from '@/composables/useFollowing'
 import { useRecentDancers } from '@/composables/useRecentDancers'
 import { useScrolledPast } from '@/composables/useScrolledPast'
-import SectionHeader from '@/components/SectionHeader.vue'
-import Skeleton from '@/components/Skeleton.vue'
-import AppBar from '@/components/nav/AppBar.vue'
+import { usePageTitle } from '@/composables/usePageTitle'
 import { initialsOf } from '@/lib/format'
 import { lookupEntityId } from '@/lib/entityIndex'
-import { useEntityIdMap } from '@/composables/useEntityIdMap'
-import { focusVt, useVtScope } from '@/lib/viewTransitionFocus'
+
+// Everyone you follow, in one list you can manage (a teacher might follow a
+// whole class), plus search and recently viewed. Following is by person, so
+// these link straight to each dancer's page.
+usePageTitle(['Dancers'])
 
 const route = useRoute()
 const router = useRouter()
 const favorites = useFavoritesStore()
-const dancers = useDancersStore()
-const recentDancers = useRecentDancers()
+const following = useFollowing()
+const store = useDancersStore()
+const { recent } = useRecentDancers()
+const { results, searching, searchError } = storeToRefs(store)
 
-const { results, searching, searchError: error, locationByName } = storeToRefs(dancers)
+const titleEl = ref<HTMLElement | null>(null)
+const scrolledPast = useScrolledPast(titleEl)
 
 const q = ref(String(route.query.q ?? ''))
 const qDebounced = refDebounced(q, 250)
+watch(q, (v) => router.replace({ query: { ...route.query, q: v || undefined } }))
+watch(qDebounced, (v) => store.search(v), { immediate: true })
 
-watch(
-  () => route.query.q,
-  (next) => {
-    const value = String(next ?? '')
-    if (value !== q.value) q.value = value
-  },
+const followed = computed(() =>
+  Object.entries(favorites.dancers)
+    .map(([id, v]) => ({ id, name: typeof v === 'string' && v ? v : 'Dancer' }))
+    .sort((a, b) => a.name.localeCompare(b.name)),
 )
+const recentList = computed(() => recent.value.filter((r) => !favorites.isFavorite('dancers', r.id)).slice(0, 8))
 
-watch(q, (value) => {
-  if (value !== String(route.query.q ?? '')) {
-    router.replace({ query: { ...route.query, q: value || undefined } })
-  }
-})
-
-watch(qDebounced, (value) => dancers.search(value), { immediate: true })
-
-interface FavoriteEntry {
-  name: string
-  initials: string
-  count: number
+async function openByName(name: string) {
+  const id = await lookupEntityId('dancers', name)
+  if (id) router.push({ name: 'dancer.info', params: { dancerId: id } })
 }
-
-const favoriteEntries = computed<FavoriteEntry[]>(() => {
-  const grouped = new Map<string, number>()
-  for (const value of Object.values(favorites.dancers)) {
-    if (typeof value !== 'string') continue
-    const name = value.trim()
-    if (!name) continue
-    grouped.set(name, (grouped.get(name) ?? 0) + 1)
-  }
-  return [...grouped.entries()]
-    .map<FavoriteEntry>(([name, count]) => ({ name, initials: initialsOf(name), count }))
-    .sort((a, b) => a.name.localeCompare(b.name))
-})
-
-watch(
-  favoriteEntries,
-  (entries) => {
-    dancers.resolveLocations(entries.map((e) => e.name))
-  },
-  { immediate: true },
-)
-
-function locationOf(group: { location?: string }) {
-  return group.location ?? ''
-}
-
-const recentList = computed(() => {
-  const favoriteNames = new Set(favoriteEntries.value.map((e) => e.name))
-  return recentDancers.recent.value.filter((r) => !favoriteNames.has(r.name))
-})
-
-function clearSearch() {
-  q.value = ''
-}
-
-const showSearch = computed(() => q.value.trim().length > 0)
-
-const vt = useVtScope('dancer')
-const dancerIds = useEntityIdMap('dancers')
-
-// Pre-resolve IDs for visible rows so view-transition names are ready by the
-// time the user clicks.
-watch(results, (list) => list.forEach((g: { name: string }) => dancerIds.resolve(g.name)))
-watch(favoriteEntries, (list) => list.forEach((e) => dancerIds.resolve(e.name)))
-
-async function navigateToDancer(id: string) {
-  focusVt('dancer', id)
-  await nextTick()
-  router.push({ name: 'dancer.info', params: { dancerId: id } })
-}
-
-async function openDancer(name: string) {
-  const id = dancerIds.get(name) ?? (await lookupEntityId('dancers', name))
-  if (!id) return
-  dancerIds.map[name] = id
-  await navigateToDancer(id)
-}
-
-async function openDancerById(id: string) {
-  await navigateToDancer(id)
-}
-
-const titleAnchor = ref<HTMLElement | null>(null)
-const scrolledPastTitle = useScrolledPast(titleAnchor)
-
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
-    <AppBar :title="'Dancers'" :show-title="scrolledPastTitle" :fallback="{ to: { name: 'more' }, label: 'More' }" />
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 pt-[calc(var(--chrome-top)+0.25rem)] pb-4">
-      <header ref="titleAnchor" class="space-y-3">
+  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
+    <AppBar title="Dancers" :show-title="scrolledPast" :fallback="{ to: { name: 'more' }, label: 'More' }" />
+
+    <main class="mx-auto w-full max-w-3xl space-y-4 px-4 pt-[calc(var(--chrome-top)+0.25rem)]">
+      <header ref="titleEl" class="space-y-3">
         <h1 class="text-display">Dancers</h1>
-        <div
-          class="floating-nav flex h-12 items-center gap-3 rounded-full px-4"
-        >
-          <Search class="size-4 shrink-0 opacity-70" />
+        <label class="bg-card border-strong focus-within:border-primary flex h-12 items-center gap-2 rounded-xl border-2 px-3">
+          <Search class="text-muted-foreground size-5 shrink-0" />
           <input
             v-model="q"
             type="search"
-            placeholder="Search by name…"
-            class="placeholder:text-card-foreground/55 min-w-0 flex-1 bg-transparent focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+            autocomplete="off"
+            placeholder="Find a dancer by name"
+            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none [&::-webkit-search-cancel-button]:hidden"
           />
-          <button
-            v-if="q"
-            type="button"
-            class="text-card-foreground/70 hover:text-card-foreground -mr-1 rounded-full p-1"
-            title="Clear"
-            @click="clearSearch"
-          >
-            <X class="size-4" />
+          <button v-if="q" type="button" class="text-muted-foreground -mr-1 flex size-10 items-center justify-center" aria-label="Clear" @click="q = ''">
+            <X class="size-5" />
           </button>
-        </div>
+        </label>
       </header>
 
-      <template v-if="showSearch">
-        <div v-if="error" class="text-destructive text-lg">{{ error.message }}</div>
-
-        <div
-          v-if="searching"
-          class="space-y-3"
-          aria-busy="true"
-          aria-live="polite"
-        >
-          <span class="sr-only">Searching dancers…</span>
-          <div v-for="i in 4" :key="i" class="flex items-center gap-3 py-3">
-            <Skeleton class="size-9 shrink-0 rounded-full!" />
-            <div class="flex-1 space-y-2">
-              <Skeleton class="h-5 w-2/3" />
-              <Skeleton class="h-4 w-1/3" />
-            </div>
-          </div>
+      <!-- Search -->
+      <template v-if="q.trim()">
+        <div v-if="searching && !results.length" class="space-y-2">
+          <Skeleton v-for="i in 4" :key="i" class="h-14 w-full rounded-xl!" />
         </div>
-
-        <div
-          v-else-if="!results.length"
-          class="text-muted-foreground text-base"
-        >
-          No dancers match.
-        </div>
-
-        <section v-else class="space-y-2">
-          <SectionHeader label="Results" :count="results.length" />
-          <ul>
-            <li v-for="group in results" :key="group.name">
-              <button
-                type="button"
-                class="flex w-full items-center gap-3 px-1 py-3 text-left"
-                @click="openDancer(group.name)"
-              >
-                <span
-                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
-                  :style="{ viewTransitionName: vt.name(dancerIds.get(group.name), 'avatar') }"
-                >
-                  {{ group.initials }}
+        <p v-else-if="searchError" class="text-base font-semibold">Search isn’t working right now. Check your connection.</p>
+        <p v-else-if="!results.length" class="text-muted-foreground py-4 text-center text-base">
+          No dancer matches “{{ q }}”. Try just a first or last name.
+        </p>
+        <ul v-else class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+          <li v-for="g in results" :key="g.name">
+            <button type="button" class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-accent" @click="openByName(g.name)">
+              <span class="bg-blue-paper text-primary flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-extrabold">{{ initialsOf(g.name) }}</span>
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-base font-bold">{{ g.name }}</span>
+                <span class="text-muted-foreground block truncate text-sm">
+                  {{ [g.location, `${g.competitionIds.length} competition${g.competitionIds.length === 1 ? '' : 's'}`].filter(Boolean).join(' · ') }}
                 </span>
-                <div class="min-w-0 flex-1">
-                  <div
-                    class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                    :style="{ viewTransitionName: vt.name(dancerIds.get(group.name), 'name') }"
-                  >{{ group.name || '?' }}</div>
-                  <div
-                    v-if="locationOf(group)"
-                    class="text-item-subtitle text-muted-foreground truncate"
-                  >
-                    {{ locationOf(group) }}
-                  </div>
-                </div>
-                <ChevronRight class="text-muted-foreground size-4 shrink-0" />
-              </button>
-            </li>
-          </ul>
-        </section>
+              </span>
+              <ChevronRight class="text-muted-foreground size-5" />
+            </button>
+          </li>
+        </ul>
       </template>
 
       <template v-else>
-        <section v-if="favoriteEntries.length" class="space-y-2">
-          <SectionHeader label="Following" :count="favoriteEntries.length" />
-          <ul>
-            <li v-for="entry in favoriteEntries" :key="entry.name" class="flex items-center">
-              <button
-                type="button"
-                class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3 text-left"
-                @click="openDancer(entry.name)"
-              >
-                <span
-                  class="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
-                  :style="{ viewTransitionName: vt.name(dancerIds.get(entry.name), 'avatar') }"
-                >
-                  {{ entry.initials }}
-                </span>
-                <div class="min-w-0 flex-1">
-                  <div
-                    class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                    :style="{ viewTransitionName: vt.name(dancerIds.get(entry.name), 'name') }"
-                  >{{ entry.name }}</div>
-                  <div
-                    v-if="locationByName.get(entry.name)"
-                    class="text-item-subtitle text-muted-foreground truncate"
-                  >
-                    {{ locationByName.get(entry.name) }}
-                  </div>
-                  <Skeleton
-                    v-else-if="!locationByName.has(entry.name)"
-                    class="mt-1 h-4 w-32"
-                  />
-                </div>
-              </button>
-              <FavoriteButton
-                v-if="dancerIds.get(entry.name)"
-                :id="dancerIds.get(entry.name) || ''"
-                type="dancers"
-                :name="entry.name"
-                class="mr-1"
-              />
+        <section class="space-y-2">
+          <h2 class="text-heading flex items-baseline justify-between pt-1">
+            Following <span class="text-muted-foreground text-sm font-semibold">{{ followed.length }}</span>
+          </h2>
+          <p v-if="!followed.length" class="bg-card text-muted-foreground rounded-2xl border p-4 text-base shadow-sm">
+            Search for a dancer above, then tap Follow. Everyone you follow shows up here and on Home.
+          </p>
+          <ul v-else class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+            <li
+              v-for="d in followed"
+              :key="d.id"
+              class="relative flex items-center gap-2 pr-2"
+              :style="following.paint(d.id)"
+            >
+              <span class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
+              <RouterLink :to="{ name: 'dancer.info', params: { dancerId: d.id } }" class="flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 pl-4">
+                <span class="min-w-0 flex-1 truncate text-base font-bold">{{ d.name }}</span>
+              </RouterLink>
+              <FollowButton :dancer="{ dancerId: d.id, fullName: d.name }" />
             </li>
           </ul>
         </section>
 
-        <section
-          v-else-if="!recentList.length"
-          class="bg-card space-y-3 rounded-2xl border p-6 text-center"
-        >
-          <Star class="text-muted-foreground mx-auto size-6" />
-          <div class="text-heading">Follow your dancers</div>
-          <p class="text-muted-foreground text-base">
-            Type a name above, then tap Follow. Their day at every competition shows up on Home.
-          </p>
-        </section>
-
         <section v-if="recentList.length" class="space-y-2">
-          <SectionHeader label="Recently viewed">
-            <button
-              type="button"
-              class="hover:text-foreground font-normal tracking-normal normal-case"
-              @click="recentDancers.clear()"
-            >
-              Clear
-            </button>
-          </SectionHeader>
-          <ul>
-            <li v-for="entry in recentList" :key="entry.id" class="flex items-center">
-              <button
-                type="button"
-                class="flex min-w-0 flex-1 items-center gap-3 px-1 py-3 text-left"
-                @click="openDancerById(entry.id)"
-              >
-                <span
-                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full font-medium [view-transition-class:nav-avatar]"
-                  :style="{ viewTransitionName: vt.name(entry.id, 'avatar') }"
-                >
-                  {{ initialsOf(entry.name) }}
-                </span>
-                <div class="min-w-0 flex-1">
-                  <div
-                    class="text-item-title truncate [view-transition-class:fit_nav-title]"
-                    :style="{ viewTransitionName: vt.name(entry.id, 'name') }"
-                  >{{ entry.name }}</div>
-                </div>
-              </button>
-              <FavoriteButton
-                :id="entry.id"
-                type="dancers"
-                :name="entry.name"
-                class="mr-1"
-              />
+          <h2 class="text-heading pt-1">Recently viewed</h2>
+          <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+            <li v-for="r in recentList" :key="r.id" class="flex items-center gap-2 pr-2">
+              <RouterLink :to="{ name: 'dancer.info', params: { dancerId: r.id } }" class="flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 pl-4">
+                <span class="min-w-0 flex-1 truncate text-base font-bold">{{ r.name }}</span>
+              </RouterLink>
+              <FollowButton :dancer="{ dancerId: r.id, fullName: r.name }" />
             </li>
           </ul>
         </section>

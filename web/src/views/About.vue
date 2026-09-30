@@ -1,418 +1,218 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { Timeline, ChevronDown, Trophy, Users, IdCard, Compass, Link } from '@lucide/vue'
-import SmoothCollapse from '@/components/SmoothCollapse.vue'
+import { CalendarDays, ChevronDown, GraduationCap, Heart, Link, Search, Star, Trophy, Users } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import { useCrisp } from '@/composables/useCrisp'
 import { PLATFORM } from '@/composables/useUpdate'
 import { version } from '../../package.json'
 
+// About ScotDance, organised by who it's for. The common questions keep
+// their #faq-… links so older shared links still land on the right answer.
 const crisp = useCrisp()
-
-const platformLabel =
-  PLATFORM === 'ios' ? 'iOS' : PLATFORM === 'android' ? 'Android' : 'Web'
 const isWeb = PLATFORM === 'web'
+const platformLabel = PLATFORM === 'ios' ? 'iOS' : PLATFORM === 'android' ? 'Android' : 'Web'
 
-const features = [
+const roles = [
   {
-    eyebrow: 'Find',
-    icon: Users,
+    icon: Heart,
+    title: 'Parents',
+    points: [
+      'Follow your dancers and see their day on Home: platform, dancing order, placings',
+      'Placings as soon as they’re posted, with an alert while the app is open',
+      'Every competition they’ve danced at, in one place',
+      'Link your dancer and add the tartan they dance in',
+    ],
+  },
+  {
+    icon: Star,
     title: 'Dancers',
-    body: 'Search by number, name, or age group. Follow your dancers to see their day at a glance.',
+    points: ['Your schedule and results, without the paper', 'Look back at every competition you’ve danced'],
   },
   {
-    eyebrow: 'Check',
-    icon: Timeline,
-    title: 'Schedules',
-    body: 'See sessions, platforms, and the dancing order. Championship draws included.',
+    icon: GraduationCap,
+    title: 'Teachers',
+    points: ['Follow a whole class and see everyone at a glance', 'Who’s dancing next, and where'],
   },
   {
-    eyebrow: 'Watch',
-    icon: Trophy,
-    title: 'Results',
-    body: 'Callbacks and placings as soon as they’re entered, with an alert for the dancers you follow.',
+    icon: CalendarDays,
+    title: 'Organisers',
+    points: ['Publish dancers, schedule and results for free', 'Parents stop asking “when is she on?”'],
   },
 ]
 
-const aggregatorFeatures = [
-  {
-    eyebrow: 'Follow',
-    icon: IdCard,
-    title: 'Profiles',
-    body: 'A dedicated page for every dancer, judge, and piper. Track things more seamlessly than ever before.',
-  },
-  {
-    eyebrow: 'Explore',
-    icon: Compass,
-    title: 'Visuals',
-    body: "Navigate competitions in a calendar view, or move around on a map. Use habits you've already learned to interact with the highland dance world.",
-  },
+const steps = [
+  { icon: Search, title: 'Find your dancer', body: 'Search by name, or type the number on their card.' },
+  { icon: Star, title: 'Tap Follow', body: 'Their day appears on Home, and in every competition they enter.' },
+  { icon: Trophy, title: 'Watch it come in', body: 'Placings appear as they’re entered, with an alert while the app is open.' },
 ]
 
 const faqs: { id: string; q: string; a?: string }[] = [
   {
     id: 'free',
-    q: 'Is there a cost associated with using this site/app at my local competition?',
-    a: 'No! All competition data is user-submitted, and you can use it as a competition organizer or competition attendee for free anywhere in the world. There is no plan for this to ever change.',
+    q: 'Does it cost anything?',
+    a: 'No. ScotDance is free for families, dancers, teachers and organisers anywhere in the world, and there are no plans to change that.',
+  },
+  {
+    id: 'results',
+    q: 'Where do the results come from?',
+    a: 'Organisers and scrutineers enter them at the competition. They appear here as soon as they’re entered, which can be a little after they’re announced.',
   },
   {
     id: 'worldwide',
-    q: 'Can I use this in any country?',
-    // Rendered inline in template so the support link can call crisp.open()
+    q: 'Can I use it in any country?',
   },
   {
     id: 'independence',
-    q: 'Is ScotDance.app affiliated with any association, organization, governing body, or particular competition(s)?',
-    a: 'No, it is a completely independent, not-for-profit, volunteer run endeavour.',
+    q: 'Is ScotDance part of an association or governing body?',
+    a: 'No. It’s independent, not-for-profit and run by a volunteer.',
   },
   {
     id: 'download',
-    q: 'Do I need to download or install anything to get access?',
-    a: 'No, it\'s entirely optional to use the App/Play Store distributed apps; everything works exactly the same in a web browser on whatever device(s) you own (e.g. by visiting <a href="http://www.scotdance.app" class="underline underline-offset-4 transition-colors hover:text-foreground">www.scotdance.app</a>). Of course, it\'s handy to have a dedicated place for easy access, so installing a mobile app makes that possible.',
+    q: 'Do I need to install anything?',
+    a: 'No. Everything works the same in a web browser at <a href="https://scotdance.app" class="text-primary underline">scotdance.app</a>. The App Store and Google Play apps are there if you’d like it on your home screen.',
   },
   {
     id: 'privacy',
-    q: 'Is it safe to use? Are you harvesting my data? Are there privacy concerns with having this information available online?',
-    a: 'This service is, in plain words, completely legitimate. It checks all the security boxes you would/should expect, and does nothing remotely nefarious with the (minimal) data it does collect from you. Furthermore, since all competition data is user-submitted, it\'s conceptually equivalent to uploading scanned or exported results PDFs to a dance association\'s website, just made more convenient, hopefully. You can also read more details on the <a href="/policies" class="underline underline-offset-4 transition-colors hover:text-foreground">Policies</a> page.',
+    q: 'Is my information safe?',
+    a: 'Yes. ScotDance collects very little about you, and doesn’t sell or share it. Competition information comes from organisers, much like a results sheet posted online. The <a href="/policies" class="text-primary underline">privacy and terms</a> page has the details.',
   },
 ]
 
-const featuresRef = ref<HTMLElement | null>(null)
-
 const route = useRoute()
 const router = useRouter()
-const openFaqs = ref(new Set<string>())
-
-function isOpen(id: string) {
-  return openFaqs.value.has(id)
-}
-function toggle(id: string) {
-  const next = new Set(openFaqs.value)
+const open = ref(new Set<string>())
+const toggle = (id: string) => {
+  const next = new Set(open.value)
   if (next.has(id)) next.delete(id)
   else next.add(id)
-  openFaqs.value = next
-}
-function scrollToFaq(id: string) {
-  document
-    .getElementById(`faq-${id}`)
-    ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
-function onLinkClick(id: string) {
-  if (!isOpen(id)) toggle(id)
-  router.replace({ hash: `#faq-${id}` })
-  scrollToFaq(id)
+  open.value = next
 }
 function applyHash(hash: string) {
-  const match = hash.match(/^#faq-(.+)$/)
-  if (!match) return
-  const id = match[1]
-  if (!faqs.some((f) => f.id === id)) return
-  if (!isOpen(id)) toggle(id)
-  nextTick(() => scrollToFaq(id))
+  if (hash === '#faqs') {
+    nextTick(() => document.getElementById('faqs')?.scrollIntoView({ block: 'start' }))
+    return
+  }
+  const id = hash.match(/^#faq-(.+)$/)?.[1]
+  if (!id || !faqs.some((f) => f.id === id)) return
+  if (!open.value.has(id)) toggle(id)
+  nextTick(() => document.getElementById(`faq-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+}
+function linkTo(id: string) {
+  router.replace({ hash: `#faq-${id}` })
 }
 onMounted(() => applyHash(route.hash))
 watch(() => route.hash, applyHash)
 </script>
 
 <template>
-  <div
-    class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]"
-    data-route="about"
-  >
+  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
     <AppBar title="About ScotDance" :fallback="{ to: { name: 'more' }, label: 'More' }" />
 
-    <!-- HERO -->
-    <section class="relative flex min-h-[70dvh] flex-col items-center justify-center px-6 pt-(--chrome-top)">
-      <header
-        class="absolute inset-x-0 top-(--chrome-top) flex flex-col items-center gap-2 pt-4 text-center"
-      >
-        <img src="/img/touchicon.png" alt="" class="size-10 rounded-md shadow-sm" />
-        <div class="text-lg">ScotDance.app</div>
+    <main class="mx-auto w-full max-w-3xl space-y-8 px-4 pt-[calc(var(--chrome-top)+0.5rem)]">
+      <header class="space-y-3">
+        <img src="/img/touchicon.png" alt="" class="size-14 rounded-2xl shadow-sm" />
+        <h1 class="text-display">Highland dance competitions, dancers and results, in one place.</h1>
+        <p class="text-muted-foreground text-base">
+          Free, independent and run by a volunteer since 2017.
+        </p>
+        <RouterLink
+          :to="{ name: 'home' }"
+          class="bg-primary text-primary-foreground inline-flex h-12 items-center gap-2 rounded-xl px-5 text-base font-bold"
+        >
+          <Users class="size-5" /> Go to your dancers
+        </RouterLink>
       </header>
 
-      <div class="mb-32 space-y-5 text-center">
-        <h1 class="text-[2.5rem] leading-tight font-extrabold tracking-tight text-balance md:text-6xl">
-          Highland dance,<br />in your pocket.
-        </h1>
-        <p class="text-muted-foreground mx-auto max-w-2xl text-lg md:text-xl">
-          Browse competitions, follow dancers, and see results as they happen.
+      <section class="space-y-3">
+        <h2 class="text-title">Made for</h2>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <article v-for="r in roles" :key="r.title" class="bg-card space-y-2 rounded-2xl border p-4 shadow-sm">
+            <h3 class="text-heading flex items-center gap-2">
+              <component :is="r.icon" class="text-primary size-5" /> {{ r.title }}
+            </h3>
+            <ul class="text-muted-foreground list-disc space-y-1 pl-5 text-[0.9375rem] marker:text-primary">
+              <li v-for="p in r.points" :key="p">{{ p }}</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="space-y-3">
+        <h2 class="text-title">On competition day</h2>
+        <ol class="space-y-2">
+          <li v-for="(s, i) in steps" :key="s.title" class="bg-card flex items-start gap-3 rounded-2xl border p-4 shadow-sm">
+            <span class="bg-primary text-primary-foreground flex size-9 shrink-0 items-center justify-center rounded-full text-base font-extrabold">
+              {{ i + 1 }}
+            </span>
+            <span>
+              <b class="block text-base">{{ s.title }}</b>
+              <span class="text-muted-foreground text-[0.9375rem]">{{ s.body }}</span>
+            </span>
+          </li>
+        </ol>
+      </section>
+
+      <section v-if="isWeb" class="bg-card space-y-3 rounded-2xl border p-4 text-center shadow-sm">
+        <h2 class="text-heading">Get the app</h2>
+        <p class="text-muted-foreground text-[0.9375rem]">Or keep using it here in your browser. It’s the same either way.</p>
+        <div class="flex flex-wrap justify-center gap-3">
+          <a href="https://apps.apple.com/us/app/scotdance/id1386475626" target="_blank" rel="noopener" aria-label="Download on the App Store">
+            <img src="/img/app-store.svg" alt="Download on the App Store" class="h-11" />
+          </a>
+          <a href="https://play.google.com/store/apps/details?id=info.mismith.scotdance" target="_blank" rel="noopener" aria-label="Get it on Google Play">
+            <img src="/img/play-store.svg" alt="Get it on Google Play" class="h-11" />
+          </a>
+        </div>
+      </section>
+
+      <section id="faqs" class="scroll-mt-(--chrome-top) space-y-3">
+        <h2 class="text-title">Questions and answers</h2>
+        <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+          <li v-for="f in faqs" :id="`faq-${f.id}`" :key="f.id" class="scroll-mt-[calc(var(--chrome-top)+0.5rem)]">
+            <div class="flex items-center">
+              <button
+                type="button"
+                class="flex min-h-14 flex-1 items-center gap-3 py-3 pl-4 text-left"
+                :aria-expanded="open.has(f.id)"
+                :aria-controls="`faq-panel-${f.id}`"
+                @click="toggle(f.id)"
+              >
+                <span class="flex-1 text-base font-bold">{{ f.q }}</span>
+                <ChevronDown :class="['text-muted-foreground size-5 shrink-0 transition-transform', open.has(f.id) && 'rotate-180']" />
+              </button>
+              <button
+                type="button"
+                class="text-muted-foreground flex size-11 shrink-0 items-center justify-center"
+                :aria-label="`Link to this answer`"
+                @click="linkTo(f.id)"
+              >
+                <Link class="size-4" />
+              </button>
+            </div>
+            <div v-if="open.has(f.id)" :id="`faq-panel-${f.id}`" class="text-muted-foreground px-4 pb-4 text-[0.9375rem] leading-relaxed">
+              <template v-if="f.id === 'worldwide'">
+                Yes, anywhere in the world. If there’s something that would help where you dance,
+                <button v-if="crisp.available" type="button" class="text-primary font-bold underline" @click="crisp.open()">get in touch</button><template v-else>get in touch</template>.
+              </template>
+              <span v-else v-html="f.a" />
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <footer class="text-muted-foreground space-y-2 pb-4 text-center text-sm">
+        <p>
+          Made by <a href="https://mismith.io" target="_blank" rel="noopener" class="text-primary font-bold">Murray Rowan</a>
+          for the Highland dance community.
         </p>
-      </div>
-
-      <RouterLink
-        :to="{ name: 'home' }"
-        class="bg-primary text-primary-foreground absolute inset-x-0 mx-auto flex h-12 w-fit items-center gap-2 rounded-xl px-6 text-base font-bold"
-        :style="{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }"
-      >
-        Go to your dancers
-      </RouterLink>
-    </section>
-
-    <!-- FEATURES -->
-    <section
-      id="features"
-      ref="featuresRef"
-      class="border-border/60 border-t px-6 py-16 md:py-24"
-    >
-      <div class="mx-auto w-full max-w-5xl">
-        <header class="mb-16 space-y-4">
-          <div class="text-foreground text-eyebrow text-sm">On the day</div>
-          <h2 class="text-[2rem] leading-tight font-extrabold tracking-tight">
-            A program of events, without the paper.
-          </h2>
-          <p class="text-muted-foreground text-lg md:text-xl">
-            Dancers, schedules, and results in a single place, kept in sync as the day
-            unfolds.
-          </p>
-        </header>
-
-        <div class="grid gap-12 md:grid-cols-3 md:gap-10">
-          <article
-            v-for="f in features"
-            :key="f.title"
-            class="border-border/60 flex flex-col gap-4 border-t pt-6"
-          >
-            <div class="flex items-center justify-between gap-4">
-              <div class="space-y-1">
-                <div class="text-foreground/65 text-eyebrow text-xs">
-                  {{ f.eyebrow }}
-                </div>
-                <h3 class="text-xl font-extrabold">
-                  {{ f.title }}
-                </h3>
-              </div>
-              <component :is="f.icon" class="text-primary size-8 shrink-0" />
-            </div>
-            <p class="text-muted-foreground leading-relaxed">{{ f.body }}</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- AGGREGATOR / CROSS-COMPETITION -->
-    <section class="border-border/60 border-t px-6 py-16 md:py-24">
-      <div class="mx-auto w-full max-w-5xl">
-        <header class="mb-16 space-y-4">
-          <div class="text-foreground text-eyebrow text-sm">Over the years</div>
-          <h2 class="text-[2rem] leading-tight font-extrabold tracking-tight">
-            Multiple sources, stitched together.
-          </h2>
-          <p class="text-muted-foreground text-lg md:text-xl">
-            Years of competition data, pulled together and made handy when you need it.
-          </p>
-        </header>
-
-        <div class="grid gap-12 md:grid-cols-2 md:gap-10">
-          <article
-            v-for="f in aggregatorFeatures"
-            :key="f.title"
-            class="border-border/60 flex flex-col gap-4 border-t pt-6"
-          >
-            <div class="flex items-center justify-between gap-4">
-              <div class="space-y-1">
-                <div class="text-foreground/65 text-eyebrow text-xs">
-                  {{ f.eyebrow }}
-                </div>
-                <h3 class="text-xl font-extrabold">
-                  {{ f.title }}
-                </h3>
-              </div>
-              <component :is="f.icon" class="text-primary size-8 shrink-0" />
-            </div>
-            <p class="text-muted-foreground leading-relaxed">{{ f.body }}</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- DOWNLOAD / CTA — web only; in-app this is redundant -->
-    <section
-      v-if="isWeb"
-      class="bg-muted/40 border-border/60 border-t px-6 py-16 md:py-24"
-    >
-      <div class="mx-auto flex w-full max-w-4xl flex-col items-center gap-10 text-center">
-        <div class="space-y-4">
-          <div class="text-foreground text-eyebrow text-sm">Take it with you</div>
-          <h2 class="text-[2rem] leading-tight font-extrabold tracking-tight">
-            From the warm-up to the awards.
-          </h2>
-          <p class="text-muted-foreground mx-auto max-w-xl text-lg md:text-xl">
-            Install it on your phone, or just bookmark it in any browser.
-          </p>
-        </div>
-
-        <div class="flex flex-wrap items-center justify-center gap-3">
-          <a
-            href="https://apps.apple.com/us/app/scotdance/id1386475626"
-            target="_blank"
-            rel="noopener"
-            class="transition-opacity hover:opacity-80"
-            aria-label="Download on the App Store"
-          >
-            <img src="/img/app-store.svg" alt="Download on the App Store" class="h-12" />
-          </a>
-          <a
-            href="https://play.google.com/store/apps/details?id=info.mismith.scotdance"
-            target="_blank"
-            rel="noopener"
-            class="transition-opacity hover:opacity-80"
-            aria-label="Get it on Google Play"
-          >
-            <img src="/img/play-store.svg" alt="Get it on Google Play" class="h-12" />
-          </a>
-        </div>
-
-        <RouterLink
-          :to="{ name: 'competitions' }"
-          class="text-primary hover:text-primary/80 px-1 py-2 font-sans text-sm font-medium"
-        >
-          Keep using it in your browser
-        </RouterLink>
-      </div>
-    </section>
-
-    <!-- FAQ -->
-    <section id="faqs" class="border-border/60 scroll-mt-(--chrome-top) border-t px-6 py-16 md:py-24">
-      <div class="mx-auto w-full max-w-3xl">
-        <header class="mb-12 space-y-4">
-          <div class="text-foreground text-eyebrow text-sm">Common questions</div>
-          <h2 class="text-[2rem] leading-tight font-extrabold tracking-tight">FAQs</h2>
-        </header>
-
-        <div class="border-border/60 border-t">
-          <div
-            v-for="(item, i) in faqs"
-            :id="`faq-${item.id}`"
-            :key="item.id"
-            class="border-border/60 group/faq relative scroll-mt-4 border-b"
-          >
-            <button
-              type="button"
-              class="flex w-full cursor-pointer items-baseline gap-4 py-6 pr-20 text-left"
-              :aria-expanded="isOpen(item.id)"
-              :aria-controls="`faq-panel-${item.id}`"
-              @click="toggle(item.id)"
-            >
-              <span class="text-foreground/40 w-8 shrink-0 font-medium tabular-nums">
-                {{ String(i + 1).padStart(2, '0') }}
-              </span>
-              <span
-                :id="`faq-q-${item.id}`"
-                class="flex-1 font-serif text-xl font-medium tracking-tight md:text-2xl"
-              >
-                {{ item.q }}
-              </span>
-              <ChevronDown
-                class="text-muted-foreground absolute top-7 right-0 size-5 transition-transform"
-                :class="isOpen(item.id) && 'rotate-180'"
-              />
-            </button>
-            <a
-              :href="`#faq-${item.id}`"
-              class="text-muted-foreground hover:text-foreground absolute top-8 right-8 opacity-0 transition-opacity group-hover/faq:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
-              :aria-label="`Link to: ${item.q}`"
-              @click.prevent="onLinkClick(item.id)"
-            >
-              <Link class="size-3.5" />
-            </a>
-            <SmoothCollapse
-              :id="`faq-panel-${item.id}`"
-              role="region"
-              :aria-labelledby="`faq-q-${item.id}`"
-              :open="isOpen(item.id)"
-            >
-              <div
-                v-if="item.id === 'worldwide'"
-                class="text-muted-foreground pr-9 pb-6 pl-12 leading-relaxed"
-              >
-                Yes, anywhere in the world. Curiously, usage in the United States has been
-                very light so far. If you've got a theory why, please
-                <button
-                  type="button"
-                  class="hover:text-foreground cursor-pointer font-serif underline underline-offset-4 transition-colors"
-                  @click="crisp.open()"
-                >
-                  get in touch</button
-                >.
-              </div>
-              <div
-                v-else
-                class="text-muted-foreground pr-9 pb-6 pl-12 leading-relaxed"
-                v-html="item.a"
-              />
-            </SmoothCollapse>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ABOUT / FOOTER -->
-    <footer class="border-border/60 border-t px-6 py-20">
-      <div
-        class="mx-auto flex w-full max-w-5xl flex-col gap-10 md:flex-row md:items-end md:justify-between"
-      >
-        <div class="space-y-4">
-          <div class="flex items-center gap-3">
-            <img src="/img/touchicon.png" alt="" class="size-8 rounded-md" />
-            <div class="text-lg">ScotDance.app</div>
-          </div>
-          <p class="text-muted-foreground max-w-sm text-base leading-snug">
-            A volunteer-run project for the highland dance community. By
-            <a
-              href="https://mismith.io"
-              target="_blank"
-              rel="noopener"
-              class="hover:text-foreground underline underline-offset-4 transition-colors"
-              >Murray Rowan</a
-            >, since 2017.
-          </p>
-        </div>
-
-        <div class="text-muted-foreground flex flex-col gap-2 text-sm md:items-end">
-          <div>
-            <button
-              v-if="crisp.available"
-              type="button"
-              class="hover:text-foreground cursor-pointer font-serif underline underline-offset-4 transition-colors"
-              @click="crisp.open()"
-            >
-              Support
-            </button>
-            <template v-if="crisp.available"> · </template>
-            <RouterLink
-              :to="{ name: 'policies' }"
-              class="hover:text-foreground underline underline-offset-4 transition-colors"
-            >
-              Policies
-            </RouterLink>
-            ·
-            <a
-              href="https://github.com/mismith/scotdance"
-              target="_blank"
-              rel="noopener"
-              class="hover:text-foreground underline underline-offset-4 transition-colors"
-            >
-              Source code
-            </a>
-          </div>
-          <div class="text-foreground/50 font-sans text-xs tabular-nums">
-            {{ platformLabel }} · v{{ version }}
-          </div>
-        </div>
-      </div>
-    </footer>
+        <p class="flex flex-wrap justify-center gap-x-3">
+          <button v-if="crisp.available" type="button" class="text-primary font-bold" @click="crisp.open()">Help</button>
+          <RouterLink :to="{ name: 'policies' }" class="text-primary font-bold">Privacy and terms</RouterLink>
+          <a href="https://github.com/mismith/scotdance" target="_blank" rel="noopener" class="text-primary font-bold">Source code</a>
+        </p>
+        <p class="tabular-nums">{{ platformLabel }} · v{{ version }}</p>
+      </footer>
+    </main>
   </div>
 </template>
-
-<style>
-@reference '../style.css';
-
-/* About has no floating top chrome — zero out scroll-padding-top so
-   #features anchors land flush at the viewport top with no inset.
-   :has() gates on about being mounted (root has data-route="about"),
-   so this naturally turns off when navigating away. */
-html:has([data-route='about']) {
-  @apply scroll-pt-0;
-}
-</style>

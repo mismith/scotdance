@@ -7,9 +7,11 @@ withDefaults(
   defineProps<{
     number: number | string | null | undefined
     color?: string | null
+    /** The dancer's tartan layer; inherited from the row when omitted. */
+    sash?: string | null
     size?: 'xs' | 'sm' | 'md' | 'lg'
   }>(),
-  { color: null, size: 'sm' },
+  { color: null, sash: undefined, size: 'sm' },
 )
 </script>
 
@@ -22,7 +24,7 @@ withDefaults(
       size === 'md' && 'h-16 w-[5.5rem] rounded-lg pb-1.5 text-[1.875rem]',
       size === 'lg' && 'h-24 w-32 rounded-xl pb-2 text-5xl',
     ]"
-    :style="{ '--dc': color ?? 'var(--strong)' }"
+    :style="color ? { '--dc': color, ...(sash !== undefined && { '--sash': sash ?? 'var(--tartan)' }) } : { '--dc': 'var(--strong)', '--sash': 'var(--tartan)' }"
     :aria-label="number != null ? `Number ${number}` : 'No number'"
   >
     <span class="sash absolute inset-x-0 top-0 h-[24%]" aria-hidden="true" />

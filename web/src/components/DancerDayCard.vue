@@ -17,12 +17,13 @@ const props = withDefaults(
     days: DancerDay[]
     competitionId: string
     color?: string | null
+    sash?: string | null
     /** Shown under the name on Home, where several competitions mix. */
     competitionName?: string | null
     /** `${dancerId}:${danceId}` of a placing that just arrived. */
     fresh?: string | null
   }>(),
-  { color: null, competitionName: null, fresh: null },
+  { color: null, sash: null, competitionName: null, fresh: null },
 )
 
 // Entries with nothing scheduled are dropped when another entry has dances.
@@ -65,7 +66,7 @@ const groupRoute = (d: DancerDay, danceId?: string) => ({
 <template>
   <article
     class="bg-card overflow-hidden rounded-2xl border shadow-sm"
-    :style="{ '--dc': color ?? 'var(--strong)' }"
+    :style="{ '--dc': color ?? 'var(--strong)', '--sash': (color && sash) || 'var(--tartan)' }"
   >
     <div class="sash h-1.5" aria-hidden="true" />
     <RouterLink

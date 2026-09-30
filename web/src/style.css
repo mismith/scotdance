@@ -58,6 +58,7 @@
   --ease-rubber-band: cubic-bezier(0.34, 1.3, 0.64, 1);
   --animate-pop: pop 450ms ease-out;
   --animate-medal: medal 900ms cubic-bezier(0.2, 0.9, 0.3, 1.3);
+  --animate-unfurl: unfurl 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 /* Light is the default: dark text on light reads better for older eyes and
@@ -215,9 +216,10 @@
   @apply bg-card text-card-foreground border shadow-sm;
 }
 
-/* Tartan sash over a dancer colour set in --dc. */
+/* A dancer's sash: their real tartan (--sash, set by paint()) or a
+   generic sett over their colour (--dc). */
 @utility sash {
-  background: var(--tartan), var(--dc, var(--primary));
+  background: var(--sash, var(--tartan)), var(--dc, var(--primary));
 }
 
 /* Liquid-glass-style press feedback for floating-nav targets. Applied via
@@ -357,6 +359,16 @@
 /* Generic pop: rubberband scale + a tiny rotational shake. For any
    element that should "pop" on toggle/activation. Keyframes carry the
    overshoot directly so the easing can stay simple. */
+/* A new tartan rolls out like a bolt of cloth. */
+@keyframes unfurl {
+  from {
+    clip-path: inset(0 100% 0 0 round 1rem);
+  }
+  to {
+    clip-path: inset(0 0 0 0 round 1rem);
+  }
+}
+
 @keyframes pop {
   0% {
     transform: scale(1) rotate(0deg);

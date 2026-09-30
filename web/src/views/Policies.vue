@@ -1,22 +1,18 @@
 <script setup lang="ts">
+import AppBar from '@/components/nav/AppBar.vue'
 import { RouterLink } from 'vue-router'
 </script>
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
-    <header
-      class="mx-auto flex w-full max-w-3xl items-start justify-between gap-3 p-4 pb-3"
-    >
-      <div class="min-w-0 flex-1">
-        <h1 class="text-title">Policies</h1>
-      </div>
-    </header>
+    <AppBar title="Privacy and terms" :fallback="{ to: { name: 'more' }, label: 'More' }" />
 
     <main
-      class="text-muted-foreground [&_:is(strong,em)]:text-foreground mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-0"
+      class="[&_:is(strong,em)]:text-foreground mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 pt-[calc(var(--chrome-top)+0.25rem)] text-base leading-relaxed text-muted-foreground"
     >
+      <h1 class="text-display text-foreground">Privacy and terms</h1>
       <section id="privacy" class="space-y-4">
-        <h2 class="text-2xl font-medium tracking-tight">Privacy Policy</h2>
+        <h2 class="text-title text-foreground">Privacy Policy</h2>
 
         <p>
           <em>ScotDance.app</em> uses enterprise-grade services and industry-standard

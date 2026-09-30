@@ -1,29 +1,42 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
-import { useLocalStorage } from '@vueuse/core'
+import { RouterLink, useRoute } from 'vue-router'
+import { Check, ChevronRight, Clock, ListOrdered, Star } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
-import DisclosureHeader from '@/components/DisclosureHeader.vue'
-import SmoothCollapse from '@/components/SmoothCollapse.vue'
+import { useFollowing } from '@/composables/useFollowing'
+import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
+import { usePageTitle } from '@/composables/usePageTitle'
 import DrawDialog from '@/components/DrawDialog.vue'
 import StaffDialog from '@/components/StaffDialog.vue'
-import FavCount from '@/components/FavCount.vue'
-import { dances as eventDances, getScheduleDanceName } from '@/lib/schedule'
-import { findGroupDancers } from '@/lib/results'
-import { staffMemberName } from '@/types/competition'
-import type { EnrichedGroup, ScheduleDance, StaffMember } from '@/types/competition'
-import { useFollowing } from '@/composables/useFollowing'
-import { useVtScope } from '@/lib/viewTransitionFocus'
+import StepsHelp from '@/components/StepsHelp.vue'
+import { dances as eventDances, getScheduleDanceName, slugline } from '@/lib/schedule'
+import { findGroupDancers, getOrdinalSuffix } from '@/lib/results'
 import { sanitizeRichText } from '@/lib/sanitize'
+import {
+  staffMemberName,
+  type EnrichedDancer,
+  type EnrichedGroup,
+  type ScheduleDance,
+  type StaffMember,
+} from '@/types/competition'
 
+// One event in the schedule: each dance, then each platform with its judges
+// and the age groups in the order they'll dance. Your dancers are called out
+// with where they fall in the dancing order; tapping a group shows the full
+// order. Results link straight through once posted.
 const route = useRoute()
+const setHeader = injectInfoHeaderSetter()
 const {
+  competitionId,
+  competition,
   schedule,
   platforms,
   groups,
   dancers,
   dances,
   staff,
+  results,
+  draws,
   loadSchedule,
   loadDancers,
   loadResults,
@@ -31,240 +44,190 @@ const {
 } = useCompetition()
 const following = useFollowing()
 
-onMounted(async () => {
-  await Promise.all([loadSchedule(), loadDancers(), loadResults(), loadStaff()])
-})
+onMounted(() => Promise.all([loadSchedule(), loadDancers(), loadResults(), loadStaff()]))
 
-const dayId = computed(() => String(route.params.dayId ?? ''))
-const blockId = computed(() => String(route.params.blockId ?? ''))
-const eventId = computed(() => String(route.params.eventId ?? ''))
+const day = computed(() => schedule.value?.days?.[String(route.params.dayId)] ?? null)
+const block = computed(() => day.value?.blocks?.[String(route.params.blockId)] ?? null)
+const event = computed(() => block.value?.events?.[String(route.params.eventId)] ?? null)
 
-// Tag the current event as the view-transition source so back-nav re-tags
-// the right row before Schedule remounts.
-useVtScope('event').syncFocus(eventId)
+usePageTitle(() => [event.value?.name, competition.value?.name])
 
-const day = computed(() => schedule.value?.days?.[dayId.value] ?? null)
-const block = computed(() => day.value?.blocks?.[blockId.value] ?? null)
-const event = computed(() => block.value?.events?.[eventId.value] ?? null)
+const blockTime = computed(() => slugline(block.value?.description))
 
-const eventDanceList = computed(() =>
-  event.value ? eventDances({ dances: event.value.dances }) : [],
-)
-
-const wrappableEventName = computed(() =>
-  (event.value?.name ?? 'Event').replace(/\//g, '/​'),
-)
-
-const expanded = useLocalStorage<Record<string, Record<string, boolean>>>(
-  'schedule:expandedDances',
-  {},
-)
-
-function danceHasContent(dance: ScheduleDance): boolean {
-  return Boolean(dance.description || (dance.danceId && dance.platforms))
+interface GroupRow {
+  group: EnrichedGroup
+  count: number
+  mine: Array<{ dancer: EnrichedDancer; color: string | null; sash: string | null; pos: number | null }>
+  posted: boolean
 }
-
-function isExpanded(danceId: string, hasContent: boolean): boolean {
-  const map = expanded.value[eventId.value] ?? {}
-  if (danceId in map) return map[danceId]
-  return hasContent
-}
-
-function toggle(danceId: string, hasContent: boolean) {
-  const current = expanded.value[eventId.value] ?? {}
-  expanded.value = {
-    ...expanded.value,
-    [eventId.value]: { ...current, [danceId]: !isExpanded(danceId, hasContent) },
-  }
-}
-
-interface PlatformPool {
+interface PlatformRow {
   id: string
   name: string
   judges: StaffMember[]
-  groups: EnrichedGroup[]
+  groups: GroupRow[]
 }
 
-function buildPools(dance: ScheduleDance): PlatformPool[] {
+function isPosted(groupId: string, danceId: string) {
+  const raw = results.value?.[groupId]?.[danceId]
+  return raw === false || (Array.isArray(raw) && raw.length > 0)
+}
+
+function drawPos(d: EnrichedDancer, groupId: string, danceId: string) {
+  const list = draws.value?.[groupId]?.[danceId]
+  if (!Array.isArray(list) || d.number == null) return null
+  const i = list.map(String).indexOf(String(d.number))
+  return i >= 0 ? i + 1 : null
+}
+
+function platformsFor(sd: ScheduleDance): PlatformRow[] {
   const judgeById = new Map(staff.value.map((m) => [m.id, m]))
   const groupById = new Map(groups.value.map((g) => [g.id, g]))
   return platforms.value
-    .map<PlatformPool | null>((platform) => {
-      const slot = dance.platforms?.[platform.id]
+    .map((p) => {
+      const slot = sd.platforms?.[p.id]
       if (!slot) return null
-      const platformJudges = (slot.orderedJudgeIds ?? [])
-        .map((id) => judgeById.get(id))
-        .filter((j): j is StaffMember => Boolean(j) && j!.type === 'Judge')
-      const platformGroups = (slot.orderedGroupIds ?? [])
+      const rows = (slot.orderedGroupIds ?? [])
         .map((id) => groupById.get(id))
-        .filter((g): g is EnrichedGroup => Boolean(g))
-      if (!platformJudges.length && !platformGroups.length) return null
-      return {
-        id: platform.id,
-        name: platform.name || 'Platform',
-        judges: platformJudges,
-        groups: platformGroups,
-      }
+        .filter((g): g is EnrichedGroup => !!g)
+        .map<GroupRow>((g) => {
+          const all = findGroupDancers(g.id, dancers.value)
+          return {
+            group: g,
+            count: all.length,
+            posted: !!sd.danceId && isPosted(g.id, sd.danceId),
+            mine: all
+              .filter((d) => following.isFollowing(d))
+              .map((d) => ({
+                dancer: d,
+                color: following.colorFor(d.dancerId), sash: following.sashFor(d.dancerId),
+                pos: sd.danceId ? drawPos(d, g.id, sd.danceId) : null,
+              })),
+          }
+        })
+      const judges = (slot.orderedJudgeIds ?? [])
+        .map((id) => judgeById.get(id))
+        .filter((j): j is StaffMember => !!j)
+      if (!rows.length && !judges.length) return null
+      return { id: p.id, name: p.name || 'Platform', judges, groups: rows }
     })
-    .filter((p): p is PlatformPool => p !== null)
+    .filter((x): x is PlatformRow => !!x)
 }
 
-function groupDancerCount(group: EnrichedGroup): number {
-  return findGroupDancers(group.id, dancers.value).length
-}
-
-function groupFavoriteCount(group: EnrichedGroup): number {
-  return findGroupDancers(group.id, dancers.value).filter((d) => following.isFollowing(d)).length
-}
+const sections = computed(() =>
+  (event.value ? eventDances({ dances: event.value.dances }) : []).map((sd) => {
+    const dance = dances.value.find((d) => d.id === sd.danceId)
+    // Organisers sometimes name a slot just "1"; prefer the real dance name.
+    const custom = sd.name?.trim() && !/^\d+$/.test(sd.name.trim()) ? sd.name.trim() : null
+    return {
+      sd,
+      name: dance?.name || custom || null,
+      realName: custom && dance?.name && custom !== dance.name ? custom : null,
+      steps: dance?.steps,
+      platforms: sd.danceId ? platformsFor(sd) : [],
+    }
+  }),
+)
 
 const drawGroup = ref<EnrichedGroup | null>(null)
 const drawDance = ref<ScheduleDance | null>(null)
-
-function openDraw(group: EnrichedGroup, dance: ScheduleDance) {
-  drawGroup.value = group
-  drawDance.value = dance
-}
-
-function closeDraw() {
-  drawGroup.value = null
-  drawDance.value = null
-}
-
-const drawDanceName = computed(() =>
-  drawDance.value ? (getScheduleDanceName(drawDance.value, dances.value) ?? '') : '',
-)
-
+const drawDanceName = computed(() => (drawDance.value ? getScheduleDanceName(drawDance.value, dances.value) : ''))
 const activeJudge = ref<StaffMember | null>(null)
-function openJudge(judge: StaffMember) {
-  activeJudge.value = judge
-}
-function closeJudge() {
-  activeJudge.value = null
-}
 </script>
 
 <template>
-  <article class="space-y-6">
-    <div
-      v-if="schedule === null"
-      class="text-muted-foreground text-base"
-    >
-      Loading…
-    </div>
-
-    <div
-      v-else-if="!event"
-      class="text-muted-foreground text-base"
-    >
-      Event not found.
-    </div>
+  <article class="space-y-4">
+    <p v-if="schedule === null" class="text-muted-foreground py-6 text-base">Loading…</p>
+    <p v-else-if="!event" class="text-muted-foreground py-6 text-base">
+      This part of the schedule has changed. Go back to Schedule to see the latest.
+    </p>
 
     <template v-else>
-      <header class="space-y-2">
-        <div class="text-foreground/65 text-xs text-eyebrow">
-          {{ day?.name }}<span v-if="block?.name"> · {{ block.name }}</span>
-        </div>
-        <h1
-          class="text-title [view-transition-class:fit_nav-title] [view-transition-name:event-name]"
-        >
-          {{ wrappableEventName }}
-        </h1>
+      <header :ref="setHeader" class="space-y-1">
+        <p class="text-muted-foreground flex items-center gap-1.5 text-sm font-bold">
+          <Clock class="size-4" />
+          {{ [day?.name, block?.name, blockTime].filter(Boolean).join(' · ') }}
+        </p>
+        <h1 class="text-display">{{ event.name || 'Event' }}</h1>
         <div
           v-if="event.description"
-          class="text-muted-foreground text-lg"
+          class="text-muted-foreground text-base [&_a]:text-primary [&_a]:underline"
           v-html="sanitizeRichText(event.description)"
         />
       </header>
 
-      <div
-        v-if="!eventDanceList.length && !event.description"
-        class="text-muted-foreground text-base"
-      >
-        No dances scheduled.
-      </div>
+      <p v-if="!sections.length" class="text-muted-foreground text-base">Nothing is scheduled in this part yet.</p>
 
-      <section v-for="dance in eventDanceList" :key="dance.id" class="space-y-1">
-        <DisclosureHeader
-          :label="getScheduleDanceName(dance, dances) || 'Dance'"
-          :expanded="isExpanded(dance.id, danceHasContent(dance))"
-          :disabled="!danceHasContent(dance)"
-          @toggle="toggle(dance.id, danceHasContent(dance))"
+      <section
+        v-for="(s, i) in sections"
+        :key="s.sd.id"
+        class="bg-card overflow-hidden rounded-2xl border shadow-sm"
+      >
+        <header class="flex items-center justify-between gap-2 border-b py-2.5 pr-2.5 pl-4">
+          <span class="min-w-0">
+            <span v-if="s.name" class="text-muted-foreground block text-[0.8125rem] font-bold">Dance {{ i + 1 }}</span>
+            <span class="text-heading block">{{ s.name ?? `Dance ${i + 1}` }}</span>
+            <span v-if="s.realName" class="text-muted-foreground block text-sm">{{ s.realName }}</span>
+          </span>
+          <StepsHelp :steps="s.steps" :dance="s.name ?? undefined" />
+        </header>
+
+        <div
+          v-if="s.sd.description"
+          class="border-b px-4 py-3 text-base [&_a]:text-primary [&_a]:underline"
+          v-html="sanitizeRichText(s.sd.description)"
         />
 
-        <SmoothCollapse
-          :open="danceHasContent(dance) && isExpanded(dance.id, danceHasContent(dance))"
-        >
-          <div class="space-y-3 pl-12">
-            <div
-              v-if="dance.description"
-              class="text-lg"
-              v-html="sanitizeRichText(dance.description)"
-            />
+        <p v-if="s.sd.danceId && !s.platforms.length" class="text-muted-foreground px-4 py-3 text-base">
+          Platforms haven’t been assigned yet.
+        </p>
 
-            <div
-              v-if="dance.danceId && buildPools(dance).length"
-              class="-mr-4 overflow-x-auto pr-4 pb-2"
-            >
-              <div class="flex items-start gap-8 snap-x snap-mandatory">
-                <div
-                  v-for="pool in buildPools(dance)"
-                  :key="pool.id"
-                  class="flex min-w-56 flex-1 shrink-0 snap-start flex-col gap-4"
-                >
-                  <div>
-                    <div
-                      class="font-serif text-2xl leading-none font-medium tracking-tight"
-                    >
-                      {{ pool.name }}
-                    </div>
-                    <div
-                      v-if="pool.judges.length"
-                      class="text-muted-foreground mt-1 text-sm"
-                    >
-                      <template
-                        v-for="(judge, i) in pool.judges"
-                        :key="judge.id"
-                      >
-                        <button
-                          type="button"
-                          class="hover:text-foreground"
-                          @click="openJudge(judge)"
-                        >
-                          {{ staffMemberName(judge) || 'Judge' }}
-                        </button><span v-if="i < pool.judges.length - 1">, </span>
-                      </template>
-                    </div>
-                  </div>
-
-                  <ul v-if="pool.groups.length">
-                    <li v-for="group in pool.groups" :key="group.id">
-                      <button
-                        type="button"
-                        class="flex w-full items-baseline gap-3 py-2 text-left"
-                        @click="openDraw(group, dance)"
-                      >
-                        <span class="text-item-title flex-1 truncate">{{
-                          group.name || group.fullName
-                        }}</span>
-                        <FavCount
-                          :favs="groupFavoriteCount(group)"
-                          :total="groupDancerCount(group)"
-                        />
-                      </button>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div
-              v-else-if="dance.danceId"
-              class="text-muted-foreground"
-            >
-              Platforms not yet assigned.
-            </div>
+        <div v-for="p in s.platforms" :key="p.id" class="border-t first:border-t-0">
+          <div class="bg-muted/60 flex flex-wrap items-baseline justify-between gap-x-3 px-4 py-2">
+            <span class="text-base font-extrabold">Platform {{ p.name }}</span>
+            <span v-if="p.judges.length" class="text-muted-foreground text-sm">
+              <template v-for="(j, ji) in p.judges" :key="j.id">
+                <button type="button" class="hover:text-foreground font-semibold underline-offset-2 hover:underline" @click="activeJudge = j">
+                  {{ staffMemberName(j) || 'Judge' }}</button><span v-if="ji < p.judges.length - 1">, </span>
+              </template>
+            </span>
           </div>
-        </SmoothCollapse>
+          <ul class="divide-y">
+            <li v-for="(g, gi) in p.groups" :key="g.group.id">
+              <component
+                :is="g.posted ? RouterLink : 'button'"
+                v-bind="
+                  g.posted
+                    ? { to: { name: 'competition.group', params: { competitionId, groupId: g.group.id }, hash: `#dance-${s.sd.danceId}` } }
+                    : { type: 'button' }
+                "
+                class="relative flex min-h-14 w-full items-center gap-3 py-2 pr-2 pl-4 text-left hover:bg-accent"
+                :style="g.mine.length ? { '--dc': g.mine[0].color ?? 'var(--primary)', '--sash': g.mine[0].sash ?? 'var(--tartan)' } : undefined"
+                @click="!g.posted && ((drawGroup = g.group), (drawDance = s.sd))"
+              >
+                <span v-if="g.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
+                <span class="text-muted-foreground w-6 shrink-0 text-center text-sm font-bold tabular-nums">{{ gi + 1 }}</span>
+                <span class="min-w-0 flex-1">
+                  <span class="block text-base font-bold">{{ g.group.fullName }}</span>
+                  <span class="text-muted-foreground block text-sm">{{ g.count }} dancers</span>
+                  <span v-for="m in g.mine" :key="m.dancer.id" class="mt-0.5 flex items-center gap-1 text-sm font-bold">
+                    <Star class="size-3.5 fill-current" :style="{ color: m.color ?? 'var(--primary)' }" />
+                    {{ m.dancer.firstName }} · #{{ m.dancer.number }}<template v-if="m.pos"> · {{ m.pos }}{{ getOrdinalSuffix(m.pos) }} to dance</template>
+                  </span>
+                </span>
+                <span
+                  v-if="g.posted"
+                  class="bg-done text-done-foreground inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-[0.8125rem] font-bold"
+                >
+                  <Check class="size-3.5" stroke-width="3" /> Results
+                </span>
+                <span v-else class="text-primary inline-flex shrink-0 items-center gap-1 text-[0.8125rem] font-bold">
+                  <ListOrdered class="size-4" /> Order
+                </span>
+                <ChevronRight class="text-muted-foreground size-5 shrink-0" />
+              </component>
+            </li>
+          </ul>
+        </div>
       </section>
     </template>
 
@@ -273,9 +236,8 @@ function closeJudge() {
       :dance="drawDance"
       :event-name="event?.name ?? undefined"
       :dance-name="drawDanceName"
-      @close="closeDraw"
+      @close="drawGroup = null"
     />
-
-    <StaffDialog :member="activeJudge" @close="closeJudge" />
+    <StaffDialog :member="activeJudge" @close="activeJudge = null" />
   </article>
 </template>

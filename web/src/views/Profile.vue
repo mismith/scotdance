@@ -1,16 +1,40 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { Eye, EyeOff, LogOut, Pencil } from '@lucide/vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { ChevronRight, Eye, EyeOff, LogOut } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 import { gravatarUrl } from '@/lib/gravatar'
 import Dialog from '@/components/Dialog.vue'
 import AppBar from '@/components/nav/AppBar.vue'
+import { ROLES, useRoles } from '@/composables/useRoles'
+import TartanSwatch from '@/components/TartanSwatch.vue'
+import { useGuardiansStore } from '@/stores/guardians'
+import { useDancerLooksStore } from '@/stores/dancerLooks'
+import { useTartansStore } from '@/stores/tartans'
 
 const auth = useAuthStore()
 const me = useMeStore()
 const router = useRouter()
+const roles = useRoles()
+const guardians = useGuardiansStore()
+const looks = useDancerLooksStore()
+const tartans = useTartansStore()
+// Dancers you've linked (or asked to), with their tartan when it's set.
+const linkedDancers = computed(() => {
+  const ids = Object.keys(guardians.linked)
+  looks.ensure(ids)
+  return ids
+    .map((id) => {
+      const status = guardians.claimFor(id)?.status ?? 'pending'
+      const tartan = tartans.get(looks.tartanIdOf(id))
+      const detail =
+        status === 'approved' ? (tartan ? tartan.name : 'No tartan chosen yet') : status === 'pending' ? 'Waiting to be checked' : 'Couldn’t be confirmed'
+      return { id, name: guardians.linked[id], tartan, detail }
+    })
+    .sort((a, b) => a.name.localeCompare(b.name))
+})
+const rolesLabel = computed(() => ROLES.filter((r) => roles.has(r.id)).map((r) => r.label).join(', ') || 'Not answered yet')
 
 const avatarUrl = ref<string | null>(null)
 watch(
@@ -84,7 +108,7 @@ function closeModal() {
 
 async function handleSignOut() {
   await auth.signOut()
-  router.replace({ name: 'about' })
+  router.replace({ name: 'home' })
 }
 
 async function submitModal() {
@@ -98,12 +122,20 @@ async function submitModal() {
     } else if (modal.value === 'delete') {
       await auth.deleteAccount(currentPassword.value)
       closeModal()
-      router.replace({ name: 'about' })
+      router.replace({ name: 'home' })
       return
     }
     closeModal()
   } catch (e) {
-    modalError.value = e instanceof Error ? e.message : 'Something went wrong.'
+    const code = (e as { code?: string }).code ?? ''
+    modalError.value =
+      code === 'auth/invalid-credential' || code === 'auth/wrong-password'
+        ? 'That password isn’t right. Check it and try again.'
+        : code === 'auth/requires-recent-login'
+          ? 'For your security, sign out, sign back in, then try again.'
+          : code === 'auth/email-already-in-use'
+            ? 'That email already has an account.'
+            : 'That didn’t work. Check your connection and try again.'
   } finally {
     submitting.value = false
   }
@@ -111,7 +143,7 @@ async function submitModal() {
 
 const submitDisabled = computed(() => {
   if (submitting.value) return true
-  if (!currentPassword.value) return true
+  if (auth.hasPassword && !currentPassword.value) return true
   if (modal.value === 'email' && !newEmail.value) return true
   if (modal.value === 'password' && !newPassword.value) return true
   return false
@@ -119,190 +151,147 @@ const submitDisabled = computed(() => {
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1rem)]">
+  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
     <AppBar title="Account" :fallback="{ to: { name: 'more' }, label: 'More' }" />
 
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 pt-[calc(var(--chrome-top)+0.25rem)]">
-      <h1 class="text-display">Account</h1>
-      <section class="flex items-center gap-4">
-        <img
-          v-if="avatarUrl"
-          :src="avatarUrl"
-          alt=""
-          class="bg-muted size-20 rounded-full object-cover"
-        />
-        <div v-else class="bg-muted size-20 rounded-full" />
-        <div class="text-muted-foreground">
-          Avatar via
-          <a
-            href="https://gravatar.com/"
-            target="_blank"
-            rel="noopener"
-            class="hover:text-foreground underline"
-          >
-            Gravatar
-          </a>
+    <main class="mx-auto w-full max-w-3xl space-y-5 px-4 pt-[calc(var(--chrome-top)+0.25rem)]">
+      <header class="flex items-center gap-4">
+        <img v-if="avatarUrl" :src="avatarUrl" alt="" class="bg-muted size-16 rounded-full object-cover" />
+        <div v-else class="bg-muted size-16 rounded-full" />
+        <div class="min-w-0">
+          <h1 class="text-display truncate">{{ displayName || 'Your account' }}</h1>
+          <p class="text-muted-foreground text-sm">Signed in with {{ auth.signInMethod }}</p>
         </div>
-      </section>
+      </header>
 
-      <section class="space-y-2">
-        <label class="block space-y-1">
-          <span class="text-muted-foreground">Display name</span>
+      <section class="bg-card space-y-2 rounded-2xl border p-4 shadow-sm">
+        <label class="block space-y-1.5">
+          <span class="text-[0.9375rem] font-bold">Your name</span>
           <input
             v-model="displayName"
             type="text"
-            class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
+            autocomplete="name"
+            class="bg-card border-strong focus:border-primary h-12 w-full rounded-xl border-2 px-3 text-base outline-none"
             @input="onDisplayNameInput"
             @blur="saveDisplayName"
           />
         </label>
-        <p v-if="displayNameSaving" class="text-muted-foreground">Saving…</p>
-        <p v-if="displayNameError" class="text-destructive">
-          {{ displayNameError }}
+        <p v-if="displayNameSaving" class="text-muted-foreground text-sm">Saving…</p>
+        <p v-if="displayNameError" class="text-destructive text-sm font-semibold">Your name didn’t save. Try again.</p>
+        <p class="text-muted-foreground text-sm">
+          Your picture comes from <a href="https://gravatar.com/" target="_blank" rel="noopener" class="text-primary font-bold">Gravatar</a>.
         </p>
       </section>
 
-      <section class="space-y-2">
-        <label class="block space-y-1">
-          <span class="text-muted-foreground">Email</span>
-          <button
-            type="button"
-            class="bg-background hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left"
-            @click="openModal('email')"
-          >
-            <span class="truncate">{{ me.email ?? '—' }}</span>
-            <Pencil class="text-muted-foreground size-3.5 shrink-0" />
+      <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+        <li>
+          <button type="button" class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-accent" @click="openModal('email')">
+            <span class="min-w-0 flex-1">
+              <span class="block text-base font-bold">Email</span>
+              <span class="text-muted-foreground block truncate text-sm">{{ me.email ?? '—' }}</span>
+            </span>
+            <span class="text-primary text-[0.9375rem] font-bold">Change</span>
           </button>
-        </label>
+        </li>
+        <li v-if="auth.hasPassword">
+          <button type="button" class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-accent" @click="openModal('password')">
+            <span class="flex-1 text-base font-bold">Password</span>
+            <span class="text-primary text-[0.9375rem] font-bold">Change</span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-accent" @click="roles.open()">
+            <span class="min-w-0 flex-1">
+              <span class="block text-base font-bold">How you use ScotDance</span>
+              <span class="text-muted-foreground block truncate text-sm">{{ rolesLabel }}</span>
+            </span>
+            <ChevronRight class="text-muted-foreground size-5" />
+          </button>
+        </li>
+      </ul>
+
+      <section v-if="linkedDancers.length" class="space-y-2">
+        <h2 class="text-heading pt-1">Your dancers</h2>
+        <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+          <li v-for="d in linkedDancers" :key="d.id">
+            <RouterLink :to="{ name: 'dancer.info', params: { dancerId: d.id } }" class="flex min-h-16 items-center gap-3 px-4 py-2 hover:bg-accent">
+              <TartanSwatch :tartan="d.tartan" :scale="0.35" class="size-10 shrink-0 rounded-full border" />
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-base font-bold">{{ d.name }}</span>
+                <span class="text-muted-foreground block truncate text-sm">{{ d.detail }}</span>
+              </span>
+              <ChevronRight class="text-muted-foreground size-5" />
+            </RouterLink>
+          </li>
+        </ul>
       </section>
 
-      <section class="space-y-2">
-        <label class="block space-y-1">
-          <span class="text-muted-foreground">Password</span>
-          <button
-            type="button"
-            class="bg-background hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left"
-            @click="openModal('password')"
-          >
-            <span class="font-mono">••••••••</span>
-            <Pencil class="text-muted-foreground size-3.5 shrink-0" />
-          </button>
-        </label>
-      </section>
-
-      <section class="flex flex-col items-center gap-3 pt-6">
-        <button
-          type="button"
-          class="hover:bg-accent inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm"
-          @click="handleSignOut"
-        >
-          <LogOut class="size-3.5" />
-          Sign out
+      <div class="space-y-2">
+        <button type="button" class="bg-card border-strong flex h-12 w-full items-center justify-center gap-2 rounded-xl border text-base font-bold" @click="handleSignOut">
+          <LogOut class="size-5" /> Sign out
         </button>
-        <button
-          type="button"
-          class="text-destructive text-sm hover:underline"
-          @click="openModal('delete')"
-        >
+        <button type="button" class="text-destructive h-12 w-full text-[0.9375rem] font-bold" @click="openModal('delete')">
           Delete account
         </button>
-      </section>
-
+      </div>
     </main>
 
-    <Dialog :open="!!modal" @close="closeModal">
-      <h2 class="text-3xl font-medium tracking-tight">
-        <template v-if="modal === 'email'">Change your email</template>
-        <template v-else-if="modal === 'password'">Change your password</template>
-        <template v-else>Delete your account</template>
-      </h2>
+    <Dialog :open="!!modal" variant="sheet" @close="closeModal">
+      <template #header>
+        <h2 class="text-title">
+          <template v-if="modal === 'email'">Change your email</template>
+          <template v-else-if="modal === 'password'">Change your password</template>
+          <template v-else>Delete your account?</template>
+        </h2>
+      </template>
+      <form class="space-y-3 p-4 pb-[calc(1.5rem+var(--safe-bottom))]" @submit.prevent="submitModal">
+        <p v-if="modal === 'delete'" class="text-base">
+          This removes your account, the dancers you follow and your settings. It can’t be undone. Competition results
+          aren’t affected.
+        </p>
 
-      <p v-if="modal === 'delete'" class="text-muted-foreground text-lg">
-        This will permanently delete your account and all associated data.
-      </p>
-
-      <form class="space-y-3" @submit.prevent="submitModal">
-        <label v-if="modal === 'email'" class="block space-y-1">
-          <span class="text-muted-foreground">New email</span>
-          <input
-            v-model="newEmail"
-            type="email"
-            autocomplete="email"
-            required
-            autofocus
-            class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 focus:ring-2 focus:outline-none"
-          />
+        <label v-if="modal === 'email'" class="block space-y-1.5">
+          <span class="text-[0.9375rem] font-bold">New email</span>
+          <input v-model="newEmail" type="email" autocomplete="email" required class="bg-card border-strong focus:border-primary h-12 w-full rounded-xl border-2 px-3 text-base outline-none" />
         </label>
 
-        <label v-if="modal === 'password'" class="block space-y-1">
-          <span class="text-muted-foreground">New password</span>
-          <div class="relative">
-            <input
-              v-model="newPassword"
-              :type="showNewPassword ? 'text' : 'password'"
-              autocomplete="new-password"
-              required
-              class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 pr-10 focus:ring-2 focus:outline-none"
-            />
-            <button
-              type="button"
-              tabindex="-1"
-              class="text-muted-foreground hover:text-foreground hover:bg-accent absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1"
-              @click="showNewPassword = !showNewPassword"
-            >
-              <component :is="showNewPassword ? EyeOff : Eye" class="size-4" />
+        <label v-if="modal === 'password'" class="block space-y-1.5">
+          <span class="text-[0.9375rem] font-bold">New password</span>
+          <span class="relative block">
+            <input v-model="newPassword" :type="showNewPassword ? 'text' : 'password'" autocomplete="new-password" required class="bg-card border-strong focus:border-primary h-12 w-full rounded-xl border-2 pr-24 pl-3 text-base outline-none" />
+            <button type="button" class="text-primary absolute top-1/2 right-1 flex h-10 -translate-y-1/2 items-center gap-1 rounded-lg px-2 text-sm font-bold" @click="showNewPassword = !showNewPassword">
+              <component :is="showNewPassword ? EyeOff : Eye" class="size-4" /> {{ showNewPassword ? 'Hide' : 'Show' }}
             </button>
-          </div>
+          </span>
         </label>
 
-        <label class="block space-y-1">
-          <span class="text-muted-foreground">Current password</span>
-          <div class="relative">
-            <input
-              v-model="currentPassword"
-              :type="showCurrentPassword ? 'text' : 'password'"
-              autocomplete="current-password"
-              required
-              :autofocus="modal !== 'email'"
-              class="bg-background focus:ring-ring w-full rounded-md border px-3 py-2 pr-10 focus:ring-2 focus:outline-none"
-            />
-            <button
-              type="button"
-              tabindex="-1"
-              class="text-muted-foreground hover:text-foreground hover:bg-accent absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-1"
-              @click="showCurrentPassword = !showCurrentPassword"
-            >
-              <component :is="showCurrentPassword ? EyeOff : Eye" class="size-4" />
+        <label v-if="auth.hasPassword" class="block space-y-1.5">
+          <span class="text-[0.9375rem] font-bold">Your current password</span>
+          <span class="relative block">
+            <input v-model="currentPassword" :type="showCurrentPassword ? 'text' : 'password'" autocomplete="current-password" required class="bg-card border-strong focus:border-primary h-12 w-full rounded-xl border-2 pr-24 pl-3 text-base outline-none" />
+            <button type="button" class="text-primary absolute top-1/2 right-1 flex h-10 -translate-y-1/2 items-center gap-1 rounded-lg px-2 text-sm font-bold" @click="showCurrentPassword = !showCurrentPassword">
+              <component :is="showCurrentPassword ? EyeOff : Eye" class="size-4" /> {{ showCurrentPassword ? 'Hide' : 'Show' }}
             </button>
-          </div>
+          </span>
         </label>
+        <p v-else class="text-muted-foreground text-sm">You may be asked to sign in with {{ auth.signInMethod }} again to confirm.</p>
 
-        <p v-if="modalError" class="text-destructive text-lg">{{ modalError }}</p>
+        <p v-if="modalError" class="text-destructive text-[0.9375rem] font-semibold" role="alert">{{ modalError }}</p>
 
-        <div class="flex items-center justify-end gap-2 pt-2">
-          <button
-            type="button"
-            class="hover:bg-accent text-muted-foreground rounded-md px-3 py-1.5 text-sm"
-            @click="closeModal"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            :disabled="submitDisabled"
-            :class="[
-              'rounded-md px-3 py-1.5 text-sm font-medium hover:opacity-90 disabled:opacity-50',
-              modal === 'delete'
-                ? 'bg-destructive text-destructive-foreground'
-                : 'bg-primary text-primary-foreground',
-            ]"
-          >
-            <template v-if="submitting">Working…</template>
-            <template v-else-if="modal === 'email'">Change email</template>
-            <template v-else-if="modal === 'password'">Change password</template>
-            <template v-else>Delete account</template>
-          </button>
-        </div>
+        <button
+          type="submit"
+          :disabled="submitDisabled"
+          :class="[
+            'h-12 w-full rounded-xl text-base font-bold disabled:opacity-50',
+            modal === 'delete' ? 'bg-destructive text-destructive-foreground' : 'bg-primary text-primary-foreground',
+          ]"
+        >
+          <template v-if="submitting">Working…</template>
+          <template v-else-if="modal === 'email'">Change email</template>
+          <template v-else-if="modal === 'password'">Change password</template>
+          <template v-else>Delete my account</template>
+        </button>
+        <button type="button" class="text-muted-foreground h-11 w-full font-bold" @click="closeModal">Cancel</button>
       </form>
     </Dialog>
   </div>

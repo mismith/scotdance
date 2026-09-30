@@ -1,94 +1,62 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { School } from '@lucide/vue'
-import { useVenueProfile, type VenueAppearance } from '@/composables/useVenueProfile'
-import { useFavoritesStore } from '@/stores/favorites'
-import { formatMonthAbbrev } from '@/lib/format'
-import {
-  injectInfoHeaderScrolledPast,
-  injectInfoHeaderSetter,
-} from '@/composables/useScrolledPast'
-import StatGrid from '@/components/StatGrid.vue'
+import { MapPin } from '@lucide/vue'
+import { useVenueProfile } from '@/composables/useVenueProfile'
+import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
+import FavoriteButton from '@/components/FavoriteButton.vue'
+import ProfileCompetitions from '@/components/ProfileCompetitions.vue'
 
+// A venue: where it is, how to get there, and what's on there.
 const setHeader = injectInfoHeaderSetter()
-const scrolledPast = injectInfoHeaderScrolledPast()
-
 const route = useRoute()
-const profile = useVenueProfile()
-const { name, locationLine, loading } = profile
-const favorites = useFavoritesStore()
-const isFavorite = computed(() =>
-  favorites.isFavorite('venues', String(route.params.venueId ?? '')),
-)
+const p = useVenueProfile()
+const id = computed(() => String(route.params.venueId ?? ''))
 
-function compRoute(a: VenueAppearance | null) {
-  if (!a?.raw.competitionId) return undefined
-  return {
-    name: 'competition.info',
-    params: { competitionId: a.raw.competitionId },
-  }
-}
-
-const tiles = computed(() => {
-  const first = profile.firstSeen.value
-  const last = profile.lastSeen.value
-  const firstDate = profile.firstSeenDate.value
-  const lastDate = profile.lastSeenDate.value
-  return [
-    {
-      label: 'Competitions',
-      value: profile.totalComps.value,
-      to: { name: 'venue.competitions' },
-    },
-    {
-      label: 'First seen',
-      caption: firstDate ? formatMonthAbbrev(firstDate).toUpperCase() : undefined,
-      value: firstDate ? firstDate.getFullYear() : null,
-      to: compRoute(first),
-    },
-    {
-      label: 'Last seen',
-      caption: lastDate ? formatMonthAbbrev(lastDate).toUpperCase() : undefined,
-      value: lastDate ? lastDate.getFullYear() : null,
-      to: compRoute(last),
-    },
-  ]
+const address = computed(() => {
+  const a = p.appearances.value.find((x) => (x.raw as { address?: string | null }).address)
+  return (a?.raw as { address?: string | null } | undefined)?.address ?? null
+})
+const mapsHref = computed(() => {
+  const q = [p.name.value, address.value, p.locationLine.value].filter(Boolean).join(', ')
+  return q ? `https://maps.google.com/?q=${encodeURIComponent(q)}` : null
+})
+const items = computed(() => {
+  const seen = new Set<string>()
+  return p.appearances.value.flatMap((a) => {
+    const cid = a.raw.competitionId
+    if (!cid || !a.competition || seen.has(cid)) return []
+    seen.add(cid)
+    return [{ competitionId: cid, competition: a.competition }]
+  })
 })
 </script>
 
 <template>
-  <article class="space-y-6">
-    <header :ref="setHeader" class="space-y-3 pr-16">
-      <div
-        :class="[
-          'flex size-20 items-center justify-center rounded-full [view-transition-class:nav-avatar]',
-          isFavorite
-            ? 'bg-secondary text-secondary-foreground'
-            : 'bg-muted text-muted-foreground',
-          !scrolledPast && '[view-transition-name:venue-avatar]',
-        ]"
-      >
-        <School class="size-10" />
-      </div>
-      <div class="space-y-1">
-        <h1
-          :class="[
-            'text-title [view-transition-class:fit_nav-title]',
-            !scrolledPast && '[view-transition-name:venue-name]',
-          ]"
-        >
-          {{ name }}
-        </h1>
-        <p
-          v-if="locationLine"
-          class="text-muted-foreground text-base"
-        >
-          {{ locationLine }}
-        </p>
+  <article class="space-y-4">
+    <header :ref="setHeader" class="flex items-center gap-4">
+      <span class="bg-blue-paper text-primary flex size-16 shrink-0 items-center justify-center rounded-2xl">
+        <MapPin class="size-7" />
+      </span>
+      <div class="min-w-0">
+        <h1 class="text-display">{{ p.name.value }}</h1>
+        <p class="text-muted-foreground text-sm">{{ [address, p.locationLine.value].filter(Boolean).join(', ') }}</p>
       </div>
     </header>
 
-    <StatGrid :stats="tiles" :loading="loading" />
+    <div class="flex flex-wrap gap-2">
+      <FavoriteButton :id="id" type="venues" :name="p.name.value" labelled />
+      <a
+        v-if="mapsHref"
+        :href="mapsHref"
+        target="_blank"
+        rel="noopener"
+        class="bg-card border-strong flex h-11 items-center gap-1.5 rounded-full border px-4 text-[0.9375rem] font-bold"
+      >
+        <MapPin class="size-4" /> Directions
+      </a>
+    </div>
+
+    <ProfileCompetitions :items="items" :loading="p.loading.value" empty-text="No competitions listed here yet." />
   </article>
 </template>

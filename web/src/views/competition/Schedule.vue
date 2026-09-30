@@ -39,7 +39,7 @@ onMounted(async () => {
 const platformName = computed(() => new Map(platforms.value.map((p) => [p.id, p.name ?? ''])))
 
 interface EventInfo {
-  mine: Array<{ dancer: EnrichedDancer; color: string | null; platform: string | null }>
+  mine: Array<{ dancer: EnrichedDancer; color: string | null; sash: string | null; platform: string | null }>
   posted: number
   total: number
 }
@@ -59,7 +59,7 @@ function info(event: ScheduleEvent): EventInfo {
           if (!mine.has(d.id))
             mine.set(d.id, {
               dancer: d,
-              color: following.colorFor(d.dancerId),
+              color: following.colorFor(d.dancerId), sash: following.sashFor(d.dancerId),
               platform: platformName.value.get(pid) || null,
             })
         }
@@ -123,7 +123,7 @@ const dayList = computed(() =>
                 params: { competitionId, dayId: d.day.id, blockId: b.block.id, eventId: event.id },
               }"
               class="relative flex min-h-14 items-center gap-3 py-2.5 pr-2 pl-4 hover:bg-accent"
-              :style="i.mine.length ? { '--dc': i.mine[0].color ?? 'var(--primary)' } : undefined"
+              :style="i.mine.length ? { '--dc': i.mine[0].color ?? 'var(--primary)', '--sash': i.mine[0].sash ?? 'var(--tartan)' } : undefined"
             >
               <span v-if="i.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
               <span class="min-w-0 flex-1">
@@ -133,7 +133,7 @@ const dayList = computed(() =>
                 </span>
                 <span v-for="m in i.mine" :key="m.dancer.id" class="mt-1 flex items-center gap-1 text-sm font-bold">
                   <Star class="size-3.5 fill-current" :style="{ color: m.color ?? 'var(--primary)' }" />
-                  {{ m.dancer.firstName }} · {{ m.dancer.number }}<template v-if="m.platform"> · Platform {{ m.platform }}</template>
+                  {{ m.dancer.firstName }} · #{{ m.dancer.number }}<template v-if="m.platform"> · Platform {{ m.platform }}</template>
                 </span>
               </span>
               <span

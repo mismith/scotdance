@@ -10,6 +10,7 @@ import type { EnrichedDancer } from '@/types/competition'
 export interface FollowedHere {
   personId: string
   color: string | null
+  sash: string | null
   name: string
   days: DancerDay[]
 }
@@ -48,6 +49,7 @@ export function useCompetitionDays() {
         return {
           personId: id,
           color: following.colorFor(id),
+          sash: following.sashFor(id),
           name: entries[0].fullName,
           days: entries.map(dayFor),
         }

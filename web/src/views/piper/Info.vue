@@ -1,117 +1,23 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { usePiperProfile, type PiperAppearance } from '@/composables/usePiperProfile'
-import { useFavoritesStore } from '@/stores/favorites'
-import { formatMonthAbbrev, initialsOf } from '@/lib/format'
-import { sanitizeRichText } from '@/lib/sanitize'
-import {
-  injectInfoHeaderScrolledPast,
-  injectInfoHeaderSetter,
-} from '@/composables/useScrolledPast'
-import SectionHeader from '@/components/SectionHeader.vue'
-import StatGrid from '@/components/StatGrid.vue'
-
-const setHeader = injectInfoHeaderSetter()
-const scrolledPast = injectInfoHeaderScrolledPast()
+import { usePiperProfile } from '@/composables/usePiperProfile'
+import StaffProfileBody from '@/components/StaffProfileBody.vue'
 
 const route = useRoute()
-const profile = usePiperProfile()
-const { displayName, location, image, bio, loading } = profile
-const favorites = useFavoritesStore()
-
-const initials = computed(() => initialsOf(displayName.value))
-const isFavorite = computed(() =>
-  favorites.isFavorite('pipers', String(route.params.piperId ?? '')),
-)
-
-function compRoute(a: PiperAppearance | null) {
-  if (!a?.raw.competitionId) return undefined
-  return {
-    name: 'competition.info',
-    params: { competitionId: a.raw.competitionId },
-  }
-}
-
-const tiles = computed(() => {
-  const first = profile.firstSeen.value
-  const last = profile.lastSeen.value
-  const firstDate = profile.firstSeenDate.value
-  const lastDate = profile.lastSeenDate.value
-  return [
-    {
-      label: 'Competitions',
-      value: profile.totalComps.value,
-      to: { name: 'piper.competitions' },
-    },
-    { label: 'Venues', value: profile.venueCount.value },
-    {
-      label: 'First seen',
-      caption: firstDate ? formatMonthAbbrev(firstDate).toUpperCase() : undefined,
-      value: firstDate ? firstDate.getFullYear() : null,
-      to: compRoute(first),
-    },
-    {
-      label: 'Last seen',
-      caption: lastDate ? formatMonthAbbrev(lastDate).toUpperCase() : undefined,
-      value: lastDate ? lastDate.getFullYear() : null,
-      to: compRoute(last),
-    },
-  ]
-})
+const p = usePiperProfile()
+const id = computed(() => String(route.params.piperId ?? ''))
 </script>
 
 <template>
-  <article class="space-y-6">
-    <header :ref="setHeader" class="space-y-3 pr-16">
-      <div
-        :class="[
-          'flex size-20 items-center justify-center overflow-hidden rounded-full text-4xl font-medium [view-transition-class:nav-avatar]',
-          isFavorite
-            ? 'bg-secondary text-secondary-foreground'
-            : 'bg-muted text-muted-foreground',
-          !scrolledPast && '[view-transition-name:piper-avatar]',
-        ]"
-      >
-        <img
-          v-if="image"
-          :src="image"
-          :alt="displayName"
-          class="size-full object-cover"
-        />
-        <template v-else>{{ initials || '?' }}</template>
-      </div>
-      <div class="space-y-1">
-        <h1
-          :class="[
-            'text-title [view-transition-class:fit_nav-title]',
-            !scrolledPast && '[view-transition-name:piper-name]',
-          ]"
-        >
-          {{ displayName }}
-        </h1>
-        <p
-          v-if="location"
-          class="text-muted-foreground text-base"
-        >
-          {{ location }}
-        </p>
-      </div>
-    </header>
-
-    <StatGrid :stats="tiles" :loading="loading" />
-
-    <section v-if="bio" class="space-y-2">
-      <SectionHeader label="Bio" />
-      <div
-        class="text-foreground/90 wrap-break-word"
-        v-html="sanitizeRichText(bio)"
-      />
-    </section>
-
-    <p class="text-muted-foreground">
-      Cross-comp profile is matched by name. Identity may be approximate when names
-      are shared.
-    </p>
-  </article>
+  <StaffProfileBody
+    kind="pipers"
+    :id="id"
+    :name="p.displayName.value"
+    :location="p.location.value"
+    :image="p.image.value"
+    :bio="p.bio.value"
+    :loading="p.loading.value"
+    :appearances="p.appearances.value"
+  />
 </template>

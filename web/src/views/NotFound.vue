@@ -1,37 +1,25 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute, RouterLink } from 'vue-router'
-import { CircleSlash, Info } from '@lucide/vue'
-
-const props = defineProps<{
-  title?: string
-  description?: string
-}>()
-
-const route = useRoute()
-
-const heading = computed(() => props.title ?? 'Page not found')
-const message = computed(() => {
-  if (props.description) return props.description
-  return `We couldn't find anything at ${route.fullPath}.`
-})
+import { RouterLink } from 'vue-router'
+import { House, Search } from '@lucide/vue'
+import AppBar from '@/components/nav/AppBar.vue'
 </script>
 
 <template>
-  <main class="mx-auto flex w-full max-w-3xl flex-1 items-center justify-center p-4">
-    <div class="flex flex-col items-center gap-4 py-16 text-center">
-      <CircleSlash class="text-muted-foreground size-16" />
-      <div class="space-y-1">
-        <h2 class="text-2xl font-semibold">{{ heading }}</h2>
-        <p class="text-muted-foreground text-lg">{{ message }}</p>
+  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
+    <AppBar :fallback="{ to: { name: 'home' }, label: 'Home' }" />
+    <main class="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-4 px-4 py-16 text-center">
+      <h1 class="text-display">This page isn’t here</h1>
+      <p class="text-muted-foreground max-w-sm text-base">
+        The link may be old, or the competition may no longer be public. Try Home, or search for what you were looking for.
+      </p>
+      <div class="flex flex-wrap justify-center gap-2">
+        <RouterLink :to="{ name: 'home' }" class="bg-primary text-primary-foreground flex h-12 items-center gap-2 rounded-xl px-5 text-base font-bold">
+          <House class="size-5" /> Go to Home
+        </RouterLink>
+        <RouterLink :to="{ name: 'search' }" class="bg-card border-strong flex h-12 items-center gap-2 rounded-xl border px-5 text-base font-bold">
+          <Search class="size-5" /> Search
+        </RouterLink>
       </div>
-      <RouterLink
-        :to="{ name: 'about' }"
-        class="bg-primary text-primary-foreground inline-flex items-center gap-2 rounded-md px-4 py-2 text-lg font-medium hover:opacity-90"
-      >
-        <Info class="size-4" />
-        Go home
-      </RouterLink>
-    </div>
-  </main>
+    </main>
+  </div>
 </template>

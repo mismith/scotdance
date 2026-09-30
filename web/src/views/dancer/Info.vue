@@ -8,6 +8,7 @@ import { useFollowing } from '@/composables/useFollowing'
 import { useCrisp } from '@/composables/useCrisp'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import DancerDayCard from '@/components/DancerDayCard.vue'
+import DancerTartan from '@/components/DancerTartan.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import Medal from '@/components/Medal.vue'
 import { fetchEntrySummary, type EntrySummary } from '@/lib/entrySummary'
@@ -25,7 +26,14 @@ const crisp = useCrisp()
 const dancerId = computed(() => String(route.params.dancerId ?? ''))
 const name = computed(() => profile.displayName.value)
 const color = computed(() => following.colorFor(dancerId.value))
+const sash = computed(() => following.sashFor(dancerId.value))
 const initials = computed(() => initialsOf(name.value))
+const subtitle = computed(() => {
+  const n = profile.totalComps.value
+  const since = profile.firstSeenDate.value?.getFullYear()
+  const record = n ? `${n} competition${n === 1 ? '' : 's'}${since ? ` since ${since}` : ''}` : null
+  return [profile.location.value, record].filter(Boolean).join(' · ')
+})
 
 const person = computed(() => (dancerId.value ? [{ id: dancerId.value, name: name.value }] : []))
 const { cards } = useDancerCards(person)
@@ -83,14 +91,14 @@ function medals(cid: string) {
       <img v-if="profile.image.value" :src="profile.image.value" :alt="name" class="size-16 shrink-0 rounded-full object-cover" />
       <span
         v-else
-        class="sash flex size-16 shrink-0 items-center justify-center rounded-full text-xl font-extrabold text-white"
-        :style="{ '--dc': color ?? 'var(--strong)' }"
+        class="sash flex size-16 shrink-0 items-center justify-center rounded-full text-xl font-extrabold text-white [text-shadow:0_1px_3px_rgb(0_0_0/0.7)]"
+        :style="following.paint(dancerId, 'var(--strong)')"
       >
         {{ initials }}
       </span>
       <div class="min-w-0">
         <h1 class="text-display">{{ name }}</h1>
-        <p v-if="profile.location.value" class="text-muted-foreground text-sm">{{ profile.location.value }}</p>
+        <p v-if="subtitle" class="text-muted-foreground text-sm">{{ subtitle }}</p>
       </div>
     </header>
 
@@ -98,8 +106,10 @@ function medals(cid: string) {
 
     <section v-if="focus && focus.days.length" class="space-y-2">
       <h2 class="text-heading pt-1">{{ focusLabel }}</h2>
-      <DancerDayCard :days="focus.days" :competition-id="focus.competitionId" :color="color" />
+      <DancerDayCard :days="focus.days" :competition-id="focus.competitionId" :color="color" :sash="sash" />
     </section>
+
+    <DancerTartan :dancer-id="dancerId" :dancer-name="name" />
 
     <section class="space-y-2">
       <h2 class="text-heading flex items-baseline justify-between pt-1">
@@ -127,7 +137,7 @@ function medals(cid: string) {
             <span class="min-w-0 flex-1">
               <span class="line-clamp-2 text-base leading-snug font-bold">{{ r.competition.name }}</span>
               <span class="text-muted-foreground block truncate text-sm">
-                {{ [r.numbers.length ? `Number ${r.numbers.join(', ')}` : null, ...medals(r.competitionId).groups].filter(Boolean).join(' · ') }}
+                {{ [r.numbers.length ? r.numbers.map((n) => `#${n}`).join(', ') : null, ...medals(r.competitionId).groups].filter(Boolean).join(' · ') }}
               </span>
               <span v-if="isSameDay(r.competition.date)" class="text-live text-sm font-bold">Today</span>
               <span v-if="medals(r.competitionId).best.length || medals(r.competitionId).overall" class="mt-1 flex flex-wrap items-center gap-1">

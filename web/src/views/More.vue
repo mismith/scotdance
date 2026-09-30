@@ -14,7 +14,7 @@ import {
   MessageCircleQuestion,
   Music,
   School,
-  Settings2,
+  ShieldCheck,
   Sun,
   Users,
 } from '@lucide/vue'
@@ -22,8 +22,7 @@ import AppBar from '@/components/nav/AppBar.vue'
 import { useScrolledPast } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { useTheme, type Theme } from '@/composables/useTheme'
-import { TEXT_SIZES, useDisplayPrefs } from '@/composables/useDisplayPrefs'
-import { ALERT_KINDS, useAlerts } from '@/composables/useAlerts'
+import { useAlerts } from '@/composables/useAlerts'
 import { useCrisp } from '@/composables/useCrisp'
 import { useUpdate } from '@/composables/useUpdate'
 import { useAuthStore } from '@/stores/auth'
@@ -43,7 +42,6 @@ const alerts = useAlerts()
 const crisp = useCrisp()
 const update = useUpdate()
 const { theme } = useTheme()
-const { textSize } = useDisplayPrefs()
 
 const titleEl = ref<HTMLElement | null>(null)
 const scrolledPast = useScrolledPast(titleEl)
@@ -61,11 +59,6 @@ const THEMES: Array<{ id: Theme; label: string }> = [
   { id: 'light', label: 'Light' },
   { id: 'dark', label: 'Dark' },
 ]
-
-async function toggleAlerts() {
-  if (alerts.enabled) await alerts.disable()
-  else await alerts.enable()
-}
 
 const roles = useRoles()
 const rolesLabel = computed(() => {
@@ -122,78 +115,34 @@ const rowClass = 'flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left ho
         </div>
       </section>
 
-      <!-- Notifications -->
+      <!-- Alerts -->
       <section class="space-y-2">
-        <h2 class="text-heading">Notifications</h2>
+        <h2 class="text-heading">Alerts</h2>
         <div class="bg-card overflow-hidden rounded-2xl border shadow-sm">
-          <button type="button" role="switch" :aria-checked="alerts.enabled" :class="rowClass" @click="toggleAlerts">
+          <button type="button" role="switch" :aria-checked="alerts.enabled.value" :class="rowClass" @click="alerts.enabled.value = !alerts.enabled.value">
             <Bell class="text-primary size-5 shrink-0" />
             <span class="min-w-0 flex-1">
-              <span class="block text-base font-bold">Result alerts</span>
-              <span class="text-muted-foreground block text-sm">About the dancers and competitions you follow</span>
+              <span class="block text-base font-bold">Live result alerts</span>
+              <span class="text-muted-foreground block text-sm">A banner when a dancer you follow places, while ScotDance is open</span>
             </span>
             <span
               :class="[
                 'relative h-7 w-12 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-6 after:rounded-full after:bg-white after:shadow after:transition-transform',
-                alerts.enabled ? 'bg-primary after:translate-x-5' : 'bg-strong',
+                alerts.enabled.value ? 'bg-primary after:translate-x-5' : 'bg-strong',
               ]"
               aria-hidden="true"
             />
           </button>
-          <template v-if="alerts.enabled && auth.isSignedIn">
-            <button
-              v-for="k in ALERT_KINDS"
-              :key="k.id"
-              type="button"
-              role="switch"
-              :aria-checked="alerts.kinds[k.id]"
-              :class="[rowClass, 'border-t pl-12']"
-              @click="alerts.setKind(k.id, !alerts.kinds[k.id])"
-            >
-              <span class="min-w-0 flex-1">
-                <span class="block text-base font-bold">{{ k.label }}</span>
-                <span class="text-muted-foreground block text-sm">{{ k.hint }}</span>
-              </span>
-              <span
-                :class="[
-                  'relative h-7 w-12 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-6 after:rounded-full after:bg-white after:shadow after:transition-transform',
-                  alerts.kinds[k.id] ? 'bg-primary after:translate-x-5' : 'bg-strong',
-                ]"
-                aria-hidden="true"
-              />
-            </button>
-          </template>
         </div>
       </section>
 
       <!-- Display -->
       <section class="space-y-2">
         <h2 class="text-heading">Display</h2>
-        <div class="bg-card space-y-4 rounded-2xl border p-4 shadow-sm">
-          <div class="space-y-2">
-            <p class="flex items-center gap-2 text-base font-bold">
-              <Settings2 class="text-primary size-5" /> Text size
-            </p>
-            <div class="bg-muted grid grid-cols-3 rounded-xl border p-1" role="group" aria-label="Text size">
-              <button
-                v-for="t in TEXT_SIZES"
-                :key="t.id"
-                type="button"
-                :aria-pressed="textSize === t.id"
-                :class="[
-                  'h-10 rounded-lg font-bold transition-colors',
-                  textSize === t.id ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground',
-                ]"
-                :style="{ fontSize: `${0.875 * t.scale}rem` }"
-                @click="textSize = t.id"
-              >
-                {{ t.label }}
-              </button>
-            </div>
-          </div>
-
+        <div class="bg-card space-y-2 rounded-2xl border p-4 shadow-sm">
           <div class="space-y-2">
             <p class="flex items-center gap-2 text-base font-bold"><Sun class="text-primary size-5" /> Appearance</p>
+            <p class="text-muted-foreground text-sm">Automatic follows your phone. Text size follows your phone’s settings too.</p>
             <div class="bg-muted grid grid-cols-3 rounded-xl border p-1" role="group" aria-label="Appearance">
               <button
                 v-for="t in THEMES"
@@ -271,6 +220,11 @@ const rowClass = 'flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left ho
           <li>
             <RouterLink :to="{ name: 'policies' }" :class="rowClass">
               <FileText class="text-primary size-5" /><span class="flex-1 text-base font-bold">Privacy and terms</span><ChevronRight class="text-muted-foreground size-5" />
+            </RouterLink>
+          </li>
+          <li v-if="me.isAdmin">
+            <RouterLink :to="{ name: 'review' }" :class="rowClass">
+              <ShieldCheck class="text-primary size-5" /><span class="flex-1 text-base font-bold">Requests to check</span><ChevronRight class="text-muted-foreground size-5" />
             </RouterLink>
           </li>
           <li v-if="canManage">

@@ -2,20 +2,15 @@
 import { ref } from 'vue'
 import { Check, Share } from '@lucide/vue'
 
-const props = defineProps<{
-  title?: string
-  text?: string
-  url?: string
-}>()
+// A quiet share icon in the app bar: shares the page you're on (a dancer, a
+// competition, one of its pages). Falls back to copying the link.
+const props = defineProps<{ title?: string }>()
 
-const justCopied = ref(false)
+const copied = ref(false)
 
-async function handleClick() {
-  const url = props.url ?? window.location.href
-  const data: ShareData = { url }
+async function share() {
+  const data: ShareData = { url: window.location.href }
   if (props.title) data.title = props.title
-  if (props.text) data.text = props.text
-
   if (typeof navigator.share === 'function' && navigator.canShare?.(data)) {
     try {
       await navigator.share(data)
@@ -24,26 +19,25 @@ async function handleClick() {
       if ((err as Error).name === 'AbortError') return
     }
   }
-
   try {
-    await navigator.clipboard.writeText(url)
-    justCopied.value = true
-    setTimeout(() => (justCopied.value = false), 1500)
+    await navigator.clipboard.writeText(data.url!)
+    copied.value = true
+    setTimeout(() => (copied.value = false), 1800)
   } catch {
-    /* clipboard blocked — silently no-op */
+    /* clipboard blocked: nothing useful to do */
   }
 }
 </script>
 
 <template>
   <button
-    v-tap-feedback
     type="button"
-    class="bg-card hover:bg-accent flex h-11 items-center gap-1.5 rounded-full border px-4 text-[0.9375rem] font-bold shadow-sm transition-colors"
-    @click="handleClick"
+    class="text-muted-foreground hover:bg-accent flex size-9 items-center justify-center rounded-full"
+    :aria-label="copied ? 'Link copied' : 'Share this page'"
+    @click="share"
   >
-    <Check v-if="justCopied" class="size-[1.125rem]" />
-    <Share v-else class="size-[1.125rem]" />
-    {{ justCopied ? 'Link copied' : 'Share' }}
+    <Check v-if="copied" class="text-primary size-5" />
+    <Share v-else class="size-5" />
+    <span class="sr-only" aria-live="polite">{{ copied ? 'Link copied' : '' }}</span>
   </button>
 </template>

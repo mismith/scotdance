@@ -39,38 +39,20 @@ const entityRef = computed(() =>
       <div class="flex items-center gap-3">
         <StaffAvatar :member="displayMember" :size="56" />
         <div class="min-w-0 flex-1 space-y-0.5">
-          <div
-            v-if="displayMember.type"
-            class="text-foreground/65 text-xs text-eyebrow"
-          >
-            {{ displayMember.type }}
-          </div>
-          <h2 class="text-2xl leading-tight font-medium tracking-tight">
-            {{ name || '?' }}
-          </h2>
+          <p v-if="displayMember.type" class="text-muted-foreground text-sm font-bold">{{ displayMember.type }}</p>
+          <h2 class="text-title">{{ name || '?' }}</h2>
         </div>
-        <FavoriteButton
-          v-if="entityRef"
-          :id="entityRef.id"
-          :type="entityRef.type"
-          :name="name"
-          class="-mr-2 shrink-0"
-        />
       </div>
     </template>
 
     <template v-if="displayMember">
-      <div class="space-y-3 p-4">
-        <div
-          v-if="displayMember.location"
-          class="text-item-subtitle text-muted-foreground"
-        >
-          {{ displayMember.location }}
-        </div>
+      <div class="space-y-3 p-4 pb-[calc(1.5rem+var(--safe-bottom))]">
+        <p v-if="displayMember.location" class="text-muted-foreground text-base">{{ displayMember.location }}</p>
+        <FavoriteButton v-if="entityRef" :id="entityRef.id" :type="entityRef.type" :name="name" labelled />
 
         <div
           v-if="displayMember.description"
-          class="text-lg"
+          class="text-base leading-relaxed [&_a]:text-primary [&_a]:underline"
           v-html="sanitizeRichText(displayMember.description)"
         />
 
@@ -79,18 +61,12 @@ const entityRef = computed(() =>
           :href="formatExternalURL(displayMember.website)"
           target="_blank"
           rel="noopener"
-          class="bg-card hover:bg-accent inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5"
+          class="bg-card border-strong inline-flex h-11 items-center gap-1.5 rounded-full border px-4 font-bold"
         >
           <ExternalLink class="size-4" />
           {{ formatHumanURL(displayMember.website) }}
         </a>
 
-        <p
-          v-if="!displayMember.description && !displayMember.website"
-          class="text-muted-foreground"
-        >
-          No bio yet.
-        </p>
 
         <RouterLink
           v-if="entityRef"
@@ -98,9 +74,9 @@ const entityRef = computed(() =>
             name: `${entityRef.routePrefix}.info`,
             params: { [entityRef.idParam]: entityRef.id },
           }"
-          class="text-primary hover:text-primary/80 inline-block px-1 py-2 text-sm font-medium"
+          class="bg-primary text-primary-foreground flex h-12 items-center justify-center rounded-xl text-base font-bold"
         >
-          View profile →
+          See all their competitions
         </RouterLink>
       </div>
     </template>

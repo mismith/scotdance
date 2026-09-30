@@ -168,6 +168,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
         :fresh="liveFresh"
         :competition-id="competitionId"
         :color="f.color"
+        :sash="f.sash"
       />
     </section>
     <section

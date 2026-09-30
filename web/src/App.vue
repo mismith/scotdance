@@ -4,7 +4,6 @@ import { RouterView, useRoute } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import GlobalBottomNav from '@/components/nav/GlobalBottomNav.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
-import AlertsSheet from '@/components/AlertsSheet.vue'
 import AlertBanner from '@/components/AlertBanner.vue'
 import RolesSheet from '@/components/RolesSheet.vue'
 import { useRoles } from '@/composables/useRoles'
@@ -64,7 +63,6 @@ watch(() => me.email, (email) => crisp.setUserEmail(email), { immediate: true })
   </div>
   <SupportLauncher />
   <LoginDialog />
-  <AlertsSheet />
   <AlertBanner />
   <RolesSheet />
   <UpdateDialog />

@@ -55,6 +55,8 @@ const groupDancers = computed(() =>
 
 const followedHere = computed(() => groupDancers.value.filter((d) => following.isFollowing(d)))
 const colorOf = (d: EnrichedDancer | null) => (d && following.isFollowing(d) ? following.colorFor(d.dancerId) : null)
+const rowStyle = (d: EnrichedDancer | null) =>
+  colorOf(d) ? { ...following.paint(d!.dancerId), backgroundColor: 'color-mix(in srgb, var(--dc) 9%, var(--card))' } : undefined
 
 // Where and when, from the schedule (first slot this group dances).
 const where = computed(() => {
@@ -125,7 +127,7 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
         <p v-if="followedHere.length" class="flex flex-wrap items-center gap-1.5 pt-1 text-sm font-bold">
           <span v-for="d in followedHere" :key="d.id" class="inline-flex items-center gap-1">
             <Star class="size-4 fill-current" :style="{ color: colorOf(d) ?? 'var(--primary)' }" />
-            {{ d.fullName }} · {{ d.number }}
+            {{ d.fullName }} · #{{ d.number }}
           </span>
         </p>
       </header>
@@ -152,7 +154,7 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
               'relative flex min-h-12 items-center gap-3 px-4 py-1.5',
               showAllCallbacks && !callbacks.dancers.some((c) => c.dancerId === row.dancerId) && 'opacity-45',
             ]"
-            :style="colorOf(row.dancer) ? { '--dc': colorOf(row.dancer)!, backgroundColor: 'color-mix(in srgb, var(--dc) 9%, var(--card))' } : undefined"
+            :style="rowStyle(row.dancer)"
           >
             <span v-if="colorOf(row.dancer)" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
             <template v-if="row.dancer">
@@ -197,7 +199,7 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
             v-for="row in s.placings.rows"
             :key="row.dancerId"
             class="relative flex min-h-13 items-center gap-2.5 px-3 py-1.5"
-            :style="colorOf(row.dancer) ? { '--dc': colorOf(row.dancer)!, backgroundColor: 'color-mix(in srgb, var(--dc) 9%, var(--card))' } : undefined"
+            :style="rowStyle(row.dancer)"
           >
             <span v-if="colorOf(row.dancer)" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
             <Medal :place="row.place" :tied="row.tied" />

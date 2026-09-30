@@ -2,7 +2,6 @@
 import { computed, toRef } from 'vue'
 import { useRoute } from 'vue-router'
 import EntityLayout from '@/components/EntityLayout.vue'
-import FavoriteButton from '@/components/FavoriteButton.vue'
 import { School } from '@lucide/vue'
 import { provideVenueProfile } from '@/composables/useVenueProfile'
 import { useFavoritesStore } from '@/stores/favorites'
@@ -31,16 +30,8 @@ const isFavorite = computed(() => favorites.isFavorite('venues', venueId.value))
     :is-favorite="isFavorite"
     :loading="loading"
     :not-found="notFound"
-    empty-title="No record of this venue"
-    empty-description="This venue profile doesn’t exist or has no competitions."
-  >
-    <template #actions>
-      <FavoriteButton
-        :id="venueId"
-        type="venues"
-        :name="name"
-        labelled
-      />
-    </template>
-  </EntityLayout>
+    empty-title="Venue not found"
+    empty-description="This venue isn’t listed for any competition on ScotDance. The link may be out of date."
+    :tabs="[]"
+  />
 </template>

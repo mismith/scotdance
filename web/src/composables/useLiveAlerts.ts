@@ -1,7 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useDancerCards } from '@/composables/useDancerCards'
-import { useAlertsPrompt } from '@/composables/useAlertsPrompt'
+import { useAlerts } from '@/composables/useAlerts'
 import { getOrdinalSuffix } from '@/lib/results'
 
 // While the app is open on competition day, watch followed dancers' live
@@ -29,7 +29,7 @@ export function startLiveAlerts() {
   if (started) return
   started = true
   const favorites = useFavoritesStore()
-  const prompt = useAlertsPrompt()
+  const alerts = useAlerts()
   const people = computed(() =>
     Object.entries(favorites.dancers).map(([id, v]) => ({ id, name: typeof v === 'string' ? v : 'Dancer' })),
   )
@@ -81,15 +81,9 @@ export function startLiveAlerts() {
       }
       const alert = fresh.at(-1)
       if (!alert) return
-      current.value = alert
+      // The medal still flips on cards; the banner is the part you can turn off.
       freshKey.value = alert.freshKey
-      if (prompt.enabledHere.value && document.hidden && 'Notification' in window && Notification.permission === 'granted') {
-        try {
-          new Notification(alert.title, { body: alert.subtitle, tag: alert.id, icon: '/img/touchicon.png' })
-        } catch {
-          /* some browsers only allow notifications from a service worker */
-        }
-      }
+      if (alerts.enabled.value) current.value = alert
     },
     { deep: false },
   )

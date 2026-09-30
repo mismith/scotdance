@@ -44,11 +44,38 @@
       "dancers:index": {
         ".read": true
       },
+      "dancers:profiles": {
+        ".read": true,
+        "$dancerId": {
+          ".write": "auth !== null && root.child($environment).child('dancers:guardians').child($dancerId).child(auth.uid).child('status').val() === 'approved'", // is LINKED to this dancer
+          ".validate": "newData.hasChildren(['tartanId']) && newData.child('tartanId').isString() && newData.child('tartanId').val().length <= 64",
+          "tartanId": { ".validate": true },
+          "updatedAt": { ".validate": "newData.isNumber()" },
+          "$other": { ".validate": false }
+        }
+      },
+      "dancers:guardians": {
+        "$dancerId": {
+          ".read": "auth !== null && root.child($environment).child('dancers:guardians').child($dancerId).child(auth.uid).child('status').val() === 'approved'", // is LINKED to this dancer
+          "$userId": {
+            ".read": "auth !== null && auth.uid === $userId", // is SELF
+            ".write": "auth !== null && ((auth.uid === $userId && ((!data.exists() && newData.child('status').val() === 'pending') || !newData.exists())) || root.child($environment).child('dancers:guardians').child($dancerId).child(auth.uid).child('status').val() === 'approved')", // is SELF asking or withdrawing || is LINKED to this dancer
+            ".validate": "newData.hasChildren(['status', 'relationship', 'createdAt'])",
+            "status": { ".validate": "newData.val() === 'pending' || newData.val() === 'approved' || newData.val() === 'denied'" },
+            "relationship": { ".validate": "newData.val() === 'parent' || newData.val() === 'self' || newData.val() === 'teacher'" },
+            "name": { ".validate": "newData.isString() && newData.val().length <= 100" },
+            "dancerName": { ".validate": "newData.isString() && newData.val().length <= 100" },
+            "note": { ".validate": "newData.isString() && newData.val().length <= 280" },
+            "createdAt": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        }
+      },
+      "tartans": {
+        ".read": true
+      },
       "competitions:data": {
         "$competitionId": {
-          "dancers": {
-            ".indexOn": ["groupId"] // result alerts look up a group's entries
-          },
           "staff": {
             ".read": true
           },
@@ -84,10 +111,20 @@
           ".write": "auth !== null && auth.uid === $userId" // is SELF
         }
       },
-      "users:tokens": {
+      "users:dancers": {
         "$userId": {
           ".read": "auth !== null && auth.uid === $userId", // is SELF
-          ".write": "auth !== null && auth.uid === $userId" // is SELF: device push tokens
+          ".write": "auth !== null && auth.uid === $userId", // is SELF
+          "$dancerId": { ".validate": "newData.isString() && newData.val().length <= 100" }
+        }
+      },
+      "users:tartans": {
+        "$userId": {
+          ".read": "auth !== null && auth.uid === $userId", // is SELF
+          "$tartanId": {
+            ".write": "auth !== null && auth.uid === $userId && (!newData.exists() || (!data.child('declined').exists() && !newData.child('declined').exists()))", // is SELF, deleting or not touching a decline
+            ".validate": "newData.hasChildren(['name', 'threadcount', 'palette', 'createdAt']) && newData.child('name').isString() && newData.child('name').val().length <= 60 && newData.child('threadcount').isString() && newData.child('threadcount').val().length <= 600"
+          }
         }
       },
       "users:permissions": {

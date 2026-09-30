@@ -12,6 +12,8 @@ const props = defineProps<{
   name?: string
   /** Show the word ("Follow" / "Following") next to the star. */
   labelled?: boolean
+  /** Compact labelled pill for list rows. */
+  compact?: boolean
 }>()
 
 const auth = useAuthStore()
@@ -48,7 +50,9 @@ async function handleClick(e: Event) {
       'flex shrink-0 items-center justify-center rounded-full transition-colors',
       labelled
         ? [
-            'h-11 gap-1.5 border px-4 text-[0.9375rem] font-bold',
+            compact
+              ? 'relative h-9 gap-1.5 border pr-3.5 pl-2.5 text-sm font-bold after:absolute after:-inset-1 after:content-[\'\']'
+              : 'h-11 gap-1.5 border px-4 text-[0.9375rem] font-bold',
             isFavorite ? 'bg-primary border-primary text-primary-foreground' : 'bg-card border-strong hover:bg-accent',
           ]
         : ['size-11 hover:bg-accent', isFavorite ? 'text-primary' : 'text-muted-foreground'],

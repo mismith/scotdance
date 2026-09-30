@@ -194,7 +194,7 @@ const followedCount = computed(() => dancers.value.filter((d) => following.isFol
           :style="
             following.isFollowing(d)
               ? {
-                  '--dc': following.colorFor(d.dancerId) ?? 'var(--primary)',
+                  ...following.paint(d.dancerId),
                   backgroundColor: 'color-mix(in srgb, var(--dc) 9%, var(--card))',
                 }
               : undefined

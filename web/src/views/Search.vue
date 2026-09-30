@@ -382,6 +382,7 @@ watch(mode, async (m) => {
                 :number="d.number"
                 size="xs"
                 :color="following.isFollowing(d) ? following.colorFor(d.dancerId) : null"
+                :sash="following.sashFor(d.dancerId)"
               />
               <span class="min-w-0">
                 <span class="block truncate text-base font-semibold">{{ d.fullName }}</span>

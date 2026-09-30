@@ -2,7 +2,6 @@
 import { computed, toRef } from 'vue'
 import { useRoute } from 'vue-router'
 import EntityLayout from '@/components/EntityLayout.vue'
-import FavoriteButton from '@/components/FavoriteButton.vue'
 import { provideJudgeProfile } from '@/composables/useJudgeProfile'
 import { useFavoritesStore } from '@/stores/favorites'
 import { initialsOf } from '@/lib/format'
@@ -33,16 +32,8 @@ const isFavorite = computed(() => favorites.isFavorite('judges', judgeId.value))
     :is-favorite="isFavorite"
     :loading="loading"
     :not-found="notFound"
-    empty-title="No record of this judge"
-    empty-description="This judge profile doesn’t exist or has no appearances."
-  >
-    <template #actions>
-      <FavoriteButton
-        :id="judgeId"
-        type="judges"
-        :name="displayName"
-        labelled
-      />
-    </template>
-  </EntityLayout>
+    empty-title="Judge not found"
+    empty-description="This judge isn’t listed at any competition on ScotDance. The link may be out of date."
+    :tabs="[]"
+  />
 </template>

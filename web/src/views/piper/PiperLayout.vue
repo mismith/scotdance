@@ -2,7 +2,6 @@
 import { computed, toRef } from 'vue'
 import { useRoute } from 'vue-router'
 import EntityLayout from '@/components/EntityLayout.vue'
-import FavoriteButton from '@/components/FavoriteButton.vue'
 import { providePiperProfile } from '@/composables/usePiperProfile'
 import { useFavoritesStore } from '@/stores/favorites'
 import { initialsOf } from '@/lib/format'
@@ -33,16 +32,8 @@ const isFavorite = computed(() => favorites.isFavorite('pipers', piperId.value))
     :is-favorite="isFavorite"
     :loading="loading"
     :not-found="notFound"
-    empty-title="No record of this piper"
-    empty-description="This piper profile doesn’t exist or has no appearances."
-  >
-    <template #actions>
-      <FavoriteButton
-        :id="piperId"
-        type="pipers"
-        :name="displayName"
-        labelled
-      />
-    </template>
-  </EntityLayout>
+    empty-title="Piper not found"
+    empty-description="This piper isn’t listed at any competition on ScotDance. The link may be out of date."
+    :tabs="[]"
+  />
 </template>

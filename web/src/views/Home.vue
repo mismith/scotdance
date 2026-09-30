@@ -117,6 +117,7 @@ const nextAnywhere = computed(() =>
 )
 
 const cardColor = (card: DancerCard) => (showingRecent.value ? null : following.colorFor(card.id))
+const cardSash = (card: DancerCard) => (showingRecent.value ? null : following.sashFor(card.id))
 
 const whatsNewDismissed = useLocalStorage('home:whatsNew:v4', false)
 
@@ -191,7 +192,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
         <span
           class="bg-primary-foreground text-primary mt-3 inline-flex h-10 items-center gap-1 rounded-full px-4 text-[0.9375rem] font-extrabold"
         >
-          Open competition <ChevronRight class="size-4" stroke-width="3" />
+          View competition <ChevronRight class="size-4" stroke-width="3" />
         </span>
       </RouterLink>
 
@@ -236,7 +237,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
         </template>
 
         <ul v-if="compact && cards.length" class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
-          <DancerCompactRow v-for="card in cards" :key="card.id" :card="card" :color="cardColor(card)" />
+          <DancerCompactRow v-for="card in cards" :key="card.id" :card="card" :color="cardColor(card)" :sash="cardSash(card)" />
         </ul>
         <template v-for="card in compact ? [] : cards" :key="card.id">
           <template v-if="card.focus && card.focus.days.length">
@@ -245,6 +246,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
               :fresh="liveFresh"
               :competition-id="card.focus.competitionId"
               :color="cardColor(card)"
+              :sash="cardSash(card)"
               :competition-name="
                 card.focus.phase === 'today'
                   ? null
@@ -257,7 +259,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
             v-else
             :to="{ name: 'dancer.info', params: { dancerId: card.id } }"
             class="bg-card flex items-center gap-3 overflow-hidden rounded-2xl border p-4 shadow-sm"
-            :style="{ '--dc': cardColor(card) ?? 'var(--strong)' }"
+            :style="{ '--dc': cardColor(card) ?? 'var(--strong)', '--sash': cardSash(card) ?? 'var(--tartan)' }"
           >
             <span class="sash h-10 w-1.5 shrink-0 rounded-full" aria-hidden="true" />
             <span class="min-w-0 flex-1">

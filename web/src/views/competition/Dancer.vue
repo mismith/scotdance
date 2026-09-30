@@ -1,17 +1,15 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { Bell, BellRing, ChevronRight, Share } from '@lucide/vue'
+import { ChevronRight } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
 import { useFollowing } from '@/composables/useFollowing'
-import { useAlerts } from '@/composables/useAlerts'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import DanceStatusChip from '@/components/DanceStatusChip.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import NumberCard from '@/components/NumberCard.vue'
-import ShareDaySheet from '@/components/ShareDaySheet.vue'
 import { getOrdinalSuffix } from '@/lib/results'
 import type { DanceStatus } from '@/lib/dancerDay'
 
@@ -20,7 +18,6 @@ const setHeader = injectInfoHeaderSetter()
 const { competitionId, competition, dancers, loadDancers, loadResults, loadSchedule } = useCompetition()
 const { dayFor, phase } = useCompetitionDays()
 const following = useFollowing()
-const alerts = useAlerts()
 
 onMounted(() => Promise.all([loadDancers(), loadResults(), loadSchedule()]))
 
@@ -41,6 +38,7 @@ const entries = computed(() => {
 const color = computed(() =>
   dancer.value && following.isFollowing(dancer.value) ? following.colorFor(dancer.value.dancerId) : null,
 )
+const sash = computed(() => (color.value ? following.sashFor(dancer.value?.dancerId) : null))
 const firstName = computed(() => dancer.value?.firstName || dancer.value?.fullName || 'this dancer')
 
 function detail(s: DanceStatus): string | null {
@@ -54,10 +52,6 @@ function detail(s: DanceStatus): string | null {
   return bits.join(' · ') || null
 }
 
-const shareOpen = ref(false)
-const hasPlacings = computed(() =>
-  entries.value.some((e) => [...e.dances, ...(e.overall ? [e.overall] : [])].some((s) => s.state === 'placed')),
-)
 </script>
 
 <template>
@@ -69,7 +63,7 @@ const hasPlacings = computed(() =>
 
     <template v-else>
       <header :ref="setHeader" class="flex items-center gap-4">
-        <NumberCard :number="dancer.number" :color="color" size="md" />
+        <NumberCard :number="dancer.number" :color="color" :sash="sash" size="md" />
         <div class="min-w-0">
           <h1 class="text-display">{{ dancer.fullName }}</h1>
           <p class="text-muted-foreground text-sm">
@@ -77,37 +71,8 @@ const hasPlacings = computed(() =>
           </p>
         </div>
       </header>
-      <p class="text-muted-foreground -mt-2 text-[0.8125rem]">
-        Number {{ dancer.number ?? '–' }} is for {{ competition?.name ?? 'this competition' }} only. Numbers change at
-        every competition.
-      </p>
 
-      <div class="grid grid-cols-2 gap-2">
-        <FollowButton v-if="dancer.dancerId" :dancer="dancer" size="block" />
-        <button
-          type="button"
-          :class="[
-            'bg-card border-strong flex h-12 items-center justify-center gap-2 rounded-xl border text-base font-bold',
-            !dancer.dancerId && 'col-span-2',
-          ]"
-          @click="shareOpen = true"
-        >
-          <Share class="size-5" /> Share
-        </button>
-      </div>
-
-      <button
-        v-if="following.isFollowing(dancer)"
-        type="button"
-        class="bg-card flex h-12 w-full items-center gap-3 rounded-xl border px-4 text-left text-[0.9375rem] font-bold"
-        @click="alerts.enabled ? undefined : alerts.promptFor(dancer.fullName)"
-      >
-        <component :is="alerts.enabled ? BellRing : Bell" class="text-primary size-5" />
-        <span class="flex-1">
-          {{ alerts.enabled ? `Alerts on for ${firstName}` : `Get an alert when ${firstName} places` }}
-        </span>
-        <span v-if="!alerts.enabled" class="text-primary">Turn on</span>
-      </button>
+      <FollowButton v-if="dancer.dancerId" :dancer="dancer" size="block" />
 
       <section v-for="e in entries" :key="e.dancer.id" class="space-y-2">
         <h2 class="text-heading flex items-baseline justify-between gap-2 pt-2">
@@ -162,15 +127,6 @@ const hasPlacings = computed(() =>
         <span class="flex-1 text-base font-bold">All competitions for {{ firstName }}</span>
         <ChevronRight class="text-muted-foreground size-5" />
       </RouterLink>
-
-      <ShareDaySheet
-        :open="shareOpen"
-        :days="entries"
-        :competition="competition"
-        :color="color"
-        :has-placings="hasPlacings"
-        @close="shareOpen = false"
-      />
     </template>
   </article>
 </template>
