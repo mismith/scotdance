@@ -6,7 +6,7 @@ import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { ChevronRight, Clock } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
-import { useFollowing } from '@/composables/useFollowing'
+import { oncePerPerson, useFollowing } from '@/composables/useFollowing'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import DrawDialog from '@/components/DrawDialog.vue'
@@ -97,8 +97,7 @@ function platformsFor(sd: ScheduleDance): PlatformRow[] {
             group: g,
             count: all.length,
             posted: !!sd.danceId && isPosted(g.id, sd.danceId),
-            mine: all
-              .filter((d) => following.isFollowing(d))
+            mine: oncePerPerson(all.filter((d) => following.isFollowing(d)))
               .map((d) => ({
                 dancer: d,
                 color: following.colorFor(d.dancerId),

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { Clock, Hourglass, Star, Trophy } from '@lucide/vue'
+import { Clock, Hourglass, Trophy } from '@lucide/vue'
+import MyDancerLine from '@/components/MyDancerLine.vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
-import { useFollowing } from '@/composables/useFollowing'
+import { oncePerPerson, useFollowing } from '@/composables/useFollowing'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import Medal from '@/components/Medal.vue'
@@ -52,7 +53,7 @@ const groupDancers = computed(() =>
   ),
 )
 
-const followedHere = computed(() => groupDancers.value.filter((d) => following.isFollowing(d)))
+const followedHere = computed(() => oncePerPerson(groupDancers.value.filter((d) => following.isFollowing(d))))
 const colorOf = (d: EnrichedDancer | null) => (d && following.isFollowing(d) ? following.colorFor(d.dancerId) : null)
 const rowStyle = (d: EnrichedDancer | null) =>
   colorOf(d) ? { ...following.paint(d!.dancerId), backgroundColor: 'color-mix(in srgb, var(--dc) 9%, var(--card))' } : undefined
@@ -123,12 +124,9 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
         <p class="text-muted-foreground text-sm">
           {{ [where, `${groupDancers.length} dancers`].filter(Boolean).join(' · ') }}
         </p>
-        <p v-if="followedHere.length" class="flex flex-wrap items-center gap-1.5 pt-1 text-sm font-bold">
-          <span v-for="d in followedHere" :key="d.id" class="inline-flex items-center gap-1">
-            <Star class="size-4 fill-current" :style="{ color: colorOf(d) ?? 'var(--primary)' }" />
-            {{ d.fullName }} · #{{ d.number }}
-          </span>
-        </p>
+        <div v-if="followedHere.length" class="space-y-1 pt-1">
+          <MyDancerLine v-for="d in followedHere" :key="d.id" :color="colorOf(d)" :name="d.fullName" :details="[`#${d.number}`]" />
+        </div>
       </header>
 
       <!-- Callbacks -->
@@ -209,12 +207,6 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
                 <span class="block truncate text-base font-semibold">{{ row.dancer.fullName }}</span>
                 <span v-if="row.dancer.location" class="text-muted-foreground block truncate text-sm">{{ row.dancer.location }}</span>
               </RouterLink>
-              <Star
-                v-if="colorOf(row.dancer)"
-                class="size-5 shrink-0 fill-current"
-                :style="{ color: colorOf(row.dancer)! }"
-                aria-label="Following"
-              />
             </template>
             <span v-else class="text-muted-foreground text-base">Unknown dancer</span>
           </li>

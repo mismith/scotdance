@@ -60,7 +60,7 @@ export function useCompetitionDays() {
     for (const d of c.dancers.value) {
       if (!d.group || !following.isFollowing(d)) continue
       const list = m.get(d.group.id) ?? []
-      list.push(d)
+      if (!list.some((x) => (x.dancerId ?? x.id) === (d.dancerId ?? d.id))) list.push(d)
       m.set(d.group.id, list)
     }
     return m

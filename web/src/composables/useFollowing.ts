@@ -16,6 +16,21 @@ export interface FollowableDancer {
   fullName?: string
 }
 
+/**
+ * Each person once: a dancer can have several entries in one group or
+ * competition (e.g. re-imported under a new id), so lists of "your dancers"
+ * go by the person, not the entry.
+ */
+export function oncePerPerson<T extends { id: string; dancerId?: string }>(list: T[]): T[] {
+  const seen = new Set<string>()
+  return list.filter((d) => {
+    const key = d.dancerId ?? d.id
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
 export function useFollowing() {
   const auth = useAuthStore()
   const favorites = useFavoritesStore()
