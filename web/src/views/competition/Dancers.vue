@@ -165,7 +165,7 @@ const followedCount = computed(() => dancers.value.filter((d) => following.isFol
       v-else-if="!dancers.length"
       :icon="Users"
       title="No dancers yet"
-      description="The dancer list hasn’t been posted. It usually appears a few days before the competition."
+      description="The dancer list hasn’t been posted yet."
     />
     <EmptyState
       v-else-if="!sections.length && onlyMine"

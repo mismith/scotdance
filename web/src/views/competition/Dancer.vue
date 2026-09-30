@@ -42,8 +42,6 @@ const firstName = computed(() => dancer.value?.firstName || dancer.value?.fullNa
 
 function detail(s: DanceStatus): string | null {
   const bits: string[] = []
-  const steps = String(s.dance.steps ?? '').trim()
-  if (steps) bits.push(`${steps} steps`)
   if (s.slot?.platformName && s.state !== 'next') bits.push(`Platform ${s.slot.platformName}`)
   if (s.slot?.blockName) bits.push([s.slot.blockName, s.slot.blockTime].filter(Boolean).join(' '))
   if (s.drawPos && s.drawSize) bits.push(`${s.drawPos}${getOrdinalSuffix(s.drawPos)} of ${s.drawSize} to dance`)
@@ -102,7 +100,7 @@ function detail(s: DanceStatus): string | null {
             >
               <span class="min-w-0">
                 <span :class="['block text-base', s.dance.id === 'overall' ? 'font-extrabold' : 'font-semibold']">
-                  {{ s.dance.name || s.dance.fullName }}
+                  {{ s.dance.fullName || s.dance.name }}
                 </span>
                 <span v-if="detail(s)" class="text-muted-foreground block text-[0.8125rem]">{{ detail(s) }}</span>
               </span>

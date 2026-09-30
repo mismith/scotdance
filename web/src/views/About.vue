@@ -36,11 +36,6 @@ const faqs: { id: string; q: string; a?: string }[] = [
     a: 'No! All competition data is user-submitted, and you can use it as a competition organiser or attendee for free, anywhere in the world. There is no plan for this to ever change.',
   },
   {
-    id: 'results',
-    q: 'Where do the results come from?',
-    a: 'Organisers and scrutineers enter them at the competition, so they show up here as soon as they’re entered. That can be a little after they’re announced.',
-  },
-  {
     id: 'worldwide',
     q: 'Can I use this in any country?',
   },

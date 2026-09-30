@@ -43,8 +43,6 @@ const sub = computed(() => {
 
 function detail(s: DanceStatus): string | null {
   const bits: string[] = []
-  const steps = String(s.dance.steps ?? '').trim()
-  if (steps) bits.push(`${steps} steps`)
   if (s.state === 'next' || s.state === 'upcoming') {
     if (s.drawPos) bits.push(`${s.drawPos}${getOrdinalSuffix(s.drawPos)} to dance`)
     if (s.slot?.blockTime && s.state === 'upcoming') bits.push(s.slot.blockTime)
@@ -114,7 +112,7 @@ const groupRoute = (d: DancerDay, danceId?: string) => ({
             class="flex min-h-11 items-center justify-between gap-2 rounded-lg px-2 py-1.5 hover:bg-accent"
           >
             <span class="min-w-0">
-              <span class="block truncate text-[0.9375rem] font-semibold">{{ s.dance.name || s.dance.fullName }}</span>
+              <span class="block truncate text-[0.9375rem] font-semibold">{{ s.dance.fullName || s.dance.name }}</span>
               <span v-if="detail(s)" class="text-muted-foreground block text-[0.8125rem]">{{ detail(s) }}</span>
             </span>
             <DanceStatusChip :status="s" :fresh="fresh === `${d.dancer.id}:${s.dance.id}`" />

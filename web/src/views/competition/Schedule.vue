@@ -91,7 +91,6 @@ const dayList = computed(() =>
   <div class="space-y-3">
     <header :ref="setHeader" class="space-y-1">
       <h1 class="text-display">Schedule</h1>
-      <p v-if="hasSchedule" class="text-muted-foreground text-sm">Times are approximate. Awards are usually given at the end of each session.</p>
     </header>
 
     <div v-if="hasSchedule === null || !ready" class="space-y-2" aria-busy="true">
@@ -104,7 +103,7 @@ const dayList = computed(() =>
       :description="
         isOver
           ? 'This competition didn’t post one here. Its results are under Results.'
-          : 'Organisers usually post it a few days before the competition. Platforms and dancing order appear here when they do.'
+          : 'Platforms and dancing order show up here once the organisers post it.'
       "
     />
 

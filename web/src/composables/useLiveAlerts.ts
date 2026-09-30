@@ -58,7 +58,7 @@ export function startLiveAlerts() {
             if (before === sig) continue
             if (!['placed', 'unplaced', 'no-placings'].includes(s.state)) continue
             const first = day.dancer.firstName || day.dancer.fullName
-            const danceName = s.dance.id === 'overall' ? 'Overall' : s.dance.name || s.dance.fullName
+            const danceName = s.dance.id === 'overall' ? 'Overall' : s.dance.fullName || s.dance.name
             fresh.push({
               id: `${key}:${sig}`,
               title:

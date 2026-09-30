@@ -9,7 +9,6 @@ import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import Medal from '@/components/Medal.vue'
 import NumberCard from '@/components/NumberCard.vue'
-import StepsHelp from '@/components/StepsHelp.vue'
 import {
   findGroupDancers,
   findGroupDances,
@@ -142,7 +141,6 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
           <h2 class="text-heading">Callbacks</h2>
           <span class="text-muted-foreground text-sm font-semibold">{{ callbacks.dancers.length }} called back</span>
         </header>
-        <p class="text-muted-foreground px-4 pt-3 text-sm">Dancers invited back to dance again in the final round.</p>
         <p v-if="callbacks.explicitlyEmpty" class="px-4 py-3 text-base">No callbacks for this group.</p>
         <ul class="divide-y">
           <li
@@ -189,9 +187,8 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
         <header class="flex items-center justify-between gap-2 border-b py-2.5 pr-2.5 pl-4">
           <h2 class="text-heading flex items-center gap-2">
             <Trophy v-if="s.dance.id === OVERALL_ID" class="text-primary size-5" />
-            {{ s.dance.name || s.dance.fullName }}
+            {{ s.dance.fullName || s.dance.name }}
           </h2>
-          <StepsHelp :steps="s.dance.steps" :dance="s.dance.name" />
         </header>
 
         <ul v-if="s.placings.hasResults" class="divide-y">

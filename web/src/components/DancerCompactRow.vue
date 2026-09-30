@@ -27,7 +27,7 @@ const line = computed(() => {
     return `${focus.competition.name}${focus.competition.date ? ` · ${formatShortDate(focus.competition.date)}` : ''}`
   if (focus.phase === 'today' && d?.next) {
     const plat = d.next.slot?.platformName
-    return `Next: ${d.next.dance.name || d.next.dance.fullName}${plat ? ` · Platform ${plat}` : ''}`
+    return `Next: ${d.next.dance.fullName || d.next.dance.name}${plat ? ` · Platform ${plat}` : ''}`
   }
   if (focus.phase === 'today' && d?.dances.some((s) => s.state === 'waiting')) return 'Waiting for results'
   if (focus.phase === 'today') return d?.group?.fullName ?? 'Today'

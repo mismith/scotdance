@@ -275,7 +275,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
                     ? 'Location is turned off for ScotDance. Turn it on in your phone’s settings, then try again.'
                     : locationError
                       ? 'Your location couldn’t be found.'
-                      : 'Show competitions within driving distance of you.'
+                      : 'Show competitions near you.'
                 }}
               </p>
               <button type="button" class="bg-primary text-primary-foreground flex h-11 w-full items-center justify-center gap-2 rounded-xl text-[0.9375rem] font-bold" @click="requestPosition">

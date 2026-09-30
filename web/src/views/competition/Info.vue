@@ -195,7 +195,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
         <div>
           <p class="text-base font-bold">{{ formatLongDate(competition.date) }}</p>
           <p v-if="sessions[0]?.time" class="text-muted-foreground text-sm">
-            Starts {{ sessions[0].time }}. Times are approximate.
+            Starts {{ sessions[0].time }}
           </p>
         </div>
       </div>

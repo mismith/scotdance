@@ -11,7 +11,6 @@ import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import DrawDialog from '@/components/DrawDialog.vue'
 import StaffDialog from '@/components/StaffDialog.vue'
-import StepsHelp from '@/components/StepsHelp.vue'
 import { dances as eventDances, getScheduleDanceName, slugline } from '@/lib/schedule'
 import { findGroupDancers, getOrdinalSuffix } from '@/lib/results'
 import { sanitizeRichText } from '@/lib/sanitize'
@@ -123,9 +122,8 @@ const sections = computed(() =>
     const custom = sd.name?.trim() && !/^\d+$/.test(sd.name.trim()) ? sd.name.trim() : null
     return {
       sd,
-      name: dance?.name || custom || null,
-      realName: custom && dance?.name && custom !== dance.name ? custom : null,
-      steps: dance?.steps,
+      name: dance?.fullName || custom || null,
+      realName: custom && dance?.name && custom !== dance.name && custom !== dance.fullName ? custom : null,
       platforms: sd.danceId ? platformsFor(sd) : [],
     }
   }),
@@ -179,11 +177,9 @@ function openJudge(e: MouseEvent, judge: StaffMember) {
       >
         <header class="flex items-center justify-between gap-2 border-b py-2.5 pr-2.5 pl-4">
           <span class="min-w-0">
-            <span v-if="s.name" class="text-muted-foreground block text-[0.8125rem] font-bold">Dance {{ i + 1 }}</span>
             <span class="text-heading block">{{ s.name ?? `Dance ${i + 1}` }}</span>
             <span v-if="s.realName" class="text-muted-foreground block text-sm">{{ s.realName }}</span>
           </span>
-          <StepsHelp :steps="s.steps" :dance="s.name ?? undefined" />
         </header>
 
         <div
