@@ -2,7 +2,7 @@
   "appId": "info.mismith.scotdance",
   "appName": "ScotDance",
   "npmClient": "npm",
-  "webDir": "www",
+  "webDir": "web/dist",
   "plugins": {
     "SplashScreen": {
       "showSpinner": true,

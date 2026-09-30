@@ -54,7 +54,7 @@ glass tab bar, Back out of a competition, dark mode, large text.
 
 - [ ] Hosting: `/admin/**` → old app (`www/`), everything else → `web/dist/`
 - [ ] Old app's router base `/admin`, asset paths updated
-- [ ] `capacitor.config.json` `webDir`: `www` → `web/dist`; `npx cap sync`
+- [x] `capacitor.config.json` `webDir`: `www` → `web/dist` (done on `next`); before a store build, `npm run build` in `web/` then `npx cap sync` (this also clears any live-reload URL)
 - [ ] Cache headers: HTML `no-cache`, hashed assets `immutable`
 - [ ] Rebuild and submit the iOS and Android apps (all plugins are already installed)
   - iOS uses Swift Package Manager now: open `ios/App/App.xcodeproj` (no workspace, no `pod install`)
