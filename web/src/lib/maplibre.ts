@@ -1,6 +1,12 @@
 import 'maplibre-gl/dist/maplibre-gl.css'
-import maplibregl, { type Map as MaplibreMap, type MapOptions } from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'
+import type { Map as MaplibreMap, MapOptions } from 'maplibre-gl'
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { guessUserCountry } from '@/lib/locale'
+
+// maplibre v6 can't find its worker inside a bundle; `?worker&url` makes Vite
+// emit it as a self-contained chunk.
+maplibregl.setWorkerUrl(workerUrl)
 
 // OpenFreeMap free public tiles — no auth, attribution required. To swap to
 // MapTiler or Stadia, only these URLs change; the renderer code stays put.

@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import maplibregl, {
-  type Map as MaplibreMap,
-  type Marker as MaplibreMarker,
-} from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'
+import type { Map as MaplibreMap, Marker as MaplibreMarker } from 'maplibre-gl'
 import Supercluster from 'supercluster'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 import { useFavoritesStore } from '@/stores/favorites'

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
-import maplibregl, { type Map as MaplibreMap } from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'
+import type { Map as MaplibreMap } from 'maplibre-gl'
 import { createMap, styleUrlFor } from '@/lib/maplibre'
 import { useTheme } from '@/composables/useTheme'
 
