@@ -5,6 +5,7 @@ import type {
   ScheduleDay,
   ScheduleEvent,
 } from '@/types/competition'
+import { compareKeys } from '@/lib/competitionData'
 import { stripTags } from '@/lib/sanitize'
 
 interface Ordered {
@@ -24,7 +25,7 @@ export function toOrderedArray<V extends Record<string, unknown>>(
       if (Number.isInteger(ao) && Number.isInteger(bo)) {
         return (ao as number) - (bo as number)
       }
-      return a.id.localeCompare(b.id)
+      return compareKeys(a.id, b.id)
     })
 }
 

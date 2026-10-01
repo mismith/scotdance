@@ -49,12 +49,16 @@ export function snapshotToArray<T extends { id: string }>(
   return Object.entries(value).map(([id, v]) => ({ id, ...v }) as T)
 }
 
+// Push ids sort by creation time only when compared byte by byte, as Firebase
+// does. `localeCompare` ignores case, so "-LEgsiq…" would land before "-LEgsT0…".
+export const compareKeys = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
+
 // Items without `_order` sink to the end; ties broken by push id.
 export function byDragOrder<T extends { id: string; _order?: number }>(a: T, b: T) {
   const ao = a._order ?? Number.POSITIVE_INFINITY
   const bo = b._order ?? Number.POSITIVE_INFINITY
   if (ao !== bo) return ao - bo
-  return a.id.localeCompare(b.id)
+  return compareKeys(a.id, b.id)
 }
 
 export interface DancersBundle {
