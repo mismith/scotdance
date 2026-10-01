@@ -6,6 +6,10 @@ import type { Competition } from '@/types/competition'
 const cache = new Map<string, Promise<Competition | null>>()
 onReconnect(() => cache.clear())
 
+export function forgetCompetitionMeta(id: string) {
+  cache.delete(id)
+}
+
 export function fetchCompetitionMeta(id: string): Promise<Competition | null> {
   if (!cache.has(id)) {
     const promise = (async () => {

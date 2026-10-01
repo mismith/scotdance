@@ -28,10 +28,16 @@ interface CacheEntry {
 const recentCache: CacheEntry = { data: ref([]), loaded: false, inFlight: null }
 const archivedCache: CacheEntry = { data: ref([]), loaded: false, inFlight: null }
 const loading = ref(false)
-onReconnect(() => {
+function forgetLoaded() {
   recentCache.loaded = false
   archivedCache.loaded = false
-})
+}
+onReconnect(forgetLoaded)
+
+/** Refetch the lists next time they're shown (after an organiser edits a competition). */
+export function forgetCompetitionsList() {
+  forgetLoaded()
+}
 const error = ref<Error | null>(null)
 
 async function fetchInto(entry: CacheEntry, includeArchived: boolean) {
@@ -95,7 +101,7 @@ export function useCompetitions(includeArchived: Ref<boolean>) {
 
   const competitions = computed<CompetitionListItem[]>(() =>
     rawCompetitions.value.filter((c) => {
-      if (me.isAdmin) return true
+      if (me.hasCompetitionPerm(c.id)) return true
       return c.listed === true && c.published === true
     }),
   )

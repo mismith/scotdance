@@ -92,6 +92,11 @@ onReconnect(() => {
   for (const map of Object.values(caches)) map.clear()
 })
 
+/** Drop everything cached for one competition (after an organiser edits it). */
+export function forgetCompetition(id: string) {
+  for (const map of Object.values(caches)) map.delete(id)
+}
+
 function cached<T>(map: Map<string, Promise<T>>, id: string, load: () => Promise<T>) {
   let p = map.get(id)
   if (!p) {

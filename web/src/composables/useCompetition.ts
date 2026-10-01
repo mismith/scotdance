@@ -73,7 +73,8 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
   const loading = ref(false)
   const error = ref<Error | null>(null)
 
-  const isVisible = (c: Competition) => me.isAdmin || c.published === true
+  // Organisers see their own competitions before they're published.
+  const isVisible = (c: Competition) => me.hasCompetitionPerm(competitionId.value) || c.published === true
   const competition = computed<Competition | null>(() => {
     const c = rawCompetition.value
     return c && isVisible(c) ? c : null

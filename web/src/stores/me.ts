@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
-import { get, onValue, ref as dbRef } from 'firebase/database'
+import { onValue, ref as dbRef } from 'firebase/database'
 import { database } from '@/firebase'
 import { useAuthStore } from './auth'
 
@@ -23,6 +23,7 @@ export const useMeStore = defineStore('me', () => {
   const permissions = ref<PermissionsRecord | null>(null)
 
   let unsubscribe: (() => void) | null = null
+  let unsubscribePermissions: (() => void) | null = null
 
   const displayName = computed(
     () => record.value?.displayName ?? auth.user?.displayName ?? null,
@@ -34,16 +35,15 @@ export const useMeStore = defineStore('me', () => {
   function hasCompetitionPerm(id: string) {
     return isAdmin.value || permissions.value?.competitions?.[id] === true
   }
-
-  async function loadPermissions(uid: string) {
-    try {
-      const snap = await get(dbRef(database, `${NAMESPACE}/users:permissions/${uid}`))
-      permissions.value = (snap.val() as PermissionsRecord | null) ?? {}
-    } catch (e) {
-      console.warn('Failed to load permissions:', e)
-      permissions.value = null
-    }
-  }
+  /** Competitions this person can manage (system admins can manage all). */
+  const managedCompetitionIds = computed(() =>
+    Object.entries(permissions.value?.competitions ?? {})
+      .filter(([, on]) => on === true)
+      .map(([id]) => id),
+  )
+  const canManageAny = computed(() => isAdmin.value || managedCompetitionIds.value.length > 0)
+  /** Permissions have been read at least once for the signed-in person. */
+  const permissionsLoaded = computed(() => permissions.value !== null)
 
   watch(
     () => auth.uid,
@@ -52,6 +52,8 @@ export const useMeStore = defineStore('me', () => {
         unsubscribe()
         unsubscribe = null
       }
+      unsubscribePermissions?.()
+      unsubscribePermissions = null
       if (!uid) {
         record.value = null
         permissions.value = null
@@ -61,7 +63,18 @@ export const useMeStore = defineStore('me', () => {
       unsubscribe = onValue(meRef, (snap) => {
         record.value = (snap.val() as MeRecord | null) ?? null
       })
-      void loadPermissions(uid)
+      // Live, so access granted or removed (an accepted invite, an admin's
+      // change) applies without signing out and in again.
+      unsubscribePermissions = onValue(
+        dbRef(database, `${NAMESPACE}/users:permissions/${uid}`),
+        (snap) => {
+          permissions.value = (snap.val() as PermissionsRecord | null) ?? {}
+        },
+        (e) => {
+          console.warn('Failed to load permissions:', e)
+          permissions.value = {}
+        },
+      )
     },
     { immediate: true },
   )
@@ -74,5 +87,8 @@ export const useMeStore = defineStore('me', () => {
     permissions,
     isAdmin,
     hasCompetitionPerm,
+    managedCompetitionIds,
+    canManageAny,
+    permissionsLoaded,
   }
 })
