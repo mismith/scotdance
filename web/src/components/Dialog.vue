@@ -6,8 +6,12 @@ import { morphSupported, type Morph } from '@/lib/morph'
 const props = withDefaults(
   defineProps<{
     open: boolean
-    /** sheet: slides up on phones. menu: a small panel above the tab bar's right end. */
-    variant?: 'center' | 'sheet' | 'menu'
+    /**
+     * sheet: slides up on phones. menu: a small panel above the tab bar's
+     * right end. dropdown: the same panel, under a top-bar button (its right
+     * edge at `--dropdown-right`, set by the opener).
+     */
+    variant?: 'center' | 'sheet' | 'menu' | 'dropdown'
     size?: 'sm' | 'md'
     closable?: boolean
     /** Grow out of (and shrink back into) whatever opened it. See lib/morph. */
@@ -63,7 +67,9 @@ function onBackdropClick(e: MouseEvent) {
       // (see sync), so it draws no ring of its own.
       'bg-card max-h-full max-w-full border-0 p-0 text-inherit outline-none',
       // Width by size prop.
-      variant !== 'menu' && (size === 'sm' ? 'w-full md:max-w-sm' : 'w-full md:max-w-md'),
+      variant !== 'menu' && variant !== 'dropdown' && (size === 'sm' ? 'w-full md:max-w-sm' : 'w-full md:max-w-md'),
+      variant === 'dropdown' &&
+        'fixed top-[calc(var(--chrome-top)+0.25rem)] bottom-auto left-auto right-(--dropdown-right,0.75rem) m-0 w-72 max-w-[calc(100vw-1.5rem)] max-h-[calc(100svh-var(--chrome-top)-1rem)] origin-top-right overflow-y-auto rounded-3xl border shadow-lg',
       variant === 'menu' &&
         'fixed top-auto bottom-[calc(var(--chrome-bottom)+0.5rem)] left-auto right-[max(0.75rem,calc((100vw-32rem)/2))] m-0 w-72 max-w-[calc(100vw-1.5rem)] max-h-[calc(100svh-var(--chrome-top)-var(--chrome-bottom)-1rem)] origin-bottom-right overflow-y-auto rounded-3xl border shadow-lg',
       // Layout per variant.
@@ -100,7 +106,7 @@ function onBackdropClick(e: MouseEvent) {
         ? 'transition-none'
         : 'ease-rubber-band transition-[opacity,translate,scale,display] transition-discrete backdrop:transition-opacity',
       // Backdrop.
-      variant === 'menu' ? 'backdrop:bg-black/20' : 'backdrop:bg-black/50',
+      variant === 'menu' || variant === 'dropdown' ? 'backdrop:bg-black/20' : 'backdrop:bg-black/50',
       'backdrop:opacity-0 open:backdrop:opacity-100 starting:open:backdrop:opacity-0',
       'motion-reduce:transition-none motion-reduce:backdrop:transition-none',
     ]"
@@ -125,7 +131,7 @@ function onBackdropClick(e: MouseEvent) {
     </header>
 
     <button
-      v-if="closable && variant !== 'menu' && !(variant === 'sheet' && slots.header)"
+      v-if="closable && variant !== 'menu' && variant !== 'dropdown' && !(variant === 'sheet' && slots.header)"
       type="button"
       aria-label="Close"
       class="hover:bg-accent text-muted-foreground absolute top-2 right-2 z-10 flex size-11 items-center justify-center rounded-full"
@@ -137,7 +143,7 @@ function onBackdropClick(e: MouseEvent) {
     <div v-if="variant === 'sheet'" class="overflow-y-auto">
       <slot />
     </div>
-    <slot v-else-if="variant === 'menu'" />
+    <slot v-else-if="variant === 'menu' || variant === 'dropdown'" />
     <div v-else class="space-y-4">
       <slot />
     </div>

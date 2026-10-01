@@ -6,6 +6,7 @@ import { CalendarX, Pencil } from '@lucide/vue'
 import { useMeStore } from '@/stores/me'
 import AppBar from '@/components/nav/AppBar.vue'
 import ShareButton from '@/components/ShareButton.vue'
+import AccountButton from '@/components/nav/AccountButton.vue'
 import CompetitionBottomNav from '@/components/nav/CompetitionBottomNav.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
@@ -95,6 +96,7 @@ usePageTitle(() => [
           <Pencil class="size-5" />
         </RouterLink>
         <ShareButton :title="competition?.name ?? undefined" />
+        <AccountButton :competition-id="competitionId" />
       </template>
     </AppBar>
 

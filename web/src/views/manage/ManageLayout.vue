@@ -5,6 +5,7 @@ import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
 import { CalendarX, ExternalLink, Lock, LogIn, Redo2, Undo2 } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
+import AccountButton from '@/components/nav/AccountButton.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import SaveStatus from '@/components/admin/SaveStatus.vue'
@@ -152,6 +153,7 @@ const barTitle = computed(() => (isHome.value ? 'Manage' : ((route.meta.title as
         >
           View <ExternalLink class="size-4" />
         </RouterLink>
+        <AccountButton :competition-id="competitionId" />
       </template>
     </AppBar>
 
