@@ -646,7 +646,8 @@ describe('backfill', () => {
     expect(result.linked).toBe(3000)
     expect(s.rtdb.writes).toBeLessThan(15)
     expect(Object.keys(s.read('dancers'))).toHaveLength(1200)
-  })
+    // 3,000 records: a second or two here, several times that on a CI runner.
+  }, 30_000)
 })
 
 describe('names', () => {
