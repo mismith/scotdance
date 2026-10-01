@@ -173,18 +173,16 @@ watch(() => route.hash, applyHash)
       </section>
 
       <footer class="text-muted-foreground space-y-2 pb-4 text-center text-sm">
-        <p>
-          Built by a Highland dance family, for Highland dance families.
-        </p>
-        <p>
-          © 2017–{{ year }} <a href="https://mismith.io" target="_blank" rel="noopener" class="text-foreground font-bold hover:underline">Murray Rowan</a>
-        </p>
+        <!-- Wraps at the comma, not mid-phrase -->
+        <p><span class="inline-block">Built by a Highland dance family,</span> <span class="inline-block">for Highland dance families.</span></p>
         <p class="flex flex-wrap justify-center gap-x-3">
           <button v-if="crisp.available" type="button" class="text-primary font-bold" @click="crisp.open()">Help</button>
           <RouterLink :to="{ name: 'policies' }" class="text-primary font-bold">Privacy and terms</RouterLink>
           <a href="https://github.com/mismith/scotdance" target="_blank" rel="noopener" class="text-primary font-bold">Source code</a>
         </p>
-        <p class="tabular-nums">{{ platformLabel }} · v{{ version }}</p>
+        <p>
+          2017–{{ year }} · <a href="https://mur.bot" target="_blank" rel="noopener" class="hover:underline">Murray Rowan</a> · {{ platformLabel }} · v{{ version }}
+        </p>
       </footer>
     </main>
   </div>
