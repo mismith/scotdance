@@ -25,5 +25,6 @@ defineProps<{
         {{ description }}
       </p>
     </div>
+    <slot />
   </div>
 </template>

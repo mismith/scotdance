@@ -47,10 +47,9 @@ const inNumberOrder = () => [...numbers.value].sort(compareNumbers)
 const isReel = (d: MDance) => /(^|\s)reel(\s|$)/i.test(d.name ?? '')
 
 async function saveDraws(updates: Record<string, string[] | null>, message?: string) {
-  const before = Object.fromEntries(Object.keys(updates).map((k) => [k, m.draws.value[groupId.value]?.[k.split('/').pop()!] ?? null]))
   try {
-    await m.writeData(updates)
-    if (message) toast(message, { action: { label: 'Undo', run: () => m.writeData(before) } })
+    const change = await m.writeData(updates, message ?? `Changed the draw for ${group.value?.label ?? 'an age group'}`)
+    if (message) toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   }

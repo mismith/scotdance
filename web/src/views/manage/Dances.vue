@@ -78,7 +78,9 @@ const spec: CollectionSpec<MDance> = {
 const items = computed(() => m.dances.value)
 
 function setGroup(danceId: string, groupId: string, on: boolean) {
-  return m.writeData({ [`dances/${danceId}/groupIds/${groupId}`]: on || null })
+  const dance = m.dancesById.value.get(danceId)?.label ?? 'a dance'
+  const group = m.groupsById.value.get(groupId)?.label ?? 'an age group'
+  return m.writeData({ [`dances/${danceId}/groupIds/${groupId}`]: on || null }, `${on ? 'Added' : 'Removed'} ${dance} ${on ? 'to' : 'from'} ${group}`)
 }
 </script>
 

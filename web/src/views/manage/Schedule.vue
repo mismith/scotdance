@@ -10,6 +10,7 @@ import TextField from '@/components/admin/TextField.vue'
 import SelectField from '@/components/admin/SelectField.vue'
 import SwitchField from '@/components/admin/SwitchField.vue'
 import PlatformAssign from '@/components/admin/PlatformAssign.vue'
+import HelpTip from '@/components/admin/HelpTip.vue'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { useSplit } from '@/composables/admin/useWide'
 import { confirm, toast } from '@/lib/admin/feedback'
@@ -68,7 +69,7 @@ async function reorder(parentPath: string, list: Node[]) {
     if (n.order !== i) updates[`${n.path}/order`] = i
   })
   try {
-    await m.writeData(updates)
+    await m.writeData(updates, 'Reordered the schedule')
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   } finally {
@@ -77,6 +78,14 @@ async function reorder(parentPath: string, list: Node[]) {
 }
 
 // --- Adding
+// What each level is for (from the old admin's tips).
+const LEVEL_HELP: Record<Level, string> = {
+  day: 'The days the competition runs. Usually there’s just one, but events can be split over several days too.',
+  block: 'Parts of the day that group events together, like Morning and Afternoon. Sessions often have their own start time and results ceremony.',
+  event: 'Groups of similar ages or categories, which usually perform the same dances. Events also work for special cases, like a dance across categories.',
+  item: 'The dances and ceremonies in each event, in the order they’re performed. Results usually go last, and Registration, if there is one, first.',
+}
+
 const PRESETS: Record<Level, string[]> = {
   day: ['Saturday', 'Sunday'],
   block: ['Morning', 'Afternoon', 'Evening'],
@@ -117,11 +126,11 @@ async function confirmAdd() {
   if (addCustom.value.trim()) updates[`${base}/${key}/${m.newKey()}`] = { name: addCustom.value.trim(), order }
   adding.value = null
   if (!Object.keys(updates).length) return
-  const before = snapshot(m.raw.value, updates)
+  const n = Object.keys(updates).length
+  const message = `Added ${n} ${n === 1 ? LEVEL_NAME[a.level].one : LEVEL_NAME[a.level].many}`
   try {
-    await m.writeData(updates)
-    const n = Object.keys(updates).length
-    toast(`Added ${n} ${n === 1 ? LEVEL_NAME[a.level].one : LEVEL_NAME[a.level].many}`, { action: { label: 'Undo', run: () => m.writeData(before) } })
+    const change = await m.writeData(updates, message)
+    toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
     if (a.parent && split.value) void open(a.parent)
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
@@ -130,7 +139,7 @@ async function confirmAdd() {
 const addCount = computed(() => addPicks.size + (addCustom.value.trim() ? 1 : 0))
 
 // --- Editing the selected node
-const save = (n: Node, key: string) => (v: string | null) => m.writeData({ [`${n.path}/${key}`]: v })
+const save = (n: Node, key: string) => (v: string | null) => m.writeData({ [`${n.path}/${key}`]: v }, itemLabel(n))
 const pad = (x: number) => String(x).padStart(2, '0')
 function dateInput(value: unknown) {
   if (!value) return ''
@@ -169,10 +178,9 @@ async function moveTo(n: Node, target: Node) {
   const order = target.children.reduce((max, c) => Math.max(max, c.order ?? -1), target.children.length - 1) + 1
   const newPath = `${target.path}/${CHILD_KEY[n.level]}/${n.id}`
   const updates = { [n.path]: null, [newPath]: { ...raw, order } }
-  const before = snapshot(m.raw.value, updates)
   try {
-    await m.writeData(updates)
-    toast(`Moved to ${itemLabel(target)}`, { action: { label: 'Undo', run: () => m.writeData(before) } })
+    const change = await m.writeData(updates, `Moved ${itemLabel(n)} to ${itemLabel(target)}`)
+    toast(`Moved to ${itemLabel(target)}`, { action: { label: 'Undo', run: () => m.undoChange(change) } })
     const keys = ['dayId', 'blockId', 'eventId', 'itemId'] as const
     void router.replace(to({ ...target.params, [keys[LEVELS.indexOf(n.level)]]: n.id }))
   } catch (e) {
@@ -189,13 +197,11 @@ async function remove(n: Node) {
     destructive: true,
   })
   if (!ok) return
-  const updates = { [n.path]: null }
-  const before = snapshot(m.raw.value, updates)
   try {
-    await m.writeData(updates)
+    const change = await m.writeData({ [n.path]: null }, `Deleted ${itemLabel(n)}`)
     const parent = parentOf(n)
     void router.replace(parent ? to(parent.params) : to({}))
-    toast(`Deleted ${itemLabel(n)}`, { action: { label: 'Undo', run: () => m.writeData(before) } })
+    toast(`Deleted ${itemLabel(n)}`, { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   }
@@ -211,11 +217,10 @@ async function setHidden(hidden: boolean) {
       destructive: hasAny,
     })
     if (!ok) return
-    const before = m.raw.value.schedule ?? null
-    await m.writeData({ schedule: false })
-    toast('Schedule tab hidden', { action: { label: 'Undo', run: () => m.writeData({ schedule: before }) } })
+    const change = await m.writeData({ schedule: false }, 'Hid the Schedule tab')
+    toast('Schedule tab hidden', { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } else {
-    await m.writeData({ schedule: null })
+    await m.writeData({ schedule: null }, 'Showed the Schedule tab')
   }
 }
 
@@ -366,7 +371,10 @@ const childLevel = (n: Node) => LEVELS[LEVELS.indexOf(n.level) + 1] as Level | u
     <template #detail>
       <div v-if="selected" :key="selected.path" class="mx-auto max-w-2xl space-y-8 p-4 pb-[calc(3rem+var(--safe-bottom))] md:p-8">
         <header>
-          <p class="text-muted-foreground text-sm font-bold capitalize">{{ LEVEL_NAME[selected.level].one }}</p>
+          <p class="text-muted-foreground flex items-center gap-1.5 text-sm font-bold capitalize">
+            {{ LEVEL_NAME[selected.level].one }}
+            <HelpTip :label="`About ${LEVEL_NAME[selected.level].many}`">{{ LEVEL_HELP[selected.level] }}</HelpTip>
+          </p>
           <h2 class="text-display break-words">{{ itemLabel(selected) }}</h2>
         </header>
 
@@ -445,7 +453,7 @@ const childLevel = (n: Node) => LEVELS[LEVELS.indexOf(n.level) + 1] as Level | u
       <h2 class="text-title">
         Add {{ adding?.level === 'item' ? 'dances' : LEVEL_NAME[adding?.level ?? 'day'].one }}{{ adding?.parent ? ` to ${itemLabel(adding.parent)}` : '' }}
       </h2>
-      <p class="text-muted-foreground text-sm">{{ adding?.level === 'item' ? 'Pick them in the order they’re danced. Registration goes first and Results last.' : 'Pick any, or type your own.' }}</p>
+      <p class="text-muted-foreground text-sm">{{ LEVEL_HELP[adding?.level ?? 'day'] }}</p>
     </template>
     <div v-if="adding" class="space-y-4 p-4">
       <div v-if="adding.level === 'item' && m.dances.value.length" class="space-y-2">

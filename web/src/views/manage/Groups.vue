@@ -3,11 +3,12 @@ import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { ChevronRight, Shuffle } from '@lucide/vue'
 import CollectionEditor from '@/components/admin/CollectionEditor.vue'
+import ImportTip from '@/components/admin/ImportTip.vue'
 import SwitchField from '@/components/admin/SwitchField.vue'
 import { useManagedCompetition, type MGroup } from '@/composables/admin/useManagedCompetition'
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
-import { snapshot, type CollectionSpec } from '@/lib/admin/collection'
+import type { CollectionSpec } from '@/lib/admin/collection'
 
 const m = useManagedCompetition()
 
@@ -48,7 +49,25 @@ const spec: CollectionSpec<MGroup> = {
       hint: 'Leave empty when the category is one group, like Primary.',
     },
     { key: 'trophy', label: 'Trophy', kind: 'text', half: true, placeholder: 'e.g. Adeline Duncan Memorial' },
-    { key: 'sponsor', label: 'Trophy sponsor', kind: 'text', half: true },
+    {
+      key: 'sponsor',
+      label: 'Trophy sponsor',
+      kind: 'select',
+      half: true,
+      placeholder: 'None',
+      // A sponsor from Judges, pipers and sponsors (stored by id, so the
+      // results page can show their details). Older competitions typed a name
+      // instead; those names stay choosable as they are.
+      options: () => {
+        const ids = new Set(m.staff.value.map((s) => s.id))
+        const typed = [...new Set(m.groups.value.map((g) => g.sponsor?.trim()).filter((s): s is string => !!s && !ids.has(s)))]
+        return [
+          ...m.sponsors.value.map((s) => ({ value: s.id, label: s.label, group: typed.length ? 'Sponsors' : undefined })),
+          ...typed.map((name) => ({ value: name, label: name, group: 'Typed names' })),
+        ]
+      },
+      hint: m.sponsors.value.length ? undefined : 'Add sponsors under Judges, pipers and sponsors first.',
+    },
   ],
   title: (g) => g.label,
   subtitle: (g) => {
@@ -83,7 +102,9 @@ const spec: CollectionSpec<MGroup> = {
 // --- Dances this group does
 const copyFrom = ref('')
 async function setDance(groupId: string, danceId: string, on: boolean) {
-  await m.writeData({ [`dances/${danceId}/groupIds/${groupId}`]: on || null })
+  const dance = m.dancesById.value.get(danceId)?.label ?? 'a dance'
+  const group = m.groupsById.value.get(groupId)?.label ?? 'an age group'
+  await m.writeData({ [`dances/${danceId}/groupIds/${groupId}`]: on || null }, `${on ? 'Added' : 'Removed'} ${dance} ${on ? 'to' : 'from'} ${group}`)
 }
 async function sameAs(groupId: string) {
   const source = copyFrom.value
@@ -95,12 +116,10 @@ async function sameAs(groupId: string) {
     if (want !== !!d.groupIds?.[groupId]) updates[`dances/${d.id}/groupIds/${groupId}`] = want || null
   }
   if (!Object.keys(updates).length) return toast('Already the same dances')
-  const before = snapshot(m.raw.value, updates)
+  const message = `Now does the same dances as ${m.groupsById.value.get(source)?.label}`
   try {
-    await m.writeData(updates)
-    toast(`Now does the same dances as ${m.groupsById.value.get(source)?.label}`, {
-      action: { label: 'Undo', run: () => m.writeData(before) },
-    })
+    const change = await m.writeData(updates, message)
+    toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   }
@@ -119,6 +138,7 @@ const items = computed(() => m.groups.value)
 
 <template>
   <CollectionEditor :spec="spec" :items="items">
+    <template #list-intro><ImportTip /></template>
     <template #detail-extra="{ item }">
       <section class="space-y-3">
         <div class="flex flex-wrap items-end justify-between gap-2">

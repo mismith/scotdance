@@ -15,6 +15,8 @@ import { compareKeys, forgetCompetition } from '@/lib/competitionData'
 import { forgetCompetitionMeta } from '@/lib/competitionMeta'
 import { forgetCompetitionsList } from '@/composables/useCompetitions'
 import { newKey, write } from '@/lib/admin/write'
+import { at } from '@/lib/admin/collection'
+import { record, undo, type HistoryWriter } from '@/lib/admin/history'
 import {
   dancerFullName,
   danceFullName,
@@ -242,21 +244,49 @@ export function createManagedCompetition(competitionId: Ref<string>) {
     forgetCompetitionsList()
   }
 
-  /** Save changes under competitions:data/{id}. Paths are relative to it. */
-  async function writeData(updates: Record<string, unknown>) {
-    const id = competitionId.value
-    const prefixed = Object.fromEntries(Object.entries(updates).map(([k, v]) => [`competitions:data/${id}/${k}`, v]))
+  // Undo history: paths are recorded in full, so one writer can put back both
+  // the competition record and its data.
+  const dataPrefix = () => `competitions:data/${competitionId.value}/`
+  const infoPrefix = () => `competitions/${competitionId.value}/`
+  const historyWriter: HistoryWriter = {
+    async apply(updates) {
+      await write(updates)
+      afterInfoWrite()
+    },
+    read(path) {
+      if (path.startsWith(dataPrefix())) return at(raw.value, path.slice(dataPrefix().length))
+      if (path.startsWith(infoPrefix())) return at(competition.value, path.slice(infoPrefix().length))
+      return undefined
+    },
+  }
+
+  async function commit(prefix: string, source: unknown, updates: Record<string, unknown>, label: string | null) {
+    const prefixed = Object.fromEntries(Object.entries(updates).map(([k, v]) => [`${prefix}${k}`, v]))
+    const before = Object.fromEntries(Object.keys(updates).map((k) => [`${prefix}${k}`, at(source, k) ?? null]))
     await write(prefixed)
+    return label == null ? 0 : record(competitionId.value, historyWriter, label, before, prefixed)
+  }
+
+  /**
+   * Save changes under competitions:data/{id}. Paths are relative to it.
+   * Returns the change's id in the undo history. A `null` label keeps it out
+   * of the history (e.g. invites, which send email when redone).
+   */
+  async function writeData(updates: Record<string, unknown>, label: string | null = 'Change') {
+    const id = await commit(dataPrefix(), raw.value, updates, label)
     afterWrite()
+    return id
   }
 
   /** Save changes under competitions/{id} (name, date, publishing…). */
-  async function writeInfo(updates: Record<string, unknown>) {
-    const id = competitionId.value
-    const prefixed = Object.fromEntries(Object.entries(updates).map(([k, v]) => [`competitions/${id}/${k}`, v]))
-    await write(prefixed)
+  async function writeInfo(updates: Record<string, unknown>, label: string | null = 'Change') {
+    const id = await commit(infoPrefix(), competition.value, updates, label)
     afterInfoWrite()
+    return id
   }
+
+  /** Undo a change (the latest by default), checking nobody has changed it since. */
+  const undoChange = (id?: number) => undo(competitionId.value, id)
 
   return {
     competitionId,
@@ -288,6 +318,7 @@ export function createManagedCompetition(competitionId: Ref<string>) {
     groupDances,
     writeData,
     writeInfo,
+    undoChange,
     newKey,
   }
 }

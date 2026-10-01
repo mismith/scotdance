@@ -76,12 +76,18 @@ const spec: CollectionSpec<MDancer> = {
     key === 'groupId' ? { [`dancers/${d.id}/categoryId`]: (value && m.groupsById.value.get(value)?.categoryId) ?? null } : {},
   impact: (ids) => {
     const updates: Record<string, unknown> = {}
-    // Take their numbers out of any draws.
-    const numbers = new Map(ids.map((id) => [id, m.dancersById.value.get(id)?.num]))
-    for (const [gid, byDance] of Object.entries(m.draws.value)) {
-      for (const [did, order] of Object.entries(byDance ?? {})) {
+    // Take their numbers out of their age group's draws (numbers are only
+    // unique within an age group, so other groups' draws are left alone).
+    const gone = new Map<string, Set<string>>()
+    for (const id of ids) {
+      const d = m.dancersById.value.get(id)
+      if (!d?.groupId || !d.num) continue
+      gone.set(d.groupId, (gone.get(d.groupId) ?? new Set()).add(d.num))
+    }
+    for (const [gid, nums] of gone) {
+      for (const [did, order] of Object.entries(m.draws.value[gid] ?? {})) {
         if (!Array.isArray(order)) continue
-        const kept = order.filter((n) => ![...numbers.values()].includes(String(n)))
+        const kept = order.filter((n) => !nums.has(String(n)))
         if (kept.length !== order.length) updates[`draws/${gid}/${did}`] = kept.length ? kept : null
       }
     }

@@ -5,7 +5,6 @@ import { ClipboardPaste, Download, FileSpreadsheet, LoaderCircle, RotateCcw } fr
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
-import { snapshot } from '@/lib/admin/collection'
 import {
   gridFromSheet,
   gridFromText,
@@ -131,15 +130,15 @@ async function doImport() {
     nextGroupOrder: nextOrder(m.groups.value),
     nextCategoryOrder: nextOrder(m.categories.value),
   })
-  const before = snapshot(m.raw.value, updates)
+  const parts = [
+    p.counts.new && `${p.counts.new} added`,
+    p.counts.changed && `${p.counts.changed} updated`,
+    removeMissing.value && p.missing.length && `${p.missing.length} removed`,
+  ].filter(Boolean)
+  const message = `Imported: ${parts.join(', ') || 'nothing to change'}`
   try {
-    await m.writeData(updates)
-    const parts = [
-      p.counts.new && `${p.counts.new} added`,
-      p.counts.changed && `${p.counts.changed} updated`,
-      removeMissing.value && p.missing.length && `${p.missing.length} removed`,
-    ].filter(Boolean)
-    toast(`Imported: ${parts.join(', ') || 'nothing to change'}`, { action: { label: 'Undo', run: () => m.writeData(before) } })
+    const change = await m.writeData(updates, message)
+    toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
     await router.replace({ name: 'manage.dancers', params: { competitionId: m.competitionId.value } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })

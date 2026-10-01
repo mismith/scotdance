@@ -40,7 +40,7 @@ async function invite() {
   }
   sending.value = true
   try {
-    await m.writeData({ [`invites/${m.newKey()}`]: { created: new Date().toISOString(), payload: { email: value } } })
+    await m.writeData({ [`invites/${m.newKey()}`]: { created: new Date().toISOString(), payload: { email: value } } }, null)
     email.value = ''
     toast(`Invite sent to ${value}`)
   } catch (e) {
@@ -52,7 +52,7 @@ async function invite() {
 
 async function resend(i: Invite) {
   try {
-    await m.writeData({ [`invites/${i.id}/created`]: new Date().toISOString(), [`invites/${i.id}/cancelled`]: null })
+    await m.writeData({ [`invites/${i.id}/created`]: new Date().toISOString(), [`invites/${i.id}/cancelled`]: null }, null)
     toast(`Sent again to ${i.payload?.email}`)
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
@@ -60,15 +60,15 @@ async function resend(i: Invite) {
 }
 async function cancel(i: Invite) {
   try {
-    await m.writeData({ [`invites/${i.id}/cancelled`]: new Date().toISOString() })
-    toast('Invite cancelled', { action: { label: 'Undo', run: () => m.writeData({ [`invites/${i.id}/cancelled`]: null }) } })
+    await m.writeData({ [`invites/${i.id}/cancelled`]: new Date().toISOString() }, null)
+    toast('Invite cancelled', { action: { label: 'Undo', run: () => m.writeData({ [`invites/${i.id}/cancelled`]: null }, null) } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   }
 }
 async function removeInvite(i: Invite) {
   try {
-    await m.writeData({ [`invites/${i.id}`]: null })
+    await m.writeData({ [`invites/${i.id}`]: null }, null)
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   }
@@ -82,7 +82,7 @@ async function removeAdmin(i: Invite) {
   })
   if (!ok) return
   try {
-    await m.writeData({ [`invites/${i.id}`]: null })
+    await m.writeData({ [`invites/${i.id}`]: null }, null)
     toast(`Removed ${i.payload?.email ?? 'admin'}`)
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })

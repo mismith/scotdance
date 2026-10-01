@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import CollectionEditor from '@/components/admin/CollectionEditor.vue'
+import ImportTip from '@/components/admin/ImportTip.vue'
 import { useManagedCompetition, type MCategory } from '@/composables/admin/useManagedCompetition'
 import type { CollectionSpec } from '@/lib/admin/collection'
 
@@ -34,5 +35,7 @@ const items = computed(() => m.categories.value)
 </script>
 
 <template>
-  <CollectionEditor :spec="spec" :items="items" />
+  <CollectionEditor :spec="spec" :items="items">
+    <template #list-intro><ImportTip /></template>
+  </CollectionEditor>
 </template>

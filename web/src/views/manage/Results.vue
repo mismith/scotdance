@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { Check, ChevronRight, Download, Trophy } from '@lucide/vue'
+import { Check, ChevronDown, ChevronRight, CircleCheck, Download, Minus, Trophy } from '@lucide/vue'
 import EmptyState from '@/components/EmptyState.vue'
 import MasterDetail from '@/components/admin/MasterDetail.vue'
 import ResultsEntry from '@/components/admin/ResultsEntry.vue'
@@ -9,7 +9,7 @@ import SwitchField from '@/components/admin/SwitchField.vue'
 import { useManagedCompetition, type MGroup } from '@/composables/admin/useManagedCompetition'
 import { useSplit } from '@/composables/admin/useWide'
 import { confirm, toast } from '@/lib/admin/feedback'
-import { CALLBACKS, OVERALL, danceState, parsePlacings, placeAt } from '@/lib/admin/results'
+import { CALLBACKS, OVERALL, danceState, isPlaceholderId, parsePlacings, placeAt } from '@/lib/admin/results'
 
 const route = useRoute()
 const m = useManagedCompetition()
@@ -27,18 +27,36 @@ function progress(g: MGroup) {
   return { done, total: ids.length }
 }
 
-// The next dance still to enter, so tapping a group lands where you need to be.
-function firstTodo(g: MGroup) {
-  return danceIds(g).find((id) => danceState(m.results.value[g.id]?.[id]) === 'todo') ?? CALLBACKS
-}
+const danceRows = (g: MGroup) => [
+  { id: CALLBACKS, label: 'Callbacks' },
+  ...m.groupDances(g.id).map((d) => ({ id: d.id, label: d.label })),
+  ...(hasOverall(g) ? [{ id: OVERALL, label: 'Overall' }] : []),
+]
+const stateOf = (groupId: string, danceId: string) => danceState(m.results.value[groupId]?.[danceId])
+const hasPlaceholder = (groupId: string, danceId: string) =>
+  parsePlacings(m.results.value[groupId]?.[danceId]).entries.some((e) => isPlaceholderId(e.id)) ||
+  (m.points.value[groupId]?.[danceId]?.combined ?? []).some(isPlaceholderId)
 
-const sections = computed(() => {
-  const byCategory = new Map<string, MGroup[]>()
-  for (const g of m.groups.value) {
-    const key = g.category?.label ?? 'No category'
-    byCategory.set(key, [...(byCategory.get(key) ?? []), g])
+// Which age groups are open, remembered on this device. The first (or the
+// one being entered) opens by default.
+const EXPANDED_KEY = 'manage.results.expanded'
+const expanded = ref<Record<string, boolean>>({})
+try {
+  expanded.value = JSON.parse(localStorage.getItem(EXPANDED_KEY) ?? '{}')
+} catch {
+  expanded.value = {}
+}
+const isExpanded = (id: string) => expanded.value[id] ?? (id === groupId.value || id === m.groups.value[0]?.id || m.groups.value.length === 1)
+function toggle(id: string) {
+  expanded.value = { ...expanded.value, [id]: !isExpanded(id) }
+  try {
+    localStorage.setItem(EXPANDED_KEY, JSON.stringify(expanded.value))
+  } catch {
+    // Private browsing: just don't remember.
   }
-  return [...byCategory.entries()]
+}
+watch(groupId, (id) => {
+  if (id && !isExpanded(id)) expanded.value = { ...expanded.value, [id]: true }
 })
 
 const totals = computed(() => {
@@ -62,11 +80,10 @@ async function setHidden(hidden: boolean) {
       destructive: hasAny,
     })
     if (!ok) return
-    const before = m.raw.value.results ?? null
-    await m.writeData({ results: false })
-    toast('Results tab hidden', { action: { label: 'Undo', run: () => m.writeData({ results: before }) } })
+    const change = await m.writeData({ results: false }, 'Hid the Results tab')
+    toast('Results tab hidden', { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } else {
-    await m.writeData({ results: null })
+    await m.writeData({ results: null }, 'Showed the Results tab')
   }
 }
 
@@ -103,7 +120,7 @@ function exportCsv() {
 </script>
 
 <template>
-  <MasterDetail :show-detail="!!groupId" focus-detail>
+  <MasterDetail :show-detail="!!groupId">
     <template #list>
       <div class="space-y-6 p-4 pb-[calc(2rem+var(--safe-bottom))]">
         <header class="space-y-1">
@@ -126,32 +143,51 @@ function exportCsv() {
           description="Add age groups and their dancers first, then enter results here."
         />
 
-        <section v-for="[category, groups] in m.resultsHidden.value ? [] : sections" :key="category" class="space-y-2">
-          <h2 class="text-muted-foreground px-1 text-sm font-bold">{{ category }}</h2>
-          <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
-            <li v-for="g in groups" :key="g.id">
-              <RouterLink
-                :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: g.id, danceId: firstTodo(g) } }"
-                :replace="split"
-                :aria-current="groupId === g.id ? 'true' : undefined"
-                :class="['flex min-h-15 items-center gap-3 px-4 py-2', groupId === g.id ? 'bg-blue-paper' : 'hover:bg-accent']"
-              >
-                <span class="min-w-0 flex-1">
-                  <span class="block truncate text-base font-semibold">{{ g.name || g.label }}</span>
-                  <span class="text-muted-foreground block text-sm">{{ m.groupDancers(g.id).length }} dancers</span>
-                </span>
-                <span
-                  v-if="progress(g).done === progress(g).total"
-                  class="bg-done text-done-foreground flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-bold"
+        <ul v-if="!m.resultsHidden.value" class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+          <li v-for="g in m.groups.value" :key="g.id">
+            <button
+              type="button"
+              :aria-expanded="isExpanded(g.id)"
+              class="hover:bg-accent flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left"
+              @click="toggle(g.id)"
+            >
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-base font-bold">{{ g.label }}</span>
+                <span class="text-muted-foreground block text-sm">{{ m.groupDancers(g.id).length }} dancers · {{ progress(g).done }} of {{ progress(g).total }} entered</span>
+              </span>
+              <CircleCheck v-if="progress(g).done === progress(g).total" class="text-primary size-5 shrink-0" />
+              <ChevronDown :class="['text-muted-foreground size-5 shrink-0 transition-transform', isExpanded(g.id) && 'rotate-180']" />
+            </button>
+            <ul v-if="isExpanded(g.id)" class="bg-background divide-y border-t">
+              <li v-for="d in danceRows(g)" :key="d.id">
+                <RouterLink
+                  :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: g.id, danceId: d.id } }"
+                  :replace="split"
+                  :aria-current="groupId === g.id && danceId === d.id ? 'true' : undefined"
+                  :class="[
+                    'flex min-h-13 items-center gap-3 py-1.5 pr-3 pl-6',
+                    groupId === g.id && danceId === d.id ? 'bg-blue-paper' : 'hover:bg-accent',
+                    hasPlaceholder(g.id, d.id) && 'bg-[repeating-linear-gradient(135deg,transparent_0_10px,color-mix(in_oklab,var(--color-next)_60%,transparent)_10px_20px)]',
+                  ]"
                 >
-                  <Check class="size-3.5" stroke-width="3" /> Done
-                </span>
-                <span v-else class="text-muted-foreground text-sm font-semibold tabular-nums">{{ progress(g).done }}/{{ progress(g).total }}</span>
-                <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
-              </RouterLink>
-            </li>
-          </ul>
-        </section>
+                  <span
+                    :class="[
+                      'flex size-9 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-extrabold',
+                      stateOf(g.id, d.id) === 'todo' ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground',
+                    ]"
+                  >
+                    <Check v-if="stateOf(g.id, d.id) === 'done'" class="size-4.5" stroke-width="3" />
+                    <Minus v-else-if="stateOf(g.id, d.id) === 'none'" class="size-4.5" stroke-width="3" />
+                    <template v-else>TBD</template>
+                  </span>
+                  <span class="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold">{{ d.label }}</span>
+                  <Trophy v-if="d.id === OVERALL" class="text-muted-foreground size-4.5 shrink-0" />
+                  <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
+                </RouterLink>
+              </li>
+            </ul>
+          </li>
+        </ul>
 
         <section class="space-y-3 border-t pt-6">
           <button

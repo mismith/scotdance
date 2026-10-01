@@ -5,25 +5,12 @@
 defineProps<{
   /** An item is selected (or being added). */
   showDetail: boolean
-  /** Give the item the whole width until very wide screens (results entry). */
-  focusDetail?: boolean
 }>()
 </script>
 
 <template>
-  <div
-    :class="[
-      'md:grid md:h-full md:grid-cols-[minmax(17rem,24rem)_minmax(0,1fr)]',
-      focusDetail && showDetail && 'md:max-2xl:grid-cols-1',
-    ]"
-  >
-    <section
-      :class="[
-        'min-w-0 md:overflow-y-auto md:border-r',
-        showDetail && 'max-md:hidden',
-        focusDetail && showDetail && 'md:max-2xl:hidden',
-      ]"
-    >
+  <div class="md:grid md:h-full md:grid-cols-[minmax(17rem,24rem)_minmax(0,1fr)]">
+    <section :class="['min-w-0 md:overflow-y-auto md:border-r', showDetail && 'max-md:hidden']">
       <slot name="list" />
     </section>
     <section :class="['bg-background min-w-0 md:overflow-y-auto', !showDetail && 'max-md:hidden']">

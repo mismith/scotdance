@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { VueDraggable } from 'vue-draggable-plus'
-import { ClipboardPaste, Copy, Gavel, RefreshCw } from '@lucide/vue'
+import { ClipboardPaste, Copy, Gavel, Plus, RefreshCw } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { toast } from '@/lib/admin/feedback'
@@ -80,7 +80,7 @@ async function save(next: Record<string, Chip[]>) {
     updates[`${props.node.path}/platforms/${p.id}`] = groupIds.length || judgeIds.length ? { orderedGroupIds: groupIds.length ? groupIds : null, orderedJudgeIds: judgeIds.length ? judgeIds : null } : null
   }
   try {
-    await m.writeData(updates)
+    await m.writeData(updates, 'Platforms')
   } catch (e) {
     pools.value = build()
     toast(friendlyError(e), { tone: 'error' })
@@ -90,6 +90,15 @@ async function save(next: Record<string, Chip[]>) {
 function onEnd() {
   dragging.value = false
   void save({ ...pools.value })
+}
+
+// A spacer is a gap in a platform's order (e.g. for a break). Move one to
+// Unassigned to take it out.
+function addSpacer(poolId: string) {
+  const id = String(Date.now())
+  const next = { ...pools.value, [poolId]: [...(pools.value[poolId] ?? []), { key: `s:${id}`, id, kind: 'spacer' as const, label: 'Spacer' }] }
+  pools.value = next
+  void save(next)
 }
 
 // --- Tap to move
@@ -121,10 +130,9 @@ async function paste() {
     const judges = (slot?.orderedJudgeIds ?? []).filter((id) => judgesById.value.has(id))
     next[p.id] = groups.length || judges.length ? { orderedGroupIds: groups.length ? groups : undefined, orderedJudgeIds: judges.length ? judges : undefined } : null
   }
-  const before = JSON.parse(JSON.stringify(props.node.platforms ?? null))
   try {
-    await m.writeData({ [`${props.node.path}/platforms`]: JSON.parse(JSON.stringify(next)) })
-    toast('Pasted', { action: { label: 'Undo', run: () => m.writeData({ [`${props.node.path}/platforms`]: before }) } })
+    const change = await m.writeData({ [`${props.node.path}/platforms`]: JSON.parse(JSON.stringify(next)) }, 'Pasted platforms')
+    toast('Pasted', { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   }
@@ -151,7 +159,7 @@ async function cycleJudges() {
     updates[`${props.node.path}/platforms/${p.id}/orderedJudgeIds`] = ids.length ? ids : null
   })
   try {
-    await m.writeData(updates)
+    await m.writeData(updates, 'Cycled judges')
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   }
@@ -175,7 +183,7 @@ function useClipboard(): Ref<Record<string, SchedulePlatform> | null> {
   <section class="space-y-3">
     <div>
       <h3 class="text-heading">Platforms</h3>
-      <p class="text-muted-foreground text-sm">Drag age groups and judges onto platforms in the order they’ll dance, or tap one to move it.</p>
+      <p class="text-muted-foreground text-sm">Drag age groups and judges onto platforms in the order they’ll dance, or tap one to move it. A spacer leaves a gap in the order; move it to Unassigned to take it out.</p>
     </div>
 
     <p v-if="!m.platforms.value.length" class="text-muted-foreground text-base">
@@ -221,6 +229,15 @@ function useClipboard(): Ref<Record<string, SchedulePlatform> | null> {
               <span v-if="chip.count != null" class="text-muted-foreground tabular-nums">{{ chip.count }}</span>
             </button>
           </VueDraggable>
+          <button
+            v-if="pool.id !== UNASSIGNED"
+            type="button"
+            :disabled="!canEdit"
+            class="text-muted-foreground hover:bg-accent mt-1.5 flex h-9 items-center gap-1 rounded-full px-2.5 text-sm font-bold disabled:opacity-50"
+            @click="addSpacer(pool.id)"
+          >
+            <Plus class="size-3.5" /> Spacer
+          </button>
         </div>
       </div>
 

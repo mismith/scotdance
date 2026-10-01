@@ -12,7 +12,6 @@ import { compareKeys } from '@/lib/competitionData'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError, write } from '@/lib/admin/write'
 import { uploadLinkFile } from '@/lib/admin/upload'
-import { snapshot } from '@/lib/admin/collection'
 import { parseDate } from '@/lib/format'
 import { placesAvailable, type VenueFields } from '@/lib/maps'
 
@@ -33,16 +32,26 @@ function dateTimeInput(value: unknown) {
   return Number.isNaN(d.getTime()) ? '' : `${dateInput(value)}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-const save = (key: string) => (v: string | null) => m.writeInfo({ [key]: v })
+const FIELD_NAMES: Record<string, string> = {
+  name: 'Name',
+  date: 'Date',
+  sobhd: 'RSOBHD number',
+  description: 'Description',
+  image: 'Image',
+  venue: 'Venue',
+  address: 'Address',
+  location: 'Town or city',
+  registrationURL: 'Registration link',
+  registrationStart: 'Registration opens',
+  registrationEnd: 'Registration closes',
+}
+const save = (key: string) => (v: string | null) => m.writeInfo({ [key]: v }, FIELD_NAMES[key] ?? key)
 
 async function pickVenue(fields: VenueFields) {
-  const updates = { ...fields }
-  const before = snapshot(m.competition.value ?? {}, updates)
+  const message = `Venue set to ${fields.venue ?? fields.address ?? fields.location ?? 'the place you picked'}`
   try {
-    await m.writeInfo(updates)
-    toast(`Venue set to ${fields.venue ?? fields.address ?? fields.location ?? 'the place you picked'}`, {
-      action: { label: 'Undo', run: () => m.writeInfo(before) },
-    })
+    const change = await m.writeInfo({ ...fields }, message)
+    toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   }
@@ -74,7 +83,7 @@ async function addLink(url?: string, name?: string) {
   const id = m.newKey()
   const order = links.value.reduce((max, l) => Math.max(max, l._order ?? -1), -1) + 1
   try {
-    await m.writeInfo({ [`links/${id}`]: { name: (name ?? newName.value).trim() || null, url: u, _order: order } })
+    await m.writeInfo({ [`links/${id}`]: { name: (name ?? newName.value).trim() || null, url: u, _order: order } }, 'Added a link')
     newName.value = ''
     newUrl.value = ''
   } catch (e) {
@@ -96,11 +105,10 @@ async function onFile(e: Event) {
   }
 }
 async function removeLink(link: LinkRow) {
-  const updates = { [`links/${link.id}`]: null }
-  const before = snapshot(m.competition.value ?? {}, updates)
+  const message = `Removed ${link.name || 'the link'}`
   try {
-    await m.writeInfo(updates)
-    toast(`Removed ${link.name || 'the link'}`, { action: { label: 'Undo', run: () => m.writeInfo(before) } })
+    const change = await m.writeInfo({ [`links/${link.id}`]: null }, message)
+    toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   }
@@ -206,8 +214,8 @@ async function deleteCompetition() {
       <ul v-if="links.length" class="bg-card divide-y rounded-2xl border shadow-sm">
         <li v-for="link in links" :key="link.id" class="space-y-3 p-4">
           <div class="grid gap-3 sm:grid-cols-2">
-            <TextField :model-value="link.name" label="Label" placeholder="e.g. Program" :save="(v) => m.writeInfo({ [`links/${link.id}/name`]: v })" />
-            <TextField :model-value="link.url" label="Link" type="url" required :save="(v) => m.writeInfo({ [`links/${link.id}/url`]: v })" />
+            <TextField :model-value="link.name" label="Label" placeholder="e.g. Program" :save="(v) => m.writeInfo({ [`links/${link.id}/name`]: v }, 'Link label')" />
+            <TextField :model-value="link.url" label="Link" type="url" required :save="(v) => m.writeInfo({ [`links/${link.id}/url`]: v }, 'Link')" />
           </div>
           <div class="flex items-center justify-between gap-2">
             <a v-if="link.url" :href="link.url" target="_blank" rel="noopener" class="text-primary truncate text-sm font-bold">Open</a>
@@ -259,14 +267,14 @@ async function deleteCompetition() {
           :model-value="!!c.listed"
           label="Listed"
           description="Shows in the competitions list with its date, venue and judges."
-          :save="(on) => m.writeInfo(on ? { listed: true } : { listed: false, published: false })"
+          :save="(on) => m.writeInfo(on ? { listed: true } : { listed: false, published: false }, on ? 'Listed' : 'Unlisted')"
         />
         <div class="border-t" />
         <SwitchField
           :model-value="!!c.published"
           label="Published"
           description="Also shows dancers, the schedule and results."
-          :save="(on) => m.writeInfo(on ? { published: true, listed: true } : { published: false })"
+          :save="(on) => m.writeInfo(on ? { published: true, listed: true } : { published: false }, on ? 'Published' : 'Unpublished')"
         />
       </div>
     </section>

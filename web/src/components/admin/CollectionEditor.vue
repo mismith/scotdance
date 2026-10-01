@@ -25,7 +25,7 @@ import { useManagedCompetition } from '@/composables/admin/useManagedCompetition
 import { useSplit } from '@/composables/admin/useWide'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
-import { snapshot, type CollectionItem, type CollectionSpec, type FieldSpec } from '@/lib/admin/collection'
+import { type CollectionItem, type CollectionSpec, type FieldSpec } from '@/lib/admin/collection'
 
 // One editable list: search, select several to change or delete at once,
 // drag to reorder, add one (or many, from presets or one after another),
@@ -91,7 +91,7 @@ async function onDragEnd() {
     if (item._order !== index) updates[`${props.spec.path}/${item.id}/_order`] = index
   })
   try {
-    await m.writeData(updates)
+    await m.writeData(updates, `Reordered ${props.spec.plural}`)
   } catch (e) {
     order.value = [...props.items]
     toast(friendlyError(e), { tone: 'error' })
@@ -128,12 +128,10 @@ async function applyBulk(value: string | null) {
     const item = props.items.find((i) => i.id === id)
     if (item && props.spec.onChange) Object.assign(updates, props.spec.onChange(item, field.key, value))
   }
-  const before = snapshot(m.raw.value, updates)
   try {
-    await m.writeData(updates)
-    toast(`Updated ${ids.length} ${ids.length === 1 ? props.spec.singular : props.spec.plural}`, {
-      action: { label: 'Undo', run: () => m.writeData(before) },
-    })
+    const message = `Updated ${ids.length} ${ids.length === 1 ? props.spec.singular : props.spec.plural}`
+    const change = await m.writeData(updates, message)
+    toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
     selecting.value = false
     selected.clear()
   } catch (e) {
@@ -156,13 +154,12 @@ async function remove(ids: string[]) {
   if (!ok) return
   const updates: Record<string, unknown> = { ...impact.updates }
   for (const id of ids) updates[`${props.spec.path}/${id}`] = null
-  const before = snapshot(m.raw.value, updates)
   try {
-    await m.writeData(updates)
+    const change = await m.writeData(updates, `Deleted ${what}`)
     if (itemId.value && ids.includes(itemId.value)) await go(listRoute.value)
     selecting.value = false
     selected.clear()
-    toast(`Deleted ${what}`, { action: { label: 'Undo', run: () => m.writeData(before) } })
+    toast(`Deleted ${what}`, { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   }
@@ -172,7 +169,8 @@ async function remove(ids: string[]) {
 function saveField(item: T, key: string, value: string | null) {
   const updates: Record<string, unknown> = { [`${props.spec.path}/${item.id}/${key}`]: value }
   if (props.spec.onChange) Object.assign(updates, props.spec.onChange(item, key, value))
-  return m.writeData(updates)
+  const field = props.spec.fields.find((f) => f.key === key)?.label ?? key
+  return m.writeData(updates, `${field} of ${props.spec.title(item) || `the ${props.spec.singular}`}`)
 }
 const stringValue = (item: T, key: string) => {
   const v = (item as unknown as Record<string, unknown>)[key]
@@ -234,11 +232,11 @@ async function submitDraft(another: boolean) {
     }
   }
   updates[`${props.spec.path}/${id}`] = record
+  const recordLabel = String(record.name ?? [record.firstName, record.lastName].filter(Boolean).join(' '))
+  const name = props.spec.title({ ...(record as object), id, label: recordLabel } as unknown as T) || recordLabel || `the ${props.spec.singular}`
   try {
-    await m.writeData(updates)
+    await m.writeData(updates, `Added ${name}`)
     lastAdded.value = Object.fromEntries(Object.entries(record).map(([k, v]) => [k, String(v)]))
-    const recordLabel = String(record.name ?? [record.firstName, record.lastName].filter(Boolean).join(' '))
-    const name = props.spec.title({ ...(record as object), id, label: recordLabel } as unknown as T) || recordLabel || `the ${props.spec.singular}`
     if (another) {
       toast(`Added ${name}`)
       resetDraft()
@@ -275,12 +273,10 @@ async function addPresets() {
   for (const i of picks) {
     updates[`${props.spec.path}/${m.newKey()}`] = { ...presets[i].values, ...(props.spec.sortable ? { _order: order++ } : {}) }
   }
-  const before = snapshot(m.raw.value, updates)
   try {
-    await m.writeData(updates)
-    toast(`Added ${picks.length} ${picks.length === 1 ? props.spec.singular : props.spec.plural}`, {
-      action: { label: 'Undo', run: () => m.writeData(before) },
-    })
+    const message = `Added ${picks.length} ${picks.length === 1 ? props.spec.singular : props.spec.plural}`
+    const change = await m.writeData(updates, message)
+    toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   }
@@ -576,7 +572,7 @@ const countLabel = computed(() => {
   <Dialog :open="presetsOpen" variant="sheet" size="md" @close="presetsOpen = false">
     <template #header>
       <h2 class="text-title">Add common {{ spec.plural }}</h2>
-      <p class="text-muted-foreground text-sm">Pick any to add. You can rename them afterwards.</p>
+      <p class="text-muted-foreground text-sm">Use these where you can: they show what good data looks like and save time. You can rename them afterwards.</p>
     </template>
     <ul class="divide-y">
       <li v-for="(p, i) in spec.presets" :key="i">

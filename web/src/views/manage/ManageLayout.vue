@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useEventListener } from '@vueuse/core'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
-import { CalendarX, ExternalLink, Lock, LogIn } from '@lucide/vue'
+import { CalendarX, ExternalLink, Lock, LogIn, Redo2, Undo2 } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
@@ -13,6 +14,7 @@ import { useSidebar, useSplit } from '@/composables/admin/useWide'
 import { provideManageBack } from '@/composables/admin/useManageBack'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { ALL_SECTIONS } from '@/lib/admin/sections'
+import { historyState, redo, undo } from '@/lib/admin/history'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 
@@ -71,6 +73,47 @@ const exit = computed(() => {
   return { to: { name: 'competition.info', params: { competitionId: cid } }, label: name.value }
 })
 
+// Undo and redo for everything changed in this competition on this visit.
+// Cmd+Z / Ctrl+Z undoes, Shift+Cmd+Z / Ctrl+Y redoes, except while typing in
+// a field (where they undo the typing, as usual).
+const history = historyState(() => competitionId.value)
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
+const undoKey = isMac ? '⌘Z' : 'Ctrl+Z'
+const redoKey = isMac ? '⇧⌘Z' : 'Ctrl+Y'
+const busy = ref(false)
+async function run(step: () => Promise<boolean>) {
+  if (busy.value) return
+  busy.value = true
+  try {
+    await step()
+  } finally {
+    busy.value = false
+  }
+}
+const doUndo = () => run(() => undo(competitionId.value))
+const doRedo = () => run(() => redo(competitionId.value))
+useEventListener(window, 'keydown', (e: KeyboardEvent) => {
+  if (access.value !== 'ok' || !(e.metaKey || e.ctrlKey) || e.altKey) return
+  const t = e.target as HTMLElement | null
+  if (t?.closest('input, textarea, select, [contenteditable="true"]')) return
+  const key = e.key.toLowerCase()
+  if (key === 'z' && !e.shiftKey) {
+    e.preventDefault()
+    void doUndo()
+  } else if ((key === 'z' && e.shiftKey) || (key === 'y' && !isMac)) {
+    e.preventDefault()
+    void doRedo()
+  }
+})
+
+// "View" opens the same part of the public page, where there is one.
+const PUBLIC: Record<string, string> = {
+  'manage.results': 'competition.results',
+  'manage.schedule': 'competition.schedule',
+  'manage.dancers': 'competition.dancers',
+}
+const viewRoute = computed(() => ({ name: (section.value && PUBLIC[section.value.route]) || 'competition.info', params: { competitionId: competitionId.value } }))
+
 // The bar names where you are; the competition sits underneath.
 const barTitle = computed(() => (isHome.value ? 'Manage' : ((route.meta.title as string | undefined) ?? section.value?.title ?? 'Manage')))
 </script>
@@ -79,10 +122,32 @@ const barTitle = computed(() => (isHome.value ? 'Manage' : ((route.meta.title as
   <div class="flex min-h-dvh flex-col md:fixed md:inset-0 md:min-h-0">
     <AppBar wide :title="barTitle" :subtitle="access === 'ok' ? name : null" show-title :scrolled="true" :exit="exit">
       <template #actions>
-        <SaveStatus v-if="access === 'ok'" />
+        <template v-if="access === 'ok'">
+          <button
+            type="button"
+            :disabled="!history.canUndo.value || busy"
+            :aria-label="history.undoLabel.value ? `Undo: ${history.undoLabel.value}` : 'Undo'"
+            :title="history.undoLabel.value ? `Undo: ${history.undoLabel.value} (${undoKey})` : `Nothing to undo (${undoKey})`"
+            class="hover:bg-accent flex size-9 items-center justify-center rounded-full disabled:opacity-35"
+            @click="doUndo"
+          >
+            <Undo2 class="size-5" />
+          </button>
+          <button
+            type="button"
+            :disabled="!history.canRedo.value || busy"
+            :aria-label="history.redoLabel.value ? `Redo: ${history.redoLabel.value}` : 'Redo'"
+            :title="history.redoLabel.value ? `Redo: ${history.redoLabel.value} (${redoKey})` : `Nothing to redo (${redoKey})`"
+            class="hover:bg-accent flex size-9 items-center justify-center rounded-full disabled:opacity-35 max-sm:hidden"
+            @click="doRedo"
+          >
+            <Redo2 class="size-5" />
+          </button>
+          <SaveStatus />
+        </template>
         <RouterLink
           v-if="access === 'ok' && sidebar"
-          :to="{ name: 'competition.info', params: { competitionId } }"
+          :to="viewRoute"
           class="hover:bg-accent text-primary flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-bold"
         >
           View <ExternalLink class="size-4" />
