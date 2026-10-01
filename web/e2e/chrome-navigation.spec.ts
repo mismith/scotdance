@@ -1,0 +1,115 @@
+import { expect as baseExpect, test } from '@playwright/test'
+
+// The dev server is shared and busy during a full run: give page loads time.
+const expect = baseExpect.configure({ timeout: 15_000 })
+
+// App-wide navigation: page titles, the tab bar, Back and scroll positions,
+// and getting around by keyboard. Uses the emulator's legacy data (read only).
+
+test.describe('page titles', () => {
+  for (const [path, title] of [
+    ['/', 'Home • ScotDance.app'],
+    ['/competitions', 'Competitions • ScotDance.app'],
+    ['/search', 'Search • ScotDance.app'],
+    ['/dancers', 'Dancers • ScotDance.app'],
+    ['/judges', 'Judges • ScotDance.app'],
+    ['/pipers', 'Pipers • ScotDance.app'],
+    ['/venues', 'Venues • ScotDance.app'],
+    ['/settings', 'Settings • ScotDance.app'],
+    ['/about', 'About • ScotDance.app'],
+    ['/policies', 'Privacy and terms • ScotDance.app'],
+    ['/no/such/page', 'Not found • ScotDance.app'],
+  ] as const) {
+    test(`${path} is called “${title}”`, async ({ page }) => {
+      await page.goto(path)
+      await expect(page).toHaveTitle(title)
+    })
+  }
+})
+
+test('the tab bar marks where you are, and tapping the current tab goes back to the top', async ({ page }) => {
+  await page.goto('/judges')
+  const nav = page.getByRole('navigation', { name: 'App' })
+  await nav.getByRole('link', { name: 'Competitions' }).click()
+  await expect(page).toHaveURL(/\/competitions$/)
+  await expect(nav.getByRole('link', { name: 'Competitions' })).toHaveAttribute('aria-current', 'page')
+  await expect(nav.getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current', 'page')
+  await nav.getByRole('link', { name: 'Search' }).click()
+  await expect(page).toHaveURL(/\/search$/)
+  await expect(nav.getByRole('link', { name: 'Search' })).toHaveAttribute('aria-current', 'page')
+})
+
+test('going back returns to where you were in a long list', async ({ page }) => {
+  await page.goto('/judges')
+  await expect(page.getByRole('heading', { level: 1, name: 'Judges' })).toBeVisible()
+  const row = page.getByRole('button', { name: /^Lisa Barker/ }).first()
+  await row.scrollIntoViewIfNeeded()
+  await page.mouse.wheel(0, 200)
+  await page.waitForTimeout(300)
+  const before = await page.evaluate(() => scrollY)
+  expect(before).toBeGreaterThan(100)
+  await row.click()
+  await expect(page).toHaveURL(/\/judges\/[^/]+\/info$/)
+  await expect(page.getByRole('heading', { level: 1, name: 'Lisa Barker' })).toBeVisible()
+  await page.goBack()
+  await expect(page).toHaveURL(/\/judges$/)
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(before - 40)
+  // And forward again lands at the top of the judge's page.
+  await page.goForward()
+  await expect(page).toHaveURL(/\/judges\/[^/]+\/info$/)
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(40)
+})
+
+test('Back on a deep link goes up to the section, and the browser’s Back doesn’t bounce down again', async ({ page }) => {
+  await page.goto('/judges/-OsoH2I8uTd5UQHwDum4/info')
+  const back = page.getByRole('button', { name: 'Back to Judges' })
+  await expect(back).toBeVisible()
+  await back.click()
+  await expect(page).toHaveURL(/\/judges$/)
+  await page.goBack()
+  await expect(page).not.toHaveURL(/\/judges\/-OsoH2I8uTd5UQHwDum4/)
+})
+
+test('leaving a competition opened from a link goes to Competitions, without bouncing back', async ({ page }) => {
+  await page.goto('/competitions/-L9Sc9TQWQclq_7oA3ij/info')
+  await page.getByRole('button', { name: 'Back to Competitions', exact: true }).click()
+  await expect(page).toHaveURL(/\/competitions$/)
+  await page.goBack()
+  await expect(page).not.toHaveURL(/-L9Sc9TQWQclq_7oA3ij/)
+})
+
+test('Back after tapping through still steps back through history', async ({ page }) => {
+  await page.goto('/judges')
+  await page.getByRole('button', { name: /^Aileen Robertson/ }).first().click()
+  await expect(page).toHaveURL(/\/judges\/[^/]+\/info$/)
+  await page.getByRole('button', { name: 'Back to Judges' }).click()
+  await expect(page).toHaveURL(/\/judges$/)
+  await page.goForward()
+  await expect(page).toHaveURL(/\/judges\/[^/]+\/info$/)
+})
+
+test('everything can be reached by keyboard, with a visible focus ring', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'keyboard navigation is a desktop concern')
+  await page.goto('/competitions')
+  await expect(page.getByRole('heading', { level: 1, name: 'Competitions' })).toBeVisible()
+  const seen: string[] = []
+  for (let i = 0; i < 14; i++) {
+    await page.keyboard.press('Tab')
+    const focus = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null
+      if (!el || el === document.body) return null
+      const r = el.getBoundingClientRect()
+      const cs = getComputedStyle(el)
+      return {
+        label: (el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 30),
+        visible: r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight,
+        ring: cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) >= 2,
+        inClosedDialog: !!el.closest('dialog:not([open])'),
+      }
+    })
+    if (!focus) continue
+    seen.push(focus.label)
+    expect(focus, focus.label).toMatchObject({ visible: true, ring: true, inClosedDialog: false })
+  }
+  expect(seen).toEqual(expect.arrayContaining(['Upcoming', 'Past results', 'Home', 'Search']))
+})

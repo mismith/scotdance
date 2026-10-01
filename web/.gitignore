@@ -9,3 +9,5 @@ dist-ssr
 .DS_Store
 
 *.tsbuildinfo
+test-results/
+playwright-report/
