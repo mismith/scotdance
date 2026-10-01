@@ -4,4 +4,5 @@
     <string name="title_activity_main">ScotDance</string>
     <string name="package_name">info.mismith.scotdance</string>
     <string name="custom_url_scheme">info.mismith.scotdance</string>
+    <string name="asset_statements" translatable="false">[{\"include\": \"https://scotdance.app/.well-known/assetlinks.json\"}]</string>
 </resources>
