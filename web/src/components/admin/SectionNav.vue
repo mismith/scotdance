@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { Check, ChevronRight, LayoutDashboard } from '@lucide/vue'
+import { Check, ChevronRight, LayoutDashboard, TriangleAlert } from '@lucide/vue'
 import { ADMINS_SECTION, MANAGE_STEPS } from '@/lib/admin/sections'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { CALLBACKS, OVERALL, danceState } from '@/lib/admin/results'
 import { formatLongDate } from '@/lib/format'
+import { danceHasPlaceholder } from '@/lib/results'
 import { groupHasOverall } from '@/types/competition'
 
 // The Manage sections as numbered steps, in the order a competition comes
@@ -18,17 +19,20 @@ const m = useManagedCompetition()
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 
-const status = computed<Record<string, { done: boolean; detail: string; count?: number }>>(() => {
+const status = computed<Record<string, { done: boolean; detail: string; count?: number; toFix?: number }>>(() => {
   const c = m.competition.value
   const groups = m.groups.value
   const withoutDances = groups.filter((g) => !m.groupDances(g.id).length).length
   const withoutGroup = m.dancers.value.filter((d) => !d.group).length
   let entered = 0
   let total = 0
+  // Results with a "?" stand-in (a number missed on the day): touch-ups to do.
+  let fixes = 0
   for (const g of groups) {
     const ids = [CALLBACKS, ...m.groupDances(g.id).map((d) => d.id), ...(groupHasOverall(g) ? [OVERALL] : [])]
     total += ids.length
     entered += ids.filter((id) => danceState(m.results.value[g.id]?.[id]) !== 'todo').length
+    fixes += ids.filter((id) => danceHasPlaceholder(m.results.value, m.points.value, g.id, id)).length
   }
   return {
     details: {
@@ -53,17 +57,21 @@ const status = computed<Record<string, { done: boolean; detail: string; count?: 
     },
     dancers: {
       done: m.dancers.value.length > 0 && !withoutGroup,
-      detail: !m.dancers.value.length ? 'Import your entry list from Excel' : withoutGroup ? `${plural(withoutGroup, 'dancer needs', 'dancers need')} an age group` : plural(m.dancers.value.length, 'dancer', 'dancers'),
+      detail: !m.dancers.value.length ? 'Import from Excel or Google Sheets' : withoutGroup ? `${plural(withoutGroup, 'dancer needs', 'dancers need')} an age group` : plural(m.dancers.value.length, 'dancer', 'dancers'),
       count: m.dancers.value.length,
     },
     platforms: { done: m.platforms.value.length > 0, detail: m.platforms.value.length ? plural(m.platforms.value.length, 'platform', 'platforms') : 'Where dancing happens', count: m.platforms.value.length },
     schedule: { done: !!m.schedule.value || m.scheduleHidden.value, detail: m.scheduleHidden.value ? 'Hidden' : m.schedule.value ? 'Started' : 'Optional' },
     results: {
-      done: m.resultsHidden.value || (total > 0 && entered === total),
+      done: m.resultsHidden.value || (total > 0 && entered === total && !fixes),
       detail: m.resultsHidden.value ? 'Hidden' : total ? `${entered} of ${total} entered` : 'On the day',
+      toFix: m.resultsHidden.value ? 0 : fixes,
     },
   }
 })
+
+const toFix = computed(() => status.value.results?.toFix ?? 0)
+const toFixLabel = computed(() => `${toFix.value} ${toFix.value === 1 ? 'result needs' : 'results need'} fixing`)
 
 const isActive = (routeName: string) => route.matched.some((r) => r.name === routeName) || String(route.name ?? '').startsWith(`${routeName}.`)
 const to = (routeName: string) => ({ name: routeName, params: { competitionId: m.competitionId.value } })
@@ -121,8 +129,16 @@ const to = (routeName: string) => ({ name: routeName, params: { competitionId: m
               <span class="block text-base font-bold">{{ s.title }}</span>
               <span class="text-muted-foreground block truncate text-sm">{{ status[s.id]?.detail ?? s.blurb }}</span>
             </span>
-            <ChevronRight class="text-muted-foreground size-5 shrink-0" />
           </template>
+          <!-- Touch-ups to do, at a glance -->
+          <span
+            v-if="s.id === 'results' && toFix"
+            class="bg-next text-next-foreground flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-xs font-extrabold tabular-nums"
+          >
+            <TriangleAlert class="size-3.5" stroke-width="2.5" aria-hidden="true" />
+            <span aria-hidden="true">{{ toFix }}</span><span class="sr-only">{{ toFixLabel }}</span>
+          </span>
+          <ChevronRight v-if="!props.compact" class="text-muted-foreground size-5 shrink-0" />
         </RouterLink>
       </li>
     </ol>

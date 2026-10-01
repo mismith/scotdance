@@ -13,8 +13,8 @@ const ROLES = ['Judge', 'Piper', 'Volunteer', 'Sponsor']
 const spec: CollectionSpec<MStaff> = {
   path: 'staff',
   route: 'manage.staff',
-  singular: 'person',
-  plural: 'people',
+  singular: 'staff member',
+  plural: 'staff',
   sortable: true,
   fields: [
     { key: 'type', label: 'Role', kind: 'select', required: true, bulk: true, placeholder: 'Choose a role', options: () => ROLES.map((r) => ({ value: r, label: r })) },

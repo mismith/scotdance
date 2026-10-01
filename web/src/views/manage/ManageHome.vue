@@ -17,7 +17,7 @@ const visibility = computed(() => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl space-y-8 p-4 pb-[calc(2rem+var(--safe-bottom))] md:p-8">
+  <div class="max-w-3xl space-y-8 p-4 pb-[calc(2rem+var(--safe-bottom))]">
     <header class="space-y-1">
       <p class="text-muted-foreground text-sm font-bold">{{ c?.date ? formatLongDate(c.date) : 'No date yet' }}</p>
       <h1 class="text-display">{{ c?.name || 'Untitled competition' }}</h1>

@@ -104,7 +104,7 @@ const spec: CollectionSpec<MDancer> = {
     }
     return { updates, warnings }
   },
-  emptyHint: 'Import them from your Excel entry list, or add them one at a time.',
+  emptyHint: 'Import them from your entry list in Excel or Google Sheets, or add them one at a time.',
 }
 </script>
 

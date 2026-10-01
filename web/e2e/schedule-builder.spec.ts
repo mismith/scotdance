@@ -13,7 +13,7 @@ import {
   seedCompetition,
   type SeededCompetition,
 } from './support/seed'
-import { barMenuItem } from './support/manageData'
+import { barMenuItem, sectionMenuItem } from './support/manageData'
 
 // Manage › Schedule (the Blocks builder) as an organiser, on phone and
 // desktop, then the public Schedule and Event pages. Writes must keep the
@@ -399,11 +399,9 @@ test('an empty schedule offers hiding the tab instead; Show brings it back', asy
   await page.getByRole('button', { name: 'Show the Schedule tab' }).click()
   await expect(page.getByRole('button', { name: 'Add session' })).toBeVisible()
   await expect.poll(() => data('schedule')).toBeNull()
-  // Once there's a schedule, the switch is at the top instead.
+  // Once there's a schedule, it's in the ⋯ menu at the top instead.
   await addSession(page, 'Morning')
-  await expect(
-    page.getByRole('switch', { name: 'Hide the Schedule tab' }),
-  ).toHaveAttribute('aria-checked', 'false')
+  await expect(await sectionMenuItem(page, 'More for the schedule', 'Hide the Schedule tab')).toBeEnabled()
 })
 
 test('dragging near the bottom of the grid scrolls it, by finger too', async ({

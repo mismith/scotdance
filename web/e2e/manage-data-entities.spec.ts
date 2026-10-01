@@ -189,21 +189,21 @@ test('platforms and judges: deleting takes them out of the schedule', async ({ p
   const judge = comp.judges[0]
   expect(await scheduleHas(judge)).toBe(true)
   await page.goto(manage(`/staff/${judge}`))
-  await deleteOpenItem(page, 'person', 'judging in')
+  await deleteOpenItem(page, 'staff member', 'judging in')
   await expectDb(data(`staff/${judge}`), null)
   expect(await scheduleHas(judge)).toBe(false)
 })
 
-test('people: add a judge with a role, website and photo', async ({ page }) => {
+test('staff: add a judge with a role, website and photo', async ({ page }) => {
   await page.goto(manage('/staff/new'))
   const form = page.locator('form')
-  await form.getByRole('button', { name: 'Add person' }).click()
+  await form.getByRole('button', { name: 'Add staff member' }).click()
   await expect(form.getByText('Role can’t be empty.')).toBeVisible()
   await select(form, 'Role').selectOption('Judge')
   await field(form, 'First name').fill('Seònaid')
   await field(form, 'Last name').fill('MacNeil')
   await field(form, 'Website').fill('example.com/seonaid')
-  await form.getByRole('button', { name: 'Add person' }).click()
+  await form.getByRole('button', { name: 'Add staff member' }).click()
   await expect(page.getByRole('heading', { name: 'Seònaid MacNeil' })).toBeVisible()
   const staff = await dbGet<Record<string, Record<string, unknown>>>(data('staff'))
   const [id, judge] = Object.entries(staff).find(([, s]) => s.firstName === 'Seònaid')!
@@ -254,7 +254,7 @@ test('after deleting one of everything, the public pages still work', async ({ p
   await page.goto(manage(`/platforms/${comp.platforms[0]}`))
   await deleteOpenItem(page, 'platform')
   await page.goto(manage(`/staff/${comp.judges[1]}`))
-  await deleteOpenItem(page, 'person')
+  await deleteOpenItem(page, 'staff member')
   await expectDb(data(`staff/${comp.judges[1]}`), null)
   expect(errors).toEqual([])
 

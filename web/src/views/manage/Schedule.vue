@@ -2,10 +2,10 @@
 import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { DnDProvider } from '@vue-dnd-kit/core'
-import { CalendarClock, Trash2 } from '@lucide/vue'
+import { CalendarClock, EyeOff, Trash2 } from '@lucide/vue'
 import EmptyState from '@/components/EmptyState.vue'
-import HideTabSwitch from '@/components/admin/HideTabSwitch.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
+import SectionMenu from '@/components/admin/SectionMenu.vue'
 import BuilderPalette from '@/components/admin/schedule/BuilderPalette.vue'
 import InlineEdit from '@/components/admin/schedule/InlineEdit.vue'
 import ScheduleGrid from '@/components/admin/schedule/ScheduleGrid.vue'
@@ -105,7 +105,15 @@ const missing = computed(() =>
         class="bg-card shrink-0 overflow-y-auto overscroll-contain p-4 max-md:max-h-[40dvh] max-md:border-b md:w-68 md:border-r"
       >
         <SectionHeader title="Schedule" class="mb-6">
-          <HideTabSwitch v-if="b.days.value.length" tab="schedule" />
+          <!-- Hiding the tab deletes the schedule, after asking. (With no
+               schedule yet, the empty grid offers it instead.) -->
+          <template v-if="b.days.value.length" #actions>
+            <SectionMenu v-slot="{ row, close }" label="More for the schedule">
+              <button type="button" :class="row" :disabled="!canEdit" @click="close(); hideTab.hide()">
+                <EyeOff class="text-primary size-5 shrink-0" /> Hide the Schedule tab
+              </button>
+            </SectionMenu>
+          </template>
         </SectionHeader>
         <BuilderPalette />
       </aside>

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { Check, ChevronDown, ChevronRight, CircleCheck, Download, Minus, Plus, Trophy } from '@lucide/vue'
+import { Check, ChevronDown, ChevronRight, CircleCheck, Download, EyeOff, Minus, Plus, Trophy } from '@lucide/vue'
 import EmptyState from '@/components/EmptyState.vue'
-import HideTabSwitch from '@/components/admin/HideTabSwitch.vue'
 import MasterDetail from '@/components/admin/MasterDetail.vue'
 import ResultsEntry from '@/components/admin/ResultsEntry.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
+import SectionMenu from '@/components/admin/SectionMenu.vue'
 import { useHideTab } from '@/composables/admin/useHideTab'
 import { useManagedCompetition, type MGroup } from '@/composables/admin/useManagedCompetition'
 import { useSplit } from '@/composables/admin/useWide'
@@ -20,7 +20,6 @@ const split = useSplit()
 const hideTab = useHideTab('results')
 
 const PRIMARY = 'bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50'
-const GHOST = 'text-primary hover:bg-accent flex h-10 items-center gap-1.5 rounded-xl px-2 text-[0.9375rem] font-bold'
 
 const groupId = computed(() => (route.params.groupId ? String(route.params.groupId) : null))
 const danceId = computed(() => (route.params.danceId ? String(route.params.danceId) : CALLBACKS))
@@ -112,11 +111,17 @@ function exportCsv() {
     <template #list>
       <div class="space-y-6 p-4 pb-[calc(2rem+var(--safe-bottom))]">
         <SectionHeader title="Results" :count="!hideTab.hidden.value && totals.total ? `${totals.done} of ${totals.total} entered` : null">
-          <template v-if="!hideTab.hidden.value && m.groups.value.length">
-            <div v-if="totals.done" class="-mx-2 -my-1 flex">
-              <button type="button" :class="GHOST" @click="exportCsv"><Download class="size-4" /> Download all results</button>
-            </div>
-            <HideTabSwitch tab="results" />
+          <!-- What's rarely needed. Hiding the tab deletes what's entered
+               (after asking), so it's tucked away here. -->
+          <template v-if="!hideTab.hidden.value && m.groups.value.length" #actions>
+            <SectionMenu v-slot="{ row, close }" label="More for results">
+              <button v-if="totals.done" type="button" :class="row" @click="close(); exportCsv()">
+                <Download class="text-primary size-5 shrink-0" /> Download all results
+              </button>
+              <button type="button" :class="row" :disabled="!canEdit" @click="close(); hideTab.hide()">
+                <EyeOff class="text-primary size-5 shrink-0" /> Hide the Results tab
+              </button>
+            </SectionMenu>
           </template>
         </SectionHeader>
 

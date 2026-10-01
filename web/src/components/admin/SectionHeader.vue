@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // The top of a Manage section, the same in each: its title (and how many),
-// its main actions beside that, then anything else underneath: other
-// actions, the switch to hide its tab, search.
+// with Select or a ⋯ menu beside it, then anything else underneath: the
+// ways to add, search.
 
 defineProps<{
   title: string
@@ -14,7 +14,7 @@ defineProps<{
 <template>
   <header class="space-y-3">
     <div class="space-y-1">
-      <div class="flex min-h-10 items-center gap-2">
+      <div class="flex min-h-11 items-center gap-2">
         <h1 class="text-title min-w-0 flex-1 truncate">
           {{ title }}
           <span

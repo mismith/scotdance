@@ -14,7 +14,7 @@ import {
   seedCompetition,
   type SeededCompetition,
 } from './support/seed'
-import { barMenuItem } from './support/manageData'
+import { barMenuItem, confirmDialog, sectionMenuItem } from './support/manageData'
 
 // Results entry in Manage, as an organiser (not a system admin, so the
 // database rules are what let the writes through). It mirrors the old admin
@@ -193,7 +193,7 @@ test('Championship can be switched on before anyone is placed', async ({
   await expect(championship).toHaveAttribute('aria-checked', 'false')
 })
 
-test('a "?" stand-in can be placed and then fixed', async ({ page }) => {
+test('a "?" stand-in can be placed and then fixed', async ({ page }, info) => {
   const group = freshGroup()
   const ds = dancersOf(group.id)
   const fling = comp.dances[0]
@@ -221,6 +221,9 @@ test('a "?" stand-in can be placed and then fixed', async ({ page }) => {
   )) as string[]
   expect([first, third]).toEqual([ds[0].id, ds[2].id])
   expect(standIn).toMatch(/^\d+$/)
+  // The sidebar (on wide screens) flags it until it's fixed.
+  const flag = page.getByRole('link', { name: /1 result needs fixing/ })
+  if (info.project.name === 'desktop') await expect(flag).toBeVisible()
 
   // Choose who it was: they take the stand-in's place.
   await page.getByRole('button', { name: 'Choose' }).click()
@@ -235,6 +238,7 @@ test('a "?" stand-in can be placed and then fixed', async ({ page }) => {
   await expect
     .poll(() => stored(`results/${group.id}/${fling.id}`))
     .toEqual([ds[0].id, ds[1].id, ds[2].id])
+  if (info.project.name === 'desktop') await expect(flag).toHaveCount(0)
 })
 
 test('championship points: give, take away, and never to a placed dancer', async ({
@@ -448,6 +452,8 @@ test('the results spreadsheet has every placing and championship point', async (
 
   await signIn(page, email)
   await page.goto(`/competitions/${comp.id}/manage/results`)
+  // Rarely needed, so in the ⋯ menu.
+  await page.getByRole('button', { name: 'More for results' }).click()
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Download all results' }).click(),
@@ -497,14 +503,16 @@ test('hiding the Results tab asks first, can be undone, and Show brings it back'
   const before = await stored('results')
   await signIn(page, email)
   await page.goto(`/competitions/${comp.id}/manage/results`)
-  const hide = page.getByRole('switch', { name: 'Hide the Results tab' })
-  await hide.click()
-  const dialog = page.locator('dialog[open]')
+  // Tucked away in the ⋯ menu, as it deletes what's entered.
+  const hide = () => sectionMenuItem(page, 'More for results', 'Hide the Results tab')
+  await (await hide()).click()
+  const dialog = confirmDialog(page)
   await expect(dialog).toContainText('Hide the Results tab?')
   await dialog.getByRole('button', { name: 'Cancel' }).click()
-  await expect(hide).toHaveAttribute('aria-checked', 'false')
+  await expect(page.getByText('Results are hidden')).toBeHidden()
+  expect(await stored('results')).toEqual(before)
 
-  await hide.click()
+  await (await hide()).click()
   await dialog.getByRole('button', { name: /^Hide results$/ }).click()
   await expect(page.getByText('Results are hidden')).toBeVisible()
   await expect.poll(() => stored('results')).toBe(false)
@@ -515,12 +523,10 @@ test('hiding the Results tab asks first, can be undone, and Show brings it back'
     .click()
   await expect.poll(() => stored('results')).toEqual(before)
 
-  await page.getByRole('switch', { name: 'Hide the Results tab' }).click()
+  await (await hide()).click()
   await dialog.getByRole('button', { name: /^Hide results$/ }).click()
   await page.getByRole('button', { name: 'Show the Results tab' }).click()
-  await expect(
-    page.getByRole('switch', { name: 'Hide the Results tab' }),
-  ).toHaveAttribute('aria-checked', 'false')
+  await expect(await hide()).toBeEnabled()
   await expect.poll(() => stored('results')).toBeNull()
   await put(`competitions:data/${comp.id}/results`, before)
 })

@@ -2,6 +2,7 @@
 import { computed, nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ExternalLink, FileUp, LoaderCircle, Plus, Trash2 } from '@lucide/vue'
+import SectionHeader from '@/components/admin/SectionHeader.vue'
 import TextField from '@/components/admin/TextField.vue'
 import ImageField from '@/components/admin/ImageField.vue'
 import SwitchField from '@/components/admin/SwitchField.vue'
@@ -180,10 +181,10 @@ async function deleteCompetition() {
 </script>
 
 <template>
-  <!-- Left-aligned like the other Manage screens; wide screens show the preview beside it. -->
+  <!-- Top left like the other Manage tabs; wide screens show the preview beside it. -->
   <div class="xl:grid xl:h-full xl:grid-cols-[minmax(0,42rem)_minmax(0,1fr)]">
-    <div class="max-w-2xl min-w-0 space-y-10 p-4 pb-[calc(3rem+var(--safe-bottom))] md:p-8 xl:max-w-none xl:overflow-y-auto">
-      <h1 class="text-display">Details</h1>
+    <div class="max-w-2xl min-w-0 space-y-10 p-4 pb-[calc(3rem+var(--safe-bottom))] xl:max-w-none xl:overflow-y-auto">
+      <SectionHeader title="Details" />
 
       <section class="space-y-4">
         <h2 class="text-heading">Basics</h2>

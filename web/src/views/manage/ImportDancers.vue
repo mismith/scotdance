@@ -53,7 +53,7 @@ async function readFile(file: File) {
     sheetIndex.value = pickSheet(sheets.value)
     sourceName.value = file.name
   } catch {
-    readError.value = 'That file couldn’t be read. Save it as an Excel workbook (.xlsx) or CSV and try again.'
+    readError.value = 'That file couldn’t be read. From Excel or Google Sheets, save it as .xlsx or CSV and try again.'
   } finally {
     reading.value = false
   }
@@ -185,7 +185,7 @@ async function doImport() {
   <div class="mx-auto max-w-4xl space-y-8 p-4 pb-[calc(3rem+var(--safe-bottom))] md:p-8">
     <header class="space-y-1">
       <h1 class="text-display">Import dancers</h1>
-      <p class="text-muted-foreground text-base">From your entry list in Excel or a CSV. You’ll see exactly what changes before anything is saved.</p>
+      <p class="text-muted-foreground text-base">From your entry list in Excel or Google Sheets. You’ll see exactly what changes before anything is saved.</p>
     </header>
 
     <!-- Step 1 -->
@@ -198,7 +198,7 @@ async function doImport() {
         <FileSpreadsheet class="text-primary mx-auto size-10" />
         <div class="space-y-1">
           <h2 class="text-heading">Choose your entry list</h2>
-          <p class="text-muted-foreground text-sm">An Excel workbook (.xlsx) or CSV. You can also drag it here.</p>
+          <p class="text-muted-foreground text-sm">An .xlsx or CSV file, from Excel or Google Sheets. You can also drag it here.</p>
         </div>
         <button
           type="button"

@@ -21,7 +21,7 @@ export const MANAGE_STEPS: ManageSection[] = [
   { id: 'dances', route: 'manage.dances', title: 'Dances', icon: Music, blurb: 'The dances performed, with their steps' },
   { id: 'categories', route: 'manage.categories', title: 'Categories', icon: Layers, blurb: 'Primary, Beginner, Premier and so on' },
   { id: 'groups', route: 'manage.groups', title: 'Age groups', icon: UsersRound, blurb: 'Which dances each group does, and draws' },
-  { id: 'dancers', route: 'manage.dancers', title: 'Dancers', icon: Users, blurb: 'Entries and numbers, usually imported from Excel' },
+  { id: 'dancers', route: 'manage.dancers', title: 'Dancers', icon: Users, blurb: 'Entries and numbers, usually from Excel or Google Sheets' },
   { id: 'platforms', route: 'manage.platforms', title: 'Platforms', icon: SquareStack, blurb: 'Where dancing happens' },
   { id: 'schedule', route: 'manage.schedule', title: 'Schedule', icon: CalendarClock, blurb: 'Days, sessions, events and who dances where' },
   { id: 'results', route: 'manage.results', title: 'Results', icon: Trophy, blurb: 'Callbacks, placings and championship points' },

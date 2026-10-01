@@ -49,6 +49,12 @@ export async function barMenuItem(page: Page, name: string | RegExp) {
   return page.getByRole('dialog', { name: 'Undo, redo and more' }).getByRole('button', { name, exact: typeof name === 'string' })
 }
 
+/** An item in a section's ⋯ menu (top right of its header, e.g. "More for results"), once it's open. */
+export async function sectionMenuItem(page: Page, menu: string, name: string) {
+  await page.getByRole('button', { name: menu, exact: true }).click()
+  return page.getByRole('dialog', { name: menu }).getByRole('button', { name, exact: true })
+}
+
 /** The Undo button on the latest toast. */
 export const toastUndo = (page: Page) => page.getByRole('status').getByRole('button', { name: 'Undo', exact: true }).last()
 

@@ -40,7 +40,7 @@ const props = defineProps<{
   items: T[]
 }>()
 
-defineSlots<{
+const slots = defineSlots<{
   /** More ways to add (Import…), styled with `cls` to sit with the others. */
   'list-actions'?: (p: { cls: string }) => unknown
   'detail-extra'?: (p: { item: T }) => unknown
@@ -325,19 +325,21 @@ async function addPresets() {
   }
 }
 
-const title = computed(() => props.spec.plural[0].toUpperCase() + props.spec.plural.slice(1))
+// Named as in the sidebar (Staff), else after what's listed.
+const section = computed(() => ALL_SECTIONS.find((s) => s.route === props.spec.route))
+const title = computed(() => section.value?.title ?? props.spec.plural[0].toUpperCase() + props.spec.plural.slice(1))
 const countLabel = computed(() => {
   const n = props.items.length
   if (query.value.trim()) return `${filtered.value.length} of ${n}`
   return String(n)
 })
-const icon = computed(() => ALL_SECTIONS.find((s) => s.route === props.spec.route)?.icon ?? Plus)
+const icon = computed(() => section.value?.icon ?? Plus)
 
-// Buttons, as elsewhere in Manage: the main action, the others beside it
-// when there's room (an empty list), and the others in the header.
-const PRIMARY = 'bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold'
+// Ways to add. Where there's a usual start (the common ones, or Import),
+// that's the main button and adding one at a time sits beside it.
+const hasStart = computed(() => !!props.spec.presets?.length || !!slots['list-actions'])
+const PRIMARY = 'bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50'
 const SECONDARY = 'bg-card border-strong hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold disabled:opacity-50'
-const GHOST = 'text-primary hover:bg-accent flex h-10 items-center gap-1.5 rounded-xl px-2 text-[0.9375rem] font-bold disabled:opacity-50'
 </script>
 
 <template>
@@ -350,31 +352,37 @@ const GHOST = 'text-primary hover:bg-accent flex h-10 items-center gap-1.5 round
               type="button"
               :aria-pressed="selecting"
               :class="[
-                'h-10 rounded-xl px-3 text-[0.9375rem] font-bold',
+                'h-11 rounded-xl px-3 text-[0.9375rem] font-bold',
                 selecting ? 'bg-primary text-primary-foreground' : 'text-primary hover:bg-accent',
               ]"
               @click="toggleSelecting"
             >
               {{ selecting ? 'Done' : 'Select' }}
             </button>
+          </template>
+          <!-- Ways to add, the same on every tab: the usual start first (the
+               common ones, or Import), then one at a time. While selecting,
+               Select all takes their place, so nothing below moves. -->
+          <div v-if="items.length && !selecting" class="flex flex-wrap gap-2">
+            <button v-if="spec.presets?.length" type="button" :disabled="!canEdit" :class="PRIMARY" @click="openPresets">
+              <ListPlus class="size-4" /> Add common {{ spec.plural }}
+            </button>
+            <slot name="list-actions" :cls="PRIMARY" />
             <RouterLink
-              v-if="!selecting"
               :to="itemRoute('new')"
               :replace="split"
               :aria-label="`Add ${spec.singular}`"
-              :class="[
-                'bg-primary text-primary-foreground flex h-10 items-center gap-1 rounded-xl pr-3.5 pl-3 text-[0.9375rem] font-bold',
-                !canEdit && 'pointer-events-none opacity-50',
-              ]"
+              :class="[hasStart ? SECONDARY : PRIMARY, !canEdit && 'pointer-events-none opacity-50']"
             >
               <Plus class="size-4" /> Add
             </RouterLink>
-          </template>
-          <div v-if="items.length && !selecting && (spec.presets?.length || $slots['list-actions'])" class="-mx-2 -my-1 flex flex-wrap items-center gap-x-1">
-            <button v-if="spec.presets?.length" type="button" :disabled="!canEdit" :class="GHOST" @click="openPresets">
-              <ListPlus class="size-4" /> Add common {{ spec.plural }}
+          </div>
+          <div v-else-if="selecting" class="flex items-center gap-2">
+            <button type="button" class="text-primary hover:bg-accent -ml-2 flex h-11 items-center gap-2 rounded-xl px-2 text-[0.9375rem] font-bold" @click="toggleAll">
+              <component :is="allFilteredSelected ? CheckSquare : Square" class="size-5" />
+              {{ allFilteredSelected ? 'Select none' : query ? 'Select all shown' : 'Select all' }}
             </button>
-            <slot name="list-actions" :cls="GHOST" />
+            <span class="text-muted-foreground ml-auto text-sm font-semibold tabular-nums">{{ selected.size }} selected</span>
           </div>
           <label v-if="items.length > 6" class="bg-card border-strong focus-within:border-primary flex h-11 items-center gap-2 rounded-xl border-2 px-3">
             <Search class="text-muted-foreground size-4 shrink-0" />
@@ -384,13 +392,6 @@ const GHOST = 'text-primary hover:bg-accent flex h-10 items-center gap-1.5 round
               <X class="size-4" />
             </button>
           </label>
-          <div v-if="selecting" class="flex items-center gap-2">
-            <button type="button" class="text-primary hover:bg-accent flex h-10 items-center gap-2 rounded-xl px-2 text-[0.9375rem] font-bold" @click="toggleAll">
-              <component :is="allFilteredSelected ? CheckSquare : Square" class="size-5" />
-              {{ allFilteredSelected ? 'Select none' : query ? 'Select all shown' : 'Select all' }}
-            </button>
-            <span class="text-muted-foreground ml-auto text-sm font-semibold tabular-nums">{{ selected.size }} selected</span>
-          </div>
         </SectionHeader>
       </div>
 
@@ -398,31 +399,31 @@ const GHOST = 'text-primary hover:bg-accent flex h-10 items-center gap-1.5 round
 
       <!-- Empty: what it's for, and the ways to add some -->
       <EmptyState v-if="!items.length" :icon="icon" :title="`No ${spec.plural} yet`" :description="spec.emptyHint">
-        <RouterLink :to="itemRoute('new')" :replace="split" :class="[PRIMARY, !canEdit && 'pointer-events-none opacity-50']">
-          <Plus class="size-4" /> Add {{ spec.singular }}
-        </RouterLink>
-        <button v-if="spec.presets?.length" type="button" :disabled="!canEdit" :class="SECONDARY" @click="openPresets">
+        <button v-if="spec.presets?.length" type="button" :disabled="!canEdit" :class="PRIMARY" @click="openPresets">
           <ListPlus class="size-4" /> Add common {{ spec.plural }}
         </button>
-        <slot name="list-actions" :cls="SECONDARY" />
+        <slot name="list-actions" :cls="PRIMARY" />
+        <RouterLink :to="itemRoute('new')" :replace="split" :class="[hasStart ? SECONDARY : PRIMARY, !canEdit && 'pointer-events-none opacity-50']">
+          <Plus class="size-4" /> Add {{ spec.singular }}
+        </RouterLink>
       </EmptyState>
       <p v-else-if="!filtered.length" class="text-muted-foreground px-4 py-10 text-center text-base">
         Nothing matches “{{ query }}”.
       </p>
 
-      <!-- Selecting: rows become checkboxes -->
+      <!-- Selecting: rows become checkboxes, where the drag handles were -->
       <ul v-else-if="selecting" :class="['divide-y', selected.size ? 'pb-24' : '']">
         <li v-for="item in filtered" :key="item.id">
           <button
             type="button"
             role="checkbox"
             :aria-checked="selected.has(item.id)"
-            :class="['flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left', selected.has(item.id) ? 'bg-blue-paper' : 'hover:bg-accent']"
+            :class="['flex min-h-14 w-full items-center gap-3 py-2 pr-3 pl-2 text-left', selected.has(item.id) ? 'bg-blue-paper' : 'hover:bg-accent']"
             @click="toggle(item.id)"
           >
             <span
               :class="[
-                'flex size-6 shrink-0 items-center justify-center rounded-md border-2',
+                '-mr-1 flex size-6 shrink-0 items-center justify-center rounded-md border-2',
                 selected.has(item.id) ? 'bg-primary border-primary text-primary-foreground' : 'border-strong',
               ]"
             >

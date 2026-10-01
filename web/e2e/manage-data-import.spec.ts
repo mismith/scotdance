@@ -159,7 +159,7 @@ test('pasted cells; rows that need fixing are shown and skipped', async ({ page 
 test('a file that isn’t a spreadsheet says so', async ({ page }) => {
   await page.goto(importPage())
   await page.locator('input[type=file]').setInputFiles({ name: 'entries.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: Buffer.from('not really a spreadsheet') })
-  await expect(page.getByText('That file couldn’t be read. Save it as an Excel workbook (.xlsx) or CSV and try again.')).toBeVisible()
+  await expect(page.getByText('That file couldn’t be read. From Excel or Google Sheets, save it as .xlsx or CSV and try again.')).toBeVisible()
   await page.locator('input[type=file]').setInputFiles({ name: 'empty.csv', mimeType: 'text/csv', buffer: Buffer.from('hello,world\n') })
   await expect(page.getByText('No dancers found.')).toBeVisible({ timeout: 15000 })
 })

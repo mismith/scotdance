@@ -5,6 +5,7 @@ import {
   getDanceResults,
   getDancerPlace,
   getOrdinalSuffix,
+  danceHasPlaceholder,
   groupHasPlaceholderDancers,
   hasGroupAnyResults,
   isDancerPointed,
@@ -308,6 +309,14 @@ describe('placeholders and group status', () => {
     expect(groupHasPlaceholderDancers(group, { [G]: { ' 10 Years': ['a', '1546578400210:tie'] } }, {})).toBe(true)
     expect(groupHasPlaceholderDancers(group, { [G]: { [D]: ['reverse:6', 'a'] } }, {})).toBe(false)
     expect(groupHasPlaceholderDancers(group, {}, { [G]: { [D]: { combined: ['1546578400210'] } } })).toBe(true)
+  })
+
+  it('spots a "?" in one dance, placings and points alike', () => {
+    const results = { [G]: { [D]: ['a', '1546578400210'], d2: ['reverse:3', 'b'], d3: ['1546578400211:tie'] }, g2: { [D]: false } } as unknown as ResultsTree
+    const points = { [G]: { d4: { combined: ['1546578400213'] } }, g2: { [D]: { combined: ['c'] } } }
+    expect(['d', 'd2', 'd3', 'd4'].map((id) => danceHasPlaceholder(results, points, G, id === 'd' ? D : id))).toEqual([true, false, true, true])
+    expect(danceHasPlaceholder(results, points, 'g2', D)).toBe(false)
+    expect(danceHasPlaceholder({}, {}, G, D)).toBe(false)
   })
 
   it('doesn’t count a championship start alone as results', () => {

@@ -261,6 +261,19 @@ export function isPlaceholderDancerId(id: string | undefined | null): boolean {
   return !!id && /^\d+$/.test(id)
 }
 
+// One dance's placings, or its championship points, with a "?" stand-in.
+function placingsHavePlaceholder(raw: unknown): boolean {
+  if (!Array.isArray(raw)) return false
+  return raw.some((entry) => {
+    if (typeof entry !== 'string' || entry.startsWith(REVERSE_PREFIX)) return false
+    return isPlaceholderDancerId(entry.endsWith(TIE_SUFFIX) ? entry.slice(0, -TIE_SUFFIX.length) : entry)
+  })
+}
+function pointsHavePlaceholder(dancePoints: unknown): boolean {
+  if (!dancePoints || typeof dancePoints !== 'object') return false
+  return Object.values(dancePoints).some((ids) => Array.isArray(ids) && ids.some((id) => isPlaceholderDancerId(id)))
+}
+
 export function groupHasPlaceholderDancers(
   group: EnrichedGroup,
   results: ResultsTree,
@@ -271,31 +284,14 @@ export function groupHasPlaceholderDancers(
   // Walk whatever's actually in the tree — some legacy data has results stored
   // under (groupId, danceId) combos where the dance isn't claimed in groupIds,
   // and we still want to surface placeholders there.
-  if (groupResults && typeof groupResults === 'object') {
-    for (const raw of Object.values(groupResults)) {
-      if (!Array.isArray(raw)) continue
-      for (const entry of raw) {
-        if (typeof entry !== 'string') continue
-        if (entry.startsWith(REVERSE_PREFIX)) continue
-        const dancerId = entry.endsWith(TIE_SUFFIX)
-          ? entry.slice(0, -TIE_SUFFIX.length)
-          : entry
-        if (isPlaceholderDancerId(dancerId)) return true
-      }
-    }
-  }
-  if (groupPoints && typeof groupPoints === 'object') {
-    for (const dancePoints of Object.values(groupPoints)) {
-      if (!dancePoints || typeof dancePoints !== 'object') continue
-      for (const judgeIds of Object.values(dancePoints)) {
-        if (!Array.isArray(judgeIds)) continue
-        for (const dancerId of judgeIds) {
-          if (isPlaceholderDancerId(dancerId)) return true
-        }
-      }
-    }
-  }
+  if (groupResults && typeof groupResults === 'object' && Object.values(groupResults).some(placingsHavePlaceholder)) return true
+  if (groupPoints && typeof groupPoints === 'object' && Object.values(groupPoints).some(pointsHavePlaceholder)) return true
   return false
+}
+
+/** Whether one age group's dance (its placings or its points) has "?" stand-ins to fix. */
+export function danceHasPlaceholder(results: ResultsTree, points: PointsTree, groupId: string, danceId: string): boolean {
+  return placingsHavePlaceholder(results?.[groupId]?.[danceId]) || pointsHavePlaceholder(points?.[groupId]?.[danceId])
 }
 
 export function hasGroupAnyResults(

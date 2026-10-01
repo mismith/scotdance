@@ -159,7 +159,7 @@ const when = (iso?: string) => (iso ? formatRelative(iso) : '')
 </script>
 
 <template>
-  <div class="mx-auto max-w-2xl space-y-8 p-4 pb-[calc(3rem+var(--safe-bottom))] md:p-8">
+  <div class="max-w-2xl space-y-8 p-4 pb-[calc(3rem+var(--safe-bottom))]">
     <SectionHeader
       title="Admins"
       :count="others.length + admins.length || null"
