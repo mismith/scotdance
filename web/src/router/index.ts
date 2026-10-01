@@ -28,6 +28,10 @@ declare module 'vue-router' {
      */
     title?: string
     icon?: Component
+    /** Manage and system-admin screens. */
+    admin?: boolean
+    /** Manage: the section a sub-page (import, draws) goes back to on phones. */
+    manageParent?: string
   }
 }
 
@@ -143,6 +147,69 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/competitions/CompetitionsList.vue'),
     meta: { icon: CalendarDays, title: 'Competitions' },
   },
+  {
+    path: '/manage',
+    name: 'manage.competitions',
+    component: () => import('@/views/manage/ManageCompetitions.vue'),
+    meta: { title: 'Manage competitions' },
+  },
+  {
+    path: '/admin',
+    name: 'admin',
+    component: () => import('@/views/admin/AdminLayout.vue'),
+    meta: { ownsBottomNav: true, admin: true, title: 'System admin' },
+    children: [
+      { path: 'submissions/:submissionId?', name: 'admin.submissions', component: () => import('@/views/admin/Submissions.vue') },
+      { path: 'users/:userId?', name: 'admin.users', component: () => import('@/views/admin/Users.vue') },
+      { path: 'tools', name: 'admin.tools', component: () => import('@/views/admin/Tools.vue') },
+      // The old admin's pages.
+      { path: 'info/:rest(.*)*', redirect: { name: 'admin.tools' } },
+    ],
+  },
+  {
+    path: '/competitions/submit',
+    name: 'competitions.submit',
+    component: () => import('@/views/competitions/Submit.vue'),
+    meta: { title: 'Submit a competition' },
+  },
+  {
+    path: '/competitions/:competitionId/invites/:inviteId',
+    name: 'competition.invite',
+    component: () => import('@/views/competition/AcceptInvite.vue'),
+    meta: { title: 'Invitation' },
+  },
+  {
+    path: '/competitions/:competitionId/manage',
+    component: () => import('@/views/manage/ManageLayout.vue'),
+    meta: { ownsBottomNav: true, admin: true },
+    children: [
+      { path: '', name: 'manage', component: () => import('@/views/manage/ManageHome.vue') },
+      { path: 'details', name: 'manage.details', component: () => import('@/views/manage/Details.vue') },
+      { path: 'results/:groupId?/:danceId?', name: 'manage.results', component: () => import('@/views/manage/Results.vue') },
+      { path: 'schedule/:dayId?/:blockId?/:eventId?/:itemId?', name: 'manage.schedule', component: () => import('@/views/manage/Schedule.vue') },
+      {
+        path: 'dancers/import',
+        name: 'manage.dancers.import',
+        component: () => import('@/views/manage/ImportDancers.vue'),
+        meta: { manageParent: 'manage.dancers', title: 'Import' },
+      },
+      { path: 'dancers/:itemId?', name: 'manage.dancers', component: () => import('@/views/manage/Dancers.vue') },
+      {
+        path: 'groups/:itemId/draws',
+        name: 'manage.groups.draws',
+        component: () => import('@/views/manage/Draws.vue'),
+        meta: { manageParent: 'manage.groups', title: 'Draws' },
+      },
+      { path: 'groups/:itemId?', name: 'manage.groups', component: () => import('@/views/manage/Groups.vue') },
+      { path: 'categories/:itemId?', name: 'manage.categories', component: () => import('@/views/manage/Categories.vue') },
+      { path: 'dances/:itemId?', name: 'manage.dances', component: () => import('@/views/manage/Dances.vue') },
+      { path: 'platforms/:itemId?', name: 'manage.platforms', component: () => import('@/views/manage/Platforms.vue') },
+      { path: 'staff/:itemId?', name: 'manage.staff', component: () => import('@/views/manage/Staff.vue') },
+      { path: 'admins', name: 'manage.admins', component: () => import('@/views/manage/Admins.vue') },
+    ],
+  },
+  // Links from the old app's emails and bookmarks.
+  { path: '/competitions/:competitionId/admin/:rest(.*)*', redirect: (to) => ({ name: 'manage', params: { competitionId: to.params.competitionId } }) },
   {
     path: '/competitions/:competitionId',
     component: () => import('@/views/competition/CompetitionLayout.vue'),
@@ -361,6 +428,9 @@ router.beforeResolve(async (to, from) => {
     skipNextViewTransition = false
     return
   }
+  // In Manage, picking from a list beside its detail shouldn't fade the
+  // whole window; on phones each step is a page, so it still animates.
+  if (to.meta.admin && from.meta.admin && matchMedia('(min-width: 768px)').matches) return
   // Crossing into or out of a competition, the tab bar's exit button buds
   // off the pill or merges back into it (style.css, vt-bud-*).
   const inComp = (r: typeof to) => r.matched.some((m) => m.meta.ownsBottomNav)

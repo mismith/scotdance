@@ -1,0 +1,156 @@
+<script setup lang="ts">
+import { onScopeDispose, reactive, ref } from 'vue'
+import { onValue } from 'firebase/database'
+import { httpsCallable } from 'firebase/functions'
+import { LoaderCircle, Play } from '@lucide/vue'
+import TextField from '@/components/admin/TextField.vue'
+import { dataRef, functions } from '@/firebase'
+import { write } from '@/lib/admin/write'
+
+// Maintenance for whoever runs ScotDance: the app versions people are
+// told to update to, and rebuilding search and profile data.
+
+const versions = ref<Record<string, string>>({})
+const off = onValue(dataRef('versions'), (snap) => (versions.value = (snap.val() ?? {}) as Record<string, string>))
+onScopeDispose(off)
+const saveVersion = (key: string) => (v: string | null) => write({ [`versions/${key}`]: v })
+const versionPattern = (v: string) => (/^\d+\.\d+\.\d+(-[\w.]+)?$/.test(v) ? null : 'Use a version like 4.0.1.')
+
+interface Job {
+  running: boolean
+  result: string | null
+  error: string | null
+}
+const jobs = reactive<Record<string, Job>>({})
+const job = (key: string): Job => jobs[key] ?? { running: false, result: null, error: null }
+
+const WORDS: Record<string, string> = {
+  linked: 'linked',
+  skipped: 'skipped',
+  pruned: 'removed',
+  competitions: 'competitions read',
+  written: 'written',
+  alreadySet: 'already set',
+  unmatched: 'not matched',
+  batches: 'batches',
+  updated: 'updated',
+  total: 'total',
+  missing: 'missing',
+}
+function describe(data: unknown): string {
+  if (data == null) return 'Done.'
+  if (Array.isArray(data)) return `Done: ${data.length} indexed.`
+  if (typeof data !== 'object') return `Done: ${String(data)}`
+  const parts = Object.entries(data as Record<string, unknown>)
+    .filter(([, v]) => typeof v === 'number' || typeof v === 'boolean' || typeof v === 'string')
+    .map(([k, v]) => `${v} ${WORDS[k] ?? k.replace(/([A-Z])/g, ' $1').toLowerCase()}`)
+  const counted = Object.keys(data as object).length
+  return parts.length ? `Done: ${parts.join(', ')}.` : `Done: ${counted} indexed.`
+}
+
+async function run(key: string, fn: string, payload?: unknown) {
+  const j = jobs[key]
+  j.running = true
+  j.error = null
+  j.result = null
+  try {
+    const res = await httpsCallable(functions, fn, { timeout: 540_000 })(payload)
+    j.result = describe(res.data)
+  } catch (e) {
+    j.error = e instanceof Error ? e.message : String(e)
+  } finally {
+    j.running = false
+  }
+}
+
+const REINDEX = [
+  { key: 'competitionsPublished', fn: 'reindexCompetitionsPublished', label: 'Published competitions list' },
+  { key: 'competitions', fn: 'reindexCompetitions', label: 'Competitions search' },
+  { key: 'dancers', fn: 'reindexDancers', label: 'Dancers search' },
+  { key: 'judges', fn: 'reindexJudges', label: 'Judges search' },
+  { key: 'pipers', fn: 'reindexPipers', label: 'Pipers search' },
+]
+const PROFILES = [
+  { key: 'Judge', label: 'Judges' },
+  { key: 'Piper', label: 'Pipers' },
+  { key: 'Venue', label: 'Venues' },
+  { key: 'Dancer', label: 'Dancers' },
+]
+for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`agg${p.key}`, `bp${p.key}`]), 'coords'])
+  jobs[key] = { running: false, result: null, error: null }
+</script>
+
+<template>
+  <div class="mx-auto max-w-3xl space-y-10 p-4 pb-[calc(3rem+var(--safe-bottom))] md:p-8">
+    <h1 class="text-display">Tools</h1>
+
+    <section class="space-y-4">
+      <div>
+        <h2 class="text-heading">App versions</h2>
+        <p class="text-muted-foreground text-sm">People on an older version are asked to update. Set these after a release is live in each store.</p>
+      </div>
+      <div class="grid gap-4 sm:grid-cols-3">
+        <TextField :model-value="versions.web" label="Web" placeholder="4.0.0" :validate="versionPattern" :save="saveVersion('web')" />
+        <TextField :model-value="versions.ios" label="iPhone and iPad" placeholder="4.0.0" :validate="versionPattern" :save="saveVersion('ios')" />
+        <TextField :model-value="versions.android" label="Android" placeholder="4.0.0" :validate="versionPattern" :save="saveVersion('android')" />
+      </div>
+    </section>
+
+    <section class="space-y-3">
+      <div>
+        <h2 class="text-heading">Search</h2>
+        <p class="text-muted-foreground text-sm">Rebuild a search index if results look out of date.</p>
+      </div>
+      <ul class="bg-card divide-y rounded-2xl border shadow-sm">
+        <li v-for="r in REINDEX" :key="r.key" class="flex flex-wrap items-center gap-3 px-4 py-3">
+          <span class="min-w-0 flex-1">
+            <span class="block text-base font-semibold">{{ r.label }}</span>
+            <span v-if="job(r.key).result" class="text-done-foreground block text-sm">{{ job(r.key).result }}</span>
+            <span v-if="job(r.key).error" class="text-destructive block text-sm font-semibold">{{ job(r.key).error }}</span>
+          </span>
+          <button type="button" :disabled="job(r.key).running" class="hover:bg-accent flex h-10 items-center gap-1.5 rounded-xl border px-3 text-sm font-bold disabled:opacity-50" @click="run(r.key, r.fn)">
+            <LoaderCircle v-if="job(r.key).running" class="size-4 animate-spin" /><Play v-else class="size-4" /> Rebuild
+          </button>
+        </li>
+      </ul>
+    </section>
+
+    <section class="space-y-3">
+      <div>
+        <h2 class="text-heading">Profiles</h2>
+        <p class="text-muted-foreground text-sm">Rebuild the profiles that link people and venues across competitions. Run step 1, then step 2.</p>
+      </div>
+      <ul class="bg-card divide-y rounded-2xl border shadow-sm">
+        <li v-for="p in PROFILES" :key="p.key" class="space-y-2 px-4 py-3">
+          <p class="text-base font-bold">{{ p.label }}</p>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" :disabled="job(`agg${p.key}`).running" class="hover:bg-accent flex h-10 items-center gap-1.5 rounded-xl border px-3 text-sm font-bold disabled:opacity-50" @click="run(`agg${p.key}`, `backfill${p.key}Aggregates`)">
+              <LoaderCircle v-if="job(`agg${p.key}`).running" class="size-4 animate-spin" /> 1. Build profiles
+            </button>
+            <button type="button" :disabled="job(`bp${p.key}`).running" class="hover:bg-accent flex h-10 items-center gap-1.5 rounded-xl border px-3 text-sm font-bold disabled:opacity-50" @click="run(`bp${p.key}`, `backfill${p.key}BackPointers`)">
+              <LoaderCircle v-if="job(`bp${p.key}`).running" class="size-4 animate-spin" /> 2. Link entries
+            </button>
+          </div>
+          <p v-for="k in [`agg${p.key}`, `bp${p.key}`]" :key="k" :class="['text-sm', jobs[k]?.error ? 'text-destructive font-semibold' : 'text-done-foreground']">
+            {{ jobs[k]?.error ?? jobs[k]?.result ?? '' }}
+          </p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="space-y-3">
+      <div>
+        <h2 class="text-heading">Map positions</h2>
+        <p class="text-muted-foreground text-sm">Looks up the map position of competitions that don’t have one yet. Try a dry run first to see what it would change.</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button type="button" :disabled="job('coords').running" class="hover:bg-accent flex h-10 items-center gap-1.5 rounded-xl border px-3 text-sm font-bold disabled:opacity-50" @click="run('coords', 'backfillCoords', { dryRun: true })">Dry run</button>
+        <button type="button" :disabled="job('coords').running" class="bg-primary text-primary-foreground flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-bold disabled:opacity-50" @click="run('coords', 'backfillCoords', { dryRun: false })">
+          <LoaderCircle v-if="job('coords').running" class="size-4 animate-spin" /> Update positions
+        </button>
+      </div>
+      <p v-if="job('coords').result" class="text-done-foreground text-sm">{{ job('coords').result }}</p>
+      <p v-if="job('coords').error" class="text-destructive text-sm font-semibold">{{ job('coords').error }}</p>
+    </section>
+  </div>
+</template>

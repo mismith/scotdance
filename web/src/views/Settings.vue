@@ -5,7 +5,7 @@ import {
   ArrowDownToLine,
   Bell,
   ChevronRight,
-  ExternalLink,
+  ClipboardList,
   FileText,
   Info,
   LifeBuoy,
@@ -140,9 +140,9 @@ const rowClass = 'flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left ho
             </RouterLink>
           </li>
           <li v-if="canManage">
-            <a href="/admin" target="_blank" rel="noopener" :class="rowClass">
-              <ExternalLink class="text-primary size-5" /><span class="flex-1 text-base font-bold">Manage competitions</span>
-            </a>
+            <RouterLink :to="{ name: 'manage.competitions' }" :class="rowClass">
+              <ClipboardList class="text-primary size-5" /><span class="flex-1 text-base font-bold">Manage competitions</span><ChevronRight class="text-muted-foreground size-5" />
+            </RouterLink>
           </li>
         </ul>
       </section>

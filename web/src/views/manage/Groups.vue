@@ -1,0 +1,169 @@
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import { RouterLink } from 'vue-router'
+import { ChevronRight, Shuffle } from '@lucide/vue'
+import CollectionEditor from '@/components/admin/CollectionEditor.vue'
+import SwitchField from '@/components/admin/SwitchField.vue'
+import { useManagedCompetition, type MGroup } from '@/composables/admin/useManagedCompetition'
+import { toast } from '@/lib/admin/feedback'
+import { canEdit, friendlyError } from '@/lib/admin/write'
+import { snapshot, type CollectionSpec } from '@/lib/admin/collection'
+
+const m = useManagedCompetition()
+
+const AGE_RANGES = [
+  '7 & Under 10 Years',
+  '10 & Under 12 Years',
+  '12 & Under 14 Years',
+  '14 & Under 16 Years',
+  '16 & Under 18 Years',
+  '18 & Under 21 Years',
+  '21 Years & Over',
+]
+
+const spec: CollectionSpec<MGroup> = {
+  path: 'groups',
+  route: 'manage.groups',
+  singular: 'age group',
+  plural: 'age groups',
+  sortable: true,
+  fields: [
+    {
+      key: 'categoryId',
+      label: 'Category',
+      kind: 'select',
+      required: true,
+      half: true,
+      bulk: true,
+      placeholder: 'Choose a category',
+      options: () => m.categories.value.map((c) => ({ value: c.id, label: c.label })),
+      hint: m.categories.value.length ? undefined : 'Add categories first (Set up › Categories).',
+    },
+    {
+      key: 'name',
+      label: 'Age range',
+      kind: 'text',
+      half: true,
+      placeholder: 'e.g. 12 & Under 14 Years',
+      hint: 'Leave empty when the category is one group, like Primary.',
+    },
+    { key: 'trophy', label: 'Trophy', kind: 'text', half: true, placeholder: 'e.g. Adeline Duncan Memorial' },
+    { key: 'sponsor', label: 'Trophy sponsor', kind: 'text', half: true },
+  ],
+  title: (g) => g.label,
+  subtitle: (g) => {
+    const dancers = m.groupDancers(g.id).length
+    const dances = m.groupDances(g.id).length
+    return `${dancers} ${dancers === 1 ? 'dancer' : 'dancers'} · ${dances} ${dances === 1 ? 'dance' : 'dances'}`
+  },
+  defaults: (prev) => ({ categoryId: prev?.categoryId ?? '' }),
+  presets: AGE_RANGES.map((name) => ({ label: name, values: { name } })),
+  impact: (ids) => {
+    const updates: Record<string, unknown> = {}
+    const warnings: string[] = []
+    let dancers = 0
+    let hasResults = false
+    for (const id of ids) {
+      dancers += m.groupDancers(id).length
+      for (const d of m.dances.value) if (d.groupIds?.[id]) updates[`dances/${d.id}/groupIds/${id}`] = null
+      if (m.results.value[id]) {
+        updates[`results/${id}`] = null
+        hasResults = true
+      }
+      if (m.points.value[id]) updates[`points/${id}`] = null
+      if (m.draws.value[id]) updates[`draws/${id}`] = null
+    }
+    if (dancers) warnings.push(`${dancers} ${dancers === 1 ? 'dancer is' : 'dancers are'} in ${ids.length === 1 ? 'it' : 'them'} and will need another age group.`)
+    if (hasResults) warnings.push('Its results and draws will be deleted too.')
+    return { updates, warnings }
+  },
+  emptyHint: 'Add the age groups dancing at this competition, or import them with your dancers.',
+}
+
+// --- Dances this group does
+const copyFrom = ref('')
+async function setDance(groupId: string, danceId: string, on: boolean) {
+  await m.writeData({ [`dances/${danceId}/groupIds/${groupId}`]: on || null })
+}
+async function sameAs(groupId: string) {
+  const source = copyFrom.value
+  copyFrom.value = ''
+  if (!source) return
+  const updates: Record<string, unknown> = {}
+  for (const d of m.dances.value) {
+    const want = !!d.groupIds?.[source]
+    if (want !== !!d.groupIds?.[groupId]) updates[`dances/${d.id}/groupIds/${groupId}`] = want || null
+  }
+  if (!Object.keys(updates).length) return toast('Already the same dances')
+  const before = snapshot(m.raw.value, updates)
+  try {
+    await m.writeData(updates)
+    toast(`Now does the same dances as ${m.groupsById.value.get(source)?.label}`, {
+      action: { label: 'Undo', run: () => m.writeData(before) },
+    })
+  } catch (e) {
+    toast(friendlyError(e), { tone: 'error' })
+  }
+}
+
+const drawSummary = (groupId: string) => {
+  const dances = m.groupDances(groupId)
+  const drawn = dances.filter((d) => (m.draws.value[groupId]?.[d.id]?.length ?? 0) > 0).length
+  if (!dances.length) return 'Choose this group’s dances first.'
+  if (!drawn) return 'No draws yet. Optional: the order dancers go up in each dance.'
+  return `Set for ${drawn} of ${dances.length} ${dances.length === 1 ? 'dance' : 'dances'}.`
+}
+
+const items = computed(() => m.groups.value)
+</script>
+
+<template>
+  <CollectionEditor :spec="spec" :items="items">
+    <template #detail-extra="{ item }">
+      <section class="space-y-3">
+        <div class="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h3 class="text-heading">Dances</h3>
+            <p class="text-muted-foreground text-sm">What this age group dances. Results and the schedule use this.</p>
+          </div>
+          <label v-if="m.groups.value.length > 1" class="flex items-center gap-2 text-sm font-semibold">
+            <span class="sr-only">Same dances as another age group</span>
+            <select
+              v-model="copyFrom"
+              :disabled="!canEdit"
+              class="bg-card border-strong h-10 max-w-56 rounded-xl border px-2 text-[0.9375rem]"
+              @change="sameAs(item.id)"
+            >
+              <option value="">Same dances as…</option>
+              <option v-for="g in m.groups.value.filter((g) => g.id !== item.id)" :key="g.id" :value="g.id">{{ g.label }}</option>
+            </select>
+          </label>
+        </div>
+        <ul v-if="m.dances.value.length" class="bg-card divide-y rounded-2xl border px-4 shadow-sm">
+          <li v-for="d in m.dances.value" :key="d.id" class="py-2">
+            <SwitchField :model-value="!!d.groupIds?.[item.id]" :label="d.label" :save="(on) => setDance(item.id, d.id, on)" />
+          </li>
+        </ul>
+        <p v-else class="text-muted-foreground text-base">
+          No dances yet.
+          <RouterLink :to="{ name: 'manage.dances', params: { competitionId: m.competitionId.value } }" class="text-primary font-bold">Add dances</RouterLink>
+        </p>
+      </section>
+
+      <section class="space-y-3">
+        <h3 class="text-heading">Draws</h3>
+        <RouterLink
+          :to="{ name: 'manage.groups.draws', params: { competitionId: m.competitionId.value, itemId: item.id } }"
+          class="bg-card hover:bg-accent flex min-h-16 items-center gap-3 rounded-2xl border px-4 py-3 shadow-sm"
+        >
+          <span class="bg-blue-paper text-primary flex size-10 shrink-0 items-center justify-center rounded-xl"><Shuffle class="size-5" /></span>
+          <span class="min-w-0 flex-1">
+            <span class="block text-base font-bold">Dancing order</span>
+            <span class="text-muted-foreground block text-sm">{{ drawSummary(item.id) }}</span>
+          </span>
+          <ChevronRight class="text-muted-foreground size-5" />
+        </RouterLink>
+      </section>
+    </template>
+  </CollectionEditor>
+</template>

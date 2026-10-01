@@ -12,6 +12,9 @@ import './composables/useTheme'
 import '@fontsource-variable/atkinson-hyperlegible-next/wght.css'
 import './style.css'
 
+// The old app used #/ URLs (emails, bookmarks); send them to the same page here.
+if (location.hash.startsWith('#/')) history.replaceState(history.state, '', location.hash.slice(1) || '/')
+
 const app = createApp(App)
 
 app.use(createPinia())

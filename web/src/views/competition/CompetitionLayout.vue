@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, toRef } from 'vue'
-import { RouterView, useRoute } from 'vue-router'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { useVtScope } from '@/lib/viewTransitionFocus'
-import { CalendarX } from '@lucide/vue'
+import { CalendarX, Pencil } from '@lucide/vue'
+import { useMeStore } from '@/stores/me'
 import AppBar from '@/components/nav/AppBar.vue'
 import ShareButton from '@/components/ShareButton.vue'
 import CompetitionBottomNav from '@/components/nav/CompetitionBottomNav.vue'
@@ -24,6 +25,7 @@ const TAB_LABEL_BY_ROUTE: Record<string, string> = {
 }
 
 const route = useRoute()
+const me = useMeStore()
 const competitionId = computed(() => String(route.params.competitionId ?? ''))
 
 useVtScope('comp').syncFocus(competitionId)
@@ -83,6 +85,15 @@ usePageTitle(() => [
       :exit="exit"
     >
       <template #actions>
+        <RouterLink
+          v-if="me.hasCompetitionPerm(competitionId)"
+          :to="{ name: 'manage', params: { competitionId } }"
+          aria-label="Manage this competition"
+          title="Manage"
+          class="hover:bg-accent text-primary flex size-9 items-center justify-center rounded-full"
+        >
+          <Pencil class="size-5" />
+        </RouterLink>
         <ShareButton :title="competition?.name ?? undefined" />
       </template>
     </AppBar>

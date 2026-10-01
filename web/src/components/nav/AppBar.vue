@@ -19,11 +19,13 @@ withDefaults(
     /** Border under the bar; defaults to `showTitle` (i.e. once scrolled). */
     scrolled?: boolean
     titleVt?: string | null
+    /** Span the full window (Manage screens on wide displays). */
+    wide?: boolean
     back?: boolean
     fallback?: { to: RouteLocationRaw; label: string }
     exit?: { delta?: number; to?: RouteLocationRaw; label: string } | null
   }>(),
-  { title: null, subtitle: null, showTitle: false, scrolled: undefined, titleVt: null, back: true, fallback: undefined, exit: null },
+  { title: null, subtitle: null, showTitle: false, scrolled: undefined, titleVt: null, wide: false, back: true, fallback: undefined, exit: null },
 )
 
 const scrollTop = () => {
@@ -37,7 +39,7 @@ const scrollTop = () => {
     class="bg-background/100 fixed inset-x-0 top-0 z-30 border-b border-transparent pt-(--safe-top) transition-colors data-[scrolled=true]:border-border"
     :data-scrolled="scrolled ?? showTitle"
   >
-    <div class="mx-auto flex h-14 max-w-3xl items-center gap-2 px-3">
+    <div :class="['mx-auto flex h-14 items-center gap-2 px-3', wide ? 'max-w-none' : 'max-w-3xl']">
       <TopBackButton v-if="back" :fallback="fallback" :exit="exit" />
       <button
         type="button"
