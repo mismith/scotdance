@@ -8,6 +8,10 @@ interface ViewTransitionHandle {
 
 type UpdateCallback = () => void | Promise<void>
 
+// The page ignores taps while a transition plays, so on a slow or busy
+// device cut it short rather than leave the page unresponsive.
+const BUDGET_MS = 1000
+
 export function startViewTransition(
   callback: UpdateCallback = () => {},
   types: string[] = [],
@@ -44,7 +48,8 @@ export function startViewTransition(
     // A transition cut short (a new navigation mid-way) rejects these; that's
     // expected, so don't let it surface as an unhandled error.
     native.ready.catch(() => {})
-    native.finished.catch(() => {})
+    const budget = setTimeout(() => native.skipTransition(), BUDGET_MS)
+    native.finished.catch(() => {}).finally(() => clearTimeout(budget))
     handle.updateCallbackDone = native.updateCallbackDone
     handle.ready = native.ready
     handle.finished = native.finished

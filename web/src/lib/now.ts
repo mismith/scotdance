@@ -1,3 +1,5 @@
+import { ref } from 'vue'
+
 // The app's idea of "today". In development and emulator builds, append
 // `?now=2019-01-14` to any URL to pretend it's that day (kept for the
 // session), so competition-day screens can be exercised against old data.
@@ -41,4 +43,26 @@ export function nowMs(): number {
 
 export function now(): Date {
   return new Date(nowMs())
+}
+
+const dayKey = () => {
+  const d = now()
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
+}
+
+/**
+ * Today's date as a reactive key. "Is it competition day?" reads it, so an app
+ * left open overnight (phones keep it for days) goes live in the morning.
+ * Checked when the app comes back on screen, and every minute while it's open.
+ */
+export const today = ref(dayKey())
+if (typeof window !== 'undefined') {
+  const refresh = () => {
+    const key = dayKey()
+    if (key !== today.value) today.value = key
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refresh()
+  })
+  window.setInterval(refresh, 60_000)
 }

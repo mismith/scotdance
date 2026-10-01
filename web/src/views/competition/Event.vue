@@ -11,8 +11,8 @@ import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import DrawDialog from '@/components/DrawDialog.vue'
 import StaffDialog from '@/components/StaffDialog.vue'
-import { dances as eventDances, getScheduleDanceName, slugline } from '@/lib/schedule'
-import { findGroupDancers, getOrdinalSuffix } from '@/lib/results'
+import { dances as eventDances, dayLabel, days, getScheduleDanceName, platformLabel, slugline } from '@/lib/schedule'
+import { findGroupDancers, getOrdinalSuffix, isPosted } from '@/lib/results'
 import { sanitizeRichText } from '@/lib/sanitize'
 import {
   staffMemberName,
@@ -55,6 +55,12 @@ const event = computed(() => block.value?.events?.[String(route.params.eventId)]
 usePageTitle(() => [event.value?.name, competition.value?.name])
 
 const blockTime = computed(() => slugline(block.value?.description))
+// The day only when there are several (a single day stays out of sight, as on Schedule).
+const dayName = computed(() => {
+  const all = days(schedule.value)
+  const i = all.findIndex((d) => d.id === String(route.params.dayId))
+  return all.length > 1 && i >= 0 ? dayLabel(all[i], i) : null
+})
 
 interface GroupRow {
   group: EnrichedGroup
@@ -69,10 +75,7 @@ interface PlatformRow {
   groups: GroupRow[]
 }
 
-function isPosted(groupId: string, danceId: string) {
-  const raw = results.value?.[groupId]?.[danceId]
-  return raw === false || (Array.isArray(raw) && raw.length > 0)
-}
+const posted = (groupId: string, danceId: string) => isPosted(results.value?.[groupId]?.[danceId])
 
 function drawPos(d: EnrichedDancer, groupId: string, danceId: string) {
   const list = draws.value?.[groupId]?.[danceId]
@@ -96,7 +99,7 @@ function platformsFor(sd: ScheduleDance): PlatformRow[] {
           return {
             group: g,
             count: all.length,
-            posted: !!sd.danceId && isPosted(g.id, sd.danceId),
+            posted: !!sd.danceId && posted(g.id, sd.danceId),
             mine: oncePerPerson(all.filter((d) => following.isFollowing(d)))
               .map((d) => ({
                 dancer: d,
@@ -109,7 +112,7 @@ function platformsFor(sd: ScheduleDance): PlatformRow[] {
         .map((id) => judgeById.get(id))
         .filter((j): j is StaffMember => !!j)
       if (!rows.length && !judges.length) return null
-      return { id: p.id, name: p.name || 'Platform', judges, groups: rows }
+      return { id: p.id, name: platformLabel(p.name) || 'Platform', judges, groups: rows }
     })
     .filter((x): x is PlatformRow => !!x)
 }
@@ -157,7 +160,7 @@ function openJudge(e: MouseEvent, judge: StaffMember) {
       <header :ref="setHeader" class="space-y-1">
         <p class="text-muted-foreground flex items-center gap-1.5 text-sm font-bold">
           <Clock class="size-4" />
-          {{ [day?.name, block?.name, blockTime].filter(Boolean).join(' · ') }}
+          {{ [dayName, block?.name, blockTime].filter(Boolean).join(' · ') }}
         </p>
         <h1 class="text-display">{{ event.name || 'Event' }}</h1>
         <div
@@ -193,7 +196,7 @@ function openJudge(e: MouseEvent, judge: StaffMember) {
 
         <div v-for="p in s.platforms" :key="p.id" class="border-t first:border-t-0">
           <div class="bg-muted/60 flex flex-wrap items-baseline justify-between gap-x-3 px-4 py-2">
-            <span class="text-base font-extrabold">Platform {{ p.name }}</span>
+            <span class="text-base font-extrabold">{{ p.name }}</span>
             <span v-if="p.judges.length" class="text-muted-foreground text-sm">
               <template v-for="(j, ji) in p.judges" :key="j.id">
                 <button type="button" class="hover:text-foreground font-semibold underline-offset-2 hover:underline" @click="openJudge($event, j)">

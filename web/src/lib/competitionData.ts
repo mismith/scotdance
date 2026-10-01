@@ -22,8 +22,10 @@ import {
 
 // Cached, promise-shared loaders for a competition's data sections. The
 // competition screens and Home (which shows several competitions at once)
-// share one fetch per section per session. Live competitions add a realtime
-// results subscription on top via `subscribeResults`.
+// share one fetch per section per session. On competition day the same
+// bundles stream instead (`watch*`), so late entries, a redrawn order or a
+// changed schedule show up without a restart; each update also refreshes
+// the cache.
 
 const NAMESPACE = import.meta.env.VITE_FIREBASE_DATA_NAMESPACE || 'production'
 
@@ -71,6 +73,8 @@ export interface ResultsBundle {
   dances: EnrichedDance[]
   results: ResultsTree
   points: PointsTree
+  /** The organiser hid results (stored as `false`). */
+  hidden: boolean
 }
 
 export interface ScheduleBundle {
@@ -78,7 +82,72 @@ export interface ScheduleBundle {
   schedule: Schedule | null
   platforms: Platform[]
   draws: DrawsTree
+  /** The organiser hid the schedule (stored as `false`). */
+  hidden: boolean
 }
+
+// --- Raw section values → what the screens use.
+
+function toDancersBundle(dancersVal: unknown, groupsVal: unknown, categoriesVal: unknown): DancersBundle {
+  const rawDancers = snapshotToArray<Dancer>(dancersVal as Record<string, Dancer> | null)
+  const rawGroups = snapshotToArray<Group>(groupsVal as Record<string, Group> | null)
+  const rawCategories = snapshotToArray<Category>(categoriesVal as Record<string, Category> | null)
+
+  const categoriesById = new Map(rawCategories.map((c) => [c.id, c]))
+  const groupsById = new Map<string, EnrichedGroup>(
+    rawGroups.map((g) => {
+      const category = g.categoryId ? categoriesById.get(g.categoryId) : undefined
+      return [g.id, { ...g, category, fullName: groupFullName(g, category) }]
+    }),
+  )
+
+  const dancers = rawDancers
+    .filter((d) => d.firstName || d.lastName)
+    .map<EnrichedDancer>((d) => {
+      // RTDB stores `number` as a string; coerce so numeric sort works.
+      const parsed = typeof d.number === 'string' ? Number.parseInt(d.number, 10) : d.number
+      return {
+        ...d,
+        number: Number.isFinite(parsed as number) ? (parsed as number) : undefined,
+        fullName: dancerFullName(d),
+        group: d.groupId ? groupsById.get(d.groupId) : undefined,
+      }
+    })
+
+  return {
+    dancers,
+    groups: [...groupsById.values()].sort(byDragOrder),
+    categories: [...rawCategories].sort(byDragOrder),
+  }
+}
+
+function toResults(resultsVal: unknown, pointsVal: unknown) {
+  return {
+    results: (resultsVal && typeof resultsVal === 'object' ? resultsVal : {}) as ResultsTree,
+    points: (pointsVal && typeof pointsVal === 'object' ? pointsVal : {}) as PointsTree,
+  }
+}
+
+function toResultsBundle(dancesVal: unknown, resultsVal: unknown, pointsVal: unknown): ResultsBundle {
+  const dances = snapshotToArray<Dance>(dancesVal as Record<string, Dance> | null)
+    .map<EnrichedDance>((d) => ({ ...d, fullName: danceFullName(d) }))
+    .sort(byDragOrder)
+  return { dances, ...toResults(resultsVal, pointsVal), hidden: resultsVal === false }
+}
+
+// RTDB stores `false` for admin-disabled sections and `null` for never-created.
+function toScheduleBundle(scheduleVal: unknown, platformsVal: unknown, drawsVal: unknown): ScheduleBundle {
+  return {
+    schedule: scheduleVal && typeof scheduleVal === 'object' ? (scheduleVal as Schedule) : null,
+    platforms: snapshotToArray<Platform>(platformsVal as Record<string, Platform> | null).sort(byDragOrder),
+    draws: drawsVal && typeof drawsVal === 'object' ? (drawsVal as DrawsTree) : {},
+    hidden: scheduleVal === false,
+  }
+}
+
+const toStaff = (val: unknown) => snapshotToArray<StaffMember>(val as Record<string, StaffMember> | null).sort(byDragOrder)
+
+// --- One-off reads, cached per session.
 
 const caches = {
   dancers: new Map<string, Promise<DancersBundle>>(),
@@ -108,120 +177,91 @@ function cached<T>(map: Map<string, Promise<T>>, id: string, load: () => Promise
   return p
 }
 
+const readAll = (id: string, sections: Section[]) =>
+  Promise.all(sections.map((s) => getSaved(sectionRef(id, s)).then((snap) => snap.val())))
+
 export function fetchDancers(id: string): Promise<DancersBundle> {
   return cached(caches.dancers, id, async () => {
-    const [dancersSnap, groupsSnap, categoriesSnap] = await Promise.all([
-      getSaved(sectionRef(id, 'dancers')),
-      getSaved(sectionRef(id, 'groups')),
-      getSaved(sectionRef(id, 'categories')),
-    ])
-    const rawDancers = snapshotToArray<Dancer>(dancersSnap.val())
-    const rawGroups = snapshotToArray<Group>(groupsSnap.val())
-    const rawCategories = snapshotToArray<Category>(categoriesSnap.val())
-
-    const categoriesById = new Map(rawCategories.map((c) => [c.id, c]))
-    const groupsById = new Map<string, EnrichedGroup>(
-      rawGroups.map((g) => {
-        const category = g.categoryId ? categoriesById.get(g.categoryId) : undefined
-        return [g.id, { ...g, category, fullName: groupFullName(g, category) }]
-      }),
-    )
-
-    const dancers = rawDancers
-      .filter((d) => d.firstName || d.lastName)
-      .map<EnrichedDancer>((d) => {
-        // RTDB stores `number` as a string; coerce so numeric sort works.
-        const parsed = typeof d.number === 'string' ? Number.parseInt(d.number, 10) : d.number
-        return {
-          ...d,
-          number: Number.isFinite(parsed as number) ? (parsed as number) : undefined,
-          fullName: dancerFullName(d),
-          group: d.groupId ? groupsById.get(d.groupId) : undefined,
-        }
-      })
-
-    return {
-      dancers,
-      groups: [...groupsById.values()].sort(byDragOrder),
-      categories: [...rawCategories].sort(byDragOrder),
-    }
+    const [d, g, c] = await readAll(id, ['dancers', 'groups', 'categories'])
+    return toDancersBundle(d, g, c)
   })
-}
-
-function toResults(resultsVal: unknown, pointsVal: unknown) {
-  return {
-    results: (resultsVal && typeof resultsVal === 'object' ? resultsVal : {}) as ResultsTree,
-    points: (pointsVal && typeof pointsVal === 'object' ? pointsVal : {}) as PointsTree,
-  }
 }
 
 export function fetchResults(id: string): Promise<ResultsBundle> {
   return cached(caches.results, id, async () => {
-    const [dancesSnap, resultsSnap, pointsSnap] = await Promise.all([
-      getSaved(sectionRef(id, 'dances')),
-      getSaved(sectionRef(id, 'results')),
-      getSaved(sectionRef(id, 'points')),
-    ])
-    const dances = snapshotToArray<Dance>(dancesSnap.val())
-      .map<EnrichedDance>((d) => ({ ...d, fullName: danceFullName(d) }))
-      .sort(byDragOrder)
-    return { dances, ...toResults(resultsSnap.val(), pointsSnap.val()) }
+    const [d, r, p] = await readAll(id, ['dances', 'results', 'points'])
+    return toResultsBundle(d, r, p)
   })
 }
 
 export function fetchSchedule(id: string): Promise<ScheduleBundle> {
   return cached(caches.schedule, id, async () => {
-    const [scheduleSnap, platformsSnap, drawsSnap] = await Promise.all([
-      getSaved(sectionRef(id, 'schedule')),
-      getSaved(sectionRef(id, 'platforms')),
-      getSaved(sectionRef(id, 'draws')),
-    ])
-    // RTDB stores `false` for admin-disabled sections and `null` for never-created.
-    const sval = scheduleSnap.val()
-    const dval = drawsSnap.val()
-    return {
-      schedule: sval && typeof sval === 'object' ? (sval as Schedule) : null,
-      platforms: snapshotToArray<Platform>(platformsSnap.val()).sort(byDragOrder),
-      draws: dval && typeof dval === 'object' ? (dval as DrawsTree) : {},
-    }
+    const [s, p, d] = await readAll(id, ['schedule', 'platforms', 'draws'])
+    return toScheduleBundle(s, p, d)
   })
 }
 
 export function fetchStaff(id: string): Promise<StaffMember[]> {
   return cached(caches.staff, id, async () => {
-    const snap = await getSaved(sectionRef(id, 'staff'))
-    return snapshotToArray<StaffMember>(snap.val()).sort(byDragOrder)
+    const [s] = await readAll(id, ['staff'])
+    return toStaff(s)
   })
 }
 
+// --- Streams, for competition day.
+
+type OnError = (e: Error) => void
+
 /**
- * Realtime results for a live competition. Calls back with the full results
- * and points trees on every change (including the first read). Returns an
- * unsubscribe function.
+ * Stream several sections together: calls back once every one has a value,
+ * then on every change. Starts from the copy saved on the device when
+ * offline. Returns an unsubscribe function.
  */
-export function subscribeResults(
-  id: string,
-  cb: (bundle: { results: ResultsTree; points: PointsTree }) => void,
-): () => void {
-  let results: unknown = undefined
-  let points: unknown = undefined
-  let gotResults = false
-  let gotPoints = false
-  const emit = () => {
-    if (gotResults && gotPoints) cb(toResults(results, points))
-  }
-  const offResults = onValueSaved(sectionRef(id, 'results'), (snap) => {
-    results = snap.val()
-    gotResults = true
-    emit()
-  })
-  const offPoints = onValueSaved(sectionRef(id, 'points'), (snap) => {
-    points = snap.val()
-    gotPoints = true
-    emit()
-  })
-  return () => {
-    offResults()
-    offPoints()
-  }
+function watchSections(id: string, sections: Section[], cb: (values: unknown[]) => void, onError?: OnError) {
+  const values: unknown[] = new Array(sections.length)
+  const got = new Set<number>()
+  const offs = sections.map((s, i) =>
+    onValueSaved(
+      sectionRef(id, s),
+      (snap) => {
+        values[i] = snap.val()
+        got.add(i)
+        if (got.size === sections.length) cb([...values])
+      },
+      onError,
+    ),
+  )
+  return () => offs.forEach((off) => off())
+}
+
+export function watchDancers(id: string, cb: (b: DancersBundle) => void, onError?: OnError) {
+  return watchSections(id, ['dancers', 'groups', 'categories'], ([d, g, c]) => {
+    const b = toDancersBundle(d, g, c)
+    caches.dancers.set(id, Promise.resolve(b))
+    cb(b)
+  }, onError)
+}
+
+export function watchResults(id: string, cb: (b: ResultsBundle) => void, onError?: OnError) {
+  return watchSections(id, ['dances', 'results', 'points'], ([d, r, p]) => {
+    const b = toResultsBundle(d, r, p)
+    caches.results.set(id, Promise.resolve(b))
+    cb(b)
+  }, onError)
+}
+
+export function watchSchedule(id: string, cb: (b: ScheduleBundle) => void, onError?: OnError) {
+  return watchSections(id, ['schedule', 'platforms', 'draws'], ([s, p, d]) => {
+    const b = toScheduleBundle(s, p, d)
+    caches.schedule.set(id, Promise.resolve(b))
+    cb(b)
+  }, onError)
+}
+
+export function watchStaff(id: string, cb: (staff: StaffMember[]) => void, onError?: OnError) {
+  return watchSections(id, ['staff'], ([s]) => {
+    const staff = toStaff(s)
+    caches.staff.set(id, Promise.resolve(staff))
+    cb(staff)
+  }, onError)
 }

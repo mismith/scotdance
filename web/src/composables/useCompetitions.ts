@@ -102,7 +102,8 @@ export function useCompetitions(includeArchived: Ref<boolean>) {
   const competitions = computed<CompetitionListItem[]>(() =>
     rawCompetitions.value.filter((c) => {
       if (me.hasCompetitionPerm(c.id)) return true
-      return c.listed === true && c.published === true
+      // Listed shows it (its overview and staff); Published adds the rest.
+      return c.listed === true
     }),
   )
 

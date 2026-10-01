@@ -18,7 +18,8 @@ export function useCompetitionDays() {
   const c = useCompetition()
   const following = useFollowing()
 
-  const phase = computed(() => competitionPhase(c.competition.value?.date))
+  // Every day of a competition over several is "today" (from the schedule's days).
+  const phase = computed(() => competitionPhase(c.competition.value?.date, c.schedule.value))
 
   const bundle = computed(() => ({
     dances: c.dances.value,
@@ -27,6 +28,8 @@ export function useCompetitionDays() {
     schedule: c.schedule.value,
     platforms: c.platforms.value,
     draws: c.draws.value,
+    // So "group 2 of 3" skips age groups since deleted.
+    groups: c.groups.value,
   }))
 
   function dayFor(d: EnrichedDancer): DancerDay {

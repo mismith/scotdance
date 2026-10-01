@@ -58,7 +58,7 @@ function onTap(item: TabItem, e: MouseEvent) {
             aria-hidden="true"
           />
           <component :is="item.icon" class="relative size-[1.375rem]" :stroke-width="item.active ? 2.4 : 2" />
-          <span class="relative max-w-full truncate px-0.5">{{ item.label }}</span>
+          <span class="relative max-w-full truncate px-px">{{ item.label }}</span>
           <span
             v-if="item.badge"
             class="bg-secondary ring-card absolute top-2 right-[calc(50%-1.125rem)] size-2 rounded-full ring-2"

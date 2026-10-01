@@ -34,7 +34,8 @@ import { RouterLink } from 'vue-router'
         </p>
         <ul class="ml-6 list-disc space-y-1">
           <li>
-            basic analytics information, like: pageviews, IP addresses, dates and times
+            basic visit information, like: IP addresses, dates and times (kept by the
+            hosting and live chat services; there are no ads or analytics trackers)
           </li>
           <li>
             device-type information, e.g.: operating system, web browser name and version
@@ -54,6 +55,11 @@ import { RouterLink } from 'vue-router'
           <li>
             your (public) display name, should you choose to set one in your profile
           </li>
+          <li>
+            the dancers, competitions and people you follow, and the colours you pick for
+            your dancers (these are private to you)
+          </li>
+          <li>how you use the app (dancer, parent, teacher, organiser), should you say</li>
         </ul>
 
         <p>
@@ -85,12 +91,12 @@ import { RouterLink } from 'vue-router'
               :to="{ name: 'profile' }"
               class="hover:text-foreground underline underline-offset-4"
             >
-              My Profile
+              Account
             </RouterLink>
             page,
           </li>
-          <li>select &ldquo;Delete Account&rdquo;,</li>
-          <li>enter your password into the confirmation dialog.</li>
+          <li>select &ldquo;Delete account&rdquo;,</li>
+          <li>confirm, entering your password if your account has one.</li>
         </ol>
 
         <hr class="border-border/60 my-6" />
@@ -104,7 +110,7 @@ import { RouterLink } from 'vue-router'
             rel="noopener"
             class="hover:text-foreground underline underline-offset-4"
           >
-            on Github</a
+            on GitHub</a
           >.
         </p>
       </section>

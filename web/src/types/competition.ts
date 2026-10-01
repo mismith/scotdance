@@ -1,6 +1,8 @@
 export interface CompetitionLink {
   name?: string
-  url: string
+  /** Missing on some old links. */
+  url?: string
+  _order?: number
 }
 
 export interface Competition {
@@ -19,7 +21,8 @@ export interface Competition {
   registrationURL?: string
   registrationStart?: number
   registrationEnd?: number
-  links?: CompetitionLink[]
+  /** Keyed by push id (old and new admin alike). */
+  links?: Record<string, CompetitionLink>
   sobhd?: string
   listed?: boolean
   published?: boolean
@@ -134,11 +137,13 @@ export const overallDance: EnrichedDance = {
   fullName: 'Overall',
 }
 
-export const groupHasOverall = (group?: EnrichedGroup) =>
-  Boolean(
-    group?.category?.name &&
-      !group.category.name.trim().toLowerCase().startsWith('primary'),
-  )
+/** Primary dancers have no overall results and no championship points. */
+export const isPrimaryCategory = (name?: string | null) =>
+  !!name?.trim().toLowerCase().startsWith('primary')
+
+/** Its category has overall results (not Primary, nor unknown). */
+export const groupHasOverall = (group?: { category?: { name?: string } | null } | null) =>
+  Boolean(group?.category?.name && !isPrimaryCategory(group.category.name))
 
 // Raw RTDB shapes:
 // results[groupId][danceId] = string[] (with optional first "reverse:N" marker, dancers as "id" or "id:tie")

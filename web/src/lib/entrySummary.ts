@@ -54,6 +54,8 @@ export function fetchEntrySummary(competitionId: string, entryId: string): Promi
           overall: o.place != null ? { place: o.place, tied: o.tied } : null,
         }
       } catch {
+        // Offline or a hiccup: try again next time rather than keep nothing.
+        cache.delete(key)
         return null
       }
     })()

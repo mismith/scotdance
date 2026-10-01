@@ -64,6 +64,9 @@ void openStore()
   })
   .catch(() => {})
 
+/** Forget every saved copy (Settings › Clear history). */
+export const clearSaved = () => request('readwrite', (s) => s.clear()).catch(() => undefined)
+
 // --- Connection state
 
 /** Firebase is connected right now. */

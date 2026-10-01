@@ -8,9 +8,9 @@ import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
 import { useFollowing } from '@/composables/useFollowing'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
-import { blocks, dances as eventDances, days, events, slugline } from '@/lib/schedule'
+import { blocks, dances as eventDances, dayLabel, days, events, platformLabel, slugline } from '@/lib/schedule'
+import { isPosted } from '@/lib/results'
 import { sanitizeRichText } from '@/lib/sanitize'
-import { formatWeekday } from '@/lib/format'
 import { competitionPhase } from '@/lib/dancerDay'
 import type { EnrichedDancer, ScheduleEvent } from '@/types/competition'
 import EmptyState from '@/components/EmptyState.vue'
@@ -25,14 +25,16 @@ const {
   schedule,
   platforms,
   results,
+  groups,
   loadSchedule,
   loadDancers,
   loadResults,
   hasSchedule,
+  scheduleHidden,
   competition,
 } = useCompetition()
 // A competition that's over and never posted a schedule shouldn't promise one.
-const isOver = computed(() => competitionPhase(competition.value?.date) === 'after')
+const isOver = computed(() => competitionPhase(competition.value?.date, schedule.value) === 'after')
 const { followedByGroup } = useCompetitionDays()
 const following = useFollowing()
 
@@ -42,7 +44,9 @@ onMounted(async () => {
   ready.value = true
 })
 
-const platformName = computed(() => new Map(platforms.value.map((p) => [p.id, p.name ?? ''])))
+const platformName = computed(() => new Map(platforms.value.map((p) => [p.id, platformLabel(p.name)])))
+// Spacers (gaps on a platform) and deleted age groups have no results to wait for.
+const groupIds = computed(() => new Set(groups.value.map((g) => g.id)))
 
 interface EventInfo {
   mine: Array<{ dancer: EnrichedDancer; color: string | null; platform: string | null }>
@@ -58,9 +62,9 @@ function info(event: ScheduleEvent): EventInfo {
     if (!sd.danceId || !sd.platforms) continue
     for (const [pid, slot] of Object.entries(sd.platforms)) {
       for (const gid of slot.orderedGroupIds ?? []) {
+        if (!groupIds.value.has(gid)) continue
         total++
-        const raw = results.value?.[gid]?.[sd.danceId]
-        if (raw === false || (Array.isArray(raw) && raw.length)) posted++
+        if (isPosted(results.value?.[gid]?.[sd.danceId])) posted++
         for (const d of followedByGroup.value.get(gid) ?? []) {
           if (!mine.has(d.id))
             mine.set(d.id, {
@@ -76,8 +80,9 @@ function info(event: ScheduleEvent): EventInfo {
 }
 
 const dayList = computed(() =>
-  days(schedule.value).map((day) => ({
+  days(schedule.value).map((day, i) => ({
     day,
+    label: dayLabel(day, i),
     blocks: blocks(day).map((block) => ({
       block,
       time: slugline(block.description),
@@ -85,6 +90,8 @@ const dayList = computed(() =>
     })),
   })),
 )
+// Days with no sessions (all deleted) aren't a schedule yet.
+const empty = computed(() => !dayList.value.some((d) => d.blocks.length || d.day.description))
 </script>
 
 <template>
@@ -97,9 +104,15 @@ const dayList = computed(() =>
       <Skeleton v-for="i in 5" :key="i" class="h-14 w-full rounded-xl!" />
     </div>
     <EmptyState
-      v-else-if="hasSchedule === false"
+      v-else-if="scheduleHidden"
       :icon="CalendarDays"
-:title="isOver ? 'No schedule was posted' : 'No schedule yet'"
+      title="No schedule here"
+      description="This competition doesn’t share its schedule here."
+    />
+    <EmptyState
+      v-else-if="hasSchedule === false || empty"
+      :icon="CalendarDays"
+      :title="isOver ? 'No schedule was posted' : 'No schedule yet'"
       :description="
         isOver
           ? 'This competition didn’t post one here. Its results are under Results.'
@@ -107,10 +120,8 @@ const dayList = computed(() =>
       "
     />
 
-    <section v-for="d in dayList" :key="d.day.id" class="space-y-3">
-      <h2 v-if="dayList.length > 1" class="text-title pt-2">
-        {{ d.day.name || formatWeekday(d.day.date) || 'Day' }}
-      </h2>
+    <section v-for="d in empty ? [] : dayList" :key="d.day.id" class="space-y-3">
+      <h2 v-if="dayList.length > 1" class="text-title pt-2">{{ d.label }}</h2>
       <div
         v-if="d.day.description"
         class="text-muted-foreground text-[0.9375rem]"
@@ -145,7 +156,7 @@ const dayList = computed(() =>
                   :key="m.dancer.id"
                   :color="m.color"
                   :name="m.dancer.firstName ?? ''"
-                  :details="[`#${m.dancer.number}`, m.platform ? `Platform ${m.platform}` : null]"
+                  :details="[`#${m.dancer.number}`, m.platform]"
                   class="mt-1"
                 />
               </span>

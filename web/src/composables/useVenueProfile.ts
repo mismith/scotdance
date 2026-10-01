@@ -21,6 +21,7 @@ import {
   findLastSeen,
 } from '@/lib/appearanceStats'
 import { insertEntityAggregate } from '@/composables/useEntityAggregates'
+import { countryName } from '@/lib/flagEmoji'
 import { useRecentEntities } from '@/composables/useRecentEntities'
 import type { Competition } from '@/types/competition'
 
@@ -164,7 +165,8 @@ function createVenueProfile(venueId: Ref<string>): UseVenueProfile {
   const lng = computed(() => aggregate.value?.lng ?? null)
 
   const locationLine = computed(() => {
-    const parts = [locality.value, region.value, country.value].filter(Boolean)
+    // "Canada", not "CA" (which reads as California).
+    const parts = [locality.value, region.value, country.value && countryName(country.value)].filter(Boolean)
     return parts.length ? parts.join(', ') : null
   })
 

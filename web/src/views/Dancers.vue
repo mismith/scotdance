@@ -26,7 +26,7 @@ const router = useRouter()
 const favorites = useFavoritesStore()
 const following = useFollowing()
 const store = useDancersStore()
-const { recent } = useRecentDancers()
+const { recent, clear: clearRecent } = useRecentDancers()
 const { results, searching, searchError } = storeToRefs(store)
 
 const titleEl = ref<HTMLElement | null>(null)
@@ -122,7 +122,17 @@ async function openByName(name: string) {
         </section>
 
         <section v-if="recentList.length" class="space-y-2">
-          <h2 class="text-heading pt-1">Recently viewed</h2>
+          <h2 class="text-heading flex min-h-6 items-center justify-between pt-1">
+            Recently viewed
+            <button
+              type="button"
+              aria-label="Clear recently viewed"
+              class="text-primary -my-2.5 -mr-2 flex h-11 items-center rounded-full px-2 text-[0.9375rem] font-bold"
+              @click="clearRecent()"
+            >
+              Clear
+            </button>
+          </h2>
           <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
             <li v-for="r in recentList" :key="r.id" class="flex items-center gap-2 pr-2">
               <RouterLink :to="{ name: 'dancer.info', params: { dancerId: r.id } }" class="flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 pl-4">

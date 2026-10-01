@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 import Fuse from 'fuse.js'
-import { Search, Star, Users, X } from '@lucide/vue'
+import { ChevronDown, Search, Star, Users, X } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useFollowing } from '@/composables/useFollowing'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
@@ -153,11 +153,12 @@ const followedCount = computed(() => dancers.value.filter((d) => following.isFol
           aria-hidden="true"
         />
       </button>
-      <label class="bg-card flex h-11 shrink-0 items-center rounded-xl border pl-3 text-[0.9375rem] font-bold">
+      <label class="bg-card relative flex h-11 shrink-0 items-center rounded-xl border text-[0.9375rem] font-bold">
         <span class="sr-only">Sort by</span>
-        <select v-model="sortBy" class="h-full rounded-xl bg-transparent pr-2 font-bold outline-none">
+        <select v-model="sortBy" class="h-full appearance-none rounded-xl bg-transparent pr-9 pl-3 font-bold outline-none">
           <option v-for="s in SORTS" :key="s.key" :value="s.key">{{ s.label }}</option>
         </select>
+        <ChevronDown class="text-muted-foreground pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2" />
       </label>
     </div>
 

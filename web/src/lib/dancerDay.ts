@@ -1,5 +1,5 @@
-import { blocks, dances as scheduleDances, days, events } from '@/lib/schedule'
-import { CALLBACKS_ID, findGroupDances, getDancerPlace } from '@/lib/results'
+import { blocks, dances as scheduleDances, days, events, isSpacerId } from '@/lib/schedule'
+import { CALLBACKS_ID, findGroupDances, getDancerPlace, isPosted } from '@/lib/results'
 import { daysFromToday } from '@/lib/format'
 import {
   OVERALL_ID,
@@ -84,13 +84,36 @@ export interface DayBundle {
   schedule: Schedule | null
   platforms: Platform[]
   draws: DrawsTree
+  /** The competition's age groups: a schedule can still list deleted ones. */
+  groups?: Array<{ id: string }>
 }
 
-export function competitionPhase(date: number | string | null | undefined): Phase {
-  const diff = daysFromToday(date ?? null)
-  if (diff == null) return 'before'
-  if (diff > 0) return 'before'
-  if (diff < 0) return 'after'
+/**
+ * Calendar days from today to a competition's first and last day (negative
+ * = past). The last is its last schedule day: the day's own date where it
+ * has one, otherwise days follow on from the competition's date.
+ */
+export function competitionSpan(
+  date: number | string | null | undefined,
+  schedule?: Schedule | null,
+): { first: number; last: number } | null {
+  const first = daysFromToday(date ?? null)
+  if (first == null || !Number.isFinite(first)) return null
+  let last = first
+  days(schedule ?? null).forEach((day, i) => {
+    const own = day.date ? daysFromToday(day.date) : null
+    // A stray date nowhere near the competition (old test data) doesn't stretch it.
+    const at = own != null && own >= first && own - first <= 14 ? own : first + i
+    last = Math.max(last, at)
+  })
+  return { first, last }
+}
+
+/** Pass the schedule so every day of a multi-day competition counts as today. */
+export function competitionPhase(date: number | string | null | undefined, schedule?: Schedule | null): Phase {
+  const span = competitionSpan(date, schedule)
+  if (!span || span.first > 0) return 'before'
+  if (span.last < 0) return 'after'
   return 'today'
 }
 
@@ -105,13 +128,15 @@ interface ScheduleIndex {
   byGroupDance: Map<string, ScheduleSlot>
 }
 
-const indexCache = new WeakMap<Schedule, ScheduleIndex>()
+// Per schedule, and per platforms list: a platform renamed or reordered on
+// the day arrives as a new list with the same schedule.
+const indexCache = new WeakMap<Schedule, { platforms: Platform[]; index: ScheduleIndex }>()
 
 export function scheduleIndex(schedule: Schedule | null, platforms: Platform[]): ScheduleIndex {
   const empty: ScheduleIndex = { slots: [], byGroupDance: new Map() }
   if (!schedule) return empty
   const hit = indexCache.get(schedule)
-  if (hit) return hit
+  if (hit && hit.platforms === platforms) return hit.index
   const platformName = new Map(platforms.map((p) => [p.id, p.name ?? null]))
   const platformOrder = new Map(platforms.map((p, i) => [p.id, i]))
   const index: ScheduleIndex = { slots: [], byGroupDance: new Map() }
@@ -125,7 +150,8 @@ export function scheduleIndex(schedule: Schedule | null, platforms: Platform[]):
             ([a], [b]) => (platformOrder.get(a) ?? 99) - (platformOrder.get(b) ?? 99),
           )
           for (const [platformId, slot] of entries) {
-            const groupIds = slot.orderedGroupIds ?? []
+            // Spacers (gaps between age groups) aren't groups.
+            const groupIds = (slot.orderedGroupIds ?? []).filter((g) => !isSpacerId(g))
             if (!groupIds.length) continue
             const s: ScheduleSlot = {
               seq: seq++,
@@ -152,7 +178,7 @@ export function scheduleIndex(schedule: Schedule | null, platforms: Platform[]):
       }
     }
   }
-  indexCache.set(schedule, index)
+  indexCache.set(schedule, { platforms, index })
   return index
 }
 
@@ -162,10 +188,8 @@ function firstLine(text: string | undefined): string | null {
   return line ? line.slice(0, 40) : null
 }
 
-function isPosted(results: ResultsTree, groupId: string, danceId: string): boolean {
-  const raw = results?.[groupId]?.[danceId]
-  return raw === false || (Array.isArray(raw) && raw.length > 0)
-}
+// A Championship start on its own ("reverse:6", nobody placed yet) isn't posted.
+const postedAt = (results: ResultsTree, groupId: string, danceId: string) => isPosted(results?.[groupId]?.[danceId])
 
 export function dancerDay(
   dancer: EnrichedDancer,
@@ -197,15 +221,24 @@ export function dancerDay(
   }
 
   // Order by schedule where known, else by the admin's dance order.
+  // "Group 2 of 3" among the age groups that still exist.
+  const known = bundle.groups?.length ? new Set(bundle.groups.map((g) => g.id)) : null
+  const slotFor = (danceId: string): SlotInfo | null => {
+    const s = index.byGroupDance.get(`${group.id}:${danceId}`)
+    if (!s || !known) return s ?? null
+    const real = s.groupIds.filter((g) => known.has(g) || g === group.id)
+    return { ...s, groupPos: real.indexOf(group.id) + 1, groupCount: real.length }
+  }
+
   const rows = groupDances
-    .map((dance, i) => ({ dance, slot: index.byGroupDance.get(`${group.id}:${dance.id}`) ?? null, i }))
+    .map((dance, i) => ({ dance, slot: slotFor(dance.id), i }))
     .sort((a, b) => (a.slot?.seq ?? 1e6 + a.i) - (b.slot?.seq ?? 1e6 + b.i))
 
   // "Danced" = posted, or something later on the same platform is posted.
   const postedSeqByPlatform = new Map<string, number>()
   if (phase === 'today') {
     for (const s of index.slots) {
-      if (s.groupIds.some((gid) => isPosted(results, gid, s.danceId))) {
+      if (s.groupIds.some((gid) => postedAt(results, gid, s.danceId))) {
         postedSeqByPlatform.set(
           s.platformId,
           Math.max(postedSeqByPlatform.get(s.platformId) ?? -1, s.seq),
@@ -214,7 +247,7 @@ export function dancerDay(
     }
   }
   const lastPostedRow = rows.reduce(
-    (last, r, i) => (isPosted(results, group.id, r.dance.id) ? i : last),
+    (last, r, i) => (postedAt(results, group.id, r.dance.id) ? i : last),
     -1,
   )
 
@@ -225,7 +258,7 @@ export function dancerDay(
     const base = { dance, place, tied, pointed, slot, drawPos: draw.pos, drawSize: draw.size }
     const raw = results?.[group.id]?.[dance.id]
     if (raw === false) return { ...base, state: 'no-placings' as const }
-    if (Array.isArray(raw) && raw.length) {
+    if (isPosted(raw)) {
       return { ...base, state: place != null ? ('placed' as const) : ('unplaced' as const) }
     }
     if (phase === 'before') return { ...base, state: 'upcoming' as const }
@@ -245,7 +278,7 @@ export function dancerDay(
   if (groupHasOverall(group)) {
     const { place, tied, pointed } = getDancerPlace(dancer.id, group.id, OVERALL_ID, results, points)
     const raw = results?.[group.id]?.[OVERALL_ID]
-    const posted = raw === false || (Array.isArray(raw) && raw.length > 0)
+    const posted = isPosted(raw)
     overall = {
       dance: { id: OVERALL_ID, fullName: 'Overall' },
       state: posted ? (raw === false ? 'no-placings' : place != null ? 'placed' : 'unplaced') : phase === 'after' ? 'not-posted' : 'later',

@@ -37,6 +37,7 @@ const past = computed(() =>
           v-for="i in upcoming"
           :key="i.competitionId"
           :competition="i.competition"
+          :competition-id="i.competitionId"
           :to="{ name: 'competition.info', params: { competitionId: i.competitionId } }"
         />
       </ul>
@@ -50,6 +51,7 @@ const past = computed(() =>
           v-for="i in past"
           :key="i.competitionId"
           :competition="i.competition"
+          :competition-id="i.competitionId"
           :to="{ name: 'competition.info', params: { competitionId: i.competitionId } }"
         />
       </ul>

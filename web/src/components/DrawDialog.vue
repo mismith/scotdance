@@ -68,7 +68,9 @@ const drawNumbers = computed<string[] | null>(() => {
   const d = displayDance.value
   if (!g || !d?.danceId) return null
   const list = draws.value?.[g.id]?.[d.danceId]
-  return Array.isArray(list) && list.length ? list : null
+  // Skip gaps the old admin could leave.
+  const numbers = Array.isArray(list) ? list.filter((n) => n != null && n !== '') : []
+  return numbers.length ? numbers : null
 })
 
 const hasRealDraw = computed(() => drawNumbers.value !== null)

@@ -7,6 +7,7 @@ import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import {
+  formatLongDate,
   formatMonthYear,
   formatShortDate,
   formatWeekdayShortDate,
@@ -247,6 +248,8 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
           v-for="(cell, i) in calendarCells"
           :key="i"
           type="button"
+          :aria-label="`${formatLongDate(cell.date.getTime())}${cell.eventCount ? `, ${cell.eventCount} competition${cell.eventCount === 1 ? '' : 's'}` : ''}`"
+          :aria-pressed="isSelected(cell.date)"
           :class="[
             'relative aspect-square rounded-lg text-base font-bold tabular-nums transition-colors',
             !cell.inMonth && 'text-muted-foreground/40',

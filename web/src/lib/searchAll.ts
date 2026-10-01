@@ -1,6 +1,7 @@
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '@/firebase'
 import { initialsOf } from '@/lib/format'
+import { normalizeEntityName } from '@/lib/entityIndex'
 
 export type SearchEntityType = 'competitions' | 'dancers' | 'judges' | 'pipers' | 'places'
 
@@ -138,23 +139,32 @@ function mapPeople(
   result: RawSearchResult<RawPersonDoc> | null,
 ): { groups: SearchPersonGroup[]; total: number } {
   if (!result) return { groups: [], total: 0 }
-  const groups = (result.grouped_hits ?? []).map<SearchPersonGroup>((g) => {
+  // Search groups by the name exactly as typed; one person's profile is keyed
+  // by the normalised name, so "ISLA MACDONALD" and "Isla MacDonald" are one row.
+  const byPerson = new Map<string, SearchPersonGroup>()
+  const raw = result.grouped_hits ?? []
+  for (const g of raw) {
     const name = g.group_key?.[0] ?? ''
     const docs = (g.hits ?? []).map((h) => h.document).filter((d): d is RawPersonDoc => !!d)
-    const withLocation = docs.find((d) => d.location)
-    const withImage = docs.find((d) => d.image)
-    const competitionIds = Array.from(
-      new Set(docs.map((d) => d.$competitionId).filter((id): id is string => !!id)),
-    )
-    return {
+    const ids = docs.map((d) => d.$competitionId).filter((id): id is string => !!id)
+    const key = normalizeEntityName(name) || name
+    const same = byPerson.get(key)
+    if (same) {
+      same.competitionIds = Array.from(new Set([...same.competitionIds, ...ids]))
+      same.location ??= docs.find((d) => d.location)?.location
+      same.image ??= docs.find((d) => d.image)?.image
+      continue
+    }
+    byPerson.set(key, {
       name,
       initials: initialsOf(name),
-      competitionIds,
-      location: withLocation?.location,
-      image: withImage?.image,
-    }
-  })
-  return { groups, total: result.found ?? groups.length }
+      competitionIds: Array.from(new Set(ids)),
+      location: docs.find((d) => d.location)?.location,
+      image: docs.find((d) => d.image)?.image,
+    })
+  }
+  const groups = [...byPerson.values()]
+  return { groups, total: (result.found ?? raw.length) - (raw.length - groups.length) }
 }
 
 function parentLabelFor(kind: PlaceKind, sample: RawCompetitionDoc | undefined): string | undefined {

@@ -23,24 +23,38 @@ interface ParsedPlacings {
   placings: ParsedPlacing[]
 }
 
-function parsePlacings(raw: DancePlacing[] | false | undefined): ParsedPlacings {
+function parsePlacings(raw: DancePlacing[] | false | null | undefined): ParsedPlacings {
   if (!Array.isArray(raw) || !raw.length) {
     return { reverseFrom: null, placings: [] }
   }
   let reverseFrom: number | null = null
   let entries = raw
   if (typeof raw[0] === 'string' && raw[0].startsWith(REVERSE_PREFIX)) {
-    reverseFrom = Number.parseInt(raw[0].slice(REVERSE_PREFIX.length), 10)
+    const n = Number.parseInt(raw[0].slice(REVERSE_PREFIX.length), 10)
+    // "reverse:0" or garbage reads as normal order, as the old app did.
+    reverseFrom = n > 0 ? n : null
     entries = raw.slice(1)
   }
-  const placings = entries.map<ParsedPlacing>((entry) => {
-    const tie = entry.endsWith(TIE_SUFFIX)
-    return {
-      dancerId: tie ? entry.slice(0, -TIE_SUFFIX.length) : entry,
-      tie,
-    }
-  })
+  // Skip gaps and stray markers (hand-edited data). The first dancer can't be
+  // tied with the one before: there isn't one.
+  const placings = entries
+    .filter((entry): entry is string => typeof entry === 'string' && entry !== '' && !entry.startsWith(REVERSE_PREFIX))
+    .map<ParsedPlacing>((entry, i) => {
+      const tie = entry.endsWith(TIE_SUFFIX)
+      return {
+        dancerId: tie ? entry.slice(0, -TIE_SUFFIX.length) : entry,
+        tie: tie && i > 0,
+      }
+    })
   return { reverseFrom, placings }
+}
+
+/**
+ * A dance's results are in: dancers placed, or marked as none placed. A
+ * Championship start on its own ("reverse:6", nobody placed yet) isn't.
+ */
+export function isPosted(raw: DancePlacing[] | false | null | undefined): boolean {
+  return raw === false || parsePlacings(raw).placings.length > 0
 }
 
 export function findGroupDances(
@@ -175,7 +189,11 @@ export function getDanceResults(
     }
   })
 
-  if (reverseFrom != null) rows.reverse()
+  if (reverseFrom != null) {
+    rows.reverse()
+    // Anyone entered after 1st (more than the places awarded) goes last.
+    rows.sort((a, b) => Number(a.place == null) - Number(b.place == null))
+  }
 
   return { rows, reverseFrom, explicitlyEmpty, hasResults: rows.length > 0 }
 }
@@ -196,10 +214,9 @@ export function getCallbackResults(
 ): CallbackResults {
   const raw = results?.[groupId]?.[CALLBACKS_ID]
   const explicitlyEmpty = raw === false
-  const list = Array.isArray(raw) ? raw : []
   const dancersById = new Map(dancers.map((d) => [d.id, d]))
-  const rows = list
-    .map((dancerId) => ({ dancerId, dancer: lookupDancer(dancerId, dancersById) }))
+  const rows = parsePlacings(raw).placings
+    .map(({ dancerId }) => ({ dancerId, dancer: lookupDancer(dancerId, dancersById) }))
     .sort((a, b) => dancerNumberValue(a.dancer) - dancerNumberValue(b.dancer))
   return { dancers: rows, explicitlyEmpty, hasResults: rows.length > 0 }
 }
@@ -214,7 +231,7 @@ export function findPointedDancers(
   if (!dancePoints) return []
   const seen = new Set<string>()
   for (const ids of Object.values(dancePoints)) {
-    for (const id of ids) seen.add(id)
+    if (Array.isArray(ids)) for (const id of ids) seen.add(id)
   }
   const dancersById = new Map(dancers.map((d) => [d.id, d]))
   return [...seen]
@@ -289,10 +306,7 @@ export function hasGroupAnyResults(
   const groupResults = results?.[group.id]
   if (!groupResults) return false
   const ids = [CALLBACKS_ID, ...dancesForGroup(group, dances).map((d) => d.id)]
-  return ids.some(
-    (id) =>
-      Array.isArray(groupResults[id]) && (groupResults[id] as DancePlacing[]).length > 0,
-  )
+  return ids.some((id) => parsePlacings(groupResults[id]).placings.length > 0)
 }
 
 export function isGroupInProgress(
@@ -303,10 +317,7 @@ export function isGroupInProgress(
   const groupResults = results?.[group.id]
   if (!groupResults) return false
   const ids = [CALLBACKS_ID, ...dancesForGroup(group, dances).map((d) => d.id)]
-  const anyEntered = ids.some(
-    (id) =>
-      Array.isArray(groupResults[id]) && (groupResults[id] as DancePlacing[]).length > 0,
-  )
+  const anyEntered = ids.some((id) => parsePlacings(groupResults[id]).placings.length > 0)
   if (!anyEntered) return false
-  return ids.some((id) => groupResults[id] === undefined || groupResults[id] === null)
+  return ids.some((id) => !isPosted(groupResults[id]))
 }

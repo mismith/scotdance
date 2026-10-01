@@ -9,7 +9,7 @@ import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
 import { useFollowing } from '@/composables/useFollowing'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
-import { findGroupDances, groupHasPlaceholderDancers } from '@/lib/results'
+import { findGroupDances, groupHasPlaceholderDancers, isPosted } from '@/lib/results'
 import { OVERALL_ID, groupHasOverall, type EnrichedGroup } from '@/types/competition'
 import EmptyState from '@/components/EmptyState.vue'
 import Medal from '@/components/Medal.vue'
@@ -30,6 +30,7 @@ const {
   loadResults,
   loadSchedule,
   isLive,
+  resultsHidden,
 } = useCompetition()
 const { followedByGroup, dayFor } = useCompetitionDays()
 const following = useFollowing()
@@ -43,11 +44,6 @@ onMounted(async () => {
 // Remembered across competitions: most people only ever want their own.
 // Ignored where none of your dancers are entered, so the list is never empty.
 const onlyMine = useLocalStorage('results:onlyMine', false)
-
-function isPosted(groupId: string, danceId: string) {
-  const raw = results.value?.[groupId]?.[danceId]
-  return raw === false || (Array.isArray(raw) && raw.length > 0)
-}
 
 interface Row {
   group: EnrichedGroup
@@ -64,7 +60,7 @@ function rowFor(group: EnrichedGroup): Row {
   return {
     group,
     total: ids.length,
-    posted: ids.filter((id) => isPosted(group.id, id)).length,
+    posted: ids.filter((id) => isPosted(results.value?.[group.id]?.[id])).length,
     unknown: groupHasPlaceholderDancers(group, results.value, points.value),
     mine: followed.map((d) => {
       const day = dayFor(d)
@@ -82,7 +78,7 @@ function rowFor(group: EnrichedGroup): Row {
 }
 
 const sections = computed(() =>
-  categories.value
+  (resultsHidden.value ? [] : categories.value)
     .map((category) => {
       let rows = groups.value.filter((g) => g.categoryId === category.id).map(rowFor)
       if (onlyMine.value && anyFollowedHere.value) rows = rows.filter((r) => r.mine.length)
@@ -109,7 +105,7 @@ const anyFollowedHere = computed(() => followedByGroup.value.size > 0)
   <div class="space-y-3">
     <header :ref="setHeader" class="space-y-2">
       <h1 class="text-display">Results</h1>
-      <div v-if="totals.total" class="space-y-1.5">
+      <div v-if="totals.total && !resultsHidden" class="space-y-1.5">
         <div class="bg-muted h-2.5 overflow-hidden rounded-full border" aria-hidden="true">
           <div
             class="bg-done-foreground h-full rounded-full transition-[width] duration-500"
@@ -124,7 +120,7 @@ const anyFollowedHere = computed(() => followedByGroup.value.size > 0)
     </header>
 
     <button
-      v-if="anyFollowedHere"
+      v-if="anyFollowedHere && !resultsHidden"
       type="button"
       role="switch"
       :aria-checked="onlyMine"
@@ -145,6 +141,12 @@ const anyFollowedHere = computed(() => followedByGroup.value.size > 0)
     <div v-if="!loaded" class="space-y-2" aria-busy="true">
       <Skeleton v-for="i in 6" :key="i" class="h-14 w-full rounded-xl!" />
     </div>
+    <EmptyState
+      v-else-if="resultsHidden"
+      :icon="Trophy"
+      title="No results here"
+      description="This competition doesn’t share its results here."
+    />
     <EmptyState
       v-else-if="!groups.length"
       :icon="Trophy"

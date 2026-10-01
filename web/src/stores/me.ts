@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
-import { onValue, ref as dbRef } from 'firebase/database'
+import { onValue, ref as dbRef, update } from 'firebase/database'
 import { database } from '@/firebase'
+import { onValueSaved } from '@/lib/offline'
 import { useAuthStore } from './auth'
 
 const NAMESPACE = import.meta.env.VITE_FIREBASE_DATA_NAMESPACE || 'production'
@@ -44,6 +45,8 @@ export const useMeStore = defineStore('me', () => {
   const canManageAny = computed(() => isAdmin.value || managedCompetitionIds.value.length > 0)
   /** Permissions have been read at least once for the signed-in person. */
   const permissionsLoaded = computed(() => permissions.value !== null)
+  /** Known whether this person organises anything: signed out, or permissions read. */
+  const accessKnown = computed(() => auth.authReady && (!auth.uid || permissionsLoaded.value))
 
   watch(
     () => auth.uid,
@@ -54,18 +57,31 @@ export const useMeStore = defineStore('me', () => {
       }
       unsubscribePermissions?.()
       unsubscribePermissions = null
-      if (!uid) {
-        record.value = null
-        permissions.value = null
-        return
-      }
+      // Nothing of the last account carries over, even for a moment.
+      record.value = null
+      permissions.value = null
+      if (!uid) return
       const meRef = dbRef(database, `${NAMESPACE}/users/${uid}`)
+      let checked = false
       unsubscribe = onValue(meRef, (snap) => {
         record.value = (snap.val() as MeRecord | null) ?? null
+        // Every account has a record with its sign-in email, kept in step
+        // (System admin › Users finds people by it), as the old app did.
+        // Mends accounts made before this too. Checked once per sign-in, so
+        // deleting the account doesn't bring it back.
+        if (checked) return
+        checked = true
+        const u = auth.user
+        if (u?.uid === uid && u.email && record.value?.email !== u.email) {
+          const fix: MeRecord = { email: u.email }
+          if (!record.value?.displayName && u.displayName) fix.displayName = u.displayName
+          void update(meRef, fix).catch(() => {})
+        }
       })
       // Live, so access granted or removed (an accepted invite, an admin's
-      // change) applies without signing out and in again.
-      unsubscribePermissions = onValue(
+      // change) applies without signing out and in again. Saved on the device
+      // too, so organisers still see their own competitions with no signal.
+      unsubscribePermissions = onValueSaved(
         dbRef(database, `${NAMESPACE}/users:permissions/${uid}`),
         (snap) => {
           permissions.value = (snap.val() as PermissionsRecord | null) ?? {}
@@ -90,5 +106,6 @@ export const useMeStore = defineStore('me', () => {
     managedCompetitionIds,
     canManageAny,
     permissionsLoaded,
+    accessKnown,
   }
 })

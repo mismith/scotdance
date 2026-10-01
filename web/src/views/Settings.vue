@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import {
   ArrowDownToLine,
   Bell,
   ChevronRight,
-  ClipboardList,
   FileText,
+  History,
   Info,
   LifeBuoy,
   MessageCircleQuestion,
@@ -19,15 +19,14 @@ import { useTheme, type Theme } from '@/composables/useTheme'
 import { useAlerts } from '@/composables/useAlerts'
 import { useCrisp } from '@/composables/useCrisp'
 import { useUpdate } from '@/composables/useUpdate'
-import { useMeStore } from '@/stores/me'
-import { useRoles } from '@/composables/useRoles'
+import { clearDeviceHistory } from '@/lib/deviceHistory'
+import { confirm, toast } from '@/lib/admin/feedback'
 
 // Settings: alerts, appearance, help and the fine print. Your account (and
 // how you use ScotDance, and signing out) lives on the Account page; the
 // everyday places are in the More menu on the tab bar.
 usePageTitle(['Settings'])
 
-const me = useMeStore()
 const alerts = useAlerts()
 const crisp = useCrisp()
 const update = useUpdate()
@@ -42,12 +41,21 @@ const THEMES: Array<{ id: Theme; label: string }> = [
   { id: 'dark', label: 'Dark' },
 ]
 
-const roles = useRoles()
-const canManage = computed(
-  () => me.isAdmin || roles.has('organizer') || Object.keys(me.permissions?.competitions ?? {}).length > 0,
-)
-
 const rowClass = 'flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-accent'
+
+// Everything this device remembers of where you've been (lib/deviceHistory),
+// so a shared or borrowed phone can be tidied in one go.
+async function clearHistory() {
+  const ok = await confirm({
+    title: 'Clear history on this device?',
+    message: 'Recent searches, recently viewed, and the copies kept for offline use. Your account, the dancers you follow and your settings stay.',
+    confirmLabel: 'Clear history',
+    destructive: true,
+  })
+  if (!ok) return
+  await clearDeviceHistory()
+  toast('History cleared')
+}
 </script>
 
 <template>
@@ -106,6 +114,20 @@ const rowClass = 'flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left ho
         </div>
       </section>
 
+      <!-- This device -->
+      <section class="space-y-2">
+        <h2 class="text-heading">This device</h2>
+        <div class="bg-card overflow-hidden rounded-2xl border shadow-sm">
+          <button type="button" :class="rowClass" @click="clearHistory">
+            <History class="text-primary size-5 shrink-0" />
+            <span class="min-w-0 flex-1">
+              <span class="block text-base font-bold">Clear history</span>
+              <span class="text-muted-foreground block text-sm">Recent searches, recently viewed, and copies kept for offline use</span>
+            </span>
+          </button>
+        </div>
+      </section>
+
       <!-- Help -->
       <section class="space-y-2">
         <h2 class="text-heading">Help</h2>
@@ -116,6 +138,11 @@ const rowClass = 'flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left ho
               <span class="flex-1 text-base font-bold">Update available</span>
               <span class="bg-secondary size-2.5 rounded-full" aria-hidden="true" />
             </button>
+          </li>
+          <li>
+            <RouterLink :to="{ name: 'about' }" :class="rowClass">
+              <Info class="text-primary size-5" /><span class="flex-1 text-base font-bold">About ScotDance</span><ChevronRight class="text-muted-foreground size-5" />
+            </RouterLink>
           </li>
           <li>
             <RouterLink :to="{ name: 'about', hash: '#faqs' }" :class="rowClass">
@@ -130,18 +157,8 @@ const rowClass = 'flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left ho
             </button>
           </li>
           <li>
-            <RouterLink :to="{ name: 'about' }" :class="rowClass">
-              <Info class="text-primary size-5" /><span class="flex-1 text-base font-bold">About ScotDance</span><ChevronRight class="text-muted-foreground size-5" />
-            </RouterLink>
-          </li>
-          <li>
             <RouterLink :to="{ name: 'policies' }" :class="rowClass">
               <FileText class="text-primary size-5" /><span class="flex-1 text-base font-bold">Privacy and terms</span><ChevronRight class="text-muted-foreground size-5" />
-            </RouterLink>
-          </li>
-          <li v-if="canManage">
-            <RouterLink :to="{ name: 'manage.competitions' }" :class="rowClass">
-              <ClipboardList class="text-primary size-5" /><span class="flex-1 text-base font-bold">Manage competitions</span><ChevronRight class="text-muted-foreground size-5" />
             </RouterLink>
           </li>
         </ul>

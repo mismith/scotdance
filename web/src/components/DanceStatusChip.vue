@@ -3,14 +3,12 @@ import { computed } from 'vue'
 import { Hourglass, Play } from '@lucide/vue'
 import Medal from '@/components/Medal.vue'
 import type { DanceStatus } from '@/lib/dancerDay'
+import { platformLabel } from '@/lib/schedule'
 
 // A dance's state in words. Never colour alone: every chip has a word.
 const props = defineProps<{ status: DanceStatus; fresh?: boolean }>()
 
-const platform = computed(() => {
-  const name = props.status.slot?.platformName
-  return name ? `Platform ${name}` : null
-})
+const platform = computed(() => platformLabel(props.status.slot?.platformName) || null)
 </script>
 
 <template>

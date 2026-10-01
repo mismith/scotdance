@@ -64,8 +64,9 @@ function onBackdropClick(e: MouseEvent) {
     :inert="!open"
     :class="[
       // Reset native dialog defaults. The dialog itself takes focus on open
-      // (see sync), so it draws no ring of its own.
-      'bg-card max-h-full max-w-full border-0 p-0 text-inherit outline-none',
+      // (see sync), so it draws no ring of its own. Each variant sets its own
+      // max size: a general max-h/max-w-full here would win over theirs.
+      'bg-card border-0 p-0 text-inherit outline-none',
       // Width by size prop.
       variant !== 'menu' && variant !== 'dropdown' && (size === 'sm' ? 'w-full md:max-w-sm' : 'w-full md:max-w-md'),
       variant === 'dropdown' &&
@@ -76,10 +77,12 @@ function onBackdropClick(e: MouseEvent) {
       variant === 'center' &&
         'fixed inset-x-0 top-[calc(var(--chrome-top)+1rem)] bottom-[calc(var(--chrome-bottom)+1rem)] m-auto h-fit rounded-3xl p-6 shadow-lg max-h-[calc(100svh-var(--chrome-top)-var(--chrome-bottom)-4rem)] max-md:max-w-[calc(100vw-2rem)]',
       variant === 'sheet' && [
-        'flex flex-col shadow-lg',
+        // Flex only while open: a bare `flex` would beat the browser's
+        // display:none for a closed dialog and leave it on the page, unseen.
+        'flex-col shadow-lg open:flex',
         // Mobile: pinned to bottom, full-bleed, top-rounded, overflow-visible
         // so the ::after bg extension can paint below the dialog box.
-        'max-md:fixed max-md:inset-x-0 max-md:top-auto max-md:bottom-0 max-md:m-0 max-md:max-h-[calc(100svh-3rem)] max-md:rounded-t-3xl max-md:overflow-visible',
+        'max-md:fixed max-md:inset-x-0 max-md:top-auto max-md:bottom-0 max-md:m-0 max-md:max-h-[calc(100svh-3rem)] max-md:max-w-full max-md:rounded-t-3xl max-md:overflow-visible',
         // Mobile: visual-only background extension below the sheet so the
         // rubber-band overshoot doesn't expose the backdrop underneath.
         'max-md:after:pointer-events-none max-md:after:absolute max-md:after:inset-x-0 max-md:after:top-full max-md:after:h-32 max-md:after:bg-card',

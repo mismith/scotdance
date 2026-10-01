@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import { computed, onMounted, toRef } from 'vue'
+import { computed, toRef, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { useVtScope } from '@/lib/viewTransitionFocus'
-import { CalendarX, Pencil } from '@lucide/vue'
+import { CalendarX, EyeOff, Hourglass, Pencil } from '@lucide/vue'
 import { useMeStore } from '@/stores/me'
 import AppBar from '@/components/nav/AppBar.vue'
 import ShareButton from '@/components/ShareButton.vue'
-import AccountButton from '@/components/nav/AccountButton.vue'
+import AdminMark from '@/components/AdminMark.vue'
 import CompetitionBottomNav from '@/components/nav/CompetitionBottomNav.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { provideCompetition } from '@/composables/useCompetition'
 import { provideInfoHeader } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
+import { useRecentEntities } from '@/composables/useRecentEntities'
 import { competitionEntry, historyPosition } from '@/lib/competitionExit'
 import { backLabelFor } from '@/lib/backLabels'
 import { competitionPhase } from '@/lib/dancerDay'
@@ -31,11 +32,38 @@ const competitionId = computed(() => String(route.params.competitionId ?? ''))
 
 useVtScope('comp').syncFocus(competitionId)
 
-const { competition, notFound, loading, error, loadSchedule } = provideCompetition(
-  toRef(competitionId),
+const { competition, notFound, restricted, loading, error, loadSchedule, loadResults, schedule, scheduleHidden, resultsHidden } =
+  provideCompetition(toRef(competitionId))
+
+// The schedule says how many days the competition runs, and whether the
+// organisers hid the Schedule or Results tab.
+watch(
+  competition,
+  (c) => {
+    if (!c) return
+    void loadSchedule()
+    void loadResults()
+  },
+  { immediate: true },
 )
 
-onMounted(loadSchedule)
+// Search lists the competitions you've opened under Recently viewed.
+const recentCompetitions = useRecentEntities('competitions')
+watch(
+  () => [competitionId.value, competition.value?.name, competition.value?.date] as const,
+  ([id, name, date]) => name && recentCompetitions.record(id, name, date),
+  { immediate: true },
+)
+
+// A hidden tab is gone from the bar; a link straight to it says why.
+const hiddenHere = computed(() => {
+  const name = String(route.name ?? '')
+  if (scheduleHidden.value && (name === 'competition.schedule' || name === 'competition.event'))
+    return { title: 'No schedule here', what: 'its schedule' }
+  if (resultsHidden.value && (name === 'competition.results' || name === 'competition.group'))
+    return { title: 'No results here', what: 'its results' }
+  return null
+})
 
 const reload = () => window.location.reload()
 
@@ -50,7 +78,7 @@ const isOverview = computed(() => route.name === 'competition.info')
 const subtitle = computed(() => {
   const c = competition.value
   if (!c) return null
-  const when = competitionPhase(c.date) === 'today' ? 'Today' : formatShortDate(c.date)
+  const when = competitionPhase(c.date, schedule.value) === 'today' ? 'Today' : formatShortDate(c.date)
   return [when, c.location].filter(Boolean).join(' · ') || null
 })
 
@@ -84,6 +112,7 @@ usePageTitle(() => [
       title-vt="competition-title"
       :fallback="{ to: { name: 'competitions' }, label: 'Competitions' }"
       :exit="exit"
+      :competition-id="competitionId"
     >
       <template #actions>
         <RouterLink
@@ -93,10 +122,9 @@ usePageTitle(() => [
           title="Manage"
           class="hover:bg-accent text-primary flex size-9 items-center justify-center rounded-full"
         >
-          <Pencil class="size-5" />
+          <span class="relative flex"><Pencil class="size-5" /><AdminMark ring="background" /></span>
         </RouterLink>
         <ShareButton :title="competition?.name ?? undefined" />
-        <AccountButton :competition-id="competitionId" />
       </template>
     </AppBar>
 
@@ -123,7 +151,20 @@ usePageTitle(() => [
           Try again
         </button>
       </div>
-      <RouterView v-else />
+      <EmptyState
+        v-else-if="restricted && !isOverview"
+        :icon="Hourglass"
+        title="Not published yet"
+        description="Dancers, the schedule and results show here once they’re published. Check back closer to the day."
+      />
+      <EmptyState
+        v-else-if="hiddenHere"
+        :icon="EyeOff"
+        :title="hiddenHere.title"
+        :description="`This competition doesn’t share ${hiddenHere.what} in ScotDance. Check with the organisers.`"
+      />
+      <!-- Keyed: an alert can jump to another competition's same page, which must load afresh. -->
+      <RouterView v-else :key="competitionId" />
     </main>
 
     <CompetitionBottomNav />

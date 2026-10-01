@@ -5,7 +5,9 @@ import { dataRef } from '@/firebase'
 // and functions packages don't share code; this implementation MUST stay in
 // sync — otherwise lookups silently miss and entity pages 404.
 export function normalizeEntityName(name: string): string {
-  return name
+  return String(name ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim()
     .replace(/[^\p{L}\p{N}\s]/gu, ' ')
@@ -58,6 +60,8 @@ async function readIndex(namespace: string, key: string): Promise<string | null>
           if (v && typeof v === 'object' && typeof v.id === 'string') return v.id
           return null
         } catch {
+          // Offline or a hiccup: try again next time rather than never.
+          cache.delete(ck)
           return null
         }
       })(),

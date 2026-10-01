@@ -9,7 +9,7 @@ const crisp = useCrisp()
 // server-side); reopening from the More menu picks up the thread.
 function confirmDismiss() {
   const ok = window.confirm(
-    'Hide the support button?\n\nYour conversation will still be saved — you can reopen it any time from the More menu.',
+    'Hide the support button?\n\nYour conversation will still be saved. You can reopen it any time from the More menu.',
   )
   if (ok) crisp.dismiss()
 }
@@ -40,7 +40,7 @@ function confirmDismiss() {
                radiates outward without affecting hit-testing. -->
               <span
                 v-if="crisp.unread > 0"
-                class="pointer-events-noneabsolute inset-0 -z-10 animate-ping rounded-full bg-inherit"
+                class="pointer-events-none absolute inset-0 -z-10 animate-ping rounded-full bg-inherit"
                 aria-hidden="true"
               />
               <LifeBuoy class="size-4" />

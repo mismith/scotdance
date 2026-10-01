@@ -20,13 +20,20 @@ export const auth = getAuth(firebaseApp)
 export const database = getDatabase(firebaseApp)
 export const functions = getFunctions(firebaseApp)
 
-if (import.meta.env.MODE === 'emulator') {
+/** Emulator port, shifted by VITE_EMULATOR_PORT_OFFSET so a second stack can run beside the first. */
+export const emulatorPort = (port: number) =>
+  port + (Number(import.meta.env.VITE_EMULATOR_PORT_OFFSET) || 0)
+
+/** Emulator builds, and unit tests (Vitest's mode), never reach the real project. */
+export const useEmulators = import.meta.env.MODE === 'emulator' || import.meta.env.MODE === 'test'
+
+if (useEmulators) {
   // Use the host the page was served from so LAN devices (phones via --host) hit
   // the dev machine, not themselves.
-  const host = window.location.hostname
-  connectAuthEmulator(auth, `http://${host}:9099`, { disableWarnings: true })
-  connectDatabaseEmulator(database, host, 9009)
-  connectFunctionsEmulator(functions, host, 5001)
+  const host = window.location.hostname || 'localhost'
+  connectAuthEmulator(auth, `http://${host}:${emulatorPort(9099)}`, { disableWarnings: true })
+  connectDatabaseEmulator(database, host, emulatorPort(9009))
+  connectFunctionsEmulator(functions, host, emulatorPort(5001))
 }
 
 export const dataRef = (path: string = '') =>

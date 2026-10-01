@@ -6,7 +6,7 @@ import { useMorph } from '@/lib/morph'
 import NearbyRadiusMap from '@/components/NearbyRadiusMap.vue'
 import { useLocationFilter, type LocationMode } from '@/composables/useLocationFilter'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
-import { countryFlag, isoFor } from '@/lib/flagEmoji'
+import { countryFlag, countryName, isoFor } from '@/lib/flagEmoji'
 import { guessUserCountry } from '@/lib/locale'
 import { fetchRegionSuggestions, resolvePlace, type PlaceSuggestion } from '@/lib/maps'
 
@@ -85,32 +85,14 @@ const compact = computed<CompactDisplay>(() => {
 
 // The trigger says where you're looking, in words.
 const compactLabel = computed(() => {
-  if (mode.value === 'nearby') return `Within ${radius.value} km`
+  // No position yet means nothing is filtered: don't claim a distance.
+  if (mode.value === 'nearby') return coords.value ? `Within ${radius.value} km` : 'Near me'
   if (mode.value === 'region') {
     if (locality.value || region.value) return locality.value || region.value
-    const c = country.value
-    if (c && /^[A-Z]{2}$/.test(c)) {
-      try {
-        return new Intl.DisplayNames(undefined, { type: 'region' }).of(c) ?? c
-      } catch {
-        return c
-      }
-    }
-    return c || 'Choose region'
+    return country.value ? countryName(country.value) : 'Choose region'
   }
   return 'Everywhere'
 })
-
-const countryName = (c: string) => {
-  if (/^[A-Z]{2}$/.test(c)) {
-    try {
-      return new Intl.DisplayNames(undefined, { type: 'region' }).of(c) ?? c
-    } catch {
-      return c
-    }
-  }
-  return c
-}
 
 const regionSummary = computed(() => {
   const parts = [locality.value, region.value, country.value].filter(Boolean)
@@ -118,7 +100,7 @@ const regionSummary = computed(() => {
 })
 
 const ariaLabel = computed(() => {
-  if (mode.value === 'nearby') return `Location: nearby (${radius.value}km)`
+  if (mode.value === 'nearby') return coords.value ? `Location: within ${radius.value} km` : 'Location: near me'
   if (mode.value === 'region')
     return `Location: ${regionSummary.value || 'region (not set)'}`
   return 'Location: worldwide'
@@ -310,7 +292,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
                 v-if="region || locality || inputValue"
                 type="button"
                 aria-label="Clear city or province"
-                class="text-muted-foreground absolute top-1/2 right-1 flex size-10 -translate-y-1/2 items-center justify-center rounded-full"
+                class="text-muted-foreground absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full"
                 @click="clearNarrow"
               >
                 <X class="size-5" />

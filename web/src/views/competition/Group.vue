@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { Award, ChevronRight, Clock, Hourglass, Trophy } from '@lucide/vue'
+import EmptyState from '@/components/EmptyState.vue'
 import MyDancerLine from '@/components/MyDancerLine.vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
@@ -20,6 +21,7 @@ import {
   getDanceResults,
 } from '@/lib/results'
 import { competitionPhase, scheduleIndex } from '@/lib/dancerDay'
+import { platformLabel } from '@/lib/schedule'
 import { OVERALL_ID, groupHasOverall, staffMemberName, type EnrichedDance, type EnrichedDancer } from '@/types/competition'
 
 const route = useRoute()
@@ -39,6 +41,7 @@ const {
   loadResults,
   loadSchedule,
   loadStaff,
+  resultsHidden,
 } = useCompetition()
 const { dayFor } = useCompetitionDays()
 const following = useFollowing()
@@ -50,7 +53,7 @@ const group = computed(() => groups.value.find((g) => g.id === groupId.value) ??
 
 usePageTitle(() => [group.value?.fullName, competition.value?.name])
 
-const phase = computed(() => competitionPhase(competition.value?.date))
+const phase = computed(() => competitionPhase(competition.value?.date, schedule.value))
 const groupDancers = computed(() =>
   [...findGroupDancers(groupId.value, dancers.value)].sort(
     (a, b) => (a.number ?? Infinity) - (b.number ?? Infinity),
@@ -70,7 +73,7 @@ const where = computed(() => {
     .map((d) => idx.byGroupDance.get(`${group.value!.id}:${d.id}`))
     .find(Boolean)
   if (!slot) return null
-  return [slot.platformName ? `Platform ${slot.platformName}` : null, slot.blockName, slot.blockTime]
+  return [platformLabel(slot.platformName), slot.blockName, slot.blockTime]
     .filter(Boolean)
     .join(' · ')
 })
@@ -98,7 +101,7 @@ const callbacks = computed(() => getCallbackResults(groupId.value, dancers.value
 const showAllCallbacks = ref(false)
 
 const sections = computed(() =>
-  danceList.value.map((dance) => ({
+  (resultsHidden.value ? [] : danceList.value).map((dance) => ({
     dance,
     placings: getDanceResults(groupId.value, dance.id, dancers.value, results.value),
     pointed: findPointedDancers(points.value, groupId.value, dance.id, dancers.value),
@@ -147,6 +150,13 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
           <MyDancerLine v-for="d in followedHere" :key="d.id" :color="colorOf(d)" :name="d.fullName" :details="[`#${d.number}`]" />
         </div>
       </header>
+
+      <EmptyState
+        v-if="resultsHidden"
+        :icon="Trophy"
+        title="No results here"
+        description="This competition doesn’t share its results here."
+      />
 
       <!-- Callbacks -->
       <section

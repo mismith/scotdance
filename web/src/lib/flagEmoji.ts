@@ -25,8 +25,10 @@ export function isoFor(value: string | null | undefined): string | null {
   if (!value) return null
   const trimmed = value.trim()
   if (!trimmed) return null
-  if (trimmed.length === 2 && /^[A-Za-z]{2}$/.test(trimmed)) return trimmed.toUpperCase()
-  return NAME_TO_ISO[trimmed.toLowerCase()] ?? null
+  // Names first, so "UK" (not an ISO code) becomes GB rather than a broken flag.
+  const named = NAME_TO_ISO[trimmed.toLowerCase()]
+  if (named) return named
+  return /^[A-Za-z]{2}$/.test(trimmed) ? trimmed.toUpperCase() : null
 }
 
 function isoToEmoji(iso: string): string {
@@ -40,3 +42,13 @@ export function countryFlag(country: string | null | undefined): string | null {
   return iso ? isoToEmoji(iso) : null
 }
 
+/** A country as people say it ("CA" → "Canada"); names come back as given. */
+export function countryName(country: string): string {
+  const c = country.trim()
+  if (!/^[A-Za-z]{2}$/.test(c)) return c
+  try {
+    return new Intl.DisplayNames(undefined, { type: 'region' }).of(c.toUpperCase()) ?? c
+  } catch {
+    return c
+  }
+}

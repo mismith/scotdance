@@ -127,7 +127,8 @@ export async function resolveVenue(placeId: string): Promise<VenueFields> {
   return {
     venue: addressOnly ? null : (place.displayName ?? null),
     address: [streetNumber?.shortText, route?.shortText].filter(Boolean).join(' ') || null,
-    location: [locality?.longText, region?.longText, country?.longText].filter(Boolean).join(', ') || null,
+    // "Calgary, AB", as v3 wrote it: lists group by this text, so one spelling.
+    location: [locality?.shortText, region?.shortText].filter(Boolean).join(', ') || null,
     lat: typeof lat === 'number' && Number.isFinite(lat) ? lat : null,
     lng: typeof lng === 'number' && Number.isFinite(lng) ? lng : null,
     country: country?.shortText ?? null,

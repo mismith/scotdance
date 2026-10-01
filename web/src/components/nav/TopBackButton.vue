@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
 import { ChevronLeft } from '@lucide/vue'
-import { backPath, useCanGoBack } from '@/lib/back'
+import { backPath, goUp, useCanGoBack } from '@/lib/back'
 import { backLabelFor } from '@/lib/backLabels'
 
 // Labelled Back: says where it goes. When there's no in-app history (a deep
@@ -31,9 +31,9 @@ function onClick(event: MouseEvent) {
   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
   event.preventDefault()
   if (props.exit?.delta) router.go(props.exit.delta)
-  else if (props.exit?.to) router.push(props.exit.to)
+  else if (props.exit?.to) goUp(router, props.exit.to)
   else if (canGoBack.value) router.back()
-  else if (props.fallback) router.push(props.fallback.to)
+  else if (props.fallback) goUp(router, props.fallback.to)
 }
 </script>
 

@@ -3,7 +3,7 @@ import { useMorph } from '@/lib/morph'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useIntervalFn } from '@vueuse/core'
-import { ChevronRight, Clock, ExternalLink, MapPin, Search, Star, Users } from '@lucide/vue'
+import { ChevronRight, Clock, ExternalLink, Hourglass, MapPin, Search, Star, Users } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
 import DateTile from '@/components/DateTile.vue'
@@ -16,16 +16,18 @@ import StaffDialog from '@/components/StaffDialog.vue'
 import { staffEntityRef, staffMemberName, type StaffMember } from '@/types/competition'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
+import { useMeStore } from '@/stores/me'
+import AdminMark from '@/components/AdminMark.vue'
 import { blocks, days } from '@/lib/schedule'
-import {
-  formatDateTime,
-  formatExternalURL,
-  formatHumanURL,
-  formatLongDate,
-  formatRelative,
-  isPast,
-} from '@/lib/format'
+import { formatExternalURL, formatLongDate, formatRelative } from '@/lib/format'
 import { sanitizeRichText } from '@/lib/sanitize'
+import {
+  competitionLinks,
+  linkLabel,
+  mapsHref as competitionMapsHref,
+  registrationLines as competitionRegistrationLines,
+  registrationOpen as isRegistrationOpen,
+} from '@/lib/competitionInfo'
 import { injectInfoHeaderScrolledPast, injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { nowMs } from '@/lib/now'
 
@@ -36,6 +38,7 @@ const scrolledPast = injectInfoHeaderScrolledPast()
 const {
   competitionId,
   competition,
+  restricted,
   staff,
   loadStaff,
   dancers,
@@ -50,6 +53,7 @@ const {
 const { phase, followedHere } = useCompetitionDays()
 const auth = useAuthStore()
 const favorites = useFavoritesStore()
+const me = useMeStore()
 
 const ready = ref(false)
 onMounted(async () => {
@@ -78,27 +82,12 @@ const updatedLabel = computed(() => {
   return mins < 1 ? 'Results updating live' : `Results updating live · checked ${mins} min ago`
 })
 
-const mapsHref = computed(() => {
-  const c = competition.value
-  if (!c?.venue && !c?.address && !c?.location) return null
-  const parts = [c.venue, c.address, c.location].filter(Boolean).join(', ')
-  return `https://maps.google.com/?q=${encodeURIComponent(parts)}`
-})
 
-const registrationLines = computed(() => {
-  const c = competition.value
-  if (!c) return []
-  const lines: string[] = []
-  if (c.registrationStart)
-    lines.push(`Registration ${isPast(c.registrationStart) ? 'opened' : 'opens'} ${formatDateTime(c.registrationStart)}`)
-  if (c.registrationEnd)
-    lines.push(`Registration ${isPast(c.registrationEnd) ? 'closed' : 'closes'} ${formatDateTime(c.registrationEnd)}`)
-  return lines
-})
-const registrationOpen = computed(() => {
-  const end = competition.value?.registrationEnd
-  return end == null || !isPast(end)
-})
+// Links, registration and directions, as the Manage › Details preview shows them.
+const mapsHref = computed(() => competitionMapsHref(competition.value))
+const registrationLines = computed(() => competitionRegistrationLines(competition.value))
+const links = computed(() => competitionLinks(competition.value))
+const registrationOpen = computed(() => isRegistrationOpen(competition.value))
 
 // Sessions: the schedule's blocks, with the time organisers put in their
 // description ("8:00 am").
@@ -134,8 +123,11 @@ const { freshKey: liveFresh } = useLiveAlertState()
   <article v-if="competition" class="space-y-5">
     <header :ref="setHeader" class="space-y-2">
       <div class="flex items-start gap-3">
-        <img v-if="competition.image" :src="competition.image" alt="" class="size-14 shrink-0 rounded-xl object-cover" />
-        <DateTile v-else :date="competition.date" class="h-14" />
+        <span v-if="competition.image" class="relative shrink-0">
+          <img :src="competition.image" alt="" class="size-14 rounded-xl object-cover" />
+          <AdminMark v-if="me.hasCompetitionPerm(competitionId)" size="md" ring="background" />
+        </span>
+        <DateTile v-else :date="competition.date" :managed="me.hasCompetitionPerm(competitionId)" class="h-14" />
         <div class="min-w-0 flex-1">
           <p
             :class="[
@@ -192,6 +184,10 @@ const { freshKey: liveFresh } = useLiveAlertState()
         <Search class="size-4" /> Find
       </RouterLink>
     </section>
+    <p v-else-if="restricted" class="bg-card text-muted-foreground flex items-center gap-3 rounded-2xl border p-4 text-[0.9375rem] shadow-sm">
+      <Hourglass class="text-primary size-5 shrink-0" />
+      Dancers, the schedule and results show here once they’re published.
+    </p>
 
     <!-- When and where -->
     <section class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
@@ -220,7 +216,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
             rel="noopener"
             class="bg-card border-strong flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-[0.9375rem] font-bold"
           >
-            Directions
+            Directions <ExternalLink class="size-4" />
           </a>
         </div>
         <MapPreview
@@ -269,7 +265,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
     </section>
 
     <!-- Registration + links -->
-    <section v-if="competition.registrationURL || competition.links?.length" class="space-y-2">
+    <section v-if="competition.registrationURL || links.length" class="space-y-2">
       <a
         v-if="competition.registrationURL"
         :href="formatExternalURL(competition.registrationURL)"
@@ -281,16 +277,16 @@ const { freshKey: liveFresh } = useLiveAlertState()
         Register <ExternalLink class="size-4" />
       </a>
       <p v-for="line in registrationLines" :key="line" class="text-muted-foreground text-sm">{{ line }}</p>
-      <div v-if="competition.links?.length" class="flex flex-wrap gap-2 pt-1">
+      <div v-if="links.length" class="flex flex-wrap gap-2 pt-1">
         <a
-          v-for="link in competition.links"
-          :key="link.url"
+          v-for="link in links"
+          :key="link.id"
           :href="formatExternalURL(link.url)"
           target="_blank"
           rel="noopener"
-          class="bg-card border-strong inline-flex h-11 items-center gap-1.5 rounded-full border px-4 text-[0.9375rem] font-bold"
+          class="bg-card border-strong inline-flex h-11 max-w-full items-center gap-1.5 rounded-full border px-4 text-[0.9375rem] font-bold"
         >
-          {{ link.name || formatHumanURL(link.url) }} <ExternalLink class="size-4" />
+          <span class="truncate">{{ linkLabel(link) }}</span> <ExternalLink class="size-4 shrink-0" />
         </a>
       </div>
     </section>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { MapPin } from '@lucide/vue'
+import { ExternalLink, MapPin } from '@lucide/vue'
 import { useVenueProfile } from '@/composables/useVenueProfile'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import FavoriteButton from '@/components/FavoriteButton.vue'
@@ -54,7 +54,7 @@ const items = computed(() => {
         rel="noopener"
         class="bg-card border-strong flex h-11 items-center gap-1.5 rounded-full border px-4 text-[0.9375rem] font-bold"
       >
-        <MapPin class="size-4" /> Directions
+        Directions <ExternalLink class="size-4" />
       </a>
     </div>
 

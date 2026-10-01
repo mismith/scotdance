@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { ChevronRight } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
@@ -11,6 +11,7 @@ import DanceStatusChip from '@/components/DanceStatusChip.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import { getOrdinalSuffix } from '@/lib/results'
+import { platformLabel } from '@/lib/schedule'
 import type { DanceStatus } from '@/lib/dancerDay'
 
 const route = useRoute()
@@ -19,7 +20,11 @@ const { competitionId, competition, dancers, loadDancers, loadResults, loadSched
 const { dayFor, phase } = useCompetitionDays()
 const following = useFollowing()
 
-onMounted(() => Promise.all([loadDancers(), loadResults(), loadSchedule()]))
+const loaded = ref(false)
+onMounted(async () => {
+  await Promise.all([loadDancers(), loadResults(), loadSchedule()])
+  loaded.value = true
+})
 
 const dancerId = computed(() => String(route.params.dancerId ?? ''))
 const dancer = computed(() => dancers.value.find((d) => d.id === dancerId.value) ?? null)
@@ -42,7 +47,7 @@ const firstName = computed(() => dancer.value?.firstName || dancer.value?.fullNa
 
 function detail(s: DanceStatus): string | null {
   const bits: string[] = []
-  if (s.slot?.platformName && s.state !== 'next') bits.push(`Platform ${s.slot.platformName}`)
+  if (s.slot?.platformName && s.state !== 'next') bits.push(platformLabel(s.slot.platformName))
   if (s.slot?.blockName) bits.push([s.slot.blockName, s.slot.blockTime].filter(Boolean).join(' '))
   if (s.drawPos && s.drawSize) bits.push(`${s.drawPos}${getOrdinalSuffix(s.drawPos)} of ${s.drawSize} to dance`)
   if (s.state === 'waiting') bits.push('Danced')
@@ -53,7 +58,7 @@ function detail(s: DanceStatus): string | null {
 
 <template>
   <article class="space-y-4">
-    <p v-if="!dancers.length" class="text-muted-foreground py-6 text-base">Loading…</p>
+    <p v-if="!dancer && !loaded" class="text-muted-foreground py-6 text-base">Loading…</p>
     <p v-else-if="!dancer" class="text-muted-foreground py-6 text-base">
       This dancer isn’t on the list any more. Go back to Dancers to see the current list.
     </p>

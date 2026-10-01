@@ -452,6 +452,15 @@
     transform: translateX(-50%);
   }
 }
+/* The back button only ever changes width (its label), never height: its
+   snapshots stay at natural size, anchored left, clipped to a pill as wide
+   as the moving group. The end slides in or out; the text never stretches
+   or grows taller. The clip leaves room for the shadow. */
+::view-transition-old(nav-back),
+::view-transition-new(nav-back) {
+  @apply h-full object-none object-left;
+  clip-path: inset(-2px -2px -4px round 9999px);
+}
 ::view-transition-new(nav-back):only-child {
   animation-name: vt-slide-in;
   animation-timing-function: var(--ease-rubber-band);

@@ -17,9 +17,15 @@ watch(
 
 async function save() {
   saving.value = true
-  await r.save(picked.value)
-  saving.value = false
-  r.close()
+  try {
+    await r.save(picked.value)
+  } catch (e) {
+    // Roles are a nicety: if they don't save, don't leave the sheet stuck.
+    console.warn('[roles] save failed', e)
+  } finally {
+    saving.value = false
+    r.close()
+  }
 }
 </script>
 

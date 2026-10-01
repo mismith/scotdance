@@ -5,6 +5,7 @@ import { ChevronRight } from '@lucide/vue'
 import NumberCard from '@/components/NumberCard.vue'
 import DanceStatusChip from '@/components/DanceStatusChip.vue'
 import { getOrdinalSuffix } from '@/lib/results'
+import { platformLabel } from '@/lib/schedule'
 import type { DancerDay, DanceStatus } from '@/lib/dancerDay'
 
 // One followed dancer at one competition: their number card for that
@@ -37,7 +38,7 @@ const sub = computed(() => {
   const d = day.value
   const parts = [multi.value ? `${shown.value.length} age groups` : d.group?.fullName]
   const plat = d.next?.slot?.platformName ?? d.dances[0]?.slot?.platformName
-  if (plat && d.phase !== 'after') parts.push(`Platform ${plat}`)
+  if (plat && d.phase !== 'after') parts.push(platformLabel(plat))
   return parts.filter(Boolean).join(' · ')
 })
 

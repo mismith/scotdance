@@ -37,6 +37,9 @@ if (typeof navigator !== 'undefined' && 'permissions' in navigator) {
     ?.query({ name: 'geolocation' as PermissionName })
     .then((status) => {
       permissionState.value = status.state as GeoPermissionState
+      // Back on Near me with location already allowed: find them again, so
+      // the list is near them rather than everywhere.
+      if (status.state === 'granted' && mode.value === 'nearby' && !coords.value) requestCurrentPosition()
       status.onchange = () => {
         permissionState.value = status.state as GeoPermissionState
       }
@@ -171,7 +174,9 @@ export function useLocationFilter() {
     const effectiveActive = Boolean(effCountry || effRegion || effLocality)
     return {
       predicate(c: CompetitionListItem): boolean {
-        if (effCountry && c.country !== effCountry) return false
+        // No country yet (e.g. a new submission without a venue): it could be
+        // anywhere, so don't hide it behind the guessed default country.
+        if (effCountry && c.country && c.country !== effCountry) return false
         if (effRegion && c.region !== effRegion) return false
         if (effLocality && c.locality !== effLocality) return false
         return true

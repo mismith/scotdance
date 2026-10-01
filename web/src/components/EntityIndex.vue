@@ -57,7 +57,8 @@ const sorted = computed(() => {
 const letters = computed(() => {
   const map = new Map<string, typeof sorted.value>()
   for (const r of sorted.value) {
-    const l = (r.agg.name ?? '?').trim().charAt(0).toUpperCase() || '?'
+    // "Ó Briain" files under O, beside the other O names.
+    const l = (r.agg.name ?? '?').trim().normalize('NFD').charAt(0).toUpperCase() || '?'
     map.set(l, [...(map.get(l) ?? []), r])
   }
   return [...map.entries()]
@@ -120,7 +121,7 @@ const scrolledPastTitle = useScrolledPast(titleAnchor)
             :placeholder="`Find ${section.label.toLowerCase()} by name`"
             class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none [&::-webkit-search-cancel-button]:hidden"
           />
-          <button v-if="query" type="button" class="text-muted-foreground -mr-1 flex size-10 items-center justify-center" aria-label="Clear" @click="query = ''">
+          <button v-if="query" type="button" class="text-muted-foreground -mr-1 flex size-7 items-center justify-center rounded-full" aria-label="Clear" @click="query = ''">
             <X class="size-5" />
           </button>
         </label>

@@ -12,9 +12,6 @@ import './composables/useTheme'
 import '@fontsource-variable/atkinson-hyperlegible-next/wght.css'
 import './style.css'
 
-// The old app used #/ URLs (emails, bookmarks); send them to the same page here.
-if (location.hash.startsWith('#/')) history.replaceState(history.state, '', location.hash.slice(1) || '/')
-
 const app = createApp(App)
 
 app.use(createPinia())
@@ -31,15 +28,28 @@ app.config.errorHandler = (err, _instance, info) => {
   console.error('[vue:error]', info, err)
 }
 
-router.onError((err) => {
+// A page's code failing to load usually means a new version went out: load
+// the page afresh to pick it up. Only once a minute, so code that's really
+// missing (or a flaky connection) can't reload the app over and over.
+const RELOAD_KEY = 'chunk-reload-at'
+router.onError((err, to) => {
   const message = err instanceof Error ? err.message : String(err)
   if (
     /Failed to fetch dynamically imported module|Importing a module script failed/i.test(
       message,
     )
   ) {
-    window.location.reload()
-    return
+    let last = 0
+    try {
+      last = Number(sessionStorage.getItem(RELOAD_KEY) ?? 0)
+      sessionStorage.setItem(RELOAD_KEY, String(Date.now()))
+    } catch {
+      /* private mode: reload anyway */
+    }
+    if (Date.now() - last > 60_000) {
+      window.location.assign(to.fullPath)
+      return
+    }
   }
   console.error('[router:error]', message, err)
 })

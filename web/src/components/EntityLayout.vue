@@ -67,7 +67,7 @@ const { scrolledPast } = provideInfoHeader()
       :show-title="scrolledPast"
       :fallback="{ to: section.to, label: section.label }"
     >
-      <template #actions>
+      <template v-if="!notFound" #actions>
         <ShareButton :title="displayName || undefined" />
       </template>
     </AppBar>

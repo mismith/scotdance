@@ -12,6 +12,8 @@ import { startViewTransition } from '@/lib/transition'
 import { trackCompetitionEntry } from '@/lib/competitionExit'
 import { useAuthStore } from '@/stores/auth'
 import { recordBackLabel } from '@/lib/backLabels'
+import { isNative } from '@/lib/native'
+import { ROUTE_INFO_KEY, SCROLL_POSITIONS_KEY } from '@/lib/deviceHistory'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -163,7 +165,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'users/:userId?', name: 'admin.users', component: () => import('@/views/admin/Users.vue') },
       { path: 'tools', name: 'admin.tools', component: () => import('@/views/admin/Tools.vue') },
       // The old admin's pages.
-      { path: 'info/:rest(.*)*', redirect: { name: 'admin.tools' } },
+      { path: 'info/:rest(.*)*', redirect: { name: 'admin.tools', params: {} } },
     ],
   },
   {
@@ -241,6 +243,18 @@ const routes: RouteRecordRaw[] = [
         name: 'competition.event',
         component: () => import('@/views/competition/Event.vue'),
       },
+      // The old app's deeper and shallower schedule links.
+      {
+        path: 'schedule/:dayId/:blockId?',
+        redirect: (to) => ({ name: 'competition.schedule', params: { competitionId: to.params.competitionId } }),
+      },
+      {
+        path: 'schedule/:dayId/:blockId/:eventId/:danceId',
+        redirect: ({ params: { competitionId, dayId, blockId, eventId } }) => ({
+          name: 'competition.event',
+          params: { competitionId, dayId, blockId, eventId },
+        }),
+      },
       {
         path: 'results',
         name: 'competition.results',
@@ -250,6 +264,15 @@ const routes: RouteRecordRaw[] = [
         path: 'results/:groupId',
         name: 'competition.group',
         component: () => import('@/views/competition/Group.vue'),
+      },
+      // The old app linked each dance's results (e.g. from dancer reports).
+      {
+        path: 'results/:groupId/:danceId',
+        redirect: ({ params: { competitionId, groupId, danceId } }) => ({
+          name: 'competition.group',
+          params: { competitionId, groupId },
+          hash: `#dance-${danceId}`,
+        }),
       },
     ],
   },
@@ -265,6 +288,8 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/Policies.vue'),
     meta: { title: 'Privacy and terms' },
   },
+  // The old app had /policies/privacy and /policies/terms.
+  { path: '/policies/:policyId', redirect: { name: 'policies', params: {} } },
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
@@ -276,19 +301,29 @@ const routes: RouteRecordRaw[] = [
 // Persisted scroll positions keyed by route.fullPath. Covers cases that
 // vue-router's native savedPosition doesn't: in-app pushes back to a list,
 // and iOS-PWA cold resume after the WebView was evicted.
-const SCROLL_KEY = 'scroll-positions'
 const readScrollPositions = (): Record<string, number> => {
-  try { return JSON.parse(localStorage.getItem(SCROLL_KEY) ?? '{}') } catch { return {} }
+  try { return JSON.parse(localStorage.getItem(SCROLL_POSITIONS_KEY) ?? '{}') } catch { return {} }
 }
 const writeScrollPositions = (m: Record<string, number>) => {
-  try { localStorage.setItem(SCROLL_KEY, JSON.stringify(m)) } catch { /* quota / private mode */ }
+  try { localStorage.setItem(SCROLL_POSITIONS_KEY, JSON.stringify(m)) } catch { /* quota / private mode */ }
+}
+// The newest SCROLL_LIMIT pages, and never one with search words in its
+// address: those are what Clear on Recent searches is for.
+const SCROLL_LIMIT = 100
+function saveScrollPosition(route: { fullPath: string; query: Record<string, unknown> }) {
+  if (!route.fullPath || route.query.q) return
+  const m = readScrollPositions()
+  delete m[route.fullPath]
+  m[route.fullPath] = window.scrollY
+  const keys = Object.keys(m)
+  for (const k of keys.slice(0, Math.max(0, keys.length - SCROLL_LIMIT))) delete m[k]
+  writeScrollPositions(m)
 }
 
 // Persisted last-visited route, so cold-boot to '/' (e.g. PWA/Capacitor icon
 // launch after the WebView was evicted) can resume where the user left off.
 type SavedRoute = { params: Record<string, string>; query: Record<string, string> }
 type RouteInfo = { $current?: string; $at?: string; [name: string]: SavedRoute | string | undefined }
-const ROUTE_INFO_KEY = 'route-info'
 const readRouteInfo = (): RouteInfo => {
   try { return JSON.parse(localStorage.getItem(ROUTE_INFO_KEY) ?? '{}') } catch { return {} }
 }
@@ -310,6 +345,10 @@ function whenTallEnough(top: number, timeout = 2000): Promise<void> {
     check()
   })
 }
+
+// The old app used #/ URLs (emails, bookmarks); send them to the same page
+// here. Must run before createWebHistory() reads the location below.
+if (location.hash.startsWith('#/')) history.replaceState(history.state, '', location.hash.slice(1) || '/')
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -334,11 +373,21 @@ export const router = createRouter({
 
 // Cold-boot restore: resume where the user left off only if they were here
 // recently (e.g. the app was evicted mid-competition). After a break, open on
-// Home, which is where their dancers are.
+// Home, which is where their dancers are. Only for the installed app (native
+// or home-screen web app): a browser tab reloads its own URL, and typing the
+// address or opening a bookmark should land on Home.
 const RESUME_WINDOW_MS = 2 * 60 * 60 * 1000
+const installed = () =>
+  isNative ||
+  matchMedia('(display-mode: standalone)').matches ||
+  (navigator as Navigator & { standalone?: boolean }).standalone === true
 router.beforeEach((to, from) => {
   if (from.name) return
   if (to.name !== 'home') return
+  if (!installed()) return
+  // Only a launch onto Home itself, not a redirect there (e.g. a signed-out
+  // /profile link, which should stay on Home with the sign-in sheet).
+  if (to.redirectedFrom) return
   const info = readRouteInfo()
   const last = info.$current
   if (!last || last === 'home' || last === 'not-found') return
@@ -350,27 +399,18 @@ router.beforeEach((to, from) => {
 })
 
 // Remember what the page being left was called, so Back can say where it goes.
+// Not while only its query changes (typing a search): that's the same page.
 router.beforeEach((to, from) => {
-  if (from.name && to.fullPath !== from.fullPath) recordBackLabel(from.fullPath, document.title)
+  if (from.name && to.path !== from.path) recordBackLabel(from.fullPath, document.title)
 })
 
 router.beforeEach((to, from) => {
-  if (!from.fullPath) return
-  if (to.path === from.path) return
-  const m = readScrollPositions()
-  m[from.fullPath] = window.scrollY
-  writeScrollPositions(m)
+  if (to.path !== from.path) saveScrollPosition(from)
 })
 
 // iOS standalone PWAs get suspended without firing beforeEach. pagehide is
 // the last reliable hook before the WebView is evicted, so flush here too.
-addEventListener('pagehide', () => {
-  const path = router.currentRoute.value.fullPath
-  if (!path) return
-  const m = readScrollPositions()
-  m[path] = window.scrollY
-  writeScrollPositions(m)
-})
+addEventListener('pagehide', () => saveScrollPosition(router.currentRoute.value))
 
 router.beforeEach(async (to) => {
   if (!to.matched.some((r) => r.meta.requiresAuth)) return
@@ -428,6 +468,8 @@ router.beforeResolve(async (to, from) => {
     skipNextViewTransition = false
     return
   }
+  // Reduce Motion: pages just change (as sheets just open, see lib/morph).
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
   // In Manage, picking from a list beside its detail shouldn't fade the
   // whole window; on phones each step is a page, so it still animates.
   if (to.meta.admin && from.meta.admin && matchMedia('(min-width: 768px)').matches) return

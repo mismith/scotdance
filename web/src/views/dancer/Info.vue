@@ -14,12 +14,14 @@ import FollowButton from '@/components/FollowButton.vue'
 import Medal from '@/components/Medal.vue'
 import { fetchEntrySummary, type EntrySummary } from '@/lib/entrySummary'
 import { initialsOf, isSameDay } from '@/lib/format'
+import { useMeStore } from '@/stores/me'
 import type { Competition } from '@/types/competition'
 
 // A dancer across every competition. Their number is different at each one,
 // so it's shown per competition, never as who they are.
 const setHeader = injectInfoHeaderSetter()
 const route = useRoute()
+const me = useMeStore()
 const profile = useDancerProfile()
 const following = useFollowing()
 const crisp = useCrisp()
@@ -127,7 +129,7 @@ function medals(cid: string) {
             "
             class="flex min-h-16 items-center gap-3 px-3 py-2.5 hover:bg-accent"
           >
-            <DateTile :date="r.competition.date" below="year" />
+            <DateTile :date="r.competition.date" below="year" :managed="me.hasCompetitionPerm(r.competitionId)" />
             <span class="min-w-0 flex-1">
               <span class="line-clamp-2 text-base leading-snug font-bold">{{ r.competition.name }}</span>
               <span class="text-muted-foreground block truncate text-sm">

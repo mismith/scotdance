@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import { ref, watch, type Ref } from 'vue'
-import { ref as dbRef, set, update } from 'firebase/database'
+import { computed, ref, watch, type Ref } from 'vue'
+import { get, ref as dbRef, set, update } from 'firebase/database'
 import { database } from '@/firebase'
 import { lookupEntityId } from '@/lib/entityIndex'
 import { onValueSaved } from '@/lib/offline'
@@ -16,32 +16,41 @@ export type FavoriteType =
   | 'pipers'
   | 'venues'
 
-const ALL_TYPES: FavoriteType[] = [
-  'competitions',
-  'dancers',
-  'judges',
-  'pipers',
-  'venues',
-]
-
 // Stored at /users:favorites/{uid}/{type}/{id} → value is either `true` or a
 // denormed display name (kept so the favourites section on each list page can
 // render before the slim index for that entity loads).
 //
-// All types now key by AGGREGATE id (one entity = one favourite). Legacy
-// dancer favourites (pre-aggregator) keyed by per-comp dancer id are migrated
-// to aggregate id on first load — see migrateDancerFavourites below.
+// All types now key by AGGREGATE id (one entity = one favourite). The old app
+// (v3, still on many phones) keyed dancer favourites by per-competition entry
+// and still reads them, so those are never deleted: each one with a name is
+// copied once to the person it belongs to (see copyOldDancerFavourites), and
+// v4 skips the old keys.
+
+type StoredFavorites = Partial<Record<FavoriteType, Record<string, FavoriteValue>>> & {
+  /** Old per-competition dancer key → the person it was copied to. */
+  oldDancers?: Record<string, string>
+}
 
 export const useFavoritesStore = defineStore('favorites', () => {
   const auth = useAuthStore()
 
   const competitions = ref<Record<string, FavoriteValue>>({})
-  const dancers = ref<Record<string, FavoriteValue>>({})
+  const allDancers = ref<Record<string, FavoriteValue>>({})
   const judges = ref<Record<string, FavoriteValue>>({})
   const pipers = ref<Record<string, FavoriteValue>>({})
   const venues = ref<Record<string, FavoriteValue>>({})
+  const copiedOld = ref<Record<string, string>>({})
 
-  const refs: Record<FavoriteType, Ref<Record<string, FavoriteValue>>> = {
+  // The people you follow. Old per-competition keys are left out: a `true`
+  // one has no name to find its person by (v4 never stores `true` for a
+  // dancer), and a named one is followed under the person's id once copied.
+  const dancers = computed<Record<string, FavoriteValue>>(() =>
+    Object.fromEntries(
+      Object.entries(allDancers.value).filter(([id, v]) => typeof v === 'string' && !copiedOld.value[id]),
+    ),
+  )
+
+  const refs: Record<FavoriteType, Readonly<Ref<Record<string, FavoriteValue>>>> = {
     competitions,
     dancers,
     judges,
@@ -90,6 +99,15 @@ export const useFavoritesStore = defineStore('favorites', () => {
     toggle('dancers', id, name)
   const toggleCompetition = (id: string) => toggle('competitions', id)
 
+  function load(val: StoredFavorites) {
+    competitions.value = val.competitions ?? {}
+    allDancers.value = val.dancers ?? {}
+    judges.value = val.judges ?? {}
+    pipers.value = val.pipers ?? {}
+    venues.value = val.venues ?? {}
+    copiedOld.value = val.oldDancers ?? {}
+  }
+
   watch(
     () => auth.uid,
     (uid) => {
@@ -97,21 +115,17 @@ export const useFavoritesStore = defineStore('favorites', () => {
         unsubscribe()
         unsubscribe = null
       }
-      if (!uid) {
-        for (const t of ALL_TYPES) refs[t].value = {}
-        return
-      }
+      // Nothing of the last account carries over, even for a moment.
+      load({})
+      if (!uid) return
       const r = dbRef(database, `${NAMESPACE}/users:favorites/${uid}`)
-      let migrated = false
+      let copied = false
       unsubscribe = onValueSaved(r, (snap) => {
-        const val =
-          (snap.val() as Partial<
-            Record<FavoriteType, Record<string, FavoriteValue>>
-          > | null) ?? {}
-        for (const t of ALL_TYPES) refs[t].value = val[t] ?? {}
-        if (!migrated) {
-          migrated = true
-          void migrateDancerFavourites(uid, val.dancers ?? {})
+        const val = (snap.val() as StoredFavorites | null) ?? {}
+        load(val)
+        if (!copied) {
+          copied = true
+          void copyOldDancerFavourites(uid, val).catch(() => {})
         }
       })
     },
@@ -138,26 +152,29 @@ export const useFavoritesStore = defineStore('favorites', () => {
   }
 })
 
-// One-time per-session migration of dancer favourites from per-comp ids to
-// aggregate ids. Pre-aggregator, FavoriteDancerButton keyed by the per-comp
-// dancer push key; the value was the denormed dancer name. We resolve the
-// name → aggregate id via /dancers:index, then rewrite the entry under the
-// aggregate id (atomic multi-path update).
-//
-// Idempotent: entries whose key already matches the resolved aggregate id are
-// skipped (no Firebase writes). Entries whose value isn't a string (no name
-// to resolve) are left alone — orphan, but rare and harmless.
-async function migrateDancerFavourites(
-  uid: string,
-  dancersMap: Record<string, FavoriteValue>,
-): Promise<void> {
-  const updates: Record<string, FavoriteValue | null> = {}
-  for (const [key, value] of Object.entries(dancersMap)) {
-    if (typeof value !== 'string') continue
-    const aggId = await lookupEntityId('dancers', value)
-    if (!aggId || aggId === key) continue
-    updates[`dancers/${aggId}`] = value
-    updates[`dancers/${key}`] = null
+/**
+ * Follow the people behind old per-competition dancer favourites. The old
+ * app keyed them by the competition entry, with the dancer's name as the
+ * value; the name finds the person (/dancers:index). Each is copied once and
+ * noted under `oldDancers`, so unfollowing in v4 sticks, and nothing is
+ * deleted: the old app still reads its keys. A key that's already a person
+ * matches its own name and is left alone.
+ */
+export async function copyOldDancerFavourites(uid: string, stored: StoredFavorites): Promise<void> {
+  const dancers = stored.dancers ?? {}
+  const done = stored.oldDancers ?? {}
+  const updates: Record<string, string> = {}
+  for (const [key, value] of Object.entries(dancers)) {
+    if (typeof value !== 'string' || done[key]) continue
+    // Already a person (a v4 follow, even of a profile that shares its name
+    // with another): never an old key. Old keys are competition entries.
+    // (If that can't be checked right now, leave it for next time.)
+    const isPerson = await get(dbRef(database, `${NAMESPACE}/dancers/${key}/name`)).then((snap) => snap.exists(), () => true)
+    if (isPerson) continue
+    const personId = await lookupEntityId('dancers', value)
+    if (!personId || personId === key) continue
+    if (!dancers[personId]) updates[`dancers/${personId}`] = value
+    updates[`oldDancers/${key}`] = personId
   }
   if (!Object.keys(updates).length) return
   await update(dbRef(database, `${NAMESPACE}/users:favorites/${uid}`), updates)

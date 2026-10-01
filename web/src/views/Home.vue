@@ -17,10 +17,11 @@ import { useRecentDancers } from '@/composables/useRecentDancers'
 import { useScrolledPast } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { useCompetitions } from '@/composables/useCompetitions'
+import { useCompetitionSpans } from '@/composables/useCompetitionSpans'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
 import { competitionPhase } from '@/lib/dancerDay'
-import { formatLongDate, parseDate } from '@/lib/format'
+import { formatLongDate, formatShortDate, parseDate } from '@/lib/format'
 import { now } from '@/lib/now'
 import type { Competition } from '@/types/competition'
 
@@ -29,7 +30,7 @@ usePageTitle(['Home'])
 const auth = useAuthStore()
 const favorites = useFavoritesStore()
 const following = useFollowing()
-const { recent } = useRecentDancers()
+const { recent, clear: clearRecent } = useRecentDancers()
 
 const titleEl = ref<HTMLElement | null>(null)
 const scrolledPast = useScrolledPast(titleEl)
@@ -112,18 +113,28 @@ const comingUp = computed(() => {
     .slice(0, 4)
 })
 
+// A competition that started in the last fortnight may still be on.
+const { phase: phaseOf } = useCompetitionSpans(recentCompetitions)
+
 // If nothing personal is coming up, show what's next anywhere.
-const nextAnywhere = computed(() =>
-  recentCompetitions.value.filter((c) => competitionPhase(c.date) !== 'after').slice(0, 3),
-)
+const nextAnywhere = computed(() => recentCompetitions.value.filter((c) => phaseOf(c) !== 'after').slice(0, 3))
 
 // With nothing personal to show, the latest finished competitions keep Home
 // alive between competition days.
 const latestResults = computed(() =>
-  recentCompetitions.value.filter((c) => competitionPhase(c.date) === 'after').slice(-3).reverse(),
+  recentCompetitions.value.filter((c) => phaseOf(c) === 'after').slice(-3).reverse(),
 )
 
 const cardColor = (card: DancerCard) => (showingRecent.value ? null : following.colorFor(card.id))
+// A dancer without a day card: where they're entered, if anywhere listed
+// (that competition's details may not have loaded).
+function cardLine(card: DancerCard) {
+  const f = card.focus
+  if (!f) return 'Not entered in any listed competitions'
+  if (f.phase === 'today') return `Today: ${f.competition.name}`
+  if (f.phase === 'after') return `Last: ${f.competition.name}`
+  return `Next: ${f.competition.name}${f.competition.date ? ` · ${formatShortDate(f.competition.date)}` : ''}`
+}
 
 const whatsNewDismissed = useLocalStorage('home:whatsNew:v4', false)
 
@@ -137,7 +148,16 @@ const { freshKey: liveFresh } = useLiveAlertState()
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
-    <AppBar title="Home" :show-title="scrolledPast" :back="false" />
+    <AppBar title="Home" :scrolled="scrolledPast" :back="false">
+      <template #leading>
+        <RouterLink to="/" class="flex min-w-0 items-center gap-2 rounded-xl" aria-label="ScotDance.app, Home">
+          <span class="flex size-8 shrink-0 overflow-hidden rounded-lg bg-[#0065bd] text-white">
+            <LogoMark class="size-8" />
+          </span>
+          <span class="truncate text-[1.0625rem] font-extrabold">ScotDance.app</span>
+        </RouterLink>
+      </template>
+    </AppBar>
 
     <main class="mx-auto w-full max-w-3xl space-y-4 px-4 pt-[calc(var(--chrome-top)+0.25rem)]">
       <header ref="titleEl">
@@ -235,6 +255,15 @@ const { freshKey: liveFresh } = useLiveAlertState()
           <span v-if="!showingRecent" class="text-muted-foreground text-sm font-semibold">
             {{ people.length }} followed
           </span>
+          <button
+            v-else
+            type="button"
+            aria-label="Clear recently viewed"
+            class="text-primary -my-2.5 -mr-2 flex h-11 items-center rounded-full px-2 text-[0.9375rem] font-bold"
+            @click="clearRecent()"
+          >
+            Clear
+          </button>
         </h2>
 
         <template v-if="loading && !cards.length">
@@ -268,7 +297,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
             <span class="sash h-10 w-1.5 shrink-0 rounded-full" aria-hidden="true" />
             <span class="min-w-0 flex-1">
               <span class="block truncate text-[1.0625rem] font-extrabold">{{ card.name }}</span>
-              <span class="text-muted-foreground block text-sm">Not entered in any listed competitions</span>
+              <span class="text-muted-foreground block truncate text-sm">{{ cardLine(card) }}</span>
             </span>
             <ChevronRight class="text-muted-foreground size-5" />
           </RouterLink>
@@ -287,6 +316,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
               v-for="c in comingUp"
               :key="c.id"
               :competition="c.competition"
+              :competition-id="c.id"
               :to="{ name: 'competition.info', params: { competitionId: c.id } }"
               :dancers="[...c.dancers].map(([id, name]) => ({ id, name }))"
               :followed="c.followed"
@@ -299,6 +329,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
               :competition="c"
               :to="{ name: 'competition.info', params: { competitionId: c.id } }"
               :followed="favorites.isFavorite('competitions', c.id)"
+              :today="phaseOf(c) === 'today'"
             />
           </template>
         </ul>

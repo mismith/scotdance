@@ -8,6 +8,7 @@ import AppBar from '@/components/nav/AppBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { dataRef } from '@/firebase'
+import { inviteStatus, type Invite } from '@/lib/admin/invites'
 import { friendlyError, write } from '@/lib/admin/write'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
@@ -15,15 +16,6 @@ import type { Competition } from '@/types/competition'
 
 // Where an admin invite email lands. Accepting asks the server to give this
 // account access to manage the competition.
-
-interface Invite {
-  created?: string
-  cancelled?: string
-  expires?: string
-  accepted?: string
-  acceptedBy?: string
-  payload?: { email?: string }
-}
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -64,7 +56,6 @@ onScopeDispose(() => offs.forEach((off) => off()))
 
 usePageTitle(() => ['Invitation', competition.value?.name])
 
-const past = (iso?: string) => !!iso && new Date(iso).getTime() <= Date.now()
 const state = computed(() => {
   if (!authReady.value) return 'loading'
   if (!auth.isSignedIn) return 'signed-out'
@@ -72,11 +63,25 @@ const state = computed(() => {
   const i = invite.value
   if (!i?.created) return 'missing'
   if (me.hasCompetitionPerm(competitionId.value)) return 'yours'
-  if (past(i.accepted)) return i.acceptedBy ? (i.acceptedBy === auth.uid ? 'accepting' : 'taken') : 'accepting'
-  if (past(i.cancelled)) return 'cancelled'
-  if (past(i.expires)) return 'expired'
-  return 'open'
+  const status = inviteStatus(i)
+  if (status === 'accepted') return i.acceptedBy === auth.uid ? 'accepting' : 'taken'
+  return status === 'pending' ? 'open' : status
 })
+
+// The server gives access within a second or two. If it still hasn't after
+// a while, it failed, and an invite can only be accepted once: say so.
+const slow = ref(false)
+let slowTimer: ReturnType<typeof setTimeout> | undefined
+watch(
+  state,
+  (s) => {
+    clearTimeout(slowTimer)
+    slow.value = false
+    if (s === 'accepting') slowTimer = setTimeout(() => (slow.value = true), 20_000)
+  },
+  { immediate: true },
+)
+onScopeDispose(() => clearTimeout(slowTimer))
 
 const error = ref<string | null>(null)
 async function accept() {
@@ -84,7 +89,8 @@ async function accept() {
   try {
     await write({ [`competitions:data/${competitionId.value}/invites/${inviteId.value}/accepted`]: new Date().toISOString() })
   } catch (e) {
-    error.value = friendlyError(e)
+    // Refused: someone accepted it first, or it was cancelled or deleted.
+    error.value = /permission.denied/i.test(String(e)) ? 'This invite can’t be accepted any more. Ask the organiser to invite you again.' : friendlyError(e)
   }
 }
 const name = computed(() => competition.value?.name ?? 'this competition')
@@ -109,6 +115,12 @@ const name = computed(() => competition.value?.name ?? 'this competition')
         </div>
       </template>
 
+      <EmptyState
+        v-else-if="state === 'accepting' && slow"
+        :icon="MailX"
+        title="Your access isn’t set up yet"
+        description="It’s taking much longer than it should. Ask the organiser to delete this invite and invite you again."
+      />
       <div v-else-if="state === 'accepting'" class="flex flex-col items-center gap-3 py-20 text-center">
         <LoaderCircle class="text-primary size-8 animate-spin" />
         <p class="text-base font-semibold">Setting up your access…</p>

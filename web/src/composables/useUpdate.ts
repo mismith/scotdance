@@ -10,7 +10,12 @@ const dialogOpen = ref(false)
 
 const updateAvailable = computed(() => {
   if (!latestVersion.value) return false
-  return compareVersions(currentVersion, latestVersion.value) < 0
+  try {
+    return compareVersions(currentVersion, latestVersion.value) < 0
+  } catch {
+    // Not a version number (a typo in /versions): no prompt, rather than a broken tab bar.
+    return false
+  }
 })
 
 onValue(dataRef('versions'), (snap) => {
