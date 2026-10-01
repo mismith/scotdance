@@ -43,7 +43,13 @@ test('signed out: the overview and a way in, but no form and no venue search', a
   const requests: string[] = []
   page.on('request', (r) => requests.push(r.url()))
   await page.goto('/competitions/submit')
-  for (const name of ['Today', 'Before the competition', 'On the day']) await expect(page.getByRole('heading', { name })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'What you’ll need' })).toBeVisible()
+  // What's needed later is tucked away until asked for.
+  const onTheDay = page.getByRole('button', { name: 'On the day' })
+  await expect(onTheDay).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.getByText('A laptop or tablet.')).toHaveCount(0)
+  await onTheDay.click()
+  await expect(page.getByText('A laptop or tablet.')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Sign in to submit' })).toBeVisible()
   await expect(page.locator('main form')).toHaveCount(0)
   await expect(page.getByRole('main').getByRole('textbox')).toHaveCount(0)
@@ -232,4 +238,12 @@ test('the answers so far outlast a reload, skipping the overview, until started 
   await page.reload()
   await expect(page.getByRole('button', { name: 'Start', exact: true })).toBeVisible()
   await expect(page.getByText('Picked up where you left off.')).toHaveCount(0)
+})
+
+test('Home has a way in, beside All competitions', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('main').getByRole('link', { name: 'All competitions' })).toBeVisible()
+  await page.getByRole('main').getByRole('link', { name: 'Submit a competition' }).click()
+  await expect(page).toHaveURL(/\/competitions\/submit$/)
+  await expect(page.getByRole('heading', { name: 'Submit a competition', level: 1 })).toBeVisible()
 })

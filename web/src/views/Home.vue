@@ -3,7 +3,7 @@ import LogoMark from '@/components/LogoMark.vue'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
-import { CalendarDays, ChevronRight, Search, Sparkles, X } from '@lucide/vue'
+import { CalendarDays, ChevronRight, Search, Sparkles, SquarePlus, X } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
 import DancerDayCard from '@/components/DancerDayCard.vue'
@@ -348,13 +348,22 @@ const { freshKey: liveFresh } = useLiveAlertState()
         </ul>
       </section>
 
-      <!-- Always a way into every competition, however quiet Home is. -->
-      <RouterLink
-        :to="{ name: 'competitions' }"
-        class="bg-card border-strong flex h-12 items-center justify-center gap-2 rounded-xl border text-base font-bold"
-      >
-        <CalendarDays class="size-5" /> All competitions
-      </RouterLink>
+      <!-- Always a way into every competition, however quiet Home is, and
+           for organisers, a way to add theirs. -->
+      <div class="flex flex-col gap-2 sm:flex-row sm:gap-3">
+        <RouterLink
+          :to="{ name: 'competitions' }"
+          class="bg-card border-strong hover:bg-accent flex h-12 items-center justify-center gap-2 rounded-xl border text-base font-bold sm:flex-1"
+        >
+          <CalendarDays class="size-5" /> All competitions
+        </RouterLink>
+        <RouterLink
+          :to="{ name: 'competitions.submit' }"
+          class="bg-card border-strong hover:bg-accent flex h-12 items-center justify-center gap-2 rounded-xl border text-base font-bold sm:flex-1"
+        >
+          <SquarePlus class="size-5" /> Submit a competition
+        </RouterLink>
+      </div>
     </main>
   </div>
 </template>

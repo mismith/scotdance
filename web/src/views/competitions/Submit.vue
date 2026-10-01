@@ -54,26 +54,26 @@ function pickVenue({ venue, address, location, ...rest }: VenueFields) {
 // Optional bits stay tucked away until asked for (or already filled in).
 const adding = reactive({ sobhd: false, description: false, message: false })
 
-// What each step asks (for the overview) and says at the top (for the step).
+// What each step asks (in short, for the overview) and says at its top.
 const STEPS = [
   {
     title: 'Details',
-    asks: 'The competition’s name and date, and a description if you like.',
+    asks: 'Name and date',
     lead: 'The competition’s name and date, as dancers and families will see them.',
   },
   {
     title: 'Venue',
-    asks: 'Where it’s held, or just the town for now.',
+    asks: 'Where it’s held',
     lead: 'If it isn’t settled yet, the town or city is enough.',
   },
   {
     title: 'Contact',
-    asks: 'Your name, which isn’t shown publicly.',
+    asks: 'Your name, kept private',
     lead: 'Only used to contact you about this submission. None of it is shown publicly.',
   },
   {
     title: 'Review',
-    asks: 'A last look before it’s sent.',
+    asks: 'A last look before sending',
     lead: 'Make sure it all looks right. You can change any of it once it’s approved.',
   },
 ]
@@ -109,6 +109,8 @@ function add(key: keyof typeof adding) {
 const sending = ref(false)
 const sent = ref(false)
 const sendError = ref<string | null>(null)
+// Until they start (or while signed out), the overview shows instead of a step.
+const overview = computed(() => auth.authReady && !sent.value && (!auth.isSignedIn || !started.value))
 
 async function go(to: number) {
   clearErrors()
@@ -293,7 +295,7 @@ const addButton = 'text-primary hover:bg-accent -mx-3 flex h-11 w-fit items-cent
 <template>
   <div class="flex min-h-dvh flex-col">
     <AppBar title="Submit a competition" show-title :fallback="{ to: { name: 'competitions' }, label: 'Competitions' }" />
-    <main class="mx-auto w-full max-w-xl flex-1 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-[calc(var(--chrome-bottom)+1.5rem)]">
+    <main :class="['mx-auto w-full max-w-xl flex-1 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-[calc(var(--chrome-bottom)+1.5rem)]', overview && 'lg:max-w-3xl']">
       <div v-if="!auth.authReady" class="space-y-4" aria-busy="true">
         <span class="sr-only">Loading…</span>
         <Skeleton class="h-8 w-2/3" />
@@ -313,7 +315,7 @@ const addButton = 'text-primary hover:bg-accent -mx-3 flex h-11 w-fit items-cent
         </div>
       </div>
 
-      <SubmitOverview v-else-if="!auth.isSignedIn || !started" :steps="STEPS" :signed-in="auth.isSignedIn" @start="start" />
+      <SubmitOverview v-else-if="overview" :steps="STEPS" :signed-in="auth.isSignedIn" @start="start" />
 
       <div v-else class="space-y-6">
         <h1 class="text-display">Submit a competition</h1>
