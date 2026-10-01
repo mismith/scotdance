@@ -186,7 +186,7 @@ const routes: RouteRecordRaw[] = [
       { path: '', name: 'manage', component: () => import('@/views/manage/ManageHome.vue') },
       { path: 'details', name: 'manage.details', component: () => import('@/views/manage/Details.vue') },
       { path: 'results/:groupId?/:danceId?', name: 'manage.results', component: () => import('@/views/manage/Results.vue') },
-      { path: 'schedule/:dayId?/:blockId?/:eventId?/:itemId?', name: 'manage.schedule', component: () => import('@/views/manage/Schedule.vue') },
+      { path: 'schedule/:dayId?', name: 'manage.schedule', component: () => import('@/views/manage/Schedule.vue') },
       {
         path: 'dancers/import',
         name: 'manage.dancers.import',

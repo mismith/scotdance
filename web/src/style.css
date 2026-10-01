@@ -36,6 +36,16 @@
   --color-done-foreground: var(--done-foreground);
   --color-live: var(--live);
   --color-live-paper: var(--live-paper);
+  /* Schedule builder blocks: dances, age groups and judges each keep one hue */
+  --color-dance: var(--dance);
+  --color-dance-foreground: var(--dance-foreground);
+  --color-dance-muted: var(--dance-muted);
+  --color-group: var(--group);
+  --color-group-foreground: var(--group-foreground);
+  --color-group-muted: var(--group-muted);
+  --color-judge: var(--judge);
+  --color-judge-foreground: var(--judge-foreground);
+  --color-judge-muted: var(--judge-muted);
   /* The number card is always paper, even in dark mode */
   --color-paper: var(--paper);
   --color-paper-ink: #0e1114;
@@ -97,6 +107,15 @@
   --live-paper: #fbe4e8;
   --paper: #ffffff;
   --paper-edge: #c9d0d8;
+  --dance: oklch(0.82 0.3 132);
+  --dance-foreground: oklch(0.3 0.14 132);
+  --dance-muted: oklch(0.92 0.08 132);
+  --group: oklch(0.78 0.28 233);
+  --group-foreground: oklch(0.32 0.12 233);
+  --group-muted: oklch(0.92 0.08 233);
+  --judge: oklch(0.72 0.28 349);
+  --judge-foreground: oklch(0.32 0.14 349);
+  --judge-muted: oklch(0.88 0.08 349);
   /* Followed dancers' colours (see stores/dancerColors). The first five are
      drawn from tartans: Royal Stewart, Black Watch, heather, MacLeod gold,
      Saltire. White text passes AA on all of them. */
@@ -156,6 +175,9 @@
   --live-paper: #3a1119;
   --paper: #f7f5ef;
   --paper-edge: #f7f5ef;
+  --dance-muted: oklch(0.22 0.06 132);
+  --group-muted: oklch(0.22 0.06 233);
+  --judge-muted: oklch(0.22 0.06 349);
   --dancer-1: #e0435e;
   --dancer-2: #3fa676;
   --dancer-3: #9b75d6;
