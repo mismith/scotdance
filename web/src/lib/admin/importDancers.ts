@@ -90,14 +90,27 @@ function looksLikeProgram(grid: Grid): boolean {
   return dancerRows > 0 && headingRows > 0
 }
 
+/** "Mary Ann Smith" → first word, then the rest (fix odd ones after import). */
+function splitFullName(name: string) {
+  const parts = name.split(' ')
+  const firstName = parts.shift() ?? ''
+  return { firstName, lastName: parts.join(' ') }
+}
+
 function parseProgram(grid: Grid): ImportedDancer[] {
   const out: ImportedDancer[] = []
   let current = { category: '', group: '' }
+  // Some programs (and scotdance-splits with names combined) have three
+  // columns: number, full name, location. Spot it from the whole sheet:
+  // nothing past the third column, and the names mostly have spaces.
+  const rows = grid.filter((r) => isNumberCell(r[0] ?? ''))
+  const combined = rows.length > 0 && rows.every((r) => !r[3]) && rows.filter((r) => (r[1] ?? '').includes(' ')).length >= rows.length * 0.6
   grid.forEach((r, i) => {
     if (blank(r)) return
     const first = r[0] ?? ''
     if (isNumberCell(first)) {
-      out.push({ row: i + 1, number: first, firstName: r[1] ?? '', lastName: r[2] ?? '', location: r[3] ?? '', ...current })
+      const names = combined ? splitFullName(r[1] ?? '') : { firstName: r[1] ?? '', lastName: r[2] ?? '' }
+      out.push({ row: i + 1, number: first, ...names, location: (combined ? r[2] : r[3]) ?? '', ...current })
     } else if (first && r.slice(1).every((c) => !c) && !/^category\s*\/\s*age group$/i.test(first)) {
       current = splitGroupTitle(first)
     }
@@ -134,15 +147,13 @@ export function guessColumns(headers: string[]): Record<TableField, number> {
 export function parseTable(grid: Grid, headerRow: number, columns: Record<TableField, number>): ImportedDancer[] {
   const at = (r: string[], field: TableField) => (columns[field] >= 0 ? (r[columns[field]] ?? '') : '')
   const out: ImportedDancer[] = []
+  const header = grid[headerRow]?.join('|')
   grid.slice(headerRow + 1).forEach((r, i) => {
-    if (blank(r)) return
+    // Skip blanks, and headings repeated down the sheet (as in the template).
+    if (blank(r) || r.join('|') === header) return
     let firstName = at(r, 'firstName')
     let lastName = at(r, 'lastName')
-    if (!firstName && !lastName && at(r, 'fullName')) {
-      const parts = at(r, 'fullName').split(' ')
-      firstName = parts.shift() ?? ''
-      lastName = parts.join(' ')
-    }
+    if (!firstName && !lastName && at(r, 'fullName')) ({ firstName, lastName } = splitFullName(at(r, 'fullName')))
     let category = at(r, 'category')
     let group = at(r, 'group')
     if (!category && group) ({ category, group } = splitGroupTitle(group))
