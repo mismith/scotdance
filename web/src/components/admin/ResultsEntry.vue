@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Diamond, ListOrdered, Pencil, Search, Trophy } from '@lucide/vue'
+import { ChevronRight, Diamond, ListOrdered, Pencil, Search, Trophy } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import HelpTip from '@/components/admin/HelpTip.vue'
@@ -174,6 +174,29 @@ function chooseFix(dancerId: string) {
 const rowDimmed = (id: string) => placedIndex.value.has(id) || pointed.value.has(id)
 const rowDisabled = (id: string) => !canEdit.value || (tab.value === 'placings' ? pointed.value.has(id) : placedIndex.value.has(id))
 const singleOverall = computed(() => isOverall.value && placings.value.entries.length === 1)
+
+// What to do here, in a sentence.
+const instruction = computed(() => {
+  if (tab.value === 'points') return 'Tap each dancer who got a championship point. Tap again to take it away.'
+  if (isCallbacks.value) return 'Tap each dancer called back. Tap again to take them out.'
+  const from = placings.value.reverseFrom
+  return from
+    ? `Tap dancers from ${from}${getOrdinalSuffix(from)} place up to 1st, in the order they’re announced.`
+    : 'Tap dancers in the order they placed, starting with 1st. Tap again to take one out.'
+})
+
+// The next dance for this age group, so entry can carry straight on.
+const next = computed(() => {
+  const g = group.value
+  if (!g) return null
+  const overall = !!g.category?.name && !g.category.name.trim().toLowerCase().startsWith('primary')
+  const order = [
+    { id: CALLBACKS, label: 'Callbacks' },
+    ...m.groupDances(g.id).map((d) => ({ id: d.id, label: d.label })),
+    ...(overall ? [{ id: OVERALL, label: 'Overall' }] : []),
+  ]
+  return order[order.findIndex((d) => d.id === props.danceId) + 1] ?? null
+})
 </script>
 
 <template>
@@ -238,6 +261,7 @@ const singleOverall = computed(() => isOverall.value && placings.value.entries.l
           </template>
 
           <template v-else-if="candidates.length">
+            <p class="text-muted-foreground px-4 pt-3 pb-2 text-sm font-semibold">{{ instruction }}</p>
             <p v-if="placings.reverseFrom && tab === 'placings'" class="bg-blue-paper text-primary px-4 py-2.5 text-sm font-bold">
               Entering from {{ placings.reverseFrom }}{{ getOrdinalSuffix(placings.reverseFrom) }} place
             </p>
@@ -321,7 +345,12 @@ const singleOverall = computed(() => isOverall.value && placings.value.entries.l
       <!-- The placed order -->
       <section class="min-w-0 max-md:border-t-8 max-md:border-muted md:overflow-y-auto">
         <template v-if="tab === 'placings'">
-          <h2 class="text-muted-foreground px-4 pt-4 pb-1 text-sm font-bold md:sr-only">{{ isCallbacks ? 'Called back' : 'Placed' }}</h2>
+          <h2 class="text-muted-foreground flex items-center gap-1.5 px-4 pt-3 pb-2 text-sm font-bold">
+            {{ isCallbacks ? `Called back · ${placings.entries.length}` : 'Placed' }}
+            <HelpTip v-if="!isCallbacks" label="How the placed list works">
+              Drag the handle to change the order. Switch on TIE when a dancer shares the place of the dancer above. Tap a dancer to take them out.
+            </HelpTip>
+          </h2>
           <PlacedList
             v-if="placings.entries.length"
             :placings="placings"
@@ -362,7 +391,7 @@ const singleOverall = computed(() => isOverall.value && placings.value.entries.l
         </template>
 
         <template v-else>
-          <h2 class="text-muted-foreground px-4 pt-4 pb-1 text-sm font-bold md:sr-only">Championship points</h2>
+          <h2 class="text-muted-foreground px-4 pt-3 pb-2 text-sm font-bold">Championship points</h2>
           <ul v-if="pointedIds.length" class="divide-y">
             <li v-for="id in pointedIds" :key="id">
               <button
@@ -380,6 +409,17 @@ const singleOverall = computed(() => isOverall.value && placings.value.entries.l
           </ul>
           <EmptyState v-else :icon="Diamond" title="Championship points" description="Select dancers who didn’t quite place" />
         </template>
+
+        <!-- Carry on to the next dance without going back to the list -->
+        <div v-if="next && (placings.entries.length || markedNone)" class="border-t p-4">
+          <RouterLink
+            :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId, danceId: next.id } }"
+            replace
+            class="bg-primary text-primary-foreground flex h-12 items-center justify-center gap-1.5 rounded-xl px-4 text-base font-bold"
+          >
+            Next: {{ next.label }} <ChevronRight class="size-5" />
+          </RouterLink>
+        </div>
       </section>
     </div>
   </div>

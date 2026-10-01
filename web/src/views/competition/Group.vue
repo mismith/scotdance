@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { Clock, Hourglass, Trophy } from '@lucide/vue'
+import { Award, ChevronRight, Clock, Hourglass, Trophy } from '@lucide/vue'
 import MyDancerLine from '@/components/MyDancerLine.vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
@@ -10,6 +10,8 @@ import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import Medal from '@/components/Medal.vue'
 import NumberCard from '@/components/NumberCard.vue'
+import StaffDialog from '@/components/StaffDialog.vue'
+import { useMorph } from '@/lib/morph'
 import {
   findGroupDancers,
   findGroupDances,
@@ -18,7 +20,7 @@ import {
   getDanceResults,
 } from '@/lib/results'
 import { competitionPhase, scheduleIndex } from '@/lib/dancerDay'
-import { OVERALL_ID, groupHasOverall, type EnrichedDance, type EnrichedDancer } from '@/types/competition'
+import { OVERALL_ID, groupHasOverall, staffMemberName, type EnrichedDance, type EnrichedDancer } from '@/types/competition'
 
 const route = useRoute()
 const setHeader = injectInfoHeaderSetter()
@@ -32,14 +34,16 @@ const {
   points,
   schedule,
   platforms,
+  staff,
   loadDancers,
   loadResults,
   loadSchedule,
+  loadStaff,
 } = useCompetition()
 const { dayFor } = useCompetitionDays()
 const following = useFollowing()
 
-onMounted(() => Promise.all([loadDancers(), loadResults(), loadSchedule()]))
+onMounted(() => Promise.all([loadDancers(), loadResults(), loadSchedule(), loadStaff()]))
 
 const groupId = computed(() => String(route.params.groupId ?? ''))
 const group = computed(() => groups.value.find((g) => g.id === groupId.value) ?? null)
@@ -101,6 +105,21 @@ const sections = computed(() =>
     state: stateByDance.value.get(dance.id) ?? null,
   })),
 )
+
+// The trophy sponsor: a person under the competition's staff (tap for their
+// details), or a typed name on older competitions.
+const sponsor = computed(() => {
+  const value = group.value?.sponsor?.trim()
+  if (!value) return { name: '', member: null }
+  const member = staff.value.find((m) => m.id === value) ?? null
+  return { name: member ? staffMemberName(member) : value, member }
+})
+const sponsorOpen = ref(false)
+const sponsorSheet = useMorph()
+function openSponsor(e: MouseEvent) {
+  sponsorOpen.value = true
+  sponsorSheet.show(e)
+}
 
 function focusHash() {
   const match = route.hash.match(/^#dance-(.+)$/)
@@ -232,6 +251,22 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
           </template>
         </div>
 
+        <!-- Who sponsors the age group's trophy (under Overall, as before) -->
+        <component
+          :is="sponsor.member ? 'button' : 'div'"
+          v-if="s.dance.id === OVERALL_ID && sponsor.name"
+          :type="sponsor.member ? 'button' : undefined"
+          :class="['flex w-full items-center gap-3 border-t px-4 py-3 text-left', sponsor.member && 'hover:bg-accent']"
+          @click="sponsor.member && openSponsor($event)"
+        >
+          <Award class="text-primary size-5 shrink-0" />
+          <span class="min-w-0 flex-1">
+            <span class="block text-base font-semibold">{{ sponsor.name }}</span>
+            <span class="text-muted-foreground block text-sm">{{ !group.trophy ? 'Trophy sponsor' : /trophy/i.test(group.trophy) ? `${group.trophy} sponsor` : `${group.trophy} Trophy sponsor` }}</span>
+          </span>
+          <ChevronRight v-if="sponsor.member" class="text-muted-foreground size-5 shrink-0" />
+        </component>
+
         <div v-if="s.pointed.length" class="border-t px-4 py-3">
           <p class="text-sm font-bold">Championship points</p>
           <p class="text-muted-foreground text-sm">
@@ -240,5 +275,6 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
         </div>
       </section>
     </template>
+    <StaffDialog :member="sponsorOpen ? sponsor.member : null" :morph="sponsorSheet" @close="sponsorSheet.hide().then(() => (sponsorOpen = false))" />
   </article>
 </template>

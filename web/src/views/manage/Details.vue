@@ -138,7 +138,7 @@ async function deleteCompetition() {
 
 <template>
   <div class="mx-auto max-w-2xl space-y-10 p-4 pb-[calc(3rem+var(--safe-bottom))] md:p-8">
-    <h1 class="text-display">Details and publishing</h1>
+    <h1 class="text-display">Details</h1>
 
     <section class="space-y-4">
       <h2 class="text-heading">Basics</h2>

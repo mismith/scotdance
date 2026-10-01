@@ -16,7 +16,7 @@ export interface ManageSection {
 }
 
 export const MANAGE_STEPS: ManageSection[] = [
-  { id: 'details', route: 'manage.details', title: 'Details and publishing', icon: Info, blurb: 'Name, date, venue, links and who can see it' },
+  { id: 'details', route: 'manage.details', title: 'Details', icon: Info, blurb: 'Name, date, venue, links and who can see it' },
   { id: 'staff', route: 'manage.staff', title: 'Judges, pipers and sponsors', icon: Gavel, blurb: 'Who’s judging, piping, helping and supporting' },
   { id: 'dances', route: 'manage.dances', title: 'Dances', icon: Music, blurb: 'The dances performed, with their steps' },
   { id: 'categories', route: 'manage.categories', title: 'Categories', icon: Layers, blurb: 'Primary, Beginner, Premier and so on' },

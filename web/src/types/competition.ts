@@ -72,6 +72,10 @@ export interface Group {
   id: string
   name?: string
   categoryId?: string
+  /** The trophy's name, e.g. "Adeline Duncan Memorial". */
+  trophy?: string
+  /** Who sponsors it: a staff member's id, or (older competitions) a name. */
+  sponsor?: string
   _order?: number
 }
 
