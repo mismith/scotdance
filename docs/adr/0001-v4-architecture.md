@@ -1,6 +1,6 @@
 # ADR-0001: v4 architecture — Vue 3 consumer rewrite alongside Vue 2 admin
 
-Status: Accepted
+Status: Accepted; admin parts superseded by ADR-0004 (admin moves into the v4 app)
 Date: 2026-04-29
 
 ## Context

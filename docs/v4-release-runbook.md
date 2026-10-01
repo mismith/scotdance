@@ -32,8 +32,7 @@ ADR 0003 for the aggregates.
 2. `firebase deploy --only functions` (predeploy lints and builds).
    `RUNTIME_CONFIG` must hold `typesense.host` / `typesense.api_key` (already
    used by `searchDancers`, so it should exist).
-3. Backfills, from the `next` admin (Admin › Info › Aggregators, signed in as an
-   admin; run the old app locally from this branch if prod's admin predates it):
+3. Backfills, from next.scotdance.app/admin/tools (signed in as a system admin):
    1. `backfillDancerAggregates`, then `backfillDancerBackPointers`
    2. the same pair for venues, judges and pipers
    3. `reindexCompetitions`, `reindexJudges`, `reindexPipers` (Typesense, for `searchAll`)
@@ -52,15 +51,16 @@ glass tab bar, Back out of a competition, dark mode, large text.
 
 ## Phase 3: cutover (ADR 0001 checklist)
 
-- [ ] Hosting: `/admin/**` → old app (`www/`), everything else → `web/dist/`
-- [ ] Old app's router base `/admin`, asset paths updated
+- [ ] Hosting: the `production` target serves `web/dist` like `next` does (admin is in the app now, ADR 0004, so there's no `/admin/**` rewrite; old `#/` and `/competitions/:id/admin` links redirect in-app)
 - [x] `capacitor.config.json` `webDir`: `www` → `web/dist` (done on `next`); before a store build, `npm run build` in `web/` then `npx cap sync` (this also clears any live-reload URL)
 - [ ] Cache headers: HTML `no-cache`, hashed assets `immutable`
 - [ ] Rebuild and submit the iOS and Android apps (all plugins are already installed)
   - iOS uses Swift Package Manager now: open `ios/App/App.xcodeproj` (no workspace, no `pod install`)
   - The update prompt compares `web/package.json`'s version with `versions/ios` and `versions/android` in the database; `set-version.js` only bumps the root and native versions, so bump `web/package.json` to match
   - Smoke test on a device: splash hides, status bar follows dark mode, Android Back closes sheets, airplane mode opens the last saved data
-- [ ] "Manage competitions" in v4 opens `/admin`
+- [x] "Manage competitions" in v4 opens `/manage` in the app
+- [ ] Organiser dry run on next.scotdance.app: submit, approve (sends a real email), invite a second admin, import an Excel sheet, enter results on a phone
+- [ ] Google Maps key has the Places API enabled (venue search in Manage › Details)
 - [ ] Privacy page mentions the private colour picks
 
 Rollback: revert the hosting rewrites and `webDir`, redeploy hosting.
