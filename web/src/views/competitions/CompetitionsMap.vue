@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
-import { useRouter, type RouteLocationRaw } from 'vue-router'
+import { useRouter } from 'vue-router'
 import maplibregl, {
   type Map as MaplibreMap,
   type Marker as MaplibreMarker,
@@ -15,15 +15,12 @@ import { groupByVenue, type VenueGroup } from '@/lib/venues'
 const props = withDefaults(
   defineProps<{
     competitions: CompetitionListItem[]
-    /** Pin click destination. When omitted, falls back to venue.info (if the
-     *  comp carries a venueId back-pointer) or competition.info. */
-    linkTo?: (c: CompetitionListItem) => RouteLocationRaw
     /** Full-bleed mode (main competitions list). When false, the map is
      *  embedded in a content column (subtab map view) — controls drop their
      *  app-chrome insets and default to MapLibre's corner positions. */
     fullscreen?: boolean
   }>(),
-  { linkTo: undefined, fullscreen: true },
+  { fullscreen: true },
 )
 
 const favorites = useFavoritesStore()
@@ -88,8 +85,8 @@ function renderMarkers(): void {
 
   for (const f of features) {
     const [lng, lat] = f.geometry.coordinates
-    const props = f.properties
-    const key = props.cluster ? `c:${props.cluster_id}` : `p:${(props as PinProps).idx}`
+    const { properties } = f
+    const key = properties.cluster ? `c:${properties.cluster_id}` : `p:${properties.idx}`
     seen.add(key)
 
     if (markers.has(key)) continue
@@ -97,15 +94,15 @@ function renderMarkers(): void {
     const el = document.createElement('button')
     el.type = 'button'
 
-    if (props.cluster) {
+    if (properties.cluster) {
       el.className = 'map-cluster'
-      el.textContent = String(props.point_count_abbreviated)
+      el.textContent = String(properties.point_count_abbreviated)
       el.addEventListener('click', () => {
-        const zoom = sc.getClusterExpansionZoom(props.cluster_id)
+        const zoom = sc.getClusterExpansionZoom(properties.cluster_id)
         map.easeTo({ center: [lng, lat], zoom: Math.min(zoom, 18) })
       })
     } else {
-      const idx = (props as PinProps).idx
+      const idx = properties.idx
       const group = venueGroups.value[idx]
       const isFav = group.competitions.some((c) => favorites.isFavoriteCompetition(c.id))
       el.className = `map-pin ${isFav ? 'is-fav' : ''}`
@@ -113,13 +110,8 @@ function renderMarkers(): void {
       el.addEventListener('click', () => {
         const first = group.competitions[0]
         if (!first) return
-        // Caller-provided destination wins (e.g. dancer.results sends pins to
-        // competition.dancer). Otherwise: venues have first-class profiles, so
-        // prefer the venueId back-pointer when present; fall back to the comp.
-        if (props.linkTo) {
-          router.push(props.linkTo(first))
-          return
-        }
+        // Venues have first-class profiles, so prefer the venueId back-pointer
+        // when present; fall back to the competition.
         const venueId = group.competitions
           .map((c) => (c as { venueId?: string }).venueId)
           .find((id): id is string => !!id)
@@ -136,7 +128,7 @@ function renderMarkers(): void {
 
     const marker = new maplibregl.Marker({
       element: el,
-      anchor: props.cluster ? 'center' : 'bottom',
+      anchor: properties.cluster ? 'center' : 'bottom',
     })
       .setLngLat([lng, lat])
       .addTo(map)

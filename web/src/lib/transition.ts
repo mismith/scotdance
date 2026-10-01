@@ -8,26 +8,11 @@ interface ViewTransitionHandle {
 
 type UpdateCallback = () => void | Promise<void>
 
-interface NativeViewTransition {
-  ready: Promise<void>
-  finished: Promise<void>
-  updateCallbackDone: Promise<void>
-  skipTransition: () => void
-}
-
-interface DocumentWithViewTransition extends Document {
-  startViewTransition?: (
-    callback: UpdateCallback | { update: UpdateCallback; types?: string[] },
-  ) => NativeViewTransition
-}
-
 export function startViewTransition(
   callback: UpdateCallback = () => {},
   types: string[] = [],
 ): ViewTransitionHandle {
-  const doc = document as DocumentWithViewTransition
-
-  if (!doc.startViewTransition) {
+  if (!('startViewTransition' in document)) {
     const done = Promise.resolve(callback())
     return {
       captured: Promise.resolve(),
@@ -40,9 +25,9 @@ export function startViewTransition(
 
   const handle = {} as ViewTransitionHandle
   handle.captured = new Promise<void>((resolve) => {
-    let native: NativeViewTransition
+    let native: ViewTransition
     try {
-      native = doc.startViewTransition!({
+      native = document.startViewTransition({
         async update() {
           resolve()
           await callback()
@@ -51,7 +36,7 @@ export function startViewTransition(
       })
     } catch (error) {
       console.warn(error)
-      native = doc.startViewTransition!(async () => {
+      native = document.startViewTransition(async () => {
         resolve()
         await callback()
       })
