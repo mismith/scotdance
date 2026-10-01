@@ -72,6 +72,20 @@ const showCurrentPassword = ref(false)
 const showNewPassword = ref(false)
 const submitting = ref(false)
 const modalError = ref<string | null>(null)
+// An account without a password (made with Apple or Google in the v4 beta)
+// confirms it's them by setting one: offer the link.
+const needsPassword = computed(() => !auth.hasPassword)
+const passwordLinkSent = ref(false)
+async function sendPasswordLink() {
+  if (!me.email) return
+  modalError.value = null
+  try {
+    await auth.resetPassword(me.email)
+    passwordLinkSent.value = true
+  } catch {
+    modalError.value = 'That didn’t work. Check your connection and try again.'
+  }
+}
 
 function openModal(kind: Exclude<ModalKind, null>) {
   modal.value = kind
@@ -82,6 +96,7 @@ function openModal(kind: Exclude<ModalKind, null>) {
   showNewPassword.value = false
   submitting.value = false
   modalError.value = null
+  passwordLinkSent.value = false
   sheet.show()
 }
 
@@ -115,7 +130,9 @@ async function submitModal() {
       code === 'auth/invalid-credential' || code === 'auth/wrong-password'
         ? 'That password isn’t right. Check it and try again.'
         : code === 'auth/requires-recent-login'
-          ? 'For your security, sign out, sign back in, then try again.'
+          ? needsPassword.value
+            ? 'For your security, set a password with the link above, sign in with it, then try again.'
+            : 'For your security, sign out, sign back in, then try again.'
           : code === 'auth/email-already-in-use'
             ? 'That email already has an account.'
             : 'That didn’t work. Check your connection and try again.'
@@ -143,7 +160,6 @@ const submitDisabled = computed(() => {
         <div v-else class="bg-muted size-16 rounded-full" />
         <div class="min-w-0">
           <h1 class="text-display truncate">{{ displayName || 'Your account' }}</h1>
-          <p class="text-muted-foreground text-sm">Signed in with {{ auth.signInMethod }}</p>
         </div>
       </header>
 
@@ -232,16 +248,34 @@ const submitDisabled = computed(() => {
           </span>
         </label>
 
-        <label v-if="auth.hasPassword" class="block space-y-1.5">
-          <span class="text-[0.9375rem] font-bold">Your current password</span>
-          <span class="relative block">
-            <input v-model="currentPassword" :type="showCurrentPassword ? 'text' : 'password'" autocomplete="current-password" required class="bg-card border-strong focus:border-primary h-12 w-full rounded-xl border-2 pr-24 pl-3 text-base outline-none" />
-            <button type="button" class="text-primary absolute top-1/2 right-1 flex h-10 -translate-y-1/2 items-center gap-1 rounded-lg px-2 text-sm font-bold" @click="showCurrentPassword = !showCurrentPassword">
-              <component :is="showCurrentPassword ? EyeOff : Eye" class="size-4" /> {{ showCurrentPassword ? 'Hide' : 'Show' }}
-            </button>
-          </span>
-        </label>
-        <p v-else class="text-muted-foreground text-sm">You may be asked to sign in with {{ auth.signInMethod }} again to confirm.</p>
+        <div v-if="auth.hasPassword">
+          <label class="block space-y-1.5">
+            <span class="text-[0.9375rem] font-bold">Your current password</span>
+            <span class="relative block">
+              <input v-model="currentPassword" :type="showCurrentPassword ? 'text' : 'password'" autocomplete="current-password" required class="bg-card border-strong focus:border-primary h-12 w-full rounded-xl border-2 pr-24 pl-3 text-base outline-none" />
+              <button type="button" class="text-primary absolute top-1/2 right-1 flex h-10 -translate-y-1/2 items-center gap-1 rounded-lg px-2 text-sm font-bold" @click="showCurrentPassword = !showCurrentPassword">
+                <component :is="showCurrentPassword ? EyeOff : Eye" class="size-4" /> {{ showCurrentPassword ? 'Hide' : 'Show' }}
+              </button>
+            </span>
+          </label>
+          <!-- Accounts made with an emailed link can look like they have a password. -->
+          <button type="button" class="text-primary h-11 text-sm font-bold" @click="sendPasswordLink">
+            Forgot it, or never had one? Email me a link
+          </button>
+          <p v-if="passwordLinkSent" class="text-done-foreground text-sm font-semibold" role="status">
+            A link to set a password is on its way to {{ me.email }}.
+          </p>
+        </div>
+        <div v-else class="space-y-1">
+          <p class="text-muted-foreground text-sm">
+            To confirm it’s you, your account needs a password. Get a link to set one, sign in with it, then come back
+            here.
+          </p>
+          <button type="button" class="text-primary h-11 font-bold" @click="sendPasswordLink">Email me a link</button>
+          <p v-if="passwordLinkSent" class="text-done-foreground text-sm font-semibold" role="status">
+            A link is on its way to {{ me.email }}.
+          </p>
+        </div>
 
         <p v-if="modalError" class="text-destructive text-[0.9375rem] font-semibold" role="alert">{{ modalError }}</p>
 

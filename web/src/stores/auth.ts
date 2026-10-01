@@ -2,17 +2,9 @@ import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import {
   EmailAuthProvider,
-  getAdditionalUserInfo,
-  GoogleAuthProvider,
-  OAuthProvider,
-  isSignInWithEmailLink,
-  sendSignInLinkToEmail,
-  signInWithEmailLink,
-  signInWithPopup,
   createUserWithEmailAndPassword,
   deleteUser,
   reauthenticateWithCredential,
-  reauthenticateWithPopup,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
@@ -20,7 +12,7 @@ import {
   updatePassword,
   updateProfile,
 } from 'firebase/auth'
-import { ref as dbRef, remove, set, update } from 'firebase/database'
+import { ref as dbRef, set, update } from 'firebase/database'
 import { useCurrentUser } from 'vuefire'
 import { useMorph } from '@/lib/morph'
 import { auth, database } from '@/firebase'
@@ -29,7 +21,7 @@ type PostLoginAction = () => void | Promise<void>
 
 /** Why sign-in was asked for, so the sheet can say so ("Sign in to follow Emma"). */
 export interface LoginReason {
-  reason: 'follow' | 'favorite' | 'alerts' | 'account'
+  reason: 'follow' | 'favorite' | 'alerts' | 'account' | 'submit'
   name?: string
 }
 
@@ -41,6 +33,8 @@ function userPath(uid: string, child = '') {
 
 export const useAuthStore = defineStore('auth', () => {
   const user = useCurrentUser()
+  /** Whether a saved sign-in has been checked for yet (until then `user` is undefined). */
+  const authReady = computed(() => user.value !== undefined)
   const isSignedIn = computed(() => !!user.value)
   const uid = computed(() => user.value?.uid ?? null)
   const displayName = computed(() => user.value?.displayName ?? user.value?.email ?? null)
@@ -61,6 +55,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function closeLogin() {
+    // Closed without signing in: whatever asked for it (a Follow) is off.
+    if (!isSignedIn.value) pendingActions.value = []
     loginSheet.hide()
   }
 
@@ -102,60 +98,6 @@ export const useAuthStore = defineStore('auth', () => {
     await signInWithEmailAndPassword(auth, email, password)
   }
 
-  // Apple / Google via popup on the web. The native apps need the
-  // @capacitor-firebase/authentication plugin for these (popups don't open
-  // inside a WebView); until then they fall back to email.
-  async function signInWithProvider(provider: 'apple' | 'google') {
-    const p =
-      provider === 'google'
-        ? new GoogleAuthProvider()
-        : new OAuthProvider('apple.com')
-    if (provider === 'apple') (p as OAuthProvider).addScope('email')
-    const cred = await signInWithPopup(auth, p)
-    if (getAdditionalUserInfo(cred)?.isNewUser) markNew()
-  }
-
-  // Passwordless: email a one-time sign-in link. The address is remembered
-  // on this device so opening the link here needs no retyping.
-  const EMAIL_FOR_LINK = 'auth:emailForLink'
-  async function sendSignInLink(email: string) {
-    await sendSignInLinkToEmail(auth, email, {
-      url: `${window.location.origin}/?signin=link`,
-      handleCodeInApp: true,
-    })
-    try {
-      localStorage.setItem(EMAIL_FOR_LINK, email)
-    } catch {
-      /* private mode */
-    }
-  }
-
-  /** Call once on start-up: finishes an email-link sign-in if this is one. */
-  async function completeEmailLinkSignIn(): Promise<boolean> {
-    const href = window.location.href
-    if (!isSignInWithEmailLink(auth, href)) return false
-    let email: string | null = null
-    try {
-      email = localStorage.getItem(EMAIL_FOR_LINK)
-    } catch {
-      /* private mode */
-    }
-    if (!email) email = window.prompt('Confirm your email address to finish signing in') ?? null
-    if (!email) return false
-    const cred = await signInWithEmailLink(auth, email, href)
-    if (getAdditionalUserInfo(cred)?.isNewUser) markNew()
-    try {
-      localStorage.removeItem(EMAIL_FOR_LINK)
-    } catch {
-      /* private mode */
-    }
-    const url = new URL(href)
-    for (const k of ['apiKey', 'oobCode', 'mode', 'lang', 'signin', 'continueUrl'])
-      url.searchParams.delete(k)
-    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash)
-    return true
-  }
-
   async function registerWithEmail(email: string, password: string) {
     await createUserWithEmailAndPassword(auth, email, password)
     markNew()
@@ -169,29 +111,20 @@ export const useAuthStore = defineStore('auth', () => {
     await signOut(auth)
   }
 
-  // How this account signs in, for the Account page.
-  const providers = computed(() => user.value?.providerData.map((p) => p.providerId) ?? [])
-  const hasPassword = computed(() => providers.value.includes('password'))
-  const signInMethod = computed(() => {
-    if (providers.value.includes('apple.com')) return 'Apple'
-    if (providers.value.includes('google.com')) return 'Google'
-    if (hasPassword.value) return 'Email and password'
-    return 'Email link'
-  })
+  // A few v4 beta accounts were made with Apple or Google: no password. (Ones
+  // made with an emailed link look as if they have one.) The Account page
+  // offers them a link to set one.
+  const hasPassword = computed(() => user.value?.providerData.some((p) => p.providerId === 'password') ?? false)
 
-  // Sensitive changes need a recent sign-in: the password if there is one,
-  // otherwise a quick re-sign-in with Apple or Google. Email-link accounts
-  // just try; Firebase says so if they need to sign in again.
-  async function reauthenticate(currentPassword?: string) {
+  // Sensitive changes need a recent sign-in: with the password if there is
+  // one. Without one, just try; Firebase says so if it's been too long.
+  /** Returns whether they signed in again just now. */
+  async function reauthenticate(currentPassword?: string): Promise<boolean> {
     const u = auth.currentUser
     if (!u) throw new Error('Not signed in')
-    if (hasPassword.value && u.email) {
-      await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, currentPassword ?? ''))
-    } else if (providers.value.includes('google.com')) {
-      await reauthenticateWithPopup(u, new GoogleAuthProvider())
-    } else if (providers.value.includes('apple.com')) {
-      await reauthenticateWithPopup(u, new OAuthProvider('apple.com'))
-    }
+    if (!hasPassword.value || !u.email) return false
+    await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, currentPassword ?? ''))
+    return true
   }
 
   async function updateDisplayName(name: string) {
@@ -217,20 +150,33 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function deleteAccount(currentPassword?: string) {
-    await reauthenticate(currentPassword)
+    const fresh = await reauthenticate(currentPassword)
     const u = auth.currentUser
     if (!u) throw new Error('Not signed in')
+    // Firebase only deletes an account signed in to in the last few minutes.
+    // Without a re-sign-in just now, check that before wiping their data, so
+    // the data never goes while the account stays.
+    if (!fresh) {
+      const { authTime } = await u.getIdTokenResult()
+      if (Date.now() - Date.parse(authTime) > 4 * 60 * 1000) {
+        throw Object.assign(new Error('Sign in again first'), { code: 'auth/requires-recent-login' })
+      }
+    }
     const uid = u.uid
+    // Their data goes first, in one write, while they're still signed in:
+    // once the account is deleted the rules refuse these writes.
+    await update(dbRef(database, NAMESPACE), {
+      [`users/${uid}`]: null,
+      [`users:favorites/${uid}`]: null,
+      [`users:dancerColors/${uid}`]: null,
+      [`users:permissions/${uid}`]: null,
+    })
     await deleteUser(u)
-    await Promise.all([
-      remove(dbRef(database, `${NAMESPACE}/users/${uid}`)),
-      remove(dbRef(database, `${NAMESPACE}/users:favorites/${uid}`)),
-      remove(dbRef(database, `${NAMESPACE}/users:permissions/${uid}`)),
-    ])
   }
 
   return {
     user,
+    authReady,
     isSignedIn,
     uid,
     displayName,
@@ -240,15 +186,11 @@ export const useAuthStore = defineStore('auth', () => {
     loginReason,
     newAccount,
     hasPassword,
-    signInMethod,
     openLogin,
     closeLogin,
     enqueueAfterLogin,
     requireSignIn,
     signInWithEmail,
-    signInWithProvider,
-    sendSignInLink,
-    completeEmailLinkSignIn,
     registerWithEmail,
     resetPassword,
     signOut: signOutUser,

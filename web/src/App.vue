@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import GlobalBottomNav from '@/components/nav/GlobalBottomNav.vue'
@@ -16,7 +16,6 @@ import { buildTitle } from '@/composables/usePageTitle'
 import { useCrisp } from '@/composables/useCrisp'
 import { useMeStore } from '@/stores/me'
 import { useDisplayPrefs } from '@/composables/useDisplayPrefs'
-import { useAuthStore } from '@/stores/auth'
 
 // Default page title from route meta. Component-level usePageTitle calls
 // (e.g. entity layouts) stack on top and override; when they unmount Unhead
@@ -50,12 +49,6 @@ useRoles()
 
 // Placing alerts for followed dancers while the app is open.
 startLiveAlerts()
-
-// Finish a passwordless sign-in when the app is opened from the emailed link.
-const auth = useAuthStore()
-onMounted(() => {
-  auth.completeEmailLinkSignIn().catch((e) => console.warn('[auth] email link', e))
-})
 
 // Pass the signed-in user's email to Crisp so support has context. Lives
 // here (rather than inside useCrisp) so the composable stays decoupled
