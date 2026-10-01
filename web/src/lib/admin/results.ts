@@ -28,20 +28,33 @@ export function parsePlacings(raw: DancePlacing[] | false | null | undefined): P
   let rest = raw
   if (typeof raw[0] === 'string' && raw[0].startsWith(REVERSE)) {
     const n = Number.parseInt(raw[0].slice(REVERSE.length), 10)
-    reverseFrom = Number.isFinite(n) ? n : null
+    reverseFrom = n > 0 ? n : null
     rest = raw.slice(1)
   }
+  // Older data can have the first dancer "tied" with nobody: read it as untied.
   const entries = rest
-    .filter((e): e is string => typeof e === 'string' && e.length > 0)
-    .map((e) => (e.endsWith(TIE) ? { id: e.slice(0, -TIE.length), tie: true } : { id: e, tie: false }))
+    .filter((e): e is string => typeof e === 'string' && e.length > 0 && !e.startsWith(REVERSE))
+    .map((e, i) => (e.endsWith(TIE) ? { id: e.slice(0, -TIE.length), tie: i > 0 } : { id: e, tie: false }))
   return { reverseFrom, entries }
 }
 
-/** Back to the stored form. The edge entry can't be tied to nothing. */
+/**
+ * Back to the stored form. The edge entry can't be tied to nothing. As in the
+ * old admin, Championship mode is kept before anyone is placed ("reverse:6"
+ * alone), so it can be switched on first.
+ */
 export function serializePlacings({ reverseFrom, entries }: Placings): string[] | null {
-  if (!entries.length) return null
   const out = entries.map((e, i) => (e.tie && i > 0 ? `${e.id}${TIE}` : e.id))
-  return reverseFrom ? [`${REVERSE}${reverseFrom}`, ...out] : out
+  if (reverseFrom) return [`${REVERSE}${reverseFrom}`, ...out]
+  return out.length ? out : null
+}
+
+/** Take out entry `index`. If the first of a tie leaves, the next dancer starts it. */
+export function removeEntry(p: Placings, index: number): Placings {
+  const entries = p.entries.map((e) => ({ ...e }))
+  const [removed] = entries.splice(index, 1)
+  if (removed && !removed.tie && entries[index]?.tie) entries[index].tie = false
+  return { ...p, entries }
 }
 
 /** The place shown for entry `index` (same rules as the public pages). */
@@ -71,5 +84,5 @@ export type DanceState = 'done' | 'none' | 'todo'
 /** done: placings entered; none: marked "none placed"; todo: nothing yet. */
 export function danceState(raw: DancePlacing[] | false | null | undefined): DanceState {
   if (raw === false) return 'none'
-  return Array.isArray(raw) && raw.some((e) => typeof e === 'string' && !e.startsWith(REVERSE)) ? 'done' : 'todo'
+  return parsePlacings(raw).entries.length ? 'done' : 'todo'
 }

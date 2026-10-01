@@ -6,11 +6,13 @@ import { Check, ChevronRight, Inbox, LoaderCircle, Trash2 } from '@lucide/vue'
 import EmptyState from '@/components/EmptyState.vue'
 import MasterDetail from '@/components/admin/MasterDetail.vue'
 import TextField from '@/components/admin/TextField.vue'
+import VenueField from '@/components/admin/VenueField.vue'
 import { useSplit } from '@/composables/admin/useWide'
 import { dataRef } from '@/firebase'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError, write } from '@/lib/admin/write'
 import { formatLongDate, formatRelative, parseDate } from '@/lib/format'
+import { placesAvailable, type VenueFields } from '@/lib/maps'
 
 // Competitions organisers have submitted. Approving one creates the
 // competition (the server does that), gives the organiser access and
@@ -21,7 +23,7 @@ interface Submission {
   submitted?: string
   approved?: string
   competitionId?: string
-  competition?: Record<string, string | undefined>
+  competition?: Record<string, string | number | undefined>
   contact?: { name?: string; email?: string; message?: string }
 }
 
@@ -52,16 +54,26 @@ const FIELDS: Array<{ key: string; label: string; type?: 'date'; multiline?: boo
   { key: 'venue', label: 'Venue' },
   { key: 'address', label: 'Address' },
   { key: 'location', label: 'Town or city' },
-  { key: 'sobhd', label: 'RSOBHD number' },
+  { key: 'sobhd', label: 'Registration number' },
   { key: 'description', label: 'Description', multiline: true },
 ]
 const pad = (n: number) => String(n).padStart(2, '0')
-const dateInput = (v?: string) => {
+const dateInput = (v?: string | number) => {
   if (!v) return ''
   const d = parseDate(v)
   return Number.isNaN(d.getTime()) ? '' : `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 const save = (s: Submission, key: string) => (v: string | null) => write({ [`competitions:submissions/${s.id}/competition/${key}`]: v })
+// Picking the venue puts it on the map (and in "near me") once approved.
+async function pickVenue(s: Submission, { venue, address, location, ...place }: VenueFields) {
+  const fields = { ...(venue && { venue }), ...(address && { address }), ...(location && { location }), ...place }
+  try {
+    await write(Object.fromEntries(Object.entries(fields).map(([k, v]) => [`competitions:submissions/${s.id}/competition/${k}`, v])))
+  } catch (e) {
+    toast(friendlyError(e), { tone: 'error' })
+  }
+}
+const onMap = (s: Submission) => Number.isFinite(s.competition?.lat) && Number.isFinite(s.competition?.lng)
 
 const approving = ref(false)
 async function approve(s: Submission) {
@@ -138,16 +150,25 @@ async function remove(s: Submission) {
         <section class="space-y-4">
           <h3 class="text-heading">Competition</h3>
           <p v-if="!current.approved" class="text-muted-foreground text-sm">Tidy anything up before approving. Changes here are copied into the competition.</p>
-          <TextField
-            v-for="f in FIELDS"
-            :key="f.key"
-            :model-value="f.type === 'date' ? dateInput(current.competition?.[f.key]) : current.competition?.[f.key]"
-            :label="f.label"
-            :type="f.type ?? 'text'"
-            :multiline="f.multiline"
-            :disabled="!!current.approved"
-            :save="save(current, f.key)"
-          />
+          <template v-for="f in FIELDS" :key="f.key">
+            <VenueField
+              v-if="f.key === 'venue' && placesAvailable && !current.approved"
+              :model-value="String(current.competition?.venue ?? '')"
+              :save="save(current, 'venue')"
+              @pick="pickVenue(current, $event)"
+            />
+            <TextField
+              v-else
+              :model-value="f.type === 'date' ? dateInput(current.competition?.[f.key]) : current.competition?.[f.key]"
+              :label="f.label"
+              :type="f.type ?? 'text'"
+              :multiline="f.multiline"
+              :disabled="!!current.approved"
+              :save="save(current, f.key)"
+            />
+          </template>
+          <p v-if="onMap(current)" class="text-muted-foreground text-sm">On the map.</p>
+          <p v-else-if="placesAvailable && !current.approved" class="text-muted-foreground text-sm">Not on the map yet: choose the venue from the suggestions to add it.</p>
         </section>
 
         <section class="bg-card space-y-1 rounded-2xl border p-4">

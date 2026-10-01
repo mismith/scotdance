@@ -5,8 +5,8 @@ import { GripVertical, X } from '@lucide/vue'
 import { useBuilder } from './builder'
 import { ACTIVATION, payload, useDragHandle, type DragData } from './drag'
 
-// A draggable block: a dance, age group, judge or spacer. Its colour says
-// which, everywhere it appears (palette and schedule).
+// A draggable block: a dance, age group, judge or spacer. The colour of the
+// bar down its side says which, everywhere it appears (palette and schedule).
 
 const props = defineProps<{
   kind: 'dance' | 'group' | 'judge' | 'spacer'
@@ -32,12 +32,11 @@ const { isDragging } = makeDraggable(
   () => payload(props.data()),
 )
 
-const TONE = {
-  dance: 'bg-dance/80 text-dance-foreground hover:bg-dance border-dance-foreground/15',
-  group: 'bg-group/80 text-group-foreground hover:bg-group border-group-foreground/15',
-  judge: 'bg-judge/80 text-judge-foreground hover:bg-judge border-judge-foreground/15',
-  spacer:
-    'bg-group/10 text-group-foreground/80 dark:text-group hover:bg-group/25 border-dashed border-group-foreground/40 dark:border-group/50',
+const BAR = {
+  dance: 'bg-dance',
+  group: 'bg-group',
+  judge: 'bg-judge',
+  spacer: 'bg-group/40',
 }
 </script>
 
@@ -47,28 +46,41 @@ const TONE = {
     :data-chip="kind === 'spacer' ? 'group' : kind"
     :title="title ?? label"
     :class="[
-      'group/chip flex min-h-8 min-w-0 cursor-grab items-center rounded-lg border py-1 pr-1 pl-0.5 text-sm leading-tight font-bold select-none active:cursor-grabbing',
-      TONE[kind],
+      'group/chip has-[[data-grip]:focus-visible]:ring-ring hover:bg-accent flex min-h-8 min-w-0 cursor-grab items-center gap-0.5 rounded-lg border py-1 pr-1 pl-1 text-sm leading-tight font-semibold select-none active:cursor-grabbing has-[[data-grip]:focus-visible]:ring-2',
+      kind === 'spacer'
+        ? 'text-muted-foreground border-strong border-dashed'
+        : 'bg-background',
       isDragging && 'opacity-40',
     ]"
   >
     <span
-      data-grip
-      class="flex shrink-0 touch-none items-center self-stretch px-0.5 opacity-50 pointer-coarse:px-1.5"
+      :class="['w-1 shrink-0 self-stretch rounded-full', BAR[kind]]"
       aria-hidden="true"
+    />
+    <!-- Focus the grip and press Enter or Space to move it with the arrow keys. -->
+    <span
+      data-grip
+      :tabindex="b.readonly.value ? undefined : 0"
+      :role="b.readonly.value ? undefined : 'button'"
+      :aria-label="b.readonly.value ? undefined : `Move ${title ?? label}`"
+      :aria-hidden="b.readonly.value || undefined"
+      class="text-muted-foreground flex shrink-0 touch-none items-center self-stretch px-0.5 outline-none pointer-coarse:px-1.5"
     >
       <GripVertical class="size-3.5" />
     </span>
     <span class="min-w-0 flex-1 truncate"
       ><slot>{{ label }}</slot></span
     >
+    <!-- Like a tag in a field, its remove button is field-sized. -->
     <button
       v-if="removable && !b.readonly.value"
       type="button"
       :aria-label="`Remove ${title ?? label}`"
-      class="hover:bg-foreground/10 -my-1 ml-1 flex size-6 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/chip:opacity-60 hover:opacity-100! focus-visible:opacity-100 pointer-coarse:opacity-60"
+      class="text-muted-foreground hover:text-foreground hover:bg-foreground/10 -my-1 ml-0.5 flex size-7 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/chip:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
       @click.stop="emit('remove')"
       @pointerdown.stop
+      @keydown.enter.stop
+      @keydown.space.stop
     >
       <X class="size-3.5" />
     </button>

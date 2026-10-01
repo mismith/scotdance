@@ -1,0 +1,32 @@
+<script setup lang="ts">
+// The top of a Manage section, the same in each: its title (and how many),
+// its main actions beside that, then anything else underneath: other
+// actions, the switch to hide its tab, search.
+
+defineProps<{
+  title: string
+  /** Shown faintly after the title: how many, or how far along. */
+  count?: string | number | null
+  description?: string
+}>()
+</script>
+
+<template>
+  <header class="space-y-3">
+    <div class="space-y-1">
+      <div class="flex min-h-10 items-center gap-2">
+        <h1 class="text-title min-w-0 flex-1 truncate">
+          {{ title }}
+          <span
+            v-if="count != null && count !== ''"
+            class="text-muted-foreground text-base font-semibold tabular-nums"
+            >{{ count }}</span
+          >
+        </h1>
+        <slot name="actions" />
+      </div>
+      <p v-if="description" class="text-muted-foreground text-base">{{ description }}</p>
+    </div>
+    <slot />
+  </header>
+</template>

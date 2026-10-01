@@ -17,6 +17,8 @@ import { forgetCompetitionsList } from '@/composables/useCompetitions'
 import { newKey, write } from '@/lib/admin/write'
 import { at } from '@/lib/admin/collection'
 import { record, undo, type HistoryWriter } from '@/lib/admin/history'
+import { useAuthStore } from '@/stores/auth'
+import { useMeStore } from '@/stores/me'
 import {
   dancerFullName,
   danceFullName,
@@ -64,6 +66,8 @@ export interface RawInvite {
   expires?: string
   accepted?: string
   acceptedBy?: string
+  /** Set by the server when the invite email couldn't be sent. */
+  emailFailed?: string
   payload?: { email?: string }
 }
 
@@ -124,42 +128,49 @@ export function createManagedCompetition(competitionId: Ref<string>) {
   let offMeta: (() => void) | null = null
   let offData: (() => void) | null = null
 
-  watch(
-    competitionId,
-    (id) => {
-      offMeta?.()
-      offData?.()
-      competition.value = null
-      raw.value = {}
-      metaLoaded.value = false
-      dataLoaded.value = false
-      loadError.value = null
-      if (!id) return
-      offMeta = onValue(
-        dataRef(`competitions/${id}`),
-        (snap) => {
-          competition.value = (snap.val() as Competition | null) ?? null
-          metaLoaded.value = true
-        },
-        (e) => {
-          loadError.value = e
-          metaLoaded.value = true
-        },
-      )
-      offData = onValue(
-        dataRef(`competitions:data/${id}`),
-        (snap) => {
-          raw.value = (snap.val() as RawData | null) ?? {}
-          dataLoaded.value = true
-        },
-        (e) => {
-          loadError.value = e
-          dataLoaded.value = true
-        },
-      )
-    },
-    { immediate: true },
-  )
+  function subscribe(id: string) {
+    offMeta?.()
+    offData?.()
+    competition.value = null
+    raw.value = {}
+    metaLoaded.value = false
+    dataLoaded.value = false
+    loadError.value = null
+    if (!id) return
+    offMeta = onValue(
+      dataRef(`competitions/${id}`),
+      (snap) => {
+        competition.value = (snap.val() as Competition | null) ?? null
+        metaLoaded.value = true
+      },
+      (e) => {
+        loadError.value = e
+        metaLoaded.value = true
+      },
+    )
+    offData = onValue(
+      dataRef(`competitions:data/${id}`),
+      (snap) => {
+        raw.value = (snap.val() as RawData | null) ?? {}
+        dataLoaded.value = true
+      },
+      (e) => {
+        loadError.value = e
+        dataLoaded.value = true
+      },
+    )
+  }
+  watch(competitionId, subscribe, { immediate: true })
+
+  // Firebase drops a read it refused (an unpublished competition, opened
+  // before signing in) and never retries it, which would leave Manage
+  // looking empty. Read again once signing in or new access might allow it.
+  const auth = useAuthStore()
+  const me = useMeStore()
+  watch([() => auth.uid, () => me.hasCompetitionPerm(competitionId.value)], () => {
+    if (loadError.value) subscribe(competitionId.value)
+  })
+
   onScopeDispose(() => {
     offMeta?.()
     offData?.()
@@ -261,6 +272,8 @@ export function createManagedCompetition(competitionId: Ref<string>) {
   }
 
   async function commit(prefix: string, source: unknown, updates: Record<string, unknown>, label: string | null) {
+    // Nothing changed (e.g. a drag dropped where it started): no write, no Undo entry.
+    if (!Object.keys(updates).length) return 0
     const prefixed = Object.fromEntries(Object.entries(updates).map(([k, v]) => [`${prefix}${k}`, v]))
     const before = Object.fromEntries(Object.keys(updates).map((k) => [`${prefix}${k}`, at(source, k) ?? null]))
     await write(prefixed)

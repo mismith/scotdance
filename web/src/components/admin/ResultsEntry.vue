@@ -11,12 +11,14 @@ import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import { tapHaptic } from '@/lib/haptics'
 import { getOrdinalSuffix } from '@/lib/results'
+import { groupHasOverall, isPrimaryCategory } from '@/types/competition'
 import {
   CALLBACKS,
   OVERALL,
   isPlaceholderId,
   newPlaceholderId,
   parsePlacings,
+  removeEntry,
   serializePlacings,
   type Entry,
   type Placings,
@@ -52,6 +54,7 @@ watch(
   () => {
     tab.value = 'placings'
     pickingReverse.value = false
+    fixing.value = null
   },
 )
 
@@ -67,6 +70,9 @@ const placedIndex = computed(() => new Map(placings.value.entries.map((e, i) => 
 const pointsPath = computed(() => `points/${props.groupId}/${props.danceId}/combined`)
 const pointedIds = computed(() => m.points.value[props.groupId]?.[props.danceId]?.combined ?? [])
 const pointed = computed(() => new Set(pointedIds.value))
+// Primary has no championship points, as it has no overall. Any stored
+// anyway (by an older app) still show, so they can be taken away.
+const offersPoints = computed(() => !isPrimaryCategory(group.value?.category?.name) || pointedIds.value.length > 0)
 
 const who = (id: string) => (isPlaceholderId(id) ? '?' : (m.dancersById.value.get(id)?.num ?? '?'))
 
@@ -79,28 +85,20 @@ async function save(value: Placings | false | null, label: string) {
   }
 }
 
-function without(p: Placings, index: number): Placings {
-  const entries = p.entries.map((e) => ({ ...e }))
-  const [removed] = entries.splice(index, 1)
-  // If the first of a tie leaves, the next dancer starts it.
-  if (removed && !removed.tie && entries[index]?.tie) entries[index].tie = false
-  return { ...p, entries }
-}
-
 /** Tap a dancer: add them to the end, or take them out if already there. */
 function place(id: string) {
   if (!canEdit.value) return
   tapHaptic()
   const p = parsePlacings(rawNow())
   const i = p.entries.findIndex((e) => e.id === id)
-  if (i >= 0) void save(without(p, i), `Took out ${who(id)}`)
+  if (i >= 0) void save(removeEntry(p, i), `Took out ${who(id)}`)
   else void save({ ...p, entries: [...p.entries, { id, tie: false }] }, `Placed ${who(id)}`)
 }
 function remove(index: number) {
   const p = parsePlacings(rawNow())
   const id = p.entries[index]?.id
   if (id == null) return
-  void save(without(p, index), `Took out ${who(id)}`)
+  void save(removeEntry(p, index), `Took out ${who(id)}`)
 }
 function tie(index: number, on: boolean) {
   const p = parsePlacings(rawNow())
@@ -151,23 +149,25 @@ function setNone(on: boolean) {
 }
 
 // --- Choosing who a "?" was (optional: the "?" can also just be taken out)
-const fixing = ref<number | null>(null)
+const fixing = ref<string | null>(null)
 const fixQuery = ref('')
 const fixChoices = computed(() => {
   const q = fixQuery.value.trim().toLowerCase()
-  return candidates.value.filter((d) => !placedIndex.value.has(d.id) && (!q || d.num.startsWith(q) || d.label.toLowerCase().includes(q)))
+  // Not someone already placed, or given a point (they can't be both).
+  return candidates.value.filter((d) => !placedIndex.value.has(d.id) && !pointed.value.has(d.id) && (!q || d.num.startsWith(q) || d.label.toLowerCase().includes(q)))
 })
 function openFix(index: number) {
   fixQuery.value = ''
-  fixing.value = index
+  fixing.value = placings.value.entries[index]?.id ?? null
 }
 function chooseFix(dancerId: string) {
-  const index = fixing.value
+  const id = fixing.value
   fixing.value = null
-  if (index == null) return
+  // By id, not position: the list may have changed on another device since.
   const p = parsePlacings(rawNow())
-  if (!p.entries[index]) return
-  p.entries[index].id = dancerId
+  const entry = p.entries.find((e) => e.id === id)
+  if (!entry) return
+  entry.id = dancerId
   void save(p, `Replaced ? with ${who(dancerId)}`)
 }
 
@@ -189,13 +189,13 @@ const instruction = computed(() => {
 const next = computed(() => {
   const g = group.value
   if (!g) return null
-  const overall = !!g.category?.name && !g.category.name.trim().toLowerCase().startsWith('primary')
   const order = [
     { id: CALLBACKS, label: 'Callbacks' },
     ...m.groupDances(g.id).map((d) => ({ id: d.id, label: d.label })),
-    ...(overall ? [{ id: OVERALL, label: 'Overall' }] : []),
+    ...(groupHasOverall(g) ? [{ id: OVERALL, label: 'Overall' }] : []),
   ]
-  return order[order.findIndex((d) => d.id === props.danceId) + 1] ?? null
+  const i = order.findIndex((d) => d.id === props.danceId)
+  return i < 0 ? null : (order[i + 1] ?? null)
 })
 </script>
 
@@ -209,7 +209,7 @@ const next = computed(() => {
     </header>
 
     <!-- Placings / Points -->
-    <div v-if="!isCallbacks" class="flex border-b" role="tablist">
+    <div v-if="!isCallbacks && offersPoints" class="flex border-b" role="tablist">
       <button
         v-for="t in (['placings', 'points'] as const)"
         :key="t"

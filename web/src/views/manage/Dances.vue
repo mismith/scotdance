@@ -5,6 +5,7 @@ import SwitchField from '@/components/admin/SwitchField.vue'
 import { useManagedCompetition, type MDance } from '@/composables/admin/useManagedCompetition'
 import { danceFullName } from '@/types/competition'
 import type { CollectionSpec } from '@/lib/admin/collection'
+import { forEachScheduleDance } from '@/lib/admin/scheduleTree'
 
 const m = useManagedCompetition()
 
@@ -70,7 +71,18 @@ const spec: CollectionSpec<MDance> = {
     }
     for (const [gid, byDance] of Object.entries(m.points.value)) for (const id of ids) if (byDance?.[id]) updates[`points/${gid}/${id}`] = null
     for (const [gid, byDance] of Object.entries(m.draws.value)) for (const id of ids) if (byDance?.[id]) updates[`draws/${gid}/${id}`] = null
-    return { updates, warnings: withResults ? ['Its results will be deleted too.'] : [] }
+    // Its slots in the schedule go too (with who dances where in them).
+    let scheduled = false
+    forEachScheduleDance(m.schedule.value, (path, item) => {
+      if (item.danceId && ids.includes(item.danceId)) {
+        updates[path] = null
+        scheduled = true
+      }
+    })
+    const warnings: string[] = []
+    if (withResults) warnings.push(`${ids.length === 1 ? 'Its' : 'Their'} results will be deleted too.`)
+    if (scheduled) warnings.push(`Also removes ${ids.length === 1 ? 'it' : 'them'} from the schedule.`)
+    return { updates, warnings }
   },
   emptyHint: 'Add the dances performed. “Add common dances” has the usual ones with their steps.',
 }

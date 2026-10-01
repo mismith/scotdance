@@ -67,6 +67,12 @@ const current = computed(() => users.value.find((u) => u.id === uid.value) ?? nu
 const currentPerms = computed<Perms>(() => (uid.value ? (perms.value[uid.value] ?? {}) : {}))
 const managed = computed(() => Object.entries(currentPerms.value.competitions ?? {}).filter(([, on]) => on).map(([id]) => id))
 
+// The list is read once, so keep it in step with a rename here.
+const saveName = (id: string) => async (v: string | null) => {
+  await write({ [`users/${id}/displayName`]: v })
+  users.value = users.value.map((u) => (u.id === id ? { ...u, displayName: v || undefined } : u))
+}
+
 const ROLE_NAMES: Record<string, string> = { parent: 'Parent', dancer: 'Dancer', teacher: 'Teacher', organizer: 'Organiser', judge: 'Judge', piper: 'Piper' }
 
 async function setAdmin(on: boolean) {
@@ -113,7 +119,7 @@ function pick(id: string) {
   <MasterDetail :show-detail="!!uid">
     <template #list>
       <div class="bg-background sticky top-(--chrome-top) z-10 space-y-3 border-b p-4 md:top-0">
-        <h1 class="text-title">People <span class="text-muted-foreground text-base font-semibold tabular-nums">{{ users.length || '' }}</span></h1>
+        <h1 class="text-title">Users <span class="text-muted-foreground text-base font-semibold tabular-nums">{{ users.length || '' }}</span></h1>
         <label class="bg-card border-strong focus-within:border-primary flex h-11 items-center gap-2 rounded-xl border-2 px-3">
           <Search class="text-muted-foreground size-4 shrink-0" />
           <span class="sr-only">Search people</span>
@@ -122,7 +128,7 @@ function pick(id: string) {
         </label>
       </div>
       <div v-if="!loaded" class="space-y-2 p-4"><Skeleton v-for="i in 6" :key="i" class="h-14 w-full rounded-xl!" /></div>
-      <p v-else-if="loadError" class="text-destructive p-4 font-semibold">People couldn’t be loaded. Check your connection and reload.</p>
+      <p v-else-if="loadError" class="text-destructive p-4 font-semibold">Users couldn’t be loaded. Check your connection and reload.</p>
       <ul v-else class="divide-y">
         <li v-for="u in shown" :key="u.id">
           <RouterLink
@@ -132,7 +138,7 @@ function pick(id: string) {
           >
             <span class="min-w-0 flex-1">
               <span class="block truncate text-base font-semibold">{{ u.displayName || u.email || 'No name' }}</span>
-              <span class="text-muted-foreground block truncate text-sm">{{ u.email }}</span>
+              <span v-if="u.displayName && u.email" class="text-muted-foreground block truncate text-sm">{{ u.email }}</span>
             </span>
             <ShieldCheck v-if="perms[u.id]?.admin" class="text-primary size-5 shrink-0" aria-label="System admin" />
             <span v-else-if="Object.keys(perms[u.id]?.competitions ?? {}).length" class="text-muted-foreground text-sm font-semibold tabular-nums">{{ Object.keys(perms[u.id]?.competitions ?? {}).length }}</span>
@@ -149,12 +155,12 @@ function pick(id: string) {
       <div v-if="current" :key="current.id" class="mx-auto max-w-2xl space-y-8 p-4 pb-[calc(3rem+var(--safe-bottom))] md:p-8">
         <header class="space-y-1">
           <h2 class="text-display break-words">{{ current.displayName || current.email || 'No name' }}</h2>
-          <p class="text-muted-foreground text-base">{{ current.email }}</p>
+          <p v-if="current.displayName && current.email" class="text-muted-foreground text-base">{{ current.email }}</p>
           <p v-if="current.roles" class="text-muted-foreground text-sm">
             {{ Object.keys(current.roles).filter((r) => current!.roles![r]).map((r) => ROLE_NAMES[r] ?? r).join(', ') }}
           </p>
         </header>
-        <TextField :model-value="current.displayName" label="Name" :save="(v) => write({ [`users/${current!.id}/displayName`]: v })" />
+        <TextField :model-value="current.displayName" label="Name" :save="saveName(current.id)" />
 
         <section class="space-y-3">
           <h3 class="text-heading">Access</h3>

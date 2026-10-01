@@ -1,10 +1,17 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
+import { get, onValue } from 'firebase/database'
 import { MailPlus, ShieldCheck } from '@lucide/vue'
+import EmptyState from '@/components/EmptyState.vue'
+import SectionHeader from '@/components/admin/SectionHeader.vue'
 import { useManagedCompetition, type RawInvite, type WithId } from '@/composables/admin/useManagedCompetition'
+import { dataRef } from '@/firebase'
 import { confirm, toast } from '@/lib/admin/feedback'
+import { inviteStatus } from '@/lib/admin/invites'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import { formatRelative } from '@/lib/format'
+import { isNative } from '@/lib/native'
+import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 
 // Who can manage this competition. Invites are emailed by the server; the
@@ -12,14 +19,57 @@ import { useMeStore } from '@/stores/me'
 // their invite, which takes the access away again.
 
 const m = useManagedCompetition()
+const auth = useAuthStore()
 const me = useMeStore()
 
-const now = () => Date.now()
-const past = (iso?: string) => !!iso && new Date(iso).getTime() <= now()
 type Invite = WithId<RawInvite>
-const status = (i: Invite) => (past(i.accepted) ? 'accepted' : past(i.cancelled) ? 'cancelled' : past(i.expires) ? 'expired' : 'pending')
+const status = (i: Invite) => inviteStatus(i)
 
 const admins = computed(() => m.invites.value.filter((i) => status(i) === 'accepted'))
+
+// Everyone else who can manage it has no invite: whoever submitted it, or
+// someone a system admin added. Only system admins can look up who they are.
+const holders = ref<string[]>([])
+watch(
+  () => m.competitionId.value,
+  (id, _, onCleanup) => {
+    holders.value = []
+    const off = onValue(
+      dataRef(`competitions:permissions/${id}/users`),
+      (snap) => (holders.value = Object.entries(snap.val() ?? {}).filter(([, on]) => on === true).map(([uid]) => uid)),
+      () => (holders.value = []),
+    )
+    onCleanup(off)
+  },
+  { immediate: true },
+)
+const known = reactive<Record<string, string>>({})
+const submittedBy = ref<string | null>(null)
+watch(
+  [holders, () => me.isAdmin],
+  async ([uids, isAdmin]) => {
+    if (!isAdmin) return
+    try {
+      const sid = (m.competition.value as { submissionId?: string } | null)?.submissionId
+      const sub = sid ? (await get(dataRef(`competitions:submissions/${sid}`))).val() : null
+      submittedBy.value = sub?.submittedBy ?? null
+      if (sub?.submittedBy && sub.contact?.email) known[sub.submittedBy] = sub.contact.email
+      for (const uid of uids.filter((u) => !(u in known))) known[uid] = (await get(dataRef(`users/${uid}/email`))).val() ?? ''
+    } catch {
+      /* names are a nicety */
+    }
+  },
+  { immediate: true },
+)
+const others = computed(() =>
+  holders.value
+    .filter((uid) => !admins.value.some((i) => i.acceptedBy === uid))
+    .map((uid) => ({
+      uid,
+      email: uid === auth.uid ? me.email : known[uid] || null,
+      detail: uid === submittedBy.value ? 'Submitted the competition' : 'Organiser',
+    })),
+)
 const pending = computed(() => m.invites.value.filter((i) => status(i) !== 'accepted').sort((a, b) => (b.created ?? '').localeCompare(a.created ?? '')))
 
 const email = ref('')
@@ -52,7 +102,8 @@ async function invite() {
 
 async function resend(i: Invite) {
   try {
-    await m.writeData({ [`invites/${i.id}/created`]: new Date().toISOString(), [`invites/${i.id}/cancelled`]: null }, null)
+    // Clearing an accept the server turned down (or never finished) lets them accept again.
+    await m.writeData({ [`invites/${i.id}/created`]: new Date().toISOString(), [`invites/${i.id}/cancelled`]: null, [`invites/${i.id}/accepted`]: null }, null)
     toast(`Sent again to ${i.payload?.email}`)
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
@@ -74,9 +125,12 @@ async function removeInvite(i: Invite) {
   }
 }
 async function removeAdmin(i: Invite) {
+  const self = i.acceptedBy === auth.uid
   const ok = await confirm({
-    title: `Remove ${i.payload?.email ?? 'this admin'}?`,
-    message: 'They’ll no longer be able to manage this competition. You can invite them again later.',
+    title: self ? 'Remove yourself?' : `Remove ${i.payload?.email ?? 'this admin'}?`,
+    message: self
+      ? 'You’ll no longer be able to manage this competition, unless someone invites you again.'
+      : 'They’ll no longer be able to manage this competition. You can invite them again later.',
     confirmLabel: 'Remove',
     destructive: true,
   })
@@ -89,15 +143,28 @@ async function removeAdmin(i: Invite) {
   }
 }
 
+// For when the email doesn't arrive: the same link, to send another way.
+// The apps aren't on the web, so theirs is the emailed (#/) form.
+async function copyLink(i: Invite) {
+  const path = `/competitions/${m.competitionId.value}/invites/${i.id}`
+  try {
+    await navigator.clipboard.writeText(isNative ? `https://scotdance.app/#${path}` : `${location.origin}${path}`)
+    toast(`Link copied. Send it to ${i.payload?.email ?? 'them'} any way you like.`)
+  } catch {
+    toast('The link couldn’t be copied.', { tone: 'error' })
+  }
+}
+
 const when = (iso?: string) => (iso ? formatRelative(iso) : '')
 </script>
 
 <template>
   <div class="mx-auto max-w-2xl space-y-8 p-4 pb-[calc(3rem+var(--safe-bottom))] md:p-8">
-    <header class="space-y-1">
-      <h1 class="text-display">Admins</h1>
-      <p class="text-muted-foreground text-base">People who can change this competition: its details, dancers, schedule and results.</p>
-    </header>
+    <SectionHeader
+      title="Admins"
+      :count="others.length + admins.length || null"
+      description="People who can change this competition: its details, dancers, schedule and results."
+    />
 
     <form class="bg-card space-y-3 rounded-2xl border p-4 shadow-sm" novalidate @submit.prevent="invite">
       <label for="invite-email" class="block text-base font-bold">Invite someone</label>
@@ -122,11 +189,22 @@ const when = (iso?: string) => (iso ? formatRelative(iso) : '')
 
     <section class="space-y-3">
       <h2 class="text-heading">Admins</h2>
-      <ul v-if="admins.length" class="bg-card divide-y rounded-2xl border shadow-sm">
+      <ul v-if="others.length || admins.length" class="bg-card divide-y rounded-2xl border shadow-sm">
+        <li v-for="o in others" :key="o.uid" class="flex min-h-15 items-center gap-3 px-4 py-2">
+          <ShieldCheck class="text-primary size-5 shrink-0" />
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-base font-semibold">
+              {{ o.email ?? (o.uid === auth.uid ? 'You' : 'Another organiser') }}<span v-if="o.email && o.uid === auth.uid" class="text-muted-foreground font-normal"> (you)</span>
+            </span>
+            <span class="text-muted-foreground block text-sm">{{ o.detail }}</span>
+          </span>
+        </li>
         <li v-for="i in admins" :key="i.id" class="flex min-h-15 items-center gap-3 px-4 py-2">
           <ShieldCheck class="text-primary size-5 shrink-0" />
           <span class="min-w-0 flex-1">
-            <span class="block truncate text-base font-semibold">{{ i.payload?.email ?? 'Unknown' }}</span>
+            <span class="block truncate text-base font-semibold">
+              {{ i.payload?.email ?? 'Unknown' }}<span v-if="i.acceptedBy === auth.uid" class="text-muted-foreground font-normal"> (you)</span>
+            </span>
             <span class="text-muted-foreground block text-sm">Accepted {{ when(i.accepted) }}</span>
           </span>
           <button type="button" :disabled="!canEdit" class="text-destructive hover:bg-destructive/10 h-10 rounded-xl px-3 text-sm font-bold disabled:opacity-50" @click="removeAdmin(i)">
@@ -134,9 +212,8 @@ const when = (iso?: string) => (iso ? formatRelative(iso) : '')
           </button>
         </li>
       </ul>
-      <p v-else class="text-muted-foreground text-base">
-        Nobody else yet.{{ me.isAdmin ? ' System admins can always manage every competition.' : '' }}
-      </p>
+      <EmptyState v-else :icon="ShieldCheck" title="No admins yet" description="Invite someone above to help manage it." />
+      <p v-if="me.isAdmin" class="text-muted-foreground text-sm">System admins can always manage every competition.</p>
     </section>
 
     <section v-if="pending.length" class="space-y-3">
@@ -145,11 +222,17 @@ const when = (iso?: string) => (iso ? formatRelative(iso) : '')
         <li v-for="i in pending" :key="i.id" class="flex flex-wrap items-center gap-2 px-4 py-3">
           <span class="min-w-0 flex-1">
             <span class="block truncate text-base font-semibold">{{ i.payload?.email ?? 'Unknown' }}</span>
-            <span class="text-muted-foreground block text-sm">
-              {{ status(i) === 'cancelled' ? `Cancelled ${when(i.cancelled)}` : status(i) === 'expired' ? 'Expired' : `Sent ${when(i.created)}` }}
+            <span v-if="status(i) === 'pending' && i.emailFailed" class="text-destructive block text-sm font-semibold">
+              The email didn’t go out. Copy the link and send it yourself.
+            </span>
+            <span v-else class="text-muted-foreground block text-sm">
+              {{ status(i) === 'cancelled' ? `Cancelled ${when(i.cancelled)}` : status(i) === 'expired' ? 'Expired' : status(i) === 'accepting' ? 'Accepting…' : `Sent ${when(i.created)}` }}
             </span>
           </span>
-          <span class="flex gap-1">
+          <span class="flex flex-wrap gap-1">
+            <button v-if="status(i) === 'pending'" type="button" class="hover:bg-accent h-10 rounded-xl border px-3 text-sm font-bold" @click="copyLink(i)">
+              Copy link
+            </button>
             <button type="button" :disabled="!canEdit" class="hover:bg-accent h-10 rounded-xl border px-3 text-sm font-bold disabled:opacity-50" @click="resend(i)">
               {{ status(i) === 'pending' ? 'Resend' : 'Send again' }}
             </button>

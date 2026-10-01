@@ -4,6 +4,7 @@ import CollectionEditor from '@/components/admin/CollectionEditor.vue'
 import { useManagedCompetition, type MStaff } from '@/composables/admin/useManagedCompetition'
 import type { CollectionSpec } from '@/lib/admin/collection'
 import { forEachScheduleDance } from '@/lib/admin/scheduleTree'
+import { idList } from '@/lib/schedule'
 
 const m = useManagedCompetition()
 
@@ -32,13 +33,19 @@ const spec: CollectionSpec<MStaff> = {
     const updates: Record<string, unknown> = {}
     forEachScheduleDance(m.schedule.value, (path, item) => {
       for (const [pid, p] of Object.entries(item.platforms ?? {})) {
-        const judges = p?.orderedJudgeIds ?? []
+        const judges = idList(p?.orderedJudgeIds)
         const kept = judges.filter((j) => !ids.includes(j))
         if (kept.length !== judges.length) updates[`${path}/platforms/${pid}/orderedJudgeIds`] = kept.length ? kept : null
       }
     })
     const n = Object.keys(updates).length
-    return { updates, warnings: n ? [`They’re judging in ${n} ${n === 1 ? 'part' : 'parts'} of the schedule and will be taken off.`] : [] }
+    // And off any trophy they sponsor (stored by id), or its sponsor line would show the id.
+    const trophies = m.groups.value.filter((g) => g.sponsor && ids.includes(g.sponsor))
+    for (const g of trophies) updates[`groups/${g.id}/sponsor`] = null
+    const warnings = []
+    if (n) warnings.push(`They’re judging in ${n} ${n === 1 ? 'part' : 'parts'} of the schedule and will be taken off.`)
+    if (trophies.length) warnings.push(`They sponsor ${trophies.length === 1 ? 'a trophy' : `${trophies.length} trophies`}, which will show no sponsor.`)
+    return { updates, warnings }
   },
   searchText: (s) => [s.type, s.location].join(' '),
   emptyHint: 'Add the judges, pipers, volunteers and sponsors to credit them on the competition page.',

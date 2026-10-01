@@ -1,35 +1,72 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { DnDProvider } from '@vue-dnd-kit/core'
-import { CalendarClock } from '@lucide/vue'
+import { CalendarClock, Trash2 } from '@lucide/vue'
 import EmptyState from '@/components/EmptyState.vue'
-import SwitchField from '@/components/admin/SwitchField.vue'
+import HideTabSwitch from '@/components/admin/HideTabSwitch.vue'
+import SectionHeader from '@/components/admin/SectionHeader.vue'
 import BuilderPalette from '@/components/admin/schedule/BuilderPalette.vue'
+import InlineEdit from '@/components/admin/schedule/InlineEdit.vue'
 import ScheduleGrid from '@/components/admin/schedule/ScheduleGrid.vue'
-import { provideBuilder } from '@/components/admin/schedule/builder'
+import { isoDate, provideBuilder } from '@/components/admin/schedule/builder'
+import { useHideTab } from '@/composables/admin/useHideTab'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
-import { confirm, toast } from '@/lib/admin/feedback'
-import { formatWeekday } from '@/lib/format'
+import { confirm } from '@/lib/admin/feedback'
+import { canEdit } from '@/lib/admin/write'
+import { dayLabel } from '@/lib/schedule'
 
 // Manage › Schedule: drag dances, age groups and judges into a grid of
 // sessions, events and platforms.
 
 const route = useRoute()
+const router = useRouter()
 const m = useManagedCompetition()
+const hideTab = useHideTab('schedule')
 const b = provideBuilder(
   m,
   computed(() => (route.params.dayId ? String(route.params.dayId) : undefined)),
 )
 
-// Days are kept for competitions that already have several; new schedules
-// use one, unnamed and unseen.
+// Most competitions have one day, kept out of sight. Adding another (under
+// the grid) brings tabs to switch days, and a row to name, date or delete
+// the one showing.
 const dayTabs = computed(() =>
-  b.days.value.map(([id, d], i) => ({
-    id,
-    label: d.name?.trim() || formatWeekday(d.date) || `Day ${i + 1}`,
-  })),
+  b.days.value.map(([id, d], i) => ({ id, label: dayLabel(d, i) })),
 )
+const day = computed(() => {
+  const found = b.days.value.find(([id]) => id === b.dayId.value)
+  return found && { id: found[0], ...found[1], label: b.dayName(found[0]) }
+})
+const showDay = (dayId?: string) =>
+  router.replace({
+    name: 'manage.schedule',
+    params: { competitionId: m.competitionId.value, dayId },
+  })
+
+function renameDay(name: string) {
+  if (day.value) void b.renameDay(day.value.id, name)
+}
+function setDayDate(e: Event) {
+  if (day.value) void b.setDayDate(day.value.id, (e.target as HTMLInputElement).value)
+}
+async function removeDay() {
+  if (!day.value) return
+  const { id, label } = day.value
+  const sessions = Object.keys(day.value.blocks ?? {}).length
+  if (
+    sessions &&
+    !(await confirm({
+      title: `Delete ${label}?`,
+      message: `Its ${sessions === 1 ? 'session goes' : `${sessions} sessions go`} too. You can undo this straight after.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    }))
+  )
+    return
+  void showDay(undefined)
+  void b.removeDay(id)
+}
 
 const missing = computed(() =>
   [
@@ -38,44 +75,25 @@ const missing = computed(() =>
     !m.groups.value.length && { route: 'manage.groups', label: 'age groups' },
   ].filter((x): x is { route: string; label: string } => !!x),
 )
-
-async function setHidden(hidden: boolean) {
-  if (hidden) {
-    const hasAny = b.days.value.length > 0
-    const ok = await confirm({
-      title: 'Hide the Schedule tab?',
-      message: hasAny
-        ? 'The schedule built so far is deleted, and the tab disappears from the competition page.'
-        : 'The tab disappears from the competition page.',
-      confirmLabel: 'Hide schedule',
-      destructive: hasAny,
-    })
-    if (!ok) return
-    const change = await m.writeData({ schedule: false }, 'Hid the Schedule tab')
-    toast('Schedule tab hidden', {
-      action: { label: 'Undo', run: () => m.undoChange(change) },
-    })
-  } else {
-    await m.writeData({ schedule: null }, 'Showed the Schedule tab')
-  }
-}
 </script>
 
 <template>
-  <div v-if="m.scheduleHidden.value" class="mx-auto max-w-2xl space-y-6 p-4 md:p-8">
+  <div v-if="hideTab.hidden.value" class="p-4 md:p-8">
+    <SectionHeader title="Schedule" />
     <EmptyState
       :icon="CalendarClock"
       title="The schedule is hidden"
-      description="This competition doesn’t show a schedule. Turn the tab back on to build one."
-    />
-    <div class="bg-card rounded-2xl border px-4 py-2">
-      <SwitchField
-        :model-value="true"
-        label="Hide the Schedule tab"
-        description="For competitions that won’t share a schedule here."
-        :save="setHidden"
-      />
-    </div>
+      description="The competition page has no Schedule tab."
+    >
+      <button
+        type="button"
+        :disabled="!canEdit"
+        class="bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50"
+        @click="hideTab.show()"
+      >
+        Show the Schedule tab
+      </button>
+    </EmptyState>
   </div>
 
   <div
@@ -84,23 +102,19 @@ async function setHidden(hidden: boolean) {
   >
     <DnDProvider preview-to="body">
       <aside
-        class="max-md:bg-card shrink-0 overflow-y-auto overscroll-contain p-4 max-md:max-h-[40dvh] max-md:border-b md:w-60 md:border-r"
+        class="bg-card shrink-0 overflow-y-auto overscroll-contain p-4 max-md:max-h-[40dvh] max-md:border-b md:w-68 md:border-r"
       >
+        <SectionHeader title="Schedule" class="mb-6">
+          <HideTabSwitch v-if="b.days.value.length" tab="schedule" />
+        </SectionHeader>
         <BuilderPalette />
-        <div class="mt-6 border-t pt-1">
-          <SwitchField
-            :model-value="false"
-            label="Hide the Schedule tab"
-            description="For competitions that won’t share a schedule here."
-            :save="setHidden"
-          />
-        </div>
       </aside>
 
       <div class="flex min-h-0 min-w-0 flex-1 flex-col">
+        <!-- Days, as tabs like those in results entry -->
         <nav
           v-if="dayTabs.length > 1"
-          class="flex gap-1 overflow-x-auto border-b px-4 py-2"
+          class="flex shrink-0 overflow-x-auto border-b px-2"
           aria-label="Days"
         >
           <RouterLink
@@ -113,15 +127,47 @@ async function setHidden(hidden: boolean) {
             replace
             :aria-current="d.id === b.dayId.value ? 'page' : undefined"
             :class="[
-              'flex h-9 shrink-0 items-center rounded-full px-4 text-[0.9375rem] font-bold',
+              'flex h-12 shrink-0 items-center border-b-2 px-3 text-[0.9375rem] font-bold',
               d.id === b.dayId.value
-                ? 'bg-primary text-primary-foreground'
-                : 'hover:bg-accent',
+                ? 'border-primary text-primary'
+                : 'text-muted-foreground hover:text-foreground border-transparent',
             ]"
           >
             {{ d.label }}
           </RouterLink>
         </nav>
+        <div
+          v-if="dayTabs.length > 1 && day"
+          :key="day.id"
+          class="group/day flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-3"
+        >
+          <h2 class="text-heading min-w-0">
+            <InlineEdit
+              :model-value="day.name ?? ''"
+              :placeholder="day.label"
+              label="Day name"
+              :readonly="b.readonly.value"
+              @update:model-value="renameDay"
+            />
+          </h2>
+          <input
+            type="date"
+            :value="isoDate(day.date)"
+            :aria-label="`Date of ${day.label}`"
+            :disabled="b.readonly.value"
+            class="bg-card border-strong focus:border-primary h-11 rounded-xl border-2 px-3 text-base outline-none disabled:opacity-60"
+            @change="setDayDate"
+          />
+          <button
+            v-if="!b.readonly.value"
+            type="button"
+            :aria-label="`Delete ${day.label}`"
+            class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-auto flex size-11 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/day:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
+            @click="removeDay"
+          >
+            <Trash2 class="size-4" />
+          </button>
+        </div>
         <p
           v-if="missing.length"
           class="bg-next text-next-foreground mx-4 mt-3 rounded-xl px-4 py-2.5 text-sm"

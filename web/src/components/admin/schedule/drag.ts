@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, onScopeDispose, watch, type Ref } from 'vue'
 import { useDnDProvider } from '@vue-dnd-kit/core'
 import { useMediaQuery } from '@vueuse/core'
 import type { CellLocation, EventLocation } from './builder'
@@ -71,6 +71,36 @@ export function useDragType() {
   const pointer = computed(() => provider.pointer.value?.current)
 
   return { provider, activeDragGroup, activeDragPayload, pointer }
+}
+
+/**
+ * Scroll `el` while something is dragged near its edges, faster nearer the
+ * edge. (The drag kit's own auto-scroll only runs while the container is
+ * itself the drop target; here the targets are inside it, so it never did,
+ * and on a phone nothing below the fold could be reached.)
+ */
+export function useEdgeScroll(el: Ref<HTMLElement | null>, edge = 48, speed = 16) {
+  const provider = useDnDProvider()
+  let frame = 0
+  function step() {
+    const box = el.value?.getBoundingClientRect()
+    const p = provider.pointer.value?.current
+    if (el.value && box && p && p.x >= box.left && p.x <= box.right && p.y >= box.top && p.y <= box.bottom) {
+      const by = (near: number) => (near < edge ? Math.ceil(((edge - near) / edge) * speed) : 0)
+      const dy = by(box.bottom - p.y) - by(p.y - box.top)
+      const dx = by(box.right - p.x) - by(p.x - box.left)
+      if (dx || dy) el.value.scrollBy(dx, dy)
+    }
+    frame = requestAnimationFrame(step)
+  }
+  watch(
+    () => provider.state.value === 'dragging',
+    (dragging) => {
+      cancelAnimationFrame(frame)
+      if (dragging) frame = requestAnimationFrame(step)
+    },
+  )
+  onScopeDispose(() => cancelAnimationFrame(frame))
 }
 
 /** Where in a list of elements the pointer would insert (by their midpoints). */

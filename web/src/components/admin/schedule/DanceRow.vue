@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { makeDraggable } from '@vue-dnd-kit/core'
-import { GripVertical, X } from '@lucide/vue'
+import { GripVertical, Trash2 } from '@lucide/vue'
 import BuilderChip from './BuilderChip.vue'
 import InlineEdit from './InlineEdit.vue'
 import PlatformCell from './PlatformCell.vue'
@@ -69,7 +69,7 @@ async function remove() {
   <div
     v-if="!row.danceId"
     data-row
-    class="group/row col-span-full border-t first:border-t-0"
+    class="group/row col-span-full border-t contain-inline-size first:border-t-0"
   >
     <div
       ref="rowEl"
@@ -80,8 +80,11 @@ async function remove() {
     >
       <span
         data-grip
-        class="text-muted-foreground flex shrink-0 touch-none self-stretch pt-0.5 pointer-coarse:px-1.5"
-        aria-hidden="true"
+        :tabindex="b.readonly.value ? undefined : 0"
+        :role="b.readonly.value ? undefined : 'button'"
+        :aria-label="b.readonly.value ? undefined : `Move ${row.name || 'row'}`"
+        :aria-hidden="b.readonly.value || undefined"
+        class="text-muted-foreground focus-visible:ring-ring flex shrink-0 touch-none self-stretch rounded-sm pt-0.5 outline-none focus-visible:ring-2 pointer-coarse:px-1.5"
         ><GripVertical class="size-3.5"
       /></span>
       <div class="min-w-0 flex-1 space-y-1">
@@ -112,10 +115,12 @@ async function remove() {
         v-if="!b.readonly.value"
         type="button"
         :aria-label="`Delete ${row.name || 'row'}`"
-        class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 -my-1 flex size-7 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
+        class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 -my-2 flex size-11 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
         @click="remove"
+        @keydown.enter.stop
+        @keydown.space.stop
       >
-        <X class="size-4" />
+        <Trash2 class="size-4" />
       </button>
     </div>
   </div>
@@ -135,7 +140,9 @@ async function remove() {
         @remove="remove"
       >
         {{ b.danceName(row.danceId)
-        }}<span v-if="steps" class="ml-1 font-normal opacity-60">({{ steps }})</span>
+        }}<span v-if="steps" class="text-muted-foreground ml-1 font-normal"
+          >({{ steps }})</span
+        >
       </BuilderChip>
     </div>
     <PlatformCell

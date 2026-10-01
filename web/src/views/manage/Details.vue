@@ -1,18 +1,22 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { FileUp, LoaderCircle, Plus, Trash2 } from '@lucide/vue'
+import { ExternalLink, FileUp, LoaderCircle, Plus, Trash2 } from '@lucide/vue'
 import TextField from '@/components/admin/TextField.vue'
 import ImageField from '@/components/admin/ImageField.vue'
 import SwitchField from '@/components/admin/SwitchField.vue'
-import VenueSearch from '@/components/admin/VenueSearch.vue'
+import VenueField from '@/components/admin/VenueField.vue'
+import DetailsPreview from '@/components/admin/DetailsPreview.vue'
 import MapPreview from '@/components/MapPreview.vue'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
-import { compareKeys } from '@/lib/competitionData'
+import { compareKeys, forgetCompetition } from '@/lib/competitionData'
+import { forgetCompetitionMeta } from '@/lib/competitionMeta'
+import { forgetCompetitionsList } from '@/composables/useCompetitions'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError, write } from '@/lib/admin/write'
+import { LINK_PROBLEM, looksLikeLink } from '@/lib/admin/collection'
 import { uploadLinkFile } from '@/lib/admin/upload'
-import { parseDate } from '@/lib/format'
+import { formatExternalURL, parseDate } from '@/lib/format'
 import { placesAvailable, type VenueFields } from '@/lib/maps'
 
 const m = useManagedCompetition()
@@ -35,7 +39,7 @@ function dateTimeInput(value: unknown) {
 const FIELD_NAMES: Record<string, string> = {
   name: 'Name',
   date: 'Date',
-  sobhd: 'RSOBHD number',
+  sobhd: 'Registration number',
   description: 'Description',
   image: 'Image',
   venue: 'Venue',
@@ -57,6 +61,19 @@ async function pickVenue(fields: VenueFields) {
   }
 }
 
+// --- Registration, and links and files: one "Add" button each until used,
+// so a new competition's page isn't a wall of empty fields.
+const showRegistration = ref(false)
+const registrationShown = computed(
+  () => showRegistration.value || !!(c.value.registrationURL || c.value.registrationStart || c.value.registrationEnd),
+)
+const registrationEl = ref<HTMLElement | null>(null)
+async function openRegistration() {
+  showRegistration.value = true
+  await nextTick()
+  registrationEl.value?.querySelector('input')?.focus()
+}
+
 // --- Links and files
 interface LinkRow {
   id: string
@@ -76,6 +93,13 @@ const newName = ref('')
 const newUrl = ref('')
 const uploading = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
+const addingLink = ref(false)
+const linkFormEl = ref<HTMLFormElement | null>(null)
+async function openLinkForm() {
+  addingLink.value = true
+  await nextTick()
+  linkFormEl.value?.querySelector('input')?.focus()
+}
 
 async function addLink(url?: string, name?: string) {
   const u = (url ?? newUrl.value).trim()
@@ -88,6 +112,21 @@ async function addLink(url?: string, name?: string) {
     newUrl.value = ''
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
+  }
+}
+// The add form: one link per tap, and only something that looks like a link.
+const linkError = ref<string | null>(null)
+let submittingLink = false
+async function submitLink() {
+  const u = newUrl.value.trim()
+  if (!u || submittingLink) return
+  linkError.value = looksLikeLink(u) ? null : LINK_PROBLEM
+  if (linkError.value) return
+  submittingLink = true
+  try {
+    await addLink()
+  } finally {
+    submittingLink = false
   }
 }
 async function onFile(e: Event) {
@@ -127,6 +166,10 @@ async function deleteCompetition() {
   const id = m.competitionId.value
   try {
     await write({ [`competitions/${id}`]: null, [`competitions:data/${id}`]: null })
+    // Lists read earlier in this visit mustn't keep showing it.
+    forgetCompetition(id)
+    forgetCompetitionMeta(id)
+    forgetCompetitionsList()
     toast(`Deleted ${name}`)
     await router.replace({ name: 'manage.competitions' })
   } catch (e) {
@@ -137,159 +180,201 @@ async function deleteCompetition() {
 </script>
 
 <template>
-  <div class="mx-auto max-w-2xl space-y-10 p-4 pb-[calc(3rem+var(--safe-bottom))] md:p-8">
-    <h1 class="text-display">Details</h1>
+  <!-- Left-aligned like the other Manage screens; wide screens show the preview beside it. -->
+  <div class="xl:grid xl:h-full xl:grid-cols-[minmax(0,42rem)_minmax(0,1fr)]">
+    <div class="max-w-2xl min-w-0 space-y-10 p-4 pb-[calc(3rem+var(--safe-bottom))] md:p-8 xl:max-w-none xl:overflow-y-auto">
+      <h1 class="text-display">Details</h1>
 
-    <section class="space-y-4">
-      <h2 class="text-heading">Basics</h2>
-      <TextField :model-value="c.name" label="Name" required placeholder="e.g. Canadian Championship 2026" :save="save('name')" />
-      <div class="grid gap-4 sm:grid-cols-2">
-        <TextField :model-value="dateInput(c.date)" label="Date" type="date" required hint="The first day, if it runs over several." :save="save('date')" />
+      <section class="space-y-4">
+        <h2 class="text-heading">Basics</h2>
+        <TextField :model-value="c.name" label="Name" required placeholder="e.g. Canadian Championship 2026" :save="save('name')" />
+        <div class="grid gap-4 sm:grid-cols-2">
+          <TextField :model-value="dateInput(c.date)" label="Date" type="date" required hint="The first day, if it runs over several." :save="save('date')" />
+          <TextField
+            :model-value="c.sobhd"
+            label="Registration number"
+            placeholder="e.g. C-AB-CO-26-1234"
+            hint="If it’s registered with an association, like the RSOBHD."
+            :save="save('sobhd')"
+          />
+        </div>
         <TextField
-          :model-value="c.sobhd"
-          label="RSOBHD number"
-          placeholder="e.g. C-AB-CO-26-1234"
-          hint="The registration number, if it has one."
-          :save="save('sobhd')"
+          :model-value="c.description"
+          label="Description"
+          multiline
+          hint="Anything else people should know. Shown on the competition page."
+          :save="save('description')"
         />
-      </div>
-      <TextField
-        :model-value="c.description"
-        label="Description"
-        multiline
-        hint="Anything else people should know. Shown on the competition page."
-        :save="save('description')"
-      />
-      <ImageField
-        :model-value="c.image"
-        label="Logo or photo"
-        folder="info"
-        :competition-id="m.competitionId.value"
-        :save="save('image')"
-      />
-    </section>
+        <ImageField
+          :model-value="c.image"
+          label="Logo or photo"
+          folder="info"
+          :competition-id="m.competitionId.value"
+          :save="save('image')"
+        />
+      </section>
 
-    <section class="space-y-4">
-      <h2 class="text-heading">Where</h2>
-      <VenueSearch v-if="placesAvailable && canEdit" @pick="pickVenue" />
-      <TextField :model-value="c.venue" label="Venue" placeholder="e.g. Telus Convention Centre" :save="save('venue')" />
-      <TextField :model-value="c.address" label="Address" placeholder="e.g. 120 9th Ave SE" :save="save('address')" />
-      <TextField
-        :model-value="c.location"
-        label="Town or city"
-        placeholder="e.g. Calgary, Alberta, Canada"
-        hint="Used for “near you” and the map. Include the province or state and country."
-        :save="save('location')"
-      />
-      <MapPreview
-        v-if="Number.isFinite(c.lat) && Number.isFinite(c.lng)"
-        :lat="c.lat!"
-        :lng="c.lng!"
-        class="h-40 rounded-xl"
-      />
-      <p v-else-if="placesAvailable" class="text-muted-foreground text-sm">Pick the venue from the search to put it on the map.</p>
-    </section>
+      <section class="space-y-4">
+        <h2 class="text-heading">Where</h2>
+        <VenueField v-if="placesAvailable" :model-value="c.venue" :save="save('venue')" @pick="pickVenue" />
+        <TextField v-else :model-value="c.venue" label="Venue name" placeholder="e.g. Telus Convention Centre" :save="save('venue')" />
+        <TextField :model-value="c.address" label="Address" placeholder="e.g. 120 9th Ave SE" :save="save('address')" />
+        <TextField
+          :model-value="c.location"
+          label="Town or city"
+          placeholder="e.g. Calgary, AB"
+          hint="Used for “near you” and the map. Include the province or state."
+          :save="save('location')"
+        />
+        <MapPreview
+          v-if="Number.isFinite(c.lat) && Number.isFinite(c.lng)"
+          :lat="c.lat!"
+          :lng="c.lng!"
+          class="h-40 rounded-xl"
+        />
+        <p v-else-if="placesAvailable" class="text-muted-foreground text-sm">Choose the venue from the suggestions to put it on the map.</p>
+      </section>
 
-    <section class="space-y-4">
-      <h2 class="text-heading">Registration</h2>
-      <TextField
-        :model-value="c.registrationURL"
-        label="Registration link"
-        type="url"
-        placeholder="e.g. example.com/register"
-        hint="Where dancers sign up. Shown as a button on the competition page."
-        :save="save('registrationURL')"
-      />
-      <div class="grid gap-4 sm:grid-cols-2">
-        <TextField :model-value="dateTimeInput(c.registrationStart)" label="Opens" type="datetime-local" :save="save('registrationStart')" />
-        <TextField :model-value="dateTimeInput(c.registrationEnd)" label="Closes" type="datetime-local" :save="save('registrationEnd')" />
-      </div>
-    </section>
+      <section v-if="registrationShown" ref="registrationEl" class="space-y-4">
+        <h2 class="text-heading">Registration</h2>
+        <TextField
+          :model-value="c.registrationURL"
+          label="Registration link"
+          type="url"
+          placeholder="e.g. example.com/register"
+          hint="Where dancers sign up. Shown as a button on the competition page."
+          :save="save('registrationURL')"
+        />
+        <div class="grid gap-4 sm:grid-cols-2">
+          <TextField :model-value="dateTimeInput(c.registrationStart)" label="Opens" type="datetime-local" :save="save('registrationStart')" />
+          <TextField :model-value="dateTimeInput(c.registrationEnd)" label="Closes" type="datetime-local" :save="save('registrationEnd')" />
+        </div>
+      </section>
 
-    <section class="space-y-4">
-      <div>
-        <h2 class="text-heading">Links and files</h2>
-        <p class="text-muted-foreground text-sm">Programs, entry forms, maps. Each shows as a button on the competition page.</p>
-      </div>
-      <ul v-if="links.length" class="bg-card divide-y rounded-2xl border shadow-sm">
-        <li v-for="link in links" :key="link.id" class="space-y-3 p-4">
+      <section v-if="links.length || addingLink" class="space-y-4">
+        <div>
+          <h2 class="text-heading">Links and files</h2>
+          <p class="text-muted-foreground text-sm">Programs, entry forms, maps. Each shows as a button on the competition page.</p>
+        </div>
+        <ul v-if="links.length" class="bg-card divide-y rounded-2xl border shadow-sm">
+          <li v-for="link in links" :key="link.id" class="space-y-3 p-4">
+            <div class="grid gap-3 sm:grid-cols-2">
+              <TextField :model-value="link.name" label="Label" placeholder="e.g. Program" :save="(v) => m.writeInfo({ [`links/${link.id}/name`]: v }, 'Link label')" />
+              <TextField :model-value="link.url" label="Link" type="url" required :save="(v) => m.writeInfo({ [`links/${link.id}/url`]: v }, 'Link')" />
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <a v-if="link.url" :href="formatExternalURL(link.url)" target="_blank" rel="noopener" class="text-primary inline-flex min-w-0 items-center gap-1 text-sm font-bold">
+                <span class="truncate">Open</span> <ExternalLink class="size-3.5 shrink-0" />
+              </a>
+              <button
+                type="button"
+                :disabled="!canEdit"
+                class="text-destructive hover:bg-destructive/10 ml-auto flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-bold disabled:opacity-50"
+                @click="removeLink(link)"
+              >
+                <Trash2 class="size-4" /> Remove
+              </button>
+            </div>
+          </li>
+        </ul>
+        <form v-if="addingLink" ref="linkFormEl" class="bg-card space-y-3 rounded-2xl border border-dashed p-4" novalidate @submit.prevent="submitLink">
           <div class="grid gap-3 sm:grid-cols-2">
-            <TextField :model-value="link.name" label="Label" placeholder="e.g. Program" :save="(v) => m.writeInfo({ [`links/${link.id}/name`]: v }, 'Link label')" />
-            <TextField :model-value="link.url" label="Link" type="url" required :save="(v) => m.writeInfo({ [`links/${link.id}/url`]: v }, 'Link')" />
+            <label class="space-y-1.5">
+              <span class="text-[0.9375rem] font-bold">Label</span>
+              <input v-model="newName" :disabled="!canEdit" type="text" placeholder="e.g. Program" class="bg-card border-strong focus:border-primary h-12 w-full rounded-xl border-2 px-3 text-base outline-none" />
+            </label>
+            <label class="space-y-1.5">
+              <span class="text-[0.9375rem] font-bold">Link</span>
+              <input
+                v-model="newUrl"
+                :disabled="!canEdit"
+                type="url"
+                placeholder="https://"
+                :aria-invalid="!!linkError || undefined"
+                :class="['bg-card h-12 w-full rounded-xl border-2 px-3 text-base outline-none', linkError ? 'border-destructive' : 'border-strong focus:border-primary']"
+                @input="linkError = null"
+              />
+              <span v-if="linkError" class="text-destructive block text-sm font-semibold" role="alert">{{ linkError }}</span>
+            </label>
           </div>
-          <div class="flex items-center justify-between gap-2">
-            <a v-if="link.url" :href="link.url" target="_blank" rel="noopener" class="text-primary truncate text-sm font-bold">Open</a>
+          <div class="flex flex-wrap gap-2">
+            <button type="submit" :disabled="!canEdit || !newUrl.trim()" class="bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50">
+              <Plus class="size-4" /> Add link
+            </button>
             <button
               type="button"
-              :disabled="!canEdit"
-              class="text-destructive hover:bg-destructive/10 ml-auto flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-bold disabled:opacity-50"
-              @click="removeLink(link)"
+              :disabled="!canEdit || uploading"
+              class="bg-card border-strong hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold disabled:opacity-50"
+              @click="fileInput?.click()"
             >
-              <Trash2 class="size-4" /> Remove
+              <LoaderCircle v-if="uploading" class="size-4 animate-spin" />
+              <FileUp v-else class="size-4" />
+              {{ uploading ? 'Uploading…' : 'Upload a PDF or image' }}
             </button>
+            <input ref="fileInput" type="file" accept="application/pdf,image/*" class="sr-only" tabindex="-1" @change="onFile" />
           </div>
-        </li>
-      </ul>
-      <form class="bg-card space-y-3 rounded-2xl border border-dashed p-4" @submit.prevent="addLink()">
-        <div class="grid gap-3 sm:grid-cols-2">
-          <label class="space-y-1.5">
-            <span class="text-[0.9375rem] font-bold">Label</span>
-            <input v-model="newName" :disabled="!canEdit" type="text" placeholder="e.g. Program" class="bg-card border-strong focus:border-primary h-12 w-full rounded-xl border-2 px-3 text-base outline-none" />
-          </label>
-          <label class="space-y-1.5">
-            <span class="text-[0.9375rem] font-bold">Link</span>
-            <input v-model="newUrl" :disabled="!canEdit" type="url" placeholder="https://" class="bg-card border-strong focus:border-primary h-12 w-full rounded-xl border-2 px-3 text-base outline-none" />
-          </label>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <button type="submit" :disabled="!canEdit || !newUrl.trim()" class="bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50">
-            <Plus class="size-4" /> Add link
-          </button>
-          <button
-            type="button"
-            :disabled="!canEdit || uploading"
-            class="bg-card border-strong hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold disabled:opacity-50"
-            @click="fileInput?.click()"
-          >
-            <LoaderCircle v-if="uploading" class="size-4 animate-spin" />
-            <FileUp v-else class="size-4" />
-            {{ uploading ? 'Uploading…' : 'Upload a PDF or image' }}
-          </button>
-          <input ref="fileInput" type="file" accept="application/pdf,image/*" class="sr-only" tabindex="-1" @change="onFile" />
-        </div>
-      </form>
-    </section>
+        </form>
+      </section>
 
-    <section class="space-y-3">
-      <h2 class="text-heading">Who can see it</h2>
-      <div class="bg-card space-y-1 rounded-2xl border px-4 py-2 shadow-sm">
-        <SwitchField
-          :model-value="!!c.listed"
-          label="Listed"
-          description="Shows in the competitions list with its date, venue and judges."
-          :save="(on) => m.writeInfo(on ? { listed: true } : { listed: false, published: false }, on ? 'Listed' : 'Unlisted')"
-        />
-        <div class="border-t" />
-        <SwitchField
-          :model-value="!!c.published"
-          label="Published"
-          description="Also shows dancers, the schedule and results."
-          :save="(on) => m.writeInfo(on ? { published: true, listed: true } : { published: false }, on ? 'Published' : 'Unpublished')"
-        />
+      <div v-if="!registrationShown || !addingLink" class="flex flex-wrap gap-2">
+        <button
+          v-if="!registrationShown"
+          type="button"
+          :disabled="!canEdit"
+          class="bg-card border-strong hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold disabled:opacity-50"
+          @click="openRegistration"
+        >
+          <Plus class="size-4" /> Add registration details
+        </button>
+        <button
+          v-if="!addingLink"
+          type="button"
+          :disabled="!canEdit"
+          class="bg-card border-strong hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold disabled:opacity-50"
+          @click="openLinkForm"
+        >
+          <Plus class="size-4" /> Add a link or file
+        </button>
       </div>
-    </section>
 
-    <section class="border-destructive/30 space-y-3 rounded-2xl border p-4">
-      <h2 class="text-heading">Delete this competition</h2>
-      <p class="text-muted-foreground text-sm">Removes it and everything in it for everyone. There’s no undo.</p>
-      <button
-        type="button"
-        :disabled="!canEdit"
-        class="text-destructive border-destructive/40 hover:bg-destructive/10 flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold disabled:opacity-50"
-        @click="deleteCompetition"
-      >
-        <Trash2 class="size-4" /> Delete competition
-      </button>
-    </section>
+      <section class="space-y-3">
+        <h2 class="text-heading">Who can see it</h2>
+        <div class="bg-card space-y-1 rounded-2xl border px-4 py-2 shadow-sm">
+          <SwitchField
+            :model-value="!!c.listed"
+            label="Listed"
+            description="Shows in the competitions list with its date, venue and judges."
+            :save="(on) => m.writeInfo(on ? { listed: true } : { listed: false, published: false }, on ? 'Listed' : 'Unlisted')"
+          />
+          <div class="border-t" />
+          <SwitchField
+            :model-value="!!c.published"
+            label="Published"
+            description="Also shows dancers, the schedule and results."
+            :save="(on) => m.writeInfo(on ? { published: true, listed: true } : { published: false }, on ? 'Published' : 'Unpublished')"
+          />
+        </div>
+      </section>
+
+      <section class="border-destructive/30 space-y-3 rounded-2xl border p-4">
+        <h2 class="text-heading">Delete this competition</h2>
+        <p class="text-muted-foreground text-sm">Removes it and everything in it for everyone. There’s no undo.</p>
+        <button
+          type="button"
+          :disabled="!canEdit"
+          class="text-destructive border-destructive/40 hover:bg-destructive/10 flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold disabled:opacity-50"
+          @click="deleteCompetition"
+        >
+          <Trash2 class="size-4" /> Delete competition
+        </button>
+      </section>
+    </div>
+
+    <aside class="hidden min-w-0 border-l xl:block xl:overflow-y-auto" aria-label="How it looks">
+      <div class="space-y-4 p-8">
+        <h2 class="text-heading">How it looks</h2>
+        <DetailsPreview :competition="c" :competition-id="m.competitionId.value" />
+      </div>
+    </aside>
   </div>
 </template>

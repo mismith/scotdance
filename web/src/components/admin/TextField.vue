@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, useId, watch } from 'vue'
+import { computed, useId } from 'vue'
 import { Check, LoaderCircle } from '@lucide/vue'
 import AdminField from '@/components/admin/AdminField.vue'
-import { canEdit, friendlyError } from '@/lib/admin/write'
+import { useAutosave } from '@/composables/admin/useAutosave'
+import { LINK_PROBLEM, looksLikeLink } from '@/lib/admin/collection'
 
 // A text box that saves itself: shortly after typing stops, on Enter, and
 // when focus leaves. Escape puts back the saved value. While the database
@@ -31,68 +32,18 @@ const props = withDefaults(
 )
 
 const id = useId()
-const asText = (v: unknown) => (v == null ? '' : String(v))
 
-const draft = ref(asText(props.modelValue))
-const dirty = ref(false)
-const status = ref<'idle' | 'saving' | 'saved'>('idle')
-const error = ref<string | null>(null)
-let timer: ReturnType<typeof setTimeout> | undefined
-let savedTimer: ReturnType<typeof setTimeout> | undefined
-
-watch(
-  () => props.modelValue,
-  (v) => {
-    if (!dirty.value) draft.value = asText(v)
-  },
-)
-
-const locked = computed(() => props.disabled || !canEdit.value)
+const { draft, dirty, status, error, locked, input, commit, revert } = useAutosave({
+  value: () => props.modelValue,
+  save: (v) => props.save(v),
+  label: () => props.label,
+  required: () => props.required,
+  validate: (v) => props.validate?.(v) ?? (props.type === 'url' && v && !looksLikeLink(v) ? LINK_PROBLEM : null),
+  disabled: () => props.disabled,
+})
 
 function onInput(e: Event) {
-  draft.value = (e.target as HTMLInputElement | HTMLTextAreaElement).value
-  dirty.value = true
-  error.value = null
-  clearTimeout(timer)
-  timer = setTimeout(commit, 900)
-}
-
-async function commit() {
-  clearTimeout(timer)
-  if (!dirty.value) return
-  const value = draft.value.trim()
-  if (props.required && !value) {
-    error.value = `${props.label} can’t be empty.`
-    return
-  }
-  const invalid = props.validate?.(value)
-  if (invalid) {
-    error.value = invalid
-    return
-  }
-  if (value === asText(props.modelValue).trim()) {
-    dirty.value = false
-    return
-  }
-  status.value = 'saving'
-  try {
-    await props.save(value)
-    dirty.value = false
-    draft.value = value
-    status.value = 'saved'
-    clearTimeout(savedTimer)
-    savedTimer = setTimeout(() => (status.value = 'idle'), 1600)
-  } catch (e) {
-    status.value = 'idle'
-    error.value = friendlyError(e)
-  }
-}
-
-function revert() {
-  clearTimeout(timer)
-  draft.value = asText(props.modelValue)
-  dirty.value = false
-  error.value = null
+  input((e.target as HTMLInputElement | HTMLTextAreaElement).value)
 }
 
 function onKeydown(e: KeyboardEvent) {
@@ -105,12 +56,6 @@ function onKeydown(e: KeyboardEvent) {
     void commit()
   }
 }
-
-// Leaving the page mid-edit still saves.
-onBeforeUnmount(() => {
-  if (dirty.value) void commit()
-  clearTimeout(savedTimer)
-})
 
 const inputClass = computed(() => [
   'bg-card w-full rounded-xl border-2 px-3 text-base outline-none transition-colors',

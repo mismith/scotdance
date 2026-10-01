@@ -1,9 +1,11 @@
 import { connectStorageEmulator, getDownloadURL, getStorage, ref as storageRef, uploadBytes } from 'firebase/storage'
-import { firebaseApp, NAMESPACE } from '@/firebase'
+import { emulatorPort, firebaseApp, NAMESPACE, useEmulators } from '@/firebase'
 
 // Storage is only used here, so it loads with Manage rather than for everyone.
 const storage = getStorage(firebaseApp)
-if (import.meta.env.MODE === 'emulator') connectStorageEmulator(storage, window.location.hostname, 9199)
+if (useEmulators) connectStorageEmulator(storage, window.location.hostname || 'localhost', emulatorPort(9199))
+// Give up on a dead connection after two minutes rather than the default ten.
+storage.maxUploadRetryTime = 2 * 60 * 1000
 const bucketRef = (path: string) => storageRef(storage, `${NAMESPACE}/${path}`)
 
 // Uploads for Manage: competition images, judge photos and linked files.
@@ -72,8 +74,15 @@ async function put(folder: UploadFolder, competitionId: string, name: string, bl
   const ext = blob.type === 'application/pdf' ? 'pdf' : (blob.type.split('/')[1] ?? 'bin').replace('jpeg', 'jpg')
   const path = `competitions/${folder}/${competitionId}-${Date.now()}-${slug(name)}.${ext}`
   const ref = bucketRef(path)
-  await uploadBytes(ref, blob, { contentType: blob.type })
-  return getDownloadURL(ref)
+  try {
+    await uploadBytes(ref, blob, { contentType: blob.type })
+    return await getDownloadURL(ref)
+  } catch (e) {
+    // Storage's own messages are for developers ("storage/unknown…").
+    console.warn('[admin] upload failed', e)
+    if ((e as { code?: string }).code === 'storage/unauthorized') throw e
+    throw new Error('That file didn’t upload. Check your connection and try again.')
+  }
 }
 
 /** Upload an image (shrunk to fit) and return its public URL. */

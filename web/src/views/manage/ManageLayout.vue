@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useEventListener } from '@vueuse/core'
-import { RouterLink, RouterView, useRoute } from 'vue-router'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
-import { CalendarX, ExternalLink, Lock, LogIn, Redo2, Undo2 } from '@lucide/vue'
+import { CalendarX, Lock, LogIn } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
-import AccountButton from '@/components/nav/AccountButton.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import ManageMenu from '@/components/admin/ManageMenu.vue'
 import SaveStatus from '@/components/admin/SaveStatus.vue'
 import SectionNav from '@/components/admin/SectionNav.vue'
 import { provideManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { useSidebar, useSplit } from '@/composables/admin/useWide'
-import { provideManageBack } from '@/composables/admin/useManageBack'
+import { provideManageBack, viaHistory, type ManageBack } from '@/composables/admin/useManageBack'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { ALL_SECTIONS } from '@/lib/admin/sections'
 import { historyState, redo, undo } from '@/lib/admin/history'
@@ -20,6 +20,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 
 const route = useRoute()
+const router = useRouter()
 const auth = useAuthStore()
 const me = useMeStore()
 const sidebar = useSidebar()
@@ -54,24 +55,31 @@ usePageTitle(() => [route.meta.title as string | undefined, section.value?.title
 
 // Back says exactly where it goes. On a phone it climbs one level (item →
 // section → Manage → competition); with the sidebar showing, sections are
-// side by side, so it leaves Manage.
-const exit = computed(() => {
+// side by side, so it leaves Manage. So does any page you can't use.
+const up = computed<ManageBack>(() => {
   const cid = competitionId.value
-  if (!sidebar.value) {
-    if (backOverride.value) return backOverride.value
-    const parent = route.meta.manageParent as string | undefined
-    if (parent) {
-      const parentSection = ALL_SECTIONS.find((s) => s.route === parent)
-      return { to: { name: parent, params: { competitionId: cid } }, label: parentSection?.title ?? 'Back' }
-    }
-    // On a phone an item fills the screen: Back returns to its list.
-    const deep = Object.entries(route.params).some(([k, v]) => k !== 'competitionId' && v)
-    if (!split.value && deep && section.value) {
-      return { to: { name: section.value.route, params: { competitionId: cid } }, label: section.value.title }
-    }
-    if (!isHome.value) return { to: { name: 'manage', params: { competitionId: cid } }, label: 'Manage' }
+  const leave = { to: { name: 'competition.info', params: { competitionId: cid } }, label: name.value }
+  if (sidebar.value || ['signed-out', 'denied', 'missing'].includes(access.value)) return leave
+  if (backOverride.value) return backOverride.value
+  const parent = route.meta.manageParent as string | undefined
+  if (parent) {
+    const parentSection = ALL_SECTIONS.find((s) => s.route === parent)
+    // A sub-page of one item (an age group's draws) goes back to that item.
+    const itemId = route.params.itemId ? String(route.params.itemId) : undefined
+    return { to: { name: parent, params: { competitionId: cid, itemId } }, label: parentSection?.title ?? 'Back' }
   }
-  return { to: { name: 'competition.info', params: { competitionId: cid } }, label: name.value }
+  // On a phone an item fills the screen: Back returns to its list. (A
+  // schedule's day is a tab, not a level.)
+  const deep = Object.entries(route.params).some(([k, v]) => k !== 'competitionId' && k !== 'dayId' && v)
+  if (!split.value && deep && section.value) {
+    return { to: { name: section.value.route, params: { competitionId: cid } }, label: section.value.title }
+  }
+  if (!isHome.value) return { to: { name: 'manage', params: { competitionId: cid } }, label: 'Manage' }
+  return leave
+})
+const exit = computed(() => {
+  void route.fullPath
+  return viaHistory(router, up.value)
 })
 
 // Undo and redo for everything changed in this competition on this visit.
@@ -81,15 +89,22 @@ const history = historyState(() => competitionId.value)
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 const undoKey = isMac ? '⌘Z' : 'Ctrl+Z'
 const redoKey = isMac ? '⇧⌘Z' : 'Ctrl+Y'
+// One step at a time, in the order asked for: a quick second ⌘Z waits for
+// the first to save rather than being lost.
 const busy = ref(false)
-async function run(step: () => Promise<boolean>) {
-  if (busy.value) return
-  busy.value = true
-  try {
-    await step()
-  } finally {
-    busy.value = false
-  }
+let queue = Promise.resolve()
+function run(step: () => Promise<boolean>) {
+  queue = queue
+    .then(async () => {
+      busy.value = true
+      try {
+        await step()
+      } finally {
+        busy.value = false
+      }
+    })
+    .catch(() => {})
+  return queue
 }
 const doUndo = () => run(() => undo(competitionId.value))
 const doRedo = () => run(() => redo(competitionId.value))
@@ -121,39 +136,23 @@ const barTitle = computed(() => (isHome.value ? 'Manage' : ((route.meta.title as
 
 <template>
   <div class="flex min-h-dvh flex-col md:fixed md:inset-0 md:min-h-0">
-    <AppBar wide :title="barTitle" :subtitle="access === 'ok' ? name : null" show-title :scrolled="true" :exit="exit">
+    <AppBar wide :title="barTitle" :subtitle="access === 'ok' ? name : null" show-title :scrolled="true" :exit="exit" :competition-id="competitionId">
       <template #actions>
         <template v-if="access === 'ok'">
-          <button
-            type="button"
-            :disabled="!history.canUndo.value || busy"
-            :aria-label="history.undoLabel.value ? `Undo: ${history.undoLabel.value}` : 'Undo'"
-            :title="history.undoLabel.value ? `Undo: ${history.undoLabel.value} (${undoKey})` : `Nothing to undo (${undoKey})`"
-            class="hover:bg-accent flex size-9 items-center justify-center rounded-full disabled:opacity-35"
-            @click="doUndo"
-          >
-            <Undo2 class="size-5" />
-          </button>
-          <button
-            type="button"
-            :disabled="!history.canRedo.value || busy"
-            :aria-label="history.redoLabel.value ? `Redo: ${history.redoLabel.value}` : 'Redo'"
-            :title="history.redoLabel.value ? `Redo: ${history.redoLabel.value} (${redoKey})` : `Nothing to redo (${redoKey})`"
-            class="hover:bg-accent flex size-9 items-center justify-center rounded-full disabled:opacity-35 max-sm:hidden"
-            @click="doRedo"
-          >
-            <Redo2 class="size-5" />
-          </button>
           <SaveStatus />
+          <ManageMenu
+            :undo-label="history.undoLabel.value"
+            :redo-label="history.redoLabel.value"
+            :can-undo="history.canUndo.value"
+            :can-redo="history.canRedo.value"
+            :busy="busy"
+            :undo-key="undoKey"
+            :redo-key="redoKey"
+            :view="viewRoute"
+            @undo="doUndo"
+            @redo="doRedo"
+          />
         </template>
-        <RouterLink
-          v-if="access === 'ok' && sidebar"
-          :to="viewRoute"
-          class="hover:bg-accent text-primary flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-bold"
-        >
-          View <ExternalLink class="size-4" />
-        </RouterLink>
-        <AccountButton :competition-id="competitionId" />
       </template>
     </AppBar>
 

@@ -32,7 +32,10 @@ onMounted(async () => {
   authReady.value = true
 })
 
-const { competitions, loading } = useCompetitions(ref(true))
+// Read afresh each visit: a competition just created, approved or deleted
+// must show (or not) here straight away.
+const { competitions, loading, reload } = useCompetitions(ref(true))
+void reload()
 
 const mine = computed<CompetitionListItem[]>(() =>
   competitions.value.filter((c) => me.hasCompetitionPerm(c.id)).sort((a, b) => String(b.date ?? '').localeCompare(String(a.date ?? ''))),
@@ -103,16 +106,13 @@ async function create() {
           <RouterLink v-else :to="{ name: 'competitions.submit' }" class="bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold">
             <Plus class="size-4" /> Submit a competition
           </RouterLink>
-          <RouterLink v-if="me.isAdmin" :to="{ name: 'admin' }" class="bg-card border-strong hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold">
-            <ShieldCheck class="size-4" /> System admin
-          </RouterLink>
         </div>
 
         <label v-if="mine.length > 6" class="bg-card border-strong focus-within:border-primary flex h-11 items-center gap-2 rounded-xl border-2 px-3">
           <Search class="text-muted-foreground size-4 shrink-0" />
           <span class="sr-only">Search competitions</span>
           <input v-model="query" type="search" placeholder="Search competitions" class="min-w-0 flex-1 bg-transparent text-base outline-none" />
-          <button v-if="query" type="button" aria-label="Clear search" class="text-muted-foreground flex size-8 items-center justify-center rounded-full" @click="query = ''"><X class="size-4" /></button>
+          <button v-if="query" type="button" aria-label="Clear search" class="text-muted-foreground flex size-7 items-center justify-center rounded-full" @click="query = ''"><X class="size-4" /></button>
         </label>
 
         <div v-if="loading && !mine.length" class="space-y-3">

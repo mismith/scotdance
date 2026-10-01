@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
-import { RouterLink } from 'vue-router'
-import { makeAutoScroll, makeDroppable } from '@vue-dnd-kit/core'
-import { Plus, WandSparkles } from '@lucide/vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { makeDroppable } from '@vue-dnd-kit/core'
+import { CalendarClock, CalendarPlus, Plus, WandSparkles } from '@lucide/vue'
+import EmptyState from '@/components/EmptyState.vue'
 import AddPopover from './AddPopover.vue'
 import BlockSection from './BlockSection.vue'
 import DragIndicator from './DragIndicator.vue'
 import { useBuilder } from './builder'
 import { useAutoFill } from './autofill'
-import { adjust, insertIndex, useDragType, type DragBlock } from './drag'
+import { adjust, insertIndex, useDragType, useEdgeScroll, type DragBlock } from './drag'
+import { useHideTab } from '@/composables/admin/useHideTab'
 import { confirm, toast } from '@/lib/admin/feedback'
 
 // The schedule as a grid: platforms across the top, sessions down the page,
@@ -16,15 +18,22 @@ import { confirm, toast } from '@/lib/admin/feedback'
 
 const b = useBuilder()
 const auto = useAutoFill()
+const hideTab = useHideTab('schedule')
 const { activeDragGroup, pointer } = useDragType()
 
-const scrollEl = ref<HTMLElement | null>(null)
-makeAutoScroll(scrollEl)
+const PRIMARY =
+  'bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold'
+const SECONDARY =
+  'bg-card border-strong hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold'
 
-const cols = computed(
-  () =>
-    `minmax(9rem, auto) repeat(${b.platforms.value.length}, minmax(13rem, 1fr)) minmax(0.5rem, auto)`,
-)
+const scrollEl = ref<HTMLElement | null>(null)
+useEdgeScroll(scrollEl)
+
+// (No platforms yet: no platform columns, as repeat(0, …) isn't valid CSS.)
+const cols = computed(() => {
+  const n = b.platforms.value.length
+  return `minmax(9rem, auto) ${n ? `repeat(${n}, minmax(13rem, 1fr))` : ''} minmax(0.5rem, auto)`
+})
 
 // Sessions reorder by dragging their header.
 const gridEl = ref<HTMLElement | null>(null)
@@ -65,6 +74,16 @@ function addBlock(name: string) {
   )
 }
 
+// Another day, for competitions over several: shown as tabs above the grid.
+const router = useRouter()
+function addDay() {
+  const dayId = b.addDay()
+  void router.replace({
+    name: 'manage.schedule',
+    params: { competitionId: b.m.competitionId.value, dayId },
+  })
+}
+
 const canAutofill = computed(
   () => b.categories.value.length > 0 && b.dances.value.length > 0,
 )
@@ -90,9 +109,47 @@ async function fillSchedule() {
 
 <template>
   <div ref="scrollEl" class="h-full overflow-auto overscroll-contain">
+    <!-- Nothing on this day yet: how to start (or, with no schedule at all, not to) -->
+    <EmptyState
+      v-if="!b.blocks.value.length"
+      :icon="CalendarClock"
+      :title="b.days.value.length ? 'Nothing on this day yet' : 'No schedule yet'"
+      description="Start with a session, like Morning, then add its events and drag dances into them."
+    >
+      <template v-if="!b.readonly.value">
+        <button ref="addBtnEl" type="button" :class="PRIMARY" @click="adding = !adding">
+          <Plus class="size-4" /> Add session
+        </button>
+        <button v-if="canAutofill" type="button" :class="SECONDARY" @click="fillSchedule">
+          <WandSparkles class="size-4" /> Autofill the schedule
+        </button>
+        <button
+          v-if="b.days.value.length"
+          type="button"
+          :class="SECONDARY"
+          @click="addDay"
+        >
+          <CalendarPlus class="size-4" /> Add day
+        </button>
+      </template>
+      <template v-if="!b.days.value.length && !b.readonly.value" #footer>
+        Not sharing a schedule here?
+        <button
+          type="button"
+          class="text-primary font-bold underline-offset-2 hover:underline"
+          @click="hideTab.hide()"
+        >
+          Hide the Schedule tab
+        </button>
+      </template>
+    </EmptyState>
+
     <div
       ref="gridEl"
-      class="grid w-max min-w-full gap-x-2 px-4 pb-16 text-sm"
+      :class="[
+        'grid w-max min-w-full gap-x-2 px-4 pb-16 text-sm',
+        !b.blocks.value.length && 'hidden',
+      ]"
       :style="{ gridTemplateColumns: cols }"
     >
       <!-- Platforms across the top -->
@@ -105,7 +162,7 @@ async function fillSchedule() {
               name: 'manage.platforms',
               params: { competitionId: b.m.competitionId.value },
             }"
-            class="text-primary text-sm font-bold"
+            class="text-primary text-[0.9375rem] font-bold"
           >
             {{ b.platforms.value.length ? 'Edit platforms' : 'Add platforms' }}
           </RouterLink>
@@ -113,7 +170,7 @@ async function fillSchedule() {
         <div
           v-for="p in b.platforms.value"
           :key="p.id"
-          class="bg-card flex min-h-10 items-center justify-center rounded-lg border px-2 text-center text-[0.9375rem] font-bold"
+          class="bg-card flex min-h-11 items-center justify-center rounded-xl border px-2 text-center text-base font-bold"
         >
           {{ p.label }}
         </div>
@@ -128,43 +185,36 @@ async function fillSchedule() {
         class="col-span-full -mt-4 mb-4"
       />
 
-      <p
-        v-if="!b.blocks.value.length"
-        class="text-muted-foreground col-span-full mb-4 max-w-md px-1 text-[0.9375rem]"
-      >
-        Start with a session, like Morning, then add its events and drag dances into
-        them. Or let autofill make a first draft from the categories, dances and judges.
-      </p>
+      <!-- After the last session: more, as wide as a phone's screen at most -->
       <div
-        v-if="!b.readonly.value"
-        class="col-span-full flex flex-wrap items-center gap-2"
+        v-if="!b.readonly.value && b.blocks.value.length"
+        class="col-span-full flex max-w-[calc(100vw-2rem)] flex-wrap items-center gap-2"
       >
-        <button
-          ref="addBtnEl"
-          type="button"
-          class="bg-card border-strong hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold"
-          @click="adding = !adding"
-        >
+        <button ref="addBtnEl" type="button" :class="PRIMARY" @click="adding = !adding">
           <Plus class="size-4" /> Add session
         </button>
-        <AddPopover
-          :anchor="addBtnEl"
-          :open="adding"
-          :items="suggestions"
-          placeholder="Session name…"
-          @close="adding = false"
-          @select="addBlock($event.label)"
-          @add="addBlock"
-        />
         <button
-          v-if="canAutofill"
+          v-if="b.days.value.length"
           type="button"
-          class="text-muted-foreground hover:text-foreground hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl px-3 text-[0.9375rem] font-bold"
-          @click="fillSchedule"
+          :class="SECONDARY"
+          @click="addDay"
         >
+          <CalendarPlus class="size-4" /> Add day
+        </button>
+        <button v-if="canAutofill" type="button" :class="SECONDARY" @click="fillSchedule">
           <WandSparkles class="size-4" /> Autofill the schedule
         </button>
       </div>
     </div>
+
+    <AddPopover
+      :anchor="addBtnEl"
+      :open="adding"
+      :items="suggestions"
+      placeholder="Session name…"
+      @close="adding = false"
+      @select="addBlock($event.label)"
+      @add="addBlock"
+    />
   </div>
 </template>

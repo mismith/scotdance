@@ -6,6 +6,7 @@ import CollectionEditor from '@/components/admin/CollectionEditor.vue'
 import { useManagedCompetition, type MDancer } from '@/composables/admin/useManagedCompetition'
 import { canEdit } from '@/lib/admin/write'
 import type { CollectionSpec } from '@/lib/admin/collection'
+import { idList } from '@/lib/schedule'
 
 const m = useManagedCompetition()
 
@@ -55,6 +56,7 @@ const spec: CollectionSpec<MDancer> = {
       // The same dancer can be in two age groups with one number; within an
       // age group, numbers must be unique.
       validate: (v, id, values) => {
+        if (!/^\d+[a-z]?$/i.test(v)) return 'Use digits, like 101 or 101A.'
         const groupId = values.groupId as string | undefined
         if (!groupId) return null
         const clash = m.dancers.value.find((d) => d.num === v && d.id !== id && d.groupId === groupId)
@@ -85,9 +87,9 @@ const spec: CollectionSpec<MDancer> = {
       gone.set(d.groupId, (gone.get(d.groupId) ?? new Set()).add(d.num))
     }
     for (const [gid, nums] of gone) {
-      for (const [did, order] of Object.entries(m.draws.value[gid] ?? {})) {
-        if (!Array.isArray(order)) continue
-        const kept = order.filter((n) => !nums.has(String(n)))
+      for (const [did, raw] of Object.entries(m.draws.value[gid] ?? {})) {
+        const order = idList(raw)
+        const kept = order.filter((n) => !nums.has(n))
         if (kept.length !== order.length) updates[`draws/${gid}/${did}`] = kept.length ? kept : null
       }
     }
@@ -108,13 +110,10 @@ const spec: CollectionSpec<MDancer> = {
 
 <template>
   <CollectionEditor :spec="spec" :items="items">
-    <template #list-actions>
+    <template #list-actions="{ cls }">
       <RouterLink
         :to="{ name: 'manage.dancers.import', params: { competitionId: m.competitionId.value } }"
-        :class="[
-          'bg-card border-strong hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold',
-          !canEdit && 'pointer-events-none opacity-50',
-        ]"
+        :class="[cls, !canEdit && 'pointer-events-none opacity-50']"
       >
         <FileSpreadsheet class="size-4" /> Import
       </RouterLink>

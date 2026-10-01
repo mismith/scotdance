@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="T extends CollectionItem">
-import { computed, nextTick, reactive, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, reactive, ref, shallowRef, watch, watchEffect } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { VueDraggable } from 'vue-draggable-plus'
 import {
@@ -17,6 +17,8 @@ import {
 import Dialog from '@/components/Dialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import MasterDetail from '@/components/admin/MasterDetail.vue'
+import SectionHeader from '@/components/admin/SectionHeader.vue'
+import SwipeRow from '@/components/admin/SwipeRow.vue'
 import TextField from '@/components/admin/TextField.vue'
 import SelectField from '@/components/admin/SelectField.vue'
 import ImageField from '@/components/admin/ImageField.vue'
@@ -25,12 +27,13 @@ import { useManagedCompetition } from '@/composables/admin/useManagedCompetition
 import { useSplit } from '@/composables/admin/useWide'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
-import { type CollectionItem, type CollectionSpec, type FieldSpec } from '@/lib/admin/collection'
+import { LINK_PROBLEM, looksLikeLink, type CollectionItem, type CollectionSpec, type FieldSpec } from '@/lib/admin/collection'
+import { ALL_SECTIONS } from '@/lib/admin/sections'
 
 // One editable list: search, select several to change or delete at once,
-// drag to reorder, add one (or many, from presets or one after another),
-// and edit the chosen item beside the list. Every change saves straight
-// away; deletes can be undone from the toast.
+// drag to reorder, swipe one left to delete it, add one (or many, from
+// presets or one after another), and edit the chosen item beside the list.
+// Every change saves straight away; deletes can be undone from the toast.
 
 const props = defineProps<{
   spec: CollectionSpec<T>
@@ -38,7 +41,8 @@ const props = defineProps<{
 }>()
 
 defineSlots<{
-  'list-actions'?: () => unknown
+  /** More ways to add (Import…), styled with `cls` to sit with the others. */
+  'list-actions'?: (p: { cls: string }) => unknown
   'detail-extra'?: (p: { item: T }) => unknown
   'list-intro'?: () => unknown
 }>()
@@ -56,14 +60,17 @@ const showDetail = computed(() => !!itemId.value)
 const itemRoute = (id: string) => ({ name: props.spec.route, params: { competitionId: m.competitionId.value, itemId: id } })
 const listRoute = computed(() => ({ name: props.spec.route, params: { competitionId: m.competitionId.value } }))
 
-function go(to: ReturnType<typeof itemRoute> | typeof listRoute.value) {
-  // Side by side, picking another item replaces rather than piling up history.
-  return split.value ? router.replace(to) : router.push(to)
+// After adding or deleting, the page left behind (the add form, the deleted
+// item) mustn't stay in the history for the phone's Back to land on.
+async function leaveFor(to: ReturnType<typeof itemRoute> | typeof listRoute.value) {
+  if ((window.history.state as { back?: string } | null)?.back === router.resolve(to).fullPath) router.back()
+  else await router.replace(to)
 }
 
 // --- Search
 const query = ref('')
-const normalised = (s: string) => s.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase()
+// Accents and curly apostrophes don't matter: "o'neill" finds O’Neill, "o briain" Ó Briain.
+const normalised = (s: string) => s.normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[‘’`´]/g, "'").toLowerCase()
 const filtered = computed(() => {
   const q = normalised(query.value.trim())
   if (!q) return props.items
@@ -90,6 +97,8 @@ async function onDragEnd() {
   order.value.forEach((item, index) => {
     if (item._order !== index) updates[`${props.spec.path}/${item.id}/_order`] = index
   })
+  // Dropped where it started: nothing to save (or to undo).
+  if (!Object.keys(updates).length) return
   try {
     await m.writeData(updates, `Reordered ${props.spec.plural}`)
   } catch (e) {
@@ -115,6 +124,10 @@ function toggleAll() {
   else filtered.value.forEach((i) => selected.add(i.id))
 }
 const bulkFields = computed(() => props.spec.fields.filter((f) => f.bulk && f.kind === 'select'))
+// Toasts (an Undo, say) rise above the bulk bar instead of covering its buttons.
+const root = document.documentElement.style
+watchEffect(() => root.setProperty('--toast-lift', selecting.value && selected.size ? '4.5rem' : '0px'))
+onBeforeUnmount(() => root.removeProperty('--toast-lift'))
 
 const bulkField = ref<FieldSpec | null>(null)
 async function applyBulk(value: string | null) {
@@ -140,23 +153,27 @@ async function applyBulk(value: string | null) {
 }
 
 // --- Deleting
-async function remove(ids: string[]) {
+async function remove(ids: string[], swiped = false) {
   if (!ids.length) return
   const names = ids.map((id) => props.items.find((i) => i.id === id)).filter(Boolean).map((i) => props.spec.title(i as T))
   const impact = props.spec.impact?.(ids) ?? {}
   const what = ids.length === 1 ? (names[0] ?? `this ${props.spec.singular}`) : `${ids.length} ${props.spec.plural}`
-  const ok = await confirm({
-    title: `Delete ${what}?`,
-    message: [...(impact.warnings ?? []), 'You can undo this straight after.'].join(' '),
-    confirmLabel: 'Delete',
-    destructive: true,
-  })
+  // A swipe is deliberate enough on its own: it only asks when more than the
+  // item goes (results, places in the schedule…). Undo covers the rest.
+  const ok =
+    (swiped && !impact.warnings?.length) ||
+    (await confirm({
+      title: `Delete ${what}?`,
+      message: [...(impact.warnings ?? []), 'You can undo this straight after.'].join(' '),
+      confirmLabel: 'Delete',
+      destructive: true,
+    }))
   if (!ok) return
   const updates: Record<string, unknown> = { ...impact.updates }
   for (const id of ids) updates[`${props.spec.path}/${id}`] = null
   try {
     const change = await m.writeData(updates, `Deleted ${what}`)
-    if (itemId.value && ids.includes(itemId.value)) await go(listRoute.value)
+    if (itemId.value && ids.includes(itemId.value)) await leaveFor(listRoute.value)
     selecting.value = false
     selected.clear()
     toast(`Deleted ${what}`, { action: { label: 'Undo', run: () => m.undoChange(change) } })
@@ -172,6 +189,15 @@ function saveField(item: T, key: string, value: string | null) {
   const field = props.spec.fields.find((f) => f.key === key)?.label ?? key
   return m.writeData(updates, `${field} of ${props.spec.title(item) || `the ${props.spec.singular}`}`)
 }
+// Bound to the item as rendered: a field saving on its way out (Back pressed
+// mid-edit) must land on its own item, not whatever is open by then. If that
+// item has gone (deleted on another device), the edit goes too: saving it
+// would bring back a stub with only that field.
+const saverFor = (item: T, key: string) => async (v: string | null) => {
+  if (!props.items.some((i) => i.id === item.id)) return
+  await saveField(item, key, v)
+}
+const validatorFor = (item: T, f: FieldSpec) => (f.validate ? (v: string) => f.validate!(v, item.id, item as unknown as Record<string, unknown>) : undefined)
 const stringValue = (item: T, key: string) => {
   const v = (item as unknown as Record<string, unknown>)[key]
   return v == null ? null : String(v)
@@ -192,21 +218,35 @@ function resetDraft() {
   }
 }
 watch(adding, (on) => on && resetDraft(), { immediate: true })
+// A field's error goes once it's changed.
+watch(
+  () => ({ ...draft }),
+  (now, before) => {
+    for (const key of Object.keys(now)) if (now[key] !== before[key]) draftErrors[key] = null
+  },
+)
 
 const nextOrder = () => props.items.reduce((max, i) => Math.max(max, typeof i._order === 'number' ? i._order : -1), -1) + 1
 
+// A double tap on Add shouldn't add it twice.
+const submitting = ref(false)
 async function submitDraft(another: boolean) {
+  if (submitting.value) return
   let firstError: string | null = null
   for (const f of props.spec.fields) {
     const v = (draft[f.key] ?? '').trim()
     let err: string | null = null
     if (f.required && !v) err = `${f.label} can’t be empty.`
     else if (v && f.validate) err = f.validate(v, null, draft)
+    else if (v && f.kind === 'url' && !looksLikeLink(v)) err = LINK_PROBLEM
     draftErrors[f.key] = err
     if (err && !firstError) firstError = f.key
   }
   if (firstError) {
-    formEl.value?.querySelector<HTMLElement>(`[data-field="${firstError}"] input, [data-field="${firstError}"] select, [data-field="${firstError}"] textarea`)?.focus()
+    // Centred, so its label isn't left under the top bar on a phone.
+    const el = formEl.value?.querySelector<HTMLElement>(`[data-field="${firstError}"] input, [data-field="${firstError}"] select, [data-field="${firstError}"] textarea`)
+    el?.focus({ preventScroll: true })
+    el?.scrollIntoView({ block: 'center' })
     return
   }
   const id = m.newKey()
@@ -234,6 +274,7 @@ async function submitDraft(another: boolean) {
   updates[`${props.spec.path}/${id}`] = record
   const recordLabel = String(record.name ?? [record.firstName, record.lastName].filter(Boolean).join(' '))
   const name = props.spec.title({ ...(record as object), id, label: recordLabel } as unknown as T) || recordLabel || `the ${props.spec.singular}`
+  submitting.value = true
   try {
     await m.writeData(updates, `Added ${name}`)
     lastAdded.value = Object.fromEntries(Object.entries(record).map(([k, v]) => [k, String(v)]))
@@ -244,10 +285,12 @@ async function submitDraft(another: boolean) {
       formEl.value?.querySelector<HTMLElement>('input, select, textarea')?.focus()
     } else {
       toast(`Added ${name}`)
-      await go(itemRoute(id))
+      await leaveFor(itemRoute(id))
     }
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
+  } finally {
+    submitting.value = false
   }
 }
 
@@ -282,82 +325,87 @@ async function addPresets() {
   }
 }
 
+const title = computed(() => props.spec.plural[0].toUpperCase() + props.spec.plural.slice(1))
 const countLabel = computed(() => {
   const n = props.items.length
   if (query.value.trim()) return `${filtered.value.length} of ${n}`
   return String(n)
 })
+const icon = computed(() => ALL_SECTIONS.find((s) => s.route === props.spec.route)?.icon ?? Plus)
+
+// Buttons, as elsewhere in Manage: the main action, the others beside it
+// when there's room (an empty list), and the others in the header.
+const PRIMARY = 'bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold'
+const SECONDARY = 'bg-card border-strong hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold disabled:opacity-50'
+const GHOST = 'text-primary hover:bg-accent flex h-10 items-center gap-1.5 rounded-xl px-2 text-[0.9375rem] font-bold disabled:opacity-50'
 </script>
 
 <template>
   <MasterDetail :show-detail="showDetail">
     <template #list>
-      <div class="bg-background sticky top-(--chrome-top) z-10 space-y-3 border-b p-4 md:top-0">
-        <div class="flex items-center gap-2">
-          <h1 class="text-title min-w-0 flex-1 truncate">
-            {{ spec.plural[0].toUpperCase() + spec.plural.slice(1) }}
-            <span class="text-muted-foreground text-base font-semibold tabular-nums">{{ countLabel }}</span>
-          </h1>
-          <button
-            v-if="items.length"
-            type="button"
-            :aria-pressed="selecting"
-            :class="[
-              'h-10 rounded-full px-3 text-[0.9375rem] font-bold',
-              selecting ? 'bg-primary text-primary-foreground' : 'text-primary hover:bg-accent',
-            ]"
-            @click="toggleSelecting"
-          >
-            {{ selecting ? 'Done' : 'Select' }}
-          </button>
-        </div>
-        <div v-if="!selecting" class="flex flex-wrap gap-2">
-          <RouterLink
-            :to="itemRoute('new')"
-            :replace="split"
-            :class="[
-              'bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold',
-              !canEdit && 'pointer-events-none opacity-50',
-            ]"
-          >
-            <Plus class="size-4" /> Add {{ spec.singular }}
-          </RouterLink>
-          <button
-            v-if="spec.presets?.length"
-            type="button"
-            :disabled="!canEdit"
-            class="bg-card border-strong hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold disabled:opacity-50"
-            @click="openPresets"
-          >
-            <ListPlus class="size-4" /> Add common {{ spec.plural }}
-          </button>
-          <slot name="list-actions" />
-        </div>
-        <label v-if="items.length > 6" class="bg-card border-strong focus-within:border-primary flex h-11 items-center gap-2 rounded-xl border-2 px-3">
-          <Search class="text-muted-foreground size-4 shrink-0" />
-          <span class="sr-only">Search {{ spec.plural }}</span>
-          <input v-model="query" type="search" :placeholder="`Search ${spec.plural}`" class="min-w-0 flex-1 bg-transparent text-base outline-none" />
-          <button v-if="query" type="button" aria-label="Clear search" class="text-muted-foreground -mr-1 flex size-8 items-center justify-center rounded-full" @click="query = ''">
-            <X class="size-4" />
-          </button>
-        </label>
-        <div v-if="selecting" class="flex items-center gap-2">
-          <button type="button" class="text-primary hover:bg-accent flex h-10 items-center gap-2 rounded-xl px-2 text-[0.9375rem] font-bold" @click="toggleAll">
-            <component :is="allFilteredSelected ? CheckSquare : Square" class="size-5" />
-            {{ allFilteredSelected ? 'Select none' : query ? 'Select all shown' : 'Select all' }}
-          </button>
-          <span class="text-muted-foreground ml-auto text-sm font-semibold tabular-nums">{{ selected.size }} selected</span>
-        </div>
+      <div class="bg-background sticky top-(--chrome-top) z-10 border-b p-4 md:top-0">
+        <SectionHeader :title="title" :count="items.length ? countLabel : null">
+          <template v-if="items.length" #actions>
+            <button
+              type="button"
+              :aria-pressed="selecting"
+              :class="[
+                'h-10 rounded-xl px-3 text-[0.9375rem] font-bold',
+                selecting ? 'bg-primary text-primary-foreground' : 'text-primary hover:bg-accent',
+              ]"
+              @click="toggleSelecting"
+            >
+              {{ selecting ? 'Done' : 'Select' }}
+            </button>
+            <RouterLink
+              v-if="!selecting"
+              :to="itemRoute('new')"
+              :replace="split"
+              :aria-label="`Add ${spec.singular}`"
+              :class="[
+                'bg-primary text-primary-foreground flex h-10 items-center gap-1 rounded-xl pr-3.5 pl-3 text-[0.9375rem] font-bold',
+                !canEdit && 'pointer-events-none opacity-50',
+              ]"
+            >
+              <Plus class="size-4" /> Add
+            </RouterLink>
+          </template>
+          <div v-if="items.length && !selecting && (spec.presets?.length || $slots['list-actions'])" class="-mx-2 -my-1 flex flex-wrap items-center gap-x-1">
+            <button v-if="spec.presets?.length" type="button" :disabled="!canEdit" :class="GHOST" @click="openPresets">
+              <ListPlus class="size-4" /> Add common {{ spec.plural }}
+            </button>
+            <slot name="list-actions" :cls="GHOST" />
+          </div>
+          <label v-if="items.length > 6" class="bg-card border-strong focus-within:border-primary flex h-11 items-center gap-2 rounded-xl border-2 px-3">
+            <Search class="text-muted-foreground size-4 shrink-0" />
+            <span class="sr-only">Search {{ spec.plural }}</span>
+            <input v-model="query" type="search" :placeholder="`Search ${spec.plural}`" class="min-w-0 flex-1 bg-transparent text-base outline-none" />
+            <button v-if="query" type="button" aria-label="Clear search" class="text-muted-foreground -mr-1 flex size-7 items-center justify-center rounded-full" @click="query = ''">
+              <X class="size-4" />
+            </button>
+          </label>
+          <div v-if="selecting" class="flex items-center gap-2">
+            <button type="button" class="text-primary hover:bg-accent flex h-10 items-center gap-2 rounded-xl px-2 text-[0.9375rem] font-bold" @click="toggleAll">
+              <component :is="allFilteredSelected ? CheckSquare : Square" class="size-5" />
+              {{ allFilteredSelected ? 'Select none' : query ? 'Select all shown' : 'Select all' }}
+            </button>
+            <span class="text-muted-foreground ml-auto text-sm font-semibold tabular-nums">{{ selected.size }} selected</span>
+          </div>
+        </SectionHeader>
       </div>
 
       <slot name="list-intro" />
 
-      <EmptyState
-        v-if="!items.length"
-        :icon="Plus"
-        :title="`No ${spec.plural} yet`"
-        :description="spec.emptyHint"
-      />
+      <!-- Empty: what it's for, and the ways to add some -->
+      <EmptyState v-if="!items.length" :icon="icon" :title="`No ${spec.plural} yet`" :description="spec.emptyHint">
+        <RouterLink :to="itemRoute('new')" :replace="split" :class="[PRIMARY, !canEdit && 'pointer-events-none opacity-50']">
+          <Plus class="size-4" /> Add {{ spec.singular }}
+        </RouterLink>
+        <button v-if="spec.presets?.length" type="button" :disabled="!canEdit" :class="SECONDARY" @click="openPresets">
+          <ListPlus class="size-4" /> Add common {{ spec.plural }}
+        </button>
+        <slot name="list-actions" :cls="SECONDARY" />
+      </EmptyState>
       <p v-else-if="!filtered.length" class="text-muted-foreground px-4 py-10 text-center text-base">
         Nothing matches “{{ query }}”.
       </p>
@@ -389,7 +437,7 @@ const countLabel = computed(() => {
         </li>
       </ul>
 
-      <!-- Normal: rows open the item; drag handles when reordering is possible -->
+      <!-- Normal: rows open the item, swipe left to delete; drag handles when reordering is possible -->
       <VueDraggable
         v-else
         v-model="order"
@@ -402,32 +450,38 @@ const countLabel = computed(() => {
         @start="dragging = true"
         @end="onDragEnd"
       >
-        <li v-for="item in canReorder ? order : filtered" :key="item.id" class="flex items-stretch">
-          <span
-            v-if="canReorder"
-            data-handle
-            class="text-muted-foreground flex w-10 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
-            :aria-label="`Drag to reorder ${spec.title(item)}`"
-          >
-            <GripVertical class="size-5" />
-          </span>
-          <RouterLink
-            :to="itemRoute(item.id)"
-            :replace="split"
-            :aria-current="itemId === item.id ? 'true' : undefined"
+        <li v-for="item in canReorder ? order : filtered" :key="item.id">
+          <!-- The row's background and focus ring take in the handle too. -->
+          <SwipeRow
+            :disabled="!canEdit"
+            :remove="() => remove([item.id], true)"
             :class="[
-              'flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 pr-3',
-              canReorder ? 'pl-0' : 'pl-4',
-              itemId === item.id ? 'bg-blue-paper' : 'hover:bg-accent',
+              'has-focus-visible:outline-ring flex items-stretch has-focus-visible:outline-3 has-focus-visible:-outline-offset-3',
+              itemId === item.id ? 'bg-blue-paper' : 'bg-background hover:bg-accent',
             ]"
           >
-            <span v-if="spec.badge" class="bg-paper text-paper-ink min-w-10 shrink-0 rounded-md border px-1.5 py-0.5 text-center font-mono text-sm font-semibold tabular-nums">{{ spec.badge(item) || '–' }}</span>
-            <span class="min-w-0 flex-1">
-              <span class="block truncate text-base font-semibold">{{ spec.title(item) }}</span>
-              <span v-if="spec.subtitle?.(item)" class="text-muted-foreground block truncate text-sm">{{ spec.subtitle(item) }}</span>
+            <span
+              v-if="canReorder"
+              data-handle
+              class="text-muted-foreground flex w-10 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
+              :aria-label="`Drag to reorder ${spec.title(item)}`"
+            >
+              <GripVertical class="size-5" />
             </span>
-            <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
-          </RouterLink>
+            <RouterLink
+              :to="itemRoute(item.id)"
+              :replace="split"
+              :aria-current="itemId === item.id ? 'true' : undefined"
+              :class="['flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 pr-3 focus-visible:outline-none', canReorder ? 'pl-0' : 'pl-4']"
+            >
+              <span v-if="spec.badge" class="bg-paper text-paper-ink min-w-10 shrink-0 rounded-md border px-1.5 py-0.5 text-center font-mono text-sm font-semibold tabular-nums">{{ spec.badge(item) || '–' }}</span>
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-base font-semibold">{{ spec.title(item) }}</span>
+                <span v-if="spec.subtitle?.(item)" class="text-muted-foreground block truncate text-sm">{{ spec.subtitle(item) }}</span>
+              </span>
+              <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
+            </RouterLink>
+          </SwipeRow>
         </li>
       </VueDraggable>
 
@@ -458,10 +512,13 @@ const countLabel = computed(() => {
     </template>
 
     <template #empty>
-      <div class="hidden h-full items-center justify-center p-8 md:flex">
-        <p class="text-muted-foreground max-w-xs text-center text-base">
-          Choose {{ spec.singular.match(/^[aeiou]/i) ? 'an' : 'a' }} {{ spec.singular }} to see and change its details, or add a new one.
-        </p>
+      <div class="hidden h-full items-center justify-center md:flex">
+        <EmptyState
+          v-if="items.length"
+          :icon="icon"
+          :title="`Choose ${spec.singular.match(/^[aeiou]/i) ? 'an' : 'a'} ${spec.singular}`"
+          description="See and change its details here."
+        />
       </div>
     </template>
 
@@ -490,12 +547,12 @@ const countLabel = computed(() => {
           </div>
         </div>
         <div class="flex flex-col gap-2 sm:flex-row">
-          <button type="submit" :disabled="!canEdit" class="bg-primary text-primary-foreground h-12 rounded-xl px-5 text-base font-bold disabled:opacity-50">
+          <button type="submit" :disabled="!canEdit || submitting" class="bg-primary text-primary-foreground h-12 rounded-xl px-5 text-base font-bold disabled:opacity-50">
             Add {{ spec.singular }}
           </button>
           <button
             type="button"
-            :disabled="!canEdit"
+            :disabled="!canEdit || submitting"
             class="bg-card border-strong hover:bg-accent h-12 rounded-xl border px-5 text-base font-bold disabled:opacity-50"
             @click="submitDraft(true)"
           >
@@ -523,7 +580,7 @@ const countLabel = computed(() => {
               :hint="f.hint"
               :required="f.required"
               :placeholder="f.placeholder"
-              :save="(v) => saveField(current!, f.key, v)"
+              :save="saverFor(current, f.key)"
             />
             <ImageField
               v-else-if="f.kind === 'image'"
@@ -533,7 +590,7 @@ const countLabel = computed(() => {
               :folder="f.storage ?? 'staff'"
               :competition-id="m.competitionId.value"
               shape="round"
-              :save="(v) => saveField(current!, f.key, v)"
+              :save="saverFor(current, f.key)"
             />
             <TextField
               v-else
@@ -545,8 +602,8 @@ const countLabel = computed(() => {
               :multiline="f.kind === 'textarea'"
               :type="f.kind === 'url' ? 'url' : 'text'"
               :inputmode="f.inputmode"
-              :validate="f.validate ? (v) => f.validate!(v, current!.id, current as unknown as Record<string, unknown>) : undefined"
-              :save="(v) => saveField(current!, f.key, v)"
+              :validate="validatorFor(current, f)"
+              :save="saverFor(current, f.key)"
             />
           </div>
         </div>

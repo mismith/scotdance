@@ -42,7 +42,7 @@ async function runAction(id: number, run: () => unknown) {
   </Dialog>
 
   <div
-    class="pointer-events-none fixed inset-x-4 bottom-[calc(var(--safe-bottom)+1rem)] z-50 flex flex-col items-center gap-2"
+    class="pointer-events-none fixed inset-x-4 bottom-[calc(var(--safe-bottom)+1rem+var(--toast-lift,0px))] z-50 flex flex-col items-center gap-2 transition-[bottom]"
     role="status"
     aria-live="polite"
   >

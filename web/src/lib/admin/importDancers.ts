@@ -38,11 +38,21 @@ export function gridFromSheet(rows: unknown[][]): Grid {
   return rows.map((r) => r.map(clean))
 }
 
+/** A CSV file's text: UTF-8, else Windows-1252 (what Excel's plain "CSV" saves). */
+export function decodeText(bytes: ArrayBuffer | Uint8Array): string {
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+  } catch {
+    return new TextDecoder('windows-1252').decode(bytes)
+  }
+}
+
 /** CSV or tab-separated text (what copying cells from Excel or Sheets gives). */
 export function gridFromText(text: string): Grid {
   const lines = text.replace(/\r\n?/g, '\n')
-  const tab = (lines.split('\n')[0] ?? '').includes('\t')
-  const sep = tab ? '\t' : ','
+  const first = lines.split('\n')[0] ?? ''
+  // Excel uses semicolons where the comma is the decimal point (e.g. French).
+  const sep = first.includes('\t') ? '\t' : first.includes(';') && !first.includes(',') ? ';' : ','
   const rows: Grid = []
   let row: string[] = []
   let cell = ''
@@ -90,8 +100,10 @@ function looksLikeProgram(grid: Grid): boolean {
   return dancerRows > 0 && headingRows > 0
 }
 
-/** "Mary Ann Smith" → first word, then the rest (fix odd ones after import). */
+/** "Mary Ann Smith" → first word, then the rest (fix odd ones after import). "Smith, Mary Ann" too. */
 function splitFullName(name: string) {
+  const comma = name.indexOf(',')
+  if (comma > 0) return { firstName: name.slice(comma + 1).trim(), lastName: name.slice(0, comma).trim() }
   const parts = name.split(' ')
   const firstName = parts.shift() ?? ''
   return { firstName, lastName: parts.join(' ') }
@@ -104,11 +116,12 @@ function parseProgram(grid: Grid): ImportedDancer[] {
   // columns: number, full name, location. Spot it from the whole sheet:
   // nothing past the third column, and the names mostly have spaces.
   const rows = grid.filter((r) => isNumberCell(r[0] ?? ''))
-  const combined = rows.length > 0 && rows.every((r) => !r[3]) && rows.filter((r) => (r[1] ?? '').includes(' ')).length >= rows.length * 0.6
+  const combined = rows.length > 0 && rows.every((r) => !r[3]) && rows.filter((r) => /[ ,]/.test(r[1] ?? '')).length >= rows.length * 0.6
   grid.forEach((r, i) => {
     if (blank(r)) return
     const first = r[0] ?? ''
-    if (isNumberCell(first)) {
+    // A dancer without a number still shows, so the plan can say so.
+    if (isNumberCell(first) || (!first && (r[1] || r[2]) && !headingHits(r))) {
       const names = combined ? splitFullName(r[1] ?? '') : { firstName: r[1] ?? '', lastName: r[2] ?? '' }
       out.push({ row: i + 1, number: first, ...names, location: (combined ? r[2] : r[3]) ?? '', ...current })
     } else if (first && r.slice(1).every((c) => !c) && !/^category\s*\/\s*age group$/i.test(first)) {
@@ -130,10 +143,11 @@ const FIELD_PATTERNS: Record<TableField, RegExp> = {
   category: /^(category|level|cat\.?)$/i,
 }
 
+const headingHits = (r: string[]) => r.filter((c) => Object.values(FIELD_PATTERNS).some((p) => p.test(c))).length
+
 function findHeaderRow(grid: Grid): number {
   for (let i = 0; i < Math.min(grid.length, 10); i += 1) {
-    const hits = grid[i].filter((c) => Object.values(FIELD_PATTERNS).some((p) => p.test(c))).length
-    if (hits >= 2) return i
+    if (headingHits(grid[i]) >= 2) return i
   }
   return -1
 }
@@ -163,12 +177,14 @@ export function parseTable(grid: Grid, headerRow: number, columns: Record<TableF
 }
 
 export function parseGrid(grid: Grid): ParseResult | null {
-  if (looksLikeProgram(grid)) return { layout: 'program', dancers: parseProgram(grid) }
   const header = findHeaderRow(grid)
-  if (header < 0) return null
-  const headers = grid[header]
-  const columns = guessColumns(headers)
-  return { layout: 'table', dancers: parseTable(grid, header, columns), columns, headers }
+  const columns = header >= 0 ? guessColumns(grid[header]) : null
+  const table = (c: Record<TableField, number>): ParseResult => ({ layout: 'table', dancers: parseTable(grid, header, c), columns: c, headers: grid[header] })
+  // Headings with an age group column make a table, even under a title (which
+  // would otherwise pass for a program's first heading).
+  if (columns && (columns.group >= 0 || columns.category >= 0)) return table(columns)
+  if (looksLikeProgram(grid)) return { layout: 'program', dancers: parseProgram(grid) }
+  return columns ? table(columns) : null
 }
 
 export function headerRowOf(grid: Grid) {
@@ -192,6 +208,13 @@ export interface ExistingGroup { id: string; name?: string; categoryId?: string 
 export interface ExistingDancer { id: string; num: string; firstName?: string; lastName?: string; location?: string; groupId?: string; label: string }
 
 export type RowStatus = 'new' | 'changed' | 'same' | 'error'
+
+/** Dancer fields an import can change, with how the plan names them. */
+const FIELDS = [
+  ['firstName', 'First name'],
+  ['lastName', 'Last name'],
+  ['location', 'Location'],
+] as const
 
 export interface PlannedDancer {
   source: ImportedDancer
@@ -245,11 +268,15 @@ export function planImport(
     seenNumbers.set(r.number, (seenNumbers.get(r.number) ?? 0) + 1)
   }
   const matched = new Set<string>()
+  // A column nobody filled in (e.g. no locations in this file) leaves what's
+  // there alone rather than clearing it.
+  const compared = FIELDS.filter(([key]) => rows.some((r) => r[key]))
 
   const dancers: PlannedDancer[] = rows.map((r) => {
     const errors: string[] = []
     const key = groupKey(r.category, r.group)
     if (!r.number) errors.push('No number')
+    else if (!isNumberCell(r.number)) errors.push(`Number “${r.number}” should be digits, like 101`)
     else if ((seenEntries.get(`${r.number}#${key}`) ?? 0) > 1) errors.push(`Number ${r.number} is in this age group more than once`)
     if (!r.firstName && !r.lastName) errors.push('No name')
     if (!r.category && !r.group) errors.push('No age group')
@@ -271,12 +298,9 @@ export function planImport(
     if (prev && !errors.length) {
       const prevGroup = existing.groups.find((g) => g.id === prev.groupId)
       const prevGroupKey = prevGroup ? groupKey(existing.categories.find((c) => c.id === prevGroup.categoryId)?.name ?? '', prevGroup.name ?? '') : ''
-      const cmp: Array<[string, string, string]> = [
-        ['First name', prev.firstName ?? '', r.firstName],
-        ['Last name', prev.lastName ?? '', r.lastName],
-        ['Location', prev.location ?? '', r.location],
-      ]
-      for (const [label, before, after] of cmp) if (norm(before) !== norm(after)) changes[label] = [before, after]
+      // Spacing doesn't count as a change; fixing capitals does.
+      const tidy = (s: string) => s.replace(/\s+/g, ' ').trim()
+      for (const [field, label] of compared) if (tidy(prev[field] ?? '') !== tidy(r[field])) changes[label] = [prev[field] ?? '', r[field]]
       if (prevGroupKey !== key) changes['Age group'] = [prevGroup ? `${existing.categories.find((c) => c.id === prevGroup.categoryId)?.name ?? ''} ${prevGroup.name ?? ''}`.trim() : '', `${r.category} ${r.group}`.trim()]
     }
     const status: RowStatus = errors.length ? 'error' : !prev ? 'new' : Object.keys(changes).length ? 'changed' : 'same'
@@ -328,8 +352,13 @@ export function planUpdates(
       categoryId: g?.categoryId ?? null,
     }
     if (d.existingId) {
-      // Update only the fields shown, keeping links the server added.
-      for (const [k, v] of Object.entries(fields)) updates[`dancers/${d.existingId}/${k}`] = v
+      // Update only the fields shown as changed, keeping the rest (and links
+      // the server added) as they are.
+      for (const [k, label] of FIELDS) if (d.changes[label]) updates[`dancers/${d.existingId}/${k}`] = fields[k]
+      if (d.changes['Age group']) {
+        updates[`dancers/${d.existingId}/groupId`] = fields.groupId
+        updates[`dancers/${d.existingId}/categoryId`] = fields.categoryId
+      }
     } else {
       updates[`dancers/${newKey()}`] = fields
     }

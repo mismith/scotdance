@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ChevronRight, Shuffle } from '@lucide/vue'
+import { ChevronDown, ChevronRight, Shuffle } from '@lucide/vue'
 import CollectionEditor from '@/components/admin/CollectionEditor.vue'
 import ImportTip from '@/components/admin/ImportTip.vue'
 import SwitchField from '@/components/admin/SwitchField.vue'
@@ -9,6 +9,8 @@ import { useManagedCompetition, type MGroup } from '@/composables/admin/useManag
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import type { CollectionSpec } from '@/lib/admin/collection'
+import { forEachScheduleDance } from '@/lib/admin/scheduleTree'
+import { idList } from '@/lib/schedule'
 
 const m = useManagedCompetition()
 
@@ -38,7 +40,7 @@ const spec: CollectionSpec<MGroup> = {
       bulk: true,
       placeholder: 'Choose a category',
       options: () => m.categories.value.map((c) => ({ value: c.id, label: c.label })),
-      hint: m.categories.value.length ? undefined : 'Add categories first (Set up › Categories).',
+      hint: m.categories.value.length ? undefined : 'Add categories first, under Categories.',
     },
     {
       key: 'name',
@@ -55,7 +57,7 @@ const spec: CollectionSpec<MGroup> = {
       kind: 'select',
       half: true,
       placeholder: 'None',
-      // A sponsor from Judges, pipers and sponsors (stored by id, so the
+      // A sponsor from Staff (stored by id, so the
       // results page can show their details). Older competitions typed a name
       // instead; those names stay choosable as they are.
       options: () => {
@@ -66,7 +68,7 @@ const spec: CollectionSpec<MGroup> = {
           ...typed.map((name) => ({ value: name, label: name, group: 'Typed names' })),
         ]
       },
-      hint: m.sponsors.value.length ? undefined : 'Add sponsors under Judges, pipers and sponsors first.',
+      hint: m.sponsors.value.length ? undefined : 'Add sponsors under Staff first.',
     },
   ],
   title: (g) => g.label,
@@ -92,8 +94,21 @@ const spec: CollectionSpec<MGroup> = {
       if (m.points.value[id]) updates[`points/${id}`] = null
       if (m.draws.value[id]) updates[`draws/${id}`] = null
     }
-    if (dancers) warnings.push(`${dancers} ${dancers === 1 ? 'dancer is' : 'dancers are'} in ${ids.length === 1 ? 'it' : 'them'} and will need another age group.`)
-    if (hasResults) warnings.push('Its results and draws will be deleted too.')
+    // And off the platforms they're on in the schedule.
+    let scheduled = false
+    forEachScheduleDance(m.schedule.value, (path, item) => {
+      for (const [pid, p] of Object.entries(item.platforms ?? {})) {
+        const groups = idList(p?.orderedGroupIds)
+        const kept = groups.filter((g) => !ids.includes(g))
+        if (kept.length === groups.length) continue
+        updates[`${path}/platforms/${pid}/orderedGroupIds`] = kept.length ? kept : null
+        scheduled = true
+      }
+    })
+    const them = ids.length === 1 ? 'it' : 'them'
+    if (dancers) warnings.push(`${dancers} ${dancers === 1 ? 'dancer is' : 'dancers are'} in ${them} and will need another age group.`)
+    if (hasResults) warnings.push(`${ids.length === 1 ? 'Its' : 'Their'} results and draws will be deleted too.`)
+    if (scheduled) warnings.push(`Also removes ${them} from the schedule.`)
     return { updates, warnings }
   },
   emptyHint: 'Add the age groups dancing at this competition, or import them with your dancers.',
@@ -148,15 +163,18 @@ const items = computed(() => m.groups.value)
           </div>
           <label v-if="m.groups.value.length > 1" class="flex items-center gap-2 text-sm font-semibold">
             <span class="sr-only">Same dances as another age group</span>
-            <select
-              v-model="copyFrom"
-              :disabled="!canEdit"
-              class="bg-card border-strong h-10 max-w-56 rounded-xl border px-2 text-[0.9375rem]"
-              @change="sameAs(item.id)"
-            >
-              <option value="">Same dances as…</option>
-              <option v-for="g in m.groups.value.filter((g) => g.id !== item.id)" :key="g.id" :value="g.id">{{ g.label }}</option>
-            </select>
+            <span class="relative">
+              <select
+                v-model="copyFrom"
+                :disabled="!canEdit"
+                class="bg-card border-strong h-10 max-w-56 appearance-none rounded-xl border pr-9 pl-3 text-[0.9375rem]"
+                @change="sameAs(item.id)"
+              >
+                <option value="">Same dances as…</option>
+                <option v-for="g in m.groups.value.filter((g) => g.id !== item.id)" :key="g.id" :value="g.id">{{ g.label }}</option>
+              </select>
+              <ChevronDown class="text-muted-foreground pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2" />
+            </span>
           </label>
         </div>
         <ul v-if="m.dances.value.length" class="bg-card divide-y rounded-2xl border px-4 shadow-sm">

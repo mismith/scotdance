@@ -20,7 +20,13 @@ const dancers = computed(() => m.groupDancers(groupId.value))
 const numbers = computed(() => dancers.value.map((d) => d.num).filter(Boolean))
 const byNumber = computed(() => new Map(dancers.value.map((d) => [d.num, d])))
 
-const stored = (danceId: string) => (m.draws.value[groupId.value]?.[danceId] ?? []).map((n) => String(n))
+// The old admin saved draws cell by cell, so a draw can have gaps (and come
+// back as an object when sparse).
+function stored(danceId: string) {
+  const v: unknown = m.draws.value[groupId.value]?.[danceId]
+  const list: unknown[] = Array.isArray(v) ? v : v && typeof v === 'object' ? Object.values(v) : []
+  return list.filter((n) => n != null && n !== '').map((n) => String(n))
+}
 
 // Local copies for dragging; follow the database unless mid-drag.
 const lists = ref<Record<string, string[]>>({})
@@ -78,8 +84,9 @@ async function clearAll() {
   await saveDraws(updates, 'Cleared all draws')
 }
 
-function onEnd(d: MDance) {
+function onEnd(d: MDance, e: { oldIndex?: number; newIndex?: number }) {
   dragging.value = false
+  if (e.oldIndex === e.newIndex) return
   void saveDraws({ [path(d.id)]: lists.value[d.id] })
 }
 
@@ -129,7 +136,7 @@ const anyDraws = computed(() => dances.value.some((d) => stored(d.id).length))
 
         <section v-for="d in dances" :key="d.id" class="bg-card space-y-3 rounded-2xl border p-4 shadow-sm">
           <div class="flex flex-wrap items-center gap-2">
-            <h2 class="text-heading min-w-0 flex-1">{{ d.label }}</h2>
+            <h2 class="text-heading w-full sm:w-auto sm:min-w-0 sm:flex-1">{{ d.label }}</h2>
             <button type="button" :disabled="!canEdit" class="hover:bg-accent flex h-10 items-center gap-1.5 rounded-xl border px-3 text-sm font-bold disabled:opacity-50" @click="shuffleOne(d)">
               <Shuffle class="size-4" /> Shuffle
             </button>
@@ -147,21 +154,25 @@ const anyDraws = computed(() => dances.value.some((d) => stored(d.id).length))
             v-model="lists[d.id]"
             tag="ol"
             class="gap-x-1.5 sm:columns-2"
+            handle="[data-handle]"
             :disabled="!canEdit"
             :animation="150"
             ghost-class="opacity-40"
             @start="dragging = true"
-            @end="onEnd(d)"
+            @end="onEnd(d, $event)"
           >
             <li
               v-for="(n, i) in lists[d.id]"
               :key="`${n}-${i}`"
               :class="[
-                'mb-1.5 flex min-h-11 cursor-grab touch-none break-inside-avoid items-center gap-2 rounded-xl border px-2 active:cursor-grabbing',
+                'mb-1.5 flex min-h-11 break-inside-avoid items-center gap-2 rounded-xl border pr-2',
                 byNumber.has(n) ? 'bg-background' : 'bg-destructive/10 border-destructive/40',
               ]"
             >
-              <GripVertical class="text-muted-foreground size-4 shrink-0" />
+              <!-- Drag by the handle only, so swiping the list on a phone scrolls it. -->
+              <span data-handle class="text-muted-foreground flex h-11 w-8 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing" aria-hidden="true">
+                <GripVertical class="size-4" />
+              </span>
               <span class="text-muted-foreground w-6 shrink-0 text-right text-sm font-semibold tabular-nums">{{ i + 1 }}</span>
               <span class="bg-paper text-paper-ink min-w-10 rounded-md border px-1.5 py-0.5 text-center font-mono text-sm font-semibold">{{ n }}</span>
               <span class="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold">{{ byNumber.get(n)?.label ?? 'Not in this age group' }}</span>

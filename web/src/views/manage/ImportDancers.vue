@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ClipboardPaste, Download, FileSpreadsheet, LoaderCircle, RotateCcw } from '@lucide/vue'
+import { ChevronDown, ClipboardPaste, Download, FileSpreadsheet, LoaderCircle, RotateCcw } from '@lucide/vue'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { toast } from '@/lib/admin/feedback'
+import { goUp } from '@/lib/back'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import {
+  decodeText,
   gridFromSheet,
   gridFromText,
   guessColumns,
@@ -42,7 +44,7 @@ async function readFile(file: File) {
   readError.value = null
   try {
     if (/\.csv$/i.test(file.name) || file.type === 'text/csv') {
-      sheets.value = [{ sheet: file.name, grid: gridFromText(await file.text()) }]
+      sheets.value = [{ sheet: file.name, grid: gridFromText(decodeText(await file.arrayBuffer())) }]
     } else {
       const { default: readXlsx } = await import('read-excel-file/browser')
       const all = await readXlsx(file)
@@ -69,6 +71,8 @@ function onDrop(e: DragEvent) {
 function startOver() {
   sheets.value = []
   pasted.value = ''
+  readError.value = null
+  filter.value = 'all'
   removeMissing.value = false
   columnOverrides.value = null
 }
@@ -76,6 +80,8 @@ function startOver() {
 // --- Step 2: reading it
 const grid = computed(() => sheets.value[sheetIndex.value]?.grid ?? [])
 const columnOverrides = ref<Record<TableField, number> | null>(null)
+// Columns chosen for one sheet don't fit another.
+watch(sheetIndex, () => (columnOverrides.value = null))
 const parsed = computed(() => {
   const base = parseGrid(grid.value)
   if (!base || base.layout === 'program' || !columnOverrides.value) return base
@@ -86,6 +92,14 @@ function setColumn(field: TableField, index: number) {
   const base = columns.value ?? guessColumns(parsed.value?.headers ?? [])
   columnOverrides.value = { ...base, [field]: index }
 }
+// What a table still needs a column for (nothing matched its heading).
+const missingColumns = computed(() => {
+  const c = columns.value
+  if (!c || parsed.value?.layout !== 'table') return []
+  return [c.number < 0 && 'numbers', c.firstName < 0 && c.lastName < 0 && c.fullName < 0 && 'names', c.group < 0 && c.category < 0 && 'age groups'].filter(
+    (x): x is string => !!x,
+  )
+})
 const FIELD_LABELS: Array<[TableField, string]> = [
   ['number', 'Number'],
   ['firstName', 'First name'],
@@ -117,6 +131,24 @@ const writes = computed(() => {
   if (!plan.value) return 0
   return plan.value.counts.new + plan.value.counts.changed + (removeMissing.value ? plan.value.missing.length : 0)
 })
+const importLabel = computed(() => {
+  const p = plan.value
+  if (!p || !writes.value) return 'Nothing to change'
+  const n = p.counts.new + p.counts.changed
+  const plural = (k: number) => (k === 1 ? 'dancer' : 'dancers')
+  return n ? `Import ${n} ${plural(n)}` : `Remove ${p.missing.length} ${plural(p.missing.length)}`
+})
+// Removing a dancer leaves an unknown dancer (?) wherever they have results.
+const missingWithResults = computed(() => {
+  const placed = new Set<string>()
+  for (const byDance of Object.values(m.results.value)) {
+    for (const list of Object.values(byDance ?? {})) if (Array.isArray(list)) for (const p of list) placed.add(String(p).replace(/:tie$/, ''))
+  }
+  for (const byDance of Object.values(m.points.value)) {
+    for (const byJudge of Object.values(byDance ?? {})) for (const ids of Object.values(byJudge ?? {})) if (Array.isArray(ids)) for (const id of ids) placed.add(id)
+  }
+  return (plan.value?.missing ?? []).filter((d) => placed.has(d.id)).length
+})
 
 // --- Step 3: saving it, all at once
 const importing = ref(false)
@@ -139,7 +171,8 @@ async function doImport() {
   try {
     const change = await m.writeData(updates, message)
     toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
-    await router.replace({ name: 'manage.dancers', params: { competitionId: m.competitionId.value } })
+    // Back to the list: a step back if that's where they came from, so it isn't in history twice.
+    goUp(router, { name: 'manage.dancers', params: { competitionId: m.competitionId.value } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   } finally {
@@ -237,9 +270,12 @@ async function doImport() {
         </p>
         <label v-if="sheets.length > 1" class="flex items-center gap-2 text-sm font-bold">
           Sheet
-          <select v-model="sheetIndex" class="bg-card border-strong h-10 rounded-xl border px-2 text-[0.9375rem]">
-            <option v-for="(s, i) in sheets" :key="s.sheet" :value="i">{{ s.sheet }}</option>
-          </select>
+          <span class="relative">
+            <select v-model="sheetIndex" class="bg-card border-strong h-10 appearance-none rounded-xl border pr-9 pl-3 text-[0.9375rem]">
+              <option v-for="(s, i) in sheets" :key="s.sheet" :value="i">{{ s.sheet }}</option>
+            </select>
+            <ChevronDown class="text-muted-foreground pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2" />
+          </span>
         </label>
         <button type="button" class="text-primary hover:bg-accent flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-bold" @click="startOver">
           <RotateCcw class="size-4" /> Choose another
@@ -257,16 +293,23 @@ async function doImport() {
           <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <label v-for="[field, label] in FIELD_LABELS" :key="field" class="space-y-1">
               <span class="text-sm font-bold">{{ label }}</span>
-              <select
-                :value="columns?.[field] ?? -1"
-                class="bg-card border-strong h-10 w-full rounded-xl border px-2 text-[0.9375rem]"
-                @change="setColumn(field, Number(($event.target as HTMLSelectElement).value))"
-              >
-                <option :value="-1">Not in the file</option>
-                <option v-for="(h, i) in parsed.headers" :key="i" :value="i">{{ h || `Column ${i + 1}` }}</option>
-              </select>
+              <span class="relative block">
+                <select
+                  :value="columns?.[field] ?? -1"
+                  class="bg-card border-strong h-10 w-full appearance-none rounded-xl border pr-9 pl-3 text-[0.9375rem]"
+                  @change="setColumn(field, Number(($event.target as HTMLSelectElement).value))"
+                >
+                  <option :value="-1">Not in the file</option>
+                  <option v-for="(h, i) in parsed.headers" :key="i" :value="i">{{ h || `Column ${i + 1}` }}</option>
+                </select>
+                <ChevronDown class="text-muted-foreground pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2" />
+              </span>
             </label>
           </div>
+          <p v-if="missingColumns.length" class="text-destructive text-sm font-semibold">
+            Choose the {{ missingColumns.length === 1 ? 'column' : 'columns' }} with the dancers’
+            {{ missingColumns.length > 1 ? `${missingColumns.slice(0, -1).join(', ')} and ${missingColumns.at(-1)}` : missingColumns[0] }}.
+          </p>
         </section>
 
         <!-- Summary -->
@@ -334,6 +377,9 @@ async function doImport() {
             <span>
               <span class="block text-base font-bold">Remove {{ plan.missing.length }} {{ plan.missing.length === 1 ? 'dancer who isn’t' : 'dancers who aren’t' }} in this file</span>
               <span class="text-muted-foreground block text-sm">{{ plan.missing.slice(0, 12).map((d) => `${d.num} ${d.label}`).join(', ') }}{{ plan.missing.length > 12 ? '…' : '' }}</span>
+              <span v-if="missingWithResults" class="text-destructive block text-sm font-semibold">
+                {{ missingWithResults === 1 && plan.missing.length === 1 ? 'They have' : `${missingWithResults} of them have` }} results entered. Those places would show as an unknown dancer (?).
+              </span>
             </span>
           </label>
         </section>
@@ -347,7 +393,7 @@ async function doImport() {
             @click="doImport"
           >
             <LoaderCircle v-if="importing" class="size-5 animate-spin" />
-            {{ writes ? `Import ${plan.counts.new + plan.counts.changed} ${plan.counts.new + plan.counts.changed === 1 ? 'dancer' : 'dancers'}` : 'Nothing to change' }}
+            {{ importLabel }}
           </button>
         </div>
       </template>

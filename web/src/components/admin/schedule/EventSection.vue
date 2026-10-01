@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { makeDraggable, makeDroppable } from '@vue-dnd-kit/core'
-import { GripVertical, Plus, X } from '@lucide/vue'
+import { GripVertical, Plus, Trash2 } from '@lucide/vue'
 import DanceRow from './DanceRow.vue'
 import DragIndicator from './DragIndicator.vue'
 import InlineEdit from './InlineEdit.vue'
@@ -110,12 +110,15 @@ async function remove() {
   >
     <div
       ref="headerEl"
-      class="group/event bg-muted col-span-full flex min-h-10 cursor-grab items-center gap-1 rounded-lg px-1 text-[0.9375rem] font-bold"
+      class="group/event bg-muted/60 col-span-full flex min-h-11 cursor-grab items-center gap-1 rounded-xl px-1 text-base font-bold contain-inline-size"
     >
       <span
         data-grip
-        class="text-muted-foreground flex shrink-0 touch-none items-center self-stretch pointer-coarse:px-1.5"
-        aria-hidden="true"
+        :tabindex="b.readonly.value ? undefined : 0"
+        :role="b.readonly.value ? undefined : 'button'"
+        :aria-label="b.readonly.value ? undefined : `Move ${event.name || 'event'}`"
+        :aria-hidden="b.readonly.value || undefined"
+        class="text-muted-foreground focus-visible:ring-ring flex shrink-0 touch-none items-center self-stretch rounded-sm outline-none focus-visible:ring-2 pointer-coarse:px-1.5"
         ><GripVertical class="size-4"
       /></span>
       <InlineEdit
@@ -132,14 +135,16 @@ async function remove() {
           v-if="!b.readonly.value"
           type="button"
           :aria-label="`Delete ${event.name || 'event'}`"
-          class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex size-7 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/event:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
+          class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex size-11 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/event:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
           @click="remove"
+          @keydown.enter.stop
+          @keydown.space.stop
         >
-          <X class="size-4" />
+          <Trash2 class="size-4" />
         </button>
       </div>
     </div>
-    <div class="col-span-full py-1.5 pr-1 pl-6 text-sm">
+    <div class="col-span-full py-1.5 pr-1 pl-6 text-sm contain-inline-size">
       <InlineEdit
         :model-value="event.description ?? ''"
         placeholder="Add a time or note"
@@ -183,7 +188,7 @@ async function remove() {
           <button
             type="button"
             title="A row without a dance, like Registration or March Past"
-            class="bg-dance/10 text-dance-foreground hover:bg-dance/25 dark:text-dance flex min-h-8 w-full items-center gap-1 rounded-lg px-2 text-left text-sm font-bold"
+            class="text-primary hover:bg-accent flex min-h-9 w-full items-center gap-1.5 rounded-lg px-2 text-left text-sm font-bold"
             @click="addRow"
           >
             <Plus class="size-4" /> Add row

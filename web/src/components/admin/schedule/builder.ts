@@ -1,5 +1,7 @@
 import { computed, inject, provide, toRaw, type InjectionKey, type Ref } from 'vue'
 import { compareKeys } from '@/lib/competitionData'
+import { formatWeekday, parseDate } from '@/lib/format'
+import { dayLabel, idList, isSpacerId } from '@/lib/schedule'
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import type { ManagedCompetition } from '@/composables/admin/useManagedCompetition'
@@ -10,7 +12,8 @@ import type { ManagedCompetition } from '@/composables/admin/useManagedCompetiti
 //
 // Days stay in the stored shape (the public pages and older apps read
 // days › sessions › events › dances), but the builder shows one day at a
-// time and makes a single unnamed day when the first session is added.
+// time and makes the first day when the first session is added, named for
+// the competition's weekday (older apps head the schedule with it).
 // Siblings are ordered by `order`, falling back to their key, as on the
 // public pages. Dances, age groups, judges and platforms are only read here:
 // they're managed in their own Manage sections.
@@ -74,13 +77,10 @@ export function ordered<T extends { order?: number }>(
 }
 
 /** A stored id list (an array, or an object if it was ever sparse). */
-export function ids(v: unknown): string[] {
-  const values = Array.isArray(v) ? v : v && typeof v === 'object' ? Object.values(v) : []
-  return values.filter((x) => x != null && x !== '').map(String)
-}
+export const ids = idList
 
 /** Spacers among a platform's age groups have all-digit ids. */
-export const isSpacerId = (id: string) => /^\d+$/.test(id)
+export { isSpacerId }
 export const newSpacerId = () => String(Date.now())
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(toRaw(v) ?? null))
@@ -145,12 +145,30 @@ function moveWithin(
   renumber(rec, order)
 }
 
+const pad = (n: number) => String(n).padStart(2, '0')
+/** A stored date as YYYY-MM-DD (what date fields take), or '' if it isn't one. */
+export function isoDate(value: unknown): string {
+  if (value == null || value === '') return ''
+  const d = parseDate(value as string | number | Date)
+  return Number.isNaN(d.getTime())
+    ? ''
+    : `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+/** A day's stored name: everyone (and the old app) sees it, so English, not the organiser's phone language. */
+const weekdayName = (iso: string) => parseDate(iso).toLocaleDateString('en', { weekday: 'long' })
+function shiftDate(iso: string, days: number) {
+  const d = parseDate(iso)
+  d.setDate(d.getDate() + days)
+  return isoDate(d)
+}
+
 /** A short category name: "Primary" → "Pri", "Pre-Premier" → "PP". */
 function abbreviate(name: string) {
+  // By character, not UTF-16 unit, so an emoji isn't cut in half.
   const words = name.split(/[\s-]+/).filter(Boolean)
   return words.length > 1
-    ? words.map((w) => w[0].toUpperCase()).join('')
-    : name.slice(0, 3)
+    ? words.map((w) => Array.from(w)[0].toUpperCase()).join('')
+    : Array.from(name).slice(0, 3).join('')
 }
 
 export function createBuilder(m: ManagedCompetition, dayParam: Ref<string | undefined>) {
@@ -259,6 +277,19 @@ export function createBuilder(m: ManagedCompetition, dayParam: Ref<string | unde
     })
   }
 
+  /**
+   * The next day's name and date: the day after the last (or the
+   * competition's first day). Older apps head the schedule with each day's
+   * name, so days always have one.
+   */
+  function nextDay(s: SSchedule): SDay {
+    const list = ordered(s.days)
+    const start = isoDate(m.competition.value?.date)
+    const last = isoDate(list.at(-1)?.[1].date)
+    const date = last ? shiftDate(last, 1) : start && shiftDate(start, list.length)
+    return date ? { name: weekdayName(date), date } : { name: `Day ${list.length + 1}` }
+  }
+
   // Lookups within the day being edited, in `s` (a draft) or what's saved.
   function dayIn(s: SSchedule, create = false): SDay | undefined {
     // Before the first save, a day made earlier in the same change.
@@ -267,7 +298,7 @@ export function createBuilder(m: ManagedCompetition, dayParam: Ref<string | unde
     if (!create) return undefined
     s.days ??= {}
     const newId = m.newKey()
-    s.days[newId] = { order: 0 }
+    s.days[newId] = { order: 0, ...nextDay(s) }
     return s.days[newId]
   }
   const blockIn = (s: SSchedule, b: string) => dayIn(s)?.blocks?.[b]
@@ -347,6 +378,41 @@ export function createBuilder(m: ManagedCompetition, dayParam: Ref<string | unde
       if (cell) cell[listKey(kind)] = list
     })
   }
+
+  // Days
+  const dayName = (d: string) => {
+    const i = days.value.findIndex(([id]) => id === d)
+    return i >= 0 ? dayLabel(days.value[i][1], i) : 'day'
+  }
+  function addDay() {
+    const id = m.newKey()
+    const day = nextDay(src())
+    void edit(`Added ${day.name}`, (s) => {
+      s.days ??= {}
+      insertAt(s.days, id, day)
+    })
+    return id
+  }
+  const renameDay = (d: string, name: string) =>
+    edit(`Renamed ${dayName(d)}`, (s) => {
+      const x = s.days?.[d]
+      if (x) x.name = name
+    })
+  /** Set a day's date (YYYY-MM-DD, or '' for none). A name that was its weekday follows it. */
+  const setDayDate = (d: string, date: string) =>
+    edit(`Changed the date of ${dayName(d)}`, (s) => {
+      const x = s.days?.[d]
+      if (!x) return
+      const old = isoDate(x.date)
+      const name = x.name?.trim()
+      if (date && (!name || (old && (name === weekdayName(old) || name === formatWeekday(old))))) x.name = weekdayName(date)
+      if (date) x.date = date
+      else delete x.date
+    })
+  const removeDay = (d: string) =>
+    edit(`Deleted ${dayName(d)}`, (s) => {
+      delete s.days?.[d]
+    })
 
   // Sessions
   function addBlock(name: string) {
@@ -498,6 +564,11 @@ export function createBuilder(m: ManagedCompetition, dayParam: Ref<string | unde
     moveBetweenCells,
     reorderInCell,
     setCell,
+    dayName,
+    addDay,
+    renameDay,
+    setDayDate,
+    removeDay,
     addBlock,
     removeBlock,
     clearDay,

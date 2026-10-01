@@ -36,7 +36,8 @@ const { floatingStyles } = useFloating(
       offset(({ rects }) => -rects.reference.height),
       size({
         apply({ rects, elements }) {
-          elements.floating.style.minWidth = `${rects.reference.width}px`
+          // As wide as the button, but never wider than the screen.
+          elements.floating.style.minWidth = `min(${rects.reference.width}px, calc(100vw - 1rem))`
         },
       }),
       flip(),
@@ -75,7 +76,12 @@ watch(
 // Focus the field as soon as it's there.
 watch(inputEl, (el) => el?.focus())
 
-// Stays open after picking, to add a few in a row.
+// Stays open after picking, to add a few in a row. The list changes under
+// the pointer as it does, so the second click of a double click is ignored
+// (it would add whatever moved up under it).
+function onClick(e: MouseEvent, i: number) {
+  if (e.detail < 2) pick(i)
+}
 function pick(i: number) {
   if (i < filtered.value.length) emit('select', filtered.value[i])
   else if (canAdd.value) emit('add', search.value.trim())
@@ -87,8 +93,10 @@ function onKeydown(e: KeyboardEvent) {
   if (!['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key) || e.isComposing)
     return
   e.preventDefault()
-  if (e.key === 'Escape') emit('close')
-  else if (e.key === 'Enter') pick(highlight.value)
+  if (e.key === 'Escape') {
+    emit('close')
+    props.anchor?.focus()
+  } else if (e.key === 'Enter') pick(highlight.value)
   else if (total.value)
     highlight.value =
       (highlight.value + (e.key === 'ArrowDown' ? 1 : -1) + total.value) % total.value
@@ -101,7 +109,7 @@ function onKeydown(e: KeyboardEvent) {
       <div class="fixed inset-0 z-40" @click="emit('close')" />
       <div
         ref="floatingEl"
-        class="bg-popover text-popover-foreground z-50 min-w-56 overflow-hidden rounded-xl border shadow-lg"
+        class="bg-popover text-popover-foreground z-50 max-w-[calc(100vw-1rem)] min-w-56 overflow-hidden rounded-xl border shadow-lg"
         :style="floatingStyles"
       >
         <div class="flex items-center border-b">
@@ -111,7 +119,7 @@ function onKeydown(e: KeyboardEvent) {
             type="text"
             :placeholder="placeholder"
             :aria-label="placeholder"
-            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent px-3 py-2 text-[0.9375rem] outline-none"
+            class="placeholder:text-muted-foreground h-11 min-w-0 flex-1 bg-transparent px-3 text-base outline-none"
             @keydown.stop="onKeydown"
           />
           <button
@@ -131,10 +139,10 @@ function onKeydown(e: KeyboardEvent) {
             role="option"
             :aria-selected="highlight === i"
             :class="[
-              'flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[0.9375rem]',
+              'flex min-h-11 w-full items-center rounded-lg px-3 py-1.5 text-left text-base',
               highlight === i && 'bg-accent',
             ]"
-            @click="pick(i)"
+            @click="onClick($event, i)"
             @mouseenter="highlight = i"
           >
             {{ item.label }}
@@ -145,15 +153,15 @@ function onKeydown(e: KeyboardEvent) {
             role="option"
             :aria-selected="highlight === filtered.length"
             :class="[
-              'flex w-full items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-left text-[0.9375rem] font-bold',
+              'flex min-h-11 w-full items-center gap-1.5 rounded-lg px-3 py-1.5 text-left text-base font-bold',
               highlight === filtered.length && 'bg-accent',
             ]"
-            @click="pick(filtered.length)"
+            @click="onClick($event, filtered.length)"
             @mouseenter="highlight = filtered.length"
           >
             <Plus class="size-4" /> Add “{{ search.trim() }}”
           </button>
-          <p v-if="!total" class="text-muted-foreground px-2.5 py-1.5 text-sm">
+          <p v-if="!total" class="text-muted-foreground px-3 py-2.5 text-sm">
             Type a name to add one.
           </p>
         </div>

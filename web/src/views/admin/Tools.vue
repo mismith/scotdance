@@ -20,6 +20,8 @@ interface Job {
   running: boolean
   result: string | null
   error: string | null
+  /** The competitions a map position was found for (or would be, on a dry run). */
+  samples?: string[]
 }
 const jobs = reactive<Record<string, Job>>({})
 const job = (key: string): Job => jobs[key] ?? { running: false, result: null, error: null }
@@ -36,26 +38,47 @@ const WORDS: Record<string, string> = {
   updated: 'updated',
   total: 'total',
   missing: 'missing',
+  scanned: 'checked',
+  noQuery: 'with no address',
+  failed: 'not found',
 }
 function describe(data: unknown): string {
   if (data == null) return 'Done.'
   if (Array.isArray(data)) return `Done: ${data.length} indexed.`
   if (typeof data !== 'object') return `Done: ${String(data)}`
-  const parts = Object.entries(data as Record<string, unknown>)
-    .filter(([, v]) => typeof v === 'number' || typeof v === 'boolean' || typeof v === 'string')
-    .map(([k, v]) => `${v} ${WORDS[k] ?? k.replace(/([A-Z])/g, ' $1').toLowerCase()}`)
-  const counted = Object.keys(data as object).length
-  return parts.length ? `Done: ${parts.join(', ')}.` : `Done: ${counted} indexed.`
+  const entries = Object.entries(data as Record<string, unknown>)
+  // (Older builds returned the published ids themselves.)
+  if (entries.every(([, v]) => v === true)) return `Done: ${entries.length} published.`
+  const dryRun = (data as { dryRun?: unknown }).dryRun === true
+  const parts = entries
+    .filter(([k, v]) => k !== 'dryRun' && (typeof v === 'number' || typeof v === 'string'))
+    .map(([k, v]) => `${v} ${dryRun && k === 'updated' ? 'to update' : (WORDS[k] ?? k.replace(/([A-Z])/g, ' $1').toLowerCase())}`)
+  if (!parts.length) return `Done: ${entries.length} indexed.`
+  return `${dryRun ? 'Dry run, nothing changed' : 'Done'}: ${parts.join(', ')}.`
 }
+
+interface CoordsSample {
+  id: string
+  name?: string
+  country?: string | null
+  region?: string | null
+  locality?: string | null
+}
+const sampleLines = (data: unknown) =>
+  ((data as { samples?: CoordsSample[] } | null)?.samples ?? []).map(
+    (x) => `${x.name || x.id}: ${[x.locality, x.region, x.country].filter(Boolean).join(', ') || 'found'}`,
+  )
 
 async function run(key: string, fn: string, payload?: unknown) {
   const j = jobs[key]
   j.running = true
   j.error = null
   j.result = null
+  j.samples = []
   try {
     const res = await httpsCallable(functions, fn, { timeout: 540_000 })(payload)
     j.result = describe(res.data)
+    j.samples = sampleLines(res.data)
   } catch (e) {
     j.error = e instanceof Error ? e.message : String(e)
   } finally {
@@ -64,7 +87,7 @@ async function run(key: string, fn: string, payload?: unknown) {
 }
 
 const REINDEX = [
-  { key: 'competitionsPublished', fn: 'reindexCompetitionsPublished', label: 'Published competitions list' },
+  { key: 'competitionsPublished', fn: 'reindexCompetitionsPublished', label: 'Published and listed competitions lists' },
   { key: 'competitions', fn: 'reindexCompetitions', label: 'Competitions search' },
   { key: 'dancers', fn: 'reindexDancers', label: 'Dancers search' },
   { key: 'judges', fn: 'reindexJudges', label: 'Judges search' },
@@ -150,6 +173,9 @@ for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`ag
         </button>
       </div>
       <p v-if="job('coords').result" class="text-done-foreground text-sm">{{ job('coords').result }}</p>
+      <ul v-if="job('coords').samples?.length" class="text-muted-foreground list-disc space-y-0.5 pl-5 text-sm">
+        <li v-for="(line, i) in job('coords').samples" :key="i">{{ line }}</li>
+      </ul>
       <p v-if="job('coords').error" class="text-destructive text-sm font-semibold">{{ job('coords').error }}</p>
     </section>
   </div>

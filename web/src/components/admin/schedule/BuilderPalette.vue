@@ -15,11 +15,13 @@ const steps = (s?: string | number) => String(s ?? '').trim()
 </script>
 
 <template>
-  <div class="space-y-5">
-    <section class="space-y-1.5">
+  <div class="space-y-6">
+    <section class="space-y-2">
       <header class="flex items-baseline justify-between gap-2">
-        <h2 class="text-eyebrow">Dances</h2>
-        <RouterLink :to="to('manage.dances')" class="text-primary text-sm font-bold"
+        <h2 class="text-heading">Dances</h2>
+        <RouterLink
+          :to="to('manage.dances')"
+          class="text-primary text-[0.9375rem] font-bold"
           >Edit</RouterLink
         >
       </header>
@@ -41,7 +43,7 @@ const steps = (s?: string | number) => String(s ?? '').trim()
           "
         >
           {{ b.danceName(d.id)
-          }}<span v-if="steps(d.steps)" class="ml-1 font-normal opacity-60"
+          }}<span v-if="steps(d.steps)" class="text-muted-foreground ml-1 font-normal"
             >({{ steps(d.steps) }})</span
           >
         </BuilderChip>
@@ -49,10 +51,12 @@ const steps = (s?: string | number) => String(s ?? '').trim()
       <p v-if="!b.dances.value.length" class="text-muted-foreground text-sm">None yet.</p>
     </section>
 
-    <section class="space-y-1.5">
+    <section class="space-y-2">
       <header class="flex items-baseline justify-between gap-2">
-        <h2 class="text-eyebrow">Age groups</h2>
-        <RouterLink :to="to('manage.groups')" class="text-primary text-sm font-bold"
+        <h2 class="text-heading">Age groups</h2>
+        <RouterLink
+          :to="to('manage.groups')"
+          class="text-primary text-[0.9375rem] font-bold"
           >Edit</RouterLink
         >
       </header>
@@ -91,10 +95,12 @@ const steps = (s?: string | number) => String(s ?? '').trim()
       />
     </section>
 
-    <section class="space-y-1.5">
+    <section class="space-y-2">
       <header class="flex items-baseline justify-between gap-2">
-        <h2 class="text-eyebrow">Judges</h2>
-        <RouterLink :to="to('manage.staff')" class="text-primary text-sm font-bold"
+        <h2 class="text-heading">Judges</h2>
+        <RouterLink
+          :to="to('manage.staff')"
+          class="text-primary text-[0.9375rem] font-bold"
           >Edit</RouterLink
         >
       </header>

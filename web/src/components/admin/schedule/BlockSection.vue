@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
 import { makeDraggable, makeDroppable } from '@vue-dnd-kit/core'
-import { GripVertical, Plus, X } from '@lucide/vue'
+import { GripVertical, Plus, Trash2 } from '@lucide/vue'
 import AddPopover from './AddPopover.vue'
 import DragIndicator from './DragIndicator.vue'
 import EventSection from './EventSection.vue'
@@ -97,9 +97,10 @@ const suggestions = computed(() => {
 const autoEditEvent = ref<string | null>(null)
 function addEvent(name: string) {
   b.addEvent(props.blockId, name)
+  // (The last event, not `:last-of-type`: the Add event row comes after it.)
   void nextTick(() =>
-    sectionEl.value
-      ?.querySelector('[data-event]:last-of-type')
+    [...(sectionEl.value?.querySelectorAll('[data-event]') ?? [])]
+      .at(-1)
       ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }),
   )
 }
@@ -128,16 +129,19 @@ async function remove() {
   >
     <div
       ref="sectionEl"
-      class="bg-card col-span-full grid grid-cols-subgrid rounded-2xl border p-3 shadow-sm"
+      class="bg-card col-span-full grid grid-cols-subgrid rounded-2xl border p-4 shadow-sm"
     >
       <div
         ref="headerEl"
-        class="group/block col-span-full flex min-h-10 cursor-grab items-center gap-1 px-1"
+        class="group/block col-span-full flex min-h-11 cursor-grab items-center gap-1 px-1 contain-inline-size"
       >
         <span
           data-grip
-          class="text-muted-foreground flex shrink-0 touch-none items-center self-stretch pointer-coarse:px-1.5"
-          aria-hidden="true"
+          :tabindex="b.readonly.value ? undefined : 0"
+          :role="b.readonly.value ? undefined : 'button'"
+          :aria-label="b.readonly.value ? undefined : `Move ${block.name || 'session'}`"
+          :aria-hidden="b.readonly.value || undefined"
+          class="text-muted-foreground focus-visible:ring-ring flex shrink-0 touch-none items-center self-stretch rounded-sm outline-none focus-visible:ring-2 pointer-coarse:px-1.5"
           ><GripVertical class="size-4"
         /></span>
         <h2 class="text-heading">
@@ -153,13 +157,15 @@ async function remove() {
           v-if="!b.readonly.value"
           type="button"
           :aria-label="`Delete ${block.name || 'session'}`"
-          class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-auto flex size-7 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/block:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
+          class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-auto flex size-11 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/block:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
           @click="remove"
+          @keydown.enter.stop
+          @keydown.space.stop
         >
-          <X class="size-4" />
+          <Trash2 class="size-4" />
         </button>
       </div>
-      <div class="col-span-full mb-3 pr-1 pl-6 text-sm">
+      <div class="col-span-full mb-3 pr-1 pl-6 text-sm contain-inline-size">
         <InlineEdit
           :model-value="block.description ?? ''"
           placeholder="Add a time or note"
@@ -188,7 +194,7 @@ async function remove() {
         <button
           ref="addBtnEl"
           type="button"
-          class="bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground flex min-h-10 w-full items-center gap-1.5 rounded-lg px-2 text-left text-[0.9375rem] font-bold"
+          class="text-primary hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl px-3 text-[0.9375rem] font-bold"
           @click="adding = !adding"
         >
           <Plus class="size-4" /> Add event

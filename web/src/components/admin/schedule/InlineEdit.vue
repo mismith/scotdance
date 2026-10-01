@@ -98,6 +98,7 @@ defineExpose({ startEdit })
     @click.stop="startEdit"
     @pointerdown.stop
     @keydown.enter.prevent.stop="startEdit"
+    @keydown.space.prevent.stop="startEdit"
     >{{ modelValue || placeholder }}</span
   >
 </template>

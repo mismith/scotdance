@@ -47,13 +47,18 @@ function normal(v: unknown): unknown {
   }
   return v
 }
+// Links the server adds to new dancers and staff (to their profiles across
+// competitions). Nobody edited anything, so they don't make a change "changed since".
+const SERVER_KEYS = new Set(['dancerId', 'judgeId', 'piperId'])
+
 function same(a: unknown, b: unknown): boolean {
   const x = normal(a)
   const y = normal(b)
   if (x === y) return true
   if (typeof x !== 'object' || typeof y !== 'object' || !x || !y) return false
-  const kx = Object.keys(x)
-  const ky = Object.keys(y)
+  const keys = (o: object) => Object.keys(o).filter((k) => !SERVER_KEYS.has(k))
+  const kx = keys(x)
+  const ky = keys(y)
   return kx.length === ky.length && kx.every((k) => same((x as Record<string, unknown>)[k], (y as Record<string, unknown>)[k]))
 }
 

@@ -6,6 +6,7 @@ import { ADMINS_SECTION, MANAGE_STEPS } from '@/lib/admin/sections'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { CALLBACKS, OVERALL, danceState } from '@/lib/admin/results'
 import { formatLongDate } from '@/lib/format'
+import { groupHasOverall } from '@/types/competition'
 
 // The Manage sections as numbered steps, in the order a competition comes
 // together, each ticked once it's done. `compact` is the sidebar; otherwise
@@ -25,8 +26,7 @@ const status = computed<Record<string, { done: boolean; detail: string; count?: 
   let entered = 0
   let total = 0
   for (const g of groups) {
-    const overall = !!g.category?.name && !g.category.name.trim().toLowerCase().startsWith('primary')
-    const ids = [CALLBACKS, ...m.groupDances(g.id).map((d) => d.id), ...(overall ? [OVERALL] : [])]
+    const ids = [CALLBACKS, ...m.groupDances(g.id).map((d) => d.id), ...(groupHasOverall(g) ? [OVERALL] : [])]
     total += ids.length
     entered += ids.filter((id) => danceState(m.results.value[g.id]?.[id]) !== 'todo').length
   }

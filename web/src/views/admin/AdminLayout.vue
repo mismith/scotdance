@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { RouterLink, RouterView, useRoute } from 'vue-router'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
 import { ChevronRight, Inbox, Lock, LogIn, UserCog, Wrench } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
@@ -8,6 +8,7 @@ import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import SaveStatus from '@/components/admin/SaveStatus.vue'
 import { useSidebar, useSplit } from '@/composables/admin/useWide'
+import { viaHistory } from '@/composables/admin/useManageBack'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
@@ -16,6 +17,7 @@ import { useMeStore } from '@/stores/me'
 // and maintenance tools. Only for system admins.
 
 const route = useRoute()
+const router = useRouter()
 const auth = useAuthStore()
 const me = useMeStore()
 const sidebar = useSidebar()
@@ -29,7 +31,7 @@ interface AdminSection {
 }
 const SECTIONS: AdminSection[] = [
   { route: 'admin.submissions', title: 'Submissions', blurb: 'Review and approve new competitions', icon: Inbox },
-  { route: 'admin.users', title: 'People', blurb: 'Accounts and who can manage what', icon: UserCog },
+  { route: 'admin.users', title: 'Users', blurb: 'Accounts and who can manage what', icon: UserCog },
   { route: 'admin.tools', title: 'Tools', blurb: 'App versions, search and profile rebuilds', icon: Wrench },
 ]
 
@@ -50,10 +52,11 @@ const isHome = computed(() => route.name === 'admin')
 usePageTitle(() => [section.value?.title, 'System admin'])
 
 const exit = computed(() => {
+  void route.fullPath
   const deep = Object.entries(route.params).some(([, v]) => v)
-  if (!sidebar.value && !split.value && deep && section.value) return { to: { name: section.value.route }, label: section.value.title }
-  if (!sidebar.value && !isHome.value) return { to: { name: 'admin' }, label: 'System admin' }
-  return { to: { name: 'manage.competitions' }, label: 'Manage' }
+  if (!sidebar.value && !split.value && deep && section.value) return viaHistory(router, { to: { name: section.value.route }, label: section.value.title })
+  if (!sidebar.value && !isHome.value) return viaHistory(router, { to: { name: 'admin' }, label: 'System admin' })
+  return viaHistory(router, { to: { name: 'manage.competitions' }, label: 'Manage' })
 })
 </script>
 

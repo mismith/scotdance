@@ -1,25 +1,35 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { Check, ChevronDown, ChevronRight, CircleCheck, Download, Minus, Trophy } from '@lucide/vue'
+import { Check, ChevronDown, ChevronRight, CircleCheck, Download, Minus, Plus, Trophy } from '@lucide/vue'
 import EmptyState from '@/components/EmptyState.vue'
+import HideTabSwitch from '@/components/admin/HideTabSwitch.vue'
 import MasterDetail from '@/components/admin/MasterDetail.vue'
 import ResultsEntry from '@/components/admin/ResultsEntry.vue'
-import SwitchField from '@/components/admin/SwitchField.vue'
+import SectionHeader from '@/components/admin/SectionHeader.vue'
+import { useHideTab } from '@/composables/admin/useHideTab'
 import { useManagedCompetition, type MGroup } from '@/composables/admin/useManagedCompetition'
 import { useSplit } from '@/composables/admin/useWide'
-import { confirm, toast } from '@/lib/admin/feedback'
+import { canEdit } from '@/lib/admin/write'
 import { CALLBACKS, OVERALL, danceState, isPlaceholderId, parsePlacings, placeAt } from '@/lib/admin/results'
+import { groupHasOverall } from '@/types/competition'
 
 const route = useRoute()
 const m = useManagedCompetition()
 const split = useSplit()
+const hideTab = useHideTab('results')
+
+const PRIMARY = 'bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50'
+const GHOST = 'text-primary hover:bg-accent flex h-10 items-center gap-1.5 rounded-xl px-2 text-[0.9375rem] font-bold'
 
 const groupId = computed(() => (route.params.groupId ? String(route.params.groupId) : null))
 const danceId = computed(() => (route.params.danceId ? String(route.params.danceId) : CALLBACKS))
 
-const hasOverall = (g: MGroup) => !!g.category?.name && !g.category.name.trim().toLowerCase().startsWith('primary')
-const danceIds = (g: MGroup) => [CALLBACKS, ...m.groupDances(g.id).map((d) => d.id), ...(hasOverall(g) ? [OVERALL] : [])]
+// Only enter results for what's listed: a removed dance (or an old link)
+// would otherwise save placings nobody can see.
+const openGroup = computed(() => (groupId.value ? (m.groupsById.value.get(groupId.value) ?? null) : null))
+
+const danceIds = (g: MGroup) => [CALLBACKS, ...m.groupDances(g.id).map((d) => d.id), ...(groupHasOverall(g) ? [OVERALL] : [])]
 
 function progress(g: MGroup) {
   const ids = danceIds(g)
@@ -30,7 +40,7 @@ function progress(g: MGroup) {
 const danceRows = (g: MGroup) => [
   { id: CALLBACKS, label: 'Callbacks' },
   ...m.groupDances(g.id).map((d) => ({ id: d.id, label: d.label })),
-  ...(hasOverall(g) ? [{ id: OVERALL, label: 'Overall' }] : []),
+  ...(groupHasOverall(g) ? [{ id: OVERALL, label: 'Overall' }] : []),
 ]
 const stateOf = (groupId: string, danceId: string) => danceState(m.results.value[groupId]?.[danceId])
 const hasPlaceholder = (groupId: string, danceId: string) =>
@@ -70,43 +80,21 @@ const totals = computed(() => {
   return { done, total }
 })
 
-async function setHidden(hidden: boolean) {
-  if (hidden) {
-    const hasAny = Object.keys(m.results.value).length > 0
-    const ok = await confirm({
-      title: 'Hide the Results tab?',
-      message: hasAny ? 'All results entered so far are deleted, and the tab disappears from the competition page.' : 'The tab disappears from the competition page.',
-      confirmLabel: 'Hide results',
-      destructive: hasAny,
-    })
-    if (!ok) return
-    const change = await m.writeData({ results: false }, 'Hid the Results tab')
-    toast('Results tab hidden', { action: { label: 'Undo', run: () => m.undoChange(change) } })
-  } else {
-    await m.writeData({ results: null }, 'Showed the Results tab')
-  }
-}
-
 // A spreadsheet of every placing, for the organisers' records.
 function exportCsv() {
   const rows: string[][] = [['Category', 'Age group', 'Dance', 'Place', 'Number', 'First name', 'Last name', 'Location']]
   for (const g of m.groups.value) {
     for (const id of danceIds(g)) {
       const name = id === CALLBACKS ? 'Callbacks' : id === OVERALL ? 'Overall' : (m.dancesById.value.get(id)?.label ?? '')
+      const row = (dancerId: string, place: string) => {
+        const d = m.dancersById.value.get(dancerId)
+        return [g.category?.label ?? '', g.name ?? '', name, place, d?.num ?? '?', d?.firstName ?? '', d?.lastName ?? '', d?.location ?? '']
+      }
       const p = parsePlacings(m.results.value[g.id]?.[id])
-      p.entries.forEach((e, i) => {
-        const d = m.dancersById.value.get(e.id)
-        rows.push([
-          g.category?.label ?? '',
-          g.name ?? '',
-          name,
-          id === CALLBACKS ? '' : String(placeAt(i, p) ?? ''),
-          d?.num ?? '?',
-          d?.firstName ?? '',
-          d?.lastName ?? '',
-          d?.location ?? '',
-        ])
-      })
+      p.entries.forEach((e, i) => rows.push(row(e.id, id === CALLBACKS ? '' : String(placeAt(i, p) ?? ''))))
+      // Championship points too, as the old export had them.
+      const pointed = new Set(Object.values(m.points.value[g.id]?.[id] ?? {}).flat())
+      for (const dancerId of pointed) rows.push(row(dancerId, 'Point'))
     }
   }
   const csv = rows.map((r) => r.map((c) => (/[",\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c)).join(',')).join('\n')
@@ -123,27 +111,36 @@ function exportCsv() {
   <MasterDetail :show-detail="!!groupId">
     <template #list>
       <div class="space-y-6 p-4 pb-[calc(2rem+var(--safe-bottom))]">
-        <header class="space-y-1">
-          <h1 class="text-title">Results</h1>
-          <p v-if="!m.resultsHidden.value && totals.total" class="text-muted-foreground text-sm font-semibold tabular-nums">
-            {{ totals.done }} of {{ totals.total }} entered
-          </p>
-        </header>
+        <SectionHeader title="Results" :count="!hideTab.hidden.value && totals.total ? `${totals.done} of ${totals.total} entered` : null">
+          <template v-if="!hideTab.hidden.value && m.groups.value.length">
+            <div v-if="totals.done" class="-mx-2 -my-1 flex">
+              <button type="button" :class="GHOST" @click="exportCsv"><Download class="size-4" /> Download all results</button>
+            </div>
+            <HideTabSwitch tab="results" />
+          </template>
+        </SectionHeader>
 
-        <EmptyState
-          v-if="m.resultsHidden.value"
-          :icon="Trophy"
-          title="Results are hidden"
-          description="This competition doesn’t show results. Turn the tab back on below to enter them."
-        />
+        <EmptyState v-if="hideTab.hidden.value" :icon="Trophy" title="Results are hidden" description="The competition page has no Results tab.">
+          <button type="button" :disabled="!canEdit" :class="PRIMARY" @click="hideTab.show()">Show the Results tab</button>
+        </EmptyState>
         <EmptyState
           v-else-if="!m.groups.value.length"
           :icon="Trophy"
           title="No age groups yet"
           description="Add age groups and their dancers first, then enter results here."
-        />
+        >
+          <RouterLink :to="{ name: 'manage.groups', params: { competitionId: m.competitionId.value } }" :class="PRIMARY">
+            <Plus class="size-4" /> Add age groups
+          </RouterLink>
+          <template #footer>
+            Not publishing results here?
+            <button type="button" :disabled="!canEdit" class="text-primary font-bold underline-offset-2 hover:underline disabled:opacity-50" @click="hideTab.hide()">
+              Hide the Results tab
+            </button>
+          </template>
+        </EmptyState>
 
-        <ul v-if="!m.resultsHidden.value" class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+        <ul v-else class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
           <li v-for="g in m.groups.value" :key="g.id">
             <button
               type="button"
@@ -189,35 +186,23 @@ function exportCsv() {
           </li>
         </ul>
 
-        <section class="space-y-3 border-t pt-6">
-          <button
-            v-if="totals.done"
-            type="button"
-            class="bg-card border-strong hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold"
-            @click="exportCsv"
-          >
-            <Download class="size-4" /> Download all results
-          </button>
-          <div class="bg-card rounded-2xl border px-4 py-2">
-            <SwitchField
-              :model-value="m.resultsHidden.value"
-              label="Hide the Results tab"
-              description="For competitions that won’t publish results here."
-              :save="setHidden"
-            />
-          </div>
-        </section>
       </div>
     </template>
 
     <template #empty>
-      <div class="hidden h-full items-center justify-center p-8 md:flex">
-        <p class="text-muted-foreground max-w-xs text-center text-base">Choose an age group to enter its callbacks, placings and points.</p>
+      <div class="hidden h-full items-center justify-center md:flex">
+        <EmptyState
+          v-if="!hideTab.hidden.value && m.groups.value.length"
+          :icon="Trophy"
+          title="Choose an age group"
+          description="Enter its callbacks, placings and points here."
+        />
       </div>
     </template>
 
     <template #detail>
-      <ResultsEntry v-if="groupId && m.groupsById.value.get(groupId)" :key="groupId" :group-id="groupId" :dance-id="danceId" />
+      <ResultsEntry v-if="openGroup && danceIds(openGroup).includes(danceId)" :key="openGroup.id" :group-id="openGroup.id" :dance-id="danceId" />
+      <EmptyState v-else-if="openGroup" :icon="Trophy" title="This dance isn’t in this age group any more" description="Choose another from the list." />
       <EmptyState v-else :icon="Trophy" title="This age group isn’t here any more" description="Choose another from the list." />
     </template>
   </MasterDetail>
