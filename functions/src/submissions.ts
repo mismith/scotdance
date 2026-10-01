@@ -2,6 +2,17 @@ import { getPostmark } from './utility/email';
 import { attachUserToCompetition } from './utility/competition';
 import { isCypress, isEmulator } from './utility/env';
 
+// A failed email mustn't fail the trigger: the submission (or the
+// competition made from it) stands, and Murray sees it in System admin.
+async function sendEmail(message) {
+  try {
+    await getPostmark().sendEmailWithTemplate(message);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error(`${message.TemplateAlias} email failed`, err);
+  }
+}
+
 class Submissions {
   database;
   config;
@@ -31,13 +42,13 @@ class Submissions {
     const model = this.getTemplateModel(submission);
 
     // send emails
-    await getPostmark().sendEmailWithTemplate({
+    await sendEmail({
       From: this.config.email,
       To: isEmulator() ? this.config.email : submission.contact.email,
       TemplateAlias: 'competition-submission',
       TemplateModel: model,
     });
-    await getPostmark().sendEmailWithTemplate({
+    await sendEmail({
       From: this.config.email,
       ReplyTo: submission.contact.email,
       To: this.config.email,
@@ -77,7 +88,7 @@ class Submissions {
     if (isCypress()) return;
 
     // send email
-    await getPostmark().sendEmailWithTemplate({
+    await sendEmail({
       From: this.config.email,
       To: isEmulator() ? this.config.email : contact.email,
       TemplateAlias: 'competition-submission-approved',
@@ -103,12 +114,16 @@ class Submissions {
       ref,
       onCreate: ref.onCreate(async (after, ctx) => {
         try {
-          await after.ref.update({
-            submittedBy: ctx.auth ? ctx.auth.uid : 'admin',
-          });
-          const snap = await after.ref.once('value');
+          // A transaction, so a submission deleted meanwhile (an admin tidying
+          // up) isn't brought back as a `{ submittedBy }` shell. (Its first try
+          // sees null when nothing is cached; answering null makes the server
+          // send the real value for a second try, and leaves a deleted one be.)
+          const { committed, snapshot } = await after.ref.transaction((current) => (
+            current ? { ...current, submittedBy: ctx.auth ? ctx.auth.uid : 'admin' } : null
+          ));
+          if (!committed || !snapshot.exists()) return null;
 
-          return await this.handleCreate(snap, ctx);
+          return await this.handleCreate(snapshot, ctx);
         } catch (err) {
           return this.handleError(err, after, ctx);
         }

@@ -16,4 +16,5 @@ export const {
   getOnReindex,
   getOnBackfillAggregates,
   getOnBackfillBackPointers,
+  getOnSyncCompetition,
 } = entity;

@@ -15,24 +15,36 @@ class Invites extends FirebaseInvites {
     const invite = snap.val();
     const competitionPath = `competitions/${competitionId}`;
     const competition = (await this.config.db.child(competitionPath).once('value')).val();
-    await getPostmark().sendEmailWithTemplate({
-      From: this.config.email,
-      To: isEmulator() ? this.config.email : invite.payload.email,
-      TemplateAlias: 'competition-admin-invite',
-      TemplateModel: {
-        app: {
-          name: this.config.name,
-          description: this.config.description,
-          email: this.config.email,
-          url: this.config.url,
+    try {
+      await getPostmark().sendEmailWithTemplate({
+        From: this.config.email,
+        To: isEmulator() ? this.config.email : invite.payload.email,
+        TemplateAlias: 'competition-admin-invite',
+        TemplateModel: {
+          app: {
+            name: this.config.name,
+            description: this.config.description,
+            email: this.config.email,
+            url: this.config.url,
+          },
+          competition,
+          invite: {
+            ...invite,
+            link,
+          },
         },
-        competition,
-        invite: {
-          ...invite,
-          link,
-        },
-      },
-    });
+      });
+      if (invite.emailFailed) await snap.ref.update({ emailFailed: null });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('invite email failed', err);
+      // The invite stands without its email (throwing would only kill the
+      // trigger): flag it, unless it's been deleted since, so the organiser
+      // can send the link another way.
+      if ((await snap.ref.child('created').once('value')).exists()) {
+        await snap.ref.update({ emailFailed: new Date().toISOString() });
+      }
+    }
   }
 
   async attachUserToCompetition(snap, ctx, value) {

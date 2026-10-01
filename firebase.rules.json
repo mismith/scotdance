@@ -46,16 +46,34 @@
       },
       "competitions:data": {
         "$competitionId": {
+          // Organisers read and write everything here, invites included. The
+          // public reads a published competition section by section (both apps
+          // do), so invites (emails, open invite ids) stay private.
+          "dancers": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
+          "groups": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
+          "categories": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
+          "dances": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
+          "platforms": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
+          "schedule": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
+          "draws": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
+          "results": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
+          "points": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
           "staff": {
-            ".read": true
+            // Judges and sponsors show once a competition is listed; a private one keeps them private.
+            ".read": "root.child($environment).child('competitions').child($competitionId).child('listed').val() === true || root.child($environment).child('competitions').child($competitionId).child('published').val() === true" // is LISTED || PUBLISHED
           },
           "invites": {
             "$inviteId": {
               ".read": "auth !== null", // is AUTHED
-              ".write": "auth !== null" // is AUTHED
+              // Organisers manage invites (competitions:data write below). Anyone else may
+              // only accept one: they can't make their own, take an accepted one over, or
+              // accept a cancelled one.
+              "accepted": {
+                ".write": "auth !== null && data.parent().exists() && !data.exists() && newData.exists() && !data.parent().child('cancelled').exists()" // is AUTHED and ACCEPTING an open invite
+              }
             }
           },
-          ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true || root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // is PUBLISHED || has PERMISSION
+          ".read": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // has PERMISSION
           ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true" // has PERMISSION
         }
       },

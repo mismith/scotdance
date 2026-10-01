@@ -7,47 +7,18 @@ import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 
 import { isCypress } from './env';
 import { ensureAdmin } from './competition';
-import { getTypesense } from './typesense';
-import { createAggregator, type AggregatorConfig } from './aggregate';
-
-export interface StaffRecord {
-  type?: string
-  firstName?: string
-  lastName?: string
-  location?: string
-  image?: string
-  description?: string
-}
-
-export interface StaffAppearance {
-  competitionId: string
-  staffId: string | null
-  firstName: string | null
-  lastName: string | null
-  image: string | null
-  bio: string | null
-  location: string | null
-}
-
-export interface StaffEntityConfig {
-  /** Discriminator on `/staff/{id}.type`, e.g. 'Judge' or 'Piper'. */
-  staffType: string
-  /** Aggregate namespace + Typesense collection name, e.g. 'judges'. */
-  namespace: string
-  /** Back-pointer field written onto the source staff record. */
-  backPointerField: string
-}
-
-function memberName(m: StaffRecord): string {
-  return `${(m.firstName || '').trim()} ${(m.lastName || '').trim()}`.trim();
-}
+import { getTypesense, indexBestEffort, sameExcept } from './typesense';
+import { createAggregator } from './aggregate';
+import {
+  personName, staffAggregator, type StaffEntityKind, type StaffRecord,
+} from './entityConfigs';
 
 function staffDocId(competitionId: string, staffId: string) {
   return `${competitionId}:${staffId}`;
 }
 
-export function createStaffEntity(config: StaffEntityConfig) {
-  const { staffType, namespace, backPointerField } = config;
+export function createStaffEntity(config: StaffEntityKind) {
+  const { staffType, namespace } = config;
 
   const schema: CollectionCreateSchema = {
     name: namespace,
@@ -71,7 +42,7 @@ export function createStaffEntity(config: StaffEntityConfig) {
     return {
       id: staffDocId(ctx.competitionId, ctx.staffId),
       $competitionId: ctx.competitionId,
-      $name: memberName(member),
+      $name: personName(member),
       firstName: member.firstName,
       lastName: member.lastName,
       location: member.location,
@@ -84,45 +55,7 @@ export function createStaffEntity(config: StaffEntityConfig) {
       .catch(() => {});
   }
 
-  const aggregatorConfig: AggregatorConfig<StaffRecord, StaffAppearance> = {
-    namespace,
-    sectionName: 'staff',
-    recordIdParam: 'staffId',
-    backPointerField,
-    predicate: isMatch,
-    nameOf: memberName,
-    nameFromAppearance: (a) => `${(a.firstName || '').trim()} ${(a.lastName || '').trim()}`.trim(),
-    toAppearance: (m, { competitionId, recordId }) => ({
-      competitionId,
-      staffId: recordId,
-      firstName: m.firstName ?? null,
-      lastName: m.lastName ?? null,
-      image: m.image ?? null,
-      bio: m.description ?? null,
-      location: m.location ?? null,
-    }),
-    // Denorm name/image/location onto the agg root so the slim index can carry
-    // them. "Latest" is approximate — first-non-null in appearance iteration
-    // order, since appearances don't carry a date. Profile pages still do the
-    // proper date-sorted pick client-side via comp meta.
-    recomputeFromAppearances: (apps) => {
-      const pick = <K extends keyof StaffAppearance>(f: K): StaffAppearance[K] | null => {
-        const hit = apps.find((a) => a[f] != null && a[f] !== '');
-        return hit ? hit[f] : null;
-      };
-      const firstName = pick('firstName') ?? '';
-      const lastName = pick('lastName') ?? '';
-      return {
-        name: `${firstName} ${lastName}`.trim(),
-        image: pick('image'),
-        location: pick('location'),
-      };
-    },
-    slimFields: (agg) => ({
-      image: agg.image ?? null,
-      location: agg.location ?? null,
-    }),
-  };
+  const aggregatorConfig = staffAggregator(config);
 
   function getOnCreate(db: any) {
     const agg = createAggregator(db, aggregatorConfig);
@@ -131,10 +64,10 @@ export function createStaffEntity(config: StaffEntityConfig) {
       const member = snap.val();
       if (isMatch(member)) {
         const { competitionId, staffId } = ctx.params;
-        await getTypesense()
+        await indexBestEffort(`${namespace} upsert`, () => getTypesense()
           .collections(namespace)
           .documents()
-          .upsert(docFor(member, { competitionId, staffId }));
+          .upsert(docFor(member, { competitionId, staffId })));
       }
       await agg.onCreate(snap, ctx);
     };
@@ -148,10 +81,13 @@ export function createStaffEntity(config: StaffEntityConfig) {
       const prev = change.before.val();
       const { competitionId, staffId } = ctx.params;
       if (isMatch(member)) {
-        await getTypesense()
-          .collections(namespace)
-          .documents()
-          .upsert(docFor(member, { competitionId, staffId }));
+        // Back-pointer writes change nothing search uses.
+        if (!sameExcept(prev, member, ['judgeId', 'piperId'])) {
+          await indexBestEffort(`${namespace} upsert`, () => getTypesense()
+            .collections(namespace)
+            .documents()
+            .upsert(docFor(member, { competitionId, staffId })));
+        }
       } else if (isMatch(prev)) {
         await safeDelete(staffDocId(competitionId, staffId));
       }
@@ -209,6 +145,11 @@ export function createStaffEntity(config: StaffEntityConfig) {
     };
   }
 
+  /** Link or unlink a competition's staff after it's listed, published or hidden again. */
+  function getOnSyncCompetition(db: any) {
+    return createAggregator(db, aggregatorConfig).syncCompetition;
+  }
+
   return {
     schema,
     getOnCreate,
@@ -217,5 +158,6 @@ export function createStaffEntity(config: StaffEntityConfig) {
     getOnReindex,
     getOnBackfillAggregates,
     getOnBackfillBackPointers,
+    getOnSyncCompetition,
   };
 }

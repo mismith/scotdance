@@ -153,21 +153,24 @@ client-side from "latest-non-null appearance after sorting by comp date desc."
 > Why client-side? The trigger doesn't have to know about display rules.
 > The aggregate is just the raw appearances; the UI decides how to summarize.
 
+## What counts
+
+Dancers come from **published** competitions only; judges, pipers and venues
+from **listed or published** ones (their names already show on a listed
+competition's page). Nothing comes from a private competition. Publishing,
+listing, unlisting or deleting a competition re-syncs its records.
+
 ## Backfill
 
-Admins can re-run a backfill from `Admin → Info → Aggregators`. Each per-entity
-button calls `backfill{Entity}Aggregates`, which:
+Admins run these from System admin › Tools. `backfill{Entity}Aggregates`
+reads everything once, builds the aggregates in memory and writes them in
+batches of 1000 paths (it no longer wipes first). `backfill{Entity}BackPointers`
+writes the `dancerId` / `judgeId` / `piperId` / `venueId` back-pointers that
+Follow reads, and removes stale ones; run it until it reports `written: 0`.
 
-1. Wipes `/{namespace}` and `/{namespace}:index`.
-2. Loops every competition.
-3. For each source record that passes the predicate, creates / fetches the
-   aggregate, writes its appearance, recomputes.
-
-The backfill is idempotent. It does **not** write back-pointers on source
-records — that would cause a trigger storm (one onUpdate per source record ×
-thousands of records). The back-pointer gets populated whenever the source
-record is next edited; reverse lookups via `:index` keep working in the
-meantime.
+Every write is a set, remove or transaction, so a re-run converges: if one
+stops part way, run it again. Ids stay stable across runs (kept via the index,
+then `_identity`, then `/{namespace}:retired`), so follows survive.
 
 ## Important invariants & footguns
 
@@ -186,7 +189,8 @@ meantime.
 
 4. **Back-pointer loop avoidance** relies on the equality check in
    `setBackPointer` and the no-op when `oldKey === newKey`. Don't strip
-   either.
+   either. The back-pointer write is a transaction that never recreates a
+   deleted record (a plain `update()` used to leave `{dancerId}`-only shells).
 
 5. **Backfill races with live writes.** If someone edits a record mid-rebuild,
    the result can be slightly inconsistent. Pick a quiet time, or accept
@@ -195,6 +199,10 @@ meantime.
 6. **Profile composables resolve display fields by "latest-non-null."** A
    stale appearance with an old image will still win if it has the most recent
    comp date. Admin merge/split tooling is the future fix.
+
+7. **`/{namespace}:retired` keeps the id of an emptied aggregate by name**, so
+   a dancer who comes back (republished, re-imported) keeps their followers.
+   It has no public read rule; keep it that way.
 
 ## Files at a glance
 

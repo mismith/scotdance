@@ -79,12 +79,23 @@ export interface AggregatorConfig<R, A extends Record<string, any>> {
   ) => Promise<Array<[string | null, R]>>
   /** When `iterate` is not supplied, scan `competitions:data/{compId}/{sectionName}`. */
   sectionName?: string
+  /**
+   * Which competitions' records may show: the aggregates are world-readable.
+   * Dancers wait for a competition to be published (its entries are private
+   * until then: rules on competitions:data, and Manage says so); judges and
+   * pipers show once it's listed. (Venues, whose record is the competition,
+   * check that in their predicate.) Default: every competition. A change of
+   * listing or publishing runs `syncCompetition`.
+   */
+  shownIn?: (comp: { published?: unknown, listed?: unknown }) => boolean
 }
 
 export interface AggregatorHandlers {
   onCreate(snap: any, ctx: any): Promise<void>
   onUpdate(change: any, ctx: any): Promise<void>
   onDelete(snap: any, ctx: any): Promise<void>
+  /** Re-link every record of one competition (after it's listed, published or hidden again). */
+  syncCompetition(competitionId: string): Promise<{ linked: number, unlinked: number }>
   backfill(): Promise<{
     linked: number
     skipped: number
@@ -93,6 +104,7 @@ export interface AggregatorHandlers {
   }>
   backfillBackPointers(opts?: { batchSize?: number }): Promise<{
     written: number
+    cleared: number
     alreadySet: number
     unmatched: number
     competitions: number
@@ -101,10 +113,10 @@ export interface AggregatorHandlers {
 }
 
 /** An index entry's aggregate id: legacy entries are a bare string, new ones `{ id }`. */
-function indexedId(entry: unknown): string | null {
-  if (typeof entry === 'string') return entry;
+export function indexedId(entry: unknown): string | null {
+  if (typeof entry === 'string') return entry || null;
   const id = (entry as { id?: unknown } | null)?.id;
-  return typeof id === 'string' ? id : null;
+  return typeof id === 'string' && id ? id : null;
 }
 
 function appearanceKey(ctx: AppearanceCtx): string {
@@ -112,6 +124,16 @@ function appearanceKey(ctx: AppearanceCtx): string {
     ? ctx.competitionId
     : `${ctx.competitionId}:${ctx.recordId}`;
 }
+
+/** Usable as an index key: not empty, and (venues) neither half of `name|locality` missing. */
+export function validKey(key: string): boolean {
+  // RTDB refuses paths over 768 bytes, and one such key would fail a whole
+  // backfill batch on every run: a name that long is junk, so skip it.
+  return !!key && !key.startsWith('|') && !key.endsWith('|') && Buffer.byteLength(key) <= 300;
+}
+
+/** How many records the publish sync handles at once. */
+const SYNC_CONCURRENCY = 10;
 
 export function createAggregator<R, A extends Record<string, any>>(
   db: any,
@@ -128,6 +150,7 @@ export function createAggregator<R, A extends Record<string, any>>(
     seedAggregate,
     recomputeFromAppearances,
     sectionName,
+    shownIn,
   } = config;
   const slimFields = config.slimFields ?? (() => ({}));
 
@@ -142,11 +165,27 @@ export function createAggregator<R, A extends Record<string, any>>(
   const identityKeyFromAppearance = config.identityKeyFromAppearance
     ?? ((a: A) => (nameFromAppearance ? normalizeName(nameFromAppearance(a)) : ''));
 
-  // A record only contributes if it passes the predicate AND has a display
+  const keyOf = (r: R): string => {
+    const key = identityKey(r);
+    return validKey(key) ? key : '';
+  };
+  // A record only contributes if it passes the predicate AND has a usable
   // name. Folding the name check in here ensures that clearing a name (e.g.
   // both firstName and lastName set to '') is treated as "no longer matches"
   // and the old appearance gets unlinked.
-  const matches = (r: R | null | undefined): r is R => !!r && predicate(r) && !!nameOf(r);
+  const matches = (r: R | null | undefined): r is R => (
+    !!r && typeof r === 'object' && predicate(r) && !!nameOf(r) && !!keyOf(r)
+  );
+  // Only an id-shaped pointer counts: the value becomes a path segment, so an
+  // organiser typing "otherId/appearances" into their own record could
+  // otherwise reach (and wipe) someone else's profile.
+  const pointerOf = (r: unknown): string | null => {
+    const v = (r as Record<string, unknown> | null)?.[backPointerField];
+    return typeof v === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(v) ? v : null;
+  };
+  const sameAppearance = (a: R, b: R, ctx: AppearanceCtx) => (
+    JSON.stringify(toAppearance(a, ctx)) === JSON.stringify(toAppearance(b, ctx))
+  );
 
   const iterate = config.iterate
     ?? (async (innerDb: any, competitionId: string) => {
@@ -157,93 +196,167 @@ export function createAggregator<R, A extends Record<string, any>>(
       return Object.entries(records) as Array<[string, R]>;
     });
 
-  async function findOrCreateAggregate(record: R): Promise<string | null> {
-    const key = identityKey(record);
-    if (!key || key.startsWith('|') || key.endsWith('|')) return null;
-    const indexRef = db.child(`${namespace}:index/${key}`);
-    const existing = (await indexRef.get()).val();
-    // Legacy entries stored a bare id string; new entries are objects with `.id`.
-    const existingId = indexedId(existing);
-    if (existingId) return existingId;
-    // Race: concurrent writes for the same key may create orphans. Pruned by
-    // recompute when the last appearance is removed.
-    const newRef = db.child(namespace).push();
-    const id = newRef.key as string;
-    const seed = seedAggregate?.(record) ?? {};
-    // `_identity` is stored so we can remove the right /{ns}:index entry when
-    // the last appearance unlinks. Re-deriving from the aggregate's denormed
-    // fields is fragile (some are renamed: firstName/lastName → name).
-    const initialAgg = {
-      ...seed,
-      name: nameOf(record),
-      _identity: key,
-      appearanceCount: 0,
-    };
-    await newRef.set(initialAgg);
-    await indexRef.set(buildIndexEntry(id, initialAgg));
-    return id;
+  /** The source record's path (relative to the data namespace). */
+  function recordPath({ competitionId, recordId }: AppearanceCtx): string {
+    // Venues: the record is the comp meta itself.
+    if (recordId === null) return `competitions/${competitionId}`;
+    if (!sectionName) {
+      throw new Error(`${namespace}: records need a sectionName`);
+    }
+    return `competitions:data/${competitionId}/${sectionName}/${recordId}`;
   }
 
-  async function recomputeAggregate(entityId: string) {
-    const aggRef = db.child(`${namespace}/${entityId}`);
-    const aggSnap = await aggRef.get();
-    const agg = aggSnap.val();
-    if (!agg) return;
-    const apps = (agg.appearances || {}) as Record<string, A>;
-    const list = Object.values(apps);
-    const count = list.length;
+  async function included(competitionId: string): Promise<boolean> {
+    if (!shownIn) return true;
+    // One read, so a switch that sets both `listed` and `published` is seen whole.
+    const comp = (await db.child(`competitions/${competitionId}`).get()).val();
+    return !!comp && shownIn(comp);
+  }
 
-    // Lazy migration: aggregates created before `_identity` existed can derive
-    // it from their first appearance (the appearance carries the same fields
-    // identity is built from). Captured *before* the empty-check so cleanup
-    // can use it even when this is the last unlink.
-    // eslint-disable-next-line no-underscore-dangle
-    let identity = agg._identity as string | undefined;
-    if (!identity && list.length) {
-      const derived = identityKeyFromAppearance(list[0]);
-      if (derived) identity = derived;
+  const indexRef = (key: string) => db.child(`${namespace}:index/${key}`);
+
+  async function lookup(key: string): Promise<string | null> {
+    if (!key) return null;
+    return indexedId((await indexRef(key).get()).val());
+  }
+
+  // Every write to an aggregate or index entry is a transaction: an aggregate
+  // is changed and recounted in one step whatever else links to it at the
+  // same moment, and an aggregate never takes over a name another one holds
+  // (two writes adding the same new person at once, e.g. an import with
+  // someone in two age groups, make one aggregate, not two), nor removes a
+  // name it doesn't hold.
+  // (A transaction's first try sees null when nothing is cached; answering
+  // null to that makes the server send the real value for a second try.)
+
+  /**
+   * Run a transaction, trying again when the SDK cancels it because this same
+   * process wrote there meanwhile (it rejects with 'set'): e.g. the publish
+   * sync linking two entries of one dancer at once.
+   */
+  async function transact(
+    ref: any,
+    update: (current: any) => unknown,
+  ): Promise<{ committed: boolean, snapshot: any }> {
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const result = await ref.transaction(update, undefined, false);
+        return result;
+      } catch (error) {
+        if ((error as Error)?.message !== 'set' || attempt >= 5) throw error;
+      }
     }
+  }
 
-    if (count === 0) {
-      await aggRef.remove();
-      if (identity) await db.child(`${namespace}:index/${identity}`).remove();
-      return;
-    }
+  /** Point `key` at `id` unless another aggregate holds it. Returns the holder. */
+  async function claimIndex(key: string, id: string, agg: any): Promise<string> {
+    const { committed, snapshot } = await transact(indexRef(key), (cur: unknown) => {
+      const holder = indexedId(cur);
+      return holder && holder !== id ? undefined : buildIndexEntry(id, agg);
+    });
+    return committed ? id : (indexedId(snapshot.val()) ?? id);
+  }
 
-    const refreshed = recomputeFromAppearances
-      ? recomputeFromAppearances(list)
-      : { name: nameFromAppearance?.(list[0]) || agg.name || '' };
-    const update: Record<string, unknown> = { ...refreshed, appearanceCount: count };
-    // eslint-disable-next-line no-underscore-dangle
-    if (!agg._identity && identity) update._identity = identity;
-    await aggRef.update(update);
+  /** Remove `key` from the index if `id` holds it. Whether it did. */
+  async function releaseIndex(key: string, id: string): Promise<boolean> {
+    let held = false;
+    await transact(indexRef(key), (cur: unknown) => {
+      if (cur === null) return null;
+      held = indexedId(cur) === id;
+      return held ? null : undefined;
+    });
+    return held;
+  }
 
-    if (identity) {
-      const merged = { ...agg, ...update };
-      await db
-        .child(`${namespace}:index/${identity}`)
-        .set(buildIndexEntry(entityId, merged));
-    }
+  // When an aggregate empties, its id is kept under its name in
+  // /{namespace}:retired (admin-only, like everything not opened up in the
+  // rules), so the same person coming back — a competition unpublished and
+  // published again, dancers deleted and imported again — gets the same id,
+  // and everyone following them still is.
+  const retiredRef = (key: string) => db.child(`${namespace}:retired/${key}`);
+
+  /**
+   * The aggregate for a record's name, claiming the name for a new one (with
+   * the id it had before, if any). The aggregate itself is created by the
+   * first link (`seedFor`).
+   */
+  async function findOrCreateAggregate(record: R): Promise<string | null> {
+    const key = keyOf(record);
+    if (!key) return null;
+    const existing = await lookup(key);
+    if (existing) return existing;
+    const retired = (await retiredRef(key).get()).val();
+    const id = typeof retired === 'string' && retired ? retired : db.child(namespace).push().key as string;
+    const holder = await claimIndex(key, id, { name: nameOf(record), appearanceCount: 0 });
+    if (holder === id && id === retired) await retiredRef(key).remove();
+    return holder;
+  }
+
+  /** Fields a new aggregate starts with. */
+  const seedFor = (record: R) => ({ ...(seedAggregate?.(record) ?? {}), name: nameOf(record) });
+
+  /**
+   * Change an aggregate's appearances and recount it, in one transaction (so
+   * appearances linked at the same moment are counted, and an aggregate is
+   * only deleted while it's really empty), then update its index entry.
+   */
+  async function changeAggregate(
+    entityId: string,
+    edit: (apps: Record<string, A>) => void,
+    { key = null, seed = {} }: { key?: string | null, seed?: Record<string, unknown> } = {},
+  ) {
+    let identity: string | null = null;
+    const { snapshot } = await transact(db.child(`${namespace}/${entityId}`), (cur: any) => {
+      const agg = cur && typeof cur === 'object' ? cur : seed;
+      const apps = { ...(agg.appearances || {}) };
+      edit(apps);
+      const list = Object.values(apps) as A[];
+      // `_identity` is stored so we can remove the right /{ns}:index entry
+      // when the last appearance unlinks. Aggregates made before it existed
+      // derive it from their first appearance.
+      // eslint-disable-next-line no-underscore-dangle
+      identity = agg._identity || key || (list.length ? identityKeyFromAppearance(list[0]) : '') || null;
+      if (!list.length) return null;
+      const refreshed = recomputeFromAppearances
+        ? recomputeFromAppearances(list)
+        : { name: nameFromAppearance?.(list[0]) || agg.name || '' };
+      return {
+        ...agg, ...refreshed, appearances: apps, _identity: identity, appearanceCount: list.length,
+      };
+    });
+    if (!identity) return;
+    const agg = snapshot.val();
+    if (agg) await claimIndex(identity, entityId, agg);
+    else if (await releaseIndex(identity, entityId)) await retiredRef(identity).set(entityId);
   }
 
   async function linkAppearance(entityId: string, ctx: AppearanceCtx, record: R) {
-    const key = appearanceKey(ctx);
-    await db
-      .child(`${namespace}/${entityId}/appearances/${key}`)
-      .set(toAppearance(record, ctx));
-    await recomputeAggregate(entityId);
+    const appearance = toAppearance(record, ctx);
+    await changeAggregate(entityId, (apps) => {
+      // eslint-disable-next-line no-param-reassign
+      apps[appearanceKey(ctx)] = appearance;
+    }, { key: keyOf(record), seed: seedFor(record) });
   }
 
   async function unlinkAppearance(entityId: string, ctx: AppearanceCtx) {
-    const key = appearanceKey(ctx);
-    await db.child(`${namespace}/${entityId}/appearances/${key}`).remove();
-    await recomputeAggregate(entityId);
+    await changeAggregate(entityId, (apps) => {
+      // eslint-disable-next-line no-param-reassign
+      delete apps[appearanceKey(ctx)];
+    });
   }
 
-  async function setBackPointer(snap: any, entityId: string | null) {
-    const current = (snap.val() as any)?.[backPointerField] ?? null;
-    if (current === entityId) return;
-    await snap.ref.update({ [backPointerField]: entityId });
+  async function setBackPointer(ctx: AppearanceCtx, entityId: string | null) {
+    // A transaction, so a record deleted meanwhile (an add that was undone
+    // straight away) isn't brought back as an empty shell.
+    await transact(db.child(recordPath(ctx)), (cur: any) => {
+      if (cur === null) return null;
+      if (typeof cur !== 'object' || pointerOf(cur) === entityId) return undefined;
+      const next = { ...cur };
+      if (entityId) next[backPointerField] = entityId;
+      else delete next[backPointerField];
+      return next;
+    });
   }
 
   function ctxFor(params: any): AppearanceCtx {
@@ -253,76 +366,143 @@ export function createAggregator<R, A extends Record<string, any>>(
     };
   }
 
-  async function maintainOnWrite(snap: any, params: any, prev: R | null) {
-    const record = snap.val() as R | null;
-    const ctx = ctxFor(params);
-    const wasMatch = matches(prev);
+  async function maintainOnWrite(record: R | null, prev: R | null, ctx: AppearanceCtx) {
+    const pointer = pointerOf(record);
+    const prevPointer = pointerOf(prev);
     const isMatch = matches(record);
+    const wasMatch = matches(prev);
+    const newKey = isMatch ? keyOf(record) : '';
+    const oldKey = wasMatch ? keyOf(prev) : '';
 
-    if (wasMatch && !isMatch) {
-      const oldId = (prev as any)?.[backPointerField];
-      if (oldId) {
-        await unlinkAppearance(oldId, ctx);
-        await setBackPointer(snap, null);
-      }
-      return;
-    }
-    if (!isMatch || !record) return;
-
-    const newKey = identityKey(record);
-    const oldKey = wasMatch && prev ? identityKey(prev) : '';
-
-    // Short-circuit: identity unchanged + the appearance payload is identical
-    // → the write only touched fields the aggregate doesn't care about (e.g.
-    // a back-pointer write from backfillBackPointers). Skip the appearance
-    // overwrite + recompute. Without this, batched back-pointer writes would
-    // re-run recomputeAggregate for every touched record.
-    if (wasMatch && prev && oldKey === newKey) {
-      const prevApp = JSON.stringify(toAppearance(prev, ctx));
-      const newApp = JSON.stringify(toAppearance(record, ctx));
-      if (prevApp === newApp) return;
+    // Nothing the aggregate shows changed (e.g. this write was the back-pointer).
+    if (isMatch && wasMatch && newKey === oldKey && pointer && sameAppearance(prev, record, ctx)) {
+      if (pointer === prevPointer) return;
+      // A new back-pointer: two quick edits can finish out of order and leave
+      // a stale one, so check it against the index.
+      if (pointer === await lookup(newKey)) return;
     }
 
-    const oldId: string | undefined = (prev as any)?.[backPointerField];
+    const inc = (isMatch || wasMatch) && await included(ctx.competitionId);
+    // Where this record's appearance may be linked now. The back-pointer can
+    // be missing (records the backfill linked before back-pointers were
+    // written), so the old name's aggregate counts too.
+    const linked = new Set([prevPointer, pointer].filter((id): id is string => !!id));
+    if (inc && wasMatch && !prevPointer) {
+      const id = await lookup(oldKey);
+      if (id) linked.add(id);
+    }
+    const target = inc && isMatch ? await findOrCreateAggregate(record) : null;
+    // eslint-disable-next-line no-restricted-syntax
+    for (const id of linked) {
+      // eslint-disable-next-line no-await-in-loop
+      if (id !== target) await unlinkAppearance(id, ctx);
+    }
+    if (target) await linkAppearance(target, ctx, record as R);
+    if (record && pointer !== target) await setBackPointer(ctx, target);
+  }
 
-    if (oldId && oldKey === newKey) {
-      await linkAppearance(oldId, ctx, record);
-      return;
+  /** Link (or unlink) one record as it stands, for the publish sync. */
+  async function syncRecord(ctx: AppearanceCtx): Promise<'linked' | 'unlinked' | null> {
+    // Read again: the list was read before the sync began, and the record may
+    // have been renamed or deleted since (its own trigger deals with that).
+    const record = (await db.child(recordPath(ctx)).get()).val() as R | null;
+    if (!record) return null;
+    const pointer = pointerOf(record);
+    // Checked per record: listing then unlisting quickly runs two syncs at once.
+    const target = matches(record) && await included(ctx.competitionId)
+      ? await findOrCreateAggregate(record)
+      : null;
+    if (pointer && pointer !== target) await unlinkAppearance(pointer, ctx);
+    if (target) await linkAppearance(target, ctx, record);
+    if (pointer !== target) await setBackPointer(ctx, target);
+    if (target) return 'linked';
+    return pointer ? 'unlinked' : null;
+  }
+
+  /** Multi-path writes, sent in batches. */
+  function batchWriter(size: number) {
+    let updates: Record<string, unknown> = {};
+    let count = 0;
+    let batches = 0;
+    async function flush() {
+      if (!count) return;
+      const batch = updates;
+      updates = {};
+      count = 0;
+      await db.update(batch);
+      batches += 1;
     }
-    if (oldId && oldKey !== newKey) {
-      await unlinkAppearance(oldId, ctx);
-    }
-    const newId = await findOrCreateAggregate(record);
-    if (!newId) return;
-    await linkAppearance(newId, ctx, record);
-    await setBackPointer(snap, newId);
+    return {
+      async set(path: string, value: unknown) {
+        updates[path] = value;
+        count += 1;
+        if (count >= size) await flush();
+      },
+      flush,
+      batches: () => batches,
+    };
   }
 
   return {
     async onCreate(snap, ctx) {
       if (isCypress()) return;
-      await maintainOnWrite(snap, ctx.params, null);
+      await maintainOnWrite(snap.val() as R | null, null, ctxFor(ctx.params));
     },
     async onUpdate(change, ctx) {
       if (isCypress()) return;
-      await maintainOnWrite(change.after, ctx.params, change.before.val() as R);
+      await maintainOnWrite(
+        change.after.val() as R | null,
+        change.before.val() as R | null,
+        ctxFor(ctx.params),
+      );
     },
     async onDelete(snap, ctx) {
       if (isCypress()) return;
       const record = snap.val() as R | null;
-      if (!matches(record)) return;
-      const entityId = (record as any)?.[backPointerField];
-      if (!entityId) return;
-      await unlinkAppearance(entityId, ctxFor(ctx.params));
+      const actx = ctxFor(ctx.params);
+      const ids = new Set<string>();
+      const pointer = pointerOf(record);
+      if (pointer) ids.add(pointer);
+      else if (matches(record) && await included(actx.competitionId)) {
+        const id = await lookup(keyOf(record));
+        if (id) ids.add(id);
+      }
+      // eslint-disable-next-line no-restricted-syntax
+      for (const id of ids) {
+        // eslint-disable-next-line no-await-in-loop
+        await unlinkAppearance(id, actx);
+      }
     },
     // The backfills walk every competition one at a time on purpose: running
     // them in parallel would flood RTDB with writes (and re-fire triggers).
     /* eslint-disable no-await-in-loop, no-restricted-syntax, no-continue */
+    async syncCompetition(competitionId) {
+      if (isCypress()) return { linked: 0, unlinked: 0 };
+      // A deleted competition's records (if any are left) all unlink.
+      const comp = (await db.child(`competitions/${competitionId}`).get()).val();
+      const records = await iterate(db, competitionId, comp);
+      let linked = 0;
+      let unlinked = 0;
+      // A few at a time: quick enough for a big competition, gentle on RTDB.
+      for (let i = 0; i < records.length; i += SYNC_CONCURRENCY) {
+        const done = await Promise.all(records.slice(i, i + SYNC_CONCURRENCY).map(
+          ([recordId]) => syncRecord({ competitionId, recordId }),
+        ));
+        linked += done.filter((d) => d === 'linked').length;
+        unlinked += done.filter((d) => d === 'unlinked').length;
+      }
+      return { linked, unlinked };
+    },
     async backfill() {
-      // Idempotent: preserves existing aggregate push keys across runs by
-      // re-using whatever the index already points at. Replaces each touched
-      // aggregate's `appearances` map atomically with the current source-of-
-      // truth, then prunes aggregates whose source records no longer exist.
+      // Reads everything once, builds every aggregate in memory, and writes
+      // them back in large multi-path batches: a round trip per record runs
+      // far past a function's time limit at production size.
+      //
+      // Idempotent: aggregates keep their ids (from the index, or their own
+      // `_identity` if the index entry went missing), each one's
+      // `appearances` is replaced with the current source of truth, and
+      // aggregates nothing links to any more are removed. Other fields on an
+      // aggregate are left alone.
       //
       // Back-pointer writes are intentionally skipped here — that's
       // `backfillBackPointers`' job. Running them in one pass meant every
@@ -331,70 +511,116 @@ export function createAggregator<R, A extends Record<string, any>>(
       // short-circuit in `maintainOnWrite` to keep amplification cheap.
       const competitions = (await db.child('competitions').get()).val() || {};
       const compIds = Object.keys(competitions);
-      const newAppearancesByEntity = new Map<string, Record<string, A>>();
+      const existing: Record<string, any> = (await db.child(namespace).get()).val() || {};
+      const index: Record<string, unknown> = (await db.child(`${namespace}:index`).get()).val() || {};
+      const retired: Record<string, unknown> = (await db.child(`${namespace}:retired`).get()).val() || {};
+
+      const idByKey = new Map<string, string>();
+      for (const [key, entry] of Object.entries(index)) {
+        const id = indexedId(entry);
+        if (id && validKey(key)) idByKey.set(key, id);
+      }
+      for (const [id, agg] of Object.entries(existing)) {
+        // eslint-disable-next-line no-underscore-dangle
+        const key = agg?._identity;
+        if (typeof key === 'string' && validKey(key) && !idByKey.has(key)) idByKey.set(key, id);
+      }
+
+      const built = new Map<string, { key: string, first: R, apps: Record<string, A> }>();
       let linked = 0;
       let skipped = 0;
       for (const competitionId of compIds) {
-        const records = await iterate(db, competitionId, competitions[competitionId]);
+        const comp = competitions[competitionId];
+        const records = await iterate(db, competitionId, comp);
+        const inc = !shownIn || shownIn(comp ?? {});
         for (const [recordId, record] of records) {
-          if (!matches(record)) {
+          if (!inc || !matches(record)) {
             skipped += 1;
             continue;
           }
-          const entityId = await findOrCreateAggregate(record);
-          if (!entityId) {
-            skipped += 1;
-            continue;
+          const key = keyOf(record);
+          let id = idByKey.get(key);
+          // An id the index gave two names (left by an old rename) stays with one.
+          if (id && built.has(id) && built.get(id)!.key !== key) id = undefined;
+          if (!id) {
+            const before = retired[key];
+            id = typeof before === 'string' && before && !built.has(before) && !existing[before]
+              ? before
+              : db.child(namespace).push().key as string;
+            idByKey.set(key, id);
           }
+          const entry = built.get(id) ?? { key, first: record, apps: {} };
           const ctx: AppearanceCtx = { competitionId, recordId };
-          const bucket = newAppearancesByEntity.get(entityId) ?? {};
-          bucket[appearanceKey(ctx)] = toAppearance(record, ctx);
-          newAppearancesByEntity.set(entityId, bucket);
+          entry.apps[appearanceKey(ctx)] = toAppearance(record, ctx);
+          built.set(id, entry);
           linked += 1;
         }
       }
-      // Replace each touched aggregate's appearances atomically + recompute.
-      for (const [entityId, apps] of newAppearancesByEntity) {
-        await db.child(`${namespace}/${entityId}/appearances`).set(apps);
-        await recomputeAggregate(entityId);
+
+      const writer = batchWriter(1000);
+      const builtKeys = new Set<string>();
+      for (const [id, { key, first, apps }] of built) {
+        const list = Object.values(apps);
+        const prior = existing[id];
+        const fields: Record<string, unknown> = {
+          ...(prior ? {} : seedAggregate?.(first) ?? {}),
+          ...(recomputeFromAppearances
+            ? recomputeFromAppearances(list)
+            : { name: nameFromAppearance?.(list[0]) || prior?.name || nameOf(first) }),
+          _identity: key,
+          appearanceCount: list.length,
+        };
+        await writer.set(`${namespace}/${id}/appearances`, apps);
+        for (const [field, value] of Object.entries(fields)) {
+          await writer.set(`${namespace}/${id}/${field}`, value ?? null);
+        }
+        await writer.set(`${namespace}:index/${key}`, buildIndexEntry(id, { ...prior, ...fields }));
+        if (key in retired) await writer.set(`${namespace}:retired/${key}`, null);
+        builtKeys.add(key);
       }
-      // Sweep aggregates whose source is gone — empty their appearances, then
-      // recomputeAggregate's count===0 branch removes the agg + index entry.
-      const existing = (await db.child(namespace).get()).val() || {};
+      // Names nobody has any more, and aggregates nothing links to.
+      for (const key of Object.keys(index)) {
+        if (!builtKeys.has(key)) await writer.set(`${namespace}:index/${key}`, null);
+      }
       let pruned = 0;
-      for (const entityId of Object.keys(existing)) {
-        if (newAppearancesByEntity.has(entityId)) continue;
-        await db.child(`${namespace}/${entityId}/appearances`).set({});
-        await recomputeAggregate(entityId);
+      for (const [id, agg] of Object.entries(existing)) {
+        if (built.has(id)) continue;
+        await writer.set(`${namespace}/${id}`, null);
+        // Keep the id for the name, if nobody else has the name now.
+        // eslint-disable-next-line no-underscore-dangle
+        const key = agg?._identity;
+        if (typeof key === 'string' && validKey(key) && !builtKeys.has(key)) {
+          await writer.set(`${namespace}:retired/${key}`, id);
+        }
         pruned += 1;
       }
+      await writer.flush();
       return {
         linked, skipped, pruned, competitions: compIds.length,
       };
     },
     async backfillBackPointers(opts?: { batchSize?: number }) {
       // Writes the back-pointer field (e.g. `judgeId`) onto every source record
-      // that matches an existing aggregate but has it missing/stale. Prereq:
+      // that matches an existing aggregate but has it missing/stale, and
+      // removes it from records that shouldn't link anywhere (a judge who
+      // became a sponsor, a dancer in an unpublished competition). Prereq:
       // `backfill()` has run so /{namespace} + /{namespace}:index are populated.
       //
-      // Each write fires the source trigger. Step 1's short-circuit in
-      // `maintainOnWrite` makes those fires near-free (no appearance overwrite,
-      // no aggregate recompute) — provided the appearance payload is identical
-      // to what's already stored, which it will be since the appearance was
-      // built from the same record during the prior `backfill()`.
+      // Each write fires the source trigger. The short-circuit in
+      // `maintainOnWrite` makes those fires cheap (no appearance overwrite,
+      // no aggregate recompute, one index read to confirm the new pointer).
       //
       // Writes are batched via multi-path `update()` calls (default 500 paths
       // per batch). Re-runs are cheap: `alreadySet` short-circuits anything
       // that already has the right pointer, so running this is effectively its
       // own preview.
-      const batchSize = Math.max(1, opts?.batchSize ?? 500);
+      const batchSize = Math.max(1, Math.floor(Number(opts?.batchSize) || 500));
 
       // Read-only resolution: aggregate id is found via /{namespace}:index
       // keyed by identityKey(record). No aggregates are created here — if the
       // index has no entry, the record is `unmatched` (a signal the regular
       // backfill needs to run first).
-      const indexSnap = await db.child(`${namespace}:index`).get();
-      const rawIndex = (indexSnap.val() as Record<string, unknown> | null) ?? {};
+      const rawIndex = ((await db.child(`${namespace}:index`).get()).val() as Record<string, unknown> | null) ?? {};
       const aggIdByKey = new Map<string, string>();
       for (const [key, val] of Object.entries(rawIndex)) {
         const id = indexedId(val);
@@ -405,63 +631,47 @@ export function createAggregator<R, A extends Record<string, any>>(
       const compIds = Object.keys(competitions);
 
       let written = 0;
+      let cleared = 0;
       let alreadySet = 0;
       let unmatched = 0;
-      let batches = 0;
-      let batch: Record<string, string> = {};
-      let batchCount = 0;
-
-      async function flush() {
-        if (batchCount === 0) return;
-        await db.update(batch);
-        batches += 1;
-        batch = {};
-        batchCount = 0;
-      }
-
-      function pathFor(competitionId: string, recordId: string | null): string {
-        // Venues: back-pointer lives on the comp meta itself.
-        if (recordId === null) {
-          return `competitions/${competitionId}/${backPointerField}`;
-        }
-        // Staff + dancers: under competitions:data/{compId}/{section}/{recordId}.
-        if (!sectionName) {
-          throw new Error(
-            `backfillBackPointers: ${namespace} has recordIdParam but no sectionName`,
-          );
-        }
-        return `competitions:data/${competitionId}/${sectionName}/${recordId}/${backPointerField}`;
-      }
+      const writer = batchWriter(batchSize);
 
       for (const competitionId of compIds) {
-        const records = await iterate(db, competitionId, competitions[competitionId]);
+        const comp = competitions[competitionId];
+        const records = await iterate(db, competitionId, comp);
+        const inc = !shownIn || shownIn(comp ?? {});
         for (const [recordId, record] of records) {
-          if (!matches(record)) continue;
-          const key = identityKey(record);
-          if (!key || key.startsWith('|') || key.endsWith('|')) {
-            unmatched += 1;
+          const pointer = pointerOf(record);
+          const path = `${recordPath({ competitionId, recordId })}/${backPointerField}`;
+          if (!inc || !matches(record)) {
+            if (pointer) {
+              await writer.set(path, null);
+              cleared += 1;
+            }
             continue;
           }
-          const targetId = aggIdByKey.get(key);
+          const targetId = aggIdByKey.get(keyOf(record));
           if (!targetId) {
             unmatched += 1;
             continue;
           }
-          const existing = (record as any)?.[backPointerField];
-          if (existing === targetId) {
+          if (pointer === targetId) {
             alreadySet += 1;
             continue;
           }
-          batch[pathFor(competitionId, recordId)] = targetId;
-          batchCount += 1;
+          await writer.set(path, targetId);
           written += 1;
-          if (batchCount >= batchSize) await flush();
         }
       }
-      await flush();
+      await writer.flush();
 
       return {
-        written, alreadySet, unmatched, competitions: compIds.length, batches,
+        written,
+        cleared,
+        alreadySet,
+        unmatched,
+        competitions: compIds.length,
+        batches: writer.batches(),
       };
     },
   };

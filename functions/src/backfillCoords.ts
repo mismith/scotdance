@@ -64,7 +64,8 @@ async function geocode(address: string, apiKey: string): Promise<GeocodeHit | nu
   const findComp = (type: string) => hit.address_components.find((c) => c.types.includes(type));
   const countryComp = findComp('country');
   const regionComp = findComp('administrative_area_level_1');
-  const localityComp = findComp('locality');
+  // UK addresses have a postal town instead (Manage's venue search does the same).
+  const localityComp = findComp('locality') ?? findComp('postal_town');
   return {
     lat: hit.geometry.location.lat,
     lng: hit.geometry.location.lng,

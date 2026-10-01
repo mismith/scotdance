@@ -3,8 +3,10 @@ import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 
 import { isCypress } from './utility/env';
 import { ensureAdmin } from './utility/competition';
-import { getTypesense } from './utility/typesense';
-import { createAggregator, type AggregatorConfig } from './utility/aggregate';
+import { getTypesense, indexBestEffort, sameExcept } from './utility/typesense';
+import { createAggregator } from './utility/aggregate';
+import { filterList } from './search';
+import { dancerAggregator as aggregatorConfig, personName } from './utility/entityConfigs';
 
 const schema: CollectionCreateSchema = {
   name: 'dancers',
@@ -36,78 +38,10 @@ function dancerExtender(dancer, { dancerId, competitionId }) {
   return {
     id: dancerId,
     $competitionId: competitionId,
-    $name: `${(dancer.firstName || '').trim()} ${(dancer.lastName || '').trim()}`.trim(),
+    $name: personName(dancer),
     ...dancer,
   };
 }
-
-interface DancerRecord {
-  firstName?: string
-  lastName?: string
-  image?: string
-  location?: string
-  number?: number | string
-  dancerId?: string
-}
-
-interface DancerAppearance {
-  competitionId: string
-  dancerId: string | null
-  firstName: string | null
-  lastName: string | null
-  image: string | null
-  location: string | null
-  number: number | null
-}
-
-function dancerName(d: DancerRecord): string {
-  return `${(d.firstName || '').trim()} ${(d.lastName || '').trim()}`.trim();
-}
-
-const aggregatorConfig: AggregatorConfig<DancerRecord, DancerAppearance> = {
-  namespace: 'dancers',
-  sectionName: 'dancers',
-  recordIdParam: 'dancerId',
-  backPointerField: 'dancerId',
-  // Every dancer record contributes — no type filter like staff has.
-  predicate: (d): d is DancerRecord => !!d,
-  nameOf: dancerName,
-  nameFromAppearance: (a) => `${(a.firstName || '').trim()} ${(a.lastName || '').trim()}`.trim(),
-  toAppearance: (dancer, { competitionId, recordId }) => ({
-    competitionId,
-    // The per-comp dancer push key. NOT the aggregate id — that's the key of
-    // /dancers/{aggregateId}/appearances/{compId:dancerId}.
-    dancerId: recordId,
-    firstName: dancer.firstName ?? null,
-    lastName: dancer.lastName ?? null,
-    image: dancer.image ?? null,
-    location: dancer.location ?? null,
-    number: typeof dancer.number === 'string'
-      ? Number.parseInt(dancer.number, 10) || null
-      : dancer.number ?? null,
-  }),
-  // Denorm name/image/location onto the agg root so the slim index can carry
-  // them. "Latest" is approximate — first-non-null in appearance iteration
-  // order, since appearances don't carry a date. Profile pages still do the
-  // proper date-sorted pick client-side via comp meta.
-  recomputeFromAppearances: (apps) => {
-    const pick = <K extends keyof DancerAppearance>(f: K): DancerAppearance[K] | null => {
-      const hit = apps.find((a) => a[f] != null && a[f] !== '');
-      return hit ? hit[f] : null;
-    };
-    const firstName = pick('firstName') ?? '';
-    const lastName = pick('lastName') ?? '';
-    return {
-      name: `${firstName} ${lastName}`.trim(),
-      image: pick('image'),
-      location: pick('location'),
-    };
-  },
-  slimFields: (agg) => ({
-    image: agg.image ?? null,
-    location: agg.location ?? null,
-  }),
-};
 
 export function getOnCreate(db: any) {
   const agg = createAggregator(db, aggregatorConfig);
@@ -115,7 +49,7 @@ export function getOnCreate(db: any) {
     if (isCypress()) return;
     const { dancerId, competitionId } = ctx.params;
     const doc = dancerExtender(snap.val(), { dancerId, competitionId });
-    await getTypesense().collections('dancers').documents().upsert(doc);
+    await indexBestEffort('dancer upsert', () => getTypesense().collections('dancers').documents().upsert(doc));
     await agg.onCreate(snap, ctx);
   };
 }
@@ -125,8 +59,11 @@ export function getOnUpdate(db: any) {
   return async function onUpdate(change: any, ctx: any) {
     if (isCypress()) return;
     const { dancerId, competitionId } = ctx.params;
-    const doc = dancerExtender(change.after.val(), { dancerId, competitionId });
-    await getTypesense().collections('dancers').documents().upsert(doc);
+    // A back-pointer write changes nothing search uses.
+    if (!sameExcept(change.before.val(), change.after.val(), [aggregatorConfig.backPointerField])) {
+      const doc = dancerExtender(change.after.val(), { dancerId, competitionId });
+      await indexBestEffort('dancer upsert', () => getTypesense().collections('dancers').documents().upsert(doc));
+    }
     await agg.onUpdate(change, ctx);
   };
 }
@@ -140,6 +77,11 @@ export function getOnDelete(db: any) {
       .catch(() => {});
     await agg.onDelete(snap, ctx);
   };
+}
+
+/** Link or unlink a competition's dancers after it's published or unpublished. */
+export function getOnSyncCompetition(db: any) {
+  return createAggregator(db, aggregatorConfig).syncCompetition;
 }
 
 export function getOnBackfillAggregates(db: any) {
@@ -181,7 +123,7 @@ export function getOnSearch(db) {
             ...searchParams,
             collection: 'dancers',
             query_by: '$name',
-            filter_by: Array.isArray(authorizedCompetitionIds) ? `$competitionId:[${authorizedCompetitionIds.join()}]` : undefined,
+            filter_by: Array.isArray(authorizedCompetitionIds) ? `$competitionId:${filterList(authorizedCompetitionIds)}` : undefined,
           },
         ],
       });

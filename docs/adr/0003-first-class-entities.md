@@ -141,7 +141,7 @@ Judges built without abstraction (Phase 1) since premature. Phase 3 introduces `
 
 Initial backfill design wrote `record.{entity}Id` back onto each source per-comp record. In testing against the emulator, this caused an `INTERNAL_ERROR` once the source-record onUpdate trigger fired (one per write × thousands of records) and re-entered aggregate maintenance in a tight loop.
 
-Fix: backfill no longer writes back-pointers. Live triggers populate them on the next legitimate edit. Reverse lookup remains correct via `/{namespace}:index` (the frontend's `lookupEntityId` already uses this path). Nothing currently reads the back-pointer, so the absence is invisible.
+Fix: backfill no longer writes back-pointers. Live triggers populate them on the next legitimate edit. Reverse lookup remains correct via `/{namespace}:index` (the frontend's `lookupEntityId` already uses this path). Nothing currently reads the back-pointer, so the absence is invisible. (Out of date since Follow: following a dancer, judge or piper reads `dancerId` / `judgeId` / `piperId` on the competition record, so the `*BackPointers` backfills must run before launch. See the v4 runbook.)
 
 If a one-shot back-pointer fill is needed later, run it as a separate chunked admin function (or with triggers temporarily disabled).
 

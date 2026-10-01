@@ -13,9 +13,17 @@ import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isCypress, isEmulator } from './utility/env';
 import { runtimeConfig, geocodingApiKey } from './utility/config';
 
-const app = admin.initializeApp({
-  databaseURL: isCypress() ? `http://${process.env.FIREBASE_DATABASE_EMULATOR_HOST}?ns=scotdance-cypress` : 'https://scotdance.firebaseio.com',
-}, 'app');
+// In the emulator, trigger snapshots build their `.ref` from
+// `http://{emulator host}/?ns=scotdance` on this same app (see
+// setEmulatedAdminApp below). The app's own URL must be that exact string, or
+// firebase-admin opens a second database for it and throws "Database
+// initialized multiple times".
+function databaseURL() {
+  if (isCypress()) return `http://${process.env.FIREBASE_DATABASE_EMULATOR_HOST}?ns=scotdance-cypress`;
+  if (isEmulator()) return `http://${process.env.FIREBASE_DATABASE_EMULATOR_HOST}/?ns=scotdance`;
+  return 'https://scotdance.firebaseio.com';
+}
+const app = admin.initializeApp({ databaseURL: databaseURL() }, 'app');
 if (isEmulator() && !isCypress()) {
   functions.app.setEmulatedAdminApp(app);
 }
@@ -65,7 +73,13 @@ export const competitionDeleted = appConfig.database.ref(`/${env}/competitions/{
       value: null,
     })));
   });
-export const competitionPublishedChanged = appConfig.database.ref(`/${env}/competitions/{competitionId}/published`).onWrite(async (change, ctx) => {
+// Publishing links the competition's dancers into their public profiles
+// (unpublishing unlinks them), which can take a while for a big one.
+const syncDancers = Dancers.getOnSyncCompetition(appConfig.db);
+const publishedDatabase = isCypress()
+  ? functions.runWith({ timeoutSeconds: 540 }).database.instance('scotdance-cypress')
+  : functions.runWith({ timeoutSeconds: 540 }).database;
+export const competitionPublishedChanged = publishedDatabase.ref(`/${env}/competitions/{competitionId}/published`).onWrite(async (change, ctx) => {
   const { competitionId } = ctx.params;
   const ref = appConfig.db.child(`competitions:published/${competitionId}`);
   const isPublished = change.after.val();
@@ -74,6 +88,15 @@ export const competitionPublishedChanged = appConfig.database.ref(`/${env}/compe
   } else {
     await ref.remove();
   }
+  await syncDancers(competitionId);
+});
+// Search shows a listed competition (and its judges and pipers) before it's
+// published, so it keeps a list of those too.
+const listedDatabase = isCypress() ? functions.database.instance('scotdance-cypress') : functions.database;
+export const competitionListedChanged = listedDatabase.ref(`/${env}/competitions/{competitionId}/listed`).onWrite(async (change, ctx) => {
+  const ref = appConfig.db.child(`competitions:listed/${ctx.params.competitionId}`);
+  if (change.after.val() === true) await ref.set(true);
+  else await ref.remove();
 });
 // Admin-triggered one-off (or re-run) backfill of lat/lng/country on competition
 // records that lack them. Geocodes via the Google Geocoding API.
@@ -90,18 +113,21 @@ export const backfillCoords = functions
     );
   });
 
+// Rebuilds the published and listed lists (search reads them) from the
+// competitions themselves.
 export const reindexCompetitionsPublished = functions.https.onCall(async (data, ctx) => {
   await ensureAdmin(ctx, appConfig.db);
 
-  const competitions: any[] = (await appConfig.db.child('competitions').get()).val();
-  const competitionsPublished = Object.entries(competitions || {})
-    .filter(([, { published }]) => published)
-    .reduce((acc, [competitionId]) => {
-      acc[competitionId] = true;
-      return acc;
-    }, {});
-  await appConfig.db.child('competitions:published').set(competitionsPublished);
-  return competitionsPublished;
+  const competitions: Record<string, any> = (await appConfig.db.child('competitions').get()).val() || {};
+  const idsWhere = (key: 'published' | 'listed') => Object.fromEntries(
+    Object.entries(competitions)
+      .filter(([, c]) => c && c[key] === true)
+      .map(([competitionId]) => [competitionId, true]),
+  );
+  const published = idsWhere('published');
+  const listed = idsWhere('listed');
+  await appConfig.db.update({ 'competitions:published': published, 'competitions:listed': listed });
+  return { published: Object.keys(published).length, listed: Object.keys(listed).length };
 });
 
 const dancersRef = configDatabase.ref(`/${env}/competitions:data/{competitionId}/dancers/{dancerId}`);
@@ -109,12 +135,15 @@ export const dancerCreated = !isCypress() && dancersRef.onCreate(Dancers.getOnCr
 export const dancerUpdated = !isCypress() && dancersRef.onUpdate(Dancers.getOnUpdate(appConfig.db));
 export const dancerDeleted = !isCypress() && dancersRef.onDelete(Dancers.getOnDelete(appConfig.db));
 const configHttps = functions.runWith(configRunWith).https;
+// Backfills and reindexes read every competition: give them the longest a
+// callable may run, and memory for production-sized data.
+const adminHttps = functions.runWith({ ...configRunWith, timeoutSeconds: 540, memory: '1GB' }).https;
 export const searchDancers = configHttps.onCall(Dancers.getOnSearch(appConfig.db));
-export const reindexDancers = configHttps.onCall(Dancers.getOnReindex(appConfig.db));
-export const backfillDancerAggregates = configHttps.onCall(
+export const reindexDancers = adminHttps.onCall(Dancers.getOnReindex(appConfig.db));
+export const backfillDancerAggregates = adminHttps.onCall(
   Dancers.getOnBackfillAggregates(appConfig.db),
 );
-export const backfillDancerBackPointers = configHttps.onCall(
+export const backfillDancerBackPointers = adminHttps.onCall(
   Dancers.getOnBackfillBackPointers(appConfig.db),
 );
 
@@ -123,26 +152,40 @@ const competitionsIndexRef = configDatabase.ref(`/${env}/competitions/{competiti
 const venueOnCreate = Venues.getOnCreate(appConfig.db);
 const venueOnUpdate = Venues.getOnUpdate(appConfig.db);
 const venueOnDelete = Venues.getOnDelete(appConfig.db);
+// Listing (or publishing) a competition shows its judges and pipers on their
+// profiles; hiding or deleting it takes them off.
+const syncJudges = Judges.getOnSyncCompetition(appConfig.db);
+const syncPipers = Pipers.getOnSyncCompetition(appConfig.db);
+const syncStaff = async (competitionId: string) => {
+  await syncJudges(competitionId);
+  await syncPipers(competitionId);
+};
+const shown = (comp: any) => comp?.listed === true || comp?.published === true;
 export const competitionIndexCreated = !isCypress()
   && competitionsIndexRef.onCreate(async (snap, ctx) => {
     await Competitions.onCreate(snap, ctx);
     await venueOnCreate(snap, ctx);
+    if (shown(snap.val())) await syncStaff(ctx.params.competitionId);
   });
 export const competitionIndexUpdated = !isCypress()
   && competitionsIndexRef.onUpdate(async (change, ctx) => {
     await Competitions.onUpdate(change, ctx);
     await venueOnUpdate(change, ctx);
+    if (shown(change.before.val()) !== shown(change.after.val())) {
+      await syncStaff(ctx.params.competitionId);
+    }
   });
 export const competitionIndexDeleted = !isCypress()
   && competitionsIndexRef.onDelete(async (snap, ctx) => {
     await Competitions.onDelete(snap, ctx);
     await venueOnDelete(snap, ctx);
+    if (shown(snap.val())) await syncStaff(ctx.params.competitionId);
   });
-export const reindexCompetitions = configHttps.onCall(Competitions.getOnReindex(appConfig.db));
-export const backfillVenueAggregates = configHttps.onCall(
+export const reindexCompetitions = adminHttps.onCall(Competitions.getOnReindex(appConfig.db));
+export const backfillVenueAggregates = adminHttps.onCall(
   Venues.getOnBackfillAggregates(appConfig.db),
 );
-export const backfillVenueBackPointers = configHttps.onCall(
+export const backfillVenueBackPointers = adminHttps.onCall(
   Venues.getOnBackfillBackPointers(appConfig.db),
 );
 
@@ -150,11 +193,11 @@ const judgesRef = configDatabase.ref(`/${env}/competitions:data/{competitionId}/
 export const judgeCreated = !isCypress() && judgesRef.onCreate(Judges.getOnCreate(appConfig.db));
 export const judgeUpdated = !isCypress() && judgesRef.onUpdate(Judges.getOnUpdate(appConfig.db));
 export const judgeDeleted = !isCypress() && judgesRef.onDelete(Judges.getOnDelete(appConfig.db));
-export const reindexJudges = configHttps.onCall(Judges.getOnReindex(appConfig.db));
-export const backfillJudgeAggregates = configHttps.onCall(
+export const reindexJudges = adminHttps.onCall(Judges.getOnReindex(appConfig.db));
+export const backfillJudgeAggregates = adminHttps.onCall(
   Judges.getOnBackfillAggregates(appConfig.db),
 );
-export const backfillJudgeBackPointers = configHttps.onCall(
+export const backfillJudgeBackPointers = adminHttps.onCall(
   Judges.getOnBackfillBackPointers(appConfig.db),
 );
 
@@ -162,11 +205,11 @@ const pipersRef = configDatabase.ref(`/${env}/competitions:data/{competitionId}/
 export const piperCreated = !isCypress() && pipersRef.onCreate(Pipers.getOnCreate(appConfig.db));
 export const piperUpdated = !isCypress() && pipersRef.onUpdate(Pipers.getOnUpdate(appConfig.db));
 export const piperDeleted = !isCypress() && pipersRef.onDelete(Pipers.getOnDelete(appConfig.db));
-export const reindexPipers = configHttps.onCall(Pipers.getOnReindex(appConfig.db));
-export const backfillPiperAggregates = configHttps.onCall(
+export const reindexPipers = adminHttps.onCall(Pipers.getOnReindex(appConfig.db));
+export const backfillPiperAggregates = adminHttps.onCall(
   Pipers.getOnBackfillAggregates(appConfig.db),
 );
-export const backfillPiperBackPointers = configHttps.onCall(
+export const backfillPiperBackPointers = adminHttps.onCall(
   Pipers.getOnBackfillBackPointers(appConfig.db),
 );
 
