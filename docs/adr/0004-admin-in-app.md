@@ -38,7 +38,10 @@ Every edit clears the public caches for that competition.
 - List and detail side by side from `md`, sections sidebar from `lg`; on phones
   Back climbs one level at a time.
 - Fields autosave (debounced, Enter, blur); Escape reverts.
-- Deletes and bulk changes confirm when they matter and always offer Undo.
+- Deletes and bulk changes confirm when they matter. Every change goes into
+  an undo history for the visit (Undo/Redo buttons, Cmd/Ctrl+Z); undoing
+  something another admin has since changed asks first. Invites stay out of
+  it, since redoing one would send the email again.
 - The Handsontable spreadsheet is gone: bulk select plus "Set" covers the
   common edits, and the Excel import covers the big ones.
 
@@ -46,7 +49,10 @@ Every edit clears the public caches for that competition.
 
 Tap dancers in the order they're announced. Number entry with read-back was
 rejected as slower and more error-prone, and there's no on-screen keypad. The
-"?" placeholder stays, so organisers can carry on and fix it later.
+"?" placeholder stays, so organisers can carry on and fix it later. The screen
+mirrors the old admin's on purpose (dance list, Placings/Points, Championship
+switch, TIE switches, tap to take out): organisers know it, and a new
+mechanism is a risk on the day.
 
 ### 5. No offline writes
 
