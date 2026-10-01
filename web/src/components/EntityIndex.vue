@@ -119,7 +119,7 @@ const scrolledPastTitle = useScrolledPast(titleAnchor)
             type="search"
             autocomplete="off"
             :placeholder="`Find ${section.label.toLowerCase()} by name`"
-            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none [&::-webkit-search-cancel-button]:hidden"
+            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none"
           />
           <button v-if="query" type="button" class="text-muted-foreground -mr-1 flex size-7 items-center justify-center rounded-full" aria-label="Clear" @click="query = ''">
             <X class="size-5" />

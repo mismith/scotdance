@@ -200,6 +200,10 @@
   * {
     @apply border-border;
   }
+  /* Search fields have their own clear button; never the browser's too. */
+  input[type='search']::-webkit-search-cancel-button {
+    @apply hidden;
+  }
   html {
     @apply scroll-pt-[calc(var(--chrome-top)+1rem)] scroll-pb-[calc(var(--chrome-bottom)+1rem)];
     -webkit-text-size-adjust: 100%;

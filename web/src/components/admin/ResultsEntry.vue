@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ChevronRight, Diamond, ListOrdered, Pencil, Search, Trophy } from '@lucide/vue'
+import { ChevronRight, Diamond, ListOrdered, Pencil, Search, Trophy, X } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import HelpTip from '@/components/admin/HelpTip.vue'
@@ -435,6 +435,9 @@ const next = computed(() => {
         <Search class="text-muted-foreground size-4 shrink-0" />
         <span class="sr-only">Find a dancer</span>
         <input v-model="fixQuery" type="search" placeholder="Find by number or name" class="min-w-0 flex-1 bg-transparent text-base outline-none" />
+        <button v-if="fixQuery" type="button" aria-label="Clear search" class="text-muted-foreground -mr-1 flex size-7 items-center justify-center rounded-full" @click="fixQuery = ''">
+          <X class="size-4" />
+        </button>
       </label>
     </div>
     <ul class="divide-y pb-[var(--safe-bottom)]">

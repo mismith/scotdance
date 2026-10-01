@@ -64,7 +64,7 @@ async function openByName(name: string) {
             type="search"
             autocomplete="off"
             placeholder="Find a dancer by name"
-            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none [&::-webkit-search-cancel-button]:hidden"
+            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none"
           />
           <button v-if="q" type="button" class="text-muted-foreground -mr-1 flex size-10 items-center justify-center" aria-label="Clear" @click="q = ''">
             <X class="size-5" />

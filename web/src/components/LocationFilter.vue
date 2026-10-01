@@ -285,7 +285,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
                 type="search"
                 placeholder="Narrow to a city or province"
                 autocomplete="off"
-                class="bg-card border-strong focus:border-primary h-12 w-full rounded-xl border-2 px-3 pr-10 text-base outline-none [&::-webkit-search-cancel-button]:hidden"
+                class="bg-card border-strong focus:border-primary h-12 w-full rounded-xl border-2 px-3 pr-10 text-base outline-none"
                 @input="scheduleSearch"
               />
               <button

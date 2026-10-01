@@ -149,7 +149,7 @@ function pick(id: string) {
               autocomplete="off"
               placeholder="Name or town"
               aria-label="Find a competition"
-              class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none [&::-webkit-search-cancel-button]:hidden"
+              class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none"
               @keydown.enter.prevent="query.trim() && filtered[0] && pick(filtered[0].id)"
             />
             <button

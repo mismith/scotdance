@@ -124,7 +124,7 @@ function pick(id: string) {
           <Search class="text-muted-foreground size-4 shrink-0" />
           <span class="sr-only">Search people</span>
           <input v-model="query" type="search" placeholder="Search by email or name" class="min-w-0 flex-1 bg-transparent text-base outline-none" />
-          <button v-if="query" type="button" aria-label="Clear search" class="text-muted-foreground flex size-8 items-center justify-center rounded-full" @click="query = ''"><X class="size-4" /></button>
+          <button v-if="query" type="button" aria-label="Clear search" class="text-muted-foreground -mr-1 flex size-7 items-center justify-center rounded-full" @click="query = ''"><X class="size-4" /></button>
         </label>
       </div>
       <div v-if="!loaded" class="space-y-2 p-4"><Skeleton v-for="i in 6" :key="i" class="h-14 w-full rounded-xl!" /></div>
@@ -195,6 +195,7 @@ function pick(id: string) {
         <Search class="text-muted-foreground size-4 shrink-0" />
         <span class="sr-only">Find a competition</span>
         <input v-model="pickQuery" type="search" placeholder="Find a competition" class="min-w-0 flex-1 bg-transparent text-base outline-none" />
+        <button v-if="pickQuery" type="button" aria-label="Clear search" class="text-muted-foreground -mr-1 flex size-7 items-center justify-center rounded-full" @click="pickQuery = ''"><X class="size-4" /></button>
       </label>
     </div>
     <ul class="divide-y pb-[var(--safe-bottom)]">

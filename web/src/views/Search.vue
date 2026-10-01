@@ -247,7 +247,7 @@ watch(mode, async (m) => {
             autocomplete="off"
             placeholder="Dancer, competition, judge or town"
             aria-label="Search"
-            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none [&::-webkit-search-cancel-button]:hidden"
+            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none"
             @keydown.enter="nameInput?.blur()"
           />
           <button

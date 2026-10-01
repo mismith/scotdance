@@ -121,7 +121,7 @@ const followedCount = computed(() => dancers.value.filter((d) => following.isFol
         placeholder="Name or number"
         aria-label="Search dancers by name or number"
         autocomplete="off"
-        class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none [&::-webkit-search-cancel-button]:hidden"
+        class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none"
       />
       <button
         v-if="query"
