@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter, type RouteLocationRaw } from 'vue-router'
-import { ClipboardList, LogIn, LogOut, Pencil, Settings, ShieldCheck, UserRound } from '@lucide/vue'
+import { ClipboardList, LogIn, LogOut, Pencil, ServerCog, Settings, UserRound } from '@lucide/vue'
 import AdminMark from '@/components/AdminMark.vue'
 import Dialog from '@/components/Dialog.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -113,7 +113,7 @@ const row = 'flex min-h-12 w-full items-center gap-3 px-4 py-2 text-left text-ba
             <span class="relative flex"><ClipboardList class="text-primary size-5" /><AdminMark /></span> Manage competitions
           </button>
           <button v-if="me.isAdmin" type="button" :class="row" @click="go({ name: 'admin' })">
-            <ShieldCheck class="text-primary size-5" /> System admin
+            <span class="relative flex"><ServerCog class="text-primary size-5" /><AdminMark /></span> System admin
           </button>
         </div>
         <div class="py-1">
