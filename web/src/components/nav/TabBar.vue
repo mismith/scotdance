@@ -46,12 +46,19 @@ function onTap(item: TabItem, e: MouseEvent) {
           v-bind="item.to ? { to: item.to, replace, 'aria-current': item.active ? 'page' : undefined } : { type: 'button', 'aria-haspopup': 'dialog' }"
           :class="[
             'relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-full text-[min(0.6875rem,12px)] leading-none font-bold transition-colors',
-            item.active ? 'text-primary bg-foreground/[0.07]' : 'text-muted-foreground hover:text-foreground',
+            item.active ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
           ]"
           @click="onTap(item, $event)"
         >
-          <component :is="item.icon" class="size-[1.375rem]" :stroke-width="item.active ? 2.4 : 2" />
-          <span class="max-w-full truncate px-0.5">{{ item.label }}</span>
+          <!-- The capsule is its own element so the page's view transition
+               slides it from the old tab to the new one (style.css). -->
+          <span
+            v-if="item.active"
+            class="bg-foreground/[0.07] absolute inset-0 rounded-full [view-transition-name:tabbar-highlight]"
+            aria-hidden="true"
+          />
+          <component :is="item.icon" class="relative size-[1.375rem]" :stroke-width="item.active ? 2.4 : 2" />
+          <span class="relative max-w-full truncate px-0.5">{{ item.label }}</span>
           <span
             v-if="item.badge"
             class="bg-secondary ring-card absolute top-2 right-[calc(50%-1.125rem)] size-2 rounded-full ring-2"

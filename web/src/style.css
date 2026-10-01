@@ -520,6 +520,25 @@
 ::view-transition-new(tabbar) {
   @apply h-full object-cover object-right;
 }
+/* The current tab's capsule slides to the new tab, overshooting a little.
+   It's the same capsule before and after, so no crossfade: just the new one,
+   stretched to fit as it moves (tab widths differ between the two bars). */
+::view-transition-group(tabbar-highlight) {
+  animation-duration: 300ms;
+  animation-timing-function: var(--ease-rubber-band);
+}
+::view-transition-old(tabbar-highlight) {
+  display: none;
+}
+::view-transition-new(tabbar-highlight) {
+  @apply size-full;
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(tabbar-highlight) {
+    animation-duration: 0s;
+  }
+}
 /* The exit button buds off the pill's edge like a droplet splitting away
    (macOS Spotlight's buttons do this): it starts squeezed inside the pill,
    stretches as it pulls free, then settles round. Closing reverses it. */
