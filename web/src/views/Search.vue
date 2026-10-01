@@ -2,11 +2,16 @@
 import { computed, nextTick, ref, shallowRef, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
-import { ChevronRight, Clock, Gavel, MapPin, Music, Search, User, X } from '@lucide/vue'
+import { ChevronRight, Gavel, Hash, MapPin, Music, Search, User, X } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import NumberCard from '@/components/NumberCard.vue'
+import Skeleton from '@/components/Skeleton.vue'
+import CompetitionPicker from '@/components/search/CompetitionPicker.vue'
+import SearchStart from '@/components/search/SearchStart.vue'
+import { useCompetitionChoices } from '@/components/search/useCompetitionChoices'
 import { useScrolledPast } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { useCompetitions } from '@/composables/useCompetitions'
@@ -15,7 +20,6 @@ import { useRecentSearches } from '@/composables/useRecentSearches'
 import { useLocationFilter } from '@/composables/useLocationFilter'
 import { useFavoritesStore } from '@/stores/favorites'
 import { fetchDancers } from '@/lib/competitionData'
-import { daysFromToday, formatShortDate } from '@/lib/format'
 import { lookupEntityId, lookupVenueId } from '@/lib/entityIndex'
 import {
   searchAll,
@@ -40,7 +44,6 @@ const scrolledPast = useScrolledPast(titleEl)
 
 type Mode = 'name' | 'number'
 const mode = ref<Mode>(route.query.by === 'number' ? 'number' : 'name')
-watch(mode, (m) => router.replace({ query: { ...route.query, by: m === 'number' ? 'number' : undefined } }))
 
 // ─── By name (every competition) ────────────────────────────────────────────
 const q = ref(String(route.query.q ?? ''))
@@ -120,43 +123,67 @@ async function openPlace(g: SearchPlaceGroup) {
 
 // ─── By number (one competition) ────────────────────────────────────────────
 // Numbers change at every competition, so number search always looks inside
-// one. Default: today's competition, else the nearest one.
-const { competitions } = useCompetitions(ref(false))
-const candidates = computed(() =>
-  [...competitions.value]
-    .filter((c) => {
-      const d = daysFromToday(c.date)
-      return d != null && d >= -30 && d <= 30
-    })
-    .sort((a, b) => Math.abs(daysFromToday(a.date) ?? 99) - Math.abs(daysFromToday(b.date) ?? 99)),
-)
+// one: the likeliest, on today or else the nearest (yours first on a tie).
+const { competitions, loading: competitionsLoading } = useCompetitions(ref(false))
+// Read whenever it can show: number search, or the competition on today
+// before anything's typed.
+const choices = useCompetitionChoices(competitions, computed(() => mode.value === 'number' || !hasQuery.value))
 const competitionId = ref<string>(String(route.query.in ?? ''))
+// A link's competition, or one picked here, stays put. Otherwise the choice
+// follows the likeliest as more becomes known (a schedule saying a
+// competition is still on, your dancers' entries), until a number is typed.
+const chosen = ref(!!competitionId.value)
 watch(
-  candidates,
+  choices,
   (list) => {
-    if (!competitionId.value && list[0]) competitionId.value = list[0].id
+    if (!list.length) return
+    // An old link's competition that isn't on any more falls back too.
+    if (!list.some((c) => c.id === competitionId.value)) chosen.value = false
+    if (!chosen.value) competitionId.value = list[0].id
   },
   { immediate: true },
 )
-watch(competitionId, (id) => router.replace({ query: { ...route.query, in: id || undefined } }))
+function choose(id: string) {
+  competitionId.value = id
+  chosen.value = true
+}
+const todayChoice = computed(() => choices.value.find((c) => c.today) ?? null)
+function searchByNumber(id?: string) {
+  if (id) choose(id)
+  mode.value = 'number'
+}
+// The address keeps the mode and, for number search, the competition. One
+// watcher, so two replaces from the same old query can't undo each other.
+watch([mode, competitionId], ([m, id]) =>
+  router.replace({
+    query: { ...route.query, by: m === 'number' ? 'number' : undefined, in: (m === 'number' && id) || undefined },
+  }),
+)
 
+// A big competition's dancer list is a heavy read: only once number search is used.
 const entries = shallowRef<EnrichedDancer[]>([])
+const loadingEntries = ref(false)
 watch(
-  competitionId,
-  async (id) => {
+  [competitionId, mode],
+  async ([id, m]) => {
+    if (m !== 'number') return
     entries.value = []
     if (!id) return
+    loadingEntries.value = true
     try {
       const b = await fetchDancers(id)
       if (id === competitionId.value) entries.value = b.dancers
     } catch {
       entries.value = []
+    } finally {
+      if (id === competitionId.value) loadingEntries.value = false
     }
   },
   { immediate: true },
 )
 
 const num = ref('')
+watch(num, (n) => n && (chosen.value = true))
 // One row per person: someone entered in two age groups has one number.
 const numberMatches = computed(() => {
   if (!num.value) return []
@@ -170,7 +197,9 @@ const numberMatches = computed(() => {
   }
   return [...byPerson.values()].sort((a, b) => (a.dancer.number ?? 0) - (b.dancer.number ?? 0)).slice(0, 12)
 })
-const competitionName = computed(() => candidates.value.find((c) => c.id === competitionId.value)?.name ?? '')
+const competitionName = computed(
+  () => choices.value.find((c) => c.id === competitionId.value)?.competition.name ?? '',
+)
 
 const nameInput = ref<HTMLInputElement | null>(null)
 const numberInput = ref<HTMLInputElement | null>(null)
@@ -219,11 +248,12 @@ watch(mode, async (m) => {
             placeholder="Dancer, competition, judge or town"
             aria-label="Search"
             class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none [&::-webkit-search-cancel-button]:hidden"
+            @keydown.enter="nameInput?.blur()"
           />
           <button
             v-if="q"
             type="button"
-            class="text-muted-foreground -mr-1 flex size-10 items-center justify-center rounded-full"
+            class="text-muted-foreground -mr-1 flex size-7 items-center justify-center rounded-full"
             aria-label="Clear search"
             @click="q = ''"
           >
@@ -231,27 +261,7 @@ watch(mode, async (m) => {
           </button>
         </label>
 
-        <template v-if="!hasQuery">
-          <section v-if="recentSearches.recent.value.length" class="space-y-2">
-            <h2 class="text-heading flex items-baseline justify-between pt-1">
-              Recent
-              <button type="button" class="text-primary text-[0.9375rem] font-bold" @click="recentSearches.clear()">
-                Clear
-              </button>
-            </h2>
-            <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
-              <li v-for="r in recentSearches.recent.value" :key="r">
-                <button type="button" class="flex min-h-12 w-full items-center gap-3 px-4 text-left hover:bg-accent" @click="q = r">
-                  <Clock class="text-muted-foreground size-5" />
-                  <span class="flex-1 text-base font-semibold">{{ r }}</span>
-                </button>
-              </li>
-            </ul>
-          </section>
-          <p class="text-muted-foreground px-1 text-[0.9375rem]">
-            Know the number on their card? Use <button type="button" class="text-primary font-bold" @click="mode = 'number'">By number</button>.
-          </p>
-        </template>
+        <SearchStart v-if="!hasQuery" :today="todayChoice" @search="q = $event" @number="searchByNumber" />
 
         <div v-else-if="failed" class="bg-card space-y-3 rounded-2xl border p-4 text-center shadow-sm">
           <p class="text-base font-semibold">Search isn’t working right now. Check your connection.</p>
@@ -341,19 +351,24 @@ watch(mode, async (m) => {
       </template>
 
       <!-- By number: the phone's own number pad, via inputmode. -->
+      <div v-else-if="!choices.length && competitionsLoading" class="space-y-1" aria-busy="true">
+        <Skeleton class="h-5 w-20" />
+        <div class="flex gap-2 overflow-hidden py-2">
+          <Skeleton v-for="i in 3" :key="i" class="h-21 w-60 shrink-0 rounded-2xl!" />
+        </div>
+      </div>
+      <EmptyState
+        v-else-if="!choices.length"
+        :icon="Hash"
+        title="No competitions on right now"
+        description="Numbers change at every competition, so this only looks in competitions within a month of today. Search by name to find anyone."
+      >
+        <button type="button" class="bg-primary text-primary-foreground h-12 rounded-xl px-6 text-base font-bold" @click="mode = 'name'">
+          Search by name
+        </button>
+      </EmptyState>
       <template v-else>
-        <label class="block space-y-1">
-          <span class="text-muted-foreground text-sm font-bold">Looking in</span>
-          <select
-            v-model="competitionId"
-            class="bg-card border-strong h-12 w-full rounded-xl border-2 px-3 text-base font-bold outline-none"
-          >
-            <option v-if="!candidates.length" value="">No competitions this month</option>
-            <option v-for="c in candidates" :key="c.id" :value="c.id">
-              {{ c.name }}{{ c.date ? ` · ${formatShortDate(c.date)}` : '' }}
-            </option>
-          </select>
-        </label>
+        <CompetitionPicker :model-value="competitionId" :choices="choices" @update:model-value="choose" />
 
         <label class="block space-y-1">
           <span class="text-muted-foreground text-sm font-bold">Number on their card</span>
@@ -391,10 +406,11 @@ watch(mode, async (m) => {
             <FollowButton :dancer="d" />
           </li>
         </ul>
+        <p v-else-if="num && loadingEntries" class="text-muted-foreground text-center text-base">Looking…</p>
         <p v-else-if="num && entries.length" class="text-muted-foreground text-center text-base">
           No dancer with number {{ num }} at {{ competitionName }}.
         </p>
-        <p v-else-if="num && !entries.length" class="text-muted-foreground text-center text-base">
+        <p v-else-if="num" class="text-muted-foreground text-center text-base">
           The dancer list for {{ competitionName }} hasn’t been posted yet.
         </p>
 

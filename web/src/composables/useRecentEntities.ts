@@ -5,6 +5,8 @@ export interface RecentEntity {
   id: string
   name: string
   viewedAt: number
+  /** A competition's date, for its date tile. */
+  date?: number | string
 }
 
 const MAX = 10
@@ -28,10 +30,10 @@ function storeFor(namespace: string): Ref<RecentEntity[]> {
 export function useRecentEntities(namespace: string) {
   const recent = storeFor(namespace)
 
-  function record(id: string, name: string) {
+  function record(id: string, name: string, date?: number | string) {
     if (!id || !name) return
     const next = recent.value.filter((r) => r.id !== id)
-    next.unshift({ id, name, viewedAt: Date.now() })
+    next.unshift({ id, name, viewedAt: Date.now(), date })
     recent.value = next.slice(0, MAX)
   }
 
