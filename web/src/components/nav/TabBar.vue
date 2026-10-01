@@ -32,6 +32,11 @@ function onTap(item: TabItem, e: MouseEvent) {
     :aria-label="label"
     class="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(0.5rem,var(--safe-bottom))]"
   >
+    <!-- What scrolls under the bar fades and softens toward the bottom, so the bar stands out. -->
+    <div
+      class="from-background via-background/70 absolute inset-x-0 bottom-0 -z-10 h-[calc(100%+1.5rem)] bg-linear-to-t from-30% to-transparent backdrop-blur-[3px] [mask-image:linear-gradient(to_top,black_50%,transparent)]"
+      aria-hidden="true"
+    />
     <div class="mx-auto flex max-w-lg items-center gap-2">
       <slot name="leading" />
       <div
