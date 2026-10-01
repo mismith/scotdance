@@ -1,5 +1,10 @@
-import { getDownloadURL, uploadBytes } from 'firebase/storage'
-import { bucketRef } from '@/firebase'
+import { connectStorageEmulator, getDownloadURL, getStorage, ref as storageRef, uploadBytes } from 'firebase/storage'
+import { firebaseApp, NAMESPACE } from '@/firebase'
+
+// Storage is only used here, so it loads with Manage rather than for everyone.
+const storage = getStorage(firebaseApp)
+if (import.meta.env.MODE === 'emulator') connectStorageEmulator(storage, window.location.hostname, 9199)
+const bucketRef = (path: string) => storageRef(storage, `${NAMESPACE}/${path}`)
 
 // Uploads for Manage: competition images, judge photos and linked files.
 // The storage rules cap images at 244 KB and links at 976 KB, so photos

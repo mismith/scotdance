@@ -36,6 +36,8 @@ export default defineConfig({
       },
       output: {
         manualChunks(id) {
+          // Storage is only for Manage uploads: leave it to load with Manage.
+          if (/node_modules\/(@firebase|firebase)\/storage/.test(id)) return undefined
           if (
             id.includes('node_modules/firebase/') ||
             id.includes('node_modules/@firebase/')

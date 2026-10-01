@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter, type RouteLocationRaw } from 'vue-router'
-import { ArrowDownToLine, Gavel, Info, LifeBuoy, LogIn, Music, School, Settings, Users } from '@lucide/vue'
+import { ArrowDownToLine, ClipboardList, Gavel, Info, LifeBuoy, LogIn, Music, School, Settings, SquarePlus, Users } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
 import { useCrisp } from '@/composables/useCrisp'
 import { useUpdate } from '@/composables/useUpdate'
@@ -65,6 +65,12 @@ const row = 'flex min-h-12 w-full items-center gap-3 px-4 py-2 text-left text-ba
         </button>
         <button type="button" :class="row" @click="go({ name: 'settings' })">
           <Settings class="text-primary size-5" /> Settings
+        </button>
+        <button v-if="me.canManageAny" type="button" :class="row" @click="go({ name: 'manage.competitions' })">
+          <ClipboardList class="text-primary size-5" /> Manage competitions
+        </button>
+        <button v-else type="button" :class="row" @click="go({ name: 'competitions.submit' })">
+          <SquarePlus class="text-primary size-5" /> Submit a competition
         </button>
       </div>
       <div class="py-1">

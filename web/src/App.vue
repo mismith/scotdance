@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import GlobalBottomNav from '@/components/nav/GlobalBottomNav.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import AlertBanner from '@/components/AlertBanner.vue'
 import OfflineNotice from '@/components/OfflineNotice.vue'
-import FeedbackHost from '@/components/admin/FeedbackHost.vue'
+import { confirmRequest, toasts } from '@/lib/admin/feedback'
 import RolesSheet from '@/components/RolesSheet.vue'
 import { useRoles } from '@/composables/useRoles'
 import { startLiveAlerts } from '@/composables/useLiveAlerts'
@@ -23,6 +23,14 @@ import { useAuthStore } from '@/stores/auth'
 // falls back here. Keep this in Unhead — not document.title — so writes are
 // reconciled together.
 const route = useRoute()
+
+// Toasts and confirm dialogs only come from Manage and the forms around it,
+// so their host loads the first time one is needed, then stays for the exit transition.
+const FeedbackHost = defineAsyncComponent(() => import('@/components/admin/FeedbackHost.vue'))
+const feedbackUsed = ref(false)
+watch([() => toasts.length, confirmRequest], ([n, req]) => {
+  if (n || req) feedbackUsed.value = true
+})
 useHead({ title: () => buildTitle([route.meta.title]) })
 
 // Routes that own their own bottom nav (entity layouts, competition layout)
@@ -67,7 +75,7 @@ watch(() => me.email, (email) => crisp.setUserEmail(email), { immediate: true })
   <LoginDialog />
   <AlertBanner />
   <OfflineNotice />
-  <FeedbackHost />
+  <FeedbackHost v-if="feedbackUsed" />
   <RolesSheet />
   <UpdateDialog />
 </template>
