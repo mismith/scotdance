@@ -83,7 +83,7 @@ async function runAction(id: number, run: () => unknown) {
     <div
       ref="stack"
       popover="manual"
-      :style="host !== 'body' && { '--notice-bottom': 'calc(var(--safe-bottom) + 1rem)' }"
+      :style="host !== 'body' && { '--notice-bottom': 'calc(var(--safe-bottom) + 1rem)', '--notice-offset': '0px', '--toast-lift': '0px' }"
       class="pointer-events-none fixed inset-x-4 top-auto bottom-[calc(var(--notice-bottom)+var(--notice-offset,0px)+var(--toast-lift,0px))] m-0 flex h-auto w-auto flex-col items-center gap-2 overflow-visible border-0 bg-transparent p-0 text-inherit transition-[bottom] duration-(--dur-base) ease-standard"
       role="status"
       aria-live="polite"
