@@ -1,7 +1,7 @@
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 
 // The competitions number search can look in (those within a month of
-// today), and how they're ordered, shortlisted and filtered.
+// today), and how they're ordered and filtered.
 
 export interface CompetitionChoice {
   id: string
@@ -18,7 +18,7 @@ export interface CompetitionChoice {
   near: boolean
 }
 
-export const isYours = (c: CompetitionChoice) => c.followed || c.dancers.length > 0
+const isYours = (c: CompetitionChoice) => c.followed || c.dancers.length > 0
 
 const distance = (c: CompetitionChoice) => (c.today ? 0 : Math.abs(c.days))
 
@@ -34,26 +34,6 @@ export function compareChoices(a: CompetitionChoice, b: CompetitionChoice): numb
     a.days - b.days ||
     (a.competition.name ?? '').localeCompare(b.competition.name ?? '')
   )
-}
-
-/** The row shows the closest few, then yours further out, up to the max. */
-export const ROW_CLOSEST = 3
-export const ROW_MAX = 5
-
-/**
- * The cards in the row, from choices ranked by compareChoices: all of them
- * when there are only a few. `keep` (ids picked from the full list, newest
- * first) go in front, so whatever's chosen is always one tap away.
- */
-export function shortlist(ranked: CompetitionChoice[], keep: string[] = []): CompetitionChoice[] {
-  const base =
-    ranked.length <= ROW_MAX
-      ? ranked
-      : [...ranked.slice(0, ROW_CLOSEST), ...ranked.slice(ROW_CLOSEST).filter(isYours)].slice(0, ROW_MAX)
-  const kept = keep
-    .map((id) => ranked.find((c) => c.id === id))
-    .filter((c): c is CompetitionChoice => !!c && !base.includes(c))
-  return [...kept, ...base]
 }
 
 const fold = (s: string) =>

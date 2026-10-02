@@ -107,7 +107,7 @@ test.describe('the number card', () => {
     const card = page.getByRole('button', { name: new RegExp(`Today.*${name}.*Find a dancer by the number on their card`) })
     await card.click()
     await expect(page).toHaveURL(new RegExp(`[?&]by=number.*[?&]in=${id}(&|$)`))
-    await expect(page.getByRole('radiogroup', { name: 'Looking in' }).getByRole('radio', { checked: true })).toContainText(name)
+    await expect(page.getByRole('button', { name: /^Looking in/ })).toContainText(name)
     await expect(page.getByRole('textbox', { name: 'Number on their card' })).toBeFocused()
   })
 

@@ -1,13 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  compareChoices,
-  matches,
-  ROW_CLOSEST,
-  ROW_MAX,
-  sections,
-  shortlist,
-  type CompetitionChoice,
-} from '@/components/search/choices'
+import { compareChoices, matches, sections, type CompetitionChoice } from '@/components/search/choices'
 
 function choice(id: string, days: number, extra: Partial<CompetitionChoice> & { name?: string; location?: string } = {}): CompetitionChoice {
   const { name = id, location, ...rest } = extra
@@ -46,31 +38,6 @@ describe('compareChoices', () => {
     expect(ids(ranked(choice('next', 2), choice('last', -2)))).toEqual(['last', 'next'])
     // Yours never beats a nearer one: the closest stays first.
     expect(ids(ranked(choice('mine', 3, { followed: true }), choice('soon', 1)))).toEqual(['soon', 'mine'])
-  })
-})
-
-describe('shortlist', () => {
-  it('shows every choice when there are only a few', () => {
-    const list = ranked(...Array.from({ length: ROW_MAX }, (_, i) => choice(`c${i}`, i)))
-    expect(ids(shortlist(list))).toEqual(ids(list))
-  })
-
-  it('with many, shows the closest few, then yours further out', () => {
-    const list = ranked(
-      ...Array.from({ length: 30 }, (_, i) => choice(`c${i}`, i)),
-      choice('followed', 20, { followed: true }),
-      choice('entered', -25, { dancers: [{ id: 'p1', name: 'Ava' }] }),
-    )
-    const row = shortlist(list)
-    expect(ids(row)).toEqual(['c0', 'c1', 'c2', 'followed', 'entered'].slice(0, ROW_MAX))
-    expect(row.slice(0, ROW_CLOSEST).every((c) => !c.followed)).toBe(true)
-  })
-
-  it('keeps one picked from the full list at the front, and nothing twice', () => {
-    const list = ranked(...Array.from({ length: 30 }, (_, i) => choice(`c${i}`, i)))
-    expect(ids(shortlist(list, ['c20']))).toEqual(['c20', 'c0', 'c1', 'c2'])
-    expect(ids(shortlist(list, ['c1']))).toEqual(['c0', 'c1', 'c2'])
-    expect(ids(shortlist(list, ['gone']))).toEqual(['c0', 'c1', 'c2'])
   })
 })
 

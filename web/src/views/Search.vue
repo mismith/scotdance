@@ -2,8 +2,11 @@
 import { computed, nextTick, ref, shallowRef, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
-import { ChevronRight, Gavel, Hash, MapPin, Music, Search, User, X } from '@lucide/vue'
+import { ChevronRight, CloudOff, Hash, LoaderCircle, MapPin, Search, SearchX, User, X } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
+import Button from '@/components/ui/Button.vue'
+import Segmented from '@/components/ui/Segmented.vue'
+import Avatar from '@/components/Avatar.vue'
 import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import FollowButton from '@/components/FollowButton.vue'
@@ -21,12 +24,12 @@ import { useLocationFilter } from '@/composables/useLocationFilter'
 import { useFavoritesStore } from '@/stores/favorites'
 import { fetchDancers } from '@/lib/competitionData'
 import { lookupEntityId, lookupVenueId } from '@/lib/entityIndex'
+import { settle } from '@/lib/settle'
 import {
   searchAll,
   type SearchAllResults,
   type SearchEntityType,
-  type SearchPersonGroup,
-  type SearchPlaceGroup,
+    type SearchPlaceGroup,
 } from '@/lib/searchAll'
 import type { EnrichedDancer } from '@/types/competition'
 
@@ -43,6 +46,10 @@ const titleEl = ref<HTMLElement | null>(null)
 const scrolledPast = useScrolledPast(titleEl)
 
 type Mode = 'name' | 'number'
+const MODES = [
+  { value: 'name', label: 'By name' },
+  { value: 'number', label: 'By number' },
+] as const
 const mode = ref<Mode>(route.query.by === 'number' ? 'number' : 'name')
 
 // ─── By name (every competition) ────────────────────────────────────────────
@@ -99,20 +106,46 @@ const nothing = computed(() => {
   )
 })
 
-async function openPerson(type: 'dancers' | 'judges' | 'pipers', g: SearchPersonGroup) {
-  const id = await lookupEntityId(type, g.name)
-  if (!id) return
-  const name = type === 'dancers' ? 'dancer.info' : type === 'judges' ? 'judge.info' : 'piper.info'
-  const param = type === 'dancers' ? 'dancerId' : type === 'judges' ? 'judgeId' : 'piperId'
-  router.push({ name, params: { [param]: id } })
+// Search finds people and venues by name; their pages go by id. Look the
+// ids up as soon as results arrive, so each row is a real link by the time
+// it's tapped. One tapped sooner holds its press and spins until it can go.
+type PersonType = 'dancers' | 'judges' | 'pipers'
+const ids = ref<Record<string, string | null>>({})
+const keyOf = (type: PersonType | 'venues', name: string) => `${type}:${name}`
+const lookup = (type: PersonType | 'venues', name: string, locality?: string | null) =>
+  type === 'venues' ? lookupVenueId(name, locality ?? null) : lookupEntityId(type, name)
+watch(results, (r) => {
+  const wanted: ReadonlyArray<readonly [PersonType | 'venues', string, string | null | undefined]> = [
+    ...(['dancers', 'judges', 'pipers'] as const).flatMap((t) => r[t].groups.map((g) => [t, g.name, null] as const)),
+    ...r.places.groups.filter((g) => g.kind === 'venue').map((g) => ['venues', g.name, g.locality] as const),
+  ]
+  for (const [type, name, locality] of wanted) {
+    const key = keyOf(type, name)
+    if (key in ids.value) continue
+    void lookup(type, name, locality).then((id) => (ids.value = { ...ids.value, [key]: id }))
+  }
+})
+const ROUTES = {
+  dancers: ['dancer.info', 'dancerId'],
+  judges: ['judge.info', 'judgeId'],
+  pipers: ['piper.info', 'piperId'],
+  venues: ['venue.info', 'venueId'],
+} as const
+function linkTo(type: PersonType | 'venues', name: string) {
+  const id = ids.value[keyOf(type, name)]
+  return id ? { name: ROUTES[type][0], params: { [ROUTES[type][1]]: id } } : null
+}
+const opening = ref<string | null>(null)
+async function openLate(type: PersonType | 'venues', name: string, locality?: string | null) {
+  const key = keyOf(type, name)
+  opening.value = key
+  const id = await lookup(type, name, locality)
+  if (opening.value !== key) return
+  opening.value = null
+  if (id) router.push({ name: ROUTES[type][0], params: { [ROUTES[type][1]]: id } })
 }
 
-async function openPlace(g: SearchPlaceGroup) {
-  if (g.kind === 'venue') {
-    const id = await lookupVenueId(g.name, g.locality ?? null)
-    if (id) router.push({ name: 'venue.info', params: { venueId: id } })
-    return
-  }
+function openArea(g: SearchPlaceGroup) {
   locationFilter.setRegion({
     country: g.country ?? null,
     region: g.region ?? null,
@@ -150,6 +183,12 @@ function choose(id: string) {
 const todayChoice = computed(() => choices.value.find((c) => c.today) ?? null)
 function searchByNumber(id?: string) {
   if (id) choose(id)
+  mode.value = 'number'
+}
+// Digits typed into name search: offer to look them up as a number.
+const digits = computed(() => (/^\d{1,5}$/.test(q.value.trim()) ? q.value.trim() : null))
+function numberFromName() {
+  num.value = digits.value ?? ''
   mode.value = 'number'
 }
 // The address keeps the mode and, for number search, the competition. One
@@ -197,6 +236,14 @@ const numberMatches = computed(() => {
   }
   return [...byPerson.values()].sort((a, b) => (a.dancer.number ?? 0) - (b.dancer.number ?? 0)).slice(0, 12)
 })
+// The dancer whose number it is, if anyone's, gets a big card; the rest
+// whose numbers start with it are rows, the digits typed heaviest.
+const exact = computed(() => numberMatches.value.find((m) => String(m.dancer.number) === num.value) ?? null)
+const others = computed(() => numberMatches.value.filter((m) => m !== exact.value))
+const typed = (n: number | string | undefined) => String(n ?? '').slice(0, num.value.length)
+const untyped = (n: number | string | undefined) => String(n ?? '').slice(num.value.length)
+const colorOf = (d: EnrichedDancer) => (following.isFollowing(d) ? following.colorFor(d.dancerId) : null)
+
 const competitionName = computed(
   () => choices.value.find((c) => c.id === competitionId.value)?.competition.name ?? '',
 )
@@ -214,38 +261,24 @@ watch(mode, async (m) => {
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
     <AppBar title="Search" :show-title="scrolledPast" :back="false" />
 
-    <main class="mx-auto w-full max-w-3xl space-y-3 px-4 pt-[calc(var(--chrome-top)+0.25rem)]">
+    <main class="mx-auto w-full max-w-3xl space-y-4 px-4 pt-[calc(var(--chrome-top)+0.25rem)]">
       <header ref="titleEl">
         <h1 class="text-display">Search</h1>
       </header>
 
-      <div class="bg-muted grid grid-cols-2 rounded-xl border p-1" role="group" aria-label="Search by">
-        <button
-          v-for="m in (['name', 'number'] as const)"
-          :key="m"
-          type="button"
-          :aria-pressed="mode === m"
-          :class="[
-            'h-10 rounded-lg text-[0.9375rem] font-bold transition-colors',
-            mode === m ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground',
-          ]"
-          @click="mode = m"
-        >
-          {{ m === 'name' ? 'By name' : 'By number' }}
-        </button>
-      </div>
+      <Segmented v-model="mode" :options="MODES" label="Search by" />
 
       <!-- By name -->
       <template v-if="mode === 'name'">
-        <label class="bg-card border-strong focus-within:border-primary flex h-12 items-center gap-2 rounded-xl border-2 px-3">
-          <Search class="text-muted-foreground size-5 shrink-0" />
+        <label class="field flex h-12 items-center gap-2 rounded-xl pr-1 pl-3">
+          <Search class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
           <input
             ref="nameInput"
             v-model="q"
             type="search"
             enterkeyhint="search"
             autocomplete="off"
-            placeholder="Dancer, competition, judge or town"
+            placeholder="Search dancers, competitions and places"
             aria-label="Search"
             class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none"
             @keydown.enter="nameInput?.blur()"
@@ -253,7 +286,7 @@ watch(mode, async (m) => {
           <button
             v-if="q"
             type="button"
-            class="text-muted-foreground -mr-1 flex size-7 items-center justify-center rounded-full"
+            class="text-muted-foreground press flex size-11 shrink-0 items-center justify-center rounded-full"
             aria-label="Clear search"
             @click="q = ''"
           >
@@ -263,47 +296,79 @@ watch(mode, async (m) => {
 
         <SearchStart v-if="!hasQuery" :today="todayChoice" @search="q = $event" @number="searchByNumber" />
 
-        <div v-else-if="failed" class="bg-card space-y-3 rounded-2xl border p-4 text-center shadow-sm">
-          <p class="text-base font-semibold">Search isn’t working right now. Check your connection.</p>
-          <button type="button" class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-6 font-bold" @click="run(q)">
-            Try again
-          </button>
+        <EmptyState
+          v-else-if="failed"
+          size="inline"
+          :icon="CloudOff"
+          title="Search isn’t working right now"
+          description="Check your connection, then try again."
+        >
+          <Button variant="primary" @click="run(q)">Try again</Button>
+        </EmptyState>
+        <div v-else-if="loadingName && nothing" class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]" aria-busy="true">
+          <span class="sr-only">Searching…</span>
+          <div v-for="i in 4" :key="i" class="flex min-h-16 items-center gap-3 py-2 pr-4 pl-4">
+            <Skeleton class="size-10 shrink-0 rounded-full!" />
+            <div class="flex-1 space-y-2">
+              <Skeleton class="h-4 w-1/2" />
+              <Skeleton class="h-3.5 w-1/3" />
+            </div>
+          </div>
         </div>
-        <p v-else-if="loadingName && nothing" class="text-muted-foreground py-4 text-center text-base">Searching…</p>
-        <p v-else-if="nothing" class="text-muted-foreground py-4 text-center text-base">
-          Nothing matches “{{ q }}”. Check the spelling, or try just a first or last name.
-        </p>
+        <EmptyState
+          v-else-if="nothing"
+          size="inline"
+          :icon="digits ? Hash : SearchX"
+          :title="`Nothing matches “${q.trim()}”.`"
+          :description="
+            digits
+              ? 'Numbers change at every competition. Look it up in one competition instead.'
+              : 'Check the spelling, or try just a first or last name.'
+          "
+        >
+          <Button v-if="digits" variant="primary" @click="numberFromName">Search by number</Button>
+        </EmptyState>
 
         <template v-else>
-          <section v-if="results.dancers.groups.length" class="space-y-2">
-            <h2 class="text-heading pt-1">Dancers</h2>
-            <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+          <section v-if="results.dancers.groups.length" :class="['space-y-2', settle]">
+            <h2 class="text-heading">Dancers</h2>
+            <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
               <li v-for="g in results.dancers.groups" :key="g.name">
-                <button type="button" class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-accent" @click="openPerson('dancers', g)">
-                  <span class="bg-blue-paper text-primary flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-extrabold">{{ g.initials }}</span>
+                <component
+                  :is="linkTo('dancers', g.name) ? RouterLink : 'button'"
+                  :to="linkTo('dancers', g.name) ?? undefined"
+                  :type="linkTo('dancers', g.name) ? undefined : 'button'"
+                  :data-tapping="opening === keyOf('dancers', g.name) || undefined"
+                  class="press-row focus-inset flex min-h-16 w-full items-center gap-3 py-2 pr-3 pl-4 text-left"
+                  @click="!linkTo('dancers', g.name) && openLate('dancers', g.name)"
+                >
+                  <span class="flex w-11 shrink-0 justify-center">
+                    <Avatar :name="g.name" :color="following.colorFor(ids[keyOf('dancers', g.name)])" />
+                  </span>
                   <span class="min-w-0 flex-1">
-                    <span class="block truncate text-base font-bold">{{ g.name }}</span>
+                    <span class="block truncate text-base font-semibold">{{ g.name }}</span>
                     <span class="text-muted-foreground block truncate text-sm">
                       {{ [g.location, `${g.competitionIds.length} competition${g.competitionIds.length === 1 ? '' : 's'}`].filter(Boolean).join(' · ') }}
                     </span>
                   </span>
-                  <ChevronRight class="text-muted-foreground size-5" />
-                </button>
+                  <LoaderCircle v-if="opening === keyOf('dancers', g.name)" class="text-muted-foreground size-5 shrink-0 animate-spin" aria-hidden="true" />
+                  <ChevronRight v-else class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+                </component>
               </li>
             </ul>
-            <button
+            <Button
               v-if="results.dancers.total > results.dancers.groups.length"
-              type="button"
-              class="text-primary h-11 w-full text-[0.9375rem] font-bold"
+              variant="plain"
+              block
               @click="run(q, 50, ['dancers'])"
             >
               Show all {{ results.dancers.total }} dancers
-            </button>
+            </Button>
           </section>
 
-          <section v-if="results.competitions.hits.length" class="space-y-2">
-            <h2 class="text-heading pt-1">Competitions</h2>
-            <ul class="divide-y overflow-hidden rounded-2xl border shadow-sm">
+          <section v-if="results.competitions.hits.length" :class="['space-y-2', settle]">
+            <h2 class="text-heading">Competitions</h2>
+            <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
               <CompetitionDateRow
                 v-for="c in results.competitions.hits"
                 :key="c.id"
@@ -314,48 +379,69 @@ watch(mode, async (m) => {
             </ul>
           </section>
 
-          <section v-for="t in (['judges', 'pipers'] as const)" v-show="results[t].groups.length" :key="t" class="space-y-2">
-            <h2 class="text-heading pt-1">{{ t === 'judges' ? 'Judges' : 'Pipers' }}</h2>
-            <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+          <section v-for="t in (['judges', 'pipers'] as const)" v-show="results[t].groups.length" :key="t" :class="['space-y-2', settle]">
+            <h2 class="text-heading">{{ t === 'judges' ? 'Judges' : 'Pipers' }}</h2>
+            <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
               <li v-for="g in results[t].groups" :key="g.name">
-                <button type="button" class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-accent" @click="openPerson(t, g)">
-                  <component :is="t === 'judges' ? Gavel : Music" class="text-primary size-5 shrink-0" />
-                  <span class="min-w-0 flex-1">
-                    <span class="block truncate text-base font-bold">{{ g.name }}</span>
-                    <span v-if="g.location" class="text-muted-foreground block truncate text-sm">{{ g.location }}</span>
+                <component
+                  :is="linkTo(t, g.name) ? RouterLink : 'button'"
+                  :to="linkTo(t, g.name) ?? undefined"
+                  :type="linkTo(t, g.name) ? undefined : 'button'"
+                  :data-tapping="opening === keyOf(t, g.name) || undefined"
+                  class="press-row focus-inset flex min-h-16 w-full items-center gap-3 py-2 pr-3 pl-4 text-left"
+                  @click="!linkTo(t, g.name) && openLate(t, g.name)"
+                >
+                  <span class="flex w-11 shrink-0 justify-center">
+                    <Avatar :name="g.name" :image="g.image" />
                   </span>
-                  <ChevronRight class="text-muted-foreground size-5" />
-                </button>
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-base font-semibold">{{ g.name }}</span>
+                    <span class="text-muted-foreground block truncate text-sm">
+                      {{ [t === 'judges' ? 'Judge' : 'Piper', g.location].filter(Boolean).join(' · ') }}
+                    </span>
+                  </span>
+                  <LoaderCircle v-if="opening === keyOf(t, g.name)" class="text-muted-foreground size-5 shrink-0 animate-spin" aria-hidden="true" />
+                  <ChevronRight v-else class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+                </component>
               </li>
             </ul>
           </section>
 
-          <section v-if="results.places.groups.length" class="space-y-2">
-            <h2 class="text-heading pt-1">Places</h2>
-            <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+          <section v-if="results.places.groups.length" :class="['space-y-2', settle]">
+            <h2 class="text-heading">Places</h2>
+            <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
               <li v-for="g in results.places.groups" :key="`${g.kind}:${g.name}`">
-                <button type="button" class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-accent" @click="openPlace(g)">
-                  <MapPin class="text-primary size-5 shrink-0" />
+                <component
+                  :is="g.kind === 'venue' && linkTo('venues', g.name) ? RouterLink : 'button'"
+                  :to="(g.kind === 'venue' && linkTo('venues', g.name)) || undefined"
+                  :type="g.kind === 'venue' && linkTo('venues', g.name) ? undefined : 'button'"
+                  :data-tapping="opening === keyOf('venues', g.name) || undefined"
+                  class="press-row focus-inset flex min-h-16 w-full items-center gap-3 py-2 pr-3 pl-4 text-left"
+                  @click="g.kind !== 'venue' ? openArea(g) : !linkTo('venues', g.name) && openLate('venues', g.name, g.locality)"
+                >
+                  <span class="flex w-11 shrink-0 justify-center">
+                    <MapPin class="text-muted-foreground size-5" aria-hidden="true" />
+                  </span>
                   <span class="min-w-0 flex-1">
-                    <span class="block truncate text-base font-bold">{{ g.name }}</span>
+                    <span class="block truncate text-base font-semibold">{{ g.name }}</span>
                     <span class="text-muted-foreground block truncate text-sm">
                       {{ [g.parentLabel, `${g.count} competition${g.count === 1 ? '' : 's'}`].filter(Boolean).join(' · ') }}
                     </span>
                   </span>
-                  <ChevronRight class="text-muted-foreground size-5" />
-                </button>
+                  <LoaderCircle v-if="opening === keyOf('venues', g.name)" class="text-muted-foreground size-5 shrink-0 animate-spin" aria-hidden="true" />
+                  <ChevronRight v-else class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+                </component>
               </li>
             </ul>
           </section>
         </template>
       </template>
 
-      <!-- By number: the phone's own number pad, via inputmode. -->
-      <div v-else-if="!choices.length && competitionsLoading" class="space-y-1" aria-busy="true">
-        <Skeleton class="h-5 w-20" />
-        <div class="flex gap-2 overflow-hidden py-2">
-          <Skeleton v-for="i in 3" :key="i" class="h-21 w-60 shrink-0 rounded-2xl!" />
-        </div>
+      <!-- By number: the number first, then where to look. The phone's own
+           number pad, via inputmode. -->
+      <div v-else-if="!choices.length && competitionsLoading" class="space-y-3" aria-busy="true">
+        <Skeleton class="h-16 w-full rounded-2xl!" />
+        <Skeleton class="h-11 w-64 rounded-full!" />
       </div>
       <EmptyState
         v-else-if="!choices.length"
@@ -363,15 +449,11 @@ watch(mode, async (m) => {
         title="No competitions on right now"
         description="Numbers change at every competition, so this only looks in competitions within a month of today. Search by name to find anyone."
       >
-        <button type="button" class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-6 text-base font-bold" @click="mode = 'name'">
-          Search by name
-        </button>
+        <Button variant="primary" size="lg" @click="mode = 'name'">Search by name</Button>
       </EmptyState>
       <template v-else>
-        <CompetitionPicker :model-value="competitionId" :choices="choices" @update:model-value="choose" />
-
-        <label class="block space-y-1">
-          <span class="text-muted-foreground text-sm font-bold">Number on their card</span>
+        <label class="block space-y-1.5">
+          <span class="text-muted-foreground text-sm font-medium">Number on their card</span>
           <input
             ref="numberInput"
             v-model="num"
@@ -382,22 +464,46 @@ watch(mode, async (m) => {
             enterkeyhint="search"
             maxlength="5"
             placeholder="e.g. 134"
-            class="bg-card border-strong focus:border-primary placeholder:text-muted-foreground h-16 w-full rounded-2xl border-2 text-center text-[2rem] font-extrabold tracking-wider tabular-nums outline-none placeholder:text-xl placeholder:font-semibold placeholder:tracking-normal"
+            class="field placeholder:text-muted-foreground h-16 w-full rounded-2xl text-center text-[2rem] font-extrabold tracking-wider tabular-nums outline-none placeholder:text-xl placeholder:font-medium placeholder:tracking-normal"
             @input="num = num.replace(/\D/g, '')"
           />
         </label>
 
-        <ul v-if="numberMatches.length" class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
-          <li v-for="{ dancer: d, groups } in numberMatches" :key="d.id" class="flex items-center gap-2 pr-2">
+        <CompetitionPicker :model-value="competitionId" :choices="choices" @update:model-value="choose" />
+
+        <div
+          v-if="exact"
+          :class="['surface flex items-center overflow-hidden rounded-3xl pr-2', settle]"
+        >
+          <RouterLink
+            :to="{ name: 'competition.dancer', params: { competitionId, dancerId: exact.dancer.id } }"
+            class="press-row focus-inset flex min-w-0 flex-1 items-center gap-4 py-4 pl-4"
+          >
+            <NumberCard :number="exact.dancer.number" size="md" :color="colorOf(exact.dancer)" />
+            <span class="min-w-0">
+              <span class="text-title line-clamp-2">{{ exact.dancer.fullName }}</span>
+              <span class="text-muted-foreground block truncate text-sm">{{ exact.groups.filter(Boolean).join(' · ') }}</span>
+            </span>
+          </RouterLink>
+          <FollowButton :dancer="exact.dancer" />
+        </div>
+
+        <ul v-if="others.length" :class="['surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]', settle]">
+          <li v-for="{ dancer: d, groups } in others" :key="d.id" class="flex items-center pr-1">
             <RouterLink
               :to="{ name: 'competition.dancer', params: { competitionId, dancerId: d.id } }"
-              class="flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 pl-3"
+              class="press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap-3 py-2 pl-4"
+              :aria-label="`${d.number} ${d.fullName}`"
             >
-              <NumberCard
-                :number="d.number"
-                size="xs"
-                :color="following.isFollowing(d) ? following.colorFor(d.dancerId) : null"
-              />
+              <span
+                class="bg-paper text-paper-ink relative inline-flex h-8 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[var(--paper-edge)] text-[0.9375rem] tracking-[-0.02em] tabular-nums"
+                :style="following.paint(d.dancerId)"
+                aria-hidden="true"
+              >
+                <span v-if="colorOf(d)" class="sash absolute inset-x-0 top-0 h-1.5" />
+                <span :class="['font-extrabold', colorOf(d) && 'pt-1']">{{ typed(d.number) }}</span
+                ><span :class="['font-medium opacity-50', colorOf(d) && 'pt-1']">{{ untyped(d.number) }}</span>
+              </span>
               <span class="min-w-0">
                 <span class="block truncate text-base font-semibold">{{ d.fullName }}</span>
                 <span class="text-muted-foreground block truncate text-sm">{{ groups.filter(Boolean).join(' · ') }}</span>
@@ -406,16 +512,24 @@ watch(mode, async (m) => {
             <FollowButton :dancer="d" />
           </li>
         </ul>
-        <p v-else-if="num && loadingEntries" class="text-muted-foreground text-center text-base">Looking…</p>
-        <p v-else-if="num && entries.length" class="text-muted-foreground text-center text-base">
-          No dancer with number {{ num }} at {{ competitionName }}.
-        </p>
-        <p v-else-if="num" class="text-muted-foreground text-center text-base">
-          The dancer list for {{ competitionName }} hasn’t been posted yet.
-        </p>
+        <p v-if="!numberMatches.length && num && loadingEntries" class="text-muted-foreground text-center text-base">Looking…</p>
+        <EmptyState
+          v-else-if="!numberMatches.length && num && entries.length"
+          size="inline"
+          :icon="SearchX"
+          :title="`No dancer with number ${num} at ${competitionName}.`"
+          description="Check the number on their card, or look in another competition."
+        />
+        <EmptyState
+          v-else-if="!numberMatches.length && num"
+          size="inline"
+          :icon="Hash"
+          :title="`The dancer list for ${competitionName} hasn’t been posted yet.`"
+          description="Numbers appear here once the organisers post their entries."
+        />
 
         <p class="text-muted-foreground flex items-center gap-2 px-1 text-sm">
-          <User class="size-4 shrink-0" />
+          <User class="size-4 shrink-0" aria-hidden="true" />
           Numbers change at every competition, so this looks in one competition at a time.
         </p>
       </template>

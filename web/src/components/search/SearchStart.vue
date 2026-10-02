@@ -2,10 +2,12 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { ChevronRight, Clock, Hash } from '@lucide/vue'
+import Avatar from '@/components/Avatar.vue'
 import DateTile from '@/components/DateTile.vue'
+import { useFollowing } from '@/composables/useFollowing'
 import { useRecentEntities } from '@/composables/useRecentEntities'
 import { useRecentSearches } from '@/composables/useRecentSearches'
-import { initialsOf, isBeforeToday } from '@/lib/format'
+import { isBeforeToday } from '@/lib/format'
 import { sectionMeta } from '@/lib/sectionMeta'
 import type { CompetitionChoice } from './choices'
 
@@ -19,6 +21,7 @@ defineProps<{
 const emit = defineEmits<{ search: [q: string]; number: [competitionId?: string] }>()
 
 const recentSearches = useRecentSearches()
+const following = useFollowing()
 
 // Competitions, people and venues you've opened, newest first, whichever
 // list they're from. Clear empties every kind, so the Recently viewed on Home
@@ -45,12 +48,12 @@ const lists = ['dancers', 'judges', 'pipers', 'venues'].map(sectionMeta)
 
 <template>
   <section v-if="recentSearches.recent.value.length" class="space-y-2">
-    <h2 class="text-heading flex min-h-6 items-center justify-between pt-1">
+    <h2 class="text-heading flex min-h-6 items-center justify-between">
       Recent searches
       <button
         type="button"
         aria-label="Clear recent searches"
-        class="text-primary -my-2.5 -mr-2 flex h-11 items-center rounded-full px-2 text-[0.9375rem] font-bold"
+        class="text-primary press -my-2.5 -mr-2 flex h-11 items-center rounded-full px-2 text-callout font-semibold"
         @click="recentSearches.clear()"
       >
         Clear
@@ -61,7 +64,7 @@ const lists = ['dancers', 'judges', 'pipers', 'venues'].map(sectionMeta)
         v-for="r in recentSearches.recent.value"
         :key="r"
         type="button"
-        class="bg-card hover:bg-accent flex h-11 max-w-full items-center gap-2 rounded-full border px-4 text-[0.9375rem] font-semibold shadow-sm"
+        class="surface press flex h-11 max-w-full items-center gap-2 rounded-full px-4 text-callout font-medium"
         @click="emit('search', r)"
       >
         <Clock class="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
@@ -72,7 +75,7 @@ const lists = ['dancers', 'judges', 'pipers', 'venues'].map(sectionMeta)
 
   <button
     type="button"
-    class="bg-card hover:bg-accent flex w-full items-center gap-3 rounded-2xl border p-4 text-left shadow-sm"
+    class="surface press-row focus-inset flex w-full items-center gap-3 rounded-2xl p-4 text-left"
     @click="emit('number', today?.id)"
   >
     <span
@@ -80,81 +83,80 @@ const lists = ['dancers', 'judges', 'pipers', 'venues'].map(sectionMeta)
         'flex size-11 shrink-0 items-center justify-center rounded-full',
         today ? 'bg-live-paper text-live' : 'bg-blue-paper text-primary',
       ]"
+      aria-hidden="true"
     >
       <Hash class="size-5" />
     </span>
     <span v-if="today" class="min-w-0 flex-1">
-      <span class="text-live flex items-center gap-1.5 text-sm font-bold">
-        <span class="bg-live size-2 shrink-0 rounded-full motion-safe:animate-[live-pulse_2s_infinite]" />
+      <span class="text-live flex items-center gap-1.5 text-footnote font-semibold">
+        <span class="bg-live size-2 shrink-0 rounded-full" />
         <span class="truncate">Today<template v-if="today.competition.location"> · {{ today.competition.location }}</template></span>
       </span>
-      <span class="block text-base leading-snug font-bold">{{ today.competition.name ?? 'Competition' }}</span>
+      <span class="block text-base leading-snug font-semibold">{{ today.competition.name ?? 'Competition' }}</span>
       <span class="text-muted-foreground block text-sm">Find a dancer by the number on their card.</span>
     </span>
     <span v-else class="min-w-0 flex-1">
-      <span class="block text-base leading-snug font-bold">Know the number on their card?</span>
+      <span class="block text-base leading-snug font-semibold">Know the number on their card?</span>
       <span class="text-muted-foreground block text-sm">Search by number instead.</span>
     </span>
-    <ChevronRight class="text-muted-foreground size-5 shrink-0" />
+    <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
   </button>
 
   <section v-if="viewed.length" class="space-y-2">
-    <h2 class="text-heading flex min-h-6 items-center justify-between pt-1">
+    <h2 class="text-heading flex min-h-6 items-center justify-between">
       Recently viewed
       <button
         type="button"
         aria-label="Clear recently viewed"
-        class="text-primary -my-2.5 -mr-2 flex h-11 items-center rounded-full px-2 text-[0.9375rem] font-bold"
+        class="text-primary press -my-2.5 -mr-2 flex h-11 items-center rounded-full px-2 text-callout font-semibold"
         @click="clearViewed"
       >
         Clear
       </button>
     </h2>
-    <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+    <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
       <li v-for="v in viewed" :key="`${v.kind.ns}:${v.id}`">
         <RouterLink
           :to="{ name: v.kind.route, params: { [v.kind.param]: v.id } }"
-          class="flex min-h-14 items-center gap-3 py-2 pr-4 pl-3 hover:bg-accent"
+          class="press-row focus-inset flex min-h-16 items-center gap-3 py-2 pr-3 pl-4"
         >
-          <span class="flex w-12 shrink-0 justify-center">
+          <span class="flex w-11 shrink-0 justify-center">
             <DateTile v-if="v.kind.ns === 'competitions'" :date="v.date" :below="isBeforeToday(v.date) ? 'year' : 'weekday'" />
-            <span v-else class="bg-blue-paper text-primary flex size-10 items-center justify-center rounded-full text-sm font-extrabold">
-              <component :is="v.kind.icon" v-if="v.kind.ns !== 'dancers'" class="size-5" />
-              <template v-else>{{ initialsOf(v.name) }}</template>
-            </span>
+            <Avatar v-else-if="v.kind.ns !== 'venues'" :name="v.name" :color="v.kind.ns === 'dancers' ? following.colorFor(v.id) : null" />
+            <component :is="v.kind.icon" v-else class="text-muted-foreground size-5" aria-hidden="true" />
           </span>
           <span class="min-w-0 flex-1">
-            <span class="block truncate text-base font-bold">{{ v.name }}</span>
+            <span class="block truncate text-base font-semibold">{{ v.name }}</span>
             <span class="text-muted-foreground block truncate text-sm">{{ v.kind.label }}</span>
           </span>
-          <ChevronRight class="text-muted-foreground size-5 shrink-0" />
+          <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
         </RouterLink>
       </li>
     </ul>
   </section>
 
   <section class="space-y-2">
-    <h2 class="text-heading pt-1">Browse</h2>
+    <h2 class="text-heading">Browse</h2>
     <RouterLink
       :to="competitions.to"
-      class="bg-card hover:bg-accent flex min-h-16 items-center gap-3 rounded-2xl border p-3 shadow-sm"
+      class="surface press-row focus-inset flex min-h-16 items-center gap-3 rounded-2xl p-3"
     >
-      <span class="bg-blue-paper text-primary flex size-11 shrink-0 items-center justify-center rounded-full">
+      <span class="bg-blue-paper text-primary flex size-11 shrink-0 items-center justify-center rounded-full" aria-hidden="true">
         <component :is="competitions.icon" class="size-5" />
       </span>
-      <span class="flex-1 text-base font-bold">{{ competitions.label }}</span>
-      <ChevronRight class="text-muted-foreground size-5 shrink-0" />
+      <span class="flex-1 text-base font-semibold">{{ competitions.label }}</span>
+      <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
     </RouterLink>
     <ul class="grid grid-cols-2 gap-2 md:grid-cols-4">
       <li v-for="b in lists" :key="b.path">
         <RouterLink
           :to="b.to"
-          class="bg-card hover:bg-accent flex h-full min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border p-3 text-center shadow-sm"
+          class="surface press-row focus-inset flex h-full min-h-24 flex-col items-center justify-center gap-2 rounded-2xl p-3 text-center"
         >
-          <span class="bg-blue-paper text-primary flex size-11 items-center justify-center rounded-full">
+          <span class="bg-blue-paper text-primary flex size-11 items-center justify-center rounded-full" aria-hidden="true">
             <component :is="b.icon" class="size-5" />
           </span>
-          <span class="text-[0.9375rem] leading-tight font-bold">{{ b.label }}</span>
+          <span class="text-callout leading-tight font-semibold">{{ b.label }}</span>
         </RouterLink>
       </li>
     </ul>

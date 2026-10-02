@@ -372,7 +372,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
           <div class="relative mt-4 flex flex-wrap gap-2">
             <RouterLink
               :to="{ name: 'search' }"
-              class="bg-primary-foreground text-primary press flex h-12 items-center gap-2 rounded-full px-5 text-base font-semibold"
+              class="bg-primary-foreground text-primary-fill press flex h-12 items-center gap-2 rounded-full px-5 text-base font-semibold"
             >
               <Search class="size-5" /> Find a dancer
             </RouterLink>
