@@ -431,12 +431,14 @@
 
 /* Wide screens with a tab bar (lg): the bar lives in the top chrome, so the
    app bar spans the window around it, its small title steps aside, and
-   pages no longer reserve room for a bar at the bottom. */
+   pages no longer reserve room for a bar at the bottom. A page that goes
+   wider than 48rem there sets --page-max on its root (e.g.
+   lg:[--page-max:72rem]) so the bar's edges line up with its content. */
 @utility appbar-row {
   max-width: 48rem;
   @media (min-width: 64rem) {
     :root:has([data-tabbar]) & {
-      max-width: none;
+      max-width: var(--page-max, none);
     }
   }
 }
