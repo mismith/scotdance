@@ -115,7 +115,7 @@ test('placings arrive live on competition day', async ({ page }) => {
   const ds = comp.dancers.filter((d) => d.groupId === group.id)
   const fling = comp.dances[0].id
   await page.goto(`/competitions/${comp.id}/results`)
-  await expect(page.getByText(/updating live/)).toBeVisible()
+  await expect(page.getByText('Live', { exact: true })).toBeVisible()
   const row = page.locator(`a[href$="/results/${group.id}"]`)
   await expect(row.getByText(/of 5/)).toHaveCount(0)
 

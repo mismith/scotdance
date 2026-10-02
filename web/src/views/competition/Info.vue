@@ -2,10 +2,10 @@
 import { useMorph } from '@/lib/morph'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { useIntervalFn } from '@vueuse/core'
 import { Check, ChevronRight, Clock, Copy, ExternalLink, Hourglass, Map as MapIcon, MapPin, Navigation, Search, Star, Users, X } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
+import { useCompetitionLive } from '@/composables/useCompetitionLive'
 import { useCompetitionProgress } from '@/composables/useCompetitionProgress'
 import { useCompetitionSearch } from '@/composables/useCompetitionSearch'
 import { useFreshPlacings } from '@/composables/useCompetitionPlacings'
@@ -39,7 +39,6 @@ import {
 } from '@/lib/competitionInfo'
 import { useDancerNumberVt } from '@/composables/useCompetitionDancerVt'
 import { injectInfoHeaderScrolledPast, injectInfoHeaderSetter } from '@/composables/useScrolledPast'
-import { nowMs } from '@/lib/now'
 
 const setHeader = injectInfoHeaderSetter()
 // Owns the shared title name until it scrolls under the bar (AppBar `titleVt`).
@@ -57,8 +56,6 @@ const {
   loadResults,
   schedule,
   loadSchedule,
-  isLive,
-  liveResultsAt,
 } = useCompetition()
 const { phase, followedHere } = useCompetitionDays()
 const favorites = useFavoritesStore()
@@ -74,14 +71,7 @@ onMounted(async () => {
   ready.value = true
 })
 
-// Minutes since the last result came in, refreshed each minute.
-const tick = ref(nowMs())
-useIntervalFn(() => (tick.value = nowMs()), 60_000)
-const sinceResult = computed(() => {
-  void tick.value
-  if (!isLive.value || !liveResultsAt.value) return null
-  return Math.max(0, Math.round((nowMs() - liveResultsAt.value) / 60_000))
-})
+const { pulse, lastResult } = useCompetitionLive()
 
 // The kicker says when and where: "In 6 days · Calgary, AB", or on the day
 // "Live · Day 1 of 2 · Calgary, AB" with the one live dot (pulsing only
@@ -192,7 +182,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         <DateTile v-else :date="competition.date" :managed="me.hasCompetitionPerm(competitionId)" class="h-14" />
         <div class="min-w-0 flex-1">
           <p :class="['flex items-center gap-1.5 text-sm font-semibold', live ? 'text-live' : 'text-muted-foreground']">
-            <LiveDot v-if="live" :pulse="sinceResult != null && sinceResult < 20" />
+            <LiveDot v-if="live" :pulse="pulse" />
             {{ kicker }}
           </p>
           <h1 class="text-display" :style="scrolledPast ? undefined : { viewTransitionName: 'competition-title' }">
@@ -202,9 +192,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
       </div>
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
         <FavoriteButton :id="competitionId" type="competitions" :name="competition.name" labelled variant="tonal" />
-        <p v-if="sinceResult != null" class="text-muted-foreground text-sm">
-          Last result {{ sinceResult < 1 ? 'just now' : `${sinceResult} min ago` }}
-        </p>
+        <p v-if="lastResult" class="text-muted-foreground text-sm first-letter:uppercase">{{ lastResult }}</p>
       </div>
     </header>
 
