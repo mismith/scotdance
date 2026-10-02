@@ -93,7 +93,8 @@ test('everything can be reached by keyboard, with a visible focus ring', async (
   await page.goto('/competitions')
   await expect(page.getByRole('heading', { level: 1, name: 'Competitions' })).toBeVisible()
   const seen: string[] = []
-  for (let i = 0; i < 14; i++) {
+  // Until the tab bar's Search (how many rows come first depends on the data).
+  for (let i = 0; i < 60 && !seen.includes('Search'); i++) {
     await page.keyboard.press('Tab')
     const focus = await page.evaluate(() => {
       const el = document.activeElement as HTMLElement | null

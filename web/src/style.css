@@ -124,15 +124,15 @@
   --live-paper: #fde7f1;
   --paper: #ffffff;
   --paper-edge: #c9d0d8;
-  --dance: oklch(0.82 0.3 132);
+  --dance: oklch(0.76 0.15 140);
   --dance-foreground: oklch(0.3 0.14 132);
-  --dance-muted: oklch(0.92 0.08 132);
-  --group: oklch(0.78 0.28 233);
+  --dance-muted: oklch(0.94 0.045 140);
+  --group: oklch(0.7 0.14 240);
   --group-foreground: oklch(0.32 0.12 233);
-  --group-muted: oklch(0.92 0.08 233);
-  --judge: oklch(0.72 0.28 349);
+  --group-muted: oklch(0.94 0.04 240);
+  --judge: oklch(0.67 0.15 350);
   --judge-foreground: oklch(0.32 0.14 349);
-  --judge-muted: oklch(0.88 0.08 349);
+  --judge-muted: oklch(0.93 0.04 350);
   /* Followed dancers' colours (see stores/dancerColors). The first five are
      drawn from tartans: Royal Stewart, Black Watch, heather, MacLeod gold,
      Saltire. White text passes AA on all of them. */
@@ -209,9 +209,9 @@
   --live-paper: #3d1430;
   --paper: #f7f5ef;
   --paper-edge: #f7f5ef;
-  --dance-muted: oklch(0.22 0.06 132);
-  --group-muted: oklch(0.22 0.06 233);
-  --judge-muted: oklch(0.22 0.06 349);
+  --dance-muted: oklch(0.25 0.05 140);
+  --group-muted: oklch(0.25 0.05 240);
+  --judge-muted: oklch(0.25 0.05 350);
   --dancer-1: #e0435e;
   --dancer-2: #3fa676;
   --dancer-3: #9b75d6;
@@ -327,6 +327,31 @@
   @media (prefers-reduced-transparency: reduce) {
     background: var(--card);
   }
+}
+
+/* Notices (toasts, offline, live alerts) share one dark glass in both
+   themes, and stack above the tab bar when there is one. */
+@utility hud {
+  background: rgb(27 33 40 / 0.92);
+  color: #fff;
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 0 0 0.5px rgb(255 255 255 / 0.1),
+    0 12px 32px -8px rgb(0 0 0 / 0.45);
+  @media (prefers-reduced-transparency: reduce) {
+    background: rgb(27 33 40);
+  }
+}
+:root {
+  --notice-bottom: calc(var(--safe-bottom) + 1rem);
+}
+:root:has([data-tabbar]) {
+  --notice-bottom: calc(var(--chrome-bottom) + 0.75rem);
+}
+:root:has([data-offline-notice]) {
+  --notice-offset: 2.75rem;
 }
 
 /* A dancer's colour, for bars, bands and badges (set as --dc by paint()). */
@@ -728,26 +753,55 @@
     opacity: 0;
   }
 }
-/* Snappy, not a flourish: 150ms, with a little rubber-band overshoot. */
+/* Timing (F3): menus and centred cards spring out of their control; a
+   sheet pinned to the bottom edge glides without overshoot; closing is a
+   quick ease back in. The two snapshots cross-fade with overlap, so there's
+   never an empty frame. */
 ::view-transition-group(morph) {
   animation-name: -ua-view-transition-group-anim-morph, vt-morph-surface;
-  animation-duration: 150ms;
-  animation-timing-function: var(--ease-rubber-band);
+  animation-duration: 300ms;
+  animation-timing-function: var(--ease-elastic);
   overflow: clip;
+}
+:active-view-transition-type(morph-pinned)::view-transition-group(morph) {
+  animation-duration: 320ms;
+  animation-timing-function: var(--ease-snappy);
+}
+:active-view-transition-type(morph-close)::view-transition-group(morph) {
+  animation-duration: 220ms;
+  animation-timing-function: var(--ease-standard);
 }
 :active-view-transition-type(morph)::view-transition-old(root),
 :active-view-transition-type(morph)::view-transition-new(root) {
-  animation-duration: 150ms;
+  animation-duration: 260ms;
+  animation-timing-function: var(--ease-standard);
+}
+:active-view-transition-type(morph-close)::view-transition-old(root),
+:active-view-transition-type(morph-close)::view-transition-new(root) {
+  animation-duration: 220ms;
 }
 ::view-transition-old(morph),
 ::view-transition-new(morph) {
   @apply size-full object-none object-top-left;
 }
 ::view-transition-old(morph) {
-  animation: vt-morph-out 60ms ease-out both;
+  animation: vt-morph-out 90ms var(--ease-exit) both;
 }
 ::view-transition-new(morph) {
-  animation: vt-morph-in 100ms 30ms ease-out both;
+  animation: vt-morph-in 150ms 50ms var(--ease-standard) both;
+}
+/* Closing shrinks the sheet's picture with the surface rather than cropping
+   it through a closing window, and it's gone early. */
+:active-view-transition-type(morph-close)::view-transition-old(morph) {
+  @apply object-cover object-top;
+  animation-duration: 80ms;
+}
+/* While something morphs, the chrome (tab bar, back pill, titles) stays in
+   the page's picture instead of its own layer, so the backdrop dims it and
+   the growing sheet passes over it (F2). The morphing element keeps its name. */
+:root:active-view-transition-type(morph)
+  :is([class*='view-transition-name'], [style*='view-transition-name']):not([style*='view-transition-name: morph']) {
+  view-transition-name: none !important;
 }
 
 /* The tab bar pill keeps its place between the app's tabs and a
