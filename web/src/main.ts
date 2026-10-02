@@ -11,6 +11,8 @@ import { vProximity } from './directives/proximity'
 import { setupNative } from './lib/native'
 import './composables/useTheme'
 import '@fontsource-variable/atkinson-hyperlegible-next/wght.css'
+// Competitor numbers and other figures that line up in columns.
+import '@fontsource-variable/atkinson-hyperlegible-mono/wght.css'
 import './style.css'
 
 const app = createApp(App)

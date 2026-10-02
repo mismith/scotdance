@@ -1,10 +1,10 @@
 <template>
   <div
-    class="bg-foreground/8 relative isolate overflow-hidden rounded-md"
+    class="bg-foreground/8 relative isolate animate-[vt-fade-in_200ms_150ms_both] overflow-hidden rounded-md"
     aria-hidden="true"
   >
     <div
-      class="absolute inset-0 -translate-x-full animate-[skeleton-shimmer_1.6s_ease-in-out_infinite]"
+      class="absolute inset-0 -translate-x-full motion-safe:animate-[skeleton-shimmer_1.6s_ease-in-out_infinite]"
       style="
         background: linear-gradient(
           110deg,
