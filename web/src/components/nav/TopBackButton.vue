@@ -41,8 +41,9 @@ function onClick(event: MouseEvent) {
   <button
     v-if="visible"
     v-tap-feedback
+    v-proximity
     type="button"
-    class="bg-card text-primary pointer-events-auto flex h-11 max-w-[42vw] shrink-0 items-center gap-0.5 rounded-full border pr-4 pl-2 text-[0.9375rem] font-bold shadow-sm [view-transition-name:nav-back] hover:bg-accent"
+    class="glass press-glass proximity text-primary pointer-events-auto flex h-11 max-w-[42vw] shrink-0 items-center gap-0.5 rounded-full pr-4 pl-2 text-callout font-semibold [view-transition-name:nav-back]"
     :aria-label="`Back to ${label}`"
     @click="onClick"
   >
