@@ -33,7 +33,7 @@ const { scrolledPast } = provideInfoHeader()
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
+  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)] lg:[--page-max:64rem]">
     <AppBar
       :title="displayName"
       :show-title="scrolledPast"
@@ -44,7 +44,7 @@ const { scrolledPast } = provideInfoHeader()
       </template>
     </AppBar>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 px-4 pt-[calc(var(--chrome-top)+0.5rem)] lg:max-w-5xl lg:px-8">
+    <main class="mx-auto w-full max-w-3xl flex-1 px-4 pt-[calc(var(--chrome-top)+0.5rem)] lg:max-w-(--page-max) lg:px-3">
       <EmptyState
         v-if="!loading && notFound"
         :icon="section.icon"

@@ -258,7 +258,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
+  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)] lg:[--page-max:72rem]">
     <AppBar title="Home" :scrolled="scrolledPast" :back="false">
       <template #leading>
         <RouterLink to="/" class="flex min-w-0 items-center gap-2 rounded-xl" aria-label="ScotDance.app, Home">
@@ -271,7 +271,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
     </AppBar>
 
     <main
-      class="mx-auto grid w-full max-w-3xl gap-x-8 gap-y-5 px-4 pt-[calc(var(--chrome-top)+0.25rem)] lg:max-w-6xl lg:grid-cols-3 lg:px-8"
+      class="mx-auto grid w-full max-w-3xl gap-x-8 gap-y-5 px-4 pt-[calc(var(--chrome-top)+0.25rem)] lg:max-w-(--page-max) lg:grid-cols-3 lg:px-3"
     >
       <header ref="titleEl" class="lg:col-span-3">
         <p class="text-muted-foreground text-sm font-medium">{{ todayLabel }}</p>
