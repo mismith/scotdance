@@ -3,31 +3,41 @@ import { useMorph } from '@/lib/morph'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useIntervalFn } from '@vueuse/core'
-import { ChevronRight, Clock, ExternalLink, Hourglass, MapPin, Search, Star, Users } from '@lucide/vue'
+import { Check, ChevronRight, Clock, Copy, ExternalLink, Hourglass, Map as MapIcon, MapPin, Navigation, Search, Star, Users, X } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
+import { useCompetitionSearch } from '@/composables/useCompetitionSearch'
+import { useFreshPlacings } from '@/composables/useCompetitionPlacings'
 import DateTile from '@/components/DateTile.vue'
+import Dialog from '@/components/Dialog.vue'
 import MapPreview from '@/components/MapPreview.vue'
 import DancerDayCard from '@/components/DancerDayCard.vue'
-import { useLiveAlertState } from '@/composables/useLiveAlerts'
 import FavoriteButton from '@/components/FavoriteButton.vue'
+import FollowButton from '@/components/FollowButton.vue'
+import LiveDot from '@/components/LiveDot.vue'
+import NumberCard from '@/components/NumberCard.vue'
 import StaffAvatar from '@/components/StaffAvatar.vue'
 import StaffDialog from '@/components/StaffDialog.vue'
+import Button from '@/components/ui/Button.vue'
 import { staffEntityRef, staffMemberName, type StaffMember } from '@/types/competition'
-import { useAuthStore } from '@/stores/auth'
+import type { DancerDay } from '@/lib/dancerDay'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useMeStore } from '@/stores/me'
 import AdminMark from '@/components/AdminMark.vue'
 import { blocks, days } from '@/lib/schedule'
+import { competitionSpan } from '@/lib/dancerDay'
 import { formatExternalURL, formatLongDate, formatRelative } from '@/lib/format'
 import { sanitizeRichText } from '@/lib/sanitize'
+import { anchorTo } from '@/lib/anchor'
 import {
   competitionLinks,
+  directions as competitionDirections,
   linkLabel,
-  mapsHref as competitionMapsHref,
   registrationLines as competitionRegistrationLines,
   registrationOpen as isRegistrationOpen,
+  staffHeading,
 } from '@/lib/competitionInfo'
+import { useDancerNumberVt } from '@/composables/useCompetitionDancerVt'
 import { injectInfoHeaderScrolledPast, injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { nowMs } from '@/lib/now'
 
@@ -51,9 +61,10 @@ const {
   liveResultsAt,
 } = useCompetition()
 const { phase, followedHere } = useCompetitionDays()
-const auth = useAuthStore()
 const favorites = useFavoritesStore()
 const me = useMeStore()
+const isFresh = useFreshPlacings()
+const numberVt = useDancerNumberVt()
 
 const ready = ref(false)
 onMounted(async () => {
@@ -62,29 +73,61 @@ onMounted(async () => {
   ready.value = true
 })
 
+// Minutes since the last result came in, refreshed each minute.
+const tick = ref(nowMs())
+useIntervalFn(() => (tick.value = nowMs()), 60_000)
+const sinceResult = computed(() => {
+  void tick.value
+  if (!isLive.value || !liveResultsAt.value) return null
+  return Math.max(0, Math.round((nowMs() - liveResultsAt.value) / 60_000))
+})
+
+// The kicker says when and where: "In 6 days · Calgary, AB", or on the day
+// "Live · Day 1 of 2 · Calgary, AB" with the one live dot (pulsing only
+// while results are coming in).
+const live = computed(() => phase.value === 'today')
 const kicker = computed(() => {
   const c = competition.value
   if (!c) return ''
-  const where = c.location ? ` · ${c.location}` : ''
-  if (phase.value === 'today') return `Today${where}`
-  if (c.date == null) return c.location ?? ''
-  const rel = formatRelative(c.date)
-  return `${formatLongDate(c.date)}${phase.value === 'before' ? ` · ${rel}` : ''}`
+  let when = ''
+  if (live.value) {
+    const span = competitionSpan(c.date, schedule.value)
+    const total = span ? span.last - span.first + 1 : 1
+    when = total > 1 && span ? `Live · Day ${1 - span.first} of ${total}` : 'Live'
+  } else if (c.date != null) {
+    const rel = formatRelative(c.date)
+    when = rel.charAt(0).toUpperCase() + rel.slice(1)
+  }
+  return [when, c.location].filter(Boolean).join(' · ')
 })
 
-// "Updated 2 min ago" on a live day, refreshed each minute.
-const tick = ref(nowMs())
-useIntervalFn(() => (tick.value = nowMs()), 60_000)
-const updatedLabel = computed(() => {
-  void tick.value
-  if (!isLive.value || !liveResultsAt.value) return null
-  const mins = Math.max(0, Math.round((nowMs() - liveResultsAt.value) / 60_000))
-  return mins < 1 ? 'Results updating live' : `Results updating live · checked ${mins} min ago`
-})
+// Directions in the map app you use, and the map itself, full size.
+const where = computed(() => competitionDirections(competition.value))
+const hasMap = computed(() => Number.isFinite(competition.value?.lat) && Number.isFinite(competition.value?.lng))
+const directionsMenu = useMorph()
+const directionsPlace = ref<Record<string, string>>({})
+function openDirections(e: MouseEvent) {
+  directionsPlace.value = anchorTo(e.currentTarget as Element, 180)
+  copied.value = false
+  directionsMenu.show(e)
+}
+const mapSheet = useMorph()
+const copied = ref(false)
+async function copyAddress(closeMenu: boolean) {
+  if (!where.value) return
+  try {
+    await navigator.clipboard.writeText(where.value.address)
+  } catch {
+    return
+  }
+  copied.value = true
+  setTimeout(() => {
+    if (closeMenu) directionsMenu.hide()
+    else copied.value = false
+  }, 900)
+}
 
-
-// Links, registration and directions, as the Manage › Details preview shows them.
-const mapsHref = computed(() => competitionMapsHref(competition.value))
+// Links and registration, as the Manage › Details preview shows them.
 const registrationLines = computed(() => competitionRegistrationLines(competition.value))
 const links = computed(() => competitionLinks(competition.value))
 const registrationOpen = computed(() => isRegistrationOpen(competition.value))
@@ -102,6 +145,19 @@ const sessions = computed(() =>
   ),
 )
 
+// Following no one here: find your dancer right on the Overview.
+const find = ref('')
+const matches = useCompetitionSearch(dancers, find)
+const shownMatches = computed(() => (find.value.trim() ? matches.value.slice(0, 5) : []))
+
+// A placing that just came in flips on its card.
+function freshIn(days: DancerDay[]): string | null {
+  for (const d of days)
+    for (const s of [...d.dances, ...(d.overall ? [d.overall] : [])])
+      if (s.state === 'placed' && isFresh(d.group?.id, s.dance.id, d.dancer.id)) return `${d.dancer.id}:${s.dance.id}`
+  return null
+}
+
 const staffGroups = computed(() => {
   const groups = new Map<string, StaffMember[]>()
   for (const m of staff.value) {
@@ -116,12 +172,13 @@ function isFavoriteStaff(m: StaffMember) {
 }
 const activeStaff = ref<StaffMember | null>(null)
 const staffSheet = useMorph()
-const { freshKey: liveFresh } = useLiveAlertState()
+
+const MENU_ROW = 'press-row focus-inset flex min-h-12 w-full items-center gap-3 px-4 text-left text-base font-medium'
 </script>
 
 <template>
-  <article v-if="competition" class="space-y-5">
-    <header :ref="setHeader" class="space-y-2">
+  <article v-if="competition" class="space-y-6">
+    <header :ref="setHeader" class="space-y-3">
       <div class="flex items-start gap-3">
         <span v-if="competition.image" class="relative shrink-0">
           <img :src="competition.image" alt="" class="size-14 rounded-xl object-cover" />
@@ -129,13 +186,8 @@ const { freshKey: liveFresh } = useLiveAlertState()
         </span>
         <DateTile v-else :date="competition.date" :managed="me.hasCompetitionPerm(competitionId)" class="h-14" />
         <div class="min-w-0 flex-1">
-          <p
-            :class="[
-              'flex items-center gap-1.5 text-sm font-bold',
-              phase === 'today' ? 'text-live' : 'text-muted-foreground',
-            ]"
-          >
-            <span v-if="phase === 'today'" class="bg-live size-2 animate-[live-pulse_2s_infinite] rounded-full" />
+          <p :class="['flex items-center gap-1.5 text-sm font-semibold', live ? 'text-live' : 'text-muted-foreground']">
+            <LiveDot v-if="live" :pulse="sinceResult != null && sinceResult < 20" />
             {{ kicker }}
           </p>
           <h1 class="text-display" :style="scrolledPast ? undefined : { viewTransitionName: 'competition-title' }">
@@ -143,97 +195,150 @@ const { freshKey: liveFresh } = useLiveAlertState()
           </h1>
         </div>
       </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <FavoriteButton
-          :id="competitionId"
-          type="competitions"
-          :name="competition.name"
-          labelled
-        />
-        <p v-if="updatedLabel" class="text-done-foreground text-sm font-bold">{{ updatedLabel }}</p>
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <FavoriteButton :id="competitionId" type="competitions" :name="competition.name" labelled variant="tonal" />
+        <p v-if="sinceResult != null" class="text-muted-foreground text-sm">
+          Last result {{ sinceResult < 1 ? 'just now' : `${sinceResult} min ago` }}
+        </p>
       </div>
     </header>
 
-    <!-- Your dancers here -->
-    <section v-if="followedHere.length" class="space-y-3">
-      <h2 class="text-heading">Your dancers here</h2>
-      <DancerDayCard
-        v-for="f in followedHere"
-        :key="f.personId"
-        :days="f.days"
-        :fresh="liveFresh"
-        :competition-id="competitionId"
-        :color="f.color"
-      />
-    </section>
-    <section
-      v-else-if="ready && dancers.length"
-      class="bg-card flex items-center gap-3 rounded-2xl border p-4 shadow-sm"
+    <Transition
+      mode="out-in"
+      enter-active-class="transition-[opacity,translate] duration-(--dur-base) ease-standard"
+      enter-from-class="opacity-0 translate-y-1.5 motion-reduce:translate-y-0"
+      leave-active-class="transition-opacity duration-(--dur-instant) ease-exit"
+      leave-to-class="opacity-0"
     >
-      <span class="bg-blue-paper text-primary flex size-11 shrink-0 items-center justify-center rounded-full">
-        <Star class="size-5" />
-      </span>
-      <p class="min-w-0 flex-1 text-[0.9375rem] leading-snug">
-        <b>Is your dancer here?</b>
-        {{ auth.isSignedIn ? 'Follow them to see their day on this page.' : 'Find them, then follow them to see their day here.' }}
-      </p>
-      <RouterLink
-        :to="{ name: 'competition.dancers', params: { competitionId } }"
-        class="bg-primary-fill text-primary-foreground flex h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-[0.9375rem] font-bold"
+      <!-- Your dancers here -->
+      <section v-if="followedHere.length" key="yours" class="space-y-3">
+        <h2 class="text-heading">Your dancers here</h2>
+        <DancerDayCard
+          v-for="f in followedHere"
+          :key="f.personId"
+          :days="f.days"
+          :fresh="freshIn(f.days)"
+          :competition-id="competitionId"
+          :color="f.color"
+        />
+      </section>
+
+      <!-- Not following anyone here: find them -->
+      <section v-else-if="ready && dancers.length" key="find" class="surface space-y-3 rounded-2xl p-4">
+        <p class="text-callout">
+          <span class="font-semibold">Is your dancer here?</span>
+          Follow them to see their day at a glance.
+        </p>
+        <label class="field flex h-12 items-center gap-2 rounded-xl pr-1 pl-3">
+          <Search class="text-muted-foreground size-5 shrink-0" />
+          <input
+            v-model="find"
+            type="search"
+            placeholder="Name or number"
+            aria-label="Find your dancer by name or number"
+            autocomplete="off"
+            enterkeyhint="search"
+            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none"
+          />
+          <button
+            v-if="find"
+            type="button"
+            class="press text-muted-foreground flex size-10 items-center justify-center rounded-full"
+            aria-label="Clear"
+            @click="find = ''"
+          >
+            <X class="size-5" />
+          </button>
+        </label>
+        <TransitionGroup
+          v-if="shownMatches.length"
+          tag="ul"
+          class="rows-inset -mx-4 -mb-2 [--inset:4.75rem]"
+          enter-active-class="transition-opacity duration-(--dur-quick) ease-standard"
+          enter-from-class="opacity-0"
+        >
+          <li v-for="d in shownMatches" :key="d.id" class="flex items-center gap-1 pr-2">
+            <RouterLink
+              :to="{ name: 'competition.dancer', params: { competitionId, dancerId: d.id } }"
+              class="press-row focus-inset flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-xl py-2 pl-4"
+              @click="numberVt.tap(d.id, 'find')"
+            >
+              <NumberCard :number="d.number" size="xs" :style="{ viewTransitionName: numberVt.row(d.id, 'find') }" />
+              <span class="min-w-0">
+                <span class="block truncate text-base font-semibold">{{ d.fullName }}</span>
+                <span class="text-muted-foreground block truncate text-sm">{{ d.group?.fullName }}</span>
+              </span>
+            </RouterLink>
+            <FollowButton :dancer="d" />
+          </li>
+        </TransitionGroup>
+        <p v-else-if="find.trim()" class="text-muted-foreground text-callout">
+          No dancer matches “{{ find.trim() }}”. Check the number on their card, or try part of their name.
+        </p>
+        <RouterLink
+          v-if="matches.length > shownMatches.length && find.trim()"
+          :to="{ name: 'competition.dancers', params: { competitionId }, query: { q: find.trim() } }"
+          class="press text-primary text-callout inline-flex h-11 items-center font-semibold"
+        >
+          See all {{ matches.length }} matches
+        </RouterLink>
+      </section>
+
+      <p
+        v-else-if="restricted"
+        key="restricted"
+        class="surface text-muted-foreground text-callout flex items-center gap-3 rounded-2xl p-4"
       >
-        <Search class="size-4" /> Find
-      </RouterLink>
-    </section>
-    <p v-else-if="restricted" class="bg-card text-muted-foreground flex items-center gap-3 rounded-2xl border p-4 text-[0.9375rem] shadow-sm">
-      <Hourglass class="text-primary size-5 shrink-0" />
-      Dancers, the schedule and results show here once they’re published.
-    </p>
+        <Hourglass class="text-primary size-5 shrink-0" />
+        Dancers, the schedule and results show here once they’re published.
+      </p>
+    </Transition>
 
     <!-- When and where -->
-    <section class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+    <section class="surface rows-inset overflow-hidden rounded-2xl [--inset:3rem]">
       <div v-if="competition.date" class="flex items-center gap-3 p-4">
         <Clock class="text-primary size-5 shrink-0" />
         <div>
-          <p class="text-base font-bold">{{ formatLongDate(competition.date) }}</p>
-          <p v-if="sessions[0]?.time" class="text-muted-foreground text-sm">
-            Starts {{ sessions[0].time }}
-          </p>
+          <p class="text-base font-semibold">{{ formatLongDate(competition.date) }}</p>
+          <p v-if="sessions[0]?.time" class="text-muted-foreground text-sm">Starts {{ sessions[0].time }}</p>
         </div>
       </div>
       <div v-if="competition.venue || competition.address || competition.location" class="space-y-3 p-4">
         <div class="flex items-center gap-3">
           <MapPin class="text-primary size-5 shrink-0" />
           <div class="min-w-0 flex-1">
-            <p v-if="competition.venue" class="text-base font-bold">{{ competition.venue }}</p>
+            <p v-if="competition.venue" class="text-base font-semibold">{{ competition.venue }}</p>
             <p class="text-muted-foreground text-sm">
               {{ [competition.address, competition.location].filter(Boolean).join(', ') }}
             </p>
           </div>
-          <a
-            v-if="mapsHref"
-            :href="mapsHref"
-            target="_blank"
-            rel="noopener"
-            class="bg-card border-strong flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-[0.9375rem] font-bold"
+          <Button
+            v-if="where"
+            variant="tonal"
+            size="sm"
+            aria-haspopup="dialog"
+            :aria-expanded="directionsMenu.open"
+            @click="openDirections"
           >
-            Directions <ExternalLink class="size-4" />
-          </a>
+            <Navigation /> Directions
+          </Button>
         </div>
         <MapPreview
-          v-if="Number.isFinite(competition.lat) && Number.isFinite(competition.lng)"
+          v-if="hasMap"
           :lat="competition.lat!"
           :lng="competition.lng!"
-          :href="mapsHref"
+          expandable
           class="h-40 rounded-xl"
+          @click="mapSheet.show($event)"
         />
       </div>
       <RouterLink
         v-if="dancers.length"
         :to="{ name: 'competition.dancers', params: { competitionId } }"
-        class="flex items-center gap-3 p-4 hover:bg-accent"
+        class="press-row focus-inset flex items-center gap-3 p-4"
       >
         <Users class="text-primary size-5 shrink-0" />
-        <span class="flex-1 text-base font-bold">
+        <span class="flex-1 text-base font-semibold">
           {{ dancers.length }} dancers<template v-if="dances.length">, {{ dances.length }} dances</template>
         </span>
         <ChevronRight class="text-muted-foreground size-5" />
@@ -246,18 +351,18 @@ const { freshKey: liveFresh } = useLiveAlertState()
         Sessions
         <RouterLink
           :to="{ name: 'competition.schedule', params: { competitionId } }"
-          class="text-primary text-[0.9375rem] font-bold"
+          class="press text-primary text-callout font-semibold"
         >
           Full schedule
         </RouterLink>
       </h2>
-      <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+      <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:6rem]">
         <li v-for="s in sessions" :key="s.id" class="flex items-center gap-3 px-4 py-3">
-          <span class="bg-muted flex min-w-16 shrink-0 justify-center rounded-lg px-2 py-1 text-sm font-extrabold tabular-nums">
+          <span class="bg-muted text-callout flex min-w-16 shrink-0 justify-center rounded-lg px-2 py-1 font-semibold tabular-nums">
             {{ s.time ?? '—' }}
           </span>
           <span class="min-w-0">
-            <span class="block text-base font-bold">{{ s.name }}</span>
+            <span class="block text-base font-semibold">{{ s.name }}</span>
             <span v-if="s.day" class="text-muted-foreground block text-sm">{{ s.day }}</span>
           </span>
         </li>
@@ -266,28 +371,30 @@ const { freshKey: liveFresh } = useLiveAlertState()
 
     <!-- Registration + links -->
     <section v-if="competition.registrationURL || links.length" class="space-y-2">
-      <a
+      <Button
         v-if="competition.registrationURL"
+        variant="primary"
+        size="lg"
+        block
         :href="formatExternalURL(competition.registrationURL)"
         target="_blank"
         rel="noopener"
-        :aria-disabled="!registrationOpen"
-        class="bg-primary-fill text-primary-foreground flex h-12 items-center justify-center gap-2 rounded-xl text-base font-bold aria-disabled:pointer-events-none aria-disabled:opacity-50"
+        :disabled="!registrationOpen"
       >
-        Register <ExternalLink class="size-4" />
-      </a>
-      <p v-for="line in registrationLines" :key="line" class="text-muted-foreground text-sm">{{ line }}</p>
+        Register <ExternalLink />
+      </Button>
+      <p v-for="line in registrationLines" :key="line" class="text-muted-foreground text-center text-sm">{{ line }}</p>
       <div v-if="links.length" class="flex flex-wrap gap-2 pt-1">
-        <a
+        <Button
           v-for="link in links"
           :key="link.id"
           :href="formatExternalURL(link.url)"
           target="_blank"
           rel="noopener"
-          class="bg-card border-strong inline-flex h-11 max-w-full items-center gap-1.5 rounded-full border px-4 text-[0.9375rem] font-bold"
+          class="max-w-full"
         >
-          <span class="truncate">{{ linkLabel(link) }}</span> <ExternalLink class="size-4 shrink-0" />
-        </a>
+          <span class="truncate">{{ linkLabel(link) }}</span> <ExternalLink />
+        </Button>
       </div>
     </section>
 
@@ -299,23 +406,25 @@ const { freshKey: liveFresh } = useLiveAlertState()
 
     <!-- Judges, pipers, and other staff -->
     <section v-for="g in staffGroups" :key="g.type" class="space-y-3">
-      <h2 class="text-heading">{{ g.type }}s <span class="text-muted-foreground text-sm font-semibold">{{ g.members.length }}</span></h2>
-      <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+      <h2 class="text-heading">
+        {{ staffHeading(g.type, g.members.length) }}
+        <span v-if="g.members.length > 1" class="text-muted-foreground text-sm font-medium tabular-nums">{{ g.members.length }}</span>
+      </h2>
+      <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4rem]">
         <li v-for="m in g.members" :key="m.id">
           <button
             type="button"
-            class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-accent"
+            class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left"
             @click="(activeStaff = m), staffSheet.show($event)"
           >
             <StaffAvatar :member="m" :size="36" />
             <span class="min-w-0 flex-1">
-              <span class="flex items-center gap-1.5 text-base font-bold">
+              <span class="flex items-center gap-1.5 text-base font-semibold">
                 <span class="truncate">{{ staffMemberName(m) }}</span>
                 <Star v-if="isFavoriteStaff(m)" class="text-primary size-4 shrink-0 fill-current" aria-label="Following" />
               </span>
               <span v-if="m.location" class="text-muted-foreground block truncate text-sm">{{ m.location }}</span>
             </span>
-            <ChevronRight class="text-muted-foreground size-5 shrink-0" />
           </button>
         </li>
       </ul>
@@ -323,9 +432,63 @@ const { freshKey: liveFresh } = useLiveAlertState()
 
     <StaffDialog :member="activeStaff" :morph="staffSheet" @close="staffSheet.hide().then(() => (activeStaff = null))" />
 
+    <!-- Directions: a small menu under the button -->
+    <Dialog
+      :open="directionsMenu.open"
+      :morph="directionsMenu"
+      variant="dropdown"
+      aria-label="Directions"
+      :style="directionsPlace"
+      @close="directionsMenu.hide()"
+    >
+      <nav v-if="where" aria-label="Directions" class="py-1.5">
+        <a v-if="where.apple" :href="where.apple" target="_blank" rel="noopener" :class="MENU_ROW" @click="directionsMenu.dismiss()">
+          <Navigation class="text-primary size-5 shrink-0" /> Apple Maps
+        </a>
+        <a :href="where.google" target="_blank" rel="noopener" :class="MENU_ROW" @click="directionsMenu.dismiss()">
+          <MapIcon class="text-primary size-5 shrink-0" /> Google Maps
+        </a>
+        <button type="button" :class="MENU_ROW" @click="copyAddress(true)">
+          <component :is="copied ? Check : Copy" class="text-primary size-5 shrink-0" />
+          {{ copied ? 'Address copied' : 'Copy address' }}
+        </button>
+      </nav>
+    </Dialog>
+
+    <!-- The map, full size -->
+    <Dialog
+      v-if="hasMap"
+      :open="mapSheet.open"
+      :morph="mapSheet"
+      variant="sheet"
+      size="md"
+      @close="mapSheet.hide().then(() => (copied = false))"
+    >
+      <template #header>
+        <h2 class="text-title">{{ competition.venue || competition.location || 'Venue' }}</h2>
+        <p class="text-muted-foreground text-sm">{{ [competition.address, competition.location].filter(Boolean).join(', ') }}</p>
+      </template>
+      <MapPreview
+        v-if="mapSheet.open"
+        :lat="competition.lat!"
+        :lng="competition.lng!"
+        interactive
+        class="h-[min(55svh,28rem)]"
+      />
+      <div v-if="where" class="flex flex-wrap gap-2 p-4 pb-[calc(1rem+var(--safe-bottom))]">
+        <Button v-if="where.apple" variant="tonal" :href="where.apple" target="_blank" rel="noopener">
+          <Navigation /> Apple Maps
+        </Button>
+        <Button variant="tonal" :href="where.google" target="_blank" rel="noopener"><MapIcon /> Google Maps</Button>
+        <Button variant="tonal" @click="copyAddress(false)">
+          <component :is="copied ? Check : Copy" /> {{ copied ? 'Address copied' : 'Copy address' }}
+        </Button>
+      </div>
+    </Dialog>
+
     <p v-if="competition.sobhd" class="text-muted-foreground flex justify-between pt-2 text-sm">
       <span>RSOBHD sanctioned</span>
-      <span class="font-bold tabular-nums">{{ competition.sobhd }}</span>
+      <span class="font-medium tabular-nums">{{ competition.sobhd }}</span>
     </p>
   </article>
 </template>

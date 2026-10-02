@@ -35,7 +35,8 @@ test('links and files show on the Overview, in order, skipping any with no addre
     registrationEnd: new Date(Date.now() + 3 * 86_400_000).toISOString(),
   })
   await page.goto(`/competitions/${comp.id}/info`)
-  const links = page.locator('main a[target=_blank]').filter({ hasNotText: /Directions|OpenStreetMap/ })
+  // (Not the map apps in the Directions menu.)
+  const links = page.locator('main a[target=_blank]:not(dialog *)')
   await expect(links).toHaveText(['Register', 'Entry form', 'Program', 'Day schedule.pdf'])
   await expect(links.nth(2)).toHaveAttribute('href', 'https://example.com/program.pdf')
   await expect(page.getByText('No address')).toHaveCount(0)
@@ -48,6 +49,35 @@ test('links and files show on the Overview, in order, skipping any with no addre
   await page.reload({ waitUntil: 'domcontentloaded' })
   await expect(page.getByText(/^Registration closed /)).toBeVisible()
   await expect(page.getByRole('link', { name: 'Register' })).toHaveAttribute('aria-disabled', 'true')
+})
+
+test('following no one here, the Overview finds your dancer by name or number', async ({ page }) => {
+  const d = comp.dancers[3]
+  await page.goto(`/competitions/${comp.id}/info`)
+  await expect(page.getByText('Is your dancer here?')).toBeVisible()
+  const find = page.getByRole('searchbox', { name: 'Find your dancer by name or number' })
+  await find.fill(d.number)
+  const match = page.getByRole('link', { name: new RegExp(`${d.firstName} ${d.lastName}`) })
+  await expect(match).toBeVisible()
+  await find.fill('zzqx')
+  await expect(page.getByText('No dancer matches “zzqx”.', { exact: false })).toBeVisible()
+})
+
+test('Directions offers the map apps and copies the address; the map opens full size', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.goto(`/competitions/${comp.id}/info`)
+  await page.getByRole('button', { name: 'Directions' }).click()
+  const menu = page.getByRole('dialog', { name: 'Directions' })
+  await expect(menu.getByRole('link', { name: 'Google Maps' })).toHaveAttribute('href', /google\.com\/maps\/dir\/.*destination=Spruce%20Meadows/)
+  await menu.getByRole('button', { name: 'Copy address' }).click()
+  await expect(menu.getByRole('button', { name: 'Address copied' })).toBeVisible()
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('Spruce Meadows, 18011 Spruce Meadows Way SW, Calgary, AB')
+  await expect(page.locator('dialog[open]')).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'Show the map' }).click()
+  const sheet = page.locator('dialog[open]')
+  await expect(sheet.getByRole('heading', { name: 'Spruce Meadows' })).toBeVisible()
+  await expect(sheet.getByRole('link', { name: 'Google Maps' })).toBeVisible()
 })
 
 test('hidden Schedule and Results tabs go from the bar, and their links say why', async ({ page }) => {
@@ -157,7 +187,8 @@ test.describe('the biggest competitions', () => {
     await search.fill('11')
     await expect(rows.first()).toContainText('11')
     t = Date.now()
-    await page.getByLabel('Sort by').selectOption('lastName')
+    await page.getByRole('button', { name: /^Sort by/ }).click()
+    await page.getByRole('radio', { name: 'Last name' }).click()
     await search.fill('')
     await expect(page.locator('main h2').first()).toHaveText(/^[A-Z]\s*\d+$/)
     const sorted = Date.now() - t

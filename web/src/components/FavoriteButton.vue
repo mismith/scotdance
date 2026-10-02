@@ -12,6 +12,8 @@ const props = defineProps<{
   name?: string
   /** Show the word ("Follow" / "Following") next to the star. */
   labelled?: boolean
+  /** Labelled only: tonal where another button is the view's main action. */
+  variant?: 'filled' | 'tonal'
 }>()
 
 const auth = useAuthStore()
@@ -49,7 +51,9 @@ async function handleClick(e: Event) {
       labelled
         ? [
             'h-11 gap-1.5 border px-4 text-[0.9375rem] font-bold',
-            isFavorite ? 'bg-blue-paper text-primary border-transparent' : 'bg-primary-fill border-primary text-primary-foreground',
+            isFavorite || variant === 'tonal'
+              ? 'bg-blue-paper text-primary border-transparent'
+              : 'bg-primary-fill border-primary text-primary-foreground',
           ]
         : ['size-11 hover:bg-accent', isFavorite ? 'text-primary' : 'text-muted-foreground'],
     ]"
