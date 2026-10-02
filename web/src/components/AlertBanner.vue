@@ -25,10 +25,10 @@ function open() {
 
 <template>
   <Transition
-    enter-active-class="transition duration-500 ease-rubber-band motion-reduce:transition-none"
-    enter-from-class="-translate-y-[140%]"
-    leave-active-class="transition duration-300 ease-in motion-reduce:transition-none"
-    leave-to-class="-translate-y-[140%]"
+    enter-active-class="transition-[translate,opacity] duration-(--dur-spring) ease-snappy motion-reduce:transition-opacity"
+    enter-from-class="-translate-y-[140%] motion-reduce:translate-y-0 motion-reduce:opacity-0"
+    leave-active-class="transition-[translate,opacity] duration-(--dur-base) ease-exit motion-reduce:transition-opacity"
+    leave-to-class="-translate-y-[140%] motion-reduce:translate-y-0 motion-reduce:opacity-0"
   >
     <div
       v-if="current"
@@ -36,19 +36,20 @@ function open() {
       role="status"
       aria-live="polite"
     >
-      <div class="bg-card flex items-stretch gap-1 rounded-2xl border shadow-xl">
-        <button type="button" class="flex min-w-0 flex-1 items-center gap-3 p-3 text-left" @click="open">
-          <span class="bg-primary-fill flex size-10 shrink-0 items-center justify-center rounded-lg" aria-hidden="true">
+      <!-- The same dark glass as the toasts: it's news from the app, not part of the page. -->
+      <div class="hud press flex items-stretch gap-1 rounded-[1.375rem]">
+        <button type="button" class="focus-inset flex min-w-0 flex-1 items-center gap-3 rounded-[1.375rem] p-3 text-left" @click="open">
+          <span class="flex size-10 shrink-0 items-center justify-center rounded-[0.625rem] bg-[#0065bd]" aria-hidden="true">
             <svg viewBox="0 0 40 40" class="size-10"><path d="M9 9 31 31M31 9 9 31" stroke="#fff" stroke-width="5.5" /></svg>
           </span>
           <span class="min-w-0">
-            <b class="block text-[0.9375rem] leading-snug">{{ current.title }}</b>
-            <span class="text-muted-foreground block truncate text-sm">{{ current.subtitle }}</span>
+            <span class="text-callout block leading-snug font-semibold">{{ current.title }}</span>
+            <span class="block truncate text-sm text-white/70">{{ current.subtitle }}</span>
           </span>
         </button>
         <button
           type="button"
-          class="text-muted-foreground flex w-11 shrink-0 items-center justify-center"
+          class="focus-inset flex w-11 shrink-0 items-center justify-center rounded-full text-white/60"
           aria-label="Dismiss"
           @click="dismiss"
         >

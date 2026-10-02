@@ -20,18 +20,16 @@ function confirmDismiss() {
     <div class="pointer-events-none fixed inset-x-0 bottom-(--chrome-bottom) z-30 px-4">
       <div class="m-auto flex max-w-3xl justify-end">
         <Transition
-          enter-active-class="transition ease-rubber-band"
-          enter-from-class="scale-50 opacity-0"
-          enter-to-class="scale-100 opacity-100"
-          leave-active-class="transition ease-out"
-          leave-from-class="scale-100 opacity-100"
-          leave-to-class="scale-50 opacity-0"
+          enter-active-class="transition-[scale,opacity] duration-(--dur-slow) ease-elastic motion-reduce:transition-opacity"
+          enter-from-class="scale-50 opacity-0 motion-reduce:scale-100"
+          leave-active-class="transition-[scale,opacity] duration-(--dur-quick) ease-exit motion-reduce:transition-opacity"
+          leave-to-class="scale-50 opacity-0 motion-reduce:scale-100"
         >
           <div v-if="crisp.ongoing && !crisp.dismissed" class="relative mb-2">
             <button
               v-tap-feedback
               type="button"
-              class="pointer-events-auto relative flex size-10 items-center justify-center rounded-full bg-[#28a52d] text-white shadow-lg transition-transform hover:scale-105"
+              class="press pointer-events-auto relative flex size-11 items-center justify-center rounded-full bg-[#28a52d] text-white shadow-(--shadow-raised)"
               title="Resume support chat"
               aria-label="Resume support chat"
               @click="crisp.open()"
@@ -43,13 +41,13 @@ function confirmDismiss() {
                 class="pointer-events-none absolute inset-0 -z-10 animate-ping rounded-full bg-inherit"
                 aria-hidden="true"
               />
-              <LifeBuoy class="size-4" />
+              <LifeBuoy class="size-5" />
             </button>
 
             <button
               v-tap-feedback
               type="button"
-              class="floating-nav pointer-events-auto absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full hover:opacity-90"
+              class="glass press pointer-events-auto absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full after:absolute after:-inset-2.5"
               title="Dismiss"
               aria-label="Dismiss support launcher"
               @click="confirmDismiss"

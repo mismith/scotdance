@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, useId } from 'vue'
 import { RouterLink } from 'vue-router'
 import {
   ArrowDownToLine,
@@ -13,6 +13,8 @@ import {
   Sun,
 } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
+import Segmented from '@/components/ui/Segmented.vue'
+import Switch from '@/components/ui/Switch.vue'
 import { useScrolledPast } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { useTheme, type Theme } from '@/composables/useTheme'
@@ -35,13 +37,17 @@ const { theme } = useTheme()
 const titleEl = ref<HTMLElement | null>(null)
 const scrolledPast = useScrolledPast(titleEl)
 
-const THEMES: Array<{ id: Theme; label: string }> = [
-  { id: 'auto', label: 'Automatic' },
-  { id: 'light', label: 'Light' },
-  { id: 'dark', label: 'Dark' },
+const THEMES: Array<{ value: Theme; label: string }> = [
+  { value: 'auto', label: 'Automatic' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
 ]
 
-const rowClass = 'flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-accent'
+const alertsId = useId()
+
+// One row anatomy (as in the More menu): icon, label, then whatever ends it.
+const rowClass =
+  'press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left [&>svg]:size-5 [&>svg]:shrink-0'
 
 // Everything this device remembers of where you've been (lib/deviceHistory),
 // so a shared or borrowed phone can be tidied in one go.
@@ -70,58 +76,42 @@ async function clearHistory() {
       <!-- Alerts -->
       <section class="space-y-2">
         <h2 class="text-heading">Alerts</h2>
-        <div class="bg-card overflow-hidden rounded-2xl border shadow-sm">
-          <button type="button" role="switch" :aria-checked="alerts.enabled.value" :class="rowClass" @click="alerts.enabled.value = !alerts.enabled.value">
-            <Bell class="text-primary size-5 shrink-0" />
-            <span class="min-w-0 flex-1">
-              <span class="block text-base font-bold">Live result alerts</span>
-              <span class="text-muted-foreground block text-sm">A banner when a dancer you follow places, while ScotDance is open</span>
-            </span>
-            <span
-              :class="[
-                'relative h-7 w-12 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-6 after:rounded-full after:bg-white after:shadow after:transition-transform',
-                alerts.enabled.value ? 'bg-primary-fill after:translate-x-5' : 'bg-strong',
-              ]"
-              aria-hidden="true"
-            />
-          </button>
-        </div>
+        <!-- The whole row toggles: the label is for the switch. -->
+        <label :for="alertsId" :class="['surface overflow-hidden rounded-2xl', rowClass]">
+          <Bell class="text-primary" />
+          <span class="min-w-0 flex-1">
+            <span :id="`${alertsId}-label`" class="block text-base font-medium">Live result alerts</span>
+            <span :id="`${alertsId}-hint`" class="text-muted-foreground block text-sm">A banner when a dancer you follow places, while ScotDance is open</span>
+          </span>
+          <Switch
+            :id="alertsId"
+            v-model="alerts.enabled.value"
+            :aria-labelledby="`${alertsId}-label`"
+            :aria-describedby="`${alertsId}-hint`"
+          />
+        </label>
       </section>
 
       <!-- Display -->
       <section class="space-y-2">
         <h2 class="text-heading">Display</h2>
-        <div class="bg-card space-y-2 rounded-2xl border p-4 shadow-sm">
-          <div class="space-y-2">
-            <p class="flex items-center gap-2 text-base font-bold"><Sun class="text-primary size-5" /> Appearance</p>
-            <p class="text-muted-foreground text-sm">Automatic follows your phone. Text size follows your phone’s settings too.</p>
-            <div class="bg-muted grid grid-cols-3 rounded-xl border p-1" role="group" aria-label="Appearance">
-              <button
-                v-for="t in THEMES"
-                :key="t.id"
-                type="button"
-                :aria-pressed="theme === t.id"
-                :class="[
-                  'h-10 rounded-lg text-[0.9375rem] font-bold transition-colors',
-                  theme === t.id ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground',
-                ]"
-                @click="theme = t.id"
-              >
-                {{ t.label }}
-              </button>
-            </div>
+        <div class="surface space-y-3 rounded-2xl p-4">
+          <div class="space-y-1">
+            <p class="flex items-center gap-3 text-base font-medium"><Sun class="text-primary size-5" /> Appearance</p>
+            <p class="text-muted-foreground pl-8 text-sm">Automatic follows your phone. Text size follows your phone’s settings too.</p>
           </div>
+          <Segmented v-model="theme" :options="THEMES" label="Appearance" />
         </div>
       </section>
 
       <!-- This device -->
       <section class="space-y-2">
         <h2 class="text-heading">This device</h2>
-        <div class="bg-card overflow-hidden rounded-2xl border shadow-sm">
+        <div class="surface overflow-hidden rounded-2xl">
           <button type="button" :class="rowClass" @click="clearHistory">
-            <History class="text-primary size-5 shrink-0" />
+            <History class="text-primary" />
             <span class="min-w-0 flex-1">
-              <span class="block text-base font-bold">Clear history</span>
+              <span class="block text-base font-medium">Clear history</span>
               <span class="text-muted-foreground block text-sm">Recent searches, recently viewed, and copies kept for offline use</span>
             </span>
           </button>
@@ -131,34 +121,34 @@ async function clearHistory() {
       <!-- Help -->
       <section class="space-y-2">
         <h2 class="text-heading">Help</h2>
-        <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+        <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:3rem]">
           <li v-if="update.updateAvailable">
             <button type="button" :class="rowClass" @click="update.openDialog()">
-              <ArrowDownToLine class="text-secondary size-5" />
-              <span class="flex-1 text-base font-bold">Update available</span>
+              <ArrowDownToLine class="text-secondary" />
+              <span class="flex-1 text-base font-medium">Update available</span>
               <span class="bg-secondary size-2.5 rounded-full" aria-hidden="true" />
             </button>
           </li>
           <li>
             <RouterLink :to="{ name: 'about' }" :class="rowClass">
-              <Info class="text-primary size-5" /><span class="flex-1 text-base font-bold">About ScotDance</span><ChevronRight class="text-muted-foreground size-5" />
+              <Info class="text-primary" /><span class="flex-1 text-base font-medium">About ScotDance</span><ChevronRight class="text-muted-foreground/70" />
             </RouterLink>
           </li>
           <li>
             <RouterLink :to="{ name: 'about', hash: '#faqs' }" :class="rowClass">
-              <MessageCircleQuestion class="text-primary size-5" /><span class="flex-1 text-base font-bold">Questions and answers</span><ChevronRight class="text-muted-foreground size-5" />
+              <MessageCircleQuestion class="text-primary" /><span class="flex-1 text-base font-medium">Questions and answers</span><ChevronRight class="text-muted-foreground/70" />
             </RouterLink>
           </li>
           <li v-if="crisp.available">
             <button type="button" :class="rowClass" @click="crisp.open()">
-              <LifeBuoy class="text-primary size-5" />
-              <span class="flex-1 text-base font-bold">Send feedback or get help</span>
-              <span v-if="crisp.unread > 0" class="bg-secondary text-secondary-foreground rounded-full px-2 text-sm font-bold">{{ crisp.unread }}</span>
+              <LifeBuoy class="text-primary" />
+              <span class="flex-1 text-base font-medium">Send feedback or get help</span>
+              <span v-if="crisp.unread > 0" class="bg-secondary text-secondary-foreground rounded-full px-2 text-sm font-semibold tabular-nums">{{ crisp.unread }}</span>
             </button>
           </li>
           <li>
             <RouterLink :to="{ name: 'policies' }" :class="rowClass">
-              <FileText class="text-primary size-5" /><span class="flex-1 text-base font-bold">Privacy and terms</span><ChevronRight class="text-muted-foreground size-5" />
+              <FileText class="text-primary" /><span class="flex-1 text-base font-medium">Privacy and terms</span><ChevronRight class="text-muted-foreground/70" />
             </RouterLink>
           </li>
         </ul>
