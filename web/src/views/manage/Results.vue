@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { Check, ChevronDown, ChevronRight, CircleCheck, Download, EyeOff, Minus, Plus, Trophy } from '@lucide/vue'
+import { ChevronDown, ChevronRight, CircleCheck, Download, EyeOff, Plus, Trophy } from '@lucide/vue'
 import EmptyState from '@/components/EmptyState.vue'
 import MasterDetail from '@/components/admin/MasterDetail.vue'
+import ResultStatus from '@/components/admin/ResultStatus.vue'
 import ResultsEntry from '@/components/admin/ResultsEntry.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
 import SectionMenu from '@/components/admin/SectionMenu.vue'
@@ -13,7 +14,7 @@ import { useManageBack } from '@/composables/admin/useManageBack'
 import { useManagedCompetition, type MGroup } from '@/composables/admin/useManagedCompetition'
 import { useSplit } from '@/composables/admin/useWide'
 import { canEdit } from '@/lib/admin/write'
-import { CALLBACKS, OVERALL, danceState, dancingNow, needsFixing, parsePlacings, placeAt, resultRows, scheduleTurns } from '@/lib/admin/results'
+import { CALLBACKS, OVERALL, danceState, dancingNow, needsFixing, parsePlacings, placeAt, resultRows, scheduleTurns, stateLabel } from '@/lib/admin/results'
 import { competitionPhase } from '@/lib/dancerDay'
 
 const route = useRoute()
@@ -161,14 +162,20 @@ function exportCsv() {
               <span class="min-w-0 flex-1">
                 <span class="flex items-center gap-2">
                   <span class="truncate text-base font-semibold">{{ g.label }}</span>
+                  <CircleCheck v-if="progress(g).done === progress(g).total" class="text-primary size-4.5 shrink-0" aria-hidden="true" />
                   <span v-if="live.has(g.id)" class="bg-live-paper text-live text-caption inline-flex h-5 shrink-0 items-center gap-1.5 rounded-full px-2">
                     <span class="bg-live size-1.5 rounded-full motion-safe:animate-[live-pulse_2s_infinite]" aria-hidden="true" />
                     Dancing now
                   </span>
                 </span>
                 <span class="text-muted-foreground block text-sm">{{ m.groupDancers(g.id).length }} dancers · {{ progress(g).done }} of {{ progress(g).total }} entered</span>
+                <span class="mt-1.5 mb-0.5 block h-[3px] overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)]" aria-hidden="true">
+                  <span
+                    class="bg-primary-fill block h-full rounded-full transition-[width] duration-(--dur-slow) ease-standard"
+                    :style="{ width: `${(progress(g).done / progress(g).total) * 100}%` }"
+                  />
+                </span>
               </span>
-              <CircleCheck v-if="progress(g).done === progress(g).total" class="text-primary size-5 shrink-0" />
               <ChevronDown :class="['text-muted-foreground size-5 shrink-0 transition-transform', isExpanded(g.id) && 'rotate-180']" />
             </button>
             <ul v-if="isExpanded(g.id)" class="bg-background divide-y border-t">
@@ -177,22 +184,14 @@ function exportCsv() {
                   :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: g.id, danceId: d.id } }"
                   :replace="split"
                   :aria-current="groupId === g.id && danceId === d.id ? 'true' : undefined"
+                  :aria-label="`${d.label}, ${stateLabel(stateOf(g.id, d.id), hasPlaceholder(g.id, d.id))}`"
                   :class="[
                     'press-row focus-inset flex min-h-13 items-center gap-3 py-1.5 pr-3 pl-6',
                     groupId === g.id && danceId === d.id ? 'bg-blue-paper' : hasPlaceholder(g.id, d.id) && 'bg-next/40',
                     hasPlaceholder(g.id, d.id) && 'relative bg-[repeating-linear-gradient(135deg,transparent_0_9px,color-mix(in_oklab,var(--next-foreground)_7%,transparent)_9px_11px)] before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[repeating-linear-gradient(135deg,var(--next-foreground)_0_3px,transparent_3px_6px)]',
                   ]"
                 >
-                  <span
-                    :class="[
-                      'flex size-9 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-extrabold',
-                      stateOf(g.id, d.id) === 'todo' ? 'bg-muted text-muted-foreground' : 'bg-primary-fill text-primary-foreground',
-                    ]"
-                  >
-                    <Check v-if="stateOf(g.id, d.id) === 'done'" class="size-4.5" stroke-width="3" />
-                    <Minus v-else-if="stateOf(g.id, d.id) === 'none'" class="size-4.5" stroke-width="3" />
-                    <template v-else>TBD</template>
-                  </span>
+                  <ResultStatus :state="stateOf(g.id, d.id)" :fix="hasPlaceholder(g.id, d.id)" />
                   <span class="text-callout min-w-0 flex-1 truncate font-medium">{{ d.label }}</span>
                   <Trophy v-if="d.id === OVERALL" class="text-muted-foreground size-4.5 shrink-0" />
                   <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
