@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, useId, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ChevronRight, CloudOff, Diamond, ListOrdered, Pencil, Search, Trophy, X } from '@lucide/vue'
+import { ChevronRight, CloudOff, Diamond, ListOrdered, Search, Trophy, X } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import HelpTip from '@/components/admin/HelpTip.vue'
 import PlacedList from '@/components/admin/PlacedList.vue'
+import Button from '@/components/ui/Button.vue'
 import Segmented from '@/components/ui/Segmented.vue'
+import Switch from '@/components/ui/Switch.vue'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
-import { tapHaptic } from '@/lib/haptics'
+import { selectionHaptic, tapHaptic } from '@/lib/haptics'
 import { getOrdinalSuffix } from '@/lib/results'
 import { isPrimaryCategory } from '@/types/competition'
 import {
@@ -37,6 +39,7 @@ import {
 const props = defineProps<{ groupId: string; danceId: string }>()
 
 const m = useManagedCompetition()
+const uid = useId()
 
 const group = computed(() => m.groupsById.value.get(props.groupId) ?? null)
 const isCallbacks = computed(() => props.danceId === CALLBACKS)
@@ -138,17 +141,20 @@ function tapPlaceholder() {
   else place(id)
 }
 
-// --- Championship: entered from the lowest place up to 1st
-const reverseOn = computed(() => !!placings.value.reverseFrom || pickingReverse.value)
-function toggleReverse() {
-  if (reverseOn.value) {
-    pickingReverse.value = false
-    if (placings.value.reverseFrom) void save({ ...parsePlacings(rawNow()), reverseFrom: null }, 'Championship off')
-  } else {
-    pickingReverse.value = true
+// --- Championship: entered from the lowest place up to 1st. Switching it on
+// first asks how many places; it reads on once that's saved.
+const PLACES = [3, 4, 5, 6, 7, 8]
+const championship = computed(() => !!placings.value.reverseFrom)
+function toggleChampionship() {
+  if (!championship.value) {
+    pickingReverse.value = !pickingReverse.value
+    return
   }
+  pickingReverse.value = false
+  void save({ ...parsePlacings(rawNow()), reverseFrom: null }, 'Championship off')
 }
 function pickReverse(n: number) {
+  selectionHaptic()
   pickingReverse.value = false
   void save({ ...parsePlacings(rawNow()), reverseFrom: n }, `Entering from ${n}${getOrdinalSuffix(n)}`)
 }
@@ -243,35 +249,8 @@ const next = computed(() => {
               <span><strong class="font-semibold">No signal.</strong> Results can’t be saved until it’s back.</span>
             </p>
           </div>
-          <!-- Championship: how many places -->
-          <template v-if="pickingReverse">
-            <div class="flex items-center gap-3 border-b px-4 py-3">
-              <span class="bg-primary-fill text-primary-foreground flex size-10 shrink-0 items-center justify-center rounded-full"><ListOrdered class="size-5" /></span>
-              <span>
-                <span class="block text-base font-bold">Select starting place</span>
-                <span class="text-muted-foreground block text-sm">How many places are being awarded?</span>
-              </span>
-            </div>
-            <ul class="divide-y">
-              <li v-for="n in candidates.length" :key="n">
-                <button
-                  type="button"
-                  :disabled="n < 2"
-                  :class="[
-                    'flex min-h-13 w-full items-center gap-3 px-4 text-left disabled:opacity-35',
-                    n === placings.reverseFrom ? 'bg-blue-paper' : 'hover:bg-accent',
-                  ]"
-                  @click="pickReverse(n)"
-                >
-                  <span class="w-12 text-base font-extrabold tabular-nums">{{ n }}{{ getOrdinalSuffix(n) }}</span>
-                  <span class="text-base">{{ n }} {{ n === 1 ? 'place' : 'places' }}</span>
-                </button>
-              </li>
-            </ul>
-          </template>
-
           <div
-            v-else-if="candidates.length"
+            v-if="candidates.length"
             :aria-disabled="!canEdit || undefined"
             :class="['transition-[opacity,filter] duration-(--dur-base) ease-standard', !canEdit && 'opacity-50 grayscale']"
           >
@@ -331,30 +310,52 @@ const next = computed(() => {
         </div>
 
         <!-- Championship (dances only) -->
-        <div v-if="isDance && tab === 'placings'" class="flex min-h-14 items-center gap-2 border-t px-4 py-2">
-          <button
-            type="button"
-            role="switch"
-            :aria-checked="reverseOn"
-            :disabled="!canEdit"
-            class="flex h-11 items-center gap-3 text-base font-bold disabled:opacity-50"
-            @click="toggleReverse"
+        <div v-if="isDance && tab === 'placings'" class="border-t px-4 py-2">
+          <div class="flex min-h-12 flex-wrap items-center gap-x-2">
+            <label class="flex min-h-11 items-center gap-3 font-medium">
+              <Switch :model-value="championship" :disabled="!canEdit" @update:model-value="toggleChampionship" />
+              Championship
+            </label>
+            <HelpTip label="About championship mode">
+              <strong>Championship</strong> mode enters results in reverse order (e.g. 6th, 5th, …, 1st), as is traditional for championship announcements.
+            </HelpTip>
+            <Button
+              v-if="placings.reverseFrom"
+              variant="tonal"
+              class="ml-auto"
+              :aria-expanded="pickingReverse"
+              :disabled="!canEdit"
+              @click="pickingReverse = !pickingReverse"
+            >
+              From {{ placings.reverseFrom }}{{ getOrdinalSuffix(placings.reverseFrom) }}
+            </Button>
+          </div>
+          <Transition
+            enter-from-class="-translate-y-1 opacity-0"
+            enter-active-class="transition duration-(--dur-base) ease-standard motion-reduce:transition-none"
+            leave-active-class="transition duration-(--dur-quick) ease-exit motion-reduce:transition-none"
+            leave-to-class="opacity-0"
           >
-            <span :class="['relative h-7 w-12 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-6 after:rounded-full after:bg-white after:shadow after:transition-transform', reverseOn ? 'bg-primary-fill after:translate-x-5' : 'bg-strong']" />
-            Championship
-          </button>
-          <HelpTip label="About championship mode">
-            <strong>Championship</strong> mode enters results in reverse order (e.g. 6th, 5th, …, 1st), as is traditional for championship announcements.
-          </HelpTip>
-          <button
-            v-if="placings.reverseFrom && !pickingReverse"
-            type="button"
-            aria-label="Change the starting place"
-            class="hover:bg-accent ml-auto flex size-11 items-center justify-center rounded-full"
-            @click="pickingReverse = true"
-          >
-            <Pencil class="size-4" />
-          </button>
+            <div v-if="pickingReverse" class="pt-1 pb-2">
+              <p :id="`${uid}-places`" class="text-muted-foreground pb-2 text-sm">How many places?</p>
+              <div role="group" :aria-labelledby="`${uid}-places`" class="grid max-w-80 grid-cols-6 gap-1.5">
+                <button
+                  v-for="n in PLACES"
+                  :key="n"
+                  type="button"
+                  :aria-pressed="n === placings.reverseFrom"
+                  :disabled="!canEdit || n > candidates.length"
+                  :class="[
+                    'press h-11 rounded-full text-base font-extrabold tabular-nums disabled:opacity-(--disabled-opacity)',
+                    n === placings.reverseFrom ? 'bg-primary-fill text-primary-foreground' : 'surface',
+                  ]"
+                  @click="pickReverse(n)"
+                >
+                  {{ n }}
+                </button>
+              </div>
+            </div>
+          </Transition>
         </div>
       </section>
 
