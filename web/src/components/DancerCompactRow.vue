@@ -9,6 +9,7 @@ import NumberCard from '@/components/NumberCard.vue'
 import { bestPlacing, dayStage, nextDance } from '@/lib/dancerDay'
 import { formatShortDate } from '@/lib/format'
 import { getOrdinalSuffix } from '@/lib/results'
+import { platformLabel } from '@/lib/schedule'
 import type { DancerCard } from '@/composables/useDancerCards'
 
 // One line per dancer, for people following many (a teacher's class) and
@@ -39,7 +40,7 @@ const best = computed(() => {
 
 // "Next · A": a platform's letter fits beside the name; a long name doesn't.
 const shortPlatform = computed(() => {
-  const p = next.value?.slot?.platformName?.trim()
+  const p = platformLabel(next.value?.slot?.platformName).replace(/^Platform\s*/, '')
   return p && p.length <= 3 ? p : null
 })
 

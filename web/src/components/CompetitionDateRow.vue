@@ -62,7 +62,7 @@ const isPrivate = computed(() => managed.value && props.competition.listed !== t
         </span>
         <span v-if="managed" class="sr-only">You can manage this.</span>
         <span v-if="note || isPrivate || followed || dancers.length" class="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
-          <span v-if="note" :class="['text-sm font-medium', today ? 'text-live' : 'text-muted-foreground']">{{ note }}</span>
+          <span v-if="note" class="text-muted-foreground text-sm font-medium">{{ note }}</span>
           <span v-if="isPrivate" class="text-muted-foreground inline-flex items-center gap-1 text-sm font-medium">
             <EyeOff class="size-3.5" aria-hidden="true" />
             Private<span class="sr-only"> (only admins can see it)</span>
