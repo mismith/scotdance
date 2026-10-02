@@ -8,14 +8,16 @@ import DanceStatusChip from '@/components/DanceStatusChip.vue'
 import { getOrdinalSuffix } from '@/lib/results'
 import { platformLabel } from '@/lib/schedule'
 import { placings, type DancerDay, type DanceStatus } from '@/lib/dancerDay'
+import { useDancerNumberVt } from '@/composables/useCompetitionDancerVt'
 
 // One followed dancer at one competition: their number card for that
 // competition, and every dance with its state. A dancer can be entered in
 // more than one age group (e.g. Premier plus a Broadsword event); those are
-// grouped in one card under the same number. The header opens the dancer's
-// page; each dance row opens that age group's results. The dance they're on
-// next stands out; once every result is in, `folded` sums the day up as one
-// line of rosettes.
+// grouped in one card under the same number (in their colour, the one mark
+// of "yours"). The header opens the dancer's page, the small number card
+// growing into the big one there; each dance row opens that age group's
+// results. The dance they're on next stands out; once every result is in,
+// `folded` sums the day up as one line of rosettes.
 const props = withDefaults(
   defineProps<{
     days: DancerDay[]
@@ -50,6 +52,7 @@ const sub = computed(() => {
   return parts.filter(Boolean).join(' · ')
 })
 const won = computed(() => (props.folded ? placings(shown.value) : []))
+const numberVt = useDancerNumberVt()
 
 const ordinal = (n: number) => `${n}${getOrdinalSuffix(n)}`
 function detail(s: DanceStatus): string | null {
@@ -74,19 +77,16 @@ const NEXT = 'bg-next/55 before:absolute before:inset-y-0 before:left-0 before:w
 </script>
 
 <template>
-  <article
-    :class="['surface overflow-hidden', lg ? 'rounded-3xl' : 'rounded-2xl']"
-    :style="color ? { '--dc': color } : undefined"
-  >
-    <div v-if="color" :class="['sash', lg ? 'h-2' : 'h-1.5']" aria-hidden="true" />
+  <article :class="['surface overflow-hidden', lg ? 'rounded-3xl' : 'rounded-2xl']">
     <RouterLink
       :to="{
         name: 'competition.dancer',
         params: { competitionId, dancerId: day.dancer.id },
       }"
       :class="['press-row focus-inset flex items-center gap-3', lg ? 'px-5 py-4' : 'px-4 py-3']"
+      @click="numberVt.tap(day.dancer.id, 'day')"
     >
-      <NumberCard :number="day.dancer.number" :color="color" :size="lg ? 'md' : 'sm'" />
+      <NumberCard :number="day.dancer.number" :color="color" :size="lg ? 'md' : 'sm'" :vt="numberVt.row(day.dancer.id, 'day')" />
       <span class="min-w-0 flex-1">
         <span :class="['block truncate', lg ? 'text-title' : 'text-[1.0625rem] leading-tight font-semibold']">
           {{ day.dancer.fullName }}

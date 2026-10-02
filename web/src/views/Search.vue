@@ -25,6 +25,7 @@ import { useFavoritesStore } from '@/stores/favorites'
 import { fetchDancers } from '@/lib/competitionData'
 import { lookupEntityId, lookupVenueId } from '@/lib/entityIndex'
 import { settle } from '@/lib/settle'
+import { useDancerNumberVt } from '@/composables/useCompetitionDancerVt'
 import {
   searchAll,
   type SearchAllResults,
@@ -242,6 +243,7 @@ const exact = computed(() => numberMatches.value.find((m) => String(m.dancer.num
 const others = computed(() => numberMatches.value.filter((m) => m !== exact.value))
 const typed = (n: number | string | undefined) => String(n ?? '').slice(0, num.value.length)
 const untyped = (n: number | string | undefined) => String(n ?? '').slice(num.value.length)
+const numberVt = useDancerNumberVt()
 const colorOf = (d: EnrichedDancer) => (following.isFollowing(d) ? following.colorFor(d.dancerId) : null)
 
 const competitionName = computed(
@@ -478,8 +480,14 @@ watch(mode, async (m) => {
           <RouterLink
             :to="{ name: 'competition.dancer', params: { competitionId, dancerId: exact.dancer.id } }"
             class="press-row focus-inset flex min-w-0 flex-1 items-center gap-4 py-4 pl-4"
+            @click="numberVt.tap(exact.dancer.id, 'search')"
           >
-            <NumberCard :number="exact.dancer.number" size="md" :color="colorOf(exact.dancer)" />
+            <NumberCard
+              :number="exact.dancer.number"
+              size="md"
+              :color="colorOf(exact.dancer)"
+              :vt="numberVt.row(exact.dancer.id, 'search')"
+            />
             <span class="min-w-0">
               <span class="text-title line-clamp-2">{{ exact.dancer.fullName }}</span>
               <span class="text-muted-foreground block truncate text-sm">{{ exact.groups.filter(Boolean).join(' · ') }}</span>

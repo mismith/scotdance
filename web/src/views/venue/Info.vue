@@ -49,7 +49,7 @@ const items = computed(() => {
       </header>
 
       <div class="flex flex-wrap gap-2">
-        <FavoriteButton :id="id" type="venues" :name="p.name.value" labelled />
+        <FavoriteButton :id="id" type="venues" :name="p.name.value" labelled variant="tonal" />
         <Button v-if="mapsHref" :href="mapsHref" target="_blank" rel="noopener">
           Directions <ExternalLink aria-hidden="true" />
         </Button>

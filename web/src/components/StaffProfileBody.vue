@@ -64,7 +64,7 @@ const next = computed(
           {{ next.competition.name }}</RouterLink
         >, {{ formatRelative(next.competition.date) }}
       </p>
-      <FavoriteButton :id="id" :type="kind" :name="name" labelled class="self-start" />
+      <FavoriteButton :id="id" :type="kind" :name="name" labelled variant="tonal" />
     </div>
 
     <div class="space-y-5">
