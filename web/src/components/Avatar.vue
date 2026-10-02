@@ -35,7 +35,7 @@ watch(
     :class="[
       'flex shrink-0 items-center justify-center rounded-full font-semibold tracking-[-0.01em]',
       size === 'lg' ? 'size-16 text-xl' : 'size-10 text-sm',
-      color ? 'sash dark:text-background text-white' : 'bg-blue-paper text-primary',
+      color ? 'sash text-on-dancer' : 'bg-blue-paper text-primary',
     ]"
     :style="color ? { '--dc': color } : undefined"
     aria-hidden="true"

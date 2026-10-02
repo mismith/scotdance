@@ -34,7 +34,7 @@ function pick(id: DancerColorId) {
         :aria-label="c.label"
         :title="c.label"
         :class="[
-          'press dark:text-background flex aspect-square items-center justify-center rounded-full text-white',
+          'press text-on-dancer flex aspect-square items-center justify-center rounded-full',
           current === c.id && 'ring-foreground ring-offset-raised ring-2 ring-offset-2',
         ]"
         :style="{ background: `var(--${c.id})` }"

@@ -107,7 +107,7 @@ watch(() => route.hash, applyHash)
             class="space-y-2 rounded-2xl p-4"
             :style="{ background: `color-mix(in srgb, ${r.color} 12%, var(--card))` }"
           >
-            <span class="flex size-11 items-center justify-center rounded-full text-white shadow-sm" :style="{ background: r.color }">
+            <span class="text-on-dancer flex size-11 items-center justify-center rounded-full shadow-sm" :style="{ background: r.color }">
               <component :is="r.icon" class="size-5" stroke-width="2.4" />
             </span>
             <h3 class="text-heading">{{ r.title }}</h3>
