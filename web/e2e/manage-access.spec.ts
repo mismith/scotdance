@@ -70,7 +70,7 @@ test('an organiser manages their own competition, and only that', async ({ page 
     await page.goto(`/competitions/${mine.id}/info`)
     await expect(page.getByRole('link', { name: 'Manage this competition' })).toBeVisible()
     await page.goto(`/competitions/${other.id}/info`)
-    await expect(page.getByText(other.name).first()).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: other.name })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Manage this competition' })).toHaveCount(0)
 
     await page.goto(`/competitions/${mine.id}/manage/dancers`)
