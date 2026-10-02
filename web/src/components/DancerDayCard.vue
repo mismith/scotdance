@@ -31,8 +31,10 @@ const props = withDefaults(
     folded?: boolean
     /** lg: the dancer's own page, where it's the main thing. */
     size?: 'md' | 'lg'
+    /** Just the dances, under a page that has its own header. */
+    bare?: boolean
   }>(),
-  { color: null, competitionName: null, fresh: null, folded: false, size: 'md' },
+  { color: null, competitionName: null, fresh: null, folded: false, size: 'md', bare: false },
 )
 
 // Entries with nothing scheduled are dropped when another entry has dances.
@@ -79,6 +81,7 @@ const NEXT = 'bg-next/55 before:absolute before:inset-y-0 before:left-0 before:w
 <template>
   <article :class="['surface overflow-hidden', lg ? 'rounded-3xl' : 'rounded-2xl']">
     <RouterLink
+      v-if="!bare"
       :to="{
         name: 'competition.dancer',
         params: { competitionId, dancerId: day.dancer.id },
@@ -111,16 +114,20 @@ const NEXT = 'bg-next/55 before:absolute before:inset-y-0 before:left-0 before:w
     </RouterLink>
 
     <template v-if="!folded">
-      <template v-for="d in shown" :key="d.dancer.id">
+      <template v-for="(d, i) in shown" :key="d.dancer.id">
         <p
           v-if="multi"
-          :class="['text-muted-foreground shadow-[inset_0_1px_0_var(--border)] pt-3 pb-1 text-footnote font-semibold', lg ? 'px-5' : 'px-4']"
+          :class="[
+            'text-muted-foreground pt-3 pb-1 text-footnote font-semibold',
+            lg ? 'px-5' : 'px-4',
+            !(bare && i === 0) && 'shadow-[inset_0_1px_0_var(--border)]',
+          ]"
         >
           {{ d.group?.fullName }}
         </p>
         <ul
           v-if="d.dances.length"
-          :class="['rows-inset', lg ? '[--inset:1.25rem]' : '[--inset:1rem]', !multi && 'shadow-[inset_0_1px_0_var(--border)]']"
+          :class="['rows-inset', lg ? '[--inset:1.25rem]' : '[--inset:1rem]', !multi && !bare && 'shadow-[inset_0_1px_0_var(--border)]']"
         >
           <li v-if="d.calledBack != null" :class="[ROW, rowSize]">
             <span class="text-callout font-medium">Callbacks</span>
@@ -167,7 +174,11 @@ const NEXT = 'bg-next/55 before:absolute before:inset-y-0 before:left-0 before:w
         </ul>
         <p
           v-else
-          :class="['text-muted-foreground shadow-[inset_0_1px_0_var(--border)] py-3 text-sm', lg ? 'px-5' : 'px-4']"
+          :class="[
+            'text-muted-foreground py-3 text-sm',
+            lg ? 'px-5' : 'px-4',
+            !(bare && i === 0 && !multi) && 'shadow-[inset_0_1px_0_var(--border)]',
+          ]"
         >
           No dances listed for this age group yet.
         </p>

@@ -267,7 +267,7 @@ test('the competition’s pages show your dancer’s day', async ({ page }) => {
   await page.goto(`/competitions/${comp.id}/dancers/${entry(3).id}`)
   await expect(page.getByRole('heading', { name: person.name })).toBeVisible()
   await expect(page.getByText('Beginner 7 & 8 Years')).toBeVisible()
-  await expect(page.getByRole('link', { name: /Highland Fling/ })).toContainText('2nd of 3 to dance')
+  await expect(page.getByRole('link', { name: /Highland Fling/ })).toContainText('2nd to dance')
   await expect(page.getByRole('link', { name: `All competitions for ${person.firstName}` })).toBeVisible()
 
   // Dancers: only mine, and finding by number.
