@@ -14,6 +14,7 @@ import SectionNav from '@/components/admin/SectionNav.vue'
 import { provideManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { useSidebar, useSplit } from '@/composables/admin/useWide'
 import { provideManageBack, viaHistory, type ManageBack } from '@/composables/admin/useManageBack'
+import { provideSectionTitle } from '@/composables/admin/useSectionTitle'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { ALL_SECTIONS } from '@/lib/admin/sections'
 import { historyState, redo, undo } from '@/lib/admin/history'
@@ -137,11 +138,13 @@ const viewRoute = computed(() => ({ name: (section.value && PUBLIC[section.value
 // Back already names it.
 const barSubtitle = computed(() => (access.value === 'ok' && up.value.label !== name.value ? name.value : null))
 const barTitle = computed(() => (isHome.value ? 'Manage' : ((route.meta.title as string | undefined) ?? section.value?.title ?? 'Manage')))
+// …once the page's own title has scrolled away (see useSectionTitle).
+const sectionTitle = provideSectionTitle()
 </script>
 
 <template>
   <div class="flex min-h-dvh flex-col md:fixed md:inset-0 md:min-h-0">
-    <AppBar wide :title="barTitle" :subtitle="barSubtitle" show-title :scrolled="true" :exit="exit" :competition-id="competitionId">
+    <AppBar wide :title="barTitle" :subtitle="barSubtitle" :show-title="sectionTitle.showInBar()" :scrolled="true" :exit="exit" :competition-id="competitionId">
       <template #actions>
         <template v-if="access === 'ok'">
           <SaveStatus />

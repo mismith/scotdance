@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useSectionTitle } from '@/composables/admin/useSectionTitle'
+
 // The top of a Manage section (and a page within one), the same in each:
 // its title (and how many), with Select or a ⋯ menu beside it, then anything
-// else underneath: the ways to add, search.
+// else underneath: the ways to add, search. The bar takes over its title
+// once it scrolls away.
 
 defineProps<{
   title: string
@@ -11,6 +15,9 @@ defineProps<{
   kicker?: string | null
   description?: string
 }>()
+
+const titleEl = ref<HTMLElement | null>(null)
+useSectionTitle(titleEl)
 </script>
 
 <template>
@@ -18,7 +25,7 @@ defineProps<{
     <div class="space-y-1">
       <p v-if="kicker" class="text-muted-foreground text-sm font-medium">{{ kicker }}</p>
       <div class="flex min-h-11 items-center gap-2">
-        <h1 class="text-title min-w-0 flex-1 truncate">
+        <h1 ref="titleEl" class="text-title min-w-0 flex-1 truncate">
           {{ title }}
           <span
             v-if="count != null && count !== ''"
