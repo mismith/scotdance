@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { useTimeout } from '@vueuse/core'
 import { ChevronRight } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
@@ -27,8 +26,6 @@ const numberVt = useDancerNumberVt()
 const isFresh = useFreshPlacings()
 
 const loaded = ref(false)
-// A quick load shows nothing in between; a slow one, the page's shape.
-const slow = useTimeout(150)
 onMounted(async () => {
   await Promise.all([loadDancers(), loadResults(), loadSchedule()])
   loaded.value = true
@@ -65,17 +62,16 @@ function detail(s: DanceStatus): string | null {
 
 <template>
   <article class="space-y-4">
+    <!-- The page's shape, if it's slow to come (skeletons wait 150ms). -->
     <div v-if="!dancer && !loaded" class="space-y-4" aria-busy="true">
-      <template v-if="slow">
-        <span class="sr-only">Loading…</span>
-        <div class="flex items-center gap-4">
-          <Skeleton class="h-16 w-[5.5rem] rounded-lg!" />
-          <div class="flex-1 space-y-2"><Skeleton class="h-7 w-2/3" /><Skeleton class="h-4 w-1/2" /></div>
-        </div>
-        <Skeleton class="h-11 w-full rounded-full!" />
-        <Skeleton class="h-5 w-24" />
-        <Skeleton class="h-64 w-full rounded-2xl!" />
-      </template>
+      <span class="sr-only">Loading…</span>
+      <div class="flex items-center gap-4">
+        <Skeleton class="h-16 w-[5.5rem] rounded-lg!" />
+        <div class="flex-1 space-y-2"><Skeleton class="h-7 w-2/3" /><Skeleton class="h-4 w-1/2" /></div>
+      </div>
+      <Skeleton class="h-11 w-full rounded-full!" />
+      <Skeleton class="h-5 w-24" />
+      <Skeleton class="h-64 w-full rounded-2xl!" />
     </div>
     <p v-else-if="!dancer" class="text-muted-foreground py-6 text-base">
       This dancer isn’t on the list any more. Go back to Dancers to see the current list.

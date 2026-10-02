@@ -15,7 +15,6 @@ import FollowButton from '@/components/FollowButton.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import Switch from '@/components/ui/Switch.vue'
-import { anchorTo } from '@/lib/anchor'
 import { selectionHaptic } from '@/lib/haptics'
 import { useMorph } from '@/lib/morph'
 
@@ -53,11 +52,6 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
 
 // Sort: a small menu that grows out of its pill.
 const sortMenu = useMorph()
-const sortPlace = ref<Record<string, string>>({})
-function openSort(e: MouseEvent) {
-  sortPlace.value = anchorTo(e.currentTarget as Element, 260)
-  sortMenu.show(e)
-}
 function pick(key: SortKey) {
   if (key !== sortBy.value) selectionHaptic()
   sortBy.value = key
@@ -107,7 +101,7 @@ const sections = computed<Section[]>(() => {
 
 const followedCount = computed(() => dancers.value.filter((d) => following.isFollowing(d)).length)
 
-const MENU_ROW = 'press-row focus-inset flex min-h-12 w-full items-center gap-3 px-4 text-left text-base font-medium'
+const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-base font-medium'
 </script>
 
 <template>
@@ -155,7 +149,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-12 w-full items-center gap-3 
         :aria-label="`Sort by ${sortLabel}`"
         aria-haspopup="dialog"
         :aria-expanded="sortMenu.open"
-        @click="openSort"
+        @click="sortMenu.show"
       >
         <ArrowDownUp class="text-primary size-4" />
         {{ sortLabel }}
@@ -168,11 +162,10 @@ const MENU_ROW = 'press-row focus-inset flex min-h-12 w-full items-center gap-3 
       :morph="sortMenu"
       variant="dropdown"
       aria-label="Sort by"
-      :style="sortPlace"
       @close="sortMenu.hide()"
     >
-      <div role="radiogroup" aria-labelledby="sort-by-label" class="py-1.5">
-        <p id="sort-by-label" class="text-muted-foreground text-footnote px-4 pt-1.5 pb-1 font-medium">Sort by</p>
+      <div role="radiogroup" aria-labelledby="sort-by-label">
+        <p id="sort-by-label" class="text-muted-foreground text-footnote px-3 pt-1.5 pb-1 font-medium">Sort by</p>
         <button
           v-for="s in SORTS"
           :key="s.key"

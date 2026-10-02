@@ -29,7 +29,6 @@ import { blocks, dances as eventDances, days, events } from '@/lib/schedule'
 import { competitionSpan } from '@/lib/dancerDay'
 import { formatExternalURL, formatLongDate, formatRelative } from '@/lib/format'
 import { sanitizeRichText } from '@/lib/sanitize'
-import { anchorTo } from '@/lib/anchor'
 import {
   competitionLinks,
   directions as competitionDirections,
@@ -107,9 +106,7 @@ const kicker = computed(() => {
 const where = computed(() => competitionDirections(competition.value))
 const hasMap = computed(() => Number.isFinite(competition.value?.lat) && Number.isFinite(competition.value?.lng))
 const directionsMenu = useMorph()
-const directionsPlace = ref<Record<string, string>>({})
 function openDirections(e: MouseEvent) {
-  directionsPlace.value = anchorTo(e.currentTarget as Element, 180)
   copied.value = false
   directionsMenu.show(e)
 }
@@ -181,7 +178,7 @@ function isFavoriteStaff(m: StaffMember) {
 const activeStaff = ref<StaffMember | null>(null)
 const staffSheet = useMorph()
 
-const MENU_ROW = 'press-row focus-inset flex min-h-12 w-full items-center gap-3 px-4 text-left text-base font-medium'
+const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-base font-medium'
 </script>
 
 <template>
@@ -451,18 +448,17 @@ const MENU_ROW = 'press-row focus-inset flex min-h-12 w-full items-center gap-3 
       :morph="directionsMenu"
       variant="dropdown"
       aria-label="Directions"
-      :style="directionsPlace"
       @close="directionsMenu.hide()"
     >
-      <nav v-if="where" aria-label="Directions" class="py-1.5">
+      <nav v-if="where" aria-label="Directions">
         <a v-if="where.apple" :href="where.apple" target="_blank" rel="noopener" :class="MENU_ROW" @click="directionsMenu.dismiss()">
-          <Navigation class="text-primary size-5 shrink-0" /> Apple Maps
+          <Navigation class="text-muted-foreground size-5 shrink-0" /> Apple Maps
         </a>
         <a :href="where.google" target="_blank" rel="noopener" :class="MENU_ROW" @click="directionsMenu.dismiss()">
-          <MapIcon class="text-primary size-5 shrink-0" /> Google Maps
+          <MapIcon class="text-muted-foreground size-5 shrink-0" /> Google Maps
         </a>
         <button type="button" :class="MENU_ROW" @click="copyAddress(true)">
-          <component :is="copied ? Check : Copy" class="text-primary size-5 shrink-0" />
+          <component :is="copied ? Check : Copy" :class="['size-5 shrink-0', copied ? 'text-done-foreground' : 'text-muted-foreground']" />
           {{ copied ? 'Address copied' : 'Copy address' }}
         </button>
       </nav>
