@@ -174,3 +174,49 @@ test('Manage competitions is up to date after creating and deleting one', async 
     await dbRemove(`users:permissions/${id}`)
   }
 })
+
+test('on competition day, Manage leads straight to results: two taps from the list', async ({ page }) => {
+  // Seeded for today, with results for the first two age groups' dances.
+  const comp = await seedCompetition({ dancersPerGroup: 2 })
+  const org = await organiser(comp)
+  try {
+    await signIn(page, org.email)
+    await page.goto('/manage')
+    await page.getByRole('link', { name: 'Enter results' }).first().click()
+    await expect(page).toHaveURL(new RegExp(`/competitions/${comp.id}/manage/results$`))
+
+    // On the Overview, the line under the name carries on where entry left off:
+    // the schedule's first age group with nothing in yet (Primary 7 & 8 has
+    // results; the next on its platform's list is Beginner).
+    await page.goto(`/competitions/${comp.id}/manage`)
+    const carryOn = page.getByRole('main').getByRole('link', { name: /^Enter results Carry on/ })
+    await expect(carryOn).toContainText('Carry on:')
+    await carryOn.click()
+    await expect(page).toHaveURL(new RegExp(`/manage/results/${comp.id}-grp-`))
+  } finally {
+    await Promise.all([removeCompetition(comp.id), dbRemove(`users:permissions/${org.id}`)])
+  }
+})
+
+test('setting up, the first unfinished step says it’s next, with its button', async ({ page }, info) => {
+  const comp = await seedCompetition({ dancersPerGroup: 1, startOffset: 30 })
+  await dbRemove(`competitions:data/${comp.id}/staff`)
+  const org = await organiser(comp)
+  try {
+    await signIn(page, org.email)
+    await page.goto(`/competitions/${comp.id}/manage`)
+    const nav = page.getByRole('navigation', { name: 'Manage sections' }).first()
+    await expect(nav.getByRole('link', { name: /Staff\s*Next/ })).toBeVisible()
+    if (info.project.name === 'phone') {
+      await page.getByRole('main').getByRole('link', { name: 'Add a judge' }).click()
+    } else {
+      // Wide, the steps are in the sidebar: the Overview has Up next instead.
+      await expect(page.getByRole('heading', { name: 'Up next' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Step by step' })).toHaveCount(0)
+      await page.getByRole('main').getByRole('link', { name: 'Add a judge' }).click()
+    }
+    await expect(page).toHaveURL(new RegExp(`/manage/staff/new$`))
+  } finally {
+    await Promise.all([removeCompetition(comp.id), dbRemove(`users:permissions/${org.id}`)])
+  }
+})

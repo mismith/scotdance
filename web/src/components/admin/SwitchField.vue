@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, useId } from 'vue'
+import Switch from '@/components/ui/Switch.vue'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 
 // A labelled on/off switch that saves on tap. The whole row is the target.
@@ -17,12 +18,12 @@ const busy = ref(false)
 const error = ref<string | null>(null)
 const locked = computed(() => props.disabled || !canEdit.value)
 
-async function toggle() {
+async function toggle(on: boolean) {
   if (locked.value || busy.value) return
   busy.value = true
   error.value = null
   try {
-    await props.save(!props.modelValue)
+    await props.save(on)
   } catch (e) {
     error.value = friendlyError(e)
   } finally {
@@ -33,29 +34,20 @@ async function toggle() {
 
 <template>
   <div>
-    <button
-      :id="id"
-      type="button"
-      role="switch"
-      :aria-checked="modelValue"
-      :aria-describedby="description ? `${id}-d` : undefined"
-      :disabled="locked"
-      class="flex w-full items-center gap-3 py-1 text-left disabled:cursor-not-allowed disabled:opacity-60"
-      @click="toggle"
-    >
-      <span class="min-w-0 flex-1">
-        <span class="block text-base font-bold">{{ label }}</span>
+    <label :class="['flex min-h-11 items-center gap-3 py-1.5', locked ? 'cursor-not-allowed' : 'cursor-pointer']">
+      <span :class="['min-w-0 flex-1', locked && 'opacity-(--disabled-opacity)']">
+        <span :id="`${id}-l`" class="block text-base font-medium">{{ label }}</span>
         <span v-if="description" :id="`${id}-d`" class="text-muted-foreground block text-sm">{{ description }}</span>
       </span>
-      <span
-        :class="[
-          'relative h-7 w-12 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-6 after:rounded-full after:bg-white after:shadow after:transition-transform',
-          modelValue ? 'bg-primary-fill after:translate-x-5' : 'bg-strong',
-          busy && 'opacity-70',
-        ]"
-        aria-hidden="true"
+      <Switch
+        :model-value="modelValue"
+        :disabled="locked"
+        :busy="busy"
+        :aria-labelledby="`${id}-l`"
+        :aria-describedby="description ? `${id}-d` : undefined"
+        @update:model-value="toggle"
       />
-    </button>
-    <p v-if="error" class="text-destructive pt-1 text-sm font-semibold" role="alert">{{ error }}</p>
+    </label>
+    <p v-if="error" class="text-destructive pt-1 text-sm font-medium" role="alert">{{ error }}</p>
   </div>
 </template>

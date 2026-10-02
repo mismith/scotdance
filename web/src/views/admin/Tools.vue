@@ -2,7 +2,9 @@
 import { onScopeDispose, reactive, ref } from 'vue'
 import { onValue } from 'firebase/database'
 import { httpsCallable } from 'firebase/functions'
-import { LoaderCircle, Play } from '@lucide/vue'
+import { Play } from '@lucide/vue'
+import Button from '@/components/ui/Button.vue'
+import SectionHeader from '@/components/admin/SectionHeader.vue'
 import TextField from '@/components/admin/TextField.vue'
 import { dataRef, functions } from '@/firebase'
 import { write } from '@/lib/admin/write'
@@ -104,8 +106,8 @@ for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`ag
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl space-y-10 p-4 pb-[calc(3rem+var(--safe-bottom))] md:p-8">
-    <h1 class="text-display">Tools</h1>
+  <div class="max-w-3xl space-y-10 p-4 pb-[calc(3rem+var(--safe-bottom))]">
+    <SectionHeader title="Tools" />
 
     <section class="space-y-4">
       <div>
@@ -124,16 +126,16 @@ for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`ag
         <h2 class="text-heading">Search</h2>
         <p class="text-muted-foreground text-sm">Rebuild a search index if results look out of date.</p>
       </div>
-      <ul class="bg-card divide-y rounded-2xl border shadow-sm">
-        <li v-for="r in REINDEX" :key="r.key" class="flex flex-wrap items-center gap-3 px-4 py-3">
+      <ul class="surface divide-y rounded-2xl">
+        <li v-for="r in REINDEX" :key="r.key" class="flex flex-wrap items-center gap-3 py-2 pr-2 pl-4">
           <span class="min-w-0 flex-1">
-            <span class="block text-base font-semibold">{{ r.label }}</span>
+            <span class="block text-base font-medium">{{ r.label }}</span>
             <span v-if="job(r.key).result" class="text-done-foreground block text-sm">{{ job(r.key).result }}</span>
-            <span v-if="job(r.key).error" class="text-destructive block text-sm font-semibold">{{ job(r.key).error }}</span>
+            <span v-if="job(r.key).error" class="text-destructive block text-sm font-medium">{{ job(r.key).error }}</span>
           </span>
-          <button type="button" :disabled="job(r.key).running" class="hover:bg-accent flex h-10 items-center gap-1.5 rounded-xl border px-3 text-sm font-bold disabled:opacity-50" @click="run(r.key, r.fn)">
-            <LoaderCircle v-if="job(r.key).running" class="size-4 animate-spin" /><Play v-else class="size-4" /> Rebuild
-          </button>
+          <Button :busy="job(r.key).running" @click="run(r.key, r.fn)">
+            <Play v-if="!job(r.key).running" /> Rebuild
+          </Button>
         </li>
       </ul>
     </section>
@@ -143,18 +145,14 @@ for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`ag
         <h2 class="text-heading">Profiles</h2>
         <p class="text-muted-foreground text-sm">Rebuild the profiles that link people and venues across competitions. Run step 1, then step 2.</p>
       </div>
-      <ul class="bg-card divide-y rounded-2xl border shadow-sm">
+      <ul class="surface divide-y rounded-2xl">
         <li v-for="p in PROFILES" :key="p.key" class="space-y-2 px-4 py-3">
-          <p class="text-base font-bold">{{ p.label }}</p>
+          <p class="text-base font-medium">{{ p.label }}</p>
           <div class="flex flex-wrap gap-2">
-            <button type="button" :disabled="job(`agg${p.key}`).running" class="hover:bg-accent flex h-10 items-center gap-1.5 rounded-xl border px-3 text-sm font-bold disabled:opacity-50" @click="run(`agg${p.key}`, `backfill${p.key}Aggregates`)">
-              <LoaderCircle v-if="job(`agg${p.key}`).running" class="size-4 animate-spin" /> 1. Build profiles
-            </button>
-            <button type="button" :disabled="job(`bp${p.key}`).running" class="hover:bg-accent flex h-10 items-center gap-1.5 rounded-xl border px-3 text-sm font-bold disabled:opacity-50" @click="run(`bp${p.key}`, `backfill${p.key}BackPointers`)">
-              <LoaderCircle v-if="job(`bp${p.key}`).running" class="size-4 animate-spin" /> 2. Link entries
-            </button>
+            <Button :busy="job(`agg${p.key}`).running" @click="run(`agg${p.key}`, `backfill${p.key}Aggregates`)">1. Build profiles</Button>
+            <Button :busy="job(`bp${p.key}`).running" @click="run(`bp${p.key}`, `backfill${p.key}BackPointers`)">2. Link entries</Button>
           </div>
-          <p v-for="k in [`agg${p.key}`, `bp${p.key}`]" :key="k" :class="['text-sm', jobs[k]?.error ? 'text-destructive font-semibold' : 'text-done-foreground']">
+          <p v-for="k in [`agg${p.key}`, `bp${p.key}`]" :key="k" :class="['text-sm', jobs[k]?.error ? 'text-destructive font-medium' : 'text-done-foreground']">
             {{ jobs[k]?.error ?? jobs[k]?.result ?? '' }}
           </p>
         </li>
@@ -167,16 +165,14 @@ for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`ag
         <p class="text-muted-foreground text-sm">Looks up the map position of competitions that don’t have one yet. Try a dry run first to see what it would change.</p>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button type="button" :disabled="job('coords').running" class="hover:bg-accent flex h-10 items-center gap-1.5 rounded-xl border px-3 text-sm font-bold disabled:opacity-50" @click="run('coords', 'backfillCoords', { dryRun: true })">Dry run</button>
-        <button type="button" :disabled="job('coords').running" class="bg-primary-fill text-primary-foreground flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-bold disabled:opacity-50" @click="run('coords', 'backfillCoords', { dryRun: false })">
-          <LoaderCircle v-if="job('coords').running" class="size-4 animate-spin" /> Update positions
-        </button>
+        <Button :disabled="job('coords').running" @click="run('coords', 'backfillCoords', { dryRun: true })">Dry run</Button>
+        <Button variant="primary" :busy="job('coords').running" @click="run('coords', 'backfillCoords', { dryRun: false })">Update positions</Button>
       </div>
       <p v-if="job('coords').result" class="text-done-foreground text-sm">{{ job('coords').result }}</p>
       <ul v-if="job('coords').samples?.length" class="text-muted-foreground list-disc space-y-0.5 pl-5 text-sm">
         <li v-for="(line, i) in job('coords').samples" :key="i">{{ line }}</li>
       </ul>
-      <p v-if="job('coords').error" class="text-destructive text-sm font-semibold">{{ job('coords').error }}</p>
+      <p v-if="job('coords').error" class="text-destructive text-sm font-medium">{{ job('coords').error }}</p>
     </section>
   </div>
 </template>

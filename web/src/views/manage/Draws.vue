@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { VueDraggable } from 'vue-draggable-plus'
 import { ArrowDown01, GripVertical, Shuffle, Trash2, UsersRound } from '@lucide/vue'
 import EmptyState from '@/components/EmptyState.vue'
+import Button from '@/components/ui/Button.vue'
+import SectionHeader from '@/components/admin/SectionHeader.vue'
 import { useManagedCompetition, compareNumbers, type MDance } from '@/composables/admin/useManagedCompetition'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
@@ -84,11 +86,17 @@ async function clearAll() {
   await saveDraws(updates, 'Cleared all draws')
 }
 
-function onEnd(d: MDance, e: { oldIndex?: number; newIndex?: number }) {
+async function onEnd(d: MDance, e: { oldIndex?: number; newIndex?: number }) {
+  // The drop is already in place: let the list settle before it glides again.
+  await nextTick()
   dragging.value = false
   if (e.oldIndex === e.newIndex) return
   void saveDraws({ [path(d.id)]: lists.value[d.id] })
 }
+
+// Rows are keyed by number (and which time it appears, for an old draw that
+// has one twice), so a shuffle is seen to shuffle.
+const keyAt = (list: string[], i: number) => `${list[i]}#${list.slice(0, i).filter((n) => n === list[i]).length}`
 
 const missing = (danceId: string) => {
   const set = new Set(stored(danceId))
@@ -105,55 +113,44 @@ const anyDraws = computed(() => dances.value.some((d) => stored(d.id).length))
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl space-y-6 p-4 pb-[calc(3rem+var(--safe-bottom))] md:p-8">
+  <div class="max-w-3xl space-y-6 p-4 pb-[calc(3rem+var(--safe-bottom))]">
     <EmptyState v-if="!group" :icon="UsersRound" title="This age group isn’t here any more" />
     <template v-else>
-      <header class="space-y-1">
-        <p class="text-muted-foreground text-sm font-bold">{{ group.label }} · {{ dancers.length }} dancers</p>
-        <h1 class="text-display">Draws</h1>
-        <p class="text-muted-foreground text-base">The order dancers go up in each dance. Optional: leave it empty if there’s no draw.</p>
-      </header>
+      <SectionHeader
+        title="Draws"
+        :kicker="`${group.label} · ${dancers.length} ${dancers.length === 1 ? 'dancer' : 'dancers'}`"
+        description="The order dancers go up in each dance. Optional: leave it empty if there’s no draw."
+      />
 
       <EmptyState v-if="!dances.length" :icon="UsersRound" title="No dances for this age group" description="Choose its dances first, on the age group’s page." />
       <EmptyState v-else-if="!numbers.length" :icon="UsersRound" title="No dancers yet" description="Add dancers with numbers to this age group first." />
 
       <template v-else>
-        <div class="flex flex-wrap gap-2">
-          <button type="button" :disabled="!canEdit" class="bg-primary-fill text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50" @click="shuffleAll">
-            <Shuffle class="size-4" /> Shuffle every dance
-          </button>
-          <button
-            v-if="anyDraws"
-            type="button"
-            :disabled="!canEdit"
-            class="text-destructive hover:bg-destructive/10 flex h-11 items-center gap-1.5 rounded-xl px-3 text-[0.9375rem] font-bold disabled:opacity-50"
-            @click="clearAll"
-          >
-            <Trash2 class="size-4" /> Clear all
-          </button>
+        <div class="space-y-2">
+          <div class="flex flex-wrap gap-2">
+            <Button variant="primary" :disabled="!canEdit" @click="shuffleAll">
+              <Shuffle /> Shuffle every dance
+            </Button>
+            <Button v-if="anyDraws" variant="plain" class="text-destructive!" :disabled="!canEdit" @click="clearAll">
+              <Trash2 /> Clear all
+            </Button>
+          </div>
+          <p class="text-muted-foreground text-sm">Reels keep number order when shuffling every dance, since they’re danced together.</p>
         </div>
-        <p class="text-muted-foreground text-sm">Reels keep number order when shuffling every dance, since they’re danced together.</p>
 
-        <section v-for="d in dances" :key="d.id" class="bg-card space-y-3 rounded-2xl border p-4 shadow-sm">
+        <section v-for="d in dances" :key="d.id" class="surface space-y-3 rounded-2xl p-4">
           <div class="flex flex-wrap items-center gap-2">
             <h2 class="text-heading w-full sm:w-auto sm:min-w-0 sm:flex-1">{{ d.label }}</h2>
-            <button type="button" :disabled="!canEdit" class="hover:bg-accent flex h-10 items-center gap-1.5 rounded-xl border px-3 text-sm font-bold disabled:opacity-50" @click="shuffleOne(d)">
-              <Shuffle class="size-4" /> Shuffle
-            </button>
-            <button type="button" :disabled="!canEdit" class="hover:bg-accent flex h-10 items-center gap-1.5 rounded-xl border px-3 text-sm font-bold disabled:opacity-50" @click="numberOrder(d)">
-              <ArrowDown01 class="size-4" /> By number
-            </button>
-            <button v-if="stored(d.id).length" type="button" :disabled="!canEdit" class="text-destructive hover:bg-destructive/10 flex h-10 items-center rounded-xl px-3 text-sm font-bold disabled:opacity-50" @click="clearOne(d)">
-              Clear
-            </button>
+            <Button :disabled="!canEdit" @click="shuffleOne(d)"><Shuffle /> Shuffle</Button>
+            <Button :disabled="!canEdit" @click="numberOrder(d)"><ArrowDown01 /> By number</Button>
+            <Button v-if="stored(d.id).length" variant="plain" class="text-destructive!" :disabled="!canEdit" @click="clearOne(d)">Clear</Button>
           </div>
 
           <p v-if="!stored(d.id).length" class="text-muted-foreground text-sm">No draw set.</p>
           <VueDraggable
             v-else
             v-model="lists[d.id]"
-            tag="ol"
-            class="gap-x-1.5 sm:columns-2"
+            target=".sort-target"
             handle="[data-handle]"
             :disabled="!canEdit"
             :animation="150"
@@ -161,31 +158,39 @@ const anyDraws = computed(() => dances.value.some((d) => stored(d.id).length))
             @start="dragging = true"
             @end="onEnd(d, $event)"
           >
-            <li
-              v-for="(n, i) in lists[d.id]"
-              :key="`${n}-${i}`"
-              :class="[
-                'mb-1.5 flex min-h-11 break-inside-avoid items-center gap-2 rounded-xl border pr-2',
-                byNumber.has(n) ? 'bg-background' : 'bg-destructive/10 border-destructive/40',
-              ]"
+            <!-- A shuffle deals the rows out one after another. -->
+            <TransitionGroup
+              tag="ol"
+              class="sort-target gap-x-6 sm:columns-2"
+              :move-class="dragging ? undefined : 'transition-transform duration-[450ms] ease-snappy delay-[calc(var(--i)*12ms)] motion-reduce:transition-none'"
             >
-              <!-- Drag by the handle only, so swiping the list on a phone scrolls it. -->
-              <span data-handle class="text-muted-foreground flex h-11 w-8 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing" aria-hidden="true">
-                <GripVertical class="size-4" />
-              </span>
-              <span class="text-muted-foreground w-6 shrink-0 text-right text-sm font-semibold tabular-nums">{{ i + 1 }}</span>
-              <span class="bg-paper text-paper-ink min-w-10 rounded-md border px-1.5 py-0.5 text-center font-mono text-sm font-semibold">{{ n }}</span>
-              <span class="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold">{{ byNumber.get(n)?.label ?? 'Not in this age group' }}</span>
-            </li>
+              <li
+                v-for="(n, i) in lists[d.id]"
+                :key="keyAt(lists[d.id], i)"
+                :style="{ '--i': i }"
+                :class="[
+                  'flex min-h-11 break-inside-avoid items-center gap-2 border-b pr-1 last:border-b-0',
+                  !byNumber.has(n) && 'text-destructive',
+                ]"
+              >
+                <!-- Drag by the handle only, so swiping the list on a phone scrolls it. -->
+                <span data-handle class="text-muted-foreground flex h-11 w-8 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing" aria-hidden="true">
+                  <GripVertical class="size-4" />
+                </span>
+                <span class="text-muted-foreground w-6 shrink-0 text-right text-sm tabular-nums">{{ i + 1 }}</span>
+                <span class="bg-paper text-paper-ink min-w-10 rounded-md border px-1.5 py-0.5 text-center font-mono text-sm font-semibold">{{ n }}</span>
+                <span class="min-w-0 flex-1 truncate text-callout font-medium">{{ byNumber.get(n)?.label ?? 'Not in this age group' }}</span>
+              </li>
+            </TransitionGroup>
           </VueDraggable>
 
-          <div v-if="stored(d.id).length && missing(d.id).length" class="bg-next text-next-foreground flex flex-wrap items-center gap-2 rounded-xl p-3 text-sm">
-            <span class="min-w-0 flex-1 font-semibold">Not in this draw: {{ missing(d.id).join(', ') }}</span>
-            <button type="button" :disabled="!canEdit" class="h-9 rounded-lg px-3 font-bold underline-offset-2 hover:underline" @click="addMissing(d)">Add to the end</button>
+          <div v-if="stored(d.id).length && missing(d.id).length" class="bg-next text-next-foreground flex flex-wrap items-center gap-x-2 rounded-xl py-1 pr-1 pl-3 text-sm">
+            <span class="min-w-0 flex-1 py-2 font-medium">Not in this draw: {{ missing(d.id).join(', ') }}</span>
+            <Button variant="plain" class="text-next-foreground! underline-offset-2 hover:underline" :disabled="!canEdit" @click="addMissing(d)">Add to the end</Button>
           </div>
-          <div v-if="strays(d.id).length" class="bg-destructive/10 text-destructive flex flex-wrap items-center gap-2 rounded-xl p-3 text-sm">
-            <span class="min-w-0 flex-1 font-semibold">{{ strays(d.id).join(', ') }} {{ strays(d.id).length === 1 ? 'isn’t' : 'aren’t' }} in this age group any more.</span>
-            <button type="button" :disabled="!canEdit" class="h-9 rounded-lg px-3 font-bold underline-offset-2 hover:underline" @click="removeStrays(d)">Take out</button>
+          <div v-if="strays(d.id).length" class="bg-destructive/10 text-destructive flex flex-wrap items-center gap-x-2 rounded-xl py-1 pr-1 pl-3 text-sm">
+            <span class="min-w-0 flex-1 py-2 font-medium">{{ strays(d.id).join(', ') }} {{ strays(d.id).length === 1 ? 'isn’t' : 'aren’t' }} in this age group any more.</span>
+            <Button variant="plain" class="text-destructive! underline-offset-2 hover:underline" :disabled="!canEdit" @click="removeStrays(d)">Take out</Button>
           </div>
         </section>
       </template>

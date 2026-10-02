@@ -1,5 +1,6 @@
 <script setup lang="ts">
-// Where a dragged item will land: a line with a dot at its start.
+// Where a dragged item will land: a line with a dot at its start. Moved by
+// a transform, it glides from gap to gap.
 withDefaults(defineProps<{ orientation?: 'horizontal' | 'vertical' }>(), {
   orientation: 'horizontal',
 })
@@ -8,7 +9,7 @@ withDefaults(defineProps<{ orientation?: 'horizontal' | 'vertical' }>(), {
 <template>
   <div
     :class="[
-      'bg-primary-fill outline-background relative z-10 outline-1',
+      'bg-primary-fill outline-background pointer-events-none absolute top-0 z-10 outline-1 transition-transform duration-(--dur-quick) ease-snappy motion-reduce:transition-none',
       orientation === 'vertical' ? 'w-0.5' : 'h-0.5',
     ]"
     aria-hidden="true"

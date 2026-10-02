@@ -166,6 +166,10 @@ const event = (page: Page, name: string) =>
     })
 const confirmDialog = (page: Page) => page.locator('dialog[open]')
 
+/** The menu has shrunk back into its button: the page takes taps again. */
+const settled = (page: Page) =>
+  page.waitForFunction(() => !document.querySelector('dialog[open]') && !document.documentElement.matches(':active-view-transition'))
+
 async function addSession(page: Page, name: string, custom = false) {
   await page.getByRole('button', { name: 'Add session' }).click()
   if (custom) {
@@ -174,6 +178,7 @@ async function addSession(page: Page, name: string, custom = false) {
   } else await page.getByRole('option', { name, exact: true }).click()
   await page.keyboard.press('Escape')
   await expect(session(page, name)).toBeVisible()
+  await settled(page)
 }
 
 async function addEvent(page: Page, sessionName: string, name: string) {
@@ -181,6 +186,7 @@ async function addEvent(page: Page, sessionName: string, name: string) {
   await page.getByRole('option', { name, exact: true }).click()
   await page.keyboard.press('Escape')
   await expect(event(page, name)).toBeVisible()
+  await settled(page)
 }
 
 /** Let page transitions finish (for screenshots). */
@@ -486,6 +492,8 @@ test('keyboard only: add, rename, autofill, delete and move with keys', async ({
   // Add two sessions from the keyboard.
   await page.getByRole('button', { name: 'Add session' }).focus()
   await page.keyboard.press('Enter')
+  // (Once it has grown out of the button, the keyboard is in its field.)
+  await expect(page.getByRole('textbox', { name: 'Session name…' })).toBeFocused()
   await page.keyboard.type('Morning')
   await page.keyboard.press('Enter')
   await page.keyboard.type('Late 🌙')
@@ -528,9 +536,11 @@ test('keyboard only: add, rename, autofill, delete and move with keys', async ({
 
   // Autofill one event from the keyboard: focus goes into the menu.
   await session(page, 'Morning').getByRole('button', { name: 'Add event' }).press('Enter')
+  await expect(page.getByRole('textbox', { name: 'Event name…' })).toBeFocused()
   await page.keyboard.type('Beginner')
   await page.keyboard.press('Enter')
   await page.keyboard.press('Escape')
+  await settled(page)
   await event(page, 'Beginner').getByRole('button', { name: 'Autofill' }).press('Enter')
   await expect(page.getByRole('menuitem', { name: 'Place Primary dances' })).toBeFocused()
   await page.getByRole('menuitem', { name: 'Place all dances' }).press('Enter')
@@ -967,4 +977,34 @@ test('legacy competitions read as before, on their day (read only)', async ({ pa
   await expect(page.getByRole('heading', { name: 'Morning' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Monday, July 2nd' })).toHaveCount(0)
   expect(errors).toEqual([])
+})
+
+test('on a phone, one platform at a time, and Add picks age groups and judges from a list', async ({
+  page,
+}, info) => {
+  test.skip(!isPhone(info), 'phone layout')
+  await set(dataPath('schedule'), seeded)
+  await page.goto(`/competitions/${comp.id}/manage/schedule`)
+  // Day 1's morning: Primary on A and B, in the first row (Highland Fling).
+  const platformB = comp.platforms[1]
+  const firstRow = () => event(page, 'Primary').locator('[data-row]').first()
+  await expect(firstRow().locator('[data-chip=group]')).toHaveCount(1)
+  // Platform B, then its cell's Add.
+  await page.getByRole('group', { name: 'Platform' }).getByRole('button', { name: 'B', exact: true }).click()
+  await firstRow().getByRole('button', { name: 'Add age groups or judges to Platform B' }).click()
+  const sheet = page.locator('dialog[open]')
+  // Already on A: it says so, and ticking it puts it on B too.
+  const under7 = sheet.getByRole('checkbox', { name: /^Primary Under 7/ })
+  await expect(under7).toContainText('On Platform A')
+  await under7.click()
+  await sheet.getByRole('checkbox', { name: /^Deborah Wardrope/ }).click()
+  await expect(sheet.getByRole('checkbox', { name: /^Deborah Wardrope/ })).toHaveAttribute('aria-checked', 'false')
+  await sheet.getByRole('checkbox', { name: /^Iain Fraser/ }).click()
+  await expect.poll(async () => {
+    const [[, day]] = sorted((await data<Schedule>('schedule')).days)
+    const [[, block]] = sorted(day.blocks)
+    const [[, ev]] = sorted(block.events)
+    const [[, row]] = sorted(ev.dances)
+    return row.platforms?.[platformB]
+  }).toEqual({ orderedGroupIds: [`${comp.id}-grp-01`, `${comp.id}-grp-00`], orderedJudgeIds: [`${comp.id}-judge-2`] })
 })

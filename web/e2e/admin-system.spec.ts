@@ -24,7 +24,7 @@ test('Users: find someone by email, let them manage a competition, then stop', a
   try {
     await signIn(page, sys.email)
     await page.goto('/admin/users')
-    await page.getByRole('searchbox', { name: 'Search people' }).fill(email.slice(0, 18))
+    await page.getByRole('searchbox', { name: 'Search users' }).fill(email.slice(0, 18))
     await page.getByRole('link', { name: /Morag Ross/ }).click()
     await expect(page).toHaveURL(new RegExp(`/admin/users/${person}$`))
     await expect(page.getByText('Competitions they manage')).toBeVisible()

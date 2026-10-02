@@ -4,6 +4,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { DnDProvider } from '@vue-dnd-kit/core'
 import { CalendarClock, EyeOff, Trash2 } from '@lucide/vue'
 import EmptyState from '@/components/EmptyState.vue'
+import Button from '@/components/ui/Button.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
 import SectionMenu from '@/components/admin/SectionMenu.vue'
 import BuilderPalette from '@/components/admin/schedule/BuilderPalette.vue'
@@ -85,14 +86,9 @@ const missing = computed(() =>
       title="The schedule is hidden"
       description="The competition page has no Schedule tab."
     >
-      <button
-        type="button"
-        :disabled="!canEdit"
-        class="bg-primary-fill text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50"
-        @click="hideTab.show()"
-      >
+      <Button variant="primary" :disabled="!canEdit" @click="hideTab.show()">
         Show the Schedule tab
-      </button>
+      </Button>
     </EmptyState>
   </div>
 
@@ -110,7 +106,7 @@ const missing = computed(() =>
           <template v-if="b.days.value.length" #actions>
             <SectionMenu v-slot="{ row, close }" label="More for the schedule">
               <button type="button" :class="row" :disabled="!canEdit" @click="close(); hideTab.hide()">
-                <EyeOff class="text-primary size-5 shrink-0" /> Hide the Schedule tab
+                <EyeOff /> Hide the Schedule tab
               </button>
             </SectionMenu>
           </template>
@@ -135,7 +131,7 @@ const missing = computed(() =>
             replace
             :aria-current="d.id === b.dayId.value ? 'page' : undefined"
             :class="[
-              'flex h-12 shrink-0 items-center border-b-2 px-3 text-[0.9375rem] font-bold',
+              'text-callout flex h-12 shrink-0 items-center border-b-2 px-3 font-semibold',
               d.id === b.dayId.value
                 ? 'border-primary text-primary'
                 : 'text-muted-foreground hover:text-foreground border-transparent',
@@ -163,14 +159,14 @@ const missing = computed(() =>
             :value="isoDate(day.date)"
             :aria-label="`Date of ${day.label}`"
             :disabled="b.readonly.value"
-            class="bg-card border-strong focus:border-primary h-11 rounded-xl border-2 px-3 text-base outline-none disabled:opacity-60"
+            class="field h-11 rounded-xl px-3 text-base disabled:opacity-(--disabled-opacity)"
             @change="setDayDate"
           />
           <button
             v-if="!b.readonly.value"
             type="button"
             :aria-label="`Delete ${day.label}`"
-            class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-auto flex size-11 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/day:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
+            class="press text-muted-foreground hover:text-destructive ml-auto flex size-11 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/day:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
             @click="removeDay"
           >
             <Trash2 class="size-4" />
@@ -184,7 +180,7 @@ const missing = computed(() =>
           <template v-for="(x, i) in missing" :key="x.route">
             <RouterLink
               :to="{ name: x.route, params: { competitionId: m.competitionId.value } }"
-              class="font-bold underline"
+              class="font-semibold underline"
               >{{ x.label }}</RouterLink
             >{{ i < missing.length - 2 ? ', ' : i === missing.length - 2 ? ' and ' : '' }}
           </template>

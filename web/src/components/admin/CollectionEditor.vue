@@ -2,21 +2,14 @@
 import { computed, nextTick, onBeforeUnmount, reactive, ref, shallowRef, watch, watchEffect } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { VueDraggable } from 'vue-draggable-plus'
-import {
-  Check,
-  CheckSquare,
-  ChevronRight,
-  GripVertical,
-  ListPlus,
-  Plus,
-  Search,
-  Square,
-  Trash2,
-  X,
-} from '@lucide/vue'
+import { ChevronRight, FileSpreadsheet, GripVertical, ListPlus, Plus, Trash2, X } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import Button from '@/components/ui/Button.vue'
+import Checkbox from '@/components/ui/Checkbox.vue'
 import MasterDetail from '@/components/admin/MasterDetail.vue'
+import MovingList from '@/components/admin/MovingList.vue'
+import SearchField from '@/components/admin/SearchField.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
 import SwipeRow from '@/components/admin/SwipeRow.vue'
 import TextField from '@/components/admin/TextField.vue'
@@ -29,11 +22,13 @@ import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import { LINK_PROBLEM, looksLikeLink, type CollectionItem, type CollectionSpec, type FieldSpec } from '@/lib/admin/collection'
 import { ALL_SECTIONS } from '@/lib/admin/sections'
+import { useMorph } from '@/lib/morph'
 
 // One editable list: search, select several to change or delete at once,
-// drag to reorder, swipe one left to delete it, add one (or many, from
-// presets or one after another), and edit the chosen item beside the list.
-// Every change saves straight away; deletes can be undone from the toast.
+// drag to reorder (or move from the keyboard), swipe one left to delete it,
+// add one (or many, from presets or one after another), and edit the chosen
+// item beside the list. Every change saves straight away; deletes can be
+// undone from the toast.
 
 const props = defineProps<{
   spec: CollectionSpec<T>
@@ -41,8 +36,8 @@ const props = defineProps<{
 }>()
 
 const slots = defineSlots<{
-  /** More ways to add (Import…), styled with `cls` to sit with the others. */
-  'list-actions'?: (p: { cls: string }) => unknown
+  /** More ways to add (Import…), as a Button of the given variant to sit with the others. */
+  'list-actions'?: (p: { variant: 'primary' | 'secondary' }) => unknown
   'detail-extra'?: (p: { item: T }) => unknown
   'list-intro'?: () => unknown
 }>()
@@ -59,6 +54,7 @@ const showDetail = computed(() => !!itemId.value)
 
 const itemRoute = (id: string) => ({ name: props.spec.route, params: { competitionId: m.competitionId.value, itemId: id } })
 const listRoute = computed(() => ({ name: props.spec.route, params: { competitionId: m.competitionId.value } }))
+const importRoute = computed(() => ({ name: 'manage.dancers.import', params: { competitionId: m.competitionId.value } }))
 
 // After adding or deleting, the page left behind (the add form, the deleted
 // item) mustn't stay in the history for the phone's Back to land on.
@@ -78,21 +74,28 @@ const filtered = computed(() => {
     normalised([props.spec.title(i), props.spec.subtitle?.(i) ?? '', props.spec.badge?.(i) ?? '', props.spec.searchText?.(i) ?? ''].join(' ')).includes(q),
   )
 })
+// A search swaps the whole list at once: that shouldn't animate row by row.
+const hushed = ref(false)
+watch(query, () => {
+  hushed.value = true
+  void nextTick(() => (hushed.value = false))
+})
 
 // --- Reordering (only while not searching or selecting)
 const order = shallowRef<T[]>([])
 const dragging = ref(false)
+/** Picked up from the keyboard: its id. */
+const lifted = ref<string | null>(null)
 watch(
   () => props.items,
   (items) => {
-    if (!dragging.value) order.value = [...items]
+    if (!dragging.value && !lifted.value) order.value = [...items]
   },
   { immediate: true },
 )
 const canReorder = computed(() => !!props.spec.sortable && !query.value.trim() && !selecting.value && canEdit.value)
 
-async function onDragEnd() {
-  dragging.value = false
+async function saveOrder() {
   const updates: Record<string, unknown> = {}
   order.value.forEach((item, index) => {
     if (item._order !== index) updates[`${props.spec.path}/${item.id}/_order`] = index
@@ -105,6 +108,63 @@ async function onDragEnd() {
     order.value = [...props.items]
     toast(friendlyError(e), { tone: 'error' })
   }
+}
+
+async function onDragEnd() {
+  // The drop is already in place: let the list settle before it glides again.
+  await nextTick()
+  dragging.value = false
+  await saveOrder()
+}
+
+// From the keyboard, like the schedule's chips: Space or Enter picks a row
+// up, the arrow keys move it, Space or Enter drops it, Escape puts it back.
+const announcement = ref('')
+let movingFocus = false
+function focusHandle(id: string) {
+  movingFocus = true
+  void nextTick(() => {
+    document.querySelector<HTMLElement>(`[data-handle-for="${CSS.escape(id)}"]`)?.focus()
+    movingFocus = false
+  })
+}
+async function onHandleKey(e: KeyboardEvent, item: T) {
+  const name = props.spec.title(item)
+  const at = order.value.findIndex((i) => i.id === item.id)
+  const place = (i: number) => `${i + 1} of ${order.value.length}`
+  if (e.key === ' ' || e.key === 'Enter') {
+    e.preventDefault()
+    if (lifted.value !== item.id) {
+      lifted.value = item.id
+      announcement.value = `Picked up ${name}, ${place(at)}. Use the arrow keys to move it, Space to drop it, Escape to put it back.`
+    } else {
+      lifted.value = null
+      announcement.value = `Dropped ${name} at ${place(at)}.`
+      await saveOrder()
+    }
+  } else if (lifted.value === item.id && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+    e.preventDefault()
+    const to = at + (e.key === 'ArrowUp' ? -1 : 1)
+    if (to < 0 || to >= order.value.length) return
+    const next = [...order.value]
+    next.splice(to, 0, ...next.splice(at, 1))
+    order.value = next
+    announcement.value = place(to)
+    focusHandle(item.id)
+  } else if (lifted.value === item.id && e.key === 'Escape') {
+    e.preventDefault()
+    e.stopPropagation()
+    putBack(item)
+  }
+}
+function putBack(item: T) {
+  lifted.value = null
+  order.value = [...props.items]
+  announcement.value = `${props.spec.title(item)} put back.`
+  focusHandle(item.id)
+}
+function onHandleBlur(item: T) {
+  if (!movingFocus && lifted.value === item.id) putBack(item)
 }
 
 // --- Selecting several
@@ -129,10 +189,15 @@ const root = document.documentElement.style
 watchEffect(() => root.setProperty('--toast-lift', selecting.value && selected.size ? '4.5rem' : '0px'))
 onBeforeUnmount(() => root.removeProperty('--toast-lift'))
 
+const bulkSheet = useMorph()
 const bulkField = ref<FieldSpec | null>(null)
+function openBulk(f: FieldSpec, e: Event) {
+  bulkField.value = f
+  void bulkSheet.show(e)
+}
 async function applyBulk(value: string | null) {
   const field = bulkField.value
-  bulkField.value = null
+  void bulkSheet.hide()
   if (!field) return
   const ids = [...selected]
   const updates: Record<string, unknown> = {}
@@ -295,22 +360,26 @@ async function submitDraft(another: boolean) {
 }
 
 // --- Presets
-const presetsOpen = ref(false)
+const presetsSheet = useMorph()
 const presetPicks = reactive(new Set<number>())
 const existingTitles = computed(() => new Set(props.items.map((i) => props.spec.title(i).trim().toLowerCase())))
 function presetTaken(index: number) {
   const p = props.spec.presets?.[index]
   return !!p && existingTitles.value.has(p.label.trim().toLowerCase())
 }
-function openPresets() {
+// Once added, a second tap while the sheet closes adds nothing more.
+let presetsTaken = false
+function openPresets(e: Event) {
   presetPicks.clear()
-  presetsOpen.value = true
+  presetsTaken = false
+  void presetsSheet.show(e)
 }
 async function addPresets() {
   const presets = props.spec.presets ?? []
   const picks = [...presetPicks].sort((a, b) => a - b)
-  presetsOpen.value = false
-  if (!picks.length) return
+  void presetsSheet.hide()
+  if (!picks.length || presetsTaken) return
+  presetsTaken = true
   let order = nextOrder()
   const updates: Record<string, unknown> = {}
   for (const i of picks) {
@@ -335,115 +404,71 @@ const countLabel = computed(() => {
 })
 const icon = computed(() => section.value?.icon ?? Plus)
 
-// Ways to add. Where there's a usual start (the common ones, or Import),
-// that's the main button and adding one at a time sits beside it.
-const hasStart = computed(() => !!props.spec.presets?.length || !!slots['list-actions'])
-const PRIMARY = 'bg-primary-fill text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50'
-const SECONDARY = 'bg-card border-strong hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold disabled:opacity-50'
+// Ways to add. Empty, the usual start (importing the dancers, the common
+// ones, or Import) is the main button; once there's a list, adding one more
+// is what's usual, so Add takes the tint.
+const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets?.length || !!slots['list-actions'])
 </script>
 
 <template>
-  <MasterDetail :show-detail="showDetail">
+  <!-- With nothing in it yet, one column: no blank pane beside an empty list. -->
+  <MasterDetail :show-detail="showDetail" :single="!items.length && !showDetail">
     <template #list>
       <div class="bg-background sticky top-(--chrome-top) z-10 border-b p-4 md:top-0">
         <SectionHeader :title="title" :count="items.length ? countLabel : null">
           <template v-if="items.length" #actions>
-            <button
-              type="button"
-              :aria-pressed="selecting"
-              :class="[
-                'h-11 rounded-xl px-3 text-[0.9375rem] font-bold',
-                selecting ? 'bg-primary-fill text-primary-foreground' : 'text-primary hover:bg-accent',
-              ]"
-              @click="toggleSelecting"
-            >
+            <Button variant="plain" class="-mr-3" :aria-pressed="selecting" @click="toggleSelecting">
               {{ selecting ? 'Done' : 'Select' }}
-            </button>
+            </Button>
           </template>
           <!-- Ways to add, the same on every tab: the usual start first (the
                common ones, or Import), then one at a time. While selecting,
                Select all takes their place, so nothing below moves. -->
           <div v-if="items.length && !selecting" class="flex flex-wrap gap-2">
-            <button v-if="spec.presets?.length" type="button" :disabled="!canEdit" :class="PRIMARY" @click="openPresets">
-              <ListPlus class="size-4" /> Add common {{ spec.plural }}
-            </button>
-            <slot name="list-actions" :cls="PRIMARY" />
-            <RouterLink
-              :to="itemRoute('new')"
-              :replace="split"
-              :aria-label="`Add ${spec.singular}`"
-              :class="[hasStart ? SECONDARY : PRIMARY, !canEdit && 'pointer-events-none opacity-50']"
-            >
-              <Plus class="size-4" /> Add
-            </RouterLink>
+            <Button v-if="spec.presets?.length" :disabled="!canEdit" @click="openPresets">
+              <ListPlus /> Add common {{ spec.plural }}
+            </Button>
+            <slot name="list-actions" variant="secondary" />
+            <Button variant="tonal" :to="itemRoute('new')" :replace="split" :aria-label="`Add ${spec.singular}`" :disabled="!canEdit">
+              <Plus /> Add
+            </Button>
           </div>
           <div v-else-if="selecting" class="flex items-center gap-2">
-            <button type="button" class="text-primary hover:bg-accent -ml-2 flex h-11 items-center gap-2 rounded-xl px-2 text-[0.9375rem] font-bold" @click="toggleAll">
-              <component :is="allFilteredSelected ? CheckSquare : Square" class="size-5" />
-              {{ allFilteredSelected ? 'Select none' : query ? 'Select all shown' : 'Select all' }}
-            </button>
-            <span class="text-muted-foreground ml-auto text-sm font-semibold tabular-nums">{{ selected.size }} selected</span>
+            <Button variant="plain" class="-ml-4" @click="toggleAll">
+              <Checkbox :checked="allFilteredSelected" />
+              <span class="ml-1">{{ allFilteredSelected ? 'Select none' : query ? 'Select all shown' : 'Select all' }}</span>
+            </Button>
+            <span class="text-muted-foreground ml-auto text-sm font-medium tabular-nums">{{ selected.size }} selected</span>
           </div>
-          <label v-if="items.length > 6" class="bg-card border-strong focus-within:border-primary flex h-11 items-center gap-2 rounded-xl border-2 px-3">
-            <Search class="text-muted-foreground size-4 shrink-0" />
-            <span class="sr-only">Search {{ spec.plural }}</span>
-            <input v-model="query" type="search" :placeholder="`Search ${spec.plural}`" class="min-w-0 flex-1 bg-transparent text-base outline-none" />
-            <button v-if="query" type="button" aria-label="Clear search" class="text-muted-foreground -mr-1 flex size-7 items-center justify-center rounded-full" @click="query = ''">
-              <X class="size-4" />
-            </button>
-          </label>
+          <SearchField v-if="items.length > 6" v-model="query" :label="`Search ${spec.plural}`" />
         </SectionHeader>
       </div>
 
-      <slot name="list-intro" />
+      <slot v-if="items.length" name="list-intro" />
 
       <!-- Empty: what it's for, and the ways to add some -->
       <EmptyState v-if="!items.length" :icon="icon" :title="`No ${spec.plural} yet`" :description="spec.emptyHint">
-        <button v-if="spec.presets?.length" type="button" :disabled="!canEdit" :class="PRIMARY" @click="openPresets">
-          <ListPlus class="size-4" /> Add common {{ spec.plural }}
-        </button>
-        <slot name="list-actions" :cls="PRIMARY" />
-        <RouterLink :to="itemRoute('new')" :replace="split" :class="[hasStart ? SECONDARY : PRIMARY, !canEdit && 'pointer-events-none opacity-50']">
-          <Plus class="size-4" /> Add {{ spec.singular }}
-        </RouterLink>
+        <Button v-if="spec.importFirst" variant="primary" :to="importRoute" :disabled="!canEdit">
+          <FileSpreadsheet /> Import dancers
+        </Button>
+        <Button v-if="spec.presets?.length" :variant="spec.importFirst ? 'secondary' : 'primary'" :disabled="!canEdit" @click="openPresets">
+          <ListPlus /> Add common {{ spec.plural }}
+        </Button>
+        <slot name="list-actions" variant="primary" />
+        <Button :variant="!hasStart ? 'primary' : spec.importFirst ? 'plain' : 'secondary'" :to="itemRoute('new')" :replace="split" :disabled="!canEdit">
+          <Plus /> Add {{ spec.singular }}
+        </Button>
       </EmptyState>
       <p v-else-if="!filtered.length" class="text-muted-foreground px-4 py-10 text-center text-base">
         Nothing matches “{{ query }}”.
       </p>
 
-      <!-- Selecting: rows become checkboxes, where the drag handles were -->
-      <ul v-else-if="selecting" :class="['divide-y', selected.size ? 'pb-24' : '']">
-        <li v-for="item in filtered" :key="item.id">
-          <button
-            type="button"
-            role="checkbox"
-            :aria-checked="selected.has(item.id)"
-            :class="['flex min-h-14 w-full items-center gap-3 py-2 pr-3 pl-2 text-left', selected.has(item.id) ? 'bg-blue-paper' : 'hover:bg-accent']"
-            @click="toggle(item.id)"
-          >
-            <span
-              :class="[
-                '-mr-1 flex size-6 shrink-0 items-center justify-center rounded-md border-2',
-                selected.has(item.id) ? 'bg-primary-fill border-primary text-primary-foreground' : 'border-strong',
-              ]"
-            >
-              <Check v-if="selected.has(item.id)" class="size-4" stroke-width="3" />
-            </span>
-            <span v-if="spec.badge" class="bg-paper text-paper-ink min-w-10 shrink-0 rounded-md border px-1.5 py-0.5 text-center font-mono text-sm font-semibold tabular-nums">{{ spec.badge(item) || '–' }}</span>
-            <span class="min-w-0 flex-1">
-              <span class="block truncate text-base font-semibold">{{ spec.title(item) }}</span>
-              <span v-if="spec.subtitle?.(item)" class="text-muted-foreground block truncate text-sm">{{ spec.subtitle(item) }}</span>
-            </span>
-          </button>
-        </li>
-      </ul>
-
-      <!-- Normal: rows open the item, swipe left to delete; drag handles when reordering is possible -->
+      <!-- Rows open the item (or, while selecting, tick it); swipe one left
+           to delete it; drag, or move from the keyboard, by the grip. -->
       <VueDraggable
         v-else
         v-model="order"
-        tag="ul"
-        class="divide-y"
+        target=".sort-target"
         handle="[data-handle]"
         :disabled="!canReorder"
         :animation="150"
@@ -451,65 +476,90 @@ const SECONDARY = 'bg-card border-strong hover:bg-accent flex h-11 items-center 
         @start="dragging = true"
         @end="onDragEnd"
       >
-        <li v-for="item in canReorder ? order : filtered" :key="item.id">
-          <!-- The row's background and focus ring take in the handle too. -->
-          <SwipeRow
-            :disabled="!canEdit"
-            :remove="() => remove([item.id], true)"
-            :class="[
-              'has-focus-visible:outline-ring flex items-stretch has-focus-visible:outline-3 has-focus-visible:-outline-offset-3',
-              itemId === item.id ? 'bg-blue-paper' : 'bg-background hover:bg-accent',
-            ]"
-          >
-            <span
-              v-if="canReorder"
-              data-handle
-              class="text-muted-foreground flex w-10 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
-              :aria-label="`Drag to reorder ${spec.title(item)}`"
+        <MovingList :still="dragging || hushed" :class="['sort-target divide-y', selecting && selected.size && 'pb-24']">
+          <li v-for="item in canReorder ? order : filtered" :key="item.id">
+            <!-- The row's tint and focus ring take in the grip too. -->
+            <SwipeRow
+              :disabled="!canEdit || selecting"
+              :remove="() => remove([item.id], true)"
+              :class="[
+                'has-focus-visible:outline-ring flex items-stretch has-focus-visible:outline-3 has-focus-visible:-outline-offset-3',
+                lifted === item.id
+                  ? 'surface-raised z-1'
+                  : ['press-row', itemId === item.id || (selecting && selected.has(item.id)) ? 'bg-blue-paper' : 'bg-background'],
+              ]"
             >
-              <GripVertical class="size-5" />
-            </span>
-            <RouterLink
-              :to="itemRoute(item.id)"
-              :replace="split"
-              :aria-current="itemId === item.id ? 'true' : undefined"
-              :class="['flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 pr-3 focus-visible:outline-none', canReorder ? 'pl-0' : 'pl-4']"
-            >
-              <span v-if="spec.badge" class="bg-paper text-paper-ink min-w-10 shrink-0 rounded-md border px-1.5 py-0.5 text-center font-mono text-sm font-semibold tabular-nums">{{ spec.badge(item) || '–' }}</span>
-              <span class="min-w-0 flex-1">
-                <span class="block truncate text-base font-semibold">{{ spec.title(item) }}</span>
-                <span v-if="spec.subtitle?.(item)" class="text-muted-foreground block truncate text-sm">{{ spec.subtitle(item) }}</span>
+              <!-- The leading edge: a grip where the list can be reordered, else a margin. -->
+              <span :class="['flex shrink-0 overflow-hidden transition-[width] duration-(--dur-base) ease-standard', canReorder ? 'w-10' : 'w-4']">
+                <button
+                  v-if="canReorder"
+                  type="button"
+                  data-handle
+                  :data-handle-for="item.id"
+                  :aria-label="`Move ${spec.title(item)}`"
+                  :aria-pressed="lifted === item.id"
+                  class="text-muted-foreground flex w-10 shrink-0 cursor-grab touch-none items-center justify-center focus-visible:outline-none active:cursor-grabbing"
+                  @keydown="onHandleKey($event, item)"
+                  @blur="onHandleBlur(item)"
+                >
+                  <GripVertical class="size-5" />
+                </button>
               </span>
-              <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
-            </RouterLink>
-          </SwipeRow>
-        </li>
+              <!-- Selecting: a tick box grows in where the grip was. -->
+              <span
+                aria-hidden="true"
+                :class="[
+                  'flex shrink-0 items-center overflow-hidden transition-[width,opacity] duration-(--dur-base) ease-standard',
+                  selecting ? 'w-[2.125rem] opacity-100' : 'w-0 opacity-0',
+                ]"
+              >
+                <Checkbox :checked="selected.has(item.id)" />
+              </span>
+              <component
+                :is="selecting ? 'button' : RouterLink"
+                v-bind="
+                  selecting
+                    ? { type: 'button', role: 'checkbox', 'aria-checked': selected.has(item.id), onClick: () => toggle(item.id) }
+                    : { to: itemRoute(item.id), replace: split, 'aria-current': itemId === item.id ? 'true' : undefined }
+                "
+                :class="[
+                  'flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 pr-3 text-left focus-visible:outline-none',
+                  // The whole row is the tick box's target.
+                  selecting && 'after:absolute after:inset-0',
+                ]"
+              >
+                <span v-if="spec.badge" class="bg-paper text-paper-ink min-w-10 shrink-0 rounded-md border px-1.5 py-0.5 text-center font-mono text-sm font-semibold tabular-nums">{{ spec.badge(item) || '–' }}</span>
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate text-base font-medium">{{ spec.title(item) }}</span>
+                  <span v-if="spec.subtitle?.(item)" class="text-muted-foreground block truncate text-sm">{{ spec.subtitle(item) }}</span>
+                </span>
+                <ChevronRight v-if="!selecting" class="text-muted-foreground size-5 shrink-0 md:hidden" />
+              </component>
+            </SwipeRow>
+          </li>
+        </MovingList>
       </VueDraggable>
+      <p class="sr-only" aria-live="assertive">{{ announcement }}</p>
 
-      <!-- Bulk actions -->
-      <div
-        v-if="selecting && selected.size"
-        class="glass fixed inset-x-3 bottom-[calc(var(--safe-bottom)+0.75rem)] z-20 flex flex-wrap items-center gap-2 rounded-2xl p-2 md:sticky md:inset-x-auto md:bottom-3 md:mx-3"
+      <!-- Bulk actions: up from the bottom once something's chosen -->
+      <Transition
+        enter-active-class="transition-[translate,opacity] duration-(--dur-slow) ease-snappy motion-reduce:transition-opacity"
+        enter-from-class="translate-y-[calc(100%+1.5rem)] opacity-0 motion-reduce:translate-y-0"
+        leave-active-class="transition-[translate,opacity] duration-(--dur-quick) ease-exit"
+        leave-to-class="translate-y-[calc(100%+1.5rem)] opacity-0 motion-reduce:translate-y-0"
       >
-        <button
-          v-for="f in bulkFields"
-          :key="f.key"
-          type="button"
-          :disabled="!canEdit"
-          class="bg-card hover:bg-accent h-11 rounded-xl border px-3 text-[0.9375rem] font-bold disabled:opacity-50"
-          @click="bulkField = f"
+        <div
+          v-if="selecting && selected.size"
+          class="glass fixed inset-x-3 bottom-[calc(var(--safe-bottom)+0.75rem)] z-20 flex flex-wrap items-center gap-2 rounded-2xl p-2 md:sticky md:inset-x-auto md:bottom-3 md:mx-3"
         >
-          Set {{ f.label.toLowerCase() }}
-        </button>
-        <button
-          type="button"
-          :disabled="!canEdit"
-          class="text-destructive bg-card hover:bg-destructive/10 ml-auto flex h-11 items-center gap-1.5 rounded-xl border px-3 text-[0.9375rem] font-bold disabled:opacity-50"
-          @click="remove([...selected])"
-        >
-          <Trash2 class="size-4" /> Delete {{ selected.size }}
-        </button>
-      </div>
+          <Button v-for="f in bulkFields" :key="f.key" :disabled="!canEdit" @click="openBulk(f, $event)">
+            Set {{ f.label.toLowerCase() }}
+          </Button>
+          <Button variant="destructive" class="ml-auto" :disabled="!canEdit" @click="remove([...selected])">
+            <Trash2 /> Delete {{ selected.size }}
+          </Button>
+        </div>
+      </Transition>
     </template>
 
     <template #empty>
@@ -548,24 +598,19 @@ const SECONDARY = 'bg-card border-strong hover:bg-accent flex h-11 items-center 
           </div>
         </div>
         <div class="flex flex-col gap-2 sm:flex-row">
-          <button type="submit" :disabled="!canEdit || submitting" class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-5 text-base font-bold disabled:opacity-50">
+          <Button type="submit" variant="primary" size="lg" :disabled="!canEdit" :busy="submitting">
             Add {{ spec.singular }}
-          </button>
-          <button
-            type="button"
-            :disabled="!canEdit || submitting"
-            class="bg-card border-strong hover:bg-accent h-12 rounded-xl border px-5 text-base font-bold disabled:opacity-50"
-            @click="submitDraft(true)"
-          >
+          </Button>
+          <Button size="lg" :disabled="!canEdit || submitting" @click="submitDraft(true)">
             Add and add another
-          </button>
+          </Button>
         </div>
       </form>
 
       <!-- Editing -->
       <div v-else-if="current" :key="current.id" class="mx-auto max-w-2xl space-y-8 p-4 md:p-8">
         <header class="flex items-center gap-3">
-          <span v-if="spec.badge?.(current)" class="bg-paper text-paper-ink shrink-0 rounded-lg border px-2.5 py-1 font-mono text-xl font-semibold tabular-nums">{{ spec.badge(current) }}</span>
+          <span v-if="spec.badge?.(current)" class="bg-paper text-paper-ink shrink-0 rounded-lg border px-2.5 py-1 font-mono text-xl font-bold tabular-nums">{{ spec.badge(current) }}</span>
           <div class="min-w-0">
             <h2 class="text-display break-words">{{ spec.title(current) }}</h2>
             <p v-if="spec.subtitle?.(current)" class="text-muted-foreground text-base">{{ spec.subtitle(current) }}</p>
@@ -610,14 +655,9 @@ const SECONDARY = 'bg-card border-strong hover:bg-accent flex h-11 items-center 
         </div>
         <slot name="detail-extra" :item="current" />
         <footer class="border-t pt-6">
-          <button
-            type="button"
-            :disabled="!canEdit"
-            class="text-destructive hover:bg-destructive/10 flex h-11 items-center gap-2 rounded-xl px-3 text-[0.9375rem] font-bold disabled:opacity-50"
-            @click="remove([current.id])"
-          >
-            <Trash2 class="size-4" /> Delete {{ spec.singular }}
-          </button>
+          <Button variant="plain" class="text-destructive! -ml-4" :disabled="!canEdit" @click="remove([current.id])">
+            <Trash2 /> Delete {{ spec.singular }}
+          </Button>
         </footer>
       </div>
 
@@ -627,10 +667,10 @@ const SECONDARY = 'bg-card border-strong hover:bg-accent flex h-11 items-center 
   </MasterDetail>
 
   <!-- Presets -->
-  <Dialog :open="presetsOpen" variant="sheet" size="md" @close="presetsOpen = false">
+  <Dialog :open="presetsSheet.open" :morph="presetsSheet" variant="sheet" size="md" @close="presetsSheet.hide()">
     <template #header>
       <h2 class="text-title">Add common {{ spec.plural }}</h2>
-      <p class="text-muted-foreground text-sm">Use these where you can: they show what good data looks like and save time. You can rename them afterwards.</p>
+      <p class="text-muted-foreground text-sm">{{ spec.presetsLead ?? 'The usual ones. Rename them any time.' }}</p>
     </template>
     <ul class="divide-y">
       <li v-for="(p, i) in spec.presets" :key="i">
@@ -639,36 +679,34 @@ const SECONDARY = 'bg-card border-strong hover:bg-accent flex h-11 items-center 
           role="checkbox"
           :aria-checked="presetPicks.has(i)"
           :disabled="presetTaken(i)"
-          class="hover:bg-accent flex min-h-13 w-full items-center gap-3 px-4 py-2 text-left disabled:opacity-50"
+          class="press-row focus-inset flex min-h-13 w-full items-center gap-3 px-4 py-2 text-left disabled:opacity-(--disabled-opacity)"
           @click="presetPicks.has(i) ? presetPicks.delete(i) : presetPicks.add(i)"
         >
-          <span :class="['flex size-6 shrink-0 items-center justify-center rounded-md border-2', presetPicks.has(i) ? 'bg-primary-fill border-primary text-primary-foreground' : 'border-strong']">
-            <Check v-if="presetPicks.has(i)" class="size-4" stroke-width="3" />
-          </span>
-          <span class="min-w-0 flex-1 text-base font-semibold">{{ p.label }}</span>
-          <span v-if="presetTaken(i)" class="text-muted-foreground text-sm font-semibold">Added</span>
+          <Checkbox :checked="presetPicks.has(i) || presetTaken(i)" />
+          <span class="min-w-0 flex-1 text-base font-medium">{{ p.label }}</span>
+          <span v-if="presetTaken(i)" class="text-muted-foreground text-sm">Added</span>
         </button>
       </li>
     </ul>
     <div class="bg-card sticky bottom-0 border-t p-4 pb-[calc(1rem+var(--safe-bottom))]">
-      <button type="button" :disabled="!presetPicks.size" class="bg-primary-fill text-primary-foreground h-12 w-full rounded-xl text-base font-bold disabled:opacity-50" @click="addPresets">
+      <Button variant="primary" size="lg" block :disabled="!presetPicks.size" @click="addPresets">
         {{ presetPicks.size ? `Add ${presetPicks.size}` : 'Choose some to add' }}
-      </button>
+      </Button>
     </div>
   </Dialog>
 
   <!-- Bulk "Set …" -->
-  <Dialog :open="!!bulkField" variant="sheet" @close="bulkField = null">
+  <Dialog :open="bulkSheet.open" :morph="bulkSheet" variant="sheet" @close="bulkSheet.hide()">
     <template #header>
       <h2 class="text-title">Set {{ bulkField?.label.toLowerCase() }}</h2>
       <p class="text-muted-foreground text-sm">For {{ selected.size }} {{ selected.size === 1 ? spec.singular : spec.plural }}</p>
     </template>
     <ul class="divide-y pb-[var(--safe-bottom)]">
       <li v-if="!bulkField?.required">
-        <button type="button" class="hover:bg-accent flex min-h-13 w-full items-center px-4 text-left text-base font-semibold" @click="applyBulk(null)">None</button>
+        <button type="button" class="press-row focus-inset flex min-h-13 w-full items-center px-4 text-left text-base font-medium" @click="applyBulk(null)">None</button>
       </li>
       <li v-for="o in bulkField?.options?.() ?? []" :key="o.value">
-        <button type="button" class="hover:bg-accent flex min-h-13 w-full items-center px-4 py-2 text-left text-base font-semibold" @click="applyBulk(o.value)">
+        <button type="button" class="press-row focus-inset flex min-h-13 w-full items-center px-4 py-2 text-left text-base font-medium" @click="applyBulk(o.value)">
           {{ o.label }}
         </button>
       </li>

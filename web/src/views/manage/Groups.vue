@@ -79,6 +79,7 @@ const spec: CollectionSpec<MGroup> = {
   },
   defaults: (prev) => ({ categoryId: prev?.categoryId ?? '' }),
   presets: AGE_RANGES.map((name) => ({ label: name, values: { name } })),
+  importFirst: true,
   impact: (ids) => {
     const updates: Record<string, unknown> = {}
     const warnings: string[] = []
@@ -161,13 +162,13 @@ const items = computed(() => m.groups.value)
             <h3 class="text-heading">Dances</h3>
             <p class="text-muted-foreground text-sm">What this age group dances. Results and the schedule use this.</p>
           </div>
-          <label v-if="m.groups.value.length > 1" class="flex items-center gap-2 text-sm font-semibold">
+          <label v-if="m.groups.value.length > 1" class="flex items-center gap-2 text-sm font-medium">
             <span class="sr-only">Same dances as another age group</span>
             <span class="relative">
               <select
                 v-model="copyFrom"
                 :disabled="!canEdit"
-                class="bg-card border-strong h-10 max-w-56 appearance-none rounded-xl border pr-9 pl-3 text-[0.9375rem]"
+                class="field text-callout h-11 max-w-56 appearance-none rounded-xl pr-9 pl-3"
                 @change="sameAs(item.id)"
               >
                 <option value="">Same dances as…</option>
@@ -177,14 +178,14 @@ const items = computed(() => m.groups.value)
             </span>
           </label>
         </div>
-        <ul v-if="m.dances.value.length" class="bg-card divide-y rounded-2xl border px-4 shadow-sm">
-          <li v-for="d in m.dances.value" :key="d.id" class="py-2">
+        <ul v-if="m.dances.value.length" class="surface divide-y rounded-2xl px-4">
+          <li v-for="d in m.dances.value" :key="d.id" class="py-1">
             <SwitchField :model-value="!!d.groupIds?.[item.id]" :label="d.label" :save="(on) => setDance(item.id, d.id, on)" />
           </li>
         </ul>
         <p v-else class="text-muted-foreground text-base">
           No dances yet.
-          <RouterLink :to="{ name: 'manage.dances', params: { competitionId: m.competitionId.value } }" class="text-primary font-bold">Add dances</RouterLink>
+          <RouterLink :to="{ name: 'manage.dances', params: { competitionId: m.competitionId.value } }" class="text-primary font-semibold">Add dances</RouterLink>
         </p>
       </section>
 
@@ -192,11 +193,11 @@ const items = computed(() => m.groups.value)
         <h3 class="text-heading">Draws</h3>
         <RouterLink
           :to="{ name: 'manage.groups.draws', params: { competitionId: m.competitionId.value, itemId: item.id } }"
-          class="bg-card hover:bg-accent flex min-h-16 items-center gap-3 rounded-2xl border px-4 py-3 shadow-sm"
+          class="surface press-row focus-inset flex min-h-16 items-center gap-3 rounded-2xl px-4 py-3"
         >
           <span class="bg-blue-paper text-primary flex size-10 shrink-0 items-center justify-center rounded-xl"><Shuffle class="size-5" /></span>
           <span class="min-w-0 flex-1">
-            <span class="block text-base font-bold">Dancing order</span>
+            <span class="block text-base font-semibold">Dancing order</span>
             <span class="text-muted-foreground block text-sm">{{ drawSummary(item.id) }}</span>
           </span>
           <ChevronRight class="text-muted-foreground size-5" />

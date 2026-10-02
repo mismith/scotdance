@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useEventListener } from '@vueuse/core'
-import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
+import { RouterView, useRoute, useRouter } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
 import { CalendarX, Lock, LogIn } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
+import Button from '@/components/ui/Button.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import ManageMenu from '@/components/admin/ManageMenu.vue'
@@ -13,6 +14,7 @@ import SectionNav from '@/components/admin/SectionNav.vue'
 import { provideManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { useSidebar, useSplit } from '@/composables/admin/useWide'
 import { provideManageBack, viaHistory, type ManageBack } from '@/composables/admin/useManageBack'
+import { provideSectionTitle } from '@/composables/admin/useSectionTitle'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { ALL_SECTIONS } from '@/lib/admin/sections'
 import { historyState, redo, undo } from '@/lib/admin/history'
@@ -49,6 +51,8 @@ const access = computed<Access>(() => {
 
 const section = computed(() => ALL_SECTIONS.find((s) => route.matched.some((r) => r.name === s.route)))
 const isHome = computed(() => route.name === 'manage')
+// Entering results needs the width: the sidebar folds to its icons.
+const rail = computed(() => route.name === 'manage.results' && !!route.params.groupId)
 const name = computed(() => m.competition.value?.name || 'Competition')
 
 usePageTitle(() => [route.meta.title as string | undefined, section.value?.title, 'Manage', m.competition.value?.name])
@@ -130,13 +134,17 @@ const PUBLIC: Record<string, string> = {
 }
 const viewRoute = computed(() => ({ name: (section.value && PUBLIC[section.value.route]) || 'competition.info', params: { competitionId: competitionId.value } }))
 
-// The bar names where you are; the competition sits underneath.
+// The bar names where you are; the competition sits underneath, unless
+// Back already names it.
+const barSubtitle = computed(() => (access.value === 'ok' && up.value.label !== name.value ? name.value : null))
 const barTitle = computed(() => (isHome.value ? 'Manage' : ((route.meta.title as string | undefined) ?? section.value?.title ?? 'Manage')))
+// …once the page's own title has scrolled away (see useSectionTitle).
+const sectionTitle = provideSectionTitle()
 </script>
 
 <template>
   <div class="flex min-h-dvh flex-col md:fixed md:inset-0 md:min-h-0">
-    <AppBar wide :title="barTitle" :subtitle="access === 'ok' ? name : null" show-title :scrolled="true" :exit="exit" :competition-id="competitionId">
+    <AppBar wide :title="barTitle" :subtitle="barSubtitle" :show-title="sectionTitle.showInBar()" :scrolled="true" :exit="exit" :competition-id="competitionId">
       <template #actions>
         <template v-if="access === 'ok'">
           <SaveStatus />
@@ -159,9 +167,12 @@ const barTitle = computed(() => (isHome.value ? 'Manage' : ((route.meta.title as
     <div class="flex flex-1 pt-(--chrome-top) md:min-h-0 md:overflow-hidden">
       <aside
         v-if="sidebar && access === 'ok'"
-        class="bg-background w-68 shrink-0 overflow-y-auto border-r px-3 pt-4 pb-8"
+        :class="[
+          'bg-background shrink-0 overflow-x-hidden overflow-y-auto border-r pt-4 pb-8 transition-[width,padding] duration-(--dur-base) ease-snappy motion-reduce:transition-none',
+          rail ? 'w-16 px-2' : 'w-68 px-3',
+        ]"
       >
-        <SectionNav compact />
+        <SectionNav compact :rail="rail" />
       </aside>
 
       <main class="min-w-0 flex-1 md:overflow-y-auto">
@@ -178,9 +189,7 @@ const barTitle = computed(() => (isHome.value ? 'Manage' : ((route.meta.title as
             description="Organisers and the admins they invite can edit a competition after signing in."
           />
           <div class="flex justify-center">
-            <button type="button" class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-6 text-base font-bold" @click="auth.openLogin()">
-              Sign in
-            </button>
+            <Button variant="primary" size="lg" @click="auth.openLogin()">Sign in</Button>
           </div>
         </template>
         <template v-else-if="access === 'denied'">
@@ -190,9 +199,7 @@ const barTitle = computed(() => (isHome.value ? 'Manage' : ((route.meta.title as
             description="Ask one of its organisers to invite you. They can do it under Manage › Admins."
           />
           <div class="flex justify-center">
-            <RouterLink :to="{ name: 'competition.info', params: { competitionId } }" class="bg-card border-strong h-12 content-center rounded-xl border px-6 text-base font-bold">
-              Back to the competition
-            </RouterLink>
+            <Button size="lg" :to="{ name: 'competition.info', params: { competitionId } }">Back to the competition</Button>
           </div>
         </template>
         <EmptyState

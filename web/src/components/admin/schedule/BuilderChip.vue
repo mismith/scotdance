@@ -7,6 +7,8 @@ import { ACTIVATION, payload, useDragHandle, type DragData } from './drag'
 
 // A draggable block: a dance, age group, judge or spacer. The colour of the
 // bar down its side says which, everywhere it appears (palette and schedule).
+// With a mouse the whole chip drags, so its grip only shows on hover; on a
+// touch screen it drags by the grip, which always shows.
 
 const props = defineProps<{
   kind: 'dance' | 'group' | 'judge' | 'spacer'
@@ -46,10 +48,10 @@ const BAR = {
     :data-chip="kind === 'spacer' ? 'group' : kind"
     :title="title ?? label"
     :class="[
-      'group/chip has-[[data-grip]:focus-visible]:ring-ring hover:bg-accent flex min-h-8 min-w-0 cursor-grab items-center gap-0.5 rounded-lg border py-1 pr-1 pl-1 text-sm leading-tight font-semibold select-none active:cursor-grabbing has-[[data-grip]:focus-visible]:ring-2',
+      'group/chip has-[[data-grip]:focus-visible]:ring-ring hover:bg-accent flex min-h-8 min-w-0 cursor-grab items-center gap-0.5 rounded-lg py-1 pr-1 pl-1 text-sm leading-tight font-medium select-none active:cursor-grabbing has-[[data-grip]:focus-visible]:ring-2',
       kind === 'spacer'
-        ? 'text-muted-foreground border-strong border-dashed'
-        : 'bg-background',
+        ? 'text-muted-foreground border-strong border border-dashed'
+        : 'surface',
       isDragging && 'opacity-40',
     ]"
   >
@@ -64,7 +66,7 @@ const BAR = {
       :role="b.readonly.value ? undefined : 'button'"
       :aria-label="b.readonly.value ? undefined : `Move ${title ?? label}`"
       :aria-hidden="b.readonly.value || undefined"
-      class="text-muted-foreground flex shrink-0 touch-none items-center self-stretch px-0.5 outline-none pointer-coarse:px-1.5"
+      class="text-muted-foreground flex shrink-0 touch-none items-center self-stretch px-0.5 outline-none pointer-coarse:px-1.5 pointer-fine:opacity-0 pointer-fine:transition-opacity pointer-fine:group-hover/chip:opacity-100 pointer-fine:focus-visible:opacity-100"
     >
       <GripVertical class="size-3.5" />
     </span>
@@ -76,7 +78,7 @@ const BAR = {
       v-if="removable && !b.readonly.value"
       type="button"
       :aria-label="`Remove ${title ?? label}`"
-      class="text-muted-foreground hover:text-foreground hover:bg-foreground/10 -my-1 ml-0.5 flex size-7 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/chip:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
+      class="press text-muted-foreground hover:text-foreground hover:bg-foreground/10 relative -my-1 ml-0.5 flex size-7 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/chip:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
       @click.stop="emit('remove')"
       @pointerdown.stop
       @keydown.enter.stop

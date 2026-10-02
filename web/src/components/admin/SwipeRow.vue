@@ -127,20 +127,20 @@ function click(e: MouseEvent) {
       :class="[
         'bg-destructive-fill text-destructive-foreground absolute inset-y-0 right-0 flex items-center justify-center overflow-hidden',
         !following &&
-          'ease-rubber-band transition-[width] duration-300 motion-reduce:transition-none',
+          'ease-snappy transition-[width] duration-(--dur-slow) motion-reduce:transition-none',
       ]"
       :style="{ width: `${Math.max(0, -offset)}px` }"
     >
       <!-- Centred until past the line, then it jumps to the row's edge and grows. -->
       <span
         :class="[
-          'transition-[flex-grow] duration-200 ease-out motion-reduce:transition-none',
+          'ease-standard transition-[flex-grow] duration-(--dur-quick) motion-reduce:transition-none',
           armed ? 'grow-0' : 'grow',
         ]"
       />
       <span
         :class="[
-          'ease-rubber-band flex shrink-0 flex-col items-center gap-0.5 px-5 text-sm font-bold transition-transform duration-200 motion-reduce:transition-none',
+          'ease-elastic flex shrink-0 flex-col items-center gap-0.5 px-5 text-sm font-semibold transition-transform duration-(--dur-slow) motion-reduce:transition-none',
           armed && 'scale-120',
         ]"
       >
@@ -154,7 +154,8 @@ function click(e: MouseEvent) {
       :class="[
         'relative touch-pan-y touch-pinch-zoom',
         !following &&
-          'ease-rubber-band transition-transform duration-300 motion-reduce:transition-none',
+          // (box-shadow too: a pressed row's tint fades as it springs back.)
+          'ease-snappy transition-[transform,box-shadow] duration-(--dur-slow) motion-reduce:transition-none',
       ]"
       :style="offset ? { transform: `translateX(${offset}px)` } : undefined"
       @pointerdown="down"

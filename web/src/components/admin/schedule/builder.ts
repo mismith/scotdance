@@ -1,4 +1,4 @@
-import { computed, inject, provide, toRaw, type InjectionKey, type Ref } from 'vue'
+import { computed, inject, provide, ref, toRaw, type InjectionKey, type Ref } from 'vue'
 import { compareKeys } from '@/lib/competitionData'
 import { formatWeekday, parseDate } from '@/lib/format'
 import { dayLabel, idList, isSpacerId } from '@/lib/schedule'
@@ -185,6 +185,12 @@ export function createBuilder(m: ManagedCompetition, dayParam: Ref<string | unde
     ordered(dayId.value ? schedule.value.days?.[dayId.value]?.blocks : undefined),
   )
   const readonly = computed(() => !canEdit.value)
+  // On a phone the grid shows one platform at a time (null: all of them).
+  const platformView = ref<string | null>(null)
+  const shownPlatforms = computed(() => {
+    const one = platformView.value && m.platforms.value.find((p) => p.id === platformView.value)
+    return one ? [one] : m.platforms.value
+  })
 
   const groupsByCategory = computed(() => {
     const map = new Map<string, typeof m.groups.value>()
@@ -543,6 +549,8 @@ export function createBuilder(m: ManagedCompetition, dayParam: Ref<string | unde
     blocks,
     readonly,
     platforms: m.platforms,
+    platformView,
+    shownPlatforms,
     dances: m.dances,
     judges: m.judges,
     categories: m.categories,

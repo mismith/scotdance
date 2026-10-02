@@ -3,8 +3,10 @@ import { computed, onScopeDispose, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { onValue } from 'firebase/database'
 import { Check, ChevronRight, Inbox, LoaderCircle, Trash2 } from '@lucide/vue'
+import Button from '@/components/ui/Button.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import MasterDetail from '@/components/admin/MasterDetail.vue'
+import SectionHeader from '@/components/admin/SectionHeader.vue'
 import TextField from '@/components/admin/TextField.vue'
 import VenueField from '@/components/admin/VenueField.vue'
 import { useSplit } from '@/composables/admin/useWide'
@@ -105,46 +107,49 @@ async function remove(s: Submission) {
 </script>
 
 <template>
-  <MasterDetail :show-detail="!!id">
+  <MasterDetail :show-detail="!!id" :single="loaded && !items.length">
     <template #list>
-      <div class="space-y-3 p-4">
-        <h1 class="text-title">Submissions <span class="text-muted-foreground text-base font-semibold">{{ waiting ? `${waiting} waiting` : '' }}</span></h1>
-        <EmptyState v-if="loaded && !items.length" :icon="Inbox" title="No submissions" />
-        <ul v-else class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
-          <li v-for="s in items" :key="s.id">
-            <RouterLink
-              :to="{ name: 'admin.submissions', params: { submissionId: s.id } }"
-              :replace="split"
-              :class="['flex min-h-16 items-center gap-3 px-4 py-2', id === s.id ? 'bg-blue-paper' : 'hover:bg-accent']"
-            >
-              <span class="min-w-0 flex-1">
-                <span class="block truncate text-base font-bold">{{ s.competition?.name || 'Untitled' }}</span>
-                <span class="text-muted-foreground block truncate text-sm">{{ [s.contact?.name, s.submitted ? formatRelative(s.submitted) : null].filter(Boolean).join(' · ') }}</span>
-              </span>
-              <span v-if="s.approved" class="bg-done text-done-foreground rounded-full px-2.5 py-1 text-sm font-bold">Approved</span>
-              <span v-else class="bg-next text-next-foreground rounded-full px-2.5 py-1 text-sm font-bold">Waiting</span>
-              <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
-            </RouterLink>
-          </li>
-        </ul>
+      <div class="bg-background sticky top-(--chrome-top) z-10 border-b p-4 md:top-0">
+        <SectionHeader title="Submissions" :count="waiting ? `${waiting} waiting` : null" />
       </div>
+      <EmptyState v-if="loaded && !items.length" :icon="Inbox" title="No submissions" description="Competitions organisers submit show here for approval." />
+      <ul v-else class="divide-y">
+        <li v-for="s in items" :key="s.id">
+          <RouterLink
+            :to="{ name: 'admin.submissions', params: { submissionId: s.id } }"
+            :replace="split"
+            :aria-current="id === s.id ? 'true' : undefined"
+            :class="['press-row focus-inset flex min-h-16 items-center gap-3 px-4 py-2', id === s.id && 'bg-blue-paper']"
+          >
+            <span class="min-w-0 flex-1">
+              <span class="block truncate text-base font-medium">{{ s.competition?.name || 'Untitled' }}</span>
+              <span class="text-muted-foreground block truncate text-sm">{{ [s.contact?.name, s.submitted ? formatRelative(s.submitted) : null].filter(Boolean).join(' · ') }}</span>
+            </span>
+            <span v-if="s.approved" class="bg-done text-done-foreground rounded-full px-2.5 py-0.5 text-sm font-semibold">Approved</span>
+            <span v-else class="bg-next text-next-foreground rounded-full px-2.5 py-0.5 text-sm font-semibold">Waiting</span>
+            <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
+          </RouterLink>
+        </li>
+      </ul>
     </template>
     <template #empty>
-      <div class="hidden h-full items-center justify-center p-8 md:flex"><p class="text-muted-foreground text-base">Choose a submission to review it.</p></div>
+      <div class="hidden h-full items-center justify-center md:flex">
+        <EmptyState v-if="items.length" :icon="Inbox" title="Choose a submission" description="Review it here, tidy it up and approve it." />
+      </div>
     </template>
     <template #detail>
       <div v-if="current" :key="current.id" class="mx-auto max-w-2xl space-y-8 p-4 pb-[calc(3rem+var(--safe-bottom))] md:p-8">
         <header class="space-y-1">
-          <p class="text-muted-foreground text-sm font-bold">Submitted {{ current.submitted ? formatRelative(current.submitted) : '' }}</p>
+          <p class="text-muted-foreground text-sm font-medium">Submitted {{ current.submitted ? formatRelative(current.submitted) : '' }}</p>
           <h2 class="text-display">{{ current.competition?.name || 'Untitled' }}</h2>
           <p v-if="current.competition?.date" class="text-muted-foreground text-base">{{ formatLongDate(current.competition.date) }}</p>
         </header>
 
-        <section v-if="current.approved" class="bg-done text-done-foreground flex flex-wrap items-center gap-3 rounded-2xl p-4">
+        <section v-if="current.approved" class="bg-done text-done-foreground flex flex-wrap items-center gap-3 rounded-2xl py-2 pr-2 pl-4">
           <Check class="size-5 shrink-0" />
-          <p class="min-w-0 flex-1 font-semibold">Approved {{ formatRelative(current.approved) }}.</p>
-          <RouterLink v-if="current.competitionId" :to="{ name: 'manage', params: { competitionId: current.competitionId } }" class="bg-card text-foreground h-10 content-center rounded-xl px-3 text-sm font-bold">Manage it</RouterLink>
-          <span v-else class="flex items-center gap-1.5 text-sm font-semibold"><LoaderCircle class="size-4 animate-spin" /> Creating…</span>
+          <p class="min-w-0 flex-1 py-1.5 font-medium">Approved {{ formatRelative(current.approved) }}.</p>
+          <Button v-if="current.competitionId" :to="{ name: 'manage', params: { competitionId: current.competitionId } }">Manage it</Button>
+          <span v-else class="flex items-center gap-1.5 pr-2 text-sm font-medium"><LoaderCircle class="size-4 animate-spin" /> Creating…</span>
         </section>
 
         <section class="space-y-4">
@@ -171,20 +176,20 @@ async function remove(s: Submission) {
           <p v-else-if="placesAvailable && !current.approved" class="text-muted-foreground text-sm">Not on the map yet: choose the venue from the suggestions to add it.</p>
         </section>
 
-        <section class="bg-card space-y-1 rounded-2xl border p-4">
+        <section class="surface space-y-1 rounded-2xl p-4">
           <h3 class="text-heading">From</h3>
-          <p class="text-base font-semibold">{{ current.contact?.name ?? 'Unknown' }}</p>
-          <p v-if="current.contact?.email" class="text-base"><a :href="`mailto:${current.contact.email}`" class="text-primary font-semibold">{{ current.contact.email }}</a></p>
+          <p class="text-base font-medium">{{ current.contact?.name ?? 'Unknown' }}</p>
+          <p v-if="current.contact?.email" class="text-base"><a :href="`mailto:${current.contact.email}`" class="text-primary font-medium">{{ current.contact.email }}</a></p>
           <p v-if="current.contact?.message" class="text-muted-foreground pt-2 text-base whitespace-pre-line">{{ current.contact.message }}</p>
         </section>
 
         <footer class="flex flex-wrap gap-2 border-t pt-6">
-          <button v-if="!current.approved" type="button" :disabled="!canEdit || approving" class="bg-primary-fill text-primary-foreground flex h-12 items-center gap-2 rounded-xl px-6 text-base font-bold disabled:opacity-50" @click="approve(current)">
-            <Check class="size-5" /> Approve
-          </button>
-          <button type="button" :disabled="!canEdit" class="text-destructive hover:bg-destructive/10 flex h-12 items-center gap-2 rounded-xl px-4 font-bold disabled:opacity-50" @click="remove(current)">
-            <Trash2 class="size-4" /> Delete
-          </button>
+          <Button v-if="!current.approved" variant="primary" size="lg" :disabled="!canEdit" :busy="approving" @click="approve(current)">
+            <Check /> Approve
+          </Button>
+          <Button variant="plain" size="lg" class="text-destructive!" :disabled="!canEdit" @click="remove(current)">
+            <Trash2 /> Delete
+          </Button>
         </footer>
       </div>
       <EmptyState v-else :icon="Inbox" title="This submission isn’t here any more" />

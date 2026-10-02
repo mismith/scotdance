@@ -2,19 +2,22 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
-import { ChevronRight, LogIn, Plus, Search, ShieldCheck, X } from '@lucide/vue'
+import { ChevronRight, LogIn, Plus, ShieldCheck } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
+import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/Dialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import DateTile from '@/components/DateTile.vue'
 import FormInput from '@/components/admin/FormInput.vue'
+import SearchField from '@/components/admin/SearchField.vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import { usePageTitle } from '@/composables/usePageTitle'
+import { useScrolledPast } from '@/composables/useScrolledPast'
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError, newKey, write } from '@/lib/admin/write'
 import { competitionPhase } from '@/lib/dancerDay'
-import { formatLongDate } from '@/lib/format'
+import { useMorph } from '@/lib/morph'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 
@@ -49,9 +52,17 @@ const upcoming = computed(() => shown.value.filter((c) => competitionPhase(c.dat
 const past = computed(() => shown.value.filter((c) => competitionPhase(c.date) === 'after'))
 
 const visibility = (c: CompetitionListItem) => (c.published ? 'Published' : c.listed ? 'Listed' : 'Private')
+// The date is on its tile: the line under the name says where, and who can see it.
+const subtitle = (c: CompetitionListItem) => [c.venue || c.location, visibility(c)].filter(Boolean).join(' · ')
+// On the day, results entry is a tap away.
+const isToday = (c: CompetitionListItem) => competitionPhase(c.date) === 'today'
+
+// The page's own title hands over to the bar once it scrolls away.
+const titleEl = ref<HTMLElement | null>(null)
+const scrolledPast = useScrolledPast(titleEl)
 
 // --- Create (system admins)
-const creating = ref(false)
+const creating = useMorph()
 const newName = ref('')
 const newDate = ref('')
 const createError = ref<string | null>(null)
@@ -64,7 +75,7 @@ async function create() {
   const id = newKey()
   try {
     await write({ [`competitions/${id}`]: { name: newName.value.trim(), date: newDate.value, listed: false, published: false } })
-    creating.value = false
+    creating.dismiss()
     newName.value = ''
     newDate.value = ''
     toast('Competition created. It’s private until you list or publish it.')
@@ -77,9 +88,9 @@ async function create() {
 
 <template>
   <div class="flex min-h-dvh flex-col">
-    <AppBar title="Manage competitions" show-title :fallback="{ to: { name: 'settings' }, label: 'Settings' }" />
+    <AppBar title="Manage competitions" :show-title="scrolledPast" :fallback="{ to: { name: 'settings' }, label: 'Settings' }" />
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-[calc(var(--chrome-bottom)+1.5rem)]">
-      <h1 class="text-display">Manage competitions</h1>
+      <h1 ref="titleEl" class="text-display">Manage competitions</h1>
 
       <div v-if="!authReady || (auth.isSignedIn && !me.permissionsLoaded)" class="space-y-3">
         <Skeleton v-for="i in 3" :key="i" class="h-16 w-full rounded-2xl!" />
@@ -88,32 +99,21 @@ async function create() {
       <template v-else-if="!auth.isSignedIn">
         <EmptyState :icon="LogIn" title="Sign in to manage your competitions" description="Organisers and their admins sign in to change competitions." />
         <div class="flex justify-center">
-          <button type="button" class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-6 text-base font-bold" @click="auth.openLogin()">Sign in</button>
+          <Button variant="primary" size="lg" @click="auth.openLogin()">Sign in</Button>
         </div>
       </template>
 
       <template v-else>
         <div class="flex flex-wrap gap-2">
-          <button
-            v-if="me.isAdmin"
-            type="button"
-            :disabled="!canEdit"
-            class="bg-primary-fill text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50"
-            @click="creating = true"
-          >
-            <Plus class="size-4" /> New competition
-          </button>
-          <RouterLink v-else :to="{ name: 'competitions.submit' }" class="bg-primary-fill text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold">
-            <Plus class="size-4" /> Submit a competition
-          </RouterLink>
+          <Button v-if="me.isAdmin" variant="tonal" :disabled="!canEdit" @click="creating.show($event)">
+            <Plus /> New competition
+          </Button>
+          <Button v-else variant="tonal" :to="{ name: 'competitions.submit' }">
+            <Plus /> Submit a competition
+          </Button>
         </div>
 
-        <label v-if="mine.length > 6" class="bg-card border-strong focus-within:border-primary flex h-11 items-center gap-2 rounded-xl border-2 px-3">
-          <Search class="text-muted-foreground size-4 shrink-0" />
-          <span class="sr-only">Search competitions</span>
-          <input v-model="query" type="search" placeholder="Search competitions" class="min-w-0 flex-1 bg-transparent text-base outline-none" />
-          <button v-if="query" type="button" aria-label="Clear search" class="text-muted-foreground -mr-1 flex size-7 items-center justify-center rounded-full" @click="query = ''"><X class="size-4" /></button>
-        </label>
+        <SearchField v-if="mine.length > 6" v-model="query" label="Search competitions" />
 
         <div v-if="loading && !mine.length" class="space-y-3">
           <Skeleton v-for="i in 3" :key="i" class="h-16 w-full rounded-2xl!" />
@@ -127,23 +127,29 @@ async function create() {
 
         <section v-for="[title, list] in ([['Coming up', upcoming], ['Past', past]] as const)" v-show="list.length" :key="title" class="space-y-2">
           <h2 class="text-heading">{{ title }}</h2>
-          <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
-            <li v-for="c in list" :key="c.id">
-              <RouterLink :to="{ name: 'manage', params: { competitionId: c.id } }" class="hover:bg-accent flex min-h-16 items-center gap-3 px-4 py-2">
+          <ul class="surface divide-y overflow-hidden rounded-2xl">
+            <li v-for="c in list" :key="c.id" class="sm:flex sm:items-center">
+              <RouterLink :to="{ name: 'manage', params: { competitionId: c.id } }" class="press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap-3 py-2 pr-3 pl-4">
                 <DateTile :date="c.date" class="h-12 shrink-0" />
                 <span class="min-w-0 flex-1">
-                  <span class="block truncate text-base font-bold">{{ c.name || 'Untitled competition' }}</span>
-                  <span class="text-muted-foreground block truncate text-sm">{{ [c.date ? formatLongDate(c.date) : null, visibility(c)].filter(Boolean).join(' · ') }}</span>
+                  <span class="block truncate text-base font-semibold">{{ c.name || 'Untitled competition' }}</span>
+                  <span class="text-muted-foreground block truncate text-sm">{{ subtitle(c) }}</span>
                 </span>
-                <ChevronRight class="text-muted-foreground size-5 shrink-0" />
+                <ChevronRight :class="['text-muted-foreground size-5 shrink-0', isToday(c) && 'sm:hidden']" />
               </RouterLink>
+              <!-- Under the name on a phone, beside it where there's room. -->
+              <div v-if="isToday(c)" class="px-4 pb-3 sm:p-0 sm:pr-3">
+                <Button variant="tonal" class="max-sm:w-full" :to="{ name: 'manage.results', params: { competitionId: c.id } }">
+                  Enter results
+                </Button>
+              </div>
             </li>
           </ul>
         </section>
       </template>
     </main>
 
-    <Dialog :open="creating" variant="sheet" @close="creating = false">
+    <Dialog :open="creating.open" :morph="creating" variant="sheet" @close="creating.hide()">
       <template #header>
         <h2 class="text-title">New competition</h2>
         <p class="text-muted-foreground text-sm">It stays private until you list or publish it.</p>
@@ -151,8 +157,8 @@ async function create() {
       <form class="space-y-4 p-4 pb-[calc(1rem+var(--safe-bottom))]" novalidate @submit.prevent="create">
         <FormInput v-model="newName" label="Name" required placeholder="e.g. Canadian Championship 2027" />
         <FormInput v-model="newDate" label="Date" kind="date" required />
-        <p v-if="createError" class="text-destructive text-sm font-semibold" role="alert">{{ createError }}</p>
-        <button type="submit" :disabled="!canEdit" class="bg-primary-fill text-primary-foreground h-12 w-full rounded-xl text-base font-bold disabled:opacity-50">Create</button>
+        <p v-if="createError" class="text-destructive text-sm font-medium" role="alert">{{ createError }}</p>
+        <Button type="submit" variant="primary" size="lg" block :disabled="!canEdit">Create</Button>
       </form>
     </Dialog>
   </div>

@@ -21,7 +21,7 @@ const steps = (s?: string | number) => String(s ?? '').trim()
         <h2 class="text-heading">Dances</h2>
         <RouterLink
           :to="to('manage.dances')"
-          class="text-primary text-[0.9375rem] font-bold"
+          class="text-primary text-callout -my-3 flex min-h-11 items-center font-semibold"
           >Edit</RouterLink
         >
       </header>
@@ -56,7 +56,7 @@ const steps = (s?: string | number) => String(s ?? '').trim()
         <h2 class="text-heading">Age groups</h2>
         <RouterLink
           :to="to('manage.groups')"
-          class="text-primary text-[0.9375rem] font-bold"
+          class="text-primary text-callout -my-3 flex min-h-11 items-center font-semibold"
           >Edit</RouterLink
         >
       </header>
@@ -65,7 +65,7 @@ const steps = (s?: string | number) => String(s ?? '').trim()
         :key="c.id"
       >
         <div v-if="b.groupsByCategory.value.get(c.id)?.length" class="space-y-1">
-          <h3 class="text-muted-foreground pt-1 text-sm font-bold">{{ c.label }}</h3>
+          <h3 class="text-muted-foreground pt-1 text-sm font-medium">{{ c.label }}</h3>
           <div class="flex flex-wrap gap-1.5 md:flex-col">
             <BuilderChip
               v-for="(g, i) in b.groupsByCategory.value.get(c.id)"
@@ -100,7 +100,7 @@ const steps = (s?: string | number) => String(s ?? '').trim()
         <h2 class="text-heading">Judges</h2>
         <RouterLink
           :to="to('manage.staff')"
-          class="text-primary text-[0.9375rem] font-bold"
+          class="text-primary text-callout -my-3 flex min-h-11 items-center font-semibold"
           >Edit</RouterLink
         >
       </header>

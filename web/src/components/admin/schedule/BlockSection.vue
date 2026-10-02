@@ -2,6 +2,7 @@
 import { computed, nextTick, ref } from 'vue'
 import { makeDraggable, makeDroppable } from '@vue-dnd-kit/core'
 import { GripVertical, Plus, Trash2 } from '@lucide/vue'
+import Button from '@/components/ui/Button.vue'
 import AddPopover from './AddPopover.vue'
 import DragIndicator from './DragIndicator.vue'
 import EventSection from './EventSection.vue'
@@ -10,6 +11,7 @@ import { ordered, useBuilder, type SBlock } from './builder'
 import {
   ACTIVATION,
   adjust,
+  dropLine,
   payload,
   insertIndex,
   useDragHandle,
@@ -18,6 +20,7 @@ import {
   type DragEventData,
 } from './drag'
 import { confirm } from '@/lib/admin/feedback'
+import { useMorph } from '@/lib/morph'
 
 // A session (morning, afternoon…): its name and time, then its events.
 
@@ -76,14 +79,14 @@ const liveIndex = computed(() =>
     ? (insertIndex(sectionEl.value, '[data-event]', pointer.value.y) ?? -1)
     : -1,
 )
+const line = computed(() => dropLine(sectionEl.value, '[data-event]', liveIndex.value))
 
 // Adding events: suggestions from the categories.
 const BUCKETS = [
   ['Primary', 'Beginner', 'Novice'],
   ['Intermediate', 'Premier', 'Restricted Premier', 'Premier Special'],
 ]
-const addBtnEl = ref<HTMLElement | null>(null)
-const adding = ref(false)
+const adding = useMorph()
 const suggestions = computed(() => {
   const taken = new Set(events.value.map(([, e]) => e.name?.trim()))
   const names = b.categories.value.map((c) => c.label)
@@ -129,7 +132,7 @@ async function remove() {
   >
     <div
       ref="sectionEl"
-      class="bg-card col-span-full grid grid-cols-subgrid rounded-2xl border p-4 shadow-sm"
+      class="surface relative col-span-full grid grid-cols-subgrid rounded-2xl p-4"
     >
       <div
         ref="headerEl"
@@ -141,7 +144,7 @@ async function remove() {
           :role="b.readonly.value ? undefined : 'button'"
           :aria-label="b.readonly.value ? undefined : `Move ${block.name || 'session'}`"
           :aria-hidden="b.readonly.value || undefined"
-          class="text-muted-foreground focus-visible:ring-ring flex shrink-0 touch-none items-center self-stretch rounded-sm outline-none focus-visible:ring-2 pointer-coarse:px-1.5"
+          class="text-muted-foreground focus-visible:ring-ring flex shrink-0 touch-none items-center self-stretch rounded-sm outline-none focus-visible:ring-2 pointer-coarse:px-1.5 pointer-fine:opacity-0 pointer-fine:transition-opacity pointer-fine:group-hover/block:opacity-100 pointer-fine:focus-visible:opacity-100"
           ><GripVertical class="size-4"
         /></span>
         <h2 class="text-heading">
@@ -157,7 +160,7 @@ async function remove() {
           v-if="!b.readonly.value"
           type="button"
           :aria-label="`Delete ${block.name || 'session'}`"
-          class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-auto flex size-11 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/block:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
+          class="press text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-auto flex size-11 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/block:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
           @click="remove"
           @keydown.enter.stop
           @keydown.space.stop
@@ -179,7 +182,6 @@ async function remove() {
       </div>
 
       <template v-for="([eventId, event], i) in events" :key="eventId">
-        <DragIndicator v-if="liveIndex === i" class="col-span-full -mt-2 mb-1.5" />
         <EventSection
           :event="event"
           :block-id="blockId"
@@ -188,23 +190,16 @@ async function remove() {
           :auto-edit="autoEditEvent === eventId"
         />
       </template>
-      <DragIndicator v-if="liveIndex === events.length" class="col-span-full mt-1" />
+      <DragIndicator v-if="line" class="inset-x-4" :style="line" />
 
       <div v-if="!b.readonly.value" class="col-span-full mt-3">
-        <button
-          ref="addBtnEl"
-          type="button"
-          class="text-primary hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl px-3 text-[0.9375rem] font-bold"
-          @click="adding = !adding"
-        >
-          <Plus class="size-4" /> Add event
-        </button>
+        <Button variant="plain" class="-ml-3" @click="adding.toggle($event)">
+          <Plus /> Add event
+        </Button>
         <AddPopover
-          :anchor="addBtnEl"
-          :open="adding"
+          :morph="adding"
           :items="suggestions"
           placeholder="Event name…"
-          @close="adding = false"
           @select="addEvent($event.label)"
           @add="addEvent"
         />

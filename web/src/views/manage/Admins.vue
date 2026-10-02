@@ -3,6 +3,8 @@ import { computed, reactive, ref, watch } from 'vue'
 import { get, onValue } from 'firebase/database'
 import { MailPlus, ShieldCheck } from '@lucide/vue'
 import EmptyState from '@/components/EmptyState.vue'
+import Button from '@/components/ui/Button.vue'
+import MovingList from '@/components/admin/MovingList.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
 import { useManagedCompetition, type RawInvite, type WithId } from '@/composables/admin/useManagedCompetition'
 import { dataRef } from '@/firebase'
@@ -77,6 +79,7 @@ const emailError = ref<string | null>(null)
 const sending = ref(false)
 
 async function invite() {
+  if (sending.value) return
   const value = email.value.trim().toLowerCase()
   emailError.value = null
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
@@ -166,8 +169,34 @@ const when = (iso?: string) => (iso ? formatRelative(iso) : '')
       description="People who can change this competition: its details, dancers, schedule and results."
     />
 
-    <form class="bg-card space-y-3 rounded-2xl border p-4 shadow-sm" novalidate @submit.prevent="invite">
-      <label for="invite-email" class="block text-base font-bold">Invite someone</label>
+    <section class="space-y-3">
+      <MovingList v-if="others.length || admins.length" class="surface divide-y overflow-hidden rounded-2xl">
+        <li v-for="o in others" :key="o.uid" class="flex min-h-15 items-center gap-3 px-4 py-2">
+          <ShieldCheck class="text-primary size-5 shrink-0" />
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-base font-medium">
+              {{ o.email ?? (o.uid === auth.uid ? 'You' : 'Another organiser') }}<span v-if="o.email && o.uid === auth.uid" class="text-muted-foreground font-normal"> (you)</span>
+            </span>
+            <span class="text-muted-foreground block text-sm">{{ o.detail }}</span>
+          </span>
+        </li>
+        <li v-for="i in admins" :key="i.id" class="flex min-h-15 items-center gap-3 py-2 pr-2 pl-4">
+          <ShieldCheck class="text-primary size-5 shrink-0" />
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-base font-medium">
+              {{ i.payload?.email ?? 'Unknown' }}<span v-if="i.acceptedBy === auth.uid" class="text-muted-foreground font-normal"> (you)</span>
+            </span>
+            <span class="text-muted-foreground block text-sm">Accepted {{ when(i.accepted) }}</span>
+          </span>
+          <Button variant="plain" class="text-destructive!" :disabled="!canEdit" @click="removeAdmin(i)">Remove</Button>
+        </li>
+      </MovingList>
+      <EmptyState v-else :icon="ShieldCheck" title="No admins yet" description="Invite someone below to help manage it." />
+      <p v-if="me.isAdmin" class="text-muted-foreground text-sm">System admins can always manage every competition.</p>
+    </section>
+
+    <form class="surface space-y-3 rounded-2xl p-4" novalidate @submit.prevent="invite">
+      <label for="invite-email" class="text-heading block">Invite someone</label>
       <div class="flex flex-col gap-2 sm:flex-row">
         <input
           id="invite-email"
@@ -177,52 +206,23 @@ const when = (iso?: string) => (iso ? formatRelative(iso) : '')
           autocomplete="off"
           placeholder="name@example.com"
           :aria-invalid="!!emailError || undefined"
-          :class="['bg-card h-12 min-w-0 flex-1 rounded-xl border-2 px-3 text-base outline-none', emailError ? 'border-destructive' : 'border-strong focus:border-primary']"
+          class="field h-12 min-w-0 flex-1 rounded-xl px-3 text-base"
         />
-        <button type="submit" :disabled="!canEdit || sending" class="bg-primary-fill text-primary-foreground flex h-12 items-center justify-center gap-1.5 rounded-xl px-5 text-base font-bold disabled:opacity-50">
-          <MailPlus class="size-5" /> Send invite
-        </button>
+        <Button type="submit" variant="primary" size="lg" :disabled="!canEdit" :busy="sending">
+          <MailPlus /> Send invite
+        </Button>
       </div>
-      <p v-if="emailError" class="text-destructive text-sm font-semibold" role="alert">{{ emailError }}</p>
+      <p v-if="emailError" class="text-destructive text-sm font-medium" role="alert">{{ emailError }}</p>
       <p v-else class="text-muted-foreground text-sm">They’ll get an email with a link. Once they accept (signed in with any account), they can manage it too.</p>
     </form>
 
-    <section class="space-y-3">
-      <h2 class="text-heading">Admins</h2>
-      <ul v-if="others.length || admins.length" class="bg-card divide-y rounded-2xl border shadow-sm">
-        <li v-for="o in others" :key="o.uid" class="flex min-h-15 items-center gap-3 px-4 py-2">
-          <ShieldCheck class="text-primary size-5 shrink-0" />
-          <span class="min-w-0 flex-1">
-            <span class="block truncate text-base font-semibold">
-              {{ o.email ?? (o.uid === auth.uid ? 'You' : 'Another organiser') }}<span v-if="o.email && o.uid === auth.uid" class="text-muted-foreground font-normal"> (you)</span>
-            </span>
-            <span class="text-muted-foreground block text-sm">{{ o.detail }}</span>
-          </span>
-        </li>
-        <li v-for="i in admins" :key="i.id" class="flex min-h-15 items-center gap-3 px-4 py-2">
-          <ShieldCheck class="text-primary size-5 shrink-0" />
-          <span class="min-w-0 flex-1">
-            <span class="block truncate text-base font-semibold">
-              {{ i.payload?.email ?? 'Unknown' }}<span v-if="i.acceptedBy === auth.uid" class="text-muted-foreground font-normal"> (you)</span>
-            </span>
-            <span class="text-muted-foreground block text-sm">Accepted {{ when(i.accepted) }}</span>
-          </span>
-          <button type="button" :disabled="!canEdit" class="text-destructive hover:bg-destructive/10 h-10 rounded-xl px-3 text-sm font-bold disabled:opacity-50" @click="removeAdmin(i)">
-            Remove
-          </button>
-        </li>
-      </ul>
-      <EmptyState v-else :icon="ShieldCheck" title="No admins yet" description="Invite someone above to help manage it." />
-      <p v-if="me.isAdmin" class="text-muted-foreground text-sm">System admins can always manage every competition.</p>
-    </section>
-
     <section v-if="pending.length" class="space-y-3">
       <h2 class="text-heading">Invites</h2>
-      <ul class="bg-card divide-y rounded-2xl border shadow-sm">
-        <li v-for="i in pending" :key="i.id" class="flex flex-wrap items-center gap-2 px-4 py-3">
-          <span class="min-w-0 flex-1">
-            <span class="block truncate text-base font-semibold">{{ i.payload?.email ?? 'Unknown' }}</span>
-            <span v-if="status(i) === 'pending' && i.emailFailed" class="text-destructive block text-sm font-semibold">
+      <MovingList class="surface divide-y overflow-hidden rounded-2xl">
+        <li v-for="i in pending" :key="i.id" class="flex flex-wrap items-center gap-x-2 gap-y-1 py-2 pr-2 pl-4">
+          <span class="min-w-0 flex-1 basis-48 py-1">
+            <span class="block truncate text-base font-medium">{{ i.payload?.email ?? 'Unknown' }}</span>
+            <span v-if="status(i) === 'pending' && i.emailFailed" class="text-destructive block text-sm font-medium">
               The email didn’t go out. Copy the link and send it yourself.
             </span>
             <span v-else class="text-muted-foreground block text-sm">
@@ -230,21 +230,13 @@ const when = (iso?: string) => (iso ? formatRelative(iso) : '')
             </span>
           </span>
           <span class="flex flex-wrap gap-1">
-            <button v-if="status(i) === 'pending'" type="button" class="hover:bg-accent h-10 rounded-xl border px-3 text-sm font-bold" @click="copyLink(i)">
-              Copy link
-            </button>
-            <button type="button" :disabled="!canEdit" class="hover:bg-accent h-10 rounded-xl border px-3 text-sm font-bold disabled:opacity-50" @click="resend(i)">
-              {{ status(i) === 'pending' ? 'Resend' : 'Send again' }}
-            </button>
-            <button v-if="status(i) === 'pending'" type="button" :disabled="!canEdit" class="hover:bg-accent h-10 rounded-xl px-3 text-sm font-bold disabled:opacity-50" @click="cancel(i)">
-              Cancel
-            </button>
-            <button v-else type="button" :disabled="!canEdit" class="text-destructive hover:bg-destructive/10 h-10 rounded-xl px-3 text-sm font-bold disabled:opacity-50" @click="removeInvite(i)">
-              Delete
-            </button>
+            <Button v-if="status(i) === 'pending'" @click="copyLink(i)">Copy link</Button>
+            <Button :disabled="!canEdit" @click="resend(i)">{{ status(i) === 'pending' ? 'Resend' : 'Send again' }}</Button>
+            <Button v-if="status(i) === 'pending'" variant="plain" :disabled="!canEdit" @click="cancel(i)">Cancel</Button>
+            <Button v-else variant="plain" class="text-destructive!" :disabled="!canEdit" @click="removeInvite(i)">Delete</Button>
           </span>
         </li>
-      </ul>
+      </MovingList>
     </section>
   </div>
 </template>

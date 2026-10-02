@@ -1,17 +1,21 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, ref, watch, watchEffect } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { makeDroppable } from '@vue-dnd-kit/core'
 import { CalendarClock, CalendarPlus, Plus, WandSparkles } from '@lucide/vue'
 import EmptyState from '@/components/EmptyState.vue'
+import Button from '@/components/ui/Button.vue'
+import Segmented from '@/components/ui/Segmented.vue'
 import AddPopover from './AddPopover.vue'
 import BlockSection from './BlockSection.vue'
 import DragIndicator from './DragIndicator.vue'
 import { useBuilder } from './builder'
 import { useAutoFill } from './autofill'
-import { adjust, insertIndex, useDragType, useEdgeScroll, type DragBlock } from './drag'
+import { adjust, dropLine, insertIndex, useDragType, useEdgeScroll, type DragBlock } from './drag'
 import { useHideTab } from '@/composables/admin/useHideTab'
+import { useSplit } from '@/composables/admin/useWide'
 import { confirm, toast } from '@/lib/admin/feedback'
+import { useMorph } from '@/lib/morph'
 
 // The schedule as a grid: platforms across the top, sessions down the page,
 // each event's dances as rows with a cell per platform.
@@ -21,17 +25,28 @@ const auto = useAutoFill()
 const hideTab = useHideTab('schedule')
 const { activeDragGroup, pointer } = useDragType()
 
-const PRIMARY =
-  'bg-primary-fill text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold'
-const SECONDARY =
-  'bg-card border-strong hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold'
+// On a phone, one platform at a time: a grid of them is a puzzle there.
+const split = useSplit()
+const picked = ref<string | null>(null)
+watchEffect(() => {
+  const all = b.platforms.value
+  const keep = all.some((p) => p.id === picked.value) ? picked.value : (all[0]?.id ?? null)
+  b.platformView.value = split.value ? null : keep
+  if (!split.value) picked.value = keep
+})
+// "Platform A" and "Platform B" are A and B side by side.
+const platformChoices = computed(() =>
+  b.platforms.value.map((p) => ({ value: p.id, label: p.label.replace(/^platform\s+/i, '') || p.label })),
+)
 
 const scrollEl = ref<HTMLElement | null>(null)
 useEdgeScroll(scrollEl)
 
 // (No platforms yet: no platform columns, as repeat(0, …) isn't valid CSS.)
+// On a phone the one platform shares the screen's width with the dances.
 const cols = computed(() => {
-  const n = b.platforms.value.length
+  const n = b.shownPlatforms.value.length
+  if (!split.value) return `minmax(0, 1fr) ${n ? 'minmax(0, 1fr)' : ''} 0`
   return `minmax(9rem, auto) ${n ? `repeat(${n}, minmax(13rem, 1fr))` : ''} minmax(0.5rem, auto)`
 })
 
@@ -56,11 +71,21 @@ const liveBlockIndex = computed(() =>
     ? (insertIndex(gridEl.value, '[data-block]', pointer.value.y) ?? -1)
     : -1,
 )
+const line = computed(() => dropLine(gridEl.value, '[data-block]', liveBlockIndex.value))
 
 // Adding sessions
 const PRESETS = ['Morning', 'Afternoon', 'Evening']
-const addBtnEl = ref<HTMLElement | null>(null)
-const adding = ref(false)
+const adding = useMorph()
+// The first session swaps the empty state's Add session for the one under
+// the grid: closing the menu, the keyboard goes to whichever is there now.
+const addBtn = ref<{ $el: HTMLElement } | null>(null)
+watch(
+  () => adding.open,
+  (open) => {
+    // (The dialog hands focus back to what opened it, if that's still there.)
+    if (!open && !adding.trigger?.isConnected) void nextTick(() => addBtn.value?.$el.focus())
+  },
+)
 const suggestions = computed(() => {
   const taken = new Set(b.blocks.value.map(([, x]) => x.name?.trim()))
   return PRESETS.filter((n) => !taken.has(n)).map((n) => ({ key: n, label: n }))
@@ -117,26 +142,21 @@ async function fillSchedule() {
       description="Start with a session, like Morning, then add its events and drag dances into them."
     >
       <template v-if="!b.readonly.value">
-        <button ref="addBtnEl" type="button" :class="PRIMARY" @click="adding = !adding">
-          <Plus class="size-4" /> Add session
-        </button>
-        <button v-if="canAutofill" type="button" :class="SECONDARY" @click="fillSchedule">
-          <WandSparkles class="size-4" /> Autofill the schedule
-        </button>
-        <button
-          v-if="b.days.value.length"
-          type="button"
-          :class="SECONDARY"
-          @click="addDay"
-        >
-          <CalendarPlus class="size-4" /> Add day
-        </button>
+        <Button ref="addBtn" variant="primary" @click="adding.toggle($event)">
+          <Plus /> Add session
+        </Button>
+        <Button v-if="canAutofill" @click="fillSchedule">
+          <WandSparkles /> Autofill the schedule
+        </Button>
+        <Button v-if="b.days.value.length" @click="addDay">
+          <CalendarPlus /> Add day
+        </Button>
       </template>
       <template v-if="!b.days.value.length && !b.readonly.value" #footer>
         Not sharing a schedule here?
         <button
           type="button"
-          class="text-primary font-bold underline-offset-2 hover:underline"
+          class="text-primary font-semibold underline-offset-2 hover:underline"
           @click="hideTab.hide()"
         >
           Hide the Schedule tab
@@ -147,7 +167,7 @@ async function fillSchedule() {
     <div
       ref="gridEl"
       :class="[
-        'grid w-max min-w-full gap-x-2 px-4 pb-16 text-sm',
+        'relative grid min-w-full gap-x-2 px-4 pb-16 text-sm md:w-max',
         !b.blocks.value.length && 'hidden',
       ]"
       :style="{ gridTemplateColumns: cols }"
@@ -162,57 +182,53 @@ async function fillSchedule() {
               name: 'manage.platforms',
               params: { competitionId: b.m.competitionId.value },
             }"
-            class="text-primary text-[0.9375rem] font-bold"
+            class="text-primary text-callout flex min-h-11 items-center font-semibold"
           >
             {{ b.platforms.value.length ? 'Edit platforms' : 'Add platforms' }}
           </RouterLink>
         </div>
-        <div
-          v-for="p in b.platforms.value"
-          :key="p.id"
-          class="bg-card flex min-h-11 items-center justify-center rounded-xl border px-2 text-center text-base font-bold"
-        >
-          {{ p.label }}
-        </div>
+        <Segmented
+          v-if="!split && b.platforms.value.length > 1"
+          :model-value="picked ?? ''"
+          :options="platformChoices"
+          label="Platform"
+          @update:model-value="picked = $event"
+        />
+        <template v-else>
+          <div
+            v-for="p in b.shownPlatforms.value"
+            :key="p.id"
+            class="surface flex min-h-11 items-center justify-center rounded-xl px-2 text-center text-base font-semibold"
+          >
+            {{ p.label }}
+          </div>
+        </template>
       </div>
 
-      <template v-for="([blockId, block], i) in b.blocks.value" :key="blockId">
-        <DragIndicator v-if="liveBlockIndex === i" class="col-span-full -mt-2 mb-1.5" />
-        <BlockSection :block="block" :block-id="blockId" :index="i" class="mb-6" />
-      </template>
-      <DragIndicator
-        v-if="liveBlockIndex === b.blocks.value.length"
-        class="col-span-full -mt-4 mb-4"
-      />
+      <BlockSection v-for="([blockId, block], i) in b.blocks.value" :key="blockId" :block="block" :block-id="blockId" :index="i" class="mb-6" />
+      <DragIndicator v-if="line" class="inset-x-4" :style="line" />
 
       <!-- After the last session: more, as wide as a phone's screen at most -->
       <div
         v-if="!b.readonly.value && b.blocks.value.length"
         class="col-span-full flex max-w-[calc(100vw-2rem)] flex-wrap items-center gap-2"
       >
-        <button ref="addBtnEl" type="button" :class="PRIMARY" @click="adding = !adding">
-          <Plus class="size-4" /> Add session
-        </button>
-        <button
-          v-if="b.days.value.length"
-          type="button"
-          :class="SECONDARY"
-          @click="addDay"
-        >
-          <CalendarPlus class="size-4" /> Add day
-        </button>
-        <button v-if="canAutofill" type="button" :class="SECONDARY" @click="fillSchedule">
-          <WandSparkles class="size-4" /> Autofill the schedule
-        </button>
+        <Button ref="addBtn" variant="tonal" @click="adding.toggle($event)">
+          <Plus /> Add session
+        </Button>
+        <Button v-if="b.days.value.length" @click="addDay">
+          <CalendarPlus /> Add day
+        </Button>
+        <Button v-if="canAutofill" @click="fillSchedule">
+          <WandSparkles /> Autofill the schedule
+        </Button>
       </div>
     </div>
 
     <AddPopover
-      :anchor="addBtnEl"
-      :open="adding"
+      :morph="adding"
       :items="suggestions"
       placeholder="Session name…"
-      @close="adding = false"
       @select="addBlock($event.label)"
       @add="addBlock"
     />

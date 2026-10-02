@@ -84,11 +84,11 @@ async function remove() {
         :role="b.readonly.value ? undefined : 'button'"
         :aria-label="b.readonly.value ? undefined : `Move ${row.name || 'row'}`"
         :aria-hidden="b.readonly.value || undefined"
-        class="text-muted-foreground focus-visible:ring-ring flex shrink-0 touch-none self-stretch rounded-sm pt-0.5 outline-none focus-visible:ring-2 pointer-coarse:px-1.5"
+        class="text-muted-foreground focus-visible:ring-ring flex shrink-0 touch-none self-stretch rounded-sm pt-0.5 outline-none focus-visible:ring-2 pointer-coarse:px-1.5 pointer-fine:opacity-0 pointer-fine:transition-opacity pointer-fine:group-hover/row:opacity-100 pointer-fine:focus-visible:opacity-100"
         ><GripVertical class="size-3.5"
       /></span>
       <div class="min-w-0 flex-1 space-y-1">
-        <div class="font-bold">
+        <div class="font-semibold">
           <InlineEdit
             :model-value="row.name ?? ''"
             placeholder="Row name"
@@ -115,7 +115,7 @@ async function remove() {
         v-if="!b.readonly.value"
         type="button"
         :aria-label="`Delete ${row.name || 'row'}`"
-        class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 -my-2 flex size-11 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
+        class="press text-muted-foreground hover:text-destructive hover:bg-destructive/10 -my-2 flex size-11 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
         @click="remove"
         @keydown.enter.stop
         @keydown.space.stop
@@ -146,7 +146,7 @@ async function remove() {
       </BuilderChip>
     </div>
     <PlatformCell
-      v-for="p in b.platforms.value"
+      v-for="p in b.shownPlatforms.value"
       :key="p.id"
       :cell="row.platforms?.[p.id]"
       :location="{ blockId, eventId, danceId: rowId, platformId: p.id }"
