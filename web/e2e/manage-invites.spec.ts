@@ -195,7 +195,7 @@ test('a submitted competition, once approved, is the organiser’s to manage', a
 
     await signIn(admin, sysEmail)
     await admin.goto(`/admin/submissions/${submissionId}`)
-    await admin.getByRole('button', { name: 'Approve' }).click()
+    await admin.getByRole('button', { name: 'Approve', exact: true }).click()
     await admin.locator('dialog[open]').getByRole('button', { name: 'Approve' }).click()
     await expect(admin.getByRole('link', { name: 'Manage it' })).toBeVisible()
     competitionId = (await dbGet<Submission>(`competitions:submissions/${submissionId}`)).competitionId

@@ -21,6 +21,6 @@ const { displayName, loading, notFound } = provideJudgeProfile(toRef(judgeId))
     :loading="loading"
     :not-found="notFound"
     empty-title="Judge not found"
-    empty-description="This judge isn’t listed at any competition on ScotDance. The link may be out of date."
+    empty-description="This judge isn’t listed at any competition on ScotDance.app. The link may be out of date."
   />
 </template>

@@ -195,7 +195,7 @@ const items = computed(() => m.groups.value)
           :to="{ name: 'manage.groups.draws', params: { competitionId: m.competitionId.value, itemId: item.id } }"
           class="surface press-row focus-inset flex min-h-16 items-center gap-3 rounded-2xl px-4 py-3"
         >
-          <span class="bg-blue-paper text-primary flex size-10 shrink-0 items-center justify-center rounded-xl"><Shuffle class="size-5" /></span>
+          <Shuffle class="text-primary size-6 shrink-0" stroke-width="1.75" aria-hidden="true" />
           <span class="min-w-0 flex-1">
             <span class="block text-base font-semibold">Dancing order</span>
             <span class="text-muted-foreground block text-sm">{{ drawSummary(item.id) }}</span>

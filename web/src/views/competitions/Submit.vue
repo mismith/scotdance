@@ -427,7 +427,7 @@ const scrolledPast = useScrolledPast(computed(() => overviewEl.value?.title ?? n
                 >
                   <Checkbox :checked="form.agree" class="mt-0.5" />
                   <span>
-                    <span class="block text-base font-medium">I understand ScotDance is run by a volunteer</span>
+                    <span class="block text-base font-medium">I understand ScotDance.app is run by a volunteer</span>
                     <span class="text-muted-foreground block text-sm">It’s offered as is, with no guarantees of any kind.</span>
                     <span v-if="errors.agree" class="text-destructive block pt-1 text-sm font-medium" role="alert">{{ errors.agree }}</span>
                   </span>

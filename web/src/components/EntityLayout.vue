@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { RouterView } from 'vue-router'
 import AppBar from '@/components/nav/AppBar.vue'
+import SidebarBranch from '@/components/nav/SidebarBranch.vue'
 import Button from '@/components/ui/Button.vue'
 import ShareButton from '@/components/ShareButton.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -33,7 +34,7 @@ const { scrolledPast } = provideInfoHeader()
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)] lg:[--page-max:64rem]">
+  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
     <AppBar
       :title="displayName"
       :show-title="scrolledPast"
@@ -44,7 +45,7 @@ const { scrolledPast } = provideInfoHeader()
       </template>
     </AppBar>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 px-4 pt-[calc(var(--chrome-top)+0.5rem)] lg:max-w-(--page-max) lg:px-3">
+    <main class="mx-auto w-full max-w-3xl flex-1 px-4 pt-[calc(var(--chrome-top)+0.5rem)]">
       <EmptyState
         v-if="!loading && notFound"
         :icon="section.icon"
@@ -57,5 +58,7 @@ const { scrolledPast } = provideInfoHeader()
       </EmptyState>
       <RouterView v-else />
     </main>
+    <!-- Wide screens: this profile, nested under its list in the sidebar. -->
+    <SidebarBranch v-if="displayName" :under="sectionRouteName" :label="displayName" :to="$route.path" current />
   </div>
 </template>

@@ -15,6 +15,7 @@ import StaffDialog from '@/components/StaffDialog.vue'
 import { dances as eventDances, dayLabel, days, getScheduleDanceName, platformLabel, slugline } from '@/lib/schedule'
 import { findGroupDancers, getOrdinalSuffix, isPosted } from '@/lib/results'
 import { sanitizeRichText } from '@/lib/sanitize'
+import { clockMinutes } from '@/lib/scheduleProgress'
 import {
   staffMemberName,
   type EnrichedDancer,
@@ -55,7 +56,11 @@ const event = computed(() => block.value?.events?.[String(route.params.eventId)]
 
 usePageTitle(() => [event.value?.name, competition.value?.name])
 
-const blockTime = computed(() => slugline(block.value?.description))
+// The time, once and as the organisers wrote it (never reformatted): the
+// event's own, when its description leads with one ("9:45 am"), shown as
+// they wrote it under the title; otherwise the session's ("8:30 am").
+const ownTime = computed(() => clockMinutes(slugline(event.value?.description)) != null)
+const blockTime = computed(() => (ownTime.value ? null : slugline(block.value?.description)))
 // The day only when there are several (a single day stays out of sight, as on Schedule).
 const dayName = computed(() => {
   const all = days(schedule.value)
@@ -179,87 +184,91 @@ const judging = computed(() => {
 
     <template v-else>
       <header :ref="setHeader" class="space-y-1">
-        <p class="text-muted-foreground flex items-center gap-1.5 text-sm font-medium">
-          <Clock class="size-4" />
-          {{ [dayName, block?.name, blockTime].filter(Boolean).join(' · ') }}
+        <p class="text-muted-foreground text-sm font-medium">
+          {{ [dayName, block?.name].filter(Boolean).join(' · ') }}
         </p>
         <h1 class="text-display">{{ event.name || 'Event' }}</h1>
+        <p v-if="blockTime" class="flex items-center gap-1.5 text-base"><Clock class="text-muted-foreground size-4" /> {{ blockTime }}</p>
         <div
           v-if="event.description"
-          class="text-muted-foreground text-base [&_a]:text-primary [&_a]:underline"
+          class="text-base [&_a]:text-primary [&_a]:underline"
           v-html="sanitizeRichText(event.description)"
         />
       </header>
 
       <p v-if="!sections.length" class="text-muted-foreground text-base">Nothing is scheduled in this part yet.</p>
 
-      <section v-for="(s, i) in sections" :key="s.sd.id" class="surface divide-y overflow-hidden rounded-2xl">
-        <header class="px-4 py-3">
+      <!-- Each dance: its name as a heading, then one card of platforms. -->
+      <section v-for="(s, i) in sections" :key="s.sd.id" class="space-y-2 pt-2">
+        <div class="space-y-0.5">
           <h2 class="text-heading">{{ s.name ?? `Dance ${i + 1}` }}</h2>
           <p v-if="s.realName" class="text-muted-foreground text-sm">{{ s.realName }}</p>
-        </header>
+          <div
+            v-if="s.sd.description"
+            class="text-muted-foreground text-callout [&_a]:text-primary [&_a]:underline"
+            v-html="sanitizeRichText(s.sd.description)"
+          />
+        </div>
 
-        <div
-          v-if="s.sd.description"
-          class="px-4 py-3 text-base [&_a]:text-primary [&_a]:underline"
-          v-html="sanitizeRichText(s.sd.description)"
-        />
+        <div class="surface divide-y overflow-hidden rounded-2xl">
+          <p v-if="s.sd.danceId && !s.platforms.length" class="text-muted-foreground px-4 py-3 text-base">
+            Platforms haven’t been assigned yet.
+          </p>
 
-        <p v-if="s.sd.danceId && !s.platforms.length" class="text-muted-foreground px-4 py-3 text-base">
-          Platforms haven’t been assigned yet.
-        </p>
-
-        <div v-for="p in s.platforms" :key="p.id">
-          <div class="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 pt-3 pb-2">
-            <h3 class="text-callout font-semibold">{{ p.name }}</h3>
-            <!-- Judges: chips that open each one's sheet. -->
-            <div v-if="p.judges.length" class="flex flex-wrap gap-1.5">
-              <button
-                v-for="j in p.judges"
-                :key="j.id"
-                type="button"
-                class="press bg-muted text-callout relative flex h-9 items-center gap-2 rounded-full pr-3 pl-1 font-medium after:absolute after:inset-x-0 after:-inset-y-1"
-                @click="openJudge($event, j)"
-              >
-                <StaffAvatar :member="j" :size="28" />
-                {{ staffMemberName(j) || 'Judge' }}
-              </button>
+          <div v-for="p in s.platforms" :key="p.id">
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 pt-3 pb-2">
+              <h3 class="text-callout font-semibold">{{ p.name }}</h3>
+              <!-- Judges: chips that open each one's sheet. -->
+              <div v-if="p.judges.length" class="flex flex-wrap gap-1.5">
+                <button
+                  v-for="j in p.judges"
+                  :key="j.id"
+                  type="button"
+                  class="press bg-muted text-callout relative flex h-9 items-center gap-2 rounded-full pr-3 pl-1 font-medium after:absolute after:inset-x-0 after:-inset-y-1"
+                  @click="openJudge($event, j)"
+                >
+                  <StaffAvatar :member="j" :size="28" />
+                  {{ staffMemberName(j) || 'Judge' }}
+                </button>
+              </div>
             </div>
+            <ul class="rows-inset">
+              <li v-for="g in p.groups" :key="g.group.id" class="relative">
+                <!-- The whole row opens the order (its tint spans it); a posted
+                     age group's Results pill sits on top, at the right. -->
+                <button
+                  type="button"
+                  :class="['press-row focus-inset relative flex min-h-14 w-full items-center gap-3 py-2 pl-4 text-left', g.posted ? 'pr-28' : 'pr-4']"
+                  :style="g.mine.length ? { '--dc': g.mine[0].color ?? 'var(--primary)' } : undefined"
+                  @click="openDraw($event, g.group, s.sd)"
+                >
+                  <span v-if="g.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
+                  <span class="min-w-0 flex-1">
+                    <span class="block text-base font-semibold">{{ g.group.fullName }}</span>
+                    <span class="text-muted-foreground block text-sm">{{ g.count }} dancers</span>
+                    <MyDancerLine
+                      v-for="m in g.mine"
+                      :key="m.dancer.id"
+                      :color="m.color"
+                      :name="m.dancer.firstName ?? ''"
+                      :details="[`#${m.dancer.number}`, m.pos ? `${m.pos}${getOrdinalSuffix(m.pos)} to dance` : null]"
+                      class="mt-1"
+                    />
+                  </span>
+                  <span v-if="!g.posted" class="text-primary text-footnote shrink-0 font-medium">Dancing order</span>
+                </button>
+                <!-- Once posted, the placings are a tap away; the row still opens the order. -->
+                <RouterLink
+                  v-if="g.posted"
+                  :to="{ name: 'competition.group', params: { competitionId, groupId: g.group.id }, hash: `#dance-${s.sd.danceId}` }"
+                  :aria-label="`${g.group.fullName} results`"
+                  class="press bg-done text-done-foreground text-footnote absolute top-1/2 right-3 flex h-8 -translate-y-1/2 items-center gap-1 rounded-full pr-3 pl-2 font-semibold after:absolute after:-inset-1.5"
+                >
+                  <Check class="size-4" stroke-width="2.75" /> Results
+                </RouterLink>
+              </li>
+            </ul>
           </div>
-          <ul class="rows-inset">
-            <li v-for="g in p.groups" :key="g.group.id" class="relative flex items-center">
-              <button
-                type="button"
-                class="press-row focus-inset relative flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 pr-2 pl-4 text-left"
-                :style="g.mine.length ? { '--dc': g.mine[0].color ?? 'var(--primary)' } : undefined"
-                @click="openDraw($event, g.group, s.sd)"
-              >
-                <span v-if="g.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
-                <span class="min-w-0 flex-1">
-                  <span class="block text-base font-semibold">{{ g.group.fullName }}</span>
-                  <span class="text-muted-foreground block text-sm">{{ g.count }} dancers</span>
-                  <MyDancerLine
-                    v-for="m in g.mine"
-                    :key="m.dancer.id"
-                    :color="m.color"
-                    :name="m.dancer.firstName ?? ''"
-                    :details="[`#${m.dancer.number}`, m.pos ? `${m.pos}${getOrdinalSuffix(m.pos)} to dance` : null]"
-                    class="mt-1"
-                  />
-                </span>
-                <span v-if="!g.posted" class="text-primary text-footnote shrink-0 font-medium">Dancing order</span>
-              </button>
-              <!-- Once posted, the placings are a tap away; the row still opens the order. -->
-              <RouterLink
-                v-if="g.posted"
-                :to="{ name: 'competition.group', params: { competitionId, groupId: g.group.id }, hash: `#dance-${s.sd.danceId}` }"
-                :aria-label="`${g.group.fullName} results`"
-                class="press bg-done text-done-foreground text-footnote relative mr-3 flex h-8 shrink-0 items-center gap-1 rounded-full pr-3 pl-2 font-semibold after:absolute after:-inset-1.5"
-              >
-                <Check class="size-4" stroke-width="2.75" /> Results
-              </RouterLink>
-            </li>
-          </ul>
         </div>
       </section>
     </template>

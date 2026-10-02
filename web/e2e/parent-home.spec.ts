@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test'
 import { dbGet, dbSet, ensureUser, uid } from './support/emulator'
 import { removeCompetition, seedCompetition, type SeededCompetition } from './support/seed'
 import { makePerson, sheet, signInFromSheet, signOut, type Person } from './support/parent'
+import { hasSidebar } from './support/nav'
 
 // A parent's day: follow a dancer, see their day on Home on competition day,
 // watch a placing arrive, choose their colour, unfollow. Then the edges:
@@ -38,7 +39,7 @@ async function freshParent() {
 
 async function signInFromHome(page: Page, email: string) {
   await page.goto('/')
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true }).click()
   await signInFromSheet(page, email)
 }
 
@@ -145,7 +146,7 @@ test('a chosen colour sticks, and stays with that account', async ({ page }) => 
 
   // The next account on this phone has its own colours.
   await signOut(page)
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true }).click()
   await signInFromSheet(page, b.email)
   await page.goto(`/dancers/${person.id}/info`)
   await followingMenu(page, person)
@@ -165,7 +166,7 @@ test('signing out clears your dancers; the next account sees only its own', asyn
   await expect(page.getByRole('heading', { name: 'See your dancer’s day at a glance' })).toBeVisible()
   await expect(card(page, person)).toHaveCount(0)
 
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true }).click()
   await signInFromSheet(page, b.email)
   await expect(page.getByRole('heading', { name: 'See your dancer’s day at a glance' })).toBeVisible()
   await expect(card(page, person)).toHaveCount(0)
@@ -229,7 +230,7 @@ test('the new look is news only to people whose old favourites came over', async
   await dbSet(`users:favorites/${returning.uid}`, { dancers: { [entry(9).id]: person.name } })
   const fresh = await freshParent()
   await dbSet(`users:favorites/${fresh.uid}/dancers/${person.id}`, person.name)
-  const note = page.getByRole('note').filter({ hasText: 'ScotDance has a new look.' })
+  const note = page.getByRole('note').filter({ hasText: 'ScotDance.app has a new look.' })
 
   // Not on competition day: a day with nothing on.
   await signInFromHome(page, returning.email)
@@ -243,7 +244,7 @@ test('the new look is news only to people whose old favourites came over', async
 
   await signOut(page)
   await page.evaluate(() => localStorage.removeItem('home:whatsNew:v4'))
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true }).click()
   await signInFromSheet(page, fresh.email)
   await page.goto('/?now=2031-02-01')
   await expect(page.getByRole('heading', { name: 'Your dancers' })).toBeVisible()
@@ -290,8 +291,13 @@ test('closing the sign-in sheet drops the follow it was opened for', async ({ pa
   await expect(sheet(page)).toHaveCount(0)
 
   // Signing in later, for something else, doesn't follow them after all.
-  await page.getByRole('navigation').getByRole('button', { name: 'Sign in and settings' }).click()
-  await page.locator('dialog[open]').getByRole('button', { name: 'Sign in', exact: true }).click()
+  if (hasSidebar(page)) {
+    // Wide screens: Sign in sits at the foot of the sidebar.
+    await page.getByRole('complementary').getByRole('button', { name: 'Sign in', exact: true }).click()
+  } else {
+    await page.getByRole('navigation').getByRole('button', { name: 'Sign in and settings' }).click()
+    await page.locator('dialog[open]').getByRole('button', { name: 'Sign in', exact: true }).click()
+  }
   await signInFromSheet(page, email)
   await expect(page.getByRole('button', { name: `Follow ${person.name}` })).toBeVisible()
   await page.waitForTimeout(500)

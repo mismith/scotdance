@@ -34,7 +34,7 @@ test('the Judges list filters by name and opens a judge', async ({ page }) => {
 
 test('a judge page lists where they’ve judged, and each opens', async ({ page }) => {
   await page.goto(`/judges/${AILEEN}/info`)
-  await expect(page.getByText(/^Judge/).first()).toBeVisible()
+  await expect(page.getByRole('main').getByText(/^Judge/).first()).toBeVisible()
   const first = page.getByRole('link', { name: /Premier Pre-Championship/ })
   await expect(first).toBeVisible()
   await first.click()

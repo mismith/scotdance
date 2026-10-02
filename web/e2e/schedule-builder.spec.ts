@@ -373,7 +373,9 @@ test('build a schedule from nothing, then see it on the public pages', async ({
   await page.getByRole('link', { name: /Primary/ }).click()
   await expect(page.getByRole('heading', { name: 'Primary', level: 1 })).toBeVisible()
   // One day: not named (as on Schedule).
-  await expect(page.getByText('Morning session · 8:30 am', { exact: true })).toBeVisible()
+  await expect(page.getByText('Morning session', { exact: true })).toBeVisible()
+  // The time once, as typed.
+  await expect(page.getByText('8:30 am', { exact: true })).toBeVisible()
   await expect(page.getByText('Platform A', { exact: true })).toBeVisible()
   await expect(page.getByText('Platform Platform')).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Aileen Robertson/ })).toBeVisible()
@@ -969,7 +971,8 @@ test('legacy competitions read as before, on their day (read only)', async ({ pa
   const event = page.getByRole('link', { name: /^Pre-Premier/ })
   await expect(event.getByText('Results in')).toBeAttached()
   await event.click()
-  await expect(page.getByText('Tuesday, July 3rd · Morning · 8:00 am')).toBeVisible()
+  await expect(page.getByText('Tuesday, July 3rd · Morning', { exact: true })).toBeVisible()
+  await expect(page.getByText(/8:00 am/).first()).toBeVisible()
   await expect(page.getByText(/^Platform \d+$/).first()).toBeVisible()
   await expect(page.getByText(/Platform Platform/)).toHaveCount(0)
   // One day: no day heading.

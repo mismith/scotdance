@@ -358,102 +358,39 @@
   --notice-offset: 2.75rem;
 }
 
-/* The launch hop (SplashOverlay): the dancer's head crouches, springs up
-   out of the flag and lands with a little squash; the flag gives with it.
-   Keyframes carry their own easing (up eases out, down eases in). */
-@keyframes splash-hop {
-  0% {
-    translate: 0 0;
-    scale: 1 1;
-    animation-timing-function: ease-in-out;
-  }
-  16% {
-    translate: 0 6%;
-    scale: 1.12 0.84;
-    fill: #fff;
-    animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
-  }
-  /* Out of the flag, the head takes the flag's blue so it shows on the page. */
-  30% {
-    fill: #0065bd;
-  }
-  48% {
-    translate: 0 -150%;
-    scale: 0.94 1.08;
-    animation-timing-function: cubic-bezier(0.6, 0, 0.85, 0.4);
-  }
-  62% {
-    fill: #0065bd;
-  }
-  74% {
-    translate: 0 4%;
-    scale: 1.14 0.84;
-    fill: #fff;
-    animation-timing-function: ease-out;
-  }
-  88% {
-    translate: 0 -6%;
-    scale: 0.98 1.03;
-  }
-  100% {
-    translate: 0 0;
-    scale: 1 1;
-  }
-}
-@keyframes splash-crouch {
-  0%,
-  100% {
-    scale: 1 1;
-  }
-  16% {
-    scale: 1.03 0.96;
-  }
-  30% {
-    scale: 0.99 1.02;
-  }
-  74% {
-    scale: 1.03 0.96;
-  }
-  88% {
-    scale: 1 1;
-  }
-}
-@utility splash-hop {
-  animation: splash-hop 900ms both;
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
-}
-@utility splash-crouch {
-  animation: splash-crouch 900ms ease-in-out both;
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
+/* Brand panels (Home's pitch, About's hero): saltire blue with a little
+   depth. Light from the top left, a whisper of grain, a lit top edge. Only
+   on these panels; everything else stays flat. */
+@utility brand-panel {
+  background-color: var(--primary-fill);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(130% 110% at 0% 0%, rgb(255 255 255 / 0.17), transparent 55%),
+    radial-gradient(90% 90% at 100% 100%, rgb(0 24 64 / 0.28), transparent 70%);
+  color: var(--primary-foreground);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 1px 2px rgb(10 40 90 / 0.18),
+    0 10px 28px -12px rgb(10 40 90 / 0.45);
 }
 
-/* Wide screens with a tab bar (lg): the bar lives in the top chrome, so the
-   app bar spans the window around it, its small title steps aside, and
-   pages no longer reserve room for a bar at the bottom. A page that goes
-   wider than 48rem there sets --page-max on its root (e.g.
-   lg:[--page-max:72rem]) so the bar's edges line up with its content. */
-@utility appbar-row {
-  max-width: 48rem;
-  @media (min-width: 64rem) {
-    :root:has([data-tabbar]) & {
-      max-width: var(--page-max, none);
-    }
-  }
-}
-@utility appbar-title {
-  @media (min-width: 64rem) {
-    :root:has([data-tabbar]) & {
-      visibility: hidden;
-    }
-  }
+/* Wide screens (lg): the app's navigation is a sidebar on the left of every
+   page (nav/AppSidebar) instead of the tab bars, so fixed chrome starts at
+   --sidebar, and pages no longer keep room for a bar at the bottom. The app
+   bar keeps to the page's column (48rem, as every page is), so its edges
+   line up with the content. */
+:root {
+  --sidebar: 0px;
 }
 @media (min-width: 64rem) {
-  :root:has([data-tabbar]) {
+  :root {
+    --sidebar: 17rem;
     --chrome-bottom: calc(1.5rem + var(--safe-bottom));
     --notice-bottom: calc(var(--safe-bottom) + 1.5rem);
   }
+}
+@utility appbar-row {
+  max-width: 48rem;
 }
 
 /* A dancer's colour, for bars, bands and badges (set as --dc by paint()). */
@@ -1033,6 +970,42 @@
 :active-view-transition-type(enter-competition)::view-transition-new(tabbar-exit),
 :active-view-transition-type(leave-competition)::view-transition-old(tabbar-exit) {
   animation: none;
+}
+
+/* Wide screens: the sidebar (nav/AppSidebar) stays put through page changes
+   rather than sliding with the page. Its frame, rows and headings are named
+   (class .sidebar), so each row glides to where it now sits while its look
+   cross-fades; a branch that opens unfolds downward, one that closes folds
+   up and away. */
+::view-transition-group(sidebar) {
+  animation: none;
+}
+::view-transition-group(.sidebar) {
+  animation-duration: var(--dur-base);
+  animation-timing-function: var(--ease-snappy);
+}
+::view-transition-old(.sidebar),
+::view-transition-new(.sidebar) {
+  animation-duration: var(--dur-quick);
+}
+/* (The unfold trails the rows below a touch, so they're always clear of it.) */
+::view-transition-new(.sidebar-branch):only-child {
+  animation: vt-unfold var(--dur-slow) var(--ease-standard) both;
+}
+::view-transition-old(.sidebar-branch):only-child {
+  animation: vt-fold var(--dur-quick) var(--ease-exit) both;
+}
+@keyframes vt-unfold {
+  from {
+    clip-path: inset(0 0 100% 0);
+    opacity: 0;
+  }
+}
+@keyframes vt-fold {
+  to {
+    clip-path: inset(0 0 100% 0);
+    opacity: 0;
+  }
 }
 
 /* The tapped dancer's number card grows into the big one on their page (and

@@ -83,7 +83,7 @@ async function pick(s: PlaceSuggestion) {
     emit('pick', fields)
     searchError.value = null
   } catch {
-    searchError.value = 'That place couldn’t be looked up. Try another, or type the details.'
+    searchError.value = 'That venue couldn’t be looked up. Try another, or type the details.'
   } finally {
     loading.value = false
   }

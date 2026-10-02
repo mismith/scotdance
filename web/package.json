@@ -17,6 +17,7 @@
     "android": "cd .. && npx cap run android --live-reload --host $(ipconfig getifaddr en0) --port ${PORT:-5273}",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
+    "brand": "node scripts/brand.ts",
     "type-check": "vue-tsc -b",
     "lint": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,vue,js,json,css}\"",

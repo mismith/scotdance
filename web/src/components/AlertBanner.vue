@@ -73,7 +73,7 @@ function open() {
   >
     <div
       v-if="current"
-      class="fixed inset-x-2 top-[calc(var(--safe-top)+0.5rem)] z-50 mx-auto max-w-lg"
+      class="fixed right-2 left-[calc(var(--sidebar)+0.5rem)] top-[calc(var(--safe-top)+0.5rem)] z-50 mx-auto max-w-lg"
       role="status"
       aria-live="polite"
     >
@@ -89,9 +89,7 @@ function open() {
         <!-- The same dark glass as the toasts: it's news from the app, not part of the page. -->
         <div class="hud press flex items-stretch gap-1 rounded-[1.375rem]">
           <button type="button" class="focus-inset flex min-w-0 flex-1 items-center gap-3 rounded-[1.375rem] p-3 text-left" @click="open">
-            <span class="flex size-10 shrink-0 items-center justify-center rounded-[0.625rem] bg-[#0065bd]" aria-hidden="true">
-              <svg viewBox="0 0 40 40" class="size-10"><path d="M9 9 31 31M31 9 9 31" stroke="#fff" stroke-width="5.5" /></svg>
-            </span>
+            <img src="/img/touchicon.png" alt="" class="size-10 shrink-0 rounded-[0.625rem]" />
             <span class="min-w-0">
               <span class="text-callout block leading-snug font-semibold">{{ current.title }}</span>
               <span class="block truncate text-sm text-white/70">{{ current.subtitle }}</span>

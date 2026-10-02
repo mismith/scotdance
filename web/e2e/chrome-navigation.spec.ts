@@ -1,4 +1,5 @@
 import { expect as baseExpect, test } from '@playwright/test'
+import { appTab } from './support/nav'
 
 // The dev server is shared and busy during a full run: give page loads time.
 const expect = baseExpect.configure({ timeout: 15_000 })
@@ -27,16 +28,15 @@ test.describe('page titles', () => {
   }
 })
 
-test('the tab bar marks where you are, and tapping the current tab goes back to the top', async ({ page }) => {
+test('the tab bar (the sidebar, on wide screens) marks where you are, and tapping the current tab goes back to the top', async ({ page }) => {
   await page.goto('/judges')
-  const nav = page.getByRole('navigation', { name: 'App' })
-  await nav.getByRole('link', { name: 'Competitions' }).click()
+  await appTab(page, 'Competitions').click()
   await expect(page).toHaveURL(/\/competitions$/)
-  await expect(nav.getByRole('link', { name: 'Competitions' })).toHaveAttribute('aria-current', 'page')
-  await expect(nav.getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current', 'page')
-  await nav.getByRole('link', { name: 'Search' }).click()
+  await expect(appTab(page, 'Competitions')).toHaveAttribute('aria-current', 'page')
+  await expect(appTab(page, 'Home')).not.toHaveAttribute('aria-current', 'page')
+  await appTab(page, 'Search').click()
   await expect(page).toHaveURL(/\/search$/)
-  await expect(nav.getByRole('link', { name: 'Search' })).toHaveAttribute('aria-current', 'page')
+  await expect(appTab(page, 'Search')).toHaveAttribute('aria-current', 'page')
 })
 
 test('going back returns to where you were in a long list', async ({ page }) => {
@@ -93,8 +93,10 @@ test('everything can be reached by keyboard, with a visible focus ring', async (
   await page.goto('/competitions')
   await expect(page.getByRole('heading', { level: 1, name: 'Competitions' })).toBeVisible()
   const seen: string[] = []
-  // Until the tab bar's Search (how many rows come first depends on the data).
-  for (let i = 0; i < 60 && !seen.includes('Search'); i++) {
+  // The sidebar comes first, then the page: Tab until every one of these has had focus
+  // (how many rows come between depends on the data).
+  const expected = ['Home', 'Competitions', 'Search', 'Dancers', 'Venues', 'Submit a competition', 'Settings', 'About ScotDance.app', 'Upcoming', 'Past results']
+  for (let i = 0; i < 80 && !expected.every((label) => seen.includes(label)); i++) {
     await page.keyboard.press('Tab')
     const focus = await page.evaluate(() => {
       const el = document.activeElement as HTMLElement | null
@@ -112,5 +114,5 @@ test('everything can be reached by keyboard, with a visible focus ring', async (
     seen.push(focus.label)
     expect(focus, focus.label).toMatchObject({ visible: true, ring: true, inClosedDialog: false })
   }
-  expect(seen).toEqual(expect.arrayContaining(['Upcoming', 'Past results', 'Home', 'Search']))
+  expect(seen).toEqual(expect.arrayContaining(expected))
 })

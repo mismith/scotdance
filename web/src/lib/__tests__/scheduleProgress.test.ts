@@ -35,8 +35,7 @@ const schedule: Schedule = {
   },
 }
 const groupIds = new Set(['g1', 'g2', 'g3', 'g4', 'g5'])
-const progress = (results: ResultsTree, minutes = 600) =>
-  scheduleProgress({ schedule, results, groupIds, date: '2026-10-03', minutes })
+const progress = (results: ResultsTree) => scheduleProgress({ schedule, results, groupIds, date: '2026-10-03' })
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
@@ -55,25 +54,20 @@ describe('scheduleProgress', () => {
     expect(progress({ g1: { fling: ['x'] } }).counts.get('pri')).toEqual({ posted: 1, total: 2 })
   })
 
-  it('before anything is posted, the first event is on once its start time has passed', () => {
-    expect(progress({}, 8 * 60).events.get('pri')).toBeUndefined()
-    expect(progress({}, 9 * 60).events.get('pri')).toBe('now')
-  })
-
-  it('the event with results coming in is on now; one with all its results in is done', () => {
+  it('never guesses what’s on: only results decide, and an event is done once they’re all in', () => {
+    // Past the start time, with nothing posted: nothing is marked.
+    expect(progress({}).events.size).toBe(0)
     const partly = progress({ g1: { fling: ['x'] } })
-    expect(partly.events.get('pri')).toBe('now')
+    expect(partly.events.get('pri')).toBeUndefined()
+    expect(partly.counts.get('pri')).toEqual({ posted: 1, total: 2 })
     const all = progress({ g1: { fling: ['x'] }, g2: { fling: false } })
     expect(all.events.get('pri')).toBe('done')
-    expect(all.events.get('beg')).toBe('now')
-    // A dance-free event is never done or on.
+    expect(all.events.get('beg')).toBeUndefined()
+    // A dance-free event is never done.
     expect(all.events.get('ceilidh')).toBeUndefined()
   })
 
-  it('a day that isn’t today has no "now", only what’s done', () => {
-    vi.setSystemTime(new Date(2026, 9, 4, 10, 0))
-    const p = progress({ g5: { fling: ['x'] } })
-    expect(p.events.get('pre')).toBe('done')
-    expect(p.events.get('pri')).toBeUndefined()
+  it('any day’s events can be done, not just today’s', () => {
+    expect(progress({ g5: { fling: ['x'] } }).events.get('pre')).toBe('done')
   })
 })

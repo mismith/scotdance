@@ -99,8 +99,8 @@ const exit = computed(() => {
   if (!isTopTab.value) return null
   const e = competitionEntry.value
   const delta = e && e.competitionId === competitionId.value && e.back ? e.position - 1 - historyPosition() : 0
-  if (e?.back && delta < 0) return { delta, label: backLabelFor(e.back) }
-  return { to: { name: 'competitions' }, label: 'Competitions' }
+  if (e?.back && delta < 0) return { delta, label: backLabelFor(e.back), compact: true }
+  return { to: { name: 'competitions' }, label: 'Competitions', compact: true }
 })
 
 // Drill-down pages (a group, a dancer, an event) set their own title; the
@@ -164,7 +164,7 @@ usePageTitle(() => [
         v-else-if="hiddenHere"
         :icon="EyeOff"
         :title="hiddenHere.title"
-        :description="`This competition doesn’t share ${hiddenHere.what} in ScotDance. Check with the organisers.`"
+        :description="`This competition doesn’t share ${hiddenHere.what} in ScotDance.app. Check with the organisers.`"
       />
       <!-- Keyed: an alert can jump to another competition's same page, which must load afresh. -->
       <RouterView v-else :key="competitionId" />

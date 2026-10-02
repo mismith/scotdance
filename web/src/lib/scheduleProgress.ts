@@ -3,13 +3,12 @@ import { isPosted } from '@/lib/results'
 import { daysFromToday } from '@/lib/format'
 import type { ResultsTree, Schedule, ScheduleEvent } from '@/types/competition'
 
-// Where a competition day has got to, from what's been posted. The data has
-// no clock and no "on now" flag, so it's inferred honestly: an event whose
-// results are all in is done; the one now is the last with any results in
-// (or the next, once that one's complete). Before anything is posted, the
-// day's first event is on once its start time ("8:30 am") has passed.
+// Where a competition has got to, from what's been posted, and nothing
+// else: the data has no clock and no "on now", and times are typed by hand,
+// so guessing what's on would often be wrong. An event says how many of its
+// results are in, and is done once they all are.
 
-export type EventProgress = 'done' | 'now'
+export type EventProgress = 'done'
 
 export interface EventCount {
   posted: number
@@ -19,7 +18,7 @@ export interface EventCount {
 export interface ScheduleProgress {
   /** Results posted out of expected, per event id. */
   counts: Map<string, EventCount>
-  /** Done or on now, per event id (otherwise not yet, or no dances to post). */
+  /** Done, per event id (otherwise still to come, or no dances to post). */
   events: Map<string, EventProgress>
   /** Calendar days from today, per day id (0 today, 1 tomorrow). */
   dayOffset: Map<string, number>
@@ -60,8 +59,6 @@ export function scheduleProgress(opts: {
   groupIds: Set<string>
   /** The competition's (first) date: days without their own follow on from it. */
   date: number | string | null | undefined
-  /** Now, as minutes after midnight. */
-  minutes: number
 }): ScheduleProgress {
   const progress: ScheduleProgress = { counts: new Map(), events: new Map(), dayOffset: new Map() }
   const first = daysFromToday(opts.date ?? null)
@@ -71,26 +68,12 @@ export function scheduleProgress(opts: {
     const offset = own != null && first != null && own >= first && own - first <= 14 ? own : first != null ? first + i : null
     if (offset != null) progress.dayOffset.set(day.id, offset)
 
-    const dayEvents = blocks(day).flatMap((block) =>
-      events(block).map((event) => {
+    for (const block of blocks(day))
+      for (const event of events(block)) {
         const count = eventCount(event, opts.results, opts.groupIds)
         progress.counts.set(event.id, count)
         if (count.total && count.posted >= count.total) progress.events.set(event.id, 'done')
-        return { event, count, start: clockMinutes(block.description) }
-      }),
-    )
-    if (offset !== 0) return
-
-    // Today: what's on now.
-    const dancing = dayEvents.filter((e) => e.count.total)
-    const last = dancing.reduce((at, e, i) => (e.count.posted > 0 ? i : at), -1)
-    const now =
-      last < 0
-        ? dancing[0] && dancing[0].start != null && opts.minutes >= dancing[0].start
-          ? dancing[0]
-          : null
-        : dancing.slice(last).find((e) => e.count.posted < e.count.total)
-    if (now) progress.events.set(now.event.id, 'now')
+      }
   })
   return progress
 }

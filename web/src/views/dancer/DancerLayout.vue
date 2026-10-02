@@ -22,6 +22,6 @@ const { displayName, loading, notFound } = provideDancerProfile(toRef(dancerId))
     :loading="loading"
     :not-found="notFound"
     empty-title="Dancer not found"
-    empty-description="This dancer isn’t listed at any competition on ScotDance. The link may be out of date; try searching by name."
+    empty-description="This dancer isn’t listed at any competition on ScotDance.app. The link may be out of date; try searching by name."
   />
 </template>

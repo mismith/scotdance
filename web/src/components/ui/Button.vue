@@ -79,7 +79,7 @@ const classes = computed(() => [
     :aria-disabled="busy || undefined"
     :class="classes"
   >
-    <LoaderCircle v-if="busy" class="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+    <LoaderCircle v-if="busy" class="animate-spin" aria-hidden="true" />
     <slot />
   </button>
 </template>

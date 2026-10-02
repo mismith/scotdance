@@ -26,7 +26,7 @@ const savedWhen = computed(() => {
     <div
       v-if="savedWhen"
       data-offline-notice
-      class="pointer-events-none fixed inset-x-4 bottom-(--notice-bottom) z-40 flex justify-center"
+      class="pointer-events-none fixed right-4 bottom-(--notice-bottom) left-[calc(var(--sidebar)+1rem)] z-40 flex justify-center"
       role="status"
       aria-live="polite"
     >

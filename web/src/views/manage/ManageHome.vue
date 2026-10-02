@@ -24,7 +24,7 @@ const results = computed(() => ({ name: 'manage.results', params: { competitionI
 </script>
 
 <template>
-  <div class="max-w-3xl space-y-8 p-4 pb-[calc(2rem+var(--safe-bottom))]">
+  <div class="mx-auto max-w-3xl space-y-8 p-4 pb-[calc(2rem+var(--safe-bottom))]">
     <header class="space-y-1">
       <p class="text-muted-foreground text-sm font-medium">{{ c?.date ? formatLongDate(c.date) : 'No date yet' }}</p>
       <h1 class="text-display">{{ c?.name || 'Untitled competition' }}</h1>
@@ -35,9 +35,7 @@ const results = computed(() => ({ name: 'manage.results', params: { competitionI
         :to="carryOn?.to ?? results"
         class="press-row focus-inset -mx-2 flex min-h-12 items-center gap-3 rounded-xl px-2 py-1"
       >
-        <span class="bg-live-paper text-live flex size-9 shrink-0 items-center justify-center rounded-full">
-          <Trophy class="size-4.5" />
-        </span>
+        <Trophy class="text-live size-6 shrink-0" stroke-width="1.75" aria-hidden="true" />
         <span class="min-w-0 flex-1">
           <span class="text-primary block text-base font-semibold">Enter results</span>
           <span class="text-muted-foreground block truncate text-sm">{{ carryOn ? `Carry on: ${carryOn.label}` : 'Everything’s entered so far' }}</span>
@@ -71,9 +69,7 @@ const results = computed(() => ({ name: 'manage.results', params: { competitionI
       <section v-if="next && !(today && next.id === 'results')" class="space-y-3">
         <h2 class="text-heading">Up next</h2>
         <div class="surface flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl p-4">
-          <span class="bg-blue-paper text-primary flex size-11 shrink-0 items-center justify-center rounded-xl">
-            <component :is="next.icon" class="size-5" />
-          </span>
+          <component :is="next.icon" class="text-primary size-6 shrink-0" stroke-width="1.75" aria-hidden="true" />
           <span class="min-w-0 flex-1">
             <span class="block text-base font-semibold">{{ next.title }}</span>
             <span class="text-muted-foreground block text-sm">{{ status[next.id]?.detail ?? next.blurb }}</span>

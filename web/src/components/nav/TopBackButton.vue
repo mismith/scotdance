@@ -10,8 +10,12 @@ import { backLabelFor } from '@/lib/backLabels'
 // shared results link still has a way out.
 const props = defineProps<{
   fallback?: { to: RouteLocationRaw; label: string }
-  /** Overrides history: jump `delta` entries, or go to `to`. */
-  exit?: { delta?: number; to?: RouteLocationRaw; label: string } | null
+  /**
+   * Overrides history: jump `delta` entries, or go to `to`. `compact` shows
+   * just the chevron (a competition's tabs, where the tab bar's own way out
+   * is right there), so the title keeps the room.
+   */
+  exit?: { delta?: number; to?: RouteLocationRaw; label: string; compact?: boolean } | null
 }>()
 
 const route = useRoute()
@@ -43,11 +47,14 @@ function onClick(event: MouseEvent) {
     v-tap-feedback
     v-proximity
     type="button"
-    class="glass press-glass proximity text-primary pointer-events-auto flex h-11 max-w-[42vw] shrink-0 items-center gap-0.5 rounded-full pr-4 pl-2 text-callout font-semibold [view-transition-name:nav-back]"
+    :class="[
+      'glass press-glass proximity text-primary pointer-events-auto flex h-11 shrink-0 items-center rounded-full [view-transition-name:nav-back]',
+      exit?.compact ? 'w-11 justify-center' : 'text-callout max-w-[42vw] gap-0.5 pr-4 pl-2 font-semibold',
+    ]"
     :aria-label="`Back to ${label}`"
     @click="onClick"
   >
-    <ChevronLeft class="size-5 shrink-0" stroke-width="2.5" />
-    <span class="truncate">{{ label }}</span>
+    <ChevronLeft :class="['shrink-0', exit?.compact ? 'size-6 -translate-x-px' : 'size-5']" stroke-width="2.5" />
+    <span v-if="!exit?.compact" class="truncate">{{ label }}</span>
   </button>
 </template>

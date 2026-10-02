@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, watch, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { CalendarDays, Clock, House, LayoutGrid, Search, Trophy, Users } from '@lucide/vue'
+import { CalendarDays, ChevronLeft, Clock, House, LayoutGrid, Search, Trophy, Users } from '@lucide/vue'
 import TabBar, { type TabItem } from '@/components/nav/TabBar.vue'
+import SidebarBranch from '@/components/nav/SidebarBranch.vue'
+import SidebarLink from '@/components/nav/SidebarLink.vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { goUp } from '@/lib/back'
 import { competitionEntry, historyPosition } from '@/lib/competitionExit'
@@ -17,12 +19,13 @@ import { tapHaptic } from '@/lib/haptics'
 //
 // A separate round glass button beside the pill leaves the competition in
 // one tap from any depth, back to the main tab you came from (Home,
-// Competitions or Search), wearing that tab's icon. Like the detached
+// Competitions or Search): a back chevron with that tab's icon, so it reads
+// as "back to Competitions" rather than as another tab. Like the detached
 // button beside iOS 26 tab bars (Music's Search).
 const route = useRoute()
 const router = useRouter()
 const competitionId = computed(() => String(route.params.competitionId ?? ''))
-const { scheduleHidden, resultsHidden } = useCompetition()
+const { competition, scheduleHidden, resultsHidden } = useCompetition()
 
 const TABS = [
   { label: 'Overview', icon: LayoutGrid, to: 'competition.info', matches: ['competition.info'] },
@@ -99,13 +102,28 @@ const items = computed<TabItem[]>(() =>
       <button
         v-tap-feedback
         type="button"
-        class="glass press-glass text-foreground pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full [view-transition-name:tabbar-exit] lg:size-11"
+        class="glass press-glass text-foreground pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full [view-transition-name:tabbar-exit]"
         :aria-label="`Leave this competition, back to ${exit.label}`"
         :title="`Back to ${exit.label}`"
         @click="leave"
       >
-        <component :is="exit.icon" class="size-6 lg:size-5" stroke-width="2.2" />
+        <span class="flex items-center -space-x-0.5" aria-hidden="true">
+          <ChevronLeft class="size-5" stroke-width="2.6" />
+          <component :is="exit.icon" class="size-5" stroke-width="2.2" />
+        </span>
       </button>
     </template>
   </TabBar>
+  <!-- Wide screens: the same tabs, nested under Competitions in the sidebar. -->
+  <SidebarBranch under="competitions" :label="competition?.name ?? 'Competition'">
+    <SidebarLink
+      v-for="t in items"
+      :key="t.label"
+      :to="t.to!"
+      :icon="t.icon"
+      :label="t.label"
+      :state="t.active ? 'current' : null"
+      replace
+    />
+  </SidebarBranch>
 </template>

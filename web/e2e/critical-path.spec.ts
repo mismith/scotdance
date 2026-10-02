@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { dbGet, ensureUser, grantCompetition, signIn, uid } from './support/emulator'
+import { appTab, hasSidebar } from './support/nav'
 import { removeCompetition, seedCompetition, type SeededCompetition } from './support/seed'
 
 // The day in one test: an organiser posts a placing in Manage, and a parent
@@ -37,8 +38,9 @@ test('a placing entered in Manage reaches a following parent live', async ({ bro
   await expect(parent.getByRole('button', { name: /^Following/ }).first()).toBeVisible()
   // In-app, the way a parent gets there (a fresh load of '/' may resume
   // the last page instead).
-  await parent.getByRole('button', { name: /^Leave this competition/ }).click()
-  await parent.getByRole('link', { name: 'Home', exact: true }).click()
+  // (Wide screens have no bar to leave from: the sidebar's Home is always there.)
+  if (!hasSidebar(parent)) await parent.getByRole('button', { name: /^Leave this competition/ }).click()
+  await appTab(parent, 'Home').click()
   await expect(parent).toHaveURL(/\/$/)
   await expect(parent.getByText(`${dancer.firstName} ${dancer.lastName}`).first()).toBeVisible()
 
@@ -47,7 +49,7 @@ test('a placing entered in Manage reaches a following parent live', async ({ bro
   const results = `/competitions/${comp.id}/manage/results/${group.id}`
   await organiser.goto(`${results}/callbacks`)
   await organiser.getByRole('button', { name: new RegExp(`^${dancer.number}\\b`) }).click()
-  await expect(organiser.getByText('Called back · 1')).toBeVisible()
+  await expect(organiser.getByText(/Called back · 1|1 called back/).first()).toBeVisible()
   await organiser.goto(`${results}/${dance.id}`)
   await organiser.getByRole('button', { name: new RegExp(`^${dancer.number}\\b`) }).click()
   await expect

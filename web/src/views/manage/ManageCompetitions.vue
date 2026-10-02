@@ -130,7 +130,7 @@ async function create() {
           <ul class="surface divide-y overflow-hidden rounded-2xl">
             <li v-for="c in list" :key="c.id" class="sm:flex sm:items-center">
               <RouterLink :to="{ name: 'manage', params: { competitionId: c.id } }" class="press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap-3 py-2 pr-3 pl-4">
-                <DateTile :date="c.date" class="h-12 shrink-0" />
+                <DateTile :date="c.date" />
                 <span class="min-w-0 flex-1">
                   <span class="block truncate text-base font-semibold">{{ c.name || 'Untitled competition' }}</span>
                   <span class="text-muted-foreground block truncate text-sm">{{ subtitle(c) }}</span>

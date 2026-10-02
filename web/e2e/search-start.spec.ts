@@ -11,8 +11,9 @@ const expect = baseExpect.configure({ timeout: 20_000 })
 // list to browse. Uses the emulator's legacy data (read only), plus one
 // listing dated years ago (each project its own day, shown as today via ?now=).
 
+// (In the page, not the sidebar, which has a Browse section of its own.)
 const section = (page: Page, heading: string) =>
-  page.locator('section').filter({ has: page.getByRole('heading', { level: 2, name: new RegExp(`^${heading}`) }) })
+  page.getByRole('main').locator('section').filter({ has: page.getByRole('heading', { level: 2, name: new RegExp(`^${heading}`) }) })
 
 test('browse opens each list', async ({ page }) => {
   for (const [label, path] of [

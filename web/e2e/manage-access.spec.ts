@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { dbRemove, ensureUser, grantCompetition, grantSystemAdmin, signIn, uid } from './support/emulator'
+import { appNav, hasSidebar, moreItems } from './support/nav'
 import { removeCompetition, seedCompetition } from './support/seed'
 
 // Who can open Manage and System admin, checked against the real database
@@ -63,7 +64,7 @@ test('an organiser manages their own competition, and only that', async ({ page 
     await page.goto('/manage')
     await expect(page.getByRole('main').getByRole('link', { name: new RegExp(mine.name) })).toBeVisible()
     await expect(page.getByRole('main').getByText(other.name)).toHaveCount(0)
-    await expect(page.getByRole('link', { name: 'Submit a competition' })).toBeVisible()
+    await expect(page.getByRole('main').getByRole('link', { name: 'Submit a competition' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'System admin' })).toHaveCount(0)
 
     // The pencil into Manage shows on their competition only.
@@ -125,10 +126,17 @@ test('signing in on a private competition’s Manage page loads it', async ({ pa
     await expect(page.getByRole('heading', { name: `Dancers ${comp.dancers.length}` })).toBeVisible()
     await expect(page.getByText(dancer).first()).toBeVisible()
 
-    // Signing out and back in from the account menu, too.
+    // Signing out (from the account menu; the Account page on wide screens) and back in, too.
     const revoked = refusal(page)
-    await page.getByRole('button', { name: /^Signed in as/ }).click()
-    await page.getByRole('button', { name: 'Sign out' }).click()
+    if (hasSidebar(page)) {
+      await page.getByRole('link', { name: /^Signed in as/ }).click()
+      await page.getByRole('button', { name: 'Sign out' }).click()
+      await expect(page).toHaveURL(/\/$/)
+      await page.goto(`/competitions/${comp.id}/manage/dancers`)
+    } else {
+      await page.getByRole('button', { name: /^Signed in as/ }).click()
+      await page.getByRole('button', { name: 'Sign out' }).click()
+    }
     await expect(page.getByText('Sign in to manage this competition')).toBeVisible()
     await revoked
     await page.getByRole('main').getByRole('button', { name: 'Sign in' }).click()
@@ -154,32 +162,44 @@ test('access given while the page is open applies straight away', async ({ page 
   }
 })
 
-test('Manage competitions and System admin sit together: last in More, and in the account menu', async ({ page }) => {
+test('Manage competitions and System admin sit together, last in More (the sidebar on wide screens), not in the account menu', async ({ page }) => {
   const email = `${uid('admin')}@example.test`
   const id = await ensureUser(email)
   await grantSystemAdmin(id)
   await signIn(page, email)
 
   await page.goto('/')
-  await page.getByRole('button', { name: /^Signed in as / }).click()
-  const account = page.getByRole('dialog', { name: 'Your account' })
-  await expect(account.getByRole('button', { name: 'Manage competitions' })).toBeVisible()
-  await expect(account.getByRole('button', { name: 'System admin' })).toBeVisible()
-  await page.keyboard.press('Escape')
+  if (hasSidebar(page)) {
+    // Wide screens: you're a link to your Account page (Sign out is there), no menu.
+    await expect(page.getByRole('link', { name: /^Signed in as / })).toHaveAttribute('href', '/profile')
+  } else {
+    await page.getByRole('button', { name: /^Signed in as / }).click()
+    const account = page.getByRole('dialog', { name: 'Your account' })
+    // The account menu keeps to your account: the tools are in More.
+    await expect(account.getByRole('button', { name: 'Manage competitions' })).toHaveCount(0)
+    await expect(account.getByRole('button', { name: 'System admin' })).toHaveCount(0)
+    await expect(account.getByRole('button', { name: 'Settings' })).toBeVisible()
+    await expect(account.getByRole('button', { name: 'Sign out' })).toBeVisible()
+    await page.keyboard.press('Escape')
+  }
 
-  await page.getByRole('navigation', { name: 'App' }).getByRole('button', { name: 'More' }).click()
-  const more = page.getByRole('dialog', { name: 'More' }).getByRole('button')
-  await expect(more.nth(-2)).toHaveText('Manage competitions')
-  await expect(more.nth(-1)).toHaveText('System admin')
-  await page.keyboard.press('Escape')
+  if (hasSidebar(page)) {
+    // No More on wide screens: they sit together in the sidebar, after Submit (as in More).
+    const names = (await appNav(page).getByRole('link').allTextContents()).map((n) => n.trim())
+    const at = names.indexOf('Submit a competition')
+    expect(names.slice(at, at + 3)).toEqual(['Submit a competition', 'Manage competitions', 'System admin'])
+  } else {
+    const { menu, role } = await moreItems(page)
+    const more = menu.getByRole(role)
+    await expect(more.nth(-2)).toHaveText('Manage competitions')
+    await expect(more.nth(-1)).toHaveText('System admin')
+    await page.keyboard.press('Escape')
+  }
 
-  // Settings doesn't repeat them; About comes before the questions.
+  // Settings keeps to settings: no tools, and help lives on About.
   await page.goto('/settings')
   await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible()
-  await expect(page.getByRole('main').getByRole('link', { name: 'Manage competitions' })).toHaveCount(0)
-  const help = page.getByRole('main').getByRole('link')
-  await expect(help.nth(0)).toHaveText('About ScotDance')
-  await expect(help.nth(1)).toHaveText('Questions and answers')
+  await expect(page.getByRole('main').getByRole('link')).toHaveCount(0)
 })
 
 test('a plain account sees neither in More', async ({ page }) => {
@@ -187,8 +207,7 @@ test('a plain account sees neither in More', async ({ page }) => {
   await ensureUser(email)
   await signIn(page, email)
   await page.goto('/')
-  await page.getByRole('navigation', { name: 'App' }).getByRole('button', { name: 'More' }).click()
-  const menu = page.getByRole('dialog', { name: 'More' })
-  await expect(menu.getByRole('button', { name: 'About ScotDance' })).toBeVisible()
-  await expect(menu.getByRole('button', { name: /Manage competitions|System admin/ })).toHaveCount(0)
+  const { menu, role } = await moreItems(page)
+  await expect(menu.getByRole(role, { name: 'About ScotDance.app' })).toBeVisible()
+  await expect(menu.getByRole(role, { name: /Manage competitions|System admin/ })).toHaveCount(0)
 })

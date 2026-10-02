@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { ChevronRight, Eye, EyeOff, LogOut } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
-import { gravatarUrl } from '@/lib/gravatar'
+import MeAvatar from '@/components/MeAvatar.vue'
 import Dialog from '@/components/Dialog.vue'
 import { useMorph } from '@/lib/morph'
 import AppBar from '@/components/nav/AppBar.vue'
@@ -17,14 +17,6 @@ const router = useRouter()
 const roles = useRoles()
 const rolesLabel = computed(() => ROLES.filter((r) => roles.has(r.id)).map((r) => r.label).join(', ') || 'Not answered yet')
 
-const avatarUrl = ref<string | null>(null)
-watch(
-  () => me.email,
-  async (email) => {
-    avatarUrl.value = await gravatarUrl(email, 200)
-  },
-  { immediate: true },
-)
 
 // Display name (debounced save)
 const displayName = ref('')
@@ -157,8 +149,7 @@ const submitDisabled = computed(() => {
 
     <main class="mx-auto w-full max-w-3xl space-y-5 px-4 pt-[calc(var(--chrome-top)+0.25rem)]">
       <header class="flex items-center gap-4">
-        <img v-if="avatarUrl" :src="avatarUrl" alt="" class="bg-muted size-16 rounded-full object-cover" />
-        <div v-else class="bg-muted size-16 rounded-full" />
+        <MeAvatar size="lg" />
         <div class="min-w-0">
           <h1 class="text-display truncate">{{ displayName || 'Your account' }}</h1>
         </div>
@@ -202,7 +193,7 @@ const submitDisabled = computed(() => {
         <li>
           <button type="button" class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left" @click="roles.open()">
             <span class="min-w-0 flex-1">
-              <span class="block text-base font-medium">How you use ScotDance</span>
+              <span class="block text-base font-medium">How you use ScotDance.app</span>
               <span class="text-muted-foreground block truncate text-sm">{{ rolesLabel }}</span>
             </span>
             <ChevronRight class="text-muted-foreground/70 size-5 shrink-0" />

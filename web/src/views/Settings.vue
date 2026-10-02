@@ -1,17 +1,6 @@
 <script setup lang="ts">
 import { ref, useId } from 'vue'
-import { RouterLink } from 'vue-router'
-import {
-  ArrowDownToLine,
-  Bell,
-  ChevronRight,
-  FileText,
-  History,
-  Info,
-  LifeBuoy,
-  MessageCircleQuestion,
-  Sun,
-} from '@lucide/vue'
+import { Bell, History, Sun } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import Segmented from '@/components/ui/Segmented.vue'
 import Switch from '@/components/ui/Switch.vue'
@@ -19,19 +8,15 @@ import { useScrolledPast } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { useTheme, type Theme } from '@/composables/useTheme'
 import { useAlerts } from '@/composables/useAlerts'
-import { useCrisp } from '@/composables/useCrisp'
-import { useUpdate } from '@/composables/useUpdate'
 import { clearDeviceHistory } from '@/lib/deviceHistory'
 import { confirm, toast } from '@/lib/admin/feedback'
 
-// Settings: alerts, appearance, help and the fine print. Your account (and
-// how you use ScotDance, and signing out) lives on the Account page; the
-// everyday places are in the More menu on the tab bar.
+// Settings: alerts, appearance and this device. Your account (and how you
+// use ScotDance, and signing out) lives on the Account page; help, the
+// questions and the fine print are on About.
 usePageTitle(['Settings'])
 
 const alerts = useAlerts()
-const crisp = useCrisp()
-const update = useUpdate()
 const { theme } = useTheme()
 
 const titleEl = ref<HTMLElement | null>(null)
@@ -81,7 +66,7 @@ async function clearHistory() {
           <Bell class="text-primary" />
           <span class="min-w-0 flex-1">
             <span :id="`${alertsId}-label`" class="block text-base font-medium">Live result alerts</span>
-            <span :id="`${alertsId}-hint`" class="text-muted-foreground block text-sm">A banner when a dancer you follow places, while ScotDance is open</span>
+            <span :id="`${alertsId}-hint`" class="text-muted-foreground block text-sm">A banner when a dancer you follow places, while ScotDance.app is open</span>
           </span>
           <Switch
             :id="alertsId"
@@ -117,46 +102,6 @@ async function clearHistory() {
           </button>
         </div>
       </section>
-
-      <!-- Help -->
-      <section class="space-y-2">
-        <h2 class="text-heading">Help</h2>
-        <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:3rem]">
-          <li v-if="update.updateAvailable">
-            <button type="button" :class="rowClass" @click="update.openDialog()">
-              <ArrowDownToLine class="text-secondary" />
-              <span class="flex-1 text-base font-medium">Update available</span>
-              <span class="bg-secondary size-2.5 rounded-full" aria-hidden="true" />
-            </button>
-          </li>
-          <li>
-            <RouterLink :to="{ name: 'about' }" :class="rowClass">
-              <Info class="text-primary" /><span class="flex-1 text-base font-medium">About ScotDance</span><ChevronRight class="text-muted-foreground/70" />
-            </RouterLink>
-          </li>
-          <li>
-            <RouterLink :to="{ name: 'about', hash: '#faqs' }" :class="rowClass">
-              <MessageCircleQuestion class="text-primary" /><span class="flex-1 text-base font-medium">Questions and answers</span><ChevronRight class="text-muted-foreground/70" />
-            </RouterLink>
-          </li>
-          <li v-if="crisp.available">
-            <button type="button" :class="rowClass" @click="crisp.open()">
-              <LifeBuoy class="text-primary" />
-              <span class="flex-1 text-base font-medium">Send feedback or get help</span>
-              <span v-if="crisp.unread > 0" class="bg-secondary text-secondary-foreground rounded-full px-2 text-sm font-semibold tabular-nums">{{ crisp.unread }}</span>
-            </button>
-          </li>
-          <li>
-            <RouterLink :to="{ name: 'policies' }" :class="rowClass">
-              <FileText class="text-primary" /><span class="flex-1 text-base font-medium">Privacy and terms</span><ChevronRight class="text-muted-foreground/70" />
-            </RouterLink>
-          </li>
-        </ul>
-      </section>
-
-      <p class="text-muted-foreground pb-2 text-center text-sm">
-        ScotDance {{ update.currentVersion }} · Run by a volunteer
-      </p>
     </main>
   </div>
 </template>

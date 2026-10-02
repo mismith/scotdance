@@ -18,10 +18,11 @@ import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
 
 // Every session open, in order. Events that include someone you follow say
-// so, and events whose results are all posted say "Results in". On the day
-// it knows the time: what's on now is marked, what's done steps back, and
-// the first visit of the day opens at the current session. The tab is
-// always here, even before a schedule is posted, so it never moves.
+// so, and each says how many of its results are in (a check once they all
+// are, when it steps back). There's no guessing what's on now: the data has
+// no clock. On a later day of the competition, the first visit of the day
+// opens at today. The tab is always here, even before a schedule is posted,
+// so it never moves.
 const setHeader = injectInfoHeaderSetter()
 const {
   competitionId,
@@ -88,14 +89,14 @@ const ready = ref(false)
 onMounted(async () => {
   await Promise.all([loadSchedule(), loadDancers(), loadResults()])
   ready.value = true
-  openAtNow()
+  openAtToday()
 })
 
-// The first visit of the day opens at what's on now; after that, wherever
-// you left it.
-async function openAtNow() {
-  const block = dayList.value.flatMap((d) => d.blocks).find((b) => b.events.some((e) => e.state === 'now'))
-  if (!block) return
+// The first visit of the day opens at today's part of the schedule (when it
+// isn't already at the top); after that, wherever you left it.
+async function openAtToday() {
+  const i = dayList.value.findIndex((d) => progress.value.dayOffset.get(d.day.id) === 0)
+  if (i <= 0) return
   const key = `schedule:opened:${competitionId.value}`
   try {
     if (localStorage.getItem(key) === today.value) return
@@ -104,7 +105,7 @@ async function openAtNow() {
     return
   }
   await nextTick()
-  document.getElementById(`block-${block.block.id}`)?.scrollIntoView({ block: 'start', behavior: 'instant' })
+  document.getElementById(`day-${dayList.value[i].day.id}`)?.scrollIntoView({ block: 'start', behavior: 'instant' })
 }
 </script>
 
@@ -134,7 +135,7 @@ async function openAtNow() {
       "
     />
 
-    <section v-for="d in empty ? [] : dayList" :key="d.day.id" class="space-y-3">
+    <section v-for="d in empty ? [] : dayList" :id="`day-${d.day.id}`" :key="d.day.id" class="scroll-mt-(--chrome-top) space-y-3">
       <h2 v-if="dayList.length > 1" class="text-title flex items-baseline gap-2 pt-2">
         {{ d.relative ?? d.label }}
         <span v-if="d.relative" class="text-muted-foreground text-base font-medium">{{ d.label }}</span>
@@ -183,15 +184,7 @@ async function openAtNow() {
                   e.state === 'done' && 'opacity-60',
                 ]"
               >
-                <span class="flex items-center gap-2">
-                  <span class="text-base leading-snug font-semibold">{{ e.event.name || 'Event' }}</span>
-                  <span
-                    v-if="e.state === 'now'"
-                    class="bg-live-paper text-live text-footnote rounded-full px-2 py-0.5 leading-none font-semibold"
-                  >
-                    Now
-                  </span>
-                </span>
+                <span class="block text-base leading-snug font-semibold">{{ e.event.name || 'Event' }}</span>
                 <span v-if="e.event.description" class="text-muted-foreground block truncate text-sm">
                   {{ slugline(e.event.description) }}
                 </span>

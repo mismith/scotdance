@@ -62,7 +62,8 @@ export function useSetup() {
       },
       staff: {
         done: judges > 0,
-        detail: staff ? [plural(judges, 'judge', 'judges'), `${staff} staff`].join(' · ') : 'Add the judges',
+        // Judges are staff too: one count, so it can't read as more people.
+        detail: staff ? `${staff} staff` : 'Add the judges',
         count: staff,
       },
       dances: { done: m.dances.value.length > 0, detail: m.dances.value.length ? plural(m.dances.value.length, 'dance', 'dances') : 'Add the dances performed', count: m.dances.value.length },

@@ -12,6 +12,7 @@ import { useFreshPlacings } from '@/composables/useCompetitionPlacings'
 import { useFollowing } from '@/composables/useFollowing'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { findGroupDances, groupHasPlaceholderDancers, isPosted } from '@/lib/results'
+import { resultsCount } from '@/lib/resultsCount'
 import { OVERALL_ID, groupHasOverall, type EnrichedGroup } from '@/types/competition'
 import EmptyState from '@/components/EmptyState.vue'
 import LiveDot from '@/components/LiveDot.vue'
@@ -98,16 +99,7 @@ const sections = computed(() =>
     .filter((s) => s.rows.length),
 )
 
-const totals = computed(() => {
-  let total = 0
-  let posted = 0
-  for (const g of groups.value) {
-    const r = rowFor(g)
-    total += r.total
-    posted += r.posted
-  }
-  return { total, posted }
-})
+const totals = computed(() => resultsCount(groups.value, dances.value, results.value))
 
 const anyFollowedHere = computed(() => followedByGroup.value.size > 0)
 const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)

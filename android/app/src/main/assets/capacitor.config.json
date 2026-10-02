@@ -2,14 +2,13 @@
 	"appId": "info.mismith.scotdance",
 	"appName": "ScotDance",
 	"npmClient": "npm",
-	"webDir": "www",
+	"webDir": "web/dist",
 	"plugins": {
 		"SplashScreen": {
-			"showSpinner": true,
-			"iosSpinnerStyle": "large",
-			"spinnerColor": "#1976d2",
-			"backgroundColor": "#ffffff",
-			"launchAutoHide": false
+			"launchAutoHide": false,
+			"showSpinner": false,
+			"backgroundColor": "#f2f4f7",
+			"launchFadeOutDuration": 0
 		}
 	}
 }

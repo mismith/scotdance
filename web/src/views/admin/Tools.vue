@@ -71,6 +71,14 @@ const sampleLines = (data: unknown) =>
     (x) => `${x.name || x.id}: ${[x.locality, x.region, x.country].filter(Boolean).join(', ') || 'found'}`,
   )
 
+// A profile rebuild is two steps, one after the other: build the profiles,
+// then link the entries to them.
+async function rebuildProfiles(key: string) {
+  await run(`agg${key}`, `backfill${key}Aggregates`)
+  if (!jobs[`agg${key}`].error) await run(`bp${key}`, `backfill${key}BackPointers`)
+}
+const profileBusy = (key: string) => job(`agg${key}`).running || job(`bp${key}`).running
+
 async function run(key: string, fn: string, payload?: unknown) {
   const j = jobs[key]
   j.running = true
@@ -143,18 +151,22 @@ for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`ag
     <section class="space-y-3">
       <div>
         <h2 class="text-heading">Profiles</h2>
-        <p class="text-muted-foreground text-sm">Rebuild the profiles that link people and venues across competitions. Run step 1, then step 2.</p>
+        <p class="text-muted-foreground text-sm">Rebuild the profiles that link people and venues across competitions, and link their entries to them.</p>
       </div>
       <ul class="surface divide-y rounded-2xl">
-        <li v-for="p in PROFILES" :key="p.key" class="space-y-2 px-4 py-3">
-          <p class="text-base font-medium">{{ p.label }}</p>
-          <div class="flex flex-wrap gap-2">
-            <Button :busy="job(`agg${p.key}`).running" @click="run(`agg${p.key}`, `backfill${p.key}Aggregates`)">1. Build profiles</Button>
-            <Button :busy="job(`bp${p.key}`).running" @click="run(`bp${p.key}`, `backfill${p.key}BackPointers`)">2. Link entries</Button>
-          </div>
-          <p v-for="k in [`agg${p.key}`, `bp${p.key}`]" :key="k" :class="['text-sm', jobs[k]?.error ? 'text-destructive font-medium' : 'text-done-foreground']">
-            {{ jobs[k]?.error ?? jobs[k]?.result ?? '' }}
-          </p>
+        <li v-for="p in PROFILES" :key="p.key" class="flex flex-wrap items-center gap-3 py-2 pr-2 pl-4">
+          <span class="min-w-0 flex-1">
+            <span class="block text-base font-medium">{{ p.label }}</span>
+            <span
+              v-for="k in [`agg${p.key}`, `bp${p.key}`]"
+              :key="k"
+              :class="['block text-sm', jobs[k]?.error ? 'text-destructive font-medium' : 'text-done-foreground']"
+              >{{ jobs[k]?.error ?? jobs[k]?.result ?? '' }}</span
+            >
+          </span>
+          <Button :busy="profileBusy(p.key)" @click="rebuildProfiles(p.key)">
+            <Play v-if="!profileBusy(p.key)" /> Rebuild
+          </Button>
         </li>
       </ul>
     </section>

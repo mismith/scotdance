@@ -24,8 +24,9 @@ import { useFavoritesStore } from '@/stores/favorites'
 // The map (MapLibre, ~1 MB) loads only when someone opens it.
 const CompetitionsMap = defineAsyncComponent(() => import('@/views/competitions/CompetitionsMap.vue'))
 
-// One row of controls, the same in every view: Upcoming or Past results,
-// where (a region, nearby, or everywhere), and how (list, calendar, map).
+// One row of controls: Upcoming or Past results, where (a region, nearby, or
+// everywhere), and how (list, calendar, map). The calendar is itself a view
+// of when, so it shows every competition and drops Upcoming/Past.
 type Range = 'upcoming' | 'past'
 const RANGES = [
   { value: 'upcoming', label: 'Upcoming' },
@@ -37,7 +38,7 @@ const range = useLocalStorage<Range>('competitions:range', 'upcoming')
 const titleEl = ref<HTMLElement | null>(null)
 const scrolledPast = useScrolledPast(titleEl)
 
-const includeArchived = computed(() => range.value === 'past')
+const includeArchived = computed(() => range.value === 'past' || view.value === 'calendar')
 const { competitions, loading, error, reload } = useCompetitions(includeArchived)
 const { filterFor, setWorldwide, mode: locationMode } = useLocationFilter()
 const favorites = useFavoritesStore()
@@ -131,7 +132,7 @@ const sections = computed<Section[]>(() => {
           view === 'map' && 'pointer-events-none absolute inset-x-4 top-[calc(var(--chrome-top)+0.5rem)] z-10 [&>*]:pointer-events-auto',
         ]"
       >
-        <div :class="['w-full sm:w-80', view === 'map' && 'glass rounded-full']">
+        <div v-if="view !== 'calendar'" :class="['w-full sm:w-80', view === 'map' && 'glass rounded-full']">
           <Segmented v-model="range" :options="RANGES" label="Which competitions" />
         </div>
         <LocationFilter :competitions="competitions" :glass="view === 'map'" />
@@ -142,12 +143,12 @@ const sections = computed<Section[]>(() => {
         v-if="view === 'map'"
         :competitions="inRange"
         :fit-key="`${locationMode}:${location.isActive}:${range}`"
-        class="fixed inset-x-0 top-(--chrome-top) bottom-0"
+        class="fixed top-(--chrome-top) right-0 bottom-0 left-(--sidebar)"
       />
 
       <CompetitionsCalendar
         v-else-if="view === 'calendar'"
-        :competitions="inRange"
+        :competitions="located"
         :loading="loading"
         class="pt-2"
       />
@@ -215,11 +216,9 @@ const sections = computed<Section[]>(() => {
 
       <!-- For organisers, at the end of the list. -->
       <section v-if="view !== 'map'" class="surface mt-6 flex items-center gap-3 rounded-2xl p-4">
-        <span class="bg-blue-paper text-primary flex size-11 shrink-0 items-center justify-center rounded-full" aria-hidden="true">
-          <SquarePlus class="size-5" />
-        </span>
+        <SquarePlus class="text-primary size-6 shrink-0" stroke-width="1.75" aria-hidden="true" />
         <p class="text-callout min-w-0 flex-1">
-          <span class="font-semibold">Running a competition?</span> Add it to ScotDance. It’s free, and saves hours of
+          <span class="font-semibold">Running a competition?</span> Add it to ScotDance.app. It’s free, and saves hours of
           work and paper.
         </p>
         <Button variant="tonal" :to="{ name: 'competitions.submit' }">Submit</Button>

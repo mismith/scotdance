@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { appTab } from './support/nav'
 
 // Settings › Clear history: what this device remembers of where you've been
 // goes in one go (a shared or borrowed phone), and search words are never
@@ -36,7 +37,7 @@ test('never keeps search words with scroll positions', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: 'Search' })).toBeVisible()
   await page.goto('/competitions')
   await expect(page.getByRole('heading', { level: 1, name: 'Competitions' })).toBeVisible()
-  await page.getByRole('navigation', { name: 'App' }).getByRole('link', { name: 'Home' }).click()
+  await appTab(page, 'Home').click()
   await expect(page).toHaveURL(/\/$/)
   const saved = await page.evaluate(() => localStorage.getItem('scroll-positions') ?? '')
   expect(saved).not.toContain('embarrassing')

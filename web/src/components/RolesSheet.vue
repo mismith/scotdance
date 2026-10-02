@@ -39,11 +39,11 @@ async function save() {
 <template>
   <Dialog :open="r.sheetOpen.value" :morph="r.sheet" variant="sheet" @close="r.close()">
     <template #header>
-      <h2 class="text-title">How do you use ScotDance?</h2>
+      <h2 class="text-title">How do you use ScotDance.app?</h2>
     </template>
     <div class="space-y-4 p-4 pb-[calc(1.5rem+var(--safe-bottom))]">
       <p class="text-base">Pick all that apply.</p>
-      <div class="surface rows-inset overflow-hidden rounded-2xl [--inset:3.375rem]" role="group" aria-label="How you use ScotDance">
+      <div class="surface rows-inset overflow-hidden rounded-2xl [--inset:3.375rem]" role="group" aria-label="How you use ScotDance.app">
         <button
           v-for="role in ROLES"
           :key="role.id"
@@ -61,8 +61,8 @@ async function save() {
         </button>
       </div>
       <p class="text-muted-foreground text-sm leading-relaxed">
-        ScotDance uses this to fit the app to you. Teachers get a compact list for following a whole class, and
-        organisers get quick access to their competitions. It also tells the volunteer who builds ScotDance who it’s
+        ScotDance.app uses this to fit itself to you. Teachers get a compact list for following a whole class, and
+        organisers get quick access to their competitions. It also tells the volunteer who builds ScotDance.app who it’s
         for, so the next features help the right people. Change it any time in your account.
       </p>
       <Button variant="primary" size="lg" block :busy="saving" @click="save">Save</Button>

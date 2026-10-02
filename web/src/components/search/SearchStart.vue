@@ -141,9 +141,7 @@ const lists = ['dancers', 'judges', 'pipers', 'venues'].map(sectionMeta)
       :to="competitions.to"
       class="surface press-row focus-inset flex min-h-16 items-center gap-3 rounded-2xl p-3"
     >
-      <span class="bg-blue-paper text-primary flex size-11 shrink-0 items-center justify-center rounded-full" aria-hidden="true">
-        <component :is="competitions.icon" class="size-5" />
-      </span>
+      <component :is="competitions.icon" class="text-primary mx-1 size-6 shrink-0" stroke-width="1.75" aria-hidden="true" />
       <span class="flex-1 text-base font-semibold">{{ competitions.label }}</span>
       <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
     </RouterLink>
@@ -153,9 +151,7 @@ const lists = ['dancers', 'judges', 'pipers', 'venues'].map(sectionMeta)
           :to="b.to"
           class="surface press-row focus-inset flex h-full min-h-24 flex-col items-center justify-center gap-2 rounded-2xl p-3 text-center"
         >
-          <span class="bg-blue-paper text-primary flex size-11 items-center justify-center rounded-full" aria-hidden="true">
-            <component :is="b.icon" class="size-5" />
-          </span>
+          <component :is="b.icon" class="text-primary size-7" stroke-width="1.75" aria-hidden="true" />
           <span class="text-callout leading-tight font-semibold">{{ b.label }}</span>
         </RouterLink>
       </li>

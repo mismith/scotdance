@@ -101,7 +101,7 @@ const name = computed(() => competition.value?.name ?? 'this competition')
   <div class="flex min-h-dvh flex-col">
     <AppBar title="Invitation" show-title :fallback="{ to: { name: 'home' }, label: 'Home' }" />
     <main class="mx-auto w-full max-w-lg flex-1 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-[calc(var(--chrome-bottom)+1.5rem)]">
-      <div v-if="state === 'loading'" class="flex justify-center py-20"><LoaderCircle class="text-muted-foreground size-8 animate-spin motion-reduce:animate-none" /></div>
+      <div v-if="state === 'loading'" class="flex justify-center py-20"><LoaderCircle class="text-muted-foreground size-8 animate-spin" /></div>
 
       <EmptyState
         v-else-if="state === 'signed-out'"
@@ -131,7 +131,7 @@ const name = computed(() => competition.value?.name ?? 'this competition')
         description="It’s taking much longer than it should. Ask the organiser to delete this invite and invite you again."
       />
       <div v-else-if="state === 'accepting'" class="flex flex-col items-center gap-3 py-20 text-center">
-        <LoaderCircle class="text-primary size-8 animate-spin motion-reduce:animate-none" />
+        <LoaderCircle class="text-primary size-8 animate-spin" />
         <p class="text-base font-medium">Setting up your access…</p>
       </div>
 

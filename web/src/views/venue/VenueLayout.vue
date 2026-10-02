@@ -21,6 +21,6 @@ const { name, loading, notFound } = provideVenueProfile(toRef(venueId))
     :loading="loading"
     :not-found="notFound"
     empty-title="Venue not found"
-    empty-description="This venue isn’t listed for any competition on ScotDance. The link may be out of date."
+    empty-description="This venue isn’t listed for any competition on ScotDance.app. The link may be out of date."
   />
 </template>

@@ -40,7 +40,7 @@ test('opens with the last saved data, says so, and recovers live results', async
   await dbSet(`users:favorites/${parentId}/dancers/${person.id}`, person.name)
 
   await page.goto('/')
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true }).click()
   await signInFromSheet(page, email)
   const card = page.locator('article').filter({ hasText: person.name })
   await expect(card.getByRole('link', { name: /Highland Fling/ })).toContainText('Next')

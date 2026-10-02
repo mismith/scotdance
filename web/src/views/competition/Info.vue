@@ -2,7 +2,7 @@
 import { useMorph } from '@/lib/morph'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Check, ChevronRight, Clock, Copy, ExternalLink, Hourglass, Map as MapIcon, MapPin, Navigation, Search, Star, Users, X } from '@lucide/vue'
+import { Check, ChevronRight, Clock, Copy, ExternalLink, Hourglass, Map as MapIcon, MapPin, Navigation, Search, Star, Trophy, Users, X } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
 import { useCompetitionLive } from '@/composables/useCompetitionLive'
@@ -21,11 +21,14 @@ import StaffAvatar from '@/components/StaffAvatar.vue'
 import StaffDialog from '@/components/StaffDialog.vue'
 import Button from '@/components/ui/Button.vue'
 import { staffEntityRef, staffMemberName, type StaffMember } from '@/types/competition'
-import type { DancerDay } from '@/lib/dancerDay'
+import type { DancerDay, DanceStatus } from '@/lib/dancerDay'
+import { getOrdinalSuffix } from '@/lib/results'
+import { resultsCount } from '@/lib/resultsCount'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useMeStore } from '@/stores/me'
 import AdminMark from '@/components/AdminMark.vue'
-import { blocks, dances as eventDances, days, events } from '@/lib/schedule'
+import { blocks, days, events } from '@/lib/schedule'
+import ResultsMark from '@/components/ResultsMark.vue'
 import { competitionSpan } from '@/lib/dancerDay'
 import { formatExternalURL, formatLongDate, formatRelative } from '@/lib/format'
 import { sanitizeRichText } from '@/lib/sanitize'
@@ -52,8 +55,11 @@ const {
   loadStaff,
   dancers,
   loadDancers,
+  groups,
   dances,
+  results,
   loadResults,
+  resultsHidden,
   schedule,
   loadSchedule,
 } = useCompetition()
@@ -121,23 +127,48 @@ const links = computed(() => competitionLinks(competition.value))
 const registrationOpen = computed(() => isRegistrationOpen(competition.value))
 
 // Sessions: the schedule's blocks, with the time organisers put in their
-// description ("8:00 am"), and on the day which one's on now.
+// description ("8:00 am"), and how many of their results are in.
 const sessions = computed(() =>
   days(schedule.value).flatMap((day, di, all) =>
     blocks(day).map((b) => {
-      const states = events(b)
-        .filter((e) => eventDances(e).some((sd) => sd.danceId))
-        .map((e) => progress.value.events.get(e.id))
+      const count = { posted: 0, total: 0 }
+      for (const e of events(b)) {
+        const c = progress.value.counts.get(e.id)
+        count.posted += c?.posted ?? 0
+        count.total += c?.total ?? 0
+      }
       return {
         id: `${day.id}:${b.id}`,
         day: all.length > 1 ? day.name : null,
         name: b.name || 'Session',
         time: (b.description ?? '').replace(/<[^>]*>/g, ' ').split('\n')[0]?.trim().slice(0, 40) || null,
-        state: states.includes('now') ? 'now' : states.length && states.every((x) => x === 'done') ? 'done' : null,
+        count,
+        done: count.total > 0 && count.posted >= count.total,
       }
     }),
   ),
 )
+
+// The Overview keeps its order but changes density with the day: before,
+// everything for getting there (the map, Register); on the day, one venue
+// row and what's on; after, the results so far instead of the map.
+const mode = computed(() => phase.value)
+const posted = computed(() => resultsCount(groups.value, dances.value, results.value))
+
+// A dancer whose day is all settled folds to one line ("=1st · 2nd · –"),
+// once any new placing has had its moment.
+const SETTLED = new Set(['placed', 'unplaced', 'no-placings', 'not-posted'])
+const settled = (days: DancerDay[]) =>
+  days.every((d) => d.dances.length && [...d.dances, ...(d.overall ? [d.overall] : [])].every((s) => SETTLED.has(s.state)))
+function placingText(s: DanceStatus) {
+  if (s.state !== 'placed' || s.place == null) return s.state === 'unplaced' ? '–' : null
+  return `${s.tied ? '=' : ''}${s.place}${getOrdinalSuffix(s.place)}${s.dance.id === 'overall' ? ' overall' : ''}`
+}
+function placingsLine(days: DancerDay[]) {
+  const all = days.flatMap((d) => [...d.dances, ...(d.overall ? [d.overall] : [])])
+  if (!all.some((s) => s.state === 'placed')) return all.some((s) => s.state !== 'not-posted') ? 'Not placed' : 'No results posted'
+  return all.map(placingText).filter(Boolean).join(' · ')
+}
 
 // Following no one here: find your dancer right on the Overview.
 const find = ref('')
@@ -182,7 +213,6 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
           v-else
           :date="competition.date"
           :managed="me.hasCompetitionPerm(competitionId)"
-          class="h-14"
           :style="scrolledPast ? undefined : { viewTransitionName: 'competition-date' }"
         />
         <div class="min-w-0 flex-1">
@@ -211,14 +241,29 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
       <!-- Your dancers here -->
       <section v-if="followedHere.length" key="yours" class="space-y-3">
         <h2 class="text-heading">Your dancers here</h2>
-        <DancerDayCard
-          v-for="f in followedHere"
-          :key="f.personId"
-          :days="f.days"
-          :fresh="freshIn(f.days)"
-          :competition-id="competitionId"
-          :color="f.color"
-        />
+        <template v-for="f in followedHere" :key="f.personId">
+          <div v-if="settled(f.days) && !freshIn(f.days)" class="surface overflow-hidden rounded-2xl">
+            <RouterLink
+              :to="{ name: 'competition.dancer', params: { competitionId, dancerId: f.days[0].dancer.id } }"
+              class="press-row focus-inset flex min-h-16 items-center gap-3 px-3 py-2.5"
+              @click="numberVt.tap(f.days[0].dancer.id, 'yours')"
+            >
+              <NumberCard :number="f.days[0].dancer.number" :color="f.color" size="sm" :vt="numberVt.row(f.days[0].dancer.id, 'yours')" />
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-base font-semibold">{{ f.name }}</span>
+                <span class="text-muted-foreground block truncate text-sm tabular-nums">{{ placingsLine(f.days) }}</span>
+              </span>
+              <ChevronRight class="text-muted-foreground size-5 shrink-0" />
+            </RouterLink>
+          </div>
+          <DancerDayCard
+            v-else
+            :days="f.days"
+            :fresh="freshIn(f.days)"
+            :competition-id="competitionId"
+            :color="f.color"
+          />
+        </template>
       </section>
 
       <!-- Not following anyone here: find them -->
@@ -294,19 +339,32 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
 
     <!-- When and where -->
     <section class="surface rows-inset overflow-hidden rounded-2xl [--inset:3rem]">
-      <div v-if="competition.date" class="flex items-center gap-3 p-4">
+      <div v-if="competition.date && mode !== 'today'" class="flex items-center gap-3 p-4">
         <Clock class="text-primary size-5 shrink-0" />
         <div>
           <p class="text-base font-semibold">{{ formatLongDate(competition.date) }}</p>
-          <p v-if="sessions[0]?.time" class="text-muted-foreground text-sm">Starts {{ sessions[0].time }}</p>
+          <p v-if="sessions[0]?.time && mode === 'before'" class="text-muted-foreground text-sm">Starts {{ sessions[0].time }}</p>
         </div>
       </div>
+      <!-- After: what's in. -->
+      <RouterLink
+        v-if="mode === 'after' && posted.total && !resultsHidden"
+        :to="{ name: 'competition.results', params: { competitionId } }"
+        class="press-row focus-inset flex items-center gap-3 p-4"
+      >
+        <Trophy class="text-primary size-5 shrink-0" />
+        <span class="min-w-0 flex-1">
+          <span class="block text-base font-semibold">Results</span>
+          <span class="text-muted-foreground block text-sm tabular-nums">{{ posted.posted }} of {{ posted.total }} posted</span>
+        </span>
+        <ChevronRight class="text-muted-foreground size-5" />
+      </RouterLink>
       <div v-if="competition.venue || competition.address || competition.location" class="space-y-3 p-4">
         <div class="flex items-center gap-3">
           <MapPin class="text-primary size-5 shrink-0" />
           <div class="min-w-0 flex-1">
-            <p v-if="competition.venue" class="text-base font-semibold">{{ competition.venue }}</p>
-            <p class="text-muted-foreground text-sm">
+            <p v-if="competition.venue" class="truncate text-base font-semibold">{{ competition.venue }}</p>
+            <p :class="['text-muted-foreground text-sm', mode !== 'before' && 'truncate']">
               {{ [competition.address, competition.location].filter(Boolean).join(', ') }}
             </p>
           </div>
@@ -321,8 +379,9 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
             <Navigation /> Directions
           </Button>
         </div>
+        <!-- The map before the day; on and after it, it's in the Directions menu. -->
         <MapPreview
-          v-if="hasMap"
+          v-if="hasMap && mode === 'before'"
           :lat="competition.lat!"
           :lng="competition.lng!"
           expandable
@@ -358,7 +417,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         <li
           v-for="s in sessions"
           :key="s.id"
-          :class="['flex items-center gap-3 px-4 py-3 transition-opacity duration-(--dur-slow)', s.state === 'done' && 'opacity-60']"
+          :class="['flex items-center gap-3 px-4 py-3 transition-opacity duration-(--dur-slow)', s.done && 'opacity-60']"
         >
           <span class="bg-muted text-callout flex min-w-16 shrink-0 justify-center rounded-lg px-2 py-1 font-semibold tabular-nums">
             {{ s.time ?? '—' }}
@@ -367,15 +426,15 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
             <span class="block text-base font-semibold">{{ s.name }}</span>
             <span v-if="s.day" class="text-muted-foreground block text-sm">{{ s.day }}</span>
           </span>
-          <span v-if="s.state === 'now'" class="bg-live-paper text-live text-footnote rounded-full px-2 py-0.5 font-semibold">Now</span>
+          <ResultsMark :posted="s.count.posted" :total="s.count.total" />
         </li>
       </ul>
     </section>
 
     <!-- Registration + links -->
-    <section v-if="competition.registrationURL || links.length" class="space-y-2">
+    <section v-if="(competition.registrationURL && mode === 'before') || links.length" class="space-y-2">
       <Button
-        v-if="competition.registrationURL"
+        v-if="competition.registrationURL && mode === 'before'"
         variant="primary"
         size="lg"
         block
@@ -386,7 +445,9 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
       >
         Register <ExternalLink />
       </Button>
-      <p v-for="line in registrationLines" :key="line" class="text-muted-foreground text-center text-sm">{{ line }}</p>
+      <template v-if="mode === 'before'">
+        <p v-for="line in registrationLines" :key="line" class="text-muted-foreground text-center text-sm">{{ line }}</p>
+      </template>
       <div v-if="links.length" class="flex flex-wrap gap-2 pt-1">
         <Button
           v-for="link in links"
@@ -450,6 +511,14 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         <a :href="where.google" target="_blank" rel="noopener" :class="MENU_ROW" @click="directionsMenu.dismiss()">
           <MapIcon class="text-muted-foreground size-5 shrink-0" /> Google Maps
         </a>
+        <button
+          v-if="hasMap && mode !== 'before'"
+          type="button"
+          :class="MENU_ROW"
+          @click="directionsMenu.dismiss(), mapSheet.show(directionsMenu.trigger)"
+        >
+          <MapPin class="text-muted-foreground size-5 shrink-0" /> Show the map
+        </button>
         <button type="button" :class="MENU_ROW" @click="copyAddress(true)">
           <component :is="copied ? Check : Copy" :class="['size-5 shrink-0', copied ? 'text-done-foreground' : 'text-muted-foreground']" />
           {{ copied ? 'Address copied' : 'Copy address' }}

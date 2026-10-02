@@ -1,4 +1,5 @@
 import { expect as baseExpect, test, type Page } from '@playwright/test'
+import { appNav, appTab } from './support/nav'
 
 // The dev server is shared and busy during a full run: give page loads time.
 const expect = baseExpect.configure({ timeout: 15_000 })
@@ -88,10 +89,10 @@ test.describe('with Reduce Motion', () => {
   })
 })
 
-test('the More menu opens from the tab bar and its items navigate', async ({ page }) => {
+test('the More menu opens from the tab bar and its items navigate', async ({ page }, info) => {
+  test.skip(info.project.name !== 'phone', 'wide screens have no tab bar or More: see the next test')
   await page.goto('/')
-  const nav = page.getByRole('navigation', { name: 'App' })
-  await nav.getByRole('button', { name: 'More' }).click()
+  await appNav(page).getByRole('button', { name: 'More' }).click()
   const menu = page.getByRole('dialog', { name: 'More' })
   await expect(menu).toBeVisible()
   await menu.getByRole('button', { name: 'Judges' }).click()
@@ -100,6 +101,25 @@ test('the More menu opens from the tab bar and its items navigate', async ({ pag
   await expect(page.getByRole('heading', { level: 1, name: 'Judges' })).toBeVisible()
   await settle(page)
   for (const d of await closedDialogs(page)) expect(d, d.text).toMatchObject({ display: 'none' })
+})
+
+test('on wide screens the More menu’s items are links in the sidebar, with no tab bar', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'phones have the More menu: see the test before')
+  await page.goto('/')
+  await expect(page.getByRole('navigation', { name: 'App', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'More', exact: true })).toHaveCount(0)
+  for (const [name, path] of [
+    ['Dancers', /\/dancers$/],
+    ['Judges', /\/judges$/],
+    ['Pipers', /\/pipers$/],
+    ['Venues', /\/venues$/],
+    ['Submit a competition', /\/competitions\/submit$/],
+    ['About ScotDance.app', /\/about$/],
+  ] as const) {
+    await appNav(page).getByRole('link', { name, exact: true }).click()
+    await expect(page).toHaveURL(path)
+    await expect(appNav(page).getByRole('link', { name, exact: true })).toHaveAttribute('aria-current', 'page')
+  }
 })
 
 test.describe('with large text (150%)', () => {
@@ -113,9 +133,10 @@ test.describe('with large text (150%)', () => {
     )
   })
 
-  test('the More menu fits on screen and every item can be reached', async ({ page }) => {
+  test('the More menu fits on screen and every item can be reached', async ({ page }, info) => {
+    test.skip(info.project.name !== 'phone', 'wide screens have no More: see the next test')
     await page.goto('/competitions')
-    await page.getByRole('navigation', { name: 'App' }).getByRole('button', { name: 'More' }).click()
+    await appNav(page).getByRole('button', { name: 'More' }).click()
     const menu = page.getByRole('dialog', { name: 'More' })
     await expect(menu).toBeVisible()
     await settle(page)
@@ -124,8 +145,26 @@ test.describe('with large text (150%)', () => {
     expect(box.y).toBeGreaterThanOrEqual(0)
     expect(box.x).toBeGreaterThanOrEqual(0)
     expect(box.x + box.width).toBeLessThanOrEqual(viewport.width)
-    for (const name of ['Dancers', 'Judges', 'Submit a competition', 'About ScotDance']) {
+    for (const name of ['Dancers', 'Judges', 'Submit a competition', 'About ScotDance.app']) {
       const item = menu.getByRole('button', { name, exact: true })
+      await item.scrollIntoViewIfNeeded()
+      await expect(item).toBeInViewport()
+    }
+  })
+
+  test('the sidebar fits on screen and every item can be reached', async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop', 'phones have the More menu: see the test before')
+    await page.goto('/competitions')
+    const sidebar = page.locator('aside')
+    await expect(sidebar).toBeVisible()
+    const box = (await sidebar.boundingBox())!
+    const viewport = page.viewportSize()!
+    expect(box.y).toBeGreaterThanOrEqual(0)
+    expect(box.x).toBeGreaterThanOrEqual(0)
+    expect(box.x + box.width).toBeLessThanOrEqual(viewport.width)
+    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height)
+    for (const name of ['Dancers', 'Judges', 'Submit a competition', 'About ScotDance.app']) {
+      const item = appNav(page).getByRole('link', { name, exact: true })
       await item.scrollIntoViewIfNeeded()
       await expect(item).toBeInViewport()
     }
@@ -149,7 +188,7 @@ test.describe('page changes', () => {
   test('animate between tabs normally', async ({ page }) => {
     await countTransitions(page)
     await page.goto('/competitions')
-    await page.getByRole('navigation', { name: 'App' }).getByRole('link', { name: 'Search' }).click()
+    await appTab(page, 'Search').click()
     await expect(page).toHaveURL(/\/search$/)
     expect(await page.evaluate(() => (window as Window & { __vt?: number }).__vt)).toBeGreaterThan(0)
   })
@@ -159,10 +198,9 @@ test.describe('page changes', () => {
     test('just change, without a transition', async ({ page }) => {
       await countTransitions(page)
       await page.goto('/competitions')
-      const nav = page.getByRole('navigation', { name: 'App' })
-      await nav.getByRole('link', { name: 'Search' }).click()
+      await appTab(page, 'Search').click()
       await expect(page).toHaveURL(/\/search$/)
-      await nav.getByRole('link', { name: 'Home' }).click()
+      await appTab(page, 'Home').click()
       await expect(page).toHaveURL(/\/$/)
       expect(await page.evaluate(() => (window as Window & { __vt?: number }).__vt)).toBe(0)
     })

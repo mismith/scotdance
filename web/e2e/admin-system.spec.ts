@@ -97,3 +97,40 @@ test('Tools: rebuilding the published list and search reports back', async ({ pa
     await dbRemove(`users:permissions/${sys.id}`)
   }
 })
+
+test('Submissions: waiting ones first, approved ones folded away, ⌘Enter to approve', async ({ page }) => {
+  const sys = await systemAdmin()
+  const [waiting, done] = [uid('sub'), uid('sub')]
+  await dbSet(`competitions:submissions/${waiting}`, {
+    competition: { name: `E2E Waiting ${waiting.slice(-5)}`, date: '2027-06-05', location: 'Calgary, AB' },
+    contact: { name: 'Morag Test', email: 'morag@example.test' },
+    submitted: new Date().toISOString(),
+  })
+  await dbSet(`competitions:submissions/${done}`, {
+    competition: { name: `E2E Approved ${done.slice(-5)}`, date: '2027-06-12', location: 'Banff, AB' },
+    contact: { name: 'Isla Test', email: 'isla@example.test' },
+    submitted: new Date(Date.now() - 86_400_000).toISOString(),
+    approved: new Date().toISOString(),
+  })
+  try {
+    await signIn(page, sys.email)
+    await page.goto(`/admin/submissions/${waiting}`)
+    await expect(page.getByRole('heading', { name: `E2E Waiting ${waiting.slice(-5)}` })).toBeVisible()
+    await expect(page.getByRole('link', { name: new RegExp(`E2E Waiting ${waiting.slice(-5)}`) })).toBeVisible()
+    const fold = page.getByRole('button', { name: /^Approved/ })
+    await expect(fold).toHaveAttribute('aria-expanded', 'false')
+    await expect(page.getByRole('link', { name: new RegExp(`E2E Approved ${done.slice(-5)}`) })).toHaveCount(0)
+    await fold.click()
+    await expect(page.getByRole('link', { name: new RegExp(`E2E Approved ${done.slice(-5)}`) })).toBeVisible()
+
+    // The keyboard asks to approve the open one (Cancel leaves it waiting).
+    await page.goto(`/admin/submissions/${waiting}`)
+    await expect(page.getByRole('button', { name: 'Approve', exact: true })).toBeVisible()
+    await page.keyboard.press('ControlOrMeta+Enter')
+    await expect(page.locator('dialog[open]')).toContainText(`Approve E2E Waiting ${waiting.slice(-5)}?`)
+    await page.locator('dialog[open]').getByRole('button', { name: 'Cancel' }).click()
+    expect(await dbGet(`competitions:submissions/${waiting}/approved`)).toBeNull()
+  } finally {
+    await Promise.all([dbRemove(`competitions:submissions/${waiting}`), dbRemove(`competitions:submissions/${done}`), dbRemove(`users:permissions/${sys.id}`)])
+  }
+})

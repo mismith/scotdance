@@ -68,7 +68,8 @@ test('fields save on Enter, on leaving, and after a pause; Escape puts back the 
 test('an edit made just before going Back still saves, to that dancer', async ({ page }) => {
   const d = comp.dancers[1]
   await page.goto(manage())
-  await page.getByRole('link', { name: /^Dancers/ }).first().click()
+  // (The Manage sections: in the sidebar on wide screens, whose Browse list has a Dancers too.)
+  await page.getByRole('navigation', { name: 'Manage sections' }).getByRole('link', { name: /^Dancers/ }).click()
   await page.getByRole('link', { name: new RegExp(`^${d.number} `) }).click()
   await expect(field(page, 'First name')).toHaveValue(d.firstName)
   await field(page, 'First name').fill('Zed')

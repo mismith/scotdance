@@ -73,7 +73,7 @@ test('a one-day competition from yesterday is under Past results only', async ({
 test('the calendar shows today’s competitions and moves between months', async ({ page }) => {
   await page.goto('/competitions?view=calendar')
   await expect(row(page, today)).toBeVisible()
-  const month = page.getByRole('heading', { level: 2 }).first()
+  const month = page.getByRole('main').getByRole('heading', { level: 2 }).first()
   const thisMonth = (await month.textContent()) ?? ''
   await page.getByRole('button', { name: 'Next month' }).click()
   await expect(month).not.toHaveText(thisMonth)
@@ -143,13 +143,14 @@ test('a competition in the list opens its page', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: today.name })).toBeVisible()
 })
 
-test('the calendar goes back past the last three months, under Past results', async ({ page }) => {
+test('the calendar shows every competition, past ones too, whatever the list shows', async ({ page }) => {
   // Pretend it's May 2019: Nationals (14 Jan 2019) is four months back. The
-  // calendar keeps the list's Upcoming / Past results choice.
+  // calendar is its own view of when, so the list's Upcoming choice doesn't apply.
   await page.goto('/competitions?now=2019-05-14')
-  await show(page, 'Past results')
+  await show(page, 'Upcoming')
   await page.goto('/competitions?view=calendar')
-  const month = page.getByRole('heading', { level: 2 }).first()
+  await expect(page.getByRole('group', { name: 'Which competitions' })).toHaveCount(0)
+  const month = page.getByRole('main').getByRole('heading', { level: 2 }).first()
   await expect(month).toHaveText(/2019/)
   for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Previous month' }).click()
   await expect(month).toHaveText(/January 2019/)

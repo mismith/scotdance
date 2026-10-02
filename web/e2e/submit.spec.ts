@@ -243,7 +243,7 @@ test('the answers so far outlast a reload, skipping the overview, until started 
 test('Home has a way in, below every competition', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('main').getByRole('link', { name: 'See all competitions' })).toBeVisible()
-  await page.getByRole('main').getByRole('link', { name: 'Add it to ScotDance' }).click()
+  await page.getByRole('main').getByRole('link', { name: 'Add it to ScotDance.app' }).click()
   await expect(page).toHaveURL(/\/competitions\/submit$/)
   await expect(page.getByRole('heading', { name: 'Submit a competition', level: 1 })).toBeVisible()
 })

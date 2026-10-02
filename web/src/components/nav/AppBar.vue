@@ -28,10 +28,8 @@ withDefaults(
     back?: boolean
     fallback?: { to: RouteLocationRaw; label: string }
     exit?: { delta?: number; to?: RouteLocationRaw; label: string } | null
-    /** The competition this page belongs to: the account menu offers to manage it. */
-    competitionId?: string
   }>(),
-  { title: null, subtitle: null, showTitle: false, scrolled: undefined, titleVt: null, wide: false, back: true, fallback: undefined, exit: null, competitionId: undefined },
+  { title: null, subtitle: null, showTitle: false, scrolled: undefined, titleVt: null, wide: false, back: true, fallback: undefined, exit: null },
 )
 
 const scrollTop = () => {
@@ -41,7 +39,7 @@ const scrollTop = () => {
 </script>
 
 <template>
-  <nav class="fixed inset-x-0 top-0 z-30 pt-(--safe-top)" :data-scrolled="scrolled ?? showTitle">
+  <nav class="fixed top-0 right-0 left-(--sidebar) z-30 pt-(--safe-top)" :data-scrolled="scrolled ?? showTitle">
     <div
       class="from-background via-background/90 absolute inset-x-0 top-0 -z-10 h-[calc(100%+1.25rem)] bg-linear-to-b from-55% to-transparent backdrop-blur-[3px] [mask-image:linear-gradient(to_bottom,black_60%,transparent)]"
       aria-hidden="true"
@@ -52,7 +50,7 @@ const scrollTop = () => {
       <button
         type="button"
         :class="[
-          'appbar-title min-w-0 flex-1 text-left transition-opacity',
+          'min-w-0 flex-1 text-left transition-opacity',
           showTitle && title ? 'opacity-100' : 'pointer-events-none opacity-0',
         ]"
         :tabindex="showTitle && title ? 0 : -1"
@@ -68,7 +66,8 @@ const scrollTop = () => {
       </button>
       <div class="flex shrink-0 items-center gap-1.5">
         <slot name="actions" />
-        <AccountButton :competition-id="competitionId" />
+        <!-- On wide screens your account is at the foot of the sidebar. -->
+        <div class="flex lg:hidden"><AccountButton /></div>
       </div>
     </div>
   </nav>

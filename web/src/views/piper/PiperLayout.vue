@@ -21,6 +21,6 @@ const { displayName, loading, notFound } = providePiperProfile(toRef(piperId))
     :loading="loading"
     :not-found="notFound"
     empty-title="Piper not found"
-    empty-description="This piper isn’t listed at any competition on ScotDance. The link may be out of date."
+    empty-description="This piper isn’t listed at any competition on ScotDance.app. The link may be out of date."
   />
 </template>

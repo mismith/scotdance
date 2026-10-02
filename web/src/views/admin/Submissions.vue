@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, onScopeDispose, ref } from 'vue'
+import { computed, onScopeDispose, ref, watch } from 'vue'
+import { useEventListener } from '@vueuse/core'
 import { RouterLink, useRoute } from 'vue-router'
 import { onValue } from 'firebase/database'
-import { Check, ChevronRight, Inbox, LoaderCircle, Trash2 } from '@lucide/vue'
+import { Check, ChevronDown, ChevronRight, Inbox, LoaderCircle, Trash2 } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import MasterDetail from '@/components/admin/MasterDetail.vue'
+import MovingList from '@/components/admin/MovingList.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
 import TextField from '@/components/admin/TextField.vue'
 import VenueField from '@/components/admin/VenueField.vue'
@@ -15,10 +17,12 @@ import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError, write } from '@/lib/admin/write'
 import { formatLongDate, formatRelative, parseDate } from '@/lib/format'
 import { placesAvailable, type VenueFields } from '@/lib/maps'
+import { grow, shrink } from '@/lib/admin/motion'
 
 // Competitions organisers have submitted. Approving one creates the
 // competition (the server does that), gives the organiser access and
-// emails them a link.
+// emails them a link. Those waiting come first; approved ones fold away.
+// Approve sits in a bar at the foot of the page (⌘Enter too).
 
 interface Submission {
   id: string
@@ -48,7 +52,13 @@ onScopeDispose(off)
 
 const id = computed(() => (route.params.submissionId ? String(route.params.submissionId) : null))
 const current = computed(() => items.value.find((s) => s.id === id.value) ?? null)
-const waiting = computed(() => items.value.filter((s) => !s.approved).length)
+const waiting = computed(() => items.value.filter((s) => !s.approved))
+const approved = computed(() => items.value.filter((s) => s.approved))
+// Folded until asked for, or until one of them is open.
+const showApproved = ref(false)
+watch(current, (s) => {
+  if (s?.approved) showApproved.value = true
+})
 
 const FIELDS: Array<{ key: string; label: string; type?: 'date'; multiline?: boolean; hint?: string }> = [
   { key: 'name', label: 'Name' },
@@ -78,12 +88,16 @@ async function pickVenue(s: Submission, { venue, address, location, ...place }: 
 const onMap = (s: Submission) => Number.isFinite(s.competition?.lat) && Number.isFinite(s.competition?.lng)
 
 const approving = ref(false)
+// (⌘Enter pressed again while it asks doesn't ask twice.)
+let asking = false
 async function approve(s: Submission) {
+  if (asking || approving.value) return
+  asking = true
   const ok = await confirm({
     title: `Approve ${s.competition?.name ?? 'this competition'}?`,
     message: `It’s created (private until listed), and ${s.contact?.email ?? 'the organiser'} gets access and an email with a link.`,
     confirmLabel: 'Approve',
-  })
+  }).finally(() => (asking = false))
   if (!ok) return
   approving.value = true
   try {
@@ -95,6 +109,17 @@ async function approve(s: Submission) {
     approving.value = false
   }
 }
+// ⌘Enter (Ctrl+Enter) approves the one that's open, even from a field.
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
+const approveKey = isMac ? '⌘↵' : 'Ctrl+↵'
+useEventListener(window, 'keydown', (e: KeyboardEvent) => {
+  if (e.key !== 'Enter' || !(isMac ? e.metaKey : e.ctrlKey) || e.isComposing) return
+  const s = current.value
+  if (!s || s.approved || !canEdit.value) return
+  e.preventDefault()
+  void approve(s)
+})
+
 async function remove(s: Submission) {
   const ok = await confirm({ title: 'Delete this submission?', message: 'For spam or duplicates. It can’t be undone.', confirmLabel: 'Delete', destructive: true })
   if (!ok) return
@@ -110,27 +135,60 @@ async function remove(s: Submission) {
   <MasterDetail :show-detail="!!id" :single="loaded && !items.length">
     <template #list>
       <div class="bg-background sticky top-(--chrome-top) z-10 border-b p-4 md:top-0">
-        <SectionHeader title="Submissions" :count="waiting ? `${waiting} waiting` : null" />
+        <SectionHeader title="Submissions" :count="waiting.length ? `${waiting.length} waiting` : null" />
       </div>
       <EmptyState v-if="loaded && !items.length" :icon="Inbox" title="No submissions" description="Competitions organisers submit show here for approval." />
-      <ul v-else class="divide-y">
-        <li v-for="s in items" :key="s.id">
-          <RouterLink
-            :to="{ name: 'admin.submissions', params: { submissionId: s.id } }"
-            :replace="split"
-            :aria-current="id === s.id ? 'true' : undefined"
-            :class="['press-row focus-inset flex min-h-16 items-center gap-3 px-4 py-2', id === s.id && 'bg-blue-paper']"
+      <template v-else-if="loaded">
+        <p v-if="!waiting.length" class="text-muted-foreground px-4 py-6 text-base">Nothing waiting.</p>
+        <MovingList class="divide-y">
+          <li v-for="s in waiting" :key="s.id">
+            <RouterLink
+              :to="{ name: 'admin.submissions', params: { submissionId: s.id } }"
+              :replace="split"
+              :aria-current="id === s.id ? 'true' : undefined"
+              :class="['press-row focus-inset flex min-h-16 items-center gap-3 px-4 py-2', id === s.id && 'bg-blue-paper']"
+            >
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-base font-medium">{{ s.competition?.name || 'Untitled' }}</span>
+                <span class="text-muted-foreground block truncate text-sm">{{ [s.contact?.name, s.submitted ? formatRelative(s.submitted) : null].filter(Boolean).join(' · ') }}</span>
+              </span>
+              <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
+            </RouterLink>
+          </li>
+        </MovingList>
+
+        <!-- Approved ones: out of the way until wanted -->
+        <section v-if="approved.length" class="border-t">
+          <button
+            type="button"
+            :aria-expanded="showApproved"
+            class="press-row focus-inset flex min-h-12 w-full items-center gap-2 px-4 text-left"
+            @click="showApproved = !showApproved"
           >
-            <span class="min-w-0 flex-1">
-              <span class="block truncate text-base font-medium">{{ s.competition?.name || 'Untitled' }}</span>
-              <span class="text-muted-foreground block truncate text-sm">{{ [s.contact?.name, s.submitted ? formatRelative(s.submitted) : null].filter(Boolean).join(' · ') }}</span>
-            </span>
-            <span v-if="s.approved" class="bg-done text-done-foreground rounded-full px-2.5 py-0.5 text-sm font-semibold">Approved</span>
-            <span v-else class="bg-next text-next-foreground rounded-full px-2.5 py-0.5 text-sm font-semibold">Waiting</span>
-            <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
-          </RouterLink>
-        </li>
-      </ul>
+            <span class="text-callout min-w-0 flex-1 font-semibold">Approved <span class="text-muted-foreground font-normal tabular-nums">{{ approved.length }}</span></span>
+            <ChevronDown :class="['text-muted-foreground size-5 shrink-0 transition-transform duration-(--dur-base) ease-snappy', showApproved && 'rotate-180']" />
+          </button>
+          <Transition :css="false" @enter="grow" @leave="shrink">
+            <MovingList v-if="showApproved" class="divide-y border-t">
+              <li v-for="s in approved" :key="s.id">
+                <RouterLink
+                  :to="{ name: 'admin.submissions', params: { submissionId: s.id } }"
+                  :replace="split"
+                  :aria-current="id === s.id ? 'true' : undefined"
+                  :class="['press-row focus-inset flex min-h-14 items-center gap-3 px-4 py-2', id === s.id && 'bg-blue-paper']"
+                >
+                  <Check class="text-done-foreground size-5 shrink-0" aria-hidden="true" />
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-base">{{ s.competition?.name || 'Untitled' }}</span>
+                    <span class="text-muted-foreground block truncate text-sm">{{ [s.contact?.name, `approved ${formatRelative(s.approved!)}`].filter(Boolean).join(' · ') }}</span>
+                  </span>
+                  <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
+                </RouterLink>
+              </li>
+            </MovingList>
+          </Transition>
+        </section>
+      </template>
     </template>
     <template #empty>
       <div class="hidden h-full items-center justify-center md:flex">
@@ -138,7 +196,7 @@ async function remove(s: Submission) {
       </div>
     </template>
     <template #detail>
-      <div v-if="current" :key="current.id" class="mx-auto max-w-2xl space-y-8 p-4 pb-[calc(3rem+var(--safe-bottom))] md:p-8">
+      <div v-if="current" :key="current.id" class="mx-auto max-w-2xl space-y-8 p-4 pb-[calc(1.5rem+var(--safe-bottom))] md:p-8 md:pb-6">
         <header class="space-y-1">
           <p class="text-muted-foreground text-sm font-medium">Submitted {{ current.submitted ? formatRelative(current.submitted) : '' }}</p>
           <h2 class="text-display">{{ current.competition?.name || 'Untitled' }}</h2>
@@ -183,11 +241,21 @@ async function remove(s: Submission) {
           <p v-if="current.contact?.message" class="text-muted-foreground pt-2 text-base whitespace-pre-line">{{ current.contact.message }}</p>
         </section>
 
-        <footer class="flex flex-wrap gap-2 border-t pt-6">
-          <Button v-if="!current.approved" variant="primary" size="lg" :disabled="!canEdit" :busy="approving" @click="approve(current)">
+        <!-- Waiting: the decision stays in reach at the foot of the page. -->
+        <footer
+          v-if="!current.approved"
+          class="glass sticky bottom-[calc(var(--safe-bottom)+0.75rem)] z-10 flex items-center gap-2 rounded-2xl p-2"
+        >
+          <Button variant="primary" size="lg" :disabled="!canEdit" :busy="approving" :aria-keyshortcuts="isMac ? 'Meta+Enter' : 'Control+Enter'" @click="approve(current)">
             <Check /> Approve
+            <kbd class="ml-1 font-sans text-sm font-normal opacity-75 max-md:hidden" aria-hidden="true">{{ approveKey }}</kbd>
           </Button>
-          <Button variant="plain" size="lg" class="text-destructive!" :disabled="!canEdit" @click="remove(current)">
+          <Button variant="plain" size="lg" class="text-destructive! ml-auto" :disabled="!canEdit" @click="remove(current)">
+            <Trash2 /> Delete
+          </Button>
+        </footer>
+        <footer v-else class="border-t pt-6">
+          <Button variant="plain" class="text-destructive! -ml-4" :disabled="!canEdit" @click="remove(current)">
             <Trash2 /> Delete
           </Button>
         </footer>

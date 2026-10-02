@@ -46,7 +46,7 @@ const row =
 </script>
 
 <template>
-  <Dialog :open="menu.open" :morph="menu" variant="menu" aria-label="More" @close="menu.hide()">
+  <Dialog :open="menu.open" :morph="menu" variant="dropdown" aria-label="More" @close="menu.hide()">
     <nav aria-label="More" class="[&>div+div]:mt-1.5 [&>div+div]:border-t [&>div+div]:pt-1.5">
       <div>
         <button v-for="b in browse" :key="b.label" type="button" :class="row" @click="go(b.to)">
@@ -58,7 +58,7 @@ const row =
           <ArrowDownToLine class="text-secondary! size-5" /> Update available
         </button>
         <button type="button" :class="row" @click="go({ name: 'about' })">
-          <Info class="size-5" /> About ScotDance
+          <Info class="size-5" /> About ScotDance.app
         </button>
         <button v-if="crisp.available" type="button" :class="row" @click="run(() => crisp.open())">
           <LifeBuoy class="size-5" />

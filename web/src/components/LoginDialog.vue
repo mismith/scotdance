@@ -28,7 +28,7 @@ const heading = computed(() => {
   if (r?.reason === 'submit') return 'Sign in to submit a competition'
   // The Follow star on judges, competitions and the like.
   if (r?.reason === 'favorite') return r.name ? `Sign in to follow ${r.name}` : 'Sign in to follow this'
-  return 'Sign in to ScotDance'
+  return 'Sign in to ScotDance.app'
 })
 // What following gets you; an organiser submitting has read why already.
 const benefits = computed(() => {

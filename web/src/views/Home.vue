@@ -258,12 +258,13 @@ const { freshKey: liveFresh } = useLiveAlertState()
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)] lg:[--page-max:72rem]">
+  <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
     <AppBar title="Home" :scrolled="scrolledPast" :back="false">
       <template #leading>
-        <RouterLink to="/" class="flex min-w-0 items-center gap-2 rounded-xl" aria-label="ScotDance.app, Home">
+        <!-- (On wide screens the sidebar carries the name.) -->
+        <RouterLink to="/" class="flex min-w-0 items-center gap-2 rounded-xl lg:hidden" aria-label="ScotDance.app, Home">
           <span class="flex size-8 shrink-0 overflow-hidden rounded-lg bg-[#0065bd] text-white">
-            <LogoMark class="size-8" />
+            <LogoMark framed class="size-8" />
           </span>
           <span class="truncate text-[1.0625rem] font-bold">ScotDance.app</span>
         </RouterLink>
@@ -271,15 +272,15 @@ const { freshKey: liveFresh } = useLiveAlertState()
     </AppBar>
 
     <main
-      class="mx-auto grid w-full max-w-3xl gap-x-8 gap-y-5 px-4 pt-[calc(var(--chrome-top)+0.25rem)] lg:max-w-(--page-max) lg:grid-cols-3 lg:px-3"
+      class="mx-auto grid w-full max-w-3xl gap-y-5 px-4 pt-[calc(var(--chrome-top)+0.25rem)]"
     >
-      <header ref="titleEl" class="lg:col-span-3">
+      <header ref="titleEl">
         <p class="text-muted-foreground text-sm font-medium">{{ todayLabel }}</p>
         <h1 class="text-display">{{ greeting }}</h1>
         <p v-if="context" :class="['text-callout mt-1 font-medium', settle]">{{ context }}</p>
       </header>
 
-      <div class="min-w-0 space-y-5 lg:col-span-2">
+      <div class="min-w-0 space-y-5">
         <!-- Dismissed, it folds away rather than jumping the page up. -->
         <Transition
           leave-active-class="transition-[grid-template-rows,opacity] duration-(--dur-base) ease-standard motion-reduce:transition-opacity"
@@ -291,7 +292,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
               <div class="bg-blue-paper relative mb-5 flex gap-3 rounded-2xl p-4 pr-12" role="note">
                 <Sparkles class="text-primary mt-0.5 size-5 shrink-0" aria-hidden="true" />
                 <p class="text-callout">
-                  <span class="font-semibold">ScotDance has a new look.</span> The dancers you follow now appear here,
+                  <span class="font-semibold">ScotDance.app has a new look.</span> The dancers you follow now appear here,
                   with their day at a glance. Competitions work the way they always have.
                 </p>
                 <button
@@ -314,7 +315,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
           @click="roles.open()"
         >
           <span class="min-w-0 flex-1">
-            <span class="block text-base font-semibold">How do you use ScotDance?</span>
+            <span class="block text-base font-semibold">How do you use ScotDance.app?</span>
             <span class="text-muted-foreground block text-sm">Dancer, parent, teacher, organiser: it helps fit the app to you.</span>
           </span>
           <ChevronRight class="text-muted-foreground size-5 shrink-0" />
@@ -368,9 +369,9 @@ const { freshKey: liveFresh } = useLiveAlertState()
         <!-- Nobody followed yet: the pitch, then something to look at -->
         <section
           v-if="!followedPeople.length"
-          class="bg-primary-fill text-primary-foreground relative overflow-hidden rounded-3xl p-5 shadow-sm"
+          class="brand-panel relative overflow-hidden rounded-3xl p-5"
         >
-          <LogoMark class="pointer-events-none absolute -right-6 -bottom-10 size-48 rotate-[-8deg] opacity-[0.13]" />
+          <LogoMark class="pointer-events-none absolute -right-6 -bottom-10 size-48 rotate-[-8deg] opacity-[0.08]" />
           <h2 class="text-title relative">See your dancer’s day at a glance</h2>
           <p class="text-callout relative mt-1.5 opacity-90">
             Follow your dancers to see their platform, dancing order and placings here, and get an alert when results
@@ -565,10 +566,10 @@ const { freshKey: liveFresh } = useLiveAlertState()
         </section>
 
         <!-- For organisers who haven't added theirs yet. -->
-        <p class="text-muted-foreground px-1 text-center text-sm lg:text-left">
+        <p class="text-muted-foreground px-1 text-center text-sm">
           Running a competition?
           <RouterLink :to="{ name: 'competitions.submit' }" class="text-primary font-semibold underline-offset-2 hover:underline">
-            Add it to ScotDance
+            Add it to ScotDance.app
           </RouterLink>
         </p>
       </aside>

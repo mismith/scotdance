@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, useId, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch, watchEffect } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { useMediaQuery } from '@vueuse/core'
-import { ChevronDown, ChevronRight, CloudOff, Diamond, ListOrdered, Search, Trophy, X } from '@lucide/vue'
+import { createReusableTemplate, useMediaQuery } from '@vueuse/core'
+import { ChevronDown, ChevronRight, ChevronUp, CircleCheck, CloudOff, Diamond, ListOrdered, Search, Trophy, X } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import Medal from '@/components/Medal.vue'
 import HelpTip from '@/components/admin/HelpTip.vue'
 import NumberTile from '@/components/admin/NumberTile.vue'
 import PlacedList from '@/components/admin/PlacedList.vue'
@@ -26,6 +27,7 @@ import {
   danceState,
   dancingNow,
   isPlaceholderId,
+  isTied,
   needsFixing,
   newPlaceholderId,
   parsePlacings,
@@ -78,16 +80,22 @@ watch(
     tab.value = 'placings'
     pickingReverse.value = false
     fixing.value = null
+    placedOpen.value = false
   },
 )
 
 const groupDancers = computed(() => m.groupDancers(props.groupId))
-// Dances and Overall place only the dancers called back. With none entered
-// (older competitions, or "No callbacks"), everyone in the age group.
+// Dances and Overall place only the dancers called back, so callbacks come
+// first: until they're entered there's no one to place (a missed step, not
+// "everyone"). Marked "No callbacks" (there wasn't a callback round), it's
+// everyone in the age group.
 const callbacksRaw = computed(() => m.results.value[props.groupId]?.[CALLBACKS])
 const calledBackIds = computed(() => new Set(parsePlacings(callbacksRaw.value).entries.map((e) => e.id)))
-const noCallbacks = computed(() => !calledBackIds.value.size)
-const calledBack = computed(() => (noCallbacks.value ? groupDancers.value : groupDancers.value.filter((d) => calledBackIds.value.has(d.id))))
+const noCallbackRound = computed(() => callbacksRaw.value === false)
+const calledBack = computed(() =>
+  noCallbackRound.value ? groupDancers.value : groupDancers.value.filter((d) => calledBackIds.value.has(d.id)),
+)
+const callbacksFirst = computed(() => !isCallbacks.value && tab.value === 'placings' && !noCallbackRound.value && !calledBackIds.value.size)
 const candidates = computed(() => (isCallbacks.value || tab.value === 'points' ? groupDancers.value : calledBack.value))
 
 const placedIndex = computed(() => new Map(placings.value.entries.map((e, i) => [e.id, i])))
@@ -241,8 +249,14 @@ function chooseFix(dancerId: string) {
   void save(p, `Replaced ? with ${who(dancerId)}`)
 }
 
-const rowDimmed = (id: string) => placedIndex.value.has(id) || pointed.value.has(id)
-const rowDisabled = (id: string) => !canEdit.value || (tab.value === 'placings' ? pointed.value.has(id) : placedIndex.value.has(id))
+// A dancer who can't be tapped here: given a point (on Placings), or placed
+// (on Points). Placed dancers show their place on the row instead of fading.
+const rowBlocked = (id: string) => (tab.value === 'placings' ? pointed.value.has(id) : placedIndex.value.has(id))
+const rowDisabled = (id: string) => !canEdit.value || rowBlocked(id)
+const placeOf = (id: string) => {
+  const i = placedIndex.value.get(id)
+  return i == null ? null : { place: placeAt(i, placings.value), tied: isTied(i, placings.value) }
+}
 const singleOverall = computed(() => isOverall.value && placings.value.entries.length === 1)
 
 // What to do here, in a sentence.
@@ -294,6 +308,24 @@ function pickGroup(id: string) {
   void router.replace({ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: id, danceId: first?.id ?? CALLBACKS } })
 }
 const pickers = useMediaQuery('(min-width: 768px) and (max-width: 1279.98px)')
+
+// --- Phones: the placed order would be a long scroll away, under the list,
+// so it sits in a strip at the bottom (with Next) and opens as a sheet.
+const [DefinePlaced, ReusePlaced] = createReusableTemplate()
+const strip = computed(() => !split.value && tab.value === 'placings')
+const placedOpen = ref(false)
+watch(strip, (on) => !on && (placedOpen.value = false))
+// The strip just counts, and says what a tap does; the rows show who's where.
+const stripLabel = computed(() => {
+  const n = placings.value.entries.length
+  if (n) return isCallbacks.value ? `${n} called back` : `${n} placed`
+  if (markedNone.value) return isCallbacks.value ? 'No callbacks' : 'No dancers placed'
+  return isCallbacks.value ? 'Nobody called back yet' : 'Nobody placed yet'
+})
+// Toasts rise above the strip.
+const root = document.documentElement.style
+watchEffect(() => root.setProperty('--toast-lift', strip.value ? '4.5rem' : '0px'))
+onBeforeUnmount(() => root.removeProperty('--toast-lift'))
 // Keep the open dance's pill in view.
 const pills = ref<HTMLElement | null>(null)
 const showCurrent = () => nextTick(() => pills.value?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }))
@@ -302,7 +334,42 @@ watch(() => props.danceId, showCurrent)
 </script>
 
 <template>
-  <div v-if="group" class="flex flex-col md:h-full">
+  <DefinePlaced>
+    <!-- Kept while empty, so the first placing lands like the rest -->
+    <PlacedList
+      :key="danceId"
+      :placings="placings"
+      :dancers-by-id="m.dancersById.value"
+      :kind="kind"
+      @remove="remove"
+      @tie="tie"
+      @reorder="reorder"
+      @fix="openFix"
+    />
+    <template v-if="!placings.entries.length">
+      <EmptyState
+        size="inline"
+        :icon="ListOrdered"
+        :title="isCallbacks ? 'Callbacks' : 'Order dancers'"
+        :description="
+          isCallbacks
+            ? 'Select the dancers called back'
+            : placings.reverseFrom
+              ? `Select dancers from ${placings.reverseFrom}${getOrdinalSuffix(placings.reverseFrom)} place`
+              : 'Select dancers in the order placed'
+        "
+      />
+      <div class="flex min-h-14 items-center border-t px-4">
+        <label class="flex min-h-11 items-center gap-3 font-medium">
+          <Switch :model-value="markedNone" :disabled="!canEdit" @update:model-value="setNone" />
+          {{ isCallbacks ? 'No callbacks' : 'No dancers placed' }}
+        </label>
+      </div>
+    </template>
+    <p v-if="singleOverall" class="text-muted-foreground flex items-center gap-1.5 px-4 py-3 text-sm"><Trophy class="size-4" /> Overall winner</p>
+  </DefinePlaced>
+
+  <div v-if="group" :class="['flex flex-col md:h-full', strip && 'pb-[calc(var(--notice-bottom)+4.5rem)]']">
     <header class="flex flex-col gap-3 border-b px-4 pt-4 pb-3">
       <div :class="['min-w-0', pickers && 'sr-only']">
         <p class="text-muted-foreground truncate text-sm font-medium">{{ group.label }}</p>
@@ -365,16 +432,8 @@ watch(() => props.danceId, showCurrent)
             :class="['transition-[opacity,filter] duration-(--dur-base) ease-standard', !canEdit && 'opacity-50 grayscale']"
           >
             <p class="text-muted-foreground px-4 pt-3 pb-2 text-sm">{{ instruction }}</p>
-            <p v-if="noCallbacks && !isCallbacks && tab === 'placings'" class="text-muted-foreground px-4 pb-2 text-sm">
-              {{ callbacksRaw === false ? 'No callbacks' : 'No callbacks entered' }}: showing everyone.
-              <RouterLink
-                v-if="callbacksRaw !== false"
-                :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId, danceId: CALLBACKS } }"
-                replace
-                class="text-primary font-semibold whitespace-nowrap"
-              >
-                Enter callbacks ›
-              </RouterLink>
+            <p v-if="noCallbackRound && !isCallbacks && tab === 'placings'" class="text-muted-foreground px-4 pb-2 text-sm">
+              No callbacks: everyone in the age group can place.
             </p>
             <p v-if="placings.reverseFrom && tab === 'placings'" class="bg-blue-paper text-primary px-4 py-2.5 text-sm font-semibold">
               Entering from {{ placings.reverseFrom }}{{ getOrdinalSuffix(placings.reverseFrom) }} place
@@ -385,7 +444,7 @@ watch(() => props.danceId, showCurrent)
                   type="button"
                   :disabled="rowDisabled(d.id)"
                   :aria-pressed="tab === 'placings' ? placedIndex.has(d.id) : pointed.has(d.id)"
-                  :class="['press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left', rowDimmed(d.id) && 'opacity-35']"
+                  :class="['press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left', rowBlocked(d.id) && 'opacity-(--disabled-opacity)']"
                   @click="tab === 'placings' ? place(d.id, $event) : point(d.id)"
                 >
                   <NumberTile :num="d.num" data-tile />
@@ -393,8 +452,12 @@ watch(() => props.danceId, showCurrent)
                     <span class="block truncate text-base font-semibold">{{ d.label }}</span>
                     <span v-if="d.location" class="text-muted-foreground block truncate text-sm">{{ d.location }}</span>
                   </span>
-                  <Diamond v-if="pointed.has(d.id)" class="text-primary size-5 shrink-0 fill-current" />
-                  <Diamond v-else-if="tab === 'points' && !placedIndex.has(d.id)" class="text-muted-foreground size-5 shrink-0" />
+                  <template v-if="placeOf(d.id)">
+                    <CircleCheck v-if="isCallbacks" class="text-primary size-6 shrink-0" aria-label="Called back" />
+                    <Medal v-else :place="placeOf(d.id)!.place" :tied="placeOf(d.id)!.tied" size="sm" />
+                  </template>
+                  <Diamond v-else-if="pointed.has(d.id)" class="text-primary size-5 shrink-0 fill-current" />
+                  <Diamond v-else-if="tab === 'points'" class="text-muted-foreground size-5 shrink-0" />
                 </button>
               </li>
               <li>
@@ -411,6 +474,21 @@ watch(() => props.danceId, showCurrent)
             </ul>
           </div>
 
+          <EmptyState
+            v-else-if="callbacksFirst && groupDancers.length"
+            size="inline"
+            :icon="ListOrdered"
+            title="Enter the callbacks first"
+            description="Only dancers called back can place. If there wasn’t a callback round, mark No callbacks there."
+          >
+            <Button
+              variant="primary"
+              replace
+              :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId, danceId: CALLBACKS } }"
+            >
+              Enter callbacks
+            </Button>
+          </EmptyState>
           <EmptyState v-else size="inline" :icon="Search" title="No dancers found" description="Add dancers to this age group first.">
             <RouterLink :to="{ name: 'manage.dancers', params: { competitionId: m.competitionId.value } }" class="text-primary text-base font-semibold">Add dancers ›</RouterLink>
           </EmptyState>
@@ -466,8 +544,8 @@ watch(() => props.danceId, showCurrent)
         </div>
       </section>
 
-      <!-- The placed order -->
-      <section ref="placedSection" class="min-w-0 max-md:border-t-8 max-md:border-muted md:overflow-y-auto">
+      <!-- The placed order (on phones, in the strip's sheet) -->
+      <section v-if="!strip" ref="placedSection" class="min-w-0 max-md:border-t-8 max-md:border-muted md:overflow-y-auto">
         <template v-if="tab === 'placings'">
           <h2 class="text-muted-foreground flex items-center gap-1.5 px-4 pt-3 pb-2 text-sm font-semibold">
             {{ isCallbacks ? `Called back · ${placings.entries.length}` : 'Placed' }}
@@ -475,38 +553,7 @@ watch(() => props.danceId, showCurrent)
               Drag the handle to change the order. Switch on Tie when a dancer shares the place of the dancer above. Tap a dancer to take them out.
             </HelpTip>
           </h2>
-          <!-- Kept while empty, so the first placing lands like the rest -->
-          <PlacedList
-            :key="danceId"
-            :placings="placings"
-            :dancers-by-id="m.dancersById.value"
-            :kind="kind"
-            @remove="remove"
-            @tie="tie"
-            @reorder="reorder"
-            @fix="openFix"
-          />
-          <template v-if="!placings.entries.length">
-            <EmptyState
-              size="inline"
-              :icon="ListOrdered"
-              :title="isCallbacks ? 'Callbacks' : 'Order dancers'"
-              :description="
-                isCallbacks
-                  ? 'Select the dancers called back'
-                  : placings.reverseFrom
-                    ? `Select dancers from ${placings.reverseFrom}${getOrdinalSuffix(placings.reverseFrom)} place`
-                    : 'Select dancers in the order placed'
-              "
-            />
-            <div class="flex min-h-14 items-center border-t px-4">
-              <label class="flex min-h-11 items-center gap-3 font-medium">
-                <Switch :model-value="markedNone" :disabled="!canEdit" @update:model-value="setNone" />
-                {{ isCallbacks ? 'No callbacks' : 'No dancers placed' }}
-              </label>
-            </div>
-          </template>
-          <p v-if="singleOverall" class="text-muted-foreground flex items-center gap-1.5 px-4 py-3 text-sm"><Trophy class="size-4" /> Overall winner</p>
+          <ReusePlaced />
         </template>
 
         <template v-else>
@@ -545,6 +592,47 @@ watch(() => props.danceId, showCurrent)
       </section>
     </div>
   </div>
+
+  <!-- Phones: the placed order at a glance, and Next -->
+  <div v-if="group && strip" class="fixed inset-x-3 bottom-(--notice-bottom) z-40">
+    <div class="glass flex items-center gap-1 rounded-full p-1.5">
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        :aria-label="`${isCallbacks ? 'Called back' : 'Placed'}: ${placings.entries.length || 'none yet'}, review`"
+        class="press flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full pr-2 pl-3 text-left"
+        @click="placedOpen = true"
+      >
+        <span class="min-w-0 flex-1 truncate">
+          <span class="font-semibold">{{ stripLabel }}</span>
+          <span v-if="placings.entries.length" class="text-muted-foreground"> · Review</span>
+        </span>
+        <ChevronUp class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+      </button>
+      <Button
+        v-if="next && (placings.entries.length || markedNone)"
+        variant="primary"
+        replace
+        :aria-label="`Next: ${next.label}`"
+        :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: next.groupId, danceId: next.danceId } }"
+      >
+        Next <ChevronRight />
+      </Button>
+    </div>
+  </div>
+  <Dialog v-if="group && strip" :open="placedOpen" variant="sheet" size="md" @close="placedOpen = false">
+    <template #header>
+      <div class="flex items-center gap-2">
+        <h2 class="text-title">{{ isCallbacks ? `Called back · ${placings.entries.length}` : 'Placed' }}</h2>
+        <HelpTip v-if="!isCallbacks" label="How the placed list works">
+          Drag the handle to change the order. Switch on Tie when a dancer shares the place of the dancer above. Tap a dancer to take them out.
+        </HelpTip>
+      </div>
+    </template>
+    <div class="pb-[calc(var(--safe-bottom)+1rem)]">
+      <ReusePlaced />
+    </div>
+  </Dialog>
 
   <!-- Choose who a "?" was -->
   <Dialog :open="fixing != null" variant="sheet" size="md" @close="fixing = null">

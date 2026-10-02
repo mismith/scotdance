@@ -56,7 +56,7 @@ const FIELD_NAMES: Record<string, string> = {
 const save = (key: string) => (v: string | null) => m.writeInfo({ [key]: v }, FIELD_NAMES[key] ?? key)
 
 async function pickVenue(fields: VenueFields) {
-  const message = `Venue set to ${fields.venue ?? fields.address ?? fields.location ?? 'the place you picked'}`
+  const message = `Venue set to ${fields.venue ?? fields.address ?? fields.location ?? 'the venue you picked'}`
   try {
     const change = await m.writeInfo({ ...fields }, message)
     toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })

@@ -35,7 +35,7 @@ const where = computed(() => [c.value.address, c.value.location].filter(Boolean)
       <div class="bg-background space-y-4 rounded-2xl p-4 shadow-(--shadow-card)">
         <header class="flex items-start gap-3">
           <img v-if="c.image" :src="c.image" alt="" class="size-14 shrink-0 rounded-xl object-cover" />
-          <DateTile v-else :date="c.date" class="h-14" />
+          <DateTile v-else :date="c.date" />
           <div class="min-w-0 flex-1">
             <p v-if="kicker" class="text-muted-foreground text-sm font-medium">{{ kicker }}</p>
             <p class="text-title">{{ c.name || 'Competition' }}</p>

@@ -17,7 +17,7 @@ function confirmDismiss() {
 
 <template>
   <Teleport to="body">
-    <div class="pointer-events-none fixed inset-x-0 bottom-(--chrome-bottom) z-30 px-4">
+    <div class="pointer-events-none fixed right-0 bottom-(--chrome-bottom) left-(--sidebar) z-30 px-4">
       <div class="m-auto flex max-w-3xl justify-end">
         <Transition
           enter-active-class="transition-[scale,opacity] duration-(--dur-slow) ease-elastic motion-reduce:transition-opacity"
@@ -29,7 +29,7 @@ function confirmDismiss() {
             <button
               v-tap-feedback
               type="button"
-              class="press pointer-events-auto relative flex size-11 items-center justify-center rounded-full bg-[#28a52d] text-white shadow-(--shadow-raised)"
+              class="press pointer-events-auto relative flex size-11 items-center justify-center rounded-full bg-primary-fill text-primary-foreground shadow-(--shadow-raised)"
               title="Resume support chat"
               aria-label="Resume support chat"
               @click="crisp.open()"

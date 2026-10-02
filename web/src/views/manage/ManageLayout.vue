@@ -11,6 +11,7 @@ import Skeleton from '@/components/Skeleton.vue'
 import ManageMenu from '@/components/admin/ManageMenu.vue'
 import SaveStatus from '@/components/admin/SaveStatus.vue'
 import SectionNav from '@/components/admin/SectionNav.vue'
+import SidebarBranch from '@/components/nav/SidebarBranch.vue'
 import { provideManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { useSidebar, useSplit } from '@/composables/admin/useWide'
 import { provideManageBack, viaHistory, type ManageBack } from '@/composables/admin/useManageBack'
@@ -51,8 +52,6 @@ const access = computed<Access>(() => {
 
 const section = computed(() => ALL_SECTIONS.find((s) => route.matched.some((r) => r.name === s.route)))
 const isHome = computed(() => route.name === 'manage')
-// Entering results needs the width: the sidebar folds to its icons.
-const rail = computed(() => route.name === 'manage.results' && !!route.params.groupId)
 const name = computed(() => m.competition.value?.name || 'Competition')
 
 usePageTitle(() => [route.meta.title as string | undefined, section.value?.title, 'Manage', m.competition.value?.name])
@@ -143,8 +142,8 @@ const sectionTitle = provideSectionTitle()
 </script>
 
 <template>
-  <div class="flex min-h-dvh flex-col md:fixed md:inset-0 md:min-h-0">
-    <AppBar wide :title="barTitle" :subtitle="barSubtitle" :show-title="sectionTitle.showInBar()" :scrolled="true" :exit="exit" :competition-id="competitionId">
+  <div class="flex min-h-dvh flex-col md:fixed md:inset-y-0 md:right-0 md:left-(--sidebar) md:min-h-0">
+    <AppBar wide :title="barTitle" :subtitle="barSubtitle" :show-title="sectionTitle.showInBar()" :scrolled="true" :exit="exit">
       <template #actions>
         <template v-if="access === 'ok'">
           <SaveStatus />
@@ -165,15 +164,6 @@ const sectionTitle = provideSectionTitle()
     </AppBar>
 
     <div class="flex flex-1 pt-(--chrome-top) md:min-h-0 md:overflow-hidden">
-      <aside
-        v-if="sidebar && access === 'ok'"
-        :class="[
-          'bg-background shrink-0 overflow-x-hidden overflow-y-auto border-r pt-4 pb-8 transition-[width,padding] duration-(--dur-base) ease-snappy motion-reduce:transition-none',
-          rail ? 'w-16 px-2' : 'w-68 px-3',
-        ]"
-      >
-        <SectionNav compact :rail="rail" />
-      </aside>
 
       <main class="min-w-0 flex-1 md:overflow-y-auto">
         <div v-if="access === 'checking'" class="mx-auto max-w-3xl space-y-4 p-4" aria-busy="true">
@@ -211,5 +201,9 @@ const sectionTitle = provideSectionTitle()
         <RouterView v-else-if="access === 'ok'" />
       </main>
     </div>
+    <!-- Wide screens: the sections, nested under Manage competitions › this competition in the sidebar. -->
+    <SidebarBranch v-if="sidebar && access === 'ok'" under="manage" :label="name">
+      <SectionNav compact />
+    </SidebarBranch>
   </div>
 </template>

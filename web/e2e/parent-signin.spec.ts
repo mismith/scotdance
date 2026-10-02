@@ -6,7 +6,7 @@ import { fakeNative, openAccount, sheet, submitPassword } from './support/parent
 
 const openFromHome = async (page: Page) => {
   await page.goto('/')
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true }).click()
   await expect(sheet(page)).toBeVisible()
 }
 
@@ -15,7 +15,7 @@ test('opens on email and password, explains a wrong password kindly, and closes 
   await ensureUser(email)
   await openFromHome(page)
   const s = sheet(page)
-  await expect(s.getByRole('heading', { name: 'Sign in to ScotDance' })).toBeVisible()
+  await expect(s.getByRole('heading', { name: 'Sign in to ScotDance.app' })).toBeVisible()
   await expect(s.getByText('Get an alert when placings are posted')).toBeVisible()
   await expect(s.getByRole('button', { name: /Apple|Google|link/ })).toHaveCount(0)
 
@@ -25,8 +25,8 @@ test('opens on email and password, explains a wrong password kindly, and closes 
   await page.keyboard.press('Escape')
   await expect(sheet(page)).toHaveCount(0)
   // Opening it again starts over.
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
-  await expect(sheet(page).getByRole('heading', { name: 'Sign in to ScotDance' })).toBeVisible()
+  await page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true }).click()
+  await expect(sheet(page).getByRole('heading', { name: 'Sign in to ScotDance.app' })).toBeVisible()
   await expect(sheet(page).getByRole('alert')).toHaveCount(0)
 
   await submitPassword(page, email)
@@ -53,7 +53,7 @@ test('creates an account, with clear errors for a taken email and a short passwo
 
   await submitPassword(page, fresh, 'password1')
   // Signed in: the sheet goes, and a brand-new account is asked how it uses the app.
-  await expect(page.getByRole('heading', { name: 'How do you use ScotDance?' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'How do you use ScotDance.app?' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toHaveCount(0)
 })
 
@@ -79,7 +79,7 @@ test('in the native app, signs in the same way', async ({ page }) => {
   await ensureUser(email)
   await openFromHome(page)
   const s = sheet(page)
-  await expect(s.getByRole('heading', { name: 'Sign in to ScotDance' })).toBeVisible()
+  await expect(s.getByRole('heading', { name: 'Sign in to ScotDance.app' })).toBeVisible()
   await submitPassword(page, email)
   await expect(sheet(page)).toHaveCount(0)
   await openAccount(page)

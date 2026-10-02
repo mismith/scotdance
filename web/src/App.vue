@@ -3,6 +3,7 @@ import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import { useHead } from '@unhead/vue'
 import GlobalBottomNav from '@/components/nav/GlobalBottomNav.vue'
+import AppSidebar from '@/components/nav/AppSidebar.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import AlertBanner from '@/components/AlertBanner.vue'
 import OfflineNotice from '@/components/OfflineNotice.vue'
@@ -60,7 +61,8 @@ watch(() => me.email, (email) => crisp.setUserEmail(email), { immediate: true })
 </script>
 
 <template>
-  <div class="flex min-h-dvh flex-col">
+  <AppSidebar />
+  <div class="flex min-h-dvh flex-col lg:pl-(--sidebar)">
     <RouterView />
 
     <GlobalBottomNav v-if="showGlobalNav" />

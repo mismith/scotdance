@@ -41,7 +41,7 @@ const faqs: { id: string; q: string; a?: string }[] = [
   },
   {
     id: 'independence',
-    q: 'Is ScotDance affiliated with any association, governing body or competition?',
+    q: 'Is ScotDance.app affiliated with any association, governing body or competition?',
     a: 'No, it’s a completely independent, not-for-profit, volunteer-run endeavour.',
   },
   {
@@ -80,11 +80,11 @@ watch(() => route.hash, applyHash)
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
-    <AppBar title="About ScotDance" :fallback="{ to: { name: 'home' }, label: 'Home' }" />
+    <AppBar title="About ScotDance.app" :fallback="{ to: { name: 'home' }, label: 'Home' }" />
 
     <main class="mx-auto w-full max-w-3xl space-y-8 px-4 pt-[calc(var(--chrome-top)+0.5rem)]">
-      <header class="bg-primary-fill text-primary-foreground relative overflow-hidden rounded-3xl p-5 shadow-sm">
-        <LogoMark class="pointer-events-none absolute -right-6 -bottom-10 size-52 rotate-[-8deg] opacity-[0.13]" />
+      <header class="brand-panel relative overflow-hidden rounded-3xl p-5">
+        <LogoMark class="pointer-events-none absolute -right-6 -bottom-10 size-52 rotate-[-8deg] opacity-[0.08]" />
         <img src="/img/touchicon.png" alt="" class="relative size-12 rounded-xl shadow-sm" />
         <h1 class="text-display relative mt-4 text-[1.5625rem] text-balance">From the <span class="whitespace-nowrap">warm-up</span> to the awards.</h1>
         <p class="relative mt-2 text-base font-medium opacity-90">
@@ -101,15 +101,8 @@ watch(() => route.hash, applyHash)
       <section class="space-y-3">
         <h2 class="text-title">Made for</h2>
         <div class="grid grid-cols-2 gap-3">
-          <article
-            v-for="r in roles"
-            :key="r.title"
-            class="space-y-2 rounded-2xl p-4"
-            :style="{ background: `color-mix(in srgb, ${r.color} 12%, var(--card))` }"
-          >
-            <span class="text-on-dancer flex size-11 items-center justify-center rounded-full shadow-sm" :style="{ background: r.color }">
-              <component :is="r.icon" class="size-5" stroke-width="2.4" />
-            </span>
+          <article v-for="r in roles" :key="r.title" class="surface space-y-2 rounded-2xl p-4">
+            <component :is="r.icon" class="size-7" stroke-width="1.75" :style="{ color: r.color }" aria-hidden="true" />
             <h3 class="text-heading">{{ r.title }}</h3>
             <p class="text-callout leading-snug">{{ r.line }}</p>
           </article>
@@ -136,10 +129,10 @@ watch(() => route.hash, applyHash)
         <p class="text-muted-foreground text-callout">Install it on your phone, or just bookmark it in any browser.</p>
         <div class="flex flex-wrap justify-center gap-3">
           <a href="https://apps.apple.com/us/app/scotdance/id1386475626" target="_blank" rel="noopener" aria-label="Download on the App Store" class="press rounded-lg">
-            <img src="/img/app-store.svg" alt="Download on the App Store" class="h-11" />
+            <img src="/img/app-store.svg" alt="Download on the App Store" class="h-12" />
           </a>
           <a href="https://play.google.com/store/apps/details?id=info.mismith.scotdance" target="_blank" rel="noopener" aria-label="Get it on Google Play" class="press rounded-lg">
-            <img src="/img/play-store.svg" alt="Get it on Google Play" class="h-11" />
+            <img src="/img/play-store.svg" alt="Get it on Google Play" class="h-12" />
           </a>
         </div>
       </section>

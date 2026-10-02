@@ -102,7 +102,7 @@ function medals(cid: string) {
 <template>
   <article :class="profileColumns">
     <div :class="profileHeader">
-      <header :ref="setHeader" class="flex items-center gap-4 lg:flex-col lg:items-start lg:gap-3">
+      <header :ref="setHeader" class="flex items-center gap-4">
         <Avatar :name="name" :image="profile.image.value" :color="color" size="lg" />
         <div class="min-w-0">
           <h1 class="text-display">{{ name }}</h1>

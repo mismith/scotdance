@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 import { dbSet, dbUpdate, ensureUser, grantCompetition, grantSystemAdmin, uid } from './support/emulator'
 import { removeCompetition, seedCompetition, type SeededCompetition } from './support/seed'
+import { competitionTabs } from './support/nav'
 import { signInFromSheet } from './support/parent'
 
 // A competition's public pages: what the Overview shows, hidden tabs,
@@ -16,7 +17,7 @@ test.afterAll(async () => {
 
 async function signInAs(page: Page, email: string) {
   await page.goto('/')
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true }).click()
   await signInFromSheet(page, email)
 }
 
@@ -108,12 +109,23 @@ test('a Ceilidh or reception in the schedule says what it is, with no page to op
   }
 })
 
-test('hidden Schedule and Results tabs go from the bar, and their links say why', async ({ page }) => {
+test('after the competition, the Overview leads with results instead of the map and Register', async ({ page }) => {
+  await dbUpdate(`competitions/${comp.id}`, { registrationURL: 'example.com/register' })
+  // Pretend it's well after (the competition is 9 days out): see lib/now.
+  const after = new Date(Date.now() + 15 * 86_400_000)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  await page.goto(`/competitions/${comp.id}/info?now=${after.getFullYear()}-${pad(after.getMonth() + 1)}-${pad(after.getDate())}`)
+  await expect(page.getByRole('link', { name: /Results \d+ of \d+ posted/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Register' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Show the map' })).toHaveCount(0)
+})
+
+test('hidden Schedule and Results tabs go from the bar (the sidebar, on wide screens), and their links say why', async ({ page }) => {
   await dbSet(`competitions:data/${comp.id}/schedule`, false)
   await dbSet(`competitions:data/${comp.id}/results`, false)
   try {
     await page.goto(`/competitions/${comp.id}/info`)
-    const bar = page.getByRole('navigation', { name: 'Competition' })
+    const bar = competitionTabs(page)
     await expect(bar.getByRole('link', { name: 'Dancers' })).toBeVisible()
     await expect(bar.getByRole('link', { name: 'Schedule' })).toHaveCount(0)
     await expect(bar.getByRole('link', { name: 'Results' })).toHaveCount(0)
@@ -231,7 +243,7 @@ test.describe('the biggest competitions', () => {
     await signInAs(page, email)
     await page.goto('/competitions/-OUSSlB1Yj8e57t9co0R/dancers')
     await expect(page.getByRole('heading', { level: 1 })).toContainText('1243', { timeout: 20_000 })
-    const bar = page.getByRole('navigation', { name: 'Competition' })
+    const bar = competitionTabs(page)
     await expect(bar.getByRole('link', { name: 'Results' })).toBeVisible()
     await expect(bar.getByRole('link', { name: 'Schedule' })).toHaveCount(0)
     await page.goto('/competitions/-OUSSlB1Yj8e57t9co0R/info')

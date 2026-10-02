@@ -7,11 +7,12 @@ const props = withDefaults(
   defineProps<{
     open: boolean
     /**
-     * sheet: slides up on phones (a centred card on wider screens). menu: a
-     * small panel above the tab bar's right end. dropdown: the same panel,
-     * anchored under whatever opened it. center: a card in the middle.
+     * sheet: slides up on phones (a centred card on wider screens).
+     * dropdown: a small panel anchored to whatever opened it (or to its
+     * `[data-menu-anchor]` ancestor, e.g. the tab bar). center: a card in the
+     * middle.
      */
-    variant?: 'center' | 'sheet' | 'menu' | 'dropdown'
+    variant?: 'center' | 'sheet' | 'dropdown'
     size?: 'sm' | 'md'
     closable?: boolean
     /**
@@ -78,23 +79,28 @@ const morphing = computed(() => !!morph.value && morphSupported)
 // trigger's nearer edge (its right edge for controls on the right of the
 // screen, its left edge for those on the left), never off screen. Low on the
 // screen, with more room above, it opens upward instead; either way it's no
-// taller than the room it has, and scrolls past that.
+// taller than the room it has, and scrolls past that. A trigger inside a
+// `[data-menu-anchor]` (the tab bar's pill) still lines up with itself, but
+// clears that whole bar: above it on phones, below it on desktop.
 const anchor = computed<Record<string, string> | undefined>(() => {
   const trigger = morph.value?.trigger
   if (props.variant !== 'dropdown' || !shown.value || !trigger?.isConnected) return undefined
   const r = trigger.getBoundingClientRect()
-  // The panel is w-72, at most the window less a 12px margin each side.
-  const width = Math.min(288, innerWidth - 24)
+  const bar = (trigger.closest('[data-menu-anchor]') ?? trigger).getBoundingClientRect()
+  // The panel is w-72 (18rem, so larger with bigger text), at most the
+  // window less a 12px margin each side.
+  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+  const width = Math.min(18 * rem, innerWidth - 24)
   const leftSide = r.left + r.width / 2 < innerWidth / 2
   const want = leftSide ? r.left : r.right - width
   const left = Math.min(Math.max(12, want), innerWidth - width - 12)
-  const below = innerHeight - r.bottom - 18
-  const above = r.top - 18
+  const below = innerHeight - bar.bottom - 18
+  const above = bar.top - 18
   const up = below < 320 && above > below
   return {
     ...(up
-      ? { top: 'auto', bottom: `${Math.round(innerHeight - r.top + 6)}px` }
-      : { top: `${Math.round(r.bottom + 6)}px`, bottom: 'auto' }),
+      ? { top: 'auto', bottom: `${Math.round(innerHeight - bar.top + 6)}px` }
+      : { top: `${Math.round(bar.bottom + 6)}px`, bottom: 'auto' }),
     left: `${Math.round(left)}px`,
     right: 'auto',
     maxHeight: `${Math.round(up ? above : below)}px`,
@@ -151,11 +157,9 @@ const dragStyle = computed(() =>
       // max size: a general max-h/max-w-full here would win over theirs.
       'bg-raised border-0 p-0 text-inherit outline-none',
       // Width by size prop.
-      variant !== 'menu' && variant !== 'dropdown' && (size === 'sm' ? 'w-full md:max-w-sm' : 'w-full md:max-w-md'),
+      variant !== 'dropdown' && (size === 'sm' ? 'w-full md:max-w-sm' : 'w-full md:max-w-md'),
       variant === 'dropdown' &&
         'fixed top-[calc(var(--chrome-top)+0.25rem)] bottom-auto left-auto right-(--dropdown-right,0.75rem) m-0 w-72 max-w-[calc(100vw-1.5rem)] max-h-[calc(100svh-var(--chrome-top)-1rem)] origin-top-right overflow-y-auto rounded-[1.375rem] p-1.5 shadow-(--shadow-raised)',
-      variant === 'menu' &&
-        'fixed top-auto bottom-[calc(var(--chrome-bottom)+0.5rem)] left-auto right-[max(0.75rem,calc((100vw-32rem)/2))] m-0 w-72 max-w-[calc(100vw-1.5rem)] max-h-[calc(100svh-var(--chrome-top)-var(--chrome-bottom)-1rem)] origin-bottom-right overflow-y-auto rounded-[1.375rem] p-1.5 shadow-(--shadow-raised)',
       // Layout per variant.
       variant === 'center' &&
         'fixed inset-x-0 top-[calc(var(--chrome-top)+1rem)] bottom-[calc(var(--chrome-bottom)+1rem)] m-auto h-fit rounded-3xl p-6 shadow-(--shadow-raised) max-h-[calc(100svh-var(--chrome-top)-var(--chrome-bottom)-4rem)] max-md:max-w-[calc(100vw-2rem)]',
@@ -184,7 +188,7 @@ const dragStyle = computed(() =>
         ? 'transition-none'
         : 'ease-snappy duration-[320ms] transition-[opacity,translate,scale,display] transition-discrete backdrop:transition-opacity',
       // Backdrop: menus float over the page without dimming it.
-      variant === 'menu' || variant === 'dropdown' ? 'backdrop:bg-transparent' : 'backdrop:bg-black/40',
+      variant === 'dropdown' ? 'backdrop:bg-transparent' : 'backdrop:bg-black/40',
       'backdrop:opacity-0 open:backdrop:opacity-100 starting:open:backdrop:opacity-0',
       'motion-reduce:transition-none motion-reduce:backdrop:transition-none',
     ]"
@@ -219,7 +223,7 @@ const dragStyle = computed(() =>
     </div>
 
     <button
-      v-if="closable && variant !== 'menu' && variant !== 'dropdown' && !(variant === 'sheet' && slots.header)"
+      v-if="closable && variant !== 'dropdown' && !(variant === 'sheet' && slots.header)"
       type="button"
       aria-label="Close"
       class="press text-muted-foreground absolute top-3 right-3 z-10 flex size-9 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--foreground)_7%,transparent)] after:absolute after:-inset-1"
@@ -231,7 +235,7 @@ const dragStyle = computed(() =>
     <div v-if="variant === 'sheet'" class="overflow-y-auto">
       <slot />
     </div>
-    <slot v-else-if="variant === 'menu' || variant === 'dropdown'" />
+    <slot v-else-if="variant === 'dropdown'" />
     <div v-else class="space-y-4">
       <slot />
     </div>

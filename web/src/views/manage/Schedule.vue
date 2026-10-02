@@ -98,7 +98,7 @@ const missing = computed(() =>
   >
     <DnDProvider preview-to="body">
       <aside
-        class="bg-card shrink-0 overflow-y-auto overscroll-contain p-4 max-md:max-h-[40dvh] max-md:border-b md:w-68 md:border-r"
+        class="shrink-0 overflow-y-auto overscroll-contain p-4 max-md:max-h-[40dvh] max-md:border-b md:w-68 md:border-r"
       >
         <SectionHeader title="Schedule" class="mb-6">
           <!-- Hiding the tab deletes the schedule, after asking. (With no
