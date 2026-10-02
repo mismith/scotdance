@@ -102,7 +102,7 @@ const to = (routeName: string) => ({ name: routeName, params: { competitionId: m
         </RouterLink>
         <!-- Start here: the next step's own button -->
         <div v-if="!props.compact && next?.id === s.id" class="relative pr-4 pb-3.5 pl-16">
-          <Button variant="primary" size="sm" :to="action(s.id).to">{{ action(s.id).label }}</Button>
+          <Button variant="primary" :to="action(s.id).to">{{ action(s.id).label }}</Button>
         </div>
       </li>
     </ol>

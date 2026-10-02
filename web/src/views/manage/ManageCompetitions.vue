@@ -139,7 +139,7 @@ async function create() {
               </RouterLink>
               <!-- Under the name on a phone, beside it where there's room. -->
               <div v-if="isToday(c)" class="px-4 pb-3 sm:p-0 sm:pr-3">
-                <Button variant="tonal" size="sm" class="max-sm:w-full" :to="{ name: 'manage.results', params: { competitionId: c.id } }">
+                <Button variant="tonal" class="max-sm:w-full" :to="{ name: 'manage.results', params: { competitionId: c.id } }">
                   Enter results
                 </Button>
               </div>
