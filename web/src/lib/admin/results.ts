@@ -1,4 +1,5 @@
-import type { DancePlacing } from '@/types/competition'
+import { scheduleIndex } from '@/lib/dancerDay'
+import { groupHasOverall, type DancePlacing, type Platform, type ResultsTree, type Schedule } from '@/types/competition'
 
 // Reading and writing one dance's placings in the stored format the public
 // pages read (lib/results.ts):
@@ -85,4 +86,56 @@ export type DanceState = 'done' | 'none' | 'todo'
 export function danceState(raw: DancePlacing[] | false | null | undefined): DanceState {
   if (raw === false) return 'none'
   return parsePlacings(raw).entries.length ? 'done' : 'todo'
+}
+
+/** What an age group enters, in order: callbacks, its dances, then Overall (not Primary). */
+export function resultRows(group: { category?: { name?: string } | null }, dances: { id: string; label: string }[]) {
+  return [
+    { id: CALLBACKS, label: 'Callbacks' },
+    ...dances.map((d) => ({ id: d.id, label: d.label })),
+    ...(groupHasOverall(group) ? [{ id: OVERALL, label: 'Overall' }] : []),
+  ]
+}
+
+/** One age group dancing one dance on one platform. */
+export interface Turn {
+  groupId: string
+  danceId: string
+  platformId: string
+}
+
+/** Every turn on the schedule, in running order. */
+export const scheduleTurns = (schedule: Schedule | null, platforms: Platform[]): Turn[] =>
+  scheduleIndex(schedule, platforms).slots.flatMap((s) => s.groupIds.map((groupId) => ({ groupId, danceId: s.danceId, platformId: s.platformId })))
+
+/**
+ * Age groups in the order their results come in: by their last turn on the
+ * schedule (results follow it), then any not on it, in list order.
+ */
+export function resultsOrder(groupIds: string[], turns: Turn[]): string[] {
+  const last = new Map(turns.map((t, i) => [t.groupId, i]))
+  const rank = (id: string, i: number) => last.get(id) ?? turns.length + i
+  return groupIds
+    .map((id, i) => ({ id, rank: rank(id, i) }))
+    .sort((a, b) => a.rank - b.rank)
+    .map((g) => g.id)
+}
+
+/**
+ * Age groups dancing now, as far as the results entered can tell: on each
+ * platform, the turn after the last one with results in.
+ */
+export function dancingNow(turns: Turn[], results: ResultsTree): Set<string> {
+  const byPlatform = new Map<string, Turn[]>()
+  for (const t of turns) byPlatform.set(t.platformId, [...(byPlatform.get(t.platformId) ?? []), t])
+  const now = new Set<string>()
+  for (const list of byPlatform.values()) {
+    let lastIn = -1
+    list.forEach((t, i) => {
+      if (danceState(results[t.groupId]?.[t.danceId]) !== 'todo') lastIn = i
+    })
+    const turn = list[lastIn + 1]
+    if (turn) now.add(turn.groupId)
+  }
+  return now
 }

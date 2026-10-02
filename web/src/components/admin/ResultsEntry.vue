@@ -12,7 +12,7 @@ import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import { tapHaptic } from '@/lib/haptics'
 import { getOrdinalSuffix } from '@/lib/results'
-import { groupHasOverall, isPrimaryCategory } from '@/types/competition'
+import { isPrimaryCategory } from '@/types/competition'
 import {
   CALLBACKS,
   OVERALL,
@@ -20,6 +20,9 @@ import {
   newPlaceholderId,
   parsePlacings,
   removeEntry,
+  resultRows,
+  resultsOrder,
+  scheduleTurns,
   serializePlacings,
   type Entry,
   type Placings,
@@ -192,17 +195,22 @@ const instruction = computed(() => {
     : 'Tap dancers in the order they placed, starting with 1st. Tap again to take one out.'
 })
 
-// The next dance for this age group, so entry can carry straight on.
+// Where to carry straight on: this age group's next dance, then the next
+// age group in the running order (or list order with no schedule).
+const turns = computed(() => scheduleTurns(m.schedule.value, m.platforms.value))
 const next = computed(() => {
   const g = group.value
   if (!g) return null
-  const order = [
-    { id: CALLBACKS, label: 'Callbacks' },
-    ...m.groupDances(g.id).map((d) => ({ id: d.id, label: d.label })),
-    ...(groupHasOverall(g) ? [{ id: OVERALL, label: 'Overall' }] : []),
-  ]
-  const i = order.findIndex((d) => d.id === props.danceId)
-  return i < 0 ? null : (order[i + 1] ?? null)
+  const rows = resultRows(g, m.groupDances(g.id))
+  const i = rows.findIndex((d) => d.id === props.danceId)
+  if (i < 0) return null
+  if (rows[i + 1]) return { groupId: g.id, danceId: rows[i + 1].id, label: rows[i + 1].label }
+  const ids = resultsOrder(
+    m.groups.value.filter((x) => x.id === g.id || m.groupDancers(x.id).length).map((x) => x.id),
+    turns.value,
+  )
+  const after = m.groupsById.value.get(ids[ids.indexOf(g.id) + 1] ?? '')
+  return after ? { groupId: after.id, danceId: CALLBACKS, label: `${after.label} · Callbacks` } : null
 })
 </script>
 
@@ -421,7 +429,7 @@ const next = computed(() => {
         <!-- Carry on to the next dance without going back to the list -->
         <div v-if="next && (placings.entries.length || markedNone)" class="border-t p-4">
           <RouterLink
-            :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId, danceId: next.id } }"
+            :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: next.groupId, danceId: next.danceId } }"
             replace
             class="bg-primary-fill text-primary-foreground flex h-12 items-center justify-center gap-1.5 rounded-xl px-4 text-base font-bold"
           >

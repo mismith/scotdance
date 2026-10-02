@@ -297,6 +297,54 @@ test('"No dancers placed", and the next dance carries on', async ({ page, browse
   ).toBeVisible()
 })
 
+test('after an age group’s last dance, Next follows the running order', async ({ page }) => {
+  const group = freshGroup()
+  const ds = dancersOf(group.id)
+  const fling = comp.dances[0]
+  const first = comp.groups[0]
+  const label = (g: { name: string; categoryId: string }) => `${comp.categories[g.categoryId]} ${g.name}`
+  const schedule = `competitions:data/${comp.id}/schedule`
+  const before = await stored('schedule')
+  await put(`competitions:data/${comp.id}/results/${group.id}/overall`, [ds[0].id])
+  // This age group dances the Fling, then the first age group does.
+  const dance = {
+    danceId: fling.id,
+    order: 0,
+    platforms: { [comp.platforms[0]]: { orderedGroupIds: [group.id, first.id] } },
+  }
+  await put(schedule, {
+    days: { day: { order: 0, blocks: { block: { order: 0, events: { event: { order: 0, dances: { dance } } } } } } },
+  })
+  try {
+    await signIn(page, email)
+    // On the day, the list marks who's dancing now, as far as results tell.
+    await page.goto(`/competitions/${comp.id}/manage/results`)
+    const now = (g: { name: string; categoryId: string }) =>
+      page.getByRole('button', { name: new RegExp(`^${label(g)}\\s*Dancing now`) })
+    await expect(now(group)).toBeVisible()
+    await expect(now(first)).toHaveCount(0)
+    await put(`competitions:data/${comp.id}/results/${group.id}/${fling.id}`, false)
+    await expect(now(first)).toBeVisible()
+    await expect(now(group)).toHaveCount(0)
+
+    await entry(page, group.id, 'overall')
+    await page.getByRole('link', { name: `Next: ${label(first)} · Callbacks` }).click()
+    await expect(page.getByRole('heading', { name: 'Callbacks' })).toBeVisible()
+    await expect(page).toHaveURL(new RegExp(`/results/${first.id}/callbacks$`))
+
+    // No schedule: the list order.
+    await put(schedule, null)
+    await entry(page, group.id, 'overall')
+    const after = comp.groups[comp.groups.indexOf(group) + 1]
+    await expect(page.getByRole('link', { name: /^Next: / })).toHaveAccessibleName(
+      after ? `Next: ${label(after)} · Callbacks` : /^Next/,
+    )
+  } finally {
+    await put(schedule, before)
+    await put(`competitions:data/${comp.id}/results/${group.id}`, null)
+  }
+})
+
 test('fast taps keep their order; a double tap takes the dancer back out', async ({
   page,
 }) => {

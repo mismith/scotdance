@@ -11,8 +11,8 @@ import { useHideTab } from '@/composables/admin/useHideTab'
 import { useManagedCompetition, type MGroup } from '@/composables/admin/useManagedCompetition'
 import { useSplit } from '@/composables/admin/useWide'
 import { canEdit } from '@/lib/admin/write'
-import { CALLBACKS, OVERALL, danceState, isPlaceholderId, parsePlacings, placeAt } from '@/lib/admin/results'
-import { groupHasOverall } from '@/types/competition'
+import { CALLBACKS, OVERALL, danceState, dancingNow, isPlaceholderId, parsePlacings, placeAt, resultRows, scheduleTurns } from '@/lib/admin/results'
+import { competitionPhase } from '@/lib/dancerDay'
 
 const route = useRoute()
 const m = useManagedCompetition()
@@ -28,7 +28,8 @@ const danceId = computed(() => (route.params.danceId ? String(route.params.dance
 // would otherwise save placings nobody can see.
 const openGroup = computed(() => (groupId.value ? (m.groupsById.value.get(groupId.value) ?? null) : null))
 
-const danceIds = (g: MGroup) => [CALLBACKS, ...m.groupDances(g.id).map((d) => d.id), ...(groupHasOverall(g) ? [OVERALL] : [])]
+const danceRows = (g: MGroup) => resultRows(g, m.groupDances(g.id))
+const danceIds = (g: MGroup) => danceRows(g).map((d) => d.id)
 
 function progress(g: MGroup) {
   const ids = danceIds(g)
@@ -36,11 +37,13 @@ function progress(g: MGroup) {
   return { done, total: ids.length }
 }
 
-const danceRows = (g: MGroup) => [
-  { id: CALLBACKS, label: 'Callbacks' },
-  ...m.groupDances(g.id).map((d) => ({ id: d.id, label: d.label })),
-  ...(groupHasOverall(g) ? [{ id: OVERALL, label: 'Overall' }] : []),
-]
+// On competition day, which age groups are dancing now (in list order, not
+// reordered: the list stays where the volunteer expects it).
+const live = computed(() =>
+  competitionPhase(m.competition.value?.date, m.schedule.value) === 'today'
+    ? dancingNow(scheduleTurns(m.schedule.value, m.platforms.value), m.results.value)
+    : new Set<string>(),
+)
 const stateOf = (groupId: string, danceId: string) => danceState(m.results.value[groupId]?.[danceId])
 const hasPlaceholder = (groupId: string, danceId: string) =>
   parsePlacings(m.results.value[groupId]?.[danceId]).entries.some((e) => isPlaceholderId(e.id)) ||
@@ -83,8 +86,7 @@ const totals = computed(() => {
 function exportCsv() {
   const rows: string[][] = [['Category', 'Age group', 'Dance', 'Place', 'Number', 'First name', 'Last name', 'Location']]
   for (const g of m.groups.value) {
-    for (const id of danceIds(g)) {
-      const name = id === CALLBACKS ? 'Callbacks' : id === OVERALL ? 'Overall' : (m.dancesById.value.get(id)?.label ?? '')
+    for (const { id, label: name } of danceRows(g)) {
       const row = (dancerId: string, place: string) => {
         const d = m.dancersById.value.get(dancerId)
         return [g.category?.label ?? '', g.name ?? '', name, place, d?.num ?? '?', d?.firstName ?? '', d?.lastName ?? '', d?.location ?? '']
@@ -154,7 +156,13 @@ function exportCsv() {
               @click="toggle(g.id)"
             >
               <span class="min-w-0 flex-1">
-                <span class="block truncate text-base font-bold">{{ g.label }}</span>
+                <span class="flex items-center gap-2">
+                  <span class="truncate text-base font-bold">{{ g.label }}</span>
+                  <span v-if="live.has(g.id)" class="bg-live-paper text-live text-caption inline-flex h-5 shrink-0 items-center gap-1.5 rounded-full px-2">
+                    <span class="bg-live size-1.5 rounded-full motion-safe:animate-[live-pulse_2s_infinite]" aria-hidden="true" />
+                    Dancing now
+                  </span>
+                </span>
                 <span class="text-muted-foreground block text-sm">{{ m.groupDancers(g.id).length }} dancers · {{ progress(g).done }} of {{ progress(g).total }} entered</span>
               </span>
               <CircleCheck v-if="progress(g).done === progress(g).total" class="text-primary size-5 shrink-0" />
