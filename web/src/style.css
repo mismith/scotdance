@@ -636,6 +636,14 @@
 @utility text-item-title {
   @apply text-base leading-snug font-semibold;
 }
+/* Content settling in on first load: up 6px and in. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
 /* Skeleton shimmer — diagonal band sweeping left-to-right across the box.
    Used by Skeleton.vue. translateX(200%) takes the band from -100% (just
    off the left edge) to +100% (just off the right). */

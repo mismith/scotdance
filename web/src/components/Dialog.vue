@@ -74,12 +74,18 @@ onMounted(() => {
 // When a morph animates the opening, the dialog's own slide/fade would fight it.
 const morphing = computed(() => !!morph.value && morphSupported)
 
-// A dropdown hangs under the control that opened it, its right edge lined up.
+// A dropdown hangs under the control that opened it, lined up with the
+// trigger's nearer edge (its right edge for controls on the right of the
+// screen, its left edge for those on the left), never off screen.
 const anchor = computed<Record<string, string> | undefined>(() => {
   const trigger = morph.value?.trigger
   if (props.variant !== 'dropdown' || !shown.value || !trigger?.isConnected) return undefined
   const r = trigger.getBoundingClientRect()
-  return { top: `${Math.round(r.bottom + 6)}px`, right: `${Math.max(12, Math.round(innerWidth - r.right))}px` }
+  const top = `${Math.round(r.bottom + 6)}px`
+  const leftSide = r.left + r.width / 2 < innerWidth / 2
+  return leftSide
+    ? { top, left: `${Math.max(12, Math.round(r.left))}px`, right: 'auto' }
+    : { top, left: 'auto', right: `${Math.max(12, Math.round(innerWidth - r.right))}px` }
 })
 
 function onBackdropClick(e: MouseEvent) {
