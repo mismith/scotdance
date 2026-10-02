@@ -130,7 +130,8 @@ function medals(cid: string) {
       </div>
       <section v-if="byYear.length" class="space-y-2">
         <h2 class="text-heading flex items-baseline justify-between">
-          Competitions <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ rows.length }}</span>
+          {{ focus?.phase === 'today' ? 'Other competitions' : 'Competitions' }}
+          <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ byYear.reduce((n, [, l]) => n + l.length, 0) }}</span>
         </h2>
         <template v-for="[year, list] in byYear" :key="year">
           <h3 class="text-muted-foreground px-1 pt-2 text-footnote font-semibold">{{ year }}</h3>
