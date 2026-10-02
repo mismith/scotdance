@@ -15,5 +15,6 @@ function subtitleOf(agg: { appearanceCount?: number; location?: string | null })
     route-prefix="piper"
     id-param="piperId"
     :subtitle-of="subtitleOf"
+    placeholder="Find a piper by name"
   />
 </template>

@@ -14,7 +14,7 @@ import {
   type ResultsBundle,
   type ScheduleBundle,
 } from '@/lib/competitionData'
-import { competitionPhase, dancerDay, type DancerDay, type Phase } from '@/lib/dancerDay'
+import { competitionPhase, competitionSpan, dancerDay, type DancerDay, type Phase } from '@/lib/dancerDay'
 import { daysFromToday, parseDate } from '@/lib/format'
 import { today } from '@/lib/now'
 import { useMeStore } from '@/stores/me'
@@ -36,6 +36,10 @@ export interface FocusCompetition {
   competitionId: string
   competition: Competition
   phase: Phase
+  /** Calendar days to its first day (1 = tomorrow); null without a date. */
+  daysAway: number | null
+  /** Which day of a multi-day competition today is, while it's on. */
+  dayOf: { n: number; of: number } | null
   /** Empty when the competition's details couldn't be read. */
   days: DancerDay[]
 }
@@ -75,15 +79,21 @@ interface Bundles {
   schedule: ScheduleBundle
 }
 
-/** All three bundles for one competition, streaming; calls back once all have arrived, then on every change. */
-function watchBundles(cid: string, cb: (b: Bundles) => void, onError: () => void) {
+/**
+ * All three bundles for one competition, streaming; calls back once all have
+ * arrived, then on every change, saying whether results changed.
+ */
+function watchBundles(cid: string, cb: (b: Bundles, resultsChanged: boolean) => void, onError: () => void) {
   const parts: Partial<Bundles> = {}
-  const emit = () => {
-    if (parts.dancers && parts.results && parts.schedule) cb({ ...(parts as Bundles) })
+  let ready = false
+  const emit = (results = false) => {
+    if (!parts.dancers || !parts.results || !parts.schedule) return
+    cb({ ...(parts as Bundles) }, ready && results)
+    ready = true
   }
   const offs = [
     watchDancers(cid, (b) => ((parts.dancers = b), emit()), onError),
-    watchResults(cid, (b) => ((parts.results = b), emit()), onError),
+    watchResults(cid, (b) => ((parts.results = b), emit(true)), onError),
     watchSchedule(cid, (b) => ((parts.schedule = b), emit()), onError),
   ]
   return () => offs.forEach((off) => off())
@@ -95,6 +105,8 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
   /** Per competition: its data, or null when it can't be read. */
   const bundles = shallowRef<Record<string, Bundles | null>>({})
   const liveAt = ref<number | null>(null)
+  /** Per competition on today: when a result last arrived while watching. */
+  const resultsAt = ref<Record<string, number>>({})
   const loading = ref(false)
   const liveOff = new Map<string, () => void>()
 
@@ -183,9 +195,10 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
           cid,
           watchBundles(
             cid,
-            (b) => {
+            (b, resultsChanged) => {
               setBundle(cid, b)
               liveAt.value = Date.now()
+              if (resultsChanged) resultsAt.value = { ...resultsAt.value, [cid]: Date.now() }
             },
             () => setBundle(cid, null),
           ),
@@ -230,10 +243,16 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
           draws: b.schedule.draws,
           groups: b.dancers.groups,
         }
+        const span = competitionSpan(p.focusComp.date, b?.schedule.schedule)
         focus = {
           competitionId: p.focusId,
           competition: p.focusComp,
           phase: p.phase,
+          daysAway: span?.first ?? null,
+          dayOf:
+            p.phase === 'today' && span && span.last > span.first
+              ? { n: 1 - span.first, of: span.last - span.first + 1 }
+              : null,
           days: dayBundle ? entries.map((d) => dancerDay(d, dayBundle, p.phase)) : [],
         }
       }
@@ -249,5 +268,5 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
 
   watch(result, (r) => (cards.value = r), { immediate: true })
 
-  return { cards, loading, liveAt }
+  return { cards, loading, liveAt, resultsAt }
 }

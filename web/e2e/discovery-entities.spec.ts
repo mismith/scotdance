@@ -22,7 +22,8 @@ test('the Judges list filters by name and opens a judge', async ({ page }) => {
   await findBox(page).fill('zzzz nobody')
   await expect(page.getByText('No one matches “zzzz nobody”.')).toBeVisible()
   await page.getByRole('button', { name: 'Clear' }).click()
-  await page.getByRole('button', { name: /^Aileen Robertson/ }).first().click()
+  // Rows are links (cmd-click opens a tab).
+  await page.getByRole('link', { name: /^Aileen Robertson/ }).first().click()
   await expect(page).toHaveURL(new RegExp(`/judges/${AILEEN}/info$`))
   await expect(page.getByRole('heading', { level: 1, name: 'Aileen Robertson' })).toBeVisible()
   await expect(page).toHaveTitle('Aileen Robertson • ScotDance.app')
@@ -92,7 +93,7 @@ test('following a judge puts them under Following on Judges, and unfollowing tak
 
   await page.goto('/judges')
   const following = page.locator('section').filter({ has: page.getByRole('heading', { level: 2, name: 'Following' }) })
-  await expect(following.getByRole('button', { name: /^Aileen Robertson/ })).toBeVisible()
+  await expect(following.getByRole('link', { name: /^Aileen Robertson/ })).toBeVisible()
   await following.getByRole('button', { name: 'Following Aileen Robertson' }).click()
   await expect(following).toBeHidden()
 })

@@ -6,10 +6,11 @@ import { isoDay, removeCompetition, seedCompetition, type SeededCompetition } fr
 // The dev server is shared and busy during a full run: give page loads time.
 const expect = baseExpect.configure({ timeout: 20_000 })
 
-// Search by number looks in one competition, chosen from cards: the likeliest
-// first, the rest in a sheet that filters as you type. Everything here is
-// dated around a day years ago (each project its own), and the app is told
-// that's today (?now=), so no other test's competitions get in the way.
+// Search by number looks in one competition: the likeliest, shown as a chip
+// under the number, which opens a sheet of the rest that filters as you
+// type. Everything here is dated around a day years ago (each project its
+// own), and the app is told that's today (?now=), so no other test's
+// competitions get in the way.
 
 test.describe.configure({ mode: 'serial' })
 test.use({ timezoneId: 'America/Edmonton' })
@@ -57,18 +58,21 @@ test.afterAll(async () => {
 })
 
 const open = (page: Page, query = '', days = 0) => page.goto(`/search?by=number&now=${isoDay(anchor + days)}${query}`)
-const row = (page: Page) => page.getByRole('radiogroup', { name: 'Looking in' })
-const chosen = (page: Page) => row(page).getByRole('radio', { checked: true })
-const card = (page: Page, name: string) => row(page).getByRole('radio', { name: new RegExp(name) })
+// The competition it looks in is a chip under the number; it opens a picker.
+const chip = (page: Page) => page.getByRole('button', { name: /^Looking in/ })
 const sheet = (page: Page) => page.locator('dialog[open]')
 const numberBox = (page: Page) => page.getByRole('textbox', { name: 'Number on their card' })
 const inAddress = (id: string) => new RegExp(`[?&]in=${id}(&|$)`)
+async function pick(page: Page, name: string) {
+  await chip(page).click()
+  await sheet(page).getByRole('radio', { name: new RegExp(name) }).click()
+  await expect(sheet(page)).toHaveCount(0)
+}
 
 test('starts on today’s competition and finds a dancer by the number on their card', async ({ page }) => {
   await open(page)
-  await expect(chosen(page)).toContainText(today.name)
-  await expect(chosen(page)).toContainText('Today')
-  await expect(row(page).getByRole('radio').first()).toHaveAttribute('aria-checked', 'true')
+  await expect(chip(page)).toContainText(today.name)
+  await expect(chip(page)).toContainText('Today')
   await expect(page).toHaveURL(inAddress(today.id))
 
   const dancer = today.dancers[0]
@@ -81,56 +85,48 @@ test('starts on today’s competition and finds a dancer by the number on their 
 
 test('day 2 of a two-day competition still counts as today', async ({ page }) => {
   await open(page, '', 1)
-  await expect(chosen(page)).toContainText(today.name)
-  await expect(chosen(page)).toContainText('Today')
+  await expect(chip(page)).toContainText(today.name)
+  await expect(chip(page)).toContainText('Today')
 })
 
-test('one tap switches competition, the results and the address follow', async ({ page }) => {
+test('switching competition: the results and the address follow', async ({ page }) => {
   await open(page)
   await numberBox(page).fill(today.dancers[0].number)
   await expect(page.getByRole('link', { name: new RegExp(today.dancers[0].lastName) })).toBeVisible()
 
-  await card(page, listings.next.name).click()
-  await expect(chosen(page)).toContainText(listings.next.name)
+  await pick(page, listings.next.name)
+  await expect(chip(page)).toContainText(listings.next.name)
   await expect(page).toHaveURL(inAddress(listings.next.id))
   await expect(page.getByText(`The dancer list for ${listings.next.name} hasn’t been posted yet.`)).toBeVisible()
 
-  await card(page, today.name).click()
-  await expect(chosen(page)).toContainText(today.name)
+  await pick(page, today.name)
+  await expect(chip(page)).toContainText(today.name)
   await expect(page).toHaveURL(inAddress(today.id))
   await expect(page.getByRole('link', { name: new RegExp(today.dancers[0].lastName) })).toBeVisible()
 })
 
-test('with many competitions, shows the closest few and finds any other by typing', async ({ page }) => {
+test('every competition near today is in the picker, and typing finds one', async ({ page }) => {
   await open(page)
-  await expect(chosen(page)).toContainText(today.name)
-  // Nine competitions around today: the closest three, not all of them.
-  await expect(row(page).getByRole('radio')).toHaveCount(3)
-  await expect(card(page, listings.far.name)).toHaveCount(0)
+  await expect(chip(page)).toContainText(today.name)
 
-  await page.getByRole('button', { name: 'More competitions' }).click()
+  await chip(page).click()
   await expect(sheet(page).getByRole('heading', { name: 'Today' })).toBeVisible()
   await expect(sheet(page).getByRole('heading', { name: 'Coming up' })).toBeVisible()
   await expect(sheet(page).getByRole('heading', { name: 'Earlier' })).toBeVisible()
   await expect(sheet(page).getByRole('radio')).toHaveCount(9)
+  await expect(sheet(page).getByRole('radio', { checked: true })).toContainText(today.name)
 
   await sheet(page).getByRole('searchbox', { name: 'Find a competition' }).fill('faraway')
   await expect(sheet(page).getByRole('radio')).toHaveCount(1)
   await sheet(page).getByRole('radio', { name: new RegExp(listings.far.name) }).click()
   await expect(sheet(page)).toHaveCount(0)
-
-  // It joins the front of the row, chosen, so switching back is one tap.
-  await expect(chosen(page)).toContainText(listings.far.name)
-  await expect(row(page).getByRole('radio').first()).toContainText(listings.far.name)
+  await expect(chip(page)).toContainText(listings.far.name)
   await expect(page).toHaveURL(inAddress(listings.far.id))
-  await card(page, today.name).click()
-  await expect(chosen(page)).toContainText(today.name)
-  await expect(card(page, listings.far.name)).toBeVisible()
 })
 
 test('nothing matching says so', async ({ page }) => {
   await open(page)
-  await page.getByRole('button', { name: 'More competitions' }).click()
+  await chip(page).click()
   await sheet(page).getByRole('searchbox', { name: 'Find a competition' }).fill('zzqx')
   await expect(sheet(page).getByText('No competition matches “zzqx”.')).toBeVisible()
   await expect(sheet(page).getByRole('radio')).toHaveCount(0)
@@ -138,47 +134,38 @@ test('nothing matching says so', async ({ page }) => {
 
 test('a link opens on its competition, and an old one falls back to today’s', async ({ page }) => {
   await open(page, `&in=${listings.far.id}`)
-  await expect(chosen(page)).toContainText(listings.far.name)
+  await expect(chip(page)).toContainText(listings.far.name)
   await page.reload()
-  await expect(chosen(page)).toContainText(listings.far.name)
+  await expect(chip(page)).toContainText(listings.far.name)
   await expect(page).toHaveURL(inAddress(listings.far.id))
 
   await open(page, '&in=no-such-competition')
-  await expect(chosen(page)).toContainText(today.name)
+  await expect(chip(page)).toContainText(today.name)
   await expect(page).toHaveURL(inAddress(today.id))
 })
 
-test('works from the keyboard: arrows between cards, Enter picks the match', async ({ page }) => {
+test('works from the keyboard: the chip opens the picker, Enter picks the match', async ({ page }) => {
   await open(page)
-  await chosen(page).focus()
-  await page.keyboard.press('ArrowRight')
-  await expect(row(page).getByRole('radio').nth(1)).toHaveAttribute('aria-checked', 'true')
-  await expect(row(page).getByRole('radio').nth(1)).toBeFocused()
-  await page.keyboard.press('Home')
-  await expect(row(page).getByRole('radio').first()).toBeFocused()
-  await expect(chosen(page)).toContainText(today.name)
-
-  await page.getByRole('button', { name: 'More competitions' }).focus()
+  await chip(page).focus()
   await page.keyboard.press('Enter')
   const filter = sheet(page).getByRole('searchbox', { name: 'Find a competition' })
   await filter.focus()
   await filter.pressSequentially('faraway')
   await page.keyboard.press('Enter')
   await expect(sheet(page)).toHaveCount(0)
-  await expect(chosen(page)).toContainText(listings.far.name)
+  await expect(chip(page)).toContainText(listings.far.name)
 })
 
-test('a followed competition further out is kept in the row, marked', async ({ page }) => {
+test('a followed competition further out is marked in the picker', async ({ page }) => {
   const email = `sn-${tag}@example.test`
   const userId = await ensureUser(email)
   await dbSet(`users:favorites/${userId}/competitions/${listings.followed.id}`, true)
   try {
     await signIn(page, email)
     await open(page)
-    const followed = card(page, listings.followed.name)
-    await expect(followed).toBeVisible()
-    await expect(followed).toContainText('Following')
-    await expect(chosen(page)).toContainText(today.name)
+    await expect(chip(page)).toContainText(today.name)
+    await chip(page).click()
+    await expect(sheet(page).getByRole('radio', { name: new RegExp(listings.followed.name) })).toContainText('Following')
   } finally {
     await dbRemove(`users:favorites/${userId}`)
   }

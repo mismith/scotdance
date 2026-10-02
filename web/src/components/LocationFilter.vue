@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 import { Check, ChevronDown, Globe, Locate, MapPinned, X } from '@lucide/vue'
+import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/Dialog.vue'
 import { useMorph } from '@/lib/morph'
 import NearbyRadiusMap from '@/components/NearbyRadiusMap.vue'
@@ -10,7 +12,7 @@ import { countryFlag, countryName, isoFor } from '@/lib/flagEmoji'
 import { guessUserCountry } from '@/lib/locale'
 import { fetchRegionSuggestions, resolvePlace, type PlaceSuggestion } from '@/lib/maps'
 
-const props = defineProps<{ competitions: CompetitionListItem[] }>()
+const props = defineProps<{ competitions: CompetitionListItem[]; glass?: boolean }>()
 
 const {
   mode,
@@ -119,7 +121,16 @@ function defaultRegionCountry(): string | null {
   return quickCountries.value[0]?.value ?? null
 }
 
+// A sheet on phones (an inset list); on wider screens a popover under the
+// pill (menu rows).
 const sheet = useMorph()
+const wide = useMediaQuery('(min-width: 768px)')
+const row = computed(() =>
+  wide.value
+    ? 'press-row focus-inset flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left'
+    : 'press-row focus-inset flex min-h-13 w-full items-center gap-3 px-4 text-left',
+)
+const inset = computed(() => (wide.value ? 'px-3' : 'px-4'))
 
 function select(id: LocationMode): void {
   if (id === mode.value) return
@@ -218,34 +229,50 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
 <template>
   <button
     type="button"
-    class="bg-card border-strong flex h-11 min-w-0 items-center gap-1.5 rounded-full border px-4 text-[0.9375rem] font-bold"
+    :class="[
+      'press flex h-11 min-w-0 items-center gap-1.5 rounded-full px-4 text-callout font-semibold',
+      glass ? 'glass' : 'surface',
+    ]"
     :aria-label="ariaLabel"
     aria-haspopup="dialog"
-    @click="sheet.show"
+    :aria-expanded="sheet.open"
+    @click="sheet.show($event)"
   >
-    <span v-if="compact.kind === 'flag'" class="text-lg leading-none">{{ compact.emoji }}</span>
-    <component :is="compact.icon" v-else class="text-primary size-[1.125rem] shrink-0" />
+    <span v-if="compact.kind === 'flag'" class="text-lg leading-none" aria-hidden="true">{{ compact.emoji }}</span>
+    <component :is="compact.icon" v-else class="text-primary size-[1.125rem] shrink-0" aria-hidden="true" />
     <span class="truncate">{{ compactLabel }}</span>
-    <ChevronDown class="text-muted-foreground size-4 shrink-0" />
+    <ChevronDown class="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
   </button>
 
-  <Dialog :open="sheet.open" :morph="sheet" variant="sheet" @close="sheet.hide()">
+  <Dialog
+    :open="sheet.open"
+    :morph="sheet"
+    :variant="wide ? 'dropdown' : 'sheet'"
+    :closable="false"
+    aria-label="Where to look"
+    :class="wide && 'w-96'"
+    @close="sheet.hide()"
+  >
     <template #header>
       <h2 class="text-title">Where to look</h2>
     </template>
-    <div class="space-y-4 p-4 pb-[calc(1.5rem+var(--safe-bottom))]">
-      <ul class="bg-card divide-y overflow-hidden rounded-2xl border" role="radiogroup" aria-label="Where to look">
+    <div :class="wide ? 'space-y-1.5' : 'space-y-4 p-4 pb-[calc(1.5rem+var(--safe-bottom))]'">
+      <ul
+        :class="!wide && 'surface rows-inset overflow-hidden rounded-2xl [--inset:3.25rem]'"
+        role="radiogroup"
+        aria-label="Where to look"
+      >
         <li>
-          <button type="button" role="radio" :aria-checked="mode === 'nearby'" class="flex min-h-14 w-full items-center gap-3 px-4 text-left" @click="select('nearby')">
-            <Locate class="text-primary size-5 shrink-0" />
-            <span class="flex-1 text-base font-bold">Near me</span>
-            <Check v-if="mode === 'nearby'" class="text-primary size-5" stroke-width="3" />
+          <button type="button" role="radio" :aria-checked="mode === 'nearby'" :class="row" @click="select('nearby')">
+            <Locate class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+            <span class="flex-1 text-base font-medium">Near me</span>
+            <Check v-if="mode === 'nearby'" class="text-primary size-5" stroke-width="2.5" aria-hidden="true" />
           </button>
-          <div v-if="mode === 'nearby'" class="space-y-3 px-4 pb-4">
+          <div v-if="mode === 'nearby'" :class="['space-y-3 pt-1 pb-4', inset]">
             <template v-if="coords">
-              <NearbyRadiusMap :lat="coords.lat" :lng="coords.lng" :radius-km="radius" class="overflow-hidden rounded-xl" />
+              <NearbyRadiusMap :lat="coords.lat" :lng="coords.lng" :radius-km="radius" />
               <label class="block space-y-1">
-                <span class="text-muted-foreground text-sm font-semibold">Within {{ radius }} km</span>
+                <span class="text-muted-foreground text-sm font-medium">Within {{ radius }} km</span>
                 <input type="range" :min="0" :max="SLIDER_STEPS" :value="sliderPosition" class="accent-primary w-full" @input="onSliderInput" />
               </label>
             </template>
@@ -260,9 +287,9 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
                       : 'Show competitions near you.'
                 }}
               </p>
-              <button type="button" class="bg-primary-fill text-primary-foreground flex h-11 w-full items-center justify-center gap-2 rounded-xl text-[0.9375rem] font-bold" @click="requestPosition">
-                <Locate class="size-4" /> {{ locationError ? 'Try again' : 'Use my location' }}
-              </button>
+              <Button variant="tonal" block @click="requestPosition">
+                <Locate /> {{ locationError ? 'Try again' : 'Use my location' }}
+              </Button>
             </template>
           </div>
         </li>
@@ -271,37 +298,38 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
             type="button"
             role="radio"
             :aria-checked="mode === 'region' && country === qc.value"
-            class="flex min-h-14 w-full items-center gap-3 px-4 text-left"
+            :class="row"
             @click="pickCountry(qc.value)"
           >
-            <span class="w-5 text-center text-xl leading-none">{{ countryFlag(qc.value) ?? '🌐' }}</span>
-            <span class="flex-1 text-base font-bold">{{ countryName(qc.value) }}</span>
-            <Check v-if="mode === 'region' && country === qc.value" class="text-primary size-5" stroke-width="3" />
+            <span class="w-5 text-center text-xl leading-none" aria-hidden="true">{{ countryFlag(qc.value) ?? '🌐' }}</span>
+            <span class="flex-1 text-base font-medium">{{ countryName(qc.value) }}</span>
+            <Check v-if="mode === 'region' && country === qc.value" class="text-primary size-5" stroke-width="2.5" aria-hidden="true" />
           </button>
-          <div v-if="mode === 'region' && country === qc.value" class="space-y-2 px-4 pb-4">
-            <div class="relative">
+          <div v-if="mode === 'region' && country === qc.value" :class="['space-y-2 pt-1 pb-4', inset]">
+            <label class="field flex h-12 items-center rounded-xl pr-1 pl-3">
               <input
                 v-model="inputValue"
                 type="search"
                 placeholder="Narrow to a city or province"
+                aria-label="Narrow to a city or province"
                 autocomplete="off"
-                class="bg-card border-strong focus:border-primary h-12 w-full rounded-xl border-2 px-3 pr-10 text-base outline-none"
+                class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none"
                 @input="scheduleSearch"
               />
               <button
                 v-if="region || locality || inputValue"
                 type="button"
                 aria-label="Clear city or province"
-                class="text-muted-foreground absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full"
+                class="text-muted-foreground press flex size-11 shrink-0 items-center justify-center rounded-full"
                 @click="clearNarrow"
               >
                 <X class="size-5" />
               </button>
-            </div>
-            <ul v-if="suggestions.length" class="divide-y overflow-hidden rounded-xl border">
+            </label>
+            <ul v-if="suggestions.length" class="surface rows-inset overflow-hidden rounded-xl">
               <li v-for="s in suggestions" :key="s.placeId">
-                <button type="button" class="w-full px-3 py-2.5 text-left hover:bg-accent" @click="pickSuggestion(s)">
-                  <span class="block text-base font-semibold">{{ s.primaryText }}</span>
+                <button type="button" class="press-row focus-inset w-full px-3 py-2.5 text-left" @click="pickSuggestion(s)">
+                  <span class="block text-base font-medium">{{ s.primaryText }}</span>
                   <span v-if="s.secondaryText" class="text-muted-foreground block text-sm">{{ s.secondaryText }}</span>
                 </button>
               </li>
@@ -310,14 +338,14 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
           </div>
         </li>
         <li>
-          <button type="button" role="radio" :aria-checked="mode === 'worldwide'" class="flex min-h-14 w-full items-center gap-3 px-4 text-left" @click="select('worldwide')">
-            <Globe class="text-primary size-5 shrink-0" />
-            <span class="flex-1 text-base font-bold">Everywhere</span>
-            <Check v-if="mode === 'worldwide'" class="text-primary size-5" stroke-width="3" />
+          <button type="button" role="radio" :aria-checked="mode === 'worldwide'" :class="row" @click="select('worldwide')">
+            <Globe class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+            <span class="flex-1 text-base font-medium">Everywhere</span>
+            <Check v-if="mode === 'worldwide'" class="text-primary size-5" stroke-width="2.5" aria-hidden="true" />
           </button>
         </li>
       </ul>
-      <button type="button" class="bg-primary-fill text-primary-foreground h-12 w-full rounded-xl text-base font-bold" @click="sheet.hide()">Done</button>
+      <Button variant="primary" :size="wide ? 'md' : 'lg'" block @click="sheet.hide()">Done</Button>
     </div>
   </Dialog>
 </template>

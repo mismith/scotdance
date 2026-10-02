@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
 import { Star } from '@lucide/vue'
+import { followHaptic } from '@/lib/haptics'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore, type FavoriteType } from '@/stores/favorites'
 
+// Follow a competition, judge, piper or venue: the star (filled red once
+// you follow, the one mark for following), or with `labelled` a pill that
+// says so: filled, or tonal where something else is the view's main action.
 const props = defineProps<{
   type: FavoriteType
   id: string
@@ -32,8 +36,11 @@ async function handleClick(e: Event) {
     auth.openLogin({ reason: 'favorite', name: props.name })
     return
   }
+  const was = isFavorite.value
   await favorites.toggle(props.type, props.id, props.name)
-  // Re-arm so a rapid second click restarts the animation from frame 0.
+  // A small lift and a firm tap for following; nothing for unfollowing.
+  if (was) return
+  followHaptic()
   animating.value = false
   await nextTick()
   animating.value = true
@@ -42,25 +49,31 @@ async function handleClick(e: Event) {
 
 <template>
   <button
-    v-tap-feedback
     type="button"
     :aria-pressed="isFavorite"
     :aria-label="labelled ? undefined : `${isFavorite ? 'Following' : 'Follow'}${name ? ` ${name}` : ''}`"
     :class="[
-      'flex shrink-0 items-center justify-center rounded-full transition-colors',
+      'press flex shrink-0 items-center justify-center rounded-full transition-colors',
       labelled
         ? [
-            'h-11 gap-1.5 border px-4 text-[0.9375rem] font-bold',
-            isFavorite || variant === 'tonal'
-              ? 'bg-blue-paper text-primary border-transparent'
-              : 'bg-primary-fill border-primary text-primary-foreground',
+            'h-11 gap-1.5 px-4 text-callout font-semibold',
+            isFavorite
+              ? 'surface text-foreground'
+              : variant === 'tonal'
+                ? 'bg-blue-paper text-primary'
+                : 'bg-primary-fill text-primary-foreground press-fill',
           ]
-        : ['size-11 hover:bg-accent', isFavorite ? 'text-primary' : 'text-muted-foreground'],
+        : ['size-11', isFavorite ? 'text-secondary' : 'text-muted-foreground'],
     ]"
     @click="handleClick"
   >
     <Star
-      :class="['size-5', isFavorite && 'fill-current', animating && 'animate-pop']"
+      :class="[
+        'size-5',
+        isFavorite && 'text-secondary fill-current',
+        animating && 'motion-safe:animate-pop',
+      ]"
+      aria-hidden="true"
       @animationend="animating = false"
     />
     <template v-if="labelled">{{ isFavorite ? 'Following' : 'Follow' }}</template>

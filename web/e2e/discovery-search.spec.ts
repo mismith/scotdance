@@ -21,7 +21,8 @@ async function search(page: Page, q: string) {
 
 test('finds a dancer by name and opens their page', async ({ page }) => {
   await search(page, 'oriana knowles')
-  const row = results(page, 'Dancers').getByRole('button', { name: /Oriana Knowles/ })
+  // A real link (cmd-click opens a tab), once its page is known.
+  const row = results(page, 'Dancers').getByRole('link', { name: /Oriana Knowles/ })
   await expect(row).toBeVisible()
   await expect(page).toHaveURL(/\/search\?q=oriana/)
   await row.click()
@@ -37,7 +38,7 @@ test('finds a dancer by name and opens their page', async ({ page }) => {
 
 test('finds a judge and a competition', async ({ page }) => {
   await search(page, 'aileen robertson')
-  await results(page, 'Judges').getByRole('button', { name: /Aileen Robertson/ }).click()
+  await results(page, 'Judges').getByRole('link', { name: /Aileen Robertson/ }).click()
   await expect(page).toHaveURL(/\/judges\/[^/]+\/info$/)
   await expect(page.getByRole('heading', { level: 1, name: 'Aileen Robertson' })).toBeVisible()
 
@@ -48,7 +49,7 @@ test('finds a judge and a competition', async ({ page }) => {
 
 test('finds a venue and opens its page', async ({ page }) => {
   await search(page, 'telus')
-  await results(page, 'Places').getByRole('button', { name: /Telus Convention Centre/ }).first().click()
+  await results(page, 'Places').getByRole('link', { name: /Telus Convention Centre/ }).first().click()
   await expect(page).toHaveURL(/\/venues\/[^/]+\/info$/)
   await expect(page.getByRole('heading', { level: 1, name: 'Telus Convention Centre' })).toBeVisible()
 })
@@ -61,7 +62,9 @@ test('finds a town and shows its competitions', async ({ page }) => {
 
 test('says so when nothing matches', async ({ page }) => {
   await search(page, 'zzzzqqqxx')
-  await expect(page.getByText('Nothing matches “zzzzqqqxx”. Check the spelling, or try just a first or last name.')).toBeVisible()
+  await expect(page.getByText('Nothing matches “zzzzqqqxx”.')).toBeVisible()
+  await expect(page.getByText('Check the spelling, or try just a first or last name.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Search by number' })).toHaveCount(0)
 })
 
 test('odd characters are searched as text, never break the page', async ({ page }) => {
@@ -113,6 +116,18 @@ test.describe('by number', () => {
     await expect(row).toBeVisible()
     await row.click()
     await expect(page).toHaveURL(new RegExp(`/competitions/${comp.id}/dancers/${dancer.id}$`))
+  })
+
+  test('digits that match no name offer to search by number', async ({ page }) => {
+    const dancer = comp.dancers[0]
+    await page.goto(`/search?in=${comp.id}`)
+    await searchBox(page).fill('98765')
+    await page.getByRole('button', { name: 'Search by number' }).click()
+    const input = page.getByRole('textbox', { name: 'Number on their card' })
+    await expect(input).toHaveValue('98765')
+    await input.fill(dancer.number)
+    // Their own number: a big card, ahead of anyone whose number starts with it.
+    await expect(page.getByRole('link', { name: new RegExp(`${dancer.firstName} ${dancer.lastName}`) })).toBeVisible()
   })
 
   test('only digits go in, and an unknown number says so', async ({ page }) => {

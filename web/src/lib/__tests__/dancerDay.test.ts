@@ -20,7 +20,8 @@ vi.mock('firebase/database', () => ({
   onValue: () => () => {},
 }))
 
-const { bestPlacing, competitionPhase, dancerDay, scheduleIndex } = await import('@/lib/dancerDay')
+const { bestPlacing, compareDays, competitionPhase, dancerDay, dayStage, firstDance, nextDance, placings, scheduleIndex } =
+  await import('@/lib/dancerDay')
 type DayBundle = Parameters<typeof dancerDay>[1]
 
 // --- Fixtures, shaped like enriched competition data.
@@ -379,5 +380,49 @@ describe('dancerDay over several days', () => {
     expect(phase).toBe('today')
     const day = dancerDay(dancer('d1', g1), bundle({ dances: [fling, sword, reel], schedule: weekend, results: { g1: { fling: ['d1'] } } }), phase)
     expect(states(day)).toEqual(['fling:placed', 'sword:next', 'reel:later'])
+  })
+})
+
+describe('a person’s day across entries', () => {
+  const me = dancer('d1', g1, 107)
+  const day = (results: ResultsTree = {}, phase: 'before' | 'today' | 'after' = 'today', over: Partial<DayBundle> = {}) =>
+    dancerDay(me, bundle({ dances: [fling, sword, reel], schedule: oneDay, results, ...over }), phase)
+  const all = (place = 'd1') => ({ g1: { fling: [place], sword: [place], reel: [place], overall: [place] } })
+
+  it('ranks next, upcoming, waiting, then done', () => {
+    expect(dayStage([day()])).toBe('next')
+    // No schedule: still to dance, but nobody knows when.
+    expect(dayStage([day({}, 'today', { schedule: null })])).toBe('upcoming')
+    expect(dayStage([day({}, 'before')])).toBe('upcoming')
+    expect(dayStage([dancerDay(me, bundle({ dances: [] }), 'today')])).toBe('upcoming')
+    // Everything danced (the last dance is posted), the others not in yet.
+    expect(dayStage([day({ g1: { reel: ['x1'] } })])).toBe('waiting')
+    expect(dayStage([day({ g1: { fling: ['d1'], sword: ['d1'] }, g2: { reel: ['x'] } })])).toBe('next')
+    expect(dayStage([day(all())])).toBe('done')
+    expect(dayStage([day(all(), 'after')])).toBe('done')
+  })
+
+  it('waits on Overall once every dance is in', () => {
+    const premier = group('g5', 'Premier', '12 & Over')
+    const d = dancerDay(dancer('p1', premier), bundle({ dances: [dance('fling', ['g5'])], results: { g5: { fling: ['p1'] } } }), 'today')
+    expect(dayStage([d])).toBe('waiting')
+  })
+
+  it('finds the soonest next dance and the first dance of the day', () => {
+    const today = day({ g1: { fling: ['d1'] } })
+    expect(nextDance([today])?.dance.id).toBe('sword')
+    expect(firstDance([day({}, 'before')])).toMatchObject({ dance: { id: 'fling' }, slot: { blockTime: '8:30 am' } })
+  })
+
+  it('sorts the most pressing first, then by the schedule', () => {
+    const early = [day()]
+    const later = [day({ g1: { fling: ['d1'] } })]
+    const done = [day(all())]
+    expect([done, later, early].sort(compareDays)).toEqual([early, later, done])
+  })
+
+  it('lists placings in dancing order with Overall last', () => {
+    const results: ResultsTree = { g1: { overall: ['d1'], reel: ['x', 'd1'], fling: ['d1'] } }
+    expect(placings([day(results)]).map((s) => `${s.dance.id}:${s.place}`)).toEqual(['fling:1', 'reel:2', 'overall:1'])
   })
 })
