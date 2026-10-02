@@ -120,14 +120,15 @@ function exportCsv() {
       <div class="space-y-6 p-4 pb-[calc(2rem+var(--safe-bottom))]">
         <SectionHeader title="Results" :count="!hideTab.hidden.value && totals.total ? `${totals.done} of ${totals.total} entered` : null">
           <!-- What's rarely needed. Hiding the tab deletes what's entered
-               (after asking), so it's tucked away here. -->
+               (after asking), so it's tucked away here, set apart in red. -->
           <template v-if="!hideTab.hidden.value && m.groups.value.length" #actions>
             <SectionMenu v-slot="{ row, close }" label="More for results">
               <button v-if="totals.done" type="button" :class="row" @click="close(); exportCsv()">
                 <Download class="text-primary size-5 shrink-0" /> Download all results
               </button>
-              <button type="button" :class="row" :disabled="!canEdit" @click="close(); hideTab.hide()">
-                <EyeOff class="text-primary size-5 shrink-0" /> Hide the Results tab
+              <div v-if="totals.done" role="separator" class="bg-border mx-4 my-1 h-px" />
+              <button type="button" :class="[row, 'text-destructive']" :disabled="!canEdit" @click="close(); hideTab.hide()">
+                <EyeOff class="size-5 shrink-0" /> Hide the Results tab
               </button>
             </SectionMenu>
           </template>
