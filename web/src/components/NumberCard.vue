@@ -10,8 +10,10 @@ const props = withDefaults(
     number: number | string | null | undefined
     color?: string | null
     size?: 'xs' | 'sm' | 'md' | 'lg'
+    /** A view-transition name: the card travels between pages (its pins as `${vt}-pins`). */
+    vt?: string
   }>(),
-  { color: null, size: 'sm' },
+  { color: null, size: 'sm', vt: undefined },
 )
 
 // In long lists a plain tile reads calmer; the coloured band marks your
@@ -30,26 +32,31 @@ const banded = computed(() => !!props.color || props.size === 'md' || props.size
       size === 'md' && 'h-16 w-[5.5rem] rounded-lg pb-1.5 text-[1.875rem]',
       size === 'lg' && 'h-24 w-32 rounded-xl pb-2 text-5xl',
     ]"
-    :style="{ '--dc': color ?? 'var(--strong)' }"
+    :style="{ '--dc': color ?? 'var(--strong)', viewTransitionName: vt }"
     :aria-label="number != null ? `Number ${number}` : 'No number'"
   >
     <span v-if="banded" :class="['sash absolute inset-x-0 top-0', size === 'xs' ? 'h-1.5' : 'h-[24%]']" aria-hidden="true" />
+    <!-- The safety pins: their own layer when the card travels, so they
+         can go on once it has landed. -->
     <span
       v-if="banded && size !== 'xs'"
-      :class="[
-        'absolute rotate-[-24deg] rounded-full bg-linear-to-b from-[#f4f6f8] to-[#9aa3ad] shadow-[0_0_0_0.5px_rgb(0_0_0/0.35)]',
-        size === 'lg' ? 'top-2 left-3 h-1.5 w-6' : 'top-1 left-1.5 h-[3px] w-3',
-      ]"
+      class="absolute inset-0"
+      :style="{ viewTransitionName: vt && `${vt}-pins` }"
       aria-hidden="true"
-    />
-    <span
-      v-if="banded && size !== 'xs'"
-      :class="[
-        'absolute rotate-[24deg] rounded-full bg-linear-to-b from-[#f4f6f8] to-[#9aa3ad] shadow-[0_0_0_0.5px_rgb(0_0_0/0.35)]',
-        size === 'lg' ? 'top-2 right-3 h-1.5 w-6' : 'top-1 right-1.5 h-[3px] w-3',
-      ]"
-      aria-hidden="true"
-    />
+    >
+      <span
+        :class="[
+          'absolute rotate-[-24deg] rounded-full bg-linear-to-b from-[#f4f6f8] to-[#9aa3ad] shadow-[0_0_0_0.5px_rgb(0_0_0/0.35)]',
+          size === 'lg' ? 'top-2 left-3 h-1.5 w-6' : 'top-1 left-1.5 h-[3px] w-3',
+        ]"
+      />
+      <span
+        :class="[
+          'absolute rotate-[24deg] rounded-full bg-linear-to-b from-[#f4f6f8] to-[#9aa3ad] shadow-[0_0_0_0.5px_rgb(0_0_0/0.35)]',
+          size === 'lg' ? 'top-2 right-3 h-1.5 w-6' : 'top-1 right-1.5 h-[3px] w-3',
+        ]"
+      />
+    </span>
     <span class="relative leading-none">{{ number ?? '–' }}</span>
   </span>
 </template>

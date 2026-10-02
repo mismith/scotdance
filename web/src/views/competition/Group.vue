@@ -218,7 +218,7 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
                 :number="row.dancer.number"
                 size="xs"
                 :color="colorOf(row.dancer)"
-                :style="{ viewTransitionName: numberVt.row(row.dancerId, 'callbacks') }"
+                :vt="numberVt.row(row.dancerId, 'callbacks')"
               />
               <span class="min-w-0 flex-1 truncate text-base font-semibold">{{ row.dancer.fullName }}</span>
             </RouterLink>
@@ -272,7 +272,7 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
                   :number="row.dancer.number"
                   size="xs"
                   :color="colorOf(row.dancer)"
-                  :style="{ viewTransitionName: numberVt.row(row.dancerId, s.dance.id) }"
+                  :vt="numberVt.row(row.dancerId, s.dance.id)"
                 />
                 <span class="min-w-0 flex-1">
                   <span class="block truncate text-base font-semibold">{{ row.dancer.fullName }}</span>

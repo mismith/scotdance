@@ -79,7 +79,7 @@ function detail(s: DanceStatus): string | null {
 
     <template v-else>
       <header :ref="setHeader" class="flex items-center gap-4">
-        <NumberCard :number="dancer.number" :color="color" size="md" :style="{ viewTransitionName: numberVt.page(dancer.id) }" />
+        <NumberCard :number="dancer.number" :color="color" size="md" :vt="numberVt.page(dancer.id)" />
         <div class="min-w-0">
           <h1 class="text-display">{{ dancer.fullName }}</h1>
           <p class="text-muted-foreground text-sm">

@@ -183,7 +183,7 @@ function openDancer(dancerId: string) {
               :number="row.dancer?.number ?? row.number"
               size="xs"
               :color="row.mine ? following.colorFor(row.dancer!.dancerId) : null"
-              :style="{ viewTransitionName: row.dancer ? numberVt.row(row.dancer.id, 'draw') : undefined }"
+              :vt="row.dancer ? numberVt.row(row.dancer.id, 'draw') : undefined"
             />
             <span v-if="row.dancer" class="min-w-0">
               <span class="block truncate text-base font-semibold">{{ row.dancer.fullName || '?' }}</span>

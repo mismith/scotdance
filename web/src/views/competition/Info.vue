@@ -256,7 +256,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
               class="press-row focus-inset flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-xl py-2 pl-4"
               @click="numberVt.tap(d.id, 'find')"
             >
-              <NumberCard :number="d.number" size="xs" :style="{ viewTransitionName: numberVt.row(d.id, 'find') }" />
+              <NumberCard :number="d.number" size="xs" :vt="numberVt.row(d.id, 'find')" />
               <span class="min-w-0">
                 <span class="block truncate text-base font-semibold">{{ d.fullName }}</span>
                 <span class="text-muted-foreground block truncate text-sm">{{ d.group?.fullName }}</span>

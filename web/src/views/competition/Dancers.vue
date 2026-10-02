@@ -240,7 +240,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
                   :number="d.number"
                   size="xs"
                   :color="following.isFollowing(d) ? following.colorFor(d.dancerId) : null"
-                  :style="{ viewTransitionName: numberVt.row(d.id, 'dancers') }"
+                  :vt="numberVt.row(d.id, 'dancers')"
                 />
                 <span class="min-w-0">
                   <span class="block truncate text-base font-semibold">{{ d.fullName }}</span>
