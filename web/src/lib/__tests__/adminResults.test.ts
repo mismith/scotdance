@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  dancingNow,
   danceState,
   isPlaceholderId,
   isTied,
@@ -7,9 +8,12 @@ import {
   parsePlacings,
   placeAt,
   removeEntry,
+  resultRows,
+  resultsOrder,
   serializePlacings,
   type Entry,
   type Placings,
+  type Turn,
 } from '@/lib/admin/results'
 import { getDanceResults } from '@/lib/results'
 import type { ResultsTree } from '@/types/competition'
@@ -198,5 +202,31 @@ describe('placeholders', () => {
     expect(isPlaceholderId('1546578400210')).toBe(true)
     expect(isPlaceholderId('-LhvSPjvKW8LgeThAXTn')).toBe(false)
     expect(isPlaceholderId('comp-x-dancer-1-2')).toBe(false)
+  })
+})
+
+describe('the running order', () => {
+  // Platform A: g1 then g2 dance the Fling, then the Sword. Platform B: g3.
+  const T = (groupId: string, danceId: string, platformId = 'A'): Turn => ({ groupId, danceId, platformId })
+  const turns = [T('g1', 'fling'), T('g2', 'fling'), T('g3', 'fling', 'B'), T('g1', 'sword'), T('g2', 'sword'), T('g3', 'sword', 'B')]
+
+  it('lists what an age group enters: callbacks, its dances, then Overall unless Primary', () => {
+    const dances = [{ id: 'fling', label: 'Highland Fling' }]
+    expect(resultRows({ category: { name: 'Novice' } }, dances).map((r) => r.id)).toEqual(['callbacks', 'fling', 'overall'])
+    expect(resultRows({ category: { name: 'Primary' } }, dances).map((r) => r.id)).toEqual(['callbacks', 'fling'])
+  })
+
+  it('orders age groups by their last turn, then those not on the schedule in list order', () => {
+    expect(resultsOrder(['x', 'g3', 'g2', 'y', 'g1'], turns)).toEqual(['g1', 'g2', 'g3', 'x', 'y'])
+    // No schedule: list order.
+    expect(resultsOrder(['b', 'a'], [])).toEqual(['b', 'a'])
+  })
+
+  it('finds who is dancing now on each platform from the results entered', () => {
+    expect([...dancingNow(turns, {})]).toEqual(['g1', 'g3'])
+    expect([...dancingNow(turns, { g1: { fling: ['d1'] } })]).toEqual(['g2', 'g3'])
+    // "None placed" counts as in; a Championship start alone doesn't.
+    expect([...dancingNow(turns, { g1: { fling: false }, g2: { fling: ['reverse:6'] } })]).toEqual(['g2', 'g3'])
+    expect([...dancingNow(turns, { g2: { sword: ['d1'] }, g3: { sword: ['d2'] } })]).toEqual([])
   })
 })

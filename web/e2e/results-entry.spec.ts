@@ -90,6 +90,8 @@ test('callbacks, then placings with a tie, reach the public page live', async ({
   // Only dancers called back are offered.
   await expect(tap(page, ds[6].number)).toHaveCount(0)
   for (const d of ds.slice(0, 4)) await tap(page, d.number).click()
+  // Screen readers hear each placing land.
+  await expect(page.getByText(`${ds[3].number} placed 4th`, { exact: true })).toBeAttached()
   // The third dancer shares second place.
   await page.getByRole('switch', { name: 'Tied with the dancer above' }).nth(1).click()
   await expect
@@ -143,14 +145,25 @@ test('Championship can be switched on before anyone is placed', async ({
   await signIn(page, email)
   await entry(page, group.id, sword.id)
   const championship = page.getByRole('switch', { name: 'Championship' })
+  const places = page.getByRole('group', { name: 'How many places?' })
+  // It asks first, and isn't on until a number is chosen.
   await championship.click()
-  await page.getByRole('button', { name: /^6th/ }).click()
+  await expect(championship).toHaveAttribute('aria-checked', 'false')
+  await places.getByRole('button', { name: '6', exact: true }).click()
+  await expect(places).toHaveCount(0)
   // Stored as the old admin stored it, and the switch stays on.
   await expect
     .poll(() => stored(`results/${group.id}/${sword.id}`))
     .toEqual(['reverse:6'])
   await expect(championship).toHaveAttribute('aria-checked', 'true')
   await expect(page.getByText('Entering from 6th place')).toBeVisible()
+  // The starting place can be changed: from 5th, then back to 6th.
+  await page.getByRole('button', { name: 'From 6th' }).click()
+  await places.getByRole('button', { name: '5', exact: true }).click()
+  await expect.poll(() => stored(`results/${group.id}/${sword.id}`)).toEqual(['reverse:5'])
+  await page.getByRole('button', { name: 'From 5th' }).click()
+  await places.getByRole('button', { name: '6', exact: true }).click()
+  await expect.poll(() => stored(`results/${group.id}/${sword.id}`)).toEqual(['reverse:6'])
   // A championship start alone isn't a posted result.
   await expect(row.getByText(/of \d+$/)).toHaveCount(0)
 
@@ -208,7 +221,7 @@ test('a "?" stand-in can be placed and then fixed', async ({ page }, info) => {
   await signIn(page, email)
   await entry(page, group.id, fling.id)
   await tap(page, ds[0].number).click()
-  await page.getByRole('button', { name: /^\? Dancer/ }).click()
+  await page.getByRole('button', { name: /^\? Missed number/ }).click()
   await tap(page, ds[2].number).click()
   await expect
     .poll(
@@ -258,7 +271,7 @@ test('championship points: give, take away, and never to a placed dancer', async
 
   await signIn(page, email)
   await entry(page, group.id, fling.id)
-  await page.getByRole('tab', { name: /Points/ }).click()
+  await page.getByRole('button', { name: 'Points', exact: true }).click()
   await expect(tap(page, ds[0].number)).toBeDisabled()
   await tap(page, ds[5].number).click()
   await tap(page, ds[6].number).click()
@@ -271,7 +284,7 @@ test('championship points: give, take away, and never to a placed dancer', async
     .toEqual({ combined: [ds[6].id] })
 
   // Back on Placings, a pointed dancer can't be placed.
-  await page.getByRole('tab', { name: 'Placings' }).click()
+  await page.getByRole('button', { name: 'Placings', exact: true }).click()
   await expect(tap(page, ds[6].number)).toBeDisabled()
 })
 
@@ -295,6 +308,87 @@ test('"No dancers placed", and the next dance carries on', async ({ page, browse
   await expect(
     viewer.locator(`#dance-${reel.id}`).getByText('No placings for this dance.'),
   ).toBeVisible()
+})
+
+test('after an age group’s last dance, Next follows the running order', async ({ page }) => {
+  const group = freshGroup()
+  const ds = dancersOf(group.id)
+  const fling = comp.dances[0]
+  const first = comp.groups[0]
+  const label = (g: { name: string; categoryId: string }) => `${comp.categories[g.categoryId]} ${g.name}`
+  const schedule = `competitions:data/${comp.id}/schedule`
+  const before = await stored('schedule')
+  await put(`competitions:data/${comp.id}/results/${group.id}/overall`, [ds[0].id])
+  // This age group dances the Fling, then the first age group does.
+  const dance = {
+    danceId: fling.id,
+    order: 0,
+    platforms: { [comp.platforms[0]]: { orderedGroupIds: [group.id, first.id] } },
+  }
+  await put(schedule, {
+    days: { day: { order: 0, blocks: { block: { order: 0, events: { event: { order: 0, dances: { dance } } } } } } },
+  })
+  try {
+    await signIn(page, email)
+    // On the day, the list marks who's dancing now, as far as results tell.
+    await page.goto(`/competitions/${comp.id}/manage/results`)
+    const now = (g: { name: string; categoryId: string }) =>
+      page.getByRole('button', { name: new RegExp(`^${label(g)}\\s*Dancing now`) })
+    await expect(now(group)).toBeVisible()
+    await expect(now(first)).toHaveCount(0)
+    await put(`competitions:data/${comp.id}/results/${group.id}/${fling.id}`, false)
+    await expect(now(first)).toBeVisible()
+    await expect(now(group)).toHaveCount(0)
+
+    await entry(page, group.id, 'overall')
+    await page.getByRole('link', { name: `Next: ${label(first)} · Callbacks` }).click()
+    await expect(page.getByRole('heading', { name: 'Callbacks' })).toBeVisible()
+    await expect(page).toHaveURL(new RegExp(`/results/${first.id}/callbacks$`))
+
+    // No schedule: the list order.
+    await put(schedule, null)
+    await entry(page, group.id, 'overall')
+    const after = comp.groups[comp.groups.indexOf(group) + 1]
+    await expect(page.getByRole('link', { name: /^Next: / })).toHaveAccessibleName(
+      after ? `Next: ${label(after)} · Callbacks` : /^Next/,
+    )
+  } finally {
+    await put(schedule, before)
+    await put(`competitions:data/${comp.id}/results/${group.id}`, null)
+  }
+})
+
+test('on a tablet, the list folds away and the header picks the age group and dance', async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== 'desktop', 'Tablet width')
+  await page.setViewportSize({ width: 1024, height: 768 })
+  const group = freshGroup()
+  const ds = dancersOf(group.id)
+  const [fling, sword] = comp.dances
+  const other = comp.groups[comp.groups.indexOf(group) + 1]
+  await put(`competitions:data/${comp.id}/results/${group.id}/callbacks`, ds.map((d) => d.id))
+  await put(`competitions:data/${comp.id}/results/${group.id}/${fling.id}`, [ds[0].id])
+
+  await signIn(page, email)
+  await entry(page, group.id, fling.id)
+  // No groups list beside the entry: the dancers get the width.
+  await expect(page.getByRole('button', { name: 'More for results' })).toBeHidden()
+  const dances = page.getByRole('navigation', { name: 'Dances' })
+  await expect(dances.getByRole('link', { name: 'Callbacks, entered' })).toBeVisible()
+  await expect(dances.getByRole('link', { name: /^Highland Fling.*, entered$/ })).toHaveAttribute('aria-current', 'page')
+  await dances.getByRole('link', { name: /^Sword Dance.*, not entered yet$/ }).click()
+  await expect(page).toHaveURL(new RegExp(`/results/${group.id}/${sword.id}$`))
+  await expect(page.getByRole('heading', { name: /Sword Dance/ })).toBeAttached()
+
+  // Another age group opens where its results left off: callbacks first.
+  await page.getByRole('combobox', { name: 'Age group' }).selectOption(other.id)
+  await expect(page).toHaveURL(new RegExp(`/results/${other.id}/callbacks$`))
+  // Without the sidebar, Back goes up to the list.
+  await page.setViewportSize({ width: 820, height: 1180 })
+  await page.getByRole('button', { name: 'Back to Results' }).click()
+  await expect(page.getByRole('button', { name: 'More for results' })).toBeVisible()
+  await put(`competitions:data/${comp.id}/results/${group.id}`, null)
 })
 
 test('fast taps keep their order; a double tap takes the dancer back out', async ({
@@ -359,25 +453,29 @@ test('a second device builds on the first one’s placings', async ({ page, brow
     .toEqual([ds[0].id, ds[1].id])
 })
 
-test('offline: entry is disabled, and comes back', async ({ page, context }) => {
+test('offline: entry is disabled, says so, and comes back', async ({ page, context }) => {
   const group = freshGroup()
   const ds = dancersOf(group.id)
   await signIn(page, email)
   await entry(page, group.id, 'callbacks')
   await expect(tap(page, ds[0].number)).toBeEnabled()
+  const banner = page.getByRole('status').filter({ hasText: 'No signal.' })
+  await expect(banner).toHaveCount(0)
   await context.setOffline(true)
   await expect(tap(page, ds[0].number)).toBeDisabled()
-  await expect(page.getByText('Offline').first()).toBeVisible()
+  await expect(banner).toContainText('Results can’t be saved until it’s back.')
   await context.setOffline(false)
   await expect(tap(page, ds[0].number)).toBeEnabled({ timeout: 15_000 })
+  await expect(banner).toHaveCount(0)
   await tap(page, ds[0].number).click()
   await expect.poll(() => stored(`results/${group.id}/callbacks`)).toEqual([ds[0].id])
 })
 
-test('age groups with no dancers, or nobody called back, explain what to do', async ({
+test('age groups with no dancers say what to do; with no callbacks, everyone is offered', async ({
   page,
 }) => {
   const group = freshGroup()
+  const ds = dancersOf(group.id)
   await put(`competitions:data/${comp.id}/groups/${comp.id}-grp-empty`, {
     name: 'Empty',
     categoryId: group.categoryId,
@@ -386,10 +484,18 @@ test('age groups with no dancers, or nobody called back, explain what to do', as
   await signIn(page, email)
   await entry(page, `${comp.id}-grp-empty`, 'callbacks')
   await expect(page.getByText('No dancers found')).toBeVisible()
+  // Older competitions have placings but no callbacks: offer everyone.
   await entry(page, group.id, comp.dances[0].id)
-  await expect(page.getByText('No dancers to place')).toBeVisible()
+  await expect(page.getByText('No callbacks entered: showing everyone.')).toBeVisible()
+  for (const d of ds) await expect(tap(page, d.number)).toBeEnabled()
   await page.getByRole('link', { name: 'Enter callbacks ›' }).click()
   await expect(page.getByRole('heading', { name: 'Callbacks' })).toBeVisible()
+  // Marked "No callbacks": everyone too.
+  await put(`competitions:data/${comp.id}/results/${group.id}/callbacks`, false)
+  await entry(page, group.id, comp.dances[0].id)
+  await expect(page.getByText('No callbacks: showing everyone.')).toBeVisible()
+  await expect(tap(page, ds[0].number)).toBeEnabled()
+  await put(`competitions:data/${comp.id}/results/${group.id}/callbacks`, null)
 })
 
 test('an old link to a dance that isn’t in the age group enters nothing', async ({
@@ -401,7 +507,7 @@ test('an old link to a dance that isn’t in the age group enters nothing', asyn
   await expect(
     page.getByText('This dance isn’t in this age group any more'),
   ).toBeVisible()
-  await expect(page.getByRole('button', { name: /^\? Dancer/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^\? Missed number/ })).toHaveCount(0)
 })
 
 test('drag a placed dancer to the top: they lose the tie they had', async ({
@@ -485,13 +591,14 @@ test('Primary age groups have no championship points to enter', async ({ page })
   try {
     await signIn(page, email)
     await entry(page, beginner.id, fling.id)
-    await expect(page.getByRole('tab', { name: /Points/ })).toBeVisible()
+    const choice = page.getByRole('group', { name: 'Placings or points' })
+    await expect(choice.getByRole('button', { name: 'Points' })).toBeVisible()
     await entry(page, primary.id, fling.id)
     await expect(page.getByRole('heading', { name: /Highland Fling/ })).toBeVisible()
-    await expect(page.getByRole('tablist')).toHaveCount(0)
+    await expect(choice).toHaveCount(0)
     // Points an older app stored anyway still show, so they can be taken away.
     await put(`${points}/${fling.id}/combined`, [dancersOf(primary.id)[0].id])
-    await expect(page.getByRole('tab', { name: /Points/ })).toBeVisible()
+    await expect(choice.getByRole('button', { name: 'Points' })).toBeVisible()
   } finally {
     await put(points, before)
   }

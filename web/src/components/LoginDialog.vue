@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { Check, Eye, EyeOff } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import Dialog from '@/components/Dialog.vue'
+import Button from '@/components/ui/Button.vue'
 
 // Sign-in, asked for at the moment it matters (tapping Follow) and saying so.
 // Email and password, as in v3, the same in the browser and the apps; phones
@@ -121,7 +122,7 @@ async function submit() {
       </ul>
 
       <label class="block space-y-1.5">
-        <span class="text-[0.9375rem] font-bold">Email address</span>
+        <span class="text-callout font-medium">Email address</span>
         <input
           v-model="email"
           type="email"
@@ -129,12 +130,12 @@ async function submit() {
           autocomplete="username"
           inputmode="email"
           required
-          class="bg-card border-strong focus:border-primary h-12 w-full rounded-xl border-2 px-3 text-base outline-none"
+          class="field h-12 w-full rounded-xl px-3 text-base"
         />
       </label>
 
       <label v-if="step !== 'forgot'" class="block space-y-1.5">
-        <span class="text-[0.9375rem] font-bold">{{ step === 'register' ? 'Choose a password' : 'Password' }}</span>
+        <span class="text-callout font-medium">{{ step === 'register' ? 'Choose a password' : 'Password' }}</span>
         <span class="relative block">
           <input
             v-model="password"
@@ -142,11 +143,11 @@ async function submit() {
             name="password"
             :autocomplete="step === 'register' ? 'new-password' : 'current-password'"
             required
-            class="bg-card border-strong focus:border-primary h-12 w-full rounded-xl border-2 pr-24 pl-3 text-base outline-none"
+            class="field h-12 w-full rounded-xl pr-24 pl-3 text-base"
           />
           <button
             type="button"
-            class="text-primary absolute top-1/2 right-1 flex h-10 -translate-y-1/2 items-center gap-1 rounded-lg px-2 text-sm font-bold"
+            class="text-primary press absolute top-1/2 right-1 flex h-10 -translate-y-1/2 items-center gap-1 rounded-full px-3 text-sm font-semibold"
             @click="passwordVisible = !passwordVisible"
           >
             <component :is="passwordVisible ? EyeOff : Eye" class="size-4" />
@@ -155,34 +156,29 @@ async function submit() {
         </span>
       </label>
 
-      <p v-if="errorMessage" class="text-destructive text-[0.9375rem] font-semibold" role="alert">
+      <p v-if="errorMessage" class="text-destructive text-callout font-medium" role="alert">
         {{ errorMessage }}
       </p>
-      <p v-if="infoMessage" class="text-done-foreground text-[0.9375rem] font-semibold" role="status">
+      <p v-if="infoMessage" class="text-done-foreground text-callout font-medium" role="status">
         {{ infoMessage }}
       </p>
 
-      <button
-        type="submit"
-        :disabled="busy"
-        class="bg-primary-fill text-primary-foreground h-12 w-full rounded-xl text-base font-bold disabled:opacity-60"
-      >
-        <template v-if="busy">Working…</template>
-        <template v-else-if="step === 'signin'">Sign in</template>
+      <Button type="submit" variant="primary" size="lg" block :busy="busy">
+        <template v-if="step === 'signin'">Sign in</template>
         <template v-else-if="step === 'register'">Create account</template>
         <template v-else>Send reset link</template>
-      </button>
+      </Button>
 
-      <div class="space-y-1 text-center text-[0.9375rem]">
+      <div class="text-callout space-y-1 text-center">
         <template v-if="step === 'signin'">
-          <button type="button" class="text-primary block h-11 w-full font-bold" @click="go('forgot')">
+          <button type="button" class="text-primary press-row block h-11 w-full rounded-full font-semibold" @click="go('forgot')">
             Forgot your password?
           </button>
-          <button type="button" class="text-primary block h-11 w-full font-bold" @click="go('register')">
+          <button type="button" class="text-primary press-row block h-11 w-full rounded-full font-semibold" @click="go('register')">
             New here? Create an account
           </button>
         </template>
-        <button v-else type="button" class="text-primary h-11 font-bold" @click="go('signin')">
+        <button v-else type="button" class="text-primary press-row h-11 rounded-full px-4 font-semibold" @click="go('signin')">
           Back to sign in
         </button>
       </div>

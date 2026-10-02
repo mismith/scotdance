@@ -8,7 +8,7 @@ defineProps<{ color: string | null; name: string; details?: Array<string | null 
 <template>
   <span class="flex min-w-0 items-center gap-2 text-sm leading-snug">
     <span class="size-2.5 shrink-0 rounded-full" :style="{ background: color ?? 'var(--primary)' }" aria-hidden="true" />
-    <span class="shrink-0 font-bold">{{ name }}</span>
+    <span class="shrink-0 font-semibold">{{ name }}</span>
     <span v-if="details?.some(Boolean)" class="text-muted-foreground truncate">{{ details.filter(Boolean).join(' · ') }}</span>
     <slot />
   </span>

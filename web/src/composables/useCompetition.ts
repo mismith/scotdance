@@ -40,6 +40,7 @@ import {
 } from '@/types/competition'
 import { days as scheduleDays } from '@/lib/schedule'
 import { peekCompetition } from '@/composables/useCompetitions'
+import { notePlacings } from '@/composables/useCompetitionPlacings'
 
 interface CompetitionContext {
   competitionId: Ref<string>
@@ -71,7 +72,7 @@ interface CompetitionContext {
   hasSchedule: ComputedRef<boolean | null>
   /** Everything streams live (competition day, any day of it, and the day after). */
   isLive: ComputedRef<boolean>
-  /** When the live results last changed, ms. */
+  /** When a result last arrived while the competition was open (live), ms. */
   liveResultsAt: Ref<number | null>
 }
 
@@ -204,12 +205,17 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     groups.value = b.groups
     categories.value = b.categories
   })
+  // The first read is what was already there; later ones are news (their
+  // placings flip in, see useCompetitionPlacings).
+  let resultsRead = false
   const resultsSection = section(fetchResults, watchResults, (b, live) => {
+    const changed = notePlacings(resultsRead ? results.value : null, b.results)
+    resultsRead = true
     dances.value = b.dances
     results.value = b.results
     points.value = b.points
     resultsHidden.value = b.hidden
-    if (live) liveResultsAt.value = nowMs()
+    if (live && changed) liveResultsAt.value = nowMs()
   })
   const scheduleSection = section(fetchSchedule, watchSchedule, (b) => {
     schedule.value = b.schedule
@@ -242,6 +248,7 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     platforms.value = []
     draws.value = {}
     liveResultsAt.value = null
+    resultsRead = false
 
     // Seed from the list cache so Info.vue can render its header on the
     // first frame (no skeleton phase → no DOM swap → view transitions from

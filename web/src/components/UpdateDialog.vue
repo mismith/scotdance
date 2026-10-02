@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useUpdate } from '@/composables/useUpdate'
 import Dialog from '@/components/Dialog.vue'
+import Button from '@/components/ui/Button.vue'
 
 const update = useUpdate()
 </script>
@@ -17,10 +18,8 @@ const update = useUpdate()
       <p class="text-muted-foreground text-sm tabular-nums">
         Version {{ update.currentVersion }} → {{ update.latestVersion ?? '…' }}
       </p>
-      <button type="button" class="bg-primary-fill text-primary-foreground h-12 w-full rounded-xl text-base font-bold" @click="update.applyUpdate()">
-        Update now
-      </button>
-      <button type="button" class="text-muted-foreground h-11 w-full font-bold" @click="update.closeDialog()">Later</button>
+      <Button variant="primary" size="lg" block @click="update.applyUpdate()">Update now</Button>
+      <Button variant="plain" size="lg" block @click="update.closeDialog()">Later</Button>
     </div>
   </Dialog>
 </template>

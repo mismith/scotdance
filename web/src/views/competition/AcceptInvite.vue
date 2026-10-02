@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, onScopeDispose, ref, watch } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
 import { onValue } from 'firebase/database'
 import { CircleCheck, LoaderCircle, MailOpen, MailX } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import Button from '@/components/ui/Button.vue'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { dataRef } from '@/firebase'
 import { inviteStatus, type Invite } from '@/lib/admin/invites'
@@ -100,20 +101,28 @@ const name = computed(() => competition.value?.name ?? 'this competition')
   <div class="flex min-h-dvh flex-col">
     <AppBar title="Invitation" show-title :fallback="{ to: { name: 'home' }, label: 'Home' }" />
     <main class="mx-auto w-full max-w-lg flex-1 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-[calc(var(--chrome-bottom)+1.5rem)]">
-      <div v-if="state === 'loading'" class="flex justify-center py-20"><LoaderCircle class="text-muted-foreground size-8 animate-spin" /></div>
+      <div v-if="state === 'loading'" class="flex justify-center py-20"><LoaderCircle class="text-muted-foreground size-8 animate-spin motion-reduce:animate-none" /></div>
 
-      <template v-else-if="state === 'signed-out'">
-        <EmptyState :icon="MailOpen" :title="`You’re invited to help manage ${name}`" description="Sign in, or create an account, to accept. Any email address works." />
-        <div class="flex justify-center"><button type="button" class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-6 text-base font-bold" @click="auth.openLogin()">Sign in to accept</button></div>
-      </template>
+      <EmptyState
+        v-else-if="state === 'signed-out'"
+        :icon="MailOpen"
+        :title="`You’re invited to help manage ${name}`"
+        description="Sign in, or create an account, to accept. Any email address works."
+      >
+        <Button variant="primary" size="lg" @click="auth.openLogin()">Sign in to accept</Button>
+      </EmptyState>
 
-      <template v-else-if="state === 'open'">
-        <EmptyState :icon="MailOpen" :title="`Help manage ${name}`" description="Accept to edit its details, dancers, schedule and results." />
-        <div class="flex flex-col items-center gap-2">
-          <button type="button" class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-8 text-base font-bold" @click="accept">Accept</button>
-          <p v-if="error" class="text-destructive text-sm font-semibold" role="alert">{{ error }}</p>
-        </div>
-      </template>
+      <EmptyState
+        v-else-if="state === 'open'"
+        :icon="MailOpen"
+        :title="`Help manage ${name}`"
+        description="Accept to edit its details, dancers, schedule and results."
+      >
+        <Button variant="primary" size="lg" @click="accept">Accept</Button>
+        <template v-if="error" #footer>
+          <span class="text-destructive font-medium" role="alert">{{ error }}</span>
+        </template>
+      </EmptyState>
 
       <EmptyState
         v-else-if="state === 'accepting' && slow"
@@ -122,16 +131,13 @@ const name = computed(() => competition.value?.name ?? 'this competition')
         description="It’s taking much longer than it should. Ask the organiser to delete this invite and invite you again."
       />
       <div v-else-if="state === 'accepting'" class="flex flex-col items-center gap-3 py-20 text-center">
-        <LoaderCircle class="text-primary size-8 animate-spin" />
-        <p class="text-base font-semibold">Setting up your access…</p>
+        <LoaderCircle class="text-primary size-8 animate-spin motion-reduce:animate-none" />
+        <p class="text-base font-medium">Setting up your access…</p>
       </div>
 
-      <template v-else-if="state === 'yours'">
-        <EmptyState :icon="CircleCheck" :title="`You can manage ${name}`" />
-        <div class="flex justify-center">
-          <RouterLink :to="{ name: 'manage', params: { competitionId } }" class="bg-primary-fill text-primary-foreground h-12 content-center rounded-xl px-6 text-base font-bold">Start managing</RouterLink>
-        </div>
-      </template>
+      <EmptyState v-else-if="state === 'yours'" :icon="CircleCheck" :title="`You can manage ${name}`">
+        <Button variant="primary" size="lg" :to="{ name: 'manage', params: { competitionId } }">Start managing</Button>
+      </EmptyState>
 
       <EmptyState v-else-if="state === 'taken'" :icon="MailX" title="This invite was already used" description="It was accepted from another account. Ask to be invited again if that wasn’t you." />
       <EmptyState v-else-if="state === 'cancelled'" :icon="MailX" title="This invite was cancelled" description="Ask the organiser to invite you again." />

@@ -1,25 +1,41 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
-import { ChevronRight, Diamond, ListOrdered, Pencil, Search, Trophy, X } from '@lucide/vue'
+import { computed, nextTick, onMounted, ref, useId, watch } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { useMediaQuery } from '@vueuse/core'
+import { ChevronDown, ChevronRight, CloudOff, Diamond, ListOrdered, Search, Trophy, X } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import HelpTip from '@/components/admin/HelpTip.vue'
+import NumberTile from '@/components/admin/NumberTile.vue'
 import PlacedList from '@/components/admin/PlacedList.vue'
-import { useManagedCompetition, compareNumbers } from '@/composables/admin/useManagedCompetition'
+import ResultStatus from '@/components/admin/ResultStatus.vue'
+import Button from '@/components/ui/Button.vue'
+import Segmented from '@/components/ui/Segmented.vue'
+import Switch from '@/components/ui/Switch.vue'
+import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
+import { useSplit } from '@/composables/admin/useWide'
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
-import { tapHaptic } from '@/lib/haptics'
+import { competitionPhase } from '@/lib/dancerDay'
+import { selectionHaptic, tapHaptic } from '@/lib/haptics'
 import { getOrdinalSuffix } from '@/lib/results'
-import { groupHasOverall, isPrimaryCategory } from '@/types/competition'
+import { isPrimaryCategory } from '@/types/competition'
 import {
   CALLBACKS,
   OVERALL,
+  danceState,
+  dancingNow,
   isPlaceholderId,
+  needsFixing,
   newPlaceholderId,
   parsePlacings,
+  placeAt,
   removeEntry,
+  resultRows,
+  resultsOrder,
+  scheduleTurns,
   serializePlacings,
+  stateLabel,
   type Entry,
   type Placings,
 } from '@/lib/admin/results'
@@ -33,6 +49,8 @@ import {
 const props = defineProps<{ groupId: string; danceId: string }>()
 
 const m = useManagedCompetition()
+const router = useRouter()
+const uid = useId()
 
 const group = computed(() => m.groupsById.value.get(props.groupId) ?? null)
 const isCallbacks = computed(() => props.danceId === CALLBACKS)
@@ -47,8 +65,13 @@ const rawNow = () => m.results.value[props.groupId]?.[props.danceId]
 const placings = computed<Placings>(() => parsePlacings(rawNow()))
 const markedNone = computed(() => rawNow() === false)
 
+const TABS = [
+  { value: 'placings', label: 'Placings' },
+  { value: 'points', label: 'Points' },
+] as const
 const tab = ref<'placings' | 'points'>('placings')
 const pickingReverse = ref(false)
+watch(tab, () => (pickingReverse.value = false))
 watch(
   () => props.danceId,
   () => {
@@ -59,11 +82,12 @@ watch(
 )
 
 const groupDancers = computed(() => m.groupDancers(props.groupId))
-// Dances and Overall place only the dancers called back.
-const calledBack = computed(() => {
-  const ids = new Set(parsePlacings(m.results.value[props.groupId]?.[CALLBACKS]).entries.map((e) => e.id))
-  return groupDancers.value.filter((d) => ids.has(d.id)).sort((a, b) => compareNumbers(a.num, b.num))
-})
+// Dances and Overall place only the dancers called back. With none entered
+// (older competitions, or "No callbacks"), everyone in the age group.
+const callbacksRaw = computed(() => m.results.value[props.groupId]?.[CALLBACKS])
+const calledBackIds = computed(() => new Set(parsePlacings(callbacksRaw.value).entries.map((e) => e.id)))
+const noCallbacks = computed(() => !calledBackIds.value.size)
+const calledBack = computed(() => (noCallbacks.value ? groupDancers.value : groupDancers.value.filter((d) => calledBackIds.value.has(d.id))))
 const candidates = computed(() => (isCallbacks.value || tab.value === 'points' ? groupDancers.value : calledBack.value))
 
 const placedIndex = computed(() => new Map(placings.value.entries.map((e, i) => [e.id, i])))
@@ -76,6 +100,10 @@ const offersPoints = computed(() => !isPrimaryCategory(group.value?.category?.na
 
 const who = (id: string) => (isPlaceholderId(id) ? '?' : (m.dancersById.value.get(id)?.num ?? '?'))
 
+// Said aloud by screen readers as each tap lands ("149 placed 3rd").
+const announcement = ref('')
+const spoken = (id: string) => (isPlaceholderId(id) ? 'Missed number' : who(id))
+
 async function save(value: Placings | false | null, label: string) {
   const stored = value === false || value === null ? value : serializePlacings(value)
   try {
@@ -85,19 +113,57 @@ async function save(value: Placings | false | null, label: string) {
   }
 }
 
+// On wide screens, a tapped number card flies across into Placed. A copy
+// flies, so taps carry on landing underneath it.
+const split = useSplit()
+const placedSection = ref<HTMLElement | null>(null)
+async function fly(row: EventTarget | null | undefined, id: string) {
+  const from = row instanceof HTMLElement ? row.querySelector<HTMLElement>('[data-tile]') : null
+  if (!from || !split.value || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  const start = from.getBoundingClientRect()
+  await nextTick()
+  const to = placedSection.value?.querySelector<HTMLElement>(`[data-tile="${CSS.escape(id)}"]`)
+  const end = to?.getBoundingClientRect()
+  if (!to || !end || end.bottom < 0 || end.top > innerHeight) return
+  // Land where the row settles, not where its ease-in starts.
+  const [, rise = '0'] = getComputedStyle(to.closest('li') ?? to).translate.split(' ')
+  const card = from.cloneNode(true) as HTMLElement
+  card.className += ' pointer-events-none fixed z-50 m-0 shadow-(--shadow-raised) transition-[translate] duration-(--dur-slow) ease-snappy'
+  Object.assign(card.style, { left: `${start.left}px`, top: `${start.top}px`, width: `${start.width}px` })
+  document.body.append(card)
+  to.style.opacity = '0'
+  card.getBoundingClientRect()
+  card.style.translate = `${end.left - start.left}px ${end.top - parseFloat(rise) - start.top}px`
+  const land = () => {
+    card.remove()
+    to.style.opacity = ''
+  }
+  card.addEventListener('transitionend', land, { once: true })
+  setTimeout(land, 600)
+}
+
 /** Tap a dancer: add them to the end, or take them out if already there. */
-function place(id: string) {
+function place(id: string, e?: Event) {
   if (!canEdit.value) return
   tapHaptic()
   const p = parsePlacings(rawNow())
   const i = p.entries.findIndex((e) => e.id === id)
-  if (i >= 0) void save(removeEntry(p, i), `Took out ${who(id)}`)
-  else void save({ ...p, entries: [...p.entries, { id, tie: false }] }, `Placed ${who(id)}`)
+  if (i >= 0) {
+    announcement.value = `${spoken(id)} taken out`
+    void save(removeEntry(p, i), `Took out ${who(id)}`)
+    return
+  }
+  const added = { ...p, entries: [...p.entries, { id, tie: false }] }
+  const at = placeAt(added.entries.length - 1, added)
+  announcement.value = isCallbacks.value ? `${spoken(id)} called back` : at ? `${spoken(id)} placed ${at}${getOrdinalSuffix(at)}` : `${spoken(id)} placed`
+  void save(added, `Placed ${who(id)}`)
+  void fly(e?.currentTarget, id)
 }
 function remove(index: number) {
   const p = parsePlacings(rawNow())
   const id = p.entries[index]?.id
   if (id == null) return
+  announcement.value = `${spoken(id)} taken out`
   void save(removeEntry(p, index), `Took out ${who(id)}`)
 }
 function tie(index: number, on: boolean) {
@@ -117,28 +183,32 @@ function point(id: string) {
   const i = list.indexOf(id)
   if (i >= 0) list.splice(i, 1)
   else list.push(id)
+  announcement.value = i >= 0 ? `Point taken from ${spoken(id)}` : `${spoken(id)} given a point`
   void m
     .writeData({ [pointsPath.value]: list.length ? list : null }, `${i >= 0 ? 'Took a point from' : 'Gave a point to'} ${who(id)} in ${danceName.value}`)
     .catch((e) => toast(friendlyError(e), { tone: 'error' }))
 }
 
-function tapPlaceholder() {
+function tapPlaceholder(e: Event) {
   const id = newPlaceholderId()
   if (tab.value === 'points') point(id)
-  else place(id)
+  else place(id, e)
 }
 
-// --- Championship: entered from the lowest place up to 1st
-const reverseOn = computed(() => !!placings.value.reverseFrom || pickingReverse.value)
-function toggleReverse() {
-  if (reverseOn.value) {
-    pickingReverse.value = false
-    if (placings.value.reverseFrom) void save({ ...parsePlacings(rawNow()), reverseFrom: null }, 'Championship off')
-  } else {
-    pickingReverse.value = true
+// --- Championship: entered from the lowest place up to 1st. Switching it on
+// first asks how many places; it reads on once that's saved.
+const PLACES = [3, 4, 5, 6, 7, 8]
+const championship = computed(() => !!placings.value.reverseFrom)
+function toggleChampionship() {
+  if (!championship.value) {
+    pickingReverse.value = !pickingReverse.value
+    return
   }
+  pickingReverse.value = false
+  void save({ ...parsePlacings(rawNow()), reverseFrom: null }, 'Championship off')
 }
 function pickReverse(n: number) {
+  selectionHaptic()
   pickingReverse.value = false
   void save({ ...parsePlacings(rawNow()), reverseFrom: n }, `Entering from ${n}${getOrdinalSuffix(n)}`)
 }
@@ -185,84 +255,128 @@ const instruction = computed(() => {
     : 'Tap dancers in the order they placed, starting with 1st. Tap again to take one out.'
 })
 
-// The next dance for this age group, so entry can carry straight on.
+// This age group's callbacks, dances and Overall, with where each stands.
+const rows = computed(() =>
+  group.value
+    ? resultRows(group.value, m.groupDances(props.groupId)).map((r) => {
+        const raw = m.results.value[props.groupId]?.[r.id]
+        return { ...r, state: danceState(raw), fix: needsFixing(raw, m.points.value[props.groupId]?.[r.id]?.combined) }
+      })
+    : [],
+)
+
+// Where to carry straight on: this age group's next dance, then the next
+// age group in the running order (or list order with no schedule).
+const turns = computed(() => scheduleTurns(m.schedule.value, m.platforms.value))
 const next = computed(() => {
   const g = group.value
   if (!g) return null
-  const order = [
-    { id: CALLBACKS, label: 'Callbacks' },
-    ...m.groupDances(g.id).map((d) => ({ id: d.id, label: d.label })),
-    ...(groupHasOverall(g) ? [{ id: OVERALL, label: 'Overall' }] : []),
-  ]
-  const i = order.findIndex((d) => d.id === props.danceId)
-  return i < 0 ? null : (order[i + 1] ?? null)
+  const i = rows.value.findIndex((d) => d.id === props.danceId)
+  if (i < 0) return null
+  const here = rows.value[i + 1]
+  if (here) return { groupId: g.id, danceId: here.id, label: here.label }
+  const ids = resultsOrder(
+    m.groups.value.filter((x) => x.id === g.id || m.groupDancers(x.id).length).map((x) => x.id),
+    turns.value,
+  )
+  const after = m.groupsById.value.get(ids[ids.indexOf(g.id) + 1] ?? '')
+  return after ? { groupId: after.id, danceId: CALLBACKS, label: `${after.label} · Callbacks` } : null
 })
+
+// --- Tablets and laptops (md to xl): the list folds away (see Results), so
+// the header picks the age group and its dance.
+const live = computed(() =>
+  competitionPhase(m.competition.value?.date, m.schedule.value) === 'today' ? dancingNow(turns.value, m.results.value) : new Set<string>(),
+)
+/** Another age group: where its results left off (callbacks to start). */
+function pickGroup(id: string) {
+  const first = resultRows(m.groupsById.value.get(id) ?? {}, m.groupDances(id)).find((r) => danceState(m.results.value[id]?.[r.id]) === 'todo')
+  void router.replace({ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: id, danceId: first?.id ?? CALLBACKS } })
+}
+const pickers = useMediaQuery('(min-width: 768px) and (max-width: 1279.98px)')
+// Keep the open dance's pill in view.
+const pills = ref<HTMLElement | null>(null)
+const showCurrent = () => nextTick(() => pills.value?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }))
+onMounted(showCurrent)
+watch(() => props.danceId, showCurrent)
 </script>
 
 <template>
   <div v-if="group" class="flex flex-col md:h-full">
-    <header class="flex items-end gap-3 px-4 pt-4 pb-3">
-      <div class="min-w-0 flex-1">
-        <p class="text-muted-foreground truncate text-sm font-bold">{{ group.label }}</p>
+    <header class="flex flex-col gap-3 border-b px-4 pt-4 pb-3">
+      <div :class="['min-w-0', pickers && 'sr-only']">
+        <p class="text-muted-foreground truncate text-sm font-medium">{{ group.label }}</p>
         <h1 class="text-title truncate">{{ danceName }}</h1>
       </div>
+      <div v-if="!isCallbacks && offersPoints || pickers" class="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <label v-if="pickers" class="relative max-w-full min-w-0">
+          <span class="sr-only">Age group</span>
+          <select
+            :value="groupId"
+            class="surface press h-11 max-w-full appearance-none truncate rounded-full pr-10 pl-4 text-base font-semibold"
+            @change="pickGroup(($event.target as HTMLSelectElement).value)"
+          >
+            <option v-for="g in m.groups.value" :key="g.id" :value="g.id">{{ g.label }}{{ live.has(g.id) ? ' · dancing now' : '' }}</option>
+          </select>
+          <ChevronDown class="text-muted-foreground pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2" aria-hidden="true" />
+        </label>
+        <!-- Placings / Points -->
+        <div v-if="!isCallbacks && offersPoints" :class="['flex max-w-sm min-w-64 flex-1 items-center gap-2', pickers && 'ml-auto']">
+          <Segmented v-model="tab" :options="TABS" label="Placings or points" class="flex-1" />
+          <HelpTip label="About championship points">
+            Championship points mark dancers who were placed by at least one judge, but whose combined score didn’t give them a place.
+          </HelpTip>
+        </div>
+      </div>
+      <nav v-if="pickers" ref="pills" aria-label="Dances" class="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
+        <RouterLink
+          v-for="r in rows"
+          :key="r.id"
+          :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId, danceId: r.id } }"
+          replace
+          :aria-current="r.id === danceId ? 'page' : undefined"
+          :aria-label="`${r.label}, ${stateLabel(r.state, r.fix)}`"
+          :class="[
+            'press text-callout inline-flex h-11 shrink-0 items-center gap-2 rounded-full pr-4 pl-3 font-semibold whitespace-nowrap',
+            r.id === danceId ? 'bg-primary-fill text-primary-foreground' : 'surface',
+          ]"
+        >
+          <ResultStatus :state="r.state" :fix="r.fix" :plain="r.id === danceId" />
+          {{ r.label }}
+        </RouterLink>
+      </nav>
     </header>
-
-    <!-- Placings / Points -->
-    <div v-if="!isCallbacks && offersPoints" class="flex border-b" role="tablist">
-      <button
-        v-for="t in (['placings', 'points'] as const)"
-        :key="t"
-        type="button"
-        role="tab"
-        :aria-selected="tab === t"
-        :class="[
-          'flex h-12 flex-1 items-center justify-center gap-2 border-b-2 text-[0.9375rem] font-bold',
-          tab === t ? 'border-primary text-primary' : 'text-muted-foreground border-transparent',
-        ]"
-        @click="tab = t; pickingReverse = false"
-      >
-        {{ t === 'placings' ? 'Placings' : 'Points' }}
-        <HelpTip v-if="t === 'points'" label="About championship points">
-          Championship points mark dancers who were placed by at least one judge, but whose combined score didn’t give them a place.
-        </HelpTip>
-      </button>
-    </div>
 
     <div class="md:grid md:min-h-0 md:flex-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
       <!-- Dancers to tap -->
       <section class="flex min-w-0 flex-col md:min-h-0 md:border-r">
         <div class="md:min-h-0 md:flex-1 md:overflow-y-auto">
-          <!-- Championship: how many places -->
-          <template v-if="pickingReverse">
-            <div class="flex items-center gap-3 border-b px-4 py-3">
-              <span class="bg-primary-fill text-primary-foreground flex size-10 shrink-0 items-center justify-center rounded-full"><ListOrdered class="size-5" /></span>
-              <span>
-                <span class="block text-base font-bold">Select starting place</span>
-                <span class="text-muted-foreground block text-sm">How many places are being awarded?</span>
-              </span>
-            </div>
-            <ul class="divide-y">
-              <li v-for="n in candidates.length" :key="n">
-                <button
-                  type="button"
-                  :disabled="n < 2"
-                  :class="[
-                    'flex min-h-13 w-full items-center gap-3 px-4 text-left disabled:opacity-35',
-                    n === placings.reverseFrom ? 'bg-blue-paper' : 'hover:bg-accent',
-                  ]"
-                  @click="pickReverse(n)"
-                >
-                  <span class="w-12 text-base font-extrabold tabular-nums">{{ n }}{{ getOrdinalSuffix(n) }}</span>
-                  <span class="text-base">{{ n }} {{ n === 1 ? 'place' : 'places' }}</span>
-                </button>
-              </li>
-            </ul>
-          </template>
-
-          <template v-else-if="candidates.length">
-            <p class="text-muted-foreground px-4 pt-3 pb-2 text-sm font-semibold">{{ instruction }}</p>
-            <p v-if="placings.reverseFrom && tab === 'placings'" class="bg-blue-paper text-primary px-4 py-2.5 text-sm font-bold">
+          <!-- No signal: nothing here can be saved, so say so over the list
+               rather than let taps quietly do nothing. -->
+          <div class="sticky top-(--chrome-top) z-10 md:top-0" role="status">
+            <p v-if="!canEdit" class="bg-foreground text-background mx-3 mt-3 flex items-center gap-3 rounded-2xl px-4 py-3 shadow-(--shadow-raised)">
+              <CloudOff class="size-5 shrink-0" aria-hidden="true" />
+              <span><strong class="font-semibold">No signal.</strong> Results can’t be saved until it’s back.</span>
+            </p>
+          </div>
+          <div
+            v-if="candidates.length"
+            :aria-disabled="!canEdit || undefined"
+            :class="['transition-[opacity,filter] duration-(--dur-base) ease-standard', !canEdit && 'opacity-50 grayscale']"
+          >
+            <p class="text-muted-foreground px-4 pt-3 pb-2 text-sm">{{ instruction }}</p>
+            <p v-if="noCallbacks && !isCallbacks && tab === 'placings'" class="text-muted-foreground px-4 pb-2 text-sm">
+              {{ callbacksRaw === false ? 'No callbacks' : 'No callbacks entered' }}: showing everyone.
+              <RouterLink
+                v-if="callbacksRaw !== false"
+                :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId, danceId: CALLBACKS } }"
+                replace
+                class="text-primary font-semibold whitespace-nowrap"
+              >
+                Enter callbacks ›
+              </RouterLink>
+            </p>
+            <p v-if="placings.reverseFrom && tab === 'placings'" class="bg-blue-paper text-primary px-4 py-2.5 text-sm font-semibold">
               Entering from {{ placings.reverseFrom }}{{ getOrdinalSuffix(placings.reverseFrom) }} place
             </p>
             <ul class="divide-y">
@@ -271,10 +385,10 @@ const next = computed(() => {
                   type="button"
                   :disabled="rowDisabled(d.id)"
                   :aria-pressed="tab === 'placings' ? placedIndex.has(d.id) : pointed.has(d.id)"
-                  :class="['hover:bg-accent active:bg-accent flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left transition-opacity', rowDimmed(d.id) && 'opacity-35']"
-                  @click="tab === 'placings' ? place(d.id) : point(d.id)"
+                  :class="['press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left', rowDimmed(d.id) && 'opacity-35']"
+                  @click="tab === 'placings' ? place(d.id, $event) : point(d.id)"
                 >
-                  <span class="bg-paper text-paper-ink min-w-12 shrink-0 rounded-md border px-1.5 py-1 text-center font-mono text-base font-semibold tabular-nums">{{ d.num || '–' }}</span>
+                  <NumberTile :num="d.num" data-tile />
                   <span class="min-w-0 flex-1">
                     <span class="block truncate text-base font-semibold">{{ d.label }}</span>
                     <span v-if="d.location" class="text-muted-foreground block truncate text-sm">{{ d.location }}</span>
@@ -287,72 +401,83 @@ const next = computed(() => {
                 <button
                   type="button"
                   :disabled="!canEdit"
-                  class="hover:bg-accent flex min-h-16 w-full items-center gap-3 bg-[repeating-linear-gradient(135deg,transparent_0_10px,color-mix(in_oklab,var(--color-next)_60%,transparent)_10px_20px)] px-4 py-2 text-left disabled:opacity-50"
+                  class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left"
                   @click="tapPlaceholder"
                 >
-                  <span class="bg-next text-next-foreground min-w-12 shrink-0 rounded-md px-1.5 py-1 text-center font-mono text-base font-semibold">?</span>
-                  <span class="min-w-0 flex-1">
-                    <span class="block text-base font-semibold">Dancer</span>
-                    <span class="text-muted-foreground block text-sm">A stand-in for a number that was missed, misheard or wrong. Fix it later.</span>
-                  </span>
+                  <NumberTile unknown data-tile />
+                  <span class="min-w-0 flex-1 truncate text-base font-semibold">Missed number</span>
                 </button>
               </li>
             </ul>
-          </template>
+          </div>
 
-          <EmptyState v-else-if="isCallbacks || tab === 'points'" :icon="Search" title="No dancers found" description="Add dancers to this age group first.">
-            <RouterLink :to="{ name: 'manage.dancers', params: { competitionId: m.competitionId.value } }" class="text-primary text-base font-bold">Add dancers ›</RouterLink>
-          </EmptyState>
-          <EmptyState v-else :icon="Search" title="No dancers to place" description="Enter the callbacks first: only dancers called back are placed.">
-            <RouterLink
-              :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId, danceId: CALLBACKS } }"
-              replace
-              class="text-primary text-base font-bold"
-            >
-              Enter callbacks ›
-            </RouterLink>
+          <EmptyState v-else size="inline" :icon="Search" title="No dancers found" description="Add dancers to this age group first.">
+            <RouterLink :to="{ name: 'manage.dancers', params: { competitionId: m.competitionId.value } }" class="text-primary text-base font-semibold">Add dancers ›</RouterLink>
           </EmptyState>
         </div>
 
         <!-- Championship (dances only) -->
-        <div v-if="isDance && tab === 'placings'" class="flex min-h-14 items-center gap-2 border-t px-4 py-2">
-          <button
-            type="button"
-            role="switch"
-            :aria-checked="reverseOn"
-            :disabled="!canEdit"
-            class="flex h-11 items-center gap-3 text-base font-bold disabled:opacity-50"
-            @click="toggleReverse"
+        <div v-if="isDance && tab === 'placings'" class="border-t px-4 py-2">
+          <div class="flex min-h-12 flex-wrap items-center gap-x-2">
+            <label class="flex min-h-11 items-center gap-3 font-medium">
+              <Switch :model-value="championship" :disabled="!canEdit" @update:model-value="toggleChampionship" />
+              Championship
+            </label>
+            <HelpTip label="About championship mode">
+              <strong>Championship</strong> mode enters results in reverse order (e.g. 6th, 5th, …, 1st), as is traditional for championship announcements.
+            </HelpTip>
+            <Button
+              v-if="placings.reverseFrom"
+              variant="tonal"
+              class="ml-auto"
+              :aria-expanded="pickingReverse"
+              :disabled="!canEdit"
+              @click="pickingReverse = !pickingReverse"
+            >
+              From {{ placings.reverseFrom }}{{ getOrdinalSuffix(placings.reverseFrom) }}
+            </Button>
+          </div>
+          <Transition
+            enter-from-class="-translate-y-1 opacity-0"
+            enter-active-class="transition duration-(--dur-base) ease-standard motion-reduce:transition-none"
+            leave-active-class="transition duration-(--dur-quick) ease-exit motion-reduce:transition-none"
+            leave-to-class="opacity-0"
           >
-            <span :class="['relative h-7 w-12 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-6 after:rounded-full after:bg-white after:shadow after:transition-transform', reverseOn ? 'bg-primary-fill after:translate-x-5' : 'bg-strong']" />
-            Championship
-          </button>
-          <HelpTip label="About championship mode">
-            <strong>Championship</strong> mode enters results in reverse order (e.g. 6th, 5th, …, 1st), as is traditional for championship announcements.
-          </HelpTip>
-          <button
-            v-if="placings.reverseFrom && !pickingReverse"
-            type="button"
-            aria-label="Change the starting place"
-            class="hover:bg-accent ml-auto flex size-11 items-center justify-center rounded-full"
-            @click="pickingReverse = true"
-          >
-            <Pencil class="size-4" />
-          </button>
+            <div v-if="pickingReverse" class="pt-1 pb-2">
+              <p :id="`${uid}-places`" class="text-muted-foreground pb-2 text-sm">How many places?</p>
+              <div role="group" :aria-labelledby="`${uid}-places`" class="grid max-w-80 grid-cols-6 gap-1.5">
+                <button
+                  v-for="n in PLACES"
+                  :key="n"
+                  type="button"
+                  :aria-pressed="n === placings.reverseFrom"
+                  :disabled="!canEdit || n > candidates.length"
+                  :class="[
+                    'press h-11 rounded-full text-base font-extrabold tabular-nums disabled:opacity-(--disabled-opacity)',
+                    n === placings.reverseFrom ? 'bg-primary-fill text-primary-foreground' : 'surface',
+                  ]"
+                  @click="pickReverse(n)"
+                >
+                  {{ n }}
+                </button>
+              </div>
+            </div>
+          </Transition>
         </div>
       </section>
 
       <!-- The placed order -->
-      <section class="min-w-0 max-md:border-t-8 max-md:border-muted md:overflow-y-auto">
+      <section ref="placedSection" class="min-w-0 max-md:border-t-8 max-md:border-muted md:overflow-y-auto">
         <template v-if="tab === 'placings'">
-          <h2 class="text-muted-foreground flex items-center gap-1.5 px-4 pt-3 pb-2 text-sm font-bold">
+          <h2 class="text-muted-foreground flex items-center gap-1.5 px-4 pt-3 pb-2 text-sm font-semibold">
             {{ isCallbacks ? `Called back · ${placings.entries.length}` : 'Placed' }}
             <HelpTip v-if="!isCallbacks" label="How the placed list works">
-              Drag the handle to change the order. Switch on TIE when a dancer shares the place of the dancer above. Tap a dancer to take them out.
+              Drag the handle to change the order. Switch on Tie when a dancer shares the place of the dancer above. Tap a dancer to take them out.
             </HelpTip>
           </h2>
+          <!-- Kept while empty, so the first placing lands like the rest -->
           <PlacedList
-            v-if="placings.entries.length"
+            :key="danceId"
             :placings="placings"
             :dancers-by-id="m.dancersById.value"
             :kind="kind"
@@ -361,8 +486,9 @@ const next = computed(() => {
             @reorder="reorder"
             @fix="openFix"
           />
-          <template v-else>
+          <template v-if="!placings.entries.length">
             <EmptyState
+              size="inline"
               :icon="ListOrdered"
               :title="isCallbacks ? 'Callbacks' : 'Order dancers'"
               :description="
@@ -374,51 +500,47 @@ const next = computed(() => {
               "
             />
             <div class="flex min-h-14 items-center border-t px-4">
-              <button
-                type="button"
-                role="switch"
-                :aria-checked="markedNone"
-                :disabled="!canEdit"
-                class="flex h-11 items-center gap-3 text-base font-bold disabled:opacity-50"
-                @click="setNone(!markedNone)"
-              >
-                <span :class="['relative h-7 w-12 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-6 after:rounded-full after:bg-white after:shadow after:transition-transform', markedNone ? 'bg-primary-fill after:translate-x-5' : 'bg-strong']" />
+              <label class="flex min-h-11 items-center gap-3 font-medium">
+                <Switch :model-value="markedNone" :disabled="!canEdit" @update:model-value="setNone" />
                 {{ isCallbacks ? 'No callbacks' : 'No dancers placed' }}
-              </button>
+              </label>
             </div>
           </template>
           <p v-if="singleOverall" class="text-muted-foreground flex items-center gap-1.5 px-4 py-3 text-sm"><Trophy class="size-4" /> Overall winner</p>
         </template>
 
         <template v-else>
-          <h2 class="text-muted-foreground px-4 pt-3 pb-2 text-sm font-bold">Championship points</h2>
+          <h2 class="text-muted-foreground px-4 pt-3 pb-2 text-sm font-semibold">Championship points</h2>
           <ul v-if="pointedIds.length" class="divide-y">
             <li v-for="id in pointedIds" :key="id">
               <button
                 type="button"
                 :disabled="!canEdit"
                 :aria-label="`Take the point from ${who(id)}`"
-                class="hover:bg-accent flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left"
+                class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left"
                 @click="point(id)"
               >
-                <span class="bg-paper text-paper-ink min-w-12 shrink-0 rounded-md border px-1.5 py-1 text-center font-mono text-base font-semibold tabular-nums">{{ who(id) }}</span>
-                <span class="min-w-0 flex-1 truncate text-base font-semibold">{{ m.dancersById.value.get(id)?.label ?? 'Unknown dancer' }}</span>
+                <NumberTile :num="who(id)" :unknown="isPlaceholderId(id)" />
+                <span class="min-w-0 flex-1 truncate text-base font-semibold">{{ m.dancersById.value.get(id)?.label ?? (isPlaceholderId(id) ? 'Missed number' : 'Deleted dancer') }}</span>
                 <Diamond class="text-primary size-5 shrink-0 fill-current" />
               </button>
             </li>
           </ul>
-          <EmptyState v-else :icon="Diamond" title="Championship points" description="Select dancers who didn’t quite place" />
+          <EmptyState v-else size="inline" :icon="Diamond" title="Championship points" description="Select dancers who didn’t quite place" />
         </template>
 
         <!-- Carry on to the next dance without going back to the list -->
         <div v-if="next && (placings.entries.length || markedNone)" class="border-t p-4">
-          <RouterLink
-            :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId, danceId: next.id } }"
+          <Button
+            variant="primary"
+            size="lg"
+            block
             replace
-            class="bg-primary-fill text-primary-foreground flex h-12 items-center justify-center gap-1.5 rounded-xl px-4 text-base font-bold"
+            :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: next.groupId, danceId: next.danceId } }"
           >
-            Next: {{ next.label }} <ChevronRight class="size-5" />
-          </RouterLink>
+            <span class="min-w-0 truncate">Next: {{ next.label }}</span>
+            <ChevronRight />
+          </Button>
         </div>
       </section>
     </div>
@@ -431,23 +553,25 @@ const next = computed(() => {
       <p class="text-muted-foreground text-sm">Replaces the “?” in the same place.</p>
     </template>
     <div class="space-y-2 p-4">
-      <label class="bg-card border-strong focus-within:border-primary flex h-11 items-center gap-2 rounded-xl border-2 px-3">
+      <label class="field flex h-11 items-center gap-2 rounded-xl px-3">
         <Search class="text-muted-foreground size-4 shrink-0" />
         <span class="sr-only">Find a dancer</span>
         <input v-model="fixQuery" type="search" placeholder="Find by number or name" class="min-w-0 flex-1 bg-transparent text-base outline-none" />
-        <button v-if="fixQuery" type="button" aria-label="Clear search" class="text-muted-foreground -mr-1 flex size-7 items-center justify-center rounded-full" @click="fixQuery = ''">
+        <button v-if="fixQuery" type="button" aria-label="Clear search" class="press text-muted-foreground -mr-1 flex size-7 items-center justify-center rounded-full" @click="fixQuery = ''">
           <X class="size-4" />
         </button>
       </label>
     </div>
     <ul class="divide-y pb-[var(--safe-bottom)]">
       <li v-for="d in fixChoices" :key="d.id">
-        <button type="button" class="hover:bg-accent flex min-h-14 w-full items-center gap-3 px-4 text-left" @click="chooseFix(d.id)">
-          <span class="bg-paper text-paper-ink min-w-12 rounded-md border px-1.5 py-1 text-center font-mono font-semibold">{{ d.num || '–' }}</span>
+        <button type="button" class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 text-left" @click="chooseFix(d.id)">
+          <NumberTile :num="d.num" />
           <span class="min-w-0 flex-1 truncate text-base font-semibold">{{ d.label }}</span>
         </button>
       </li>
       <li v-if="!fixChoices.length" class="text-muted-foreground px-4 py-6 text-center">Everyone is already placed.</li>
     </ul>
   </Dialog>
+
+  <p class="sr-only" aria-live="polite">{{ announcement }}</p>
 </template>

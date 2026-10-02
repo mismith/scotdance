@@ -10,6 +10,7 @@ import AdminMark from '@/components/AdminMark.vue'
 import CompetitionBottomNav from '@/components/nav/CompetitionBottomNav.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import Button from '@/components/ui/Button.vue'
 import { provideCompetition } from '@/composables/useCompetition'
 import { provideInfoHeader } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
@@ -67,6 +68,14 @@ const hiddenHere = computed(() => {
 
 const reload = () => window.location.reload()
 
+// Not published yet: before the day it's still coming; on or after it,
+// the organisers just haven't put it here.
+const unpublishedNote = computed(() =>
+  competitionPhase(competition.value?.date) === 'before'
+    ? 'Dancers, the schedule and results show here once they’re published. Check back closer to the day.'
+    : 'Dancers, the schedule and results show here once they’re published. The organisers haven’t published these here yet.',
+)
+
 // Each page registers its big in-page title (for the bar's border once it
 // scrolls under). The competition name and date sit in the bar on every page
 // but Overview, whose own big title shrinks into the bar as you leave it
@@ -120,7 +129,7 @@ usePageTitle(() => [
           :to="{ name: 'manage', params: { competitionId } }"
           aria-label="Manage this competition"
           title="Manage"
-          class="hover:bg-accent text-primary flex size-9 items-center justify-center rounded-full"
+          class="press hover:bg-accent text-primary flex size-9 items-center justify-center rounded-full"
         >
           <span class="relative flex"><Pencil class="size-5" /><AdminMark ring="background" /></span>
         </RouterLink>
@@ -143,19 +152,13 @@ usePageTitle(() => [
       />
       <div v-else-if="error" class="space-y-3 py-8 text-center">
         <p class="text-base font-semibold">This competition didn’t load. Check your connection.</p>
-        <button
-          type="button"
-          class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-6 font-bold"
-          @click="reload"
-        >
-          Try again
-        </button>
+        <Button variant="primary" size="lg" @click="reload">Try again</Button>
       </div>
       <EmptyState
         v-else-if="restricted && !isOverview"
         :icon="Hourglass"
         title="Not published yet"
-        description="Dancers, the schedule and results show here once they’re published. Check back closer to the day."
+        :description="unpublishedNote"
       />
       <EmptyState
         v-else-if="hiddenHere"
