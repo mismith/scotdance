@@ -640,9 +640,11 @@
    zoom scale everything together. */
 @utility text-display {
   @apply text-[1.625rem] leading-tight font-[760] tracking-[-0.022em];
+  text-wrap: balance;
 }
 @utility text-title {
   @apply text-[1.3125rem] leading-tight font-bold tracking-[-0.014em];
+  text-wrap: balance;
 }
 @utility text-heading {
   @apply text-[1.0625rem] leading-snug font-[650];
