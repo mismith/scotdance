@@ -64,7 +64,8 @@ const addBtn = ref<{ $el: HTMLElement } | null>(null)
 watch(
   () => adding.open,
   (open) => {
-    if (!open) void nextTick(() => document.activeElement === document.body && addBtn.value?.$el.focus())
+    // (The dialog hands focus back to what opened it, if that's still there.)
+    if (!open && !adding.trigger?.isConnected) void nextTick(() => addBtn.value?.$el.focus())
   },
 )
 const suggestions = computed(() => {

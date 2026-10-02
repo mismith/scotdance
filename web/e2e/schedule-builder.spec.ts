@@ -540,6 +540,7 @@ test('keyboard only: add, rename, autofill, delete and move with keys', async ({
   await page.keyboard.type('Beginner')
   await page.keyboard.press('Enter')
   await page.keyboard.press('Escape')
+  await settled(page)
   await event(page, 'Beginner').getByRole('button', { name: 'Autofill' }).press('Enter')
   await expect(page.getByRole('menuitem', { name: 'Place Primary dances' })).toBeFocused()
   await page.getByRole('menuitem', { name: 'Place all dances' }).press('Enter')

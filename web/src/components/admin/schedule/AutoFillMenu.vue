@@ -76,47 +76,50 @@ const row =
   >
     <WandSparkles class="size-4" />
   </button>
-  <Dialog :open="menu.open" :morph="menu" variant="dropdown" aria-label="Autofill" @close="menu.hide()">
-    <div ref="listEl" role="menu" aria-label="Autofill" class="[&>div+div]:mt-1.5 [&>div+div]:border-t [&>div+div]:pt-1.5">
-      <div>
-        <button
-          v-for="c in b.categories.value"
-          :key="c.id"
-          type="button"
-          role="menuitem"
-          :class="row"
-          @click="run(`Placed ${c.label} dances`, () => auto.placeDances(blockId, eventId, new Set([c.id])))"
-        >
-          Place {{ c.label }} dances
-        </button>
-        <button type="button" role="menuitem" :class="row" @click="run('Placed all dances', () => auto.placeDances(blockId, eventId))">
-          Place all dances
-        </button>
+  <!-- Out of the event's header, which drags (keys pressed in the menu mustn't pick it up). -->
+  <Teleport to="body">
+    <Dialog :open="menu.open" :morph="menu" variant="dropdown" aria-label="Autofill" @close="menu.hide()">
+      <div ref="listEl" role="menu" aria-label="Autofill" class="[&>div+div]:mt-1.5 [&>div+div]:border-t [&>div+div]:pt-1.5">
+        <div>
+          <button
+            v-for="c in b.categories.value"
+            :key="c.id"
+            type="button"
+            role="menuitem"
+            :class="row"
+            @click="run(`Placed ${c.label} dances`, () => auto.placeDances(blockId, eventId, new Set([c.id])))"
+          >
+            Place {{ c.label }} dances
+          </button>
+          <button type="button" role="menuitem" :class="row" @click="run('Placed all dances', () => auto.placeDances(blockId, eventId))">
+            Place all dances
+          </button>
+        </div>
+        <div>
+          <button
+            type="button"
+            role="menuitem"
+            :disabled="!!groupsHint"
+            :title="groupsHint || 'Shares each dance’s age groups across the platforms, replacing any there'"
+            :class="row"
+            @click="run('Assigned age groups', () => auto.fillGroups(blockId, eventId))"
+          >
+            Assign age groups
+            <span v-if="groupsHint" class="text-muted-foreground text-sm font-normal">{{ groupsHint }}</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            :disabled="!!judgesHint"
+            :title="judgesHint || 'One judge per platform, rotating each dance, replacing any there'"
+            :class="row"
+            @click="run('Assigned judges', () => auto.cycleJudges(blockId, eventId))"
+          >
+            Assign judges
+            <span v-if="judgesHint" class="text-muted-foreground text-sm font-normal">{{ judgesHint }}</span>
+          </button>
+        </div>
       </div>
-      <div>
-        <button
-          type="button"
-          role="menuitem"
-          :disabled="!!groupsHint"
-          :title="groupsHint || 'Shares each dance’s age groups across the platforms, replacing any there'"
-          :class="row"
-          @click="run('Assigned age groups', () => auto.fillGroups(blockId, eventId))"
-        >
-          Assign age groups
-          <span v-if="groupsHint" class="text-muted-foreground text-sm font-normal">{{ groupsHint }}</span>
-        </button>
-        <button
-          type="button"
-          role="menuitem"
-          :disabled="!!judgesHint"
-          :title="judgesHint || 'One judge per platform, rotating each dance, replacing any there'"
-          :class="row"
-          @click="run('Assigned judges', () => auto.cycleJudges(blockId, eventId))"
-        >
-          Assign judges
-          <span v-if="judgesHint" class="text-muted-foreground text-sm font-normal">{{ judgesHint }}</span>
-        </button>
-      </div>
-    </div>
-  </Dialog>
+    </Dialog>
+  </Teleport>
 </template>
