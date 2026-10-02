@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, useId } from 'vue'
+import Button from '@/components/ui/Button.vue'
+import { grow, shrink } from '@/lib/admin/motion'
 import { CalendarClock, ChevronDown, ClipboardList, FileSpreadsheet, Laptop, MailCheck, Pointer, Wifi } from '@lucide/vue'
 
 // Before the first step: the four steps and how long approval takes, so it
@@ -29,6 +31,9 @@ const NEEDS = [
 ]
 
 const id = useId()
+// For the page, so the bar can take over the title once it scrolls away.
+const title = ref<HTMLElement | null>(null)
+defineExpose({ title })
 const open = ref(new Set<string>())
 function toggle(title: string) {
   const next = new Set(open.value)
@@ -40,17 +45,17 @@ function toggle(title: string) {
 <template>
   <div class="space-y-6">
     <header class="space-y-2">
-      <h1 class="text-display">Submit a competition</h1>
+      <h1 ref="title" class="text-display">Submit a competition</h1>
       <p class="text-muted-foreground text-base">Free, and it takes a few minutes. If you have an info sheet, you’re mostly done already.</p>
     </header>
 
     <div class="space-y-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:items-start lg:gap-x-10 lg:space-y-0">
       <div class="space-y-6">
         <div class="space-y-3">
-          <ol class="bg-card divide-y rounded-2xl border shadow-sm">
+          <ol class="surface divide-y rounded-2xl">
             <li v-for="(s, i) in steps" :key="s.title" class="flex items-center gap-3 px-4 py-2.5">
-              <span class="bg-blue-paper text-primary flex size-7 shrink-0 items-center justify-center rounded-full text-sm font-extrabold">{{ i + 1 }}</span>
-              <span class="w-20 shrink-0 text-base font-bold">{{ s.title }}</span>
+              <span class="bg-blue-paper text-primary flex size-7 shrink-0 items-center justify-center rounded-full text-sm font-bold">{{ i + 1 }}</span>
+              <span class="w-20 shrink-0 text-base font-semibold">{{ s.title }}</span>
               <span class="text-muted-foreground min-w-0 text-sm">{{ s.asks }}</span>
             </li>
           </ol>
@@ -61,33 +66,36 @@ function toggle(title: string) {
         </div>
 
         <div class="space-y-2">
-          <button type="button" class="bg-primary-fill text-primary-foreground h-12 w-full rounded-xl px-8 text-base font-bold sm:w-auto" @click="$emit('start')">
+          <Button variant="primary" size="lg" class="max-sm:w-full sm:px-8" @click="$emit('start')">
             {{ signedIn ? 'Start' : 'Sign in to submit' }}
-          </button>
+          </Button>
           <p v-if="!signedIn" class="text-muted-foreground text-sm">Any email address works. You’ll manage the competition from the same account.</p>
         </div>
       </div>
 
       <section class="space-y-3">
         <h2 class="text-heading">What you’ll need</h2>
-        <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+        <ul class="surface divide-y overflow-hidden rounded-2xl">
           <li v-for="(group, g) in NEEDS" :key="group.title">
             <button
               type="button"
-              class="hover:bg-accent flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left"
+              class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left"
               :aria-expanded="open.has(group.title)"
               :aria-controls="`${id}-${g}`"
               @click="toggle(group.title)"
             >
-              <span class="flex-1 text-base font-bold">{{ group.title }}</span>
-              <ChevronDown :class="['text-muted-foreground size-5 shrink-0 transition-transform', open.has(group.title) && 'rotate-180']" />
+              <span class="flex-1 text-base font-semibold">{{ group.title }}</span>
+              <ChevronDown :class="['text-muted-foreground size-5 shrink-0 transition-transform duration-(--dur-base) ease-snappy', open.has(group.title) && 'rotate-180']" />
             </button>
-            <ul v-if="open.has(group.title)" :id="`${id}-${g}`" class="space-y-3 px-4 pb-4">
-              <li v-for="item in group.items" :key="item.lead" class="flex gap-3 text-[0.9375rem]">
-                <component :is="item.icon" class="text-primary mt-0.5 size-5 shrink-0" />
-                <span class="text-muted-foreground"><b class="text-foreground">{{ item.lead }}</b>{{ item.rest }}</span>
-              </li>
-            </ul>
+            <!-- Opens to its height, rather than jumping. -->
+            <Transition :css="false" @enter="grow" @leave="shrink">
+              <ul v-if="open.has(group.title)" :id="`${id}-${g}`" class="space-y-3 px-4 pb-4">
+                <li v-for="item in group.items" :key="item.lead" class="text-callout flex gap-3">
+                  <component :is="item.icon" class="text-primary mt-0.5 size-5 shrink-0" />
+                  <span class="text-muted-foreground"><b class="text-foreground font-semibold">{{ item.lead }}</b>{{ item.rest }}</span>
+                </li>
+              </ul>
+            </Transition>
           </li>
         </ul>
       </section>

@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
-import { ChevronLeft, ChevronRight, CircleCheck, LoaderCircle, Plus, Send } from '@lucide/vue'
+import { ChevronLeft, ChevronRight, Plus, Send } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
+import Button from '@/components/ui/Button.vue'
+import Checkbox from '@/components/ui/Checkbox.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import FormInput from '@/components/admin/FormInput.vue'
 import StepNav from '@/components/submit/StepNav.vue'
+import SentMark from '@/components/submit/SentMark.vue'
 import SubmitOverview from '@/components/submit/SubmitOverview.vue'
 import VenueField from '@/components/admin/VenueField.vue'
 import { usePageTitle } from '@/composables/usePageTitle'
+import { useScrolledPast } from '@/composables/useScrolledPast'
 import { friendlyError, newKey, write } from '@/lib/admin/write'
 import { formatLongDate } from '@/lib/format'
 import { placesAvailable, type VenueFields } from '@/lib/maps'
@@ -90,6 +93,8 @@ const REQUIRED: Array<Array<[Field, string]>> = [
 const started = ref(false)
 const step = ref(0)
 const heading = ref<HTMLElement | null>(null)
+// Which way the steps move: forward slides in from the right, back from the left.
+const direction = ref<1 | -1>(1)
 
 const filled = (k: Field) => (k === 'agree' ? form.agree : !!String(form[k]).trim())
 const complete = (s: number) => REQUIRED[s].every(([k]) => filled(k))
@@ -117,6 +122,7 @@ async function go(to: number) {
   sendError.value = null
   restored.value = false
   started.value = true
+  direction.value = to < step.value ? -1 : 1
   step.value = to
   window.scrollTo({ top: 0 })
   await nextTick()
@@ -289,12 +295,15 @@ function startOver() {
   void go(0)
 }
 
-const addButton = 'text-primary hover:bg-accent -mx-3 flex h-11 w-fit items-center gap-1.5 rounded-xl px-3 text-[0.9375rem] font-bold'
+// The overview's own big title hands over to the bar once it scrolls away;
+// the steps and the sent screen have the bar's title alone.
+const overviewEl = ref<{ title: HTMLElement | null } | null>(null)
+const scrolledPast = useScrolledPast(computed(() => overviewEl.value?.title ?? null))
 </script>
 
 <template>
   <div class="flex min-h-dvh flex-col">
-    <AppBar title="Submit a competition" show-title :fallback="{ to: { name: 'competitions' }, label: 'Competitions' }" />
+    <AppBar title="Submit a competition" :show-title="!overview || scrolledPast" :fallback="{ to: { name: 'competitions' }, label: 'Competitions' }" />
     <main :class="['mx-auto w-full max-w-xl flex-1 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-[calc(var(--chrome-bottom)+1.5rem)]', overview && 'lg:max-w-3xl']">
       <div v-if="!auth.authReady" class="space-y-4" aria-busy="true">
         <span class="sr-only">Loading…</span>
@@ -303,131 +312,142 @@ const addButton = 'text-primary hover:bg-accent -mx-3 flex h-11 w-fit items-cent
       </div>
 
       <div v-else-if="sent" class="space-y-4 py-10 text-center">
-        <CircleCheck class="text-done-foreground mx-auto size-14" />
+        <SentMark class="mx-auto size-14" />
         <h1 class="text-display">Submitted</h1>
         <p class="text-muted-foreground mx-auto max-w-md text-base">
           Thanks. It’s usually approved overnight. You’ll get an email at {{ me.email }} with a link to start adding the details.
         </p>
         <p class="text-muted-foreground mx-auto max-w-md text-sm">If it doesn’t arrive, check your junk folder.</p>
         <div class="flex flex-col items-center gap-2 pt-2">
-          <RouterLink :to="{ name: 'competitions' }" class="bg-primary-fill text-primary-foreground h-12 content-center rounded-xl px-6 text-base font-bold">Back to competitions</RouterLink>
-          <button type="button" class="text-primary h-11 font-bold" @click="another">Submit another</button>
+          <Button variant="primary" size="lg" :to="{ name: 'competitions' }">Back to competitions</Button>
+          <Button variant="plain" @click="another">Submit another</Button>
         </div>
       </div>
 
-      <SubmitOverview v-else-if="overview" :steps="STEPS" :signed-in="auth.isSignedIn" @start="start" />
+      <SubmitOverview v-else-if="overview" :steps="STEPS" :signed-in="auth.isSignedIn" ref="overviewEl" @start="start" />
 
       <div v-else class="space-y-6">
-        <h1 class="text-display">Submit a competition</h1>
-        <p v-if="restored" class="bg-blue-paper flex items-center justify-between gap-3 rounded-xl pl-4 text-[0.9375rem] font-semibold">
+        <p v-if="restored" class="bg-blue-paper text-callout flex items-center justify-between gap-3 rounded-xl pl-4 font-medium">
           Picked up where you left off.
-          <button type="button" class="text-primary h-11 shrink-0 rounded-xl px-4 font-bold" @click="startOver">Start over</button>
+          <Button variant="plain" class="shrink-0" @click="startOver">Start over</Button>
         </p>
         <StepNav :steps="STEPS.map((s) => s.title)" :current="step" @go="jump" />
 
         <form class="space-y-6" novalidate @submit.prevent="next">
-          <header class="space-y-1">
-            <h2 ref="heading" tabindex="-1" class="text-title outline-none">
-              <span class="sr-only">Step {{ step + 1 }} of {{ STEPS.length }}: </span>{{ STEPS[step].title }}
-            </h2>
-            <p class="text-muted-foreground text-base">{{ STEPS[step].lead }}</p>
-          </header>
+          <!-- Each step slides a little the way you're going. -->
+          <Transition
+            mode="out-in"
+            enter-active-class="transition-[translate,opacity] duration-(--dur-base) ease-snappy motion-reduce:transition-opacity"
+            :enter-from-class="`opacity-0 motion-reduce:translate-x-0 ${direction > 0 ? 'translate-x-6' : '-translate-x-6'}`"
+            leave-active-class="transition-[translate,opacity] duration-(--dur-quick) ease-exit motion-reduce:transition-opacity"
+            :leave-to-class="`opacity-0 motion-reduce:translate-x-0 ${direction > 0 ? '-translate-x-6' : 'translate-x-6'}`"
+            @enter="heading?.focus()"
+          >
+            <div :key="step" class="space-y-6">
+              <header class="space-y-1">
+                <h2 ref="heading" tabindex="-1" class="text-title outline-none">
+                  <span class="sr-only">Step {{ step + 1 }} of {{ STEPS.length }}: </span>{{ STEPS[step].title }}
+                </h2>
+                <p class="text-muted-foreground text-base">{{ STEPS[step].lead }}</p>
+              </header>
 
-          <div v-if="step === 0" class="space-y-4">
-            <FormInput v-model="form.name" label="Name" required placeholder="e.g. Canadian Championship 2027" :error="errors.name" />
-            <FormInput v-model="form.date" label="Date" kind="date" required hint="The first day, if it runs over several." :error="errors.date" />
-            <FormInput
-              v-if="adding.description || form.description"
-              v-model="form.description"
-              data-field="description"
-              label="Description"
-              kind="textarea"
-              hint="Optional: anything else people should know. It’s shown on the competition page."
-            />
-            <FormInput
-              v-if="adding.sobhd || form.sobhd"
-              v-model="form.sobhd"
-              data-field="sobhd"
-              label="Registration number"
-              placeholder="e.g. C-AB-CO-27-1234"
-              hint="Optional: if it’s registered with an association, like the RSOBHD."
-            />
-            <div class="flex flex-wrap gap-x-6">
-              <button v-if="!adding.description && !form.description" type="button" :class="addButton" @click="add('description')">
-                <Plus class="size-4" /> Add a description
-              </button>
-              <button v-if="!adding.sobhd && !form.sobhd" type="button" :class="addButton" @click="add('sobhd')">
-                <Plus class="size-4" /> Add registration number
-              </button>
-            </div>
-          </div>
-
-          <div v-else-if="step === 1" class="space-y-4">
-            <VenueField v-if="placesAvailable" v-model="form.venue" @pick="pickVenue" />
-            <FormInput v-else v-model="form.venue" label="Venue name" placeholder="e.g. Telus Convention Centre" />
-            <FormInput v-model="form.address" label="Address" placeholder="e.g. 120 9th Ave SE" />
-            <FormInput v-model="form.location" label="Town or city" required placeholder="e.g. Calgary, AB" hint="Include the province or state." :error="errors.location" />
-          </div>
-
-          <div v-else-if="step === 2" class="space-y-4">
-            <FormInput v-model="form.contactName" label="Your name" required autocomplete="name" :error="errors.contactName" />
-            <div class="space-y-1.5">
-              <p class="text-[0.9375rem] font-bold">Your email</p>
-              <p class="text-base break-words">{{ me.email }}</p>
-              <p class="text-muted-foreground text-sm">From your account.</p>
-            </div>
-            <FormInput
-              v-if="adding.message || form.message"
-              v-model="form.message"
-              data-field="message"
-              label="Message"
-              kind="textarea"
-              hint="Optional: questions or notes."
-            />
-            <button v-else type="button" :class="addButton" @click="add('message')"><Plus class="size-4" /> Add a message</button>
-          </div>
-
-          <div v-else class="space-y-4">
-            <dl class="bg-card divide-y rounded-2xl border shadow-sm">
-              <div v-for="s in summary" :key="s.title" class="flex items-start gap-2 py-3 pr-2 pl-4">
-                <div class="min-w-0 flex-1">
-                  <dt class="text-muted-foreground text-sm font-bold">{{ s.title }}</dt>
-                  <dd v-for="(line, i) in s.lines" :key="i" class="text-base break-words whitespace-pre-line">{{ line }}</dd>
+              <div v-if="step === 0" class="space-y-4">
+                <FormInput v-model="form.name" label="Name" required placeholder="e.g. Canadian Championship 2027" :error="errors.name" />
+                <FormInput v-model="form.date" label="Date" kind="date" required hint="The first day, if it runs over several." :error="errors.date" />
+                <FormInput
+                  v-if="adding.description || form.description"
+                  v-model="form.description"
+                  data-field="description"
+                  label="Description"
+                  kind="textarea"
+                  hint="Optional: anything else people should know. It’s shown on the competition page."
+                />
+                <FormInput
+                  v-if="adding.sobhd || form.sobhd"
+                  v-model="form.sobhd"
+                  data-field="sobhd"
+                  label="Registration number"
+                  placeholder="e.g. C-AB-CO-27-1234"
+                  hint="Optional: if it’s registered with an association, like the RSOBHD."
+                />
+                <div class="-mx-4 flex flex-wrap gap-x-2">
+                  <Button v-if="!adding.description && !form.description" variant="plain" @click="add('description')">
+                    <Plus /> Add a description
+                  </Button>
+                  <Button v-if="!adding.sobhd && !form.sobhd" variant="plain" @click="add('sobhd')">
+                    <Plus /> Add registration number
+                  </Button>
                 </div>
-                <button type="button" class="text-primary hover:bg-accent h-11 shrink-0 rounded-xl px-3 text-[0.9375rem] font-bold" @click="go(s.step)">
-                  Edit<span class="sr-only"> {{ s.title }}</span>
+              </div>
+
+              <div v-else-if="step === 1" class="space-y-4">
+                <VenueField v-if="placesAvailable" v-model="form.venue" @pick="pickVenue" />
+                <FormInput v-else v-model="form.venue" label="Venue name" placeholder="e.g. Telus Convention Centre" />
+                <FormInput v-model="form.address" label="Address" placeholder="e.g. 120 9th Ave SE" />
+                <FormInput v-model="form.location" label="Town or city" required placeholder="e.g. Calgary, AB" hint="Include the province or state." :error="errors.location" />
+              </div>
+
+              <div v-else-if="step === 2" class="space-y-4">
+                <FormInput v-model="form.contactName" label="Your name" required autocomplete="name" :error="errors.contactName" />
+                <div class="space-y-1.5">
+                  <p class="text-callout font-medium">Your email</p>
+                  <p class="text-base break-words">{{ me.email }}</p>
+                  <p class="text-muted-foreground text-sm">From your account.</p>
+                </div>
+                <FormInput
+                  v-if="adding.message || form.message"
+                  v-model="form.message"
+                  data-field="message"
+                  label="Message"
+                  kind="textarea"
+                  hint="Optional: questions or notes."
+                />
+                <Button v-else variant="plain" class="-ml-4" @click="add('message')"><Plus /> Add a message</Button>
+              </div>
+
+              <div v-else class="space-y-4">
+                <dl class="surface divide-y rounded-2xl">
+                  <div v-for="s in summary" :key="s.title" class="flex items-start gap-2 py-3 pr-2 pl-4">
+                    <div class="min-w-0 flex-1">
+                      <dt class="text-muted-foreground text-sm font-medium">{{ s.title }}</dt>
+                      <dd v-for="(line, i) in s.lines" :key="i" class="text-base break-words whitespace-pre-line">{{ line }}</dd>
+                    </div>
+                    <Button variant="plain" @click="go(s.step)">
+                      Edit<span class="sr-only"> {{ s.title }}</span>
+                    </Button>
+                  </div>
+                </dl>
+                <button
+                  type="button"
+                  role="checkbox"
+                  :aria-checked="form.agree"
+                  :aria-invalid="!!errors.agree || undefined"
+                  class="surface press-row focus-inset flex w-full items-start gap-3 rounded-2xl p-4 text-left"
+                  @click="form.agree = !form.agree"
+                >
+                  <Checkbox :checked="form.agree" class="mt-0.5" />
+                  <span>
+                    <span class="block text-base font-medium">I understand ScotDance is run by a volunteer</span>
+                    <span class="text-muted-foreground block text-sm">It’s offered as is, with no guarantees of any kind.</span>
+                    <span v-if="errors.agree" class="text-destructive block pt-1 text-sm font-medium" role="alert">{{ errors.agree }}</span>
+                  </span>
                 </button>
               </div>
-            </dl>
-            <label class="bg-card flex items-start gap-3 rounded-2xl border p-4">
-              <input v-model="form.agree" type="checkbox" :aria-invalid="!!errors.agree || undefined" class="accent-primary mt-1 size-5 shrink-0" />
-              <span>
-                <span class="block text-base font-bold">I understand ScotDance is run by a volunteer</span>
-                <span class="text-muted-foreground block text-sm">It’s offered as is, with no guarantees of any kind.</span>
-                <span v-if="errors.agree" class="text-destructive block pt-1 text-sm font-semibold" role="alert">{{ errors.agree }}</span>
-              </span>
-            </label>
-          </div>
+            </div>
+          </Transition>
 
-          <p v-if="sendError" class="text-destructive font-semibold" role="alert">{{ sendError }}</p>
+          <p v-if="sendError" class="text-destructive font-medium" role="alert">{{ sendError }}</p>
           <div class="flex gap-3">
-            <button
-              v-if="step > 0"
-              type="button"
-              :disabled="sending"
-              class="bg-card border-strong hover:bg-accent flex h-12 items-center gap-1 rounded-xl border pr-5 pl-3 text-base font-bold disabled:opacity-50"
-              @click="go(step - 1)"
-            >
-              <ChevronLeft class="size-5" /> Back
-            </button>
-            <button type="submit" :disabled="sending" class="bg-primary-fill text-primary-foreground flex h-12 flex-1 items-center justify-center gap-2 rounded-xl text-base font-bold disabled:opacity-50">
-              <template v-if="step < STEPS.length - 1">Next <ChevronRight class="-mr-1 size-5" /></template>
+            <Button v-if="step > 0" size="lg" class="pl-4" :disabled="sending" @click="go(step - 1)">
+              <ChevronLeft /> Back
+            </Button>
+            <Button type="submit" variant="primary" size="lg" class="flex-1" :busy="sending">
+              <template v-if="step < STEPS.length - 1">Next <ChevronRight /></template>
               <template v-else>
-                <LoaderCircle v-if="sending" class="size-5 animate-spin" />
-                <Send v-else class="size-5" />
+                <Send v-if="!sending" />
                 Submit
               </template>
-            </button>
+            </Button>
           </div>
         </form>
       </div>

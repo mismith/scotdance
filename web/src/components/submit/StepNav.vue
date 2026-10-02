@@ -14,12 +14,20 @@ defineEmits<{ go: [step: number] }>()
           type="button"
           :aria-current="i === current ? 'step' : undefined"
           :class="[
-            'flex min-h-11 w-full flex-col gap-2 rounded-md pt-1 pb-1.5 text-left text-sm font-bold',
+            'flex min-h-11 w-full flex-col gap-2 rounded-md pt-1 pb-1.5 text-left text-sm font-semibold',
             i === current ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
           ]"
           @click="$emit('go', i)"
         >
-          <span :class="['h-1.5 w-full rounded-full transition-colors', i <= current ? 'bg-primary-fill' : 'bg-border']" />
+          <!-- The bar fills from the left as you reach its step. -->
+          <span class="bg-border block h-1.5 w-full overflow-hidden rounded-full">
+            <span
+              :class="[
+                'bg-primary-fill block h-full origin-left rounded-full transition-transform duration-(--dur-slow) ease-snappy motion-reduce:transition-none',
+                i <= current ? 'scale-x-100' : 'scale-x-0',
+              ]"
+            />
+          </span>
           <span class="block truncate"><span class="sr-only">Step {{ i + 1 }}: </span>{{ label }}</span>
         </button>
       </li>
