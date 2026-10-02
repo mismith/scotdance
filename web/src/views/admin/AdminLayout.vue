@@ -10,6 +10,7 @@ import Skeleton from '@/components/Skeleton.vue'
 import SaveStatus from '@/components/admin/SaveStatus.vue'
 import { useSidebar, useSplit } from '@/composables/admin/useWide'
 import { viaHistory } from '@/composables/admin/useManageBack'
+import { provideSectionTitle } from '@/composables/admin/useSectionTitle'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
@@ -59,11 +60,21 @@ const exit = computed(() => {
   if (!sidebar.value && !isHome.value) return viaHistory(router, { to: { name: 'admin' }, label: 'System admin' })
   return viaHistory(router, { to: { name: 'manage.competitions' }, label: 'Manage' })
 })
+
+// As in Manage: the bar names the section once the page's own title has
+// scrolled away (see useSectionTitle), with System admin underneath, and
+// never repeats what Back already says. The home page has its own big title.
+const sectionTitle = provideSectionTitle()
+const barTitle = computed(() => {
+  const t = isHome.value ? null : (section.value?.title ?? null)
+  return t === exit.value.label ? null : t
+})
+const barSubtitle = computed(() => (isHome.value || exit.value.label === 'System admin' ? null : 'System admin'))
 </script>
 
 <template>
   <div class="flex min-h-dvh flex-col md:fixed md:inset-0 md:min-h-0">
-    <AppBar wide title="System admin" :subtitle="section?.title ?? null" show-title :scrolled="true" :exit="exit">
+    <AppBar wide :title="barTitle" :subtitle="barSubtitle" :show-title="sectionTitle.showInBar()" :scrolled="true" :exit="exit">
       <template #actions>
         <SaveStatus v-if="access === 'ok'" />
       </template>
