@@ -358,6 +358,39 @@ test('after an age group’s last dance, Next follows the running order', async 
   }
 })
 
+test('on a tablet, the list folds away and the header picks the age group and dance', async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== 'desktop', 'Tablet width')
+  await page.setViewportSize({ width: 1024, height: 768 })
+  const group = freshGroup()
+  const ds = dancersOf(group.id)
+  const [fling, sword] = comp.dances
+  const other = comp.groups[comp.groups.indexOf(group) + 1]
+  await put(`competitions:data/${comp.id}/results/${group.id}/callbacks`, ds.map((d) => d.id))
+  await put(`competitions:data/${comp.id}/results/${group.id}/${fling.id}`, [ds[0].id])
+
+  await signIn(page, email)
+  await entry(page, group.id, fling.id)
+  // No groups list beside the entry: the dancers get the width.
+  await expect(page.getByRole('button', { name: 'More for results' })).toBeHidden()
+  const dances = page.getByRole('navigation', { name: 'Dances' })
+  await expect(dances.getByRole('link', { name: 'Callbacks, entered' })).toBeVisible()
+  await expect(dances.getByRole('link', { name: /^Highland Fling.*, entered$/ })).toHaveAttribute('aria-current', 'page')
+  await dances.getByRole('link', { name: /^Sword Dance.*, not entered yet$/ }).click()
+  await expect(page).toHaveURL(new RegExp(`/results/${group.id}/${sword.id}$`))
+  await expect(page.getByRole('heading', { name: /Sword Dance/ })).toBeAttached()
+
+  // Another age group opens where its results left off: callbacks first.
+  await page.getByRole('combobox', { name: 'Age group' }).selectOption(other.id)
+  await expect(page).toHaveURL(new RegExp(`/results/${other.id}/callbacks$`))
+  // Without the sidebar, Back goes up to the list.
+  await page.setViewportSize({ width: 820, height: 1180 })
+  await page.getByRole('button', { name: 'Back to Results' }).click()
+  await expect(page.getByRole('button', { name: 'More for results' })).toBeVisible()
+  await put(`competitions:data/${comp.id}/results/${group.id}`, null)
+})
+
 test('fast taps keep their order; a double tap takes the dancer back out', async ({
   page,
 }) => {

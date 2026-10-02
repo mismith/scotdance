@@ -9,10 +9,11 @@ import SectionHeader from '@/components/admin/SectionHeader.vue'
 import SectionMenu from '@/components/admin/SectionMenu.vue'
 import Button from '@/components/ui/Button.vue'
 import { useHideTab } from '@/composables/admin/useHideTab'
+import { useManageBack } from '@/composables/admin/useManageBack'
 import { useManagedCompetition, type MGroup } from '@/composables/admin/useManagedCompetition'
 import { useSplit } from '@/composables/admin/useWide'
 import { canEdit } from '@/lib/admin/write'
-import { CALLBACKS, OVERALL, danceState, dancingNow, isPlaceholderId, parsePlacings, placeAt, resultRows, scheduleTurns } from '@/lib/admin/results'
+import { CALLBACKS, OVERALL, danceState, dancingNow, needsFixing, parsePlacings, placeAt, resultRows, scheduleTurns } from '@/lib/admin/results'
 import { competitionPhase } from '@/lib/dancerDay'
 
 const route = useRoute()
@@ -26,6 +27,13 @@ const danceId = computed(() => (route.params.danceId ? String(route.params.dance
 // Only enter results for what's listed: a removed dance (or an old link)
 // would otherwise save placings nobody can see.
 const openGroup = computed(() => (groupId.value ? (m.groupsById.value.get(groupId.value) ?? null) : null))
+
+// On tablets and laptops (md to xl) the list folds away while a dance is
+// open, so the dancers and Placed get the width; the entry's header picks
+// the age group and dance instead, and Back returns to the list.
+useManageBack(() =>
+  groupId.value && split.value ? { to: { name: 'manage.results', params: { competitionId: m.competitionId.value } }, label: 'Results' } : null,
+)
 
 const danceRows = (g: MGroup) => resultRows(g, m.groupDances(g.id))
 const danceIds = (g: MGroup) => danceRows(g).map((d) => d.id)
@@ -44,9 +52,7 @@ const live = computed(() =>
     : new Set<string>(),
 )
 const stateOf = (groupId: string, danceId: string) => danceState(m.results.value[groupId]?.[danceId])
-const hasPlaceholder = (groupId: string, danceId: string) =>
-  parsePlacings(m.results.value[groupId]?.[danceId]).entries.some((e) => isPlaceholderId(e.id)) ||
-  (m.points.value[groupId]?.[danceId]?.combined ?? []).some(isPlaceholderId)
+const hasPlaceholder = (groupId: string, danceId: string) => needsFixing(m.results.value[groupId]?.[danceId], m.points.value[groupId]?.[danceId]?.combined)
 
 // Which age groups are open, remembered on this device. The first (or the
 // one being entered) opens by default.
@@ -108,7 +114,7 @@ function exportCsv() {
 </script>
 
 <template>
-  <MasterDetail :show-detail="!!groupId">
+  <MasterDetail :show-detail="!!groupId" :class="groupId && 'md:max-xl:grid-cols-1! md:max-xl:[&>section:first-child]:hidden'">
     <template #list>
       <div class="space-y-6 p-4 pb-[calc(2rem+var(--safe-bottom))]">
         <SectionHeader title="Results" :count="!hideTab.hidden.value && totals.total ? `${totals.done} of ${totals.total} entered` : null">

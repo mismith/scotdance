@@ -1,18 +1,21 @@
 <script setup lang="ts">
-import { computed, ref, useId, watch } from 'vue'
-import { RouterLink } from 'vue-router'
-import { ChevronRight, CloudOff, Diamond, ListOrdered, Search, Trophy, X } from '@lucide/vue'
+import { computed, nextTick, onMounted, ref, useId, watch } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { useMediaQuery } from '@vueuse/core'
+import { ChevronDown, ChevronRight, CloudOff, Diamond, ListOrdered, Search, Trophy, X } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import HelpTip from '@/components/admin/HelpTip.vue'
 import NumberTile from '@/components/admin/NumberTile.vue'
 import PlacedList from '@/components/admin/PlacedList.vue'
+import ResultStatus from '@/components/admin/ResultStatus.vue'
 import Button from '@/components/ui/Button.vue'
 import Segmented from '@/components/ui/Segmented.vue'
 import Switch from '@/components/ui/Switch.vue'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
+import { competitionPhase } from '@/lib/dancerDay'
 import { selectionHaptic, tapHaptic } from '@/lib/haptics'
 import { useMorph } from '@/lib/morph'
 import { getOrdinalSuffix } from '@/lib/results'
@@ -20,7 +23,10 @@ import { isPrimaryCategory } from '@/types/competition'
 import {
   CALLBACKS,
   OVERALL,
+  danceState,
+  dancingNow,
   isPlaceholderId,
+  needsFixing,
   newPlaceholderId,
   parsePlacings,
   placeAt,
@@ -29,6 +35,7 @@ import {
   resultsOrder,
   scheduleTurns,
   serializePlacings,
+  stateLabel,
   type Entry,
   type Placings,
 } from '@/lib/admin/results'
@@ -42,6 +49,7 @@ import {
 const props = defineProps<{ groupId: string; danceId: string }>()
 
 const m = useManagedCompetition()
+const router = useRouter()
 const uid = useId()
 
 const group = computed(() => m.groupsById.value.get(props.groupId) ?? null)
@@ -219,16 +227,26 @@ const instruction = computed(() => {
     : 'Tap dancers in the order they placed, starting with 1st. Tap again to take one out.'
 })
 
+// This age group's callbacks, dances and Overall, with where each stands.
+const rows = computed(() =>
+  group.value
+    ? resultRows(group.value, m.groupDances(props.groupId)).map((r) => {
+        const raw = m.results.value[props.groupId]?.[r.id]
+        return { ...r, state: danceState(raw), fix: needsFixing(raw, m.points.value[props.groupId]?.[r.id]?.combined) }
+      })
+    : [],
+)
+
 // Where to carry straight on: this age group's next dance, then the next
 // age group in the running order (or list order with no schedule).
 const turns = computed(() => scheduleTurns(m.schedule.value, m.platforms.value))
 const next = computed(() => {
   const g = group.value
   if (!g) return null
-  const rows = resultRows(g, m.groupDances(g.id))
-  const i = rows.findIndex((d) => d.id === props.danceId)
+  const i = rows.value.findIndex((d) => d.id === props.danceId)
   if (i < 0) return null
-  if (rows[i + 1]) return { groupId: g.id, danceId: rows[i + 1].id, label: rows[i + 1].label }
+  const here = rows.value[i + 1]
+  if (here) return { groupId: g.id, danceId: here.id, label: here.label }
   const ids = resultsOrder(
     m.groups.value.filter((x) => x.id === g.id || m.groupDancers(x.id).length).map((x) => x.id),
     turns.value,
@@ -236,24 +254,70 @@ const next = computed(() => {
   const after = m.groupsById.value.get(ids[ids.indexOf(g.id) + 1] ?? '')
   return after ? { groupId: after.id, danceId: CALLBACKS, label: `${after.label} · Callbacks` } : null
 })
+
+// --- Tablets and laptops (md to xl): the list folds away (see Results), so
+// the header picks the age group and its dance.
+const live = computed(() =>
+  competitionPhase(m.competition.value?.date, m.schedule.value) === 'today' ? dancingNow(turns.value, m.results.value) : new Set<string>(),
+)
+/** Another age group: where its results left off (callbacks to start). */
+function pickGroup(id: string) {
+  const first = resultRows(m.groupsById.value.get(id) ?? {}, m.groupDances(id)).find((r) => danceState(m.results.value[id]?.[r.id]) === 'todo')
+  void router.replace({ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: id, danceId: first?.id ?? CALLBACKS } })
+}
+// Keep the open dance's pill in view.
+const pickers = useMediaQuery('(min-width: 768px) and (max-width: 1279.98px)')
+const pills = ref<HTMLElement | null>(null)
+const showCurrent = () => nextTick(() => pills.value?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }))
+onMounted(showCurrent)
+watch(() => props.danceId, showCurrent)
 </script>
 
 <template>
   <div v-if="group" class="flex flex-col md:h-full">
-    <header class="flex items-end gap-3 px-4 pt-4 pb-3">
-      <div class="min-w-0 flex-1">
+    <header class="flex flex-col gap-3 border-b px-4 pt-4 pb-3">
+      <div :class="['min-w-0', pickers && 'sr-only']">
         <p class="text-muted-foreground truncate text-sm font-medium">{{ group.label }}</p>
         <h1 class="text-title truncate">{{ danceName }}</h1>
       </div>
+      <div v-if="!isCallbacks && offersPoints || pickers" class="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <label v-if="pickers" class="relative max-w-full min-w-0">
+          <span class="sr-only">Age group</span>
+          <select
+            :value="groupId"
+            class="surface press h-11 max-w-full appearance-none truncate rounded-full pr-10 pl-4 text-base font-semibold"
+            @change="pickGroup(($event.target as HTMLSelectElement).value)"
+          >
+            <option v-for="g in m.groups.value" :key="g.id" :value="g.id">{{ g.label }}{{ live.has(g.id) ? ' · dancing now' : '' }}</option>
+          </select>
+          <ChevronDown class="text-muted-foreground pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2" aria-hidden="true" />
+        </label>
+        <!-- Placings / Points -->
+        <div v-if="!isCallbacks && offersPoints" :class="['flex max-w-sm min-w-64 flex-1 items-center gap-2', pickers && 'ml-auto']">
+          <Segmented v-model="tab" :options="TABS" label="Placings or points" class="flex-1" />
+          <HelpTip label="About championship points">
+            Championship points mark dancers who were placed by at least one judge, but whose combined score didn’t give them a place.
+          </HelpTip>
+        </div>
+      </div>
+      <nav v-if="pickers" ref="pills" aria-label="Dances" class="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
+        <RouterLink
+          v-for="r in rows"
+          :key="r.id"
+          :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId, danceId: r.id } }"
+          replace
+          :aria-current="r.id === danceId ? 'page' : undefined"
+          :aria-label="`${r.label}, ${stateLabel(r.state, r.fix)}`"
+          :class="[
+            'press text-callout inline-flex h-11 shrink-0 items-center gap-2 rounded-full pr-4 pl-3 font-semibold whitespace-nowrap',
+            r.id === danceId ? 'bg-primary-fill text-primary-foreground' : 'surface',
+          ]"
+        >
+          <ResultStatus :state="r.state" :fix="r.fix" :plain="r.id === danceId" />
+          {{ r.label }}
+        </RouterLink>
+      </nav>
     </header>
-
-    <!-- Placings / Points -->
-    <div v-if="!isCallbacks && offersPoints" class="flex items-center gap-2 border-b px-4 pb-3">
-      <Segmented v-model="tab" :options="TABS" label="Placings or points" class="max-w-sm flex-1" />
-      <HelpTip label="About championship points">
-        Championship points mark dancers who were placed by at least one judge, but whose combined score didn’t give them a place.
-      </HelpTip>
-    </div>
 
     <div class="md:grid md:min-h-0 md:flex-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
       <!-- Dancers to tap -->

@@ -80,7 +80,15 @@ export const isTied = (index: number, { entries }: Placings) => !!(entries[index
 export const isPlaceholderId = (id: string) => /^\d+$/.test(id)
 export const newPlaceholderId = () => String(Date.now())
 
+/** A "?" in a dance's placings or championship points still needs fixing. */
+export const needsFixing = (raw: DancePlacing[] | false | null | undefined, pointed: string[] = []) =>
+  parsePlacings(raw).entries.some((e) => isPlaceholderId(e.id)) || pointed.some(isPlaceholderId)
+
 export type DanceState = 'done' | 'none' | 'todo'
+
+/** The state in words, for screen readers. */
+export const stateLabel = (state: DanceState, fix = false) =>
+  fix ? 'has a ? to fix' : state === 'done' ? 'entered' : state === 'none' ? 'none placed' : 'not entered yet'
 
 /** done: placings entered; none: marked "none placed"; todo: nothing yet. */
 export function danceState(raw: DancePlacing[] | false | null | undefined): DanceState {
