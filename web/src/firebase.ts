@@ -1,5 +1,11 @@
 import { initializeApp } from 'firebase/app'
-import { getAuth, connectAuthEmulator } from 'firebase/auth'
+import {
+  browserLocalPersistence,
+  browserSessionPersistence,
+  connectAuthEmulator,
+  indexedDBLocalPersistence,
+  initializeAuth,
+} from 'firebase/auth'
 import { getDatabase, connectDatabaseEmulator, ref as dbRef } from 'firebase/database'
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions'
 
@@ -16,7 +22,12 @@ export const firebaseApp = initializeApp({
 
 export const NAMESPACE = import.meta.env.VITE_FIREBASE_DATA_NAMESPACE || 'production'
 
-export const auth = getAuth(firebaseApp)
+// Email and password only, so no popup or redirect sign-in. (getAuth() would
+// add its helper, whose hidden iframe never answers in the iOS app, at
+// capacitor://localhost: auth never got ready, and nor did any database read.)
+export const auth = initializeAuth(firebaseApp, {
+  persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence],
+})
 export const database = getDatabase(firebaseApp)
 export const functions = getFunctions(firebaseApp)
 

@@ -1,11 +1,11 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { createHead } from '@unhead/vue/client'
-import { VueFire, VueFireAuth, VueFireDatabaseOptionsAPI } from 'vuefire'
+import { VueFire, VueFireAuthOptionsFromAuth, VueFireDatabaseOptionsAPI } from 'vuefire'
 
 import App from './App.vue'
 import { router } from './router'
-import { firebaseApp } from './firebase'
+import { auth, firebaseApp } from './firebase'
 import { vTapFeedback } from './directives/tapFeedback'
 import { setupNative } from './lib/native'
 import './composables/useTheme'
@@ -19,7 +19,8 @@ app.use(createHead())
 app.use(router)
 app.use(VueFire, {
   firebaseApp,
-  modules: [VueFireAuth(), VueFireDatabaseOptionsAPI()],
+  // The auth made in firebase.ts (VueFireAuth() would make its own, with the popup helper).
+  modules: [VueFireAuthOptionsFromAuth({ auth }), VueFireDatabaseOptionsAPI()],
 })
 
 app.directive('tap-feedback', vTapFeedback)
