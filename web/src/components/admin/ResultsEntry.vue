@@ -13,6 +13,7 @@ import Button from '@/components/ui/Button.vue'
 import Segmented from '@/components/ui/Segmented.vue'
 import Switch from '@/components/ui/Switch.vue'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
+import { useSplit } from '@/composables/admin/useWide'
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import { competitionPhase } from '@/lib/dancerDay'
@@ -112,8 +113,37 @@ async function save(value: Placings | false | null, label: string) {
   }
 }
 
+// On wide screens, a tapped number card flies across into Placed. A copy
+// flies, so taps carry on landing underneath it.
+const split = useSplit()
+const placedSection = ref<HTMLElement | null>(null)
+async function fly(row: EventTarget | null | undefined, id: string) {
+  const from = row instanceof HTMLElement ? row.querySelector<HTMLElement>('[data-tile]') : null
+  if (!from || !split.value || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  const start = from.getBoundingClientRect()
+  await nextTick()
+  const to = placedSection.value?.querySelector<HTMLElement>(`[data-tile="${CSS.escape(id)}"]`)
+  const end = to?.getBoundingClientRect()
+  if (!to || !end || end.bottom < 0 || end.top > innerHeight) return
+  // Land where the row settles, not where its ease-in starts.
+  const [, rise = '0'] = getComputedStyle(to.closest('li') ?? to).translate.split(' ')
+  const card = from.cloneNode(true) as HTMLElement
+  card.className += ' pointer-events-none fixed z-50 m-0 shadow-(--shadow-raised) transition-[translate] duration-(--dur-slow) ease-snappy'
+  Object.assign(card.style, { left: `${start.left}px`, top: `${start.top}px`, width: `${start.width}px` })
+  document.body.append(card)
+  to.style.opacity = '0'
+  card.getBoundingClientRect()
+  card.style.translate = `${end.left - start.left}px ${end.top - parseFloat(rise) - start.top}px`
+  const land = () => {
+    card.remove()
+    to.style.opacity = ''
+  }
+  card.addEventListener('transitionend', land, { once: true })
+  setTimeout(land, 600)
+}
+
 /** Tap a dancer: add them to the end, or take them out if already there. */
-function place(id: string) {
+function place(id: string, e?: Event) {
   if (!canEdit.value) return
   tapHaptic()
   const p = parsePlacings(rawNow())
@@ -127,6 +157,7 @@ function place(id: string) {
   const at = placeAt(added.entries.length - 1, added)
   announcement.value = isCallbacks.value ? `${spoken(id)} called back` : at ? `${spoken(id)} placed ${at}${getOrdinalSuffix(at)}` : `${spoken(id)} placed`
   void save(added, `Placed ${who(id)}`)
+  void fly(e?.currentTarget, id)
 }
 function remove(index: number) {
   const p = parsePlacings(rawNow())
@@ -158,10 +189,10 @@ function point(id: string) {
     .catch((e) => toast(friendlyError(e), { tone: 'error' }))
 }
 
-function tapPlaceholder() {
+function tapPlaceholder(e: Event) {
   const id = newPlaceholderId()
   if (tab.value === 'points') point(id)
-  else place(id)
+  else place(id, e)
 }
 
 // --- Championship: entered from the lowest place up to 1st. Switching it on
@@ -355,9 +386,9 @@ watch(() => props.danceId, showCurrent)
                   :disabled="rowDisabled(d.id)"
                   :aria-pressed="tab === 'placings' ? placedIndex.has(d.id) : pointed.has(d.id)"
                   :class="['press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left', rowDimmed(d.id) && 'opacity-35']"
-                  @click="tab === 'placings' ? place(d.id) : point(d.id)"
+                  @click="tab === 'placings' ? place(d.id, $event) : point(d.id)"
                 >
-                  <NumberTile :num="d.num" />
+                  <NumberTile :num="d.num" data-tile />
                   <span class="min-w-0 flex-1">
                     <span class="block truncate text-base font-semibold">{{ d.label }}</span>
                     <span v-if="d.location" class="text-muted-foreground block truncate text-sm">{{ d.location }}</span>
@@ -373,7 +404,7 @@ watch(() => props.danceId, showCurrent)
                   class="press-row focus-inset flex min-h-16 w-full items-center gap-3 bg-[repeating-linear-gradient(135deg,transparent_0_10px,color-mix(in_oklab,var(--color-next)_60%,transparent)_10px_20px)] px-4 py-2 text-left"
                   @click="tapPlaceholder"
                 >
-                  <NumberTile unknown />
+                  <NumberTile unknown data-tile />
                   <span class="min-w-0 flex-1">
                     <span class="block text-base font-semibold">Dancer</span>
                     <span class="text-muted-foreground block text-sm">A stand-in for a number that was missed, misheard or wrong. Fix it later.</span>
@@ -439,7 +470,7 @@ watch(() => props.danceId, showCurrent)
       </section>
 
       <!-- The placed order -->
-      <section class="min-w-0 max-md:border-t-8 max-md:border-muted md:overflow-y-auto">
+      <section ref="placedSection" class="min-w-0 max-md:border-t-8 max-md:border-muted md:overflow-y-auto">
         <template v-if="tab === 'placings'">
           <h2 class="text-muted-foreground flex items-center gap-1.5 px-4 pt-3 pb-2 text-sm font-semibold">
             {{ isCallbacks ? `Called back · ${placings.entries.length}` : 'Placed' }}
@@ -447,8 +478,9 @@ watch(() => props.danceId, showCurrent)
               Drag the handle to change the order. Switch on Tie when a dancer shares the place of the dancer above. Tap a dancer to take them out.
             </HelpTip>
           </h2>
+          <!-- Kept while empty, so the first placing lands like the rest -->
           <PlacedList
-            v-if="placings.entries.length"
+            :key="danceId"
             :placings="placings"
             :dancers-by-id="m.dancersById.value"
             :kind="kind"
@@ -457,7 +489,7 @@ watch(() => props.danceId, showCurrent)
             @reorder="reorder"
             @fix="openFix"
           />
-          <template v-else>
+          <template v-if="!placings.entries.length">
             <EmptyState
               size="inline"
               :icon="ListOrdered"
