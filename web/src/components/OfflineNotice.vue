@@ -18,18 +18,19 @@ const savedWhen = computed(() => {
 
 <template>
   <Transition
-    enter-active-class="transition duration-300 ease-rubber-band motion-reduce:transition-none"
+    enter-active-class="transition duration-(--dur-slow) ease-snappy motion-reduce:transition-none"
     enter-from-class="translate-y-4 opacity-0"
-    leave-active-class="transition duration-200 ease-in motion-reduce:transition-none"
+    leave-active-class="transition duration-(--dur-quick) ease-exit motion-reduce:transition-none"
     leave-to-class="translate-y-4 opacity-0"
   >
     <div
       v-if="savedWhen"
-      class="pointer-events-none fixed inset-x-4 bottom-[calc(var(--chrome-bottom)+0.75rem)] z-40 flex justify-center"
+      data-offline-notice
+      class="pointer-events-none fixed inset-x-4 bottom-(--notice-bottom) z-40 flex justify-center"
       role="status"
       aria-live="polite"
     >
-      <p class="glass text-foreground flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold shadow-lg">
+      <p class="hud flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium">
         <CloudOff class="size-4 shrink-0" />
         Offline · last updated {{ savedWhen }}
       </p>

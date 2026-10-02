@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, type Component } from 'vue'
+import { computed, ref, watch, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { CalendarDays, Clock, House, LayoutGrid, Search, Trophy, Users } from '@lucide/vue'
 import TabBar, { type TabItem } from '@/components/nav/TabBar.vue'
@@ -65,6 +65,20 @@ function leave() {
   else goUp(router, { name: 'competitions' })
 }
 
+// A dancer opened from Schedule or Results keeps that tab lit (and Back
+// returns to it), like iOS tab stacks; opened from Dancers or a link, Dancers.
+const lastTab = ref<string | null>(null)
+watch(
+  () => route.name,
+  (name) => {
+    if (name === 'competition.dancer') return
+    lastTab.value = TABS.find((t) => t.matches.includes(String(name)))?.to ?? null
+  },
+  { immediate: true },
+)
+const isActive = (t: (typeof TABS)[number]) =>
+  route.name === 'competition.dancer' && lastTab.value ? t.to === lastTab.value : t.matches.includes(String(route.name ?? ''))
+
 const items = computed<TabItem[]>(() =>
   TABS.filter(
     (t) =>
@@ -74,7 +88,7 @@ const items = computed<TabItem[]>(() =>
     label: t.label,
     icon: t.icon,
     to: { name: t.to, params: { competitionId: competitionId.value } },
-    active: t.matches.includes(String(route.name ?? '')),
+    active: isActive(t),
   })),
 )
 </script>
