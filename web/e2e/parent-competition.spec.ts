@@ -80,6 +80,34 @@ test('Directions offers the map apps and copies the address; the map opens full 
   await expect(sheet.getByRole('link', { name: 'Google Maps' })).toBeVisible()
 })
 
+test('an event’s rows open the dancing order, posted ones add Results, and judges say what they judge', async ({ page }) => {
+  await page.goto(`/competitions/${comp.id}/schedule/${comp.id}-day1/${comp.id}-b1/${comp.id}-e1`)
+  await page.getByRole('button', { name: /^Primary Under 7/ }).first().click()
+  const sheet = page.locator('dialog[open]')
+  await expect(sheet.getByText('Dancing order')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(sheet).toHaveCount(0)
+
+  await page.getByRole('button', { name: /Aileen Robertson/ }).first().click()
+  await expect(sheet.getByText(/Judging here/).locator('..')).toContainText('Platform A · Highland Fling (4), Sword Dance (2&1)')
+  await page.keyboard.press('Escape')
+
+  await page.getByRole('link', { name: 'Primary Under 7 results' }).first().click()
+  await expect(page).toHaveURL(new RegExp(`/results/${comp.id}-grp-00#dance-`))
+})
+
+test('a Ceilidh or reception in the schedule says what it is, with no page to open', async ({ page }) => {
+  const path = `competitions:data/${comp.id}/schedule/days/${comp.id}-day1/blocks/${comp.id}-b2/events/${comp.id}-e9`
+  await dbSet(path, { order: 1, name: 'Ceilidh', description: 'Everyone welcome in the main hall.' })
+  try {
+    await page.goto(`/competitions/${comp.id}/schedule`)
+    await expect(page.getByText('Everyone welcome in the main hall.')).toBeVisible()
+    await expect(page.getByRole('link', { name: /Ceilidh/ })).toHaveCount(0)
+  } finally {
+    await dbSet(path, null)
+  }
+})
+
 test('hidden Schedule and Results tabs go from the bar, and their links say why', async ({ page }) => {
   await dbSet(`competitions:data/${comp.id}/schedule`, false)
   await dbSet(`competitions:data/${comp.id}/results`, false)

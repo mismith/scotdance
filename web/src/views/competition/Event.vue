@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { useMorph } from '@/lib/morph'
 import MyDancerLine from '@/components/MyDancerLine.vue'
-import ResultsMark from '@/components/ResultsMark.vue'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { ChevronRight, Clock } from '@lucide/vue'
+import { Check, Clock } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { oncePerPerson, useFollowing } from '@/composables/useFollowing'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import DrawDialog from '@/components/DrawDialog.vue'
+import Skeleton from '@/components/Skeleton.vue'
+import StaffAvatar from '@/components/StaffAvatar.vue'
 import StaffDialog from '@/components/StaffDialog.vue'
 import { dances as eventDances, dayLabel, days, getScheduleDanceName, platformLabel, slugline } from '@/lib/schedule'
 import { findGroupDancers, getOrdinalSuffix, isPosted } from '@/lib/results'
@@ -24,8 +25,8 @@ import {
 
 // One event in the schedule: each dance, then each platform with its judges
 // and the age groups in the order they'll dance. Your dancers are called out
-// with where they fall in the dancing order; tapping a group shows the full
-// order. Results link straight through once posted.
+// with where they fall in the dancing order; tapping a group always shows
+// the full order, and a Results pill goes to the placings once posted.
 const route = useRoute()
 const setHeader = injectInfoHeaderSetter()
 const {
@@ -147,18 +148,38 @@ function openJudge(e: MouseEvent, judge: StaffMember) {
   activeJudge.value = judge
   judgeSheet.show(e)
 }
+
+// Why you tapped a judge: where they're judging in this event, and what.
+// "Platform A · Highland Fling, Sword Dance".
+const judging = computed(() => {
+  const j = activeJudge.value
+  if (!j) return null
+  const byPlatform = new Map<string, string[]>()
+  sections.value.forEach((s, i) => {
+    for (const p of s.platforms) {
+      if (!p.judges.some((x) => x.id === j.id)) continue
+      byPlatform.set(p.name, [...(byPlatform.get(p.name) ?? []), s.name ?? `Dance ${i + 1}`])
+    }
+  })
+  return [...byPlatform].map(([platform, names]) => `${platform} · ${names.join(', ')}`).join('; ') || null
+})
 </script>
 
 <template>
   <article class="space-y-4">
-    <p v-if="schedule === null" class="text-muted-foreground py-6 text-base">Loading…</p>
+    <!-- The page's shape, if it's slow to come (skeletons wait 150ms). -->
+    <div v-if="schedule === null" class="space-y-4" aria-busy="true">
+      <span class="sr-only">Loading…</span>
+      <div class="space-y-2"><Skeleton class="h-4 w-1/3" /><Skeleton class="h-8 w-1/2" /></div>
+      <Skeleton class="h-72 w-full rounded-2xl!" />
+    </div>
     <p v-else-if="!event" class="text-muted-foreground py-6 text-base">
       This part of the schedule has changed. Go back to Schedule to see the latest.
     </p>
 
     <template v-else>
       <header :ref="setHeader" class="space-y-1">
-        <p class="text-muted-foreground flex items-center gap-1.5 text-sm font-bold">
+        <p class="text-muted-foreground flex items-center gap-1.5 text-sm font-medium">
           <Clock class="size-4" />
           {{ [dayName, block?.name, blockTime].filter(Boolean).join(' · ') }}
         </p>
@@ -172,21 +193,15 @@ function openJudge(e: MouseEvent, judge: StaffMember) {
 
       <p v-if="!sections.length" class="text-muted-foreground text-base">Nothing is scheduled in this part yet.</p>
 
-      <section
-        v-for="(s, i) in sections"
-        :key="s.sd.id"
-        class="bg-card overflow-hidden rounded-2xl border shadow-sm"
-      >
-        <header class="flex items-center justify-between gap-2 border-b py-2.5 pr-2.5 pl-4">
-          <span class="min-w-0">
-            <span class="text-heading block">{{ s.name ?? `Dance ${i + 1}` }}</span>
-            <span v-if="s.realName" class="text-muted-foreground block text-sm">{{ s.realName }}</span>
-          </span>
+      <section v-for="(s, i) in sections" :key="s.sd.id" class="surface divide-y overflow-hidden rounded-2xl">
+        <header class="px-4 py-3">
+          <h2 class="text-heading">{{ s.name ?? `Dance ${i + 1}` }}</h2>
+          <p v-if="s.realName" class="text-muted-foreground text-sm">{{ s.realName }}</p>
         </header>
 
         <div
           v-if="s.sd.description"
-          class="border-b px-4 py-3 text-base [&_a]:text-primary [&_a]:underline"
+          class="px-4 py-3 text-base [&_a]:text-primary [&_a]:underline"
           v-html="sanitizeRichText(s.sd.description)"
         />
 
@@ -194,32 +209,34 @@ function openJudge(e: MouseEvent, judge: StaffMember) {
           Platforms haven’t been assigned yet.
         </p>
 
-        <div v-for="p in s.platforms" :key="p.id" class="border-t first:border-t-0">
-          <div class="bg-muted/60 flex flex-wrap items-baseline justify-between gap-x-3 px-4 py-2">
-            <span class="text-base font-extrabold">{{ p.name }}</span>
-            <span v-if="p.judges.length" class="text-muted-foreground text-sm">
-              <template v-for="(j, ji) in p.judges" :key="j.id">
-                <button type="button" class="hover:text-foreground font-semibold underline-offset-2 hover:underline" @click="openJudge($event, j)">
-                  {{ staffMemberName(j) || 'Judge' }}</button><span v-if="ji < p.judges.length - 1">, </span>
-              </template>
-            </span>
+        <div v-for="p in s.platforms" :key="p.id">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 pt-3 pb-2">
+            <h3 class="text-callout font-semibold">{{ p.name }}</h3>
+            <!-- Judges: chips that open each one's sheet. -->
+            <div v-if="p.judges.length" class="flex flex-wrap gap-1.5">
+              <button
+                v-for="j in p.judges"
+                :key="j.id"
+                type="button"
+                class="press bg-muted text-callout relative flex h-9 items-center gap-2 rounded-full pr-3 pl-1 font-medium after:absolute after:inset-x-0 after:-inset-y-1"
+                @click="openJudge($event, j)"
+              >
+                <StaffAvatar :member="j" :size="28" />
+                {{ staffMemberName(j) || 'Judge' }}
+              </button>
+            </div>
           </div>
-          <ul class="divide-y">
-            <li v-for="g in p.groups" :key="g.group.id">
-              <component
-                :is="g.posted ? RouterLink : 'button'"
-                v-bind="
-                  g.posted
-                    ? { to: { name: 'competition.group', params: { competitionId, groupId: g.group.id }, hash: `#dance-${s.sd.danceId}` } }
-                    : { type: 'button' }
-                "
-                class="relative flex min-h-14 w-full items-center gap-3 py-2 pr-2 pl-4 text-left hover:bg-accent"
+          <ul class="rows-inset">
+            <li v-for="g in p.groups" :key="g.group.id" class="relative flex items-center">
+              <button
+                type="button"
+                class="press-row focus-inset relative flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 pr-2 pl-4 text-left"
                 :style="g.mine.length ? { '--dc': g.mine[0].color ?? 'var(--primary)' } : undefined"
-                @click="!g.posted && openDraw($event, g.group, s.sd)"
+                @click="openDraw($event, g.group, s.sd)"
               >
                 <span v-if="g.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
                 <span class="min-w-0 flex-1">
-                  <span class="block text-base font-bold">{{ g.group.fullName }}</span>
+                  <span class="block text-base font-semibold">{{ g.group.fullName }}</span>
                   <span class="text-muted-foreground block text-sm">{{ g.count }} dancers</span>
                   <MyDancerLine
                     v-for="m in g.mine"
@@ -230,10 +247,17 @@ function openJudge(e: MouseEvent, judge: StaffMember) {
                     class="mt-1"
                   />
                 </span>
-                <ResultsMark v-if="g.posted" :posted="1" :total="1" />
-                <span v-else class="text-primary shrink-0 text-sm font-bold">Order</span>
-                <ChevronRight class="text-muted-foreground size-5 shrink-0" />
-              </component>
+                <span v-if="!g.posted" class="text-primary text-footnote shrink-0 font-medium">Dancing order</span>
+              </button>
+              <!-- Once posted, the placings are a tap away; the row still opens the order. -->
+              <RouterLink
+                v-if="g.posted"
+                :to="{ name: 'competition.group', params: { competitionId, groupId: g.group.id }, hash: `#dance-${s.sd.danceId}` }"
+                :aria-label="`${g.group.fullName} results`"
+                class="press bg-done text-done-foreground text-footnote relative mr-3 flex h-8 shrink-0 items-center gap-1 rounded-full pr-3 pl-2 font-semibold after:absolute after:-inset-1.5"
+              >
+                <Check class="size-4" stroke-width="2.75" /> Results
+              </RouterLink>
             </li>
           </ul>
         </div>
@@ -248,6 +272,11 @@ function openJudge(e: MouseEvent, judge: StaffMember) {
       :morph="drawSheet"
       @close="drawSheet.hide().then(() => (drawGroup = null))"
     />
-    <StaffDialog :member="activeJudge" :morph="judgeSheet" @close="judgeSheet.hide().then(() => (activeJudge = null))" />
+    <StaffDialog
+      :member="activeJudge"
+      :judging="judging"
+      :morph="judgeSheet"
+      @close="judgeSheet.hide().then(() => (activeJudge = null))"
+    />
   </article>
 </template>
