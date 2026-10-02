@@ -50,6 +50,8 @@ const access = computed<Access>(() => {
 
 const section = computed(() => ALL_SECTIONS.find((s) => route.matched.some((r) => r.name === s.route)))
 const isHome = computed(() => route.name === 'manage')
+// Entering results needs the width: the sidebar folds to its icons.
+const rail = computed(() => route.name === 'manage.results' && !!route.params.groupId)
 const name = computed(() => m.competition.value?.name || 'Competition')
 
 usePageTitle(() => [route.meta.title as string | undefined, section.value?.title, 'Manage', m.competition.value?.name])
@@ -162,9 +164,12 @@ const barTitle = computed(() => (isHome.value ? 'Manage' : ((route.meta.title as
     <div class="flex flex-1 pt-(--chrome-top) md:min-h-0 md:overflow-hidden">
       <aside
         v-if="sidebar && access === 'ok'"
-        class="bg-background w-68 shrink-0 overflow-y-auto border-r px-3 pt-4 pb-8"
+        :class="[
+          'bg-background shrink-0 overflow-x-hidden overflow-y-auto border-r pt-4 pb-8 transition-[width,padding] duration-(--dur-base) ease-snappy motion-reduce:transition-none',
+          rail ? 'w-16 px-2' : 'w-68 px-3',
+        ]"
       >
-        <SectionNav compact />
+        <SectionNav compact :rail="rail" />
       </aside>
 
       <main class="min-w-0 flex-1 md:overflow-y-auto">
