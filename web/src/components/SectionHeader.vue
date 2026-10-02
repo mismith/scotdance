@@ -10,7 +10,7 @@ defineProps<{
 
 <template>
   <div
-    class="flex items-center gap-3 px-1 pt-2 text-[1.0625rem] font-extrabold"
+    class="text-heading flex items-center gap-3 px-1 pt-2"
   >
     <span>{{ label }}</span>
     <span class="border-border flex-1 border-t" aria-hidden="true" />
