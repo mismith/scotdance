@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { Check } from '@lucide/vue'
+import Button from '@/components/ui/Button.vue'
+import Checkbox from '@/components/ui/Checkbox.vue'
 import Dialog from '@/components/Dialog.vue'
 import { ROLES, useRoles, type Role } from '@/composables/useRoles'
 
@@ -36,29 +37,19 @@ async function save() {
     </template>
     <div class="space-y-4 p-4 pb-[calc(1.5rem+var(--safe-bottom))]">
       <p class="text-base">Pick all that apply.</p>
-      <div class="space-y-2" role="group" aria-label="How you use ScotDance">
+      <div class="surface rows-inset overflow-hidden rounded-2xl [--inset:3.125rem]" role="group" aria-label="How you use ScotDance">
         <button
           v-for="role in ROLES"
           :key="role.id"
           type="button"
           role="checkbox"
           :aria-checked="!!picked[role.id]"
-          :class="[
-            'flex min-h-14 w-full items-center gap-3 rounded-xl border-2 px-4 py-2 text-left transition-colors',
-            picked[role.id] ? 'border-primary bg-blue-paper' : 'border-border bg-card',
-          ]"
+          class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left"
           @click="picked = { ...picked, [role.id]: !picked[role.id] }"
         >
-          <span
-            :class="[
-              'flex size-6 shrink-0 items-center justify-center rounded-md border-2',
-              picked[role.id] ? 'border-primary bg-primary-fill text-primary-foreground' : 'border-strong',
-            ]"
-          >
-            <Check v-if="picked[role.id]" class="size-4" stroke-width="3" />
-          </span>
+          <Checkbox :checked="!!picked[role.id]" />
           <span class="min-w-0">
-            <span class="block text-base font-bold">{{ role.label }}</span>
+            <span class="block text-base font-medium">{{ role.label }}</span>
             <span class="text-muted-foreground block text-sm">{{ role.hint }}</span>
           </span>
         </button>
@@ -68,17 +59,10 @@ async function save() {
         organisers get quick access to their competitions. It also tells the volunteer who builds ScotDance who it’s
         for, so the next features help the right people. Change it any time in your account.
       </p>
-      <button
-        type="button"
-        class="bg-primary-fill text-primary-foreground h-12 w-full rounded-xl text-base font-bold disabled:opacity-60"
-        :disabled="saving"
-        @click="save"
-      >
-        {{ saving ? 'Saving…' : 'Save' }}
-      </button>
-      <button type="button" class="text-muted-foreground h-11 w-full text-[0.9375rem] font-bold" @click="r.close()">
-        Skip for now
-      </button>
+      <div class="space-y-1">
+        <Button variant="primary" size="lg" block :busy="saving" @click="save">Save</Button>
+        <Button variant="plain" block class="text-muted-foreground" @click="r.close()">Skip for now</Button>
+      </div>
     </div>
   </Dialog>
 </template>

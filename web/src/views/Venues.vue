@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { MapPin } from '@lucide/vue'
 import EntityIndex from '@/components/EntityIndex.vue'
 import { countryName } from '@/lib/flagEmoji'
 
@@ -22,5 +23,7 @@ function subtitleOf(agg: {
     route-prefix="venue"
     id-param="venueId"
     :subtitle-of="subtitleOf"
+    placeholder="Find a venue by name"
+    :places="MapPin"
   />
 </template>

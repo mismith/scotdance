@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
-import { Star } from '@lucide/vue'
+import { ChevronDown, Star, StarOff } from '@lucide/vue'
+import Dialog from '@/components/Dialog.vue'
+import DancerColorPicker from '@/components/DancerColorPicker.vue'
 import { useFollowing, type FollowableDancer } from '@/composables/useFollowing'
+import { followHaptic } from '@/lib/haptics'
+import { useMorph } from '@/lib/morph'
 
-// Follow a dancer. On their page it's a full-width "Follow" / "Following"
-// button; in long lists it's just the star (the familiar v3 symbol), filled
-// in their colour once followed, so a list of 150 isn't a wall of buttons.
-// Hidden when the record isn't linked to a person yet (no aggregate id),
-// since following is per person, not per entry.
+// Follow a dancer. On their page it's a full-width button: Follow, then
+// Following, which opens a small menu with their colour and Stop following.
+// In long lists it's just the star, filled red once followed (the one mark
+// for following), so a list of 150 isn't a wall of buttons. Hidden when the
+// record isn't linked to a person yet (no aggregate id), since following is
+// per person, not per entry.
+defineOptions({ inheritAttrs: false })
 const props = withDefaults(
   defineProps<{
     dancer: FollowableDancer
@@ -18,44 +24,88 @@ const props = withDefaults(
 
 const following = useFollowing()
 const on = computed(() => following.isFollowing(props.dancer))
-const color = computed(() => following.colorFor(props.dancer.dancerId) ?? 'var(--primary)')
 const popping = ref(false)
 const name = computed(
   () => props.dancer.fullName ?? `${props.dancer.firstName ?? ''} ${props.dancer.lastName ?? ''}`.trim(),
 )
+const menu = useMorph()
 
 async function onClick(e: Event) {
   e.preventDefault()
   e.stopPropagation()
+  if (on.value && props.size === 'block') {
+    menu.show(e)
+    return
+  }
+  const was = on.value
   await following.toggle(props.dancer)
-  popping.value = false
-  await nextTick()
-  popping.value = true
+  // A small lift and a firm tap for following; nothing for unfollowing.
+  if (!was && following.isFollowing(props.dancer)) {
+    followHaptic()
+    popping.value = false
+    await nextTick()
+    popping.value = true
+  }
+}
+
+function stop() {
+  menu.dismiss()
+  void following.setFollowing(props.dancer, false)
 }
 </script>
 
 <template>
   <button
     v-if="dancer.dancerId"
-    v-tap-feedback
+    v-bind="$attrs"
     type="button"
     :aria-pressed="on"
     :aria-label="`${on ? 'Following' : 'Follow'} ${name}`"
-    :style="on ? (size === 'row' ? { color } : { backgroundColor: `color-mix(in srgb, ${color} 16%, var(--card))`, borderColor: 'transparent' }) : undefined"
+    :aria-haspopup="on && size === 'block' ? 'dialog' : undefined"
     :class="[
-      'relative inline-flex shrink-0 items-center justify-center gap-1.5 font-bold transition-colors',
+      'relative inline-flex shrink-0 items-center justify-center gap-1.5 font-semibold transition-colors',
       size === 'row'
-        ? ['size-11 rounded-full hover:bg-accent', !on && 'text-muted-foreground']
-        : ['h-12 w-full rounded-xl border px-4 text-base', on ? 'text-foreground' : 'bg-primary-fill border-primary text-primary-foreground'],
+        ? ['press size-11 rounded-full', on ? 'text-secondary' : 'text-muted-foreground']
+        : [
+            'h-12 w-full rounded-full px-5 text-base',
+            on ? 'bg-blue-paper text-primary press' : 'bg-primary-fill text-primary-foreground press-fill',
+          ],
     ]"
     @click="onClick"
   >
     <Star
-      :class="[size === 'row' ? 'size-6' : 'size-5', on && 'fill-current', popping && 'animate-pop']"
-      :stroke-width="size === 'row' ? 2 : 2.4"
-      :style="on && size !== 'row' ? { color } : undefined"
+      :class="[
+        size === 'row' ? 'size-6' : 'size-5',
+        on && 'fill-current',
+        on && size === 'block' && 'text-secondary',
+        popping && 'motion-safe:animate-pop',
+      ]"
+      :stroke-width="size === 'row' ? 2 : 2.25"
+      aria-hidden="true"
       @animationend="popping = false"
     />
-    <template v-if="size !== 'row'">{{ on ? 'Following' : 'Follow' }}</template>
+    <template v-if="size !== 'row'">
+      {{ on ? 'Following' : 'Follow' }}
+      <ChevronDown v-if="on" class="size-4 opacity-70" aria-hidden="true" />
+    </template>
   </button>
+
+  <Dialog
+    v-if="size === 'block' && dancer.dancerId"
+    :open="menu.open"
+    :morph="menu"
+    variant="dropdown"
+    :aria-label="`Following ${name}`"
+    @close="menu.hide()"
+  >
+    <DancerColorPicker :dancer-id="dancer.dancerId" :dancer-name="name" class="px-3 pt-2 pb-3" />
+    <button
+      type="button"
+      class="press-row focus-inset text-destructive flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-base font-medium"
+      @click="stop"
+    >
+      <StarOff class="size-5" aria-hidden="true" />
+      Stop following
+    </button>
+  </Dialog>
 </template>

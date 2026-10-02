@@ -44,6 +44,15 @@ async function signInFromHome(page: Page, email: string) {
 
 const card = (page: Page, p: Person) => page.locator('article').filter({ hasText: p.name })
 
+/** On their page, Following opens a small menu: their colour, and Stop following. */
+async function followingMenu(page: Page, p: Person) {
+  await page.getByRole('button', { name: `Following ${p.name}` }).click()
+  return page.getByRole('dialog', { name: `Following ${p.name}` })
+}
+async function unfollow(page: Page, p: Person) {
+  await (await followingMenu(page, p)).getByRole('button', { name: 'Stop following' }).click()
+}
+
 test('follow a dancer, see their day on Home, and watch a placing arrive', async ({ page }) => {
   // Beginner Under 7: drawn, on platform A this morning, no results yet.
   // This entry is number 107, last of three to dance the Fling.
@@ -87,7 +96,7 @@ test('follow a dancer, see their day on Home, and watch a placing arrive', async
   // Unfollow from their page: Home goes back to the pitch, with them under
   // Recently viewed rather than Your dancers.
   await page.goto(`/dancers/${person.id}/info`)
-  await page.getByRole('button', { name: `Following ${person.name}` }).click()
+  await unfollow(page, person)
   await expect(page.getByRole('button', { name: `Follow ${person.name}` })).toBeVisible()
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'See your dancer’s day at a glance' })).toBeVisible()
@@ -124,13 +133,14 @@ test('a chosen colour sticks, and stays with that account', async ({ page }) => 
 
   await signInFromHome(page, a.email)
   await page.goto(`/dancers/${person.id}/info`)
-  const picker = page.getByRole('radiogroup', { name: `${person.firstName}’s colour` })
+  const picker = (await followingMenu(page, person)).getByRole('radiogroup', { name: `${person.firstName}’s colour` })
   // The first dancer you follow is red until you choose.
   await expect(picker.getByRole('radio', { name: 'Red' })).toHaveAttribute('aria-checked', 'true')
   await picker.getByRole('radio', { name: 'Teal' }).click()
   await expect(picker.getByRole('radio', { name: 'Teal' })).toHaveAttribute('aria-checked', 'true')
   await expect.poll(() => dbGet(`users:dancerColors/${a.uid}/${person.id}`)).toBe('dancer-6')
   await page.reload()
+  await followingMenu(page, person)
   await expect(page.getByRole('radio', { name: 'Teal' })).toHaveAttribute('aria-checked', 'true')
 
   // The next account on this phone has its own colours.
@@ -138,6 +148,7 @@ test('a chosen colour sticks, and stays with that account', async ({ page }) => 
   await page.getByRole('button', { name: 'Sign in', exact: true }).click()
   await signInFromSheet(page, b.email)
   await page.goto(`/dancers/${person.id}/info`)
+  await followingMenu(page, person)
   await expect(page.getByRole('radio', { name: 'Red' })).toHaveAttribute('aria-checked', 'true')
 })
 
@@ -205,7 +216,7 @@ test('old favourites from the previous app: named ones follow the person, nothin
 
   // Unfollowing sticks: the old key isn't copied again next time.
   await page.goto(`/dancers/${person.id}/info`)
-  await page.getByRole('button', { name: `Following ${person.name}` }).click()
+  await unfollow(page, person)
   await expect(page.getByRole('button', { name: `Follow ${person.name}` })).toBeVisible()
   await page.reload()
   await expect(page.getByRole('button', { name: `Follow ${person.name}` })).toBeVisible()
