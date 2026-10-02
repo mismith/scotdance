@@ -26,7 +26,8 @@ const props = withDefaults(
 )
 
 const SIZE = {
-  sm: 'h-9 gap-1.5 px-3.5 text-callout [&_svg]:size-4',
+  // 36px to the eye, 44px to the finger.
+  sm: 'relative h-9 gap-1.5 px-3.5 text-callout [&_svg]:size-4 after:absolute after:-inset-1',
   md: 'h-11 gap-1.5 px-4 text-callout [&_svg]:size-4',
   lg: 'h-12 gap-2 px-6 text-base [&_svg]:size-5',
 }
