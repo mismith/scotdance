@@ -6,7 +6,7 @@ test('a seeded competition shows on its info page', async ({ page }) => {
   const comp = await seedCompetition()
   try {
     await page.goto(`/competitions/${comp.id}/info`)
-    await expect(page.getByText(comp.name).first()).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: comp.name })).toBeVisible()
   } finally {
     await removeCompetition(comp.id)
   }

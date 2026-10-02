@@ -424,6 +424,31 @@
   transform-origin: 50% 100%;
 }
 
+/* Wide screens with a tab bar (lg): the bar lives in the top chrome, so the
+   app bar spans the window around it, its small title steps aside, and
+   pages no longer reserve room for a bar at the bottom. */
+@utility appbar-row {
+  max-width: 48rem;
+  @media (min-width: 64rem) {
+    :root:has([data-tabbar]) & {
+      max-width: none;
+    }
+  }
+}
+@utility appbar-title {
+  @media (min-width: 64rem) {
+    :root:has([data-tabbar]) & {
+      visibility: hidden;
+    }
+  }
+}
+@media (min-width: 64rem) {
+  :root:has([data-tabbar]) {
+    --chrome-bottom: calc(1.5rem + var(--safe-bottom));
+    --notice-bottom: calc(var(--safe-bottom) + 1.5rem);
+  }
+}
+
 /* A dancer's colour, for bars, bands and badges (set as --dc by paint()). */
 @utility sash {
   background: var(--dc, var(--primary));
