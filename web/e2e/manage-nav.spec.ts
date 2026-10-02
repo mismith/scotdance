@@ -129,7 +129,9 @@ test('Undo and Redo put a change back and forward again', async ({ page }, info)
     await page.getByRole('heading', { name: 'Details' }).click()
     await page.keyboard.press(process.platform === 'darwin' ? 'Meta+Shift+z' : 'Control+y')
     await expect.poll(() => dbGet(`competitions/${comp.id}/venue`)).toBe('Corn Exchange')
-    await expect(page.getByRole('button', { name: /^Redo/ })).toBeDisabled()
+    // Nothing left to redo (the menu closed after Undo; open it to look).
+    await expect(await barMenuItem(page, /^Redo/)).toBeDisabled()
+    await page.keyboard.press('Escape')
   } finally {
     await Promise.all([removeCompetition(comp.id), dbRemove(`users:permissions/${org.id}`)])
   }

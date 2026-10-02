@@ -31,14 +31,9 @@ const canManageHere = computed(() => !!props.competitionId && me.hasCompetitionP
 const roles = useRoles()
 const canManage = computed(() => me.canManageAny || roles.has('organizer'))
 
-const button = ref<HTMLButtonElement | null>(null)
+// The menu grows out of the button and hangs under it (Dialog anchors it).
 const open = ref(false)
-function show() {
-  // Line the menu's right edge up with the button.
-  const r = button.value?.getBoundingClientRect()
-  if (r) document.documentElement.style.setProperty('--dropdown-right', `${Math.max(12, window.innerWidth - r.right)}px`)
-  open.value = true
-}
+const show = () => (open.value = true)
 function go(to: RouteLocationRaw) {
   open.value = false
   void router.push(to)
@@ -52,31 +47,31 @@ function signIn() {
   auth.openLogin({ reason: 'account' })
 }
 
-const row = 'flex min-h-12 w-full items-center gap-3 px-4 py-2 text-left text-base font-bold hover:bg-accent focus-visible:-outline-offset-2'
+// One menu anatomy: inset rounded rows, medium labels, muted icons.
+const row =
+  'press-row focus-inset flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-base font-medium [&>svg]:text-muted-foreground [&>svg]:size-5 [&>svg]:shrink-0'
 </script>
 
 <template>
   <button
     v-if="!auth.isSignedIn"
-    ref="button"
     type="button"
     aria-label="Sign in and settings"
     title="Sign in"
     aria-haspopup="dialog"
     :aria-expanded="open"
-    class="hover:bg-accent text-primary flex size-9 items-center justify-center rounded-full"
+    class="press hover:bg-accent text-primary relative flex size-9 items-center justify-center rounded-full after:absolute after:-inset-1"
     @click="show"
   >
     <UserRound class="size-5" />
   </button>
   <button
     v-else
-    ref="button"
     type="button"
     :aria-label="`Signed in as ${me.displayName ?? me.email ?? 'you'}`"
     aria-haspopup="dialog"
     :aria-expanded="open"
-    class="hover:ring-accent flex size-9 items-center justify-center rounded-full hover:ring-4"
+    class="press hover:ring-accent relative flex size-9 items-center justify-center rounded-full hover:ring-4 after:absolute after:-inset-1"
     @click="show"
   >
     <img v-if="avatar" :src="avatar" alt="" class="size-8 rounded-full" />
@@ -84,44 +79,44 @@ const row = 'flex min-h-12 w-full items-center gap-3 px-4 py-2 text-left text-ba
   </button>
 
   <Dialog :open="open" variant="dropdown" aria-label="Your account" @close="open = false">
-    <nav v-if="!auth.isSignedIn" aria-label="Your account" class="divide-y">
-      <div class="py-1">
+    <nav v-if="!auth.isSignedIn" aria-label="Your account" class="[&>div+div]:mt-1.5 [&>div+div]:border-t [&>div+div]:pt-1.5">
+      <div>
         <button type="button" :class="row" @click="signIn">
-          <LogIn class="text-primary size-5" /> Sign in
+          <LogIn class="size-5" /> Sign in
         </button>
         <button type="button" :class="row" @click="go({ name: 'settings' })">
-          <Settings class="text-primary size-5" /> Settings
+          <Settings class="size-5" /> Settings
         </button>
       </div>
     </nav>
     <template v-else>
-      <nav aria-label="Your account" class="divide-y">
-        <div class="py-1">
+      <nav aria-label="Your account" class="[&>div+div]:mt-1.5 [&>div+div]:border-t [&>div+div]:pt-1.5">
+        <div>
           <button type="button" :class="row" @click="go({ name: 'profile' })">
-            <UserRound class="text-primary size-5 shrink-0" />
+            <UserRound class="size-5" />
             <span class="min-w-0 flex-1">
               <span class="block truncate">{{ me.displayName ?? 'Your account' }}</span>
               <span v-if="me.email" class="text-muted-foreground block truncate text-sm font-medium">{{ me.email }}</span>
             </span>
           </button>
         </div>
-        <div v-if="canManageHere || canManage || me.isAdmin" class="py-1">
+        <div v-if="canManageHere || canManage || me.isAdmin">
           <button v-if="canManageHere" type="button" :class="row" @click="go({ name: 'manage', params: { competitionId } })">
-            <span class="relative flex"><Pencil class="text-primary size-5" /><AdminMark /></span> Manage this competition
+            <span class="relative flex text-muted-foreground"><Pencil class="size-5" /><AdminMark ring="raised" /></span> Manage this competition
           </button>
           <button v-if="canManage" type="button" :class="row" @click="go({ name: 'manage.competitions' })">
-            <span class="relative flex"><ClipboardList class="text-primary size-5" /><AdminMark /></span> Manage competitions
+            <span class="relative flex text-muted-foreground"><ClipboardList class="size-5" /><AdminMark ring="raised" /></span> Manage competitions
           </button>
           <button v-if="me.isAdmin" type="button" :class="row" @click="go({ name: 'admin' })">
-            <span class="relative flex"><ServerCog class="text-primary size-5" /><AdminMark /></span> System admin
+            <span class="relative flex text-muted-foreground"><ServerCog class="size-5" /><AdminMark ring="raised" /></span> System admin
           </button>
         </div>
-        <div class="py-1">
+        <div>
           <button type="button" :class="row" @click="go({ name: 'settings' })">
-            <Settings class="text-primary size-5" /> Settings
+            <Settings class="size-5" /> Settings
           </button>
           <button type="button" :class="row" @click="signOut">
-            <LogOut class="text-primary size-5" /> Sign out
+            <LogOut class="size-5" /> Sign out
           </button>
         </div>
       </nav>

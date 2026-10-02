@@ -48,18 +48,31 @@ function onScreen(el: HTMLElement | null): el is HTMLElement {
   return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight
 }
 
+const transparent = (c: string) => c === 'rgba(0, 0, 0, 0)' || c === 'transparent'
+
+/** What's painted behind an element: its own background, else the nearest
+ *  ancestor's. A text button then grows out of the page it sits on, not out
+ *  of a white box. */
+function paintedBackground(el: HTMLElement): string {
+  for (let n: HTMLElement | null = el; n; n = n.parentElement) {
+    const bg = getComputedStyle(n).backgroundColor
+    if (!transparent(bg)) return bg
+  }
+  return 'var(--color-raised)'
+}
+
 /** The shape the morph's surface starts or ends as. */
 function paintSurface(el: HTMLElement, end: 'from' | 'to') {
   const cs = getComputedStyle(el)
   const root = document.documentElement.style
-  const bg = cs.backgroundColor
+  const bg = paintedBackground(el)
   // A pill's radius computes as 9999px; cap each corner at what's visible so
   // the surface doesn't balloon through huge radii on the way.
   const r = el.getBoundingClientRect()
   const cap = Math.min(r.width, r.height) / 2
   const corners = [cs.borderTopLeftRadius, cs.borderTopRightRadius, cs.borderBottomRightRadius, cs.borderBottomLeftRadius]
   root.setProperty(`--morph-${end}-radius`, corners.map((c) => `${Math.min(parseFloat(c) || 0, cap)}px`).join(' '))
-  root.setProperty(`--morph-${end}-bg`, bg === 'rgba(0, 0, 0, 0)' ? 'var(--color-card)' : bg)
+  root.setProperty(`--morph-${end}-bg`, bg)
   root.setProperty(`--morph-${end}-corner`, cs.getPropertyValue('corner-shape') || 'round')
 }
 
@@ -84,6 +97,11 @@ export function useMorph() {
     }
     paintSurface(leaving, 'from')
     leaving.style.viewTransitionName = NAME
+    // Floating menus and centred cards spring a little; a sheet pinned to the
+    // bottom edge doesn't overshoot it. style.css times each.
+    const kind = target.value?.dataset.morphKind
+    const pinned = kind === 'sheet' && !matchMedia('(min-width: 48rem)').matches
+    const types = [NAME, pinned ? 'morph-pinned' : 'morph-float', next ? 'morph-open' : 'morph-close']
     const transition = startViewTransition(async () => {
       leaving.style.viewTransitionName = ''
       open.value = next
@@ -93,7 +111,7 @@ export function useMorph() {
         paintSurface(arriving, 'to')
         arriving.style.viewTransitionName = NAME
       }
-    }, [NAME])
+    }, types)
     // An interrupted morph (say, a route change mid-way) just ends early.
     transition.ready.catch(() => {})
     await transition.finished.catch(() => {})
@@ -116,5 +134,5 @@ export function useMorph() {
   /** For the component that renders the opened thing (Dialog does this). */
   const setTarget = (el: HTMLElement | null) => (target.value = el)
 
-  return reactive({ open, show, hide, dismiss, toggle, setTarget })
+  return reactive({ open, trigger, show, hide, dismiss, toggle, setTarget })
 }

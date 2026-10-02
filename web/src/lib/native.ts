@@ -41,12 +41,22 @@ interface AppPlugin {
 
 const ignore = () => {}
 
+/** Take the native launch screen down (SplashOverlay calls this). */
+export function hideNativeSplash() {
+  if (!isNative) return
+  nativePlugin<SplashScreenPlugin & { hide: (o?: { fadeOutDuration?: number }) => Promise<void> }>('SplashScreen')
+    ?.hide({ fadeOutDuration: 0 })
+    .catch(ignore)
+}
+
 /** Wire the page up to the native shell. Call once, after the app mounts. */
 export function setupNative() {
   if (!isNative) return
 
-  // The splash stays up until the page says it's ready (launchAutoHide: false).
-  nativePlugin<SplashScreenPlugin>('SplashScreen')?.hide().catch(ignore)
+  // The splash stays up until the page takes over (launchAutoHide: false):
+  // SplashOverlay hides it once its identical picture is on screen. A
+  // backstop in case that never happens.
+  setTimeout(hideNativeSplash, 4000)
 
   // Status bar icons follow the app's theme, including a manual override.
   // "DARK" means light icons for a dark background.
