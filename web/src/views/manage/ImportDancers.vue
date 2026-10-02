@@ -277,7 +277,7 @@ async function doImport() {
         <label v-if="sheets.length > 1" class="flex items-center gap-2 text-sm font-medium">
           Sheet
           <span class="relative">
-            <select v-model="sheetIndex" class="field h-11 appearance-none rounded-xl pr-9 pl-3 text-[0.9375rem]">
+            <select v-model="sheetIndex" class="field h-11 appearance-none rounded-xl pr-9 pl-3 text-callout">
               <option v-for="(s, i) in sheets" :key="s.sheet" :value="i">{{ s.sheet }}</option>
             </select>
             <ChevronDown class="text-muted-foreground pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2" />
@@ -300,7 +300,7 @@ async function doImport() {
               <span class="relative block">
                 <select
                   :value="columns?.[field] ?? -1"
-                  class="field h-11 w-full appearance-none rounded-xl pr-9 pl-3 text-[0.9375rem]"
+                  class="field h-11 w-full appearance-none rounded-xl pr-9 pl-3 text-callout"
                   @change="setColumn(field, Number(($event.target as HTMLSelectElement).value))"
                 >
                   <option :value="-1">Not in the file</option>
@@ -343,7 +343,7 @@ async function doImport() {
 
         <!-- Rows: a table where there's room -->
         <div v-if="wide" class="surface overflow-x-auto rounded-2xl">
-          <table class="w-full text-[0.9375rem]">
+          <table class="w-full text-callout">
             <thead class="text-muted-foreground border-b text-left text-sm">
               <tr>
                 <th class="px-3 py-2 font-medium">Row</th>

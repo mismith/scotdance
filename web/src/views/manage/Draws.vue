@@ -179,7 +179,7 @@ const anyDraws = computed(() => dances.value.some((d) => stored(d.id).length))
                 </span>
                 <span class="text-muted-foreground w-6 shrink-0 text-right text-sm tabular-nums">{{ i + 1 }}</span>
                 <span class="bg-paper text-paper-ink min-w-10 rounded-md border px-1.5 py-0.5 text-center font-mono text-sm font-semibold">{{ n }}</span>
-                <span class="min-w-0 flex-1 truncate text-[0.9375rem] font-medium">{{ byNumber.get(n)?.label ?? 'Not in this age group' }}</span>
+                <span class="min-w-0 flex-1 truncate text-callout font-medium">{{ byNumber.get(n)?.label ?? 'Not in this age group' }}</span>
               </li>
             </TransitionGroup>
           </VueDraggable>

@@ -59,7 +59,7 @@ function toggle(title: string) {
               <span class="text-muted-foreground min-w-0 text-sm">{{ s.asks }}</span>
             </li>
           </ol>
-          <p class="text-muted-foreground flex gap-3 px-1 text-[0.9375rem]">
+          <p class="text-muted-foreground flex gap-3 px-1 text-callout">
             <MailCheck class="text-primary mt-0.5 size-5 shrink-0" />
             Usually approved overnight. You’ll get an email.
           </p>

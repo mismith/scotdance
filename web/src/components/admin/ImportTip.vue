@@ -9,7 +9,7 @@ const m = useManagedCompetition()
 </script>
 
 <template>
-  <div v-if="!m.dancers.value.length" class="bg-blue-paper m-4 flex gap-3 rounded-2xl p-4 text-[0.9375rem]">
+  <div v-if="!m.dancers.value.length" class="bg-blue-paper m-4 flex gap-3 rounded-2xl p-4 text-callout">
     <FileSpreadsheet class="text-primary mt-0.5 size-5 shrink-0" />
     <div class="min-w-0 flex-1">
       <p>Importing your entry list also creates its categories and age groups.</p>
