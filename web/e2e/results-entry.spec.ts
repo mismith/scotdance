@@ -221,7 +221,7 @@ test('a "?" stand-in can be placed and then fixed', async ({ page }, info) => {
   await signIn(page, email)
   await entry(page, group.id, fling.id)
   await tap(page, ds[0].number).click()
-  await page.getByRole('button', { name: /^\? Dancer/ }).click()
+  await page.getByRole('button', { name: /^\? Missed number/ }).click()
   await tap(page, ds[2].number).click()
   await expect
     .poll(
@@ -507,7 +507,7 @@ test('an old link to a dance that isn’t in the age group enters nothing', asyn
   await expect(
     page.getByText('This dance isn’t in this age group any more'),
   ).toBeVisible()
-  await expect(page.getByRole('button', { name: /^\? Dancer/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^\? Missed number/ })).toHaveCount(0)
 })
 
 test('drag a placed dancer to the top: they lose the tie they had', async ({

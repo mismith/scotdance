@@ -72,7 +72,7 @@ watch(
 )
 
 const unknown = (id: string) => isPlaceholderId(id) || !props.dancersById.get(id)
-const name = (id: string) => props.dancersById.get(id)?.label ?? (isPlaceholderId(id) ? 'Unknown dancer' : 'Deleted dancer')
+const name = (id: string) => props.dancersById.get(id)?.label ?? (isPlaceholderId(id) ? 'Missed number' : 'Deleted dancer')
 
 // The switch on a row means "tied with the dancer above". In stored order
 // that's this dancer's own flag, or (entered from the lowest place) the flag of
@@ -129,7 +129,7 @@ function onEnd(e: { oldIndex?: number; newIndex?: number }) {
         :key="row.key"
         :class="[
           'flex min-h-16 items-center gap-1 pr-2',
-          unknown(row.id) && 'bg-[repeating-linear-gradient(135deg,transparent_0_10px,color-mix(in_oklab,var(--color-next)_60%,transparent)_10px_20px)]',
+          unknown(row.id) && 'relative bg-next/40 bg-[repeating-linear-gradient(135deg,transparent_0_9px,color-mix(in_oklab,var(--next-foreground)_7%,transparent)_9px_11px)] before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[repeating-linear-gradient(135deg,var(--next-foreground)_0_3px,transparent_3px_6px)]',
         ]"
       >
         <span

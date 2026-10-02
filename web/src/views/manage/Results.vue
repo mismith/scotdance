@@ -179,8 +179,8 @@ function exportCsv() {
                   :aria-current="groupId === g.id && danceId === d.id ? 'true' : undefined"
                   :class="[
                     'press-row focus-inset flex min-h-13 items-center gap-3 py-1.5 pr-3 pl-6',
-                    groupId === g.id && danceId === d.id && 'bg-blue-paper',
-                    hasPlaceholder(g.id, d.id) && 'bg-[repeating-linear-gradient(135deg,transparent_0_10px,color-mix(in_oklab,var(--color-next)_60%,transparent)_10px_20px)]',
+                    groupId === g.id && danceId === d.id ? 'bg-blue-paper' : hasPlaceholder(g.id, d.id) && 'bg-next/40',
+                    hasPlaceholder(g.id, d.id) && 'relative bg-[repeating-linear-gradient(135deg,transparent_0_9px,color-mix(in_oklab,var(--next-foreground)_7%,transparent)_9px_11px)] before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[repeating-linear-gradient(135deg,var(--next-foreground)_0_3px,transparent_3px_6px)]',
                   ]"
                 >
                   <span

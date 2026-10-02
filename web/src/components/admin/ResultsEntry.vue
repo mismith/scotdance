@@ -401,14 +401,11 @@ watch(() => props.danceId, showCurrent)
                 <button
                   type="button"
                   :disabled="!canEdit"
-                  class="press-row focus-inset flex min-h-16 w-full items-center gap-3 bg-[repeating-linear-gradient(135deg,transparent_0_10px,color-mix(in_oklab,var(--color-next)_60%,transparent)_10px_20px)] px-4 py-2 text-left"
+                  class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left"
                   @click="tapPlaceholder"
                 >
                   <NumberTile unknown data-tile />
-                  <span class="min-w-0 flex-1">
-                    <span class="block text-base font-semibold">Dancer</span>
-                    <span class="text-muted-foreground block text-sm">A stand-in for a number that was missed, misheard or wrong. Fix it later.</span>
-                  </span>
+                  <span class="min-w-0 flex-1 truncate text-base font-semibold">Missed number</span>
                 </button>
               </li>
             </ul>
@@ -524,7 +521,7 @@ watch(() => props.danceId, showCurrent)
                 @click="point(id)"
               >
                 <NumberTile :num="who(id)" :unknown="isPlaceholderId(id)" />
-                <span class="min-w-0 flex-1 truncate text-base font-semibold">{{ m.dancersById.value.get(id)?.label ?? 'Unknown dancer' }}</span>
+                <span class="min-w-0 flex-1 truncate text-base font-semibold">{{ m.dancersById.value.get(id)?.label ?? (isPlaceholderId(id) ? 'Missed number' : 'Deleted dancer') }}</span>
                 <Diamond class="text-primary size-5 shrink-0 fill-current" />
               </button>
             </li>
