@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useEventListener } from '@vueuse/core'
-import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
+import { RouterView, useRoute, useRouter } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
 import { CalendarX, Lock, LogIn } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
+import Button from '@/components/ui/Button.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import ManageMenu from '@/components/admin/ManageMenu.vue'
@@ -130,13 +131,15 @@ const PUBLIC: Record<string, string> = {
 }
 const viewRoute = computed(() => ({ name: (section.value && PUBLIC[section.value.route]) || 'competition.info', params: { competitionId: competitionId.value } }))
 
-// The bar names where you are; the competition sits underneath.
+// The bar names where you are; the competition sits underneath, unless
+// Back already names it.
+const barSubtitle = computed(() => (access.value === 'ok' && up.value.label !== name.value ? name.value : null))
 const barTitle = computed(() => (isHome.value ? 'Manage' : ((route.meta.title as string | undefined) ?? section.value?.title ?? 'Manage')))
 </script>
 
 <template>
   <div class="flex min-h-dvh flex-col md:fixed md:inset-0 md:min-h-0">
-    <AppBar wide :title="barTitle" :subtitle="access === 'ok' ? name : null" show-title :scrolled="true" :exit="exit" :competition-id="competitionId">
+    <AppBar wide :title="barTitle" :subtitle="barSubtitle" show-title :scrolled="true" :exit="exit" :competition-id="competitionId">
       <template #actions>
         <template v-if="access === 'ok'">
           <SaveStatus />
@@ -178,9 +181,7 @@ const barTitle = computed(() => (isHome.value ? 'Manage' : ((route.meta.title as
             description="Organisers and the admins they invite can edit a competition after signing in."
           />
           <div class="flex justify-center">
-            <button type="button" class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-6 text-base font-bold" @click="auth.openLogin()">
-              Sign in
-            </button>
+            <Button variant="primary" size="lg" @click="auth.openLogin()">Sign in</Button>
           </div>
         </template>
         <template v-else-if="access === 'denied'">
@@ -190,9 +191,7 @@ const barTitle = computed(() => (isHome.value ? 'Manage' : ((route.meta.title as
             description="Ask one of its organisers to invite you. They can do it under Manage › Admins."
           />
           <div class="flex justify-center">
-            <RouterLink :to="{ name: 'competition.info', params: { competitionId } }" class="bg-card border-strong h-12 content-center rounded-xl border px-6 text-base font-bold">
-              Back to the competition
-            </RouterLink>
+            <Button size="lg" :to="{ name: 'competition.info', params: { competitionId } }">Back to the competition</Button>
           </div>
         </template>
         <EmptyState
