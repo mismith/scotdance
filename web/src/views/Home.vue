@@ -27,7 +27,7 @@ import { compareDays, competitionPhase, dayStage, firstDance, nextDance } from '
 import { formatLongDate, formatRelative, formatShortDate, parseDate } from '@/lib/format'
 import { now } from '@/lib/now'
 import { getOrdinalSuffix } from '@/lib/results'
-import { settle, settleDelay, lateSkeleton } from '@/lib/settle'
+import { settle, settleDelay } from '@/lib/settle'
 import { platformLabel } from '@/lib/schedule'
 import type { Competition } from '@/types/competition'
 
@@ -354,7 +354,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
               :color="cardColor(card)"
               :folded="folded(card)"
             />
-            <Skeleton v-else-if="card.loading" :class="['h-40 w-full rounded-2xl!', lateSkeleton]" />
+            <Skeleton v-else-if="card.loading" class="h-40 w-full rounded-2xl!" />
           </template>
         </section>
 
@@ -416,7 +416,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
             <Skeleton
               v-for="i in Math.min(people.length, 2)"
               :key="i"
-              :class="[showingRecent || compact ? 'h-16' : 'h-52', 'w-full rounded-2xl!', lateSkeleton]"
+              :class="[showingRecent || compact ? 'h-16' : 'h-52', 'w-full rounded-2xl!']"
             />
           </template>
 
@@ -457,7 +457,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
               :competition-name="`${card.focus.phase === 'before' ? 'Next' : 'Last'}: ${card.focus.competition.name}`"
               :folded="card.focus.phase === 'after'"
             />
-            <Skeleton v-else-if="card.loading" :class="['h-40 w-full rounded-2xl!', lateSkeleton]" />
+            <Skeleton v-else-if="card.loading" class="h-40 w-full rounded-2xl!" />
             <RouterLink
               v-else
               :to="{ name: 'dancer.info', params: { dancerId: card.id } }"
@@ -516,7 +516,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
             </RouterLink>
           </h2>
           <div v-if="competitionsLoading && !comingUp.length && !nextAnywhere.length" class="space-y-2" aria-busy="true">
-            <Skeleton v-for="i in 3" :key="i" :class="['h-16 w-full rounded-2xl!', lateSkeleton]" />
+            <Skeleton v-for="i in 3" :key="i" class="h-16 w-full rounded-2xl!" />
           </div>
           <ul v-else :class="['surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]', settle]">
             <template v-if="comingUp.length">

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { CalendarDays, CloudOff, SquarePlus } from '@lucide/vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import AppBar from '@/components/nav/AppBar.vue'
+import Button from '@/components/ui/Button.vue'
+import Segmented from '@/components/ui/Segmented.vue'
 import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
 import CompetitionsCalendar from '@/components/CompetitionsCalendar.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -16,23 +18,26 @@ import { useLocationFilter } from '@/composables/useLocationFilter'
 import { useFollowedCompetitions } from '@/composables/useFollowedCompetitions'
 import { useCompetitionSpans } from '@/composables/useCompetitionSpans'
 import { parseDate } from '@/lib/format'
+import { lateSkeleton, settle, settleDelay } from '@/lib/settle'
 import { useFavoritesStore } from '@/stores/favorites'
 
 // The map (MapLibre, ~1 MB) loads only when someone opens it.
 const CompetitionsMap = defineAsyncComponent(() => import('@/views/competitions/CompetitionsMap.vue'))
 
-// Two plain choices, in words: Upcoming or Past results. Where (a region,
-// nearby, or everywhere) and how (list, calendar, map) are labelled buttons.
+// One row of controls, the same in every view: Upcoming or Past results,
+// where (a region, nearby, or everywhere), and how (list, calendar, map).
 type Range = 'upcoming' | 'past'
+const RANGES = [
+  { value: 'upcoming', label: 'Upcoming' },
+  { value: 'past', label: 'Past results' },
+] as const
 const view = useLocalStorage<ViewMode>('competitions:view', 'list')
 const range = useLocalStorage<Range>('competitions:range', 'upcoming')
 
 const titleEl = ref<HTMLElement | null>(null)
 const scrolledPast = useScrolledPast(titleEl)
 
-// The calendar has no Upcoming/Past choice and can go back any number of
-// months, so it always has every competition.
-const includeArchived = computed(() => range.value === 'past' || view.value === 'calendar')
+const includeArchived = computed(() => range.value === 'past')
 const { competitions, loading, error, reload } = useCompetitions(includeArchived)
 const { filterFor, setWorldwide, mode: locationMode } = useLocationFilter()
 const favorites = useFavoritesStore()
@@ -64,6 +69,14 @@ const ms = (c: { date?: number | string }) => dateOf(c)?.getTime() ?? 0
 const { span } = useCompetitionSpans(competitions)
 // Dateless ones count as upcoming.
 const isUpcoming = (c: CompetitionListItem) => (span(c)?.last ?? 0) >= 0
+const isOn = (c: CompetitionListItem) => {
+  const days = span(c)
+  return !!days && days.first <= 0 && days.last >= 0
+}
+const dayNote = (c: CompetitionListItem) => {
+  const s = span(c)
+  return s && isOn(c) && s.last > s.first ? `Day ${1 - s.first} of ${s.last - s.first + 1}` : null
+}
 
 const inRange = computed(() => {
   const list = located.value.filter((c) => isUpcoming(c) === (range.value === 'upcoming'))
@@ -79,8 +92,7 @@ const sections = computed<Section[]>(() => {
   const out = new Map<string, Section>()
   for (const c of inRange.value) {
     const d = dateOf(c)
-    const days = span(c)
-    const today = !!days && days.first <= 0 && days.last >= 0
+    const today = isOn(c)
     const key = today ? 'today' : d ? `${d.getFullYear()}-${d.getMonth()}` : 'tba'
     const label = today
       ? 'Today'
@@ -93,22 +105,18 @@ const sections = computed<Section[]>(() => {
   }
   return [...out.values()]
 })
-
-const mapCompetitions = computed(() =>
-  competitions.value.filter((c) => isUpcoming(c) === (range.value === 'upcoming')),
-)
 </script>
 
 <template>
   <div
-    :class="['flex flex-1 flex-col', view === 'map' ? 'h-dvh' : 'pb-[calc(var(--chrome-bottom)+1.5rem)]']"
+    :class="['flex flex-1 flex-col', view === 'map' ? 'h-dvh overflow-hidden' : 'pb-[calc(var(--chrome-bottom)+1.5rem)]']"
   >
     <AppBar title="Competitions" :show-title="scrolledPast || view === 'map'" :back="false" />
 
     <main
       :class="[
         'mx-auto w-full max-w-3xl space-y-3 px-4 pt-[calc(var(--chrome-top)+0.25rem)]',
-        view === 'map' && 'relative flex flex-1 flex-col',
+        view === 'map' && 'relative flex-1',
       ]"
     >
       <header v-if="view !== 'map'" ref="titleEl">
@@ -116,86 +124,81 @@ const mapCompetitions = computed(() =>
       </header>
       <h1 v-else class="sr-only">Competitions</h1>
 
+      <!-- The same controls in every view; over the map they float on glass. -->
       <div
-        v-if="view !== 'calendar'"
-        class="bg-muted grid grid-cols-2 rounded-xl border p-1"
-        role="group"
-        aria-label="Which competitions"
+        :class="[
+          'flex flex-wrap items-center gap-2',
+          view === 'map' && 'pointer-events-none absolute inset-x-4 top-[calc(var(--chrome-top)+0.5rem)] z-10 [&>*]:pointer-events-auto',
+        ]"
       >
-        <button
-          v-for="r in (['upcoming', 'past'] as const)"
-          :key="r"
-          type="button"
-          :aria-pressed="range === r"
-          :class="[
-            'h-10 rounded-lg text-[0.9375rem] font-bold transition-colors',
-            range === r ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground',
-          ]"
-          @click="range = r"
-        >
-          {{ r === 'upcoming' ? 'Upcoming' : 'Past results' }}
-        </button>
+        <div :class="['w-full sm:w-80', view === 'map' && 'glass rounded-full']">
+          <Segmented v-model="range" :options="RANGES" label="Which competitions" />
+        </div>
+        <LocationFilter :competitions="competitions" :glass="view === 'map'" />
+        <ViewModeButton v-model="view" :glass="view === 'map'" />
       </div>
 
-      <div class="flex flex-wrap gap-2">
-        <LocationFilter v-if="view !== 'map'" :competitions="competitions" />
-        <ViewModeButton v-model="view" />
-      </div>
-
-      <CompetitionsMap v-if="view === 'map'" :competitions="mapCompetitions" class="-mx-4 flex-1" />
+      <CompetitionsMap
+        v-if="view === 'map'"
+        :competitions="inRange"
+        :fit-key="`${locationMode}:${location.isActive}:${range}`"
+        class="fixed inset-x-0 top-(--chrome-top) bottom-0"
+      />
 
       <CompetitionsCalendar
         v-else-if="view === 'calendar'"
-        :competitions="located"
+        :competitions="inRange"
         :loading="loading"
+        class="pt-2"
       />
 
       <template v-else>
-        <div v-if="loading && !competitions.length" class="space-y-2" aria-busy="true">
-          <Skeleton v-for="i in 5" :key="i" class="h-16 w-full rounded-xl!" />
+        <div v-if="loading && !competitions.length" :class="['surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]', lateSkeleton]" aria-busy="true">
+          <span class="sr-only">Loading competitions…</span>
+          <div v-for="i in 5" :key="i" class="flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4">
+            <Skeleton class="h-14 w-11 shrink-0 rounded-xl!" />
+            <div class="flex-1 space-y-2">
+              <Skeleton class="h-4 w-3/4" />
+              <Skeleton class="h-3.5 w-1/3" />
+            </div>
+          </div>
         </div>
-        <div v-else-if="error && !competitions.length" class="space-y-3">
-          <EmptyState :icon="CloudOff" title="Competitions didn’t load" description="Check your connection, then try again." />
-          <button
-            type="button"
-            class="bg-primary-fill text-primary-foreground mx-auto flex h-12 items-center rounded-xl px-6 text-base font-bold"
-            @click="reload()"
-          >
-            Try again
-          </button>
-        </div>
-        <div v-else-if="!inRange.length" class="space-y-3">
-          <EmptyState
-            :icon="CalendarDays"
-            :title="range === 'upcoming' ? 'No upcoming competitions here' : 'No past competitions here'"
-            :description="
-              location.isActive
-                ? 'Nothing matches where you’re looking. Try everywhere, or switch between Upcoming and Past results.'
-                : range === 'upcoming'
-                  ? 'New competitions appear here as organisers add them.'
-                  : 'Nothing on record yet.'
-            "
-          />
-          <button
-            v-if="location.isActive && locationMode !== 'worldwide'"
-            type="button"
-            class="bg-primary-fill text-primary-foreground mx-auto flex h-12 items-center rounded-xl px-6 text-base font-bold"
-            @click="setWorldwide()"
-          >
+        <EmptyState
+          v-else-if="error && !competitions.length"
+          :icon="CloudOff"
+          title="Competitions didn’t load"
+          description="Check your connection, then try again."
+        >
+          <Button variant="primary" size="lg" @click="reload()">Try again</Button>
+        </EmptyState>
+        <EmptyState
+          v-else-if="!inRange.length"
+          :icon="CalendarDays"
+          :title="range === 'upcoming' ? 'No upcoming competitions here' : 'No past competitions here'"
+          :description="
+            location.isActive
+              ? 'Nothing matches where you’re looking. Try everywhere, or switch between Upcoming and Past results.'
+              : range === 'upcoming'
+                ? 'New competitions appear here as organisers add them.'
+                : 'Nothing on record yet.'
+          "
+        >
+          <Button v-if="location.isActive && locationMode !== 'worldwide'" variant="primary" size="lg" @click="setWorldwide()">
             Show everywhere
-          </button>
-        </div>
+          </Button>
+        </EmptyState>
 
-        <section v-for="s in sections" :key="s.key">
+        <section v-for="(s, i) in sections" :key="s.key" :class="settle" :style="settleDelay(i)">
           <h2
             :class="[
-              'bg-background sticky top-(--chrome-top) z-10 py-2 text-[1.0625rem] font-extrabold',
+              'text-heading bg-background sticky top-(--chrome-top) z-10 flex items-center gap-1.5 py-2',
               s.key === 'today' && 'text-live',
             ]"
           >
+            <span v-if="s.key === 'today'" class="bg-live size-2 rounded-full" aria-hidden="true" />
             {{ s.label }}
           </h2>
-          <ul class="divide-y overflow-hidden rounded-2xl border shadow-sm">
+          <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
             <CompetitionDateRow
               v-for="c in s.items"
               :key="c.id"
@@ -204,25 +207,22 @@ const mapCompetitions = computed(() =>
               :dancers="byCompetition[c.id] ?? []"
               :followed="favorites.isFavorite('competitions', c.id)"
               :today="s.key === 'today'"
+              :note="dayNote(c)"
             />
           </ul>
         </section>
       </template>
 
       <!-- For organisers, at the end of the list. -->
-      <section v-if="view !== 'map'" class="bg-card mt-6 flex items-center gap-3 rounded-2xl border p-4 shadow-sm">
-        <span class="bg-blue-paper text-primary flex size-11 shrink-0 items-center justify-center rounded-full">
+      <section v-if="view !== 'map'" class="surface mt-6 flex items-center gap-3 rounded-2xl p-4">
+        <span class="bg-blue-paper text-primary flex size-11 shrink-0 items-center justify-center rounded-full" aria-hidden="true">
           <SquarePlus class="size-5" />
         </span>
-        <p class="min-w-0 flex-1 text-[0.9375rem] leading-snug">
-          <b>Running a competition?</b> Add it to ScotDance. It’s free, and saves hours of work and paper.
+        <p class="text-callout min-w-0 flex-1">
+          <span class="font-semibold">Running a competition?</span> Add it to ScotDance. It’s free, and saves hours of
+          work and paper.
         </p>
-        <RouterLink
-          :to="{ name: 'competitions.submit' }"
-          class="bg-primary-fill text-primary-foreground flex h-11 shrink-0 items-center rounded-full px-4 text-[0.9375rem] font-bold"
-        >
-          Submit
-        </RouterLink>
+        <Button variant="tonal" :to="{ name: 'competitions.submit' }">Submit</Button>
       </section>
     </main>
   </div>

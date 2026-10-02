@@ -97,6 +97,19 @@ test('the map loads its worker and puts competitions on it, without errors', asy
   expect(errors).toEqual([])
 })
 
+test('a map pin opens its venue’s competitions without leaving the map', async ({ page }) => {
+  await page.goto('/competitions?view=map')
+  // The seeded competitions share a venue: one pin, with its next date.
+  await page.locator('.map-pin').first().click()
+  const callout = page.getByRole('region', { name: 'Spruce Meadows' })
+  await expect(callout.getByRole('link', { name: new RegExp(today.name) })).toBeVisible()
+  await expect(page).toHaveURL(/view=map/)
+  await page.keyboard.press('Escape')
+  await expect(callout).toHaveCount(0)
+  // The sheet along the bottom lists what's in view.
+  await expect(page.getByRole('region', { name: 'Competitions in view' })).toContainText(/competitions? in view/)
+})
+
 test('a view mode in a shared link opens in that mode', async ({ page }) => {
   await page.goto('/competitions?view=calendar')
   await expect(page.getByRole('button', { name: 'Show as Calendar' })).toBeVisible()
@@ -130,10 +143,11 @@ test('a competition in the list opens its page', async ({ page }) => {
   await expect(page.getByText(today.name).first()).toBeVisible()
 })
 
-test('the calendar goes back past the last three months', async ({ page }) => {
-  // Pretend it's May 2019: Nationals (14 Jan 2019) is four months back.
+test('the calendar goes back past the last three months, under Past results', async ({ page }) => {
+  // Pretend it's May 2019: Nationals (14 Jan 2019) is four months back. The
+  // calendar keeps the list's Upcoming / Past results choice.
   await page.goto('/competitions?now=2019-05-14')
-  await show(page, 'Upcoming')
+  await show(page, 'Past results')
   await page.goto('/competitions?view=calendar')
   const month = page.getByRole('heading', { level: 2 }).first()
   await expect(month).toHaveText(/2019/)
