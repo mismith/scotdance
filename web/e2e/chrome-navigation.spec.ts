@@ -42,7 +42,7 @@ test('the tab bar marks where you are, and tapping the current tab goes back to 
 test('going back returns to where you were in a long list', async ({ page }) => {
   await page.goto('/judges')
   await expect(page.getByRole('heading', { level: 1, name: 'Judges' })).toBeVisible()
-  const row = page.getByRole('button', { name: /^Lisa Barker/ }).first()
+  const row = page.getByRole('link', { name: /^Lisa Barker/ }).first()
   await row.scrollIntoViewIfNeeded()
   await page.mouse.wheel(0, 200)
   await page.waitForTimeout(300)
@@ -80,7 +80,7 @@ test('leaving a competition opened from a link goes to Competitions, without bou
 
 test('Back after tapping through still steps back through history', async ({ page }) => {
   await page.goto('/judges')
-  await page.getByRole('button', { name: /^Aileen Robertson/ }).first().click()
+  await page.getByRole('link', { name: /^Aileen Robertson/ }).first().click()
   await expect(page).toHaveURL(/\/judges\/[^/]+\/info$/)
   await page.getByRole('button', { name: 'Back to Judges' }).click()
   await expect(page).toHaveURL(/\/judges$/)
