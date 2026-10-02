@@ -2,6 +2,7 @@
 import { computed, nextTick, ref } from 'vue'
 import { makeDraggable, makeDroppable } from '@vue-dnd-kit/core'
 import { GripVertical, Plus, Trash2 } from '@lucide/vue'
+import Button from '@/components/ui/Button.vue'
 import AddPopover from './AddPopover.vue'
 import DragIndicator from './DragIndicator.vue'
 import EventSection from './EventSection.vue'
@@ -18,6 +19,7 @@ import {
   type DragEventData,
 } from './drag'
 import { confirm } from '@/lib/admin/feedback'
+import { useMorph } from '@/lib/morph'
 
 // A session (morning, afternoon…): its name and time, then its events.
 
@@ -82,8 +84,7 @@ const BUCKETS = [
   ['Primary', 'Beginner', 'Novice'],
   ['Intermediate', 'Premier', 'Restricted Premier', 'Premier Special'],
 ]
-const addBtnEl = ref<HTMLElement | null>(null)
-const adding = ref(false)
+const adding = useMorph()
 const suggestions = computed(() => {
   const taken = new Set(events.value.map(([, e]) => e.name?.trim()))
   const names = b.categories.value.map((c) => c.label)
@@ -191,20 +192,13 @@ async function remove() {
       <DragIndicator v-if="liveIndex === events.length" class="col-span-full mt-1" />
 
       <div v-if="!b.readonly.value" class="col-span-full mt-3">
-        <button
-          ref="addBtnEl"
-          type="button"
-          class="text-primary hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl px-3 text-[0.9375rem] font-bold"
-          @click="adding = !adding"
-        >
-          <Plus class="size-4" /> Add event
-        </button>
+        <Button variant="plain" class="-ml-3" @click="adding.toggle($event)">
+          <Plus /> Add event
+        </Button>
         <AddPopover
-          :anchor="addBtnEl"
-          :open="adding"
+          :morph="adding"
           :items="suggestions"
           placeholder="Event name…"
-          @close="adding = false"
           @select="addEvent($event.label)"
           @add="addEvent"
         />

@@ -166,6 +166,10 @@ const event = (page: Page, name: string) =>
     })
 const confirmDialog = (page: Page) => page.locator('dialog[open]')
 
+/** The menu has shrunk back into its button: the page takes taps again. */
+const settled = (page: Page) =>
+  page.waitForFunction(() => !document.querySelector('dialog[open]') && !document.documentElement.matches(':active-view-transition'))
+
 async function addSession(page: Page, name: string, custom = false) {
   await page.getByRole('button', { name: 'Add session' }).click()
   if (custom) {
@@ -174,6 +178,7 @@ async function addSession(page: Page, name: string, custom = false) {
   } else await page.getByRole('option', { name, exact: true }).click()
   await page.keyboard.press('Escape')
   await expect(session(page, name)).toBeVisible()
+  await settled(page)
 }
 
 async function addEvent(page: Page, sessionName: string, name: string) {
@@ -181,6 +186,7 @@ async function addEvent(page: Page, sessionName: string, name: string) {
   await page.getByRole('option', { name, exact: true }).click()
   await page.keyboard.press('Escape')
   await expect(event(page, name)).toBeVisible()
+  await settled(page)
 }
 
 /** Let page transitions finish (for screenshots). */
@@ -486,6 +492,8 @@ test('keyboard only: add, rename, autofill, delete and move with keys', async ({
   // Add two sessions from the keyboard.
   await page.getByRole('button', { name: 'Add session' }).focus()
   await page.keyboard.press('Enter')
+  // (Once it has grown out of the button, the keyboard is in its field.)
+  await expect(page.getByRole('textbox', { name: 'Session name…' })).toBeFocused()
   await page.keyboard.type('Morning')
   await page.keyboard.press('Enter')
   await page.keyboard.type('Late 🌙')
@@ -528,6 +536,7 @@ test('keyboard only: add, rename, autofill, delete and move with keys', async ({
 
   // Autofill one event from the keyboard: focus goes into the menu.
   await session(page, 'Morning').getByRole('button', { name: 'Add event' }).press('Enter')
+  await expect(page.getByRole('textbox', { name: 'Event name…' })).toBeFocused()
   await page.keyboard.type('Beginner')
   await page.keyboard.press('Enter')
   await page.keyboard.press('Escape')

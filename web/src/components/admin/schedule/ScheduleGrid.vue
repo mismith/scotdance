@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { makeDroppable } from '@vue-dnd-kit/core'
 import { CalendarClock, CalendarPlus, Plus, WandSparkles } from '@lucide/vue'
 import EmptyState from '@/components/EmptyState.vue'
+import Button from '@/components/ui/Button.vue'
 import AddPopover from './AddPopover.vue'
 import BlockSection from './BlockSection.vue'
 import DragIndicator from './DragIndicator.vue'
@@ -12,6 +13,7 @@ import { useAutoFill } from './autofill'
 import { adjust, insertIndex, useDragType, useEdgeScroll, type DragBlock } from './drag'
 import { useHideTab } from '@/composables/admin/useHideTab'
 import { confirm, toast } from '@/lib/admin/feedback'
+import { useMorph } from '@/lib/morph'
 
 // The schedule as a grid: platforms across the top, sessions down the page,
 // each event's dances as rows with a cell per platform.
@@ -21,10 +23,6 @@ const auto = useAutoFill()
 const hideTab = useHideTab('schedule')
 const { activeDragGroup, pointer } = useDragType()
 
-const PRIMARY =
-  'bg-primary-fill text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold'
-const SECONDARY =
-  'bg-card border-strong hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold'
 
 const scrollEl = ref<HTMLElement | null>(null)
 useEdgeScroll(scrollEl)
@@ -59,8 +57,16 @@ const liveBlockIndex = computed(() =>
 
 // Adding sessions
 const PRESETS = ['Morning', 'Afternoon', 'Evening']
-const addBtnEl = ref<HTMLElement | null>(null)
-const adding = ref(false)
+const adding = useMorph()
+// The first session swaps the empty state's Add session for the one under
+// the grid: closing the menu, the keyboard goes to whichever is there now.
+const addBtn = ref<{ $el: HTMLElement } | null>(null)
+watch(
+  () => adding.open,
+  (open) => {
+    if (!open) void nextTick(() => document.activeElement === document.body && addBtn.value?.$el.focus())
+  },
+)
 const suggestions = computed(() => {
   const taken = new Set(b.blocks.value.map(([, x]) => x.name?.trim()))
   return PRESETS.filter((n) => !taken.has(n)).map((n) => ({ key: n, label: n }))
@@ -117,26 +123,21 @@ async function fillSchedule() {
       description="Start with a session, like Morning, then add its events and drag dances into them."
     >
       <template v-if="!b.readonly.value">
-        <button ref="addBtnEl" type="button" :class="PRIMARY" @click="adding = !adding">
-          <Plus class="size-4" /> Add session
-        </button>
-        <button v-if="canAutofill" type="button" :class="SECONDARY" @click="fillSchedule">
-          <WandSparkles class="size-4" /> Autofill the schedule
-        </button>
-        <button
-          v-if="b.days.value.length"
-          type="button"
-          :class="SECONDARY"
-          @click="addDay"
-        >
-          <CalendarPlus class="size-4" /> Add day
-        </button>
+        <Button ref="addBtn" variant="primary" @click="adding.toggle($event)">
+          <Plus /> Add session
+        </Button>
+        <Button v-if="canAutofill" @click="fillSchedule">
+          <WandSparkles /> Autofill the schedule
+        </Button>
+        <Button v-if="b.days.value.length" @click="addDay">
+          <CalendarPlus /> Add day
+        </Button>
       </template>
       <template v-if="!b.days.value.length && !b.readonly.value" #footer>
         Not sharing a schedule here?
         <button
           type="button"
-          class="text-primary font-bold underline-offset-2 hover:underline"
+          class="text-primary font-semibold underline-offset-2 hover:underline"
           @click="hideTab.hide()"
         >
           Hide the Schedule tab
@@ -190,29 +191,22 @@ async function fillSchedule() {
         v-if="!b.readonly.value && b.blocks.value.length"
         class="col-span-full flex max-w-[calc(100vw-2rem)] flex-wrap items-center gap-2"
       >
-        <button ref="addBtnEl" type="button" :class="PRIMARY" @click="adding = !adding">
-          <Plus class="size-4" /> Add session
-        </button>
-        <button
-          v-if="b.days.value.length"
-          type="button"
-          :class="SECONDARY"
-          @click="addDay"
-        >
-          <CalendarPlus class="size-4" /> Add day
-        </button>
-        <button v-if="canAutofill" type="button" :class="SECONDARY" @click="fillSchedule">
-          <WandSparkles class="size-4" /> Autofill the schedule
-        </button>
+        <Button ref="addBtn" variant="tonal" @click="adding.toggle($event)">
+          <Plus /> Add session
+        </Button>
+        <Button v-if="b.days.value.length" @click="addDay">
+          <CalendarPlus /> Add day
+        </Button>
+        <Button v-if="canAutofill" @click="fillSchedule">
+          <WandSparkles /> Autofill the schedule
+        </Button>
       </div>
     </div>
 
     <AddPopover
-      :anchor="addBtnEl"
-      :open="adding"
+      :morph="adding"
       :items="suggestions"
       placeholder="Session name…"
-      @close="adding = false"
       @select="addBlock($event.label)"
       @add="addBlock"
     />
