@@ -67,7 +67,8 @@ const results = computed(() => ({ name: 'manage.results', params: { competitionI
 
     <!-- With the steps in the sidebar, the Overview says what's next and what needs fixing instead. -->
     <template v-if="sidebar">
-      <section v-if="next" class="space-y-3">
+      <!-- (On the day, results entry is already the line under the name.) -->
+      <section v-if="next && !(today && next.id === 'results')" class="space-y-3">
         <h2 class="text-heading">Up next</h2>
         <div class="surface flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl p-4">
           <span class="bg-blue-paper text-primary flex size-11 shrink-0 items-center justify-center rounded-xl">
