@@ -142,6 +142,24 @@ test('signing out clears your dancers; the next account sees only its own', asyn
   await expect(page.getByRole('button', { name: `Follow ${person.name}` })).toBeVisible()
 })
 
+test('following lots: Home shows the few that matter, and See all lists everyone', async ({ page }) => {
+  // The third entry of seven age groups, which no other test here follows.
+  const ps: Person[] = []
+  for (let g = 0; g < 7; g++) ps.push(await follow(g, 2))
+  const parent = await freshParent()
+  await dbSet(`users:favorites/${parent.uid}/dancers`, Object.fromEntries(ps.map((p) => [p.id, p.name])))
+
+  await signInFromHome(page, parent.email)
+  const seeAll = page.getByRole('link', { name: 'See all 7' })
+  await expect(seeAll).toBeVisible()
+  const onHome = async () => (await Promise.all(ps.map((p) => page.getByText(p.name, { exact: true }).count()))).filter(Boolean).length
+  await expect.poll(onHome).toBe(6)
+
+  await seeAll.click()
+  await expect(page).toHaveURL(/\/dancers$/)
+  for (const p of ps) await expect(page.getByText(p.name, { exact: true }).first()).toBeVisible()
+})
+
 test('old favourites from the previous app: named ones follow the person, nothing is deleted', async ({ page }) => {
   const person = await follow(6)
   const { email, uid: parentId } = await freshParent()

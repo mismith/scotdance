@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
-import { ChevronRight, Star } from '@lucide/vue'
+import { ChevronRight, EyeOff, Star } from '@lucide/vue'
 import { useFollowing } from '@/composables/useFollowing'
 import DateTile from '@/components/DateTile.vue'
 import { useMeStore } from '@/stores/me'
@@ -34,6 +34,8 @@ const managed = computed(() => {
   const id = props.competitionId ?? props.competition.id
   return props.markManaged && !!id && me.hasCompetitionPerm(id)
 })
+// Not in the public list (only its admins see it), in Manage's word.
+const isPrivate = computed(() => managed.value && props.competition.listed !== true && props.competition.published !== true)
 </script>
 
 <template>
@@ -51,13 +53,17 @@ const managed = computed(() => {
           {{ competition.location }}
         </span>
         <span v-if="managed" class="sr-only">You can manage this.</span>
-        <span v-if="today || followed || dancers.length" class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span v-if="today || isPrivate || followed || dancers.length" class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
           <span
             v-if="today"
             class="bg-live-paper text-live inline-flex h-6 items-center gap-1.5 rounded-full px-2 text-xs font-bold"
           >
             <span class="bg-live size-2 animate-[live-pulse_2s_infinite] rounded-full" />
             Today
+          </span>
+          <span v-if="isPrivate" class="bg-muted text-muted-foreground inline-flex h-6 items-center gap-1 rounded-full px-2 text-xs font-bold">
+            <EyeOff class="size-3.5" aria-hidden="true" />
+            Private<span class="sr-only"> (only admins can see it)</span>
           </span>
           <span v-if="dancers.length" class="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
             <span class="flex shrink-0 gap-0.5" aria-hidden="true">

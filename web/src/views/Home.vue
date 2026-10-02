@@ -59,6 +59,20 @@ const people = computed(() =>
 )
 const { cards, loading } = useDancerCards(people)
 
+// Home shows the few that matter now: dancing today, then soonest next,
+// then most recently danced. Everyone's on the Dancers page.
+const HOME_LIMIT = 6
+const dateMs = (c: Competition) => (c.date ? parseDate(c.date).getTime() : 0)
+function relevance(a: DancerCard, b: DancerCard) {
+  const rank = (c: DancerCard) => (!c.focus ? 3 : c.focus.phase === 'today' ? 0 : c.focus.phase === 'before' ? 1 : 2)
+  const r = rank(a) - rank(b)
+  if (r || !a.focus || !b.focus) return r
+  const d = dateMs(a.focus.competition) - dateMs(b.focus.competition)
+  return a.focus.phase === 'after' ? -d : d
+}
+const shownCards = computed(() => (showingRecent.value ? cards.value : [...cards.value].sort(relevance).slice(0, HOME_LIMIT)))
+const moreFollowed = computed(() => !showingRecent.value && people.value.length > HOME_LIMIT)
+
 // Competitions on today where someone you follow is dancing.
 interface TodayComp {
   competitionId: string
@@ -252,7 +266,14 @@ const { freshKey: liveFresh } = useLiveAlertState()
       <section v-if="people.length" class="space-y-3">
         <h2 class="text-heading flex items-baseline justify-between pt-2">
           {{ showingRecent ? 'Recently viewed' : 'Your dancers' }}
-          <span v-if="!showingRecent" class="text-muted-foreground text-sm font-semibold">
+          <RouterLink
+            v-if="moreFollowed"
+            :to="{ name: 'dancers' }"
+            class="text-primary -my-2.5 -mr-2 flex h-11 items-center rounded-full px-2 text-[0.9375rem] font-bold"
+          >
+            See all {{ people.length }}
+          </RouterLink>
+          <span v-else-if="!showingRecent" class="text-muted-foreground text-sm font-semibold">
             {{ people.length }} followed
           </span>
           <button
@@ -271,9 +292,9 @@ const { freshKey: liveFresh } = useLiveAlertState()
         </template>
 
         <ul v-if="compact && cards.length" class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
-          <DancerCompactRow v-for="card in cards" :key="card.id" :card="card" :color="cardColor(card)" />
+          <DancerCompactRow v-for="card in shownCards" :key="card.id" :card="card" :color="cardColor(card)" />
         </ul>
-        <template v-for="card in compact ? [] : cards" :key="card.id">
+        <template v-for="card in compact ? [] : shownCards" :key="card.id">
           <template v-if="card.focus && card.focus.days.length">
             <DancerDayCard
               :days="card.focus.days"
