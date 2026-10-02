@@ -78,7 +78,7 @@ const label = computed(() => {
   <span
     v-else-if="pointed"
     :class="[
-      'bg-next text-next-foreground inline-flex shrink-0 items-center justify-center rounded-lg font-bold',
+      'bg-next text-next-foreground inline-flex shrink-0 items-center justify-center rounded-lg font-semibold',
       size === 'md' ? 'h-8 px-2 text-sm' : 'h-6 px-1.5 text-xs',
     ]"
     :aria-label="label"

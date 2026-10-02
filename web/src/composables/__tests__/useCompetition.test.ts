@@ -173,6 +173,9 @@ describe('sections', () => {
     const results = ctx.loadResults()
     streams.get('results')!({ dances: [], results: { g1: { d1: ['d1'] } }, points: {}, hidden: false })
     await results
+    // What's there on opening isn't a result arriving; the next one is.
+    expect(ctx.liveResultsAt.value).toBeNull()
+    streams.get('results')!({ dances: [], results: { g1: { d1: ['d1'], d2: ['d1'] } }, points: {}, hidden: false })
     expect(ctx.liveResultsAt.value).not.toBeNull()
     expect(calls).toEqual(['stream dancers', 'stream results'])
   })

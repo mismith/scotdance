@@ -3,7 +3,7 @@ import { formatDateTime, formatExternalURL, formatHumanURL, isPast } from '@/lib
 import type { Competition, CompetitionLink } from '@/types/competition'
 
 // What a competition's Overview shows from its record: its links and files,
-// registration, directions. Shared with Manage › Details' preview, so the
+// registration, directions, staff headings. Shared with Manage › Details' preview, so the
 // preview is what people will see.
 
 export interface LinkItem extends CompetitionLink {
@@ -45,8 +45,35 @@ export function registrationOpen(c: Competition | null | undefined): boolean {
   return end == null || !isPast(end)
 }
 
-export function mapsHref(c: Competition | null | undefined): string | null {
-  if (!c?.venue && !c?.address && !c?.location) return null
-  const parts = [c.venue, c.address, c.location].filter(Boolean).join(', ')
-  return `https://maps.google.com/?q=${encodeURIComponent(parts)}`
+export interface Directions {
+  /** The venue as one line, for copying. */
+  address: string
+  /** Apple Maps, offered on iPhone, iPad and Mac. */
+  apple: string | null
+  google: string
+}
+
+/** Apple Maps on Apple devices (most parents at a competition are on iPhone). */
+export const offersAppleMaps = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)
+
+/** Directions to the venue in the map apps people use. */
+export function directions(c: Competition | null | undefined): Directions | null {
+  const address = [c?.venue, c?.address, c?.location].filter(Boolean).join(', ')
+  if (!address) return null
+  const q = encodeURIComponent(address)
+  return {
+    address,
+    apple: offersAppleMaps ? `https://maps.apple.com/?daddr=${q}` : null,
+    google: `https://www.google.com/maps/dir/?api=1&destination=${q}`,
+  }
+}
+
+/** A staff heading: "Judge" → "Judges", but "Staff", "Secretaries", "Stewards" as they should be. */
+export function staffHeading(type: string, count: number): string {
+  const t = type.trim()
+  if (count === 1 || /^(staff|crew|personnel|security|media|press)$/i.test(t)) return t
+  if (/(ss|ch|sh|x|z)$/i.test(t)) return `${t}es`
+  if (/s$/i.test(t)) return t
+  if (/[^aeiou]y$/i.test(t)) return `${t.slice(0, -1)}ies`
+  return `${t}s`
 }
