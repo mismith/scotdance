@@ -293,8 +293,8 @@ function pickGroup(id: string) {
   const first = resultRows(m.groupsById.value.get(id) ?? {}, m.groupDances(id)).find((r) => danceState(m.results.value[id]?.[r.id]) === 'todo')
   void router.replace({ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: id, danceId: first?.id ?? CALLBACKS } })
 }
-// Keep the open dance's pill in view.
 const pickers = useMediaQuery('(min-width: 768px) and (max-width: 1279.98px)')
+// Keep the open dance's pill in view.
 const pills = ref<HTMLElement | null>(null)
 const showCurrent = () => nextTick(() => pills.value?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }))
 onMounted(showCurrent)
