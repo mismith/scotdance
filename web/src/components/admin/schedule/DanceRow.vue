@@ -115,7 +115,7 @@ async function remove() {
         v-if="!b.readonly.value"
         type="button"
         :aria-label="`Delete ${row.name || 'row'}`"
-        class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 -my-2 flex size-11 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
+        class="press text-muted-foreground hover:text-destructive hover:bg-destructive/10 -my-2 flex size-11 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
         @click="remove"
         @keydown.enter.stop
         @keydown.space.stop

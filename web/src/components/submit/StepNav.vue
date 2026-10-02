@@ -14,7 +14,7 @@ defineEmits<{ go: [step: number] }>()
           type="button"
           :aria-current="i === current ? 'step' : undefined"
           :class="[
-            'flex min-h-11 w-full flex-col gap-2 rounded-md pt-1 pb-1.5 text-left text-sm font-semibold',
+            'press flex min-h-11 w-full flex-col gap-2 rounded-md pt-1 pb-1.5 text-left text-sm font-semibold',
             i === current ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
           ]"
           @click="$emit('go', i)"
