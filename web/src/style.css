@@ -1025,3 +1025,38 @@
 :active-view-transition-type(leave-competition)::view-transition-old(tabbar-exit) {
   animation: none;
 }
+
+/* The tapped dancer's number card grows into the big one on their page (and
+   back); its safety pins go on once it has landed (M13). Only the tapped
+   row's card carries the name (composables/useCompetitionDancerVt). Same
+   11:8 card at both sizes, so the snapshots scale cleanly. */
+::view-transition-group(comp-dancer-number) {
+  animation-duration: var(--dur-slow);
+  animation-timing-function: var(--ease-snappy);
+  z-index: 1;
+}
+::view-transition-old(comp-dancer-number),
+::view-transition-new(comp-dancer-number) {
+  height: 100%;
+}
+::view-transition-group(comp-dancer-number-pins) {
+  z-index: 2;
+}
+::view-transition-new(comp-dancer-number-pins):only-child {
+  animation: vt-pins-on var(--dur-base) calc(var(--dur-slow) - 60ms) var(--ease-elastic) both;
+}
+::view-transition-old(comp-dancer-number-pins):only-child {
+  animation: vt-fade-out var(--dur-instant) var(--ease-exit) both;
+}
+@keyframes vt-pins-on {
+  from {
+    opacity: 0;
+    scale: 1.5;
+    translate: 0 -3px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-new(comp-dancer-number-pins):only-child {
+    animation: vt-fade-in var(--dur-quick) var(--ease-standard) both;
+  }
+}
