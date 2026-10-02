@@ -4,6 +4,7 @@ import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
 import { ChevronRight, Inbox, Lock, LogIn, UserCog, Wrench } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
+import Button from '@/components/ui/Button.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import SaveStatus from '@/components/admin/SaveStatus.vue'
@@ -68,32 +69,38 @@ const exit = computed(() => {
       </template>
     </AppBar>
     <div class="flex flex-1 pt-(--chrome-top) md:min-h-0 md:overflow-hidden">
-      <aside v-if="sidebar && access === 'ok'" class="w-64 shrink-0 space-y-1 overflow-y-auto border-r px-3 pt-4">
+      <!-- Like Manage's sidebar: the section you're in sits on a blue tint. -->
+      <aside v-if="sidebar && access === 'ok'" class="bg-background w-68 shrink-0 space-y-1 overflow-y-auto border-r px-3 pt-4">
         <RouterLink
           v-for="s in SECTIONS"
           :key="s.route"
           :to="{ name: s.route }"
-          :class="['flex min-h-11 items-center gap-3 rounded-xl px-3 text-[0.9375rem] font-semibold', section?.route === s.route ? 'bg-primary-fill text-primary-foreground' : 'hover:bg-accent']"
+          :aria-current="section?.route === s.route ? 'page' : undefined"
+          :class="[
+            'press-row text-callout flex min-h-11 items-center gap-3 rounded-xl px-2',
+            section?.route === s.route ? 'bg-blue-paper text-primary font-semibold' : 'font-medium',
+          ]"
         >
-          <component :is="s.icon" class="size-5" /> {{ s.title }}
+          <span class="text-muted-foreground flex size-7 shrink-0 items-center justify-center"><component :is="s.icon" class="size-5" /></span>
+          {{ s.title }}
         </RouterLink>
       </aside>
       <main class="min-w-0 flex-1 md:overflow-y-auto">
         <div v-if="access === 'checking'" class="mx-auto max-w-3xl space-y-3 p-4"><Skeleton v-for="i in 3" :key="i" class="h-16 w-full rounded-2xl!" /></div>
         <template v-else-if="access === 'signed-out'">
           <EmptyState :icon="LogIn" title="Sign in to continue" />
-          <div class="flex justify-center"><button type="button" class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-6 text-base font-bold" @click="auth.openLogin()">Sign in</button></div>
+          <div class="flex justify-center"><Button variant="primary" size="lg" @click="auth.openLogin()">Sign in</Button></div>
         </template>
         <EmptyState v-else-if="access === 'denied'" :icon="Lock" title="For system admins only" description="This area is for whoever runs ScotDance." />
         <template v-else>
-          <div v-if="isHome" class="mx-auto max-w-3xl space-y-4 p-4 md:p-8">
+          <div v-if="isHome" class="max-w-3xl space-y-4 p-4">
             <h1 class="text-display">System admin</h1>
-            <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+            <ul class="surface divide-y overflow-hidden rounded-2xl">
               <li v-for="s in SECTIONS" :key="s.route">
-                <RouterLink :to="{ name: s.route }" class="hover:bg-accent flex min-h-16 items-center gap-3 px-4 py-2.5">
+                <RouterLink :to="{ name: s.route }" class="press-row focus-inset flex min-h-16 items-center gap-3 px-4 py-2.5">
                   <span class="bg-blue-paper text-primary flex size-10 shrink-0 items-center justify-center rounded-xl"><component :is="s.icon" class="size-5" /></span>
                   <span class="min-w-0 flex-1">
-                    <span class="block text-base font-bold">{{ s.title }}</span>
+                    <span class="block text-base font-semibold">{{ s.title }}</span>
                     <span class="text-muted-foreground block text-sm">{{ s.blurb }}</span>
                   </span>
                   <ChevronRight class="text-muted-foreground size-5" />
