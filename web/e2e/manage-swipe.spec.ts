@@ -271,7 +271,7 @@ test('a mouse drag never swipes', async ({ page }) => {
   expect(await dbGet(data(`dancers/${d.id}`))).not.toBeNull()
 })
 
-test('the selected row’s background, hover and focus ring take in its drag handle', async ({
+test('the selected row’s background, hover and focus ring take in its grip', async ({
   page,
 }, info) => {
   test.skip(isPhone(info), 'needs the list and the item side by side')
@@ -287,15 +287,16 @@ test('the selected row’s background, hover and focus ring take in its drag han
       }
       return ''
     })
-  const handle = (name: string) => page.getByLabel(`Drag to reorder ${name}`)
+  const handle = (name: string) => page.getByLabel(`Move ${name}`)
   const selected = await behind(row(page, 'Novice'))
   expect(selected).not.toBe(await behind(row(page, 'Primary')))
   expect(await behind(handle('Novice'))).toBe(selected)
 
-  const plain = await behind(handle('Beginner'))
+  // Hovering tints the whole row (a shade over its background), grip and all.
+  const tint = (name: string) => slider(row(page, name)).evaluate((el) => getComputedStyle(el).boxShadow)
+  const plain = await tint('Beginner')
   await handle('Beginner').hover()
-  await expect.poll(() => behind(handle('Beginner'))).not.toBe(plain)
-  expect(await behind(row(page, 'Beginner'))).toBe(await behind(handle('Beginner')))
+  await expect.poll(() => tint('Beginner')).not.toBe(plain)
 
   // From the keyboard, the ring goes round the whole row, not just its link.
   await page.keyboard.press('Tab')

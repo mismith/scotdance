@@ -58,6 +58,7 @@ const spec: CollectionSpec<MDance> = {
     label: danceFullName(p),
     values: Object.fromEntries(Object.entries(p).filter(([, v]) => v)) as Record<string, string>,
   })),
+  presetsLead: 'The usual ones, with their steps. Rename them any time.',
   impact: (ids) => {
     const updates: Record<string, unknown> = {}
     let withResults = false

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, useId } from 'vue'
-import { Check, LoaderCircle, MapPin } from '@lucide/vue'
+import { MapPin } from '@lucide/vue'
 import AdminField from '@/components/admin/AdminField.vue'
+import SaveMark from '@/components/admin/SaveMark.vue'
 import { useAutosave } from '@/composables/admin/useAutosave'
 import { fetchVenueSuggestions, resolveVenue, type PlaceSuggestion, type VenueFields } from '@/lib/maps'
 
@@ -138,36 +139,34 @@ function onBlur() {
         autocomplete="off"
         placeholder="e.g. Telus Convention Centre"
         :class="[
-          'bg-card h-12 w-full rounded-xl border-2 pr-10 pl-3 text-base outline-none transition-colors',
-          saved?.error.value ? 'border-destructive' : 'border-strong focus:border-primary',
-          saved?.locked.value && 'bg-muted text-muted-foreground cursor-not-allowed',
+          'h-12 w-full rounded-xl pr-10 pl-3 text-base',
+          saved?.locked.value ? 'bg-muted text-muted-foreground cursor-not-allowed shadow-[inset_0_0_0_1px_var(--border)]' : 'field',
         ]"
         @input="onInput"
         @keydown="onKeydown"
         @blur="onBlur"
       />
-      <span class="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2" aria-hidden="true">
-        <LoaderCircle v-if="loading || saved?.status.value === 'saving'" class="size-4 animate-spin" />
-        <Check v-else-if="saved?.status.value === 'saved'" class="text-done-foreground size-4" />
+      <span class="text-muted-foreground pointer-events-none absolute top-1/2 right-3 flex -translate-y-1/2" aria-hidden="true">
+        <SaveMark :status="loading ? 'saving' : (saved?.status.value ?? 'idle')" />
       </span>
       <!-- Pressing a suggestion mustn't blur the box first (that closes the list). -->
       <ul
         v-if="results.length"
         :id="`${id}-list`"
         role="listbox"
-        class="bg-popover absolute inset-x-0 top-full z-20 mt-1 divide-y overflow-hidden rounded-xl border shadow-lg"
+        class="surface-raised absolute inset-x-0 top-full z-20 mt-1.5 overflow-hidden rounded-2xl p-1"
         @mousedown.prevent
       >
         <li v-for="(s, i) in results" :id="`${id}-o${i}`" :key="s.placeId" role="option" :aria-selected="i === active">
           <button
             type="button"
             tabindex="-1"
-            :class="['flex w-full items-center gap-3 px-3 py-2.5 text-left', i === active ? 'bg-accent' : 'hover:bg-accent']"
+            :class="['press-row flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left', i === active && '[--row-tint:var(--tint-hover)]']"
             @click="pick(s)"
           >
             <MapPin class="text-primary size-4 shrink-0" />
             <span class="min-w-0">
-              <span class="block truncate text-base font-semibold">{{ s.primaryText }}</span>
+              <span class="block truncate text-base font-medium">{{ s.primaryText }}</span>
               <span class="text-muted-foreground block truncate text-sm">{{ s.secondaryText }}</span>
             </span>
           </button>

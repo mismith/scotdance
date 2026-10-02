@@ -21,7 +21,7 @@ defineProps<{
 }>()
 
 const id = useId()
-const base = 'bg-card w-full rounded-xl border-2 px-3 text-base outline-none'
+const base = 'field w-full rounded-xl px-3 text-base'
 </script>
 
 <template>
@@ -33,14 +33,14 @@ const base = 'bg-card w-full rounded-xl border-2 px-3 text-base outline-none'
       :aria-invalid="!!error || undefined"
       rows="3"
       :placeholder="placeholder"
-      :class="[base, 'min-h-24 py-2.5', error ? 'border-destructive' : 'border-strong focus:border-primary']"
+      :class="[base, 'min-h-24 py-2.5']"
     />
     <div v-else-if="kind === 'select'" class="relative">
       <select
         :id="id"
         v-model="model"
         :aria-invalid="!!error || undefined"
-        :class="[base, 'h-12 appearance-none pr-10', error ? 'border-destructive' : 'border-strong focus:border-primary']"
+        :class="[base, 'h-12 appearance-none pr-10']"
       >
         <option value="">{{ placeholder ?? 'Choose…' }}</option>
         <option v-for="o in options" :key="o.value" :value="o.value">{{ o.label }}</option>
@@ -56,7 +56,7 @@ const base = 'bg-card w-full rounded-xl border-2 px-3 text-base outline-none'
       :inputmode="inputmode"
       :placeholder="placeholder"
       :autocomplete="autocomplete ?? 'off'"
-      :class="[base, 'h-12', error ? 'border-destructive' : 'border-strong focus:border-primary']"
+      :class="[base, 'h-12']"
     />
   </AdminField>
 </template>

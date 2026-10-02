@@ -59,6 +59,10 @@ export interface CollectionSpec<T extends CollectionItem = CollectionItem> {
   /** Quick-add starting values, given the previous added record. */
   defaults?: (previous: Record<string, string> | null) => Record<string, string>
   presets?: Array<{ label: string; values: Record<string, string> }>
+  /** The line under the presets sheet's title. */
+  presetsLead?: string
+  /** Empty, the way to start is importing the dancers, which creates these too. */
+  importFirst?: boolean
   /** Extra writes when a field changes (e.g. a dancer's category follows their age group). */
   onChange?: (item: T, key: string, value: string | null) => Record<string, unknown>
   /** What deleting these rows affects. */

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { RouterLink } from 'vue-router'
 import { FileSpreadsheet } from '@lucide/vue'
+import Button from '@/components/ui/Button.vue'
 import CollectionEditor from '@/components/admin/CollectionEditor.vue'
 import { useManagedCompetition, type MDancer } from '@/composables/admin/useManagedCompetition'
 import { canEdit } from '@/lib/admin/write'
@@ -110,13 +110,10 @@ const spec: CollectionSpec<MDancer> = {
 
 <template>
   <CollectionEditor :spec="spec" :items="items">
-    <template #list-actions="{ cls }">
-      <RouterLink
-        :to="{ name: 'manage.dancers.import', params: { competitionId: m.competitionId.value } }"
-        :class="[cls, !canEdit && 'pointer-events-none opacity-50']"
-      >
-        <FileSpreadsheet class="size-4" /> Import
-      </RouterLink>
+    <template #list-actions="{ variant }">
+      <Button :variant="variant" :to="{ name: 'manage.dancers.import', params: { competitionId: m.competitionId.value } }" :disabled="!canEdit">
+        <FileSpreadsheet /> Import
+      </Button>
     </template>
   </CollectionEditor>
 </template>

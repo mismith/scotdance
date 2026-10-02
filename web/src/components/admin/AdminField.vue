@@ -15,14 +15,14 @@ defineProps<{
 <template>
   <div class="space-y-1.5">
     <div v-if="!hideLabel" class="flex items-baseline justify-between gap-2">
-      <label :for="$props.for" class="text-[0.9375rem] font-bold">
-        {{ label }}<span v-if="required" class="text-muted-foreground font-semibold"> (required)</span>
+      <label :for="$props.for" class="text-callout font-medium">
+        {{ label }}<span v-if="required" class="text-muted-foreground font-normal"> (required)</span>
       </label>
       <slot name="aside" />
     </div>
     <label v-else :for="$props.for" class="sr-only">{{ label }}</label>
     <slot />
-    <p v-if="error" class="text-destructive text-sm font-semibold" role="alert">{{ error }}</p>
+    <p v-if="error" class="text-destructive text-sm font-medium" role="alert">{{ error }}</p>
     <p v-else-if="hint" class="text-muted-foreground text-sm">{{ hint }}</p>
   </div>
 </template>

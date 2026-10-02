@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, useId } from 'vue'
-import { Check, ChevronDown, LoaderCircle } from '@lucide/vue'
+import { ChevronDown } from '@lucide/vue'
 import AdminField from '@/components/admin/AdminField.vue'
+import SaveMark from '@/components/admin/SaveMark.vue'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import type { SelectOption } from '@/lib/admin/collection'
 
 // A native picker (the phone's own wheel or list) that saves on choose.
-
 
 const props = defineProps<{
   modelValue: string | null | undefined
@@ -69,10 +69,10 @@ async function onChange(e: Event) {
         :id="id"
         :value="current"
         :disabled="locked"
+        :aria-invalid="orphan || !!error || undefined"
         :class="[
-          'bg-card h-12 w-full appearance-none rounded-xl border-2 pr-16 pl-3 text-base outline-none',
-          orphan || error ? 'border-destructive' : 'border-strong focus:border-primary',
-          locked && 'bg-muted text-muted-foreground cursor-not-allowed',
+          'h-12 w-full appearance-none rounded-xl pr-16 pl-3 text-base',
+          locked ? 'bg-muted text-muted-foreground cursor-not-allowed shadow-[inset_0_0_0_1px_var(--border)]' : 'field',
         ]"
         @change="onChange"
       >
@@ -88,8 +88,7 @@ async function onChange(e: Event) {
         </template>
       </select>
       <span class="text-muted-foreground pointer-events-none absolute top-1/2 right-3 flex -translate-y-1/2 items-center gap-1.5" aria-hidden="true">
-        <LoaderCircle v-if="status === 'saving'" class="size-4 animate-spin" />
-        <Check v-else-if="status === 'saved'" class="text-done-foreground size-4" />
+        <SaveMark :status="status" />
         <ChevronDown class="size-4" />
       </span>
     </div>

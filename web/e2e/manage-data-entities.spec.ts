@@ -64,7 +64,7 @@ test('categories: add common ones once, rename, reorder, delete (age groups keep
   if (!isPhone(info)) {
     // Drag Restricted Premier to the top.
     await page.goto(manage('/categories'))
-    await page.getByLabel('Drag to reorder Restricted Premier').dragTo(page.getByLabel('Drag to reorder Primary'), { targetPosition: { x: 10, y: 2 } })
+    await page.getByLabel('Move Restricted Premier').dragTo(page.getByLabel('Move Primary'), { targetPosition: { x: 10, y: 2 } })
     await expect.poll(async () => {
       const all = await dbGet<Record<string, { name: string; _order: number }>>(data('categories'))
       return Object.values(all).sort((a, b) => a._order - b._order).map((c) => c.name)[0]

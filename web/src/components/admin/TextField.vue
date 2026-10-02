@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, useId } from 'vue'
-import { Check, LoaderCircle } from '@lucide/vue'
 import AdminField from '@/components/admin/AdminField.vue'
+import SaveMark from '@/components/admin/SaveMark.vue'
 import { useAutosave } from '@/composables/admin/useAutosave'
 import { LINK_PROBLEM, looksLikeLink } from '@/lib/admin/collection'
 
@@ -58,9 +58,8 @@ function onKeydown(e: KeyboardEvent) {
 }
 
 const inputClass = computed(() => [
-  'bg-card w-full rounded-xl border-2 px-3 text-base outline-none transition-colors',
-  error.value ? 'border-destructive' : 'border-strong focus:border-primary',
-  locked.value && 'bg-muted text-muted-foreground cursor-not-allowed',
+  'w-full rounded-xl px-3 text-base',
+  locked.value ? 'bg-muted text-muted-foreground cursor-not-allowed shadow-[inset_0_0_0_1px_var(--border)]' : 'field',
   props.multiline ? 'min-h-24 py-2.5 leading-normal' : 'h-12 pr-10',
 ])
 </script>
@@ -100,11 +99,10 @@ const inputClass = computed(() => [
       />
       <span
         v-if="!multiline"
-        class="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2"
+        class="text-muted-foreground pointer-events-none absolute top-1/2 right-3 flex -translate-y-1/2"
         aria-hidden="true"
       >
-        <LoaderCircle v-if="status === 'saving'" class="size-4 animate-spin" />
-        <Check v-else-if="status === 'saved'" class="text-done-foreground size-4" />
+        <SaveMark :status="status" />
       </span>
     </div>
   </AdminField>

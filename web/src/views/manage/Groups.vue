@@ -79,6 +79,7 @@ const spec: CollectionSpec<MGroup> = {
   },
   defaults: (prev) => ({ categoryId: prev?.categoryId ?? '' }),
   presets: AGE_RANGES.map((name) => ({ label: name, values: { name } })),
+  importFirst: true,
   impact: (ids) => {
     const updates: Record<string, unknown> = {}
     const warnings: string[] = []
