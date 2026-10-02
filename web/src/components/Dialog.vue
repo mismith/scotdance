@@ -76,7 +76,9 @@ const morphing = computed(() => !!morph.value && morphSupported)
 
 // A dropdown hangs under the control that opened it, lined up with the
 // trigger's nearer edge (its right edge for controls on the right of the
-// screen, its left edge for those on the left), never off screen.
+// screen, its left edge for those on the left), never off screen. Low on the
+// screen, with more room above, it opens upward instead; either way it's no
+// taller than the room it has, and scrolls past that.
 const anchor = computed<Record<string, string> | undefined>(() => {
   const trigger = morph.value?.trigger
   if (props.variant !== 'dropdown' || !shown.value || !trigger?.isConnected) return undefined
@@ -86,7 +88,18 @@ const anchor = computed<Record<string, string> | undefined>(() => {
   const leftSide = r.left + r.width / 2 < innerWidth / 2
   const want = leftSide ? r.left : r.right - width
   const left = Math.min(Math.max(12, want), innerWidth - width - 12)
-  return { top: `${Math.round(r.bottom + 6)}px`, left: `${Math.round(left)}px`, right: 'auto' }
+  const below = innerHeight - r.bottom - 18
+  const above = r.top - 18
+  const up = below < 320 && above > below
+  return {
+    ...(up
+      ? { top: 'auto', bottom: `${Math.round(innerHeight - r.top + 6)}px` }
+      : { top: `${Math.round(r.bottom + 6)}px`, bottom: 'auto' }),
+    left: `${Math.round(left)}px`,
+    right: 'auto',
+    maxHeight: `${Math.round(up ? above : below)}px`,
+    transformOrigin: `${leftSide ? 'left' : 'right'} ${up ? 'bottom' : 'top'}`,
+  }
 })
 
 function onBackdropClick(e: MouseEvent) {
