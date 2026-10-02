@@ -3,7 +3,9 @@ import type { RouteLocationRaw } from 'vue-router'
 import AccountButton from '@/components/nav/AccountButton.vue'
 import TopBackButton from '@/components/nav/TopBackButton.vue'
 
-// The one top bar. Opaque, 3.5rem, under the status bar. Left: a labelled
+// The one top bar, 3.5rem, under the status bar. What scrolls under it
+// fades and softens into the page, as under the tab bar, so there's no hard
+// line. Left: a labelled
 // Back button (when there's somewhere to go back to), or whatever the page
 // puts in the `leading` slot (Home: the ScotDance.app name). Middle: a small title
 // (and optional subtitle) that appears once the page's own big title has
@@ -39,10 +41,11 @@ const scrollTop = () => {
 </script>
 
 <template>
-  <nav
-    class="bg-background/100 fixed inset-x-0 top-0 z-30 border-b border-transparent pt-(--safe-top) transition-colors data-[scrolled=true]:border-border"
-    :data-scrolled="scrolled ?? showTitle"
-  >
+  <nav class="fixed inset-x-0 top-0 z-30 pt-(--safe-top)" :data-scrolled="scrolled ?? showTitle">
+    <div
+      class="from-background via-background/90 absolute inset-x-0 top-0 -z-10 h-[calc(100%+1.25rem)] bg-linear-to-b from-55% to-transparent backdrop-blur-[3px] [mask-image:linear-gradient(to_bottom,black_60%,transparent)]"
+      aria-hidden="true"
+    />
     <div :class="['mx-auto flex h-14 items-center gap-2 px-3', wide ? 'max-w-none' : 'max-w-3xl']">
       <TopBackButton v-if="back" :fallback="fallback" :exit="exit" />
       <slot name="leading" />
@@ -56,12 +59,12 @@ const scrollTop = () => {
         @click="scrollTop"
       >
         <span
-          :class="['block truncate font-bold', subtitle ? 'text-[0.9375rem] leading-tight' : 'text-[1.0625rem]']"
+          :class="['block truncate font-semibold', subtitle ? 'text-callout leading-tight' : 'text-[1.0625rem]']"
           :style="showTitle && titleVt ? { viewTransitionName: titleVt } : undefined"
         >
           {{ title }}
         </span>
-        <span v-if="subtitle" class="text-muted-foreground block truncate text-xs font-semibold">{{ subtitle }}</span>
+        <span v-if="subtitle" class="text-muted-foreground block truncate text-xs font-medium">{{ subtitle }}</span>
       </button>
       <div class="flex shrink-0 items-center gap-1.5">
         <slot name="actions" />

@@ -31,6 +31,7 @@ function onTap(item: TabItem, e: MouseEvent) {
 
 <template>
   <nav
+    data-tabbar
     :aria-label="label"
     class="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(0.5rem,var(--safe-bottom))]"
   >

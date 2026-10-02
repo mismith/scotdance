@@ -1,10 +1,30 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { X } from '@lucide/vue'
+import { computed, shallowRef, watch } from 'vue'
+import { CircleAlert, X } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
+import Button from '@/components/ui/Button.vue'
 import { confirmRequest, dismissToast, toasts } from '@/lib/admin/feedback'
+import { errorHaptic, warningHaptic } from '@/lib/haptics'
 
+// Keep the last request on screen while the dialog closes, so its words
+// don't vanish mid-way.
 const req = computed(() => confirmRequest.value)
+const shown = shallowRef(req.value)
+watch(req, (r) => {
+  if (r) {
+    shown.value = r
+    if (r.destructive) warningHaptic()
+  }
+  // Then let it go once the close has played.
+  else setTimeout(() => !req.value && (shown.value = null), 400)
+})
+
+// At most two at once: newer ones push the oldest out.
+const visible = computed(() => toasts.slice(-2))
+watch(
+  () => toasts.at(-1),
+  (t) => t?.tone === 'error' && errorHaptic(),
+)
 
 async function runAction(id: number, run: () => unknown) {
   dismissToast(id)
@@ -13,58 +33,49 @@ async function runAction(id: number, run: () => unknown) {
 </script>
 
 <template>
-  <Dialog :open="!!req" variant="center" :closable="false" @close="req?.resolve(false)">
-    <template v-if="req">
+  <!-- A decision, not something the user reached for: it simply appears. -->
+  <Dialog :open="!!req" variant="center" :closable="false" :morph="false" @close="req?.resolve(false)">
+    <template v-if="shown">
       <div class="space-y-2 pr-2">
-        <h2 class="text-title">{{ req.title }}</h2>
-        <p v-if="req.message" class="text-muted-foreground text-base">{{ req.message }}</p>
+        <h2 class="text-title">{{ shown.title }}</h2>
+        <p v-if="shown.message" class="text-muted-foreground text-base">{{ shown.message }}</p>
       </div>
       <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <button
-          type="button"
-          class="bg-card border-strong hover:bg-accent h-12 rounded-xl border px-5 text-base font-bold"
-          @click="req.resolve(false)"
-        >
-          {{ req.cancelLabel ?? 'Cancel' }}
-        </button>
-        <button
-          type="button"
-          :class="[
-            'h-12 rounded-xl px-5 text-base font-bold',
-            req.destructive ? 'bg-destructive-fill text-destructive-foreground' : 'bg-primary-fill text-primary-foreground',
-          ]"
-          @click="req.resolve(true)"
-        >
-          {{ req.confirmLabel }}
-        </button>
+        <Button size="lg" @click="req?.resolve(false)">{{ shown.cancelLabel ?? 'Cancel' }}</Button>
+        <Button size="lg" :variant="shown.destructive ? 'destructive' : 'primary'" @click="req?.resolve(true)">
+          {{ shown.confirmLabel }}
+        </Button>
       </div>
     </template>
   </Dialog>
 
+  <!-- One notice stack, above the tab bar when there is one (style.css
+       --notice-bottom), sharing one dark glass in both themes. -->
   <div
-    class="pointer-events-none fixed inset-x-4 bottom-[calc(var(--safe-bottom)+1rem+var(--toast-lift,0px))] z-50 flex flex-col items-center gap-2 transition-[bottom]"
+    class="pointer-events-none fixed inset-x-4 bottom-[calc(var(--notice-bottom)+var(--notice-offset,0px)+var(--toast-lift,0px))] z-50 flex flex-col items-center gap-2 transition-[bottom] duration-(--dur-base) ease-standard"
     role="status"
     aria-live="polite"
   >
     <TransitionGroup
-      enter-active-class="transition duration-300 ease-rubber-band motion-reduce:transition-none"
-      enter-from-class="translate-y-4 opacity-0"
-      leave-active-class="transition duration-200 ease-in motion-reduce:transition-none"
-      leave-to-class="translate-y-2 opacity-0"
+      move-class="transition-transform duration-(--dur-slow) ease-snappy motion-reduce:transition-none"
+      enter-active-class="transition duration-(--dur-slow) ease-snappy motion-reduce:transition-none"
+      enter-from-class="translate-y-4 scale-95 opacity-0"
+      leave-active-class="absolute transition duration-(--dur-quick) ease-exit motion-reduce:transition-none"
+      leave-to-class="scale-95 opacity-0"
     >
       <div
-        v-for="t in toasts"
+        v-for="t in visible"
         :key="t.id"
-        :class="[
-          'pointer-events-auto flex max-w-lg items-center gap-1 rounded-2xl py-1.5 pr-1.5 pl-4 shadow-xl',
-          t.tone === 'error' ? 'bg-destructive-fill text-destructive-foreground' : 'bg-foreground text-background',
-        ]"
+        class="hud pointer-events-auto flex max-w-lg items-center gap-1 rounded-2xl py-1.5 pr-1.5 pl-4"
       >
-        <p class="min-w-0 flex-1 py-1.5 text-[0.9375rem] font-semibold">{{ t.message }}</p>
+        <CircleAlert v-if="t.tone === 'error'" class="size-[1.125rem] shrink-0 text-[#ff8a8a]" aria-hidden="true" />
+        <p class="min-w-0 flex-1 py-1.5 text-callout font-medium" :class="t.tone === 'error' && 'pl-1'">
+          <span v-if="t.tone === 'error'" class="sr-only">Error: </span>{{ t.message }}
+        </p>
         <button
           v-if="t.action"
           type="button"
-          class="h-10 shrink-0 rounded-xl px-3 text-[0.9375rem] font-bold underline-offset-2 hover:underline"
+          class="press h-10 shrink-0 rounded-xl px-3 text-callout font-semibold text-[#8cc4ff]"
           @click="runAction(t.id, t.action.run)"
         >
           {{ t.action.label }}
@@ -72,7 +83,7 @@ async function runAction(id: number, run: () => unknown) {
         <button
           type="button"
           aria-label="Dismiss"
-          class="flex size-11 shrink-0 items-center justify-center rounded-full opacity-70 hover:opacity-100"
+          class="press flex size-11 shrink-0 items-center justify-center rounded-full opacity-60 hover:opacity-100"
           @click="dismissToast(t.id)"
         >
           <X class="size-4" />

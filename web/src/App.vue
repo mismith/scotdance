@@ -12,6 +12,7 @@ import { useRoles } from '@/composables/useRoles'
 import { startLiveAlerts } from '@/composables/useLiveAlerts'
 import SupportLauncher from '@/components/SupportLauncher.vue'
 import UpdateDialog from '@/components/UpdateDialog.vue'
+import SplashOverlay from '@/components/SplashOverlay.vue'
 import { buildTitle } from '@/composables/usePageTitle'
 import { useCrisp } from '@/composables/useCrisp'
 import { useMeStore } from '@/stores/me'
@@ -71,4 +72,5 @@ watch(() => me.email, (email) => crisp.setUserEmail(email), { immediate: true })
   <FeedbackHost v-if="feedbackUsed" />
   <RolesSheet />
   <UpdateDialog />
+  <SplashOverlay />
 </template>

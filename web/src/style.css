@@ -62,7 +62,7 @@
      classes stop switching faces. */
   --font-sans: 'Atkinson Hyperlegible Next Variable', 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-serif: var(--font-sans);
-  --font-mono: 'Atkinson Hyperlegible Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-mono: 'Atkinson Hyperlegible Mono Variable', 'Atkinson Hyperlegible Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --default-transition-duration: 220ms;
   /* Motion vocabulary. Springs move things; opacity and colour never bounce
      (they use standard or exit). Durations: --dur-* below. */
@@ -72,7 +72,7 @@
   --ease-elastic: linear(0, 0.059, 0.193, 0.354, 0.513, 0.653, 0.768, 0.856, 0.921, 0.965, 0.993, 1.009, 1.017, 1.02, 1.019, 1.017, 1.014, 1.01, 1.007, 1.005, 1);
   /* Older overshoot curve; prefer --ease-snappy / --ease-elastic. */
   --ease-rubber-band: cubic-bezier(0.34, 1.3, 0.64, 1);
-  --animate-pop: pop 450ms ease-out;
+  --animate-pop: pop 320ms var(--ease-standard);
   --animate-medal: medal 900ms cubic-bezier(0.2, 0.9, 0.3, 1.3);
 }
 
@@ -109,7 +109,6 @@
   --input: #8c96a3;
   --strong: #8c96a3;
   --ring: #0065bd;
-  --radius: 0.75rem;
   /* Subtler than a full squircle (superellipse(2)), so corners stay soft. */
   --corner-shape: superellipse(1.5);
   --blue-paper: #e1ecf8;
@@ -124,15 +123,15 @@
   --live-paper: #fde7f1;
   --paper: #ffffff;
   --paper-edge: #c9d0d8;
-  --dance: oklch(0.82 0.3 132);
+  --dance: oklch(0.76 0.15 140);
   --dance-foreground: oklch(0.3 0.14 132);
-  --dance-muted: oklch(0.92 0.08 132);
-  --group: oklch(0.78 0.28 233);
+  --dance-muted: oklch(0.94 0.045 140);
+  --group: oklch(0.7 0.14 240);
   --group-foreground: oklch(0.32 0.12 233);
-  --group-muted: oklch(0.92 0.08 233);
-  --judge: oklch(0.72 0.28 349);
+  --group-muted: oklch(0.94 0.04 240);
+  --judge: oklch(0.67 0.15 350);
   --judge-foreground: oklch(0.32 0.14 349);
-  --judge-muted: oklch(0.88 0.08 349);
+  --judge-muted: oklch(0.93 0.04 350);
   /* Followed dancers' colours (see stores/dancerColors). The first five are
      drawn from tartans: Royal Stewart, Black Watch, heather, MacLeod gold,
      Saltire. White text passes AA on all of them. */
@@ -148,8 +147,8 @@
      WebViews that don't report env() insets edge-to-edge. */
   --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top));
   --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom));
-  /* Opaque chrome: a 3.5rem app bar under the status bar, and a 3.5rem tab
-     bar above the home indicator. Pages pad by these. */
+  /* Chrome: a 3.5rem app bar under the status bar, and the floating tab bar
+     above the home indicator. Pages pad by these. */
   --nav-top: var(--safe-top);
   --nav-bottom: 0px;
   --chrome-top: calc(3.5rem + var(--safe-top));
@@ -209,9 +208,9 @@
   --live-paper: #3d1430;
   --paper: #f7f5ef;
   --paper-edge: #f7f5ef;
-  --dance-muted: oklch(0.22 0.06 132);
-  --group-muted: oklch(0.22 0.06 233);
-  --judge-muted: oklch(0.22 0.06 349);
+  --dance-muted: oklch(0.25 0.05 140);
+  --group-muted: oklch(0.25 0.05 240);
+  --judge-muted: oklch(0.25 0.05 350);
   --dancer-1: #e0435e;
   --dancer-2: #3fa676;
   --dancer-3: #9b75d6;
@@ -327,6 +326,102 @@
   @media (prefers-reduced-transparency: reduce) {
     background: var(--card);
   }
+}
+
+/* Notices (toasts, offline, live alerts) share one dark glass in both
+   themes, and stack above the tab bar when there is one. */
+@utility hud {
+  background: rgb(27 33 40 / 0.92);
+  color: #fff;
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 0 0 0.5px rgb(255 255 255 / 0.1),
+    0 12px 32px -8px rgb(0 0 0 / 0.45);
+  @media (prefers-reduced-transparency: reduce) {
+    background: rgb(27 33 40);
+  }
+}
+:root {
+  --notice-bottom: calc(var(--safe-bottom) + 1rem);
+}
+:root:has([data-tabbar]) {
+  --notice-bottom: calc(var(--chrome-bottom) + 0.75rem);
+}
+:root:has([data-offline-notice]) {
+  --notice-offset: 2.75rem;
+}
+
+/* The launch hop (SplashOverlay): the dancer's head crouches, springs up
+   out of the flag and lands with a little squash; the flag gives with it.
+   Keyframes carry their own easing (up eases out, down eases in). */
+@keyframes splash-hop {
+  0% {
+    translate: 0 0;
+    scale: 1 1;
+    animation-timing-function: ease-in-out;
+  }
+  16% {
+    translate: 0 6%;
+    scale: 1.12 0.84;
+    fill: #fff;
+    animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  /* Out of the flag, the head takes the flag's blue so it shows on the page. */
+  30% {
+    fill: #0065bd;
+  }
+  48% {
+    translate: 0 -150%;
+    scale: 0.94 1.08;
+    animation-timing-function: cubic-bezier(0.6, 0, 0.85, 0.4);
+  }
+  62% {
+    fill: #0065bd;
+  }
+  74% {
+    translate: 0 4%;
+    scale: 1.14 0.84;
+    fill: #fff;
+    animation-timing-function: ease-out;
+  }
+  88% {
+    translate: 0 -6%;
+    scale: 0.98 1.03;
+  }
+  100% {
+    translate: 0 0;
+    scale: 1 1;
+  }
+}
+@keyframes splash-crouch {
+  0%,
+  100% {
+    scale: 1 1;
+  }
+  16% {
+    scale: 1.03 0.96;
+  }
+  30% {
+    scale: 0.99 1.02;
+  }
+  74% {
+    scale: 1.03 0.96;
+  }
+  88% {
+    scale: 1 1;
+  }
+}
+@utility splash-hop {
+  animation: splash-hop 900ms both;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+@utility splash-crouch {
+  animation: splash-crouch 900ms ease-in-out both;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
 }
 
 /* A dancer's colour, for bars, bands and badges (set as --dc by paint()). */
@@ -541,15 +636,12 @@
 @utility text-item-title {
   @apply text-base leading-snug font-semibold;
 }
-@utility text-item-subtitle {
-  @apply text-sm leading-snug;
-}
-@utility text-item-meta {
-  @apply text-sm;
-}
-
-@utility text-disclosure-heading {
-  @apply text-[1.0625rem] leading-snug font-[650];
+/* Content settling in on first load: up 6px and in. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
 }
 
 /* Skeleton shimmer — diagonal band sweeping left-to-right across the box.
@@ -574,100 +666,44 @@
   }
 }
 
+/* A soft ring from the live dot (M11). Pulse it only while results are
+   arriving, and behind motion-safe. */
 @keyframes live-pulse {
   0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--live) 60%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--live) 35%, transparent);
   }
   70% {
-    box-shadow: 0 0 0 7px transparent;
+    box-shadow: 0 0 0 6px transparent;
   }
   100% {
     box-shadow: 0 0 0 0 transparent;
   }
 }
 
-/* Generic pop: rubberband scale + a tiny rotational shake. For any
-   element that should "pop" on toggle/activation. Keyframes carry the
-   overshoot directly so the easing can stay simple. */
+/* Pop (M10): a small, happy lift for following someone. No rotation, no
+   wobble: up a touch, settle. Keyframes carry the overshoot, so the timing
+   function stays plain. Use it for the "on" moment only. */
 @keyframes pop {
   0% {
-    transform: scale(1) rotate(0deg);
+    transform: scale(1);
   }
-  25% {
-    transform: scale(1.4) rotate(-12deg);
-  }
-  50% {
-    transform: scale(0.9) rotate(10deg);
+  35% {
+    transform: scale(1.16);
   }
   70% {
-    transform: scale(1.15) rotate(-5deg);
-  }
-  85% {
-    transform: scale(0.98) rotate(2deg);
+    transform: scale(0.98);
   }
   100% {
-    transform: scale(1) rotate(0deg);
+    transform: scale(1);
   }
 }
 
-::view-transition-group-children(.clip) {
-  @apply overflow-clip;
-}
 /* Anchor text/image snapshots top-left at natural size so they don't squish
    while the parent group's width changes. */
 ::view-transition-old(.fit),
 ::view-transition-new(.fit) {
   @apply object-none object-top-left;
 }
-/* Lock snapshot to the group's full height so it doesn't compress
-   vertically while the group width interpolates. */
-::view-transition-old(.fixed-height),
-::view-transition-new(.fixed-height) {
-  @apply h-full;
-}
-
-/* Bram's bg/fg-split View Transitions technique. Outer pill gets nav-left
-   / nav-right and its image-pair is hidden; the bg morphs purely via the
-   animated keyframe so the rounded corners stay clean at every frame.
-   Inner content uses match-element names and cross-fades on top.
-   https://www.bram.us/2025/03/11/view-transitions-border-radius/ */
-@keyframes vt-nav-pill {
-  from,
-  to {
-    corner-shape: var(--corner-shape);
-    /* @apply floating-nav rounded-full — manually expanded; keep in sync. */
-    background: var(--color-card);
-    color: var(--color-card-foreground);
-    box-shadow: var(--shadow-lg);
-    border-radius: 9999px;
-    border: 1px solid var(--color-border);
-    box-sizing: border-box;
-  }
-}
-::view-transition-group(nav-left) {
-  animation-name: -ua-view-transition-group-anim-nav-left, vt-nav-pill;
-  animation-timing-function: var(--ease-rubber-band);
-}
-::view-transition-group(nav-right) {
-  animation-name: -ua-view-transition-group-anim-nav-right, vt-nav-pill;
-  animation-timing-function: var(--ease-rubber-band);
-}
-::view-transition-image-pair(nav-left),
-::view-transition-image-pair(nav-right) {
-  @apply hidden;
-}
-::view-transition-group(nav-pill),
-::view-transition-group(nav-left-active),
-::view-transition-group(nav-right-active),
-::view-transition-group(nav-right-icon) {
-  animation-timing-function: var(--ease-rubber-band);
-}
-::view-transition-group(.nav-avatar),
-::view-transition-group(.nav-title) {
-  animation-timing-function: var(--ease-rubber-band);
-  @apply z-1;
-}
-
 /* Shared slide-in/out for any element appearing/disappearing from the left
    of the floating top chrome (back button, name pill). */
 @keyframes vt-slide-in {
@@ -728,26 +764,138 @@
     opacity: 0;
   }
 }
-/* Snappy, not a flourish: 150ms, with a little rubber-band overshoot. */
+/* Timing (F3): menus and centred cards spring out of their control; a
+   sheet pinned to the bottom edge glides without overshoot; closing is a
+   quick ease back in. The two snapshots cross-fade with overlap, so there's
+   never an empty frame. */
 ::view-transition-group(morph) {
   animation-name: -ua-view-transition-group-anim-morph, vt-morph-surface;
-  animation-duration: 150ms;
-  animation-timing-function: var(--ease-rubber-band);
+  animation-duration: 300ms;
+  animation-timing-function: var(--ease-elastic);
   overflow: clip;
+}
+:active-view-transition-type(morph-pinned)::view-transition-group(morph) {
+  animation-duration: 320ms;
+  animation-timing-function: var(--ease-snappy);
+}
+:active-view-transition-type(morph-close)::view-transition-group(morph) {
+  animation-duration: 220ms;
+  animation-timing-function: var(--ease-standard);
 }
 :active-view-transition-type(morph)::view-transition-old(root),
 :active-view-transition-type(morph)::view-transition-new(root) {
-  animation-duration: 150ms;
+  animation-duration: 260ms;
+  animation-timing-function: var(--ease-standard);
+}
+:active-view-transition-type(morph-close)::view-transition-old(root),
+:active-view-transition-type(morph-close)::view-transition-new(root) {
+  animation-duration: 220ms;
 }
 ::view-transition-old(morph),
 ::view-transition-new(morph) {
   @apply size-full object-none object-top-left;
 }
 ::view-transition-old(morph) {
-  animation: vt-morph-out 60ms ease-out both;
+  animation: vt-morph-out 90ms var(--ease-exit) both;
 }
 ::view-transition-new(morph) {
-  animation: vt-morph-in 100ms 30ms ease-out both;
+  animation: vt-morph-in 150ms 50ms var(--ease-standard) both;
+}
+/* Closing shrinks the sheet's picture with the surface rather than cropping
+   it through a closing window, and it's gone early. */
+:active-view-transition-type(morph-close)::view-transition-old(morph) {
+  @apply object-cover object-top;
+  animation-duration: 80ms;
+}
+/* While something morphs, the chrome (tab bar, back pill, titles) stays in
+   the page's picture instead of its own layer, so the backdrop dims it and
+   the growing sheet passes over it (F2). The morphing element keeps its name. */
+:root:active-view-transition-type(morph)
+  :is([class*='view-transition-name'], [style*='view-transition-name']):not([style*='view-transition-name: morph']) {
+  view-transition-name: none !important;
+}
+
+/* Getting around (M1): a page pushes in from the right as the old one eases
+   back and fades; Back pops it out the other way; switching tabs swaps in
+   place with a quick fade-through. The chrome has its own transition names,
+   so it holds still while the page moves under it. Opacity never bounces. */
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes vt-from-right {
+  from {
+    translate: 2rem 0;
+  }
+}
+@keyframes vt-to-left {
+  to {
+    translate: -1.5rem 0;
+  }
+}
+@keyframes vt-from-left {
+  from {
+    translate: -1.5rem 0;
+  }
+}
+@keyframes vt-to-right {
+  to {
+    translate: 2rem 0;
+  }
+}
+@keyframes vt-rise {
+  from {
+    translate: 0 6px;
+  }
+}
+:active-view-transition-type(push)::view-transition-old(root) {
+  animation:
+    vt-fade-out 120ms var(--ease-exit) both,
+    vt-to-left 300ms var(--ease-snappy) both;
+}
+:active-view-transition-type(push)::view-transition-new(root) {
+  animation:
+    vt-fade-in 220ms 60ms var(--ease-standard) both,
+    vt-from-right 340ms var(--ease-snappy) both;
+}
+:active-view-transition-type(pop)::view-transition-old(root) {
+  animation:
+    vt-fade-out 120ms var(--ease-exit) both,
+    vt-to-right 300ms var(--ease-snappy) both;
+}
+:active-view-transition-type(pop)::view-transition-new(root) {
+  animation:
+    vt-fade-in 220ms 60ms var(--ease-standard) both,
+    vt-from-left 340ms var(--ease-snappy) both;
+}
+:active-view-transition-type(tab)::view-transition-old(root) {
+  animation: vt-fade-out 90ms var(--ease-exit) both;
+}
+:active-view-transition-type(tab)::view-transition-new(root) {
+  animation:
+    vt-fade-in 180ms 70ms var(--ease-standard) both,
+    vt-rise 260ms 70ms var(--ease-snappy) both;
+}
+/* Labels that change in place (the tab bar entering or leaving a
+   competition, the back pill's text) fade out before the new ones fade in,
+   so two sets of words never sit on top of each other (M14). */
+:active-view-transition-type(enter-competition, leave-competition)::view-transition-old(tabbar) {
+  animation: vt-fade-out 90ms var(--ease-exit) both;
+}
+:active-view-transition-type(enter-competition, leave-competition)::view-transition-new(tabbar) {
+  animation: vt-fade-in 160ms 70ms var(--ease-standard) both;
+}
+::view-transition-old(nav-back):not(:only-child) {
+  animation: vt-fade-out 80ms var(--ease-exit) both;
+}
+::view-transition-new(nav-back):not(:only-child) {
+  animation: vt-fade-in 160ms 70ms var(--ease-standard) both;
 }
 
 /* The tab bar pill keeps its place between the app's tabs and a

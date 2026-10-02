@@ -5,6 +5,7 @@ import {
   isNavigationFailure,
   NavigationFailureType,
   type RouteRecordRaw,
+  type RouteLocationNormalized,
 } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
 import { CalendarDays, Gavel, House, Info, Music, School, Settings, Users } from '@lucide/vue'
@@ -458,8 +459,42 @@ nav?.addEventListener('navigate', (event) => {
   }
 })
 
+// Which way a navigation goes (M1): deeper pushes in from the right, back
+// pops out to the left, and switching tabs swaps in place. Back and Forward
+// are told apart by the history position vue-router keeps in history.state;
+// this listener runs after the router's own, before its guards.
+let lastPosition = Number(history.state?.position ?? 0)
+let popDirection: 'push' | 'pop' | null = null
+window.addEventListener('popstate', (e) => {
+  const position = Number((e.state as { position?: number } | null)?.position ?? lastPosition)
+  popDirection = position < lastPosition ? 'pop' : 'push'
+})
+router.afterEach(() => {
+  lastPosition = Number(history.state?.position ?? lastPosition)
+})
+const GLOBAL_TABS = ['home', 'competitions', 'search']
+const COMPETITION_TABS = ['competition.info', 'competition.dancers', 'competition.schedule', 'competition.results']
+const depth = (r: RouteLocationNormalized) => r.path.split('/').filter(Boolean).length
+function direction(to: RouteLocationNormalized, from: RouteLocationNormalized): 'push' | 'pop' | 'tab' {
+  if (popDirection) {
+    const d = popDirection
+    popDirection = null
+    return d
+  }
+  const name = (r: RouteLocationNormalized) => String(r.name ?? '')
+  if (GLOBAL_TABS.includes(name(to)) && GLOBAL_TABS.includes(name(from))) return 'tab'
+  if (
+    COMPETITION_TABS.includes(name(to)) &&
+    COMPETITION_TABS.includes(name(from)) &&
+    to.params.competitionId === from.params.competitionId
+  )
+    return 'tab'
+  return depth(to) < depth(from) ? 'pop' : 'push'
+}
+
 router.beforeResolve(async (to, from) => {
   if (from.matched.length === 0) return
+  const way = direction(to, from)
   // Skip transition for same-route query-only changes (e.g. typing into a
   // search input that syncs ?q= to the URL) — the snapshot/replay would
   // flicker visible text on each keystroke.
@@ -477,6 +512,6 @@ router.beforeResolve(async (to, from) => {
   // off the pill or merges back into it (style.css, vt-bud-*).
   const inComp = (r: typeof to) => r.matched.some((m) => m.meta.ownsBottomNav)
   const types = inComp(to) && !inComp(from) ? ['enter-competition'] : !inComp(to) && inComp(from) ? ['leave-competition'] : []
-  const transition = startViewTransition(undefined, types)
+  const transition = startViewTransition(undefined, [...types, way])
   await transition.captured
 })
