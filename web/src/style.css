@@ -354,6 +354,77 @@
   --notice-offset: 2.75rem;
 }
 
+/* The launch hop (SplashOverlay): the dancer's head crouches, springs up
+   out of the flag and lands with a little squash; the flag gives with it.
+   Keyframes carry their own easing (up eases out, down eases in). */
+@keyframes splash-hop {
+  0% {
+    translate: 0 0;
+    scale: 1 1;
+    animation-timing-function: ease-in-out;
+  }
+  16% {
+    translate: 0 6%;
+    scale: 1.12 0.84;
+    fill: #fff;
+    animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  /* Out of the flag, the head takes the flag's blue so it shows on the page. */
+  30% {
+    fill: #0065bd;
+  }
+  48% {
+    translate: 0 -150%;
+    scale: 0.94 1.08;
+    animation-timing-function: cubic-bezier(0.6, 0, 0.85, 0.4);
+  }
+  62% {
+    fill: #0065bd;
+  }
+  74% {
+    translate: 0 4%;
+    scale: 1.14 0.84;
+    fill: #fff;
+    animation-timing-function: ease-out;
+  }
+  88% {
+    translate: 0 -6%;
+    scale: 0.98 1.03;
+  }
+  100% {
+    translate: 0 0;
+    scale: 1 1;
+  }
+}
+@keyframes splash-crouch {
+  0%,
+  100% {
+    scale: 1 1;
+  }
+  16% {
+    scale: 1.03 0.96;
+  }
+  30% {
+    scale: 0.99 1.02;
+  }
+  74% {
+    scale: 1.03 0.96;
+  }
+  88% {
+    scale: 1 1;
+  }
+}
+@utility splash-hop {
+  animation: splash-hop 900ms both;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+@utility splash-crouch {
+  animation: splash-crouch 900ms ease-in-out both;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
 /* A dancer's colour, for bars, bands and badges (set as --dc by paint()). */
 @utility sash {
   background: var(--dc, var(--primary));
