@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ChevronRight, Diamond, ListOrdered, Pencil, Search, Trophy, X } from '@lucide/vue'
+import { ChevronRight, CloudOff, Diamond, ListOrdered, Pencil, Search, Trophy, X } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import HelpTip from '@/components/admin/HelpTip.vue'
 import PlacedList from '@/components/admin/PlacedList.vue'
-import { useManagedCompetition, compareNumbers } from '@/composables/admin/useManagedCompetition'
+import Segmented from '@/components/ui/Segmented.vue'
+import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import { tapHaptic } from '@/lib/haptics'
@@ -47,8 +48,13 @@ const rawNow = () => m.results.value[props.groupId]?.[props.danceId]
 const placings = computed<Placings>(() => parsePlacings(rawNow()))
 const markedNone = computed(() => rawNow() === false)
 
+const TABS = [
+  { value: 'placings', label: 'Placings' },
+  { value: 'points', label: 'Points' },
+] as const
 const tab = ref<'placings' | 'points'>('placings')
 const pickingReverse = ref(false)
+watch(tab, () => (pickingReverse.value = false))
 watch(
   () => props.danceId,
   () => {
@@ -59,11 +65,12 @@ watch(
 )
 
 const groupDancers = computed(() => m.groupDancers(props.groupId))
-// Dances and Overall place only the dancers called back.
-const calledBack = computed(() => {
-  const ids = new Set(parsePlacings(m.results.value[props.groupId]?.[CALLBACKS]).entries.map((e) => e.id))
-  return groupDancers.value.filter((d) => ids.has(d.id)).sort((a, b) => compareNumbers(a.num, b.num))
-})
+// Dances and Overall place only the dancers called back. With none entered
+// (older competitions, or "No callbacks"), everyone in the age group.
+const callbacksRaw = computed(() => m.results.value[props.groupId]?.[CALLBACKS])
+const calledBackIds = computed(() => new Set(parsePlacings(callbacksRaw.value).entries.map((e) => e.id)))
+const noCallbacks = computed(() => !calledBackIds.value.size)
+const calledBack = computed(() => (noCallbacks.value ? groupDancers.value : groupDancers.value.filter((d) => calledBackIds.value.has(d.id))))
 const candidates = computed(() => (isCallbacks.value || tab.value === 'points' ? groupDancers.value : calledBack.value))
 
 const placedIndex = computed(() => new Map(placings.value.entries.map((e, i) => [e.id, i])))
@@ -209,30 +216,25 @@ const next = computed(() => {
     </header>
 
     <!-- Placings / Points -->
-    <div v-if="!isCallbacks && offersPoints" class="flex border-b" role="tablist">
-      <button
-        v-for="t in (['placings', 'points'] as const)"
-        :key="t"
-        type="button"
-        role="tab"
-        :aria-selected="tab === t"
-        :class="[
-          'flex h-12 flex-1 items-center justify-center gap-2 border-b-2 text-[0.9375rem] font-bold',
-          tab === t ? 'border-primary text-primary' : 'text-muted-foreground border-transparent',
-        ]"
-        @click="tab = t; pickingReverse = false"
-      >
-        {{ t === 'placings' ? 'Placings' : 'Points' }}
-        <HelpTip v-if="t === 'points'" label="About championship points">
-          Championship points mark dancers who were placed by at least one judge, but whose combined score didn’t give them a place.
-        </HelpTip>
-      </button>
+    <div v-if="!isCallbacks && offersPoints" class="flex items-center gap-2 border-b px-4 pb-3">
+      <Segmented v-model="tab" :options="TABS" label="Placings or points" class="max-w-sm flex-1" />
+      <HelpTip label="About championship points">
+        Championship points mark dancers who were placed by at least one judge, but whose combined score didn’t give them a place.
+      </HelpTip>
     </div>
 
     <div class="md:grid md:min-h-0 md:flex-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
       <!-- Dancers to tap -->
       <section class="flex min-w-0 flex-col md:min-h-0 md:border-r">
         <div class="md:min-h-0 md:flex-1 md:overflow-y-auto">
+          <!-- No signal: nothing here can be saved, so say so over the list
+               rather than let taps quietly do nothing. -->
+          <div class="sticky top-(--chrome-top) z-10 md:top-0" role="status">
+            <p v-if="!canEdit" class="bg-foreground text-background mx-3 mt-3 flex items-center gap-3 rounded-2xl px-4 py-3 shadow-(--shadow-raised)">
+              <CloudOff class="size-5 shrink-0" aria-hidden="true" />
+              <span><strong class="font-semibold">No signal.</strong> Results can’t be saved until it’s back.</span>
+            </p>
+          </div>
           <!-- Championship: how many places -->
           <template v-if="pickingReverse">
             <div class="flex items-center gap-3 border-b px-4 py-3">
@@ -260,8 +262,23 @@ const next = computed(() => {
             </ul>
           </template>
 
-          <template v-else-if="candidates.length">
+          <div
+            v-else-if="candidates.length"
+            :aria-disabled="!canEdit || undefined"
+            :class="['transition-[opacity,filter] duration-(--dur-base) ease-standard', !canEdit && 'opacity-50 grayscale']"
+          >
             <p class="text-muted-foreground px-4 pt-3 pb-2 text-sm font-semibold">{{ instruction }}</p>
+            <p v-if="noCallbacks && !isCallbacks && tab === 'placings'" class="text-muted-foreground px-4 pb-2 text-sm">
+              {{ callbacksRaw === false ? 'No callbacks' : 'No callbacks entered' }}: showing everyone.
+              <RouterLink
+                v-if="callbacksRaw !== false"
+                :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId, danceId: CALLBACKS } }"
+                replace
+                class="text-primary font-semibold whitespace-nowrap"
+              >
+                Enter callbacks ›
+              </RouterLink>
+            </p>
             <p v-if="placings.reverseFrom && tab === 'placings'" class="bg-blue-paper text-primary px-4 py-2.5 text-sm font-bold">
               Entering from {{ placings.reverseFrom }}{{ getOrdinalSuffix(placings.reverseFrom) }} place
             </p>
@@ -298,19 +315,10 @@ const next = computed(() => {
                 </button>
               </li>
             </ul>
-          </template>
+          </div>
 
-          <EmptyState v-else-if="isCallbacks || tab === 'points'" :icon="Search" title="No dancers found" description="Add dancers to this age group first.">
-            <RouterLink :to="{ name: 'manage.dancers', params: { competitionId: m.competitionId.value } }" class="text-primary text-base font-bold">Add dancers ›</RouterLink>
-          </EmptyState>
-          <EmptyState v-else :icon="Search" title="No dancers to place" description="Enter the callbacks first: only dancers called back are placed.">
-            <RouterLink
-              :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId, danceId: CALLBACKS } }"
-              replace
-              class="text-primary text-base font-bold"
-            >
-              Enter callbacks ›
-            </RouterLink>
+          <EmptyState v-else :icon="Search" title="No dancers found" description="Add dancers to this age group first.">
+            <RouterLink :to="{ name: 'manage.dancers', params: { competitionId: m.competitionId.value } }" class="text-primary text-base font-semibold">Add dancers ›</RouterLink>
           </EmptyState>
         </div>
 
