@@ -119,7 +119,7 @@ const anyDraws = computed(() => dances.value.some((d) => stored(d.id).length))
 
       <template v-else>
         <div class="flex flex-wrap gap-2">
-          <button type="button" :disabled="!canEdit" class="bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50" @click="shuffleAll">
+          <button type="button" :disabled="!canEdit" class="bg-primary-fill text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50" @click="shuffleAll">
             <Shuffle class="size-4" /> Shuffle every dance
           </button>
           <button

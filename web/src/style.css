@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -11,7 +10,11 @@
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+  /* Brand blue as ink (text, icons, rings, borders) and as a fill (solid
+     buttons, badges). They're the same in light; in dark the ink lightens
+     for contrast while the fill stays a deep, saturated blue. */
   --color-primary: var(--primary);
+  --color-primary-fill: var(--primary-fill);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -20,7 +23,10 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-fill: var(--destructive-fill);
   --color-destructive-foreground: var(--destructive-foreground);
+  /* A surface that rises above cards: menus, dialogs, sheets. */
+  --color-raised: var(--raised);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -58,6 +64,13 @@
   --font-serif: var(--font-sans);
   --font-mono: 'Atkinson Hyperlegible Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --default-transition-duration: 220ms;
+  /* Motion vocabulary. Springs move things; opacity and colour never bounce
+     (they use standard or exit). Durations: --dur-* below. */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-snappy: linear(0, 0.065, 0.202, 0.353, 0.494, 0.613, 0.71, 0.786, 0.843, 0.887, 0.918, 0.942, 0.959, 0.971, 0.979, 0.986, 0.99, 0.993, 1);
+  --ease-elastic: linear(0, 0.059, 0.193, 0.354, 0.513, 0.653, 0.768, 0.856, 0.921, 0.965, 0.993, 1.009, 1.017, 1.02, 1.019, 1.017, 1.014, 1.01, 1.007, 1.005, 1);
+  /* Older overshoot curve; prefer --ease-snappy / --ease-elastic. */
   --ease-rubber-band: cubic-bezier(0.34, 1.3, 0.64, 1);
   --animate-pop: pop 450ms ease-out;
   --animate-medal: medal 900ms cubic-bezier(0.2, 0.9, 0.3, 1.3);
@@ -79,6 +92,7 @@
   --popover-foreground: #12161b;
   /* Saltire blue (Pantone 300) */
   --primary: #0065bd;
+  --primary-fill: #0065bd;
   --primary-foreground: #ffffff;
   /* Royal Stewart red: following + "today" */
   --secondary: #b0102c;
@@ -88,7 +102,9 @@
   --accent: #e9edf2;
   --accent-foreground: #12161b;
   --destructive: #b42318;
+  --destructive-fill: #b42318;
   --destructive-foreground: #ffffff;
+  --raised: #ffffff;
   --border: #d3dae2;
   --input: #8c96a3;
   --strong: #8c96a3;
@@ -97,14 +113,15 @@
   /* Subtler than a full squircle (superellipse(2)), so corners stay soft. */
   --corner-shape: superellipse(1.5);
   --blue-paper: #e1ecf8;
-  --pink-paper: #fbe4e8;
+  --pink-paper: #fde7f1;
   --chip: #e9edf2;
   --next: #ffefc7;
   --next-foreground: #7a4600;
   --done: #ddf2e2;
   --done-foreground: #145c2b;
-  --live: #b0102c;
-  --live-paper: #fbe4e8;
+  /* Live and today: hot pink, kept apart from the red of following. */
+  --live: #c8166a;
+  --live-paper: #fde7f1;
   --paper: #ffffff;
   --paper-edge: #c9d0d8;
   --dance: oklch(0.82 0.3 132);
@@ -137,6 +154,20 @@
   --nav-bottom: 0px;
   --chrome-top: calc(3.5rem + var(--safe-top));
   --chrome-bottom: calc(4.5rem + max(0.5rem, var(--safe-bottom)));
+  /* Surfaces: a hairline and a whisper of shadow for cards; a soft lift for
+     what floats above them. No borders as well. */
+  --shadow-card: 0 0 0 0.5px rgb(18 22 27 / 0.09), 0 1px 2px rgb(16 24 40 / 0.05);
+  --shadow-raised: 0 0 0 0.5px rgb(18 22 27 / 0.06), 0 10px 30px -8px rgb(16 24 40 / 0.2), 0 2px 6px rgb(16 24 40 / 0.06);
+  /* Pressed and hovered rows tint by this much of the ink colour. */
+  --tint-hover: color-mix(in oklab, var(--foreground) 4%, transparent);
+  --tint-press: color-mix(in oklab, var(--foreground) 9%, transparent);
+  --proximity-alpha: 0.24;
+  --disabled-opacity: 0.4;
+  --dur-instant: 90ms;
+  --dur-quick: 160ms;
+  --dur-base: 240ms;
+  --dur-slow: 380ms;
+  --dur-spring: 460ms;
 }
 
 .dark {
@@ -148,10 +179,11 @@
   --glass-edge: rgb(255 255 255 / 0.1);
   --glass-line: rgb(255 255 255 / 0.1);
   --card-foreground: #eef2f6;
-  --popover: #1f262e;
+  --popover: #222a33;
   --popover-foreground: #eef2f6;
   --primary: #62aaf0;
-  --primary-foreground: #06121e;
+  --primary-fill: #1a6fd0;
+  --primary-foreground: #ffffff;
   --secondary: #ff7088;
   --secondary-foreground: #1a0509;
   --muted: #1f262e;
@@ -159,20 +191,22 @@
   --accent: #1f262e;
   --accent-foreground: #eef2f6;
   --destructive: #ff8a7a;
-  --destructive-foreground: #1a0509;
+  --destructive-fill: #d0342c;
+  --destructive-foreground: #ffffff;
+  --raised: #222a33;
   --border: #2b343e;
   --input: #5d6875;
   --strong: #5d6875;
   --ring: #62aaf0;
   --blue-paper: #11263a;
-  --pink-paper: #3a1119;
+  --pink-paper: #3d1430;
   --chip: #1f262e;
   --next: #3a2a07;
   --next-foreground: #ffd27a;
   --done: #0f2c19;
   --done-foreground: #86dda0;
-  --live: #ff7088;
-  --live-paper: #3a1119;
+  --live: #ff6eb0;
+  --live-paper: #3d1430;
   --paper: #f7f5ef;
   --paper-edge: #f7f5ef;
   --dance-muted: oklch(0.22 0.06 132);
@@ -186,6 +220,12 @@
   --dancer-6: #3fc2c9;
   --dancer-7: #ec6fae;
   --dancer-8: #f28a3c;
+  /* Dark surfaces rise by getting lighter, with a faint lit top edge. */
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.035), 0 0 0 0.5px rgb(255 255 255 / 0.06);
+  --shadow-raised: inset 0 1px 0 rgb(255 255 255 / 0.07), 0 0 0 0.5px rgb(255 255 255 / 0.08), 0 14px 34px -10px rgb(0 0 0 / 0.65);
+  --tint-hover: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --tint-press: color-mix(in oklab, var(--foreground) 10%, transparent);
+  --proximity-alpha: 0.12;
 }
 
 /* The OS Increase Contrast setting: no grey text, heavier edges. */
@@ -207,6 +247,21 @@
   html {
     @apply scroll-pt-[calc(var(--chrome-top)+1rem)] scroll-pb-[calc(var(--chrome-bottom)+1rem)];
     -webkit-text-size-adjust: 100%;
+    /* Every control has its own press state (press-* below). */
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='switch']:not(:disabled),
+  [role='checkbox']:not(:disabled),
+  summary,
+  select:not(:disabled) {
+    cursor: pointer;
+  }
+  /* Times and numbers keep their width as they change. */
+  time,
+  [data-num] {
+    font-variant-numeric: tabular-nums;
   }
   body {
     @apply bg-background text-foreground font-sans;
@@ -278,6 +333,164 @@
 @utility sash {
   background: var(--dc, var(--primary));
 }
+
+/* Surfaces. Paper for content (a hairline, a whisper of shadow, no border),
+   raised for what floats above it (menus, sheets). Glass is for chrome. */
+@utility surface {
+  background-color: var(--card);
+  box-shadow: var(--shadow-card);
+}
+@utility surface-raised {
+  background-color: var(--raised);
+  box-shadow: var(--shadow-raised);
+}
+/* Separators inset from the leading edge, iOS style, without touching the
+   rows' own background colour (hover and press tint via box-shadow). Set
+   --inset on the list to line them up with the text. */
+@utility rows-inset {
+  & > * + * {
+    background-image: linear-gradient(var(--border), var(--border));
+    background-size: calc(100% - var(--inset, 1rem)) 1px;
+    background-position: right top;
+    background-repeat: no-repeat;
+  }
+}
+
+/* Form fields: a white well with a quiet 1px edge (still 3:1), focus adds a
+   blue edge and a soft halo. Use on the input, or on a label wrapping one. */
+@utility field {
+  background-color: var(--card);
+  box-shadow:
+    inset 0 0 0 1px var(--input),
+    inset 0 1px 2px rgb(16 24 40 / 0.04);
+  transition: box-shadow var(--dur-quick) var(--ease-standard);
+  &:focus,
+  &:focus-within {
+    outline: none;
+    box-shadow:
+      inset 0 0 0 1.5px var(--primary),
+      0 0 0 4px color-mix(in oklab, var(--primary) 18%, transparent);
+  }
+  &:has(:user-invalid),
+  &:user-invalid,
+  &[aria-invalid='true'] {
+    box-shadow: inset 0 0 0 1.5px var(--destructive);
+  }
+}
+
+/* Interaction states, one per level (see docs: every touch answers within a
+   frame, the same way for its level). Pressed comes in at once and springs
+   back out. iOS needs a touchstart listener for :active (main.ts), and the
+   v-tap-feedback directive's data-tapping outlasts a quick tap.
+   Rows: a tint layered over whatever background they have. */
+@utility press-row {
+  box-shadow: inset 0 0 0 100vmax var(--row-tint, transparent);
+  transition: box-shadow var(--dur-base) var(--ease-standard);
+  @media (hover: hover) {
+    &:hover {
+      --row-tint: var(--tint-hover);
+    }
+  }
+  &:active,
+  &[data-tapping] {
+    --row-tint: var(--tint-press);
+    transition-duration: 0ms;
+  }
+  &:disabled,
+  &[aria-disabled='true'] {
+    --row-tint: transparent;
+  }
+}
+/* Pills, chips, icon buttons, segmented options. */
+@utility press {
+  transition:
+    scale var(--dur-slow) var(--ease-elastic),
+    background-color var(--dur-quick) var(--ease-standard),
+    color var(--dur-quick) var(--ease-standard);
+  &:active:not(:disabled),
+  &[data-tapping] {
+    scale: 0.96;
+    transition-duration: 60ms;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &:active:not(:disabled),
+    &[data-tapping] {
+      scale: none;
+    }
+  }
+}
+/* Solid buttons. */
+@utility press-fill {
+  transition:
+    scale var(--dur-slow) var(--ease-elastic),
+    filter var(--dur-quick) var(--ease-standard);
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      filter: brightness(1.06);
+    }
+  }
+  &:active:not(:disabled),
+  &[data-tapping] {
+    scale: 0.97;
+    filter: brightness(0.92);
+    transition-duration: 60ms;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &:active:not(:disabled),
+    &[data-tapping] {
+      scale: none;
+    }
+  }
+}
+/* Glass chrome: squishes, then springs back. */
+@utility press-glass {
+  transition: scale var(--dur-spring) var(--ease-elastic);
+  &:active,
+  &[data-tapping] {
+    scale: 0.92;
+    transition-duration: 70ms;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &:active,
+    &[data-tapping] {
+      scale: none;
+    }
+  }
+}
+/* Keyboard focus that follows the shape and isn't clipped by a card. */
+@utility focus-inset {
+  &:focus-visible {
+    outline-offset: -3px;
+  }
+}
+
+/* "Someone nearby": with a mouse or trackpad, glass and solid buttons catch
+   a soft light that follows the pointer as it approaches (v-proximity sets
+   --near 0..1 and --mx/--my). Never on rows or fields; off for Reduce
+   Motion and Reduce Transparency (the directive never sets --near then). */
+@property --near {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+@utility proximity {
+  position: relative;
+  isolation: isolate;
+  transition: --near var(--dur-quick) var(--ease-standard);
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(
+      140px circle at var(--mx, 50%) var(--my, 50%),
+      rgb(255 255 255 / calc(var(--near) * var(--proximity-alpha))),
+      transparent 62%
+    );
+  }
+}
 /* Press feedback: the control dims while pressed, like a native button.
    Applied via the v-tap-feedback directive, which sets data-tapping during
    a press so the dim outlasts iOS's brief :active. */
@@ -287,8 +500,11 @@
     translate var(--default-transition-duration) var(--ease-rubber-band);
 }
 [data-tap-feedback][data-tapping] {
-  opacity: 0.6;
   transition: none;
+}
+/* A control with only the directive (no press-* utility) still answers. */
+[data-tap-feedback][data-tapping]:not([class*='press']) {
+  scale: 0.96;
 }
 
 /* Type scale (80% of the Front Row prototype, with body floored at 16px):
@@ -296,19 +512,29 @@
    caption 12. All rem-based, so the in-app Text size setting and browser
    zoom scale everything together. */
 @utility text-display {
-  @apply text-[1.625rem] leading-tight font-extrabold tracking-[-0.02em];
+  @apply text-[1.625rem] leading-tight font-[760] tracking-[-0.022em];
 }
 @utility text-title {
-  @apply text-[1.3125rem] leading-tight font-extrabold tracking-[-0.015em];
+  @apply text-[1.3125rem] leading-tight font-bold tracking-[-0.014em];
 }
 @utility text-heading {
-  @apply text-[1.0625rem] leading-snug font-bold;
+  @apply text-[1.0625rem] leading-snug font-[650];
+}
+/* The 15px step: buttons, chips, secondary rows. Weight is the caller's. */
+@utility text-callout {
+  @apply text-[0.9375rem] leading-snug;
+}
+@utility text-footnote {
+  @apply text-[0.8125rem] leading-snug;
+}
+@utility text-caption {
+  @apply text-xs leading-snug font-medium;
 }
 
 /* Small label above a heading. Sentence case, bold, no letter-spacing
    games: uppercase tracked micro-labels are hard to read. */
 @utility text-eyebrow {
-  @apply font-sans font-bold tracking-normal normal-case;
+  @apply font-sans font-semibold tracking-normal normal-case;
 }
 
 /* Shared list-row typography. */
@@ -323,7 +549,7 @@
 }
 
 @utility text-disclosure-heading {
-  @apply text-[1.0625rem] leading-snug font-bold;
+  @apply text-[1.0625rem] leading-snug font-[650];
 }
 
 /* Skeleton shimmer — diagonal band sweeping left-to-right across the box.

@@ -143,7 +143,7 @@ function onEnd(e: { oldIndex?: number; newIndex?: number }) {
           @click="emit('tie', tieIndex(row), !tieOn(row))"
         >
           <span :class="tieOn(row) ? 'text-primary' : 'text-muted-foreground'">TIE</span>
-          <span :class="['relative h-5 w-9 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-4 after:rounded-full after:bg-white after:shadow after:transition-transform', tieOn(row) ? 'bg-primary after:translate-x-4' : 'bg-strong']" />
+          <span :class="['relative h-5 w-9 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-4 after:rounded-full after:bg-white after:shadow after:transition-transform', tieOn(row) ? 'bg-primary-fill after:translate-x-4' : 'bg-strong']" />
         </button>
         <span v-else class="w-[4.75rem] shrink-0" />
         <Trophy v-if="singleOverall" class="text-primary mx-1 size-7 shrink-0" />

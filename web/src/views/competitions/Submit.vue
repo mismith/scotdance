@@ -310,7 +310,7 @@ const addButton = 'text-primary hover:bg-accent -mx-3 flex h-11 w-fit items-cent
         </p>
         <p class="text-muted-foreground mx-auto max-w-md text-sm">If it doesn’t arrive, check your junk folder.</p>
         <div class="flex flex-col items-center gap-2 pt-2">
-          <RouterLink :to="{ name: 'competitions' }" class="bg-primary text-primary-foreground h-12 content-center rounded-xl px-6 text-base font-bold">Back to competitions</RouterLink>
+          <RouterLink :to="{ name: 'competitions' }" class="bg-primary-fill text-primary-foreground h-12 content-center rounded-xl px-6 text-base font-bold">Back to competitions</RouterLink>
           <button type="button" class="text-primary h-11 font-bold" @click="another">Submit another</button>
         </div>
       </div>
@@ -420,7 +420,7 @@ const addButton = 'text-primary hover:bg-accent -mx-3 flex h-11 w-fit items-cent
             >
               <ChevronLeft class="size-5" /> Back
             </button>
-            <button type="submit" :disabled="sending" class="bg-primary text-primary-foreground flex h-12 flex-1 items-center justify-center gap-2 rounded-xl text-base font-bold disabled:opacity-50">
+            <button type="submit" :disabled="sending" class="bg-primary-fill text-primary-foreground flex h-12 flex-1 items-center justify-center gap-2 rounded-xl text-base font-bold disabled:opacity-50">
               <template v-if="step < STEPS.length - 1">Next <ChevronRight class="-mr-1 size-5" /></template>
               <template v-else>
                 <LoaderCircle v-if="sending" class="size-5 animate-spin" />

@@ -75,7 +75,7 @@ const entityRef = computed(() =>
             name: `${entityRef.routePrefix}.info`,
             params: { [entityRef.idParam]: entityRef.id },
           }"
-          class="bg-primary text-primary-foreground flex h-12 items-center justify-center rounded-xl text-base font-bold"
+          class="bg-primary-fill text-primary-foreground flex h-12 items-center justify-center rounded-xl text-base font-bold"
         >
           See all their competitions
         </RouterLink>

@@ -88,7 +88,7 @@ async function create() {
       <template v-else-if="!auth.isSignedIn">
         <EmptyState :icon="LogIn" title="Sign in to manage your competitions" description="Organisers and their admins sign in to change competitions." />
         <div class="flex justify-center">
-          <button type="button" class="bg-primary text-primary-foreground h-12 rounded-xl px-6 text-base font-bold" @click="auth.openLogin()">Sign in</button>
+          <button type="button" class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-6 text-base font-bold" @click="auth.openLogin()">Sign in</button>
         </div>
       </template>
 
@@ -98,12 +98,12 @@ async function create() {
             v-if="me.isAdmin"
             type="button"
             :disabled="!canEdit"
-            class="bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50"
+            class="bg-primary-fill text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50"
             @click="creating = true"
           >
             <Plus class="size-4" /> New competition
           </button>
-          <RouterLink v-else :to="{ name: 'competitions.submit' }" class="bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold">
+          <RouterLink v-else :to="{ name: 'competitions.submit' }" class="bg-primary-fill text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold">
             <Plus class="size-4" /> Submit a competition
           </RouterLink>
         </div>
@@ -152,7 +152,7 @@ async function create() {
         <FormInput v-model="newName" label="Name" required placeholder="e.g. Canadian Championship 2027" />
         <FormInput v-model="newDate" label="Date" kind="date" required />
         <p v-if="createError" class="text-destructive text-sm font-semibold" role="alert">{{ createError }}</p>
-        <button type="submit" :disabled="!canEdit" class="bg-primary text-primary-foreground h-12 w-full rounded-xl text-base font-bold disabled:opacity-50">Create</button>
+        <button type="submit" :disabled="!canEdit" class="bg-primary-fill text-primary-foreground h-12 w-full rounded-xl text-base font-bold disabled:opacity-50">Create</button>
       </form>
     </Dialog>
   </div>

@@ -165,7 +165,7 @@ async function submit() {
       <button
         type="submit"
         :disabled="busy"
-        class="bg-primary text-primary-foreground h-12 w-full rounded-xl text-base font-bold disabled:opacity-60"
+        class="bg-primary-fill text-primary-foreground h-12 w-full rounded-xl text-base font-bold disabled:opacity-60"
       >
         <template v-if="busy">Working…</template>
         <template v-else-if="step === 'signin'">Sign in</template>

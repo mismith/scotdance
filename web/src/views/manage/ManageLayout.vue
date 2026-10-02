@@ -178,7 +178,7 @@ const barTitle = computed(() => (isHome.value ? 'Manage' : ((route.meta.title as
             description="Organisers and the admins they invite can edit a competition after signing in."
           />
           <div class="flex justify-center">
-            <button type="button" class="bg-primary text-primary-foreground h-12 rounded-xl px-6 text-base font-bold" @click="auth.openLogin()">
+            <button type="button" class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-6 text-base font-bold" @click="auth.openLogin()">
               Sign in
             </button>
           </div>

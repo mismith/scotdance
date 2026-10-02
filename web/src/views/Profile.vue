@@ -284,7 +284,7 @@ const submitDisabled = computed(() => {
           :disabled="submitDisabled"
           :class="[
             'h-12 w-full rounded-xl text-base font-bold disabled:opacity-50',
-            modal === 'delete' ? 'bg-destructive text-destructive-foreground' : 'bg-primary text-primary-foreground',
+            modal === 'delete' ? 'bg-destructive-fill text-destructive-foreground' : 'bg-primary-fill text-primary-foreground',
           ]"
         >
           <template v-if="submitting">Working…</template>

@@ -299,7 +299,7 @@ async function deleteCompetition() {
             </label>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button type="submit" :disabled="!canEdit || !newUrl.trim()" class="bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50">
+            <button type="submit" :disabled="!canEdit || !newUrl.trim()" class="bg-primary-fill text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50">
               <Plus class="size-4" /> Add link
             </button>
             <button

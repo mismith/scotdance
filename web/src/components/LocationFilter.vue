@@ -260,7 +260,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
                       : 'Show competitions near you.'
                 }}
               </p>
-              <button type="button" class="bg-primary text-primary-foreground flex h-11 w-full items-center justify-center gap-2 rounded-xl text-[0.9375rem] font-bold" @click="requestPosition">
+              <button type="button" class="bg-primary-fill text-primary-foreground flex h-11 w-full items-center justify-center gap-2 rounded-xl text-[0.9375rem] font-bold" @click="requestPosition">
                 <Locate class="size-4" /> {{ locationError ? 'Try again' : 'Use my location' }}
               </button>
             </template>
@@ -317,7 +317,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
           </button>
         </li>
       </ul>
-      <button type="button" class="bg-primary text-primary-foreground h-12 w-full rounded-xl text-base font-bold" @click="sheet.hide()">Done</button>
+      <button type="button" class="bg-primary-fill text-primary-foreground h-12 w-full rounded-xl text-base font-bold" @click="sheet.hide()">Done</button>
     </div>
   </Dialog>
 </template>

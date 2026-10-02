@@ -49,7 +49,7 @@ async function handleClick(e: Event) {
       labelled
         ? [
             'h-11 gap-1.5 border px-4 text-[0.9375rem] font-bold',
-            isFavorite ? 'bg-blue-paper text-primary border-transparent' : 'bg-primary border-primary text-primary-foreground',
+            isFavorite ? 'bg-blue-paper text-primary border-transparent' : 'bg-primary-fill border-primary text-primary-foreground',
           ]
         : ['size-11 hover:bg-accent', isFavorite ? 'text-primary' : 'text-muted-foreground'],
     ]"

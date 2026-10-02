@@ -46,7 +46,7 @@ async function onClick(e: Event) {
       'relative inline-flex shrink-0 items-center justify-center gap-1.5 font-bold transition-colors',
       size === 'row'
         ? ['size-11 rounded-full hover:bg-accent', !on && 'text-muted-foreground']
-        : ['h-12 w-full rounded-xl border px-4 text-base', on ? 'text-foreground' : 'bg-primary border-primary text-primary-foreground'],
+        : ['h-12 w-full rounded-xl border px-4 text-base', on ? 'text-foreground' : 'bg-primary-fill border-primary text-primary-foreground'],
     ]"
     @click="onClick"
   >

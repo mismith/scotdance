@@ -13,7 +13,7 @@ import AppBar from '@/components/nav/AppBar.vue'
         The link may be old, or the competition may no longer be public. Try Home, or search for what you were looking for.
       </p>
       <div class="flex flex-wrap justify-center gap-2">
-        <RouterLink :to="{ name: 'home' }" class="bg-primary text-primary-foreground flex h-12 items-center gap-2 rounded-xl px-5 text-base font-bold">
+        <RouterLink :to="{ name: 'home' }" class="bg-primary-fill text-primary-foreground flex h-12 items-center gap-2 rounded-xl px-5 text-base font-bold">
           <House class="size-5" /> Go to Home
         </RouterLink>
         <RouterLink :to="{ name: 'search' }" class="bg-card border-strong flex h-12 items-center gap-2 rounded-xl border px-5 text-base font-bold">

@@ -31,7 +31,7 @@ async function runAction(id: number, run: () => unknown) {
           type="button"
           :class="[
             'h-12 rounded-xl px-5 text-base font-bold',
-            req.destructive ? 'bg-destructive text-destructive-foreground' : 'bg-primary text-primary-foreground',
+            req.destructive ? 'bg-destructive-fill text-destructive-foreground' : 'bg-primary-fill text-primary-foreground',
           ]"
           @click="req.resolve(true)"
         >
@@ -57,7 +57,7 @@ async function runAction(id: number, run: () => unknown) {
         :key="t.id"
         :class="[
           'pointer-events-auto flex max-w-lg items-center gap-1 rounded-2xl py-1.5 pr-1.5 pl-4 shadow-xl',
-          t.tone === 'error' ? 'bg-destructive text-destructive-foreground' : 'bg-foreground text-background',
+          t.tone === 'error' ? 'bg-destructive-fill text-destructive-foreground' : 'bg-foreground text-background',
         ]"
       >
         <p class="min-w-0 flex-1 py-1.5 text-[0.9375rem] font-semibold">{{ t.message }}</p>

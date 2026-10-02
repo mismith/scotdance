@@ -236,7 +236,7 @@ const next = computed(() => {
           <!-- Championship: how many places -->
           <template v-if="pickingReverse">
             <div class="flex items-center gap-3 border-b px-4 py-3">
-              <span class="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center rounded-full"><ListOrdered class="size-5" /></span>
+              <span class="bg-primary-fill text-primary-foreground flex size-10 shrink-0 items-center justify-center rounded-full"><ListOrdered class="size-5" /></span>
               <span>
                 <span class="block text-base font-bold">Select starting place</span>
                 <span class="text-muted-foreground block text-sm">How many places are being awarded?</span>
@@ -324,7 +324,7 @@ const next = computed(() => {
             class="flex h-11 items-center gap-3 text-base font-bold disabled:opacity-50"
             @click="toggleReverse"
           >
-            <span :class="['relative h-7 w-12 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-6 after:rounded-full after:bg-white after:shadow after:transition-transform', reverseOn ? 'bg-primary after:translate-x-5' : 'bg-strong']" />
+            <span :class="['relative h-7 w-12 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-6 after:rounded-full after:bg-white after:shadow after:transition-transform', reverseOn ? 'bg-primary-fill after:translate-x-5' : 'bg-strong']" />
             Championship
           </button>
           <HelpTip label="About championship mode">
@@ -382,7 +382,7 @@ const next = computed(() => {
                 class="flex h-11 items-center gap-3 text-base font-bold disabled:opacity-50"
                 @click="setNone(!markedNone)"
               >
-                <span :class="['relative h-7 w-12 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-6 after:rounded-full after:bg-white after:shadow after:transition-transform', markedNone ? 'bg-primary after:translate-x-5' : 'bg-strong']" />
+                <span :class="['relative h-7 w-12 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-6 after:rounded-full after:bg-white after:shadow after:transition-transform', markedNone ? 'bg-primary-fill after:translate-x-5' : 'bg-strong']" />
                 {{ isCallbacks ? 'No callbacks' : 'No dancers placed' }}
               </button>
             </div>
@@ -415,7 +415,7 @@ const next = computed(() => {
           <RouterLink
             :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId, danceId: next.id } }"
             replace
-            class="bg-primary text-primary-foreground flex h-12 items-center justify-center gap-1.5 rounded-xl px-4 text-base font-bold"
+            class="bg-primary-fill text-primary-foreground flex h-12 items-center justify-center gap-1.5 rounded-xl px-4 text-base font-bold"
           >
             Next: {{ next.label }} <ChevronRight class="size-5" />
           </RouterLink>

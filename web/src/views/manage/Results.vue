@@ -19,7 +19,7 @@ const m = useManagedCompetition()
 const split = useSplit()
 const hideTab = useHideTab('results')
 
-const PRIMARY = 'bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50'
+const PRIMARY = 'bg-primary-fill text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50'
 
 const groupId = computed(() => (route.params.groupId ? String(route.params.groupId) : null))
 const danceId = computed(() => (route.params.danceId ? String(route.params.danceId) : CALLBACKS))
@@ -175,7 +175,7 @@ function exportCsv() {
                   <span
                     :class="[
                       'flex size-9 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-extrabold',
-                      stateOf(g.id, d.id) === 'todo' ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground',
+                      stateOf(g.id, d.id) === 'todo' ? 'bg-muted text-muted-foreground' : 'bg-primary-fill text-primary-foreground',
                     ]"
                   >
                     <Check v-if="stateOf(g.id, d.id) === 'done'" class="size-4.5" stroke-width="3" />

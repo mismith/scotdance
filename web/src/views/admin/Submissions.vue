@@ -179,7 +179,7 @@ async function remove(s: Submission) {
         </section>
 
         <footer class="flex flex-wrap gap-2 border-t pt-6">
-          <button v-if="!current.approved" type="button" :disabled="!canEdit || approving" class="bg-primary text-primary-foreground flex h-12 items-center gap-2 rounded-xl px-6 text-base font-bold disabled:opacity-50" @click="approve(current)">
+          <button v-if="!current.approved" type="button" :disabled="!canEdit || approving" class="bg-primary-fill text-primary-foreground flex h-12 items-center gap-2 rounded-xl px-6 text-base font-bold disabled:opacity-50" @click="approve(current)">
             <Check class="size-5" /> Approve
           </button>
           <button type="button" :disabled="!canEdit" class="text-destructive hover:bg-destructive/10 flex h-12 items-center gap-2 rounded-xl px-4 font-bold disabled:opacity-50" @click="remove(current)">

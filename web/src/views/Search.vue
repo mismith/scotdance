@@ -265,7 +265,7 @@ watch(mode, async (m) => {
 
         <div v-else-if="failed" class="bg-card space-y-3 rounded-2xl border p-4 text-center shadow-sm">
           <p class="text-base font-semibold">Search isn’t working right now. Check your connection.</p>
-          <button type="button" class="bg-primary text-primary-foreground h-12 rounded-xl px-6 font-bold" @click="run(q)">
+          <button type="button" class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-6 font-bold" @click="run(q)">
             Try again
           </button>
         </div>
@@ -363,7 +363,7 @@ watch(mode, async (m) => {
         title="No competitions on right now"
         description="Numbers change at every competition, so this only looks in competitions within a month of today. Search by name to find anyone."
       >
-        <button type="button" class="bg-primary text-primary-foreground h-12 rounded-xl px-6 text-base font-bold" @click="mode = 'name'">
+        <button type="button" class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-6 text-base font-bold" @click="mode = 'name'">
           Search by name
         </button>
       </EmptyState>

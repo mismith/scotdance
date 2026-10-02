@@ -125,7 +125,7 @@ function click(e: MouseEvent) {
       v-if="shown"
       aria-hidden="true"
       :class="[
-        'bg-destructive text-destructive-foreground absolute inset-y-0 right-0 flex items-center justify-center overflow-hidden',
+        'bg-destructive-fill text-destructive-foreground absolute inset-y-0 right-0 flex items-center justify-center overflow-hidden',
         !following &&
           'ease-rubber-band transition-[width] duration-300 motion-reduce:transition-none',
       ]"

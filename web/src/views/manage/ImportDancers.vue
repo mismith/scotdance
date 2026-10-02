@@ -203,7 +203,7 @@ async function doImport() {
         <button
           type="button"
           :disabled="!canEdit || reading"
-          class="bg-primary text-primary-foreground mx-auto flex h-12 items-center gap-2 rounded-xl px-6 text-base font-bold disabled:opacity-50"
+          class="bg-primary-fill text-primary-foreground mx-auto flex h-12 items-center gap-2 rounded-xl px-6 text-base font-bold disabled:opacity-50"
           @click="fileInput?.click()"
         >
           <LoaderCircle v-if="reading" class="size-5 animate-spin" />
@@ -322,7 +322,7 @@ async function doImport() {
               type="button"
               role="radio"
               :aria-checked="filter === key"
-              :class="['h-10 rounded-full border px-3.5 text-sm font-bold', filter === key ? 'bg-primary text-primary-foreground border-primary' : 'hover:bg-accent']"
+              :class="['h-10 rounded-full border px-3.5 text-sm font-bold', filter === key ? 'bg-primary-fill text-primary-foreground border-primary' : 'hover:bg-accent']"
               @click="filter = key"
             >
               {{ key === 'all' ? `All ${plan.dancers.length}` : `${STATUS[key].label} ${plan.counts[key]}` }}
@@ -389,7 +389,7 @@ async function doImport() {
           <button
             type="button"
             :disabled="!canEdit || importing || !writes"
-            class="bg-primary text-primary-foreground flex h-12 items-center gap-2 rounded-xl px-6 text-base font-bold disabled:opacity-50"
+            class="bg-primary-fill text-primary-foreground flex h-12 items-center gap-2 rounded-xl px-6 text-base font-bold disabled:opacity-50"
             @click="doImport"
           >
             <LoaderCircle v-if="importing" class="size-5 animate-spin" />

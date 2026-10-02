@@ -276,7 +276,7 @@ watch(venueGroups, () => {
 }
 .map-pin::before {
   content: '';
-  @apply block w-[22px] h-[22px] rounded-full border-2 border-white bg-primary;
+  @apply block w-[22px] h-[22px] rounded-full border-2 border-white bg-primary-fill;
 }
 .map-pin::after {
   content: '';
@@ -299,7 +299,7 @@ watch(venueGroups, () => {
 }
 
 .map-cluster {
-  @apply flex items-center justify-center min-w-9 h-9 px-[10px] py-0 border-2 border-white rounded-full bg-primary text-white font-semibold tabular-nums cursor-pointer shadow-[0_2px_6px_rgba(0,0,0,0.25)];
+  @apply flex items-center justify-center min-w-9 h-9 px-[10px] py-0 border-2 border-white rounded-full bg-primary-fill text-white font-semibold tabular-nums cursor-pointer shadow-[0_2px_6px_rgba(0,0,0,0.25)];
 }
 .map-cluster:hover {
   @apply scale-105;

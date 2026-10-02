@@ -113,7 +113,7 @@ const to = (routeName: string) => ({ name: routeName, params: { competitionId: m
             :class="[
               'flex shrink-0 items-center justify-center rounded-full font-extrabold tabular-nums',
               props.compact ? 'size-7 text-xs' : 'size-8 text-sm',
-              status[s.id]?.done ? 'bg-done text-done-foreground' : isActive(s.route) ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground',
+              status[s.id]?.done ? 'bg-done text-done-foreground' : isActive(s.route) ? 'bg-primary-fill text-primary-foreground' : 'bg-muted text-muted-foreground',
               isActive(s.route) && status[s.id]?.done && 'ring-primary ring-2 ring-offset-2 ring-offset-(--color-blue-paper)',
             ]"
           >

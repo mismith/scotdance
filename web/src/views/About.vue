@@ -83,7 +83,7 @@ watch(() => route.hash, applyHash)
     <AppBar title="About ScotDance" :fallback="{ to: { name: 'home' }, label: 'Home' }" />
 
     <main class="mx-auto w-full max-w-3xl space-y-8 px-4 pt-[calc(var(--chrome-top)+0.5rem)]">
-      <header class="bg-primary text-primary-foreground relative overflow-hidden rounded-3xl p-5 shadow-sm">
+      <header class="bg-primary-fill text-primary-foreground relative overflow-hidden rounded-3xl p-5 shadow-sm">
         <LogoMark class="pointer-events-none absolute -right-6 -bottom-10 size-52 rotate-[-8deg] opacity-[0.13]" />
         <img src="/img/touchicon.png" alt="" class="relative size-12 rounded-xl shadow-sm" />
         <h1 class="text-display relative mt-4 text-[1.5625rem] text-balance">From the warm-up to the awards.</h1>
@@ -120,7 +120,7 @@ watch(() => route.hash, applyHash)
         <h2 class="text-title">On competition day</h2>
         <ol class="space-y-2">
           <li v-for="(s, i) in steps" :key="s.title" class="bg-card flex items-start gap-3 rounded-2xl border p-4 shadow-sm">
-            <span class="bg-primary text-primary-foreground flex size-9 shrink-0 items-center justify-center rounded-full text-base font-extrabold">
+            <span class="bg-primary-fill text-primary-foreground flex size-9 shrink-0 items-center justify-center rounded-full text-base font-extrabold">
               {{ i + 1 }}
             </span>
             <span>

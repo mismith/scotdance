@@ -217,7 +217,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
         v-for="t in todays"
         :key="t.competitionId"
         :to="{ name: 'competition.info', params: { competitionId: t.competitionId } }"
-        class="bg-primary text-primary-foreground relative block overflow-hidden rounded-2xl p-4 shadow-sm"
+        class="bg-primary-fill text-primary-foreground relative block overflow-hidden rounded-2xl p-4 shadow-sm"
       >
         <LogoMark class="pointer-events-none absolute -right-4 -bottom-8 size-36 rotate-[-8deg] opacity-[0.13]" />
         <span class="flex items-center gap-2 text-sm font-bold">
@@ -236,7 +236,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
       <!-- Nobody followed yet: the pitch, then something to look at -->
       <section
         v-if="!followedPeople.length"
-        class="bg-primary text-primary-foreground relative overflow-hidden rounded-3xl p-5 shadow-sm"
+        class="bg-primary-fill text-primary-foreground relative overflow-hidden rounded-3xl p-5 shadow-sm"
       >
         <LogoMark class="pointer-events-none absolute -right-6 -bottom-10 size-48 rotate-[-8deg] opacity-[0.13]" />
         <h2 class="text-title relative">See your dancer’s day at a glance</h2>

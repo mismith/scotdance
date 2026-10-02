@@ -8,7 +8,7 @@ withDefaults(defineProps<{ orientation?: 'horizontal' | 'vertical' }>(), {
 <template>
   <div
     :class="[
-      'bg-primary outline-background relative z-10 outline-1',
+      'bg-primary-fill outline-background relative z-10 outline-1',
       orientation === 'vertical' ? 'w-0.5' : 'h-0.5',
     ]"
     aria-hidden="true"

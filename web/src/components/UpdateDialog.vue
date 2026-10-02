@@ -17,7 +17,7 @@ const update = useUpdate()
       <p class="text-muted-foreground text-sm tabular-nums">
         Version {{ update.currentVersion }} → {{ update.latestVersion ?? '…' }}
       </p>
-      <button type="button" class="bg-primary text-primary-foreground h-12 w-full rounded-xl text-base font-bold" @click="update.applyUpdate()">
+      <button type="button" class="bg-primary-fill text-primary-foreground h-12 w-full rounded-xl text-base font-bold" @click="update.applyUpdate()">
         Update now
       </button>
       <button type="button" class="text-muted-foreground h-11 w-full font-bold" @click="update.closeDialog()">Later</button>

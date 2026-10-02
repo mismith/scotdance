@@ -22,7 +22,7 @@ const hideTab = useHideTab('schedule')
 const { activeDragGroup, pointer } = useDragType()
 
 const PRIMARY =
-  'bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold'
+  'bg-primary-fill text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold'
 const SECONDARY =
   'bg-card border-strong hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold'
 

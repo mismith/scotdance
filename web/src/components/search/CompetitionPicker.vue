@@ -123,7 +123,7 @@ function pick(id: string) {
         <span
           v-if="c.id === model"
           :class="[
-            'bg-primary text-primary-foreground ring-background absolute -top-1.5 -right-1.5 flex size-6 items-center justify-center rounded-full ring-2',
+            'bg-primary-fill text-primary-foreground ring-background absolute -top-1.5 -right-1.5 flex size-6 items-center justify-center rounded-full ring-2',
             changed && 'motion-safe:animate-pop',
           ]"
           aria-hidden="true"

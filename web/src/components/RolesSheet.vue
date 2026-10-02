@@ -52,7 +52,7 @@ async function save() {
           <span
             :class="[
               'flex size-6 shrink-0 items-center justify-center rounded-md border-2',
-              picked[role.id] ? 'border-primary bg-primary text-primary-foreground' : 'border-strong',
+              picked[role.id] ? 'border-primary bg-primary-fill text-primary-foreground' : 'border-strong',
             ]"
           >
             <Check v-if="picked[role.id]" class="size-4" stroke-width="3" />
@@ -70,7 +70,7 @@ async function save() {
       </p>
       <button
         type="button"
-        class="bg-primary text-primary-foreground h-12 w-full rounded-xl text-base font-bold disabled:opacity-60"
+        class="bg-primary-fill text-primary-foreground h-12 w-full rounded-xl text-base font-bold disabled:opacity-60"
         :disabled="saving"
         @click="save"
       >

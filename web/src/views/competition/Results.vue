@@ -132,7 +132,7 @@ const anyFollowedHere = computed(() => followedByGroup.value.size > 0)
       <span
         :class="[
           'relative h-6 w-10 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform',
-          onlyMine ? 'bg-primary after:translate-x-4' : 'bg-strong',
+          onlyMine ? 'bg-primary-fill after:translate-x-4' : 'bg-strong',
         ]"
         aria-hidden="true"
       />

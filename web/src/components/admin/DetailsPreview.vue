@@ -53,7 +53,7 @@ const where = computed(() => [c.value.address, c.value.location].filter(Boolean)
         <div v-if="c.registrationURL || links.length" class="space-y-2">
           <span
             v-if="c.registrationURL"
-            :class="['bg-primary text-primary-foreground flex h-12 items-center justify-center gap-2 rounded-xl text-base font-bold', !regOpen && 'opacity-50']"
+            :class="['bg-primary-fill text-primary-foreground flex h-12 items-center justify-center gap-2 rounded-xl text-base font-bold', !regOpen && 'opacity-50']"
           >
             Register <ExternalLink class="size-4" />
           </span>

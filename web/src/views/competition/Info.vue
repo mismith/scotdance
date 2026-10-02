@@ -179,7 +179,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
       </p>
       <RouterLink
         :to="{ name: 'competition.dancers', params: { competitionId } }"
-        class="bg-primary text-primary-foreground flex h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-[0.9375rem] font-bold"
+        class="bg-primary-fill text-primary-foreground flex h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-[0.9375rem] font-bold"
       >
         <Search class="size-4" /> Find
       </RouterLink>
@@ -272,7 +272,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
         target="_blank"
         rel="noopener"
         :aria-disabled="!registrationOpen"
-        class="bg-primary text-primary-foreground flex h-12 items-center justify-center gap-2 rounded-xl text-base font-bold aria-disabled:pointer-events-none aria-disabled:opacity-50"
+        class="bg-primary-fill text-primary-foreground flex h-12 items-center justify-center gap-2 rounded-xl text-base font-bold aria-disabled:pointer-events-none aria-disabled:opacity-50"
       >
         Register <ExternalLink class="size-4" />
       </a>

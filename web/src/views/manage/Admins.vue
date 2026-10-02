@@ -179,7 +179,7 @@ const when = (iso?: string) => (iso ? formatRelative(iso) : '')
           :aria-invalid="!!emailError || undefined"
           :class="['bg-card h-12 min-w-0 flex-1 rounded-xl border-2 px-3 text-base outline-none', emailError ? 'border-destructive' : 'border-strong focus:border-primary']"
         />
-        <button type="submit" :disabled="!canEdit || sending" class="bg-primary text-primary-foreground flex h-12 items-center justify-center gap-1.5 rounded-xl px-5 text-base font-bold disabled:opacity-50">
+        <button type="submit" :disabled="!canEdit || sending" class="bg-primary-fill text-primary-foreground flex h-12 items-center justify-center gap-1.5 rounded-xl px-5 text-base font-bold disabled:opacity-50">
           <MailPlus class="size-5" /> Send invite
         </button>
       </div>

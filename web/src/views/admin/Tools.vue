@@ -168,7 +168,7 @@ for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`ag
       </div>
       <div class="flex flex-wrap gap-2">
         <button type="button" :disabled="job('coords').running" class="hover:bg-accent flex h-10 items-center gap-1.5 rounded-xl border px-3 text-sm font-bold disabled:opacity-50" @click="run('coords', 'backfillCoords', { dryRun: true })">Dry run</button>
-        <button type="button" :disabled="job('coords').running" class="bg-primary text-primary-foreground flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-bold disabled:opacity-50" @click="run('coords', 'backfillCoords', { dryRun: false })">
+        <button type="button" :disabled="job('coords').running" class="bg-primary-fill text-primary-foreground flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-bold disabled:opacity-50" @click="run('coords', 'backfillCoords', { dryRun: false })">
           <LoaderCircle v-if="job('coords').running" class="size-4 animate-spin" /> Update positions
         </button>
       </div>

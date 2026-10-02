@@ -280,7 +280,7 @@ const dowLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
             <span
               v-for="n in Math.max(0, Math.min(cell.eventCount, 3) - cell.favCount)"
               :key="`e${n}`"
-              class="bg-primary size-1.5 rounded-full"
+              class="bg-primary-fill size-1.5 rounded-full"
             />
             <span
               v-if="cell.eventCount > 3"

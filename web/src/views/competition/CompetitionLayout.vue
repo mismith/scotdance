@@ -145,7 +145,7 @@ usePageTitle(() => [
         <p class="text-base font-semibold">This competition didn’t load. Check your connection.</p>
         <button
           type="button"
-          class="bg-primary text-primary-foreground h-12 rounded-xl px-6 font-bold"
+          class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-6 font-bold"
           @click="reload"
         >
           Try again

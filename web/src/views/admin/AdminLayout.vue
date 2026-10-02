@@ -73,7 +73,7 @@ const exit = computed(() => {
           v-for="s in SECTIONS"
           :key="s.route"
           :to="{ name: s.route }"
-          :class="['flex min-h-11 items-center gap-3 rounded-xl px-3 text-[0.9375rem] font-semibold', section?.route === s.route ? 'bg-primary text-primary-foreground' : 'hover:bg-accent']"
+          :class="['flex min-h-11 items-center gap-3 rounded-xl px-3 text-[0.9375rem] font-semibold', section?.route === s.route ? 'bg-primary-fill text-primary-foreground' : 'hover:bg-accent']"
         >
           <component :is="s.icon" class="size-5" /> {{ s.title }}
         </RouterLink>
@@ -82,7 +82,7 @@ const exit = computed(() => {
         <div v-if="access === 'checking'" class="mx-auto max-w-3xl space-y-3 p-4"><Skeleton v-for="i in 3" :key="i" class="h-16 w-full rounded-2xl!" /></div>
         <template v-else-if="access === 'signed-out'">
           <EmptyState :icon="LogIn" title="Sign in to continue" />
-          <div class="flex justify-center"><button type="button" class="bg-primary text-primary-foreground h-12 rounded-xl px-6 text-base font-bold" @click="auth.openLogin()">Sign in</button></div>
+          <div class="flex justify-center"><button type="button" class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-6 text-base font-bold" @click="auth.openLogin()">Sign in</button></div>
         </template>
         <EmptyState v-else-if="access === 'denied'" :icon="Lock" title="For system admins only" description="This area is for whoever runs ScotDance." />
         <template v-else>

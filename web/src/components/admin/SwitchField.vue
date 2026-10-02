@@ -50,7 +50,7 @@ async function toggle() {
       <span
         :class="[
           'relative h-7 w-12 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-6 after:rounded-full after:bg-white after:shadow after:transition-transform',
-          modelValue ? 'bg-primary after:translate-x-5' : 'bg-strong',
+          modelValue ? 'bg-primary-fill after:translate-x-5' : 'bg-strong',
           busy && 'opacity-70',
         ]"
         aria-hidden="true"

@@ -80,7 +80,7 @@ const row = 'flex min-h-12 w-full items-center gap-3 px-4 py-2 text-left text-ba
     @click="show"
   >
     <img v-if="avatar" :src="avatar" alt="" class="size-8 rounded-full" />
-    <span v-else class="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-full text-xs font-extrabold">{{ initials }}</span>
+    <span v-else class="bg-primary-fill text-primary-foreground flex size-8 items-center justify-center rounded-full text-xs font-extrabold">{{ initials }}</span>
   </button>
 
   <Dialog :open="open" variant="dropdown" aria-label="Your account" @close="open = false">

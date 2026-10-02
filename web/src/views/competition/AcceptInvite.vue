@@ -104,13 +104,13 @@ const name = computed(() => competition.value?.name ?? 'this competition')
 
       <template v-else-if="state === 'signed-out'">
         <EmptyState :icon="MailOpen" :title="`You’re invited to help manage ${name}`" description="Sign in, or create an account, to accept. Any email address works." />
-        <div class="flex justify-center"><button type="button" class="bg-primary text-primary-foreground h-12 rounded-xl px-6 text-base font-bold" @click="auth.openLogin()">Sign in to accept</button></div>
+        <div class="flex justify-center"><button type="button" class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-6 text-base font-bold" @click="auth.openLogin()">Sign in to accept</button></div>
       </template>
 
       <template v-else-if="state === 'open'">
         <EmptyState :icon="MailOpen" :title="`Help manage ${name}`" description="Accept to edit its details, dancers, schedule and results." />
         <div class="flex flex-col items-center gap-2">
-          <button type="button" class="bg-primary text-primary-foreground h-12 rounded-xl px-8 text-base font-bold" @click="accept">Accept</button>
+          <button type="button" class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-8 text-base font-bold" @click="accept">Accept</button>
           <p v-if="error" class="text-destructive text-sm font-semibold" role="alert">{{ error }}</p>
         </div>
       </template>
@@ -129,7 +129,7 @@ const name = computed(() => competition.value?.name ?? 'this competition')
       <template v-else-if="state === 'yours'">
         <EmptyState :icon="CircleCheck" :title="`You can manage ${name}`" />
         <div class="flex justify-center">
-          <RouterLink :to="{ name: 'manage', params: { competitionId } }" class="bg-primary text-primary-foreground h-12 content-center rounded-xl px-6 text-base font-bold">Start managing</RouterLink>
+          <RouterLink :to="{ name: 'manage', params: { competitionId } }" class="bg-primary-fill text-primary-foreground h-12 content-center rounded-xl px-6 text-base font-bold">Start managing</RouterLink>
         </div>
       </template>
 

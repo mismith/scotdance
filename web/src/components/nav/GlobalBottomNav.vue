@@ -34,7 +34,10 @@ const items = computed<TabItem[]>(() => {
       label: 'More',
       icon: CircleEllipsis,
       onClick: (e: MouseEvent) => menu.toggle(e),
-      active: menu.open || MORE_PREFIXES.some((p) => path.startsWith(p)),
+      // Not while only the menu is open: two selected capsules would share a
+      // view-transition name, and the browser would cancel the menu's morph.
+      active: MORE_PREFIXES.some((p) => path.startsWith(p)),
+      expanded: menu.open,
       badge: update.updateAvailable || crisp.unread > 0,
     },
   ]

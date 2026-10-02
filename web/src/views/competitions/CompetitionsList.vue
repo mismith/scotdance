@@ -158,7 +158,7 @@ const mapCompetitions = computed(() =>
           <EmptyState :icon="CloudOff" title="Competitions didn’t load" description="Check your connection, then try again." />
           <button
             type="button"
-            class="bg-primary text-primary-foreground mx-auto flex h-12 items-center rounded-xl px-6 text-base font-bold"
+            class="bg-primary-fill text-primary-foreground mx-auto flex h-12 items-center rounded-xl px-6 text-base font-bold"
             @click="reload()"
           >
             Try again
@@ -179,7 +179,7 @@ const mapCompetitions = computed(() =>
           <button
             v-if="location.isActive && locationMode !== 'worldwide'"
             type="button"
-            class="bg-primary text-primary-foreground mx-auto flex h-12 items-center rounded-xl px-6 text-base font-bold"
+            class="bg-primary-fill text-primary-foreground mx-auto flex h-12 items-center rounded-xl px-6 text-base font-bold"
             @click="setWorldwide()"
           >
             Show everywhere
@@ -219,7 +219,7 @@ const mapCompetitions = computed(() =>
         </p>
         <RouterLink
           :to="{ name: 'competitions.submit' }"
-          class="bg-primary text-primary-foreground flex h-11 shrink-0 items-center rounded-full px-4 text-[0.9375rem] font-bold"
+          class="bg-primary-fill text-primary-foreground flex h-11 shrink-0 items-center rounded-full px-4 text-[0.9375rem] font-bold"
         >
           Submit
         </RouterLink>

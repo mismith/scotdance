@@ -7,6 +7,7 @@ import App from './App.vue'
 import { router } from './router'
 import { auth, firebaseApp } from './firebase'
 import { vTapFeedback } from './directives/tapFeedback'
+import { vProximity } from './directives/proximity'
 import { setupNative } from './lib/native'
 import './composables/useTheme'
 import '@fontsource-variable/atkinson-hyperlegible-next/wght.css'
@@ -24,6 +25,9 @@ app.use(VueFire, {
 })
 
 app.directive('tap-feedback', vTapFeedback)
+app.directive('proximity', vProximity)
+// iOS only applies :active (the press-* states) once a touchstart listener exists.
+document.addEventListener('touchstart', () => {}, { passive: true })
 
 app.config.errorHandler = (err, _instance, info) => {
   console.error('[vue:error]', info, err)

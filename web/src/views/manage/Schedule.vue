@@ -88,7 +88,7 @@ const missing = computed(() =>
       <button
         type="button"
         :disabled="!canEdit"
-        class="bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50"
+        class="bg-primary-fill text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50"
         @click="hideTab.show()"
       >
         Show the Schedule tab

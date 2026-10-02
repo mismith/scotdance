@@ -338,7 +338,7 @@ const icon = computed(() => section.value?.icon ?? Plus)
 // Ways to add. Where there's a usual start (the common ones, or Import),
 // that's the main button and adding one at a time sits beside it.
 const hasStart = computed(() => !!props.spec.presets?.length || !!slots['list-actions'])
-const PRIMARY = 'bg-primary text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50'
+const PRIMARY = 'bg-primary-fill text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50'
 const SECONDARY = 'bg-card border-strong hover:bg-accent flex h-11 items-center gap-1.5 rounded-xl border px-4 text-[0.9375rem] font-bold disabled:opacity-50'
 </script>
 
@@ -353,7 +353,7 @@ const SECONDARY = 'bg-card border-strong hover:bg-accent flex h-11 items-center 
               :aria-pressed="selecting"
               :class="[
                 'h-11 rounded-xl px-3 text-[0.9375rem] font-bold',
-                selecting ? 'bg-primary text-primary-foreground' : 'text-primary hover:bg-accent',
+                selecting ? 'bg-primary-fill text-primary-foreground' : 'text-primary hover:bg-accent',
               ]"
               @click="toggleSelecting"
             >
@@ -424,7 +424,7 @@ const SECONDARY = 'bg-card border-strong hover:bg-accent flex h-11 items-center 
             <span
               :class="[
                 '-mr-1 flex size-6 shrink-0 items-center justify-center rounded-md border-2',
-                selected.has(item.id) ? 'bg-primary border-primary text-primary-foreground' : 'border-strong',
+                selected.has(item.id) ? 'bg-primary-fill border-primary text-primary-foreground' : 'border-strong',
               ]"
             >
               <Check v-if="selected.has(item.id)" class="size-4" stroke-width="3" />
@@ -548,7 +548,7 @@ const SECONDARY = 'bg-card border-strong hover:bg-accent flex h-11 items-center 
           </div>
         </div>
         <div class="flex flex-col gap-2 sm:flex-row">
-          <button type="submit" :disabled="!canEdit || submitting" class="bg-primary text-primary-foreground h-12 rounded-xl px-5 text-base font-bold disabled:opacity-50">
+          <button type="submit" :disabled="!canEdit || submitting" class="bg-primary-fill text-primary-foreground h-12 rounded-xl px-5 text-base font-bold disabled:opacity-50">
             Add {{ spec.singular }}
           </button>
           <button
@@ -642,7 +642,7 @@ const SECONDARY = 'bg-card border-strong hover:bg-accent flex h-11 items-center 
           class="hover:bg-accent flex min-h-13 w-full items-center gap-3 px-4 py-2 text-left disabled:opacity-50"
           @click="presetPicks.has(i) ? presetPicks.delete(i) : presetPicks.add(i)"
         >
-          <span :class="['flex size-6 shrink-0 items-center justify-center rounded-md border-2', presetPicks.has(i) ? 'bg-primary border-primary text-primary-foreground' : 'border-strong']">
+          <span :class="['flex size-6 shrink-0 items-center justify-center rounded-md border-2', presetPicks.has(i) ? 'bg-primary-fill border-primary text-primary-foreground' : 'border-strong']">
             <Check v-if="presetPicks.has(i)" class="size-4" stroke-width="3" />
           </span>
           <span class="min-w-0 flex-1 text-base font-semibold">{{ p.label }}</span>
@@ -651,7 +651,7 @@ const SECONDARY = 'bg-card border-strong hover:bg-accent flex h-11 items-center 
       </li>
     </ul>
     <div class="bg-card sticky bottom-0 border-t p-4 pb-[calc(1rem+var(--safe-bottom))]">
-      <button type="button" :disabled="!presetPicks.size" class="bg-primary text-primary-foreground h-12 w-full rounded-xl text-base font-bold disabled:opacity-50" @click="addPresets">
+      <button type="button" :disabled="!presetPicks.size" class="bg-primary-fill text-primary-foreground h-12 w-full rounded-xl text-base font-bold disabled:opacity-50" @click="addPresets">
         {{ presetPicks.size ? `Add ${presetPicks.size}` : 'Choose some to add' }}
       </button>
     </div>

@@ -1,0 +1,42 @@
+<script setup lang="ts">
+import { selectionHaptic } from '@/lib/haptics'
+
+// The one switch: an iOS-sized track with a thumb that springs across. Use
+// it bare (with an aria-label or aria-labelledby), or wrap it in a label row.
+// Only for settings that take effect at once; anything that asks first is a
+// button, not a switch.
+const model = defineModel<boolean>({ required: true })
+const props = defineProps<{ disabled?: boolean; busy?: boolean }>()
+
+function toggle() {
+  if (props.disabled || props.busy) return
+  model.value = !model.value
+  selectionHaptic()
+}
+</script>
+
+<template>
+  <button
+    type="button"
+    role="switch"
+    :aria-checked="model"
+    :disabled="disabled"
+    :aria-busy="busy || undefined"
+    :class="[
+      'relative inline-flex h-[1.875rem] w-[3.125rem] shrink-0 items-center rounded-full p-0.5 transition-colors duration-(--dur-quick)',
+      'disabled:opacity-(--disabled-opacity)',
+      model ? 'bg-primary-fill' : 'bg-[color-mix(in_oklab,var(--foreground)_16%,transparent)]',
+      busy && 'opacity-70',
+    ]"
+    @click="toggle"
+  >
+    <span
+      :class="[
+        'block size-[1.625rem] rounded-full bg-white shadow-[0_1px_3px_rgb(0_0_0/0.25),0_0_0_0.5px_rgb(0_0_0/0.06)]',
+        'transition-[translate,width] duration-(--dur-slow) ease-elastic motion-reduce:transition-none',
+        model ? 'translate-x-5' : 'translate-x-0',
+      ]"
+      aria-hidden="true"
+    />
+  </button>
+</template>

@@ -61,7 +61,7 @@ function toggle(title: string) {
         </div>
 
         <div class="space-y-2">
-          <button type="button" class="bg-primary text-primary-foreground h-12 w-full rounded-xl px-8 text-base font-bold sm:w-auto" @click="$emit('start')">
+          <button type="button" class="bg-primary-fill text-primary-foreground h-12 w-full rounded-xl px-8 text-base font-bold sm:w-auto" @click="$emit('start')">
             {{ signedIn ? 'Start' : 'Sign in to submit' }}
           </button>
           <p v-if="!signedIn" class="text-muted-foreground text-sm">Any email address works. You’ll manage the competition from the same account.</p>

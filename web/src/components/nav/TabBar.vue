@@ -17,6 +17,8 @@ export interface TabItem {
   onClick?: (e: MouseEvent) => void
   active: boolean
   badge?: boolean
+  /** A menu button whose menu is open: drawn pressed, not selected. */
+  expanded?: boolean
 }
 
 defineProps<{ items: TabItem[]; label: string; replace?: boolean }>()
@@ -48,10 +50,10 @@ function onTap(item: TabItem, e: MouseEvent) {
           v-for="item in items"
           :key="item.label"
           v-tap-feedback
-          v-bind="item.to ? { to: item.to, replace, 'aria-current': item.active ? 'page' : undefined } : { type: 'button', 'aria-haspopup': 'dialog' }"
+          v-bind="item.to ? { to: item.to, replace, 'aria-current': item.active ? 'page' : undefined } : { type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': !!item.expanded }"
           :class="[
             'relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-full text-[min(0.6875rem,12px)] leading-none font-bold transition-colors',
-            item.active ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+            item.active || item.expanded ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
           ]"
           @click="onTap(item, $event)"
         >

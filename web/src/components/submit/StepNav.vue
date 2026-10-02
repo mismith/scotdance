@@ -19,7 +19,7 @@ defineEmits<{ go: [step: number] }>()
           ]"
           @click="$emit('go', i)"
         >
-          <span :class="['h-1.5 w-full rounded-full transition-colors', i <= current ? 'bg-primary' : 'bg-border']" />
+          <span :class="['h-1.5 w-full rounded-full transition-colors', i <= current ? 'bg-primary-fill' : 'bg-border']" />
           <span class="block truncate"><span class="sr-only">Step {{ i + 1 }}: </span>{{ label }}</span>
         </button>
       </li>
