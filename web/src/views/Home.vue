@@ -280,25 +280,32 @@ const { freshKey: liveFresh } = useLiveAlertState()
       </header>
 
       <div class="min-w-0 space-y-5 lg:col-span-2">
-        <div
-          v-if="showWhatsNew"
-          class="bg-blue-paper relative flex gap-3 rounded-2xl p-4 pr-12"
-          role="note"
+        <!-- Dismissed, it folds away rather than jumping the page up. -->
+        <Transition
+          leave-active-class="transition-[grid-template-rows,opacity] duration-(--dur-base) ease-standard motion-reduce:transition-opacity"
+          leave-from-class="grid-rows-[1fr]"
+          leave-to-class="grid-rows-[0fr] opacity-0"
         >
-          <Sparkles class="text-primary mt-0.5 size-5 shrink-0" />
-          <p class="text-callout">
-            <span class="font-semibold">ScotDance has a new look.</span> The dancers you follow now appear here, with
-            their day at a glance. Competitions work the way they always have.
-          </p>
-          <button
-            type="button"
-            class="press absolute top-1.5 right-1.5 flex size-11 items-center justify-center rounded-full"
-            aria-label="Dismiss"
-            @click="whatsNewDismissed = true"
-          >
-            <X class="size-5" />
-          </button>
-        </div>
+          <div v-if="showWhatsNew" class="grid mb-0!">
+            <div class="min-h-0 overflow-hidden">
+              <div class="bg-blue-paper relative mb-5 flex gap-3 rounded-2xl p-4 pr-12" role="note">
+                <Sparkles class="text-primary mt-0.5 size-5 shrink-0" aria-hidden="true" />
+                <p class="text-callout">
+                  <span class="font-semibold">ScotDance has a new look.</span> The dancers you follow now appear here,
+                  with their day at a glance. Competitions work the way they always have.
+                </p>
+                <button
+                  type="button"
+                  class="press absolute top-1.5 right-1.5 flex size-11 items-center justify-center rounded-full"
+                  aria-label="Dismiss"
+                  @click="whatsNewDismissed = true"
+                >
+                  <X class="size-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </Transition>
 
         <button
           v-if="auth.isSignedIn && roles.pending.value && !roles.answered.value"

@@ -223,6 +223,34 @@ test('old favourites from the previous app: named ones follow the person, nothin
   expect(await dbGet(`users:favorites/${parentId}/dancers`)).toEqual(old)
 })
 
+test('the new look is news only to people whose old favourites came over', async ({ page }) => {
+  const person = await follow(9)
+  const returning = await freshParent()
+  await dbSet(`users:favorites/${returning.uid}`, { dancers: { [entry(9).id]: person.name } })
+  const fresh = await freshParent()
+  await dbSet(`users:favorites/${fresh.uid}/dancers/${person.id}`, person.name)
+  const note = page.getByRole('note').filter({ hasText: 'ScotDance has a new look.' })
+
+  // Not on competition day: a day with nothing on.
+  await signInFromHome(page, returning.email)
+  await page.goto('/?now=2031-02-01')
+  await expect(note).toBeVisible()
+  await note.getByRole('button', { name: 'Dismiss' }).click()
+  await expect(note).toHaveCount(0)
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Your dancers' })).toBeVisible()
+  await expect(note).toHaveCount(0)
+
+  await signOut(page)
+  await page.evaluate(() => localStorage.removeItem('home:whatsNew:v4'))
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await signInFromSheet(page, fresh.email)
+  await page.goto('/?now=2031-02-01')
+  await expect(page.getByRole('heading', { name: 'Your dancers' })).toBeVisible()
+  await expect(note).toHaveCount(0)
+  await page.goto('/?now=')
+})
+
 test('the competition’s pages show your dancer’s day', async ({ page }) => {
   // Beginner 7 & 8: on platform A after Under 7, with a draw of its own.
   const person = await follow(3)
