@@ -1,38 +1,63 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ChevronRight } from '@lucide/vue'
+import { ChevronRight, Hourglass, Play } from '@lucide/vue'
+import Avatar from '@/components/Avatar.vue'
+import FollowButton from '@/components/FollowButton.vue'
 import Medal from '@/components/Medal.vue'
 import NumberCard from '@/components/NumberCard.vue'
-import { bestPlacing } from '@/lib/dancerDay'
+import { bestPlacing, dayStage, nextDance } from '@/lib/dancerDay'
 import { formatShortDate } from '@/lib/format'
-import { platformLabel } from '@/lib/schedule'
+import { getOrdinalSuffix } from '@/lib/results'
 import type { DancerCard } from '@/composables/useDancerCards'
 
-// One line per followed dancer, for people following many (a teacher's
-// class): number at the relevant competition, name, and one status line.
-const props = defineProps<{ card: DancerCard; color: string | null }>()
+// One line per dancer, for people following many (a teacher's class) and
+// for dancers you've only looked at: their number at the competition that
+// matters now, their name, one status line, and where they are in their day
+// at the right edge. Usually under that competition's header, so it isn't
+// named again unless `showCompetition`.
+const props = withDefaults(
+  defineProps<{
+    card: DancerCard
+    color: string | null
+    /** A Follow star at the end (dancers you've only looked at). */
+    follow?: boolean
+    showCompetition?: boolean
+  }>(),
+  { follow: false, showCompetition: false },
+)
 
 const f = computed(() => props.card.focus)
-const day = computed(() => f.value?.days.find((d) => d.dances.length) ?? f.value?.days[0] ?? null)
+const days = computed(() => f.value?.days ?? [])
+const day = computed(() => days.value.find((d) => d.dances.length) ?? days.value[0] ?? null)
+const stage = computed(() => (f.value?.phase === 'today' && days.value.length ? dayStage(days.value) : null))
+const next = computed(() => nextDance(days.value))
 const best = computed(() => {
-  const all = (f.value?.days ?? []).map(bestPlacing).filter((b): b is NonNullable<typeof b> => !!b)
+  const all = days.value.map(bestPlacing).filter((b): b is NonNullable<typeof b> => !!b)
   return all.sort((a, b) => (a.place ?? 99) - (b.place ?? 99))[0] ?? null
+})
+
+// "Next · A": a platform's letter fits beside the name; a long name doesn't.
+const shortPlatform = computed(() => {
+  const p = next.value?.slot?.platformName?.trim()
+  return p && p.length <= 3 ? p : null
 })
 
 const line = computed(() => {
   const focus = f.value
-  const d = day.value
   if (!focus) return 'Not entered in any listed competitions'
-  if (focus.phase === 'before')
-    return `${focus.competition.name}${focus.competition.date ? ` · ${formatShortDate(focus.competition.date)}` : ''}`
-  if (focus.phase === 'today' && d?.next) {
-    const plat = d.next.slot?.platformName
-    return `Next: ${d.next.dance.fullName || d.next.dance.name}${plat ? ` · ${platformLabel(plat)}` : ''}`
+  const where = props.showCompetition ? focus.competition.name : null
+  const n = next.value
+  if (stage.value === 'next' && n) {
+    const order = n.drawPos ? `${n.drawPos}${getOrdinalSuffix(n.drawPos)} to dance` : null
+    return [n.dance.fullName || n.dance.name, order].filter(Boolean).join(' · ')
   }
-  if (focus.phase === 'today' && d?.dances.some((s) => s.state === 'waiting')) return 'Waiting for results'
-  if (focus.phase === 'today') return d?.group?.fullName ?? `Today: ${focus.competition.name}`
-  return `Last: ${focus.competition.name}`
+  if (stage.value === 'done') return 'Every result is in'
+  if (focus.phase === 'before')
+    return [where ?? day.value?.group?.fullName, focus.competition.date ? formatShortDate(focus.competition.date) : null]
+      .filter(Boolean)
+      .join(' · ')
+  return [focus.phase === 'after' && where ? `Last: ${where}` : where, day.value?.group?.fullName].filter(Boolean).join(' · ') || focus.competition.name
 })
 
 const to = computed(() =>
@@ -43,18 +68,41 @@ const to = computed(() =>
 </script>
 
 <template>
-  <li>
-    <RouterLink :to="to" class="relative flex min-h-14 items-center gap-3 py-2 pr-2 pl-4 hover:bg-accent" :style="{ '--dc': color ?? 'var(--strong)' }">
-      <span class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
-      <NumberCard v-if="day" :number="day.dancer.number" size="xs" :color="color" />
+  <li class="relative flex items-center" :style="color ? { '--dc': color } : undefined">
+    <span v-if="color" class="sash absolute inset-y-0 left-0 w-1" aria-hidden="true" />
+    <RouterLink
+      :to="to"
+      :class="['press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap-3 py-2 pl-4', follow ? 'pr-1' : 'pr-3']"
+    >
+      <span class="flex w-11 shrink-0 justify-center">
+        <NumberCard v-if="day?.dancer.number != null" :number="day.dancer.number" size="xs" :color="color" />
+        <Avatar v-else :name="card.name" :color="color" />
+      </span>
       <span class="min-w-0 flex-1">
-        <span class="block truncate text-base font-bold">{{ card.name }}</span>
-        <span :class="['block truncate text-sm', f?.phase === 'today' && day?.next ? 'text-next-foreground font-bold' : 'text-muted-foreground']">
+        <span class="block truncate text-base font-semibold">{{ card.name }}</span>
+        <span
+          :class="['block truncate text-sm', stage === 'next' ? 'text-next-foreground font-medium' : 'text-muted-foreground']"
+        >
           {{ line }}
         </span>
       </span>
-      <Medal v-if="best && f?.phase !== 'before'" :place="best.place" size="sm" />
-      <ChevronRight class="text-muted-foreground size-5 shrink-0" />
+      <span
+        v-if="stage === 'next' && next"
+        class="bg-next text-next-foreground inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-footnote font-semibold whitespace-nowrap"
+      >
+        <Play class="size-3 fill-current" aria-hidden="true" />
+        Next<template v-if="shortPlatform"> · {{ shortPlatform }}</template>
+      </span>
+      <span
+        v-else-if="stage === 'waiting'"
+        class="text-muted-foreground inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-footnote font-semibold shadow-[inset_0_0_0_1px_var(--border)] whitespace-nowrap"
+      >
+        <Hourglass class="size-3" aria-hidden="true" />
+        Waiting
+      </span>
+      <Medal v-else-if="best && f?.phase !== 'before'" :place="best.place" :tied="best.tied" size="sm" />
+      <ChevronRight v-if="!follow" class="text-muted-foreground size-5 shrink-0" />
     </RouterLink>
+    <FollowButton v-if="follow" :dancer="{ dancerId: card.id, fullName: card.name }" class="mr-1" />
   </li>
 </template>

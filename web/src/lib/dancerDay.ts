@@ -314,3 +314,69 @@ export function bestPlacing(day: DancerDay): DanceStatus | null {
   if (!placed.length) return null
   return placed.reduce((best, s) => (s.place! < best.place! ? s : best))
 }
+
+// ─── Several entries, one person ────────────────────────────────────────────
+// Home and the dancer page treat a person's entries at one competition (a
+// Premier dancer also in a Broadsword event) as one day.
+
+const statusesOf = (days: DancerDay[]) => days.flatMap((d) => [...d.dances, ...(d.overall ? [d.overall] : [])])
+
+const slotOrder = (s: DanceStatus | null) => s?.slot?.seq ?? Infinity
+
+/** Their next dance across every entry: the soonest by the schedule. */
+export function nextDance(days: DancerDay[]): DanceStatus | null {
+  return (
+    days
+      .map((d) => d.next)
+      .filter((s): s is DanceStatus => !!s)
+      .sort((a, b) => slotOrder(a) - slotOrder(b))[0] ?? null
+  )
+}
+
+/**
+ * Where and when they start: the first scheduled dance with its time,
+ * platform and place in the draw, for the night before.
+ */
+export function firstDance(days: DancerDay[]): DanceStatus | null {
+  return (
+    days
+      .flatMap((d) => d.dances)
+      .filter((s) => s.slot)
+      .sort((a, b) => slotOrder(a) - slotOrder(b))[0] ?? null
+  )
+}
+
+/**
+ * How pressing a dancer's day is, most first:
+ *   next      a dance still to come, and the schedule says when
+ *   upcoming  still to dance, order unknown (or nothing listed yet)
+ *   waiting   every dance danced, some results still to come
+ *   done      every result in
+ */
+export type DayStage = 'next' | 'upcoming' | 'waiting' | 'done'
+const STAGES: DayStage[] = ['next', 'upcoming', 'waiting', 'done']
+
+export function dayStage(days: DancerDay[]): DayStage {
+  const next = nextDance(days)
+  if (next) return next.slot ? 'next' : 'upcoming'
+  const all = statusesOf(days)
+  if (!days.some((d) => d.dances.length) || all.some((s) => s.state === 'upcoming')) return 'upcoming'
+  if (all.some((s) => s.state === 'waiting' || s.state === 'later')) return 'waiting'
+  return 'done'
+}
+
+/** Most pressing first; among those dancing next, the soonest. */
+export function compareDays(a: DancerDay[], b: DancerDay[]): number {
+  const stage = STAGES.indexOf(dayStage(a)) - STAGES.indexOf(dayStage(b))
+  if (stage) return stage
+  const na = nextDance(a)
+  const nb = nextDance(b)
+  return slotOrder(na) - slotOrder(nb) || (na?.drawPos ?? 99) - (nb?.drawPos ?? 99)
+}
+
+/** Every placing across their entries, in dancing order, Overall last. */
+export function placings(days: DancerDay[]): DanceStatus[] {
+  return [...days.flatMap((d) => d.dances), ...days.flatMap((d) => (d.overall ? [d.overall] : []))].filter(
+    (s) => s.state === 'placed' && s.place != null,
+  )
+}

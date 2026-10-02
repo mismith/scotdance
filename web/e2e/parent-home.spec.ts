@@ -62,13 +62,14 @@ test('follow a dancer, see their day on Home, and watch a placing arrive', async
   await expect.poll(() => dbGet(`users:favorites/${parentId}/dancers/${person.id}`)).toBe(person.name)
 
   await page.goto('/')
-  // Competition day: the banner, and the dancer's day.
-  await expect(page.getByRole('link', { name: new RegExp(`${person.firstName} is dancing`) })).toBeVisible()
+  // Competition day: the competition, with the dancer's day under it.
+  await expect(page.getByRole('heading', { name: new RegExp(`Today.*${comp.name}`) })).toBeVisible()
+  await expect(page.getByText(`${person.firstName} dances next on Platform A.`)).toBeVisible()
   const day = card(page, person)
   await expect(day.getByLabel('Number 107')).toBeVisible()
   await expect(day.getByText('Beginner Under 7 · Platform A')).toBeVisible()
   const fling = day.getByRole('link', { name: /Highland Fling \(4\)/ })
-  await expect(fling).toContainText('3rd to dance · group 1 of 2')
+  await expect(fling).toContainText('3rd to dance · 1st of 2 groups')
   await expect(fling).toContainText('Next')
   await expect(day.getByRole('link', { name: /Overall/ })).toContainText('After all dances')
 
@@ -92,7 +93,26 @@ test('follow a dancer, see their day on Home, and watch a placing arrive', async
   await expect(page.getByRole('heading', { name: 'See your dancer’s day at a glance' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Your dancers' })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'Recently viewed' })).toBeVisible()
-  await expect(page.getByRole('link', { name: new RegExp(`${person.firstName} is dancing`) })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: new RegExp(`Today.*${comp.name}`) })).toHaveCount(0)
+})
+
+test('on competition day, whoever dances next comes first, and a finished day folds to its placings', async ({ page }) => {
+  // Primary 7 & 8 has every result in; Premier dances later today.
+  const done = await makePerson(comp, [entry(1).id], 'Isla')
+  const next = await makePerson(comp, [entry(8).id], 'Skye')
+  people.push(done, next)
+  const parent = await freshParent()
+  await dbSet(`users:favorites/${parent.uid}/dancers`, { [done.id]: done.name, [next.id]: next.name })
+
+  await signInFromHome(page, parent.email)
+  await expect(page.getByText(/^Skye dances next/)).toBeVisible()
+  const days = page.locator('main article')
+  await expect(days.first()).toContainText(next.name)
+  await expect(days.nth(1)).toContainText(done.name)
+  // Folded: the header and its rosettes, no dance rows.
+  await expect(card(page, done).getByRole('img', { name: /place/ }).first()).toBeVisible()
+  await expect(card(page, done).getByRole('link')).toHaveCount(1)
+  await expect(card(page, next).getByRole('link', { name: /Highland Fling/ })).toBeVisible()
 })
 
 test('a chosen colour sticks, and stays with that account', async ({ page }) => {
@@ -175,7 +195,7 @@ test('old favourites from the previous app: named ones follow the person, nothin
   await signInFromHome(page, email)
   // One card, for the person: no "Dancer" ghosts for the old keys.
   await expect(card(page, person)).toBeVisible()
-  await expect(page.getByText('1 followed')).toBeVisible()
+  await expect(page.locator('main article')).toHaveCount(1)
   await expect(page.getByText('Not entered in any listed competitions')).toHaveCount(0)
 
   await expect

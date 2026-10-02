@@ -8,8 +8,10 @@ import { useMeStore } from '@/stores/me'
 import { isSameDay } from '@/lib/format'
 import type { Competition } from '@/types/competition'
 
-// A competition as a row: a calendar date block (what people scan for),
-// the name, the town, then Today, and your dancers as coloured dots.
+// A competition as a row: a calendar date block (what people scan for, pink
+// while it's on), the name, the town, then a short note ("Day 2 of 2"), and
+// your dancers as coloured dots. Lists put these in a `rows-inset` card with
+// `[--inset:4.5rem]`, so separators line up with the name.
 const props = withDefaults(
   defineProps<{
     competition: Competition & { id?: string }
@@ -23,8 +25,17 @@ const props = withDefaults(
     competitionId?: string
     /** Mark it when you can manage it (off where every row is yours, or in a preview). */
     markManaged?: boolean
+    /** A word on where it's at: "Day 2 of 2", "Results posted", "Published". */
+    note?: string | null
   }>(),
-  { followed: false, dancers: () => [], today: undefined, competitionId: undefined, markManaged: true },
+  {
+    followed: false,
+    dancers: () => [],
+    today: undefined,
+    competitionId: undefined,
+    markManaged: true,
+    note: null,
+  },
 )
 
 const following = useFollowing()
@@ -39,33 +50,24 @@ const isPrivate = computed(() => managed.value && props.competition.listed !== t
 </script>
 
 <template>
-  <li>
-    <RouterLink
-      :to="to"
-      class="bg-card flex min-h-16 items-center gap-3 px-3 py-2.5 hover:bg-accent"
-    >
-      <DateTile :date="competition.date" :managed="managed" />
+  <li class="bg-card">
+    <RouterLink :to="to" class="press-row focus-inset flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4">
+      <DateTile :date="competition.date" :managed="managed" :today="today" />
       <span class="min-w-0 flex-1">
-        <span class="line-clamp-2 text-base leading-snug font-bold">
+        <span class="line-clamp-2 text-base leading-snug font-semibold">
           {{ competition.name ?? 'Competition' }}
         </span>
         <span v-if="competition.location" class="text-muted-foreground block truncate text-sm">
           {{ competition.location }}
         </span>
         <span v-if="managed" class="sr-only">You can manage this.</span>
-        <span v-if="today || isPrivate || followed || dancers.length" class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span
-            v-if="today"
-            class="bg-live-paper text-live inline-flex h-6 items-center gap-1.5 rounded-full px-2 text-xs font-bold"
-          >
-            <span class="bg-live size-2 animate-[live-pulse_2s_infinite] rounded-full" />
-            Today
-          </span>
-          <span v-if="isPrivate" class="bg-muted text-muted-foreground inline-flex h-6 items-center gap-1 rounded-full px-2 text-xs font-bold">
+        <span v-if="note || isPrivate || followed || dancers.length" class="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+          <span v-if="note" :class="['text-sm font-medium', today ? 'text-live' : 'text-muted-foreground']">{{ note }}</span>
+          <span v-if="isPrivate" class="text-muted-foreground inline-flex items-center gap-1 text-sm font-medium">
             <EyeOff class="size-3.5" aria-hidden="true" />
             Private<span class="sr-only"> (only admins can see it)</span>
           </span>
-          <span v-if="dancers.length" class="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
+          <span v-if="dancers.length" class="flex min-w-0 items-center gap-1.5 text-sm font-medium">
             <span class="flex shrink-0 gap-0.5" aria-hidden="true">
               <span
                 v-for="x in dancers.slice(0, 4)"
@@ -76,8 +78,8 @@ const isPrivate = computed(() => managed.value && props.competition.listed !== t
             </span>
             <span class="truncate">{{ dancers.map((x) => x.name).join(', ') }}</span>
           </span>
-          <span v-else-if="followed" class="text-muted-foreground inline-flex items-center gap-1 text-sm font-semibold">
-            <Star class="size-3.5 fill-current" /> Following
+          <span v-else-if="followed" class="text-muted-foreground inline-flex items-center gap-1 text-sm">
+            <Star class="text-secondary size-3.5 fill-current" aria-hidden="true" /> Following
           </span>
         </span>
       </span>
