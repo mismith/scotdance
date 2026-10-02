@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
 import { ChevronRight, EyeOff, Star } from '@lucide/vue'
 import { useFollowing } from '@/composables/useFollowing'
+import { COMPETITION_DATE_VT, COMPETITION_TITLE_VT, useCompetitionVt } from '@/composables/useCompetitionVt'
 import DateTile from '@/components/DateTile.vue'
 import { useMeStore } from '@/stores/me'
 import { isSameDay } from '@/lib/format'
@@ -45,16 +46,31 @@ const managed = computed(() => {
   const id = props.competitionId ?? props.competition.id
   return props.markManaged && !!id && me.hasCompetitionPerm(id)
 })
+// A row into the competition's Overview hands its date and name over (M2).
+const vt = useCompetitionVt()
+const id = computed(() => props.competitionId ?? props.competition.id)
+const toOverview = computed(() => typeof props.to === 'object' && 'name' in props.to && props.to.name === 'competition.info')
+function onClick() {
+  if (toOverview.value && id.value) vt.tap(id.value)
+}
 // Not in the public list (only its admins see it), in Manage's word.
 const isPrivate = computed(() => managed.value && props.competition.listed !== true && props.competition.published !== true)
 </script>
 
 <template>
   <li class="bg-card">
-    <RouterLink :to="to" class="press-row focus-inset flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4">
-      <DateTile :date="competition.date" :managed="managed" :today="today" />
+    <RouterLink :to="to" class="press-row focus-inset flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4" @click="onClick">
+      <DateTile
+        :date="competition.date"
+        :managed="managed"
+        :today="today"
+        :style="{ viewTransitionName: vt.row(id, COMPETITION_DATE_VT) }"
+      />
       <span class="min-w-0 flex-1">
-        <span class="line-clamp-2 text-base leading-snug font-semibold">
+        <span
+          class="line-clamp-2 text-base leading-snug font-semibold"
+          :style="{ viewTransitionName: vt.row(id, COMPETITION_TITLE_VT), viewTransitionClass: 'fit' }"
+        >
           {{ competition.name ?? 'Competition' }}
         </span>
         <span v-if="competition.location" class="text-muted-foreground block truncate text-sm">

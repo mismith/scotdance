@@ -178,13 +178,19 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
           <img :src="competition.image" alt="" class="size-14 rounded-xl object-cover" />
           <AdminMark v-if="me.hasCompetitionPerm(competitionId)" size="md" ring="background" />
         </span>
-        <DateTile v-else :date="competition.date" :managed="me.hasCompetitionPerm(competitionId)" class="h-14" />
+        <DateTile
+          v-else
+          :date="competition.date"
+          :managed="me.hasCompetitionPerm(competitionId)"
+          class="h-14"
+          :style="scrolledPast ? undefined : { viewTransitionName: 'competition-date' }"
+        />
         <div class="min-w-0 flex-1">
           <p :class="['flex items-center gap-1.5 text-sm font-semibold', live ? 'text-live' : 'text-muted-foreground']">
             <LiveDot v-if="live" :pulse="pulse" />
             {{ kicker }}
           </p>
-          <h1 class="text-display" :style="scrolledPast ? undefined : { viewTransitionName: 'competition-title' }">
+          <h1 class="text-display" :style="scrolledPast ? undefined : { viewTransitionName: 'competition-title', viewTransitionClass: 'fit' }">
             {{ competition.name ?? 'Competition' }}
           </h1>
         </div>
