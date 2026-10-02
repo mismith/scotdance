@@ -1,17 +1,19 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch, watchEffect } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { makeDroppable } from '@vue-dnd-kit/core'
 import { CalendarClock, CalendarPlus, Plus, WandSparkles } from '@lucide/vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Button from '@/components/ui/Button.vue'
+import Segmented from '@/components/ui/Segmented.vue'
 import AddPopover from './AddPopover.vue'
 import BlockSection from './BlockSection.vue'
 import DragIndicator from './DragIndicator.vue'
 import { useBuilder } from './builder'
 import { useAutoFill } from './autofill'
-import { adjust, insertIndex, useDragType, useEdgeScroll, type DragBlock } from './drag'
+import { adjust, dropLine, insertIndex, useDragType, useEdgeScroll, type DragBlock } from './drag'
 import { useHideTab } from '@/composables/admin/useHideTab'
+import { useSplit } from '@/composables/admin/useWide'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { useMorph } from '@/lib/morph'
 
@@ -23,13 +25,28 @@ const auto = useAutoFill()
 const hideTab = useHideTab('schedule')
 const { activeDragGroup, pointer } = useDragType()
 
+// On a phone, one platform at a time: a grid of them is a puzzle there.
+const split = useSplit()
+const picked = ref<string | null>(null)
+watchEffect(() => {
+  const all = b.platforms.value
+  const keep = all.some((p) => p.id === picked.value) ? picked.value : (all[0]?.id ?? null)
+  b.platformView.value = split.value ? null : keep
+  if (!split.value) picked.value = keep
+})
+// "Platform A" and "Platform B" are A and B side by side.
+const platformChoices = computed(() =>
+  b.platforms.value.map((p) => ({ value: p.id, label: p.label.replace(/^platform\s+/i, '') || p.label })),
+)
 
 const scrollEl = ref<HTMLElement | null>(null)
 useEdgeScroll(scrollEl)
 
 // (No platforms yet: no platform columns, as repeat(0, …) isn't valid CSS.)
+// On a phone the one platform shares the screen's width with the dances.
 const cols = computed(() => {
-  const n = b.platforms.value.length
+  const n = b.shownPlatforms.value.length
+  if (!split.value) return `minmax(0, 1fr) ${n ? 'minmax(0, 1fr)' : ''} 0`
   return `minmax(9rem, auto) ${n ? `repeat(${n}, minmax(13rem, 1fr))` : ''} minmax(0.5rem, auto)`
 })
 
@@ -54,6 +71,7 @@ const liveBlockIndex = computed(() =>
     ? (insertIndex(gridEl.value, '[data-block]', pointer.value.y) ?? -1)
     : -1,
 )
+const line = computed(() => dropLine(gridEl.value, '[data-block]', liveBlockIndex.value))
 
 // Adding sessions
 const PRESETS = ['Morning', 'Afternoon', 'Evening']
@@ -149,7 +167,7 @@ async function fillSchedule() {
     <div
       ref="gridEl"
       :class="[
-        'grid w-max min-w-full gap-x-2 px-4 pb-16 text-sm',
+        'relative grid min-w-full gap-x-2 px-4 pb-16 text-sm md:w-max',
         !b.blocks.value.length && 'hidden',
       ]"
       :style="{ gridTemplateColumns: cols }"
@@ -164,28 +182,31 @@ async function fillSchedule() {
               name: 'manage.platforms',
               params: { competitionId: b.m.competitionId.value },
             }"
-            class="text-primary text-[0.9375rem] font-bold"
+            class="text-primary text-callout flex min-h-11 items-center font-semibold"
           >
             {{ b.platforms.value.length ? 'Edit platforms' : 'Add platforms' }}
           </RouterLink>
         </div>
-        <div
-          v-for="p in b.platforms.value"
-          :key="p.id"
-          class="bg-card flex min-h-11 items-center justify-center rounded-xl border px-2 text-center text-base font-bold"
-        >
-          {{ p.label }}
-        </div>
+        <Segmented
+          v-if="!split && b.platforms.value.length > 1"
+          :model-value="picked ?? ''"
+          :options="platformChoices"
+          label="Platform"
+          @update:model-value="picked = $event"
+        />
+        <template v-else>
+          <div
+            v-for="p in b.shownPlatforms.value"
+            :key="p.id"
+            class="surface flex min-h-11 items-center justify-center rounded-xl px-2 text-center text-base font-semibold"
+          >
+            {{ p.label }}
+          </div>
+        </template>
       </div>
 
-      <template v-for="([blockId, block], i) in b.blocks.value" :key="blockId">
-        <DragIndicator v-if="liveBlockIndex === i" class="col-span-full -mt-2 mb-1.5" />
-        <BlockSection :block="block" :block-id="blockId" :index="i" class="mb-6" />
-      </template>
-      <DragIndicator
-        v-if="liveBlockIndex === b.blocks.value.length"
-        class="col-span-full -mt-4 mb-4"
-      />
+      <BlockSection v-for="([blockId, block], i) in b.blocks.value" :key="blockId" :block="block" :block-id="blockId" :index="i" class="mb-6" />
+      <DragIndicator v-if="line" class="inset-x-4" :style="line" />
 
       <!-- After the last session: more, as wide as a phone's screen at most -->
       <div

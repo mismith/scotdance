@@ -10,6 +10,7 @@ import { ordered, useBuilder, type SEvent } from './builder'
 import {
   ACTIVATION,
   adjust,
+  dropLine,
   payload,
   insertIndex,
   useDragHandle,
@@ -80,6 +81,7 @@ const liveIndex = computed(() =>
     ? (insertIndex(rowsEl.value, '[data-row]', pointer.value.y) ?? -1)
     : -1,
 )
+const line = computed(() => dropLine(rowsEl.value, '[data-row]', liveIndex.value))
 
 const autoEditRow = ref<string | null>(null)
 function addRow() {
@@ -110,7 +112,7 @@ async function remove() {
   >
     <div
       ref="headerEl"
-      class="group/event bg-muted/60 col-span-full flex min-h-11 cursor-grab items-center gap-1 rounded-xl px-1 text-base font-bold contain-inline-size"
+      class="group/event bg-muted/60 col-span-full flex min-h-11 cursor-grab items-center gap-1 rounded-xl px-1 text-base font-semibold contain-inline-size"
     >
       <span
         data-grip
@@ -118,7 +120,7 @@ async function remove() {
         :role="b.readonly.value ? undefined : 'button'"
         :aria-label="b.readonly.value ? undefined : `Move ${event.name || 'event'}`"
         :aria-hidden="b.readonly.value || undefined"
-        class="text-muted-foreground focus-visible:ring-ring flex shrink-0 touch-none items-center self-stretch rounded-sm outline-none focus-visible:ring-2 pointer-coarse:px-1.5"
+        class="text-muted-foreground focus-visible:ring-ring flex shrink-0 touch-none items-center self-stretch rounded-sm outline-none focus-visible:ring-2 pointer-coarse:px-1.5 pointer-fine:opacity-0 pointer-fine:transition-opacity pointer-fine:group-hover/event:opacity-100 pointer-fine:focus-visible:opacity-100"
         ><GripVertical class="size-4"
       /></span>
       <InlineEdit
@@ -165,10 +167,6 @@ async function remove() {
       ]"
     >
       <template v-for="([rowId, row], i) in rows" :key="rowId">
-        <DragIndicator
-          v-if="isDragOver && liveIndex === i"
-          class="col-span-full -my-px"
-        />
         <DanceRow
           :row="row"
           :block-id="blockId"
@@ -178,17 +176,14 @@ async function remove() {
           :auto-edit="autoEditRow === rowId"
         />
       </template>
-      <DragIndicator
-        v-if="isDragOver && liveIndex === rows.length"
-        class="col-span-full -my-px"
-      />
+      <DragIndicator v-if="line" class="inset-x-0" :style="line" />
 
       <div v-if="!b.readonly.value" class="col-span-full mt-1 grid grid-cols-subgrid">
         <div class="p-1">
           <button
             type="button"
             title="A row without a dance, like Registration or March Past"
-            class="text-primary hover:bg-accent flex min-h-9 w-full items-center gap-1.5 rounded-lg px-2 text-left text-sm font-bold"
+            class="text-primary press-row flex min-h-11 w-full items-center gap-1.5 rounded-lg px-2 text-left text-sm font-semibold"
             @click="addRow"
           >
             <Plus class="size-4" /> Add row

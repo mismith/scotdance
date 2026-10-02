@@ -121,3 +121,18 @@ export function insertIndex(
 
 /** An index after removing the dragged item from before it. */
 export const adjust = (to: number, from: number) => (to > from ? to - 1 : to)
+
+/**
+ * Where to draw the line showing where a drop would land: between the
+ * elements matching `selector` in `container`, before the one at `index` (or
+ * after the last). Drawn as one line that glides from gap to gap.
+ */
+export function dropLine(container: HTMLElement | null, selector: string, index: number) {
+  if (!container || index < 0) return null
+  const els = [...container.querySelectorAll<HTMLElement>(selector)]
+  const top = container.getBoundingClientRect().top
+  const at = els[index]?.getBoundingClientRect()
+  const before = els[index - 1]?.getBoundingClientRect()
+  const y = at && before ? (before.bottom + at.top) / 2 : at ? at.top - 2 : before ? before.bottom + 2 : top + 4
+  return { transform: `translateY(${Math.round(y - top - 1)}px)` }
+}

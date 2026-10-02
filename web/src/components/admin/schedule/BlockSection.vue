@@ -11,6 +11,7 @@ import { ordered, useBuilder, type SBlock } from './builder'
 import {
   ACTIVATION,
   adjust,
+  dropLine,
   payload,
   insertIndex,
   useDragHandle,
@@ -78,6 +79,7 @@ const liveIndex = computed(() =>
     ? (insertIndex(sectionEl.value, '[data-event]', pointer.value.y) ?? -1)
     : -1,
 )
+const line = computed(() => dropLine(sectionEl.value, '[data-event]', liveIndex.value))
 
 // Adding events: suggestions from the categories.
 const BUCKETS = [
@@ -130,7 +132,7 @@ async function remove() {
   >
     <div
       ref="sectionEl"
-      class="bg-card col-span-full grid grid-cols-subgrid rounded-2xl border p-4 shadow-sm"
+      class="surface relative col-span-full grid grid-cols-subgrid rounded-2xl p-4"
     >
       <div
         ref="headerEl"
@@ -142,7 +144,7 @@ async function remove() {
           :role="b.readonly.value ? undefined : 'button'"
           :aria-label="b.readonly.value ? undefined : `Move ${block.name || 'session'}`"
           :aria-hidden="b.readonly.value || undefined"
-          class="text-muted-foreground focus-visible:ring-ring flex shrink-0 touch-none items-center self-stretch rounded-sm outline-none focus-visible:ring-2 pointer-coarse:px-1.5"
+          class="text-muted-foreground focus-visible:ring-ring flex shrink-0 touch-none items-center self-stretch rounded-sm outline-none focus-visible:ring-2 pointer-coarse:px-1.5 pointer-fine:opacity-0 pointer-fine:transition-opacity pointer-fine:group-hover/block:opacity-100 pointer-fine:focus-visible:opacity-100"
           ><GripVertical class="size-4"
         /></span>
         <h2 class="text-heading">
@@ -180,7 +182,6 @@ async function remove() {
       </div>
 
       <template v-for="([eventId, event], i) in events" :key="eventId">
-        <DragIndicator v-if="liveIndex === i" class="col-span-full -mt-2 mb-1.5" />
         <EventSection
           :event="event"
           :block-id="blockId"
@@ -189,7 +190,7 @@ async function remove() {
           :auto-edit="autoEditEvent === eventId"
         />
       </template>
-      <DragIndicator v-if="liveIndex === events.length" class="col-span-full mt-1" />
+      <DragIndicator v-if="line" class="inset-x-4" :style="line" />
 
       <div v-if="!b.readonly.value" class="col-span-full mt-3">
         <Button variant="plain" class="-ml-3" @click="adding.toggle($event)">

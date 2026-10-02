@@ -978,3 +978,33 @@ test('legacy competitions read as before, on their day (read only)', async ({ pa
   await expect(page.getByRole('heading', { name: 'Monday, July 2nd' })).toHaveCount(0)
   expect(errors).toEqual([])
 })
+
+test('on a phone, one platform at a time, and Add picks age groups and judges from a list', async ({
+  page,
+}, info) => {
+  test.skip(!isPhone(info), 'phone layout')
+  await set(dataPath('schedule'), seeded)
+  await page.goto(`/competitions/${comp.id}/manage/schedule`)
+  // Day 1's morning: Primary on A and B, in the first row (Highland Fling).
+  const platformB = comp.platforms[1]
+  const firstRow = () => event(page, 'Primary').locator('[data-row]').first()
+  await expect(firstRow().locator('[data-chip=group]')).toHaveCount(1)
+  // Platform B, then its cell's Add.
+  await page.getByRole('group', { name: 'Platform' }).getByRole('button', { name: 'B', exact: true }).click()
+  await firstRow().getByRole('button', { name: 'Add age groups or judges to Platform B' }).click()
+  const sheet = page.locator('dialog[open]')
+  // Already on A: it says so, and ticking it puts it on B too.
+  const under7 = sheet.getByRole('checkbox', { name: /^Primary Under 7/ })
+  await expect(under7).toContainText('On Platform A')
+  await under7.click()
+  await sheet.getByRole('checkbox', { name: /^Deborah Wardrope/ }).click()
+  await expect(sheet.getByRole('checkbox', { name: /^Deborah Wardrope/ })).toHaveAttribute('aria-checked', 'false')
+  await sheet.getByRole('checkbox', { name: /^Iain Fraser/ }).click()
+  await expect.poll(async () => {
+    const [[, day]] = sorted((await data<Schedule>('schedule')).days)
+    const [[, block]] = sorted(day.blocks)
+    const [[, ev]] = sorted(block.events)
+    const [[, row]] = sorted(ev.dances)
+    return row.platforms?.[platformB]
+  }).toEqual({ orderedGroupIds: [`${comp.id}-grp-01`, `${comp.id}-grp-00`], orderedJudgeIds: [`${comp.id}-judge-2`] })
+})
