@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, useId } from 'vue'
 import { ImagePlus, LoaderCircle } from '@lucide/vue'
+import Button from '@/components/ui/Button.vue'
 import AdminField from '@/components/admin/AdminField.vue'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import { uploadImage, type UploadFolder } from '@/lib/admin/upload'
@@ -55,7 +56,7 @@ async function remove() {
     <div class="flex items-center gap-4">
       <div
         :class="[
-          'bg-muted flex size-20 shrink-0 items-center justify-center overflow-hidden border',
+          'bg-muted outline-border flex size-20 shrink-0 items-center justify-center overflow-hidden outline-1 -outline-offset-1',
           shape === 'round' ? 'rounded-full' : 'rounded-2xl',
         ]"
       >
@@ -64,23 +65,12 @@ async function remove() {
         <ImagePlus v-else class="text-muted-foreground size-7" />
       </div>
       <div class="flex flex-wrap gap-2">
-        <button
-          type="button"
-          :disabled="locked"
-          class="bg-card border-strong hover:bg-accent h-11 rounded-xl border px-4 text-[0.9375rem] font-bold disabled:opacity-50"
-          @click="input?.click()"
-        >
+        <Button :disabled="!canEdit" :busy="busy" @click="input?.click()">
           {{ busy ? 'Uploading…' : modelValue ? 'Replace' : 'Choose image' }}
-        </button>
-        <button
-          v-if="modelValue && !busy"
-          type="button"
-          :disabled="locked"
-          class="text-destructive hover:bg-destructive/10 h-11 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50"
-          @click="remove"
-        >
+        </Button>
+        <Button v-if="modelValue && !busy" variant="plain" class="text-destructive!" :disabled="locked" @click="remove">
           Remove
-        </button>
+        </Button>
       </div>
       <input :id="id" ref="input" type="file" accept="image/*" class="sr-only" tabindex="-1" @change="onPick" />
     </div>
