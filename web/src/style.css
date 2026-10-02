@@ -42,6 +42,7 @@
   --color-done-foreground: var(--done-foreground);
   --color-live: var(--live);
   --color-live-paper: var(--live-paper);
+  --color-on-dancer: var(--on-dancer);
   /* Schedule builder blocks: dances, age groups and judges each keep one hue */
   --color-dance: var(--dance);
   --color-dance-foreground: var(--dance-foreground);
@@ -106,8 +107,8 @@
   --destructive-foreground: #ffffff;
   --raised: #ffffff;
   --border: #d3dae2;
-  --input: #8c96a3;
-  --strong: #8c96a3;
+  --input: #87919e;
+  --strong: #87919e;
   --ring: #0065bd;
   /* Subtler than a full squircle (superellipse(2)), so corners stay soft. */
   --corner-shape: superellipse(1.5);
@@ -143,6 +144,8 @@
   --dancer-6: #00707a;
   --dancer-7: #b0266e;
   --dancer-8: #b04a00;
+  /* Text and ticks on a dancer's colour. */
+  --on-dancer: #ffffff;
   /* The Android app injects --safe-area-inset-* (Capacitor SystemBars) for
      WebViews that don't report env() insets edge-to-edge. */
   --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top));
@@ -219,6 +222,8 @@
   --dancer-6: #3fc2c9;
   --dancer-7: #ec6fae;
   --dancer-8: #f28a3c;
+  /* Dark mode's dancer colours are brighter, so they take dark ink. */
+  --on-dancer: #0c0f13;
   /* Dark surfaces rise by getting lighter, with a faint lit top edge. */
   --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.035), 0 0 0 0.5px rgb(255 255 255 / 0.06);
   --shadow-raised: inset 0 1px 0 rgb(255 255 255 / 0.07), 0 0 0 0.5px rgb(255 255 255 / 0.08), 0 14px 34px -10px rgb(0 0 0 / 0.65);
@@ -422,6 +427,31 @@
   animation: splash-crouch 900ms ease-in-out both;
   transform-box: fill-box;
   transform-origin: 50% 100%;
+}
+
+/* Wide screens with a tab bar (lg): the bar lives in the top chrome, so the
+   app bar spans the window around it, its small title steps aside, and
+   pages no longer reserve room for a bar at the bottom. */
+@utility appbar-row {
+  max-width: 48rem;
+  @media (min-width: 64rem) {
+    :root:has([data-tabbar]) & {
+      max-width: none;
+    }
+  }
+}
+@utility appbar-title {
+  @media (min-width: 64rem) {
+    :root:has([data-tabbar]) & {
+      visibility: hidden;
+    }
+  }
+}
+@media (min-width: 64rem) {
+  :root:has([data-tabbar]) {
+    --chrome-bottom: calc(1.5rem + var(--safe-bottom));
+    --notice-bottom: calc(var(--safe-bottom) + 1.5rem);
+  }
 }
 
 /* A dancer's colour, for bars, bands and badges (set as --dc by paint()). */
@@ -999,4 +1029,39 @@
 :active-view-transition-type(enter-competition)::view-transition-new(tabbar-exit),
 :active-view-transition-type(leave-competition)::view-transition-old(tabbar-exit) {
   animation: none;
+}
+
+/* The tapped dancer's number card grows into the big one on their page (and
+   back); its safety pins go on once it has landed (M13). Only the tapped
+   row's card carries the name (composables/useCompetitionDancerVt). Same
+   11:8 card at both sizes, so the snapshots scale cleanly. */
+::view-transition-group(comp-dancer-number) {
+  animation-duration: var(--dur-slow);
+  animation-timing-function: var(--ease-snappy);
+  z-index: 1;
+}
+::view-transition-old(comp-dancer-number),
+::view-transition-new(comp-dancer-number) {
+  height: 100%;
+}
+::view-transition-group(comp-dancer-number-pins) {
+  z-index: 2;
+}
+::view-transition-new(comp-dancer-number-pins):only-child {
+  animation: vt-pins-on var(--dur-base) calc(var(--dur-slow) - 60ms) var(--ease-elastic) both;
+}
+::view-transition-old(comp-dancer-number-pins):only-child {
+  animation: vt-fade-out var(--dur-instant) var(--ease-exit) both;
+}
+@keyframes vt-pins-on {
+  from {
+    opacity: 0;
+    scale: 1.5;
+    translate: 0 -3px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-new(comp-dancer-number-pins):only-child {
+    animation: vt-fade-in var(--dur-quick) var(--ease-standard) both;
+  }
 }

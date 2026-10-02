@@ -46,13 +46,13 @@ const scrollTop = () => {
       class="from-background via-background/90 absolute inset-x-0 top-0 -z-10 h-[calc(100%+1.25rem)] bg-linear-to-b from-55% to-transparent backdrop-blur-[3px] [mask-image:linear-gradient(to_bottom,black_60%,transparent)]"
       aria-hidden="true"
     />
-    <div :class="['mx-auto flex h-14 items-center gap-2 px-3', wide ? 'max-w-none' : 'max-w-3xl']">
+    <div :class="['mx-auto flex h-14 items-center gap-2 px-3', wide ? 'max-w-none' : 'appbar-row']">
       <TopBackButton v-if="back" :fallback="fallback" :exit="exit" />
       <slot name="leading" />
       <button
         type="button"
         :class="[
-          'min-w-0 flex-1 text-left transition-opacity',
+          'appbar-title min-w-0 flex-1 text-left transition-opacity',
           showTitle && title ? 'opacity-100' : 'pointer-events-none opacity-0',
         ]"
         :tabindex="showTitle && title ? 0 : -1"

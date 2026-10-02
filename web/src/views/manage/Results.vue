@@ -1,25 +1,26 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { Check, ChevronDown, ChevronRight, CircleCheck, Download, EyeOff, Minus, Plus, Trophy } from '@lucide/vue'
+import { ChevronDown, ChevronRight, CircleCheck, Download, EyeOff, Plus, Trophy } from '@lucide/vue'
 import EmptyState from '@/components/EmptyState.vue'
 import MasterDetail from '@/components/admin/MasterDetail.vue'
+import ResultStatus from '@/components/admin/ResultStatus.vue'
 import ResultsEntry from '@/components/admin/ResultsEntry.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
 import SectionMenu from '@/components/admin/SectionMenu.vue'
+import Button from '@/components/ui/Button.vue'
 import { useHideTab } from '@/composables/admin/useHideTab'
+import { useManageBack } from '@/composables/admin/useManageBack'
 import { useManagedCompetition, type MGroup } from '@/composables/admin/useManagedCompetition'
 import { useSplit } from '@/composables/admin/useWide'
 import { canEdit } from '@/lib/admin/write'
-import { CALLBACKS, OVERALL, danceState, isPlaceholderId, parsePlacings, placeAt } from '@/lib/admin/results'
-import { groupHasOverall } from '@/types/competition'
+import { CALLBACKS, OVERALL, danceState, dancingNow, needsFixing, parsePlacings, placeAt, resultRows, scheduleTurns, stateLabel } from '@/lib/admin/results'
+import { competitionPhase } from '@/lib/dancerDay'
 
 const route = useRoute()
 const m = useManagedCompetition()
 const split = useSplit()
 const hideTab = useHideTab('results')
-
-const PRIMARY = 'bg-primary-fill text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50'
 
 const groupId = computed(() => (route.params.groupId ? String(route.params.groupId) : null))
 const danceId = computed(() => (route.params.danceId ? String(route.params.danceId) : CALLBACKS))
@@ -28,7 +29,15 @@ const danceId = computed(() => (route.params.danceId ? String(route.params.dance
 // would otherwise save placings nobody can see.
 const openGroup = computed(() => (groupId.value ? (m.groupsById.value.get(groupId.value) ?? null) : null))
 
-const danceIds = (g: MGroup) => [CALLBACKS, ...m.groupDances(g.id).map((d) => d.id), ...(groupHasOverall(g) ? [OVERALL] : [])]
+// On tablets and laptops (md to xl) the list folds away while a dance is
+// open, so the dancers and Placed get the width; the entry's header picks
+// the age group and dance instead, and Back returns to the list.
+useManageBack(() =>
+  groupId.value && split.value ? { to: { name: 'manage.results', params: { competitionId: m.competitionId.value } }, label: 'Results' } : null,
+)
+
+const danceRows = (g: MGroup) => resultRows(g, m.groupDances(g.id))
+const danceIds = (g: MGroup) => danceRows(g).map((d) => d.id)
 
 function progress(g: MGroup) {
   const ids = danceIds(g)
@@ -36,15 +45,15 @@ function progress(g: MGroup) {
   return { done, total: ids.length }
 }
 
-const danceRows = (g: MGroup) => [
-  { id: CALLBACKS, label: 'Callbacks' },
-  ...m.groupDances(g.id).map((d) => ({ id: d.id, label: d.label })),
-  ...(groupHasOverall(g) ? [{ id: OVERALL, label: 'Overall' }] : []),
-]
+// On competition day, which age groups are dancing now (in list order, not
+// reordered: the list stays where the volunteer expects it).
+const live = computed(() =>
+  competitionPhase(m.competition.value?.date, m.schedule.value) === 'today'
+    ? dancingNow(scheduleTurns(m.schedule.value, m.platforms.value), m.results.value)
+    : new Set<string>(),
+)
 const stateOf = (groupId: string, danceId: string) => danceState(m.results.value[groupId]?.[danceId])
-const hasPlaceholder = (groupId: string, danceId: string) =>
-  parsePlacings(m.results.value[groupId]?.[danceId]).entries.some((e) => isPlaceholderId(e.id)) ||
-  (m.points.value[groupId]?.[danceId]?.combined ?? []).some(isPlaceholderId)
+const hasPlaceholder = (groupId: string, danceId: string) => needsFixing(m.results.value[groupId]?.[danceId], m.points.value[groupId]?.[danceId]?.combined)
 
 // Which age groups are open, remembered on this device. The first (or the
 // one being entered) opens by default.
@@ -83,8 +92,7 @@ const totals = computed(() => {
 function exportCsv() {
   const rows: string[][] = [['Category', 'Age group', 'Dance', 'Place', 'Number', 'First name', 'Last name', 'Location']]
   for (const g of m.groups.value) {
-    for (const id of danceIds(g)) {
-      const name = id === CALLBACKS ? 'Callbacks' : id === OVERALL ? 'Overall' : (m.dancesById.value.get(id)?.label ?? '')
+    for (const { id, label: name } of danceRows(g)) {
       const row = (dancerId: string, place: string) => {
         const d = m.dancersById.value.get(dancerId)
         return [g.category?.label ?? '', g.name ?? '', name, place, d?.num ?? '?', d?.firstName ?? '', d?.lastName ?? '', d?.location ?? '']
@@ -107,26 +115,27 @@ function exportCsv() {
 </script>
 
 <template>
-  <MasterDetail :show-detail="!!groupId">
+  <MasterDetail :show-detail="!!groupId" :class="groupId && 'md:max-xl:grid-cols-1! md:max-xl:[&>section:first-child]:hidden'">
     <template #list>
       <div class="space-y-6 p-4 pb-[calc(2rem+var(--safe-bottom))]">
         <SectionHeader title="Results" :count="!hideTab.hidden.value && totals.total ? `${totals.done} of ${totals.total} entered` : null">
           <!-- What's rarely needed. Hiding the tab deletes what's entered
-               (after asking), so it's tucked away here. -->
+               (after asking), so it's tucked away here, set apart in red. -->
           <template v-if="!hideTab.hidden.value && m.groups.value.length" #actions>
             <SectionMenu v-slot="{ row, close }" label="More for results">
               <button v-if="totals.done" type="button" :class="row" @click="close(); exportCsv()">
                 <Download class="text-primary size-5 shrink-0" /> Download all results
               </button>
-              <button type="button" :class="row" :disabled="!canEdit" @click="close(); hideTab.hide()">
-                <EyeOff class="text-primary size-5 shrink-0" /> Hide the Results tab
+              <div v-if="totals.done" role="separator" class="bg-border mx-4 my-1 h-px" />
+              <button type="button" :class="[row, 'text-destructive']" :disabled="!canEdit" @click="close(); hideTab.hide()">
+                <EyeOff class="size-5 shrink-0" /> Hide the Results tab
               </button>
             </SectionMenu>
           </template>
         </SectionHeader>
 
         <EmptyState v-if="hideTab.hidden.value" :icon="Trophy" title="Results are hidden" description="The competition page has no Results tab.">
-          <button type="button" :disabled="!canEdit" :class="PRIMARY" @click="hideTab.show()">Show the Results tab</button>
+          <Button variant="primary" :disabled="!canEdit" @click="hideTab.show()">Show the Results tab</Button>
         </EmptyState>
         <EmptyState
           v-else-if="!m.groups.value.length"
@@ -134,30 +143,40 @@ function exportCsv() {
           title="No age groups yet"
           description="Add age groups and their dancers first, then enter results here."
         >
-          <RouterLink :to="{ name: 'manage.groups', params: { competitionId: m.competitionId.value } }" :class="PRIMARY">
-            <Plus class="size-4" /> Add age groups
-          </RouterLink>
+          <Button variant="primary" :to="{ name: 'manage.groups', params: { competitionId: m.competitionId.value } }"><Plus /> Add age groups</Button>
           <template #footer>
             Not publishing results here?
-            <button type="button" :disabled="!canEdit" class="text-primary font-bold underline-offset-2 hover:underline disabled:opacity-50" @click="hideTab.hide()">
+            <button type="button" :disabled="!canEdit" class="text-primary font-semibold underline-offset-2 hover:underline disabled:opacity-(--disabled-opacity)" @click="hideTab.hide()">
               Hide the Results tab
             </button>
           </template>
         </EmptyState>
 
-        <ul v-else class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+        <ul v-else class="surface divide-y overflow-hidden rounded-2xl">
           <li v-for="g in m.groups.value" :key="g.id">
             <button
               type="button"
               :aria-expanded="isExpanded(g.id)"
-              class="hover:bg-accent flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left"
+              class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left"
               @click="toggle(g.id)"
             >
               <span class="min-w-0 flex-1">
-                <span class="block truncate text-base font-bold">{{ g.label }}</span>
+                <span class="flex items-center gap-2">
+                  <span class="truncate text-base font-semibold">{{ g.label }}</span>
+                  <CircleCheck v-if="progress(g).done === progress(g).total" class="text-primary size-4.5 shrink-0" aria-hidden="true" />
+                  <span v-if="live.has(g.id)" class="bg-live-paper text-live text-caption inline-flex h-5 shrink-0 items-center gap-1.5 rounded-full px-2">
+                    <span class="bg-live size-1.5 rounded-full motion-safe:animate-[live-pulse_2s_infinite]" aria-hidden="true" />
+                    Dancing now
+                  </span>
+                </span>
                 <span class="text-muted-foreground block text-sm">{{ m.groupDancers(g.id).length }} dancers · {{ progress(g).done }} of {{ progress(g).total }} entered</span>
+                <span class="mt-1.5 mb-0.5 block h-[3px] overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--foreground)_8%,transparent)]" aria-hidden="true">
+                  <span
+                    class="bg-primary-fill block h-full rounded-full transition-[width] duration-(--dur-slow) ease-standard"
+                    :style="{ width: `${(progress(g).done / progress(g).total) * 100}%` }"
+                  />
+                </span>
               </span>
-              <CircleCheck v-if="progress(g).done === progress(g).total" class="text-primary size-5 shrink-0" />
               <ChevronDown :class="['text-muted-foreground size-5 shrink-0 transition-transform', isExpanded(g.id) && 'rotate-180']" />
             </button>
             <ul v-if="isExpanded(g.id)" class="bg-background divide-y border-t">
@@ -166,23 +185,15 @@ function exportCsv() {
                   :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: g.id, danceId: d.id } }"
                   :replace="split"
                   :aria-current="groupId === g.id && danceId === d.id ? 'true' : undefined"
+                  :aria-label="`${d.label}, ${stateLabel(stateOf(g.id, d.id), hasPlaceholder(g.id, d.id))}`"
                   :class="[
-                    'flex min-h-13 items-center gap-3 py-1.5 pr-3 pl-6',
-                    groupId === g.id && danceId === d.id ? 'bg-blue-paper' : 'hover:bg-accent',
-                    hasPlaceholder(g.id, d.id) && 'bg-[repeating-linear-gradient(135deg,transparent_0_10px,color-mix(in_oklab,var(--color-next)_60%,transparent)_10px_20px)]',
+                    'press-row focus-inset flex min-h-13 items-center gap-3 py-1.5 pr-3 pl-6',
+                    groupId === g.id && danceId === d.id ? 'bg-blue-paper' : hasPlaceholder(g.id, d.id) && 'bg-next/40',
+                    hasPlaceholder(g.id, d.id) && 'relative bg-[repeating-linear-gradient(135deg,transparent_0_9px,color-mix(in_oklab,var(--next-foreground)_7%,transparent)_9px_11px)] before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[repeating-linear-gradient(135deg,var(--next-foreground)_0_3px,transparent_3px_6px)]',
                   ]"
                 >
-                  <span
-                    :class="[
-                      'flex size-9 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-extrabold',
-                      stateOf(g.id, d.id) === 'todo' ? 'bg-muted text-muted-foreground' : 'bg-primary-fill text-primary-foreground',
-                    ]"
-                  >
-                    <Check v-if="stateOf(g.id, d.id) === 'done'" class="size-4.5" stroke-width="3" />
-                    <Minus v-else-if="stateOf(g.id, d.id) === 'none'" class="size-4.5" stroke-width="3" />
-                    <template v-else>TBD</template>
-                  </span>
-                  <span class="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold">{{ d.label }}</span>
+                  <ResultStatus :state="stateOf(g.id, d.id)" :fix="hasPlaceholder(g.id, d.id)" />
+                  <span class="text-callout min-w-0 flex-1 truncate font-medium">{{ d.label }}</span>
                   <Trophy v-if="d.id === OVERALL" class="text-muted-foreground size-4.5 shrink-0" />
                   <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
                 </RouterLink>

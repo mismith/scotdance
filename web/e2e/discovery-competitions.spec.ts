@@ -140,7 +140,7 @@ test('a competition in the list opens its page', async ({ page }) => {
   await page.goto('/competitions')
   await row(page, today).click()
   await expect(page).toHaveURL(new RegExp(`/competitions/${today.id}/info$`))
-  await expect(page.getByText(today.name).first()).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: today.name })).toBeVisible()
 })
 
 test('the calendar goes back past the last three months, under Past results', async ({ page }) => {

@@ -86,13 +86,13 @@ watch(() => route.hash, applyHash)
       <header class="bg-primary-fill text-primary-foreground relative overflow-hidden rounded-3xl p-5 shadow-sm">
         <LogoMark class="pointer-events-none absolute -right-6 -bottom-10 size-52 rotate-[-8deg] opacity-[0.13]" />
         <img src="/img/touchicon.png" alt="" class="relative size-12 rounded-xl shadow-sm" />
-        <h1 class="text-display relative mt-4 text-[1.5625rem] text-balance">From the warm-up to the awards.</h1>
-        <p class="relative mt-2 text-base font-semibold opacity-90">
+        <h1 class="text-display relative mt-4 text-[1.5625rem] text-balance">From the <span class="whitespace-nowrap">warm-up</span> to the awards.</h1>
+        <p class="relative mt-2 text-base font-medium opacity-90">
           Browse competitions, follow dancers, and see results as they happen. Free, anywhere in the world.
         </p>
         <RouterLink
           :to="{ name: 'home' }"
-          class="bg-primary-foreground text-primary relative mt-4 inline-flex h-12 items-center gap-2 rounded-full px-5 text-base font-extrabold"
+          class="bg-primary-foreground text-primary-fill press relative mt-4 inline-flex h-12 items-center gap-2 rounded-full px-5 text-base font-semibold"
         >
           <Users class="size-5" /> Go to your dancers
         </RouterLink>
@@ -111,7 +111,7 @@ watch(() => route.hash, applyHash)
               <component :is="r.icon" class="size-5" stroke-width="2.4" />
             </span>
             <h3 class="text-heading">{{ r.title }}</h3>
-            <p class="text-[0.9375rem] leading-snug">{{ r.line }}</p>
+            <p class="text-callout leading-snug">{{ r.line }}</p>
           </article>
         </div>
       </section>
@@ -119,26 +119,26 @@ watch(() => route.hash, applyHash)
       <section class="space-y-3">
         <h2 class="text-title">On competition day</h2>
         <ol class="space-y-2">
-          <li v-for="(s, i) in steps" :key="s.title" class="bg-card flex items-start gap-3 rounded-2xl border p-4 shadow-sm">
+          <li v-for="(s, i) in steps" :key="s.title" class="surface flex items-start gap-3 rounded-2xl p-4">
             <span class="bg-primary-fill text-primary-foreground flex size-9 shrink-0 items-center justify-center rounded-full text-base font-extrabold">
               {{ i + 1 }}
             </span>
             <span>
-              <b class="block text-base">{{ s.title }}</b>
-              <span class="text-muted-foreground text-[0.9375rem]">{{ s.body }}</span>
+              <span class="block text-base font-semibold">{{ s.title }}</span>
+              <span class="text-muted-foreground text-callout">{{ s.body }}</span>
             </span>
           </li>
         </ol>
       </section>
 
-      <section v-if="isWeb" class="bg-card space-y-3 rounded-2xl border p-4 text-center shadow-sm">
+      <section v-if="isWeb" class="surface space-y-3 rounded-2xl p-4 text-center">
         <h2 class="text-heading">Get the app</h2>
-        <p class="text-muted-foreground text-[0.9375rem]">Install it on your phone, or just bookmark it in any browser.</p>
+        <p class="text-muted-foreground text-callout">Install it on your phone, or just bookmark it in any browser.</p>
         <div class="flex flex-wrap justify-center gap-3">
-          <a href="https://apps.apple.com/us/app/scotdance/id1386475626" target="_blank" rel="noopener" aria-label="Download on the App Store">
+          <a href="https://apps.apple.com/us/app/scotdance/id1386475626" target="_blank" rel="noopener" aria-label="Download on the App Store" class="press rounded-lg">
             <img src="/img/app-store.svg" alt="Download on the App Store" class="h-11" />
           </a>
-          <a href="https://play.google.com/store/apps/details?id=info.mismith.scotdance" target="_blank" rel="noopener" aria-label="Get it on Google Play">
+          <a href="https://play.google.com/store/apps/details?id=info.mismith.scotdance" target="_blank" rel="noopener" aria-label="Get it on Google Play" class="press rounded-lg">
             <img src="/img/play-store.svg" alt="Get it on Google Play" class="h-11" />
           </a>
         </div>
@@ -146,27 +146,42 @@ watch(() => route.hash, applyHash)
 
       <section id="faqs" class="scroll-mt-(--chrome-top) space-y-3">
         <h2 class="text-title">Questions and answers</h2>
-        <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+        <ul class="surface rows-inset overflow-hidden rounded-2xl">
           <li v-for="f in faqs" :id="`faq-${f.id}`" :key="f.id" class="scroll-mt-[calc(var(--chrome-top)+0.5rem)]">
-            <div class="flex items-center">
-              <button
-                type="button"
-                class="flex min-h-14 flex-1 items-center gap-3 py-3 pr-4 pl-4 text-left"
-                :aria-expanded="open.has(f.id)"
-                :aria-controls="`faq-panel-${f.id}`"
-                @click="toggle(f.id)"
-              >
-                <span class="flex-1 text-base font-bold">{{ f.q }}</span>
-                <ChevronDown :class="['text-muted-foreground size-5 shrink-0 transition-transform', open.has(f.id) && 'rotate-180']" />
-              </button>
-            </div>
-            <div v-if="open.has(f.id)" :id="`faq-panel-${f.id}`" class="text-muted-foreground px-4 pb-4 text-[0.9375rem] leading-relaxed">
-              <template v-if="f.id === 'worldwide'">
-                Yes, anywhere in the world. Curiously, usage in the United States has been very light so far. If you’ve got a
-                theory why, please
-                <button v-if="crisp.available" type="button" class="text-primary font-bold underline" @click="crisp.open()">get in touch</button><template v-else>get in touch</template>.
-              </template>
-              <span v-else v-html="f.a" />
+            <button
+              type="button"
+              class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left"
+              :aria-expanded="open.has(f.id)"
+              :aria-controls="`faq-panel-${f.id}`"
+              @click="toggle(f.id)"
+            >
+              <span class="flex-1 text-base font-medium">{{ f.q }}</span>
+              <ChevronDown
+                :class="[
+                  'text-muted-foreground size-5 shrink-0 transition-transform duration-(--dur-slow) ease-snappy motion-reduce:transition-none',
+                  open.has(f.id) && 'rotate-180',
+                ]"
+              />
+            </button>
+            <!-- The answer grows open, rather than snapping the page down. -->
+            <div
+              :id="`faq-panel-${f.id}`"
+              :inert="!open.has(f.id)"
+              :class="[
+                'grid transition-[grid-template-rows,opacity] duration-(--dur-slow) ease-snappy motion-reduce:transition-none',
+                open.has(f.id) ? 'grid-rows-[1fr]' : 'grid-rows-[0fr] opacity-0',
+              ]"
+            >
+              <div class="text-muted-foreground text-callout overflow-hidden px-4 leading-relaxed">
+                <p class="pb-4">
+                  <template v-if="f.id === 'worldwide'">
+                    Yes, anywhere in the world. Curiously, usage in the United States has been very light so far. If you’ve
+                    got a theory why, please
+                    <button v-if="crisp.available" type="button" class="text-primary font-semibold underline" @click="crisp.open()">get in touch</button><template v-else>get in touch</template>.
+                  </template>
+                  <span v-else v-html="f.a" />
+                </p>
+              </div>
             </div>
           </li>
         </ul>
@@ -176,9 +191,9 @@ watch(() => route.hash, applyHash)
         <!-- Wraps at the comma, not mid-phrase -->
         <p><span class="inline-block">Built by a Highland dance family,</span> <span class="inline-block">for Highland dance families.</span></p>
         <p class="flex flex-wrap justify-center gap-x-3">
-          <button v-if="crisp.available" type="button" class="text-primary font-bold" @click="crisp.open()">Help</button>
-          <RouterLink :to="{ name: 'policies' }" class="text-primary font-bold">Privacy and terms</RouterLink>
-          <a href="https://github.com/mismith/scotdance" target="_blank" rel="noopener" class="text-primary font-bold">Source code</a>
+          <button v-if="crisp.available" type="button" class="text-primary py-2 font-semibold" @click="crisp.open()">Help</button>
+          <RouterLink :to="{ name: 'policies' }" class="text-primary py-2 font-semibold">Privacy and terms</RouterLink>
+          <a href="https://github.com/mismith/scotdance" target="_blank" rel="noopener" class="text-primary py-2 font-semibold">Source code</a>
         </p>
         <p>
           2017–{{ year }} · <a href="https://mur.bot" target="_blank" rel="noopener" class="hover:underline">Murray Rowan</a> · {{ platformLabel }} · v{{ version }}

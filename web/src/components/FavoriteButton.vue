@@ -6,8 +6,8 @@ import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore, type FavoriteType } from '@/stores/favorites'
 
 // Follow a competition, judge, piper or venue: the star (filled red once
-// you follow, the one mark for following), or with `labelled` a quiet tonal
-// pill that says so.
+// you follow, the one mark for following), or with `labelled` a pill that
+// says so: filled, or tonal where something else is the view's main action.
 const props = defineProps<{
   type: FavoriteType
   id: string
@@ -16,6 +16,8 @@ const props = defineProps<{
   name?: string
   /** Show the word ("Follow" / "Following") next to the star. */
   labelled?: boolean
+  /** Labelled only: tonal where another button is the view's main action. */
+  variant?: 'filled' | 'tonal'
 }>()
 
 const auth = useAuthStore()
@@ -53,7 +55,14 @@ async function handleClick(e: Event) {
     :class="[
       'press flex shrink-0 items-center justify-center rounded-full transition-colors',
       labelled
-        ? ['h-11 gap-1.5 px-4 text-callout font-semibold', isFavorite ? 'surface text-foreground' : 'bg-blue-paper text-primary']
+        ? [
+            'h-11 gap-1.5 px-4 text-callout font-semibold',
+            isFavorite
+              ? 'surface text-foreground'
+              : variant === 'tonal'
+                ? 'bg-blue-paper text-primary'
+                : 'bg-primary-fill text-primary-foreground press-fill',
+          ]
         : ['size-11', isFavorite ? 'text-secondary' : 'text-muted-foreground'],
     ]"
     @click="handleClick"

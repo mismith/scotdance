@@ -8,6 +8,7 @@ import { gravatarUrl } from '@/lib/gravatar'
 import Dialog from '@/components/Dialog.vue'
 import { useMorph } from '@/lib/morph'
 import AppBar from '@/components/nav/AppBar.vue'
+import Button from '@/components/ui/Button.vue'
 import { ROLES, useRoles } from '@/composables/useRoles'
 
 const auth = useAuthStore()
@@ -163,57 +164,55 @@ const submitDisabled = computed(() => {
         </div>
       </header>
 
-      <section class="bg-card space-y-2 rounded-2xl border p-4 shadow-sm">
+      <section class="surface space-y-2 rounded-2xl p-4">
         <label class="block space-y-1.5">
-          <span class="text-[0.9375rem] font-bold">Your name</span>
+          <span class="text-callout font-medium">Your name</span>
           <input
             v-model="displayName"
             type="text"
             autocomplete="name"
-            class="bg-card border-strong focus:border-primary h-12 w-full rounded-xl border-2 px-3 text-base outline-none"
+            class="field h-12 w-full rounded-xl px-3 text-base"
             @input="onDisplayNameInput"
             @blur="saveDisplayName"
           />
         </label>
         <p v-if="displayNameSaving" class="text-muted-foreground text-sm">Saving…</p>
-        <p v-if="displayNameError" class="text-destructive text-sm font-semibold">Your name didn’t save. Try again.</p>
+        <p v-if="displayNameError" class="text-destructive text-sm font-medium" role="alert">Your name didn’t save. Try again.</p>
         <p class="text-muted-foreground text-sm">
-          Your picture comes from <a href="https://gravatar.com/" target="_blank" rel="noopener" class="text-primary font-bold">Gravatar</a>.
+          Your picture comes from <a href="https://gravatar.com/" target="_blank" rel="noopener" class="text-primary font-semibold">Gravatar</a>.
         </p>
       </section>
 
-      <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+      <ul class="surface rows-inset overflow-hidden rounded-2xl">
         <li>
-          <button type="button" class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-accent" @click="openModal('email')">
+          <button type="button" class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left" @click="openModal('email')">
             <span class="min-w-0 flex-1">
-              <span class="block text-base font-bold">Email</span>
+              <span class="block text-base font-medium">Email</span>
               <span class="text-muted-foreground block truncate text-sm">{{ me.email ?? '—' }}</span>
             </span>
-            <span class="text-primary text-[0.9375rem] font-bold">Change</span>
+            <span class="text-primary text-callout font-semibold">Change</span>
           </button>
         </li>
         <li v-if="auth.hasPassword">
-          <button type="button" class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-accent" @click="openModal('password')">
-            <span class="flex-1 text-base font-bold">Password</span>
-            <span class="text-primary text-[0.9375rem] font-bold">Change</span>
+          <button type="button" class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left" @click="openModal('password')">
+            <span class="flex-1 text-base font-medium">Password</span>
+            <span class="text-primary text-callout font-semibold">Change</span>
           </button>
         </li>
         <li>
-          <button type="button" class="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left hover:bg-accent" @click="roles.open()">
+          <button type="button" class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left" @click="roles.open()">
             <span class="min-w-0 flex-1">
-              <span class="block text-base font-bold">How you use ScotDance</span>
+              <span class="block text-base font-medium">How you use ScotDance</span>
               <span class="text-muted-foreground block truncate text-sm">{{ rolesLabel }}</span>
             </span>
-            <ChevronRight class="text-muted-foreground size-5" />
+            <ChevronRight class="text-muted-foreground/70 size-5 shrink-0" />
           </button>
         </li>
       </ul>
 
       <div class="space-y-2">
-        <button type="button" class="bg-card border-strong flex h-12 w-full items-center justify-center gap-2 rounded-xl border text-base font-bold" @click="handleSignOut">
-          <LogOut class="size-5" /> Sign out
-        </button>
-        <button type="button" class="text-destructive h-12 w-full text-[0.9375rem] font-bold" @click="openModal('delete')">
+        <Button size="lg" block @click="handleSignOut"><LogOut /> Sign out</Button>
+        <button type="button" class="text-destructive press-row h-12 w-full rounded-full text-callout font-semibold" @click="openModal('delete')">
           Delete account
         </button>
       </div>
@@ -234,15 +233,15 @@ const submitDisabled = computed(() => {
         </p>
 
         <label v-if="modal === 'email'" class="block space-y-1.5">
-          <span class="text-[0.9375rem] font-bold">New email</span>
-          <input v-model="newEmail" type="email" autocomplete="email" required class="bg-card border-strong focus:border-primary h-12 w-full rounded-xl border-2 px-3 text-base outline-none" />
+          <span class="text-callout font-medium">New email</span>
+          <input v-model="newEmail" type="email" autocomplete="email" required class="field h-12 w-full rounded-xl px-3 text-base" />
         </label>
 
         <label v-if="modal === 'password'" class="block space-y-1.5">
-          <span class="text-[0.9375rem] font-bold">New password</span>
+          <span class="text-callout font-medium">New password</span>
           <span class="relative block">
-            <input v-model="newPassword" :type="showNewPassword ? 'text' : 'password'" autocomplete="new-password" required class="bg-card border-strong focus:border-primary h-12 w-full rounded-xl border-2 pr-24 pl-3 text-base outline-none" />
-            <button type="button" class="text-primary absolute top-1/2 right-1 flex h-10 -translate-y-1/2 items-center gap-1 rounded-lg px-2 text-sm font-bold" @click="showNewPassword = !showNewPassword">
+            <input v-model="newPassword" :type="showNewPassword ? 'text' : 'password'" autocomplete="new-password" required class="field h-12 w-full rounded-xl pr-24 pl-3 text-base" />
+            <button type="button" class="text-primary press absolute top-1/2 right-1 flex h-10 -translate-y-1/2 items-center gap-1 rounded-full px-3 text-sm font-semibold" @click="showNewPassword = !showNewPassword">
               <component :is="showNewPassword ? EyeOff : Eye" class="size-4" /> {{ showNewPassword ? 'Hide' : 'Show' }}
             </button>
           </span>
@@ -250,19 +249,19 @@ const submitDisabled = computed(() => {
 
         <div v-if="auth.hasPassword">
           <label class="block space-y-1.5">
-            <span class="text-[0.9375rem] font-bold">Your current password</span>
+            <span class="text-callout font-medium">Your current password</span>
             <span class="relative block">
-              <input v-model="currentPassword" :type="showCurrentPassword ? 'text' : 'password'" autocomplete="current-password" required class="bg-card border-strong focus:border-primary h-12 w-full rounded-xl border-2 pr-24 pl-3 text-base outline-none" />
-              <button type="button" class="text-primary absolute top-1/2 right-1 flex h-10 -translate-y-1/2 items-center gap-1 rounded-lg px-2 text-sm font-bold" @click="showCurrentPassword = !showCurrentPassword">
+              <input v-model="currentPassword" :type="showCurrentPassword ? 'text' : 'password'" autocomplete="current-password" required class="field h-12 w-full rounded-xl pr-24 pl-3 text-base" />
+              <button type="button" class="text-primary press absolute top-1/2 right-1 flex h-10 -translate-y-1/2 items-center gap-1 rounded-full px-3 text-sm font-semibold" @click="showCurrentPassword = !showCurrentPassword">
                 <component :is="showCurrentPassword ? EyeOff : Eye" class="size-4" /> {{ showCurrentPassword ? 'Hide' : 'Show' }}
               </button>
             </span>
           </label>
           <!-- Accounts made with an emailed link can look like they have a password. -->
-          <button type="button" class="text-primary h-11 text-sm font-bold" @click="sendPasswordLink">
+          <button type="button" class="text-primary press h-11 text-sm font-semibold" @click="sendPasswordLink">
             Forgot it, or never had one? Email me a link
           </button>
-          <p v-if="passwordLinkSent" class="text-done-foreground text-sm font-semibold" role="status">
+          <p v-if="passwordLinkSent" class="text-done-foreground text-sm font-medium" role="status">
             A link to set a password is on its way to {{ me.email }}.
           </p>
         </div>
@@ -271,28 +270,27 @@ const submitDisabled = computed(() => {
             To confirm it’s you, your account needs a password. Get a link to set one, sign in with it, then come back
             here.
           </p>
-          <button type="button" class="text-primary h-11 font-bold" @click="sendPasswordLink">Email me a link</button>
-          <p v-if="passwordLinkSent" class="text-done-foreground text-sm font-semibold" role="status">
+          <button type="button" class="text-primary press h-11 font-semibold" @click="sendPasswordLink">Email me a link</button>
+          <p v-if="passwordLinkSent" class="text-done-foreground text-sm font-medium" role="status">
             A link is on its way to {{ me.email }}.
           </p>
         </div>
 
-        <p v-if="modalError" class="text-destructive text-[0.9375rem] font-semibold" role="alert">{{ modalError }}</p>
+        <p v-if="modalError" class="text-destructive text-callout font-medium" role="alert">{{ modalError }}</p>
 
-        <button
+        <Button
           type="submit"
-          :disabled="submitDisabled"
-          :class="[
-            'h-12 w-full rounded-xl text-base font-bold disabled:opacity-50',
-            modal === 'delete' ? 'bg-destructive-fill text-destructive-foreground' : 'bg-primary-fill text-primary-foreground',
-          ]"
+          size="lg"
+          block
+          :variant="modal === 'delete' ? 'destructive' : 'primary'"
+          :disabled="submitDisabled && !submitting"
+          :busy="submitting"
         >
-          <template v-if="submitting">Working…</template>
-          <template v-else-if="modal === 'email'">Change email</template>
+          <template v-if="modal === 'email'">Change email</template>
           <template v-else-if="modal === 'password'">Change password</template>
           <template v-else>Delete my account</template>
-        </button>
-        <button type="button" class="text-muted-foreground h-11 w-full font-bold" @click="closeModal">Cancel</button>
+        </Button>
+        <Button variant="plain" size="lg" block @click="closeModal">Cancel</Button>
       </form>
     </Dialog>
   </div>

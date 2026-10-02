@@ -99,12 +99,12 @@ const items = computed<TabItem[]>(() =>
       <button
         v-tap-feedback
         type="button"
-        class="glass text-foreground pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full [view-transition-name:tabbar-exit]"
+        class="glass press-glass text-foreground pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full [view-transition-name:tabbar-exit] lg:size-11"
         :aria-label="`Leave this competition, back to ${exit.label}`"
         :title="`Back to ${exit.label}`"
         @click="leave"
       >
-        <component :is="exit.icon" class="size-6" stroke-width="2.2" />
+        <component :is="exit.icon" class="size-6 lg:size-5" stroke-width="2.2" />
       </button>
     </template>
   </TabBar>

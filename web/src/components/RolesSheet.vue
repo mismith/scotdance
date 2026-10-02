@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import Dialog from '@/components/Dialog.vue'
 import Button from '@/components/ui/Button.vue'
 import Checkbox from '@/components/ui/Checkbox.vue'
-import Dialog from '@/components/Dialog.vue'
+import { selectionHaptic } from '@/lib/haptics'
 import { ROLES, useRoles, type Role } from '@/composables/useRoles'
 
 const r = useRoles()
@@ -15,6 +16,11 @@ watch(
     if (open) picked.value = { ...r.roles.value }
   },
 )
+
+function toggle(id: Role) {
+  picked.value = { ...picked.value, [id]: !picked.value[id] }
+  selectionHaptic()
+}
 
 async function save() {
   saving.value = true
@@ -37,15 +43,15 @@ async function save() {
     </template>
     <div class="space-y-4 p-4 pb-[calc(1.5rem+var(--safe-bottom))]">
       <p class="text-base">Pick all that apply.</p>
-      <div class="surface rows-inset overflow-hidden rounded-2xl [--inset:3.125rem]" role="group" aria-label="How you use ScotDance">
+      <div class="surface rows-inset overflow-hidden rounded-2xl [--inset:3.375rem]" role="group" aria-label="How you use ScotDance">
         <button
           v-for="role in ROLES"
           :key="role.id"
           type="button"
           role="checkbox"
           :aria-checked="!!picked[role.id]"
-          class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left"
-          @click="picked = { ...picked, [role.id]: !picked[role.id] }"
+          class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left"
+          @click="toggle(role.id)"
         >
           <Checkbox :checked="!!picked[role.id]" />
           <span class="min-w-0">
@@ -59,10 +65,8 @@ async function save() {
         organisers get quick access to their competitions. It also tells the volunteer who builds ScotDance who it’s
         for, so the next features help the right people. Change it any time in your account.
       </p>
-      <div class="space-y-1">
-        <Button variant="primary" size="lg" block :busy="saving" @click="save">Save</Button>
-        <Button variant="plain" block class="text-muted-foreground" @click="r.close()">Skip for now</Button>
-      </div>
+      <Button variant="primary" size="lg" block :busy="saving" @click="save">Save</Button>
+      <Button variant="plain" size="lg" block @click="r.close()">Skip for now</Button>
     </div>
   </Dialog>
 </template>

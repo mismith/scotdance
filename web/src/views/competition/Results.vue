@@ -4,16 +4,20 @@ import ResultsMark from '@/components/ResultsMark.vue'
 import { computed, onMounted, ref } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import { RouterLink } from 'vue-router'
-import { AlertTriangle, ChevronRight, Star, Trophy } from '@lucide/vue'
+import { AlertTriangle, ChevronRight, Trophy } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
+import { useCompetitionLive } from '@/composables/useCompetitionLive'
+import { useFreshPlacings } from '@/composables/useCompetitionPlacings'
 import { useFollowing } from '@/composables/useFollowing'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { findGroupDances, groupHasPlaceholderDancers, isPosted } from '@/lib/results'
 import { OVERALL_ID, groupHasOverall, type EnrichedGroup } from '@/types/competition'
 import EmptyState from '@/components/EmptyState.vue'
+import LiveDot from '@/components/LiveDot.vue'
 import Medal from '@/components/Medal.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import Switch from '@/components/ui/Switch.vue'
 
 // Results without digging: every age group is visible at once (no
 // accordions), with how many of its dances are posted and, for the people
@@ -34,6 +38,8 @@ const {
 } = useCompetition()
 const { followedByGroup, dayFor } = useCompetitionDays()
 const following = useFollowing()
+const { pulse, lastResult } = useCompetitionLive()
+const isFresh = useFreshPlacings()
 
 const loaded = ref(false)
 onMounted(async () => {
@@ -50,7 +56,12 @@ interface Row {
   total: number
   posted: number
   unknown: boolean
-  mine: Array<{ key: string; name: string; color: string | null; medals: Array<{ id: string; place: number; tied: boolean }> }>
+  mine: Array<{
+    key: string
+    name: string
+    color: string | null
+    medals: Array<{ id: string; place: number; tied: boolean; dancerId: string }>
+  }>
 }
 
 function rowFor(group: EnrichedGroup): Row {
@@ -71,7 +82,7 @@ function rowFor(group: EnrichedGroup): Row {
         color: following.colorFor(d.dancerId),
         medals: all
           .filter((s) => s.state === 'placed' && s.place != null)
-          .map((s) => ({ id: s.dance.id, place: s.place!, tied: s.tied })),
+          .map((s) => ({ id: s.dance.id, place: s.place!, tied: s.tied, dancerId: d.id })),
       }
     }),
   }
@@ -81,7 +92,7 @@ const sections = computed(() =>
   (resultsHidden.value ? [] : categories.value)
     .map((category) => {
       let rows = groups.value.filter((g) => g.categoryId === category.id).map(rowFor)
-      if (onlyMine.value && anyFollowedHere.value) rows = rows.filter((r) => r.mine.length)
+      if (mineOnly.value) rows = rows.filter((r) => r.mine.length)
       return { category, rows }
     })
     .filter((s) => s.rows.length),
@@ -99,44 +110,38 @@ const totals = computed(() => {
 })
 
 const anyFollowedHere = computed(() => followedByGroup.value.size > 0)
+const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
 </script>
 
 <template>
   <div class="space-y-3">
     <header :ref="setHeader" class="space-y-2">
       <h1 class="text-display">Results</h1>
-      <div v-if="totals.total && !resultsHidden" class="space-y-1.5">
-        <div class="bg-muted h-2.5 overflow-hidden rounded-full border" aria-hidden="true">
+      <div v-if="totals.total && !resultsHidden" class="space-y-2">
+        <!-- How much is in: a hairline that grows as results arrive. -->
+        <div class="h-1 overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--foreground)_9%,transparent)]" aria-hidden="true">
           <div
-            class="bg-done-foreground h-full rounded-full transition-[width] duration-500"
-            :style="{ width: `${Math.round((totals.posted / totals.total) * 100)}%` }"
+            class="bg-done-foreground h-full rounded-full transition-[width] duration-(--dur-slow) ease-standard"
+            :style="{ width: `${(totals.posted / totals.total) * 100}%` }"
           />
         </div>
-        <p class="text-muted-foreground text-sm">
-          <b class="text-foreground">{{ totals.posted }} of {{ totals.total }}</b> results posted
-          <template v-if="isLive"> · updating live</template>
+        <p class="text-muted-foreground flex flex-wrap items-center gap-x-2 text-sm">
+          <span><span class="text-foreground font-semibold tabular-nums">{{ totals.posted }} of {{ totals.total }}</span> results posted</span>
+          <span v-if="isLive" class="flex items-center gap-1.5">
+            <LiveDot :pulse="pulse" />
+            <span class="text-live font-semibold">Live</span><template v-if="lastResult"> · {{ lastResult }}</template>
+          </span>
         </p>
       </div>
     </header>
 
-    <button
+    <label
       v-if="anyFollowedHere && !resultsHidden"
-      type="button"
-      role="switch"
-      :aria-checked="onlyMine"
-      class="bg-card flex h-11 w-full items-center gap-2 rounded-xl border px-3 text-left text-[0.9375rem] font-bold"
-      @click="onlyMine = !onlyMine"
+      class="surface flex h-11 items-center gap-2 rounded-full pr-1.5 pl-4"
     >
-      <Star :class="['size-4 shrink-0', onlyMine ? 'text-primary fill-current' : 'text-muted-foreground']" />
-      <span class="flex-1">Only my dancers’ age groups</span>
-      <span
-        :class="[
-          'relative h-6 w-10 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform',
-          onlyMine ? 'bg-primary-fill after:translate-x-4' : 'bg-strong',
-        ]"
-        aria-hidden="true"
-      />
-    </button>
+      <span id="only-my-groups" class="text-callout min-w-0 flex-1 truncate font-medium">Only my dancers’ age groups</span>
+      <Switch v-model="onlyMine" aria-labelledby="only-my-groups" />
+    </label>
 
     <div v-if="!loaded" class="space-y-2" aria-busy="true">
       <Skeleton v-for="i in 6" :key="i" class="h-14 w-full rounded-xl!" />
@@ -154,46 +159,65 @@ const anyFollowedHere = computed(() => followedByGroup.value.size > 0)
       description="Placings appear here as soon as they’re entered at the competition."
     />
 
-    <section v-for="s in sections" :key="s.category.id">
-      <h2 class="bg-background sticky top-(--chrome-top) z-10 py-2 text-[1.0625rem] font-extrabold">
-        {{ s.category.name || 'Other' }}
-      </h2>
-      <ul class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
-        <li v-for="r in s.rows" :key="r.group.id">
-          <RouterLink
-            :to="{ name: 'competition.group', params: { competitionId, groupId: r.group.id } }"
-            class="relative flex min-h-14 items-center gap-3 py-2 pr-2 pl-4 hover:bg-accent"
-            :style="r.mine.length ? { '--dc': r.mine[0].color ?? 'var(--primary)' } : undefined"
-          >
-            <span v-if="r.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
-            <span class="min-w-0 flex-1">
-              <span class="flex items-center gap-1.5 text-base font-bold">
-                <span class="truncate">{{ r.group.name || r.group.fullName }}</span>
-                <AlertTriangle
-                  v-if="r.unknown"
-                  class="text-next-foreground size-4 shrink-0"
-                  aria-label="Some placings couldn’t be matched to a dancer"
-                />
-              </span>
-              <MyDancerLine
-                v-for="m in r.mine"
-                :key="m.key"
-                :color="m.color"
-                :name="m.name"
-                :details="[m.medals.length ? null : 'No placings yet']"
-                class="mt-1"
+    <!-- Only mine fades through, so the list doesn't jump. -->
+    <Transition
+      v-else
+      mode="out-in"
+      enter-active-class="transition-opacity duration-(--dur-quick) ease-standard"
+      enter-from-class="opacity-0"
+      leave-active-class="transition-opacity duration-(--dur-instant) ease-exit"
+      leave-to-class="opacity-0"
+    >
+      <div :key="String(mineOnly)" class="space-y-3">
+        <section v-for="s in sections" :key="s.category.id">
+          <h2 class="bg-background text-muted-foreground text-callout sticky top-(--chrome-top) z-10 py-2 font-semibold">
+            {{ s.category.name || 'Other' }}
+          </h2>
+          <ul class="surface rows-inset overflow-hidden rounded-2xl">
+            <li v-for="r in s.rows" :key="r.group.id">
+              <RouterLink
+                :to="{ name: 'competition.group', params: { competitionId, groupId: r.group.id } }"
+                class="press-row focus-inset relative flex min-h-14 items-center gap-3 py-2 pr-3 pl-4"
+                :style="r.mine.length ? { '--dc': r.mine[0].color ?? 'var(--primary)' } : undefined"
               >
-                <span v-if="m.medals.length" class="flex items-center gap-1">
-                  <Medal v-for="x in m.medals.slice(0, 3)" :key="x.id" :place="x.place" :tied="x.tied" size="sm" />
-                  <span v-if="m.medals.length > 3" class="text-muted-foreground text-sm font-semibold">+{{ m.medals.length - 3 }}</span>
+                <span v-if="r.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
+                <span class="min-w-0 flex-1">
+                  <span class="flex items-center gap-1.5 text-base font-semibold">
+                    <span class="truncate">{{ r.group.name || r.group.fullName }}</span>
+                    <AlertTriangle
+                      v-if="r.unknown"
+                      class="text-next-foreground size-4 shrink-0"
+                      aria-label="Some placings couldn’t be matched to a dancer"
+                    />
+                  </span>
+                  <MyDancerLine
+                    v-for="m in r.mine"
+                    :key="m.key"
+                    :color="m.color"
+                    :name="m.name"
+                    :details="[m.medals.length ? null : 'No placings yet']"
+                    class="mt-1"
+                  >
+                    <span v-if="m.medals.length" class="flex items-center gap-1">
+                      <Medal
+                        v-for="x in m.medals.slice(0, 3)"
+                        :key="x.id"
+                        :place="x.place"
+                        :tied="x.tied"
+                        :fresh="isFresh(r.group.id, x.id, x.dancerId)"
+                        size="sm"
+                      />
+                      <span v-if="m.medals.length > 3" class="text-muted-foreground text-sm font-medium">+{{ m.medals.length - 3 }}</span>
+                    </span>
+                  </MyDancerLine>
                 </span>
-              </MyDancerLine>
-            </span>
-            <ResultsMark :posted="r.posted" :total="r.total" />
-            <ChevronRight class="text-muted-foreground size-5 shrink-0" />
-          </RouterLink>
-        </li>
-      </ul>
-    </section>
+                <ResultsMark :posted="r.posted" :total="r.total" />
+                <ChevronRight class="text-muted-foreground size-5 shrink-0" />
+              </RouterLink>
+            </li>
+          </ul>
+        </section>
+      </div>
+    </Transition>
   </div>
 </template>
