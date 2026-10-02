@@ -81,11 +81,12 @@ const anchor = computed<Record<string, string> | undefined>(() => {
   const trigger = morph.value?.trigger
   if (props.variant !== 'dropdown' || !shown.value || !trigger?.isConnected) return undefined
   const r = trigger.getBoundingClientRect()
-  const top = `${Math.round(r.bottom + 6)}px`
+  // The panel is w-72, at most the window less a 12px margin each side.
+  const width = Math.min(288, innerWidth - 24)
   const leftSide = r.left + r.width / 2 < innerWidth / 2
-  return leftSide
-    ? { top, left: `${Math.max(12, Math.round(r.left))}px`, right: 'auto' }
-    : { top, left: 'auto', right: `${Math.max(12, Math.round(innerWidth - r.right))}px` }
+  const want = leftSide ? r.left : r.right - width
+  const left = Math.min(Math.max(12, want), innerWidth - width - 12)
+  return { top: `${Math.round(r.bottom + 6)}px`, left: `${Math.round(left)}px`, right: 'auto' }
 })
 
 function onBackdropClick(e: MouseEvent) {
