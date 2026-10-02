@@ -42,6 +42,7 @@
   --color-done-foreground: var(--done-foreground);
   --color-live: var(--live);
   --color-live-paper: var(--live-paper);
+  --color-on-dancer: var(--on-dancer);
   /* Schedule builder blocks: dances, age groups and judges each keep one hue */
   --color-dance: var(--dance);
   --color-dance-foreground: var(--dance-foreground);
@@ -106,8 +107,8 @@
   --destructive-foreground: #ffffff;
   --raised: #ffffff;
   --border: #d3dae2;
-  --input: #8c96a3;
-  --strong: #8c96a3;
+  --input: #87919e;
+  --strong: #87919e;
   --ring: #0065bd;
   /* Subtler than a full squircle (superellipse(2)), so corners stay soft. */
   --corner-shape: superellipse(1.5);
@@ -143,6 +144,8 @@
   --dancer-6: #00707a;
   --dancer-7: #b0266e;
   --dancer-8: #b04a00;
+  /* Text and ticks on a dancer's colour. */
+  --on-dancer: #ffffff;
   /* The Android app injects --safe-area-inset-* (Capacitor SystemBars) for
      WebViews that don't report env() insets edge-to-edge. */
   --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top));
@@ -219,6 +222,8 @@
   --dancer-6: #3fc2c9;
   --dancer-7: #ec6fae;
   --dancer-8: #f28a3c;
+  /* Dark mode's dancer colours are brighter, so they take dark ink. */
+  --on-dancer: #0c0f13;
   /* Dark surfaces rise by getting lighter, with a faint lit top edge. */
   --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.035), 0 0 0 0.5px rgb(255 255 255 / 0.06);
   --shadow-raised: inset 0 1px 0 rgb(255 255 255 / 0.07), 0 0 0 0.5px rgb(255 255 255 / 0.08), 0 14px 34px -10px rgb(0 0 0 / 0.65);
