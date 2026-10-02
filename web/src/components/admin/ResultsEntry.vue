@@ -5,6 +5,7 @@ import { ChevronRight, CloudOff, Diamond, ListOrdered, Search, Trophy, X } from 
 import Dialog from '@/components/Dialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import HelpTip from '@/components/admin/HelpTip.vue'
+import NumberTile from '@/components/admin/NumberTile.vue'
 import PlacedList from '@/components/admin/PlacedList.vue'
 import Button from '@/components/ui/Button.vue'
 import Segmented from '@/components/ui/Segmented.vue'
@@ -13,6 +14,7 @@ import { useManagedCompetition } from '@/composables/admin/useManagedCompetition
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import { selectionHaptic, tapHaptic } from '@/lib/haptics'
+import { useMorph } from '@/lib/morph'
 import { getOrdinalSuffix } from '@/lib/results'
 import { isPrimaryCategory } from '@/types/competition'
 import {
@@ -21,6 +23,7 @@ import {
   isPlaceholderId,
   newPlaceholderId,
   parsePlacings,
+  placeAt,
   removeEntry,
   resultRows,
   resultsOrder,
@@ -66,7 +69,7 @@ watch(
   () => {
     tab.value = 'placings'
     pickingReverse.value = false
-    fixing.value = null
+    fix.dismiss()
   },
 )
 
@@ -89,6 +92,10 @@ const offersPoints = computed(() => !isPrimaryCategory(group.value?.category?.na
 
 const who = (id: string) => (isPlaceholderId(id) ? '?' : (m.dancersById.value.get(id)?.num ?? '?'))
 
+// Said aloud by screen readers as each tap lands ("149 placed 3rd").
+const announcement = ref('')
+const spoken = (id: string) => (isPlaceholderId(id) ? 'Missed number' : who(id))
+
 async function save(value: Placings | false | null, label: string) {
   const stored = value === false || value === null ? value : serializePlacings(value)
   try {
@@ -104,13 +111,21 @@ function place(id: string) {
   tapHaptic()
   const p = parsePlacings(rawNow())
   const i = p.entries.findIndex((e) => e.id === id)
-  if (i >= 0) void save(removeEntry(p, i), `Took out ${who(id)}`)
-  else void save({ ...p, entries: [...p.entries, { id, tie: false }] }, `Placed ${who(id)}`)
+  if (i >= 0) {
+    announcement.value = `${spoken(id)} taken out`
+    void save(removeEntry(p, i), `Took out ${who(id)}`)
+    return
+  }
+  const added = { ...p, entries: [...p.entries, { id, tie: false }] }
+  const at = placeAt(added.entries.length - 1, added)
+  announcement.value = isCallbacks.value ? `${spoken(id)} called back` : at ? `${spoken(id)} placed ${at}${getOrdinalSuffix(at)}` : `${spoken(id)} placed`
+  void save(added, `Placed ${who(id)}`)
 }
 function remove(index: number) {
   const p = parsePlacings(rawNow())
   const id = p.entries[index]?.id
   if (id == null) return
+  announcement.value = `${spoken(id)} taken out`
   void save(removeEntry(p, index), `Took out ${who(id)}`)
 }
 function tie(index: number, on: boolean) {
@@ -130,6 +145,7 @@ function point(id: string) {
   const i = list.indexOf(id)
   if (i >= 0) list.splice(i, 1)
   else list.push(id)
+  announcement.value = i >= 0 ? `Point taken from ${spoken(id)}` : `${spoken(id)} given a point`
   void m
     .writeData({ [pointsPath.value]: list.length ? list : null }, `${i >= 0 ? 'Took a point from' : 'Gave a point to'} ${who(id)} in ${danceName.value}`)
     .catch((e) => toast(friendlyError(e), { tone: 'error' }))
@@ -165,6 +181,7 @@ function setNone(on: boolean) {
 }
 
 // --- Choosing who a "?" was (optional: the "?" can also just be taken out)
+const fix = useMorph()
 const fixing = ref<string | null>(null)
 const fixQuery = ref('')
 const fixChoices = computed(() => {
@@ -175,10 +192,11 @@ const fixChoices = computed(() => {
 function openFix(index: number) {
   fixQuery.value = ''
   fixing.value = placings.value.entries[index]?.id ?? null
+  if (fixing.value) void fix.show()
 }
 function chooseFix(dancerId: string) {
   const id = fixing.value
-  fixing.value = null
+  void fix.hide()
   // By id, not position: the list may have changed on another device since.
   const p = parsePlacings(rawNow())
   const entry = p.entries.find((e) => e.id === id)
@@ -224,7 +242,7 @@ const next = computed(() => {
   <div v-if="group" class="flex flex-col md:h-full">
     <header class="flex items-end gap-3 px-4 pt-4 pb-3">
       <div class="min-w-0 flex-1">
-        <p class="text-muted-foreground truncate text-sm font-bold">{{ group.label }}</p>
+        <p class="text-muted-foreground truncate text-sm font-medium">{{ group.label }}</p>
         <h1 class="text-title truncate">{{ danceName }}</h1>
       </div>
     </header>
@@ -254,7 +272,7 @@ const next = computed(() => {
             :aria-disabled="!canEdit || undefined"
             :class="['transition-[opacity,filter] duration-(--dur-base) ease-standard', !canEdit && 'opacity-50 grayscale']"
           >
-            <p class="text-muted-foreground px-4 pt-3 pb-2 text-sm font-semibold">{{ instruction }}</p>
+            <p class="text-muted-foreground px-4 pt-3 pb-2 text-sm">{{ instruction }}</p>
             <p v-if="noCallbacks && !isCallbacks && tab === 'placings'" class="text-muted-foreground px-4 pb-2 text-sm">
               {{ callbacksRaw === false ? 'No callbacks' : 'No callbacks entered' }}: showing everyone.
               <RouterLink
@@ -266,7 +284,7 @@ const next = computed(() => {
                 Enter callbacks ›
               </RouterLink>
             </p>
-            <p v-if="placings.reverseFrom && tab === 'placings'" class="bg-blue-paper text-primary px-4 py-2.5 text-sm font-bold">
+            <p v-if="placings.reverseFrom && tab === 'placings'" class="bg-blue-paper text-primary px-4 py-2.5 text-sm font-semibold">
               Entering from {{ placings.reverseFrom }}{{ getOrdinalSuffix(placings.reverseFrom) }} place
             </p>
             <ul class="divide-y">
@@ -275,10 +293,10 @@ const next = computed(() => {
                   type="button"
                   :disabled="rowDisabled(d.id)"
                   :aria-pressed="tab === 'placings' ? placedIndex.has(d.id) : pointed.has(d.id)"
-                  :class="['hover:bg-accent active:bg-accent flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left transition-opacity', rowDimmed(d.id) && 'opacity-35']"
+                  :class="['press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left', rowDimmed(d.id) && 'opacity-35']"
                   @click="tab === 'placings' ? place(d.id) : point(d.id)"
                 >
-                  <span class="bg-paper text-paper-ink min-w-12 shrink-0 rounded-md border px-1.5 py-1 text-center font-mono text-base font-semibold tabular-nums">{{ d.num || '–' }}</span>
+                  <NumberTile :num="d.num" />
                   <span class="min-w-0 flex-1">
                     <span class="block truncate text-base font-semibold">{{ d.label }}</span>
                     <span v-if="d.location" class="text-muted-foreground block truncate text-sm">{{ d.location }}</span>
@@ -291,10 +309,10 @@ const next = computed(() => {
                 <button
                   type="button"
                   :disabled="!canEdit"
-                  class="hover:bg-accent flex min-h-16 w-full items-center gap-3 bg-[repeating-linear-gradient(135deg,transparent_0_10px,color-mix(in_oklab,var(--color-next)_60%,transparent)_10px_20px)] px-4 py-2 text-left disabled:opacity-50"
+                  class="press-row focus-inset flex min-h-16 w-full items-center gap-3 bg-[repeating-linear-gradient(135deg,transparent_0_10px,color-mix(in_oklab,var(--color-next)_60%,transparent)_10px_20px)] px-4 py-2 text-left"
                   @click="tapPlaceholder"
                 >
-                  <span class="bg-next text-next-foreground min-w-12 shrink-0 rounded-md px-1.5 py-1 text-center font-mono text-base font-semibold">?</span>
+                  <NumberTile unknown />
                   <span class="min-w-0 flex-1">
                     <span class="block text-base font-semibold">Dancer</span>
                     <span class="text-muted-foreground block text-sm">A stand-in for a number that was missed, misheard or wrong. Fix it later.</span>
@@ -362,10 +380,10 @@ const next = computed(() => {
       <!-- The placed order -->
       <section class="min-w-0 max-md:border-t-8 max-md:border-muted md:overflow-y-auto">
         <template v-if="tab === 'placings'">
-          <h2 class="text-muted-foreground flex items-center gap-1.5 px-4 pt-3 pb-2 text-sm font-bold">
+          <h2 class="text-muted-foreground flex items-center gap-1.5 px-4 pt-3 pb-2 text-sm font-semibold">
             {{ isCallbacks ? `Called back · ${placings.entries.length}` : 'Placed' }}
             <HelpTip v-if="!isCallbacks" label="How the placed list works">
-              Drag the handle to change the order. Switch on TIE when a dancer shares the place of the dancer above. Tap a dancer to take them out.
+              Drag the handle to change the order. Switch on Tie when a dancer shares the place of the dancer above. Tap a dancer to take them out.
             </HelpTip>
           </h2>
           <PlacedList
@@ -391,34 +409,27 @@ const next = computed(() => {
               "
             />
             <div class="flex min-h-14 items-center border-t px-4">
-              <button
-                type="button"
-                role="switch"
-                :aria-checked="markedNone"
-                :disabled="!canEdit"
-                class="flex h-11 items-center gap-3 text-base font-bold disabled:opacity-50"
-                @click="setNone(!markedNone)"
-              >
-                <span :class="['relative h-7 w-12 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-6 after:rounded-full after:bg-white after:shadow after:transition-transform', markedNone ? 'bg-primary-fill after:translate-x-5' : 'bg-strong']" />
+              <label class="flex min-h-11 items-center gap-3 font-medium">
+                <Switch :model-value="markedNone" :disabled="!canEdit" @update:model-value="setNone" />
                 {{ isCallbacks ? 'No callbacks' : 'No dancers placed' }}
-              </button>
+              </label>
             </div>
           </template>
           <p v-if="singleOverall" class="text-muted-foreground flex items-center gap-1.5 px-4 py-3 text-sm"><Trophy class="size-4" /> Overall winner</p>
         </template>
 
         <template v-else>
-          <h2 class="text-muted-foreground px-4 pt-3 pb-2 text-sm font-bold">Championship points</h2>
+          <h2 class="text-muted-foreground px-4 pt-3 pb-2 text-sm font-semibold">Championship points</h2>
           <ul v-if="pointedIds.length" class="divide-y">
             <li v-for="id in pointedIds" :key="id">
               <button
                 type="button"
                 :disabled="!canEdit"
                 :aria-label="`Take the point from ${who(id)}`"
-                class="hover:bg-accent flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left"
+                class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left"
                 @click="point(id)"
               >
-                <span class="bg-paper text-paper-ink min-w-12 shrink-0 rounded-md border px-1.5 py-1 text-center font-mono text-base font-semibold tabular-nums">{{ who(id) }}</span>
+                <NumberTile :num="who(id)" :unknown="isPlaceholderId(id)" />
                 <span class="min-w-0 flex-1 truncate text-base font-semibold">{{ m.dancersById.value.get(id)?.label ?? 'Unknown dancer' }}</span>
                 <Diamond class="text-primary size-5 shrink-0 fill-current" />
               </button>
@@ -429,42 +440,47 @@ const next = computed(() => {
 
         <!-- Carry on to the next dance without going back to the list -->
         <div v-if="next && (placings.entries.length || markedNone)" class="border-t p-4">
-          <RouterLink
-            :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: next.groupId, danceId: next.danceId } }"
+          <Button
+            variant="primary"
+            size="lg"
+            block
             replace
-            class="bg-primary-fill text-primary-foreground flex h-12 items-center justify-center gap-1.5 rounded-xl px-4 text-base font-bold"
+            :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: next.groupId, danceId: next.danceId } }"
           >
-            Next: {{ next.label }} <ChevronRight class="size-5" />
-          </RouterLink>
+            <span class="min-w-0 truncate">Next: {{ next.label }}</span>
+            <ChevronRight />
+          </Button>
         </div>
       </section>
     </div>
   </div>
 
   <!-- Choose who a "?" was -->
-  <Dialog :open="fixing != null" variant="sheet" size="md" @close="fixing = null">
+  <Dialog :open="fix.open" :morph="fix" variant="sheet" size="md" @close="fix.hide()">
     <template #header>
       <h2 class="text-title">Who was it?</h2>
       <p class="text-muted-foreground text-sm">Replaces the “?” in the same place.</p>
     </template>
     <div class="space-y-2 p-4">
-      <label class="bg-card border-strong focus-within:border-primary flex h-11 items-center gap-2 rounded-xl border-2 px-3">
+      <label class="field flex h-11 items-center gap-2 rounded-xl px-3">
         <Search class="text-muted-foreground size-4 shrink-0" />
         <span class="sr-only">Find a dancer</span>
         <input v-model="fixQuery" type="search" placeholder="Find by number or name" class="min-w-0 flex-1 bg-transparent text-base outline-none" />
-        <button v-if="fixQuery" type="button" aria-label="Clear search" class="text-muted-foreground -mr-1 flex size-7 items-center justify-center rounded-full" @click="fixQuery = ''">
+        <button v-if="fixQuery" type="button" aria-label="Clear search" class="press text-muted-foreground -mr-1 flex size-7 items-center justify-center rounded-full" @click="fixQuery = ''">
           <X class="size-4" />
         </button>
       </label>
     </div>
     <ul class="divide-y pb-[var(--safe-bottom)]">
       <li v-for="d in fixChoices" :key="d.id">
-        <button type="button" class="hover:bg-accent flex min-h-14 w-full items-center gap-3 px-4 text-left" @click="chooseFix(d.id)">
-          <span class="bg-paper text-paper-ink min-w-12 rounded-md border px-1.5 py-1 text-center font-mono font-semibold">{{ d.num || '–' }}</span>
+        <button type="button" class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 text-left" @click="chooseFix(d.id)">
+          <NumberTile :num="d.num" />
           <span class="min-w-0 flex-1 truncate text-base font-semibold">{{ d.label }}</span>
         </button>
       </li>
       <li v-if="!fixChoices.length" class="text-muted-foreground px-4 py-6 text-center">Everyone is already placed.</li>
     </ul>
   </Dialog>
+
+  <p class="sr-only" aria-live="polite">{{ announcement }}</p>
 </template>

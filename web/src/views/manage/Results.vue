@@ -7,6 +7,7 @@ import MasterDetail from '@/components/admin/MasterDetail.vue'
 import ResultsEntry from '@/components/admin/ResultsEntry.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
 import SectionMenu from '@/components/admin/SectionMenu.vue'
+import Button from '@/components/ui/Button.vue'
 import { useHideTab } from '@/composables/admin/useHideTab'
 import { useManagedCompetition, type MGroup } from '@/composables/admin/useManagedCompetition'
 import { useSplit } from '@/composables/admin/useWide'
@@ -18,8 +19,6 @@ const route = useRoute()
 const m = useManagedCompetition()
 const split = useSplit()
 const hideTab = useHideTab('results')
-
-const PRIMARY = 'bg-primary-fill text-primary-foreground flex h-11 items-center gap-1.5 rounded-xl px-4 text-[0.9375rem] font-bold disabled:opacity-50'
 
 const groupId = computed(() => (route.params.groupId ? String(route.params.groupId) : null))
 const danceId = computed(() => (route.params.danceId ? String(route.params.danceId) : CALLBACKS))
@@ -128,7 +127,7 @@ function exportCsv() {
         </SectionHeader>
 
         <EmptyState v-if="hideTab.hidden.value" :icon="Trophy" title="Results are hidden" description="The competition page has no Results tab.">
-          <button type="button" :disabled="!canEdit" :class="PRIMARY" @click="hideTab.show()">Show the Results tab</button>
+          <Button variant="primary" :disabled="!canEdit" @click="hideTab.show()">Show the Results tab</Button>
         </EmptyState>
         <EmptyState
           v-else-if="!m.groups.value.length"
@@ -136,28 +135,26 @@ function exportCsv() {
           title="No age groups yet"
           description="Add age groups and their dancers first, then enter results here."
         >
-          <RouterLink :to="{ name: 'manage.groups', params: { competitionId: m.competitionId.value } }" :class="PRIMARY">
-            <Plus class="size-4" /> Add age groups
-          </RouterLink>
+          <Button variant="primary" :to="{ name: 'manage.groups', params: { competitionId: m.competitionId.value } }"><Plus /> Add age groups</Button>
           <template #footer>
             Not publishing results here?
-            <button type="button" :disabled="!canEdit" class="text-primary font-bold underline-offset-2 hover:underline disabled:opacity-50" @click="hideTab.hide()">
+            <button type="button" :disabled="!canEdit" class="text-primary font-semibold underline-offset-2 hover:underline disabled:opacity-(--disabled-opacity)" @click="hideTab.hide()">
               Hide the Results tab
             </button>
           </template>
         </EmptyState>
 
-        <ul v-else class="bg-card divide-y overflow-hidden rounded-2xl border shadow-sm">
+        <ul v-else class="surface divide-y overflow-hidden rounded-2xl">
           <li v-for="g in m.groups.value" :key="g.id">
             <button
               type="button"
               :aria-expanded="isExpanded(g.id)"
-              class="hover:bg-accent flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left"
+              class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left"
               @click="toggle(g.id)"
             >
               <span class="min-w-0 flex-1">
                 <span class="flex items-center gap-2">
-                  <span class="truncate text-base font-bold">{{ g.label }}</span>
+                  <span class="truncate text-base font-semibold">{{ g.label }}</span>
                   <span v-if="live.has(g.id)" class="bg-live-paper text-live text-caption inline-flex h-5 shrink-0 items-center gap-1.5 rounded-full px-2">
                     <span class="bg-live size-1.5 rounded-full motion-safe:animate-[live-pulse_2s_infinite]" aria-hidden="true" />
                     Dancing now
@@ -175,8 +172,8 @@ function exportCsv() {
                   :replace="split"
                   :aria-current="groupId === g.id && danceId === d.id ? 'true' : undefined"
                   :class="[
-                    'flex min-h-13 items-center gap-3 py-1.5 pr-3 pl-6',
-                    groupId === g.id && danceId === d.id ? 'bg-blue-paper' : 'hover:bg-accent',
+                    'press-row focus-inset flex min-h-13 items-center gap-3 py-1.5 pr-3 pl-6',
+                    groupId === g.id && danceId === d.id && 'bg-blue-paper',
                     hasPlaceholder(g.id, d.id) && 'bg-[repeating-linear-gradient(135deg,transparent_0_10px,color-mix(in_oklab,var(--color-next)_60%,transparent)_10px_20px)]',
                   ]"
                 >
@@ -190,7 +187,7 @@ function exportCsv() {
                     <Minus v-else-if="stateOf(g.id, d.id) === 'none'" class="size-4.5" stroke-width="3" />
                     <template v-else>TBD</template>
                   </span>
-                  <span class="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold">{{ d.label }}</span>
+                  <span class="text-callout min-w-0 flex-1 truncate font-medium">{{ d.label }}</span>
                   <Trophy v-if="d.id === OVERALL" class="text-muted-foreground size-4.5 shrink-0" />
                   <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
                 </RouterLink>

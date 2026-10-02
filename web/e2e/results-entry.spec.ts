@@ -90,6 +90,8 @@ test('callbacks, then placings with a tie, reach the public page live', async ({
   // Only dancers called back are offered.
   await expect(tap(page, ds[6].number)).toHaveCount(0)
   for (const d of ds.slice(0, 4)) await tap(page, d.number).click()
+  // Screen readers hear each placing land.
+  await expect(page.getByText(`${ds[3].number} placed 4th`, { exact: true })).toBeAttached()
   // The third dancer shares second place.
   await page.getByRole('switch', { name: 'Tied with the dancer above' }).nth(1).click()
   await expect

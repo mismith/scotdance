@@ -3,6 +3,8 @@ import { computed, ref, watch } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import { GripVertical, Trophy } from '@lucide/vue'
 import Medal from '@/components/Medal.vue'
+import NumberTile from '@/components/admin/NumberTile.vue'
+import Switch from '@/components/ui/Switch.vue'
 import { isPlaceholderId, isTied, placeAt, type Entry, type Placings } from '@/lib/admin/results'
 import type { MDancer } from '@/composables/admin/useManagedCompetition'
 import { canEdit } from '@/lib/admin/write'
@@ -102,7 +104,7 @@ function onEnd(e: { oldIndex?: number; newIndex?: number }) {
       <span
         v-if="!isCallbacks"
         data-handle
-        class="text-muted-foreground flex h-16 w-9 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
+        class="text-muted-foreground flex h-16 w-11 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
         aria-hidden="true"
       >
         <GripVertical class="size-5" />
@@ -111,12 +113,10 @@ function onEnd(e: { oldIndex?: number; newIndex?: number }) {
         type="button"
         :disabled="!canEdit"
         :aria-label="`Take out ${name(row.id)}`"
-        :class="['flex min-h-16 min-w-0 flex-1 items-center gap-3 py-2 text-left disabled:cursor-default', isCallbacks && 'pl-4']"
+        :class="['press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-lg py-2 text-left disabled:cursor-default', isCallbacks ? 'pl-4' : 'pl-1']"
         @click="emit('remove', row.index)"
       >
-        <span class="bg-paper text-paper-ink min-w-12 shrink-0 rounded-md border px-1.5 py-1 text-center font-mono text-base font-semibold tabular-nums">
-          {{ unknown(row.id) ? '?' : dancersById.get(row.id)?.num || '–' }}
-        </span>
+        <NumberTile :num="dancersById.get(row.id)?.num" :unknown="unknown(row.id)" />
         <span class="min-w-0 flex-1">
           <span class="block truncate text-base font-semibold">{{ name(row.id) }}</span>
           <span v-if="dancersById.get(row.id)?.location" class="text-muted-foreground block truncate text-sm">{{ dancersById.get(row.id)?.location }}</span>
@@ -126,26 +126,22 @@ function onEnd(e: { oldIndex?: number; newIndex?: number }) {
         v-if="unknown(row.id)"
         type="button"
         :disabled="!canEdit"
-        class="bg-next text-next-foreground h-9 shrink-0 rounded-lg px-2.5 text-sm font-bold disabled:opacity-50"
+        class="press bg-next text-next-foreground relative h-9 shrink-0 rounded-full px-3 text-sm font-semibold after:absolute after:-inset-y-1 after:inset-x-0 disabled:opacity-(--disabled-opacity)"
         @click="emit('fix', row.index)"
       >
         Choose
       </button>
       <template v-if="!isCallbacks">
-        <button
-          v-if="k > 0"
-          type="button"
-          role="switch"
-          :aria-checked="tieOn(row)"
-          aria-label="Tied with the dancer above"
-          :disabled="!canEdit"
-          class="flex h-11 shrink-0 items-center gap-1.5 rounded-full px-1.5 text-xs font-extrabold tracking-wide disabled:opacity-50"
-          @click="emit('tie', tieIndex(row), !tieOn(row))"
-        >
-          <span :class="tieOn(row) ? 'text-primary' : 'text-muted-foreground'">TIE</span>
-          <span :class="['relative h-5 w-9 shrink-0 rounded-full transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-4 after:rounded-full after:bg-white after:shadow after:transition-transform', tieOn(row) ? 'bg-primary-fill after:translate-x-4' : 'bg-strong']" />
-        </button>
-        <span v-else class="w-[4.75rem] shrink-0" />
+        <label v-if="k > 0" class="flex h-11 shrink-0 items-center gap-1.5 pl-1.5">
+          <span :class="['text-footnote font-semibold transition-colors duration-(--dur-quick)', tieOn(row) ? 'text-primary' : 'text-muted-foreground']" aria-hidden="true">Tie</span>
+          <Switch
+            :model-value="tieOn(row)"
+            aria-label="Tied with the dancer above"
+            :disabled="!canEdit"
+            @update:model-value="(on: boolean) => emit('tie', tieIndex(row), on)"
+          />
+        </label>
+        <span v-else class="w-[5.375rem] shrink-0" />
         <Trophy v-if="singleOverall" class="text-primary mx-1 size-7 shrink-0" />
         <Medal v-else :place="placeAt(row.index, placings)" :tied="isTied(row.index, placings)" size="sm" />
       </template>
