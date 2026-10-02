@@ -6,6 +6,7 @@ import { useIntervalFn } from '@vueuse/core'
 import { Check, ChevronRight, Clock, Copy, ExternalLink, Hourglass, Map as MapIcon, MapPin, Navigation, Search, Star, Users, X } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
+import { useCompetitionProgress } from '@/composables/useCompetitionProgress'
 import { useCompetitionSearch } from '@/composables/useCompetitionSearch'
 import { useFreshPlacings } from '@/composables/useCompetitionPlacings'
 import DateTile from '@/components/DateTile.vue'
@@ -24,7 +25,7 @@ import type { DancerDay } from '@/lib/dancerDay'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useMeStore } from '@/stores/me'
 import AdminMark from '@/components/AdminMark.vue'
-import { blocks, days } from '@/lib/schedule'
+import { blocks, dances as eventDances, days, events } from '@/lib/schedule'
 import { competitionSpan } from '@/lib/dancerDay'
 import { formatExternalURL, formatLongDate, formatRelative } from '@/lib/format'
 import { sanitizeRichText } from '@/lib/sanitize'
@@ -64,6 +65,7 @@ const { phase, followedHere } = useCompetitionDays()
 const favorites = useFavoritesStore()
 const me = useMeStore()
 const isFresh = useFreshPlacings()
+const progress = useCompetitionProgress()
 const numberVt = useDancerNumberVt()
 
 const ready = ref(false)
@@ -133,15 +135,21 @@ const links = computed(() => competitionLinks(competition.value))
 const registrationOpen = computed(() => isRegistrationOpen(competition.value))
 
 // Sessions: the schedule's blocks, with the time organisers put in their
-// description ("8:00 am").
+// description ("8:00 am"), and on the day which one's on now.
 const sessions = computed(() =>
   days(schedule.value).flatMap((day, di, all) =>
-    blocks(day).map((b) => ({
-      id: `${day.id}:${b.id}`,
-      day: all.length > 1 ? day.name : null,
-      name: b.name || 'Session',
-      time: (b.description ?? '').replace(/<[^>]*>/g, ' ').split('\n')[0]?.trim().slice(0, 40) || null,
-    })),
+    blocks(day).map((b) => {
+      const states = events(b)
+        .filter((e) => eventDances(e).some((sd) => sd.danceId))
+        .map((e) => progress.value.events.get(e.id))
+      return {
+        id: `${day.id}:${b.id}`,
+        day: all.length > 1 ? day.name : null,
+        name: b.name || 'Session',
+        time: (b.description ?? '').replace(/<[^>]*>/g, ' ').split('\n')[0]?.trim().slice(0, 40) || null,
+        state: states.includes('now') ? 'now' : states.length && states.every((x) => x === 'done') ? 'done' : null,
+      }
+    }),
   ),
 )
 
@@ -357,14 +365,19 @@ const MENU_ROW = 'press-row focus-inset flex min-h-12 w-full items-center gap-3 
         </RouterLink>
       </h2>
       <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:6rem]">
-        <li v-for="s in sessions" :key="s.id" class="flex items-center gap-3 px-4 py-3">
+        <li
+          v-for="s in sessions"
+          :key="s.id"
+          :class="['flex items-center gap-3 px-4 py-3 transition-opacity duration-(--dur-slow)', s.state === 'done' && 'opacity-60']"
+        >
           <span class="bg-muted text-callout flex min-w-16 shrink-0 justify-center rounded-lg px-2 py-1 font-semibold tabular-nums">
             {{ s.time ?? '—' }}
           </span>
-          <span class="min-w-0">
+          <span class="min-w-0 flex-1">
             <span class="block text-base font-semibold">{{ s.name }}</span>
             <span v-if="s.day" class="text-muted-foreground block text-sm">{{ s.day }}</span>
           </span>
+          <span v-if="s.state === 'now'" class="bg-live-paper text-live text-footnote rounded-full px-2 py-0.5 font-semibold">Now</span>
         </li>
       </ul>
     </section>
