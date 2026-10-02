@@ -62,6 +62,7 @@ const favorites = useFavoritesStore()
 const me = useMeStore()
 const isFresh = useFreshPlacings()
 const progress = useCompetitionProgress()
+const { pulse, lastResult } = useCompetitionLive()
 const numberVt = useDancerNumberVt()
 
 const ready = ref(false)
@@ -70,8 +71,6 @@ onMounted(async () => {
   await Promise.all([loadDancers(), loadResults(), loadSchedule()])
   ready.value = true
 })
-
-const { pulse, lastResult } = useCompetitionLive()
 
 // The kicker says when and where: "In 6 days · Calgary, AB", or on the day
 // "Live · Day 1 of 2 · Calgary, AB" with the one live dot (pulsing only
