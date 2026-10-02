@@ -17,7 +17,6 @@ import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import { competitionPhase } from '@/lib/dancerDay'
 import { selectionHaptic, tapHaptic } from '@/lib/haptics'
-import { useMorph } from '@/lib/morph'
 import { getOrdinalSuffix } from '@/lib/results'
 import { isPrimaryCategory } from '@/types/competition'
 import {
@@ -77,7 +76,7 @@ watch(
   () => {
     tab.value = 'placings'
     pickingReverse.value = false
-    fix.dismiss()
+    fixing.value = null
   },
 )
 
@@ -189,7 +188,6 @@ function setNone(on: boolean) {
 }
 
 // --- Choosing who a "?" was (optional: the "?" can also just be taken out)
-const fix = useMorph()
 const fixing = ref<string | null>(null)
 const fixQuery = ref('')
 const fixChoices = computed(() => {
@@ -200,11 +198,10 @@ const fixChoices = computed(() => {
 function openFix(index: number) {
   fixQuery.value = ''
   fixing.value = placings.value.entries[index]?.id ?? null
-  if (fixing.value) void fix.show()
 }
 function chooseFix(dancerId: string) {
   const id = fixing.value
-  void fix.hide()
+  fixing.value = null
   // By id, not position: the list may have changed on another device since.
   const p = parsePlacings(rawNow())
   const entry = p.entries.find((e) => e.id === id)
@@ -386,7 +383,7 @@ watch(() => props.danceId, showCurrent)
             </ul>
           </div>
 
-          <EmptyState v-else :icon="Search" title="No dancers found" description="Add dancers to this age group first.">
+          <EmptyState v-else size="inline" :icon="Search" title="No dancers found" description="Add dancers to this age group first.">
             <RouterLink :to="{ name: 'manage.dancers', params: { competitionId: m.competitionId.value } }" class="text-primary text-base font-semibold">Add dancers ›</RouterLink>
           </EmptyState>
         </div>
@@ -462,6 +459,7 @@ watch(() => props.danceId, showCurrent)
           />
           <template v-else>
             <EmptyState
+              size="inline"
               :icon="ListOrdered"
               :title="isCallbacks ? 'Callbacks' : 'Order dancers'"
               :description="
@@ -499,7 +497,7 @@ watch(() => props.danceId, showCurrent)
               </button>
             </li>
           </ul>
-          <EmptyState v-else :icon="Diamond" title="Championship points" description="Select dancers who didn’t quite place" />
+          <EmptyState v-else size="inline" :icon="Diamond" title="Championship points" description="Select dancers who didn’t quite place" />
         </template>
 
         <!-- Carry on to the next dance without going back to the list -->
@@ -520,7 +518,7 @@ watch(() => props.danceId, showCurrent)
   </div>
 
   <!-- Choose who a "?" was -->
-  <Dialog :open="fix.open" :morph="fix" variant="sheet" size="md" @close="fix.hide()">
+  <Dialog :open="fixing != null" variant="sheet" size="md" @close="fixing = null">
     <template #header>
       <h2 class="text-title">Who was it?</h2>
       <p class="text-muted-foreground text-sm">Replaces the “?” in the same place.</p>
