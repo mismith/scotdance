@@ -77,7 +77,7 @@ const to = (routeName: string) => ({ name: routeName, params: { competitionId: m
               :class="['ring-background absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full ring-2', status[s.id]?.done ? 'bg-done-foreground' : 'bg-primary']"
               aria-hidden="true"
             />
-            <span class="sr-only">{{ s.title }}{{ status[s.id]?.done ? ', done' : next?.id === s.id ? ', next' : '' }}</span>
+            <span class="sr-only">{{ s.title }}{{ s.id === 'results' && toFix ? `, ${toFixLabel()}` : status[s.id]?.done ? ', done' : next?.id === s.id ? ', next' : '' }}</span>
           </span>
           <span
             v-else

@@ -11,7 +11,7 @@ defineProps<{ label: string }>()
 
 // The one menu anatomy: inset rounded rows, medium labels, muted icons.
 const ROW =
-  'press-row focus-inset flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-base font-medium disabled:opacity-(--disabled-opacity) [&>svg]:text-muted-foreground [&>svg]:size-5 [&>svg]:shrink-0'
+  'press-row focus-inset flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-base font-medium disabled:opacity-(--disabled-opacity) [&:not(.text-destructive)>svg]:text-muted-foreground [&>svg]:size-5 [&>svg]:shrink-0'
 
 const menu = useMorph()
 const close = () => void menu.hide()
