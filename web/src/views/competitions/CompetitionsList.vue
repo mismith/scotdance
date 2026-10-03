@@ -2,7 +2,7 @@
 import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
-import { CalendarDays, CloudOff, SquarePlus } from '@lucide/vue'
+import { CalendarClock, CalendarDays, CloudOff, List, Map as MapIcon, SquarePlus, Trophy } from '@lucide/vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import AppBar from '@/components/nav/AppBar.vue'
 import Button from '@/components/ui/Button.vue'
@@ -12,7 +12,8 @@ import CompetitionsCalendar from '@/components/CompetitionsCalendar.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import LocationFilter from '@/components/LocationFilter.vue'
 import Skeleton from '@/components/Skeleton.vue'
-import ViewModeButton, { type ViewMode } from '@/components/ViewModeButton.vue'
+import MenuPill from '@/components/MenuPill.vue'
+import { swapInPlace } from '@/lib/navMotion'
 import { useScrolledPast } from '@/composables/useScrolledPast'
 import { useLocationFilter } from '@/composables/useLocationFilter'
 import { useFollowedCompetitions } from '@/composables/useFollowedCompetitions'
@@ -24,15 +25,23 @@ import { useFavoritesStore } from '@/stores/favorites'
 // The map (MapLibre, ~1 MB) loads only when someone opens it.
 const CompetitionsMap = defineAsyncComponent(() => import('@/views/competitions/CompetitionsMap.vue'))
 
-// One row of controls: Upcoming or Past results, where (a region, nearby, or
-// everywhere), and how (list, calendar, map). The calendar is itself a view
-// of when, so it shows every competition and drops Upcoming/Past.
+// How (list, calendar or map) beside the title, then where (a region,
+// nearby, or everywhere) and when (Upcoming or Past results). The calendar is
+// itself a view of when, so it shows every competition and drops the last.
+type ViewMode = 'list' | 'calendar' | 'map'
+const VIEWS = [
+  { value: 'list', label: 'List', icon: List },
+  { value: 'calendar', label: 'Calendar', icon: CalendarDays },
+  { value: 'map', label: 'Map', icon: MapIcon },
+] as const
 type Range = 'upcoming' | 'past'
 const RANGES = [
-  { value: 'upcoming', label: 'Upcoming' },
-  { value: 'past', label: 'Past results' },
+  { value: 'upcoming', label: 'Upcoming', hint: 'Soonest first', icon: CalendarClock },
+  { value: 'past', label: 'Past results', hint: 'Most recent first', icon: Trophy },
 ] as const
 const view = useLocalStorage<ViewMode>('competitions:view', 'list')
+// Switching views moves the content toward the chosen one, under a still header.
+const setView = (v: ViewMode) => swapInPlace(VIEWS.map((o) => o.value), view.value, v, () => (view.value = v))
 const range = useLocalStorage<Range>('competitions:range', 'upcoming')
 
 const titleEl = ref<HTMLElement | null>(null)
@@ -112,7 +121,7 @@ const sections = computed<Section[]>(() => {
   <div
     :class="['flex flex-1 flex-col', view === 'map' ? 'h-dvh overflow-hidden' : 'pb-[calc(var(--chrome-bottom)+1.5rem)]']"
   >
-    <AppBar title="Competitions" :show-title="scrolledPast || view === 'map'" :back="false" />
+    <AppBar title="Competitions" :show-title="scrolledPast" :back="false" />
 
     <main
       :class="[
@@ -120,23 +129,22 @@ const sections = computed<Section[]>(() => {
         view === 'map' && 'relative flex-1',
       ]"
     >
-      <header v-if="view !== 'map'" ref="titleEl">
-        <h1 class="text-display">Competitions</h1>
-      </header>
-      <h1 v-else class="sr-only">Competitions</h1>
-
-      <!-- The same controls in every view; over the map they float on glass. -->
-      <div
-        :class="[
-          'flex flex-wrap items-center gap-2',
-          view === 'map' && 'pointer-events-none absolute inset-x-4 top-[calc(var(--chrome-top)+0.5rem)] z-10 [&>*]:pointer-events-auto',
-        ]"
-      >
-        <div v-if="view !== 'calendar'" :class="['w-full sm:w-80', view === 'map' && 'glass rounded-full']">
-          <Segmented v-model="range" :options="RANGES" label="Which competitions" />
+      <!-- The same header in every view, in the same place. Over the map it's
+           on the page's colour, fading into the map as the top bar does. -->
+      <div data-page-head class="relative z-10 space-y-3">
+        <div
+          v-if="view === 'map'"
+          class="from-background pointer-events-none absolute -inset-x-[100vw] -top-[calc(var(--chrome-top)+0.5rem)] -bottom-10 -z-10 bg-linear-to-b from-[calc(100%-2rem)] to-transparent"
+          aria-hidden="true"
+        />
+        <header ref="titleEl" class="flex items-center gap-3">
+          <h1 class="text-display min-w-0 flex-1">Competitions</h1>
+          <Segmented :model-value="view" :options="VIEWS" label="Show competitions as" compact class="shrink-0" @update:model-value="setView" />
+        </header>
+        <div class="flex flex-wrap items-center gap-2">
+          <LocationFilter :competitions="competitions" />
+          <MenuPill v-if="view !== 'calendar'" v-model="range" :options="RANGES" label="Which competitions" />
         </div>
-        <LocationFilter :competitions="competitions" :glass="view === 'map'" />
-        <ViewModeButton v-model="view" :glass="view === 'map'" />
       </div>
 
       <CompetitionsMap

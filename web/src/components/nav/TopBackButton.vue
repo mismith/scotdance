@@ -47,6 +47,7 @@ function onClick(event: MouseEvent) {
     v-tap-feedback
     v-proximity
     type="button"
+    data-nav="back"
     :class="[
       'glass press-glass proximity text-primary pointer-events-auto flex h-11 shrink-0 items-center rounded-full [view-transition-name:nav-back]',
       exit?.compact ? 'w-11 justify-center' : 'text-callout max-w-[42vw] gap-0.5 pr-4 pl-2 font-semibold',

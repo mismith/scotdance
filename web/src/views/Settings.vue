@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, useId } from 'vue'
+import { nextTick, ref, useId } from 'vue'
 import { Bell, History, Sun } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import Segmented from '@/components/ui/Segmented.vue'
@@ -10,6 +10,7 @@ import { useTheme, type Theme } from '@/composables/useTheme'
 import { useAlerts } from '@/composables/useAlerts'
 import { clearDeviceHistory } from '@/lib/deviceHistory'
 import { confirm, toast } from '@/lib/admin/feedback'
+import { startViewTransition } from '@/lib/transition'
 
 // Settings: alerts, appearance and this device. Your account (and how you
 // use ScotDance, and signing out) lives on the Account page; help, the
@@ -18,6 +19,15 @@ usePageTitle(['Settings'])
 
 const alerts = useAlerts()
 const { theme } = useTheme()
+// A new appearance cross-fades in rather than snapping.
+async function setTheme(next: Theme) {
+  if (next === theme.value) return
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return void (theme.value = next)
+  startViewTransition(async () => {
+    theme.value = next
+    await nextTick()
+  }, ['theme'])
+}
 
 const titleEl = ref<HTMLElement | null>(null)
 const scrolledPast = useScrolledPast(titleEl)
@@ -85,7 +95,7 @@ async function clearHistory() {
             <p class="flex items-center gap-3 text-base font-medium"><Sun class="text-primary size-5" /> Appearance</p>
             <p class="text-muted-foreground pl-8 text-sm">Automatic follows your phone. Text size follows your phone’s settings too.</p>
           </div>
-          <Segmented v-model="theme" :options="THEMES" label="Appearance" />
+          <Segmented :model-value="theme" :options="THEMES" label="Appearance" @update:model-value="setTheme" />
         </div>
       </section>
 

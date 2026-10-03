@@ -199,7 +199,7 @@ function onPointerUp(e: PointerEvent) {
   <div class="space-y-5 md:grid md:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] md:items-start md:gap-8 md:space-y-0">
     <div class="mx-auto w-full max-w-sm space-y-3 md:sticky md:top-[calc(var(--chrome-top)+1rem)]">
       <div class="flex items-center gap-1">
-        <h2 class="text-title flex-1">{{ monthLabel }}</h2>
+        <h2 class="text-heading flex-1">{{ monthLabel }}</h2>
         <button
           type="button"
           aria-label="Previous month"
@@ -274,7 +274,15 @@ function onPointerUp(e: PointerEvent) {
       </div>
     </div>
 
-    <div class="space-y-5">
+    <!-- Picking another day or month fades the list through, so it doesn't jump. -->
+    <Transition
+      mode="out-in"
+      enter-active-class="transition-opacity duration-(--dur-quick) ease-standard"
+      enter-from-class="opacity-0"
+      leave-active-class="transition-opacity duration-(--dur-instant) ease-exit"
+      leave-to-class="opacity-0"
+    >
+    <div :key="sectionLabel" class="space-y-5">
       <template v-if="visibleCompetitions.length">
         <section class="space-y-2">
           <h3 class="text-heading flex items-baseline justify-between gap-3">
@@ -328,5 +336,6 @@ function onPointerUp(e: PointerEvent) {
         </ul>
       </section>
     </div>
+    </Transition>
   </div>
 </template>

@@ -786,9 +786,11 @@
   view-transition-name: none !important;
 }
 
-/* Getting around (M1): a page pushes in from the right as the old one eases
-   back and fades; Back pops it out the other way; switching tabs swaps in
-   place with a quick fade-through. The chrome has its own transition names,
+/* Getting around (lib/navMotion picks the way): deeper pages come in from
+   the right as the old one eases back and fades, and Back reverses it; a
+   menu's peers (tabs, the sidebar's rows) move a shorter way along that menu,
+   across or up and down, with a quicker fade-through; anything else swaps in
+   place. The chrome (top bar, tab bar, sidebar) has its own transition names,
    so it holds still while the page moves under it. Opacity never bounces. */
 @keyframes vt-fade-out {
   to {
@@ -800,58 +802,134 @@
     opacity: 0;
   }
 }
-@keyframes vt-from-right {
+@keyframes vt-move-in {
   from {
-    translate: 2rem 0;
+    translate: var(--vt-from);
   }
 }
-@keyframes vt-to-left {
+@keyframes vt-move-out {
   to {
-    translate: -1.5rem 0;
+    translate: var(--vt-to);
   }
 }
-@keyframes vt-from-left {
-  from {
-    translate: -1.5rem 0;
-  }
+:active-view-transition-type(forward)::view-transition-old(root) {
+  --vt-to: -1.5rem 0;
 }
-@keyframes vt-to-right {
-  to {
-    translate: 2rem 0;
-  }
+:active-view-transition-type(forward)::view-transition-new(root) {
+  --vt-from: 2rem 0;
 }
-@keyframes vt-rise {
-  from {
-    translate: 0 6px;
-  }
+:active-view-transition-type(back)::view-transition-old(root) {
+  --vt-to: 2rem 0;
 }
-:active-view-transition-type(push)::view-transition-old(root) {
+:active-view-transition-type(back)::view-transition-new(root) {
+  --vt-from: -1.5rem 0;
+}
+:active-view-transition-type(forward, back)::view-transition-old(root) {
   animation:
     vt-fade-out 120ms var(--ease-exit) both,
-    vt-to-left 300ms var(--ease-snappy) both;
+    vt-move-out 300ms var(--ease-snappy) both;
 }
-:active-view-transition-type(push)::view-transition-new(root) {
+:active-view-transition-type(forward, back)::view-transition-new(root) {
   animation:
     vt-fade-in 220ms 60ms var(--ease-standard) both,
-    vt-from-right 340ms var(--ease-snappy) both;
+    vt-move-in 340ms var(--ease-snappy) both;
 }
-:active-view-transition-type(pop)::view-transition-old(root) {
+:active-view-transition-type(next):active-view-transition-type(axis-x)::view-transition-old(root) {
+  --vt-to: -1rem 0;
+}
+:active-view-transition-type(next):active-view-transition-type(axis-x)::view-transition-new(root) {
+  --vt-from: 1.25rem 0;
+}
+:active-view-transition-type(prev):active-view-transition-type(axis-x)::view-transition-old(root) {
+  --vt-to: 1rem 0;
+}
+:active-view-transition-type(prev):active-view-transition-type(axis-x)::view-transition-new(root) {
+  --vt-from: -1.25rem 0;
+}
+:active-view-transition-type(next):active-view-transition-type(axis-y)::view-transition-old(root) {
+  --vt-to: 0 -0.75rem;
+}
+:active-view-transition-type(next):active-view-transition-type(axis-y)::view-transition-new(root) {
+  --vt-from: 0 1rem;
+}
+:active-view-transition-type(prev):active-view-transition-type(axis-y)::view-transition-old(root) {
+  --vt-to: 0 0.75rem;
+}
+:active-view-transition-type(prev):active-view-transition-type(axis-y)::view-transition-new(root) {
+  --vt-from: 0 -1rem;
+}
+:active-view-transition-type(next, prev)::view-transition-old(root) {
   animation:
-    vt-fade-out 120ms var(--ease-exit) both,
-    vt-to-right 300ms var(--ease-snappy) both;
+    vt-fade-out 90ms var(--ease-exit) both,
+    vt-move-out 220ms var(--ease-snappy) both;
 }
-:active-view-transition-type(pop)::view-transition-new(root) {
+:active-view-transition-type(next, prev)::view-transition-new(root) {
   animation:
-    vt-fade-in 220ms 60ms var(--ease-standard) both,
-    vt-from-left 340ms var(--ease-snappy) both;
+    vt-fade-in 200ms 70ms var(--ease-standard) both,
+    vt-move-in 300ms 70ms var(--ease-snappy) both;
 }
-:active-view-transition-type(tab)::view-transition-old(root) {
+:active-view-transition-type(swap)::view-transition-old(root) {
   animation: vt-fade-out 90ms var(--ease-exit) both;
 }
-:active-view-transition-type(tab)::view-transition-new(root) {
+:active-view-transition-type(swap)::view-transition-new(root) {
+  --vt-from: 0 6px;
   animation:
     vt-fade-in 180ms 70ms var(--ease-standard) both,
-    vt-rise 260ms 70ms var(--ease-snappy) both;
+    vt-move-in 260ms 70ms var(--ease-snappy) both;
+}
+/* A sheet that changes what it asks (sign in, then create an account): the
+   sheet itself (painted by the group, as a morph's surface is) resizes from
+   the top, while its old contents leave before the new arrive, so two forms
+   never sit on top of each other. */
+:root:active-view-transition-type(sheet-step) dialog[open] {
+  view-transition-name: sheet-step;
+}
+::view-transition-group(sheet-step) {
+  animation-duration: var(--dur-base);
+  animation-timing-function: var(--ease-snappy);
+  overflow: clip;
+  background: var(--color-raised);
+  border-radius: 1.75rem 1.75rem 0 0;
+  @media (width >= 48rem) {
+    border-radius: 1.5rem;
+  }
+}
+::view-transition-old(sheet-step),
+::view-transition-new(sheet-step) {
+  @apply object-none object-top;
+}
+::view-transition-old(sheet-step) {
+  animation: vt-fade-out 90ms var(--ease-exit) both;
+}
+::view-transition-new(sheet-step) {
+  animation: vt-fade-in 200ms 70ms var(--ease-standard) both;
+}
+/* A change in place (lib/navMotion swapInPlace): the page's header holds
+   still, live, so its segmented control's thumb slides as usual. */
+:root:active-view-transition-type(in-page) [data-page-head] {
+  view-transition-name: page-head;
+}
+::view-transition-old(page-head) {
+  display: none;
+}
+::view-transition-new(page-head) {
+  animation: none;
+}
+/* The top bar and the fade behind the tab bar hold still: where they're the
+   same on both pages nothing moves, and what differs (a title, a button)
+   cross-fades in place. */
+::view-transition-group(appbar),
+::view-transition-group(tabbar-backdrop) {
+  animation-duration: 220ms;
+}
+/* Words that travel (a competition's name, from its row or its page into the
+   top bar): the old words go before the new arrive, so the two sizes never
+   sit on top of each other. */
+::view-transition-old(.text) {
+  animation: vt-fade-out 80ms var(--ease-exit) both;
+}
+::view-transition-new(.text) {
+  animation: vt-fade-in 160ms 60ms var(--ease-standard) both;
 }
 /* Labels that change in place (the tab bar entering or leaving a
    competition, the back pill's text) fade out before the new ones fade in,
@@ -979,6 +1057,17 @@
    up and away. */
 ::view-transition-group(sidebar) {
   animation: none;
+}
+/* Rows nest in the list's group (nav/AppSidebar), clipped to it, so one
+   scrolled out of sight doesn't show over the account at the foot while it
+   moves. Where groups can't nest, the rows don't glide; the sidebar holds. */
+::view-transition-group-children(sidebar-nav) {
+  overflow: clip;
+}
+@supports not (view-transition-group: contain) {
+  [style*='view-transition-class: sidebar'] {
+    view-transition-name: none !important;
+  }
 }
 ::view-transition-group(.sidebar) {
   animation-duration: var(--dur-base);

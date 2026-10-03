@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { Check, Eye, EyeOff } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import Dialog from '@/components/Dialog.vue'
 import Button from '@/components/ui/Button.vue'
+import { startViewTransition } from '@/lib/transition'
 
 // Sign-in, asked for at the moment it matters (tapping Follow) and saying so.
 // Email and password, as in v3, the same in the browser and the apps; phones
@@ -45,7 +46,7 @@ const benefits = computed(() => {
 watch(
   () => auth.loginDialogOpen,
   (open) => {
-    if (open) go('signin')
+    if (open) go('signin', false)
   },
 )
 
@@ -59,11 +60,19 @@ watch(
   },
 )
 
-function go(next: Step) {
-  step.value = next
-  errorMessage.value = null
-  infoMessage.value = null
-  passwordVisible.value = false
+function go(next: Step, animate = true) {
+  const change = () => {
+    step.value = next
+    errorMessage.value = null
+    infoMessage.value = null
+    passwordVisible.value = false
+  }
+  // The sheet resizes to the new step as its contents cross-fade (style.css).
+  if (!animate || matchMedia('(prefers-reduced-motion: reduce)').matches) return change()
+  startViewTransition(async () => {
+    change()
+    await nextTick()
+  }, ['sheet-step'])
 }
 
 function friendly(e: unknown): string {

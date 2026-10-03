@@ -47,7 +47,7 @@ const row =
 
 <template>
   <Dialog :open="menu.open" :morph="menu" variant="dropdown" aria-label="More" @close="menu.hide()">
-    <nav aria-label="More" class="[&>div+div]:mt-1.5 [&>div+div]:border-t [&>div+div]:pt-1.5">
+    <nav aria-label="More" data-nav="more" class="[&>div+div]:mt-1.5 [&>div+div]:border-t [&>div+div]:pt-1.5">
       <div>
         <button v-for="b in browse" :key="b.label" type="button" :class="row" @click="go(b.to)">
           <component :is="b.icon" class="size-5" /> {{ b.label }}

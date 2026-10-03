@@ -3,9 +3,9 @@ import type { RouteLocationRaw } from 'vue-router'
 import AccountButton from '@/components/nav/AccountButton.vue'
 import TopBackButton from '@/components/nav/TopBackButton.vue'
 
-// The one top bar, 3.5rem, under the status bar. What scrolls under it
-// fades and softens into the page, as under the tab bar, so there's no hard
-// line. Left: a labelled
+// The one top bar, 3.5rem, under the status bar. It's solid, so nothing
+// shows through it; what scrolls under it fades and blurs into the page in a
+// short band just below, so there's no hard line. Left: a labelled
 // Back button (when there's somewhere to go back to), or whatever the page
 // puts in the `leading` slot (Home: the ScotDance.app name). Middle: a small title
 // (and optional subtitle) that appears once the page's own big title has
@@ -39,9 +39,9 @@ const scrollTop = () => {
 </script>
 
 <template>
-  <nav class="fixed top-0 right-0 left-(--sidebar) z-30 pt-(--safe-top)" :data-scrolled="scrolled ?? showTitle">
+  <nav class="fixed top-0 right-0 left-(--sidebar) z-30 pt-(--safe-top) [view-transition-name:appbar]" :data-scrolled="scrolled ?? showTitle">
     <div
-      class="from-background via-background/90 absolute inset-x-0 top-0 -z-10 h-[calc(100%+1.25rem)] bg-linear-to-b from-55% to-transparent backdrop-blur-[3px] [mask-image:linear-gradient(to_bottom,black_60%,transparent)]"
+      class="from-background absolute inset-x-0 top-0 -z-10 h-[calc(100%+1.25rem)] bg-linear-to-b from-[calc(100%-1.25rem)] to-transparent backdrop-blur-sm [mask-image:linear-gradient(to_bottom,black_calc(100%-1.25rem),transparent)]"
       aria-hidden="true"
     />
     <div :class="['mx-auto flex h-14 items-center gap-2 px-3', wide ? 'max-w-none' : 'appbar-row']">
@@ -58,7 +58,7 @@ const scrollTop = () => {
       >
         <span
           :class="['block truncate font-semibold', subtitle ? 'text-callout leading-tight' : 'text-[1.0625rem]']"
-          :style="showTitle && titleVt ? { viewTransitionName: titleVt } : undefined"
+          :style="showTitle && titleVt ? { viewTransitionName: titleVt, viewTransitionClass: 'fit text' } : undefined"
         >
           {{ title }}
         </span>

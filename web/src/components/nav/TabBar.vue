@@ -33,13 +33,14 @@ function onTap(item: TabItem, e: MouseEvent) {
 <template>
   <nav
     data-tabbar
+    data-nav-axis="x"
     :aria-label="label"
-    class="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(0.5rem,var(--safe-bottom))] lg:hidden"
+    class="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(0.5rem,var(--safe-bottom))] [view-transition-name:tabbar-backdrop] lg:hidden"
   >
-    <!-- What scrolls under the bar fades and softens toward the bottom, so the
-         bar stands out. -->
+    <!-- As under the top bar: the page's colour behind the bar, and what
+         scrolls toward it fades and blurs away in a short band just above. -->
     <div
-      class="from-background via-background/70 absolute inset-x-0 bottom-0 -z-10 h-[calc(100%+1.5rem)] bg-linear-to-t from-30% to-transparent backdrop-blur-[3px] [mask-image:linear-gradient(to_top,black_50%,transparent)]"
+      class="from-background absolute inset-x-0 bottom-0 -z-10 h-[calc(100%+1.25rem)] bg-linear-to-t from-[calc(100%-1.25rem)] to-transparent backdrop-blur-sm [mask-image:linear-gradient(to_top,black_calc(100%-1.25rem),transparent)]"
       aria-hidden="true"
     />
     <div class="mx-auto flex max-w-lg items-center gap-2">
@@ -54,7 +55,7 @@ function onTap(item: TabItem, e: MouseEvent) {
           v-for="item in items"
           :key="item.label"
           v-tap-feedback
-          v-bind="item.to ? { to: item.to, replace, 'aria-current': item.active ? 'page' : undefined } : { type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': !!item.expanded }"
+          v-bind="item.to ? { to: item.to, replace, 'aria-current': item.active ? 'page' : undefined } : { type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': !!item.expanded, 'data-current': item.active ? '' : undefined }"
           :class="[
             'relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-full text-[min(0.6875rem,12px)] leading-none font-semibold transition-colors',
             item.active || item.expanded ? 'text-primary' : 'text-muted-foreground hover:text-foreground',

@@ -95,7 +95,7 @@ test('everything can be reached by keyboard, with a visible focus ring', async (
   const seen: string[] = []
   // The sidebar comes first, then the page: Tab until every one of these has had focus
   // (how many rows come between depends on the data).
-  const expected = ['Home', 'Competitions', 'Search', 'Dancers', 'Venues', 'Submit a competition', 'Settings', 'About ScotDance.app', 'Upcoming', 'Past results']
+  const expected = ['Home', 'Competitions', 'Search', 'Dancers', 'Venues', 'Submit a competition', 'Settings', 'About ScotDance.app', 'List', 'Calendar', 'Map', 'Which competitions: Upcoming']
   for (let i = 0; i < 80 && !expected.every((label) => seen.includes(label)); i++) {
     await page.keyboard.press('Tab')
     const focus = await page.evaluate(() => {

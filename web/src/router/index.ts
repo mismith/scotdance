@@ -10,6 +10,7 @@ import {
 import { getCurrentUser } from 'vuefire'
 import { CalendarDays, Gavel, House, Info, Music, School, Settings, Users } from '@lucide/vue'
 import { startViewTransition } from '@/lib/transition'
+import { byPath, fromTap, inverse, types, type Motion } from '@/lib/navMotion'
 import { trackCompetitionEntry } from '@/lib/competitionExit'
 import { useAuthStore } from '@/stores/auth'
 import { recordBackLabel } from '@/lib/backLabels'
@@ -459,42 +460,39 @@ nav?.addEventListener('navigate', (event) => {
   }
 })
 
-// Which way a navigation goes (M1): deeper pushes in from the right, back
-// pops out to the left, and switching tabs swaps in place. Back and Forward
-// are told apart by the history position vue-router keeps in history.state;
-// this listener runs after the router's own, before its guards.
+// Which way a navigation goes (lib/navMotion): toward what you tapped,
+// along its menu; deeper for a link in the page; Back reverses how you got
+// here. Each history entry remembers how it was reached, by the position
+// vue-router keeps in history.state, so the browser's Back and Forward play
+// it in reverse or again. (By the time the guards run, Back and Forward have
+// already moved history.state to where they're going, while a push or
+// replace hasn't touched it yet. Replacing an entry, as a competition's tabs
+// do, keeps how it was first reached.)
+const arrivals = new Map<number, Motion>()
 let lastPosition = Number(history.state?.position ?? 0)
-let popDirection: 'push' | 'pop' | null = null
-window.addEventListener('popstate', (e) => {
-  const position = Number((e.state as { position?: number } | null)?.position ?? lastPosition)
-  popDirection = position < lastPosition ? 'pop' : 'push'
-})
-router.afterEach(() => {
-  lastPosition = Number(history.state?.position ?? lastPosition)
+let pending: Motion | null = null
+router.afterEach((_to, _from, failure) => {
+  const position = Number(history.state?.position ?? lastPosition)
+  if (!failure && pending && position > lastPosition) arrivals.set(position, pending)
+  lastPosition = position
+  pending = null
 })
 const GLOBAL_TABS = ['home', 'competitions', 'search']
-const COMPETITION_TABS = ['competition.info', 'competition.dancers', 'competition.schedule', 'competition.results']
-const depth = (r: RouteLocationNormalized) => r.path.split('/').filter(Boolean).length
-function direction(to: RouteLocationNormalized, from: RouteLocationNormalized): 'push' | 'pop' | 'tab' {
-  if (popDirection) {
-    const d = popDirection
-    popDirection = null
-    return d
+const inComp = (r: RouteLocationNormalized) => r.matched.some((m) => m.meta.ownsBottomNav)
+function motionFor(to: RouteLocationNormalized, from: RouteLocationNormalized): Motion {
+  const now = Number(history.state?.position ?? lastPosition)
+  if (now !== lastPosition) {
+    const arrived = arrivals.get(Math.max(now, lastPosition))
+    if (now < lastPosition) return arrived ? inverse(arrived) : { way: 'back', axis: 'x' }
+    return arrived ?? { way: 'forward', axis: 'x' }
   }
-  const name = (r: RouteLocationNormalized) => String(r.name ?? '')
-  if (GLOBAL_TABS.includes(name(to)) && GLOBAL_TABS.includes(name(from))) return 'tab'
-  if (
-    COMPETITION_TABS.includes(name(to)) &&
-    COMPETITION_TABS.includes(name(from)) &&
-    to.params.competitionId === from.params.competitionId
-  )
-    return 'tab'
-  return depth(to) < depth(from) ? 'pop' : 'push'
+  const isMorePage = !GLOBAL_TABS.includes(String(from.name ?? '')) && !inComp(from)
+  return fromTap(to.path, from.path, isMorePage) ?? byPath(to.path, from.path)
 }
 
 router.beforeResolve(async (to, from) => {
   if (from.matched.length === 0) return
-  const way = direction(to, from)
+  const motion = (pending = motionFor(to, from))
   // Skip transition for same-route query-only changes (e.g. typing into a
   // search input that syncs ?q= to the URL) — the snapshot/replay would
   // flicker visible text on each keystroke.
@@ -505,13 +503,13 @@ router.beforeResolve(async (to, from) => {
   }
   // Reduce Motion: pages just change (as sheets just open, see lib/morph).
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
-  // In Manage, picking from a list beside its detail shouldn't fade the
-  // whole window; on phones each step is a page, so it still animates.
-  if (to.meta.admin && from.meta.admin && matchMedia('(min-width: 768px)').matches) return
+  // In Manage on wide screens, picking from a list beside its detail
+  // shouldn't move the window; going to another section still does. On
+  // phones each step is a page, so it always animates.
+  if (to.meta.admin && from.meta.admin && to.name === from.name && matchMedia('(min-width: 768px)').matches) return
   // Crossing into or out of a competition, the tab bar's exit button buds
   // off the pill or merges back into it (style.css, vt-bud-*).
-  const inComp = (r: typeof to) => r.matched.some((m) => m.meta.ownsBottomNav)
-  const types = inComp(to) && !inComp(from) ? ['enter-competition'] : !inComp(to) && inComp(from) ? ['leave-competition'] : []
-  const transition = startViewTransition(undefined, [...types, way])
+  const crossing = inComp(to) && !inComp(from) ? ['enter-competition'] : !inComp(to) && inComp(from) ? ['leave-competition'] : []
+  const transition = startViewTransition(undefined, [...crossing, ...types(motion)])
   await transition.captured
 })

@@ -15,6 +15,7 @@ import { useScrolledPast } from '@/composables/useScrolledPast'
 import { friendlyError, newKey, write } from '@/lib/admin/write'
 import { formatLongDate } from '@/lib/format'
 import { placesAvailable, type VenueFields } from '@/lib/maps'
+import { moveInPlace } from '@/lib/navMotion'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 
@@ -180,9 +181,12 @@ async function submit() {
         submitted: new Date().toISOString(),
       },
     })
-    sent.value = true
+    // On to "Submitted", as a page would go.
+    moveInPlace({ way: 'forward', axis: 'x' }, () => {
+      sent.value = true
+      window.scrollTo({ top: 0 })
+    })
     clearDraft()
-    window.scrollTo({ top: 0 })
   } catch (e) {
     sendError.value = friendlyError(e)
   } finally {
@@ -194,8 +198,10 @@ async function submit() {
 function another() {
   Object.assign(form, { name: '', date: '', sobhd: '', description: '', message: '', agree: false })
   Object.assign(adding, { sobhd: false, description: false, message: false })
-  sent.value = false
-  void go(0)
+  moveInPlace({ way: 'swap', axis: 'x' }, () => {
+    sent.value = false
+    return go(0)
+  })
 }
 
 const summary = computed(() =>
@@ -255,7 +261,7 @@ function clearDraft() {
 // the overview's button goes straight on to the first step.
 let startOnSignIn = false
 function start() {
-  if (auth.isSignedIn) return go(0)
+  if (auth.isSignedIn) return moveInPlace({ way: 'forward', axis: 'x' }, () => go(0))
   startOnSignIn = true
   auth.openLogin({ reason: 'account' })
 }

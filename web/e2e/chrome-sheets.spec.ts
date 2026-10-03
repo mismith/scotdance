@@ -1,5 +1,5 @@
 import { expect as baseExpect, test, type Page } from '@playwright/test'
-import { appNav, appTab } from './support/nav'
+import { appNav, appTab, hasSidebar } from './support/nav'
 
 // The dev server is shared and busy during a full run: give page loads time.
 const expect = baseExpect.configure({ timeout: 15_000 })
@@ -33,32 +33,33 @@ test('closed sheets are not displayed, so they never block taps or reach screen 
 
 test('a sheet opens and closes, and leaves nothing behind', async ({ page }) => {
   await page.goto('/competitions')
-  const trigger = page.getByRole('button', { name: /^Show as/ })
+  const trigger = page.getByRole('button', { name: /^Which competitions/ })
   await trigger.click()
-  const sheet = page.getByRole('dialog', { name: 'Show competitions as' })
+  const sheet = page.getByRole('dialog', { name: 'Which competitions' })
   await expect(sheet).toBeVisible()
   await settle(page)
-  await sheet.getByRole('radio', { name: /Calendar/ }).click()
+  await sheet.getByRole('radio', { name: /^Past results/ }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
-  await expect(page).toHaveURL(/view=calendar/)
+  await expect(trigger).toHaveAccessibleName('Which competitions: Past results')
   await settle(page)
   for (const d of await closedDialogs(page)) expect(d, d.text).toMatchObject({ display: 'none' })
-  // The page underneath takes taps where the sheet was.
+  // The page underneath takes taps again.
+  const views = page.getByRole('group', { name: 'Show competitions as' })
+  await views.getByRole('button', { name: 'Calendar' }).click()
+  await expect(page).toHaveURL(/view=calendar/)
   await page.getByRole('button', { name: 'Next month' }).click()
-  await page.getByRole('button', { name: /^Show as/ }).click()
-  await settle(page)
-  await page.getByRole('dialog').getByRole('radio', { name: /List/ }).click()
+  await views.getByRole('button', { name: 'List' }).click()
   await expect(page).not.toHaveURL(/view=/)
 })
 
 test('Escape and the backdrop close a sheet; focus goes back to the page', async ({ page }) => {
   await page.goto('/competitions')
-  await page.getByRole('button', { name: /^Show as/ }).click()
+  await page.getByRole('button', { name: /^Which competitions/ }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toHaveCount(0)
 
-  await page.getByRole('button', { name: /^Show as/ }).click()
+  await page.getByRole('button', { name: /^Which competitions/ }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
   // Taps during the opening morph go to the transition, not the page.
   await settle(page)
@@ -80,7 +81,7 @@ test.describe('with Reduce Motion', () => {
 
   test('sheets still open and close', async ({ page }) => {
     await page.goto('/competitions')
-    await page.getByRole('button', { name: /^Show as/ }).click()
+    await page.getByRole('button', { name: /^Which competitions/ }).click()
     const sheet = page.getByRole('dialog')
     await expect(sheet).toBeVisible()
     await page.keyboard.press('Escape')
@@ -175,11 +176,14 @@ test.describe('page changes', () => {
   const countTransitions = async (page: Page) => {
     await page.addInitScript(() => {
       const w = window as Window & { __vt?: number }
+      const v = window as Window & { __types?: string[][] }
       w.__vt = 0
+      v.__types = []
       const start = document.startViewTransition?.bind(document)
       if (start)
         document.startViewTransition = ((arg: Parameters<typeof start>[0]) => {
           w.__vt = (w.__vt ?? 0) + 1
+          v.__types!.push(arg && typeof arg === 'object' ? [...(arg.types ?? [])] : [])
           return start(arg)
         }) as typeof document.startViewTransition
     })
@@ -191,6 +195,31 @@ test.describe('page changes', () => {
     await appTab(page, 'Search').click()
     await expect(page).toHaveURL(/\/search$/)
     expect(await page.evaluate(() => (window as Window & { __vt?: number }).__vt)).toBeGreaterThan(0)
+  })
+
+  test('move toward the tab you tap, along its bar (or down the sidebar), and Back reverses it', async ({ page }) => {
+    await countTransitions(page)
+    const axis = hasSidebar(page) ? 'axis-y' : 'axis-x'
+    await page.goto('/')
+    await appTab(page, 'Search').click()
+    await expect(page).toHaveURL(/\/search$/)
+    await page.goBack()
+    await expect(page).toHaveURL(/\/$/)
+    expect(await page.evaluate(() => (window as Window & { __types?: string[][] }).__types)).toEqual([
+      ['next', axis],
+      ['prev', axis],
+    ])
+  })
+
+  test('a link in the page goes deeper, from the right; its back button comes back out', async ({ page }) => {
+    await countTransitions(page)
+    await page.goto('/competitions')
+    await page.getByRole('main').getByRole('link', { name: /QA Highland Games/ }).first().click()
+    await expect(page).toHaveURL(/\/competitions\/[^/]+\/info$/)
+    await page.getByRole('button', { name: /^Back to Competitions/ }).click()
+    await expect(page).toHaveURL(/\/competitions$/)
+    const types = await page.evaluate(() => (window as Window & { __types?: string[][] }).__types)
+    expect(types?.map((t) => t.filter((n) => n === 'forward' || n === 'back'))).toEqual([['forward'], ['back']])
   })
 
   test.describe('with Reduce Motion', () => {

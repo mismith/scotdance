@@ -72,8 +72,9 @@ onMounted(() => {
   else if (shown.value) sync(true)
 })
 
-// When a morph animates the opening, the dialog's own slide/fade would fight it.
-const morphing = computed(() => !!morph.value && morphSupported)
+// When a morph animates the opening, the dialog's own slide/fade would fight
+// it; with nothing on screen to grow from, it opens the ordinary way.
+const morphing = computed(() => !!morph.value?.animated && morphSupported)
 
 // A dropdown hangs under the control that opened it, lined up with the
 // trigger's nearer edge (its right edge for controls on the right of the

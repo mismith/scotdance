@@ -14,8 +14,8 @@ import { parseDate } from '@/lib/format'
 import { useTheme } from '@/composables/useTheme'
 import { groupByVenue, type VenueGroup } from '@/lib/venues'
 
-// The competitions as a place: the map fills the screen under the glass
-// controls. Each venue is a pin showing its next date; tapping one grows a
+// The competitions as a place: the map fills the screen under the page's
+// header. Each venue is a pin showing its next date; tapping one grows a
 // callout listing what's on there. A sheet along the bottom lists what's in
 // view and follows the map as it moves. Choosing a location flies there.
 const props = defineProps<{
@@ -213,9 +213,10 @@ function fit(animate: boolean) {
   for (const g of groups) bounds.extend([g.lng, g.lat])
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
   map.fitBounds(bounds, {
+    // Clear of the header along the top and the sheet along the bottom.
     padding: wide.value
-      ? { top: 5 * rem, bottom: 6 * rem, left: 27 * rem, right: 3 * rem }
-      : { top: 8 * rem, bottom: 13 * rem, left: 2.5 * rem, right: 2.5 * rem },
+      ? { top: 10 * rem, bottom: 10 * rem, left: 3 * rem, right: 3 * rem }
+      : { top: 10 * rem, bottom: 13 * rem, left: 2.5 * rem, right: 2.5 * rem },
     maxZoom: 11,
     duration: animate ? 900 : 0,
   })
@@ -339,7 +340,7 @@ watch(
 
     <!-- What's in view, following the map. -->
     <section
-      class="glass absolute inset-x-2 bottom-[calc(var(--chrome-bottom)+0.5rem)] z-10 overflow-hidden rounded-3xl md:inset-x-auto md:top-[4.25rem] md:bottom-auto md:left-6 md:w-96"
+      class="glass absolute inset-x-2 bottom-[calc(var(--chrome-bottom)+0.5rem)] z-10 overflow-hidden rounded-3xl md:inset-x-auto md:bottom-6 md:left-6 md:w-96"
       aria-label="Competitions in view"
     >
       <button
@@ -392,9 +393,9 @@ watch(
    so @apply can see its utilities. MapLibre makes these nodes itself. */
 @reference '../../style.css';
 
-/* Clear of the glass controls along the top (two rows on a phone). */
+/* Clear of the page's header along the top, in line with its edge. */
 .comp-map .maplibregl-ctrl-top-right {
-  @apply top-[6.75rem] right-2 sm:top-[3.75rem];
+  @apply top-[7.75rem] right-4;
 }
 .comp-map .maplibregl-ctrl-bottom-right,
 .comp-map .maplibregl-ctrl-bottom-left {

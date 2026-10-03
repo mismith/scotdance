@@ -80,6 +80,9 @@ export type Morph = ReturnType<typeof useMorph>
 
 export function useMorph() {
   const open = ref(false)
+  // Whether the last open or close grew out of (or into) its trigger. A
+  // sheet with nothing on screen to grow from opens the ordinary way.
+  const animated = ref(false)
   const trigger = shallowRef<HTMLElement | null>(null)
   const target = shallowRef<HTMLElement | null>(null)
 
@@ -92,9 +95,11 @@ export function useMorph() {
     if (open.value === next) return
     const leaving = next ? trigger.value : target.value
     if (!morphSupported || reduceMotion() || !onScreen(leaving)) {
+      animated.value = false
       open.value = next
       return
     }
+    animated.value = true
     paintSurface(leaving, 'from')
     leaving.style.viewTransitionName = NAME
     // Floating menus and centred cards spring a little; a sheet pinned to the
@@ -134,5 +139,5 @@ export function useMorph() {
   /** For the component that renders the opened thing (Dialog does this). */
   const setTarget = (el: HTMLElement | null) => (target.value = el)
 
-  return reactive({ open, trigger, show, hide, dismiss, toggle, setTarget })
+  return reactive({ open, animated, trigger, show, hide, dismiss, toggle, setTarget })
 }

@@ -29,6 +29,7 @@ import { useMeStore } from '@/stores/me'
 import AdminMark from '@/components/AdminMark.vue'
 import { blocks, days, events } from '@/lib/schedule'
 import ResultsMark from '@/components/ResultsMark.vue'
+import { rowsMove } from '@/lib/settle'
 import { competitionSpan } from '@/lib/dancerDay'
 import { formatExternalURL, formatLongDate, formatRelative } from '@/lib/format'
 import { sanitizeRichText } from '@/lib/sanitize'
@@ -220,7 +221,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
             <LiveDot v-if="live" :pulse="pulse" />
             {{ kicker }}
           </p>
-          <h1 class="text-display" :style="scrolledPast ? undefined : { viewTransitionName: 'competition-title', viewTransitionClass: 'fit' }">
+          <h1 class="text-display" :style="scrolledPast ? undefined : { viewTransitionName: 'competition-title', viewTransitionClass: 'fit text' }">
             {{ competition.name ?? 'Competition' }}
           </h1>
         </div>
@@ -296,9 +297,8 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         <TransitionGroup
           v-if="shownMatches.length"
           tag="ul"
-          class="rows-inset -mx-4 -mb-2 [--inset:4.75rem]"
-          enter-active-class="transition-opacity duration-(--dur-quick) ease-standard"
-          enter-from-class="opacity-0"
+          class="rows-inset -mx-4 -mb-2 [interpolate-size:allow-keywords] [--inset:4.75rem]"
+          v-bind="rowsMove"
         >
           <li v-for="d in shownMatches" :key="d.id" class="flex items-center gap-1 pr-2">
             <RouterLink

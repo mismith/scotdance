@@ -12,7 +12,7 @@ import { countryFlag, countryName, isoFor } from '@/lib/flagEmoji'
 import { guessUserCountry } from '@/lib/locale'
 import { fetchRegionSuggestions, resolvePlace, type PlaceSuggestion } from '@/lib/maps'
 
-const props = defineProps<{ competitions: CompetitionListItem[]; glass?: boolean }>()
+const props = defineProps<{ competitions: CompetitionListItem[] }>()
 
 const {
   mode,
@@ -229,10 +229,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
 <template>
   <button
     type="button"
-    :class="[
-      'press flex h-11 min-w-0 items-center gap-1.5 rounded-full px-4 text-callout font-semibold',
-      glass ? 'glass' : 'surface',
-    ]"
+    class="press surface flex h-11 min-w-0 items-center gap-1.5 rounded-full px-4 text-callout font-semibold"
     :aria-label="ariaLabel"
     aria-haspopup="dialog"
     :aria-expanded="sheet.open"

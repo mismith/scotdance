@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { Award, Clock, Hourglass, Trophy } from '@lucide/vue'
+import { rowsMove } from '@/lib/settle'
 import EmptyState from '@/components/EmptyState.vue'
 import MyDancerLine from '@/components/MyDancerLine.vue'
 import Skeleton from '@/components/Skeleton.vue'
@@ -114,16 +115,7 @@ const callbackRows = computed(() =>
 )
 
 // Rows that arrive (a placing coming in, everyone shown) grow into place;
-// reorders glide. Gentler with Reduce Motion: a fade.
-const ROWS_MOVE = {
-  enterActiveClass:
-    'overflow-hidden transition-[height,opacity] duration-(--dur-base) ease-standard motion-reduce:transition-opacity',
-  enterFromClass: 'h-0 opacity-0',
-  leaveActiveClass:
-    'overflow-hidden transition-[height,opacity] duration-(--dur-quick) ease-exit motion-reduce:transition-opacity',
-  leaveToClass: 'h-0 opacity-0',
-  moveClass: 'transition-transform duration-(--dur-slow) ease-snappy',
-}
+// reorders glide (lib/settle rowsMove). Gentler with Reduce Motion: a fade.
 
 const sections = computed(() =>
   (resultsHidden.value ? [] : danceList.value).map((dance) => ({
@@ -200,7 +192,7 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
           <span class="text-muted-foreground text-sm font-medium">{{ callbacks.dancers.length }} called back</span>
         </header>
         <p v-if="callbacks.explicitlyEmpty" class="px-4 py-3 text-base">No callbacks for this group.</p>
-        <TransitionGroup tag="ul" class="rows-inset [interpolate-size:allow-keywords] [--inset:4.5rem]" v-bind="ROWS_MOVE">
+        <TransitionGroup tag="ul" class="rows-inset [interpolate-size:allow-keywords] [--inset:4.5rem]" v-bind="rowsMove">
           <li
             v-for="row in callbackRows"
             :key="row.dancerId"
@@ -254,7 +246,7 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
           v-show="s.placings.hasResults"
           tag="ul"
           class="rows-inset [interpolate-size:allow-keywords] [--inset:7rem]"
-          v-bind="ROWS_MOVE"
+          v-bind="rowsMove"
         >
           <li v-for="row in s.placings.rows" :key="row.dancerId" class="relative" :style="rowStyle(row.dancer)">
             <span v-if="colorOf(row.dancer)" class="sash absolute inset-y-0 left-0 z-1 w-1.5" aria-hidden="true" />

@@ -69,7 +69,7 @@ const isPrivate = computed(() => managed.value && props.competition.listed !== t
       <span class="min-w-0 flex-1">
         <span
           class="line-clamp-2 text-base leading-snug font-semibold"
-          :style="{ viewTransitionName: vt.row(id, COMPETITION_TITLE_VT), viewTransitionClass: 'fit' }"
+          :style="{ viewTransitionName: vt.row(id, COMPETITION_TITLE_VT), viewTransitionClass: 'fit text' }"
         >
           {{ competition.name ?? 'Competition' }}
         </span>

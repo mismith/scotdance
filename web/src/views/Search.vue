@@ -6,6 +6,7 @@ import { ChevronRight, CloudOff, Hash, LoaderCircle, MapPin, Search, SearchX, Us
 import AppBar from '@/components/nav/AppBar.vue'
 import Button from '@/components/ui/Button.vue'
 import Segmented from '@/components/ui/Segmented.vue'
+import { swapInPlace } from '@/lib/navMotion'
 import Avatar from '@/components/Avatar.vue'
 import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -52,6 +53,8 @@ const MODES = [
   { value: 'number', label: 'By number' },
 ] as const
 const mode = ref<Mode>(route.query.by === 'number' ? 'number' : 'name')
+// Tapping a mode moves the search toward it, under a still header.
+const setMode = (m: Mode) => swapInPlace(MODES.map((o) => o.value), mode.value, m, () => (mode.value = m))
 
 // ─── By name (every competition) ────────────────────────────────────────────
 const q = ref(String(route.query.q ?? ''))
@@ -264,11 +267,12 @@ watch(mode, async (m) => {
     <AppBar title="Search" :show-title="scrolledPast" :back="false" />
 
     <main class="mx-auto w-full max-w-3xl space-y-4 px-4 pt-[calc(var(--chrome-top)+0.25rem)]">
-      <header ref="titleEl">
-        <h1 class="text-display">Search</h1>
-      </header>
-
-      <Segmented v-model="mode" :options="MODES" label="Search by" />
+      <div data-page-head class="space-y-4">
+        <header ref="titleEl">
+          <h1 class="text-display">Search</h1>
+        </header>
+        <Segmented :model-value="mode" :options="MODES" label="Search by" @update:model-value="setMode" />
+      </div>
 
       <!-- By name -->
       <template v-if="mode === 'name'">

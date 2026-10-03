@@ -9,6 +9,7 @@ import ResultsEntry from '@/components/admin/ResultsEntry.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
 import SectionMenu from '@/components/admin/SectionMenu.vue'
 import Button from '@/components/ui/Button.vue'
+import { rowsOpen } from '@/lib/settle'
 import { useHideTab } from '@/composables/admin/useHideTab'
 import { useManageBack } from '@/composables/admin/useManageBack'
 import { useManagedCompetition, type MGroup } from '@/composables/admin/useManagedCompetition'
@@ -152,7 +153,7 @@ function exportCsv() {
           </template>
         </EmptyState>
 
-        <ul v-else class="surface divide-y overflow-hidden rounded-2xl">
+        <ul v-else class="surface divide-y overflow-hidden rounded-2xl [interpolate-size:allow-keywords]">
           <li v-for="g in m.groups.value" :key="g.id">
             <button
               type="button"
@@ -179,7 +180,8 @@ function exportCsv() {
               </span>
               <ChevronDown :class="['text-muted-foreground size-5 shrink-0 transition-transform', isExpanded(g.id) && 'rotate-180']" />
             </button>
-            <ul v-if="isExpanded(g.id)" class="bg-background divide-y border-t">
+            <Transition v-bind="rowsOpen">
+              <ul v-if="isExpanded(g.id)" class="bg-background divide-y border-t">
               <li v-for="d in danceRows(g)" :key="d.id">
                 <RouterLink
                   :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: g.id, danceId: d.id } }"
@@ -198,7 +200,8 @@ function exportCsv() {
                   <ChevronRight class="text-muted-foreground size-5 shrink-0 md:hidden" />
                 </RouterLink>
               </li>
-            </ul>
+              </ul>
+            </Transition>
           </li>
         </ul>
 

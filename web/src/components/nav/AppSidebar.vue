@@ -61,6 +61,7 @@ const vt = (name: string) => ({ viewTransitionName: `sidebar-${name}`, viewTrans
 
 <template>
   <aside
+    data-nav-axis="y"
     class="bg-card fixed inset-y-0 left-0 z-30 hidden w-(--sidebar) flex-col pt-(--safe-top) [view-transition-name:sidebar] lg:flex"
   >
     <RouterLink
@@ -73,10 +74,12 @@ const vt = (name: string) => ({ viewTransitionName: `sidebar-${name}`, viewTrans
       <span class="text-heading">ScotDance.app</span>
     </RouterLink>
 
-    <!-- Rows scroll out under soft edges (in the padding, so nothing's faded at rest). -->
+    <!-- Rows scroll out under soft edges (in the padding, so nothing's faded at
+         rest). Its rows' transition groups nest in its own, so they stay
+         inside it as they glide (style.css, .sidebar). -->
     <nav
       aria-label="ScotDance.app"
-      class="flex flex-1 flex-col gap-5 overflow-y-auto px-3 pt-2 pb-4 mask-t-from-[calc(100%-0.5rem)] mask-b-from-[calc(100%-1rem)]"
+      class="flex flex-1 flex-col gap-5 overflow-y-auto px-3 pt-2 pb-4 mask-t-from-[calc(100%-0.5rem)] mask-b-from-[calc(100%-1rem)] [view-transition-group:contain] [view-transition-name:sidebar-nav]"
     >
       <ul class="space-y-0.5">
         <li><SidebarLink :to="{ name: 'home' }" :icon="House" label="Home" :state="state(name === 'home')" vt="sidebar-home" /></li>

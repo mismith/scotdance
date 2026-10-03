@@ -42,9 +42,10 @@ const section = (page: Page, label: string | RegExp) =>
   page.locator('section').filter({ has: page.getByRole('heading', { level: 2, name: label }) })
 
 async function show(page: Page, range: 'Upcoming' | 'Past results') {
-  const button = page.getByRole('group', { name: 'Which competitions' }).getByRole('button', { name: range })
-  await button.click()
-  await expect(button).toHaveAttribute('aria-pressed', 'true')
+  const pill = page.getByRole('button', { name: /^Which competitions/ })
+  await pill.click()
+  await page.getByRole('dialog', { name: 'Which competitions' }).getByRole('radio', { name: new RegExp(`^${range}`) }).click()
+  await expect(pill).toHaveAccessibleName(`Which competitions: ${range}`)
 }
 
 test('a competition without a country still shows with the guessed country filter on', async ({ page }) => {
@@ -112,7 +113,8 @@ test('a map pin opens its venue’s competitions without leaving the map', async
 
 test('a view mode in a shared link opens in that mode', async ({ page }) => {
   await page.goto('/competitions?view=calendar')
-  await expect(page.getByRole('button', { name: 'Show as Calendar' })).toBeVisible()
+  const views = page.getByRole('group', { name: 'Show competitions as' })
+  await expect(views.getByRole('button', { name: 'Calendar' })).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByRole('button', { name: 'Previous month' })).toBeVisible()
 })
 
@@ -149,7 +151,7 @@ test('the calendar shows every competition, past ones too, whatever the list sho
   await page.goto('/competitions?now=2019-05-14')
   await show(page, 'Upcoming')
   await page.goto('/competitions?view=calendar')
-  await expect(page.getByRole('group', { name: 'Which competitions' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^Which competitions/ })).toHaveCount(0)
   const month = page.getByRole('main').getByRole('heading', { level: 2 }).first()
   await expect(month).toHaveText(/2019/)
   for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Previous month' }).click()
