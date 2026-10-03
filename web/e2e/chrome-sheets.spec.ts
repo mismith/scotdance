@@ -1,5 +1,8 @@
 import { expect as baseExpect, test, type Page } from '@playwright/test'
+import { uid } from './support/emulator'
 import { appNav, appTab, hasSidebar } from './support/nav'
+import { retry } from './support/retry'
+import { removeCompetition, seedCompetition } from './support/seed'
 
 // The dev server is shared and busy during a full run: give page loads time.
 const expect = baseExpect.configure({ timeout: 15_000 })
@@ -218,15 +221,20 @@ test.describe('page changes', () => {
     ])
   })
 
-  test('a link in the page goes deeper, from the right; its back button comes back out', { tag: '@seed' }, async ({ page }) => {
-    await countTransitions(page)
-    await page.goto('/competitions')
-    await page.getByRole('main').getByRole('link', { name: /QA Highland Games/ }).first().click()
-    await expect(page).toHaveURL(/\/competitions\/[^/]+\/info$/)
-    await page.getByRole('button', { name: /^Back to Competitions/ }).click()
-    await expect(page).toHaveURL(/\/competitions$/)
-    const types = await page.evaluate(() => (window as Window & { __types?: string[][] }).__types)
-    expect(types?.map((t) => t.filter((n) => n === 'forward' || n === 'back'))).toEqual([['forward'], ['back']])
+  test('a link in the page goes deeper, from the right; its back button comes back out', async ({ page }) => {
+    const comp = await retry(() => seedCompetition({ id: uid('deeper'), name: `Deeper Games ${uid().slice(-5)}`, startOffset: 3, dancersPerGroup: 1, resultsForGroups: 0 }))
+    try {
+      await countTransitions(page)
+      await arrive(page, '/competitions')
+      await page.getByRole('main').getByRole('link', { name: new RegExp(comp.name) }).first().click()
+      await expect(page).toHaveURL(/\/competitions\/[^/]+\/info$/)
+      await page.getByRole('button', { name: /^Back to Competitions/ }).click()
+      await expect(page).toHaveURL(/\/competitions$/)
+      const types = await page.evaluate(() => (window as Window & { __types?: string[][] }).__types)
+      expect(types?.map((t) => t.filter((n) => n === 'forward' || n === 'back'))).toEqual([['forward'], ['back']])
+    } finally {
+      await retry(() => removeCompetition(comp.id))
+    }
   })
 
   test.describe('with Reduce Motion', () => {

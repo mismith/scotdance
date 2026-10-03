@@ -3,6 +3,7 @@ import { dbSet, dbUpdate, ensureUser, grantCompetition, grantSystemAdmin, uid } 
 import { removeCompetition, seedCompetition, type SeededCompetition } from './support/seed'
 import { competitionTabs } from './support/nav'
 import { signInFromSheet } from './support/parent'
+import { DANCER, nameOf } from './support/legacy'
 
 // A competition's public pages: what the Overview shows, hidden tabs,
 // unpublished competitions, and the biggest real ones.
@@ -220,9 +221,11 @@ test.describe('the biggest competitions', () => {
     const shown = Date.now() - started
     await expect(page.getByRole('heading', { level: 1 })).toContainText('1091')
     const search = page.getByRole('searchbox', { name: 'Search dancers by name or number' })
+    // By surname: one of the legacy dancers who danced here.
+    const dancer = await nameOf('dancers', DANCER)
     let t = Date.now()
-    await search.fill('Thow')
-    await expect(page.locator('main ul > li').filter({ hasText: 'Rebecca Thow' }).first()).toBeVisible()
+    await search.fill(dancer.split(' ').at(-1)!)
+    await expect(page.locator('main ul > li').filter({ hasText: dancer }).first()).toBeVisible()
     const searched = Date.now() - t
     await search.fill('11')
     await expect(rows.first()).toContainText('11')

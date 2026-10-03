@@ -1,5 +1,6 @@
 import { expect as baseExpect, test, type Page } from '@playwright/test'
 import { dbSet, uid } from './support/emulator'
+import { DANCER, JUDGE, VENUE, nameOf } from './support/legacy'
 import { retry } from './support/retry'
 import { isoDay, removeCompetition } from './support/seed'
 
@@ -32,10 +33,10 @@ test('browse opens each list', async ({ page }) => {
 
 test('competitions, people and venues you opened come back, newest first', { tag: '@seed' }, async ({ page }) => {
   const visits = [
-    { path: '/judges/-OsoH2I8uTd5UQHwDum4/info', name: 'Aileen Robertson', kind: 'Judge' },
+    { path: `/judges/${JUDGE}/info`, name: await nameOf('judges', JUDGE), kind: 'Judge' },
     { path: '/competitions/-L9Sc9TQWQclq_7oA3ij/info', name: 'Nationals', kind: 'Competition' },
-    { path: '/venues/-OsoH8n0XvjuN0nhsvMu/info', name: 'Calgary Life Church', kind: 'Venue' },
-    { path: '/dancers/-OsoHXgf8ThIQ81eayjM/info', name: 'Oriana Knowles', kind: 'Dancer' },
+    { path: `/venues/${VENUE}/info`, name: await nameOf('venues', VENUE), kind: 'Venue' },
+    { path: `/dancers/${DANCER}/info`, name: await nameOf('dancers', DANCER), kind: 'Dancer' },
   ]
   for (const v of visits) {
     await page.goto(v.path)
@@ -56,9 +57,10 @@ test('competitions, people and venues you opened come back, newest first', { tag
 })
 
 test('Clear empties Recently viewed, on Search, Home and the Dancers list alike', { tag: '@seed' }, async ({ page }) => {
+  const name = await nameOf('dancers', DANCER)
   const dancer = async () => {
-    await page.goto('/dancers/-OsoHXgf8ThIQ81eayjM/info')
-    await expect(page.getByRole('heading', { level: 1, name: 'Oriana Knowles' })).toBeVisible()
+    await page.goto(`/dancers/${DANCER}/info`)
+    await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   }
   await dancer()
   await page.goto('/competitions/-L9Sc9TQWQclq_7oA3ij/info')

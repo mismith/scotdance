@@ -64,6 +64,13 @@ jobs:
       # Secret Manager).
       - name: Functions secrets for the emulator
         run: printf 'RUNTIME_CONFIG={}\nGOOGLE_GEOCODING_API_KEY=unused\n' > functions/.secret.local
+      # The old app's competitions and profiles, anonymised
+      # (web/e2e/seed/build.mjs): what the emulators start with.
+      - name: Seed data
+        run: |
+          mkdir -p "$RUNNER_TEMP/seed/database_export"
+          gunzip -c web/e2e/seed/database.json.gz > "$RUNNER_TEMP/seed/database_export/scotdance.json"
+          echo '{"version":"15.32.1","database":{"version":"4.11.2","path":"database_export"}}' > "$RUNNER_TEMP/seed/firebase-export-metadata.json"
       # One functions worker (--inspect-functions), as in `npm run local`:
       # otherwise seeding spawns so many that the database emulator falls over.
       # Signed out, the CLI can't look up the project's database and guesses
@@ -76,8 +83,9 @@ jobs:
           npx --yes firebase-tools@15 emulators:exec
           --project firebase-scotdance
           --only auth,database,functions,storage
+          --import "$RUNNER_TEMP/seed"
           --inspect-functions 9229
-          'cd web && npx playwright test --grep-invert @seed'
+          'cd web && npx playwright test'
       - name: Keep traces of failures
         if: failure()
         uses: actions/upload-artifact@v4

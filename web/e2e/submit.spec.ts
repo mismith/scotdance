@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 import { dbGet, dbRemove, ensureUser, signIn, uid } from './support/emulator'
+import { retry } from './support/retry'
+import { removeCompetition, seedCompetition } from './support/seed'
 
 // Submitting a competition, through the real database rules and Cloud
 // Functions trigger: signed in only, an overview and then a step at a time,
@@ -241,10 +243,16 @@ test('the answers so far outlast a reload, skipping the overview, until started 
   await expect(page.getByText('Picked up where you left off.')).toHaveCount(0)
 })
 
-test('Home has a way in, below every competition', { tag: '@seed' }, async ({ page }) => {
-  await page.goto('/')
-  await expect(page.getByRole('main').getByRole('link', { name: 'See all competitions' })).toBeVisible()
-  await page.getByRole('main').getByRole('link', { name: 'Add it to ScotDance.app' }).click()
-  await expect(page).toHaveURL(/\/competitions\/submit$/)
-  await expect(page.getByRole('heading', { name: 'Submit a competition', level: 1 })).toBeVisible()
+test('Home has a way in, below every competition', async ({ page }) => {
+  // One coming up, so Home lists competitions.
+  const comp = await retry(() => seedCompetition({ id: uid('wayin'), startOffset: 5, dancersPerGroup: 1, resultsForGroups: 0 }))
+  try {
+    await page.goto('/')
+    await expect(page.getByRole('main').getByRole('link', { name: 'See all competitions' })).toBeVisible()
+    await page.getByRole('main').getByRole('link', { name: 'Add it to ScotDance.app' }).click()
+    await expect(page).toHaveURL(/\/competitions\/submit$/)
+    await expect(page.getByRole('heading', { name: 'Submit a competition', level: 1 })).toBeVisible()
+  } finally {
+    await retry(() => removeCompetition(comp.id))
+  }
 })

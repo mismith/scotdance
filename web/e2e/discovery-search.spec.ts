@@ -1,5 +1,6 @@
 import { expect as baseExpect, test, type Page } from '@playwright/test'
 import { uid } from './support/emulator'
+import { DANCER, JUDGE, nameOf } from './support/legacy'
 import { retry } from './support/retry'
 import { removeCompetition, seedCompetition, type SeededCompetition } from './support/seed'
 
@@ -8,7 +9,14 @@ const expect = baseExpect.configure({ timeout: 20_000 })
 
 // Search (Typesense through the searchAll function): by name across every
 // competition, and by number within one. By-name tests use the emulator's
-// legacy data (read only); by-number seeds one small competition.
+// legacy data (read only, people by id); by-number seeds one small competition.
+
+let judge = ''
+let dancer = ''
+test.beforeAll(async () => {
+  judge = await nameOf('judges', JUDGE)
+  dancer = await nameOf('dancers', DANCER)
+})
 
 const searchBox = (page: Page) => page.getByRole('searchbox', { name: 'Search' })
 const results = (page: Page, heading: string) =>
@@ -20,27 +28,28 @@ async function search(page: Page, q: string) {
 }
 
 test('finds a dancer by name and opens their page', { tag: '@seed' }, async ({ page }) => {
-  await search(page, 'oriana knowles')
+  const q = dancer.toLowerCase()
+  await search(page, q)
   // A real link (cmd-click opens a tab), once its page is known.
-  const row = results(page, 'Dancers').getByRole('link', { name: /Oriana Knowles/ })
+  const row = results(page, 'Dancers').getByRole('link', { name: new RegExp(dancer) })
   await expect(row).toBeVisible()
-  await expect(page).toHaveURL(/\/search\?q=oriana/)
+  await expect(page).toHaveURL(new RegExp(`/search\\?q=${encodeURIComponent(q.split(' ')[0])}`))
   await row.click()
   await expect(page).toHaveURL(/\/dancers\/[^/]+\/info$/)
-  await expect(page.getByRole('heading', { level: 1, name: 'Oriana Knowles' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: dancer })).toBeVisible()
   // Back returns to the same search, and the button says so.
   const back = page.getByRole('button', { name: 'Back to Search' })
   await expect(back).toBeVisible()
   await back.click()
-  await expect(page).toHaveURL(/\/search\?q=oriana/)
-  await expect(searchBox(page)).toHaveValue('oriana knowles')
+  await expect(page).toHaveURL(new RegExp(`/search\\?q=${encodeURIComponent(q.split(' ')[0])}`))
+  await expect(searchBox(page)).toHaveValue(q)
 })
 
 test('finds a judge and a competition', { tag: '@seed' }, async ({ page }) => {
-  await search(page, 'aileen robertson')
-  await results(page, 'Judges').getByRole('link', { name: /Aileen Robertson/ }).click()
+  await search(page, judge.toLowerCase())
+  await results(page, 'Judges').getByRole('link', { name: new RegExp(judge) }).click()
   await expect(page).toHaveURL(/\/judges\/[^/]+\/info$/)
-  await expect(page.getByRole('heading', { level: 1, name: 'Aileen Robertson' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: judge })).toBeVisible()
 
   await search(page, 'nationals')
   await results(page, 'Competitions').getByRole('link', { name: /Nationals/ }).first().click()
@@ -82,15 +91,16 @@ test('odd characters are searched as text, never break the page', async ({ page 
 })
 
 test('remembers recent searches until cleared', { tag: '@seed' }, async ({ page }) => {
-  await search(page, 'Oriana')
+  const first = dancer.split(' ')[0]
+  await search(page, first)
   await expect(results(page, 'Dancers')).toBeVisible()
   // Recorded once typing pauses.
   await page.waitForTimeout(2500)
   await page.getByRole('button', { name: 'Clear search' }).click()
   const recent = results(page, 'Recent')
-  await expect(recent.getByRole('button', { name: 'Oriana' })).toBeVisible()
-  await recent.getByRole('button', { name: 'Oriana' }).click()
-  await expect(searchBox(page)).toHaveValue('Oriana')
+  await expect(recent.getByRole('button', { name: first })).toBeVisible()
+  await recent.getByRole('button', { name: first }).click()
+  await expect(searchBox(page)).toHaveValue(first)
   await page.getByRole('button', { name: 'Clear search' }).click()
   await recent.getByRole('button', { name: 'Clear' }).click()
   await expect(results(page, 'Recent')).toHaveCount(0)

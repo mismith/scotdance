@@ -7,9 +7,9 @@ import { defineConfig, devices } from '@playwright/test'
 process.env.E2E_OUTPUT_DIR ??= `test-results/run-${Date.now()}`
 
 // CI (.github/workflows/e2e.yml) has the emulators up but no `npm run local`,
-// so it serves the app itself. Its emulators start empty: tests that read
-// the local seed data are tagged @seed and left out there, and its search
-// collections are made before the tests (ciSetup).
+// so it serves the app itself. Its emulators start from web/e2e/seed (the
+// old app's data, anonymised), which tests tagged @seed read, and its search
+// is rebuilt from that before the tests (ciSetup).
 const ci = !!process.env.CI
 
 export default defineConfig({

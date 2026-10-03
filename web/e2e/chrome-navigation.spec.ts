@@ -1,5 +1,6 @@
 import { expect as baseExpect, test } from '@playwright/test'
 import { appTab } from './support/nav'
+import { JUDGE, nameOf } from './support/legacy'
 
 // The dev server is shared and busy during a full run: give page loads time.
 const expect = baseExpect.configure({ timeout: 15_000 })
@@ -42,7 +43,9 @@ test('the tab bar (the sidebar, on wide screens) marks where you are, and tappin
 test('going back returns to where you were in a long list', { tag: '@seed' }, async ({ page }) => {
   await page.goto('/judges')
   await expect(page.getByRole('heading', { level: 1, name: 'Judges' })).toBeVisible()
-  const row = page.getByRole('link', { name: /^Lisa Barker/ }).first()
+  // The last judge in the list, well down it.
+  const row = page.getByRole('main').locator('a[href^="/judges/"]').last()
+  const name = await nameOf('judges', (await row.getAttribute('href'))!.split('/')[2])
   await row.scrollIntoViewIfNeeded()
   await page.mouse.wheel(0, 200)
   await page.waitForTimeout(300)
@@ -50,7 +53,7 @@ test('going back returns to where you were in a long list', { tag: '@seed' }, as
   expect(before).toBeGreaterThan(100)
   await row.click()
   await expect(page).toHaveURL(/\/judges\/[^/]+\/info$/)
-  await expect(page.getByRole('heading', { level: 1, name: 'Lisa Barker' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
   await page.goBack()
   await expect(page).toHaveURL(/\/judges$/)
   await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(before - 40)
@@ -61,13 +64,13 @@ test('going back returns to where you were in a long list', { tag: '@seed' }, as
 })
 
 test('Back on a deep link goes up to the section, and the browser’s Back doesn’t bounce down again', { tag: '@seed' }, async ({ page }) => {
-  await page.goto('/judges/-OsoH2I8uTd5UQHwDum4/info')
+  await page.goto(`/judges/${JUDGE}/info`)
   const back = page.getByRole('button', { name: 'Back to Judges' })
   await expect(back).toBeVisible()
   await back.click()
   await expect(page).toHaveURL(/\/judges$/)
   await page.goBack()
-  await expect(page).not.toHaveURL(/\/judges\/-OsoH2I8uTd5UQHwDum4/)
+  await expect(page).not.toHaveURL(new RegExp(`/judges/${JUDGE}`))
 })
 
 test('leaving a competition opened from a link goes to Competitions, without bouncing back', { tag: '@seed' }, async ({ page }) => {
@@ -80,7 +83,7 @@ test('leaving a competition opened from a link goes to Competitions, without bou
 
 test('Back after tapping through still steps back through history', { tag: '@seed' }, async ({ page }) => {
   await page.goto('/judges')
-  await page.getByRole('link', { name: /^Aileen Robertson/ }).first().click()
+  await page.getByRole('link', { name: new RegExp(`^${await nameOf('judges', JUDGE)}`) }).first().click()
   await expect(page).toHaveURL(/\/judges\/[^/]+\/info$/)
   await page.getByRole('button', { name: 'Back to Judges' }).click()
   await expect(page).toHaveURL(/\/judges$/)
