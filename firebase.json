@@ -13,7 +13,13 @@
     "source": "functions"
   },
   "hosting": {
+    "site": "scotdance",
     "public": "www",
+    "ignore": [
+      "firebase.json",
+      "**/.DS_Store",
+      "**/node_modules/**"
+    ],
     "headers": [
       {
         "source": "/version.json",
@@ -21,6 +27,15 @@
           {
             "key": "Access-Control-Allow-Origin",
             "value": "*"
+          }
+        ]
+      },
+      {
+        "source": "/.well-known/apple-app-site-association",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
           }
         ]
       }

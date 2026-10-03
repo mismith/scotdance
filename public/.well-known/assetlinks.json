@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.get_login_creds"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "info.mismith.scotdance",
+      "sha256_cert_fingerprints": [
+        "E9:3A:EE:F0:4F:23:A1:1C:C1:74:BF:A3:8C:DA:00:2D:04:99:E8:C4:DF:81:B9:9C:11:87:ED:C3:0B:07:07:70",
+        "78:41:C0:48:9C:E9:CC:56:AE:9C:A3:22:55:6A:3E:83:AD:3A:17:DB:07:64:E5:0D:4F:96:18:BA:CC:16:35:B5"
+      ]
+    }
+  }
+]
