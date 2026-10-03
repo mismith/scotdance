@@ -9,9 +9,11 @@ import Dialog from '@/components/Dialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import DateTile from '@/components/DateTile.vue'
+import VisibilityChip from '@/components/VisibilityChip.vue'
 import FormInput from '@/components/admin/FormInput.vue'
 import SearchField from '@/components/admin/SearchField.vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
+import { useHiddenAs } from '@/composables/useHiddenAs'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { useScrolledPast } from '@/composables/useScrolledPast'
 import { toast } from '@/lib/admin/feedback'
@@ -51,9 +53,11 @@ const shown = computed(() => {
 const upcoming = computed(() => shown.value.filter((c) => competitionPhase(c.date) !== 'after').reverse())
 const past = computed(() => shown.value.filter((c) => competitionPhase(c.date) === 'after'))
 
-const visibility = (c: CompetitionListItem) => (c.published ? 'Published' : c.listed ? 'Listed' : 'Private')
-// The date is on its tile: the line under the name says where, and who can see it.
-const subtitle = (c: CompetitionListItem) => [c.venue || c.location, visibility(c)].filter(Boolean).join(' · ')
+// The date is on its tile, where it is under the name, and how it's hidden
+// (until it's published) on a chip, as in every other list.
+const hiddenAs = useHiddenAs()
+// System admins see every competition here: the shield picks out their own.
+const shielded = (c: CompetitionListItem) => me.isAdmin && me.organises(c.id)
 // On the day, results entry is a tap away.
 const isToday = (c: CompetitionListItem) => competitionPhase(c.date) === 'today'
 
@@ -130,10 +134,11 @@ async function create() {
           <ul class="surface divide-y overflow-hidden rounded-2xl">
             <li v-for="c in list" :key="c.id" class="sm:flex sm:items-center">
               <RouterLink :to="{ name: 'manage', params: { competitionId: c.id } }" class="press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap-3 py-2 pr-3 pl-4">
-                <DateTile :date="c.date" />
+                <DateTile :date="c.date" :managed="shielded(c)" />
                 <span class="min-w-0 flex-1">
                   <span class="block truncate text-base font-semibold">{{ c.name || 'Untitled competition' }}</span>
-                  <span class="text-muted-foreground block truncate text-sm">{{ subtitle(c) }}</span>
+                  <span v-if="c.venue || c.location" class="text-muted-foreground block truncate text-sm">{{ c.venue || c.location }}</span>
+                  <span v-if="hiddenAs(c.id, c)" class="mt-0.5 flex"><VisibilityChip :visibility="hiddenAs(c.id, c)" /></span>
                 </span>
                 <ChevronRight :class="['text-muted-foreground size-5 shrink-0', isToday(c) && 'sm:hidden']" />
               </RouterLink>

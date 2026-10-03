@@ -221,8 +221,12 @@ const dayNote = (c: Competition & { id: string }) => {
   return s && s.first <= 0 && s.last > s.first ? `Day ${1 - s.first} of ${s.last - s.first + 1}` : null
 }
 
-// If nothing personal is coming up, show what's next anywhere.
-const nextAnywhere = computed(() => recentCompetitions.value.filter((c) => phaseOf(c) !== 'after').slice(0, 3))
+// If nothing personal is coming up, show what's next anywhere (but not
+// again what's under Your competitions).
+const nextAnywhere = computed(() => {
+  const managed = new Set(yours.value.map((c) => c.id))
+  return recentCompetitions.value.filter((c) => phaseOf(c) !== 'after' && !managed.has(c.id)).slice(0, 3)
+})
 
 // With nothing personal to show, the latest finished competitions keep Home
 // alive between competition days (published ones: a listed one has no

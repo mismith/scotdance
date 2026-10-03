@@ -6,6 +6,7 @@ import { useDancerProfile } from '@/composables/useDancerProfile'
 import { useDancerCards } from '@/composables/useDancerCards'
 import { useFollowing } from '@/composables/useFollowing'
 import { useCrisp } from '@/composables/useCrisp'
+import { useHiddenAs } from '@/composables/useHiddenAs'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import Avatar from '@/components/Avatar.vue'
 import DancerDayCard from '@/components/DancerDayCard.vue'
@@ -13,6 +14,7 @@ import DateTile from '@/components/DateTile.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import Medal from '@/components/Medal.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import VisibilityChip from '@/components/VisibilityChip.vue'
 import { fetchEntrySummary, type EntrySummary } from '@/lib/entrySummary'
 import { parseDate } from '@/lib/format'
 import { profileColumns, profileHeader } from '@/lib/profile'
@@ -27,6 +29,7 @@ const me = useMeStore()
 const profile = useDancerProfile()
 const following = useFollowing()
 const crisp = useCrisp()
+const hiddenAs = useHiddenAs()
 
 const dancerId = computed(() => String(route.params.dancerId ?? ''))
 const name = computed(() => profile.displayName.value)
@@ -145,12 +148,13 @@ function medals(cid: string) {
                 "
                 class="press-row focus-inset flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4"
               >
-                <DateTile :date="r.competition.date" :managed="me.hasCompetitionPerm(r.competitionId)" />
+                <DateTile :date="r.competition.date" :managed="me.organises(r.competitionId)" />
                 <span class="min-w-0 flex-1">
                   <span class="line-clamp-2 text-base leading-snug font-semibold">{{ r.competition.name }}</span>
                   <span class="text-muted-foreground block truncate text-sm">
                     {{ [r.numbers.length ? r.numbers.map((n) => `#${n}`).join(', ') : null, ...medals(r.competitionId).groups].filter(Boolean).join(' · ') }}
                   </span>
+                  <span v-if="hiddenAs(r.competitionId, r.competition)" class="mt-0.5 flex"><VisibilityChip :visibility="hiddenAs(r.competitionId, r.competition)" /></span>
                   <span v-if="medals(r.competitionId).best.length || medals(r.competitionId).overall" class="mt-1 flex flex-wrap items-center gap-1">
                     <template v-if="medals(r.competitionId).overall">
                       <Medal :place="medals(r.competitionId).overall!.place" size="sm" />

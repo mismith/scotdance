@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
-import { ChevronRight, EyeOff, Star } from '@lucide/vue'
+import { ChevronRight, Star } from '@lucide/vue'
 import { useFollowing } from '@/composables/useFollowing'
+import { useHiddenAs } from '@/composables/useHiddenAs'
 import DateTile from '@/components/DateTile.vue'
+import VisibilityChip from '@/components/VisibilityChip.vue'
 import { useMeStore } from '@/stores/me'
 import { isSameDay } from '@/lib/format'
 import type { Competition } from '@/types/competition'
 
 // A competition as a row: a calendar date block (what people scan for, pink
 // while it's on), the name, the town, then a short note ("Day 2 of 2"), and
-// your dancers as coloured dots. Lists put these in a `rows-inset` card with
+// your dancers as coloured dots. Its admins also see the shield and, until
+// it's published, how it's hidden. Lists put these in a `rows-inset` card with
 // `[--inset:4.5rem]`, so separators line up with the name.
 const props = withDefaults(
   defineProps<{
@@ -23,8 +26,10 @@ const props = withDefaults(
     today?: boolean
     /** Its id, when `competition` doesn't carry one. */
     competitionId?: string
-    /** Mark it when you can manage it (off where every row is yours, or in a preview). */
+    /** Shield it when you're its admin (off where every row is yours). */
     markManaged?: boolean
+    /** As everyone else sees it: no shield, no visibility. */
+    preview?: boolean
     /** A word on where it's at: "Day 2 of 2", "Results posted", "Published". */
     note?: string | null
   }>(),
@@ -34,6 +39,7 @@ const props = withDefaults(
     today: undefined,
     competitionId: undefined,
     markManaged: true,
+    preview: false,
     note: null,
   },
 )
@@ -41,15 +47,10 @@ const props = withDefaults(
 const following = useFollowing()
 const me = useMeStore()
 const today = computed(() => props.today ?? isSameDay(props.competition.date))
-const canManage = computed(() => {
-  const id = props.competitionId ?? props.competition.id
-  return !!id && me.hasCompetitionPerm(id)
-})
-// The shield on the date (left off where every row is yours).
-const managed = computed(() => props.markManaged && canManage.value)
-// Not in the public list (only its admins see it), in Manage's word: said
-// the same way wherever it's listed.
-const isPrivate = computed(() => canManage.value && props.competition.listed !== true && props.competition.published !== true)
+const hiddenAs = useHiddenAs()
+const id = computed(() => props.competitionId ?? props.competition.id)
+const managed = computed(() => props.markManaged && !props.preview && !!id.value && me.organises(id.value))
+const hidden = computed(() => (props.preview ? null : hiddenAs(id.value, props.competition)))
 </script>
 
 <template>
@@ -68,12 +69,9 @@ const isPrivate = computed(() => canManage.value && props.competition.listed !==
           {{ competition.location }}
         </span>
         <span v-if="managed" class="sr-only">You can manage this.</span>
-        <span v-if="note || isPrivate || followed || dancers.length" class="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+        <span v-if="note || hidden || followed || dancers.length" class="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+          <VisibilityChip :visibility="hidden" />
           <span v-if="note" class="text-muted-foreground text-sm font-medium">{{ note }}</span>
-          <span v-if="isPrivate" class="text-muted-foreground inline-flex items-center gap-1 text-sm font-medium">
-            <EyeOff class="size-3.5" aria-hidden="true" />
-            Private<span class="sr-only"> (only admins can see it)</span>
-          </span>
           <span v-if="dancers.length" class="flex min-w-0 items-center gap-1.5 text-sm font-medium">
             <span class="flex shrink-0 gap-0.5" aria-hidden="true">
               <span

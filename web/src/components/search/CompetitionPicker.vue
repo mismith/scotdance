@@ -110,7 +110,7 @@ function pick(id: string) {
                     class="press-row focus-inset flex min-h-16 w-full items-center gap-3 py-2.5 pr-3 pl-4 text-left"
                     @click="pick(c.id)"
                   >
-                    <DateTile :date="c.competition.date" :managed="me.hasCompetitionPerm(c.id)" :today="c.today" />
+                    <DateTile :date="c.competition.date" :managed="me.organises(c.id)" :today="c.today" />
                     <ChoiceSummary :choice="c" />
                     <Check v-if="c.id === model" class="text-primary size-5 shrink-0" stroke-width="2.5" aria-hidden="true" />
                   </button>

@@ -85,6 +85,12 @@ export function peekCompetition(id: string | null | undefined): CompetitionListI
   )
 }
 
+/** Fetch a list (once, until it's forgotten) for `peekCompetition`, without a component's filtered copy. */
+export function ensureCompetitionsList(includeArchived: boolean): Promise<void> {
+  const entry = includeArchived ? archivedCache : recentCache
+  return entry.loaded ? Promise.resolve() : fetchInto(entry, includeArchived)
+}
+
 export function useCompetitions(includeArchived: Ref<boolean>) {
   const me = useMeStore()
 

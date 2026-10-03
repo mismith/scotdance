@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, toRef, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
-import { CalendarX, EyeOff, Hourglass, Pencil } from '@lucide/vue'
+import { CalendarX, ChevronRight, EyeOff, Hourglass, Pencil } from '@lucide/vue'
 import { useMeStore } from '@/stores/me'
 import AppBar from '@/components/nav/AppBar.vue'
 import ShareButton from '@/components/ShareButton.vue'
@@ -18,6 +18,7 @@ import { competitionEntry, historyPosition } from '@/lib/competitionExit'
 import { backLabelFor } from '@/lib/backLabels'
 import { competitionPhase } from '@/lib/dancerDay'
 import { formatShortDate } from '@/lib/format'
+import { VISIBILITY, visibilityOf } from '@/lib/visibility'
 
 const TAB_LABEL_BY_ROUTE: Record<string, string> = {
   'competition.info': 'Overview',
@@ -65,6 +66,15 @@ const hiddenHere = computed(() => {
 })
 
 const reload = () => window.location.reload()
+
+// Its admins see everything here, so every tab says when everyone else
+// doesn't, with the way to change it.
+const hidden = computed(() => {
+  const c = competition.value
+  if (!c || !me.hasCompetitionPerm(competitionId.value)) return null
+  const v = visibilityOf(c)
+  return v === 'published' ? null : v
+})
 
 // Not published yet: before the day it's still coming; on or after it,
 // the organisers just haven't put it here.
@@ -135,6 +145,20 @@ usePageTitle(() => [
     </AppBar>
 
     <main class="mx-auto w-full max-w-3xl flex-1 px-4 pt-[calc(var(--chrome-top)+0.5rem)]">
+      <RouterLink
+        v-if="hidden && !loading"
+        :to="{ name: 'manage', params: { competitionId } }"
+        :class="[
+          'press-row focus-inset mb-4 flex min-h-12 items-center gap-3 rounded-2xl px-4 py-2.5 text-sm',
+          hidden === 'private' ? 'bg-foreground text-background' : 'bg-card border-foreground/40 border',
+        ]"
+      >
+        <component :is="VISIBILITY[hidden].icon" class="size-5 shrink-0" aria-hidden="true" />
+        <span class="min-w-0 flex-1"><span class="font-semibold">{{ VISIBILITY[hidden].label }}:</span> {{ VISIBILITY[hidden].line }}</span>
+        <span :class="['flex shrink-0 items-center font-semibold', hidden === 'unpublished' && 'text-primary']">
+          Manage<ChevronRight class="size-4" aria-hidden="true" />
+        </span>
+      </RouterLink>
       <div v-if="loading" class="space-y-4" aria-busy="true" aria-live="polite">
         <span class="sr-only">Loading competition…</span>
         <Skeleton class="h-5 w-1/3" />

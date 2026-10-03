@@ -36,12 +36,16 @@ export const useMeStore = defineStore('me', () => {
   function hasCompetitionPerm(id: string) {
     return isAdmin.value || permissions.value?.competitions?.[id] === true
   }
-  /** Competitions this person can manage (system admins can manage all). */
+  /** Competitions this person was made an admin of (not every one a system admin can manage). */
   const managedCompetitionIds = computed(() =>
     Object.entries(permissions.value?.competitions ?? {})
       .filter(([, on]) => on === true)
       .map(([id]) => id),
   )
+  /** One they were made an admin of: what the shield marks. System admins can manage the rest too, unmarked. */
+  function organises(id: string) {
+    return permissions.value?.competitions?.[id] === true
+  }
   const canManageAny = computed(() => isAdmin.value || managedCompetitionIds.value.length > 0)
   /** Permissions have been read at least once for the signed-in person. */
   const permissionsLoaded = computed(() => permissions.value !== null)
@@ -103,6 +107,7 @@ export const useMeStore = defineStore('me', () => {
     permissions,
     isAdmin,
     hasCompetitionPerm,
+    organises,
     managedCompetitionIds,
     canManageAny,
     permissionsLoaded,

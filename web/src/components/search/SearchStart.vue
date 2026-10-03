@@ -4,11 +4,14 @@ import { RouterLink } from 'vue-router'
 import { ChevronRight, Clock, Hash } from '@lucide/vue'
 import Avatar from '@/components/Avatar.vue'
 import DateTile from '@/components/DateTile.vue'
+import VisibilityChip from '@/components/VisibilityChip.vue'
 import { useFollowing } from '@/composables/useFollowing'
+import { useHiddenAs } from '@/composables/useHiddenAs'
 import { useRecentEntities } from '@/composables/useRecentEntities'
 import { useRecentSearches } from '@/composables/useRecentSearches'
 import { isBeforeToday } from '@/lib/format'
 import { sectionMeta } from '@/lib/sectionMeta'
+import { useMeStore } from '@/stores/me'
 import type { CompetitionChoice } from './choices'
 
 // Search before anything's typed: your recent searches, a way to look up a
@@ -22,10 +25,13 @@ const emit = defineEmits<{ search: [q: string]; number: [competitionId?: string]
 
 const recentSearches = useRecentSearches()
 const following = useFollowing()
+const me = useMeStore()
+const hiddenAs = useHiddenAs()
 
 // Competitions, people and venues you've opened, newest first, whichever
 // list they're from. Clear empties every kind, so the Recently viewed on Home
-// and on each list empties too.
+// and on each list empties too. A competition's admins see its shield and how
+// it's hidden, as in every list.
 const kinds = [
   { ns: 'competitions', label: 'Competition', route: 'competition.info', param: 'competitionId' },
   { ns: 'dancers', label: 'Dancer', route: 'dancer.info', param: 'dancerId' },
@@ -121,13 +127,19 @@ const lists = ['dancers', 'judges', 'pipers', 'venues'].map(sectionMeta)
           class="press-row focus-inset flex min-h-16 items-center gap-3 py-2 pr-3 pl-4"
         >
           <span class="flex w-11 shrink-0 justify-center">
-            <DateTile v-if="v.kind.ns === 'competitions'" :date="v.date" :below="isBeforeToday(v.date) ? 'year' : 'weekday'" />
+            <DateTile
+              v-if="v.kind.ns === 'competitions'"
+              :date="v.date"
+              :below="isBeforeToday(v.date) ? 'year' : 'weekday'"
+              :managed="me.organises(v.id)"
+            />
             <Avatar v-else-if="v.kind.ns !== 'venues'" :name="v.name" :color="v.kind.ns === 'dancers' ? following.colorFor(v.id) : null" />
             <component :is="v.kind.icon" v-else class="text-muted-foreground size-5" aria-hidden="true" />
           </span>
           <span class="min-w-0 flex-1">
             <span class="block truncate text-base font-semibold">{{ v.name }}</span>
             <span class="text-muted-foreground block truncate text-sm">{{ v.kind.label }}</span>
+            <span v-if="v.kind.ns === 'competitions' && hiddenAs(v.id)" class="mt-0.5 flex"><VisibilityChip :visibility="hiddenAs(v.id)" /></span>
           </span>
           <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
         </RouterLink>

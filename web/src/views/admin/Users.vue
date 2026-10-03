@@ -13,8 +13,10 @@ import SearchField from '@/components/admin/SearchField.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
 import TextField from '@/components/admin/TextField.vue'
 import SwitchField from '@/components/admin/SwitchField.vue'
+import VisibilityChip from '@/components/VisibilityChip.vue'
 import { useSplit } from '@/composables/admin/useWide'
 import { useCompetitions } from '@/composables/useCompetitions'
+import { useHiddenAs } from '@/composables/useHiddenAs'
 import { dataRef } from '@/firebase'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { friendlyError, write } from '@/lib/admin/write'
@@ -59,6 +61,7 @@ onScopeDispose(off)
 
 const { competitions } = useCompetitions(ref(true))
 const competitionName = (id: string) => competitions.value.find((c) => c.id === id)?.name ?? 'A deleted competition'
+const hiddenAs = useHiddenAs()
 
 const query = ref('')
 const shown = computed(() => {
@@ -175,7 +178,10 @@ function pick(id: string) {
             <p class="text-callout font-medium">Competitions they manage</p>
             <MovingList v-if="managed.length" class="surface divide-y overflow-hidden rounded-2xl">
               <li v-for="cid in managed" :key="cid" class="flex min-h-13 items-center gap-2 py-1 pr-2 pl-4">
-                <RouterLink :to="{ name: 'manage', params: { competitionId: cid } }" class="text-primary flex min-h-11 min-w-0 flex-1 items-center truncate font-medium">{{ competitionName(cid) }}</RouterLink>
+                <RouterLink :to="{ name: 'manage', params: { competitionId: cid } }" class="text-primary flex min-h-11 min-w-0 flex-1 items-center gap-2 font-medium">
+                  <span class="truncate">{{ competitionName(cid) }}</span>
+                  <VisibilityChip :visibility="hiddenAs(cid)" />
+                </RouterLink>
                 <Button variant="plain" class="text-destructive!" @click="setCompetition(cid, false)">Remove</Button>
               </li>
             </MovingList>
@@ -201,7 +207,10 @@ function pick(id: string) {
       <li v-for="c in pickChoices" :key="c.id">
         <button type="button" class="press-row focus-inset flex min-h-14 w-full flex-col justify-center px-4 py-2 text-left" @click="pick(c.id)">
           <span class="text-base font-medium">{{ c.name || 'Untitled' }}</span>
-          <span class="text-muted-foreground text-sm">{{ c.date ? formatLongDate(c.date) : '' }}</span>
+          <span class="text-muted-foreground flex items-center gap-2 text-sm">
+            {{ c.date ? formatLongDate(c.date) : '' }}
+            <VisibilityChip :visibility="hiddenAs(c.id, c)" />
+          </span>
         </button>
       </li>
     </ul>

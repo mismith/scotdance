@@ -1,14 +1,19 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Star } from '@lucide/vue'
 import { useFollowing } from '@/composables/useFollowing'
+import { useHiddenAs } from '@/composables/useHiddenAs'
+import VisibilityChip from '@/components/VisibilityChip.vue'
 import type { CompetitionChoice } from './choices'
 
 // A competition's name and town, then your dancers as coloured dots (or a
-// star for one you follow), as in the Competitions list. Today is the date
-// tile's to say.
-defineProps<{ choice: CompetitionChoice }>()
+// star for one you follow), and how it's hidden for its admins, as in the
+// Competitions list. Today is the date tile's to say.
+const props = defineProps<{ choice: CompetitionChoice }>()
 
 const following = useFollowing()
+const hiddenAs = useHiddenAs()
+const hidden = computed(() => hiddenAs(props.choice.id, props.choice.competition))
 </script>
 
 <template>
@@ -19,7 +24,8 @@ const following = useFollowing()
     <span v-if="choice.competition.location" class="text-muted-foreground block truncate text-sm">
       {{ choice.competition.location }}
     </span>
-    <span v-if="choice.followed || choice.dancers.length" class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+    <span v-if="hidden || choice.followed || choice.dancers.length" class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+      <VisibilityChip :visibility="hidden" />
       <span v-if="choice.dancers.length" class="flex min-w-0 items-center gap-1.5 text-sm font-medium">
         <span class="flex shrink-0 gap-0.5" aria-hidden="true">
           <span

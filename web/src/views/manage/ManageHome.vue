@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ChevronRight, Eye, EyeOff, Trophy } from '@lucide/vue'
+import { ChevronRight, Trophy } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import SectionNav from '@/components/admin/SectionNav.vue'
 import SwitchField from '@/components/admin/SwitchField.vue'
@@ -9,17 +9,14 @@ import { useManagedCompetition } from '@/composables/admin/useManagedCompetition
 import { useSetup } from '@/composables/admin/useSetup'
 import { useSidebar } from '@/composables/admin/useWide'
 import { formatLongDate } from '@/lib/format'
+import { VISIBILITY, visibilityOf } from '@/lib/visibility'
 
 const m = useManagedCompetition()
 const sidebar = useSidebar()
 const { status, next, action, problems, today, carryOn } = useSetup()
 const c = computed(() => m.competition.value)
 
-const visibility = computed(() => {
-  if (c.value?.published) return { icon: Eye, text: 'Published: everyone can see everything.' }
-  if (c.value?.listed) return { icon: Eye, text: 'Listed: basic details are public; dancers, schedule and results aren’t yet.' }
-  return { icon: EyeOff, text: 'Private: only admins can see this competition.' }
-})
+const visibility = computed(() => VISIBILITY[visibilityOf(c.value ?? {})])
 const results = computed(() => ({ name: 'manage.results', params: { competitionId: m.competitionId.value } }))
 </script>
 
@@ -29,7 +26,7 @@ const results = computed(() => ({ name: 'manage.results', params: { competitionI
       <p class="text-muted-foreground text-sm font-medium">{{ c?.date ? formatLongDate(c.date) : 'No date yet' }}</p>
       <h1 class="text-display">{{ c?.name || 'Untitled competition' }}</h1>
       <!-- On the day, the line under the name is the way into results
-           entry, at the dance to carry on with (who can see it is below). -->
+           entry, at the dance to carry on with, then who can see it. -->
       <RouterLink
         v-if="today"
         :to="carryOn?.to ?? results"
@@ -42,8 +39,9 @@ const results = computed(() => ({ name: 'manage.results', params: { competitionI
         </span>
         <ChevronRight class="text-muted-foreground size-5 shrink-0" />
       </RouterLink>
-      <p v-else class="text-muted-foreground flex items-start gap-1.5 text-base">
-        <component :is="visibility.icon" class="mt-1 size-4 shrink-0" /> {{ visibility.text }}
+      <p class="text-muted-foreground flex items-start gap-1.5 text-base">
+        <component :is="visibility.icon" class="mt-1 size-4 shrink-0" aria-hidden="true" />
+        <span><span class="text-foreground font-semibold">{{ visibility.label }}:</span> {{ visibility.line }}</span>
       </p>
     </header>
 

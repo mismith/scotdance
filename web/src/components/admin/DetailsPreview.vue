@@ -5,12 +5,13 @@ import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
 import DateTile from '@/components/DateTile.vue'
 import { competitionLinks, linkLabel, registrationLines, registrationOpen } from '@/lib/competitionInfo'
 import { formatLongDate } from '@/lib/format'
+import { visibilityOf } from '@/lib/visibility'
 import { sanitizeRichText } from '@/lib/sanitize'
 import type { Competition } from '@/types/competition'
 
 // Beside Manage › Details on wide screens: what people will see, in the
-// competitions list and at the top of its page. Read only; it follows each
-// field as it saves.
+// competitions list (once it's listed) and at the top of its page. Read
+// only; it follows each field as it saves.
 const props = defineProps<{ competition: Competition; competitionId: string }>()
 
 const c = computed(() => props.competition)
@@ -19,14 +20,17 @@ const regLines = computed(() => registrationLines(c.value))
 const regOpen = computed(() => registrationOpen(c.value))
 const kicker = computed(() => [c.value.date ? formatLongDate(c.value.date) : null, c.value.location].filter(Boolean).join(' · '))
 const where = computed(() => [c.value.address, c.value.location].filter(Boolean).join(', '))
+const unlisted = computed(() => visibilityOf(c.value) === 'private')
 </script>
 
 <template>
   <div class="space-y-6" inert>
     <section class="space-y-2">
-      <h3 class="text-muted-foreground text-sm font-medium">In the competitions list</h3>
+      <h3 class="text-muted-foreground text-sm font-medium">
+        In the competitions list<template v-if="unlisted">, once it’s listed</template>
+      </h3>
       <ul class="surface divide-y overflow-hidden rounded-2xl">
-        <CompetitionDateRow :competition="c" :to="{ name: 'competition.info', params: { competitionId } }" :mark-managed="false" />
+        <CompetitionDateRow :competition="c" :competition-id="competitionId" :to="{ name: 'competition.info', params: { competitionId } }" preview />
       </ul>
     </section>
 

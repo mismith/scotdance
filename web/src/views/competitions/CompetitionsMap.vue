@@ -8,6 +8,7 @@ import Supercluster from 'supercluster'
 import { ChevronRight, ChevronUp, X } from '@lucide/vue'
 import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
+import { useHiddenAs } from '@/composables/useHiddenAs'
 import { useFavoritesStore } from '@/stores/favorites'
 import { createMap, persistCamera, styleUrlFor } from '@/lib/maplibre'
 import { parseDate } from '@/lib/format'
@@ -29,6 +30,7 @@ const props = defineProps<{
 }>()
 
 const favorites = useFavoritesStore()
+const hiddenAs = useHiddenAs()
 const { isDark } = useTheme()
 const wide = useMediaQuery('(min-width: 768px)')
 
@@ -74,16 +76,18 @@ const shortDate = (c: CompetitionListItem) =>
   c.date ? parseDate(c.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'TBA'
 
 // A pin is its venue's next (or, under Past results, latest) date, with how
-// many more are on there.
+// many more are on there. Ink, like the Private chip, where only admins can
+// see every competition there (the pin is there for them alone).
 function pinElement(group: VenueGroup, idx: number): HTMLElement {
   const el = document.createElement('button')
   el.type = 'button'
   const fav = group.competitions.some((c) => favorites.isFavoriteCompetition(c.id))
-  el.className = `map-pin${fav ? ' is-fav' : ''}`
+  const hidden = group.competitions.every((c) => hiddenAs(c.id, c) === 'private')
+  el.className = `map-pin${fav ? ' is-fav' : ''}${hidden ? ' is-private' : ''}`
   const n = group.competitions.length
   el.setAttribute(
     'aria-label',
-    `${group.venue || group.location || 'Venue'}: ${n} competition${n === 1 ? '' : 's'}, ${shortDate(group.competitions[0])}`,
+    `${group.venue || group.location || 'Venue'}: ${n} competition${n === 1 ? '' : 's'}, ${shortDate(group.competitions[0])}${hidden ? ', private' : ''}`,
   )
   const pill = document.createElement('span')
   pill.className = 'map-pin-label'
@@ -436,6 +440,12 @@ watch(
 }
 .map-pin.is-fav .map-pin-tail {
   @apply border-t-secondary;
+}
+.map-pin.is-private .map-pin-label {
+  @apply bg-foreground text-background;
+}
+.map-pin.is-private .map-pin-tail {
+  @apply border-t-foreground;
 }
 .map-cluster {
   @apply bg-primary-fill text-primary-foreground flex h-9 min-w-9 cursor-pointer items-center justify-center rounded-full border-2 border-white px-2.5 text-sm font-semibold tabular-nums shadow-[0_2px_6px_rgb(0_0_0/0.25)] transition-transform duration-(--dur-quick) ease-snappy;

@@ -204,12 +204,12 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
       <div class="flex items-start gap-3">
         <span v-if="competition.image" class="relative shrink-0">
           <img :src="competition.image" alt="" class="size-14 rounded-xl object-cover" />
-          <AdminMark v-if="me.hasCompetitionPerm(competitionId)" size="md" ring="background" />
+          <AdminMark v-if="me.organises(competitionId)" size="md" ring="background" />
         </span>
         <DateTile
           v-else
           :date="competition.date"
-          :managed="me.hasCompetitionPerm(competitionId)"
+          :managed="me.organises(competitionId)"
         />
         <div class="min-w-0 flex-1">
           <p :class="['flex items-center gap-1.5 text-sm font-semibold', live ? 'text-live' : 'text-muted-foreground']">
