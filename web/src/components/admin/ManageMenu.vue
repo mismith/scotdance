@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { RouterLink, type RouteLocationRaw } from 'vue-router'
-import { Ellipsis, Eye, Redo2, Undo2 } from '@lucide/vue'
+import { Check, CircleAlert, CloudOff, Ellipsis, LoaderCircle, Redo2, Undo2 } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
+import { useSaveStatus } from '@/composables/admin/useSaveStatus'
 import { useMorph } from '@/lib/morph'
 
-// Manage's ⋯ menu, top right beside your account: Undo and Redo (saying
-// what they'd change), and the public page. ⌘Z and ⇧⌘Z still work anywhere.
+// Manage's ⋯ menu, top right beside View: Undo and Redo (saying what they'd
+// change; ⌘Z and ⇧⌘Z still work anywhere). Its button also says whether
+// your changes are safe, in words, when there's something to say: "Saved"
+// for a moment after each save, Saving…, Offline or Not saved; otherwise
+// it's just ⋯ (composables/admin/useSaveStatus).
 const props = defineProps<{
   undoLabel: string | null
   redoLabel: string | null
@@ -14,11 +17,17 @@ const props = defineProps<{
   busy: boolean
   undoKey: string
   redoKey: string
-  view: RouteLocationRaw
 }>()
 const emit = defineEmits<{ undo: []; redo: [] }>()
 
 const menu = useMorph()
+const save = useSaveStatus()
+const SAVE_NOTE = {
+  saved: 'Changes save as you go.',
+  saving: 'Saving your changes…',
+  offline: 'You’re offline. Changes can’t be saved until you’re back online.',
+  error: 'Your last change wasn’t saved. Try it again.',
+}
 function pick(what: 'undo' | 'redo') {
   void menu.hide()
   if (what === 'undo') emit('undo')
@@ -36,14 +45,51 @@ const row =
     aria-label="Undo, redo and more"
     aria-haspopup="dialog"
     :aria-expanded="menu.open"
-    class="press flex size-9 items-center justify-center rounded-full"
+    :title="save.state.value === 'error' ? (save.error.value ?? undefined) : undefined"
+    :class="[
+      'press flex h-9 min-w-9 items-center justify-center rounded-full px-2 text-sm font-semibold whitespace-nowrap transition-colors',
+      !save.shown.value
+        ? ''
+        : save.state.value === 'offline' || save.state.value === 'error'
+          ? 'bg-destructive/10 text-destructive'
+          : save.state.value === 'saved'
+            ? 'text-done-foreground'
+            : 'text-muted-foreground',
+    ]"
     @click="menu.show($event)"
   >
-    <Ellipsis class="size-5" />
+    <span class="grid size-5 shrink-0 place-items-center" aria-hidden="true">
+      <Ellipsis v-if="!save.shown.value" class="size-5" />
+      <CloudOff v-else-if="save.state.value === 'offline'" class="size-4" />
+      <LoaderCircle v-else-if="save.state.value === 'saving'" class="size-4 animate-spin" />
+      <CircleAlert v-else-if="save.state.value === 'error'" class="size-4" />
+      <Check v-else class="size-4" stroke-width="2.75" />
+    </span>
+    <!-- The words open out beside it and fold away again. -->
+    <span
+      :class="[
+        'grid transition-[grid-template-columns,opacity] duration-(--dur-base) ease-snappy motion-reduce:transition-opacity',
+        save.shown.value ? 'grid-cols-[1fr] opacity-100' : 'grid-cols-[0fr] opacity-0',
+      ]"
+      aria-hidden="true"
+    >
+      <span class="min-w-0 overflow-hidden pr-1 pl-1">{{ save.label.value }}</span>
+    </span>
   </button>
+  <span role="status" aria-live="polite" class="sr-only">{{ save.label.value }}</span>
 
   <Dialog :open="menu.open" :morph="menu" variant="dropdown" aria-label="Undo, redo and more" @close="menu.hide()">
     <nav aria-label="Undo, redo and more" class="[&>div+div]:mt-1.5 [&>div+div]:border-t [&>div+div]:pt-1.5">
+      <div>
+        <p
+          :class="[
+            'text-callout flex items-start gap-2 px-3 pt-1.5 pb-2 font-medium',
+            save.state.value === 'offline' || save.state.value === 'error' ? 'text-destructive' : 'text-muted-foreground',
+          ]"
+        >
+          {{ SAVE_NOTE[save.state.value] }}
+        </p>
+      </div>
       <div>
         <button
           type="button"
@@ -73,11 +119,6 @@ const row =
           </span>
           <kbd class="text-muted-foreground font-sans text-sm max-md:hidden">{{ props.redoKey }}</kbd>
         </button>
-      </div>
-      <div>
-        <RouterLink :to="props.view" :class="row" @click="menu.dismiss()">
-          <Eye /> View the public page
-        </RouterLink>
       </div>
     </nav>
   </Dialog>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRouter, type RouteLocationRaw } from 'vue-router'
+import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
 import { ArrowDownToLine, ClipboardList, Gavel, Info, LifeBuoy, Music, School, ServerCog, SquarePlus, Users } from '@lucide/vue'
 import AdminMark from '@/components/AdminMark.vue'
 import Dialog from '@/components/Dialog.vue'
@@ -31,6 +31,14 @@ const browse = [
   { label: 'Venues', icon: School, to: { name: 'venues' } },
 ]
 
+// The page you're on (or under) is marked, so going to another moves the way
+// the list runs: lower down, in from the right (lib/navMotion).
+const route = useRoute()
+function here(to: RouteLocationRaw) {
+  const path = router.resolve(to).path
+  return route.path === path || route.path.startsWith(`${path}/`) ? '' : undefined
+}
+
 function go(to: RouteLocationRaw) {
   props.menu.dismiss()
   router.push(to)
@@ -49,7 +57,7 @@ const row =
   <Dialog :open="menu.open" :morph="menu" variant="dropdown" aria-label="More" @close="menu.hide()">
     <nav aria-label="More" data-nav="more" class="[&>div+div]:mt-1.5 [&>div+div]:border-t [&>div+div]:pt-1.5">
       <div>
-        <button v-for="b in browse" :key="b.label" type="button" :class="row" @click="go(b.to)">
+        <button v-for="b in browse" :key="b.label" type="button" :class="row" :data-current="here(b.to)" @click="go(b.to)">
           <component :is="b.icon" class="size-5" /> {{ b.label }}
         </button>
       </div>
@@ -57,7 +65,7 @@ const row =
         <button v-if="update.updateAvailable" type="button" :class="row" @click="run(() => update.openDialog())">
           <ArrowDownToLine class="text-secondary! size-5" /> Update available
         </button>
-        <button type="button" :class="row" @click="go({ name: 'about' })">
+        <button type="button" :class="row" :data-current="here({ name: 'about' })" @click="go({ name: 'about' })">
           <Info class="size-5" /> About ScotDance.app
         </button>
         <button v-if="crisp.available" type="button" :class="row" @click="run(() => crisp.open())">
@@ -68,13 +76,13 @@ const row =
       </div>
       <!-- For organisers: submitting, managing, and (admins) the whole system. -->
       <div>
-        <button type="button" :class="row" @click="go({ name: 'competitions.submit' })">
+        <button type="button" :class="row" :data-current="here({ name: 'competitions.submit' })" @click="go({ name: 'competitions.submit' })">
           <SquarePlus class="size-5" /> Submit a competition
         </button>
-        <button v-if="canManage" type="button" :class="row" @click="go({ name: 'manage.competitions' })">
+        <button v-if="canManage" type="button" :class="row" :data-current="here({ name: 'manage.competitions' })" @click="go({ name: 'manage.competitions' })">
           <span class="relative flex text-muted-foreground"><ClipboardList class="size-5" /><AdminMark ring="raised" /></span> Manage competitions
         </button>
-        <button v-if="me.isAdmin" type="button" :class="row" @click="go({ name: 'admin' })">
+        <button v-if="me.isAdmin" type="button" :class="row" :data-current="here({ name: 'admin' })" @click="go({ name: 'admin' })">
           <span class="relative flex text-muted-foreground"><ServerCog class="size-5" /><AdminMark ring="raised" /></span> System admin
         </button>
       </div>

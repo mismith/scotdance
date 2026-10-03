@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useEventListener } from '@vueuse/core'
-import { RouterView, useRoute, useRouter } from 'vue-router'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
-import { CalendarX, Lock, LogIn } from '@lucide/vue'
+import { CalendarX, Eye, Lock, LogIn } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import Button from '@/components/ui/Button.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import ManageMenu from '@/components/admin/ManageMenu.vue'
-import SaveStatus from '@/components/admin/SaveStatus.vue'
 import SectionNav from '@/components/admin/SectionNav.vue'
 import SidebarBranch from '@/components/nav/SidebarBranch.vue'
 import { provideManagedCompetition } from '@/composables/admin/useManagedCompetition'
@@ -146,7 +145,9 @@ const sectionTitle = provideSectionTitle()
     <AppBar wide :title="barTitle" :subtitle="barSubtitle" :show-title="sectionTitle.showInBar()" :scrolled="true" :exit="exit">
       <template #actions>
         <template v-if="access === 'ok'">
-          <SaveStatus />
+          <!-- Undo and Redo in ⋯, whose button also says when your changes
+               are saved (or can't be); View, the competition as everyone
+               sees it, is one tap. -->
           <ManageMenu
             :undo-label="history.undoLabel.value"
             :redo-label="history.redoLabel.value"
@@ -155,10 +156,12 @@ const sectionTitle = provideSectionTitle()
             :busy="busy"
             :undo-key="undoKey"
             :redo-key="redoKey"
-            :view="viewRoute"
             @undo="doUndo"
             @redo="doRedo"
           />
+          <RouterLink :to="viewRoute" class="press flex size-9 items-center justify-center rounded-full" aria-label="View" title="View the competition as everyone sees it">
+            <Eye class="size-5" />
+          </RouterLink>
         </template>
       </template>
     </AppBar>

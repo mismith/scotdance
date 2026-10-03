@@ -11,7 +11,6 @@ import AppBar from '@/components/nav/AppBar.vue'
 import { sectionMeta } from '@/lib/sectionMeta'
 import { selectionHaptic } from '@/lib/haptics'
 import { settle } from '@/lib/settle'
-import { useVtScope } from '@/lib/viewTransitionFocus'
 import {
   useEntityAggregates,
   type AggregateRow,
@@ -30,8 +29,6 @@ const props = withDefaults(
     /** RTDB namespace, e.g. 'judges'. Doubles as the section route name — page
      *  title + avatar icon are pulled from its title/icon meta. */
     namespace: string
-    /** VT scope name used by the corresponding {Entity}Layout. */
-    vtScope: string
     /** Route name prefix — `${routePrefix}.info` is the navigation target. */
     routePrefix: string
     /** Route param name passed to `params`, e.g. 'judgeId'. */
@@ -58,7 +55,6 @@ const retry = () => useEntityAggregates(props.namespace)
 
 const favorites = useFavoritesStore()
 const recent = useRecentEntities(props.namespace)
-const vt = useVtScope(props.vtScope)
 
 const query = ref('')
 const sorted = computed(() => {
@@ -229,7 +225,7 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
             <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
               <li v-for="row in block.rows" :key="row.id" class="flex items-center pr-1">
                 <RouterLink v-slot="{ href, navigate }" :to="to(row.id)" custom>
-                  <a :href="href" :class="ROW" @click="vt.onNavigate($event, navigate, row.id, block.key)">
+                  <a :href="href" :class="ROW" @click="navigate">
                     <span class="flex w-11 shrink-0 justify-center">
                       <component :is="places" v-if="places" class="text-muted-foreground size-5" aria-hidden="true" />
                       <Avatar v-else :name="row.agg.name || '?'" :image="imageOf(row.agg)" />
@@ -270,7 +266,7 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
               </li>
               <li v-else class="flex items-center pr-1">
                 <RouterLink v-slot="{ href, navigate }" :to="to(x.row.id)" custom>
-                  <a :href="href" :class="ROW" @click="vt.onNavigate($event, navigate, x.row.id, 'all')">
+                  <a :href="href" :class="ROW" @click="navigate">
                     <span class="flex w-11 shrink-0 justify-center">
                       <component :is="places" v-if="places" class="text-muted-foreground size-5" aria-hidden="true" />
                       <Avatar v-else :name="x.row.agg.name || '?'" :image="imageOf(x.row.agg)" />

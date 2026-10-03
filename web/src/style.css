@@ -69,6 +69,8 @@
      (they use standard or exit). Durations: --dur-* below. */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  /* A page sliding in, as iOS pushes one: quick off the mark, a long settle. */
+  --ease-push: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-snappy: linear(0, 0.065, 0.202, 0.353, 0.494, 0.613, 0.71, 0.786, 0.843, 0.887, 0.918, 0.942, 0.959, 0.971, 0.979, 0.986, 0.99, 0.993, 1);
   --ease-elastic: linear(0, 0.059, 0.193, 0.354, 0.513, 0.653, 0.768, 0.856, 0.921, 0.965, 0.993, 1.009, 1.017, 1.02, 1.019, 1.017, 1.014, 1.01, 1.007, 1.005, 1);
   /* Older overshoot curve; prefer --ease-snappy / --ease-elastic. */
@@ -669,12 +671,6 @@
   }
 }
 
-/* Anchor text/image snapshots top-left at natural size so they don't squish
-   while the parent group's width changes. */
-::view-transition-old(.fit),
-::view-transition-new(.fit) {
-  @apply object-none object-top-left;
-}
 /* Shared slide-in/out for any element appearing/disappearing from the left
    of the floating top chrome (back button, name pill). */
 @keyframes vt-slide-in {
@@ -786,12 +782,16 @@
   view-transition-name: none !important;
 }
 
-/* Getting around (lib/navMotion picks the way): deeper pages come in from
-   the right as the old one eases back and fades, and Back reverses it; a
-   menu's peers (tabs, the sidebar's rows) move a shorter way along that menu,
-   across or up and down, with a quicker fade-through; anything else swaps in
-   place. The chrome (top bar, tab bar, sidebar) has its own transition names,
-   so it holds still while the page moves under it. Opacity never bounces. */
+/* Getting around (lib/navMotion picks the way), as Apple does it: pages
+   slide, they don't fade, so nothing flashes through between them.
+   - A deeper page slides in from the right edge over the old one, which
+     drifts a third of the way left and dims a little; Back reverses it.
+   - On phones, a tab bar's tabs (and a page's segmented views) slide past
+     like pages, toward the one you tapped.
+   - On wide screens, the sidebar's peers and segmented views just change, as
+     on a Mac; anything else swaps in place everywhere.
+   The chrome (top bar, tab bar, sidebar) has its own transition names, so it
+   holds still while the page moves under it. */
 @keyframes vt-fade-out {
   to {
     opacity: 0;
@@ -802,80 +802,81 @@
     opacity: 0;
   }
 }
-@keyframes vt-move-in {
+@keyframes vt-slide {
   from {
-    translate: var(--vt-from);
+    translate: var(--vt-from, 0) 0;
+  }
+  to {
+    translate: var(--vt-to, 0) 0;
   }
 }
-@keyframes vt-move-out {
+@keyframes vt-dim {
   to {
-    translate: var(--vt-to);
+    filter: brightness(0.92);
   }
+}
+@keyframes vt-undim {
+  from {
+    filter: brightness(0.92);
+  }
+}
+/* Two opaque pages, one over the other: not blended. */
+:active-view-transition-type(forward, back, next, prev)::view-transition-old(root),
+:active-view-transition-type(forward, back, next, prev)::view-transition-new(root) {
+  mix-blend-mode: normal;
+  animation-duration: 440ms;
+  animation-timing-function: var(--ease-push);
+  animation-fill-mode: both;
 }
 :active-view-transition-type(forward)::view-transition-old(root) {
-  --vt-to: -1.5rem 0;
+  --vt-to: -30%;
+  animation-name: vt-slide, vt-dim;
 }
 :active-view-transition-type(forward)::view-transition-new(root) {
-  --vt-from: 2rem 0;
+  --vt-from: 100%;
+  animation-name: vt-slide;
+  box-shadow: 0 0 2rem rgb(0 0 0 / 0.16);
 }
 :active-view-transition-type(back)::view-transition-old(root) {
-  --vt-to: 2rem 0;
+  --vt-to: 100%;
+  animation-name: vt-slide;
+  box-shadow: 0 0 2rem rgb(0 0 0 / 0.16);
+  z-index: 1;
 }
 :active-view-transition-type(back)::view-transition-new(root) {
-  --vt-from: -1.5rem 0;
+  --vt-from: -30%;
+  animation-name: vt-slide, vt-undim;
 }
-:active-view-transition-type(forward, back)::view-transition-old(root) {
-  animation:
-    vt-fade-out 120ms var(--ease-exit) both,
-    vt-move-out 300ms var(--ease-snappy) both;
+:active-view-transition-type(next)::view-transition-old(root) {
+  --vt-to: -100%;
 }
-:active-view-transition-type(forward, back)::view-transition-new(root) {
-  animation:
-    vt-fade-in 220ms 60ms var(--ease-standard) both,
-    vt-move-in 340ms var(--ease-snappy) both;
+:active-view-transition-type(next)::view-transition-new(root) {
+  --vt-from: 100%;
 }
-:active-view-transition-type(next):active-view-transition-type(axis-x)::view-transition-old(root) {
-  --vt-to: -1rem 0;
+:active-view-transition-type(prev)::view-transition-old(root) {
+  --vt-to: 100%;
 }
-:active-view-transition-type(next):active-view-transition-type(axis-x)::view-transition-new(root) {
-  --vt-from: 1.25rem 0;
+:active-view-transition-type(prev)::view-transition-new(root) {
+  --vt-from: -100%;
 }
-:active-view-transition-type(prev):active-view-transition-type(axis-x)::view-transition-old(root) {
-  --vt-to: 1rem 0;
-}
-:active-view-transition-type(prev):active-view-transition-type(axis-x)::view-transition-new(root) {
-  --vt-from: -1.25rem 0;
-}
-:active-view-transition-type(next):active-view-transition-type(axis-y)::view-transition-old(root) {
-  --vt-to: 0 -0.75rem;
-}
-:active-view-transition-type(next):active-view-transition-type(axis-y)::view-transition-new(root) {
-  --vt-from: 0 1rem;
-}
-:active-view-transition-type(prev):active-view-transition-type(axis-y)::view-transition-old(root) {
-  --vt-to: 0 0.75rem;
-}
-:active-view-transition-type(prev):active-view-transition-type(axis-y)::view-transition-new(root) {
-  --vt-from: 0 -1rem;
-}
-:active-view-transition-type(next, prev)::view-transition-old(root) {
-  animation:
-    vt-fade-out 90ms var(--ease-exit) both,
-    vt-move-out 220ms var(--ease-snappy) both;
-}
+:active-view-transition-type(next, prev)::view-transition-old(root),
 :active-view-transition-type(next, prev)::view-transition-new(root) {
-  animation:
-    vt-fade-in 200ms 70ms var(--ease-standard) both,
-    vt-move-in 300ms 70ms var(--ease-snappy) both;
+  animation-name: vt-slide;
+  animation-duration: 380ms;
 }
 :active-view-transition-type(swap)::view-transition-old(root) {
-  animation: vt-fade-out 90ms var(--ease-exit) both;
+  display: none;
 }
 :active-view-transition-type(swap)::view-transition-new(root) {
-  --vt-from: 0 6px;
-  animation:
-    vt-fade-in 180ms 70ms var(--ease-standard) both,
-    vt-move-in 260ms 70ms var(--ease-snappy) both;
+  animation: none;
+}
+@media (width >= 64rem) {
+  :active-view-transition-type(next, prev)::view-transition-old(root) {
+    display: none;
+  }
+  :active-view-transition-type(next, prev)::view-transition-new(root) {
+    animation: none;
+  }
 }
 /* A sheet that changes what it asks (sign in, then create an account): the
    sheet itself (painted by the group, as a morph's surface is) resizes from
@@ -903,19 +904,6 @@
 }
 ::view-transition-new(sheet-step) {
   animation: vt-fade-in 200ms 70ms var(--ease-standard) both;
-}
-/* A competition's date tile glides between the row you tapped and its page
-   (composables/useCompetitionVt). Moving sideways (between its tabs, say)
-   there's nothing to glide to, so it goes with the page; with no partner
-   otherwise, it fades as quickly as the page does rather than lingering. */
-:root:active-view-transition-type(next, prev, swap) [style*='view-transition-name: competition-date'] {
-  view-transition-name: none !important;
-}
-::view-transition-old(competition-date):only-child {
-  animation: vt-fade-out 120ms var(--ease-exit) both;
-}
-::view-transition-new(competition-date):only-child {
-  animation: vt-fade-in 220ms 60ms var(--ease-standard) both;
 }
 /* A change in place (lib/navMotion swapInPlace): the page's header holds
    still, live, so its segmented control's thumb slides as usual. */
@@ -1109,37 +1097,3 @@
   }
 }
 
-/* The tapped dancer's number card grows into the big one on their page (and
-   back); its safety pins go on once it has landed (M13). Only the tapped
-   row's card carries the name (composables/useCompetitionDancerVt). Same
-   11:8 card at both sizes, so the snapshots scale cleanly. */
-::view-transition-group(comp-dancer-number) {
-  animation-duration: var(--dur-slow);
-  animation-timing-function: var(--ease-snappy);
-  z-index: 1;
-}
-::view-transition-old(comp-dancer-number),
-::view-transition-new(comp-dancer-number) {
-  height: 100%;
-}
-::view-transition-group(comp-dancer-number-pins) {
-  z-index: 2;
-}
-::view-transition-new(comp-dancer-number-pins):only-child {
-  animation: vt-pins-on var(--dur-base) calc(var(--dur-slow) - 60ms) var(--ease-elastic) both;
-}
-::view-transition-old(comp-dancer-number-pins):only-child {
-  animation: vt-fade-out var(--dur-instant) var(--ease-exit) both;
-}
-@keyframes vt-pins-on {
-  from {
-    opacity: 0;
-    scale: 1.5;
-    translate: 0 -3px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-new(comp-dancer-number-pins):only-child {
-    animation: vt-fade-in var(--dur-quick) var(--ease-standard) both;
-  }
-}

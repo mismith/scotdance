@@ -138,7 +138,7 @@ function groupKicker(g: CompetitionGroup) {
 
 // One line under the greeting that answers "what now?", always in the same
 // place: who dances next, the night before where they start, then when
-// results are in.
+// results are in. (Just "dancing today" would only repeat the cards below.)
 const firstName = (c: DancerCard) => c.name.split(' ')[0]
 function names(list: DancerCard[]) {
   const n = list.map(firstName)
@@ -156,7 +156,7 @@ const context = computed(() => {
       const plat = platformLabel(nextDance(lead.focus!.days)?.slot?.platformName)
       return `${firstName(lead)} dances next${plat ? ` on ${plat}` : ''}.`
     }
-    if (stage === 'upcoming') return `${names(today.filter((c) => dayStage(c.focus!.days) === 'upcoming'))} dancing today.`
+    if (stage === 'upcoming') return null
     const waiting = today.filter((c) => dayStage(c.focus!.days) === 'waiting')
     return waiting.length ? `Waiting on results for ${names(waiting)}.` : `Results are in for ${names(today)}.`
   }
@@ -182,7 +182,8 @@ const context = computed(() => {
 })
 
 // Coming up: competitions your dancers are entered in, plus competitions you
-// follow, soonest first.
+// follow, soonest first. One you manage is already under Your competitions
+// (where it opens Manage), so it isn't listed twice.
 const { competitions: recentCompetitions, loading: competitionsLoading } = useCompetitions(ref(false))
 const comingUp = computed(() => {
   const map = new Map<string, { id: string; competition: Competition; dancers: Map<string, string>; followed: boolean }>()
@@ -206,7 +207,9 @@ const comingUp = computed(() => {
     e.followed = true
     map.set(comp.id, e)
   }
+  const managed = new Set(yours.value.map((c) => c.id))
   return [...map.values()]
+    .filter((e) => !managed.has(e.id))
     .sort((a, b) => parseDate(a.competition.date ?? 0).getTime() - parseDate(b.competition.date ?? 0).getTime())
     .slice(0, 4)
 })
@@ -497,7 +500,6 @@ const { freshKey: liveFresh } = useLiveAlertState()
               :to="{ name: 'manage', params: { competitionId: c.id } }"
               :today="phaseOf(c) === 'today'"
               :mark-managed="false"
-              :note="c.published ? 'Published' : c.listed ? 'Listed' : 'Private'"
             />
           </ul>
         </section>

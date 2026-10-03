@@ -3,13 +3,11 @@ import { computed, toRef } from 'vue'
 import { useRoute } from 'vue-router'
 import EntityLayout from '@/components/EntityLayout.vue'
 import { provideDancerProfile } from '@/composables/useDancerProfile'
-import { useVtScope } from '@/lib/viewTransitionFocus'
 
 // A dancer across every competition: one page.
 const route = useRoute()
 const dancerId = computed(() => String(route.params.dancerId ?? ''))
 
-useVtScope('dancer').syncFocus(dancerId)
 
 const { displayName, loading, notFound } = provideDancerProfile(toRef(dancerId))
 </script>

@@ -10,10 +10,8 @@ const props = withDefaults(
     number: number | string | null | undefined
     color?: string | null
     size?: 'xs' | 'sm' | 'md' | 'lg'
-    /** A view-transition name: the card travels between pages (its pins as `${vt}-pins`). */
-    vt?: string
   }>(),
-  { color: null, size: 'sm', vt: undefined },
+  { color: null, size: 'sm' },
 )
 
 // In long lists a plain tile reads calmer; the coloured band marks your
@@ -32,16 +30,14 @@ const banded = computed(() => !!props.color || props.size === 'md' || props.size
       size === 'md' && 'h-16 w-[5.5rem] rounded-lg pb-1.5 text-[1.875rem]',
       size === 'lg' && 'h-24 w-32 rounded-xl pb-2 text-5xl',
     ]"
-    :style="{ '--dc': color ?? 'var(--strong)', viewTransitionName: vt }"
+    :style="{ '--dc': color ?? 'var(--strong)' }"
     :aria-label="number != null ? `Number ${number}` : 'No number'"
   >
     <span v-if="banded" :class="['sash absolute inset-x-0 top-0', size === 'xs' ? 'h-1.5' : 'h-[24%]']" aria-hidden="true" />
-    <!-- The safety pins: their own layer when the card travels, so they
-         can go on once it has landed. -->
+    <!-- The safety pins. -->
     <span
       v-if="banded && size !== 'xs'"
       class="absolute inset-0"
-      :style="{ viewTransitionName: vt && `${vt}-pins` }"
       aria-hidden="true"
     >
       <span

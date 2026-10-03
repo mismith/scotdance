@@ -41,13 +41,9 @@ import {
   registrationOpen as isRegistrationOpen,
   staffHeading,
 } from '@/lib/competitionInfo'
-import { useDancerNumberVt } from '@/composables/useCompetitionDancerVt'
-import { injectInfoHeaderScrolledPast, injectInfoHeaderSetter } from '@/composables/useScrolledPast'
+import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 
 const setHeader = injectInfoHeaderSetter()
-// The date tile carries the shared name (the tapped row's tile glides into
-// it) until the header scrolls under the bar.
-const scrolledPast = injectInfoHeaderScrolledPast()
 
 const {
   competitionId,
@@ -71,7 +67,6 @@ const me = useMeStore()
 const isFresh = useFreshPlacings()
 const progress = useCompetitionProgress()
 const { pulse, lastResult } = useCompetitionLive()
-const numberVt = useDancerNumberVt()
 
 const ready = ref(false)
 onMounted(async () => {
@@ -215,7 +210,6 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
           v-else
           :date="competition.date"
           :managed="me.hasCompetitionPerm(competitionId)"
-          :style="scrolledPast ? undefined : { viewTransitionName: 'competition-date' }"
         />
         <div class="min-w-0 flex-1">
           <p :class="['flex items-center gap-1.5 text-sm font-semibold', live ? 'text-live' : 'text-muted-foreground']">
@@ -248,9 +242,8 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
             <RouterLink
               :to="{ name: 'competition.dancer', params: { competitionId, dancerId: f.days[0].dancer.id } }"
               class="press-row focus-inset flex min-h-16 items-center gap-3 px-3 py-2.5"
-              @click="numberVt.tap(f.days[0].dancer.id, 'yours')"
             >
-              <NumberCard :number="f.days[0].dancer.number" :color="f.color" size="sm" :vt="numberVt.row(f.days[0].dancer.id, 'yours')" />
+              <NumberCard :number="f.days[0].dancer.number" :color="f.color" size="sm" />
               <span class="min-w-0 flex-1">
                 <span class="block truncate text-base font-semibold">{{ f.name }}</span>
                 <span class="text-muted-foreground block truncate text-sm tabular-nums">{{ placingsLine(f.days) }}</span>
@@ -305,9 +298,8 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
             <RouterLink
               :to="{ name: 'competition.dancer', params: { competitionId, dancerId: d.id } }"
               class="press-row focus-inset flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-xl py-2 pl-4"
-              @click="numberVt.tap(d.id, 'find')"
             >
-              <NumberCard :number="d.number" size="xs" :vt="numberVt.row(d.id, 'find')" />
+              <NumberCard :number="d.number" size="xs" />
               <span class="min-w-0">
                 <span class="block truncate text-base font-semibold">{{ d.fullName }}</span>
                 <span class="text-muted-foreground block truncate text-sm">{{ d.group?.fullName }}</span>

@@ -19,7 +19,6 @@ function subtitleOf(agg: {
 <template>
   <EntityIndex
     namespace="venues"
-    vt-scope="venue"
     route-prefix="venue"
     id-param="venueId"
     :subtitle-of="subtitleOf"

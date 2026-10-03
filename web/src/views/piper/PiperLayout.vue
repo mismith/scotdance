@@ -3,12 +3,10 @@ import { computed, toRef } from 'vue'
 import { useRoute } from 'vue-router'
 import EntityLayout from '@/components/EntityLayout.vue'
 import { providePiperProfile } from '@/composables/usePiperProfile'
-import { useVtScope } from '@/lib/viewTransitionFocus'
 
 const route = useRoute()
 const piperId = computed(() => String(route.params.piperId ?? ''))
 
-useVtScope('piper').syncFocus(piperId)
 
 const { displayName, loading, notFound } = providePiperProfile(toRef(piperId))
 </script>

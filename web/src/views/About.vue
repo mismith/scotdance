@@ -19,8 +19,8 @@ const platformLabel = platform === 'ios' ? 'iOS' : platform === 'android' ? 'And
 const roles = [
   { icon: Heart, title: 'Parents', color: 'var(--dancer-1)', line: 'Follow your dancers and see their results as they happen.' },
   { icon: Star, title: 'Dancers', color: 'var(--dancer-4)', line: 'Your schedule and results, without the paper.' },
-  { icon: GraduationCap, title: 'Teachers', color: 'var(--dancer-2)', line: 'Follow your whole class and see everyone at a glance.' },
-  { icon: CalendarDays, title: 'Organisers', color: 'var(--dancer-5)', line: 'Saves hours of work and paper, and keeps every result on record for later.' },
+  { icon: GraduationCap, title: 'Teachers', color: 'var(--dancer-2)', line: 'Follow your whole studio and see everyone at a glance.' },
+  { icon: CalendarDays, title: 'Organisers', color: 'var(--dancer-5)', line: 'Saves hours of work, and keeps every result on record for later.' },
 ]
 
 const steps = [

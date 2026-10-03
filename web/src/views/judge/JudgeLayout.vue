@@ -3,12 +3,10 @@ import { computed, toRef } from 'vue'
 import { useRoute } from 'vue-router'
 import EntityLayout from '@/components/EntityLayout.vue'
 import { provideJudgeProfile } from '@/composables/useJudgeProfile'
-import { useVtScope } from '@/lib/viewTransitionFocus'
 
 const route = useRoute()
 const judgeId = computed(() => String(route.params.judgeId ?? ''))
 
-useVtScope('judge').syncFocus(judgeId)
 
 const { displayName, loading, notFound } = provideJudgeProfile(toRef(judgeId))
 </script>

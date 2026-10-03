@@ -11,7 +11,6 @@ function subtitleOf(agg: { appearanceCount?: number; location?: string | null })
 <template>
   <EntityIndex
     namespace="pipers"
-    vt-scope="piper"
     route-prefix="piper"
     id-param="piperId"
     :subtitle-of="subtitleOf"

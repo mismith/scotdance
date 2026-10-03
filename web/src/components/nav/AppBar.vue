@@ -11,9 +11,9 @@ import TopBackButton from '@/components/nav/TopBackButton.vue'
 // (and optional subtitle) that appears once the page's own big title has
 // scrolled away, or always when `showTitle` says so. Right: the page's own
 // actions (the `actions` slot), then your account, on every page.
-// The small title comes and goes the same way everywhere: a quick fade with a
-// little lift. Through a page change it cross-fades with the rest of the bar,
-// rather than travelling.
+// The small title comes and goes the same way everywhere: it slides out from
+// behind the back button (where there is one) as it fades in. Through a page
+// change it cross-fades with the rest of the bar, rather than travelling.
 withDefaults(
   defineProps<{
     title?: string | null
@@ -49,7 +49,7 @@ const scrollTop = () => {
         type="button"
         :class="[
           'min-w-0 flex-1 text-left transition-[opacity,translate] duration-(--dur-base) ease-standard',
-          showTitle && title ? 'opacity-100' : 'pointer-events-none translate-y-1 opacity-0',
+          showTitle && title ? 'opacity-100' : 'pointer-events-none -translate-x-3 opacity-0',
         ]"
         :tabindex="showTitle && title ? 0 : -1"
         @click="scrollTop"

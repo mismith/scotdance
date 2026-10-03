@@ -5,7 +5,6 @@ import { useLocalStorage } from '@vueuse/core'
 import { ArrowDownUp, Check, ChevronDown, Search, Star, Users, X } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionSearch } from '@/composables/useCompetitionSearch'
-import { useDancerNumberVt } from '@/composables/useCompetitionDancerVt'
 import { useFollowing } from '@/composables/useFollowing'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import type { EnrichedDancer } from '@/types/competition'
@@ -26,7 +25,6 @@ const route = useRoute()
 const setHeader = injectInfoHeaderSetter()
 const { competitionId, dancers, loadDancers } = useCompetition()
 const following = useFollowing()
-const numberVt = useDancerNumberVt()
 
 const loaded = ref(false)
 onMounted(async () => {
@@ -235,13 +233,11 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
               <RouterLink
                 :to="{ name: 'competition.dancer', params: { competitionId, dancerId: d.id } }"
                 class="press-row focus-inset flex min-h-15 min-w-0 flex-1 items-center gap-3 rounded-r-xl py-2 pl-4"
-                @click="numberVt.tap(d.id, 'dancers')"
               >
                 <NumberCard
                   :number="d.number"
                   size="xs"
                   :color="following.isFollowing(d) ? following.colorFor(d.dancerId) : null"
-                  :vt="numberVt.row(d.id, 'dancers')"
                 />
                 <span class="min-w-0">
                   <span class="block truncate text-base font-semibold">{{ d.fullName }}</span>

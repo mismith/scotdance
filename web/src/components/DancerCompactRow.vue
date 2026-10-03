@@ -11,7 +11,6 @@ import { formatShortDate } from '@/lib/format'
 import { getOrdinalSuffix } from '@/lib/results'
 import { platformLabel } from '@/lib/schedule'
 import type { DancerCard } from '@/composables/useDancerCards'
-import { useDancerNumberVt } from '@/composables/useCompetitionDancerVt'
 
 // One line per dancer, for people following many (a teacher's class) and
 // for dancers you've only looked at: their number at the competition that
@@ -62,7 +61,6 @@ const line = computed(() => {
   return [focus.phase === 'after' && where ? `Last: ${where}` : where, day.value?.group?.fullName].filter(Boolean).join(' · ') || focus.competition.name
 })
 
-const numberVt = useDancerNumberVt()
 const to = computed(() =>
   f.value && day.value
     ? { name: 'competition.dancer', params: { competitionId: f.value.competitionId, dancerId: day.value.dancer.id } }
@@ -76,7 +74,6 @@ const to = computed(() =>
     <RouterLink
       :to="to"
       :class="['press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap-3 py-2 pl-4', follow ? 'pr-1' : 'pr-3']"
-      @click="day && numberVt.tap(day.dancer.id, 'compact')"
     >
       <span class="flex w-11 shrink-0 justify-center">
         <NumberCard
@@ -84,7 +81,6 @@ const to = computed(() =>
           :number="day.dancer.number"
           size="xs"
           :color="color"
-          :vt="numberVt.row(day.dancer.id, 'compact')"
         />
         <Avatar v-else :name="card.name" :color="color" />
       </span>

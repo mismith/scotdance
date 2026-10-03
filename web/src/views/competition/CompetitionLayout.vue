@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, toRef, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
-import { useVtScope } from '@/lib/viewTransitionFocus'
 import { CalendarX, EyeOff, Hourglass, Pencil } from '@lucide/vue'
 import { useMeStore } from '@/stores/me'
 import AppBar from '@/components/nav/AppBar.vue'
@@ -31,7 +30,6 @@ const route = useRoute()
 const me = useMeStore()
 const competitionId = computed(() => String(route.params.competitionId ?? ''))
 
-useVtScope('comp').syncFocus(competitionId)
 
 const { competition, notFound, restricted, loading, error, loadSchedule, loadResults, schedule, scheduleHidden, resultsHidden } =
   provideCompetition(toRef(competitionId))

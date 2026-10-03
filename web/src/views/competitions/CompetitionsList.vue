@@ -232,7 +232,7 @@ const sections = computed<Section[]>(() => {
         <SquarePlus class="text-primary size-6 shrink-0" stroke-width="1.75" aria-hidden="true" />
         <p class="text-callout min-w-0 flex-1">
           <span class="font-semibold">Running a competition?</span> Add it to ScotDance.app. It’s free, and saves hours of
-          work and paper.
+          work.
         </p>
         <Button variant="tonal" :to="{ name: 'competitions.submit' }">Submit</Button>
       </section>

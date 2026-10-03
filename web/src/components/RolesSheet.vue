@@ -61,7 +61,7 @@ async function save() {
         </button>
       </div>
       <p class="text-muted-foreground text-sm leading-relaxed">
-        ScotDance.app uses this to fit itself to you. Teachers get a compact list for following a whole class, and
+        ScotDance.app uses this to fit itself to you. Teachers get a compact list for following a whole studio, and
         organisers get quick access to their competitions. It also tells the volunteer who builds ScotDance.app who it’s
         for, so the next features help the right people. Change it any time in your account.
       </p>

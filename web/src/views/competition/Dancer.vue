@@ -4,7 +4,6 @@ import { RouterLink, useRoute } from 'vue-router'
 import { ChevronRight } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
-import { useDancerNumberVt } from '@/composables/useCompetitionDancerVt'
 import { useFreshPlacings } from '@/composables/useCompetitionPlacings'
 import { useFollowing } from '@/composables/useFollowing'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
@@ -19,7 +18,6 @@ const setHeader = injectInfoHeaderSetter()
 const { competitionId, competition, dancers, loadDancers, loadResults, loadSchedule } = useCompetition()
 const { dayFor, phase } = useCompetitionDays()
 const following = useFollowing()
-const numberVt = useDancerNumberVt()
 const isFresh = useFreshPlacings()
 
 const loaded = ref(false)
@@ -76,7 +74,7 @@ const fresh = computed(() => {
 
     <template v-else>
       <header :ref="setHeader" class="flex items-center gap-4">
-        <NumberCard :number="dancer.number" :color="color" size="md" :vt="numberVt.page(dancer.id)" />
+        <NumberCard :number="dancer.number" :color="color" size="md" />
         <div class="min-w-0">
           <h1 class="text-display">{{ dancer.fullName }}</h1>
           <p class="text-muted-foreground text-sm">

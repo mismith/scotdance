@@ -32,11 +32,8 @@ export function useScrolledPast(
 }
 
 // Layout-side helpers: provide a header ref + its scrolled-past state for a
-// child Info tab. The Info component registers its <header> via the
-// setter; the layout reads `scrolledPast` to gate the small-title pill
-// reveal; the Info component reads `scrolledPast` to strip its in-flow VTNs
-// once the pill takes over as the morph target (mutually exclusive — only
-// the visible representation owns the view-transition-name).
+// child Info tab. The Info component registers its <header> via the setter;
+// the layout reads `scrolledPast` to show the small title in the bar.
 
 interface InfoHeaderCtx {
   el: Ref<HTMLElement | null>
@@ -61,8 +58,3 @@ export function injectInfoHeaderSetter(): (target: unknown) => void {
   }
 }
 
-export function injectInfoHeaderScrolledPast(): Readonly<Ref<boolean>> {
-  const ctx = inject(InfoHeaderKey, null)
-  if (!ctx) return ref(false)
-  return ctx.scrolledPast
-}

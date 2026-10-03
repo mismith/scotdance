@@ -174,10 +174,10 @@ test('Championship can be switched on before anyone is placed', async ({
   await expect(championship).toHaveAttribute('aria-checked', 'true')
   await expect(page.getByText('Entering from 6th place')).toBeVisible()
   // The starting place can be changed: from 5th, then back to 6th.
-  await page.getByRole('button', { name: 'From 6th' }).click()
+  await page.getByRole('button', { name: 'From 6th', exact: true }).click()
   await places.getByRole('button', { name: '5', exact: true }).click()
   await expect.poll(() => stored(`results/${group.id}/${sword.id}`)).toEqual(['reverse:5'])
-  await page.getByRole('button', { name: 'From 5th' }).click()
+  await page.getByRole('button', { name: 'From 5th', exact: true }).click()
   await places.getByRole('button', { name: '6', exact: true }).click()
   await expect.poll(() => stored(`results/${group.id}/${sword.id}`)).toEqual(['reverse:6'])
   // A championship start alone isn't a posted result.

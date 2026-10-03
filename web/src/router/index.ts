@@ -477,7 +477,6 @@ router.afterEach((_to, _from, failure) => {
   lastPosition = position
   pending = null
 })
-const GLOBAL_TABS = ['home', 'competitions', 'search']
 const inComp = (r: RouteLocationNormalized) => r.matched.some((m) => m.meta.ownsBottomNav)
 function motionFor(to: RouteLocationNormalized, from: RouteLocationNormalized): Motion {
   const now = Number(history.state?.position ?? lastPosition)
@@ -486,8 +485,7 @@ function motionFor(to: RouteLocationNormalized, from: RouteLocationNormalized): 
     if (now < lastPosition) return arrived ? inverse(arrived) : { way: 'back', axis: 'x' }
     return arrived ?? { way: 'forward', axis: 'x' }
   }
-  const isMorePage = !GLOBAL_TABS.includes(String(from.name ?? '')) && !inComp(from)
-  return fromTap(to.path, from.path, isMorePage) ?? byPath(to.path, from.path)
+  return fromTap(to.path, from.path) ?? byPath(to.path, from.path)
 }
 
 router.beforeResolve(async (to, from) => {

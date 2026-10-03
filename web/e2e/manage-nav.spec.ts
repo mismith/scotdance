@@ -118,7 +118,8 @@ test('Undo and Redo put a change back and forward again', async ({ page }, info)
     await venue.fill('Corn Exchange')
     await venue.press('Enter')
     await expect.poll(() => dbGet(`competitions/${comp.id}/venue`)).toBe('Corn Exchange')
-    // Saved is the quiet state: screen readers hear it, nothing shows.
+    // The ⋯ button says so, in words, for a moment (and screen readers hear it).
+    await expect(page.getByRole('button', { name: 'Undo, redo and more' })).toContainText('Saved')
     await expect(page.getByRole('status').filter({ hasText: 'Saved' })).toBeAttached()
 
     await (await barMenuItem(page, /^Undo/)).click()

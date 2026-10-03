@@ -42,29 +42,45 @@ export function alongMenu(axis: 'x' | 'y', current: DOMRect, tapped: DOMRect): M
 
 // What was tapped last, so a navigation it starts can move to match. Menus
 // say how they're laid out (`data-nav-axis`, with their current item marked
-// aria-current or data-current); back controls say `data-nav="back"`.
-let tapped: { el: Element; at: number } | null = null
+// aria-current or data-current); back controls say `data-nav="back"`. Worked
+// out as the tap lands, while the menu is still on screen (a menu can close
+// before the page changes).
+let tapped: { at: number; motion: Motion | 'link' } | null = null
 if (typeof document !== 'undefined') {
-  document.addEventListener('click', (e) => (tapped = e.target instanceof Element ? { el: e.target, at: performance.now() } : null), true)
+  document.addEventListener(
+    'click',
+    (e) => (tapped = e.target instanceof Element ? { at: performance.now(), motion: ofTap(e.target) } : null),
+    true,
+  )
+}
+
+function ofTap(el: Element): Motion | 'link' {
+  if (el.closest('[data-nav="back"]')) return { way: 'back', axis: 'x' }
+  const item = el.closest('a, button')
+  // The More menu is the tab bar's last tab, its pages a list: down the list
+  // (or across to it from another tab) comes in from the right.
+  const more = el.closest('[data-nav="more"]')
+  if (more) {
+    const current = more.querySelector('[data-current]')
+    if (!item || !current) return { way: 'next', axis: 'x' }
+    const d = item.getBoundingClientRect().top - current.getBoundingClientRect().top
+    return { way: d > 0 ? 'next' : d < 0 ? 'prev' : 'swap', axis: 'x' }
+  }
+  const menu = el.closest<HTMLElement>('[data-nav-axis]')
+  if (menu) {
+    const current = menu.querySelector('[aria-current="page"], [data-current]')
+    if (item && current && current !== item) return alongMenu(menu.dataset.navAxis === 'y' ? 'y' : 'x', current.getBoundingClientRect(), item.getBoundingClientRect())
+    if (item && item === current) return { way: 'swap', axis: 'x' }
+  }
+  return 'link'
 }
 
 /** The motion for a navigation the last tap started, if one did. */
-export function fromTap(to: string, from: string, isMorePage: boolean): Motion | null {
+export function fromTap(to: string, from: string): Motion | null {
   const tap = tapped
   tapped = null
-  if (!tap || performance.now() - tap.at > 2000 || !tap.el.isConnected) return null
-  const { el } = tap
-  if (el.closest('[data-nav="back"]')) return { way: 'back', axis: 'x' }
-  // The More menu belongs to the tab bar's last tab: across to it, or a swap
-  // between the pages it holds.
-  if (el.closest('[data-nav="more"]')) return { way: isMorePage ? 'swap' : 'next', axis: 'x' }
-  const menu = el.closest<HTMLElement>('[data-nav-axis]')
-  if (menu) {
-    const item = el.closest('a, button')
-    const current = menu.querySelector('[aria-current="page"], [data-current]')
-    if (item && current && current !== item) return alongMenu(menu.dataset.navAxis === 'y' ? 'y' : 'x', current.getBoundingClientRect(), item.getBoundingClientRect())
-    if (item === current) return { way: 'swap', axis: 'x' }
-  }
+  if (!tap || performance.now() - tap.at > 2000) return null
+  if (tap.motion !== 'link') return tap.motion
   // A link in the page.
   return byPath(to, from).way === 'back' ? { way: 'back', axis: 'x' } : { way: 'forward', axis: 'x' }
 }

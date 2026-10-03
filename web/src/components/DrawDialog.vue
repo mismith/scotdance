@@ -2,7 +2,6 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useCompetition } from '@/composables/useCompetition'
-import { useDancerNumberVt } from '@/composables/useCompetitionDancerVt'
 import { useFollowing } from '@/composables/useFollowing'
 import { findGroupDancers, getOrdinalSuffix } from '@/lib/results'
 import type {
@@ -36,7 +35,6 @@ const emit = defineEmits<{
 
 const { competitionId, dancers, draws } = useCompetition()
 const following = useFollowing()
-const numberVt = useDancerNumberVt()
 
 const dancerNumberValue = (d: EnrichedDancer) =>
   d.number != null && Number.isFinite(d.number) ? d.number : Number.POSITIVE_INFINITY
@@ -131,11 +129,10 @@ watch(
   { flush: 'post' },
 )
 
-// Opening a dancer: their number card grows into their page, and the sheet
-// leaves with this page instead of shrinking back while the next one comes in.
+// Opening a dancer: the sheet leaves with this page instead of shrinking back
+// while the next one comes in.
 const router = useRouter()
-function openDancer(dancerId: string) {
-  numberVt.tap(dancerId, 'draw')
+function openDancer() {
   const off = router.afterEach(() => {
     off()
     if (props.morph) props.morph.dismiss()
@@ -174,7 +171,7 @@ function openDancer(dancerId: string) {
               'flex min-h-14 min-w-0 flex-1 items-center gap-2.5 py-2 pl-3',
               row.dancer && 'press-row focus-inset rounded-r-xl',
             ]"
-            @click="row.dancer && openDancer(row.dancer.id)"
+            @click="row.dancer && openDancer()"
           >
             <span v-if="hasRealDraw" class="text-muted-foreground w-9 shrink-0 text-right text-sm font-semibold tabular-nums">
               {{ ord(i + 1) }}
@@ -183,7 +180,6 @@ function openDancer(dancerId: string) {
               :number="row.dancer?.number ?? row.number"
               size="xs"
               :color="row.mine ? following.colorFor(row.dancer!.dancerId) : null"
-              :vt="row.dancer ? numberVt.row(row.dancer.id, 'draw') : undefined"
             />
             <span v-if="row.dancer" class="min-w-0">
               <span class="block truncate text-base font-semibold">{{ row.dancer.fullName || '?' }}</span>

@@ -8,7 +8,6 @@ import MyDancerLine from '@/components/MyDancerLine.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
-import { useDancerNumberVt } from '@/composables/useCompetitionDancerVt'
 import { useFreshPlacings } from '@/composables/useCompetitionPlacings'
 import { oncePerPerson, useFollowing } from '@/composables/useFollowing'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
@@ -49,7 +48,6 @@ const {
 } = useCompetition()
 const { dayFor } = useCompetitionDays()
 const following = useFollowing()
-const numberVt = useDancerNumberVt()
 const isFresh = useFreshPlacings()
 
 onMounted(() => Promise.all([loadDancers(), loadResults(), loadSchedule(), loadStaff()]))
@@ -204,13 +202,11 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
               v-if="row.dancer"
               :to="{ name: 'competition.dancer', params: { competitionId, dancerId: row.dancer.id } }"
               class="press-row focus-inset flex min-h-12 items-center gap-3 px-4 py-1.5"
-              @click="numberVt.tap(row.dancerId, 'callbacks')"
             >
               <NumberCard
                 :number="row.dancer.number"
                 size="xs"
                 :color="colorOf(row.dancer)"
-                :vt="numberVt.row(row.dancerId, 'callbacks')"
               />
               <span class="min-w-0 flex-1 truncate text-base font-semibold">{{ row.dancer.fullName }}</span>
             </RouterLink>
@@ -254,7 +250,6 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
               :is="row.dancer ? RouterLink : 'div'"
               v-bind="row.dancer ? { to: { name: 'competition.dancer', params: { competitionId, dancerId: row.dancer.id } } } : {}"
               :class="['flex min-h-13 items-center gap-2.5 px-3 py-1.5', row.dancer && 'press-row focus-inset']"
-              @click="row.dancer && numberVt.tap(row.dancerId, s.dance.id)"
             >
               <span class="flex w-9 shrink-0 justify-center">
                 <Medal :place="row.place" :tied="row.tied" :fresh="isFresh(groupId, s.dance.id, row.dancerId)" />
@@ -264,7 +259,6 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
                   :number="row.dancer.number"
                   size="xs"
                   :color="colorOf(row.dancer)"
-                  :vt="numberVt.row(row.dancerId, s.dance.id)"
                 />
                 <span class="min-w-0 flex-1">
                   <span class="block truncate text-base font-semibold">{{ row.dancer.fullName }}</span>
