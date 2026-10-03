@@ -148,7 +148,9 @@ export function getOnReindex(db) {
         );
       },
     ))));
-    await getTypesense().collections('dancers').documents().import(documents, { action: 'upsert' });
+    if (documents.length) {
+      await getTypesense().collections('dancers').documents().import(documents, { action: 'upsert' });
+    }
 
     return documents;
   };

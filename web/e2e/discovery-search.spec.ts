@@ -19,7 +19,7 @@ async function search(page: Page, q: string) {
   await searchBox(page).fill(q)
 }
 
-test('finds a dancer by name and opens their page', async ({ page }) => {
+test('finds a dancer by name and opens their page', { tag: '@seed' }, async ({ page }) => {
   await search(page, 'oriana knowles')
   // A real link (cmd-click opens a tab), once its page is known.
   const row = results(page, 'Dancers').getByRole('link', { name: /Oriana Knowles/ })
@@ -36,7 +36,7 @@ test('finds a dancer by name and opens their page', async ({ page }) => {
   await expect(searchBox(page)).toHaveValue('oriana knowles')
 })
 
-test('finds a judge and a competition', async ({ page }) => {
+test('finds a judge and a competition', { tag: '@seed' }, async ({ page }) => {
   await search(page, 'aileen robertson')
   await results(page, 'Judges').getByRole('link', { name: /Aileen Robertson/ }).click()
   await expect(page).toHaveURL(/\/judges\/[^/]+\/info$/)
@@ -47,14 +47,14 @@ test('finds a judge and a competition', async ({ page }) => {
   await expect(page).toHaveURL(/\/competitions\/-L9Sc9TQWQclq_7oA3ij\/info$/)
 })
 
-test('finds a venue and opens its page', async ({ page }) => {
+test('finds a venue and opens its page', { tag: '@seed' }, async ({ page }) => {
   await search(page, 'telus')
   await results(page, 'Places').getByRole('link', { name: /Telus Convention Centre/ }).first().click()
   await expect(page).toHaveURL(/\/venues\/[^/]+\/info$/)
   await expect(page.getByRole('heading', { level: 1, name: 'Telus Convention Centre' })).toBeVisible()
 })
 
-test('finds a town and shows its competitions', async ({ page }) => {
+test('finds a town and shows its competitions', { tag: '@seed' }, async ({ page }) => {
   await search(page, 'calgary')
   // The town (venues named after it, like Calgary Life Church, show too).
   await expect(results(page, 'Places').getByRole('button', { name: /^Calgary AB\b/ })).toBeVisible()
@@ -81,7 +81,7 @@ test('odd characters are searched as text, never break the page', async ({ page 
   expect(errors).toEqual([])
 })
 
-test('remembers recent searches until cleared', async ({ page }) => {
+test('remembers recent searches until cleared', { tag: '@seed' }, async ({ page }) => {
   await search(page, 'Oriana')
   await expect(results(page, 'Dancers')).toBeVisible()
   // Recorded once typing pauses.

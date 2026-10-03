@@ -212,7 +212,7 @@ async function newUser() {
 test.describe('the biggest competitions', () => {
   test.setTimeout(90_000)
 
-  test('Nationals: 1,091 dancers list, search and sort quickly', async ({ page }) => {
+  test('Nationals: 1,091 dancers list, search and sort quickly', { tag: '@seed' }, async ({ page }) => {
     const started = Date.now()
     await page.goto('/competitions/-L9Sc9TQWQclq_7oA3ij/dancers')
     const rows = page.locator('main ul > li')
@@ -237,7 +237,7 @@ test.describe('the biggest competitions', () => {
     expect(sorted).toBeLessThan(3000)
   })
 
-  test('SDCCS2025 (1,243 dancers, unpublished, schedule hidden) opens for a system admin', async ({ page }) => {
+  test('SDCCS2025 (1,243 dancers, unpublished, schedule hidden) opens for a system admin', { tag: '@seed' }, async ({ page }) => {
     const email = `${uid('admin')}@example.test`
     await grantSystemAdmin(await ensureUser(email))
     await signInAs(page, email)

@@ -94,8 +94,9 @@ test('a step at a time, checked as it goes, and sent once however fast it’s ta
     await next(page)
     await expect(page.getByText('Add the town or city.')).toBeVisible()
     await expect(heading(page, 2)).toBeVisible()
-    // Typed and not picked from the suggestions: it stays as the name.
-    await page.getByRole('combobox', { name: 'Venue name' }).fill('Spruce Meadows')
+    // Typed and not picked from the suggestions: it stays as the name. (By
+    // label: a search box with a Maps key, a plain one without, as in CI.)
+    await page.getByLabel('Venue name', { exact: true }).fill('Spruce Meadows')
     await page.getByRole('textbox', { name: 'Town or city (required)' }).fill('Calgary, AB')
 
     // Back and Next keep what was typed.
@@ -104,7 +105,7 @@ test('a step at a time, checked as it goes, and sent once however fast it’s ta
     await expect(page.getByRole('textbox', { name: 'Name (required)', exact: true })).toHaveValue(name)
     await expect(page.getByRole('textbox', { name: 'Description' })).toHaveValue('Outdoors. Bring a chair.')
     await next(page)
-    await expect(page.getByRole('combobox', { name: 'Venue name' })).toHaveValue('Spruce Meadows')
+    await expect(page.getByLabel('Venue name', { exact: true })).toHaveValue('Spruce Meadows')
     await expect(page.getByRole('textbox', { name: 'Town or city (required)' })).toHaveValue('Calgary, AB')
     await next(page)
 
@@ -240,7 +241,7 @@ test('the answers so far outlast a reload, skipping the overview, until started 
   await expect(page.getByText('Picked up where you left off.')).toHaveCount(0)
 })
 
-test('Home has a way in, below every competition', async ({ page }) => {
+test('Home has a way in, below every competition', { tag: '@seed' }, async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('main').getByRole('link', { name: 'See all competitions' })).toBeVisible()
   await page.getByRole('main').getByRole('link', { name: 'Add it to ScotDance.app' }).click()

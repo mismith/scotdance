@@ -961,7 +961,7 @@ test('narrow phone: the builder and public pages fit 360px, light and dark', asy
   }
 })
 
-test('legacy competitions read as before, on their day (read only)', async ({ page }) => {
+test('legacy competitions read as before, on their day (read only)', { tag: '@seed' }, async ({ page }) => {
   const errors = collectErrors(page)
   // Nationals: three named days (one with an old ISO date), numeric spacers,
   // deleted age groups and judges still listed in places.

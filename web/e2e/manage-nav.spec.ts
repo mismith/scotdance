@@ -114,7 +114,8 @@ test('Undo and Redo put a change back and forward again', async ({ page }, info)
   try {
     await signIn(page, org.email)
     await page.goto(`/competitions/${comp.id}/manage/details`)
-    const venue = page.getByRole('combobox', { name: 'Venue name' })
+    // By label: a search box with a Maps key, a plain one without (as in CI).
+    const venue = page.getByLabel('Venue name', { exact: true })
     await venue.fill('Corn Exchange')
     await venue.press('Enter')
     await expect.poll(() => dbGet(`competitions/${comp.id}/venue`)).toBe('Corn Exchange')

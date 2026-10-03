@@ -13,7 +13,7 @@ const ORIANA = '-OsoHXgf8ThIQ81eayjM'
 
 const findBox = (page: Page) => page.getByRole('searchbox')
 
-test('the Judges list filters by name and opens a judge', async ({ page }) => {
+test('the Judges list filters by name and opens a judge', { tag: '@seed' }, async ({ page }) => {
   await page.goto('/judges')
   await expect(page).toHaveTitle('Judges • ScotDance.app')
   await expect(page.getByRole('heading', { level: 1, name: 'Judges' })).toBeVisible()
@@ -32,7 +32,7 @@ test('the Judges list filters by name and opens a judge', async ({ page }) => {
   await expect(page).toHaveURL(/\/judges$/)
 })
 
-test('a judge page lists where they’ve judged, and each opens', async ({ page }) => {
+test('a judge page lists where they’ve judged, and each opens', { tag: '@seed' }, async ({ page }) => {
   await page.goto(`/judges/${AILEEN}/info`)
   await expect(page.getByRole('main').getByText(/^Judge/).first()).toBeVisible()
   const first = page.getByRole('link', { name: /Premier Pre-Championship/ })
@@ -41,7 +41,7 @@ test('a judge page lists where they’ve judged, and each opens', async ({ page 
   await expect(page).toHaveURL(/\/competitions\/-L9Sck5Kb-4D4wYsQWtZ\/info$/)
 })
 
-test('a venue page has directions, a map and its competitions', async ({ page }) => {
+test('a venue page has directions, a map and its competitions', { tag: '@seed' }, async ({ page }) => {
   await page.goto(`/venues/${LIFE_CHURCH}/info`)
   await expect(page.getByRole('heading', { level: 1, name: 'Calgary Life Church' })).toBeVisible()
   const directions = page.getByRole('link', { name: 'Directions' })
@@ -50,7 +50,7 @@ test('a venue page has directions, a map and its competitions', async ({ page })
   await expect(page.getByRole('link', { name: /Evelyn Nicholsen Leinweber/ })).toBeVisible()
 })
 
-test('a dancer page shows every competition with their number there', async ({ page }) => {
+test('a dancer page shows every competition with their number there', { tag: '@seed' }, async ({ page }) => {
   await page.goto(`/dancers/${ORIANA}/info`)
   await expect(page.getByRole('heading', { level: 1, name: 'Oriana Knowles' })).toBeVisible()
   await expect(page.getByText(/5 competitions since 2018/)).toBeVisible()
@@ -75,14 +75,14 @@ for (const [path, title] of [
   })
 }
 
-test('following a judge signed out asks you to sign in first', async ({ page }) => {
+test('following a judge signed out asks you to sign in first', { tag: '@seed' }, async ({ page }) => {
   await page.goto(`/judges/${AILEEN}/info`)
   await page.getByRole('button', { name: 'Follow', exact: true }).click()
   await expect(page.locator('dialog[open]')).toBeVisible()
   await expect(page.locator('dialog[open]').getByRole('heading', { name: 'Sign in to follow Aileen Robertson' })).toBeVisible()
 })
 
-test('following a judge puts them under Following on Judges, and unfollowing takes them off', async ({ page }) => {
+test('following a judge puts them under Following on Judges, and unfollowing takes them off', { tag: '@seed' }, async ({ page }) => {
   const email = `${uid('follow')}@example.test`
   await ensureUser(email)
   await signIn(page, email)

@@ -30,7 +30,7 @@ test('browse opens each list', async ({ page }) => {
   }
 })
 
-test('competitions, people and venues you opened come back, newest first', async ({ page }) => {
+test('competitions, people and venues you opened come back, newest first', { tag: '@seed' }, async ({ page }) => {
   const visits = [
     { path: '/judges/-OsoH2I8uTd5UQHwDum4/info', name: 'Aileen Robertson', kind: 'Judge' },
     { path: '/competitions/-L9Sc9TQWQclq_7oA3ij/info', name: 'Nationals', kind: 'Competition' },
@@ -55,7 +55,7 @@ test('competitions, people and venues you opened come back, newest first', async
   await expect(page).toHaveURL(/\/competitions\/-L9Sc9TQWQclq_7oA3ij\/info$/)
 })
 
-test('Clear empties Recently viewed, on Search, Home and the Dancers list alike', async ({ page }) => {
+test('Clear empties Recently viewed, on Search, Home and the Dancers list alike', { tag: '@seed' }, async ({ page }) => {
   const dancer = async () => {
     await page.goto('/dancers/-OsoHXgf8ThIQ81eayjM/info')
     await expect(page.getByRole('heading', { level: 1, name: 'Oriana Knowles' })).toBeVisible()

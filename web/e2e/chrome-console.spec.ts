@@ -45,7 +45,7 @@ const ROUTES = [
 // socket closing when a test navigates away mid-connect.
 const IGNORE = [/relay\.crisp\.chat/]
 
-test('every public page loads without errors', async ({ page }) => {
+test('every public page loads without errors', { tag: '@seed' }, async ({ page }) => {
   test.setTimeout(ROUTES.length * 15_000)
   const problems: string[] = []
   page.on('console', (m) => {

@@ -45,13 +45,22 @@ const shift = (link: Locator) =>
   slider(link).evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m41)
 const action = (page: Page) => page.getByText('Delete', { exact: true })
 
-/** A finger on the screen: touch events, as a phone sends them. */
+/**
+ * A finger on the screen: touch events, as a phone sends them. Each carries
+ * its own time, `after` the one before, so how fast the finger seems to move
+ * (what makes a flick) doesn't depend on how busy the machine is.
+ */
 async function touch(page: Page, at: { x: number; y: number }) {
   const cdp = await page.context().newCDPSession(page)
+  let clock = Date.now()
   const send = (
     type: 'touchStart' | 'touchMove' | 'touchEnd' | 'touchCancel',
     points = [at],
-  ) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points })
+    after = 0,
+  ) => {
+    clock += after
+    return cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points, timestamp: clock / 1000 })
+  }
   await send('touchStart')
   return {
     /** Slide to a point at an easy pace (or quickly, in fewer steps). */
@@ -62,18 +71,19 @@ async function touch(page: Page, at: { x: number; y: number }) {
           x: from.x + ((x - from.x) * i) / steps,
           y: from.y + ((y - from.y) * i) / steps,
         }
-        await send('touchMove')
+        await send('touchMove', [at], 20)
         await page.waitForTimeout(20)
       }
     },
     /** Lift the finger after a pause, so it isn't a flick. */
     async lift() {
       await page.waitForTimeout(150)
-      await send('touchEnd', [])
+      await send('touchEnd', [], 150)
     },
-    flick: () => send('touchEnd', []),
+    /** Lift it straight away, still moving. */
+    flick: () => send('touchEnd', [], 8),
     /** The system takes the touch away (a call coming in, say). */
-    cancel: () => send('touchCancel', []),
+    cancel: () => send('touchCancel', [], 20),
   }
 }
 

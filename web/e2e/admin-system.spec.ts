@@ -72,7 +72,8 @@ test('Submissions: tidy one up, or delete it', async ({ page }) => {
 
     await page.getByRole('button', { name: 'Delete' }).click()
     await page.locator('dialog[open]').getByRole('button', { name: 'Delete' }).click()
-    await expect(page.getByText('This submission isn’t here any more')).toBeVisible()
+    // Beside the others it says so; if it was the only one, the inbox is empty.
+    await expect(page.getByText(/^(This submission isn’t here any more|No submissions)$/)).toBeVisible()
     expect(await dbGet(`competitions:submissions/${id}`)).toBeNull()
   } finally {
     await Promise.all([dbRemove(`competitions:submissions/${id}`), dbRemove(`users:permissions/${sys.id}`)])

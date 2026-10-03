@@ -211,7 +211,7 @@ test.describe('page changes', () => {
     ])
   })
 
-  test('a link in the page goes deeper, from the right; its back button comes back out', async ({ page }) => {
+  test('a link in the page goes deeper, from the right; its back button comes back out', { tag: '@seed' }, async ({ page }) => {
     await countTransitions(page)
     await page.goto('/competitions')
     await page.getByRole('main').getByRole('link', { name: /QA Highland Games/ }).first().click()

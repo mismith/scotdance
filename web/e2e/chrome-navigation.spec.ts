@@ -39,7 +39,7 @@ test('the tab bar (the sidebar, on wide screens) marks where you are, and tappin
   await expect(appTab(page, 'Search')).toHaveAttribute('aria-current', 'page')
 })
 
-test('going back returns to where you were in a long list', async ({ page }) => {
+test('going back returns to where you were in a long list', { tag: '@seed' }, async ({ page }) => {
   await page.goto('/judges')
   await expect(page.getByRole('heading', { level: 1, name: 'Judges' })).toBeVisible()
   const row = page.getByRole('link', { name: /^Lisa Barker/ }).first()
@@ -60,7 +60,7 @@ test('going back returns to where you were in a long list', async ({ page }) => 
   await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(40)
 })
 
-test('Back on a deep link goes up to the section, and the browser’s Back doesn’t bounce down again', async ({ page }) => {
+test('Back on a deep link goes up to the section, and the browser’s Back doesn’t bounce down again', { tag: '@seed' }, async ({ page }) => {
   await page.goto('/judges/-OsoH2I8uTd5UQHwDum4/info')
   const back = page.getByRole('button', { name: 'Back to Judges' })
   await expect(back).toBeVisible()
@@ -70,7 +70,7 @@ test('Back on a deep link goes up to the section, and the browser’s Back doesn
   await expect(page).not.toHaveURL(/\/judges\/-OsoH2I8uTd5UQHwDum4/)
 })
 
-test('leaving a competition opened from a link goes to Competitions, without bouncing back', async ({ page }) => {
+test('leaving a competition opened from a link goes to Competitions, without bouncing back', { tag: '@seed' }, async ({ page }) => {
   await page.goto('/competitions/-L9Sc9TQWQclq_7oA3ij/info')
   await page.getByRole('button', { name: 'Back to Competitions', exact: true }).click()
   await expect(page).toHaveURL(/\/competitions$/)
@@ -78,7 +78,7 @@ test('leaving a competition opened from a link goes to Competitions, without bou
   await expect(page).not.toHaveURL(/-L9Sc9TQWQclq_7oA3ij/)
 })
 
-test('Back after tapping through still steps back through history', async ({ page }) => {
+test('Back after tapping through still steps back through history', { tag: '@seed' }, async ({ page }) => {
   await page.goto('/judges')
   await page.getByRole('link', { name: /^Aileen Robertson/ }).first().click()
   await expect(page).toHaveURL(/\/judges\/[^/]+\/info$/)

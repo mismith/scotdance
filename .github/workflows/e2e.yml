@@ -1,0 +1,87 @@
+name: E2E
+
+# The app's Playwright suite (web/e2e) against the Firebase emulators and a
+# Typesense of its own, on next (and ci/ branches, to try a change to this
+# without deploying next). main and develop still run the old app's Cypress
+# suite from their own test.yml, which next no longer has.
+on:
+  push:
+    branches:
+      - next
+      - 'ci/**'
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    # The suite is written on Edmonton time, and two specs set the browser to
+    # it: the tests' own idea of "today" (isoDay) has to match.
+    env:
+      TZ: America/Edmonton
+    services:
+      typesense:
+        image: typesense/typesense:0.23.1
+        env:
+          TYPESENSE_API_KEY: xyz
+          TYPESENSE_DATA_DIR: /data
+          TYPESENSE_ENABLE_CORS: true
+        ports:
+          - 8108:8108
+        volumes:
+          - /tmp/typesense-server-data:/data
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: |
+            web/package-lock.json
+            functions/package-lock.json
+      # The database emulator runs on Java.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Cache Firebase emulators
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ runner.os }}-15
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+      - name: Install and build functions
+        working-directory: functions
+        run: npm ci && npm run build
+      # Empty config: no Postmark (invite and approval emails stay unsent)
+      # and a stand-in geocoding key (an empty one sends the emulator off to
+      # Secret Manager).
+      - name: Functions secrets for the emulator
+        run: printf 'RUNTIME_CONFIG={}\nGOOGLE_GEOCODING_API_KEY=unused\n' > functions/.secret.local
+      # One functions worker (--inspect-functions), as in `npm run local`:
+      # otherwise seeding spawns so many that the database emulator falls over.
+      # Signed out, the CLI can't look up the project's database and guesses
+      # firebase-scotdance, so the triggers would listen where nothing's
+      # written: name the one the app uses.
+      - name: E2E
+        env:
+          DATABASE_URL: https://scotdance.firebaseio.com
+        run: >-
+          npx --yes firebase-tools@15 emulators:exec
+          --project firebase-scotdance
+          --only auth,database,functions,storage
+          --inspect-functions 9229
+          'cd web && npx playwright test --grep-invert @seed'
+      - name: Keep traces of failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: web/test-results/
+          retention-days: 7

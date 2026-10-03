@@ -145,7 +145,7 @@ test('a competition in the list opens its page', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: today.name })).toBeVisible()
 })
 
-test('the calendar shows every competition, past ones too, whatever the list shows', async ({ page }) => {
+test('the calendar shows every competition, past ones too, whatever the list shows', { tag: '@seed' }, async ({ page }) => {
   // Pretend it's May 2019: Nationals (14 Jan 2019) is four months back. The
   // calendar is its own view of when, so the list's Upcoming choice doesn't apply.
   await page.goto('/competitions?now=2019-05-14')

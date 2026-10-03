@@ -51,7 +51,7 @@ test('the basics: name, date, number, description; required ones say so', async 
   await description.fill('Entries close a week before.')
   await description.press('Enter')
   await description.pressSequentially('Bring a chair.')
-  await page.getByRole('combobox', { name: 'Venue name' }).focus()
+  await page.getByLabel('Venue name', { exact: true }).focus()
   await expectDb(info('description'), 'Entries close a week before.\nBring a chair.')
 
   // Town or city: the short form v3 wrote.
