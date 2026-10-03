@@ -1,6 +1,6 @@
 import { getPostmark } from './utility/email';
 import { attachUserToCompetition } from './utility/competition';
-import { isCypress, isEmulator } from './utility/env';
+import { isEmulator } from './utility/env';
 
 // A failed email mustn't fail the trigger: the submission (or the
 // competition made from it) stands, and Murray sees it in System admin.
@@ -35,7 +35,6 @@ class Submissions {
   }
 
   async handleCreate(snap, ctx) {
-    if (isCypress()) return;
 
     const { submissionId } = ctx.params;
     const submission = snap.val();
@@ -85,7 +84,6 @@ class Submissions {
       competitionId,
     });
 
-    if (isCypress()) return;
 
     // send email
     await sendEmail({

@@ -1,7 +1,6 @@
 import { https } from 'firebase-functions/v1';
 import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 
-import { isCypress } from './utility/env';
 import { ensureAdmin } from './utility/competition';
 import { getTypesense, indexBestEffort, sameExcept } from './utility/typesense';
 import { createAggregator } from './utility/aggregate';
@@ -46,7 +45,6 @@ function dancerExtender(dancer, { dancerId, competitionId }) {
 export function getOnCreate(db: any) {
   const agg = createAggregator(db, aggregatorConfig);
   return async function onCreate(snap: any, ctx: any) {
-    if (isCypress()) return;
     const { dancerId, competitionId } = ctx.params;
     const doc = dancerExtender(snap.val(), { dancerId, competitionId });
     await indexBestEffort('dancer upsert', () => getTypesense().collections('dancers').documents().upsert(doc));
@@ -57,7 +55,6 @@ export function getOnCreate(db: any) {
 export function getOnUpdate(db: any) {
   const agg = createAggregator(db, aggregatorConfig);
   return async function onUpdate(change: any, ctx: any) {
-    if (isCypress()) return;
     const { dancerId, competitionId } = ctx.params;
     // A back-pointer write changes nothing search uses.
     if (!sameExcept(change.before.val(), change.after.val(), [aggregatorConfig.backPointerField])) {
@@ -71,7 +68,6 @@ export function getOnUpdate(db: any) {
 export function getOnDelete(db: any) {
   const agg = createAggregator(db, aggregatorConfig);
   return async function onDelete(snap: any, ctx: any) {
-    if (isCypress()) return;
     const { dancerId } = ctx.params;
     await getTypesense().collections('dancers').documents(dancerId).delete()
       .catch(() => {});

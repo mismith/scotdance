@@ -1,6 +1,5 @@
 import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 
-import { isCypress } from './utility/env';
 import { ensureAdmin } from './utility/competition';
 import { getTypesense, indexBestEffort, sameExcept } from './utility/typesense';
 
@@ -60,14 +59,12 @@ function competitionExtender(comp: any, { competitionId }: { competitionId: stri
 }
 
 export async function onCreate(snap: any, ctx: any) {
-  if (isCypress()) return;
   const { competitionId } = ctx.params;
   const doc = competitionExtender(snap.val(), { competitionId });
   await indexBestEffort('competition upsert', () => getTypesense().collections('competitions').documents().upsert(doc));
 }
 
 export async function onUpdate({ before, after: snap }: any, ctx: any) {
-  if (isCypress()) return;
   // The venue back-pointer changes nothing search uses.
   if (sameExcept(before.val(), snap.val(), ['venueId'])) return;
   const { competitionId } = ctx.params;
@@ -76,7 +73,6 @@ export async function onUpdate({ before, after: snap }: any, ctx: any) {
 }
 
 export async function onDelete(_snap: any, ctx: any) {
-  if (isCypress()) return;
   const { competitionId } = ctx.params;
   await getTypesense()
     .collections('competitions')

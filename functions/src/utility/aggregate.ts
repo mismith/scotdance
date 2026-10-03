@@ -10,7 +10,6 @@
 // See docs/adr/0003-first-class-entities.md for the design and
 // docs/aggregators.md for the runtime flow.
 
-import { isCypress } from './env';
 import { normalizeName } from './normalize';
 
 export interface AppearanceCtx {
@@ -445,11 +444,9 @@ export function createAggregator<R, A extends Record<string, any>>(
 
   return {
     async onCreate(snap, ctx) {
-      if (isCypress()) return;
       await maintainOnWrite(snap.val() as R | null, null, ctxFor(ctx.params));
     },
     async onUpdate(change, ctx) {
-      if (isCypress()) return;
       await maintainOnWrite(
         change.after.val() as R | null,
         change.before.val() as R | null,
@@ -457,7 +454,6 @@ export function createAggregator<R, A extends Record<string, any>>(
       );
     },
     async onDelete(snap, ctx) {
-      if (isCypress()) return;
       const record = snap.val() as R | null;
       const actx = ctxFor(ctx.params);
       const ids = new Set<string>();
@@ -477,7 +473,6 @@ export function createAggregator<R, A extends Record<string, any>>(
     // them in parallel would flood RTDB with writes (and re-fire triggers).
      
     async syncCompetition(competitionId) {
-      if (isCypress()) return { linked: 0, unlinked: 0 };
       // A deleted competition's records (if any are left) all unlink.
       const comp = (await db.child(`competitions/${competitionId}`).get()).val();
       const records = await iterate(db, competitionId, comp);

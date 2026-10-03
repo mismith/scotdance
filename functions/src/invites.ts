@@ -1,11 +1,10 @@
 import { FirebaseInvites } from '@mismith/firebase-tools/dist/server';
 import { getPostmark } from './utility/email';
 import { attachUserToCompetition } from './utility/competition';
-import { isCypress, isEmulator } from './utility/env';
+import { isEmulator } from './utility/env';
 
 class Invites extends FirebaseInvites {
   async handleCreate(snap, ctx) {
-    if (isCypress()) return;
 
     // get dynamic link
     const { competitionId, inviteId } = ctx.params;

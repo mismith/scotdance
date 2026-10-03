@@ -12,17 +12,22 @@ Modernize your highland dancing experience by interacting with program-of-events
 
 ## Dev
 
+The app lives in `web/` (Vue 3 + Vite), the Cloud Functions in `functions/`, and the native shells (Capacitor) at the root. Use the Node version in `.nvmrc`.
+
 Command | Description
 --- | ---
-`npm i` | install dependencies
-`npm run dev` | serve app with emulated data and hot reloading at https://localhost:3000
-`npm run dev:cy` | shortcut for running `dev` + `cy -- open`
-`npm test` | build app and run cypress tests locally (equivalently to how they will be run in CI)
-`npm run lint` / `npm run lint:fix` | show code formatting tips (and fix them)
-`npm run build` | build for release to production (including apps)
-`npm run report` | open bundle size visualizer (`stats.html`)
+`npm i` (in the root, `web/` and `functions/`) | install dependencies
+`npm run local` (in `web/`) | serve the app at http://localhost:5273 with the Firebase emulators, Typesense (Docker) and hot reloading
+`npm test` (in `web/`) | run the unit tests
+`npm run e2e` (in `web/`) | run the Playwright tests against `npm run local`
+`npm run lint` / `npm run type-check` (in `web/`) | check the code
+`npm run report` (in `web/`) | open the bundle size visualizer
+`npm run brand` (in `web/`) | regenerate the icons and splash screens from `resources/`
+`npm run build` | build the app and sync it into the native projects
 `npm run release` | create version commit and tag in git
-`npm run deploy` | push local build to production and `main` git branch
+`npm run deploy` | deploy `web/dist`, functions and rules to production and push to `main`
+
+See [the v4 release runbook](./docs/v4-release-runbook.md) for local testing gotchas.
 
 
 ## Admin
@@ -38,7 +43,7 @@ Links to the admin panels needed to manage this project:
 * Email sending/templates: [Postmark](https://account.postmarkapp.com/servers/4370108/overview)
 * Live chat: [Crisp](https://app.crisp.chat/website/160e5d08-deea-4187-a21b-39762a904c26/inbox/)
 * Full-text search: [Typesense (via Render.com)](https://dashboard.render.com/)
-* Native app: [Capacitor](https://capacitorjs.com/), with image asset generation via the VSCode extension
+* Native app: [Capacitor](https://capacitorjs.com/), with icons and splash screens from `npm run brand` (in `web/`)
 * Release notes: [Changelog](./CHANGELOG.md)
 
 
@@ -47,7 +52,7 @@ Links to the admin panels needed to manage this project:
 ### Combined Release
 
 1. While waiting between/for any of the following steps, write release notes in `CHANGELOG.md`
-2. Adjust/increment the version in `package.json` (this will be propagated by the `sync-version` script that gets called pre-`build`)
+2. Set the version with `npm run set-version -- 1.2.3` (root `package.json` and the native projects), and match it in `web/package.json` (the app's update prompt reads that one)
 3. Build and Deploy to app stores:
     1. Perform steps 1-5 of the Apple App Store instructions
     2. Perform steps 2-8 of the Google Play Store instructions
@@ -56,9 +61,9 @@ Links to the admin panels needed to manage this project:
     1. Commit version change and release notes using the release version as the commit message (e.g. `1.0.0`)
     2. Tag the commit using the release version prepended with `v` (e.g. `v1.0.0`)
 5. Deploy to web via `npm run deploy`, which consists of:
-    1. Deploy to web via `firebase deploy`
+    1. Deploy to web via `firebase deploy` (hosting, functions, database rules and storage rules)
     2. Push to `main`
-6. Open the ScotDance admin panel's [versions page](https://scotdance.app/#/admin/info/versions) and update the appropriate version numbers as apps are released/approved
+6. Open System admin's [Tools page](https://scotdance.app/admin/tools) and update the version numbers as each app is released/approved
 
 ### Apple App Store
 

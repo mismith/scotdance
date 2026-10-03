@@ -5,35 +5,9 @@
   "description": "Highland dancing event tracker",
   "author": "Murray Rowan <murray@mismith.info>",
   "scripts": {
-    "init": "cp -n .env.example .env.local",
-    "is:cy": "touch ./functions/IS_CYPRESS",
-    "not:cy": "rm -rf ./functions/IS_CYPRESS",
-    "emulate:firebase": "firebase emulators:start --import=.firebase/emulator-data",
-    "emulate:typesense": "./typesense-server --log-dir .typesense/logs --data-dir .typesense/emulator-data --listen-port=8108 --api-key=xyz --enable-cors",
-    "dev:functions": "npm run --prefix functions/ dev",
-    "dev:www": "vite",
-    "dev:production": "run-p not:cy dev:functions \"emulate:firebase -- --export-on-exit\" emulate:typesense \"dev:www -- --open '/?production'\"",
-    "dev": "run-p not:cy dev:functions \"emulate:firebase -- --export-on-exit\" emulate:typesense dev:www",
-    "dev:cy": "run-p is:cy dev:functions emulate:firebase emulate:typesense \"dev:www -- --open '/?cypress'\" \"cy -- open --browser=chrome --e2e\"",
-    "dev:cy:ci": "run-s build:www test:cy:ci",
-    "cy": "CYPRESS_BASE_URL=https://localhost:3000 cypress",
-    "cy:ci": "CYPRESS_BASE_URL=http://localhost:5050 cypress",
-    "test:cy:ci": "npm run is:cy && firebase emulators:exec \"npm run cy:ci -- run --browser=chrome --e2e\"",
-    "test": "npm run lint && npm run build:ci && npm run test:cy:ci",
-    "lint:www": "eslint './{src,cypress}/**/*.{js,ts,vue}'",
-    "lint:functions": "npm run --prefix functions/ lint",
-    "lint": "npm run lint:www && npm run lint:functions",
-    "lint:fix": "npm run lint:www -- --fix && npm run lint:functions -- -- --fix",
+    "build": "npm --prefix web run build && cap sync",
     "set-version": "node ./set-version.js",
     "postset-version": "npx cap copy",
-    "sync-version": "pilfer-package version > public/version.json && npm run set-version -- $npm_package_version",
-    "notify": "node ./notify.js",
-    "resources": "cordova-res ios --skip-config --copy && cordova-res android --skip-config --copy",
-    "build:www": "vite build",
-    "build:functions": "npm run --prefix functions/ build",
-    "build:ci": "npm run build:www && npm run build:functions",
-    "build": "npm run lint && npm run build:ci && npm run sync-version && npx cap sync && npm run notify 'Build Complete'",
-    "report": "npx vite-bundle-visualizer && open stats.html",
     "release": "git commit -a -m $npm_package_version && git tag \"v${npm_package_version}\"",
     "deploy": "firebase deploy --only hosting:production,functions,database,storage && git push origin HEAD:main --tags"
   },
@@ -45,128 +19,14 @@
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/ios": "^8.5.2",
     "@capacitor/splash-screen": "^8.0.2",
-    "@capacitor/text-zoom": "^8.0.1",
-    "@googlemaps/js-api-loader": "^1.16.6",
-    "@handsontable/vue": "^11.1.0",
-    "@mdi/js": "^5.9.55",
-    "@mismith/firebase-tools": "^1.4.1",
-    "@outluch/v-file": "^1.0.0",
-    "array-move-multiple": "^1.0.5",
-    "compare-versions": "^3.6.0",
-    "deep-property": "^1.1.0",
-    "fast-html-parser": "^1.0.1",
-    "firebase": "^10.11.0",
-    "fuse.js": "^7.0.0",
-    "handsontable": "^11.1.0",
-    "lodash.debounce": "^4.0.8",
-    "lodash.find": "^4.6.0",
-    "lodash.groupby": "^4.6.0",
-    "lodash.orderby": "^4.6.0",
-    "lodash.pick": "^4.4.0",
-    "md5": "^2.3.0",
-    "moment": "^2.29.2",
-    "node-notifier": "^8.0.2",
-    "obj-flatten": "^2.0.6",
-    "roboto-fontface": "*",
-    "sanitize-html": "^2.5.2",
-    "save-csv": "^4.1.0",
-    "simple-line-icons": "^2.5.5",
-    "vue": "^2.7.16",
-    "vue-async-computed": "^3.9.0",
-    "vue-body-class": "^2.0.0-beta.2",
-    "vue-localstorage": "^0.6.2",
-    "vue-observe-visibility": "^0.4.6",
-    "vue-reactive-provide": "^0.3.0",
-    "vue-router": "^3.4.3",
-    "vue-scrollto": "^2.18.2",
-    "vuedraggable": "^2.24.1",
-    "vuefire": "^1.4.4",
-    "vuetify": "^2.7.2",
-    "vuex": "^3.5.1",
-    "vuex-map-fields": "^1.4.0",
-    "vuexfire": "^2.3.0",
-    "xlsx": "^0.18.2"
+    "@capacitor/text-zoom": "^8.0.1"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.2",
-    "@vitejs/plugin-vue2": "^2.3.1",
-    "autoprefixer": "^10.3.7",
-    "cypress": "^13.8.0",
-    "cypress-file-upload": "^5.0.8",
-    "eslint": "^7.32.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-import-resolver-alias": "^1.1.2",
-    "eslint-plugin-cypress": "^2.12.1",
-    "eslint-plugin-import": "^2.25.2",
-    "eslint-plugin-vue": "^7.20.0",
-    "firebase-admin": "^10.0.2",
-    "firebase-tools": "^15.32.1",
-    "lint-staged": "^11.2.4",
-    "npm-run-all": "^4.1.5",
-    "pilfer-package": "^1.0.0",
-    "postcss": "^8.3.11",
-    "sass": "^1.26.11",
-    "unplugin-vue-components": "^0.27.3",
-    "vite": "^5.3.5",
-    "vite-plugin-eslint": "^1.8.1",
-    "vite-plugin-mkcert": "^1.17.5",
-    "vue-template-compiler": "^2.7.16"
+    "firebase-tools": "^15.32.1"
   },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "parserOptions": {
-      "ecmaVersion": 2020
-    },
-    "settings": {
-      "import/resolver": {
-        "alias": {
-          "map": [
-            [
-              "@",
-              "./src"
-            ]
-          ]
-        }
-      }
-    },
-    "extends": [
-      "plugin:cypress/recommended",
-      "plugin:vue/essential",
-      "airbnb-base"
-    ],
-    "rules": {
-      "arrow-body-style": 0,
-      "max-len": 0,
-      "no-unused-vars": 1,
-      "import/no-cycle": 0,
-      "vue/no-mutating-props": 1,
-      "import/no-extraneous-dependencies": [
-        "error",
-        {
-          "devDependencies": [
-            "**/*.test.js",
-            "**/*.spec.js",
-            "cypress/**/*"
-          ]
-        }
-      ]
-    }
-  },
-  "postcss": {
-    "plugins": {
-      "autoprefixer": {}
-    }
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not ie <= 11"
-  ],
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "license": "MIT",
   "repository": {

@@ -5,7 +5,6 @@
 
 import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 
-import { isCypress } from './env';
 import { ensureAdmin } from './competition';
 import { getTypesense, indexBestEffort, sameExcept } from './typesense';
 import { createAggregator } from './aggregate';
@@ -60,7 +59,6 @@ export function createStaffEntity(config: StaffEntityKind) {
   function getOnCreate(db: any) {
     const agg = createAggregator(db, aggregatorConfig);
     return async function onCreate(snap: any, ctx: any) {
-      if (isCypress()) return;
       const member = snap.val();
       if (isMatch(member)) {
         const { competitionId, staffId } = ctx.params;
@@ -76,7 +74,6 @@ export function createStaffEntity(config: StaffEntityKind) {
   function getOnUpdate(db: any) {
     const agg = createAggregator(db, aggregatorConfig);
     return async function onUpdate(change: any, ctx: any) {
-      if (isCypress()) return;
       const member = change.after.val();
       const prev = change.before.val();
       const { competitionId, staffId } = ctx.params;
@@ -98,7 +95,6 @@ export function createStaffEntity(config: StaffEntityKind) {
   function getOnDelete(db: any) {
     const agg = createAggregator(db, aggregatorConfig);
     return async function onDelete(snap: any, ctx: any) {
-      if (isCypress()) return;
       const { competitionId, staffId } = ctx.params;
       if (isMatch(snap.val())) await safeDelete(staffDocId(competitionId, staffId));
       await agg.onDelete(snap, ctx);

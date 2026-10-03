@@ -74,30 +74,29 @@ glass tab bar, Back out of a competition, dark mode, large text.
 
 ## Phase 3: cutover (ADR 0001 checklist)
 
-- [ ] Hosting: the `production` target serves `web/dist` like `next` does (admin is in the app now, ADR 0004, so there's no `/admin/**` rewrite; old `#/` and `/competitions/:id/admin` links redirect in-app)
-- [x] `capacitor.config.json` `webDir`: `www` → `web/dist` (done on `next`); before a store build, `npm run build` in `web/` then `npx cap sync` (this also clears any live-reload URL)
-- [ ] Cache headers: HTML `no-cache`, hashed assets `immutable` (done for `next` in `firebase.json`; copy its `headers` and `ignore` to `production` with the switch above, or `/.well-known/` won't deploy)
+- [x] Hosting: the `production` target serves `web/dist` like `next` does (done on `next`, where the old app is gone; admin is in the app now, ADR 0004, so there's no `/admin/**` rewrite; old `#/` and `/competitions/:id/admin` links redirect in-app). To go live from `next`: `npm run build`, then `firebase deploy --only hosting:production`
+- [x] `capacitor.config.json` `webDir`: `www` → `web/dist` (done on `next`); before a store build, run `npm run build` at the root: it builds `web/` and runs `cap sync` (this also clears any live-reload URL)
+- [x] Cache headers: HTML `no-cache`, hashed assets `immutable`, and `ignore` that keeps `/.well-known/` (both targets in `firebase.json`)
 - [ ] Rebuild and submit the iOS and Android apps (all plugins are already installed)
   - iOS uses Swift Package Manager now: open `ios/App/App.xcodeproj` (no workspace, no `pod install`)
   - The update prompt compares `web/package.json`'s version with `versions/ios`, `versions/android` and (on the web) `versions/web` in the database; `set-version.js` only bumps the root and native versions, so bump `web/package.json` to match. Both are `4.0.0` now (Android versionCode 4000000); set `versions/*` to `4.0.0` only once each store has the build, or everyone on the old app is told to update to something they can't get yet
   - Vite reads env files from `web/`, not the repo root: create `web/.env.local` with `VITE_GOOGLE_MAPS_API_KEY` before a local store build, or the apps ship without venue search. The key's referrer restrictions need the app origins too (`capacitor://localhost` on iOS, `https://localhost` on Android)
   - Smoke test on a device: splash hides, status bar follows dark mode, Android Back closes sheets, airplane mode opens the last saved data
-  - Saved passwords with Face ID or a fingerprint: the iOS app has the Associated Domains entitlement (`webcredentials:scotdance.app`) and the Android app an `asset_statements` link, so the sign-in sheet offers people's saved scotdance.app passwords. Both need `web/public/.well-known/` live on scotdance.app (deploy it to the current site too if the apps ship first). `assetlinks.json` already has the Play app-signing SHA-256 (Play Console › Protected with Play; re-check it if the signing key ever changes). If Xcode's automatic signing can't add Associated Domains to the App ID, turn it on at developer.apple.com
+  - Saved passwords with Face ID or a fingerprint: the iOS app has the Associated Domains entitlement (`webcredentials:scotdance.app`) and the Android app an `asset_statements` link, so the sign-in sheet offers people's saved scotdance.app passwords. Both need `/.well-known/` on scotdance.app: live since 2026-10-02, deployed from `develop` so it's there before the apps ship. `assetlinks.json` already has the Play app-signing SHA-256 (Play Console › Protected with Play; re-check it if the signing key ever changes). If Xcode's automatic signing can't add Associated Domains to the App ID, turn it on at developer.apple.com
 - [x] "Manage competitions" in v4 opens `/manage` in the app
 - [ ] Organiser dry run on next.scotdance.app: submit, approve (sends a real email), invite a second admin, import an Excel sheet, enter results on a phone
 - [ ] Google Maps key has the Places API enabled (venue search in Manage › Details), with a daily quota cap: the key ships in the app, so referrer limits alone can't stop someone reusing it
 - [ ] Privacy page mentions the private colour picks
 
-Rollback: revert the hosting rewrites and `webDir`, redeploy hosting.
+Rollback: `develop` still has the v3 app. Check it out, `npm ci && npm run build:www`, then `firebase deploy --only hosting`.
 
 ## Local testing gotchas
 
 - `npm run local` (in `web/`) handles the awkward parts: it runs the stack
   on the Node version in `.nvmrc` (24, as in production), one function at a
   time (`--inspect-functions`, so a test run's burst of triggers can't swamp
-  it), Typesense from Docker (the repo's `typesense-server` binary is
-  Intel-only), and Vite on :5273. It needs Docker running (OrbStack) and
-  Node 24 installed with nvm.
+  it), Typesense from Docker, and Vite on :5273. It needs Docker running
+  (OrbStack) and Node 24 installed with nvm.
 - `firebase.json` names the database instance (`scotdance`), so the emulator
   applies the rules (and the `date` index the competitions list needs) even
   when the CLI's login has expired.

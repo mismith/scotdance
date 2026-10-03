@@ -1,10 +1,5 @@
 # Capacitor
-/www
 .gradle
-/resources/android
-/resources/ios
-/resources/screenshots
-/resources/DerivedData
 
 # Vue defaults
 .DS_Store
@@ -36,15 +31,6 @@ yarn-error.log*
 .firebase/
 .runtimeconfig.json
 firebase-adminsdk.json
-/public/version.json
-/stats.html
-/cypress/videos/
-/cypress/screenshots/
-/cypress/downloads/
 .typesense/
-IS_CYPRESS
 /web/stats.html
-
-resources/ios/**/*
-resources/android/**/*
 *.profraw
