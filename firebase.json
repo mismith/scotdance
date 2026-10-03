@@ -19,6 +19,7 @@
     {
       "target": "production",
       "public": "www",
+      "ignore": ["firebase.json", "**/.DS_Store", "**/node_modules/**"],
       "headers": [
         {
           "source": "/version.json",
@@ -28,6 +29,10 @@
               "value": "*"
             }
           ]
+        },
+        {
+          "source": "/.well-known/apple-app-site-association",
+          "headers": [{ "key": "Content-Type", "value": "application/json" }]
         }
       ],
       "rewrites": [

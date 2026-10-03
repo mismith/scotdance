@@ -14,7 +14,7 @@
       },
       "hosting": {
         "production": [
-          "firebase-scotdance"
+          "scotdance"
         ],
         "next": [
           "scotdance-next"
