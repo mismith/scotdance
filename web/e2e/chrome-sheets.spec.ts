@@ -189,9 +189,16 @@ test.describe('page changes', () => {
     })
   }
 
+  // The first page doesn't animate in, and a tab tapped before it's drawn
+  // leaves from there too (the router hasn't arrived yet): wait for its title.
+  const arrive = async (page: Page, path: string) => {
+    await page.goto(path)
+    await expect(page.getByRole('main').getByRole('heading', { level: 1 }).first()).toBeVisible()
+  }
+
   test('animate between tabs normally', async ({ page }) => {
     await countTransitions(page)
-    await page.goto('/competitions')
+    await arrive(page, '/competitions')
     await appTab(page, 'Search').click()
     await expect(page).toHaveURL(/\/search$/)
     expect(await page.evaluate(() => (window as Window & { __vt?: number }).__vt)).toBeGreaterThan(0)
@@ -200,7 +207,7 @@ test.describe('page changes', () => {
   test('move toward the tab you tap, along its bar (or down the sidebar), and Back reverses it', async ({ page }) => {
     await countTransitions(page)
     const axis = hasSidebar(page) ? 'axis-y' : 'axis-x'
-    await page.goto('/')
+    await arrive(page, '/')
     await appTab(page, 'Search').click()
     await expect(page).toHaveURL(/\/search$/)
     await page.goBack()
@@ -226,7 +233,7 @@ test.describe('page changes', () => {
     test.use({ reducedMotion: 'reduce' })
     test('just change, without a transition', async ({ page }) => {
       await countTransitions(page)
-      await page.goto('/competitions')
+      await arrive(page, '/competitions')
       await appTab(page, 'Search').click()
       await expect(page).toHaveURL(/\/search$/)
       await appTab(page, 'Home').click()
