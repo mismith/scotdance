@@ -1,4 +1,4 @@
-import { https } from 'firebase-functions/v1';
+import { HttpsError } from 'firebase-functions/v2/https';
 
 import { getTypesense } from './utility/typesense';
 
@@ -140,7 +140,7 @@ export function getOnSearchAll(db: any) {
       });
       return out;
     } catch (error: any) {
-      throw new https.HttpsError('invalid-argument', error?.message, error);
+      throw new HttpsError('invalid-argument', error?.message, error);
     }
   };
 }

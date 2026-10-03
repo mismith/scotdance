@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase-admin/app';
 import { getDatabase } from 'firebase-admin/database';
-import * as functions from 'firebase-functions/v1';
+import { app as functionsApp } from 'firebase-functions/v1';
 import Invites from './invites';
 import Submissions from './submissions';
 import * as Dancers from './dancers';
@@ -13,6 +13,7 @@ import { runBackfillCoords } from './backfillCoords';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isEmulator } from './utility/env';
 import { runtimeConfig, geocodingApiKey } from './utility/config';
+import { database, https } from './utility/triggers';
 
 // In the emulator, trigger snapshots build their `.ref` from
 // `http://{emulator host}/?ns=scotdance` on this same app (see
@@ -25,21 +26,20 @@ function databaseURL() {
 }
 const app = initializeApp({ databaseURL: databaseURL() }, 'app');
 if (isEmulator()) {
-  functions.app.setEmulatedAdminApp(app);
+  functionsApp.setEmulatedAdminApp(app);
 }
 
 const env = isEmulator() ? 'development' : 'production';
 const appConfig = {
   db: getDatabase(app).ref(env),
-  database: functions.database,
+  database: database(),
   name: 'ScotDance.app',
   description: 'Highland dancing event tracker',
   email: 'admin@scotdance.app',
   url: isEmulator() ? 'http://localhost:5273' : 'https://scotdance.app',
 };
 
-const configRunWith = { secrets: [runtimeConfig] };
-const configDatabase = functions.runWith(configRunWith).database;
+const configDatabase = database({ secrets: [runtimeConfig] });
 
 const invites = new Invites(configDatabase, appConfig);
 const invitesHooks = invites.hook(`/${env}/competitions:data/{competitionId}/invites`);
@@ -74,7 +74,7 @@ export const competitionDeleted = appConfig.database.ref(`/${env}/competitions/{
 // Publishing links the competition's dancers into their public profiles
 // (unpublishing unlinks them), which can take a while for a big one.
 const syncDancers = Dancers.getOnSyncCompetition(appConfig.db);
-const publishedDatabase = functions.runWith({ timeoutSeconds: 540 }).database;
+const publishedDatabase = database({ timeoutSeconds: 540 });
 export const competitionPublishedChanged = publishedDatabase.ref(`/${env}/competitions/{competitionId}/published`).onWrite(async (change, ctx) => {
   const { competitionId } = ctx.params;
   const ref = appConfig.db.child(`competitions:published/${competitionId}`);
@@ -88,7 +88,7 @@ export const competitionPublishedChanged = publishedDatabase.ref(`/${env}/compet
 });
 // Search shows a listed competition (and its judges and pipers) before it's
 // published, so it keeps a list of those too.
-const listedDatabase = functions.database;
+const listedDatabase = database();
 export const competitionListedChanged = listedDatabase.ref(`/${env}/competitions/{competitionId}/listed`).onWrite(async (change, ctx) => {
   const ref = appConfig.db.child(`competitions:listed/${ctx.params.competitionId}`);
   if (change.after.val() === true) await ref.set(true);
@@ -97,9 +97,8 @@ export const competitionListedChanged = listedDatabase.ref(`/${env}/competitions
 // Admin-triggered one-off (or re-run) backfill of lat/lng/country on competition
 // records that lack them. Geocodes via the Google Geocoding API.
 // Pass `{ dryRun: true }` to log proposed writes without persisting.
-export const backfillCoords = functions
-  .runWith({ secrets: [geocodingApiKey], timeoutSeconds: 540, memory: '512MB' })
-  .https.onCall(async (data, ctx) => {
+export const backfillCoords = https({ secrets: [geocodingApiKey], timeoutSeconds: 540, memory: '512MiB' })
+  .onCall(async (data, ctx) => {
     await ensureAdmin(ctx, appConfig.db);
     const dryRun = Boolean(data?.dryRun);
     return runBackfillCoords(
@@ -111,7 +110,7 @@ export const backfillCoords = functions
 
 // Rebuilds the published and listed lists (search reads them) from the
 // competitions themselves.
-export const reindexCompetitionsPublished = functions.https.onCall(async (data, ctx) => {
+export const reindexCompetitionsPublished = https().onCall(async (data, ctx) => {
   await ensureAdmin(ctx, appConfig.db);
 
   const competitions: Record<string, any> = (await appConfig.db.child('competitions').get()).val() || {};
@@ -130,10 +129,10 @@ const dancersRef = configDatabase.ref(`/${env}/competitions:data/{competitionId}
 export const dancerCreated = dancersRef.onCreate(Dancers.getOnCreate(appConfig.db));
 export const dancerUpdated = dancersRef.onUpdate(Dancers.getOnUpdate(appConfig.db));
 export const dancerDeleted = dancersRef.onDelete(Dancers.getOnDelete(appConfig.db));
-const configHttps = functions.runWith(configRunWith).https;
+const configHttps = https({ secrets: [runtimeConfig] });
 // Backfills and reindexes read every competition: give them the longest a
 // callable may run, and memory for production-sized data.
-const adminHttps = functions.runWith({ ...configRunWith, timeoutSeconds: 540, memory: '1GB' }).https;
+const adminHttps = https({ secrets: [runtimeConfig], timeoutSeconds: 540, memory: '1GiB' });
 export const searchDancers = configHttps.onCall(Dancers.getOnSearch(appConfig.db));
 export const reindexDancers = adminHttps.onCall(Dancers.getOnReindex(appConfig.db));
 export const backfillDancerAggregates = adminHttps.onCall(

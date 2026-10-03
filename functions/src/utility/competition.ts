@@ -1,4 +1,4 @@
-import { https } from 'firebase-functions/v1';
+import { HttpsError } from 'firebase-functions/v2/https';
 
 export async function attachUserToCompetition({
   db,
@@ -17,8 +17,8 @@ export async function attachUserToCompetition({
 }
 
 export async function ensureAdmin(ctx, db) {
-  if (!ctx.auth?.uid) throw new https.HttpsError('unauthenticated', '');
+  if (!ctx.auth?.uid) throw new HttpsError('unauthenticated', '');
   const isAdmin = (await db.child(`users:permissions/${ctx.auth.uid}/admin`).get())
     .val() === true;
-  if (!isAdmin) throw new https.HttpsError('permission-denied', '');
+  if (!isAdmin) throw new HttpsError('permission-denied', '');
 }

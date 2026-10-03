@@ -31,11 +31,12 @@ ADR 0003 for the aggregates.
 `firebase login --reauth` first; run from the repo root.
 
 1. `firebase deploy --only database` (rules).
-2. `firebase deploy --only functions` (predeploy lints and builds). They run
-   on Node 24 (`functions/package.json` `engines`; Cloud Functions has no
-   Node 26 yet). Any local Node from 24 up can deploy: the old
-   `buffer-equal-constant-time` failure on Node 26 went with the 2026-10-02
-   dependency upgrade.
+2. `firebase deploy --only functions` (predeploy lints and builds). They're
+   2nd gen on Node 24 since 2026-10-03 (`functions/package.json` `engines`;
+   `functions/src/utility/triggers.ts` keeps the 1st gen handler shapes), and
+   run as `firebase-scotdance@appspot.gserviceaccount.com` like 1st gen did.
+   Function names are the API: the v3 apps call `searchDancers` by name, so
+   never rename one. Any local Node from 24 up can deploy.
    `RUNTIME_CONFIG` must hold `typesense.host` / `typesense.api_key` (already
    used by `searchDancers`, so it should exist). `GOOGLE_GEOCODING_API_KEY`
    must exist in Secret Manager too (`backfillCoords` declares it).

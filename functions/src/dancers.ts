@@ -1,4 +1,4 @@
-import { https } from 'firebase-functions/v1';
+import { HttpsError } from 'firebase-functions/v2/https';
 import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 
 import { ensureAdmin } from './utility/competition';
@@ -99,7 +99,7 @@ export function getOnBackfillBackPointers(db: any) {
 
 export function getOnSearch(db) {
   return async function onSearch(searchParams, ctx) {
-    if (!ctx.auth?.uid) throw new https.HttpsError('unauthenticated', '');
+    if (!ctx.auth?.uid) throw new HttpsError('unauthenticated', '');
 
     // aggregate a list of all competition ids this user has access too
     const permissions = (await db.child(`users:permissions/${ctx.auth.uid}`).get()).val();
@@ -125,7 +125,7 @@ export function getOnSearch(db) {
       });
       return response?.results?.[0];
     } catch (error) {
-      throw new https.HttpsError('invalid-argument', error?.message, error);
+      throw new HttpsError('invalid-argument', error?.message, error);
     }
   };
 }
