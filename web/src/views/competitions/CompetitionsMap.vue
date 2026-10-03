@@ -17,11 +17,14 @@ import { groupByVenue, type VenueGroup } from '@/lib/venues'
 // The competitions as a place: the map fills the screen under the page's
 // header. Each venue is a pin showing its next date; tapping one grows a
 // callout listing what's on there. A sheet along the bottom lists what's in
-// view and follows the map as it moves. Choosing a location flies there.
+// view and follows the map as it moves. Every competition is on it, wherever
+// it is (the map itself says where); choosing a location flies there.
 const props = defineProps<{
-  /** In the order the list would show them. */
+  /** All of them, in the order the list would show them. */
   competitions: CompetitionListItem[]
-  /** Changes when the location (or Upcoming/Past) does: the map fits to what's left. */
+  /** The ones where the location points: what the map frames. */
+  focus: CompetitionListItem[]
+  /** Changes when the location (or Upcoming/Past) does: the map frames `focus` again. */
   fitKey: string
 }>()
 
@@ -207,7 +210,7 @@ const sheetTitle = computed(() => {
 const FITTED = 'competitions:map:fitted'
 function fit(animate: boolean) {
   const map = mapInstance.value
-  const groups = venueGroups.value
+  const groups = groupByVenue(props.focus)
   if (!map || !groups.length) return
   const bounds = new maplibregl.LngLatBounds()
   for (const g of groups) bounds.extend([g.lng, g.lat])

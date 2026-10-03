@@ -45,7 +45,8 @@ import { useDancerNumberVt } from '@/composables/useCompetitionDancerVt'
 import { injectInfoHeaderScrolledPast, injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 
 const setHeader = injectInfoHeaderSetter()
-// Owns the shared title name until it scrolls under the bar (AppBar `titleVt`).
+// The date tile carries the shared name (the tapped row's tile glides into
+// it) until the header scrolls under the bar.
 const scrolledPast = injectInfoHeaderScrolledPast()
 
 const {
@@ -221,7 +222,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
             <LiveDot v-if="live" :pulse="pulse" />
             {{ kicker }}
           </p>
-          <h1 class="text-display" :style="scrolledPast ? undefined : { viewTransitionName: 'competition-title', viewTransitionClass: 'fit text' }">
+          <h1 class="text-display">
             {{ competition.name ?? 'Competition' }}
           </h1>
         </div>

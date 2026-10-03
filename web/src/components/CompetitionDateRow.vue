@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
 import { ChevronRight, EyeOff, Star } from '@lucide/vue'
 import { useFollowing } from '@/composables/useFollowing'
-import { COMPETITION_DATE_VT, COMPETITION_TITLE_VT, useCompetitionVt } from '@/composables/useCompetitionVt'
+import { COMPETITION_DATE_VT, useCompetitionVt } from '@/composables/useCompetitionVt'
 import DateTile from '@/components/DateTile.vue'
 import { useMeStore } from '@/stores/me'
 import { isSameDay } from '@/lib/format'
@@ -67,10 +67,7 @@ const isPrivate = computed(() => managed.value && props.competition.listed !== t
         :style="{ viewTransitionName: vt.row(id, COMPETITION_DATE_VT) }"
       />
       <span class="min-w-0 flex-1">
-        <span
-          class="line-clamp-2 text-base leading-snug font-semibold"
-          :style="{ viewTransitionName: vt.row(id, COMPETITION_TITLE_VT), viewTransitionClass: 'fit text' }"
-        >
+        <span class="line-clamp-2 text-base leading-snug font-semibold">
           {{ competition.name ?? 'Competition' }}
         </span>
         <span v-if="competition.location" class="text-muted-foreground block truncate text-sm">

@@ -27,7 +27,9 @@ const CompetitionsMap = defineAsyncComponent(() => import('@/views/competitions/
 
 // How (list, calendar or map) beside the title, then where (a region,
 // nearby, or everywhere) and when (Upcoming or Past results). The calendar is
-// itself a view of when, so it shows every competition and drops the last.
+// itself a view of when, so it drops Upcoming/Past; the map is a view of
+// where, so it drops the location (it shows everywhere, framed on the last
+// one picked).
 type ViewMode = 'list' | 'calendar' | 'map'
 const VIEWS = [
   { value: 'list', label: 'List', icon: List },
@@ -88,10 +90,12 @@ const dayNote = (c: CompetitionListItem) => {
   return s && isOn(c) && s.last > s.first ? `Day ${1 - s.first} of ${s.last - s.first + 1}` : null
 }
 
-const inRange = computed(() => {
-  const list = located.value.filter((c) => isUpcoming(c) === (range.value === 'upcoming'))
-  return list.sort((a, b) => (range.value === 'upcoming' ? ms(a) - ms(b) : ms(b) - ms(a)))
-})
+const byRange = (list: CompetitionListItem[]) =>
+  list.filter((c) => isUpcoming(c) === (range.value === 'upcoming')).sort((a, b) => (range.value === 'upcoming' ? ms(a) - ms(b) : ms(b) - ms(a)))
+const inRange = computed(() => byRange(located.value))
+// The map shows them everywhere (where you look on it is the "where"),
+// framed on the location picked for the list.
+const inRangeEverywhere = computed(() => byRange(competitions.value))
 
 interface Section {
   key: string
@@ -142,14 +146,15 @@ const sections = computed<Section[]>(() => {
           <Segmented :model-value="view" :options="VIEWS" label="Show competitions as" compact class="shrink-0" @update:model-value="setView" />
         </header>
         <div class="flex flex-wrap items-center gap-2">
-          <LocationFilter :competitions="competitions" />
+          <LocationFilter v-if="view !== 'map'" :competitions="competitions" />
           <MenuPill v-if="view !== 'calendar'" v-model="range" :options="RANGES" label="Which competitions" />
         </div>
       </div>
 
       <CompetitionsMap
         v-if="view === 'map'"
-        :competitions="inRange"
+        :competitions="inRangeEverywhere"
+        :focus="inRange"
         :fit-key="`${locationMode}:${location.isActive}:${range}`"
         class="fixed top-(--chrome-top) right-0 bottom-0 left-(--sidebar)"
       />

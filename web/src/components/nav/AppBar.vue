@@ -11,10 +11,9 @@ import TopBackButton from '@/components/nav/TopBackButton.vue'
 // (and optional subtitle) that appears once the page's own big title has
 // scrolled away, or always when `showTitle` says so. Right: the page's own
 // actions (the `actions` slot), then your account, on every page.
-//
-// `titleVt` names the title for view transitions, so a page's big title can
-// shrink into the bar; it's only applied while the title is showing, so the
-// name is never on two elements at once.
+// The small title comes and goes the same way everywhere: a quick fade with a
+// little lift. Through a page change it cross-fades with the rest of the bar,
+// rather than travelling.
 withDefaults(
   defineProps<{
     title?: string | null
@@ -22,14 +21,13 @@ withDefaults(
     showTitle?: boolean
     /** Border under the bar; defaults to `showTitle` (i.e. once scrolled). */
     scrolled?: boolean
-    titleVt?: string | null
     /** Span the full window (Manage screens on wide displays). */
     wide?: boolean
     back?: boolean
     fallback?: { to: RouteLocationRaw; label: string }
     exit?: { delta?: number; to?: RouteLocationRaw; label: string } | null
   }>(),
-  { title: null, subtitle: null, showTitle: false, scrolled: undefined, titleVt: null, wide: false, back: true, fallback: undefined, exit: null },
+  { title: null, subtitle: null, showTitle: false, scrolled: undefined, wide: false, back: true, fallback: undefined, exit: null },
 )
 
 const scrollTop = () => {
@@ -50,15 +48,14 @@ const scrollTop = () => {
       <button
         type="button"
         :class="[
-          'min-w-0 flex-1 text-left transition-opacity',
-          showTitle && title ? 'opacity-100' : 'pointer-events-none opacity-0',
+          'min-w-0 flex-1 text-left transition-[opacity,translate] duration-(--dur-base) ease-standard',
+          showTitle && title ? 'opacity-100' : 'pointer-events-none translate-y-1 opacity-0',
         ]"
         :tabindex="showTitle && title ? 0 : -1"
         @click="scrollTop"
       >
         <span
           :class="['block truncate font-semibold', subtitle ? 'text-callout leading-tight' : 'text-[1.0625rem]']"
-          :style="showTitle && titleVt ? { viewTransitionName: titleVt, viewTransitionClass: 'fit text' } : undefined"
         >
           {{ title }}
         </span>

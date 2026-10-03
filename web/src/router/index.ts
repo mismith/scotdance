@@ -1,4 +1,4 @@
-import type { Component } from 'vue'
+import { nextTick, type Component } from 'vue'
 import {
   createRouter,
   createWebHistory,
@@ -510,6 +510,24 @@ router.beforeResolve(async (to, from) => {
   // Crossing into or out of a competition, the tab bar's exit button buds
   // off the pill or merges back into it (style.css, vt-bud-*).
   const crossing = inComp(to) && !inComp(from) ? ['enter-competition'] : !inComp(to) && inComp(from) ? ['leave-competition'] : []
-  const transition = startViewTransition(undefined, [...crossing, ...types(motion)])
+  // The top bar's back button fades out and in when it changes; when a
+  // change leaves it as it was (between a competition's tabs, say), it just
+  // stays (style.css, same-back).
+  const before = barParts()
+  const updated = new Promise<void>((resolve) => (barUpdated = resolve))
+  const transition = startViewTransition(async (vtTypes) => {
+    await updated
+    const after = barParts()
+    if (after.back && after.back === before.back) vtTypes?.add('same-back')
+  }, [...crossing, ...types(motion)])
   await transition.captured
+})
+// The top bar's back button, as drawn.
+const barParts = () => ({ back: document.querySelector('[data-bar="back"]')?.outerHTML ?? null })
+// The new page is in once the router's done and Vue has drawn it.
+let barUpdated: (() => void) | null = null
+router.afterEach(async () => {
+  await nextTick()
+  barUpdated?.()
+  barUpdated = null
 })

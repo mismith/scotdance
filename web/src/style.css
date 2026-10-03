@@ -904,6 +904,19 @@
 ::view-transition-new(sheet-step) {
   animation: vt-fade-in 200ms 70ms var(--ease-standard) both;
 }
+/* A competition's date tile glides between the row you tapped and its page
+   (composables/useCompetitionVt). Moving sideways (between its tabs, say)
+   there's nothing to glide to, so it goes with the page; with no partner
+   otherwise, it fades as quickly as the page does rather than lingering. */
+:root:active-view-transition-type(next, prev, swap) [style*='view-transition-name: competition-date'] {
+  view-transition-name: none !important;
+}
+::view-transition-old(competition-date):only-child {
+  animation: vt-fade-out 120ms var(--ease-exit) both;
+}
+::view-transition-new(competition-date):only-child {
+  animation: vt-fade-in 220ms 60ms var(--ease-standard) both;
+}
 /* A change in place (lib/navMotion swapInPlace): the page's header holds
    still, live, so its segmented control's thumb slides as usual. */
 :root:active-view-transition-type(in-page) [data-page-head] {
@@ -922,15 +935,6 @@
 ::view-transition-group(tabbar-backdrop) {
   animation-duration: 220ms;
 }
-/* Words that travel (a competition's name, from its row or its page into the
-   top bar): the old words go before the new arrive, so the two sizes never
-   sit on top of each other. */
-::view-transition-old(.text) {
-  animation: vt-fade-out 80ms var(--ease-exit) both;
-}
-::view-transition-new(.text) {
-  animation: vt-fade-in 160ms 60ms var(--ease-standard) both;
-}
 /* Labels that change in place (the tab bar entering or leaving a
    competition, the back pill's text) fade out before the new ones fade in,
    so two sets of words never sit on top of each other (M14). */
@@ -945,6 +949,14 @@
 }
 ::view-transition-new(nav-back):not(:only-child) {
   animation: vt-fade-in 160ms 70ms var(--ease-standard) both;
+}
+/* …unless the change left it as it was (between a competition's tabs, say):
+   then it just stays put, no fade (router, same-back). */
+:active-view-transition-type(same-back)::view-transition-old(nav-back) {
+  display: none;
+}
+:active-view-transition-type(same-back)::view-transition-new(nav-back) {
+  animation: none;
 }
 
 /* The tab bar pill keeps its place between the app's tabs and a

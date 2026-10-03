@@ -118,7 +118,6 @@ usePageTitle(() => [
       :subtitle="subtitle"
       :show-title="!isOverview || scrolledPast"
       :scrolled="scrolledPast"
-      title-vt="competition-title"
       :fallback="{ to: { name: 'competitions' }, label: 'Competitions' }"
       :exit="exit"
       :competition-id="competitionId"

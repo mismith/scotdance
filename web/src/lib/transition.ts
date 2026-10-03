@@ -6,7 +6,8 @@ interface ViewTransitionHandle {
   skipTransition: () => void
 }
 
-type UpdateCallback = () => void | Promise<void>
+/** Makes the change; can add to the transition's types once it's made. */
+type UpdateCallback = (types?: Set<string>) => void | Promise<void>
 
 // The page ignores taps while a transition plays, so on a slow or busy
 // device cut it short rather than leave the page unresponsive.
@@ -34,7 +35,7 @@ export function startViewTransition(
       native = document.startViewTransition({
         async update() {
           resolve()
-          await callback()
+          await callback((native as (ViewTransition & { types?: Set<string> }) | undefined)?.types)
         },
         types,
       })

@@ -259,17 +259,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
-    <AppBar title="Home" :scrolled="scrolledPast" :back="false">
-      <template #leading>
-        <!-- (On wide screens the sidebar carries the name.) -->
-        <RouterLink to="/" class="flex min-w-0 items-center gap-2 rounded-xl lg:hidden" aria-label="ScotDance.app, Home">
-          <span class="flex size-8 shrink-0 overflow-hidden rounded-lg bg-[#0065bd] text-white">
-            <LogoMark framed class="size-8" />
-          </span>
-          <span class="truncate text-[1.0625rem] font-bold">ScotDance.app</span>
-        </RouterLink>
-      </template>
-    </AppBar>
+    <AppBar title="Home" :show-title="scrolledPast" :back="false" />
 
     <main
       class="mx-auto grid w-full max-w-3xl gap-y-5 px-4 pt-[calc(var(--chrome-top)+0.25rem)]"
