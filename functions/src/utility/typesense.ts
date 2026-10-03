@@ -31,7 +31,7 @@ export async function indexBestEffort(what: string, work: () => Promise<unknown>
   try {
     await work();
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error(`Typesense: ${what} failed`, error);
   }
 }

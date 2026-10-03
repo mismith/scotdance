@@ -31,10 +31,11 @@ ADR 0003 for the aggregates.
 `firebase login --reauth` first; run from the repo root.
 
 1. `firebase deploy --only database` (rules).
-2. `firebase deploy --only functions` (predeploy lints and builds), on Node
-   22 (`nvm use 22`, then `npx firebase-tools deploy …` if the global CLI
-   was installed under another Node): under Node 26 the code analysis fails
-   on `buffer-equal-constant-time`.
+2. `firebase deploy --only functions` (predeploy lints and builds). They run
+   on Node 24 (`functions/package.json` `engines`; Cloud Functions has no
+   Node 26 yet). Any local Node from 24 up can deploy: the old
+   `buffer-equal-constant-time` failure on Node 26 went with the 2026-10-02
+   dependency upgrade.
    `RUNTIME_CONFIG` must hold `typesense.host` / `typesense.api_key` (already
    used by `searchDancers`, so it should exist). `GOOGLE_GEOCODING_API_KEY`
    must exist in Secret Manager too (`backfillCoords` declares it).
@@ -91,12 +92,12 @@ Rollback: revert the hosting rewrites and `webDir`, redeploy hosting.
 
 ## Local testing gotchas
 
-- `npm run local` (in `web/`) handles the awkward parts: it runs the functions
-  emulator on the Node version in `.nvmrc` (22, as in production; under Node
-  26 the functions don't load), one function at a time (`--inspect-functions`,
-  so a test run's burst of triggers can't swamp it), Typesense from Docker
-  (the repo's `typesense-server` binary is Intel-only), and Vite on :5273.
-  It needs Docker running (OrbStack) and Node 22 installed with nvm.
+- `npm run local` (in `web/`) handles the awkward parts: it runs the stack
+  on the Node version in `.nvmrc` (24, as in production), one function at a
+  time (`--inspect-functions`, so a test run's burst of triggers can't swamp
+  it), Typesense from Docker (the repo's `typesense-server` binary is
+  Intel-only), and Vite on :5273. It needs Docker running (OrbStack) and
+  Node 24 installed with nvm.
 - `firebase.json` names the database instance (`scotdance`), so the emulator
   applies the rules (and the `date` index the competitions list needs) even
   when the CLI's login has expired.

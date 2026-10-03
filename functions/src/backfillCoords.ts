@@ -1,5 +1,5 @@
-/* eslint-disable no-console, no-await-in-loop, no-restricted-syntax */
-import type * as admin from 'firebase-admin';
+ 
+import type { Reference } from 'firebase-admin/database';
 
 interface Competition {
   name?: string;
@@ -93,7 +93,7 @@ const THROTTLE_MS = 100;
 const MAX_SAMPLES = 20;
 
 export async function runBackfillCoords(
-  competitionsRef: admin.database.Reference,
+  competitionsRef: Reference,
   apiKey: string,
   dryRun: boolean,
 ): Promise<BackfillSummary> {

@@ -8,7 +8,7 @@ async function sendEmail(message) {
   try {
     await getPostmark().sendEmailWithTemplate(message);
   } catch (err) {
-    // eslint-disable-next-line no-console
+     
     console.error(`${message.TemplateAlias} email failed`, err);
   }
 }
@@ -101,9 +101,9 @@ class Submissions {
     });
   }
 
-  // eslint-disable-next-line class-methods-use-this
+   
   async handleError(err, snap, ctx) {
-    // eslint-disable-next-line no-console
+     
     console.error(err, snap && snap.val(), ctx);
   }
 

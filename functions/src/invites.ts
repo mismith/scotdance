@@ -36,7 +36,7 @@ class Invites extends FirebaseInvites {
       });
       if (invite.emailFailed) await snap.ref.update({ emailFailed: null });
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error('invite email failed', err);
       // The invite stands without its email (throwing would only kill the
       // trigger): flag it, unless it's been deleted since, so the organiser

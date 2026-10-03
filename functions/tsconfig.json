@@ -1,15 +1,14 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "nodenext",
+    "strict": false,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "rootDir": "src",
     "outDir": "dist",
     "sourceMap": true,
-    "target": "es2020",
-    "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node10",
-    "ignoreDeprecations": "5.0"
+    "target": "es2022",
+    "skipLibCheck": true
   },
   "compileOnSave": true,
   "include": ["src"]

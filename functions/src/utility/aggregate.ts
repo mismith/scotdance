@@ -240,7 +240,7 @@ export function createAggregator<R, A extends Record<string, any>>(
   ): Promise<{ committed: boolean, snapshot: any }> {
     for (let attempt = 1; ; attempt += 1) {
       try {
-        // eslint-disable-next-line no-await-in-loop
+         
         const result = await ref.transaction(update, undefined, false);
         return result;
       } catch (error) {
@@ -315,7 +315,7 @@ export function createAggregator<R, A extends Record<string, any>>(
       // `_identity` is stored so we can remove the right /{ns}:index entry
       // when the last appearance unlinks. Aggregates made before it existed
       // derive it from their first appearance.
-      // eslint-disable-next-line no-underscore-dangle
+       
       identity = agg._identity || key || (list.length ? identityKeyFromAppearance(list[0]) : '') || null;
       if (!list.length) return null;
       const refreshed = recomputeFromAppearances
@@ -334,14 +334,14 @@ export function createAggregator<R, A extends Record<string, any>>(
   async function linkAppearance(entityId: string, ctx: AppearanceCtx, record: R) {
     const appearance = toAppearance(record, ctx);
     await changeAggregate(entityId, (apps) => {
-      // eslint-disable-next-line no-param-reassign
+       
       apps[appearanceKey(ctx)] = appearance;
     }, { key: keyOf(record), seed: seedFor(record) });
   }
 
   async function unlinkAppearance(entityId: string, ctx: AppearanceCtx) {
     await changeAggregate(entityId, (apps) => {
-      // eslint-disable-next-line no-param-reassign
+       
       delete apps[appearanceKey(ctx)];
     });
   }
@@ -392,9 +392,9 @@ export function createAggregator<R, A extends Record<string, any>>(
       if (id) linked.add(id);
     }
     const target = inc && isMatch ? await findOrCreateAggregate(record) : null;
-    // eslint-disable-next-line no-restricted-syntax
+     
     for (const id of linked) {
-      // eslint-disable-next-line no-await-in-loop
+       
       if (id !== target) await unlinkAppearance(id, ctx);
     }
     if (target) await linkAppearance(target, ctx, record as R);
@@ -467,15 +467,15 @@ export function createAggregator<R, A extends Record<string, any>>(
         const id = await lookup(keyOf(record));
         if (id) ids.add(id);
       }
-      // eslint-disable-next-line no-restricted-syntax
+       
       for (const id of ids) {
-        // eslint-disable-next-line no-await-in-loop
+         
         await unlinkAppearance(id, actx);
       }
     },
     // The backfills walk every competition one at a time on purpose: running
     // them in parallel would flood RTDB with writes (and re-fire triggers).
-    /* eslint-disable no-await-in-loop, no-restricted-syntax, no-continue */
+     
     async syncCompetition(competitionId) {
       if (isCypress()) return { linked: 0, unlinked: 0 };
       // A deleted competition's records (if any are left) all unlink.
@@ -521,7 +521,7 @@ export function createAggregator<R, A extends Record<string, any>>(
         if (id && validKey(key)) idByKey.set(key, id);
       }
       for (const [id, agg] of Object.entries(existing)) {
-        // eslint-disable-next-line no-underscore-dangle
+         
         const key = agg?._identity;
         if (typeof key === 'string' && validKey(key) && !idByKey.has(key)) idByKey.set(key, id);
       }
@@ -587,7 +587,7 @@ export function createAggregator<R, A extends Record<string, any>>(
         if (built.has(id)) continue;
         await writer.set(`${namespace}/${id}`, null);
         // Keep the id for the name, if nobody else has the name now.
-        // eslint-disable-next-line no-underscore-dangle
+         
         const key = agg?._identity;
         if (typeof key === 'string' && validKey(key) && !builtKeys.has(key)) {
           await writer.set(`${namespace}:retired/${key}`, id);
@@ -675,5 +675,5 @@ export function createAggregator<R, A extends Record<string, any>>(
       };
     },
   };
-  /* eslint-enable no-await-in-loop, no-restricted-syntax, no-continue */
+   
 }

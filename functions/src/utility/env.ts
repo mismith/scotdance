@@ -8,7 +8,7 @@ export function isCypress() {
   try {
     readFileSync('./IS_CYPRESS', 'utf8');
     return true;
-  } catch (e) {
+  } catch {
     return false;
   }
 }
