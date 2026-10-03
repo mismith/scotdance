@@ -222,9 +222,10 @@ const dayNote = (c: Competition & { id: string }) => {
 const nextAnywhere = computed(() => recentCompetitions.value.filter((c) => phaseOf(c) !== 'after').slice(0, 3))
 
 // With nothing personal to show, the latest finished competitions keep Home
-// alive between competition days.
+// alive between competition days (published ones: a listed one has no
+// results to show).
 const latestResults = computed(() =>
-  recentCompetitions.value.filter((c) => phaseOf(c) === 'after').slice(-3).reverse(),
+  recentCompetitions.value.filter((c) => phaseOf(c) === 'after' && c.published).slice(-3).reverse(),
 )
 
 // For organisers: the competitions they run that are on or coming up.

@@ -4,22 +4,22 @@ How the new consumer app (`web/`) gets from this branch to production. Each
 phase can be rolled back on its own. See ADR 0001 for the cutover design and
 ADR 0003 for the aggregates.
 
-## Where things stand (2026-09-30)
+## Where things stand (2026-10-02)
 
-- `web/` builds clean; `functions/` lints, typechecks and builds clean.
-- Production still runs the v3 backend. Missing there, and needed by v4:
-  - **Rules** from this branch: public reads for `dancers`, `judges`, `pipers`,
-    `venues` (+ `:index`), and private `users:dancerColors`. Two tighten: only
-    organisers create invites (anyone else can only accept an open one), and a
-    private competition's staff is no longer public. v3 keeps working (it
-    accepts invites the same way and only shows staff for listed competitions).
-  - **Functions**: `searchAll`, the `*Aggregates` / `*BackPointers` backfills,
-    `reindexCompetitions` / `reindexJudges` / `reindexPipers`, and the
-    judge/piper/venue triggers. (Probed 2026-09-30: `searchAll` 404s in prod.)
-  - **Data**: the aggregates (`/dancers`, `/judges`, `/pipers`, `/venues`) and
-    the back-pointers on competition records, built by the backfills.
-- So next.scotdance.app (which reads production data) half works today:
-  competitions and results yes; search, people pages and Follow no.
+- Phases 0 and 1 are done: `next` is on next.scotdance.app, and production
+  has this branch's rules and functions and the backfilled data.
+  - Backfills (2026-10-02, Friday evening): map positions 3 updated; dancers
+    116,914 entries linked, venues 775, judges 1,615, pipers 543, each re-run
+    to `written: 0` and `pruned: 0`; 729 published and 783 listed
+    competitions; search indexes rebuilt for competitions (824), judges
+    (1,638) and pipers (548). `reindexDancers` left alone.
+  - Checked on next.scotdance.app: search (signed in and out), a dancer page
+    with results, Follow and unfollow, old favourites carried over, a judge
+    page and results signed out. On scotdance.app (v3), signed out: a
+    competition's dancers and info.
+- Still to check: a dancer search in the v3 app signed in as a non-admin (v3
+  needs sign-in for dancer search).
+- Next: Phase 2 (real devices), then Phase 3.
 
 ## Phase 0: code onto `next`
 
@@ -31,7 +31,10 @@ ADR 0003 for the aggregates.
 `firebase login --reauth` first; run from the repo root.
 
 1. `firebase deploy --only database` (rules).
-2. `firebase deploy --only functions` (predeploy lints and builds).
+2. `firebase deploy --only functions` (predeploy lints and builds), on Node
+   22 (`nvm use 22`, then `npx firebase-tools deploy …` if the global CLI
+   was installed under another Node): under Node 26 the code analysis fails
+   on `buffer-equal-constant-time`.
    `RUNTIME_CONFIG` must hold `typesense.host` / `typesense.api_key` (already
    used by `searchDancers`, so it should exist). `GOOGLE_GEOCODING_API_KEY`
    must exist in Secret Manager too (`backfillCoords` declares it).
