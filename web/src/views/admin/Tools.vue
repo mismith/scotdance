@@ -7,10 +7,13 @@ import Button from '@/components/ui/Button.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
 import TextField from '@/components/admin/TextField.vue'
 import { dataRef, functions } from '@/firebase'
+import { confirm } from '@/lib/admin/feedback'
 import { write } from '@/lib/admin/write'
 
 // Maintenance for whoever runs ScotDance: the app versions people are
-// told to update to, and rebuilding search and profile data.
+// told to update to, and rebuilding search and profile data. Search and
+// profiles keep themselves up to date as competitions change: rebuilding is
+// for the first build, or to repair them.
 
 const versions = ref<Record<string, string>>({})
 const off = onValue(dataRef('versions'), (snap) => (versions.value = (snap.val() ?? {}) as Record<string, string>))
@@ -99,10 +102,24 @@ async function run(key: string, fn: string, payload?: unknown) {
 const REINDEX = [
   { key: 'competitionsPublished', fn: 'reindexCompetitionsPublished', label: 'Published and listed competitions lists' },
   { key: 'competitions', fn: 'reindexCompetitions', label: 'Competitions search' },
-  { key: 'dancers', fn: 'reindexDancers', label: 'Dancers search' },
+  {
+    key: 'dancers',
+    fn: 'reindexDancers',
+    label: 'Dancers search',
+    // It starts from empty, and the old apps search the same list.
+    warn: {
+      title: 'Rebuild dancer search?',
+      message:
+        'Dancer search is empty here and in the old apps until it finishes, which can take several minutes. It keeps itself up to date, so only rebuild it if dancers are missing from search.',
+    },
+  },
   { key: 'judges', fn: 'reindexJudges', label: 'Judges search' },
   { key: 'pipers', fn: 'reindexPipers', label: 'Pipers search' },
 ]
+async function rebuildSearch(r: (typeof REINDEX)[number]) {
+  if (r.warn && !(await confirm({ ...r.warn, confirmLabel: 'Rebuild', destructive: true }))) return
+  await run(r.key, r.fn)
+}
 const PROFILES = [
   { key: 'Judge', label: 'Judges' },
   { key: 'Piper', label: 'Pipers' },
@@ -141,7 +158,7 @@ for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`ag
             <span v-if="job(r.key).result" class="text-done-foreground block text-sm">{{ job(r.key).result }}</span>
             <span v-if="job(r.key).error" class="text-destructive block text-sm font-medium">{{ job(r.key).error }}</span>
           </span>
-          <Button :busy="job(r.key).running" @click="run(r.key, r.fn)">
+          <Button :busy="job(r.key).running" @click="rebuildSearch(r)">
             <Play v-if="!job(r.key).running" /> Rebuild
           </Button>
         </li>

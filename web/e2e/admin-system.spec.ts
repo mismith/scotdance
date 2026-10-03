@@ -93,6 +93,14 @@ test('Tools: rebuilding the published list and search reports back', async ({ pa
       await row.getByRole('button', { name: 'Rebuild' }).click()
       await expect(row.getByText(result)).toBeVisible({ timeout: 90_000 })
     }
+    // Dancer search starts from empty (the old apps' search too), so it asks first.
+    const dancers = page.getByRole('listitem').filter({ hasText: 'Dancers search' })
+    await dancers.getByRole('button', { name: 'Rebuild' }).click()
+    const ask = page.getByRole('dialog').filter({ hasText: 'Rebuild dancer search?' })
+    await expect(ask).toContainText('empty here and in the old apps')
+    await ask.getByRole('button', { name: 'Cancel' }).click()
+    await expect(ask).toHaveCount(0)
+    await expect(dancers.getByText(/^Done/)).toHaveCount(0)
   } finally {
     await dbRemove(`users:permissions/${sys.id}`)
   }
