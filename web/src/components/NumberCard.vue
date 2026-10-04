@@ -38,24 +38,30 @@ const banded = computed(() => !!props.color || props.size === 'md' || props.size
     :aria-label="number != null ? `Number ${number}` : 'No number'"
   >
     <span v-if="banded" :class="['sash absolute inset-x-0 top-0', size === 'xs' ? 'h-1.5' : 'h-[24%]']" aria-hidden="true" />
-    <!-- The safety pins. -->
-    <span
-      v-if="banded && size !== 'xs'"
-      class="absolute inset-0"
-      aria-hidden="true"
-    >
-      <span
+    <!-- The safety pins, drawn flat: a coil, the two arms and the clasp. -->
+    <span v-if="banded && size !== 'xs'" class="absolute inset-0 text-white/90" aria-hidden="true">
+      <svg
+        v-for="side in ['left', 'right']"
+        :key="side"
+        viewBox="0 0 44 12"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.75"
+        stroke-linecap="round"
+        stroke-linejoin="round"
         :class="[
-          'absolute rotate-[-24deg] rounded-full bg-linear-to-b from-[#f4f6f8] to-[#9aa3ad] shadow-[0_0_0_0.5px_rgb(0_0_0/0.35)]',
-          size === 'xl' ? 'top-2.5 left-4 h-2 w-8' : size === 'lg' ? 'top-2 left-3 h-1.5 w-6' : 'top-1 left-1.5 h-[3px] w-3',
+          'absolute',
+          side === 'left' ? '-rotate-12' : 'rotate-12 -scale-x-100',
+          size === 'xl' ? `top-2 w-12 ${side === 'left' ? 'left-3.5' : 'right-3.5'}`
+          : size === 'lg' ? `top-1.5 w-9 ${side === 'left' ? 'left-2.5' : 'right-2.5'}`
+          : size === 'md' ? `top-1 w-6 ${side === 'left' ? 'left-1.5' : 'right-1.5'}`
+          : `top-0.5 w-4 ${side === 'left' ? 'left-1' : 'right-1'}`,
         ]"
-      />
-      <span
-        :class="[
-          'absolute rotate-[24deg] rounded-full bg-linear-to-b from-[#f4f6f8] to-[#9aa3ad] shadow-[0_0_0_0.5px_rgb(0_0_0/0.35)]',
-          size === 'xl' ? 'top-2.5 right-4 h-2 w-8' : size === 'lg' ? 'top-2 right-3 h-1.5 w-6' : 'top-1 right-1.5 h-[3px] w-3',
-        ]"
-      />
+      >
+        <circle cx="5" cy="6" r="3" />
+        <path d="M8 4.2H35M7.6 7.8H33" />
+        <path d="M34 2.6h5.4a1.6 1.6 0 0 1 1.6 1.6v3.6a1.6 1.6 0 0 1-1.6 1.6H34z" />
+      </svg>
     </span>
     <span class="relative leading-none">{{ number ?? '–' }}</span>
   </span>

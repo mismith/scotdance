@@ -66,9 +66,14 @@ const pinned = computed(
 )
 
 const ordinal = (n: number) => `${n}${getOrdinalSuffix(n)}`
-// A dance still to come, as the schedule has it: its time (or session), then
-// where, and their place in the draw. Never a guess at what's on now.
-const when = (s: DanceStatus) => s.slot?.eventTime ?? s.slot?.blockTime ?? s.slot?.blockName ?? null
+// A dance still to come, as the schedule has it: when its event (or session)
+// starts, as "From 12:15 pm", since the dances in it share that start and
+// the schedule has no time for each one; then where, and their place in the
+// draw. Never a guess at what's on now.
+const when = (s: DanceStatus) => {
+  const t = s.slot?.eventTime ?? s.slot?.blockTime
+  return t ? `From ${t}` : (s.slot?.blockName ?? null)
+}
 const where = (d: DancerDay, s: DanceStatus) =>
   [d.phase === 'before' ? s.slot?.dayName : null, platformLabel(s.slot?.platformName), s.drawPos ? `${ordinal(s.drawPos)} to dance` : null]
     .filter(Boolean)
@@ -92,68 +97,72 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-5 py-2.5' : 'min-h-12 px
 </script>
 
 <template>
-  <article :class="['surface overflow-hidden', bare && lg ? 'rounded-3xl' : 'rounded-[1.25rem]']">
+  <article :class="['surface @container overflow-hidden', bare && lg ? 'rounded-3xl' : 'rounded-[1.25rem]']">
     <template v-if="!bare">
+      <!-- The bib, the name, and the placings pinned on: beside the name when
+           the card has room, under it on a phone. -->
       <RouterLink
         :to="{ name: 'competition.dancer', params: { competitionId, dancerId: day.dancer.id } }"
-        :class="['press-row focus-inset flex items-center gap-3.5 px-4 pt-4', pinned || upcoming.length ? 'pb-3' : 'pb-4']"
+        class="press-row focus-inset grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3.5 gap-y-3 p-4 @min-[34rem]:grid-cols-[auto_minmax(0,1fr)_auto_auto]"
       >
         <NumberCard :number="day.dancer.number" :color="color" size="md" />
-        <span class="min-w-0 flex-1">
+        <span class="min-w-0">
           <span class="block text-[1.25rem] leading-tight font-bold tracking-[-0.01em] break-words">{{ day.dancer.fullName }}</span>
           <span v-if="sub" class="text-muted-foreground text-callout block">{{ sub }}</span>
           <span v-if="competitionName" class="text-muted-foreground text-callout block truncate">{{ competitionName }}</span>
         </span>
-        <ChevronRight class="text-muted-foreground size-5 shrink-0" />
-      </RouterLink>
-
-      <!-- Pinned on as they're posted. Each rosette names its dance aloud;
-           the dancer's page lists them. -->
-      <div v-if="pinned" class="flex flex-wrap items-center gap-x-1 gap-y-2 px-4 pb-4">
+        <ChevronRight class="text-muted-foreground col-start-3 row-start-1 size-5 shrink-0 @min-[34rem]:col-start-4" />
+        <!-- Pinned on as they're posted. Each rosette names its dance aloud;
+             the dancer's page lists them. -->
         <span
-          v-if="calledBack != null"
-          :class="[
-            'mr-1.5 inline-flex h-8 items-center rounded-full px-3 text-sm font-semibold',
-            calledBack ? 'bg-done text-done-foreground' : 'bg-muted text-muted-foreground',
-          ]"
+          v-if="pinned"
+          class="col-span-3 flex flex-wrap items-center gap-x-1 gap-y-2 @min-[34rem]:col-span-1 @min-[34rem]:col-start-3 @min-[34rem]:row-start-1 @min-[34rem]:justify-end"
         >
-          {{ calledBack ? 'Called back' : 'Not called back' }}
-        </span>
-        <Medal
-          v-for="{ d, s } in won"
-          :key="`${d.dancer.id}:${s.dance.id}`"
-          :place="s.place"
-          :tied="s.tied"
-          :fresh="fresh === `${d.dancer.id}:${s.dance.id}`"
-          :dance="s.dance.fullName || s.dance.name"
-          size="lg"
-        />
-        <span v-if="overall" class="ml-2 inline-flex items-center gap-1.5 border-l pl-3">
+          <span
+            v-if="calledBack != null"
+            :class="[
+              'mr-1.5 inline-flex h-8 items-center rounded-full px-3 text-sm font-semibold',
+              calledBack ? 'bg-done text-done-foreground' : 'bg-muted text-muted-foreground',
+            ]"
+          >
+            {{ calledBack ? 'Called back' : 'Not called back' }}
+          </span>
           <Medal
-            :place="overall.s!.place"
-            :tied="overall.s!.tied"
-            :fresh="fresh === `${overall.d.dancer.id}:overall`"
-            dance="Overall"
+            v-for="{ d, s } in won"
+            :key="`${d.dancer.id}:${s.dance.id}`"
+            :place="s.place"
+            :tied="s.tied"
+            :fresh="fresh === `${d.dancer.id}:${s.dance.id}`"
+            :dance="s.dance.fullName || s.dance.name"
             size="lg"
           />
-          <span class="text-muted-foreground text-sm font-semibold" aria-hidden="true">Overall</span>
+          <span v-if="overall" class="ml-2 inline-flex items-center gap-1.5 border-l pl-3">
+            <Medal
+              :place="overall.s!.place"
+              :tied="overall.s!.tied"
+              :fresh="fresh === `${overall.d.dancer.id}:overall`"
+              dance="Overall"
+              size="lg"
+            />
+            <span class="text-muted-foreground text-sm font-semibold" aria-hidden="true">Overall</span>
+          </span>
+          <span v-if="points" class="bg-blue-paper text-primary ml-1.5 inline-flex h-8 items-center rounded-full px-3 text-sm font-semibold">
+            {{ points === 1 ? 'Championship point' : `${points} championship points` }}
+          </span>
+          <span v-if="notPlaced && (won.length || overall || points)" class="text-muted-foreground ml-1.5 text-sm font-medium">
+            {{ notPlaced }} not placed
+          </span>
+          <span v-else-if="notPlaced" class="text-muted-foreground text-sm font-medium">Not placed</span>
+          <span
+            v-if="waiting"
+            class="bg-muted text-muted-foreground border-strong ml-1.5 inline-flex h-8 items-center gap-1.5 rounded-full border border-dashed px-3 text-sm font-semibold"
+          >
+            <Hourglass class="size-3.5" stroke-width="2.4" aria-hidden="true" />
+            Results to come
+          </span>
+          <span v-if="settled && day.phase === 'today' && !won.length && !overall" class="text-muted-foreground text-sm">Every result is in</span>
         </span>
-        <span v-if="points" class="bg-blue-paper text-primary ml-1.5 inline-flex h-8 items-center rounded-full px-3 text-sm font-semibold">
-          {{ points === 1 ? 'Championship point' : `${points} championship points` }}
-        </span>
-        <span v-if="notPlaced && (won.length || overall || points)" class="text-muted-foreground ml-1.5 text-sm font-medium">
-          {{ notPlaced }} not placed
-        </span>
-        <span v-else-if="notPlaced" class="text-muted-foreground text-sm font-medium">Not placed</span>
-        <span
-          v-if="waiting"
-          class="bg-muted text-muted-foreground border-strong ml-1.5 inline-flex h-8 items-center gap-1.5 rounded-full border border-dashed px-3 text-sm font-semibold"
-        >
-          <Hourglass class="size-3.5" stroke-width="2.4" aria-hidden="true" />
-          Results to come
-        </span>
-        <span v-if="settled && day.phase === 'today' && !won.length && !overall" class="text-muted-foreground text-sm">Every result is in</span>
-      </div>
+      </RouterLink>
 
       <!-- Still to come, as the schedule has it. -->
       <ul v-if="upcoming.length" class="rows-inset shadow-[inset_0_1px_0_var(--border)] [--inset:1rem]">
