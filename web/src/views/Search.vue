@@ -307,9 +307,10 @@ watch(mode, async (m) => {
           size="inline"
           :icon="CloudOff"
           title="Search isn’t working right now"
-          :description="online ? 'Try again in a minute.' : 'You’re offline. Check your connection, then try again.'"
+          :description="online ? 'Try again in a minute, or browse in the meantime.' : 'You’re offline. Check your connection, then try again.'"
         >
           <Button variant="primary" @click="run(q)">Try again</Button>
+          <Button v-if="online" :to="{ name: 'competitions' }">Browse competitions</Button>
         </EmptyState>
         <div v-else-if="loadingName && nothing" class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]" aria-busy="true">
           <span class="sr-only">Searching…</span>
@@ -512,7 +513,7 @@ watch(mode, async (m) => {
               >
                 <span v-if="colorOf(d)" class="sash absolute inset-x-0 top-0 h-1.5" />
                 <span :class="['font-extrabold', colorOf(d) && 'pt-1']">{{ typed(d.number) }}</span
-                ><span :class="['font-medium opacity-50', colorOf(d) && 'pt-1']">{{ untyped(d.number) }}</span>
+                ><span :class="['font-medium text-[color-mix(in_oklab,var(--color-paper-ink)_62%,var(--color-paper))]', colorOf(d) && 'pt-1']">{{ untyped(d.number) }}</span>
               </span>
               <span class="min-w-0">
                 <span class="block truncate text-base font-semibold">{{ d.fullName }}</span>

@@ -51,7 +51,7 @@ const next = computed(
         <Avatar :name="name" :image="image" size="lg" />
         <div class="min-w-0">
           <h1 class="text-display">{{ name }}</h1>
-          <p class="text-muted-foreground text-sm">{{ [label, location].filter(Boolean).join(' · ') }}</p>
+          <p class="text-muted-foreground text-callout">{{ [label, location].filter(Boolean).join(' · ') }}</p>
         </div>
       </header>
       <p v-if="next" class="text-callout">

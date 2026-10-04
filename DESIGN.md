@@ -150,7 +150,7 @@ The best seat at a Highland dance competition is at the edge of the platform: cl
 Density follows the visitor. The public app is spacious and glanceable for one-handed use in sun and noise; Manage is the same system, tighter, for an organiser at a laptop. Colour is news, not decoration: pink means something is live right now, amber means up next, green means done, and each followed dancer carries their own colour everywhere they appear.
 
 **Key Characteristics:**
-- Atkinson Hyperlegible everywhere, rem-based so the in-app Text size and browser zoom scale it all.
+- Atkinson Hyperlegible everywhere, rem-based so the phone's text size (in the app) and browser zoom scale it all.
 - Flat paper on a cool mist background; glass only for floating chrome; one textured brand panel per surface at most.
 - Continuous (squircle) corners on every rounded shape; capsules for buttons and chips.
 - iOS-style lists: full-width rows, inset hairline separators, a tint on press.
@@ -191,7 +191,7 @@ Dancer colours: eight saturated hues (red, green, purple, ochre, blue, teal, mag
 
 **Display Font:** Atkinson Hyperlegible Next (with system-ui fallback)
 **Body Font:** Atkinson Hyperlegible Next
-**Label/Mono Font:** Atkinson Hyperlegible Mono, for numbers that must not be misread
+**Label/Mono Font:** Atkinson Hyperlegible Mono, for numbers an organiser picks from in Manage (number tiles), where 1/7 and 6/8 must not be misread. The public number card uses the main face, extra bold with tabular figures, so it reads like a printed bib.
 
 **Character:** A typeface designed for readers with low vision: open shapes, unmistakable letters (no I/l/1 confusion). It reads friendly and plain rather than stylish, which is the point.
 
@@ -268,7 +268,7 @@ The bib a dancer wears: bold tabular number on white paper, a band in the follow
 A placing is a rosette with its dance named underneath (Fling, Sword, Reel…) and a full spoken label ("Fling: 1st place, tied"). A championship point is a blue-paper chip, shown as a result, not as a miss.
 
 ### Scott (the logo dancer)
-The dancer in the mark, drawn whole (never cropped, never given a face) in Saltire Blue, or white on the brand panel. He appears sparingly: About's hero and the nothing-yet empty states (no one followed, no competitions here). Never on competition-day screens, errors or no-match results, where the news is the point.
+The dancer in the mark, drawn whole (never cropped, never given a face) in Saltire Blue, or white on the brand panel. He appears sparingly: About's hero, Home's pitch before anyone is followed, and the nothing-yet empty states (no one followed, no competitions here). Never on competition-day screens, errors or no-match results, where the news is the point.
 
 ## Do's and Don'ts
 
@@ -278,7 +278,7 @@ The dancer in the mark, drawn whole (never cropped, never given a face) in Salti
 - **Do** give every icon-only button a 44px target (36px inside chrome) and an accessible name.
 - **Do** honour Reduce Motion (pages just change, scrolls jump) and Reduce Transparency (glass turns solid).
 - **Do** name the dance on every placing, and say what "next" means (the group before, the draw, the session time).
-- **Do** size type in rem from the scale above, so Text size scales everything.
+- **Do** size type in rem from the scale above, so the phone's text size and browser zoom scale everything.
 
 ### Don't:
 - **Don't** add borders to cards; paper is defined by the card shadow.

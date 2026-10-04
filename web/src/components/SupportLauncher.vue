@@ -38,7 +38,7 @@ function confirmDismiss() {
                radiates outward without affecting hit-testing. -->
               <span
                 v-if="crisp.unread > 0"
-                class="pointer-events-none absolute inset-0 -z-10 animate-ping rounded-full bg-inherit"
+                class="pointer-events-none absolute inset-0 -z-10 animate-ping rounded-full bg-inherit motion-reduce:hidden"
                 aria-hidden="true"
               />
               <LifeBuoy class="size-5" />

@@ -408,14 +408,7 @@ watch(() => props.danceId, showCurrent)
       <EmptyState
         size="inline"
         :icon="ListOrdered"
-        :title="isCallbacks ? 'Callbacks' : 'Order dancers'"
-        :description="
-          isCallbacks
-            ? 'Select the dancers called back'
-            : placings.reverseFrom
-              ? `Select dancers from ${placings.reverseFrom}${getOrdinalSuffix(placings.reverseFrom)} place`
-              : 'Select dancers in the order placed'
-        "
+        :title="isCallbacks ? 'No one called back yet' : 'No one placed yet'"
       />
       <div class="flex min-h-14 items-center border-t px-4">
         <label class="flex min-h-11 items-center gap-3 font-medium">
@@ -614,8 +607,9 @@ watch(() => props.danceId, showCurrent)
       <!-- The placed order (on phones, in the strip's sheet) -->
       <section v-if="!strip" ref="placedSection" class="min-w-0 max-md:border-t-8 max-md:border-muted md:overflow-y-auto">
         <template v-if="tab === 'placings'">
-          <h2 class="text-muted-foreground flex items-center gap-1.5 px-4 pt-3 pb-2 text-sm font-semibold">
-            {{ isCallbacks ? `Called back · ${placings.entries.length}` : 'Placed' }}
+          <h2 class="text-heading flex items-center gap-1.5 px-4 pt-3 pb-2">
+            {{ isCallbacks ? 'Called back' : 'Placed' }}
+            <span v-if="isCallbacks || placings.entries.length" class="text-muted-foreground font-normal tabular-nums">· {{ placings.entries.length }}</span>
             <HelpTip v-if="!isCallbacks" label="How the placed list works">
               Drag the handle to change the order. Switch on Tie when a dancer shares the place of the dancer above. Tap a dancer to take them out.
             </HelpTip>
@@ -624,7 +618,7 @@ watch(() => props.danceId, showCurrent)
         </template>
 
         <template v-else>
-          <h2 class="text-muted-foreground px-4 pt-3 pb-2 text-sm font-semibold">Championship points</h2>
+          <h2 class="text-heading px-4 pt-3 pb-2">Championship points</h2>
           <ul v-if="pointedIds.length" class="divide-y">
             <li v-for="id in pointedIds" :key="id">
               <button
@@ -711,7 +705,7 @@ watch(() => props.danceId, showCurrent)
         <Search class="text-muted-foreground size-4 shrink-0" />
         <span class="sr-only">Find a dancer</span>
         <input v-model="fixQuery" type="search" placeholder="Find by number or name" class="min-w-0 flex-1 bg-transparent text-base outline-none" />
-        <button v-if="fixQuery" type="button" aria-label="Clear search" class="press text-muted-foreground -mr-1 flex size-7 items-center justify-center rounded-full" @click="fixQuery = ''">
+        <button v-if="fixQuery" type="button" aria-label="Clear search" class="press text-muted-foreground relative -mr-1 flex size-7 items-center justify-center rounded-full after:absolute after:-inset-2" @click="fixQuery = ''">
           <X class="size-4" />
         </button>
       </label>

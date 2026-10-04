@@ -30,6 +30,8 @@ watch(
   <img
     v-if="image && !broken"
     :src="image"
+    loading="lazy"
+    decoding="async"
     alt=""
     :class="['bg-muted shrink-0 rounded-full object-cover', SIZE[size]]"
     @error="broken = true"

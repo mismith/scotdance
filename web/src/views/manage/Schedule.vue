@@ -16,6 +16,7 @@ import { useManagedCompetition } from '@/composables/admin/useManagedCompetition
 import { confirm } from '@/lib/admin/feedback'
 import { canEdit } from '@/lib/admin/write'
 import { dayLabel } from '@/lib/schedule'
+import { formatWeekday } from '@/lib/format'
 
 // Manage › Schedule: drag dances, age groups and judges into a grid of
 // sessions, events and platforms.
@@ -44,6 +45,15 @@ const showDay = (dayId?: string) =>
     name: 'manage.schedule',
     params: { competitionId: m.competitionId.value, dayId },
   })
+
+// Families see the day's name, so a "Saturday" dated on a Thursday is worth
+// a word.
+const weekdayClash = computed(() => {
+  const name = day.value?.name?.trim() ?? ''
+  const actual = formatWeekday(day.value?.date)
+  if (!actual || !/^(mon|tue|wed|thu|fri|sat|sun)[a-z]*$/i.test(name)) return null
+  return name.slice(0, 3).toLowerCase() === actual.slice(0, 3).toLowerCase() ? null : actual
+})
 
 function renameDay(name: string) {
   if (day.value) void b.renameDay(day.value.id, name)
@@ -171,6 +181,9 @@ const missing = computed(() =>
           >
             <Trash2 class="size-4" />
           </button>
+          <p v-if="weekdayClash" class="text-next-foreground basis-full text-sm font-medium">
+            That date is a {{ weekdayClash }}. Families see the name, so check which is right.
+          </p>
         </div>
         <p
           v-if="missing.length"

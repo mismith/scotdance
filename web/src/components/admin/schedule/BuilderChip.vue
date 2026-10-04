@@ -80,7 +80,7 @@ const BAR = {
       v-if="removable && !b.readonly.value"
       type="button"
       :aria-label="`Remove ${title ?? label}`"
-      class="press text-muted-foreground hover:text-foreground hover:bg-foreground/10 relative -my-1 ml-0.5 flex size-7 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/chip:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
+      class="press text-muted-foreground hover:text-foreground hover:bg-foreground/10 relative -my-1 ml-0.5 flex size-7 shrink-0 items-center justify-center rounded-full opacity-0 after:absolute after:-inset-2 transition-opacity group-hover/chip:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
       @click.stop="emit('remove')"
       @pointerdown.stop
       @keydown.enter.stop

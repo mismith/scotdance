@@ -77,7 +77,7 @@ const fresh = computed(() => {
         <NumberCard :number="dancer.number" :color="color" size="md" />
         <div class="min-w-0">
           <h1 class="text-display">{{ dancer.fullName }}</h1>
-          <p class="text-muted-foreground text-sm">
+          <p class="text-muted-foreground text-callout">
             {{ [dancer.group?.fullName, dancer.location].filter(Boolean).join(' · ') }}
           </p>
         </div>

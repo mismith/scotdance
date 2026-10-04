@@ -44,7 +44,7 @@ const items = computed(() => {
         </span>
         <div class="min-w-0">
           <h1 class="text-display">{{ p.name.value }}</h1>
-          <p class="text-muted-foreground text-sm">{{ [address, p.locationLine.value].filter(Boolean).join(', ') }}</p>
+          <p class="text-muted-foreground text-callout">{{ [address, p.locationLine.value].filter(Boolean).join(', ') }}</p>
         </div>
       </header>
 

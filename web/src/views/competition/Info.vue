@@ -21,8 +21,7 @@ import StaffAvatar from '@/components/StaffAvatar.vue'
 import StaffDialog from '@/components/StaffDialog.vue'
 import Button from '@/components/ui/Button.vue'
 import { staffEntityRef, staffMemberName, type StaffMember } from '@/types/competition'
-import type { DancerDay, DanceStatus } from '@/lib/dancerDay'
-import { getOrdinalSuffix, shortDanceName } from '@/lib/results'
+import type { DancerDay } from '@/lib/dancerDay'
 import { resultsCount } from '@/lib/resultsCount'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useMeStore } from '@/stores/me'
@@ -152,20 +151,11 @@ const sessions = computed(() =>
 const mode = computed(() => phase.value)
 const posted = computed(() => resultsCount(groups.value, dances.value, results.value))
 
-// A dancer whose day is all settled folds to one line ("1st Fling (tie) ·
-// 2nd Reel"), once any new placing has had its moment.
+// A dancer whose day is all settled folds to their rosettes, as on Home,
+// once any new placing has had its moment.
 const SETTLED = new Set(['placed', 'unplaced', 'no-placings', 'not-posted'])
 const settled = (days: DancerDay[]) =>
   days.every((d) => d.dances.length && [...d.dances, ...(d.overall ? [d.overall] : [])].every((s) => SETTLED.has(s.state)))
-function placingText(s: DanceStatus) {
-  if (s.state !== 'placed' || s.place == null) return null
-  return `${s.place}${getOrdinalSuffix(s.place)} ${shortDanceName(s.dance.fullName || s.dance.name)}${s.tied ? ' (tie)' : ''}`
-}
-function placingsLine(days: DancerDay[]) {
-  const all = days.flatMap((d) => [...d.dances, ...(d.overall ? [d.overall] : [])])
-  if (!all.some((s) => s.state === 'placed')) return all.some((s) => s.state !== 'not-posted') ? 'Not placed' : 'No results posted'
-  return all.map(placingText).filter(Boolean).join(' · ')
-}
 
 // Following no one here: find your dancer right on the Overview.
 const find = ref('')
@@ -247,25 +237,12 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
       <section v-if="followedHere.length" key="yours" class="space-y-3">
         <h2 class="text-heading">Your dancers here</h2>
         <template v-for="f in followedHere" :key="f.personId">
-          <div v-if="settled(f.days) && !freshIn(f.days)" class="surface overflow-hidden rounded-2xl">
-            <RouterLink
-              :to="{ name: 'competition.dancer', params: { competitionId, dancerId: f.days[0].dancer.id } }"
-              class="press-row focus-inset flex min-h-16 items-center gap-3 px-3 py-2.5"
-            >
-              <NumberCard :number="f.days[0].dancer.number" :color="f.color" size="sm" />
-              <span class="min-w-0 flex-1">
-                <span class="block truncate text-base font-semibold">{{ f.name }}</span>
-                <span class="text-muted-foreground block text-sm tabular-nums">{{ placingsLine(f.days) }}</span>
-              </span>
-              <ChevronRight class="text-muted-foreground size-5 shrink-0" />
-            </RouterLink>
-          </div>
           <DancerDayCard
-            v-else
             :days="f.days"
             :fresh="freshIn(f.days)"
             :competition-id="competitionId"
             :color="f.color"
+            :folded="settled(f.days) && !freshIn(f.days)"
           />
         </template>
       </section>

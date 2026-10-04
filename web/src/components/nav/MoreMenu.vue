@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
-import { ArrowDownToLine, ClipboardList, Gavel, Info, LifeBuoy, Music, School, ServerCog, SquarePlus, Users } from '@lucide/vue'
+import { ArrowDownToLine, ClipboardList, Gavel, Info, LifeBuoy, Music, School, ServerCog, Settings, SquarePlus, Users } from '@lucide/vue'
 import AdminMark from '@/components/AdminMark.vue'
 import Dialog from '@/components/Dialog.vue'
 import { useCrisp } from '@/composables/useCrisp'
@@ -67,6 +67,9 @@ const row =
         </button>
         <button type="button" :class="row" :data-current="here({ name: 'about' })" @click="go({ name: 'about' })">
           <Info class="size-5" /> About ScotDance.app
+        </button>
+        <button type="button" :class="row" :data-current="here({ name: 'settings' })" @click="go({ name: 'settings' })">
+          <Settings class="size-5" /> Settings
         </button>
         <button v-if="crisp.available" type="button" :class="row" @click="run(() => crisp.open())">
           <LifeBuoy class="size-5" />

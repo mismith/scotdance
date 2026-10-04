@@ -49,8 +49,8 @@ const PAIRS: Array<[ink: string, fill: string, min: number]> = [
   ['input', 'card', LARGE],
   ['ring', 'card', LARGE],
   ['ring', 'background', LARGE],
-  // Initials and ticks on a followed dancer's colour.
-  ...[1, 2, 3, 4, 5, 6, 7, 8].map((n) => ['on-dancer', `dancer-${n}`, LARGE] as const),
+  // Initials and ticks on a followed dancer's colour (4.5:1, as DESIGN.md promises).
+  ...[1, 2, 3, 4, 5, 6, 7, 8].map((n) => ['on-dancer', `dancer-${n}`, TEXT] as const),
 ]
 
 describe.each(Object.entries(THEMES))('%s theme', (_, t) => {

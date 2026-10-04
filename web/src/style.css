@@ -21,7 +21,6 @@
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-fill: var(--destructive-fill);
   --color-destructive-foreground: var(--destructive-foreground);
@@ -33,8 +32,6 @@
   --color-strong: var(--strong);
   /* Tinted surfaces for callouts and selected states */
   --color-blue-paper: var(--blue-paper);
-  --color-pink-paper: var(--pink-paper);
-  --color-chip: var(--chip);
   /* Status language: every state is shape + colour + a word */
   --color-next: var(--next);
   --color-next-foreground: var(--next-foreground);
@@ -44,7 +41,8 @@
   --color-live: var(--live);
   --color-live-paper: var(--live-paper);
   --color-on-dancer: var(--on-dancer);
-  /* Schedule builder blocks: dances, age groups and judges each keep one hue */
+  /* Schedule builder blocks: dances, age groups and judges each keep one hue,
+     clear of the state colours (done green, live pink, next amber) */
   --color-dance: var(--dance);
   --color-dance-muted: var(--dance-muted);
   --color-group: var(--group);
@@ -56,11 +54,8 @@
   --color-paper-ink: #0e1114;
   /* One family everywhere: Atkinson Hyperlegible Next was drawn for
      low-vision readers and keeps 1/l/I, 0/O and 3/6/8 distinct, which
-     matters when the most important thing on screen is a number.
-     --font-serif is aliased to the same stack so legacy `font-serif`
-     classes stop switching faces. */
+     matters when the most important thing on screen is a number. */
   --font-sans: 'Atkinson Hyperlegible Next Variable', 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-serif: var(--font-sans);
   --font-mono: 'Atkinson Hyperlegible Mono Variable', 'Atkinson Hyperlegible Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --default-transition-duration: 220ms;
   /* Motion vocabulary. Springs move things; opacity and colour never bounce
@@ -99,7 +94,6 @@
   --muted: #e9edf2;
   --muted-foreground: #454e59;
   --accent: #e9edf2;
-  --accent-foreground: #12161b;
   --destructive: #b42318;
   --destructive-fill: #b42318;
   --destructive-foreground: #ffffff;
@@ -114,8 +108,6 @@
      blue is lighter and white text needs the contrast). */
   --brand-light: rgb(255 255 255 / 0.17);
   --blue-paper: #e1ecf8;
-  --pink-paper: #fde7f1;
-  --chip: #e9edf2;
   --next: #ffefc7;
   --next-foreground: #7a4600;
   --next-edge: #f59e0b;
@@ -126,12 +118,12 @@
   --live-paper: #fde7f1;
   --paper: #ffffff;
   --paper-edge: #c9d0d8;
-  --dance: oklch(0.76 0.15 140);
-  --dance-muted: oklch(0.94 0.045 140);
+  --dance: oklch(0.76 0.12 195);
+  --dance-muted: oklch(0.94 0.04 195);
   --group: oklch(0.7 0.14 240);
   --group-muted: oklch(0.94 0.04 240);
-  --judge: oklch(0.67 0.15 350);
-  --judge-muted: oklch(0.93 0.04 350);
+  --judge: oklch(0.68 0.14 300);
+  --judge-muted: oklch(0.93 0.04 300);
   /* Followed dancers' colours (see stores/dancerColors). The first five are
      drawn from tartans: Royal Stewart, Black Watch, heather, MacLeod gold,
      Saltire. White text passes AA on all of them. */
@@ -151,8 +143,6 @@
   --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom));
   /* Chrome: a 3.5rem app bar under the status bar, and the floating tab bar
      above the home indicator. Pages pad by these. */
-  --nav-top: var(--safe-top);
-  --nav-bottom: 0px;
   --chrome-top: calc(3.5rem + var(--safe-top));
   --chrome-bottom: calc(4.5rem + max(0.5rem, var(--safe-bottom)));
   /* Surfaces: a hairline and a whisper of shadow for cards; a soft lift for
@@ -191,7 +181,6 @@
   --muted: #1f262e;
   --muted-foreground: #b4beca;
   --accent: #1f262e;
-  --accent-foreground: #eef2f6;
   --destructive: #ff8a7a;
   --destructive-fill: #d0342c;
   --destructive-foreground: #ffffff;
@@ -201,8 +190,6 @@
   --strong: #5d6875;
   --ring: #62aaf0;
   --blue-paper: #11263a;
-  --pink-paper: #3d1430;
-  --chip: #1f262e;
   --next: #3a2a07;
   --next-foreground: #ffd27a;
   --next-edge: #f59e0b;
@@ -212,9 +199,9 @@
   --live-paper: #3d1430;
   --paper: #f7f5ef;
   --paper-edge: #f7f5ef;
-  --dance-muted: oklch(0.25 0.05 140);
+  --dance-muted: oklch(0.25 0.05 195);
   --group-muted: oklch(0.25 0.05 240);
-  --judge-muted: oklch(0.25 0.05 350);
+  --judge-muted: oklch(0.25 0.05 300);
   --dancer-1: #e0435e;
   --dancer-2: #3fa676;
   --dancer-3: #9b75d6;
@@ -411,13 +398,22 @@
 
 /* Surfaces. Paper for content (a hairline, a whisper of shadow, no border),
    raised for what floats above it (menus, sheets). Glass is for chrome. */
+/* High contrast mode drops shadows, so paper gets an edge there instead. */
 @utility surface {
   background-color: var(--card);
   box-shadow: var(--shadow-card);
+  @media (forced-colors: active) {
+    outline: 1px solid CanvasText;
+    outline-offset: -1px;
+  }
 }
 @utility surface-raised {
   background-color: var(--raised);
   box-shadow: var(--shadow-raised);
+  @media (forced-colors: active) {
+    outline: 1px solid CanvasText;
+    outline-offset: -1px;
+  }
 }
 /* Separators inset from the leading edge, iOS style, without touching the
    rows' own background colour (hover and press tint via box-shadow). Set
@@ -593,7 +589,7 @@
 
 /* Type scale (80% of the Front Row prototype, with body floored at 16px):
    display 26 / title 21 / heading 17 / list 16 / body 16 / secondary 14 /
-   caption 12. All rem-based, so the in-app Text size setting and browser
+   caption 12. All rem-based, so the phone's text size (in the app) and browser
    zoom scale everything together. */
 @utility text-display {
   @apply text-[1.625rem] leading-tight font-[760] tracking-[-0.022em];

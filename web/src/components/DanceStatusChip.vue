@@ -40,11 +40,11 @@ const platform = computed(() => platformLabel(props.status.slot?.platformName) |
     class="bg-muted text-muted-foreground border-strong inline-flex h-7 items-center gap-1 rounded-full border border-dashed px-2.5 text-footnote font-semibold whitespace-nowrap"
   >
     <Hourglass class="size-3.5" stroke-width="2.4" aria-hidden="true" />
-    Waiting<span class="sr-only"> for results</span>
+    Results to come
   </span>
   <span
     v-else-if="status.state === 'next'"
-    class="bg-next text-next-foreground inline-flex h-7 items-center gap-1 rounded-full px-2.5 text-footnote font-semibold whitespace-nowrap"
+    class="bg-next text-next-foreground inline-flex h-8 items-center gap-1 rounded-full px-3 text-callout font-semibold whitespace-nowrap"
   >
     <Play class="size-3.5 fill-current" stroke-width="2.4" aria-hidden="true" />
     Next{{ platform ? ` · ${platform}` : '' }}

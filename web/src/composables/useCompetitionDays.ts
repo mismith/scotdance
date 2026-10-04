@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useFollowing } from '@/composables/useFollowing'
-import { competitionPhase, dancerDay, type DancerDay } from '@/lib/dancerDay'
+import { compareDays, competitionPhase, dancerDay, type DancerDay } from '@/lib/dancerDay'
 import type { EnrichedDancer } from '@/types/competition'
 
 // Inside a competition: the followed people entered here, each with their
@@ -55,6 +55,8 @@ export function useCompetitionDays() {
           days: entries.map(dayFor),
         }
       })
+      // Whoever's up soonest first, as on Home; otherwise in follow order.
+      .sort((a, b) => compareDays(a.days, b.days))
   })
 
   /** Followed dancers per group id, for highlighting lists. */

@@ -8,7 +8,7 @@ import type {
 } from '@/types/competition'
 import { compareKeys } from '@/lib/competitionData'
 import { formatWeekday, parseDate } from '@/lib/format'
-import { stripTags } from '@/lib/sanitize'
+import { stripTags } from '@/lib/stripTags'
 
 interface Ordered {
   id: string

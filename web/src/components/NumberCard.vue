@@ -33,6 +33,7 @@ const banded = computed(() => !!props.color || props.size === 'md' || props.size
       size === 'lg' && 'h-24 w-32 rounded-xl pb-2 text-5xl',
     ]"
     :style="{ '--dc': color ?? 'var(--strong)' }"
+    role="img"
     :aria-label="number != null ? `Number ${number}` : 'No number'"
   >
     <span v-if="banded" :class="['sash absolute inset-x-0 top-0', size === 'xs' ? 'h-1.5' : 'h-[24%]']" aria-hidden="true" />

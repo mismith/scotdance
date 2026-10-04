@@ -19,6 +19,8 @@ const broken = ref(false)
   <img
     v-if="member.image && !broken"
     :src="member.image"
+    loading="lazy"
+    decoding="async"
     alt=""
     :style="{ width: `${size}px`, height: `${size}px` }"
     class="bg-muted shrink-0 rounded-full object-cover"

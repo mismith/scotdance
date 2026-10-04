@@ -13,12 +13,12 @@ import VisibilityChip from '@/components/VisibilityChip.vue'
 import FormInput from '@/components/admin/FormInput.vue'
 import SearchField from '@/components/admin/SearchField.vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
+import { useCompetitionSpans } from '@/composables/useCompetitionSpans'
 import { useHiddenAs } from '@/composables/useHiddenAs'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { useScrolledPast } from '@/composables/useScrolledPast'
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError, newKey, write } from '@/lib/admin/write'
-import { competitionPhase } from '@/lib/dancerDay'
 import { useMorph } from '@/lib/morph'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
@@ -50,8 +50,11 @@ const shown = computed(() => {
   const q = query.value.trim().toLowerCase()
   return q ? mine.value.filter((c) => [c.name, c.location, c.venue].join(' ').toLowerCase().includes(q)) : mine.value
 })
-const upcoming = computed(() => shown.value.filter((c) => competitionPhase(c.date) !== 'after').reverse())
-const past = computed(() => shown.value.filter((c) => competitionPhase(c.date) === 'after'))
+// Through the schedule's last day, so day 2 of a two-day competition is
+// still on (and still a tap from results entry).
+const { phase } = useCompetitionSpans(mine)
+const upcoming = computed(() => shown.value.filter((c) => phase(c) !== 'after').reverse())
+const past = computed(() => shown.value.filter((c) => phase(c) === 'after'))
 
 // The date is on its tile, where it is under the name, and how it's hidden
 // (until it's published) on a chip, as in every other list.
@@ -59,7 +62,7 @@ const hiddenAs = useHiddenAs()
 // System admins see every competition here: the shield picks out their own.
 const shielded = (c: CompetitionListItem) => me.isAdmin && me.organises(c.id)
 // On the day, results entry is a tap away.
-const isToday = (c: CompetitionListItem) => competitionPhase(c.date) === 'today'
+const isToday = (c: CompetitionListItem) => phase(c) === 'today'
 
 // The page's own title hands over to the bar once it scrolls away.
 const titleEl = ref<HTMLElement | null>(null)
@@ -134,7 +137,7 @@ async function create() {
           <ul class="surface divide-y overflow-hidden rounded-2xl">
             <li v-for="c in list" :key="c.id" class="sm:flex sm:items-center">
               <RouterLink :to="{ name: 'manage', params: { competitionId: c.id } }" class="press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap-3 py-2 pr-3 pl-4">
-                <DateTile :date="c.date" :managed="shielded(c)" />
+                <DateTile :date="c.date" :today="isToday(c)" :managed="shielded(c)" />
                 <span class="min-w-0 flex-1">
                   <span class="block truncate text-base font-semibold">{{ c.name || 'Untitled competition' }}</span>
                   <span v-if="c.venue || c.location" class="text-muted-foreground block truncate text-sm">{{ c.venue || c.location }}</span>

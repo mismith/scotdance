@@ -369,15 +369,15 @@ const { freshKey: liveFresh } = useLiveAlertState()
         <!-- Nobody followed yet: the pitch, then something to look at -->
         <section
           v-if="!followedPeople.length"
-          class="brand-panel relative overflow-hidden rounded-3xl p-5"
+          class="brand-panel rounded-3xl p-5"
         >
-          <LogoMark class="pointer-events-none absolute -right-6 -bottom-10 size-48 rotate-[-8deg] opacity-[0.08]" />
-          <h2 class="text-title relative">See your dancer’s day at a glance</h2>
-          <p class="text-callout relative mt-1.5">
+          <LogoMark class="size-14" />
+          <h2 class="text-title mt-3">See your dancer’s day at a glance</h2>
+          <p class="text-callout mt-1.5">
             Follow your dancers to see their platform, dancing order and placings here, and get an alert when results
             are posted.
           </p>
-          <div class="relative mt-4 flex flex-wrap gap-2">
+          <div class="mt-4 flex flex-wrap gap-2">
             <RouterLink
               :to="{ name: 'search' }"
               class="bg-primary-foreground text-primary-fill press flex h-12 items-center gap-2 rounded-full px-5 text-base font-semibold"

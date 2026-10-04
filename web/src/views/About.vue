@@ -165,7 +165,7 @@ watch(() => route.hash, applyHash)
                 open.has(f.id) ? 'grid-rows-[1fr]' : 'grid-rows-[0fr] opacity-0',
               ]"
             >
-              <div class="text-muted-foreground text-callout overflow-hidden px-4 leading-relaxed">
+              <div class="text-muted-foreground overflow-hidden px-4 text-base leading-relaxed">
                 <p class="pb-4">
                   <template v-if="f.id === 'worldwide'">
                     Yes, anywhere in the world. Curiously, usage in the United States has been very light so far. If you’ve

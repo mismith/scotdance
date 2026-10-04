@@ -113,9 +113,8 @@ const NEXT = 'bg-next/55 before:absolute before:inset-y-0 before:left-0 before:w
               :tied="s.tied"
               :fresh="fresh === `${day.dancer.id}:${s.dance.id}`"
               :dance="s.dance.fullName || s.dance.name"
-              size="sm"
             />
-            <span class="text-muted-foreground text-caption leading-none" aria-hidden="true">{{ shortDanceName(s.dance.fullName || s.dance.name) }}</span>
+            <span class="text-muted-foreground text-footnote leading-none font-medium" aria-hidden="true">{{ shortDanceName(s.dance.fullName || s.dance.name) }}</span>
           </span>
           <span v-if="!won.length && day.phase === 'today'" class="text-muted-foreground text-sm">Every result is in</span>
         </span>

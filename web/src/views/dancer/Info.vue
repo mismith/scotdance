@@ -114,7 +114,7 @@ function medals(cid: string) {
         <Avatar :name="name" :image="profile.image.value" :color="color" size="lg" />
         <div class="min-w-0">
           <h1 class="text-display">{{ name }}</h1>
-          <p v-if="subtitle" class="text-muted-foreground text-sm">{{ subtitle }}</p>
+          <p v-if="subtitle" class="text-muted-foreground text-callout">{{ subtitle }}</p>
         </div>
       </header>
       <FollowButton :dancer="{ dancerId, fullName: name }" size="block" />
@@ -142,7 +142,9 @@ function medals(cid: string) {
           <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ byYear.reduce((n, [, l]) => n + l.length, 0) }}</span>
         </h2>
         <template v-for="[year, list] in byYear" :key="year">
-          <h3 class="text-muted-foreground px-1 pt-2 text-footnote font-semibold">{{ year }}</h3>
+          <h3 class="text-heading flex items-baseline justify-between pt-2">
+            {{ year }} <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ list.length }}</span>
+          </h3>
           <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
             <li v-for="r in list" :key="r.competitionId">
               <RouterLink

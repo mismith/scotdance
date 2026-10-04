@@ -67,13 +67,4 @@ export function linkify(html: string): string {
     .join('')
 }
 
-/**
- * Strip every tag — for one-line previews where HTML would break layout.
- * Returns plain text (shown with {{ }}, which escapes it), so "&" stays "&"
- * rather than "&amp;"; line breaks and block ends become newlines.
- */
-export function stripTags(input: string | undefined | null): string {
-  if (!input) return ''
-  const withBreaks = input.replace(/<br\s*\/?>|<\/(?:p|div|li|h[1-6]|blockquote)>/gi, '$&\n')
-  return DOMPurify.sanitize(withBreaks, { ALLOWED_TAGS: [], ALLOWED_ATTR: [], RETURN_DOM: true }).textContent ?? ''
-}
+export { stripTags } from '@/lib/stripTags'

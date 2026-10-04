@@ -70,9 +70,9 @@ function onTap(item: TabItem, e: MouseEvent) {
             aria-hidden="true"
           />
           <component :is="item.icon" class="relative size-[1.375rem]" :stroke-width="item.active ? 2.4 : 2" />
-          <!-- With big text the labels can't fit: icons only, as iOS does
-               (the query is in rem, so it follows the text size). -->
-          <span class="relative max-w-full truncate px-px @max-[17rem]:sr-only">{{ item.label }}</span>
+          <!-- Labels stop growing at 12px, as iOS tab labels do, so big text
+               keeps them; only a bar too narrow for them goes icons only. -->
+          <span class="relative max-w-full truncate px-px @max-[200px]:sr-only">{{ item.label }}</span>
           <span
             v-if="item.badge"
             class="bg-primary ring-card absolute top-2 right-[calc(50%-1.125rem)] size-2 rounded-full ring-2"

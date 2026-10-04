@@ -168,7 +168,7 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
       <header :ref="setHeader" class="space-y-1">
         <!-- One title with the category in it ("Primary Under 7"), not a label above. -->
         <h1 class="text-display">{{ group.fullName || group.name }}</h1>
-        <p class="text-muted-foreground text-sm">
+        <p class="text-muted-foreground text-callout">
           {{ [where, `${groupDancers.length} dancers`].filter(Boolean).join(' · ') }}
         </p>
         <div v-if="followedHere.length" class="space-y-1 pt-1">
@@ -237,7 +237,7 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
           </template>
           <template v-else-if="s.state === 'waiting'">
             <Hourglass class="mt-0.5 size-5 shrink-0" />
-            <span><span class="text-foreground font-semibold">Danced. Waiting for results.</span><br />Placings appear here as soon as they’re entered.</span>
+            <span><span class="text-foreground font-semibold">Danced. Results to come.</span><br />Placings appear here as soon as they’re entered.</span>
           </template>
           <template v-else-if="s.state === 'next'">
             <Clock class="mt-0.5 size-5 shrink-0" />

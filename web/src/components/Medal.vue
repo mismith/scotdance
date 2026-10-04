@@ -33,7 +33,7 @@ const TIERS = {
   1: { body: 'fill-[color-mix(in_oklab,var(--color-primary)_18%,var(--color-card))]', ring: 2.5, tails: 1, halo: true },
   2: { body: 'fill-[color-mix(in_oklab,var(--color-primary)_14%,var(--color-card))]', ring: 2, tails: 1, halo: false },
   3: { body: 'fill-[color-mix(in_oklab,var(--color-primary)_10%,var(--color-card))]', ring: 1.25, tails: 0.6, halo: false },
-  rest: { body: 'fill-[color-mix(in_oklab,var(--color-primary)_6%,var(--color-card))]', ring: 0.75, tails: 0.3, halo: false },
+  rest: { body: 'fill-[color-mix(in_oklab,var(--color-primary)_6%,var(--color-card))]', ring: 1, tails: 0.5, halo: false },
 }
 const tier = computed(() => TIERS[props.place === 1 || props.place === 2 || props.place === 3 ? props.place : 'rest'])
 

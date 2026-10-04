@@ -258,7 +258,7 @@ const judging = computed(() => {
                       class="mt-1"
                     />
                   </span>
-                  <span v-if="g.waiting" class="text-muted-foreground text-footnote shrink-0 font-medium">Waiting for results</span>
+                  <span v-if="g.waiting" class="text-muted-foreground text-footnote shrink-0 font-medium">Results to come</span>
                   <span v-else-if="!g.posted" class="text-primary text-footnote shrink-0 font-medium">Dancing order</span>
                 </button>
                 <!-- Once posted, the placings are a tap away; the row still opens the order. -->
