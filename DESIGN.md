@@ -136,6 +136,38 @@ components:
     textColor: "{colors.ink}"
     rounded: "{rounded.xl}"
     width: "2.75rem"
+  number-card-xs:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.md}"
+    width: "2.75rem"
+    height: "2rem"
+  number-card-md:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.ink}"
+    rounded: "0.5rem"
+    width: "5.5rem"
+    height: "4rem"
+  number-card-xl:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.2xl}"
+    width: "11rem"
+    height: "8rem"
+  dancer-day-card:
+    backgroundColor: "{colors.paper}"
+    rounded: "1.25rem"
+    padding: "1rem"
+  rosette-lg:
+    textColor: "{colors.saltire-blue}"
+    height: "3rem"
+    width: "2.55rem"
+  chip-pinned:
+    backgroundColor: "{colors.slate-wash}"
+    textColor: "{colors.slate-text}"
+    rounded: "{rounded.full}"
+    height: "2rem"
+    padding: "0 0.75rem"
 ---
 
 # Design System: ScotDance.app
@@ -261,10 +293,10 @@ Every rounded shape uses continuous corners (`corner-shape: superellipse(1.5)`),
 A small calendar page leading a competition row: month, day, weekday (or year). Slate Wash at rest, Live Paper and Live Pink while it's on; an outlined blue shield badge in its corner when you organise that competition.
 
 ### Competitor Number Card (signature)
-The bib a dancer wears: bold tabular number on white paper, a band in the followed dancer's colour, two safety pins drawn flat in one stroke (coil, arms, clasp). Only ever shown inside a competition, never as someone's identity. Sizes run from a 44px list tile to the 88px card that leads a dancer's day and the 176px poster-size card that leads a competition dancer's page.
+The bib a dancer wears: bold tabular number on white paper, a band in the followed dancer's colour, two safety pins drawn flat in one stroke (coil, arms, clasp). Only ever shown inside a competition, never as someone's identity. Sizes run from a 44px list tile (plain, no band or pins unless the dancer is followed) to the 88px card that leads a dancer's day and the 176px poster-size card that leads a competition dancer's page.
 
 ### Dancer Day Card (signature)
-**The Number Card:** the bib your dancer wears is the hero object. Each followed dancer's card on Home and a competition's Overview leads with their 88px number card, name (1.25rem bold) and age group. Placings pin on as 48px rosettes in a row (beside the name when the card has room, under it on a phone), Overall set apart by a hairline with its label, then chips for callbacks, championship points and "Results to come". The dances still to come sit at the foot, each with "From" its event's or session's start time, platform and draw right-aligned in tabular figures. Dancer colour lives only on the bib's band.
+**The Number Card:** the bib your dancer wears is the hero object. Each followed dancer's card on Home and a competition's Overview is paper at 1.25rem (20px) continuous corners, one step rounder than an ordinary card, and leads with their 88px number card, name (1.25rem bold) and age group. Placings pin on as 48px-tall rosettes in a row (beside the name when the card is 34rem wide or more, under it on a phone), Overall set apart by a hairline with its label, then 2rem capsule chips (taller than the usual chip, to sit level with the rosettes) for callbacks, championship points and "Results to come". The dances still to come sit at the foot, each with "From" its event's or session's start time, platform and draw right-aligned in tabular figures. Dancer colour lives only on the bib's band.
 
 ### Rosettes
 A placing is a rosette, one blue for every place, its dance named only in its spoken label ("Highland Fling: 1st place, tied"); the dancer's page lists each dance by name. A championship point is a blue-paper chip, shown as a result, not as a miss.
@@ -279,7 +311,7 @@ The dancer in the mark, drawn whole (never cropped, never given a face) in Salti
 - **Do** use pink, amber and green only for live, next (in Manage) and done.
 - **Do** give every icon-only button a 44px target (36px inside chrome) and an accessible name.
 - **Do** honour Reduce Motion (pages just change, scrolls jump) and Reduce Transparency (glass turns solid).
-- **Do** name the dance on every placing, and give upcoming dances the schedule's facts (platform, session, time, draw), never a guess at what's on now.
+- **Do** give every placing its dance in the rosette's spoken label, and give upcoming dances the schedule's facts (platform, start time, draw), never a guess at what's on now.
 - **Do** size type in rem from the scale above, so the phone's text size and browser zoom scale everything.
 
 ### Don't:

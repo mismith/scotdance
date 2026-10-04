@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-04T04:32:27.376098+00:00",
+  "generatedAt": "2026-10-04T21:19:50.802921+00:00",
   "title": "Design System: ScotDance.app",
   "extensions": {
     "colorMeta": {
@@ -112,7 +112,7 @@
       "name": "Next Chip",
       "kind": "chip",
       "refersTo": "chip-next",
-      "description": "Up next.",
+      "description": "In Manage only: what needs the organiser next (the next section to set up). Families' screens never show a Next.",
       "html": "<span class=\"ds-chip-next\">Next</span>",
       "css": ".ds-chip-next{display:inline-flex;align-items:center;height:1.75rem;padding:0 .625rem;border-radius:9999px;background:#ffefc7;color:#7a4600;font:600 .8125rem \"Atkinson Hyperlegible Next\",system-ui,sans-serif}"
     },
@@ -123,6 +123,30 @@
       "description": "Date tile, name, town; inset separators.",
       "html": "<a class=\"ds-row\" href=\"#\"><span class=\"ds-tile\"><b>OCT</b><i>15</i><small>Thu</small></span><span><strong>QA Games</strong><br><small>Calgary, AB</small></span></a>",
       "css": ".ds-row{display:flex;gap:.75rem;align-items:center;min-height:4rem;padding:.625rem .75rem .625rem 1rem;background:#fff;color:#12161b;text-decoration:none;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif}.ds-row:hover{box-shadow:inset 0 0 0 100vmax rgb(18 22 27/.04)}.ds-tile{display:flex;flex-direction:column;align-items:center;width:2.75rem;padding:.375rem 0;border-radius:.75rem;background:#e9edf2;line-height:1}.ds-tile b{font-size:.75rem;color:#454e59}.ds-tile i{font-style:normal;font-weight:800;font-size:1.25rem}.ds-tile small,.ds-row small{color:#454e59;font-size:.75rem}"
+    },
+    {
+      "name": "Competitor Number Card",
+      "kind": "custom",
+      "refersTo": "number-card-md",
+      "description": "The bib a dancer wears: bold tabular number on white paper, a band in the dancer's colour, two flat safety pins. 88px leads a dancer's day; 176px (number-card-xl) leads a competition dancer's page; 44px plain tiles in lists.",
+      "html": "<span class=\"ds-bib\" role=\"img\" aria-label=\"Number 127\"><span class=\"ds-bib-band\"></span><span class=\"ds-bib-pins\"><svg viewBox=\"0 0 44 12\"><circle cx=\"5\" cy=\"6\" r=\"3\"/><path d=\"M8 4.2H35M7.6 7.8H33\"/><path d=\"M34 2.6h5.4a1.6 1.6 0 0 1 1.6 1.6v3.6a1.6 1.6 0 0 1-1.6 1.6H34z\"/></svg><svg viewBox=\"0 0 44 12\"><circle cx=\"5\" cy=\"6\" r=\"3\"/><path d=\"M8 4.2H35M7.6 7.8H33\"/><path d=\"M34 2.6h5.4a1.6 1.6 0 0 1 1.6 1.6v3.6a1.6 1.6 0 0 1-1.6 1.6H34z\"/></svg></span><span class=\"ds-bib-n\">127</span></span>",
+      "css": ".ds-bib{--dc:#b0102c;position:relative;display:inline-flex;align-items:flex-end;justify-content:center;width:5.5rem;height:4rem;padding-bottom:.375rem;box-sizing:border-box;overflow:hidden;border:1px solid #c9d0d8;border-radius:.5rem;corner-shape:superellipse(1.5);background:#fff;color:#12161b;font:800 1.875rem/1 \"Atkinson Hyperlegible Next\",system-ui,sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums;box-shadow:0 1px 0 rgb(0 0 0/.05),0 2px 6px rgb(0 0 0/.1)}.ds-bib-band{position:absolute;inset:0 0 auto;height:24%;background:var(--dc)}.ds-bib-pins svg{position:absolute;top:.25rem;width:1.5rem;fill:none;stroke:rgb(255 255 255/.9);stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}.ds-bib-pins svg:first-child{left:.375rem;rotate:-12deg}.ds-bib-pins svg:last-child{right:.375rem;transform:rotate(12deg) scaleX(-1)}.ds-bib-n{position:relative}"
+    },
+    {
+      "name": "Rosette",
+      "kind": "custom",
+      "refersTo": "rosette-lg",
+      "description": "A placing: one blue for every place, stronger tint and halo for the top places; the dance is named only in its spoken label.",
+      "html": "<svg class=\"ds-rosette\" viewBox=\"0 0 34 40\" role=\"img\" aria-label=\"Highland Fling: 1st place\"><path d=\"M11 22 L7 39 L13 35 L16 39 L17 24 Z M23 22 L27 39 L21 35 L18 39 L17 24 Z\" fill=\"currentColor\"/><circle cx=\"17\" cy=\"15\" r=\"17\" fill=\"currentColor\" opacity=\".2\"/><circle cx=\"17\" cy=\"15\" r=\"12.75\" fill=\"#e0ebf6\" stroke=\"currentColor\" stroke-width=\"2.5\"/><circle cx=\"17\" cy=\"15\" r=\"10\" fill=\"none\" stroke=\"currentColor\" stroke-opacity=\".35\" stroke-dasharray=\"2 2\"/><text x=\"17\" y=\"15\" text-anchor=\"middle\" dominant-baseline=\"central\" font-size=\"14\" font-weight=\"800\" fill=\"currentColor\">1<tspan font-size=\".6em\" dy=\"-.45em\">st</tspan></text></svg>",
+      "css": ".ds-rosette{width:2.55rem;height:3rem;overflow:visible;color:#0065bd;flex-shrink:0;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif}"
+    },
+    {
+      "name": "Dancer Day Card",
+      "kind": "card",
+      "refersTo": "dancer-day-card",
+      "description": "One followed dancer at one competition: bib, name and age group, rosettes pinned beside, the dances still to come at the foot with \"From\" times.",
+      "html": "<article class=\"ds-day\"><a class=\"ds-day-head\" href=\"#\"><span class=\"ds-bib\" role=\"img\" aria-label=\"Number 127\"><span class=\"ds-bib-band\"></span><span class=\"ds-bib-pins\"><svg viewBox=\"0 0 44 12\"><circle cx=\"5\" cy=\"6\" r=\"3\"/><path d=\"M8 4.2H35M7.6 7.8H33\"/><path d=\"M34 2.6h5.4a1.6 1.6 0 0 1 1.6 1.6v3.6a1.6 1.6 0 0 1-1.6 1.6H34z\"/></svg><svg viewBox=\"0 0 44 12\"><circle cx=\"5\" cy=\"6\" r=\"3\"/><path d=\"M8 4.2H35M7.6 7.8H33\"/><path d=\"M34 2.6h5.4a1.6 1.6 0 0 1 1.6 1.6v3.6a1.6 1.6 0 0 1-1.6 1.6H34z\"/></svg></span><span class=\"ds-bib-n\">127</span></span><span class=\"ds-day-who\"><strong>Isla MacLeod</strong><small>Intermediate 10 &amp; under</small></span><span class=\"ds-day-pins\"><svg class=\"ds-rosette\" viewBox=\"0 0 34 40\" role=\"img\" aria-label=\"Highland Fling: 1st place\"><path d=\"M11 22 L7 39 L13 35 L16 39 L17 24 Z M23 22 L27 39 L21 35 L18 39 L17 24 Z\" fill=\"currentColor\"/><circle cx=\"17\" cy=\"15\" r=\"17\" fill=\"currentColor\" opacity=\".2\"/><circle cx=\"17\" cy=\"15\" r=\"12.75\" fill=\"#e0ebf6\" stroke=\"currentColor\" stroke-width=\"2.5\"/><circle cx=\"17\" cy=\"15\" r=\"10\" fill=\"none\" stroke=\"currentColor\" stroke-opacity=\".35\" stroke-dasharray=\"2 2\"/><text x=\"17\" y=\"15\" text-anchor=\"middle\" dominant-baseline=\"central\" font-size=\"14\" font-weight=\"800\" fill=\"currentColor\">1<tspan font-size=\".6em\" dy=\"-.45em\">st</tspan></text></svg><span class=\"ds-chip-wait\">Results to come</span></span></a><ul class=\"ds-day-next\"><li><a href=\"#\"><span>Seann Triubhas</span><span class=\"ds-day-when\"><b>From 1:30 pm</b><small>Platform 2 · 4th to dance</small></span></a></li></ul></article>",
+      "css": ".ds-day{width:22rem;overflow:hidden;border-radius:1.25rem;corner-shape:superellipse(1.5);background:#fff;color:#12161b;box-shadow:0 0 0 0.5px rgb(18 22 27/.09),0 1px 2px rgb(16 24 40/.05);font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif}.ds-day a{color:inherit;text-decoration:none}.ds-day a:hover{box-shadow:inset 0 0 0 100vmax rgb(18 22 27/.04)}.ds-day a:focus-visible{outline:2px solid #0065bd;outline-offset:-2px}.ds-day-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.75rem .875rem;align-items:center;padding:1rem}.ds-day-who strong{display:block;font-size:1.25rem;line-height:1.25;letter-spacing:-.01em}.ds-day-who small,.ds-day small{display:block;color:#454e59;font-size:.875rem}.ds-day-who small{font-size:.9375rem}.ds-day-pins{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .25rem}.ds-chip-wait{display:inline-flex;align-items:center;height:2rem;margin-left:.375rem;padding:0 .75rem;border:1px dashed #87919e;border-radius:9999px;background:#e9edf2;color:#454e59;font-size:.875rem;font-weight:600}.ds-day-next{margin:0;padding:0;list-style:none;box-shadow:inset 0 1px 0 #d3dae2}.ds-day-next a{display:flex;flex-wrap:wrap;align-items:center;gap:.125rem .75rem;min-height:3.5rem;padding:.625rem 1rem;font-weight:600}.ds-day-when{margin-left:auto;text-align:right;font-variant-numeric:tabular-nums}.ds-bib{--dc:#b0102c;position:relative;display:inline-flex;align-items:flex-end;justify-content:center;width:5.5rem;height:4rem;padding-bottom:.375rem;box-sizing:border-box;overflow:hidden;border:1px solid #c9d0d8;border-radius:.5rem;corner-shape:superellipse(1.5);background:#fff;color:#12161b;font:800 1.875rem/1 \"Atkinson Hyperlegible Next\",system-ui,sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums;box-shadow:0 1px 0 rgb(0 0 0/.05),0 2px 6px rgb(0 0 0/.1)}.ds-bib-band{position:absolute;inset:0 0 auto;height:24%;background:var(--dc)}.ds-bib-pins svg{position:absolute;top:.25rem;width:1.5rem;fill:none;stroke:rgb(255 255 255/.9);stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}.ds-bib-pins svg:first-child{left:.375rem;rotate:-12deg}.ds-bib-pins svg:last-child{right:.375rem;transform:rotate(12deg) scaleX(-1)}.ds-bib-n{position:relative}.ds-rosette{width:2.55rem;height:3rem;overflow:visible;color:#0065bd;flex-shrink:0;font-family:\"Atkinson Hyperlegible Next\",system-ui,sans-serif}"
     }
   ],
   "narrative": {
@@ -168,7 +192,8 @@
       }
     ],
     "notes": [
-      "Scott, the logo dancer, appears whole and sparingly: About hero and nothing-yet empty states, never on competition-day screens."
+      "Scott, the logo dancer, appears whole and sparingly: About hero and nothing-yet empty states, never on competition-day screens.",
+      "The Number Card: on competition-day screens a followed dancer is the bib they wear (88px on Home and Overview, 176px on their competition page), placings pinned beside it as 48px rosettes; dancer colour lives only on the bib's band."
     ]
   }
 }
