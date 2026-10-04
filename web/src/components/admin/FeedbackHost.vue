@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vu
 import { CircleAlert, X } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
 import Button from '@/components/ui/Button.vue'
-import { confirmRequest, dismissToast, feedbackHost, toasts } from '@/lib/admin/feedback'
+import { confirmRequest, dismissToast, toasts } from '@/lib/admin/feedback'
 import { errorHaptic, warningHaptic } from '@/lib/haptics'
 
 // Keep the last request on screen while the dialog closes, so its words
@@ -37,7 +37,7 @@ watch(
 )
 let observer: MutationObserver | undefined
 onMounted(() => {
-  feedbackHost.ready = true
+  requestAnimationFrame(() => (live.value = true))
   observer = new MutationObserver(retarget)
   observer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['open'] })
   retarget()
@@ -45,7 +45,10 @@ onMounted(() => {
 onBeforeUnmount(() => observer?.disconnect())
 
 // At most two at once: newer ones push the oldest out.
-const visible = computed(() => toasts.slice(-2))
+// The stack loads with the first toast; it shows them a frame after it's in
+// the page, so its live region announces even that first one.
+const live = ref(false)
+const visible = computed(() => (live.value ? toasts.slice(-2) : []))
 watch(
   () => toasts.at(-1),
   (t) => {

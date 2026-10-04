@@ -73,7 +73,7 @@ test('follow a dancer, see their day on Home, and watch a placing arrive', async
 
   await page.goto('/')
   // Competition day: the competition, with the dancer's day under it.
-  await expect(page.getByRole('heading', { name: new RegExp(`Today.*${comp.name}`) })).toBeVisible()
+  await expect(page.getByRole('heading', { name: new RegExp(`${comp.name}.*Today`) })).toBeVisible()
   // No guess at what's on now: plenty of competitions post nothing until the end.
   await expect(page.getByText(/dances next/)).toHaveCount(0)
   const day = card(page, person)
@@ -81,7 +81,9 @@ test('follow a dancer, see their day on Home, and watch a placing arrive', async
   await expect(day.getByText('Beginner Under 7', { exact: true })).toBeVisible()
   // Each dance still to come, in facts from the schedule: the platform and
   // 3rd in the draw.
-  const fling = day.getByRole('link', { name: /Highland Fling \(4\)/ })
+  // (In the list of dances still to come: once placed, a dance's rosette is
+  // in the card's header instead.)
+  const fling = day.getByRole('listitem').getByRole('link', { name: /Highland Fling \(4\)/ })
   await expect(fling).toContainText('Platform A')
   await expect(fling).toContainText('3rd to dance')
   await expect(fling).not.toContainText('Next')
@@ -92,7 +94,7 @@ test('follow a dancer, see their day on Home, and watch a placing arrive', async
   await dbSet(`competitions:data/${comp.id}/results/${g}/${comp.dances[0].id}`, [entry(2, 1).id, entry(2).id])
   await expect(day.getByRole('img', { name: /^Highland Fling.*: 2nd place$/ })).toBeVisible()
   await expect(fling).toHaveCount(0)
-  const sword = day.getByRole('link', { name: /Sword Dance/ })
+  const sword = day.getByRole('listitem').getByRole('link', { name: /Sword Dance/ })
 
   // A late change to the draw shows up too.
   await dbSet(`competitions:data/${comp.id}/draws/${g}/${comp.dances[1].id}`, ['107', '108'])
@@ -107,7 +109,7 @@ test('follow a dancer, see their day on Home, and watch a placing arrive', async
   await expect(page.getByRole('heading', { name: 'See your dancer’s day at a glance' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Your dancers' })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'Recently viewed' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: new RegExp(`Today.*${comp.name}`) })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: new RegExp(`${comp.name}.*Today`) })).toHaveCount(0)
 })
 
 test('on competition day, whoever has dances to come comes first, and a finished day folds to its placings', async ({ page }) => {

@@ -92,7 +92,7 @@ test('the results list counts what’s posted and flags "?" stand-ins', async ({
   const row = page.locator(`a[href$="/results/${group.id}"]`)
   // Fling, Seann (none placed), Reel and Overall are in; the Sword isn't.
   await expect(row.getByText('4 of 5')).toBeVisible()
-  await expect(row.getByLabel('Some placings couldn’t be matched to a dancer')).toBeVisible()
+  await expect(row.getByText('Some placings couldn’t be matched to a dancer')).toBeVisible()
   await row.click()
   await expect(page).toHaveURL(new RegExp(`/results/${group.id}$`))
 })

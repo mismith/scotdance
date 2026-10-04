@@ -1,5 +1,4 @@
 import { reactive, shallowRef } from 'vue'
-import { announce } from '@/lib/announce'
 
 // App-wide confirmation dialog and toasts (rendered by FeedbackHost.vue).
 
@@ -11,8 +10,6 @@ export interface Toast {
 }
 
 export const toasts = reactive<Toast[]>([])
-/** Set once FeedbackHost (and its live region) is in the page. */
-export const feedbackHost = { ready: false }
 let nextId = 1
 
 export function dismissToast(id: number) {
@@ -27,9 +24,6 @@ export function toast(
 ) {
   const id = nextId++
   toasts.push({ id, message, tone: opts.tone ?? 'default', action: opts.action })
-  // The toast stack (a live region) loads with the first toast, too late to
-  // read it: that one goes through App's region instead.
-  if (!feedbackHost.ready) announce(message)
   // Keep at most three on screen.
   while (toasts.length > 3) toasts.shift()
   setTimeout(() => dismissToast(id), opts.action ? 8000 : 4000)

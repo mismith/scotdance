@@ -16,7 +16,8 @@ const expect = baseExpect.configure({ timeout: 20_000 })
 const section = (page: Page, heading: string) =>
   page.getByRole('main').locator('section').filter({ has: page.getByRole('heading', { level: 2, name: new RegExp(`^${heading}`) }) })
 
-test('browse opens each list', async ({ page }) => {
+test('browse opens each list', async ({ page }, info) => {
+  test.skip(info.project.name !== 'phone', 'wide screens browse from the sidebar, which lists the same pages')
   for (const [label, path] of [
     ['Competitions', '/competitions'],
     ['Dancers', '/dancers'],

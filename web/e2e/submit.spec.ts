@@ -69,7 +69,7 @@ test('signing in from the overview goes straight to the first step, on the same 
   await signInOnSheet(page, email)
   await expect(heading(page, 1)).toBeVisible()
   await expect(page).toHaveURL(/\/competitions\/submit$/)
-  await expect(page.getByRole('textbox', { name: 'Name (required)', exact: true })).toBeVisible()
+  await expect(page.getByRole('textbox', { name: 'Name', exact: true })).toBeVisible()
 })
 
 test('a step at a time, checked as it goes, and sent once however fast it’s tapped', async ({ page }) => {
@@ -84,7 +84,7 @@ test('a step at a time, checked as it goes, and sent once however fast it’s ta
     await expect(page.getByText('Add the competition’s name.')).toBeVisible()
     await expect(page.getByText('Add the date.')).toBeVisible()
     await expect(heading(page, 1)).toBeVisible()
-    await page.getByRole('textbox', { name: 'Name (required)', exact: true }).fill(name)
+    await page.getByRole('textbox', { name: 'Name', exact: true }).fill(name)
     await page.locator('input[type=date]').fill('2027-06-05')
     await page.getByRole('button', { name: 'Add a description' }).click()
     await page.getByRole('textbox', { name: 'Description' }).fill('Outdoors. Bring a chair.')
@@ -99,22 +99,22 @@ test('a step at a time, checked as it goes, and sent once however fast it’s ta
     // Typed and not picked from the suggestions: it stays as the name. (By
     // label: a search box with a Maps key, a plain one without, as in CI.)
     await page.getByLabel('Venue name', { exact: true }).fill('Spruce Meadows')
-    await page.getByRole('textbox', { name: 'Town or city (required)' }).fill('Calgary, AB')
+    await page.getByRole('textbox', { name: 'Town or city' }).fill('Calgary, AB')
 
     // Back and Next keep what was typed.
     await page.getByRole('button', { name: 'Back', exact: true }).click()
     await expect(heading(page, 1)).toBeVisible()
-    await expect(page.getByRole('textbox', { name: 'Name (required)', exact: true })).toHaveValue(name)
+    await expect(page.getByRole('textbox', { name: 'Name', exact: true })).toHaveValue(name)
     await expect(page.getByRole('textbox', { name: 'Description' })).toHaveValue('Outdoors. Bring a chair.')
     await next(page)
     await expect(page.getByLabel('Venue name', { exact: true })).toHaveValue('Spruce Meadows')
-    await expect(page.getByRole('textbox', { name: 'Town or city (required)' })).toHaveValue('Calgary, AB')
+    await expect(page.getByRole('textbox', { name: 'Town or city' })).toHaveValue('Calgary, AB')
     await next(page)
 
     await expect(heading(page, 3)).toBeVisible()
     await expect(page.getByText('None of it is shown publicly.')).toBeVisible()
     await expect(page.getByRole('main').getByText(email)).toBeVisible()
-    await page.getByRole('textbox', { name: 'Your name (required)' }).fill('Morag Test')
+    await page.getByRole('textbox', { name: 'Your name' }).fill('Morag Test')
     await page.getByRole('button', { name: 'Add a message' }).click()
     await page.getByRole('textbox', { name: 'Message' }).fill('Two days, same hall.')
     await next(page)
@@ -165,25 +165,25 @@ test('the stepper goes back freely, and forward only as far as the steps on the 
   await expect(heading(page, 1)).toBeVisible()
   await expect(page.getByText('Add the competition’s name.')).toBeVisible()
 
-  await page.getByRole('textbox', { name: 'Name (required)', exact: true }).fill('Jumping Games')
+  await page.getByRole('textbox', { name: 'Name', exact: true }).fill('Jumping Games')
   await page.locator('input[type=date]').fill('2027-06-05')
   await stepper(page, 'Step 4: Review').click()
   await expect(heading(page, 2)).toBeVisible()
   await expect(page.getByText('Add the town or city.')).toBeVisible()
   await expect(stepper(page, 'Step 2: Venue')).toHaveAttribute('aria-current', 'step')
 
-  await page.getByRole('textbox', { name: 'Town or city (required)' }).fill('Calgary, AB')
+  await page.getByRole('textbox', { name: 'Town or city' }).fill('Calgary, AB')
   await stepper(page, 'Step 4: Review').click()
   await expect(heading(page, 3)).toBeVisible()
   await expect(page.getByText('Add your name.')).toBeVisible()
 
-  await page.getByRole('textbox', { name: 'Your name (required)' }).fill('Morag Test')
+  await page.getByRole('textbox', { name: 'Your name' }).fill('Morag Test')
   await stepper(page, 'Step 4: Review').click()
   await expect(heading(page, 4)).toBeVisible()
 
   await stepper(page, 'Step 1: Details').click()
   await expect(heading(page, 1)).toBeVisible()
-  await expect(page.getByRole('textbox', { name: 'Name (required)', exact: true })).toHaveValue('Jumping Games')
+  await expect(page.getByRole('textbox', { name: 'Name', exact: true })).toHaveValue('Jumping Games')
 })
 
 test('Submit another starts afresh, at the same venue', async ({ page }) => {
@@ -192,12 +192,12 @@ test('Submit another starts afresh, at the same venue', async ({ page }) => {
   const name = `E2E Submit ${uid('s').slice(-6)}`
   try {
     await begin(page, email)
-    await page.getByRole('textbox', { name: 'Name (required)', exact: true }).fill(name)
+    await page.getByRole('textbox', { name: 'Name', exact: true }).fill(name)
     await page.locator('input[type=date]').fill('2027-06-05')
     await next(page)
-    await page.getByRole('textbox', { name: 'Town or city (required)' }).fill('Calgary, AB')
+    await page.getByRole('textbox', { name: 'Town or city' }).fill('Calgary, AB')
     await next(page)
-    await page.getByRole('textbox', { name: 'Your name (required)' }).fill('Morag Test')
+    await page.getByRole('textbox', { name: 'Your name' }).fill('Morag Test')
     await next(page)
     await page.getByRole('checkbox', { name: /run by a volunteer/ }).check()
     await page.getByRole('button', { name: 'Submit', exact: true }).click()
@@ -205,14 +205,14 @@ test('Submit another starts afresh, at the same venue', async ({ page }) => {
 
     await page.getByRole('button', { name: 'Submit another' }).click()
     await expect(heading(page, 1)).toBeVisible()
-    await expect(page.getByRole('textbox', { name: 'Name (required)', exact: true })).toHaveValue('')
+    await expect(page.getByRole('textbox', { name: 'Name', exact: true })).toHaveValue('')
     await expect(page.locator('input[type=date]')).toHaveValue('')
-    await page.getByRole('textbox', { name: 'Name (required)', exact: true }).fill(`${name} day 2`)
+    await page.getByRole('textbox', { name: 'Name', exact: true }).fill(`${name} day 2`)
     await page.locator('input[type=date]').fill('2027-06-06')
     await next(page)
-    await expect(page.getByRole('textbox', { name: 'Town or city (required)' })).toHaveValue('Calgary, AB')
+    await expect(page.getByRole('textbox', { name: 'Town or city' })).toHaveValue('Calgary, AB')
     await next(page)
-    await expect(page.getByRole('textbox', { name: 'Your name (required)' })).toHaveValue('Morag Test')
+    await expect(page.getByRole('textbox', { name: 'Your name' })).toHaveValue('Morag Test')
   } finally {
     await removeSubmissionsNamed(name)
   }
@@ -222,7 +222,7 @@ test('the answers so far outlast a reload, skipping the overview, until started 
   const email = `${uid('org')}@example.test`
   await ensureUser(email)
   await begin(page, email)
-  await page.getByRole('textbox', { name: 'Name (required)', exact: true }).fill('Half-finished Games')
+  await page.getByRole('textbox', { name: 'Name', exact: true }).fill('Half-finished Games')
   await page.locator('input[type=date]').fill('2027-06-05')
   await next(page)
   await expect(heading(page, 2)).toBeVisible()
@@ -231,12 +231,12 @@ test('the answers so far outlast a reload, skipping the overview, until started 
   await expect(page.getByText('Picked up where you left off.')).toBeVisible()
   await expect(heading(page, 2)).toBeVisible()
   await page.getByRole('button', { name: 'Back', exact: true }).click()
-  await expect(page.getByRole('textbox', { name: 'Name (required)', exact: true })).toHaveValue('Half-finished Games')
+  await expect(page.getByRole('textbox', { name: 'Name', exact: true })).toHaveValue('Half-finished Games')
 
   await page.reload()
   await page.getByRole('button', { name: 'Start over' }).click()
   await expect(heading(page, 1)).toBeVisible()
-  await expect(page.getByRole('textbox', { name: 'Name (required)', exact: true })).toHaveValue('')
+  await expect(page.getByRole('textbox', { name: 'Name', exact: true })).toHaveValue('')
   // Nothing saved now: back to the overview.
   await page.reload()
   await expect(page.getByRole('button', { name: 'Start', exact: true })).toBeVisible()

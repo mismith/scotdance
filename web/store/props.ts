@@ -96,26 +96,28 @@ export function dateTile(
   )
 }
 
-/** The amber "Next" chip from a dancer's day: a play mark and where they're on. (x, y) is its centre. */
-export function nextChip(
-  x: number,
-  y: number,
-  h: number,
-  label = 'Next · Platform A',
-  turn = 0,
-) {
+/**
+ * A dance still to come, as a dancer's day card has it: a clock, then when
+ * its event starts and where ("From 12:15 pm · Platform A"), on paper.
+ * (x, y) is its centre.
+ */
+export function whenChip(x: number, y: number, h: number, label = 'From 12:15 pm · Platform A', turn = 0) {
   const font = `font-family="'Atkinson Hyperlegible Next', Atkinson, sans-serif"`
-  const fs = h * 0.44
-  const w = h * 0.9 + label.length * fs * 0.5 + h * 0.55
+  const fs = h * 0.42
+  const w = h * 1.05 + label.length * fs * 0.5 + h * 0.5
   const l = x - w / 2
   const t = y - h / 2
-  const tri = `M${n(l + h * 0.42)},${n(y - h * 0.17)} L${n(l + h * 0.42)},${n(y + h * 0.17)} L${n(l + h * 0.7)},${n(y)} Z`
+  const cx = l + h * 0.56
+  const r = h * 0.2
+  const clock =
+    `<circle cx="${n(cx)}" cy="${n(y)}" r="${n(r)}" fill="none" stroke="${INK}" stroke-width="${n(h * 0.06)}"/>` +
+    `<path d="M${n(cx)},${n(y - r * 0.55)} L${n(cx)},${n(y)} L${n(cx + r * 0.45)},${n(y + r * 0.3)}" fill="none" stroke="${INK}" stroke-width="${n(h * 0.06)}" stroke-linecap="round" stroke-linejoin="round"/>`
   return (
     `<g transform="rotate(${turn} ${n(x)} ${n(y)})">` +
-    `<rect x="${n(l)}" y="${n(t + h * 0.06)}" width="${n(w)}" height="${n(h)}" rx="${n(h / 2)}" fill="rgba(122,70,0,.14)"/>` +
-    `<rect x="${n(l)}" y="${n(t)}" width="${n(w)}" height="${n(h)}" rx="${n(h / 2)}" fill="#ffefc7"/>` +
-    `<path d="${tri}" fill="#7a4600" stroke="#7a4600" stroke-width="${n(h * 0.05)}" stroke-linejoin="round"/>` +
-    `<text x="${n(l + h * 0.88)}" y="${n(y)}" dominant-baseline="central" ${font} font-weight="700" font-size="${n(fs)}" fill="#7a4600">${label}</text></g>`
+    `<rect x="${n(l)}" y="${n(t + h * 0.08)}" width="${n(w)}" height="${n(h)}" rx="${n(h / 2)}" fill="rgba(10,16,30,.22)"/>` +
+    `<rect x="${n(l)}" y="${n(t)}" width="${n(w)}" height="${n(h)}" rx="${n(h / 2)}" fill="#fff"/>` +
+    clock +
+    `<text x="${n(l + h * 0.98)}" y="${n(y)}" dominant-baseline="central" ${font} font-weight="700" font-size="${n(fs)}" fill="${INK}">${label}</text></g>`
   )
 }
 

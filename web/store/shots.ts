@@ -1,19 +1,19 @@
 // The store shots, in order. The first three are what search results show,
 // so they tell one day at a competition (the World Championship final at
-// Cowal, demo.ts): the result lands, who's on next, and when. The rest go
+// Cowal, demo.ts): the result lands, who you follow, and when they're on. The rest go
 // feature by feature, and the last is the sign-off.
 //
 // Headlines are two lines, broken where written; subtitles one short line.
 // The copy reuses the app's own lines (About) where they fit.
 //
 // Every slot has one big thing beside its phone: the app's own objects at
-// poster size (a 1st-place rosette, the number cards, the Next chip, the
+// poster size (a 1st-place rosette, the number cards, a dance's start time, the
 // date tile, rosettes, a schedule chip mid-drag). Scott only ever appears as
 // the logo itself: in the app's lockup on the first slot, and big in the
 // confetti on the last. His leap is saved for the app's own launch.
 import type { Ctx, Decor } from './compose.ts'
 import { box, joints, leap } from './mark.ts'
-import { dateTile, dragChip, nextChip, numberCard, rosette, scott } from './props.ts'
+import { dateTile, dragChip, numberCard, rosette, scott, whenChip } from './props.ts'
 
 export interface Shot {
   scene: string
@@ -169,18 +169,12 @@ export const cards: Decor = {
   },
 }
 
-/** Slot 3: the amber Next chip, poster size, across the phone's top. */
-export const next: Decor = {
+/** Slot 3: when a dance starts and where, as a day card has it, poster size across the phone's top. */
+export const when: Decor = {
   layer: 'front',
   draw: (c) => {
     const p = at(c)
-    return nextChip(
-      inside(c, p.L(0.42), p.u(0.42)),
-      p.T(0.05),
-      p.u(0.16),
-      'Next · Platform A',
-      -6,
-    )
+    return whenChip(inside(c, p.L(0.48), p.u(0.48)), p.T(0.05), p.u(0.15), 'From 12:15 pm · Platform A', -5)
   },
 }
 
@@ -244,9 +238,9 @@ export const SHOTS: Shot[] = [
   {
     scene: 'schedule',
     title: 'Know when\nthey’re on',
-    sub: 'See who’s dancing next, and where.',
+    sub: 'Their platform, start time and place in the draw.',
     phone: { dx: 0.04, dy: 0.05, tilt: { y: 11, z: 2 } },
-    decor: [next],
+    decor: [when],
   },
   {
     scene: 'calendar',

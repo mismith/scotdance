@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { announce } from '@/lib/announce'
 import { useRouter } from 'vue-router'
 import { X } from '@lucide/vue'
 import { useLiveAlertState } from '@/composables/useLiveAlerts'
@@ -21,10 +20,7 @@ function wait() {
   if (current.value) timer = setTimeout(dismiss, 9000)
 }
 watch(current, (a) => {
-  if (a) {
-    held.value = 0
-    announce([a.title, a.subtitle].filter(Boolean).join('. '))
-  }
+  if (a) held.value = 0
   wait()
 })
 
@@ -74,44 +70,47 @@ function open() {
 </script>
 
 <template>
-  <Transition
-    enter-active-class="transition-[translate,opacity] duration-(--dur-spring) ease-snappy motion-reduce:transition-opacity"
-    enter-from-class="-translate-y-[140%] motion-reduce:translate-y-0 motion-reduce:opacity-0"
-    leave-active-class="transition-[translate,opacity] duration-(--dur-base) ease-exit motion-reduce:transition-opacity"
-    leave-to-class="-translate-y-[140%] motion-reduce:translate-y-0 motion-reduce:opacity-0"
-  >
-    <div
-      v-if="current"
-      class="fixed right-2 left-[calc(var(--sidebar)+0.5rem)] top-[calc(var(--safe-top)+0.5rem)] z-50 mx-auto max-w-lg"
+  <!-- Always in the page, so a screen reader hears each alert as it arrives. -->
+  <div role="status" aria-live="polite">
+    <Transition
+      enter-active-class="transition-[translate,opacity] duration-(--dur-spring) ease-snappy motion-reduce:transition-opacity"
+      enter-from-class="-translate-y-[140%] motion-reduce:translate-y-0 motion-reduce:opacity-0"
+      leave-active-class="transition-[translate,opacity] duration-(--dur-base) ease-exit motion-reduce:transition-opacity"
+      leave-to-class="-translate-y-[140%] motion-reduce:translate-y-0 motion-reduce:opacity-0"
     >
       <div
-        class="touch-none transition-[translate] duration-(--dur-slow) ease-snappy"
-        :style="dragStyle"
-        @pointerdown="onDown"
-        @pointermove="onMove"
-        @pointerup="onUp"
-        @pointercancel="onCancel"
-        @click.capture="held && $event.stopPropagation()"
+        v-if="current"
+        class="fixed right-2 left-[calc(var(--sidebar)+0.5rem)] top-[calc(var(--safe-top)+0.5rem)] z-50 mx-auto max-w-lg"
       >
-        <!-- The same dark glass as the toasts: it's news from the app, not part of the page. -->
-        <div class="hud press flex items-stretch gap-1 rounded-[1.375rem]">
-          <button type="button" class="focus-inset flex min-w-0 flex-1 items-center gap-3 rounded-[1.375rem] p-3 text-left" @click="open">
-            <img src="/img/touchicon.png" alt="" class="size-10 shrink-0 rounded-[0.625rem]" />
-            <span class="min-w-0">
-              <span class="text-callout block leading-snug font-semibold">{{ current.title }}</span>
-              <span class="block truncate text-sm text-white/70">{{ current.subtitle }}</span>
-            </span>
-          </button>
-          <button
-            type="button"
-            class="focus-inset flex w-11 shrink-0 items-center justify-center rounded-full text-white/60"
-            aria-label="Dismiss"
-            @click="dismiss"
-          >
-            <X class="size-5" />
-          </button>
+        <div
+          class="touch-none transition-[translate] duration-(--dur-slow) ease-snappy"
+          :style="dragStyle"
+          @pointerdown="onDown"
+          @pointermove="onMove"
+          @pointerup="onUp"
+          @pointercancel="onCancel"
+          @click.capture="held && $event.stopPropagation()"
+        >
+          <!-- The same dark glass as the toasts: it's news from the app, not part of the page. -->
+          <div class="hud press flex items-stretch gap-1 rounded-[1.375rem]">
+            <button type="button" class="focus-inset flex min-w-0 flex-1 items-center gap-3 rounded-[1.375rem] p-3 text-left" @click="open">
+              <img src="/img/touchicon.png" alt="" class="size-10 shrink-0 rounded-[0.625rem]" />
+              <span class="min-w-0">
+                <span class="text-callout block leading-snug font-semibold">{{ current.title }}</span>
+                <span class="block truncate text-sm text-white/70">{{ current.subtitle }}</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              class="focus-inset flex w-11 shrink-0 items-center justify-center rounded-full text-white/60"
+              aria-label="Dismiss"
+              @click="dismiss"
+            >
+              <X class="size-5" />
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  </Transition>
+    </Transition>
+  </div>
 </template>

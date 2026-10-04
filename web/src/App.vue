@@ -7,7 +7,6 @@ import AppSidebar from '@/components/nav/AppSidebar.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import AlertBanner from '@/components/AlertBanner.vue'
 import OfflineNotice from '@/components/OfflineNotice.vue'
-import { announcement } from '@/lib/announce'
 import { confirmRequest, toasts } from '@/lib/admin/feedback'
 import RolesSheet from '@/components/RolesSheet.vue'
 import { useRoles } from '@/composables/useRoles'
@@ -70,7 +69,6 @@ watch(() => me.email, (email) => crisp.setUserEmail(email), { immediate: true })
   </div>
   <SupportLauncher />
   <LoginDialog />
-  <p class="sr-only" role="status" aria-live="polite">{{ announcement }}</p>
   <AlertBanner />
   <OfflineNotice />
   <FeedbackHost v-if="feedbackUsed" />

@@ -372,10 +372,8 @@ test('build a schedule from nothing, then see it on the public pages', async ({
   await expect(page.getByText('8:30 am')).toBeVisible()
   await page.getByRole('link', { name: /Primary/ }).click()
   await expect(page.getByRole('heading', { name: 'Primary', level: 1 })).toBeVisible()
-  // One day: not named (as on Schedule).
-  await expect(page.getByText('Morning session', { exact: true })).toBeVisible()
-  // The time once, as typed.
-  await expect(page.getByText('8:30 am', { exact: true })).toBeVisible()
+  // One day: not named (as on Schedule). The session, then its time once, as typed.
+  await expect(page.getByText('Morning session · 8:30 am', { exact: true })).toBeVisible()
   await expect(page.getByText('Platform A', { exact: true })).toBeVisible()
   await expect(page.getByText('Platform Platform')).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Aileen Robertson/ })).toBeVisible()
@@ -543,12 +541,12 @@ test('keyboard only: add, rename, autofill, delete and move with keys', async ({
   await page.keyboard.press('Enter')
   await page.keyboard.press('Escape')
   await settled(page)
-  await event(page, 'Beginner').getByRole('button', { name: 'Autofill' }).press('Enter')
+  await event(page, 'Beginner').getByRole('button', { name: /^Fill in/ }).press('Enter')
   await expect(page.getByRole('menuitem', { name: 'Place Primary dances' })).toBeFocused()
   await page.getByRole('menuitem', { name: 'Place all dances' }).press('Enter')
   await expect(event(page, 'Beginner').locator('[data-row]')).toHaveCount(4)
   await expect(
-    event(page, 'Beginner').getByRole('button', { name: 'Autofill' }),
+    event(page, 'Beginner').getByRole('button', { name: /^Fill in/ }),
   ).toBeFocused()
 
   // Move a session with the keys: grip, Enter, arrows, Enter.
@@ -748,7 +746,7 @@ test('bad inputs: long and emoji names, no or many platforms, deleted age groups
     await expectNoSideScroll(page)
     await page.getByRole('option', { name: 'Results', exact: true }).click()
     await page.keyboard.press('Escape')
-    await event(page, 'Results').getByRole('button', { name: 'Autofill' }).click()
+    await event(page, 'Results').getByRole('button', { name: /^Fill in/ }).click()
     await expect(
       page.getByRole('menuitem', { name: /^Place Primary Highland/ }),
     ).toBeVisible()
@@ -972,7 +970,7 @@ test('legacy competitions read as before, on their day (read only)', { tag: '@se
   const event = page.getByRole('link', { name: /^Pre-Premier/ })
   await expect(event.getByText('Results in')).toBeAttached()
   await event.click()
-  await expect(page.getByText(/^Tuesday, July 3rd · Morning · 8:00 am$/)).toBeVisible()
+  await expect(page.getByText('Tuesday, July 3rd · Morning · 8:00 am', { exact: true })).toBeVisible()
   await expect(page.getByText(/^Platform \d+$/).first()).toBeVisible()
   await expect(page.getByText(/Platform Platform/)).toHaveCount(0)
   // One day: no day heading.

@@ -412,7 +412,7 @@ test('on a tablet, the list folds away and the header picks the age group and da
   await put(`competitions:data/${comp.id}/results/${group.id}`, null)
 })
 
-test('fast taps keep their order; a double tap takes the dancer back out', async ({
+test('fast taps keep their order; a double tap places a dancer once', async ({
   page,
 }) => {
   const group = freshGroup()
@@ -431,20 +431,24 @@ test('fast taps keep their order; a double tap takes the dancer back out', async
     .poll(() => stored(`results/${group.id}/${fling.id}`))
     .toEqual([...ds].reverse().map((d) => d.id))
 
+  // Past the half second in which another tap on a just-placed dancer counts
+  // as the same tap.
+  await page.waitForTimeout(600)
   await openPlaced(page)
   await page
     .getByRole('button', { name: `Take out ${ds[0].firstName} ${ds[0].lastName}` })
     .click()
   await closePlaced(page)
+  await expect.poll(() => stored(`results/${group.id}/${fling.id}`)).not.toContain(ds[0].id)
+  // A fresh tap, not a second one of the take-out's (that would be ignored).
+  await page.waitForTimeout(600)
+  // In a loud hall a tap can miss its haptic and get tapped again: the second
+  // tap within half a second is the same tap, so they're placed, not placed
+  // and taken straight back out.
   await tap(page, ds[0].number).dblclick()
   await expect
     .poll(() => stored(`results/${group.id}/${fling.id}`))
-    .toEqual(
-      [...ds]
-        .reverse()
-        .slice(0, 7)
-        .map((d) => d.id),
-    )
+    .toEqual([...[...ds].reverse().slice(0, 7).map((d) => d.id), ds[0].id])
 })
 
 test('a second device builds on the first one’s placings', async ({ page, browser }) => {
