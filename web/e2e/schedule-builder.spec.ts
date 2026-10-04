@@ -971,8 +971,7 @@ test('legacy competitions read as before, on their day (read only)', { tag: '@se
   const event = page.getByRole('link', { name: /^Pre-Premier/ })
   await expect(event.getByText('Results in')).toBeAttached()
   await event.click()
-  await expect(page.getByText('Tuesday, July 3rd · Morning', { exact: true })).toBeVisible()
-  await expect(page.getByText(/8:00 am/).first()).toBeVisible()
+  await expect(page.getByText(/^Tuesday, July 3rd · Morning · 8:00 am$/)).toBeVisible()
   await expect(page.getByText(/^Platform \d+$/).first()).toBeVisible()
   await expect(page.getByText(/Platform Platform/)).toHaveCount(0)
   // One day: no day heading.

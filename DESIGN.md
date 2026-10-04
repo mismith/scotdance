@@ -9,6 +9,7 @@ colors:
   live-paper: "#fde7f1"
   next-amber-paper: "#ffefc7"
   next-amber-ink: "#7a4600"
+  next-amber-edge: "#f59e0b"
   done-green-paper: "#ddf2e2"
   done-green-ink: "#145c2b"
   blue-paper: "#e1ecf8"
@@ -50,6 +51,11 @@ typography:
     fontSize: "0.9375rem"
     fontWeight: 600
     lineHeight: 1.375
+  small:
+    fontFamily: "Atkinson Hyperlegible Next, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 400
+    lineHeight: 1.375
   footnote:
     fontFamily: "Atkinson Hyperlegible Next, ui-sans-serif, system-ui, sans-serif"
     fontSize: "0.8125rem"
@@ -65,6 +71,8 @@ rounded:
   xl: "0.75rem"
   2xl: "1rem"
   3xl: "1.5rem"
+  menu: "1.375rem"
+  sheet: "1.75rem"
   full: "9999px"
 spacing:
   gutter: "1rem"
@@ -171,11 +179,11 @@ One confident blue for action, a Scottish red kept for favourites, and a small s
 - **Field Edge** (#87919e): input outlines (3:1 on paper).
 - **Night** (#0c0f13) and **Night Card** (#161b21): the dark theme's page and paper.
 
-State papers: **Next Amber** (#ffefc7, ink #7a4600) for up next; **Done Green** (#ddf2e2, ink #145c2b) for finished; **Blue Paper** (#e1ecf8) for tonal buttons and the current sidebar row; **Destructive** (#b42318) for deleting.
+State papers: **Next Amber** (#ffefc7, ink #7a4600, edge #f59e0b) for up next, and in Manage for what needs the organiser next (a "?" placing, the next section); **Done Green** (#ddf2e2, ink #145c2b) for finished; **Blue Paper** (#e1ecf8) for tonal buttons and the current sidebar row; **Destructive** (#b42318) for deleting.
 
 Dancer colours: eight saturated hues (red, green, purple, ochre, blue, teal, magenta, orange), all 4.5:1 with white text, assigned per followed dancer and used for their number card band, dots and bars.
 
-**The Colour Is News Rule.** Pink, amber and green appear only when they report a state (live, next, done). A screen with nothing happening is blue, ink and paper.
+**The Colour Is News Rule.** Pink, amber and green appear only when they report a state (live, next, done). A screen with nothing happening is blue, ink and paper. Finished or out-of-the-running things are muted by colour and say so in words, never faded with opacity.
 
 **The One Blue Rule.** Saltire Blue fills at most one button per view; everything else that acts is tonal, paper or plain text.
 
@@ -192,10 +200,13 @@ Dancer colours: eight saturated hues (red, green, purple, ochre, blue, teal, mag
 - **Title** (700, 1.3125rem, tight, -0.014em, balanced): sheet titles and big section openers.
 - **Headline** (650, 1.0625rem, snug): section headings above lists ("Coming up").
 - **Body** (400 to 600, 1rem): list rows (names semibold), paragraphs. Never smaller than 16px for reading text.
-- **Label** (600, 0.9375rem): buttons, chips, secondary row lines.
-- **Footnote** (0.8125rem) and **Caption** (500, 0.75rem): counts, dates under tiles, metadata.
+- **Label / Callout** (600 for labels, 0.9375rem): buttons, chips, secondary row lines, the line under a page title.
+- **Small** (0.875rem): counts beside headings, small chip labels.
+- **Footnote** (0.8125rem) and **Caption** (500, 0.75rem): dates under tiles, metadata.
 
-**The Sentence Case Rule.** Labels and eyebrows are sentence case and bold; no uppercase tracked micro-labels (except the month on a date tile).
+**The Sentence Case Rule.** Labels are sentence case and bold; no uppercase tracked micro-labels (except the month on a date tile).
+
+**The Title First Rule.** A page leads with its title; its date, place or category follows underneath at Callout size. Nothing sits above a heading.
 
 **The Figures Rule.** Competitor numbers, times and counts use tabular figures so columns don't jiggle.
 
@@ -216,7 +227,7 @@ Flat by default. Content sits on paper that is defined by a hairline and a whisp
 
 ## Shapes
 
-Every rounded shape uses continuous corners (`corner-shape: superellipse(1.5)`), as iOS draws them, except full capsules and circles. Cards and grouped lists are 1rem (rounded-2xl); tiles and fields 0.75rem (rounded-xl); sheets 1.5rem at the top; buttons, chips and the tab bar are capsules. The competitor number card is the one object with its own silhouette: white paper with a coloured band and two safety pins.
+Every rounded shape uses continuous corners (`corner-shape: superellipse(1.5)`), as iOS draws them, except full capsules and circles. Cards and grouped lists are 1rem (rounded-2xl); tiles and fields 0.75rem (rounded-xl); sheets 1.75rem at the top; menus 1.375rem; buttons, chips and the tab bar are capsules. The competitor number card is the one object with its own silhouette: white paper with a coloured band and two safety pins.
 
 ## Components
 
@@ -253,13 +264,20 @@ A small calendar page leading a competition row: month, day, weekday (or year). 
 ### Competitor Number Card (signature)
 The bib a dancer wears: bold tabular number on white paper, a band in the followed dancer's colour, two safety pins. Only ever shown inside a competition, never as someone's identity.
 
+### Rosettes
+A placing is a rosette with its dance named underneath (Fling, Sword, Reel…) and a full spoken label ("Fling: 1st place, tied"). A championship point is a blue-paper chip, shown as a result, not as a miss.
+
+### Scott (the logo dancer)
+The dancer in the mark, drawn whole (never cropped, never given a face) in Saltire Blue, or white on the brand panel. He appears sparingly: About's hero and the nothing-yet empty states (no one followed, no competitions here). Never on competition-day screens, errors or no-match results, where the news is the point.
+
 ## Do's and Don'ts
 
 ### Do:
 - **Do** keep one filled Saltire Blue button per view; make the rest tonal, paper or plain.
 - **Do** use pink, amber and green only for live, next and done.
 - **Do** give every icon-only button a 44px target (36px inside chrome) and an accessible name.
-- **Do** honour Reduce Motion (pages just change) and Reduce Transparency (glass turns solid).
+- **Do** honour Reduce Motion (pages just change, scrolls jump) and Reduce Transparency (glass turns solid).
+- **Do** name the dance on every placing, and say what "next" means (the group before, the draw, the session time).
 - **Do** size type in rem from the scale above, so Text size scales everything.
 
 ### Don't:
@@ -268,3 +286,4 @@ The bib a dancer wears: bold tabular number on white paper, a band in the follow
 - **Don't** put text on translucent glass without the mostly-opaque surface behind it.
 - **Don't** show a competitor number as who someone is outside its competition.
 - **Don't** add texture or gradient light outside the brand panel.
+- **Don't** fade text with opacity to mean "done" or "out"; mute it by colour and add the words.

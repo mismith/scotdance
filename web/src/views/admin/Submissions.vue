@@ -198,9 +198,9 @@ async function remove(s: Submission) {
     <template #detail>
       <div v-if="current" :key="current.id" class="mx-auto max-w-2xl space-y-8 p-4 pb-[calc(1.5rem+var(--safe-bottom))] md:p-8 md:pb-6">
         <header class="space-y-1">
-          <p class="text-muted-foreground text-sm font-medium">Submitted {{ current.submitted ? formatRelative(current.submitted) : '' }}</p>
           <h2 class="text-display">{{ current.competition?.name || 'Untitled' }}</h2>
           <p v-if="current.competition?.date" class="text-muted-foreground text-base">{{ formatLongDate(current.competition.date) }}</p>
+          <p class="text-muted-foreground text-callout">Submitted {{ current.submitted ? formatRelative(current.submitted) : '' }}</p>
         </header>
 
         <section v-if="current.approved" class="bg-done text-done-foreground flex flex-wrap items-center gap-3 rounded-2xl py-2 pr-2 pl-4">

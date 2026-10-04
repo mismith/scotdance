@@ -188,11 +188,10 @@ const judging = computed(() => {
 
     <template v-else>
       <header :ref="setHeader" class="space-y-1">
-        <p class="text-muted-foreground text-sm font-medium">
-          {{ [dayName, block?.name].filter(Boolean).join(' · ') }}
-        </p>
         <h1 class="text-display">{{ event.name || 'Event' }}</h1>
-        <p v-if="blockTime" class="flex items-center gap-1.5 text-base"><Clock class="text-muted-foreground size-4" /> {{ blockTime }}</p>
+        <p class="text-muted-foreground flex items-center gap-1.5 text-base">
+          <Clock v-if="blockTime" class="size-4 shrink-0" /> {{ [dayName, block?.name, blockTime].filter(Boolean).join(' · ') }}
+        </p>
         <div
           v-if="event.description"
           class="text-base [&_a]:text-primary [&_a]:underline"

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-03T22:59:29.412Z",
+  "generatedAt": "2026-10-04T04:32:27.376098+00:00",
   "title": "Design System: ScotDance.app",
   "extensions": {
     "colorMeta": {
@@ -138,7 +138,7 @@
     "rules": [
       {
         "name": "The Colour Is News Rule",
-        "body": "Pink, amber and green appear only when they report live, next or done.",
+        "body": "Pink, amber and green appear only when they report live, next or done (amber also marks what needs the organiser next in Manage). Done or out is muted by colour and words, never opacity.",
         "section": "colors"
       },
       {
@@ -152,6 +152,11 @@
         "section": "typography"
       },
       {
+        "name": "The Title First Rule",
+        "body": "A page leads with its title; date, place or category follow underneath. Nothing above a heading.",
+        "section": "typography"
+      },
+      {
         "name": "The Figures Rule",
         "body": "Numbers use tabular figures.",
         "section": "typography"
@@ -161,6 +166,9 @@
         "body": "Only the brand panel gets texture and gradient light.",
         "section": "elevation"
       }
+    ],
+    "notes": [
+      "Scott, the logo dancer, appears whole and sparingly: About hero and nothing-yet empty states, never on competition-day screens."
     ]
   }
 }

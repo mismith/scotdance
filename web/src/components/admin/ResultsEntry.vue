@@ -430,8 +430,8 @@ watch(() => props.danceId, showCurrent)
   <div v-if="group" :class="['flex flex-col md:h-full', strip && 'pb-[calc(var(--notice-bottom)+4.5rem)]']">
     <header class="flex flex-col gap-3 border-b px-4 pt-4 pb-3">
       <div :class="['min-w-0', pickers && 'sr-only']">
-        <p class="text-muted-foreground truncate text-sm font-medium">{{ group.label }}</p>
         <h1 class="text-title truncate">{{ danceName }}</h1>
+        <p class="text-muted-foreground text-callout truncate">{{ group.label }}</p>
       </div>
       <div v-if="!isCallbacks && offersPoints || pickers" class="flex flex-wrap items-center gap-x-4 gap-y-3">
         <label v-if="pickers" class="relative max-w-full min-w-0">

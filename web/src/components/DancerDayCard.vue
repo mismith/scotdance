@@ -152,30 +152,29 @@ const NEXT = 'bg-next/55 before:absolute before:inset-y-0 before:left-0 before:w
               :to="groupRoute(d, s.dance.id)"
               :class="['press-row focus-inset relative flex flex-wrap items-center gap-x-3 gap-y-1', rowSize, s.state === 'next' && NEXT]"
             >
-              <span class="min-w-[9rem] flex-1">
-                <span
-                  :class="[
-                    'block break-words',
-                    lg || s.state === 'next' ? 'text-base' : 'text-callout',
-                    s.state === 'next' ? 'font-semibold' : 'font-medium',
-                  ]"
-                >
-                  {{ s.dance.fullName || s.dance.name }}
-                </span>
-                <!-- Each fact wraps as a whole, its separator at the line's end. -->
-                <span
-                  v-if="detail(s).length"
-                  :class="[
-                    'block',
-                    s.state === 'next' ? 'text-next-foreground text-callout font-semibold' : 'text-muted-foreground text-sm',
-                  ]"
-                >
-                  <template v-for="(bit, n) in detail(s)" :key="bit">
-                    <span class="inline-block">{{ bit }}{{ n < detail(s).length - 1 ? '&nbsp;·' : '' }}</span>{{ ' ' }}
-                  </template>
-                </span>
+              <span
+                :class="[
+                  'min-w-[9rem] flex-1 break-words',
+                  lg || s.state === 'next' ? 'text-base' : 'text-callout',
+                  s.state === 'next' ? 'font-semibold' : 'font-medium',
+                ]"
+              >
+                {{ s.dance.fullName || s.dance.name }}
               </span>
               <DanceStatusChip class="ml-auto" :status="s" :fresh="fresh === `${d.dancer.id}:${s.dance.id}`" />
+              <!-- The details take the row's full width below. Each fact wraps
+                   as a whole, its separator at the line's end. -->
+              <span
+                v-if="detail(s).length"
+                :class="[
+                  'basis-full',
+                  s.state === 'next' ? 'text-next-foreground text-callout font-semibold' : 'text-muted-foreground text-sm',
+                ]"
+              >
+                <template v-for="(bit, n) in detail(s)" :key="bit">
+                  <span class="inline-block">{{ bit }}{{ n < detail(s).length - 1 ? '&nbsp;·' : '' }}</span>{{ ' ' }}
+                </template>
+              </span>
             </RouterLink>
           </li>
           <li v-if="d.overall">

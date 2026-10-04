@@ -58,8 +58,8 @@ function leaving() {
       <div class="flex items-center gap-3">
         <StaffAvatar :member="displayMember" :size="56" />
         <div class="min-w-0 flex-1 space-y-0.5">
-          <p v-if="displayMember.type" class="text-muted-foreground text-sm font-medium">{{ displayMember.type }}</p>
           <h2 class="text-title">{{ name || '?' }}</h2>
+          <p v-if="displayMember.type" class="text-muted-foreground text-callout">{{ displayMember.type }}</p>
         </div>
       </div>
     </template>
