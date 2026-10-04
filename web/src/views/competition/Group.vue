@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { createReusableTemplate } from '@vueuse/core'
 import { Award, ChevronDown, Clock, Hourglass, Trophy } from '@lucide/vue'
 import { rowsMove } from '@/lib/settle'
 import EmptyState from '@/components/EmptyState.vue'
@@ -102,8 +103,18 @@ const danceList = computed<EnrichedDance[]>(() => {
 
 const callbacks = computed(() => getCallbackResults(groupId.value, dancers.value, results.value))
 const showAllCallbacks = ref(false)
-const callbacksOpen = ref(route.hash === '#dance-callbacks')
-watch(() => route.hash, (h) => h === '#dance-callbacks' && (callbacksOpen.value = true))
+// Until every result is in, callbacks are the news: on top, and open. Once
+// they're all in, the placings lead and callbacks fold away below them.
+const everyResultIn = computed(
+  () => sections.value.length > 0 && sections.value.every((s) => s.placings.hasResults || s.placings.explicitlyEmpty),
+)
+const callbacksToggled = ref<boolean | null>(route.hash === '#dance-callbacks' ? true : null)
+watch(() => route.hash, (h) => h === '#dance-callbacks' && (callbacksToggled.value = true))
+const callbacksOpen = computed({
+  get: () => callbacksToggled.value ?? !everyResultIn.value,
+  set: (open) => (callbacksToggled.value = open),
+})
+const [DefineCallbacks, ReuseCallbacks] = createReusableTemplate()
 // Folded: just the followed dancers who were called back.
 const shownCallbacks = computed(() => (callbacksOpen.value ? callbackRows.value : callbackRows.value.filter((r) => r.dancer && following.isFollowing(r.dancer))))
 const callbackRows = computed(() =>
@@ -152,6 +163,67 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
 </script>
 
 <template>
+  <DefineCallbacks>
+    <!-- Callbacks -->
+    <section
+      v-if="callbacks.hasResults || callbacks.explicitlyEmpty"
+      id="dance-callbacks"
+      class="surface scroll-mt-[calc(var(--chrome-top)+0.75rem)] overflow-hidden rounded-2xl"
+    >
+      <!-- Folded, it's one row (your dancers' rows still show). -->
+      <h2>
+        <button
+          type="button"
+          class="press-row focus-inset flex min-h-12 w-full items-center justify-between gap-2 px-4 py-3 text-left"
+          :aria-expanded="callbacksOpen"
+          @click="callbacksOpen = !callbacksOpen"
+        >
+          <span class="text-heading">Callbacks</span>
+          <span class="text-muted-foreground flex items-center gap-1 text-sm font-medium">
+            {{ callbacks.explicitlyEmpty ? 'None' : `${callbacks.dancers.length} called back` }}
+            <ChevronDown :class="['size-5 transition-transform duration-(--dur-base) ease-standard motion-reduce:transition-none', callbacksOpen && 'rotate-180']" aria-hidden="true" />
+          </span>
+        </button>
+      </h2>
+      <p v-if="callbacksOpen && callbacks.explicitlyEmpty" class="border-t px-4 py-3 text-base">No callbacks for this group.</p>
+      <TransitionGroup tag="ul" :class="['rows-inset [interpolate-size:allow-keywords] [--inset:4.5rem]', shownCallbacks.length && 'border-t']" v-bind="rowsMove">
+        <li
+          v-for="row in shownCallbacks"
+          :key="row.dancerId"
+          class="relative"
+          :style="rowStyle(row.dancer)"
+        >
+          <span v-if="colorOf(row.dancer)" class="sash absolute inset-y-0 left-0 z-1 w-1.5" aria-hidden="true" />
+          <RouterLink
+            v-if="row.dancer"
+            :to="{ name: 'competition.dancer', params: { competitionId, dancerId: row.dancer.id } }"
+            class="press-row focus-inset flex min-h-12 items-center gap-3 px-4 py-1.5"
+          >
+            <NumberCard
+              :number="row.dancer.number"
+              size="xs"
+              :color="colorOf(row.dancer)"
+            />
+            <!-- Showing everyone: those not called back say so, in words, not
+                 only by being quieter. -->
+            <span :class="['min-w-0 flex-1 truncate text-base', row.out ? 'text-muted-foreground font-medium' : 'font-semibold']">
+              {{ row.dancer.fullName }}
+            </span>
+            <span v-if="row.out" class="text-muted-foreground shrink-0 text-sm">Not called back</span>
+          </RouterLink>
+          <span v-else class="text-muted-foreground flex min-h-12 items-center px-4 text-base">Unknown dancer</span>
+        </li>
+      </TransitionGroup>
+      <button
+        v-if="callbacksOpen && callbacks.dancers.length && callbacks.dancers.length < groupDancers.length"
+        type="button"
+        class="press-row focus-inset text-primary text-callout h-12 w-full border-t font-semibold"
+        @click="showAllCallbacks = !showAllCallbacks"
+      >
+        {{ showAllCallbacks ? 'Show callbacks only' : `Show all ${groupDancers.length} dancers` }}
+      </button>
+    </section>
+  </DefineCallbacks>
   <article class="space-y-4">
     <!-- The page's shape, if it's slow to come (skeletons wait 150ms). -->
     <div v-if="!groups.length" class="space-y-4" aria-busy="true">
@@ -182,6 +254,8 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
         title="No results here"
         description="This competition doesn’t share its results here."
       />
+
+      <ReuseCallbacks v-if="!everyResultIn" />
 
       <!-- Dances + overall -->
       <section
@@ -269,66 +343,7 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
         </div>
       </section>
 
-      <!-- Callbacks -->
-      <section
-        v-if="callbacks.hasResults || callbacks.explicitlyEmpty"
-        id="dance-callbacks"
-        class="surface scroll-mt-[calc(var(--chrome-top)+0.75rem)] overflow-hidden rounded-2xl"
-      >
-        <!-- Placings are what people come for, so callbacks sit below them,
-             folded to one row (your dancers' rows still show). -->
-        <h2>
-          <button
-            type="button"
-            class="press-row focus-inset flex min-h-12 w-full items-center justify-between gap-2 px-4 py-3 text-left"
-            :aria-expanded="callbacksOpen"
-            @click="callbacksOpen = !callbacksOpen"
-          >
-            <span class="text-heading">Callbacks</span>
-            <span class="text-muted-foreground flex items-center gap-1 text-sm font-medium">
-              {{ callbacks.explicitlyEmpty ? 'None' : `${callbacks.dancers.length} called back` }}
-              <ChevronDown :class="['size-5 transition-transform duration-(--dur-base) ease-standard motion-reduce:transition-none', callbacksOpen && 'rotate-180']" aria-hidden="true" />
-            </span>
-          </button>
-        </h2>
-        <p v-if="callbacksOpen && callbacks.explicitlyEmpty" class="border-t px-4 py-3 text-base">No callbacks for this group.</p>
-        <TransitionGroup tag="ul" :class="['rows-inset [interpolate-size:allow-keywords] [--inset:4.5rem]', shownCallbacks.length && 'border-t']" v-bind="rowsMove">
-          <li
-            v-for="row in shownCallbacks"
-            :key="row.dancerId"
-            class="relative"
-            :style="rowStyle(row.dancer)"
-          >
-            <span v-if="colorOf(row.dancer)" class="sash absolute inset-y-0 left-0 z-1 w-1.5" aria-hidden="true" />
-            <RouterLink
-              v-if="row.dancer"
-              :to="{ name: 'competition.dancer', params: { competitionId, dancerId: row.dancer.id } }"
-              class="press-row focus-inset flex min-h-12 items-center gap-3 px-4 py-1.5"
-            >
-              <NumberCard
-                :number="row.dancer.number"
-                size="xs"
-                :color="colorOf(row.dancer)"
-              />
-              <!-- Showing everyone: those not called back say so, in words, not
-                   only by being quieter. -->
-              <span :class="['min-w-0 flex-1 truncate text-base', row.out ? 'text-muted-foreground font-medium' : 'font-semibold']">
-                {{ row.dancer.fullName }}
-              </span>
-              <span v-if="row.out" class="text-muted-foreground shrink-0 text-sm">Not called back</span>
-            </RouterLink>
-            <span v-else class="text-muted-foreground flex min-h-12 items-center px-4 text-base">Unknown dancer</span>
-          </li>
-        </TransitionGroup>
-        <button
-          v-if="callbacksOpen && callbacks.dancers.length && callbacks.dancers.length < groupDancers.length"
-          type="button"
-          class="press-row focus-inset text-primary text-callout h-12 w-full border-t font-semibold"
-          @click="showAllCallbacks = !showAllCallbacks"
-        >
-          {{ showAllCallbacks ? 'Show callbacks only' : `Show all ${groupDancers.length} dancers` }}
-        </button>
-      </section>
+      <ReuseCallbacks v-if="everyResultIn" />
     </template>
     <StaffDialog :member="sponsorOpen ? sponsor.member : null" :morph="sponsorSheet" @close="sponsorSheet.hide().then(() => (sponsorOpen = false))" />
   </article>

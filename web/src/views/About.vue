@@ -2,7 +2,7 @@
 import LogoMark from '@/components/LogoMark.vue'
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { CalendarDays, ChevronDown, GraduationCap, Heart, Star, Users } from '@lucide/vue'
+import { ChevronDown, SquarePlus, Star, Users } from '@lucide/vue'
 import Medal from '@/components/Medal.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import AppBar from '@/components/nav/AppBar.vue'
@@ -11,27 +11,19 @@ import { platform } from '@/lib/native'
 import { version } from '../../package.json'
 import { smooth } from '@/lib/motion'
 
-// About ScotDance, organised by who it's for. The common questions keep
+// About ScotDance, organised by who it's for: families, then organisers. The common questions keep
 // their #faq-… links so older shared links still land on the right answer.
 const crisp = useCrisp()
 const isWeb = platform === 'web'
 const year = new Date().getFullYear()
 const platformLabel = platform === 'ios' ? 'iOS' : platform === 'android' ? 'Android' : 'Web'
 
-// One line per role, about the same length.
-const roles = [
-  { icon: Heart, title: 'Parents', line: 'Follow your dancers and see their results as they happen.' },
-  { icon: Star, title: 'Dancers', line: 'Your schedule and results, without the paper.' },
-  { icon: GraduationCap, title: 'Teachers', line: 'Follow your whole studio and see everyone at a glance.' },
-  { icon: CalendarDays, title: 'Organisers', line: 'Saves hours of work, and keeps every result on record for later.' },
-]
-
-// Each step beside the real thing you'll see: their number, the Follow star,
-// a rosette.
-const steps = [
-  { piece: 'number', title: 'Find your dancer', body: 'Search by name or number, or browse by age group.' },
-  { piece: 'follow', title: 'Tap Follow', body: 'Their day shows up on Home, and in every competition they enter.' },
-  { piece: 'rosette', title: 'Watch it come in', body: 'Callbacks and placings, posted as they’re announced.' },
+// What families get, each beside the real thing they'll see in the app.
+const forFamilies = [
+  { piece: 'rosette', title: 'Results as they happen', body: 'Placings show up as soon as they’re entered. No more waiting by the results board.' },
+  { piece: 'number', title: 'Know when they’re on', body: 'Their platform, dancing order and session, straight from the organisers’ schedule.' },
+  { piece: 'follow', title: 'Follow your dancers', body: 'Your own, or your whole studio, at a glance on Home.' },
+  { piece: 'record', title: 'Every result, on record', body: 'All their placings, season after season.' },
 ] as const
 
 const faqs: { id: string; q: string; a?: string }[] = [
@@ -103,35 +95,42 @@ watch(() => route.hash, applyHash)
       </header>
 
       <section class="space-y-3">
-        <h2 class="text-title">On competition day</h2>
-        <ol class="surface rows-inset overflow-hidden rounded-2xl [--inset:5.5rem]">
-          <li v-for="st in steps" :key="st.title" class="flex items-center gap-4 px-4 py-3">
+        <h2 class="text-title">For families</h2>
+        <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:5.5rem]">
+          <li v-for="f in forFamilies" :key="f.title" class="flex items-center gap-4 px-4 py-3">
             <span class="flex w-15 shrink-0 justify-center" aria-hidden="true">
-              <NumberCard v-if="st.piece === 'number'" number="107" color="var(--dancer-1)" size="sm" />
-              <span v-else-if="st.piece === 'follow'" class="bg-blue-paper flex size-11 items-center justify-center rounded-full">
+              <Medal v-if="f.piece === 'rosette'" :place="1" />
+              <NumberCard v-else-if="f.piece === 'number'" number="107" color="var(--dancer-1)" size="sm" />
+              <span v-else-if="f.piece === 'follow'" class="bg-blue-paper flex size-11 items-center justify-center rounded-full">
                 <Star class="fill-secondary text-secondary size-6" />
               </span>
-              <Medal v-else :place="1" />
+              <span v-else class="flex -space-x-2.5">
+                <Medal :place="2" size="sm" />
+                <Medal :place="1" size="sm" />
+              </span>
             </span>
             <span>
-              <span class="block text-base font-semibold">{{ st.title }}</span>
-              <span class="text-muted-foreground text-callout">{{ st.body }}</span>
-            </span>
-          </li>
-        </ol>
-      </section>
-
-      <section class="space-y-3">
-        <h2 class="text-title">Made for</h2>
-        <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:3.25rem]">
-          <li v-for="r in roles" :key="r.title" class="flex items-start gap-4 px-4 py-3">
-            <component :is="r.icon" class="text-muted-foreground mt-0.5 size-5 shrink-0" aria-hidden="true" />
-            <span>
-              <span class="block text-base font-semibold">{{ r.title }}</span>
-              <span class="text-muted-foreground text-callout">{{ r.line }}</span>
+              <span class="block text-base font-semibold">{{ f.title }}</span>
+              <span class="text-muted-foreground text-callout">{{ f.body }}</span>
             </span>
           </li>
         </ul>
+      </section>
+
+      <section class="space-y-3">
+        <h2 class="text-title">For organisers</h2>
+        <div class="surface space-y-3 rounded-2xl p-4">
+          <p class="text-base">
+            <span class="font-semibold">Run the day without the paper.</span>
+            Build the schedule, import your dancers and post results as they’re announced. It saves hours of work, and keeps every result on record for later. Free, for any competition.
+          </p>
+          <RouterLink
+            :to="{ name: 'competitions.submit' }"
+            class="bg-blue-paper text-primary press inline-flex h-11 items-center gap-2 rounded-full px-4 text-base font-semibold"
+          >
+            <SquarePlus class="size-5" /> Submit a competition
+          </RouterLink>
+        </div>
       </section>
 
       <section v-if="isWeb" class="surface space-y-3 rounded-2xl p-4 text-center">

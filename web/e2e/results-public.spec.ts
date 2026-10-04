@@ -52,8 +52,8 @@ test('an age group shows every stored shape the old app wrote', async ({ page })
 
   const callbacks = page.locator('#dance-callbacks')
   await expect(callbacks.getByText('7 called back')).toBeVisible()
-  // Folded under the placings until opened.
-  await callbacks.getByRole('button', { name: /^Callbacks/ }).click()
+  // Results are still to come (the Sword isn't in), so callbacks lead, open.
+  await expect(callbacks.getByRole('button', { name: /^Callbacks/ })).toHaveAttribute('aria-expanded', 'true')
   await callbacks.getByRole('button', { name: 'Show all 8 dancers' }).click()
   await expect(callbacks.getByRole('listitem')).toHaveCount(8)
 

@@ -5,7 +5,7 @@ import { ChevronRight } from '@lucide/vue'
 import Medal from '@/components/Medal.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import DanceStatusChip from '@/components/DanceStatusChip.vue'
-import { getOrdinalSuffix, shortDanceName } from '@/lib/results'
+import { getOrdinalSuffix } from '@/lib/results'
 import { platformLabel } from '@/lib/schedule'
 import { placings, type DancerDay, type DanceStatus } from '@/lib/dancerDay'
 
@@ -93,17 +93,15 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-5 py-2.5' : 'min-h-12 px
         <span v-if="competitionName" class="text-muted-foreground block truncate text-sm">
           {{ competitionName }}
         </span>
-        <!-- Each rosette says which dance it's for: "she won the Fling". -->
-        <span v-if="folded && (won.length || day.phase === 'today')" class="mt-1.5 flex flex-wrap items-start gap-x-2.5 gap-y-1.5">
-          <span v-for="s in won" :key="s.dance.id" class="flex flex-col items-center gap-0.5">
-            <Medal
-              :place="s.place"
-              :tied="s.tied"
-              :fresh="fresh === `${day.dancer.id}:${s.dance.id}`"
-              :dance="s.dance.fullName || s.dance.name"
-            />
-            <span class="text-muted-foreground text-footnote leading-none font-medium" aria-hidden="true">{{ shortDanceName(s.dance.fullName || s.dance.name) }}</span>
-          </span>
+        <span v-if="folded && (won.length || day.phase === 'today')" class="mt-1.5 flex flex-wrap items-center gap-1.5">
+          <Medal
+            v-for="s in won"
+            :key="s.dance.id"
+            :place="s.place"
+            :tied="s.tied"
+            :fresh="fresh === `${day.dancer.id}:${s.dance.id}`"
+            :dance="s.dance.fullName || s.dance.name"
+          />
           <span v-if="!won.length && day.phase === 'today'" class="text-muted-foreground text-sm">Every result is in</span>
         </span>
       </span>

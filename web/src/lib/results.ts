@@ -118,33 +118,6 @@ export function getDancerPlace(
   return { place, tied, pointed }
 }
 
-// A dance's everyday short name, for under a rosette or in a one-line summary
-// ("1st Fling"). Older competitions' own short names are unreliable (often a
-// different dance's), so it comes from the full name.
-const SHORT_DANCE: [RegExp, string][] = [
-  [/pas de bas|\bpdb\b/i, 'Pas de basques'],
-  [/fling/i, 'Fling'],
-  [/broadsword/i, 'Broadsword'],
-  [/sword/i, 'Sword'],
-  [/seann|sean |triubhas|truibhas|trews/i, 'Seann'],
-  [/reel|strathspey/i, 'Reel'],
-  [/flora/i, 'Flora'],
-  [/hornpipe/i, 'Hornpipe'],
-  [/jig/i, 'Jig'],
-  [/lilt/i, 'Lilt'],
-  [/earl/i, 'Earl'],
-  [/laddie/i, 'Laddie'],
-  [/barracks/i, 'Barracks'],
-  [/blue bonnets/i, 'Bonnets'],
-  [/village maid/i, 'Village Maid'],
-  [/choreograph/i, 'Choreography'],
-  [/overall/i, 'Overall'],
-]
-export function shortDanceName(name: string | null | undefined): string {
-  const n = (name ?? '').replace(/\s*\([^)]*\)\s*$/, '').trim()
-  return SHORT_DANCE.find(([re]) => re.test(n))?.[1] ?? n
-}
-
 export function getOrdinalSuffix(place: number): string {
   const s = place % 100
   if (s >= 11 && s <= 13) return 'th'

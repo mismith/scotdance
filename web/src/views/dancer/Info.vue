@@ -17,7 +17,6 @@ import Skeleton from '@/components/Skeleton.vue'
 import VisibilityChip from '@/components/VisibilityChip.vue'
 import { fetchEntrySummary, type EntrySummary } from '@/lib/entrySummary'
 import { parseDate } from '@/lib/format'
-import { shortDanceName } from '@/lib/results'
 import { profileColumns, profileHeader } from '@/lib/profile'
 import { useMeStore } from '@/stores/me'
 import type { Competition } from '@/types/competition'
@@ -162,15 +161,12 @@ function medals(cid: string) {
                     {{ [r.numbers.length ? r.numbers.map((n) => `#${n}`).join(', ') : null, ...medals(r.competitionId).groups].filter(Boolean).join(' · ') }}
                   </span>
                   <span v-if="hiddenAs(r.competitionId, r.competition)" class="mt-0.5 flex"><VisibilityChip :visibility="hiddenAs(r.competitionId, r.competition)" /></span>
-                  <span v-if="medals(r.competitionId).best.length || medals(r.competitionId).overall" class="mt-1.5 flex flex-wrap items-start gap-x-2.5 gap-y-1.5">
-                    <span v-if="medals(r.competitionId).overall" class="flex flex-col items-center gap-0.5">
+                  <span v-if="medals(r.competitionId).best.length || medals(r.competitionId).overall" class="mt-1 flex flex-wrap items-center gap-1">
+                    <template v-if="medals(r.competitionId).overall">
                       <Medal :place="medals(r.competitionId).overall!.place" dance="Overall" size="sm" />
-                      <span class="text-caption leading-none font-semibold" aria-hidden="true">Overall</span>
-                    </span>
-                    <span v-for="m in medals(r.competitionId).best" :key="m.danceId" class="flex flex-col items-center gap-0.5">
-                      <Medal :place="m.place" :tied="m.tied" :dance="m.name" size="sm" />
-                      <span class="text-muted-foreground text-caption leading-none" aria-hidden="true">{{ shortDanceName(m.name) }}</span>
-                    </span>
+                      <span class="mr-1 text-sm font-medium">Overall</span>
+                    </template>
+                    <Medal v-for="m in medals(r.competitionId).best" :key="m.danceId" :place="m.place" :tied="m.tied" :dance="m.name" size="sm" />
                   </span>
                 </span>
                 <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
