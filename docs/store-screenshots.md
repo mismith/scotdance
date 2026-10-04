@@ -46,14 +46,24 @@ npm run store:upload:android
 
 ### Keys
 
-Both lanes read their keys from the environment. Keep the key files outside
-the repo (for example in `~/.config/scotdance/`, or the repo root, where `app-store-connect-key.p8` and `play-service-account.json` are ignored) and set, in your shell profile:
+Each lane reads its keys from a `.env` beside its Fastfile, which fastlane
+loads itself and git ignores. Keep the key files outside the repo, in a folder
+any app's project can point at (for example `~/.config/store-keys/`; the repo
+root also works, where `*.p8` and `play-service-account.json` are ignored).
+Use full paths: `.env` files don't expand `~`.
+
+`ios/App/fastlane/.env`:
 
 ```bash
-export APP_STORE_CONNECT_API_KEY_KEY_ID=…
-export APP_STORE_CONNECT_API_KEY_ISSUER_ID=…
-export APP_STORE_CONNECT_API_KEY_KEY_FILEPATH=~/.config/scotdance/app-store-connect-key.p8
-export SUPPLY_JSON_KEY=~/.config/scotdance/play-service-account.json
+APP_STORE_CONNECT_API_KEY_KEY_ID=…
+APP_STORE_CONNECT_API_KEY_ISSUER_ID=…
+APP_STORE_CONNECT_API_KEY_KEY_FILEPATH=/Users/…/.config/store-keys/app-store-connect-key.p8
+```
+
+`android/fastlane/.env`:
+
+```bash
+SUPPLY_JSON_KEY=/Users/…/.config/store-keys/play-service-account.json
 ```
 
 - **App Store Connect API key:** App Store Connect › Users and Access ›

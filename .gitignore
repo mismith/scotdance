@@ -43,3 +43,4 @@ firebase-adminsdk.json
 **/fastlane/README.md
 *.p8
 play-service-account.json
+**/fastlane/.env

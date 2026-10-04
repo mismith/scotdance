@@ -1,4 +1,4 @@
-# App Store lanes. Keys come from the environment, never this repo
+# App Store lanes. Keys come from fastlane/.env (git-ignored), never this repo
 # (docs/store-screenshots.md):
 #   APP_STORE_CONNECT_API_KEY_KEY_ID, APP_STORE_CONNECT_API_KEY_ISSUER_ID,
 #   APP_STORE_CONNECT_API_KEY_KEY_FILEPATH (the .p8)

@@ -1,5 +1,5 @@
 # Google Play lanes. The service account key's path comes from
-# SUPPLY_JSON_KEY in the environment (docs/store-screenshots.md).
+# SUPPLY_JSON_KEY in fastlane/.env, git-ignored (docs/store-screenshots.md).
 
 default_platform(:android)
 

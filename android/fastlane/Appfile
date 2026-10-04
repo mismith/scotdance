@@ -1,4 +1,4 @@
 package_name("info.mismith.scotdance")
-# The Play service account's key, from the environment, never this repo
+# The Play service account's key, from fastlane/.env, never this repo
 # (docs/store-screenshots.md).
 json_key_file(ENV["SUPPLY_JSON_KEY"])
