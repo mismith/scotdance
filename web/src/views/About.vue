@@ -7,6 +7,7 @@ import AppBar from '@/components/nav/AppBar.vue'
 import { useCrisp } from '@/composables/useCrisp'
 import { platform } from '@/lib/native'
 import { version } from '../../package.json'
+import { smooth } from '@/lib/motion'
 
 // About ScotDance, organised by who it's for. The common questions keep
 // their #faq-… links so older shared links still land on the right answer.
@@ -15,12 +16,12 @@ const isWeb = platform === 'web'
 const year = new Date().getFullYear()
 const platformLabel = platform === 'ios' ? 'iOS' : platform === 'android' ? 'Android' : 'Web'
 
-// One line per role, about the same length, each in its own colour.
+// One line per role, about the same length.
 const roles = [
-  { icon: Heart, title: 'Parents', color: 'var(--dancer-1)', line: 'Follow your dancers and see their results as they happen.' },
-  { icon: Star, title: 'Dancers', color: 'var(--dancer-4)', line: 'Your schedule and results, without the paper.' },
-  { icon: GraduationCap, title: 'Teachers', color: 'var(--dancer-2)', line: 'Follow your whole studio and see everyone at a glance.' },
-  { icon: CalendarDays, title: 'Organisers', color: 'var(--dancer-5)', line: 'Saves hours of work, and keeps every result on record for later.' },
+  { icon: Heart, title: 'Parents', line: 'Follow your dancers and see their results as they happen.' },
+  { icon: Star, title: 'Dancers', line: 'Your schedule and results, without the paper.' },
+  { icon: GraduationCap, title: 'Teachers', line: 'Follow your whole studio and see everyone at a glance.' },
+  { icon: CalendarDays, title: 'Organisers', line: 'Saves hours of work, and keeps every result on record for later.' },
 ]
 
 const steps = [
@@ -72,7 +73,7 @@ function applyHash(hash: string) {
   const id = hash.match(/^#faq-(.+)$/)?.[1]
   if (!id || !faqs.some((f) => f.id === id)) return
   if (!open.value.has(id)) toggle(id)
-  nextTick(() => document.getElementById(`faq-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  nextTick(() => document.getElementById(`faq-${id}`)?.scrollIntoView({ behavior: smooth(), block: 'start' }))
 }
 onMounted(() => applyHash(route.hash))
 watch(() => route.hash, applyHash)
@@ -83,16 +84,15 @@ watch(() => route.hash, applyHash)
     <AppBar title="About ScotDance.app" :fallback="{ to: { name: 'home' }, label: 'Home' }" />
 
     <main class="mx-auto w-full max-w-3xl space-y-8 px-4 pt-[calc(var(--chrome-top)+0.5rem)]">
-      <header class="brand-panel relative overflow-hidden rounded-3xl p-5">
-        <LogoMark class="pointer-events-none absolute -right-6 -bottom-10 size-52 rotate-[-8deg] opacity-[0.08]" />
-        <img src="/img/touchicon.png" alt="" class="relative size-12 rounded-xl shadow-sm" />
-        <h1 class="text-display relative mt-4 text-[1.5625rem] text-balance">From the <span class="whitespace-nowrap">warm-up</span> to the awards.</h1>
-        <p class="relative mt-2 text-base font-medium opacity-90">
+      <header class="brand-panel rounded-3xl p-5">
+        <LogoMark class="size-16" />
+        <h1 class="text-display mt-3 text-[1.5625rem] text-balance">From the <span class="whitespace-nowrap">warm-up</span> to the awards.</h1>
+        <p class="mt-2 text-base font-medium">
           Browse competitions, follow dancers, and see results as they happen. Free, anywhere in the world.
         </p>
         <RouterLink
           :to="{ name: 'home' }"
-          class="bg-primary-foreground text-primary-fill press relative mt-4 inline-flex h-12 items-center gap-2 rounded-full px-5 text-base font-semibold"
+          class="bg-primary-foreground text-primary-fill press mt-4 inline-flex h-12 items-center gap-2 rounded-full px-5 text-base font-semibold"
         >
           <Users class="size-5" /> Go to your dancers
         </RouterLink>
@@ -102,7 +102,7 @@ watch(() => route.hash, applyHash)
         <h2 class="text-title">Made for</h2>
         <div class="grid grid-cols-2 gap-3">
           <article v-for="r in roles" :key="r.title" class="surface space-y-2 rounded-2xl p-4">
-            <component :is="r.icon" class="size-7" stroke-width="1.75" :style="{ color: r.color }" aria-hidden="true" />
+            <component :is="r.icon" class="text-primary size-6" stroke-width="1.75" aria-hidden="true" />
             <h3 class="text-heading">{{ r.title }}</h3>
             <p class="text-callout leading-snug">{{ r.line }}</p>
           </article>

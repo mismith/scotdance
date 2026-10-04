@@ -24,6 +24,8 @@ const banded = computed(() => !!props.color || props.size === 'md' || props.size
     :class="[
       'bg-paper text-paper-ink relative inline-flex shrink-0 justify-center overflow-hidden border border-[var(--paper-edge)] font-extrabold tracking-[-0.02em] tabular-nums',
       banded ? 'items-end' : 'items-center',
+      // A column of plain tiles in the dark theme would glow: a dimmer paper.
+      !banded && 'dark:bg-[color-mix(in_oklab,var(--paper)_80%,var(--background))]',
       size !== 'xs' && 'shadow-[0_1px_0_rgb(0_0_0/0.05),0_2px_6px_rgb(0_0_0/0.1)]',
       size === 'xs' && ['h-8 w-11 rounded-md text-[0.9375rem]', banded && 'pb-0.5'],
       size === 'sm' && ['h-11 w-[3.75rem] rounded-md text-xl', banded && 'pb-1'],

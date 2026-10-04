@@ -37,7 +37,7 @@ const scrollTop = () => {
 </script>
 
 <template>
-  <nav class="fixed top-0 right-0 left-(--sidebar) z-30 pt-(--safe-top) [view-transition-name:appbar]" :data-scrolled="scrolled ?? showTitle">
+  <nav aria-label="Page" class="fixed top-0 right-0 left-(--sidebar) z-30 pt-(--safe-top) [view-transition-name:appbar]" :data-scrolled="scrolled ?? showTitle">
     <div
       class="from-background absolute inset-x-0 top-0 -z-10 h-[calc(100%+1.25rem)] bg-linear-to-b from-[calc(100%-1.25rem)] to-transparent backdrop-blur-sm [mask-image:linear-gradient(to_bottom,black_calc(100%-1.25rem),transparent)]"
       aria-hidden="true"
@@ -52,6 +52,7 @@ const scrollTop = () => {
           showTitle && title ? 'opacity-100' : 'pointer-events-none -translate-x-3 opacity-0',
         ]"
         :tabindex="showTitle && title ? 0 : -1"
+        :aria-hidden="showTitle && title ? undefined : 'true'"
         @click="scrollTop"
       >
         <span

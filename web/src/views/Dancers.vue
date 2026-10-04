@@ -155,9 +155,14 @@ async function openLate(name: string) {
           <h2 class="text-heading flex items-baseline justify-between">
             Following <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ followed.length }}</span>
           </h2>
-          <p v-if="!followed.length" class="surface text-muted-foreground rounded-2xl p-4 text-base">
-            Search for a dancer above, open their page and tap Follow. Everyone you follow shows up here and on Home.
-          </p>
+          <EmptyState
+            v-if="!followed.length"
+            size="inline"
+            scott
+            class="surface rounded-2xl"
+            title="Follow your dancers"
+            description="Search for a dancer above, open their page and tap Follow. Everyone you follow shows up here and on Home."
+          />
           <ul v-else :class="['surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]', settle]">
             <li v-for="d in followed" :key="d.id" class="flex items-center pr-1">
               <RouterLink

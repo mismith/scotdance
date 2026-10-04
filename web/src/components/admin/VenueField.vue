@@ -4,7 +4,12 @@ import { MapPin } from '@lucide/vue'
 import AdminField from '@/components/admin/AdminField.vue'
 import SaveMark from '@/components/admin/SaveMark.vue'
 import { useAutosave } from '@/composables/admin/useAutosave'
-import { fetchVenueSuggestions, resolveVenue, type PlaceSuggestion, type VenueFields } from '@/lib/maps'
+import {
+  fetchVenueSuggestions,
+  resolveVenue,
+  type PlaceSuggestion,
+  type VenueFields,
+} from '@/lib/maps'
 
 // The venue's name, which also searches for it: choosing a suggestion fills
 // in the address, town and map position (`pick`). Whatever's typed and not
@@ -19,7 +24,11 @@ const emit = defineEmits<{ pick: [fields: VenueFields] }>()
 const id = useId()
 const LABEL = 'Venue name'
 const saved = props.save
-  ? useAutosave({ value: () => model.value, save: (v) => props.save!(v), label: () => LABEL })
+  ? useAutosave({
+      value: () => model.value,
+      save: (v) => props.save!(v),
+      label: () => LABEL,
+    })
   : null
 const text = computed(() => (saved ? saved.draft.value : (model.value ?? '')))
 
@@ -83,7 +92,8 @@ async function pick(s: PlaceSuggestion) {
     emit('pick', fields)
     searchError.value = null
   } catch {
-    searchError.value = 'That venue couldn’t be looked up. Try another, or type the details.'
+    searchError.value =
+      'That venue couldn’t be looked up. Try another, or type the details.'
   } finally {
     loading.value = false
   }
@@ -124,54 +134,75 @@ function onBlur() {
     hint="Choose it from the suggestions to fill in the address and town, and put it on the map."
     :error="error"
   >
-    <div class="relative">
-      <input
-        :id="id"
-        :value="text"
-        type="text"
-        role="combobox"
-        aria-autocomplete="list"
-        :aria-expanded="results.length > 0"
-        :aria-controls="`${id}-list`"
-        :aria-activedescendant="active >= 0 ? `${id}-o${active}` : undefined"
-        :aria-invalid="!!saved?.error.value || undefined"
-        :disabled="saved?.locked.value"
-        autocomplete="off"
-        placeholder="e.g. Telus Convention Centre"
-        :class="[
-          'h-12 w-full rounded-xl pr-10 pl-3 text-base',
-          saved?.locked.value ? 'bg-muted text-muted-foreground cursor-not-allowed shadow-[inset_0_0_0_1px_var(--border)]' : 'field',
-        ]"
-        @input="onInput"
-        @keydown="onKeydown"
-        @blur="onBlur"
-      />
-      <span class="text-muted-foreground pointer-events-none absolute top-1/2 right-3 flex -translate-y-1/2" aria-hidden="true">
-        <SaveMark :status="loading ? 'saving' : (saved?.status.value ?? 'idle')" />
-      </span>
-      <!-- Pressing a suggestion mustn't blur the box first (that closes the list). -->
-      <ul
-        v-if="results.length"
-        :id="`${id}-list`"
-        role="listbox"
-        class="surface-raised absolute inset-x-0 top-full z-20 mt-1.5 overflow-hidden rounded-2xl p-1"
-        @mousedown.prevent
-      >
-        <li v-for="(s, i) in results" :id="`${id}-o${i}`" :key="s.placeId" role="option" :aria-selected="i === active">
-          <button
-            type="button"
-            tabindex="-1"
-            :class="['press-row flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left', i === active && '[--row-tint:var(--tint-hover)]']"
-            @click="pick(s)"
+    <template #default="{ describedby }">
+      <div class="relative">
+        <input
+          :id="id"
+          :aria-describedby="describedby"
+          :value="text"
+          type="text"
+          role="combobox"
+          aria-autocomplete="list"
+          :aria-expanded="results.length > 0"
+          :aria-controls="`${id}-list`"
+          :aria-activedescendant="active >= 0 ? `${id}-o${active}` : undefined"
+          :aria-invalid="!!saved?.error.value || undefined"
+          :disabled="saved?.locked.value"
+          autocomplete="off"
+          placeholder="e.g. Telus Convention Centre"
+          :class="[
+            'h-12 w-full rounded-xl pr-10 pl-3 text-base',
+            saved?.locked.value
+              ? 'bg-muted text-muted-foreground cursor-not-allowed shadow-[inset_0_0_0_1px_var(--border)]'
+              : 'field',
+          ]"
+          @input="onInput"
+          @keydown="onKeydown"
+          @blur="onBlur"
+        />
+        <span
+          class="text-muted-foreground pointer-events-none absolute top-1/2 right-3 flex -translate-y-1/2"
+          aria-hidden="true"
+        >
+          <SaveMark :status="loading ? 'saving' : (saved?.status.value ?? 'idle')" />
+        </span>
+        <!-- Pressing a suggestion mustn't blur the box first (that closes the list). -->
+        <ul
+          v-if="results.length"
+          :id="`${id}-list`"
+          role="listbox"
+          class="surface-raised absolute inset-x-0 top-full z-20 mt-1.5 overflow-hidden rounded-2xl p-1"
+          @mousedown.prevent
+        >
+          <li
+            v-for="(s, i) in results"
+            :id="`${id}-o${i}`"
+            :key="s.placeId"
+            role="option"
+            :aria-selected="i === active"
           >
-            <MapPin class="text-primary size-4 shrink-0" />
-            <span class="min-w-0">
-              <span class="block truncate text-base font-medium">{{ s.primaryText }}</span>
-              <span class="text-muted-foreground block truncate text-sm">{{ s.secondaryText }}</span>
-            </span>
-          </button>
-        </li>
-      </ul>
-    </div>
+            <button
+              type="button"
+              tabindex="-1"
+              :class="[
+                'press-row flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left',
+                i === active && '[--row-tint:var(--tint-hover)]',
+              ]"
+              @click="pick(s)"
+            >
+              <MapPin class="text-primary size-4 shrink-0" />
+              <span class="min-w-0">
+                <span class="block truncate text-base font-medium">{{
+                  s.primaryText
+                }}</span>
+                <span class="text-muted-foreground block truncate text-sm">{{
+                  s.secondaryText
+                }}</span>
+              </span>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </template>
   </AdminField>
 </template>

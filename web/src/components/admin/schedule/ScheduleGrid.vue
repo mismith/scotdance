@@ -16,6 +16,7 @@ import { useHideTab } from '@/composables/admin/useHideTab'
 import { useSplit } from '@/composables/admin/useWide'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { useMorph } from '@/lib/morph'
+import { smooth } from '@/lib/motion'
 
 // The schedule as a grid: platforms across the top, sessions down the page,
 // each event's dances as rows with a cell per platform.
@@ -96,7 +97,7 @@ function addBlock(name: string) {
   void nextTick(() =>
     gridEl.value
       ?.querySelector('[data-block]:last-of-type')
-      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }),
+      ?.scrollIntoView({ behavior: smooth(), block: 'nearest' }),
   )
 }
 

@@ -22,6 +22,7 @@ import {
 } from './drag'
 import { confirm } from '@/lib/admin/feedback'
 import { useMorph } from '@/lib/morph'
+import { smooth } from '@/lib/motion'
 
 // A session (morning, afternoon…): its name and time, then its events.
 
@@ -105,7 +106,7 @@ function addEvent(name: string) {
   void nextTick(() =>
     [...(sectionEl.value?.querySelectorAll('[data-event]') ?? [])]
       .at(-1)
-      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }),
+      ?.scrollIntoView({ behavior: smooth(), block: 'nearest' }),
   )
 }
 

@@ -2,9 +2,7 @@
 import { onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import { useIntersectionObserver } from '@vueuse/core'
 import { MapPin } from '@lucide/vue'
-import { Marker } from 'maplibre-gl'
 import type { ExpressionSpecification, FilterSpecification, LayerSpecification, Map as MaplibreMap, StyleSpecification } from 'maplibre-gl'
-import { createMap, styleUrlFor } from '@/lib/maplibre'
 import { useTheme } from '@/composables/useTheme'
 
 // A still map of where a place is, with a pin in the middle. With `href`,
@@ -12,7 +10,8 @@ import { useTheme } from '@/composables/useTheme'
 // it, so it's hidden from screen readers and the keyboard (the button covers
 // them). `expandable` makes it a button that opens the full map (listen for
 // click); `interactive` is that full map, to pan and zoom. The map only
-// starts once it scrolls into view: each one is a WebGL context.
+// starts once it scrolls into view: each one is a WebGL context, and the
+// renderer (most of a megabyte) only downloads then too.
 const props = withDefaults(
   defineProps<{ lat: number; lng: number; href?: string | null; zoom?: number; expandable?: boolean; interactive?: boolean }>(),
   {
@@ -33,7 +32,7 @@ const { isDark } = useTheme()
 // tiles, icons and fonts) and recolour the labels.
 const POI_LAYERS = /^poi_r\d+$/
 let lightPoiLayers: Promise<LayerSpecification[]> | null = null
-function poiLayers(): Promise<LayerSpecification[]> {
+function poiLayers(styleUrlFor: (dark: boolean) => string): Promise<LayerSpecification[]> {
   lightPoiLayers ??= fetch(styleUrlFor(false))
     .then((r) => r.json())
     .then((style: StyleSpecification) => style.layers.filter((l) => POI_LAYERS.test(l.id)))
@@ -47,10 +46,10 @@ const withoutStops = (filter: FilterSpecification | undefined): FilterSpecificat
   ['!', ['match', ['get', 'class'], ['bus', 'railway', 'bus_stop', 'tram_stop'], true, false]],
 ]
 
-async function tune(m: MaplibreMap, dark: boolean) {
+async function tune(m: MaplibreMap, dark: boolean, styleUrlFor: (dark: boolean) => string) {
   if (m.getLayer('poi_transit')) m.setLayoutProperty('poi_transit', 'visibility', 'none')
   if (dark) {
-    for (const layer of await poiLayers()) {
+    for (const layer of await poiLayers(styleUrlFor)) {
       if (m.getLayer(layer.id) || layer.type !== 'symbol') continue
       m.addLayer({
         ...layer,
@@ -63,11 +62,16 @@ async function tune(m: MaplibreMap, dark: boolean) {
   }
 }
 
+let styleUrl: ((dark: boolean) => string) | null = null
+let gone = false
 const { stop } = useIntersectionObserver(
   container,
-  ([entry]) => {
+  async ([entry]) => {
     if (!entry?.isIntersecting || map.value || !container.value) return
     stop()
+    const [{ createMap, styleUrlFor }, { Marker }] = await Promise.all([import('@/lib/maplibre'), import('maplibre-gl')])
+    if (gone || !container.value) return
+    styleUrl = styleUrlFor
     const m = createMap(container.value, {
       style: styleUrlFor(isDark.value),
       center: [props.lng, props.lat],
@@ -78,20 +82,21 @@ const { stop } = useIntersectionObserver(
     })
     // On a map you can move, the pin moves with it.
     if (props.interactive && pin.value) new Marker({ element: pin.value, anchor: 'bottom' }).setLngLat([props.lng, props.lat]).addTo(m)
-    m.on('style.load', () => tune(m, isDark.value))
+    m.on('style.load', () => tune(m, isDark.value, styleUrlFor))
     m.once('idle', () => (loaded.value = true))
     map.value = m
   },
   { rootMargin: '200px' },
 )
 
-watch(isDark, (dark) => map.value?.setStyle(styleUrlFor(dark)))
+watch(isDark, (dark) => styleUrl && map.value?.setStyle(styleUrl(dark)))
 watch(
   () => [props.lat, props.lng],
   () => map.value?.jumpTo({ center: [props.lng, props.lat] }),
 )
 
 onBeforeUnmount(() => {
+  gone = true
   map.value?.remove()
   map.value = null
 })

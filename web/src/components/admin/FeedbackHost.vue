@@ -101,14 +101,14 @@ async function runAction(id: number, run: () => unknown) {
           :key="t.id"
           class="hud pointer-events-auto flex max-w-lg items-center gap-1 rounded-2xl py-1.5 pr-1.5 pl-4"
         >
-          <CircleAlert v-if="t.tone === 'error'" class="size-[1.125rem] shrink-0 text-[#ff8a8a]" aria-hidden="true" />
+          <CircleAlert v-if="t.tone === 'error'" class="size-[1.125rem] shrink-0 text-(--hud-danger)" aria-hidden="true" />
           <p class="min-w-0 flex-1 py-1.5 text-callout font-medium" :class="t.tone === 'error' && 'pl-1'">
             <span v-if="t.tone === 'error'" class="sr-only">Error: </span>{{ t.message }}
           </p>
           <button
             v-if="t.action"
             type="button"
-            class="press h-10 shrink-0 rounded-xl px-3 text-callout font-semibold text-[#8cc4ff]"
+            class="press h-10 shrink-0 rounded-xl px-3 text-callout font-semibold text-(--hud-link)"
             @click="runAction(t.id, t.action.run)"
           >
             {{ t.action.label }}

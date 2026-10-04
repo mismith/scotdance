@@ -247,7 +247,8 @@ function onPointerUp(e: PointerEvent) {
               :aria-pressed="isSelected(cell.date)"
               :class="[
                 'press focus-inset relative aspect-square rounded-full text-base tabular-nums transition-colors',
-                !cell.inMonth && 'text-muted-foreground/40',
+                // Other months' days: quieter by colour, still readable (not faded).
+                !cell.inMonth && 'text-muted-foreground font-normal',
                 isSelected(cell.date)
                   ? 'text-primary-foreground font-semibold'
                   : cell.eventCount

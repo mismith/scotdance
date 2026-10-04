@@ -187,7 +187,7 @@ const sections = computed<Section[]>(() => {
         </EmptyState>
         <EmptyState
           v-else-if="!inRange.length"
-          :icon="CalendarDays"
+          scott
           :title="range === 'upcoming' ? 'No upcoming competitions here' : 'No past competitions here'"
           :description="
             location.isActive

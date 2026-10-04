@@ -83,7 +83,7 @@ const groupRoute = (d: DancerDay, danceId?: string) => ({
 const ROW = 'relative flex items-center justify-between gap-3'
 const rowSize = computed(() => (lg.value ? 'min-h-14 px-5 py-2.5' : 'min-h-12 px-4 py-2'))
 // The dance they're on next: a warm tint and an amber edge.
-const NEXT = 'bg-next/55 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-amber-500'
+const NEXT = 'bg-next/55 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-next-edge'
 </script>
 
 <template>

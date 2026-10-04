@@ -373,7 +373,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
         >
           <LogoMark class="pointer-events-none absolute -right-6 -bottom-10 size-48 rotate-[-8deg] opacity-[0.08]" />
           <h2 class="text-title relative">See your dancer’s day at a glance</h2>
-          <p class="text-callout relative mt-1.5 opacity-90">
+          <p class="text-callout relative mt-1.5">
             Follow your dancers to see their platform, dancing order and placings here, and get an alert when results
             are posted.
           </p>

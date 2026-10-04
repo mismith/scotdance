@@ -17,6 +17,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="ScotDance" />
 
+    <!-- Dark before the first paint, so dark mode doesn't flash light while
+         the app loads (useTheme takes over from here, same storage key). -->
+    <script>
+      try {
+        const t = localStorage.getItem('theme')
+        if (t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches))
+          document.documentElement.classList.add('dark')
+      } catch {}
+    </script>
 
     <title>ScotDance.app</title>
   </head>

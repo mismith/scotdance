@@ -25,7 +25,8 @@ function toggle() {
     :class="[
       'relative inline-flex h-[1.875rem] w-[3.125rem] shrink-0 items-center rounded-full p-0.5 transition-colors duration-(--dur-quick)',
       'disabled:opacity-(--disabled-opacity)',
-      model ? 'bg-primary-fill' : 'bg-[color-mix(in_oklab,var(--foreground)_16%,transparent)]',
+      // Off keeps an edge, like a field's, so the track shows (3:1).
+      model ? 'bg-primary-fill' : 'bg-[color-mix(in_oklab,var(--foreground)_16%,transparent)] shadow-[inset_0_0_0_1px_var(--input)]',
       busy && 'opacity-70',
     ]"
     @click="toggle"

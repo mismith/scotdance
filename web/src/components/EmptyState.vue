@@ -1,18 +1,22 @@
 <script setup lang="ts">
 import type { Component } from 'vue'
+import LogoMark from '@/components/LogoMark.vue'
 
 // Nothing here (yet): an icon, a title, one line on what to do, then the
 // actions for it (the main one first) and, below, any other way out. `page`
 // fills an empty screen; `inline` sits inside a list or panel (no results,
-// a section with nothing in it). It settles in rather than popping.
+// a section with nothing in it). It settles in rather than popping. `scott`
+// puts the logo dancer in place of the icon, for the friendly, low-stakes
+// empties (nothing followed, nothing found), never on competition-day screens.
 withDefaults(
   defineProps<{
     icon?: Component
+    scott?: boolean
     title: string
     description?: string
     size?: 'page' | 'inline'
   }>(),
-  { icon: undefined, description: undefined, size: 'page' },
+  { icon: undefined, scott: false, description: undefined, size: 'page' },
 )
 </script>
 
@@ -23,8 +27,9 @@ withDefaults(
       size === 'inline' ? 'gap-3 px-4 py-8' : 'gap-4 px-6 py-16',
     ]"
   >
+    <LogoMark v-if="scott" :class="['text-primary', size === 'inline' ? 'size-16' : 'size-20']" />
     <div
-      v-if="icon"
+      v-else-if="icon"
       :class="[
         'bg-muted text-muted-foreground/80 flex items-center justify-center rounded-full',
         size === 'inline' ? 'size-11' : 'size-14',

@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
-import * as maplibregl from 'maplibre-gl'
-import type { Map as MaplibreMap } from 'maplibre-gl'
-import { createMap, styleUrlFor } from '@/lib/maplibre'
+import type { GeoJSONSource, Map as MaplibreMap, Marker } from 'maplibre-gl'
 import { useTheme } from '@/composables/useTheme'
 
 const props = defineProps<{
@@ -56,18 +54,22 @@ function boundsFor(
   ]
 }
 
-let userMarker: maplibregl.Marker | null = null
+let userMarker: Marker | null = null
+// The renderer (most of a megabyte) downloads when the map first shows.
+let gl: typeof import('maplibre-gl') | null = null
+let styleUrl: ((dark: boolean) => string) | null = null
+let gone = false
 
 function refresh(): void {
   const map = mapInstance.value
-  if (!map || !map.isStyleLoaded()) return
+  if (!map || !gl || !map.isStyleLoaded()) return
   const data = buildCircle(props.lat, props.lng, props.radiusKm)
-  const src = map.getSource(CIRCLE_SOURCE_ID) as maplibregl.GeoJSONSource | undefined
+  const src = map.getSource(CIRCLE_SOURCE_ID) as GeoJSONSource | undefined
   if (src) src.setData(data)
   if (!userMarker) {
     const el = document.createElement('div')
     el.className = 'maplibregl-user-location-dot'
-    userMarker = new maplibregl.Marker({ element: el })
+    userMarker = new gl.Marker({ element: el })
       .setLngLat([props.lng, props.lat])
       .addTo(map)
   } else {
@@ -99,8 +101,10 @@ function addCircleLayers(map: MaplibreMap): void {
   })
 }
 
-onMounted(() => {
-  if (!container.value) return
+onMounted(async () => {
+  const [{ createMap, styleUrlFor }, maplibre] = await Promise.all([import('@/lib/maplibre'), import('maplibre-gl')])
+  if (gone || !container.value) return
+  gl = maplibre
   const map = createMap(container.value, {
     style: styleUrlFor(isDark.value),
     center: [props.lng, props.lat],
@@ -115,16 +119,20 @@ onMounted(() => {
     refresh()
   })
 
-  // Re-add the source/layers after a basemap swap — setStyle wipes them.
-  watch(isDark, (dark) => {
-    map.once('styledata', () => {
-      if (!map.getSource(CIRCLE_SOURCE_ID)) {
-        addCircleLayers(map)
-        refresh()
-      }
-    })
-    map.setStyle(styleUrlFor(dark))
+  styleUrl = styleUrlFor
+})
+
+// Re-add the source/layers after a basemap swap — setStyle wipes them.
+watch(isDark, (dark) => {
+  const map = mapInstance.value
+  if (!map || !styleUrl) return
+  map.once('styledata', () => {
+    if (!map.getSource(CIRCLE_SOURCE_ID)) {
+      addCircleLayers(map)
+      refresh()
+    }
   })
+  map.setStyle(styleUrl(dark))
 })
 
 watch(
@@ -133,6 +141,7 @@ watch(
 )
 
 onBeforeUnmount(() => {
+  gone = true
   userMarker?.remove()
   userMarker = null
   mapInstance.value?.remove()
