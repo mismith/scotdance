@@ -39,7 +39,7 @@ firebase-adminsdk.json
 /firebase.store.json
 
 # fastlane: run reports, and never a store key
-fastlane/report.xml
-fastlane/README.md
+**/fastlane/report.xml
+**/fastlane/README.md
 *.p8
 play-service-account.json
