@@ -47,7 +47,7 @@ const platform = computed(() => platformLabel(props.status.slot?.platformName) |
     class="bg-next text-next-foreground inline-flex h-8 items-center gap-1 rounded-full px-3 text-callout font-semibold whitespace-nowrap"
   >
     <Play class="size-3.5 fill-current" stroke-width="2.4" aria-hidden="true" />
-    Next{{ platform ? ` · ${platform}` : '' }}
+    Next
   </span>
   <span
     v-else-if="status.state === 'upcoming'"

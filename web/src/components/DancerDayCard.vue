@@ -55,7 +55,7 @@ const sub = computed(() => {
 const won = computed(() => (props.folded ? placings(shown.value) : []))
 
 const ordinal = (n: number) => `${n}${getOrdinalSuffix(n)}`
-// When they're on, in facts a parent can check at the platform: the group
+// When they're on, in facts a parent can check at the platform: where, the group
 // dancing before them, their place in the draw, and the session with the
 // time the organisers gave it. Never a guessed clock time.
 function detail(s: DanceStatus): string[] {
@@ -63,6 +63,9 @@ function detail(s: DanceStatus): string[] {
   const bits: string[] = []
   const session = [s.slot?.blockName, s.slot?.eventTime ?? s.slot?.blockTime].filter(Boolean).join(', ')
   if (s.state === 'next') {
+    // The platform leads, at reading size: it's where to go.
+    const platform = platformLabel(s.slot?.platformName)
+    if (platform) bits.push(platform)
     if (s.slot?.beforeGroup) bits.push(`After ${s.slot.beforeGroup}`)
     else if (s.slot && s.slot.groupCount > 1 && s.slot.groupPos === 1) bits.push('First group up')
     if (s.drawPos) bits.push(`${ordinal(s.drawPos)} to dance`)
