@@ -138,7 +138,7 @@
     "rules": [
       {
         "name": "The Colour Is News Rule",
-        "body": "Pink, amber and green appear only when they report live, next or done (amber also marks what needs the organiser next in Manage). Done or out is muted by colour and words, never opacity.",
+        "body": "Pink, amber and green appear only when they report live, next (Manage only) or done. Families' screens never guess what's on next. Done or out is muted by colour and words, never opacity.",
         "section": "colors"
       },
       {

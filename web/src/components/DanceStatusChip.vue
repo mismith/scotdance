@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Award, Hourglass, Play } from '@lucide/vue'
+import { Award, Hourglass } from '@lucide/vue'
 import Medal from '@/components/Medal.vue'
 import type { DanceStatus } from '@/lib/dancerDay'
 import { platformLabel } from '@/lib/schedule'
@@ -41,13 +41,6 @@ const platform = computed(() => platformLabel(props.status.slot?.platformName) |
   >
     <Hourglass class="size-3.5" stroke-width="2.4" aria-hidden="true" />
     Results to come
-  </span>
-  <span
-    v-else-if="status.state === 'next'"
-    class="bg-next text-next-foreground inline-flex h-8 items-center gap-1 rounded-full px-3 text-callout font-semibold whitespace-nowrap"
-  >
-    <Play class="size-3.5 fill-current" stroke-width="2.4" aria-hidden="true" />
-    Next
   </span>
   <span
     v-else-if="status.state === 'upcoming'"

@@ -120,7 +120,7 @@ test('Undo and Redo put a change back and forward again', async ({ page }, info)
     await venue.press('Enter')
     await expect.poll(() => dbGet(`competitions/${comp.id}/venue`)).toBe('Corn Exchange')
     // The ⋯ button says so, in words, for a moment (and screen readers hear it).
-    await expect(page.getByRole('button', { name: 'Undo, redo and more' })).toContainText('Saved')
+    await expect(page.getByRole('button', { name: 'Undo and redo' })).toContainText('Saved')
     await expect(page.getByRole('status').filter({ hasText: 'Saved' })).toBeAttached()
 
     await (await barMenuItem(page, /^Undo/)).click()

@@ -26,8 +26,10 @@ withDefaults(
     back?: boolean
     fallback?: { to: RouteLocationRaw; label: string }
     exit?: { delta?: number; to?: RouteLocationRaw; label: string } | null
+    /** Back as just a chevron, so the title has the room (a competition's pages). */
+    compactBack?: boolean
   }>(),
-  { title: null, subtitle: null, showTitle: false, scrolled: undefined, wide: false, back: true, fallback: undefined, exit: null },
+  { title: null, subtitle: null, showTitle: false, scrolled: undefined, wide: false, back: true, fallback: undefined, exit: null, compactBack: false },
 )
 
 const scrollTop = () => {
@@ -43,7 +45,7 @@ const scrollTop = () => {
       aria-hidden="true"
     />
     <div :class="['@container mx-auto flex h-14 items-center gap-2 px-3', wide ? 'max-w-none' : 'appbar-row']">
-      <TopBackButton v-if="back" :fallback="fallback" :exit="exit" />
+      <TopBackButton v-if="back" :fallback="fallback" :exit="exit" :compact="compactBack" />
       <slot name="leading" />
       <button
         type="button"

@@ -35,7 +35,6 @@
   /* Status language: every state is shape + colour + a word */
   --color-next: var(--next);
   --color-next-foreground: var(--next-foreground);
-  --color-next-edge: var(--next-edge);
   --color-done: var(--done);
   --color-done-foreground: var(--done-foreground);
   --color-live: var(--live);
@@ -110,7 +109,6 @@
   --blue-paper: #e1ecf8;
   --next: #ffefc7;
   --next-foreground: #7a4600;
-  --next-edge: #f59e0b;
   --done: #ddf2e2;
   --done-foreground: #145c2b;
   /* Live and today: hot pink, kept apart from the red of following. */
@@ -192,7 +190,6 @@
   --blue-paper: #11263a;
   --next: #3a2a07;
   --next-foreground: #ffd27a;
-  --next-edge: #f59e0b;
   --done: #0f2c19;
   --done-foreground: #86dda0;
   --live: #ff6eb0;

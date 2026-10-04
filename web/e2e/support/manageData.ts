@@ -45,8 +45,8 @@ export const confirmDialog = (page: Page) => page.locator('dialog[open]')
 
 /** An item in the bar's ⋯ menu (Undo, Redo, the public page): opens the menu first. */
 export async function barMenuItem(page: Page, name: string | RegExp) {
-  await page.getByRole('button', { name: 'Undo, redo and more' }).click()
-  return page.getByRole('dialog', { name: 'Undo, redo and more' }).getByRole('button', { name, exact: typeof name === 'string' })
+  await page.getByRole('button', { name: 'Undo and redo' }).click()
+  return page.getByRole('dialog', { name: 'Undo and redo' }).getByRole('button', { name, exact: typeof name === 'string' })
 }
 
 /** An item in a section's ⋯ menu (top right of its header, e.g. "More for results"), once it's open. */

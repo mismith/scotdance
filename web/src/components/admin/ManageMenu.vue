@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { Check, CircleAlert, CloudOff, Ellipsis, LoaderCircle, Redo2, Undo2 } from '@lucide/vue'
+import { Check, CircleAlert, CloudOff, History, LoaderCircle, Redo2, Undo2 } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
 import { useSaveStatus } from '@/composables/admin/useSaveStatus'
 import { useMorph } from '@/lib/morph'
 
-// Manage's ⋯ menu, top right beside View: Undo and Redo (saying what they'd
-// change; ⌘Z and ⇧⌘Z still work anywhere). Its button also says whether
-// your changes are safe, in words, when there's something to say: "Saved"
-// for a moment after each save, Saving…, Offline or Not saved; otherwise
-// it's just ⋯ (composables/admin/useSaveStatus).
+// Manage's undo menu, top right beside View: Undo and Redo (saying what
+// they'd change; ⌘Z and ⇧⌘Z still work anywhere). Its button also says
+// whether your changes are safe, in words, when there's something to say:
+// "Saved" for a moment after each save, Saving…, Offline or Not saved;
+// otherwise it's just the history icon (composables/admin/useSaveStatus).
+// Not ⋯: that's each section's own menu, often right below it.
 const props = defineProps<{
   undoLabel: string | null
   redoLabel: string | null
@@ -42,7 +43,7 @@ const row =
 <template>
   <button
     type="button"
-    aria-label="Undo, redo and more"
+    aria-label="Undo and redo"
     aria-haspopup="dialog"
     :aria-expanded="menu.open"
     :title="save.state.value === 'error' ? (save.error.value ?? undefined) : undefined"
@@ -59,7 +60,7 @@ const row =
     @click="menu.show($event)"
   >
     <span class="grid size-5 shrink-0 place-items-center" aria-hidden="true">
-      <Ellipsis v-if="!save.shown.value" class="size-5" />
+      <History v-if="!save.shown.value" class="size-5" />
       <CloudOff v-else-if="save.state.value === 'offline'" class="size-4" />
       <LoaderCircle v-else-if="save.state.value === 'saving'" class="size-4 animate-spin" />
       <CircleAlert v-else-if="save.state.value === 'error'" class="size-4" />
@@ -78,8 +79,8 @@ const row =
   </button>
   <span role="status" aria-live="polite" class="sr-only">{{ save.label.value }}</span>
 
-  <Dialog :open="menu.open" :morph="menu" variant="dropdown" aria-label="Undo, redo and more" @close="menu.hide()">
-    <nav aria-label="Undo, redo and more" class="[&>div+div]:mt-1.5 [&>div+div]:border-t [&>div+div]:pt-1.5">
+  <Dialog :open="menu.open" :morph="menu" variant="dropdown" aria-label="Undo and redo" @close="menu.hide()">
+    <nav aria-label="Undo and redo" class="[&>div+div]:mt-1.5 [&>div+div]:border-t [&>div+div]:pt-1.5">
       <div>
         <p
           :class="[

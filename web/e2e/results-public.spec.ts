@@ -141,7 +141,7 @@ test('day two of a competition: dances still to come aren’t “never posted”
   try {
     const premier = twoDay.groups.find((g) => g.id.endsWith('-grp-30'))!
     await page.goto(`/competitions/${twoDay.id}/results/${premier.id}`)
-    await expect(page.getByText(/Not danced yet/).first()).toBeVisible()
+    await expect(page.getByText(/No results yet/).first()).toBeVisible()
     await expect(page.getByText('No result was posted for this dance.')).toHaveCount(0)
   } finally {
     await retry(() => removeCompetition(id))
@@ -157,5 +157,5 @@ test('a competition that hides its results says so', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Results', exact: true })).toHaveCount(0)
   await page.goto(`/competitions/${comp.id}/results/${shapes.group.id}`)
   await expect(page.getByText('No results here')).toBeVisible()
-  await expect(page.getByText('Not danced yet.')).toHaveCount(0)
+  await expect(page.getByText('No results yet.')).toHaveCount(0)
 })

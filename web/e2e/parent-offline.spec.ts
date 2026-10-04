@@ -43,7 +43,7 @@ test('opens with the last saved data, says so, and recovers live results', async
   await page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true }).click()
   await signInFromSheet(page, email)
   const card = page.locator('article').filter({ hasText: person.name })
-  await expect(card.getByRole('link', { name: /Highland Fling/ })).toContainText('Next')
+  await expect(card.getByRole('link', { name: /Highland Fling/ })).toContainText('Platform A')
   // Visit the competition too, so its pages are saved.
   await page.goto(`/competitions/${comp.id}/info`)
   await expect(page.getByRole('heading', { name: 'Your dancers here' })).toBeVisible()
@@ -53,7 +53,7 @@ test('opens with the last saved data, says so, and recovers live results', async
   // Signal gone; reopen the app.
   net.on = false
   await page.reload()
-  await expect(card.getByRole('link', { name: /Highland Fling/ })).toContainText('Next', { timeout: 15_000 })
+  await expect(card.getByRole('link', { name: /Highland Fling/ })).toContainText('Platform A', { timeout: 15_000 })
   const notice = page.getByRole('status').filter({ hasText: 'Offline' })
   await expect(notice).toContainText(/Offline · last updated \d/)
   await page.goto(`/competitions/${comp.id}/info`)

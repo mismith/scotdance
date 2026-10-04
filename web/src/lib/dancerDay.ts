@@ -22,9 +22,11 @@ import {
 //   placed / unplaced   results are posted for this dance
 //   waiting             not posted, but something scheduled after it on the
 //                       same platform has been, so it has been danced
-//   next                the first dance not yet danced
-//   later               after that
-// Before competition day every dance is "upcoming"; after it, anything
+//   upcoming            still to dance, as far as anyone can tell
+//   later               Overall, until it's posted
+// There's no "next": plenty of competitions post nothing until the end, so a
+// guess at what's on now would often be wrong. Upcoming dances show what the
+// schedule says (platform, session, time, draw) instead. After the day, anything
 // never posted is "not-posted".
 
 export type Phase = 'before' | 'today' | 'after'
@@ -34,7 +36,6 @@ export type DanceState =
   | 'unplaced'
   | 'no-placings'
   | 'waiting'
-  | 'next'
   | 'later'
   | 'upcoming'
   | 'not-posted'
@@ -48,14 +49,11 @@ export interface SlotInfo {
   eventName: string | null
   /** The event's own start time, from its description, when it has one. */
   eventTime: string | null
-  eventId: string | null
   platformId: string
   platformName: string | null
   /** 1-based position of this group among the groups on that platform. */
   groupPos: number
   groupCount: number
-  /** The age group dancing just before this one there, as the platform runs ("After Beginner Under 7"). */
-  beforeGroup: string | null
 }
 
 export interface DanceStatus {
@@ -78,7 +76,6 @@ export interface DancerDay {
   overall: DanceStatus | null
   /** null when callbacks haven't been posted for the group. */
   calledBack: boolean | null
-  next: DanceStatus | null
   resultsIn: number
 }
 
@@ -90,7 +87,7 @@ export interface DayBundle {
   platforms: Platform[]
   draws: DrawsTree
   /** The competition's age groups: a schedule can still list deleted ones. */
-  groups?: Array<{ id: string; fullName?: string; name?: string }>
+  groups?: Array<{ id: string }>
 }
 
 /**
@@ -165,12 +162,10 @@ export function scheduleIndex(schedule: Schedule | null, platforms: Platform[]):
               blockTime: firstLine(block.description),
               eventName: event.name ?? null,
               eventTime: firstLine(event.description),
-              eventId: event.id ?? null,
               platformId,
               platformName: platformName.get(platformId) ?? null,
               groupPos: 0,
               groupCount: groupIds.length,
-              beforeGroup: null,
               danceId: sd.danceId,
               groupIds,
             }
@@ -212,7 +207,6 @@ export function dancerDay(
     dances: [],
     overall: null,
     calledBack: null,
-    next: null,
     resultsIn: 0,
   }
   if (!group) return empty
@@ -231,13 +225,11 @@ export function dancerDay(
   // Order by schedule where known, else by the admin's dance order.
   // "Group 2 of 3" among the age groups that still exist.
   const known = bundle.groups?.length ? new Set(bundle.groups.map((g) => g.id)) : null
-  const groupName = new Map((bundle.groups ?? []).map((g) => [g.id, g.fullName ?? g.name ?? null]))
   const slotFor = (danceId: string): SlotInfo | null => {
     const s = index.byGroupDance.get(`${group.id}:${danceId}`)
     if (!s || !known) return s ?? null
     const real = s.groupIds.filter((g) => known.has(g) || g === group.id)
-    const pos = real.indexOf(group.id)
-    return { ...s, groupPos: pos + 1, groupCount: real.length, beforeGroup: pos > 0 ? (groupName.get(real[pos - 1]) ?? null) : null }
+    return { ...s, groupPos: real.indexOf(group.id) + 1, groupCount: real.length }
   }
 
   const rows = groupDances
@@ -261,7 +253,6 @@ export function dancerDay(
     -1,
   )
 
-  let foundNext = false
   const statuses: DanceStatus[] = rows.map(({ dance, slot }, i) => {
     const { place, tied, pointed } = getDancerPlace(dancer.id, group.id, dance.id, results, points)
     const draw = drawFor(dance.id)
@@ -277,11 +268,7 @@ export function dancerDay(
       i < lastPostedRow ||
       (slot != null && (postedSeqByPlatform.get(slot.platformId) ?? -1) > slot.seq)
     if (danced) return { ...base, state: 'waiting' as const }
-    if (!foundNext) {
-      foundNext = true
-      return { ...base, state: 'next' as const }
-    }
-    return { ...base, state: 'later' as const }
+    return { ...base, state: 'upcoming' as const }
   })
 
   let overall: DanceStatus | null = null
@@ -311,7 +298,6 @@ export function dancerDay(
     dances: statuses,
     overall,
     calledBack,
-    next: statuses.find((s) => s.state === 'next') ?? null,
     resultsIn: statuses.filter((s) => ['placed', 'unplaced', 'no-placings'].includes(s.state)).length,
   }
 }
@@ -333,12 +319,12 @@ const statusesOf = (days: DancerDay[]) => days.flatMap((d) => [...d.dances, ...(
 
 const slotOrder = (s: DanceStatus | null) => s?.slot?.seq ?? Infinity
 
-/** Their next dance across every entry: the soonest by the schedule. */
-export function nextDance(days: DancerDay[]): DanceStatus | null {
+/** Their soonest dance still to come, by the schedule (not a guess at "now"). */
+export function soonestUpcoming(days: DancerDay[]): DanceStatus | null {
   return (
     days
-      .map((d) => d.next)
-      .filter((s): s is DanceStatus => !!s)
+      .flatMap((d) => d.dances)
+      .filter((s) => s.state === 'upcoming')
       .sort((a, b) => slotOrder(a) - slotOrder(b))[0] ?? null
   )
 }
@@ -358,29 +344,26 @@ export function firstDance(days: DancerDay[]): DanceStatus | null {
 
 /**
  * How pressing a dancer's day is, most first:
- *   next      a dance still to come, and the schedule says when
- *   upcoming  still to dance, order unknown (or nothing listed yet)
+ *   upcoming  dances still to come (or nothing listed yet)
  *   waiting   every dance danced, some results still to come
  *   done      every result in
  */
-export type DayStage = 'next' | 'upcoming' | 'waiting' | 'done'
-const STAGES: DayStage[] = ['next', 'upcoming', 'waiting', 'done']
+export type DayStage = 'upcoming' | 'waiting' | 'done'
+const STAGES: DayStage[] = ['upcoming', 'waiting', 'done']
 
 export function dayStage(days: DancerDay[]): DayStage {
-  const next = nextDance(days)
-  if (next) return next.slot ? 'next' : 'upcoming'
   const all = statusesOf(days)
   if (!days.some((d) => d.dances.length) || all.some((s) => s.state === 'upcoming')) return 'upcoming'
   if (all.some((s) => s.state === 'waiting' || s.state === 'later')) return 'waiting'
   return 'done'
 }
 
-/** Most pressing first; among those dancing next, the soonest. */
+/** Most pressing first; among those still to dance, the soonest by the schedule. */
 export function compareDays(a: DancerDay[], b: DancerDay[]): number {
   const stage = STAGES.indexOf(dayStage(a)) - STAGES.indexOf(dayStage(b))
   if (stage) return stage
-  const na = nextDance(a)
-  const nb = nextDance(b)
+  const na = soonestUpcoming(a)
+  const nb = soonestUpcoming(b)
   return slotOrder(na) - slotOrder(nb) || (na?.drawPos ?? 99) - (nb?.drawPos ?? 99)
 }
 

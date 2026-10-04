@@ -148,22 +148,13 @@ const lists = ['dancers', 'judges', 'pipers', 'venues'].map(sectionMeta)
   <!-- On wide screens the sidebar already lists all of these. -->
   <section class="space-y-2 lg:hidden">
     <h2 class="text-heading">Browse</h2>
-    <RouterLink
-      :to="competitions.to"
-      class="surface press-row focus-inset flex min-h-16 items-center gap-3 rounded-2xl p-3"
-    >
-      <component :is="competitions.icon" class="text-primary mx-1 size-6 shrink-0" stroke-width="1.75" aria-hidden="true" />
-      <span class="flex-1 text-base font-semibold">{{ competitions.label }}</span>
-      <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
-    </RouterLink>
-    <ul class="grid grid-cols-2 gap-2 md:grid-cols-4">
-      <li v-for="b in lists" :key="b.path">
-        <RouterLink
-          :to="b.to"
-          class="surface press-row focus-inset flex h-full min-h-24 flex-col items-center justify-center gap-2 rounded-2xl p-3 text-center"
-        >
-          <component :is="b.icon" class="text-primary size-7" stroke-width="1.75" aria-hidden="true" />
-          <span class="text-callout leading-tight font-semibold">{{ b.label }}</span>
+    <!-- One list, as in More: muted icons, the label, a chevron. -->
+    <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:3.5rem]">
+      <li v-for="b in [competitions, ...lists]" :key="b.path">
+        <RouterLink :to="b.to" class="press-row focus-inset flex min-h-14 items-center gap-4 px-4 py-2">
+          <component :is="b.icon" class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+          <span class="flex-1 text-base font-medium">{{ b.label }}</span>
+          <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
         </RouterLink>
       </li>
     </ul>

@@ -239,14 +239,10 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
             <Hourglass class="mt-0.5 size-5 shrink-0" />
             <span><span class="text-foreground font-semibold">Danced. Results to come.</span><br />Placings appear here as soon as they’re entered.</span>
           </template>
-          <template v-else-if="s.state === 'next'">
-            <Clock class="mt-0.5 size-5 shrink-0" />
-            <span><span class="text-foreground font-semibold">Up next.</span> Not danced yet.</span>
-          </template>
           <template v-else-if="phase === 'after'">No result was posted for this dance.</template>
           <template v-else>
             <Clock class="mt-0.5 size-5 shrink-0" />
-            <span>Not danced yet.</span>
+            <span>No results yet.</span>
           </template>
         </div>
 

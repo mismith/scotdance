@@ -23,7 +23,7 @@ import { useCompetitionSpans } from '@/composables/useCompetitionSpans'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useMeStore } from '@/stores/me'
-import { compareDays, competitionPhase, dayStage, firstDance, nextDance } from '@/lib/dancerDay'
+import { compareDays, competitionPhase, dayStage, firstDance } from '@/lib/dancerDay'
 import { formatLongDate, formatRelative, formatShortDate, parseDate } from '@/lib/format'
 import { now } from '@/lib/now'
 import { getOrdinalSuffix } from '@/lib/results'
@@ -137,8 +137,9 @@ function groupKicker(g: CompetitionGroup) {
 }
 
 // One line under the greeting that answers "what now?", always in the same
-// place: who dances next, the night before where they start, then when
-// results are in. (Just "dancing today" would only repeat the cards below.)
+// place: the night before, where they start; on the day, once results come
+// in, whose are still to come. (Just "dancing today" would only repeat the
+// cards below.)
 const firstName = (c: DancerCard) => c.name.split(' ')[0]
 function names(list: DancerCard[]) {
   const n = list.map(firstName)
@@ -151,14 +152,9 @@ const context = computed(() => {
   const today = ranked.value.filter((c) => isToday(c) && c.focus!.days.length)
   if (today.length) {
     const lead = today[0]
-    const stage = dayStage(lead.focus!.days)
-    if (stage === 'next') {
-      const plat = platformLabel(nextDance(lead.focus!.days)?.slot?.platformName)
-      return `${firstName(lead)} dances next${plat ? ` on ${plat}` : ''}.`
-    }
-    if (stage === 'upcoming') return null
+    if (dayStage(lead.focus!.days) === 'upcoming') return null
     const waiting = today.filter((c) => dayStage(c.focus!.days) === 'waiting')
-    return waiting.length ? `Waiting on results for ${names(waiting)}.` : `Results are in for ${names(today)}.`
+    return waiting.length ? `Results to come for ${names(waiting)}.` : `Results are in for ${names(today)}.`
   }
   const tomorrow = ranked.value.filter((c) => c.focus?.phase === 'before' && c.focus.daysAway === 1)
   if (tomorrow.length) {

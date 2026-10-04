@@ -48,33 +48,20 @@ const lg = computed(() => props.size === 'lg')
 const sub = computed(() => {
   const d = day.value
   const parts = [multi.value ? `${shown.value.length} age groups` : d.group?.fullName]
-  const plat = d.next?.slot?.platformName ?? d.dances[0]?.slot?.platformName
+  const plat = d.dances[0]?.slot?.platformName
   if (plat && d.phase !== 'after' && !props.folded) parts.push(platformLabel(plat))
   return parts.filter(Boolean).join(' · ')
 })
 const won = computed(() => (props.folded ? placings(shown.value) : []))
 
 const ordinal = (n: number) => `${n}${getOrdinalSuffix(n)}`
-// When they're on, in facts a parent can check at the platform: where, the group
-// dancing before them, their place in the draw, and the session with the
-// time the organisers gave it. Never a guessed clock time.
+// A dance still to come, in what the schedule says: the session with the
+// time the organisers gave it, and their place in the draw. Never a guess at
+// what's on now.
 function detail(s: DanceStatus): string[] {
-  if (s.state !== 'next' && s.state !== 'upcoming' && s.state !== 'later') return []
-  const bits: string[] = []
+  if (s.state !== 'upcoming') return []
   const session = [s.slot?.blockName, s.slot?.eventTime ?? s.slot?.blockTime].filter(Boolean).join(', ')
-  if (s.state === 'next') {
-    // The platform leads, at reading size: it's where to go.
-    const platform = platformLabel(s.slot?.platformName)
-    if (platform) bits.push(platform)
-    if (s.slot?.beforeGroup) bits.push(`After ${s.slot.beforeGroup}`)
-    else if (s.slot && s.slot.groupCount > 1 && s.slot.groupPos === 1) bits.push('First group up')
-    if (s.drawPos) bits.push(`${ordinal(s.drawPos)} to dance`)
-    if (session) bits.push(session)
-  } else {
-    if (session) bits.push(session)
-    if (s.drawPos) bits.push(`${ordinal(s.drawPos)} to dance`)
-  }
-  return bits
+  return [session, s.drawPos ? `${ordinal(s.drawPos)} to dance` : ''].filter(Boolean)
 }
 
 const groupRoute = (d: DancerDay, danceId?: string) => ({
@@ -85,8 +72,6 @@ const groupRoute = (d: DancerDay, danceId?: string) => ({
 
 const ROW = 'relative flex items-center justify-between gap-3'
 const rowSize = computed(() => (lg.value ? 'min-h-14 px-5 py-2.5' : 'min-h-12 px-4 py-2'))
-// The dance they're on next: a warm tint and an amber edge.
-const NEXT = 'bg-next/55 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-next-edge'
 </script>
 
 <template>
@@ -152,13 +137,13 @@ const NEXT = 'bg-next/55 before:absolute before:inset-y-0 before:left-0 before:w
                  card (or with big text) the state drops below it. -->
             <RouterLink
               :to="groupRoute(d, s.dance.id)"
-              :class="['press-row focus-inset relative flex flex-wrap items-center gap-x-3 gap-y-1', rowSize, s.state === 'next' && NEXT]"
+              :class="['press-row focus-inset relative flex flex-wrap items-center gap-x-3 gap-y-1', rowSize]"
             >
               <span
                 :class="[
                   'min-w-[9rem] flex-1 break-words',
-                  lg || s.state === 'next' ? 'text-base' : 'text-callout',
-                  s.state === 'next' ? 'font-semibold' : 'font-medium',
+                  lg ? 'text-base' : 'text-callout',
+                  'font-medium',
                 ]"
               >
                 {{ s.dance.fullName || s.dance.name }}
@@ -166,13 +151,7 @@ const NEXT = 'bg-next/55 before:absolute before:inset-y-0 before:left-0 before:w
               <DanceStatusChip class="ml-auto" :status="s" :fresh="fresh === `${d.dancer.id}:${s.dance.id}`" />
               <!-- The details take the row's full width below. Each fact wraps
                    as a whole, its separator at the line's end. -->
-              <span
-                v-if="detail(s).length"
-                :class="[
-                  'basis-full',
-                  s.state === 'next' ? 'text-next-foreground text-callout font-semibold' : 'text-muted-foreground text-sm',
-                ]"
-              >
+              <span v-if="detail(s).length" class="text-muted-foreground basis-full text-sm">
                 <template v-for="(bit, n) in detail(s)" :key="bit">
                   <span class="inline-block">{{ bit }}{{ n < detail(s).length - 1 ? '&nbsp;·' : '' }}</span>{{ ' ' }}
                 </template>

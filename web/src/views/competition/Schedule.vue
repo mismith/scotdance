@@ -37,11 +37,7 @@ const {
 } = useCompetition()
 // A competition that's over and never posted a schedule shouldn't promise one.
 const isOver = computed(() => competitionPhase(competition.value?.date, schedule.value) === 'after')
-const { followedByGroup, followedHere } = useCompetitionDays()
-// The events your dancers dance next in, marked "Next" like their day card.
-const nextEvents = computed(
-  () => new Set(followedHere.value.flatMap((f) => f.days.map((d) => d.next?.slot?.eventId).filter(Boolean) as string[])),
-)
+const { followedByGroup } = useCompetitionDays()
 const following = useFollowing()
 const progress = useCompetitionProgress()
 
@@ -82,7 +78,6 @@ const dayList = computed(() =>
         mine: mineIn(event),
         count: progress.value.counts.get(event.id) ?? { posted: 0, total: 0 },
         state: progress.value.events.get(event.id) ?? null,
-        next: nextEvents.value.has(event.id),
       })),
     })),
   })),
@@ -179,7 +174,7 @@ async function openAtToday() {
                 name: 'competition.event',
                 params: { competitionId, dayId: d.day.id, blockId: b.block.id, eventId: e.event.id },
               }"
-              :class="['press-row focus-inset relative flex min-h-14 items-center gap-3 py-2.5 pr-3 pl-4', e.next && 'bg-next/55']"
+              class="press-row focus-inset relative flex min-h-14 items-center gap-3 py-2.5 pr-3 pl-4"
               :style="e.mine.length ? { '--dc': e.mine[0].color ?? 'var(--primary)' } : undefined"
             >
               <span v-if="e.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
@@ -187,7 +182,6 @@ async function openAtToday() {
                 <span :class="['block text-base leading-snug break-words', e.state === 'done' ? 'text-muted-foreground font-medium' : 'font-semibold']">
                   {{ e.event.name || 'Event' }}
                 </span>
-                <span v-if="e.next" class="text-next-foreground text-callout block font-semibold">Up next</span>
                 <span v-if="e.event.description" class="text-muted-foreground block truncate text-sm">
                   {{ slugline(e.event.description) }}
                 </span>

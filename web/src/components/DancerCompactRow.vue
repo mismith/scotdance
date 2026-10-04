@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ChevronRight, Hourglass, Play } from '@lucide/vue'
+import { ChevronRight, Hourglass } from '@lucide/vue'
 import Avatar from '@/components/Avatar.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import Medal from '@/components/Medal.vue'
 import NumberCard from '@/components/NumberCard.vue'
-import { bestPlacing, dayStage, nextDance } from '@/lib/dancerDay'
+import { bestPlacing, dayStage } from '@/lib/dancerDay'
 import { formatShortDate } from '@/lib/format'
-import { getOrdinalSuffix } from '@/lib/results'
-import { platformLabel } from '@/lib/schedule'
 import type { DancerCard } from '@/composables/useDancerCards'
 
 // One line per dancer, for people following many (a teacher's class) and
@@ -32,27 +30,15 @@ const f = computed(() => props.card.focus)
 const days = computed(() => f.value?.days ?? [])
 const day = computed(() => days.value.find((d) => d.dances.length) ?? days.value[0] ?? null)
 const stage = computed(() => (f.value?.phase === 'today' && days.value.length ? dayStage(days.value) : null))
-const next = computed(() => nextDance(days.value))
 const best = computed(() => {
   const all = days.value.map(bestPlacing).filter((b): b is NonNullable<typeof b> => !!b)
   return all.sort((a, b) => (a.place ?? 99) - (b.place ?? 99))[0] ?? null
-})
-
-// "Next · A": a platform's letter fits beside the name; a long name doesn't.
-const shortPlatform = computed(() => {
-  const p = platformLabel(next.value?.slot?.platformName).replace(/^Platform\s*/, '')
-  return p && p.length <= 3 ? p : null
 })
 
 const line = computed(() => {
   const focus = f.value
   if (!focus) return 'Not entered in any listed competitions'
   const where = props.showCompetition ? focus.competition.name : null
-  const n = next.value
-  if (stage.value === 'next' && n) {
-    const order = n.drawPos ? `${n.drawPos}${getOrdinalSuffix(n.drawPos)} to dance` : null
-    return [n.dance.fullName || n.dance.name, order].filter(Boolean).join(' · ')
-  }
   if (stage.value === 'done') return 'Every result is in'
   if (focus.phase === 'before')
     return [where ?? day.value?.group?.fullName, focus.competition.date ? formatShortDate(focus.competition.date) : null]
@@ -87,24 +73,17 @@ const to = computed(() =>
       <span class="min-w-0 flex-1">
         <span class="block truncate text-base font-semibold">{{ card.name }}</span>
         <span
-          :class="['block truncate text-sm', stage === 'next' ? 'text-next-foreground font-medium' : 'text-muted-foreground']"
+          class="text-muted-foreground block truncate text-sm"
         >
           {{ line }}
         </span>
       </span>
       <span
-        v-if="stage === 'next' && next"
-        class="bg-next text-next-foreground inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-footnote font-semibold whitespace-nowrap"
-      >
-        <Play class="size-3 fill-current" aria-hidden="true" />
-        Next<template v-if="shortPlatform"> · {{ shortPlatform }}</template>
-      </span>
-      <span
-        v-else-if="stage === 'waiting'"
+        v-if="stage === 'waiting'"
         class="text-muted-foreground inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-footnote font-semibold shadow-[inset_0_0_0_1px_var(--border)] whitespace-nowrap"
       >
         <Hourglass class="size-3" aria-hidden="true" />
-        Waiting
+        Results to come
       </span>
       <Medal v-else-if="best && f?.phase !== 'before'" :place="best.place" :tied="best.tied" size="sm" />
       <ChevronRight v-if="!follow" class="text-muted-foreground size-5 shrink-0" />

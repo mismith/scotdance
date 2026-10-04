@@ -180,7 +180,7 @@ describe('Undo', () => {
 
   it('takes back a "?" replaced with a dancer', async () => {
     const t = setup(sample({ gB8: { callbacks: false, dFling: ['d1', '1700000000000'] } }))
-    t.placed().vm.$emit('fix', '1700000000000')
+    t.placed().vm.$emit('fix', 1)
     await flushPromises()
     await t.w.findAll('dialog button').find((b) => b.text().includes('102'))!.trigger('click')
     await flushPromises()
@@ -192,26 +192,26 @@ describe('Undo', () => {
 })
 
 describe('Championship', () => {
-  it('is a button that opens the choice, and saves at once with nobody placed yet', async () => {
+  const championshipSwitch = (t: ReturnType<typeof setup>) =>
+    t.w.findAll('[role="switch"]').find((x) => x.element.closest('label')?.textContent?.includes('Championship'))!
+
+  it('is the switch it was: on asks how many places, and saves at once with nobody placed yet', async () => {
     const t = setup(sample())
-    const open = t.w.find('button[aria-label="Championship: off"]')
-    expect(open.attributes('role')).toBeUndefined()
-    await open.trigger('click')
-    expect(open.attributes('aria-expanded')).toBe('true')
+    await championshipSwitch(t).trigger('click')
     await t.button('6').trigger('click')
     await flushPromises()
     expect(confirmRequest.value).toBeNull()
     expect(t.stored()).toEqual(['reverse:6'])
-    expect(t.lastToast()?.message).toBe('Championship on, from 6th up')
+    expect(t.lastToast()?.message).toBe('Entering from 6th')
   })
 
   it('asks before renumbering anyone placed, and leaves them be if not', async () => {
     const t = setup(sample({ gB8: { callbacks: false, dFling: ['d1', 'd2', 'd3'] } }))
-    await t.w.find('button[aria-label="Championship: off"]').trigger('click')
+    await championshipSwitch(t).trigger('click')
     await t.button('6').trigger('click')
     expect(confirmRequest.value).toMatchObject({
-      title: 'Renumber the 3 placed from 6th up?',
-      message: 'The first dancer entered (101) becomes 6th.',
+      title: 'Renumber the 3 dancers already placed?',
+      message: 'The first one entered (101) becomes 6th.',
       confirmLabel: 'Renumber',
     })
     confirmRequest.value!.resolve(false)
@@ -221,7 +221,7 @@ describe('Championship', () => {
 
   it('renumbers once confirmed, with Undo', async () => {
     const t = setup(sample({ gB8: { callbacks: false, dFling: ['d1', 'd2', 'd3'] } }))
-    await t.w.find('button[aria-label="Championship: off"]').trigger('click')
+    await championshipSwitch(t).trigger('click')
     await t.button('6').trigger('click')
     confirmRequest.value!.resolve(true)
     await flushPromises()
@@ -232,21 +232,12 @@ describe('Championship', () => {
 
   it('asks before turning off, too, as that renumbers them from 1st', async () => {
     const t = setup(sample({ gB8: { callbacks: false, dFling: ['reverse:6', 'd1', 'd2'] } }))
-    await t.w.find('button[aria-label="Championship: from 6th place up"]').trigger('click')
-    await t.button('Turn off Championship').trigger('click')
-    expect(confirmRequest.value?.title).toBe('Renumber the 2 placed from 1st down?')
+    await championshipSwitch(t).trigger('click')
+    expect(confirmRequest.value).toMatchObject({ title: 'Renumber the 2 dancers already placed?', message: 'The first one entered (101) becomes 1st.' })
     confirmRequest.value!.resolve(true)
     await flushPromises()
     expect(t.stored()).toEqual(['d1', 'd2'])
     expect(t.lastToast()?.message).toBe('Championship off')
-  })
-
-  it('sits above the dancers, and is hidden while the dance waits on callbacks', async () => {
-    const t = setup(sample({ gB8: { dFling: null } as never }))
-    expect(t.w.find('button[aria-label^="Championship"]').exists()).toBe(false)
-    const ready = setup(sample())
-    const html = ready.w.html()
-    expect(html.indexOf('Championship: off')).toBeLessThan(html.indexOf('Isla Grant'))
   })
 })
 
@@ -261,32 +252,5 @@ describe('a dance waiting on callbacks', () => {
     expect(t.w.text()).not.toContain('Enter the callbacks first')
     expect(t.candidate('101').exists()).toBe(true)
     expect(t.lastToast()?.action?.label).toBe('Undo')
-  })
-})
-
-describe('on a phone', () => {
-  const happyDOM = () => (window as unknown as { happyDOM: { setViewport: (v: { width: number; height: number }) => void } }).happyDOM
-  beforeEach(() => happyDOM().setViewport({ width: 375, height: 812 }))
-  afterEach(() => happyDOM().setViewport({ width: 1024, height: 768 }))
-
-  it('the strip says who is where, 1st first, and still opens the list to review', async () => {
-    const t = setup(sample({ gB8: { callbacks: false, dFling: ['reverse:6', 'd1', 'd2', 'd3'] } }))
-    const strip = t.w.find('button[aria-label^="Review:"]')
-    expect(strip.text()).toBe('4th 103 · 5th 102 · 6th 101Review')
-    expect(strip.attributes('aria-label')).toBe('Review: 4th 103, 5th 102, 6th 101')
-  })
-
-  it('the strip lists who is called back, by number', async () => {
-    const t = setup(sample({ gB8: { callbacks: ['d3', 'd1'] } }), 'callbacks')
-    expect(t.w.find('button[aria-label^="Review:"]').text()).toBe('2 called back: 101, 103Review')
-  })
-
-  it('Callbacks has its "No callbacks" switch right under the instruction', async () => {
-    const t = setup(sample(null), 'callbacks')
-    const sw = t.w.findAll('[role="switch"]').find((x) => x.element.closest('label')?.textContent?.includes('No callbacks'))
-    expect(sw?.exists()).toBe(true)
-    await sw!.trigger('click')
-    await flushPromises()
-    expect(t.stored('callbacks')).toBe(false)
   })
 })

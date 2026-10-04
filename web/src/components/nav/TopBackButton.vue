@@ -16,7 +16,10 @@ const props = defineProps<{
    * is right there), so the title keeps the room.
    */
   exit?: { delta?: number; to?: RouteLocationRaw; label: string; compact?: boolean } | null
+  /** Just the chevron wherever it goes (it still says where to screen readers). */
+  compact?: boolean
 }>()
+const compact = computed(() => props.compact || !!props.exit?.compact)
 
 const route = useRoute()
 const router = useRouter()
@@ -53,14 +56,14 @@ function onClick(event: MouseEvent) {
       'glass press-glass proximity text-primary pointer-events-auto flex h-11 shrink-0 items-center rounded-full [view-transition-name:nav-back]',
       // With big text on a phone the label would crowd out the bar's actions
       // (the query is in rem, so it scales with the text): just the arrow.
-      exit?.compact
+      compact
         ? 'w-11 justify-center'
         : 'text-callout max-w-[42vw] gap-0.5 pr-4 pl-2 font-semibold @max-[22rem]:w-11 @max-[22rem]:justify-center @max-[22rem]:px-0',
     ]"
     :aria-label="`Back to ${label}`"
     @click="onClick"
   >
-    <ChevronLeft :class="['shrink-0', exit?.compact ? 'size-6 -translate-x-px' : 'size-5']" stroke-width="2.5" />
-    <span v-if="!exit?.compact" class="truncate @max-[22rem]:hidden">{{ label }}</span>
+    <ChevronLeft :class="['shrink-0', compact ? 'size-6 -translate-x-px' : 'size-5']" stroke-width="2.5" />
+    <span v-if="!compact" class="truncate @max-[22rem]:hidden">{{ label }}</span>
   </button>
 </template>

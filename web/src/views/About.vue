@@ -2,7 +2,9 @@
 import LogoMark from '@/components/LogoMark.vue'
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { CalendarDays, ChevronDown, GraduationCap, Heart, Search, Star, Trophy, Users } from '@lucide/vue'
+import { CalendarDays, ChevronDown, GraduationCap, Heart, Star, Users } from '@lucide/vue'
+import Medal from '@/components/Medal.vue'
+import NumberCard from '@/components/NumberCard.vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import { useCrisp } from '@/composables/useCrisp'
 import { platform } from '@/lib/native'
@@ -24,11 +26,13 @@ const roles = [
   { icon: CalendarDays, title: 'Organisers', line: 'Saves hours of work, and keeps every result on record for later.' },
 ]
 
+// Each step beside the real thing you'll see: their number, the Follow star,
+// a rosette.
 const steps = [
-  { icon: Search, title: 'Find your dancer', body: 'Search by name or number, or browse by age group.' },
-  { icon: Star, title: 'Tap Follow', body: 'Their day shows up on Home, and in every competition they enter.' },
-  { icon: Trophy, title: 'Watch it come in', body: 'Callbacks and placings, posted as they’re announced.' },
-]
+  { piece: 'number', title: 'Find your dancer', body: 'Search by name or number, or browse by age group.' },
+  { piece: 'follow', title: 'Tap Follow', body: 'Their day shows up on Home, and in every competition they enter.' },
+  { piece: 'rosette', title: 'Watch it come in', body: 'Callbacks and placings, posted as they’re announced.' },
+] as const
 
 const faqs: { id: string; q: string; a?: string }[] = [
   {
@@ -99,29 +103,35 @@ watch(() => route.hash, applyHash)
       </header>
 
       <section class="space-y-3">
-        <h2 class="text-title">Made for</h2>
-        <div class="grid grid-cols-2 gap-3">
-          <article v-for="r in roles" :key="r.title" class="surface space-y-2 rounded-2xl p-4">
-            <component :is="r.icon" class="text-primary size-6" stroke-width="1.75" aria-hidden="true" />
-            <h3 class="text-heading">{{ r.title }}</h3>
-            <p class="text-callout leading-snug">{{ r.line }}</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="space-y-3">
         <h2 class="text-title">On competition day</h2>
-        <ol class="space-y-2">
-          <li v-for="(s, i) in steps" :key="s.title" class="surface flex items-start gap-3 rounded-2xl p-4">
-            <span class="bg-primary-fill text-primary-foreground flex size-9 shrink-0 items-center justify-center rounded-full text-base font-extrabold">
-              {{ i + 1 }}
+        <ol class="surface rows-inset overflow-hidden rounded-2xl [--inset:5.5rem]">
+          <li v-for="st in steps" :key="st.title" class="flex items-center gap-4 px-4 py-3">
+            <span class="flex w-15 shrink-0 justify-center" aria-hidden="true">
+              <NumberCard v-if="st.piece === 'number'" number="107" color="var(--dancer-1)" size="sm" />
+              <span v-else-if="st.piece === 'follow'" class="bg-blue-paper flex size-11 items-center justify-center rounded-full">
+                <Star class="fill-secondary text-secondary size-6" />
+              </span>
+              <Medal v-else :place="1" />
             </span>
             <span>
-              <span class="block text-base font-semibold">{{ s.title }}</span>
-              <span class="text-muted-foreground text-callout">{{ s.body }}</span>
+              <span class="block text-base font-semibold">{{ st.title }}</span>
+              <span class="text-muted-foreground text-callout">{{ st.body }}</span>
             </span>
           </li>
         </ol>
+      </section>
+
+      <section class="space-y-3">
+        <h2 class="text-title">Made for</h2>
+        <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:3.25rem]">
+          <li v-for="r in roles" :key="r.title" class="flex items-start gap-4 px-4 py-3">
+            <component :is="r.icon" class="text-muted-foreground mt-0.5 size-5 shrink-0" aria-hidden="true" />
+            <span>
+              <span class="block text-base font-semibold">{{ r.title }}</span>
+              <span class="text-muted-foreground text-callout">{{ r.line }}</span>
+            </span>
+          </li>
+        </ul>
       </section>
 
       <section v-if="isWeb" class="surface space-y-3 rounded-2xl p-4 text-center">

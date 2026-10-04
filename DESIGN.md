@@ -9,7 +9,6 @@ colors:
   live-paper: "#fde7f1"
   next-amber-paper: "#ffefc7"
   next-amber-ink: "#7a4600"
-  next-amber-edge: "#f59e0b"
   done-green-paper: "#ddf2e2"
   done-green-ink: "#145c2b"
   blue-paper: "#e1ecf8"
@@ -147,7 +146,7 @@ components:
 
 The best seat at a Highland dance competition is at the edge of the platform: close enough to see every step, calm enough to follow your own dancer through a long, loud day. The app is that seat. Everything a family needs (when their dancer is on, where, and how they placed) sits at a glance, and nothing stands between them and the dancing. It is native and calm: a well-made phone app, not a website, with quiet paper surfaces, one confident blue, and rich detail kept for touch and state.
 
-Density follows the visitor. The public app is spacious and glanceable for one-handed use in sun and noise; Manage is the same system, tighter, for an organiser at a laptop. Colour is news, not decoration: pink means something is live right now, amber means up next, green means done, and each followed dancer carries their own colour everywhere they appear.
+Density follows the visitor. The public app is spacious and glanceable for one-handed use in sun and noise; Manage is the same system, tighter, for an organiser at a laptop. Colour is news, not decoration: pink means something is live right now, green means done, amber (in Manage) means what needs the organiser next, and each followed dancer carries their own colour everywhere they appear.
 
 **Key Characteristics:**
 - Atkinson Hyperlegible everywhere, rem-based so the phone's text size (in the app) and browser zoom scale it all.
@@ -179,11 +178,11 @@ One confident blue for action, a Scottish red kept for favourites, and a small s
 - **Field Edge** (#87919e): input outlines (3:1 on paper).
 - **Night** (#0c0f13) and **Night Card** (#161b21): the dark theme's page and paper.
 
-State papers: **Next Amber** (#ffefc7, ink #7a4600, edge #f59e0b) for up next, and in Manage for what needs the organiser next (a "?" placing, the next section); **Done Green** (#ddf2e2, ink #145c2b) for finished; **Blue Paper** (#e1ecf8) for tonal buttons and the current sidebar row; **Destructive** (#b42318) for deleting.
+State papers: **Next Amber** (#ffefc7, ink #7a4600), in Manage only, for what needs the organiser next (a "?" placing, the next section). Families' screens don't guess what's on next: plenty of competitions post nothing until the end, so upcoming dances show their schedule facts instead; **Done Green** (#ddf2e2, ink #145c2b) for finished; **Blue Paper** (#e1ecf8) for tonal buttons and the current sidebar row; **Destructive** (#b42318) for deleting.
 
 Dancer colours: eight saturated hues (red, green, purple, ochre, blue, teal, magenta, orange), all 4.5:1 with white text, assigned per followed dancer and used for their number card band, dots and bars.
 
-**The Colour Is News Rule.** Pink, amber and green appear only when they report a state (live, next, done). A screen with nothing happening is blue, ink and paper. Finished or out-of-the-running things are muted by colour and say so in words, never faded with opacity.
+**The Colour Is News Rule.** Pink, amber and green appear only when they report a state (live, next in Manage, done). A screen with nothing happening is blue, ink and paper. Finished or out-of-the-running things are muted by colour and say so in words, never faded with opacity.
 
 **The One Blue Rule.** Saltire Blue fills at most one button per view; everything else that acts is tonal, paper or plain text.
 
@@ -239,7 +238,7 @@ Every rounded shape uses continuous corners (`corner-shape: superellipse(1.5)`),
 - **States:** press tints or shrinks within a frame and springs back; busy keeps the label and adds a spinner; disabled at 40%.
 
 ### Chips
-- **Style:** capsules 1.5 to 1.75rem tall, label weight. State chips use the state papers (Next, Done, Live).
+- **Style:** capsules 1.5 to 1.75rem tall, label weight. State chips use the state papers (Done, Live; Next in Manage).
 - **Visibility:** Private is solid ink with a crossed eye; Unpublished is outlined with an hourglass; Published shows nothing.
 
 ### Cards / Containers
@@ -274,10 +273,10 @@ The dancer in the mark, drawn whole (never cropped, never given a face) in Salti
 
 ### Do:
 - **Do** keep one filled Saltire Blue button per view; make the rest tonal, paper or plain.
-- **Do** use pink, amber and green only for live, next and done.
+- **Do** use pink, amber and green only for live, next (in Manage) and done.
 - **Do** give every icon-only button a 44px target (36px inside chrome) and an accessible name.
 - **Do** honour Reduce Motion (pages just change, scrolls jump) and Reduce Transparency (glass turns solid).
-- **Do** name the dance on every placing, and say what "next" means (the group before, the draw, the session time).
+- **Do** name the dance on every placing, and give upcoming dances the schedule's facts (platform, session, time, draw), never a guess at what's on now.
 - **Do** size type in rem from the scale above, so the phone's text size and browser zoom scale everything.
 
 ### Don't:

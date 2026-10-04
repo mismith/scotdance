@@ -74,14 +74,16 @@ test('follow a dancer, see their day on Home, and watch a placing arrive', async
   await page.goto('/')
   // Competition day: the competition, with the dancer's day under it.
   await expect(page.getByRole('heading', { name: new RegExp(`Today.*${comp.name}`) })).toBeVisible()
-  await expect(page.getByText(`${person.firstName} dances next on Platform A.`)).toBeVisible()
+  // No guess at what's on now: plenty of competitions post nothing until the end.
+  await expect(page.getByText(/dances next/)).toHaveCount(0)
   const day = card(page, person)
   await expect(day.getByLabel('Number 107')).toBeVisible()
   await expect(day.getByText('Beginner Under 7 · Platform A')).toBeVisible()
   const fling = day.getByRole('link', { name: /Highland Fling \(4\)/ })
-  // When, in facts you can check at the platform: first group up, 3rd in the draw.
-  await expect(fling).toContainText('First group up · 3rd to dance')
-  await expect(fling).toContainText('Next')
+  // When, in facts from the schedule: the platform and 3rd in the draw.
+  await expect(fling).toContainText('Platform A')
+  await expect(fling).toContainText('3rd to dance')
+  await expect(fling).not.toContainText('Next')
   await expect(day.getByRole('link', { name: /Overall/ })).toContainText('After all dances')
 
   // The organiser posts the Fling: 2nd. Home updates without a reload.
@@ -89,7 +91,6 @@ test('follow a dancer, see their day on Home, and watch a placing arrive', async
   await dbSet(`competitions:data/${comp.id}/results/${g}/${comp.dances[0].id}`, [entry(2, 1).id, entry(2).id])
   await expect(fling.getByRole('img', { name: '2nd place' })).toBeVisible()
   const sword = day.getByRole('link', { name: /Sword Dance/ })
-  await expect(sword).toContainText('Next')
 
   // A late change to the draw shows up too.
   await dbSet(`competitions:data/${comp.id}/draws/${g}/${comp.dances[1].id}`, ['107', '108'])
@@ -107,7 +108,7 @@ test('follow a dancer, see their day on Home, and watch a placing arrive', async
   await expect(page.getByRole('heading', { name: new RegExp(`Today.*${comp.name}`) })).toHaveCount(0)
 })
 
-test('on competition day, whoever dances next comes first, and a finished day folds to its placings', async ({ page }) => {
+test('on competition day, whoever has dances to come comes first, and a finished day folds to its placings', async ({ page }) => {
   // Primary 7 & 8 has every result in; Premier dances later today.
   const done = await makePerson(comp, [entry(1).id], 'Isla')
   const next = await makePerson(comp, [entry(8).id], 'Skye')
@@ -116,7 +117,6 @@ test('on competition day, whoever dances next comes first, and a finished day fo
   await dbSet(`users:favorites/${parent.uid}/dancers`, { [done.id]: done.name, [next.id]: next.name })
 
   await signInFromHome(page, parent.email)
-  await expect(page.getByText(/^Skye dances next/)).toBeVisible()
   const days = page.locator('main article')
   await expect(days.first()).toContainText(next.name)
   await expect(days.nth(1)).toContainText(done.name)

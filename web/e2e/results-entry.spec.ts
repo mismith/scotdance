@@ -583,7 +583,7 @@ test('the results spreadsheet has every placing and championship point', async (
   await page.getByRole('button', { name: 'More for results' }).click()
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Download all results' }).click(),
+    page.getByRole('dialog', { name: 'More for results' }).getByRole('button', { name: 'Download all results' }).click(),
   ])
   const rows = (await readFile((await download.path())!, 'utf8'))
     .replace(/^﻿/, '')

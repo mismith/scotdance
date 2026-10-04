@@ -135,6 +135,16 @@ function exportCsv() {
           </template>
         </SectionHeader>
 
+        <!-- The end of the day: say so, with what comes next. -->
+        <div
+          v-if="!hideTab.hidden.value && totals.total && totals.done === totals.total"
+          class="bg-done text-done-foreground flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl py-2 pr-2 pl-4"
+        >
+          <CircleCheck class="size-5 shrink-0" aria-hidden="true" />
+          <p class="min-w-0 flex-1 py-1.5 font-semibold">Every result is in.</p>
+          <Button @click="exportCsv()"><Download /> Download all results</Button>
+        </div>
+
         <EmptyState v-if="hideTab.hidden.value" :icon="Trophy" title="Results are hidden" description="The competition page has no Results tab.">
           <Button variant="primary" :disabled="!canEdit" @click="hideTab.show()">Show the Results tab</Button>
         </EmptyState>
