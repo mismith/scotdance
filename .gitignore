@@ -42,3 +42,4 @@ firebase-adminsdk.json
 fastlane/report.xml
 fastlane/README.md
 *.p8
+play-service-account.json

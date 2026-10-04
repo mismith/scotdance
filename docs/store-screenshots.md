@@ -47,7 +47,7 @@ npm run store:upload:android
 ### Keys
 
 Both lanes read their keys from the environment. Keep the key files outside
-the repo (for example in `~/.config/scotdance/`) and set, in your shell profile:
+the repo (for example in `~/.config/scotdance/`, or the repo root, where `AuthKey_*.p8` and `play-service-account.json` are ignored) and set, in your shell profile:
 
 ```bash
 export APP_STORE_CONNECT_API_KEY_KEY_ID=…
