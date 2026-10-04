@@ -1,4 +1,5 @@
 import { scheduleIndex } from '@/lib/dancerDay'
+import { getOrdinalSuffix } from '@/lib/results'
 import { groupHasOverall, type DancePlacing, type Platform, type ResultsTree, type Schedule } from '@/types/competition'
 
 // Reading and writing one dance's placings in the stored format the public
@@ -75,6 +76,35 @@ export function placeAt(index: number, { reverseFrom, entries }: Placings): numb
 
 /** Tied with a neighbour (for the rosette's tie band). */
 export const isTied = (index: number, { entries }: Placings) => !!(entries[index]?.tie || entries[index + 1]?.tie)
+
+/**
+ * Who's placed, in a few words each ("1st 104"), 1st first as the placed list
+ * shows them. Callbacks have no places, so they're just numbers, in order.
+ */
+export function placedSummary(p: Placings, num: (id: string) => string, callbacks = false): string[] {
+  if (callbacks) return p.entries.map((e) => num(e.id)).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+  const parts = p.entries.map((e, i) => {
+    const place = placeAt(i, p)
+    return place ? `${place}${getOrdinalSuffix(place)} ${num(e.id)}` : num(e.id)
+  })
+  return p.reverseFrom ? parts.reverse() : parts
+}
+
+/**
+ * Lets a tap through unless it's on the same thing as the last one, within
+ * `ms` of it. In a loud hall a tap can miss its haptic and get tapped again,
+ * which would place a dancer and then take them straight back out. A tap on
+ * anything else always goes through.
+ */
+export function tapGuard(ms = 500, now: () => number = () => performance.now()) {
+  let last: { key: string; at: number } | null = null
+  return (key: string) => {
+    const at = now()
+    if (last && last.key === key && at - last.at < ms) return false
+    last = { key, at }
+    return true
+  }
+}
 
 /** "?" dancers are stand-ins: a timestamp instead of a dancer id. */
 export const isPlaceholderId = (id: string) => /^\d+$/.test(id)

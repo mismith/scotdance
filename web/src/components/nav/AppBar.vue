@@ -42,7 +42,7 @@ const scrollTop = () => {
       class="from-background absolute inset-x-0 top-0 -z-10 h-[calc(100%+1.25rem)] bg-linear-to-b from-[calc(100%-1.25rem)] to-transparent backdrop-blur-sm [mask-image:linear-gradient(to_bottom,black_calc(100%-1.25rem),transparent)]"
       aria-hidden="true"
     />
-    <div :class="['mx-auto flex h-14 items-center gap-2 px-3', wide ? 'max-w-none' : 'appbar-row']">
+    <div :class="['@container mx-auto flex h-14 items-center gap-2 px-3', wide ? 'max-w-none' : 'appbar-row']">
       <TopBackButton v-if="back" :fallback="fallback" :exit="exit" />
       <slot name="leading" />
       <button

@@ -21,16 +21,18 @@ defineProps<{
 }>()
 
 const id = useId()
-const base = 'field w-full rounded-xl px-3 text-base'
+const base = 'field placeholder:text-muted-foreground w-full rounded-xl px-3 text-base'
 </script>
 
 <template>
-  <AdminField :label="label" :for="id" :hint="hint" :error="error" :required="required">
+  <AdminField v-slot="{ describedby }" :label="label" :for="id" :hint="hint" :error="error" :required="required">
     <textarea
       v-if="kind === 'textarea'"
       :id="id"
       v-model="model"
       :aria-invalid="!!error || undefined"
+      :aria-required="required || undefined"
+      :aria-describedby="describedby"
       rows="3"
       :placeholder="placeholder"
       :class="[base, 'min-h-24 py-2.5']"
@@ -40,6 +42,8 @@ const base = 'field w-full rounded-xl px-3 text-base'
         :id="id"
         v-model="model"
         :aria-invalid="!!error || undefined"
+        :aria-required="required || undefined"
+        :aria-describedby="describedby"
         :class="[base, 'h-12 appearance-none pr-10']"
       >
         <option value="">{{ placeholder ?? 'Choose…' }}</option>
@@ -52,6 +56,8 @@ const base = 'field w-full rounded-xl px-3 text-base'
       :id="id"
       v-model="model"
       :aria-invalid="!!error || undefined"
+      :aria-required="required || undefined"
+      :aria-describedby="describedby"
       :type="kind === 'url' ? 'url' : kind === 'email' ? 'email' : kind === 'date' ? 'date' : kind === 'datetime-local' ? 'datetime-local' : 'text'"
       :inputmode="inputmode"
       :placeholder="placeholder"

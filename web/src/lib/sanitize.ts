@@ -44,8 +44,27 @@ DOMPurify.addHook('afterSanitizeAttributes', (node) => {
  */
 export function sanitizeRichText(input: string | undefined | null): string {
   if (!input) return ''
-  const withBreaks = input.replace(/(?<!>)\n/g, '<br>')
+  const withBreaks = linkify(input).replace(/(?<!>)\n/g, '<br>')
   return DOMPurify.sanitize(withBreaks, { ALLOWED_TAGS, ALLOWED_ATTR })
+}
+
+// Web addresses typed as plain text become links (an older description
+// edited in Manage keeps its links as "Entry form (https://…)"). Only in text,
+// never inside a tag or an existing link; DOMPurify vets the result.
+const URL_IN_TEXT = /\bhttps?:\/\/[^\s<>"']*[^\s<>"'.,;:!?)\]]/gi
+export function linkify(html: string): string {
+  let inLink = 0
+  return html
+    .split(/(<[^>]*>)/)
+    .map((part) => {
+      if (part.startsWith('<')) {
+        if (/^<a[\s>]/i.test(part)) inLink++
+        else if (/^<\/a\s*>/i.test(part)) inLink = Math.max(0, inLink - 1)
+        return part
+      }
+      return inLink ? part : part.replace(URL_IN_TEXT, (url) => `<a href="${url}">${url}</a>`)
+    })
+    .join('')
 }
 
 /**

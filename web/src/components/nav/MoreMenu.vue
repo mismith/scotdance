@@ -63,7 +63,7 @@ const row =
       </div>
       <div>
         <button v-if="update.updateAvailable" type="button" :class="row" @click="run(() => update.openDialog())">
-          <ArrowDownToLine class="text-secondary! size-5" /> Update available
+          <ArrowDownToLine class="text-primary! size-5" /> Update available
         </button>
         <button type="button" :class="row" :data-current="here({ name: 'about' })" @click="go({ name: 'about' })">
           <Info class="size-5" /> About ScotDance.app

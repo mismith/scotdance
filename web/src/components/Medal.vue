@@ -13,6 +13,8 @@ const props = withDefaults(
     size?: 'sm' | 'md'
     /** Plays the arrival flip (a placing just came in). */
     fresh?: boolean
+    /** The dance it's for, so the label says "Highland Fling: 1st place". */
+    dance?: string | null
   }>(),
   { tied: false, pointed: false, size: 'md', fresh: false },
 )
@@ -36,8 +38,10 @@ const TIERS = {
 const tier = computed(() => TIERS[props.place === 1 || props.place === 2 || props.place === 3 ? props.place : 'rest'])
 
 const label = computed(() => {
-  if (props.place == null) return props.pointed ? 'Championship point' : 'Not placed'
-  return `${props.place}${getOrdinalSuffix(props.place)} place${props.tied ? ', tied' : ''}`
+  const what = props.place == null
+    ? props.pointed ? 'Championship point' : 'Not placed'
+    : `${props.place}${getOrdinalSuffix(props.place)} place${props.tied ? ', tied' : ''}`
+  return props.dance ? `${props.dance}: ${what}` : what
 })
 </script>
 
@@ -75,10 +79,11 @@ const label = computed(() => {
       </text>
     </g>
   </svg>
+  <!-- Blue like the rosettes: amber is reserved for up next. -->
   <span
     v-else-if="pointed"
     :class="[
-      'bg-next text-next-foreground inline-flex shrink-0 items-center justify-center rounded-lg font-semibold',
+      'bg-blue-paper text-primary inline-flex shrink-0 items-center justify-center rounded-lg font-semibold',
       size === 'md' ? 'h-8 px-2 text-sm' : 'h-6 px-1.5 text-xs',
     ]"
     :aria-label="label"

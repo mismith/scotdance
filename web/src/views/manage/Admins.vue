@@ -197,6 +197,7 @@ const when = (iso?: string) => (iso ? formatRelative(iso) : '')
 
     <form class="surface space-y-3 rounded-2xl p-4" novalidate @submit.prevent="invite">
       <label for="invite-email" class="text-heading block">Invite someone</label>
+      <!-- (Only flex-1 side by side: stacked, its zero basis would squash it.) -->
       <div class="flex flex-col gap-2 sm:flex-row">
         <input
           id="invite-email"
@@ -206,14 +207,15 @@ const when = (iso?: string) => (iso ? formatRelative(iso) : '')
           autocomplete="off"
           placeholder="name@example.com"
           :aria-invalid="!!emailError || undefined"
-          class="field h-12 min-w-0 flex-1 rounded-xl px-3 text-base"
+          aria-describedby="invite-email-note"
+          class="field placeholder:text-muted-foreground h-12 min-w-0 rounded-xl px-3 text-base sm:flex-1"
         />
         <Button type="submit" variant="primary" size="lg" :disabled="!canEdit" :busy="sending">
           <MailPlus /> Send invite
         </Button>
       </div>
-      <p v-if="emailError" class="text-destructive text-sm font-medium" role="alert">{{ emailError }}</p>
-      <p v-else class="text-muted-foreground text-sm">They’ll get an email with a link. Once they accept (signed in with any account), they can manage it too.</p>
+      <p v-if="emailError" id="invite-email-note" class="text-destructive text-sm font-medium" role="alert">{{ emailError }}</p>
+      <p v-else id="invite-email-note" class="text-muted-foreground text-sm">They’ll get an email with a link. Once they accept (signed in with any account), they can manage it too.</p>
     </form>
 
     <section v-if="pending.length" class="space-y-3">

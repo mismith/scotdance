@@ -11,7 +11,7 @@ import BlockSection from './BlockSection.vue'
 import DragIndicator from './DragIndicator.vue'
 import { useBuilder } from './builder'
 import { useAutoFill } from './autofill'
-import { adjust, dropLine, insertIndex, useDragType, useEdgeScroll, type DragBlock } from './drag'
+import { adjust, dropLine, insertIndex, useDragInterrupts, useDragType, useEdgeScroll, type DragBlock } from './drag'
 import { useHideTab } from '@/composables/admin/useHideTab'
 import { useSplit } from '@/composables/admin/useWide'
 import { confirm, toast } from '@/lib/admin/feedback'
@@ -41,6 +41,7 @@ const platformChoices = computed(() =>
 
 const scrollEl = ref<HTMLElement | null>(null)
 useEdgeScroll(scrollEl)
+useDragInterrupts()
 
 // (No platforms yet: no platform columns, as repeat(0, …) isn't valid CSS.)
 // On a phone the one platform shares the screen's width with the dances.

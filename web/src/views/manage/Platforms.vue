@@ -4,6 +4,7 @@ import CollectionEditor from '@/components/admin/CollectionEditor.vue'
 import { useManagedCompetition, type MPlatform } from '@/composables/admin/useManagedCompetition'
 import type { CollectionSpec } from '@/lib/admin/collection'
 import { forEachScheduleDance } from '@/lib/admin/scheduleTree'
+import { htmlToText, looksLikeHtml } from '@/lib/admin/richText'
 
 const m = useManagedCompetition()
 
@@ -18,7 +19,8 @@ const spec: CollectionSpec<MPlatform> = {
     { key: 'description', label: 'Description', kind: 'textarea', placeholder: 'e.g. Main hall, by the stage' },
   ],
   title: (p) => p.label,
-  subtitle: (p) => p.description,
+  // Older descriptions are HTML: the one-line subtitle shows just the words.
+  subtitle: (p) => (p.description && looksLikeHtml(p.description) ? htmlToText(p.description) : p.description),
   presets: ['A', 'B', 'C', 'Stage'].map((name) => ({ label: name, values: { name } })),
   impact: (ids) => {
     const updates: Record<string, unknown> = {}

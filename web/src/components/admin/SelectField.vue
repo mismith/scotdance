@@ -57,6 +57,7 @@ async function onChange(e: Event) {
 
 <template>
   <AdminField
+    v-slot="{ describedby }"
     :label="label"
     :for="id"
     :hint="hint"
@@ -70,6 +71,8 @@ async function onChange(e: Event) {
         :value="current"
         :disabled="locked"
         :aria-invalid="orphan || !!error || undefined"
+        :aria-required="required || undefined"
+        :aria-describedby="describedby"
         :class="[
           'h-12 w-full appearance-none rounded-xl pr-16 pl-3 text-base',
           locked ? 'bg-muted text-muted-foreground cursor-not-allowed shadow-[inset_0_0_0_1px_var(--border)]' : 'field',

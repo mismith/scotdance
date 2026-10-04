@@ -114,9 +114,9 @@ test('callbacks, then placings with a tie, reach the public page live', async ({
     .toEqual([ds[0].id, ds[1].id, `${ds[2].id}:tie`, ds[3].id])
 
   // No reload on the public side.
-  await expect(section.getByRole('img', { name: '1st place', exact: true })).toBeVisible()
+  await expect(section.getByRole('img', { name: /(^|: )1st place$/ })).toBeVisible()
   await expect(section.getByRole('img', { name: '2nd place, tied' })).toHaveCount(2)
-  await expect(section.getByRole('img', { name: '4th place', exact: true })).toBeVisible()
+  await expect(section.getByRole('img', { name: /(^|: )4th place$/ })).toBeVisible()
 
   // Tap a placed dancer to take them out: the tie stays with who's left.
   await page
@@ -125,7 +125,7 @@ test('callbacks, then placings with a tie, reach the public page live', async ({
   await expect
     .poll(() => stored(`results/${group.id}/${fling.id}`))
     .toEqual([ds[0].id, ds[2].id, ds[3].id])
-  await expect(section.getByRole('img', { name: '3rd place', exact: true })).toBeVisible()
+  await expect(section.getByRole('img', { name: /(^|: )3rd place$/ })).toBeVisible()
 
   // Undo puts them back; redo takes them out again.
   await closePlaced(page)
@@ -205,7 +205,7 @@ test('Championship can be switched on before anyone is placed', async ({
   const group6 = viewer.locator(`#dance-${sword.id}`)
   await viewer.goto(`/competitions/${comp.id}/results/${group.id}`)
   await expect(group6.getByRole('img', { name: '1st place, tied' })).toHaveCount(2)
-  await expect(group6.getByRole('img', { name: '3rd place', exact: true })).toBeVisible()
+  await expect(group6.getByRole('img', { name: /(^|: )3rd place$/ })).toBeVisible()
 
   // Taking everyone out keeps Championship on.
   for (const d of announced)

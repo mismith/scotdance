@@ -272,10 +272,12 @@ const { freshKey: liveFresh } = useLiveAlertState()
     <main
       class="mx-auto grid w-full max-w-3xl gap-y-5 px-4 pt-[calc(var(--chrome-top)+0.25rem)]"
     >
+      <!-- The greeting leads; the date and "what now?" follow it rather than
+           sitting above it as a label. -->
       <header ref="titleEl">
-        <p class="text-muted-foreground text-sm font-medium">{{ todayLabel }}</p>
         <h1 class="text-display">{{ greeting }}</h1>
-        <p v-if="context" :class="['text-callout mt-1 font-medium', settle]">{{ context }}</p>
+        <p class="text-muted-foreground text-callout font-medium">{{ todayLabel }}</p>
+        <p v-if="context" :class="['mt-1.5 text-base font-medium', settle]">{{ context }}</p>
       </header>
 
       <div class="min-w-0 space-y-5">
@@ -333,7 +335,8 @@ const { freshKey: liveFresh } = useLiveAlertState()
               class="press-row -mx-2 flex items-center gap-2 rounded-xl px-2 py-1"
             >
               <span class="min-w-0 flex-1">
-                <span class="text-live flex items-center gap-1.5 text-footnote font-semibold">
+                <span class="text-title block">{{ g.competition.name }}</span>
+                <span class="text-live text-callout flex items-center gap-1.5 font-semibold">
                   <span
                     :class="[
                       'bg-live size-2 shrink-0 rounded-full',
@@ -343,7 +346,6 @@ const { freshKey: liveFresh } = useLiveAlertState()
                   />
                   <span class="truncate">{{ todayKicker(g) }}</span>
                 </span>
-                <span class="text-title block truncate">{{ g.competition.name }}</span>
               </span>
               <ChevronRight class="text-muted-foreground size-5 shrink-0" />
             </RouterLink>

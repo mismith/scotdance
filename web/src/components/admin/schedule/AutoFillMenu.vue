@@ -8,6 +8,8 @@ import { useAutoFill } from './autofill'
 import { toast } from '@/lib/admin/feedback'
 
 // Autofill for one event: place dances, then share out age groups and judges.
+// Its button reads "Fill in" where the event's header has room, and is just
+// the wand where it doesn't (still named for screen readers).
 
 const props = defineProps<{ blockId: string; eventId: string }>()
 
@@ -25,6 +27,8 @@ watch(
   },
   { flush: 'post' },
 )
+
+const eventName = computed(() => b.getEvent(props.blockId, props.eventId)?.name?.trim() || 'this event')
 
 const hasRows = computed(() =>
   ordered(b.getEvent(props.blockId, props.eventId)?.dances).some(([, r]) => r.danceId),
@@ -64,22 +68,22 @@ const row =
   <button
     v-if="b.dances.value.length"
     type="button"
-    aria-label="Autofill"
-    title="Autofill"
+    title="Place dances, age groups and judges for you"
     aria-haspopup="dialog"
     :aria-expanded="menu.open"
-    class="press text-muted-foreground hover:text-foreground flex size-11 items-center justify-center rounded-full"
+    class="press text-muted-foreground hover:text-foreground flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-3 text-sm font-semibold @max-2xs:w-11 @max-2xs:px-0"
     @click="menu.toggle($event)"
     @pointerdown.stop
     @keydown.enter.stop
     @keydown.space.stop
   >
     <WandSparkles class="size-4" />
+    <span class="@max-2xs:sr-only">Fill in</span><span class="sr-only"> {{ eventName }}</span>
   </button>
   <!-- Out of the event's header, which drags (keys pressed in the menu mustn't pick it up). -->
   <Teleport to="body">
-    <Dialog :open="menu.open" :morph="menu" variant="dropdown" aria-label="Autofill" @close="menu.hide()">
-      <div ref="listEl" role="menu" aria-label="Autofill" class="[&>div+div]:mt-1.5 [&>div+div]:border-t [&>div+div]:pt-1.5">
+    <Dialog :open="menu.open" :morph="menu" variant="dropdown" :aria-label="`Fill in ${eventName}`" @close="menu.hide()">
+      <div ref="listEl" role="menu" :aria-label="`Fill in ${eventName}`" class="[&>div+div]:mt-1.5 [&>div+div]:border-t [&>div+div]:pt-1.5">
         <div>
           <button
             v-for="c in b.categories.value"

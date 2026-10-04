@@ -90,7 +90,9 @@ const vt = (name: string) => ({ viewTransitionName: `sidebar-${name}`, viewTrans
         <li><SidebarLink :to="{ name: 'search' }" :icon="Search" label="Search" :state="state(name === 'search')" vt="sidebar-search" /></li>
       </ul>
 
-      <ul class="space-y-0.5">
+      <!-- Inside a competition's Manage its sections lead: the browsing lists
+           fold away so Results and Admins stay above the fold on a laptop. -->
+      <ul v-if="!inManage" class="space-y-0.5">
         <li v-for="b in browse" :key="b.route">
           <SidebarLink :to="{ name: b.route }" :icon="b.icon" :label="b.label" :state="state(name === b.route, name.startsWith(b.profile))" :vt="`sidebar-${b.route}`" />
           <div :id="`sidebar-${b.route}`" />
@@ -98,7 +100,7 @@ const vt = (name: string) => ({ viewTransitionName: `sidebar-${name}`, viewTrans
       </ul>
 
       <ul class="space-y-0.5">
-        <li>
+        <li v-if="!inManage">
           <SidebarLink :to="{ name: 'competitions.submit' }" :icon="SquarePlus" label="Submit a competition" :state="state(name === 'competitions.submit')" vt="sidebar-submit" />
         </li>
         <li v-if="canManage">
@@ -120,7 +122,7 @@ const vt = (name: string) => ({ viewTransitionName: `sidebar-${name}`, viewTrans
 
       <!-- About, Settings and help sink to the bottom, above you. -->
       <ul class="mt-auto space-y-0.5">
-        <li><SidebarLink :to="{ name: 'about' }" :icon="Info" label="About ScotDance.app" :state="state(name === 'about')" vt="sidebar-about" /></li>
+        <li v-if="!inManage"><SidebarLink :to="{ name: 'about' }" :icon="Info" label="About ScotDance.app" :state="state(name === 'about')" vt="sidebar-about" /></li>
         <li><SidebarLink :to="{ name: 'settings' }" :icon="Settings" label="Settings" :state="state(name === 'settings')" vt="sidebar-settings" /></li>
         <li v-if="crisp.available">
           <button
@@ -141,7 +143,7 @@ const vt = (name: string) => ({ viewTransitionName: `sidebar-${name}`, viewTrans
             :style="vt('update')"
             @click="update.openDialog()"
           >
-            <ArrowDownToLine class="text-secondary size-5 shrink-0" aria-hidden="true" />
+            <ArrowDownToLine class="text-primary size-5 shrink-0" aria-hidden="true" />
             Update available
           </button>
         </li>

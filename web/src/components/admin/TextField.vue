@@ -58,14 +58,14 @@ function onKeydown(e: KeyboardEvent) {
 }
 
 const inputClass = computed(() => [
-  'w-full rounded-xl px-3 text-base',
+  'placeholder:text-muted-foreground w-full rounded-xl px-3 text-base',
   locked.value ? 'bg-muted text-muted-foreground cursor-not-allowed shadow-[inset_0_0_0_1px_var(--border)]' : 'field',
   props.multiline ? 'min-h-24 py-2.5 leading-normal' : 'h-12 pr-10',
 ])
 </script>
 
 <template>
-  <AdminField :label="label" :for="id" :hint="hint" :error="error" :required="required" :hide-label="hideLabel">
+  <AdminField v-slot="{ describedby }" :label="label" :for="id" :hint="hint" :error="error" :required="required" :hide-label="hideLabel">
     <div class="relative">
       <textarea
         v-if="multiline"
@@ -75,6 +75,8 @@ const inputClass = computed(() => [
         :placeholder="placeholder"
         :disabled="locked"
         :aria-invalid="!!error || undefined"
+        :aria-required="required || undefined"
+        :aria-describedby="describedby"
         :class="inputClass"
         @input="onInput"
         @blur="commit"
@@ -91,6 +93,8 @@ const inputClass = computed(() => [
         :disabled="locked"
         :autofocus="autofocus"
         :aria-invalid="!!error || undefined"
+        :aria-required="required || undefined"
+        :aria-describedby="describedby"
         :class="inputClass"
         @input="onInput"
         @change="type === 'date' || type === 'datetime-local' ? commit() : undefined"

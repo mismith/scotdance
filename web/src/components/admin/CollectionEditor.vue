@@ -21,6 +21,7 @@ import { useSplit } from '@/composables/admin/useWide'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import { LINK_PROBLEM, looksLikeLink, type CollectionItem, type CollectionSpec, type FieldSpec } from '@/lib/admin/collection'
+import { htmlToText } from '@/lib/admin/richText'
 import { ALL_SECTIONS } from '@/lib/admin/sections'
 import { useMorph } from '@/lib/morph'
 
@@ -268,6 +269,9 @@ const stringValue = (item: T, key: string) => {
   return v == null ? null : String(v)
 }
 const fieldValue = (item: T, key: string) => (item as unknown as Record<string, unknown>)[key] as string | number | null | undefined
+// Long text (a bio, a description) is edited as plain text, even where the
+// old app stored HTML. Saved as typed, the public pages show it the same way.
+const textValue = (item: T, f: FieldSpec) => (f.kind === 'textarea' ? htmlToText(stringValue(item, f.key)) : fieldValue(item, f.key))
 
 // --- Adding
 const lastAdded = ref<Record<string, string> | null>(null)
@@ -640,7 +644,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
             />
             <TextField
               v-else
-              :model-value="fieldValue(current, f.key)"
+              :model-value="textValue(current, f)"
               :label="f.label"
               :hint="f.hint"
               :required="f.required"

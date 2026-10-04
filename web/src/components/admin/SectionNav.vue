@@ -81,14 +81,14 @@ const to = (routeName: string) => ({ name: routeName, params: { competitionId: m
           </span>
           <template v-if="props.compact">
             <span :class="['text-callout min-w-0 flex-1 truncate', isActive(s.route) ? 'text-primary font-semibold' : 'font-medium']">{{ s.title }}</span>
-            <span v-if="next?.id === s.id" class="bg-primary-fill text-primary-foreground rounded-full px-2 py-0.5 text-xs font-semibold">Next</span>
+            <span v-if="next?.id === s.id" class="bg-next text-next-foreground rounded-full px-2 py-0.5 text-xs font-semibold">Next</span>
             <span v-else-if="status[s.id]?.count" class="text-muted-foreground text-sm tabular-nums">{{ status[s.id]?.count }}</span>
           </template>
           <template v-else>
             <span class="min-w-0 flex-1">
               <span class="flex items-center gap-2">
                 <span class="text-base font-semibold">{{ s.title }}</span>
-                <span v-if="next?.id === s.id" class="bg-primary-fill text-primary-foreground rounded-full px-2 py-0.5 text-xs font-semibold">Next</span>
+                <span v-if="next?.id === s.id" class="bg-next text-next-foreground rounded-full px-2 py-0.5 text-xs font-semibold">Next</span>
               </span>
               <span class="text-muted-foreground block truncate text-sm">{{ status[s.id]?.detail ?? s.blurb }}</span>
             </span>

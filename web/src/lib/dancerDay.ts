@@ -46,11 +46,16 @@ export interface SlotInfo {
   /** Organisers usually put the start time in the block description ("8:00 am"). */
   blockTime: string | null
   eventName: string | null
+  /** The event's own start time, from its description, when it has one. */
+  eventTime: string | null
+  eventId: string | null
   platformId: string
   platformName: string | null
   /** 1-based position of this group among the groups on that platform. */
   groupPos: number
   groupCount: number
+  /** The age group dancing just before this one there, as the platform runs ("After Beginner Under 7"). */
+  beforeGroup: string | null
 }
 
 export interface DanceStatus {
@@ -85,7 +90,7 @@ export interface DayBundle {
   platforms: Platform[]
   draws: DrawsTree
   /** The competition's age groups: a schedule can still list deleted ones. */
-  groups?: Array<{ id: string }>
+  groups?: Array<{ id: string; fullName?: string; name?: string }>
 }
 
 /**
@@ -159,10 +164,13 @@ export function scheduleIndex(schedule: Schedule | null, platforms: Platform[]):
               blockName: block.name ?? null,
               blockTime: firstLine(block.description),
               eventName: event.name ?? null,
+              eventTime: firstLine(event.description),
+              eventId: event.id ?? null,
               platformId,
               platformName: platformName.get(platformId) ?? null,
               groupPos: 0,
               groupCount: groupIds.length,
+              beforeGroup: null,
               danceId: sd.danceId,
               groupIds,
             }
@@ -223,11 +231,13 @@ export function dancerDay(
   // Order by schedule where known, else by the admin's dance order.
   // "Group 2 of 3" among the age groups that still exist.
   const known = bundle.groups?.length ? new Set(bundle.groups.map((g) => g.id)) : null
+  const groupName = new Map((bundle.groups ?? []).map((g) => [g.id, g.fullName ?? g.name ?? null]))
   const slotFor = (danceId: string): SlotInfo | null => {
     const s = index.byGroupDance.get(`${group.id}:${danceId}`)
     if (!s || !known) return s ?? null
     const real = s.groupIds.filter((g) => known.has(g) || g === group.id)
-    return { ...s, groupPos: real.indexOf(group.id) + 1, groupCount: real.length }
+    const pos = real.indexOf(group.id)
+    return { ...s, groupPos: pos + 1, groupCount: real.length, beforeGroup: pos > 0 ? (groupName.get(real[pos - 1]) ?? null) : null }
   }
 
   const rows = groupDances

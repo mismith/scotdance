@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vu
 import { CircleAlert, X } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
 import Button from '@/components/ui/Button.vue'
-import { confirmRequest, dismissToast, toasts } from '@/lib/admin/feedback'
+import { confirmRequest, dismissToast, feedbackHost, toasts } from '@/lib/admin/feedback'
 import { errorHaptic, warningHaptic } from '@/lib/haptics'
 
 // Keep the last request on screen while the dialog closes, so its words
@@ -37,6 +37,7 @@ watch(
 )
 let observer: MutationObserver | undefined
 onMounted(() => {
+  feedbackHost.ready = true
   observer = new MutationObserver(retarget)
   observer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['open'] })
   retarget()

@@ -18,6 +18,7 @@ import { forgetCompetitionsList } from '@/composables/useCompetitions'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError, write } from '@/lib/admin/write'
 import { LINK_PROBLEM, looksLikeLink } from '@/lib/admin/collection'
+import { htmlToText } from '@/lib/admin/richText'
 import { uploadLinkFile } from '@/lib/admin/upload'
 import { grow, shrink } from '@/lib/admin/motion'
 import { formatExternalURL, parseDate } from '@/lib/format'
@@ -202,8 +203,9 @@ async function deleteCompetition() {
             :save="save('sobhd')"
           />
         </div>
+        <!-- Edited as plain text, even when the old app stored HTML. -->
         <TextField
-          :model-value="c.description"
+          :model-value="htmlToText(c.description)"
           label="Description"
           multiline
           hint="Anything else people should know. Shown on the competition page."

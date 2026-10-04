@@ -67,7 +67,8 @@ function stop() {
       size === 'row'
         ? ['press size-11 rounded-full', on ? 'text-secondary' : 'text-muted-foreground']
         : [
-            'h-12 w-full rounded-full px-5 text-base',
+            // The full width of a phone; on wider pages a button's width, not a bar.
+            'h-12 w-full rounded-full px-5 text-base sm:w-auto sm:min-w-56',
             on ? 'bg-blue-paper text-primary press' : 'bg-primary-fill text-primary-foreground press-fill',
           ],
     ]"

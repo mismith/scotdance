@@ -1,6 +1,6 @@
 import { computed, onScopeDispose, watch, type Ref } from 'vue'
 import { useDnDProvider } from '@vue-dnd-kit/core'
-import { useMediaQuery } from '@vueuse/core'
+import { useEventListener, useMediaQuery } from '@vueuse/core'
 import type { CellLocation, EventLocation } from './builder'
 
 // What can be dragged in the schedule builder. Each kind is also its
@@ -54,6 +54,13 @@ export function useDragHandle() {
   return computed(() => (coarse.value ? '[data-grip]' : ''))
 }
 
+/**
+ * A grip's touch target: 44px square around it on touch screens, without
+ * moving anything (the mouse look is unchanged).
+ */
+export const GRIP_TARGET =
+  'pointer-coarse:relative pointer-coarse:after:absolute pointer-coarse:after:top-1/2 pointer-coarse:after:left-1/2 pointer-coarse:after:size-11 pointer-coarse:after:-translate-1/2'
+
 /** The kind of item being dragged, and its data, if any. */
 export function useDragType() {
   const provider = useDnDProvider()
@@ -71,6 +78,48 @@ export function useDragType() {
   const pointer = computed(() => provider.pointer.value?.current)
 
   return { provider, activeDragGroup, activeDragPayload, pointer }
+}
+
+/**
+ * End a drag cleanly when the gesture is cut short. The drag kit only listens
+ * for the pointer coming up, so after a cancelled touch (an incoming call, an
+ * edge swipe), switching away, or a mouse released over another window, the
+ * dragged item kept floating and the next tap anywhere dropped it. Call once,
+ * inside the DnDProvider.
+ *
+ * (Not lostpointercapture: the kit never captures the pointer, and a touch's
+ * own capture is let go after every lift, drops included.)
+ */
+export function useDragInterrupts() {
+  const provider = useDnDProvider()
+  const active = () => provider.state.value === 'dragging' || provider.state.value === 'activating'
+
+  // The kit has no cancel to call, so go through its own ways out: Escape
+  // puts a drag back, and a lift before it has started just forgets it.
+  // (Neither bubbles, so only listeners on the document itself see them.)
+  function abort() {
+    if (provider.state.value === 'dragging') {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape' }))
+      document.dispatchEvent(new KeyboardEvent('keyup', { key: 'Escape', code: 'Escape' }))
+    } else if (provider.state.value === 'activating') {
+      document.dispatchEvent(new PointerEvent('pointerup', { isPrimary: true }))
+    }
+  }
+  useEventListener(document, 'pointercancel', (e) => e.isPrimary && abort())
+  useEventListener(document, 'visibilitychange', () => document.hidden && abort())
+  useEventListener(window, 'blur', abort)
+
+  // Nor does it tell pointers apart: a second finger mid-drag took the item
+  // over. Keep it with the first until it lands.
+  for (const type of ['pointerdown', 'pointermove', 'pointerup'] as const)
+    useEventListener(
+      window,
+      type,
+      (e) => {
+        if (e.isPrimary === false && active()) e.stopImmediatePropagation()
+      },
+      { capture: true },
+    )
 }
 
 /**

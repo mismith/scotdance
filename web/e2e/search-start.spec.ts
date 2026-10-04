@@ -107,16 +107,17 @@ test.describe('the number card', () => {
 
   test('with a competition on today, opens number search there', async ({ page }) => {
     await page.goto(`/search?now=${day}`)
-    const card = page.getByRole('button', { name: new RegExp(`Today.*${name}.*Find a dancer by the number on their card`) })
+    const card = page.getByRole('button', { name: new RegExp(`${name}.*Today.*Find a dancer by the number on their card`) })
     await card.click()
     await expect(page).toHaveURL(new RegExp(`[?&]by=number.*[?&]in=${id}(&|$)`))
     await expect(page.getByRole('button', { name: /^Looking in/ })).toContainText(name)
     await expect(page.getByRole('textbox', { name: 'Number on their card' })).toBeFocused()
   })
 
-  test('with nothing on, still offers number search', async ({ page }) => {
+  test('with nothing on, number search is the By number switch (no card repeating it)', async ({ page }) => {
     await page.goto('/search?now=2031-02-01')
-    await page.getByRole('button', { name: /Know the number on their card\? Search by number instead\./ }).click()
+    await expect(page.getByRole('button', { name: /Find a dancer by the number on their card/ })).toHaveCount(0)
+    await page.getByRole('group', { name: 'Search by' }).getByRole('button', { name: 'By number' }).click()
     await expect(page).toHaveURL(/[?&]by=number/)
     await expect(page.getByText('No competitions on right now')).toBeVisible()
   })

@@ -86,12 +86,12 @@ const fresh = computed(() => {
       <FollowButton v-if="dancer.dancerId" :dancer="dancer" size="block" />
 
       <section class="space-y-2">
-        <h2 class="text-heading flex items-baseline justify-between gap-2 pt-2">
+        <h2 class="text-heading flex min-h-6 items-center justify-between gap-2 pt-2">
           <span>{{ phase === 'today' ? 'Today' : phase === 'before' ? 'Dances' : 'Results' }}</span>
           <RouterLink
             v-if="entries.length === 1 && entries[0]?.group"
             :to="{ name: 'competition.group', params: { competitionId, groupId: entries[0].group.id } }"
-            class="press text-primary text-callout font-semibold"
+            class="press text-primary -my-2.5 -mr-2 flex h-11 items-center rounded-full px-2 text-callout font-semibold"
           >
             Age group results
           </RouterLink>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, shallowRef, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { refDebounced } from '@vueuse/core'
+import { refDebounced, useOnline } from '@vueuse/core'
 import { ChevronRight, CloudOff, Hash, LoaderCircle, MapPin, Search, SearchX, User, X } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import Button from '@/components/ui/Button.vue'
@@ -36,6 +36,8 @@ import type { EnrichedDancer } from '@/types/competition'
 
 usePageTitle(['Search'])
 
+// A failed search says whose end it's on: no signal, or search itself.
+const online = useOnline()
 const route = useRoute()
 const router = useRouter()
 const following = useFollowing()
@@ -305,7 +307,7 @@ watch(mode, async (m) => {
           size="inline"
           :icon="CloudOff"
           title="Search isn’t working right now"
-          description="Check your connection, then try again."
+          :description="online ? 'Try again in a minute.' : 'You’re offline. Check your connection, then try again.'"
         >
           <Button variant="primary" @click="run(q)">Try again</Button>
         </EmptyState>

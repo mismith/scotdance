@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch, watchEffect } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch, watchEffect, type ComponentPublicInstance } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { createReusableTemplate, useMediaQuery } from '@vueuse/core'
 import { ChevronDown, ChevronRight, ChevronUp, CircleCheck, CloudOff, Diamond, ListOrdered, Search, Trophy, X } from '@lucide/vue'
@@ -15,7 +15,7 @@ import Segmented from '@/components/ui/Segmented.vue'
 import Switch from '@/components/ui/Switch.vue'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { useSplit } from '@/composables/admin/useWide'
-import { toast } from '@/lib/admin/feedback'
+import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import { competitionPhase } from '@/lib/dancerDay'
 import { selectionHaptic, tapHaptic } from '@/lib/haptics'
@@ -32,12 +32,14 @@ import {
   newPlaceholderId,
   parsePlacings,
   placeAt,
+  placedSummary,
   removeEntry,
   resultRows,
   resultsOrder,
   scheduleTurns,
   serializePlacings,
   stateLabel,
+  tapGuard,
   type Entry,
   type Placings,
 } from '@/lib/admin/results'
@@ -46,7 +48,9 @@ import {
 // order they placed (tap again to take them out), drag to fix the order and
 // switch on Tie where two share a place. Callbacks come first; each dance
 // then lists only the dancers called back. A "?" stands in for a dancer whose
-// number was missed, so entry can carry on and be fixed later.
+// number was missed, so entry can carry on and be fixed later. Anything a
+// stray tap could lose (a take-out, a move, a "?" replaced, Championship
+// changed) offers Undo.
 
 const props = defineProps<{ groupId: string; danceId: string }>()
 
@@ -107,19 +111,33 @@ const pointed = computed(() => new Set(pointedIds.value))
 const offersPoints = computed(() => !isPrimaryCategory(group.value?.category?.name) || pointedIds.value.length > 0)
 
 const who = (id: string) => (isPlaceholderId(id) ? '?' : (m.dancersById.value.get(id)?.num ?? '?'))
+const ordinal = (n: number) => `${n}${getOrdinalSuffix(n)}`
 
 // Said aloud by screen readers as each tap lands ("149 placed 3rd").
 const announcement = ref('')
 const spoken = (id: string) => (isPlaceholderId(id) ? 'Missed number' : who(id))
 
-async function save(value: Placings | false | null, label: string) {
+/** Save this dance's placings. Returns the change's id, for Undo. */
+async function save(value: Placings | false | null, label: string): Promise<number | null> {
   const stored = value === false || value === null ? value : serializePlacings(value)
   try {
-    await m.writeData({ [path.value]: stored }, `${label} in ${danceName.value}`)
+    return await m.writeData({ [path.value]: stored }, `${label} in ${danceName.value}`)
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
+    return null
   }
 }
+/** Save, then say what happened with an Undo. */
+async function saveUndoable(value: Placings | false | null, label: string) {
+  const change = await save(value, label)
+  if (change) toast(label, { action: { label: 'Undo', run: () => m.undoChange(change) } })
+}
+
+// A second tap on the same dancer within half a second is the same tap again
+// (its haptic lost in the noise), not "take them out". Any other dancer's tap
+// goes straight through.
+const firstTap = tapGuard(500)
+const MISSED = '?'
 
 // On wide screens, a tapped number card flies across into Placed. A copy
 // flies, so taps carry on landing underneath it.
@@ -150,29 +168,45 @@ async function fly(row: EventTarget | null | undefined, id: string) {
   setTimeout(land, 600)
 }
 
-/** Tap a dancer: add them to the end, or take them out if already there. */
+/** Tap a dancer in the list: placed (or given a point), or taken back out. */
+function tapDancer(id: string, e?: Event) {
+  if (!canEdit.value || !firstTap(id)) return
+  if (tab.value === 'points') point(id)
+  else place(id, e)
+}
+/** Tap "Missed number": a new "?" each time (but one per tap). */
+function tapPlaceholder(e: Event) {
+  if (!canEdit.value || !firstTap(MISSED)) return
+  const id = newPlaceholderId()
+  if (tab.value === 'points') point(id)
+  else place(id, e)
+}
+
+/** Add a dancer to the end, or take them out if already there. */
 function place(id: string, e?: Event) {
-  if (!canEdit.value) return
   tapHaptic()
   const p = parsePlacings(rawNow())
   const i = p.entries.findIndex((e) => e.id === id)
   if (i >= 0) {
     announcement.value = `${spoken(id)} taken out`
-    void save(removeEntry(p, i), `Took out ${who(id)}`)
+    void saveUndoable(removeEntry(p, i), `Took out ${who(id)}`)
     return
   }
   const added = { ...p, entries: [...p.entries, { id, tie: false }] }
   const at = placeAt(added.entries.length - 1, added)
-  announcement.value = isCallbacks.value ? `${spoken(id)} called back` : at ? `${spoken(id)} placed ${at}${getOrdinalSuffix(at)}` : `${spoken(id)} placed`
+  announcement.value = isCallbacks.value ? `${spoken(id)} called back` : at ? `${spoken(id)} placed ${ordinal(at)}` : `${spoken(id)} placed`
   void save(added, `Placed ${who(id)}`)
   void fly(e?.currentTarget, id)
 }
-function remove(index: number) {
+/** A placed row tapped: take that dancer out. */
+function remove(index: number, id: string) {
+  if (!canEdit.value || !firstTap(id)) return
   const p = parsePlacings(rawNow())
-  const id = p.entries[index]?.id
-  if (id == null) return
+  // By who, not just where: the list may have changed under the tap.
+  const i = p.entries[index]?.id === id ? index : p.entries.findIndex((e) => e.id === id)
+  if (i < 0) return
   announcement.value = `${spoken(id)} taken out`
-  void save(removeEntry(p, index), `Took out ${who(id)}`)
+  void saveUndoable(removeEntry(p, i), `Took out ${who(id)}`)
 }
 function tie(index: number, on: boolean) {
   const p = parsePlacings(rawNow())
@@ -180,12 +214,13 @@ function tie(index: number, on: boolean) {
   p.entries[index].tie = on
   void save(p, `${on ? 'Tied' : 'Untied'} ${who(p.entries[index].id)}`)
 }
-function reorder(entries: Entry[]) {
-  void save({ ...parsePlacings(rawNow()), entries }, 'Reordered')
+function reorder(entries: Entry[], moved: string) {
+  const p = { ...parsePlacings(rawNow()), entries }
+  const at = placeAt(entries.findIndex((e) => e.id === moved), p)
+  void saveUndoable(p, at ? `Moved ${who(moved)} to ${ordinal(at)}` : `Moved ${who(moved)}`)
 }
 
 function point(id: string) {
-  if (!canEdit.value) return
   tapHaptic()
   const list = [...pointedIds.value]
   const i = list.indexOf(id)
@@ -197,33 +232,50 @@ function point(id: string) {
     .catch((e) => toast(friendlyError(e), { tone: 'error' }))
 }
 
-function tapPlaceholder(e: Event) {
-  const id = newPlaceholderId()
-  if (tab.value === 'points') point(id)
-  else place(id, e)
-}
-
-// --- Championship: entered from the lowest place up to 1st. Switching it on
-// first asks how many places; it reads on once that's saved.
+// --- Championship: entered from the lowest place up to 1st. A button (not a
+// switch: it asks how many places first) opens the choice, with Turn off once
+// it's on. Changing it renumbers anyone already placed, so then it checks.
 const PLACES = [3, 4, 5, 6, 7, 8]
 const championship = computed(() => !!placings.value.reverseFrom)
-function toggleChampionship() {
-  if (!championship.value) {
-    pickingReverse.value = !pickingReverse.value
-    return
-  }
+const championshipButton = ref<ComponentPublicInstance | null>(null)
+// The choice closes as it's made: keep the keyboard where it was.
+const backToChampionship = () => nextTick(() => (championshipButton.value?.$el as HTMLElement | undefined)?.focus())
+async function setChampionship(n: number | null) {
   pickingReverse.value = false
-  void save({ ...parsePlacings(rawNow()), reverseFrom: null }, 'Championship off')
-}
-function pickReverse(n: number) {
+  const p = parsePlacings(rawNow())
+  if (n === p.reverseFrom) return backToChampionship()
   selectionHaptic()
-  pickingReverse.value = false
-  void save({ ...parsePlacings(rawNow()), reverseFrom: n }, `Entering from ${n}${getOrdinalSuffix(n)}`)
+  const count = p.entries.length
+  if (count) {
+    const first = placeAt(0, { ...p, reverseFrom: n })
+    const ok = await confirm({
+      title: `Renumber ${count === 1 ? 'the one' : `the ${count}`} placed from ${n ? `${ordinal(n)} up` : '1st down'}?`,
+      message: first ? `The first dancer entered (${who(p.entries[0].id)}) becomes ${ordinal(first)}.` : undefined,
+      confirmLabel: 'Renumber',
+    })
+    if (!ok) return backToChampionship()
+  }
+  const was = parsePlacings(rawNow())
+  void saveUndoable(
+    { ...was, reverseFrom: n },
+    n == null ? 'Championship off' : was.reverseFrom ? `Championship from ${ordinal(n)} up` : `Championship on, from ${ordinal(n)} up`,
+  )
+  void backToChampionship()
 }
 
 // --- Nobody placed / no callbacks
 function setNone(on: boolean) {
   void save(on ? false : null, on ? (isCallbacks.value ? 'No callbacks' : 'No dancers placed') : 'Cleared “none”')
+}
+// From a dance waiting on callbacks: there wasn't a callback round, so mark
+// the callbacks "none" (as their own switch does) and carry on here.
+async function markNoCallbackRound() {
+  try {
+    const change = await m.writeData({ [`results/${props.groupId}/${CALLBACKS}`]: false }, `No callback round in ${group.value?.label ?? 'this age group'}`)
+    if (change) toast('No callback round', { action: { label: 'Undo', run: () => m.undoChange(change) } })
+  } catch (e) {
+    toast(friendlyError(e), { tone: 'error' })
+  }
 }
 
 // --- Choosing who a "?" was (optional: the "?" can also just be taken out)
@@ -234,9 +286,9 @@ const fixChoices = computed(() => {
   // Not someone already placed, or given a point (they can't be both).
   return candidates.value.filter((d) => !placedIndex.value.has(d.id) && !pointed.value.has(d.id) && (!q || d.num.startsWith(q) || d.label.toLowerCase().includes(q)))
 })
-function openFix(index: number) {
+function openFix(id: string) {
   fixQuery.value = ''
-  fixing.value = placings.value.entries[index]?.id ?? null
+  fixing.value = id
 }
 function chooseFix(dancerId: string) {
   const id = fixing.value
@@ -246,7 +298,7 @@ function chooseFix(dancerId: string) {
   const entry = p.entries.find((e) => e.id === id)
   if (!entry) return
   entry.id = dancerId
-  void save(p, `Replaced ? with ${who(dancerId)}`)
+  void saveUndoable(p, `Replaced ? with ${who(dancerId)}`)
 }
 
 // A dancer who can't be tapped here: given a point (on Placings), or placed
@@ -315,13 +367,19 @@ const [DefinePlaced, ReusePlaced] = createReusableTemplate()
 const strip = computed(() => !split.value && tab.value === 'placings')
 const placedOpen = ref(false)
 watch(strip, (on) => !on && (placedOpen.value = false))
-// The strip just counts, and says what a tap does; the rows show who's where.
-const stripLabel = computed(() => {
-  const n = placings.value.entries.length
-  if (n) return isCallbacks.value ? `${n} called back` : `${n} placed`
+// The strip says who's where, best first, as far as it fits ("1st 104 ·
+// 2nd 107"), or who's called back; the sheet has the whole list.
+function summary(name: (id: string) => string, sep: string) {
+  const p = placings.value
+  if (p.entries.length) {
+    const list = placedSummary(p, name, isCallbacks.value)
+    return isCallbacks.value ? `${list.length} called back: ${list.join(', ')}` : list.join(sep)
+  }
   if (markedNone.value) return isCallbacks.value ? 'No callbacks' : 'No dancers placed'
   return isCallbacks.value ? 'Nobody called back yet' : 'Nobody placed yet'
-})
+}
+const stripLabel = computed(() => summary(who, ' · '))
+const stripSpoken = computed(() => `Review: ${summary(spoken, ', ')}`)
 // Toasts rise above the strip.
 const root = document.documentElement.style
 watchEffect(() => root.setProperty('--toast-lift', strip.value ? '4.5rem' : '0px'))
@@ -431,12 +489,69 @@ watch(() => props.danceId, showCurrent)
             :aria-disabled="!canEdit || undefined"
             :class="['transition-[opacity,filter] duration-(--dur-base) ease-standard', !canEdit && 'opacity-50 grayscale']"
           >
-            <p class="text-muted-foreground px-4 pt-3 pb-2 text-sm">{{ instruction }}</p>
-            <p v-if="noCallbackRound && !isCallbacks && tab === 'placings'" class="text-muted-foreground px-4 pb-2 text-sm">
+            <!-- Championship (dances only): first, as it changes what every tap
+                 below means. On, it tints, so it can't be missed. -->
+            <div v-if="isDance && tab === 'placings'" :class="['border-b px-4 py-2', championship && 'bg-blue-paper']">
+              <div class="flex min-h-12 flex-wrap items-center gap-x-2 gap-y-1">
+                <span :class="championship ? 'text-primary font-semibold' : 'font-medium'">Championship</span>
+                <HelpTip label="About championship mode">
+                  <strong>Championship</strong> mode enters results in reverse order (e.g. 6th, 5th, …, 1st), as is traditional for championship announcements.
+                </HelpTip>
+                <Button
+                  ref="championshipButton"
+                  class="ml-auto"
+                  :aria-label="`Championship: ${placings.reverseFrom ? `from ${ordinal(placings.reverseFrom)} place up` : 'off'}`"
+                  :aria-expanded="pickingReverse"
+                  :disabled="!canEdit"
+                  @click="pickingReverse = !pickingReverse"
+                >
+                  {{ placings.reverseFrom ? `From ${ordinal(placings.reverseFrom)} up` : 'Off' }}
+                  <ChevronDown :class="['transition-transform duration-(--dur-quick) motion-reduce:transition-none', pickingReverse && 'rotate-180']" aria-hidden="true" />
+                </Button>
+              </div>
+              <Transition
+                enter-from-class="-translate-y-1 opacity-0"
+                enter-active-class="transition duration-(--dur-base) ease-standard motion-reduce:transition-none"
+                leave-active-class="transition duration-(--dur-quick) ease-exit motion-reduce:transition-none"
+                leave-to-class="opacity-0"
+              >
+                <div v-if="pickingReverse" class="pb-2">
+                  <div class="flex min-h-11 items-center justify-between gap-2 pb-1">
+                    <p :id="`${uid}-places`" class="text-muted-foreground text-sm">How many places?</p>
+                    <Button v-if="championship" variant="plain" size="sm" :disabled="!canEdit" @click="setChampionship(null)">
+                      Turn off<span class="sr-only"> Championship</span>
+                    </Button>
+                  </div>
+                  <div role="group" :aria-labelledby="`${uid}-places`" class="grid max-w-80 grid-cols-6 gap-1.5">
+                    <button
+                      v-for="n in PLACES"
+                      :key="n"
+                      type="button"
+                      :aria-pressed="n === placings.reverseFrom"
+                      :disabled="!canEdit || n > candidates.length"
+                      :class="[
+                        'press h-11 rounded-full text-base font-extrabold tabular-nums disabled:opacity-(--disabled-opacity)',
+                        n === placings.reverseFrom ? 'bg-primary-fill text-primary-foreground' : 'surface',
+                      ]"
+                      @click="setChampionship(n)"
+                    >
+                      {{ n }}
+                    </button>
+                  </div>
+                </div>
+              </Transition>
+            </div>
+            <p class="text-muted-foreground px-4 pt-3 pb-2 text-base">{{ instruction }}</p>
+            <!-- Phones: the strip's sheet has it too, but it's the first
+                 question on Callbacks, so it's here as well. -->
+            <div v-if="strip && isCallbacks && !placings.entries.length" class="px-4 pb-2">
+              <label class="flex min-h-11 items-center gap-3 font-medium">
+                <Switch :model-value="markedNone" :disabled="!canEdit" @update:model-value="setNone" />
+                No callbacks
+              </label>
+            </div>
+            <p v-if="noCallbackRound && !isCallbacks && tab === 'placings'" class="text-muted-foreground px-4 pb-2 text-base">
               No callbacks: everyone in the age group can place.
-            </p>
-            <p v-if="placings.reverseFrom && tab === 'placings'" class="bg-blue-paper text-primary px-4 py-2.5 text-sm font-semibold">
-              Entering from {{ placings.reverseFrom }}{{ getOrdinalSuffix(placings.reverseFrom) }} place
             </p>
             <ul class="divide-y">
               <li v-for="d in candidates" :key="d.id">
@@ -445,7 +560,7 @@ watch(() => props.danceId, showCurrent)
                   :disabled="rowDisabled(d.id)"
                   :aria-pressed="tab === 'placings' ? placedIndex.has(d.id) : pointed.has(d.id)"
                   :class="['press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left', rowBlocked(d.id) && 'opacity-(--disabled-opacity)']"
-                  @click="tab === 'placings' ? place(d.id, $event) : point(d.id)"
+                  @click="tapDancer(d.id, $event)"
                 >
                   <NumberTile :num="d.num" data-tile />
                   <span class="min-w-0 flex-1">
@@ -479,7 +594,7 @@ watch(() => props.danceId, showCurrent)
             size="inline"
             :icon="ListOrdered"
             title="Enter the callbacks first"
-            description="Only dancers called back can place. If there wasn’t a callback round, mark No callbacks there."
+            description="Only dancers called back can place. If there wasn’t a callback round, everyone can."
           >
             <Button
               variant="primary"
@@ -488,59 +603,11 @@ watch(() => props.danceId, showCurrent)
             >
               Enter callbacks
             </Button>
+            <Button :disabled="!canEdit" @click="markNoCallbackRound">No callback round</Button>
           </EmptyState>
           <EmptyState v-else size="inline" :icon="Search" title="No dancers found" description="Add dancers to this age group first.">
             <RouterLink :to="{ name: 'manage.dancers', params: { competitionId: m.competitionId.value } }" class="text-primary text-base font-semibold">Add dancers ›</RouterLink>
           </EmptyState>
-        </div>
-
-        <!-- Championship (dances only) -->
-        <div v-if="isDance && tab === 'placings'" class="border-t px-4 py-2">
-          <div class="flex min-h-12 flex-wrap items-center gap-x-2">
-            <label class="flex min-h-11 items-center gap-3 font-medium">
-              <Switch :model-value="championship" :disabled="!canEdit" @update:model-value="toggleChampionship" />
-              Championship
-            </label>
-            <HelpTip label="About championship mode">
-              <strong>Championship</strong> mode enters results in reverse order (e.g. 6th, 5th, …, 1st), as is traditional for championship announcements.
-            </HelpTip>
-            <Button
-              v-if="placings.reverseFrom"
-              variant="tonal"
-              class="ml-auto"
-              :aria-expanded="pickingReverse"
-              :disabled="!canEdit"
-              @click="pickingReverse = !pickingReverse"
-            >
-              From {{ placings.reverseFrom }}{{ getOrdinalSuffix(placings.reverseFrom) }}
-            </Button>
-          </div>
-          <Transition
-            enter-from-class="-translate-y-1 opacity-0"
-            enter-active-class="transition duration-(--dur-base) ease-standard motion-reduce:transition-none"
-            leave-active-class="transition duration-(--dur-quick) ease-exit motion-reduce:transition-none"
-            leave-to-class="opacity-0"
-          >
-            <div v-if="pickingReverse" class="pt-1 pb-2">
-              <p :id="`${uid}-places`" class="text-muted-foreground pb-2 text-sm">How many places?</p>
-              <div role="group" :aria-labelledby="`${uid}-places`" class="grid max-w-80 grid-cols-6 gap-1.5">
-                <button
-                  v-for="n in PLACES"
-                  :key="n"
-                  type="button"
-                  :aria-pressed="n === placings.reverseFrom"
-                  :disabled="!canEdit || n > candidates.length"
-                  :class="[
-                    'press h-11 rounded-full text-base font-extrabold tabular-nums disabled:opacity-(--disabled-opacity)',
-                    n === placings.reverseFrom ? 'bg-primary-fill text-primary-foreground' : 'surface',
-                  ]"
-                  @click="pickReverse(n)"
-                >
-                  {{ n }}
-                </button>
-              </div>
-            </div>
-          </Transition>
         </div>
       </section>
 
@@ -565,7 +632,7 @@ watch(() => props.danceId, showCurrent)
                 :disabled="!canEdit"
                 :aria-label="`Take the point from ${who(id)}`"
                 class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left"
-                @click="point(id)"
+                @click="tapDancer(id)"
               >
                 <NumberTile :num="who(id)" :unknown="isPlaceholderId(id)" />
                 <span class="min-w-0 flex-1 truncate text-base font-semibold">{{ m.dancersById.value.get(id)?.label ?? (isPlaceholderId(id) ? 'Missed number' : 'Deleted dancer') }}</span>
@@ -599,14 +666,13 @@ watch(() => props.danceId, showCurrent)
       <button
         type="button"
         aria-haspopup="dialog"
-        :aria-label="`${isCallbacks ? 'Called back' : 'Placed'}: ${placings.entries.length || 'none yet'}, review`"
+        :aria-label="stripSpoken"
         class="press flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full pr-2 pl-3 text-left"
         @click="placedOpen = true"
       >
-        <span class="min-w-0 flex-1 truncate">
-          <span class="font-semibold">{{ stripLabel }}</span>
-          <span v-if="placings.entries.length" class="text-muted-foreground"> · Review</span>
-        </span>
+        <!-- Cut short at the end, so 1st (or the latest Championship place) stays -->
+        <span class="min-w-0 flex-1 truncate font-semibold tabular-nums">{{ stripLabel }}</span>
+        <span v-if="placings.entries.length" class="text-muted-foreground shrink-0">Review</span>
         <ChevronUp class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
       </button>
       <Button

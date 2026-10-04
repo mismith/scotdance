@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Hourglass, Play } from '@lucide/vue'
+import { Award, Hourglass, Play } from '@lucide/vue'
 import Medal from '@/components/Medal.vue'
 import type { DanceStatus } from '@/lib/dancerDay'
 import { platformLabel } from '@/lib/schedule'
@@ -17,14 +17,18 @@ const platform = computed(() => platformLabel(props.status.slot?.platformName) |
     :place="status.place"
     :tied="status.tied"
     :fresh="fresh"
+    :dance="status.dance.fullName || status.dance.name"
   />
+  <!-- A championship point is a result to be proud of: marked like one, not
+       greyed out with the misses. -->
   <span
-    v-else-if="status.state === 'unplaced'"
-    class="text-muted-foreground inline-flex items-center gap-1 text-sm font-medium"
+    v-else-if="status.state === 'unplaced' && status.pointed"
+    class="bg-blue-paper text-primary inline-flex h-7 items-center gap-1 rounded-full px-2.5 text-footnote font-semibold whitespace-nowrap"
   >
-    <template v-if="status.pointed">Championship point</template>
-    <template v-else>Not placed</template>
+    <Award class="size-3.5" stroke-width="2.4" aria-hidden="true" />
+    Championship point
   </span>
+  <span v-else-if="status.state === 'unplaced'" class="text-muted-foreground text-sm">Not placed</span>
   <span
     v-else-if="status.state === 'no-placings'"
     class="text-muted-foreground text-sm font-medium"
@@ -35,14 +39,14 @@ const platform = computed(() => platformLabel(props.status.slot?.platformName) |
     v-else-if="status.state === 'waiting'"
     class="bg-muted text-muted-foreground border-strong inline-flex h-7 items-center gap-1 rounded-full border border-dashed px-2.5 text-footnote font-semibold whitespace-nowrap"
   >
-    <Hourglass class="size-3.5" stroke-width="2.4" />
-    Waiting for results
+    <Hourglass class="size-3.5" stroke-width="2.4" aria-hidden="true" />
+    Waiting<span class="sr-only"> for results</span>
   </span>
   <span
     v-else-if="status.state === 'next'"
     class="bg-next text-next-foreground inline-flex h-7 items-center gap-1 rounded-full px-2.5 text-footnote font-semibold whitespace-nowrap"
   >
-    <Play class="size-3.5 fill-current" stroke-width="2.4" />
+    <Play class="size-3.5 fill-current" stroke-width="2.4" aria-hidden="true" />
     Next{{ platform ? ` · ${platform}` : '' }}
   </span>
   <span
@@ -57,5 +61,5 @@ const platform = computed(() => platformLabel(props.status.slot?.platformName) |
   >
     No result posted
   </span>
-  <span v-else class="text-muted-foreground text-sm font-medium">Later</span>
+  <span v-else class="text-muted-foreground text-sm font-medium whitespace-nowrap">{{ status.slot?.blockName ?? 'Later' }}</span>
 </template>

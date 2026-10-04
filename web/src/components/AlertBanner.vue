@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { announce } from '@/lib/announce'
 import { useRouter } from 'vue-router'
 import { X } from '@lucide/vue'
 import { useLiveAlertState } from '@/composables/useLiveAlerts'
@@ -20,7 +21,10 @@ function wait() {
   if (current.value) timer = setTimeout(dismiss, 9000)
 }
 watch(current, (a) => {
-  if (a) held.value = 0
+  if (a) {
+    held.value = 0
+    announce([a.title, a.subtitle].filter(Boolean).join('. '))
+  }
   wait()
 })
 
@@ -37,6 +41,11 @@ function onMove(e: PointerEvent) {
   if (!d.moved) (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
   d.moved = true
   d.dy = dy < 0 ? dy : Math.sqrt(dy) * 2
+}
+// The system taking the touch away (a call coming in) puts it back, never dismisses.
+function onCancel() {
+  drag.value = null
+  wait()
 }
 function onUp() {
   const d = drag.value
@@ -74,8 +83,6 @@ function open() {
     <div
       v-if="current"
       class="fixed right-2 left-[calc(var(--sidebar)+0.5rem)] top-[calc(var(--safe-top)+0.5rem)] z-50 mx-auto max-w-lg"
-      role="status"
-      aria-live="polite"
     >
       <div
         class="touch-none transition-[translate] duration-(--dur-slow) ease-snappy"
@@ -83,7 +90,7 @@ function open() {
         @pointerdown="onDown"
         @pointermove="onMove"
         @pointerup="onUp"
-        @pointercancel="onUp"
+        @pointercancel="onCancel"
         @click.capture="held && $event.stopPropagation()"
       >
         <!-- The same dark glass as the toasts: it's news from the app, not part of the page. -->

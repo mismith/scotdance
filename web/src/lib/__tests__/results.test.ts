@@ -11,6 +11,7 @@ import {
   isDancerPointed,
   isGroupInProgress,
   isPosted,
+  shortDanceName,
 } from '@/lib/results'
 import type { EnrichedDance, EnrichedDancer, EnrichedGroup, PointsTree, ResultsTree } from '@/types/competition'
 
@@ -344,4 +345,21 @@ describe('getOrdinalSuffix', () => {
     [111, 'th'],
     [112, 'th'],
   ])('%i → %s', (n, s) => expect(getOrdinalSuffix(n)).toBe(s))
+})
+
+describe('shortDanceName', () => {
+  it('gives the everyday name of each common dance', () => {
+    expect(shortDanceName('Highland Fling')).toBe('Fling')
+    expect(shortDanceName('Sword Dance (2&1)')).toBe('Sword')
+    expect(shortDanceName('Seann Triubhas')).toBe('Seann')
+    expect(shortDanceName('Seann Truibhas')).toBe('Seann')
+    expect(shortDanceName('Strathspey & Half Tulloch')).toBe('Reel')
+    expect(shortDanceName('Flora MacDonald’s Fancy')).toBe('Flora')
+    expect(shortDanceName('Pas de basques & High Cuts')).toBe('Pas de basques')
+    expect(shortDanceName('Broadsword')).toBe('Broadsword')
+  })
+  it('falls back to the name itself, without its steps', () => {
+    expect(shortDanceName('Cake Walk (4)')).toBe('Cake Walk')
+    expect(shortDanceName(undefined)).toBe('')
+  })
 })

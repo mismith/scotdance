@@ -79,7 +79,9 @@ const lists = ['dancers', 'judges', 'pipers', 'venues'].map(sectionMeta)
     </div>
   </section>
 
+  <!-- Only with a competition on today: otherwise it repeats "By number" above. -->
   <button
+    v-if="today"
     type="button"
     class="surface press-row focus-inset flex w-full items-center gap-3 rounded-2xl p-4 text-left"
     @click="emit('number', today?.id)"
@@ -87,23 +89,19 @@ const lists = ['dancers', 'judges', 'pipers', 'venues'].map(sectionMeta)
     <span
       :class="[
         'flex size-11 shrink-0 items-center justify-center rounded-full',
-        today ? 'bg-live-paper text-live' : 'bg-blue-paper text-primary',
+        'bg-live-paper text-live',
       ]"
       aria-hidden="true"
     >
       <Hash class="size-5" />
     </span>
-    <span v-if="today" class="min-w-0 flex-1">
-      <span class="text-live flex items-center gap-1.5 text-footnote font-semibold">
+    <span class="min-w-0 flex-1">
+      <span class="block text-base leading-snug font-semibold">{{ today.competition.name ?? 'Competition' }}</span>
+      <span class="text-live flex items-center gap-1.5 text-sm font-semibold">
         <span class="bg-live size-2 shrink-0 rounded-full" />
         <span class="truncate">Today<template v-if="today.competition.location"> · {{ today.competition.location }}</template></span>
       </span>
-      <span class="block text-base leading-snug font-semibold">{{ today.competition.name ?? 'Competition' }}</span>
       <span class="text-muted-foreground block text-sm">Find a dancer by the number on their card.</span>
-    </span>
-    <span v-else class="min-w-0 flex-1">
-      <span class="block text-base leading-snug font-semibold">Know the number on their card?</span>
-      <span class="text-muted-foreground block text-sm">Search by number instead.</span>
     </span>
     <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
   </button>
@@ -147,7 +145,8 @@ const lists = ['dancers', 'judges', 'pipers', 'venues'].map(sectionMeta)
     </ul>
   </section>
 
-  <section class="space-y-2">
+  <!-- On wide screens the sidebar already lists all of these. -->
+  <section class="space-y-2 lg:hidden">
     <h2 class="text-heading">Browse</h2>
     <RouterLink
       :to="competitions.to"

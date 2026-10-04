@@ -283,6 +283,19 @@
   :focus-visible {
     @apply outline-ring outline-3 outline-offset-2;
   }
+  /* The parts the browser draws, in the palette too: placeholders readable
+     (about 5:1) but plainly not typed text, the caret and selection blue. */
+  ::placeholder {
+    color: color-mix(in oklab, var(--muted-foreground) 80%, transparent);
+    opacity: 1;
+  }
+  input,
+  textarea {
+    caret-color: var(--primary);
+  }
+  ::selection {
+    background-color: color-mix(in oklab, var(--primary) 24%, transparent);
+  }
 }
 
 /* Chrome surface (app bar, tab bar, standalone buttons). Opaque on purpose:
@@ -441,6 +454,15 @@
   &:user-invalid,
   &[aria-invalid='true'] {
     box-shadow: inset 0 0 0 1.5px var(--destructive);
+  }
+  /* High contrast drops shadows: a real edge, and the system's focus colour. */
+  @media (forced-colors: active) {
+    border: 1px solid CanvasText;
+    &:focus,
+    &:focus-within {
+      outline: 2px solid Highlight;
+      outline-offset: 1px;
+    }
   }
 }
 

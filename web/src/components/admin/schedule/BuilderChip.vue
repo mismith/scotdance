@@ -3,12 +3,13 @@ import { ref } from 'vue'
 import { makeDraggable } from '@vue-dnd-kit/core'
 import { GripVertical, X } from '@lucide/vue'
 import { useBuilder } from './builder'
-import { ACTIVATION, payload, useDragHandle, type DragData } from './drag'
+import { ACTIVATION, GRIP_TARGET, payload, useDragHandle, type DragData } from './drag'
 
 // A draggable block: a dance, age group, judge or spacer. The colour of the
 // bar down its side says which, everywhere it appears (palette and schedule).
 // With a mouse the whole chip drags, so its grip only shows on hover; on a
-// touch screen it drags by the grip, which always shows.
+// touch screen it drags by the grip, which always shows, with a finger-sized
+// target around it.
 
 const props = defineProps<{
   kind: 'dance' | 'group' | 'judge' | 'spacer'
@@ -66,6 +67,7 @@ const BAR = {
       :role="b.readonly.value ? undefined : 'button'"
       :aria-label="b.readonly.value ? undefined : `Move ${title ?? label}`"
       :aria-hidden="b.readonly.value || undefined"
+      :class="GRIP_TARGET"
       class="text-muted-foreground flex shrink-0 touch-none items-center self-stretch px-0.5 outline-none pointer-coarse:px-1.5 pointer-fine:opacity-0 pointer-fine:transition-opacity pointer-fine:group-hover/chip:opacity-100 pointer-fine:focus-visible:opacity-100"
     >
       <GripVertical class="size-3.5" />

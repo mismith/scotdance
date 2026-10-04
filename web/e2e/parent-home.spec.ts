@@ -79,7 +79,8 @@ test('follow a dancer, see their day on Home, and watch a placing arrive', async
   await expect(day.getByLabel('Number 107')).toBeVisible()
   await expect(day.getByText('Beginner Under 7 · Platform A')).toBeVisible()
   const fling = day.getByRole('link', { name: /Highland Fling \(4\)/ })
-  await expect(fling).toContainText('3rd to dance · 1st of 2 groups')
+  // When, in facts you can check at the platform: first group up, 3rd in the draw.
+  await expect(fling).toContainText('First group up · 3rd to dance')
   await expect(fling).toContainText('Next')
   await expect(day.getByRole('link', { name: /Overall/ })).toContainText('After all dances')
 

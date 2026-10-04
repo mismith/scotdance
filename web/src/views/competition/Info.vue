@@ -22,7 +22,7 @@ import StaffDialog from '@/components/StaffDialog.vue'
 import Button from '@/components/ui/Button.vue'
 import { staffEntityRef, staffMemberName, type StaffMember } from '@/types/competition'
 import type { DancerDay, DanceStatus } from '@/lib/dancerDay'
-import { getOrdinalSuffix } from '@/lib/results'
+import { getOrdinalSuffix, shortDanceName } from '@/lib/results'
 import { resultsCount } from '@/lib/resultsCount'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useMeStore } from '@/stores/me'
@@ -152,14 +152,14 @@ const sessions = computed(() =>
 const mode = computed(() => phase.value)
 const posted = computed(() => resultsCount(groups.value, dances.value, results.value))
 
-// A dancer whose day is all settled folds to one line ("=1st · 2nd · –"),
-// once any new placing has had its moment.
+// A dancer whose day is all settled folds to one line ("1st Fling (tie) ·
+// 2nd Reel"), once any new placing has had its moment.
 const SETTLED = new Set(['placed', 'unplaced', 'no-placings', 'not-posted'])
 const settled = (days: DancerDay[]) =>
   days.every((d) => d.dances.length && [...d.dances, ...(d.overall ? [d.overall] : [])].every((s) => SETTLED.has(s.state)))
 function placingText(s: DanceStatus) {
-  if (s.state !== 'placed' || s.place == null) return s.state === 'unplaced' ? '–' : null
-  return `${s.tied ? '=' : ''}${s.place}${getOrdinalSuffix(s.place)}${s.dance.id === 'overall' ? ' overall' : ''}`
+  if (s.state !== 'placed' || s.place == null) return null
+  return `${s.place}${getOrdinalSuffix(s.place)} ${shortDanceName(s.dance.fullName || s.dance.name)}${s.tied ? ' (tie)' : ''}`
 }
 function placingsLine(days: DancerDay[]) {
   const all = days.flatMap((d) => [...d.dances, ...(d.overall ? [d.overall] : [])])
@@ -192,6 +192,14 @@ function isFavoriteStaff(m: StaffMember) {
   const r = staffEntityRef(m)
   return r ? favorites.isFavorite(r.type, r.id) : false
 }
+// A long panel (a dozen judges) shows a few, followed ones first, and the
+// rest on request, so it doesn't bury what comes after it.
+const STAFF_FOLD = 5
+const staffOpen = ref(new Set<string>())
+function staffShown(g: { type: string; members: StaffMember[] }) {
+  if (staffOpen.value.has(g.type) || g.members.length <= STAFF_FOLD) return g.members
+  return [...g.members].sort((a, b) => Number(isFavoriteStaff(b)) - Number(isFavoriteStaff(a))).slice(0, STAFF_FOLD - 1)
+}
 const activeStaff = ref<StaffMember | null>(null)
 const staffSheet = useMorph()
 
@@ -211,14 +219,15 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
           :date="competition.date"
           :managed="me.organises(competitionId)"
         />
+        <!-- The name leads; when and where follows it. -->
         <div class="min-w-0 flex-1">
-          <p :class="['flex items-center gap-1.5 text-sm font-semibold', live ? 'text-live' : 'text-muted-foreground']">
-            <LiveDot v-if="live" :pulse="pulse" />
-            {{ kicker }}
-          </p>
           <h1 class="text-display">
             {{ competition.name ?? 'Competition' }}
           </h1>
+          <p :class="['text-callout mt-0.5 flex items-center gap-1.5 font-semibold', live ? 'text-live' : 'text-muted-foreground']">
+            <LiveDot v-if="live" :pulse="pulse" />
+            {{ kicker }}
+          </p>
         </div>
       </div>
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -246,7 +255,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
               <NumberCard :number="f.days[0].dancer.number" :color="f.color" size="sm" />
               <span class="min-w-0 flex-1">
                 <span class="block truncate text-base font-semibold">{{ f.name }}</span>
-                <span class="text-muted-foreground block truncate text-sm tabular-nums">{{ placingsLine(f.days) }}</span>
+                <span class="text-muted-foreground block text-sm tabular-nums">{{ placingsLine(f.days) }}</span>
               </span>
               <ChevronRight class="text-muted-foreground size-5 shrink-0" />
             </RouterLink>
@@ -265,7 +274,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
       <section v-else-if="ready && dancers.length" key="find" class="surface space-y-3 rounded-2xl p-4">
         <p class="text-callout">
           <span class="font-semibold">Is your dancer here?</span>
-          Follow them to see their day at a glance.
+          {{ mode === 'after' ? 'Find them to see their results.' : 'Follow them to see their day at a glance.' }}
         </p>
         <label class="field flex h-12 items-center gap-2 rounded-xl pr-1 pl-3">
           <Search class="text-muted-foreground size-5 shrink-0" />
@@ -356,8 +365,9 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         <div class="flex items-center gap-3">
           <MapPin class="text-primary size-5 shrink-0" />
           <div class="min-w-0 flex-1">
-            <p v-if="competition.venue" class="truncate text-base font-semibold">{{ competition.venue }}</p>
-            <p :class="['text-muted-foreground text-sm', mode !== 'before' && 'truncate']">
+            <!-- Venue and address in full: they're what you'd read out to a taxi. -->
+            <p v-if="competition.venue" class="text-base font-semibold break-words">{{ competition.venue }}</p>
+            <p class="text-muted-foreground text-sm break-words">
               {{ [competition.address, competition.location].filter(Boolean).join(', ') }}
             </p>
           </div>
@@ -397,11 +407,11 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
 
     <!-- Sessions -->
     <section v-if="sessions.length" class="space-y-3">
-      <h2 class="text-heading flex items-baseline justify-between">
+      <h2 class="text-heading flex min-h-6 items-center justify-between">
         Sessions
         <RouterLink
           :to="{ name: 'competition.schedule', params: { competitionId } }"
-          class="press text-primary text-callout font-semibold"
+          class="press text-primary -my-2.5 -mr-2 flex h-11 items-center rounded-full px-2 text-callout font-semibold"
         >
           Full schedule
         </RouterLink>
@@ -410,13 +420,14 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         <li
           v-for="s in sessions"
           :key="s.id"
-          :class="['flex items-center gap-3 px-4 py-3 transition-opacity duration-(--dur-slow)', s.done && 'opacity-60']"
+          class="flex items-center gap-3 px-4 py-3"
         >
           <span class="bg-muted text-callout flex min-w-16 shrink-0 justify-center rounded-lg px-2 py-1 font-semibold tabular-nums">
             {{ s.time ?? '—' }}
           </span>
           <span class="min-w-0 flex-1">
-            <span class="block text-base font-semibold">{{ s.name }}</span>
+            <!-- Over: quieter by colour (opacity would take it under AA). -->
+            <span :class="['block text-base', s.done ? 'text-muted-foreground font-medium' : 'font-semibold']">{{ s.name }}</span>
             <span v-if="s.day" class="text-muted-foreground block text-sm">{{ s.day }}</span>
           </span>
           <ResultsMark :posted="s.count.posted" :total="s.count.total" />
@@ -468,7 +479,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         <span v-if="g.members.length > 1" class="text-muted-foreground text-sm font-medium tabular-nums">{{ g.members.length }}</span>
       </h2>
       <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4rem]">
-        <li v-for="m in g.members" :key="m.id">
+        <li v-for="m in staffShown(g)" :key="m.id">
           <button
             type="button"
             class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left"
@@ -478,10 +489,19 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
             <span class="min-w-0 flex-1">
               <span class="flex items-center gap-1.5 text-base font-semibold">
                 <span class="truncate">{{ staffMemberName(m) }}</span>
-                <Star v-if="isFavoriteStaff(m)" class="text-primary size-4 shrink-0 fill-current" aria-label="Following" />
+                <Star v-if="isFavoriteStaff(m)" class="text-secondary size-4 shrink-0 fill-current" aria-label="Following" />
               </span>
               <span v-if="m.location" class="text-muted-foreground block truncate text-sm">{{ m.location }}</span>
             </span>
+          </button>
+        </li>
+        <li v-if="g.members.length > STAFF_FOLD && !staffOpen.has(g.type)">
+          <button
+            type="button"
+            class="press-row focus-inset text-primary text-callout h-12 w-full font-semibold"
+            @click="staffOpen = new Set([...staffOpen, g.type])"
+          >
+            Show all {{ g.members.length }}
           </button>
         </li>
       </ul>

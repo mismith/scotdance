@@ -61,7 +61,7 @@ interface Row {
     key: string
     name: string
     color: string | null
-    medals: Array<{ id: string; place: number; tied: boolean; dancerId: string }>
+    medals: Array<{ id: string; name: string; place: number; tied: boolean; dancerId: string }>
   }>
 }
 
@@ -83,7 +83,7 @@ function rowFor(group: EnrichedGroup): Row {
         color: following.colorFor(d.dancerId),
         medals: all
           .filter((s) => s.state === 'placed' && s.place != null)
-          .map((s) => ({ id: s.dance.id, place: s.place!, tied: s.tied, dancerId: d.id })),
+          .map((s) => ({ id: s.dance.id, name: s.dance.fullName || s.dance.name || '', place: s.place!, tied: s.tied, dancerId: d.id })),
       }
     }),
   }
@@ -174,13 +174,11 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
               >
                 <span v-if="r.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
                 <span class="min-w-0 flex-1">
-                  <span class="flex items-center gap-1.5 text-base font-semibold">
-                    <span class="truncate">{{ r.group.name || r.group.fullName }}</span>
-                    <AlertTriangle
-                      v-if="r.unknown"
-                      class="text-next-foreground size-4 shrink-0"
-                      aria-label="Some placings couldn’t be matched to a dancer"
-                    />
+                  <span class="block truncate text-base font-semibold">{{ r.group.name || r.group.fullName }}</span>
+                  <!-- Said in words: a bare warning sign reads as "something's wrong with the results". -->
+                  <span v-if="r.unknown" class="text-muted-foreground mt-0.5 flex items-center gap-1 text-sm">
+                    <AlertTriangle class="size-3.5 shrink-0" aria-hidden="true" />
+                    Some placings couldn’t be matched to a dancer
                   </span>
                   <MyDancerLine
                     v-for="m in r.mine"
@@ -197,6 +195,7 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
                         :place="x.place"
                         :tied="x.tied"
                         :fresh="isFresh(r.group.id, x.id, x.dancerId)"
+                        :dance="x.name"
                         size="sm"
                       />
                       <span v-if="m.medals.length > 3" class="text-muted-foreground text-sm font-medium">+{{ m.medals.length - 3 }}</span>

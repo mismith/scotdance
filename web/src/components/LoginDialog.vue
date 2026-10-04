@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, useId, watch } from 'vue'
 import { Check, Eye, EyeOff } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import Dialog from '@/components/Dialog.vue'
@@ -16,6 +16,8 @@ const step = ref<Step>('signin')
 const email = ref('')
 const password = ref('')
 const passwordVisible = ref(false)
+const passwordId = useId()
+const errorId = useId()
 const busy = ref(false)
 const errorMessage = ref<string | null>(null)
 const infoMessage = ref<string | null>(null)
@@ -139,33 +141,41 @@ async function submit() {
           autocomplete="username"
           inputmode="email"
           required
+          :aria-invalid="errorMessage ? 'true' : undefined"
+          :aria-describedby="errorMessage ? errorId : undefined"
           class="field h-12 w-full rounded-xl px-3 text-base"
         />
       </label>
 
-      <label v-if="step !== 'forgot'" class="block space-y-1.5">
-        <span class="text-callout font-medium">{{ step === 'register' ? 'Choose a password' : 'Password' }}</span>
+      <!-- Not one <label>: the Show button inside it would join the field's name. -->
+      <div v-if="step !== 'forgot'" class="space-y-1.5">
+        <label :for="passwordId" class="text-callout block font-medium">{{ step === 'register' ? 'Choose a password' : 'Password' }}</label>
         <span class="relative block">
           <input
+            :id="passwordId"
             v-model="password"
             :type="passwordVisible ? 'text' : 'password'"
             name="password"
             :autocomplete="step === 'register' ? 'new-password' : 'current-password'"
             required
+            :aria-invalid="errorMessage ? 'true' : undefined"
+            :aria-describedby="errorMessage ? errorId : undefined"
             class="field h-12 w-full rounded-xl pr-24 pl-3 text-base"
           />
           <button
             type="button"
             class="text-primary press absolute top-1/2 right-1 flex h-10 -translate-y-1/2 items-center gap-1 rounded-full px-3 text-sm font-semibold"
+            :aria-label="passwordVisible ? 'Hide password' : 'Show password'"
+            :aria-pressed="passwordVisible"
             @click="passwordVisible = !passwordVisible"
           >
-            <component :is="passwordVisible ? EyeOff : Eye" class="size-4" />
+            <component :is="passwordVisible ? EyeOff : Eye" class="size-4" aria-hidden="true" />
             {{ passwordVisible ? 'Hide' : 'Show' }}
           </button>
         </span>
-      </label>
+      </div>
 
-      <p v-if="errorMessage" class="text-destructive text-callout font-medium" role="alert">
+      <p v-if="errorMessage" :id="errorId" class="text-destructive text-callout font-medium" role="alert">
         {{ errorMessage }}
       </p>
       <p v-if="infoMessage" class="text-done-foreground text-callout font-medium" role="status">

@@ -73,6 +73,8 @@ interface GroupRow {
   count: number
   mine: Array<{ dancer: EnrichedDancer; color: string | null; pos: number | null }>
   posted: boolean
+  /** Danced (a group after it on the platform is posted), its placings not in yet. */
+  waiting: boolean
 }
 interface PlatformRow {
   id: string
@@ -106,6 +108,7 @@ function platformsFor(sd: ScheduleDance): PlatformRow[] {
             group: g,
             count: all.length,
             posted: !!sd.danceId && posted(g.id, sd.danceId),
+            waiting: false,
             mine: oncePerPerson(all.filter((d) => following.isFollowing(d)))
               .map((d) => ({
                 dancer: d,
@@ -114,6 +117,7 @@ function platformsFor(sd: ScheduleDance): PlatformRow[] {
               })),
           }
         })
+      rows.forEach((r, i) => (r.waiting = !r.posted && rows.slice(i + 1).some((later) => later.posted)))
       const judges = (slot.orderedJudgeIds ?? [])
         .map((id) => judgeById.get(id))
         .filter((j): j is StaffMember => !!j)
@@ -255,7 +259,8 @@ const judging = computed(() => {
                       class="mt-1"
                     />
                   </span>
-                  <span v-if="!g.posted" class="text-primary text-footnote shrink-0 font-medium">Dancing order</span>
+                  <span v-if="g.waiting" class="text-muted-foreground text-footnote shrink-0 font-medium">Waiting for results</span>
+                  <span v-else-if="!g.posted" class="text-primary text-footnote shrink-0 font-medium">Dancing order</span>
                 </button>
                 <!-- Once posted, the placings are a tap away; the row still opens the order. -->
                 <RouterLink

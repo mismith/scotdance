@@ -41,7 +41,8 @@ const VARIANT = {
 
 const inactive = computed(() => props.disabled || props.busy)
 const classes = computed(() => [
-  'inline-flex shrink-0 items-center justify-center rounded-full font-semibold whitespace-nowrap select-none',
+  // High contrast drops fills and shadows: an edge keeps it a button.
+  'inline-flex shrink-0 items-center justify-center rounded-full font-semibold whitespace-nowrap select-none forced-colors:border',
   'disabled:opacity-(--disabled-opacity) [&[aria-disabled]:not([aria-busy])]:opacity-(--disabled-opacity) aria-disabled:pointer-events-none',
   SIZE[props.size],
   VARIANT[props.variant],

@@ -6,7 +6,7 @@ import BuilderChip from './BuilderChip.vue'
 import InlineEdit from './InlineEdit.vue'
 import PlatformCell from './PlatformCell.vue'
 import { ids, useBuilder, type SDance } from './builder'
-import { ACTIVATION, payload, useDragHandle, type DragDance } from './drag'
+import { ACTIVATION, GRIP_TARGET, payload, useDragHandle, type DragDance } from './drag'
 import { confirm } from '@/lib/admin/feedback'
 
 // One row of an event: a dance across the platforms, or another row
@@ -84,6 +84,7 @@ async function remove() {
         :role="b.readonly.value ? undefined : 'button'"
         :aria-label="b.readonly.value ? undefined : `Move ${row.name || 'row'}`"
         :aria-hidden="b.readonly.value || undefined"
+        :class="GRIP_TARGET"
         class="text-muted-foreground focus-visible:ring-ring flex shrink-0 touch-none self-stretch rounded-sm pt-0.5 outline-none focus-visible:ring-2 pointer-coarse:px-1.5 pointer-fine:opacity-0 pointer-fine:transition-opacity pointer-fine:group-hover/row:opacity-100 pointer-fine:focus-visible:opacity-100"
         ><GripVertical class="size-3.5"
       /></span>

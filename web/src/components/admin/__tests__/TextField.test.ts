@@ -140,6 +140,25 @@ describe('TextField', () => {
     expect(calls).toHaveLength(2)
   })
 
+  it('reads out the hint, then the error in its place, and says when it’s required', async () => {
+    const w = field({ required: true, hint: 'As on their entry form.' })
+    const input = w.find('input')
+    const note = () => w.find(`[id="${input.attributes('aria-describedby')}"]`).element
+    expect(input.attributes('aria-required')).toBe('true')
+    expect(note().textContent).toBe('As on their entry form.')
+    await input.setValue('')
+    await input.trigger('keydown', { key: 'Enter' })
+    expect(note().textContent).toBe('First name can’t be empty.')
+    // "(required)" is for the eye; the field itself says so.
+    expect(w.find('label [aria-hidden="true"]').text()).toBe('(required)')
+  })
+
+  it('points at nothing when there’s nothing to read, and isn’t required unless asked', () => {
+    const input = field({}).find('input')
+    expect(input.attributes('aria-describedby')).toBeUndefined()
+    expect(input.attributes('aria-required')).toBeUndefined()
+  })
+
   it('locks while offline', async () => {
     online.value = false
     const w = field({})

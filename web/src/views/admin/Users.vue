@@ -93,15 +93,20 @@ async function setAdmin(on: boolean) {
   await write({ [`users:permissions/${id}/admin`]: on || null })
 }
 
-async function setCompetition(competitionId: string, on: boolean) {
-  const id = uid.value
+// Taking access away is one tap, so it can be undone from the toast. (For
+// the same account: the undo may come after moving on to someone else.)
+async function setCompetition(competitionId: string, on: boolean, id = uid.value) {
   if (!id) return
   try {
     await write({
       [`users:permissions/${id}/competitions/${competitionId}`]: on || null,
       [`competitions:permissions/${competitionId}/users/${id}`]: on || null,
     })
-    toast(on ? `Can now manage ${competitionName(competitionId)}` : `No longer manages ${competitionName(competitionId)}`)
+    if (on) toast(`Can now manage ${competitionName(competitionId)}`)
+    else
+      toast(`No longer manages ${competitionName(competitionId)}`, {
+        action: { label: 'Undo', run: () => setCompetition(competitionId, true, id) },
+      })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   }

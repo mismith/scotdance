@@ -51,12 +51,16 @@ function onClick(event: MouseEvent) {
     data-bar="back"
     :class="[
       'glass press-glass proximity text-primary pointer-events-auto flex h-11 shrink-0 items-center rounded-full [view-transition-name:nav-back]',
-      exit?.compact ? 'w-11 justify-center' : 'text-callout max-w-[42vw] gap-0.5 pr-4 pl-2 font-semibold',
+      // With big text on a phone the label would crowd out the bar's actions
+      // (the query is in rem, so it scales with the text): just the arrow.
+      exit?.compact
+        ? 'w-11 justify-center'
+        : 'text-callout max-w-[42vw] gap-0.5 pr-4 pl-2 font-semibold @max-[22rem]:w-11 @max-[22rem]:justify-center @max-[22rem]:px-0',
     ]"
     :aria-label="`Back to ${label}`"
     @click="onClick"
   >
     <ChevronLeft :class="['shrink-0', exit?.compact ? 'size-6 -translate-x-px' : 'size-5']" stroke-width="2.5" />
-    <span v-if="!exit?.compact" class="truncate">{{ label }}</span>
+    <span v-if="!exit?.compact" class="truncate @max-[22rem]:hidden">{{ label }}</span>
   </button>
 </template>

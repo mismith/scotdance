@@ -9,6 +9,7 @@ import AutoFillMenu from './AutoFillMenu.vue'
 import { ordered, useBuilder, type SEvent } from './builder'
 import {
   ACTIVATION,
+  GRIP_TARGET,
   adjust,
   dropLine,
   payload,
@@ -110,9 +111,11 @@ async function remove() {
     class="col-span-full mb-4 grid grid-cols-subgrid last:mb-0"
     :class="isDragging && 'opacity-40'"
   >
+    <!-- A size container: a long name never widens the grid, and Fill in
+         drops its word where the header is narrow. -->
     <div
       ref="headerEl"
-      class="group/event bg-muted/60 col-span-full flex min-h-11 cursor-grab items-center gap-1 rounded-xl px-1 text-base font-semibold contain-inline-size"
+      class="group/event bg-muted/60 @container col-span-full flex min-h-11 cursor-grab items-center gap-1 rounded-xl px-1 text-base font-semibold"
     >
       <span
         data-grip
@@ -120,6 +123,7 @@ async function remove() {
         :role="b.readonly.value ? undefined : 'button'"
         :aria-label="b.readonly.value ? undefined : `Move ${event.name || 'event'}`"
         :aria-hidden="b.readonly.value || undefined"
+        :class="GRIP_TARGET"
         class="text-muted-foreground focus-visible:ring-ring flex shrink-0 touch-none items-center self-stretch rounded-sm outline-none focus-visible:ring-2 pointer-coarse:px-1.5 pointer-fine:opacity-0 pointer-fine:transition-opacity pointer-fine:group-hover/event:opacity-100 pointer-fine:focus-visible:opacity-100"
         ><GripVertical class="size-4"
       /></span>

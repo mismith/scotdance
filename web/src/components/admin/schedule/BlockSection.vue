@@ -10,6 +10,7 @@ import InlineEdit from './InlineEdit.vue'
 import { ordered, useBuilder, type SBlock } from './builder'
 import {
   ACTIVATION,
+  GRIP_TARGET,
   adjust,
   dropLine,
   payload,
@@ -144,6 +145,7 @@ async function remove() {
           :role="b.readonly.value ? undefined : 'button'"
           :aria-label="b.readonly.value ? undefined : `Move ${block.name || 'session'}`"
           :aria-hidden="b.readonly.value || undefined"
+          :class="GRIP_TARGET"
           class="text-muted-foreground focus-visible:ring-ring flex shrink-0 touch-none items-center self-stretch rounded-sm outline-none focus-visible:ring-2 pointer-coarse:px-1.5 pointer-fine:opacity-0 pointer-fine:transition-opacity pointer-fine:group-hover/block:opacity-100 pointer-fine:focus-visible:opacity-100"
           ><GripVertical class="size-4"
         /></span>

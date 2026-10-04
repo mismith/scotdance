@@ -5,7 +5,7 @@ import { ChevronRight } from '@lucide/vue'
 import Medal from '@/components/Medal.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import DanceStatusChip from '@/components/DanceStatusChip.vue'
-import { getOrdinalSuffix } from '@/lib/results'
+import { getOrdinalSuffix, shortDanceName } from '@/lib/results'
 import { platformLabel } from '@/lib/schedule'
 import { placings, type DancerDay, type DanceStatus } from '@/lib/dancerDay'
 
@@ -55,13 +55,23 @@ const sub = computed(() => {
 const won = computed(() => (props.folded ? placings(shown.value) : []))
 
 const ordinal = (n: number) => `${n}${getOrdinalSuffix(n)}`
-function detail(s: DanceStatus): string | null {
-  if (s.state !== 'next' && s.state !== 'upcoming') return null
+// When they're on, in facts a parent can check at the platform: the group
+// dancing before them, their place in the draw, and the session with the
+// time the organisers gave it. Never a guessed clock time.
+function detail(s: DanceStatus): string[] {
+  if (s.state !== 'next' && s.state !== 'upcoming' && s.state !== 'later') return []
   const bits: string[] = []
-  if (s.drawPos) bits.push(`${ordinal(s.drawPos)} to dance`)
-  if (s.slot?.blockTime && s.state === 'upcoming') bits.push(s.slot.blockTime)
-  else if (s.slot && s.slot.groupCount > 1) bits.push(`${ordinal(s.slot.groupPos)} of ${s.slot.groupCount} groups`)
-  return bits.join(' · ') || null
+  const session = [s.slot?.blockName, s.slot?.eventTime ?? s.slot?.blockTime].filter(Boolean).join(', ')
+  if (s.state === 'next') {
+    if (s.slot?.beforeGroup) bits.push(`After ${s.slot.beforeGroup}`)
+    else if (s.slot && s.slot.groupCount > 1 && s.slot.groupPos === 1) bits.push('First group up')
+    if (s.drawPos) bits.push(`${ordinal(s.drawPos)} to dance`)
+    if (session) bits.push(session)
+  } else {
+    if (session) bits.push(session)
+    if (s.drawPos) bits.push(`${ordinal(s.drawPos)} to dance`)
+  }
+  return bits
 }
 
 const groupRoute = (d: DancerDay, danceId?: string) => ({
@@ -95,15 +105,18 @@ const NEXT = 'bg-next/55 before:absolute before:inset-y-0 before:left-0 before:w
         <span v-if="competitionName" class="text-muted-foreground block truncate text-sm">
           {{ competitionName }}
         </span>
-        <span v-if="folded && (won.length || day.phase === 'today')" class="mt-1 flex flex-wrap items-center gap-1">
-          <Medal
-            v-for="s in won"
-            :key="s.dance.id"
-            :place="s.place"
-            :tied="s.tied"
-            :fresh="fresh === `${day.dancer.id}:${s.dance.id}`"
-            size="sm"
-          />
+        <!-- Each rosette says which dance it's for: "she won the Fling". -->
+        <span v-if="folded && (won.length || day.phase === 'today')" class="mt-1.5 flex flex-wrap items-start gap-x-2.5 gap-y-1.5">
+          <span v-for="s in won" :key="s.dance.id" class="flex flex-col items-center gap-0.5">
+            <Medal
+              :place="s.place"
+              :tied="s.tied"
+              :fresh="fresh === `${day.dancer.id}:${s.dance.id}`"
+              :dance="s.dance.fullName || s.dance.name"
+              size="sm"
+            />
+            <span class="text-muted-foreground text-caption leading-none" aria-hidden="true">{{ shortDanceName(s.dance.fullName || s.dance.name) }}</span>
+          </span>
           <span v-if="!won.length && day.phase === 'today'" class="text-muted-foreground text-sm">Every result is in</span>
         </span>
       </span>
@@ -133,28 +146,36 @@ const NEXT = 'bg-next/55 before:absolute before:inset-y-0 before:left-0 before:w
             </span>
           </li>
           <li v-for="s in d.dances" :key="s.dance.id">
-            <RouterLink :to="groupRoute(d, s.dance.id)" :class="['press-row focus-inset', ROW, rowSize, s.state === 'next' && NEXT]">
-              <span class="min-w-0">
+            <!-- The dance's name always shows in full: it wraps, and on a narrow
+                 card (or with big text) the state drops below it. -->
+            <RouterLink
+              :to="groupRoute(d, s.dance.id)"
+              :class="['press-row focus-inset relative flex flex-wrap items-center gap-x-3 gap-y-1', rowSize, s.state === 'next' && NEXT]"
+            >
+              <span class="min-w-[9rem] flex-1">
                 <span
                   :class="[
-                    'block truncate',
-                    lg ? 'text-base' : 'text-callout',
+                    'block break-words',
+                    lg || s.state === 'next' ? 'text-base' : 'text-callout',
                     s.state === 'next' ? 'font-semibold' : 'font-medium',
                   ]"
                 >
                   {{ s.dance.fullName || s.dance.name }}
                 </span>
+                <!-- Each fact wraps as a whole, its separator at the line's end. -->
                 <span
-                  v-if="detail(s)"
+                  v-if="detail(s).length"
                   :class="[
-                    'block text-footnote',
-                    s.state === 'next' ? 'text-next-foreground font-medium' : 'text-muted-foreground',
+                    'block',
+                    s.state === 'next' ? 'text-next-foreground text-callout font-semibold' : 'text-muted-foreground text-sm',
                   ]"
                 >
-                  {{ detail(s) }}
+                  <template v-for="(bit, n) in detail(s)" :key="bit">
+                    <span class="inline-block">{{ bit }}{{ n < detail(s).length - 1 ? '&nbsp;·' : '' }}</span>{{ ' ' }}
+                  </template>
                 </span>
               </span>
-              <DanceStatusChip :status="s" :fresh="fresh === `${d.dancer.id}:${s.dance.id}`" />
+              <DanceStatusChip class="ml-auto" :status="s" :fresh="fresh === `${d.dancer.id}:${s.dance.id}`" />
             </RouterLink>
           </li>
           <li v-if="d.overall">

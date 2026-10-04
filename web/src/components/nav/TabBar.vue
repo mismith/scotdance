@@ -47,7 +47,7 @@ function onTap(item: TabItem, e: MouseEvent) {
       <slot name="leading" />
       <div
         data-menu-anchor
-        class="glass pointer-events-auto grid h-16 min-w-0 flex-1 grid-cols-(--cols) rounded-full p-1 [view-transition-name:tabbar]"
+        class="glass @container pointer-events-auto grid h-16 min-w-0 flex-1 grid-cols-(--cols) rounded-full p-1 [view-transition-name:tabbar]"
         :style="{ '--cols': `repeat(${items.length}, minmax(0, 1fr))` }"
       >
         <component
@@ -70,10 +70,12 @@ function onTap(item: TabItem, e: MouseEvent) {
             aria-hidden="true"
           />
           <component :is="item.icon" class="relative size-[1.375rem]" :stroke-width="item.active ? 2.4 : 2" />
-          <span class="relative max-w-full truncate px-px">{{ item.label }}</span>
+          <!-- With big text the labels can't fit: icons only, as iOS does
+               (the query is in rem, so it follows the text size). -->
+          <span class="relative max-w-full truncate px-px @max-[17rem]:sr-only">{{ item.label }}</span>
           <span
             v-if="item.badge"
-            class="bg-secondary ring-card absolute top-2 right-[calc(50%-1.125rem)] size-2 rounded-full ring-2"
+            class="bg-primary ring-card absolute top-2 right-[calc(50%-1.125rem)] size-2 rounded-full ring-2"
             aria-hidden="true"
           />
         </component>

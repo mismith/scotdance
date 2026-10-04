@@ -11,7 +11,7 @@ defineProps<{ label: string; placeholder?: string }>()
   <label class="field flex h-11 items-center gap-2 rounded-xl px-3">
     <Search class="text-muted-foreground size-4 shrink-0" />
     <span class="sr-only">{{ label }}</span>
-    <input v-model="model" type="search" :placeholder="placeholder ?? label" class="min-w-0 flex-1 bg-transparent text-base outline-none" />
+    <input v-model="model" type="search" :placeholder="placeholder ?? label" class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none" />
     <!-- Field-sized, with a 44px target around it. -->
     <button
       v-if="model"

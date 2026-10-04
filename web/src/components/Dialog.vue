@@ -128,12 +128,13 @@ function onDragMove(e: PointerEvent) {
   // Downward 1:1; upward resists, like pulling on something pinned.
   drag.value.dy = dy > 0 ? dy : -Math.sqrt(-dy) * 2
 }
-function onDragEnd() {
+function onDragEnd(e: PointerEvent) {
   const d = drag.value
   if (!d) return
   drag.value = null
   const velocity = d.dy / Math.max(1, performance.now() - d.t0)
-  if (d.dy > 120 || (d.dy > 24 && velocity > 0.6)) emit('close')
+  // A cancelled touch (the system took it) settles back; only a release closes.
+  if (e.type === 'pointerup' && (d.dy > 120 || (d.dy > 24 && velocity > 0.6))) emit('close')
   else {
     settling.value = true
     setTimeout(() => (settling.value = false), 380)

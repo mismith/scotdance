@@ -156,7 +156,7 @@ async function openLate(name: string) {
             Following <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ followed.length }}</span>
           </h2>
           <p v-if="!followed.length" class="surface text-muted-foreground rounded-2xl p-4 text-base">
-            Search for a dancer above, then tap Follow. Everyone you follow shows up here and on Home.
+            Search for a dancer above, open their page and tap Follow. Everyone you follow shows up here and on Home.
           </p>
           <ul v-else :class="['surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]', settle]">
             <li v-for="d in followed" :key="d.id" class="flex items-center pr-1">

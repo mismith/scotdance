@@ -10,6 +10,7 @@ import { useTheme, type Theme } from '@/composables/useTheme'
 import { useAlerts } from '@/composables/useAlerts'
 import { clearDeviceHistory } from '@/lib/deviceHistory'
 import { confirm, toast } from '@/lib/admin/feedback'
+import { isNative } from '@/lib/native'
 import { startViewTransition } from '@/lib/transition'
 
 // Settings: alerts, appearance and this device. Your account (and how you
@@ -93,7 +94,11 @@ async function clearHistory() {
         <div class="surface space-y-3 rounded-2xl p-4">
           <div class="space-y-1">
             <p class="flex items-center gap-3 text-base font-medium"><Sun class="text-primary size-5" /> Appearance</p>
-            <p class="text-muted-foreground pl-8 text-sm">Automatic follows your phone. Text size follows your phone’s settings too.</p>
+            <!-- Only the app can follow the phone's text size; a browser has its own zoom. -->
+            <p class="text-muted-foreground pl-8 text-sm">
+              <template v-if="isNative">Automatic follows your phone. Text size follows your phone’s settings too.</template>
+              <template v-else>Automatic follows your device. To make text bigger, zoom in your browser.</template>
+            </p>
           </div>
           <Segmented :model-value="theme" :options="THEMES" label="Appearance" @update:model-value="setTheme" />
         </div>

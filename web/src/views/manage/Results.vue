@@ -164,7 +164,7 @@ function exportCsv() {
               <span class="min-w-0 flex-1">
                 <span class="flex items-center gap-2">
                   <span class="truncate text-base font-semibold">{{ g.label }}</span>
-                  <CircleCheck v-if="progress(g).done === progress(g).total" class="text-primary size-4.5 shrink-0" aria-hidden="true" />
+                  <CircleCheck v-if="progress(g).done === progress(g).total" class="text-done-foreground size-4.5 shrink-0" aria-hidden="true" />
                   <span v-if="live.has(g.id)" class="bg-live-paper text-live text-caption inline-flex h-5 shrink-0 items-center gap-1.5 rounded-full px-2">
                     <span class="bg-live size-1.5 rounded-full motion-safe:animate-[live-pulse_2s_infinite]" aria-hidden="true" />
                     Dancing now
