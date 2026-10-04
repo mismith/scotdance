@@ -1,0 +1,23 @@
+# App Store lanes. Keys come from the environment, never this repo
+# (docs/store-screenshots.md):
+#   APP_STORE_CONNECT_API_KEY_KEY_ID, APP_STORE_CONNECT_API_KEY_ISSUER_ID,
+#   APP_STORE_CONNECT_API_KEY_KEY_FILEPATH (the .p8)
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Upload the store screenshots (made by `npm run store` in web/) to the version being prepared in App Store Connect. Nothing else: no build, no text, no submission."
+  lane :screenshots do
+    app_store_connect_api_key
+    deliver(
+      screenshots_path: "./fastlane/screenshots",
+      overwrite_screenshots: true,
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_app_version_update: true,
+      submit_for_review: false,
+      run_precheck_before_submit: false,
+      force: true,
+    )
+  end
+end

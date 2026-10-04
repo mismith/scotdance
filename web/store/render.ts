@@ -3,8 +3,8 @@
 // into slots, and saves them where the apps' projects keep them, in the
 // folders fastlane reads (deliver for the App Store, supply for Google Play),
 // so uploading is one command:
-//   ios/App/fastlane/screenshots/en-US/iphone-NN-<scene>.jpg (and ipad-)
-//   android/fastlane/metadata/android/en-US/images/phoneScreenshots/NN-<scene>.jpg
+//   ios/App/fastlane/screenshots/en-CA/iphone-NN-<scene>.jpg (and ipad-)
+//   android/fastlane/metadata/android/en-CA/images/phoneScreenshots/NN-<scene>.jpg
 // JPEG at the top quality with full-resolution colour: no alpha channel (the
 // App Store refuses one), and a third of a PNG's size for the same picture.
 import { execFileSync } from 'node:child_process'
@@ -20,10 +20,10 @@ const OUT = new URL('./out/', import.meta.url).pathname
 
 /** Where each device's shots go, and what their names start with. */
 const DEST: Record<Device['id'], { dir: string; prefix: string }> = {
-  iphone: { dir: `${ROOT}ios/App/fastlane/screenshots/en-US/`, prefix: 'iphone-' },
-  ipad: { dir: `${ROOT}ios/App/fastlane/screenshots/en-US/`, prefix: 'ipad-' },
+  iphone: { dir: `${ROOT}ios/App/fastlane/screenshots/en-CA/`, prefix: 'iphone-' },
+  ipad: { dir: `${ROOT}ios/App/fastlane/screenshots/en-CA/`, prefix: 'ipad-' },
   android: {
-    dir: `${ROOT}android/fastlane/metadata/android/en-US/images/phoneScreenshots/`,
+    dir: `${ROOT}android/fastlane/metadata/android/en-CA/images/phoneScreenshots/`,
     prefix: '',
   },
 }

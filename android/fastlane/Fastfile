@@ -1,0 +1,19 @@
+# Google Play lanes. The service account key's path comes from
+# SUPPLY_JSON_KEY in the environment (docs/store-screenshots.md).
+
+default_platform(:android)
+
+platform :android do
+  desc "Replace the store listing's phone screenshots (made by `npm run store` in web/). Nothing else: no build, no text. Google reviews the change before it shows."
+  lane :screenshots do
+    upload_to_play_store(
+      metadata_path: "./fastlane/metadata/android",
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: false,
+    )
+  end
+end
