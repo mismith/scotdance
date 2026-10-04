@@ -47,12 +47,12 @@ npm run store:upload:android
 ### Keys
 
 Both lanes read their keys from the environment. Keep the key files outside
-the repo (for example in `~/.config/scotdance/`, or the repo root, where `AuthKey_*.p8` and `play-service-account.json` are ignored) and set, in your shell profile:
+the repo (for example in `~/.config/scotdance/`, or the repo root, where `app-store-connect-key.p8` and `play-service-account.json` are ignored) and set, in your shell profile:
 
 ```bash
 export APP_STORE_CONNECT_API_KEY_KEY_ID=…
 export APP_STORE_CONNECT_API_KEY_ISSUER_ID=…
-export APP_STORE_CONNECT_API_KEY_KEY_FILEPATH=~/.config/scotdance/AuthKey_….p8
+export APP_STORE_CONNECT_API_KEY_KEY_FILEPATH=~/.config/scotdance/app-store-connect-key.p8
 export SUPPLY_JSON_KEY=~/.config/scotdance/play-service-account.json
 ```
 
@@ -66,4 +66,4 @@ export SUPPLY_JSON_KEY=~/.config/scotdance/play-service-account.json
   invite the service account's email, with the ScotDance app and **Store
   presence › Edit store listing** permission.
 
-fastlane itself: `brew install fastlane`.
+fastlane itself: `brew install fastlane`, 2.240 or newer (older ones reject the 6.9" iPhone and 13" iPad sizes). The uploads also run from the repo root.

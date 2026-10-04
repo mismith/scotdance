@@ -6,6 +6,8 @@
   "author": "Murray Rowan <murray@mismith.info>",
   "scripts": {
     "build": "npm --prefix web run build && cap sync",
+    "store:upload:ios": "npm --prefix web run store:upload:ios",
+    "store:upload:android": "npm --prefix web run store:upload:android",
     "set-version": "node ./set-version.js",
     "postset-version": "npx cap copy",
     "release": "git commit -a -m $npm_package_version && git tag \"v${npm_package_version}\"",
