@@ -171,7 +171,7 @@ export function dragChip(
     // The lifted shadow, soft and below.
     `<rect x="${n(l + h * 0.04)}" y="${n(t + h * 0.16)}" width="${n(w)}" height="${n(h)}" rx="${n(r)}" fill="rgba(10,16,30,.22)"/>` +
     `<rect x="${n(l)}" y="${n(t)}" width="${n(w)}" height="${n(h)}" rx="${n(r)}" fill="#fff"/>` +
-    `<rect x="${n(l + h * 0.1)}" y="${n(t + h * 0.14)}" width="${n(h * 0.085)}" height="${n(h * 0.72)}" rx="${n(h * 0.0425)}" fill="oklch(0.76 0.15 140)"/>` +
+    `<rect x="${n(l + h * 0.1)}" y="${n(t + h * 0.14)}" width="${n(h * 0.085)}" height="${n(h * 0.72)}" rx="${n(h * 0.0425)}" fill="oklch(0.76 0.12 195)"/>` +
     grip +
     `<text x="${n(l + h * 0.58)}" y="${n(y)}" dominant-baseline="central" ${font} font-weight="600" font-size="${n(fs)}">${label}</text></g>`
   )

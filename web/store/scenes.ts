@@ -31,12 +31,12 @@ export const SCENES: Scene[] = [
   {
     id: 'builder',
     path: `/competitions/${TODAY_ID}/manage/schedule/${TODAY_ID}-day3`,
-    // On a phone the builder is two panes: its palette (dances, age groups)
-    // and the schedule, each scrolling on its own. Scroll the schedule to
-    // the day's first block.
+    // Show the grid itself, not just the palette above it: scroll the day's
+    // first block up under the app bar. Wide, the schedule scrolls in its own
+    // pane; on a phone the whole page scrolls.
     prepare: async (page) => {
       await page
-        .getByText('Morning', { exact: true })
+        .locator('[data-block]')
         .first()
         .evaluate((el) => {
           let pane = el.parentElement
@@ -48,9 +48,10 @@ export const SCENES: Scene[] = [
             )
           )
             pane = pane.parentElement
-          if (pane)
-            pane.scrollTop +=
-              el.getBoundingClientRect().top - pane.getBoundingClientRect().top - 14
+          const scroller = pane ?? (document.scrollingElement as HTMLElement)
+          const bar = document.querySelector('[data-nav="back"]')?.closest('nav')
+          const top = pane ? pane.getBoundingClientRect().top : (bar?.getBoundingClientRect().bottom ?? 0)
+          scroller.scrollTop += el.getBoundingClientRect().top - top - 14
         })
     },
   },
