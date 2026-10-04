@@ -10,7 +10,8 @@ export function getTypesense() {
     client = new Typesense.Client({
       nodes: [{
         host: isEmulator() ? 'localhost' : getConfig().typesense?.host,
-        port: isEmulator() ? 8108 : 443,
+        // TYPESENSE_PORT: a second emulator stack (web/store) runs its own.
+        port: isEmulator() ? Number(process.env.TYPESENSE_PORT) || 8108 : 443,
         protocol: isEmulator() ? 'http' : 'https',
       }],
       apiKey: isEmulator() ? 'xyz' : getConfig().typesense?.api_key,

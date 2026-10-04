@@ -87,15 +87,16 @@ export function dayLabel(day: { name?: string; date?: number | string | null }, 
 
 /**
  * A platform's name as people see it: "B" → "Platform B". Names that already
- * say "Platform" aren't doubled, and a leading "=" shows the rest as is
- * ("=Main hall" → "Main hall"), as in the old app.
+ * say "Platform" anywhere aren't doubled ("Main Platform" stays as is), and a
+ * leading "=" shows the rest as is ("=Main hall" → "Main hall"), as in the old app.
  */
 export function platformLabel(name: string | null | undefined): string {
   const n = (name ?? '').trim()
   if (!n) return ''
   if (n.startsWith('=')) return n.slice(1).trim()
   const rest = n.replace(/^platform\b\s*/i, '')
-  return rest ? `Platform ${rest}` : 'Platform'
+  if (rest !== n) return rest ? `Platform ${rest}` : 'Platform'
+  return /\bplatform\b/i.test(n) ? n : `Platform ${n}`
 }
 
 export function getScheduleDanceName(

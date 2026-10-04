@@ -1,7 +1,7 @@
 import { computed, inject, provide, ref, toRaw, type InjectionKey, type Ref } from 'vue'
 import { compareKeys } from '@/lib/competitionData'
 import { formatWeekday, parseDate } from '@/lib/format'
-import { dayLabel, idList, isSpacerId } from '@/lib/schedule'
+import { dayLabel, idList, isSpacerId, platformLabel } from '@/lib/schedule'
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
 import type { ManagedCompetition } from '@/composables/admin/useManagedCompetition'
@@ -185,11 +185,13 @@ export function createBuilder(m: ManagedCompetition, dayParam: Ref<string | unde
     ordered(dayId.value ? schedule.value.days?.[dayId.value]?.blocks : undefined),
   )
   const readonly = computed(() => !canEdit.value)
+  // Platforms labelled as the public pages show them ("B" → "Platform B", "=Main hall" → "Main hall").
+  const platforms = computed(() => m.platforms.value.map((p) => ({ ...p, label: platformLabel(p.name) || p.label })))
   // On a phone the grid shows one platform at a time (null: all of them).
   const platformView = ref<string | null>(null)
   const shownPlatforms = computed(() => {
-    const one = platformView.value && m.platforms.value.find((p) => p.id === platformView.value)
-    return one ? [one] : m.platforms.value
+    const one = platformView.value && platforms.value.find((p) => p.id === platformView.value)
+    return one ? [one] : platforms.value
   })
 
   const groupsByCategory = computed(() => {
@@ -548,7 +550,7 @@ export function createBuilder(m: ManagedCompetition, dayParam: Ref<string | unde
     dayId,
     blocks,
     readonly,
-    platforms: m.platforms,
+    platforms,
     platformView,
     shownPlatforms,
     dances: m.dances,

@@ -34,3 +34,12 @@ firebase-adminsdk.json
 .typesense/
 /web/stats.html
 *.profraw
+
+# web/store: its emulator config (generated)
+/firebase.store.json
+
+# fastlane: run reports, and never a store key
+**/fastlane/report.xml
+**/fastlane/README.md
+*.p8
+play-service-account.json
