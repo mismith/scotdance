@@ -838,7 +838,8 @@ test('bad inputs: long and emoji names, no or many platforms, deleted age groups
       ),
     )
     await openBuilder(page)
-    await expect(page.getByText('T', { exact: true })).toHaveCount(1)
+    // "Platform T" over its column; "T" in the phone's one-at-a-time switch.
+    await expect(page.getByText(/^(Platform )?T$/)).toHaveCount(1)
     await expectNoSideScroll(page)
     await page.screenshot({
       path: test.info().outputPath(`${info.project.name}-twenty-platforms.png`),
