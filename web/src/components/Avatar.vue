@@ -11,13 +11,13 @@ const props = withDefaults(
     image?: string | null
     /** A followed dancer's colour (see useFollowing). */
     color?: string | null
-    size?: 'xs' | 'sm' | 'lg'
+    size?: 'xs' | 'sm' | 'lg' | 'xl'
     you?: boolean
   }>(),
   { image: null, color: null, size: 'sm' },
 )
 
-const SIZE = { xs: 'size-8 text-xs', sm: 'size-10 text-sm', lg: 'size-16 text-xl' }
+const SIZE = { xs: 'size-8 text-xs', sm: 'size-10 text-sm', lg: 'size-16 text-xl', xl: 'size-24 text-[2rem]' }
 
 const broken = ref(false)
 watch(

@@ -25,10 +25,10 @@ colors:
 typography:
   display:
     fontFamily: "Atkinson Hyperlegible Next, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1.625rem"
+    fontSize: "1.875rem"
     fontWeight: 760
     lineHeight: 1.25
-    letterSpacing: "-0.022em"
+    letterSpacing: "-0.024em"
   title:
     fontFamily: "Atkinson Hyperlegible Next, ui-sans-serif, system-ui, sans-serif"
     fontSize: "1.3125rem"
@@ -222,12 +222,12 @@ Dancer colours: eight saturated hues (red, green, purple, ochre, blue, teal, mag
 
 **Display Font:** Atkinson Hyperlegible Next (with system-ui fallback)
 **Body Font:** Atkinson Hyperlegible Next
-**Label/Mono Font:** Atkinson Hyperlegible Mono, for numbers an organiser picks from in Manage (number tiles), where 1/7 and 6/8 must not be misread. The public number card uses the main face, extra bold with tabular figures, so it reads like a printed bib.
+**Mono Font:** Atkinson Hyperlegible Mono, only where an organiser checks pasted data cell by cell (the dancer import's paste box and preview table). Numbers elsewhere use the main face, extra bold with tabular figures: the number card reads like a printed bib, and Manage's number tiles match it.
 
 **Character:** A typeface designed for readers with low vision: open shapes, unmistakable letters (no I/l/1 confusion). It reads friendly and plain rather than stylish, which is the point.
 
 ### Hierarchy
-- **Display** (760, 1.625rem, tight, -0.022em, balanced): a page's own title (a competition's name). Home's greeting is a step up at 2rem; a competition dancer's name under their bib at 1.875rem.
+- **Display** (760, 1.875rem, tight, -0.024em, balanced): a page's own title (a competition's name, a dancer's name under their bib). Home's greeting is a step up at 2rem.
 - **Title** (700, 1.3125rem, tight, -0.014em, balanced): sheet titles and big section openers.
 - **Headline** (650, 1.0625rem, snug): section headings above lists ("Coming up").
 - **Body** (400 to 600, 1rem): list rows (names semibold), paragraphs. Never smaller than 16px for reading text.
@@ -283,6 +283,9 @@ Every rounded shape uses continuous corners (`corner-shape: superellipse(1.5)`),
 - **Style:** paper well, 1px Field Edge inset outline, 0.75rem corners, 44px tall.
 - **Focus:** 1.5px Saltire Blue edge plus a soft 4px halo.
 - **Error:** 1.5px destructive edge; the message is a full sentence below.
+
+### Profile Hero
+A person's or place's page (dancer, judge, piper, venue) opens centred, as a competition dancer's page does under their number card: a 96px avatar (initials in the dancer's colour when followed) or the venue's map pin tile, the name at Display size, one line of who or where, then Follow (or Favourite) at a button's width. Outside a competition there is no number card; inside a dancer's history each competition row shows the number they wore there as a small card, then their rosettes.
 
 ### Navigation
 - **Tab bar:** a floating glass capsule at the bottom on phones (Home, Competitions, Search, More); inside a competition it swaps to that competition's tabs with a round "leave" button beside it. The current tab sits on a quiet pill.

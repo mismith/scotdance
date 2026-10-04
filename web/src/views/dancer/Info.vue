@@ -13,6 +13,7 @@ import DancerDayCard from '@/components/DancerDayCard.vue'
 import DateTile from '@/components/DateTile.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import Medal from '@/components/Medal.vue'
+import NumberCard from '@/components/NumberCard.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import VisibilityChip from '@/components/VisibilityChip.vue'
 import { fetchEntrySummary, type EntrySummary } from '@/lib/entrySummary'
@@ -109,14 +110,14 @@ function medals(cid: string) {
 <template>
   <article :class="profileColumns">
     <div :class="profileHeader">
-      <header :ref="setHeader" class="flex items-center gap-4">
-        <Avatar :name="name" :image="profile.image.value" :color="color" size="lg" />
+      <header :ref="setHeader" class="flex flex-col items-center gap-4">
+        <Avatar :name="name" :image="profile.image.value" :color="color" size="xl" />
         <div class="min-w-0">
           <h1 class="text-display">{{ name }}</h1>
-          <p v-if="subtitle" class="text-muted-foreground text-callout">{{ subtitle }}</p>
+          <p v-if="subtitle" class="text-muted-foreground text-callout mt-1">{{ subtitle }}</p>
         </div>
       </header>
-      <FollowButton :dancer="{ dancerId, fullName: name }" size="block" />
+      <FollowButton :dancer="{ dancerId, fullName: name }" size="block" class="w-auto! min-w-48" />
     </div>
 
     <div class="space-y-5">
@@ -157,16 +158,21 @@ function medals(cid: string) {
                 <DateTile :date="r.competition.date" :managed="me.organises(r.competitionId)" />
                 <span class="min-w-0 flex-1">
                   <span class="line-clamp-2 text-base leading-snug font-semibold">{{ r.competition.name }}</span>
-                  <span class="text-muted-foreground block truncate text-sm">
-                    {{ [r.numbers.length ? r.numbers.map((n) => `#${n}`).join(', ') : null, ...medals(r.competitionId).groups].filter(Boolean).join(' · ') }}
+                  <span v-if="medals(r.competitionId).groups.length" class="text-muted-foreground block text-sm">
+                    {{ medals(r.competitionId).groups.join(' · ') }}
                   </span>
                   <span v-if="hiddenAs(r.competitionId, r.competition)" class="mt-0.5 flex"><VisibilityChip :visibility="hiddenAs(r.competitionId, r.competition)" /></span>
-                  <span v-if="medals(r.competitionId).best.length || medals(r.competitionId).overall" class="mt-1 flex flex-wrap items-center gap-1">
-                    <template v-if="medals(r.competitionId).overall">
-                      <Medal :place="medals(r.competitionId).overall!.place" dance="Overall" size="sm" />
-                      <span class="mr-1 text-sm font-medium">Overall</span>
-                    </template>
-                    <Medal v-for="m in medals(r.competitionId).best" :key="m.danceId" :place="m.place" :tied="m.tied" :dance="m.name" size="sm" />
+                  <!-- The number they wore there, then what they won, pinned on as on their day card. -->
+                  <span
+                    v-if="r.numbers.length || medals(r.competitionId).best.length || medals(r.competitionId).overall"
+                    class="mt-2 flex flex-wrap items-center gap-x-1 gap-y-1.5"
+                  >
+                    <NumberCard v-for="n in r.numbers" :key="n" :number="n" :color="color" size="xs" class="mr-1.5" />
+                    <Medal v-for="m in medals(r.competitionId).best" :key="m.danceId" :place="m.place" :tied="m.tied" :dance="m.name" />
+                    <span v-if="medals(r.competitionId).overall" class="ml-1.5 inline-flex items-center gap-1.5 border-l pl-2.5">
+                      <Medal :place="medals(r.competitionId).overall!.place" dance="Overall" />
+                      <span class="text-muted-foreground text-sm font-semibold" aria-hidden="true">Overall</span>
+                    </span>
                   </span>
                 </span>
                 <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />

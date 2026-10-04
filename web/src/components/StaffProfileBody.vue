@@ -47,14 +47,14 @@ const next = computed(
 <template>
   <article :class="profileColumns">
     <div :class="profileHeader">
-      <header :ref="setHeader" class="flex items-center gap-4">
-        <Avatar :name="name" :image="image" size="lg" />
+      <header :ref="setHeader" class="flex flex-col items-center gap-4">
+        <Avatar :name="name" :image="image" size="xl" />
         <div class="min-w-0">
           <h1 class="text-display">{{ name }}</h1>
-          <p class="text-muted-foreground text-callout">{{ [label, location].filter(Boolean).join(' · ') }}</p>
+          <p class="text-muted-foreground text-callout mt-1">{{ [label, location].filter(Boolean).join(' · ') }}</p>
         </div>
       </header>
-      <p v-if="next" class="text-callout">
+      <p v-if="next" class="text-callout text-balance">
         <span class="text-muted-foreground">{{ kind === 'judges' ? 'Judging' : 'Piping' }} next:</span>
         {{ ' ' }}
         <RouterLink

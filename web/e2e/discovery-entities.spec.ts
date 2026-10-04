@@ -59,7 +59,8 @@ test('a dancer page shows every competition with their number there', { tag: '@s
   await expect(page.getByRole('heading', { level: 1, name: dancer })).toBeVisible()
   await expect(page.getByText(/5 competitions since 2018/)).toBeVisible()
   const nationals = page.getByRole('link', { name: /Nationals/ })
-  await expect(nationals).toContainText('#1088')
+  // Their number there, as the card they wore.
+  await expect(nationals.getByRole('img', { name: 'Number 1088' })).toBeVisible()
   await nationals.click()
   await expect(page).toHaveURL(/\/competitions\/-L9Sc9TQWQclq_7oA3ij\/dancers\/[^/]+$/)
 })

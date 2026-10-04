@@ -6,6 +6,7 @@ import { ArrowDown01, GripVertical, Shuffle, Trash2, UsersRound } from '@lucide/
 import EmptyState from '@/components/EmptyState.vue'
 import Button from '@/components/ui/Button.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
+import NumberTile from '@/components/admin/NumberTile.vue'
 import { useManagedCompetition, compareNumbers, type MDance } from '@/composables/admin/useManagedCompetition'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
@@ -178,7 +179,7 @@ const anyDraws = computed(() => dances.value.some((d) => stored(d.id).length))
                   <GripVertical class="size-4" />
                 </span>
                 <span class="text-muted-foreground w-6 shrink-0 text-right text-sm tabular-nums">{{ i + 1 }}</span>
-                <span class="bg-paper text-paper-ink min-w-10 rounded-md border px-1.5 py-0.5 text-center font-mono text-sm font-semibold">{{ n }}</span>
+                <NumberTile :num="String(n)" />
                 <span class="min-w-0 flex-1 truncate text-callout font-medium">{{ byNumber.get(n)?.label ?? 'Not in this age group' }}</span>
               </li>
             </TransitionGroup>

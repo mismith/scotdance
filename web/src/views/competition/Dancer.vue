@@ -77,7 +77,7 @@ const fresh = computed(() => {
       <!-- Their number card at poster size: the bib they're wearing today. -->
       <header :ref="setHeader" class="flex flex-col items-center pt-2 text-center">
         <NumberCard :number="dancer.number" :color="color" size="xl" />
-        <h1 class="text-display mt-5 text-[1.875rem]">{{ dancer.fullName }}</h1>
+        <h1 class="text-display mt-5">{{ dancer.fullName }}</h1>
         <p class="text-muted-foreground text-callout mt-1">
           {{ [dancer.group?.fullName, dancer.location].filter(Boolean).join(' · ') }}
         </p>

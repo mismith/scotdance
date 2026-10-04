@@ -38,17 +38,17 @@ const items = computed(() => {
 <template>
   <article :class="profileColumns">
     <div :class="profileHeader">
-      <header :ref="setHeader" class="flex items-center gap-4 lg:flex-col lg:items-start lg:gap-3">
-        <span class="bg-blue-paper text-primary flex size-16 shrink-0 items-center justify-center rounded-2xl" aria-hidden="true">
-          <MapPin class="size-7" />
+      <header :ref="setHeader" class="flex flex-col items-center gap-4">
+        <span class="bg-blue-paper text-primary flex size-24 shrink-0 items-center justify-center rounded-3xl" aria-hidden="true">
+          <MapPin class="size-10" />
         </span>
         <div class="min-w-0">
           <h1 class="text-display">{{ p.name.value }}</h1>
-          <p class="text-muted-foreground text-callout">{{ [address, p.locationLine.value].filter(Boolean).join(', ') }}</p>
+          <p class="text-muted-foreground text-callout mt-1">{{ [address, p.locationLine.value].filter(Boolean).join(', ') }}</p>
         </div>
       </header>
 
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap justify-center gap-2">
         <FavoriteButton :id="id" type="venues" :name="p.name.value" labelled variant="tonal" />
         <Button v-if="mapsHref" :href="mapsHref" target="_blank" rel="noopener">
           Directions <ExternalLink aria-hidden="true" />
@@ -60,7 +60,7 @@ const items = computed(() => {
         :lat="p.lat.value"
         :lng="p.lng.value"
         :href="mapsHref"
-        class="surface h-48 overflow-hidden rounded-2xl"
+        class="surface h-48 self-stretch overflow-hidden rounded-2xl text-left"
       />
     </div>
 

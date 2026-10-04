@@ -63,6 +63,7 @@ const banded = computed(() => !!props.color || props.size === 'md' || props.size
         <path d="M34 2.6h5.4a1.6 1.6 0 0 1 1.6 1.6v3.6a1.6 1.6 0 0 1-1.6 1.6H34z" />
       </svg>
     </span>
-    <span class="relative leading-none">{{ number ?? '–' }}</span>
+    <!-- The number, or a caller's own rendering of it (search shows the typed digits bolder). -->
+    <span class="relative leading-none"><slot>{{ number ?? '–' }}</slot></span>
   </span>
 </template>

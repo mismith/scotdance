@@ -16,6 +16,8 @@ import TextField from '@/components/admin/TextField.vue'
 import SelectField from '@/components/admin/SelectField.vue'
 import ImageField from '@/components/admin/ImageField.vue'
 import FormInput from '@/components/admin/FormInput.vue'
+import NumberTile from '@/components/admin/NumberTile.vue'
+import NumberCard from '@/components/NumberCard.vue'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { useSplit } from '@/composables/admin/useWide'
 import { confirm, toast } from '@/lib/admin/feedback'
@@ -532,7 +534,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
                   selecting && 'after:absolute after:inset-0',
                 ]"
               >
-                <span v-if="spec.badge" class="bg-paper text-paper-ink min-w-10 shrink-0 rounded-md border px-1.5 py-0.5 text-center font-mono text-sm font-semibold tabular-nums">{{ spec.badge(item) || '–' }}</span>
+                <NumberTile v-if="spec.badge" :num="spec.badge(item)" />
                 <span class="min-w-0 flex-1">
                   <span class="block truncate text-base font-medium">{{ spec.title(item) }}</span>
                   <span v-if="spec.subtitle?.(item)" class="text-muted-foreground block truncate text-sm">{{ spec.subtitle(item) }}</span>
@@ -614,7 +616,8 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
       <!-- Editing -->
       <div v-else-if="current" :key="current.id" class="mx-auto max-w-2xl space-y-8 p-4 md:p-8">
         <header class="flex items-center gap-3">
-          <span v-if="spec.badge?.(current)" class="bg-paper text-paper-ink shrink-0 rounded-lg border px-2.5 py-1 font-mono text-xl font-bold tabular-nums">{{ spec.badge(current) }}</span>
+          <!-- A dancer's number at this competition, as the card they'll wear. -->
+          <NumberCard v-if="spec.badge?.(current)" :number="spec.badge(current)" size="md" />
           <div class="min-w-0">
             <h2 class="text-display break-words">{{ spec.title(current) }}</h2>
             <p v-if="spec.subtitle?.(current)" class="text-muted-foreground text-base">{{ spec.subtitle(current) }}</p>

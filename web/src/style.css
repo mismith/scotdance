@@ -585,11 +585,11 @@
 }
 
 /* Type scale (80% of the Front Row prototype, with body floored at 16px):
-   display 26 / title 21 / heading 17 / list 16 / body 16 / secondary 14 /
+   display 30 / title 21 / heading 17 / list 16 / body 16 / secondary 14 /
    caption 12. All rem-based, so the phone's text size (in the app) and browser
    zoom scale everything together. */
 @utility text-display {
-  @apply text-[1.625rem] leading-tight font-[760] tracking-[-0.022em];
+  @apply text-[1.875rem] leading-tight font-[760] tracking-[-0.024em];
   text-wrap: balance;
 }
 @utility text-title {

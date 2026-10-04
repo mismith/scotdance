@@ -2,7 +2,7 @@
 import { computed, nextTick, ref, shallowRef, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { refDebounced, useOnline } from '@vueuse/core'
-import { ChevronRight, CloudOff, Hash, LoaderCircle, MapPin, Search, SearchX, User, X } from '@lucide/vue'
+import { ChevronRight, CloudOff, Hash, Info, LoaderCircle, MapPin, Search, SearchX, X } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import Button from '@/components/ui/Button.vue'
 import Segmented from '@/components/ui/Segmented.vue'
@@ -506,15 +506,10 @@ watch(mode, async (m) => {
               class="press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap-3 py-2 pl-4"
               :aria-label="`${d.number} ${d.fullName}`"
             >
-              <span
-                class="bg-paper text-paper-ink relative inline-flex h-8 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[var(--paper-edge)] text-[0.9375rem] tracking-[-0.02em] tabular-nums"
-                :style="following.paint(d.dancerId)"
-                aria-hidden="true"
-              >
-                <span v-if="colorOf(d)" class="sash absolute inset-x-0 top-0 h-1.5" />
-                <span :class="['font-extrabold', colorOf(d) && 'pt-1']">{{ typed(d.number) }}</span
-                ><span :class="['font-medium text-[color-mix(in_oklab,var(--color-paper-ink)_62%,var(--color-paper))]', colorOf(d) && 'pt-1']">{{ untyped(d.number) }}</span>
-              </span>
+              <!-- Their card, with the digits typed so far in bold. -->
+              <NumberCard :number="d.number" :color="colorOf(d)" size="xs" aria-hidden="true">
+                <span class="font-extrabold">{{ typed(d.number) }}</span><span class="font-medium text-[color-mix(in_oklab,var(--color-paper-ink)_62%,var(--color-paper))]">{{ untyped(d.number) }}</span>
+              </NumberCard>
               <span class="min-w-0">
                 <span class="block truncate text-base font-semibold">{{ d.fullName }}</span>
                 <span class="text-muted-foreground block truncate text-sm">{{ groups.filter(Boolean).join(' · ') }}</span>
@@ -540,7 +535,7 @@ watch(mode, async (m) => {
         />
 
         <p class="text-muted-foreground flex items-center gap-2 px-1 text-sm">
-          <User class="size-4 shrink-0" aria-hidden="true" />
+          <Info class="size-4 shrink-0" aria-hidden="true" />
           Numbers change at every competition, so this looks in one competition at a time.
         </p>
       </template>

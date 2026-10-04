@@ -6,6 +6,7 @@ import { ChevronDown, ClipboardPaste, Download, FileSpreadsheet, RotateCcw } fro
 import Button from '@/components/ui/Button.vue'
 import Checkbox from '@/components/ui/Checkbox.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
+import NumberTile from '@/components/admin/NumberTile.vue'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { toast } from '@/lib/admin/feedback'
 import { goUp } from '@/lib/back'
@@ -377,7 +378,7 @@ async function doImport() {
         <ul v-else class="surface divide-y overflow-hidden rounded-2xl">
           <li v-for="d in shownRows.slice(0, 500)" :key="d.source.row" class="space-y-1 px-4 py-3">
             <div class="flex items-center gap-2">
-              <span class="bg-paper text-paper-ink min-w-10 rounded-md border px-1.5 py-0.5 text-center font-mono text-sm font-semibold">{{ d.source.number || '–' }}</span>
+              <NumberTile :num="d.source.number" />
               <span class="min-w-0 flex-1 truncate text-base font-medium">{{ nameOf(d) }}</span>
               <span :class="['rounded-full px-2 py-0.5 text-sm font-semibold whitespace-nowrap', STATUS[d.status].cls]">{{ STATUS[d.status].label }}</span>
             </div>
