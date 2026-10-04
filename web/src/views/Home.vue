@@ -116,7 +116,6 @@ const unplaced = computed(() => others.value.filter((c) => !c.focus))
 
 // Finished dancers fold to a line of rosettes, so the ones still dancing
 // lead (and a past competition is just its placings).
-const folded = (c: DancerCard) => !!c.focus?.days.length && dayStage(c.focus.days) === 'done'
 
 // The live dot pulses only while results are arriving (one in the last 20
 // minutes), and only once on the page.
@@ -271,7 +270,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
       <!-- The greeting leads; the date and "what now?" follow it rather than
            sitting above it as a label. -->
       <header ref="titleEl">
-        <h1 class="text-display">{{ greeting }}</h1>
+        <h1 class="text-display text-[2rem]">{{ greeting }}</h1>
         <p class="text-muted-foreground text-callout font-medium">{{ todayLabel }}</p>
         <p v-if="context" :class="['mt-1.5 text-base font-medium', settle]">{{ context }}</p>
       </header>
@@ -356,7 +355,6 @@ const { freshKey: liveFresh } = useLiveAlertState()
               :fresh="liveFresh"
               :competition-id="card.focus.competitionId"
               :color="cardColor(card)"
-              :folded="folded(card)"
             />
             <Skeleton v-else-if="card.loading" class="h-40 w-full rounded-2xl!" />
           </template>
@@ -459,7 +457,6 @@ const { freshKey: liveFresh } = useLiveAlertState()
               :competition-id="card.focus.competitionId"
               :color="cardColor(card)"
               :competition-name="`${card.focus.phase === 'before' ? 'Next' : 'Last'}: ${card.focus.competition.name}`"
-              :folded="card.focus.phase === 'after'"
             />
             <Skeleton v-else-if="card.loading" class="h-40 w-full rounded-2xl!" />
             <RouterLink

@@ -151,12 +151,6 @@ const sessions = computed(() =>
 const mode = computed(() => phase.value)
 const posted = computed(() => resultsCount(groups.value, dances.value, results.value))
 
-// A dancer whose day is all settled folds to their rosettes, as on Home,
-// once any new placing has had its moment.
-const SETTLED = new Set(['placed', 'unplaced', 'no-placings', 'not-posted'])
-const settled = (days: DancerDay[]) =>
-  days.every((d) => d.dances.length && [...d.dances, ...(d.overall ? [d.overall] : [])].every((s) => SETTLED.has(s.state)))
-
 // Following no one here: find your dancer right on the Overview.
 const find = ref('')
 const matches = useCompetitionSearch(dancers, find)
@@ -242,7 +236,6 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
             :fresh="freshIn(f.days)"
             :competition-id="competitionId"
             :color="f.color"
-            :folded="settled(f.days) && !freshIn(f.days)"
           />
         </template>
       </section>

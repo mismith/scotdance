@@ -10,7 +10,7 @@ const props = withDefaults(
     place: number | null
     tied?: boolean
     pointed?: boolean
-    size?: 'sm' | 'md'
+    size?: 'sm' | 'md' | 'lg'
     /** Plays the arrival flip (a placing just came in). */
     fresh?: boolean
     /** The dance it's for, so the label says "Highland Fling: 1st place". */
@@ -53,7 +53,7 @@ const label = computed(() => {
     :aria-label="label"
     :class="[
       'text-primary shrink-0 overflow-visible',
-      size === 'md' ? 'h-10 w-[2.125rem]' : 'h-8 w-[1.7rem]',
+      size === 'lg' ? 'h-12 w-[2.55rem]' : size === 'md' ? 'h-10 w-[2.125rem]' : 'h-8 w-[1.7rem]',
       fresh && 'animate-medal motion-reduce:animate-none',
     ]"
   >
@@ -84,7 +84,7 @@ const label = computed(() => {
     v-else-if="pointed"
     :class="[
       'bg-blue-paper text-primary inline-flex shrink-0 items-center justify-center rounded-lg font-semibold',
-      size === 'md' ? 'h-8 px-2 text-sm' : 'h-6 px-1.5 text-xs',
+      size === 'sm' ? 'h-6 px-1.5 text-xs' : 'h-8 px-2 text-sm',
     ]"
     :aria-label="label"
   >

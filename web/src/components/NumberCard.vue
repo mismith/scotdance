@@ -9,14 +9,14 @@ const props = withDefaults(
   defineProps<{
     number: number | string | null | undefined
     color?: string | null
-    size?: 'xs' | 'sm' | 'md' | 'lg'
+    size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   }>(),
   { color: null, size: 'sm' },
 )
 
 // In long lists a plain tile reads calmer; the coloured band marks your
 // dancers, and the big sizes keep the full competitor-card look.
-const banded = computed(() => !!props.color || props.size === 'md' || props.size === 'lg')
+const banded = computed(() => !!props.color || props.size === 'md' || props.size === 'lg' || props.size === 'xl')
 </script>
 
 <template>
@@ -31,6 +31,7 @@ const banded = computed(() => !!props.color || props.size === 'md' || props.size
       size === 'sm' && ['h-11 w-[3.75rem] rounded-md text-xl', banded && 'pb-1'],
       size === 'md' && 'h-16 w-[5.5rem] rounded-lg pb-1.5 text-[1.875rem]',
       size === 'lg' && 'h-24 w-32 rounded-xl pb-2 text-5xl',
+      size === 'xl' && 'h-32 w-44 rounded-2xl pb-3 text-[4rem]',
     ]"
     :style="{ '--dc': color ?? 'var(--strong)' }"
     role="img"
@@ -46,13 +47,13 @@ const banded = computed(() => !!props.color || props.size === 'md' || props.size
       <span
         :class="[
           'absolute rotate-[-24deg] rounded-full bg-linear-to-b from-[#f4f6f8] to-[#9aa3ad] shadow-[0_0_0_0.5px_rgb(0_0_0/0.35)]',
-          size === 'lg' ? 'top-2 left-3 h-1.5 w-6' : 'top-1 left-1.5 h-[3px] w-3',
+          size === 'xl' ? 'top-2.5 left-4 h-2 w-8' : size === 'lg' ? 'top-2 left-3 h-1.5 w-6' : 'top-1 left-1.5 h-[3px] w-3',
         ]"
       />
       <span
         :class="[
           'absolute rotate-[24deg] rounded-full bg-linear-to-b from-[#f4f6f8] to-[#9aa3ad] shadow-[0_0_0_0.5px_rgb(0_0_0/0.35)]',
-          size === 'lg' ? 'top-2 right-3 h-1.5 w-6' : 'top-1 right-1.5 h-[3px] w-3',
+          size === 'xl' ? 'top-2.5 right-4 h-2 w-8' : size === 'lg' ? 'top-2 right-3 h-1.5 w-6' : 'top-1 right-1.5 h-[3px] w-3',
         ]"
       />
     </span>

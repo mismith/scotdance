@@ -60,11 +60,12 @@ const fresh = computed(() => {
     <!-- The page's shape, if it's slow to come (skeletons wait 150ms). -->
     <div v-if="!dancer && !loaded" class="space-y-4" aria-busy="true">
       <span class="sr-only">Loading…</span>
-      <div class="flex items-center gap-4">
-        <Skeleton class="h-16 w-[5.5rem] rounded-lg!" />
-        <div class="flex-1 space-y-2"><Skeleton class="h-7 w-2/3" /><Skeleton class="h-4 w-1/2" /></div>
+      <div class="flex flex-col items-center gap-3 pt-2">
+        <Skeleton class="h-32 w-44 rounded-2xl!" />
+        <Skeleton class="mt-2 h-8 w-2/3" />
+        <Skeleton class="h-4 w-1/2" />
+        <Skeleton class="h-12 w-48 rounded-full!" />
       </div>
-      <Skeleton class="h-11 w-full rounded-full!" />
       <Skeleton class="h-5 w-24" />
       <Skeleton class="h-64 w-full rounded-2xl!" />
     </div>
@@ -73,17 +74,15 @@ const fresh = computed(() => {
     </p>
 
     <template v-else>
-      <header :ref="setHeader" class="flex items-center gap-4">
-        <NumberCard :number="dancer.number" :color="color" size="md" />
-        <div class="min-w-0">
-          <h1 class="text-display">{{ dancer.fullName }}</h1>
-          <p class="text-muted-foreground text-callout">
-            {{ [dancer.group?.fullName, dancer.location].filter(Boolean).join(' · ') }}
-          </p>
-        </div>
+      <!-- Their number card at poster size: the bib they're wearing today. -->
+      <header :ref="setHeader" class="flex flex-col items-center pt-2 text-center">
+        <NumberCard :number="dancer.number" :color="color" size="xl" />
+        <h1 class="text-display mt-5 text-[1.875rem]">{{ dancer.fullName }}</h1>
+        <p class="text-muted-foreground text-callout mt-1">
+          {{ [dancer.group?.fullName, dancer.location].filter(Boolean).join(' · ') }}
+        </p>
+        <FollowButton v-if="dancer.dancerId" :dancer="dancer" size="block" class="mt-4 w-auto! min-w-48" />
       </header>
-
-      <FollowButton v-if="dancer.dancerId" :dancer="dancer" size="block" />
 
       <section class="space-y-2">
         <h2 class="text-heading flex min-h-6 items-center justify-between gap-2 pt-2">
