@@ -3,6 +3,7 @@ import { child } from 'firebase/database'
 import { dataRef } from '@/firebase'
 import { getSaved, onReconnect } from '@/lib/offline'
 import { fetchCompetitionMeta } from '@/lib/competitionMeta'
+import { ensureCompetitionsList, peekCompetition } from '@/composables/useCompetitions'
 import {
   fetchDancers,
   fetchResults,
@@ -134,16 +135,22 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
       const token = ++run
       const list = people.value
       loading.value = list.length > 0
+      // Every competition that could lead a card (on now, coming up, or in
+      // the last few months) is in the recent list Home shows anyway, so
+      // older ones are only read for someone who hasn't competed lately.
+      const recentList = ensureCompetitionsList(false)
       const out: Plan[] = await Promise.all(
         list.map(async ({ id, name }) => {
-          const agg = await fetchAggregate(id)
+          const [agg] = await Promise.all([fetchAggregate(id), recentList])
           const apps = Object.values(agg?.appearances ?? {})
           const compIds = [...new Set(apps.map((a) => a.competitionId).filter((x): x is string => !!x))]
-          const metas = await Promise.all(compIds.map((c) => fetchCompetitionMeta(c)))
-          const comps = compIds
-            .map((cid, i) => ({ competitionId: cid, competition: metas[i] }))
-            .filter((c): c is { competitionId: string; competition: Competition } => !!c.competition)
-            .filter((c) => canOpen(c.competitionId, c.competition))
+          const openable = (metas: Array<Competition | null>) =>
+            compIds
+              .map((cid, i) => ({ competitionId: cid, competition: metas[i] }))
+              .filter((c): c is { competitionId: string; competition: Competition } => !!c.competition)
+              .filter((c) => canOpen(c.competitionId, c.competition))
+          const recent = openable(compIds.map((c) => peekCompetition(c)))
+          const comps = recent.length ? recent : openable(await Promise.all(compIds.map((c) => fetchCompetitionMeta(c))))
           const phases = await Promise.all(
             comps.map(async ({ competitionId, competition }) => {
               const diff = daysFromToday(competition.date ?? null)
