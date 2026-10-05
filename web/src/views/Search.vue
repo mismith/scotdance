@@ -218,10 +218,15 @@ function numberFromName() {
 }
 // The address keeps the mode and, for number search, the competition. One
 // watcher, so two replaces from the same old query can't undo each other.
-watch([mode, competitionId], ([m, id]) =>
-  router.replace({
-    query: { ...route.query, by: m === 'number' ? 'number' : undefined, in: (m === 'number' && id) || undefined },
-  }),
+// Immediate: coming from Home, the competitions are already loaded, so the
+// competition is picked before this watcher exists.
+watch(
+  [mode, competitionId],
+  ([m, id]) =>
+    router.replace({
+      query: { ...route.query, by: m === 'number' ? 'number' : undefined, in: (m === 'number' && id) || undefined },
+    }),
+  { immediate: true },
 )
 
 // A big competition's dancer list is a heavy read: only once number search is used.
