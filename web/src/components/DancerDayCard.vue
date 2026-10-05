@@ -59,10 +59,16 @@ const waiting = computed(
     dances.value.some(({ s }) => s.state === 'waiting') ||
     (!upcoming.value.length && shown.value.some((d) => d.overall?.state === 'later' && d.resultsIn > 0)),
 )
-const calledBack = computed(() => (multi.value ? null : day.value.calledBack))
+// Placings, Overall or championship points: the rosettes say it.
+const placed = computed(() => won.value.length > 0 || !!overall.value || points.value > 0)
+// Callbacks while they're the news: "Called back" until placings come in;
+// "Not called back" (which says not placed too) unless they placed.
+const calledBack = computed(() => (multi.value || placed.value ? null : day.value.calledBack))
+// Not placed anywhere, said only where there were no callbacks to say it.
+const unplaced = computed(() => !placed.value && notPlaced.value > 0 && calledBack.value == null)
 const settled = computed(() => !upcoming.value.length && !waiting.value && dances.value.length > 0)
 const pinned = computed(
-  () => calledBack.value != null || won.value.length || overall.value || points.value || notPlaced.value || waiting.value || (settled.value && day.value.phase === 'today'),
+  () => calledBack.value != null || placed.value || unplaced.value || waiting.value || (settled.value && day.value.phase === 'today'),
 )
 
 const ordinal = (n: number) => `${n}${getOrdinalSuffix(n)}`
@@ -149,10 +155,7 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-5 py-2.5' : 'min-h-12 px
           <span v-if="points" class="bg-blue-paper text-primary ml-1.5 inline-flex h-8 items-center rounded-full px-3 text-sm font-semibold">
             {{ points === 1 ? 'Championship point' : `${points} championship points` }}
           </span>
-          <span v-if="notPlaced && (won.length || overall || points)" class="text-muted-foreground ml-1.5 text-sm font-medium">
-            {{ notPlaced }} not placed
-          </span>
-          <span v-else-if="notPlaced" class="text-muted-foreground text-sm font-medium">Not placed</span>
+          <span v-if="unplaced" class="text-muted-foreground text-sm font-medium">Not placed</span>
           <span
             v-if="waiting"
             class="bg-muted text-muted-foreground border-strong ml-1.5 inline-flex h-8 items-center gap-1.5 rounded-full border border-dashed px-3 text-sm font-semibold"
