@@ -22,7 +22,8 @@ const emit = defineEmits<{ toggle: [] }>()
     ]"
     @click="props.as === 'button' && emit('toggle')"
   >
-    <svg viewBox="0 0 16 16" class="size-3.5" fill="none" aria-hidden="true">
+    <!-- Hidden when unticked: Safari draws the tick's zero-length round cap as a dot. -->
+    <svg viewBox="0 0 16 16" :class="['size-3.5', !props.checked && 'opacity-0']" fill="none" aria-hidden="true">
       <path
         d="M3.5 8.5l3 3 6-7"
         stroke="currentColor"
