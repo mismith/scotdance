@@ -13,6 +13,7 @@ type Submission = {
   contact: Record<string, unknown>
   submitted: string
   submittedBy?: string
+  receivedAt?: number
 }
 const submissionsNamed = async (name: string) =>
   Object.entries((await dbGet<Record<string, Submission>>('competitions:submissions')) ?? {}).filter(([, s]) => s.competition?.name === name)
@@ -133,13 +134,14 @@ test('a step at a time, checked as it goes, and sent once however fast it’s ta
     await page.getByRole('button', { name: 'Submit', exact: true }).dblclick()
     await expect(page.getByRole('heading', { name: 'Submitted' })).toBeVisible()
 
-    // Once, in the shape approval reads (the server adds who sent it).
+    // Once, in the shape approval reads (the server adds who sent it, and
+    // when by its own clock, for the flood check).
     await expect.poll(async () => (await submissionsNamed(name)).map(([, s]) => s.submittedBy)).toEqual([orgId])
     await page.waitForTimeout(1000)
     const all = await submissionsNamed(name)
     expect(all).toHaveLength(1)
     const [[, sent]] = all
-    expect(Object.keys(sent).sort()).toEqual(['competition', 'contact', 'submitted', 'submittedBy'])
+    expect(Object.keys(sent).sort()).toEqual(['competition', 'contact', 'receivedAt', 'submitted', 'submittedBy'])
     expect(sent.competition).toEqual({
       name,
       date: '2027-06-05',
@@ -150,6 +152,7 @@ test('a step at a time, checked as it goes, and sent once however fast it’s ta
     })
     expect(sent.contact).toEqual({ name: 'Morag Test', email, message: 'Two days, same hall.', disclaimer: true })
     expect(Date.parse(sent.submitted)).toBeGreaterThan(Date.now() - 5 * 60_000)
+    expect(sent.receivedAt).toBeGreaterThan(Date.now() - 5 * 60_000)
   } finally {
     await removeSubmissionsNamed(name)
   }
