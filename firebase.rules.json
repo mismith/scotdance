@@ -58,6 +58,10 @@
           ".read": "root.child($environment).child('users:permissions').child(auth.uid).child('organisations').child($organisationId).val() === true" // has PERMISSION to same ORGANISATION
         }
       },
+      "competitions:changed": {
+        // When each part of a competition last changed (stamped by functions), so the app re-uses what it has
+        "$competitionId": { ".read": true }
+      },
       "judges": {
         "$id": { ".read": true } // one at a time: the whole tree is too big to hand out
       },

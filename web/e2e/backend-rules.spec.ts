@@ -80,7 +80,7 @@ test('public reads: published data and profiles yes, private data and other peop
   } finally {
     await dbSet(`competitions/${priv}/listed`, false)
   }
-  for (const node of ['dancers:index/x', 'judges/-x', 'pipers:index', 'venues/-x']) await allowed(`signed-out read of /${node}`, as(null, 'GET', node))
+  for (const node of ['dancers:index/x', 'judges/-x', 'pipers:index', 'venues/-x', `competitions:changed/${pub}`]) await allowed(`signed-out read of /${node}`, as(null, 'GET', node))
   // Profiles (and the dancers' name index) are read one at a time; the whole trees are too big to hand out.
   for (const node of ['dancers', 'dancers:index', 'judges', 'pipers', 'venues']) await refused(`signed-out read of all /${node}`, as(null, 'GET', node))
   // Ids kept for people who aren't showing (e.g. in a competition that was unpublished) stay private.
@@ -114,6 +114,7 @@ test('a parent can save their own things and nothing else', async () => {
   await refused('signed out, submit', as(null, 'PUT', `competitions:submissions/${uid('rules-sub')}`, { competition: { name: 'x' } }))
   await refused('grant themselves a competition', as(parent, 'PUT', `users:permissions/${me}/competitions/${pub}`, true))
   await refused('make themselves a system admin', as(parent, 'PUT', `users:permissions/${me}/admin`, true))
+  await refused('stamp a competition as changed (functions do)', as(parent, 'PUT', `competitions:changed/${pub}/results`, 1))
   await refused('edit a competition', as(parent, 'PATCH', `competitions/${pub}`, { name: 'x' }))
   await refused('edit a competition’s dancers', as(parent, 'PATCH', `competitions:data/${pub}/dancers/d1`, { firstName: 'x' }))
   await refused('write a profile (aggregate)', as(parent, 'PATCH', 'dancers/-Agg', { name: 'x' }))

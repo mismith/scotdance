@@ -20,6 +20,8 @@ const KEEP_MS = 60 * 24 * 60 * 60 * 1000 // saved copies older than 60 days are 
 interface Saved {
   value: unknown
   at: number
+  /** The server's last-changed stamp it was read at, when there is one (see getSavedAt). */
+  version?: number
 }
 
 // --- IndexedDB, as a tiny key/value store. Every failure (private mode,
@@ -48,8 +50,8 @@ function request<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBReq
 }
 
 const readSaved = (key: string) => request<Saved | undefined>('readonly', (s) => s.get(key)).catch(() => undefined)
-const writeSaved = (key: string, value: unknown) =>
-  void request('readwrite', (s) => s.put({ value, at: Date.now() } satisfies Saved, key)).catch(() => {})
+const writeSaved = (key: string, value: unknown, version?: number) =>
+  void request('readwrite', (s) => s.put({ value, at: Date.now(), version } satisfies Saved, key)).catch(() => {})
 
 // Tidy up old copies once per launch.
 void openStore()
@@ -115,11 +117,11 @@ const snapshot = (value: unknown): Snapshot => ({ val: () => value, exists: () =
  * `get()`, but falls back to the copy saved on the device when offline.
  * Pass `key` when the query's own location isn't a stable name for it.
  */
-export function getSaved(q: Query, key = keyFor(q)): Promise<Snapshot> {
+export function getSaved(q: Query, key = keyFor(q), version?: number): Promise<Snapshot> {
   let answered = false
   const network = get(q).then((snap) => {
     answered = true
-    writeSaved(key, snap.val())
+    writeSaved(key, snap.val(), version)
     return snapshot(snap.val())
   })
   const fallback = new Promise<Snapshot>((resolve) => {
@@ -134,6 +136,36 @@ export function getSaved(q: Query, key = keyFor(q)): Promise<Snapshot> {
     else setTimeout(() => void tryDisk(), GRACE_MS)
   })
   return Promise.race([network, fallback])
+}
+
+/**
+ * `getSaved()` for something the server stamps with when it last changed:
+ * a copy saved on the device at this same `version` is still current, so
+ * it's used without downloading anything.
+ */
+export async function getSavedAt(q: Query, version: number | null, key = keyFor(q)): Promise<Snapshot> {
+  if (version != null) {
+    const saved = await readSaved(key)
+    if (saved?.version === version) return snapshot(saved.value)
+  }
+  return getSaved(q, key, version ?? undefined)
+}
+
+/**
+ * A last-changed stamp (or a set of them), from the network. Null when it
+ * can't be read right now (offline, or nothing stamped yet), so the caller
+ * reads as usual.
+ */
+export function getStamp<T>(q: Query): Promise<T | null> {
+  const network = get(q).then(
+    (snap) => (snap.val() as T | null) ?? null,
+    () => null,
+  )
+  const offline = new Promise<null>((resolve) => {
+    if (clearlyOffline()) resolve(null)
+    else setTimeout(() => !connected.value && resolve(null), GRACE_MS)
+  })
+  return Promise.race([network, offline])
 }
 
 /**

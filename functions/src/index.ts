@@ -12,6 +12,7 @@ import * as Organisations from './organisations';
 import * as Notifications from './notifications';
 import { getOnSearchAll } from './search';
 import { runBackfillCoords } from './backfillCoords';
+import { getOnChange } from './changed';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isEmulator } from './utility/env';
 import { runtimeConfig, geocodingApiKey } from './utility/config';
@@ -114,6 +115,13 @@ export const competitionListedChanged = listedDatabase.ref(`/${env}/competitions
   if (change.after.val() === true) await ref.set(true);
   else await ref.remove();
 });
+// When each competition last changed, for the copies the app keeps (see
+// changed.ts). Data is stamped entry by entry, so each event carries one
+// dancer or one dance's results, never a whole section.
+export const competitionDetailsChanged = database().ref(`/${env}/competitions/{competitionId}`)
+  .onWrite(getOnChange(appConfig.db, () => 'details'));
+export const competitionDataChanged = database().ref(`/${env}/competitions:data/{competitionId}/{section}/{itemId}`)
+  .onWrite(getOnChange(appConfig.db, ({ section }) => section));
 // Admin-triggered one-off (or re-run) backfill of lat/lng/country on competition
 // records that lack them. Geocodes via the Google Geocoding API.
 // Pass `{ dryRun: true }` to log proposed writes without persisting.

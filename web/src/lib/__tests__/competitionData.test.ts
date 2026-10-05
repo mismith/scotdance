@@ -6,16 +6,26 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const db: Record<string, unknown> = {}
 const listeners = new Map<string, Array<(snap: { val: () => unknown }) => void>>()
 let failReads = 0
+// The competition's last-changed stamps, and the stamp each section was read at.
+let changed: Record<string, number> | null = null
+const readAt: Array<[string, number | null]> = []
+const edited = vi.fn()
 
 vi.mock('@/firebase', () => ({ database: {} }))
 vi.mock('firebase/database', () => ({ ref: (_db: unknown, path: string) => ({ path }) }))
+vi.mock('@/lib/competitionChanged', async (importOriginal) => ({
+  stampOf: (await importOriginal<typeof import('@/lib/competitionChanged')>()).stampOf,
+  competitionChanged: async () => changed,
+  editedCompetition: (id: string) => edited(id),
+}))
 vi.mock('@/lib/offline', () => ({
   onReconnect: () => {},
-  getSaved: async (r: { path: string }) => {
+  getSavedAt: async (r: { path: string }, version: number | null) => {
     if (failReads > 0) {
       failReads--
       throw new Error('permission_denied')
     }
+    readAt.push([section(r.path), version])
     return { val: () => db[section(r.path)] ?? null }
   },
   onValueSaved: (r: { path: string }, cb: (snap: { val: () => unknown }) => void) => {
@@ -40,6 +50,9 @@ beforeEach(() => {
   for (const k of Object.keys(db)) delete db[k]
   listeners.clear()
   failReads = 0
+  changed = null
+  readAt.length = 0
+  edited.mockClear()
 })
 
 describe('ordering helpers', () => {
@@ -87,6 +100,23 @@ describe('fetchDancers', () => {
     const [a, b] = await Promise.all([data.fetchDancers(c), data.fetchDancers(c)])
     expect(a).toBe(b)
     expect(a.dancers).toHaveLength(1)
+  })
+})
+
+describe('saved copies', () => {
+  it('reads each section at its own last-changed stamp', async () => {
+    changed = { dancers: 5, categories: 7, results: 9 }
+    await data.fetchDancers(id())
+    expect(readAt).toEqual([
+      ['dancers', 5],
+      ['groups', null], // not stamped yet: read as usual
+      ['categories', 7],
+    ])
+  })
+
+  it('stops going by stamps for a competition an organiser just edited here', () => {
+    data.forgetCompetition('c-edited')
+    expect(edited).toHaveBeenCalledWith('c-edited')
   })
 })
 

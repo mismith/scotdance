@@ -18,8 +18,9 @@ let failNext: string | null = null
 vi.mock('@/firebase', () => ({ dataRef: (path: string) => ({ path }) }))
 vi.mock('firebase/database', () => ({ child: (p: { path: string }, k: string) => ({ path: `${p.path}/${k}` }) }))
 vi.mock('@/lib/offline', () => ({
-  getSaved: async (r: { path: string }) => ({ val: () => meta[r.path.split('/').at(-1)!] ?? null }),
+  getSavedAt: async (r: { path: string }) => ({ val: () => meta[r.path.split('/').at(-1)!] ?? null }),
 }))
+vi.mock('@/lib/competitionChanged', () => ({ competitionChanged: async () => null, stampOf: () => null }))
 vi.mock('@/stores/me', () => ({ useMeStore: () => me }))
 vi.mock('@/composables/useCompetitions', () => ({ peekCompetition: () => null }))
 vi.mock('@/lib/competitionData', () => {

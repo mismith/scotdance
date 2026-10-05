@@ -11,7 +11,8 @@ import {
 } from 'vue'
 import { child } from 'firebase/database'
 import { dataRef } from '@/firebase'
-import { getSaved } from '@/lib/offline'
+import { competitionChanged, stampOf } from '@/lib/competitionChanged'
+import { getSavedAt } from '@/lib/offline'
 import {
   fetchDancers,
   fetchResults,
@@ -265,7 +266,8 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     }
 
     try {
-      const snap = await getSaved(competitionMetaRef(id))
+      // Re-used from the device while its details haven't changed.
+      const snap = await getSavedAt(competitionMetaRef(id), stampOf(await competitionChanged(id), 'details'))
       if (id !== competitionId.value) return
       const value = snap.val() as Competition | null
       if (value && typeof value === 'object') {

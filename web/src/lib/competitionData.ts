@@ -1,6 +1,7 @@
 import { ref as dbRef } from 'firebase/database'
 import { database } from '@/firebase'
-import { getSaved, onReconnect, onValueSaved } from '@/lib/offline'
+import { competitionChanged, editedCompetition, stampOf } from '@/lib/competitionChanged'
+import { getSavedAt, onReconnect, onValueSaved } from '@/lib/offline'
 import {
   danceFullName,
   dancerFullName,
@@ -22,10 +23,11 @@ import {
 
 // Cached, promise-shared loaders for a competition's data sections. The
 // competition screens and Home (which shows several competitions at once)
-// share one fetch per section per session. On competition day the same
-// bundles stream instead (`watch*`), so late entries, a redrawn order or a
-// changed schedule show up without a restart; each update also refreshes
-// the cache.
+// share one fetch per section per session, and a section already saved on
+// the device is re-used while it hasn't changed (see competitionChanged).
+// On competition day the same bundles stream instead (`watch*`), so late
+// entries, a redrawn order or a changed schedule show up without a restart;
+// each update also refreshes the cache.
 
 const NAMESPACE = import.meta.env.VITE_FIREBASE_DATA_NAMESPACE || 'production'
 
@@ -164,6 +166,7 @@ onReconnect(() => {
 /** Drop everything cached for one competition (after an organiser edits it). */
 export function forgetCompetition(id: string) {
   for (const map of Object.values(caches)) map.delete(id)
+  editedCompetition(id)
 }
 
 function cached<T>(map: Map<string, Promise<T>>, id: string, load: () => Promise<T>) {
@@ -177,8 +180,10 @@ function cached<T>(map: Map<string, Promise<T>>, id: string, load: () => Promise
   return p
 }
 
-const readAll = (id: string, sections: Section[]) =>
-  Promise.all(sections.map((s) => getSaved(sectionRef(id, s)).then((snap) => snap.val())))
+const readAll = async (id: string, sections: Section[]) => {
+  const changed = await competitionChanged(id)
+  return Promise.all(sections.map((s) => getSavedAt(sectionRef(id, s), stampOf(changed, s)).then((snap) => snap.val())))
+}
 
 export function fetchDancers(id: string): Promise<DancersBundle> {
   return cached(caches.dancers, id, async () => {
