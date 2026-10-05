@@ -1,0 +1,19 @@
+Hello {{ contact.name }}!
+
+You can now manage {{ competition.name }}.
+Some of the first things you could do:
+  - add a logo or photo, and a link to registration
+  - add its judges, pipers and sponsors
+  - list it, so it shows in the competitions list
+  - then its dances, age groups, dancers and schedule
+
+Manage it via the link below:
+{{ admin.link }}
+
+---
+
+If you have any questions or feedback, feel free to reply to this email.
+
+---
+
+{{ app.name }} | {{ app.description }} | {{ app.url }}

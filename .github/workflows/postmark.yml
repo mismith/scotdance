@@ -1,0 +1,26 @@
+name: Postmark templates
+
+# postmark/ is the source of truth for the email templates: a change there on
+# next goes to Postmark. It only adds and updates; a template deleted here
+# has to be deleted in Postmark too. The token is the server's API token, in
+# the POSTMARK_SERVER_TOKEN secret.
+
+on:
+  push:
+    branches:
+      - next
+    paths:
+      - 'postmark/**'
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+      - name: Push the templates
+        env:
+          POSTMARK_SERVER_TOKEN: ${{ secrets.POSTMARK_SERVER_TOKEN }}
+        run: npx --yes postmark-cli@1.6.19 templates push postmark --force

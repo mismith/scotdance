@@ -1,0 +1,19 @@
+{
+  "Name": "Competition Admin Invite",
+  "Alias": "competition-admin-invite",
+  "Subject": "You’re invited to help manage {{ competition.name }}",
+  "TemplateType": "Standard",
+  "TestRenderModel": {
+    "app": {
+      "name": "name_Value",
+      "url": "url_Value",
+      "description": "description_Value"
+    },
+    "competition": {
+      "name": "name_Value"
+    },
+    "invite": {
+      "link": "link_Value"
+    }
+  }
+}

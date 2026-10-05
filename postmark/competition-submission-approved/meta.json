@@ -1,0 +1,22 @@
+{
+  "Name": "Competition Submission Approved",
+  "Alias": "competition-submission-approved",
+  "Subject": "Your competition submission was approved!",
+  "TemplateType": "Standard",
+  "TestRenderModel": {
+    "competition": {
+      "name": "name_Value"
+    },
+    "app": {
+      "url": "url_Value",
+      "name": "name_Value",
+      "description": "description_Value"
+    },
+    "contact": {
+      "name": "name_Value"
+    },
+    "admin": {
+      "link": "link_Value"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+An approval is required for {{ competition.name }}.
+
+It was submitted by {{ contact.name }}{{#contact.message}}, who has this to say:{{/contact.message}}{{^contact.message}}.{{/contact.message}}
+
+    {{#contact.message}}{{.}}{{/contact.message}}
+
+---
+
+{{ app.name }} | {{ app.description }} | {{ app.url }}

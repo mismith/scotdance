@@ -1,0 +1,13 @@
+Hello {{ contact.name }}!
+
+{{ competition.name }} is now pending approval.
+
+Your submission will be reviewed within 7 days, and you will receive another email once approved.
+
+---
+
+If you have any questions or feedback, feel free to reply to this email.
+
+---
+
+{{ app.name }} | {{ app.description }} | {{ app.url }}

@@ -1,0 +1,19 @@
+{
+  "Name": "Competition Submission",
+  "Alias": "competition-submission",
+  "Subject": "Your competition has been submitted to {{ app.name }}",
+  "TemplateType": "Standard",
+  "TestRenderModel": {
+    "app": {
+      "name": "name_Value",
+      "url": "url_Value",
+      "description": "description_Value"
+    },
+    "competition": {
+      "name": "name_Value"
+    },
+    "contact": {
+      "name": "name_Value"
+    }
+  }
+}
