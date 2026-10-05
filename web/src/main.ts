@@ -9,6 +9,7 @@ import { auth, firebaseApp } from './firebase'
 import { vTapFeedback } from './directives/tapFeedback'
 import { vProximity } from './directives/proximity'
 import { setupNative } from './lib/native'
+import { handleNotificationTaps } from './composables/useAlerts'
 import './composables/useTheme'
 import '@fontsource-variable/atkinson-hyperlegible-next/wght.css'
 // Competitor numbers and other figures that line up in columns.
@@ -63,3 +64,5 @@ router.onError((err, to) => {
 
 app.mount('#app')
 setupNative()
+// A tapped notification opens what it's about.
+handleNotificationTaps((link) => void router.push(link))

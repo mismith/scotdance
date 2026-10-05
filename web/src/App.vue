@@ -5,6 +5,7 @@ import { useHead } from '@unhead/vue'
 import GlobalBottomNav from '@/components/nav/GlobalBottomNav.vue'
 import AppSidebar from '@/components/nav/AppSidebar.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
+import AlertsPrompt from '@/components/AlertsPrompt.vue'
 import AlertBanner from '@/components/AlertBanner.vue'
 import OfflineNotice from '@/components/OfflineNotice.vue'
 import { confirmRequest, toasts } from '@/lib/admin/feedback'
@@ -70,6 +71,7 @@ watch(() => me.email, (email) => crisp.setUserEmail(email), { immediate: true })
   <SupportLauncher />
   <LoginDialog />
   <AlertBanner />
+  <AlertsPrompt />
   <OfflineNotice />
   <FeedbackHost v-if="feedbackUsed" />
   <RolesSheet />

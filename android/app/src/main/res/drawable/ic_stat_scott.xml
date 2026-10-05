@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Scott, the ScotDance mark, for notifications (white; Android tints it). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="88"
+        android:pathData="M256.00,288.16 L47.53,150.18 M256.00,288.16 L464.47,150.18 M256.00,288.16 L47.53,426.15 M256.00,288.16 L464.47,426.15" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M208.00,288.16 a48.00,48.00 0 1,0 96.00,0 a48.00,48.00 0 1,0 -96.00,0 M188.00,117.16 a68.00,68.00 0 1,0 136.00,0 a68.00,68.00 0 1,0 -136.00,0" />
+</vector>

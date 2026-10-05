@@ -87,7 +87,10 @@
           // Organisers read and write everything here, invites included. The
           // public reads a published competition section by section (both apps
           // do), so invites (emails, open invite ids) stay private.
-          "dancers": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
+          "dancers": {
+            ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true", // is PUBLISHED
+            ".indexOn": ["groupId"] // result alerts look up an age group's entries
+          },
           "groups": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
           "categories": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
           "dances": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
@@ -136,6 +139,12 @@
         "$userId": {
           ".read": "auth !== null && auth.uid === $userId", // is SELF
           ".write": "auth !== null && auth.uid === $userId" // is SELF
+        }
+      },
+      "users:tokens": {
+        "$userId": {
+          ".read": "auth !== null && auth.uid === $userId", // is SELF
+          ".write": "auth !== null && auth.uid === $userId" // is SELF: device push tokens
         }
       },
       "users:dancerColors": {

@@ -1,6 +1,7 @@
 // A small in-memory Realtime Database for testing the Cloud Functions
-// aggregators (functions/src/utility/aggregate.ts): paths, get / set /
-// update / remove / push, transactions whose first try sees null (as the
+// (the aggregators in functions/src/utility/aggregate.ts, and alerts in
+// functions/src/notifications.ts): paths, get / set / update / remove / push,
+// orderByChild queries, transactions whose first try sees null (as the
 // admin SDK's do when nothing is cached), and the trigger events each write
 // causes, so a test can run them in order, out of order, or all at once.
 
@@ -12,10 +13,14 @@ const parts = (path: string) => path.split('/').filter(Boolean)
 /** Let other "function instances" run: every database call is a round trip. */
 const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
 
-/** RTDB stores no nulls and no empty objects. */
+/** RTDB stores no nulls and no empty objects, and gives lists (like placings) back as arrays. */
 function tidy(v: Json): Json {
   if (v === null || v === undefined) return null
   if (typeof v !== 'object') return v
+  if (Array.isArray(v)) {
+    const list = v.map(tidy)
+    return list.some((x) => x !== null) ? list : null
+  }
   const out: Obj = {}
   for (const [k, x] of Object.entries(v as Obj)) {
     const t = tidy(x)
@@ -63,6 +68,50 @@ function matchesOf(tree: Json, pattern: string[], at: string[] = [], params: Rec
   const wild = /^\{(.+)\}$/.exec(head)
   if (!wild) return head in (node as Obj) ? matchesOf(tree, rest, [...at, head], params) : []
   return Object.keys(node as Obj).flatMap((k) => matchesOf(tree, rest, [...at, k], { ...params, [wild[1]]: k }))
+}
+
+/** RTDB's orderByChild order: missing, false, true, numbers, strings, then objects. */
+function compareOrder(a: Json, b: Json): number {
+  const rank = (v: Json) => (v === null || v === undefined ? 0 : v === false ? 1 : v === true ? 2 : typeof v === 'number' ? 3 : typeof v === 'string' ? 4 : 5)
+  const ra = rank(a)
+  const rb = rank(b)
+  if (ra !== rb) return ra - rb
+  if ((ra !== 3 && ra !== 4) || a === b) return 0
+  return (a as number | string) < (b as number | string) ? -1 : 1
+}
+
+/** `ref.orderByChild(key)` with `startAt`, `endAt` and `equalTo`. */
+export class FakeQuery {
+  constructor(
+    private readonly db: FakeRtdb,
+    readonly path: string,
+    private readonly key: string,
+    private readonly bounds: { start?: Json; end?: Json } = {},
+  ) {}
+
+  startAt(value: Json) {
+    return new FakeQuery(this.db, this.path, this.key, { ...this.bounds, start: value })
+  }
+
+  endAt(value: Json) {
+    return new FakeQuery(this.db, this.path, this.key, { ...this.bounds, end: value })
+  }
+
+  equalTo(value: Json) {
+    return new FakeQuery(this.db, this.path, this.key, { start: value, end: value })
+  }
+
+  async get() {
+    await tick()
+    const node = this.db.read(this.path)
+    if (!node || typeof node !== 'object') return snap(null)
+    const { bounds } = this
+    const hits = Object.entries(node as Obj).filter(([, child]) => {
+      const v = getIn(child, parts(this.key))
+      return (!('start' in bounds) || compareOrder(v, bounds.start) >= 0) && (!('end' in bounds) || compareOrder(v, bounds.end) <= 0)
+    })
+    return snap(hits.length ? Object.fromEntries(hits) : null)
+  }
 }
 
 const related = (a: string, b: string) => a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`) || b === ''
@@ -132,6 +181,10 @@ export class FakeRef {
 
   push() {
     return this.child(this.db.pushId())
+  }
+
+  orderByChild(key: string) {
+    return new FakeQuery(this.db, this.path, key)
   }
 
   async get() {

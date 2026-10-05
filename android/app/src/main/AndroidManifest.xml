@@ -9,6 +9,10 @@
         android:theme="@style/AppTheme">
         <!-- Shares saved scotdance.app passwords with the app (Google Password Manager). -->
         <meta-data android:name="asset_statements" android:resource="@string/asset_statements" />
+        <!-- Push alerts: Scott as the icon, and the Results channel the app makes. -->
+        <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_scott" />
+        <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/notification_blue" />
+        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="results" />
 
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"

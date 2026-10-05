@@ -109,7 +109,38 @@ Rollback: `develop` still has the v3 app. Check it out, `npm ci && npm run build
 - E2E: `npm run e2e` in `web/` against a running `npm run local`
   (`E2E_BASE_URL` / `E2E_EMULATOR_PORT_OFFSET` point it at another stack).
 
+## Organisations and push alerts (if they ship with v4)
+
+Prototype on branch `claude/v4-orgs-push`; design in ADR 0005 (organisations)
+and ADR 0006 (push alerts). Done already (2026-10-04): the APNs key is in
+Firebase, `GoogleService-Info.plist` is in the iOS app, and its push, Time
+Sensitive and background capabilities are on.
+
+Merging to `next` deploys next.scotdance.app (staging, on the real backend),
+so the backend goes first, from the branch, after Phase 1's steps:
+
+1. `firebase deploy --only database,storage` (organisations, device tokens,
+   the dancers `groupId` index; organisation logos and files).
+2. `firebase deploy --only functions` (`createOrganisation`,
+   `organisationInvite*`, `organisationDeleted`, the alert triggers, the
+   `sendResultAlerts` Cloud Tasks queue and the hourly `morningSummaries`,
+   which makes a Cloud Scheduler job). Then enter a test result on a
+   published competition you follow and check `sendResultAlerts` ran in the
+   functions logs: it's the one part the emulator can't prove (its URL
+   lookup and invoker permission).
+3. Merge to `next`. The web deploys, and `.github/workflows/postmark.yml`
+   pushes the email templates in `postmark/` (the source of truth; it needs
+   the `POSTMARK_SERVER_TOKEN` repo secret, the server's API token).
+4. System admin › Tools › Alerts › Followers: Rebuild, once.
+5. System admin › Organisations › Tag: this season's competitions first.
+6. TestFlight / Play internal testing on real phones before the app ships:
+   follow a dancer, enter a result in Manage, wait a minute.
+
+Until cutover, emailed links open scotdance.app, which is still v3: an
+organisation invite's email link lands where there are no organisations.
+On staging, send people the invite's Copy link instead (it opens
+next.scotdance.app).
+
 ## Parked
 
-- Push alerts: branch `claude/front-row-push-alerts` (needs rebasing).
 - Tartans: branch `claude/tartans-parked`, as a future optional side tool.

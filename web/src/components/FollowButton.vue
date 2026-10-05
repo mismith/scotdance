@@ -6,6 +6,7 @@ import DancerColorPicker from '@/components/DancerColorPicker.vue'
 import { useFollowing, type FollowableDancer } from '@/composables/useFollowing'
 import { followHaptic } from '@/lib/haptics'
 import { useMorph } from '@/lib/morph'
+import { askForAlerts } from '@/components/AlertsPrompt.vue'
 
 // Follow a dancer. On their page it's a full-width button: Follow, then
 // Following, which opens a small menu with their colour and Stop following.
@@ -42,6 +43,8 @@ async function onClick(e: Event) {
   // A small lift and a firm tap for following; nothing for unfollowing.
   if (!was && following.isFollowing(props.dancer)) {
     followHaptic()
+    // The moment notifications mean something: offer them (once).
+    askForAlerts(props.dancer.firstName ?? name.value.split(' ')[0] ?? '')
     popping.value = false
     await nextTick()
     popping.value = true

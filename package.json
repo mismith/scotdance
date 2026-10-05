@@ -14,6 +14,7 @@
     "deploy": "firebase deploy --only hosting:production,functions,database,storage && git push origin HEAD:main --tags"
   },
   "dependencies": {
+    "@capacitor-firebase/messaging": "^8.5.2",
     "@capacitor/android": "^8.5.2",
     "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.5.2",

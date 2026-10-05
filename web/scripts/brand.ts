@@ -82,6 +82,38 @@ for (const d of readdirSync(res).filter((n) => n.startsWith('mipmap-') && !n.inc
   await png(icon({ frame: 'circle' }), width(`${dir}/ic_launcher_foreground.png`), `${dir}/ic_launcher_foreground.png`)
 }
 
+// Android's small notification icon (push alerts): Scott alone, white on
+// clear, as a vector drawable; the system tints it.
+{
+  const x0 = CX - 256
+  const y0 = (LOGO.top + LOGO.bottom) / 2 - 256
+  const f = (n: number) => n.toFixed(2)
+  const limbs = [...p.hands, ...p.legs.map((l) => l.foot)]
+    .map((q) => `M${f(p.hip.x - x0)},${f(p.hip.y - y0)} L${f(q.x - x0)},${f(q.y - y0)}`)
+    .join(' ')
+  const circle = (cx: number, cy: number, r: number) =>
+    `M${f(cx - x0 - r)},${f(cy - y0)} a${f(r)},${f(r)} 0 1,0 ${f(2 * r)},0 a${f(r)},${f(r)} 0 1,0 ${f(-2 * r)},0`
+  writeFileSync(
+    `${res}/drawable/ic_stat_scott.xml`,
+    `<?xml version="1.0" encoding="utf-8"?>
+<!-- Scott, the ScotDance mark, for notifications (white; Android tints it). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="${WIDTH}"
+        android:pathData="${limbs}" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="${circle(p.hip.x, p.hip.y, WIDTH / 2 + 4)} ${circle(p.head.x, p.head.y, HEAD_R)}" />
+</vector>
+`,
+  )
+}
+
 // The Play Store feature graphic: Scott and the name, white on the blue.
 const font = readFileSync(
   `${ROOT}web/node_modules/@fontsource-variable/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-wght-normal.woff2`,

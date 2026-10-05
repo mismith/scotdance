@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The brand blue, for push alerts' icon. -->
+    <color name="notification_blue">#0065BD</color>
+</resources>

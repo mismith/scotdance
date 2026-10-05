@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { onScopeDispose, reactive, ref } from 'vue'
-import { onValue } from 'firebase/database'
+import { RouterLink } from 'vue-router'
+import { computed, onScopeDispose, reactive, ref, watch } from 'vue'
+import { get, limitToLast, onValue, orderByKey, query } from 'firebase/database'
 import { httpsCallable } from 'firebase/functions'
-import { RefreshCw } from '@lucide/vue'
+import { RefreshCw, Send } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
 import TextField from '@/components/admin/TextField.vue'
+import NotificationCard from '@/components/NotificationCard.vue'
 import { dataRef, functions } from '@/firebase'
 import { confirm } from '@/lib/admin/feedback'
 import { versionJump } from '@/lib/admin/versions'
@@ -75,6 +77,7 @@ const WORDS: Record<string, string> = {
   scanned: 'checked',
   noQuery: 'with no address',
   failed: 'not found',
+  messages: 'sent',
 }
 function describe(data: unknown): string {
   if (data == null) return 'Done.'
@@ -155,7 +158,37 @@ const PROFILES = [
   { key: 'Venue', label: 'Venues' },
   { key: 'Dancer', label: 'Dancers' },
 ]
-for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`agg${p.key}`, `bp${p.key}`]), 'coords'])
+// Alerts: the followers lists they're sent from, built once when the alert
+// functions go live (they keep themselves up to date after that). And, on a
+// local emulator, where nothing really sends, the alerts that would have.
+interface LoggedAlert { uid?: string; title?: string; body?: string; link?: string; kind?: string; tokens?: number; at?: number }
+const outbox = ref<Array<LoggedAlert & { id: string }>>([])
+const offOutbox = onValue(query(dataRef('notifications:log'), orderByKey(), limitToLast(30)), (snap) => {
+  outbox.value = Object.entries((snap.val() ?? {}) as Record<string, LoggedAlert>)
+    .map(([id, a]) => ({ ...a, id }))
+    .reverse()
+}, () => (outbox.value = []))
+onScopeDispose(offOutbox)
+const emails = reactive<Record<string, string>>({})
+watch(outbox, async (list) => {
+  for (const uid of new Set(list.map((a) => a.uid).filter((u): u is string => !!u && !(u in emails)))) {
+    emails[uid] = (await get(dataRef(`users/${uid}/email`)).catch(() => null))?.val() ?? 'Someone'
+  }
+})
+// "now", "4m ago", then the time: how a phone dates its notifications.
+function ago(at?: number) {
+  if (!at) return ''
+  const m = Math.round((Date.now() - at) / 60_000)
+  if (m < 1) return 'now'
+  if (m < 60) return `${m}m ago`
+  return new Date(at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+}
+const KIND: Record<string, string> = { results: 'Results', morning: 'Morning of', published: 'Dancer list is up' }
+const isEmulator = import.meta.env.MODE === 'emulator'
+const showOutbox = computed(() => isEmulator || outbox.value.length > 0)
+const morningFor = ref('')
+
+for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`agg${p.key}`, `bp${p.key}`]), 'coords', 'followers', 'morning'])
   jobs[key] = { running: false, result: null, error: null }
 </script>
 
@@ -221,6 +254,47 @@ for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`ag
           </Button>
         </li>
       </ul>
+    </section>
+
+    <section class="space-y-3">
+      <div>
+        <h2 class="text-heading">Alerts</h2>
+        <p class="text-muted-foreground text-sm">Who follows each dancer and competition, which alerts go to. Build it once when alerts first go live; it keeps itself up to date after that.</p>
+      </div>
+      <ul class="surface divide-y rounded-2xl">
+        <li class="flex flex-wrap items-center gap-3 py-2 pr-2 pl-4">
+          <span class="min-w-0 flex-1">
+            <span class="block text-base font-medium">Followers</span>
+            <span v-if="job('followers').result" class="text-done-foreground block text-sm">{{ job('followers').result }}</span>
+            <span v-if="job('followers').error" class="text-destructive block text-sm font-medium">{{ job('followers').error }}</span>
+          </span>
+          <Button :busy="job('followers').running" @click="run('followers', 'backfillFollowers')">
+            <RefreshCw v-if="!job('followers').running" /> Rebuild
+          </Button>
+        </li>
+      </ul>
+      <template v-if="showOutbox">
+        <form v-if="isEmulator" class="flex flex-wrap items-end gap-2" @submit.prevent="run('morning', 'sendMorningSummary', { competitionId: morningFor })">
+          <label class="min-w-0 flex-1 space-y-1.5">
+            <span class="text-callout block font-medium">Send a morning summary now</span>
+            <input v-model="morningFor" type="text" placeholder="Competition id" class="field h-11 w-full rounded-xl px-3 text-base" />
+          </label>
+          <Button type="submit" :busy="job('morning').running" :disabled="!morningFor.trim()"><Send v-if="!job('morning').running" /> Send</Button>
+        </form>
+        <p v-if="job('morning').result" class="text-done-foreground text-sm">{{ job('morning').result }}</p>
+        <h3 class="text-callout pt-2 font-semibold">Sent here instead <span class="text-muted-foreground font-normal">(local emulator)</span></h3>
+        <p class="text-muted-foreground text-sm">Nothing reaches a phone from the emulator: each alert lands here, as it would have looked.</p>
+        <p v-if="!outbox.length" class="text-muted-foreground text-sm">None yet. Post a result for a dancer someone follows.</p>
+        <ul v-else class="bg-blue-paper space-y-3 rounded-2xl p-3">
+          <li v-for="a in outbox" :key="a.id" class="space-y-1">
+            <NotificationCard :title="a.title ?? ''" :body="a.body" :when="ago(a.at)" />
+            <p class="text-muted-foreground px-3 text-xs">
+              {{ KIND[a.kind ?? ''] ?? 'Alert' }} · to {{ a.uid ? emails[a.uid] ?? '…' : 'someone' }} · {{ a.tokens === 1 ? '1 phone' : `${a.tokens ?? 0} phones` }}
+              <RouterLink v-if="a.link" :to="a.link" class="text-primary font-medium"> · Open</RouterLink>
+            </p>
+          </li>
+        </ul>
+      </template>
     </section>
 
     <section class="space-y-3">

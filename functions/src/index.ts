@@ -9,12 +9,16 @@ import * as Judges from './judges';
 import * as Pipers from './pipers';
 import * as Venues from './venues';
 import * as Organisations from './organisations';
+import * as Notifications from './notifications';
 import { getOnSearchAll } from './search';
 import { runBackfillCoords } from './backfillCoords';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isEmulator } from './utility/env';
 import { runtimeConfig, geocodingApiKey } from './utility/config';
 import { database, https } from './utility/triggers';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { onTaskDispatched } from 'firebase-functions/v2/tasks';
+import { enqueue, TASKS_INVOKER } from './utility/tasks';
 
 // In the emulator, trigger snapshots build their `.ref` from
 // `http://{emulator host}/?ns=scotdance` on this same app (see
@@ -85,7 +89,10 @@ export const competitionDeleted = appConfig.database.ref(`/${env}/competitions/{
   });
 // Publishing links the competition's dancers into their public profiles
 // (unpublishing unlinks them), which can take a while for a big one.
+// Then followers hear it's live: after the sync, which links the entries to
+// the dancers they follow (so this isn't a trigger of its own).
 const syncDancers = Dancers.getOnSyncCompetition(appConfig.db);
+const notifyFollowersOnPublished = Notifications.getOnCompetitionPublished(appConfig.db, app, isEmulator());
 const publishedDatabase = database({ timeoutSeconds: 540 });
 export const competitionPublishedChanged = publishedDatabase.ref(`/${env}/competitions/{competitionId}/published`).onWrite(async (change, ctx) => {
   const { competitionId } = ctx.params;
@@ -97,6 +104,7 @@ export const competitionPublishedChanged = publishedDatabase.ref(`/${env}/compet
     await ref.remove();
   }
   await syncDancers(competitionId);
+  await notifyFollowersOnPublished(change, ctx);
 });
 // Search shows a listed competition (and its judges and pipers) before it's
 // published, so it keeps a list of those too.
@@ -218,3 +226,42 @@ export const backfillPiperBackPointers = adminHttps.onCall(
 );
 
 export const searchAll = configHttps.onCall(getOnSearchAll(appConfig.db));
+
+// Push alerts (see notifications.ts).
+// Results: Manage saves every tap, so each save queues a task a minute on (5 s
+// in the emulator), which sends only if nothing's changed since.
+const resultsSettleSeconds = isEmulator() ? 5 : 60;
+export const notifyFollowersOnResult = database()
+  .ref(`/${env}/competitions:data/{competitionId}/results/{groupId}/{danceId}`)
+  .onWrite(Notifications.getOnResultsWritten(appConfig.db, isEmulator(), (task) => (
+    enqueue(app, 'sendResultAlerts', { ...task }, resultsSettleSeconds)
+  )));
+export const sendResultAlerts = onTaskDispatched<Notifications.SettleTask>({
+  retryConfig: { maxAttempts: 3, minBackoffSeconds: 30 },
+  // No more at once than it can run (maxInstances, utility/triggers.ts):
+  // beyond that, the queue waits rather than having tasks turned away.
+  rateLimits: { maxConcurrentDispatches: 10 },
+  invoker: TASKS_INVOKER,
+}, async (req) => {
+  await Notifications.getOnResultsSettled(appConfig.db, app, isEmulator())(req.data);
+});
+export const followerIndexOnFavorite = database()
+  .ref(`/${env}/users:favorites/{uid}/dancers/{aggregateId}`)
+  .onWrite(Notifications.getOnFavoriteWritten(appConfig.db));
+export const followerIndexOnCompetitionFavorite = database()
+  .ref(`/${env}/users:favorites/{uid}/competitions/{competitionId}`)
+  .onWrite(Notifications.getOnCompetitionFavoriteWritten(appConfig.db));
+export const backfillFollowers = adminHttps.onCall(async (data, ctx) => {
+  await ensureAdmin(ctx, appConfig.db);
+  return Notifications.getOnBackfillFollowers(appConfig.db)();
+});
+// One competition's morning summary now (System admin › Tools, for trying it out).
+export const sendMorningSummary = adminHttps.onCall(async (data, ctx) => {
+  await ensureAdmin(ctx, appConfig.db);
+  return Notifications.sendMorningSummaryNow(appConfig.db, app, isEmulator(), String(data?.competitionId ?? ''));
+});
+// Hourly: each competition's summary goes out in the run that lands between
+// 06:00 and 06:59 where it's held (time zone from its coordinates).
+export const morningSummaries = onSchedule({ schedule: '30 * * * *', timeZone: 'UTC', timeoutSeconds: 300 }, async () => {
+  await Notifications.sendMorningSummaries(appConfig.db, app, isEmulator());
+});

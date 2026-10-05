@@ -31,6 +31,12 @@ function userPath(uid: string, child = '') {
   return `${NAMESPACE}/users/${uid}${child ? `/${child}` : ''}`
 }
 
+// Things to do while still signed in, just before signing out.
+const beforeSignOut: Array<() => Promise<void>> = []
+export function onBeforeSignOut(fn: () => Promise<void>) {
+  beforeSignOut.push(fn)
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const user = useCurrentUser()
   /** Whether a saved sign-in has been checked for yet (until then `user` is undefined). */
@@ -108,6 +114,11 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function signOutUser() {
+    // Tidy up while still signed in (e.g. this phone's alerts), then go. Not
+    // for more than a moment: offline, a database write waits for the
+    // connection, and signing out mustn't.
+    const tidy = Promise.all(beforeSignOut.map((fn) => fn().catch(() => {})))
+    await Promise.race([tidy, new Promise((resolve) => setTimeout(resolve, 2000))])
     await signOut(auth)
   }
 
@@ -169,6 +180,7 @@ export const useAuthStore = defineStore('auth', () => {
       [`users/${uid}`]: null,
       [`users:favorites/${uid}`]: null,
       [`users:dancerColors/${uid}`]: null,
+      [`users:tokens/${uid}`]: null,
       [`users:permissions/${uid}`]: null,
     })
     await deleteUser(u)
