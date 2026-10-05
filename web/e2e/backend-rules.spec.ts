@@ -80,7 +80,9 @@ test('public reads: published data and profiles yes, private data and other peop
   } finally {
     await dbSet(`competitions/${priv}/listed`, false)
   }
-  for (const node of ['dancers:index', 'judges', 'pipers:index', 'venues']) await allowed(`signed-out read of /${node}`, as(null, 'GET', node))
+  for (const node of ['dancers:index', 'judges/-x', 'pipers:index', 'venues/-x']) await allowed(`signed-out read of /${node}`, as(null, 'GET', node))
+  // Profiles are read one at a time; the whole tree is too big to hand out.
+  for (const node of ['dancers', 'judges', 'pipers', 'venues']) await refused(`signed-out read of all /${node}`, as(null, 'GET', node))
   // Ids kept for people who aren't showing (e.g. in a competition that was unpublished) stay private.
   await refused('signed-out read of /dancers:retired', as(null, 'GET', 'dancers:retired'))
   await refused('a parent reading /dancers:retired', as(parent, 'GET', 'dancers:retired'))

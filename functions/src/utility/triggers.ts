@@ -14,8 +14,9 @@ import { isEmulator } from './env';
 // `event.context`, so handlers see exactly what they did on 1st gen.
 
 // Run as the account 1st gen used (2nd gen defaults to the Compute Engine
-// one), so database and secret access stay as they were.
-setGlobalOptions({ serviceAccount: 'firebase-scotdance@appspot.gserviceaccount.com' });
+// one), so database and secret access stay as they were. Each instance serves
+// up to 80 requests at once; capping them caps what a flood (or a loop) costs.
+setGlobalOptions({ serviceAccount: 'firebase-scotdance@appspot.gserviceaccount.com', maxInstances: 10 });
 
 type DatabaseOptions = Omit<ReferenceOptions, 'ref' | 'instance'>;
 type Handler = (dataOrChange: any, ctx: any) => unknown;

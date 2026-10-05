@@ -21,25 +21,25 @@
         ".indexOn": ["date"]
       },
       "judges": {
-        ".read": true
+        "$id": { ".read": true } // one at a time: the whole tree is too big to hand out
       },
       "judges:index": {
         ".read": true
       },
       "pipers": {
-        ".read": true
+        "$id": { ".read": true } // one at a time: the whole tree is too big to hand out
       },
       "pipers:index": {
         ".read": true
       },
       "venues": {
-        ".read": true
+        "$id": { ".read": true } // one at a time: the whole tree is too big to hand out
       },
       "venues:index": {
         ".read": true
       },
       "dancers": {
-        ".read": true
+        "$id": { ".read": true } // one at a time: the whole tree is too big to hand out
       },
       "dancers:index": {
         ".read": true
@@ -78,6 +78,7 @@
         }
       },
       "competitions:submissions": {
+        ".indexOn": ["submittedBy", "receivedAt"], // the flood check
         "$competitionId": {
           ".write": "auth !== null && !data.exists() && !newData.child('approved').exists()" // is AUTHED and CREATING and NOT approving
         }

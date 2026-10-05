@@ -7,9 +7,6 @@
       "database": {
         "production": [
           "scotdance"
-        ],
-        "development": [
-          "scotdance-dev"
         ]
       },
       "hosting": {

@@ -75,7 +75,8 @@ async function put(folder: UploadFolder, competitionId: string, name: string, bl
   const path = `competitions/${folder}/${competitionId}-${Date.now()}-${slug(name)}.${ext}`
   const ref = bucketRef(path)
   try {
-    await uploadBytes(ref, blob, { contentType: blob.type })
+    // Every upload gets a new name, so devices can keep a file for good.
+    await uploadBytes(ref, blob, { contentType: blob.type, cacheControl: 'public, max-age=31536000, immutable' })
     return await getDownloadURL(ref)
   } catch (e) {
     // Storage's own messages are for developers ("storage/unknown…").
