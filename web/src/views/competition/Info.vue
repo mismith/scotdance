@@ -64,6 +64,11 @@ const {
   loadSchedule,
 } = useCompetition()
 const { phase, followedHere } = useCompetitionDays()
+// A studio follows dozens: the first few, so the rest of the Overview is in
+// reach, and the others on asking.
+const FOLLOWED_SHOWN = 3
+const allFollowed = ref(false)
+const shownFollowed = computed(() => (allFollowed.value ? followedHere.value : followedHere.value.slice(0, FOLLOWED_SHOWN)))
 const favorites = useFavoritesStore()
 const me = useMeStore()
 const isFresh = useFreshPlacings()
@@ -127,6 +132,9 @@ const registrationOpen = computed(() => isRegistrationOpen(competition.value))
 
 // Sessions: the schedule's blocks, with the time organisers put in their
 // description ("8:00 am"), and how many of their results are in.
+const TIME = /^\d{1,2}([:.]\d{2})?\s*(am|pm|a\.m\.|p\.m\.)?(\s|$|[-–])/i
+const whenOrNote = (line: string) =>
+  TIME.test(line) ? { time: line.slice(0, 12), note: null } : { time: null, note: line ? line.slice(0, 80) : null }
 const sessions = computed(() =>
   days(schedule.value).flatMap((day, di, all) =>
     blocks(day).map((b) => {
@@ -140,7 +148,9 @@ const sessions = computed(() =>
         id: `${day.id}:${b.id}`,
         day: all.length > 1 ? day.name : null,
         name: b.name || 'Session',
-        time: (b.description ?? '').replace(/<[^>]*>/g, ' ').split('\n')[0]?.trim().slice(0, 40) || null,
+        // Its description's first line: the chip when it's a time ("8:30 am"),
+        // a note under the name when it's anything else.
+        ...whenOrNote((b.description ?? '').replace(/<[^>]*>/g, ' ').split('\n')[0]?.trim() ?? ''),
         count,
         done: count.total > 0 && count.posted >= count.total,
       }
@@ -243,8 +253,11 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
     >
       <!-- Your dancers here -->
       <section v-if="followedHere.length" key="yours" class="space-y-3">
-        <h2 class="text-heading">Your dancers here</h2>
-        <template v-for="f in followedHere" :key="f.personId">
+        <h2 class="text-heading">
+          Your dancers here
+          <span v-if="followedHere.length > 1" class="text-muted-foreground text-sm font-medium tabular-nums">{{ followedHere.length }}</span>
+        </h2>
+        <template v-for="f in shownFollowed" :key="f.personId">
           <DancerDayCard
             :days="f.days"
             :fresh="freshIn(f.days)"
@@ -252,6 +265,9 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
             :color="f.color"
           />
         </template>
+        <Button v-if="followedHere.length > FOLLOWED_SHOWN" block @click="allFollowed = !allFollowed">
+          {{ allFollowed ? 'Show fewer' : `Show all ${followedHere.length} dancers` }}
+        </Button>
       </section>
 
       <!-- Not following anyone here: find them -->
@@ -412,7 +428,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
           <span class="min-w-0 flex-1">
             <!-- Over: quieter by colour (opacity would take it under AA). -->
             <span :class="['block text-base', s.done ? 'text-muted-foreground font-medium' : 'font-semibold']">{{ s.name }}</span>
-            <span v-if="s.day" class="text-muted-foreground block text-sm">{{ s.day }}</span>
+            <span v-if="s.day || s.note" class="text-muted-foreground block text-sm">{{ [s.day, s.note].filter(Boolean).join(' · ') }}</span>
           </span>
           <ResultsMark :posted="s.count.posted" :total="s.count.total" />
         </li>
