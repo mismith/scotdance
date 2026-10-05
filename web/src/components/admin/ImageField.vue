@@ -4,7 +4,7 @@ import { ImagePlus, LoaderCircle } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import AdminField from '@/components/admin/AdminField.vue'
 import { canEdit, friendlyError } from '@/lib/admin/write'
-import { uploadImage, type UploadFolder } from '@/lib/admin/upload'
+import { uploadImage, type UploadFolder, type UploadOwner } from '@/lib/admin/upload'
 
 // Pick a photo or logo; it's shrunk on the device, uploaded, and saved.
 
@@ -13,6 +13,8 @@ const props = defineProps<{
   label: string
   folder: UploadFolder
   competitionId: string
+  /** An organisation's image instead: its id goes in `competitionId`. */
+  owner?: UploadOwner
   save: (url: string | null) => unknown
   hint?: string
   /** Round preview for people, rounded square for logos. */
@@ -32,7 +34,7 @@ async function onPick(e: Event) {
   busy.value = true
   error.value = null
   try {
-    const url = await uploadImage(file, props.folder, props.competitionId)
+    const url = await uploadImage(file, props.folder, props.competitionId, props.owner)
     await props.save(url)
   } catch (err) {
     error.value =

@@ -139,7 +139,7 @@ test('Undo and Redo put a change back and forward again', async ({ page }, info)
   }
 })
 
-test('Manage competitions is up to date after creating and deleting one', async ({ page }, info) => {
+test('Manage is up to date after creating and deleting one', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop', 'one layout is enough')
   const email = `${uid('sys')}@example.test`
   const id = await ensureUser(email)

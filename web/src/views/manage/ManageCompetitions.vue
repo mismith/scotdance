@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
-import { ChevronRight, LogIn, Plus, ShieldCheck } from '@lucide/vue'
+import { ChevronRight, Landmark, LogIn, Plus, ShieldCheck } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/Dialog.vue'
@@ -11,6 +11,10 @@ import Skeleton from '@/components/Skeleton.vue'
 import DateTile from '@/components/DateTile.vue'
 import VisibilityChip from '@/components/VisibilityChip.vue'
 import FormInput from '@/components/admin/FormInput.vue'
+import OrganisationMark from '@/components/OrganisationMark.vue'
+import OrganisationPicker from '@/components/OrganisationPicker.vue'
+import { useOrganisationCompetitions, useOrganisations } from '@/composables/useOrganisations'
+import { createOrganisation } from '@/lib/admin/organisations'
 import SearchField from '@/components/admin/SearchField.vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
 import { useCompetitionSpans } from '@/composables/useCompetitionSpans'
@@ -19,6 +23,7 @@ import { usePageTitle } from '@/composables/usePageTitle'
 import { useScrolledPast } from '@/composables/useScrolledPast'
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError, newKey, write } from '@/lib/admin/write'
+import { competitionPhase } from '@/lib/dancerDay'
 import { useMorph } from '@/lib/morph'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
@@ -26,7 +31,7 @@ import { useMeStore } from '@/stores/me'
 // Every competition you can manage. System admins see all of them and can
 // create one directly; organisers submit theirs for approval.
 
-usePageTitle(['Manage competitions'])
+usePageTitle(['Manage'])
 const auth = useAuthStore()
 const me = useMeStore()
 const router = useRouter()
@@ -68,6 +73,22 @@ const isToday = (c: CompetitionListItem) => phase(c) === 'today'
 const titleEl = ref<HTMLElement | null>(null)
 const scrolledPast = useScrolledPast(titleEl)
 
+// --- Your organisations: their pages, and starting one
+const orgs = useOrganisations()
+const { byOrganisation } = useOrganisationCompetitions()
+const myOrgs = computed(() => me.managedOrganisationIds.flatMap((id) => orgs.byId.value.get(id) ?? []))
+const comingUp = (id: string) => (byOrganisation.value.get(id) ?? []).filter((c) => competitionPhase(c.date) !== 'after').length
+const startingOrg = useMorph()
+async function startOrg({ name, shortName }: { name: string; shortName: string }) {
+  try {
+    const id = await createOrganisation({ name, shortName })
+    toast(`Started ${name}. Add its logo and competitions.`)
+    await router.push({ name: 'organisation.manage', params: { organisationId: id } })
+  } catch (e) {
+    toast(friendlyError(e), { tone: 'error' })
+  }
+}
+
 // --- Create (system admins)
 const creating = useMorph()
 const newName = ref('')
@@ -95,9 +116,9 @@ async function create() {
 
 <template>
   <div class="flex min-h-dvh flex-col">
-    <AppBar title="Manage competitions" :show-title="scrolledPast" :fallback="{ to: { name: 'settings' }, label: 'Settings' }" />
+    <AppBar title="Manage" :show-title="scrolledPast" :fallback="{ to: { name: 'settings' }, label: 'Settings' }" />
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-[calc(var(--chrome-bottom)+1.5rem)]">
-      <h1 ref="titleEl" class="text-display">Manage competitions</h1>
+      <h1 ref="titleEl" class="text-display">Manage</h1>
 
       <div v-if="!authReady || (auth.isSignedIn && !me.permissionsLoaded)" class="space-y-3">
         <Skeleton v-for="i in 3" :key="i" class="h-16 w-full rounded-2xl!" />
@@ -117,6 +138,9 @@ async function create() {
           </Button>
           <Button v-else variant="tonal" :to="{ name: 'competitions.submit' }">
             <Plus /> Submit a competition
+          </Button>
+          <Button v-if="!me.isAdmin && mine.length && !myOrgs.length" :disabled="!canEdit" @click="startingOrg.show($event)">
+            <Landmark /> Start an organisation
           </Button>
         </div>
 
@@ -154,8 +178,27 @@ async function create() {
             </li>
           </ul>
         </section>
+
+        <!-- Your organisations, last. -->
+        <section v-if="myOrgs.length" class="space-y-2">
+          <h2 class="text-heading">Your organisations</h2>
+          <ul class="surface divide-y overflow-hidden rounded-2xl">
+            <li v-for="org in myOrgs" :key="org.id">
+              <RouterLink :to="{ name: 'organisation.manage', params: { organisationId: org.id } }" class="press-row focus-inset flex min-h-16 items-center gap-3 py-2 pr-3 pl-4">
+                <OrganisationMark :organisation="org" />
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate text-base font-semibold">{{ org.name }}</span>
+                  <span class="text-muted-foreground block truncate text-sm">{{ comingUp(org.id) ? `${comingUp(org.id)} coming up` : 'Nothing coming up' }}</span>
+                </span>
+                <ChevronRight class="text-muted-foreground size-5 shrink-0" />
+              </RouterLink>
+            </li>
+          </ul>
+        </section>
       </template>
     </main>
+
+    <OrganisationPicker :morph="startingOrg" title="Start an organisation" :mine="[]" any @pick="(org) => router.push({ name: 'organisation.info', params: { organisationId: org.id } })" @create="startOrg" />
 
     <Dialog :open="creating.open" :morph="creating" variant="sheet" @close="creating.hide()">
       <template #header>

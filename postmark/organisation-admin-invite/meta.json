@@ -1,0 +1,19 @@
+{
+  "Name": "Organisation Admin Invite",
+  "Alias": "organisation-admin-invite",
+  "Subject": "You’re invited to help manage {{ organisation.name }}",
+  "TemplateType": "Standard",
+  "TestRenderModel": {
+    "app": {
+      "name": "ScotDance.app",
+      "url": "https://scotdance.app",
+      "description": "Highland dancing event tracker"
+    },
+    "organisation": {
+      "name": "Foothills Highland Dancing Association"
+    },
+    "invite": {
+      "link": "https://scotdance.app/organisations/fhda/invites/abc123"
+    }
+  }
+}

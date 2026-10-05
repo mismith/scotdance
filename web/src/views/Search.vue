@@ -12,6 +12,7 @@ import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import NumberCard from '@/components/NumberCard.vue'
+import OrganisationMark from '@/components/OrganisationMark.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import CompetitionPicker from '@/components/search/CompetitionPicker.vue'
 import SearchStart from '@/components/search/SearchStart.vue'
@@ -22,6 +23,7 @@ import { useCompetitions } from '@/composables/useCompetitions'
 import { useFollowing } from '@/composables/useFollowing'
 import { useRecentSearches } from '@/composables/useRecentSearches'
 import { useLocationFilter } from '@/composables/useLocationFilter'
+import { useOrganisationCompetitions, useOrganisations } from '@/composables/useOrganisations'
 import { useFavoritesStore } from '@/stores/favorites'
 import { fetchDancers } from '@/lib/competitionData'
 import { lookupEntityId, lookupVenueId } from '@/lib/entityIndex'
@@ -98,6 +100,20 @@ async function run(text: string, perGroup = 5, types?: SearchEntityType[]) {
 }
 watch(qDebounced, (v) => run(v), { immediate: true })
 
+// Organisations are few, so they're matched here rather than on the server:
+// by name, short name or where they're based, and only those with a listed
+// competition (as on their list).
+const { organisations } = useOrganisations()
+const { byOrganisation } = useOrganisationCompetitions()
+const listedCount = (id: string) => (byOrganisation.value.get(id) ?? []).filter((c) => c.listed === true).length
+const organisationHits = computed(() => {
+  const t = qDebounced.value.trim().toLowerCase()
+  if (t.length < 2) return []
+  return organisations.value
+    .filter((o) => listedCount(o.id) > 0 && [o.name, o.shortName, o.location].some((v) => (v ?? '').toLowerCase().includes(t)))
+    .slice(0, 5)
+})
+
 const hasQuery = computed(() => q.value.trim().length > 0)
 const loadingName = computed(() => searching.value || (hasQuery.value && q.value.trim() !== qDebounced.value.trim()))
 const nothing = computed(() => {
@@ -107,7 +123,8 @@ const nothing = computed(() => {
     !r.competitions.hits.length &&
     !r.judges.groups.length &&
     !r.pipers.groups.length &&
-    !r.places.groups.length
+    !r.places.groups.length &&
+    !organisationHits.value.length
   )
 })
 
@@ -438,6 +455,26 @@ watch(mode, async (m) => {
                   <LoaderCircle v-if="opening === keyOf('venues', g.name)" class="text-muted-foreground size-5 shrink-0 animate-spin" aria-hidden="true" />
                   <ChevronRight v-else class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
                 </component>
+              </li>
+            </ul>
+          </section>
+
+          <section v-if="organisationHits.length" :class="['space-y-2', settle]">
+            <h2 class="text-heading">Organisations</h2>
+            <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+              <li v-for="o in organisationHits" :key="o.id">
+                <RouterLink :to="{ name: 'organisation.info', params: { organisationId: o.id } }" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 py-2 pr-3 pl-4 text-left">
+                  <span class="flex w-11 shrink-0 justify-center">
+                    <OrganisationMark :organisation="o" />
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="line-clamp-2 block text-base font-semibold">{{ o.name }}</span>
+                    <span class="text-muted-foreground block truncate text-sm">
+                      {{ [o.shortName, o.location, `${listedCount(o.id)} competition${listedCount(o.id) === 1 ? '' : 's'}`].filter(Boolean).join(' · ') }}
+                    </span>
+                  </span>
+                  <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+                </RouterLink>
               </li>
             </ul>
           </section>

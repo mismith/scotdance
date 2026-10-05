@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { ExternalLink, FileUp, Plus, Trash2 } from '@lucide/vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { ExternalLink, FileUp, Landmark, Plus, Trash2 } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import MovingList from '@/components/admin/MovingList.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
@@ -11,6 +11,13 @@ import SwitchField from '@/components/admin/SwitchField.vue'
 import VenueField from '@/components/admin/VenueField.vue'
 import DetailsPreview from '@/components/admin/DetailsPreview.vue'
 import MapPreview from '@/components/MapPreview.vue'
+import OrganisationMark from '@/components/OrganisationMark.vue'
+import OrganisationPicker from '@/components/OrganisationPicker.vue'
+import { useOrganisations } from '@/composables/useOrganisations'
+import { createOrganisation } from '@/lib/admin/organisations'
+import { useMorph } from '@/lib/morph'
+import { useMeStore } from '@/stores/me'
+import type { OrganisationListItem } from '@/types/organisation'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
 import { compareKeys, forgetCompetition } from '@/lib/competitionData'
 import { forgetCompetitionMeta } from '@/lib/competitionMeta'
@@ -152,6 +159,43 @@ async function removeLink(link: LinkRow) {
   const message = `Removed ${link.name || 'the link'}`
   try {
     const change = await m.writeInfo({ [`links/${link.id}`]: null }, message)
+    toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
+  } catch (e) {
+    toast(friendlyError(e), { tone: 'error' })
+  }
+}
+
+// --- Organisations it's run by or part of. Its admins add their own (or
+// start one); a system admin can add any. Anyone here can take one off.
+const me = useMeStore()
+const orgs = useOrganisations()
+const linked = computed(() =>
+  Object.entries(c.value.organisations ?? {})
+    .filter(([, on]) => on === true)
+    .map(([id]) => orgs.byId.value.get(id) ?? { id, name: 'An organisation' }),
+)
+const pickingOrg = useMorph()
+async function addOrganisation(org: OrganisationListItem) {
+  const message = `Added ${org.name}`
+  try {
+    const change = await m.writeInfo({ [`organisations/${org.id}`]: true }, message)
+    toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
+  } catch (e) {
+    toast(friendlyError(e), { tone: 'error' })
+  }
+}
+async function startOrganisation({ name, shortName }: { name: string; shortName: string }) {
+  try {
+    await createOrganisation({ name, shortName, competitionId: m.competitionId.value })
+    toast(`Started ${name}. Add its logo and details from its page.`)
+  } catch (e) {
+    toast(friendlyError(e), { tone: 'error' })
+  }
+}
+async function removeOrganisation(org: { id: string; name?: string }) {
+  const message = `Took ${org.name ?? 'it'} off`
+  try {
+    const change = await m.writeInfo({ [`organisations/${org.id}`]: null }, message)
     toast(message, { action: { label: 'Undo', run: () => m.undoChange(change) } })
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
@@ -345,6 +389,35 @@ async function deleteCompetition() {
             :save="(on) => m.writeInfo(on ? { published: true, listed: true } : { published: false }, on ? 'Published' : 'Unpublished')"
           />
         </div>
+      </section>
+
+      <!-- Organisations go last, above only Delete. -->
+      <section class="space-y-3">
+        <div>
+          <h2 class="text-heading">Organisations</h2>
+          <p class="text-muted-foreground text-sm">The association, games society or series it’s run by or part of. Each has a page listing its competitions.</p>
+        </div>
+        <MovingList v-if="linked.length" class="surface divide-y overflow-hidden rounded-2xl">
+          <li v-for="org in linked" :key="org.id" class="flex min-h-15 items-center gap-3 py-2 pr-2 pl-4">
+            <OrganisationMark :organisation="org" />
+            <RouterLink :to="{ name: 'organisation.info', params: { organisationId: org.id } }" class="min-w-0 flex-1">
+              <span class="block truncate text-base font-semibold">{{ org.name }}</span>
+              <span v-if="'shortName' in org && org.shortName" class="text-muted-foreground block truncate text-sm">{{ org.shortName }}</span>
+            </RouterLink>
+            <Button variant="plain" class="text-destructive!" :disabled="!canEdit" @click="removeOrganisation(org)">Take off</Button>
+          </li>
+        </MovingList>
+        <Button :disabled="!canEdit" @click="pickingOrg.show($event)">
+          <component :is="linked.length ? Plus : Landmark" /> Add an organisation
+        </Button>
+        <OrganisationPicker
+          :morph="pickingOrg"
+          :mine="me.managedOrganisationIds"
+          :chosen="linked.map((org) => org.id)"
+          :any="me.isAdmin"
+          @pick="addOrganisation"
+          @create="startOrganisation"
+        />
       </section>
 
       <section class="space-y-3 border-t pt-8">

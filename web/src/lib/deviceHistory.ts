@@ -12,7 +12,7 @@ export const SCROLL_POSITIONS_KEY = 'scroll-positions'
 /** The last page of each kind, to reopen where you were (router). */
 export const ROUTE_INFO_KEY = 'route-info'
 
-const RECENT_KINDS = ['competitions', 'dancers', 'judges', 'pipers', 'venues']
+const RECENT_KINDS = ['competitions', 'dancers', 'judges', 'pipers', 'venues', 'organisations']
 
 export async function clearDeviceHistory() {
   useRecentSearches().clear()

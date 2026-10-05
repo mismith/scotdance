@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, type Component } from 'vue'
+import { computed, ref, type Component, type Ref } from 'vue'
 import { CloudOff, Search, SearchX, X } from '@lucide/vue'
 import { RouterLink } from 'vue-router'
 import Avatar from '@/components/Avatar.vue'
@@ -40,18 +40,25 @@ const props = withDefaults(
     /** Places, not people: an icon instead of initials, and "Nothing" not "No one". */
     places?: Component
     emptyMessage?: string
+    /** Rows from elsewhere than `/{namespace}:index` (organisations, kept whole). */
+    source?: {
+      data: Readonly<Ref<Array<{ id: string; agg: AggregateRow }>>>
+      loading: Readonly<Ref<boolean>>
+      error: Readonly<Ref<Error | null>>
+      retry: () => void
+    }
   }>(),
-  { places: undefined, emptyMessage: undefined },
+  { places: undefined, emptyMessage: undefined, source: undefined },
 )
 
 const section = computed(() => sectionMeta(props.namespace))
 
-const entry = useEntityAggregates(props.namespace)
+const entry = props.source ?? useEntityAggregates(props.namespace)
 const aggregates = entry.data
 const loading = entry.loading
 const error = entry.error
 // A list that didn't load loads again when asked for again.
-const retry = () => useEntityAggregates(props.namespace)
+const retry = () => (props.source ? props.source.retry() : useEntityAggregates(props.namespace))
 
 const favorites = useFavoritesStore()
 const recent = useRecentEntities(props.namespace)
@@ -227,8 +234,10 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
                 <RouterLink v-slot="{ href, navigate }" :to="to(row.id)" custom>
                   <a :href="href" :class="ROW" @click="navigate">
                     <span class="flex w-11 shrink-0 justify-center">
-                      <component :is="places" v-if="places" class="text-muted-foreground size-5" aria-hidden="true" />
-                      <Avatar v-else :name="row.agg.name || '?'" :image="imageOf(row.agg)" />
+                      <slot name="mark" :row="row.agg">
+                        <component :is="places" v-if="places" class="text-muted-foreground size-5" aria-hidden="true" />
+                        <Avatar v-else :name="row.agg.name || '?'" :image="imageOf(row.agg)" />
+                      </slot>
                     </span>
                     <span class="min-w-0 flex-1">
                       <span class="block truncate text-base font-semibold">{{ row.agg.name || '?' }}</span>
@@ -268,8 +277,10 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
                 <RouterLink v-slot="{ href, navigate }" :to="to(x.row.id)" custom>
                   <a :href="href" :class="ROW" @click="navigate">
                     <span class="flex w-11 shrink-0 justify-center">
-                      <component :is="places" v-if="places" class="text-muted-foreground size-5" aria-hidden="true" />
-                      <Avatar v-else :name="x.row.agg.name || '?'" :image="imageOf(x.row.agg)" />
+                      <slot name="mark" :row="x.row.agg">
+                        <component :is="places" v-if="places" class="text-muted-foreground size-5" aria-hidden="true" />
+                        <Avatar v-else :name="x.row.agg.name || '?'" :image="imageOf(x.row.agg)" />
+                      </slot>
                     </span>
                     <span class="min-w-0 flex-1">
                       <span class="block truncate text-base font-semibold">{{ x.row.agg.name || '?' }}</span>

@@ -18,6 +18,8 @@ import { canEdit, friendlyError, write } from '@/lib/admin/write'
 import { formatLongDate, formatRelative, parseDate } from '@/lib/format'
 import { placesAvailable, type VenueFields } from '@/lib/maps'
 import { grow, shrink } from '@/lib/admin/motion'
+import OrganisationMark from '@/components/OrganisationMark.vue'
+import { useOrganisations } from '@/composables/useOrganisations'
 
 // Competitions organisers have submitted. Approving one creates the
 // competition (the server does that), gives the organiser access and
@@ -31,6 +33,11 @@ interface Submission {
   competitionId?: string
   competition?: Record<string, string | number | undefined>
   contact?: { name?: string; email?: string; message?: string }
+  submittedBy?: string
+  /** Picked in Submit: ones already here. */
+  organisations?: Record<string, boolean>
+  /** New ones, made at approval with the submitter as their admin. */
+  newOrganisations?: Record<string, { name?: string; shortName?: string | null }>
 }
 
 const route = useRoute()
@@ -52,6 +59,36 @@ onScopeDispose(off)
 
 const id = computed(() => (route.params.submissionId ? String(route.params.submissionId) : null))
 const current = computed(() => items.value.find((s) => s.id === id.value) ?? null)
+
+// The organisations it asked to be listed under: ones already here (is the
+// submitter one of their admins, or is this a claim to check?) and new ones.
+const orgs = useOrganisations()
+const adminsOf = ref<Record<string, Record<string, boolean>>>({})
+watch(
+  () => Object.keys(current.value?.organisations ?? {}),
+  (ids) => {
+    for (const oid of ids) {
+      if (oid in adminsOf.value) continue
+      onValue(dataRef(`organisations:permissions/${oid}/users`), (snap) => (adminsOf.value = { ...adminsOf.value, [oid]: snap.val() ?? {} }), () => {})
+    }
+  },
+  { immediate: true },
+)
+function requested(sub: Submission) {
+  const theirs = (oid: string) => !!sub.submittedBy && adminsOf.value[oid]?.[sub.submittedBy] === true
+  return [
+    ...Object.keys(sub.organisations ?? {}).map((oid) => ({
+      key: oid,
+      org: orgs.byId.value.get(oid) ?? { name: 'A deleted organisation' },
+      note: theirs(oid) ? 'They’re one of its admins' : 'Not one of its admins: check it’s theirs to claim',
+    })),
+    ...Object.entries(sub.newOrganisations ?? {}).map(([k, o]) => ({
+      key: k,
+      org: { name: o.name ?? 'Untitled', shortName: o.shortName ?? null },
+      note: sub.approved ? 'Started when approved' : 'New: they’ll be its admin',
+    })),
+  ]
+}
 const waiting = computed(() => items.value.filter((s) => !s.approved))
 const approved = computed(() => items.value.filter((s) => s.approved))
 // Folded until asked for, or until one of them is open.
@@ -239,6 +276,20 @@ async function remove(s: Submission) {
           <p class="text-base font-medium">{{ current.contact?.name ?? 'Unknown' }}</p>
           <p v-if="current.contact?.email" class="text-base"><a :href="`mailto:${current.contact.email}`" class="text-primary font-medium">{{ current.contact.email }}</a></p>
           <p v-if="current.contact?.message" class="text-muted-foreground pt-2 text-base whitespace-pre-line">{{ current.contact.message }}</p>
+        </section>
+
+        <section v-if="requested(current).length" class="space-y-2">
+          <h3 class="text-heading">Organisations</h3>
+          <ul class="surface divide-y overflow-hidden rounded-2xl">
+            <li v-for="r in requested(current)" :key="r.key" class="flex min-h-15 items-center gap-3 px-4 py-2">
+              <OrganisationMark :organisation="r.org" />
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-base font-semibold">{{ r.org.name }}</span>
+                <span class="text-muted-foreground block truncate text-sm">{{ r.note }}</span>
+              </span>
+            </li>
+          </ul>
+          <p v-if="!current.approved" class="text-muted-foreground text-sm">Approving lists the competition under these, and starts the new ones with the submitter as their admin.</p>
         </section>
 
         <!-- Waiting: the decision stays in reach at the foot of the page. -->

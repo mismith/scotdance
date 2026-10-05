@@ -204,7 +204,7 @@ const sectionTitle = provideSectionTitle()
         <RouterView v-else-if="access === 'ok'" />
       </main>
     </div>
-    <!-- Wide screens: the sections, nested under Manage competitions › this competition in the sidebar. -->
+    <!-- Wide screens: the sections, nested under Manage › this competition in the sidebar. -->
     <SidebarBranch v-if="sidebar && access === 'ok'" under="manage" :label="name">
       <SectionNav compact />
     </SidebarBranch>

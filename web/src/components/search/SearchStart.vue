@@ -38,6 +38,7 @@ const kinds = [
   { ns: 'judges', label: 'Judge', route: 'judge.info', param: 'judgeId' },
   { ns: 'pipers', label: 'Piper', route: 'piper.info', param: 'piperId' },
   { ns: 'venues', label: 'Venue', route: 'venue.info', param: 'venueId' },
+  { ns: 'organisations', label: 'Organisation', route: 'organisation.info', param: 'organisationId' },
 ].map((k) => ({ ...k, icon: sectionMeta(k.ns).icon, store: useRecentEntities(k.ns) }))
 const viewed = computed(() =>
   kinds
@@ -49,7 +50,7 @@ const clearViewed = () => kinds.forEach((k) => k.store.clear())
 
 // Competitions across the top; the people lists and venues as tiles.
 const competitions = sectionMeta('competitions')
-const lists = ['dancers', 'judges', 'pipers', 'venues'].map(sectionMeta)
+const lists = ['dancers', 'judges', 'pipers', 'venues', 'organisations'].map(sectionMeta)
 </script>
 
 <template>
@@ -131,7 +132,7 @@ const lists = ['dancers', 'judges', 'pipers', 'venues'].map(sectionMeta)
               :below="isBeforeToday(v.date) ? 'year' : 'weekday'"
               :managed="me.organises(v.id)"
             />
-            <Avatar v-else-if="v.kind.ns !== 'venues'" :name="v.name" :color="v.kind.ns === 'dancers' ? following.colorFor(v.id) : null" />
+            <Avatar v-else-if="v.kind.ns !== 'venues' && v.kind.ns !== 'organisations'" :name="v.name" :color="v.kind.ns === 'dancers' ? following.colorFor(v.id) : null" />
             <component :is="v.kind.icon" v-else class="text-muted-foreground size-5" aria-hidden="true" />
           </span>
           <span class="min-w-0 flex-1">

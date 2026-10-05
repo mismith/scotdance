@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue'
-import { ChevronLeft, ChevronRight, Plus, Send } from '@lucide/vue'
+import { ChevronLeft, ChevronRight, Plus, Send, X } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import Button from '@/components/ui/Button.vue'
 import Checkbox from '@/components/ui/Checkbox.vue'
@@ -10,6 +10,11 @@ import StepNav from '@/components/submit/StepNav.vue'
 import SentMark from '@/components/submit/SentMark.vue'
 import SubmitOverview from '@/components/submit/SubmitOverview.vue'
 import VenueField from '@/components/admin/VenueField.vue'
+import OrganisationMark from '@/components/OrganisationMark.vue'
+import OrganisationPicker from '@/components/OrganisationPicker.vue'
+import { useOrganisations } from '@/composables/useOrganisations'
+import { useMorph } from '@/lib/morph'
+import { organisationLabel, type OrganisationListItem } from '@/types/organisation'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { useScrolledPast } from '@/composables/useScrolledPast'
 import { friendlyError, newKey, write } from '@/lib/admin/write'
@@ -53,6 +58,41 @@ function pickVenue({ venue, address, location, ...rest }: VenueFields) {
   if (address) form.address = address
   if (location) form.location = location
   place.value = rest
+}
+
+// The organisations it's run by or part of: ones already on ScotDance.app
+// (yours first; any other is checked when it's approved), or new ones,
+// made when it's approved, with you as their admin.
+const orgs = useOrganisations()
+const hosts = reactive({ ids: [] as string[], fresh: [] as Array<{ name: string; shortName: string }> })
+const pickingOrg = useMorph()
+const chosenOrgs = computed(() => [
+  ...hosts.ids.flatMap((id) => {
+    const org = orgs.byId.value.get(id)
+    return org ? [{ key: id, org, fresh: false }] : []
+  }),
+  ...hosts.fresh.map((org, i) => ({ key: `new-${i}`, org: { ...org, image: null, location: null }, fresh: true })),
+])
+// One tap for yours, when there are only a few.
+const quickOrgs = computed(() =>
+  me.managedOrganisationIds.length <= 3
+    ? me.managedOrganisationIds.flatMap((id) => {
+        const org = orgs.byId.value.get(id)
+        return org && !hosts.ids.includes(id) ? [org] : []
+      })
+    : [],
+)
+function addHost(org: OrganisationListItem) {
+  if (!hosts.ids.includes(org.id)) hosts.ids.push(org.id)
+}
+function addFreshHost(org: { name: string; shortName: string }) {
+  const known = orgs.organisations.value.find((o) => o.name?.trim().toLowerCase() === org.name.trim().toLowerCase())
+  if (known) addHost(known)
+  else hosts.fresh.push(org)
+}
+function removeHost(key: string) {
+  if (key.startsWith('new-')) hosts.fresh.splice(Number(key.slice(4)), 1)
+  else hosts.ids = hosts.ids.filter((id) => id !== key)
 }
 
 // Optional bits stay tucked away until asked for (or already filled in).
@@ -178,6 +218,9 @@ async function submit() {
           ...place.value,
         },
         contact: { name: t(form.contactName), email: me.email, message: t(form.message), disclaimer: true },
+        // Only when chosen, so a submission without any is as it always was.
+        ...(hosts.ids.length && { organisations: Object.fromEntries(hosts.ids.map((id) => [id, true])) }),
+        ...(hosts.fresh.length && { newOrganisations: Object.fromEntries(hosts.fresh.map((o) => [newKey(), { name: o.name, shortName: o.shortName || null }])) }),
         submitted: new Date().toISOString(),
       },
     })
@@ -211,6 +254,7 @@ const summary = computed(() =>
     { step: 1, title: 'Venue', lines: [form.venue, form.address, form.location] },
     { step: 2, title: 'Contact', lines: [form.contactName, me.email] },
     { step: 2, title: 'Message', lines: [form.message] },
+    { step: 0, title: 'Organisations', lines: chosenOrgs.value.map((h) => (h.fresh ? `${h.org.name} (new: you’ll be its admin)` : h.org.name ?? '')) },
   ]
     .map((s) => ({ ...s, lines: s.lines.map((l) => (l || '').trim()).filter(Boolean) }))
     .filter((s) => s.lines.length),
@@ -222,11 +266,11 @@ const restored = ref(false)
 const draftKey = () => `submit:draft:${auth.uid}`
 const ANSWERS: Field[] = ['name', 'date', 'venue', 'address', 'location', 'sobhd', 'description', 'message']
 watch(
-  [form, place, step],
+  [form, place, step, hosts],
   () => {
     if (!auth.uid || sent.value) return
     try {
-      if (ANSWERS.some(filled)) localStorage.setItem(draftKey(), JSON.stringify({ form, place: place.value, step: step.value }))
+      if (ANSWERS.some(filled)) localStorage.setItem(draftKey(), JSON.stringify({ form, place: place.value, step: step.value, hosts }))
       else localStorage.removeItem(draftKey())
     } catch {
       // Private browsing: no draft.
@@ -242,6 +286,8 @@ function restore() {
       if (typeof saved.form[k] === typeof form[k] && saved.form[k] !== '') Object.assign(form, { [k]: saved.form[k] })
     }
     place.value = saved.place ?? null
+    if (Array.isArray(saved.hosts?.ids)) hosts.ids = saved.hosts.ids
+    if (Array.isArray(saved.hosts?.fresh)) hosts.fresh = saved.hosts.fresh
     step.value = STEPS[saved.step] ? Number(saved.step) : 0
     started.value = ANSWERS.some(filled)
     restored.value = started.value
@@ -269,6 +315,8 @@ function reset() {
   Object.assign(form, blank(), { contactName: me.displayName ?? '' })
   Object.assign(adding, { sobhd: false, description: false, message: false })
   place.value = null
+  hosts.ids = []
+  hosts.fresh = []
   clearErrors()
   started.value = false
   step.value = 0
@@ -383,6 +431,37 @@ const scrolledPast = useScrolledPast(computed(() => overviewEl.value?.title ?? n
                   <Button v-if="!adding.sobhd && !form.sobhd" variant="plain" @click="add('sobhd')">
                     <Plus /> Add registration number
                   </Button>
+                </div>
+                <div class="space-y-2">
+                  <p class="text-callout font-medium">Organisations</p>
+                  <ul v-if="chosenOrgs.length" class="surface divide-y overflow-hidden rounded-2xl">
+                    <li v-for="h in chosenOrgs" :key="h.key" class="flex min-h-15 items-center gap-3 py-2 pr-1 pl-3">
+                      <OrganisationMark :organisation="h.org" />
+                      <span class="min-w-0 flex-1">
+                        <span class="block truncate text-base font-semibold">{{ h.org.name }}</span>
+                        <span class="text-muted-foreground block truncate text-sm">{{ h.fresh ? 'New: you’ll be its admin' : [h.org.shortName, h.org.location].filter(Boolean).join(' · ') }}</span>
+                      </span>
+                      <button type="button" class="text-muted-foreground press flex size-11 shrink-0 items-center justify-center rounded-full" :aria-label="`Remove ${h.org.name}`" @click="removeHost(h.key)">
+                        <X class="size-5" />
+                      </button>
+                    </li>
+                  </ul>
+                  <div class="flex flex-wrap gap-2">
+                    <Button v-for="org in quickOrgs" :key="org.id" variant="tonal" @click="addHost(org)">
+                      <Plus /> {{ organisationLabel(org) }}
+                    </Button>
+                    <Button @click="pickingOrg.show($event)"><Plus /> {{ quickOrgs.length ? 'Another' : 'Add an organisation' }}</Button>
+                  </div>
+                  <p class="text-muted-foreground text-sm">Optional: the association, games society or series it’s run by or part of. Each gets a page listing its competitions.</p>
+                  <OrganisationPicker
+                    :morph="pickingOrg"
+                    :mine="me.managedOrganisationIds"
+                    :chosen="hosts.ids"
+                    any
+                    create-hint="It’s made when your competition is approved, with you as its admin."
+                    @pick="addHost"
+                    @create="addFreshHost"
+                  />
                 </div>
               </div>
 

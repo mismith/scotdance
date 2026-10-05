@@ -8,7 +8,7 @@ import {
   type RouteLocationNormalized,
 } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
-import { CalendarDays, Gavel, House, Info, Music, School, Settings, Users } from '@lucide/vue'
+import { CalendarDays, Gavel, House, Info, Landmark, Music, School, Settings, Users } from '@lucide/vue'
 import { startViewTransition } from '@/lib/transition'
 import { byPath, fromTap, inverse, types, type Motion } from '@/lib/navMotion'
 import { trackCompetitionEntry } from '@/lib/competitionExit'
@@ -85,6 +85,36 @@ const routes: RouteRecordRaw[] = [
     meta: { icon: School, title: 'Venues' },
   },
   {
+    path: '/organisations',
+    name: 'organisations',
+    component: () => import('@/views/Organisations.vue'),
+    meta: { icon: Landmark, title: 'Organisations' },
+  },
+  {
+    path: '/organisations/:organisationId/manage',
+    name: 'organisation.manage',
+    component: () => import('@/views/organisation/Manage.vue'),
+    meta: { admin: true, title: 'Manage' },
+  },
+  {
+    path: '/organisations/:organisationId/invites/:inviteId',
+    name: 'organisation.invite',
+    component: () => import('@/views/competition/AcceptInvite.vue'),
+    meta: { title: 'Invitation' },
+  },
+  {
+    path: '/organisations/:organisationId',
+    component: () => import('@/views/organisation/OrganisationLayout.vue'),
+    children: [
+      { path: '', redirect: { name: 'organisation.info' } },
+      {
+        path: 'info',
+        name: 'organisation.info',
+        component: () => import('@/views/organisation/Info.vue'),
+      },
+    ],
+  },
+  {
     path: '/dancers/:dancerId',
     component: () => import('@/views/dancer/DancerLayout.vue'),
         children: [
@@ -155,7 +185,7 @@ const routes: RouteRecordRaw[] = [
     path: '/manage',
     name: 'manage.competitions',
     component: () => import('@/views/manage/ManageCompetitions.vue'),
-    meta: { title: 'Manage competitions' },
+    meta: { title: 'Manage' },
   },
   {
     path: '/admin',
@@ -165,6 +195,7 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: 'submissions/:submissionId?', name: 'admin.submissions', component: () => import('@/views/admin/Submissions.vue') },
       { path: 'users/:userId?', name: 'admin.users', component: () => import('@/views/admin/Users.vue') },
+      { path: 'organisations/:organisationId?', name: 'admin.organisations', component: () => import('@/views/admin/Organisations.vue') },
       { path: 'tools', name: 'admin.tools', component: () => import('@/views/admin/Tools.vue') },
       // The old admin's pages.
       { path: 'info/:rest(.*)*', redirect: { name: 'admin.tools', params: {} } },

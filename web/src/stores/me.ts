@@ -16,6 +16,7 @@ export interface MeRecord {
 interface PermissionsRecord {
   admin?: boolean
   competitions?: Record<string, boolean>
+  organisations?: Record<string, boolean>
 }
 
 export const useMeStore = defineStore('me', () => {
@@ -46,7 +47,16 @@ export const useMeStore = defineStore('me', () => {
   function organises(id: string) {
     return permissions.value?.competitions?.[id] === true
   }
-  const canManageAny = computed(() => isAdmin.value || managedCompetitionIds.value.length > 0)
+  /** Organisations this person is an admin of (system admins can change every one, unlisted here). */
+  const managedOrganisationIds = computed(() =>
+    Object.entries(permissions.value?.organisations ?? {})
+      .filter(([, on]) => on === true)
+      .map(([id]) => id),
+  )
+  function hasOrganisationPerm(id: string) {
+    return isAdmin.value || permissions.value?.organisations?.[id] === true
+  }
+  const canManageAny = computed(() => isAdmin.value || managedCompetitionIds.value.length > 0 || managedOrganisationIds.value.length > 0)
   /** Permissions have been read at least once for the signed-in person. */
   const permissionsLoaded = computed(() => permissions.value !== null)
   /** Known whether this person organises anything: signed out, or permissions read. */
@@ -109,6 +119,8 @@ export const useMeStore = defineStore('me', () => {
     hasCompetitionPerm,
     organises,
     managedCompetitionIds,
+    managedOrganisationIds,
+    hasOrganisationPerm,
     canManageAny,
     permissionsLoaded,
     accessKnown,

@@ -17,7 +17,7 @@ const crisp = useCrisp()
 
 const menu = useMorph()
 
-const MORE_PREFIXES = ['/settings', '/about', '/judges', '/pipers', '/venues', '/dancers', '/profile', '/policies']
+const MORE_PREFIXES = ['/settings', '/about', '/judges', '/pipers', '/venues', '/organisations', '/dancers', '/profile', '/policies']
 
 const items = computed<TabItem[]>(() => {
   const path = route.path

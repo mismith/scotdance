@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { defineComponent, h, reactive } from 'vue'
+import { defineComponent, h, reactive, ref } from 'vue'
 
 // Submitting a competition: signed in only, an overview and then a step at a
 // time, sending the same shape as ever (the approval function reads it),
@@ -16,7 +16,8 @@ vi.mock('@/lib/maps', () => ({ placesAvailable: true }))
 
 const auth = reactive({ authReady: true, isSignedIn: true, uid: 'u1' as string | null, openLogin: vi.fn() })
 vi.mock('@/stores/auth', () => ({ useAuthStore: () => auth }))
-vi.mock('@/stores/me', () => ({ useMeStore: () => ({ email: 'morag@example.test', displayName: null }) }))
+vi.mock('@/stores/me', () => ({ useMeStore: () => ({ email: 'morag@example.test', displayName: null, managedOrganisationIds: [] }) }))
+vi.mock('@/composables/useOrganisations', () => ({ useOrganisations: () => ({ organisations: ref([]), byId: ref(new Map()), loaded: ref(true), error: ref(null), retry: () => {} }) }))
 vi.mock('@/composables/usePageTitle', () => ({ usePageTitle: () => {} }))
 
 // The venue box (tested on its own): types a name, or hands back a pick.

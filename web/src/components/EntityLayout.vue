@@ -10,13 +10,13 @@ import { sectionMeta } from '@/lib/sectionMeta'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { provideInfoHeader } from '@/composables/useScrolledPast'
 
-// Shared shell for profile pages (dancer, judge, piper, venue): the bar,
+// Shared shell for profile pages (dancer, judge, piper, venue, organisation): the bar,
 // the page (each profile's Info), and a way on when the link is stale. On
 // wide screens the page puts its header in a column of its own that stays
 // put (lib/profile).
 
 const props = defineProps<{
-  scope: 'judge' | 'piper' | 'venue' | 'dancer'
+  scope: 'judge' | 'piper' | 'venue' | 'dancer' | 'organisation'
   /** Route name of the section index this profile belongs to (e.g. 'judges'). */
   sectionRouteName: string
   displayName: string

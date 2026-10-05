@@ -1,0 +1,14 @@
+Hello!
+
+Will you help manage {{ organisation.name }} on {{ app.name }}? You’ll be able to change its page and add its competitions.
+
+Sign in, or make an account, to accept:
+{{ invite.link }}
+
+---
+
+If you have any questions or feedback, feel free to reply to this email.
+
+---
+
+{{ app.name }} | {{ app.description }} | {{ app.url }}

@@ -13,18 +13,21 @@ import { inviteStatus, type Invite } from '@/lib/admin/invites'
 import { friendlyError, write } from '@/lib/admin/write'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
-import type { Competition } from '@/types/competition'
 
-// Where an admin invite email lands. Accepting asks the server to give this
-// account access to manage the competition.
+// Where an admin invite email lands, for a competition or an organisation.
+// Accepting asks the server to give this account access to manage it.
 
 const route = useRoute()
 const auth = useAuthStore()
 const me = useMeStore()
-const competitionId = computed(() => String(route.params.competitionId ?? ''))
+const isOrganisation = computed(() => !!route.params.organisationId)
+const ownerId = computed(() => String(route.params.organisationId ?? route.params.competitionId ?? ''))
 const inviteId = computed(() => String(route.params.inviteId ?? ''))
+const recordPath = computed(() => `${isOrganisation.value ? 'organisations' : 'competitions'}/${ownerId.value}`)
+const invitePath = computed(() => `${isOrganisation.value ? 'organisations:data' : 'competitions:data'}/${ownerId.value}/invites/${inviteId.value}`)
+const asker = computed(() => (isOrganisation.value ? 'one of its admins' : 'the organiser'))
 
-const competition = ref<Competition | null>(null)
+const competition = ref<{ name?: string } | null>(null)
 const invite = ref<Invite | null>(null)
 const loaded = ref(false)
 const authReady = ref(false)
@@ -35,14 +38,14 @@ onMounted(async () => {
 
 let offs: Array<() => void> = []
 watch(
-  () => [competitionId.value, inviteId.value, auth.uid],
+  () => [recordPath.value, invitePath.value, auth.uid],
   () => {
     offs.forEach((off) => off())
-    offs = [onValue(dataRef(`competitions/${competitionId.value}`), (s) => (competition.value = s.val()))]
+    offs = [onValue(dataRef(recordPath.value), (s) => (competition.value = s.val()))]
     if (!auth.uid) return
     offs.push(
       onValue(
-        dataRef(`competitions:data/${competitionId.value}/invites/${inviteId.value}`),
+        dataRef(invitePath.value),
         (s) => {
           invite.value = s.val()
           loaded.value = true
@@ -63,7 +66,7 @@ const state = computed(() => {
   if (!loaded.value) return 'loading'
   const i = invite.value
   if (!i?.created) return 'missing'
-  if (me.hasCompetitionPerm(competitionId.value)) return 'yours'
+  if (isOrganisation.value ? me.hasOrganisationPerm(ownerId.value) : me.hasCompetitionPerm(ownerId.value)) return 'yours'
   const status = inviteStatus(i)
   if (status === 'accepted') return i.acceptedBy === auth.uid ? 'accepting' : 'taken'
   return status === 'pending' ? 'open' : status
@@ -88,13 +91,16 @@ const error = ref<string | null>(null)
 async function accept() {
   error.value = null
   try {
-    await write({ [`competitions:data/${competitionId.value}/invites/${inviteId.value}/accepted`]: new Date().toISOString() })
+    await write({ [`${invitePath.value}/accepted`]: new Date().toISOString() })
   } catch (e) {
     // Refused: someone accepted it first, or it was cancelled or deleted.
-    error.value = /permission.denied/i.test(String(e)) ? 'This invite can’t be accepted any more. Ask the organiser to invite you again.' : friendlyError(e)
+    error.value = /permission.denied/i.test(String(e)) ? `This invite can’t be accepted any more. Ask ${asker.value} to invite you again.` : friendlyError(e)
   }
 }
-const name = computed(() => competition.value?.name ?? 'this competition')
+const name = computed(() => competition.value?.name ?? (isOrganisation.value ? 'this organisation' : 'this competition'))
+const manageRoute = computed(() =>
+  isOrganisation.value ? { name: 'organisation.manage', params: { organisationId: ownerId.value } } : { name: 'manage', params: { competitionId: ownerId.value } },
+)
 </script>
 
 <template>
@@ -116,7 +122,7 @@ const name = computed(() => competition.value?.name ?? 'this competition')
         v-else-if="state === 'open'"
         :icon="MailOpen"
         :title="`Help manage ${name}`"
-        description="Accept to edit its details, dancers, schedule and results."
+        :description="isOrganisation ? 'Accept to change its page and add its competitions.' : 'Accept to edit its details, dancers, schedule and results.'"
       >
         <Button variant="primary" size="lg" @click="accept">Accept</Button>
         <template v-if="error" #footer>
@@ -128,7 +134,7 @@ const name = computed(() => competition.value?.name ?? 'this competition')
         v-else-if="state === 'accepting' && slow"
         :icon="MailX"
         title="Your access isn’t set up yet"
-        description="It’s taking much longer than it should. Ask the organiser to delete this invite and invite you again."
+        :description="`It’s taking much longer than it should. Ask ${asker} to delete this invite and invite you again.`"
       />
       <div v-else-if="state === 'accepting'" class="flex flex-col items-center gap-3 py-20 text-center">
         <LoaderCircle class="text-primary size-8 animate-spin" />
@@ -136,13 +142,13 @@ const name = computed(() => competition.value?.name ?? 'this competition')
       </div>
 
       <EmptyState v-else-if="state === 'yours'" :icon="CircleCheck" :title="`You can manage ${name}`">
-        <Button variant="primary" size="lg" :to="{ name: 'manage', params: { competitionId } }">Start managing</Button>
+        <Button variant="primary" size="lg" :to="manageRoute">Start managing</Button>
       </EmptyState>
 
       <EmptyState v-else-if="state === 'taken'" :icon="MailX" title="This invite was already used" description="It was accepted from another account. Ask to be invited again if that wasn’t you." />
-      <EmptyState v-else-if="state === 'cancelled'" :icon="MailX" title="This invite was cancelled" description="Ask the organiser to invite you again." />
-      <EmptyState v-else-if="state === 'expired'" :icon="MailX" title="This invite has expired" description="Ask the organiser to send it again." />
-      <EmptyState v-else :icon="MailX" title="Invite not found" description="The link may be wrong, or the invite was deleted. Ask the organiser to invite you again." />
+      <EmptyState v-else-if="state === 'cancelled'" :icon="MailX" title="This invite was cancelled" :description="`Ask ${asker} to invite you again.`" />
+      <EmptyState v-else-if="state === 'expired'" :icon="MailX" title="This invite has expired" :description="`Ask ${asker} to send it again.`" />
+      <EmptyState v-else :icon="MailX" title="Invite not found" :description="`The link may be wrong, or the invite was deleted. Ask ${asker} to invite you again.`" />
     </main>
   </div>
 </template>

@@ -19,6 +19,8 @@ import LiveDot from '@/components/LiveDot.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import StaffAvatar from '@/components/StaffAvatar.vue'
 import StaffDialog from '@/components/StaffDialog.vue'
+import OrganisationMark from '@/components/OrganisationMark.vue'
+import { useOrganisations } from '@/composables/useOrganisations'
 import Button from '@/components/ui/Button.vue'
 import { staffEntityRef, staffMemberName, type StaffMember } from '@/types/competition'
 import type { DancerDay } from '@/lib/dancerDay'
@@ -163,6 +165,17 @@ function freshIn(days: DancerDay[]): string | null {
       if (s.state === 'placed' && isFresh(d.group?.id, s.dance.id, d.dancer.id)) return `${d.dancer.id}:${s.dance.id}`
   return null
 }
+
+// The organisations it's run by or part of, each with a page of its own.
+const organisationsList = useOrganisations()
+const organisations = computed(() =>
+  Object.entries(competition.value?.organisations ?? {})
+    .filter(([, on]) => on === true)
+    .flatMap(([id]) => {
+      const org = organisationsList.byId.value.get(id)
+      return org ? [org] : []
+    }),
+)
 
 const staffGroups = computed(() => {
   const groups = new Map<string, StaffMember[]>()
@@ -473,6 +486,26 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
           >
             Show all {{ g.members.length }}
           </button>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Who runs it: last, after the people -->
+    <section v-if="organisations.length" class="space-y-3">
+      <h2 class="text-heading">
+        {{ organisations.length === 1 ? 'Organisation' : 'Organisations' }}
+        <span v-if="organisations.length > 1" class="text-muted-foreground text-sm font-medium tabular-nums">{{ organisations.length }}</span>
+      </h2>
+      <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.25rem]">
+        <li v-for="org in organisations" :key="org.id">
+          <RouterLink :to="{ name: 'organisation.info', params: { organisationId: org.id } }" class="press-row focus-inset flex min-h-14 items-center gap-3 px-4 py-2">
+            <OrganisationMark :organisation="org" />
+            <span class="min-w-0 flex-1">
+              <span class="block truncate text-base font-semibold">{{ org.name }}</span>
+              <span v-if="org.shortName || org.location" class="text-muted-foreground block truncate text-sm">{{ [org.shortName, org.location].filter(Boolean).join(' · ') }}</span>
+            </span>
+            <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+          </RouterLink>
         </li>
       </ul>
     </section>

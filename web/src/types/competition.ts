@@ -26,6 +26,8 @@ export interface Competition {
   sobhd?: string
   listed?: boolean
   published?: boolean
+  /** The organisations it's run by or part of (see types/organisation). */
+  organisations?: Record<string, boolean>
 }
 
 export interface StaffMember {

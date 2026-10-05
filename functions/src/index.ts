@@ -8,6 +8,7 @@ import * as Competitions from './competitions';
 import * as Judges from './judges';
 import * as Pipers from './pipers';
 import * as Venues from './venues';
+import * as Organisations from './organisations';
 import { getOnSearchAll } from './search';
 import { runBackfillCoords } from './backfillCoords';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
@@ -51,6 +52,17 @@ const submissions = new Submissions(configDatabase, appConfig);
 const submissionsHooks = submissions.hook(`/${env}/competitions:submissions`);
 export const competitionSubmissionCreated = submissionsHooks.onCreate;
 export const competitionSubmissionUpdated = submissionsHooks.onUpdate;
+
+// Organisations: anyone running a competition can start one; its admins
+// invite others to help, as a competition's do.
+export const createOrganisation = https({ secrets: [runtimeConfig] }).onCall(Organisations.getOnCreate(appConfig.db));
+const organisationInvites = new Organisations.OrganisationInvites(configDatabase, appConfig);
+const organisationInvitesHooks = organisationInvites.hook(`/${env}/organisations:data/{organisationId}/invites`);
+export const organisationInviteCreated = organisationInvitesHooks.onCreate;
+export const organisationInviteUpdated = organisationInvitesHooks.onUpdate;
+export const organisationInviteDeleted = organisationInvitesHooks.onDelete;
+export const organisationDeleted = appConfig.database.ref(`/${env}/organisations/{organisationId}`)
+  .onDelete(Organisations.getOnDelete(appConfig.db));
 
 export const competitionDeleted = appConfig.database.ref(`/${env}/competitions/{competitionId}`)
   .onDelete(async (before, ctx) => {

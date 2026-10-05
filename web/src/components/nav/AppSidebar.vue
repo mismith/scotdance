@@ -1,22 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import {
-  ArrowDownToLine,
-  CalendarDays,
-  ClipboardList,
-  Gavel,
-  House,
-  Info,
-  LifeBuoy,
-  Music,
-  School,
-  Search,
-  ServerCog,
-  Settings,
-  SquarePlus,
-  Users,
-} from '@lucide/vue'
+import { ArrowDownToLine, CalendarDays, ClipboardList, Gavel, House, Info, Landmark, LifeBuoy, Music, School, Search, ServerCog, Settings, SquarePlus, Users } from '@lucide/vue'
 import LogoMark from '@/components/LogoMark.vue'
 import AccountButton from '@/components/nav/AccountButton.vue'
 import SidebarLink from '@/components/nav/SidebarLink.vue'
@@ -29,7 +14,7 @@ import { useMeStore } from '@/stores/me'
 // page, in place of the tab bars and the More menu. Where you are nests
 // under where it belongs, on a guide line: a competition
 // and its tabs under Competitions, a profile under its list, a competition
-// you manage and its sections under Manage competitions. The pages add their
+// you manage and its sections under Manage. The pages add their
 // own branch (nav/SidebarBranch, into the `sidebar-*` slots below). Your
 // account sits at the foot. A card on the page's ground, so no edge line;
 // the groups need no headings or rules: space sets them apart. Through page changes the sidebar stays put: each row is named, so
@@ -55,6 +40,7 @@ const browse = [
   { label: 'Judges', icon: Gavel, route: 'judges', profile: 'judge.' },
   { label: 'Pipers', icon: Music, route: 'pipers', profile: 'piper.' },
   { label: 'Venues', icon: School, route: 'venues', profile: 'venue.' },
+  { label: 'Organisations', icon: Landmark, route: 'organisations', profile: 'organisation.' },
 ]
 const vt = (name: string) => ({ viewTransitionName: `sidebar-${name}`, viewTransitionClass: 'sidebar' })
 </script>
@@ -107,7 +93,7 @@ const vt = (name: string) => ({ viewTransitionName: `sidebar-${name}`, viewTrans
           <SidebarLink
             :to="{ name: 'manage.competitions' }"
             :icon="ClipboardList"
-            label="Manage competitions"
+            label="Manage"
             :state="state(name === 'manage.competitions', inManage)"
             admin
             vt="sidebar-manage"

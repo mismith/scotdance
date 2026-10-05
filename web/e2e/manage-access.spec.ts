@@ -162,7 +162,7 @@ test('access given while the page is open applies straight away', async ({ page 
   }
 })
 
-test('Manage competitions and System admin sit together, last in More (the sidebar on wide screens), not in the account menu', async ({ page }) => {
+test('Manage and System admin sit together, last in More (the sidebar on wide screens), not in the account menu', async ({ page }) => {
   const email = `${uid('admin')}@example.test`
   const id = await ensureUser(email)
   await grantSystemAdmin(id)
@@ -176,7 +176,7 @@ test('Manage competitions and System admin sit together, last in More (the sideb
     await page.getByRole('button', { name: /^Signed in as / }).click()
     const account = page.getByRole('dialog', { name: 'Your account' })
     // The account menu keeps to your account: the tools are in More.
-    await expect(account.getByRole('button', { name: 'Manage competitions' })).toHaveCount(0)
+    await expect(account.getByRole('button', { name: 'Manage', exact: true })).toHaveCount(0)
     await expect(account.getByRole('button', { name: 'System admin' })).toHaveCount(0)
     await expect(account.getByRole('button', { name: 'Settings' })).toBeVisible()
     await expect(account.getByRole('button', { name: 'Sign out' })).toBeVisible()
@@ -187,11 +187,11 @@ test('Manage competitions and System admin sit together, last in More (the sideb
     // No More on wide screens: they sit together in the sidebar, after Submit (as in More).
     const names = (await appNav(page).getByRole('link').allTextContents()).map((n) => n.trim())
     const at = names.indexOf('Submit a competition')
-    expect(names.slice(at, at + 3)).toEqual(['Submit a competition', 'Manage competitions', 'System admin'])
+    expect(names.slice(at, at + 3)).toEqual(['Submit a competition', 'Manage', 'System admin'])
   } else {
     const { menu, role } = await moreItems(page)
     const more = menu.getByRole(role)
-    await expect(more.nth(-2)).toHaveText('Manage competitions')
+    await expect(more.nth(-2)).toHaveText('Manage')
     await expect(more.nth(-1)).toHaveText('System admin')
     await page.keyboard.press('Escape')
   }
@@ -209,5 +209,5 @@ test('a plain account sees neither in More', async ({ page }) => {
   await page.goto('/')
   const { menu, role } = await moreItems(page)
   await expect(menu.getByRole(role, { name: 'About ScotDance.app' })).toBeVisible()
-  await expect(menu.getByRole(role, { name: /Manage competitions|System admin/ })).toHaveCount(0)
+  await expect(menu.getByRole(role, { name: /^(Manage|System admin)$/ })).toHaveCount(0)
 })

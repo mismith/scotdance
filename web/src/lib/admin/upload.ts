@@ -8,7 +8,8 @@ if (useEmulators) connectStorageEmulator(storage, window.location.hostname || 'l
 storage.maxUploadRetryTime = 2 * 60 * 1000
 const bucketRef = (path: string) => storageRef(storage, `${NAMESPACE}/${path}`)
 
-// Uploads for Manage: competition images, judge photos and linked files.
+// Uploads for Manage: competition images, judge photos and linked files, and
+// organisations' logos and files.
 // The storage rules cap images at 244 KB and links at 976 KB, so photos
 // are shrunk on the device first (people pick 4 MB phone pictures). Names
 // get the competition and a timestamp, so two competitions' "logo.png"
@@ -70,9 +71,12 @@ export async function shrinkImage(file: File, limit = IMAGE_LIMIT): Promise<Blob
   throw new Error('That image is too detailed to shrink enough. Try a smaller one.')
 }
 
-async function put(folder: UploadFolder, competitionId: string, name: string, blob: Blob): Promise<string> {
+/** Whose file it is: a competition's (the default) or an organisation's. */
+export type UploadOwner = 'competitions' | 'organisations'
+
+async function put(folder: UploadFolder, ownerId: string, name: string, blob: Blob, owner: UploadOwner = 'competitions'): Promise<string> {
   const ext = blob.type === 'application/pdf' ? 'pdf' : (blob.type.split('/')[1] ?? 'bin').replace('jpeg', 'jpg')
-  const path = `competitions/${folder}/${competitionId}-${Date.now()}-${slug(name)}.${ext}`
+  const path = `${owner}/${folder}/${ownerId}-${Date.now()}-${slug(name)}.${ext}`
   const ref = bucketRef(path)
   try {
     // Every upload gets a new name, so devices can keep a file for good.
@@ -87,19 +91,19 @@ async function put(folder: UploadFolder, competitionId: string, name: string, bl
 }
 
 /** Upload an image (shrunk to fit) and return its public URL. */
-export async function uploadImage(file: File, folder: UploadFolder, competitionId: string): Promise<string> {
+export async function uploadImage(file: File, folder: UploadFolder, ownerId: string, owner: UploadOwner = 'competitions'): Promise<string> {
   if (!file.type.startsWith('image/')) throw new Error('Choose an image (JPEG, PNG or WebP).')
   const blob = await shrinkImage(file)
-  return put(folder, competitionId, file.name, blob)
+  return put(folder, ownerId, file.name, blob, owner)
 }
 
 /** Upload a PDF or image for a competition link and return its URL. */
-export async function uploadLinkFile(file: File, competitionId: string): Promise<string> {
+export async function uploadLinkFile(file: File, ownerId: string, owner: UploadOwner = 'competitions'): Promise<string> {
   if (file.type.startsWith('image/')) {
     const blob = await shrinkImage(file, LINK_LIMIT)
-    return put('links', competitionId, file.name, blob)
+    return put('links', ownerId, file.name, blob, owner)
   }
   if (file.type !== 'application/pdf') throw new Error('Choose a PDF or an image.')
   if (file.size > LINK_LIMIT) throw new Error('That PDF is over 950 KB. Try exporting a smaller one.')
-  return put('links', competitionId, file.name, file)
+  return put('links', ownerId, file.name, file, owner)
 }

@@ -16,9 +16,47 @@
       "competitions": {
         ".read": true,
         "$competitionId": {
-          ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true" // has PERMISSION
+          ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('competitions').child($competitionId).val() === true", // has PERMISSION
+          "organisations": {
+            "$organisationId": {
+              // An organisation's admins add its competitions and take them off.
+              // A competition's admins can take any off (the write above), but
+              // add only an organisation they're an admin of.
+              ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('organisations').child($organisationId).val() === true", // has PERMISSION to the ORGANISATION
+              ".validate": "newData.val() === true && root.child($environment).child('organisations').child($organisationId).exists() && (root.child($environment).child('users:permissions').child(auth.uid).child('organisations').child($organisationId).val() === true || root.child($environment).child('users:permissions').child(auth.uid).child('admin').val() === true)" // an existing ORGANISATION its ADMIN (or a system ADMIN) adds
+            }
+          }
         },
         ".indexOn": ["date"]
+      },
+      "organisations": {
+        ".read": true,
+        "$organisationId": {
+          // Its admins edit its page. Making or deleting one is for functions
+          // (createOrganisation, an approved submission) and system admins.
+          ".write": "data.exists() && newData.exists() && root.child($environment).child('users:permissions').child(auth.uid).child('organisations').child($organisationId).val() === true", // has PERMISSION and EDITING
+          ".validate": "newData.child('name').isString() && newData.child('name').val().length > 0"
+        }
+      },
+      "organisations:data": {
+        "$organisationId": {
+          // Its admins' private bits: invites (emails, open invite ids).
+          "invites": {
+            "$inviteId": {
+              ".read": "auth !== null", // is AUTHED
+              "accepted": {
+                ".write": "auth !== null && data.parent().exists() && !data.exists() && newData.exists() && !data.parent().child('cancelled').exists()" // is AUTHED and ACCEPTING an open invite
+              }
+            }
+          },
+          ".read": "root.child($environment).child('users:permissions').child(auth.uid).child('organisations').child($organisationId).val() === true", // has PERMISSION
+          ".write": "root.child($environment).child('users:permissions').child(auth.uid).child('organisations').child($organisationId).val() === true" // has PERMISSION
+        }
+      },
+      "organisations:permissions": {
+        "$organisationId": {
+          ".read": "root.child($environment).child('users:permissions').child(auth.uid).child('organisations').child($organisationId).val() === true" // has PERMISSION to same ORGANISATION
+        }
       },
       "judges": {
         "$id": { ".read": true } // one at a time: the whole tree is too big to hand out

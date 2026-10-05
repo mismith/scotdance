@@ -15,6 +15,7 @@ export type FavoriteType =
   | 'judges'
   | 'pipers'
   | 'venues'
+  | 'organisations'
 
 // Stored at /users:favorites/{uid}/{type}/{id} → value is either `true` or a
 // denormed display name (kept so the favourites section on each list page can
@@ -39,6 +40,7 @@ export const useFavoritesStore = defineStore('favorites', () => {
   const judges = ref<Record<string, FavoriteValue>>({})
   const pipers = ref<Record<string, FavoriteValue>>({})
   const venues = ref<Record<string, FavoriteValue>>({})
+  const organisations = ref<Record<string, FavoriteValue>>({})
   const copiedOld = ref<Record<string, string>>({})
 
   // The people you follow. Old per-competition keys are left out: a `true`
@@ -56,6 +58,7 @@ export const useFavoritesStore = defineStore('favorites', () => {
     judges,
     pipers,
     venues,
+    organisations,
   }
 
   let unsubscribe: (() => void) | null = null
@@ -105,6 +108,7 @@ export const useFavoritesStore = defineStore('favorites', () => {
     judges.value = val.judges ?? {}
     pipers.value = val.pipers ?? {}
     venues.value = val.venues ?? {}
+    organisations.value = val.organisations ?? {}
     copiedOld.value = val.oldDancers ?? {}
   }
 
@@ -138,6 +142,7 @@ export const useFavoritesStore = defineStore('favorites', () => {
     judges,
     pipers,
     venues,
+    organisations,
     byType,
     isFavorite,
     setFavorite,

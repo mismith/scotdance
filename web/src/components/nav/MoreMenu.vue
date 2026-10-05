@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
-import { ArrowDownToLine, ClipboardList, Gavel, Info, LifeBuoy, Music, School, ServerCog, Settings, SquarePlus, Users } from '@lucide/vue'
+import { ArrowDownToLine, ClipboardList, Gavel, Info, Landmark, LifeBuoy, Music, School, ServerCog, Settings, SquarePlus, Users } from '@lucide/vue'
 import AdminMark from '@/components/AdminMark.vue'
 import Dialog from '@/components/Dialog.vue'
 import { useCrisp } from '@/composables/useCrisp'
@@ -29,6 +29,7 @@ const browse = [
   { label: 'Judges', icon: Gavel, to: { name: 'judges' } },
   { label: 'Pipers', icon: Music, to: { name: 'pipers' } },
   { label: 'Venues', icon: School, to: { name: 'venues' } },
+  { label: 'Organisations', icon: Landmark, to: { name: 'organisations' } },
 ]
 
 // The page you're on (or under) is marked, so going to another moves the way
@@ -83,7 +84,7 @@ const row =
           <SquarePlus class="size-5" /> Submit a competition
         </button>
         <button v-if="canManage" type="button" :class="row" :data-current="here({ name: 'manage.competitions' })" @click="go({ name: 'manage.competitions' })">
-          <span class="relative flex text-muted-foreground"><ClipboardList class="size-5" /><AdminMark ring="raised" /></span> Manage competitions
+          <span class="relative flex text-muted-foreground"><ClipboardList class="size-5" /><AdminMark ring="raised" /></span> Manage
         </button>
         <button v-if="me.isAdmin" type="button" :class="row" :data-current="here({ name: 'admin' })" @click="go({ name: 'admin' })">
           <span class="relative flex text-muted-foreground"><ServerCog class="size-5" /><AdminMark ring="raised" /></span> System admin

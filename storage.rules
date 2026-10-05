@@ -31,6 +31,20 @@ service firebase.storage {
                        && request.resource.contentType.matches('application/pdf|image/.*');
         }
       }
+      match /organisations {
+      	match /info/{fileName} {
+          allow get;
+          allow create: if request.auth != null
+                       && request.resource.size < 244 * 1024
+                       && request.resource.contentType.matches('image/.*');
+        }
+      	match /links/{fileName} {
+          allow get;
+          allow create: if request.auth != null
+                       && request.resource.size < 244 * 4 * 1024
+                       && request.resource.contentType.matches('application/pdf|image/.*');
+        }
+      }
     }
   }
 }

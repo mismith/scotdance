@@ -1,5 +1,6 @@
 import { getPostmark } from './utility/email';
 import { attachUserToCompetition } from './utility/competition';
+import { organisationsForSubmission } from './organisations';
 import { isEmulator } from './utility/env';
 
 // A failed email mustn't fail the trigger: the submission (or the
@@ -106,6 +107,15 @@ class Submissions {
       userId: submittedBy,
       competitionId,
     });
+    // list it under the organisations it asked for (making the new ones, with
+    // the submitter as their admin)
+    const organisationIds = await organisationsForSubmission(this.config.db, submission);
+    if (organisationIds.length) {
+      await this.config.db.update(Object.fromEntries(
+        organisationIds.map((id) => [`competitions/${competitionId}/organisations/${id}`, true]),
+      ));
+      await snap.ref.update({ organisationIds: Object.fromEntries(organisationIds.map((id) => [id, true])) });
+    }
 
 
     // send email
