@@ -3,17 +3,17 @@ import type { Competition } from '@/types/competition'
 
 // Who can see a competition, from Manage's two switches. Listed puts its
 // overview and staff in front of everyone; Published adds dancers, the
-// schedule and results. Unpublished is Listed without Published, in the
-// word the Published switch itself uses when it's turned off.
-export type Visibility = 'private' | 'unpublished' | 'published'
+// schedule and results. Each hidden state is named for the switch that's
+// off (Unlisted, Unpublished), so the chip and the switch say the same thing.
+export type Visibility = 'unlisted' | 'unpublished' | 'published'
 
 export const visibilityOf = (c: Pick<Competition, 'listed' | 'published'>): Visibility =>
-  c.published === true ? 'published' : c.listed === true ? 'unpublished' : 'private'
+  c.published === true ? 'published' : c.listed === true ? 'unpublished' : 'unlisted'
 
-/** Said the same way wherever it shows: "Private: only admins can see this competition." */
+/** Said the same way wherever it shows: "Unlisted: only admins can see this competition." */
 export const VISIBILITY = {
-  private: {
-    label: 'Private',
+  unlisted: {
+    label: 'Unlisted',
     icon: EyeOff,
     line: 'only admins can see this competition.',
   },

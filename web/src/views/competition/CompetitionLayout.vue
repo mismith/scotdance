@@ -151,7 +151,7 @@ usePageTitle(() => [
         :to="{ name: 'manage', params: { competitionId } }"
         :class="[
           'press-row focus-inset mb-4 flex min-h-12 items-center gap-3 rounded-2xl px-4 py-2.5 text-sm',
-          hidden === 'private' ? 'bg-foreground text-background' : 'bg-card border-foreground/40 border',
+          hidden === 'unlisted' ? 'bg-foreground text-background' : 'bg-card border-foreground/40 border',
         ]"
       >
         <component :is="VISIBILITY[hidden].icon" class="size-5 shrink-0" aria-hidden="true" />

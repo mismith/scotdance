@@ -4,7 +4,7 @@ import { visibilityOf, type Visibility } from '@/lib/visibility'
 import { useMeStore } from '@/stores/me'
 import type { Competition } from '@/types/competition'
 
-// How a competition is hidden from everyone else ('private' or
+// How a competition is hidden from everyone else ('unlisted' or
 // 'unpublished'), for the people who see past that: its admins and system
 // admins. Null once it's published, and for everyone else. Search hits and
 // profiles carry a competition without its switches, so those are read from

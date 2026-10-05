@@ -76,18 +76,18 @@ const shortDate = (c: CompetitionListItem) =>
   c.date ? parseDate(c.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'TBA'
 
 // A pin is its venue's next (or, under Past results, latest) date, with how
-// many more are on there. Ink, like the Private chip, where only admins can
+// many more are on there. Ink, like the Unlisted chip, where only admins can
 // see every competition there (the pin is there for them alone).
 function pinElement(group: VenueGroup, idx: number): HTMLElement {
   const el = document.createElement('button')
   el.type = 'button'
   const fav = group.competitions.some((c) => favorites.isFavoriteCompetition(c.id))
-  const hidden = group.competitions.every((c) => hiddenAs(c.id, c) === 'private')
+  const hidden = group.competitions.every((c) => hiddenAs(c.id, c) === 'unlisted')
   el.className = `map-pin${fav ? ' is-fav' : ''}${hidden ? ' is-private' : ''}`
   const n = group.competitions.length
   el.setAttribute(
     'aria-label',
-    `${group.venue || group.location || 'Venue'}: ${n} competition${n === 1 ? '' : 's'}, ${shortDate(group.competitions[0])}${hidden ? ', private' : ''}`,
+    `${group.venue || group.location || 'Venue'}: ${n} competition${n === 1 ? '' : 's'}, ${shortDate(group.competitions[0])}${hidden ? ', unlisted' : ''}`,
   )
   const pill = document.createElement('span')
   pill.className = 'map-pin-label'

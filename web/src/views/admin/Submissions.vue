@@ -132,7 +132,7 @@ async function approve(s: Submission) {
   asking = true
   const ok = await confirm({
     title: `Approve ${s.competition?.name ?? 'this competition'}?`,
-    message: `It’s created (private until listed), and ${s.contact?.email ?? 'the organiser'} gets access and an email with a link.`,
+    message: `It’s created (unlisted, so only admins see it), and ${s.contact?.email ?? 'the organiser'} gets access and an email with a link.`,
     confirmLabel: 'Approve',
   }).finally(() => (asking = false))
   if (!ok) return

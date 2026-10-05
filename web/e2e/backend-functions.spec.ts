@@ -101,7 +101,7 @@ test('profiles show what Manage says is public: listed shows staff and venue, pu
   expect(await index('pipers', piper)).not.toBeNull()
   expect(await index('venues', venue)).not.toBeNull()
 
-  // Private (Manage's Unlist switch writes both): nothing shows.
+  // Unlisted (Manage's Unlist switch writes both): nothing shows.
   await write({ [`competitions/${comp}/listed`]: false, [`competitions/${comp}/published`]: false })
   await expect.poll(() => index('pipers', piper), POLL).toBeNull()
   await expect.poll(() => index('venues', venue), POLL).toBeNull()

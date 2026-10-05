@@ -20,7 +20,7 @@ const regLines = computed(() => registrationLines(c.value))
 const regOpen = computed(() => registrationOpen(c.value))
 const kicker = computed(() => [c.value.date ? formatLongDate(c.value.date) : null, c.value.location].filter(Boolean).join(' · '))
 const where = computed(() => [c.value.address, c.value.location].filter(Boolean).join(', '))
-const unlisted = computed(() => visibilityOf(c.value) === 'private')
+const unlisted = computed(() => visibilityOf(c.value) === 'unlisted')
 </script>
 
 <template>

@@ -203,7 +203,7 @@ test('a submitted competition, once approved, is the organiser’s to manage', a
     await page.goto('/manage')
     await page.getByRole('main').getByRole('link', { name: new RegExp(name) }).click()
     await expect(page.getByRole('heading', { name })).toBeVisible()
-    await expect(page.getByText('Private: only admins can see this competition.')).toBeVisible()
+    await expect(page.getByText('Unlisted: only admins can see this competition.')).toBeVisible()
   } finally {
     await admin.context().close()
     if (competitionId) await removeCompetition(competitionId)

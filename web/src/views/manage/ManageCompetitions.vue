@@ -106,7 +106,7 @@ async function create() {
     creating.dismiss()
     newName.value = ''
     newDate.value = ''
-    toast('Competition created. It’s private until you list or publish it.')
+    toast('Competition created. Only admins see it until you list or publish it.')
     await router.push({ name: 'manage.details', params: { competitionId: id } })
   } catch (e) {
     createError.value = friendlyError(e)
@@ -203,7 +203,7 @@ async function create() {
     <Dialog :open="creating.open" :morph="creating" variant="sheet" @close="creating.hide()">
       <template #header>
         <h2 class="text-title">New competition</h2>
-        <p class="text-muted-foreground text-sm">It stays private until you list or publish it.</p>
+        <p class="text-muted-foreground text-sm">Only admins see it until you list or publish it.</p>
       </template>
       <form class="space-y-4 p-4 pb-[calc(1rem+var(--safe-bottom))]" novalidate @submit.prevent="create">
         <FormInput v-model="newName" label="Name" required placeholder="e.g. Canadian Championship 2027" />
