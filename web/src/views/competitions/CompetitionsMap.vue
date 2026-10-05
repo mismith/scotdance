@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { onKeyStroke, useMediaQuery } from '@vueuse/core'
 import * as maplibregl from 'maplibre-gl'
@@ -194,7 +194,32 @@ onKeyStroke('Escape', unselect)
 
 // ─── What's in view ──────────────────────────────────────────────────────────
 const inView = ref<CompetitionListItem[]>([])
+// One list, all of it scrolling once open, so whichever row a thumb lands on
+// scrolls it; folded, only its first row shows. Its height glides between the
+// two in script, as CSS can't animate to `height: auto` in Safari yet. Folding
+// keeps the rows until it's done, so they slide away rather than vanish.
 const sheetOpen = ref(false)
+const listShown = ref(false)
+const list = ref<HTMLElement | null>(null)
+let fold: Animation | undefined
+async function toggleSheet() {
+  const el = list.value
+  const from = el?.offsetHeight ?? 0
+  fold?.cancel()
+  sheetOpen.value = !sheetOpen.value
+  if (sheetOpen.value) listShown.value = true
+  if (!el || typeof el.animate !== 'function' || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    listShown.value = sheetOpen.value
+    return
+  }
+  await nextTick()
+  const first = el.firstElementChild as HTMLElement | null
+  const to = sheetOpen.value ? el.offsetHeight : (first?.offsetHeight ?? 0)
+  if (!sheetOpen.value) el.scrollTo({ top: 0, behavior: 'smooth' })
+  fold = el.animate([{ height: `${from}px` }, { height: `${to}px` }], { duration: 240, easing: 'cubic-bezier(0.2, 0, 0, 1)' })
+  // A cancelled fold (reopened halfway) rejects, and the rows stay.
+  fold.finished.then(() => (listShown.value = sheetOpen.value)).catch(() => {})
+}
 function syncInView() {
   const map = mapInstance.value
   if (!map) return
@@ -332,7 +357,7 @@ watch(
             <X class="size-5" />
           </button>
         </header>
-        <ul class="rows-inset max-h-64 overflow-y-auto shadow-[inset_0_1px_0_var(--border)] [--inset:4.5rem]">
+        <ul class="rows-inset max-h-64 overflow-y-auto overscroll-contain shadow-[inset_0_1px_0_var(--border)] [--inset:4.5rem]">
           <CompetitionDateRow
             v-for="c in selectedGroup.competitions"
             :key="c.id"
@@ -355,7 +380,7 @@ watch(
         class="press-row focus-inset flex h-12 w-full items-center gap-2 px-4 text-left"
         :aria-expanded="sheetOpen"
         :disabled="inView.length < 2"
-        @click="sheetOpen = !sheetOpen"
+        @click="toggleSheet"
       >
         <span class="flex-1 text-base font-semibold">{{ sheetTitle }}</span>
         <ChevronUp
@@ -364,33 +389,24 @@ watch(
           aria-hidden="true"
         />
       </button>
-      <ul v-if="inView.length" class="rows-inset [--inset:4.5rem]">
+      <ul
+        v-if="inView.length"
+        ref="list"
+        :class="[
+          'rows-inset max-h-[calc(45dvh+5.5rem)] overscroll-contain [--inset:4.5rem]',
+          sheetOpen ? 'overflow-y-auto' : 'overflow-hidden',
+          !listShown && '[&>li+li]:hidden',
+        ]"
+      >
         <CompetitionDateRow
-          :competition="inView[0]"
-          :to="{ name: 'competition.info', params: { competitionId: inView[0].id } }"
-          :followed="favorites.isFavorite('competitions', inView[0].id)"
+          v-for="c in inView"
+          :key="c.id"
+          :competition="c"
+          :to="{ name: 'competition.info', params: { competitionId: c.id } }"
+          :followed="favorites.isFavorite('competitions', c.id)"
           class="bg-transparent!"
         />
       </ul>
-      <div
-        :class="[
-          'grid transition-[grid-template-rows] duration-(--dur-base) ease-standard motion-reduce:transition-none',
-          sheetOpen && inView.length > 1 ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
-        ]"
-      >
-        <div class="min-h-0 overflow-hidden">
-          <ul class="rows-inset max-h-[45dvh] overflow-y-auto [--inset:4.5rem]" :inert="!sheetOpen">
-            <CompetitionDateRow
-              v-for="c in inView.slice(1)"
-              :key="c.id"
-              :competition="c"
-              :to="{ name: 'competition.info', params: { competitionId: c.id } }"
-              :followed="favorites.isFavorite('competitions', c.id)"
-              class="bg-transparent! shadow-[inset_0_1px_0_var(--border)]"
-            />
-          </ul>
-        </div>
-      </div>
     </section>
   </div>
 </template>
@@ -399,6 +415,12 @@ watch(
 /* Tailwind v4 isolates SFC <style> blocks — reference the main stylesheet
    so @apply can see its utilities. MapLibre makes these nodes itself. */
 @reference '../../style.css';
+
+/* The map is a place, not a page: a drag that misses a list mustn't pull
+   the whole page (and its header) along with it. */
+html:has(.comp-map) {
+  @apply overscroll-none;
+}
 
 /* Clear of the page's header along the top, in line with its edge. */
 .comp-map .maplibregl-ctrl-top-right {
