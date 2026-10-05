@@ -29,7 +29,25 @@ export function filterList(ids: string[]): string {
   return `[${ids.filter((id) => !id.includes('`')).map((id) => `\`${id}\``).join(',')}]`;
 }
 
+// Which competitions show (about 40 KB of ids) changes only when one is
+// published, listed or hidden, so each instance reads it once a minute rather
+// than on every search: a newly shown one turns up in search within a minute.
+const SHOWN_TTL_MS = 60 * 1000;
+
 export function getOnSearchAll(db: any) {
+  let shown: { at: number, lists: Promise<string[][]> } | null = null;
+  const shownLists = () => {
+    if (!shown || Date.now() - shown.at > SHOWN_TTL_MS) {
+      const lists = Promise.all(
+        ['competitions:published', 'competitions:listed'].map(async (path) => Object.keys((await db.child(path).get()).val() || {})),
+      );
+      shown = { at: Date.now(), lists };
+      // A failed read isn't kept: the next search tries again.
+      lists.catch(() => { shown = null; });
+    }
+    return shown.lists;
+  };
+
   return async function onSearchAll(params: SearchAllParams, ctx: any) {
     // Anyone can call this, so take nothing on trust.
     const q = (typeof params?.q === 'string' ? params.q : '').trim().slice(0, 200);
@@ -54,9 +72,7 @@ export function getOnSearchAll(db: any) {
     let shownIds: string[] = [];
     let publishedIds: string[] = [];
     if (!isAdmin) {
-      const [published, listed] = await Promise.all(
-        ['competitions:published', 'competitions:listed'].map(async (path) => Object.keys((await db.child(path).get()).val() || {})),
-      );
+      const [published, listed] = await shownLists();
       // As the rules read it: only `true` grants a competition.
       const ownedIds = uid
         ? Object.entries(permissions?.competitions || {})
