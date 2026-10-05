@@ -17,7 +17,7 @@ import type { Competition } from '@/types/competition'
 // `[--inset:4.5rem]`, so separators line up with the name.
 const props = withDefaults(
   defineProps<{
-    competition: Competition & { id?: string }
+    competition: Omit<Competition, 'date'> & { id?: string; date?: number | string }
     to: RouteLocationRaw
     followed?: boolean
     /** Followed dancers entered here (aggregate id, first name). */

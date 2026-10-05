@@ -21,7 +21,9 @@ export const schema: CollectionCreateSchema = {
     {
       name: 'locality', type: 'string', optional: true, facet: true,
     },
-    { name: 'date', type: 'int64', optional: true },
+    {
+      name: 'date', type: 'string', optional: true, index: false,
+    },
     {
       name: 'published', type: 'bool', facet: true, optional: true,
     },
@@ -34,11 +36,15 @@ export const schema: CollectionCreateSchema = {
   ],
 };
 
-function toMs(d: unknown): number | undefined {
-  if (d == null) return undefined;
-  if (typeof d === 'number') return d;
-  const t = Date.parse(String(d));
-  return Number.isFinite(t) ? t : undefined;
+/**
+ * The date as the competition has it ('2026-12-12', or an old admin's ISO
+ * time or ms), so the app reads a search hit's date the way it reads the
+ * competition's. As ms, '2026-12-12' was UTC midnight: the day before in the
+ * Americas.
+ */
+function dateOf(d: unknown): string | undefined {
+  if (typeof d === 'number') return Number.isFinite(d) ? String(d) : undefined;
+  return typeof d === 'string' && d ? d : undefined;
 }
 
 function competitionExtender(comp: any, { competitionId }: { competitionId: string }) {
@@ -51,7 +57,7 @@ function competitionExtender(comp: any, { competitionId }: { competitionId: stri
     country: comp?.country,
     region: comp?.region,
     locality: comp?.locality,
-    date: toMs(comp?.date),
+    date: dateOf(comp?.date),
     published: !!comp?.published,
     listed: !!comp?.listed,
     image: comp?.image,

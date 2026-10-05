@@ -16,7 +16,8 @@ interface RawCompetitionDoc {
   locality?: string
   region?: string
   country?: string
-  date?: number
+  /** As the competition has it, usually '2026-12-12' (a calendar day, not an instant). */
+  date?: string
   published?: boolean
   listed?: boolean
   image?: string
@@ -66,7 +67,7 @@ export interface SearchCompetitionHit {
   name: string
   venue?: string
   location?: string
-  date?: number
+  date?: string
   image?: string
 }
 
