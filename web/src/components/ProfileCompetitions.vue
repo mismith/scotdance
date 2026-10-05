@@ -14,6 +14,8 @@ const props = defineProps<{
   items: Array<{ competitionId: string; competition: Competition }>
   loading?: boolean
   emptyText?: string
+  /** On this organisation's page: names without it (CompetitionDateRow). */
+  within?: string | null
 }>()
 
 const ms = (c: Competition) => (c.date ? parseDate(c.date).getTime() : 0)
@@ -56,6 +58,7 @@ const years = computed(() => {
           :key="i.competitionId"
           :competition="i.competition"
           :competition-id="i.competitionId"
+          :within="within"
           :to="{ name: 'competition.info', params: { competitionId: i.competitionId } }"
         />
       </ul>
@@ -70,6 +73,7 @@ const years = computed(() => {
           :key="i.competitionId"
           :competition="i.competition"
           :competition-id="i.competitionId"
+          :within="within"
           :to="{ name: 'competition.info', params: { competitionId: i.competitionId } }"
         />
       </ul>

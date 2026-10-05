@@ -19,6 +19,7 @@ import LiveDot from '@/components/LiveDot.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import StaffAvatar from '@/components/StaffAvatar.vue'
 import StaffDialog from '@/components/StaffDialog.vue'
+import CompetitionName from '@/components/CompetitionName.vue'
 import OrganisationMark from '@/components/OrganisationMark.vue'
 import { useOrganisations } from '@/composables/useOrganisations'
 import Button from '@/components/ui/Button.vue'
@@ -219,7 +220,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         <!-- The name leads; when and where follows it. -->
         <div class="min-w-0 flex-1">
           <h1 class="text-display">
-            {{ competition.name ?? 'Competition' }}
+            <CompetitionName :competition="competition" link />
           </h1>
           <p :class="['text-callout mt-0.5 flex items-center gap-1.5 font-semibold', live ? 'text-live' : 'text-muted-foreground']">
             <LiveDot v-if="live" :pulse="pulse" />

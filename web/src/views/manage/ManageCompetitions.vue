@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/Dialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import CompetitionName from '@/components/CompetitionName.vue'
 import DateTile from '@/components/DateTile.vue'
 import VisibilityChip from '@/components/VisibilityChip.vue'
 import FormInput from '@/components/admin/FormInput.vue'
@@ -163,7 +164,7 @@ async function create() {
               <RouterLink :to="{ name: 'manage', params: { competitionId: c.id } }" class="press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap-3 py-2 pr-3 pl-4">
                 <DateTile :date="c.date" :today="isToday(c)" :managed="shielded(c)" />
                 <span class="min-w-0 flex-1">
-                  <span class="block truncate text-base font-semibold">{{ c.name || 'Untitled competition' }}</span>
+                  <span class="block truncate text-base font-semibold"><CompetitionName :competition="c" fallback="Untitled competition" /></span>
                   <span v-if="c.venue || c.location" class="text-muted-foreground block truncate text-sm">{{ c.venue || c.location }}</span>
                   <span v-if="hiddenAs(c.id, c)" class="mt-0.5 flex"><VisibilityChip :visibility="hiddenAs(c.id, c)" /></span>
                 </span>

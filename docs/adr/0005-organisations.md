@@ -92,6 +92,13 @@ Organisations always go last: at the bottom of a page, a menu, a form step
 or search results, after everything else there (only Delete sits below
 them, on Manage › Details).
 
+- **Competition rows** (lists, calendar, map, Home, Search, Manage) lead with
+  its organisation's short name: "CHDA Winter Wonderland" reads "CHDA ·
+  Winter Wonderland", the organisation (short or full name) dropped from the
+  front of the name so it isn't said twice (`lib/competitionTitle.ts`). With
+  several, the one the name starts with, else the first by short name; none
+  without a short name. Not on the organisation's own page, nor the
+  competition's own header, which keep the name as it is.
 - **Competition page**: an "Organisation(s)" section after the judges and
   pipers.
 - **Organisation page** `/organisations/:id`: logo (rounded square, so it's

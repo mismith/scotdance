@@ -104,7 +104,10 @@ watch(qDebounced, (v) => run(v), { immediate: true })
 // by name, short name or where they're based, and only those with a listed
 // competition (as on their list).
 const { organisations } = useOrganisations()
-const { byOrganisation } = useOrganisationCompetitions()
+const { byOrganisation, competitions: everyCompetition } = useOrganisationCompetitions()
+// The search index doesn't carry a competition's organisations: from the
+// competitions list instead, so results lead with them as lists do.
+const organisationsOf = computed(() => new Map(everyCompetition.value.map((c) => [c.id, c.organisations])))
 const listedCount = (id: string) => (byOrganisation.value.get(id) ?? []).filter((c) => c.listed === true).length
 const organisationHits = computed(() => {
   const t = qDebounced.value.trim().toLowerCase()
@@ -396,7 +399,7 @@ watch(mode, async (m) => {
               <CompetitionDateRow
                 v-for="c in results.competitions.hits"
                 :key="c.id"
-                :competition="c"
+                :competition="{ ...c, organisations: organisationsOf.get(c.id) }"
                 :to="{ name: 'competition.info', params: { competitionId: c.id } }"
                 :followed="favorites.isFavorite('competitions', c.id)"
               />

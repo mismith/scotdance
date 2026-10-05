@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompetitionName from '@/components/CompetitionName.vue'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { ChevronRight, Clock, Hash } from '@lucide/vue'
@@ -7,6 +8,7 @@ import DateTile from '@/components/DateTile.vue'
 import VisibilityChip from '@/components/VisibilityChip.vue'
 import { useFollowing } from '@/composables/useFollowing'
 import { useHiddenAs } from '@/composables/useHiddenAs'
+import { useOrganisationCompetitions } from '@/composables/useOrganisations'
 import { useRecentEntities } from '@/composables/useRecentEntities'
 import { useRecentSearches } from '@/composables/useRecentSearches'
 import { isBeforeToday } from '@/lib/format'
@@ -47,6 +49,10 @@ const viewed = computed(() =>
     .slice(0, 5),
 )
 const clearViewed = () => kinds.forEach((k) => k.store.clear())
+// A viewed competition kept only its name: its organisations from the list,
+// so it leads with them as competitions do everywhere.
+const { competitions: everyCompetition } = useOrganisationCompetitions()
+const organisationsOf = computed(() => new Map(everyCompetition.value.map((c) => [c.id, c.organisations])))
 
 // Competitions across the top; the people lists and venues as tiles.
 const competitions = sectionMeta('competitions')
@@ -97,7 +103,7 @@ const lists = ['dancers', 'judges', 'pipers', 'venues', 'organisations'].map(sec
       <Hash class="size-5" />
     </span>
     <span class="min-w-0 flex-1">
-      <span class="block text-base leading-snug font-semibold">{{ today.competition.name ?? 'Competition' }}</span>
+      <span class="block text-base leading-snug font-semibold"><CompetitionName :competition="today.competition" /></span>
       <span class="text-live flex items-center gap-1.5 text-sm font-semibold">
         <span class="bg-live size-2 shrink-0 rounded-full" />
         <span class="truncate">Today<template v-if="today.competition.location"> · {{ today.competition.location }}</template></span>
@@ -136,7 +142,10 @@ const lists = ['dancers', 'judges', 'pipers', 'venues', 'organisations'].map(sec
             <component :is="v.kind.icon" v-else class="text-muted-foreground size-5" aria-hidden="true" />
           </span>
           <span class="min-w-0 flex-1">
-            <span class="block truncate text-base font-semibold">{{ v.name }}</span>
+            <span class="block truncate text-base font-semibold">
+              <CompetitionName v-if="v.kind.ns === 'competitions'" :competition="{ name: v.name, organisations: organisationsOf.get(v.id) }" />
+              <template v-else>{{ v.name }}</template>
+            </span>
             <span class="text-muted-foreground block truncate text-sm">{{ v.kind.label }}</span>
             <span v-if="v.kind.ns === 'competitions' && hiddenAs(v.id)" class="mt-0.5 flex"><VisibilityChip :visibility="hiddenAs(v.id)" /></span>
           </span>

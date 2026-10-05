@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompetitionName from '@/components/CompetitionName.vue'
 import { computed } from 'vue'
 import { ExternalLink, MapPin } from '@lucide/vue'
 import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
@@ -42,7 +43,7 @@ const unlisted = computed(() => visibilityOf(c.value) === 'unlisted')
           <DateTile v-else :date="c.date" />
           <div class="min-w-0 flex-1">
             <p v-if="kicker" class="text-muted-foreground text-sm font-medium">{{ kicker }}</p>
-            <p class="text-title">{{ c.name || 'Competition' }}</p>
+            <p class="text-title"><CompetitionName :competition="c" /></p>
           </div>
         </header>
 

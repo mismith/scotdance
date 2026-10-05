@@ -4,6 +4,7 @@ import { RouterLink, type RouteLocationRaw } from 'vue-router'
 import { ChevronRight, Star } from '@lucide/vue'
 import { useFollowing } from '@/composables/useFollowing'
 import { useHiddenAs } from '@/composables/useHiddenAs'
+import CompetitionName from '@/components/CompetitionName.vue'
 import DateTile from '@/components/DateTile.vue'
 import VisibilityChip from '@/components/VisibilityChip.vue'
 import { useMeStore } from '@/stores/me'
@@ -13,7 +14,9 @@ import type { Competition } from '@/types/competition'
 // A competition as a row: a calendar date block (what people scan for, pink
 // while it's on), the name, the town, then a short note ("Day 2 of 2"), and
 // your dancers as coloured dots. Its admins also see the shield and, until
-// it's published, how it's hidden. Lists put these in a `rows-inset` card with
+// it's published, how it's hidden. The name leads with its organisation's
+// short name (CompetitionName); on that organisation's own page (`within`),
+// without it. Lists put these in a `rows-inset` card with
 // `[--inset:4.5rem]`, so separators line up with the name.
 const props = withDefaults(
   defineProps<{
@@ -32,6 +35,8 @@ const props = withDefaults(
     preview?: boolean
     /** A word on where it's at: "Day 2 of 2", "Results posted", "Published". */
     note?: string | null
+    /** On this organisation's page: its name without the organisation, in front or in it. */
+    within?: string | null
   }>(),
   {
     followed: false,
@@ -41,6 +46,7 @@ const props = withDefaults(
     markManaged: true,
     preview: false,
     note: null,
+    within: null,
   },
 )
 
@@ -51,6 +57,7 @@ const hiddenAs = useHiddenAs()
 const id = computed(() => props.competitionId ?? props.competition.id)
 const managed = computed(() => props.markManaged && !props.preview && !!id.value && me.organises(id.value))
 const hidden = computed(() => (props.preview ? null : hiddenAs(id.value, props.competition)))
+
 </script>
 
 <template>
@@ -63,7 +70,7 @@ const hidden = computed(() => (props.preview ? null : hiddenAs(id.value, props.c
       />
       <span class="min-w-0 flex-1">
         <span class="line-clamp-2 text-base leading-snug font-semibold">
-          {{ competition.name ?? 'Competition' }}
+          <CompetitionName :competition="competition" :within="within" />
         </span>
         <span v-if="competition.location" class="text-muted-foreground block truncate text-sm">
           {{ competition.location }}

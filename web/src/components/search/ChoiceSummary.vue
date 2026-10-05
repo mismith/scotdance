@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompetitionName from '@/components/CompetitionName.vue'
 import { computed } from 'vue'
 import { Star } from '@lucide/vue'
 import { useFollowing } from '@/composables/useFollowing'
@@ -19,7 +20,7 @@ const hidden = computed(() => hiddenAs(props.choice.id, props.choice.competition
 <template>
   <span class="min-w-0 flex-1">
     <span class="line-clamp-2 text-base leading-snug font-semibold">
-      {{ choice.competition.name ?? 'Competition' }}
+      <CompetitionName :competition="choice.competition" />
     </span>
     <span v-if="choice.competition.location" class="text-muted-foreground block truncate text-sm">
       {{ choice.competition.location }}

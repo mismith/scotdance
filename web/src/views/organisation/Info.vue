@@ -72,7 +72,7 @@ const subline = computed(() => {
     </div>
 
     <div class="space-y-5">
-      <ProfileCompetitions :items="items" :loading="loading" empty-text="No competitions listed yet." />
+      <ProfileCompetitions :items="items" :loading="loading" empty-text="No competitions listed yet." :within="id" />
     </div>
   </article>
 </template>

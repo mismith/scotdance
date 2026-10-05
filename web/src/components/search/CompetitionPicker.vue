@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompetitionName from '@/components/CompetitionName.vue'
 import { computed, ref, useId } from 'vue'
 import { Check, ChevronDown, Search, X } from '@lucide/vue'
 import DateTile from '@/components/DateTile.vue'
@@ -63,7 +64,7 @@ function pick(id: string) {
         <span v-if="chosen.today" class="bg-live size-1.5 rounded-full" aria-hidden="true" />
         {{ chosen.today ? 'Today' : shortDate(chosen) }}
       </span>
-      <span class="truncate text-callout font-semibold">{{ chosen.competition.name ?? 'Competition' }}</span>
+      <span class="truncate text-callout font-semibold"><CompetitionName :competition="chosen.competition" /></span>
       <ChevronDown class="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
     </button>
 
