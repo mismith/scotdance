@@ -11,6 +11,7 @@ const aggregates: Record<string, unknown> = {}
 const recent: Record<string, unknown> = {}
 const older: Record<string, unknown> = {}
 const metaReads = vi.fn()
+const entryReads = vi.fn()
 
 vi.mock('@/firebase', () => ({ dataRef: (path: string) => ({ path }) }))
 vi.mock('firebase/database', () => ({ child: (p: { path: string }, k: string) => ({ path: `${p.path}/${k}` }) }))
@@ -34,10 +35,13 @@ vi.mock('@/stores/me', () => ({
 vi.mock('@/lib/competitionData', () => {
   const stop = () => () => {}
   return {
-    fetchDancers: async () => ({ dancers: [], groups: [], categories: [] }),
+    fetchEntries: async (cid: string, personId: string) => {
+      entryReads(cid, personId)
+      return { dancers: [{ id: `e-${cid}`, fullName: 'Isla Ross', dancerId: personId }], groups: [], categories: [] }
+    },
     fetchResults: async () => ({ dances: [], results: {}, points: {}, hidden: false }),
     fetchSchedule: async () => ({ schedule: null, platforms: [], draws: {}, hidden: false }),
-    watchDancers: stop,
+    watchEntries: stop,
     watchResults: stop,
     watchSchedule: stop,
   }
@@ -60,6 +64,7 @@ function cardsFor(id: string) {
 beforeEach(() => {
   for (const o of [aggregates, recent, older]) for (const k of Object.keys(o)) delete o[k]
   metaReads.mockClear()
+  entryReads.mockClear()
 })
 afterAll(() => vi.useRealTimers())
 
@@ -72,6 +77,15 @@ describe('useDancerCards', () => {
     const { cards, stop } = cardsFor('a1')
     await vi.waitFor(() => expect(cards.value[0]?.focus?.competitionId).toBe('next-month'))
     expect(metaReads).not.toHaveBeenCalled()
+    stop()
+  })
+
+  it('reads only the followed dancer’s own entries for their day', async () => {
+    aggregates.a3 = entered('next-month')
+    recent['next-month'] = competition('Next month', '2026-11-01')
+    const { cards, stop } = cardsFor('a3')
+    await vi.waitFor(() => expect(cards.value[0]?.focus?.days).toHaveLength(1))
+    expect(entryReads.mock.calls).toEqual([['next-month', 'a3']])
     stop()
   })
 

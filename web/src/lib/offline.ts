@@ -172,8 +172,12 @@ export function getStamp<T>(q: Query): Promise<T | null> {
  * `onValue()`, but starts with the copy saved on the device when offline,
  * then carries on with live values once connected.
  */
-export function onValueSaved(q: Query, cb: (snap: Snapshot) => void, onError?: (e: Error) => void): () => void {
-  const key = keyFor(q)
+export function onValueSaved(
+  q: Query,
+  cb: (snap: Snapshot) => void,
+  onError?: (e: Error) => void,
+  key = keyFor(q),
+): () => void {
   let live = false
   let stopped = false
   const off = onValue(

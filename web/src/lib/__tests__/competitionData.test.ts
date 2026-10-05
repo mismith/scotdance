@@ -9,10 +9,22 @@ let failReads = 0
 // The competition's last-changed stamps, and the stamp each section was read at.
 let changed: Record<string, number> | null = null
 const readAt: Array<[string, number | null]> = []
+const savedAs: Array<string | undefined> = []
 const edited = vi.fn()
+type Ref = { path: string; where?: string }
+// A query for one person's entries sees only theirs.
+const only = (value: unknown, who?: string) =>
+  who && value && typeof value === 'object'
+    ? Object.fromEntries(Object.entries(value).filter(([, d]) => (d as { dancerId?: string }).dancerId === who))
+    : value
 
 vi.mock('@/firebase', () => ({ database: {} }))
-vi.mock('firebase/database', () => ({ ref: (_db: unknown, path: string) => ({ path }) }))
+vi.mock('firebase/database', () => ({
+  ref: (_db: unknown, path: string) => ({ path, toString: () => path }),
+  query: (r: Ref, ...constraints: Array<{ equalTo?: string }>) => ({ ...r, where: constraints.find((c) => c.equalTo)?.equalTo }),
+  orderByChild: (key: string) => ({ orderByChild: key }),
+  equalTo: (value: string) => ({ equalTo: value }),
+}))
 vi.mock('@/lib/competitionChanged', async (importOriginal) => ({
   stampOf: (await importOriginal<typeof import('@/lib/competitionChanged')>()).stampOf,
   competitionChanged: async () => changed,
@@ -20,18 +32,20 @@ vi.mock('@/lib/competitionChanged', async (importOriginal) => ({
 }))
 vi.mock('@/lib/offline', () => ({
   onReconnect: () => {},
-  getSavedAt: async (r: { path: string }, version: number | null) => {
+  getSavedAt: async (r: Ref, version: number | null, key?: string) => {
     if (failReads > 0) {
       failReads--
       throw new Error('permission_denied')
     }
-    readAt.push([section(r.path), version])
-    return { val: () => db[section(r.path)] ?? null }
+    readAt.push([r.where ? `${section(r.path)}?${r.where}` : section(r.path), version])
+    savedAs.push(key)
+    return { val: () => only(db[section(r.path)], r.where) ?? null }
   },
-  onValueSaved: (r: { path: string }, cb: (snap: { val: () => unknown }) => void) => {
+  onValueSaved: (r: Ref, cb: (snap: { val: () => unknown }) => void) => {
     const key = section(r.path)
-    listeners.set(key, [...(listeners.get(key) ?? []), cb])
-    return () => listeners.set(key, (listeners.get(key) ?? []).filter((x) => x !== cb))
+    const seen = (snap: { val: () => unknown }) => cb({ val: () => only(snap.val(), r.where) })
+    listeners.set(key, [...(listeners.get(key) ?? []), seen])
+    return () => listeners.set(key, (listeners.get(key) ?? []).filter((x) => x !== seen))
   },
 }))
 // competitions:data/{id}/{section} → section
@@ -52,6 +66,7 @@ beforeEach(() => {
   failReads = 0
   changed = null
   readAt.length = 0
+  savedAs.length = 0
   edited.mockClear()
 })
 
@@ -117,6 +132,28 @@ describe('saved copies', () => {
   it('stops going by stamps for a competition an organiser just edited here', () => {
     data.forgetCompetition('c-edited')
     expect(edited).toHaveBeenCalledWith('c-edited')
+  })
+})
+
+describe('one person’s entries', () => {
+  it('reads just theirs, at the dancers stamp, saved apart from everyone’s', async () => {
+    changed = { dancers: 5 }
+    db.groups = { g1: { name: '7 & 8' } }
+    db.dancers = { e1: { firstName: 'Isla', dancerId: 'p1', groupId: 'g1' }, e2: { firstName: 'Ava', dancerId: 'p2' } }
+    const b = await data.fetchEntries(id(), 'p1')
+    expect(b.dancers.map((d) => [d.fullName, d.group?.name])).toEqual([['Isla', '7 & 8']])
+    expect(readAt[0]).toEqual(['dancers?p1', 5])
+    expect(savedAs[0]).toMatch(/\/dancers\?dancerId=p1$/)
+  })
+
+  it('streams theirs, late entries included', () => {
+    const seen: string[][] = []
+    data.watchEntries(id(), 'p1', (b) => seen.push(b.dancers.map((d) => d.fullName)))
+    push('groups', null)
+    push('categories', null)
+    push('dancers', { e1: { firstName: 'Isla', dancerId: 'p1' }, e2: { firstName: 'Ava', dancerId: 'p2' } })
+    push('dancers', { e1: { firstName: 'Isla', dancerId: 'p1' }, e3: { firstName: 'Late', dancerId: 'p1' } })
+    expect(seen).toEqual([['Isla'], ['Isla', 'Late']])
   })
 })
 

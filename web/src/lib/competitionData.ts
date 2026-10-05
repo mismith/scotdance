@@ -1,4 +1,4 @@
-import { ref as dbRef } from 'firebase/database'
+import { equalTo, orderByChild, query, ref as dbRef, type Query } from 'firebase/database'
 import { database } from '@/firebase'
 import { competitionChanged, editedCompetition, stampOf } from '@/lib/competitionChanged'
 import { getSavedAt, onReconnect, onValueSaved } from '@/lib/offline'
@@ -45,6 +45,25 @@ type Section =
 
 const sectionRef = (id: string, section: Section) =>
   dbRef(database, `${NAMESPACE}/competitions:data/${id}/${section}`)
+
+// What's read: a section, or part of one, and the section whose
+// last-changed stamp it goes by. `key` names a part's saved copy.
+interface Part {
+  q: Query
+  stamp: Section
+  key?: string
+}
+const sections = (id: string, names: Section[]): Part[] => names.map((s) => ({ q: sectionRef(id, s), stamp: s }))
+// One person's entries, found by the link back to their profile: Home needs
+// those, not everyone else's.
+function entriesOf(id: string, personId: string): Part {
+  const dancers = sectionRef(id, 'dancers')
+  return {
+    q: query(dancers, orderByChild('dancerId'), equalTo(personId)),
+    stamp: 'dancers',
+    key: `${dancers.toString()}?dancerId=${personId}`,
+  }
+}
 
 export function snapshotToArray<T extends { id: string }>(
   value: Record<string, Omit<T, 'id'>> | null,
@@ -153,6 +172,8 @@ const toStaff = (val: unknown) => snapshotToArray<StaffMember>(val as Record<str
 
 const caches = {
   dancers: new Map<string, Promise<DancersBundle>>(),
+  /** By `{competitionId}/{personId}`. */
+  entries: new Map<string, Promise<DancersBundle>>(),
   results: new Map<string, Promise<ResultsBundle>>(),
   schedule: new Map<string, Promise<ScheduleBundle>>(),
   staff: new Map<string, Promise<StaffMember[]>>(),
@@ -166,6 +187,7 @@ onReconnect(() => {
 /** Drop everything cached for one competition (after an organiser edits it). */
 export function forgetCompetition(id: string) {
   for (const map of Object.values(caches)) map.delete(id)
+  for (const key of caches.entries.keys()) if (key.startsWith(`${id}/`)) caches.entries.delete(key)
   editedCompetition(id)
 }
 
@@ -180,35 +202,43 @@ function cached<T>(map: Map<string, Promise<T>>, id: string, load: () => Promise
   return p
 }
 
-const readAll = async (id: string, sections: Section[]) => {
+const readAll = async (id: string, parts: Part[]) => {
   const changed = await competitionChanged(id)
-  return Promise.all(sections.map((s) => getSavedAt(sectionRef(id, s), stampOf(changed, s)).then((snap) => snap.val())))
+  return Promise.all(parts.map((p) => getSavedAt(p.q, stampOf(changed, p.stamp), p.key).then((snap) => snap.val())))
 }
 
 export function fetchDancers(id: string): Promise<DancersBundle> {
   return cached(caches.dancers, id, async () => {
-    const [d, g, c] = await readAll(id, ['dancers', 'groups', 'categories'])
+    const [d, g, c] = await readAll(id, sections(id, ['dancers', 'groups', 'categories']))
+    return toDancersBundle(d, g, c)
+  })
+}
+
+/** One person's entries (by their profile id), with the groups and categories. */
+export function fetchEntries(id: string, personId: string): Promise<DancersBundle> {
+  return cached(caches.entries, `${id}/${personId}`, async () => {
+    const [d, g, c] = await readAll(id, [entriesOf(id, personId), ...sections(id, ['groups', 'categories'])])
     return toDancersBundle(d, g, c)
   })
 }
 
 export function fetchResults(id: string): Promise<ResultsBundle> {
   return cached(caches.results, id, async () => {
-    const [d, r, p] = await readAll(id, ['dances', 'results', 'points'])
+    const [d, r, p] = await readAll(id, sections(id, ['dances', 'results', 'points']))
     return toResultsBundle(d, r, p)
   })
 }
 
 export function fetchSchedule(id: string): Promise<ScheduleBundle> {
   return cached(caches.schedule, id, async () => {
-    const [s, p, d] = await readAll(id, ['schedule', 'platforms', 'draws'])
+    const [s, p, d] = await readAll(id, sections(id, ['schedule', 'platforms', 'draws']))
     return toScheduleBundle(s, p, d)
   })
 }
 
 export function fetchStaff(id: string): Promise<StaffMember[]> {
   return cached(caches.staff, id, async () => {
-    const [s] = await readAll(id, ['staff'])
+    const [s] = await readAll(id, sections(id, ['staff']))
     return toStaff(s)
   })
 }
@@ -218,37 +248,47 @@ export function fetchStaff(id: string): Promise<StaffMember[]> {
 type OnError = (e: Error) => void
 
 /**
- * Stream several sections together: calls back once every one has a value,
+ * Stream several sections (or parts of them) together: calls back once every one has a value,
  * then on every change. Starts from the copy saved on the device when
  * offline. Returns an unsubscribe function.
  */
-function watchSections(id: string, sections: Section[], cb: (values: unknown[]) => void, onError?: OnError) {
-  const values: unknown[] = new Array(sections.length)
+function watchParts(parts: Part[], cb: (values: unknown[]) => void, onError?: OnError) {
+  const values: unknown[] = new Array(parts.length)
   const got = new Set<number>()
-  const offs = sections.map((s, i) =>
+  const offs = parts.map((p, i) =>
     onValueSaved(
-      sectionRef(id, s),
+      p.q,
       (snap) => {
         values[i] = snap.val()
         got.add(i)
-        if (got.size === sections.length) cb([...values])
+        if (got.size === parts.length) cb([...values])
       },
       onError,
+      p.key,
     ),
   )
   return () => offs.forEach((off) => off())
 }
 
 export function watchDancers(id: string, cb: (b: DancersBundle) => void, onError?: OnError) {
-  return watchSections(id, ['dancers', 'groups', 'categories'], ([d, g, c]) => {
+  return watchParts(sections(id, ['dancers', 'groups', 'categories']), ([d, g, c]) => {
     const b = toDancersBundle(d, g, c)
     caches.dancers.set(id, Promise.resolve(b))
     cb(b)
   }, onError)
 }
 
+/** One person's entries streaming, late ones included. */
+export function watchEntries(id: string, personId: string, cb: (b: DancersBundle) => void, onError?: OnError) {
+  return watchParts([entriesOf(id, personId), ...sections(id, ['groups', 'categories'])], ([d, g, c]) => {
+    const b = toDancersBundle(d, g, c)
+    caches.entries.set(`${id}/${personId}`, Promise.resolve(b))
+    cb(b)
+  }, onError)
+}
+
 export function watchResults(id: string, cb: (b: ResultsBundle) => void, onError?: OnError) {
-  return watchSections(id, ['dances', 'results', 'points'], ([d, r, p]) => {
+  return watchParts(sections(id, ['dances', 'results', 'points']), ([d, r, p]) => {
     const b = toResultsBundle(d, r, p)
     caches.results.set(id, Promise.resolve(b))
     cb(b)
@@ -256,7 +296,7 @@ export function watchResults(id: string, cb: (b: ResultsBundle) => void, onError
 }
 
 export function watchSchedule(id: string, cb: (b: ScheduleBundle) => void, onError?: OnError) {
-  return watchSections(id, ['schedule', 'platforms', 'draws'], ([s, p, d]) => {
+  return watchParts(sections(id, ['schedule', 'platforms', 'draws']), ([s, p, d]) => {
     const b = toScheduleBundle(s, p, d)
     caches.schedule.set(id, Promise.resolve(b))
     cb(b)
@@ -264,7 +304,7 @@ export function watchSchedule(id: string, cb: (b: ScheduleBundle) => void, onErr
 }
 
 export function watchStaff(id: string, cb: (staff: StaffMember[]) => void, onError?: OnError) {
-  return watchSections(id, ['staff'], ([s]) => {
+  return watchParts(sections(id, ['staff']), ([s]) => {
     const staff = toStaff(s)
     caches.staff.set(id, Promise.resolve(staff))
     cb(staff)

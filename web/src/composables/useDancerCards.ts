@@ -5,10 +5,10 @@ import { getSaved, onReconnect } from '@/lib/offline'
 import { fetchCompetitionMeta } from '@/lib/competitionMeta'
 import { ensureCompetitionsList, peekCompetition } from '@/composables/useCompetitions'
 import {
-  fetchDancers,
+  fetchEntries,
   fetchResults,
   fetchSchedule,
-  watchDancers,
+  watchEntries,
   watchResults,
   watchSchedule,
   type DancersBundle,
@@ -75,27 +75,36 @@ const dateMs = (c: Competition | null) => (c?.date ? parseDate(c.date).getTime()
 const MAX_DAYS = 7
 
 interface Bundles {
-  dancers: DancersBundle
+  /** Each followed person's own entries there (with the groups), by profile id. */
+  entries: Record<string, DancersBundle>
   results: ResultsBundle
   schedule: ScheduleBundle
 }
 
 /**
- * All three bundles for one competition, streaming; calls back once all have
- * arrived, then on every change, saying whether results changed.
+ * What one competition's cards need, streaming: the followed people's own
+ * entries, the results and the schedule. Calls back once all have arrived,
+ * then on every change, saying whether results changed.
  */
-function watchBundles(cid: string, cb: (b: Bundles, resultsChanged: boolean) => void, onError: () => void) {
-  const parts: Partial<Bundles> = {}
+function watchBundles(
+  cid: string,
+  personIds: string[],
+  cb: (b: Bundles, resultsChanged: boolean) => void,
+  onError: () => void,
+) {
+  const entries: Record<string, DancersBundle> = {}
+  let results: ResultsBundle | undefined
+  let schedule: ScheduleBundle | undefined
   let ready = false
-  const emit = (results = false) => {
-    if (!parts.dancers || !parts.results || !parts.schedule) return
-    cb({ ...(parts as Bundles) }, ready && results)
+  const emit = (resultsChanged = false) => {
+    if (personIds.some((p) => !entries[p]) || !results || !schedule) return
+    cb({ entries: { ...entries }, results, schedule }, ready && resultsChanged)
     ready = true
   }
   const offs = [
-    watchDancers(cid, (b) => ((parts.dancers = b), emit()), onError),
-    watchResults(cid, (b) => ((parts.results = b), emit(true)), onError),
-    watchSchedule(cid, (b) => ((parts.schedule = b), emit()), onError),
+    ...personIds.map((p) => watchEntries(cid, p, (b) => ((entries[p] = b), emit()), onError)),
+    watchResults(cid, (b) => ((results = b), emit(true)), onError),
+    watchSchedule(cid, (b) => ((schedule = b), emit()), onError),
   ]
   return () => offs.forEach((off) => off())
 }
@@ -121,7 +130,6 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
     focusId: string | null
     focusComp: Competition | null
     phase: Phase
-    entryIds: string[]
     upcoming: Array<{ competitionId: string; competition: Competition }>
   }
   const plans = ref<Plan[]>([])
@@ -168,9 +176,6 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
             .filter((c) => phaseOf.get(c.competitionId) === 'after')
             .sort((a, b) => dateMs(b.competition) - dateMs(a.competition))
           const focus = today[0] ?? ahead[0] ?? behind[0] ?? null
-          const entryIds = focus
-            ? apps.filter((a) => a.competitionId === focus.competitionId && a.dancerId).map((a) => a.dancerId!)
-            : []
           const displayName =
             [apps.at(-1)?.firstName, apps.at(-1)?.lastName].filter(Boolean).join(' ') || agg?.name || name
           return {
@@ -179,7 +184,6 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
             focusId: focus?.competitionId ?? null,
             focusComp: focus?.competition ?? null,
             phase: focus ? phaseOf.get(focus.competitionId)! : 'before',
-            entryIds: [...new Set(entryIds)],
             upcoming: ahead.filter((c) => c.competitionId !== focus?.competitionId),
           }
         }),
@@ -188,20 +192,29 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
       plans.value = out
 
       // Today's competitions stream (results, late entries, a redrawn
-      // order); the rest are read once.
-      const liveIds = new Set(out.filter((p) => p.phase === 'today' && p.focusId).map((p) => p.focusId!))
-      for (const [cid, off] of liveOff) {
-        if (!liveIds.has(cid)) {
+      // order); the rest are read once. Either way, only the followed
+      // people's own entries, not the whole competition's.
+      const peopleAt = new Map<string, string[]>()
+      for (const p of out) if (p.focusId) peopleAt.set(p.focusId, [...new Set([...(peopleAt.get(p.focusId) ?? []), p.id])])
+      // One stream per competition and who's followed there.
+      const live = new Map(
+        out
+          .filter((p) => p.phase === 'today' && p.focusId)
+          .map((p) => [`${p.focusId}|${peopleAt.get(p.focusId!)!.join(',')}`, p.focusId!]),
+      )
+      for (const [key, off] of liveOff) {
+        if (!live.has(key)) {
           off()
-          liveOff.delete(cid)
+          liveOff.delete(key)
         }
       }
-      for (const cid of liveIds) {
-        if (liveOff.has(cid)) continue
+      for (const [key, cid] of live) {
+        if (liveOff.has(key)) continue
         liveOff.set(
-          cid,
+          key,
           watchBundles(
             cid,
+            peopleAt.get(cid)!,
             (b, resultsChanged) => {
               setBundle(cid, b)
               liveAt.value = Date.now()
@@ -211,12 +224,19 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
           ),
         )
       }
-      const once = [...new Set(out.map((p) => p.focusId).filter((x): x is string => !!x && !liveIds.has(x)))]
+      const liveIds = new Set(live.values())
+      const once = [...peopleAt.keys()].filter((cid) => !liveIds.has(cid))
       await Promise.all(
         once.map(async (cid) => {
           try {
-            const [d, r, s] = await Promise.all([fetchDancers(cid), fetchResults(cid), fetchSchedule(cid)])
-            if (token === run) setBundle(cid, { dancers: d, results: r, schedule: s })
+            const who = peopleAt.get(cid)!
+            const [r, s, mine] = await Promise.all([
+              fetchResults(cid),
+              fetchSchedule(cid),
+              Promise.all(who.map((p) => fetchEntries(cid, p))),
+            ])
+            const entries = Object.fromEntries(who.map((p, i) => [p, mine[i]!]))
+            if (token === run) setBundle(cid, { entries, results: r, schedule: s })
           } catch {
             // Not readable (or gone): show the competition without the day.
             if (token === run) setBundle(cid, null)
@@ -238,17 +258,19 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
   const result = computed<DancerCard[]>(() =>
     plans.value.map((p) => {
       const b = p.focusId ? bundles.value[p.focusId] : undefined
+      // Undefined while loading; null when it can't be read.
+      const mine = b === null ? null : b?.entries[p.id]
       let focus: FocusCompetition | null = null
       if (p.focusId && p.focusComp) {
-        const entries = b ? b.dancers.dancers.filter((d) => p.entryIds.includes(d.id) || d.dancerId === p.id) : []
-        const dayBundle = b && {
+        const entries = mine?.dancers ?? []
+        const dayBundle = b && mine && {
           dances: b.results.dances,
           results: b.results.results,
           points: b.results.points,
           schedule: b.schedule.schedule,
           platforms: b.schedule.platforms,
           draws: b.schedule.draws,
-          groups: b.dancers.groups,
+          groups: mine.groups,
         }
         const span = competitionSpan(p.focusComp.date, b?.schedule.schedule)
         focus = {
@@ -268,7 +290,7 @@ export function useDancerCards(people: Ref<Array<{ id: string; name: string }>>)
         name: p.name,
         focus,
         upcoming: p.upcoming,
-        loading: !!p.focusId && b === undefined,
+        loading: !!p.focusId && mine === undefined,
       }
     }),
   )

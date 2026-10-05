@@ -93,7 +93,7 @@
           // do), so invites (emails, open invite ids) stay private.
           "dancers": {
             ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true", // is PUBLISHED
-            ".indexOn": ["groupId"] // result alerts look up an age group's entries
+            ".indexOn": ["groupId", "dancerId"] // result alerts look up an age group's entries; Home, a followed dancer's
           },
           "groups": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
           "categories": { ".read": "root.child($environment).child('competitions').child($competitionId).child('published').val() === true" }, // is PUBLISHED
