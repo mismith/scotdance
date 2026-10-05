@@ -80,7 +80,7 @@
         "$id": { ".read": true } // one at a time: the whole tree is too big to hand out
       },
       "dancers:index": {
-        ".read": true
+        "$key": { ".read": true } // one at a time, like the profiles: the app only looks up names
       },
       "competitions:data": {
         "$competitionId": {
