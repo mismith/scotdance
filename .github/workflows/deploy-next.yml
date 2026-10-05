@@ -14,9 +14,15 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: |
+            web/package-lock.json
+            functions/package-lock.json
       - name: Install dependencies
         working-directory: web
+        run: npm ci
+      # Some unit tests run the functions' own code (alerts, aggregates).
+      - name: Install the functions' dependencies
+        working-directory: functions
         run: npm ci
       - name: Unit tests
         working-directory: web
