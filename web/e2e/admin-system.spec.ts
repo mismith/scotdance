@@ -189,6 +189,86 @@ test('Submissions: reject with a reply, send it again when it doesn’t go out, 
   }
 })
 
+test('Submissions: select several to reject (and undo), approve or delete together', async ({ page }) => {
+  test.setTimeout(150_000)
+  const sys = await systemAdmin()
+  const tag = uid('bulk').slice(-5)
+  const ids: Record<'a' | 'b' | 'c' | 'r', string> = { a: uid('sub'), b: uid('sub'), c: uid('sub'), r: uid('sub') }
+  const name = (k: string) => `E2E Bulk ${k.toUpperCase()} ${tag}`
+  const sub = (k: string, extra: Record<string, unknown> = {}) => ({
+    competition: { name: name(k), date: '2027-06-05', location: 'Calgary' },
+    contact: { name: `Morag ${k.toUpperCase()}`, email: `${k}@example.test` },
+    submitted: new Date().toISOString(),
+    ...extra,
+  })
+  await Promise.all([
+    dbSet(`competitions:submissions/${ids.a}`, sub('a')),
+    dbSet(`competitions:submissions/${ids.b}`, sub('b')),
+    // On the map already: nothing to flag.
+    dbSet(`competitions:submissions/${ids.c}`, sub('c', { competition: { name: name('c'), date: '2027-06-05', location: 'Calgary', lat: 51, lng: -114 } })),
+    dbSet(`competitions:submissions/${ids.r}`, sub('r', { rejected: new Date().toISOString(), rejection: { reason: 'spam' } })),
+  ])
+  const SERVER = { timeout: 60_000 }
+  const competitionIds: string[] = []
+  try {
+    await signIn(page, sys.email)
+    await page.goto('/admin/submissions')
+    // While selecting, rows tick instead of opening.
+    const row = (k: string) => page.getByRole('checkbox', { name: new RegExp(name(k)) })
+    const sheet = page.locator('dialog[open]')
+    const select = () => page.getByRole('button', { name: 'Select', exact: true }).click()
+
+    // Reject two quietly, then take it back.
+    await select()
+    await expect(page.getByText('Choose the ones to approve, reject or delete.')).toBeVisible()
+    await row('a').click()
+    await row('b').click()
+    await expect(page.getByText('2 selected')).toBeVisible()
+    await page.getByRole('button', { name: 'Reject 2' }).click()
+    await expect(sheet.getByRole('heading', { name: 'Reject 2 submissions?' })).toBeVisible()
+    await sheet.getByRole('button', { name: 'Already submitted' }).click()
+    await expect(sheet.getByText('They’ll each get this by email, in a note of their own.')).toBeVisible()
+    await sheet.getByRole('button', { name: 'Test or spam' }).click()
+    await sheet.getByRole('button', { name: 'Reject', exact: true }).click()
+    await expect(page.getByText('Rejected 2. No one was told.')).toBeVisible()
+    for (const k of ['a', 'b'] as const) expect(await dbGet(`competitions:submissions/${ids[k]}/rejection`)).toEqual({ reason: 'spam' })
+    await page.getByRole('button', { name: 'Undo' }).click()
+    for (const k of ['a', 'b'] as const) await expect.poll(() => dbGet(`competitions:submissions/${ids[k]}/rejected`)).toBeNull()
+
+    // The bar offers what fits what's picked: waiting ones approve or reject; rejected ones delete.
+    await select()
+    await page.getByRole('button', { name: /^Rejected/ }).click()
+    await row('b').click()
+    await row('r').click()
+    for (const label of ['Approve 1', 'Reject 1', 'Delete 1']) await expect(page.getByRole('button', { name: label })).toBeVisible()
+    await row('b').click()
+    await expect(page.getByRole('button', { name: 'Approve 1' })).toHaveCount(0)
+    await page.getByRole('button', { name: 'Delete 1' }).click()
+    await sheet.getByRole('button', { name: 'Delete' }).click()
+    await expect(page.getByText('Deleted.', { exact: true })).toBeVisible()
+    expect(await dbGet(`competitions:submissions/${ids.r}`)).toBeNull()
+
+    // Approve two: listed first, flagging the one that isn't on the map yet.
+    await select()
+    await row('a').click()
+    await row('c').click()
+    await page.getByRole('button', { name: 'Approve 2' }).click()
+    await expect(sheet.getByRole('heading', { name: 'Approve 2 competitions?' })).toBeVisible()
+    await expect(sheet.getByRole('listitem').filter({ hasText: name('a') })).toContainText('Not on the map yet')
+    await expect(sheet.getByRole('listitem').filter({ hasText: name('c') })).not.toContainText('Not on the map yet')
+    await sheet.getByRole('button', { name: 'Approve 2' }).click()
+    await expect(page.getByText('Approved 2. The competitions are being created.')).toBeVisible()
+    for (const k of ['a', 'c'] as const) {
+      await expect.poll(() => dbGet(`competitions:submissions/${ids[k]}/competitionId`), SERVER).toBeTruthy()
+      competitionIds.push(await dbGet<string>(`competitions:submissions/${ids[k]}/competitionId`))
+    }
+    expect(await dbGet(`competitions:submissions/${ids.b}/approved`)).toBeNull()
+  } finally {
+    await Promise.all(competitionIds.map((cid) => removeCompetition(cid)))
+    await Promise.all([...Object.values(ids).map((sid) => dbRemove(`competitions:submissions/${sid}`)), dbRemove(`users:permissions/${sys.id}`)])
+  }
+})
+
 test('Tools: rebuilding the published list and search reports back', async ({ page }) => {
   test.setTimeout(120_000)
   const sys = await systemAdmin()

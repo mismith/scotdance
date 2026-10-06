@@ -9,17 +9,25 @@ import { REASONS, emails, pickReason, replyEmail, type RejectReason } from '@/li
 import { canEdit } from '@/lib/admin/write'
 import { useMeStore } from '@/stores/me'
 
-// Rejecting a submission: a reason, for the record, and a reply. Both are
-// optional. A reply is emailed to them inside a short note from you (the
-// preview shows it whole); leave it empty and no one is told. A reason starts
-// a reply in your words, to change or clear. Spam gets none.
+// Rejecting a submission (or several): a reason, for the record, and a reply.
+// Both are optional. A reply is emailed to each inside a short note from you
+// (the preview shows it whole, for the first); leave it empty and no one is
+// told. A reason starts a reply in your words, to change or clear. Spam gets
+// none.
 
-const props = defineProps<{
-  morph: Morph
-  competition?: { name?: unknown; date?: unknown; venue?: unknown; location?: unknown }
-  contact?: { name?: string; email?: string }
-  busy?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    morph: Morph
+    /** The one being rejected, or the first of several (for the preview). */
+    competition?: { name?: unknown; date?: unknown; venue?: unknown; location?: unknown }
+    contact?: { name?: string; email?: string }
+    /** How many are being rejected together, and how many of them gave no email. */
+    count?: number
+    withoutEmail?: number
+    busy?: boolean
+  }>(),
+  { competition: undefined, contact: undefined, count: 1, withoutEmail: 0 },
+)
 const emit = defineEmits<{ reject: [{ reason: RejectReason | null; reply: string | null }] }>()
 
 const me = useMeStore()
@@ -47,13 +55,17 @@ watch(
 )
 
 const name = computed(() => (typeof props.competition?.name === 'string' && props.competition.name.trim()) || 'this competition')
-const canReply = computed(() => !!props.contact?.email)
+const several = computed(() => props.count > 1)
+const canReply = computed(() => (several.value ? props.withoutEmail < props.count : !!props.contact?.email))
 const spam = computed(() => state.value.reason === 'spam')
 const sends = computed(() => canReply.value && emails(state.value.reason, state.value.reply))
 const note = computed(() => {
-  if (!canReply.value) return 'There’s no email address to reply to, so no one is told.'
+  if (!canReply.value) return several.value ? 'None of them gave an email address, so no one is told.' : 'There’s no email address to reply to, so no one is told.'
   if (spam.value) return 'Spam never gets a reply: one would confirm the address works.'
-  return sends.value ? `They’ll get this by email at ${props.contact?.email}.` : 'Leave it empty and no one is told.'
+  if (!sends.value) return 'Leave it empty and no one is told.'
+  if (!several.value) return `They’ll get this by email at ${props.contact?.email}.`
+  const missing = props.withoutEmail ? ` (${props.withoutEmail} gave no email address, so ${props.withoutEmail === 1 ? 'isn’t' : 'aren’t'} told)` : ''
+  return `They’ll each get this by email, in a note of their own${missing}.`
 })
 const email = computed(() =>
   replyEmail({ competition: props.competition, contactName: props.contact?.name, reply: state.value.reply, signer: me.displayName }),
@@ -82,7 +94,7 @@ function onKeydown(e: KeyboardEvent) {
 <template>
   <Dialog :open="morph.open" :morph="morph" variant="sheet" size="md" @close="morph.hide()">
     <template #header>
-      <h2 class="text-title">Reject {{ name }}?</h2>
+      <h2 class="text-title">{{ several ? `Reject ${count} submissions?` : `Reject ${name}?` }}</h2>
     </template>
     <form :key="opens" class="space-y-6 px-4 pt-4" @submit.prevent="submit" @keydown="onKeydown">
       <fieldset>
@@ -135,7 +147,7 @@ function onKeydown(e: KeyboardEvent) {
         <div class="space-y-4 border-t px-4 pt-3 pb-4">
           <div>
             <p class="text-base font-semibold">{{ email.subject }}</p>
-            <p class="text-muted-foreground text-sm">To {{ contact?.email }}</p>
+            <p class="text-muted-foreground text-sm">To {{ contact?.email }}{{ several ? ', and the others each to theirs' : '' }}</p>
           </div>
           <div class="text-muted-foreground space-y-3 text-base">
             <p>{{ email.greeting }}</p>
