@@ -36,6 +36,12 @@ declare module 'vue-router' {
     admin?: boolean
     /** Manage: the section a sub-page (import, draws) goes back to on phones. */
     manageParent?: string
+    /**
+     * Shows dancers by name (mostly minors), so search engines shouldn't
+     * index it (App adds the robots meta). On a layout route, applies to
+     * every child.
+     */
+    noindex?: boolean
   }
 }
 
@@ -64,7 +70,7 @@ const routes: RouteRecordRaw[] = [
     path: '/dancers',
     name: 'dancers',
     component: () => import('@/views/Dancers.vue'),
-    meta: { icon: Users, title: 'Dancers' },
+    meta: { icon: Users, title: 'Dancers', noindex: true },
   },
   {
     path: '/judges',
@@ -117,6 +123,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/dancers/:dancerId',
     component: () => import('@/views/dancer/DancerLayout.vue'),
+    meta: { noindex: true },
         children: [
       { path: '', redirect: { name: 'dancer.info' } },
       {
@@ -173,7 +180,7 @@ const routes: RouteRecordRaw[] = [
     path: '/search',
     name: 'search',
     component: () => import('@/views/Search.vue'),
-    meta: { title: 'Search' },
+    meta: { title: 'Search', noindex: true },
   },
   {
     path: '/competitions',
@@ -260,11 +267,13 @@ const routes: RouteRecordRaw[] = [
         path: 'dancers',
         name: 'competition.dancers',
         component: () => import('@/views/competition/Dancers.vue'),
+        meta: { noindex: true },
       },
       {
         path: 'dancers/:dancerId',
         name: 'competition.dancer',
         component: () => import('@/views/competition/Dancer.vue'),
+        meta: { noindex: true },
       },
       {
         path: 'schedule',
@@ -297,6 +306,7 @@ const routes: RouteRecordRaw[] = [
         path: 'results/:groupId',
         name: 'competition.group',
         component: () => import('@/views/competition/Group.vue'),
+        meta: { noindex: true },
       },
       // The old app linked each dance's results (e.g. from dancer reports).
       {

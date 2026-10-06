@@ -33,7 +33,12 @@ const feedbackUsed = ref(false)
 watch([() => toasts.length, confirmRequest], ([n, req]) => {
   if (n || req) feedbackUsed.value = true
 })
-useHead({ title: () => buildTitle([route.meta.title]) })
+useHead({
+  title: () => buildTitle([route.meta.title]),
+  // Pages with dancers' names (mostly minors) stay out of search results.
+  // Not robots.txt: a blocked page is never crawled, so its noindex is never seen.
+  meta: () => (route.meta.noindex ? [{ name: 'robots', content: 'noindex' }] : []),
+})
 
 // Routes that own their own bottom nav (entity layouts, competition layout)
 // opt out via `meta.ownsBottomNav` — declared once on the layout route, applies
