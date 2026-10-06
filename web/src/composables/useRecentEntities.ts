@@ -7,6 +7,8 @@ export interface RecentEntity {
   viewedAt: number
   /** A competition's date, for its date tile. */
   date?: number | string
+  /** A competition's organisations, so its name leads with them. */
+  organisations?: Record<string, boolean>
 }
 
 const MAX = 10
@@ -30,10 +32,10 @@ function storeFor(namespace: string): Ref<RecentEntity[]> {
 export function useRecentEntities(namespace: string) {
   const recent = storeFor(namespace)
 
-  function record(id: string, name: string, date?: number | string) {
+  function record(id: string, name: string, date?: number | string, organisations?: Record<string, boolean>) {
     if (!id || !name) return
     const next = recent.value.filter((r) => r.id !== id)
-    next.unshift({ id, name, viewedAt: Date.now(), date })
+    next.unshift({ id, name, viewedAt: Date.now(), date, organisations })
     recent.value = next.slice(0, MAX)
   }
 

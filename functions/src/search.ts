@@ -2,8 +2,8 @@ import { HttpsError } from 'firebase-functions/v2/https';
 
 import { getTypesense } from './utility/typesense';
 
-type EntityType = 'competitions' | 'dancers' | 'judges' | 'pipers' | 'places';
-const ALL_TYPES: EntityType[] = ['competitions', 'dancers', 'judges', 'pipers', 'places'];
+type EntityType = 'competitions' | 'dancers' | 'judges' | 'pipers' | 'places' | 'organisations';
+const ALL_TYPES: EntityType[] = ['competitions', 'dancers', 'judges', 'pipers', 'places', 'organisations'];
 
 interface SearchAllParams {
   q?: string;
@@ -18,6 +18,7 @@ function emptyOut() {
     judges: null,
     pipers: null,
     places: null,
+    organisations: null,
   };
 }
 
@@ -91,7 +92,7 @@ export function getOnSearchAll(db: any) {
 
     // Build searches and remember which result slot each one targets.
     const slots: Array<
-    { key: 'competitions' | 'dancers' | 'judges' | 'pipers' }
+    { key: 'competitions' | 'dancers' | 'judges' | 'pipers' | 'organisations' }
     | { key: 'places'; kind: 'venue' | 'locality' | 'region' }
     > = [];
     const searches: any[] = [];
@@ -136,6 +137,18 @@ export function getOnSearchAll(db: any) {
             // so the picker sheet gets the full list (not just a sample).
             group_limit: 50,
           });
+        });
+      } else if (type === 'organisations') {
+        // Organisations are matched on the device (there are tens): this
+        // counts each one's listed competitions, which anyone may see.
+        slots.push({ key: 'organisations' });
+        searches.push({
+          collection: 'competitions',
+          q: '*',
+          filter_by: 'listed:true',
+          facet_by: 'organisations',
+          max_facet_values: 250,
+          per_page: 0,
         });
       }
     });

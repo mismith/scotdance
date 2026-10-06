@@ -132,8 +132,12 @@ so the backend goes first, from the branch, after Phase 1's steps:
    pushes the email templates in `postmark/` (the source of truth; it needs
    the `POSTMARK_SERVER_TOKEN` repo secret, the server's API token).
 4. System admin › Tools › Alerts › Followers: Rebuild, once.
-5. System admin › Organisations › Tag: this season's competitions first.
-6. TestFlight / Play internal testing on real phones before the app ships:
+5. System admin › Tools › Competitions search, once, after the functions
+   deploy that indexes each competition's organisations (2026-10-05): until
+   then Search's hits have no organisation prefix and it lists no
+   organisations.
+6. System admin › Organisations › Tag: this season's competitions first.
+7. TestFlight / Play internal testing on real phones before the app ships:
    follow a dancer, enter a result in Manage, wait a minute.
 
 Until cutover, emailed links open scotdance.app, which is still v3: an

@@ -97,6 +97,22 @@ describe('searchAll', () => {
     ])
   })
 
+  it('gives competitions their organisations, and counts each organisation’s listed competitions', async () => {
+    respond = () => ({
+      competitions: {
+        found: 2,
+        hits: [
+          { document: { id: 'c1', name: 'Games', organisations: ['o1', 'o2'] } },
+          { document: { id: 'c2', name: 'Open', organisations: [] } },
+        ],
+      },
+      organisations: { facet_counts: [{ field_name: 'organisations', counts: [{ value: 'o1', count: 3 }, { value: 'o2', count: 1 }] }] },
+    })
+    const out = await searchAll({ q: 'games' })
+    expect(out.competitions.hits.map((h) => h.organisations)).toEqual([{ o1: true, o2: true }, undefined])
+    expect(out.organisations.counts).toEqual({ o1: 3, o2: 1 })
+  })
+
   it('merges towns, regions and venues into one list of places, biggest first', async () => {
     respond = () => ({
       places: {
@@ -150,5 +166,9 @@ describe('searchAll', () => {
     const out = await searchAll({ q: 'nothing at all' })
     expect(out.places).toEqual({ groups: [], total: 0 })
     expect(out.judges).toEqual({ groups: [], total: 0 })
+    expect(out.organisations).toEqual({ counts: {} })
+    // An index without organisations yet (before its reindex) fails only that search.
+    respond = () => ({ organisations: { code: 404, error: 'Could not find a facet field named `organisations` in the schema.' } })
+    expect((await searchAll({ q: 'before the reindex' })).organisations).toEqual({ counts: {} })
   })
 })

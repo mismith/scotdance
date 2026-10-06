@@ -3,7 +3,7 @@ import { functions } from '@/firebase'
 import { initialsOf } from '@/lib/format'
 import { normalizeEntityName } from '@/lib/entityIndex'
 
-export type SearchEntityType = 'competitions' | 'dancers' | 'judges' | 'pipers' | 'places'
+export type SearchEntityType = 'competitions' | 'dancers' | 'judges' | 'pipers' | 'places' | 'organisations'
 
 export type PlaceKind = 'venue' | 'locality' | 'region'
 
@@ -21,6 +21,8 @@ interface RawCompetitionDoc {
   published?: boolean
   listed?: boolean
   image?: string
+  /** Its organisations' ids. */
+  organisations?: string[]
 }
 
 interface RawPersonDoc {
@@ -46,6 +48,7 @@ interface RawSearchResult<D> {
   hits?: RawHit<D>[]
   grouped_hits?: RawGroupedHit<D>[]
   found?: number
+  facet_counts?: Array<{ field_name?: string; counts?: Array<{ value?: string; count?: number }> }>
 }
 
 interface RawPlacesBlock {
@@ -60,6 +63,7 @@ interface RawSearchAllResponse {
   judges: RawSearchResult<RawPersonDoc> | null
   pipers: RawSearchResult<RawPersonDoc> | null
   places: RawPlacesBlock | null
+  organisations: RawSearchResult<never> | null
 }
 
 export interface SearchCompetitionHit {
@@ -69,6 +73,7 @@ export interface SearchCompetitionHit {
   location?: string
   date?: string
   image?: string
+  organisations?: Record<string, boolean>
 }
 
 export interface SearchPersonGroup {
@@ -97,6 +102,8 @@ export interface SearchAllResults {
   judges: { groups: SearchPersonGroup[]; total: number }
   pipers: { groups: SearchPersonGroup[]; total: number }
   places: { groups: SearchPlaceGroup[]; total: number }
+  /** How many listed competitions each organisation has, by id. */
+  organisations: { counts: Record<string, number> }
 }
 
 interface CallParams {
@@ -130,6 +137,7 @@ function mapCompetitions(
         location: d.location || [d.locality, d.region, d.country].filter(Boolean).join(', ') || undefined,
         date: d.date,
         image: d.image,
+        organisations: d.organisations?.length ? Object.fromEntries(d.organisations.map((id) => [id, true])) : undefined,
       }
     })
     .filter((h): h is SearchCompetitionHit => h !== null)
@@ -232,6 +240,11 @@ function mapPlaces(block: RawPlacesBlock | null): SearchAllResults['places'] {
   return { groups, total: groups.length }
 }
 
+function mapOrganisations(result: RawSearchResult<never> | null): SearchAllResults['organisations'] {
+  const counts = result?.facet_counts?.find((f) => f.field_name === 'organisations')?.counts ?? []
+  return { counts: Object.fromEntries(counts.flatMap((c) => (c.value ? [[c.value, c.count ?? 0] as const] : []))) }
+}
+
 export async function searchAll(params: CallParams): Promise<SearchAllResults> {
   const trimmed = params.q.trim()
   if (!trimmed) {
@@ -241,6 +254,7 @@ export async function searchAll(params: CallParams): Promise<SearchAllResults> {
       judges: { groups: [], total: 0 },
       pipers: { groups: [], total: 0 },
       places: { groups: [], total: 0 },
+      organisations: { counts: {} },
     }
   }
   const key = cacheKey({ ...params, q: trimmed })
@@ -257,6 +271,7 @@ export async function searchAll(params: CallParams): Promise<SearchAllResults> {
         judges: mapPeople(data?.judges ?? null),
         pipers: mapPeople(data?.pipers ?? null),
         places: mapPlaces(data?.places ?? null),
+        organisations: mapOrganisations(data?.organisations ?? null),
       }
       responseCache.set(key, out)
       return out

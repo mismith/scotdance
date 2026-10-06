@@ -33,6 +33,11 @@ export const schema: CollectionCreateSchema = {
     {
       name: 'image', type: 'string', optional: true, index: false,
     },
+    // Its organisations' ids: hits lead with them, and Search counts each
+    // one's listed competitions, without reading every competition.
+    {
+      name: 'organisations', type: 'string[]', facet: true, optional: true,
+    },
   ],
 };
 
@@ -61,6 +66,10 @@ function competitionExtender(comp: any, { competitionId }: { competitionId: stri
     published: !!comp?.published,
     listed: !!comp?.listed,
     image: comp?.image,
+    // As the app reads it: only `true` tags.
+    organisations: Object.entries(comp?.organisations || {})
+      .filter(([, on]) => on === true)
+      .map(([id]) => id),
   };
 }
 

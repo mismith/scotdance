@@ -8,8 +8,8 @@ import DateTile from '@/components/DateTile.vue'
 import VisibilityChip from '@/components/VisibilityChip.vue'
 import { useFollowing } from '@/composables/useFollowing'
 import { useHiddenAs } from '@/composables/useHiddenAs'
-import { useOrganisationCompetitions } from '@/composables/useOrganisations'
-import { useRecentEntities } from '@/composables/useRecentEntities'
+import { peekCompetition } from '@/composables/useCompetitions'
+import { useRecentEntities, type RecentEntity } from '@/composables/useRecentEntities'
 import { useRecentSearches } from '@/composables/useRecentSearches'
 import { isBeforeToday } from '@/lib/format'
 import { sectionMeta } from '@/lib/sectionMeta'
@@ -49,10 +49,9 @@ const viewed = computed(() =>
     .slice(0, 5),
 )
 const clearViewed = () => kinds.forEach((k) => k.store.clear())
-// A viewed competition kept only its name: its organisations from the list,
-// so it leads with them as competitions do everywhere.
-const { competitions: everyCompetition } = useOrganisationCompetitions()
-const organisationsOf = computed(() => new Map(everyCompetition.value.map((c) => [c.id, c.organisations])))
+// A viewed competition leads with its organisations, as competitions do
+// everywhere: kept with it, or for one viewed before they were, from the list.
+const organisationsOf = (v: RecentEntity) => v.organisations ?? peekCompetition(v.id)?.organisations
 
 // Competitions across the top; the people lists and venues as tiles.
 const competitions = sectionMeta('competitions')
@@ -143,7 +142,7 @@ const lists = ['dancers', 'judges', 'pipers', 'venues', 'organisations'].map(sec
           </span>
           <span class="min-w-0 flex-1">
             <span class="block truncate text-base font-semibold">
-              <CompetitionName v-if="v.kind.ns === 'competitions'" :competition="{ name: v.name, organisations: organisationsOf.get(v.id) }" />
+              <CompetitionName v-if="v.kind.ns === 'competitions'" :competition="{ name: v.name, organisations: organisationsOf(v) }" />
               <template v-else>{{ v.name }}</template>
             </span>
             <span class="text-muted-foreground block truncate text-sm">{{ v.kind.label }}</span>

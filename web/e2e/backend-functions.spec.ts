@@ -125,7 +125,7 @@ test('searchAll shows each person only what they may see', async () => {
   await dbSet(`users:permissions/${owner.uid}/competitions/${priv}`, true)
   await dbSet(`users:permissions/${admin.uid}/admin`, true)
   const hidden = surname('Hidden')
-  await dbSet(`competitions/${priv}`, { name: `Private ${hidden}`, date: '2026-10-05', published: false, listed: false })
+  await dbSet(`competitions/${priv}`, { name: `Private ${hidden}`, date: '2026-10-05', published: false, listed: false, organisations: { [`${priv}-org`]: true, [`${priv}-off`]: false } })
   await dbSet(`competitions:data/${priv}`, {
     dancers: { [`${priv}-d`]: { firstName: 'Dancer', lastName: hidden, number: '1' } },
     staff: { [`${priv}-j`]: { type: 'Judge', firstName: 'Judge', lastName: hidden } },
@@ -147,6 +147,10 @@ test('searchAll shows each person only what they may see', async () => {
     expect(await seen(owner)).toEqual({ dancers: 1, judges: 1, competitions: 1 })
     expect(await seen(parent)).toEqual({ dancers: 0, judges: 0, competitions: 0 })
     expect(await seen(null)).toEqual({ dancers: 0, judges: 0, competitions: 0 })
+    // A hit carries the competition's organisations, so it leads with them.
+    type Hits = { hits?: Array<{ document?: { organisations?: string[] } }> }
+    const r = await callFunction<Record<'competitions', Hits>>('searchAll', { q: hidden, types: ['competitions'] }, admin)
+    expect(r.result?.competitions?.hits?.[0]?.document?.organisations).toEqual([`${priv}-org`])
 
     // Odd input from anyone answers cleanly (it's callable without signing in).
     for (const data of [{ q: '' }, { q: '*' }, { q: 'a'.repeat(5000) }, { q: 42 }, { q: 'x', types: 'dancers' }, { q: 'x', perGroup: 'lots' }, { q: 'x', perGroup: 1e6 }, null]) {

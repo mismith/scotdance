@@ -41,7 +41,11 @@ export function useOrganisations() {
   return { organisations: list, byId, loaded, error, retry: start }
 }
 
-/** Each organisation's competitions (those you can see), soonest last. */
+/**
+ * Each organisation's competitions (those you can see), soonest last. Reads
+ * every competition ever, so only where past ones show: organisation pages
+ * and Manage. Search has them from the search index instead.
+ */
 export function useOrganisationCompetitions() {
   const { competitions, loading } = useCompetitions(ref(true))
   const byOrganisation = computed(() => {

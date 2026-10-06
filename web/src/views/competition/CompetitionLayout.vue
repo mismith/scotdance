@@ -51,7 +51,7 @@ watch(
 const recentCompetitions = useRecentEntities('competitions')
 watch(
   () => [competitionId.value, competition.value?.name, competition.value?.date] as const,
-  ([id, name, date]) => name && recentCompetitions.record(id, name, date),
+  ([id, name, date]) => name && recentCompetitions.record(id, name, date, competition.value?.organisations),
   { immediate: true },
 )
 

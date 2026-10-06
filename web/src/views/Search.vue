@@ -23,7 +23,7 @@ import { useCompetitions } from '@/composables/useCompetitions'
 import { useFollowing } from '@/composables/useFollowing'
 import { useRecentSearches } from '@/composables/useRecentSearches'
 import { useLocationFilter } from '@/composables/useLocationFilter'
-import { useOrganisationCompetitions, useOrganisations } from '@/composables/useOrganisations'
+import { useOrganisations } from '@/composables/useOrganisations'
 import { useFavoritesStore } from '@/stores/favorites'
 import { fetchDancers } from '@/lib/competitionData'
 import { lookupEntityId, lookupVenueId } from '@/lib/entityIndex'
@@ -72,6 +72,7 @@ const empty: SearchAllResults = {
   judges: { groups: [], total: 0 },
   pipers: { groups: [], total: 0 },
   places: { groups: [], total: 0 },
+  organisations: { counts: {} },
 }
 const results = shallowRef<SearchAllResults>(empty)
 const searching = ref(false)
@@ -102,13 +103,9 @@ watch(qDebounced, (v) => run(v), { immediate: true })
 
 // Organisations are few, so they're matched here rather than on the server:
 // by name, short name or where they're based, and only those with a listed
-// competition (as on their list).
+// competition (as on their list), which search counts.
 const { organisations } = useOrganisations()
-const { byOrganisation, competitions: everyCompetition } = useOrganisationCompetitions()
-// The search index doesn't carry a competition's organisations: from the
-// competitions list instead, so results lead with them as lists do.
-const organisationsOf = computed(() => new Map(everyCompetition.value.map((c) => [c.id, c.organisations])))
-const listedCount = (id: string) => (byOrganisation.value.get(id) ?? []).filter((c) => c.listed === true).length
+const listedCount = (id: string) => results.value.organisations.counts[id] ?? 0
 const organisationHits = computed(() => {
   const t = qDebounced.value.trim().toLowerCase()
   if (t.length < 2) return []
@@ -404,7 +401,7 @@ watch(mode, async (m) => {
               <CompetitionDateRow
                 v-for="c in results.competitions.hits"
                 :key="c.id"
-                :competition="{ ...c, organisations: organisationsOf.get(c.id) }"
+                :competition="c"
                 :to="{ name: 'competition.info', params: { competitionId: c.id } }"
                 :followed="favorites.isFavorite('competitions', c.id)"
               />

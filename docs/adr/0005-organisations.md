@@ -109,16 +109,21 @@ them, on Manage › Details).
 - **Organisations index** `/organisations` (sidebar, More, Search's browse
   tiles, last in each): only organisations with a listed competition, so an
   empty one (just made) doesn't show.
-- **Search**: matched on the device by name, short name or where it's based;
-  the last group of results.
+- **Search**: matched on the device by name, short name or where it's based,
+  only those with a listed competition, as on the index; the last group of
+  results.
 - **Manage** (`/manage`, renamed from "Manage competitions" now it lists
   both): "Your organisations" below your competitions.
 - **Organisation Manage** `/organisations/:id/manage`: its page, its
   competitions (add, take off, Undo), its admins (invite, remove).
 
 Data: `/organisations` is read whole (tens, not thousands) and kept on the
-device like favourites; each organisation's competitions come from the
-competitions list the app already loads. No server index.
+device like favourites; an organisation's page and Manage find its
+competitions in the full competitions list. Search never reads that list:
+the search index carries each competition's organisation ids, so hits lead
+with them, and the same search counts each organisation's listed
+competitions. Changing the index's fields takes System admin › Tools ›
+Competitions search once.
 
 ### 6. Tagging existing competitions (System admin › Organisations › Tag)
 
