@@ -51,18 +51,19 @@ test('Users: find someone by email, let them manage a competition, then stop', a
   }
 })
 
-test('Submissions: tidy one up, or delete it', async ({ page }) => {
+test('Submissions: tidy one up, reject it quietly (and undo that), then delete it', async ({ page }) => {
   const sys = await systemAdmin()
   const id = uid('sub')
+  const name = `E2E Submission ${id.slice(-5)}`
   await dbSet(`competitions:submissions/${id}`, {
-    competition: { name: `E2E Submission ${id.slice(-5)}`, date: '2027-06-05', location: 'Calgary' },
+    competition: { name, date: '2027-06-05', location: 'Calgary' },
     contact: { name: 'Morag Test', email: 'morag@example.test', message: 'First one!' },
     submitted: new Date().toISOString(),
   })
   try {
     await signIn(page, sys.email)
     await page.goto(`/admin/submissions/${id}`)
-    await expect(page.getByRole('heading', { name: `E2E Submission ${id.slice(-5)}` })).toBeVisible()
+    await expect(page.getByRole('heading', { name })).toBeVisible()
     await expect(page.getByText('First one!')).toBeVisible()
 
     const location = page.getByRole('textbox', { name: 'Town or city' })
@@ -70,6 +71,33 @@ test('Submissions: tidy one up, or delete it', async ({ page }) => {
     await location.press('Enter')
     await expect.poll(() => dbGet(`competitions:submissions/${id}/competition/location`)).toBe('Calgary, AB')
 
+    // Waiting, it's Approve or Reject. As spam, there's no reply to write.
+    await expect(page.getByRole('button', { name: 'Delete' })).toHaveCount(0)
+    await page.getByRole('button', { name: 'Reject', exact: true }).click()
+    const sheet = page.locator('dialog[open]')
+    await expect(sheet.getByRole('heading', { name: `Reject ${name}?` })).toBeVisible()
+    await sheet.getByRole('button', { name: 'Test or spam' }).click()
+    await expect(sheet.getByRole('textbox', { name: /^Reply/ })).toBeDisabled()
+    await expect(sheet.getByText('Spam never gets a reply: one would confirm the address works.')).toBeVisible()
+    await sheet.getByRole('button', { name: 'Reject', exact: true }).click()
+    await expect(page.getByText('Rejected. No one was told.')).toBeVisible()
+    await expect(page.getByText('Rejected today: test or spam. No one was told.', { exact: true })).toBeVisible()
+    expect(await dbGet(`competitions:submissions/${id}/rejection`)).toEqual({ reason: 'spam' })
+    expect(await dbGet(`competitions:submissions/${id}/rejectedBy`)).toBe(sys.id)
+    const fold = page.getByRole('button', { name: /^Rejected/ })
+    await expect(fold).toHaveAttribute('aria-expanded', 'true')
+    await expect(page.getByRole('link', { name: `${name} Morag Test · rejected today`, exact: true })).toBeVisible()
+
+    // Nothing went out, so it can be taken back.
+    await page.getByRole('button', { name: 'Undo' }).click()
+    await expect(page.getByRole('button', { name: 'Reject', exact: true })).toBeVisible()
+    expect(await dbGet(`competitions:submissions/${id}/rejected`)).toBeNull()
+    expect(await dbGet(`competitions:submissions/${id}/rejection`)).toBeNull()
+
+    // Rejected (with no reason or reply this time), it can be deleted.
+    await page.getByRole('button', { name: 'Reject', exact: true }).click()
+    await sheet.getByRole('button', { name: 'Reject', exact: true }).click()
+    await expect(page.getByText('Rejected today. No one was told.', { exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Delete' }).click()
     await page.locator('dialog[open]').getByRole('button', { name: 'Delete' }).click()
     // Beside the others it says so; if it was the only one, the inbox is empty.
@@ -77,6 +105,87 @@ test('Submissions: tidy one up, or delete it', async ({ page }) => {
     expect(await dbGet(`competitions:submissions/${id}`)).toBeNull()
   } finally {
     await Promise.all([dbRemove(`competitions:submissions/${id}`), dbRemove(`users:permissions/${sys.id}`)])
+  }
+})
+
+test('Submissions: reject with a reply, send it again when it doesn’t go out, then approve it after all', async ({ page }) => {
+  test.setTimeout(150_000)
+  const sys = await systemAdmin()
+  // The reply is signed with their first name.
+  await dbSet(`users/${sys.id}`, { email: sys.email, displayName: 'Murray Test' })
+  const id = uid('sub')
+  const name = `E2E Reply ${id.slice(-5)}`
+  await dbSet(`competitions:submissions/${id}`, {
+    competition: { name, date: '2027-06-05', venue: 'Dunoon Stadium', location: 'Dunoon' },
+    contact: { name: 'Morag Test', email: 'morag@example.test' },
+    submitted: new Date().toISOString(),
+  })
+  const reply = 'Is this the dancing at the Cowal Gathering?\n\nIf it is, I can add you as one of its admins instead.'
+  const SERVER = { timeout: 60_000 }
+  let competitionId: string | undefined
+  try {
+    await signIn(page, sys.email)
+    await page.goto(`/admin/submissions/${id}`)
+    await page.getByRole('button', { name: 'Reject', exact: true }).click()
+    const sheet = page.locator('dialog[open]')
+    const box = sheet.getByRole('textbox', { name: /^Reply/ })
+    await expect(sheet.getByText('Leave it empty and no one is told.')).toBeVisible()
+
+    // A reason starts a reply in your words; a reply is emailed, and the button says so.
+    await sheet.getByRole('button', { name: 'Already submitted' }).click()
+    await expect(sheet.getByRole('button', { name: 'Already submitted' })).toHaveAttribute('aria-pressed', 'true')
+    await expect(box).toHaveValue(/^Someone else has already submitted it\./)
+    await expect(sheet.getByText('They’ll get this by email at morag@example.test.')).toBeVisible()
+    await expect(sheet.getByRole('button', { name: 'Reject and email' })).toBeVisible()
+    // Cleared, it's back to telling no one.
+    await sheet.getByRole('button', { name: 'Already submitted' }).click()
+    await expect(box).toHaveValue('')
+    await expect(sheet.getByRole('button', { name: 'Reject', exact: true })).toBeVisible()
+
+    // Your own words, in the note around them.
+    await sheet.getByRole('button', { name: 'Already submitted' }).click()
+    await box.fill(reply)
+    await sheet.getByText('Preview the email').click()
+    for (const line of [`About your submission of ${name}`, 'To morag@example.test', 'Hello Morag Test,', `Thanks for submitting ${name}. I haven’t added it to ScotDance.app.`, 'If it is, I can add you as one of its admins instead.', 'Saturday 5 June 2027', 'Dunoon Stadium, Dunoon', 'Murray']) {
+      await expect(sheet).toContainText(line)
+    }
+
+    // ⌘Enter rejects from the reply (it only means Approve outside the sheet).
+    await box.press('ControlOrMeta+Enter')
+    await expect(page.getByText('Rejected. Your reply is on its way to morag@example.test.')).toBeVisible()
+    expect(await dbGet(`competitions:submissions/${id}/rejection`)).toEqual({ reason: 'duplicate', reply })
+    expect(await dbGet(`competitions:submissions/${id}/approved`)).toBeNull()
+    await expect(page.getByText('Rejected today: already submitted.', { exact: true })).toBeVisible()
+    const card = page.getByRole('region', { name: 'Your reply' })
+    await expect(card).toContainText('If it is, I can add you as one of its admins instead.')
+
+    // Emails can't go out from the emulator: the server says so, and it can be sent again, or by hand.
+    await expect(card.getByText('The email didn’t go out. Send it again, or copy it and send it yourself.')).toBeVisible(SERVER)
+    const failed = await dbGet<string>(`competitions:submissions/${id}/replyFailed`)
+    expect(failed).toBeTruthy()
+    await expect(page.getByRole('link', { name: `${name} Morag Test · rejected today The reply didn’t go out`, exact: true })).toBeVisible()
+    const rejectedAt = await dbGet<string>(`competitions:submissions/${id}/rejected`)
+    await card.getByRole('button', { name: 'Send again' }).click()
+    await expect(page.getByText('Sending it again.')).toBeVisible()
+    await expect.poll(async () => { const t = await dbGet<string | null>(`competitions:submissions/${id}/replyFailed`); return !!t && t !== failed }, SERVER).toBe(true)
+    // (It's still rejected when it was: sending again doesn't change that.)
+    expect(await dbGet(`competitions:submissions/${id}/rejected`)).toBe(rejectedAt)
+    expect(await dbGet(`competitions:submissions/${id}/rejection/retried`)).toBeTruthy()
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+    await card.getByRole('button', { name: 'Copy reply' }).click()
+    await expect(page.getByText('Reply copied. Send it to morag@example.test any way you like.')).toBeVisible()
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(reply)
+
+    // Approved after all (say, once they've answered): it's no longer rejected.
+    await page.getByRole('button', { name: 'Approve', exact: true }).click()
+    await page.locator('dialog[open]').getByRole('button', { name: 'Approve' }).click()
+    await expect(page.getByRole('link', { name: 'Manage it' })).toBeVisible(SERVER)
+    competitionId = (await dbGet<{ competitionId?: string }>(`competitions:submissions/${id}`)).competitionId
+    expect(await dbGet(`competitions:submissions/${id}/rejected`)).toBeNull()
+    await expect(page.getByRole('button', { name: /^Approved/ })).toHaveAttribute('aria-expanded', 'true')
+  } finally {
+    if (competitionId) await removeCompetition(competitionId)
+    await Promise.all([dbRemove(`competitions:submissions/${id}`), dbRemove(`users/${sys.id}`), dbRemove(`users:permissions/${sys.id}`)])
   }
 })
 

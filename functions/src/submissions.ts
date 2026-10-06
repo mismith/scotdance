@@ -21,6 +21,36 @@ const HOUR = 60 * 60 * 1000;
 const PER_ACCOUNT_PER_DAY = 10;
 const PER_HOUR = 30;
 
+// A reply as the template lays it out: paragraphs (split at blank lines) of
+// lines, so it reads as typed (Postmark escapes each one), the same as plain
+// text, and its start for the inbox preview. (The app's preview of the email,
+// web/src/lib/admin/submissions.ts, splits it the same way.)
+export function replyModel(reply: string) {
+  const paragraphs = reply.trim().split(/\n\s*\n/)
+    .map((p) => ({ lines: p.split('\n').map((line) => line.trim()).filter(Boolean) }))
+    .filter((p) => p.lines.length);
+  // (By character, not UTF-16 unit, so an emoji isn't cut in half.)
+  const first = [...(paragraphs[0]?.lines.join(' ') ?? '')];
+  return {
+    paragraphs,
+    text: paragraphs.map((p) => p.lines.join('\n')).join('\n\n'),
+    preview: first.length > 120 ? `${first.slice(0, 119).join('')}…` : first.join(''),
+  };
+}
+
+// What was submitted, in a line or two, so they know which one it's about:
+// the date as "Friday 28 August 2026" (in English, a weekday too, so it can't
+// be misread anywhere), and where.
+const longDate = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+export function summary(competition: any = {}) {
+  const { date, venue, location } = competition;
+  const day = typeof date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(date) ? new Date(`${date.slice(0, 10)}T00:00:00Z`) : null;
+  return {
+    date: day && !Number.isNaN(day.getTime()) ? longDate.formatToParts(day).filter((p) => p.type !== 'literal').map((p) => p.value).join(' ') : null,
+    where: [venue, location].filter((s) => typeof s === 'string' && s.trim()).map((s) => s.trim()).join(', ') || null,
+  };
+}
+
 class Submissions {
   database;
   config;
@@ -132,7 +162,50 @@ class Submissions {
     });
   }
 
-   
+  // Rejected with a reply: it's emailed to them, inside a short note signed by
+  // whoever rejected it. Without one (or as spam, where a reply would confirm
+  // the address works) no one is told. The submission says how it went:
+  // `replied`, or `replyFailed` so it can be sent again (`rejection/retried`)
+  // or another way.
+  async handleRejected(snap, ctx) {
+    const submission = snap.val();
+    const { reason, reply } = submission.rejection || {};
+    if (typeof reply !== 'string' || !reply.trim() || reason === 'spam') return;
+    // Approved, deleted, rejected again or sent again since (a quick change
+    // of mind, or Send again tapped twice)? Then this one's moot.
+    const latest = (await snap.ref.get()).val();
+    if (!latest || latest.approved || latest.rejected !== submission.rejected
+      || latest.rejection?.retried !== submission.rejection?.retried) return;
+
+    const signerId = ctx.auth?.uid || submission.rejectedBy;
+    const displayName = signerId ? (await this.config.db.child(`users/${signerId}/displayName`).get()).val() : null;
+    const signer = typeof displayName === 'string' ? displayName.trim().split(/\s+/)[0] || null : null;
+
+    // (Unless it's been deleted meanwhile: update() would bring it back as a shell.)
+    const mark = async (fields) => {
+      if ((await snap.ref.get()).exists()) await snap.ref.update(fields);
+    };
+    try {
+      await getPostmark().sendEmailWithTemplate({
+        From: this.config.email,
+        To: isEmulator() ? this.config.email : submission.contact?.email,
+        TemplateAlias: 'competition-submission-rejected',
+        TemplateModel: {
+          ...this.getTemplateModel(submission),
+          competition: { ...submission.competition, name: submission.competition?.name?.trim() || 'your competition' },
+          contact: { ...submission.contact, name: submission.contact?.name?.trim() || null },
+          summary: summary(submission.competition),
+          reply: replyModel(reply),
+          signer,
+        },
+      });
+      await mark({ replied: new Date().toISOString(), replyFailed: null });
+    } catch (err) {
+      console.error('competition-submission-rejected email failed', err);
+      await mark({ replyFailed: new Date().toISOString() });
+    }
+  }
+
   async handleError(err, snap, ctx) {
      
     console.error(err, snap && snap.val(), ctx);
@@ -171,6 +244,13 @@ class Submissions {
 
             return await this.handleApproved(snap, ctx);
           }
+          // rejected, or its reply sent again
+          const rejected = after.child('rejected').val();
+          const retried = after.child('rejection/retried').val();
+          if (rejected && (rejected !== before.child('rejected').val() || retried !== before.child('rejection/retried').val())) {
+            return await this.handleRejected(after, ctx);
+          }
+          return null;
         } catch (err) {
           return this.handleError(err, after, ctx);
         }

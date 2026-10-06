@@ -28,8 +28,10 @@ const host = shallowRef<HTMLElement | 'body'>('body')
 function retarget() {
   host.value = [...document.querySelectorAll<HTMLDialogElement>('dialog[open]')].at(-1) ?? 'body'
 }
+// (The stack itself is watched too: this host loads with the first toast, and
+// that one must show as soon as the stack is in the page.)
 watch(
-  [host, () => toasts.length],
+  [host, () => toasts.length, stack],
   () => {
     if (stack.value?.isConnected && !stack.value.matches(':popover-open')) stack.value.showPopover?.()
   },

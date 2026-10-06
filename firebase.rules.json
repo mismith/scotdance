@@ -125,7 +125,7 @@
       "competitions:submissions": {
         ".indexOn": ["submittedBy", "receivedAt"], // the flood check
         "$competitionId": {
-          ".write": "auth !== null && !data.exists() && !newData.child('approved').exists()" // is AUTHED and CREATING and NOT approving
+          ".write": "auth !== null && !data.exists() && !newData.child('approved').exists() && !newData.child('rejected').exists() && !newData.child('rejection').exists() && !newData.child('replied').exists() && !newData.child('replyFailed').exists()" // is AUTHED and CREATING and NOT approving or rejecting (or saying a reply went out)
         }
       },
       "competitions:permissions": {

@@ -1,0 +1,36 @@
+{
+  "Name": "Competition Submission Rejected",
+  "Alias": "competition-submission-rejected",
+  "Subject": "About your submission of {{ competition.name }}",
+  "TemplateType": "Standard",
+  "TestRenderModel": {
+    "app": {
+      "name": "ScotDance.app",
+      "url": "https://scotdance.app",
+      "description": "Highland dancing event tracker"
+    },
+    "competition": {
+      "name": "Cowal Games Highland Dancing"
+    },
+    "contact": {
+      "name": "Morag Fraser"
+    },
+    "summary": {
+      "date": "Friday 28 August 2026",
+      "where": "Dunoon Stadium, Dunoon"
+    },
+    "reply": {
+      "paragraphs": [
+        {
+          "lines": ["Is this the dancing at the Cowal Highland Gathering? That’s already on ScotDance.app, so if it is, I can add you as one of its admins instead."]
+        },
+        {
+          "lines": ["If it’s a separate competition, let me know and I’ll add it."]
+        }
+      ],
+      "text": "Is this the dancing at the Cowal Highland Gathering? That’s already on ScotDance.app, so if it is, I can add you as one of its admins instead.\n\nIf it’s a separate competition, let me know and I’ll add it.",
+      "preview": "Is this the dancing at the Cowal Highland Gathering? That’s already on ScotDance.app, so if it is, I can add you as one of…"
+    },
+    "signer": "Murray"
+  }
+}

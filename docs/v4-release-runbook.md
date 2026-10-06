@@ -144,6 +144,20 @@ organisation invite's email link lands where there are no organisations.
 On staging, send people the invite's Copy link instead (it opens
 next.scotdance.app).
 
+## Rejecting submissions
+
+Approve or Reject in System admin › Submissions; a rejection's reply is
+emailed by `competitionSubmissionUpdated` with the new
+`competition-submission-rejected` template. The backend goes first, from the
+branch:
+
+1. `firebase deploy --only database` (a submitter can't send one already
+   rejected, or with a reply of its own).
+2. `firebase deploy --only functions:competitionSubmissionUpdated`.
+3. Merge to `next`: the web deploys and the template is pushed. Then submit a
+   competition yourself, reject it with a reply, and check the email arrives
+   and the submission says "Emailed".
+
 ## Parked
 
 - Tartans: branch `claude/tartans-parked`, as a future optional side tool.
