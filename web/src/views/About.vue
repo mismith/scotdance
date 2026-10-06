@@ -48,8 +48,8 @@ const faqs: { id: string; q: string; a?: string }[] = [
   },
   {
     id: 'privacy',
-    q: 'Is it safe to use? What about my data?',
-    a: 'In plain words: yes, it’s completely legitimate. It checks all the security boxes you’d expect, and does nothing nefarious with the (minimal) data it collects. Since all competition data is user-submitted, it’s much like results PDFs posted on an association’s website, just more convenient, hopefully. There are more details on the <a href="/policies" class="text-primary underline">privacy and terms</a> page.',
+    q: 'Is it safe to use? What about privacy?',
+    a: 'In plain words: yes, it’s completely legitimate. It checks all the security boxes you’d expect, and does nothing nefarious with the (minimal) data it collects. Competition data is entered by organisers: the same names, numbers, towns, age groups and results as the program and the results PDFs posted on an association’s website. The difference is it’s all in one place, so each dancer’s results are gathered onto one profile, season after season. Nothing like a birthdate, address or school is ever asked for, and search engines like Google are asked not to list dancer pages. There are more details on the <a href="/policies" class="text-primary underline">privacy and terms</a> page.',
   },
 ]
 

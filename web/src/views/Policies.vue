@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import AppBar from '@/components/nav/AppBar.vue'
+import { useCrisp } from '@/composables/useCrisp'
 import { RouterLink } from 'vue-router'
+
+const crisp = useCrisp()
 </script>
 
 <template>
@@ -75,6 +78,41 @@ import { RouterLink } from 'vue-router'
             any potentially sensitive information input is done so at your own discretion
           </li>
         </ul>
+
+        <p>
+          <strong>If you, or your dancer, are in a published competition</strong>, the
+          details organisers print in the program and post with the results are public:
+        </p>
+        <ul class="ml-6 list-disc space-y-1">
+          <li>
+            for dancers: name, competitor number, where they’re from (a town, province,
+            state or country), age group, dances and placings
+          </li>
+          <li>
+            for judges and pipers: name, plus any photo, bio or website the organisers add
+          </li>
+        </ul>
+        <p>
+          Organisers enter these from their own entries. <em>ScotDance.app</em> doesn’t
+          take entries itself, and has nowhere to put a dancer’s birthdate, address,
+          school or contact details. Each person’s competitions are gathered onto one profile,
+          matched by name, so families can follow a dancer from one competition to the
+          next and keep a record of their results. Search engines like Google are asked
+          not to list dancer pages, and competitions that aren’t published stay private.
+        </p>
+        <p>
+          If something’s wrong, or you have a concern about what’s shown, the
+          competition’s organisers can correct it, or please
+          <button
+            v-if="crisp.available"
+            type="button"
+            class="hover:text-foreground underline underline-offset-4"
+            @click="crisp.open()"
+          >
+            get in touch</button
+          ><template v-else>get in touch</template>. <em>ScotDance.app</em> is run by one
+          volunteer, Murray Rowan.
+        </p>
 
         <hr class="border-border/60 my-6" />
 
