@@ -4,7 +4,7 @@ import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 import { ensureAdmin } from './utility/competition';
 import { getTypesense, indexBestEffort, sameExcept } from './utility/typesense';
 import { createAggregator } from './utility/aggregate';
-import { filterList } from './search';
+import { filterList, searchTerm } from './search';
 import { dancerAggregator as aggregatorConfig, personName } from './utility/entityConfigs';
 
 const schema: CollectionCreateSchema = {
@@ -97,9 +97,13 @@ export function getOnBackfillBackPointers(db: any) {
   };
 }
 
+// The v3 app's Dancers search. It takes only the q: the rest is what v3 sends,
+// so nobody can page through every published dancer.
 export function getOnSearch(db) {
   return async function onSearch(searchParams, ctx) {
     if (!ctx.auth?.uid) throw new HttpsError('unauthenticated', '');
+    const q = searchTerm(searchParams?.q);
+    if (!q) throw new HttpsError('invalid-argument', 'Search for a name');
 
     // aggregate a list of all competition ids this user has access too
     const permissions = (await db.child(`users:permissions/${ctx.auth.uid}`).get()).val();
@@ -116,10 +120,15 @@ export function getOnSearch(db) {
       const response = await getTypesense().multiSearch.perform({
         searches: [
           {
-            ...searchParams,
             collection: 'dancers',
+            q,
             query_by: '$name',
             filter_by: Array.isArray(authorizedCompetitionIds) ? `$competitionId:${filterList(authorizedCompetitionIds)}` : undefined,
+            group_by: '$name',
+            group_limit: 99,
+            per_page: 99,
+            // What v3 shows of each entry (views/Dancers.vue, DancerListItem).
+            include_fields: 'id,$competitionId,$name,firstName,lastName,number,groupId,location,website',
           },
         ],
       });

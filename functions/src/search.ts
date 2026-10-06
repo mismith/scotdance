@@ -30,6 +30,17 @@ export function filterList(ids: string[]): string {
   return `[${ids.filter((id) => !id.includes('`')).map((id) => `\`${id}\``).join(',')}]`;
 }
 
+/**
+ * The caller's q, or '' when it has no word to find. Typesense drops
+ * punctuation and reads `-word` as "not word", and a q with no word left
+ * searches everything, as `*` does, so one word must start with a letter or
+ * digit.
+ */
+export function searchTerm(q: unknown): string {
+  const text = (typeof q === 'string' ? q : '').trim().slice(0, 200);
+  return text.split(' ').some((word) => /^[\p{L}\p{N}]/u.test(word)) ? text : '';
+}
+
 // Which competitions show (about 40 KB of ids) changes only when one is
 // published, listed or hidden, so each instance reads it once a minute rather
 // than on every search: a newly shown one turns up in search within a minute.
@@ -51,7 +62,7 @@ export function getOnSearchAll(db: any) {
 
   return async function onSearchAll(params: SearchAllParams, ctx: any) {
     // Anyone can call this, so take nothing on trust.
-    const q = (typeof params?.q === 'string' ? params.q : '').trim().slice(0, 200);
+    const q = searchTerm(params?.q);
     if (!q) return emptyOut();
 
     const requested = Math.floor(Number(params?.perGroup ?? 5));
@@ -90,7 +101,8 @@ export function getOnSearchAll(db: any) {
     // Short-circuit: non-admin with nothing to see → nothing to search.
     if (!isAdmin && shownIds.length === 0) return emptyOut();
 
-    // Build searches and remember which result slot each one targets.
+    // Build searches and remember which result slot each one targets. Each
+    // returns only the fields the app reads (web/src/lib/searchAll.ts).
     const slots: Array<
     { key: 'competitions' | 'dancers' | 'judges' | 'pipers' | 'organisations' }
     | { key: 'places'; kind: 'venue' | 'locality' | 'region' }
@@ -106,6 +118,7 @@ export function getOnSearchAll(db: any) {
           query_by: 'name,venue,location,locality,region,country',
           filter_by: compFilter,
           per_page: perGroup,
+          include_fields: 'id,$name,name,venue,location,locality,region,country,date,image,organisations',
         });
       } else if (type === 'dancers' || type === 'judges' || type === 'pipers') {
         const ids = type === 'dancers' ? publishedIds : shownIds;
@@ -120,6 +133,8 @@ export function getOnSearchAll(db: any) {
           per_page: perGroup,
           group_by: '$name',
           group_limit: 5,
+          // A dancer's entry holds more than search shows, and no photo shows.
+          include_fields: type === 'dancers' ? '$name,$competitionId,location' : '$name,$competitionId,location,image',
         });
       } else if (type === 'places') {
         // Three sub-queries — one per place kind. Each is scoped to its own
@@ -136,6 +151,7 @@ export function getOnSearchAll(db: any) {
             // High enough to capture all comps for any one venue/locality/region
             // so the picker sheet gets the full list (not just a sample).
             group_limit: 50,
+            include_fields: 'id,venue,locality,region,country',
           });
         });
       } else if (type === 'organisations') {
