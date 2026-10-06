@@ -27,6 +27,7 @@ import { useOrganisations } from '@/composables/useOrganisations'
 import { useFavoritesStore } from '@/stores/favorites'
 import { fetchDancers } from '@/lib/competitionData'
 import { lookupEntityId, lookupVenueId } from '@/lib/entityIndex'
+import { isBeforeToday } from '@/lib/format'
 import { settle } from '@/lib/settle'
 import {
   searchAll,
@@ -402,6 +403,7 @@ watch(mode, async (m) => {
                 v-for="c in results.competitions.hits"
                 :key="c.id"
                 :competition="c"
+                :below="isBeforeToday(c.date) ? 'year' : 'weekday'"
                 :to="{ name: 'competition.info', params: { competitionId: c.id } }"
                 :followed="favorites.isFavorite('competitions', c.id)"
               />

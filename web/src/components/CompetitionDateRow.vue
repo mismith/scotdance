@@ -37,6 +37,8 @@ const props = withDefaults(
     note?: string | null
     /** On this organisation's page: its name without the organisation, in front or in it. */
     within?: string | null
+    /** Under the day: the weekday, or the year where years mix (Search). */
+    below?: 'weekday' | 'year'
   }>(),
   {
     followed: false,
@@ -47,6 +49,7 @@ const props = withDefaults(
     preview: false,
     note: null,
     within: null,
+    below: 'weekday',
   },
 )
 
@@ -65,6 +68,7 @@ const hidden = computed(() => (props.preview ? null : hiddenAs(id.value, props.c
     <RouterLink :to="to" class="press-row focus-inset flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4">
       <DateTile
         :date="competition.date"
+        :below="below"
         :managed="managed"
         :today="today"
       />
