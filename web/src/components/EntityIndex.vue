@@ -300,7 +300,7 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
     <nav
       v-if="lettered && letters.length > 4"
       aria-label="Jump to a letter"
-      class="fixed top-1/2 right-0.5 z-20 flex -translate-y-1/2 touch-none flex-col items-center py-1 select-none md:right-[max(0.25rem,calc((100vw-48rem)/2-2rem))]"
+      class="fixed top-1/2 right-[calc(var(--chrome-right)+0.125rem)] z-20 flex -translate-y-1/2 touch-none flex-col items-center py-1 select-none md:right-[calc(var(--chrome-right)+max(0.25rem,(100vw-var(--chrome-left)-var(--chrome-right)-48rem)/2-2rem))]"
       @pointerdown="scrubStart"
       @pointermove="scrubMove"
       @pointerup="scrubEnd"

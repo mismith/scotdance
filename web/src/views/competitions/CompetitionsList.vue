@@ -156,7 +156,7 @@ const sections = computed<Section[]>(() => {
         :competitions="inRangeEverywhere"
         :focus="inRange"
         :fit-key="`${locationMode}:${location.isActive}:${range}`"
-        class="fixed top-(--chrome-top) right-0 bottom-0 left-(--sidebar)"
+        class="fixed inset-x-chrome-0 top-(--chrome-top) bottom-0"
       />
 
       <CompetitionsCalendar

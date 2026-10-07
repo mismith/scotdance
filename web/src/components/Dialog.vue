@@ -161,7 +161,7 @@ const dragStyle = computed(() =>
       // Width by size prop.
       variant !== 'dropdown' && (size === 'sm' ? 'w-full md:max-w-sm' : 'w-full md:max-w-md'),
       variant === 'dropdown' &&
-        'fixed top-[calc(var(--chrome-top)+0.25rem)] bottom-auto left-auto right-(--dropdown-right,0.75rem) m-0 w-72 max-w-[calc(100vw-1.5rem)] max-h-[calc(100svh-var(--chrome-top)-1rem)] origin-top-right overflow-y-auto rounded-[1.375rem] p-1.5 shadow-(--shadow-raised)',
+        'fixed top-[calc(var(--chrome-top)+0.25rem)] bottom-auto left-auto right-[calc(var(--chrome-right)+0.75rem)] m-0 w-72 max-w-[calc(100vw-1.5rem)] max-h-[calc(100svh-var(--chrome-top)-1rem)] origin-top-right overflow-y-auto rounded-[1.375rem] p-1.5 shadow-(--shadow-raised)',
       // Layout per variant.
       variant === 'center' &&
         'fixed inset-x-0 top-[calc(var(--chrome-top)+1rem)] bottom-[calc(var(--chrome-bottom)+1rem)] m-auto h-fit rounded-3xl p-6 shadow-(--shadow-raised) max-h-[calc(100svh-var(--chrome-top)-var(--chrome-bottom)-4rem)] max-md:max-w-[calc(100vw-2rem)]',

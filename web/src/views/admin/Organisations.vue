@@ -440,7 +440,7 @@ const CHIP = 'inline-flex h-8 max-w-full items-center gap-1.5 rounded-full pr-3 
     >
       <div
         v-if="view === 'tag' && selected.size"
-        class="surface fixed inset-x-3 bottom-[calc(var(--chrome-bottom)+0.75rem)] z-30 mx-auto flex max-w-2xl flex-wrap items-center gap-2 rounded-2xl border p-2 pl-4 shadow-lg md:left-[calc(var(--sidebar)+1rem)]"
+        class="surface fixed inset-x-chrome-3 bottom-[calc(var(--chrome-bottom)+0.75rem)] z-30 mx-auto flex max-w-2xl flex-wrap items-center gap-2 rounded-2xl border p-2 pl-4 shadow-lg md:left-[calc(var(--chrome-left)+1rem)]"
         role="toolbar"
         aria-label="Chosen competitions"
       >

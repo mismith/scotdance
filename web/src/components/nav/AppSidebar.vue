@@ -48,7 +48,7 @@ const vt = (name: string) => ({ viewTransitionName: `sidebar-${name}`, viewTrans
 <template>
   <aside
     data-nav-axis="y"
-    class="bg-card fixed inset-y-0 left-0 z-30 hidden w-(--sidebar) flex-col pt-(--safe-top) [view-transition-name:sidebar] lg:flex"
+    class="bg-card fixed inset-y-0 left-0 z-30 hidden w-(--chrome-left) flex-col pt-(--safe-top) pl-(--safe-left) [view-transition-name:sidebar] lg:flex"
   >
     <RouterLink
       :to="{ name: 'home' }"

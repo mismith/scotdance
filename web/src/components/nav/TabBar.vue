@@ -35,7 +35,7 @@ function onTap(item: TabItem, e: MouseEvent) {
     data-tabbar
     data-nav-axis="x"
     :aria-label="label"
-    class="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(0.5rem,var(--safe-bottom))] [view-transition-name:tabbar-backdrop] lg:hidden"
+    class="pointer-events-none fixed inset-x-chrome-0 bottom-0 z-30 px-3 pb-[max(0.5rem,var(--safe-bottom))] [view-transition-name:tabbar-backdrop] lg:hidden"
   >
     <!-- As under the top bar: the page's colour behind the bar, and what
          scrolls toward it fades and blurs away in a short band just above. -->

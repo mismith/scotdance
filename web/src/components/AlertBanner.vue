@@ -80,7 +80,7 @@ function open() {
     >
       <div
         v-if="current"
-        class="fixed right-2 left-[calc(var(--sidebar)+0.5rem)] top-[calc(var(--safe-top)+0.5rem)] z-50 mx-auto max-w-lg"
+        class="fixed inset-x-chrome-2 top-[calc(var(--safe-top)+0.5rem)] z-50 mx-auto max-w-lg"
       >
         <div
           class="touch-none transition-[translate] duration-(--dur-slow) ease-snappy"

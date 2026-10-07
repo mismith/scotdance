@@ -139,10 +139,16 @@
      WebViews that don't report env() insets edge-to-edge. */
   --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top));
   --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom));
+  --safe-left: var(--safe-area-inset-left, env(safe-area-inset-left));
+  --safe-right: var(--safe-area-inset-right, env(safe-area-inset-right));
   /* Chrome: a 3.5rem app bar under the status bar, and the floating tab bar
-     above the home indicator. Pages pad by these. */
+     above the home indicator. At the sides, the sidebar on wide screens, and
+     the notch or status bar of a phone on its side (or the iPhone Duo's inner
+     screen). Pages pad by these. */
   --chrome-top: calc(3.5rem + var(--safe-top));
   --chrome-bottom: calc(4.5rem + max(0.5rem, var(--safe-bottom)));
+  --chrome-left: calc(var(--sidebar) + var(--safe-left));
+  --chrome-right: var(--safe-right);
   /* Surfaces: a hairline and a whisper of shadow for cards; a soft lift for
      what floats above them. No borders as well. */
   --shadow-card: 0 0 0 0.5px rgb(18 22 27 / 0.09), 0 1px 2px rgb(16 24 40 / 0.05);
@@ -371,7 +377,7 @@
 
 /* Wide screens (lg): the app's navigation is a sidebar on the left of every
    page (nav/AppSidebar) instead of the tab bars, so fixed chrome starts at
-   --sidebar, and pages no longer keep room for a bar at the bottom. The app
+   --chrome-left, and pages no longer keep room for a bar at the bottom. The app
    bar keeps to the page's column (48rem, as every page is), so its edges
    line up with the content. */
 :root {
@@ -386,6 +392,12 @@
 }
 @utility appbar-row {
   max-width: 48rem;
+}
+/* Fixed things that span the page keep inside the side chrome, plus a gap
+   (spacing units): inset-x-chrome-0 meets it, inset-x-chrome-4 is 1rem in. */
+@utility inset-x-chrome-* {
+  left: calc(var(--chrome-left) + --spacing(--value(number)));
+  right: calc(var(--chrome-right) + --spacing(--value(number)));
 }
 
 /* A dancer's colour, for bars, bands and badges (set as --dc by paint()). */

@@ -68,7 +68,7 @@ watch(() => me.email, (email) => crisp.setUserEmail(email), { immediate: true })
 
 <template>
   <AppSidebar />
-  <div class="flex min-h-dvh flex-col lg:pl-(--sidebar)">
+  <div class="flex min-h-dvh flex-col pr-(--chrome-right) pl-(--chrome-left)">
     <RouterView />
 
     <GlobalBottomNav v-if="showGlobalNav" />

@@ -141,7 +141,7 @@ const sectionTitle = provideSectionTitle()
 </script>
 
 <template>
-  <div class="flex min-h-dvh flex-col md:fixed md:inset-y-0 md:right-0 md:left-(--sidebar) md:min-h-0">
+  <div class="flex min-h-dvh flex-col md:fixed md:inset-x-chrome-0 md:inset-y-0 md:min-h-0">
     <AppBar wide :title="barTitle" :subtitle="barSubtitle" :show-title="sectionTitle.showInBar()" :scrolled="true" :exit="exit">
       <template #actions>
         <template v-if="access === 'ok'">

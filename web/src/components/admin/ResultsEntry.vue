@@ -645,7 +645,7 @@ watch(() => props.danceId, showCurrent)
   </div>
 
   <!-- Phones: the placed order at a glance, and Next -->
-  <div v-if="group && strip" class="fixed inset-x-3 bottom-(--notice-bottom) z-40">
+  <div v-if="group && strip" class="fixed inset-x-chrome-3 bottom-(--notice-bottom) z-40">
     <div class="glass flex items-center gap-1 rounded-full p-1.5">
       <button
         type="button"

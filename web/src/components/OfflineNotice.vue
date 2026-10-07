@@ -28,7 +28,7 @@ const savedWhen = computed(() => {
       <div
         v-if="savedWhen"
         data-offline-notice
-        class="pointer-events-none fixed right-4 bottom-(--notice-bottom) left-[calc(var(--sidebar)+1rem)] z-40 flex justify-center"
+        class="pointer-events-none fixed inset-x-chrome-4 bottom-(--notice-bottom) z-40 flex justify-center"
       >
         <p class="hud flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium">
           <CloudOff class="size-4 shrink-0" />

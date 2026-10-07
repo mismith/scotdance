@@ -523,7 +523,7 @@ async function remove(s: Submission) {
         >
           <div
             v-if="showBulk"
-            class="glass fixed inset-x-3 bottom-[calc(var(--safe-bottom)+0.75rem)] z-20 flex items-center gap-2 rounded-2xl p-2.5 md:sticky md:inset-x-auto md:bottom-3 md:mx-3"
+            class="glass fixed inset-x-chrome-3 bottom-[calc(var(--safe-bottom)+0.75rem)] z-20 flex items-center gap-2 rounded-2xl p-2.5 md:sticky md:inset-x-auto md:bottom-3 md:mx-3"
           >
             <!-- (Small capsules, so all three fit when waiting and rejected ones are picked together.) -->
             <template v-if="picked.waiting.length">

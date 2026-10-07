@@ -17,7 +17,7 @@ function confirmDismiss() {
 
 <template>
   <Teleport to="body">
-    <div class="pointer-events-none fixed right-0 bottom-(--chrome-bottom) left-(--sidebar) z-30 px-4">
+    <div class="pointer-events-none fixed inset-x-chrome-0 bottom-(--chrome-bottom) z-30 px-4">
       <div class="m-auto flex max-w-3xl justify-end">
         <Transition
           enter-active-class="transition-[scale,opacity] duration-(--dur-slow) ease-elastic motion-reduce:transition-opacity"
