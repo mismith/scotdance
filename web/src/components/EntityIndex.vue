@@ -9,7 +9,6 @@ import FavoriteButton from '@/components/FavoriteButton.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import { sectionMeta } from '@/lib/sectionMeta'
-import { selectionHaptic } from '@/lib/haptics'
 import { settle } from '@/lib/settle'
 import {
   useEntityAggregates,
@@ -22,7 +21,7 @@ import { useFavoritesStore, type FavoriteType } from '@/stores/favorites'
 // Generic alphabetical list of /{namespace} aggregates. Each entity's index
 // page is a tiny wrapper around this — passes the namespace, route prefix,
 // VT scope, and a `subtitleOf` mapper for whatever line lives under the name.
-// One list; a long one gets letter headings and an A–Z strip to jump with.
+// One list; a long one gets letter headings.
 
 const props = withDefaults(
   defineProps<{
@@ -74,8 +73,7 @@ const sorted = computed(() => {
 // "Ó Briain" files under O, beside the other O names.
 const letterOf = (name: string | undefined) => (name ?? '?').trim().normalize('NFD').charAt(0).toUpperCase() || '?'
 
-// Letter headings (and the A–Z strip) only once a list is long enough to
-// need them.
+// Letter headings only once a list is long enough to need them.
 const LETTERS_FROM = 30
 const lettered = computed(() => !query.value.trim() && sorted.value.length > LETTERS_FROM)
 const rows = computed(() => {
@@ -89,7 +87,6 @@ const rows = computed(() => {
   }
   return out
 })
-const letters = computed(() => rows.value.flatMap((x) => ('letter' in x ? [x.letter] : [])))
 
 const aggCache = computed(() => new Map(aggregates.value.map((r) => [r.id, r.agg])))
 
@@ -123,34 +120,6 @@ const recentRows = computed(() => {
 
 const to = (id: string) => ({ name: `${props.routePrefix}.info`, params: { [props.idParam]: id } })
 const imageOf = (agg: AggregateRow) => (typeof agg.image === 'string' ? agg.image : null)
-
-// The A–Z strip: tap a letter, or run a finger down it, to jump there. A
-// tick for each new letter.
-let scrubbing = false
-let at = ''
-function jump(letter: string, again = false) {
-  if (letter === at && !again) return
-  at = letter
-  selectionHaptic()
-  document.getElementById(`${props.namespace}-${letter}`)?.scrollIntoView({ block: 'start' })
-}
-function letterAt(e: PointerEvent) {
-  const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null
-  return el?.dataset.letter ?? null
-}
-function scrubStart(e: PointerEvent) {
-  scrubbing = true
-  at = ''
-  ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-  const l = letterAt(e)
-  if (l) jump(l)
-}
-function scrubMove(e: PointerEvent) {
-  if (!scrubbing) return
-  const l = letterAt(e)
-  if (l) jump(l)
-}
-const scrubEnd = () => (scrubbing = false)
 
 const titleAnchor = ref<HTMLElement | null>(null)
 const scrolledPastTitle = useScrolledPast(titleAnchor)
@@ -268,7 +237,6 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
             <template v-for="x in rows" :key="'letter' in x ? `@${x.letter}` : x.row.id">
               <li
                 v-if="'letter' in x"
-                :id="`${namespace}-${x.letter}`"
                 class="text-muted-foreground bg-card/90 sticky top-(--chrome-top) z-10 px-4 py-1.5 text-footnote font-semibold backdrop-blur-md"
               >
                 {{ x.letter }}
@@ -295,28 +263,5 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
         </section>
       </template>
     </main>
-
-    <!-- A–Z: jump down a long list. -->
-    <nav
-      v-if="lettered && letters.length > 4"
-      aria-label="Jump to a letter"
-      class="fixed top-1/2 right-[calc(var(--chrome-right)+0.125rem)] z-20 flex -translate-y-1/2 touch-none flex-col items-center py-1 select-none md:right-[calc(var(--chrome-right)+max(0.25rem,(100vw-var(--chrome-left)-var(--chrome-right)-48rem)/2-2rem))]"
-      @pointerdown="scrubStart"
-      @pointermove="scrubMove"
-      @pointerup="scrubEnd"
-      @pointercancel="scrubEnd"
-    >
-      <button
-        v-for="l in letters"
-        :key="l"
-        type="button"
-        :data-letter="l"
-        :aria-label="`Jump to ${l}`"
-        class="text-primary flex h-4.5 w-6 items-center justify-center text-xs font-semibold"
-        @click="jump(l, true)"
-      >
-        {{ l }}
-      </button>
-    </nav>
   </div>
 </template>
