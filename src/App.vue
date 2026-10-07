@@ -244,6 +244,33 @@
     </v-navigation-drawer>
 
     <v-main id="main" class="app-scroll-frame">
+      <!-- Website only: the apps get the new version through the stores. -->
+      <div v-if="showNextBanner" class="NextBanner flex-none print-hide">
+        <div class="NextBanner-inner">
+          <button type="button" class="NextBanner-close" aria-label="Dismiss" @click="dismissNextBanner()">
+            <v-icon small>{{ mdiClose }}</v-icon>
+          </button>
+          <!-- The new app's icon (resources/icon.svg on next) -->
+          <svg class="NextBanner-icon" viewBox="0 0 1024 1024" aria-hidden="true">
+            <rect width="1024" height="1024" rx="230" fill="#0065bd" />
+            <g transform="translate(512 512) scale(1.4518) translate(-256 -280)">
+              <g stroke="#fff" stroke-width="88">
+                <line x1="256" y1="300" x2="47.53" y2="162.02" />
+                <line x1="256" y1="300" x2="464.47" y2="162.02" />
+                <line x1="256" y1="300" x2="47.53" y2="437.98" />
+                <line x1="256" y1="300" x2="464.47" y2="437.98" />
+              </g>
+              <circle cx="256" cy="300" r="48" fill="#fff" />
+              <circle cx="256" cy="129" r="68" fill="#fff" />
+            </g>
+          </svg>
+          <div class="NextBanner-text">
+            <div class="NextBanner-title">The new ScotDance.app</div>
+            <div class="NextBanner-subtitle">Nearly here. Help shape it.</div>
+          </div>
+          <a class="NextBanner-action" :href="nextUrl">Try it</a>
+        </div>
+      </div>
       <router-view v-if="$store.state.me !== undefined" />
       <div v-else class="app-scroll-frame">
         <Spinner />
@@ -399,6 +426,16 @@ export default {
     hasSubmenu() {
       return Boolean(this.competitions.length);
     },
+    showNextBanner() {
+      // On and off live from the database: production/featureFlags/next-banner
+      return this.$device?.platform === 'web'
+        && this.$store.getters.getFeatureFlag('next-banner')
+        && !this.$store.getters.isViewed('next', 'banner');
+    },
+    nextUrl() {
+      // The new app's paths match these, and it redirects the ones it changed.
+      return `https://next.scotdance.app${this.$route.fullPath}`;
+    },
     submenuIsNew: {
       get() {
         return !this.$store.getters.isViewed('ui', 'submenu');
@@ -462,6 +499,10 @@ export default {
       'help',
     ]),
     isDev,
+
+    dismissNextBanner() {
+      this.$store.commit('setViewed', ['next', 'banner']);
+    },
 
     loadCompetitions() {
       if (this.competitionsRaw) this.$unbind('competitionsRaw');
@@ -555,6 +596,67 @@ export default {
   right: env(safe-area-inset-right) !important;
   bottom: env(safe-area-inset-bottom) !important;
   height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+}
+
+// a quiet strip under the app bar, like the App Store's own app banner
+.NextBanner {
+  background-color: #fff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+  .theme--dark & {
+    background-color: #1e1e1e;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+}
+.NextBanner-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  // the × glyph and "Try it" line up with the page's 16px edges
+  padding: 8px 16px 8px 10px;
+}
+.NextBanner-close {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  opacity: 0.6;
+}
+.NextBanner-icon {
+  flex: none;
+  width: 36px;
+  height: 36px;
+}
+.NextBanner-text {
+  flex: auto;
+  min-width: 0;
+  line-height: 1.3;
+}
+.NextBanner-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+.NextBanner-subtitle {
+  font-size: 13px;
+  opacity: 0.65;
+}
+.NextBanner-action {
+  flex: none;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  color: #0065bd !important;
+  background-color: rgba(0, 101, 189, 0.1);
+
+  .theme--dark & {
+    color: #62aaf0 !important;
+    background-color: rgba(98, 170, 240, 0.16);
+  }
 }
 
 // app-wide helpers
