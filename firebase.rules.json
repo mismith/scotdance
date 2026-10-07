@@ -123,9 +123,9 @@
         }
       },
       "competitions:submissions": {
-        ".indexOn": ["submittedBy", "receivedAt"], // the flood check
+        ".indexOn": ["submittedBy", "receivedAt", "competition/date"], // the flood check; what else is submitted for the same day
         "$competitionId": {
-          ".write": "auth !== null && !data.exists() && !newData.child('approved').exists() && !newData.child('rejected').exists() && !newData.child('rejection').exists() && !newData.child('replied').exists() && !newData.child('replyFailed').exists()" // is AUTHED and CREATING and NOT approving or rejecting (or saying a reply went out)
+          ".write": "auth !== null && !data.exists() && !newData.child('approved').exists() && !newData.child('rejected').exists() && !newData.child('rejection').exists() && !newData.child('replied').exists() && !newData.child('replyFailed').exists() && !newData.child('autoApproved').exists() && !newData.child('review').exists()" // is AUTHED and CREATING and NOT approving or rejecting (or saying a reply went out, or that it needs no review)
         }
       },
       "competitions:permissions": {

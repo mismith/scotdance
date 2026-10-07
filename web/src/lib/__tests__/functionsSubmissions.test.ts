@@ -1,11 +1,13 @@
 // @vitest-environment node
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { FakeRtdb, snap } from './fakeRtdb'
 
-// Rejecting a submission (functions/src/submissions.ts): a reply goes out once,
-// in competition-submission-rejected, and the submission says how it went.
-// Nothing goes out without a reply, for spam, or once the rejection is moot.
-// Postmark is stubbed: each email that would go out lands in `postmark.sent`.
+// Submissions (functions/src/submissions.ts). Arriving, one is approved at
+// once when there's nothing to look at, or waits saying why. Rejecting one
+// with a reply emails it once, in competition-submission-rejected, and the
+// submission says how it went. Nothing goes out without a reply, for spam, or
+// once the rejection is moot. Postmark is stubbed: each email that would go
+// out lands in `postmark.sent`.
 
 /** Database values: untyped JSON. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -50,6 +52,7 @@ function setup() {
   const snapshot = (value: Json) => ({
     ...snap(value),
     ref: rtdb.ref(`${PATH}/s1`),
+    key: 's1',
     child: (path: string) => snap(path.split('/').reduce((v, k) => v?.[k] ?? null, value)),
   })
   /** Change the submission as the app does; returns the trigger event, to deliver now or later. */
@@ -174,6 +177,137 @@ describe('a reply that didn’t go out', () => {
       await change(rejectedWith({ reply: 'Hi' }))()
       expect(read()).toBeNull()
     }
+  })
+})
+
+// Arriving, as the platform runs it: each write's trigger events in turn
+// (the ones the handlers' own writes cause too), until there are none.
+function arrival() {
+  const rtdb = new FakeRtdb()
+  rtdb.patterns = [`${PATH}/{submissionId}`]
+  rtdb.write({ 'users/admin-1/displayName': 'Murray Rowan' })
+  const database = { ref: () => ({ onCreate: (h: Json) => h, onUpdate: (h: Json) => h }) }
+  const submissions = new Submissions(database, { db: rtdb.ref(), name: 'ScotDance.app', description: 'Highland dancing event tracker', email: 'admin@scotdance.app', url: 'https://scotdance.app' })
+  const { onCreate, onUpdate } = submissions.hook(PATH)
+  const snapshot = (path: string, value: Json) => ({
+    ...snap(value),
+    ref: rtdb.ref(path),
+    key: path.split('/').at(-1),
+    child: (p: string) => snap(p.split('/').reduce((v, k) => v?.[k] ?? null, value)),
+  })
+  /** Deliver what's queued; `uid` is whoever made the writes (none for the server's). */
+  async function settle(uid?: string) {
+    while (rtdb.events.length) {
+      const { path, params, before, after } = rtdb.events.shift()!
+      const ctx = { params, ...(uid && { auth: { uid } }) }
+      if (before === null && after !== null) await onCreate(snapshot(path, after), ctx)
+      else if (before !== null && after !== null) await onUpdate({ before: snapshot(path, before), after: snapshot(path, after) }, ctx)
+    }
+  }
+  /** A submission, from Submit, by an organiser. */
+  async function submit(competition: Json = {}, extra: Json = {}) {
+    rtdb.write({ [`${PATH}/s1`]: { ...SUBMISSION, competition: { ...SUBMISSION.competition, ...competition }, ...extra } })
+    await settle('organiser-1')
+  }
+  /** A change in Submissions, by Murray. */
+  async function change(updates: Record<string, Json>) {
+    rtdb.write(updates)
+    await settle('admin-1')
+  }
+  const competitions = () => Object.entries(rtdb.read('competitions') ?? {})
+  return { rtdb, submit, change, settle, competitions, read: () => rtdb.read(`${PATH}/s1`) }
+}
+const sentTemplates = () => postmark.sent.map((e) => e.TemplateAlias)
+
+describe('a new submission', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-06T12:00:00Z'))
+  })
+  afterEach(() => vi.useRealTimers())
+
+  it('has its registration number tidied as it arrives', async () => {
+    const { submit, read } = arrival()
+    await submit({ sobhd: ' C-MB-22-143 ' })
+    expect(read().competition.sobhd).toBe('C-MB-CO-22-143')
+    expect(read().submittedBy).toBe('organiser-1')
+  })
+
+  it('with nothing to look at, is approved at once: they hear it’s approved, and Murray that it was', async () => {
+    const { submit, read, competitions } = arrival()
+    await submit()
+    expect(read()).toMatchObject({ approved: expect.any(String), autoApproved: true, approvedBy: 'auto' })
+    expect(read().review).toBeUndefined()
+    const [[competitionId, competition]] = competitions()
+    expect(read().competitionId).toBe(competitionId)
+    expect(competition).toMatchObject({ name: 'Cowal Games Highland Dancing', submissionId: 's1' })
+    expect(sentTemplates()).toEqual(['competition-submission-approved', 'competition-submission-auto-approved'])
+    const murrays = postmark.sent[1]
+    expect(murrays).toMatchObject({ To: 'admin@scotdance.app', ReplyTo: 'morag@example.test' })
+    expect(murrays.TemplateModel).toMatchObject({
+      competition: { name: 'Cowal Games Highland Dancing' },
+      summary: { date: 'Friday 27 August 2027', where: 'Dunoon Stadium, Dunoon' },
+      admin: { link: `https://scotdance.app/#/competitions/${competitionId}/admin` },
+    })
+  })
+
+  it('with something to look at, waits saying why, and both hear it’s waiting', async () => {
+    const { submit, read, competitions } = arrival()
+    await submit({ name: 'COWAL GAMES HIGHLAND DANCING', location: '' })
+    expect(read().approved).toBeUndefined()
+    expect(read().review).toEqual(['The name is in capitals', 'There’s no town or city'])
+    expect(competitions()).toEqual([])
+    expect(sentTemplates()).toEqual(['competition-submission', 'competition-submission-approval'])
+    expect(postmark.sent[1].TemplateModel).toMatchObject({
+      review: ['The name is in capitals', 'There’s no town or city'],
+      admin: { link: 'https://scotdance.app/#/admin/submissions/s1' },
+    })
+  })
+
+  it('decided while it’s checked (or deleted) is left be', async () => {
+    const decided = arrival()
+    let tries = 0
+    // The second transaction is the check's: Murray rejects it just then.
+    decided.rtdb.duringTransaction = () => {
+      tries += 1
+      if (tries === 2) decided.rtdb.write({ [`${PATH}/s1/rejected`]: '2026-10-06T12:00:01.000Z' })
+    }
+    await decided.submit()
+    expect(decided.read().approved).toBeUndefined()
+    expect(decided.competitions()).toEqual([])
+    expect(postmark.sent).toEqual([])
+
+    const deleted = arrival()
+    let calls = 0
+    deleted.rtdb.duringTransaction = () => {
+      calls += 1
+      if (calls === 2) deleted.rtdb.write({ [`${PATH}/s1`]: null })
+    }
+    await deleted.submit({ location: '' })
+    expect(deleted.read()).toBeNull()
+    expect(postmark.sent).toEqual([])
+  })
+
+  it('tidied while it waits says what’s left, and still waits for Murray', async () => {
+    const { submit, change, read } = arrival()
+    await submit({ name: 'COWAL GAMES HIGHLAND DANCING', location: '' })
+    await change({ [`${PATH}/s1/competition/name`]: 'Cowal Games Highland Dancing' })
+    expect(read().review).toEqual(['There’s no town or city'])
+    await change({ [`${PATH}/s1/competition/location`]: 'Dunoon' })
+    expect(read().review).toBeUndefined()
+    expect(read().approved).toBeUndefined()
+    // (No more emails than the two as it arrived.)
+    expect(postmark.sent).toHaveLength(2)
+  })
+
+  it('approved by Murray isn’t said to be automatic', async () => {
+    const { submit, change, read } = arrival()
+    await submit({ location: '' })
+    postmark.sent.length = 0
+    await change({ [`${PATH}/s1/approved`]: '2026-10-06T13:00:00.000Z' })
+    expect(read()).toMatchObject({ approvedBy: 'admin-1', competitionId: expect.any(String) })
+    expect(read().autoApproved).toBeUndefined()
+    expect(sentTemplates()).toEqual(['competition-submission-approved'])
   })
 })
 

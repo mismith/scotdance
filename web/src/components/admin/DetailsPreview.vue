@@ -8,6 +8,7 @@ import { competitionLinks, linkLabel, registrationLines, registrationOpen } from
 import { formatLongDate } from '@/lib/format'
 import { visibilityOf } from '@/lib/visibility'
 import { sanitizeRichText } from '@/lib/sanitize'
+import { registrationLabel, registrations } from '@/lib/registration'
 import type { Competition } from '@/types/competition'
 
 // Beside Manage › Details on wide screens: what people will see, in the
@@ -77,10 +78,12 @@ const unlisted = computed(() => visibilityOf(c.value) === 'unlisted')
         <!-- eslint-disable-next-line vue/no-v-html -- sanitised, as on the competition page -->
         <div v-if="c.description" class="text-base leading-relaxed [&_a]:text-primary [&_a]:underline [&_p+p]:mt-3" v-html="sanitizeRichText(c.description)" />
 
-        <p v-if="c.sobhd" class="text-muted-foreground flex justify-between text-sm">
-          <span>RSOBHD sanctioned</span>
-          <span class="font-semibold tabular-nums">{{ c.sobhd }}</span>
-        </p>
+        <div v-if="registrations(c.sobhd).length" class="text-muted-foreground space-y-1 text-sm">
+          <p v-for="r in registrations(c.sobhd)" :key="r.number" class="flex justify-between gap-4">
+            <span>{{ registrationLabel(r) }}</span>
+            <span class="font-semibold tabular-nums">{{ r.number }}</span>
+          </p>
+        </div>
       </div>
     </section>
   </div>

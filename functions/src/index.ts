@@ -13,6 +13,7 @@ import * as Notifications from './notifications';
 import { getOnSearchAll } from './search';
 import { runBackfillCoords } from './backfillCoords';
 import { getOnChange } from './changed';
+import { getOnRegistrationWritten } from './registration';
 import { attachUserToCompetition, ensureAdmin } from './utility/competition';
 import { isEmulator } from './utility/env';
 import { runtimeConfig, geocodingApiKey } from './utility/config';
@@ -115,6 +116,11 @@ export const competitionListedChanged = listedDatabase.ref(`/${env}/competitions
   if (change.after.val() === true) await ref.set(true);
   else await ref.remove();
 });
+// Registration numbers are kept in each association's own format (see
+// registration.ts), however they're typed: in Manage, the old app or a
+// submission. A number already tidy is left be, so this settles at once.
+export const competitionRegistrationChanged = database().ref(`/${env}/competitions/{competitionId}/sobhd`)
+  .onWrite(getOnRegistrationWritten(appConfig.db));
 // When each competition last changed, for the copies the app keeps (see
 // changed.ts). Data is stamped entry by entry, so each event carries one
 // dancer or one dance's results, never a whole section.

@@ -158,6 +158,29 @@ branch:
    competition yourself, reject it with a reply, and check the email arrives
    and the submission says "Emailed".
 
+## Approving submissions as they arrive
+
+A new submission is checked as it arrives (`functions/src/review.ts`): with
+nothing to look at, it's approved there and then, and admin@ gets
+`competition-submission-auto-approved` with a link to manage it. There's no
+undo: anything wrong is fixed in Manage. Otherwise it waits, and says why
+(Needs a look, in System admin › Submissions). Registration numbers are tidied
+into each association's format as they're saved
+(`competitionRegistrationChanged`, and in the submission itself).
+
+1. Merge to `next` first: the web (Needs a look) deploys and the new and
+   changed templates are pushed, so nothing sends a template Postmark
+   doesn't have yet.
+2. `firebase deploy --only database` (the index on `competition/date`; a
+   submitter can't say it's approved or needs no review).
+3. `firebase deploy --only functions:competitionSubmissionCreated,functions:competitionSubmissionUpdated,functions:competitionRegistrationChanged`.
+4. The numbers already there were tidied once, on 2026-10-06 (89 of 739,
+   after a before-and-after was checked; backup and restore file in
+   `~/Sites/@mismith/scotdance-backups/2026-10-06-registration-numbers`). The
+   trigger keeps them tidy after that.
+5. Submit a tidy competition yourself: it should be approved within seconds,
+   with both emails.
+
 ## Parked
 
 - Tartans: branch `claude/tartans-parked`, as a future optional side tool.

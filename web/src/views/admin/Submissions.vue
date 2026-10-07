@@ -34,7 +34,9 @@ import { useAuthStore } from '@/stores/auth'
 // waiting come first; rejected and approved ones fold away. Approve and
 // Reject sit in a bar at the foot of the page (⌘Enter approves). Select picks
 // several, as in the Manage collections: approve or reject waiting ones
-// together, or delete rejected ones.
+// together, or delete rejected ones. Most are approved as they arrive (the
+// server's checks, functions/src/review.ts, found nothing to look at; anything
+// to fix after that is fixed in Manage), and the rest say what needs a look.
 
 interface Submission {
   id: string
@@ -44,6 +46,10 @@ interface Submission {
   competition?: Record<string, string | number | undefined>
   contact?: { name?: string; email?: string; message?: string }
   submittedBy?: string
+  /** Approved as it arrived: the server's checks found nothing to look at. */
+  autoApproved?: boolean
+  /** Why it's waiting for a person: what those checks found (again after each change here). */
+  review?: string[]
   /** Picked in Submit: ones already here. */
   organisations?: Record<string, boolean>
   /** New ones, made at approval with the submitter as their admin. */
@@ -176,7 +182,14 @@ useIntervalFn(() => (now.value = Date.now()), 15_000)
 const replyOf = (s: Submission) => replyStatus(s, now.value)
 function rowLine(s: Submission) {
   const st = status(s)
-  const when = st === 'waiting' ? (s.submitted ? formatRelative(s.submitted) : null) : st === 'rejected' ? `rejected ${formatRelative(s.rejected!)}` : `approved ${formatRelative(s.approved!)}`
+  const when =
+    st === 'waiting'
+      ? s.submitted
+        ? formatRelative(s.submitted)
+        : null
+      : st === 'rejected'
+        ? `rejected ${formatRelative(s.rejected!)}`
+        : `approved ${s.autoApproved ? 'automatically ' : ''}${formatRelative(s.approved!)}`
   return [s.contact?.name, when].filter(Boolean).join(' · ')
 }
 // "Rejected today: already submitted. No one was told."
@@ -325,11 +338,16 @@ const approveItems = computed(() =>
     id: s.id,
     name: String(s.competition?.name || 'Untitled'),
     line: [s.competition?.date ? formatLongDate(s.competition.date) : null, s.contact?.email].filter(Boolean).join(' · '),
+    // What the server's checks found, and what's checked here (live): the
+    // map, and whose organisations they are (said the same way, so once).
     flags: [
-      ...(onMap(s) ? [] : ['Not on the map yet']),
-      ...Object.keys(s.organisations ?? {})
-        .filter((oid) => !theirs(s, oid))
-        .map((oid) => `Lists it under ${orgName(oid)}, though they’re not one of its admins`),
+      ...new Set([
+        ...(s.review ?? []),
+        ...(onMap(s) ? [] : ['Not on the map yet']),
+        ...Object.keys(s.organisations ?? {})
+          .filter((oid) => !theirs(s, oid))
+          .map((oid) => `It lists it under ${orgName(oid)}, though they’re not one of its admins`),
+      ]),
     ],
   })),
 )
@@ -538,13 +556,23 @@ async function remove(s: Submission) {
 
         <section v-if="current.approved" class="bg-done text-done-foreground flex flex-wrap items-center gap-3 rounded-2xl py-2 pr-2 pl-4">
           <Check class="size-5 shrink-0" />
-          <p class="min-w-0 flex-1 py-1.5 font-medium">Approved {{ formatRelative(current.approved) }}.</p>
+          <p class="min-w-0 flex-1 py-1.5 font-medium">Approved {{ current.autoApproved ? 'automatically ' : '' }}{{ formatRelative(current.approved) }}.</p>
           <Button v-if="current.competitionId" :to="{ name: 'manage', params: { competitionId: current.competitionId } }">Manage it</Button>
           <span v-else class="flex items-center gap-1.5 pr-2 text-sm font-medium"><LoaderCircle class="size-4 animate-spin" /> Creating…</span>
         </section>
         <section v-else-if="current.rejected" class="bg-muted flex items-start gap-3 rounded-2xl px-4 py-3.5">
           <Ban class="text-muted-foreground mt-0.5 size-5 shrink-0" aria-hidden="true" />
           <p class="min-w-0 flex-1 font-medium">{{ rejectedLine(current) }}</p>
+        </section>
+
+        <!-- Waiting: what the server's checks found (checked again after each change here). -->
+        <section v-else-if="current.review?.length" class="bg-next text-next-foreground rounded-2xl px-4 py-3.5" aria-labelledby="review-h">
+          <h3 id="review-h" class="flex items-center gap-2 font-semibold">
+            <CircleAlert class="size-5 shrink-0" aria-hidden="true" /> Needs a look
+          </h3>
+          <ul class="mt-1.5 list-disc space-y-1 pl-12 text-base marker:text-current">
+            <li v-for="r in current.review" :key="r">{{ r }}</li>
+          </ul>
         </section>
 
         <!-- What you replied, and whether it went (kept if it's approved after all) -->

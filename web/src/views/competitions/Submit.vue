@@ -422,7 +422,7 @@ const scrolledPast = useScrolledPast(computed(() => overviewEl.value?.title ?? n
                   data-field="sobhd"
                   label="Registration number"
                   placeholder="e.g. C-AB-CO-27-1234"
-                  hint="Optional: if it’s registered with an association, like the RSOBHD."
+                  hint="Optional: if it’s registered with an association, like the RSOBHD. For several, separate them with commas."
                 />
                 <div class="-mx-4 flex flex-wrap gap-x-2">
                   <Button v-if="!adding.description && !form.description" variant="plain" @click="add('description')">

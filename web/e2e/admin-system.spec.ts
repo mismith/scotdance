@@ -254,8 +254,10 @@ test('Submissions: select several to reject (and undo), approve or delete togeth
     await row('c').click()
     await page.getByRole('button', { name: 'Approve 2' }).click()
     await expect(sheet.getByRole('heading', { name: 'Approve 2 competitions?' })).toBeVisible()
-    await expect(sheet.getByRole('listitem').filter({ hasText: name('a') })).toContainText('Not on the map yet')
-    await expect(sheet.getByRole('listitem').filter({ hasText: name('c') })).not.toContainText('Not on the map yet')
+    // (By its name alone: another's flags can name it, as already submitted that day.)
+    const item = (k: string) => sheet.getByRole('listitem').filter({ has: page.getByText(name(k), { exact: true }) })
+    await expect(item('a')).toContainText('Not on the map yet')
+    await expect(item('c')).not.toContainText('Not on the map yet')
     await sheet.getByRole('button', { name: 'Approve 2' }).click()
     await expect(page.getByText('Approved 2. The competitions are being created.')).toBeVisible()
     for (const k of ['a', 'c'] as const) {
@@ -266,6 +268,56 @@ test('Submissions: select several to reject (and undo), approve or delete togeth
   } finally {
     await Promise.all(competitionIds.map((cid) => removeCompetition(cid)))
     await Promise.all([...Object.values(ids).map((sid) => dbRemove(`competitions:submissions/${sid}`)), dbRemove(`users:permissions/${sys.id}`)])
+  }
+})
+
+test('Submissions: one with nothing to look at is approved as it arrives; one that waits says why', async ({ page }) => {
+  test.setTimeout(150_000)
+  const sys = await systemAdmin()
+  // (Capitals and digits: a lowercase word in the name would need a look.)
+  const tag = uid('auto').slice(-5).toUpperCase()
+  // A day of their own, so nothing else here looks like the same competition.
+  const date = new Date(Date.now() + (200 + Math.floor(Math.random() * 100)) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const tidy = { id: uid('sub'), name: `Cowal Highland Games ${tag}` }
+  const messy = { id: uid('sub'), name: `SPRING FLING ${tag}` }
+  const contact = { name: 'Morag Fraser', email: 'morag@example.test' }
+  await Promise.all([
+    dbSet(`competitions:submissions/${tidy.id}`, { competition: { name: tidy.name, date, location: 'Dunoon' }, contact, submitted: new Date().toISOString() }),
+    dbSet(`competitions:submissions/${messy.id}`, { competition: { name: messy.name, date }, contact, submitted: new Date().toISOString() }),
+  ])
+  const SERVER = { timeout: 60_000 }
+  let competitionId: string | null = null
+  try {
+    await expect.poll(() => dbGet(`competitions:submissions/${tidy.id}/competitionId`), SERVER).toBeTruthy()
+    competitionId = await dbGet<string>(`competitions:submissions/${tidy.id}/competitionId`)
+    const submitter = await dbGet<string>(`competitions:submissions/${tidy.id}/submittedBy`)
+    expect(await dbGet(`competitions:submissions/${tidy.id}`)).toMatchObject({ autoApproved: true, approvedBy: 'auto' })
+    expect(await dbGet(`competitions/${competitionId}/name`)).toBe(tidy.name)
+    await expect.poll(() => dbGet(`competitions:submissions/${messy.id}/review`), SERVER).toEqual(['The name is in capitals', 'There’s no town or city'])
+    expect(await dbGet(`competitions:submissions/${messy.id}/approved`)).toBeNull()
+
+    await signIn(page, sys.email)
+
+    // The one that waits says why, and what's left once it's tidied (the server checks it again).
+    await page.goto(`/admin/submissions/${messy.id}`)
+    const look = page.getByRole('region', { name: 'Needs a look' })
+    await expect(look.getByRole('listitem')).toHaveText(['The name is in capitals', 'There’s no town or city'])
+    const field = page.getByRole('textbox', { name: 'Name', exact: true })
+    await field.fill(`Spring Fling ${tag}`)
+    await field.press('Enter')
+    await expect(look.getByRole('listitem')).toHaveText(['There’s no town or city'], SERVER)
+    expect(await dbGet(`competitions:submissions/${messy.id}/approved`)).toBeNull()
+
+    // The one approved as it arrived says so (anything to fix is fixed in Manage).
+    await page.goto(`/admin/submissions/${tidy.id}`)
+    await expect(page.getByText('Approved automatically today.', { exact: true })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Manage it' })).toBeVisible()
+    await expect(page.getByRole('link', { name: `${tidy.name} ${contact.name} · approved automatically today`, exact: true })).toBeVisible()
+    // Its organiser can manage it.
+    expect(await dbGet(`users:permissions/${submitter}/competitions/${competitionId}`)).toBe(true)
+  } finally {
+    if (competitionId) await removeCompetition(competitionId)
+    await Promise.all([dbRemove(`competitions:submissions/${tidy.id}`), dbRemove(`competitions:submissions/${messy.id}`), dbRemove(`users:permissions/${sys.id}`)])
   }
 })
 

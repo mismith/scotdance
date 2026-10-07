@@ -243,7 +243,7 @@ async function deleteCompetition() {
             :model-value="c.sobhd"
             label="Registration number"
             placeholder="e.g. C-AB-CO-26-1234"
-            hint="If it’s registered with an association, like the RSOBHD."
+            hint="If it’s registered with an association, like the RSOBHD. For several, separate them with commas."
             :save="save('sobhd')"
           />
         </div>

@@ -35,6 +35,7 @@ import { rowsMove } from '@/lib/settle'
 import { competitionSpan } from '@/lib/dancerDay'
 import { formatExternalURL, formatLongDate, formatRelative } from '@/lib/format'
 import { sanitizeRichText } from '@/lib/sanitize'
+import { registrationLabel, registrations } from '@/lib/registration'
 import {
   competitionLinks,
   directions as competitionDirections,
@@ -590,9 +591,12 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
       </div>
     </Dialog>
 
-    <p v-if="competition.sobhd" class="text-muted-foreground flex justify-between pt-2 text-sm">
-      <span>RSOBHD sanctioned</span>
-      <span class="font-medium tabular-nums">{{ competition.sobhd }}</span>
-    </p>
+    <!-- Its registration numbers, each beside who it's registered with. -->
+    <div v-if="registrations(competition.sobhd).length" class="text-muted-foreground space-y-1 pt-2 text-sm">
+      <p v-for="r in registrations(competition.sobhd)" :key="r.number" class="flex justify-between gap-4">
+        <span>{{ registrationLabel(r) }}</span>
+        <span class="font-medium tabular-nums">{{ r.number }}</span>
+      </p>
+    </div>
   </article>
 </template>

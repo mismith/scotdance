@@ -1,0 +1,29 @@
+{
+  "Name": "Competition Submission Auto-Approved",
+  "Alias": "competition-submission-auto-approved",
+  "Subject": "{{ competition.name }} was approved automatically",
+  "TemplateType": "Standard",
+  "TestRenderModel": {
+    "app": {
+      "name": "ScotDance.app",
+      "url": "https://scotdance.app",
+      "description": "Highland dancing event tracker"
+    },
+    "competition": {
+      "name": "Cowal Games Highland Dancing",
+      "sobhd": "C-ON-CO-27-2609"
+    },
+    "contact": {
+      "name": "Morag Fraser",
+      "email": "morag@example.com",
+      "message": "Hoping to get this on before entries open!"
+    },
+    "summary": {
+      "date": "Friday 27 August 2027",
+      "where": "Dunoon Stadium, Dunoon"
+    },
+    "admin": {
+      "link": "https://scotdance.app/#/competitions/def456/admin"
+    }
+  }
+}

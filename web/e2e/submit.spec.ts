@@ -6,7 +6,7 @@ import { removeCompetition, seedCompetition } from './support/seed'
 // Submitting a competition, through the real database rules and Cloud
 // Functions trigger: signed in only, an overview and then a step at a time,
 // stored in the shape the approval function and System admin › Submissions
-// read.
+// read. One with nothing in it to look at is approved as it arrives.
 
 type Submission = {
   competition: Record<string, unknown>
@@ -14,10 +14,22 @@ type Submission = {
   submitted: string
   submittedBy?: string
   receivedAt?: number
+  autoApproved?: boolean
+  approvedBy?: string
+  competitionId?: string
 }
 const submissionsNamed = async (name: string) =>
   Object.entries((await dbGet<Record<string, Submission>>('competitions:submissions')) ?? {}).filter(([, s]) => s.competition?.name === name)
-const removeSubmissionsNamed = async (name: string) => Promise.all((await submissionsNamed(name)).map(([id]) => dbRemove(`competitions:submissions/${id}`)))
+const removeSubmissionsNamed = async (name: string) =>
+  Promise.all(
+    (await submissionsNamed(name)).map(async ([id, s]) => {
+      // (One approved as it arrived made a competition: that goes too.)
+      if (s.competitionId) await removeCompetition(s.competitionId)
+      await dbRemove(`competitions:submissions/${id}`)
+    }),
+  )
+// Some months off, as a real one is (one whose date has passed waits for a look).
+const SOON = new Date(Date.now() + 120 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
 
 const GOOGLE = /maps\.googleapis\.com|places\.googleapis\.com/
 const heading = (page: Page, step: number) => page.getByRole('heading', { name: new RegExp(`^Step ${step} of 4`) })
@@ -74,6 +86,8 @@ test('signing in from the overview goes straight to the first step, on the same 
 })
 
 test('a step at a time, checked as it goes, and sent once however fast it’s tapped', async ({ page }) => {
+  // (Room for the server to approve it, cold.)
+  test.setTimeout(120_000)
   const email = `${uid('org')}@example.test`
   const orgId = await ensureUser(email)
   const name = `E2E Submit ${uid('s').slice(-6)}`
@@ -86,7 +100,7 @@ test('a step at a time, checked as it goes, and sent once however fast it’s ta
     await expect(page.getByText('Add the date.')).toBeVisible()
     await expect(heading(page, 1)).toBeVisible()
     await page.getByRole('textbox', { name: 'Name', exact: true }).fill(name)
-    await page.locator('input[type=date]').fill('2027-06-05')
+    await page.locator('input[type=date]').fill(SOON)
     await page.getByRole('button', { name: 'Add a description' }).click()
     await page.getByRole('textbox', { name: 'Description' }).fill('Outdoors. Bring a chair.')
     await page.getByRole('button', { name: 'Add registration number' }).click()
@@ -135,16 +149,19 @@ test('a step at a time, checked as it goes, and sent once however fast it’s ta
     await expect(page.getByRole('heading', { name: 'Submitted' })).toBeVisible()
 
     // Once, in the shape approval reads (the server adds who sent it, and
-    // when by its own clock, for the flood check).
-    await expect.poll(async () => (await submissionsNamed(name)).map(([, s]) => s.submittedBy)).toEqual([orgId])
+    // when by its own clock, for the flood check). Nothing in it needs a
+    // look, so it's approved as it arrives, and its competition made.
+    await expect.poll(async () => (await submissionsNamed(name)).map(([, s]) => [s.submittedBy, typeof s.competitionId]), { timeout: 60_000 }).toEqual([[orgId, 'string']])
     await page.waitForTimeout(1000)
     const all = await submissionsNamed(name)
     expect(all).toHaveLength(1)
     const [[, sent]] = all
-    expect(Object.keys(sent).sort()).toEqual(['competition', 'contact', 'receivedAt', 'submitted', 'submittedBy'])
+    expect(Object.keys(sent).sort()).toEqual(['approved', 'approvedBy', 'autoApproved', 'competition', 'competitionId', 'contact', 'receivedAt', 'submitted', 'submittedBy'])
+    expect(sent).toMatchObject({ autoApproved: true, approvedBy: 'auto' })
+    expect(await dbGet(`competitions/${sent.competitionId}/name`)).toBe(name)
     expect(sent.competition).toEqual({
       name,
-      date: '2027-06-05',
+      date: SOON,
       venue: 'Spruce Meadows',
       location: 'Calgary, AB',
       sobhd: 'C-AB-CO-27-1234',

@@ -414,6 +414,8 @@
                       <p>An approval is required for <strong>{{ competition.name }}</strong>.</p>
                       <p>It was submitted by <strong>{{ contact.name }}</strong>{{#contact.message}}, who has this to say:{{/contact.message}}{{^contact.message}}.{{/contact.message}}</p>
                       {{#contact.message}}<blockquote>{{.}}</blockquote>{{/contact.message}}
+                      <p>It needs a look because:</p>
+                      <ul>{{#each review}}<li>{{.}}</li>{{/each}}</ul>
                       
                       <!-- Action -->
                       <table class="body-action" align="center" width="100%" cellpadding="0" cellspacing="0">

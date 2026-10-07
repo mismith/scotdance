@@ -2,6 +2,8 @@ import { getPostmark } from './utility/email';
 import { attachUserToCompetition } from './utility/competition';
 import { organisationsForSubmission } from './organisations';
 import { isEmulator } from './utility/env';
+import { tidyRegistration, yearOf } from './registration';
+import { reviewReasons, type ReviewContext } from './review';
 
 // A failed email mustn't fail the trigger: the submission (or the
 // competition made from it) stands, and Murray sees it in System admin.
@@ -51,6 +53,13 @@ export function summary(competition: any = {}) {
   };
 }
 
+// What was submitted, with its registration number in its association's format.
+function tidyCompetition(competition) {
+  if (!competition || typeof competition.sobhd !== 'string') return competition;
+  const { value } = tidyRegistration(competition.sobhd, yearOf(competition.date));
+  return { ...competition, sobhd: value || null };
+}
+
 class Submissions {
   database;
   config;
@@ -83,16 +92,56 @@ class Submissions {
     return mineToday > PER_ACCOUNT_PER_DAY || recent.numChildren() > PER_HOUR;
   }
 
+  // What a new submission is checked against (review.ts): what's already here
+  // and already submitted for its date, and any organisation it asks to be
+  // listed under that the submitter doesn't run.
+  async reviewContext(submissionId, submission): Promise<ReviewContext> {
+    const { db } = this.config;
+    const today = new Date().toISOString().slice(0, 10);
+    const date = submission.competition?.date;
+    const unclaimed = Promise.all(Object.keys(submission.organisations ?? {}).map(async (oid) => {
+      const theirs = (await db.child(`organisations:permissions/${oid}/users/${submission.submittedBy}`).get()).val() === true;
+      return theirs ? null : (await db.child(`organisations/${oid}/name`).get()).val() || 'an organisation that’s been deleted';
+    }));
+    if (typeof date !== 'string' || !date) return { today, competitions: [], submissions: [], unclaimed: (await unclaimed).filter(Boolean) };
+    const [competitions, submissions] = await Promise.all([
+      db.child('competitions').orderByChild('date').equalTo(date).get(),
+      db.child('competitions:submissions').orderByChild('competition/date').equalTo(date).get(),
+    ]);
+    return {
+      today,
+      competitions: Object.values(competitions.val() || {}).map((c: any) => c?.name).filter(Boolean),
+      submissions: Object.entries(submissions.val() || {})
+        .filter(([id, other]: [string, any]) => id !== submissionId && !other?.rejected && (other?.receivedAt ?? 0) <= (submission.receivedAt ?? Infinity))
+        .map(([, other]: [string, any]) => other?.competition?.name)
+        .filter(Boolean),
+      unclaimed: (await unclaimed).filter(Boolean),
+    };
+  }
+
   async handleCreate(snap, ctx) {
 
     const { submissionId } = ctx.params;
     const submission = snap.val();
-    const model = this.getTemplateModel(submission);
 
     if (await this.isFlood(submission)) {
       console.warn(`Submission ${submissionId} from ${submission.submittedBy}: too many lately, so no emails`);
       return;
     }
+
+    // Checked as it arrives. With nothing for a person to look at, it's
+    // approved now: the update trigger creates the competition, emails them
+    // that it's approved, and emails you that it was. Otherwise it waits,
+    // saying why, and both are told as before. (Unless it's been decided or
+    // deleted meanwhile.)
+    const review = reviewReasons(submission, await this.reviewContext(submissionId, submission));
+    const { committed, snapshot } = await snap.ref.transaction((current) => {
+      if (!current) return null;
+      if (current.approved || current.rejected) return undefined;
+      return review.length ? { ...current, review } : { ...current, approved: new Date().toISOString(), autoApproved: true };
+    });
+    if (!committed || !snapshot.exists() || !review.length) return;
+    const model = this.getTemplateModel({ ...submission, review });
 
     // send emails
     await sendEmail({
@@ -112,6 +161,21 @@ class Submissions {
           link: `${this.config.url}/#/admin/submissions/${submissionId}`,
         },
       },
+    });
+  }
+
+  // Tidied while it waits (a name's capitals, a mistyped date): it's checked
+  // again, so what it says needs a look is what's left. Approving it is still
+  // yours to do.
+  async handleEdited(snap) {
+    const latest = (await snap.ref.get()).val();
+    if (!latest || latest.approved || latest.rejected) return;
+    const reasons = reviewReasons(latest, await this.reviewContext(snap.key, latest));
+    const review = reasons.length ? reasons : null;
+    await snap.ref.transaction((current) => {
+      if (!current) return null;
+      if (current.approved || current.rejected || JSON.stringify(current.review ?? null) === JSON.stringify(review)) return undefined;
+      return { ...current, review };
     });
   }
 
@@ -160,6 +224,24 @@ class Submissions {
         },
       },
     });
+
+    // Approved as it arrived: you hear what went through, with a link to
+    // manage it (to fix anything there).
+    if (submission.autoApproved) {
+      await sendEmail({
+        From: this.config.email,
+        ReplyTo: contact.email,
+        To: this.config.email,
+        TemplateAlias: 'competition-submission-auto-approved',
+        TemplateModel: {
+          ...model,
+          summary: summary(competition),
+          admin: {
+            link: `${this.config.url}/#/competitions/${competitionId}/admin`,
+          },
+        },
+      });
+    }
   }
 
   // Rejected with a reply: it's emailed to them, inside a short note signed by
@@ -222,9 +304,10 @@ class Submissions {
           // up) isn't brought back as a `{ submittedBy }` shell. (Its first try
           // sees null when nothing is cached; answering null makes the server
           // send the real value for a second try, and leaves a deleted one be.)
-          // receivedAt is the server's clock, for the flood check.
+          // receivedAt is the server's clock, for the flood check. Its
+          // registration number goes in tidy, as a competition's does.
           const { committed, snapshot } = await after.ref.transaction((current) => (
-            current ? { ...current, submittedBy: ctx.auth ? ctx.auth.uid : 'admin', receivedAt: Date.now() } : null
+            current ? { ...current, ...(current.competition && { competition: tidyCompetition(current.competition) }), submittedBy: ctx.auth ? ctx.auth.uid : 'admin', receivedAt: Date.now() } : null
           ));
           if (!committed || !snapshot.exists()) return null;
 
@@ -235,10 +318,11 @@ class Submissions {
       }),
       onUpdate: ref.onUpdate(async ({ before, after }, ctx) => {
         try {
-          // approved
-          if (before.child('approved').val() !== after.child('approved').val()) {
+          // approved (by you, or as it arrived): only as it becomes approved,
+          // so a later change to `approved` doesn't make the competition twice
+          if (after.child('approved').val() && !before.child('approved').val()) {
             await after.ref.update({
-              approvedBy: ctx.auth ? ctx.auth.uid : 'admin',
+              approvedBy: after.child('autoApproved').val() ? 'auto' : ctx.auth ? ctx.auth.uid : 'admin',
             });
             const snap = await after.ref.once('value');
 
@@ -249,6 +333,11 @@ class Submissions {
           const retried = after.child('rejection/retried').val();
           if (rejected && (rejected !== before.child('rejected').val() || retried !== before.child('rejection/retried').val())) {
             return await this.handleRejected(after, ctx);
+          }
+          // tidied while it waits
+          if (!after.child('approved').val() && !rejected
+            && JSON.stringify(before.child('competition').val()) !== JSON.stringify(after.child('competition').val())) {
+            return await this.handleEdited(after);
           }
           return null;
         } catch (err) {

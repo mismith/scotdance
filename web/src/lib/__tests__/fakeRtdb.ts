@@ -48,8 +48,13 @@ function getIn(node: Json, keys: string[]): Json {
 export interface Snap {
   val(): Json
   exists(): boolean
+  numChildren(): number
 }
-export const snap = (v: Json): Snap => ({ val: () => clone(v), exists: () => v !== null })
+export const snap = (v: Json): Snap => ({
+  val: () => clone(v),
+  exists: () => v !== null,
+  numChildren: () => (v && typeof v === 'object' ? Object.keys(v).length : 0),
+})
 
 export interface TriggerEvent {
   pattern: string
@@ -179,8 +184,17 @@ export class FakeRef {
     return new FakeRef(this.db, [...parts(this.path), ...parts(path)].join('/'))
   }
 
-  push() {
-    return this.child(this.db.pushId())
+  /** A new child; given a value, it's written too (awaiting it waits for that, as the SDK's ThenableReference does). */
+  push(value?: Json) {
+    const ref = this.child(this.db.pushId())
+    if (value === undefined) return ref
+    const written = ref.set(value).then(() => new FakeRef(this.db, ref.path))
+    return Object.assign(new FakeRef(this.db, ref.path), { then: written.then.bind(written) })
+  }
+
+  /** A snapshot of what's here, knowing where it's from (`ref`, `key`), as the SDK's do. */
+  private snapshot(v: Json) {
+    return { ...snap(v), ref: this as FakeRef, key: this.key }
   }
 
   orderByChild(key: string) {
@@ -189,7 +203,12 @@ export class FakeRef {
 
   async get() {
     await tick()
-    return snap(this.db.read(this.path))
+    return this.snapshot(this.db.read(this.path))
+  }
+
+  async once(event: 'value') {
+    void event
+    return this.get()
   }
 
   async set(value: Json) {
@@ -213,7 +232,7 @@ export class FakeRef {
     const started = this.db.plainWrites.length
     // Nothing is cached, so the first try sees null…
     let next = update(null)
-    if (next === undefined) return { committed: false, snapshot: snap(null) }
+    if (next === undefined) return { committed: false, snapshot: this.snapshot(null) }
     this.db.duringTransaction?.(this.path)
     await tick()
     // The SDK cancels a pending transaction when this process sets or updates
@@ -225,9 +244,9 @@ export class FakeRef {
     // …and when that guess was wrong the server sends the real value to try again.
     if (current !== null) {
       next = update(clone(current))
-      if (next === undefined) return { committed: false, snapshot: snap(current) }
+      if (next === undefined) return { committed: false, snapshot: this.snapshot(current) }
     }
     this.db.write({ [this.path]: next })
-    return { committed: true, snapshot: snap(this.db.read(this.path)) }
+    return { committed: true, snapshot: this.snapshot(this.db.read(this.path)) }
   }
 }
