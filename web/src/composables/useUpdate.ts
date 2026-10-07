@@ -8,15 +8,23 @@ import { platform, STORE_URL } from '@/lib/native'
 const latestVersion = ref<string | null>(null)
 const dialogOpen = ref(false)
 
-const updateAvailable = computed(() => {
-  if (!latestVersion.value) return false
+// This build against the latest release: -1 behind, 0 the same, 1 ahead.
+const comparison = computed(() => {
+  if (!latestVersion.value) return null
   try {
-    return compareVersions(currentVersion, latestVersion.value) < 0
+    return compareVersions(currentVersion, latestVersion.value)
   } catch {
     // Not a version number (a typo in /versions): no prompt, rather than a broken tab bar.
-    return false
+    return null
   }
 })
+
+const updateAvailable = computed(() => comparison.value === -1)
+
+// Ahead of the release: a TestFlight or Play testing build, or next.scotdance.app.
+// The stores ship that same build, so it stops being early when /versions catches
+// up: by hand for the apps (Tools), on deploy for the web (publish-web-version.js).
+const early = computed(() => comparison.value === 1)
 
 onValue(dataRef('versions'), (snap) => {
   const value = snap.val()
@@ -48,6 +56,7 @@ const state = reactive({
   currentVersion,
   latestVersion,
   updateAvailable,
+  early,
   dialogOpen,
   openDialog,
   closeDialog,

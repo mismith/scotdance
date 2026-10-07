@@ -199,7 +199,7 @@ for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`ag
     <section class="space-y-4">
       <div>
         <h2 class="text-heading">App versions</h2>
-        <p class="text-muted-foreground text-sm">People on an older version are asked to update. Set these after a release is live in each store.</p>
+        <p class="text-muted-foreground text-sm">People on an older version are asked to update. Set each app’s once its release is live in the store. The web’s sets itself when it deploys.</p>
       </div>
       <div class="grid gap-4 sm:grid-cols-3">
         <TextField

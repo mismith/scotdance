@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
-import { ArrowDownToLine, ClipboardList, Gavel, Info, Landmark, LifeBuoy, Music, School, ServerCog, Settings, SquarePlus, Users } from '@lucide/vue'
+import { ArrowDownToLine, ClipboardList, Gavel, HeartHandshake, Info, Landmark, LifeBuoy, Music, School, ServerCog, Settings, SquarePlus, Users } from '@lucide/vue'
 import AdminMark from '@/components/AdminMark.vue'
 import Dialog from '@/components/Dialog.vue'
 import { useCrisp } from '@/composables/useCrisp'
@@ -65,6 +65,9 @@ const row =
       <div>
         <button v-if="update.updateAvailable" type="button" :class="row" @click="run(() => update.openDialog())">
           <ArrowDownToLine class="text-primary! size-5" /> Update available
+        </button>
+        <button v-if="update.early && crisp.available" type="button" :class="row" @click="run(() => crisp.open())">
+          <HeartHandshake class="text-primary! size-5" /> Share your ideas
         </button>
         <button type="button" :class="row" :data-current="here({ name: 'about' })" @click="go({ name: 'about' })">
           <Info class="size-5" /> About ScotDance.app

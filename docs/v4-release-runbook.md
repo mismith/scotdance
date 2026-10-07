@@ -73,6 +73,29 @@ followed dancers, a competition on the day (`?now=` doesn't work in prod
 builds, so use a live or recent one), the More menu, the morphing sheets, the
 glass tab bar, Back out of a competition, dark mode, large text.
 
+## Early access (before cutover)
+
+People try v4 only if they choose to; everyone else stays on v3 until the
+stores release it. On a phone it replaces the v3 app (same app ID).
+
+- iPhone: a TestFlight public link on an external group, open to anyone, no
+  limit. The first build needs TestFlight review. Required: a Beta App
+  Description ("The new ScotDance.app, nearly here. Help shape it for Highland
+  dance families: share your ideas from the More menu.") and a Feedback Email.
+- Android: Play open testing. Anyone with the link, or the "Join the beta" box
+  on the Play listing, can join. Set the track's feedback email.
+- Web: next.scotdance.app. scotdance.app (v3, web only) can show a dismissible
+  banner linking to the same page there, deployed from `develop`
+  (`npm ci && npm run build:www`, `.env.local` copied from the repo root, then
+  `firebase deploy --only hosting`). It shows only while
+  `production/featureFlags/next-banner` is `true`, and open tabs follow the
+  flag live: `firebase database:set /production/featureFlags/next-banner --data
+  true --instance scotdance -f` (`false` to hide it).
+- Feedback: while the app's version is ahead of `versions/*` (TestFlight, Play
+  testing, next.scotdance.app), More (and the sidebar) has "Share your ideas",
+  with a dot on More until it's first opened. It opens the Help chat; Crisp
+  shows each conversation's version and platform.
+
 ## Phase 3: cutover (ADR 0001 checklist)
 
 - [x] Hosting: the `production` target serves `web/dist` like `next` does (done on `next`, where the old app is gone; admin is in the app now, ADR 0004, so there's no `/admin/**` rewrite; old `#/` and `/competitions/:id/admin` links redirect in-app). To go live from `next`: `npm run build`, then `firebase deploy --only hosting:production`
@@ -80,7 +103,7 @@ glass tab bar, Back out of a competition, dark mode, large text.
 - [x] Cache headers: HTML `no-cache`, hashed assets `immutable`, and `ignore` that keeps `/.well-known/` (both targets in `firebase.json`)
 - [ ] Rebuild and submit the iOS and Android apps (all plugins are already installed)
   - iOS uses Swift Package Manager now: open `ios/App/App.xcodeproj` (no workspace, no `pod install`)
-  - The update prompt compares `web/package.json`'s version with `versions/ios`, `versions/android` and (on the web) `versions/web` in the database; `set-version.js` only bumps the root and native versions, so bump `web/package.json` to match. Both are `4.0.0` now (Android versionCode 4000000); set `versions/*` to `4.0.0` only once each store has the build, or everyone on the old app is told to update to something they can't get yet
+  - The update prompt compares `web/package.json`'s version with `versions/ios`, `versions/android` and (on the web) `versions/web` in the database; `set-version.js` only bumps the root and native versions, so bump `web/package.json` to match. Both are `4.0.0` now (Android versionCode 4000000). Release each store's version by hand (App Store: "Manually release this version"; Play: managed publishing), then set that platform's version to `4.0.0` in System admin › Tools straight away: earlier, everyone on the old app is told to update to something they can't get yet; later, people who got 4.0.0 still see "Share your ideas" (the app counts as early while it's ahead of `versions/*`). `versions/web` sets itself: the `production` hosting target's postdeploy runs `publish-web-version.js`
   - Vite reads env files from `web/`, not the repo root: create `web/.env.local` with `VITE_GOOGLE_MAPS_API_KEY` before a local store build, or the apps ship without venue search. The key's referrer restrictions need the app origins too (`capacitor://localhost` on iOS, `https://localhost` on Android)
   - Smoke test on a device: splash hides, status bar follows dark mode, Android Back closes sheets, airplane mode opens the last saved data
   - Saved passwords with Face ID or a fingerprint: the iOS app has the Associated Domains entitlement (`webcredentials:scotdance.app`) and the Android app an `asset_statements` link, so the sign-in sheet offers people's saved scotdance.app passwords. Both need `/.well-known/` on scotdance.app: live since 2026-10-02, deployed from `develop` so it's there before the apps ship. `assetlinks.json` already has the Play app-signing SHA-256 (Play Console › Protected with Play; re-check it if the signing key ever changes). If Xcode's automatic signing can't add Associated Domains to the App ID, turn it on at developer.apple.com
@@ -89,7 +112,7 @@ glass tab bar, Back out of a competition, dark mode, large text.
 - [ ] Google Maps key has the Places API enabled (venue search in Manage › Details), with a daily quota cap: the key ships in the app, so referrer limits alone can't stop someone reusing it
 - [ ] Privacy page mentions the private colour picks
 
-Rollback: `develop` still has the v3 app. Check it out, `npm ci && npm run build:www`, then `firebase deploy --only hosting`.
+Rollback: `develop` still has the v3 app. Check it out, `npm ci && npm run build:www`, then `firebase deploy --only hosting`. Then set `versions/web` back to v3's (3.14.1) in Tools: the v4 deploy set it to 4.0.0, and v3 would ask everyone on the web to update.
 
 ## Local testing gotchas
 

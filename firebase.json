@@ -19,6 +19,7 @@
     {
       "target": "production",
       "public": "web/dist",
+      "postdeploy": "node \"$PROJECT_DIR/publish-web-version.js\"",
       "ignore": ["firebase.json", "**/.DS_Store", "**/node_modules/**"],
       "headers": [
         {

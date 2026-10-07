@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { ArrowDownToLine, CalendarDays, ClipboardList, Gavel, House, Info, Landmark, LifeBuoy, Music, School, Search, ServerCog, Settings, SquarePlus, Users } from '@lucide/vue'
+import { ArrowDownToLine, CalendarDays, ClipboardList, Gavel, HeartHandshake, House, Info, Landmark, LifeBuoy, Music, School, Search, ServerCog, Settings, SquarePlus, Users } from '@lucide/vue'
 import LogoMark from '@/components/LogoMark.vue'
 import AccountButton from '@/components/nav/AccountButton.vue'
 import SidebarLink from '@/components/nav/SidebarLink.vue'
@@ -120,6 +120,17 @@ const vt = (name: string) => ({ viewTransitionName: `sidebar-${name}`, viewTrans
             <LifeBuoy class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
             <span class="flex-1">Help</span>
             <span v-if="crisp.unread > 0" class="bg-secondary text-secondary-foreground rounded-full px-2 text-sm">{{ crisp.unread }}</span>
+          </button>
+        </li>
+        <li v-if="update.early && crisp.available">
+          <button
+            type="button"
+            class="press-row focus-inset text-callout flex min-h-10 w-full items-center gap-3 rounded-xl px-3 py-1.5 text-left font-medium"
+            :style="vt('ideas')"
+            @click="crisp.open()"
+          >
+            <HeartHandshake class="text-primary size-5 shrink-0" aria-hidden="true" />
+            Share your ideas
           </button>
         </li>
         <li v-if="update.updateAvailable">

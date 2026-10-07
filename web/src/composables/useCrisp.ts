@@ -1,6 +1,8 @@
 import { computed, reactive, ref } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import { Crisp } from 'crisp-sdk-web'
+import { version } from '../../package.json'
+import { platform } from '@/lib/native'
 
 const WEBSITE_ID = '160e5d08-deea-4187-a21b-39762a904c26'
 
@@ -54,6 +56,10 @@ function setUserEmail(email: string | null | undefined) {
 // sets up the $crisp queue; subsequent calls buffer commands until the
 // script finishes loading.
 Crisp.configure(WEBSITE_ID)
+
+// Which build each conversation comes from: ideas shared from an early build
+// (useUpdate) show a version ahead of the stores.
+Crisp.session.setData({ version, platform })
 
 // Crisp's default launcher never shows — SupportLauncher.vue is the
 // only visible chat affordance.
