@@ -141,7 +141,8 @@ class Submissions {
       return review.length ? { ...current, review } : { ...current, approved: new Date().toISOString(), autoApproved: true };
     });
     if (!committed || !snapshot.exists() || !review.length) return;
-    const model = this.getTemplateModel({ ...submission, review });
+    // (Nested, so the email leaves the list out when there isn't one.)
+    const model = this.getTemplateModel({ ...submission, review: { reasons: review } });
 
     // send emails
     await sendEmail({

@@ -1,10 +1,10 @@
 An approval is required for {{ competition.name }}.
 
-It needs a look because:
-{{#each review}}- {{.}}
+{{#review}}It needs a look because:
+{{#each reasons}}- {{.}}
 {{/each}}
 
-It was submitted by {{ contact.name }}{{#contact.message}}, who has this to say:{{/contact.message}}{{^contact.message}}.{{/contact.message}}
+{{/review}}It was submitted by {{ contact.name }}{{#contact.message}}, who has this to say:{{/contact.message}}{{^contact.message}}.{{/contact.message}}
 
     {{#contact.message}}{{.}}{{/contact.message}}
 

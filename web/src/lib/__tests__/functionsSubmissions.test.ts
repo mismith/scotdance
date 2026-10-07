@@ -259,7 +259,7 @@ describe('a new submission', () => {
     expect(competitions()).toEqual([])
     expect(sentTemplates()).toEqual(['competition-submission', 'competition-submission-approval'])
     expect(postmark.sent[1].TemplateModel).toMatchObject({
-      review: ['The name is in capitals', 'There’s no town or city'],
+      review: { reasons: ['The name is in capitals', 'There’s no town or city'] },
       admin: { link: 'https://scotdance.app/#/admin/submissions/s1' },
     })
   })

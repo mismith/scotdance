@@ -19,9 +19,11 @@
     "admin": {
       "link": "link_Value"
     },
-    "review": [
-      "“HDAO Spring Highland Competition” is already here on the same day",
-      "The name is in capitals"
-    ]
+    "review": {
+      "reasons": [
+        "“HDAO Spring Highland Competition” is already here on the same day",
+        "The name is in capitals"
+      ]
+    }
   }
 }
