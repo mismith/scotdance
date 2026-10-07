@@ -1,13 +1,13 @@
 // The store shots, in order. The first three are what search results show,
 // so they tell one day at a competition (the World Championship final at
-// Cowal, demo.ts): the result lands, who you follow, and when they're on. The rest go
-// feature by feature, and the last is the sign-off.
+// Cowal, demo.ts): who you follow, when they're on, and their results as they
+// come in. The rest go feature by feature, and the last is the sign-off.
 //
 // Headlines are two lines, broken where written; subtitles one short line.
 // The copy reuses the app's own lines (About) where they fit.
 //
 // Every slot has one big thing beside its phone: the app's own objects at
-// poster size (a 1st-place rosette, the number cards, a dance's start time, the
+// poster size (the number cards, a dance's start time, a 3rd-place rosette, the
 // date tile, rosettes, a schedule chip mid-drag). Scott only ever appears as
 // the logo itself: in the app's lockup on the first slot, and big in the
 // confetti on the last. His leap is saved for the app's own launch.
@@ -84,15 +84,15 @@ function confetti(band: Area, skip: Area, size: number, count = 24) {
   return bits.join('')
 }
 
-/** Slot 1: a giant 1st-place rosette hanging off the phone's right edge, beside Freya's 1st. */
-export const firstPlace: Decor = {
+/** Slot 3: a giant 3rd-place rosette hanging off the phone's right edge, beside the 3rd place. */
+export const thirdPlace: Decor = {
   layer: 'front',
   draw: (c) => {
     const p = at(c)
     const size = p.u(0.44)
     const rx = inside(c, p.R(-0.02), size / 2)
-    const ry = p.T(0.72)
-    return `<g transform="rotate(10 ${rx.toFixed(0)} ${ry.toFixed(0)})">${rosette(rx, ry, size)}</g>`
+    const ry = p.T(0.975)
+    return `<g transform="rotate(10 ${rx.toFixed(0)} ${ry.toFixed(0)})">${rosette(rx, ry, size, '3', 'rd')}</g>`
   },
 }
 
@@ -153,7 +153,7 @@ export const finaleStar: Decor = {
   },
 }
 
-/** Slot 2: the three dancers' number cards, big, in their colours, over the phone's top. */
+/** Slot 1: the three dancers' number cards, big, in their colours, over the phone's top. */
 export const cards: Decor = {
   layer: 'front',
   draw: (c) => {
@@ -169,7 +169,7 @@ export const cards: Decor = {
   },
 }
 
-/** Slot 3: when a dance starts and where, as a day card has it, poster size across the phone's top. */
+/** Slot 2: when a dance starts and where, as a day card has it, poster size across the phone's top. */
 export const when: Decor = {
   layer: 'front',
   draw: (c) => {
@@ -221,17 +221,10 @@ export const dragging: Decor = {
 
 export const SHOTS: Shot[] = [
   {
-    scene: 'results',
-    title: 'Results,\nas they happen',
-    sub: 'No more waiting by the results board.',
-    brand: true,
-    phone: { dx: -0.03, dy: 0.02 },
-    decor: [firstPlace],
-  },
-  {
     scene: 'home',
     title: 'Follow\nyour dancers',
     sub: 'Your dancer, or your whole studio, at a glance.',
+    brand: true,
     phone: { dy: 0.05 },
     decor: [cards],
   },
@@ -241,6 +234,13 @@ export const SHOTS: Shot[] = [
     sub: 'Their platform, start time and place in the draw.',
     phone: { dx: 0.04, dy: 0.05, tilt: { y: 11, z: 2 } },
     decor: [when],
+  },
+  {
+    scene: 'results',
+    title: 'Results,\nas they happen',
+    sub: 'Even when you can’t be there.',
+    phone: { dx: -0.03, dy: 0.02 },
+    decor: [thirdPlace],
   },
   {
     scene: 'calendar',

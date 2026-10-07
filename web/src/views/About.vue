@@ -20,9 +20,9 @@ const platformLabel = platform === 'ios' ? 'iOS' : platform === 'android' ? 'And
 
 // What families get, each beside the real thing they'll see in the app.
 const forFamilies = [
-  { piece: 'rosette', title: 'Results as they happen', body: 'Placings show up as soon as they’re entered. No more waiting by the results board.' },
-  { piece: 'number', title: 'Know when they’re on', body: 'Their platform, dancing order and session, straight from the organisers’ schedule.' },
   { piece: 'follow', title: 'Follow your dancers', body: 'Your own, or your whole studio, at a glance on Home.' },
+  { piece: 'number', title: 'Know when they’re on', body: 'Their platform, dancing order and session, straight from the organisers’ schedule.' },
+  { piece: 'rosette', title: 'Results as they happen', body: 'Placings show up as soon as they’re entered, even when you can’t be there.' },
   { piece: 'record', title: 'Every result, on record', body: 'All their placings, season after season.' },
 ] as const
 
