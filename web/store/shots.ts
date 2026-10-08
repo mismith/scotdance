@@ -9,11 +9,10 @@
 // Every slot has one big thing beside its phone: the app's own objects at
 // poster size (the number cards, a dance's start time, a 3rd-place rosette, the
 // date tile, rosettes, a schedule chip mid-drag). Scott only ever appears as
-// the logo itself: in the app's lockup on the first slot, and big in the
-// confetti on the last. His leap is saved for the app's own launch.
+// the logo itself: in the app's lockup on the first slot, and big over the
+// app's name on the last. His leap is saved for the app's own launch.
 import type { Ctx, Decor } from './compose.ts'
-import { box, joints, leap } from './mark.ts'
-import { dateTile, dragChip, numberCard, rosette, scott, whenChip } from './props.ts'
+import { dateTile, dragChip, numberCard, rosette, whenChip } from './props.ts'
 
 export interface Shot {
   scene: string
@@ -21,6 +20,8 @@ export interface Shot {
   sub?: string
   /** The app's lockup (Scott as the logo, and "ScotDance.app") above the headline. */
   brand?: boolean
+  /** The sign-off: the logo, big, over the title (the app's name) and subtitle. */
+  signoff?: boolean
   /** Moves the phone: dx, dy in slot widths and heights; scale; and a turn in space. */
   phone?: {
     dx?: number
@@ -48,42 +49,6 @@ const at = (c: Ctx) => ({
 const inside = (c: Ctx, x: number, half: number) =>
   Math.max(half + 0.03 * c.W, Math.min(c.W - half - 0.03 * c.W, x))
 
-// Confetti, seeded so every run is the same: scattered through a band (the
-// open space round the mark), never inside `skip` (the mark itself),
-// thicker near it.
-const CONFETTI = ['#ffffff', '#ffd34d', '#7ee0e6', '#ff9ccb', '#ffb36b', '#c8b2ff']
-interface Area {
-  x: number
-  y: number
-  w: number
-  h: number
-}
-function confetti(band: Area, skip: Area, size: number, count = 24) {
-  let seed = 11
-  const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647
-  const cx = skip.x + skip.w / 2
-  const bits: string[] = []
-  for (let tries = 0, n = 0; n < count && tries < 6000; tries++) {
-    const x = band.x + rand() * band.w
-    const y = band.y + rand() * band.h
-    const inSkip =
-      x > skip.x - size &&
-      x < skip.x + skip.w + size &&
-      y > skip.y - size &&
-      y < skip.y + skip.h + size
-    // Thicker near it: farther out, fewer survive.
-    if (inSkip || rand() > 1 - Math.min(0.8, Math.abs(x - cx) / band.w)) continue
-    const w = size * (0.7 + rand() * 0.6)
-    const colour = CONFETTI[n++ % CONFETTI.length]
-    bits.push(
-      rand() < 0.35
-        ? `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${(w / 2).toFixed(1)}" fill="${colour}"/>`
-        : `<rect x="${(x - w / 2).toFixed(0)}" y="${(y - w * 1.1).toFixed(0)}" width="${w.toFixed(1)}" height="${(w * 2.2).toFixed(1)}" rx="${(w / 3).toFixed(1)}" fill="${colour}" transform="rotate(${(rand() * 180).toFixed(0)} ${x.toFixed(0)} ${y.toFixed(0)})"/>`,
-    )
-  }
-  return bits.join('')
-}
-
 /** Slot 3: a giant 3rd-place rosette hanging off the phone's right edge, beside the 3rd place. */
 export const thirdPlace: Decor = {
   layer: 'front',
@@ -93,63 +58,6 @@ export const thirdPlace: Decor = {
     const rx = inside(c, p.R(-0.02), size / 2)
     const ry = p.T(0.975)
     return `<g transform="rotate(10 ${rx.toFixed(0)} ${ry.toFixed(0)})">${rosette(rx, ry, size, '3', 'rd')}</g>`
-  },
-}
-
-/** The last slot: the logo, big, above the phone, in a burst of confetti. */
-export const finaleLogo: Decor = {
-  layer: 'front',
-  draw: (c) => {
-    const p = at(c)
-    const j = leap(0)
-    const b = box(j)
-    const top = c.words + p.u(0.06)
-    const k = Math.min((0.5 * c.W) / b.w, (p.T(-0.06) - top) / b.h)
-    const hx = c.W / 2
-    const hy = top - b.y * k
-    const w = b.w * k
-    return (
-      confetti(
-        {
-          x: Math.max(c.W * 0.04, hx - w * 1.1),
-          y: c.words + p.u(0.02),
-          w: Math.min(c.W * 0.92, w * 2.2),
-          h: p.T(-0.02) - c.words - p.u(0.02),
-        },
-        { x: hx + b.x * k, y: hy + b.y * k, w, h: b.h * k },
-        p.u(0.026),
-      ) + scott(j, hx, hy, k, { ink: '#ffffff' })
-    )
-  },
-}
-
-/** The last slot, the other way: Scott's star jump above the phone, wearing his number, in confetti. */
-export const finaleStar: Decor = {
-  layer: 'front',
-  draw: (c) => {
-    const p = at(c)
-    const star = joints({ arms: [313, 47], legs: [244, 116], neck: 1.05 })
-    const b = box(star)
-    const top = c.words + p.u(0.04)
-    const k = Math.min((0.74 * c.W) / b.w, (p.T(0.0) - top) / b.h)
-    const hx = c.W / 2
-    const hy = top - b.y * k
-    const w = b.w * k
-    return (
-      confetti(
-        {
-          x: Math.max(c.W * 0.04, hx - w * 0.85),
-          y: c.words + p.u(0.02),
-          w: Math.min(c.W * 0.92, w * 1.7),
-          h: p.T(-0.02) - c.words - p.u(0.02),
-        },
-        { x: hx + b.x * k, y: hy + b.y * k, w, h: b.h * k },
-        p.u(0.026),
-        20,
-      ) +
-      scott(star, hx, hy, k, { ink: '#ffffff' }) +
-      numberCard(hx + 8 * k, hy + 34 * k, 215 * k, '145', '#00707a', -6)
-    )
   },
 }
 
@@ -265,9 +173,9 @@ export const SHOTS: Shot[] = [
   },
   {
     scene: 'overview',
-    title: 'From the warm-up\nto the awards',
-    sub: 'Made by a Highland dance family, for yours.',
-    phone: { dy: 0.17 },
-    decor: [finaleLogo],
+    title: 'ScotDance.app',
+    sub: 'From the warm-up to the awards',
+    signoff: true,
+    phone: { dy: 0.02 },
   },
 ]

@@ -105,9 +105,14 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;')
 /** The brand lockup's height (the mark and "ScotDance.app"), and the gap under it. */
 const lockup = (device: Device) => device.art.title * 0.86
 
-/** Where the words end: the top margin, the lockup if any, two lines of title, a gap, one line of subtitle. */
+/** The sign-off's logo: its height, and the gap under it. */
+const signMark = (device: Device) => device.art.title * 2.1
+const signGap = (device: Device) => device.art.title * 0.42
+
+/** Where the words end: the top margin, the lockup or sign-off logo if any, the title (one line on a sign-off, else two), a gap, one line of subtitle. */
 export const wordsEnd = (device: Device, shot?: Shot) => {
   const { art } = device
+  if (shot?.signoff) return art.top + signMark(device) + signGap(device) + art.title + art.sub * 1.95
   return (
     art.top + (shot?.brand ? lockup(device) : 0) + art.title * 1.0 * 2 + art.sub * 1.95
   )
@@ -133,6 +138,17 @@ function brand(device: Device) {
     `<svg width="${(b.w * k).toFixed(0)}" height="${(b.h * k).toFixed(0)}" viewBox="${b.x} ${b.y} ${b.w} ${b.h}">` +
     `${draw(j, { ink: '#ffffff' })}</svg>`
   return `<div class="brand" style="height:${mark}px;margin-bottom:${(lockup(device) - mark).toFixed(0)}px;gap:${(mark * 0.32).toFixed(0)}px;font-size:${(mark * 0.62).toFixed(0)}px">${svg}<span>ScotDance.app</span></div>`
+}
+
+/** The sign-off's logo: Scott as the logo, white, big, over the app's name. */
+function signoff(device: Device) {
+  const h = signMark(device)
+  const j = leap(0)
+  const b = box(j)
+  return (
+    `<div style="height:${h.toFixed(0)}px;margin-bottom:${signGap(device).toFixed(0)}px">` +
+    `<svg width="${((b.w / b.h) * h).toFixed(0)}" height="${h.toFixed(0)}" viewBox="${b.x} ${b.y} ${b.w} ${b.h}">${draw(j, { ink: '#ffffff' })}</svg></div>`
+  )
 }
 
 const GRAIN =
@@ -171,6 +187,7 @@ export function compose(device: Device, shots: Shot[], raws: Record<string, Raw>
       `<section class="slot" style="left:${left}px;background:${pt.field}">` +
         `<header style="left:${art.side}px;top:${art.top}px;width:${W - art.side * 2}px;color:${pt.ink}">` +
         (shot.brand ? brand(device) : '') +
+        (shot.signoff ? signoff(device) : '') +
         `<h1>${esc(shot.title)
           .split('\n')
           .map((l) => `<span class="ln">${l}</span>`)
