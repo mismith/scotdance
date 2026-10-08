@@ -26,9 +26,30 @@ The art (slots, headlines, colours, props) is in `web/store/shots.ts` and
 then `npm run store` reuses it, and `npm run store:render` redraws the art from
 the last captures without the stack.
 
+## The App Store header
+
+iOS 27's product page header, above the screenshots: the dancer colours as
+folded silk on a 20-second loop, with no words (Apple puts the icon, name
+and Get button over it). It doesn't use the captures, so it's its own step.
+From `web/`:
+
+```bash
+npm run store:header
+```
+
+It writes `ios/App/fastlane/creative/en-CA/header.mp4` (about 13 minutes:
+Chrome draws 600 frames at 3840 × 1646; about 95 MB, near lossless, so git
+ignores it and the same command makes it again exactly). `node store/creative.ts still`
+writes its first frame to `store/out/creative/` to look at. The look is in
+`web/store/creative.ts`.
+
+Search results still show the first three screenshots: there's no search
+results asset. To add one, put `search.png` (3:2) beside the header and the
+upload places it too.
+
 ## Upload them
 
-Each lane uploads the screenshots and nothing else (no build, no text, no
+Each lane uploads the store art and nothing else (no build, no text, no
 submission). From `web/`:
 
 ```bash
@@ -40,7 +61,13 @@ npm run store:upload:android
 ```
 
 - **App Store:** they go on the version being prepared in App Store Connect
-  (create the version first), and show when it's released.
+  (create the version first), and show when it's released. After the
+  screenshots, `store/upload.ts` puts the header on the same version through
+  App Store Connect's asset library (fastlane can't yet), replacing the one
+  there. It only does that when the version being prepared is this
+  checkout's (`package.json`), and does nothing if the file hasn't changed.
+  `node store/upload.ts --plan` says what it would do without changing
+  anything.
 - **Google Play:** they replace the listing's phone screenshots, and show once
   Google has reviewed the change.
 
