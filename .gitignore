@@ -44,3 +44,6 @@ firebase-adminsdk.json
 *.p8
 play-service-account.json
 **/fastlane/.env
+
+# The App Store header loop: ~95 MB, and `npm run store:header` makes it again exactly
+/ios/App/fastlane/creative/**/*.mp4
