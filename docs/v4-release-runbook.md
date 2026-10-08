@@ -84,13 +84,20 @@ stores release it. On a phone it replaces the v3 app (same app ID).
   dance families: share your ideas from the More menu.") and a Feedback Email.
 - Android: Play open testing. Anyone with the link, or the "Join the beta" box
   on the Play listing, can join. Set the track's feedback email.
-- Web: next.scotdance.app. scotdance.app (v3, web only) can show a dismissible
-  banner linking to the same page there, deployed from `develop`
-  (`npm ci && npm run build:www`, `.env.local` copied from the repo root, then
-  `firebase deploy --only hosting`). It shows only while
-  `production/featureFlags/next-banner` is `true`, and open tabs follow the
-  flag live: `firebase database:set /production/featureFlags/next-banner --data
-  true --instance scotdance -f` (`false` to hide it).
+- Web: next.scotdance.app.
+- Getting the word out: v3 (3.15.0 on `develop`, in the apps and on
+  scotdance.app) has a dismissible banner. Each platform shows it once its link
+  is set in `production/featureFlags/next-banner/{web,ios,android}` (live, no
+  release needed; delete a link to hide it there):
+  - `web`: `https://next.scotdance.app` (the banner opens the same page there)
+  - `ios`: the TestFlight public link
+  - `android`: `https://play.google.com/apps/testing/info.mismith.scotdance`
+  - e.g. `firebase database:set /production/featureFlags/next-banner/web --data
+    '"https://next.scotdance.app"' --instance scotdance -f`
+  - Deploy v3's web with `firebase deploy --only hosting` from `develop`
+    (after `npm ci && npm run build:www`, with `.env.local` copied from the
+    repo root). Never `npm run deploy` there: it would put v3's rules and
+    functions back over v4's.
 - Feedback: while the app's version is ahead of `versions/*` (TestFlight, Play
   testing, next.scotdance.app), More (and the sidebar) has "Share your ideas",
   with a dot on More until it's first opened. It opens the Help chat; Crisp
