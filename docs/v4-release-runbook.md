@@ -85,8 +85,8 @@ stores release it. On a phone it replaces the v3 app (same app ID).
 - Android: Play open testing. Anyone with the link, or the "Join the beta" box
   on the Play listing, can join. Set the track's feedback email.
 - Web: next.scotdance.app.
-- Getting the word out: v3 (3.15.0 on `develop`, in the apps and on
-  scotdance.app) has a dismissible banner. Each platform shows it once its link
+- Getting the word out: v3 from 3.15.0 (the change is on `develop`; in the apps
+  and on scotdance.app) has a dismissible banner. Each platform shows it once its link
   is set in `production/featureFlags/next-banner/{web,ios,android}` (live, no
   release needed; delete a link to hide it there):
   - `web`: `https://next.scotdance.app` (the banner opens the same page there)
