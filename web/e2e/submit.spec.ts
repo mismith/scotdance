@@ -156,8 +156,9 @@ test('a step at a time, checked as it goes, and sent once however fast it’s ta
     const all = await submissionsNamed(name)
     expect(all).toHaveLength(1)
     const [[, sent]] = all
-    expect(Object.keys(sent).sort()).toEqual(['approved', 'approvedBy', 'autoApproved', 'competition', 'competitionId', 'contact', 'receivedAt', 'submitted', 'submittedBy'])
-    expect(sent).toMatchObject({ autoApproved: true, approvedBy: 'auto' })
+    expect(Object.keys(sent).sort()).toEqual(['approved', 'approvedBy', 'autoApproved', 'competition', 'competitionId', 'contact', 'origin', 'receivedAt', 'submitted', 'submittedBy'])
+    // (origin: its emails are v4's, linking back to this site.)
+    expect(sent).toMatchObject({ autoApproved: true, approvedBy: 'auto', origin: new URL(page.url()).origin })
     expect(await dbGet(`competitions/${sent.competitionId}/name`)).toBe(name)
     expect(sent.competition).toEqual({
       name,
