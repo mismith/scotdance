@@ -1,6 +1,6 @@
 Hello{{#contact.name}} {{.}}{{/contact.name}},
 
-Thanks for submitting {{ competition.name }}. I haven’t added it to {{ app.name }}.
+Thanks for submitting {{ competition.name }}. It hasn’t been added to {{ app.name }}.
 
 {{{ reply.text }}}
 

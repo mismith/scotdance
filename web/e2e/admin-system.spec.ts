@@ -146,7 +146,7 @@ test('Submissions: reject with a reply, send it again when it doesn’t go out, 
     await sheet.getByRole('button', { name: 'Already submitted' }).click()
     await box.fill(reply)
     await sheet.getByText('Preview the email').click()
-    for (const line of [`About your submission of ${name}`, 'To morag@example.test', 'Hello Morag Test,', `Thanks for submitting ${name}. I haven’t added it to ScotDance.app.`, 'If it is, I can add you as one of its admins instead.', 'Saturday 5 June 2027', 'Dunoon Stadium, Dunoon', 'Murray']) {
+    for (const line of [`About your submission of ${name}`, 'To morag@example.test', 'Hello Morag Test,', `Thanks for submitting ${name}. It hasn’t been added to ScotDance.app.`, 'If it is, I can add you as one of its admins instead.', 'Saturday 5 June 2027', 'Dunoon Stadium, Dunoon', 'Murray']) {
       await expect(sheet).toContainText(line)
     }
 

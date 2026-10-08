@@ -54,7 +54,7 @@ describe('replyEmail', () => {
     const email = replyEmail({ competition, contactName: 'Morag Fraser', reply: 'Is this the dancing at Cowal?\n\nLet me know.', signer: 'Murray Rowan' })
     expect(email.subject).toBe('About your submission of Cowal Games Highland Dancing')
     expect(email.greeting).toBe('Hello Morag Fraser,')
-    expect(email.intro).toBe('Thanks for submitting Cowal Games Highland Dancing. I haven’t added it to ScotDance.app.')
+    expect(email.intro).toBe('Thanks for submitting Cowal Games Highland Dancing. It hasn’t been added to ScotDance.app.')
     expect(email.reply).toEqual([['Is this the dancing at Cowal?'], ['Let me know.']])
     expect(email.summary).toEqual(['Cowal Games Highland Dancing', 'Friday 28 August 2026', 'Dunoon Stadium, Dunoon'])
     expect(email.signature).toEqual(['Murray', 'ScotDance.app'])

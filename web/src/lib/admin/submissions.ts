@@ -18,12 +18,12 @@ export const REASONS: ReadonlyArray<{ value: RejectReason; label: string; reply:
   {
     value: 'invalid',
     label: 'Invalid or incomplete',
-    reply: 'Some of the details looked incomplete or mistyped. If you submit it again with its full name, date and town, I’ll take another look.',
+    reply: 'Some of the details looked incomplete or mistyped. If you submit it again with its full name, date and town, it’ll get another look.',
   },
   {
     value: 'duplicate',
     label: 'Already submitted',
-    reply: 'Someone else has already submitted it. If you help run it, reply and I can add you as one of its admins.',
+    reply: 'Someone else has already submitted it. If you help run it, just reply and you can be added as one of its admins.',
   },
   { value: 'spam', label: 'Test or spam', reply: '' },
 ]
@@ -103,7 +103,7 @@ export function replyEmail(opts: {
   return {
     subject: `About your submission of ${name}`,
     greeting: `Hello${text(opts.contactName) ? ` ${text(opts.contactName)}` : ''},`,
-    intro: `Thanks for submitting ${name}. I haven’t added it to ScotDance.app.`,
+    intro: `Thanks for submitting ${name}. It hasn’t been added to ScotDance.app.`,
     reply: paragraphs(opts.reply),
     summary: [name, emailDate(c.date), where].filter((s): s is string => !!s),
     closing: 'If you’ve any questions, just reply to this email.',
