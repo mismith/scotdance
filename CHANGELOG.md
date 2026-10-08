@@ -1,5 +1,8 @@
 # Release Notes
 
+## 3.15.0 - Oct 8, 2026
+- get ready for the new ScotDance.app, coming soon (and you can help shape it)
+
 ## 3.14.1 - Sep 9, 2026
 - minor fixes and behind-the-scenes improvements
 
