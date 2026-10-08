@@ -1,6 +1,7 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 import { FirebaseInvites } from '@mismith/firebase-tools/dist/server';
 import { getPostmark } from './utility/email';
+import { V4_SITE, appModel, firstName, organisationMark, sendOptions, sentFrom } from './utility/emailModel';
 import { isEmulator } from './utility/env';
 
 // Organisations: the associations, games societies and series that run
@@ -115,23 +116,24 @@ export function getOnDelete(db: any) {
 /** Invites to help run an organisation, emailed like a competition's. */
 export class OrganisationInvites extends FirebaseInvites {
   async handleCreate(snap: any, ctx: any) {
+    // Organisations are v4's, so this is always the v4 email, linking to the
+    // site the invite was sent from (utility/emailModel.ts). An invite from
+    // before it said goes to V4_SITE.
     const { organisationId, inviteId } = ctx.params;
-    const link = `${this.config.url}/organisations/${organisationId}/invites/${inviteId}`;
     const invite = snap.val();
+    const from = sentFrom(invite.origin || V4_SITE);
+    const link = `${from.url}/organisations/${organisationId}/invites/${inviteId}`;
     const organisation = (await this.config.db.child(`organisations/${organisationId}`).once('value')).val();
+    const inviter = await firstName(this.config.db, invite.createdBy);
     try {
       await getPostmark().sendEmailWithTemplate({
         From: this.config.email,
         To: isEmulator() ? this.config.email : invite.payload.email,
-        TemplateAlias: 'organisation-admin-invite',
+        ...sendOptions('organisation-invite'),
         TemplateModel: {
-          app: {
-            name: this.config.name,
-            description: this.config.description,
-            email: this.config.email,
-            url: this.config.url,
-          },
-          organisation,
+          app: appModel(this.config, from),
+          organisation: { ...organisation, mark: organisationMark(organisation ?? undefined) },
+          inviter: inviter && { name: inviter },
           invite: { ...invite, link },
         },
       });

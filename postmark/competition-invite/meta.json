@@ -1,0 +1,33 @@
+{
+  "Name": "Competition invite",
+  "Alias": "competition-invite",
+  "Subject": "{{#inviter}}{{ name }} invited you{{/inviter}}{{^inviter}}You’re invited{{/inviter}} to help manage {{ competition.name }}",
+  "TemplateType": "Standard",
+  "LayoutTemplate": "scotdance",
+  "TestRenderModel": {
+    "app": {
+      "name": "ScotDance.app",
+      "url": "https://scotdance.app",
+      "host": "scotdance.app",
+      "preview": null
+    },
+    "competition": {
+      "name": "Cowal Games Highland Dancing"
+    },
+    "summary": {
+      "date": "Friday 28 August 2026",
+      "where": "Dunoon Stadium, Dunoon",
+      "tile": {
+        "month": "Aug",
+        "day": "28",
+        "year": "2026"
+      }
+    },
+    "inviter": {
+      "name": "Morag"
+    },
+    "invite": {
+      "link": "https://scotdance.app/competitions/def456/invites/abc123"
+    }
+  }
+}

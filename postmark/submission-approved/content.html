@@ -1,0 +1,49 @@
+<div class="preheader">It’s yours to set up now. Until you list it, only its admins can see it.&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+<h1>{{ competition.name }} is approved</h1>
+<p>Thanks for adding it. It’s yours to set up now, and until you list it, only its admins can see it.</p>
+<table role="presentation" class="row" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td class="row-cell">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          {{#summary.tile}}<td class="tile" width="48" valign="middle">
+            <div class="tile-month">{{ month }}</div>
+            <div class="tile-day">{{ day }}</div>
+            <div class="tile-year">{{ year }}</div>
+          </td>{{/summary.tile}}
+          <td class="row-text">
+            <div class="row-name">{{ competition.name }}</div>
+            {{#summary.where}}<div class="row-meta">{{.}}</div>{{/summary.where}}
+            <div style="padding-top: 6px;"><span class="chip chip--quiet">Unlisted</span></div>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<h2>Where to start</h2>
+<table role="presentation" class="steps" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td class="step-cell" width="28"><div class="step-num">1</div></td>
+    <td class="step-cell step-text"><strong>Details:</strong> <span>a logo or photo, and a link to registration</span></td>
+  </tr>
+  <tr>
+    <td class="step-cell" width="28"><div class="step-num">2</div></td>
+    <td class="step-cell step-text"><strong>Staff:</strong> <span>its judges, pipers and sponsors</span></td>
+  </tr>
+  <tr>
+    <td class="step-cell" width="28"><div class="step-num">3</div></td>
+    <td class="step-cell step-text"><strong>List it,</strong> <span>so it shows in the competitions list</span></td>
+  </tr>
+  <tr>
+    <td class="step-cell" width="28"><div class="step-num">4</div></td>
+    <td class="step-cell step-text"><strong>Then the rest:</strong> <span>dances, age groups, dancers and the schedule</span></td>
+  </tr>
+</table>
+<table role="presentation" class="button-wrap button-table" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td class="button-cell" align="center"><a class="button" href="{{ admin.link }}">Set it up</a></td>
+  </tr>
+</table>
+<p class="small" style="margin-top: 16px;">Questions? Just reply to this email.</p>
+<p class="fine">You’re getting this because this address was used to submit {{ competition.name }} to {{ app.name }}.</p>

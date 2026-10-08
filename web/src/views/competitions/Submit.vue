@@ -222,6 +222,8 @@ async function submit() {
         ...(hosts.ids.length && { organisations: Object.fromEntries(hosts.ids.map((id) => [id, true])) }),
         ...(hosts.fresh.length && { newOrganisations: Object.fromEntries(hosts.fresh.map((o) => [newKey(), { name: o.name, shortName: o.shortName || null }])) }),
         submitted: new Date().toISOString(),
+        // Emails about it are v4's, linking back here (functions/src/utility/emailModel.ts).
+        origin: window.location.origin,
       },
     })
     // On to "Submitted", as a page would go.

@@ -1,0 +1,36 @@
+{
+  "Name": "Admin: submission approved automatically",
+  "Alias": "admin-submission-auto-approved",
+  "Subject": "{{ competition.name }} was approved automatically",
+  "TemplateType": "Standard",
+  "LayoutTemplate": "scotdance",
+  "TestRenderModel": {
+    "app": {
+      "name": "ScotDance.app",
+      "url": "https://scotdance.app",
+      "host": "scotdance.app",
+      "preview": null
+    },
+    "competition": {
+      "name": "Cowal Games Highland Dancing",
+      "sobhd": "C-ON-CO-27-2609"
+    },
+    "contact": {
+      "name": "Morag Fraser",
+      "email": "morag@example.com",
+      "message": "Hoping to get this on before entries open!"
+    },
+    "summary": {
+      "date": "Friday 28 August 2026",
+      "where": "Dunoon Stadium, Dunoon",
+      "tile": {
+        "month": "Aug",
+        "day": "28",
+        "year": "2026"
+      }
+    },
+    "admin": {
+      "link": "https://scotdance.app/competitions/def456/manage"
+    }
+  }
+}

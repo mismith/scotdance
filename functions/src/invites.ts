@@ -2,31 +2,33 @@ import { FirebaseInvites } from '@mismith/firebase-tools/dist/server';
 import { getPostmark } from './utility/email';
 import { attachUserToCompetition } from './utility/competition';
 import { isEmulator } from './utility/env';
+import { appModel, firstName, sendOptions, sentFrom, summary } from './utility/emailModel';
 
 class Invites extends FirebaseInvites {
   async handleCreate(snap, ctx) {
 
-    // get dynamic link
+    // The link opens the app the invite was sent from (utility/emailModel.ts).
     const { competitionId, inviteId } = ctx.params;
-    const link = `${this.config.url}/#/competitions/${competitionId}/invites/${inviteId}`;
+    const invite = snap.val();
+    const from = sentFrom(invite.origin);
+    const link = from.v4
+      ? `${from.url}/competitions/${competitionId}/invites/${inviteId}`
+      : `${from.url}/#/competitions/${competitionId}/invites/${inviteId}`;
 
     // send email
-    const invite = snap.val();
     const competitionPath = `competitions/${competitionId}`;
     const competition = (await this.config.db.child(competitionPath).once('value')).val();
+    const inviter = await firstName(this.config.db, invite.createdBy);
     try {
       await getPostmark().sendEmailWithTemplate({
         From: this.config.email,
         To: isEmulator() ? this.config.email : invite.payload.email,
-        TemplateAlias: 'competition-admin-invite',
+        ...sendOptions(from.v4 ? 'competition-invite' : 'competition-admin-invite'),
         TemplateModel: {
-          app: {
-            name: this.config.name,
-            description: this.config.description,
-            email: this.config.email,
-            url: this.config.url,
-          },
+          app: appModel(this.config, from),
           competition,
+          summary: summary(competition ?? undefined),
+          inviter: inviter && { name: inviter },
           invite: {
             ...invite,
             link,

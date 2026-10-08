@@ -1,0 +1,45 @@
+<div class="preheader">Submitted by {{ contact.name }}.&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+<h1>{{ competition.name }} needs a look</h1>
+{{#review}}<table role="presentation" class="callout" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td class="callout-cell">
+      <p class="callout-title">Why it needs a look</p>
+      <ul>{{#each reasons}}<li>{{.}}</li>{{/each}}</ul>
+    </td>
+  </tr>
+</table>{{/review}}
+<table role="presentation" class="row" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td class="row-cell">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          {{#summary.tile}}<td class="tile" width="48" valign="middle">
+            <div class="tile-month">{{ month }}</div>
+            <div class="tile-day">{{ day }}</div>
+            <div class="tile-year">{{ year }}</div>
+          </td>{{/summary.tile}}
+          <td class="row-text">
+            <div class="row-name">{{ competition.name }}</div>
+            {{#summary.where}}<div class="row-meta">{{.}}</div>{{/summary.where}}
+            {{#competition.sobhd}}<div class="row-meta">{{.}}</div>{{/competition.sobhd}}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<p>Submitted by <strong>{{ contact.name }}</strong> <span class="muted">({{ contact.email }})</span></p>
+{{#contact.message}}<table role="presentation" class="quote" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td class="quote-cell">
+      <p class="quote-label">Their note</p>
+      <p class="quote-text">{{.}}</p>
+    </td>
+  </tr>
+</table>{{/contact.message}}
+<table role="presentation" class="button-wrap button-table" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td class="button-cell" align="center"><a class="button" href="{{ admin.link }}">Review it</a></td>
+  </tr>
+</table>
+<p class="small" style="margin: 16px 0 0;">To email {{ contact.name }}, reply to this one.</p>

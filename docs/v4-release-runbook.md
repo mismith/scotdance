@@ -118,6 +118,7 @@ stores release it. On a phone it replaces the v3 app (same app ID).
 - [ ] Organiser dry run on next.scotdance.app: submit, approve (sends a real email), invite a second admin, import an Excel sheet, enter results on a phone
 - [ ] Google Maps key has the Places API enabled (venue search in Manage › Details), with a daily quota cap: the key ships in the app, so referrer limits alone can't stop someone reusing it
 - [ ] Privacy page mentions the private colour picks
+- [ ] Emails: set `V4_SITE` to `https://scotdance.app` in `functions/src/utility/emailModel.ts` and deploy the functions, so the store apps' and admin@'s emails link to scotdance.app (`postmark/README.md`)
 
 Rollback: `develop` still has the v3 app. Check it out, `npm ci && npm run build:www`, then `firebase deploy --only hosting`. Then set `versions/web` back to v3's (3.14.1) in Tools: the v4 deploy set it to 4.0.0, and v3 would ask everyone on the web to update.
 
@@ -169,10 +170,9 @@ so the backend goes first, from the branch, after Phase 1's steps:
 7. TestFlight / Play internal testing on real phones before the app ships:
    follow a dancer, enter a result in Manage, wait a minute.
 
-Until cutover, emailed links open scotdance.app, which is still v3: an
-organisation invite's email link lands where there are no organisations.
-On staging, send people the invite's Copy link instead (it opens
-next.scotdance.app).
+Organisation invites link back to the site they were sent from. One sent
+before 2026-10-08 links to scotdance.app, which is still v3 and has no
+organisations: send its Copy link instead.
 
 ## Rejecting submissions
 

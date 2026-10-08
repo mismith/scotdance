@@ -62,7 +62,8 @@ async function invite() {
   }
   sending.value = true
   try {
-    await props.writeInvites({ [`invites/${props.newKey()}`]: { created: new Date().toISOString(), payload: { email: value } } })
+    // (origin: its email is v4's, linking back here; functions/src/utility/emailModel.ts.)
+    await props.writeInvites({ [`invites/${props.newKey()}`]: { created: new Date().toISOString(), payload: { email: value }, origin: window.location.origin } })
     email.value = ''
     toast(`Invite sent to ${value}`)
   } catch (e) {
@@ -75,7 +76,7 @@ async function invite() {
 async function resend(i: Invite) {
   try {
     // Clearing an accept the server turned down (or never finished) lets them accept again.
-    await props.writeInvites({ [`invites/${i.id}/created`]: new Date().toISOString(), [`invites/${i.id}/cancelled`]: null, [`invites/${i.id}/accepted`]: null })
+    await props.writeInvites({ [`invites/${i.id}/created`]: new Date().toISOString(), [`invites/${i.id}/cancelled`]: null, [`invites/${i.id}/accepted`]: null, [`invites/${i.id}/origin`]: window.location.origin })
     toast(`Sent again to ${i.payload?.email}`)
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })

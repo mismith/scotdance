@@ -1,0 +1,18 @@
+{{ competition.name }} needs a look
+
+{{#review}}Why it needs a look:
+{{#each reasons}}- {{.}}
+{{/each}}
+{{/review}}    {{ competition.name }}{{#summary.date}}
+    {{.}}{{/summary.date}}{{#summary.where}}
+    {{.}}{{/summary.where}}{{#competition.sobhd}}
+    {{.}}{{/competition.sobhd}}
+
+Submitted by {{ contact.name }} <{{ contact.email }}>{{#contact.message}}, who wrote:
+
+    {{.}}{{/contact.message}}
+
+Review it:
+{{ admin.link }}
+
+To email {{ contact.name }}, reply to this one.

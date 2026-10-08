@@ -4,6 +4,9 @@ import { organisationsForSubmission } from './organisations';
 import { isEmulator } from './utility/env';
 import { tidyRegistration, yearOf } from './registration';
 import { reviewReasons, type ReviewContext } from './review';
+import { adminSite, appModel, firstName, sendOptions, sentFrom, summary, type SentFrom } from './utility/emailModel';
+
+export { summary };
 
 // A failed email mustn't fail the trigger: the submission (or the
 // competition made from it) stands, and Murray sees it in System admin.
@@ -40,19 +43,6 @@ export function replyModel(reply: string) {
   };
 }
 
-// What was submitted, in a line or two, so they know which one it's about:
-// the date as "Friday 28 August 2026" (in English, a weekday too, so it can't
-// be misread anywhere), and where.
-const longDate = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
-export function summary(competition: any = {}) {
-  const { date, venue, location } = competition;
-  const day = typeof date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(date) ? new Date(`${date.slice(0, 10)}T00:00:00Z`) : null;
-  return {
-    date: day && !Number.isNaN(day.getTime()) ? longDate.formatToParts(day).filter((p) => p.type !== 'literal').map((p) => p.value).join(' ') : null,
-    where: [venue, location].filter((s) => typeof s === 'string' && s.trim()).map((s) => s.trim()).join(', ') || null,
-  };
-}
-
 // What was submitted, with its registration number in its association's format.
 function tidyCompetition(competition) {
   if (!competition || typeof competition.sobhd !== 'string') return competition;
@@ -69,15 +59,13 @@ class Submissions {
     this.config = config;
   }
 
-  getTemplateModel(submission) {
+  // For the site it was sent from (utility/emailModel.ts), with what was
+  // submitted in a line or two.
+  getTemplateModel(submission, from: SentFrom) {
     return {
-      app: {
-        name: this.config.name,
-        description: this.config.description,
-        email: this.config.email,
-        url: this.config.url,
-      },
+      app: appModel(this.config, from),
       ...submission,
+      summary: summary(submission.competition),
     };
   }
 
@@ -142,24 +130,26 @@ class Submissions {
     });
     if (!committed || !snapshot.exists() || !review.length) return;
     // (Nested, so the email leaves the list out when there isn't one.)
-    const model = this.getTemplateModel({ ...submission, review: { reasons: review } });
+    const reviewed = { ...submission, review: { reasons: review } };
+    const from = sentFrom(submission.origin);
+    const admin = adminSite(from);
 
     // send emails
     await sendEmail({
       From: this.config.email,
       To: isEmulator() ? this.config.email : submission.contact.email,
-      TemplateAlias: 'competition-submission',
-      TemplateModel: model,
+      ...sendOptions(from.v4 ? 'submission-received' : 'competition-submission'),
+      TemplateModel: this.getTemplateModel(reviewed, from),
     });
     await sendEmail({
       From: this.config.email,
       ReplyTo: submission.contact.email,
       To: this.config.email,
-      TemplateAlias: 'competition-submission-approval',
+      ...sendOptions('admin-submission-review'),
       TemplateModel: {
-        ...model,
+        ...this.getTemplateModel(reviewed, admin),
         admin: {
-          link: `${this.config.url}/#/admin/submissions/${submissionId}`,
+          link: `${admin.url}/admin/submissions/${submissionId}`,
         },
       },
     });
@@ -184,7 +174,7 @@ class Submissions {
   async handleApproved(snap, ctx) {
     const submission = snap.val();
     const submissionId = snap.key;
-    const model = this.getTemplateModel(submission);
+    const from = sentFrom(submission.origin);
     const { competition = {}, contact = {}, submittedBy } = submission;
 
     // create competition, linking back to submission (and vice versa)
@@ -217,11 +207,11 @@ class Submissions {
     await sendEmail({
       From: this.config.email,
       To: isEmulator() ? this.config.email : contact.email,
-      TemplateAlias: 'competition-submission-approved',
+      ...sendOptions(from.v4 ? 'submission-approved' : 'competition-submission-approved'),
       TemplateModel: {
-        ...model,
+        ...this.getTemplateModel(submission, from),
         admin: {
-          link: `${this.config.url}/#/competitions/${competitionId}/admin`,
+          link: from.v4 ? `${from.url}/competitions/${competitionId}/manage` : `${from.url}/#/competitions/${competitionId}/admin`,
         },
       },
     });
@@ -229,16 +219,16 @@ class Submissions {
     // Approved as it arrived: you hear what went through, with a link to
     // manage it (to fix anything there).
     if (submission.autoApproved) {
+      const admin = adminSite(from);
       await sendEmail({
         From: this.config.email,
         ReplyTo: contact.email,
         To: this.config.email,
-        TemplateAlias: 'competition-submission-auto-approved',
+        ...sendOptions('admin-submission-auto-approved'),
         TemplateModel: {
-          ...model,
-          summary: summary(competition),
+          ...this.getTemplateModel(submission, admin),
           admin: {
-            link: `${this.config.url}/#/competitions/${competitionId}/admin`,
+            link: `${admin.url}/competitions/${competitionId}/manage`,
           },
         },
       });
@@ -260,9 +250,8 @@ class Submissions {
     if (!latest || latest.approved || latest.rejected !== submission.rejected
       || latest.rejection?.retried !== submission.rejection?.retried) return;
 
-    const signerId = ctx.auth?.uid || submission.rejectedBy;
-    const displayName = signerId ? (await this.config.db.child(`users/${signerId}/displayName`).get()).val() : null;
-    const signer = typeof displayName === 'string' ? displayName.trim().split(/\s+/)[0] || null : null;
+    const signer = await firstName(this.config.db, ctx.auth?.uid || submission.rejectedBy);
+    const from = sentFrom(submission.origin);
 
     // (Unless it's been deleted meanwhile: update() would bring it back as a shell.)
     const mark = async (fields) => {
@@ -272,12 +261,11 @@ class Submissions {
       await getPostmark().sendEmailWithTemplate({
         From: this.config.email,
         To: isEmulator() ? this.config.email : submission.contact?.email,
-        TemplateAlias: 'competition-submission-rejected',
+        ...sendOptions(from.v4 ? 'submission-rejected' : 'competition-submission-rejected'),
         TemplateModel: {
-          ...this.getTemplateModel(submission),
+          ...this.getTemplateModel(submission, from),
           competition: { ...submission.competition, name: submission.competition?.name?.trim() || 'your competition' },
           contact: { ...submission.contact, name: submission.contact?.name?.trim() || null },
-          summary: summary(submission.competition),
           reply: replyModel(reply),
           signer,
         },

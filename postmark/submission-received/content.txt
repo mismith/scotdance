@@ -1,0 +1,11 @@
+Thanks for submitting {{ competition.name }}
+
+It just needs a quick look before it goes up. You’ll get another email as soon as it’s ready, within a week.
+
+    {{ competition.name }}{{#summary.date}}
+    {{.}}{{/summary.date}}{{#summary.where}}
+    {{.}}{{/summary.where}}
+
+Spotted a mistake, or have a question? Just reply to this email.
+
+You’re getting this because this address was used to submit a competition to {{ app.name }}.

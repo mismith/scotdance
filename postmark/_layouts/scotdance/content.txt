@@ -1,0 +1,6 @@
+{{{ @content }}}
+
+--
+{{ app.name }}: Highland dance competitions, live on every family’s phone.
+{{ app.url }}{{#app.preview}}
+Sent from {{.}}, the preview site.{{/app.preview}}

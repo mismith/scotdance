@@ -1,0 +1,31 @@
+{
+  "Name": "Submission received",
+  "Alias": "submission-received",
+  "Subject": "Thanks for submitting {{ competition.name }}",
+  "TemplateType": "Standard",
+  "LayoutTemplate": "scotdance",
+  "TestRenderModel": {
+    "app": {
+      "name": "ScotDance.app",
+      "url": "https://scotdance.app",
+      "host": "scotdance.app",
+      "preview": null
+    },
+    "competition": {
+      "name": "Cowal Games Highland Dancing"
+    },
+    "contact": {
+      "name": "Morag Fraser",
+      "email": "morag@example.com"
+    },
+    "summary": {
+      "date": "Friday 28 August 2026",
+      "where": "Dunoon Stadium, Dunoon",
+      "tile": {
+        "month": "Aug",
+        "day": "28",
+        "year": "2026"
+      }
+    }
+  }
+}

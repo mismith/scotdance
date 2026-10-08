@@ -1,0 +1,28 @@
+<div class="preheader">{{ reply.preview }}&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+<div class="letter">
+  <p>Hello{{#contact.name}} {{.}}{{/contact.name}},</p>
+  <p>Thanks for submitting <strong>{{ competition.name }}</strong>. It hasn’t been added to {{ app.name }}.</p>
+  <!-- The reply, as typed: paragraphs of lines -->
+  {{#each reply.paragraphs}}<div class="reply">{{#each lines}}<div>{{.}}</div>{{/each}}</div>{{/each}}
+<table role="presentation" class="row" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td class="row-cell">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          {{#summary.tile}}<td class="tile" width="48" valign="middle">
+            <div class="tile-month">{{ month }}</div>
+            <div class="tile-day">{{ day }}</div>
+            <div class="tile-year">{{ year }}</div>
+          </td>{{/summary.tile}}
+          <td class="row-text">
+            <div class="row-name">{{ competition.name }}</div>
+            {{#summary.where}}<div class="row-meta">{{.}}</div>{{/summary.where}}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+  <p>If you’ve any questions, just reply to this email.</p>
+  <p class="signature">{{#signer}}{{.}}<br />{{/signer}}{{ app.name }}</p>
+</div>

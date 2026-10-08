@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en-GB" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <meta name="format-detection" content="telephone=no, date=no, address=no, email=no, url=no" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
+    <title>{{ app.name }}</title>
+    <!--
+    Every v4 email's head, styles, icon and footer; each template is just its
+    body, which goes in the card below. Postmark inlines these rules into each element as
+    it sends, so anything in a media query has to be !important to win over
+    them. Colours are DESIGN.md's. The icon and the app's font come from
+    web/public/email/ on the site it was sent from (Apple Mail and iOS Mail
+    use the font; Gmail and Outlook fall back to the system face).
+    -->
+    <style>
+      @font-face {
+        font-family: 'Atkinson Hyperlegible Next';
+        font-style: normal;
+        font-weight: 200 800;
+        font-display: swap;
+        src: url('{{ app.url }}/email/atkinson-hyperlegible-next.woff2') format('woff2');
+      }
+
+      /* Base */
+      body { margin: 0; padding: 0; width: 100%; background-color: #f2f4f7; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+      table { border-collapse: collapse; }
+      img { border: 0; line-height: 100%; outline: none; text-decoration: none; }
+      td, p, h1, h2, li, a, span, div { font-family: 'Atkinson Hyperlegible Next', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+      .page { background-color: #f2f4f7; }
+      .column { width: 100%; max-width: 560px; }
+      .outer { padding: 24px 16px 40px; }
+
+      /* Masthead: just the icon, so the inbox preview starts with the preheader */
+      .masthead { padding: 0 4px 16px; }
+      .logo { display: block; width: 40px; height: 40px; border-radius: 10px; }
+
+      /* The card */
+      .card { background-color: #ffffff; border-radius: 16px; padding: 28px 24px; box-shadow: 0 0 0 0.5px rgba(18, 22, 27, 0.09), 0 1px 2px rgba(16, 24, 40, 0.05); }
+
+      /* Type */
+      h1 { margin: 0 0 12px; color: #12161b; font-size: 24px; line-height: 30px; font-weight: 760; letter-spacing: -0.4px; }
+      h2 { margin: 28px 0 8px; color: #12161b; font-size: 17px; line-height: 23px; font-weight: 650; }
+      p { margin: 0 0 16px; color: #12161b; font-size: 16px; line-height: 24px; }
+      a { color: #0065bd; }
+      strong { font-weight: 650; }
+      .muted { color: #454e59; }
+      .small { font-size: 14px; line-height: 20px; color: #454e59; }
+      .fine { margin: 24px 0 0; padding-top: 16px; border-top: 1px solid #d3dae2; font-size: 13px; line-height: 18px; color: #454e59; }
+      .break { word-break: break-all; }
+
+      /* Preheader: the inbox preview line, hidden in the email itself */
+      .preheader { display: none !important; visibility: hidden; mso-hide: all; font-size: 1px; line-height: 1px; max-height: 0; max-width: 0; opacity: 0; overflow: hidden; }
+
+      /* Competition row: a date tile, its name and where, as in the app's lists */
+      .row { width: 100%; margin: 20px 0; border-top: 1px solid #d3dae2; border-bottom: 1px solid #d3dae2; }
+      .row-cell { padding: 12px 0; }
+      .tile { width: 48px; background-color: #e9edf2; border-radius: 12px; text-align: center; padding: 6px 0 7px; }
+      .tile-month { font-size: 11px; line-height: 13px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #454e59; }
+      .tile-day { font-size: 21px; line-height: 24px; font-weight: 760; color: #12161b; font-variant-numeric: tabular-nums; }
+      .tile-year { font-size: 11px; line-height: 13px; font-weight: 600; color: #454e59; font-variant-numeric: tabular-nums; }
+      .tile--org { background-color: #e1ecf8; padding: 0; height: 48px; }
+      .tile--logo { background-color: #ffffff; padding: 4px; height: 40px; box-shadow: 0 0 0 0.5px rgba(18, 22, 27, 0.12); }
+      .tile-mark { font-size: 15px; line-height: 48px; font-weight: 760; letter-spacing: -0.3px; color: #0065bd; }
+      .tile-logo { display: block; width: 40px; height: 40px; border-radius: 8px; }
+      .row-text { padding-left: 14px; vertical-align: middle; }
+      .row-name { font-size: 16px; line-height: 22px; font-weight: 650; color: #12161b; }
+      .row-meta { font-size: 15px; line-height: 21px; color: #454e59; }
+
+      /* Chips (state papers, only when they carry news) */
+      .chip { display: inline-block; padding: 3px 10px; border-radius: 9999px; font-size: 13px; line-height: 18px; font-weight: 650; }
+      .chip--next { background-color: #ffefc7; color: #7a4600; }
+      .chip--done { background-color: #ddf2e2; color: #145c2b; }
+      .chip--quiet { background-color: #e9edf2; color: #454e59; }
+
+      /* Callout: what needs a look (Manage's amber) */
+      .callout { width: 100%; margin: 4px 0 20px; }
+      .callout-cell { background-color: #ffefc7; border-radius: 12px; padding: 14px 16px 6px; }
+      .callout-title { margin: 0 0 6px; font-size: 15px; line-height: 21px; font-weight: 700; color: #7a4600; }
+      .callout ul { margin: 0 0 8px; padding: 0 0 0 20px; }
+      .callout li { margin: 0 0 6px; font-size: 15px; line-height: 21px; color: #12161b; }
+
+      /* Quote: someone's own words */
+      .quote { margin: 0 0 20px; }
+      .quote-cell { background-color: #e9edf2; border-radius: 12px; padding: 14px 16px; }
+      .quote-label { margin: 0 0 4px; font-size: 14px; line-height: 20px; font-weight: 650; color: #454e59; }
+      .quote-text { margin: 0; font-size: 16px; line-height: 24px; color: #12161b; }
+
+      /* Button: one Saltire Blue capsule per email */
+      .button-wrap { margin: 24px 0 8px; }
+      .button-cell { border-radius: 9999px; background-color: #0065bd; }
+      .button { display: inline-block; padding: 12px 24px; border-radius: 9999px; font-size: 16px; line-height: 20px; font-weight: 650; color: #ffffff; text-decoration: none; }
+
+      /* Steps: a grouped list, in Manage's order */
+      .steps { width: 100%; margin: 4px 0 8px; }
+      .step-cell { padding: 10px 0; border-top: 1px solid #d3dae2; vertical-align: top; }
+      .steps tr:first-child .step-cell { border-top: 0; }
+      .step-num { width: 28px; height: 28px; border-radius: 9999px; background-color: #e1ecf8; color: #0065bd; font-size: 14px; line-height: 28px; font-weight: 700; text-align: center; }
+      .step-text { padding-left: 12px; font-size: 16px; line-height: 22px; color: #12161b; }
+      .step-text span { color: #454e59; }
+
+      /* Letter (a reply, as typed) */
+      .letter p { margin: 0 0 16px; }
+      .reply { margin: 0 0 16px; font-size: 16px; line-height: 24px; color: #12161b; }
+      .signature { margin: 0; color: #12161b; }
+
+      /* Footer */
+      .footer { padding: 20px 4px 0; text-align: left; }
+      .footer p { margin: 0 0 6px; font-size: 13px; line-height: 18px; color: #454e59; }
+      .footer a { color: #454e59; font-weight: 650; text-decoration: none; }
+      .footer .preview-note { color: #7a4600; }
+
+      /* Phones: a little less padding, and the button runs full width */
+      @media only screen and (max-width: 480px) {
+        .outer { padding: 16px 12px 32px !important; }
+        .card { padding: 24px 20px !important; }
+        .button-table { width: 100% !important; }
+        .button { display: block !important; text-align: center !important; }
+      }
+
+      /* Dark: Apple Mail, iOS Mail and Outlook for Mac follow this. Gmail's
+         apps recolour on their own, so nothing above relies on a dark
+         background to read. */
+      @media (prefers-color-scheme: dark) {
+        body, .page { background-color: #0c0f13 !important; }
+        .card { background-color: #161b21 !important; box-shadow: none !important; }
+        h1, h2, p, .row-name, .tile-day, .step-text, .quote-text, .reply, .signature, .callout li { color: #eef2f6 !important; }
+        .muted, .small, .fine, .row-meta, .tile-month, .tile-year, .quote-label, .step-text span, .footer p, .footer a { color: #b4beca !important; }
+        a { color: #62aaf0 !important; }
+        .row, .fine, .step-cell { border-color: #2b343e !important; }
+        .tile, .quote-cell, .chip--quiet { background-color: #1f262e !important; }
+        .tile--org, .step-num { background-color: #11263a !important; }
+        .tile-mark, .step-num { color: #62aaf0 !important; }
+        .chip--next, .callout-cell { background-color: #3a2a07 !important; }
+        .chip--next, .callout-title, .footer .preview-note { color: #ffd27a !important; }
+        .chip--done { background-color: #0f2c19 !important; color: #86dda0 !important; }
+        .button-cell, .button { background-color: #1a6fd0 !important; }
+        .button { color: #ffffff !important; }
+      }
+    </style>
+    <!--[if mso]>
+    <style>td, p, h1, h2, li, a, span, div { font-family: Arial, sans-serif !important; }</style>
+    <![endif]-->
+  </head>
+  <body class="page">
+    <div role="article" aria-roledescription="email" aria-label="{{ app.name }}" lang="en-GB">
+      <table role="presentation" class="page" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td align="center" class="outer">
+            <!--[if mso]><table role="presentation" width="560" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
+            <table role="presentation" class="column" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td class="masthead">
+                  <a href="{{ app.url }}"><img class="logo" src="{{ app.url }}/email/icon.png" width="40" height="40" alt="{{ app.name }}" /></a>
+                </td>
+              </tr>
+              <tr>
+                <td class="card">
+                  {{{ @content }}}
+                </td>
+              </tr>
+              <tr>
+                <td class="footer">
+                  <p><a href="{{ app.url }}">{{ app.name }}</a></p>
+                  <p>Highland dance competitions, live on every family’s phone.</p>
+                  {{#app.preview}}<p class="preview-note">Sent from {{.}}, the preview site.</p>{{/app.preview}}
+                </td>
+              </tr>
+            </table>
+            <!--[if mso]></td></tr></table><![endif]-->
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

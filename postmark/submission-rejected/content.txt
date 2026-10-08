@@ -1,0 +1,14 @@
+Hello{{#contact.name}} {{.}}{{/contact.name}},
+
+Thanks for submitting {{ competition.name }}. It hasn’t been added to {{ app.name }}.
+
+{{{ reply.text }}}
+
+    {{ competition.name }}{{#summary.date}}
+    {{.}}{{/summary.date}}{{#summary.where}}
+    {{.}}{{/summary.where}}
+
+If you’ve any questions, just reply to this email.
+
+{{#signer}}{{.}}
+{{/signer}}{{ app.name }}

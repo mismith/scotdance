@@ -1,0 +1,8 @@
+Help manage {{ organisation.name }}?
+
+{{#inviter}}{{ name }} has invited you{{/inviter}}{{^inviter}}You’re invited{{/inviter}} to help run it on {{ app.name }}. You’ll be able to change its page and add its competitions.
+
+Sign in, or make an account, to accept:
+{{ invite.link }}
+
+Not expecting this? You can ignore it: nothing changes unless you accept.

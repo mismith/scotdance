@@ -1,0 +1,30 @@
+<div class="preheader">You’ll be able to edit its details, dancers, schedule and results.&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+<h1>Help manage {{ competition.name }}?</h1>
+<p>{{#inviter}}{{ name }} has invited you{{/inviter}}{{^inviter}}You’re invited{{/inviter}} to help run it on {{ app.name }}. You’ll be able to edit its details, dancers, schedule and results.</p>
+<table role="presentation" class="row" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td class="row-cell">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          {{#summary.tile}}<td class="tile" width="48" valign="middle">
+            <div class="tile-month">{{ month }}</div>
+            <div class="tile-day">{{ day }}</div>
+            <div class="tile-year">{{ year }}</div>
+          </td>{{/summary.tile}}
+          <td class="row-text">
+            <div class="row-name">{{ competition.name }}</div>
+            {{#summary.where}}<div class="row-meta">{{.}}</div>{{/summary.where}}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table role="presentation" class="button-wrap button-table" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td class="button-cell" align="center"><a class="button" href="{{ invite.link }}">Accept invite</a></td>
+  </tr>
+</table>
+<p class="small" style="margin-top: 16px;">Sign in, or make an account, to accept.</p>
+<p class="small">Button not working? Paste this into your browser:<br /><a class="break" href="{{ invite.link }}">{{ invite.link }}</a></p>
+<p class="fine">Not expecting this? You can ignore it: nothing changes unless you accept.</p>

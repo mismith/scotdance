@@ -1,0 +1,24 @@
+<div class="preheader">It just needs a quick look before it goes up. You’ll hear back within a week.&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+<h1>Thanks for submitting {{ competition.name }}</h1>
+<p>It just needs a quick look before it goes up. You’ll get another email as soon as it’s ready, within a week.</p>
+<table role="presentation" class="row" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td class="row-cell">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          {{#summary.tile}}<td class="tile" width="48" valign="middle">
+            <div class="tile-month">{{ month }}</div>
+            <div class="tile-day">{{ day }}</div>
+            <div class="tile-year">{{ year }}</div>
+          </td>{{/summary.tile}}
+          <td class="row-text">
+            <div class="row-name">{{ competition.name }}</div>
+            {{#summary.where}}<div class="row-meta">{{.}}</div>{{/summary.where}}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<p>Spotted a mistake, or have a question? Just reply to this email.</p>
+<p class="fine">You’re getting this because this address was used to submit a competition to {{ app.name }}.</p>

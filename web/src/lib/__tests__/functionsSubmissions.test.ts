@@ -6,8 +6,10 @@ import { FakeRtdb, snap } from './fakeRtdb'
 // once when there's nothing to look at, or waits saying why. Rejecting one
 // with a reply emails it once, in competition-submission-rejected, and the
 // submission says how it went. Nothing goes out without a reply, for spam, or
-// once the rejection is moot. Postmark is stubbed: each email that would go
-// out lands in `postmark.sent`.
+// once the rejection is moot. Each email follows the app it came from: no
+// origin is the v3 app's template and links, an origin the v4 one's; emails
+// to admin@ are always v4. Postmark is stubbed: each email that would go out
+// lands in `postmark.sent`.
 
 /** Database values: untyped JSON. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -241,13 +243,16 @@ describe('a new submission', () => {
     const [[competitionId, competition]] = competitions()
     expect(read().competitionId).toBe(competitionId)
     expect(competition).toMatchObject({ name: 'Cowal Games Highland Dancing', submissionId: 's1' })
-    expect(sentTemplates()).toEqual(['competition-submission-approved', 'competition-submission-auto-approved'])
+    expect(sentTemplates()).toEqual(['competition-submission-approved', 'admin-submission-auto-approved'])
+    expect(postmark.sent[0].TemplateModel.admin.link).toBe(`https://scotdance.app/#/competitions/${competitionId}/admin`)
     const murrays = postmark.sent[1]
     expect(murrays).toMatchObject({ To: 'admin@scotdance.app', ReplyTo: 'morag@example.test' })
     expect(murrays.TemplateModel).toMatchObject({
       competition: { name: 'Cowal Games Highland Dancing' },
-      summary: { date: 'Friday 27 August 2027', where: 'Dunoon Stadium, Dunoon' },
-      admin: { link: `https://scotdance.app/#/competitions/${competitionId}/admin` },
+      summary: { date: 'Friday 27 August 2027', where: 'Dunoon Stadium, Dunoon', tile: { month: 'Aug', day: '27', year: '2027' } },
+      // Murray's admin is v4's, on next until launch.
+      app: { url: 'https://next.scotdance.app', preview: 'next.scotdance.app' },
+      admin: { link: `https://next.scotdance.app/competitions/${competitionId}/manage` },
     })
   })
 
@@ -257,10 +262,10 @@ describe('a new submission', () => {
     expect(read().approved).toBeUndefined()
     expect(read().review).toEqual(['The name is in capitals', 'There’s no town or city'])
     expect(competitions()).toEqual([])
-    expect(sentTemplates()).toEqual(['competition-submission', 'competition-submission-approval'])
+    expect(sentTemplates()).toEqual(['competition-submission', 'admin-submission-review'])
     expect(postmark.sent[1].TemplateModel).toMatchObject({
       review: { reasons: ['The name is in capitals', 'There’s no town or city'] },
-      admin: { link: 'https://scotdance.app/#/admin/submissions/s1' },
+      admin: { link: 'https://next.scotdance.app/admin/submissions/s1' },
     })
   })
 
@@ -311,6 +316,52 @@ describe('a new submission', () => {
   })
 })
 
+describe('from the v4 app', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-06T12:00:00Z'))
+  })
+  afterEach(() => vi.useRealTimers())
+
+  it('gets the v4 emails, linking back to the site it came from', async () => {
+    const prod = arrival()
+    await prod.submit({}, { origin: 'https://scotdance.app' })
+    const [[competitionId]] = prod.competitions()
+    expect(sentTemplates()).toEqual(['submission-approved', 'admin-submission-auto-approved'])
+    for (const email of postmark.sent) {
+      expect(email.TemplateModel).toMatchObject({ app: { url: 'https://scotdance.app', host: 'scotdance.app', preview: null } })
+      expect(email.TemplateModel.admin.link).toBe(`https://scotdance.app/competitions/${competitionId}/manage`)
+    }
+
+    postmark.sent.length = 0
+    const next = arrival()
+    await next.submit({ location: '' }, { origin: 'https://next.scotdance.app' })
+    expect(sentTemplates()).toEqual(['submission-received', 'admin-submission-review'])
+    expect(postmark.sent[0].TemplateModel).toMatchObject({ app: { url: 'https://next.scotdance.app', host: 'next.scotdance.app', preview: 'next.scotdance.app' } })
+    expect(postmark.sent[1].TemplateModel.admin.link).toBe('https://next.scotdance.app/admin/submissions/s1')
+  })
+
+  it('from a store app (or anywhere else), links to the v4 site', async () => {
+    const { submit } = arrival()
+    await submit({}, { origin: 'capacitor://localhost' })
+    expect(sentTemplates()).toEqual(['submission-approved', 'admin-submission-auto-approved'])
+    expect(postmark.sent[0].TemplateModel.app.url).toBe('https://next.scotdance.app')
+  })
+
+  it('rejected with a reply, gets the v4 note', async () => {
+    const { rtdb, change } = setup()
+    rtdb.write({ [`${PATH}/s1/origin`]: 'https://scotdance.app' })
+    await change(rejectedWith({ reply: 'Hi' }))()
+    expect(sentTemplates()).toEqual(['submission-rejected'])
+  })
+
+  it('is tagged by template, with no tracking', async () => {
+    const { submit } = arrival()
+    await submit({}, { origin: 'https://scotdance.app' })
+    expect(postmark.sent[0]).toMatchObject({ Tag: 'submission-approved', TrackOpens: false, TrackLinks: 'None' })
+  })
+})
+
 describe('the email’s model', () => {
   it('keeps the reply as typed, and starts the inbox preview with it', () => {
     const long = 'x'.repeat(130)
@@ -324,8 +375,9 @@ describe('the email’s model', () => {
   })
 
   it('writes what was submitted as it can', () => {
-    expect(summary({ date: '2027-08-27', venue: 'Hall', location: 'Perth' })).toEqual({ date: 'Friday 27 August 2027', where: 'Hall, Perth' })
-    expect(summary({ date: 'soon', location: ' Perth ' })).toEqual({ date: null, where: 'Perth' })
-    expect(summary(undefined)).toEqual({ date: null, where: null })
+    expect(summary({ date: '2027-08-27', venue: 'Hall', location: 'Perth' })).toEqual({ date: 'Friday 27 August 2027', where: 'Hall, Perth', tile: { month: 'Aug', day: '27', year: '2027' } })
+    expect(summary({ date: '2026-09-05' }).tile).toEqual({ month: 'Sep', day: '5', year: '2026' })
+    expect(summary({ date: 'soon', location: ' Perth ' })).toEqual({ date: null, where: 'Perth', tile: null })
+    expect(summary(undefined)).toEqual({ date: null, where: null, tile: null })
   })
 })

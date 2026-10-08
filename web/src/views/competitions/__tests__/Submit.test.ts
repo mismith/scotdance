@@ -217,7 +217,9 @@ describe('Submit a competition', () => {
 
     expect(write).toHaveBeenCalledTimes(1)
     const sent = sentValue()
-    expect(Object.keys(sent).sort()).toEqual(['competition', 'contact', 'submitted'])
+    expect(Object.keys(sent).sort()).toEqual(['competition', 'contact', 'origin', 'submitted'])
+    // (So its emails are v4's, linking back here.)
+    expect(sent.origin).toBe(window.location.origin)
     expect(sent.competition).toEqual({
       name: 'Calgary Highland Games',
       date: '2027-06-05',

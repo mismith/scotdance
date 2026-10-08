@@ -1,0 +1,27 @@
+{
+  "Name": "Organisation invite",
+  "Alias": "organisation-invite",
+  "Subject": "{{#inviter}}{{ name }} invited you{{/inviter}}{{^inviter}}You’re invited{{/inviter}} to help manage {{ organisation.name }}",
+  "TemplateType": "Standard",
+  "LayoutTemplate": "scotdance",
+  "TestRenderModel": {
+    "app": {
+      "name": "ScotDance.app",
+      "url": "https://scotdance.app",
+      "host": "scotdance.app",
+      "preview": null
+    },
+    "organisation": {
+      "name": "Foothills Highland Dancing Association",
+      "shortName": "FHDA",
+      "mark": "FHDA",
+      "image": null
+    },
+    "inviter": {
+      "name": "Morag"
+    },
+    "invite": {
+      "link": "https://scotdance.app/organisations/fhda/invites/abc123"
+    }
+  }
+}

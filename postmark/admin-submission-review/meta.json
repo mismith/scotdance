@@ -1,0 +1,42 @@
+{
+  "Name": "Admin: submission to review",
+  "Alias": "admin-submission-review",
+  "Subject": "{{ competition.name }} needs a look",
+  "TemplateType": "Standard",
+  "LayoutTemplate": "scotdance",
+  "TestRenderModel": {
+    "app": {
+      "name": "ScotDance.app",
+      "url": "https://scotdance.app",
+      "host": "scotdance.app",
+      "preview": null
+    },
+    "competition": {
+      "name": "COWAL GAMES HIGHLAND DANCING",
+      "sobhd": "C-ON-CO-27-2609"
+    },
+    "contact": {
+      "name": "Morag Fraser",
+      "email": "morag@example.com",
+      "message": "Hoping to get this on before entries open!"
+    },
+    "summary": {
+      "date": "Friday 28 August 2026",
+      "where": "Dunoon Stadium, Dunoon",
+      "tile": {
+        "month": "Aug",
+        "day": "28",
+        "year": "2026"
+      }
+    },
+    "review": {
+      "reasons": [
+        "“Cowal Highland Gathering” is already here on the same day",
+        "The name is in capitals"
+      ]
+    },
+    "admin": {
+      "link": "https://scotdance.app/admin/submissions/abc123"
+    }
+  }
+}

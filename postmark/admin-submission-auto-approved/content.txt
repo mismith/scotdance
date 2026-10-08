@@ -1,0 +1,17 @@
+{{ competition.name }} was approved automatically
+
+Nothing in it needed a look. {{ contact.name }} can manage it now, and has been emailed a link.
+
+    {{ competition.name }}{{#summary.date}}
+    {{.}}{{/summary.date}}{{#summary.where}}
+    {{.}}{{/summary.where}}{{#competition.sobhd}}
+    {{.}}{{/competition.sobhd}}
+
+Submitted by {{ contact.name }} <{{ contact.email }}>{{#contact.message}}, who wrote:
+
+    {{.}}{{/contact.message}}
+
+If anything needs fixing, change it in Manage:
+{{ admin.link }}
+
+To email {{ contact.name }}, reply to this one.
