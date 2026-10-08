@@ -244,7 +244,6 @@
     </v-navigation-drawer>
 
     <v-main id="main" class="app-scroll-frame">
-      <!-- Website only: the apps get the new version through the stores. -->
       <div v-if="showNextBanner" class="NextBanner flex-none print-hide">
         <div class="NextBanner-inner">
           <button type="button" class="NextBanner-close" aria-label="Dismiss" @click="dismissNextBanner()">
@@ -268,7 +267,11 @@
             <div class="NextBanner-title">The new ScotDance.app</div>
             <div class="NextBanner-subtitle">Nearly here. Help shape it.</div>
           </div>
-          <a class="NextBanner-action" :href="nextUrl">Try it</a>
+          <a
+            class="NextBanner-action"
+            :href="nextUrl"
+            :target="$device.platform === 'web' ? undefined : '_blank'"
+          >Try it</a>
         </div>
       </div>
       <router-view v-if="$store.state.me !== undefined" />
@@ -426,15 +429,21 @@ export default {
     hasSubmenu() {
       return Boolean(this.competitions.length);
     },
+    // Where to try the new app, set live per platform in the database
+    // (production/featureFlags/next-banner/{web,ios,android}): next.scotdance.app,
+    // the TestFlight public link, the Play testing link. No link, no banner.
+    nextLink() {
+      const links = this.$store.getters.getFeatureFlag('next-banner');
+      const link = links && links[this.$device?.platform];
+      return typeof link === 'string' ? link : null;
+    },
     showNextBanner() {
-      // On and off live from the database: production/featureFlags/next-banner
-      return this.$device?.platform === 'web'
-        && this.$store.getters.getFeatureFlag('next-banner')
-        && !this.$store.getters.isViewed('next', 'banner');
+      return Boolean(this.nextLink) && !this.$store.getters.isViewed('next', 'banner');
     },
     nextUrl() {
+      if (this.$device?.platform !== 'web') return this.nextLink;
       // The new app's paths match these, and it redirects the ones it changed.
-      return `https://next.scotdance.app${this.$route.fullPath}`;
+      return `${this.nextLink.replace(/\/$/, '')}${this.$route.fullPath}`;
     },
     submenuIsNew: {
       get() {
