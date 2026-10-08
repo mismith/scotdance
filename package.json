@@ -55,7 +55,7 @@
     "fast-html-parser": "^1.0.1",
     "firebase": "^10.11.0",
     "fuse.js": "^7.0.0",
-    "handsontable": "^11.1.0",
+    "handsontable": "^18.1.2",
     "lodash.debounce": "^4.0.8",
     "lodash.find": "^4.6.0",
     "lodash.groupby": "^4.6.0",
