@@ -17,7 +17,16 @@ vi.mock('@/lib/maps', () => ({ placesAvailable: true }))
 const auth = reactive({ authReady: true, isSignedIn: true, uid: 'u1' as string | null, openLogin: vi.fn() })
 vi.mock('@/stores/auth', () => ({ useAuthStore: () => auth }))
 vi.mock('@/stores/me', () => ({ useMeStore: () => ({ email: 'morag@example.test', displayName: null, managedOrganisationIds: [] }) }))
-vi.mock('@/composables/useOrganisations', () => ({ useOrganisations: () => ({ organisations: ref([]), byId: ref(new Map()), loaded: ref(true), error: ref(null), retry: () => {} }) }))
+const orgList = vi.hoisted(() => ({ value: [] as Array<{ id: string; name: string; shortName?: string }> }))
+vi.mock('@/composables/useOrganisations', () => ({
+  useOrganisations: () => ({
+    organisations: orgList,
+    byId: { get value() { return new Map(orgList.value.map((o) => [o.id, o])) } },
+    loaded: ref(true),
+    error: ref(null),
+    retry: () => {},
+  }),
+}))
 vi.mock('@/composables/usePageTitle', () => ({ usePageTitle: () => {} }))
 
 // The venue box (tested on its own): types a name, or hands back a pick.
@@ -86,6 +95,7 @@ beforeEach(() => {
   auth.openLogin.mockClear()
   Object.assign(auth, { isSignedIn: true, uid: 'u1' })
   localStorage.clear()
+  orgList.value = []
 })
 
 describe('Submit a competition', () => {
@@ -265,6 +275,23 @@ describe('Submit a competition', () => {
     expect(value(w, 'Venue')).toBe('')
     expect(value(w, 'Address')).toBe('1 Main St')
     expect(value(w, 'Town or city')).toBe('Banff, AB')
+  })
+
+  it('suggests the organisations its name mentions, as whole words, to add in a tap', async () => {
+    orgList.value = [
+      { id: 'chda', name: 'Calgary Highland Dancing Association', shortName: 'CHDA' },
+      { id: 'cowal', name: 'Cowal Gathering' },
+    ]
+    const w = await begin()
+    const has = (text: string) => w.findAll('button').some((b) => b.text().trim() === text)
+    await input(w, 'Name').setValue('CHDAville Games')
+    expect(has('Add CHDA')).toBe(false)
+    await input(w, 'Name').setValue('CHDA Fall Competition at the Cowal Gathering')
+    expect(has('Add Cowal Gathering')).toBe(true)
+    await button(w, 'Add CHDA').trigger('click')
+    expect(w.text()).toContain('Calgary Highland Dancing Association')
+    expect(has('Add CHDA')).toBe(false)
+    expect(has('Add another organisation')).toBe(true)
   })
 
   it('asks for the tick before sending, and a double tap sends it once', async () => {

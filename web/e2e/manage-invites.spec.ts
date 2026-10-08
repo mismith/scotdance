@@ -184,7 +184,7 @@ test('a submitted competition, once approved, is the organiser’s to manage', a
     await next()
     await page.getByRole('textbox', { name: 'Your name' }).fill('Morag Test')
     await next()
-    await page.getByRole('checkbox', { name: /run by a volunteer/ }).check()
+    await page.getByRole('checkbox', { name: /no guarantees/ }).check()
     await page.getByRole('button', { name: 'Submit', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Submitted' })).toBeVisible()
 

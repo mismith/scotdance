@@ -73,15 +73,16 @@ const chosenOrgs = computed(() => [
   }),
   ...hosts.fresh.map((org, i) => ({ key: `new-${i}`, org: { ...org, image: null, location: null }, fresh: true })),
 ])
-// One tap for yours, when there are only a few.
-const quickOrgs = computed(() =>
-  me.managedOrganisationIds.length <= 3
-    ? me.managedOrganisationIds.flatMap((id) => {
-        const org = orgs.byId.value.get(id)
-        return org && !hosts.ids.includes(id) ? [org] : []
-      })
-    : [],
-)
+// One tap, right under the name, for any organisation it mentions ("CHDA
+// Fall Competition": by short name or full name, as whole words). Yours come
+// first in the picker.
+const words = (s?: string | null) => ` ${(s ?? '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim()} `
+const quickOrgs = computed(() => {
+  const name = words(form.name)
+  return orgs.organisations.value.filter(
+    (o) => !hosts.ids.includes(o.id) && [o.shortName, o.name].some((s) => words(s).trim().length >= 3 && name.includes(words(s))),
+  )
+})
 function addHost(org: OrganisationListItem) {
   if (!hosts.ids.includes(org.id)) hosts.ids.push(org.id)
 }
@@ -409,6 +410,11 @@ const scrolledPast = useScrolledPast(computed(() => overviewEl.value?.title ?? n
 
               <div v-if="step === 0" class="space-y-4">
                 <FormInput v-model="form.name" label="Name" required placeholder="e.g. Canadian Championship 2027" :error="errors.name" />
+                <div v-if="quickOrgs.length" class="-mt-2 flex flex-wrap gap-2">
+                  <Button v-for="org in quickOrgs" :key="org.id" variant="tonal" size="sm" @click="addHost(org)">
+                    <Plus /> Add {{ organisationLabel(org) }}
+                  </Button>
+                </div>
                 <FormInput v-model="form.date" label="Date" kind="date" required hint="The first day, if it runs over several." :error="errors.date" />
                 <FormInput
                   v-if="adding.description || form.description"
@@ -426,17 +432,9 @@ const scrolledPast = useScrolledPast(computed(() => overviewEl.value?.title ?? n
                   placeholder="e.g. C-AB-CO-27-1234"
                   hint="Optional: if it’s registered with an association, like the RSOBHD. For several, separate them with commas."
                 />
-                <div class="-mx-4 flex flex-wrap gap-x-2">
-                  <Button v-if="!adding.description && !form.description" variant="plain" @click="add('description')">
-                    <Plus /> Add a description
-                  </Button>
-                  <Button v-if="!adding.sobhd && !form.sobhd" variant="plain" @click="add('sobhd')">
-                    <Plus /> Add registration number
-                  </Button>
-                </div>
-                <div class="space-y-2">
+                <div v-if="chosenOrgs.length" class="space-y-1.5">
                   <p class="text-callout font-medium">Organisations</p>
-                  <ul v-if="chosenOrgs.length" class="surface divide-y overflow-hidden rounded-2xl">
+                  <ul class="surface divide-y overflow-hidden rounded-2xl">
                     <li v-for="h in chosenOrgs" :key="h.key" class="flex min-h-15 items-center gap-3 py-2 pr-1 pl-3">
                       <OrganisationMark :organisation="h.org" />
                       <span class="min-w-0 flex-1">
@@ -448,13 +446,17 @@ const scrolledPast = useScrolledPast(computed(() => overviewEl.value?.title ?? n
                       </button>
                     </li>
                   </ul>
-                  <div class="flex flex-wrap gap-2">
-                    <Button v-for="org in quickOrgs" :key="org.id" variant="tonal" @click="addHost(org)">
-                      <Plus /> {{ organisationLabel(org) }}
-                    </Button>
-                    <Button @click="pickingOrg.show($event)"><Plus /> {{ quickOrgs.length ? 'Another' : 'Add an organisation' }}</Button>
-                  </div>
-                  <p class="text-muted-foreground text-sm">Optional: the association, games society or series it’s run by or part of. Each gets a page listing its competitions.</p>
+                </div>
+                <div class="-mx-4 flex flex-wrap gap-x-2">
+                  <Button v-if="!adding.description && !form.description" variant="plain" @click="add('description')">
+                    <Plus /> Add a description
+                  </Button>
+                  <Button v-if="!adding.sobhd && !form.sobhd" variant="plain" @click="add('sobhd')">
+                    <Plus /> Add registration number
+                  </Button>
+                  <Button variant="plain" @click="pickingOrg.show($event)">
+                    <Plus /> {{ chosenOrgs.length ? 'Add another organisation' : 'Add an organisation' }}
+                  </Button>
                   <OrganisationPicker
                     :morph="pickingOrg"
                     :mine="me.managedOrganisationIds"
@@ -514,8 +516,9 @@ const scrolledPast = useScrolledPast(computed(() => overviewEl.value?.title ?? n
                 >
                   <Checkbox :checked="form.agree" class="mt-0.5" />
                   <span>
-                    <span class="block text-base font-medium">I know ScotDance.app is run by a volunteer</span>
-                    <span class="text-muted-foreground block text-sm">It comes as is, with no guarantees. Families know their results will be online, like a results sheet.</span>
+                    <!-- (Balanced, and kept whole where a split reads badly, so no word sits alone on a line.) -->
+                    <span class="block text-base font-medium text-balance">I accept it comes <span class="whitespace-nowrap">as is</span>, with no guarantees</span>
+                    <span class="text-muted-foreground block text-sm text-pretty">ScotDance.app is free and <span class="whitespace-nowrap">volunteer-run</span>. You’re in control of what goes online for your competition, like dancers and results.</span>
                     <span v-if="errors.agree" class="text-destructive block pt-1 text-sm font-medium" role="alert">{{ errors.agree }}</span>
                   </span>
                 </button>

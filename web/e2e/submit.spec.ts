@@ -144,7 +144,7 @@ test('a step at a time, checked as it goes, and sent once however fast it’s ta
     await expect(page.getByText('Tick this to continue.')).toBeVisible()
     expect(await submissionsNamed(name)).toEqual([])
 
-    await page.getByRole('checkbox', { name: /run by a volunteer/ }).check()
+    await page.getByRole('checkbox', { name: /no guarantees/ }).check()
     await page.getByRole('button', { name: 'Submit', exact: true }).dblclick()
     await expect(page.getByRole('heading', { name: 'Submitted' })).toBeVisible()
 
@@ -219,7 +219,7 @@ test('Submit another starts afresh, at the same venue', async ({ page }) => {
     await next(page)
     await page.getByRole('textbox', { name: 'Your name' }).fill('Morag Test')
     await next(page)
-    await page.getByRole('checkbox', { name: /run by a volunteer/ }).check()
+    await page.getByRole('checkbox', { name: /no guarantees/ }).check()
     await page.getByRole('button', { name: 'Submit', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Submitted' })).toBeVisible()
 

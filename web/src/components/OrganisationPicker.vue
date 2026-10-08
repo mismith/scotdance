@@ -9,8 +9,9 @@ import { useOrganisations } from '@/composables/useOrganisations'
 import type { Morph } from '@/lib/morph'
 import type { OrganisationListItem } from '@/types/organisation'
 
-// Choose an organisation, or start a new one, in a sheet. Yours come first;
-// the rest (where you may pick any) as you type. A name with no match offers
+// Choose an organisation, or start a new one, in a sheet. Yours come first,
+// then (where you may pick any) the rest: a few before you type, so it's
+// clear what one is, and every match as you do. A name with no match offers
 // itself as a new organisation, with a short name if it has one.
 
 const props = withDefaults(
@@ -45,7 +46,7 @@ const matches = (org: OrganisationListItem) =>
 
 const yours = computed(() => o.organisations.value.filter((org) => props.mine.includes(org.id) && matches(org)))
 const others = computed(() =>
-  props.any && q.value ? o.organisations.value.filter((org) => !props.mine.includes(org.id) && matches(org)).slice(0, 30) : [],
+  props.any ? o.organisations.value.filter((org) => !props.mine.includes(org.id) && matches(org)).slice(0, q.value ? 30 : 8) : [],
 )
 const exact = computed(() => o.organisations.value.some((org) => [org.name, org.shortName].some((s) => s?.trim().toLowerCase() === q.value)))
 
@@ -145,7 +146,7 @@ const ROW = 'press-row focus-inset flex min-h-15 w-full items-center gap-3 px-4 
         <p v-if="!yours.length && !others.length && !(creatable && q)" class="text-muted-foreground px-4 py-3 text-sm">
           {{ q ? `Nothing matches “${query.trim()}”.` : any ? 'Type a name to find one.' : 'You’re not an admin of any organisation yet.' }}
         </p>
-        <button v-if="creatable && (q || !yours.length) && !exact" type="button" :class="[ROW, 'text-primary']" @click="startCreate">
+        <button v-if="creatable && !exact" type="button" :class="[ROW, 'text-primary']" @click="startCreate">
           <span class="bg-blue-paper flex size-10 shrink-0 items-center justify-center rounded-xl"><Plus class="size-5" /></span>
           <span class="line-clamp-2 min-w-0 flex-1 text-base font-semibold">{{ q ? `New organisation: “${query.trim()}”` : 'New organisation' }}</span>
         </button>
