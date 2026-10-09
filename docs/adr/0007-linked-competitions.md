@@ -92,7 +92,8 @@ with:
 
 - Name: the first day's, to edit.
 - Date: the day after the one before.
-- Registration number: blank. Often each day has its own.
+- Registration number: blank, since each day often has its own, with a
+  one-tap **Same as Saturday's** for when it doesn't.
 
 Organisations, contact, description and links are shared. In Venue, **Same
 venue for every day** is on; turned off, each day gets its own venue picker.
