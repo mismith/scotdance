@@ -183,7 +183,7 @@ weekends.
 
 - **Manage › Details**: a **This weekend** section, just before
   Organisations. Its rows each have Take off (Undo). Two ways to add:
-  - **Add another day** makes the next day's competition from this one
+  - **Add a day** makes the next day's competition, set up like this one
     (§9).
   - **Add a competition** adds one that's already here. It opens the
     competition picker from Organisation Manage, with your own competitions
@@ -195,70 +195,79 @@ weekends.
   consecutive. **Add them all** applies the strong ones, with Undo. It's a
   pure function, `lib/weekendSuggestions.ts`, like `organisationTagging.ts`.
 
-### 9. Duplicate a competition
+### 9. Set up the weekend once
 
-An organiser asked (2026-10-09): "duplicate competition so like the
-competition venue and judges etc all copy over for multiple day events".
-It's the quickest way to make a weekend's second day, and the same thing
-makes next year's competition from this year's.
+An organiser asked (2026-10-09) for a way to "duplicate competition so like
+the competition venue and judges etc all copy over for multiple day
+events". A one-off copy forks the two days, though: every correction after
+it (a judge swapped, a venue typo, a new age group) has to be made twice,
+and the days drift apart. What organisers mean is that most of a weekend is
+the same, and it should be set up once.
 
-**Where.** Manage › a competition's home: **Duplicate**. Manage › Details ›
-This weekend: **Add another day**, the same sheet with Same weekend on.
+**What organisers see.** In a weekend, Manage's Staff, Categories, Age
+groups, Dances, Platforms and Dancers each list the whole weekend:
 
-**The sheet.**
+- Every item shows the days it's in as **day chips** (**Sat ✓ Sun ✓**).
+  A change applies to every day it's in, with nothing to choose. Untick a
+  day for what differs: a judge on Saturday only, an age group that runs
+  on Sunday only.
+- **Dancers** are one list, with a number for each day (the same number
+  both days, or different), and **+** to enter a dancer on a day.
+  **Import** takes one sheet for the weekend, with a number column for each
+  day.
+- **Details**: name, date and registration number are per day. Venue,
+  address, organisations, links and the registration link are the
+  weekend's, with **Different on Sunday** for when one isn't.
+- **Schedule, dancing order and results** stay per day. Manage opens on
+  today's day.
+- **Add a day** (Manage › Details › This weekend) makes the next day's
+  competition already set up like this one: every item ticked for it,
+  dancers not entered. It asks only for the new day's name and date. There
+  are no copy options, because nothing is copied that then has to be kept
+  in step.
 
-- **Name.** Blank for another day, since the days' names usually differ.
-  For a later date, this one's name with its year moved to the new date's
-  (`lib/organisationTagging.ts` already spots years in names, to strip
-  them).
-- **Date.** The day after.
-- **Same weekend.** On when the dates are 1 to 3 days apart. You need to
-  manage every competition in that weekend (§3).
-- **Copy over**, each line saying what it holds ("3 judges, 1 piper"):
+**How it works.** Each day stays a whole, ordinary competition, so
+everything that reads one (the app, the v3 apps, search, the aggregators,
+alerts) keeps working untouched. Instead of syncing copies in the
+background, the weekend's Manage writes every day at once:
 
-  | | Ticked at first |
-  |---|---|
-  | Venue and details: venue, address, place, organisations, links and files, registration link, description, image | yes |
-  | Staff: judges, pipers, sponsors | yes |
-  | Age groups and dances: categories, age groups with their trophies, dances and which age groups do them | yes |
-  | Platforms | yes |
-  | Admins: everyone who manages this one manages the copy | yes |
-  | Schedule, moved to the new date ("Check it before you publish") | no |
-  | Dancers, with their numbers | no |
+- Every Manage change already goes through one `commit()` in
+  `useManagedCompetition` and one `write()`, a single atomic multi-path
+  update. In a weekend, `commit()` repeats each path for every other day the
+  item is in, in the same update. Undo puts back every day together.
+- **Shared items have the same key on every day** (staff, categories, age
+  groups, dances, platforms), so a path means the same item everywhere and
+  nothing needs mapping: a group's `categoryId`, a dance's `groupIds` and
+  the schedule's references hold on every day. Results and draws are keyed
+  by the same age group and dance, so the families' side (§6) matches days
+  exactly instead of by name. The keys can be shared because nothing
+  indexes these on their own: staff search documents are keyed by
+  competition and staff id (`staffDocId`), and appearances by
+  `compId:recordId`.
+- **Dancers are the exception.** The dancers search index is keyed by the
+  entry id alone (`functions/src/dancers.ts`), so a dancer's entries get
+  their own key on each day, tied by a `weekendKey` field shared across the
+  days.
+- **Rules need nothing new.** The write already checks every path. A change
+  goes out to the days you manage; someone who manages only one day edits
+  only that day (and the lists show where the days now differ). An invite
+  from a weekend's Admins is for every day of it, so this stays rare.
+- **When days differ anyway.** A co-admin of one day only, or a script, can
+  still change one day. The weekend's lists compare a shared item's days
+  and say **Different on Sunday: Morag Fraser's photo**, with **Make the
+  same**. Nothing is overwritten without being shown.
+- Pure functions, tested: `lib/admin/weekend.ts` merges the days' lists
+  into one (an item and its days) and fans a change out into paths.
 
-  Never copied: the registration number, dancing order, results and
-  points, invites. Schedule and dancers start unticked because a copy that
-  isn't checked would tell families something wrong (Principle 3).
+**Bringing in weekends made before this.** Two competitions set up
+separately don't share keys. **Match up** (in This weekend) pairs their
+staff, age groups, dances and platforms by name for the organiser to
+confirm. It re-keys only a day with no results or draws yet; otherwise the
+days stay as they are, and the families' side matches by name.
 
-The copy **starts private** (neither listed nor published) and opens at its
-Manage home: "Duplicated. It's private until you list it."
-
-**Server.** A `duplicateCompetition` callable (`functions/src/duplicate.ts`):
-
-- Only an admin of the competition, or a system admin, can call it. It
-  allows 10 a day per account, as submissions do.
-- **Every copied record gets a new key**, and every reference is remapped:
-  - a group's `categoryId` and `sponsor`
-  - a dance's `groupIds`
-  - a dancer's `groupId`
-  - the schedule's `danceId`, platform keys, `orderedGroupIds` and
-    `orderedJudgeIds`
-
-  Keys can't be shared: the dancers search index is keyed by the entry id
-  alone (`functions/src/dancers.ts`), so a copied entry would overwrite the
-  original's. The remap is a pure function, with tests.
-- **Back-pointers are left off** (`judgeId`, `piperId`, `dancerId`,
-  `venueId`, `submissionId`). The aggregators write them when the copy is
-  listed or published, as they do for any competition.
-- **Schedule days move** by the difference between the dates.
-- **Links and the image** point at the same stored files.
-- **One multi-path update** writes the competition, its data, permissions
-  (the caller, and the other admins if chosen), and `siblings` for the
-  weekend. Granting other people access needs the admin SDK, so this can't
-  be a write from the app.
-- **admin@ gets `competition-duplicated`** (what, from which, by whom). A
-  copy skips Submit's review, but only someone who already runs an approved
-  competition can make one.
+**Next year.** Making next year's competition from this one is a real
+fork (nothing should stay in step), so it can be a plain copy later, with
+new keys. It isn't part of weekends.
 
 ## Considered
 
@@ -272,9 +281,6 @@ Manage home: "Duplicated. It's private until you list it."
 
 ## Not now
 
-- **Copying into a competition that already exists** (bringing Saturday's
-  age groups into a Sunday someone already started). That raises what to
-  overwrite; Duplicate makes a new one instead.
 - **A page or name for the weekend itself.** The organisation's page is the
   umbrella when there is one.
 - **Weekend aggregates**: trophies across days.
@@ -286,24 +292,27 @@ Manage home: "Duplicated. It's private until you list it."
 ## Consequences
 
 - Deploy: database rules (`siblings`, `with`), functions
-  (`duplicateCompetition`, `competitionSubmissionCreated`,
-  `competitionSubmissionUpdated`, `competitionDeleted`, the competitions
-  search schema), then System admin › Tools › Competitions search once.
-- A new Postmark template, `competition-duplicated`, in `postmark/`.
+  (`competitionSubmissionCreated`, `competitionSubmissionUpdated`,
+  `competitionDeleted`, the competitions search schema), then System admin ›
+  Tools › Competitions search once.
+- Add a day is a write from the app: you manage both days, so the rules
+  already allow it. The other admins are invited, as now.
 - v3 ignores `siblings`, and its admin writes field by field, so it won't
   remove them.
 - A weekend submitted together gets one approval email per day.
 
 ## Build order
 
-1. Data, rules, Manage › Details, deletion clean-up.
-2. Duplicate. It's useful on its own (next year's competition) and it's
-   what organisers asked for.
+1. Data, rules, Manage › Details' This weekend, deletion clean-up.
+2. Add a day, and Manage across the weekend for Staff, categories, age
+   groups, dances, platforms and details (§9). This is what organisers asked
+   for, and shared keys make the families' side exact.
 3. Home's Tomorrow and Yesterday, and a dancer's weekend.
 4. Schedule and Results carrying on; Overview's This weekend; Dancers' switch.
 5. Lists: `groupWeekends` in the list, profiles, Home, calendar, map, search.
-6. Submit's Add another day, and approval.
-7. Tools › Weekends for what's already here.
+6. Dancers with a number per day, and the weekend import.
+7. Submit's Add another day; Tools › Weekends and Match up for weekends
+   made before this.
 
 ## Open questions
 
@@ -312,9 +321,10 @@ Manage home: "Duplicated. It's private until you list it."
 - **Results order**: the competition you came in through first (proposed),
   or always today's first.
 - **Dancers**: keep its day switch, or is a dancer's weekend page enough.
-- **Duplicates and review**: a copy is made at once and admin@ is told
-  (proposed), or it goes through Submit's review like a new competition.
-- **Submit's Add another day**: still worth it alongside Duplicate, or is
-  submitting the first day and duplicating it enough.
+- **Submit's Add another day**: still worth it, or is submitting the first
+  day and adding the next in Manage enough. Add a day in Manage shares the
+  setup from the start; two submissions don't.
+- **Day chips by default**: a new judge goes on every day (proposed), or
+  only the day you're on.
 - **How many**: count likely weekends in the data before building Tools, to
   see whether suggestions or adding by hand will do.
