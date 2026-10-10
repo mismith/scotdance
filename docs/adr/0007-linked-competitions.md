@@ -57,7 +57,7 @@ enough that matching on date and place would mislead families
 ```
 
 - `part` is `staff` or `venue` to begin with (§3).
-- A competition is in at most one link.
+- A competition is in at most one link (Murray, 2026-10-10).
 - `/competitionLinks` is public. It's read whole, as `/organisations` is
   (tens of links, not thousands), so lists and the switcher need no extra
   reads.
@@ -68,7 +68,7 @@ enough that matching on date and place would mislead families
 
 | Part | What it covers |
 |---|---|
-| **Staff** | The whole staff list: judges, pipers and the rest, with their photos and details |
+| **Staff** | The whole staff list: judges, pipers, sponsors and the rest, with their photos and details. All of it or none: picking types would be too complicated (Murray, 2026-10-10) |
 | **Venue** | `venue`, `address`, `location`, `lat`, `lng`, `country`, `region`, `locality` |
 
 Each competition in the link switches each part on or off for itself.
@@ -158,7 +158,11 @@ current tab again.
 
 **Also:**
 
-- Overview has a **Linked competitions** section with the same rows.
+- On Overview the app bar's title only appears once you scroll, so the
+  header has the same switcher as a pill beside Favourite: **4 of 7 linked
+  ▾**.
+- Overview has a **Linked competitions** section with the same rows: the
+  ones either side of this one, and **All 7**.
 - Only competitions the viewer can see appear: listed, or ones they manage.
 - Nothing else changes. Each competition's Dancers, Schedule and Results are
   its own.
@@ -180,6 +184,11 @@ A section before Organisations.
   - **Make this the primary**.
   - **Sync now**.
   - **Take out of the link**.
+- **Inline, too.** The switches live in this section, but a linked
+  competition's Staff page offers the primary's staff where it's needed:
+  "4 of 7 linked. SDCCS Pre-Premier Open is the primary", with **Take its
+  staff**. That's the same switch, and it confirms what it replaces. Details'
+  venue fields offer the primary's venue the same way.
 - **Synced parts on the others are read-only.**
   - Staff shows "Synced from SDCCS Pre-Premier Open. Change staff there and
     it changes here too", with **Open it** and **Stop syncing**.
@@ -189,9 +198,31 @@ For SDCCS: link all seven, make the first one the primary, and switch on
 Staff and Venue for all. Any day at a different venue switches its own
 Venue off.
 
-### 8. Lists
+### 8. The linked mark
 
-Unchanged for now. Each linked competition keeps its own row.
+Wherever a competition shows, a linked one says so, always in the same
+way (Murray asked for one treatment across the app, 2026-10-10). Each
+linked competition keeps its own row; nothing is merged.
+
+- **Shape: a second tile behind the date tile.** The date tile already
+  stands for a competition everywhere, so a linked one's tile has a second
+  layer behind it, down and to the right, in a new `--stack` colour (a mid
+  grey in both themes). It's one layer however many are linked. It works on
+  a today tile too, which stays pink. It's a `linked` prop on `DateTile`,
+  passed by `CompetitionDateRow` and the other rows.
+- **Words: "4 of 7 linked".** The same phrase in a row's detail line, under
+  the title switcher, and on Overview's pill. State is shape plus words here;
+  colour stays free for today, live and favourites.
+- **Where:** the competitions list; Home; Search; venue, judge, piper and
+  organisation pages; a dancer's competitions; Manage's list. Also the title
+  and Overview (§6).
+- **Calendar:** a bar under a link's days joins them, beneath the tint the
+  calendar already gives days with competitions.
+- **Map:** a linked competition's pin label stacks the same way as its
+  tile.
+- **Not a chain icon.** The link icon already means a web link everywhere in
+  the app (links and files, registration), and the copy and layers icons are
+  taken too.
 
 ## Considered
 
@@ -213,7 +244,6 @@ Unchanged for now. Each linked competition keeps its own row.
 ## Not now
 
 - More parts to sync (organisations, links and files, platforms).
-- Linked competitions showing together in lists.
 - Submitting several days at once, linked on approval.
 - Making next year's competition from this year's: a one-way copy, its own
   feature.
@@ -243,8 +273,5 @@ Unchanged for now. Each linked competition keeps its own row.
 
 ## Open questions
 
-- **Which staff sync**: all of it (proposed), or only judges and pipers.
-  Sponsors may differ by day.
-- **One link per competition** (proposed), or can a competition be in two
-  (a weekend inside the SDCCS week)?
-- **Lists**: worth showing links there later, or is the switcher enough.
+- **Words for a pair**: "1 of 2 linked" everywhere (proposed, the same
+  wording everywhere), or "Linked with Chinook Open" when there are only two.
