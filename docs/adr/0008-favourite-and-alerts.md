@@ -15,71 +15,81 @@ judges, pipers, venues and organisations. What each one does differs:
 | **Judge, piper, venue, organisation** | First on their index page; starred on a competition's staff | None |
 
 None of it is following as people know it from social media, and
-"following" a child reads wrong. Murray (2026-10-10): the ones that give
-alerts should say alerts, and the ones that are handy shortcuts can be
-favourites.
+"following" a child reads wrong.
 
-A first version of this ADR (2026-10-09) made dancers Alerts and
-everything else Favourite. But a dancer is both a shortcut and alerts, and
-so is a competition, so one word for each can't say what it does.
+Murray (2026-10-10):
+
+- Favouriting something signs you up for its alerts, so Alerts appears only
+  once it's a favourite. That lets a dancer be a favourite without alerts.
+- Competitions don't need favourites. Pinned competitions, which is what
+  following a competition used to be, aren't needed any more: a competition
+  just has alerts.
+- Keep it simple.
 
 ## Decisions
 
-### 1. Two things, each named for what it does
+### 1. Dancers: ★ Favourite, with alerts
 
-- **★ Favourite** keeps something handy. Anything can be one: dancers,
-  competitions, judges, pipers, venues, organisations. The star stays,
-  Royal Stewart red when on. The button says **Favourite** in both states,
-  with the star filled when on (`aria-pressed`), as iOS does.
-- **🔔 Alerts** tells you when something happens. Only what can alert you
-  has it: dancers and competitions, and organisations once "a new
-  competition is listed" exists (ADR 0005). The button says **Alerts**, then
-  **Alerts on**.
+- **Favourite** is the button: their day on Home in their colour, "Only my
+  dancers", first in Dancers.
+- **Favouriting turns their alerts on.** You get them when they place and
+  the morning they dance.
+- **The bell appears only once they're a favourite:** **Alerts**, or
+  **Alerts off** once turned off. Turning alerts off keeps them a favourite;
+  a teacher can favourite a class and turn alerts off for most of it.
+- **Lists show the star.**
 
-A judge's page has Favourite only. A dancer's and a competition's have
-both, side by side.
+### 2. Competitions: 🔔 Alerts only
 
-### 2. How they go together
+- **Alerts** is the only button. **Alerts on** gets you the dancer list
+  going up, and the morning of.
+- **Nothing is pinned.**
+  - No star.
+  - Home's Coming up shows your favourite dancers' competitions.
+  - The calendar's dots just count competitions.
+  - Map pins aren't red.
+- **Lists say "Alerts on"** with the bell, so you can see which you've
+  asked for.
 
-- **Favouriting a dancer asks once**: "Know the moment Chloe places?" with
-  **Get alerts** and **Not now**. This is ADR 0006's ask, which was already
-  planned for the moment you start following someone. "Get alerts" leads to
-  the phone's prompt.
-- A teacher can favourite a whole class and say Not now: all of them on
-  Home, none of them buzzing. That answers the open question of whether a
-  dancer needed two switches.
-- **Alerts on means Favourite on**: you can't get alerts for something that
-  isn't on your Home. Turning Favourite off turns its alerts off too, and
-  says so.
-- **In lists, only the star.** The bell is on the dancer's or competition's
-  own page, and in Settings › Alerts.
-- **Settings › Alerts** lists what you get alerts for ("3 dancers, 2
-  competitions"), above ADR 0006's kinds (results, morning of, dancer list
-  up), which say what you get.
+### 3. Judges, pipers, venues, organisations: ★ Favourite
 
-### 3. Data
+A shortcut: first on their index page, starred on a competition's staff.
+An organisation gets the bell, the same way as a dancer, once "a new
+competition is listed" exists (ADR 0005).
 
-- Favourites stay where they are: `users:favorites/{uid}/{type}/{id}`.
-- Alerts are new: `users:alerts/{uid}/{dancers|competitions}/{id} = true`.
-  The rules allow only the user themselves.
-- The reverse indexes that send alerts (`dancers:followers`,
-  `competitions:followers`, ADR 0006) are kept from `users:alerts` instead of
-  `users:favorites`. The in-app banner (`useLiveAlerts`) reads the same set.
-- **No one loses alerts they have.** A one-off backfill gives every
-  existing dancer and competition favourite its alerts, as
-  `backfillFollowers` did. It's in System admin › Tools.
+### 4. The first time, on a phone
+
+ADR 0006's sheet still asks before the phone's own prompt, once per phone,
+the first time something turns alerts on: "Know the moment Chloe places.
+Alerts come as notifications. Allow them on this phone?" **Not now** leaves
+alerts on for the in-app banner. Settings › Alerts can ask again.
+
+### 5. Data: almost nothing moves
+
+- **Favourites stay** at `users:favorites/{uid}/{type}/{id}`.
+  - A competition's entry there now means "alerts on". The path keeps its
+    name, so nobody loses anything and nothing needs migrating.
+  - `dancers:followers` and `competitions:followers` (ADR 0006) are kept
+    from it as now.
+- **One new path: `users:alertsOff/{uid}/dancers/{id} = true`**, for a
+  favourite dancer with alerts turned off. The rules allow only the user
+  themselves.
+  - The senders (`sendResultAlerts`, `morningSummaries`) and the in-app
+    banner (`useLiveAlerts`) skip anyone whose favourite has alerts turned
+    off.
+  - Unfavouriting a dancer removes their entry here too.
 
 ## Consequences
 
-- Copy changes in about 20 files under `web/src` (buttons, rows, Home,
-  Settings, empty states), with their unit and e2e tests. Also About,
-  Policies, and the wording in ADRs 0005 and 0006.
-- Functions: the follower triggers move to `users:alerts`, plus the
-  backfill.
+- Copy changes in about 20 files under `web/src`:
+  - `FavoriteButton` becomes Favourite, or Alerts on a competition.
+  - `FollowButton` becomes Favourite with the bell.
+  - Rows, Home, Settings and empty states.
+  - Their unit and e2e tests, plus About, Policies, and the wording in ADRs
+    0005 and 0006.
+- Competitions stop being pinned:
+  - Home's Coming up, the calendar's favourite dots, the red map pins and
+    the competition pickers' "followed" lose their competition favourites.
+  - Their code gets simpler.
 - The store screenshots show "Following", so they'd be taken again. Doing
   this before the v4 store builds avoids a second set.
-
-## Open questions
-
-- **Favouriting a competition**: ask about its alerts as a dancer does, or
-  turn them on quietly (as following a competition does now).

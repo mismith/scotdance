@@ -204,32 +204,27 @@ Wherever a competition shows, a linked one says so, always in the same
 way (Murray asked for one treatment across the app, 2026-10-10). Each
 linked competition keeps its own row; nothing is merged.
 
-**A capsule under the date tile** (Murray, 2026-10-10, after Apple
-Calendar's month view). The date tile already stands for a competition
-everywhere. A linked one has a 4px capsule under it, as wide as the tile:
+**Dots under the date tile** (Murray, 2026-10-10). The date tile already
+stands for a competition everywhere. A linked one has a row of dots under
+it:
 
-- **It splits, one segment per linked competition**, with 2px between
-  them: 2, then 3, up to 5 under a 44px tile. This one's segment is Saltire
-  blue and the others are a new `--seg` grey. Only the capsule's two ends
-  are rounded.
-- **Then dots**: once a segment would be narrower than 6px, the capsule
-  turns to dots, one per linked competition. This one's dot is a longer
-  pill, so where it sits isn't told by colour alone. When more dots are
-  linked than fit, it shows the ones either side of this one, with the
-  outermost smaller.
-- **No words in rows**: "4 of 7 linked" is hidden text for screen
-  readers.
-- **The same rule everywhere, at each place's width**: under the title in
-  the switcher (64px, where seven still fit as segments), under Overview's
-  52px tile, and under each row's 44px tile.
+- **A dot per linked competition**, 4px with 2px between. This one's is a
+  Saltire-blue pill, 8px long, so where it sits isn't told by colour alone.
+  The others use a new `--seg` grey.
+- **At most 7**, which is just the width of a 44px tile. With more linked,
+  the dots show the 7 around this one, and the outer one on a side with
+  more beyond it is smaller.
+- **No words in rows**: "4 of 7 linked" is hidden text for screen readers.
+- **The same dots everywhere**: under each row's tile, under Overview's
+  tile, and after "Today" under the title in the switcher.
 - **Where**: the competitions list; Home; Search; venue, judge, piper and
   organisation pages; a dancer's competitions; Manage's list; the title and
   Overview (§6). The calendar's grid keeps its dots, which count the
-  competitions on each day; the list of the chosen day under it shows the
-  capsule.
-- **Built as**: `components/LinkedCapsule.vue` (`count`, `position`,
-  `width`), drawn by `DateTile` when it's given `linked`. The split-or-dots
-  rule is a pure function in `lib/linkedCapsule.ts`, with tests.
+  competitions on each day. The list of the chosen day under it shows the
+  linked dots.
+- **Built as** `components/LinkedDots.vue` (`count`, `position`), drawn by
+  `DateTile` when it's given `linked`. The window is a pure function in
+  `lib/linkedDots.ts`, with tests.
 
 **Considered (mocked up side by side, 2026-10-10):**
 
@@ -239,8 +234,10 @@ everywhere. A linked one has a 4px capsule under it, as wide as the tile:
   long list.
 - **A folded corner in Saltire blue**: it says "more" rather than "one of a
   set", so it still needs words.
-- **Segments inside the tile's foot**: cramped against the weekday; under
-  the tile, the capsule has room to split.
+- **Segments inside the tile's foot**: cramped against the weekday.
+- **A capsule under the tile that splits into segments, then turns to
+  dots** (like Apple Calendar's month view): two looks for one thing. Dots
+  alone are simpler, and seven fit.
 - **Not a chain icon**: the link icon already means a web link everywhere in
   the app, and the copy and layers icons are taken too.
 
