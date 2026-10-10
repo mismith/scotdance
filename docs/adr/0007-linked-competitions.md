@@ -204,25 +204,36 @@ Wherever a competition shows, a linked one says so, always in the same
 way (Murray asked for one treatment across the app, 2026-10-10). Each
 linked competition keeps its own row; nothing is merged.
 
-- **Shape: a second tile behind the date tile.** The date tile already
-  stands for a competition everywhere, so a linked one's tile has a second
-  layer behind it, down and to the right, in a new `--stack` colour (a mid
-  grey in both themes). It's one layer however many are linked. It works on
-  a today tile too, which stays pink. It's a `linked` prop on `DateTile`,
-  passed by `CompetitionDateRow` and the other rows.
-- **Words: "4 of 7 linked".** The same phrase in a row's detail line, under
-  the title switcher, and on Overview's pill. State is shape plus words here;
-  colour stays free for today, live and favourites.
-- **Where:** the competitions list; Home; Search; venue, judge, piper and
-  organisation pages; a dancer's competitions; Manage's list. Also the title
-  and Overview (§6).
-- **Calendar:** a bar under a link's days joins them, beneath the tint the
-  calendar already gives days with competitions.
-- **Map:** a linked competition's pin label stacks the same way as its
-  tile.
-- **Not a chain icon.** The link icon already means a web link everywhere in
-  the app (links and files, registration), and the copy and layers icons are
-  taken too.
+**Proposed: segments along the date tile's foot.** The date tile already
+stands for a competition everywhere. A linked one's tile has a thin
+segmented strip along its bottom edge: one segment per linked competition,
+with this one's in Saltire blue. It says how many are linked and which this
+one is, at a glance and without words.
+
+- **Rows**: the strip replaces the words. "4 of 7 linked" stays as hidden
+  text for screen readers. It's a `linked` prop on `DateTile`
+  (`{ position, count }`), passed by `CompetitionDateRow` and the other rows.
+- **The title**: the same strip under the competition's name in the app bar
+  switcher, and on Overview's switcher pill.
+- **Calendar**: a strip under a link's days, one segment per day, today's
+  in blue.
+- **Map**: the strip under a linked competition's pin label.
+- **Where**: the competitions list; Home; Search; venue, judge, piper and
+  organisation pages; a dancer's competitions; Manage's list; the title and
+  Overview (§6).
+- **Past 7**, the segments get too thin to count, so the strip shows 7
+  with the current one in place. The switcher has the exact number.
+
+**Considered (mocked up side by side, 2026-10-10):**
+
+- **A. A grey tile stacked behind**: too subtle, and it can read as a
+  rendering glitch.
+- **B. A tile fanned behind in Saltire blue**: lively, but loud on every
+  linked row of a long list.
+- **C. A folded corner in Saltire blue**: neat, but it says "more" rather
+  than "one of a set", so it still needs words.
+- **Not a chain icon**: the link icon already means a web link everywhere in
+  the app, and the copy and layers icons are taken too.
 
 ## Considered
 
@@ -273,5 +284,4 @@ linked competition keeps its own row; nothing is merged.
 
 ## Open questions
 
-- **Words for a pair**: "1 of 2 linked" everywhere (proposed, the same
-  wording everywhere), or "Linked with Chinook Open" when there are only two.
+- **The mark**: segments (proposed), or one of the others in §8.
