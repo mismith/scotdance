@@ -159,7 +159,7 @@ current tab again.
 **Also:**
 
 - On Overview the app bar's title only appears once you scroll, so the
-  header has the same switcher as a pill beside Favourite: **4 of 7 linked
+  header has the same switcher as a pill beside Alerts: **4 of 7 linked
   ▾**.
 - Overview has a **Linked competitions** section with the same rows: the
   ones either side of this one, and **All 7**.
