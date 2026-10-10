@@ -130,9 +130,10 @@ on or off.
 ### 6. Families: the switcher
 
 **In a linked competition, its title is the switcher.** The title in the app
-bar becomes a button with a chevron, with "4 of 7 linked" under it. It opens
-the linked competitions: a dropdown on wide screens, a sheet on phones. Each
-row shows:
+bar becomes a button with a chevron; the line under it stays as on any
+competition ("Today · Halifax, NS"). It opens the competitions it goes with,
+headed by what they are in plain words: **7 competitions, Jul 5–11**. That's
+a dropdown on wide screens and a sheet on phones. Each row shows:
 
 - Its date tile and name.
 - Today or Tomorrow when it is.
@@ -159,10 +160,13 @@ current tab again.
 **Also:**
 
 - On Overview the app bar's title only appears once you scroll, so the
-  header has the same switcher as a pill beside Alerts: **4 of 7 linked
+  header has the same switcher as a pill beside Alerts: **7 competitions
   ▾**.
-- Overview has a **Linked competitions** section with the same rows: the
-  ones either side of this one, and **All 7**.
+- Overview has a section with the same rows, headed **7 competitions, Jul
+  5–11**: the ones either side of this one, and **All 7**.
+- **Words for families never say "linked"** (Murray found "4 of 7 linked"
+  unclear, 2026-10-10). They say how many competitions and when. "Linked" is
+  only for organisers, in Manage, where they link them.
 - Only competitions the viewer can see appear: listed, or ones they manage.
 - Nothing else changes. Each competition's Dancers, Schedule and Results are
   its own.
@@ -186,8 +190,8 @@ A section before Organisations.
   - **Take out of the link**.
 - **Inline, too.** The switches live in this section, but a linked
   competition's Staff page offers the primary's staff where it's needed:
-  "4 of 7 linked. SDCCS Pre-Premier Open is the primary", with **Take its
-  staff**. That's the same switch, and it confirms what it replaces. Details'
+  "Linked with 6 others. SDCCS Pre-Premier Open is the primary", with
+  **Take its staff**. That's the same switch, and it confirms what it replaces. Details'
   venue fields offer the primary's venue the same way.
 - **Synced parts on the others are read-only.**
   - Staff shows "Synced from SDCCS Pre-Premier Open. Change staff there and
@@ -204,27 +208,25 @@ Wherever a competition shows, a linked one says so, always in the same
 way (Murray asked for one treatment across the app, 2026-10-10). Each
 linked competition keeps its own row; nothing is merged.
 
-**Dots under the date tile** (Murray, 2026-10-10). The date tile already
-stands for a competition everywhere. A linked one has a row of dots under
-it:
+**Dots under the date tile, and only there** (Murray, 2026-10-10). The
+date tile already stands for a competition everywhere. A linked one has a
+row of dots under it, in Saltire blue:
 
-- **A dot per linked competition**, 4px with 2px between. This one's is a
-  Saltire-blue pill, 8px long, so where it sits isn't told by colour alone.
-  The others use a new `--seg` grey.
-- **At most 7**, which is just the width of a 44px tile. With more linked,
-  the dots show the 7 around this one, and the outer one on a side with
-  more beyond it is smaller.
-- **No words in rows**: "4 of 7 linked" is hidden text for screen readers.
-- **The same dots everywhere**: under each row's tile, under Overview's
-  tile, and after "Today" under the title in the switcher.
-- **Where**: the competitions list; Home; Search; venue, judge, piper and
-  organisation pages; a dancer's competitions; Manage's list; the title and
-  Overview (§6). The calendar's grid keeps its dots, which count the
-  competitions on each day. The list of the chosen day under it shows the
+- **A dot per competition that goes together, up to 5.**
+- **More than 5: four dots and a plus.** It never shrinks or windows the
+  dots.
+- **No position.** The tile's date already places it, and the switcher
+  ticks the current one, so every dot is the same.
+- **No words in rows.** Screen readers hear "One of 7 competitions, July 5
+  to 11".
+- **Where:** under the date tile wherever one shows: the competitions list,
+  Home, Search, venue, judge, piper and organisation pages, a dancer's
+  competitions, Manage's list, and Overview's header. Nothing under the
+  title. The calendar's grid keeps its own dots, which count the
+  competitions on each day; the list of the chosen day under it shows the
   linked dots.
-- **Built as** `components/LinkedDots.vue` (`count`, `position`), drawn by
-  `DateTile` when it's given `linked`. The window is a pure function in
-  `lib/linkedDots.ts`, with tests.
+- **Built as** `components/LinkedDots.vue` (`count`), drawn by `DateTile`
+  when it's given `linked`.
 
 **Considered (mocked up side by side, 2026-10-10):**
 
@@ -236,8 +238,9 @@ it:
   set", so it still needs words.
 - **Segments inside the tile's foot**: cramped against the weekday.
 - **A capsule under the tile that splits into segments, then turns to
-  dots** (like Apple Calendar's month view): two looks for one thing. Dots
-  alone are simpler, and seven fit.
+  dots** (like Apple Calendar's month view): two looks for one thing.
+- **Dots that show this one's position, windowed past 7**: too much to take
+  in. Four and a plus is enough.
 - **Not a chain icon**: the link icon already means a web link everywhere in
   the app, and the copy and layers icons are taken too.
 
