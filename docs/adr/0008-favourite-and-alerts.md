@@ -1,6 +1,6 @@
 # ADR-0008: Favourite and Alerts, instead of Follow
 
-Status: Proposed (revised 2026-10-10)
+Status: Accepted (Murray, 2026-10-10)
 Date: 2026-10-09
 
 ## Context

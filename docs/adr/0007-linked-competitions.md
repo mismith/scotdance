@@ -204,34 +204,43 @@ Wherever a competition shows, a linked one says so, always in the same
 way (Murray asked for one treatment across the app, 2026-10-10). Each
 linked competition keeps its own row; nothing is merged.
 
-**Proposed: segments along the date tile's foot.** The date tile already
-stands for a competition everywhere. A linked one's tile has a thin
-segmented strip along its bottom edge: one segment per linked competition,
-with this one's in Saltire blue. It says how many are linked and which this
-one is, at a glance and without words.
+**A capsule under the date tile** (Murray, 2026-10-10, after Apple
+Calendar's month view). The date tile already stands for a competition
+everywhere. A linked one has a 4px capsule under it, as wide as the tile:
 
-- **Rows**: the strip replaces the words. "4 of 7 linked" stays as hidden
-  text for screen readers. It's a `linked` prop on `DateTile`
-  (`{ position, count }`), passed by `CompetitionDateRow` and the other rows.
-- **The title**: the same strip under the competition's name in the app bar
-  switcher, and on Overview's switcher pill.
-- **Calendar**: a strip under a link's days, one segment per day, today's
-  in blue.
-- **Map**: the strip under a linked competition's pin label.
+- **It splits, one segment per linked competition**, with 2px between
+  them: 2, then 3, up to 5 under a 44px tile. This one's segment is Saltire
+  blue and the others are a new `--seg` grey. Only the capsule's two ends
+  are rounded.
+- **Then dots**: once a segment would be narrower than 6px, the capsule
+  turns to dots, one per linked competition. This one's dot is a longer
+  pill, so where it sits isn't told by colour alone. When more dots are
+  linked than fit, it shows the ones either side of this one, with the
+  outermost smaller.
+- **No words in rows**: "4 of 7 linked" is hidden text for screen
+  readers.
+- **The same rule everywhere, at each place's width**: under the title in
+  the switcher (64px, where seven still fit as segments), under Overview's
+  52px tile, and under each row's 44px tile.
 - **Where**: the competitions list; Home; Search; venue, judge, piper and
   organisation pages; a dancer's competitions; Manage's list; the title and
-  Overview (§6).
-- **Past 7**, the segments get too thin to count, so the strip shows 7
-  with the current one in place. The switcher has the exact number.
+  Overview (§6). The calendar's grid keeps its dots, which count the
+  competitions on each day; the list of the chosen day under it shows the
+  capsule.
+- **Built as**: `components/LinkedCapsule.vue` (`count`, `position`,
+  `width`), drawn by `DateTile` when it's given `linked`. The split-or-dots
+  rule is a pure function in `lib/linkedCapsule.ts`, with tests.
 
 **Considered (mocked up side by side, 2026-10-10):**
 
-- **A. A grey tile stacked behind**: too subtle, and it can read as a
+- **A grey tile stacked behind**: too subtle, and it can read as a
   rendering glitch.
-- **B. A tile fanned behind in Saltire blue**: lively, but loud on every
-  linked row of a long list.
-- **C. A folded corner in Saltire blue**: neat, but it says "more" rather
-  than "one of a set", so it still needs words.
+- **A tile fanned behind in Saltire blue**: loud on every linked row of a
+  long list.
+- **A folded corner in Saltire blue**: it says "more" rather than "one of a
+  set", so it still needs words.
+- **Segments inside the tile's foot**: cramped against the weekday; under
+  the tile, the capsule has room to split.
 - **Not a chain icon**: the link icon already means a web link everywhere in
   the app, and the copy and layers icons are taken too.
 
@@ -281,7 +290,3 @@ one is, at a glance and without words.
 3. Staff sync: the copy, the trigger, the rules, Staff read-only on the
    others.
 4. Venue sync.
-
-## Open questions
-
-- **The mark**: segments (proposed), or one of the others in §8.
