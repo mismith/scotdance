@@ -1,6 +1,6 @@
 # ADR-0007: Linked competitions
 
-Status: Proposed
+Status: Accepted (Murray, 2026-10-11)
 Date: 2026-10-10
 
 ## Context
@@ -109,12 +109,20 @@ In Manage's order: Details' sections top to bottom, then Staff (Murray,
   or cleared and listed in the confirmation.
 - **Then triggers keep it in step.**
   - `competitionStaffSync` on `competitions:data/{id}/staff/{staffId}`.
-  - Every other part, in the existing `competitions/{id}` update trigger:
-    it checks the changed fields against §3's table.
+  - Every other part, in `competitionDetailsSync` on `competitions/{id}`:
+    it checks the changed fields against §3's table. It's a trigger of its
+    own, so trouble indexing for search can't hold up the copy.
   - Each one checks whether `id` is a primary and, for every competition
     syncing that part, writes the primary's value. It reads the value fresh
     rather than taking the event's, so events that arrive out of order
     still end up in step.
+- **Staff the primary deletes** come off the others' schedules and trophies
+  too, as deleting one in Manage does.
+- **Championship points move with the judge.** Turning Staff on moves each
+  judge's points to the one with the same name in the primary's staff, and
+  is refused when someone's points would have no one to go to: Manage says
+  who ("Its championship points have marks from Iain Sutherland, who isn't on
+  SDCCS Pre-Premier Open's staff").
 - **Same keys.** A synced staff member has the same key in every competition,
   so sponsors and schedule judges can point at it. That's safe: staff search
   documents are keyed by competition and staff id (`staffDocId`), and
@@ -151,11 +159,17 @@ In Manage's order: Details' sections top to bottom, then Staff (Murray,
 One callable does it all: link, take out, make primary, and switch parts
 on or off.
 
-- **Changing a link** (linking, choosing the primary, switching a part)
-  needs you to manage every competition it touches, or be a system admin.
-  Otherwise someone could attach their competition to a popular one, or
-  push their staff into it.
-- **Taking your own competition out** needs only that competition.
+- **Changing a link** needs you to manage every competition it changes, or
+  be a system admin. Otherwise someone could attach their competition to a
+  popular one, or push their staff into it.
+  - Linking: the one joining and the primary.
+  - Choosing the primary: all of them (each one's synced parts are copied
+    again from it).
+  - A part's switch: each competition whose switch changes.
+- **Taking one out** needs that competition, or the primary.
+- **Which joins which.** Linking two, the one not yet in a link joins the
+  other's; with neither in one, the one you're on becomes the primary.
+- A link has at most 14 competitions.
 - `competitionDeleted` takes a deleted competition out of its link.
 
 ### 6. Families: the switcher
@@ -194,7 +208,9 @@ current tab again.
   header has the same switcher as a pill beside Alerts: **7 competitions
   ▾**.
 - Overview has a section with the same rows, headed **7 competitions, Jul
-  5–11**: the ones either side of this one, and **All 7**.
+  5–11**: the ones either side of this one, and **All 7**. It comes after
+  Your dancers here, before When and where. Its pill sits beside Follow
+  (Alerts, once ADR 0008 is built).
 - **Words for families never say "linked"** (Murray found "4 of 7 linked"
   unclear, 2026-10-10). They say how many competitions and when. "Linked" is
   only for organisers, in Manage, where they link them.
