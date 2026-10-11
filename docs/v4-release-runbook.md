@@ -231,6 +231,27 @@ order:
 Don't approve the blank one from 2026-10-11: approval copies its empty
 competition into a nameless one. Reject or delete it.
 
+## Linking competitions (ADR 0007)
+
+Built on `ci/linked-competitions`. Nothing changes for anyone until two
+competitions are linked, and only their organisers can do that, so the
+backend can go first. From the branch:
+
+1. `firebase deploy --only database`: who reads the link data (anyone) and
+   writes it (functions only), and the refusals for an app change to a part
+   a competition takes from its primary. The rules file is the whole of
+   `next`'s plus these: check nothing else is waiting.
+2. `firebase deploy --only functions:linkCompetitions,functions:competitionStaffSync,functions:competitionDetailsSync,functions:competitionDeleted,functions:competitionPublishedChanged,functions:sendLinkedPublishedAlerts`.
+   `sendLinkedPublishedAlerts` is a Cloud Tasks queue like
+   `sendResultAlerts`: link two test competitions you follow, publish the
+   primary, and check the functions logs show it ran (the emulator can't
+   prove its URL lookup and invoker permission).
+3. Merge to `next`.
+
+v3's admin gets "permission denied" changing a synced part on a linked
+competition (it has no idea it's linked). Fine until cutover: only v4's
+Manage can link.
+
 ## Parked
 
 - Tartans: branch `claude/tartans-parked`, as a future optional side tool.
