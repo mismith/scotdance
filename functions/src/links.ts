@@ -96,6 +96,24 @@ async function syncing(db: Db, link: Link, part: Part): Promise<string[]> {
 const personKey = (item: Json) => `${item?.firstName ?? ''} ${item?.lastName ?? ''}`.trim().replace(/\s+/g, ' ').toLowerCase();
 const personName = (item: Json) => `${item?.firstName ?? ''} ${item?.lastName ?? ''}`.trim().replace(/\s+/g, ' ');
 
+/** Each list of judges in a schedule: its path (under the schedule) and ids. */
+function judgeLists(schedule: Json): Array<{ path: string; ids: string[] }> {
+  const out: Array<{ path: string; ids: string[] }> = [];
+  for (const [dayId, day] of Object.entries(schedule?.days ?? {}) as [string, Json][]) {
+    for (const [blockId, block] of Object.entries(day?.blocks ?? {}) as [string, Json][]) {
+      for (const [eventId, event] of Object.entries(block?.events ?? {}) as [string, Json][]) {
+        for (const [danceId, dance] of Object.entries(event?.dances ?? {}) as [string, Json][]) {
+          for (const [platformId, platform] of Object.entries(dance?.platforms ?? {}) as [string, Json][]) {
+            if (!Array.isArray(platform?.orderedJudgeIds)) continue;
+            out.push({ path: `days/${dayId}/blocks/${blockId}/events/${eventId}/dances/${danceId}/platforms/${platformId}/orderedJudgeIds`, ids: platform.orderedJudgeIds });
+          }
+        }
+      }
+    }
+  }
+  return out;
+}
+
 export interface Cleared {
   name: string
   /** Age groups it sponsored. */
@@ -169,27 +187,16 @@ export function planStaff(to: string, data: {
     if (!next) clear(sponsor).sponsors += 1;
   }
 
-  for (const [dayId, day] of Object.entries(data.schedule?.days ?? {}) as [string, Json][]) {
-    for (const [blockId, block] of Object.entries(day?.blocks ?? {}) as [string, Json][]) {
-      for (const [eventId, event] of Object.entries(block?.events ?? {}) as [string, Json][]) {
-        for (const [danceId, dance] of Object.entries(event?.dances ?? {}) as [string, Json][]) {
-          for (const [platformId, platform] of Object.entries(dance?.platforms ?? {}) as [string, Json][]) {
-            const ids: string[] = Array.isArray(platform?.orderedJudgeIds) ? platform.orderedJudgeIds : [];
-            if (!ids.some((id) => id in toStaff)) continue;
-            const next = ids.flatMap((id) => {
-              if (!(id in toStaff)) return [id];
-              const to2 = moved.get(id);
-              if (!to2) clear(id).judging += 1;
-              return to2 ? [to2] : [];
-            });
-            const unique = [...new Set(next)];
-            if (!same(unique, ids)) {
-              updates[`${base}/schedule/days/${dayId}/blocks/${blockId}/events/${eventId}/dances/${danceId}/platforms/${platformId}/orderedJudgeIds`] = unique.length ? unique : null;
-            }
-          }
-        }
-      }
-    }
+  for (const { path, ids } of judgeLists(data.schedule)) {
+    if (!ids.some((id) => id in toStaff)) continue;
+    const next = ids.flatMap((id) => {
+      if (!(id in toStaff)) return [id];
+      const to2 = moved.get(id);
+      if (!to2) clear(id).judging += 1;
+      return to2 ? [to2] : [];
+    });
+    const unique = [...new Set(next)];
+    if (!same(unique, ids)) updates[`${base}/schedule/${path}`] = unique.length ? unique : null;
   }
 
   // Championship points are kept under each judge's key: move them, never drop them.
@@ -488,7 +495,18 @@ export function getOnStaffWritten(db: Db) {
     await Promise.all(targets.map(async (id) => {
       const path = `competitions:data/${id}/staff/${staffId}`;
       if (!item) {
+        // Gone: off its schedule there and off any trophy it sponsors, as
+        // deleting one in Manage does.
         updates[path] = null;
+        const [groups, schedule] = await Promise.all([val(db, `competitions:data/${id}/groups`), val(db, `competitions:data/${id}/schedule`)]);
+        for (const [groupId, group] of Object.entries(groups ?? {}) as [string, Json][]) {
+          if (group?.sponsor === staffId) updates[`competitions:data/${id}/groups/${groupId}/sponsor`] = null;
+        }
+        for (const { path: at, ids } of judgeLists(schedule)) {
+          if (!ids.includes(staffId)) continue;
+          const kept = ids.filter((j) => j !== staffId);
+          updates[`competitions:data/${id}/schedule/${at}`] = kept.length ? kept : null;
+        }
         return;
       }
       const theirs = (await val(db, path)) ?? {};

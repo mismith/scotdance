@@ -264,6 +264,19 @@ describe('keeping them in step', () => {
     expect(read('competitions:data/sat/staff/j3')).toBeNull()
   })
 
+  it('takes one the primary deletes off the others’ schedules and trophies too', async () => {
+    const { save, rtdb, read } = await linked()
+    rtdb.write({
+      'competitions:data/sat/groups/g1/sponsor': 'j2',
+      'competitions:data/sat/schedule/days/d1/blocks/b1/events/e1/dances/i1/platforms/p1/orderedJudgeIds': ['j1', 'j2'],
+    })
+    rtdb.events.splice(0)
+    await save({ 'competitions:data/fri/staff/j2': null })
+    expect(read('competitions:data/sat/staff/j2')).toBeNull()
+    expect(read('competitions:data/sat/groups/g1/sponsor')).toBeNull()
+    expect(read('competitions:data/sat/schedule/days/d1/blocks/b1/events/e1/dances/i1/platforms/p1/orderedJudgeIds')).toEqual(['j1'])
+  })
+
   it('leaves each one’s back-pointers alone, and doesn’t copy back-pointer changes', async () => {
     const { save, rtdb, read } = await linked()
     rtdb.write({ 'competitions:data/sat/staff/j2/judgeId': 'M2' })

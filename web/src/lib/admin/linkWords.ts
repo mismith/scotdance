@@ -14,6 +14,9 @@ const NOUN: Record<LinkPart, { noun: string; plural?: boolean }> = {
   staff: { noun: 'staff' },
 }
 
+/** "venue", "staff": what a part is, in a sentence. */
+export const partNoun = (part: LinkPart) => NOUN[part].noun
+
 const count = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`
 const possessive = (name: string) => `${name}’${name.endsWith('s') ? '' : 's'}`
 

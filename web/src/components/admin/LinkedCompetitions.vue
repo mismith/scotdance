@@ -12,7 +12,7 @@ import { useLinkSync, useLinkedSet } from '@/composables/useCompetitionLinks'
 import { changeLink, previewLink, type PartPreview } from '@/lib/admin/links'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
-import { replacesSentence } from '@/lib/admin/linkWords'
+import { partNoun, replacesSentence } from '@/lib/admin/linkWords'
 import { formatWeekday, parseDate } from '@/lib/format'
 import { LINK_PARTS, linkPartLabel, type LinkPart } from '@/lib/linked'
 import { useMorph } from '@/lib/morph'
@@ -63,7 +63,8 @@ function takesLine(c: CompetitionListItem) {
   if (!theirs.length) return 'Takes nothing from the primary'
   if (theirs.length === LINK_PARTS.length) return isPrimary.value ? 'Everything above' : 'Everything'
   const missing = LINK_PARTS.filter((p) => !theirs.includes(p.id))
-  if (missing.length <= 2) return `All but ${missing.map((p) => p.label).join(' and ')}`
+  if (missing.length === 1) return `All but ${missing[0].label}: its own ${partNoun(missing[0].id)}`
+  if (missing.length === 2) return `All but ${missing.map((p) => p.label).join(' and ')}`
   return theirs.map(linkPartLabel).join(' · ')
 }
 
