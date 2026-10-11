@@ -203,3 +203,19 @@ export function memberNote(
   if (!text) return null
   return { text, tone: days === 0 ? 'live' : elsewhere ? 'venue' : 'muted' }
 }
+
+/**
+ * A list's rows with their places on the rail, at most `limit` of them (a
+ * group cut short keeps its rail for the ones shown). `alone`: a row not in
+ * a group here, which may need its set named (withOthersLine).
+ */
+export function railRows<T>(blocks: LinkedBlock<T>[], limit = Number.POSITIVE_INFINITY): Array<{ item: T; rail: RailPosition; alone: boolean }> {
+  const out: Array<{ item: T; rail: RailPosition; alone: boolean }> = []
+  for (const b of blocks) {
+    const room = limit - out.length
+    if (room <= 0) break
+    const items = b.items.slice(0, room)
+    items.forEach((item, i) => out.push({ item, rail: railOf(i, items.length), alone: items.length === 1 }))
+  }
+  return out
+}

@@ -4,12 +4,15 @@ import { CalendarOff } from '@lucide/vue'
 import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import { useCompetitionLinks } from '@/composables/useCompetitionLinks'
 import { daysFromToday, parseDate } from '@/lib/format'
+import { orderLinked, railRows, type RailPosition } from '@/lib/linked'
 import type { Competition } from '@/types/competition'
 
 // A profile's competitions as plain lists: coming up (soonest first), then
 // the past a year at a time (most recent first). No filters: a person or
 // venue has tens, not thousands, and scrolling is easier than a control.
+// Linked competitions stay together on a rail (ADR 0007 §8).
 const props = defineProps<{
   items: Array<{ competitionId: string; competition: Competition }>
   loading?: boolean
@@ -18,22 +21,30 @@ const props = defineProps<{
   within?: string | null
 }>()
 
+type Item = (typeof props.items)[number]
+type Row = Item & { rail: RailPosition; note: string | null }
+
 const ms = (c: Competition) => (c.date ? parseDate(c.date).getTime() : 0)
-const upcoming = computed(() =>
-  props.items
-    .filter((i) => (daysFromToday(i.competition.date) ?? 1) >= 0)
-    .sort((a, b) => ms(a.competition) - ms(b.competition)),
-)
+const { linkOf, othersLine } = useCompetitionLinks()
+function rows(list: Item[], descending: boolean): Row[] {
+  const keyed = list.map((i) => ({ ...i, id: i.competitionId, date: i.competition.date, name: i.competition.name }))
+  return railRows(orderLinked(keyed, linkOf, { descending, at: (k) => ms(k.competition) })).map(({ item, rail, alone }) => ({
+    competitionId: item.competitionId,
+    competition: item.competition,
+    rail,
+    note: alone ? othersLine({ id: item.id, date: item.date, name: item.name }) : null,
+  }))
+}
+const upcoming = computed(() => rows(props.items.filter((i) => (daysFromToday(i.competition.date) ?? 1) >= 0), false))
 const years = computed(() => {
-  const out = new Map<number, typeof props.items>()
+  const out = new Map<number, Item[]>()
   props.items
     .filter((i) => (daysFromToday(i.competition.date) ?? 1) < 0)
-    .sort((a, b) => ms(b.competition) - ms(a.competition))
     .forEach((i) => {
       const y = parseDate(i.competition.date!).getFullYear()
       out.set(y, [...(out.get(y) ?? []), i])
     })
-  return [...out.entries()]
+  return [...out.entries()].sort((a, b) => b[0] - a[0]).map(([y, list]) => [y, rows(list, true)] as const)
 })
 </script>
 
@@ -60,6 +71,8 @@ const years = computed(() => {
           :competition-id="i.competitionId"
           :within="within"
           :to="{ name: 'competition.info', params: { competitionId: i.competitionId } }"
+          :rail="i.rail"
+          :note="i.note"
         />
       </ul>
     </section>
@@ -75,6 +88,8 @@ const years = computed(() => {
           :competition-id="i.competitionId"
           :within="within"
           :to="{ name: 'competition.info', params: { competitionId: i.competitionId } }"
+          :rail="i.rail"
+          :note="i.note"
         />
       </ul>
     </section>

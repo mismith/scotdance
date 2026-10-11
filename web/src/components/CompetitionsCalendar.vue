@@ -4,6 +4,8 @@ import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
 import { CalendarOff, ChevronLeft, ChevronRight } from '@lucide/vue'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
+import { useCompetitionLinks } from '@/composables/useCompetitionLinks'
+import { orderLinked, railRows } from '@/lib/linked'
 import FavCount from '@/components/FavCount.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { formatLongDate, formatMonthYear, formatShortDate, formatWeekdayShortDate, parseDate } from '@/lib/format'
@@ -129,6 +131,11 @@ const visibleCompetitions = computed(() =>
     : [...monthEvents.value].sort((a, b) => parseDate(a.date!).getTime() - parseDate(b.date!).getTime()),
 )
 const favCount = (list: CompetitionListItem[]) => list.filter((c) => favorites.isFavoriteCompetition(c.id)).length
+// Linked ones together on their rail (ADR 0007 §8); one on its own (as on a
+// single day) names the rest of its set.
+const { linkOf, othersLine } = useCompetitionLinks()
+const railed = (list: CompetitionListItem[]) =>
+  railRows(orderLinked(list, linkOf)).map(({ item, rail, alone }) => ({ competition: item, rail, note: alone ? othersLine(item) : null }))
 
 const sectionLabel = computed(() => (selected.value ? formatWeekdayShortDate(selected.value) : monthLabel.value))
 const selectedIsToday = computed(() => !!selected.value && selected.value.getTime() === today.getTime())
@@ -315,11 +322,13 @@ function onPointerUp(e: PointerEvent) {
           </h3>
           <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
             <CompetitionDateRow
-              v-for="competition in visibleCompetitions"
+              v-for="{ competition, rail, note } in railed(visibleCompetitions)"
               :key="competition.id"
               :competition="competition"
               :to="props.linkTo(competition)"
               :followed="favorites.isFavorite('competitions', competition.id)"
+              :rail="rail"
+              :note="note"
             />
           </ul>
         </section>
@@ -351,11 +360,13 @@ function onPointerUp(e: PointerEvent) {
         </h3>
         <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
           <CompetitionDateRow
-            v-for="competition in d.comps"
+            v-for="{ competition, rail, note } in railed(d.comps)"
             :key="competition.id"
             :competition="competition"
             :to="props.linkTo(competition)"
             :followed="favorites.isFavorite('competitions', competition.id)"
+            :rail="rail"
+            :note="note"
           />
         </ul>
       </section>
