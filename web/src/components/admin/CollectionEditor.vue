@@ -36,6 +36,8 @@ import { useMorph } from '@/lib/morph'
 const props = defineProps<{
   spec: CollectionSpec<T>
   items: T[]
+  /** Shown but not changed here (copied from a linked primary, say): no adding, moving or deleting. */
+  readonly?: boolean
 }>()
 
 const slots = defineSlots<{
@@ -43,6 +45,8 @@ const slots = defineSlots<{
   'list-actions'?: (p: { variant: 'primary' | 'secondary' }) => unknown
   'detail-extra'?: (p: { item: T }) => unknown
   'list-intro'?: () => unknown
+  /** Above the list, empty or not (why it's read-only, say). */
+  notice?: () => unknown
 }>()
 
 const route = useRoute()
@@ -96,7 +100,7 @@ watch(
   },
   { immediate: true },
 )
-const canReorder = computed(() => !!props.spec.sortable && !query.value.trim() && !selecting.value && canEdit.value)
+const canReorder = computed(() => !!props.spec.sortable && !props.readonly && !query.value.trim() && !selecting.value && canEdit.value)
 
 async function saveOrder() {
   const updates: Record<string, unknown> = {}
@@ -422,7 +426,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
     <template #list>
       <div class="bg-background sticky top-(--chrome-top) z-10 border-b p-4 md:top-0">
         <SectionHeader :title="title" :count="items.length ? countLabel : null">
-          <template v-if="items.length" #actions>
+          <template v-if="items.length && !readonly" #actions>
             <Button variant="plain" class="-mr-3" :aria-pressed="selecting" @click="toggleSelecting">
               {{ selecting ? 'Done' : 'Select' }}
             </Button>
@@ -430,7 +434,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
           <!-- Ways to add, the same on every tab: the usual start first (the
                common ones, or Import), then one at a time. While selecting,
                Select all takes their place, so nothing below moves. -->
-          <div v-if="items.length && !selecting" class="flex flex-wrap gap-2">
+          <div v-if="items.length && !selecting && !readonly" class="flex flex-wrap gap-2">
             <Button v-if="spec.presets?.length" :disabled="!canEdit" @click="openPresets">
               <ListPlus /> Add common {{ spec.plural }}
             </Button>
@@ -450,10 +454,12 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
         </SectionHeader>
       </div>
 
+      <slot name="notice" />
       <slot v-if="items.length" name="list-intro" />
 
       <!-- Empty: what it's for, and the ways to add some -->
-      <EmptyState v-if="!items.length" :icon="icon" :title="`No ${spec.plural} yet`" :description="spec.emptyHint">
+      <EmptyState v-if="!items.length" :icon="icon" :title="`No ${spec.plural} yet`" :description="readonly ? undefined : spec.emptyHint">
+        <template v-if="!readonly">
         <Button v-if="spec.importFirst" variant="primary" :to="importRoute" :disabled="!canEdit">
           <FileSpreadsheet /> Import dancers
         </Button>
@@ -464,6 +470,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
         <Button :variant="!hasStart ? 'primary' : spec.importFirst ? 'plain' : 'secondary'" :to="itemRoute('new')" :replace="split" :disabled="!canEdit">
           <Plus /> Add {{ spec.singular }}
         </Button>
+        </template>
       </EmptyState>
       <p v-else-if="!filtered.length" class="text-muted-foreground px-4 py-10 text-center text-base">
         Nothing matches “{{ query }}”.
@@ -486,7 +493,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
           <li v-for="item in canReorder ? order : filtered" :key="item.id">
             <!-- The row's tint and focus ring take in the grip too. -->
             <SwipeRow
-              :disabled="!canEdit || selecting"
+              :disabled="!canEdit || selecting || readonly"
               :remove="() => remove([item.id], true)"
               :class="[
                 'has-focus-visible:outline-ring flex items-stretch has-focus-visible:outline-3 has-focus-visible:-outline-offset-3',
@@ -581,7 +588,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
 
     <template #detail>
       <!-- Adding -->
-      <form v-if="adding" ref="formEl" class="mx-auto max-w-2xl space-y-6 p-4 md:p-8" novalidate @submit.prevent="submitDraft(false)">
+      <form v-if="adding && !readonly" ref="formEl" class="mx-auto max-w-2xl space-y-6 p-4 md:p-8" novalidate @submit.prevent="submitDraft(false)">
         <h2 class="text-display">Add {{ spec.singular }}</h2>
         <div class="grid gap-4 sm:grid-cols-2">
           <div
@@ -633,6 +640,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
               :hint="f.hint"
               :required="f.required"
               :placeholder="f.placeholder"
+              :disabled="readonly"
               :save="saverFor(current, f.key)"
             />
             <ImageField
@@ -643,6 +651,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
               :folder="f.storage ?? 'staff'"
               :competition-id="m.competitionId.value"
               shape="round"
+              :disabled="readonly"
               :save="saverFor(current, f.key)"
             />
             <TextField
@@ -656,12 +665,13 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
               :type="f.kind === 'url' ? 'url' : 'text'"
               :inputmode="f.inputmode"
               :validate="validatorFor(current, f)"
+              :disabled="readonly"
               :save="saverFor(current, f.key)"
             />
           </div>
         </div>
         <slot name="detail-extra" :item="current" />
-        <footer class="border-t pt-6">
+        <footer v-if="!readonly" class="border-t pt-6">
           <Button variant="plain" class="text-destructive! -ml-4" :disabled="!canEdit" @click="remove([current.id])">
             <Trash2 /> Delete {{ spec.singular }}
           </Button>
