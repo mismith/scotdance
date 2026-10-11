@@ -32,7 +32,9 @@ const props = defineProps<{
 const m = useManagedCompetition()
 const me = useMeStore()
 const { setOf } = useCompetitionLinks()
-const { competitions } = useCompetitions(ref(true))
+// Every competition (the past too), but only once the sheet's opened.
+const everything = ref(false)
+const { competitions } = useCompetitions(everything)
 
 const here = computed(() => m.competitionId.value)
 const hereLinked = computed(() => !!setOf(here.value))
@@ -124,6 +126,7 @@ watch(
   () => props.morph.open,
   (open) => {
     if (!open) return
+    everything.value = true
     picked.value = null
     preview.value = null
     query.value = ''
