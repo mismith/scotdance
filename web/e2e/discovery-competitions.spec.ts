@@ -159,3 +159,18 @@ test('the calendar shows every competition, past ones too, whatever the list sho
   await page.getByRole('button', { name: /January 14, 2019, 1 competition/ }).click()
   await expect(page.getByRole('link', { name: /Nationals/ })).toBeVisible()
 })
+
+test('Back from a competition returns the calendar to the day picked', { tag: '@seed' }, async ({ page }) => {
+  await page.goto('/competitions?view=calendar&date=2019-01')
+  const month = page.getByRole('main').getByRole('heading', { level: 2 }).first()
+  await expect(month).toHaveText(/January 2019/)
+  const day = page.getByRole('button', { name: /January 14, 2019, 1 competition/ })
+  await day.click()
+  await expect(page).toHaveURL(/date=2019-01-14/)
+  await page.getByRole('link', { name: /Nationals/ }).click()
+  await expect(page).toHaveURL(/\/info$/)
+  await page.goBack()
+  await expect(month).toHaveText(/January 2019/)
+  await expect(day).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('link', { name: /Nationals/ })).toBeVisible()
+})

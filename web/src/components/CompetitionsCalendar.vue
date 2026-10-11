@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import type { RouteLocationRaw } from 'vue-router'
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
 import { CalendarOff, ChevronLeft, ChevronRight } from '@lucide/vue'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
@@ -36,10 +36,33 @@ const favorites = useFavoritesStore()
 const DAY = 86_400_000
 const today = startOfDay(now())
 
-const cursor = ref(new Date(today.getFullYear(), today.getMonth(), 1))
-const selected = ref<Date | null>(new Date(today))
+// The day picked (?date=2026-08-15), or the month with none (?date=2026-08),
+// is in the address, so Back from a competition returns to it. Today, the
+// default, is left out.
+const route = useRoute()
+const router = useRouter()
+const pad = (n: number) => String(n).padStart(2, '0')
+const monthParam = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`
+function fromParam(value: unknown) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}(-\d{2})?$/.test(value)) return null
+  const isDay = value.length > 7
+  const d = parseDate(isDay ? value : `${value}-01`)
+  if (Number.isNaN(d.getTime())) return null
+  return { cursor: new Date(d.getFullYear(), d.getMonth(), 1), selected: isDay ? d : null }
+}
+const start = fromParam(route.query.date)
+
+const cursor = ref(start?.cursor ?? new Date(today.getFullYear(), today.getMonth(), 1))
+const selected = ref<Date | null>(start ? start.selected : new Date(today))
 // Which way the month moved, for the slide.
 const direction = ref<1 | -1>(1)
+
+const dateParam = computed(() => {
+  if (!selected.value) return monthParam(cursor.value)
+  if (selected.value.getTime() === today.getTime()) return undefined
+  return `${monthParam(selected.value)}-${pad(selected.value.getDate())}`
+})
+watch(dateParam, (date) => router.replace({ query: { ...route.query, date } }))
 
 function startOfDay(d: Date) {
   const x = new Date(d)

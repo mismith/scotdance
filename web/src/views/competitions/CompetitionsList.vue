@@ -62,7 +62,10 @@ onMounted(() => {
   const v = route.query.view
   if (v === 'calendar' || v === 'map' || v === 'list') view.value = v
 })
-watch(view, (v) => router.replace({ query: { ...route.query, view: v === 'list' ? undefined : v } }))
+// The calendar's date (CompetitionsCalendar) goes when the calendar does.
+watch(view, (v) =>
+  router.replace({ query: { ...route.query, view: v === 'list' ? undefined : v, date: v === 'calendar' ? route.query.date : undefined } }),
+)
 
 const location = computed(() => filterFor(competitions.value))
 const located = computed<CompetitionListItem[]>(() =>
