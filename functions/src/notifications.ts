@@ -299,16 +299,23 @@ async function tokensFor(db: Db, uid: string) {
     .filter((t): t is { key: string; token: string } => typeof t.token === 'string' && !!t.token);
 }
 
-async function deliverOne(db: Db, app: App, m: Message, emulated: boolean) {
-  // Claim the signature first, in one step, so two runs for the same save
-  // (events can arrive twice) can't both send.
-  const ledger = db.child(`notifications:sent/${m.key}`);
+/**
+ * Claims a signature in one step, so two runs for the same thing (events can
+ * arrive twice) can't both send. Returns how to give it back, or null when
+ * it was sent already.
+ */
+async function claim(db: Db, key: string, signature: string) {
+  const ledger = db.child(`notifications:sent/${key}`);
   let before: unknown = null;
-  const claim = await ledger.transaction((sent) => {
+  const claimed = await ledger.transaction((sent) => {
     before = sent;
-    return sent === m.signature ? undefined : m.signature;
+    return sent === signature ? undefined : signature;
   });
-  if (!claim.committed) return;
+  return claimed.committed ? () => ledger.set(before ?? null) : null;
+}
+
+/** Sends a claimed message (or logs it, in the emulator). Throws if FCM can't be reached. */
+async function send(db: Db, app: App, m: Omit<Message, 'signature'>, emulated: boolean) {
   const tokens = await tokensFor(db, m.uid);
   if (emulated) {
     await db.child('notifications:log').push().set({
@@ -324,20 +331,25 @@ async function deliverOne(db: Db, app: App, m: Message, emulated: boolean) {
     return;
   }
   if (!tokens.length) return;
-  let res;
-  try {
-    res = await getMessaging(app).sendEachForMulticast(fcmMessage(m, tokens.map((t) => t.token)));
-  } catch (e) {
-    // Not sent (FCM unreachable, say): give the claim back, so a retry (the
-    // results task's) sends it rather than finding it already sent.
-    await ledger.set(before ?? null);
-    throw e;
-  }
+  const res = await getMessaging(app).sendEachForMulticast(fcmMessage(m, tokens.map((t) => t.token)));
   // Forget tokens FCM says are gone.
   const dead = res.responses
     .map((r, i) => (!r.success && isDeadToken(r.error) ? tokens[i].key : null))
     .filter((k): k is string => !!k);
   await Promise.all(dead.map((k) => db.child(`users:tokens/${m.uid}/${k}`).remove()));
+}
+
+async function deliverOne(db: Db, app: App, m: Message, emulated: boolean) {
+  const giveBack = await claim(db, m.key, m.signature);
+  if (!giveBack) return;
+  try {
+    await send(db, app, m, emulated);
+  } catch (e) {
+    // Not sent (FCM unreachable, say): give the claim back, so a retry (the
+    // results task's) sends it rather than finding it already sent.
+    await giveBack();
+    throw e;
+  }
 }
 
 function deliver(db: Db, app: App, messages: Message[], emulated: boolean) {
@@ -586,16 +598,124 @@ async function notifyCompetition(
  * list is ready). Run it after the publish sync: that links entries to the
  * dancers people follow.
  */
-export function getOnCompetitionPublished(db: Db, app: App, emulated: boolean) {
+export function getOnCompetitionPublished(
+  db: Db,
+  app: App,
+  emulated: boolean,
+  schedule: (task: LinkPublishedTask) => Promise<unknown> = async () => {},
+) {
   return async (change: Change, ctx: Ctx) => {
     if (change.before.val() === true || change.after.val() !== true) return;
     const { competitionId } = ctx.params;
     const comp = (await db.child(`competitions/${competitionId}`).get()).val() || {};
     if (comp.published !== true) return;
     // Publishing an old competition (adding past results) must not notify.
-    const days = daysFromToday(comp.date);
-    if (!emulated && (days == null || days < -1)) return;
+    if (!fresh(comp.date, emulated)) return;
+    // Linked ones are usually published together (the primary's publish is
+    // copied to the others): the set's task sends one alert for them all.
+    const linkId = (await db.child(`competitionLinks:of/${competitionId}`).get()).val();
+    if (typeof linkId === 'string') {
+      await schedule({ linkId });
+      return;
+    }
     await notifyCompetition(db, app, emulated, competitionId, comp, 'published', 'published');
+  };
+}
+
+/** Recent enough that its going live is news (always, in the emulator). */
+function fresh(date: unknown, emulated: boolean) {
+  const days = daysFromToday(date);
+  return emulated || (days != null && days >= -1);
+}
+
+/** A linked set, some of it just published: alerted a minute on, together. */
+export interface LinkPublishedTask {
+  linkId: string;
+}
+
+/** "Jul 5–11", "Jun 30–Jul 2". */
+export function dateSpan(dates: unknown[]): string {
+  const days = dates.map(dateValue).filter((d): d is Date => !!d).sort((a, b) => a.getTime() - b.getTime());
+  if (!days.length) return '';
+  const month = (d: Date) => d.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
+  const first = days[0];
+  const last = days[days.length - 1];
+  if (first.toISOString().slice(0, 10) === last.toISOString().slice(0, 10)) return `${month(first)} ${first.getUTCDate()}`;
+  return month(first) === month(last) && first.getUTCFullYear() === last.getUTCFullYear()
+    ? `${month(first)} ${first.getUTCDate()}–${last.getUTCDate()}`
+    : `${month(first)} ${first.getUTCDate()}–${month(last)} ${last.getUTCDate()}`;
+}
+
+/**
+ * Several linked competitions live at once, for one person: "7 competitions
+ * are live, Jul 5–11". `names` are their followed dancers entered in any of them.
+ */
+export function linkedPublishedMessage(competitions: Array<{ name?: string; date?: unknown }>, names: string[]) {
+  const n = competitions.length;
+  const first = competitions[0]?.name?.trim() || 'The first';
+  const who = names.length ? listNames(names) : null;
+  const span = dateSpan(competitions.map((c) => c.date));
+  return {
+    title: `${n} competitions are live${span ? `, ${span}` : ''}`,
+    body: who
+      ? `${who} ${names.length > 1 ? 'are' : 'is'} on the dancer lists. See platforms and dancing order.`
+      : `${first} and ${n - 1} ${n - 1 > 1 ? 'others' : 'other'}: dancer lists and schedules are up.`,
+  };
+}
+
+/** How long one person's set alert holds off another task's for the same set. */
+const SET_LOCK_MS = 10 * 60_000;
+
+/**
+ * A linked set's published ones, a minute after one went live: each person
+ * hears once, about all of them they follow or have a dancer in. Someone with
+ * just one of them gets the usual alert for it. Each competition is claimed
+ * as its own alert would be, so none is ever sent twice.
+ */
+export function getOnLinkPublishedSettled(db: Db, app: App, emulated: boolean, now = () => Date.now()) {
+  return async ({ linkId }: LinkPublishedTask) => {
+    const link = (await db.child(`competitionLinks/${linkId}`).get()).val();
+    const ids = Object.keys(link?.competitions ?? {});
+    const comps = (await Promise.all(ids.map(async (id) => ({ id, ...((await db.child(`competitions/${id}`).get()).val() || {}) }))))
+      .filter((c) => c.published === true && fresh(c.date, emulated))
+      .sort((a, b) => (dateValue(a.date)?.getTime() ?? 0) - (dateValue(b.date)?.getTime() ?? 0) || String(a.name ?? '').localeCompare(String(b.name ?? '')));
+    if (!comps.length) return 0;
+    const recipients = await Promise.all(comps.map((c) => recipientsFor(db, c.id)));
+    const byUid = new Map<string, Array<{ comp: (typeof comps)[number]; names: Set<string> }>>();
+    comps.forEach((comp, i) => recipients[i].forEach((names, uid) => {
+      byUid.set(uid, [...(byUid.get(uid) ?? []), { comp, names }]);
+    }));
+    const wants = wanted(db, 'published');
+    let sent = 0;
+    await Promise.all([...byUid].map(async ([uid, theirs]) => {
+      if (!(await wants(uid))) return;
+      // Tasks for the same set run side by side: one sends, the rest stand back.
+      const lock = await db.child(`notifications:sent/link:${linkId}/published/${uid}`).transaction((at) => (
+        typeof at === 'number' && now() - at < SET_LOCK_MS ? undefined : now()
+      ));
+      if (!lock.committed) return;
+      const claims = await Promise.all(theirs.map(({ comp }) => claim(db, `${comp.id}/published/${uid}`, 'published')));
+      const unsent = theirs.filter((_, i) => claims[i]);
+      if (!unsent.length) return;
+      const names = [...new Set(unsent.flatMap((t) => [...t.names]))];
+      const one = unsent.length === 1;
+      const head = unsent[0].comp;
+      try {
+        await send(db, app, {
+          uid,
+          kind: 'published',
+          competitionId: head.id,
+          ...(one ? competitionMessage('published', head.name, names) : linkedPublishedMessage(unsent.map((t) => t.comp), names)),
+          link: `/competitions/${head.id}/info`,
+          key: one ? `${head.id}/published/${uid}` : `link:${linkId}/published/${uid}`,
+        }, emulated);
+        sent += 1;
+      } catch (e) {
+        await Promise.all(claims.filter(Boolean).map((giveBack) => giveBack!()));
+        throw e;
+      }
+    }));
+    return sent;
   };
 }
 
