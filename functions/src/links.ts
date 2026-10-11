@@ -313,16 +313,18 @@ export async function takeOut(db: Db, competitionId: string) {
   if (link) {
     const { linkId } = link;
     const left = link.members.filter((id) => id !== competitionId);
-    updates[`competitionLinks/${linkId}/competitions/${competitionId}`] = null;
-    if (link.primary === competitionId) {
-      updates[`competitionLinks/${linkId}/primary`] = null;
-      for (const id of left) updates[`competitionLinks:sync/${id}`] = null;
-    }
+    // (One update can't name a path and one inside it.)
     if (left.length < 2) {
       updates[`competitionLinks/${linkId}`] = null;
       for (const id of left) {
         updates[`competitionLinks:of/${id}`] = null;
         updates[`competitionLinks:sync/${id}`] = null;
+      }
+    } else {
+      updates[`competitionLinks/${linkId}/competitions/${competitionId}`] = null;
+      if (link.primary === competitionId) {
+        updates[`competitionLinks/${linkId}/primary`] = null;
+        for (const id of left) updates[`competitionLinks:sync/${id}`] = null;
       }
     }
   }
