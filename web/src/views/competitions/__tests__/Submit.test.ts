@@ -308,6 +308,22 @@ describe('Submit a competition', () => {
     expect(write).toHaveBeenCalledTimes(1)
   })
 
+  it('sending checks every step: a draft reopened at the review with nothing on step 1 goes back there', async () => {
+    localStorage.setItem(
+      'submit:draft:u1',
+      JSON.stringify({ form: { venue: 'Telus Convention Centre', contactName: 'Morag Ross', agree: true }, place: null, step: 3, hosts: { ids: [], fresh: [] } }),
+    )
+    const w = render()
+    await flushPromises()
+    expect(w.text()).toContain('Step 4 of 4')
+
+    await next(w)
+    expect(write).not.toHaveBeenCalled()
+    expect(w.text()).toContain('Step 1 of 4')
+    expect(w.text()).toContain('Add the competition’s name.')
+    expect(w.text()).toContain('Add the date.')
+  })
+
   it('keeps a draft through a reload, past the overview, and forgets it once sent', async () => {
     const first = await begin()
     await input(first, 'Name').setValue('Calgary Highland Games')

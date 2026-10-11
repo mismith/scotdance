@@ -193,9 +193,13 @@ async function jump(to: number) {
 }
 
 async function next() {
-  if (step.value < STEPS.length - 1) await jump(step.value + 1)
-  else if (complete(step.value)) await submit()
-  else await flag(step.value)
+  if (step.value < STEPS.length - 1) return jump(step.value + 1)
+  // Sending checks every step, not just the review: a draft can reopen here
+  // with something since gone missing. It goes back to the first that is.
+  const missing = STEPS.findIndex((_, s) => !complete(s))
+  if (missing === -1) return submit()
+  if (missing !== step.value) await go(missing)
+  await flag(missing)
 }
 
 async function submit() {

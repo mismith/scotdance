@@ -129,6 +129,14 @@ class Submissions {
       return review.length ? { ...current, review } : { ...current, approved: new Date().toISOString(), autoApproved: true };
     });
     if (!committed || !snapshot.exists() || !review.length) return;
+    // Nothing to go on (no name, date or town: the rules refuse these now, but
+    // an old app or a direct write got one through): it waits in Needs a
+    // look, saying why, without emailing anyone about a blank.
+    const c = submission.competition || {};
+    if (![c.name, c.date, c.location].some((v) => typeof v === 'string' && v.trim())) {
+      console.warn(`Submission ${submissionId} from ${submission.submittedBy}: no name, date or town, so no emails`);
+      return;
+    }
     // (Nested, so the email leaves the list out when there isn't one.)
     const reviewed = { ...submission, review: { reasons: review } };
     const from = sentFrom(submission.origin);
