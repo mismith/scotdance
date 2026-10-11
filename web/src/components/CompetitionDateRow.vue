@@ -6,6 +6,7 @@ import { useFollowing } from '@/composables/useFollowing'
 import { useHiddenAs } from '@/composables/useHiddenAs'
 import CompetitionName from '@/components/CompetitionName.vue'
 import DateTile from '@/components/DateTile.vue'
+import LinkRail from '@/components/LinkRail.vue'
 import VisibilityChip from '@/components/VisibilityChip.vue'
 import { useMeStore } from '@/stores/me'
 import { isSameDay } from '@/lib/format'
@@ -77,11 +78,7 @@ const hidden = computed(() => (props.preview ? null : hiddenAs(id.value, props.c
 
 <template>
   <li :class="['bg-card', rail && 'relative', (rail === 'middle' || rail === 'last') && 'bg-none!']">
-    <span
-      v-if="rail"
-      aria-hidden="true"
-      :class="['bg-primary absolute left-9 w-1', rail === 'first' ? 'top-1/2 bottom-0' : rail === 'last' ? 'top-0 h-1/2' : 'inset-y-0']"
-    />
+    <LinkRail :rail="rail" />
     <RouterLink :to="to" :replace="replace" class="press-row focus-inset flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4">
       <DateTile
         :date="competition.date"

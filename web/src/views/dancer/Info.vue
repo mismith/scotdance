@@ -11,6 +11,7 @@ import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import Avatar from '@/components/Avatar.vue'
 import DancerDayCard from '@/components/DancerDayCard.vue'
 import DateTile from '@/components/DateTile.vue'
+import LinkRail from '@/components/LinkRail.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import Medal from '@/components/Medal.vue'
 import NumberCard from '@/components/NumberCard.vue'
@@ -21,6 +22,8 @@ import { parseDate } from '@/lib/format'
 import { profileColumns, profileHeader } from '@/lib/profile'
 import { useMeStore } from '@/stores/me'
 import type { Competition } from '@/types/competition'
+import { useCompetitionLinks } from '@/composables/useCompetitionLinks'
+import { orderLinked, railRows } from '@/lib/linked'
 
 // A dancer across every competition. Their number is different at each one,
 // so it's shown per competition, never as who they are.
@@ -75,6 +78,9 @@ const rows = computed<Row[]>(() => {
 // competition is just the top of the list (its rosettes named there), not
 // shown twice.
 const showFocus = computed(() => !!focus.value?.days.length && focus.value.phase !== 'after')
+// Linked competitions together on their rail, newest first (ADR 0007 §8);
+// one without the rest of its set names them.
+const { linkOf, othersLine } = useCompetitionLinks()
 const byYear = computed(() => {
   const today = showFocus.value ? focus.value!.competitionId : null
   const out = new Map<string, Row[]>()
@@ -83,7 +89,16 @@ const byYear = computed(() => {
     const y = r.competition.date ? String(parseDate(r.competition.date).getFullYear()) : 'Date to be announced'
     out.set(y, [...(out.get(y) ?? []), r])
   }
-  return [...out.entries()]
+  const at = (r: { date?: number | string }) => (r.date ? parseDate(r.date).getTime() : 0)
+  return [...out.entries()].map(([year, list]) => {
+    const keyed = list.map((r) => ({ ...r, id: r.competitionId, date: r.competition.date, name: r.competition.name }))
+    const railed = railRows(orderLinked(keyed, linkOf, { descending: true, at })).map(({ item, rail, alone }) => ({
+      ...item,
+      rail,
+      withOthers: alone ? othersLine({ id: item.id, date: item.date, name: item.name }) : null,
+    }))
+    return [year, railed] as const
+  })
 })
 
 const summaries = ref<Record<string, EntrySummary[]>>({})
@@ -146,7 +161,12 @@ function medals(cid: string) {
             {{ year }} <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ list.length }}</span>
           </h3>
           <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
-            <li v-for="r in list" :key="r.competitionId">
+            <li
+              v-for="r in list"
+              :key="r.competitionId"
+              :class="[r.rail && 'relative', (r.rail === 'middle' || r.rail === 'last') && 'bg-none!']"
+            >
+              <LinkRail :rail="r.rail" />
               <RouterLink
                 :to="
                   r.entryIds[0]
@@ -155,9 +175,10 @@ function medals(cid: string) {
                 "
                 class="press-row focus-inset flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4"
               >
-                <DateTile :date="r.competition.date" :managed="me.organises(r.competitionId)" />
+                <DateTile :date="r.competition.date" :managed="me.organises(r.competitionId)" :class="r.rail && 'ring-card ring-3'" />
                 <span class="min-w-0 flex-1">
                   <span class="line-clamp-2 text-base leading-snug font-semibold">{{ r.competition.name }}</span>
+                  <span v-if="r.withOthers" class="text-muted-foreground block text-sm">{{ r.withOthers }}</span>
                   <span v-if="medals(r.competitionId).groups.length" class="text-muted-foreground block text-sm">
                     {{ medals(r.competitionId).groups.join(' · ') }}
                   </span>
