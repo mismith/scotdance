@@ -269,6 +269,16 @@ describe('a new submission', () => {
     })
   })
 
+  it('with no name, date or town (one the rules let through before), waits saying why, and no one is emailed', async () => {
+    const { rtdb, settle, read, competitions } = arrival()
+    rtdb.write({ [`${PATH}/s1`]: { contact: SUBMISSION.contact, submitted: SUBMISSION.submitted } })
+    await settle('organiser-1')
+    expect(read().review).toEqual(['There’s no name', 'There’s no date', 'There’s no town or city'])
+    expect(read().approved).toBeUndefined()
+    expect(competitions()).toEqual([])
+    expect(postmark.sent).toHaveLength(0)
+  })
+
   it('decided while it’s checked (or deleted) is left be', async () => {
     const decided = arrival()
     let tries = 0
