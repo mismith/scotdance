@@ -234,7 +234,8 @@ says that a competition has partners, not which ones, so lists group them.
 - **One row that opens**: a group is one row with its dates, which opens to
   its competitions. Shortest, but each competition is a tap further away.
 
-**Marks on the tile, set aside (2026-10-10 and 11):** they say a competition has partners, but not which ones.
+**Marks on the tile, set aside (2026-10-10 and 11):** they say a
+competition has partners, but not which ones.
 
 - **A grey tile stacked behind**: too subtle, and it can read as a
   rendering glitch.
