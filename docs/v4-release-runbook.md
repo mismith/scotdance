@@ -211,6 +211,24 @@ into each association's format as they're saved
 5. Submit a tidy competition yourself: it should be approved within seconds,
    with both emails.
 
+## Refusing blank submissions
+
+On 2026-10-11 a submission arrived with nothing in its competition, and
+admin@ was emailed that it needed a look. Now a new one needs a name, a
+YYYY-MM-DD date and a town or city, Submit's Send checks every step, and one
+that gets through anyway waits in Needs a look without emailing anyone. The
+web went out with the merge to `next`; the backend is two deploys, in either
+order:
+
+1. `firebase deploy --only database`. The only rules change since
+   2026-10-06's (approving as they arrive) is this one. v3's Submit always
+   sends all three (its form requires them), and edits to a submission
+   already sent (either admin) aren't held to it.
+2. `firebase deploy --only functions:competitionSubmissionCreated`.
+
+Don't approve the blank one from 2026-10-11: approval copies its empty
+competition into a nameless one. Reject or delete it.
+
 ## Parked
 
 - Tartans: branch `claude/tartans-parked`, as a future optional side tool.
