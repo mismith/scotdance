@@ -81,8 +81,8 @@ describe('colours', () => {
   it('wraps round when you follow more dancers than there are colours', () => {
     favorites.dancers = Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`p${i}`, `P${i}`]))
     const f = useFollowing()
-    expect(f.colorIdFor('p8')).toBe('dancer-1')
-    expect(f.colorIdFor('p9')).toBe('dancer-2')
+    expect(f.colorIdFor('p8')).toBe('dancer-9')
+    expect(f.colorIdFor('p9')).toBe('dancer-1')
   })
 })
 

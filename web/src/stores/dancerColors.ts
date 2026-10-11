@@ -19,6 +19,7 @@ export const DANCER_COLORS = [
   { id: 'dancer-6', label: 'Teal' },
   { id: 'dancer-7', label: 'Pink' },
   { id: 'dancer-8', label: 'Orange' },
+  { id: 'dancer-9', label: 'Navy' },
 ] as const
 export type DancerColorId = (typeof DANCER_COLORS)[number]['id']
 /** A palette colour, or one of your own. */

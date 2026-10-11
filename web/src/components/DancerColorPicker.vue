@@ -8,8 +8,8 @@ import { DANCER_COLORS, inkOn, isCustomColor, useDancerColorsStore, type DancerC
 // Choose the colour a followed dancer wears across your app: their bar on
 // Home, their initials in lists, their number card band. Just for you. Lives
 // in the Following menu on their page. The rainbow dot at the end opens the
-// system colour picker for any colour at all. Two rows of five keep each dot
-// a full 44px tap target in the 18rem menu.
+// system colour picker for any colour at all. Two full rows of five keep
+// each dot a 44px tap target in the 18rem menu.
 const props = defineProps<{ dancerId: string; dancerName: string }>()
 
 const RAINBOW = 'conic-gradient(#e11d48, #f59e0b, #eab308, #16a34a, #0891b2, #2563eb, #7c3aed, #db2777, #e11d48)'

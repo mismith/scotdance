@@ -133,6 +133,7 @@
   --dancer-6: #00707a;
   --dancer-7: #b0266e;
   --dancer-8: #b04a00;
+  --dancer-9: #14306b;
   /* Text and ticks on a dancer's colour. */
   --on-dancer: #ffffff;
   /* The Android app injects --safe-area-inset-* (Capacitor SystemBars) for
@@ -213,6 +214,7 @@
   --dancer-6: #3fc2c9;
   --dancer-7: #ec6fae;
   --dancer-8: #f28a3c;
+  --dancer-9: #4872fb;
   /* Dark mode's dancer colours are brighter, so they take dark ink. */
   --on-dancer: #0c0f13;
   /* Dark surfaces rise by getting lighter, with a faint lit top edge. */

@@ -212,7 +212,7 @@ One confident blue for action, a Scottish red kept for favourites, and a small s
 
 State papers: **Next Amber** (#ffefc7, ink #7a4600), in Manage only, for what needs the organiser next (a "?" placing, the next section). Families' screens don't guess what's on next: plenty of competitions post nothing until the end, so upcoming dances show their schedule facts instead; **Done Green** (#ddf2e2, ink #145c2b) for finished; **Blue Paper** (#e1ecf8) for tonal buttons and the current sidebar row; **Destructive** (#b42318) for deleting.
 
-Dancer colours: eight saturated hues (red, green, purple, ochre, blue, teal, magenta, orange), all 4.5:1 with white text, assigned per followed dancer and used for their number card band, dots and bars.
+Dancer colours: nine saturated hues (red, green, purple, ochre, blue, teal, magenta, orange, navy), all 4.5:1 with white text, assigned per followed dancer and used for their number card band, dots and bars.
 
 **The Colour Is News Rule.** Pink, amber and green appear only when they report a state (live, next in Manage, done). A screen with nothing happening is blue, ink and paper. Finished or out-of-the-running things are muted by colour and say so in words, never faded with opacity.
 
