@@ -202,33 +202,39 @@ For SDCCS: link all seven, make the first one the primary, and switch on
 Staff and Venue for all. Any day at a different venue switches its own
 Venue off.
 
-### 8. The linked mark
+### 8. Linked competitions in lists
 
-Wherever a competition shows, a linked one says so, always in the same
-way (Murray asked for one treatment across the app, 2026-10-10). Each
-linked competition keeps its own row; nothing is merged.
+A list should show at a glance which competitions go together: a weekend
+pair should look like a pair (Murray, 2026-10-11). A mark on each tile only
+says that a competition has partners, not which ones, so lists group them.
 
-**Dots under the date tile, and only there** (Murray, 2026-10-10). The
-date tile already stands for a competition everywhere. A linked one has a
-row of dots under it, in Saltire blue:
+**Proposed: each group gets its own card, labelled.**
 
-- **A dot per competition that goes together, up to 5.**
-- **More than 5: four dots and a plus.** It never shrinks or windows the
-  dots.
-- **No position.** The tile's date already places it, and the switcher
-  ticks the current one, so every dot is the same.
-- **No words in rows.** Screen readers hear "One of 7 competitions, July 5
-  to 11".
-- **Where:** under the date tile wherever one shows: the competitions list,
-  Home, Search, venue, judge, piper and organisation pages, a dancer's
-  competitions, Manage's list, and Overview's header. Nothing under the
-  title. The calendar's grid keeps its own dots, which count the
-  competitions on each day; the list of the chosen day under it shows the
-  linked dots.
-- **Built as** `components/LinkedDots.vue` (`count`), drawn by `DateTile`
-  when it's given `linked`.
+- **The same words as the switcher.** A group's rows sit in their own card,
+  under a small label: **2 competitions, Jul 3–4**, or **7 competitions,
+  Jul 5–11**.
+- **Each competition keeps its own row.** It has its own tile, name,
+  dancers and tap target.
+- **The group sits where its first day falls.** Unlinked competitions on
+  the same dates come after it, never between its rows. Unlinked
+  competitions share a card as they do now.
+- **One function does the grouping:** `groupLinked(items)`, a pure function
+  with tests. The competitions list, venue and organisation pages, Manage's
+  list and Search use it.
+- **When a competition shows alone** (Home's Coming up, a judge's or
+  dancer's list, a calendar day), its row adds one line naming the others:
+  "With Maritime Open, Sun 4", or "With 6 others, Jul 5–11".
+- **The calendar's grid keeps its own dots**, which count the competitions
+  on each day.
 
-**Considered (mocked up side by side, 2026-10-10):**
+**Also mocked up (2026-10-11):**
+
+- **A rail**: a blue line through the group's date tiles, with no hairline
+  between them. Light, but the link isn't said in words.
+- **One row that opens**: a group is one row with its dates, which opens to
+  its competitions. Shortest, but each competition is a tap further away.
+
+**Marks on the tile, set aside (2026-10-10 and 11):** they say a competition has partners, but not which ones.
 
 - **A grey tile stacked behind**: too subtle, and it can read as a
   rendering glitch.
@@ -240,7 +246,9 @@ row of dots under it, in Saltire blue:
 - **A capsule under the tile that splits into segments, then turns to
   dots** (like Apple Calendar's month view): two looks for one thing.
 - **Dots that show this one's position, windowed past 7**: too much to take
-  in. Four and a plus is enough.
+  in.
+- **Up to 5 dots, then four and a plus**: simple, but in a list you still
+  can't tell which competitions go together.
 - **Not a chain icon**: the link icon already means a web link everywhere in
   the app, and the copy and layers icons are taken too.
 
