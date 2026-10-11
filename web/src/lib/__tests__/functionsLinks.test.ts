@@ -302,6 +302,22 @@ describe('keeping them in step', () => {
     expect(read('competitions/sun/description')).toBe('Seven competitions, one week in Halifax.')
   })
 
+  it('leaves the others’ staff be when the primary itself is deleted', async () => {
+    const { save, read } = await linked()
+    await save({ 'competitions/fri': null, 'competitions:data/fri': null })
+    expect(Object.keys(read('competitions:data/sat/staff') ?? {}).sort()).toEqual(['j1', 'j2', 's1'])
+    expect(Object.keys(read('competitions:data/sun/staff') ?? {}).sort()).toEqual(['j1', 'j2', 's1'])
+  })
+
+  it('never copies into one that’s gone, making a new primary or syncing again', async () => {
+    const { call, rtdb, read } = await linked()
+    rtdb.write({ 'competitions/sun': null })
+    rtdb.events.splice(0)
+    await call('organiser', { action: 'primary', competitionId: 'sat' })
+    await call('organiser', { action: 'syncNow', competitionId: 'sat' })
+    expect(read('competitions/sun')).toBeNull()
+  })
+
   it('doesn’t bring a deleted competition back', async () => {
     const { save, rtdb, read } = await linked()
     rtdb.write({ 'competitions/sun': null })

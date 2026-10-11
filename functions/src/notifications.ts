@@ -663,14 +663,17 @@ export function linkedPublishedMessage(competitions: Array<{ name?: string; date
   };
 }
 
-/** How long one person's set alert holds off another task's for the same set. */
-const SET_LOCK_MS = 10 * 60_000;
+/** A person's set alert in progress holds off another task's for the same set, unless it's this stale. */
+const SET_LOCK_MS = 2 * 60_000;
 
 /**
  * A linked set's published ones, a minute after one went live: each person
  * hears once, about all of them they follow or have a dancer in. Someone with
  * just one of them gets the usual alert for it. Each competition is claimed
- * as its own alert would be, so none is ever sent twice.
+ * as its own alert would be, so none is ever sent twice; one published later
+ * gets its own alert from its own task. Tasks for the same set can run side
+ * by side: while one is sending a person's alert, the other tries again later
+ * (throwing, so Cloud Tasks retries it) rather than splitting it in two.
  */
 export function getOnLinkPublishedSettled(db: Db, app: App, emulated: boolean, now = () => Date.now()) {
   return async ({ linkId }: LinkPublishedTask) => {
@@ -687,34 +690,41 @@ export function getOnLinkPublishedSettled(db: Db, app: App, emulated: boolean, n
     }));
     const wants = wanted(db, 'published');
     let sent = 0;
+    let held = 0;
     await Promise.all([...byUid].map(async ([uid, theirs]) => {
       if (!(await wants(uid))) return;
-      // Tasks for the same set run side by side: one sends, the rest stand back.
-      const lock = await db.child(`notifications:sent/link:${linkId}/published/${uid}`).transaction((at) => (
-        typeof at === 'number' && now() - at < SET_LOCK_MS ? undefined : now()
-      ));
-      if (!lock.committed) return;
-      const claims = await Promise.all(theirs.map(({ comp }) => claim(db, `${comp.id}/published/${uid}`, 'published')));
-      const unsent = theirs.filter((_, i) => claims[i]);
-      if (!unsent.length) return;
-      const names = [...new Set(unsent.flatMap((t) => [...t.names]))];
-      const one = unsent.length === 1;
-      const head = unsent[0].comp;
+      const lock = db.child(`notifications:sent/link:${linkId}/published/${uid}`);
+      const locked = await lock.transaction((at) => (typeof at === 'number' && now() - at < SET_LOCK_MS ? undefined : now()));
+      if (!locked.committed) {
+        held += 1;
+        return;
+      }
       try {
-        await send(db, app, {
-          uid,
-          kind: 'published',
-          competitionId: head.id,
-          ...(one ? competitionMessage('published', head.name, names) : linkedPublishedMessage(unsent.map((t) => t.comp), names)),
-          link: `/competitions/${head.id}/info`,
-          key: one ? `${head.id}/published/${uid}` : `link:${linkId}/published/${uid}`,
-        }, emulated);
-        sent += 1;
-      } catch (e) {
-        await Promise.all(claims.filter(Boolean).map((giveBack) => giveBack!()));
-        throw e;
+        const claims = await Promise.all(theirs.map(({ comp }) => claim(db, `${comp.id}/published/${uid}`, 'published')));
+        const unsent = theirs.filter((_, i) => claims[i]);
+        if (!unsent.length) return;
+        const names = [...new Set(unsent.flatMap((t) => [...t.names]))];
+        const one = unsent.length === 1;
+        const head = unsent[0].comp;
+        try {
+          await send(db, app, {
+            uid,
+            kind: 'published',
+            competitionId: head.id,
+            ...(one ? competitionMessage('published', head.name, names) : linkedPublishedMessage(unsent.map((t) => t.comp), names)),
+            link: `/competitions/${head.id}/info`,
+            key: one ? `${head.id}/published/${uid}` : `link:${linkId}/published/${uid}`,
+          }, emulated);
+          sent += 1;
+        } catch (e) {
+          await Promise.all(claims.filter(Boolean).map((giveBack) => giveBack!()));
+          throw e;
+        }
+      } finally {
+        await lock.set(null);
       }
     }));
+    if (held) throw new Error(`Another task was sending ${held} of this set's alerts: trying again`);
     return sent;
   };
 }

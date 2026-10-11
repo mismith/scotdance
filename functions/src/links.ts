@@ -275,8 +275,11 @@ export interface TargetPreview {
   parts: Array<Omit<PartPlan, 'updates'>>
 }
 
-async function plansFor(db: Db, from: string, targets: Array<{ competitionId: string, parts: Part[] }>) {
+async function plansFor(db: Db, from: string, all: Array<{ competitionId: string, parts: Part[] }>) {
   const records = new Map<string, Json>();
+  // Writing into a deleted one would bring it back as a stub.
+  const there = await Promise.all(all.map((t) => exists(db, t.competitionId)));
+  const targets = all.filter((_, i) => there[i]);
   return Promise.all(targets.map(async ({ competitionId, parts }) => ({
     competitionId,
     plans: await Promise.all(parts.map((p) => planPart(db, from, competitionId, p, records))),
@@ -490,6 +493,9 @@ export function getOnStaffWritten(db: Db) {
     if (same(without(change.before.val(), BACK_POINTERS), without(change.after.val(), BACK_POINTERS))) return;
     const link = await linkOf(db, competitionId);
     if (!link || link.primary !== competitionId) return;
+    // The primary itself deleted (its staff go with it): the others keep
+    // theirs. competitionDeleted takes it out of the link.
+    if (!change.after.exists() && !(await exists(db, competitionId))) return;
     const targets = await syncing(db, link, 'staff');
     if (!targets.length) return;
     const item = await val(db, `competitions:data/${competitionId}/staff/${staffId}`);

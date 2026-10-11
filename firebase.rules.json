@@ -33,8 +33,15 @@
           "registrationEnd": { ".validate": "newData.val() === data.val() || root.child($environment).child('competitionLinks:sync').child($competitionId).child('registration').val() !== true" }, // UNCHANGED or not SYNCED (registration)
           "listed": { ".validate": "newData.val() === data.val() || root.child($environment).child('competitionLinks:sync').child($competitionId).child('visibility').val() !== true" }, // UNCHANGED or not SYNCED (visibility)
           "published": { ".validate": "newData.val() === data.val() || root.child($environment).child('competitionLinks:sync').child($competitionId).child('visibility').val() !== true" }, // UNCHANGED or not SYNCED (visibility)
-          "links": { "$linkId": { "$field": { ".validate": "newData.val() === data.val() || root.child($environment).child('competitionLinks:sync').child($competitionId).child('links').val() !== true" } } }, // UNCHANGED or not SYNCED (links)
+          "links": {
+            ".validate": "newData.hasChildren() || root.child($environment).child('competitionLinks:sync').child($competitionId).child('links').val() !== true", // a LIST, or not SYNCED (links)
+            "$linkId": {
+              ".validate": "newData.hasChildren() || root.child($environment).child('competitionLinks:sync').child($competitionId).child('links').val() !== true",
+              "$field": { ".validate": "newData.val() === data.val() || root.child($environment).child('competitionLinks:sync').child($competitionId).child('links').val() !== true" } // UNCHANGED or not SYNCED (links)
+            }
+          },
           "organisations": {
+            ".validate": "newData.hasChildren() || root.child($environment).child('competitionLinks:sync').child($competitionId).child('organisations').val() !== true", // a LIST, or not SYNCED (organisations)
             "$organisationId": {
               // An organisation's admins add its competitions and take them off.
               // A competition's admins can take any off (the write above), but
@@ -128,6 +135,7 @@
             // Judges and sponsors show once a competition is listed; a private one keeps them private.
             ".read": "root.child($environment).child('competitions').child($competitionId).child('listed').val() === true || root.child($environment).child('competitions').child($competitionId).child('published').val() === true", // is LISTED || PUBLISHED
             "$staffId": {
+              ".validate": "newData.hasChildren() || root.child($environment).child('competitionLinks:sync').child($competitionId).child('staff').val() !== true", // a RECORD, or not SYNCED
               "$field": { ".validate": "newData.val() === data.val() || root.child($environment).child('competitionLinks:sync').child($competitionId).child('staff').val() !== true" } // UNCHANGED or not SYNCED from its linked primary (ADR 0007)
             }
           },

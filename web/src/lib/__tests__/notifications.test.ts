@@ -512,7 +512,13 @@ describe('linked competitions going live (ADR 0007)', () => {
     expect(log()).toEqual([])
     expect(queue).toEqual([{ linkId: 'L1' }, { linkId: 'L1' }])
     const settled = getOnLinkPublishedSettled(db, app, true)
-    await Promise.all(queue.map(settled))
+    // Both tasks run side by side; one held back throws, and Cloud Tasks runs it again.
+    let pending = queue
+    for (let round = 0; round < 5 && pending.length; round += 1) {
+      const outcomes = await Promise.allSettled(pending.map(settled))
+      pending = pending.filter((_, i) => outcomes[i].status === 'rejected')
+    }
+    expect(pending).toEqual([])
     expect(said()).toEqual([
       'u1: 2 competitions are live, Jul 4–5',
       'u2: 2 competitions are live, Jul 4–5',
@@ -530,7 +536,7 @@ describe('linked competitions going live (ADR 0007)', () => {
   it('sends each competition once, even when one goes live after the rest', async () => {
     const { db, rtdb, log, said } = linkedSet()
     rtdb.write({ 'competitions/c1/published': true })
-    let clock = 0
+    const clock = 0
     const settled = getOnLinkPublishedSettled(db, app, true, () => clock)
     await settled({ linkId: 'L1' })
     await settled({ linkId: 'L1' })
@@ -541,12 +547,27 @@ describe('linked competitions going live (ADR 0007)', () => {
       'u4: Calgary Highland Games is live',
       'u6: Calgary Highland Games is live',
     ])
-    clock += 11 * 60_000
+    // Five minutes later, the other one: its own alert, at once.
     rtdb.write({ 'competitions/c2/published': true })
     await settled({ linkId: 'L1' })
     expect(log()).toHaveLength(7)
     expect(said()).toContain('u1: Calgary Closed Championship is live')
     expect(said()).toContain('u2: Calgary Closed Championship is live')
+  })
+
+  it('has a task wait while another is sending the same person’s alert, then sends nothing twice', async () => {
+    const { db, rtdb, said } = linkedSet()
+    rtdb.write({ 'competitions/c1/published': true, 'competitions/c2/published': true })
+    // Another task is mid-send for u1.
+    rtdb.write({ 'notifications:sent/link:L1/published/u1': 1000 })
+    const settled = getOnLinkPublishedSettled(db, app, true, () => 2000)
+    await expect(settled({ linkId: 'L1' })).rejects.toThrow(/trying again/)
+    expect(said()).not.toContain('u1: 2 competitions are live, Jul 4–5')
+    // That one finishes (the lock goes); the retry sends u1's, and no one else's again.
+    rtdb.write({ 'notifications:sent/link:L1/published/u1': null })
+    await settled({ linkId: 'L1' })
+    expect(said().filter((x) => x.startsWith('u1:'))).toEqual(['u1: 2 competitions are live, Jul 4–5'])
+    expect(said().filter((x) => x.startsWith('u2:'))).toHaveLength(1)
   })
 
   it('words a set by its first competition, and spans months', () => {

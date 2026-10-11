@@ -241,7 +241,7 @@ const to = (c: CompetitionListItem) =>
             <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
           </RouterLink>
         </li>
-        <li v-if="isPrimary || !primary">
+        <li v-if="isPrimary">
           <button
             type="button"
             class="press-row focus-inset text-primary text-callout flex min-h-13 w-full items-center gap-2.5 px-4 font-semibold disabled:opacity-(--disabled-opacity)"
