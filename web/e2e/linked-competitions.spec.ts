@@ -194,7 +194,7 @@ test.describe('families and organisers', () => {
     await page.goto(`/competitions/${ids[1]}/manage/details`)
     await expect(page.getByRole('note').getByText(/The parts marked Synced come from/)).toBeVisible()
     await expect(page.getByRole('textbox', { name: 'Description' })).toBeDisabled()
-    await expect(page.getByRole('textbox', { name: 'Name' })).toBeEnabled()
+    await expect(page.getByRole('textbox', { name: 'Name', exact: true })).toBeEnabled()
 
     await page.goto(`/competitions/${ids[1]}/manage/staff`)
     await expect(page.getByText(/Synced from .*Pre-Premier Open/)).toBeVisible()
