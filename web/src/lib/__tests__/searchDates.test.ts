@@ -41,6 +41,8 @@ describe('a competition’s date in search', () => {
   it('stays the day it’s on, wherever you are', async () => {
     const doc = await index({ name: 'Cowal Highland Gathering', date: '2026-12-12' })
     expect(doc.date).toBe('2026-12-12')
+    // What search sorts by.
+    expect(doc.day).toBe(20261212)
 
     respond = () => ({ competitions: { hits: [{ document: doc }], found: 1 } })
     const { competitions } = await searchAll({ q: 'cowal' })
@@ -51,16 +53,24 @@ describe('a competition’s date in search', () => {
   })
 
   it('reads an old admin’s dates the way the Competitions list does', async () => {
-    for (const date of ['2018-07-02T06:00:00.000Z', '2018-12-12T09:00', 1530511200000]) {
+    for (const [date, day] of [
+      ['2018-07-02T06:00:00.000Z', 20180702],
+      ['2018-12-12T09:00', 20181212],
+      [1530511200000, 20180702],
+    ] as const) {
       const doc = await index({ name: 'Old', date })
       expect(doc.date).toBe(String(date))
       expect(parseDate(doc.date as string)).toEqual(parseDate(date))
+      expect(doc.day).toBe(day)
     }
   })
 
   it('leaves out a date that isn’t set', async () => {
     for (const date of [undefined, null, '']) {
-      expect((await index({ name: 'TBA', date })).date).toBeUndefined()
+      const doc = await index({ name: 'TBA', date })
+      expect(doc.date).toBeUndefined()
+      // Sorted as the oldest, after every dated one.
+      expect(doc.day).toBe(0)
     }
   })
 })

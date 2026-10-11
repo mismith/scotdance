@@ -1,5 +1,11 @@
-FROM typesense/typesense:0.23.1
+FROM typesense/typesense:30.2
 
-ENV TYPESENSE_DATA_DIR=/app/typesense-data
-ENV TYPESENSE_ENABLE_CORS=true
+# A folder of its own on the Render disk: 30 can't hand its data back to
+# 0.23, so the old data stays at the disk's root for a rollback.
+ENV TYPESENSE_DATA_DIR=/app/typesense-data/v30
+# Only Cloud Functions call it, never a browser. (CORS is on by default.)
+ENV TYPESENSE_ENABLE_CORS=false
 # ENV TYPESENSE_API_KEY is stored in Render.com env vars
+
+# The disk is only mounted at run time, so make the folder then.
+ENTRYPOINT ["sh", "-c", "mkdir -p \"$TYPESENSE_DATA_DIR\" && exec /opt/typesense-server \"$@\"", "--"]

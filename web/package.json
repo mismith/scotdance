@@ -11,7 +11,7 @@
     "dev:web": "vite",
     "dev": "concurrently -k -n fn,web -c magenta,green \"npm:dev:functions\" \"npm:dev:web\"",
     "emulate:firebase": "cd .. && firebase emulators:start --import=.firebase/emulator-data --export-on-exit=.firebase/emulator-data",
-    "emulate:typesense": "cd .. && docker rm -f scotdance-typesense >/dev/null 2>&1; docker run --rm --name scotdance-typesense -p 8108:8108 -v \"$PWD/.typesense/emulator-data:/data\" typesense/typesense:0.23.1 --data-dir /data --api-key=xyz --enable-cors",
+    "emulate:typesense": "cd .. && docker rm -f scotdance-typesense >/dev/null 2>&1; docker run --rm --name scotdance-typesense -p 8108:8108 -v \"$PWD/.typesense/emulator-data-v30:/data\" typesense/typesense:30.2 --data-dir /data --api-key=xyz --enable-cors=false",
     "local": "cd .. && PATH=\"$(ls -d \"$HOME\"/.nvm/versions/node/v\"$(cat .nvmrc)\".* 2>/dev/null | sort -V | tail -1)/bin:$PATH\" firebase emulators:exec --inspect-functions --import=.firebase/emulator-data --export-on-exit=.firebase/emulator-data 'cd web && concurrently -k -n fn,ts,web -c magenta,yellow,green npm:dev:functions npm:emulate:typesense \"vite --mode emulator --port 5273\"'",
     "ios": "cd .. && npx cap run ios --live-reload --host $(ipconfig getifaddr en0) --port ${PORT:-5273}",
     "android": "cd .. && npx cap run android --live-reload --host $(ipconfig getifaddr en0) --port ${PORT:-5273}",

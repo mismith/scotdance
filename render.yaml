@@ -1,9 +1,12 @@
 services:
   - type: web
     name: scotdance-typesense
-    env: docker
+    runtime: docker
     dockerfilePath: ./Dockerfile.typesense
     repo: https://github.com/mismith/scotdance.git
+    branch: next
+    # Deploy by hand: a restart is a minute without search.
+    autoDeployTrigger: 'off'
     plan: starter
     healthCheckPath: /health
     disk:

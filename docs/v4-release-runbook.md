@@ -38,7 +38,8 @@ ADR 0003 for the aggregates.
    Function names are the API: the v3 apps call `searchDancers` by name, so
    never rename one. Any local Node from 24 up can deploy.
    `RUNTIME_CONFIG` must hold `typesense.host` / `typesense.api_key` (already
-   used by `searchDancers`, so it should exist). `GOOGLE_GEOCODING_API_KEY`
+   used by `searchDancers`, so it should exist), and `typesense.search_api_key`
+   for the search callables ([typesense-upgrade-runbook.md](typesense-upgrade-runbook.md)). `GOOGLE_GEOCODING_API_KEY`
    must exist in Secret Manager too (`backfillCoords` declares it).
 3. Backfills, from next.scotdance.app/admin/tools (signed in as a system admin),
    at a time with no competition running. Each one is safe to re-run; if one

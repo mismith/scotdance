@@ -11,12 +11,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 type Json = any
 
 const searched: Json[] = []
+let answer: (search: Json) => Json = () => ({ found: 0 })
 vi.mock('../../../../functions/src/utility/typesense', () => ({
-  getTypesense: () => ({
+  getTypesenseSearch: () => ({
     multiSearch: {
       perform: async ({ searches }: { searches: Json[] }) => {
         searched.push(...searches)
-        return { results: searches.map(() => ({ found: 0 })) }
+        return { results: searches.map((s) => answer(s)) }
       },
     },
   }),
@@ -37,6 +38,7 @@ const wildcards = ['*', ' * ', '**', '-isla', '*-isla', '.', '', '   ', 42, unde
 
 beforeEach(() => {
   searched.length = 0
+  answer = () => ({ found: 0 })
 })
 
 describe('searchDancers', () => {
@@ -59,13 +61,13 @@ describe('searchDancers', () => {
       {
         collection: 'dancers',
         q: 'isla',
-        query_by: '$name',
-        filter_by: '$competitionId:[`c1`]',
-        group_by: '$name',
+        query_by: 'name',
+        filter_by: 'competitionId:[`c1`]',
+        group_by: 'name',
         group_limit: 99,
         per_page: 99,
         include_fields:
-          'id,$competitionId,$name,firstName,lastName,number,groupId,location,website',
+          'id,competitionId,name,firstName,lastName,number,groupId,location,website',
       },
     ])
   })
@@ -80,6 +82,20 @@ describe('searchDancers', () => {
       code: 'invalid-argument',
     })
     expect(searched).toEqual([])
+  })
+
+  it('answers with the $name and $competitionId v3 reads', async () => {
+    const doc = { id: 'd1', competitionId: 'c1', name: 'Isla Ross', firstName: 'Isla' }
+    answer = () => ({ found: 1, grouped_hits: [{ group_key: ['Isla Ross'], hits: [{ document: doc }] }] })
+    expect(await search({ q: 'isla' }, signedIn)).toEqual({
+      found: 1,
+      grouped_hits: [
+        {
+          group_key: ['Isla Ross'],
+          hits: [{ document: { id: 'd1', $competitionId: 'c1', $name: 'Isla Ross', firstName: 'Isla' } }],
+        },
+      ],
+    })
   })
 
   it('still needs someone signed in', async () => {
@@ -106,7 +122,28 @@ describe('searchAll', () => {
     expect(withHits.length).toBeGreaterThan(0)
     for (const s of withHits) expect(s.include_fields, s.collection).toBeTruthy()
     expect(searched.find((s) => s.collection === 'dancers').include_fields).toBe(
-      '$name,$competitionId,location',
+      'name,competitionId,location',
     )
+  })
+
+  it('puts competitions coming up before past ones that match as well', async () => {
+    const hit = (id: string, text_match = 5) => ({ document: { id }, text_match })
+    answer = (s) => {
+      if (s.collection !== 'competitions' || !s.sort_by) return { found: 0 }
+      return s.filter_by.includes('day:>=')
+        ? { found: 2, hits: [hit('soon'), hit('later', 3)] }
+        : { found: 9, hits: [hit('last-year', 9), hit('2022'), hit('2021'), hit('2020'), hit('2019')] }
+    }
+    const out = await searchAll({ q: 'fraser', types: ['competitions'] }, {})
+    // A better match still leads; then, matching as well, the coming one.
+    expect(out.competitions).toEqual({
+      found: 11,
+      hits: [hit('last-year', 9), hit('soon'), hit('2022'), hit('2021'), hit('2020')],
+    })
+    const [upcoming, past] = searched
+    expect(upcoming.filter_by).toMatch(/^id:\[`c1`,`c2`\] && day:>=\d{8}$/)
+    expect(upcoming.sort_by).toBe('_text_match:desc,day:asc')
+    expect(past.filter_by).toMatch(/^id:\[`c1`,`c2`\] && day:<\d{8}$/)
+    expect(past.sort_by).toBe('_text_match:desc,day:desc')
   })
 })

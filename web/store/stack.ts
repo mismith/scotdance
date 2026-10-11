@@ -88,11 +88,11 @@ export async function startStack(): Promise<Stack> {
         TYPESENSE,
         '-p',
         `${TYPESENSE_PORT}:8108`,
-        'typesense/typesense:0.23.1',
+        'typesense/typesense:30.2',
         '--data-dir',
         '/tmp',
         '--api-key=xyz',
-        '--enable-cors',
+        '--enable-cors=false',
       ],
       { stdio: 'ignore' },
     )

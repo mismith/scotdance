@@ -2,16 +2,18 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 
 import { ensureAdmin } from './utility/competition';
-import { getTypesense, indexBestEffort, sameExcept } from './utility/typesense';
+import {
+  getTypesense, getTypesenseSearch, indexBestEffort, rebuild, sameExcept,
+} from './utility/typesense';
 import { createAggregator } from './utility/aggregate';
-import { filterList, searchTerm } from './search';
+import { filterList, searchTerm, withAppKeys } from './search';
 import { dancerAggregator as aggregatorConfig, personName } from './utility/entityConfigs';
 
 const schema: CollectionCreateSchema = {
   name: 'dancers',
   fields: [
     {
-      name: '$competitionId',
+      name: 'competitionId',
       type: 'string',
       facet: true,
     },
@@ -26,7 +28,7 @@ const schema: CollectionCreateSchema = {
       optional: true,
     },
     {
-      name: '$name',
+      name: 'name',
       type: 'string',
       facet: true,
     },
@@ -36,9 +38,10 @@ const schema: CollectionCreateSchema = {
 function dancerExtender(dancer, { dancerId, competitionId }) {
   return {
     id: dancerId,
-    $competitionId: competitionId,
-    $name: personName(dancer),
     ...dancer,
+    // The apps read these as $competitionId and $name (search.ts withAppKeys).
+    competitionId,
+    name: personName(dancer),
   };
 }
 
@@ -117,22 +120,22 @@ export function getOnSearch(db) {
     }
 
     try {
-      const response = await getTypesense().multiSearch.perform({
+      const response = await getTypesenseSearch().multiSearch.perform({
         searches: [
           {
             collection: 'dancers',
             q,
-            query_by: '$name',
-            filter_by: Array.isArray(authorizedCompetitionIds) ? `$competitionId:${filterList(authorizedCompetitionIds)}` : undefined,
-            group_by: '$name',
+            query_by: 'name',
+            filter_by: Array.isArray(authorizedCompetitionIds) ? `competitionId:${filterList(authorizedCompetitionIds)}` : undefined,
+            group_by: 'name',
             group_limit: 99,
             per_page: 99,
             // What v3 shows of each entry (views/Dancers.vue, DancerListItem).
-            include_fields: 'id,$competitionId,$name,firstName,lastName,number,groupId,location,website',
+            include_fields: 'id,competitionId,name,firstName,lastName,number,groupId,location,website',
           },
         ],
       });
-      return response?.results?.[0];
+      return withAppKeys(response?.results?.[0]);
     } catch (error) {
       throw new HttpsError('invalid-argument', error?.message, error);
     }
@@ -142,12 +145,6 @@ export function getOnSearch(db) {
 export function getOnReindex(db) {
   return async function onReindex(data, ctx) {
     await ensureAdmin(ctx, db);
-
-    // reset the collection
-    await getTypesense().collections('dancers').delete().catch(() => {});
-    await getTypesense().collections().create(schema);
-
-    // populate it with dancer data
     const competitions = (await db.child('competitions').get()).val();
     const documents = [].concat(...(await Promise.all(Object.keys(competitions || {}).map(
       async (competitionId) => {
@@ -157,10 +154,6 @@ export function getOnReindex(db) {
         );
       },
     ))));
-    if (documents.length) {
-      await getTypesense().collections('dancers').documents().import(documents, { action: 'upsert' });
-    }
-
-    return documents;
+    return rebuild(schema, documents);
   };
 }

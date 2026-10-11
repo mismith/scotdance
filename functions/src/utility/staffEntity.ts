@@ -6,7 +6,9 @@
 import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 
 import { ensureAdmin } from './competition';
-import { getTypesense, indexBestEffort, sameExcept } from './typesense';
+import {
+  getTypesense, indexBestEffort, rebuild, sameExcept,
+} from './typesense';
 import { createAggregator } from './aggregate';
 import {
   personName, staffAggregator, type StaffEntityKind, type StaffRecord,
@@ -22,8 +24,8 @@ export function createStaffEntity(config: StaffEntityKind) {
   const schema: CollectionCreateSchema = {
     name: namespace,
     fields: [
-      { name: '$competitionId', type: 'string', facet: true },
-      { name: '$name', type: 'string', facet: true },
+      { name: 'competitionId', type: 'string', facet: true },
+      { name: 'name', type: 'string', facet: true },
       { name: 'firstName', type: 'string', optional: true },
       { name: 'lastName', type: 'string', optional: true },
       { name: 'location', type: 'string', optional: true },
@@ -40,8 +42,9 @@ export function createStaffEntity(config: StaffEntityKind) {
   function docFor(member: StaffRecord, ctx: { competitionId: string; staffId: string }) {
     return {
       id: staffDocId(ctx.competitionId, ctx.staffId),
-      $competitionId: ctx.competitionId,
-      $name: personName(member),
+      // The app reads these as $competitionId and $name (search.ts withAppKeys).
+      competitionId: ctx.competitionId,
+      name: personName(member),
       firstName: member.firstName,
       lastName: member.lastName,
       location: member.location,
@@ -104,8 +107,6 @@ export function createStaffEntity(config: StaffEntityKind) {
   function getOnReindex(db: any) {
     return async function onReindex(_data: unknown, ctx: any) {
       await ensureAdmin(ctx, db);
-      await getTypesense().collections(namespace).delete().catch(() => {});
-      await getTypesense().collections().create(schema);
       const competitions = (await db.child('competitions').get()).val() || {};
       const documents: any[] = [].concat(...(await Promise.all(Object.keys(competitions).map(
         async (competitionId) => {
@@ -117,10 +118,7 @@ export function createStaffEntity(config: StaffEntityKind) {
             )) as never;
         },
       ))));
-      if (documents.length) {
-        await getTypesense().collections(namespace).documents().import(documents, { action: 'upsert' });
-      }
-      return documents;
+      return rebuild(schema, documents);
     };
   }
 

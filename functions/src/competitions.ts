@@ -1,12 +1,13 @@
 import { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections';
 
 import { ensureAdmin } from './utility/competition';
-import { getTypesense, indexBestEffort, sameExcept } from './utility/typesense';
+import {
+  getTypesense, indexBestEffort, rebuild, sameExcept,
+} from './utility/typesense';
 
 export const schema: CollectionCreateSchema = {
   name: 'competitions',
   fields: [
-    { name: '$name', type: 'string', facet: true },
     { name: 'name', type: 'string', optional: true },
     {
       name: 'venue', type: 'string', optional: true, facet: true,
@@ -24,6 +25,8 @@ export const schema: CollectionCreateSchema = {
     {
       name: 'date', type: 'string', optional: true, index: false,
     },
+    // The date to sort by: search puts those coming up first.
+    { name: 'day', type: 'int32' },
     {
       name: 'published', type: 'bool', facet: true, optional: true,
     },
@@ -52,10 +55,23 @@ function dateOf(d: unknown): string | undefined {
   return typeof d === 'string' && d ? d : undefined;
 }
 
+/**
+ * The date as a whole number that sorts, e.g. 20261212, or 0 for none. An
+ * old admin's ISO time or ms counts as its day in UTC, which can be a day
+ * out: search allows for that.
+ */
+export function dayOf(d: unknown): number {
+  const date = dateOf(d);
+  if (!date) return 0;
+  const ymd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (ymd) return Number(ymd[1] + ymd[2] + ymd[3]);
+  const t = new Date(/^\d{10,}$/.test(date) ? Number(date) : date);
+  return Number.isNaN(t.getTime()) ? 0 : Number(t.toISOString().slice(0, 10).replace(/-/g, ''));
+}
+
 function competitionExtender(comp: any, { competitionId }: { competitionId: string }) {
   return {
     id: competitionId,
-    $name: (comp?.name || '').trim(),
     name: comp?.name,
     venue: comp?.venue,
     location: comp?.location,
@@ -63,6 +79,7 @@ function competitionExtender(comp: any, { competitionId }: { competitionId: stri
     region: comp?.region,
     locality: comp?.locality,
     date: dateOf(comp?.date),
+    day: dayOf(comp?.date),
     published: !!comp?.published,
     listed: !!comp?.listed,
     image: comp?.image,
@@ -99,17 +116,10 @@ export async function onDelete(_snap: any, ctx: any) {
 export function getOnReindex(db: any) {
   return async function onReindex(_data: unknown, ctx: any) {
     await ensureAdmin(ctx, db);
-
-    await getTypesense().collections('competitions').delete().catch(() => {});
-    await getTypesense().collections().create(schema);
-
     const competitions = (await db.child('competitions').get()).val() || {};
     const documents = Object.entries(competitions).map(
       ([competitionId, comp]) => competitionExtender(comp, { competitionId }),
     );
-    if (documents.length) {
-      await getTypesense().collections('competitions').documents().import(documents, { action: 'upsert' });
-    }
-    return documents;
+    return rebuild(schema, documents);
   };
 }
