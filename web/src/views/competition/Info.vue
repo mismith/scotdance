@@ -2,7 +2,7 @@
 import { useMorph } from '@/lib/morph'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Check, ChevronRight, Clock, Copy, ExternalLink, Hourglass, Map as MapIcon, MapPin, Navigation, Search, Star, Trophy, Users, X } from '@lucide/vue'
+import { Check, ChevronDown, ChevronRight, Clock, Copy, ExternalLink, Hourglass, Map as MapIcon, MapPin, Navigation, Search, Star, Trophy, Users, X } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
 import { useCompetitionLive } from '@/composables/useCompetitionLive'
@@ -10,6 +10,7 @@ import { useCompetitionProgress } from '@/composables/useCompetitionProgress'
 import { useCompetitionSearch } from '@/composables/useCompetitionSearch'
 import { useFreshPlacings } from '@/composables/useCompetitionPlacings'
 import DateTile from '@/components/DateTile.vue'
+import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
 import Dialog from '@/components/Dialog.vue'
 import MapPreview from '@/components/MapPreview.vue'
 import DancerDayCard from '@/components/DancerDayCard.vue'
@@ -45,6 +46,10 @@ import {
   staffHeading,
 } from '@/lib/competitionInfo'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
+import { useLinkedSwitcher } from '@/composables/useLinkedSwitcher'
+import { useFollowedCompetitions } from '@/composables/useFollowedCompetitions'
+import { memberNote } from '@/lib/linked'
+import { daysFromToday } from '@/lib/format'
 
 const setHeader = injectInfoHeaderSetter()
 
@@ -100,6 +105,26 @@ const kicker = computed(() => {
     when = rel.charAt(0).toUpperCase() + rel.slice(1)
   }
   return [when, c.location].filter(Boolean).join(' · ')
+})
+
+// Linked with others (ADR 0007 §6): a pill beside Follow opens the
+// switcher, and a section shows the ones either side of this one.
+const switcher = useLinkedSwitcher()
+const { byCompetition: followedByCompetition } = useFollowedCompetitions()
+const NEARBY = 2
+const nearby = computed(() => {
+  const members = switcher?.members.value ?? []
+  const at = members.findIndex((c) => c.id === competitionId.value)
+  return members
+    .map((c, i) => ({ c, i }))
+    .filter(({ c }) => c.id !== competitionId.value)
+    .sort((a, b) => Math.abs(a.i - at) - Math.abs(b.i - at) || a.i - b.i)
+    .slice(0, NEARBY)
+    .sort((a, b) => a.i - b.i)
+    .map(({ c }) => {
+      const note = memberNote(c, { days: daysFromToday(c.date), venue: competition.value?.venue })
+      return { c, note }
+    })
 })
 
 // Directions in the map app you use, and the map itself, full size.
@@ -241,6 +266,17 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
       </div>
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
         <FavoriteButton :id="competitionId" type="competitions" :name="competition.name" labelled variant="tonal" />
+        <button
+          v-if="switcher?.linked.value"
+          type="button"
+          class="press surface text-callout flex h-11 shrink-0 items-center gap-1.5 rounded-full pr-3 pl-4 font-semibold"
+          aria-haspopup="dialog"
+          :aria-label="`${switcher.label.value}: switch competition`"
+          @click="switcher.morph.show($event)"
+        >
+          {{ switcher.members.value.length }} competitions
+          <ChevronDown class="text-muted-foreground size-4" stroke-width="2.4" aria-hidden="true" />
+        </button>
         <p v-if="lastResult" class="text-muted-foreground text-sm first-letter:uppercase">{{ lastResult }}</p>
       </div>
     </header>
@@ -339,6 +375,32 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         Dancers, the schedule and results show here once they’re published.
       </p>
     </Transition>
+
+    <!-- The competitions it's linked with: the ones either side, and all of them -->
+    <section v-if="switcher?.linked.value" class="space-y-3">
+      <h2 class="text-heading">{{ switcher.label.value }}</h2>
+      <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+        <CompetitionDateRow
+          v-for="r in nearby"
+          :key="r.c.id"
+          :competition="r.c"
+          :to="{ name: 'competition.info', params: { competitionId: r.c.id } }"
+          replace
+          :note="r.note?.text"
+          :note-tone="r.note?.tone"
+          :dancers="followedByCompetition[r.c.id] ?? []"
+        />
+        <li v-if="switcher.members.value.length - 1 > nearby.length">
+          <button
+            type="button"
+            class="press-row focus-inset text-primary text-callout flex min-h-12 w-full items-center justify-center font-semibold"
+            @click="switcher.morph.show($event)"
+          >
+            All {{ switcher.members.value.length }}
+          </button>
+        </li>
+      </ul>
+    </section>
 
     <!-- When and where -->
     <section class="surface rows-inset overflow-hidden rounded-2xl [--inset:3rem]">

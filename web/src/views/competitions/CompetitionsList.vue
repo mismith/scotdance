@@ -18,7 +18,9 @@ import { useScrolledPast } from '@/composables/useScrolledPast'
 import { useLocationFilter } from '@/composables/useLocationFilter'
 import { useFollowedCompetitions } from '@/composables/useFollowedCompetitions'
 import { useCompetitionSpans } from '@/composables/useCompetitionSpans'
+import { useCompetitionLinks } from '@/composables/useCompetitionLinks'
 import { parseDate } from '@/lib/format'
+import { orderLinked, railOf, type RailPosition } from '@/lib/linked'
 import { lateSkeleton, settle, settleDelay } from '@/lib/settle'
 import { useFavoritesStore } from '@/stores/favorites'
 
@@ -103,21 +105,30 @@ const inRangeEverywhere = computed(() => byRange(competitions.value))
 interface Section {
   key: string
   label: string
-  items: CompetitionListItem[]
+  rows: Array<{ c: CompetitionListItem; rail: RailPosition; note: string | null }>
 }
+// Linked competitions stay together, on a rail (ADR 0007 §8): a group sits
+// in the section of its first day, or Today while any of its days is today.
+// One shown without the rest of its set names them.
+const { linkOf, othersLine } = useCompetitionLinks()
 const sections = computed<Section[]>(() => {
   const out = new Map<string, Section>()
-  for (const c of inRange.value) {
-    const d = dateOf(c)
-    const today = isOn(c)
+  const blocks = orderLinked(inRange.value, linkOf, { descending: range.value === 'past', at: ms })
+  for (const b of blocks) {
+    const first = [...b.items].sort((x, y) => ms(x) - ms(y))[0]
+    const d = dateOf(first)
+    const today = b.items.some(isOn)
     const key = today ? 'today' : d ? `${d.getFullYear()}-${d.getMonth()}` : 'tba'
     const label = today
       ? 'Today'
       : d
         ? d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
         : 'Date to be announced'
-    const s = out.get(key) ?? { key, label, items: [] }
-    s.items.push(c)
+    const s = out.get(key) ?? { key, label, rows: [] }
+    b.items.forEach((c, i) => {
+      const alone = b.items.length === 1 ? othersLine(c) : null
+      s.rows.push({ c, rail: railOf(i, b.items.length), note: [dayNote(c), alone].filter(Boolean).join(' · ') || null })
+    })
     out.set(key, s)
   }
   return [...out.values()]
@@ -217,14 +228,15 @@ const sections = computed<Section[]>(() => {
           </h2>
           <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
             <CompetitionDateRow
-              v-for="c in s.items"
+              v-for="{ c, rail, note } in s.rows"
               :key="c.id"
               :competition="c"
               :to="{ name: 'competition.info', params: { competitionId: c.id } }"
               :dancers="byCompetition[c.id] ?? []"
               :followed="favorites.isFavorite('competitions', c.id)"
-              :today="s.key === 'today'"
-              :note="dayNote(c)"
+              :today="s.key === 'today' && isOn(c)"
+              :note="note"
+              :rail="rail"
             />
           </ul>
         </section>

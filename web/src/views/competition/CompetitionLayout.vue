@@ -9,8 +9,10 @@ import AdminMark from '@/components/AdminMark.vue'
 import CompetitionBottomNav from '@/components/nav/CompetitionBottomNav.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import LinkedSwitcher from '@/components/LinkedSwitcher.vue'
 import Button from '@/components/ui/Button.vue'
 import { provideCompetition } from '@/composables/useCompetition'
+import { provideLinkedSwitcher } from '@/composables/useLinkedSwitcher'
 import { provideInfoHeader } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { useRecentEntities } from '@/composables/useRecentEntities'
@@ -32,8 +34,19 @@ const me = useMeStore()
 const competitionId = computed(() => String(route.params.competitionId ?? ''))
 
 
-const { competition, notFound, restricted, loading, error, loadSchedule, loadResults, schedule, scheduleHidden, resultsHidden } =
+const { competition, notFound, restricted, loading, error, loadSchedule, loadResults, schedule, scheduleHidden, resultsHidden, dancers } =
   provideCompetition(toRef(competitionId))
+
+// Linked with others (a weekend's, a week's): the title switches between them.
+const personHere = computed(() =>
+  route.name === 'competition.dancer' ? (dancers.value.find((d) => d.id === route.params.dancerId)?.dancerId ?? null) : null,
+)
+const switcher = provideLinkedSwitcher(competitionId, personHere)
+const titleMenu = computed(() =>
+  switcher.linked.value
+    ? { open: (e: MouseEvent) => void switcher.morph.show(e), label: `${competition.value?.name ?? 'This competition'}, one of ${switcher.label.value}. Switch competition` }
+    : null,
+)
 
 // The schedule says how many days the competition runs, and whether the
 // organisers hid the Schedule or Results tab.
@@ -130,6 +143,7 @@ usePageTitle(() => [
       :exit="exit"
       compact-back
       :competition-id="competitionId"
+      :title-menu="titleMenu"
     >
       <template #actions>
         <RouterLink
@@ -193,5 +207,6 @@ usePageTitle(() => [
     </main>
 
     <CompetitionBottomNav />
+    <LinkedSwitcher v-if="switcher.linked.value" />
   </div>
 </template>

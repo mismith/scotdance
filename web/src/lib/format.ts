@@ -150,6 +150,29 @@ export function formatMonthAbbrev(value: number | string | Date | undefined | nu
   return d ? monthAbbrev.format(d) : ''
 }
 
+const monthDay = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' })
+
+/** "Jul 4". */
+export function formatMonthDay(value: number | string | Date | undefined | null): string {
+  const d = validDate(value)
+  return d ? monthDay.format(d) : ''
+}
+
+/**
+ * The days a set of dates covers, as the device's locale writes a range:
+ * "Jul 5 – 11", "Jun 30 – Jul 2" ("Jul 4" for one day). Empty when none is readable.
+ */
+export function formatDateSpan(values: Array<number | string | Date | undefined | null>): string {
+  const days = values.map(validDate).filter((d): d is Date => !!d).sort((a, b) => a.getTime() - b.getTime())
+  if (!days.length) return ''
+  const first = startOfDay(days[0])
+  const last = startOfDay(days[days.length - 1])
+  if (first.getTime() === last.getTime()) return monthDay.format(first)
+  const crossesYear = first.getFullYear() !== last.getFullYear()
+  const fmt = crossesYear ? monthDayYear : monthDay
+  return fmt.formatRange(first, last)
+}
+
 export function isSameDay(
   a: number | string | undefined | null,
   b: Date = now(),
