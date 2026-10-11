@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
-import { DANCER_COLORS, useDancerColorsStore } from '@/stores/dancerColors'
+import { DANCER_COLORS, isCustomColor, useDancerColorsStore } from '@/stores/dancerColors'
 
 // Following a dancer means favouriting their AGGREGATE record (one person
 // across every competition). A per-competition record carries a back-pointer
@@ -40,6 +40,7 @@ export function useFollowing() {
   // Each followed dancer gets a colour: the one you chose for them, or else
   // the next one nobody's using, in the order you followed them (push-id-like
   // keys sort chronologically), so a family's first dancer is always red.
+  // Your own colours (hex) sit outside the palette, so they take no turn.
   const order = computed(() => Object.keys(favorites.dancers))
   const assigned = computed(() => {
     const out: Record<string, string> = {}
@@ -50,12 +51,12 @@ export function useFollowing() {
     return out
   })
 
-  /** The colour id (e.g. 'dancer-3') for a followed dancer. */
+  /** The colour id (e.g. 'dancer-3', or your own '#rrggbb') for a followed dancer. */
   const colorIdFor = (aggregateId: string | undefined | null) => (aggregateId ? (assigned.value[aggregateId] ?? null) : null)
 
   function colorFor(aggregateId: string | undefined | null): string | null {
     const id = colorIdFor(aggregateId)
-    return id ? `var(--${id})` : null
+    return !id ? null : isCustomColor(id) ? id : `var(--${id})`
   }
 
   /** Inline style for anything drawn in a dancer's colour (see `sash`). */

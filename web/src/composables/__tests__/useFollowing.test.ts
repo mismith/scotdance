@@ -31,7 +31,7 @@ vi.mock('@/lib/offline', () => ({
 }))
 
 const { oncePerPerson, useFollowing } = await import('@/composables/useFollowing')
-const { useDancerColorsStore } = await import('@/stores/dancerColors')
+const { inkOn, useDancerColorsStore } = await import('@/stores/dancerColors')
 
 beforeEach(() => {
   setActivePinia(createPinia())
@@ -68,6 +68,16 @@ describe('colours', () => {
     expect(['a', 'b', 'c'].map(f.colorIdFor)).toEqual(['dancer-2', 'dancer-1', 'dancer-3'])
   })
 
+  it('wears your own colour as is, without taking a palette colour', async () => {
+    useDancerColorsStore()
+    await signIn()
+    favorites.dancers = { a: 'A', b: 'B' }
+    emit!({ a: '#12ab9f', b: '#nothex' })
+    const f = useFollowing()
+    expect(f.colorFor('a')).toBe('#12ab9f')
+    expect(f.colorIdFor('b')).toBe('dancer-1')
+  })
+
   it('wraps round when you follow more dancers than there are colours', () => {
     favorites.dancers = Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`p${i}`, `P${i}`]))
     const f = useFollowing()
@@ -77,6 +87,11 @@ describe('colours', () => {
 })
 
 describe('dancer colours store', () => {
+  it('writes in ink on light colours, white on dark ones', () => {
+    expect(inkOn('#ffee00')).toBe('#0c0f13')
+    expect(inkOn('#1d6a48')).toBe('#ffffff')
+  })
+
   it('saves your choice, and forgets it for the next account', async () => {
     const colors = useDancerColorsStore()
     await colors.choose('a', 'dancer-6')

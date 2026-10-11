@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { initialsOf } from '@/lib/format'
+import { inkOn, isCustomColor } from '@/stores/dancerColors'
 
 // A person as a circle: their photo, or their initials when there isn't one
 // (or it won't load). A dancer you follow wears their colour; you yourself
@@ -43,7 +44,7 @@ watch(
       SIZE[size],
       color ? 'sash text-on-dancer' : you ? 'bg-primary-fill text-primary-foreground' : 'bg-blue-paper text-primary',
     ]"
-    :style="color ? { '--dc': color } : undefined"
+    :style="color ? { '--dc': color, '--on-dancer': isCustomColor(color) ? inkOn(color) : undefined } : undefined"
     aria-hidden="true"
   >
     {{ initialsOf(name) }}
