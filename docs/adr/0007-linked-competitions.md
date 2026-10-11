@@ -21,12 +21,16 @@ They're still separate competitions. Murray (2026-10-10):
 - What's really the same is the **staff**, and sometimes the **venue**.
 - Merging the days in families' screens would be too confusing.
 
+On 2026-10-11 he widened what's shared: everything on Details can sync too,
+apart from what makes each competition itself (its name, date and
+registration number).
+
 So linking does two things:
 
 1. **Families** can see which competitions are linked and jump between
    them. Each competition's pages stay its own.
-2. **Organisers** pick one competition as the **primary**. The others can
-   each choose to take its staff, its venue, or both. A function keeps those
+2. **Organisers** pick one competition as the **primary**. The others take
+   its staff and its details, each part switchable. A function keeps those
    parts in step as the primary changes.
 
 This is not:
@@ -56,7 +60,8 @@ enough that matching on date and place would mislead families
 /competitionLinks:sync/{competitionId}/{part} = true    // what it takes from the primary
 ```
 
-- `part` is `staff` or `venue` to begin with (§3).
+- `part` is one of §3's: `about`, `venue`, `registration`, `links`,
+  `visibility`, `organisations` or `staff`.
 - A competition is in at most one link (Murray, 2026-10-10).
 - `/competitionLinks` is public. It's read whole, as `/organisations` is
   (tens of links, not thousands), so lists and the switcher need no extra
@@ -66,20 +71,34 @@ enough that matching on date and place would mislead families
 
 ### 3. What can sync
 
-| Part | What it covers |
-|---|---|
-| **Staff** | The whole staff list: judges, pipers, sponsors and the rest, with their photos and details. All of it or none: picking types would be too complicated (Murray, 2026-10-10) |
-| **Venue** | `venue`, `address`, `location`, `lat`, `lng`, `country`, `region`, `locality` |
+In Manage's order: Details' sections top to bottom, then Staff (Murray,
+2026-10-11).
 
-Each competition in the link switches each part on or off for itself.
+| Part | Switch | What it covers |
+|---|---|---|
+| `about` | **Description and logo** | `description`, `image` |
+| `venue` | **Where** | `venue`, `address`, `location`, `lat`, `lng`, `country`, `region`, `locality` |
+| `registration` | **Registration** | `registrationURL`, `registrationStart`, `registrationEnd` |
+| `links` | **Links and files** | `links` |
+| `visibility` | **Listed and published** | `listed`, `published` |
+| `organisations` | **Organisations** | `organisations` |
+| `staff` | **Staff** | The whole staff list: judges, pipers, helpers and sponsors, with their photos and details. All of it or none: picking types would be too complicated (Murray, 2026-10-10) |
 
-- **Never synced:** the name, date and registration number; dancers; age
-  groups, categories and dances; the schedule; dancing order; results.
+- **All start on** when a competition is linked (Murray, 2026-10-11). Each
+  competition switches each part off for itself, such as a day at another
+  venue switching off Where.
+- **Listed and published sync together**, so they can never disagree
+  (Details already lists whatever it publishes). The switch says what they
+  mean in families' terms, as Details does:
+  - "Listed: families can find it in the competitions list."
+  - "Published: they can also see its dancers, schedule and results."
+- **Never synced:** the name, date and registration number (each day has its
+  own); dancers; age groups, categories and dances; platforms; the schedule;
+  dancing order; results.
 - **Staff is the pool.** Who judges which platform each day stays in that
   competition's own schedule.
-- **Later, if wanted:** organisations, links and files, platforms. Adding a
-  part is a new name in `sync` plus its copy and its trigger; nothing else
-  changes.
+- **Later, if wanted:** platforms. Adding a part is a new name in `sync`
+  plus its fields; nothing else changes.
 
 ### 4. How it syncs (functions)
 
@@ -90,7 +109,8 @@ Each competition in the link switches each part on or off for itself.
   or cleared and listed in the confirmation.
 - **Then triggers keep it in step.**
   - `competitionStaffSync` on `competitions:data/{id}/staff/{staffId}`.
-  - The venue fields, in the existing `competitions/{id}` update trigger.
+  - Every other part, in the existing `competitions/{id}` update trigger:
+    it checks the changed fields against §3's table.
   - Each one checks whether `id` is a primary and, for every competition
     syncing that part, writes the primary's value. It reads the value fresh
     rather than taking the event's, so events that arrive out of order
@@ -102,11 +122,22 @@ Each competition in the link switches each part on or off for itself.
 - **No loops.** Only the primary's changes go out; copies don't sync onward.
   The aggregators run on each copy as on any competition, and write back
   the same `judgeId` / `piperId`.
-- **The app can't change a synced part.** A `.validate` reads
-  `competitionLinks:sync/{id}/{part}` and refuses writes from the app to the
-  staff, or to the venue fields, of a competition that syncs them. A delete
-  gets past `.validate`, but the app never offers one, and **Sync now** puts
-  it back.
+- **The app can't change a synced part.** A `.validate` on each part's
+  fields reads `competitionLinks:sync/{id}/{part}` and refuses writes from
+  the app to a part the competition syncs. A delete gets past `.validate`,
+  but the app never offers one, and **Sync now** puts it back.
+- **Publishing the set sends one alert** (Murray, 2026-10-11). Publishing
+  the primary publishes every competition that syncs Listed and published.
+  ADR 0006's "is live" alert would then come once per competition: 7 at once
+  for a family with alerts on for the whole week. Instead each person gets
+  one, for the ones they follow or have a dancer in: **7 competitions are
+  live, Jul 5–11** · SDCCS Pre-Premier Open and 6 others: dancer lists and
+  schedules are up. Tapping it opens the first of them.
+  - Each copy's `competitionPublishedChanged` still links its entries to
+    people first. Then, instead of alerting, it queues one task for the
+    link a minute on, as results do (ADR 0006), and the task sends the
+    alerts once every copy is in.
+  - Someone with alerts on for just one of them gets the usual alert for it.
 - **Turning a part off** keeps the competition's copy, editable again.
 - **Changing the primary** re-copies every synced part from the new one,
   after a confirmation.
@@ -176,11 +207,16 @@ current tab again.
 A section before Organisations.
 
 - **On the primary:**
-  - Its badge, **Primary**.
-  - A switch per part, "Staff: synced to all 6", that turns the part on or
-    off for every linked competition at once.
-  - The linked competitions, each saying what it takes ("Staff · Venue",
-    "Staff only: its own venue").
+  - **This one is the primary**, and under it: "The other 6 copy what's
+    switched on below. Change it here and it changes in all of them."
+  - **What they copy:** a switch per part, in §3's order, each saying what
+    it covers ("The link, and when it opens and closes"). A switch turns
+    the part on or off for every linked competition at once. One that some
+    competitions have switched off says so: "Venue and address · Sunday has
+    its own".
+  - "Each keeps its own name, date and registration number."
+  - **The other 6**, each saying what it takes: "Everything above", or "All
+    but Where: its own venue".
   - **Link a competition**: the competition picker from Organisation Manage,
     with your own competitions near these dates first.
 - **On the others:**
@@ -191,16 +227,19 @@ A section before Organisations.
 - **Inline, too.** The switches live in this section, but a linked
   competition's Staff page offers the primary's staff where it's needed:
   "Linked with 6 others. SDCCS Pre-Premier Open is the primary", with
-  **Take its staff**. That's the same switch, and it confirms what it replaces. Details'
-  venue fields offer the primary's venue the same way.
+  **Take its staff**. That's the same switch, and it confirms what it
+  replaces. Where on Details offers the primary's venue the same way: "SDCCS
+  Pre-Premier Open is at Halifax Convention Centre", with **Use its venue**.
 - **Synced parts on the others are read-only.**
   - Staff shows "Synced from SDCCS Pre-Premier Open. Change staff there and
     it changes here too", with **Open it** and **Stop syncing**.
-  - The venue fields in Details say the same.
+  - Details opens with "Linked with 6 others. The parts marked Synced come
+    from SDCCS Pre-Premier Open. Change them there", with **Open it** and
+    **Choose what syncs**. Each synced section is tagged **Synced** and
+    can't be edited. The name, date and registration number always can.
 
-For SDCCS: link all seven, make the first one the primary, and switch on
-Staff and Venue for all. Any day at a different venue switches its own
-Venue off.
+For SDCCS: link all seven and make the first one the primary; everything
+syncs. A day at a different venue switches its own Where off.
 
 ### 8. Linked competitions in lists
 
@@ -285,7 +324,7 @@ competition has partners, but not which ones.
 
 ## Not now
 
-- More parts to sync (organisations, links and files, platforms).
+- Syncing platforms.
 - Submitting several days at once, linked on approval.
 - Making next year's competition from this year's: a one-way copy, its own
   feature.
@@ -296,12 +335,16 @@ competition has partners, but not which ones.
 ## Consequences
 
 - Deploy:
-  - Rules: `/competitionLinks*`, plus the `.validate`s on staff and on the
-    venue fields.
-  - Functions: `linkCompetitions`, `competitionStaffSync`, the venue part of
-    the competition update trigger, and `competitionDeleted`.
+  - Rules: `/competitionLinks*`, plus the `.validate`s on staff and on each
+    part's fields.
+  - Functions: `linkCompetitions`, `competitionStaffSync`, the parts in the
+    competition update trigger, `competitionDeleted`, and the set's
+    published alert.
 - v3's admin can't change a synced part on a competition that syncs it: it
   gets permission denied. v3's admin goes at cutover.
+- Publishing the primary publishes the others that sync Listed and
+  published, dancer lists and all. A day that isn't ready switches its own
+  off first.
 - A synced judge appears on every linked competition in their profile,
   since they're on each one's staff.
 
@@ -311,4 +354,5 @@ competition has partners, but not which ones.
 2. The switcher, and Overview's Linked competitions.
 3. Staff sync: the copy, the trigger, the rules, Staff read-only on the
    others.
-4. Venue sync.
+4. Details sync: the other parts, Details read-only where synced, and one
+   alert when the set publishes.
