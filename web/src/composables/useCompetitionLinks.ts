@@ -2,7 +2,7 @@ import { computed, ref, watch, type Ref } from 'vue'
 import { dataRef } from '@/firebase'
 import { onValueSaved } from '@/lib/offline'
 import { fetchCompetitionMeta } from '@/lib/competitionMeta'
-import { compareByDate, setsByCompetition, withOthersLine, type CompetitionLinkRecord, type LinkedSet } from '@/lib/linked'
+import { LINK_PART_IDS, compareByDate, setsByCompetition, withOthersLine, type CompetitionLinkRecord, type LinkPart, type LinkedSet } from '@/lib/linked'
 import { ensureCompetitionsList, peekCompetition, type CompetitionListItem } from '@/composables/useCompetitions'
 import { useMeStore } from '@/stores/me'
 
@@ -13,6 +13,9 @@ import { useMeStore } from '@/stores/me'
 const raw = ref<Record<string, CompetitionLinkRecord>>({})
 const loaded = ref(false)
 let off: (() => void) | null = null
+// What each takes from its primary: read only where it shows (Manage).
+const syncRaw = ref<Record<string, Record<string, boolean>>>({})
+let offSync: (() => void) | null = null
 
 function start() {
   if (off) return
@@ -27,6 +30,30 @@ function start() {
       off = null
     },
   )
+}
+
+function startSync() {
+  if (offSync) return
+  offSync = onValueSaved(
+    dataRef('competitionLinks:sync'),
+    (snap) => {
+      syncRaw.value = (snap.val() as Record<string, Record<string, boolean>> | null) ?? {}
+    },
+    () => {
+      offSync = null
+    },
+  )
+}
+
+/** What each linked competition takes from its primary (Manage). */
+export function useLinkSync() {
+  start()
+  startSync()
+  /** The parts `id` takes from its primary, in Manage's order. */
+  const partsOf = (id: string | null | undefined): LinkPart[] =>
+    id ? LINK_PART_IDS.filter((p) => syncRaw.value[id]?.[p] === true) : []
+  const takes = (id: string | null | undefined, part: LinkPart) => !!id && syncRaw.value[id]?.[part] === true
+  return { partsOf, takes }
 }
 
 export function useCompetitionLinks() {

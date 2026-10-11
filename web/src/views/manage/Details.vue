@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { ExternalLink, FileUp, Landmark, Plus, Trash2 } from '@lucide/vue'
+import { ExternalLink, FileUp, Landmark, Plus, RefreshCw, Trash2 } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import MovingList from '@/components/admin/MovingList.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
@@ -10,6 +10,12 @@ import ImageField from '@/components/admin/ImageField.vue'
 import SwitchField from '@/components/admin/SwitchField.vue'
 import VenueField from '@/components/admin/VenueField.vue'
 import DetailsPreview from '@/components/admin/DetailsPreview.vue'
+import LinkedCompetitions from '@/components/admin/LinkedCompetitions.vue'
+import SyncedChip from '@/components/admin/SyncedChip.vue'
+import { useLinkSync, useLinkedSet } from '@/composables/useCompetitionLinks'
+import { changeLink, previewLink } from '@/lib/admin/links'
+import { replacesSentence } from '@/lib/admin/linkWords'
+import { LINK_PART_IDS, type LinkPart } from '@/lib/linked'
 import MapPreview from '@/components/MapPreview.vue'
 import OrganisationMark from '@/components/OrganisationMark.vue'
 import OrganisationPicker from '@/components/OrganisationPicker.vue'
@@ -63,6 +69,50 @@ const FIELD_NAMES: Record<string, string> = {
 }
 const save = (key: string) => (v: string | null) => m.writeInfo({ [key]: v }, FIELD_NAMES[key] ?? key)
 
+// --- Linked competitions (ADR 0007): what this one takes from its primary
+// is copied from there, so it's read-only here, marked Synced.
+const { takes } = useLinkSync()
+const linkedSet = useLinkedSet(m.competitionId)
+const primaryId = computed(() => linkedSet.primary.value)
+const primaryRecord = computed(() => linkedSet.members.value.find((x) => x.id === primaryId.value) ?? null)
+const primaryName = computed(() => primaryRecord.value?.name?.trim() || 'the primary')
+const synced = (part: LinkPart) => !!primaryId.value && primaryId.value !== m.competitionId.value && takes(m.competitionId.value, part)
+const anySynced = computed(() => LINK_PART_IDS.some(synced))
+const syncedHint = computed(() => `Copied from ${primaryName.value}. Change it there.`)
+const othersCount = computed(() => (linkedSet.set.value?.ids.length ?? 1) - 1)
+const scrollToLinked = () => document.getElementById('linked')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+// Keeping its own venue: offer the primary's, when it's somewhere else.
+const offerVenue = computed(() => {
+  const p = primaryRecord.value
+  if (!p?.venue?.trim() || primaryId.value === m.competitionId.value || synced('venue')) return null
+  return p.venue.trim().toLowerCase() === (c.value.venue ?? '').trim().toLowerCase() ? null : p
+})
+const takingVenue = ref(false)
+async function useItsVenue() {
+  if (takingVenue.value) return
+  takingVenue.value = true
+  try {
+    const id = m.competitionId.value
+    const preview = await previewLink({ action: 'sync', competitionId: id, part: 'venue', on: true })
+    const plan = preview.targets[0]?.parts[0]
+    if (plan?.replaces) {
+      const ok = await confirm({
+        title: `Use ${primaryName.value}’s venue?`,
+        message: `${replacesSentence(c.value.name?.trim() || 'This one', plan, primaryName.value)} It changes with it from then on.`,
+        confirmLabel: 'Use its venue',
+      })
+      if (!ok) return
+    }
+    await changeLink({ action: 'sync', competitionId: id, part: 'venue', on: true })
+    toast(`Takes its venue from ${primaryName.value}`)
+  } catch (e) {
+    toast(friendlyError(e), { tone: 'error' })
+  } finally {
+    takingVenue.value = false
+  }
+}
+
 async function pickVenue(fields: VenueFields) {
   const message = `Venue set to ${fields.venue ?? fields.address ?? fields.location ?? 'the venue you picked'}`
   try {
@@ -77,7 +127,7 @@ async function pickVenue(fields: VenueFields) {
 // so a new competition's page isn't a wall of empty fields.
 const showRegistration = ref(false)
 const registrationShown = computed(
-  () => showRegistration.value || !!(c.value.registrationURL || c.value.registrationStart || c.value.registrationEnd),
+  () => (showRegistration.value && !synced('registration')) || !!(c.value.registrationURL || c.value.registrationStart || c.value.registrationEnd),
 )
 const registrationEl = ref<HTMLElement | null>(null)
 async function openRegistration() {
@@ -234,6 +284,20 @@ async function deleteCompetition() {
     <div class="max-w-2xl min-w-0 space-y-10 p-4 pb-[calc(3rem+var(--safe-bottom))] xl:max-w-none xl:overflow-y-auto">
       <SectionHeader title="Details" />
 
+      <div v-if="anySynced" role="note" class="bg-blue-paper flex gap-3 rounded-2xl p-4">
+        <RefreshCw class="text-primary mt-0.5 size-5 shrink-0" aria-hidden="true" />
+        <div class="min-w-0 flex-1 space-y-2">
+          <p class="text-callout">
+            <span class="font-semibold">Linked with {{ othersCount }} {{ othersCount === 1 ? 'other' : 'others' }}.</span>
+            The parts marked Synced come from {{ primaryName }}. Change them there.
+          </p>
+          <div class="-ml-1 flex flex-wrap gap-2">
+            <Button v-if="primaryId" size="sm" :to="{ name: 'manage.details', params: { competitionId: primaryId } }">Open it</Button>
+            <Button variant="plain" size="sm" @click="scrollToLinked">Choose what syncs</Button>
+          </div>
+        </div>
+      </div>
+
       <section class="space-y-4">
         <h2 class="text-heading">Basics</h2>
         <TextField :model-value="c.name" label="Name" required placeholder="e.g. Canadian Championship 2026" :save="save('name')" />
@@ -252,7 +316,8 @@ async function deleteCompetition() {
           :model-value="htmlToText(c.description)"
           label="Description"
           multiline
-          hint="Anything else people should know. Shown on the competition page."
+          :hint="synced('about') ? syncedHint : 'Anything else people should know. Shown on the competition page.'"
+          :disabled="synced('about')"
           :save="save('description')"
         />
         <ImageField
@@ -260,20 +325,26 @@ async function deleteCompetition() {
           label="Logo or photo"
           folder="info"
           :competition-id="m.competitionId.value"
+          :hint="synced('about') ? syncedHint : undefined"
+          :disabled="synced('about')"
           :save="save('image')"
         />
       </section>
 
       <section class="space-y-4">
-        <h2 class="text-heading">Where</h2>
-        <VenueField v-if="placesAvailable" :model-value="c.venue" :save="save('venue')" @pick="pickVenue" />
-        <TextField v-else :model-value="c.venue" label="Venue name" placeholder="e.g. Telus Convention Centre" :save="save('venue')" />
-        <TextField :model-value="c.address" label="Address" placeholder="e.g. 120 9th Ave SE" :save="save('address')" />
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="text-heading">Where</h2>
+          <SyncedChip v-if="synced('venue')" :from="primaryName" />
+        </div>
+        <VenueField v-if="placesAvailable" :model-value="c.venue" :disabled="synced('venue')" :save="save('venue')" @pick="pickVenue" />
+        <TextField v-else :model-value="c.venue" label="Venue name" placeholder="e.g. Telus Convention Centre" :disabled="synced('venue')" :save="save('venue')" />
+        <TextField :model-value="c.address" label="Address" placeholder="e.g. 120 9th Ave SE" :disabled="synced('venue')" :save="save('address')" />
         <TextField
           :model-value="c.location"
           label="Town or city"
           placeholder="e.g. Calgary, AB"
-          hint="Used for “near you” and the map. Include the province or state."
+          :hint="synced('venue') ? syncedHint : 'Used for “near you” and the map. Include the province or state.'"
+          :disabled="synced('venue')"
           :save="save('location')"
         />
         <MapPreview
@@ -282,51 +353,64 @@ async function deleteCompetition() {
           :lng="c.lng!"
           class="h-40 rounded-xl"
         />
-        <p v-else-if="placesAvailable" class="text-muted-foreground text-sm">Choose the venue from the suggestions to put it on the map.</p>
+        <p v-else-if="placesAvailable && !synced('venue')" class="text-muted-foreground text-sm">Choose the venue from the suggestions to put it on the map.</p>
+        <div v-if="offerVenue" class="surface flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl p-4">
+          <p class="text-muted-foreground text-callout min-w-0 flex-1 basis-56">{{ primaryName }} is at {{ offerVenue.venue }}.</p>
+          <Button variant="tonal" :disabled="!canEdit" :busy="takingVenue" @click="useItsVenue">Use its venue</Button>
+        </div>
       </section>
 
       <Transition :css="false" @enter="grow" @leave="shrink">
         <section v-if="registrationShown" ref="registrationEl" class="space-y-4">
-          <h2 class="text-heading">Registration</h2>
+          <div class="flex items-center justify-between gap-2">
+            <h2 class="text-heading">Registration</h2>
+            <SyncedChip v-if="synced('registration')" :from="primaryName" />
+          </div>
           <TextField
             :model-value="c.registrationURL"
             label="Registration link"
             type="url"
             placeholder="e.g. example.com/register"
-            hint="Where dancers sign up. Shown as a button on the competition page."
+            :hint="synced('registration') ? syncedHint : 'Where dancers sign up. Shown as a button on the competition page.'"
+            :disabled="synced('registration')"
             :save="save('registrationURL')"
           />
           <div class="grid gap-4 sm:grid-cols-2">
-            <TextField :model-value="dateTimeInput(c.registrationStart)" label="Opens" type="datetime-local" :save="save('registrationStart')" />
-            <TextField :model-value="dateTimeInput(c.registrationEnd)" label="Closes" type="datetime-local" :save="save('registrationEnd')" />
+            <TextField :model-value="dateTimeInput(c.registrationStart)" label="Opens" type="datetime-local" :disabled="synced('registration')" :save="save('registrationStart')" />
+            <TextField :model-value="dateTimeInput(c.registrationEnd)" label="Closes" type="datetime-local" :disabled="synced('registration')" :save="save('registrationEnd')" />
           </div>
         </section>
       </Transition>
 
       <Transition :css="false" @enter="grow" @leave="shrink">
-        <section v-if="links.length || addingLink" class="space-y-4">
+        <section v-if="links.length || (addingLink && !synced('links'))" class="space-y-4">
           <div>
-            <h2 class="text-heading">Links and files</h2>
-            <p class="text-muted-foreground text-sm">Programs, entry forms, maps. Each shows as a button on the competition page.</p>
+            <div class="flex items-center justify-between gap-2">
+              <h2 class="text-heading">Links and files</h2>
+              <SyncedChip v-if="synced('links')" :from="primaryName" />
+            </div>
+            <p class="text-muted-foreground text-sm">
+              {{ synced('links') ? syncedHint : 'Programs, entry forms, maps. Each shows as a button on the competition page.' }}
+            </p>
           </div>
           <MovingList v-if="links.length" class="surface divide-y rounded-2xl">
             <li v-for="link in links" :key="link.id" class="space-y-3 p-4">
               <div class="grid gap-3 sm:grid-cols-2">
-                <TextField :model-value="link.name" label="Label" placeholder="e.g. Program" :save="(v) => m.writeInfo({ [`links/${link.id}/name`]: v }, 'Link label')" />
-                <TextField :model-value="link.url" label="Link" type="url" required :save="(v) => m.writeInfo({ [`links/${link.id}/url`]: v }, 'Link')" />
+                <TextField :model-value="link.name" label="Label" placeholder="e.g. Program" :disabled="synced('links')" :save="(v) => m.writeInfo({ [`links/${link.id}/name`]: v }, 'Link label')" />
+                <TextField :model-value="link.url" label="Link" type="url" required :disabled="synced('links')" :save="(v) => m.writeInfo({ [`links/${link.id}/url`]: v }, 'Link')" />
               </div>
               <div class="flex items-center justify-between gap-2">
                 <Button v-if="link.url" variant="plain" class="-ml-4" :href="formatExternalURL(link.url)" target="_blank" rel="noopener">
                   Open <ExternalLink />
                 </Button>
-                <Button variant="plain" class="text-destructive! -mr-4 ml-auto" :disabled="!canEdit" @click="removeLink(link)">
+                <Button v-if="!synced('links')" variant="plain" class="text-destructive! -mr-4 ml-auto" :disabled="!canEdit" @click="removeLink(link)">
                   <Trash2 /> Remove
                 </Button>
               </div>
             </li>
           </MovingList>
           <Transition :css="false" @enter="grow" @leave="shrink">
-            <form v-if="addingLink" ref="linkFormEl" class="surface space-y-3 rounded-2xl p-4" novalidate @submit.prevent="submitLink">
+            <form v-if="addingLink && !synced('links')" ref="linkFormEl" class="surface space-y-3 rounded-2xl p-4" novalidate @submit.prevent="submitLink">
               <div class="grid gap-3 sm:grid-cols-2">
                 <label class="space-y-1.5">
                   <span class="text-callout block font-medium">Label</span>
@@ -362,23 +446,28 @@ async function deleteCompetition() {
       </Transition>
 
       <Transition :css="false" @enter="grow" @leave="shrink">
-        <div v-if="!registrationShown || !addingLink" class="flex flex-wrap gap-2">
-          <Button v-if="!registrationShown" :disabled="!canEdit" @click="openRegistration">
+        <div v-if="(!registrationShown && !synced('registration')) || (!addingLink && !synced('links'))" class="flex flex-wrap gap-2">
+          <Button v-if="!registrationShown && !synced('registration')" :disabled="!canEdit" @click="openRegistration">
             <Plus /> Add registration details
           </Button>
-          <Button v-if="!addingLink" :disabled="!canEdit" @click="openLinkForm">
+          <Button v-if="!addingLink && !synced('links')" :disabled="!canEdit" @click="openLinkForm">
             <Plus /> Add a link or file
           </Button>
         </div>
       </Transition>
 
       <section class="space-y-3">
-        <h2 class="text-heading">Who can see it</h2>
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="text-heading">Who can see it</h2>
+          <SyncedChip v-if="synced('visibility')" :from="primaryName" />
+        </div>
+        <p v-if="synced('visibility')" class="text-muted-foreground text-sm">{{ syncedHint }}</p>
         <div class="surface rounded-2xl px-4 py-1.5">
           <SwitchField
             :model-value="!!c.listed"
             label="Listed"
             description="Shows in the competitions list with its date, venue and judges."
+            :disabled="synced('visibility')"
             :save="(on) => m.writeInfo(on ? { listed: true } : { listed: false, published: false }, on ? 'Listed' : 'Unlisted')"
           />
           <div class="border-t" />
@@ -386,16 +475,24 @@ async function deleteCompetition() {
             :model-value="!!c.published"
             label="Published"
             description="Also shows dancers, the schedule and results."
+            :disabled="synced('visibility')"
             :save="(on) => m.writeInfo(on ? { published: true, listed: true } : { published: false }, on ? 'Published' : 'Unpublished')"
           />
         </div>
       </section>
 
+      <LinkedCompetitions />
+
       <!-- Organisations go last, above only Delete. -->
       <section class="space-y-3">
         <div>
-          <h2 class="text-heading">Organisations</h2>
-          <p class="text-muted-foreground text-sm">The association, games society or series it’s run by or part of. Each has a page listing its competitions.</p>
+          <div class="flex items-center justify-between gap-2">
+            <h2 class="text-heading">Organisations</h2>
+            <SyncedChip v-if="synced('organisations')" :from="primaryName" />
+          </div>
+          <p class="text-muted-foreground text-sm">
+            {{ synced('organisations') ? syncedHint : 'The association, games society or series it’s run by or part of. Each has a page listing its competitions.' }}
+          </p>
         </div>
         <MovingList v-if="linked.length" class="surface divide-y overflow-hidden rounded-2xl">
           <li v-for="org in linked" :key="org.id" class="flex min-h-15 items-center gap-3 py-2 pr-2 pl-4">
@@ -404,10 +501,10 @@ async function deleteCompetition() {
               <span class="block truncate text-base font-semibold">{{ org.name }}</span>
               <span v-if="'shortName' in org && org.shortName" class="text-muted-foreground block truncate text-sm">{{ org.shortName }}</span>
             </RouterLink>
-            <Button variant="plain" class="text-destructive!" :disabled="!canEdit" @click="removeOrganisation(org)">Take off</Button>
+            <Button v-if="!synced('organisations')" variant="plain" class="text-destructive!" :disabled="!canEdit" @click="removeOrganisation(org)">Take off</Button>
           </li>
         </MovingList>
-        <Button :disabled="!canEdit" @click="pickingOrg.show($event)">
+        <Button v-if="!synced('organisations')" :disabled="!canEdit" @click="pickingOrg.show($event)">
           <component :is="linked.length ? Plus : Landmark" /> Add an organisation
         </Button>
         <OrganisationPicker

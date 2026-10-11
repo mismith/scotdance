@@ -18,7 +18,7 @@ import {
 // Escape puts it back); without, it's a plain v-model (as in Submit).
 
 const model = defineModel<string | null | undefined>({ default: '' })
-const props = defineProps<{ save?: (value: string) => unknown }>()
+const props = defineProps<{ save?: (value: string) => unknown; disabled?: boolean }>()
 const emit = defineEmits<{ pick: [fields: VenueFields] }>()
 
 const id = useId()
@@ -28,6 +28,7 @@ const saved = props.save
       value: () => model.value,
       save: (v) => props.save!(v),
       label: () => LABEL,
+      disabled: () => props.disabled,
     })
   : null
 const text = computed(() => (saved ? saved.draft.value : (model.value ?? '')))

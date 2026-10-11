@@ -27,6 +27,9 @@ export const canEdit = computed(() => connected.value)
 
 export function friendlyError(e: unknown): string {
   if (e instanceof OfflineError) return e.message
+  // A callable that said why, in a sentence (functions' HttpsError): say that.
+  const code = (e as { code?: unknown })?.code
+  if (typeof code === 'string' && code.startsWith('functions/') && e instanceof Error && / .*[.?]$/.test(e.message)) return e.message
   const raw = e instanceof Error ? e.message : String(e)
   if (/permission.denied/i.test(raw)) return 'You don’t have permission to change this.'
   return 'That change didn’t save. Check your connection and try again.'

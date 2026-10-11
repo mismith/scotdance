@@ -37,7 +37,7 @@ async function toggle(on: boolean) {
     <label :class="['flex min-h-11 items-center gap-3 py-1.5', locked ? 'cursor-not-allowed' : 'cursor-pointer']">
       <span :class="['min-w-0 flex-1', locked && 'opacity-(--disabled-opacity)']">
         <span :id="`${id}-l`" class="block text-base font-medium">{{ label }}</span>
-        <span v-if="description" :id="`${id}-d`" class="text-muted-foreground block text-sm">{{ description }}</span>
+        <span v-if="description" :id="`${id}-d`" class="text-muted-foreground block text-sm whitespace-pre-line">{{ description }}</span>
       </span>
       <Switch
         :model-value="modelValue"
