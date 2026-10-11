@@ -208,29 +208,42 @@ A list should show at a glance which competitions go together: a weekend
 pair should look like a pair (Murray, 2026-10-11). A mark on each tile only
 says that a competition has partners, not which ones, so lists group them.
 
-**Proposed: each group gets its own card, labelled.**
+**A rail through their date tiles** (Murray chose it, 2026-10-11). A
+group's rows sit together, joined by a blue line that runs through their date
+tiles, with no hairline between them. Each competition keeps its own row,
+with its own tile, name, dancers and tap target.
 
-- **The same words as the switcher.** A group's rows sit in their own card,
-  under a small label: **2 competitions, Jul 3–4**, or **7 competitions,
-  Jul 5–11**.
-- **Each competition keeps its own row.** It has its own tile, name,
-  dancers and tap target.
-- **The group sits where its first day falls.** Unlinked competitions on
-  the same dates come after it, never between its rows. Unlinked
-  competitions share a card as they do now.
-- **One function does the grouping:** `groupLinked(items)`, a pure function
-  with tests. The competitions list, venue and organisation pages, Manage's
-  list and Search use it.
-- **When a competition shows alone** (Home's Coming up, a judge's or
-  dancer's list, a calendar day), its row adds one line naming the others:
-  "With Maritime Open, Sun 4", or "With 6 others, Jul 5–11".
-- **The calendar's grid keeps its own dots**, which count the competitions
-  on each day.
+**Where they go** is decided by one pure function, `orderLinked(items)`,
+with tests. It makes the order the same everywhere and easy to scan by date:
+
+1. **Date order, then name**, as lists are now.
+2. **A group stays together, at its first day**, its own competitions in
+   date order.
+3. **On a group's first day, other competitions go above it; on its last day
+   and after, below it.** For a weekend pair, which is most groups, every row
+   stays in date order: nothing moves.
+4. **Something on a middle day** (only a group of 3 days or more has one)
+   **goes straight after the group.** It's the one case that leaves date
+   order, and its tile still shows its own date.
+5. **Two groups starting the same day** don't mix: each stays together, and
+   the one whose first competition comes first by name goes first.
+6. **Sections** (Today, then months): a group sits in the section of its
+   first day, or in Today while any of its days is today.
+7. **When some are hidden** (past ones in Upcoming, a filter, search), the
+   ones left are grouped the same way. One left alone gets a line naming the
+   others: "With Maritime Open, Sun 4", or "With 6 others, Jul 5–11". The
+   same line shows wherever a competition appears on its own (Home's Coming
+   up, a judge's or dancer's list).
+8. **Search**, ordered by how well each matches, pulls a group's matches
+   together at the best match's place.
+
+The calendar's grid keeps its own dots, which count the competitions on each
+day.
 
 **Also mocked up (2026-10-11):**
 
-- **A rail**: a blue line through the group's date tiles, with no hairline
-  between them. Light, but the link isn't said in words.
+- **Each group in its own card, labelled** "2 competitions, Jul 3–4". Says
+  it in words, but the list breaks into many small cards.
 - **One row that opens**: a group is one row with its dates, which opens to
   its competitions. Shortest, but each competition is a tap further away.
 
