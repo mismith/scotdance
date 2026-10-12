@@ -84,9 +84,9 @@ In Manage's order: Details' sections top to bottom, then Staff (Murray,
 | `organisations` | **Organisations** | `organisations` |
 | `staff` | **Staff** | The whole staff list: judges, pipers, helpers and sponsors, with their photos and details. All of it or none: picking types would be too complicated (Murray, 2026-10-10) |
 
-- **All start on** when a competition is linked (Murray, 2026-10-11). Each
-  competition switches each part off for itself, such as a day at another
-  venue switching off Where.
+- **Shared by default** when a competition is linked (Murray, 2026-10-11),
+  except what it already has of its own, which it keeps (2026-10-12, §7).
+  Each competition switches each part on or off for itself.
 - **Listed and published sync together**, so they can never disagree
   (Details already lists whatever it publishes). The switch says what they
   mean in families' terms, as Details does:
@@ -220,42 +220,46 @@ current tab again.
 
 ### 7. Organisers: Manage › Details › Linked competitions
 
-A section before Organisations.
+A section before Organisations. Simplified after the first build (Murray,
+2026-10-12: "a lot of dynamic copy and two versions of things in each row…
+overwhelming"): one list, a tag only where something differs, the switches
+one tap away, and no explaining paragraphs.
 
-- **On the primary:**
-  - **This one is the primary**, and under it: "The other 6 copy what's
-    switched on below. Change it here and it changes in all of them."
-  - **What they copy:** a switch per part, in §3's order, each saying what
-    it covers ("The link, and when it opens and closes"). A switch turns
-    the part on or off for every linked competition at once. One that some
-    competitions have switched off says so: "Venue and address · Sunday has
-    its own".
-  - "Each keeps its own name, date and registration number."
-  - **The other 6**, each saying what it takes: "Everything above", or "All
-    but Where: its own venue".
-  - **Link a competition**: the competition picker from Organisation Manage,
-    with your own competitions near these dates first.
-- **On the others:**
-  - "Takes from SDCCS Pre-Premier Open", with a switch per part.
-  - **Make this the primary**.
-  - **Sync now**.
-  - **Take out of the link**.
-- **Inline, too.** The switches live in this section, but a linked
-  competition's Staff page offers the primary's staff where it's needed:
-  "Linked with 6 others. SDCCS Pre-Premier Open is the primary", with
-  **Take its staff**. That's the same switch, and it confirms what it
-  replaces. Where on Details offers the primary's venue the same way: "SDCCS
-  Pre-Premier Open is at Halifax Convention Centre", with **Use its venue**.
-- **Synced parts on the others are read-only.**
-  - Staff shows "Synced from SDCCS Pre-Premier Open. Change staff there and
-    it changes here too", with **Open it** and **Stop syncing**.
-  - Details opens with "Linked with 6 others. The parts marked Synced come
-    from SDCCS Pre-Premier Open. Change them there", with **Open it** and
-    **Choose what syncs**. Each synced section is tagged **Synced** and
-    can't be edited. The name, date and registration number always can.
+**Words.** Organisers see **Main** (the primary) and **Shared**: the others
+share parts from the main one. Not "synced", which sounds two-way and
+technical, nor "copy" or "take". "Shared" always comes with "from …" or "with
+the others", since the app's Share button means sending a link.
 
-For SDCCS: link all seven and make the first one the primary; everything
-syncs. A day at a different venue switches its own Where off.
+- **On the main one:**
+  - Every competition in the link, in date order, with a tag only where it
+    differs: **Main** on this one, **Own venue** (or **Own venue and
+    staff**, **Shares some**) on one that keeps a part of its own.
+  - **Shared with the others · Everything** opens a sheet with a switch per
+    part (§3's order, a short line each). A switch is every other one's at
+    once; one that some keep their own says so ("Sunday has its own"). At its
+    foot: "Names, dates and registration numbers are always each one's own."
+  - **Link a competition**: your own competitions, near these dates first.
+- **On the others:** its main competition (tap to open it), **Shared from
+  it · All but Where** (the same sheet, its own switches), and **All 7
+  competitions** to see the rest.
+- **The ··· menu** holds what's rare: Make this the main one, Share again
+  now, Take out of the link.
+- **Linking never replaces anything** (Murray, 2026-10-12). The one joining
+  shares everything from the main one except what it already has of its own,
+  which it keeps, said as tags ("Its own venue"). **Choose what's shared**
+  opens the switches for anyone who wants otherwise; turning on a part it has
+  says what's replaced. Later, switching a part on asks first.
+- **Shared parts on the others** are shown as they are, as plain text marked
+  **Shared**, under one link at the top of Details: **Shared from SDCCS
+  Pre-Premier Open ›**. The name, date and registration number stay fields.
+  Staff says "Shared from SDCCS Pre-Premier Open", with **Open it** and
+  **Stop sharing**.
+- **Offered where it's missing.** A Staff page that keeps its own offers
+  **Use its staff**; Where offers **Use SDCCS Pre-Premier Open's venue**.
+  Each is that part's switch, and asks before replacing.
+
+For SDCCS: set up the first competition, link the other six to it; each
+shares everything it hasn't got. A day at a different venue keeps its own.
 
 ### 8. Linked competitions in lists
 
