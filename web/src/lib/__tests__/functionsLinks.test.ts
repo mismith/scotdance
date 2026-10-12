@@ -4,8 +4,10 @@ import {
   getOnCompetitionUpdated,
   getOnLink,
   getOnStaffWritten,
+  pairFor,
   planStaff,
   takeOut,
+  writeLink,
 } from '../../../../functions/src/links'
 import { FakeRtdb, snap, type TriggerEvent } from './fakeRtdb'
 
@@ -187,6 +189,21 @@ describe('linkCompetitions: link', () => {
     // Without its staff, it can still link.
     await call('organiser', { action: 'link', competitionId: 'sat', withId: 'fri', parts: ['venue'] })
     expect(read('competitionLinks:sync/sat')).toEqual({ venue: true })
+  })
+})
+
+describe('linking from the server (approving submissions)', () => {
+  it('takes only what wouldn’t replace anything of its own', async () => {
+    const { rtdb, read } = setup()
+    const db = rtdb.ref() as never
+    const res = await writeLink(db, await pairFor(db, 'sun', 'fri'), 'unreplaced')
+    expect(res).toMatchObject({ joining: 'sun', primary: 'fri' })
+    // Sunday had its own venue: kept, and not synced; its empty parts are filled from Friday.
+    expect(res.parts).not.toContain('venue')
+    expect(res.parts).toContain('about')
+    expect(read('competitions/sun/venue')).toBe('Riverside Arena')
+    expect(read('competitions/sun/description')).toBe('Seven competitions, one week in Halifax.')
+    expect(read('competitionLinks:sync/sun/venue')).toBeNull()
   })
 })
 

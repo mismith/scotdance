@@ -335,6 +335,67 @@ export async function takeOut(db: Db, competitionId: string) {
   return link;
 }
 
+// Linking two ----------------------------------------------------------------------
+
+export interface Pair {
+  /** The one not yet in a link, which takes parts from the primary. */
+  joining: string
+  primary: string
+  /** The link it joins, when there is one. */
+  link: Link | null
+}
+
+/**
+ * Who joins whom, linking `competitionId` with `withId`: the one not yet in
+ * a link joins the other's; with neither in one, `withId` starts one as its
+ * primary. Refuses when both are in links, either is gone, or the link has
+ * no primary or no room. (No permission check: the callable does that.)
+ */
+export async function pairFor(db: Db, competitionId: string, withId: string): Promise<Pair> {
+  const [aThere, bThere, a, b] = await Promise.all([exists(db, competitionId), exists(db, withId), linkOf(db, competitionId), linkOf(db, withId)]);
+  if (!aThere || !bThere) throw new HttpsError('not-found', 'That competition isn’t there any more.');
+  if (a && b) {
+    if (a.linkId === b.linkId) throw new HttpsError('already-exists', 'They’re linked already.');
+    throw new HttpsError('failed-precondition', 'Both are linked with others already. Take one out of its link first.');
+  }
+  const link = b ?? a;
+  const joining = b || !a ? competitionId : withId;
+  const primary = link ? link.primary : withId;
+  if (!primary) throw new HttpsError('failed-precondition', 'Choose which of those is the primary first.');
+  if ((link?.members.length ?? 1) + 1 > MAX_LINKED) {
+    throw new HttpsError('failed-precondition', `A link has at most ${MAX_LINKED} competitions.`);
+  }
+  return { joining, primary, link };
+}
+
+/**
+ * Links a pair (from pairFor), the joining one taking `parts` from the
+ * primary. `'unreplaced'` takes only the parts that wouldn't replace
+ * anything of its own (empty there, or the same already): for linking ones
+ * set up separately, as approving submissions does, without overwriting them.
+ */
+export async function writeLink(db: Db, { joining, primary, link }: Pair, parts: Part[] | 'unreplaced' = [...PARTS]) {
+  let chosen = parts === 'unreplaced' ? [...PARTS] : parts;
+  let planned = await plansFor(db, primary, [{ competitionId: joining, parts: chosen }]);
+  if (parts === 'unreplaced') {
+    const keep = new Set(planned[0]?.plans.filter((p) => !p.replaces && !p.blocked).map((p) => p.part));
+    chosen = chosen.filter((p) => keep.has(p));
+    planned = planned.map((t) => ({ ...t, plans: t.plans.filter((p) => keep.has(p.part)) }));
+  }
+  const linkId = link?.linkId ?? db.child('competitionLinks').push().key;
+  const updates: Updates = {
+    [`competitionLinks/${linkId}/primary`]: primary,
+    [`competitionLinks/${linkId}/competitions/${primary}`]: true,
+    [`competitionLinks/${linkId}/competitions/${joining}`]: true,
+    [`competitionLinks:of/${primary}`]: linkId,
+    [`competitionLinks:of/${joining}`]: linkId,
+    [`competitionLinks:sync/${joining}`]: chosen.length ? Object.fromEntries(chosen.map((p) => [p, true])) : null,
+  };
+  applyOrRefuse(planned, updates);
+  await db.update(updates);
+  return { linkId: linkId as string, joining, primary, parts: chosen };
+}
+
 // The callable ------------------------------------------------------------------
 
 const idOf = (v: unknown) => (typeof v === 'string' && /^[^.#$/[\]]{1,128}$/.test(v) ? v : null);
@@ -376,36 +437,10 @@ export function getOnLink(db: Db) {
       const withId = idOf(data?.withId);
       if (!withId || withId === competitionId) throw new HttpsError('invalid-argument', 'Link it with which competition?');
       const parts = Array.isArray(data?.parts) ? PARTS.filter((p) => data.parts.includes(p)) : [...PARTS];
-      const [aThere, bThere, a, b] = await Promise.all([exists(db, competitionId), exists(db, withId), linkOf(db, competitionId), linkOf(db, withId)]);
-      if (!aThere || !bThere) throw new HttpsError('not-found', 'That competition isn’t there any more.');
-      if (a && b) {
-        if (a.linkId === b.linkId) throw new HttpsError('already-exists', 'They’re linked already.');
-        throw new HttpsError('failed-precondition', 'Both are linked with others already. Take one out of its link first.');
-      }
-      // The one not in a link joins; with neither, `withId` (the one you're on) starts one.
-      const link = b ?? a;
-      const joining = b || !a ? competitionId : withId;
-      const primary = link ? link.primary : withId;
-      if (!primary) throw new HttpsError('failed-precondition', 'Choose which of those is the primary first.');
-      mustManage([joining, primary], 'You need to manage both competitions to link them.');
-      if ((link?.members.length ?? 1) + 1 > MAX_LINKED) {
-        throw new HttpsError('failed-precondition', `A link has at most ${MAX_LINKED} competitions.`);
-      }
-      const planned = await plansFor(db, primary, [{ competitionId: joining, parts }]);
-      if (dryRun) return { joining, primary, targets: preview(planned) };
-
-      const linkId = link?.linkId ?? db.child('competitionLinks').push().key;
-      const updates: Updates = {
-        [`competitionLinks/${linkId}/primary`]: primary,
-        [`competitionLinks/${linkId}/competitions/${primary}`]: true,
-        [`competitionLinks/${linkId}/competitions/${joining}`]: true,
-        [`competitionLinks:of/${primary}`]: linkId,
-        [`competitionLinks:of/${joining}`]: linkId,
-        [`competitionLinks:sync/${joining}`]: parts.length ? Object.fromEntries(parts.map((p) => [p, true])) : null,
-      };
-      applyOrRefuse(planned, updates);
-      await db.update(updates);
-      return { linkId, joining, primary };
+      const pair = await pairFor(db, competitionId, withId);
+      mustManage([pair.joining, pair.primary], 'You need to manage both competitions to link them.');
+      if (dryRun) return { joining: pair.joining, primary: pair.primary, targets: preview(await plansFor(db, pair.primary, [{ competitionId: pair.joining, parts }])) };
+      return writeLink(db, pair, parts);
     }
 
     const link = await linkOf(db, competitionId);
