@@ -154,11 +154,13 @@ test.describe('families and organisers', () => {
     const all = { about: true, venue: true, registration: true, links: true, visibility: true, organisations: true, staff: true }
     await dbSet(`competitionLinks:sync/${ids[1]}`, all)
     await dbSet(`competitionLinks:sync/${ids[2]}`, { ...all, venue: null })
+    await dbSet(`competitions:data/${ids[1]}/staff`, { j1: { type: 'Judge', firstName: 'Ailsa', lastName: 'Grant' } })
   })
 
   test.afterAll(async () => {
     for (const id of ids) {
       await dbRemove(`competitions/${id}`)
+      await dbRemove(`competitions:data/${id}`)
       await dbRemove(`competitionLinks:of/${id}`)
       await dbRemove(`competitionLinks:sync/${id}`)
     }
@@ -211,5 +213,10 @@ test.describe('families and organisers', () => {
     await page.goto(`/competitions/${ids[1]}/manage/staff`)
     await expect(page.getByRole('link', { name: /Shared from .*Pre-Premier Open/ })).toBeVisible()
     await expect(page.getByRole('link', { name: /^Add/ })).toHaveCount(0)
+    // A staff member's locked fields say why too, on a phone as well (where
+    // the list is hidden while one is open, and a sheet in it couldn't show).
+    await page.goto(`/competitions/${ids[1]}/manage/staff/j1`)
+    await page.getByRole('button', { name: /^Role:/ }).click()
+    await expect(page.locator('dialog[open]').getByRole('button', { name: 'Edit here instead' })).toBeVisible()
   })
 })
