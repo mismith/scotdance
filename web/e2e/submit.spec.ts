@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test'
 import { dbGet, dbRemove, ensureUser, signIn, uid } from './support/emulator'
 import { retry } from './support/retry'
 import { removeCompetition, seedCompetition } from './support/seed'
-import { action, addCompetition, pickDay, question } from './support/submit'
+import { action, addCompetition, pastMatches, pickDay, question } from './support/submit'
 
 // Adding a competition, through the real database rules and Cloud Functions
 // trigger: signed in only, an intro and then one question at a time (ADR
@@ -109,7 +109,8 @@ test('a question at a time, checked as it goes, and sent once however fast it’
   test.setTimeout(120_000)
   const email = `${uid('org')}@example.test`
   const orgId = await ensureUser(email)
-  const name = `E2E Submit ${uid('s').slice(-6)}`
+  // (In capitals: a random tag in lowercase, like "kqzvt", would be held for a look.)
+  const name = `E2E Submit ${uid('s').slice(-6).toUpperCase()}`
   try {
     await begin(page, email)
 
@@ -125,41 +126,40 @@ test('a question at a time, checked as it goes, and sent once however fast it’
     await expect(question(page, 2)).toBeVisible()
     await pickDay(page, SOON)
     await action(page).click()
-
-    await expect(question(page, 3)).toBeVisible()
+    await pastMatches(page)
     await main(page).getByRole('textbox').fill(name)
     // Enter moves on, as Continue does.
     await main(page).getByRole('textbox').press('Enter')
 
     // Optional: Skip until something's chosen.
-    await expect(question(page, 4)).toBeVisible()
+    await expect(question(page, 5)).toBeVisible()
     await expect(action(page)).toHaveText('Skip')
     await action(page).click()
 
     // Typed and not picked from the suggestions: it stays as the name, and
     // the town's still needed. (By label: a search box with a Maps key, a
     // plain one without, as in CI.)
-    await expect(question(page, 5)).toBeVisible()
+    await expect(question(page, 6)).toBeVisible()
     await main(page).getByLabel('Venue name', { exact: true }).fill('Spruce Meadows')
     await action(page).click()
     await expect(main(page).getByText('Add the town or city to continue.')).toBeVisible()
     await main(page).getByRole('textbox', { name: 'Town or city' }).fill('Calgary, AB')
     await action(page).click()
 
-    await expect(question(page, 6)).toBeVisible()
+    await expect(question(page, 7)).toBeVisible()
     await expect(main(page).getByText('From ScotDance Canada.')).toBeVisible()
     await expect(action(page)).toHaveText('Skip')
     await main(page).getByRole('textbox').fill('C-AB-CO-27-1234')
     await expect(action(page)).toHaveText('Continue')
     await action(page).click()
 
-    await expect(question(page, 7)).toBeVisible()
+    await expect(question(page, 8)).toBeVisible()
     await expect(main(page).getByText('It’s never shown publicly.')).toBeVisible()
     await main(page).getByRole('textbox').fill('Morag Test')
     await action(page).click()
 
     // The last look shows it all before anything is sent.
-    await expect(question(page, 8)).toBeVisible()
+    await expect(question(page, 9)).toBeVisible()
     for (const text of [
       'Canada',
       name,
@@ -252,35 +252,39 @@ test('Back keeps what was typed, and a change from the last look comes straight 
   await action(page).click()
   await pickDay(page, '2027-06-05')
   await action(page).click()
-  await expect(question(page, 3)).toBeVisible()
+  await pastMatches(page)
   await main(page).getByRole('textbox').fill('Jumping Games')
-  await page.getByRole('button', { name: 'Back to the previous question' }).click()
+  const back = page.getByRole('button', { name: 'Back to the previous question' })
+  await back.click()
+  // (Through "Is it one of these?", when anything's on that day.)
+  await expect(question(page, 2).or(question(page, 3))).toBeVisible()
+  if (await question(page, 3).isVisible()) await back.click()
   await expect(question(page, 2)).toBeVisible()
   await expect(main(page).getByText('Saturday, June 5, 2027')).toBeVisible()
   await action(page).click()
-  await expect(question(page, 3)).toBeVisible()
+  await pastMatches(page)
   await expect(main(page).getByRole('textbox')).toHaveValue('Jumping Games')
   await action(page).click()
-  await expect(question(page, 4)).toBeVisible()
-  await action(page).click()
   await expect(question(page, 5)).toBeVisible()
+  await action(page).click()
+  await expect(question(page, 6)).toBeVisible()
   await main(page).getByLabel('Venue name', { exact: true }).fill('Glenmore Hall')
   await action(page).click()
   await main(page).getByRole('textbox', { name: 'Town or city' }).fill('Calgary, AB')
   await action(page).click()
-  await expect(question(page, 6)).toBeVisible()
-  await action(page).click()
   await expect(question(page, 7)).toBeVisible()
-  await main(page).getByRole('textbox').fill('Morag Test')
   await action(page).click()
   await expect(question(page, 8)).toBeVisible()
+  await main(page).getByRole('textbox').fill('Morag Test')
+  await action(page).click()
+  await expect(question(page, 9)).toBeVisible()
 
   await main(page).getByRole('button', { name: /^Name/ }).click()
-  await expect(question(page, 3)).toBeVisible()
+  await expect(question(page, 4)).toBeVisible()
   await expect(action(page)).toHaveText('Back to review')
   await main(page).getByRole('textbox').fill('Jumping Games 2027')
   await action(page).click()
-  await expect(question(page, 8)).toBeVisible()
+  await expect(question(page, 9)).toBeVisible()
   await expect(main(page).getByText('Jumping Games 2027')).toBeVisible()
 })
 
@@ -319,20 +323,20 @@ test('Add another starts on the date, at the same venue, with you', async ({ pag
     await expect(question(page, 2)).toBeVisible()
     await pickDay(page, '2027-06-06')
     await action(page).click()
-    await expect(question(page, 3)).toBeVisible()
+    await pastMatches(page)
     await expect(main(page).getByRole('textbox')).toHaveValue('')
     await main(page).getByRole('textbox').fill(`${name} day 2`)
     await action(page).click()
-    await expect(question(page, 4)).toBeVisible()
-    await action(page).click()
     await expect(question(page, 5)).toBeVisible()
+    await action(page).click()
+    await expect(question(page, 6)).toBeVisible()
     await expect(main(page).getByRole('textbox', { name: 'Town or city' })).toHaveValue(
       'Calgary, AB',
     )
     await action(page).click()
-    await expect(question(page, 6)).toBeVisible()
-    await action(page).click()
     await expect(question(page, 7)).toBeVisible()
+    await action(page).click()
+    await expect(question(page, 8)).toBeVisible()
     await expect(main(page).getByRole('textbox')).toHaveValue('Morag Test')
   } finally {
     await removeSubmissionsNamed(name)
@@ -351,17 +355,17 @@ test('the answers so far outlast a reload, offered on the intro, until started o
   await action(page).click()
   await pickDay(page, '2027-06-05')
   await action(page).click()
-  await expect(question(page, 3)).toBeVisible()
+  await pastMatches(page)
   await main(page).getByRole('textbox').fill('Half-finished Games')
   await action(page).click()
-  await expect(question(page, 4)).toBeVisible()
+  await expect(question(page, 5)).toBeVisible()
 
   await page.reload()
   await expect(action(page)).toHaveText('Pick up where you left off')
   await action(page).click()
-  await expect(question(page, 4)).toBeVisible()
+  await expect(question(page, 5)).toBeVisible()
   await page.getByRole('button', { name: 'Back to the previous question' }).click()
-  await expect(question(page, 3)).toBeVisible()
+  await expect(question(page, 4)).toBeVisible()
   await expect(main(page).getByRole('textbox')).toHaveValue('Half-finished Games')
 
   await page.reload()

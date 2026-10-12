@@ -1,6 +1,7 @@
 import { getPostmark } from './utility/email';
 import { attachUserToCompetition } from './utility/competition';
 import { organisationsForSubmission } from './organisations';
+import { pairFor, writeLink } from './links';
 import { isEmulator } from './utility/env';
 import { reviewReasons, type ReviewContext } from './review';
 import { adminSite, appModel, firstName, sendOptions, sentFrom, summary, type SentFrom } from './utility/emailModel';
@@ -201,6 +202,7 @@ class Submissions {
       ));
       await snap.ref.update({ organisationIds: Object.fromEntries(organisationIds.map((id) => [id, true])) });
     }
+    await this.linkWeekend(submissionId, submission, competitionId);
 
 
     // send email
@@ -232,6 +234,51 @@ class Submissions {
           },
         },
       });
+    }
+  }
+
+  // Another competition that weekend (ADR 0009): a submission can say it's
+  // linked with the one sent just before it (`linkedTo`, that one's id).
+  // Whichever of the two is approved second links their competitions, the
+  // first as the main one, sharing only what wouldn't replace anything the
+  // second has of its own. Never failing the approval: when they can't be
+  // linked (both linked with others already, say), they're left unlinked,
+  // and the second says why (`notLinked`).
+  async linkWeekend(submissionId: string, submission, competitionId: string) {
+    const { db } = this.config;
+    const pairs = [];
+    try {
+      // Approved second, after the one before it.
+      if (typeof submission.linkedTo === 'string' && /^[^.#$/[\]]{1,128}$/.test(submission.linkedTo)) {
+        const first = (await db.child(`competitions:submissions/${submission.linkedTo}`).get()).val();
+        if (first?.competitionId) pairs.push({ secondId: submissionId, second: submission, secondCompetition: competitionId, first, firstCompetition: first.competitionId });
+      }
+      // Approved second, after one sent after it.
+      const later = (await db.child('competitions:submissions').orderByChild('linkedTo').equalTo(submissionId).get()).val() ?? {};
+      for (const [id, s] of Object.entries(later) as [string, any][]) {
+        if (s?.competitionId) pairs.push({ secondId: id, second: s, secondCompetition: s.competitionId, first: submission, firstCompetition: competitionId });
+      }
+    } catch (err) {
+      console.error(`Submission ${submissionId}: couldn’t look for its linked one`, err);
+      return;
+    }
+    for (const pair of pairs) await this.link(pair);
+  }
+
+  async link({ secondId, second, secondCompetition, first, firstCompetition }) {
+    const { db } = this.config;
+    // Only one person's own two: anyone could name a popular competition's submission.
+    if (!second.submittedBy || second.submittedBy !== first.submittedBy) return;
+    const mark = db.child(`competitions:submissions/${secondId}`);
+    // Once, though both approvals can get here at the same moment.
+    const { committed } = await mark.child('linked').transaction((current) => (current ? undefined : new Date().toISOString()));
+    if (!committed) return;
+    try {
+      await writeLink(db, await pairFor(db, secondCompetition, firstCompetition), 'unreplaced');
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err);
+      console.warn(`Submission ${secondId}: not linked`, reason);
+      await mark.update({ linked: null, notLinked: reason });
     }
   }
 
