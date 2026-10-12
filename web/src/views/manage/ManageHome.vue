@@ -6,12 +6,15 @@ import Button from '@/components/ui/Button.vue'
 import SectionNav from '@/components/admin/SectionNav.vue'
 import SwitchField from '@/components/admin/SwitchField.vue'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
+import { useSharedParts } from '@/composables/admin/useSharedParts'
 import { useSetup } from '@/composables/admin/useSetup'
 import { useSidebar } from '@/composables/admin/useWide'
 import { formatLongDate } from '@/lib/format'
 import { VISIBILITY, visibilityOf } from '@/lib/visibility'
 
 const m = useManagedCompetition()
+// Linked (ADR 0007): Listed and published shared from the main one change there.
+const { shared, mainName, mainTo } = useSharedParts(m.competitionId)
 const sidebar = useSidebar()
 const { status, next, action, problems, today, carryOn } = useSetup()
 const c = computed(() => m.competition.value)
@@ -45,7 +48,18 @@ const results = computed(() => ({ name: 'manage.results', params: { competitionI
       </p>
     </header>
 
-    <section class="surface rounded-2xl px-4 py-1.5">
+    <RouterLink
+      v-if="shared('visibility') && mainTo()"
+      :to="mainTo()!"
+      class="press-row focus-inset surface text-callout flex min-h-14 items-center gap-3 rounded-2xl px-4 py-2"
+    >
+      <span class="min-w-0 flex-1">
+        <span class="block font-semibold">{{ c?.published ? 'Listed and published' : c?.listed ? 'Listed' : 'Not listed' }}</span>
+        <span class="text-muted-foreground block text-sm">Shared from {{ mainName }}</span>
+      </span>
+      <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+    </RouterLink>
+    <section v-else class="surface rounded-2xl px-4 py-1.5">
       <SwitchField
         :model-value="!!c?.listed"
         label="Listed"

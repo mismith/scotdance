@@ -19,18 +19,20 @@ const props = defineProps<{
   hint?: string
   /** Round preview for people, rounded square for logos. */
   shape?: 'round' | 'square'
+  /** Can't be changed here (it's copied from a linked primary). */
+  disabled?: boolean
 }>()
 
 const id = useId()
 const input = ref<HTMLInputElement | null>(null)
 const busy = ref(false)
 const error = ref<string | null>(null)
-const locked = computed(() => !canEdit.value || busy.value)
+const locked = computed(() => props.disabled || !canEdit.value || busy.value)
 
 async function onPick(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   ;(e.target as HTMLInputElement).value = ''
-  if (!file) return
+  if (!file || locked.value) return
   busy.value = true
   error.value = null
   try {
@@ -82,7 +84,7 @@ async function remove() {
       </div>
       <div class="flex flex-wrap gap-2">
         <Button
-          :disabled="!canEdit"
+          :disabled="!canEdit || disabled"
           :busy="busy"
           :aria-describedby="describedby"
           @click="input?.click()"
@@ -106,6 +108,7 @@ async function remove() {
         accept="image/*"
         class="sr-only"
         tabindex="-1"
+        :disabled="locked"
         @change="onPick"
       />
     </div>

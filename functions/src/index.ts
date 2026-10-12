@@ -10,6 +10,7 @@ import * as Pipers from './pipers';
 import * as Venues from './venues';
 import * as Organisations from './organisations';
 import * as Notifications from './notifications';
+import * as Links from './links';
 import { getOnSearchAll } from './search';
 import { runBackfillCoords } from './backfillCoords';
 import { getOnChange } from './changed';
@@ -71,9 +72,11 @@ export const organisationDeleted = appConfig.database.ref(`/${env}/organisations
 
 export const competitionDeleted = appConfig.database.ref(`/${env}/competitions/{competitionId}`)
   .onDelete(async (before, ctx) => {
-    // remove lingering permissions links between competitions and users
     const { db } = appConfig;
     const { competitionId } = ctx.params;
+    // out of its link, if it's in one (the others keep what they have)
+    await Links.takeOut(db, competitionId);
+    // remove lingering permissions links between competitions and users
     const snap = await db.child(`competitions:permissions/${competitionId}`).once('value');
     const permissions = snap.val();
     if (!permissions) return;
@@ -88,12 +91,24 @@ export const competitionDeleted = appConfig.database.ref(`/${env}/competitions/{
       value: null,
     })));
   });
+// Linked competitions (links.ts): one callable for every change to a link,
+// and triggers that keep the others in step with the primary's staff and
+// details.
+export const linkCompetitions = https().onCall(Links.getOnLink(appConfig.db));
+export const competitionStaffSync = database().ref(`/${env}/competitions:data/{competitionId}/staff/{staffId}`)
+  .onWrite(Links.getOnStaffWritten(appConfig.db));
+export const competitionDetailsSync = database().ref(`/${env}/competitions/{competitionId}`)
+  .onUpdate(Links.getOnCompetitionUpdated(appConfig.db));
 // Publishing links the competition's dancers into their public profiles
 // (unpublishing unlinks them), which can take a while for a big one.
 // Then followers hear it's live: after the sync, which links the entries to
 // the dancers they follow (so this isn't a trigger of its own).
 const syncDancers = Dancers.getOnSyncCompetition(appConfig.db);
-const notifyFollowersOnPublished = Notifications.getOnCompetitionPublished(appConfig.db, app, isEmulator());
+// A linked set's alert waits a minute for the rest of it (5 s in the emulator).
+const linkedPublishedSettleSeconds = isEmulator() ? 5 : 60;
+const notifyFollowersOnPublished = Notifications.getOnCompetitionPublished(appConfig.db, app, isEmulator(), (task) => (
+  enqueue(app, 'sendLinkedPublishedAlerts', { ...task }, linkedPublishedSettleSeconds)
+));
 const publishedDatabase = database({ timeoutSeconds: 540 });
 export const competitionPublishedChanged = publishedDatabase.ref(`/${env}/competitions/{competitionId}/published`).onWrite(async (change, ctx) => {
   const { competitionId } = ctx.params;
@@ -104,7 +119,14 @@ export const competitionPublishedChanged = publishedDatabase.ref(`/${env}/compet
   } else {
     await ref.remove();
   }
+  // When it went live, and whether its dancers are in yet: a linked set's
+  // alert waits for the rest of the set (notifications.ts).
+  const live = Notifications.liveMark(appConfig.db, competitionId);
+  const goingLive = isPublished === true && change.before.val() !== true;
+  if (goingLive) await live.start();
+  else if (isPublished !== true) await live.clear();
   await syncDancers(competitionId);
+  if (goingLive) await live.ready();
   await notifyFollowersOnPublished(change, ctx);
 });
 // Search shows a listed competition (and its judges and pipers) before it's
@@ -252,6 +274,15 @@ export const sendResultAlerts = onTaskDispatched<Notifications.SettleTask>({
   invoker: TASKS_INVOKER,
 }, async (req) => {
   await Notifications.getOnResultsSettled(appConfig.db, app, isEmulator())(req.data);
+});
+// A linked set published together: one alert each (see links.ts).
+export const sendLinkedPublishedAlerts = onTaskDispatched<Notifications.LinkPublishedTask>({
+  // Retries wait out the rest of the set going live (up to its 9 minute sync).
+  retryConfig: { maxAttempts: 12, minBackoffSeconds: 30, maxBackoffSeconds: 60 },
+  rateLimits: { maxConcurrentDispatches: 10 },
+  invoker: TASKS_INVOKER,
+}, async (req) => {
+  await Notifications.getOnLinkPublishedSettled(appConfig.db, app, isEmulator())(req.data);
 });
 export const followerIndexOnFavorite = database()
   .ref(`/${env}/users:favorites/{uid}/dancers/{aggregateId}`)

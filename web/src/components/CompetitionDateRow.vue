@@ -6,9 +6,11 @@ import { useFollowing } from '@/composables/useFollowing'
 import { useHiddenAs } from '@/composables/useHiddenAs'
 import CompetitionName from '@/components/CompetitionName.vue'
 import DateTile from '@/components/DateTile.vue'
+import LinkRail from '@/components/LinkRail.vue'
 import VisibilityChip from '@/components/VisibilityChip.vue'
 import { useMeStore } from '@/stores/me'
 import { isSameDay } from '@/lib/format'
+import type { RailPosition } from '@/lib/linked'
 import type { Competition } from '@/types/competition'
 
 // A competition as a row: a calendar date block (what people scan for, pink
@@ -17,7 +19,9 @@ import type { Competition } from '@/types/competition'
 // it's published, how it's hidden. The name leads with its organisation's
 // short name (CompetitionName); on that organisation's own page (`within`),
 // without it. Lists put these in a `rows-inset` card with
-// `[--inset:4.5rem]`, so separators line up with the name.
+// `[--inset:4.5rem]`, so separators line up with the name. Linked
+// competitions sit together in a list on a blue rail through their date
+// tiles (`rail`), with no separator between them (ADR 0007 §8).
 const props = withDefaults(
   defineProps<{
     competition: Omit<Competition, 'date'> & { id?: string; date?: number | string }
@@ -35,6 +39,12 @@ const props = withDefaults(
     preview?: boolean
     /** A word on where it's at: "Day 2 of 2", "Results posted", "Published". */
     note?: string | null
+    /** How the note reads: live (pink, on the day), venue (amber: somewhere else), or muted. */
+    noteTone?: 'live' | 'venue' | 'muted'
+    /** On its linked group's rail, and where. */
+    rail?: RailPosition
+    /** Go there in place of this page (switching between linked competitions). */
+    replace?: boolean
     /** On this organisation's page: its name without the organisation, in front or in it. */
     within?: string | null
     /** Under the day: the weekday, or the year where years mix (Search). */
@@ -48,6 +58,9 @@ const props = withDefaults(
     markManaged: true,
     preview: false,
     note: null,
+    noteTone: 'muted',
+    rail: null,
+    replace: false,
     within: null,
     below: 'weekday',
   },
@@ -64,13 +77,15 @@ const hidden = computed(() => (props.preview ? null : hiddenAs(id.value, props.c
 </script>
 
 <template>
-  <li class="bg-card">
-    <RouterLink :to="to" class="press-row focus-inset flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4">
+  <li :class="['bg-card', rail && 'relative', (rail === 'middle' || rail === 'last') && 'bg-none!']">
+    <LinkRail :rail="rail" />
+    <RouterLink :to="to" :replace="replace" class="press-row focus-inset flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4">
       <DateTile
         :date="competition.date"
         :below="below"
         :managed="managed"
         :today="today"
+        :class="rail && 'ring-card ring-3'"
       />
       <span class="min-w-0 flex-1">
         <span class="line-clamp-2 text-base leading-snug font-semibold">
@@ -82,7 +97,10 @@ const hidden = computed(() => (props.preview ? null : hiddenAs(id.value, props.c
         <span v-if="managed" class="sr-only">You can manage this.</span>
         <span v-if="note || hidden || followed || dancers.length" class="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
           <VisibilityChip :visibility="hidden" />
-          <span v-if="note" class="text-muted-foreground text-sm font-medium">{{ note }}</span>
+          <span
+            v-if="note"
+            :class="['text-sm font-medium', noteTone === 'live' ? 'text-live' : noteTone === 'venue' ? 'text-next-foreground' : 'text-muted-foreground']"
+          >{{ note }}</span>
           <span v-if="dancers.length" class="flex min-w-0 items-center gap-1.5 text-sm font-medium">
             <span class="flex shrink-0 gap-0.5" aria-hidden="true">
               <span

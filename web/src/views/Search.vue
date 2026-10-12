@@ -24,6 +24,8 @@ import { useFollowing } from '@/composables/useFollowing'
 import { useRecentSearches } from '@/composables/useRecentSearches'
 import { useLocationFilter } from '@/composables/useLocationFilter'
 import { useOrganisations } from '@/composables/useOrganisations'
+import { useCompetitionLinks } from '@/composables/useCompetitionLinks'
+import { groupInPlace, railRows } from '@/lib/linked'
 import { useFavoritesStore } from '@/stores/favorites'
 import { fetchDancers } from '@/lib/competitionData'
 import { lookupEntityId, lookupVenueId } from '@/lib/entityIndex'
@@ -45,6 +47,11 @@ const route = useRoute()
 const router = useRouter()
 const following = useFollowing()
 const favorites = useFavoritesStore()
+// Linked competitions that both match sit together, at the better match (ADR 0007 §8).
+const { linkOf, othersLine } = useCompetitionLinks()
+const competitionRows = computed(() =>
+  railRows(groupInPlace(results.value.competitions.hits, linkOf)).map(({ item, rail, alone }) => ({ c: item, rail, note: alone ? othersLine(item) : null })),
+)
 const recentSearches = useRecentSearches()
 const locationFilter = useLocationFilter()
 
@@ -400,12 +407,14 @@ watch(mode, async (m) => {
             <h2 class="text-heading">Competitions</h2>
             <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
               <CompetitionDateRow
-                v-for="c in results.competitions.hits"
+                v-for="{ c, rail, note } in competitionRows"
                 :key="c.id"
                 :competition="c"
                 :below="isBeforeToday(c.date) ? 'year' : 'weekday'"
                 :to="{ name: 'competition.info', params: { competitionId: c.id } }"
                 :followed="favorites.isFavorite('competitions', c.id)"
+                :rail="rail"
+                :note="note"
               />
             </ul>
           </section>

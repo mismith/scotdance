@@ -11,14 +11,25 @@ import { ARRIVE, CX, CYCLE, GROUND, HEAD_R, HOME, WIDTH, pose } from '@/lib/scot
 // fades out, finishing a leap first. Native only (or `?splash` in
 // development). With Reduce Motion he just stands there as the logo. Colours
 // follow the system appearance, as the native splash does, not the app's
-// own theme setting.
+// own theme setting. Once a launch: when the page reloads (iOS restarts it
+// after a while in the background), the app simply comes back.
+const SHOWN = 'splash:shown'
+function firstThisLaunch() {
+  try {
+    if (sessionStorage.getItem(SHOWN)) return false
+    sessionStorage.setItem(SHOWN, '1')
+  } catch {
+    // No storage: show it, as before.
+  }
+  return true
+}
 const FADE_IN = 0.2
 const FIRST_LEAP = 1.6 // s as the logo before another leap, while still loading
 const AGAIN = 3.2
 const OUT = 0.3
 
 const router = useRouter()
-const show = ref(isNative || (import.meta.env.DEV && new URLSearchParams(location.search).has('splash')))
+const show = ref((isNative && firstThisLaunch()) || (import.meta.env.DEV && new URLSearchParams(location.search).has('splash')))
 const reduce = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
 const c = ref(reduce ? 0 : ARRIVE)
 const opacity = ref(reduce ? 1 : 0)
@@ -37,7 +48,11 @@ const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t 
 
 let raf = 0
 onMounted(async () => {
-  if (!show.value) return
+  if (!show.value) {
+    // A reload: nothing native is up, but never leave it waiting.
+    hideNativeSplash()
+    return
+  }
   // Two frames: this overlay is on screen before the native splash goes.
   await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
   hideNativeSplash()

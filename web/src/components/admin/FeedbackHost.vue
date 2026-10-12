@@ -71,7 +71,7 @@ async function runAction(id: number, run: () => unknown) {
     <template v-if="shown">
       <div class="space-y-2 pr-2">
         <h2 class="text-title">{{ shown.title }}</h2>
-        <p v-if="shown.message" class="text-muted-foreground text-base">{{ shown.message }}</p>
+        <p v-if="shown.message" class="text-muted-foreground text-base whitespace-pre-line">{{ shown.message }}</p>
       </div>
       <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <Button size="lg" @click="req?.resolve(false)">{{ shown.cancelLabel ?? 'Cancel' }}</Button>

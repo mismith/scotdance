@@ -20,6 +20,7 @@ import {
 const model = defineModel<string | null | undefined>({ default: '' })
 const props = defineProps<{
   save?: (value: string) => unknown
+  disabled?: boolean
   /** Only places in these countries (ISO, e.g. ['CA']). */
   regionCodes?: string[]
   placeholder?: string
@@ -35,6 +36,7 @@ const saved = props.save
       value: () => model.value,
       save: (v) => props.save!(v),
       label: () => LABEL,
+      disabled: () => props.disabled,
     })
   : null
 const text = computed(() => (saved ? saved.draft.value : (model.value ?? '')))

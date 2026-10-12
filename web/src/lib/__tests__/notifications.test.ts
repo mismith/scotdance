@@ -6,8 +6,10 @@ import {
   fcmMessage,
   getOnBackfillFollowers,
   getOnCompetitionFavoriteWritten,
+  dateSpan,
   getOnCompetitionPublished,
   getOnFavoriteWritten,
+  getOnLinkPublishedSettled,
   getOnResultsSettled,
   getOnResultsWritten,
   isDeadToken,
@@ -15,7 +17,9 @@ import {
   ordinal,
   parsePlacings,
   resultMessage,
+  linkedPublishedMessage,
   sendMorningSummaries,
+  type LinkPublishedTask,
   type SettleTask,
 } from '../../../../functions/src/notifications'
 import { FakeRtdb, snap, type TriggerEvent } from './fakeRtdb'
@@ -477,5 +481,134 @@ describe('follower indexes', () => {
     expect(await backfill()).toEqual({ dancerFollows: 3, competitionFollows: 1 })
     expect(rtdb.read('dancers:followers')).toEqual({ p1: { u1: true, u2: true }, p2: { u1: true } })
     expect(rtdb.read('competitions:followers')).toEqual({ c1: { u1: true } })
+  })
+})
+
+describe('linked competitions going live (ADR 0007)', () => {
+  /** c1 and c2 linked, both unpublished; u1 and u2 follow dancers in each, u3 and u4 only in c1, u6 the competition c1. */
+  function linkedSet() {
+    const data = seed()
+    data.competitions.c1.published = false
+    data.competitions.c2 = { name: 'Calgary Closed Championship', date: '2026-07-05', published: false, ...CALGARY }
+    data['competitions:data'].c2 = {
+      dancers: {
+        f1: { firstName: 'Ailsa', lastName: 'Grant', groupId: 'g1', dancerId: 'p1' },
+        f6: { firstName: 'Fiona', lastName: 'Baird', groupId: 'g1', dancerId: 'p6' },
+      },
+    }
+    data['dancers:followers'].p6 = { u2: true }
+    data['competitions:followers'] = { c1: { u6: true } }
+    data.users.u6 = { alerts: on }
+    data.competitionLinks = { L1: { primary: 'c1', competitions: { c1: true, c2: true } } }
+    data['competitionLinks:of'] = { c1: 'L1', c2: 'L1' }
+    return setup(data)
+  }
+
+  it('waits for the set, then tells each person once about all of theirs', async () => {
+    const { db, rtdb, save, log, said } = linkedSet()
+    const queue: LinkPublishedTask[] = []
+    const handler = getOnCompetitionPublished(db, app, true, async (task) => { queue.push(task) })
+    await save({ 'competitions/c1/published': true, 'competitions/c2/published': true }, handler)
+    expect(log()).toEqual([])
+    expect(queue).toEqual([{ linkId: 'L1' }, { linkId: 'L1' }])
+    rtdb.write({ 'notifications:live/c1': { since: 0, ready: true }, 'notifications:live/c2': { since: 0, ready: true } })
+    const settled = getOnLinkPublishedSettled(db, app, true, () => 1000)
+    // Both tasks run side by side; one held back throws, and Cloud Tasks runs it again.
+    let pending = queue
+    for (let round = 0; round < 5 && pending.length; round += 1) {
+      const outcomes = await Promise.allSettled(pending.map(settled))
+      pending = pending.filter((_, i) => outcomes[i].status === 'rejected')
+    }
+    expect(pending).toEqual([])
+    expect(said()).toEqual([
+      'u1: 2 competitions are live, Jul 4–5',
+      'u2: 2 competitions are live, Jul 4–5',
+      'u3: Calgary Highland Games is live',
+      'u4: Calgary Highland Games is live',
+      'u6: Calgary Highland Games is live',
+    ])
+    const body = (uid: string) => log().find((m) => m.uid === uid)?.body
+    expect(body('u1')).toBe('Ailsa and Kirsty are on the dancer lists. See platforms and dancing order.')
+    expect(body('u2')).toBe('Mairi and Fiona are on the dancer lists. See platforms and dancing order.')
+    expect(body('u3')).toBe('Iona is on the dancer list. See platforms and dancing order.')
+    expect(log().find((m) => m.uid === 'u1')).toMatchObject({ competitionId: 'c1', link: '/competitions/c1/info' })
+  })
+
+  it('sends each competition once, even when one goes live after the rest', async () => {
+    const { db, rtdb, log, said } = linkedSet()
+    rtdb.write({ 'competitions/c1/published': true, 'notifications:live/c1': { since: 0, ready: true } })
+    const clock = 5 * 60_000
+    const settled = getOnLinkPublishedSettled(db, app, true, () => clock)
+    await settled({ linkId: 'L1' })
+    await settled({ linkId: 'L1' })
+    expect(said()).toEqual([
+      'u1: Calgary Highland Games is live',
+      'u2: Calgary Highland Games is live',
+      'u3: Calgary Highland Games is live',
+      'u4: Calgary Highland Games is live',
+      'u6: Calgary Highland Games is live',
+    ])
+    // Five minutes later, the other one: its own alert, at once.
+    rtdb.write({ 'competitions/c2/published': true, 'notifications:live/c2': { since: clock, ready: true } })
+    await settled({ linkId: 'L1' })
+    expect(log()).toHaveLength(7)
+    expect(said()).toContain('u1: Calgary Closed Championship is live')
+    expect(said()).toContain('u2: Calgary Closed Championship is live')
+  })
+
+  it('has a task wait while another is sending the same person’s alert, then sends nothing twice', async () => {
+    const { db, rtdb, said } = linkedSet()
+    rtdb.write({ 'competitions/c1/published': true, 'competitions/c2/published': true })
+    rtdb.write({ 'notifications:live/c1': { since: 0, ready: true }, 'notifications:live/c2': { since: 0, ready: true } })
+    // Another task is mid-send for u1.
+    rtdb.write({ 'notifications:sent/link:L1/published/u1': 1000 })
+    const settled = getOnLinkPublishedSettled(db, app, true, () => 2000)
+    await expect(settled({ linkId: 'L1' })).rejects.toThrow(/trying again/)
+    expect(said()).not.toContain('u1: 2 competitions are live, Jul 4–5')
+    // That one finishes (the lock goes); the retry sends u1's, and no one else's again.
+    rtdb.write({ 'notifications:sent/link:L1/published/u1': null })
+    await settled({ linkId: 'L1' })
+    expect(said().filter((x) => x.startsWith('u1:'))).toEqual(['u1: 2 competitions are live, Jul 4–5'])
+    expect(said().filter((x) => x.startsWith('u2:'))).toHaveLength(1)
+  })
+
+  it('waits while one of the set is still syncing its dancers, then sends once', async () => {
+    const { db, rtdb, said } = linkedSet()
+    rtdb.write({ 'competitions/c1/published': true, 'competitions/c2/published': true })
+    rtdb.write({ 'notifications:live/c1': { since: 0, ready: true }, 'notifications:live/c2': { since: 0, ready: false } })
+    const settled = getOnLinkPublishedSettled(db, app, true, () => 60_000)
+    await expect(settled({ linkId: 'L1' })).rejects.toThrow(/finish going live/)
+    expect(said()).toEqual([])
+    rtdb.write({ 'notifications:live/c2/ready': true })
+    await settled({ linkId: 'L1' })
+    expect(said()).toContain('u1: 2 competitions are live, Jul 4–5')
+  })
+
+  it('goes without one whose sync never finished', async () => {
+    const { db, rtdb, said } = linkedSet()
+    rtdb.write({ 'competitions/c1/published': true, 'competitions/c2/published': true })
+    rtdb.write({ 'notifications:live/c1': { since: 0, ready: true }, 'notifications:live/c2': { since: 0, ready: false } })
+    await getOnLinkPublishedSettled(db, app, true, () => 11 * 60_000)({ linkId: 'L1' })
+    expect(said()).toContain('u1: Calgary Highland Games is live')
+    expect(said().some((x) => x.includes('Calgary Closed Championship'))).toBe(false)
+  })
+
+  it('doesn’t announce again one that went live earlier', async () => {
+    const { db, rtdb, said } = linkedSet()
+    // c1 went live (and was announced) an hour ago; c2 just now.
+    rtdb.write({ 'competitions/c1/published': true, 'competitions/c2/published': true })
+    rtdb.write({ 'notifications:live/c1': { since: 0, ready: true }, 'notifications:live/c2': { since: 60 * 60_000, ready: true } })
+    await getOnLinkPublishedSettled(db, app, true, () => 61 * 60_000)({ linkId: 'L1' })
+    expect(said()).toContain('u1: Calgary Closed Championship is live')
+    expect(said().some((x) => x.includes('Calgary Highland Games') || x.includes('2 competitions'))).toBe(false)
+  })
+
+  it('words a set by its first competition, and spans months', () => {
+    expect(linkedPublishedMessage([{ name: 'SDCCS Pre-Premier Open', date: '2027-07-05' }, { name: 'B', date: '2027-07-06' }, { name: 'C', date: '2027-07-11' }], [])).toEqual({
+      title: '3 competitions are live, Jul 5–11',
+      body: 'SDCCS Pre-Premier Open and 2 others: dancer lists and schedules are up.',
+    })
+    expect(dateSpan(['2027-07-02', '2027-06-30'])).toBe('Jun 30–Jul 2')
+    expect(dateSpan(['2027-07-02'])).toBe('Jul 2')
   })
 })

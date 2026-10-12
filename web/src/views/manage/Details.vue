@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { ExternalLink, FileUp, Landmark, Plus, Trash2 } from '@lucide/vue'
+import { ChevronRight, ExternalLink, FileUp, Landmark, Link2, Plus, Trash2 } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import MovingList from '@/components/admin/MovingList.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
@@ -10,6 +10,11 @@ import ImageField from '@/components/admin/ImageField.vue'
 import SwitchField from '@/components/admin/SwitchField.vue'
 import VenueField from '@/components/admin/VenueField.vue'
 import DetailsPreview from '@/components/admin/DetailsPreview.vue'
+import LinkedCompetitions from '@/components/admin/LinkedCompetitions.vue'
+import SharedPart from '@/components/admin/SharedPart.vue'
+import { useSharedParts } from '@/composables/admin/useSharedParts'
+import { changeLink, previewLink } from '@/lib/admin/links'
+import { replacesSentence } from '@/lib/admin/linkWords'
 import MapPreview from '@/components/MapPreview.vue'
 import OrganisationMark from '@/components/OrganisationMark.vue'
 import OrganisationPicker from '@/components/OrganisationPicker.vue'
@@ -28,7 +33,7 @@ import { LINK_PROBLEM, looksLikeLink } from '@/lib/admin/collection'
 import { htmlToText } from '@/lib/admin/richText'
 import { uploadLinkFile } from '@/lib/admin/upload'
 import { grow, shrink } from '@/lib/admin/motion'
-import { formatExternalURL, parseDate } from '@/lib/format'
+import { formatDateTime, formatExternalURL, formatHumanURL, parseDate } from '@/lib/format'
 import { registrationNote, registrationToSave } from '@/lib/registration'
 import { placesAvailable, type VenueFields } from '@/lib/maps'
 
@@ -69,6 +74,50 @@ const save = (key: string) => (v: string | null) => m.writeInfo({ [key]: v }, FI
 const year = () => (c.value.date ? parseDate(c.value.date).getFullYear() || null : null)
 const noteRegistration = (draft: string) => registrationNote(draft, year())
 const saveRegistration = (v: string) => save('sobhd')(registrationToSave(v, year()))
+
+// --- Linked competitions (ADR 0007): what this one shares from the main one
+// is changed there, so here it's shown as it is, as plain text.
+const { mainId, mainRecord, mainName, shared, anyShared, mainTo } = useSharedParts(m.competitionId)
+const venueText = computed(() => [c.value.venue, c.value.address, c.value.location].filter(Boolean).join(' · ') || 'No venue yet')
+const registrationText = computed(() =>
+  [
+    c.value.registrationStart && `Opens ${formatDateTime(c.value.registrationStart)}`,
+    c.value.registrationEnd && `closes ${formatDateTime(c.value.registrationEnd)}`,
+    c.value.registrationURL && formatHumanURL(c.value.registrationURL),
+  ].filter(Boolean).join(' · '),
+)
+const visibilityText = computed(() => (c.value.published ? 'Listed and published' : c.value.listed ? 'Listed, not published yet' : 'Not listed'))
+
+// Keeping its own venue: offer the main one's, when it's somewhere else.
+const offerVenue = computed(() => {
+  const p = mainRecord.value
+  if (!p?.venue?.trim() || mainId.value === m.competitionId.value || shared('venue')) return null
+  return p.venue.trim().toLowerCase() === (c.value.venue ?? '').trim().toLowerCase() ? null : p
+})
+const takingVenue = ref(false)
+async function useItsVenue() {
+  if (takingVenue.value) return
+  takingVenue.value = true
+  try {
+    const id = m.competitionId.value
+    const preview = await previewLink({ action: 'sync', competitionId: id, part: 'venue', on: true })
+    const plan = preview.targets[0]?.parts[0]
+    if (plan?.replaces) {
+      const ok = await confirm({
+        title: `Use ${mainName.value}’s venue?`,
+        message: `${replacesSentence(c.value.name?.trim() || 'This one', plan, mainName.value)} It changes with it from then on.`,
+        confirmLabel: 'Use its venue',
+      })
+      if (!ok) return
+    }
+    await changeLink({ action: 'sync', competitionId: id, part: 'venue', on: true })
+    toast(`Shares its venue from ${mainName.value}`)
+  } catch (e) {
+    toast(friendlyError(e), { tone: 'error' })
+  } finally {
+    takingVenue.value = false
+  }
+}
 
 async function pickVenue(fields: VenueFields) {
   const message = `Venue set to ${fields.venue ?? fields.address ?? fields.location ?? 'the venue you picked'}`
@@ -241,6 +290,16 @@ async function deleteCompetition() {
     <div class="max-w-2xl min-w-0 space-y-10 p-4 pb-[calc(3rem+var(--safe-bottom))] xl:max-w-none xl:overflow-y-auto">
       <SectionHeader title="Details" />
 
+      <RouterLink
+        v-if="anyShared && mainTo()"
+        :to="mainTo()!"
+        class="press bg-blue-paper text-primary text-callout flex min-h-12 items-center gap-2.5 rounded-2xl px-4 font-semibold"
+      >
+        <Link2 class="size-5 shrink-0" aria-hidden="true" />
+        <span class="min-w-0 flex-1">Shared from {{ mainName }}</span>
+        <ChevronRight class="size-5 shrink-0" aria-hidden="true" />
+      </RouterLink>
+
       <section class="space-y-4">
         <h2 class="text-heading">Basics</h2>
         <TextField :model-value="c.name" label="Name" required placeholder="e.g. Canadian Championship 2026" :save="save('name')" />
@@ -255,24 +314,34 @@ async function deleteCompetition() {
             :save="saveRegistration"
           />
         </div>
-        <!-- Edited as plain text, even when the old app stored HTML. -->
-        <TextField
-          :model-value="htmlToText(c.description)"
-          label="Description"
-          multiline
-          hint="Anything else people should know. Shown on the competition page."
-          :save="save('description')"
-        />
-        <ImageField
-          :model-value="c.image"
-          label="Logo or photo"
-          folder="info"
-          :competition-id="m.competitionId.value"
-          :save="save('image')"
-        />
+        <template v-if="!shared('about')">
+          <!-- Edited as plain text, even when the old app stored HTML. -->
+          <TextField
+            :model-value="htmlToText(c.description)"
+            label="Description"
+            multiline
+            hint="Anything else people should know. Shown on the competition page."
+            :save="save('description')"
+          />
+          <ImageField
+            :model-value="c.image"
+            label="Logo or photo"
+            folder="info"
+            :competition-id="m.competitionId.value"
+            :save="save('image')"
+          />
+        </template>
       </section>
 
-      <section class="space-y-4">
+      <SharedPart v-if="shared('about')" title="Description and logo">
+        <span class="flex items-start gap-3">
+          <img v-if="c.image" :src="c.image" alt="" class="size-12 shrink-0 rounded-xl object-cover" />
+          <span class="min-w-0 flex-1 whitespace-pre-line">{{ htmlToText(c.description) || 'No description yet' }}</span>
+        </span>
+      </SharedPart>
+
+      <SharedPart v-if="shared('venue')" title="Where">{{ venueText }}</SharedPart>
+      <section v-else class="space-y-4">
         <h2 class="text-heading">Where</h2>
         <VenueField v-if="placesAvailable" :model-value="c.venue" :save="save('venue')" @pick="pickVenue" />
         <TextField v-else :model-value="c.venue" label="Venue name" placeholder="e.g. Telus Convention Centre" :save="save('venue')" />
@@ -291,9 +360,13 @@ async function deleteCompetition() {
           class="h-40 rounded-xl"
         />
         <p v-else-if="placesAvailable" class="text-muted-foreground text-sm">Choose the venue from the suggestions to put it on the map.</p>
+        <Button v-if="offerVenue" variant="plain" class="-ml-4" :disabled="!canEdit" :busy="takingVenue" @click="useItsVenue">
+          Use {{ mainName }}’s venue
+        </Button>
       </section>
 
-      <Transition :css="false" @enter="grow" @leave="shrink">
+      <SharedPart v-if="shared('registration')" title="Registration">{{ registrationText || 'No registration details yet' }}</SharedPart>
+      <Transition v-else :css="false" @enter="grow" @leave="shrink">
         <section v-if="registrationShown" ref="registrationEl" class="space-y-4">
           <h2 class="text-heading">Registration</h2>
           <TextField
@@ -311,7 +384,10 @@ async function deleteCompetition() {
         </section>
       </Transition>
 
-      <Transition :css="false" @enter="grow" @leave="shrink">
+      <SharedPart v-if="shared('links')" title="Links and files">
+        {{ links.map((l) => l.name || formatHumanURL(l.url ?? '')).join(' · ') || 'No links yet' }}
+      </SharedPart>
+      <Transition v-else :css="false" @enter="grow" @leave="shrink">
         <section v-if="links.length || addingLink" class="space-y-4">
           <div>
             <h2 class="text-heading">Links and files</h2>
@@ -370,17 +446,18 @@ async function deleteCompetition() {
       </Transition>
 
       <Transition :css="false" @enter="grow" @leave="shrink">
-        <div v-if="!registrationShown || !addingLink" class="flex flex-wrap gap-2">
-          <Button v-if="!registrationShown" :disabled="!canEdit" @click="openRegistration">
+        <div v-if="(!registrationShown && !shared('registration')) || (!addingLink && !shared('links'))" class="flex flex-wrap gap-2">
+          <Button v-if="!registrationShown && !shared('registration')" :disabled="!canEdit" @click="openRegistration">
             <Plus /> Add registration details
           </Button>
-          <Button v-if="!addingLink" :disabled="!canEdit" @click="openLinkForm">
+          <Button v-if="!addingLink && !shared('links')" :disabled="!canEdit" @click="openLinkForm">
             <Plus /> Add a link or file
           </Button>
         </div>
       </Transition>
 
-      <section class="space-y-3">
+      <SharedPart v-if="shared('visibility')" title="Who can see it">{{ visibilityText }}</SharedPart>
+      <section v-else class="space-y-3">
         <h2 class="text-heading">Who can see it</h2>
         <div class="surface rounded-2xl px-4 py-1.5">
           <SwitchField
@@ -399,8 +476,11 @@ async function deleteCompetition() {
         </div>
       </section>
 
+      <LinkedCompetitions />
+
       <!-- Organisations go last, above only Delete. -->
-      <section class="space-y-3">
+      <SharedPart v-if="shared('organisations')" title="Organisations">{{ linked.map((org) => org.name).join(' · ') || 'None' }}</SharedPart>
+      <section v-else class="space-y-3">
         <div>
           <h2 class="text-heading">Organisations</h2>
           <p class="text-muted-foreground text-sm">The association, games society or series it’s run by or part of. Each has a page listing its competitions.</p>

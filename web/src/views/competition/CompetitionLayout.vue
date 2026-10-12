@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, toRef, watch } from 'vue'
-import { RouterLink, RouterView, useRoute } from 'vue-router'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { CalendarX, ChevronRight, EyeOff, Hourglass, Pencil } from '@lucide/vue'
 import { useMeStore } from '@/stores/me'
 import AppBar from '@/components/nav/AppBar.vue'
@@ -9,8 +9,10 @@ import AdminMark from '@/components/AdminMark.vue'
 import CompetitionBottomNav from '@/components/nav/CompetitionBottomNav.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import LinkedSwitcher from '@/components/LinkedSwitcher.vue'
 import Button from '@/components/ui/Button.vue'
 import { provideCompetition } from '@/composables/useCompetition'
+import { TAB_OF, provideLinkedSwitcher } from '@/composables/useLinkedSwitcher'
 import { provideInfoHeader } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { useRecentEntities } from '@/composables/useRecentEntities'
@@ -32,8 +34,19 @@ const me = useMeStore()
 const competitionId = computed(() => String(route.params.competitionId ?? ''))
 
 
-const { competition, notFound, restricted, loading, error, loadSchedule, loadResults, schedule, scheduleHidden, resultsHidden } =
+const { competition, notFound, restricted, loading, error, loadSchedule, loadResults, schedule, scheduleHidden, resultsHidden, dancers } =
   provideCompetition(toRef(competitionId))
+
+// Linked with others (a weekend's, a week's): the title switches between them.
+const personHere = computed(() =>
+  route.name === 'competition.dancer' ? (dancers.value.find((d) => d.id === route.params.dancerId)?.dancerId ?? null) : null,
+)
+const switcher = provideLinkedSwitcher(competitionId, personHere)
+const titleMenu = computed(() =>
+  switcher.linked.value
+    ? { open: (e: MouseEvent) => void switcher.morph.show(e), label: `${competition.value?.name ?? 'This competition'}, one of ${switcher.label.value}. Switch competition` }
+    : null,
+)
 
 // The schedule says how many days the competition runs, and whether the
 // organisers hid the Schedule or Results tab.
@@ -102,10 +115,21 @@ const subtitle = computed(() => {
 // On a tab, Back leaves the competition in one tap: to wherever you came
 // from, or the competitions list for a deep link. Deeper pages step back
 // normally (a group back to Results).
+const router = useRouter()
 const exit = computed(() => {
   void route.fullPath
-  if (!isTopTab.value) return null
   const e = competitionEntry.value
+  if (!isTopTab.value) {
+    // Switched here from a linked one's page: Back goes up to this one's tab,
+    // not back into the other competition.
+    const tab = TAB_OF[String(route.name)]
+    const back = (window.history.state as { back?: unknown } | null)?.back
+    const cameFrom = typeof back === 'string' ? router.resolve(back).params.competitionId : null
+    if (e?.switched && e.competitionId === competitionId.value && tab && cameFrom && cameFrom !== competitionId.value) {
+      return { to: { name: tab, params: { competitionId: competitionId.value } }, label: TAB_LABEL_BY_ROUTE[tab] }
+    }
+    return null
+  }
   const delta = e && e.competitionId === competitionId.value && e.back ? e.position - 1 - historyPosition() : 0
   if (e?.back && delta < 0) return { delta, label: backLabelFor(e.back), compact: true }
   return { to: { name: 'competitions' }, label: 'Competitions', compact: true }
@@ -130,6 +154,7 @@ usePageTitle(() => [
       :exit="exit"
       compact-back
       :competition-id="competitionId"
+      :title-menu="titleMenu"
     >
       <template #actions>
         <RouterLink
@@ -193,5 +218,6 @@ usePageTitle(() => [
     </main>
 
     <CompetitionBottomNav />
+    <LinkedSwitcher v-if="switcher.linked.value" />
   </div>
 </template>

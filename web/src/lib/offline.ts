@@ -172,6 +172,9 @@ export function getStamp<T>(q: Query): Promise<T | null> {
  * `onValue()`, but starts with the copy saved on the device when offline,
  * then carries on with live values once connected.
  */
+/** What's saved on the device for `q`, without waiting for the network (null if nothing). */
+export const peekSaved = async (q: Query): Promise<unknown> => (await readSaved(keyFor(q)))?.value ?? null
+
 export function onValueSaved(
   q: Query,
   cb: (snap: Snapshot) => void,

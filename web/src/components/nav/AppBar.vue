@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { RouteLocationRaw } from 'vue-router'
+import { ChevronDown } from '@lucide/vue'
 import AccountButton from '@/components/nav/AccountButton.vue'
 import TopBackButton from '@/components/nav/TopBackButton.vue'
 
@@ -15,7 +16,9 @@ import TopBackButton from '@/components/nav/TopBackButton.vue'
 // The small title comes and goes the same way everywhere: it slides out from
 // behind the back button (where there is one) as it fades in. Through a page
 // change it cross-fades with the rest of the bar, rather than travelling.
-withDefaults(
+// Tapping it scrolls to the top, unless it opens a menu (`titleMenu`: a
+// linked competition's switcher), when a chevron says so.
+const props = withDefaults(
   defineProps<{
     title?: string | null
     subtitle?: string | null
@@ -29,9 +32,13 @@ withDefaults(
     exit?: { delta?: number; to?: RouteLocationRaw; label: string } | null
     /** Back as just a chevron, so the title has the room (a competition's pages). */
     compactBack?: boolean
+    /** The title opens this menu (and says what it is to screen readers) instead of scrolling up. */
+    titleMenu?: { open: (e: MouseEvent) => void; label: string } | null
   }>(),
-  { title: null, subtitle: null, showTitle: false, scrolled: undefined, wide: false, back: true, fallback: undefined, exit: null, compactBack: false },
+  { title: null, subtitle: null, showTitle: false, scrolled: undefined, wide: false, back: true, fallback: undefined, exit: null, compactBack: false, titleMenu: null },
 )
+
+const onTitle = (e: MouseEvent) => (props.titleMenu ? props.titleMenu.open(e) : scrollTop())
 
 const scrollTop = () => {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -50,23 +57,27 @@ const scrollTop = () => {
       <slot name="leading" />
       <!-- Or the page's own middle, instead of the small title (Add a competition's progress). -->
       <slot name="middle">
-      <button
-        type="button"
-        :class="[
-          'min-w-0 flex-1 text-left transition-[opacity,translate] duration-(--dur-base) ease-standard',
-          showTitle && title ? 'opacity-100' : 'pointer-events-none -translate-x-3 opacity-0',
-        ]"
-        :tabindex="showTitle && title ? 0 : -1"
-        :aria-hidden="showTitle && title ? undefined : 'true'"
-        @click="scrollTop"
-      >
-        <span
-          :class="['block truncate font-semibold', subtitle ? 'text-callout leading-tight' : 'text-[1.0625rem]']"
+      <div class="flex min-w-0 flex-1">
+        <button
+          type="button"
+          :class="[
+            'min-w-0 text-left transition-[opacity,translate] duration-(--dur-base) ease-standard',
+            titleMenu ? 'press hover:bg-accent -my-1 -ml-2 rounded-xl py-1 pr-1.5 pl-2' : 'flex-1',
+            showTitle && title ? 'opacity-100' : 'pointer-events-none -translate-x-3 opacity-0',
+          ]"
+          :tabindex="showTitle && title ? 0 : -1"
+          :aria-hidden="showTitle && title ? undefined : 'true'"
+          :aria-haspopup="titleMenu ? 'dialog' : undefined"
+          :aria-label="titleMenu ? titleMenu.label : undefined"
+          @click="onTitle"
         >
-          {{ title }}
-        </span>
-        <span v-if="subtitle" class="text-muted-foreground block truncate text-xs font-medium">{{ subtitle }}</span>
-      </button>
+          <span :class="['flex min-w-0 items-center gap-1 font-semibold', subtitle ? 'text-callout leading-tight' : 'text-[1.0625rem]']">
+            <span class="truncate">{{ title }}</span>
+            <ChevronDown v-if="titleMenu" class="text-muted-foreground size-4 shrink-0" stroke-width="2.4" aria-hidden="true" />
+          </span>
+          <span v-if="subtitle" class="text-muted-foreground block truncate text-xs font-medium">{{ subtitle }}</span>
+        </button>
+      </div>
       </slot>
       <div class="flex shrink-0 items-center gap-1.5">
         <slot name="actions" />

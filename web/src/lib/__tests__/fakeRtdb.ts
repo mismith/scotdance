@@ -149,6 +149,12 @@ export class FakeRtdb {
 
   /** Apply `{ path: value }` writes together, and queue the trigger events they cause. */
   write(updates: Record<string, Json>) {
+    // As the SDK does: one update can't name a path and one inside it.
+    const paths = Object.keys(updates).map((p) => parts(p).join('/'))
+    for (const a of paths) {
+      const inside = paths.find((b) => b !== a && b.startsWith(`${a}/`))
+      if (inside !== undefined) throw new Error(`update: ${a} is an ancestor of ${inside}`)
+    }
     const before = this.data
     let next = this.data
     for (const [path, value] of Object.entries(updates)) next = setIn(next, parts(path), clone(value))

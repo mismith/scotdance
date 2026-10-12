@@ -30,6 +30,8 @@ import { getOrdinalSuffix } from '@/lib/results'
 import { settle, settleDelay } from '@/lib/settle'
 import { platformLabel } from '@/lib/schedule'
 import type { Competition } from '@/types/competition'
+import { useCompetitionLinks } from '@/composables/useCompetitionLinks'
+import { orderLinked, railRows } from '@/lib/linked'
 
 usePageTitle(['Home'])
 
@@ -180,6 +182,7 @@ const context = computed(() => {
 // follow, soonest first. One you manage is already under Your competitions
 // (where it opens Manage), so it isn't listed twice.
 const { competitions: recentCompetitions, loading: competitionsLoading } = useCompetitions(ref(false))
+const { linkOf, othersLine } = useCompetitionLinks()
 const comingUp = computed(() => {
   const map = new Map<string, { id: string; competition: Competition; dancers: Map<string, string>; followed: boolean }>()
   if (!showingRecent.value) {
@@ -203,10 +206,16 @@ const comingUp = computed(() => {
     map.set(comp.id, e)
   }
   const managed = new Set(yours.value.map((c) => c.id))
-  return [...map.values()]
+  const entries = [...map.values()]
     .filter((e) => !managed.has(e.id))
-    .sort((a, b) => parseDate(a.competition.date ?? 0).getTime() - parseDate(b.competition.date ?? 0).getTime())
-    .slice(0, 4)
+    .map((e) => ({ ...e, date: e.competition.date, name: e.competition.name }))
+  // Linked ones together, on their rail; one without the rest names them.
+  const at = (e: { date?: number | string }) => parseDate(e.date ?? 0).getTime()
+  return railRows(orderLinked(entries, linkOf, { at }), 4).map(({ item, rail, alone }) => ({
+    ...item,
+    rail,
+    note: alone ? othersLine({ id: item.id, date: item.date, name: item.name }) : null,
+  }))
 })
 
 // A competition that started in the last fortnight may still be on.
@@ -220,7 +229,13 @@ const dayNote = (c: Competition & { id: string }) => {
 // again what's under Your competitions).
 const nextAnywhere = computed(() => {
   const managed = new Set(yours.value.map((c) => c.id))
-  return recentCompetitions.value.filter((c) => phaseOf(c) !== 'after' && !managed.has(c.id)).slice(0, 3)
+  const next = recentCompetitions.value.filter((c) => phaseOf(c) !== 'after' && !managed.has(c.id))
+  const at = (c: { date?: number | string }) => parseDate(c.date ?? 0).getTime()
+  return railRows(orderLinked(next, linkOf, { at }), 3).map(({ item, rail, alone }) => ({
+    ...item,
+    rail,
+    note: dayNote(item) ?? (alone ? othersLine({ id: item.id, date: item.date, name: item.name }) : null),
+  }))
 })
 
 // With nothing personal to show, the latest finished competitions keep Home
@@ -528,6 +543,8 @@ const { freshKey: liveFresh } = useLiveAlertState()
                 :to="{ name: 'competition.info', params: { competitionId: c.id } }"
                 :dancers="[...c.dancers].map(([id, name]) => ({ id, name }))"
                 :followed="c.followed"
+                :rail="c.rail"
+                :note="c.note"
               />
             </template>
             <template v-else>
@@ -538,7 +555,8 @@ const { freshKey: liveFresh } = useLiveAlertState()
                 :to="{ name: 'competition.info', params: { competitionId: c.id } }"
                 :followed="favorites.isFavorite('competitions', c.id)"
                 :today="phaseOf(c) === 'today'"
-                :note="dayNote(c)"
+                :rail="c.rail"
+                :note="c.note"
               />
             </template>
           </ul>
