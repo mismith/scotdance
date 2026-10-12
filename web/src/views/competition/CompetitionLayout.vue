@@ -162,7 +162,7 @@ usePageTitle(() => [
           :to="{ name: 'manage', params: { competitionId } }"
           aria-label="Manage this competition"
           title="Manage"
-          class="press hover:bg-accent text-primary flex size-9 items-center justify-center rounded-full"
+          class="press hover:bg-accent flex size-9 items-center justify-center rounded-full"
         >
           <span class="relative flex"><Pencil class="size-5" /><AdminMark ring="background" /></span>
         </RouterLink>

@@ -37,7 +37,7 @@ async function share() {
 <template>
   <button
     type="button"
-    class="press text-muted-foreground hover:bg-accent relative flex size-9 items-center justify-center rounded-full"
+    class="press hover:bg-accent relative flex size-9 items-center justify-center rounded-full"
     :aria-label="copied ? 'Link copied' : 'Share this page'"
     @click="share"
   >

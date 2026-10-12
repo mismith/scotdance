@@ -79,7 +79,8 @@ const scrollTop = () => {
         </button>
       </div>
       </slot>
-      <div class="flex shrink-0 items-center gap-1.5">
+      <!-- Blue, like Back: an action in grey or ink reads as switched off. -->
+      <div class="text-primary flex shrink-0 items-center gap-1.5">
         <slot name="actions" />
         <!-- On wide screens your account is at the foot of the sidebar. -->
         <div class="flex lg:hidden"><AccountButton /></div>

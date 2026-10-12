@@ -289,7 +289,7 @@ A person's or place's page (dancer, judge, piper, venue) opens centred, as a com
 
 ### Navigation
 - **Tab bar:** a floating glass capsule at the bottom on phones (Home, Competitions, Search, More); inside a competition it swaps to that competition's tabs with a round "leave" button beside it. The current tab sits on a quiet pill.
-- **App bar:** a back button that names where it goes, the title once the page's own title scrolls under, and up to two icon actions (36px in chrome).
+- **App bar:** a back button that names where it goes, the title once the page's own title scrolls under, and up to two icon actions (36px in chrome), in blue like Back: grey reads as switched off.
 - **Sidebar (64rem+):** the same destinations in a list, the current one on Blue Paper.
 
 ### Date Tile (signature)
