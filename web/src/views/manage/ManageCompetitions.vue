@@ -137,8 +137,8 @@ async function create() {
           <Button v-if="me.isAdmin" variant="tonal" :disabled="!canEdit" @click="creating.show($event)">
             <Plus /> New competition
           </Button>
-          <Button v-else variant="tonal" :to="{ name: 'competitions.submit' }">
-            <Plus /> Submit a competition
+          <Button v-else variant="tonal" :to="{ name: 'competitions.add' }">
+            <Plus /> Add a competition
           </Button>
           <Button v-if="!me.isAdmin && mine.length && !myOrgs.length" :disabled="!canEdit" @click="startingOrg.show($event)">
             <Landmark /> Start an organisation

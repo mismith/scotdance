@@ -81,12 +81,17 @@ export async function resolvePlace(placeId: string): Promise<PickedRegion | null
 export const placesAvailable = !!GOOGLE_MAPS_API_KEY
 
 /** Venues and addresses, for the venue search in Manage › Details. */
-export async function fetchVenueSuggestions(input: string): Promise<PlaceSuggestion[]> {
+/** Places for a venue, within `regionCodes` (ISO countries, e.g. ['CA']) when given. */
+export async function fetchVenueSuggestions(input: string, regionCodes?: string[]): Promise<PlaceSuggestion[]> {
   const trimmed = input.trim()
   if (!trimmed || !placesAvailable) return []
   const { AutocompleteSuggestion, AutocompleteSessionToken } = await getPlacesLib()
   if (!sessionToken) sessionToken = new AutocompleteSessionToken()
-  const { suggestions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions({ input: trimmed, sessionToken })
+  const { suggestions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
+    input: trimmed,
+    sessionToken,
+    ...(regionCodes?.length && { includedRegionCodes: regionCodes.map((c) => c.toLowerCase()) }),
+  })
   return suggestions
     .map((s) => s.placePrediction)
     .filter((p): p is NonNullable<typeof p> => Boolean(p))
@@ -109,6 +114,9 @@ export interface VenueFields {
 }
 
 /** A picked venue as competition fields (the same shape the old admin wrote). */
+/** Where a picked venue is, beyond its name and address: what puts it on the map. */
+export type VenuePlace = Pick<VenueFields, 'lat' | 'lng' | 'country' | 'region' | 'locality'>
+
 export async function resolveVenue(placeId: string): Promise<VenueFields> {
   const { Place } = await getPlacesLib()
   const place = new Place({ id: placeId })

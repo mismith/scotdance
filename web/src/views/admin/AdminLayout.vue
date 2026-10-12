@@ -17,8 +17,8 @@ import { usePageTitle } from '@/composables/usePageTitle'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 
-// System admin: approving submitted competitions, people and their access,
-// organisations, and maintenance tools. Only for system admins.
+// System admin: approving submitted competitions (the daily one), then the
+// organisations and people, then maintenance tools. Only for system admins.
 
 const route = useRoute()
 const router = useRouter()
@@ -35,9 +35,9 @@ interface AdminSection {
 }
 const SECTIONS: AdminSection[] = [
   { route: 'admin.submissions', title: 'Submissions', blurb: 'Review and approve new competitions', icon: Inbox },
+  { route: 'admin.organisations', title: 'Organisations', blurb: 'Every organisation, and which competitions they run', icon: Landmark },
   { route: 'admin.users', title: 'Users', blurb: 'Accounts and who can manage what', icon: UserCog },
   { route: 'admin.tools', title: 'Tools', blurb: 'App versions, search and profile rebuilds', icon: Wrench },
-  { route: 'admin.organisations', title: 'Organisations', blurb: 'Every organisation, and which competitions they run', icon: Landmark },
 ]
 
 const authReady = ref(false)

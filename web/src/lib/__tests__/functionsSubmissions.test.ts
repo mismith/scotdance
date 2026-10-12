@@ -228,10 +228,10 @@ describe('a new submission', () => {
   })
   afterEach(() => vi.useRealTimers())
 
-  it('has its registration number tidied as it arrives', async () => {
+  it('keeps its registration number as sent: the app showed it tidied, so nothing here changes it', async () => {
     const { submit, read } = arrival()
     await submit({ sobhd: ' C-MB-22-143 ' })
-    expect(read().competition.sobhd).toBe('C-MB-CO-22-143')
+    expect(read().competition.sobhd).toBe(' C-MB-22-143 ')
     expect(read().submittedBy).toBe('organiser-1')
   })
 

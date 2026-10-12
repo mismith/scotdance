@@ -64,7 +64,7 @@ test('an organiser manages their own competition, and only that', async ({ page 
     await page.goto('/manage')
     await expect(page.getByRole('main').getByRole('link', { name: new RegExp(mine.name) })).toBeVisible()
     await expect(page.getByRole('main').getByText(other.name)).toHaveCount(0)
-    await expect(page.getByRole('main').getByRole('link', { name: 'Submit a competition' })).toBeVisible()
+    await expect(page.getByRole('main').getByRole('link', { name: 'Add a competition' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'System admin' })).toHaveCount(0)
 
     // The pencil into Manage shows on their competition only.
@@ -184,10 +184,10 @@ test('Manage and System admin sit together, last in More (the sidebar on wide sc
   }
 
   if (hasSidebar(page)) {
-    // No More on wide screens: they sit together in the sidebar, after Submit (as in More).
+    // No More on wide screens: they sit together in the sidebar, after Add a competition (as in More).
     const names = (await appNav(page).getByRole('link').allTextContents()).map((n) => n.trim())
-    const at = names.indexOf('Submit a competition')
-    expect(names.slice(at, at + 3)).toEqual(['Submit a competition', 'Manage', 'System admin'])
+    const at = names.indexOf('Add a competition')
+    expect(names.slice(at, at + 3)).toEqual(['Add a competition', 'Manage', 'System admin'])
   } else {
     const { menu, role } = await moreItems(page)
     const more = menu.getByRole(role)

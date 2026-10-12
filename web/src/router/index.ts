@@ -201,18 +201,21 @@ const routes: RouteRecordRaw[] = [
     meta: { ownsBottomNav: true, admin: true, title: 'System admin' },
     children: [
       { path: 'submissions/:submissionId?', name: 'admin.submissions', component: () => import('@/views/admin/Submissions.vue') },
-      { path: 'users/:userId?', name: 'admin.users', component: () => import('@/views/admin/Users.vue') },
       { path: 'organisations/:organisationId?', name: 'admin.organisations', component: () => import('@/views/admin/Organisations.vue') },
+      { path: 'users/:userId?', name: 'admin.users', component: () => import('@/views/admin/Users.vue') },
       { path: 'tools', name: 'admin.tools', component: () => import('@/views/admin/Tools.vue') },
       // The old admin's pages.
       { path: 'info/:rest(.*)*', redirect: { name: 'admin.tools', params: {} } },
     ],
   },
+  // The old address, in emails and links from before it was Add.
+  { path: '/competitions/submit', redirect: { name: 'competitions.add' } },
   {
-    path: '/competitions/submit',
-    name: 'competitions.submit',
+    path: '/competitions/add',
+    name: 'competitions.add',
     component: () => import('@/views/competitions/Submit.vue'),
-    meta: { title: 'Submit a competition' },
+    // One question at a time, with its own button at the foot instead of the tab bar.
+    meta: { title: 'Add a competition', ownsBottomNav: true },
   },
   {
     path: '/competitions/:competitionId/invites/:inviteId',

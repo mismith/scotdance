@@ -42,6 +42,16 @@ test('the basics: name, date, number, description; required ones say so', async 
   await page.locator('input[type=date]').fill('2026-11-14')
   await expectDb(info('date'), '2026-11-14')
 
+  // Typed loosely, it says how it'll be saved, and is saved that way.
+  await field(page, 'Registration number').fill('c ab co 26 1234')
+  await expect(page.getByText('Registered with ScotDance Canada: C-AB-CO-26-1234')).toBeVisible()
+  await field(page, 'Registration number').press('Enter')
+  await expectDb(info('sobhd'), 'C-AB-CO-26-1234')
+  // One it can't read is saved as typed, and says so.
+  await field(page, 'Registration number').fill('Pending with SDC')
+  await expect(page.getByText('Not a format ScotDance.app knows, so it’s saved as typed.')).toBeVisible()
+  await field(page, 'Registration number').press('Enter')
+  await expectDb(info('sobhd'), 'Pending with SDC')
   await field(page, 'Registration number').fill('C-AB-CO-26-1234')
   await field(page, 'Registration number').press('Enter')
   await expectDb(info('sobhd'), 'C-AB-CO-26-1234')

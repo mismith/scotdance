@@ -71,6 +71,13 @@ test('Submissions: tidy one up, reject it quietly (and undo that), then delete i
     await location.press('Enter')
     await expect.poll(() => dbGet(`competitions:submissions/${id}/competition/location`)).toBe('Calgary, AB')
 
+    // A registration number says how it'll be saved, as in Manage, and is saved that way.
+    const number = page.getByRole('textbox', { name: 'Registration number' })
+    await number.fill('c ab co 27 1234')
+    await expect(page.getByText('Registered with ScotDance Canada: C-AB-CO-27-1234')).toBeVisible()
+    await number.press('Enter')
+    await expect.poll(() => dbGet(`competitions:submissions/${id}/competition/sobhd`)).toBe('C-AB-CO-27-1234')
+
     // Waiting, it's Approve or Reject. As spam, there's no reply to write.
     await expect(page.getByRole('button', { name: 'Delete' })).toHaveCount(0)
     await page.getByRole('button', { name: 'Reject', exact: true }).click()

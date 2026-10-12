@@ -28,7 +28,7 @@ const heading = computed(() => {
   const r = auth.loginReason
   if (r?.reason === 'follow' && r.name) return `Sign in to follow ${r.name.split(' ')[0]}`
   if (r?.reason === 'alerts') return 'Sign in to get alerts'
-  if (r?.reason === 'submit') return 'Sign in to submit a competition'
+  if (r?.reason === 'submit') return 'Sign in to add a competition'
   // The Follow star on judges, competitions and the like.
   if (r?.reason === 'favorite') return r.name ? `Sign in to follow ${r.name}` : 'Sign in to follow this'
   return 'Sign in to ScotDance.app'

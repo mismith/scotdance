@@ -197,19 +197,26 @@ nothing to look at, it's approved there and then, and admin@ gets
 `competition-submission-auto-approved` with a link to manage it. There's no
 undo: anything wrong is fixed in Manage. Otherwise it waits, and says why
 (Needs a look, in System admin › Submissions). Registration numbers are tidied
-into each association's format as they're saved
-(`competitionRegistrationChanged`, and in the submission itself).
+into each association's format by the app as they're typed, with what they'll
+be saved as shown beside them (ADR 0010). The server only reads them: one it
+can't read means a look.
 
 1. Merge to `next` first: the web (Needs a look) deploys and the new and
    changed templates are pushed, so nothing sends a template Postmark
    doesn't have yet.
 2. `firebase deploy --only database` (the index on `competition/date`; a
    submitter can't say it's approved or needs no review).
-3. `firebase deploy --only functions:competitionSubmissionCreated,functions:competitionSubmissionUpdated,functions:competitionRegistrationChanged`.
+3. `firebase deploy --only functions:competitionSubmissionCreated,functions:competitionSubmissionUpdated`.
 4. The numbers already there were tidied once, on 2026-10-06 (89 of 739,
    after a before-and-after was checked; backup and restore file in
-   `~/Sites/@mismith/scotdance-backups/2026-10-06-registration-numbers`). The
-   trigger keeps them tidy after that.
+   `~/Sites/@mismith/scotdance-backups/2026-10-06-registration-numbers`).
+   - The `competitionRegistrationChanged` trigger that kept them tidy after
+     that is gone from the code: it changed numbers without showing anyone.
+   - Once ADR 0010 is on `next`, delete it with
+     `firebase functions:delete competitionRegistrationChanged`. A plain
+     functions deploy offers to as well.
+   - Until v3 goes, numbers typed in v3 stay as typed. They're tidied, with
+     the preview, the next time someone edits them in Manage.
 5. Submit a tidy competition yourself: it should be approved within seconds,
    with both emails.
 

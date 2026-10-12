@@ -28,7 +28,7 @@ const ROUTES = [
   '/about#faq-privacy',
   '/policies',
   '/no/such/page',
-  '/competitions/submit',
+  '/competitions/add',
   '/profile',
   '/competitions/-L9Sc9TQWQclq_7oA3ij/info',
   '/competitions/-L9Sc9TQWQclq_7oA3ij/dancers',

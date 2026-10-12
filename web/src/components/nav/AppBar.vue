@@ -10,7 +10,8 @@ import TopBackButton from '@/components/nav/TopBackButton.vue'
 // Back button (when there's somewhere to go back to), or whatever the page
 // puts in the `leading` slot (Home: the ScotDance.app name). Middle: a small title
 // (and optional subtitle) that appears once the page's own big title has
-// scrolled away, or always when `showTitle` says so. Right: the page's own
+// scrolled away, or always when `showTitle` says so (or the page's own
+// `middle`, instead). Right: the page's own
 // actions (the `actions` slot), then your account, on every page.
 // The small title comes and goes the same way everywhere: it slides out from
 // behind the back button (where there is one) as it fades in. Through a page
@@ -54,6 +55,8 @@ const scrollTop = () => {
     <div :class="['@container mx-auto flex h-14 items-center gap-2 px-3', wide ? 'max-w-none' : 'appbar-row']">
       <TopBackButton v-if="back" :fallback="fallback" :exit="exit" :compact="compactBack" />
       <slot name="leading" />
+      <!-- Or the page's own middle, instead of the small title (Add a competition's progress). -->
+      <slot name="middle">
       <div class="flex min-w-0 flex-1">
         <button
           type="button"
@@ -75,6 +78,7 @@ const scrollTop = () => {
           <span v-if="subtitle" class="text-muted-foreground block truncate text-xs font-medium">{{ subtitle }}</span>
         </button>
       </div>
+      </slot>
       <div class="flex shrink-0 items-center gap-1.5">
         <slot name="actions" />
         <!-- On wide screens your account is at the foot of the sidebar. -->

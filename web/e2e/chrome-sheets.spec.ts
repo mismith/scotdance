@@ -117,7 +117,7 @@ test('on wide screens the More menu’s items are links in the sidebar, with no 
     ['Judges', /\/judges$/],
     ['Pipers', /\/pipers$/],
     ['Venues', /\/venues$/],
-    ['Submit a competition', /\/competitions\/submit$/],
+    ['Add a competition', /\/competitions\/add$/],
     ['About ScotDance.app', /\/about$/],
   ] as const) {
     await appNav(page).getByRole('link', { name, exact: true }).click()
@@ -149,7 +149,7 @@ test.describe('with large text (150%)', () => {
     expect(box.y).toBeGreaterThanOrEqual(0)
     expect(box.x).toBeGreaterThanOrEqual(0)
     expect(box.x + box.width).toBeLessThanOrEqual(viewport.width)
-    for (const name of ['Dancers', 'Judges', 'Submit a competition', 'About ScotDance.app']) {
+    for (const name of ['Dancers', 'Judges', 'Add a competition', 'About ScotDance.app']) {
       const item = menu.getByRole('button', { name, exact: true })
       await item.scrollIntoViewIfNeeded()
       await expect(item).toBeInViewport()
@@ -167,7 +167,7 @@ test.describe('with large text (150%)', () => {
     expect(box.x).toBeGreaterThanOrEqual(0)
     expect(box.x + box.width).toBeLessThanOrEqual(viewport.width)
     expect(box.y + box.height).toBeLessThanOrEqual(viewport.height)
-    for (const name of ['Dancers', 'Judges', 'Submit a competition', 'About ScotDance.app']) {
+    for (const name of ['Dancers', 'Judges', 'Add a competition', 'About ScotDance.app']) {
       const item = appNav(page).getByRole('link', { name, exact: true })
       await item.scrollIntoViewIfNeeded()
       await expect(item).toBeInViewport()

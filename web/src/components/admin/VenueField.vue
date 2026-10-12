@@ -18,7 +18,15 @@ import {
 // Escape puts it back); without, it's a plain v-model (as in Submit).
 
 const model = defineModel<string | null | undefined>({ default: '' })
-const props = defineProps<{ save?: (value: string) => unknown; disabled?: boolean }>()
+const props = defineProps<{
+  save?: (value: string) => unknown
+  disabled?: boolean
+  /** Only places in these countries (ISO, e.g. ['CA']). */
+  regionCodes?: string[]
+  placeholder?: string
+  /** Under the box; null for none (where the page says it already). */
+  hint?: string | null
+}>()
 const emit = defineEmits<{ pick: [fields: VenueFields] }>()
 
 const id = useId()
@@ -51,7 +59,7 @@ async function search(q: string) {
   }
   loading.value = true
   try {
-    const found = await fetchVenueSuggestions(q)
+    const found = await fetchVenueSuggestions(q, props.regionCodes)
     if (mine !== latest) return
     results.value = found
     searchError.value = null
@@ -100,6 +108,9 @@ async function pick(s: PlaceSuggestion) {
   }
 }
 
+// Whether a picked suggestion is still being looked up.
+defineExpose({ loading })
+
 function onKeydown(e: KeyboardEvent) {
   if (results.value.length && e.key === 'ArrowDown') {
     e.preventDefault()
@@ -132,7 +143,7 @@ function onBlur() {
   <AdminField
     :label="LABEL"
     :for="id"
-    hint="Choose it from the suggestions to fill in the address and town, and put it on the map."
+    :hint="hint === undefined ? 'Choose it from the suggestions to fill in the address and town, and put it on the map.' : (hint ?? undefined)"
     :error="error"
   >
     <template #default="{ describedby }">
@@ -150,7 +161,7 @@ function onBlur() {
           :aria-invalid="!!saved?.error.value || undefined"
           :disabled="saved?.locked.value"
           autocomplete="off"
-          placeholder="e.g. Telus Convention Centre"
+          :placeholder="placeholder ?? 'e.g. Telus Convention Centre'"
           :class="[
             'h-12 w-full rounded-xl pr-10 pl-3 text-base',
             saved?.locked.value

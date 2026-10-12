@@ -1,7 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { getOnRegistrationWritten, tidyRegistration, yearOf } from '../../../../functions/src/registration'
-import { FakeRtdb, snap } from './fakeRtdb'
+import { tidyRegistration, yearOf } from '../../../../functions/src/registration'
 import { registrations } from '@/lib/registration'
 
 // Registration numbers (functions/src/registration.ts), tidied into each
@@ -125,30 +124,6 @@ describe('anything else', () => {
     expect(yearOf('2026-05-03')).toBe(2026)
     expect(yearOf('soon')).toBeNull()
     expect(yearOf(undefined)).toBeNull()
-  })
-})
-
-describe('the trigger on a competition’s number', () => {
-  it('writes it back tidied, once, and leaves a tidy one be', async () => {
-    const rtdb = new FakeRtdb()
-    rtdb.write({ 'competitions/c1': { name: 'Thistle Championships', date: '2024-03-16', sobhd: 'SQC24/02  C05/24' } })
-    const onWritten = getOnRegistrationWritten(rtdb.ref())
-    const deliver = () => onWritten({ after: snap(rtdb.read('competitions/c1/sobhd')) }, { params: { competitionId: 'c1' } })
-    await deliver()
-    expect(rtdb.read('competitions/c1/sobhd')).toBe('SQC 2024/02, C05/2024')
-    const writes = rtdb.writes
-    await deliver()
-    expect(rtdb.writes).toBe(writes)
-  })
-
-  it('clears a placeholder, and leaves a removed number alone', async () => {
-    const rtdb = new FakeRtdb()
-    rtdb.write({ 'competitions/c1': { date: '2025-11-16', sobhd: 'TBA' } })
-    const onWritten = getOnRegistrationWritten(rtdb.ref())
-    await onWritten({ after: snap('TBA') }, { params: { competitionId: 'c1' } })
-    expect(rtdb.read('competitions/c1/sobhd')).toBeNull()
-    await onWritten({ after: snap(null) }, { params: { competitionId: 'c1' } })
-    expect(rtdb.read('competitions/c1')).toEqual({ date: '2025-11-16' })
   })
 })
 

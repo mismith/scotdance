@@ -20,6 +20,7 @@ import { confirm, toast } from '@/lib/admin/feedback'
 import { emails, reasonLabel, replyStatus, type RejectReason, type Rejection } from '@/lib/admin/submissions'
 import { canEdit, friendlyError, write } from '@/lib/admin/write'
 import { formatLongDate, formatRelative, parseDate } from '@/lib/format'
+import { registrationNote, registrationToSave } from '@/lib/registration'
 import { placesAvailable, type VenueFields } from '@/lib/maps'
 import { grow, shrink } from '@/lib/admin/motion'
 import { useMorph } from '@/lib/morph'
@@ -216,6 +217,11 @@ const dateInput = (v?: string | number) => {
 }
 const at = (s: Submission, key: string) => `competitions:submissions/${s.id}/${key}`
 const save = (s: Submission, key: string) => (v: string | null) => write({ [at(s, `competition/${key}`)]: v })
+// The registration number, as in Manage: how it'll be saved shows as it's
+// typed, and that's what's saved.
+const yearOf = (s: Submission) => (s.competition?.date ? parseDate(s.competition.date).getFullYear() || null : null)
+const fieldNote = (s: Submission, key: string) => (key === 'sobhd' ? (draft: string) => registrationNote(draft, yearOf(s)) : undefined)
+const fieldSave = (s: Submission, key: string) => (key === 'sobhd' ? (v: string) => save(s, key)(registrationToSave(v, yearOf(s))) : save(s, key))
 // Picking the venue puts it on the map (and in "near me") once approved.
 async function pickVenue(s: Submission, { venue, address, location, ...place }: VenueFields) {
   const fields = { ...(venue && { venue }), ...(address && { address }), ...(location && { location }), ...place }
@@ -617,7 +623,8 @@ async function remove(s: Submission) {
               :type="f.type ?? 'text'"
               :multiline="f.multiline"
               :disabled="!!current.approved"
-              :save="save(current, f.key)"
+              :note="fieldNote(current, f.key)"
+              :save="fieldSave(current, f.key)"
             />
           </template>
           <p v-if="onMap(current)" class="text-muted-foreground text-sm">On the map.</p>

@@ -8,7 +8,7 @@ Thanks for adding it. It’s yours to set up now, and until you list it, only it
     Unlisted
 
 Where to start:
-  1. Details: a logo or photo, and a link to registration
+  1. Details: a description, a logo or photo, and a link to registration
   2. Staff: its judges, pipers and sponsors
   3. List it, so it shows in the competitions list
   4. Then the rest: dances, age groups, dancers and the schedule
@@ -18,4 +18,4 @@ Set it up:
 
 Questions? Just reply to this email.
 
-You’re getting this because this address was used to submit {{ competition.name }} to {{ app.name }}.
+You’re getting this because this address was used to add {{ competition.name }} to {{ app.name }}.

@@ -34,6 +34,7 @@ import { htmlToText } from '@/lib/admin/richText'
 import { uploadLinkFile } from '@/lib/admin/upload'
 import { grow, shrink } from '@/lib/admin/motion'
 import { formatDateTime, formatExternalURL, formatHumanURL, parseDate } from '@/lib/format'
+import { registrationNote, registrationToSave } from '@/lib/registration'
 import { placesAvailable, type VenueFields } from '@/lib/maps'
 
 const m = useManagedCompetition()
@@ -67,6 +68,12 @@ const FIELD_NAMES: Record<string, string> = {
   registrationEnd: 'Registration closes',
 }
 const save = (key: string) => (v: string | null) => m.writeInfo({ [key]: v }, FIELD_NAMES[key] ?? key)
+
+// The registration number is saved as shown under it while it's typed: in its
+// association's format, or as typed when it isn't one ScotDance.app knows.
+const year = () => (c.value.date ? parseDate(c.value.date).getFullYear() || null : null)
+const noteRegistration = (draft: string) => registrationNote(draft, year())
+const saveRegistration = (v: string) => save('sobhd')(registrationToSave(v, year()))
 
 // --- Linked competitions (ADR 0007): what this one shares from the main one
 // is changed there, so here it's shown as it is, as plain text.
@@ -303,7 +310,8 @@ async function deleteCompetition() {
             label="Registration number"
             placeholder="e.g. C-AB-CO-26-1234"
             hint="If it’s registered with an association, like the RSOBHD. For several, separate them with commas."
-            :save="save('sobhd')"
+            :note="noteRegistration"
+            :save="saveRegistration"
           />
         </div>
         <template v-if="!shared('about')">

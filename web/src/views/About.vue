@@ -125,10 +125,10 @@ watch(() => route.hash, applyHash)
             Build the schedule, import your dancers and post results as they’re announced. It saves hours of work, and keeps every result on record for later. Free, for any competition.
           </p>
           <RouterLink
-            :to="{ name: 'competitions.submit' }"
+            :to="{ name: 'competitions.add' }"
             class="bg-blue-paper text-primary press inline-flex h-11 items-center gap-2 rounded-full px-4 text-base font-semibold"
           >
-            <SquarePlus class="size-5" /> Submit a competition
+            <SquarePlus class="size-5" /> Add a competition
           </RouterLink>
         </div>
       </section>

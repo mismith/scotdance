@@ -249,7 +249,7 @@ const sections = computed<Section[]>(() => {
           <span class="font-semibold">Running a competition?</span> Add it to ScotDance.app. It’s free, and saves hours of
           work.
         </p>
-        <Button variant="tonal" :to="{ name: 'competitions.submit' }">Submit</Button>
+        <Button variant="tonal" :to="{ name: 'competitions.add' }">Add it</Button>
       </section>
     </main>
   </div>
