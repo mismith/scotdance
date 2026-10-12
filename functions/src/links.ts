@@ -258,7 +258,7 @@ async function planPart(db: Db, from: string, to: string, part: Part, records: M
   const [toStaff, groups, schedule, points] = toData;
   const plan = planStaff(to, { from: fromStaff, to: toStaff, groups, schedule, points });
   const { updates, blocked, ...staff } = plan;
-  const fromName = (await record(from)).name || 'the primary';
+  const fromName = (await record(from)).name || 'the main one';
   return {
     part,
     updates,
@@ -361,7 +361,7 @@ export async function pairFor(db: Db, competitionId: string, withId: string): Pr
   const link = b ?? a;
   const joining = b || !a ? competitionId : withId;
   const primary = link ? link.primary : withId;
-  if (!primary) throw new HttpsError('failed-precondition', 'Choose which of those is the primary first.');
+  if (!primary) throw new HttpsError('failed-precondition', 'Make one of those the main one first.');
   if ((link?.members.length ?? 1) + 1 > MAX_LINKED) {
     throw new HttpsError('failed-precondition', `A link has at most ${MAX_LINKED} competitions.`);
   }
@@ -448,7 +448,7 @@ export function getOnLink(db: Db) {
     if (action === 'unlink') {
       if (!link) return { linkId: null };
       if (!manages(competitionId) && !(link.primary && manages(link.primary))) {
-        throw new HttpsError('permission-denied', 'You need to manage it, or the primary, to take it out.');
+        throw new HttpsError('permission-denied', 'You need to manage it, or the main one, to take it out.');
       }
       await takeOut(db, competitionId);
       return { linkId: link.linkId };
@@ -458,7 +458,7 @@ export function getOnLink(db: Db) {
 
     if (action === 'primary') {
       if (link.primary === competitionId) return { linkId: link.linkId };
-      mustManage(link.members, 'You need to manage every linked competition to change the primary.');
+      mustManage(link.members, 'You need to manage every linked competition to change the main one.');
       // It stops taking anything; the old primary takes what it took.
       const theirs = await flagsOf(db, competitionId);
       const flags = new Map<string, Part[]>();
@@ -482,8 +482,8 @@ export function getOnLink(db: Db) {
 
     if (action === 'sync') {
       const { part } = data;
-      if (!isPart(part)) throw new HttpsError('invalid-argument', 'Sync which part?');
-      if (!link.primary) throw new HttpsError('failed-precondition', 'Choose a primary first.');
+      if (!isPart(part)) throw new HttpsError('invalid-argument', 'Share which part?');
+      if (!link.primary) throw new HttpsError('failed-precondition', 'Make one of them the main one first.');
       const on = data?.on === true;
       // On the primary, the switch is every other one's.
       const targets = link.primary === competitionId ? link.members.filter((id) => id !== competitionId) : [competitionId];
@@ -500,9 +500,9 @@ export function getOnLink(db: Db) {
     }
 
     if (action === 'syncNow') {
-      if (!link.primary) throw new HttpsError('failed-precondition', 'Choose a primary first.');
+      if (!link.primary) throw new HttpsError('failed-precondition', 'Make one of them the main one first.');
       const targets = link.primary === competitionId ? link.members.filter((id) => id !== competitionId) : [competitionId];
-      mustManage(targets, 'You need to manage every competition it would copy into.');
+      mustManage(targets, 'You need to manage every competition it shares with.');
       const planned = await plansFor(db, link.primary, await Promise.all(targets.map(async (id) => ({ competitionId: id, parts: await flagsOf(db, id) }))));
       const updates: Updates = {};
       applyOrRefuse(planned, updates);

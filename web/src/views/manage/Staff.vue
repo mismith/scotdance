@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { RefreshCw } from '@lucide/vue'
+import { Link2 } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import CollectionEditor from '@/components/admin/CollectionEditor.vue'
 import { useLinkSync, useLinkedSet } from '@/composables/useCompetitionLinks'
@@ -60,15 +60,14 @@ const spec: CollectionSpec<MStaff> = {
 
 const items = computed(() => m.staff.value)
 
-// Linked (ADR 0007): staff taken from the primary are copied from there, so
-// they're read-only here; one keeping its own is offered the primary's.
+// Linked (ADR 0007): staff shared from the main one are changed there, so
+// they're read-only here; one keeping its own is offered the main one's.
 const { takes } = useLinkSync()
 const linkedSet = useLinkedSet(m.competitionId)
-const primaryId = computed(() => linkedSet.primary.value)
-const primaryName = computed(() => linkedSet.members.value.find((c) => c.id === primaryId.value)?.name?.trim() || 'the primary')
-const othersCount = computed(() => (linkedSet.set.value?.ids.length ?? 1) - 1)
-const notPrimary = computed(() => !!primaryId.value && primaryId.value !== m.competitionId.value)
-const synced = computed(() => notPrimary.value && takes(m.competitionId.value, 'staff'))
+const mainId = computed(() => linkedSet.primary.value)
+const mainName = computed(() => linkedSet.members.value.find((c) => c.id === mainId.value)?.name?.trim() || 'the main one')
+const notMain = computed(() => !!mainId.value && mainId.value !== m.competitionId.value)
+const shared = computed(() => notMain.value && takes(m.competitionId.value, 'staff'))
 
 const busy = ref(false)
 async function setSyncing(on: boolean) {
@@ -81,15 +80,15 @@ async function setSyncing(on: boolean) {
       if (plan?.blocked) throw new Error(plan.blocked)
       if (plan?.replaces) {
         const ok = await confirm({
-          title: `Take ${primaryName.value}’s staff?`,
-          message: `${replacesSentence(m.competition.value?.name?.trim() || 'This one', plan, primaryName.value)} They stay in step with it from then on.`,
-          confirmLabel: 'Take its staff',
+          title: `Use ${mainName.value}’s staff?`,
+          message: `${replacesSentence(m.competition.value?.name?.trim() || 'This one', plan, mainName.value)} They stay in step with it from then on.`,
+          confirmLabel: 'Use its staff',
         })
         if (!ok) return
       }
     }
     await changeLink({ action: 'sync', competitionId: id, part: 'staff', on })
-    toast(on ? `Takes its staff from ${primaryName.value}` : 'Keeps its own staff now')
+    toast(on ? `Staff: shared from ${mainName.value}` : 'Staff: its own now')
   } catch (e) {
     toast(e instanceof Error && !('code' in e) ? e.message : friendlyError(e), { tone: 'error' })
   } finally {
@@ -99,27 +98,20 @@ async function setSyncing(on: boolean) {
 </script>
 
 <template>
-  <CollectionEditor :spec="spec" :items="items" :readonly="synced">
-    <template v-if="notPrimary" #notice>
-      <div role="note" class="bg-blue-paper m-4 flex gap-3 rounded-2xl p-4">
-        <RefreshCw class="text-primary mt-0.5 size-5 shrink-0" aria-hidden="true" />
-        <div class="min-w-0 flex-1 space-y-2">
-          <p v-if="synced" class="text-callout">
-            <span class="font-semibold">Synced from {{ primaryName }}.</span> Change staff there and it changes here too.
-            Who judges which platform is still this one’s own, in its Schedule.
-          </p>
-          <p v-else class="text-callout">
-            <span class="font-semibold">Linked with {{ othersCount }} {{ othersCount === 1 ? 'other' : 'others' }}.</span>
-            {{ primaryName }} is the primary.
-            {{ items.length ? `Taking its staff replaces these ${items.length}, and keeps them in step from then on.` : 'Take its staff to set this one up in one go.' }}
-          </p>
-          <div class="-ml-1 flex flex-wrap gap-2">
-            <template v-if="synced">
-              <Button size="sm" :to="{ name: 'manage.staff', params: { competitionId: primaryId } }">Open it</Button>
-              <Button variant="plain" size="sm" :disabled="!canEdit" :busy="busy" @click="setSyncing(false)">Stop syncing</Button>
-            </template>
-            <Button v-else variant="tonal" size="sm" class="bg-card!" :disabled="!canEdit" :busy="busy" @click="setSyncing(true)">Take its staff</Button>
-          </div>
+  <CollectionEditor :spec="spec" :items="items" :readonly="shared">
+    <template v-if="notMain" #notice>
+      <div role="note" class="bg-blue-paper m-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl p-4">
+        <Link2 class="text-primary size-5 shrink-0" aria-hidden="true" />
+        <p class="text-callout min-w-0 flex-1 basis-48">
+          <template v-if="shared">Shared from <span class="font-semibold">{{ mainName }}</span>. Who judges where stays in this one’s Schedule.</template>
+          <template v-else><span class="font-semibold">{{ mainName }}</span> is the main one. Use its staff, kept in step from then on.</template>
+        </p>
+        <div class="flex gap-2">
+          <template v-if="shared">
+            <Button size="sm" :to="{ name: 'manage.staff', params: { competitionId: mainId } }">Open it</Button>
+            <Button variant="plain" size="sm" :disabled="!canEdit" :busy="busy" @click="setSyncing(false)">Stop sharing</Button>
+          </template>
+          <Button v-else size="sm" :disabled="!canEdit" :busy="busy" @click="setSyncing(true)">Use its staff</Button>
         </div>
       </div>
     </template>

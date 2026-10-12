@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
-import { ChevronLeft, Link2 } from '@lucide/vue'
+import { ChevronDown, ChevronLeft, Link2 } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import Switch from '@/components/ui/Switch.vue'
 import CompetitionName from '@/components/CompetitionName.vue'
@@ -20,9 +20,10 @@ import type { useMorph } from '@/lib/morph'
 import { useMeStore } from '@/stores/me'
 
 // Linking a competition (ADR 0007 §7): pick one you manage (those nearest
-// these dates first; a system admin can find any), then see what it will
-// take from the primary, and what that replaces, before linking. Every part
-// starts on; switch off what it should keep of its own.
+// these dates first; a system admin can find any), then link. Linking never
+// replaces anything: the one joining shares everything from the main one
+// except what it already has of its own, which it keeps (said as tags).
+// "Choose what's shared" opens the switches, for anyone who wants otherwise.
 const props = defineProps<{
   morph: ReturnType<typeof useMorph>
   /** This one's set (itself among them), when it's linked. */
@@ -79,12 +80,16 @@ const parts = computed(() =>
     const plan = preview.value?.targets[0]?.parts.find((x) => x.part === p.id)
     return {
       ...p,
-      description: 'more' in p ? `${p.detail} ${p.more}` : p.detail,
       blocked: plan?.blocked ?? null,
+      /** It has its own already: kept, unless shared on purpose (then this says what goes). */
       replaces: plan?.replaces ? replacesSentence(nameOf(preview.value?.joining), plan, nameOf(preview.value?.primary)) : null,
     }
   }),
 )
+/** What the one joining keeps of its own, as things stand. */
+const kept = computed(() => parts.value.filter((p) => !chosen.has(p.id)))
+const replacing = computed(() => parts.value.filter((p) => p.replaces && chosen.has(p.id)))
+const choosing = ref(false)
 
 async function pick(c: CompetitionListItem) {
   picked.value = c
@@ -92,8 +97,10 @@ async function pick(c: CompetitionListItem) {
   loading.value = true
   try {
     preview.value = await previewLink({ action: 'link', competitionId: c.id, withId: here.value })
+    choosing.value = false
     chosen.clear()
-    for (const p of parts.value) if (!p.blocked) chosen.add(p.id)
+    // Shared: whatever it hasn't got of its own.
+    for (const p of parts.value) if (!p.blocked && !p.replaces) chosen.add(p.id)
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
     picked.value = null
@@ -145,7 +152,7 @@ watch(
       </div>
       <template v-else>
         <h2 class="text-title">Link a competition</h2>
-        <p class="text-muted-foreground text-sm">One you run on the days around this one, like the other half of a weekend.</p>
+        <p class="text-muted-foreground text-sm">One you run around the same days, like the other half of a weekend.</p>
       </template>
     </template>
 
@@ -178,21 +185,32 @@ watch(
       </ul>
     </template>
 
-    <!-- What it takes -->
+    <!-- What it shares -->
     <div v-else class="space-y-4 p-4 pt-1 pb-[calc(1.5rem+var(--safe-bottom))]">
-      <p v-if="loading" class="text-muted-foreground text-callout" aria-live="polite">Checking what it would copy…</p>
+      <p v-if="loading" class="text-muted-foreground text-callout" aria-live="polite">Checking what it has…</p>
       <template v-else-if="preview">
-        <p class="text-callout">
-          <template v-if="preview.joining === here">This one takes these from <strong>{{ nameOf(preview.primary) }}</strong>, the primary.</template>
-          <template v-else-if="preview.primary === here">It takes these from this one, the primary.</template>
-          <template v-else>It takes these from <strong>{{ nameOf(preview.primary) }}</strong>, the primary.</template>
-          Switch off anything it should keep of its own.
+        <p class="text-base">
+          <template v-if="preview.primary === here">It shares everything from this one, the main one</template>
+          <template v-else-if="preview.joining === here">This one shares everything from <strong>{{ nameOf(preview.primary) }}</strong>, the main one</template>
+          <template v-else>It shares everything from <strong>{{ nameOf(preview.primary) }}</strong>, the main one</template>{{ kept.length ? ', except what it already has of its own:' : '.' }}
         </p>
-        <ul class="surface divide-y rounded-2xl px-4 py-1">
+        <ul v-if="kept.length" class="flex flex-wrap gap-2" aria-label="Kept as its own">
+          <li v-for="p in kept" :key="p.id" class="bg-next text-next-foreground rounded-full px-3 py-1 text-sm font-bold">Its own {{ p.own }}</li>
+        </ul>
+        <button
+          type="button"
+          class="press text-primary text-callout -ml-1 flex h-10 items-center gap-1 rounded-full px-1 font-semibold"
+          :aria-expanded="choosing"
+          @click="choosing = !choosing"
+        >
+          Choose what’s shared
+          <ChevronDown :class="['size-4 transition-transform duration-(--dur-quick)', choosing && 'rotate-180']" aria-hidden="true" />
+        </button>
+        <ul v-if="choosing" class="surface divide-y rounded-2xl px-4 py-1">
           <li v-for="p in parts" :key="p.id" class="flex items-center gap-3 py-2.5">
             <span class="min-w-0 flex-1">
               <span class="block text-base font-medium">{{ p.label }}</span>
-              <span class="text-muted-foreground block text-sm">{{ p.description }}</span>
+              <span class="text-muted-foreground block text-sm">{{ p.detail }}</span>
               <span v-if="p.blocked" class="text-destructive block text-sm font-medium">{{ p.blocked }}</span>
               <span v-else-if="p.replaces && chosen.has(p.id)" class="text-next-foreground block text-sm font-medium">{{ p.replaces }}</span>
             </span>
@@ -204,10 +222,12 @@ watch(
             />
           </li>
         </ul>
-        <p class="text-muted-foreground text-sm">Each keeps its own name, date and registration number. Families can jump between them from the title of each.</p>
         <Button variant="primary" size="lg" block :disabled="!canEdit" :busy="linking" @click="link">
           <Link2 /> Link them
         </Button>
+        <p class="text-muted-foreground text-center text-sm">
+          {{ replacing.length ? `Its own ${replacing.map((p) => p.own).join(' and ')} ${replacing.length > 1 ? 'are' : 'is'} replaced.` : 'Nothing it has is replaced.' }}
+        </p>
       </template>
     </div>
   </Dialog>

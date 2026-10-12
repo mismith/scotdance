@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ChevronRight, Link2, RefreshCw } from '@lucide/vue'
+import { ChevronDown, ChevronRight, Ellipsis, Link2, Plus, RefreshCw, Star, Unlink } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
-import DateTile from '@/components/DateTile.vue'
 import CompetitionName from '@/components/CompetitionName.vue'
+import DateTile from '@/components/DateTile.vue'
+import Dialog from '@/components/Dialog.vue'
 import SwitchField from '@/components/admin/SwitchField.vue'
 import LinkCompetitionSheet from '@/components/admin/LinkCompetitionSheet.vue'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
@@ -12,18 +13,20 @@ import { useLinkSync, useLinkedSet } from '@/composables/useCompetitionLinks'
 import { changeLink, previewLink, type PartPreview } from '@/lib/admin/links'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
-import { partNoun, replacesSentence } from '@/lib/admin/linkWords'
-import { formatWeekday, parseDate } from '@/lib/format'
-import { LINK_PARTS, linkPartLabel, type LinkPart } from '@/lib/linked'
+import { replacesSentence } from '@/lib/admin/linkWords'
+import { formatDateSpan, formatWeekday, parseDate } from '@/lib/format'
+import { LINK_PARTS, LINK_PART_IDS, linkPartLabel, type LinkPart } from '@/lib/linked'
 import { useMorph } from '@/lib/morph'
 import { useMeStore } from '@/stores/me'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
 
-// Manage › Details › Linked competitions (ADR 0007 §7). Competitions that
-// go together (a weekend's two, a week's seven) are linked here. One is the
-// primary: the others copy what's switched on from it, and functions keep
-// them in step. On the primary, a switch per part for all the others; on
-// another, its own switches, and the ways to change the link.
+// Manage › Details › Linked competitions (ADR 0007 §7). Competitions that go
+// together (a weekend's two, a week's seven) are linked here. One is the main
+// one (the primary): the others share its details and staff, and functions
+// keep them in step. The section is one list, with a tag only where something
+// differs, and one "Shared" row that opens the switches. What's rarely done
+// (making another the main one, sharing again, taking one out) is in the ···
+// menu.
 const m = useManagedCompetition()
 const me = useMeStore()
 const id = computed(() => m.competitionId.value)
@@ -31,44 +34,51 @@ const { set, members, primary } = useLinkedSet(id)
 const { takes, partsOf } = useLinkSync()
 
 const linked = computed(() => !!set.value)
-const isPrimary = computed(() => linked.value && primary.value === id.value)
+const isMain = computed(() => linked.value && primary.value === id.value)
 const others = computed(() => members.value.filter((c) => c.id !== id.value))
-const primaryRecord = computed(() => members.value.find((c) => c.id === primary.value) ?? null)
-const primaryName = computed(() => primaryRecord.value?.name?.trim() || 'the primary')
-const count = computed(() => (set.value?.ids.length ?? 1) - 1)
+const mainRecord = computed(() => members.value.find((c) => c.id === primary.value) ?? null)
+const mainName = computed(() => mainRecord.value?.name?.trim() || 'the main one')
+const span = computed(() => formatDateSpan(members.value.map((c) => c.date)))
 
-const parts = LINK_PARTS.map((p) => ({ ...p, description: 'more' in p ? `${p.detail}\n${p.more}` : p.detail }))
-
-// How to name one of the others briefly: its weekday when they're all
-// within a week ("Sunday has its own"), else its name.
+// One of the others, briefly: its weekday when they're all within a week
+// ("Sunday has its own"), else its name.
 const withinAWeek = computed(() => {
   const days = members.value.map((c) => (c.date ? parseDate(c.date).getTime() : NaN)).filter((t) => !Number.isNaN(t))
   return days.length > 1 && Math.max(...days) - Math.min(...days) < 7 * 86_400_000
 })
 const shortName = (c: CompetitionListItem) => (withinAWeek.value && c.date ? formatWeekday(c.date) : c.name?.trim() || 'One')
 
-/** On the primary: which of the others don't take a part. */
-const notTaking = (part: LinkPart) => others.value.filter((c) => !takes(c.id, part))
-function primaryDetail(p: (typeof parts)[number]) {
-  const missing = notTaking(p.id)
-  if (!missing.length || missing.length === others.value.length) return p.description
-  const own = missing.length === 1 ? `${shortName(missing[0])} has its own` : `${missing.length} have their own`
-  return p.description.replace(/^([^\n]*)/, `$1 · ${own}`)
+/** The parts shared: on the main one, those any other shares; on another, its own. */
+const shared = computed<LinkPart[]>(() =>
+  isMain.value ? LINK_PART_IDS.filter((p) => others.value.some((o) => takes(o.id, p))) : partsOf(id.value),
+)
+const sharedSummary = computed(() => {
+  const on = shared.value
+  if (on.length === LINK_PART_IDS.length) return 'Everything'
+  if (!on.length) return 'Nothing'
+  const off = LINK_PARTS.filter((p) => !on.includes(p.id))
+  return off.length <= 2 ? `All but ${off.map((p) => p.label).join(' and ')}` : `${on.length} of ${LINK_PART_IDS.length}`
+})
+
+/** A row's tag: Main, or what it keeps of its own; nothing when it shares everything. */
+function tagOf(c: CompetitionListItem): { text: string; tone: 'main' | 'own' } | null {
+  if (c.id === primary.value) return { text: 'Main', tone: 'main' }
+  if (!primary.value) return null
+  const own = LINK_PARTS.filter((p) => !takes(c.id, p.id))
+  if (!own.length) return null
+  if (own.length === LINK_PARTS.length) return { text: 'Shares nothing', tone: 'own' }
+  return { text: own.length <= 2 ? `Own ${own.map((p) => p.own).join(' and ')}` : 'Shares some', tone: 'own' }
 }
 
-/** What one of the others takes, in a few words. */
-function takesLine(c: CompetitionListItem) {
-  if (c.id === primary.value) return 'Primary'
-  const theirs = partsOf(c.id)
-  if (!theirs.length) return 'Takes nothing from the primary'
-  if (theirs.length === LINK_PARTS.length) return isPrimary.value ? 'Everything above' : 'Everything'
-  const missing = LINK_PARTS.filter((p) => !theirs.includes(p.id))
-  if (missing.length === 1) return `All but ${missing[0].label}: its own ${partNoun(missing[0].id)}`
-  if (missing.length === 2) return `All but ${missing.map((p) => p.label).join(' and ')}`
-  return theirs.map(linkPartLabel).join(' · ')
+/** On the main one's switches: which of the others keep that part their own. */
+function ownNote(part: LinkPart) {
+  if (!isMain.value) return null
+  const own = others.value.filter((o) => !takes(o.id, part))
+  if (!own.length || own.length === others.value.length) return null
+  return own.length === 1 ? `${shortName(own[0])} has its own` : `${own.length} have their own`
 }
 
-/** Confirms what turning a part on (or a new primary) would replace; true to go ahead. */
+/** Confirms what sharing a part (or a new main one) would replace; true to go ahead. */
 async function confirmReplacing(previews: Array<{ competitionId: string; parts: PartPreview[] }>, from: string, title: string, confirmLabel: string) {
   const blocked = previews.flatMap((t) => t.parts.filter((p) => p.blocked))
   if (blocked.length) {
@@ -77,87 +87,75 @@ async function confirmReplacing(previews: Array<{ competitionId: string; parts: 
   }
   const lines = previews.flatMap((t) => {
     const c = members.value.find((x) => x.id === t.competitionId)
-    const name = c ? shortName(c) : 'One'
-    return t.parts.filter((p) => p.replaces).map((p) => replacesSentence(name, p, from))
+    return t.parts.filter((p) => p.replaces).map((p) => replacesSentence(c ? shortName(c) : 'One', p, from))
   })
   if (!lines.length) return true
   return confirm({ title, message: lines.join('\n'), confirmLabel })
 }
 
-const busy = ref<string | null>(null)
-async function run(key: string, fn: () => Promise<unknown>) {
+const busy = ref(false)
+async function run(fn: () => Promise<unknown>) {
   if (busy.value) return
-  busy.value = key
+  busy.value = true
   try {
     await fn()
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
   } finally {
-    busy.value = null
+    busy.value = false
   }
 }
 
-/** A part's switch: on the primary, for all the others; else for this one. */
+/** A part's switch: on the main one, for all the others; else for this one. */
 async function setPart(part: LinkPart, on: boolean) {
   const label = linkPartLabel(part)
   if (on) {
     const preview = await previewLink({ action: 'sync', competitionId: id.value, part, on: true })
     const ok = await confirmReplacing(
       preview.targets,
-      primaryName.value,
-      isPrimary.value ? `Copy ${label} to the others?` : `Take ${label} from ${primaryName.value}?`,
-      'Copy it',
+      mainName.value,
+      isMain.value ? `Share ${label} with the others?` : `Share ${label} from ${mainName.value}?`,
+      'Share it',
     )
     if (!ok) return
   }
   await changeLink({ action: 'sync', competitionId: id.value, part, on })
-  toast(
-    on
-      ? isPrimary.value
-        ? `The others take ${label} from this one`
-        : `Takes ${label} from ${primaryName.value}`
-      : isPrimary.value
-        ? `Each keeps its own ${label} now`
-        : `Keeps its own ${label} now`,
-  )
+  toast(on ? `${label}: shared` : isMain.value ? `${label}: each one’s own now` : `${label}: its own now`)
 }
 
-const makePrimary = () =>
-  run('primary', async () => {
+const menu = useMorph()
+const sheet = useMorph()
+const picking = useMorph()
+const showAll = ref(false)
+
+const makeMain = () =>
+  run(async () => {
+    menu.dismiss()
     const preview = await previewLink({ action: 'primary', competitionId: id.value })
-    const ok = await confirmReplacing(
-      preview.targets,
-      m.competition.value?.name?.trim() || 'this one',
-      'Make this the primary?',
-      'Make it the primary',
-    )
+    const replacing = preview.targets.some((t) => t.parts.some((p) => p.replaces))
+    const ok = replacing
+      ? await confirmReplacing(preview.targets, m.competition.value?.name?.trim() || 'this one', 'Make this the main one?', 'Make it the main one')
+      : await confirm({ title: 'Make this the main one?', message: 'The others then share from this one.', confirmLabel: 'Make it the main one' })
     if (!ok) return
-    // Nothing to replace: still say what it means.
-    if (!preview.targets.some((t) => t.parts.some((p) => p.replaces))) {
-      const yes = await confirm({
-        title: 'Make this the primary?',
-        message: 'The others then copy what they take from this one.',
-        confirmLabel: 'Make it the primary',
-      })
-      if (!yes) return
-    }
     await changeLink({ action: 'primary', competitionId: id.value })
-    toast('This one is the primary now')
+    toast('This one is the main one now')
   })
 
-const syncNow = () =>
-  run('sync', async () => {
+const shareAgain = () =>
+  run(async () => {
+    menu.dismiss()
     await changeLink({ action: 'syncNow', competitionId: id.value })
-    toast(isPrimary.value ? 'Copied to the others again' : `Copied from ${primaryName.value} again`)
+    toast('Shared again')
   })
 
 const takeOut = () =>
-  run('out', async () => {
+  run(async () => {
+    menu.dismiss()
     const ok = await confirm({
       title: 'Take it out of the link?',
-      message: isPrimary.value
-        ? 'This one keeps everything it has. The others stop copying from it until one of them is made the primary.'
-        : `It keeps everything it has, and stops copying from ${primaryName.value}. Families won’t see it with the others any more.`,
+      message: isMain.value
+        ? 'This one keeps everything it has. The others stop sharing from it until one of them is made the main one.'
+        : 'It keeps everything it has. Families won’t see it with the others any more.',
       confirmLabel: 'Take it out',
       destructive: true,
     })
@@ -166,105 +164,132 @@ const takeOut = () =>
     toast('Taken out of the link')
   })
 
-const picking = useMorph()
 const to = (c: CompetitionListItem) =>
-  me.hasCompetitionPerm(c.id)
-    ? { name: 'manage.details', params: { competitionId: c.id } }
-    : { name: 'competition.info', params: { competitionId: c.id } }
+  me.hasCompetitionPerm(c.id) ? { name: 'manage.details', params: { competitionId: c.id } } : { name: 'competition.info', params: { competitionId: c.id } }
+
+const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-base font-medium disabled:opacity-(--disabled-opacity)'
+const ROW = 'press-row focus-inset flex min-h-14 w-full items-center gap-3 border-t px-4 text-left'
+const TAG = { main: 'bg-blue-paper text-primary', own: 'bg-next text-next-foreground' }
 </script>
 
 <template>
   <section id="linked" class="scroll-mt-(--chrome-top) space-y-3">
-    <h2 class="text-heading">Linked competitions</h2>
+    <div class="flex items-center justify-between gap-2">
+      <h2 class="text-heading">Linked competitions</h2>
+      <button
+        v-if="linked"
+        type="button"
+        class="press text-muted-foreground -my-2 -mr-2 flex size-11 items-center justify-center rounded-full"
+        aria-label="More for linked competitions"
+        @click="menu.show($event)"
+      >
+        <Ellipsis class="size-5" />
+      </button>
+    </div>
 
     <!-- Not linked yet -->
     <template v-if="!linked">
-      <p class="text-muted-foreground text-sm">
-        For competitions that go together, like a weekend’s two or a week’s seven. Families can jump between them, and
-        this one’s staff and details are copied into the others, so they’re set up once.
-      </p>
+      <p class="text-muted-foreground text-sm">For a weekend’s or a week’s competitions: families jump between them, and you set them up once.</p>
       <Button :disabled="!canEdit" @click="picking.show($event)"><Link2 /> Link a competition</Button>
     </template>
 
-    <template v-else>
-      <!-- Who's the primary -->
-      <div class="flex items-start gap-3">
-        <span class="bg-blue-paper text-primary flex size-10 shrink-0 items-center justify-center rounded-full" aria-hidden="true">
-          <RefreshCw class="size-5" />
-        </span>
-        <div class="min-w-0 flex-1">
-          <p class="text-base leading-snug font-semibold">
-            <template v-if="isPrimary">This one is the primary</template>
-            <template v-else>Linked with {{ count }} {{ count === 1 ? 'other' : 'others' }}</template>
-          </p>
-          <p class="text-muted-foreground text-sm">
-            <template v-if="isPrimary">
-              The other {{ count }} copy what’s switched on below. Change it here and it changes in all of them.
-            </template>
-            <template v-else-if="primary">
-              <RouterLink v-if="primaryRecord" :to="to(primaryRecord)" class="text-primary font-semibold">{{ primaryName }}</RouterLink>
-              <template v-else>Another competition</template>
-              is the primary. This one copies what’s switched on below from it.
-            </template>
-            <template v-else>None of them is the primary, so nothing’s copied between them. Make one the primary to share its details again.</template>
-          </p>
-        </div>
-      </div>
-
-      <!-- What's copied -->
-      <template v-if="primary">
-        <h3 class="text-callout pt-2 font-semibold">{{ isPrimary ? 'What they copy' : `What it takes from ${primaryName}` }}</h3>
-        <div class="surface divide-y rounded-2xl px-4 py-1.5">
-          <SwitchField
-            v-for="p in parts"
-            :key="p.id"
-            :model-value="isPrimary ? notTaking(p.id).length < others.length : takes(id, p.id)"
-            :label="p.label"
-            :description="isPrimary ? primaryDetail(p) : p.description"
-            :disabled="!!busy"
-            :save="(on) => setPart(p.id, on)"
-          />
-        </div>
-        <p class="text-muted-foreground text-sm">Each keeps its own name, date and registration number.</p>
-      </template>
-
-      <!-- The others -->
-      <h3 class="text-callout pt-2 font-semibold">{{ isPrimary ? `The other ${count}` : 'The others' }}</h3>
-      <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
-        <li v-for="c in others" :key="c.id">
-          <RouterLink :to="to(c)" class="press-row focus-inset flex min-h-15 items-center gap-3 py-2 pr-3 pl-4">
-            <DateTile :date="c.date" :managed="me.organises(c.id)" />
-            <span class="min-w-0 flex-1">
-              <span class="block truncate text-base font-semibold"><CompetitionName :competition="c" /></span>
-              <span :class="['block truncate text-sm font-medium', c.id === primary ? 'text-primary' : 'text-muted-foreground']">{{ takesLine(c) }}</span>
-            </span>
-            <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
-          </RouterLink>
-        </li>
-        <li v-if="isPrimary">
-          <button
-            type="button"
-            class="press-row focus-inset text-primary text-callout flex min-h-13 w-full items-center gap-2.5 px-4 font-semibold disabled:opacity-(--disabled-opacity)"
-            :disabled="!canEdit"
-            @click="picking.show($event)"
+    <!-- The main one: every competition, a tag where one differs -->
+    <div v-else-if="isMain" class="surface overflow-hidden rounded-2xl">
+      <ul class="rows-inset [--inset:4.5rem]">
+        <li v-for="c in members" :key="c.id">
+          <component
+            :is="c.id === id ? 'div' : RouterLink"
+            v-bind="c.id === id ? {} : { to: to(c) }"
+            :class="['flex min-h-15 items-center gap-3 py-2 pr-3 pl-4', c.id !== id && 'press-row focus-inset']"
           >
-            <Link2 class="size-5" aria-hidden="true" /> Link a competition
-          </button>
+            <DateTile :date="c.date" />
+            <span class="min-w-0 flex-1 truncate text-base font-semibold"><CompetitionName :competition="c" /></span>
+            <span v-if="tagOf(c)" :class="['shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold', TAG[tagOf(c)!.tone]]">{{ tagOf(c)!.text }}</span>
+          </component>
         </li>
       </ul>
-      <p v-if="isPrimary" class="text-muted-foreground text-sm">
-        Families can jump between linked competitions from the title of each one. Open one to choose what it copies, or to
-        make it the primary.
-      </p>
+      <button type="button" :class="ROW" @click="sheet.show($event)">
+        <span class="flex-1 text-base font-semibold">Shared with the others</span>
+        <span class="text-muted-foreground text-callout">{{ sharedSummary }}</span>
+        <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+      </button>
+      <button type="button" :class="[ROW, 'text-primary text-callout font-semibold disabled:opacity-(--disabled-opacity)']" :disabled="!canEdit" @click="picking.show($event)">
+        <Plus class="size-5" aria-hidden="true" /> Link a competition
+      </button>
+    </div>
 
-      <div class="flex flex-wrap gap-2 pt-1">
-        <Button v-if="!isPrimary" :disabled="!canEdit || !!busy" :busy="busy === 'primary'" @click="makePrimary">Make this the primary</Button>
-        <Button v-if="primary && (isPrimary ? others.some((o) => partsOf(o.id).length) : partsOf(id).length)" :disabled="!canEdit || !!busy" :busy="busy === 'sync'" @click="syncNow">
-          <RefreshCw /> Sync now
-        </Button>
-        <Button class="text-destructive!" :disabled="!canEdit || !!busy" :busy="busy === 'out'" @click="takeOut">Take out of the link</Button>
+    <!-- One of the others: its main one, what it shares, and the rest on asking -->
+    <div v-else class="surface overflow-hidden rounded-2xl">
+      <RouterLink v-if="mainRecord" :to="to(mainRecord)" class="press-row focus-inset flex min-h-15 items-center gap-3 py-2 pr-3 pl-4">
+        <DateTile :date="mainRecord.date" />
+        <span class="min-w-0 flex-1">
+          <span class="block truncate text-base font-semibold"><CompetitionName :competition="mainRecord" /></span>
+          <span class="text-primary block text-sm font-semibold">Main competition</span>
+        </span>
+        <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+      </RouterLink>
+      <p v-else class="text-muted-foreground px-4 py-3 text-sm">None of them is the main one, so nothing’s shared. Make one the main one from its ··· menu.</p>
+      <button v-if="primary" type="button" :class="ROW" @click="sheet.show($event)">
+        <span class="flex-1 text-base font-semibold">Shared from it</span>
+        <span class="text-muted-foreground text-callout">{{ sharedSummary }}</span>
+        <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+      </button>
+      <button type="button" :class="ROW" :aria-expanded="showAll" @click="showAll = !showAll">
+        <span class="flex-1 text-base font-semibold">All {{ members.length }} competitions</span>
+        <span class="text-muted-foreground text-callout">{{ span }}</span>
+        <ChevronDown :class="['text-muted-foreground size-5 shrink-0 transition-transform duration-(--dur-quick)', showAll && 'rotate-180']" aria-hidden="true" />
+      </button>
+      <ul v-if="showAll" class="rows-inset border-t [--inset:4.5rem]">
+        <li v-for="c in members" :key="c.id">
+          <component
+            :is="c.id === id ? 'div' : RouterLink"
+            v-bind="c.id === id ? {} : { to: to(c) }"
+            :class="['flex min-h-15 items-center gap-3 py-2 pr-3 pl-4', c.id !== id && 'press-row focus-inset']"
+          >
+            <DateTile :date="c.date" />
+            <span class="min-w-0 flex-1 truncate text-base font-semibold"><CompetitionName :competition="c" /></span>
+            <span v-if="tagOf(c)" :class="['shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold', TAG[tagOf(c)!.tone]]">{{ tagOf(c)!.text }}</span>
+          </component>
+        </li>
+      </ul>
+    </div>
+
+    <!-- What's shared -->
+    <Dialog :open="sheet.open" :morph="sheet" variant="sheet" size="md" @close="sheet.hide()">
+      <template #header>
+        <h2 class="text-title">{{ isMain ? 'Shared with the others' : `Shared from ${mainName}` }}</h2>
+      </template>
+      <div class="space-y-3 p-4 pt-1 pb-[calc(1.5rem+var(--safe-bottom))]">
+        <div class="surface divide-y rounded-2xl px-4 py-1">
+          <div v-for="p in LINK_PARTS" :key="p.id">
+            <SwitchField
+              :model-value="shared.includes(p.id)"
+              :label="p.label"
+              :description="p.detail"
+              :disabled="busy"
+              :save="(on) => setPart(p.id, on)"
+            />
+            <p v-if="ownNote(p.id)" class="text-next-foreground -mt-1 pb-2 text-sm font-semibold">{{ ownNote(p.id) }}</p>
+          </div>
+        </div>
+        <p class="text-muted-foreground text-sm">Names, dates and registration numbers are always each one’s own.</p>
       </div>
-    </template>
+    </Dialog>
+
+    <!-- The rarely done -->
+    <Dialog :open="menu.open" :morph="menu" variant="dropdown" aria-label="More for linked competitions" @close="menu.hide()">
+      <nav aria-label="More for linked competitions">
+        <button v-if="!isMain" type="button" :class="MENU_ROW" :disabled="!canEdit || busy" @click="makeMain">
+          <Star class="text-muted-foreground size-5 shrink-0" /> Make this the main one
+        </button>
+        <button v-if="primary && shared.length" type="button" :class="MENU_ROW" :disabled="!canEdit || busy" @click="shareAgain">
+          <RefreshCw class="text-muted-foreground size-5 shrink-0" /> Share again now
+        </button>
+        <button type="button" :class="[MENU_ROW, 'text-destructive']" :disabled="!canEdit || busy" @click="takeOut">
+          <Unlink class="size-5 shrink-0" /> Take out of the link
+        </button>
+      </nav>
+    </Dialog>
 
     <LinkCompetitionSheet :morph="picking" :members="members" />
   </section>

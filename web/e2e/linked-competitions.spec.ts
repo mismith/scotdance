@@ -151,8 +151,9 @@ test.describe('families and organisers', () => {
       await dbSet(`competitions:permissions/${id}/users/${organiserUid}`, true)
     }
     await dbSet(`competitionLinks/${linkId}`, { primary: ids[0], competitions: Object.fromEntries(ids.map((id) => [id, true])) })
-    await dbSet(`competitionLinks:sync/${ids[1]}`, { about: true, venue: true, staff: true })
-    await dbSet(`competitionLinks:sync/${ids[2]}`, { about: true, staff: true })
+    const all = { about: true, venue: true, registration: true, links: true, visibility: true, organisations: true, staff: true }
+    await dbSet(`competitionLinks:sync/${ids[1]}`, all)
+    await dbSet(`competitionLinks:sync/${ids[2]}`, { ...all, venue: null })
   })
 
   test.afterAll(async () => {
@@ -185,19 +186,23 @@ test.describe('families and organisers', () => {
     await expect(page).toHaveURL(new RegExp(`/competitions/${ids[0]}/info`))
   })
 
-  test('Manage says what each takes, and what’s synced can’t be changed there', async ({ page }) => {
+  test('Manage lists them, tags what differs, and shows what’s shared rather than editing it', async ({ page }) => {
     await signIn(page, organiserEmail)
     await page.goto(`/competitions/${ids[0]}/manage/details`)
-    await expect(page.getByText('This one is the primary')).toBeVisible()
-    await expect(page.getByText('Venue and address', { exact: false }).first()).toContainText('has its own')
+    const section = page.locator('#linked')
+    await expect(section.getByText('Main', { exact: true })).toBeVisible()
+    await expect(section.getByText('Own venue', { exact: true })).toBeVisible()
+    await section.getByRole('button', { name: /Shared with the others/ }).click()
+    await expect(page.locator('dialog[open]').getByText(/has its own$/)).toBeVisible()
+    await page.keyboard.press('Escape')
 
     await page.goto(`/competitions/${ids[1]}/manage/details`)
-    await expect(page.getByRole('note').getByText(/The parts marked Synced come from/)).toBeVisible()
-    await expect(page.getByRole('textbox', { name: 'Description' })).toBeDisabled()
+    await expect(page.getByRole('link', { name: /Shared from .*Pre-Premier Open/ })).toBeVisible()
+    await expect(page.getByRole('textbox', { name: 'Description' })).toHaveCount(0)
     await expect(page.getByRole('textbox', { name: 'Name', exact: true })).toBeEnabled()
 
     await page.goto(`/competitions/${ids[1]}/manage/staff`)
-    await expect(page.getByText(/Synced from .*Pre-Premier Open/)).toBeVisible()
-    await expect(page.getByRole('link', { name: /Add staff member|Add/ })).toHaveCount(0)
+    await expect(page.getByRole('note').getByText(/Shared from/)).toBeVisible()
+    await expect(page.getByRole('link', { name: /^Add/ })).toHaveCount(0)
   })
 })

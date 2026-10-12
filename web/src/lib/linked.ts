@@ -4,22 +4,22 @@ import { formatDateSpan, formatMonthDay, parseDate } from '@/lib/format'
 // two, or a week's seven, that their organisers linked. Families can jump
 // between them, and lists keep them together. Words for families never say
 // "linked": they say how many competitions and when ("7 competitions, Jul
-// 5 – 11"). "Linked" is only for organisers, in Manage.
+// 5 – 11"). "Linked" is only for organisers, in Manage, where the parts
+// the others use from the main one are "shared".
 
-/** What a linked competition can take from its primary, in Manage's order (functions/src/links.ts PARTS). */
+/**
+ * What a linked competition can share from the main one (its primary), in
+ * Manage's order (functions/src/links.ts PARTS). `own` names it on a tag for
+ * one that keeps its own ("Own venue").
+ */
 export const LINK_PARTS = [
-  { id: 'about', label: 'Description and logo', detail: 'What families read about it, and its picture' },
-  { id: 'venue', label: 'Where', detail: 'Venue and address' },
-  { id: 'registration', label: 'Registration', detail: 'The link, and when it opens and closes' },
-  { id: 'links', label: 'Links and files', detail: 'Programs, entry forms and other links' },
-  {
-    id: 'visibility',
-    label: 'Listed and published',
-    detail: 'Listed: families can find it in the competitions list.',
-    more: 'Published: they can also see its dancers, schedule and results.',
-  },
-  { id: 'organisations', label: 'Organisations', detail: 'Who runs it' },
-  { id: 'staff', label: 'Staff', detail: 'Judges, pipers, helpers and sponsors' },
+  { id: 'about', label: 'Description and logo', detail: 'What families read, and its picture', own: 'description' },
+  { id: 'venue', label: 'Where', detail: 'Venue and address', own: 'venue' },
+  { id: 'registration', label: 'Registration', detail: 'The link, and when it opens and closes', own: 'registration' },
+  { id: 'links', label: 'Links and files', detail: 'Programs, forms and other links', own: 'links' },
+  { id: 'visibility', label: 'Listed and published', detail: 'Who can find it, and see its dancers and results', own: 'listing' },
+  { id: 'organisations', label: 'Organisations', detail: 'Who runs it', own: 'organisations' },
+  { id: 'staff', label: 'Staff', detail: 'Judges, pipers, helpers and sponsors', own: 'staff' },
 ] as const
 
 export type LinkPart = (typeof LINK_PARTS)[number]['id']
