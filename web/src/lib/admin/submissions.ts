@@ -103,7 +103,7 @@ export function replyEmail(opts: {
   return {
     subject: `About your submission of ${name}`,
     greeting: `Hello${text(opts.contactName) ? ` ${text(opts.contactName)}` : ''},`,
-    intro: `Thanks for submitting ${name}. It hasn’t been added to ScotDance.app.`,
+    intro: `Thanks for sending in ${name}. It hasn’t been added to ScotDance.app.`,
     reply: paragraphs(opts.reply),
     summary: [name, emailDate(c.date), where].filter((s): s is string => !!s),
     closing: 'If you’ve any questions, just reply to this email.',
