@@ -10,6 +10,7 @@ import { useHiddenAs } from '@/composables/useHiddenAs'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import Avatar from '@/components/Avatar.vue'
 import DancerDayCard from '@/components/DancerDayCard.vue'
+import DancerLookButton from '@/components/DancerLookButton.vue'
 import DateTile from '@/components/DateTile.vue'
 import LinkRail from '@/components/LinkRail.vue'
 import FollowButton from '@/components/FollowButton.vue'
@@ -126,7 +127,9 @@ function medals(cid: string) {
   <article :class="profileColumns">
     <div :class="profileHeader">
       <header :ref="setHeader" class="flex flex-col items-center gap-4">
-        <Avatar :name="name" :image="profile.image.value" :color="color" size="xl" />
+        <DancerLookButton :dancer-id="dancerId" :name="name">
+          <Avatar :name="name" :image="profile.image.value" :color="color" size="xl" />
+        </DancerLookButton>
         <div class="min-w-0">
           <h1 class="text-display">{{ name }}</h1>
           <p v-if="subtitle" class="text-muted-foreground text-callout mt-1">{{ subtitle }}</p>

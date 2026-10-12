@@ -49,8 +49,12 @@ const PAIRS: Array<[ink: string, fill: string, min: number]> = [
   ['input', 'card', LARGE],
   ['ring', 'card', LARGE],
   ['ring', 'background', LARGE],
-  // Initials and ticks on a followed dancer's colour (4.5:1, as DESIGN.md promises).
-  ...[1, 2, 3, 4, 5, 6, 7, 8].map((n) => ['on-dancer', `dancer-${n}`, TEXT] as const),
+  // Initials and ticks on a followed dancer's colour (4.5:1, as DESIGN.md
+  // promises), in its own ink where it has one (light gold takes ink).
+  ...[1, 2, 3, 4, 5, 6, 7, 8].map((n) => [n === 4 ? 'on-dancer-4' : 'on-dancer', `dancer-${n}`, TEXT] as const),
+  // A followed dancer's dots, bars and bands are the app's "yours" mark, so
+  // each colour holds 3:1 against the page and cards as a shape.
+  ...[1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((n) => [[`dancer-${n}`, 'background', LARGE] as const, [`dancer-${n}`, 'card', LARGE] as const]),
 ]
 
 describe.each(Object.entries(THEMES))('%s theme', (_, t) => {

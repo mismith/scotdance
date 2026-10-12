@@ -1,7 +1,16 @@
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
-import { DANCER_COLORS, isCustomColor, useDancerColorsStore } from '@/stores/dancerColors'
+import { clothBackground } from '@/lib/tartan'
+import {
+  DANCER_COLORS,
+  baseColor,
+  isCustomColor,
+  isTartan,
+  useDancerColorsStore,
+  type DancerColor,
+  type DancerLook,
+} from '@/stores/dancerColors'
 
 // Following a dancer means favouriting their AGGREGATE record (one person
 // across every competition). A per-competition record carries a back-pointer
@@ -37,29 +46,43 @@ export function useFollowing() {
 
   const colors = useDancerColorsStore()
 
-  // Each followed dancer gets a colour: the one you chose for them, or else
-  // the next one nobody's using, in the order you followed them (push-id-like
-  // keys sort chronologically), so a family's first dancer is always red.
-  // Your own colours (hex) sit outside the palette, so they take no turn.
+  // Each followed dancer gets a look: the one you chose for them (a colour or
+  // a tartan), or else the next colour nobody's using, in the order you
+  // followed them (push-id-like keys sort chronologically), so a family's
+  // first dancer is always red. A tartan takes its first colour's turn; your
+  // own colours (hex) sit outside the palette, so they take no turn.
   const order = computed(() => Object.keys(favorites.dancers))
   const assigned = computed(() => {
-    const out: Record<string, string> = {}
-    const taken = new Set<string>(order.value.map((id) => colors.chosen[id]).filter(Boolean))
+    const out: Record<string, DancerLook> = {}
+    const taken = new Set<string>(order.value.flatMap((id) => (colors.chosen[id] ? [baseColor(colors.chosen[id])] : [])))
     const free = [...DANCER_COLORS.filter((c) => !taken.has(c.id)), ...DANCER_COLORS.filter((c) => taken.has(c.id))]
     let n = 0
     for (const id of order.value) out[id] = colors.chosen[id] ?? free[n++ % free.length].id
     return out
   })
 
-  /** The colour id (e.g. 'dancer-3', or your own '#rrggbb') for a followed dancer. */
-  const colorIdFor = (aggregateId: string | undefined | null) => (aggregateId ? (assigned.value[aggregateId] ?? null) : null)
+  /** A followed dancer's look: a colour id (e.g. 'dancer-3', or your own '#rrggbb'), or a tartan. */
+  const lookFor = (aggregateId: string | undefined | null): DancerLook | null =>
+    aggregateId ? (assigned.value[aggregateId] ?? null) : null
 
-  function colorFor(aggregateId: string | undefined | null): string | null {
-    const id = colorIdFor(aggregateId)
-    return !id ? null : isCustomColor(id) ? id : `var(--${id})`
+  /** A followed dancer's own colour: their colour, or their tartan's first. */
+  const colorIdFor = (aggregateId: string | undefined | null): DancerColor | null => {
+    const look = lookFor(aggregateId)
+    return look ? baseColor(look) : null
   }
 
-  /** Inline style for anything drawn in a dancer's colour (see `sash`). */
+  /**
+   * A followed dancer's look as a CSS background: their colour, or their
+   * tartan's cloth (a `var(--cloth-…)`; see lib/tartan's solidOf for dots).
+   */
+  function colorFor(aggregateId: string | undefined | null): string | null {
+    const look = lookFor(aggregateId)
+    if (!look || !aggregateId) return null
+    if (isTartan(look)) return clothBackground(look, aggregateId)
+    return isCustomColor(look) ? look : `var(--${look})`
+  }
+
+  /** Inline style for anything drawn in a dancer's look (see `sash`). */
   function paint(aggregateId: string | undefined | null, fallback = 'var(--primary)') {
     return { '--dc': colorFor(aggregateId) ?? fallback }
   }
@@ -91,5 +114,5 @@ export function useFollowing() {
 
   const followedIds = computed(() => order.value)
 
-  return { isFollowing, colorFor, colorIdFor, paint, toggle, setFollowing, followedIds }
+  return { isFollowing, lookFor, colorFor, colorIdFor, paint, toggle, setFollowing, followedIds }
 }

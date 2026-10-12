@@ -10,6 +10,7 @@ import LinkRail from '@/components/LinkRail.vue'
 import VisibilityChip from '@/components/VisibilityChip.vue'
 import { useMeStore } from '@/stores/me'
 import { isSameDay } from '@/lib/format'
+import { solidOf } from '@/lib/tartan'
 import type { RailPosition } from '@/lib/linked'
 import type { Competition } from '@/types/competition'
 
@@ -107,7 +108,7 @@ const hidden = computed(() => (props.preview ? null : hiddenAs(id.value, props.c
                 v-for="x in dancers.slice(0, 4)"
                 :key="x.id"
                 class="size-2.5 rounded-full"
-                :style="{ background: following.colorFor(x.id) ?? 'var(--primary)' }"
+                :style="{ background: solidOf(following.colorFor(x.id)) ?? 'var(--primary)' }"
               />
             </span>
             <span class="truncate">{{ dancers.map((x) => x.name).join(', ') }}</span>

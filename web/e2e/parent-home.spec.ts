@@ -5,7 +5,8 @@ import { makePerson, sheet, signInFromSheet, signOut, type Person } from './supp
 import { hasSidebar } from './support/nav'
 
 // A parent's day: follow a dancer, see their day on Home on competition day,
-// watch a placing arrive, choose their colour, unfollow. Then the edges:
+// watch a placing arrive, choose their look (a colour, a tartan, one of their
+// own from the loom), unfollow. Then the edges:
 // switching accounts, old favourites from the previous app.
 //
 // One small competition (dated today) per worker; each test follows a dancer
@@ -45,13 +46,15 @@ async function signInFromHome(page: Page, email: string) {
 
 const card = (page: Page, p: Person) => page.locator('article').filter({ hasText: p.name })
 
-/** On their page, Following opens a small menu: their colour, and Stop following. */
-async function followingMenu(page: Page, p: Person) {
-  await page.getByRole('button', { name: `Following ${p.name}` }).click()
-  return page.getByRole('dialog', { name: `Following ${p.name}` })
+/** On their page, their avatar opens a small menu: their colour and pattern, and Customise. */
+async function lookMenu(page: Page, p: Person) {
+  await page.getByRole('button', { name: `Choose ${p.firstName}’s look` }).click()
+  return page.getByRole('dialog', { name: `${p.firstName}’s look` })
 }
+/** Following is one tap either way; stopping offers Undo. */
 async function unfollow(page: Page, p: Person) {
-  await (await followingMenu(page, p)).getByRole('button', { name: 'Stop following' }).click()
+  await page.getByRole('button', { name: `Following ${p.name}` }).click()
+  await expect(page.getByText(`Stopped following ${p.firstName}`)).toBeVisible()
 }
 
 test('follow a dancer, see their day on Home, and watch a placing arrive', async ({ page }) => {
@@ -139,14 +142,14 @@ test('a chosen colour sticks, and stays with that account', async ({ page }) => 
 
   await signInFromHome(page, a.email)
   await page.goto(`/dancers/${person.id}/info`)
-  const picker = (await followingMenu(page, person)).getByRole('radiogroup', { name: `${person.firstName}’s colour` })
+  const picker = (await lookMenu(page, person)).getByRole('radiogroup', { name: `${person.firstName}’s colour` })
   // The first dancer you follow is red until you choose.
   await expect(picker.getByRole('radio', { name: 'Red' })).toHaveAttribute('aria-checked', 'true')
   await picker.getByRole('radio', { name: 'Teal' }).click()
   await expect(picker.getByRole('radio', { name: 'Teal' })).toHaveAttribute('aria-checked', 'true')
   await expect.poll(() => dbGet(`users:dancerColors/${a.uid}/${person.id}`)).toBe('dancer-6')
   await page.reload()
-  await followingMenu(page, person)
+  await lookMenu(page, person)
   await expect(page.getByRole('radio', { name: 'Teal' })).toHaveAttribute('aria-checked', 'true')
 
   // The next account on this phone has its own colours.
@@ -154,8 +157,82 @@ test('a chosen colour sticks, and stays with that account', async ({ page }) => 
   await page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true }).click()
   await signInFromSheet(page, b.email)
   await page.goto(`/dancers/${person.id}/info`)
-  await followingMenu(page, person)
+  await lookMenu(page, person)
   await expect(page.getByRole('radio', { name: 'Red' })).toHaveAttribute('aria-checked', 'true')
+})
+
+test('a tartan: pick a pattern, then make it your own on the loom', async ({ page }) => {
+  const person = await follow(3)
+  const a = await freshParent()
+  await dbSet(`users:favorites/${a.uid}/dancers/${person.id}`, person.name)
+  const look = () => dbGet(`users:dancerColors/${a.uid}/${person.id}`)
+
+  await signInFromHome(page, a.email)
+  await page.goto(`/dancers/${person.id}/info`)
+  const menu = await lookMenu(page, person)
+  // A pattern is woven in their colour, and a new colour keeps the pattern.
+  await menu.getByRole('radiogroup', { name: `${person.firstName}’s pattern` }).getByRole('radio', { name: 'Reel' }).click()
+  await expect.poll(look).toEqual({ color: 'dancer-1', sett: 'P16 K16' })
+  await menu.getByRole('radio', { name: 'Navy' }).click()
+  await expect.poll(look).toEqual({ color: 'dancer-9', sett: 'P16 K16' })
+
+  // Customise: the loom, saving as you go.
+  await menu.getByRole('button', { name: 'Customise' }).click()
+  const loom = page.getByRole('dialog', { name: `${person.firstName}’s tartan` })
+  await expect(loom.getByRole('img', { name: 'The tartan' })).toBeVisible()
+  await loom.getByRole('button', { name: 'Add a stripe' }).click()
+  await expect.poll(look).toEqual({ color: 'dancer-9', sett: 'P16 K16 S6' })
+  // The new stripe is chosen: make it a line in white.
+  await loom.getByRole('radiogroup', { name: 'Width', exact: true }).getByRole('radio', { name: 'Line', exact: true }).click()
+  await loom.getByRole('radiogroup', { name: 'Colour', exact: true }).getByRole('radio', { name: 'White', exact: true }).click()
+  await expect.poll(look).toEqual({ color: 'dancer-9', sett: 'P16 K16 W2' })
+  // Arrow keys move the chosen stripe; Undo steps back one change at a time.
+  await loom.getByRole('button', { name: /^Line in white, 3 of 3/ }).press('ArrowLeft')
+  await expect.poll(look).toEqual({ color: 'dancer-9', sett: 'P16 W2 K16' })
+  await loom.getByRole('button', { name: 'Undo', exact: true }).click()
+  await expect.poll(look).toEqual({ color: 'dancer-9', sett: 'P16 K16 W2' })
+  await loom.getByRole('button', { name: 'Done', exact: true }).click()
+  await expect(loom).toBeHidden()
+
+  // Their own now: the menu says so, and Plain goes back to just the colour.
+  const again = await lookMenu(page, person)
+  await expect(again.getByText('Your own')).toBeVisible()
+  await again.getByRole('radio', { name: 'Plain', exact: true }).click()
+  await expect.poll(look).toBe('dancer-9')
+})
+
+test('the loom from a plain colour: nothing changes until you do, Undo goes back, drags work after a removal', async ({ page }) => {
+  const person = await follow(7)
+  const a = await freshParent()
+  await dbSet(`users:favorites/${a.uid}/dancers/${person.id}`, person.name)
+  await dbSet(`users:dancerColors/${a.uid}/${person.id}`, 'dancer-3')
+  const look = () => dbGet(`users:dancerColors/${a.uid}/${person.id}`)
+
+  await signInFromHome(page, a.email)
+  await page.goto(`/dancers/${person.id}/info`)
+  await (await lookMenu(page, person)).getByRole('button', { name: 'Customise' }).click()
+  const loom = page.getByRole('dialog', { name: `${person.firstName}’s tartan` })
+  // Just looking keeps them plain; the first change weaves the tartan.
+  await expect(loom.getByText(`${person.firstName} stays plain until you change something here.`)).toBeVisible()
+  expect(await look()).toBe('dancer-3')
+  await loom.getByRole('button', { name: /^Line in white, 5 of 5/ }).click()
+  await loom.getByRole('button', { name: 'Remove' }).click()
+  await expect.poll(look).toEqual({ color: 'dancer-3', sett: 'P40 K16 S16 K2' })
+  // With a stripe gone, the rest still drag: the field to the end.
+  const field = loom.getByRole('button', { name: /^Field in purple, 1 of 4/ })
+  const box = (await field.boundingBox())!
+  const end = (await loom.getByRole('button', { name: /^Line in black, 4 of 4/ }).boundingBox())!
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(box.x + box.width / 2 + 20, box.y + box.height / 2, { steps: 4 })
+  await page.mouse.move(end.x + end.width + 8, end.y + end.height / 2, { steps: 8 })
+  await page.mouse.up()
+  await expect.poll(look).toEqual({ color: 'dancer-3', sett: 'K16 S16 K2 P40' })
+  // Undo all the way: back to plain purple.
+  await loom.getByRole('button', { name: 'Undo', exact: true }).click()
+  await loom.getByRole('button', { name: 'Undo', exact: true }).click()
+  await expect.poll(look).toBe('dancer-3')
+  await expect(loom.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled()
 })
 
 test('signing out clears your dancers; the next account sees only its own', async ({ page }) => {

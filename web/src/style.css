@@ -122,13 +122,15 @@
   --group-muted: oklch(0.94 0.04 240);
   --judge: oklch(0.68 0.14 300);
   --judge-muted: oklch(0.93 0.04 300);
-  /* Followed dancers' colours (see stores/dancerColors). The first five are
+  /* Followed dancers' colours (see stores/dancerColors; lib/tartan's CLOTH
+     dyes tartans in these light values in both themes). The first five are
      drawn from tartans: Royal Stewart, Black Watch, heather, MacLeod gold,
-     Saltire. White text passes AA on all of them. */
+     Saltire. Text passes AA on all of them: white, except gold, which is a
+     true gold rather than a dark mustard and takes ink (--on-dancer-4). */
   --dancer-1: #b0102c;
   --dancer-2: #1d6a48;
   --dancer-3: #6a3fa0;
-  --dancer-4: #8a5f00;
+  --dancer-4: #b5800a;
   --dancer-5: #0065bd;
   --dancer-6: #00707a;
   --dancer-7: #b0266e;
@@ -136,6 +138,7 @@
   --dancer-9: #14306b;
   /* Text and ticks on a dancer's colour. */
   --on-dancer: #ffffff;
+  --on-dancer-4: #0c0f13;
   /* The Android app injects --safe-area-inset-* (Capacitor SystemBars) for
      WebViews that don't report env() insets edge-to-edge. */
   --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top));
@@ -410,7 +413,8 @@
   right: calc(var(--chrome-right) + --spacing(--value(number)));
 }
 
-/* A dancer's colour, for bars, bands and badges (set as --dc by paint()). */
+/* A dancer's look, for bars, bands and badges (set as --dc by paint()): a
+   colour, or a tartan's cloth (a background image; see lib/tartan). */
 @utility sash {
   background: var(--dc, var(--primary));
 }

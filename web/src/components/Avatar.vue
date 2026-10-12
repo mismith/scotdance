@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { initialsOf } from '@/lib/format'
-import { inkOn, isCustomColor } from '@/stores/dancerColors'
+import { clothInk, isCloth } from '@/lib/tartan'
+import { inkOnLook } from '@/stores/dancerColors'
 
 // A person as a circle: their photo, or their initials when there isn't one
-// (or it won't load). A dancer you follow wears their colour; you yourself
-// (MeAvatar) are filled, so you hold on a highlighted row.
+// (or it won't load). A dancer you follow wears their look, a colour or a
+// tartan; you yourself (MeAvatar) are filled, so you hold on a highlighted row.
 const props = withDefaults(
   defineProps<{
     name: string
     image?: string | null
-    /** A followed dancer's colour (see useFollowing). */
+    /** A followed dancer's look, as a CSS background (see useFollowing's colorFor). */
     color?: string | null
     size?: 'xs' | 'sm' | 'lg' | 'xl'
     you?: boolean
@@ -19,6 +20,15 @@ const props = withDefaults(
 )
 
 const SIZE = { xs: 'size-8 text-xs', sm: 'size-10 text-sm', lg: 'size-16 text-xl', xl: 'size-24 text-[2rem]' }
+
+// Initials in the colour's own ink; on a tartan, white (or ink, on light
+// cloth) with a soft halo that keeps them legible over every stripe.
+const ink = computed(() => {
+  if (!props.color) return undefined
+  if (!isCloth(props.color)) return { color: inkOnLook(props.color) ?? undefined }
+  const { ink, halo } = clothInk(props.color)
+  return { color: ink, textShadow: `0 0 2px ${halo}, 0 1px 4px ${halo}` }
+})
 
 const broken = ref(false)
 watch(
@@ -42,9 +52,13 @@ watch(
     :class="[
       'flex shrink-0 items-center justify-center rounded-full font-semibold tracking-[-0.01em]',
       SIZE[size],
-      color ? 'sash text-on-dancer' : you ? 'bg-primary-fill text-primary-foreground' : 'bg-blue-paper text-primary',
+      color
+        ? 'sash'
+        : you
+          ? 'bg-primary-fill text-primary-foreground'
+          : 'bg-blue-paper text-primary',
     ]"
-    :style="color ? { '--dc': color, '--on-dancer': isCustomColor(color) ? inkOn(color) : undefined } : undefined"
+    :style="color ? { '--dc': color, ...ink } : undefined"
     aria-hidden="true"
   >
     {{ initialsOf(name) }}

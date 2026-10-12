@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
-import { ChevronDown, Star, StarOff } from '@lucide/vue'
-import Dialog from '@/components/Dialog.vue'
-import DancerColorPicker from '@/components/DancerColorPicker.vue'
+import { Star } from '@lucide/vue'
 import { useFollowing, type FollowableDancer } from '@/composables/useFollowing'
+import { toast } from '@/lib/admin/feedback'
 import { followHaptic } from '@/lib/haptics'
-import { useMorph } from '@/lib/morph'
 import { askForAlerts } from '@/components/AlertsPrompt.vue'
 
-// Follow a dancer. On their page it's a full-width button: Follow, then
-// Following, which opens a small menu with their colour and Stop following.
-// In long lists it's just the star, filled red once followed (the one mark
-// for following), so a list of 150 isn't a wall of buttons. Hidden when the
+// Follow a dancer. On their page it's a full-width button, Follow then
+// Following, and one tap either way: stopping says so with an Undo (their
+// look is kept, so following again brings it back). Their look itself is
+// chosen from their avatar or number card (DancerLookButton). In long lists
+// it's just the star, filled red once followed (the one mark for
+// following), so a list of 150 isn't a wall of buttons. Hidden when the
 // record isn't linked to a person yet (no aggregate id), since following is
 // per person, not per entry.
 defineOptions({ inheritAttrs: false })
@@ -29,15 +29,10 @@ const popping = ref(false)
 const name = computed(
   () => props.dancer.fullName ?? `${props.dancer.firstName ?? ''} ${props.dancer.lastName ?? ''}`.trim(),
 )
-const menu = useMorph()
 
 async function onClick(e: Event) {
   e.preventDefault()
   e.stopPropagation()
-  if (on.value && props.size === 'block') {
-    menu.show(e)
-    return
-  }
   const was = on.value
   await following.toggle(props.dancer)
   // A small lift and a firm tap for following; nothing for unfollowing.
@@ -48,12 +43,10 @@ async function onClick(e: Event) {
     popping.value = false
     await nextTick()
     popping.value = true
+  } else if (was && props.size === 'block' && !following.isFollowing(props.dancer)) {
+    const first = props.dancer.firstName || name.value.split(' ')[0] || 'them'
+    toast(`Stopped following ${first}`, { action: { label: 'Undo', run: () => following.setFollowing(props.dancer, true) } })
   }
-}
-
-function stop() {
-  menu.dismiss()
-  void following.setFollowing(props.dancer, false)
 }
 </script>
 
@@ -64,7 +57,6 @@ function stop() {
     type="button"
     :aria-pressed="on"
     :aria-label="`${on ? 'Following' : 'Follow'} ${name}`"
-    :aria-haspopup="on && size === 'block' ? 'dialog' : undefined"
     :class="[
       'relative inline-flex shrink-0 items-center justify-center gap-1.5 font-semibold transition-colors',
       size === 'row'
@@ -90,26 +82,6 @@ function stop() {
     />
     <template v-if="size !== 'row'">
       {{ on ? 'Following' : 'Follow' }}
-      <ChevronDown v-if="on" class="size-4 opacity-70" aria-hidden="true" />
     </template>
   </button>
-
-  <Dialog
-    v-if="size === 'block' && dancer.dancerId"
-    :open="menu.open"
-    :morph="menu"
-    variant="dropdown"
-    :aria-label="`Following ${name}`"
-    @close="menu.hide()"
-  >
-    <DancerColorPicker :dancer-id="dancer.dancerId" :dancer-name="name" class="px-3 pt-2 pb-3" />
-    <button
-      type="button"
-      class="press-row focus-inset text-destructive flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-base font-medium"
-      @click="stop"
-    >
-      <StarOff class="size-5" aria-hidden="true" />
-      Stop following
-    </button>
-  </Dialog>
 </template>

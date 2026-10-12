@@ -31,7 +31,7 @@ vi.mock('@/lib/offline', () => ({
 }))
 
 const { oncePerPerson, useFollowing } = await import('@/composables/useFollowing')
-const { inkOn, useDancerColorsStore } = await import('@/stores/dancerColors')
+const { inkOn, inkOnLook, readLook, useDancerColorsStore } = await import('@/stores/dancerColors')
 
 beforeEach(() => {
   setActivePinia(createPinia())
@@ -78,6 +78,29 @@ describe('colours', () => {
     expect(f.colorIdFor('b')).toBe('dancer-1')
   })
 
+  it('wears a tartan woven in its first colour, which takes that colour’s turn', async () => {
+    useDancerColorsStore()
+    await signIn()
+    favorites.dancers = { a: 'A', b: 'B' }
+    const tartan = { color: 'dancer-1', sett: 'P40 K16 S16 K2 T2', third: '#48a4c0' }
+    emit!({ a: tartan })
+    const f = useFollowing()
+    expect(f.lookFor('a')).toEqual(tartan)
+    expect(f.colorIdFor('a')).toBe('dancer-1')
+    expect(f.colorIdFor('b')).toBe('dancer-2')
+    // (No canvas here to weave on, so the cloth stands in as its first colour.)
+    expect(f.colorFor('a')).toBe('var(--dancer-1)')
+  })
+
+  it('ignores looks it can’t show, so those dancers get a handed-out colour', async () => {
+    useDancerColorsStore()
+    await signIn()
+    favorites.dancers = { a: 'A', b: 'B', c: 'C' }
+    emit!({ a: { color: 'dancer-3', sett: 'R40' }, b: { color: 'plaid', sett: 'P16' }, c: { color: 'dancer-3', sett: 'P16', second: 'navy' } })
+    const f = useFollowing()
+    expect(['a', 'b', 'c'].map(f.colorIdFor)).toEqual(['dancer-1', 'dancer-2', 'dancer-3'])
+  })
+
   it('wraps round when you follow more dancers than there are colours', () => {
     favorites.dancers = Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`p${i}`, `P${i}`]))
     const f = useFollowing()
@@ -90,6 +113,30 @@ describe('dancer colours store', () => {
   it('writes in ink on light colours, white on dark ones', () => {
     expect(inkOn('#ffee00')).toBe('#0c0f13')
     expect(inkOn('#1d6a48')).toBe('#ffffff')
+  })
+
+  it('reads a look: a colour, or a tartan the builder could have made', () => {
+    expect(readLook('dancer-4')).toBe('dancer-4')
+    expect(readLook('#12ab9f')).toBe('#12ab9f')
+    expect(readLook('dancer-10')).toBeNull()
+    expect(readLook({ color: 'dancer-4', sett: 'P16 K16' })).toEqual({ color: 'dancer-4', sett: 'P16 K16' })
+    expect(readLook({ color: '#12ab9f', sett: 'P16 K16', second: '#14306b' })).toEqual({ color: '#12ab9f', sett: 'P16 K16', second: '#14306b' })
+    expect(readLook({ color: 'dancer-4', sett: 'P17' })).toBeNull()
+    expect(readLook({ color: 'dancer-4' })).toBeNull()
+    expect(readLook({ color: 'dancer-4', sett: 'P16', third: 'red' })).toBeNull()
+  })
+
+  it('inks text for each kind of look: gold takes its own, cloth takes none (white with a halo)', () => {
+    expect(inkOnLook('var(--dancer-4)')).toBe('var(--on-dancer-4, var(--on-dancer))')
+    expect(inkOnLook('#ffee00')).toBe('#0c0f13')
+    expect(inkOnLook('var(--cloth-abc)')).toBeNull()
+  })
+
+  it('saves a tartan without the colours that go with the first', async () => {
+    const colors = useDancerColorsStore()
+    await signIn('u1')
+    await colors.choose('a', { color: 'dancer-2', sett: 'P16 K16', second: undefined })
+    expect(writes.map((w) => [w.path, w.value])).toEqual([['users:dancerColors/u1/a', { color: 'dancer-2', sett: 'P16 K16' }]])
   })
 
   it('saves your choice, and forgets it for the next account', async () => {

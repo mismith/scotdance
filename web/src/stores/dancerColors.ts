@@ -3,11 +3,13 @@ import { ref, watch } from 'vue'
 import { set } from 'firebase/database'
 import { dataRef } from '@/firebase'
 import { onValueSaved } from '@/lib/offline'
+import { isHex, parseSett, type Tartan } from '@/lib/tartan'
 import { useAuthStore } from './auth'
 
-// The colour you've chosen for each dancer you follow, if any
+// The look you've chosen for each dancer you follow, if any: a colour
 // (users:dancerColors/{uid}/{dancerId} = 'dancer-3', or any '#rrggbb' from the
-// system colour picker). Private to you: it's how they look in your app.
+// system colour picker) or a tartan made from one ({ color, sett, second?,
+// third? }, see lib/tartan). Private to you: it's how they look in your app.
 // Without a choice, colours are handed out in the order you followed them.
 
 export const DANCER_COLORS = [
@@ -24,9 +26,25 @@ export const DANCER_COLORS = [
 export type DancerColorId = (typeof DANCER_COLORS)[number]['id']
 /** A palette colour, or one of your own. */
 export type DancerColor = DancerColorId | `#${string}`
+/** How a followed dancer looks: one colour, or a tartan. */
+export type DancerLook = DancerColor | Tartan
 const VALID = new Set<string>(DANCER_COLORS.map((c) => c.id))
 
-export const isCustomColor = (c: string | null | undefined): c is `#${string}` => !!c && /^#[0-9a-f]{6}$/i.test(c)
+export const isCustomColor = (c: unknown): c is `#${string}` => isHex(c)
+export const isDancerColor = (c: unknown): c is DancerColor => (typeof c === 'string' && VALID.has(c)) || isHex(c)
+export const isTartan = (look: DancerLook | null | undefined): look is Tartan => typeof look === 'object' && look !== null
+/** A look's own colour: the colour itself, or a tartan's first. */
+export const baseColor = (look: DancerLook): DancerColor => (isTartan(look) ? look.color : look)
+
+/** A saved look, if it's one this app can show (anything else is ignored, so a dancer falls back to a handed-out colour). */
+export function readLook(v: unknown): DancerLook | null {
+  if (isDancerColor(v)) return v
+  if (typeof v !== 'object' || v === null) return null
+  const { color, sett, second, third } = v as Record<string, unknown>
+  if (!isDancerColor(color) || !parseSett(sett)) return null
+  if ((second !== undefined && !isHex(second)) || (third !== undefined && !isHex(third))) return null
+  return { color, sett: sett as string, ...(second ? { second } : {}), ...(third ? { third } : {}) }
+}
 
 /**
  * Text on one of your own colours: white or ink, whichever reads better
@@ -42,9 +60,26 @@ export function inkOn(hex: `#${string}`) {
   return 1.05 / (L + 0.05) >= (L + 0.05) / 0.055 ? '#ffffff' : '#0c0f13'
 }
 
+/**
+ * Text on a colour: a palette colour's own ink (light theme's gold takes dark
+ * ink; see --on-dancer-4), or white or ink for one of your own.
+ */
+export const inkFor = (color: DancerColor) =>
+  isCustomColor(color) ? inkOn(color) : `var(--on-${color}, var(--on-dancer))`
+
+/**
+ * Text on a look as useFollowing's colorFor gives it: a colour's ink, or null
+ * for a tartan's cloth (white with a halo reads on any of it).
+ */
+export function inkOnLook(bg: string): string | null {
+  if (isCustomColor(bg)) return inkOn(bg)
+  const palette = bg.match(/^var\(--(dancer-\d)\)$/)
+  return palette ? inkFor(palette[1] as DancerColorId) : bg.startsWith('var(--cloth-') ? null : 'var(--on-dancer)'
+}
+
 export const useDancerColorsStore = defineStore('dancerColors', () => {
   const auth = useAuthStore()
-  const chosen = ref<Record<string, DancerColor>>({})
+  const chosen = ref<Record<string, DancerLook>>({})
 
   let off: (() => void) | null = null
   watch(
@@ -57,10 +92,13 @@ export const useDancerColorsStore = defineStore('dancerColors', () => {
         off = onValueSaved(
           dataRef(`users:dancerColors/${uid}`),
           (snap) => {
-            const all = (snap.val() ?? {}) as Record<string, string>
-            chosen.value = Object.fromEntries(
-              Object.entries(all).filter(([, v]) => VALID.has(v) || isCustomColor(v)),
-            ) as Record<string, DancerColor>
+            const all = (snap.val() ?? {}) as Record<string, unknown>
+            const out: Record<string, DancerLook> = {}
+            for (const [id, v] of Object.entries(all)) {
+              const look = readLook(v)
+              if (look) out[id] = look
+            }
+            chosen.value = out
           },
           () => {},
         )
@@ -69,9 +107,13 @@ export const useDancerColorsStore = defineStore('dancerColors', () => {
     { immediate: true },
   )
 
-  async function choose(dancerId: string, color: DancerColor | null) {
+  async function choose(dancerId: string, look: DancerLook | null) {
     if (!auth.uid) return
-    await set(dataRef(`users:dancerColors/${auth.uid}/${dancerId}`), color)
+    // (Read back first: the database refuses undefined, so a tartan's
+    // unchosen colours are left out, and one it couldn't show isn't saved.)
+    const value = isTartan(look) ? readLook(look) : look
+    if (look && !value) return
+    await set(dataRef(`users:dancerColors/${auth.uid}/${dancerId}`), value)
   }
 
   return { chosen, choose }

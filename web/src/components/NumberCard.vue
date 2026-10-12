@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { clothInk, isCloth } from '@/lib/tartan'
+import { inkOnLook } from '@/stores/dancerColors'
 
 // The competitor number card: white paper, bold number, a band in the
-// dancer's colour, two safety pins. It shows the number for ONE competition
-// entry. A dancer has a different number at every competition, so this is
-// only ever shown in a competition's context, never as someone's identity.
+// dancer's look (a colour or their tartan), two safety pins. It shows the
+// number for ONE competition entry. A dancer has a different number at every
+// competition, so this is only ever shown in a competition's context, never
+// as someone's identity.
 const props = withDefaults(
   defineProps<{
     number: number | string | null | undefined
@@ -17,6 +20,14 @@ const props = withDefaults(
 // In long lists a plain tile reads calmer; the coloured band marks your
 // dancers, and the big sizes keep the full competitor-card look.
 const banded = computed(() => !!props.color || props.size === 'md' || props.size === 'lg' || props.size === 'xl')
+
+// The pins take the band's ink, softened: white on dark colours and cloth,
+// dark on light ones (a white-ground tartan, a pale colour of your own).
+const pinInk = computed(() => {
+  const c = props.color
+  const ink = !c ? '#ffffff' : isCloth(c) ? clothInk(c).ink : (inkOnLook(c) ?? '#ffffff')
+  return `color-mix(in oklab, ${ink} 60%, transparent)`
+})
 </script>
 
 <template>
@@ -38,29 +49,31 @@ const banded = computed(() => !!props.color || props.size === 'md' || props.size
     :aria-label="number != null ? `Number ${number}` : 'No number'"
   >
     <span v-if="banded" :class="['sash absolute inset-x-0 top-0', size === 'xs' ? 'h-1.5' : 'h-[24%]']" aria-hidden="true" />
-    <!-- The safety pins, drawn flat: a coil, the two arms and the clasp. -->
-    <span v-if="banded && size !== 'xs'" class="absolute inset-0 text-white/90" aria-hidden="true">
+    <!-- The safety pins, kept quiet so the dancer's look is the star: one soft
+         stroke for the coil, the bar and an open clasp, and the point dipping
+         under the card for a moment. -->
+    <span v-if="banded && size !== 'xs'" class="absolute inset-0" :style="{ color: pinInk }" aria-hidden="true">
       <svg
         v-for="side in ['left', 'right']"
         :key="side"
         viewBox="0 0 44 12"
         fill="none"
         stroke="currentColor"
-        stroke-width="1.75"
+        stroke-width="1.15"
         stroke-linecap="round"
         stroke-linejoin="round"
         :class="[
           'absolute',
-          side === 'left' ? '-rotate-12' : 'rotate-12 -scale-x-100',
-          size === 'xl' ? `top-2 w-12 ${side === 'left' ? 'left-3.5' : 'right-3.5'}`
-          : size === 'lg' ? `top-1.5 w-9 ${side === 'left' ? 'left-2.5' : 'right-2.5'}`
-          : size === 'md' ? `top-1 w-6 ${side === 'left' ? 'left-1.5' : 'right-1.5'}`
-          : `top-0.5 w-4 ${side === 'left' ? 'left-1' : 'right-1'}`,
+          side === 'left' ? '-rotate-10' : 'rotate-10 -scale-x-100',
+          size === 'xl' ? `top-2 w-9 ${side === 'left' ? 'left-3' : 'right-3'}`
+          : size === 'lg' ? `top-1.5 w-7 ${side === 'left' ? 'left-2.5' : 'right-2.5'}`
+          : size === 'md' ? `top-1 w-5 ${side === 'left' ? 'left-1.5' : 'right-1.5'}`
+          : `top-0.5 w-3.5 ${side === 'left' ? 'left-1' : 'right-1'}`,
         ]"
       >
-        <circle cx="5" cy="6" r="3" />
-        <path d="M8 4.2H35M7.6 7.8H33" />
-        <path d="M34 2.6h5.4a1.6 1.6 0 0 1 1.6 1.6v3.6a1.6 1.6 0 0 1-1.6 1.6H34z" />
+        <circle cx="4.8" cy="6" r="2.4" />
+        <path d="M4.8 3.6 34.5 3.7M4.8 8.4 13 8.3M26 8.1 34.5 7.8" />
+        <rect x="34.5" y="2.6" width="6" height="6.6" rx="1.8" />
       </svg>
     </span>
     <!-- The number, or a caller's own rendering of it (search shows the typed digits bolder). -->

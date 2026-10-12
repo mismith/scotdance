@@ -178,7 +178,7 @@ components:
 
 The best seat at a Highland dance competition is at the edge of the platform: close enough to see every step, calm enough to follow your own dancer through a long, loud day. The app is that seat. Everything a family needs (when their dancer is on, where, and how they placed) sits at a glance, and nothing stands between them and the dancing. It is native and calm: a well-made phone app, not a website, with quiet paper surfaces, one confident blue, and rich detail kept for touch and state.
 
-Density follows the visitor. The public app is spacious and glanceable for one-handed use in sun and noise; Manage is the same system, tighter, for an organiser at a laptop. Colour is news, not decoration: pink means something is live right now, green means done, amber (in Manage) means what needs the organiser next, and each followed dancer carries their own colour everywhere they appear.
+Density follows the visitor. The public app is spacious and glanceable for one-handed use in sun and noise; Manage is the same system, tighter, for an organiser at a laptop. Colour is news, not decoration: pink means something is live right now, green means done, amber (in Manage) means what needs the organiser next, and each followed dancer carries their own look (a colour, or a tartan woven in it) everywhere they appear.
 
 **Key Characteristics:**
 - Atkinson Hyperlegible everywhere, rem-based so the phone's text size (in the app) and browser zoom scale it all.
@@ -212,7 +212,7 @@ One confident blue for action, a Scottish red kept for favourites, and a small s
 
 State papers: **Next Amber** (#ffefc7, ink #7a4600), in Manage only, for what needs the organiser next (a "?" placing, the next section). Families' screens don't guess what's on next: plenty of competitions post nothing until the end, so upcoming dances show their schedule facts instead; **Done Green** (#ddf2e2, ink #145c2b) for finished; **Blue Paper** (#e1ecf8) for tonal buttons and the current sidebar row; **Destructive** (#b42318) for deleting.
 
-Dancer colours: nine saturated hues (red, green, purple, ochre, blue, teal, magenta, orange, navy), all 4.5:1 with white text, assigned per followed dancer and used for their number card band, dots and bars.
+Dancer colours: nine saturated hues (red, green, purple, gold, blue, teal, magenta, orange, navy), assigned per followed dancer and used for their number card band, avatar, dots and bars. All hold 3:1 as a dot or bar on the page and take white text at 4.5:1, except gold: a true gold rather than a dark mustard, so text on it in the light theme takes ink (`--on-dancer-4`). A follower can weave any of them into a tartan (lib/tartan.ts): the cloth fills the band, avatar and bars in place of the flat colour, dyed in the light palette in both themes; a dot too small for cloth shows its first colour. Initials on cloth are white with a soft halo, or ink with a light halo on light cloth.
 
 **The Colour Is News Rule.** Pink, amber and green appear only when they report a state (live, next in Manage, done). A screen with nothing happening is blue, ink and paper. Finished or out-of-the-running things are muted by colour and say so in words, never faded with opacity.
 
@@ -285,7 +285,7 @@ Every rounded shape uses continuous corners (`corner-shape: superellipse(1.5)`),
 - **Error:** 1.5px destructive edge; the message is a full sentence below.
 
 ### Profile Hero
-A person's or place's page (dancer, judge, piper, venue) opens centred, as a competition dancer's page does under their number card: a 96px avatar (initials in the dancer's colour when followed) or the venue's map pin tile, the name at Display size, one line of who or where, then Follow (or Favourite) at a button's width. Outside a competition there is no number card; inside a dancer's history each competition row shows the number they wore there as a small card, then their rosettes.
+A person's or place's page (dancer, judge, piper, venue) opens centred, as a competition dancer's page does under their number card: a 96px avatar (initials on the dancer's colour or tartan when followed, with a palette badge: tap it to choose their look) or the venue's map pin tile, the name at Display size, one line of who or where, then Follow (or Favourite) at a button's width. Outside a competition there is no number card; inside a dancer's history each competition row shows the number they wore there as a small card, then their rosettes.
 
 ### Navigation
 - **Tab bar:** a floating glass capsule at the bottom on phones (Home, Competitions, Search, More); inside a competition it swaps to that competition's tabs with a round "leave" button beside it. The current tab sits on a quiet pill.
@@ -296,10 +296,10 @@ A person's or place's page (dancer, judge, piper, venue) opens centred, as a com
 A small calendar page leading a competition row: month, day, weekday (or year). Slate Wash at rest, Live Paper and Live Pink while it's on; an outlined blue shield badge in its corner when you organise that competition.
 
 ### Competitor Number Card (signature)
-The bib a dancer wears: bold tabular number on white paper, a band in the followed dancer's colour, two safety pins drawn flat in one stroke (coil, arms, clasp). Only ever shown inside a competition, never as someone's identity. Sizes run from a 44px list tile (plain, no band or pins unless the dancer is followed) to the 88px card that leads a dancer's day and the 176px poster-size card that leads a competition dancer's page.
+The bib a dancer wears: bold tabular number on white paper, a band in the followed dancer's look, two quiet safety pins in one thin, soft stroke of the band's ink (coil, bar, an open clasp, and the point dipping under the card) so the colour or tartan stays the star. Only ever shown inside a competition, never as someone's identity. Sizes run from a 44px list tile (plain, no band or pins unless the dancer is followed) to the 88px card that leads a dancer's day and the 176px poster-size card that leads a competition dancer's page.
 
 ### Dancer Day Card (signature)
-**The Number Card:** the bib your dancer wears is the hero object. Each followed dancer's card on Home and a competition's Overview is paper at 1.25rem (20px) continuous corners, one step rounder than an ordinary card, and leads with their 88px number card, name (1.25rem bold) and age group. Placings pin on as 48px-tall rosettes in a row (beside the name when the card is 34rem wide or more, under it on a phone), Overall set apart by a hairline with its label, then 2rem capsule chips (taller than the usual chip, to sit level with the rosettes) for callbacks, championship points and "Results to come". The dances still to come sit at the foot, each with "From" its event's or session's start time, platform and draw right-aligned in tabular figures. Dancer colour lives only on the bib's band.
+**The Number Card:** the bib your dancer wears is the hero object. Each followed dancer's card on Home and a competition's Overview is paper at 1.25rem (20px) continuous corners, one step rounder than an ordinary card, and leads with their 88px number card, name (1.25rem bold) and age group. Placings pin on as 48px-tall rosettes in a row (beside the name when the card is 34rem wide or more, under it on a phone), Overall set apart by a hairline with its label, then 2rem capsule chips (taller than the usual chip, to sit level with the rosettes) for callbacks, championship points and "Results to come". The dances still to come sit at the foot, each with "From" its event's or session's start time, platform and draw right-aligned in tabular figures. Dancer colour (or tartan) lives only on the bib's band.
 
 ### Rosettes
 A placing is a rosette, one blue for every place, its dance named only in its spoken label ("Highland Fling: 1st place, tied"); the dancer's page lists each dance by name. A championship point is a blue-paper chip, shown as a result, not as a miss.

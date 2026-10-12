@@ -9,6 +9,7 @@ import { useFollowing } from '@/composables/useFollowing'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import DancerDayCard from '@/components/DancerDayCard.vue'
+import DancerLookButton from '@/components/DancerLookButton.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import Skeleton from '@/components/Skeleton.vue'
@@ -76,7 +77,16 @@ const fresh = computed(() => {
     <template v-else>
       <!-- Their number card at poster size: the bib they're wearing today. -->
       <header :ref="setHeader" class="flex flex-col items-center pt-2 text-center">
-        <NumberCard :number="dancer.number" :color="color" size="xl" />
+        <DancerLookButton
+          v-if="dancer.dancerId"
+          :dancer-id="dancer.dancerId"
+          :name="dancer.fullName"
+          :label="dancer.number != null ? `Number ${dancer.number}` : undefined"
+          shape="card"
+        >
+          <NumberCard :number="dancer.number" :color="color" size="xl" />
+        </DancerLookButton>
+        <NumberCard v-else :number="dancer.number" :color="color" size="xl" />
         <h1 class="text-display mt-5">{{ dancer.fullName }}</h1>
         <p class="text-muted-foreground text-callout mt-1">
           {{ [dancer.group?.fullName, dancer.location].filter(Boolean).join(' · ') }}

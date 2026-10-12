@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import { Star } from '@lucide/vue'
 import { useFollowing } from '@/composables/useFollowing'
 import { useHiddenAs } from '@/composables/useHiddenAs'
+import { solidOf } from '@/lib/tartan'
 import VisibilityChip from '@/components/VisibilityChip.vue'
 import type { CompetitionChoice } from './choices'
 
@@ -33,7 +34,7 @@ const hidden = computed(() => hiddenAs(props.choice.id, props.choice.competition
             v-for="x in choice.dancers.slice(0, 4)"
             :key="x.id"
             class="size-2.5 rounded-full"
-            :style="{ background: following.colorFor(x.id) ?? 'var(--primary)' }"
+            :style="{ background: solidOf(following.colorFor(x.id)) ?? 'var(--primary)' }"
           />
         </span>
         <span class="truncate">{{ choice.dancers.map((x) => x.name).join(', ') }}</span>
