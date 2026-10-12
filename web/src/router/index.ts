@@ -212,7 +212,8 @@ const routes: RouteRecordRaw[] = [
     path: '/competitions/submit',
     name: 'competitions.submit',
     component: () => import('@/views/competitions/Submit.vue'),
-    meta: { title: 'Submit a competition' },
+    // One question at a time, with its own button at the foot instead of the tab bar.
+    meta: { title: 'Add a competition', ownsBottomNav: true },
   },
   {
     path: '/competitions/:competitionId/invites/:inviteId',

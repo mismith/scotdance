@@ -128,7 +128,7 @@ watch(() => route.hash, applyHash)
             :to="{ name: 'competitions.submit' }"
             class="bg-blue-paper text-primary press inline-flex h-11 items-center gap-2 rounded-full px-4 text-base font-semibold"
           >
-            <SquarePlus class="size-5" /> Submit a competition
+            <SquarePlus class="size-5" /> Add a competition
           </RouterLink>
         </div>
       </section>

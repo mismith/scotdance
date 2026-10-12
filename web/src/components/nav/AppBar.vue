@@ -9,7 +9,8 @@ import TopBackButton from '@/components/nav/TopBackButton.vue'
 // Back button (when there's somewhere to go back to), or whatever the page
 // puts in the `leading` slot (Home: the ScotDance.app name). Middle: a small title
 // (and optional subtitle) that appears once the page's own big title has
-// scrolled away, or always when `showTitle` says so. Right: the page's own
+// scrolled away, or always when `showTitle` says so (or the page's own
+// `middle`, instead). Right: the page's own
 // actions (the `actions` slot), then your account, on every page.
 // The small title comes and goes the same way everywhere: it slides out from
 // behind the back button (where there is one) as it fades in. Through a page
@@ -29,7 +30,17 @@ withDefaults(
     /** Back as just a chevron, so the title has the room (a competition's pages). */
     compactBack?: boolean
   }>(),
-  { title: null, subtitle: null, showTitle: false, scrolled: undefined, wide: false, back: true, fallback: undefined, exit: null, compactBack: false },
+  {
+    title: null,
+    subtitle: null,
+    showTitle: false,
+    scrolled: undefined,
+    wide: false,
+    back: true,
+    fallback: undefined,
+    exit: null,
+    compactBack: false,
+  },
 )
 
 const scrollTop = () => {
@@ -39,31 +50,57 @@ const scrollTop = () => {
 </script>
 
 <template>
-  <nav aria-label="Page" class="fixed inset-x-chrome-0 top-0 z-30 pt-(--safe-top) [view-transition-name:appbar]" :data-scrolled="scrolled ?? showTitle">
+  <nav
+    aria-label="Page"
+    class="inset-x-chrome-0 fixed top-0 z-30 pt-(--safe-top) [view-transition-name:appbar]"
+    :data-scrolled="scrolled ?? showTitle"
+  >
     <div
-      class="from-background absolute inset-x-0 top-0 -z-10 h-[calc(100%+1.25rem)] bg-linear-to-b from-[calc(100%-1.25rem)] to-transparent backdrop-blur-sm [mask-image:linear-gradient(to_bottom,black_calc(100%-1.25rem),transparent)]"
+      class="from-background absolute inset-x-0 top-0 -z-10 h-[calc(100%+1.25rem)] bg-linear-to-b from-[calc(100%-1.25rem)] to-transparent [mask-image:linear-gradient(to_bottom,black_calc(100%-1.25rem),transparent)] backdrop-blur-sm"
       aria-hidden="true"
     />
-    <div :class="['@container mx-auto flex h-14 items-center gap-2 px-3', wide ? 'max-w-none' : 'appbar-row']">
-      <TopBackButton v-if="back" :fallback="fallback" :exit="exit" :compact="compactBack" />
+    <div
+      :class="[
+        '@container mx-auto flex h-14 items-center gap-2 px-3',
+        wide ? 'max-w-none' : 'appbar-row',
+      ]"
+    >
+      <TopBackButton
+        v-if="back"
+        :fallback="fallback"
+        :exit="exit"
+        :compact="compactBack"
+      />
       <slot name="leading" />
-      <button
-        type="button"
-        :class="[
-          'min-w-0 flex-1 text-left transition-[opacity,translate] duration-(--dur-base) ease-standard',
-          showTitle && title ? 'opacity-100' : 'pointer-events-none -translate-x-3 opacity-0',
-        ]"
-        :tabindex="showTitle && title ? 0 : -1"
-        :aria-hidden="showTitle && title ? undefined : 'true'"
-        @click="scrollTop"
-      >
-        <span
-          :class="['block truncate font-semibold', subtitle ? 'text-callout leading-tight' : 'text-[1.0625rem]']"
+      <!-- Or the page's own middle, instead of the small title (Add a competition's progress). -->
+      <slot name="middle">
+        <button
+          type="button"
+          :class="[
+            'ease-standard min-w-0 flex-1 text-left transition-[opacity,translate] duration-(--dur-base)',
+            showTitle && title
+              ? 'opacity-100'
+              : 'pointer-events-none -translate-x-3 opacity-0',
+          ]"
+          :tabindex="showTitle && title ? 0 : -1"
+          :aria-hidden="showTitle && title ? undefined : 'true'"
+          @click="scrollTop"
         >
-          {{ title }}
-        </span>
-        <span v-if="subtitle" class="text-muted-foreground block truncate text-xs font-medium">{{ subtitle }}</span>
-      </button>
+          <span
+            :class="[
+              'block truncate font-semibold',
+              subtitle ? 'text-callout leading-tight' : 'text-[1.0625rem]',
+            ]"
+          >
+            {{ title }}
+          </span>
+          <span
+            v-if="subtitle"
+            class="text-muted-foreground block truncate text-xs font-medium"
+            >{{ subtitle }}</span
+          >
+        </button>
+      </slot>
       <div class="flex shrink-0 items-center gap-1.5">
         <slot name="actions" />
         <!-- On wide screens your account is at the foot of the sidebar. -->

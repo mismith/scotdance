@@ -1,7 +1,7 @@
 {
   "Name": "Submission received",
   "Alias": "submission-received",
-  "Subject": "Thanks for submitting {{ competition.name }}",
+  "Subject": "Thanks for adding {{ competition.name }}",
   "TemplateType": "Standard",
   "LayoutTemplate": "scotdance",
   "TestRenderModel": {

@@ -18,7 +18,12 @@ import {
 // Escape puts it back); without, it's a plain v-model (as in Submit).
 
 const model = defineModel<string | null | undefined>({ default: '' })
-const props = defineProps<{ save?: (value: string) => unknown }>()
+const props = defineProps<{
+  save?: (value: string) => unknown
+  /** Only places in these countries (ISO, e.g. ['CA']). */
+  regionCodes?: string[]
+  placeholder?: string
+}>()
 const emit = defineEmits<{ pick: [fields: VenueFields] }>()
 
 const id = useId()
@@ -50,7 +55,7 @@ async function search(q: string) {
   }
   loading.value = true
   try {
-    const found = await fetchVenueSuggestions(q)
+    const found = await fetchVenueSuggestions(q, props.regionCodes)
     if (mine !== latest) return
     results.value = found
     searchError.value = null
@@ -149,7 +154,7 @@ function onBlur() {
           :aria-invalid="!!saved?.error.value || undefined"
           :disabled="saved?.locked.value"
           autocomplete="off"
-          placeholder="e.g. Telus Convention Centre"
+          :placeholder="placeholder ?? 'e.g. Telus Convention Centre'"
           :class="[
             'h-12 w-full rounded-xl pr-10 pl-3 text-base',
             saved?.locked.value

@@ -1,93 +1,120 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue'
-import { ChevronLeft, ChevronRight, Plus, Send, X } from '@lucide/vue'
+import { ChevronLeft, ChevronRight, Plus, Send } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import Button from '@/components/ui/Button.vue'
 import Checkbox from '@/components/ui/Checkbox.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import FormInput from '@/components/admin/FormInput.vue'
-import StepNav from '@/components/submit/StepNav.vue'
+import CountryPicker from '@/components/submit/CountryPicker.vue'
+import DayPicker from '@/components/submit/DayPicker.vue'
 import SentMark from '@/components/submit/SentMark.vue'
-import SubmitOverview from '@/components/submit/SubmitOverview.vue'
-import VenueField from '@/components/admin/VenueField.vue'
+import SubmitIntro from '@/components/submit/SubmitIntro.vue'
+import VenueStep from '@/components/submit/VenueStep.vue'
 import OrganisationMark from '@/components/OrganisationMark.vue'
 import OrganisationPicker from '@/components/OrganisationPicker.vue'
+import { useLocationFilter } from '@/composables/useLocationFilter'
 import { useOrganisations } from '@/composables/useOrganisations'
-import { useMorph } from '@/lib/morph'
-import { organisationLabel, type OrganisationListItem } from '@/types/organisation'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { useScrolledPast } from '@/composables/useScrolledPast'
 import { friendlyError, newKey, write } from '@/lib/admin/write'
 import { formatLongDate } from '@/lib/format'
-import { placesAvailable, type VenueFields } from '@/lib/maps'
+import { guessUserCountry } from '@/lib/locale'
+import { type VenuePlace } from '@/lib/maps'
+import { useMorph } from '@/lib/morph'
 import { moveInPlace } from '@/lib/navMotion'
+import {
+  countryChoice,
+  defaultCountry,
+  nameExample,
+  registrationHint,
+} from '@/lib/submitCountries'
+import { type OrganisationListItem } from '@/types/organisation'
 import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 
-// Organisers ask for their competition to be added: an overview, then a few
-// questions at a time. Once it's approved they get access to manage it, and
-// an email saying so. Signed in only: they manage it from the same account,
-// and the venue search (billed per use) isn't for passers-by.
+// Organisers ask for their competition to be added, one question at a time
+// (ADR 0010): an intro, then a slide per question, each with one button at
+// its foot (Continue; Skip on an optional one until it's answered), then a
+// last look and Send. Once it's approved they manage it, and get an email
+// saying so. Signed in only: they manage it from the same account, and the
+// venue search (billed per use) isn't for passers-by.
 
-usePageTitle(['Submit a competition'])
+usePageTitle(['Add a competition'])
 const auth = useAuthStore()
 const me = useMeStore()
+const filter = useLocationFilter()
 
 const blank = () => ({
-  name: '',
+  country: null as string | null,
   date: '',
+  name: '',
   venue: '',
   address: '',
   location: '',
   sobhd: '',
-  description: '',
   contactName: '',
   message: '',
   agree: false,
 })
 const form = reactive(blank())
-type Field = keyof typeof form
-const errors = reactive<Partial<Record<Field, string | null>>>({})
-
-// Choosing the venue from its suggestions also puts the competition on the
-// map and in "near me" once it's approved. A bare address has no name: it
-// goes in the address field instead.
-const place = ref<Pick<VenueFields, 'lat' | 'lng' | 'country' | 'region' | 'locality'> | null>(null)
-function pickVenue({ venue, address, location, ...rest }: VenueFields) {
-  form.venue = venue ?? ''
-  if (address) form.address = address
-  if (location) form.location = location
-  place.value = rest
-}
+// Where the venue search put it, when the venue was picked from it.
+const place = ref<VenuePlace | null>(null)
+// The country Competitions is showing (or the phone's), to start on.
+const startingCountry = () =>
+  defaultCountry(filter.country.value ?? guessUserCountry(), filter.region.value)
 
 // The organisations it's run by or part of: ones already on ScotDance.app
-// (yours first; any other is checked when it's approved), or new ones,
+// (any; yours first, any other is checked when it's approved), or new ones,
 // made when it's approved, with you as their admin.
 const orgs = useOrganisations()
-const hosts = reactive({ ids: [] as string[], fresh: [] as Array<{ name: string; shortName: string }> })
+const hosts = reactive({
+  ids: [] as string[],
+  fresh: [] as Array<{ name: string; shortName: string }>,
+  offered: false,
+})
 const pickingOrg = useMorph()
 const chosenOrgs = computed(() => [
   ...hosts.ids.flatMap((id) => {
     const org = orgs.byId.value.get(id)
     return org ? [{ key: id, org, fresh: false }] : []
   }),
-  ...hosts.fresh.map((org, i) => ({ key: `new-${i}`, org: { ...org, image: null, location: null }, fresh: true })),
+  ...hosts.fresh.map((org, i) => ({
+    key: `new-${i}`,
+    org: { ...org, image: null, location: null },
+    fresh: true,
+  })),
 ])
-// One tap, right under the name, for any organisation it mentions ("CHDA
-// Fall Competition": by short name or full name, as whole words). Yours come
-// first in the picker.
-const words = (s?: string | null) => ` ${(s ?? '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim()} `
-const quickOrgs = computed(() => {
+// Any the name mentions ("CHDA Fall Competition": by short name or full
+// name, as whole words), then yours: one tap each.
+const words = (s?: string | null) =>
+  ` ${(s ?? '')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim()} `
+const mentioned = computed(() => {
   const name = words(form.name)
-  return orgs.organisations.value.filter(
-    (o) => !hosts.ids.includes(o.id) && [o.shortName, o.name].some((s) => words(s).trim().length >= 3 && name.includes(words(s))),
+  return orgs.organisations.value.filter((o) =>
+    [o.shortName, o.name].some(
+      (s) => words(s).trim().length >= 3 && name.includes(words(s)),
+    ),
   )
+})
+const suggestedOrgs = computed(() => {
+  const mine = orgs.organisations.value.filter((o) =>
+    me.managedOrganisationIds.includes(o.id),
+  )
+  return [
+    ...new Map([...mentioned.value, ...mine].map((o) => [o.id, o])).values(),
+  ].filter((o) => !hosts.ids.includes(o.id))
 })
 function addHost(org: OrganisationListItem) {
   if (!hosts.ids.includes(org.id)) hosts.ids.push(org.id)
 }
 function addFreshHost(org: { name: string; shortName: string }) {
-  const known = orgs.organisations.value.find((o) => o.name?.trim().toLowerCase() === org.name.trim().toLowerCase())
+  const known = orgs.organisations.value.find(
+    (o) => o.name?.trim().toLowerCase() === org.name.trim().toLowerCase(),
+  )
   if (known) addHost(known)
   else hosts.fresh.push(org)
 }
@@ -95,119 +122,153 @@ function removeHost(key: string) {
   if (key.startsWith('new-')) hosts.fresh.splice(Number(key.slice(4)), 1)
   else hosts.ids = hosts.ids.filter((id) => id !== key)
 }
+// The first time there: ticked already when the name says which, or when
+// you run just the one.
+function offerOrgs() {
+  if (hosts.offered) return
+  hosts.offered = true
+  if (hosts.ids.length || hosts.fresh.length) return
+  const mine = orgs.organisations.value.filter((o) =>
+    me.managedOrganisationIds.includes(o.id),
+  )
+  for (const org of mentioned.value.length
+    ? mentioned.value
+    : mine.length === 1
+      ? mine
+      : [])
+    addHost(org)
+}
 
-// Optional bits stay tucked away until asked for (or already filled in).
-const adding = reactive({ sobhd: false, description: false, message: false })
+// --- The slides
 
-// What each step asks (in short, for the overview) and says at its top.
-const STEPS = [
-  {
-    title: 'Details',
-    asks: 'Name and date',
-    lead: 'The competition’s name and date, as dancers and families will see them.',
-  },
-  {
-    title: 'Venue',
-    asks: 'Where it’s held',
-    lead: 'If it isn’t settled yet, the town or city is enough.',
-  },
-  {
-    title: 'Contact',
-    asks: 'Your name, kept private',
-    lead: 'Only used to contact you about this submission. None of it is shown publicly.',
-  },
-  {
-    title: 'Review',
-    asks: 'A last look before sending',
-    lead: 'Make sure it all looks right. You can change any of it once it’s approved.',
-  },
-]
-const REQUIRED: Array<Array<[Field, string]>> = [
-  [
-    ['name', 'Add the competition’s name.'],
-    ['date', 'Add the date.'],
-  ],
-  [['location', 'Add the town or city.']],
-  [['contactName', 'Add your name.']],
-  [['agree', 'Tick this to continue.']],
-]
-// The overview comes first, then the steps.
-const started = ref(false)
-const step = ref(0)
-const heading = ref<HTMLElement | null>(null)
-// Which way the steps move: forward slides in from the right, back from the left.
+const SLIDES = [
+  'country',
+  'date',
+  'name',
+  'organisation',
+  'venue',
+  'registration',
+  'contact',
+  'review',
+] as const
+type Slide = (typeof SLIDES)[number]
+const OPTIONAL: ReadonlySet<Slide> = new Set(['organisation', 'registration'])
+const answered: Record<Slide, () => boolean> = {
+  country: () => !!form.country,
+  date: () => /^\d{4}-\d{2}-\d{2}$/.test(form.date),
+  name: () => !!form.name.trim(),
+  organisation: () => chosenOrgs.value.length > 0,
+  venue: () => !!form.location.trim(),
+  registration: () => !!form.sobhd.trim(),
+  contact: () => !!form.contactName.trim(),
+  review: () => form.agree,
+}
+const MISSING: Partial<Record<Slide, string>> = {
+  country: 'Pick a country to continue.',
+  date: 'Pick a date to continue.',
+  name: 'Add its name to continue.',
+  venue: 'Add the town or city to continue.',
+  contact: 'Add your name to continue.',
+  review: 'Tick this to send it.',
+}
+
+// Null is the intro.
+const at = ref<Slide | null>(null)
+const index = computed(() => (at.value ? SLIDES.indexOf(at.value) : -1))
+// Changing an answer from the last look comes straight back to it.
+const returning = ref(false)
+const error = ref<string | null>(null)
+// Which way the slides move: forward slides in from the right, back from the left.
 const direction = ref<1 | -1>(1)
-
-const filled = (k: Field) => (k === 'agree' ? form.agree : !!String(form[k]).trim())
-const complete = (s: number) => REQUIRED[s].every(([k]) => filled(k))
-function clearErrors() {
-  for (const k of Object.keys(errors) as Field[]) errors[k] = null
-}
-// A message goes as soon as it's dealt with.
-watch(form, () => {
-  for (const k of Object.keys(errors) as Field[]) if (errors[k] && filled(k)) errors[k] = null
-})
-
-function add(key: keyof typeof adding) {
-  adding[key] = true
-  void nextTick(() => document.querySelector<HTMLElement>(`main [data-field="${key}"] :is(input, textarea)`)?.focus())
-}
+const heading = ref<HTMLElement | null>(null)
+const venueStep = ref<InstanceType<typeof VenueStep> | null>(null)
 
 const sending = ref(false)
 const sent = ref(false)
 const sendError = ref<string | null>(null)
-// Until they start (or while signed out), the overview shows instead of a step.
-const overview = computed(() => auth.authReady && !sent.value && (!auth.isSignedIn || !started.value))
 
-async function go(to: number) {
-  clearErrors()
+// An answer clears what was said about it being missing.
+watch([form, hosts], () => {
+  if (error.value && at.value && answered[at.value]()) error.value = null
+})
+
+function go(to: Slide | null) {
+  error.value = null
   sendError.value = null
-  restored.value = false
-  started.value = true
-  direction.value = to < step.value ? -1 : 1
-  step.value = to
+  const from = index.value
+  const dest = to ? SLIDES.indexOf(to) : -1
+  direction.value = dest < from ? -1 : 1
+  if (to === 'organisation') offerOrgs()
+  at.value = to
   window.scrollTo({ top: 0 })
-  await nextTick()
-  heading.value?.focus()
 }
 
-// What's missing on a step, said beside each field.
-async function flag(s: number) {
-  for (const [k, message] of REQUIRED[s]) errors[k] = filled(k) ? null : message
-  await nextTick()
-  document.querySelector<HTMLElement>('main [aria-invalid="true"]')?.focus()
+// Once a slide is in: its question has focus, for screen readers. With a
+// mouse and keyboard (no on-screen keyboard to cover the page), the box to
+// type in does instead.
+function settled() {
+  const typing =
+    matchMedia('(pointer: fine)').matches &&
+    document.querySelector<HTMLElement>(
+      '[data-slide] :is(input[type=text], input:not([type]), textarea)',
+    )
+  ;(typing || heading.value)?.focus()
 }
 
-// Back always works. Forward checks each step on the way, as Next does, and
-// stops at the first with something missing.
-async function jump(to: number) {
-  let at = to
-  for (let s = step.value; s < to; s++) {
-    if (!complete(s)) {
-      at = s
-      break
-    }
+async function flag() {
+  error.value = (at.value && MISSING[at.value]) ?? null
+  await nextTick()
+  document.querySelector<HTMLElement>('[data-slide] [aria-invalid="true"]')?.focus()
+}
+
+function advance() {
+  // Enter in a sheet's search (another country, an organisation) is that
+  // sheet's, not a nudge on to the next question.
+  if (document.activeElement?.closest('dialog')) return
+  if (!at.value) return start()
+  if (at.value === 'review') return send()
+  if (at.value === 'venue') venueStep.value?.settle()
+  if (!OPTIONAL.has(at.value) && !answered[at.value]()) return flag()
+  if (returning.value) {
+    returning.value = false
+    return go('review')
   }
-  if (at !== step.value) await go(at)
-  if (at < to) await flag(at)
+  go(SLIDES[index.value + 1])
 }
 
-async function next() {
-  if (step.value < STEPS.length - 1) return jump(step.value + 1)
-  // Sending checks every step, not just the review: a draft can reopen here
-  // with something since gone missing. It goes back to the first that is.
-  const missing = STEPS.findIndex((_, s) => !complete(s))
-  if (missing === -1) return submit()
-  if (missing !== step.value) await go(missing)
-  await flag(missing)
+function previous() {
+  if (returning.value) {
+    returning.value = false
+    return go('review')
+  }
+  go(index.value > 0 ? SLIDES[index.value - 1] : null)
 }
 
-async function submit() {
+function change(slide: Slide) {
+  returning.value = true
+  go(slide)
+}
+
+// Sending checks every answer, not just the last look: a draft can reopen
+// with something since gone missing. It goes back to the first that is.
+async function send() {
+  const missing = SLIDES.find((s) => s !== 'review' && !OPTIONAL.has(s) && !answered[s]())
+  if (missing) {
+    returning.value = true
+    go(missing)
+    await nextTick()
+    return flag()
+  }
+  if (!form.agree) return flag()
   // A double tap sends it once.
   if (sending.value || sent.value) return
   sending.value = true
   sendError.value = null
   const t = (v: string) => v.trim() || null
+  const where = form.country ? countryChoice(form.country) : null
+  const picked = Object.fromEntries(
+    Object.entries(place.value ?? {}).filter(([, v]) => v != null),
+  )
   try {
     // Through write(), which says so when offline rather than waiting for signal.
     await write({
@@ -219,19 +280,38 @@ async function submit() {
           address: t(form.address),
           location: t(form.location),
           sobhd: t(form.sobhd),
-          description: t(form.description),
-          ...place.value,
+          // The country asked, as the venue search would put it, unless
+          // the venue was picked from it.
+          ...(where && {
+            country: where.iso,
+            ...(where.region && { region: where.region }),
+          }),
+          ...picked,
         },
-        contact: { name: t(form.contactName), email: me.email, message: t(form.message), disclaimer: true },
+        contact: {
+          name: t(form.contactName),
+          email: me.email,
+          message: t(form.message),
+          disclaimer: true,
+        },
         // Only when chosen, so a submission without any is as it always was.
-        ...(hosts.ids.length && { organisations: Object.fromEntries(hosts.ids.map((id) => [id, true])) }),
-        ...(hosts.fresh.length && { newOrganisations: Object.fromEntries(hosts.fresh.map((o) => [newKey(), { name: o.name, shortName: o.shortName || null }])) }),
+        ...(hosts.ids.length && {
+          organisations: Object.fromEntries(hosts.ids.map((id) => [id, true])),
+        }),
+        ...(hosts.fresh.length && {
+          newOrganisations: Object.fromEntries(
+            hosts.fresh.map((o) => [
+              newKey(),
+              { name: o.name, shortName: o.shortName || null },
+            ]),
+          ),
+        }),
         submitted: new Date().toISOString(),
         // Emails about it are v4's, linking back here (functions/src/utility/emailModel.ts).
         origin: window.location.origin,
       },
     })
-    // On to "Submitted", as a page would go.
+    // On to "Sent", as a page would go.
     moveInPlace({ way: 'forward', axis: 'x' }, () => {
       sent.value = true
       window.scrollTo({ top: 0 })
@@ -244,40 +324,100 @@ async function submit() {
   }
 }
 
-// The next one is often at the same venue: that (and you) stay.
+// The next one is often at the same venue, run by the same people: that
+// (and you) stay.
 function another() {
-  Object.assign(form, { name: '', date: '', sobhd: '', description: '', message: '', agree: false })
-  Object.assign(adding, { sobhd: false, description: false, message: false })
+  Object.assign(form, { name: '', date: '', sobhd: '', message: '', agree: false })
+  returning.value = false
   moveInPlace({ way: 'swap', axis: 'x' }, () => {
     sent.value = false
-    return go(0)
+    go('date')
   })
 }
 
-const summary = computed(() =>
-  [
-    { step: 0, title: 'Details', lines: [form.name, formatLongDate(form.date), form.sobhd && `Registration: ${form.sobhd}`] },
-    { step: 0, title: 'Description', lines: [form.description] },
-    { step: 1, title: 'Venue', lines: [form.venue, form.address, form.location] },
-    { step: 2, title: 'Contact', lines: [form.contactName, me.email] },
-    { step: 2, title: 'Message', lines: [form.message] },
-    { step: 0, title: 'Organisations', lines: chosenOrgs.value.map((h) => (h.fresh ? `${h.org.name} (new: you’ll be its admin)` : h.org.name ?? '')) },
-  ]
-    .map((s) => ({ ...s, lines: s.lines.map((l) => (l || '').trim()).filter(Boolean) }))
-    .filter((s) => s.lines.length),
-)
+// The one button at the foot: what it says, and how loudly.
+const action = computed(() => {
+  if (!at.value)
+    return {
+      label: !auth.isSignedIn
+        ? 'Sign in to start'
+        : resumeAt.value
+          ? 'Pick up where you left off'
+          : 'Start',
+      variant: 'primary' as const,
+    }
+  if (at.value === 'review')
+    return { label: 'Send', variant: 'primary' as const, icon: Send }
+  if (returning.value) return { label: 'Back to review', variant: 'primary' as const }
+  if (OPTIONAL.has(at.value) && !answered[at.value]())
+    return { label: 'Skip', variant: 'tonal' as const }
+  return { label: 'Continue', variant: 'primary' as const }
+})
+
+// --- The last look
+
+const review = computed(() => {
+  const country = form.country ? countryChoice(form.country) : null
+  return [
+    {
+      slide: 'country' as const,
+      label: 'Country',
+      lines: [country ? `${country.flag} ${country.name}` : ''],
+    },
+    {
+      slide: 'date' as const,
+      label: 'Date',
+      lines: [form.date ? formatLongDate(form.date) : ''],
+    },
+    { slide: 'name' as const, label: 'Name', lines: [form.name] },
+    {
+      slide: 'organisation' as const,
+      label: chosenOrgs.value.length > 1 ? 'Organisations' : 'Organisation',
+      lines: chosenOrgs.value.map((h) =>
+        h.fresh ? `${h.org.name} (new)` : (h.org.name ?? ''),
+      ),
+    },
+    {
+      slide: 'venue' as const,
+      label: 'Venue',
+      lines: [form.venue, form.address, form.location],
+    },
+    { slide: 'registration' as const, label: 'Registration', lines: [form.sobhd] },
+    {
+      slide: 'contact' as const,
+      label: 'Your name',
+      lines: [form.contactName, me.email ?? ''],
+    },
+  ].map((r) => ({ ...r, lines: r.lines.map((l) => l.trim()).filter(Boolean) }))
+})
+
+// --- Drafts
 
 // The answers so far outlast a reload (on this device, for this account)
-// until they're sent. A draft picks up at its step, past the overview.
-const restored = ref(false)
+// until they're sent. The intro then offers to pick up where they were.
+const resumeAt = ref<Slide | null>(null)
 const draftKey = () => `submit:draft:${auth.uid}`
-const ANSWERS: Field[] = ['name', 'date', 'venue', 'address', 'location', 'sobhd', 'description', 'message']
+const ANSWERS = [
+  'date',
+  'name',
+  'venue',
+  'address',
+  'location',
+  'sobhd',
+  'message',
+] as const
+const hasAnswers = () =>
+  ANSWERS.some((k) => !!form[k].trim()) || hosts.ids.length > 0 || hosts.fresh.length > 0
 watch(
-  [form, place, step, hosts],
+  [form, place, at, hosts],
   () => {
     if (!auth.uid || sent.value) return
     try {
-      if (ANSWERS.some(filled)) localStorage.setItem(draftKey(), JSON.stringify({ form, place: place.value, step: step.value, hosts }))
+      if (hasAnswers())
+        localStorage.setItem(
+          draftKey(),
+          JSON.stringify({ v: 2, form, place: place.value, at: at.value, hosts }),
+        )
       else localStorage.removeItem(draftKey())
     } catch {
       // Private browsing: no draft.
@@ -289,15 +429,21 @@ function restore() {
   try {
     const saved = JSON.parse(localStorage.getItem(draftKey()) ?? 'null')
     if (!saved?.form) return
-    for (const k of Object.keys(form) as Field[]) {
-      if (typeof saved.form[k] === typeof form[k] && saved.form[k] !== '') Object.assign(form, { [k]: saved.form[k] })
+    for (const k of Object.keys(form) as Array<keyof typeof form>) {
+      const v = saved.form[k]
+      if (
+        v !== '' &&
+        v != null &&
+        (typeof v === typeof form[k] || (k === 'country' && typeof v === 'string'))
+      )
+        Object.assign(form, { [k]: v })
     }
     place.value = saved.place ?? null
     if (Array.isArray(saved.hosts?.ids)) hosts.ids = saved.hosts.ids
     if (Array.isArray(saved.hosts?.fresh)) hosts.fresh = saved.hosts.fresh
-    step.value = STEPS[saved.step] ? Number(saved.step) : 0
-    started.value = ANSWERS.some(filled)
-    restored.value = started.value
+    hosts.offered = !!saved.hosts?.offered
+    // An older draft (from the four steps) starts again at the first question.
+    if (hasAnswers()) resumeAt.value = SLIDES.includes(saved.at) ? saved.at : 'country'
   } catch {
     // Private browsing, or nothing readable: start afresh.
   }
@@ -310,25 +456,33 @@ function clearDraft() {
   }
 }
 
-// Each account starts from its own draft (or the overview). Signing in from
-// the overview's button goes straight on to the first step.
+// Each account starts from its own draft (or the intro). Signing in from the
+// intro's button goes straight on to the first question.
 let startOnSignIn = false
 function start() {
-  if (auth.isSignedIn) return moveInPlace({ way: 'forward', axis: 'x' }, () => go(0))
-  startOnSignIn = true
-  auth.openLogin({ reason: 'account' })
+  if (!auth.isSignedIn) {
+    startOnSignIn = true
+    auth.openLogin({ reason: 'account' })
+    return
+  }
+  const to = resumeAt.value ?? 'country'
+  resumeAt.value = null
+  go(to)
 }
 function reset() {
-  Object.assign(form, blank(), { contactName: me.displayName ?? '' })
-  Object.assign(adding, { sobhd: false, description: false, message: false })
+  Object.assign(form, blank(), {
+    contactName: me.displayName ?? '',
+    country: startingCountry(),
+  })
   place.value = null
   hosts.ids = []
   hosts.fresh = []
-  clearErrors()
-  started.value = false
-  step.value = 0
+  hosts.offered = false
+  error.value = null
+  at.value = null
+  returning.value = false
+  resumeAt.value = null
   sent.value = false
-  restored.value = false
 }
 watch(
   () => auth.uid,
@@ -336,10 +490,7 @@ watch(
     reset()
     if (!uid) return
     restore()
-    if (startOnSignIn) {
-      started.value = true
-      window.scrollTo({ top: 0 })
-    }
+    if (startOnSignIn) start()
     startOnSignIn = false
   },
   { immediate: true },
@@ -351,200 +502,418 @@ watch(
   },
 )
 function startOver() {
-  reset()
   clearDraft()
-  void go(0)
+  reset()
+  go('country')
 }
 
-// The overview's own big title hands over to the bar once it scrolls away;
-// the steps and the sent screen have the bar's title alone.
-const overviewEl = ref<{ title: HTMLElement | null } | null>(null)
-const scrolledPast = useScrolledPast(computed(() => overviewEl.value?.title ?? null))
+// The intro's own big title hands over to the bar once it scrolls away.
+const introEl = ref<{ title: HTMLElement | null } | null>(null)
+const scrolledPast = useScrolledPast(computed(() => introEl.value?.title ?? null))
+const onIntro = computed(() => auth.authReady && !sent.value && !at.value)
+
+const registration = computed(() => registrationHint(form.country))
 </script>
 
 <template>
   <div class="flex min-h-dvh flex-col">
-    <AppBar title="Submit a competition" :show-title="!overview || scrolledPast" :fallback="{ to: { name: 'competitions' }, label: 'Competitions' }" />
-    <main :class="['mx-auto w-full max-w-xl flex-1 px-4 pt-[calc(var(--chrome-top)+1rem)] pb-[calc(var(--chrome-bottom)+1.5rem)]', overview && 'lg:max-w-3xl']">
+    <AppBar
+      title="Add a competition"
+      :show-title="!onIntro || scrolledPast"
+      :back="!at || sent"
+      :scrolled="false"
+      :fallback="{ to: { name: 'competitions' }, label: 'Competitions' }"
+    >
+      <template v-if="at && !sent" #leading>
+        <button
+          v-tap-feedback
+          v-proximity
+          type="button"
+          data-nav="back"
+          class="glass press-glass proximity text-primary pointer-events-auto flex size-11 shrink-0 items-center justify-center rounded-full [view-transition-name:nav-back]"
+          :aria-label="
+            returning
+              ? 'Back to review'
+              : index > 0
+                ? 'Back to the previous question'
+                : 'Back to the start'
+          "
+          @click="previous"
+        >
+          <ChevronLeft class="size-6 -translate-x-px" stroke-width="2.5" />
+        </button>
+      </template>
+      <template v-if="at && !sent" #middle>
+        <div class="flex min-w-0 flex-1 items-center px-2">
+          <div
+            role="progressbar"
+            aria-label="Progress"
+            aria-valuemin="1"
+            :aria-valuemax="SLIDES.length"
+            :aria-valuenow="index + 1"
+            :aria-valuetext="`Step ${index + 1} of ${SLIDES.length}`"
+            class="bg-border h-1.5 flex-1 overflow-hidden rounded-full"
+          >
+            <span
+              class="bg-primary-fill ease-snappy block h-full origin-left rounded-full transition-transform duration-(--dur-slow) motion-reduce:transition-none"
+              :style="{ transform: `scaleX(${(index + 1) / SLIDES.length})` }"
+            />
+          </div>
+        </div>
+      </template>
+    </AppBar>
+
+    <main
+      class="mx-auto flex w-full max-w-xl flex-1 flex-col px-4 pt-[calc(var(--chrome-top)+1rem)]"
+    >
       <div v-if="!auth.authReady" class="space-y-4" aria-busy="true">
         <span class="sr-only">Loading…</span>
-        <Skeleton class="h-8 w-2/3" />
-        <Skeleton class="h-48 w-full rounded-2xl!" />
+        <Skeleton class="h-10 w-2/3" />
+        <Skeleton class="h-56 w-full rounded-2xl!" />
       </div>
 
       <div v-else-if="sent" class="space-y-4 py-10 text-center">
         <SentMark class="mx-auto size-14" />
-        <h1 class="text-display">Submitted</h1>
+        <h1 class="text-display">Sent</h1>
         <p class="text-muted-foreground mx-auto max-w-md text-base">
-          Thanks. It’s usually approved overnight. You’ll get an email at {{ me.email }} with a link to start adding the details.
+          Thanks. It’s usually approved overnight. You’ll get an email at
+          {{ me.email }} with a link to start adding the details.
         </p>
-        <p class="text-muted-foreground mx-auto max-w-md text-sm">If it doesn’t arrive, check your junk folder.</p>
+        <p class="text-muted-foreground mx-auto max-w-md text-sm">
+          If it doesn’t arrive, check your junk folder.
+        </p>
         <div class="flex flex-col items-center gap-2 pt-2">
-          <Button variant="primary" size="lg" :to="{ name: 'competitions' }">Back to competitions</Button>
-          <Button variant="plain" @click="another">Submit another</Button>
+          <Button variant="primary" size="lg" :to="{ name: 'competitions' }"
+            >Back to competitions</Button
+          >
+          <Button variant="plain" @click="another">Add another</Button>
         </div>
       </div>
 
-      <SubmitOverview v-else-if="overview" :steps="STEPS" :signed-in="auth.isSignedIn" ref="overviewEl" @start="start" />
+      <form v-else class="flex flex-1 flex-col" novalidate @submit.prevent="advance">
+        <!-- Each slide slides a little the way you're going. -->
+        <Transition
+          mode="out-in"
+          enter-active-class="transition-[translate,opacity] duration-(--dur-base) ease-snappy motion-reduce:transition-opacity"
+          :enter-from-class="`opacity-0 motion-reduce:translate-x-0 ${direction > 0 ? 'translate-x-6' : '-translate-x-6'}`"
+          leave-active-class="transition-[translate,opacity] duration-(--dur-quick) ease-exit motion-reduce:transition-opacity"
+          :leave-to-class="`opacity-0 motion-reduce:translate-x-0 ${direction > 0 ? '-translate-x-6' : 'translate-x-6'}`"
+          @before-leave="(el) => ((el as HTMLElement).inert = true)"
+          @after-enter="settled"
+        >
+          <SubmitIntro
+            v-if="!at"
+            ref="introEl"
+            key="intro"
+            :signed-in="auth.isSignedIn"
+            :draft="!!resumeAt"
+            class="pb-6"
+            @start-over="startOver"
+          />
 
-      <div v-else class="space-y-6">
-        <p v-if="restored" class="bg-blue-paper text-callout flex items-center justify-between gap-3 rounded-xl pl-4 font-medium">
-          Picked up where you left off.
-          <Button variant="plain" class="shrink-0" @click="startOver">Start over</Button>
-        </p>
-        <StepNav :steps="STEPS.map((s) => s.title)" :current="step" @go="jump" />
+          <div v-else :key="at" data-slide :data-slide-name="at" class="space-y-6 pb-6">
+            <header class="space-y-2">
+              <h1
+                id="slide-question"
+                ref="heading"
+                tabindex="-1"
+                class="text-display text-balance outline-none"
+              >
+                <span class="sr-only">Step {{ index + 1 }} of {{ SLIDES.length }}: </span>
+                <template v-if="at === 'country'">Which country is it in?</template>
+                <template v-else-if="at === 'date'">When is it?</template>
+                <template v-else-if="at === 'name'">What’s it called?</template>
+                <template v-else-if="at === 'organisation'">Who’s running it?</template>
+                <template v-else-if="at === 'venue'">Where is it?</template>
+                <template v-else-if="at === 'registration'"
+                  >What’s its registration number?</template
+                >
+                <template v-else-if="at === 'contact'">What’s your name?</template>
+                <template v-else>All good?</template>
+              </h1>
+              <p
+                v-if="at !== 'country'"
+                class="text-muted-foreground text-base text-pretty"
+              >
+                <template v-if="at === 'date'"
+                  >If it runs over a few days, pick the first.</template
+                >
+                <template v-else-if="at === 'name'"
+                  >As dancers and families will see it.</template
+                >
+                <template v-else-if="at === 'organisation'"
+                  >An association, games society or series. Its page lists everything it
+                  runs.</template
+                >
+                <template v-else-if="at === 'venue'"
+                  >Search for the venue. If it isn’t booked yet, the town is
+                  enough.</template
+                >
+                <template v-else-if="at === 'registration'"
+                  >From {{ registration.body }}. If you don’t have it handy, add it
+                  later.</template
+                >
+                <template v-else-if="at === 'contact'"
+                  >So replies reach the right person. It’s never shown publicly.</template
+                >
+                <template v-else>Tap anything to change it.</template>
+              </p>
+            </header>
 
-        <form class="space-y-6" novalidate @submit.prevent="next">
-          <!-- Each step slides a little the way you're going. -->
-          <Transition
-            mode="out-in"
-            enter-active-class="transition-[translate,opacity] duration-(--dur-base) ease-snappy motion-reduce:transition-opacity"
-            :enter-from-class="`opacity-0 motion-reduce:translate-x-0 ${direction > 0 ? 'translate-x-6' : '-translate-x-6'}`"
-            leave-active-class="transition-[translate,opacity] duration-(--dur-quick) ease-exit motion-reduce:transition-opacity"
-            :leave-to-class="`opacity-0 motion-reduce:translate-x-0 ${direction > 0 ? '-translate-x-6' : 'translate-x-6'}`"
-            @enter="heading?.focus()"
-          >
-            <div :key="step" class="space-y-6">
-              <header class="space-y-1">
-                <h2 ref="heading" tabindex="-1" class="text-title outline-none">
-                  <span class="sr-only">Step {{ step + 1 }} of {{ STEPS.length }}: </span>{{ STEPS[step].title }}
-                </h2>
-                <p class="text-muted-foreground text-base">{{ STEPS[step].lead }}</p>
-              </header>
+            <template v-if="at === 'country'">
+              <CountryPicker v-model="form.country" labelledby="slide-question" />
+              <p v-if="error" class="text-destructive text-sm font-medium" role="alert">
+                {{ error }}
+              </p>
+            </template>
 
-              <div v-if="step === 0" class="space-y-4">
-                <FormInput v-model="form.name" label="Name" required placeholder="e.g. Canadian Championship 2027" :error="errors.name" />
-                <div v-if="quickOrgs.length" class="-mt-2 flex flex-wrap gap-2">
-                  <Button v-for="org in quickOrgs" :key="org.id" variant="tonal" size="sm" @click="addHost(org)">
-                    <Plus /> Add {{ organisationLabel(org) }}
-                  </Button>
-                </div>
-                <FormInput v-model="form.date" label="Date" kind="date" required hint="The first day, if it runs over several." :error="errors.date" />
-                <FormInput
-                  v-if="adding.description || form.description"
-                  v-model="form.description"
-                  data-field="description"
-                  label="Description"
-                  kind="textarea"
-                  hint="Optional: anything else people should know. It’s shown on the competition page."
-                />
-                <FormInput
-                  v-if="adding.sobhd || form.sobhd"
-                  v-model="form.sobhd"
-                  data-field="sobhd"
-                  label="Registration number"
-                  placeholder="e.g. C-AB-CO-27-1234"
-                  hint="Optional: if it’s registered with an association, like the RSOBHD. For several, separate them with commas."
-                />
-                <div v-if="chosenOrgs.length" class="space-y-1.5">
-                  <p class="text-callout font-medium">Organisations</p>
-                  <ul class="surface divide-y overflow-hidden rounded-2xl">
-                    <li v-for="h in chosenOrgs" :key="h.key" class="flex min-h-15 items-center gap-3 py-2 pr-1 pl-3">
-                      <OrganisationMark :organisation="h.org" />
-                      <span class="min-w-0 flex-1">
-                        <span class="block truncate text-base font-semibold">{{ h.org.name }}</span>
-                        <span class="text-muted-foreground block truncate text-sm">{{ h.fresh ? 'New: you’ll be its admin' : [h.org.shortName, h.org.location].filter(Boolean).join(' · ') }}</span>
-                      </span>
-                      <button type="button" class="text-muted-foreground press flex size-11 shrink-0 items-center justify-center rounded-full" :aria-label="`Remove ${h.org.name}`" @click="removeHost(h.key)">
-                        <X class="size-5" />
-                      </button>
-                    </li>
-                  </ul>
-                </div>
-                <div class="-mx-4 flex flex-wrap gap-x-2">
-                  <Button v-if="!adding.description && !form.description" variant="plain" @click="add('description')">
-                    <Plus /> Add a description
-                  </Button>
-                  <Button v-if="!adding.sobhd && !form.sobhd" variant="plain" @click="add('sobhd')">
-                    <Plus /> Add registration number
-                  </Button>
-                  <Button variant="plain" @click="pickingOrg.show($event)">
-                    <Plus /> {{ chosenOrgs.length ? 'Add another organisation' : 'Add an organisation' }}
-                  </Button>
-                  <OrganisationPicker
-                    :morph="pickingOrg"
-                    :mine="me.managedOrganisationIds"
-                    :chosen="hosts.ids"
-                    any
-                    create-hint="It’s made when your competition is approved, with you as its admin."
-                    @pick="addHost"
-                    @create="addFreshHost"
-                  />
-                </div>
-              </div>
+            <template v-else-if="at === 'date'">
+              <DayPicker v-model="form.date" labelledby="slide-question" />
+              <p v-if="error" class="text-destructive text-sm font-medium" role="alert">
+                {{ error }}
+              </p>
+              <p
+                v-else-if="form.date"
+                class="text-center text-base font-semibold"
+                aria-live="polite"
+              >
+                {{ formatLongDate(form.date) }}
+              </p>
+            </template>
 
-              <div v-else-if="step === 1" class="space-y-4">
-                <VenueField v-if="placesAvailable" v-model="form.venue" @pick="pickVenue" />
-                <FormInput v-else v-model="form.venue" label="Venue name" placeholder="e.g. Telus Convention Centre" />
-                <FormInput v-model="form.address" label="Address" placeholder="e.g. 120 9th Ave SE" />
-                <FormInput v-model="form.location" label="Town or city" required placeholder="e.g. Calgary, AB" hint="Include the province or state." :error="errors.location" />
-              </div>
+            <template v-else-if="at === 'name'">
+              <input
+                v-model="form.name"
+                type="text"
+                aria-labelledby="slide-question"
+                :aria-invalid="!!error || undefined"
+                :aria-describedby="error ? 'slide-error' : undefined"
+                aria-required="true"
+                autocomplete="off"
+                autocapitalize="words"
+                enterkeyhint="next"
+                :placeholder="nameExample(form.country)"
+                class="field placeholder:text-muted-foreground h-14 w-full rounded-xl px-4 text-lg"
+              />
+              <p
+                v-if="error"
+                id="slide-error"
+                class="text-destructive -mt-3 text-sm font-medium"
+                role="alert"
+              >
+                {{ error }}
+              </p>
+            </template>
 
-              <div v-else-if="step === 2" class="space-y-4">
-                <FormInput v-model="form.contactName" label="Your name" required autocomplete="name" :error="errors.contactName" />
-                <div class="space-y-1.5">
-                  <p class="text-callout font-medium">Your email</p>
-                  <p class="text-base break-words">{{ me.email }}</p>
-                  <p class="text-muted-foreground text-sm">From your account.</p>
-                </div>
-                <FormInput
-                  v-if="adding.message || form.message"
-                  v-model="form.message"
-                  data-field="message"
-                  label="Message"
-                  kind="textarea"
-                  hint="Optional: questions or notes."
-                />
-                <Button v-else variant="plain" class="-ml-4" @click="add('message')"><Plus /> Add a message</Button>
-              </div>
-
-              <div v-else class="space-y-4">
-                <dl class="surface divide-y rounded-2xl">
-                  <div v-for="s in summary" :key="s.title" class="flex items-start gap-2 py-3 pr-2 pl-4">
-                    <div class="min-w-0 flex-1">
-                      <dt class="text-muted-foreground text-sm font-medium">{{ s.title }}</dt>
-                      <dd v-for="(line, i) in s.lines" :key="i" class="text-base break-words whitespace-pre-line">{{ line }}</dd>
-                    </div>
-                    <Button variant="plain" @click="go(s.step)">
-                      Edit<span class="sr-only"> {{ s.title }}</span>
-                    </Button>
-                  </div>
-                </dl>
+            <template v-else-if="at === 'organisation'">
+              <div
+                v-if="chosenOrgs.length || suggestedOrgs.length"
+                class="surface divide-y overflow-hidden rounded-2xl"
+              >
                 <button
+                  v-for="h in chosenOrgs"
+                  :key="h.key"
                   type="button"
                   role="checkbox"
-                  :aria-checked="form.agree"
-                  :aria-invalid="!!errors.agree || undefined"
-                  class="surface press-row focus-inset flex w-full items-start gap-3 rounded-2xl p-4 text-left"
-                  @click="form.agree = !form.agree"
+                  aria-checked="true"
+                  class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left"
+                  @click="removeHost(h.key)"
                 >
-                  <Checkbox :checked="form.agree" class="mt-0.5" />
-                  <span>
-                    <!-- (Balanced, and kept whole where a split reads badly, so no word sits alone on a line.) -->
-                    <span class="block text-base font-medium text-balance">I accept it comes <span class="whitespace-nowrap">as is</span>, with no guarantees</span>
-                    <span class="text-muted-foreground block text-sm text-pretty">ScotDance.app is free and <span class="whitespace-nowrap">volunteer-run</span>. You’re in control of what goes online for your competition, like dancers and results.</span>
-                    <span v-if="errors.agree" class="text-destructive block pt-1 text-sm font-medium" role="alert">{{ errors.agree }}</span>
+                  <OrganisationMark :organisation="h.org" />
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-base font-semibold">{{
+                      h.org.name
+                    }}</span>
+                    <span class="text-muted-foreground block truncate text-sm">{{
+                      h.fresh
+                        ? 'New: you’ll be its admin'
+                        : [h.org.shortName, h.org.location].filter(Boolean).join(' · ')
+                    }}</span>
                   </span>
+                  <Checkbox :checked="true" />
+                </button>
+                <button
+                  v-for="org in suggestedOrgs"
+                  :key="org.id"
+                  type="button"
+                  role="checkbox"
+                  aria-checked="false"
+                  class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left"
+                  @click="addHost(org)"
+                >
+                  <OrganisationMark :organisation="org" />
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-base font-semibold">{{
+                      org.name
+                    }}</span>
+                    <span class="text-muted-foreground block truncate text-sm">{{
+                      [org.shortName, org.location].filter(Boolean).join(' · ')
+                    }}</span>
+                  </span>
+                  <Checkbox :checked="false" />
                 </button>
               </div>
-            </div>
-          </Transition>
+              <button
+                type="button"
+                class="surface press-row focus-inset text-primary flex min-h-14 w-full items-center gap-3 rounded-2xl px-4 py-2 text-left"
+                @click="pickingOrg.show($event)"
+              >
+                <span
+                  class="bg-blue-paper flex size-10 shrink-0 items-center justify-center rounded-xl"
+                  aria-hidden="true"
+                  ><Plus class="size-5"
+                /></span>
+                <span class="flex-1 text-base font-semibold">{{
+                  chosenOrgs.length || suggestedOrgs.length
+                    ? 'Find or add another'
+                    : 'Find or add an organisation'
+                }}</span>
+              </button>
+              <OrganisationPicker
+                :morph="pickingOrg"
+                :mine="me.managedOrganisationIds"
+                :chosen="hosts.ids"
+                any
+                create-hint="It’s made when your competition is approved, with you as its admin."
+                @pick="addHost"
+                @create="addFreshHost"
+              />
+            </template>
 
-          <p v-if="sendError" class="text-destructive font-medium" role="alert">{{ sendError }}</p>
-          <div class="flex gap-3">
-            <Button v-if="step > 0" size="lg" class="pl-4" :disabled="sending" @click="go(step - 1)">
-              <ChevronLeft /> Back
-            </Button>
-            <Button type="submit" variant="primary" size="lg" class="flex-1" :busy="sending">
-              <template v-if="step < STEPS.length - 1">Next <ChevronRight /></template>
-              <template v-else>
-                <Send v-if="!sending" />
-                Submit
-              </template>
-            </Button>
+            <VenueStep
+              v-else-if="at === 'venue'"
+              ref="venueStep"
+              v-model:venue="form.venue"
+              v-model:address="form.address"
+              v-model:location="form.location"
+              v-model:place="place"
+              :country="form.country"
+              :error="error"
+            />
+
+            <template v-else-if="at === 'registration'">
+              <input
+                v-model="form.sobhd"
+                type="text"
+                aria-labelledby="slide-question"
+                autocomplete="off"
+                autocapitalize="characters"
+                spellcheck="false"
+                enterkeyhint="next"
+                :placeholder="
+                  registration.example ? `e.g. ${registration.example}` : undefined
+                "
+                class="field placeholder:text-muted-foreground h-14 w-full rounded-xl px-4 text-lg"
+              />
+            </template>
+
+            <template v-else-if="at === 'contact'">
+              <input
+                v-model="form.contactName"
+                type="text"
+                aria-labelledby="slide-question"
+                :aria-invalid="!!error || undefined"
+                :aria-describedby="error ? 'slide-error' : undefined"
+                aria-required="true"
+                autocomplete="name"
+                enterkeyhint="next"
+                class="field placeholder:text-muted-foreground h-14 w-full rounded-xl px-4 text-lg"
+              />
+              <p
+                v-if="error"
+                id="slide-error"
+                class="text-destructive -mt-3 text-sm font-medium"
+                role="alert"
+              >
+                {{ error }}
+              </p>
+            </template>
+
+            <template v-else>
+              <ul class="surface divide-y overflow-hidden rounded-2xl">
+                <li v-for="r in review" :key="r.slide">
+                  <button
+                    type="button"
+                    class="press-row focus-inset flex min-h-14 w-full items-center gap-3 py-2.5 pr-3 pl-4 text-left"
+                    @click="change(r.slide)"
+                  >
+                    <span class="text-muted-foreground text-callout w-24 shrink-0">{{
+                      r.label
+                    }}</span>
+                    <span class="min-w-0 flex-1 text-base break-words">
+                      <template v-if="r.lines.length">
+                        <span
+                          v-for="(line, i) in r.lines"
+                          :key="i"
+                          :class="[
+                            'block',
+                            i > 0 && 'text-muted-foreground text-callout',
+                          ]"
+                          >{{ line }}</span
+                        >
+                      </template>
+                      <span v-else class="text-muted-foreground">Not added</span>
+                    </span>
+                    <ChevronRight
+                      class="text-muted-foreground size-5 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span class="sr-only">Change</span>
+                  </button>
+                </li>
+              </ul>
+              <FormInput
+                v-model="form.message"
+                label="Anything to ask or mention?"
+                kind="textarea"
+                hint="Only the reviewer sees it."
+              />
+              <button
+                type="button"
+                role="checkbox"
+                :aria-checked="form.agree"
+                :aria-invalid="!!error || undefined"
+                class="surface press-row focus-inset flex w-full items-start gap-3 rounded-2xl p-4 text-left"
+                @click="form.agree = !form.agree"
+              >
+                <Checkbox :checked="form.agree" class="mt-0.5" />
+                <span>
+                  <!-- (Balanced, and kept whole where a split reads badly, so no word sits alone on a line.) -->
+                  <span class="block text-base font-medium text-balance"
+                    >I accept it comes <span class="whitespace-nowrap">as is</span>, with
+                    no guarantees</span
+                  >
+                  <span class="text-muted-foreground block text-sm text-pretty"
+                    >ScotDance.app is free and
+                    <span class="whitespace-nowrap">volunteer-run</span>. You’re in
+                    control of what goes online for your competition, like dancers and
+                    results.</span
+                  >
+                  <span
+                    v-if="error"
+                    class="text-destructive block pt-1 text-sm font-medium"
+                    role="alert"
+                    >{{ error }}</span
+                  >
+                </span>
+              </button>
+            </template>
           </div>
-        </form>
-      </div>
+        </Transition>
+
+        <!-- The one button, at the foot: it stays put while a long slide scrolls. -->
+        <div
+          class="from-background sticky bottom-0 z-10 -mx-4 mt-auto bg-linear-to-t from-[calc(100%-1.25rem)] to-transparent px-4 pt-5 pb-[calc(1rem+var(--safe-bottom))]"
+        >
+          <p v-if="sendError" class="text-destructive pb-3 font-medium" role="alert">
+            {{ sendError }}
+          </p>
+          <Button type="submit" :variant="action.variant" size="lg" block :busy="sending">
+            <component :is="action.icon" v-if="action.icon && !sending" />
+            {{ action.label }}
+          </Button>
+        </div>
+      </form>
     </main>
   </div>
 </template>

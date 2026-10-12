@@ -1,6 +1,7 @@
 import { expect, test, type Browser, type Page } from '@playwright/test'
 import { dbGet, dbRemove, ensureUser, grantCompetition, grantSystemAdmin, signIn, uid } from './support/emulator'
 import { removeCompetition, seedCompetition } from './support/seed'
+import { addCompetition } from './support/submit'
 
 // Inviting admins and submitting competitions, through the real database
 // rules and Cloud Functions triggers (emails fail in the emulator, which
@@ -171,22 +172,11 @@ test('a submitted competition, once approved, is the organiser’s to manage', a
   let submissionId: string | undefined
   let competitionId: string | undefined
   try {
-    // Signed in first, then a step at a time (submit.spec.ts covers the steps).
+    // Signed in first, then a question at a time (submit.spec.ts covers them).
     await page.goto('/competitions/submit')
-    await page.getByRole('button', { name: 'Sign in to submit' }).click()
+    await page.getByRole('button', { name: 'Sign in to start' }).click()
     await signInOnSheet(page, orgEmail)
-    const next = () => page.getByRole('button', { name: 'Next', exact: true }).click()
-    await page.getByRole('textbox', { name: 'Name', exact: true }).fill(name)
-    await page.locator('input[type=date]').fill('2027-03-14')
-    await next()
-    await expect(page.getByRole('heading', { name: /^Step 2 of 4/ })).toBeVisible()
-    await page.getByRole('textbox', { name: 'Town or city' }).fill('Calgary, AB')
-    await next()
-    await page.getByRole('textbox', { name: 'Your name' }).fill('Morag Test')
-    await next()
-    await page.getByRole('checkbox', { name: /no guarantees/ }).check()
-    await page.getByRole('button', { name: 'Submit', exact: true }).click()
-    await expect(page.getByRole('heading', { name: 'Submitted' })).toBeVisible()
+    await addCompetition(page, { name, date: '2027-03-14', town: 'Calgary, AB', you: 'Morag Test' })
 
     type Submission = { competition?: { name?: string }; submittedBy?: string; competitionId?: string }
     const mine = async () => Object.entries((await dbGet<Record<string, Submission>>('competitions:submissions')) ?? {}).filter(([, s]) => s.competition?.name === name)

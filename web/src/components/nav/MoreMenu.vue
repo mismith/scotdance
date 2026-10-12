@@ -84,7 +84,7 @@ const row =
       <!-- For organisers: submitting, managing, and (admins) the whole system. -->
       <div>
         <button type="button" :class="row" :data-current="here({ name: 'competitions.submit' })" @click="go({ name: 'competitions.submit' })">
-          <SquarePlus class="size-5" /> Submit a competition
+          <SquarePlus class="size-5" /> Add a competition
         </button>
         <button v-if="canManage" type="button" :class="row" :data-current="here({ name: 'manage.competitions' })" @click="go({ name: 'manage.competitions' })">
           <span class="relative flex text-muted-foreground"><ClipboardList class="size-5" /><AdminMark ring="raised" /></span> Manage

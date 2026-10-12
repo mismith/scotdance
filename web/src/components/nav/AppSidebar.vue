@@ -87,7 +87,7 @@ const vt = (name: string) => ({ viewTransitionName: `sidebar-${name}`, viewTrans
 
       <ul class="space-y-0.5">
         <li v-if="!inManage">
-          <SidebarLink :to="{ name: 'competitions.submit' }" :icon="SquarePlus" label="Submit a competition" :state="state(name === 'competitions.submit')" vt="sidebar-submit" />
+          <SidebarLink :to="{ name: 'competitions.submit' }" :icon="SquarePlus" label="Add a competition" :state="state(name === 'competitions.submit')" vt="sidebar-submit" />
         </li>
         <li v-if="canManage">
           <SidebarLink
