@@ -11,6 +11,7 @@ import * as Venues from './venues';
 import * as Organisations from './organisations';
 import * as Notifications from './notifications';
 import * as Links from './links';
+import * as KnownCompetitions from './knownCompetitions';
 import { getOnSearchAll } from './search';
 import { runBackfillCoords } from './backfillCoords';
 import { getOnChange } from './changed';
@@ -157,6 +158,18 @@ export const backfillCoords = https({ secrets: [geocodingApiKey], timeoutSeconds
       dryRun,
     );
   });
+
+// Known competitions (knownCompetitions.ts): the governing bodies' lists,
+// suggested on Add a competition. Read on the 1st of each month, and from
+// System admin › Known competitions when a body posts an update.
+const knownOptions = { timeoutSeconds: 300, memory: '512MiB' as const };
+export const refreshKnownCompetitions = https(knownOptions).onCall(async (data, ctx) => {
+  await ensureAdmin(ctx, appConfig.db);
+  return KnownCompetitions.refresh(appConfig.db, data?.source);
+});
+export const refreshKnownCompetitionsMonthly = onSchedule({ schedule: '0 7 1 * *', timeZone: 'UTC', ...knownOptions }, async () => {
+  await KnownCompetitions.refresh(appConfig.db);
+});
 
 // Rebuilds the published and listed lists (search reads them) from the
 // competitions themselves.

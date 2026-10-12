@@ -86,6 +86,11 @@
       "competitionLinks": { ".read": true },
       "competitionLinks:of": { ".read": true },
       "competitionLinks:sync": { ".read": true },
+      // Known competitions (ADR 0009): the governing bodies' public lists, suggested on Add a competition. Only functions write them (refreshKnownCompetitions); how each source's last run went (knownCompetitions:runs) is for system admins.
+      "knownCompetitions": {
+        ".read": "auth !== null", // is AUTHED
+        ".indexOn": ["date"]
+      },
       "competitions:changed": {
         // When each part of a competition last changed (stamped by functions), so the app re-uses what it has
         "$competitionId": { ".read": true }

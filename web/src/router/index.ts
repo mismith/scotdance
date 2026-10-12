@@ -202,6 +202,7 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: 'submissions/:submissionId?', name: 'admin.submissions', component: () => import('@/views/admin/Submissions.vue') },
       { path: 'organisations/:organisationId?', name: 'admin.organisations', component: () => import('@/views/admin/Organisations.vue') },
+      { path: 'known-competitions', name: 'admin.known', component: () => import('@/views/admin/KnownCompetitions.vue') },
       { path: 'users/:userId?', name: 'admin.users', component: () => import('@/views/admin/Users.vue') },
       { path: 'tools', name: 'admin.tools', component: () => import('@/views/admin/Tools.vue') },
       // The old admin's pages.

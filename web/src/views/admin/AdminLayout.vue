@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
-import { ChevronRight, Inbox, Landmark, Lock, LogIn, UserCog, Wrench } from '@lucide/vue'
+import { CalendarSearch, ChevronRight, Inbox, Landmark, Lock, LogIn, UserCog, Wrench } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import SidebarBranch from '@/components/nav/SidebarBranch.vue'
 import SidebarLink from '@/components/nav/SidebarLink.vue'
@@ -18,7 +18,8 @@ import { useAuthStore } from '@/stores/auth'
 import { useMeStore } from '@/stores/me'
 
 // System admin: approving submitted competitions (the daily one), then the
-// organisations and people, then maintenance tools. Only for system admins.
+// organisations, the governing bodies' lists and people, then maintenance
+// tools. Only for system admins.
 
 const route = useRoute()
 const router = useRouter()
@@ -36,6 +37,7 @@ interface AdminSection {
 const SECTIONS: AdminSection[] = [
   { route: 'admin.submissions', title: 'Submissions', blurb: 'Review and approve new competitions', icon: Inbox },
   { route: 'admin.organisations', title: 'Organisations', blurb: 'Every organisation, and which competitions they run', icon: Landmark },
+  { route: 'admin.known', title: 'Known competitions', blurb: 'The governing bodies’ lists, offered when adding a competition', icon: CalendarSearch },
   { route: 'admin.users', title: 'Users', blurb: 'Accounts and who can manage what', icon: UserCog },
   { route: 'admin.tools', title: 'Tools', blurb: 'App versions, search and profile rebuilds', icon: Wrench },
 ]

@@ -186,6 +186,22 @@ test('invites: only an organiser makes them; anyone with the link accepts an ope
   expect(await dbGet(`users:permissions/${stranger.uid}/competitions/${priv}`)).toBeNull()
 })
 
+test('known competitions: read when signed in, written only by functions, and how their reads went for system admins only', async () => {
+  const key = `sdc:2027-10-23:${uid('rules-known')}`
+  await dbSet(`knownCompetitions/${key}`, { source: 'sdc', date: '2027-10-23', name: 'Rules Fall Classic', country: 'CA', fetched: '2026-10-12T07:00:00.000Z' })
+  try {
+    await refused('a signed-out read of known competitions', as(null, 'GET', 'knownCompetitions'))
+    await allowed('a parent reading known competitions', as(parent, 'GET', 'knownCompetitions'))
+    await allowed('an organiser reading one known competition', as(org, 'GET', `knownCompetitions/${key}`))
+    await refused('an organiser changing a known competition', as(org, 'PATCH', `knownCompetitions/${key}`, { name: 'Mine now' }))
+    await refused('an organiser adding a known competition', as(org, 'PUT', `knownCompetitions/sdc:2027-10-24:x`, { source: 'sdc', date: '2027-10-24', name: 'X', country: 'CA' }))
+    await refused('an organiser reading how the reads went', as(org, 'GET', 'knownCompetitions:runs'))
+    await refused('an organiser saying how a read went', as(org, 'PUT', 'knownCompetitions:runs/sdc', { at: 'now' }))
+  } finally {
+    await dbRemove(`knownCompetitions/${key}`)
+  }
+})
+
 test('deleting an account can wipe its data in one write', async () => {
   const who = await account(`${uid('rules-leaver')}@example.test`)
   await as(who, 'PUT', `users:favorites/${who.uid}/dancers/-Agg1`, 'X')

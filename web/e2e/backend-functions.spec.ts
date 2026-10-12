@@ -166,7 +166,7 @@ test('searchAll shows each person only what they may see', async () => {
 
 test('only a system admin can run a backfill or reindex', async () => {
   const someone = await account(`${uid('fn-someone')}@example.test`)
-  for (const name of ['backfillDancerAggregates', 'backfillDancerBackPointers', 'backfillVenueAggregates', 'reindexCompetitions', 'reindexJudges', 'reindexDancers', 'reindexCompetitionsPublished', 'backfillCoords']) {
+  for (const name of ['backfillDancerAggregates', 'backfillDancerBackPointers', 'backfillVenueAggregates', 'reindexCompetitions', 'reindexJudges', 'reindexDancers', 'reindexCompetitionsPublished', 'backfillCoords', 'refreshKnownCompetitions']) {
     expect((await callFunction(name, { dryRun: true }, null)).status, `${name} signed out`).toBe(401)
     expect((await callFunction(name, { dryRun: true }, someone)).status, `${name} as a non-admin`).toBe(403)
     expect((await callFunction(name, { dryRun: true }, org)).status, `${name} as an organiser`).toBe(403)
