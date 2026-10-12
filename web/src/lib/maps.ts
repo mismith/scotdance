@@ -69,7 +69,9 @@ export async function resolvePlace(placeId: string): Promise<PickedRegion | null
   const region = find('administrative_area_level_1')?.shortText ?? null
   const locality = find('locality')?.shortText ?? null
   const label =
-    [locality, region, country].filter(Boolean).join(', ') || place.displayName || ''
+    [locality, region, country].filter(Boolean).join(', ') ||
+    place.displayName ||
+    ''
   // Reset the session — Google bills per session, fresh one for next pick.
   sessionToken = null
   return { country, region, locality, label }
@@ -80,10 +82,7 @@ export const placesAvailable = !!GOOGLE_MAPS_API_KEY
 
 /** Venues and addresses, for the venue search in Manage › Details. */
 /** Places for a venue, within `regionCodes` (ISO countries, e.g. ['CA']) when given. */
-export async function fetchVenueSuggestions(
-  input: string,
-  regionCodes?: string[],
-): Promise<PlaceSuggestion[]> {
+export async function fetchVenueSuggestions(input: string, regionCodes?: string[]): Promise<PlaceSuggestion[]> {
   const trimmed = input.trim()
   if (!trimmed || !placesAvailable) return []
   const { AutocompleteSuggestion, AutocompleteSessionToken } = await getPlacesLib()
@@ -91,9 +90,7 @@ export async function fetchVenueSuggestions(
   const { suggestions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
     input: trimmed,
     sessionToken,
-    ...(regionCodes?.length && {
-      includedRegionCodes: regionCodes.map((c) => c.toLowerCase()),
-    }),
+    ...(regionCodes?.length && { includedRegionCodes: regionCodes.map((c) => c.toLowerCase()) }),
   })
   return suggestions
     .map((s) => s.placePrediction)
@@ -118,17 +115,12 @@ export interface VenueFields {
 
 /** A picked venue as competition fields (the same shape the old admin wrote). */
 /** Where a picked venue is, beyond its name and address: what puts it on the map. */
-export type VenuePlace = Pick<
-  VenueFields,
-  'lat' | 'lng' | 'country' | 'region' | 'locality'
->
+export type VenuePlace = Pick<VenueFields, 'lat' | 'lng' | 'country' | 'region' | 'locality'>
 
 export async function resolveVenue(placeId: string): Promise<VenueFields> {
   const { Place } = await getPlacesLib()
   const place = new Place({ id: placeId })
-  await place.fetchFields({
-    fields: ['addressComponents', 'displayName', 'location', 'types'],
-  })
+  await place.fetchFields({ fields: ['addressComponents', 'displayName', 'location', 'types'] })
   sessionToken = null
   const components = place.addressComponents ?? []
   const find = (type: string) => components.find((c) => c.types.includes(type))
@@ -137,15 +129,12 @@ export async function resolveVenue(placeId: string): Promise<VenueFields> {
   const locality = find('locality') ?? find('postal_town')
   const region = find('administrative_area_level_1')
   const country = find('country')
-  const addressOnly = (place.types ?? []).some(
-    (t) => t === 'street_address' || t === 'premise' || t === 'route',
-  )
+  const addressOnly = (place.types ?? []).some((t) => t === 'street_address' || t === 'premise' || t === 'route')
   const lat = place.location?.lat()
   const lng = place.location?.lng()
   return {
     venue: addressOnly ? null : (place.displayName ?? null),
-    address:
-      [streetNumber?.shortText, route?.shortText].filter(Boolean).join(' ') || null,
+    address: [streetNumber?.shortText, route?.shortText].filter(Boolean).join(' ') || null,
     // "Calgary, AB", as v3 wrote it: lists group by this text, so one spelling.
     location: [locality?.shortText, region?.shortText].filter(Boolean).join(', ') || null,
     lat: typeof lat === 'number' && Number.isFinite(lat) ? lat : null,

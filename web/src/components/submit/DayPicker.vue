@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { ChevronLeft, ChevronRight } from '@lucide/vue'
 import { formatLongDate, formatMonthYear, parseDate } from '@/lib/format'
 import { selectionHaptic } from '@/lib/haptics'
@@ -66,6 +66,34 @@ function pick(cell: { date: Date; inMonth: boolean }) {
   model.value = toValue(cell.date)
 }
 
+// One stop for Tab (the chosen day, or today, or the 1st), and the arrows
+// move the choice a day or a week, into the next month as they go.
+const grid = ref<HTMLElement | null>(null)
+const tabDay = computed(() => {
+  const inMonth = (d: Date | null) =>
+    !!d &&
+    d.getFullYear() === cursor.value.getFullYear() &&
+    d.getMonth() === cursor.value.getMonth()
+  return inMonth(selected.value) ? selected.value! : inMonth(today) ? today : cursor.value
+})
+async function onArrow(e: KeyboardEvent) {
+  const step = (
+    { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 7, ArrowUp: -7 } as Record<string, number>
+  )[e.key]
+  if (!step) return
+  e.preventDefault()
+  const from = tabDay.value
+  const date = new Date(from.getFullYear(), from.getMonth(), from.getDate() + step)
+  pick({
+    date,
+    inMonth:
+      date.getMonth() === cursor.value.getMonth() &&
+      date.getFullYear() === cursor.value.getFullYear(),
+  })
+  await nextTick()
+  grid.value?.querySelector<HTMLElement>(`[data-day="${toValue(date)}"]`)?.focus()
+}
+
 // The disc sits behind the chosen cell and slides to the next one chosen.
 const marker = computed(() => {
   const i = cells.value.findIndex((c) => c.inMonth && isSelected(c.date))
@@ -129,7 +157,9 @@ function onPointerUp(e: PointerEvent) {
     </div>
 
     <div
+      ref="grid"
       class="grid touch-pan-y overflow-hidden"
+      @keydown="onArrow"
       @pointerdown="onPointerDown"
       @pointerup="onPointerUp"
       @pointercancel="swipe = null"
@@ -159,6 +189,8 @@ function onPointerUp(e: PointerEvent) {
             type="button"
             :aria-label="formatLongDate(cell.date.getTime())"
             :aria-pressed="isSelected(cell.date)"
+            :data-day="cell.inMonth ? toValue(cell.date) : undefined"
+            :tabindex="cell.inMonth && sameDay(cell.date, tabDay) ? 0 : -1"
             :class="[
               'press focus-inset relative aspect-square rounded-full text-base tabular-nums transition-colors',
               // Other months' days: quieter by colour, still readable (not faded).

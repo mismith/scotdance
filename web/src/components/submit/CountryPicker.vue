@@ -24,6 +24,25 @@ function choose(code: string) {
   model.value = code
 }
 
+// As radios do: one stop for Tab (the chosen one, or the first), and the
+// arrows move the choice.
+const group = ref<HTMLElement | null>(null)
+const tabStop = computed(() =>
+  choices.value.some((c) => c.code === model.value)
+    ? model.value
+    : choices.value[0]?.code,
+)
+function onArrow(e: KeyboardEvent) {
+  const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key]
+  if (!step) return
+  e.preventDefault()
+  const list = choices.value
+  const at = list.findIndex((c) => c.code === tabStop.value)
+  const next = list[(at + step + list.length) % list.length]
+  choose(next.code)
+  group.value?.querySelectorAll<HTMLElement>('[role=radio]')[list.indexOf(next)]?.focus()
+}
+
 const sheet = useMorph()
 const query = ref('')
 const q = computed(() => query.value.trim().toLowerCase())
@@ -50,13 +69,20 @@ const ROW =
 
 <template>
   <div class="surface overflow-hidden rounded-2xl">
-    <div role="radiogroup" :aria-labelledby="labelledby" class="divide-y">
+    <div
+      ref="group"
+      role="radiogroup"
+      :aria-labelledby="labelledby"
+      class="divide-y"
+      @keydown="onArrow"
+    >
       <button
         v-for="c in choices"
         :key="c.code"
         type="button"
         role="radio"
         :aria-checked="model === c.code"
+        :tabindex="c.code === tabStop ? 0 : -1"
         :class="ROW"
         @click="choose(c.code)"
       >

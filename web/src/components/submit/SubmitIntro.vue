@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import {
   CalendarClock,
   CalendarDays,
@@ -7,6 +7,7 @@ import {
   ClipboardList,
   Clock,
   FileSpreadsheet,
+  FilePen,
   Laptop,
   MailCheck,
   Pointer,
@@ -14,13 +15,18 @@ import {
   Wifi,
 } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
+import { formatLongDate } from '@/lib/format'
 import { useMorph } from '@/lib/morph'
 
 // Before the first question: what it takes and what happens after, as three
 // stops, so it reads as quick. The page's own button (Start) sits at the
 // foot like every question's. What's needed later is in a sheet.
 
-defineProps<{ signedIn: boolean; draft: boolean }>()
+const props = defineProps<{
+  signedIn: boolean
+  /** What's saved and not yet sent, if anything. */
+  draft: { name: string; date: string } | null
+}>()
 defineEmits<{ startOver: [] }>()
 
 const STOPS = [
@@ -80,6 +86,9 @@ const NEEDS = [
   },
 ]
 
+// The draft, as far as it got: its name and day, or just that there is one.
+const draftLine = computed(() => (props.draft?.date ? formatLongDate(props.draft.date) : 'Not sent yet'))
+
 const needs = useMorph()
 // For the page, so the bar can take over the title once it scrolls away.
 const title = ref<HTMLElement | null>(null)
@@ -126,21 +135,29 @@ defineExpose({ title })
       </li>
     </ol>
 
-    <div class="-mx-4 flex flex-wrap items-center gap-x-2">
+    <!-- Left part-way: what's saved, to pick up (the page's button) or drop. -->
+    <div v-if="draft" class="surface flex items-center gap-3 rounded-2xl py-2 pr-2 pl-4">
+      <FilePen class="text-primary size-5 shrink-0" aria-hidden="true" />
+      <span class="min-w-0 flex-1 py-1">
+        <span class="block truncate text-base font-semibold">{{ draft.name.trim() || 'Your competition' }}</span>
+        <span class="text-muted-foreground block truncate text-callout">{{ draftLine }}</span>
+      </span>
+      <button
+        type="button"
+        class="press-row text-primary text-callout flex min-h-11 shrink-0 items-center rounded-full px-3 font-semibold"
+        @click="$emit('startOver')"
+      >
+        Start over
+      </button>
+    </div>
+
+    <div class="-mx-4">
       <button
         type="button"
         class="press-row text-primary text-callout flex min-h-11 items-center gap-1 rounded-full px-4 font-semibold"
         @click="needs.show($event)"
       >
         What you’ll need <ChevronRight class="size-4" stroke-width="2.4" />
-      </button>
-      <button
-        v-if="draft"
-        type="button"
-        class="press-row text-primary text-callout flex min-h-11 items-center rounded-full px-4 font-semibold"
-        @click="$emit('startOver')"
-      >
-        Start over
       </button>
     </div>
     <p v-if="!signedIn" class="text-muted-foreground text-sm">

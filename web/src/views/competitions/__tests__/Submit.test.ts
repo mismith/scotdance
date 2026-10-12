@@ -74,14 +74,9 @@ const VenueField = defineComponent({
       ]),
 })
 vi.mock('@/components/admin/VenueField.vue', () => ({ default: VenueField }))
-// The bar, with the page's back button and progress in it.
-const AppBar = defineComponent({
-  name: 'AppBar',
-  setup:
-    (_, { slots }) =>
-    () =>
-      h('nav', [slots.leading?.(), slots.middle?.()]),
-})
+// The bar, with the page's back button and progress in it (a stub's
+// render function, so the page's own slots show).
+const AppBar = { name: 'AppBar', render(this: { $slots: Record<string, (() => unknown) | undefined> }) { return h('nav', [this.$slots.leading?.(), this.$slots.middle?.()]) } }
 
 const { default: Submit } = await import('@/views/competitions/Submit.vue')
 
@@ -190,7 +185,7 @@ describe('Add a competition', () => {
     expect(w.findComponent(VenueField).exists()).toBe(false)
     expect(label(w)).toBe('Sign in to start')
     await cont(w)
-    expect(auth.openLogin).toHaveBeenCalledWith({ reason: 'account' })
+    expect(auth.openLogin).toHaveBeenCalledWith({ reason: 'submit' })
 
     // Signing in from there goes straight on to the first question.
     Object.assign(auth, { isSignedIn: true, uid: 'u1' })

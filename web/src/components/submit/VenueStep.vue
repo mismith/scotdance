@@ -59,7 +59,7 @@ async function to(next: Mode) {
 function settle() {
   if (mode.value === 'search' && venue.value.trim()) mode.value = 'typed'
 }
-defineExpose({ settle })
+defineExpose({ settle, mode })
 </script>
 
 <template>

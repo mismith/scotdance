@@ -215,8 +215,10 @@ function settled() {
   ;(typing || heading.value)?.focus()
 }
 
+// (Still searching, there's no town box yet: picking a venue fills it in.)
 async function flag() {
-  error.value = (at.value && MISSING[at.value]) ?? null
+  error.value =
+    at.value === 'venue' && venueStep.value?.mode === 'search' ? 'Search for the venue, or add just the town.' : ((at.value && MISSING[at.value]) ?? null)
   await nextTick()
   document.querySelector<HTMLElement>('[data-slide] [aria-invalid="true"]')?.focus()
 }
@@ -462,7 +464,9 @@ let startOnSignIn = false
 function start() {
   if (!auth.isSignedIn) {
     startOnSignIn = true
-    auth.openLogin({ reason: 'account' })
+    // (As an organiser: the sheet says why, and a new account's "how do you
+    // use the app?" waits rather than covering the first question.)
+    auth.openLogin({ reason: 'submit' })
     return
   }
   const to = resumeAt.value ?? 'country'
@@ -606,7 +610,7 @@ const registration = computed(() => registrationHint(form.country))
             ref="introEl"
             key="intro"
             :signed-in="auth.isSignedIn"
-            :draft="!!resumeAt"
+            :draft="resumeAt ? { name: form.name, date: form.date } : null"
             class="pb-6"
             @start-over="startOver"
           />
