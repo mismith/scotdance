@@ -212,9 +212,9 @@ can't read means a look.
    `~/Sites/@mismith/scotdance-backups/2026-10-06-registration-numbers`).
    - The `competitionRegistrationChanged` trigger that kept them tidy after
      that is gone from the code: it changed numbers without showing anyone.
-   - Once ADR 0010 is on `next`, delete it with
-     `firebase functions:delete competitionRegistrationChanged`. A plain
-     functions deploy offers to as well.
+   - Deleted 2026-10-12, once ADR 0010 was on `next` (with
+     `competitionSubmissionCreated` and `competitionSubmissionUpdated`
+     redeployed, so a submission's number is kept as sent).
    - Until v3 goes, numbers typed in v3 stay as typed. They're tidied, with
      the preview, the next time someone edits them in Manage.
 5. Submit a tidy competition yourself: it should be approved within seconds,
@@ -233,7 +233,8 @@ order:
    2026-10-06's (approving as they arrive) is this one. v3's Submit always
    sends all three (its form requires them), and edits to a submission
    already sent (either admin) aren't held to it.
-2. `firebase deploy --only functions:competitionSubmissionCreated`.
+2. `firebase deploy --only functions:competitionSubmissionCreated`. Done
+   2026-10-12, with ADR 0010's deploy.
 
 Don't approve the blank one from 2026-10-11: approval copies its empty
 competition into a nameless one. Reject or delete it.
