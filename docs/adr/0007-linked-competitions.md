@@ -260,11 +260,16 @@ the others", since the app's Share button means sending a link.
   which it keeps, said as tags ("Its own venue"). **Choose what's shared**
   opens the switches for anyone who wants otherwise; turning on a part it has
   says what's replaced. Later, switching a part on asks first.
-- **Shared parts on the others** are shown as they are, as plain text marked
-  **Shared**, under one link at the top of Details: **Shared from SDCCS
-  Pre-Premier Open ›**. The name, date and registration number stay fields.
-  Staff says "Shared from SDCCS Pre-Premier Open", with **Open it** and
-  **Stop sharing**.
+- **Shared parts on the others are locked in place** (Murray, 2026-10-12,
+  canvas "Making shared obvious", option 1). Each field keeps its place and
+  label, its value readable, on a grey fill with a lock where you'd edit;
+  switches show a lock in the thumb, and Staff a lock where Add would be.
+  Tapping anything locked opens one sheet: "Shared from SDCCS Pre-Premier
+  Open", what that means, **Open SDCCS Pre-Premier Open** and **Stop sharing
+  its …** (keeping what's there). One link heads Details and Staff: **Shared
+  from SDCCS Pre-Premier Open ›**. The name, date and registration number stay
+  fields. Greying fields out was set aside: it shows which, but not why, and
+  is hard to read.
 - **Offered where it's missing.** A Staff page that keeps its own offers
   **Use its staff**; Where offers **Use SDCCS Pre-Premier Open's venue**.
   Each is that part's switch, and asks before replacing.

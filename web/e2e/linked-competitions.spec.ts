@@ -186,7 +186,7 @@ test.describe('families and organisers', () => {
     await expect(page).toHaveURL(new RegExp(`/competitions/${ids[0]}/info`))
   })
 
-  test('Manage lists them, tags what differs, and shows what’s shared rather than editing it', async ({ page }) => {
+  test('Manage lists them, tags what differs, and locks what’s shared, saying why', async ({ page }) => {
     await signIn(page, organiserEmail)
     await page.goto(`/competitions/${ids[0]}/manage/details`)
     const section = page.locator('#linked')
@@ -200,9 +200,15 @@ test.describe('families and organisers', () => {
     await expect(page.getByRole('link', { name: /Shared from .*Pre-Premier Open/ })).toBeVisible()
     await expect(page.getByRole('textbox', { name: 'Description' })).toHaveCount(0)
     await expect(page.getByRole('textbox', { name: 'Name', exact: true })).toBeEnabled()
+    // Tapping a locked field says why, with the two ways out.
+    await page.getByRole('button', { name: /^Description:/ }).click()
+    const sheet = page.locator('dialog[open]')
+    await expect(sheet.getByRole('heading', { name: /Shared from .*Pre-Premier Open/ })).toBeVisible()
+    await expect(sheet.getByRole('button', { name: 'Stop sharing its description and logo' })).toBeVisible()
+    await page.keyboard.press('Escape')
 
     await page.goto(`/competitions/${ids[1]}/manage/staff`)
-    await expect(page.getByRole('note').getByText(/Shared from/)).toBeVisible()
+    await expect(page.getByRole('link', { name: /Shared from .*Pre-Premier Open/ })).toBeVisible()
     await expect(page.getByRole('link', { name: /^Add/ })).toHaveCount(0)
   })
 })

@@ -1,7 +1,8 @@
-import { computed, type Ref } from 'vue'
+import { computed, inject, provide, ref, type InjectionKey, type Ref } from 'vue'
 import type { RouteLocationRaw } from 'vue-router'
 import { useLinkSync, useLinkedSet } from '@/composables/useCompetitionLinks'
 import { LINK_PART_IDS, type LinkPart } from '@/lib/linked'
+import { useMorph } from '@/lib/morph'
 import { useMeStore } from '@/stores/me'
 
 /**
@@ -28,3 +29,36 @@ export function useSharedParts(competitionId: Ref<string>) {
   }
   return { mainId, mainRecord, mainName, isOther, shared, anyShared, mainTo }
 }
+
+export type SharedSheet = ReturnType<typeof useSharedParts> & {
+  competitionId: Ref<string>
+  morph: ReturnType<typeof useMorph>
+  /** The part being explained. */
+  part: Ref<LinkPart | null>
+  /** Tapping anything locked: why, and the ways out (SharedSheet.vue). */
+  explain: (part: LinkPart, from?: Event | HTMLElement | null) => void
+}
+const KEY: InjectionKey<SharedSheet> = Symbol('sharedSheet')
+
+/**
+ * A Manage page with shared parts: everything locked on it opens the one
+ * Shared sheet (render SharedSheet.vue once on the page).
+ */
+export function provideSharedSheet(competitionId: Ref<string>): SharedSheet {
+  const morph = useMorph()
+  const part = ref<LinkPart | null>(null)
+  const sheet: SharedSheet = {
+    ...useSharedParts(competitionId),
+    competitionId,
+    morph,
+    part,
+    explain: (p, from) => {
+      part.value = p
+      morph.show(from)
+    },
+  }
+  provide(KEY, sheet)
+  return sheet
+}
+
+export const useSharedSheet = () => inject(KEY, null)

@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Link2 } from '@lucide/vue'
+import { RouterLink } from 'vue-router'
+import { ChevronRight, Link2, Lock } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import CollectionEditor from '@/components/admin/CollectionEditor.vue'
-import { useSharedParts } from '@/composables/admin/useSharedParts'
+import SharedSheet from '@/components/admin/SharedSheet.vue'
+import { provideSharedSheet } from '@/composables/admin/useSharedParts'
 import { changeLink, previewLink } from '@/lib/admin/links'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
@@ -61,30 +63,29 @@ const spec: CollectionSpec<MStaff> = {
 const items = computed(() => m.staff.value)
 
 // Linked (ADR 0007): staff shared from the main one are changed there, so
-// they're read-only here; one keeping its own is offered the main one's.
-const { mainName, isOther: notMain, shared: sharedPart, mainTo } = useSharedParts(m.competitionId)
+// they're locked here (tapping says why); one keeping its own is offered the
+// main one's.
+const { mainName, isOther: notMain, shared: sharedPart, mainTo } = provideSharedSheet(m.competitionId)
 const shared = computed(() => sharedPart('staff'))
 
 const busy = ref(false)
-async function setSyncing(on: boolean) {
+async function useItsStaff() {
   if (busy.value) return
   busy.value = true
   try {
     const id = m.competitionId.value
-    if (on) {
-      const plan = (await previewLink({ action: 'sync', competitionId: id, part: 'staff', on: true })).targets[0]?.parts[0]
-      if (plan?.blocked) throw new Error(plan.blocked)
-      if (plan?.replaces) {
-        const ok = await confirm({
-          title: `Use ${mainName.value}’s staff?`,
-          message: `${replacesSentence(m.competition.value?.name?.trim() || 'This one', plan, mainName.value)} They stay in step with it from then on.`,
-          confirmLabel: 'Use its staff',
-        })
-        if (!ok) return
-      }
+    const plan = (await previewLink({ action: 'sync', competitionId: id, part: 'staff', on: true })).targets[0]?.parts[0]
+    if (plan?.blocked) throw new Error(plan.blocked)
+    if (plan?.replaces) {
+      const ok = await confirm({
+        title: `Use ${mainName.value}’s staff?`,
+        message: `${replacesSentence(m.competition.value?.name?.trim() || 'This one', plan, mainName.value)} They stay in step with it from then on.`,
+        confirmLabel: 'Use its staff',
+      })
+      if (!ok || m.competitionId.value !== id) return
     }
-    await changeLink({ action: 'sync', competitionId: id, part: 'staff', on })
-    toast(on ? `Staff: shared from ${mainName.value}` : 'Staff: its own now')
+    await changeLink({ action: 'sync', competitionId: id, part: 'staff', on: true })
+    toast(`Staff: shared from ${mainName.value}`)
   } catch (e) {
     toast(e instanceof Error && !('code' in e) ? e.message : friendlyError(e), { tone: 'error' })
   } finally {
@@ -94,22 +95,23 @@ async function setSyncing(on: boolean) {
 </script>
 
 <template>
-  <CollectionEditor :spec="spec" :items="items" :readonly="shared">
+  <CollectionEditor :spec="spec" :items="items" :shared="shared ? 'staff' : undefined">
     <template v-if="notMain" #notice>
-      <div role="note" class="bg-blue-paper m-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl p-4">
+      <RouterLink
+        v-if="shared && mainTo('manage.staff')"
+        :to="mainTo('manage.staff')!"
+        class="press bg-blue-paper text-primary text-callout m-4 flex min-h-12 items-center gap-2.5 rounded-2xl px-4 font-semibold"
+      >
+        <Lock class="size-5 shrink-0" aria-hidden="true" />
+        <span class="min-w-0 flex-1">Shared from {{ mainName }}</span>
+        <ChevronRight class="size-5 shrink-0" aria-hidden="true" />
+      </RouterLink>
+      <div v-else-if="!shared" role="note" class="bg-blue-paper m-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl p-4">
         <Link2 class="text-primary size-5 shrink-0" aria-hidden="true" />
-        <p class="text-callout min-w-0 flex-1 basis-48">
-          <template v-if="shared">Shared from <span class="font-semibold">{{ mainName }}</span>. Who judges where stays in this one’s Schedule.</template>
-          <template v-else>Use <span class="font-semibold">{{ mainName }}</span>’s staff, kept in step from then on.</template>
-        </p>
-        <div class="flex gap-2">
-          <template v-if="shared">
-            <Button size="sm" :to="mainTo('manage.staff')!">Open it</Button>
-            <Button variant="plain" size="sm" :disabled="!canEdit" :busy="busy" @click="setSyncing(false)">Stop sharing</Button>
-          </template>
-          <Button v-else size="sm" :disabled="!canEdit" :busy="busy" @click="setSyncing(true)">Use its staff</Button>
-        </div>
+        <p class="text-callout min-w-0 flex-1 basis-48">Use <span class="font-semibold">{{ mainName }}</span>’s staff, kept in step from then on.</p>
+        <Button size="sm" :disabled="!canEdit" :busy="busy" @click="useItsStaff">Use its staff</Button>
       </div>
+      <SharedSheet />
     </template>
   </CollectionEditor>
 </template>

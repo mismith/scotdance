@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, reactive, ref, shallowRef, watch, watchEffect } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { VueDraggable } from 'vue-draggable-plus'
-import { ChevronRight, FileSpreadsheet, GripVertical, ListPlus, Plus, Trash2, X } from '@lucide/vue'
+import { ChevronRight, FileSpreadsheet, GripVertical, ListPlus, Lock, Plus, Trash2, X } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import Button from '@/components/ui/Button.vue'
@@ -15,10 +15,12 @@ import SwipeRow from '@/components/admin/SwipeRow.vue'
 import TextField from '@/components/admin/TextField.vue'
 import SelectField from '@/components/admin/SelectField.vue'
 import ImageField from '@/components/admin/ImageField.vue'
+import SharedValue from '@/components/admin/SharedValue.vue'
 import FormInput from '@/components/admin/FormInput.vue'
 import NumberTile from '@/components/admin/NumberTile.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
+import { useSharedSheet } from '@/composables/admin/useSharedParts'
 import { useSplit } from '@/composables/admin/useWide'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
@@ -26,6 +28,7 @@ import { LINK_PROBLEM, looksLikeLink, type CollectionItem, type CollectionSpec, 
 import { htmlToText } from '@/lib/admin/richText'
 import { ALL_SECTIONS } from '@/lib/admin/sections'
 import { useMorph } from '@/lib/morph'
+import type { LinkPart } from '@/lib/linked'
 
 // One editable list: search, select several to change or delete at once,
 // drag to reorder (or move from the keyboard), swipe one left to delete it,
@@ -36,8 +39,11 @@ import { useMorph } from '@/lib/morph'
 const props = defineProps<{
   spec: CollectionSpec<T>
   items: T[]
-  /** Shown but not changed here (copied from a linked primary, say): no adding, moving or deleting. */
-  readonly?: boolean
+  /**
+   * Shared from a linked competition's main one (ADR 0007): shown, locked,
+   * and changed there. No adding, moving or deleting; tapping says why.
+   */
+  shared?: LinkPart
 }>()
 
 const slots = defineSlots<{
@@ -53,6 +59,8 @@ const route = useRoute()
 const router = useRouter()
 const m = useManagedCompetition()
 const split = useSplit()
+const readonly = computed(() => !!props.shared)
+const sheet = useSharedSheet()
 
 const itemId = computed(() => (route.params.itemId ? String(route.params.itemId) : null))
 const adding = computed(() => itemId.value === 'new')
@@ -100,7 +108,7 @@ watch(
   },
   { immediate: true },
 )
-const canReorder = computed(() => !!props.spec.sortable && !props.readonly && !query.value.trim() && !selecting.value && canEdit.value)
+const canReorder = computed(() => !!props.spec.sortable && !readonly.value && !query.value.trim() && !selecting.value && canEdit.value)
 
 async function saveOrder() {
   const updates: Record<string, unknown> = {}
@@ -179,9 +187,9 @@ const selecting = ref(false)
 const selected = reactive(new Set<string>())
 // Going read-only (shared from a linked main one) ends any selecting: nothing can be deleted then.
 watch(
-  () => props.readonly,
-  (readonly) => {
-    if (!readonly) return
+  () => readonly.value,
+  (locked) => {
+    if (!locked) return
     selecting.value = false
     selected.clear()
   },
@@ -287,6 +295,12 @@ const fieldValue = (item: T, key: string) => (item as unknown as Record<string, 
 // Long text (a bio, a description) is edited as plain text, even where the
 // old app stored HTML. Saved as typed, the public pages show it the same way.
 const textValue = (item: T, f: FieldSpec) => (f.kind === 'textarea' ? htmlToText(stringValue(item, f.key)) : fieldValue(item, f.key))
+/** As read, when shared: a choice by its label. */
+const shownValue = (item: T, f: FieldSpec): string | null => {
+  if (f.kind !== 'select') return String(textValue(item, f) ?? '') || null
+  const v = stringValue(item, f.key)
+  return f.options?.().find((o) => o.value === v)?.label ?? v ?? null
+}
 
 // --- Adding
 const lastAdded = ref<Record<string, string> | null>(null)
@@ -439,6 +453,17 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
             <Button variant="plain" class="-mr-3" :aria-pressed="selecting" @click="toggleSelecting">
               {{ selecting ? 'Done' : 'Select' }}
             </Button>
+          </template>
+          <!-- Shared: a lock where Add would be; tapping says why. -->
+          <template v-else-if="shared" #actions>
+            <button
+              type="button"
+              class="press bg-muted text-muted-foreground -my-1 flex size-11 items-center justify-center rounded-full"
+              :aria-label="`Why ${spec.plural} can’t be added here`"
+              @click="sheet?.explain(shared, $event)"
+            >
+              <Lock class="size-4" />
+            </button>
           </template>
           <!-- Ways to add, the same on every tab: the usual start first (the
                common ones, or Import), then one at a time. While selecting,
@@ -641,15 +666,21 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
         </header>
         <div class="grid gap-4 sm:grid-cols-2">
           <div v-for="f in spec.fields" :key="f.key" :class="f.half ? 'sm:col-span-1' : 'sm:col-span-2'">
+            <template v-if="shared">
+              <SharedValue v-if="f.kind === 'image'" :label="f.label" :part="shared">
+                <img v-if="stringValue(current, f.key)" :src="stringValue(current, f.key)!" alt="" class="size-16 rounded-full object-cover" />
+                <span v-else class="text-muted-foreground">Nothing yet</span>
+              </SharedValue>
+              <SharedValue v-else :label="f.label" :part="shared" :value="shownValue(current, f)" :multiline="f.kind === 'textarea'" />
+            </template>
             <SelectField
-              v-if="f.kind === 'select'"
+              v-else-if="f.kind === 'select'"
               :model-value="stringValue(current, f.key)"
               :label="f.label"
               :options="f.options?.() ?? []"
               :hint="f.hint"
               :required="f.required"
               :placeholder="f.placeholder"
-              :disabled="readonly"
               :save="saverFor(current, f.key)"
             />
             <ImageField
@@ -660,7 +691,6 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
               :folder="f.storage ?? 'staff'"
               :competition-id="m.competitionId.value"
               shape="round"
-              :disabled="readonly"
               :save="saverFor(current, f.key)"
             />
             <TextField
@@ -674,7 +704,6 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
               :type="f.kind === 'url' ? 'url' : 'text'"
               :inputmode="f.inputmode"
               :validate="validatorFor(current, f)"
-              :disabled="readonly"
               :save="saverFor(current, f.key)"
             />
           </div>
