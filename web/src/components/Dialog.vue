@@ -56,6 +56,14 @@ function sync(open: boolean) {
   if (!el) return
   if (open && !el.open) {
     el.showModal()
+    // Inside something hidden (a phone's list pane while an item is open), a
+    // modal dialog can't be seen yet blocks every tap: close it again.
+    if (!el.getClientRects().length) {
+      el.close()
+      if (import.meta.env.DEV) console.warn('A dialog opened inside a hidden element, so it was closed:', el)
+      emit('close')
+      return
+    }
     // Take focus on the dialog itself, not its first button: otherwise iOS
     // draws a focus ring on that button the moment a sheet or menu opens.
     el.focus({ preventScroll: true })

@@ -4,7 +4,6 @@ import { RouterLink } from 'vue-router'
 import { ChevronRight, Link2, Lock } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import CollectionEditor from '@/components/admin/CollectionEditor.vue'
-import SharedSheet from '@/components/admin/SharedSheet.vue'
 import { provideSharedSheet } from '@/composables/admin/useSharedParts'
 import { changeLink, previewLink } from '@/lib/admin/links'
 import { confirm, toast } from '@/lib/admin/feedback'
@@ -111,7 +110,6 @@ async function useItsStaff() {
         <p class="text-callout min-w-0 flex-1 basis-48">Use <span class="font-semibold">{{ mainName }}</span>’s staff, kept in step from then on.</p>
         <Button size="sm" :disabled="!canEdit" :busy="busy" @click="useItsStaff">Use its staff</Button>
       </div>
-      <SharedSheet />
     </template>
   </CollectionEditor>
 </template>

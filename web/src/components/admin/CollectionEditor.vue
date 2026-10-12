@@ -15,6 +15,7 @@ import SwipeRow from '@/components/admin/SwipeRow.vue'
 import TextField from '@/components/admin/TextField.vue'
 import SelectField from '@/components/admin/SelectField.vue'
 import ImageField from '@/components/admin/ImageField.vue'
+import SharedSheet from '@/components/admin/SharedSheet.vue'
 import SharedValue from '@/components/admin/SharedValue.vue'
 import FormInput from '@/components/admin/FormInput.vue'
 import NumberTile from '@/components/admin/NumberTile.vue'
@@ -720,6 +721,9 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
       <EmptyState v-else :icon="X" :title="`This ${spec.singular} isn’t here any more`" description="It may have been deleted. Choose another from the list." />
     </template>
   </MasterDetail>
+
+  <!-- Why a shared one can't be changed here (outside the panes: a phone hides the list while one's open) -->
+  <SharedSheet v-if="shared" />
 
   <!-- Presets -->
   <Dialog :open="presetsSheet.open" :morph="presetsSheet" variant="sheet" size="md" @close="presetsSheet.hide()">
