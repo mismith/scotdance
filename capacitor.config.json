@@ -7,7 +7,6 @@
     "SplashScreen": {
       "launchAutoHide": false,
       "showSpinner": false,
-      "backgroundColor": "#f2f4f7",
       "launchFadeOutDuration": 0
     },
     "FirebaseMessaging": {
