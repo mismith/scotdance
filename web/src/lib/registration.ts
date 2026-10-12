@@ -136,3 +136,13 @@ export function registrationPreview(raw: string, year?: number | null): { saved:
     lines: registrations(value).map((r) => (r.association ? `${registrationLabel(r)}: ${r.number}` : `Saved as ${r.number}`)),
   }
 }
+
+/** The line under a registration number's box while it's typed (null: the box's own hint). */
+export function registrationNote(draft: string, year?: number | null): string | null {
+  if (!draft.trim()) return null
+  const preview = registrationPreview(draft, year)
+  return preview.unread ? 'Not a format ScotDance.app knows, so it’s saved as typed.' : preview.lines.join(', ')
+}
+
+/** What a registration number's box saves: as its note said. */
+export const registrationToSave = (typed: string, year?: number | null) => registrationPreview(typed, year).saved || null
