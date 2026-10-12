@@ -118,7 +118,12 @@ export async function startStack(): Promise<Stack> {
     ],
     {
       cwd: ROOT,
-      env: { ...process.env, TYPESENSE_PORT: String(TYPESENSE_PORT) },
+      env: {
+        ...process.env,
+        TYPESENSE_PORT: String(TYPESENSE_PORT),
+        // Keeps that one worker running each event as the right function.
+        NODE_OPTIONS: `--require ${WEB}scripts/emulator-no-keepalive.cjs`,
+      },
       stdio: ['ignore', 'pipe', 'pipe'],
       detached: true,
     },
