@@ -73,12 +73,14 @@ jobs:
           echo '{"version":"15.32.1","database":{"version":"4.11.2","path":"database_export"}}' > "$RUNNER_TEMP/seed/firebase-export-metadata.json"
       # One functions worker (--inspect-functions), as in `npm run local`:
       # otherwise seeding spawns so many that the database emulator falls over.
-      # Signed out, the CLI can't look up the project's database and guesses
-      # firebase-scotdance, so the triggers would listen where nothing's
-      # written: name the one the app uses.
+      # The preload stops that worker running an event as the wrong function
+      # (see the file). Signed out, the CLI can't look up the project's
+      # database and guesses firebase-scotdance, so the triggers would listen
+      # where nothing's written: name the one the app uses.
       - name: E2E
         env:
           DATABASE_URL: https://scotdance.firebaseio.com
+          NODE_OPTIONS: --require ${{ github.workspace }}/web/scripts/emulator-no-keepalive.cjs
         run: >-
           npx --yes firebase-tools@15 emulators:exec
           --project firebase-scotdance
