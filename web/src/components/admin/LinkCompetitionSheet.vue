@@ -73,7 +73,7 @@ const chosen = reactive(new Set<LinkPart>())
 const nameOf = (cid?: string | null) =>
   cid === here.value
     ? m.competition.value?.name?.trim() || 'This one'
-    : (cid === picked.value?.id ? picked.value?.name : props.members.find((c) => c.id === cid)?.name)?.trim() || 'the other'
+    : (competitions.value.find((c) => c.id === cid) ?? props.members.find((c) => c.id === cid))?.name?.trim() || 'the main one'
 
 const parts = computed(() =>
   LINK_PARTS.map((p) => {
@@ -96,16 +96,20 @@ async function pick(c: CompetitionListItem) {
   preview.value = null
   loading.value = true
   try {
-    preview.value = await previewLink({ action: 'link', competitionId: c.id, withId: here.value })
+    const answer = await previewLink({ action: 'link', competitionId: c.id, withId: here.value })
+    // Picked another meanwhile (Back, then another): that one's answer counts.
+    if (picked.value !== c) return
+    preview.value = answer
     choosing.value = false
     chosen.clear()
     // Shared: whatever it hasn't got of its own.
     for (const p of parts.value) if (!p.blocked && !p.replaces) chosen.add(p.id)
   } catch (e) {
+    if (picked.value !== c) return
     toast(friendlyError(e), { tone: 'error' })
     picked.value = null
   } finally {
-    loading.value = false
+    if (picked.value === c || picked.value === null) loading.value = false
   }
 }
 

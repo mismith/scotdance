@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { Link2 } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import CollectionEditor from '@/components/admin/CollectionEditor.vue'
-import { useLinkSync, useLinkedSet } from '@/composables/useCompetitionLinks'
+import { useSharedParts } from '@/composables/admin/useSharedParts'
 import { changeLink, previewLink } from '@/lib/admin/links'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
@@ -62,12 +62,8 @@ const items = computed(() => m.staff.value)
 
 // Linked (ADR 0007): staff shared from the main one are changed there, so
 // they're read-only here; one keeping its own is offered the main one's.
-const { takes } = useLinkSync()
-const linkedSet = useLinkedSet(m.competitionId)
-const mainId = computed(() => linkedSet.primary.value)
-const mainName = computed(() => linkedSet.members.value.find((c) => c.id === mainId.value)?.name?.trim() || 'the main one')
-const notMain = computed(() => !!mainId.value && mainId.value !== m.competitionId.value)
-const shared = computed(() => notMain.value && takes(m.competitionId.value, 'staff'))
+const { mainName, isOther: notMain, shared: sharedPart, mainTo } = useSharedParts(m.competitionId)
+const shared = computed(() => sharedPart('staff'))
 
 const busy = ref(false)
 async function setSyncing(on: boolean) {
@@ -108,7 +104,7 @@ async function setSyncing(on: boolean) {
         </p>
         <div class="flex gap-2">
           <template v-if="shared">
-            <Button size="sm" :to="{ name: 'manage.staff', params: { competitionId: mainId } }">Open it</Button>
+            <Button size="sm" :to="mainTo('manage.staff')!">Open it</Button>
             <Button variant="plain" size="sm" :disabled="!canEdit" :busy="busy" @click="setSyncing(false)">Stop sharing</Button>
           </template>
           <Button v-else size="sm" :disabled="!canEdit" :busy="busy" @click="setSyncing(true)">Use its staff</Button>

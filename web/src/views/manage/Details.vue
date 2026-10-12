@@ -12,10 +12,9 @@ import VenueField from '@/components/admin/VenueField.vue'
 import DetailsPreview from '@/components/admin/DetailsPreview.vue'
 import LinkedCompetitions from '@/components/admin/LinkedCompetitions.vue'
 import SharedPart from '@/components/admin/SharedPart.vue'
-import { useLinkSync, useLinkedSet } from '@/composables/useCompetitionLinks'
+import { useSharedParts } from '@/composables/admin/useSharedParts'
 import { changeLink, previewLink } from '@/lib/admin/links'
 import { replacesSentence } from '@/lib/admin/linkWords'
-import { LINK_PART_IDS, type LinkPart } from '@/lib/linked'
 import MapPreview from '@/components/MapPreview.vue'
 import OrganisationMark from '@/components/OrganisationMark.vue'
 import OrganisationPicker from '@/components/OrganisationPicker.vue'
@@ -71,13 +70,7 @@ const save = (key: string) => (v: string | null) => m.writeInfo({ [key]: v }, FI
 
 // --- Linked competitions (ADR 0007): what this one shares from the main one
 // is changed there, so here it's shown as it is, as plain text.
-const { takes } = useLinkSync()
-const linkedSet = useLinkedSet(m.competitionId)
-const mainId = computed(() => linkedSet.primary.value)
-const mainRecord = computed(() => linkedSet.members.value.find((x) => x.id === mainId.value) ?? null)
-const mainName = computed(() => mainRecord.value?.name?.trim() || 'the main one')
-const shared = (part: LinkPart) => !!mainId.value && mainId.value !== m.competitionId.value && takes(m.competitionId.value, part)
-const anyShared = computed(() => LINK_PART_IDS.some(shared))
+const { mainId, mainRecord, mainName, shared, anyShared, mainTo } = useSharedParts(m.competitionId)
 const venueText = computed(() => [c.value.venue, c.value.address, c.value.location].filter(Boolean).join(' · ') || 'No venue yet')
 const registrationText = computed(() =>
   [
@@ -291,8 +284,8 @@ async function deleteCompetition() {
       <SectionHeader title="Details" />
 
       <RouterLink
-        v-if="anyShared && mainId"
-        :to="{ name: 'manage.details', params: { competitionId: mainId } }"
+        v-if="anyShared && mainTo()"
+        :to="mainTo()!"
         class="press bg-blue-paper text-primary text-callout flex min-h-12 items-center gap-2.5 rounded-2xl px-4 font-semibold"
       >
         <Link2 class="size-5 shrink-0" aria-hidden="true" />

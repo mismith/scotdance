@@ -108,6 +108,15 @@ async function run(fn: () => Promise<unknown>) {
 
 /** A part's switch: on the main one, for all the others; else for this one. */
 async function setPart(part: LinkPart, on: boolean) {
+  if (busy.value) return
+  busy.value = true
+  try {
+    await savePart(part, on)
+  } finally {
+    busy.value = false
+  }
+}
+async function savePart(part: LinkPart, on: boolean) {
   const label = linkPartLabel(part)
   if (on) {
     const preview = await previewLink({ action: 'sync', competitionId: id.value, part, on: true })
@@ -228,6 +237,7 @@ const TAG = { main: 'bg-blue-paper text-primary', own: 'bg-next text-next-foregr
         </span>
         <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
       </RouterLink>
+      <p v-else-if="primary" class="flex min-h-15 items-center px-4 text-base font-semibold">Main competition <span class="text-muted-foreground ml-1.5 font-normal">(not listed yet)</span></p>
       <p v-else class="text-muted-foreground px-4 py-3 text-sm">None of them is the main one, so nothing’s shared. Make one the main one from its ··· menu.</p>
       <button v-if="primary" type="button" :class="ROW" @click="sheet.show($event)">
         <span class="flex-1 text-base font-semibold">Shared from it</span>

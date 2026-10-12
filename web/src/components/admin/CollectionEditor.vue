@@ -177,6 +177,15 @@ function onHandleBlur(item: T) {
 // --- Selecting several
 const selecting = ref(false)
 const selected = reactive(new Set<string>())
+// Going read-only (shared from a linked main one) ends any selecting: nothing can be deleted then.
+watch(
+  () => props.readonly,
+  (readonly) => {
+    if (!readonly) return
+    selecting.value = false
+    selected.clear()
+  },
+)
 function toggleSelecting() {
   selecting.value = !selecting.value
   selected.clear()
@@ -562,7 +571,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
         leave-to-class="translate-y-[calc(100%+1.5rem)] opacity-0 motion-reduce:translate-y-0"
       >
         <div
-          v-if="selecting && selected.size"
+          v-if="selecting && selected.size && !readonly"
           class="glass fixed inset-x-chrome-3 bottom-[calc(var(--safe-bottom)+0.75rem)] z-20 flex flex-wrap items-center gap-2 rounded-2xl p-2 md:sticky md:inset-x-auto md:bottom-3 md:mx-3"
         >
           <Button v-for="f in bulkFields" :key="f.key" :disabled="!canEdit" @click="openBulk(f, $event)">

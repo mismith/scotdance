@@ -466,6 +466,12 @@ export function getOnLink(db: Db) {
         if (id === competitionId) continue;
         flags.set(id, id === link.primary ? theirs : await flagsOf(db, id));
       }
+      // A link left without a main one shares nothing: from its new one, each
+      // shares what replaces nothing of its own, as linking does.
+      if (!link.primary) {
+        const fresh = await plansFor(db, competitionId, [...flags.keys()].map((id) => ({ competitionId: id, parts: [...PARTS] })));
+        for (const { competitionId: id, plans } of fresh) flags.set(id, plans.filter((p) => !p.replaces && !p.blocked).map((p) => p.part));
+      }
       const planned = await plansFor(db, competitionId, [...flags].map(([id, parts]) => ({ competitionId: id, parts })));
       if (dryRun) return { primary: competitionId, targets: preview(planned) };
       const updates: Updates = {
@@ -474,6 +480,8 @@ export function getOnLink(db: Db) {
       };
       if (link.primary) {
         updates[`competitionLinks:sync/${link.primary}`] = theirs.length ? Object.fromEntries(theirs.map((p) => [p, true])) : null;
+      } else {
+        for (const [id, parts] of flags) updates[`competitionLinks:sync/${id}`] = parts.length ? Object.fromEntries(parts.map((p) => [p, true])) : null;
       }
       applyOrRefuse(planned, updates);
       await db.update(updates);

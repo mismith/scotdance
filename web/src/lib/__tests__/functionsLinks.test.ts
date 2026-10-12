@@ -229,6 +229,20 @@ describe('linkCompetitions: unlink, primary, sync', () => {
     expect(read('competitionLinks:sync')).toBeNull()
   })
 
+  it('shares what replaces nothing from a new primary, once the old one has left', async () => {
+    const { call, rtdb, read, save } = await linked()
+    await save({ 'competitions/sun/venue': null })
+    await call('organiser', { action: 'sync', competitionId: 'sun', part: 'venue', on: false })
+    await save({ 'competitions/sun/venue': 'Riverside Arena' })
+    await takeOut(rtdb.ref() as never, 'fri')
+    expect(read('competitionLinks:sync')).toBeNull()
+    await call('organiser', { action: 'primary', competitionId: 'sat' })
+    // Sunday has its own venue, so keeps it; it shares the rest, which is the same as Saturday's.
+    expect(Object.keys(read('competitionLinks:sync/sun'))).not.toContain('venue')
+    expect(Object.keys(read('competitionLinks:sync/sun'))).toContain('staff')
+    expect(read('competitions/sun/venue')).toBe('Riverside Arena')
+  })
+
   it('lets the primary’s manager take one out, but not a stranger', async () => {
     const t = await linked()
     await expect(t.call('nobody', { action: 'unlink', competitionId: 'sun' })).rejects.toMatchObject({ code: 'permission-denied' })
