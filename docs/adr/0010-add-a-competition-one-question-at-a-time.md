@@ -128,6 +128,17 @@ it.
     The button then reads **Continue anyway**.
   - It never blocks. A new or unusual format still gets through, and
     review already holds an unreadable one for a person to look at.
+  - **What's shown is what's sent.** The tidied number goes in the
+    submission.
+  - **Murray (2026-10-12): never change someone's input without showing
+    them.**
+    - Manage › Details' registration field shows the same line as it's
+      typed ("Registered with ScotDance Canada: …", "Not a format
+      ScotDance.app knows, so it's saved as typed", or for TBA, "Left blank
+      until you have one"), and saves that.
+    - The server's tidying goes: the `competitionRegistrationChanged`
+      trigger, and the tidy on a submission's arrival. Review still reads
+      the number, to hold one it can't read for a look.
 - **8 Your name:** "So replies reach the right person. It's never shown
   publicly." It starts with your account's name.
 - **10 Sent:** "Thanks. It's usually approved overnight…", as before. "Add

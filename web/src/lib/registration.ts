@@ -36,10 +36,11 @@ export function registrations(value: string | null | undefined): Registration[] 
 
 // --- Tidying, as the server does
 
-// A mirror of tidyRegistration in functions/src/registration.ts (which says
-// what each format is), so Add a competition can show what a number will be
-// saved as while it's typed. registrationMirror.test.ts keeps the two in step:
-// change both together.
+// Numbers are tidied here, as they're typed, with what they'll be saved as
+// shown beside them (registrationPreview): nothing changes a number without
+// its preview. The server reads them the same way, to hold one it can't read
+// for a look (functions/src/registration.ts, which says what each format is).
+// registrationMirror.test.ts keeps the two in step: change both together.
 
 const PROVINCES = 'AB|BC|MB|NB|NL|NS|ON|PE|QC|SK|NT|YT|NU'
 const CANADA = [
@@ -116,4 +117,22 @@ export function tidyRegistration(raw: unknown, year?: number | null): { value: s
   }
   if (unread.length) return { value: raw.replace(/\s+/g, ' ').trim(), unread }
   return { value: [...new Set(out)].join(', '), unread }
+}
+
+/**
+ * What a typed number (or several) will be saved as, and the line that says
+ * so beside the box: "Registered with ScotDance Canada: C-AB-CO-26-1234". One
+ * it can't read is saved as typed, with no line (the caller says it); TBA and
+ * the like are saved as nothing, and say so.
+ */
+export function registrationPreview(raw: string, year?: number | null): { saved: string; unread: boolean; lines: string[] } {
+  const { value, unread } = tidyRegistration(raw, year)
+  if (unread.length) return { saved: raw.replace(/\s+/g, ' ').trim(), unread: true, lines: [] }
+  // TBA, N/A and the like: nothing to save yet, and it says so.
+  if (!value && raw.trim()) return { saved: '', unread: false, lines: ['Left blank until you have one.'] }
+  return {
+    saved: value,
+    unread: false,
+    lines: registrations(value).map((r) => (r.association ? `${registrationLabel(r)}: ${r.number}` : `Saved as ${r.number}`)),
+  }
 }

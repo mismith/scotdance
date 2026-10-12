@@ -2,7 +2,6 @@ import { getPostmark } from './utility/email';
 import { attachUserToCompetition } from './utility/competition';
 import { organisationsForSubmission } from './organisations';
 import { isEmulator } from './utility/env';
-import { tidyRegistration, yearOf } from './registration';
 import { reviewReasons, type ReviewContext } from './review';
 import { adminSite, appModel, firstName, sendOptions, sentFrom, summary, type SentFrom } from './utility/emailModel';
 
@@ -41,13 +40,6 @@ export function replyModel(reply: string) {
     text: paragraphs.map((p) => p.lines.join('\n')).join('\n\n'),
     preview: first.length > 120 ? `${first.slice(0, 119).join('')}…` : first.join(''),
   };
-}
-
-// What was submitted, with its registration number in its association's format.
-function tidyCompetition(competition) {
-  if (!competition || typeof competition.sobhd !== 'string') return competition;
-  const { value } = tidyRegistration(competition.sobhd, yearOf(competition.date));
-  return { ...competition, sobhd: value || null };
 }
 
 class Submissions {
@@ -301,10 +293,10 @@ class Submissions {
           // up) isn't brought back as a `{ submittedBy }` shell. (Its first try
           // sees null when nothing is cached; answering null makes the server
           // send the real value for a second try, and leaves a deleted one be.)
-          // receivedAt is the server's clock, for the flood check. Its
-          // registration number goes in tidy, as a competition's does.
+          // receivedAt is the server's clock, for the flood check. (Its
+          // registration number is as sent: the app showed it tidied.)
           const { committed, snapshot } = await after.ref.transaction((current) => (
-            current ? { ...current, ...(current.competition && { competition: tidyCompetition(current.competition) }), submittedBy: ctx.auth ? ctx.auth.uid : 'admin', receivedAt: Date.now() } : null
+            current ? { ...current, submittedBy: ctx.auth ? ctx.auth.uid : 'admin', receivedAt: Date.now() } : null
           ));
           if (!committed || !snapshot.exists()) return null;
 

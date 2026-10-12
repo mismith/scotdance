@@ -16,6 +16,8 @@ const props = withDefaults(
     label: string
     save: (value: string) => unknown
     hint?: string
+    /** A line about what's typed, in place of the hint while it says something (e.g. how it'll be saved). */
+    note?: (draft: string) => string | null
     type?: 'text' | 'number' | 'date' | 'datetime-local' | 'url' | 'email' | 'tel'
     multiline?: boolean
     rows?: number
@@ -65,7 +67,7 @@ const inputClass = computed(() => [
 </script>
 
 <template>
-  <AdminField v-slot="{ describedby }" :label="label" :for="id" :hint="hint" :error="error" :required="required" :hide-label="hideLabel">
+  <AdminField v-slot="{ describedby }" :label="label" :for="id" :hint="(note && note(draft)) || hint" :error="error" :required="required" :hide-label="hideLabel">
     <div class="relative">
       <textarea
         v-if="multiline"

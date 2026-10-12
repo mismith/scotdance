@@ -29,6 +29,7 @@ import { htmlToText } from '@/lib/admin/richText'
 import { uploadLinkFile } from '@/lib/admin/upload'
 import { grow, shrink } from '@/lib/admin/motion'
 import { formatExternalURL, parseDate } from '@/lib/format'
+import { registrationPreview } from '@/lib/registration'
 import { placesAvailable, type VenueFields } from '@/lib/maps'
 
 const m = useManagedCompetition()
@@ -62,6 +63,16 @@ const FIELD_NAMES: Record<string, string> = {
   registrationEnd: 'Registration closes',
 }
 const save = (key: string) => (v: string | null) => m.writeInfo({ [key]: v }, FIELD_NAMES[key] ?? key)
+
+// The registration number is saved as shown under it while it's typed: in its
+// association's format, or as typed when it isn't one ScotDance.app knows.
+const year = () => (c.value.date ? parseDate(c.value.date).getFullYear() || null : null)
+const registrationNote = (draft: string) => {
+  if (!draft.trim()) return null
+  const preview = registrationPreview(draft, year())
+  return preview.unread ? 'Not a format ScotDance.app knows, so it’s saved as typed.' : preview.lines.join(', ')
+}
+const saveRegistration = (v: string) => save('sobhd')(registrationPreview(v, year()).saved || null)
 
 async function pickVenue(fields: VenueFields) {
   const message = `Venue set to ${fields.venue ?? fields.address ?? fields.location ?? 'the venue you picked'}`
@@ -244,7 +255,8 @@ async function deleteCompetition() {
             label="Registration number"
             placeholder="e.g. C-AB-CO-26-1234"
             hint="If it’s registered with an association, like the RSOBHD. For several, separate them with commas."
-            :save="save('sobhd')"
+            :note="registrationNote"
+            :save="saveRegistration"
           />
         </div>
         <!-- Edited as plain text, even when the old app stored HTML. -->

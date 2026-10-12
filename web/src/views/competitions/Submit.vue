@@ -21,7 +21,7 @@ import { friendlyError, newKey, write } from '@/lib/admin/write'
 import { formatLongDate, parseDate } from '@/lib/format'
 import { guessUserCountry } from '@/lib/locale'
 import { type VenuePlace } from '@/lib/maps'
-import { registrationLabel, registrations, tidyRegistration } from '@/lib/registration'
+import { registrationPreview } from '@/lib/registration'
 import { useMorph } from '@/lib/morph'
 import {
   countryChoice,
@@ -330,7 +330,8 @@ async function send() {
           venue: t(form.venue),
           address: t(form.address),
           location: t(form.location),
-          sobhd: t(form.sobhd),
+          // As shown beside the box while it was typed.
+          sobhd: t(regPreview.value.saved),
           // The country asked, as the venue search would put it, unless
           // the venue was picked from it.
           ...(where && {
@@ -434,7 +435,7 @@ const review = computed(() => {
       label: 'Venue',
       lines: [form.venue, form.address, form.location],
     },
-    { slide: 'registration' as const, label: 'Registration', lines: [regUnread.value ? form.sobhd : regTidy.value.value] },
+    { slide: 'registration' as const, label: 'Registration', lines: [regPreview.value.saved] },
     {
       slide: 'contact' as const,
       label: 'Your name',
@@ -573,9 +574,8 @@ const registration = computed(() => registrationHint(form.country))
 // it's typed. One it can't read gets a single "are you sure?": the first
 // Continue says so and stays, the next carries on, since a person looks at
 // it before it's approved anyway.
-const regTidy = computed(() => tidyRegistration(form.sobhd, form.date ? Number(form.date.slice(0, 4)) : null))
-const regUnread = computed(() => !!form.sobhd.trim() && regTidy.value.unread.length > 0)
-const regSaved = computed(() => (regUnread.value ? [] : registrations(regTidy.value.value)))
+const regPreview = computed(() => registrationPreview(form.sobhd, form.date ? Number(form.date.slice(0, 4)) : null))
+const regUnread = computed(() => !!form.sobhd.trim() && regPreview.value.unread)
 const regWarned = ref(false)
 watch(
   () => form.sobhd,
@@ -789,7 +789,7 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
                 spellcheck="false"
                 enterkeyhint="next"
                 :placeholder="registration.example ? `e.g. ${registration.example}` : undefined"
-                :aria-describedby="regWarned && regUnread ? 'slide-error' : regSaved.length ? 'slide-saved' : undefined"
+                :aria-describedby="regWarned && regUnread ? 'slide-error' : regPreview.lines.length ? 'slide-saved' : undefined"
                 class="field placeholder:text-muted-foreground h-12 w-full rounded-xl px-3 text-base"
               />
               <p v-if="regWarned && regUnread" id="slide-error" class="-mt-4 text-sm font-medium" role="alert">
@@ -797,10 +797,10 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
                 <template v-else>That isn’t a format ScotDance.app knows.</template>
                 Check it, or continue anyway: it’ll get a look before it’s approved.
               </p>
-              <p v-else-if="regSaved.length" id="slide-saved" class="text-muted-foreground -mt-4 flex gap-1.5 text-sm" aria-live="polite">
+              <p v-else-if="regPreview.lines.length" id="slide-saved" class="text-muted-foreground -mt-4 flex gap-1.5 text-sm" aria-live="polite">
                 <Check class="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
                 <span>
-                  <span v-for="r in regSaved" :key="r.number" class="block">{{ r.association ? `${registrationLabel(r)}: ${r.number}` : `Saved as ${r.number}` }}</span>
+                  <span v-for="line in regPreview.lines" :key="line" class="block">{{ line }}</span>
                 </span>
               </p>
             </template>

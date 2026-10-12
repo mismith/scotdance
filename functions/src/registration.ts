@@ -1,10 +1,10 @@
-// Competition registration numbers, kept in each association's own format so
-// they read the same however they were typed: in a submission, in Manage or
-// in the old app. Several in one field are kept, joined with ", ". If any
-// of it can't be read, it's all left as typed, so nothing said alongside
-// (what each number is for, say) is lost; what couldn't be read is reported,
-// so a submission with it waits for a person. The app names each association
-// from the tidied form (web/src/lib/registration.ts).
+// Competition registration numbers, read in each association's own format.
+// The app tidies them as they're typed, showing what they'll be saved as
+// (web/src/lib/registration.ts, a copy of this kept in step by a test), so
+// nothing here changes one: it only reads them, so a submission with one it
+// can't read waits for a person (review.ts). Several in one field are joined
+// with ", ". If any of it can't be read, it's all left as typed, so nothing
+// said alongside (what each number is for, say) is lost.
 //
 // - RSOBHD, through ScotDance Canada: C-ON-CO-26-2609 (Manitoba's are three
 //   digits). Typed without the CO, it gets one.
@@ -92,21 +92,6 @@ export function tidyRegistration(raw: unknown, year?: number | null): { value: s
   }
   if (unread.length) return { value: raw.replace(/\s+/g, ' ').trim(), unread };
   return { value: [...new Set(out)].join(', '), unread };
-}
-
-/**
- * For the trigger on competitions/{competitionId}/sobhd: writes the number
- * back tidied, unless it already is (so the write it makes settles at once).
- */
-export function getOnRegistrationWritten(db: any) {
-  return async (change: any, ctx: any) => {
-    const raw = change.after.val();
-    if (typeof raw !== 'string') return;
-    const { competitionId } = ctx.params;
-    const date = (await db.child(`competitions/${competitionId}/date`).get()).val();
-    const { value } = tidyRegistration(raw, yearOf(date));
-    if (value !== raw) await db.child(`competitions/${competitionId}/sobhd`).set(value || null);
-  };
 }
 
 /** The year of a competition's date (YYYY-MM-DD), if it has one. */
