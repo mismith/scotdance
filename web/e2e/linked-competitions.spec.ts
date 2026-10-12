@@ -204,7 +204,8 @@ test.describe('families and organisers', () => {
     await page.getByRole('button', { name: /^Description:/ }).click()
     const sheet = page.locator('dialog[open]')
     await expect(sheet.getByRole('heading', { name: /Shared from .*Pre-Premier Open/ })).toBeVisible()
-    await expect(sheet.getByRole('button', { name: 'Stop sharing its description and logo' })).toBeVisible()
+    await expect(sheet.getByRole('link', { name: 'Edit there' })).toBeVisible()
+    await expect(sheet.getByRole('button', { name: 'Edit here instead' })).toBeVisible()
     await page.keyboard.press('Escape')
 
     await page.goto(`/competitions/${ids[1]}/manage/staff`)

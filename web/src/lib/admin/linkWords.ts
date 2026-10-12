@@ -51,10 +51,3 @@ export function ownReplaced(parts: Array<{ id: LinkPart; own: string }>): string
   const plural = parts.length > 1 || OWN_PLURAL.has(parts[0].id)
   return `Its own ${listNames(parts.map((p) => p.own))} ${plural ? 'are' : 'is'} replaced.`
 }
-
-/** Why a shared part can't be changed here, in the Shared sheet. */
-export function sharedLine(part: LinkPart): string {
-  if (part === 'staff') return 'Its staff come from there. Change them there, and this one follows. Who judges where stays in this one’s Schedule.'
-  const { noun, plural } = NOUN[part]
-  return `Its ${noun} ${plural ? 'come' : 'comes'} from there. Change ${plural ? 'them' : 'it'} there, and this one follows.`
-}
