@@ -260,6 +260,25 @@ v3's admin gets "permission denied" changing a synced part on a linked
 competition (it has no idea it's linked). Fine until cutover: only v4's
 Manage can link.
 
+## Known competitions (ADR 0009)
+
+Built on `claude/known-competitions`. The index is private (signed-in reads,
+functions write) and only shows on Add a competition, so the backend goes
+first. From the branch:
+
+1. `firebase deploy --only database`: `/knownCompetitions` (signed-in reads,
+   indexed on `date`) and the submissions index on `linkedTo`. The rules
+   file is the whole of `next`'s plus these: check nothing else is waiting.
+2. `firebase deploy --only functions:refreshKnownCompetitions,functions:refreshKnownCompetitionsMonthly,functions:competitionSubmissionCreated,functions:competitionSubmissionUpdated`.
+   The last two link a weekend's submissions as the second is approved.
+   `refreshKnownCompetitionsMonthly` is a Cloud Scheduler job (07:00 UTC on
+   the 1st): check it's listed in the console after the deploy.
+3. System admin › Known competitions › Refresh, once: each source should
+   say how many it found (about 50 from ScotDance Canada, 40 from ScotDance
+   USA and 55 from the RSOBHD in October 2026, counting from 90 days back).
+   A source that says what went wrong keeps its last good list.
+4. Merge to `next` (the Add a competition changes ship with the web).
+
 ## Parked
 
 - Tartans: branch `claude/tartans-parked`, as a future optional side tool.

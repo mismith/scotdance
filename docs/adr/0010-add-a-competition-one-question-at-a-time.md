@@ -45,7 +45,8 @@ it.
   "Same again", Send.
 - **Description is no longer asked.** Organisers add it in Manage ›
   Details, along with the logo.
-- Slide 3 comes with ADR 0009. Until then the progress counts 8 steps.
+- Slide 3 comes with ADR 0009. The progress counts 9 steps, slide 3
+  included even when it's passed by.
 
 ### 2. Every slide
 
