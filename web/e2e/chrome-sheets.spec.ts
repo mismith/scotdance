@@ -117,7 +117,7 @@ test('on wide screens the More menu’s items are links in the sidebar, with no 
     ['Judges', /\/judges$/],
     ['Pipers', /\/pipers$/],
     ['Venues', /\/venues$/],
-    ['Add a competition', /\/competitions\/submit$/],
+    ['Add a competition', /\/competitions\/add$/],
     ['About ScotDance.app', /\/about$/],
   ] as const) {
     await appNav(page).getByRole('link', { name, exact: true }).click()

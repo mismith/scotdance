@@ -54,7 +54,7 @@ async function begin(page: Page, email: string) {
   // Typing a venue searches Google Places: never from tests (it's billed).
   await page.route(GOOGLE, (r) => r.abort())
   await signIn(page, email)
-  await page.goto('/competitions/submit')
+  await page.goto('/competitions/add')
   await action(page).click()
   await expect(question(page, 1)).toBeVisible()
 }
@@ -64,7 +64,7 @@ test('signed out: the intro and a way in, but no questions and no venue search',
 }) => {
   const requests: string[] = []
   page.on('request', (r) => requests.push(r.url()))
-  await page.goto('/competitions/submit')
+  await page.goto('/competitions/add')
   await expect(
     page.getByRole('heading', { name: 'Add your competition', level: 1 }),
   ).toBeVisible()
@@ -92,11 +92,11 @@ test('signing in from the intro goes straight to the first question, on the same
 }) => {
   const email = `${uid('org')}@example.test`
   await ensureUser(email)
-  await page.goto('/competitions/submit')
+  await page.goto('/competitions/add')
   await action(page).click()
   await signInOnSheet(page, email)
   await expect(question(page, 1)).toBeVisible()
-  await expect(page).toHaveURL(/\/competitions\/submit$/)
+  await expect(page).toHaveURL(/\/competitions\/add$/)
   await expect(page.getByRole('heading', { level: 1 })).toContainText(
     'Which country is it in?',
   )
@@ -372,6 +372,12 @@ test('the answers so far outlast a reload, offered on the intro, until started o
   await expect(action(page)).toHaveText('Start')
 })
 
+test('the old address still gets there', async ({ page }) => {
+  await page.goto('/competitions/submit')
+  await expect(page).toHaveURL(/\/competitions\/add$/)
+  await expect(page.getByRole('heading', { name: 'Add your competition', level: 1 })).toBeVisible()
+})
+
 test('Home has a way in, below every competition', async ({ page }) => {
   // One coming up, so Home lists competitions.
   const comp = await retry(() =>
@@ -391,7 +397,7 @@ test('Home has a way in, below every competition', async ({ page }) => {
       .getByRole('main')
       .getByRole('link', { name: 'Add it to ScotDance.app' })
       .click()
-    await expect(page).toHaveURL(/\/competitions\/submit$/)
+    await expect(page).toHaveURL(/\/competitions\/add$/)
     await expect(
       page.getByRole('heading', { name: 'Add your competition', level: 1 }),
     ).toBeVisible()

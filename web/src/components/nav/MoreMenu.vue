@@ -83,7 +83,7 @@ const row =
       </div>
       <!-- For organisers: submitting, managing, and (admins) the whole system. -->
       <div>
-        <button type="button" :class="row" :data-current="here({ name: 'competitions.submit' })" @click="go({ name: 'competitions.submit' })">
+        <button type="button" :class="row" :data-current="here({ name: 'competitions.add' })" @click="go({ name: 'competitions.add' })">
           <SquarePlus class="size-5" /> Add a competition
         </button>
         <button v-if="canManage" type="button" :class="row" :data-current="here({ name: 'manage.competitions' })" @click="go({ name: 'manage.competitions' })">

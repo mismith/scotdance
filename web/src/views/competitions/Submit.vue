@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useIntersectionObserver } from '@vueuse/core'
-import { ChevronLeft, ChevronRight, Plus, Send } from '@lucide/vue'
+import { Check, ChevronLeft, ChevronRight, Plus, Send } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import Button from '@/components/ui/Button.vue'
 import Checkbox from '@/components/ui/Checkbox.vue'
@@ -21,6 +21,7 @@ import { friendlyError, newKey, write } from '@/lib/admin/write'
 import { formatLongDate, parseDate } from '@/lib/format'
 import { guessUserCountry } from '@/lib/locale'
 import { type VenuePlace } from '@/lib/maps'
+import { registrationLabel, registrations, tidyRegistration } from '@/lib/registration'
 import { useMorph } from '@/lib/morph'
 import {
   countryChoice,
@@ -270,6 +271,10 @@ function advance() {
   if (!showing()) return
   // A venue picked from the search is still being looked up.
   if (at.value === 'venue' && venueStep.value?.busy) return
+  if (at.value === 'registration' && regUnread.value && !regWarned.value) {
+    regWarned.value = true
+    return
+  }
   if (!at.value) return start()
   if (at.value === 'review') return send()
   if (at.value === 'venue') venueStep.value?.settle()
@@ -391,6 +396,7 @@ const action = computed(() => {
     }
   if (at.value === 'review')
     return { label: 'Send', variant: 'primary' as const, icon: Send }
+  if (at.value === 'registration' && regWarned.value && regUnread.value) return { label: 'Continue anyway', variant: 'primary' as const }
   if (returning.value) return { label: 'Back to review', variant: 'primary' as const }
   if (OPTIONAL.has(at.value) && !answered[at.value]())
     return { label: 'Skip', variant: 'tonal' as const }
@@ -428,7 +434,7 @@ const review = computed(() => {
       label: 'Venue',
       lines: [form.venue, form.address, form.location],
     },
-    { slide: 'registration' as const, label: 'Registration', lines: [form.sobhd] },
+    { slide: 'registration' as const, label: 'Registration', lines: [regUnread.value ? form.sobhd : regTidy.value.value] },
     {
       slide: 'contact' as const,
       label: 'Your name',
@@ -562,6 +568,19 @@ const scrolledPast = useScrolledPast(computed(() => introEl.value?.title ?? null
 const onIntro = computed(() => auth.authReady && !sent.value && !at.value)
 
 const registration = computed(() => registrationHint(form.country))
+
+// The number as it'll be saved (the server tidies it the same way), shown as
+// it's typed. One it can't read gets a single "are you sure?": the first
+// Continue says so and stays, the next carries on, since a person looks at
+// it before it's approved anyway.
+const regTidy = computed(() => tidyRegistration(form.sobhd, form.date ? Number(form.date.slice(0, 4)) : null))
+const regUnread = computed(() => !!form.sobhd.trim() && regTidy.value.unread.length > 0)
+const regSaved = computed(() => (regUnread.value ? [] : registrations(regTidy.value.value)))
+const regWarned = ref(false)
+watch(
+  () => form.sobhd,
+  () => (regWarned.value = false),
+)
 
 // The venue's helper says what the way it's being asked needs.
 const venueHelp = computed(() => {
@@ -770,8 +789,20 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
                 spellcheck="false"
                 enterkeyhint="next"
                 :placeholder="registration.example ? `e.g. ${registration.example}` : undefined"
+                :aria-describedby="regWarned && regUnread ? 'slide-error' : regSaved.length ? 'slide-saved' : undefined"
                 class="field placeholder:text-muted-foreground h-12 w-full rounded-xl px-3 text-base"
               />
+              <p v-if="regWarned && regUnread" id="slide-error" class="-mt-4 text-sm font-medium" role="alert">
+                <template v-if="registration.example">That doesn’t match the usual format, like <span class="whitespace-nowrap">{{ registration.example }}</span>.</template>
+                <template v-else>That isn’t a format ScotDance.app knows.</template>
+                Check it, or continue anyway: it’ll get a look before it’s approved.
+              </p>
+              <p v-else-if="regSaved.length" id="slide-saved" class="text-muted-foreground -mt-4 flex gap-1.5 text-sm" aria-live="polite">
+                <Check class="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                <span>
+                  <span v-for="r in regSaved" :key="r.number" class="block">{{ r.association ? `${registrationLabel(r)}: ${r.number}` : `Saved as ${r.number}` }}</span>
+                </span>
+              </p>
             </template>
 
             <template v-else-if="at === 'contact'">

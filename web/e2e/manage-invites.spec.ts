@@ -173,7 +173,7 @@ test('a submitted competition, once approved, is the organiser’s to manage', a
   let competitionId: string | undefined
   try {
     // Signed in first, then a question at a time (submit.spec.ts covers them).
-    await page.goto('/competitions/submit')
+    await page.goto('/competitions/add')
     await page.getByRole('button', { name: 'Sign in to start' }).click()
     await signInOnSheet(page, orgEmail)
     await addCompetition(page, { name, date: '2027-03-14', town: 'Calgary, AB', you: 'Morag Test' })

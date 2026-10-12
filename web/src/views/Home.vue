@@ -560,7 +560,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
         <!-- For organisers who haven't added theirs yet. -->
         <p class="text-muted-foreground px-1 text-center text-sm">
           Running a competition?
-          <RouterLink :to="{ name: 'competitions.submit' }" class="text-primary font-semibold underline-offset-2 hover:underline">
+          <RouterLink :to="{ name: 'competitions.add' }" class="text-primary font-semibold underline-offset-2 hover:underline">
             Add it to ScotDance.app
           </RouterLink>
         </p>

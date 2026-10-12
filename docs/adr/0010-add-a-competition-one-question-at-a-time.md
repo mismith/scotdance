@@ -118,6 +118,16 @@ it.
   handy, add it later." The empty field shows an example, e.g.
   C-AB-CO-27-1234. Both depend on the country: ScotDance USA, the ABHDI or
   your state's committee, otherwise the RSOBHD with no example.
+  - **As it's typed,** it shows how the number will be saved. The server
+    tidies every number into its association's format, and the app uses a
+    copy of that code, so "c ab co 27 1234" shows "Registered with ScotDance
+    Canada: C-AB-CO-27-1234".
+  - **A number it can't read gets one "are you sure?".** The first Continue
+    stays put: "That doesn't match the usual format, like C-AB-CO-27-1234.
+    Check it, or continue anyway: it'll get a look before it's approved."
+    The button then reads **Continue anyway**.
+  - It never blocks. A new or unusual format still gets through, and
+    review already holds an unreadable one for a person to look at.
 - **8 Your name:** "So replies reach the right person. It's never shown
   publicly." It starts with your account's name.
 - **10 Sent:** "Thanks. It's usually approved overnight…", as before. "Add
@@ -144,12 +154,10 @@ The intro, the app bar, the page title, More, the sidebar, About, Manage's
 empty list, Competitions' "Running a competition?" button (**Add it**) and
 the sign-in sheet all say Add.
 
-Two things don't change:
-
-- The address stays `/competitions/submit`, since emails and old links
-  point at it.
-- Submissions keep their name in System admin, where it's the established
-  term.
+- **The address is `/competitions/add`.** The old `/competitions/submit`
+  redirects to it, for emails and links from before.
+- **One thing doesn't change:** Submissions keep their name in System admin,
+  where it's the established term.
 
 ### 6. Emails
 
@@ -187,6 +195,9 @@ Two things don't change:
   - `CountryPicker`, `DayPicker` and `VenueStep` are new, in
     `components/submit`.
   - `StepNav` goes, replaced by the progress bar.
+- **Registration numbers:** `web/src/lib/registration.ts` gains a copy of
+  `tidyRegistration`. `registrationMirror.test.ts` checks it against every
+  number in the server's own tests, so the two stay in step.
 - **Other changes:**
   - `AppBar` gains a `middle` slot, for the progress bar.
   - The route owns its bottom bar (`ownsBottomNav`).
