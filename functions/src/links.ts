@@ -104,8 +104,11 @@ function judgeLists(schedule: Json): Array<{ path: string; ids: string[] }> {
       for (const [eventId, event] of Object.entries(block?.events ?? {}) as [string, Json][]) {
         for (const [danceId, dance] of Object.entries(event?.dances ?? {}) as [string, Json][]) {
           for (const [platformId, platform] of Object.entries(dance?.platforms ?? {}) as [string, Json][]) {
-            if (!Array.isArray(platform?.orderedJudgeIds)) continue;
-            out.push({ path: `days/${dayId}/blocks/${blockId}/events/${eventId}/dances/${danceId}/platforms/${platformId}/orderedJudgeIds`, ids: platform.orderedJudgeIds });
+            // An array, or an object when it was ever saved sparse (as the app's idList reads it).
+            const list = platform?.orderedJudgeIds;
+            if (!list || typeof list !== 'object') continue;
+            const ids = (Array.isArray(list) ? list : Object.values(list)).filter((j): j is string => typeof j === 'string');
+            out.push({ path: `days/${dayId}/blocks/${blockId}/events/${eventId}/dances/${danceId}/platforms/${platformId}/orderedJudgeIds`, ids });
           }
         }
       }
@@ -203,14 +206,17 @@ export function planStaff(to: string, data: {
   const blocked = new Set<string>();
   for (const [groupId, dances] of Object.entries(data.points ?? {})) {
     for (const [danceId, judges] of Object.entries(dances ?? {}) as [string, Json][]) {
+      // Two of its judges going to one of the main one's would overwrite each other's marks.
+      const taken = new Set<string>();
       for (const [judgeId, points] of Object.entries(judges ?? {})) {
         if (!(judgeId in toStaff)) continue;
         const next = moved.get(judgeId);
         if (next === judgeId) continue;
-        if (!next || (judges as Json)[next] !== undefined) {
+        if (!next || (judges as Json)[next] !== undefined || taken.has(next)) {
           blocked.add(personName(toStaff[judgeId]) || 'a judge');
           continue;
         }
+        taken.add(next);
         updates[`${base}/points/${groupId}/${danceId}/${judgeId}`] = null;
         updates[`${base}/points/${groupId}/${danceId}/${next}`] = points;
       }
@@ -248,7 +254,11 @@ async function planPart(db: Db, from: string, to: string, part: Part, records: M
     for (const f of PART_FIELDS[part]) {
       if (!same(src[f], dst[f])) updates[`competitions/${to}/${f}`] = src[f] ?? null;
     }
-    const replaces = PART_FIELDS[part].some((f) => !blank(dst[f]) && !same(dst[f], src[f]));
+    // Listed and published are never blank: missing is off, so a hidden one
+    // keeps its own (a submitted one, without them, as much as one made in Manage).
+    const replaces = part === 'visibility'
+      ? PART_FIELDS[part].some((f) => (dst[f] === true) !== (src[f] === true))
+      : PART_FIELDS[part].some((f) => !blank(dst[f]) && !same(dst[f], src[f]));
     return { part, updates, replaces };
   }
   const [fromStaff, toData] = await Promise.all([
@@ -390,6 +400,8 @@ export async function writeLink(db: Db, { joining, primary, link }: Pair, parts:
     [`competitionLinks:of/${primary}`]: linkId,
     [`competitionLinks:of/${joining}`]: linkId,
     [`competitionLinks:sync/${joining}`]: chosen.length ? Object.fromEntries(chosen.map((p) => [p, true])) : null,
+    // The primary takes nothing (any flags left from before would lock its own parts).
+    [`competitionLinks:sync/${primary}`]: null,
   };
   applyOrRefuse(planned, updates);
   await db.update(updates);
@@ -446,7 +458,12 @@ export function getOnLink(db: Db) {
     const link = await linkOf(db, competitionId);
 
     if (action === 'unlink') {
-      if (!link) return { linkId: null };
+      // Not in a link, but maybe left pointing at one that's gone (taken
+      // apart at the same moment it was joined): clear that, so its parts free up.
+      if (!link) {
+        if (manages(competitionId)) await takeOut(db, competitionId);
+        return { linkId: null };
+      }
       if (!manages(competitionId) && !(link.primary && manages(link.primary))) {
         throw new HttpsError('permission-denied', 'You need to manage it, or the main one, to take it out.');
       }

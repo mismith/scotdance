@@ -87,6 +87,10 @@ In Manage's order: Details' sections top to bottom, then Staff (Murray,
 - **Shared by default** when a competition is linked (Murray, 2026-10-11),
   except what it already has of its own, which it keeps (2026-10-12, §7).
   Each competition switches each part on or off for itself.
+  - Listed and published are never empty: missing counts as off. So a hidden
+    one joining a listed main one keeps its own (tagged "Own listing") until
+    that's switched on, however it was made (Manage writes `false`, Submit
+    writes nothing). Murray to confirm, or share it by default instead.
 - **Listed and published sync together**, so they can never disagree
   (Details already lists whatever it publishes). The switch says what they
   mean in families' terms, as Details does:
@@ -134,6 +138,8 @@ In Manage's order: Details' sections top to bottom, then Staff (Murray,
   fields reads `competitionLinks:sync/{id}/{part}` and refuses writes from
   the app to a part the competition syncs. A delete gets past `.validate`,
   but the app never offers one, and **Sync now** puts it back.
+  - Tagging organisations from an organisation's page, or a system admin's
+    tagging, goes to the main one when a competition shares Organisations.
 - **Publishing the set sends one alert** (Murray, 2026-10-11). Publishing
   the primary publishes every competition that syncs Listed and published.
   ADR 0006's "is live" alert would then come once per competition: 7 at once
@@ -145,6 +151,11 @@ In Manage's order: Details' sections top to bottom, then Staff (Murray,
     people first. Then, instead of alerting, it queues one task for the
     link a minute on, as results do (ADR 0006), and the task sends the
     alerts once every copy is in.
+  - "In" is `notifications:live/{id}`: `since` when it went live, `ready`
+    once its entries are linked. A task retries while any of the set that
+    went live in the last 30 minutes isn't ready (up to 10 minutes, past the
+    sync's 9), and leaves out ones that went live earlier: those were
+    announced then.
   - Someone with alerts on for just one of them gets the usual alert for it.
 - **Turning a part off** keeps the competition's copy, editable again.
 - **Changing the primary** re-copies every synced part from the new one,

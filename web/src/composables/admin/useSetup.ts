@@ -1,6 +1,8 @@
 import { computed } from 'vue'
 import type { RouteLocationRaw } from 'vue-router'
 import { useManagedCompetition } from '@/composables/admin/useManagedCompetition'
+import { useSharedParts } from '@/composables/admin/useSharedParts'
+import { useMeStore } from '@/stores/me'
 import { MANAGE_STEPS, type ManageSection } from '@/lib/admin/sections'
 import { CALLBACKS, OVERALL, danceState } from '@/lib/admin/results'
 import { nextResult } from '@/lib/admin/nextResult'
@@ -29,6 +31,9 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 
 export function useSetup() {
   const m = useManagedCompetition()
+  // Staff shared from a linked main one are added there (ADR 0007).
+  const me = useMeStore()
+  const { shared, mainId, mainName, mainTo } = useSharedParts(m.competitionId)
   const route = (name: string, params: Record<string, string> = {}) => ({ name, params: { competitionId: m.competitionId.value, ...params } })
 
   const groupsWithoutDances = computed(() => m.groups.value.filter((g) => !m.groupDances(g.id).length))
@@ -63,7 +68,7 @@ export function useSetup() {
       staff: {
         done: judges > 0,
         // Judges are staff too: one count, so it can't read as more people.
-        detail: staff ? `${staff} staff` : 'Add the judges',
+        detail: staff ? `${staff} staff` : shared('staff') ? `Shared from ${mainName.value}` : 'Add the judges',
         count: staff,
       },
       dances: { done: m.dances.value.length > 0, detail: m.dances.value.length ? plural(m.dances.value.length, 'dance', 'dances') : 'Add the dances performed', count: m.dances.value.length },
@@ -103,6 +108,11 @@ export function useSetup() {
       case 'details':
         return { label: 'Add the details', to: route('manage.details') }
       case 'staff':
+        if (shared('staff') && mainId.value) {
+          return me.hasCompetitionPerm(mainId.value)
+            ? { label: 'Add a judge', to: mainTo('manage.staff', { itemId: 'new' })! }
+            : { label: `Open ${mainName.value}`, to: mainTo()! }
+        }
         return { label: 'Add a judge', to: route('manage.staff', { itemId: 'new' }) }
       case 'dances':
         return { label: 'Add dances', to: route('manage.dances') }

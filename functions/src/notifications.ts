@@ -665,6 +665,28 @@ export function linkedPublishedMessage(competitions: Array<{ name?: string; date
 
 /** A person's set alert in progress holds off another task's for the same set, unless it's this stale. */
 const SET_LOCK_MS = 2 * 60_000;
+/** Ones in a set that went live longer ago than this were announced then. */
+const LIVE_WINDOW_MS = 30 * 60_000;
+/** A sync still not done after this failed (its trigger stops at 9 minutes): go without it. */
+const SYNC_WAIT_MS = 10 * 60_000;
+
+interface LiveMark {
+  since: number
+  ready?: boolean
+}
+
+/**
+ * notifications:live/{competitionId}: when it went live, and `ready` once
+ * its dancers are synced (so alerts can find who follows them).
+ */
+export function liveMark(db: Db, competitionId: string, now = () => Date.now()) {
+  const ref = db.child(`notifications:live/${competitionId}`);
+  return {
+    start: () => ref.set({ since: now(), ready: false }),
+    ready: () => ref.child('ready').set(true),
+    clear: () => ref.remove(),
+  };
+}
 
 /**
  * A linked set's published ones, a minute after one went live: each person
@@ -679,8 +701,16 @@ export function getOnLinkPublishedSettled(db: Db, app: App, emulated: boolean, n
   return async ({ linkId }: LinkPublishedTask) => {
     const link = (await db.child(`competitionLinks/${linkId}`).get()).val();
     const ids = Object.keys(link?.competitions ?? {});
-    const comps = (await Promise.all(ids.map(async (id) => ({ id, ...((await db.child(`competitions/${id}`).get()).val() || {}) }))))
-      .filter((c) => c.published === true && fresh(c.date, emulated))
+    const live = (await Promise.all(ids.map(async (id) => {
+      const [comp, mark] = await Promise.all([db.child(`competitions/${id}`).get(), db.child(`notifications:live/${id}`).get()]);
+      return { comp: { id, ...(comp.val() || {}) }, mark: mark.val() as LiveMark | null };
+    })))
+      // Just gone live: one live since earlier was announced then.
+      .filter(({ comp, mark }) => comp.published === true && fresh(comp.date, emulated) && typeof mark?.since === 'number' && now() - mark.since < LIVE_WINDOW_MS);
+    // One still syncing: wait for it (Cloud Tasks retries), so its dancers' families hear once.
+    const syncing = live.filter(({ mark }) => mark!.ready !== true && now() - mark!.since < SYNC_WAIT_MS);
+    if (syncing.length) throw new Error(`Waiting for ${syncing.length} of this set to finish going live: trying again`);
+    const comps = live.filter(({ mark }) => mark!.ready === true).map(({ comp }) => comp)
       .sort((a, b) => (dateValue(a.date)?.getTime() ?? 0) - (dateValue(b.date)?.getTime() ?? 0) || String(a.name ?? '').localeCompare(String(b.name ?? '')));
     if (!comps.length) return 0;
     const recipients = await Promise.all(comps.map((c) => recipientsFor(db, c.id)));

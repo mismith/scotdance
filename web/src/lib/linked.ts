@@ -197,7 +197,7 @@ export function memberNote(
   { days, venue, dancers = [], current = false }: { days: number | null; venue?: string | null; dancers?: string[]; current?: boolean },
 ): { text: string; tone: 'live' | 'venue' | 'muted' } | null {
   const when = days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : days === -1 ? 'Yesterday' : null
-  const who = dancers.length ? `${listNames(dancers)} ${dancers.length > 1 ? 'are' : 'is'} dancing` : null
+  const who = !dancers.length ? null : days != null && days < 0 ? `${listNames(dancers)} danced` : `${listNames(dancers)} ${dancers.length > 1 ? 'are' : 'is'} dancing`
   const elsewhere = !current && c.venue?.trim() && venue?.trim() && !sameVenue(c.venue, venue) ? `Another venue: ${c.venue.trim()}` : null
   const text = [when, who, elsewhere].filter(Boolean).join(' · ')
   if (!text) return null

@@ -100,7 +100,7 @@ async function setSyncing(on: boolean) {
         <Link2 class="text-primary size-5 shrink-0" aria-hidden="true" />
         <p class="text-callout min-w-0 flex-1 basis-48">
           <template v-if="shared">Shared from <span class="font-semibold">{{ mainName }}</span>. Who judges where stays in this one’s Schedule.</template>
-          <template v-else><span class="font-semibold">{{ mainName }}</span> is the main one. Use its staff, kept in step from then on.</template>
+          <template v-else>Use <span class="font-semibold">{{ mainName }}</span>’s staff, kept in step from then on.</template>
         </p>
         <div class="flex gap-2">
           <template v-if="shared">

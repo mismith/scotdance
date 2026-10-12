@@ -1,5 +1,5 @@
 import type { PartPreview } from '@/lib/admin/links'
-import type { LinkPart } from '@/lib/linked'
+import { listNames, type LinkPart } from '@/lib/linked'
 
 // What linking, or switching a part on, would replace: the words Manage
 // confirms with (ADR 0007 §4).
@@ -42,4 +42,12 @@ export function replacesSentence(name: string, p: PartPreview, from: string): st
   }
   const { noun, plural } = NOUN[p.part]
   return `${possessive(name)} ${noun} ${plural ? 'are' : 'is'} replaced with ${possessive(from)}.`
+}
+
+const OWN_PLURAL = new Set<LinkPart>(['links', 'organisations'])
+
+/** "Its own venue is replaced.", "Its own venue, links and staff are replaced." */
+export function ownReplaced(parts: Array<{ id: LinkPart; own: string }>): string {
+  const plural = parts.length > 1 || OWN_PLURAL.has(parts[0].id)
+  return `Its own ${listNames(parts.map((p) => p.own))} ${plural ? 'are' : 'is'} replaced.`
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { PARTS } from '../../../../functions/src/links'
-import { LINK_PART_IDS, groupInPlace, orderLinked, railOf, setLabel, setsByCompetition, withOthersLine } from '../linked'
+import { LINK_PART_IDS, groupInPlace, memberNote, orderLinked, railOf, setLabel, setsByCompetition, withOthersLine } from '../linked'
+import { ownReplaced } from '../admin/linkWords'
 
 // Linked competitions in lists (ADR 0007 §8): where each goes, and the words
 // that say how many there are and when.
@@ -86,6 +87,20 @@ describe('words for a set', () => {
   it('places each row on its group’s rail', () => {
     expect([0, 1, 2].map((i) => railOf(i, 3))).toEqual(['first', 'middle', 'last'])
     expect(railOf(0, 1)).toBeNull()
+  })
+})
+
+describe('notes and confirms', () => {
+  it('says who is dancing, or danced once it’s over', () => {
+    expect(memberNote({}, { days: 1, dancers: ['Ailsa', 'Mairi'] })?.text).toBe('Tomorrow · Ailsa and Mairi are dancing')
+    expect(memberNote({}, { days: -1, dancers: ['Ailsa'] })?.text).toBe('Yesterday · Ailsa danced')
+    expect(memberNote({}, { days: -40, dancers: ['Ailsa', 'Mairi'] })?.text).toBe('Ailsa and Mairi danced')
+  })
+
+  it('agrees the verb with what’s replaced', () => {
+    expect(ownReplaced([{ id: 'venue', own: 'venue' }])).toBe('Its own venue is replaced.')
+    expect(ownReplaced([{ id: 'links', own: 'links' }])).toBe('Its own links are replaced.')
+    expect(ownReplaced([{ id: 'venue', own: 'venue' }, { id: 'links', own: 'links' }, { id: 'staff', own: 'staff' }])).toBe('Its own venue, links and staff are replaced.')
   })
 })
 

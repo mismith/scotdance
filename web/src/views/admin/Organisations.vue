@@ -16,6 +16,7 @@ import VisibilityChip from '@/components/VisibilityChip.vue'
 import SearchField from '@/components/admin/SearchField.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
 import { useOrganisations } from '@/composables/useOrganisations'
+import { useSharedSource } from '@/composables/useCompetitionLinks'
 import { dataRef } from '@/firebase'
 import { toast } from '@/lib/admin/feedback'
 import { createOrganisation } from '@/lib/admin/organisations'
@@ -127,11 +128,15 @@ const hiddenOf = (c: Competition) => {
 }
 watch([scope, untaggedOnly], () => selected.clear())
 
+// A linked one sharing its organisations is tagged through its main one.
+const sourceOf = useSharedSource()
+const orgPath = (cid: string, organisationId: string) => `competitions/${sourceOf(cid, 'organisations')}/organisations/${organisationId}`
+
 async function tag(organisationId: string, competitionIds: string[], on: boolean, label = organisationLabel(orgOf(organisationId))) {
   const ids = competitionIds.filter((cid) => (all.value.find((c) => c.id === cid)?.organisations?.[organisationId] === true) !== on)
   if (!ids.length) return
-  const updates = Object.fromEntries(ids.map((cid) => [`competitions/${cid}/organisations/${organisationId}`, on || null]))
-  const undo = Object.fromEntries(ids.map((cid) => [`competitions/${cid}/organisations/${organisationId}`, on ? null : true]))
+  const updates = Object.fromEntries(ids.map((cid) => [orgPath(cid, organisationId), on || null]))
+  const undo = Object.fromEntries(ids.map((cid) => [orgPath(cid, organisationId), on ? null : true]))
   const what = ids.length === 1 ? '1 competition' : `${ids.length} competitions`
   try {
     await write(updates)
@@ -149,7 +154,7 @@ async function acceptAllStrong() {
   for (const f of families.value) {
     for (const s of suggestions.value.get(f.key) ?? []) {
       if (!s.strong) continue
-      for (const c of f.competitions) if (c.organisations?.[s.organisationId] !== true) updates[`competitions/${c.id}/organisations/${s.organisationId}`] = true
+      for (const c of f.competitions) if (c.organisations?.[s.organisationId] !== true) updates[orgPath(c.id, s.organisationId)] = true
     }
   }
   const n = Object.keys(updates).length

@@ -12,6 +12,8 @@ interface Entry {
   position: number
   /** The page before it, or null for a deep link. */
   back: string | null
+  /** Swapped in for a linked one by the switcher, in the same history entry. */
+  switched?: boolean
 }
 
 const KEY = 'competition-entry'
@@ -27,12 +29,23 @@ export const competitionEntry = ref<Entry | null>(read())
 const state = () => (window.history.state ?? {}) as { position?: number; back?: string | null }
 export const historyPosition = () => state().position ?? 0
 
+let switching = false
+/**
+ * The next navigation swaps this competition for one linked with it (the
+ * switcher): it keeps this one's way out, so Back still leaves the set.
+ */
+export const keepCompetitionEntry = () => {
+  switching = true
+}
+
 export function trackCompetitionEntry(router: Router) {
   router.afterEach((to, from, failure) => {
+    const kept = switching ? competitionEntry.value : null
+    switching = false
     if (failure) return
     const id = to.params.competitionId ? String(to.params.competitionId) : null
     if (!id || from.params.competitionId === to.params.competitionId) return
-    competitionEntry.value = { competitionId: id, position: historyPosition(), back: state().back ?? null }
+    competitionEntry.value = kept ? { ...kept, competitionId: id, switched: true } : { competitionId: id, position: historyPosition(), back: state().back ?? null }
     try {
       sessionStorage.setItem(KEY, JSON.stringify(competitionEntry.value))
     } catch {

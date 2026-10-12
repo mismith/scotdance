@@ -120,7 +120,14 @@ export const competitionPublishedChanged = publishedDatabase.ref(`/${env}/compet
   } else {
     await ref.remove();
   }
+  // When it went live, and whether its dancers are in yet: a linked set's
+  // alert waits for the rest of the set (notifications.ts).
+  const live = Notifications.liveMark(appConfig.db, competitionId);
+  const goingLive = isPublished === true && change.before.val() !== true;
+  if (goingLive) await live.start();
+  else if (isPublished !== true) await live.clear();
   await syncDancers(competitionId);
+  if (goingLive) await live.ready();
   await notifyFollowersOnPublished(change, ctx);
 });
 // Search shows a listed competition (and its judges and pipers) before it's
@@ -276,7 +283,8 @@ export const sendResultAlerts = onTaskDispatched<Notifications.SettleTask>({
 });
 // A linked set published together: one alert each (see links.ts).
 export const sendLinkedPublishedAlerts = onTaskDispatched<Notifications.LinkPublishedTask>({
-  retryConfig: { maxAttempts: 3, minBackoffSeconds: 30 },
+  // Retries wait out the rest of the set going live (up to its 9 minute sync).
+  retryConfig: { maxAttempts: 12, minBackoffSeconds: 30, maxBackoffSeconds: 60 },
   rateLimits: { maxConcurrentDispatches: 10 },
   invoker: TASKS_INVOKER,
 }, async (req) => {

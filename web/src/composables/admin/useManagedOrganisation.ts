@@ -3,6 +3,7 @@ import { onValue } from 'firebase/database'
 import { dataRef } from '@/firebase'
 import { newKey, write } from '@/lib/admin/write'
 import type { RawInvite, WithId } from '@/composables/admin/useManagedCompetition'
+import { useSharedSource } from '@/composables/useCompetitionLinks'
 import type { Organisation } from '@/types/organisation'
 
 // Live, editable view of one organisation for its Manage page: its record,
@@ -12,6 +13,7 @@ import type { Organisation } from '@/types/organisation'
 export function useManagedOrganisation(organisationId: Ref<string>) {
   const organisation = ref<Organisation | null>(null)
   const loaded = ref(false)
+  const sourceOf = useSharedSource()
   const invitesRaw = ref<Record<string, RawInvite>>({})
   const holders = ref<string[]>([])
 
@@ -56,9 +58,9 @@ export function useManagedOrganisation(organisationId: Ref<string>) {
   const writeInfo = (updates: Record<string, unknown>) => write(prefixed('organisations', updates))
   /** Its admins' private data (invites): paths under /organisations:data/{id}. */
   const writeData = (updates: Record<string, unknown>) => write(prefixed('organisations:data', updates))
-  /** Add it to a competition (true) or take it off (null). */
+  /** Add it to a competition (true) or take it off (null); a linked one sharing its organisations, through its main one. */
   const setCompetition = (competitionId: string, on: boolean) =>
-    write({ [`competitions/${competitionId}/organisations/${organisationId.value}`]: on || null })
+    write({ [`competitions/${sourceOf(competitionId, 'organisations')}/organisations/${organisationId.value}`]: on || null })
 
   return { organisationId, organisation, loaded, invites, holders, writeInfo, writeData, setCompetition, newKey }
 }

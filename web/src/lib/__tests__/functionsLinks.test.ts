@@ -114,6 +114,22 @@ describe('planStaff', () => {
     expect(stuck.blocked).toEqual(['Iain Sutherland'])
   })
 
+  it('won’t let two of its judges going to one person overwrite each other’s marks', () => {
+    const plan = planStaff('sat', {
+      from: { j1: judge('Ailsa', 'Grant') },
+      to: { x1: judge('Ailsa', 'Grant'), x3: judge('Ailsa', 'Grant') },
+      points: { g1: { fling: { x1: ['3'], x3: ['5'] } } },
+    })
+    expect(plan.blocked).toEqual(['Ailsa Grant'])
+  })
+
+  it('reads judge lists saved sparse (as objects) too', () => {
+    const data = seed()['competitions:data']
+    const schedule = { days: { d1: { blocks: { b1: { events: { e1: { dances: { i1: { platforms: { p1: { orderedJudgeIds: { 1: 'x1', 2: 'x2' } } } } } } } } } } } }
+    const plan = planStaff('sat', { from: data.fri.staff, to: data.sat.staff, schedule })
+    expect(plan.updates['competitions:data/sat/schedule/days/d1/blocks/b1/events/e1/dances/i1/platforms/p1/orderedJudgeIds']).toEqual(['j1'])
+  })
+
   it('keeps its own back-pointers for the same person, and changes nothing when they already match', () => {
     const from = { j1: judge('Ailsa', 'Grant', { judgeId: 'A1' }) }
     const plan = planStaff('sat', { from, to: { j1: judge('Ailsa', 'Grant', { judgeId: 'A1' }) } })
@@ -205,6 +221,23 @@ describe('linking from the server (approving submissions)', () => {
     expect(read('competitions/sun/description')).toBe('Seven competitions, one week in Halifax.')
     expect(read('competitionLinks:sync/sun/venue')).toBeNull()
   })
+
+  it('keeps a hidden one hidden, though it has no listed or published at all (as a submitted one hasn’t)', async () => {
+    const { rtdb, read } = setup()
+    const db = rtdb.ref() as never
+    const res = await writeLink(db, await pairFor(db, 'sun', 'fri'), 'unreplaced')
+    expect(res.parts).not.toContain('visibility')
+    expect(read('competitions/sun/listed') ?? null).toBeNull()
+  })
+
+  it('clears any sharing left on the main one from before', async () => {
+    const data = seed()
+    data['competitionLinks:sync'] = { fri: { venue: true } }
+    const { rtdb, read } = setup(data)
+    const db = rtdb.ref() as never
+    await writeLink(db, await pairFor(db, 'sat', 'fri'))
+    expect(read('competitionLinks:sync/fri')).toBeNull()
+  })
 })
 
 describe('linkCompetitions: unlink, primary, sync', () => {
@@ -241,6 +274,18 @@ describe('linkCompetitions: unlink, primary, sync', () => {
     expect(Object.keys(read('competitionLinks:sync/sun'))).not.toContain('venue')
     expect(Object.keys(read('competitionLinks:sync/sun'))).toContain('staff')
     expect(read('competitions/sun/venue')).toBe('Riverside Arena')
+  })
+
+  it('frees one left pointing at a link that’s gone', async () => {
+    const data = seed()
+    data['competitionLinks:of'] = { sun: 'gone' }
+    data['competitionLinks:sync'] = { sun: { venue: true } }
+    const { call, read } = setup(data)
+    await expect(call('nobody', { action: 'unlink', competitionId: 'sun' })).resolves.toEqual({ linkId: null })
+    expect(read('competitionLinks:sync/sun')).toEqual({ venue: true })
+    await call('organiser', { action: 'unlink', competitionId: 'sun' })
+    expect(read('competitionLinks:of/sun')).toBeNull()
+    expect(read('competitionLinks:sync/sun')).toBeNull()
   })
 
   it('lets the primary’s manager take one out, but not a stranger', async () => {

@@ -46,7 +46,13 @@ const withinAWeek = computed(() => {
   const days = members.value.map((c) => (c.date ? parseDate(c.date).getTime() : NaN)).filter((t) => !Number.isNaN(t))
   return days.length > 1 && Math.max(...days) - Math.min(...days) < 7 * 86_400_000
 })
-const shortName = (c: CompetitionListItem) => (withinAWeek.value && c.date ? formatWeekday(c.date) : c.name?.trim() || 'One')
+const shortName = (c: CompetitionListItem) => {
+  const day = withinAWeek.value && c.date ? formatWeekday(c.date) : null
+  const alone = day && members.value.filter((o) => o.date && formatWeekday(o.date) === day).length === 1
+  return alone ? day : c.name?.trim() || 'One'
+}
+/** Changing the main one, or what the others share, needs you to manage them all (the server checks too). */
+const managesAll = computed(() => (set.value?.ids ?? []).every((x) => me.hasCompetitionPerm(x)))
 
 /** The parts shared: on the main one, those any other shares; on another, its own. */
 const shared = computed<LinkPart[]>(() =>
@@ -116,20 +122,21 @@ async function setPart(part: LinkPart, on: boolean) {
     busy.value = false
   }
 }
+// Each action keeps to the competition it began on: a slow answer can't land
+// on another one opened meanwhile.
 async function savePart(part: LinkPart, on: boolean) {
+  const cid = id.value
+  const main = isMain.value
+  const from = mainName.value
   const label = linkPartLabel(part)
   if (on) {
-    const preview = await previewLink({ action: 'sync', competitionId: id.value, part, on: true })
-    const ok = await confirmReplacing(
-      preview.targets,
-      mainName.value,
-      isMain.value ? `Share ${label} with the others?` : `Share ${label} from ${mainName.value}?`,
-      'Share it',
-    )
-    if (!ok) return
+    const preview = await previewLink({ action: 'sync', competitionId: cid, part, on: true })
+    if (id.value !== cid) return
+    const ok = await confirmReplacing(preview.targets, from, main ? `Share ${label} with the others?` : `Share ${label} from ${from}?`, 'Replace')
+    if (!ok || id.value !== cid) return
   }
-  await changeLink({ action: 'sync', competitionId: id.value, part, on })
-  toast(on ? `${label}: shared` : isMain.value ? `${label}: each one’s own now` : `${label}: its own now`)
+  await changeLink({ action: 'sync', competitionId: cid, part, on })
+  toast(on ? (main ? `${label}: shared with the others` : `${label}: shared from ${from}`) : main ? `${label}: each one’s own now` : `${label}: its own now`)
 }
 
 const menu = useMorph()
@@ -140,13 +147,16 @@ const showAll = ref(false)
 const makeMain = () =>
   run(async () => {
     menu.dismiss()
-    const preview = await previewLink({ action: 'primary', competitionId: id.value })
+    const cid = id.value
+    const name = m.competition.value?.name?.trim() || 'this one'
+    const preview = await previewLink({ action: 'primary', competitionId: cid })
+    if (id.value !== cid) return
     const replacing = preview.targets.some((t) => t.parts.some((p) => p.replaces))
     const ok = replacing
-      ? await confirmReplacing(preview.targets, m.competition.value?.name?.trim() || 'this one', 'Make this the main one?', 'Make it the main one')
+      ? await confirmReplacing(preview.targets, name, 'Make this the main one?', 'Make it the main one')
       : await confirm({ title: 'Make this the main one?', message: 'The others then share from this one.', confirmLabel: 'Make it the main one' })
-    if (!ok) return
-    await changeLink({ action: 'primary', competitionId: id.value })
+    if (!ok || id.value !== cid) return
+    await changeLink({ action: 'primary', competitionId: cid })
     toast('This one is the main one now')
   })
 
@@ -160,16 +170,19 @@ const shareAgain = () =>
 const takeOut = () =>
   run(async () => {
     menu.dismiss()
+    const cid = id.value
     const ok = await confirm({
       title: 'Take it out of the link?',
-      message: isMain.value
-        ? 'This one keeps everything it has. The others stop sharing from it until one of them is made the main one.'
-        : 'It keeps everything it has. Families won’t see it with the others any more.',
+      message: (set.value?.ids.length ?? 0) <= 2
+        ? 'Both keep everything they have, and they aren’t linked any more.'
+        : isMain.value
+          ? 'This one keeps everything it has. The others stop sharing from it until one of them is made the main one.'
+          : 'It keeps everything it has. Families won’t see it with the others any more.',
       confirmLabel: 'Take it out',
       destructive: true,
     })
-    if (!ok) return
-    await changeLink({ action: 'unlink', competitionId: id.value })
+    if (!ok || id.value !== cid) return
+    await changeLink({ action: 'unlink', competitionId: cid })
     toast('Taken out of the link')
   })
 
@@ -276,12 +289,13 @@ const TAG = { main: 'bg-blue-paper text-primary', own: 'bg-next text-next-foregr
               :model-value="shared.includes(p.id)"
               :label="p.label"
               :description="p.detail"
-              :disabled="busy"
+              :disabled="busy || (isMain && !managesAll)"
               :save="(on) => setPart(p.id, on)"
             />
             <p v-if="ownNote(p.id)" class="text-next-foreground -mt-1 pb-2 text-sm font-semibold">{{ ownNote(p.id) }}</p>
           </div>
         </div>
+        <p v-if="isMain && !managesAll" class="text-muted-foreground text-sm">Changing these needs you to manage all {{ set?.ids.length }} competitions.</p>
         <p class="text-muted-foreground text-sm">Names, dates and registration numbers are always each one’s own.</p>
       </div>
     </Dialog>
@@ -289,10 +303,10 @@ const TAG = { main: 'bg-blue-paper text-primary', own: 'bg-next text-next-foregr
     <!-- The rarely done -->
     <Dialog :open="menu.open" :morph="menu" variant="dropdown" aria-label="More for linked competitions" @close="menu.hide()">
       <nav aria-label="More for linked competitions">
-        <button v-if="!isMain" type="button" :class="MENU_ROW" :disabled="!canEdit || busy" @click="makeMain">
+        <button v-if="!isMain && managesAll" type="button" :class="MENU_ROW" :disabled="!canEdit || busy" @click="makeMain">
           <Star class="text-muted-foreground size-5 shrink-0" /> Make this the main one
         </button>
-        <button v-if="primary && shared.length" type="button" :class="MENU_ROW" :disabled="!canEdit || busy" @click="shareAgain">
+        <button v-if="primary && shared.length && (!isMain || managesAll)" type="button" :class="MENU_ROW" :disabled="!canEdit || busy" @click="shareAgain">
           <RefreshCw class="text-muted-foreground size-5 shrink-0" /> Share again now
         </button>
         <button type="button" :class="[MENU_ROW, 'text-destructive']" :disabled="!canEdit || busy" @click="takeOut">

@@ -20,11 +20,11 @@ export function useSharedParts(competitionId: Ref<string>) {
   const isOther = computed(() => !!mainId.value && mainId.value !== competitionId.value)
   const shared = (part: LinkPart) => isOther.value && takes(competitionId.value, part)
   const anyShared = computed(() => LINK_PART_IDS.some(shared))
-  /** The main one: its Manage page (`section`) when you manage it, else its own page. */
-  const mainTo = (section = 'manage.details'): RouteLocationRaw | null => {
+  /** The main one: its Manage page (`section`, with `params`) when you manage it, else its own page. */
+  const mainTo = (section = 'manage.details', params: Record<string, string> = {}): RouteLocationRaw | null => {
     const id = mainId.value
     if (!id) return null
-    return me.hasCompetitionPerm(id) ? { name: section, params: { competitionId: id } } : { name: 'competition.info', params: { competitionId: id } }
+    return me.hasCompetitionPerm(id) ? { name: section, params: { competitionId: id, ...params } } : { name: 'competition.info', params: { competitionId: id } }
   }
   return { mainId, mainRecord, mainName, isOther, shared, anyShared, mainTo }
 }

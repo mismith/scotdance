@@ -2,6 +2,7 @@ import { computed, inject, provide, type ComputedRef, type InjectionKey, type Re
 import { useRoute, useRouter, type RouteLocationNormalizedLoaded, type RouteLocationRaw } from 'vue-router'
 import { useLinkedSet } from '@/composables/useCompetitionLinks'
 import { fetchEntries } from '@/lib/competitionData'
+import { keepCompetitionEntry } from '@/lib/competitionExit'
 import { setLabel } from '@/lib/linked'
 import { useMorph } from '@/lib/morph'
 import type { CompetitionListItem } from '@/composables/useCompetitions'
@@ -29,11 +30,15 @@ const KEY: InjectionKey<LinkedSwitcher> = Symbol('linkedSwitcher')
 
 const TABS = ['competition.info', 'competition.dancers', 'competition.schedule', 'competition.results']
 /** Deeper pages go to their tab. */
-const TAB_OF: Record<string, string> = {
+export const TAB_OF: Record<string, string> = {
   'competition.event': 'competition.schedule',
   'competition.group': 'competition.results',
   'competition.dancer': 'competition.dancers',
 }
+/** Finding a dancer in the other one gives up after this (no signal at the venue): Dancers instead. */
+const LOOKUP_MS = 1500
+const within = <T>(work: Promise<T>, ms: number) =>
+  Promise.race([work, new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Too slow')), ms))])
 
 /**
  * Where to land in `toId` from `route`: a tab stays the same tab, with its
@@ -50,10 +55,11 @@ export async function switchTarget(
   if (TABS.includes(name)) return { name, params, query: route.query }
   if (name === 'competition.dancer' && personId) {
     try {
-      const entry = (await fetchEntries(toId, personId)).dancers[0]
+      const entry = (await within(fetchEntries(toId, personId), LOOKUP_MS)).dancers[0]
       if (entry) return { name: 'competition.dancer', params: { ...params, dancerId: entry.id } }
     } catch {
-      // Not published there (its dancers are private): its Dancers tab says so.
+      // Not published there (its dancers are private), or no answer in time:
+      // its Dancers tab says which.
     }
   }
   return { name: TAB_OF[name] ?? 'competition.info', params }
@@ -71,14 +77,25 @@ export function provideLinkedSwitcher(
   const linked = computed(() => members.value.length > 1)
   const label = computed(() => (linked.value ? setLabel(members.value) : null))
   const targetFor = (toId: string) => switchTarget(route, toId, personId.value)
+  let going = false
   async function go(toId: string) {
     if (toId === competitionId.value) {
       void morph.hide()
       return
     }
-    const target = await targetFor(toId)
-    morph.dismiss()
-    await router.replace(target)
+    if (going) return
+    going = true
+    const from = route.fullPath
+    try {
+      const target = await targetFor(toId)
+      // Moved on meanwhile (closed it, went elsewhere): don't pull them back.
+      if (route.fullPath !== from || !morph.open) return
+      morph.dismiss()
+      keepCompetitionEntry()
+      await router.replace(target)
+    } finally {
+      going = false
+    }
   }
   const api: LinkedSwitcher = { members, linked, label, morph, go, targetFor }
   provide(KEY, api)

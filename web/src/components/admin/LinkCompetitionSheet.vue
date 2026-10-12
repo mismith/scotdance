@@ -13,9 +13,9 @@ import { useCompetitions, type CompetitionListItem } from '@/composables/useComp
 import { changeLink, previewLink, type LinkPreview } from '@/lib/admin/links'
 import { toast } from '@/lib/admin/feedback'
 import { canEdit, friendlyError } from '@/lib/admin/write'
-import { replacesSentence } from '@/lib/admin/linkWords'
+import { ownReplaced, replacesSentence } from '@/lib/admin/linkWords'
 import { parseDate } from '@/lib/format'
-import { LINK_PARTS, type LinkPart } from '@/lib/linked'
+import { LINK_PARTS, type LinkPart, type LinkedSet } from '@/lib/linked'
 import type { useMorph } from '@/lib/morph'
 import { useMeStore } from '@/stores/me'
 
@@ -41,6 +41,17 @@ const here = computed(() => m.competitionId.value)
 const hereLinked = computed(() => !!setOf(here.value))
 const when = (c: { date?: number | string }) => (c.date ? parseDate(c.date).getTime() : NaN)
 
+/** Why one can't be picked, if it can't. */
+function blockedBy(theirs: LinkedSet | null) {
+  if (!theirs) return null
+  // Both in links already: one has to come out of its own first.
+  if (hereLinked.value) return 'In another link: take one out of its link first'
+  // This one would join its link, so its main one has to be yours too.
+  if (!theirs.primary) return 'Its link has no main one yet'
+  if (!me.hasCompetitionPerm(theirs.primary)) return 'In a link whose main one you don’t manage'
+  return null
+}
+
 const query = ref('')
 const choices = computed(() => {
   const q = query.value.trim().toLowerCase()
@@ -56,8 +67,7 @@ const choices = computed(() => {
         c,
         distance: Number.isNaN(at) || Number.isNaN(when(c)) ? Number.POSITIVE_INFINITY : Math.abs(when(c) - at),
         note: theirs ? `Linked with ${theirs.ids.length - 1} ${theirs.ids.length === 2 ? 'other' : 'others'}` : null,
-        // Both in links already: one has to come out of its own first.
-        blocked: !!theirs && hereLinked.value,
+        blocked: blockedBy(theirs),
       }
     })
     .sort((a, b) => a.distance - b.distance || (a.c.name ?? '').localeCompare(b.c.name ?? ''))
@@ -170,14 +180,14 @@ watch(
           <button
             type="button"
             class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left disabled:opacity-(--disabled-opacity)"
-            :disabled="x.blocked"
+            :disabled="!!x.blocked"
             @click="pick(x.c)"
           >
             <DateTile :date="x.c.date" :managed="me.organises(x.c.id)" />
             <span class="min-w-0 flex-1">
               <span class="block truncate text-base font-semibold"><CompetitionName :competition="x.c" /></span>
               <span class="text-muted-foreground block truncate text-sm">
-                {{ x.blocked ? 'In another link: take one out of its link first' : [x.c.venue || x.c.location, x.note].filter(Boolean).join(' · ') }}
+                {{ x.blocked || [x.c.venue || x.c.location, x.note].filter(Boolean).join(' · ') }}
               </span>
             </span>
             <Link2 class="text-primary size-5 shrink-0" aria-hidden="true" />
@@ -230,7 +240,7 @@ watch(
           <Link2 /> Link them
         </Button>
         <p class="text-muted-foreground text-center text-sm">
-          {{ replacing.length ? `Its own ${replacing.map((p) => p.own).join(' and ')} ${replacing.length > 1 ? 'are' : 'is'} replaced.` : 'Nothing it has is replaced.' }}
+          {{ replacing.length ? ownReplaced(replacing) : 'Nothing it has is replaced.' }}
         </p>
       </template>
     </div>
