@@ -123,7 +123,7 @@ function onPointerUp(e: PointerEvent) {
 
 <template>
   <div
-    class="surface space-y-2 rounded-2xl p-3"
+    class="surface max-w-sm space-y-2 rounded-2xl p-3"
     role="group"
     :aria-labelledby="labelledby"
   >

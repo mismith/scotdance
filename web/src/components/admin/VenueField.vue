@@ -23,6 +23,8 @@ const props = defineProps<{
   /** Only places in these countries (ISO, e.g. ['CA']). */
   regionCodes?: string[]
   placeholder?: string
+  /** Under the box; null for none (where the page says it already). */
+  hint?: string | null
 }>()
 const emit = defineEmits<{ pick: [fields: VenueFields] }>()
 
@@ -104,6 +106,9 @@ async function pick(s: PlaceSuggestion) {
   }
 }
 
+// Whether a picked suggestion is still being looked up.
+defineExpose({ loading })
+
 function onKeydown(e: KeyboardEvent) {
   if (results.value.length && e.key === 'ArrowDown') {
     e.preventDefault()
@@ -136,7 +141,7 @@ function onBlur() {
   <AdminField
     :label="LABEL"
     :for="id"
-    hint="Choose it from the suggestions to fill in the address and town, and put it on the map."
+    :hint="hint === undefined ? 'Choose it from the suggestions to fill in the address and town, and put it on the map.' : (hint ?? undefined)"
     :error="error"
   >
     <template #default="{ describedby }">

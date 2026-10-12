@@ -2,7 +2,6 @@
 import { computed, ref } from 'vue'
 import {
   CalendarClock,
-  CalendarDays,
   ChevronRight,
   ClipboardList,
   Clock,
@@ -11,7 +10,8 @@ import {
   Laptop,
   MailCheck,
   Pointer,
-  UserRound,
+  ListChecks,
+  SquarePlus,
   Wifi,
 } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
@@ -23,24 +23,16 @@ import { useMorph } from '@/lib/morph'
 // foot like every question's. What's needed later is in a sheet.
 
 const props = defineProps<{
-  signedIn: boolean
   /** What's saved and not yet sent, if anything. */
   draft: { name: string; date: string } | null
 }>()
 defineEmits<{ startOver: [] }>()
 
+// What happens, in order: the quick part here, then the rest in Manage.
 const STOPS = [
-  {
-    icon: CalendarDays,
-    title: 'The competition',
-    text: 'When, where and what it’s called.',
-  },
-  { icon: UserRound, title: 'You', text: 'Your name, so replies reach you.' },
-  {
-    icon: MailCheck,
-    title: 'Approved',
-    text: 'Usually overnight. Then an email with a link to add the rest, like dancers and the schedule.',
-  },
+  { icon: SquarePlus, title: 'Add it', text: 'When, where and what it’s called. That’s all for now.' },
+  { icon: MailCheck, title: 'Approved', text: 'Usually overnight. You’ll get an email with a link.' },
+  { icon: ListChecks, title: 'Add the rest', text: 'Dancers, the schedule and results, whenever you’re ready.' },
 ]
 
 const NEEDS = [
@@ -111,13 +103,12 @@ defineExpose({ title })
       <li
         v-for="(stop, i) in STOPS"
         :key="stop.title"
-        class="relative flex gap-3.5 py-3 motion-safe:animate-[rise-in_var(--dur-slow)_var(--ease-standard)_both]"
-        :style="{ animationDelay: `${120 + i * 90}ms` }"
+        class="relative flex gap-3.5 py-3"
       >
         <!-- The line from one stop down to the next. -->
         <span
           v-if="i < STOPS.length - 1"
-          class="bg-blue-paper absolute top-[3.25rem] -bottom-3 left-[1.1875rem] w-0.5"
+          class="bg-border absolute top-[3.25rem] -bottom-3 left-[1.1875rem] w-0.5"
           aria-hidden="true"
         />
         <span
@@ -160,9 +151,6 @@ defineExpose({ title })
         What you’ll need <ChevronRight class="size-4" stroke-width="2.4" />
       </button>
     </div>
-    <p v-if="!signedIn" class="text-muted-foreground text-sm">
-      Any email address works. You’ll manage the competition from the same account.
-    </p>
 
     <Dialog
       :open="needs.open"

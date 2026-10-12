@@ -304,7 +304,7 @@ describe('Add a competition', () => {
     const text = w.text()
     for (const s of [
       'Canada',
-      'Saturday, June 5, 2027',
+      'Sat, Jun 5, 2027',
       'Calgary Highland Games',
       'Calgary, AB',
       'Morag Ross',
@@ -596,5 +596,104 @@ describe('Add a competition', () => {
     await cont(w)
     await cont(w)
     expect((field(w).element as HTMLInputElement).value).toBe('Morag Ross')
+  })
+
+  it('keeps the slide a draft was left on through more than one reload', async () => {
+    const first = await begin()
+    await cont(first)
+    await pickDay(first, 5)
+    await cont(first)
+    await field(first).setValue('Calgary Highland Games')
+    await cont(first)
+    first.unmount()
+
+    // Opened and left twice without picking it up.
+    render().unmount()
+    const w = render()
+    await flushPromises()
+    await cont(w)
+    expect(slide(w)).toBe('organisation')
+  })
+
+  it('a double tap moves on one question, not two', async () => {
+    const w = await begin()
+    await cont(w)
+    await pickDay(w, 5)
+    await cont(w)
+    await field(w).setValue('Calgary Highland Games')
+    const form = w.find('main form')
+    await Promise.all([form.trigger('submit'), form.trigger('submit')])
+    await flushPromises()
+    expect(slide(w)).toBe('organisation')
+  })
+
+  it('Enter moves on from the question itself, as from a text box', async () => {
+    const w = await begin()
+    await w.find('#slide-question').trigger('keydown', { key: 'Enter' })
+    await flushPromises()
+    expect(slide(w)).toBe('date')
+  })
+
+  it('ticking and unticking an organisation keeps it in its place', async () => {
+    orgList.value = [
+      { id: 'chda', name: 'Calgary Highland Dancing Association', shortName: 'CHDA' },
+      { id: 'cowal', name: 'Cowal Gathering' },
+    ]
+    me.managedOrganisationIds = ['cowal']
+    const w = await begin()
+    await cont(w)
+    await pickDay(w, 5)
+    await cont(w)
+    await field(w).setValue('CHDA Fall Competition')
+    await cont(w)
+    const names = () => w.findAll('[data-slide] [role=checkbox]').map((b) => [b.text().includes('Calgary') ? 'chda' : 'cowal', b.attributes('aria-checked')])
+    expect(names()).toEqual([
+      ['chda', 'true'],
+      ['cowal', 'false'],
+    ])
+    await w.findAll('[data-slide] [role=checkbox]')[0].trigger('click')
+    expect(names()).toEqual([
+      ['chda', 'false'],
+      ['cowal', 'false'],
+    ])
+    await w.findAll('[data-slide] [role=checkbox]')[1].trigger('click')
+    expect(names()).toEqual([
+      ['chda', 'false'],
+      ['cowal', 'true'],
+    ])
+  })
+
+  it('a picked venue with no town of its own asks for the town', async () => {
+    const w = await begin()
+    await cont(w)
+    await pickDay(w, 5)
+    await cont(w)
+    await field(w).setValue('Games on the Hill')
+    await cont(w)
+    await cont(w)
+    w.findComponent(VenueField).vm.$emit('pick', { ...TELUS, venue: 'Hilltop Field', address: null, location: null, locality: null })
+    await flushPromises()
+    expect(w.text()).toContain('Hilltop Field')
+    await cont(w)
+    expect(slide(w)).toBe('venue')
+    expect(w.text()).toContain('Add the town or city to continue.')
+    await field(w, 'Town or city').setValue('Canmore, AB')
+    await cont(w)
+    expect(slide(w)).toBe('registration')
+  })
+
+  it('a town typed, then a search not picked from, keeps the town', async () => {
+    const w = await begin()
+    await cont(w)
+    await pickDay(w, 5)
+    await cont(w)
+    await field(w).setValue('Calgary Highland Games')
+    await cont(w)
+    await cont(w)
+    await click(w, 'Just the town for now')
+    await field(w, 'Town or city').setValue('Calgary, AB')
+    await click(w, 'Search for the venue')
+    await cont(w)
+    expect(slide(w)).toBe('registration')
   })
 })

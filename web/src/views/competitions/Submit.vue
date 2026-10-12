@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { useIntersectionObserver } from '@vueuse/core'
 import { ChevronLeft, ChevronRight, Plus, Send } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import Button from '@/components/ui/Button.vue'
 import Checkbox from '@/components/ui/Checkbox.vue'
 import Skeleton from '@/components/Skeleton.vue'
-import FormInput from '@/components/admin/FormInput.vue'
 import CountryPicker from '@/components/submit/CountryPicker.vue'
 import DayPicker from '@/components/submit/DayPicker.vue'
 import SentMark from '@/components/submit/SentMark.vue'
@@ -18,11 +18,10 @@ import { useOrganisations } from '@/composables/useOrganisations'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { useScrolledPast } from '@/composables/useScrolledPast'
 import { friendlyError, newKey, write } from '@/lib/admin/write'
-import { formatLongDate } from '@/lib/format'
+import { formatLongDate, parseDate } from '@/lib/format'
 import { guessUserCountry } from '@/lib/locale'
 import { type VenuePlace } from '@/lib/maps'
 import { useMorph } from '@/lib/morph'
-import { moveInPlace } from '@/lib/navMotion'
 import {
   countryChoice,
   defaultCountry,
@@ -122,6 +121,29 @@ function removeHost(key: string) {
   if (key.startsWith('new-')) hosts.fresh.splice(Number(key.slice(4)), 1)
   else hosts.ids = hosts.ids.filter((id) => id !== key)
 }
+// The rows on "Who's running it?": the chosen and the offered in one list
+// that keeps its order, so ticking one changes it in place (focus and all)
+// rather than moving it.
+const orgOrder = ref<string[]>([])
+const orgRows = computed(() => {
+  const rows = new Map<string, { key: string; org: (typeof chosenOrgs.value)[number]['org'] | OrganisationListItem; fresh: boolean; checked: boolean }>()
+  for (const h of chosenOrgs.value) rows.set(h.key, { ...h, checked: true })
+  for (const o of suggestedOrgs.value) if (!rows.has(o.id)) rows.set(o.id, { key: o.id, org: o, fresh: false, checked: false })
+  return rows
+})
+watch(
+  orgRows,
+  (rows) => {
+    for (const key of rows.keys()) if (!orgOrder.value.includes(key)) orgOrder.value.push(key)
+  },
+  { immediate: true },
+)
+const orderedOrgRows = computed(() => orgOrder.value.flatMap((key) => orgRows.value.get(key) ?? []))
+function toggleOrg(row: { key: string; org: unknown; checked: boolean }) {
+  if (row.checked) removeHost(row.key)
+  else addHost(row.org as OrganisationListItem)
+}
+
 // The first time there: ticked already when the name says which, or when
 // you run just the one.
 function offerOrgs() {
@@ -198,21 +220,25 @@ function go(to: Slide | null) {
   const from = index.value
   const dest = to ? SLIDES.indexOf(to) : -1
   direction.value = dest < from ? -1 : 1
-  if (to === 'organisation') offerOrgs()
+  // Arriving: the ticked first, then the offered, in an order that then holds.
+  if (to === 'organisation') {
+    offerOrgs()
+    orgOrder.value = [...orgRows.value.keys()]
+  }
   at.value = to
   window.scrollTo({ top: 0 })
 }
 
-// Once a slide is in: its question has focus, for screen readers. With a
-// mouse and keyboard (no on-screen keyboard to cover the page), the box to
-// type in does instead.
+// Once a slide is in, the box to type in has focus (it's labelled by the
+// question, so a screen reader hears that first), keeping the keyboard up
+// from one question to the next where the phone allows. Without one, the
+// question does. Not on All good?: its message box is optional.
 function settled() {
-  const typing =
-    matchMedia('(pointer: fine)').matches &&
-    document.querySelector<HTMLElement>(
-      '[data-slide] :is(input[type=text], input:not([type]), textarea)',
-    )
-  ;(typing || heading.value)?.focus()
+  if (!at.value) return introEl.value?.title?.focus()
+  const box =
+    at.value !== 'review' &&
+    document.querySelector<HTMLElement>('[data-slide] :is(input[type=text], input:not([type]), [role=combobox])')
+  ;(box || heading.value)?.focus()
 }
 
 // (Still searching, there's no town box yet: picking a venue fills it in.)
@@ -223,10 +249,27 @@ async function flag() {
   document.querySelector<HTMLElement>('[data-slide] [aria-invalid="true"]')?.focus()
 }
 
+// Enter moves on from anywhere on a slide, as from a text box: the question,
+// a day, a country. (Not from a button, which Enter presses, or the message.)
+function onEnter(e: KeyboardEvent) {
+  const target = e.target as HTMLElement
+  if (e.isComposing || target.closest('button, textarea, input, select, a, dialog')) return
+  e.preventDefault()
+  advance()
+}
+
+// The slide asked for is on screen: until then (it slides in after the last
+// one slides out), a second tap or Enter waits rather than skipping it.
+const slideEl = ref<HTMLElement | null>(null)
+const showing = () => !at.value || slideEl.value?.dataset.slideName === at.value
+
 function advance() {
   // Enter in a sheet's search (another country, an organisation) is that
   // sheet's, not a nudge on to the next question.
   if (document.activeElement?.closest('dialog')) return
+  if (!showing()) return
+  // A venue picked from the search is still being looked up.
+  if (at.value === 'venue' && venueStep.value?.busy) return
   if (!at.value) return start()
   if (at.value === 'review') return send()
   if (at.value === 'venue') venueStep.value?.settle()
@@ -239,6 +282,7 @@ function advance() {
 }
 
 function previous() {
+  if (!showing()) return
   if (returning.value) {
     returning.value = false
     return go('review')
@@ -313,11 +357,10 @@ async function send() {
         origin: window.location.origin,
       },
     })
-    // On to "Sent", as a page would go.
-    moveInPlace({ way: 'forward', axis: 'x' }, () => {
-      sent.value = true
-      window.scrollTo({ top: 0 })
-    })
+    // On to "Sent", as the slides go.
+    direction.value = 1
+    sent.value = true
+    window.scrollTo({ top: 0 })
     clearDraft()
   } catch (e) {
     sendError.value = friendlyError(e)
@@ -331,10 +374,8 @@ async function send() {
 function another() {
   Object.assign(form, { name: '', date: '', sobhd: '', message: '', agree: false })
   returning.value = false
-  moveInPlace({ way: 'swap', axis: 'x' }, () => {
-    sent.value = false
-    go('date')
-  })
+  sent.value = false
+  go('date')
 }
 
 // The one button at the foot: what it says, and how loudly.
@@ -358,6 +399,9 @@ const action = computed(() => {
 
 // --- The last look
 
+// A day short enough to sit on one line: "Sat, Oct 24, 2026".
+const shortDay = new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
+
 const review = computed(() => {
   const country = form.country ? countryChoice(form.country) : null
   return [
@@ -369,7 +413,7 @@ const review = computed(() => {
     {
       slide: 'date' as const,
       label: 'Date',
-      lines: [form.date ? formatLongDate(form.date) : ''],
+      lines: [form.date ? shortDay.format(parseDate(form.date)) : ''],
     },
     { slide: 'name' as const, label: 'Name', lines: [form.name] },
     {
@@ -418,7 +462,8 @@ watch(
       if (hasAnswers())
         localStorage.setItem(
           draftKey(),
-          JSON.stringify({ v: 2, form, place: place.value, at: at.value, hosts }),
+          // (On the intro, still the slide it was left on.)
+          JSON.stringify({ v: 2, form, place: place.value, at: at.value ?? resumeAt.value, hosts }),
         )
       else localStorage.removeItem(draftKey())
     } catch {
@@ -517,12 +562,26 @@ const scrolledPast = useScrolledPast(computed(() => introEl.value?.title ?? null
 const onIntro = computed(() => auth.authReady && !sent.value && !at.value)
 
 const registration = computed(() => registrationHint(form.country))
+
+// The venue's helper says what the way it's being asked needs.
+const venueHelp = computed(() => {
+  if (place.value) return 'Check it’s the right one.'
+  const mode = venueStep.value?.mode ?? 'search'
+  if (mode === 'town') return 'Just the town, until the venue’s booked.'
+  if (mode === 'typed') return 'Only the town is needed. The venue and address help families find it.'
+  return 'Search, then pick it from the list. If it isn’t booked yet, the town is enough.'
+})
+
+// The button's foot shows a hairline only while something scrolls under it.
+const end = ref<HTMLElement | null>(null)
+const atEnd = ref(true)
+useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting))
 </script>
 
 <template>
   <div class="flex min-h-dvh flex-col">
     <AppBar
-      title="Add a competition"
+      title="Add your competition"
       :show-title="!onIntro || scrolledPast"
       :back="!at || sent"
       :scrolled="false"
@@ -535,18 +594,13 @@ const registration = computed(() => registrationHint(form.country))
           type="button"
           data-nav="back"
           class="glass press-glass proximity text-primary pointer-events-auto flex size-11 shrink-0 items-center justify-center rounded-full [view-transition-name:nav-back]"
-          :aria-label="
-            returning
-              ? 'Back to review'
-              : index > 0
-                ? 'Back to the previous question'
-                : 'Back to the start'
-          "
+          :aria-label="returning ? 'Back to review' : index > 0 ? 'Back to the previous question' : 'Back to the start'"
           @click="previous"
         >
           <ChevronLeft class="size-6 -translate-x-px" stroke-width="2.5" />
         </button>
       </template>
+      <!-- Ends where the questions do, on wide screens too. -->
       <template v-if="at && !sent" #middle>
         <div class="flex min-w-0 flex-1 items-center px-2">
           <div
@@ -556,7 +610,7 @@ const registration = computed(() => registrationHint(form.country))
             :aria-valuemax="SLIDES.length"
             :aria-valuenow="index + 1"
             :aria-valuetext="`Step ${index + 1} of ${SLIDES.length}`"
-            class="bg-border h-1.5 flex-1 overflow-hidden rounded-full"
+            class="bg-border h-1.5 flex-1 overflow-hidden rounded-full lg:max-w-[33rem]"
           >
             <span
               class="bg-primary-fill ease-snappy block h-full origin-left rounded-full transition-transform duration-(--dur-slow) motion-reduce:transition-none"
@@ -567,34 +621,15 @@ const registration = computed(() => registrationHint(form.country))
       </template>
     </AppBar>
 
-    <main
-      class="mx-auto flex w-full max-w-xl flex-1 flex-col px-4 pt-[calc(var(--chrome-top)+1rem)]"
-    >
-      <div v-if="!auth.authReady" class="space-y-4" aria-busy="true">
+    <!-- One column, at the bar's left edge on wide screens, as wide as a question needs. -->
+    <main class="mx-auto flex w-full max-w-xl flex-1 flex-col px-4 pt-[calc(var(--chrome-top)+1rem)] lg:max-w-3xl">
+      <div v-if="!auth.authReady" class="max-w-xl space-y-4" aria-busy="true">
         <span class="sr-only">Loading…</span>
         <Skeleton class="h-10 w-2/3" />
         <Skeleton class="h-56 w-full rounded-2xl!" />
       </div>
 
-      <div v-else-if="sent" class="space-y-4 py-10 text-center">
-        <SentMark class="mx-auto size-14" />
-        <h1 class="text-display">Sent</h1>
-        <p class="text-muted-foreground mx-auto max-w-md text-base">
-          Thanks. It’s usually approved overnight. You’ll get an email at
-          {{ me.email }} with a link to start adding the details.
-        </p>
-        <p class="text-muted-foreground mx-auto max-w-md text-sm">
-          If it doesn’t arrive, check your junk folder.
-        </p>
-        <div class="flex flex-col items-center gap-2 pt-2">
-          <Button variant="primary" size="lg" :to="{ name: 'competitions' }"
-            >Back to competitions</Button
-          >
-          <Button variant="plain" @click="another">Add another</Button>
-        </div>
-      </div>
-
-      <form v-else class="flex flex-1 flex-col" novalidate @submit.prevent="advance">
+      <form v-else class="flex flex-1 flex-col" novalidate @submit.prevent="advance" @keydown.enter="onEnter">
         <!-- Each slide slides a little the way you're going. -->
         <Transition
           mode="out-in"
@@ -605,84 +640,57 @@ const registration = computed(() => registrationHint(form.country))
           @before-leave="(el) => ((el as HTMLElement).inert = true)"
           @after-enter="settled"
         >
+          <div v-if="sent" key="sent" class="max-w-xl space-y-4 py-10 text-center">
+            <SentMark class="mx-auto size-14" />
+            <h1 class="text-display">Sent</h1>
+            <p class="text-muted-foreground mx-auto max-w-md text-base text-pretty">
+              Thanks. It’s usually approved overnight. You’ll get an email at {{ me.email }} with a link to start adding the details.
+            </p>
+            <p class="text-muted-foreground mx-auto max-w-md text-sm">If it doesn’t arrive, check your junk folder.</p>
+          </div>
+
           <SubmitIntro
-            v-if="!at"
+            v-else-if="!at"
             ref="introEl"
             key="intro"
-            :signed-in="auth.isSignedIn"
             :draft="resumeAt ? { name: form.name, date: form.date } : null"
-            class="pb-6"
+            class="max-w-xl pb-6"
             @start-over="startOver"
           />
 
-          <div v-else :key="at" data-slide :data-slide-name="at" class="space-y-6 pb-6">
+          <div v-else :key="at" ref="slideEl" data-slide :data-slide-name="at" class="max-w-xl space-y-6 pb-6">
             <header class="space-y-2">
-              <h1
-                id="slide-question"
-                ref="heading"
-                tabindex="-1"
-                class="text-display text-balance outline-none"
-              >
+              <h1 id="slide-question" ref="heading" tabindex="-1" class="text-display text-balance outline-none">
                 <span class="sr-only">Step {{ index + 1 }} of {{ SLIDES.length }}: </span>
                 <template v-if="at === 'country'">Which country is it in?</template>
                 <template v-else-if="at === 'date'">When is it?</template>
                 <template v-else-if="at === 'name'">What’s it called?</template>
                 <template v-else-if="at === 'organisation'">Who’s running it?</template>
                 <template v-else-if="at === 'venue'">Where is it?</template>
-                <template v-else-if="at === 'registration'"
-                  >What’s its registration number?</template
-                >
+                <template v-else-if="at === 'registration'">What’s its registration number?</template>
                 <template v-else-if="at === 'contact'">What’s your name?</template>
                 <template v-else>All good?</template>
               </h1>
-              <p
-                v-if="at !== 'country'"
-                class="text-muted-foreground text-base text-pretty"
-              >
-                <template v-if="at === 'date'"
-                  >If it runs over a few days, pick the first.</template
-                >
-                <template v-else-if="at === 'name'"
-                  >As dancers and families will see it.</template
-                >
-                <template v-else-if="at === 'organisation'"
-                  >An association, games society or series. Its page lists everything it
-                  runs.</template
-                >
-                <template v-else-if="at === 'venue'"
-                  >Search for the venue. If it isn’t booked yet, the town is
-                  enough.</template
-                >
-                <template v-else-if="at === 'registration'"
-                  >From {{ registration.body }}. If you don’t have it handy, add it
-                  later.</template
-                >
-                <template v-else-if="at === 'contact'"
-                  >So replies reach the right person. It’s never shown publicly.</template
-                >
+              <p v-if="at !== 'country'" class="text-muted-foreground text-base text-pretty">
+                <template v-if="at === 'date'">If it runs over a few days, pick the first.</template>
+                <template v-else-if="at === 'name'">As dancers and families will see it.</template>
+                <template v-else-if="at === 'organisation'">An association, games society or series. Its page on ScotDance.app lists everything it runs.</template>
+                <template v-else-if="at === 'venue'">{{ venueHelp }}</template>
+                <template v-else-if="at === 'registration'">From {{ registration.body }}. If you don’t have it handy, add it later.</template>
+                <template v-else-if="at === 'contact'">So replies reach the right person. It’s never shown publicly.</template>
                 <template v-else>Tap anything to change it.</template>
               </p>
             </header>
 
             <template v-if="at === 'country'">
               <CountryPicker v-model="form.country" labelledby="slide-question" />
-              <p v-if="error" class="text-destructive text-sm font-medium" role="alert">
-                {{ error }}
-              </p>
+              <p v-if="error" class="text-destructive text-sm font-medium" role="alert">{{ error }}</p>
             </template>
 
             <template v-else-if="at === 'date'">
               <DayPicker v-model="form.date" labelledby="slide-question" />
-              <p v-if="error" class="text-destructive text-sm font-medium" role="alert">
-                {{ error }}
-              </p>
-              <p
-                v-else-if="form.date"
-                class="text-center text-base font-semibold"
-                aria-live="polite"
-              >
-                {{ formatLongDate(form.date) }}
-              </p>
+              <p v-if="error" class="text-destructive text-sm font-medium" role="alert">{{ error }}</p>
+              <p v-else-if="form.date" class="text-base font-semibold" aria-live="polite">{{ formatLongDate(form.date) }}</p>
             </template>
 
             <template v-else-if="at === 'name'">
@@ -697,81 +705,37 @@ const registration = computed(() => registrationHint(form.country))
                 autocapitalize="words"
                 enterkeyhint="next"
                 :placeholder="nameExample(form.country)"
-                class="field placeholder:text-muted-foreground h-14 w-full rounded-xl px-4 text-lg"
+                class="field placeholder:text-muted-foreground h-12 w-full rounded-xl px-3 text-base"
               />
-              <p
-                v-if="error"
-                id="slide-error"
-                class="text-destructive -mt-3 text-sm font-medium"
-                role="alert"
-              >
-                {{ error }}
-              </p>
+              <p v-if="error" id="slide-error" class="text-destructive -mt-4 text-sm font-medium" role="alert">{{ error }}</p>
             </template>
 
             <template v-else-if="at === 'organisation'">
-              <div
-                v-if="chosenOrgs.length || suggestedOrgs.length"
-                class="surface divide-y overflow-hidden rounded-2xl"
-              >
+              <div v-if="orderedOrgRows.length" class="surface divide-y overflow-hidden rounded-2xl">
                 <button
-                  v-for="h in chosenOrgs"
-                  :key="h.key"
+                  v-for="row in orderedOrgRows"
+                  :key="row.key"
                   type="button"
                   role="checkbox"
-                  aria-checked="true"
+                  :aria-checked="row.checked"
                   class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left"
-                  @click="removeHost(h.key)"
+                  @click="toggleOrg(row)"
                 >
-                  <OrganisationMark :organisation="h.org" />
+                  <OrganisationMark :organisation="row.org" />
                   <span class="min-w-0 flex-1">
-                    <span class="block truncate text-base font-semibold">{{
-                      h.org.name
-                    }}</span>
-                    <span class="text-muted-foreground block truncate text-sm">{{
-                      h.fresh
-                        ? 'New: you’ll be its admin'
-                        : [h.org.shortName, h.org.location].filter(Boolean).join(' · ')
-                    }}</span>
+                    <span class="block truncate text-base font-semibold">{{ row.org.name }}</span>
+                    <span class="text-muted-foreground block truncate text-sm">{{ row.fresh ? 'New: you’ll be its admin' : [row.org.shortName, row.org.location].filter(Boolean).join(' · ') }}</span>
                   </span>
-                  <Checkbox :checked="true" />
-                </button>
-                <button
-                  v-for="org in suggestedOrgs"
-                  :key="org.id"
-                  type="button"
-                  role="checkbox"
-                  aria-checked="false"
-                  class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left"
-                  @click="addHost(org)"
-                >
-                  <OrganisationMark :organisation="org" />
-                  <span class="min-w-0 flex-1">
-                    <span class="block truncate text-base font-semibold">{{
-                      org.name
-                    }}</span>
-                    <span class="text-muted-foreground block truncate text-sm">{{
-                      [org.shortName, org.location].filter(Boolean).join(' · ')
-                    }}</span>
-                  </span>
-                  <Checkbox :checked="false" />
+                  <Checkbox :checked="row.checked" />
                 </button>
               </div>
               <button
                 type="button"
-                class="surface press-row focus-inset text-primary flex min-h-14 w-full items-center gap-3 rounded-2xl px-4 py-2 text-left"
+                class="surface press-row focus-inset text-primary flex min-h-16 w-full items-center gap-3 rounded-2xl px-4 py-2 text-left"
                 @click="pickingOrg.show($event)"
               >
-                <span
-                  class="bg-blue-paper flex size-10 shrink-0 items-center justify-center rounded-xl"
-                  aria-hidden="true"
-                  ><Plus class="size-5"
-                /></span>
-                <span class="flex-1 text-base font-semibold">{{
-                  chosenOrgs.length || suggestedOrgs.length
-                    ? 'Find or add another'
-                    : 'Find or add an organisation'
-                }}</span>
+                <span class="bg-blue-paper flex size-10 shrink-0 items-center justify-center rounded-xl" aria-hidden="true"><Plus class="size-5" /></span>
+                <span class="flex-1 text-base font-semibold">{{ orderedOrgRows.length ? 'Find or add another' : 'Find or add an organisation' }}</span>
               </button>
               <OrganisationPicker
                 :morph="pickingOrg"
@@ -793,6 +757,7 @@ const registration = computed(() => registrationHint(form.country))
               v-model:place="place"
               :country="form.country"
               :error="error"
+              @switched="error = null"
             />
 
             <template v-else-if="at === 'registration'">
@@ -804,10 +769,8 @@ const registration = computed(() => registrationHint(form.country))
                 autocapitalize="characters"
                 spellcheck="false"
                 enterkeyhint="next"
-                :placeholder="
-                  registration.example ? `e.g. ${registration.example}` : undefined
-                "
-                class="field placeholder:text-muted-foreground h-14 w-full rounded-xl px-4 text-lg"
+                :placeholder="registration.example ? `e.g. ${registration.example}` : undefined"
+                class="field placeholder:text-muted-foreground h-12 w-full rounded-xl px-3 text-base"
               />
             </template>
 
@@ -821,57 +784,39 @@ const registration = computed(() => registrationHint(form.country))
                 aria-required="true"
                 autocomplete="name"
                 enterkeyhint="next"
-                class="field placeholder:text-muted-foreground h-14 w-full rounded-xl px-4 text-lg"
+                class="field placeholder:text-muted-foreground h-12 w-full rounded-xl px-3 text-base"
               />
-              <p
-                v-if="error"
-                id="slide-error"
-                class="text-destructive -mt-3 text-sm font-medium"
-                role="alert"
-              >
-                {{ error }}
-              </p>
+              <p v-if="error" id="slide-error" class="text-destructive -mt-4 text-sm font-medium" role="alert">{{ error }}</p>
             </template>
 
             <template v-else>
               <ul class="surface divide-y overflow-hidden rounded-2xl">
                 <li v-for="r in review" :key="r.slide">
-                  <button
-                    type="button"
-                    class="press-row focus-inset flex min-h-14 w-full items-center gap-3 py-2.5 pr-3 pl-4 text-left"
-                    @click="change(r.slide)"
-                  >
-                    <span class="text-muted-foreground text-callout w-24 shrink-0">{{
-                      r.label
-                    }}</span>
+                  <button type="button" class="press-row focus-inset flex min-h-14 w-full items-start gap-3 py-3 pr-3 pl-4 text-left" @click="change(r.slide)">
+                    <span class="text-muted-foreground text-callout w-24 shrink-0 pt-px">{{ r.label }}</span>
                     <span class="min-w-0 flex-1 text-base break-words">
                       <template v-if="r.lines.length">
-                        <span
-                          v-for="(line, i) in r.lines"
-                          :key="i"
-                          :class="[
-                            'block',
-                            i > 0 && 'text-muted-foreground text-callout',
-                          ]"
-                          >{{ line }}</span
-                        >
+                        <span v-for="(line, i) in r.lines" :key="i" :class="['block', i > 0 && 'text-muted-foreground text-callout']">{{ line }}</span>
                       </template>
                       <span v-else class="text-muted-foreground">Not added</span>
                     </span>
-                    <ChevronRight
-                      class="text-muted-foreground size-5 shrink-0"
-                      aria-hidden="true"
-                    />
+                    <ChevronRight class="text-muted-foreground mt-0.5 size-5 shrink-0" aria-hidden="true" />
                     <span class="sr-only">Change</span>
                   </button>
                 </li>
               </ul>
-              <FormInput
-                v-model="form.message"
-                label="Anything to ask or mention?"
-                kind="textarea"
-                hint="Only the reviewer sees it."
-              />
+              <div class="space-y-1.5">
+                <label for="slide-message" class="text-callout font-medium">Anything to ask or mention?</label>
+                <!-- Two lines to start, growing with what's typed. -->
+                <textarea
+                  id="slide-message"
+                  v-model="form.message"
+                  rows="2"
+                  aria-describedby="slide-message-note"
+                  class="field placeholder:text-muted-foreground field-sizing-content min-h-[4.5rem] w-full resize-none rounded-xl px-3 py-2.5 text-base"
+                />
+                <p id="slide-message-note" class="text-muted-foreground text-sm">Only the reviewer sees it.</p>
+              </div>
               <button
                 type="button"
                 role="checkbox"
@@ -883,36 +828,33 @@ const registration = computed(() => registrationHint(form.country))
                 <Checkbox :checked="form.agree" class="mt-0.5" />
                 <span>
                   <!-- (Balanced, and kept whole where a split reads badly, so no word sits alone on a line.) -->
-                  <span class="block text-base font-medium text-balance"
-                    >I accept it comes <span class="whitespace-nowrap">as is</span>, with
-                    no guarantees</span
-                  >
-                  <span class="text-muted-foreground block text-sm text-pretty"
-                    >ScotDance.app is free and
-                    <span class="whitespace-nowrap">volunteer-run</span>. You’re in
-                    control of what goes online for your competition, like dancers and
-                    results.</span
-                  >
-                  <span
-                    v-if="error"
-                    class="text-destructive block pt-1 text-sm font-medium"
-                    role="alert"
-                    >{{ error }}</span
-                  >
+                  <span class="block text-base font-medium text-balance">I accept it comes <span class="whitespace-nowrap">as is</span>, with no guarantees</span>
+                  <span class="text-muted-foreground block text-sm text-pretty">ScotDance.app is free and <span class="whitespace-nowrap">volunteer-run</span>. You’re in control of what goes online for your competition, like dancers and results.</span>
+                  <span v-if="error" class="text-destructive block pt-1 text-sm font-medium" role="alert">{{ error }}</span>
                 </span>
               </button>
             </template>
           </div>
         </Transition>
 
-        <!-- The one button, at the foot: it stays put while a long slide scrolls. -->
+        <span ref="end" aria-hidden="true" />
+        <!-- The one button, at the foot of the screen on phones (a hairline
+             only while something scrolls under it), under the question on
+             wide screens. -->
         <div
-          class="from-background sticky bottom-0 z-10 -mx-4 mt-auto bg-linear-to-t from-[calc(100%-1.25rem)] to-transparent px-4 pt-5 pb-[calc(1rem+var(--safe-bottom))]"
+          :class="[
+            'bg-background sticky bottom-0 z-10 -mx-4 mt-auto px-4 pt-3 pb-[calc(1rem+var(--safe-bottom))] transition-[border-color] duration-(--dur-quick) lg:static lg:mx-0 lg:mt-2 lg:max-w-xl lg:border-transparent lg:px-0',
+            'border-t',
+            atEnd ? 'border-transparent' : 'border-border',
+          ]"
         >
-          <p v-if="sendError" class="text-destructive pb-3 font-medium" role="alert">
-            {{ sendError }}
-          </p>
-          <Button type="submit" :variant="action.variant" size="lg" block :busy="sending">
+          <p v-if="sendError" class="text-destructive pb-3 font-medium" role="alert">{{ sendError }}</p>
+          <p v-if="!at && !sent && !auth.isSignedIn" class="text-muted-foreground pb-3 text-sm text-pretty">Any email address works. You’ll manage the competition from the same account.</p>
+          <template v-if="sent">
+            <Button variant="plain" block class="mb-1" @click="another">Add another</Button>
+            <Button variant="primary" size="lg" block :to="{ name: 'competitions' }">Back to competitions</Button>
+          </template>
+          <Button v-else type="submit" :variant="action.variant" size="lg" block :busy="sending">
             <component :is="action.icon" v-if="action.icon && !sending" />
             {{ action.label }}
           </Button>
