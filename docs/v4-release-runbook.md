@@ -121,7 +121,7 @@ later; the links don't change. From the main checkout, on `next`:
    `APP_STORE_CONNECT_API_KEY_*`; Xcode's account signs it, since the key
    can't. A new version waits for Beta App Review (usually hours).
 5. Android: Android Studio › Build › Generate Signed App Bundle › release
-   (`scotdance.keystore` at the repo root), then `fastlane beta` in
+   (`~/Documents/ScotDance/certs/scotdance.keystore`), then `fastlane beta` in
    `android`. Google reviews it; with managed publishing on, it then waits
    for Publish in Publishing overview.
 
