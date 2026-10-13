@@ -1,0 +1,9 @@
+What's new
+- Give each dancer any colour you like, or weave them a tartan
+- A weekend's competitions stay together: on Home, the calendar, search and dancer pages
+- Search shows coming competitions first
+- Adding a competition goes one question at a time
+- Back on the calendar returns to the day you picked
+- No white flash as the app opens
+
+Share your ideas from the More menu.

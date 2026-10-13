@@ -104,6 +104,26 @@ stores release it. On a phone it replaces the v3 app (same app ID).
   with a dot on More until it's first opened. It opens the Help chat; Crisp
   shows each conversation's version and platform.
 
+### New beta builds
+
+A new build goes to everyone who's joined and anyone who opens the links
+later; the links don't change. From the main checkout, on `next`:
+
+1. Bump the patch: `npm run set-version` (no argument adds one), and
+   `web/package.json` and its lockfile to match. Play never takes a version
+   code twice, and Crisp tells the builds apart by version.
+2. `npm run build` at the root.
+3. What's new goes in `android/fastlane/metadata/android/en-CA/changelogs/default.txt`
+   (both stores read it; Play takes up to 500 characters). Commit.
+4. iPhone: `fastlane beta` in `ios/App`. It archives, uploads and sends the
+   build to Early Access with the notes. The keys come from `~/.zshrc`'s
+   `APP_STORE_CONNECT_API_KEY_*`; Xcode's account signs it, since the key
+   can't. A new version waits for Beta App Review (usually hours).
+5. Android: Android Studio › Build › Generate Signed App Bundle › release
+   (`scotdance.keystore` at the repo root), then `fastlane beta` in
+   `android`. Google reviews it; with managed publishing on, it then waits
+   for Publish in Publishing overview.
+
 ## Phase 3: cutover (ADR 0001 checklist)
 
 - [x] Hosting: the `production` target serves `web/dist` like `next` does (done on `next`, where the old app is gone; admin is in the app now, ADR 0004, so there's no `/admin/**` rewrite; old `#/` and `/competitions/:id/admin` links redirect in-app). To go live from `next`: `npm run build`, then `firebase deploy --only hosting:production`

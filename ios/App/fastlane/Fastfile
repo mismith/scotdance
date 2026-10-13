@@ -20,4 +20,24 @@ platform :ios do
       force: true,
     )
   end
+
+  desc "Build a beta (after the version bump and `npm run build` at the root), upload it to TestFlight and send it to Early Access, the public link's group, with the beta notes as What to Test. A new version waits for Beta App Review."
+  lane :beta do
+    # Before the API key: the export signs with Xcode's account, since the
+    # key (App Manager) can't use Apple's cloud signing.
+    build_app(
+      project: "App.xcodeproj",
+      scheme: "App",
+      export_method: "app-store-connect",
+      export_xcargs: "-allowProvisioningUpdates",
+      output_directory: "./build",
+    )
+    app_store_connect_api_key
+    upload_to_testflight(
+      groups: ["Early Access"],
+      distribute_external: true,
+      notify_external_testers: true,
+      changelog: File.read("../../../android/fastlane/metadata/android/en-CA/changelogs/default.txt"),
+    )
+  end
 end

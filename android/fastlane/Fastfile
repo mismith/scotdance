@@ -16,4 +16,16 @@ platform :android do
       skip_upload_screenshots: false,
     )
   end
+
+  desc "Send the bundle Android Studio signed (Build › Generate Signed App Bundle, release) to open testing, the beta link's track, with the beta notes (metadata/android/en-CA/changelogs/default.txt). Google reviews it first."
+  lane :beta do
+    upload_to_play_store(
+      track: "beta",
+      aab: "./app/release/app-release.aab",
+      metadata_path: "./fastlane/metadata/android",
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+    )
+  end
 end
