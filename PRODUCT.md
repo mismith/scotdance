@@ -18,7 +18,7 @@ A Vue 3 web app at scotdance.app, also shipped in the App Store and Google Play 
 
 ## Product Purpose
 
-Highland dance competitions run on paper: printed programs, schedules on a wall, results read out and posted later as PDFs. ScotDance.app puts the program, schedule and results on everyone's phone, live as they're announced, and keeps every result on record afterwards. For organisers it saves hours of work and paper.
+Highland dance competitions run on paper: printed programs, schedules on a wall, results read out and posted later as PDFs. ScotDance.app puts the program, schedule and results on everyone's phone, live as they're announced, and keeps every result on record afterwards. For organisers it cuts the paper, though setting it up is extra work for them.
 
 Success: a family at a competition can find their dancer, see when they're on next and watch placings arrive, without asking anyone; an organiser can run the day's results from a laptop or a phone without errors.
 

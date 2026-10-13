@@ -122,7 +122,7 @@ watch(() => route.hash, applyHash)
         <div class="surface space-y-3 rounded-2xl p-4">
           <p class="text-base">
             <span class="font-semibold">Run the day without the paper.</span>
-            Build the schedule, import your dancers and post results as they’re announced. It saves hours of work, and keeps every result on record for later. Free, for any competition.
+            Build the schedule, import your dancers and post results as they’re announced. It keeps every result on record for later. Free, for any competition.
           </p>
           <RouterLink
             :to="{ name: 'competitions.add' }"

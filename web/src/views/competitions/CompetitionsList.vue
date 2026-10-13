@@ -246,8 +246,8 @@ const sections = computed<Section[]>(() => {
       <section v-if="view !== 'map'" class="surface mt-6 flex items-center gap-3 rounded-2xl p-4">
         <SquarePlus class="text-primary size-6 shrink-0" stroke-width="1.75" aria-hidden="true" />
         <p class="text-callout min-w-0 flex-1">
-          <span class="font-semibold">Running a competition?</span> Add it to ScotDance.app. It’s free, and saves hours of
-          work.
+          <span class="font-semibold">Running a competition?</span> Put its schedule and results on everyone’s phone. It’s
+          free.
         </p>
         <Button variant="tonal" :to="{ name: 'competitions.add' }">Add it</Button>
       </section>

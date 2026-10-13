@@ -103,7 +103,7 @@ const transform = computed(() => {
     aria-hidden="true"
     :class="[
       'fixed inset-0 z-[100] grid place-items-center bg-[#f2f4f7] text-[#0065bd]',
-      '[@media(prefers-color-scheme:dark)]:bg-[#0c0f13] [@media(prefers-color-scheme:dark)]:text-[#62aaf0]',
+      '[@media(prefers-color-scheme:dark)]:bg-[#0c0f13]',
     ]"
   >
     <svg :viewBox="viewBox" overflow="visible" class="w-[min(46vw,15rem)]" :style="{ opacity }">
