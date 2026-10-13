@@ -15,8 +15,9 @@
 //   node store/upload.ts           upload and place
 //   node store/upload.ts --plan    only say what it would do
 //
-// Keys: fastlane's own variables (docs/store-screenshots.md), from the
-// environment or ios/App/fastlane/.env.
+// Key: the App Store Connect API key in the login keychain
+// (docs/store-screenshots.md › Keys).
+import { execFileSync } from 'node:child_process'
 import { createHash, sign } from 'node:crypto'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { CREATIVE } from './creative.ts'
@@ -44,19 +45,14 @@ const EDITABLE = [
 const plan = process.argv.includes('--plan')
 
 function keys() {
-  const env = { ...process.env }
-  const file = `${ROOT}ios/App/fastlane/.env`
-  if (existsSync(file))
-    for (const line of readFileSync(file, 'utf8').split('\n')) {
-      const m = line.match(/^\s*([A-Z_]+)\s*=\s*"?([^"]*)"?\s*$/)
-      if (m && !env[m[1]]) env[m[1]] = m[2]
-    }
-  const id = env.APP_STORE_CONNECT_API_KEY_KEY_ID
-  const issuer = env.APP_STORE_CONNECT_API_KEY_ISSUER_ID
-  const path = env.APP_STORE_CONNECT_API_KEY_KEY_FILEPATH
-  if (!id || !issuer || !path)
-    throw new Error('No App Store Connect key: see docs/store-screenshots.md (Keys).')
-  return { id, issuer, pem: readFileSync(path, 'utf8') }
+  let item: string
+  try {
+    item = execFileSync('security', ['find-generic-password', '-s', 'scotdance-asc', '-w'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
+  } catch {
+    throw new Error("scotdance-asc isn't in the login keychain: see docs/store-screenshots.md (Keys).")
+  }
+  const { key_id, issuer_id, key } = JSON.parse(item)
+  return { id: key_id as string, issuer: issuer_id as string, pem: key as string }
 }
 const KEY = keys()
 

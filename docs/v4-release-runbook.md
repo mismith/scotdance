@@ -117,18 +117,15 @@ later; the links don't change. From the main checkout, on `next`:
    (both stores read it; Play takes up to 500 characters): what's changed
    is `git log v<last beta>..`. Commit, and tag the bump `v<version>`.
 4. iPhone: `fastlane beta` in `ios/App`. It archives, uploads and sends the
-   build to Early Access with the notes. The keys come from `~/.zshrc`'s
-   `APP_STORE_CONNECT_API_KEY_*`; Xcode's account signs it, since the key
-   can't. A new version waits for Beta App Review (usually hours).
+   build to Early Access with the notes. Xcode's account signs it, since the
+   API key can't. A new version waits for Beta App Review (usually hours).
 5. Android: `fastlane beta` in `android`. It builds the bundle, signs it with
-   the upload key (`~/Documents/ScotDance/certs/scotdance.keystore`, its alias
-   and password from the login keychain) and sends it to open testing with
-   the notes. Google reviews it; with managed publishing on, it then waits
-   for Publish in Publishing overview. The keychain item, once per Mac
-   (`-w` last, so it asks for the password):
-   `security add-generic-password -s scotdance-upload-key -a <key alias> -w`.
-   Play App Signing re-signs every build, so this is only the upload key: if
-   it leaks, reset it in Play Console.
+   the upload key and sends it to open testing with the notes. Google
+   reviews it; with managed publishing on, it then waits for Publish in
+   Publishing overview. Play App Signing re-signs every build, so this is
+   only the upload key: if it leaks, reset it in Play Console.
+
+The keys for both are in the login keychain ([store-screenshots.md › Keys](store-screenshots.md#keys)).
 
 ## Phase 3: cutover (ADR 0001 checklist)
 

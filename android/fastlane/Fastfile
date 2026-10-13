@@ -1,5 +1,11 @@
-# Google Play lanes. The service account key's path comes from
-# SUPPLY_JSON_KEY in fastlane/.env, git-ignored (docs/store-screenshots.md).
+# Google Play lanes. The service account key comes from the login keychain,
+# never a file (docs/store-screenshots.md › Keys).
+
+def keychain(service)
+  value = `security find-generic-password -s #{service} -w 2>/dev/null`.strip
+  UI.user_error!("#{service} isn't in the login keychain: see docs/store-screenshots.md › Keys") if value.empty?
+  value
+end
 
 default_platform(:android)
 
@@ -7,6 +13,7 @@ platform :android do
   desc "Replace the store listing's images: phone screenshots (made by `npm run store` in web/), icon and feature graphic (copies of resources/). Nothing else: no build, no text. Google reviews the change before it shows."
   lane :screenshots do
     upload_to_play_store(
+      json_key_data: keychain("scotdance-play"),
       metadata_path: "./fastlane/metadata/android",
       skip_upload_apk: true,
       skip_upload_aab: true,
@@ -21,6 +28,7 @@ platform :android do
   lane :beta do
     gradle(task: "bundle", build_type: "Release")
     upload_to_play_store(
+      json_key_data: keychain("scotdance-play"),
       track: "beta",
       aab: lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH],
       metadata_path: "./fastlane/metadata/android",

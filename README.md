@@ -81,7 +81,7 @@ Links to the admin panels needed to manage this project:
 
 ### Google Play Store
 
-* To build a signed `.aab`, you'll need the `scotdance.keystore` file (stored in a private iCloud).
+* `fastlane beta` in `android/` builds, signs and uploads a beta (`docs/v4-release-runbook.md` › New beta builds); the keys are in the login keychain (`docs/store-screenshots.md` › Keys).
 * To upload to Google Play:
 
     1. `npm run build`

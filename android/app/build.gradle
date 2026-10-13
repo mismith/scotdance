@@ -1,20 +1,27 @@
 apply plugin: 'com.android.application'
 
-// Release bundles sign with the upload key when the login keychain has a
-// "scotdance-upload-key" item (account: the key's alias, password: its
-// password; docs/v4-release-runbook.md › New beta builds), so nobody types
-// it. Without one (CI, another Mac) they build unsigned.
+// Release bundles sign with the upload key from the login keychain
+// (docs/store-screenshots.md › Keys): the keystore, base64, in
+// "scotdance-upload-keystore", and its alias (the account) and password in
+// "scotdance-upload-key". Nobody types them, and the keystore is only ever
+// a file in build/. Without them (CI, another Mac) bundles build unsigned.
 def uploadKey = { ->
-    def find = { List flags ->
-        def p = (['security', 'find-generic-password', '-s', 'scotdance-upload-key'] + flags).execute()
+    def find = { String service, List flags ->
+        def p = (['security', 'find-generic-password', '-s', service] + flags).execute()
         def out = p.text
-        p.waitFor() == 0 ? out : null
+        p.waitFor() == 0 ? out.trim() : null
     }
     try {
-        def store = new File(System.getProperty('user.home'), 'Documents/ScotDance/certs/scotdance.keystore')
-        def alias = (find([]) =~ /"acct"<blob>="([^"]+)"/).with { it.find() ? it.group(1) : null }
-        def password = find(['-w'])?.trim()
-        store.exists() && alias && password ? [store: store, alias: alias, password: password] : null
+        def keystore = find('scotdance-upload-keystore', ['-w'])
+        def password = find('scotdance-upload-key', ['-w'])
+        def alias = (find('scotdance-upload-key', []) =~ /"acct"<blob>="([^"]+)"/).with { it.find() ? it.group(1) : null }
+        if (!keystore || !password || !alias) return null
+        def store = layout.buildDirectory.file('upload.keystore').get().asFile
+        store.parentFile.mkdirs()
+        store.bytes = keystore.decodeBase64()
+        store.setReadable(false, false)
+        store.setReadable(true, true)
+        [store: store, alias: alias, password: password]
     } catch (ignored) {
         null // no keychain here
     }

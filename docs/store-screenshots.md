@@ -73,25 +73,30 @@ npm run store:upload:android
 
 ### Keys
 
-Each lane reads its keys from a `.env` beside its Fastfile, which fastlane
-loads itself and git ignores. Keep the key files outside the repo, in a folder
-any app's project can point at (for example `~/.config/store-keys/`; the repo
-root also works, where `*.p8` and `play-service-account.json` are ignored).
-Use full paths: `.env` files don't expand `~`.
+The store keys live in the login keychain, never in a file or a path in this
+repo. The lanes, `web/store/upload.ts` and `android/app/build.gradle` read
+them with `security`:
 
-`ios/App/fastlane/.env`:
+| Item | Holds |
+| --- | --- |
+| `scotdance-asc` | the App Store Connect API key, as JSON: `key_id`, `issuer_id` and `key` (the `.p8`'s text) |
+| `scotdance-play` | the Google Play service account's JSON key |
+| `scotdance-upload-keystore` | the Android upload keystore, base64 |
+| `scotdance-upload-key` | the upload key's alias (the account) and password |
 
-```bash
-APP_STORE_CONNECT_API_KEY_KEY_ID=…
-APP_STORE_CONNECT_API_KEY_ISSUER_ID=…
-APP_STORE_CONNECT_API_KEY_KEY_FILEPATH=/Users/…/.config/store-keys/app-store-connect-key.p8
-```
-
-`android/fastlane/.env`:
+On a new Mac, from the downloaded files (`-U` replaces an item that's
+there), then delete the downloads:
 
 ```bash
-SUPPLY_JSON_KEY=/Users/…/.config/store-keys/play-service-account.json
+security add-generic-password -U -s scotdance-asc -a scotdance -w "$(KEY_ID=… ISSUER_ID=… python3 -c 'import json, os, sys; print(json.dumps({"key_id": os.environ["KEY_ID"], "issuer_id": os.environ["ISSUER_ID"], "key": open(sys.argv[1]).read()}))' AuthKey_….p8)"
+security add-generic-password -U -s scotdance-play -a scotdance -w "$(python3 -c 'import json, sys; print(json.dumps(json.load(open(sys.argv[1]))))' play-key.json)"
+security add-generic-password -U -s scotdance-upload-keystore -a scotdance -w "$(base64 -i scotdance.keystore)"
+security add-generic-password -U -s scotdance-upload-key -a scotdance -w
 ```
+
+The last asks for the keystore's password. Keep a backup of the keystore
+outside the repo: the keychain doesn't sync, and without it Google has to
+reset the upload key.
 
 - **App Store Connect API key:** App Store Connect › Users and Access ›
   Integrations › App Store Connect API › Team Keys › +, access **App
@@ -101,6 +106,7 @@ SUPPLY_JSON_KEY=/Users/…/.config/store-keys/play-service-account.json
   **Google Play Android Developer API**, create a service account and a JSON
   key for it. Then in Play Console › Users and permissions › Invite new users,
   invite the service account's email, with the ScotDance app and **Store
-  presence › Edit store listing** permission.
+  presence › Edit store listing** and **Release apps to testing tracks**
+  permissions (Apply, then Save changes).
 
 fastlane itself: `brew install fastlane`, 2.240 or newer (older ones reject the 6.9" iPhone and 13" iPad sizes). The uploads also run from the repo root.
