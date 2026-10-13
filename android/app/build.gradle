@@ -1,5 +1,25 @@
 apply plugin: 'com.android.application'
 
+// Release bundles sign with the upload key when the login keychain has a
+// "scotdance-upload-key" item (account: the key's alias, password: its
+// password; docs/v4-release-runbook.md › New beta builds), so nobody types
+// it. Without one (CI, another Mac) they build unsigned.
+def uploadKey = { ->
+    def find = { List flags ->
+        def p = (['security', 'find-generic-password', '-s', 'scotdance-upload-key'] + flags).execute()
+        def out = p.text
+        p.waitFor() == 0 ? out : null
+    }
+    try {
+        def store = new File(System.getProperty('user.home'), 'Documents/ScotDance/certs/scotdance.keystore')
+        def alias = (find([]) =~ /"acct"<blob>="([^"]+)"/).with { it.find() ? it.group(1) : null }
+        def password = find(['-w'])?.trim()
+        store.exists() && alias && password ? [store: store, alias: alias, password: password] : null
+    } catch (ignored) {
+        null // no keychain here
+    }
+}()
+
 android {
     namespace = "info.mismith.scotdance"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -11,8 +31,19 @@ android {
         versionName "4.0.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+    signingConfigs {
+        if (uploadKey) {
+            release {
+                storeFile uploadKey.store
+                storePassword uploadKey.password
+                keyAlias uploadKey.alias
+                keyPassword uploadKey.password
+            }
+        }
+    }
     buildTypes {
         release {
+            if (uploadKey) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

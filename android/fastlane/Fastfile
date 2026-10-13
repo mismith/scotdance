@@ -17,11 +17,12 @@ platform :android do
     )
   end
 
-  desc "Send the bundle Android Studio signed (Build › Generate Signed App Bundle, release) to open testing, the beta link's track, with the beta notes (metadata/android/en-CA/changelogs/default.txt). Google reviews it first."
+  desc "Build a beta bundle (after the version bump and `npm run build` at the root), signed with the upload key from the keychain (app/build.gradle), and send it to open testing, the beta link's track, with the beta notes (metadata/android/en-CA/changelogs/default.txt). Google reviews it first."
   lane :beta do
+    gradle(task: "bundle", build_type: "Release")
     upload_to_play_store(
       track: "beta",
-      aab: "./app/release/app-release.aab",
+      aab: lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH],
       metadata_path: "./fastlane/metadata/android",
       skip_upload_metadata: true,
       skip_upload_images: true,

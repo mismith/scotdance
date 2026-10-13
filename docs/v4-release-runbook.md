@@ -120,10 +120,15 @@ later; the links don't change. From the main checkout, on `next`:
    build to Early Access with the notes. The keys come from `~/.zshrc`'s
    `APP_STORE_CONNECT_API_KEY_*`; Xcode's account signs it, since the key
    can't. A new version waits for Beta App Review (usually hours).
-5. Android: Android Studio › Build › Generate Signed App Bundle › release
-   (`~/Documents/ScotDance/certs/scotdance.keystore`), then `fastlane beta` in
-   `android`. Google reviews it; with managed publishing on, it then waits
-   for Publish in Publishing overview.
+5. Android: `fastlane beta` in `android`. It builds the bundle, signs it with
+   the upload key (`~/Documents/ScotDance/certs/scotdance.keystore`, its alias
+   and password from the login keychain) and sends it to open testing with
+   the notes. Google reviews it; with managed publishing on, it then waits
+   for Publish in Publishing overview. The keychain item, once per Mac
+   (`-w` last, so it asks for the password):
+   `security add-generic-password -s scotdance-upload-key -a <key alias> -w`.
+   Play App Signing re-signs every build, so this is only the upload key: if
+   it leaks, reset it in Play Console.
 
 ## Phase 3: cutover (ADR 0001 checklist)
 
