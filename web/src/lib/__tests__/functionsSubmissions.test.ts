@@ -217,7 +217,19 @@ function arrival() {
     await settle('admin-1')
   }
   const competitions = () => Object.entries(rtdb.read('competitions') ?? {})
-  return { rtdb, submit, change, settle, competitions, read: () => rtdb.read(`${PATH}/s1`) }
+  /** Deliver what's queued all at once, as two instances would (then what that queues, likewise). */
+  async function settleTogether(uid?: string) {
+    while (rtdb.events.length) {
+      const events = rtdb.events.splice(0)
+      await Promise.all(events.map(({ path, params, before, after }) => {
+        const ctx = { params, ...(uid && { auth: { uid } }) }
+        if (before === null && after !== null) return onCreate(snapshot(path, after), ctx)
+        if (before !== null && after !== null) return onUpdate({ before: snapshot(path, before), after: snapshot(path, after) }, ctx)
+        return null
+      }))
+    }
+  }
+  return { rtdb, submissions, submit, change, settle, settleTogether, competitions, read: (id = 's1') => rtdb.read(`${PATH}/${id}`) }
 }
 const sentTemplates = () => postmark.sent.map((e) => e.TemplateAlias)
 
@@ -389,5 +401,105 @@ describe('the email’s model', () => {
     expect(summary({ date: '2026-09-05' }).tile).toEqual({ month: 'Sep', day: '5', year: '2026' })
     expect(summary({ date: 'soon', location: ' Perth ' })).toEqual({ date: null, where: 'Perth', tile: null })
     expect(summary(undefined)).toEqual({ date: null, where: null, tile: null })
+  })
+})
+
+// Another competition that weekend (ADR 0009): the second submission names
+// the first (`linkedTo`), and whichever is approved second links their
+// competitions, the first as the main one.
+describe('a weekend’s two', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-06T12:00:00Z'))
+  })
+  afterEach(() => vi.useRealTimers())
+
+  const SAT = { ...SUBMISSION, competition: { ...SUBMISSION.competition, name: 'Cowal Games Saturday', date: '2027-08-28' } }
+  const SUN = { ...SUBMISSION, competition: { ...SUBMISSION.competition, name: 'Cowal Games Sunday', date: '2027-08-29', venue: 'Dunoon Grammar' }, linkedTo: 's1' }
+  const competitionOf = (a: ReturnType<typeof arrival>, id: string) => a.read(id).competitionId as string
+  const linkOf = (a: ReturnType<typeof arrival>, competitionId: string) => {
+    const linkId = a.rtdb.read(`competitionLinks:of/${competitionId}`)
+    return linkId ? { linkId, ...a.rtdb.read(`competitionLinks/${linkId}`) } : null
+  }
+
+  it('are linked when the second is approved, the first as the main one, keeping the second’s own venue', async () => {
+    const a = arrival()
+    a.rtdb.write({ [`${PATH}/s1`]: SAT })
+    await a.settle('organiser-1')
+    expect(linkOf(a, competitionOf(a, 's1'))).toBeNull()
+    a.rtdb.write({ [`${PATH}/s2`]: SUN })
+    await a.settle('organiser-1')
+    const [sat, sun] = [competitionOf(a, 's1'), competitionOf(a, 's2')]
+    expect(linkOf(a, sun)).toEqual({ linkId: expect.any(String), primary: sat, competitions: { [sat]: true, [sun]: true } })
+    expect(a.rtdb.read(`competitions/${sun}/venue`)).toBe('Dunoon Grammar')
+    // (Its venue is its own, so that part isn't shared.)
+    expect(a.rtdb.read(`competitionLinks:sync/${sun}/venue`)).toBeNull()
+    expect(a.read('s2').linked).toEqual(expect.any(String))
+  })
+
+  it('are linked the same when the first is approved second', async () => {
+    const a = arrival()
+    // The first waits for a look.
+    a.rtdb.write({ [`${PATH}/s1`]: { ...SAT, competition: { ...SAT.competition, name: 'COWAL GAMES SATURDAY' } } })
+    await a.settle('organiser-1')
+    a.rtdb.write({ [`${PATH}/s2`]: SUN })
+    await a.settle('organiser-1')
+    expect(a.read('s1').approved).toBeUndefined()
+    expect(linkOf(a, competitionOf(a, 's2'))).toBeNull()
+    await a.change({ [`${PATH}/s1/approved`]: '2026-10-06T13:00:00.000Z' })
+    const [sat, sun] = [competitionOf(a, 's1'), competitionOf(a, 's2')]
+    expect(linkOf(a, sat)).toMatchObject({ primary: sat, competitions: { [sat]: true, [sun]: true } })
+  })
+
+  it('approved at the same moment are linked once', async () => {
+    const a = arrival()
+    a.rtdb.write({ [`${PATH}/s1`]: { ...SAT, competition: { ...SAT.competition, location: '' } }, [`${PATH}/s2`]: { ...SUN, competition: { ...SUN.competition, location: '' } } })
+    await a.settle('organiser-1')
+    a.rtdb.write({ [`${PATH}/s1/approved`]: '2026-10-06T13:00:00.000Z', [`${PATH}/s2/approved`]: '2026-10-06T13:00:00.000Z' })
+    await a.settleTogether('admin-1')
+    const [sat, sun] = [competitionOf(a, 's1'), competitionOf(a, 's2')]
+    expect(Object.keys(a.rtdb.read('competitionLinks'))).toHaveLength(1)
+    expect(linkOf(a, sun)).toMatchObject({ primary: sat, competitions: { [sat]: true, [sun]: true } })
+  })
+
+  it('aren’t linked when the first isn’t the same person’s', async () => {
+    const a = arrival()
+    a.rtdb.write({ [`${PATH}/s1`]: SAT })
+    await a.settle('someone-else')
+    a.rtdb.write({ [`${PATH}/s2`]: SUN })
+    await a.settle('organiser-1')
+    expect(a.read('s2').competitionId).toEqual(expect.any(String))
+    expect(a.rtdb.read('competitionLinks')).toBeNull()
+    expect(a.read('s2').linked).toBeUndefined()
+  })
+
+  it('that can’t be linked are left unlinked, saying why, and the approval stands', async () => {
+    // The first's competition deleted since.
+    const gone = arrival()
+    gone.rtdb.write({ [`${PATH}/s1`]: SAT })
+    await gone.settle('organiser-1')
+    gone.rtdb.write({ [`competitions/${competitionOf(gone, 's1')}`]: null })
+    gone.rtdb.write({ [`${PATH}/s2`]: SUN })
+    await gone.settle('organiser-1')
+    expect(gone.read('s2')).toMatchObject({ competitionId: expect.any(String), notLinked: 'That competition isn’t there any more.' })
+    expect(gone.read('s2').linked).toBeUndefined()
+    expect(sentTemplates()).toContain('competition-submission-approved')
+
+    // Both linked with others already.
+    const taken = arrival()
+    taken.rtdb.write({
+      'competitions/c1': { name: 'Saturday', date: '2027-08-28' },
+      'competitions/c2': { name: 'Sunday', date: '2027-08-29' },
+      'competitions/x': { name: 'Friday', date: '2027-08-27' },
+      'competitions/y': { name: 'Monday', date: '2027-08-30' },
+      'competitionLinks/l1': { primary: 'x', competitions: { x: true, c1: true } },
+      'competitionLinks/l2': { primary: 'y', competitions: { y: true, c2: true } },
+      'competitionLinks:of': { x: 'l1', c1: 'l1', y: 'l2', c2: 'l2' },
+      [`${PATH}/s1`]: { ...SAT, submittedBy: 'organiser-1', competitionId: 'c1' },
+      [`${PATH}/s2`]: { ...SUN, submittedBy: 'organiser-1', competitionId: 'c2' },
+    })
+    await taken.submissions.link({ secondId: 's2', second: taken.read('s2'), secondCompetition: 'c2', first: taken.read('s1'), firstCompetition: 'c1' })
+    expect(taken.read('s2').notLinked).toMatch(/Both are linked with others already/)
+    expect(taken.rtdb.read('competitionLinks:of')).toEqual({ x: 'l1', c1: 'l1', y: 'l2', c2: 'l2' })
   })
 })

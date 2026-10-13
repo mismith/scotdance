@@ -2,11 +2,12 @@ import { expect, type Page } from '@playwright/test'
 
 // Add a competition, one question at a time (ADR 0010): the steps every spec
 // that sends one walks through. submit.spec.ts covers the questions
-// themselves.
+// themselves; known-competitions.spec.ts, step 3 ("Is it one of these?",
+// ADR 0009), which only shows when something's known that day.
 
-/** The question showing, by its place in the steps ("Step 3 of 8: …"). */
+/** The question showing, by its place in the steps ("Step 4 of 9: …"). */
 export const question = (page: Page, step: number) =>
-  page.getByRole('heading', { level: 1, name: new RegExp(`^Step ${step} of 8`) })
+  page.getByRole('heading', { level: 1, name: new RegExp(`^Step ${step} of 9`) })
 
 /** The one button at the foot of each question (Continue, Skip, Send…). */
 export const action = (page: Page) =>
@@ -48,6 +49,18 @@ export async function pickDay(page: Page, iso: string) {
 }
 
 /**
+ * On from the date: past "Is it one of these?" (None of these) when anything
+ * else is on that day, as other specs' competitions can be.
+ */
+export async function pastMatches(page: Page) {
+  await expect(question(page, 3).or(question(page, 4))).toBeVisible()
+  if (await question(page, 3).isVisible()) {
+    await action(page).click()
+    await expect(question(page, 4)).toBeVisible()
+  }
+}
+
+/**
  * From the first question to Sent, with just what's needed: Canada, the date,
  * the name, the town (typed, as without a Maps key), your name.
  */
@@ -60,24 +73,24 @@ export async function addCompetition(
   await action(page).click()
   await pickDay(page, date)
   await action(page).click()
-  await expect(question(page, 3)).toBeVisible()
+  await pastMatches(page)
   await page.getByRole('main').getByRole('textbox').fill(name)
   await action(page).click()
-  await expect(question(page, 4)).toBeVisible()
-  await action(page).click()
   await expect(question(page, 5)).toBeVisible()
+  await action(page).click()
+  await expect(question(page, 6)).toBeVisible()
   const justTown = page
     .getByRole('main')
     .getByRole('button', { name: 'Just the town for now' })
   if (await justTown.isVisible()) await justTown.click()
   await page.getByRole('main').getByRole('textbox', { name: 'Town or city' }).fill(town)
   await action(page).click()
-  await expect(question(page, 6)).toBeVisible()
-  await action(page).click()
   await expect(question(page, 7)).toBeVisible()
-  await page.getByRole('main').getByRole('textbox').fill(you)
   await action(page).click()
   await expect(question(page, 8)).toBeVisible()
+  await page.getByRole('main').getByRole('textbox').fill(you)
+  await action(page).click()
+  await expect(question(page, 9)).toBeVisible()
   await page.getByRole('checkbox', { name: /no guarantees/ }).check()
   await action(page).click()
   await expect(page.getByRole('heading', { name: 'Sent' })).toBeVisible()

@@ -62,6 +62,11 @@ interface Submission {
   /** The server's word on the reply's email: sent, or not. */
   replied?: string
   replyFailed?: string
+  /** Added just after this one, that weekend: linked with it once both are approved (ADR 0009). */
+  linkedTo?: string
+  /** When the server linked them, or why it couldn't. */
+  linked?: string
+  notLinked?: string
 }
 
 const route = useRoute()
@@ -193,6 +198,23 @@ function rowLine(s: Submission) {
         : `approved ${s.autoApproved ? 'automatically ' : ''}${formatRelative(s.approved!)}`
   return [s.contact?.name, when].filter(Boolean).join(' · ')
 }
+// Another competition that weekend (ADR 0009): the one it was added after,
+// and any added after it, with how their linking went.
+function weekendOf(s: Submission) {
+  const first = s.linkedTo ? items.value.find((i) => i.id === s.linkedTo) : null
+  const later = items.value.filter((i) => i.linkedTo === s.id)
+  return [...(first ? [{ other: first, second: s }] : []), ...later.map((i) => ({ other: i, second: i }))].map(({ other, second }) => ({
+    id: other.id,
+    name: other.competition?.name || 'Untitled',
+    date: other.competition?.date ? formatLongDate(other.competition.date) : '',
+    status: second.linked
+      ? `Linked ${formatRelative(second.linked)}.`
+      : second.notLinked
+        ? `Not linked: ${second.notLinked}`
+        : 'They’re linked once both are approved.',
+  }))
+}
+
 // "Rejected today: already submitted. No one was told."
 function rejectedLine(s: Submission) {
   const why = reasonLabel(s.rejection?.reason)
@@ -636,6 +658,21 @@ async function remove(s: Submission) {
           <p class="text-base font-medium">{{ current.contact?.name ?? 'Unknown' }}</p>
           <p v-if="current.contact?.email" class="text-base"><a :href="`mailto:${current.contact.email}`" class="text-primary font-medium">{{ current.contact.email }}</a></p>
           <p v-if="current.contact?.message" class="text-muted-foreground pt-2 text-base whitespace-pre-line">{{ current.contact.message }}</p>
+        </section>
+
+        <section v-if="weekendOf(current).length" class="space-y-2">
+          <h3 class="text-heading">Linked with</h3>
+          <ul class="surface divide-y overflow-hidden rounded-2xl">
+            <li v-for="w in weekendOf(current)" :key="w.id">
+              <RouterLink :to="{ name: 'admin.submissions', params: { submissionId: w.id } }" class="press-row focus-inset flex min-h-15 items-center gap-3 px-4 py-2">
+                <span class="min-w-0 flex-1">
+                  <span class="block text-base font-semibold break-words">{{ w.name }}</span>
+                  <span class="text-muted-foreground block text-sm">{{ [w.date, w.status].filter(Boolean).join(' · ') }}</span>
+                </span>
+                <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+              </RouterLink>
+            </li>
+          </ul>
         </section>
 
         <section v-if="requested(current).length" class="space-y-2">

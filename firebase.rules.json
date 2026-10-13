@@ -86,6 +86,11 @@
       "competitionLinks": { ".read": true },
       "competitionLinks:of": { ".read": true },
       "competitionLinks:sync": { ".read": true },
+      // Known competitions (ADR 0009): the governing bodies' public lists, suggested on Add a competition. Only functions write them (refreshKnownCompetitions); how each source's last run went (knownCompetitions:runs) is for system admins.
+      "knownCompetitions": {
+        ".read": "auth !== null", // is AUTHED
+        ".indexOn": ["date"]
+      },
       "competitions:changed": {
         // When each part of a competition last changed (stamped by functions), so the app re-uses what it has
         "$competitionId": { ".read": true }
@@ -155,7 +160,7 @@
         }
       },
       "competitions:submissions": {
-        ".indexOn": ["submittedBy", "receivedAt", "competition/date"], // the flood check; what else is submitted for the same day
+        ".indexOn": ["submittedBy", "receivedAt", "competition/date", "linkedTo"], // the flood check; what else is submitted for the same day; the ones to link with it once approved
         "$competitionId": {
           ".write": "auth !== null && !data.exists() && !newData.child('approved').exists() && !newData.child('rejected').exists() && !newData.child('rejection').exists() && !newData.child('replied').exists() && !newData.child('replyFailed').exists() && !newData.child('autoApproved').exists() && !newData.child('review').exists()", // is AUTHED and CREATING and NOT approving or rejecting (or saying a reply went out, or that it needs no review)
           ".validate": "data.exists() || (newData.child('competition/name').isString() && !newData.child('competition/name').val().matches(/^ *$/) && newData.child('competition/date').isString() && newData.child('competition/date').val().matches(/^\\d{4}-\\d{2}-\\d{2}$/) && newData.child('competition/location').isString() && !newData.child('competition/location').val().matches(/^ *$/))" // a NEW one has a NAME, a DATE (YYYY-MM-DD) and a TOWN or CITY; edits to one already sent (System admin) aren't held to it

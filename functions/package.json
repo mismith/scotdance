@@ -15,6 +15,7 @@
     "firebase-functions": "^7.4.0",
     "google-auth-library": "^11.1.0",
     "postmark": "^5.1.0",
+    "read-excel-file": "^9.3.10",
     "typesense": "^3.1.0"
   },
   "devDependencies": {

@@ -1,7 +1,7 @@
 // A small in-memory Realtime Database for testing the Cloud Functions
 // (the aggregators in functions/src/utility/aggregate.ts, and alerts in
 // functions/src/notifications.ts): paths, get / set / update / remove / push,
-// orderByChild queries, transactions whose first try sees null (as the
+// orderByChild and orderByKey queries, transactions whose first try sees null (as the
 // admin SDK's do when nothing is cached), and the trigger events each write
 // causes, so a test can run them in order, out of order, or all at once.
 
@@ -85,7 +85,7 @@ function compareOrder(a: Json, b: Json): number {
   return (a as number | string) < (b as number | string) ? -1 : 1
 }
 
-/** `ref.orderByChild(key)` with `startAt`, `endAt` and `equalTo`. */
+/** `ref.orderByChild(key)` (or `orderByKey()`, as `$key`) with `startAt`, `endAt` and `equalTo`. */
 export class FakeQuery {
   constructor(
     private readonly db: FakeRtdb,
@@ -111,8 +111,8 @@ export class FakeQuery {
     const node = this.db.read(this.path)
     if (!node || typeof node !== 'object') return snap(null)
     const { bounds } = this
-    const hits = Object.entries(node as Obj).filter(([, child]) => {
-      const v = getIn(child, parts(this.key))
+    const hits = Object.entries(node as Obj).filter(([k, child]) => {
+      const v = this.key === '$key' ? k : getIn(child, parts(this.key))
       return (!('start' in bounds) || compareOrder(v, bounds.start) >= 0) && (!('end' in bounds) || compareOrder(v, bounds.end) <= 0)
     })
     return snap(hits.length ? Object.fromEntries(hits) : null)
@@ -205,6 +205,10 @@ export class FakeRef {
 
   orderByChild(key: string) {
     return new FakeQuery(this.db, this.path, key)
+  }
+
+  orderByKey() {
+    return new FakeQuery(this.db, this.path, '$key')
   }
 
   async get() {
