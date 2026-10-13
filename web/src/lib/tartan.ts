@@ -4,40 +4,44 @@ import type { DancerColor, DancerColorId } from '@/stores/dancerColors'
 //
 // The recipe is a sett in the Scottish Register's threadcount notation, the
 // stripes from the middle of the pattern out ("P40 K16 S16 K2 T2" is 40
-// threads of the first colour, 16 black, 16 of the second, 2 black, 2 of the
-// third), mirrored like nearly every tartan and woven the same across and
-// down. Letters are roles, not fixed colours: P, S and T are the follower's
-// first, second and third colours, K and W a fixed black and white. A real
-// tartan's threadcount has the same shape with its own colour letters, so one
-// could be drawn by the same code one day.
+// threads of P, 16 black, 16 of S, 2 black, 2 of T), mirrored like nearly
+// every tartan and woven the same across and down, plus the colour each
+// letter stands for. K and W are always black and white; any other capital
+// is whatever colour the recipe gives it, so a tartan can have as many
+// colours as it has stripes. A real tartan's threadcount has the same shape
+// with its own colour letters, so one could be drawn by the same code one day.
 //
 // The builder works in four fixed widths, like Lego bricks: pieces swap for
 // another size but never stretch.
 
-export type Role = 'P' | 'S' | 'T' | 'K' | 'W'
-export const ROLES: readonly Role[] = ['P', 'S', 'T', 'K', 'W']
 export const WIDTHS = [2, 6, 16, 40] as const
 export type Width = (typeof WIDTHS)[number]
 export const WIDTH_NAMES: Record<Width, string> = { 2: 'Line', 6: 'Stripe', 16: 'Band', 40: 'Field' }
 export const MAX_STRIPES = 14
 
 export interface Stripe {
-  role: Role
+  /** A colour letter: K black, W white, any other capital from the recipe's colours. */
+  code: string
   width: Width
 }
 
 export type Hex = `#${string}`
 export const isHex = (s: unknown): s is Hex => typeof s === 'string' && /^#[0-9a-f]{6}$/i.test(s)
 
-/** A follower's tartan for a dancer. Second and third go with the first colour until chosen. */
+/**
+ * A follower's tartan for a dancer: the stripes, and the colour of each
+ * letter in them (but K and W). `color` is the dancer's own colour, the one
+ * their dots show; picking a new one repaints the stripes that were in it.
+ */
 export interface Tartan {
   color: DancerColor
   sett: string
-  second?: Hex
-  third?: Hex
+  colors: Record<string, Hex>
 }
 
-const TOKEN = /^([PSTKW])(2|6|16|40)$/
+/** Letters a recipe can give colours to: every capital but K and W. */
+export const isColourCode = (c: string) => /^[A-JL-VX-Z]$/.test(c)
+const TOKEN = /^([A-Z])(2|6|16|40)$/
 
 /** "P40 K16 S16 K2 T2" as stripes, or null if it isn't one the builder makes. */
 export function parseSett(sett: unknown): Stripe[] | null {
@@ -48,30 +52,12 @@ export function parseSett(sett: unknown): Stripe[] | null {
   for (const t of tokens) {
     const m = t.match(TOKEN)
     if (!m) return null
-    stripes.push({ role: m[1] as Role, width: Number(m[2]) as Width })
+    stripes.push({ code: m[1]!, width: Number(m[2]) as Width })
   }
   return stripes
 }
 
-export const formatSett = (stripes: readonly Stripe[]) => stripes.map((s) => s.role + s.width).join(' ')
-
-/**
- * Patterns to start from, named after dances rather than clans so nobody
- * takes one for a registered tartan. With Plain they fill two rows of five.
- */
-export const PRESETS = [
-  { id: 'fling', name: 'Fling', sett: 'P40 K16 S16 K2 T2' },
-  { id: 'sword', name: 'Sword', sett: 'S16 K2 S2 K2 S2 K16 P40 T2' },
-  { id: 'reel', name: 'Reel', sett: 'P16 K16' },
-  { id: 'jig', name: 'Jig', sett: 'P40 T2' },
-  { id: 'hornpipe', name: 'Hornpipe', sett: 'K40 S6 K6 P16 K2 T2' },
-  { id: 'lilt', name: 'Lilt', sett: 'W40 P6 W6 S16 W2 T2' },
-  { id: 'flora', name: 'Flora', sett: 'P40 S6 K16 T2 K2 W2 K2 S16 P6 K2 P2 W2' },
-  { id: 'strathspey', name: 'Strathspey', sett: 'P40 S2 P6 S2 P16 S40' },
-  { id: 'seann', name: 'Seann Triubhas', sett: 'K6 S16 P40 S16 T2' },
-] as const
-
-export const presetFor = (sett: string) => PRESETS.find((p) => p.sett === sett) ?? null
+export const formatSett = (stripes: readonly Stripe[]) => stripes.map((s) => s.code + s.width).join(' ')
 
 // Colours. Cloth is dyed, so it keeps the light theme's palette in both
 // themes (the same values as --dancer-1…9 in style.css; a test keeps them in step).
@@ -89,7 +75,7 @@ export const CLOTH: Record<DancerColorId, Hex> = {
 export const BLACK: Hex = '#1a1c22'
 export const WHITE: Hex = '#f1ede2'
 
-/** Colours for the second and third, named for screen readers and the stripe panel. */
+/** The colours a stripe can take besides black and white (and the rainbow for any other). */
 export const SWATCHES: ReadonlyArray<{ hex: Hex; label: string }> = [
   { hex: CLOTH['dancer-1'], label: 'Red' },
   { hex: CLOTH['dancer-2'], label: 'Green' },
@@ -102,14 +88,17 @@ export const SWATCHES: ReadonlyArray<{ hex: Hex; label: string }> = [
   { hex: CLOTH['dancer-9'], label: 'Navy' },
   { hex: '#e8c000', label: 'Yellow' },
   { hex: '#48a4c0', label: 'Sky' },
-  { hex: WHITE, label: 'White' },
-  { hex: BLACK, label: 'Black' },
 ]
-export const swatchName = (hex: string) => SWATCHES.find((s) => s.hex.toLowerCase() === hex.toLowerCase())?.label ?? null
+const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
+/** A colour's name, for labels and screen readers, or null for one of your own. */
+export const swatchName = (hex: string) =>
+  same(hex, BLACK) ? 'Black' : same(hex, WHITE) ? 'White' : (SWATCHES.find((s) => same(s.hex, hex))?.label ?? null)
 
-// Second and third colours that go with each first colour, the way real
-// tartans pair them (Royal Stewart's navy and yellow with red, MacLeod's
-// black and red with gold), until someone picks their own.
+export const clothHex = (color: DancerColor): Hex => (isHex(color) ? color : CLOTH[color])
+
+// The colours a preset is woven in: the dancer's colour for P, and for S and
+// T the pair real tartans put with it (Royal Stewart's navy and yellow with
+// red, MacLeod's black and red with gold).
 const NAVY = CLOTH['dancer-9']
 const COMPANIONS: Record<DancerColorId, [Hex, Hex]> = {
   'dancer-1': [NAVY, '#e8c000'],
@@ -122,13 +111,107 @@ const COMPANIONS: Record<DancerColorId, [Hex, Hex]> = {
   'dancer-8': [NAVY, WHITE],
   'dancer-9': [CLOTH['dancer-2'], CLOTH['dancer-1']],
 }
+export const companionsOf = (color: DancerColor): [Hex, Hex] => (isHex(color) ? [NAVY, '#e8c000'] : COMPANIONS[color])
 
-export const clothHex = (color: DancerColor): Hex => (isHex(color) ? color : CLOTH[color])
+/**
+ * Patterns to start from, named after dances rather than clans so nobody
+ * takes one for a registered tartan. With Plain they fill two rows of five.
+ * P is woven in the dancer's colour, S and T in the pair that goes with it.
+ */
+export const PRESETS = [
+  { id: 'fling', name: 'Fling', sett: 'P40 K16 S16 K2 T2' },
+  { id: 'sword', name: 'Sword', sett: 'S16 K2 S2 K2 S2 K16 P40 T2' },
+  { id: 'reel', name: 'Reel', sett: 'P16 K16' },
+  { id: 'jig', name: 'Jig', sett: 'P16 S6 W2 S6' },
+  { id: 'hornpipe', name: 'Hornpipe', sett: 'K40 S6 K6 P16 K2 T2' },
+  { id: 'lilt', name: 'Lilt', sett: 'W40 P6 W6 S16 W2 T2' },
+  { id: 'flora', name: 'Flora', sett: 'P40 S6 K16 T2 K2 W2 K2 S16 P6 K2 P2 W2' },
+  { id: 'strathspey', name: 'Strathspey', sett: 'P40 S2 P6 S2 P16 S40' },
+  { id: 'seann', name: 'Seann Triubhas', sett: 'K6 S16 P40 S16 T2' },
+] as const
 
-/** Every role's colour in a tartan. */
-export function paletteOf(t: Pick<Tartan, 'color' | 'second' | 'third'>): Record<Role, Hex> {
-  const [second, third] = isHex(t.color) ? [NAVY, '#e8c000' as Hex] : COMPANIONS[t.color]
-  return { P: clothHex(t.color), S: t.second ?? second, T: t.third ?? third, K: BLACK, W: WHITE }
+/** A recipe's colours, kept to the letters its stripes use. */
+function usedColours(stripes: readonly Stripe[], colors: Record<string, Hex>) {
+  const out: Record<string, Hex> = {}
+  for (const s of stripes) if (isColourCode(s.code) && colors[s.code]) out[s.code] = colors[s.code]!
+  return out
+}
+
+/** A preset woven in a dancer's colour (a black or white in its pair is woven as K or W). */
+export function weavePreset(sett: string, color: DancerColor): Tartan {
+  const [S, T] = companionsOf(color)
+  const roles: Record<string, Hex> = { P: clothHex(color), S, T }
+  const stripes = (parseSett(sett) ?? []).map((x) => {
+    const hex = roles[x.code]
+    return { ...x, code: !hex ? x.code : same(hex, BLACK) ? 'K' : same(hex, WHITE) ? 'W' : x.code }
+  })
+  return { color, sett: formatSett(stripes), colors: usedColours(stripes, roles) }
+}
+
+/** Every letter's colour in a tartan, black and white included. */
+export const paletteOf = (t: Pick<Tartan, 'colors'>): Record<string, Hex> => ({ ...t.colors, K: BLACK, W: WHITE })
+
+/** Whether every stripe has a colour to be woven in. */
+export const isWoven = (t: Pick<Tartan, 'sett' | 'colors'>) =>
+  !!parseSett(t.sett)?.every((s) => s.code === 'K' || s.code === 'W' || isHex(t.colors[s.code]))
+
+/** The stripes as they look (colour and width), for telling two recipes apart however they're lettered. */
+const lookOf = (t: Pick<Tartan, 'sett' | 'colors'>) => {
+  const p = paletteOf(t)
+  return (parseSett(t.sett) ?? []).map((s) => `${p[s.code]?.toLowerCase()}${s.width}`).join(' ')
+}
+export const sameCloth = (a: Pick<Tartan, 'sett' | 'colors'>, b: Pick<Tartan, 'sett' | 'colors'>) => lookOf(a) === lookOf(b)
+
+/** The preset a tartan still is, woven in its dancer's colour, if it is one. */
+export const presetOf = (t: Tartan) => PRESETS.find((p) => sameCloth(t, weavePreset(p.sett, t.color))) ?? null
+
+/**
+ * A new colour for the dancer: a preset is woven again in it (its pair
+ * changes too); anything else has its stripes in the old colour repainted.
+ */
+export function recolor(t: Tartan, color: DancerColor): Tartan {
+  const preset = presetOf(t)
+  if (preset) return weavePreset(preset.sett, color)
+  const from = clothHex(t.color)
+  const to = clothHex(color)
+  return { color, sett: t.sett, colors: Object.fromEntries(Object.entries(t.colors).map(([k, v]) => [k, same(v, from) ? to : v])) }
+}
+
+/**
+ * The letter for a colour in a recipe: K or W for black and white, the
+ * letter it already has, or the next free one (added to `colors`).
+ */
+export function codeFor(colors: Record<string, Hex>, hex: Hex): string {
+  if (same(hex, BLACK)) return 'K'
+  if (same(hex, WHITE)) return 'W'
+  const had = Object.entries(colors).find(([, v]) => same(v, hex))?.[0]
+  if (had) return had
+  const free = 'ABCDEFGHIJLMNOPQRSTUVXYZ'.split('').find((c) => !colors[c])!
+  colors[free] = hex
+  return free
+}
+
+/** A recipe tidied for saving: colours only for the letters its stripes use. */
+export const tidy = (t: Tartan): Tartan => ({ ...t, colors: usedColours(parseSett(t.sett) ?? [], t.colors) })
+
+/**
+ * The dancer's colour kept true to the cloth: theirs while a stripe still
+ * wears it, otherwise `painted` (the colour that just replaced it) or the
+ * colour woven most, black and white last, so their dots match once every
+ * stripe in it has gone.
+ */
+export function settle(t: Tartan, painted?: Hex): Tartan {
+  const stripes = parseSett(t.sett) ?? []
+  const p = paletteOf(t)
+  const woven = (hex: string) => stripes.some((s) => same(p[s.code] ?? '', hex))
+  if (!stripes.length || woven(clothHex(t.color))) return t
+  const plain = (hex: string) => same(hex, BLACK) || same(hex, WHITE)
+  const threads = new Map<Hex, number>()
+  for (const s of repeatOf(stripes)) threads.set(p[s.code]!, (threads.get(p[s.code]!) ?? 0) + s.width)
+  const most = [...threads].sort((a, b) => Number(plain(a[0])) - Number(plain(b[0])) || b[1] - a[1])[0]![0]
+  const hex = painted && woven(painted) && !plain(painted) ? painted : most
+  const id = (Object.keys(CLOTH) as DancerColorId[]).find((k) => same(CLOTH[k], hex))
+  return { ...t, color: id ?? (hex.toLowerCase() as Hex) }
 }
 
 // Weaving.
@@ -141,8 +224,9 @@ export const repeatOf = <T>(stripes: readonly T[]): T[] =>
 /** Which stripe each place in the repeat is. */
 export const repeatIndex = (n: number) => repeatOf([...Array(n).keys()])
 
-export const runsOf = (stripes: readonly Stripe[], palette: Record<Role, Hex>): Run[] =>
-  repeatOf(stripes).map((s) => [palette[s.role], s.width] as const)
+export type Palette = Record<string, Hex>
+export const runsOf = (stripes: readonly Stripe[], palette: Palette): Run[] =>
+  repeatOf(stripes).map((s) => [palette[s.code] ?? BLACK, s.width] as const)
 export const threadsIn = (stripes: readonly Stripe[]) => repeatOf(stripes).reduce((n, s) => n + s.width, 0)
 
 /** Bands along one edge, `k` pixels a thread, as [start, end) in whole pixels. */
@@ -190,11 +274,12 @@ export function weave(ctx: CanvasRenderingContext2D, w: number, h: number, runs:
 
 /**
  * A tile's width in CSS pixels: every look is cut from cloth of one scale,
- * clamped so a small check still shows a few squares on a 40px avatar and a
- * big sett still shows its pattern on a number card. Even, so the twill's
- * 4px rib (at 2x) meets itself at the tile's edges.
+ * about 0.3px a thread, so a 40px avatar or a bib's band shows a whole
+ * repeat or more rather than a corner of one. Clamped so a small check
+ * keeps squares big enough to see and a huge sett keeps its finest lines.
+ * Even, so the twill's 4px rib (at 2x) meets itself at the tile's edges.
  */
-export const tileSize = (threads: number) => Math.max(36, Math.min(220, Math.round(threads * 0.3) * 2))
+export const tileSize = (threads: number) => Math.max(16, Math.min(200, Math.round(threads * 0.15) * 2))
 
 function luminance(hex: string) {
   const [r, g, b] = [1, 3, 5].map((i) => {
@@ -205,7 +290,7 @@ function luminance(hex: string) {
 }
 
 /** Whether a tartan is mostly light (a white ground, say), so text on it takes ink rather than white. */
-export function isLightCloth(stripes: readonly Stripe[], palette: Record<Role, Hex>) {
+export function isLightCloth(stripes: readonly Stripe[], palette: Palette) {
   const runs = runsOf(stripes, palette)
   const total = runs.reduce((n, [, t]) => n + t, 0)
   return runs.reduce((sum, [hex, t]) => sum + luminance(hex) * t, 0) / total > 0.4
@@ -219,7 +304,7 @@ let scratch: HTMLCanvasElement | null = null
 let noCanvas = typeof document === 'undefined'
 
 /** One seamless repeat as a data URL, `size` CSS pixels square, drawn at 2x. Null without a canvas. */
-export function clothTile(stripes: readonly Stripe[], palette: Record<Role, Hex>, size: number): string | null {
+export function clothTile(stripes: readonly Stripe[], palette: Palette, size: number): string | null {
   const key = `${formatSett(stripes)}|${Object.values(palette).join()}|${size}`
   const hit = tiles.get(key)
   if (hit) {
@@ -245,7 +330,7 @@ export function clothTile(stripes: readonly Stripe[], palette: Record<Role, Hex>
 }
 
 /** A tartan as a CSS background, a repeat `size` CSS pixels wide (a swatch shows the whole repeat). */
-export function clothImage(t: Pick<Tartan, 'color' | 'sett' | 'second' | 'third'>, size?: number): string | null {
+export function clothImage(t: Pick<Tartan, 'sett' | 'colors'>, size?: number): string | null {
   const stripes = parseSett(t.sett)
   if (!stripes) return null
   const s = size ?? tileSize(threadsIn(stripes))
@@ -271,7 +356,7 @@ const solidOfColor = (color: DancerColor) => (isHex(color) ? color : `var(--${co
  */
 export function clothBackground(t: Tartan, slot: string): string {
   const name = `--cloth-${slot.replace(/[^\w-]/g, '_')}`
-  const key = `${t.color}|${t.sett}|${t.second ?? ''}|${t.third ?? ''}`
+  const key = `${t.color}|${lookOf(t)}`
   const held = slots.get(name)
   if (held?.key === key) return `var(${name})`
   const image = noCanvas ? null : clothImage(t)
@@ -324,10 +409,13 @@ export function stripeAt(stripes: readonly Stripe[], t: number): { index: number
 
 /**
  * A remix of a sett: one or two small changes (swap neighbours, move a
- * stripe, recolour one, resize one, trade two colours, flip the order).
- * `random` is injectable for tests.
+ * stripe, recolour one from the tartan's own colours or black and white,
+ * resize one, trade two colours, flip the order). `random` is injectable for
+ * tests.
  */
 export function remix(stripes: readonly Stripe[], random: () => number = Math.random): Stripe[] {
+  const codes = [...new Set([...stripes.map((x) => x.code), 'K', 'W'])]
+  const colours = codes.filter(isColourCode)
   const s = stripes.map((x) => ({ ...x }))
   const pick = (n: number) => Math.floor(random() * n)
   const changes = [
@@ -343,8 +431,8 @@ export function remix(stripes: readonly Stripe[], random: () => number = Math.ra
     },
     () => {
       const x = s[pick(s.length)]!
-      const others = ROLES.filter((r) => r !== x.role)
-      x.role = others[pick(others.length)]!
+      const others = codes.filter((c) => c !== x.code)
+      x.code = others[pick(others.length)]!
     },
     () => {
       const x = s[pick(s.length)]!
@@ -352,10 +440,11 @@ export function remix(stripes: readonly Stripe[], random: () => number = Math.ra
       x.width = others[pick(others.length)]!
     },
     () => {
-      const pair: Role[] = ['P', 'S', 'T']
-      const a = pair.splice(pick(3), 1)[0]!
-      const b = pair[pick(2)]!
-      for (const x of s) x.role = x.role === a ? b : x.role === b ? a : x.role
+      if (colours.length < 2) return
+      const pair = [...colours]
+      const a = pair.splice(pick(pair.length), 1)[0]!
+      const b = pair[pick(pair.length)]!
+      for (const x of s) x.code = x.code === a ? b : x.code === b ? a : x.code
     },
     () => void s.reverse(),
   ]

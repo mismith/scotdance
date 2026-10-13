@@ -189,14 +189,15 @@
           ".read": "auth !== null && auth.uid === $userId", // is SELF
           ".write": "auth !== null && auth.uid === $userId", // is SELF
           // A colour ('dancer-3' or '#rrggbb'), or a tartan woven in one: the
-          // builder's sett (up to 14 stripes in 4 widths) and, if chosen, a
-          // second and third colour (see web/src/lib/tartan.ts).
+          // builder's sett (up to 14 stripes in 4 widths) and the colour of
+          // each letter in it but K and W (see web/src/lib/tartan.ts).
           "$dancerId": {
             ".validate": "(newData.isString() && newData.val().length <= 16) || newData.hasChildren(['color', 'sett'])",
             "color": { ".validate": "newData.isString() && newData.val().matches(/^(dancer-[1-9]|#[0-9a-fA-F]{6})$/)" },
-            "sett": { ".validate": "newData.isString() && newData.val().matches(/^[PSTKW](2|6|16|40)( [PSTKW](2|6|16|40)){0,13}$/)" },
-            "second": { ".validate": "newData.isString() && newData.val().matches(/^#[0-9a-fA-F]{6}$/)" },
-            "third": { ".validate": "newData.isString() && newData.val().matches(/^#[0-9a-fA-F]{6}$/)" },
+            "sett": { ".validate": "newData.isString() && newData.val().matches(/^[A-Z](2|6|16|40)( [A-Z](2|6|16|40)){0,13}$/)" },
+            "colors": {
+              "$code": { ".validate": "$code.matches(/^[A-JL-VX-Z]$/) && newData.isString() && newData.val().matches(/^#[0-9a-fA-F]{6}$/)" }
+            },
             "$other": { ".validate": false }
           }
         }

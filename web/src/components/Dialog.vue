@@ -117,8 +117,16 @@ const anchor = computed<Record<string, string> | undefined>(() => {
   }
 })
 
+// A tap on the backdrop closes, but only one that started there too: a press
+// that began inside (and was let go outside, or whose button re-rendered under
+// the finger) lands its click on the dialog itself, and mustn't close it.
+let pressedBackdrop = false
+function onPointerDown(e: PointerEvent) {
+  pressedBackdrop = e.target === dialogRef.value
+}
 function onBackdropClick(e: MouseEvent) {
-  if (e.target === dialogRef.value) emit('close')
+  if (pressedBackdrop && e.target === dialogRef.value) emit('close')
+  pressedBackdrop = false
 }
 
 // Sheets on phones can be pulled down to close, from the grabber or header.
@@ -202,6 +210,7 @@ const dragStyle = computed(() =>
       'backdrop:opacity-0 open:backdrop:opacity-100 starting:open:backdrop:opacity-0',
       'motion-reduce:transition-none motion-reduce:backdrop:transition-none',
     ]"
+    @pointerdown="onPointerDown"
     @click="onBackdropClick"
     @cancel.prevent="emit('close')"
   >

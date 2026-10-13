@@ -106,14 +106,19 @@ test('a parent can save their own things and nothing else', async () => {
   await refused('a colour that isn’t a short string', as(parent, 'PUT', `users:dancerColors/${me}/-Agg2`, 'x'.repeat(17)))
   await refused('a colour that isn’t a string', as(parent, 'PUT', `users:dancerColors/${me}/-Agg2`, 3))
   const look = `users:dancerColors/${me}/-Agg2`
-  await allowed('weave a dancer a tartan', as(parent, 'PUT', look, { color: 'dancer-3', sett: 'P40 K16 S16 K2 T2', third: '#48a4c0' }))
-  await allowed('a tartan in your own colour', as(parent, 'PUT', look, { color: '#12ab9f', sett: 'P16 K16', second: '#14306b' }))
+  await allowed(
+    'weave a dancer a tartan',
+    as(parent, 'PUT', look, { color: 'dancer-3', sett: 'P40 K16 A16 K2 B2', colors: { P: '#6a3fa0', A: '#14306b', B: '#48a4c0' } }),
+  )
+  await allowed('a tartan in black and white alone', as(parent, 'PUT', look, { color: 'dancer-3', sett: 'K16 W2' }))
+
   await allowed('back to a plain colour', as(parent, 'PUT', look, 'dancer-3'))
   await refused('a stripe the builder can’t make', as(parent, 'PUT', look, { color: 'dancer-3', sett: 'P41' }))
   await refused('more than fourteen stripes', as(parent, 'PUT', look, { color: 'dancer-3', sett: Array(15).fill('P2').join(' ') }))
   await refused('a tartan with no colour', as(parent, 'PUT', look, { sett: 'P16 K16' }))
   await refused('a tartan in a colour that isn’t one', as(parent, 'PUT', look, { color: 'red', sett: 'P16 K16' }))
-  await refused('a second colour that isn’t a colour', as(parent, 'PUT', look, { color: 'dancer-3', sett: 'P16 K16', second: 'navy' }))
+  await refused('a stripe colour that isn’t a colour', as(parent, 'PUT', look, { color: 'dancer-3', sett: 'P16', colors: { P: 'navy' } }))
+  await refused('a colour for black', as(parent, 'PUT', look, { color: 'dancer-3', sett: 'K16', colors: { K: '#6a3fa0' } }))
   await refused('anything else in a tartan', as(parent, 'PUT', look, { color: 'dancer-3', sett: 'P16 K16', note: 'hi' }))
   await refused('someone else’s colours', as(parent, 'PUT', `users:dancerColors/${org.uid}/-Agg2`, 'dancer-1'))
   await refused('someone else’s follows', as(parent, 'PUT', `users:favorites/${org.uid}/dancers/x`, true))

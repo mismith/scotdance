@@ -3,13 +3,13 @@ import { ref, watch } from 'vue'
 import { set } from 'firebase/database'
 import { dataRef } from '@/firebase'
 import { onValueSaved } from '@/lib/offline'
-import { isHex, parseSett, type Tartan } from '@/lib/tartan'
+import { isColourCode, isHex, isWoven, parseSett, tidy, type Hex, type Tartan } from '@/lib/tartan'
 import { useAuthStore } from './auth'
 
 // The look you've chosen for each dancer you follow, if any: a colour
 // (users:dancerColors/{uid}/{dancerId} = 'dancer-3', or any '#rrggbb' from the
-// system colour picker) or a tartan made from one ({ color, sett, second?,
-// third? }, see lib/tartan). Private to you: it's how they look in your app.
+// system colour picker) or a tartan ({ color, sett, colors }, see lib/tartan).
+// Private to you: it's how they look in your app.
 // Without a choice, colours are handed out in the order you followed them.
 
 export const DANCER_COLORS = [
@@ -36,14 +36,20 @@ export const isTartan = (look: DancerLook | null | undefined): look is Tartan =>
 /** A look's own colour: the colour itself, or a tartan's first. */
 export const baseColor = (look: DancerLook): DancerColor => (isTartan(look) ? look.color : look)
 
-/** A saved look, if it's one this app can show (anything else is ignored, so a dancer falls back to a handed-out colour). */
+/**
+ * A saved look, if it's one this app can show (anything else is ignored, so
+ * a dancer falls back to a handed-out colour). A tartan in black and white
+ * alone has no `colors`: the database doesn't keep an empty object.
+ */
 export function readLook(v: unknown): DancerLook | null {
   if (isDancerColor(v)) return v
   if (typeof v !== 'object' || v === null) return null
-  const { color, sett, second, third } = v as Record<string, unknown>
-  if (!isDancerColor(color) || !parseSett(sett)) return null
-  if ((second !== undefined && !isHex(second)) || (third !== undefined && !isHex(third))) return null
-  return { color, sett: sett as string, ...(second ? { second } : {}), ...(third ? { third } : {}) }
+  const { color, sett, colors = {}, ...rest } = v as Record<string, unknown>
+  if (!isDancerColor(color) || typeof sett !== 'string' || !parseSett(sett) || Object.keys(rest).length) return null
+  if (typeof colors !== 'object' || colors === null) return null
+  if (!Object.entries(colors).every(([k, c]) => isColourCode(k) && isHex(c))) return null
+  const t = tidy({ color, sett, colors: { ...(colors as Record<string, Hex>) } })
+  return isWoven(t) ? t : null
 }
 
 /**

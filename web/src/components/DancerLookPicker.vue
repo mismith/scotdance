@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { Check, SlidersHorizontal } from '@lucide/vue'
 import { useFollowing } from '@/composables/useFollowing'
 import { selectionHaptic } from '@/lib/haptics'
-import { PRESETS, clothImage, presetFor } from '@/lib/tartan'
+import { PRESETS, clothImage, presetOf, recolor, weavePreset } from '@/lib/tartan'
 import {
   DANCER_COLORS,
   inkFor,
@@ -16,7 +16,8 @@ import {
 // How a followed dancer looks across your app, just for you: a colour, then
 // a pattern woven in it (Plain, or one of the presets), then Customise for
 // the loom (TartanSheet). Colour and pattern are independent: a new colour
-// keeps the pattern, a new pattern keeps the colour. Both rows are five
+// keeps the pattern (repainting the stripes that were in the old colour), a
+// new pattern keeps the colour. Both rows are five
 // 44px circles across, so a pattern previews just what the avatar will wear.
 // The rainbow dot opens the system colour picker for any colour at all.
 const props = defineProps<{ dancerId: string; dancerName: string }>()
@@ -32,8 +33,9 @@ const look = computed(() => following.lookFor(props.dancerId))
 const current = computed(() => following.colorIdFor(props.dancerId))
 const tartan = computed(() => (isTartan(look.value) ? look.value : null))
 const custom = computed(() => (isCustomColor(current.value) ? current.value : null))
-const own = computed(() => !!tartan.value && !presetFor(tartan.value.sett))
-const patternName = computed(() => (!tartan.value ? 'Plain' : (presetFor(tartan.value.sett)?.name ?? 'Your own')))
+const preset = computed(() => (tartan.value ? presetOf(tartan.value) : null))
+const own = computed(() => !!tartan.value && !preset.value)
+const patternName = computed(() => (!tartan.value ? 'Plain' : (preset.value?.name ?? 'Your own')))
 
 // The system picker opens on their colour now, palette or not.
 const seed = computed(() => {
@@ -46,7 +48,7 @@ const plain = computed(() => (current.value ? (isCustomColor(current.value) ? cu
 const patterns = computed(() =>
   PRESETS.map((p) => ({
     ...p,
-    bg: current.value ? (clothImage({ ...tartan.value, color: current.value, sett: p.sett }, 44) ?? plain.value) : plain.value,
+    bg: current.value ? (clothImage(weavePreset(p.sett, current.value), 44) ?? plain.value) : plain.value,
   })),
 )
 const ownBg = computed(() => (tartan.value ? (clothImage(tartan.value, 28) ?? plain.value) : null))
@@ -54,7 +56,7 @@ const ownBg = computed(() => (tartan.value ? (clothImage(tartan.value, 28) ?? pl
 function pickColor(c: DancerColor) {
   if (c === current.value) return
   selectionHaptic()
-  colors.choose(props.dancerId, tartan.value ? { ...tartan.value, color: c } : c)
+  colors.choose(props.dancerId, tartan.value ? recolor(tartan.value, c) : c)
 }
 
 function pickCustom(e: Event) {
@@ -64,10 +66,10 @@ function pickCustom(e: Event) {
 
 function pickPattern(sett: string | null) {
   const c = current.value
-  if (!c || (sett ?? null) === (tartan.value?.sett ?? null)) return
+  const already = sett ? preset.value?.sett === sett : !tartan.value
+  if (!c || already) return
   selectionHaptic()
-  // A new pattern keeps your colours: the first, and any second or third you chose.
-  colors.choose(props.dancerId, sett ? { ...tartan.value, color: c, sett } : c)
+  colors.choose(props.dancerId, sett ? weavePreset(sett, c) : c)
 }
 </script>
 
@@ -136,10 +138,10 @@ function pickPattern(sett: string | null) {
         :key="p.id"
         type="button"
         role="radio"
-        :aria-checked="tartan?.sett === p.sett"
+        :aria-checked="preset?.sett === p.sett"
         :aria-label="p.name"
         :title="p.name"
-        :class="['press aspect-square rounded-full shadow-[inset_0_0_0_1px_rgb(0_0_0/0.12)]', tartan?.sett === p.sett && RING]"
+        :class="['press aspect-square rounded-full shadow-[inset_0_0_0_1px_rgb(0_0_0/0.12)]', preset?.sett === p.sett && RING]"
         :style="{ background: p.bg }"
         @click="pickPattern(p.sett)"
       />

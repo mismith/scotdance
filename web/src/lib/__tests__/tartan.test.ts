@@ -1,28 +1,37 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import {
+  BLACK,
   CLOTH,
   MAX_STRIPES,
   PRESETS,
   clothBackground,
   clothInk,
+  codeFor,
   formatSett,
   isCloth,
   isLightCloth,
+  isWoven,
   paletteOf,
   parseSett,
-  presetFor,
+  presetOf,
+  recolor,
   remix,
   remixes,
   repeatOf,
+  settle,
   solidOf,
   stripeAt,
   threadsIn,
+  tidy,
   tileSize,
+  weavePreset,
+  type Hex,
 } from '@/lib/tartan'
 
 // Dancer tartans: a sett is the stripes from the middle out, mirrored, in
-// four fixed widths; colours are roles that each follower fills in.
+// four fixed widths; each letter is a colour (K and W are black and white,
+// the rest come with the recipe).
 
 /** A repeatable stand-in for Math.random. */
 function seeded(seed: number) {
@@ -36,22 +45,25 @@ describe('setts', () => {
   it('reads the builder’s notation and writes it back the same', () => {
     const stripes = parseSett('P40 K16 S16 K2 T2')
     expect(stripes).toEqual([
-      { role: 'P', width: 40 },
-      { role: 'K', width: 16 },
-      { role: 'S', width: 16 },
-      { role: 'K', width: 2 },
-      { role: 'T', width: 2 },
+      { code: 'P', width: 40 },
+      { code: 'K', width: 16 },
+      { code: 'S', width: 16 },
+      { code: 'K', width: 2 },
+      { code: 'T', width: 2 },
     ])
     expect(formatSett(stripes!)).toBe('P40 K16 S16 K2 T2')
     expect(parseSett('  W40   P6 ')).toEqual([
-      { role: 'W', width: 40 },
-      { role: 'P', width: 6 },
+      { code: 'W', width: 40 },
+      { code: 'P', width: 6 },
     ])
   })
 
-  it('refuses anything the builder can’t make: other widths, colours or lengths', () => {
+  it('refuses anything the builder can’t make: other widths, letters or lengths', () => {
     expect(parseSett('P41')).toBeNull()
-    expect(parseSett('R40 K16')).toBeNull()
+    expect(parseSett('R40 K16')).toEqual([
+      { code: 'R', width: 40 },
+      { code: 'K', width: 16 },
+    ])
     expect(parseSett('p40')).toBeNull()
     expect(parseSett('P/40 K4')).toBeNull()
     expect(parseSett('')).toBeNull()
@@ -64,8 +76,13 @@ describe('setts', () => {
     expect(PRESETS).toHaveLength(9)
     for (const p of PRESETS) expect(parseSett(p.sett), p.name).not.toBeNull()
     expect(new Set(PRESETS.map((p) => p.sett)).size).toBe(PRESETS.length)
-    expect(presetFor('P16 K16')?.name).toBe('Reel')
-    expect(presetFor('P16 K16 T2')).toBeNull()
+  })
+
+  it('knows a preset however its colours are lettered, until it’s changed', () => {
+    expect(presetOf({ color: 'dancer-2', sett: 'A16 K16', colors: { A: '#1d6a48' } })?.name).toBe('Reel')
+    expect(presetOf(weavePreset('P16 K16', '#123456'))?.name).toBe('Reel')
+    expect(presetOf({ color: 'dancer-2', sett: 'P16 K16 T2', colors: { P: '#1d6a48', T: '#e8c000' } })).toBeNull()
+    expect(presetOf({ color: 'dancer-2', sett: 'P16 K16', colors: { P: '#b0102c' } })).toBeNull()
   })
 })
 
@@ -85,10 +102,10 @@ describe('weaving', () => {
   })
 
   it('cuts every tile from cloth of one scale, clamped for tiny and huge setts', () => {
-    expect(tileSize(32)).toBe(36)
-    expect(tileSize(110)).toBe(66)
+    expect(tileSize(32)).toBe(16)
+    expect(tileSize(110)).toBe(34)
     expect(tileSize(102) % 2).toBe(0)
-    expect(tileSize(1000)).toBe(220)
+    expect(tileSize(1000)).toBe(200)
   })
 })
 
@@ -99,16 +116,60 @@ describe('colours', () => {
     for (const [id, hex] of Object.entries(CLOTH)) expect(root, id).toContain(`--${id}: ${hex};`)
   })
 
-  it('pairs second and third colours with the first until someone chooses their own', () => {
-    expect(paletteOf({ color: 'dancer-1' })).toMatchObject({ P: '#b0102c', S: '#14306b', T: '#e8c000', K: '#1a1c22', W: '#f1ede2' })
-    expect(paletteOf({ color: 'dancer-1', third: '#48a4c0' })).toMatchObject({ S: '#14306b', T: '#48a4c0' })
-    expect(paletteOf({ color: '#123456' })).toMatchObject({ P: '#123456', S: '#14306b', T: '#e8c000' })
+  it('weaves a preset in the dancer’s colour and the pair that goes with it, keeping only the colours it uses', () => {
+    expect(weavePreset('P40 K16 S16 K2 T2', 'dancer-1')).toEqual({
+      color: 'dancer-1',
+      sett: 'P40 K16 S16 K2 T2',
+      colors: { P: '#b0102c', S: '#14306b', T: '#e8c000' },
+    })
+    expect(weavePreset('P16 K16', '#123456').colors).toEqual({ P: '#123456' })
+    // (Purple's pair is green and white: white is woven as W.)
+    expect(weavePreset('P40 K16 S16 K2 T2', 'dancer-3')).toEqual({
+      color: 'dancer-3',
+      sett: 'P40 K16 S16 K2 W2',
+      colors: { P: '#6a3fa0', S: '#1d6a48' },
+    })
+    expect(paletteOf(weavePreset('P16 K16', 'dancer-1'))).toEqual({ P: '#b0102c', K: '#1a1c22', W: '#f1ede2' })
+  })
+
+  it('weaves only what has a colour for every stripe', () => {
+    expect(isWoven({ sett: 'P16 K16 W2', colors: { P: '#b0102c' } })).toBe(true)
+    expect(isWoven({ sett: 'P16 R16', colors: { P: '#b0102c' } })).toBe(false)
+    expect(tidy({ color: 'dancer-1', sett: 'P16 K16', colors: { P: '#b0102c', S: '#14306b' } }).colors).toEqual({ P: '#b0102c' })
+  })
+
+  it('letters a new colour with the next free capital, and black and white as K and W', () => {
+    const colors: Record<string, Hex> = { A: '#b0102c' }
+    expect(codeFor(colors, BLACK)).toBe('K')
+    expect(codeFor(colors, '#F1EDE2')).toBe('W')
+    expect(codeFor(colors, '#B0102C')).toBe('A')
+    expect(codeFor(colors, '#123456')).toBe('B')
+    expect(colors).toEqual({ A: '#b0102c', B: '#123456' })
+  })
+
+  it('reweaves a preset in a new colour, and repaints only the old colour’s stripes on anything else', () => {
+    expect(recolor(weavePreset('P40 K16 S16 K2 T2', 'dancer-1'), 'dancer-5')).toEqual(weavePreset('P40 K16 S16 K2 T2', 'dancer-5'))
+    const own = { color: 'dancer-1', sett: 'P40 A6 K2', colors: { P: '#b0102c', A: '#123456' } } as const
+    expect(recolor(own, 'dancer-2')).toEqual({ color: 'dancer-2', sett: 'P40 A6 K2', colors: { P: '#1d6a48', A: '#123456' } })
+  })
+
+  it('moves the dancer’s colour once no stripe wears theirs: to the one painted, else the one woven most', () => {
+    const t = { color: 'dancer-1', sett: 'P6 A40 K2', colors: { P: '#b0102c', A: '#14306b' } } as const
+    expect(settle(t)).toBe(t)
+    expect(settle({ ...t, colors: { P: '#e8c000', A: '#14306b' } }).color).toBe('dancer-9')
+    expect(settle({ ...t, colors: { P: '#e8c000', A: '#14306b' } }, '#e8c000').color).toBe('#e8c000')
+    expect(settle({ ...t, colors: { P: '#e8c000', A: '#ABCDEF' } }).color).toBe('#abcdef')
+    // Black and white only when there’s nothing else.
+    expect(settle({ color: 'dancer-1', sett: 'A16 K40', colors: { A: '#b5800a' } }).color).toBe('dancer-4')
+    expect(settle({ color: 'dancer-1', sett: 'A16 K40', colors: { A: '#b5800a' } }, BLACK).color).toBe('dancer-4')
+    expect(settle({ color: 'dancer-1', sett: 'W16 K40', colors: {} }).color).toBe('#1a1c22')
   })
 
   it('knows light cloth from dark, for the ink on it', () => {
-    const lilt = parseSett('W40 P6 W6 S16 W2 T2')!
-    expect(isLightCloth(lilt, paletteOf({ color: 'dancer-7' }))).toBe(true)
-    expect(isLightCloth(parseSett('P40 K16 S16 K2 T2')!, paletteOf({ color: 'dancer-1' }))).toBe(false)
+    const lilt = weavePreset('W40 P6 W6 S16 W2 T2', 'dancer-7')
+    expect(isLightCloth(parseSett(lilt.sett)!, paletteOf(lilt))).toBe(true)
+    const fling = weavePreset('P40 K16 S16 K2 T2', 'dancer-1')
+    expect(isLightCloth(parseSett(fling.sett)!, paletteOf(fling))).toBe(false)
     expect(clothInk('var(--cloth-abc)')).toEqual({ ink: 'var(--cloth-abc-ink)', halo: 'var(--cloth-abc-halo)' })
   })
 
@@ -121,8 +182,8 @@ describe('colours', () => {
   })
 
   it('wears the first colour where there’s no canvas to weave on', () => {
-    expect(clothBackground({ color: 'dancer-2', sett: 'P16 K16' }, 'a')).toBe('var(--dancer-2)')
-    expect(clothBackground({ color: '#12ab9f', sett: 'P16 K16' }, 'a')).toBe('#12ab9f')
+    expect(clothBackground(weavePreset('P16 K16', 'dancer-2'), 'a')).toBe('var(--dancer-2)')
+    expect(clothBackground(weavePreset('P16 K16', '#12ab9f'), 'a')).toBe('#12ab9f')
   })
 })
 

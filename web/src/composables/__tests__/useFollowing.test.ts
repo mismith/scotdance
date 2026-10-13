@@ -82,7 +82,7 @@ describe('colours', () => {
     useDancerColorsStore()
     await signIn()
     favorites.dancers = { a: 'A', b: 'B' }
-    const tartan = { color: 'dancer-1', sett: 'P40 K16 S16 K2 T2', third: '#48a4c0' }
+    const tartan = { color: 'dancer-1', sett: 'P40 K16 A16 K2 W2', colors: { P: '#b0102c', A: '#48a4c0' } }
     emit!({ a: tartan })
     const f = useFollowing()
     expect(f.lookFor('a')).toEqual(tartan)
@@ -96,7 +96,7 @@ describe('colours', () => {
     useDancerColorsStore()
     await signIn()
     favorites.dancers = { a: 'A', b: 'B', c: 'C' }
-    emit!({ a: { color: 'dancer-3', sett: 'R40' }, b: { color: 'plaid', sett: 'P16' }, c: { color: 'dancer-3', sett: 'P16', second: 'navy' } })
+    emit!({ a: { color: 'dancer-3', sett: 'R40' }, b: { color: 'plaid', sett: 'P16' }, c: { color: 'dancer-3', sett: 'P16', colors: { P: 'navy' } } })
     const f = useFollowing()
     expect(['a', 'b', 'c'].map(f.colorIdFor)).toEqual(['dancer-1', 'dancer-2', 'dancer-3'])
   })
@@ -119,11 +119,18 @@ describe('dancer colours store', () => {
     expect(readLook('dancer-4')).toBe('dancer-4')
     expect(readLook('#12ab9f')).toBe('#12ab9f')
     expect(readLook('dancer-10')).toBeNull()
-    expect(readLook({ color: 'dancer-4', sett: 'P16 K16' })).toEqual({ color: 'dancer-4', sett: 'P16 K16' })
-    expect(readLook({ color: '#12ab9f', sett: 'P16 K16', second: '#14306b' })).toEqual({ color: '#12ab9f', sett: 'P16 K16', second: '#14306b' })
-    expect(readLook({ color: 'dancer-4', sett: 'P17' })).toBeNull()
+    expect(readLook({ color: 'dancer-4', sett: 'B16 K16', colors: { B: '#b5800a' } })).toEqual({ color: 'dancer-4', sett: 'B16 K16', colors: { B: '#b5800a' } })
+    expect(readLook({ color: 'dancer-4', sett: 'P17', colors: {} })).toBeNull()
     expect(readLook({ color: 'dancer-4' })).toBeNull()
-    expect(readLook({ color: 'dancer-4', sett: 'P16', third: 'red' })).toBeNull()
+    expect(readLook({ color: 'dancer-4', sett: 'P16 R2', colors: { P: '#b5800a' } })).toBeNull() // R has no colour
+    expect(readLook({ color: 'dancer-4', sett: 'P16', colors: { P: 'red' } })).toBeNull()
+    expect(readLook({ color: 'dancer-4', sett: 'P16', colors: { K: '#b5800a', P: '#b5800a' } })).toBeNull()
+  })
+
+  it('reads a tartan in black and white alone, which the database keeps without colours', () => {
+    expect(readLook({ color: 'dancer-4', sett: 'K16 W2' })).toEqual({ color: 'dancer-4', sett: 'K16 W2', colors: {} })
+    expect(readLook({ color: 'dancer-4', sett: 'P16 K16' })).toBeNull()
+    expect(readLook({ color: 'dancer-4', sett: 'P16 K16', second: '#14306b', colors: { P: '#b5800a' } })).toBeNull()
   })
 
   it('inks text for each kind of look: gold takes its own, cloth takes none (white with a halo)', () => {
@@ -132,11 +139,12 @@ describe('dancer colours store', () => {
     expect(inkOnLook('var(--cloth-abc)')).toBeNull()
   })
 
-  it('saves a tartan without the colours that go with the first', async () => {
+  it('saves a tartan with only the colours its stripes use, and not one it can’t weave', async () => {
     const colors = useDancerColorsStore()
     await signIn('u1')
-    await colors.choose('a', { color: 'dancer-2', sett: 'P16 K16', second: undefined })
-    expect(writes.map((w) => [w.path, w.value])).toEqual([['users:dancerColors/u1/a', { color: 'dancer-2', sett: 'P16 K16' }]])
+    await colors.choose('a', { color: 'dancer-2', sett: 'P16 K16', colors: { P: '#1d6a48', S: '#14306b' } })
+    await colors.choose('b', { color: 'dancer-2', sett: 'P16 S16', colors: { P: '#1d6a48' } })
+    expect(writes.map((w) => [w.path, w.value])).toEqual([['users:dancerColors/u1/a', { color: 'dancer-2', sett: 'P16 K16', colors: { P: '#1d6a48' } }]])
   })
 
   it('saves your choice, and forgets it for the next account', async () => {

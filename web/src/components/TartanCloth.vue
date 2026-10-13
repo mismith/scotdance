@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { useTemplateRef, watch } from 'vue'
 import { useElementSize } from '@vueuse/core'
-import { bandsAlong, repeatIndex, runsOf, stripeAt, threadsIn, weave, type Hex, type Role, type Stripe } from '@/lib/tartan'
+import { bandsAlong, repeatIndex, runsOf, stripeAt, threadsIn, weave, type Palette, type Stripe } from '@/lib/tartan'
 
 // The loom's cloth: a stretch of the tartan, a repeat and a half across, at
 // whatever size it's given. Tap it to choose the stripe under your finger
 // (of the two stripes crossing there, the narrower: that's the one aimed
 // at). The chosen stripe stays lit both ways and the rest of the cloth dims,
 // so you can see every place it lands.
-const props = defineProps<{ stripes: Stripe[]; palette: Record<Role, Hex>; selected: number | null }>()
+const props = defineProps<{ stripes: Stripe[]; palette: Palette; selected: number | null }>()
 const emit = defineEmits<{ select: [index: number] }>()
 
 const REPEATS = 1.5

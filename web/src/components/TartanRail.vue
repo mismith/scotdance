@@ -3,7 +3,7 @@ import { computed, nextTick, ref, useTemplateRef } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import { Plus } from '@lucide/vue'
 import { selectionHaptic } from '@/lib/haptics'
-import { WIDTH_NAMES, swatchName, type Hex, type Role, type Stripe, type Width } from '@/lib/tartan'
+import { WIDTH_NAMES, swatchName, type Palette, type Stripe, type Width } from '@/lib/tartan'
 
 // A tartan's stripes as a row of bricks, from the middle of the pattern out:
 // each as wide as its piece (scaled down together if they'd overflow, never
@@ -15,7 +15,7 @@ export type Brick = Stripe & { id: number }
 
 const props = defineProps<{
   bricks: Brick[]
-  palette: Record<Role, Hex>
+  palette: Palette
   selected: number | null
   canAdd: boolean
 }>()
@@ -46,7 +46,7 @@ const widths = computed(() => {
 })
 
 const labelOf = (b: Brick, i: number) =>
-  `${WIDTH_NAMES[b.width]} in ${(swatchName(props.palette[b.role]) ?? 'your colour').toLowerCase()}, ${i + 1} of ${props.bricks.length}`
+  `${WIDTH_NAMES[b.width]} in ${(swatchName(props.palette[b.code] ?? '') ?? 'your own colour').toLowerCase()}, ${i + 1} of ${props.bricks.length}`
 
 const brickEls = () => [...(rail.value?.querySelectorAll<HTMLElement>('[data-brick]') ?? [])]
 
@@ -162,7 +162,7 @@ function onKeydown(e: KeyboardEvent, index: number) {
           ? 'z-2 scale-108 cursor-grabbing shadow-[0_10px_22px_rgb(0_0_0/0.3),inset_0_0_0_1px_rgb(0_0_0/0.14)]'
           : dragging && 'transition-transform duration-(--dur-quick) ease-standard motion-reduce:transition-none',
       ]"
-      :style="{ width: `${widths[i]}px`, background: palette[b.role], transform: shift(i) }"
+      :style="{ width: `${widths[i]}px`, background: palette[b.code], transform: shift(i) }"
       @pointerdown="onPointerDown($event, i)"
       @click="onClick(b)"
       @keydown="onKeydown($event, i)"

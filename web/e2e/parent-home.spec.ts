@@ -172,33 +172,38 @@ test('a tartan: pick a pattern, then make it your own on the loom', async ({ pag
   const menu = await lookMenu(page, person)
   // A pattern is woven in their colour, and a new colour keeps the pattern.
   await menu.getByRole('radiogroup', { name: `${person.firstName}’s pattern` }).getByRole('radio', { name: 'Reel' }).click()
-  await expect.poll(look).toEqual({ color: 'dancer-1', sett: 'P16 K16' })
+  await expect.poll(look).toEqual({ color: 'dancer-1', sett: 'P16 K16', colors: { P: '#b0102c' } })
   await menu.getByRole('radio', { name: 'Navy' }).click()
-  await expect.poll(look).toEqual({ color: 'dancer-9', sett: 'P16 K16' })
+  await expect.poll(look).toEqual({ color: 'dancer-9', sett: 'P16 K16', colors: { P: '#14306b' } })
 
   // Customise: the loom, saving as you go.
   await menu.getByRole('button', { name: 'Customise' }).click()
   const loom = page.getByRole('dialog', { name: `${person.firstName}’s tartan` })
   await expect(loom.getByRole('img', { name: 'The tartan' })).toBeVisible()
   await loom.getByRole('button', { name: 'Add a stripe' }).click()
-  await expect.poll(look).toEqual({ color: 'dancer-9', sett: 'P16 K16 S6' })
+  // (In the colour that goes with navy: green.)
+  await expect.poll(look).toEqual({ color: 'dancer-9', sett: 'P16 K16 A6', colors: { P: '#14306b', A: '#1d6a48' } })
   // The new stripe is chosen: make it a line in white.
   await loom.getByRole('radiogroup', { name: 'Width', exact: true }).getByRole('radio', { name: 'Line', exact: true }).click()
   await loom.getByRole('radiogroup', { name: 'Colour', exact: true }).getByRole('radio', { name: 'White', exact: true }).click()
-  await expect.poll(look).toEqual({ color: 'dancer-9', sett: 'P16 K16 W2' })
+  await expect.poll(look).toEqual({ color: 'dancer-9', sett: 'P16 K16 W2', colors: { P: '#14306b' } })
   // Arrow keys move the chosen stripe; Undo steps back one change at a time.
   await loom.getByRole('button', { name: /^Line in white, 3 of 3/ }).press('ArrowLeft')
-  await expect.poll(look).toEqual({ color: 'dancer-9', sett: 'P16 W2 K16' })
+  await expect.poll(look).toEqual({ color: 'dancer-9', sett: 'P16 W2 K16', colors: { P: '#14306b' } })
   await loom.getByRole('button', { name: 'Undo', exact: true }).click()
-  await expect.poll(look).toEqual({ color: 'dancer-9', sett: 'P16 K16 W2' })
-  await loom.getByRole('button', { name: 'Done', exact: true }).click()
+  await expect.poll(look).toEqual({ color: 'dancer-9', sett: 'P16 K16 W2', colors: { P: '#14306b' } })
+  // Painting the navy band gold leaves no navy, so their colour follows the cloth.
+  await loom.getByRole('button', { name: /^Band in navy, 1 of 3/ }).click()
+  await loom.getByRole('radiogroup', { name: 'Colour', exact: true }).getByRole('radio', { name: 'Gold', exact: true }).click()
+  await expect.poll(look).toEqual({ color: 'dancer-4', sett: 'A16 K16 W2', colors: { A: '#b5800a' } })
+  await loom.getByRole('button', { name: 'Close', exact: true }).click()
   await expect(loom).toBeHidden()
 
   // Their own now: the menu says so, and Plain goes back to just the colour.
   const again = await lookMenu(page, person)
   await expect(again.getByText('Your own')).toBeVisible()
   await again.getByRole('radio', { name: 'Plain', exact: true }).click()
-  await expect.poll(look).toBe('dancer-9')
+  await expect.poll(look).toBe('dancer-4')
 })
 
 test('the loom from a plain colour: nothing changes until you do, Undo goes back, drags work after a removal', async ({ page }) => {
@@ -217,7 +222,7 @@ test('the loom from a plain colour: nothing changes until you do, Undo goes back
   expect(await look()).toBe('dancer-3')
   await loom.getByRole('button', { name: /^Line in white, 5 of 5/ }).click()
   await loom.getByRole('button', { name: 'Remove' }).click()
-  await expect.poll(look).toEqual({ color: 'dancer-3', sett: 'P40 K16 S16 K2' })
+  await expect.poll(look).toEqual({ color: 'dancer-3', sett: 'P40 K16 S16 K2', colors: { P: '#6a3fa0', S: '#1d6a48' } })
   // With a stripe gone, the rest still drag: the field to the end.
   const field = loom.getByRole('button', { name: /^Field in purple, 1 of 4/ })
   const box = (await field.boundingBox())!
@@ -227,7 +232,7 @@ test('the loom from a plain colour: nothing changes until you do, Undo goes back
   await page.mouse.move(box.x + box.width / 2 + 20, box.y + box.height / 2, { steps: 4 })
   await page.mouse.move(end.x + end.width + 8, end.y + end.height / 2, { steps: 8 })
   await page.mouse.up()
-  await expect.poll(look).toEqual({ color: 'dancer-3', sett: 'K16 S16 K2 P40' })
+  await expect.poll(look).toEqual({ color: 'dancer-3', sett: 'K16 S16 K2 P40', colors: { P: '#6a3fa0', S: '#1d6a48' } })
   // Undo all the way: back to plain purple.
   await loom.getByRole('button', { name: 'Undo', exact: true }).click()
   await loom.getByRole('button', { name: 'Undo', exact: true }).click()
