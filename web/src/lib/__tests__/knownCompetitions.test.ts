@@ -7,6 +7,7 @@ import {
   near,
   sameCompetition,
   sameDayLastYear,
+  sourceName,
   suggestionsFor,
   townOf,
   type HereCompetition,
@@ -96,12 +97,13 @@ describe('the suggestions', () => {
     { id: 'mine-3', name: 'Halloween Open', date: '2025-11-08' },
   ]
 
-  it('groups yours from last year, each source’s, and what’s here, in that country, nearest first', () => {
+  it('offers yours from last year, the known ones whichever list they’re from, and what’s here, in that country, nearest first', () => {
     const s = suggestionsFor(day, canada, { known: list, here, mine })
     expect(s.yours.map((c) => c.id)).toEqual(['mine-1', 'mine-3'])
-    expect(s.known.map((g) => [g.source.heading, g.competitions.map((k) => k.name)])).toEqual([
-      ['From ScotDance Canada’s event list', ['BHDA Fall Festival and Workshop', 'CIHDA Fall Open Competition']],
-      ['From the RSOBHD’s calendar', ['Canada’s Capital City Open Championships']],
+    expect(s.known.map((k) => [k.name, sourceName(k.source)])).toEqual([
+      ['BHDA Fall Festival and Workshop', 'ScotDance Canada'],
+      ['Canada’s Capital City Open Championships', 'RSOBHD'],
+      ['CIHDA Fall Open Competition', 'ScotDance Canada'],
     ])
     // Not the US one, nor one two days on.
     expect(s.here.map((c) => c.id)).toEqual(['here-1', 'here-3'])
@@ -110,8 +112,8 @@ describe('the suggestions', () => {
 
   it('leaves out a known one that’s already here, and any it’s told to', () => {
     const s = suggestionsFor(day, canada, { known: list, here, mine: [], skip: ['sdc:2026-10-23:CIHDA Fall Open Competition', 'here-3'] })
-    expect(s.known.flatMap((g) => g.competitions.map((k) => k.name))).not.toContain('EHDA National Competition')
-    expect(s.known.flatMap((g) => g.competitions.map((k) => k.name))).not.toContain('CIHDA Fall Open Competition')
+    expect(s.known.map((k) => k.name)).not.toContain('EHDA National Competition')
+    expect(s.known.map((k) => k.name)).not.toContain('CIHDA Fall Open Competition')
     expect(s.here.map((c) => c.id)).toEqual(['here-1'])
   })
 

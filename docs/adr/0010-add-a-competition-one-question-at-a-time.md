@@ -42,7 +42,7 @@ it.
 
 - Picking a match on slide 3 jumps straight to slide 9, with everything
   filled in. A returning organiser is done in four taps: country, date,
-  "Same again", Send.
+  last year's, Send.
 - **Description is no longer asked.** Organisers add it in Manage ›
   Details, along with the logo.
 - Slide 3 comes with ADR 0009. The progress counts 9 steps, slide 3
@@ -156,7 +156,10 @@ it.
   button.
   - Anyone who misses it can reply to the received email.
   - Both admin emails show it.
-- **The as-is checkbox stays,** with its current words.
+- **The as-is checkbox stays.** Reworded 2026-10-12, since "it" didn't say
+  what: "I accept ScotDance.app comes as is, with no guarantees", then
+  "It's free and volunteer-run. You're in control of what goes online for
+  your competition, like dancers and results."
 - **Send** checks every answer first. One gone missing (a draft from
   before, say) opens its slide, with its button reading Back to review.
 

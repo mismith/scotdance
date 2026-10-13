@@ -109,23 +109,28 @@ number never changes under someone.
 - **"In that country"** includes one that doesn't say: a competition here
   with no country yet, or a UK one that doesn't say which nation.
 - Looking takes at most 6 seconds. Offline or slow, the slide is passed by.
+- **One list, not a group per source** (Murray, 2026-10-12: grouping was a
+  wall to take in, and nobody minds where it's from as long as it's right).
+  Yours from last year first, then the known ones, nearest day first. Each
+  row is its name, its day and town, and in small print where it's from
+  ("Yours last year", "From ScotDance Canada"), with a chevron.
 
 - **Yours last year:** competitions you manage from about a year earlier
-  (±3 weeks), with "Same again".
-  - It copies the name (with the year moved on), venue, organisations and
-    links.
-  - It doesn't copy the registration number, which changes every year.
-- **From [source]:** the known competitions, under their source's name
-  (e.g. "From ScotDance Canada's event list").
-  - It fills the name, venue, address, town and website (as a link named
-    Website).
+  (±3 weeks). Picking one is "the same again":
+  - It copies the name (with the year moved on), venue and organisations.
+  - It doesn't copy the registration number, which changes every year, or
+    links, which Add a competition doesn't ask for.
+- **Known:** the governing bodies' competitions.
+  - It fills the name, venue, address and town. (The index keeps the
+    website, but Add a competition doesn't ask for links.)
   - It also fills the organisation, when the source's organiser matches one
     here by name.
   - One that's already here (alike in name, venue and town, as the 2026
     prototype matched them) is left out: it's under Already on
     ScotDance.app.
 - **Already on ScotDance.app:** competitions someone has already added that
-  day.
+  day, in a short group of their own under the list, since picking one
+  doesn't fill anything in.
   - Picking one shows "It's already on ScotDance.app", with **Open it** and
     "It's a different one".
   - This stops a duplicate before it's typed. Review's same-name check
@@ -134,8 +139,6 @@ number never changes under someone.
 - **Picking one jumps to All good?** with everything filled in, or first to
   anything still needed (a new account's name, a town the source didn't
   give), whose button then reads Back to review.
-  - What came with a pick and has no question of its own shows on All
-    good? with a × to take it off: its links, and Linked with.
   - Back on slide 3, the pick is marked and the button reads Continue.
     Tapping it again (or another) puts back what was there before it,
     leaving anything typed since, like your name.
@@ -147,7 +150,10 @@ anything matched.
 
 - **One submission is still one competition.** The sent screen asks
   "Another competition that weekend?", and its button names the next day
-  ("Add Sunday, Oct 25").
+  ("Add Sunday, Oct 25"). Under the question: "It starts with this one's
+  details, so it just needs a name. Once both are approved, they're
+  linked, and the details and staff you add to this one show on both." (The
+  name, date and registration number are all that differ, and never sync.)
 - **It opens Submit filled in:**
   - The next day's date.
   - This one's venue, organisations and contact details.
@@ -156,7 +162,8 @@ anything matched.
     days or two competitions, and the organiser says which by adding the
     second or not.
 - **The new submission carries `linkedTo`:** the first submission's id.
-  Its All good? shows "Linked with" the first, with a × for not linking.
+  Its All good? says so under the answers: "Linked with [the first] once
+  both are approved." (Taking it out again is in Manage.)
   Its slide 3 doesn't offer the first back: not the known one picked for
   it, nor the first once it's approved.
 - **Linking happens on whichever approval comes second.** The two can be

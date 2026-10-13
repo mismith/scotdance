@@ -801,9 +801,11 @@ describe('Add a competition', () => {
     expect(slide(w)).toBe('match')
     expect(w.text()).toContain('Is it one of these?')
     expect(w.text()).toContain('Step 3 of 9')
-    expect(w.text()).toContain('From ScotDance Canada’s event list')
+    // Its days and town, and (in small print) which list it's from.
     // (The range as the locale writes it, thin spaces and all.)
-    expect(w.text()).toMatch(/Jun 5\s–\s6 · Spruce Meadows · Calgary, AB/)
+    expect(w.text()).toMatch(/Jun 5\s–\s6 · Calgary, AB/)
+    expect(w.text()).toContain('From ScotDance Canada')
+    expect(w.text()).not.toContain('Spruce Meadows')
     expect(label(w)).toBe('None of these')
     await cont(w)
     expect(slide(w)).toBe('name')
@@ -825,7 +827,7 @@ describe('Add a competition', () => {
     expect(w.text()).not.toContain('Spokane Games')
   })
 
-  it('picking a known one fills in what it knows, its organisation and website too, and goes to what’s left', async () => {
+  it('picking a known one fills in what it knows, its organisation too, and goes to what’s left', async () => {
     db.data = { knownCompetitions: { k1: KNOWN } }
     orgList.value = [{ id: 'o1', name: 'Calgary Highland Dance Association' }]
     const w = await begin()
@@ -838,8 +840,10 @@ describe('Add a competition', () => {
     await field(w).setValue('Morag Ross')
     await cont(w)
     expect(slide(w)).toBe('review')
-    for (const text of ['Calgary Highland Games', 'Calgary Highland Dance Association', 'Spruce Meadows', '18011 Spruce Meadows Way SW', 'Calgary, AB', 'Website: https://example.test/games'])
+    for (const text of ['Calgary Highland Games', 'Calgary Highland Dance Association', 'Spruce Meadows', '18011 Spruce Meadows Way SW', 'Calgary, AB'])
       expect(w.text()).toContain(text)
+    // (Not its website: Add a competition doesn't ask for links.)
+    expect(w.text()).not.toContain('example.test/games')
     await w.find('[role=checkbox]').trigger('click')
     await cont(w)
     const sent = sentValue()
@@ -849,24 +853,9 @@ describe('Add a competition', () => {
       address: '18011 Spruce Meadows Way SW',
       location: 'Calgary, AB',
       country: 'CA',
-      links: { sub1: { name: 'Website', url: 'https://example.test/games' } },
     })
+    expect(sent.competition.links).toBeUndefined()
     expect(sent.organisations).toEqual({ o1: true })
-  })
-
-  it('its links can come off on the last look', async () => {
-    db.data = { knownCompetitions: { k1: KNOWN } }
-    me.displayName = 'Morag Ross'
-    const w = await begin()
-    await toMatches(w)
-    await rowButton(w, 'Calgary Highland Games').trigger('click')
-    await flushPromises()
-    expect(slide(w)).toBe('review')
-    await click(w, 'Remove the links')
-    expect(w.text()).not.toContain('Website:')
-    await w.find('[role=checkbox]').trigger('click')
-    await cont(w)
-    expect(sentValue().competition.links).toBeUndefined()
   })
 
   it('tapping the pick again puts back what was there, but not what’s been typed since', async () => {
@@ -933,7 +922,7 @@ describe('Add a competition', () => {
     expect(w.text()).toContain('Already on ScotDance.app')
   })
 
-  it('yours from last year: Same again, a year on, without its registration number', async () => {
+  it('yours from last year: the same again, a year on, without its registration number or links', async () => {
     me.managedCompetitionIds = ['c1']
     me.displayName = 'Morag Ross'
     db.data = {
@@ -949,16 +938,16 @@ describe('Add a competition', () => {
     expect(w.text()).toContain('Yours last year')
     expect(w.text()).not.toContain('Someone Else’s Games')
     expect(w.text()).toContain('Jun 13, 2026')
-    await rowButton(w, 'Same again').trigger('click')
+    await rowButton(w, 'Calgary Games 2026').trigger('click')
     await flushPromises()
     expect(slide(w)).toBe('review')
     expect(w.text()).toContain('Calgary Games 2027')
-    expect(w.text()).toContain('Program: https://example.test/p.pdf')
     await w.find('[role=checkbox]').trigger('click')
     await cont(w)
     const sent = sentValue()
-    expect(sent.competition).toMatchObject({ ...TELUS, name: 'Calgary Games 2027', date: '2027-06-05', links: { l1: { name: 'Program', url: 'https://example.test/p.pdf' } } })
+    expect(sent.competition).toMatchObject({ ...TELUS, name: 'Calgary Games 2027', date: '2027-06-05' })
     expect(sent.competition.sobhd).toBeNull()
+    expect(sent.competition.links).toBeUndefined()
     expect(sent.organisations).toEqual({ o1: true })
   })
 
@@ -1007,7 +996,7 @@ describe('Add a competition', () => {
     expect((field(w).element as HTMLInputElement).value).toBe('Morag Ross')
     await cont(w)
     expect(slide(w)).toBe('review')
-    expect(w.text()).toContain('Linked with')
+    expect(w.text()).toContain('Linked with Calgary Highland Games once both are approved.')
     await w.find('[role=checkbox]').trigger('click')
     await cont(w)
     const second = write.mock.calls[1][0]['competitions:submissions/sub1'] as Record<string, Record<string, unknown>>
@@ -1015,23 +1004,12 @@ describe('Add a competition', () => {
     expect(second.competition).toMatchObject({ name: 'Calgary Highland Games Day 2', date: '2027-06-06', venue: 'Telus Convention Centre' })
   })
 
-  it('a link can come off before it’s sent, and Add another isn’t linked', async () => {
+  it('Add another isn’t linked', async () => {
     me.displayName = 'Morag Ross'
     const w = await begin()
     await toReview(w)
     await w.find('[role=checkbox]').trigger('click')
     await cont(w)
-    await click(w, 'Add Sunday, Jun 6')
-    await cont(w)
-    await field(w).setValue('Calgary Highland Games Day 2')
-    for (let i = 0; i < 5; i++) await cont(w)
-    expect(slide(w)).toBe('review')
-    await click(w, 'Don’t link them')
-    expect(w.text()).not.toContain('Linked with')
-    await w.find('[role=checkbox]').trigger('click')
-    await cont(w)
-    expect((write.mock.calls[1][0]['competitions:submissions/sub1'] as Record<string, unknown>).linkedTo).toBeUndefined()
-
     await click(w, 'Add another')
     await pickDay(w, 12)
     await cont(w)

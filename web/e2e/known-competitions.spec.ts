@@ -75,7 +75,7 @@ async function sendIt(page: Page, you = 'Morag Test') {
   await expect(page.getByRole('heading', { name: 'Sent' })).toBeVisible()
 }
 
-test('a known competition fills in what it knows, its organisation too, and tapping it again puts things back', async ({ page }) => {
+test('a known competition fills in what it knows (its organisation too, not its website), and tapping it again puts things back', async ({ page }) => {
   test.setTimeout(120_000)
   const email = `${uid('known')}@example.test`
   await ensureUser(email)
@@ -108,7 +108,8 @@ test('a known competition fills in what it knows, its organisation too, and tapp
     await expect(question(page, 3)).toBeVisible()
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Is it one of these?')
     await expect(action(page)).toHaveText('None of these')
-    await expect(main(page).getByRole('heading', { name: 'From ScotDance Canada’s event list' })).toBeVisible()
+    // Which list it's from, in small print.
+    await expect(main(page).getByRole('button', { name: new RegExp(name) })).toContainText('From ScotDance Canada')
     await expect(main(page).getByText(`E2E Elsewhere ${t}`)).toHaveCount(0)
 
     // Already here: it says so, with a way to it.
@@ -127,9 +128,10 @@ test('a known competition fills in what it knows, its organisation too, and tapp
     await main(page).getByRole('textbox').fill('Morag Test')
     await action(page).click()
     await expect(question(page, 9)).toBeVisible()
-    for (const text of [name, `E2E Highland Dance Association ${t}`, 'Bearspaw Christian School', '15001 69 Street NW', 'Calgary, AB', 'Website: https://example.test/fall']) {
+    for (const text of [name, `E2E Highland Dance Association ${t}`, 'Bearspaw Christian School', '15001 69 Street NW', 'Calgary, AB']) {
       await expect(main(page).locator('ul').getByText(text, { exact: true }).first()).toBeVisible()
     }
+    await expect(main(page).getByText('example.test/fall')).toHaveCount(0)
 
     // Back to it: tapping it again puts back what was there before (not your name).
     for (const step of [8, 7, 6, 5, 4, 3]) {
@@ -160,7 +162,7 @@ test('a known competition fills in what it knows, its organisation too, and tapp
       location: 'Calgary, AB',
       country: 'CA',
     })
-    expect(Object.values(sent.competition.links as object)).toEqual([{ name: 'Website', url: 'https://example.test/fall' }])
+    expect(sent.competition.links).toBeUndefined()
     expect(sent.organisations).toEqual({ [orgId]: true })
     expect(sent.contact).toMatchObject({ name: 'Morag Test', email })
   } finally {
@@ -172,7 +174,7 @@ test('a known competition fills in what it knows, its organisation too, and tapp
   }
 })
 
-test('yours from last year: Same again, a year on, without its registration number', async ({ page }) => {
+test('yours from last year: the same again, a year on, without its registration number or links', async ({ page }) => {
   test.setTimeout(120_000)
   const email = `${uid('again')}@example.test`
   const me = await ensureUser(email)
@@ -204,15 +206,16 @@ test('yours from last year: Same again, a year on, without its registration numb
   try {
     await toDay(page, email, day)
     await expect(question(page, 3)).toBeVisible()
-    await expect(main(page).getByRole('heading', { name: 'Yours last year' })).toBeVisible()
-    await main(page).getByRole('button', { name: new RegExp(`E2E Spring Fling ${year} ${t}`) }).click()
+    const row = main(page).getByRole('button', { name: new RegExp(`E2E Spring Fling ${year} ${t}`) })
+    await expect(row).toContainText('Yours last year')
+    await row.click()
     await expect(question(page, 8).or(question(page, 9))).toBeVisible()
     if (await question(page, 8).isVisible()) {
       await main(page).getByRole('textbox').fill('Morag Test')
       await action(page).click()
     }
     await expect(question(page, 9)).toBeVisible()
-    for (const text of [moved, 'Glenmore Hall', 'Calgary, AB', `E2E Glenmore Dancers ${t}`, 'Program: https://example.test/program.pdf']) {
+    for (const text of [moved, 'Glenmore Hall', 'Calgary, AB', `E2E Glenmore Dancers ${t}`]) {
       await expect(main(page).locator('ul').getByText(text, { exact: true }).first()).toBeVisible()
     }
     await expect(main(page).getByRole('button', { name: /^Registration/ })).toContainText('Not added')
@@ -230,9 +233,9 @@ test('yours from last year: Same again, a year on, without its registration numb
       country: 'CA',
       region: 'AB',
       locality: 'Calgary',
-      links: { l1: { name: 'Program', url: 'https://example.test/program.pdf' } },
     })
     expect(sent.competition.sobhd).toBeUndefined()
+    expect(sent.competition.links).toBeUndefined()
     expect(sent.organisations).toEqual({ [orgId]: true })
   } finally {
     await removeSubmissionsNamed(moved)
@@ -298,7 +301,7 @@ test('another competition that weekend: the next day, as much carried over, and 
     await expect(main(page).getByRole('textbox')).toHaveValue('Morag Test')
     await action(page).click()
     await expect(question(page, 9)).toBeVisible()
-    await expect(main(page).locator('ul').getByText(sat, { exact: true })).toBeVisible()
+    await expect(main(page).getByText(`Linked with ${sat} once both are approved.`)).toBeVisible()
     await sendIt(page)
 
     // Both approved as they arrived, and linked: Saturday's the main one.

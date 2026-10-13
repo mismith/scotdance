@@ -8,11 +8,12 @@ import type { CountryChoice } from '@/lib/submitCountries'
 // a year before. A person picks; nothing is matched by itself.
 
 export type KnownSource = 'sdc' | 'scotdance-usa' | 'rsobhd'
-export const KNOWN_SOURCES: Array<{ key: KnownSource; name: string; heading: string }> = [
-  { key: 'sdc', name: 'ScotDance Canada', heading: 'From ScotDance Canada’s event list' },
-  { key: 'scotdance-usa', name: 'ScotDance USA', heading: 'From ScotDance USA’s calendar' },
-  { key: 'rsobhd', name: 'RSOBHD', heading: 'From the RSOBHD’s calendar' },
+export const KNOWN_SOURCES: Array<{ key: KnownSource; name: string }> = [
+  { key: 'sdc', name: 'ScotDance Canada' },
+  { key: 'scotdance-usa', name: 'ScotDance USA' },
+  { key: 'rsobhd', name: 'RSOBHD' },
 ]
+export const sourceName = (key: string) => KNOWN_SOURCES.find((s) => s.key === key)?.name ?? key
 
 /** A row of /knownCompetitions, with its key. */
 export interface KnownCompetition {
@@ -43,7 +44,6 @@ export interface HereCompetition {
   country?: string
   region?: string
   locality?: string
-  links?: Record<string, { name?: string; url?: string; _order?: number }>
   organisations?: Record<string, boolean>
 }
 
@@ -109,15 +109,17 @@ export function sameCompetition(known: KnownCompetition, here: HereCompetition) 
 // The groups ------------------------------------------------------------------------
 
 export interface Suggestions {
+  /** Yours from about a year before, then the known ones: what a pick fills in from. */
   yours: HereCompetition[]
-  known: Array<{ source: (typeof KNOWN_SOURCES)[number]; competitions: KnownCompetition[] }>
+  known: KnownCompetition[]
+  /** Already here: picking one says so, rather than filling anything in. */
   here: HereCompetition[]
 }
 
 /**
- * The slide's groups for a day and country: yours from about a year before
- * (±3 weeks, anywhere), the known ones that aren't here already, and what's
- * here already. Nearest day first.
+ * What the slide offers for a day and country: yours from about a year
+ * before (±3 weeks, anywhere), the known ones that aren't here already
+ * (whichever list they're from), and what's here already. Nearest day first.
  */
 export function suggestionsFor(
   day: string,
@@ -142,10 +144,7 @@ export function suggestionsFor(
     .sort(closest((c) => dayOf(c.date), lastYear))
   return {
     yours,
-    known: KNOWN_SOURCES.map((source) => ({
-      source,
-      competitions: listed.filter((k) => k.source === source.key).sort(closest((k) => k.date, day)),
-    })).filter((g) => g.competitions.length),
+    known: listed.sort(closest((k) => k.date, day)),
     here: there.sort(closest((c) => dayOf(c.date), day)),
   }
 }
