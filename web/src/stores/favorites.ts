@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { computed, ref, watch, type Ref } from 'vue'
 import { get, ref as dbRef, set, update } from 'firebase/database'
 import { database } from '@/firebase'
-import { lookupEntityId } from '@/lib/entityIndex'
+import { lookupEntityIdOrThrow } from '@/lib/entityIndex'
 import { onValueSaved } from '@/lib/offline'
 import { useAuthStore } from './auth'
 
@@ -25,11 +25,11 @@ export type FavoriteType =
 // (v3, still on many phones) keyed dancer favourites by per-competition entry
 // and still reads them, so those are never deleted: each one with a name is
 // copied once to the person it belongs to (see copyOldDancerFavourites), and
-// v4 skips the old keys.
+// v4 skips the old keys, including those whose name no longer finds anyone.
 
 type StoredFavorites = Partial<Record<FavoriteType, Record<string, FavoriteValue>>> & {
-  /** Old per-competition dancer key → the person it was copied to. */
-  oldDancers?: Record<string, string>
+  /** Old per-competition dancer key → the person it was copied to, or `true` when no one goes by its name now. */
+  oldDancers?: Record<string, string | true>
 }
 
 export const useFavoritesStore = defineStore('favorites', () => {
@@ -41,11 +41,12 @@ export const useFavoritesStore = defineStore('favorites', () => {
   const pipers = ref<Record<string, FavoriteValue>>({})
   const venues = ref<Record<string, FavoriteValue>>({})
   const organisations = ref<Record<string, FavoriteValue>>({})
-  const copiedOld = ref<Record<string, string>>({})
+  const copiedOld = ref<Record<string, string | true>>({})
 
   // The people you follow. Old per-competition keys are left out: a `true`
   // one has no name to find its person by (v4 never stores `true` for a
-  // dancer), and a named one is followed under the person's id once copied.
+  // dancer), and a named one is followed under the person's id once copied,
+  // or dropped when no one goes by its name now.
   const dancers = computed<Record<string, FavoriteValue>>(() =>
     Object.fromEntries(
       Object.entries(allDancers.value).filter(([id, v]) => typeof v === 'string' && !copiedOld.value[id]),
@@ -163,12 +164,15 @@ export const useFavoritesStore = defineStore('favorites', () => {
  * value; the name finds the person (/dancers:index). Each is copied once and
  * noted under `oldDancers`, so unfollowing in v4 sticks, and nothing is
  * deleted: the old app still reads its keys. A key that's already a person
- * matches its own name and is left alone.
+ * matches its own name and is left alone. A name no one goes by now (say a
+ * surname typed with the province after it, since corrected) leads nowhere,
+ * so it's noted as `true` and v4 drops it rather than listing a dancer it
+ * can't open.
  */
 export async function copyOldDancerFavourites(uid: string, stored: StoredFavorites): Promise<void> {
   const dancers = stored.dancers ?? {}
   const done = stored.oldDancers ?? {}
-  const updates: Record<string, string> = {}
+  const updates: Record<string, string | true> = {}
   for (const [key, value] of Object.entries(dancers)) {
     if (typeof value !== 'string' || done[key]) continue
     // Already a person (a v4 follow, even of a profile that shares its name
@@ -176,10 +180,11 @@ export async function copyOldDancerFavourites(uid: string, stored: StoredFavorit
     // (If that can't be checked right now, leave it for next time.)
     const isPerson = await get(dbRef(database, `${NAMESPACE}/dancers/${key}/name`)).then((snap) => snap.exists(), () => true)
     if (isPerson) continue
-    const personId = await lookupEntityId('dancers', value)
-    if (!personId || personId === key) continue
-    if (!dancers[personId]) updates[`dancers/${personId}`] = value
-    updates[`oldDancers/${key}`] = personId
+    // (If the index can't be read right now, leave it for next time.)
+    const personId = await lookupEntityIdOrThrow('dancers', value).catch(() => undefined)
+    if (personId === undefined || personId === key) continue
+    if (personId && !dancers[personId]) updates[`dancers/${personId}`] = value
+    updates[`oldDancers/${key}`] = personId || true
   }
   if (!Object.keys(updates).length) return
   await update(dbRef(database, `${NAMESPACE}/users:favorites/${uid}`), updates)

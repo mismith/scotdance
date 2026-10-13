@@ -26,6 +26,17 @@ export async function lookupEntityId(
   namespace: string,
   name: string,
 ): Promise<string | null> {
+  return lookupEntityIdOrThrow(namespace, name).catch(() => null)
+}
+
+/**
+ * Like lookupEntityId, but throws when the index can't be read (offline or a
+ * hiccup), so null always means no one goes by that name.
+ */
+export async function lookupEntityIdOrThrow(
+  namespace: string,
+  name: string,
+): Promise<string | null> {
   const key = normalizeEntityName(name)
   if (!key) return null
   return readIndex(namespace, key)
@@ -42,7 +53,7 @@ export async function lookupVenueId(
   if (!v) return null
   const l = normalizeEntityName(locality || '')
   const key = `${v}|${l || 'none'}`
-  return readIndex('venues', key)
+  return readIndex('venues', key).catch(() => null)
 }
 
 async function readIndex(namespace: string, key: string): Promise<string | null> {
@@ -59,10 +70,10 @@ async function readIndex(namespace: string, key: string): Promise<string | null>
           if (typeof v === 'string' && v) return v
           if (v && typeof v === 'object' && typeof v.id === 'string') return v.id
           return null
-        } catch {
+        } catch (err) {
           // Offline or a hiccup: try again next time rather than never.
           cache.delete(ck)
-          return null
+          throw err
         }
       })(),
     )

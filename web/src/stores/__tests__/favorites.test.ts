@@ -12,6 +12,7 @@ const writes: Array<{ path: string; value: unknown }> = []
 const index: Record<string, string> = {}
 /** Profiles that exist but aren't what their name looks up to (e.g. a duplicate). */
 const extraPeople: string[] = []
+let indexDown = false
 const auth = reactive<{ uid: string | null }>({ uid: null })
 let emit: ((val: unknown) => void) | null = null
 let listening: string | null = null
@@ -37,7 +38,10 @@ vi.mock('@/lib/offline', () => ({
   },
 }))
 vi.mock('@/lib/entityIndex', () => ({
-  lookupEntityId: async (_ns: string, name: string) => index[name.toLowerCase()] ?? null,
+  lookupEntityIdOrThrow: async (_ns: string, name: string) => {
+    if (indexDown) throw new Error('offline')
+    return index[name.toLowerCase()] ?? null
+  },
 }))
 vi.mock('@/stores/auth', () => ({ useAuthStore: () => auth }))
 
@@ -51,6 +55,7 @@ beforeEach(() => {
   index['isla ross'] = 'personIsla'
   index['ava grant'] = 'personAva'
   extraPeople.length = 0
+  indexDown = false
   auth.uid = null
   setActivePinia(createPinia())
 })
@@ -97,8 +102,22 @@ describe('copyOldDancerFavourites', () => {
     expect(writes[0].value).toEqual({ 'oldDancers/old2018': 'personIsla', 'oldDancers/old2019': 'personIsla' })
   })
 
-  it('leaves names it can’t find alone', async () => {
-    await copyOldDancerFavourites('u1', { dancers: { oldGone: 'Someone Renamed' } })
+  it('drops a name no one goes by now, deleting nothing', async () => {
+    // Followed three times in the old app under a name since corrected.
+    await copyOldDancerFavourites('u1', {
+      dancers: { oldGone1: 'Isla Ross AB', oldGone2: 'Isla Ross AB', oldIsla: 'Isla Ross' },
+    })
+    expect(writes[0].value).toEqual({
+      'dancers/personIsla': 'Isla Ross',
+      'oldDancers/oldGone1': true,
+      'oldDancers/oldGone2': true,
+      'oldDancers/oldIsla': 'personIsla',
+    })
+  })
+
+  it('leaves names alone while it can’t look them up', async () => {
+    indexDown = true
+    await copyOldDancerFavourites('u1', { dancers: { oldIsla: 'Isla Ross' } })
     expect(writes).toEqual([])
   })
 })
@@ -110,8 +129,8 @@ describe('useFavoritesStore', () => {
     await nextTick()
     expect(listening).toBe(`${NS}/users:favorites/u1`)
     emit!({
-      dancers: { oldIsla: 'Isla Ross', oldTrue: true, personIsla: 'Isla Ross', personAva: 'Ava Grant' },
-      oldDancers: { oldIsla: 'personIsla' },
+      dancers: { oldIsla: 'Isla Ross', oldGone: 'Isla Ross AB', oldTrue: true, personIsla: 'Isla Ross', personAva: 'Ava Grant' },
+      oldDancers: { oldIsla: 'personIsla', oldGone: true },
       competitions: { c1: true },
     })
     expect(Object.keys(fav.dancers)).toEqual(['personIsla', 'personAva'])
