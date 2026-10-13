@@ -272,7 +272,14 @@ async function flag() {
   error.value =
     at.value === 'venue' && venueStep.value?.mode === 'search' ? 'Search for the venue, or add just the town.' : ((at.value && MISSING[at.value]) ?? null)
   await nextTick()
-  document.querySelector<HTMLElement>('[data-slide] [aria-invalid="true"]')?.focus()
+  // Into the middle of the screen, where it can't hide under the bar or the
+  // button pinned at the foot (on a phone, Send covers the tick box), then
+  // focused. Smoothly, unless motion's reduced.
+  const missing = slideEl.value?.querySelector<HTMLElement>('[aria-invalid="true"]')
+  if (!missing) return
+  const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  missing.scrollIntoView?.({ behavior: still ? 'auto' : 'smooth', block: 'center' })
+  missing.focus({ preventScroll: true })
 }
 
 // Enter moves on from anywhere on a slide, as from a text box: the question,

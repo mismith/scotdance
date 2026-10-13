@@ -177,6 +177,8 @@ test('a question at a time, checked as it goes, and sent once however fast it’
     await expect(action(page)).toHaveText('Send')
     await action(page).click()
     await expect(main(page).getByText('Tick this to send it.')).toBeVisible()
+    // Brought into view: on a phone it's below the fold, under Send.
+    await expect(page.getByRole('checkbox', { name: /no guarantees/ })).toBeInViewport()
     expect(await submissionsNamed(name)).toEqual([])
 
     await page.getByRole('checkbox', { name: /no guarantees/ }).check()

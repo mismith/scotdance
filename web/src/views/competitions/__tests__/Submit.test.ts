@@ -499,12 +499,18 @@ describe('Add a competition', () => {
     )
   })
 
-  it('asks for the tick before sending, and a double tap sends it once', async () => {
+  it('asks for the tick before sending, bringing it into view, and a double tap sends it once', async () => {
+    const scrolled = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => {})
     const w = await begin()
     await toReview(w)
     await cont(w)
     expect(w.text()).toContain('Tick this to send it.')
     expect(write).not.toHaveBeenCalled()
+    // (Below the fold on a phone, under the pinned Send.)
+    const box = w.find('[data-slide] [role=checkbox]').element
+    expect(scrolled.mock.contexts.at(-1)).toBe(box)
+    expect(scrolled).toHaveBeenLastCalledWith({ behavior: 'smooth', block: 'center' })
+    scrolled.mockRestore()
 
     await w.find('[data-slide] [role=checkbox]').trigger('click')
     const form = w.find('main form')
