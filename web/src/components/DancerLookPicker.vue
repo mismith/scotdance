@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { Check, SlidersHorizontal } from '@lucide/vue'
 import { useFollowing } from '@/composables/useFollowing'
+import { toast } from '@/lib/admin/feedback'
 import { selectionHaptic } from '@/lib/haptics'
 import { PRESETS, clothImage, presetOf, recolor, weavePreset } from '@/lib/tartan'
 import {
@@ -53,10 +54,16 @@ const patterns = computed(() =>
 )
 const ownBg = computed(() => (tartan.value ? (clothImage(tartan.value, 28) ?? plain.value) : null))
 
+// (A write the database refuses would otherwise just snap back; offline, it
+// waits and saves later.)
+function save(look: Parameters<typeof colors.choose>[1]) {
+  colors.choose(props.dancerId, look).catch(() => toast('That didn’t save. Try again in a moment.', { tone: 'error' }))
+}
+
 function pickColor(c: DancerColor) {
   if (c === current.value) return
   selectionHaptic()
-  colors.choose(props.dancerId, tartan.value ? recolor(tartan.value, c) : c)
+  save(tartan.value ? recolor(tartan.value, c) : c)
 }
 
 function pickCustom(e: Event) {
@@ -69,7 +76,7 @@ function pickPattern(sett: string | null) {
   const already = sett ? preset.value?.sett === sett : !tartan.value
   if (!c || already) return
   selectionHaptic()
-  colors.choose(props.dancerId, sett ? weavePreset(sett, c) : c)
+  save(sett ? weavePreset(sett, c) : c)
 }
 </script>
 
