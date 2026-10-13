@@ -114,7 +114,8 @@ later; the links don't change. From the main checkout, on `next`:
    code twice, and Crisp tells the builds apart by version.
 2. `npm run build` at the root.
 3. What's new goes in `android/fastlane/metadata/android/en-CA/changelogs/default.txt`
-   (both stores read it; Play takes up to 500 characters). Commit.
+   (both stores read it; Play takes up to 500 characters): what's changed
+   is `git log v<last beta>..`. Commit, and tag the bump `v<version>`.
 4. iPhone: `fastlane beta` in `ios/App`. It archives, uploads and sends the
    build to Early Access with the notes. The keys come from `~/.zshrc`'s
    `APP_STORE_CONNECT_API_KEY_*`; Xcode's account signs it, since the key
