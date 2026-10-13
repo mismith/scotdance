@@ -302,7 +302,7 @@ describe('Add a competition', () => {
   it('an optional question says Skip until it’s answered, then Continue', async () => {
     const w = await begin()
     await toReview(w)
-    await change(w, 'Registration')
+    await change(w, 'Registration number')
     expect(slide(w)).toBe('registration')
     expect(label(w)).toBe('Back to review')
     w.unmount()
@@ -742,14 +742,14 @@ describe('Add a competition', () => {
   it('shows a registration number as it’ll be saved, and checks once on one it can’t read', async () => {
     const w = await begin()
     await toReview(w)
-    await change(w, 'Registration')
+    await change(w, 'Registration number')
     await field(w).setValue('c ab co 27 1234')
     expect(w.text()).toContain('Registered with ScotDance Canada: C-AB-CO-27-1234')
     await cont(w)
     expect(slide(w)).toBe('review')
     expect(w.text()).toContain('C-AB-CO-27-1234')
 
-    await change(w, 'Registration')
+    await change(w, 'Registration number')
     await field(w).setValue('AB-1234-X')
     await cont(w)
     expect(slide(w)).toBe('registration')
@@ -804,7 +804,7 @@ describe('Add a competition', () => {
     // Its days and town, and (in small print) which list it's from.
     // (The range as the locale writes it, thin spaces and all.)
     expect(w.text()).toMatch(/Jun 5\s–\s6 · Calgary, AB/)
-    expect(w.text()).toContain('From ScotDance Canada')
+    expect(w.text()).toContain('ScotDance Canada')
     expect(w.text()).not.toContain('Spruce Meadows')
     expect(label(w)).toBe('None of these')
     await cont(w)
@@ -935,10 +935,11 @@ describe('Add a competition', () => {
     orgList.value = [{ id: 'o1', name: 'Calgary Highland Dance Association' }]
     const w = await begin()
     await toMatches(w)
-    expect(w.text()).toContain('Yours last year')
+    // As it'd be this year: what the question asks.
+    expect(rowButton(w, 'Calgary Games 2027').text()).toMatch(/Jun 5 · Calgary, AB\s*Same as last year/)
+    expect(w.text()).not.toContain('Calgary Games 2026')
     expect(w.text()).not.toContain('Someone Else’s Games')
-    expect(w.text()).toContain('Jun 13, 2026')
-    await rowButton(w, 'Calgary Games 2026').trigger('click')
+    await rowButton(w, 'Calgary Games 2027').trigger('click')
     await flushPromises()
     expect(slide(w)).toBe('review')
     expect(w.text()).toContain('Calgary Games 2027')
@@ -996,12 +997,45 @@ describe('Add a competition', () => {
     expect((field(w).element as HTMLInputElement).value).toBe('Morag Ross')
     await cont(w)
     expect(slide(w)).toBe('review')
-    expect(w.text()).toContain('Linked with Calgary Highland Games once both are approved.')
+    expect(w.find('[data-slide] li:last-child button').text()).toContain('Linked withCalgary Highland Games')
     await w.find('[role=checkbox]').trigger('click')
     await cont(w)
     const second = write.mock.calls[1][0]['competitions:submissions/sub1'] as Record<string, Record<string, unknown>>
     expect(second.linkedTo).toBe('sub1')
     expect(second.competition).toMatchObject({ name: 'Calgary Highland Games Day 2', date: '2027-06-06', venue: 'Telus Convention Centre' })
+  })
+
+  it('the link is a row on All good?: tapping it says what it does, and unlinks or links again', async () => {
+    me.displayName = 'Morag Ross'
+    const w = await begin()
+    await toReview(w)
+    await w.find('[role=checkbox]').trigger('click')
+    await cont(w)
+    await click(w, 'Add Sunday, Jun 6')
+    await cont(w)
+    await field(w).setValue('Calgary Highland Games Day 2')
+    for (let i = 0; i < 5; i++) await cont(w)
+    expect(slide(w)).toBe('review')
+    const linkedRow = () => w.find('[data-slide] li:last-child button')
+    // Kept, when they'd rather it was.
+    await linkedRow().trigger('click')
+    await flushPromises()
+    expect(confirmAnswer.asked.at(-1)).toMatchObject({ title: 'Unlink it from Calgary Highland Games?', confirmLabel: 'Unlink', cancelLabel: 'Keep linked' })
+    expect(linkedRow().text()).toContain('Calgary Highland Games')
+    confirmAnswer.value = true
+    await linkedRow().trigger('click')
+    await flushPromises()
+    expect(linkedRow().text()).toContain('Not linked')
+    await linkedRow().trigger('click')
+    await flushPromises()
+    expect(confirmAnswer.asked.at(-1)).toMatchObject({ title: 'Link it with Calgary Highland Games?', confirmLabel: 'Link them' })
+    expect(linkedRow().text()).toContain('Calgary Highland Games')
+    confirmAnswer.value = true
+    await linkedRow().trigger('click')
+    await flushPromises()
+    await w.find('[role=checkbox]').trigger('click')
+    await cont(w)
+    expect((write.mock.calls[1][0]['competitions:submissions/sub1'] as Record<string, unknown>).linkedTo).toBeUndefined()
   })
 
   it('Add another isn’t linked', async () => {

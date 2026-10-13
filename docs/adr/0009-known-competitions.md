@@ -112,11 +112,14 @@ number never changes under someone.
 - **One list, not a group per source** (Murray, 2026-10-12: grouping was a
   wall to take in, and nobody minds where it's from as long as it's right).
   Yours from last year first, then the known ones, nearest day first. Each
-  row is its name, its day and town, and in small print where it's from
-  ("Yours last year", "From ScotDance Canada"), with a chevron.
+  row is its name, then its day and town with a small coloured tag for
+  where it's from ("ScotDance Canada"; green "Same as last year" for
+  yours), and a chevron.
 
 - **Yours last year:** competitions you manage from about a year earlier
-  (±3 weeks). Picking one is "the same again":
+  (±3 weeks), shown as they'd be this year: the name with its year moved
+  on, on the day chosen. (Last year's own date doesn't answer "is it one of
+  these?") Picking one is the same again:
   - It copies the name (with the year moved on), venue and organisations.
   - It doesn't copy the registration number, which changes every year, or
     links, which Add a competition doesn't ask for.
@@ -162,8 +165,11 @@ anything matched.
     days or two competitions, and the organiser says which by adding the
     second or not.
 - **The new submission carries `linkedTo`:** the first submission's id.
-  Its All good? says so under the answers: "Linked with [the first] once
-  both are approved." (Taking it out again is in Manage.)
+  Its All good? has a "Linked with" row like the others. Tapping it asks
+  "Unlink it from [the first]?", saying what linking does for them ("the
+  details and staff you add to that one show on this one too, so you set
+  them up once"); unlinked, it reads "Not linked", and tapping asks to link
+  them again.
   Its slide 3 doesn't offer the first back: not the known one picked for
   it, nor the first once it's approved.
 - **Linking happens on whichever approval comes second.** The two can be

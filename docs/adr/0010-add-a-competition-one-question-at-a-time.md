@@ -148,7 +148,9 @@ it.
 
 ### 4. All good?
 
-- **"Tap anything to change it."** Each answer is a row with its label,
+- **"Tap anything to change it."** (The registration number's row says
+  "Registration number": "Registration" alone read like entry dates.)
+  Each answer is a row with its label,
   the answer (wrapped, never cut short) and a chevron. "Not added" stands
   in for an optional one skipped. Your name's row shows your email too.
 - **Message:** a plain field under the answers, "Anything to ask or

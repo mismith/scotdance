@@ -108,8 +108,8 @@ test('a known competition fills in what it knows (its organisation too, not its 
     await expect(question(page, 3)).toBeVisible()
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Is it one of these?')
     await expect(action(page)).toHaveText('None of these')
-    // Which list it's from, in small print.
-    await expect(main(page).getByRole('button', { name: new RegExp(name) })).toContainText('From ScotDance Canada')
+    // Marked with the list it's from.
+    await expect(main(page).getByRole('button', { name: new RegExp(name) })).toContainText('ScotDance Canada')
     await expect(main(page).getByText(`E2E Elsewhere ${t}`)).toHaveCount(0)
 
     // Already here: it says so, with a way to it.
@@ -206,8 +206,10 @@ test('yours from last year: the same again, a year on, without its registration 
   try {
     await toDay(page, email, day)
     await expect(question(page, 3)).toBeVisible()
-    const row = main(page).getByRole('button', { name: new RegExp(`E2E Spring Fling ${year} ${t}`) })
-    await expect(row).toContainText('Yours last year')
+    // As it'd be this year, which is what the question asks.
+    const row = main(page).getByRole('button', { name: new RegExp(moved) })
+    await expect(row).toContainText('Same as last year')
+    await expect(main(page).getByText(`E2E Spring Fling ${year} ${t}`)).toHaveCount(0)
     await row.click()
     await expect(question(page, 8).or(question(page, 9))).toBeVisible()
     if (await question(page, 8).isVisible()) {
@@ -301,7 +303,7 @@ test('another competition that weekend: the next day, as much carried over, and 
     await expect(main(page).getByRole('textbox')).toHaveValue('Morag Test')
     await action(page).click()
     await expect(question(page, 9)).toBeVisible()
-    await expect(main(page).getByText(`Linked with ${sat} once both are approved.`)).toBeVisible()
+    await expect(main(page).getByRole('button', { name: /^Linked with/ })).toContainText(sat)
     await sendIt(page)
 
     // Both approved as they arrived, and linked: Saturday's the main one.

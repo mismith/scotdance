@@ -3,7 +3,7 @@ import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { endAt, get, orderByChild, query, startAt } from 'firebase/database'
 import { useIntersectionObserver } from '@vueuse/core'
-import { Check, ChevronLeft, ChevronRight, Link2, Plus, Send } from '@lucide/vue'
+import { Check, ChevronLeft, ChevronRight, Plus, Send } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import Button from '@/components/ui/Button.vue'
 import Checkbox from '@/components/ui/Checkbox.vue'
@@ -79,8 +79,9 @@ const form = reactive(blank())
 // Where the venue search put it, when the venue was picked from it.
 const place = ref<VenuePlace | null>(null)
 // The one added just before it, that weekend: the two are linked once both
-// are approved (ADR 0009).
+// are approved (ADR 0009), unless they're unlinked on All good?.
 const linkedTo = ref<{ id: string; name: string; date: string } | null>(null)
+const linking = ref(true)
 // The country Competitions is showing (or the phone's), to start on.
 const startingCountry = () =>
   defaultCountry(filter.country.value ?? guessUserCountry(), filter.region.value)
@@ -444,8 +445,7 @@ function pickKnown(k: KnownCompetition) {
 // changes every year.
 function sameAgain(c: HereCompetition) {
   pick(c.id, () => {
-    const years = Number(form.date.slice(0, 4)) - Number(dayOf(c.date)?.slice(0, 4) ?? form.date.slice(0, 4))
-    Object.assign(form, { name: movedOn(c.name ?? '', years), venue: c.venue ?? '', address: c.address ?? '', location: c.location ?? '' })
+    Object.assign(form, { name: thisYears(c), venue: c.venue ?? '', address: c.address ?? '', location: c.location ?? '' })
     place.value =
       typeof c.lat === 'number' && typeof c.lng === 'number'
         ? { lat: c.lat, lng: c.lng, country: c.country ?? null, region: c.region ?? null, locality: c.locality ?? null }
@@ -466,10 +466,12 @@ async function alreadyHere(c: HereCompetition) {
   if (open) router.push({ name: 'competition.info', params: { competitionId: c.id } })
 }
 // Under each one's name, just enough to tell which: its day (or days) and
-// town. (Last year's say which year.)
+// town.
 const knownLine = (k: KnownCompetition) => [formatDateSpan([k.date, k.end]), townOf(k)].filter(Boolean).join(' · ')
-const hereLine = (c: HereCompetition, year = false) =>
-  [year ? formatShortDate(dayOf(c.date)) : formatDateSpan([dayOf(c.date)]), c.location].filter(Boolean).join(' · ')
+const hereLine = (c: HereCompetition) => [formatDateSpan([dayOf(c.date)]), c.location].filter(Boolean).join(' · ')
+// Last year's, as it'd be on the day chosen: what "Is it one of these?" asks.
+const yearsOn = (c: HereCompetition) => Number(form.date.slice(0, 4)) - Number(dayOf(c.date)?.slice(0, 4) ?? form.date.slice(0, 4))
+const thisYears = (c: HereCompetition) => movedOn(c.name ?? '', yearsOn(c))
 
 function change(slide: Slide) {
   returning.value = true
@@ -536,7 +538,7 @@ async function send() {
           ),
         }),
         // Linked with it once both are approved (functions/src/submissions.ts).
-        ...(linkedTo.value && { linkedTo: linkedTo.value.id }),
+        ...(linkedTo.value && linking.value && { linkedTo: linkedTo.value.id }),
         submitted: new Date().toISOString(),
         // Emails about it are v4's, linking back here (functions/src/utility/emailModel.ts).
         origin: window.location.origin,
@@ -581,6 +583,7 @@ function sameWeekend() {
   another()
   form.date = nextDay.value
   linkedTo.value = { id: first.id, name: first.name, date: first.date }
+  linking.value = true
   pickedBefore.value = first.known
 }
 
@@ -613,7 +616,7 @@ const shortDay = new Intl.DateTimeFormat(undefined, { weekday: 'short', month: '
 
 const review = computed(() => {
   const country = form.country ? countryChoice(form.country) : null
-  return [
+  const rows: Array<{ slide: Slide | 'linked'; label: string; lines: string[]; empty?: string }> = [
     {
       slide: 'country' as const,
       label: 'Country',
@@ -637,16 +640,26 @@ const review = computed(() => {
       label: 'Venue',
       lines: [form.venue, form.address, form.location],
     },
-    { slide: 'registration' as const, label: 'Registration', lines: [regPreview.value.saved] },
+    { slide: 'registration' as const, label: 'Registration number', lines: [regPreview.value.saved] },
     {
       slide: 'contact' as const,
       label: 'Your name',
       lines: [form.contactName, me.email ?? ''],
     },
-  ].map((r) => ({ ...r, lines: r.lines.map((l) => l.trim()).filter(Boolean) }))
+  ]
+  if (linkedTo.value) rows.push({ slide: 'linked', label: 'Linked with', lines: linking.value ? [linkedTo.value.name] : [], empty: 'Not linked' })
+  return rows.map((r) => ({ ...r, lines: r.lines.map((l) => l.trim()).filter(Boolean) }))
 })
-// The one it'll be linked with, under the answers (taken out again in Manage).
-const linkedLine = computed(() => linkedTo.value?.name ?? '')
+// Linked or not, as they like: tapping the row says what it does for them,
+// and asks.
+const LINKING_HELPS = 'the details and staff you add to that one show on this one too, so you set them up once.'
+async function toggleLinking() {
+  const first = linkedTo.value
+  if (!first) return
+  linking.value = linking.value
+    ? !(await confirm({ title: `Unlink it from ${first.name}?`, message: `Linked, ${LINKING_HELPS}`, confirmLabel: 'Unlink', cancelLabel: 'Keep linked' }))
+    : await confirm({ title: `Link it with ${first.name}?`, message: `Once both are approved, ${LINKING_HELPS}`, confirmLabel: 'Link them', cancelLabel: 'Not now' })
+}
 
 // --- Drafts
 
@@ -666,7 +679,7 @@ const ANSWERS = [
 const hasAnswers = () =>
   ANSWERS.some((k) => !!form[k].trim()) || hosts.ids.length > 0 || hosts.fresh.length > 0
 watch(
-  [form, place, at, hosts, linkedTo, picked, pickedBefore],
+  [form, place, at, hosts, linkedTo, linking, picked, pickedBefore],
   () => {
     if (!auth.uid || sent.value) return
     try {
@@ -682,6 +695,7 @@ watch(
             at: (at.value === 'match' ? 'date' : at.value) ?? resumeAt.value,
             hosts,
             linkedTo: linkedTo.value,
+            linking: linking.value,
             picked: picked.value,
             pickedBefore: pickedBefore.value,
           }),
@@ -711,6 +725,7 @@ function restore() {
     if (Array.isArray(saved.hosts?.fresh)) hosts.fresh = saved.hosts.fresh
     hosts.offered = !!saved.hosts?.offered
     linkedTo.value = typeof saved.linkedTo?.id === 'string' ? saved.linkedTo : null
+    linking.value = saved.linking !== false
     picked.value = typeof saved.picked?.key === 'string' && saved.picked.before?.form ? saved.picked : null
     pickedBefore.value = typeof saved.pickedBefore === 'string' ? saved.pickedBefore : null
     // An older draft (from the four steps) starts again at the first question.
@@ -942,25 +957,29 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
             </template>
 
             <template v-else-if="at === 'match'">
-              <!-- Yours from last year first, then the lists' (which list, in small print): picking one fills it in. -->
+              <!-- Yours from last year (as it'd be this year) first, then the lists', each marked where it's from: picking one fills it in. -->
               <ul v-if="suggestions?.yours.length || suggestions?.known.length" class="surface divide-y overflow-hidden rounded-2xl">
                 <li v-for="c in suggestions.yours" :key="c.id">
-                  <button type="button" :aria-pressed="pickedKey === c.id" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2.5 text-left" @click="sameAgain(c)">
-                    <span class="min-w-0 flex-1">
-                      <span class="block text-base font-semibold break-words">{{ c.name }}</span>
-                      <span class="text-muted-foreground block text-sm">{{ hereLine(c, true) }}</span>
-                      <span class="text-muted-foreground block text-xs">Yours last year</span>
+                  <button type="button" :aria-pressed="pickedKey === c.id" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left" @click="sameAgain(c)">
+                    <span class="min-w-0 flex-1 space-y-1">
+                      <span class="block text-base font-semibold break-words">{{ thisYears(c) }}</span>
+                      <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span class="text-muted-foreground text-sm">{{ [formatDateSpan([form.date]), c.location].filter(Boolean).join(' · ') }}</span>
+                        <span class="bg-done text-done-foreground rounded-full px-2 py-0.5 text-xs font-semibold">Same as last year</span>
+                      </span>
                     </span>
                     <Check v-if="pickedKey === c.id" class="text-primary size-5 shrink-0" aria-hidden="true" />
                     <ChevronRight v-else class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
                   </button>
                 </li>
                 <li v-for="k in suggestions.known" :key="k.key">
-                  <button type="button" :aria-pressed="pickedKey === k.key" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2.5 text-left" @click="pickKnown(k)">
-                    <span class="min-w-0 flex-1">
+                  <button type="button" :aria-pressed="pickedKey === k.key" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left" @click="pickKnown(k)">
+                    <span class="min-w-0 flex-1 space-y-1">
                       <span class="block text-base font-semibold break-words">{{ k.name }}</span>
-                      <span class="text-muted-foreground block text-sm">{{ knownLine(k) }}</span>
-                      <span class="text-muted-foreground block text-xs">From {{ sourceName(k.source) }}</span>
+                      <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span class="text-muted-foreground text-sm">{{ knownLine(k) }}</span>
+                        <span class="bg-blue-paper text-primary rounded-full px-2 py-0.5 text-xs font-semibold">{{ sourceName(k.source) }}</span>
+                      </span>
                     </span>
                     <Check v-if="pickedKey === k.key" class="text-primary size-5 shrink-0" aria-hidden="true" />
                     <ChevronRight v-else class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
@@ -971,8 +990,8 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
                 <h2 id="match-here" class="text-callout text-muted-foreground font-medium">Already on ScotDance.app</h2>
                 <ul class="surface divide-y overflow-hidden rounded-2xl">
                   <li v-for="c in suggestions.here" :key="c.id">
-                    <button type="button" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-2.5 text-left" @click="alreadyHere(c)">
-                      <span class="min-w-0 flex-1">
+                    <button type="button" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left" @click="alreadyHere(c)">
+                      <span class="min-w-0 flex-1 space-y-1">
                         <span class="block text-base font-semibold break-words">{{ c.name }}</span>
                         <span class="text-muted-foreground block text-sm">{{ hereLine(c) }}</span>
                       </span>
@@ -1094,23 +1113,19 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
             <template v-else>
               <ul class="surface divide-y overflow-hidden rounded-2xl">
                 <li v-for="r in review" :key="r.slide">
-                  <button type="button" class="press-row focus-inset flex min-h-14 w-full items-start gap-3 py-3 pr-3 pl-4 text-left" @click="change(r.slide)">
+                  <button type="button" class="press-row focus-inset flex min-h-14 w-full items-start gap-3 py-3 pr-3 pl-4 text-left" @click="r.slide === 'linked' ? toggleLinking() : change(r.slide)">
                     <span class="text-muted-foreground text-callout w-24 shrink-0 pt-px">{{ r.label }}</span>
                     <span class="min-w-0 flex-1 text-base break-words">
                       <template v-if="r.lines.length">
                         <span v-for="(line, i) in r.lines" :key="i" :class="['block', i > 0 && 'text-muted-foreground text-callout']">{{ line }}</span>
                       </template>
-                      <span v-else class="text-muted-foreground">Not added</span>
+                      <span v-else class="text-muted-foreground">{{ r.empty ?? 'Not added' }}</span>
                     </span>
                     <ChevronRight class="text-muted-foreground mt-0.5 size-5 shrink-0" aria-hidden="true" />
                     <span class="sr-only">Change</span>
                   </button>
                 </li>
               </ul>
-              <p v-if="linkedLine" class="text-muted-foreground -mt-2 flex gap-1.5 px-1 text-sm">
-                <Link2 class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                <span>Linked with {{ linkedLine }} once both are approved.</span>
-              </p>
               <div class="space-y-1.5">
                 <label for="slide-message" class="text-callout font-medium">Anything to ask or mention?</label>
                 <!-- Two lines to start, growing with what's typed. -->
