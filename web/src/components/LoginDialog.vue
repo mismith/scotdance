@@ -124,14 +124,8 @@ async function submit() {
       <h2 class="text-title">{{ heading }}</h2>
     </template>
 
+    <!-- Fields first: with the keyboard up, only the top of the sheet shows. -->
     <form class="space-y-3 p-4 pb-[calc(1.5rem+var(--safe-bottom))]" @submit.prevent="submit">
-      <ul v-if="step === 'signin' && benefits.length" class="space-y-2 pb-1">
-        <li v-for="b in benefits" :key="b" class="flex gap-2.5 text-base">
-          <Check class="text-done-foreground mt-0.5 size-5 shrink-0" stroke-width="2.6" />
-          {{ b }}
-        </li>
-      </ul>
-
       <label class="block space-y-1.5">
         <span class="text-callout font-medium">Email address</span>
         <input
@@ -201,6 +195,13 @@ async function submit() {
           Back to sign in
         </button>
       </div>
+
+      <ul v-if="step === 'signin' && benefits.length" class="space-y-2 border-t pt-4">
+        <li v-for="b in benefits" :key="b" class="flex gap-2.5 text-base">
+          <Check class="text-done-foreground mt-0.5 size-5 shrink-0" stroke-width="2.6" />
+          {{ b }}
+        </li>
+      </ul>
     </form>
   </Dialog>
 </template>
