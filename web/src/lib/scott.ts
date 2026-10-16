@@ -169,8 +169,10 @@ export const LOGO = (() => {
  * middle of the X, so the head doesn't make him look low). In a circle (the
  * favicon, round launcher icons), centred on the middle of the X, his reach
  * `reach` of the way out. web/scripts/brand.ts renders the icons from these.
+ * The square fills Apple's keyline square (75%); his thin tips run just past
+ * its outer circle, as an X looks smaller than its box.
  */
 export const FRAME = {
-  square: { width: 0.66, centre: 280 },
+  square: { width: 0.75, centre: 280 },
   circle: { reach: 0.82 },
 }

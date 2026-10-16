@@ -63,6 +63,8 @@ for (const [file, size] of [
   ['web/public/img/icon-1024.png', 1024],
   ['resources/icon.png', 1024],
   ['resources/icon-512x512.png', 512],
+  ['web/public/email/icon.png', 120],
+  ['android/fastlane/metadata/android/en-CA/images/icon.png', 512], // the Play listing
 ] as const)
   await png(square, size, `${ROOT}${file}`)
 await png(icon({ frame: 'circle', inset: 0.8 }), 512, `${ROOT}web/public/img/icon-maskable-512.png`)
