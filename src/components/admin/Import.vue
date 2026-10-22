@@ -322,8 +322,10 @@ export default {
 
           // parse group and category from section header
           const title = String(datum.number).trim();
-          const category = title.replace(/\d(.*)$/, '').trim();
-          const name = title.replace(category, '').trim();
+          // split at the first digit, dropping separators like "Beginner / 8 & Under"
+          const split = title.search(/\d/);
+          const category = (split < 0 ? title : title.slice(0, split)).replace(/[\s/|:,–—-]+$/, '');
+          const name = split < 0 ? '' : title.slice(split).trim();
           if (categories.indexOf(category) < 0) {
             categories.push(category);
           }
