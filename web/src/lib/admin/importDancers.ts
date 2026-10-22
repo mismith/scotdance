@@ -86,12 +86,12 @@ export function gridFromText(text: string): Grid {
 const isNumberCell = (v: string) => /^\d+[a-z]?$/i.test(v)
 const blank = (r: string[]) => r.every((c) => !c)
 
-/** "Premier 16 & Under 18 Years" → category "Premier", age range "16 & Under 18 Years". */
+/** "Premier 16 & Under 18 Years" → category "Premier", age range "16 & Under 18 Years". Separators between them ("Beginner / 8 & Under") are dropped. */
 export function splitGroupTitle(title: string): { category: string; group: string } {
   const t = title.replace(/\s+/g, ' ').trim()
   const i = t.search(/\d/)
   if (i < 0) return { category: t, group: '' }
-  return { category: t.slice(0, i).trim(), group: t.slice(i).trim() }
+  return { category: t.slice(0, i).replace(/[\s/|:,–—-]+$/, ''), group: t.slice(i).trim() }
 }
 
 function looksLikeProgram(grid: Grid): boolean {

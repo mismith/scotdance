@@ -127,6 +127,9 @@ describe('splitGroupTitle', () => {
     ['12 & Over', '', '12 & Over'],
     ['Restricted Premier 18 Years & Over', 'Restricted Premier', '18 Years & Over'],
     ['  Beginner   7  Years ', 'Beginner', '7 Years'],
+    ['Beginner / 8 yrs and younger', 'Beginner', '8 yrs and younger'],
+    ['Premier - 14-16 yrs', 'Premier', '14-16 yrs'],
+    ['Novice: 10 & Over', 'Novice', '10 & Over'],
   ])('%s', (title, category, group) => {
     expect(splitGroupTitle(title)).toEqual({ category, group })
   })
