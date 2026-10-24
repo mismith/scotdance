@@ -63,9 +63,13 @@ Merging edits made offline against live results would be messy and risky.
 
 `read-excel-file` (xlsx and csv; not legacy .xls) parses either the program
 layout or a plain table. Matching is by number within an age group, since the same
-dancer can be entered in two groups. The plan shows new, changed, moved and
-missing dancers before anything is written; re-importing the same file changes
-nothing.
+dancer can be entered in two groups. Nothing is guessed beyond that: the same
+number in another age group is another entry, never a move, because organisers
+have already grouped their lists the way they need (a guessed move turned a
+Dancer of the Day list into moves out of Premier, 2026-10-24). The plan shows
+new, changed and missing dancers before anything is written; a dancer who
+really moved shows as new, with the old entry offered for removal.
+Re-importing the same file changes nothing.
 
 ## Consequences
 

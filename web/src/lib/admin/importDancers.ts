@@ -8,8 +8,9 @@
 // - "Table": a header row (Number, First name, Last name, Location, Age
 //   group…) and one dancer per row.
 //
-// Dancers are matched to existing ones by competitor number, so importing
-// an updated list changes people rather than duplicating them.
+// Dancers are matched to existing ones by competitor number within their age
+// group, so importing an updated list changes people rather than duplicating
+// them. A number in another age group is always another entry.
 
 export type Grid = string[][]
 
@@ -230,7 +231,7 @@ export interface ImportPlan {
   newCategories: string[]
   newGroups: Array<{ key: string; category: string; group: string }>
   dancers: PlannedDancer[]
-  /** Existing dancers whose numbers aren't in the file. */
+  /** Existing entries (number in an age group) the file doesn't have. */
   missing: ExistingDancer[]
   counts: Record<RowStatus, number>
 }
@@ -255,17 +256,13 @@ export function planImport(
     return g ? groupKey(existing.categories.find((c) => c.id === g.categoryId)?.name ?? '', g.name ?? '') : ''
   }
   const byNumAndGroup = new Map(existing.dancers.map((d) => [`${d.num}#${existingGroupKey(d)}`, d]))
-  const byNum = new Map<string, ExistingDancer[]>()
-  for (const d of existing.dancers) byNum.set(d.num, [...(byNum.get(d.num) ?? []), d])
 
   const newCategories = new Map<string, string>()
   const newGroups = new Map<string, { key: string; category: string; group: string }>()
   const seenEntries = new Map<string, number>()
-  const seenNumbers = new Map<string, number>()
   for (const r of rows) {
     const entry = `${r.number}#${groupKey(r.category, r.group)}`
     seenEntries.set(entry, (seenEntries.get(entry) ?? 0) + 1)
-    seenNumbers.set(r.number, (seenNumbers.get(r.number) ?? 0) + 1)
   }
   const matched = new Set<string>()
   // A column nobody filled in (e.g. no locations in this file) leaves what's
@@ -284,24 +281,15 @@ export function planImport(
       if (!groupByKey.has(key)) newGroups.set(key, { key, category: r.category, group: r.group })
       if (r.category && !catByName.has(norm(r.category))) newCategories.set(norm(r.category), r.category)
     }
-    // Same number and age group: the same entry. Otherwise, the same number
-    // and name (once each) means they moved to another age group.
-    let prev = byNumAndGroup.get(`${r.number}#${key}`)
-    if (!prev && seenNumbers.get(r.number) === 1 && byNum.get(r.number)?.length === 1) {
-      const only = byNum.get(r.number)![0]
-      const sameName = norm(`${only.firstName ?? ''} ${only.lastName ?? ''}`) === norm(`${r.firstName} ${r.lastName}`)
-      if (sameName) prev = only
-    }
-    if (prev && matched.has(prev.id)) prev = undefined
+    // Same number and age group: the same entry. Anything else is new; the
+    // organiser's grouping is never second-guessed.
+    const prev = byNumAndGroup.get(`${r.number}#${key}`)
     if (prev && !errors.length) matched.add(prev.id)
     const changes: Record<string, [string, string]> = {}
     if (prev && !errors.length) {
-      const prevGroup = existing.groups.find((g) => g.id === prev.groupId)
-      const prevGroupKey = prevGroup ? groupKey(existing.categories.find((c) => c.id === prevGroup.categoryId)?.name ?? '', prevGroup.name ?? '') : ''
       // Spacing doesn't count as a change; fixing capitals does.
       const tidy = (s: string) => s.replace(/\s+/g, ' ').trim()
       for (const [field, label] of compared) if (tidy(prev[field] ?? '') !== tidy(r[field])) changes[label] = [prev[field] ?? '', r[field]]
-      if (prevGroupKey !== key) changes['Age group'] = [prevGroup ? `${existing.categories.find((c) => c.id === prevGroup.categoryId)?.name ?? ''} ${prevGroup.name ?? ''}`.trim() : '', `${r.category} ${r.group}`.trim()]
     }
     const status: RowStatus = errors.length ? 'error' : !prev ? 'new' : Object.keys(changes).length ? 'changed' : 'same'
     return { source: r, status, errors, existingId: prev?.id, changes, groupKey: key }
@@ -355,10 +343,6 @@ export function planUpdates(
       // Update only the fields shown as changed, keeping the rest (and links
       // the server added) as they are.
       for (const [k, label] of FIELDS) if (d.changes[label]) updates[`dancers/${d.existingId}/${k}`] = fields[k]
-      if (d.changes['Age group']) {
-        updates[`dancers/${d.existingId}/groupId`] = fields.groupId
-        updates[`dancers/${d.existingId}/categoryId`] = fields.categoryId
-      }
     } else {
       updates[`dancers/${newKey()}`] = fields
     }

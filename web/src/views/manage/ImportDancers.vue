@@ -405,7 +405,7 @@ async function doImport() {
             <span class="block text-base font-medium">Remove {{ plan.missing.length }} {{ plan.missing.length === 1 ? 'dancer who isn’t' : 'dancers who aren’t' }} in this file</span>
             <span class="text-muted-foreground block text-sm">{{ plan.missing.slice(0, 12).map((d) => `${d.num} ${d.label}`).join(', ') }}{{ plan.missing.length > 12 ? '…' : '' }}</span>
             <span v-if="missingWithResults" class="text-destructive block text-sm font-medium">
-              {{ missingWithResults === 1 && plan.missing.length === 1 ? 'They have' : `${missingWithResults} of them have` }} results entered. Those places would show as an unknown dancer (?).
+              {{ missingWithResults === 1 && plan.missing.length === 1 ? 'They have' : `${missingWithResults} of them ${missingWithResults === 1 ? 'has' : 'have'}` }} results entered. Those places would show as an unknown dancer (?).
             </span>
           </span>
         </button>

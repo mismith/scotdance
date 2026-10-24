@@ -57,9 +57,9 @@ function existingFrom(tree: Tree) {
   return { categories, groups, dancers }
 }
 
-function keys() {
+function keys(prefix = 'k') {
   let n = 0
-  return () => `k${String(++n).padStart(3, '0')}`
+  return () => `${prefix}${String(++n).padStart(3, '0')}`
 }
 
 /** Plan and apply a whole import, the way ImportDancers.vue does. */
@@ -354,49 +354,47 @@ describe('planImport + planUpdates', () => {
     expect(dancersOf(again.tree)).toEqual(['201 Mia Reid [Beginner 7 & Under 9 Years]'])
   })
 
-  it('shows changed, moved, new and missing dancers', () => {
+  it('shows changed, new and missing dancers', () => {
     const first = importInto({}, FILE).tree
     const second = importInto(first, [
       row('101', 'Isla', 'Macdonald-Smith', 'Primary', '', 'Calgary, AB'), // changed name
-      row('102', 'Ava', 'O’Neill', 'Beginner', '7 & Under 9 Years', 'Edmonton, AB'), // moved
+      row('102', 'Ava', 'O’Neill', 'Beginner', '7 & Under 9 Years', 'Edmonton, AB'), // another age group: a new entry
       row('201', 'Mia', 'Reid', 'Beginner', '7 & Under 9 Years', 'Ottawa, ON'), // same
       row('202', 'Lucy', 'Kerr', 'Beginner', '7 & Under 9 Years', 'Halifax, NS'), // new
     ])
     const byNum = Object.fromEntries(second.plan.dancers.map((d) => [d.source.number, d]))
     expect(byNum['101'].status).toBe('changed')
     expect(byNum['101'].changes).toEqual({ 'Last name': ['MacDonald', 'Macdonald-Smith'] })
-    expect(byNum['102'].status).toBe('changed')
-    expect(byNum['102'].changes).toEqual({ 'Age group': ['Primary', 'Beginner 7 & Under 9 Years'] })
+    expect(byNum['102'].status).toBe('new')
     expect(byNum['201'].status).toBe('same')
     expect(byNum['202'].status).toBe('new')
     expect(second.plan.missing.map((d) => `${d.num} ${d.label}`).sort()).toEqual([
+      '102 Ava O’Neill',
       '301 Freya Ross',
       '301 Freya Ross',
       '401 Ruby Sinclair',
       '401 Seán Ó Briain',
     ])
     // Missing dancers stay unless asked.
-    expect(Object.keys(second.tree.dancers!)).toHaveLength(8)
+    expect(Object.keys(second.tree.dancers!)).toHaveLength(9)
+    expect(dancersOf(second.tree)).toContain('102 Ava O’Neill [Primary] Edmonton, AB')
     expect(dancersOf(second.tree)).toContain('102 Ava O’Neill [Beginner 7 & Under 9 Years] Edmonton, AB')
-    // Moving keeps the record (and anything linked to it).
-    const avaBefore = Object.entries(first.dancers!).find(([, d]) => d.number === '102')![0]
-    expect(second.tree.dancers![avaBefore].lastName).toBe('O’Neill')
 
-    const removing = importInto(first, second.plan.dancers.map((d) => d.source), true)
+    const removing = importInto(first, second.plan.dancers.map((d) => d.source), true, keys('b'))
     expect(Object.keys(removing.tree.dancers!)).toHaveLength(4)
   })
 
   it('leaves fields the file doesn’t have alone', () => {
     const first = importInto({}, FILE).tree
-    // A later list without locations, and one dancer in a new age group.
+    // A later list without locations, and one name fixed.
     const again = importInto(first, [
       row('101', 'Isla', 'MacDonald', 'Primary', ''),
-      row('201', 'Mia', 'Reid', 'Beginner', '9 & Under 11 Years'),
+      row('201', 'Mia', 'Reed', 'Beginner', '7 & Under 9 Years'),
     ])
     expect(again.plan.counts).toMatchObject({ same: 1, changed: 1 })
-    expect(again.plan.dancers[1].changes).toEqual({ 'Age group': ['Beginner 7 & Under 9 Years', 'Beginner 9 & Under 11 Years'] })
+    expect(again.plan.dancers[1].changes).toEqual({ 'Last name': ['Reid', 'Reed'] })
     expect(dancersOf(again.tree)).toContain('101 Isla MacDonald [Primary] Calgary, AB')
-    expect(dancersOf(again.tree)).toContain('201 Mia Reid [Beginner 9 & Under 11 Years] Ottawa, ON')
+    expect(dancersOf(again.tree)).toContain('201 Mia Reed [Beginner 7 & Under 9 Years] Ottawa, ON')
   })
 
   it('flags rows it can’t import and skips them', () => {
@@ -443,12 +441,17 @@ describe('planImport + planUpdates', () => {
     expect(again.updates).toEqual({})
   })
 
-  it('doesn’t move one record onto two rows', () => {
-    const first = importInto({}, [row('7', 'Ava', 'Reid', 'Primary', '')]).tree
-    // Ava is now in two other groups: both rows are new; the Primary entry is missing.
-    const again = importInto(first, [row('7', 'Ava', 'Reid', 'Beginner', '7 Years'), row('7', 'Ava', 'Reid', 'Beginner', '8 Years')])
+  it('adds the same dancers in other age groups as more entries', () => {
+    const first = importInto({}, [row('301', 'Freya', 'Ross', 'Premier', '12 & Under 14 Years'), row('302', 'Isla', 'Kerr', 'Premier', '16 & Over')]).tree
+    // The same dancers in two new groups (e.g. Dancer of the Day): extra entries.
+    const again = importInto(first, [row('301', 'Freya', 'Ross', 'Junior', 'Dancer of the Day'), row('302', 'Isla', 'Kerr', 'Senior', 'Dancer of the Day')], false, keys('b'))
     expect(again.plan.dancers.map((d) => d.status)).toEqual(['new', 'new'])
-    expect(again.plan.missing.map((d) => d.label)).toEqual(['Ava Reid'])
+    expect(dancersOf(again.tree)).toEqual([
+      '301 Freya Ross [Junior Dancer of the Day]',
+      '301 Freya Ross [Premier 12 & Under 14 Years]',
+      '302 Isla Kerr [Premier 16 & Over]',
+      '302 Isla Kerr [Senior Dancer of the Day]',
+    ])
   })
 
   it('handles a big list quickly', () => {
@@ -510,13 +513,14 @@ describe('real entry lists', () => {
       '203A same',
       '204 new',
       '301 same',
-      '302 changed (Age group)',
+      '302 new',
       '301 same',
       '401 same',
     ])
     expect(plan.newGroups.map((g) => `${g.category} ${g.group}`)).toEqual(['Premier 14 & Under 16 Years'])
-    expect(plan.missing.map((d) => `${d.num} ${d.label}`)).toEqual(['202 Ella Grant'])
+    expect(plan.missing.map((d) => `${d.num} ${d.label}`)).toEqual(['202 Ella Grant', '302 Hannah Murray'])
     expect(dancersOf(tree)).toContain('302 Hannah Murray [Premier 14 & Under 16 Years] Calgary, AB')
+    expect(dancersOf(tree)).not.toContain('302 Hannah Murray [Premier 12 & Under 14 Years] Calgary, AB')
     expect(dancersOf(tree)).not.toContain('202 Ella Grant [Beginner 7 & Under 9 Years]')
     // And once more: nothing left to do.
     expect(importInto(tree, parseGrid(grid)!.dancers).updates).toEqual({})
