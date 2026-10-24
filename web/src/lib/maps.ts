@@ -26,6 +26,8 @@ export interface PlaceSuggestion {
   placeId: string
   primaryText: string
   secondaryText: string
+  /** How far it is from `near`, when that was given. */
+  distanceMeters?: number | null
 }
 
 export interface PickedRegion {
@@ -81,8 +83,12 @@ export async function resolvePlace(placeId: string): Promise<PickedRegion | null
 export const placesAvailable = !!GOOGLE_MAPS_API_KEY
 
 /** Venues and addresses, for the venue search in Manage › Details. */
-/** Places for a venue, within `regionCodes` (ISO countries, e.g. ['CA']) when given. */
-export async function fetchVenueSuggestions(input: string, regionCodes?: string[]): Promise<PlaceSuggestion[]> {
+/** Places for a venue, within `regionCodes` (ISO countries, e.g. ['CA']) when given, and those `near` a point first. */
+export async function fetchVenueSuggestions(
+  input: string,
+  regionCodes?: string[],
+  near?: { lat: number; lng: number },
+): Promise<PlaceSuggestion[]> {
   const trimmed = input.trim()
   if (!trimmed || !placesAvailable) return []
   const { AutocompleteSuggestion, AutocompleteSessionToken } = await getPlacesLib()
@@ -91,6 +97,7 @@ export async function fetchVenueSuggestions(input: string, regionCodes?: string[
     input: trimmed,
     sessionToken,
     ...(regionCodes?.length && { includedRegionCodes: regionCodes.map((c) => c.toLowerCase()) }),
+    ...(near && { locationBias: { center: near, radius: 2000 }, origin: near }),
   })
   return suggestions
     .map((s) => s.placePrediction)
@@ -99,6 +106,7 @@ export async function fetchVenueSuggestions(input: string, regionCodes?: string[
       placeId: p.placeId,
       primaryText: p.mainText?.toString() ?? p.text?.toString() ?? '',
       secondaryText: p.secondaryText?.toString() ?? '',
+      distanceMeters: p.distanceMeters,
     }))
 }
 

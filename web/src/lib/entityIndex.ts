@@ -44,15 +44,20 @@ export async function lookupEntityIdOrThrow(
 
 // Venues key on `normalize(name) + '|' + normalize(locality) || 'none'` so
 // "Telus Convention Centre" in Calgary vs Brisbane don't silently merge.
-// Mirrors functions/src/venues.ts venueKey().
+// Mirrors venueKey() in functions/src/utility/entityConfigs.ts.
+export function venueKey(venue: string | null | undefined, locality?: string | null): string {
+  const v = normalizeEntityName(venue ?? '')
+  if (!v) return ''
+  const l = normalizeEntityName(locality || '')
+  return `${v}|${l || 'none'}`
+}
+
 export async function lookupVenueId(
   venue: string,
   locality?: string | null,
 ): Promise<string | null> {
-  const v = normalizeEntityName(venue)
-  if (!v) return null
-  const l = normalizeEntityName(locality || '')
-  const key = `${v}|${l || 'none'}`
+  const key = venueKey(venue, locality)
+  if (!key) return null
   return readIndex('venues', key).catch(() => null)
 }
 

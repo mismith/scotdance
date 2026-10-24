@@ -151,7 +151,7 @@ RTDB rejects `$` in keys. The Typesense convention `$name` was carried over by m
 
 ## Open questions / deferred
 
-- **Admin merge/split UI** — not in scope. Manual DB editing for now.
+- **Admin merge/split UI** — venues have one (2026-10-14): System admin › Venues suggests venues that look like one place (pins within 150 m, or the same name spelled differently) and merges them by giving the others' competitions the kept venue's fields, so these triggers move them over; followers move with them. Known venues are also offered first in the venue field, so new competitions join them. People: still manual DB editing.
 - **"Latest non-null" tie-breakers** — if two comps share a date, ordering is by RTDB key insertion order. Good enough.
 - **Aggregate Typesense index** — deferred to post-MVP.
 - **Venue geo proximity** in identity — using locality only; revisit if same-name-same-locality cases appear.

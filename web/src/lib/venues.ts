@@ -18,7 +18,7 @@ function normalizeVenue(name?: string): string {
     .join(' ')
 }
 
-function haversineMeters(
+export function haversineMeters(
   aLat: number,
   aLng: number,
   bLat: number,

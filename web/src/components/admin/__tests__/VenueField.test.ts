@@ -11,6 +11,18 @@ vi.mock('@/lib/maps', () => ({
   resolveVenue: async (placeId: string) => ({ venue: placeId, address: '1 Main St', location: 'Calgary, AB', lat: 51, lng: -114, country: 'CA', region: 'AB', locality: 'Calgary' }),
 }))
 
+// Venues the app already knows (the venues index), none unless a test adds some.
+const index = vi.hoisted(() => ({ rows: [] as Array<{ id: string; agg: Record<string, unknown> }> }))
+vi.mock('@/composables/useEntityAggregates', async () => {
+  const { ref } = await import('vue')
+  return { useEntityAggregates: () => ({ data: ref(index.rows) }) }
+})
+vi.mock('@/firebase', () => ({ dataRef: (path: string) => ({ path }) }))
+vi.mock('@/lib/knownVenues', async (original) => ({
+  ...(await original<typeof import('@/lib/knownVenues')>()),
+  knownVenueFields: async (id: string) => ({ venue: `${id} as the app has it`, address: '2 Known Rd', location: 'Calgary, AB', lat: 51, lng: -114, country: 'CA', region: 'AB', locality: 'Calgary' }),
+}))
+
 vi.mock('@/lib/admin/write', async () => {
   const { computed } = await import('vue')
   return { canEdit: computed(() => true), friendlyError: () => 'That change didn’t save.' }
@@ -32,6 +44,7 @@ async function type(w: ReturnType<typeof mount>, text: string) {
 
 afterEach(() => {
   pending.length = 0
+  index.rows = []
   vi.useRealTimers()
 })
 
@@ -129,5 +142,22 @@ describe('VenueField', () => {
     await w.find('input').setValue('Glenmore Hall')
     await vi.advanceTimersByTimeAsync(1000)
     expect(save).toHaveBeenCalledWith('Glenmore Hall')
+  })
+
+  it('offers venues the app knows first, in place of Google’s own for the same one', async () => {
+    vi.useFakeTimers()
+    index.rows = [
+      { id: 'V1', agg: { name: 'Spruce Meadows', locality: 'Calgary', region: 'AB', country: 'CA', appearanceCount: 6 } },
+      { id: 'V2', agg: { name: 'Spruce Meadows', locality: 'Brisbane', region: 'QLD', country: 'AU', appearanceCount: 1 } },
+    ]
+    const w = mount(VenueField, { props: { modelValue: '', regionCodes: ['CA'] } })
+    await type(w, 'spruce')
+    answer('spruce', ['Spruce Meadows', 'Spruce Grove Arena'])
+    await flushPromises()
+    const options = w.findAll('[role=option]').map((o) => o.text())
+    expect(options).toEqual(['Spruce MeadowsCalgary, AB · 6 competitions', 'Spruce Grove ArenaCalgary, AB'])
+    await w.find('[role=option] button').trigger('click')
+    await flushPromises()
+    expect(w.emitted('pick')?.[0]?.[0]).toMatchObject({ venue: 'V1 as the app has it', address: '2 Known Rd' })
   })
 })
