@@ -37,7 +37,7 @@ platform :ios do
     build_app(
       project: "App.xcodeproj",
       scheme: "App",
-      export_method: "app-store-connect",
+      export_method: "app-store",
       export_xcargs: "-allowProvisioningUpdates",
       output_directory: "./build",
     )
