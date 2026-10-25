@@ -195,7 +195,7 @@ One confident blue for action, a Scottish red kept for favourites, and a small s
 - **Saltire Blue** (#0065bd; #62aaf0 at night): the flag's blue. Primary buttons, links, the selected tab, focus rings and the admin shield. One filled primary per view.
 
 ### Secondary
-- **Tartan Red** (#b0102c): follows and favourites (the filled star), and the first dancer colour. Never a second action colour.
+- **Tartan Red** (#b0102c): favourites (the filled star), and the first dancer colour. Never a second action colour.
 
 ### Tertiary
 - **Live Pink** (#c8166a on Live Paper #fde7f1): only while something is happening now: today's date tile, the live dot, "Today" headings, fresh results. Gone the moment it isn't live.
@@ -285,7 +285,7 @@ Every rounded shape uses continuous corners (`corner-shape: superellipse(1.5)`),
 - **Error:** 1.5px destructive edge; the message is a full sentence below.
 
 ### Profile Hero
-A person's or place's page (dancer, judge, piper, venue) opens centred, as a competition dancer's page does under their number card: a 96px avatar (initials on the dancer's colour or tartan when followed, with a palette badge: tap it to choose their look) or the venue's map pin tile, the name at Display size, one line of who or where, then Follow (or Favourite) at a button's width. Outside a competition there is no number card; inside a dancer's history each competition row shows the number they wore there as a small card, then their rosettes.
+A person's or place's page (dancer, judge, piper, venue) opens centred, as a competition dancer's page does under their number card: a 96px avatar (initials on the dancer's colour or tartan when followed, with a palette badge: tap it to choose their look) or the venue's map pin tile, the name at Display size, one line of who or where, then Favourite at a button's width (a dancer's, once a favourite, with their Alerts bell beside it). Outside a competition there is no number card; inside a dancer's history each competition row shows the number they wore there as a small card, then their rosettes.
 
 ### Navigation
 - **Tab bar:** a floating glass capsule at the bottom on phones (Home, Competitions, Search, More); inside a competition it swaps to that competition's tabs with a round "leave" button beside it. The current tab sits on a quiet pill.

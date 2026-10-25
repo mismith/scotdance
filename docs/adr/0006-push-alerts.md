@@ -9,7 +9,7 @@ and Android one.
 
 ## Context
 
-v4 already shows a banner the moment a followed dancer places, but only
+v4 already shows a banner the moment a favourite dancer places, but only
 while the app is open (`useLiveAlerts`). Parents want to know with the phone
 in their pocket. The September branch built the server side; its app side
 targeted screens that no longer exist, and it registered **APNs** tokens on
@@ -24,9 +24,9 @@ Each can be switched off; all start on.
 
 | Kind | When | Example |
 |---|---|---|
-| Results | A placing is posted for a dancer you follow (or "results are in", when they didn't place) | **Chloe placed 2nd** · Highland Fling · Beginner Under 7 · Foothills Fall Classic 2026 (or **Sword Dance results are in**) |
+| Results | A placing is posted for a favourite dancer (or "results are in", when they didn't place) | **Chloe placed 2nd** · Highland Fling · Beginner Under 7 · Foothills Fall Classic 2026 (or **Sword Dance results are in**) |
 | Morning of | 06:00–06:59 where the competition is, on its day | **Foothills Fall Classic 2026 is today** · Chloe is dancing. Tap for platforms and dancing order. |
-| Dancer list is up | A competition you follow (or one a dancer you follow is in) is published | **Foothills Fall Classic 2026 is live** · The dancer list and schedule are up. |
+| Dancer list is up | A competition with its alerts on (or one a favourite dancer is in) is published | **Foothills Fall Classic 2026 is live** · The dancer list and schedule are up. |
 
 Tapping one opens the result (`/competitions/{id}/results/{group}#dance-…`)
 or the competition.
@@ -39,16 +39,17 @@ age group and competition go on the line under (Murray, 2026-10-03).
 - Reverse indexes `dancers:followers/{person}/{uid}` and
   `competitions:followers/{id}/{uid}`, kept by triggers on
   `users:favorites`; `backfillFollowers` (System admin › Tools) builds them
-  once.
+  once. A favourite dancer with alerts turned off
+  (`users:alertsOff/{uid}/dancers/{id}`, ADR 0008) is skipped when sending.
 - **Results wait for a pause** (60 s; 5 s in the emulator) and then send what
   stands: Manage saves every tap, so someone placed 4th first would otherwise
   get "Results are in" and then "placed 4th" seconds apart. The wait is a
-  **Cloud Task**: the database trigger checks someone follows a dancer in
-  the age group, then queues the dance's results for `sendResultAlerts`
-  (`onTaskDispatched`, retried up to 3 times) a minute on, which sends only
-  if they still stand as saved (else a later save's task has it). Nothing
-  sits open waiting: an earlier version slept in the trigger, which held up
-  every other function in the emulator.
+  **Cloud Task**: the database trigger checks a dancer in the age group
+  is someone's favourite with alerts on, then queues the dance's results
+  for `sendResultAlerts` (`onTaskDispatched`, retried up to 3 times) a
+  minute on, which sends only if they still stand as saved (else a later
+  save's task has it). Nothing sits open waiting: an earlier version slept
+  in the trigger, which held up every other function in the emulator.
 - Nothing until someone's placed; callbacks never; only around competition
   day (so entering old results doesn't notify).
 - **Published** runs inside `competitionPublishedChanged`, after the publish
@@ -89,9 +90,10 @@ age group and competition go on the line under (Murray, 2026-10-03).
   `published`), with the account, so every phone agrees. "Notifications" on
   or off is per phone (it's the token).
 - **Asking**: iOS shows its prompt once. So the app asks first, in a sheet,
-  the moment it means something: right after you follow a dancer ("Know the
-  moment Chloe places"). "Not now" leaves the phone's prompt unused, for
-  Settings later. Never on launch.
+  the moment it means something: right after something turns alerts on
+  (favouriting a dancer: "Know the moment Chloe places"; a competition's
+  Alerts: "Know when the dancer list is up"). "Not now" leaves the phone's
+  prompt unused, for Settings later. Never on launch.
 - **Settings › Alerts**: Notifications (this phone) with the three kinds
   under it once on; if the phone blocked them, how to turn them back on. The
   in-app banner stays as its own switch ("While the app is open"). On the
@@ -112,7 +114,7 @@ age group and competition go on the line under (Murray, 2026-10-03).
 - Web push (needs a service worker, which the web app doesn't have, and a
   VAPID key; on iPhone it only works for home-screen web apps). The banner
   covers the web.
-- Quiet hours, a per-competition mute, "follow an organisation" alerts.
+- Quiet hours, a per-competition mute, alerts for a favourite organisation.
 
 ## Native setup
 
@@ -134,7 +136,7 @@ Left for Murray:
 
 1. Deploy rules (`users:tokens`, the dancers `groupId` index), functions;
    run System admin › Tools › Alerts › Followers once.
-2. TestFlight / internal testing on real phones: follow a dancer, enter a
+2. TestFlight / internal testing on real phones: favourite a dancer, enter a
    result in Manage, wait a minute.
 
 ## Consequences

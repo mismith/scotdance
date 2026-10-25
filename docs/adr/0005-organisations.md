@@ -103,7 +103,7 @@ them, on Manage › Details).
   pipers.
 - **Organisation page** `/organisations/:id`: logo (rounded square, so it's
   never mistaken for a person), name, short name · based in · N competitions
-  since YYYY, Follow, website, Manage (for its admins), description, links,
+  since YYYY, Favourite, website, Manage (for its admins), description, links,
   then its competitions (coming up, then past by year), as venue and judge
   profiles do.
 - **Organisations index** `/organisations` (sidebar, More, Search's browse
@@ -171,5 +171,5 @@ the same limits as competitions' (`storage.rules`).
 ## Open questions
 
 - Merging duplicates (System admin): needed once people start creating them.
-- Follow an organisation → alert when it lists a new competition (ADR 0006
-  has the alert plumbing).
+- A favourite organisation → alert when it lists a new competition (ADR 0006
+  has the alert plumbing; ADR 0008 gives it the bell, as a dancer has).

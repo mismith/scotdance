@@ -93,3 +93,18 @@ alerts on for the in-app banner. Settings › Alerts can ask again.
   - Their code gets simpler.
 - The store screenshots show "Following", so they'd be taken again. Doing
   this before the v4 store builds avoids a second set.
+
+## Built (2026-10-25)
+
+- The senders check `users:alertsOff` as they send, so `dancers:followers`
+  still lists every favourite and no new function is needed. Deploy the
+  rules and the alert functions (`notifyFollowersOnResult`,
+  `sendResultAlerts`, `competitionPublishedChanged`,
+  `sendLinkedPublishedAlerts`, `morningSummaries`, `sendMorningSummary`).
+- A competition's sheet: "Know when the dancer list is up", with its two
+  alerts as the preview.
+- Favouriting signed out asks for sign-in as before; the sheet then waits
+  for the next time something turns alerts on, so it never stacks on the
+  sign-in (or the new account's roles) sheet.
+- The Dancers page says "Alerts off" under a favourite with them off, so a
+  teacher can see which.

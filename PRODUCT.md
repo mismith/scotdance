@@ -35,7 +35,7 @@ Built by a Highland dance family, for Highland dance families. Free for attendee
 
 ## Capabilities and Constraints
 
-- Public: competitions (list, calendar, map), a competition's overview, dancers, schedule and results; search by name or competitor number; profiles for dancers, judges, pipers and venues; follow dancers (with colours), judges and competitions; live alerts.
+- Public: competitions (list, calendar, map), a competition's overview, dancers, schedule and results; search by name or competitor number; profiles for dancers, judges, pipers and venues; favourite dancers (with colours), judges, pipers, venues and organisations; alerts for favourite dancers and for competitions (ADR 0008).
 - Accounts: email and password only (no Apple, Google or magic-link sign-in).
 - Manage (in the same app): every section of setting up a competition, in setup order (Details, Staff, Dances, Categories, Age groups, Dancers, Platforms, Schedule, Results); admins and invites; visibility (Private, Listed, Published).
 - Results entry is tap-to-pick, mirroring the old admin's mechanism (dance list per group, Placings/Points, Championship and how many places, tie switches, tap a placed row to remove). It keeps the "?" stand-in dancer so organisers can carry on and fix later. Never an on-screen keypad. A previous redesign of it was rejected as confusing and error-prone.
