@@ -10,6 +10,7 @@
     "store:upload:android": "npm --prefix web run store:upload:android",
     "set-version": "node ./set-version.js",
     "postset-version": "npx cap copy",
+    "known:sdc": "npm --prefix functions run build && node functions/scripts/refresh-sdc.mjs",
     "release": "git commit -a -m $npm_package_version && git tag \"v${npm_package_version}\"",
     "deploy": "firebase deploy --only hosting:production,functions,database,storage && git push origin HEAD:main --tags"
   },
