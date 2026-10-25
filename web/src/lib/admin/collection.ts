@@ -61,6 +61,8 @@ export interface CollectionSpec<T extends CollectionItem = CollectionItem> {
   presets?: Array<{ label: string; values: Record<string, string> }>
   /** The line under the presets sheet's title. */
   presetsLead?: string
+  /** A select field chosen once at the top of the presets sheet and given to each one added (an age group's category). */
+  presetsScope?: string
   /** Empty, the way to start is importing the dancers, which creates these too. */
   importFirst?: boolean
   /** Extra writes when a field changes (e.g. a dancer's category follows their age group). */

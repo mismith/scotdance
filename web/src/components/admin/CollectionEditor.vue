@@ -397,27 +397,46 @@ async function submitDraft(another: boolean) {
 const presetsSheet = useMorph()
 const presetPicks = reactive(new Set<number>())
 const existingTitles = computed(() => new Set(props.items.map((i) => props.spec.title(i).trim().toLowerCase())))
+// Chosen once for every preset added (an age group's category), never guessed.
+const scopeField = computed(() => props.spec.fields.find((f) => f.key === props.spec.presetsScope) ?? null)
+const scopeOptions = computed(() => scopeField.value?.options?.() ?? [])
+const presetScope = ref('')
+const same = (a: string | null | undefined, b: string) => (a ?? '').trim().toLowerCase() === b.trim().toLowerCase()
 function presetTaken(index: number) {
   const p = props.spec.presets?.[index]
-  return !!p && existingTitles.value.has(p.label.trim().toLowerCase())
+  if (!p) return false
+  if (!scopeField.value) return existingTitles.value.has(p.label.trim().toLowerCase())
+  const scope = scopeField.value.key
+  return (
+    !!presetScope.value &&
+    props.items.some((i) => stringValue(i, scope) === presetScope.value && Object.entries(p.values).every(([k, v]) => same(stringValue(i, k), v)))
+  )
 }
 // Once added, a second tap while the sheet closes adds nothing more.
 let presetsTaken = false
 function openPresets(e: Event) {
   presetPicks.clear()
   presetsTaken = false
+  // The last choice stays (shown at the top); only one option is a choice already made.
+  const options = scopeOptions.value
+  if (!options.some((o) => o.value === presetScope.value)) presetScope.value = options.length === 1 ? options[0].value : ''
   void presetsSheet.show(e)
 }
+// Ones already in the newly chosen category can't stay ticked.
+watch(presetScope, () => {
+  for (const i of [...presetPicks]) if (presetTaken(i)) presetPicks.delete(i)
+})
 async function addPresets() {
   const presets = props.spec.presets ?? []
   const picks = [...presetPicks].sort((a, b) => a - b)
   void presetsSheet.hide()
-  if (!picks.length || presetsTaken) return
+  if (!picks.length || presetsTaken || (scopeField.value && !presetScope.value)) return
   presetsTaken = true
   let order = nextOrder()
   const updates: Record<string, unknown> = {}
+  const scope = scopeField.value ? { [scopeField.value.key]: presetScope.value } : {}
   for (const i of picks) {
-    updates[`${props.spec.path}/${m.newKey()}`] = { ...presets[i].values, ...(props.spec.sortable ? { _order: order++ } : {}) }
+    updates[`${props.spec.path}/${m.newKey()}`] = { ...presets[i].values, ...scope, ...(props.spec.sortable ? { _order: order++ } : {}) }
   }
   try {
     const message = `Added ${picks.length} ${picks.length === 1 ? props.spec.singular : props.spec.plural}`
@@ -731,6 +750,17 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
       <h2 class="text-title">Add common {{ spec.plural }}</h2>
       <p class="text-muted-foreground text-sm">{{ spec.presetsLead ?? 'The usual ones. Rename them any time.' }}</p>
     </template>
+    <div v-if="scopeField" class="border-b p-4">
+      <FormInput
+        v-model="presetScope"
+        :label="scopeField.label"
+        kind="select"
+        :options="scopeOptions"
+        :hint="scopeField.hint"
+        :placeholder="scopeField.placeholder"
+        required
+      />
+    </div>
     <ul class="divide-y">
       <li v-for="(p, i) in spec.presets" :key="i">
         <button
@@ -748,8 +778,14 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
       </li>
     </ul>
     <div class="bg-card sticky bottom-0 border-t p-4 pb-[calc(1rem+var(--safe-bottom))]">
-      <Button variant="primary" size="lg" block :disabled="!presetPicks.size" @click="addPresets">
-        {{ presetPicks.size ? `Add ${presetPicks.size}` : 'Choose some to add' }}
+      <Button variant="primary" size="lg" block :disabled="!presetPicks.size || (!!scopeField && !presetScope)" @click="addPresets">
+        {{
+          scopeField && !presetScope
+            ? `Choose ${/^[aeiou]/i.test(scopeField.label) ? 'an' : 'a'} ${scopeField.label.toLowerCase()} first`
+            : presetPicks.size
+              ? `Add ${presetPicks.size}`
+              : 'Choose some to add'
+        }}
       </Button>
     </div>
   </Dialog>

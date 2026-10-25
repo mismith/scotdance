@@ -138,6 +138,32 @@ test('age groups: add one, choose its dances, copy dances from another, delete w
   expect(await dbGet(data('schedule'))).toEqual(scheduleBefore)
 })
 
+test('age groups: common ones go in the category chosen, once per category', async ({ page }) => {
+  const [premier] = Object.entries(comp.categories).find(([, n]) => n === 'Premier')!
+  await page.goto(manage('/groups'))
+  await page.getByRole('button', { name: 'Add common age groups' }).click()
+  const sheet = page.locator('dialog[open]')
+  await sheet.getByRole('checkbox', { name: '10 & Under 12 Years' }).click()
+  await sheet.getByRole('checkbox', { name: '12 & Under 14 Years' }).click()
+  // Never guessed: nothing is added until the category is chosen.
+  await expect(sheet.getByRole('button', { name: 'Choose a category first' })).toBeDisabled()
+  await select(sheet, 'Category').selectOption({ label: 'Premier' })
+  await sheet.getByRole('button', { name: 'Add 2' }).click()
+  await expect(page.getByRole('status').getByText('Added 2 age groups')).toBeVisible()
+  await page.waitForTimeout(500)
+  const groups = Object.values(await dbGet<Record<string, { name: string; categoryId?: string }>>(data('groups')))
+  expect(groups.filter((g) => g.name.endsWith('Years') && g.name.includes('Under 1')).map((g) => [g.name, g.categoryId]).sort()).toEqual([
+    ['10 & Under 12 Years', premier],
+    ['12 & Under 14 Years', premier],
+  ])
+
+  // Added for Premier, still there to add for Novice.
+  await page.getByRole('button', { name: 'Add common age groups' }).click()
+  await expect(sheet.getByRole('checkbox', { name: /^10 & Under 12 Years/ })).toBeDisabled()
+  await select(sheet, 'Category').selectOption({ label: 'Novice' })
+  await expect(sheet.getByRole('checkbox', { name: /^10 & Under 12 Years/ })).toBeEnabled()
+})
+
 test('dances: add common ones, choose who dances it, delete with its results', async ({ page }) => {
   await page.goto(manage('/dances'))
   await page.getByRole('button', { name: 'Add common dances' }).click()

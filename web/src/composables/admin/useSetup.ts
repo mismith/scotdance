@@ -37,6 +37,7 @@ export function useSetup() {
   const route = (name: string, params: Record<string, string> = {}) => ({ name, params: { competitionId: m.competitionId.value, ...params } })
 
   const groupsWithoutDances = computed(() => m.groups.value.filter((g) => !m.groupDances(g.id).length))
+  const groupsWithoutCategory = computed(() => m.groups.value.filter((g) => !g.category))
   const dancersWithoutGroup = computed(() => m.dancers.value.filter((d) => !d.group))
   const danceIds = (g: (typeof m.groups.value)[number]) => [CALLBACKS, ...m.groupDances(g.id).map((d) => d.id), ...(groupHasOverall(g) ? [OVERALL] : [])]
 
@@ -140,6 +141,10 @@ export function useSetup() {
     const withoutGroup = dancersWithoutGroup.value
     if (withoutGroup.length) {
       out.push({ id: 'dancers', text: `${plural(withoutGroup.length, 'dancer needs', 'dancers need')} an age group`, to: route('manage.dancers', { itemId: withoutGroup[0].id }) })
+    }
+    const withoutCategory = groupsWithoutCategory.value
+    if (withoutCategory.length) {
+      out.push({ id: 'groups-category', text: `${plural(withoutCategory.length, 'age group needs', 'age groups need')} a category`, to: route('manage.groups', { itemId: withoutCategory[0].id }) })
     }
     const withoutDances = groupsWithoutDances.value
     if (withoutDances.length) {
