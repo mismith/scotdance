@@ -180,7 +180,7 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
         <template v-if="!query">
           <section
             v-for="block in [
-              { key: 'favourites', label: 'Following', rows: favoriteRows, clear: false },
+              { key: 'favourites', label: 'Favourites', rows: favoriteRows, clear: false },
               { key: 'recent', label: 'Recently viewed', rows: recentRows, clear: true },
             ]"
             v-show="block.rows.length"

@@ -20,7 +20,7 @@ const platformLabel = platform === 'ios' ? 'iOS' : platform === 'android' ? 'And
 
 // What families get, each beside the real thing they'll see in the app.
 const forFamilies = [
-  { piece: 'follow', title: 'Follow your dancers', body: 'Your own, or your whole studio, at a glance on Home.' },
+  { piece: 'favourite', title: 'Favourite your dancers', body: 'Your own, or your whole studio, at a glance on Home.' },
   { piece: 'number', title: 'Know when they’re on', body: 'Their platform, dancing order and session, straight from the organisers’ schedule.' },
   { piece: 'rosette', title: 'Results as they happen', body: 'Placings show up as soon as they’re entered, even when you can’t be there.' },
   { piece: 'record', title: 'Every result, on record', body: 'All their placings, season after season.' },
@@ -84,7 +84,7 @@ watch(() => route.hash, applyHash)
         <LogoMark class="size-16" />
         <h1 class="text-display mt-3 text-[1.5625rem] text-balance">From the <span class="whitespace-nowrap">warm-up</span> to the awards.</h1>
         <p class="mt-2 text-base font-medium">
-          Browse competitions, follow dancers, and see results as they happen. Free, anywhere in the world.
+          Browse competitions, favourite your dancers, and see results as they happen. Free, anywhere in the world.
         </p>
         <RouterLink
           :to="{ name: 'home' }"
@@ -101,7 +101,7 @@ watch(() => route.hash, applyHash)
             <span class="flex w-15 shrink-0 justify-center" aria-hidden="true">
               <Medal v-if="f.piece === 'rosette'" :place="1" />
               <NumberCard v-else-if="f.piece === 'number'" number="107" color="var(--dancer-1)" size="sm" />
-              <span v-else-if="f.piece === 'follow'" class="bg-blue-paper flex size-11 items-center justify-center rounded-full">
+              <span v-else-if="f.piece === 'favourite'" class="bg-blue-paper flex size-11 items-center justify-center rounded-full">
                 <Star class="fill-secondary text-secondary size-6" />
               </span>
               <span v-else class="flex -space-x-2.5">

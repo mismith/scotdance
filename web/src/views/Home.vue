@@ -68,7 +68,7 @@ const people = computed(() =>
 )
 const { cards, loading, resultsAt } = useDancerCards(people)
 
-// Following a class, not two kids: one line each.
+// A class of favourites, not two kids: one line each.
 const roles = useRoles()
 const compact = computed(
   () => !showingRecent.value && (roles.has('teacher') || followedPeople.value.length > 6),
@@ -296,7 +296,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
               <div class="bg-blue-paper relative mb-5 flex gap-3 rounded-2xl p-4 pr-12" role="note">
                 <Sparkles class="text-primary mt-0.5 size-5 shrink-0" aria-hidden="true" />
                 <p class="text-callout">
-                  <span class="font-semibold">ScotDance.app has a new look.</span> The dancers you follow now appear here,
+                  <span class="font-semibold">ScotDance.app has a new look.</span> Your favourite dancers now appear here,
                   with their day at a glance. Competitions work the way they always have.
                 </p>
                 <button
@@ -369,7 +369,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
           </template>
         </section>
 
-        <!-- Nobody followed yet: the pitch, then something to look at -->
+        <!-- No favourites yet: the pitch, then something to look at -->
         <section
           v-if="!followedPeople.length"
           class="brand-panel rounded-3xl p-5"
@@ -377,7 +377,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
           <LogoMark class="size-14" />
           <h2 class="text-title mt-3">See your dancer’s day at a glance</h2>
           <p class="text-callout mt-1.5">
-            Follow your dancers to see their platform, dancing order and placings here, and get an alert when results
+            Favourite your dancers to see their platform, dancing order and placings here, and get an alert when results
             are posted.
           </p>
           <div class="mt-4 flex flex-wrap gap-2">
@@ -410,7 +410,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
               See all {{ people.length }}
             </RouterLink>
             <span v-else-if="!showingRecent" class="text-muted-foreground text-sm font-normal">
-              {{ people.length }} followed
+              {{ people.length }} {{ people.length === 1 ? 'favourite' : 'favourites' }}
             </span>
             <button
               v-else

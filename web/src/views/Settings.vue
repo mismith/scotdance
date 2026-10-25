@@ -22,7 +22,7 @@ usePageTitle(['Settings'])
 
 const alerts = useAlerts()
 const auth = useAuthStore()
-// Notifications need an account (they follow your dancers) and a phone.
+// Notifications need an account (they're for your dancers) and a phone.
 async function setPush(on: boolean) {
   if (!auth.isSignedIn) return auth.openLogin({ reason: 'account' })
   if (!on) {
@@ -34,7 +34,7 @@ async function setPush(on: boolean) {
   else if (state === 'failed') toast('Notifications couldn’t be turned on. Try again in a moment.')
 }
 const pushHint = computed(() => {
-  if (!auth.isSignedIn) return 'Sign in to get them for the dancers you follow'
+  if (!auth.isSignedIn) return 'Sign in to get them for your dancers'
   if (alerts.push.value === 'blocked')
     return platform === 'android' ? 'Off for ScotDance in your phone’s settings. Turn them on under Apps › ScotDance › Notifications.' : 'Off for ScotDance in your iPhone’s settings. Turn them on under Settings › ScotDance › Notifications.'
   if (alerts.push.value === 'on') return 'On for this phone, even with ScotDance closed'
@@ -72,7 +72,7 @@ const rowClass =
 async function clearHistory() {
   const ok = await confirm({
     title: 'Clear history on this device?',
-    message: 'Recent searches, recently viewed, and the copies kept for offline use. Your account, the dancers you follow and your settings stay.',
+    message: 'Recent searches, recently viewed, and the copies kept for offline use. Your account, your favourites and your settings stay.',
     confirmLabel: 'Clear history',
     destructive: true,
   })
@@ -141,7 +141,7 @@ async function clearHistory() {
           <Bell class="text-primary" />
           <span class="min-w-0 flex-1">
             <span :id="`${alertsId}-label`" class="block text-base font-medium">{{ alerts.push.value === 'unavailable' ? 'Live result alerts' : 'While the app is open' }}</span>
-            <span :id="`${alertsId}-hint`" class="text-muted-foreground block text-sm">{{ alerts.push.value === 'unavailable' ? 'A banner when a dancer you follow places, while ScotDance.app is open' : 'A banner when a dancer you follow places' }}</span>
+            <span :id="`${alertsId}-hint`" class="text-muted-foreground block text-sm">{{ alerts.push.value === 'unavailable' ? 'A banner when one of your dancers places, while ScotDance.app is open' : 'A banner when one of your dancers places' }}</span>
           </span>
           <Switch
             :id="alertsId"

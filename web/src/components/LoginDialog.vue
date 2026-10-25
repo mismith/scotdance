@@ -6,7 +6,7 @@ import Dialog from '@/components/Dialog.vue'
 import Button from '@/components/ui/Button.vue'
 import { startViewTransition } from '@/lib/transition'
 
-// Sign-in, asked for at the moment it matters (tapping Follow) and saying so.
+// Sign-in, asked for at the moment it matters (tapping Favourite) and saying so.
 // Email and password, as in v3, the same in the browser and the apps; phones
 // fill both in from their saved passwords (with Face ID or a fingerprint).
 type Step = 'signin' | 'register' | 'forgot'
@@ -26,14 +26,15 @@ const heading = computed(() => {
   if (step.value === 'register') return 'Create an account'
   if (step.value === 'forgot') return 'Reset your password'
   const r = auth.loginReason
-  if (r?.reason === 'follow' && r.name) return `Sign in to follow ${r.name.split(' ')[0]}`
-  if (r?.reason === 'alerts') return 'Sign in to get alerts'
+  if (r?.reason === 'follow' && r.name) return `Sign in to favourite ${r.name.split(' ')[0]}`
+  // A competition's Alerts, or Settings.
+  if (r?.reason === 'alerts') return r.name ? `Sign in to get alerts for ${r.name}` : 'Sign in to get alerts'
   if (r?.reason === 'submit') return 'Sign in to add a competition'
-  // The Follow star on judges, competitions and the like.
-  if (r?.reason === 'favorite') return r.name ? `Sign in to follow ${r.name}` : 'Sign in to follow this'
+  // The Favourite star on judges, venues and the like.
+  if (r?.reason === 'favorite') return r.name ? `Sign in to favourite ${r.name}` : 'Sign in to favourite this'
   return 'Sign in to ScotDance.app'
 })
-// What following gets you; an organiser submitting has read why already.
+// What favourites get you; an organiser submitting has read why already.
 const benefits = computed(() => {
   const r = auth.loginReason
   if (r?.reason === 'submit') return []

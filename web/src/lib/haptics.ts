@@ -5,7 +5,7 @@ import { nativePlugin } from '@/lib/native'
 // there. Use the word that matches the moment, sparingly:
 //   selectionHaptic   a tick as a choice changes (segmented controls, pickers)
 //   tapHaptic         light: tabs, opening a menu or sheet
-//   followHaptic      medium: following someone
+//   followHaptic      medium: favouriting someone, turning alerts on
 //   successHaptic     saved, signed in, a live result arriving
 //   warningHaptic     a destructive confirm opening
 //   errorHaptic       a save or sign-in that failed

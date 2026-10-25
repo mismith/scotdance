@@ -259,7 +259,7 @@ for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`ag
     <section class="space-y-3">
       <div>
         <h2 class="text-heading">Alerts</h2>
-        <p class="text-muted-foreground text-sm">Who follows each dancer and competition, which alerts go to. Build it once when alerts first go live; it keeps itself up to date after that.</p>
+        <p class="text-muted-foreground text-sm">Who has each dancer as a favourite, and each competition’s alerts on: the lists alerts go to. Build it once when alerts first go live; it keeps itself up to date after that.</p>
       </div>
       <ul class="surface divide-y rounded-2xl">
         <li class="flex flex-wrap items-center gap-3 py-2 pr-2 pl-4">
@@ -284,7 +284,7 @@ for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`ag
         <p v-if="job('morning').result" class="text-done-foreground text-sm">{{ job('morning').result }}</p>
         <h3 class="text-callout pt-2 font-semibold">Sent here instead <span class="text-muted-foreground font-normal">(local emulator)</span></h3>
         <p class="text-muted-foreground text-sm">Nothing reaches a phone from the emulator: each alert lands here, as it would have looked.</p>
-        <p v-if="!outbox.length" class="text-muted-foreground text-sm">None yet. Post a result for a dancer someone follows.</p>
+        <p v-if="!outbox.length" class="text-muted-foreground text-sm">None yet. Post a result for someone’s favourite dancer.</p>
         <ul v-else class="bg-blue-paper space-y-3 rounded-2xl p-3">
           <li v-for="a in outbox" :key="a.id" class="space-y-1">
             <NotificationCard :title="a.title ?? ''" :body="a.body" :when="ago(a.at)" />

@@ -107,7 +107,7 @@ const kicker = computed(() => {
   return [when, c.location].filter(Boolean).join(' · ')
 })
 
-// Linked with others (ADR 0007 §6): a pill beside Follow opens the
+// Linked with others (ADR 0007 §6): a pill beside Alerts opens the
 // switcher, and a section shows the ones either side of this one.
 const switcher = useLinkedSwitcher()
 const { byCompetition: followedByCompetition } = useFollowedCompetitions()
@@ -311,7 +311,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
       <section v-else-if="ready && dancers.length" key="find" class="surface space-y-3 rounded-2xl p-4">
         <p class="text-callout">
           <span class="font-semibold">Is your dancer here?</span>
-          {{ mode === 'after' ? 'Find them to see their results.' : 'Follow them to see their day at a glance.' }}
+          {{ mode === 'after' ? 'Find them to see their results.' : 'Favourite them to see their day at a glance.' }}
         </p>
         <label class="field flex h-12 items-center gap-2 rounded-xl pr-1 pl-3">
           <Search class="text-muted-foreground size-5 shrink-0" />
@@ -552,7 +552,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
             <span class="min-w-0 flex-1">
               <span class="flex items-center gap-1.5 text-base font-semibold">
                 <span class="truncate">{{ staffMemberName(m) }}</span>
-                <Star v-if="isFavoriteStaff(m)" class="text-secondary size-4 shrink-0 fill-current" aria-label="Following" />
+                <Star v-if="isFavoriteStaff(m)" class="text-secondary size-4 shrink-0 fill-current" aria-label="Favourite" />
               </span>
               <span v-if="m.location" class="text-muted-foreground block truncate text-sm">{{ m.location }}</span>
             </span>

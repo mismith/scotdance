@@ -80,25 +80,28 @@ for (const [path, title] of [
   })
 }
 
-test('following a judge signed out asks you to sign in first', { tag: '@seed' }, async ({ page }) => {
+test('favouriting a judge signed out asks you to sign in first', { tag: '@seed' }, async ({ page }) => {
   await page.goto(`/judges/${JUDGE}/info`)
-  await page.getByRole('button', { name: 'Follow', exact: true }).click()
+  await page.getByRole('button', { name: 'Favourite', exact: true }).click()
   await expect(page.locator('dialog[open]')).toBeVisible()
-  await expect(page.locator('dialog[open]').getByRole('heading', { name: `Sign in to follow ${judge}` })).toBeVisible()
+  await expect(page.locator('dialog[open]').getByRole('heading', { name: `Sign in to favourite ${judge}` })).toBeVisible()
 })
 
-test('following a judge puts them under Following on Judges, and unfollowing takes them off', { tag: '@seed' }, async ({ page }) => {
-  const email = `${uid('follow')}@example.test`
+test('favouriting a judge puts them under Favourites on Judges, and taking them off takes them off', { tag: '@seed' }, async ({ page }) => {
+  const email = `${uid('favourite')}@example.test`
   await ensureUser(email)
   await signIn(page, email)
   await page.goto(`/judges/${JUDGE}/info`)
-  const follow = page.getByRole('button', { name: 'Follow', exact: true })
-  await follow.click()
-  await expect(page.getByRole('button', { name: 'Following', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  const favourite = page.getByRole('button', { name: 'Favourite', exact: true })
+  await expect(favourite).toHaveAttribute('aria-pressed', 'false')
+  await favourite.click()
+  await expect(favourite).toHaveAttribute('aria-pressed', 'true')
+  // Only dancers and competitions have alerts (ADR 0008).
+  await expect(page.getByRole('button', { name: /Alerts/ })).toHaveCount(0)
 
   await page.goto('/judges')
-  const following = page.locator('section').filter({ has: page.getByRole('heading', { level: 2, name: 'Following' }) })
-  await expect(following.getByRole('link', { name: new RegExp(`^${judge}`) })).toBeVisible()
-  await following.getByRole('button', { name: `Following ${judge}` }).click()
-  await expect(following).toBeHidden()
+  const favourites = page.locator('section').filter({ has: page.getByRole('heading', { level: 2, name: 'Favourites' }) })
+  await expect(favourites.getByRole('link', { name: new RegExp(`^${judge}`) })).toBeVisible()
+  await favourites.getByRole('button', { name: `Favourite ${judge}`, pressed: true }).click()
+  await expect(favourites).toBeHidden()
 })

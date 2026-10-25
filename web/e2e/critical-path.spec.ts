@@ -4,7 +4,7 @@ import { appTab, hasSidebar } from './support/nav'
 import { removeCompetition, seedCompetition, type SeededCompetition } from './support/seed'
 
 // The day in one test: an organiser posts a placing in Manage, and a parent
-// following that dancer sees it on Home without reloading.
+// with that dancer as a favourite sees it on Home without reloading.
 
 let comp: SeededCompetition
 
@@ -15,7 +15,7 @@ test.afterEach(async () => {
   await removeCompetition(comp.id)
 })
 
-test('a placing entered in Manage reaches a following parent live', async ({ browser }) => {
+test('a placing entered in Manage reaches a parent with them as a favourite, live', async ({ browser }) => {
   const group = comp.groups.find((g) => g.id.endsWith('-grp-12'))!
   const dancer = comp.dancers.find((d) => d.groupId === group.id)!
   const dance = comp.dances[0]
@@ -25,7 +25,7 @@ test('a placing entered in Manage reaches a following parent live', async ({ bro
   await ensureUser(parentEmail)
   await grantCompetition(await ensureUser(organiserEmail), comp.id)
 
-  // Follow keys on the dancer's profile, which the aggregator links back
+  // A favourite keys on the dancer's profile, which the aggregator links back
   // to the competition's dancer record (dancerId) a moment after seeding.
   await expect
     .poll(() => dbGet(`competitions:data/${comp.id}/dancers/${dancer.id}/dancerId`), { timeout: 20_000 })
@@ -34,8 +34,8 @@ test('a placing entered in Manage reaches a following parent live', async ({ bro
   const parent = await (await browser.newContext()).newPage()
   await signIn(parent, parentEmail)
   await parent.goto(`/competitions/${comp.id}/dancers/${dancer.id}`)
-  await parent.getByRole('button', { name: `Follow ${dancer.firstName}`, exact: false }).first().click()
-  await expect(parent.getByRole('button', { name: /^Following/ }).first()).toBeVisible()
+  await parent.getByRole('button', { name: `Favourite ${dancer.firstName}`, pressed: false, exact: false }).first().click()
+  await expect(parent.getByRole('button', { name: /^Favourite/, pressed: true }).first()).toBeVisible()
   // In-app, the way a parent gets there (a fresh load of '/' may resume
   // the last page instead).
   // (Wide screens have no bar to leave from: the sidebar's Home is always there.)

@@ -19,7 +19,7 @@ const props = withDefaults(
   defineProps<{
     card: DancerCard
     color: string | null
-    /** A Follow star at the end (dancers you've only looked at). */
+    /** A Favourite star at the end (dancers you've only looked at). */
     follow?: boolean
     showCompetition?: boolean
   }>(),

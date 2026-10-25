@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { refDebounced } from '@vueuse/core'
-import { ChevronRight, CloudOff, LoaderCircle, Search, SearchX, X } from '@lucide/vue'
+import { BellOff, ChevronRight, CloudOff, LoaderCircle, Search, SearchX, X } from '@lucide/vue'
 import AppBar from '@/components/nav/AppBar.vue'
 import Button from '@/components/ui/Button.vue'
 import Avatar from '@/components/Avatar.vue'
@@ -19,9 +19,9 @@ import { usePageTitle } from '@/composables/usePageTitle'
 import { lookupEntityId } from '@/lib/entityIndex'
 import { settle } from '@/lib/settle'
 
-// Everyone you follow, in one list you can manage (a teacher might follow a
-// whole class), plus search and recently viewed. Following is by person, so
-// these link straight to each dancer's page.
+// Your favourites, in one list you can manage (a teacher might have a whole
+// class), plus search and recently viewed. Favourites are by person, so
+// these link straight to each dancer's page; one with alerts off says so.
 usePageTitle(['Dancers'])
 
 const route = useRoute()
@@ -153,15 +153,15 @@ async function openLate(name: string) {
       <template v-else>
         <section class="space-y-2">
           <h2 class="text-heading flex items-baseline justify-between">
-            Following <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ followed.length }}</span>
+            Favourites <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ followed.length }}</span>
           </h2>
           <EmptyState
             v-if="!followed.length"
             size="inline"
             scott
             class="surface rounded-2xl"
-            title="Follow your dancers"
-            description="Search for a dancer above, open their page and tap Follow. Everyone you follow shows up here and on Home."
+            title="Favourite your dancers"
+            description="Search for a dancer above, open their page and tap Favourite. Your favourites show up here and on Home."
           />
           <ul v-else :class="['surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]', settle]">
             <li v-for="d in followed" :key="d.id" class="flex items-center pr-1">
@@ -172,7 +172,12 @@ async function openLate(name: string) {
                 <span class="flex w-11 shrink-0 justify-center">
                   <Avatar :name="d.name" :color="following.colorFor(d.id)" />
                 </span>
-                <span class="min-w-0 flex-1 truncate text-base font-semibold">{{ d.name }}</span>
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate text-base font-semibold">{{ d.name }}</span>
+                  <span v-if="!following.alertsOn(d.id)" class="text-muted-foreground flex items-center gap-1 text-sm">
+                    <BellOff class="size-3.5 shrink-0" aria-hidden="true" /> Alerts off
+                  </span>
+                </span>
               </RouterLink>
               <FollowButton :dancer="{ dancerId: d.id, fullName: d.name }" />
             </li>

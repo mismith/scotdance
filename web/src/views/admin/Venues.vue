@@ -215,7 +215,7 @@ const showSeparate = ref(false)
     <SectionHeader
       title="Venues"
       :count="groups?.length || null"
-      description="Venues that look like one place, typed in more than one way, each against Google’s version with the differences marked. Merging gives all their competitions the chosen name with Google’s address and map position (or the chosen one’s, when Google doesn’t know the place), and their followers follow the venue kept."
+      description="Venues that look like one place, typed in more than one way, each against Google’s version with the differences marked. Merging gives all their competitions the chosen name with Google’s address and map position (or the chosen one’s, when Google doesn’t know the place), and anyone’s favourite of them moves to the venue kept."
     />
 
     <div v-if="!groups" class="space-y-4" aria-busy="true">

@@ -3,7 +3,7 @@ import { solidOf } from '@/lib/tartan'
 
 // One of your dancers inside a list row: a dot in their colour, their first
 // name, then quieter details. The dot is the app's one signal for "yours";
-// stars are only ever the Follow button. (A tartan's dot is its first
+// stars are only ever the Favourite button. (A tartan's dot is its first
 // colour: cloth doesn't read at 10px.)
 defineProps<{ color: string | null; name: string; details?: Array<string | null | undefined> }>()
 </script>

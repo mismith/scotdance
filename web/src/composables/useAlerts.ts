@@ -5,12 +5,13 @@ import { database, NAMESPACE } from '@/firebase'
 import { isNative, nativePlugin, platform } from '@/lib/native'
 import { onBeforeSignOut, useAuthStore } from '@/stores/auth'
 
-// Alerts when a dancer you follow places, a competition you follow goes
-// live, and on the morning of competition day.
+// Alerts when a favourite dancer places (unless their alerts are off), a
+// competition you've turned alerts on for goes live, and on the morning of
+// competition day (ADR 0008).
 //
 // Two ways they reach you:
 //  - In the app (web and native): while ScotDance.app is open, a banner
-//    drops in the moment a followed dancer's placing is posted
+//    drops in the moment a favourite dancer's placing is posted
 //    (useLiveAlerts). On by default; switched off per device.
 //  - Notifications (the native apps): the phone registers with Firebase
 //    Cloud Messaging and its token is saved to /users:tokens/{uid}/{key};
@@ -23,7 +24,7 @@ export type AlertKind = 'results' | 'morning' | 'published'
 export const ALERT_KINDS: Array<{ id: AlertKind; label: string; hint: string; importance: 2 | 3 | 4 }> = [
   { id: 'results', label: 'Results', hint: 'The moment your dancers’ placings are posted', importance: 4 },
   { id: 'morning', label: 'Morning of', hint: 'Who’s dancing today, first thing on competition day', importance: 3 },
-  { id: 'published', label: 'Dancer list is up', hint: 'When a competition you follow posts its dancers and schedule', importance: 2 },
+  { id: 'published', label: 'Dancer list is up', hint: 'When a competition you get alerts for posts its dancers and schedule', importance: 2 },
 ]
 
 // @capacitor-firebase/messaging, as the native shell exposes it. It hands

@@ -51,26 +51,26 @@ async function lookMenu(page: Page, p: Person) {
   await page.getByRole('button', { name: `Choose ${p.firstName}’s look` }).click()
   return page.getByRole('dialog', { name: `${p.firstName}’s look` })
 }
-/** Following is one tap either way; stopping offers Undo. */
+/** A favourite is one tap either way; taking one off offers Undo. */
 async function unfollow(page: Page, p: Person) {
-  await page.getByRole('button', { name: `Following ${p.name}` }).click()
-  await expect(page.getByText(`Stopped following ${p.firstName}`)).toBeVisible()
+  await page.getByRole('button', { name: `Favourite ${p.name}`, pressed: true }).click()
+  await expect(page.getByText(`Removed ${p.firstName} from favourites`)).toBeVisible()
 }
 
-test('follow a dancer, see their day on Home, and watch a placing arrive', async ({ page }) => {
+test('favourite a dancer, see their day on Home, and watch a placing arrive', async ({ page }) => {
   // Beginner Under 7: drawn, on platform A this morning, no results yet.
   // This entry is number 107, last of three to dance the Fling.
   const person = await follow(2)
   const { email, uid: parentId } = await freshParent()
 
-  // Signed out, Follow asks you to sign in, naming the dancer…
+  // Signed out, Favourite asks you to sign in, naming the dancer…
   await page.goto(`/competitions/${comp.id}/dancers/${entry(2).id}`)
   await expect(page.getByRole('heading', { name: person.name })).toBeVisible()
-  await page.getByRole('button', { name: `Follow ${person.name}` }).click()
-  await expect(sheet(page).getByRole('heading', { name: `Sign in to follow ${person.firstName}` })).toBeVisible()
+  await page.getByRole('button', { name: `Favourite ${person.name}`, pressed: false }).click()
+  await expect(sheet(page).getByRole('heading', { name: `Sign in to favourite ${person.firstName}` })).toBeVisible()
   await signInFromSheet(page, email)
-  // …and the follow goes through once you have.
-  await expect(page.getByRole('button', { name: `Following ${person.name}` })).toBeVisible({ timeout: 10_000 })
+  // …and the favourite goes through once you have.
+  await expect(page.getByRole('button', { name: `Favourite ${person.name}`, pressed: true })).toBeVisible({ timeout: 10_000 })
   // The button shows it at once; the save reaches the server a moment later.
   await expect.poll(() => dbGet(`users:favorites/${parentId}/dancers/${person.id}`)).toBe(person.name)
 
@@ -103,11 +103,11 @@ test('follow a dancer, see their day on Home, and watch a placing arrive', async
   await dbSet(`competitions:data/${comp.id}/draws/${g}/${comp.dances[1].id}`, ['107', '108'])
   await expect(sword).toContainText('1st to dance')
 
-  // Unfollow from their page: Home goes back to the pitch, with them under
+  // Take them off from their page: Home goes back to the pitch, with them under
   // Recently viewed rather than Your dancers.
   await page.goto(`/dancers/${person.id}/info`)
   await unfollow(page, person)
-  await expect(page.getByRole('button', { name: `Follow ${person.name}` })).toBeVisible()
+  await expect(page.getByRole('button', { name: `Favourite ${person.name}`, pressed: false })).toBeVisible()
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'See your dancer’s day at a glance' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Your dancers' })).toHaveCount(0)
@@ -258,7 +258,7 @@ test('signing out clears your dancers; the next account sees only its own', asyn
   await expect(page.getByRole('heading', { name: 'See your dancer’s day at a glance' })).toBeVisible()
   await expect(card(page, person)).toHaveCount(0)
   await page.goto(`/competitions/${comp.id}/dancers/${entry(5).id}`)
-  await expect(page.getByRole('button', { name: `Follow ${person.name}` })).toBeVisible()
+  await expect(page.getByRole('button', { name: `Favourite ${person.name}`, pressed: false })).toBeVisible()
 })
 
 test('following lots: Home shows the few that matter, and See all lists everyone', async ({ page }) => {
@@ -305,9 +305,9 @@ test('old favourites from the previous app: named ones follow the person, nothin
   // Unfollowing sticks: the old key isn't copied again next time.
   await page.goto(`/dancers/${person.id}/info`)
   await unfollow(page, person)
-  await expect(page.getByRole('button', { name: `Follow ${person.name}` })).toBeVisible()
+  await expect(page.getByRole('button', { name: `Favourite ${person.name}`, pressed: false })).toBeVisible()
   await page.reload()
-  await expect(page.getByRole('button', { name: `Follow ${person.name}` })).toBeVisible()
+  await expect(page.getByRole('button', { name: `Favourite ${person.name}`, pressed: false })).toBeVisible()
   expect(await dbGet(`users:favorites/${parentId}/dancers`)).toEqual(old)
 })
 
@@ -372,8 +372,8 @@ test('closing the sign-in sheet drops the follow it was opened for', async ({ pa
   const person = await follow(7)
   const { email, uid: parentId } = await freshParent()
   await page.goto(`/competitions/${comp.id}/dancers/${entry(7).id}`)
-  await page.getByRole('button', { name: `Follow ${person.name}` }).click()
-  await expect(sheet(page).getByRole('heading', { name: `Sign in to follow ${person.firstName}` })).toBeVisible()
+  await page.getByRole('button', { name: `Favourite ${person.name}`, pressed: false }).click()
+  await expect(sheet(page).getByRole('heading', { name: `Sign in to favourite ${person.firstName}` })).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(sheet(page)).toHaveCount(0)
 
@@ -386,7 +386,7 @@ test('closing the sign-in sheet drops the follow it was opened for', async ({ pa
     await page.locator('dialog[open]').getByRole('button', { name: 'Sign in', exact: true }).click()
   }
   await signInFromSheet(page, email)
-  await expect(page.getByRole('button', { name: `Follow ${person.name}` })).toBeVisible()
+  await expect(page.getByRole('button', { name: `Favourite ${person.name}`, pressed: false })).toBeVisible()
   await page.waitForTimeout(500)
   expect(await dbGet(`users:favorites/${parentId}`)).toBeNull()
 })

@@ -59,8 +59,8 @@ const crisp = useCrisp()
             your (public) display name, should you choose to set one in your profile
           </li>
           <li>
-            the dancers, competitions and people you follow, and the colours you pick for
-            your dancers (these are private to you)
+            your favourites, the competitions you get alerts for, and the colours you pick
+            for your dancers (these are private to you)
           </li>
           <li>how you use the app (dancer, parent, teacher, organiser), should you say</li>
         </ul>
@@ -96,8 +96,8 @@ const crisp = useCrisp()
           Organisers enter these from their own entries. <em>ScotDance.app</em> doesn’t
           take entries itself, and has nowhere to put a dancer’s birthdate, address,
           school or contact details. Each person’s competitions are gathered onto one profile,
-          matched by name, so families can follow a dancer from one competition to the
-          next and keep a record of their results. Search engines like Google are asked
+          matched by name, so families can keep up with a dancer from one competition to
+          the next and keep a record of their results. Search engines like Google are asked
           not to list dancer pages, and competitions that aren’t published stay private.
         </p>
         <p>

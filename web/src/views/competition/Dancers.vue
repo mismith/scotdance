@@ -203,8 +203,8 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
           v-if="!sections.length && mineOnly"
           size="inline"
           :icon="Star"
-          :title="followedCount ? 'No matches' : 'You’re not following anyone here'"
-          description="Turn off “Only my dancers” to see everyone, then tap Follow next to your dancer."
+          :title="followedCount ? 'No matches' : 'None of your favourites are here'"
+          description="Turn off “Only my dancers” to see everyone, then tap the star next to your dancer."
         />
         <p v-else-if="!sections.length" class="text-muted-foreground py-6 text-center text-base">
           No dancer matches “{{ query }}”. Check the number on their card, or try part of their name.

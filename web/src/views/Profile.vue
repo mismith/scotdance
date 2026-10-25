@@ -219,7 +219,7 @@ const submitDisabled = computed(() => {
       </template>
       <form class="space-y-3 p-4 pb-[calc(1.5rem+var(--safe-bottom))]" @submit.prevent="submitModal">
         <p v-if="modal === 'delete'" class="text-base">
-          This removes your account, the dancers you follow and your settings. It can’t be undone. Competition results
+          This removes your account, your favourites and your settings. It can’t be undone. Competition results
           aren’t affected.
         </p>
 

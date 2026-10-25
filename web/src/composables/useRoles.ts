@@ -8,7 +8,7 @@ import { useMeStore } from '@/stores/me'
 
 // "Which of these describe you?" Pick any: dancer, parent, teacher, organiser.
 // Stored on the person (/users/{uid}/roles) and used to fit the app:
-//   teacher    Home lists followed dancers compactly (a class, not two kids)
+//   teacher    Home lists favourite dancers compactly (a class, not two kids)
 //   organizer  quick access to managing competitions
 // Asked once, right after someone deliberately creates an account; never in
 // the way of an action they signed in to do (then it waits as a card on Home).
@@ -16,8 +16,8 @@ import { useMeStore } from '@/stores/me'
 export type Role = 'dancer' | 'parent' | 'teacher' | 'organizer'
 export const ROLES: Array<{ id: Role; label: string; hint: string }> = [
   { id: 'dancer', label: 'Dancer', hint: 'I compete' },
-  { id: 'parent', label: 'Parent of a dancer', hint: 'I follow my kids' },
-  { id: 'teacher', label: 'Teacher or coach', hint: 'I follow my students' },
+  { id: 'parent', label: 'Parent of a dancer', hint: 'I keep up with my kids' },
+  { id: 'teacher', label: 'Teacher or coach', hint: 'I keep up with my students' },
   { id: 'organizer', label: 'Competition organiser', hint: 'I run or help run competitions' },
 ]
 
