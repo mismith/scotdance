@@ -438,6 +438,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
           <div class="min-w-0 flex-1">
             <!-- Venue and address in full: they're what you'd read out to a taxi. -->
             <p v-if="competition.venue" class="text-base font-semibold break-words">{{ competition.venue }}</p>
+            <p v-if="competition.space" class="text-sm font-medium break-words">{{ competition.space }}</p>
             <p class="text-muted-foreground text-sm break-words">
               {{ [competition.address, competition.location].filter(Boolean).join(', ') }}
             </p>

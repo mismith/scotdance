@@ -94,6 +94,8 @@ export interface SearchPlaceGroup {
   country?: string
   region?: string
   locality?: string
+  /** The town as typed, which tells a venue apart when it has no locality. */
+  location?: string
 }
 
 export interface SearchAllResults {
@@ -215,6 +217,7 @@ function mapPlacesBucket(
         country: sample.country,
         region: sample.region,
         locality: sample.locality,
+        location: sample.location,
       }
     })
     .filter((g): g is SearchPlaceGroup => g !== null)

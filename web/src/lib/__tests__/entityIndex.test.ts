@@ -121,3 +121,20 @@ describe('lookups', () => {
     expect(await lookupVenueId('   ', 'Calgary')).toBeNull()
   })
 })
+
+describe('venueKey', async () => {
+  const { venueKey } = await import('@/lib/entityIndex')
+  const { venueKey: functionsKey } = await import('../../../../functions/src/utility/entityConfigs')
+
+  it('falls back to the town as typed, the same as the functions', () => {
+    for (const [venue, locality, location] of [
+      ['Spruce Meadows', 'Calgary', 'Calgary, AB'],
+      ['Spruce Meadows', null, 'Calgary, AB'],
+      ['Spruce Meadows', '', 'Calgary'],
+      ['Spruce Meadows', null, null],
+      ['', 'Calgary', null],
+    ] as const) expect(venueKey(venue, locality, location)).toBe(functionsKey(venue, locality, location))
+    expect(venueKey('Spruce Meadows', null, 'Calgary, AB')).toBe('spruce meadows|calgary')
+    expect(venueKey('Spruce Meadows', null, null)).toBe('spruce meadows|none')
+  })
+})

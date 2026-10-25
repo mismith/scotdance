@@ -1,4 +1,4 @@
-import { normalizeEntityName, venueKey } from '@/lib/entityIndex'
+import { normalizeEntityName, venueKey, venueTown } from '@/lib/entityIndex'
 import { parseDate } from '@/lib/format'
 import { looseVenueName, townLine } from '@/lib/knownVenues'
 import type { VenueFields } from '@/lib/maps'
@@ -47,7 +47,7 @@ export function venuesFrom(comps: Record<string, CompetitionRecord>): Venue[] {
     const fields = Object.fromEntries(
       VENUE_FIELDS.map((f) => [f, latest.find(([, c]) => c[f] != null && c[f] !== '')?.[1][f] ?? null]),
     ) as unknown as VenueFields
-    return { id, key: venueKey(fields.venue, fields.locality), fields, competitionIds: latest.map(([cid]) => cid) }
+    return { id, key: venueKey(fields.venue, fields.locality, fields.location), fields, competitionIds: latest.map(([cid]) => cid) }
   })
 }
 
@@ -143,7 +143,7 @@ export function tierOf(g: Venue[]): Tier {
 export function googleFits(g: Venue[], google: VenueFields | null | undefined): google is VenueFields {
   if (!google) return false
   const pinned = g.filter((v) => v.fields.lat != null)
-  if (!pinned.length) return !!google.locality && g.some((v) => normalizeEntityName(v.fields.locality ?? '') === normalizeEntityName(google.locality ?? ''))
+  if (!pinned.length) return !!google.locality && g.some((v) => venueTown(v.fields.locality, v.fields.location) === normalizeEntityName(google.locality ?? ''))
   return pinned.some((v) => (metres(v.fields, google) ?? Infinity) <= GOOGLE_FITS_M)
 }
 
@@ -154,7 +154,7 @@ const sameText = (a: string | null | undefined, b: string | null | undefined) =>
 export function defaultKeeper(g: Venue[], google?: VenueFields | null): Venue {
   if (googleFits(g, google)) {
     const named = g.filter((v) => sameText(v.fields.venue, google.venue))
-    return named.find((v) => sameText(v.fields.locality, google.locality)) ?? named[0] ?? g[0]
+    return named.find((v) => venueTown(v.fields.locality, v.fields.location) === normalizeEntityName(google.locality ?? '')) ?? named[0] ?? g[0]
   }
   return g[0]
 }
@@ -169,7 +169,9 @@ export function canonicalFields(keep: Venue, google?: VenueFields | null): Venue
   const base = keep.fields
   if (!google) return base
   const venue = sameText(google.venue, base.venue) ? google.venue : base.venue
-  const locality = sameText(google.locality, base.locality) ? google.locality : base.locality
+  // Google's town when it's the one the venue goes by (filling one that was only typed).
+  const town = venueTown(base.locality, base.location)
+  const locality = google.locality && normalizeEntityName(google.locality) === town ? google.locality : base.locality
   const region = google.region ?? base.region
   return {
     venue,
@@ -220,6 +222,25 @@ export function wordDiff(text: string | null | undefined, reference: string | nu
   return merged.filter((p, k) => p.kind !== 'missing' || (merged[k - 1]?.kind !== 'diff' && merged[k + 1]?.kind !== 'diff'))
 }
 
+const SEPARATORS = /^[\s\-–—,:(/]+|[\s\-–—,:)/]+$/g
+
+/**
+ * The space (hall, theatre, gym) a venue's name adds to the kept name: "Acacia Ridge
+ * State School - Assembly Hall near the oval" kept as "Acacia Ridge State
+ * School" adds "Assembly Hall near the oval". Null when it adds nothing, or
+ * isn't the kept name with more on the front or end.
+ */
+export function spaceFrom(name: string | null | undefined, kept: string | null | undefined): string | null {
+  const n = (name ?? '').replace(/\s+/g, ' ').trim()
+  const k = (kept ?? '').replace(/\s+/g, ' ').trim()
+  if (!n || !k || n.length <= k.length) return null
+  const lower = n.toLowerCase()
+  const at = lower.startsWith(k.toLowerCase()) ? 'start' : lower.endsWith(k.toLowerCase()) ? 'end' : null
+  if (!at) return null
+  const rest = (at === 'start' ? n.slice(k.length) : n.slice(0, n.length - k.length)).replace(SEPARATORS, '').trim()
+  return rest || null
+}
+
 export interface Merge {
   /** The multi-path update that merges them (paths under the data namespace). */
   after: Record<string, unknown>
@@ -243,6 +264,7 @@ export function mergeVenues({
   comps,
   synced,
   favorites,
+  spaces = {},
 }: {
   keep: Venue
   group: Venue[]
@@ -251,8 +273,10 @@ export function mergeVenues({
   /** Competitions whose venue comes from their linked main one. */
   synced: Set<string>
   favorites: Favorites
+  /** The space each venue's competitions keep (by venue id), when they don't have one. */
+  spaces?: Record<string, string>
 }): Merge {
-  if (venueKey(fields.venue, fields.locality) !== keep.key) throw new Error('Those fields would make another venue.')
+  if (venueKey(fields.venue, fields.locality, fields.location) !== keep.key) throw new Error('Those fields would make another venue.')
   const after: Record<string, unknown> = {}
   const before: Record<string, unknown> = {}
   const ids = new Set(group.map((v) => v.id))
@@ -260,11 +284,12 @@ export function mergeVenues({
   let competitions = 0
   for (const [id, c] of Object.entries(comps)) {
     if (!c || synced.has(id)) continue
-    if (!(typeof c.venueId === 'string' && ids.has(c.venueId)) && !keys.has(venueKey(c.venue, c.locality))) continue
+    if (!(typeof c.venueId === 'string' && ids.has(c.venueId)) && !keys.has(venueKey(c.venue, c.locality, c.location))) continue
     let changed = false
-    for (const f of VENUE_FIELDS) {
+    const venueId = typeof c.venueId === 'string' && ids.has(c.venueId) ? c.venueId : group.find((v) => v.key === venueKey(c.venue, c.locality, c.location))?.id
+    const space = !c.space && venueId ? spaces[venueId] : undefined
+    for (const [f, now] of [...VENUE_FIELDS.map((f) => [f, fields[f] ?? null] as const), ...(space ? [['space', space] as const] : [])]) {
       const was = c[f] ?? null
-      const now = fields[f] ?? null
       if (was === now) continue
       after[`competitions/${id}/${f}`] = now
       before[`competitions/${id}/${f}`] = was

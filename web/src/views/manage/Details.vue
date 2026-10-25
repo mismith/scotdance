@@ -62,6 +62,7 @@ const FIELD_NAMES: Record<string, string> = {
   description: 'Description',
   image: 'Image',
   venue: 'Venue',
+  space: 'Space',
   address: 'Address',
   location: 'Town or city',
   registrationURL: 'Registration link',
@@ -337,6 +338,7 @@ async function deleteCompetition() {
         <h2 class="text-heading">Where</h2>
         <template v-if="shared('venue')">
           <SharedValue label="Venue name" part="venue" :value="c.venue" />
+          <SharedValue v-if="c.space" label="Space" part="venue" :value="c.space" />
           <SharedValue label="Address" part="venue" :value="c.address" />
           <SharedValue label="Town or city" part="venue" :value="c.location" />
           <MapPreview v-if="Number.isFinite(c.lat) && Number.isFinite(c.lng)" :lat="c.lat!" :lng="c.lng!" class="h-40 rounded-xl" />
@@ -344,6 +346,13 @@ async function deleteCompetition() {
         <template v-else>
           <VenueField v-if="placesAvailable" :model-value="c.venue" :save="save('venue')" @pick="pickVenue" />
           <TextField v-else :model-value="c.venue" label="Venue name" placeholder="e.g. Telus Convention Centre" :save="save('venue')" />
+          <TextField
+            :model-value="c.space"
+            label="Space"
+            placeholder="e.g. Main Hall"
+            hint="The hall, theatre, gym or stage it’s in, if the venue has more than one. The venue name stays the building’s."
+            :save="save('space')"
+          />
           <TextField :model-value="c.address" label="Address" placeholder="e.g. 120 9th Ave SE" :save="save('address')" />
           <TextField
             :model-value="c.location"

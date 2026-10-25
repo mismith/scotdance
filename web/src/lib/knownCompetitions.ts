@@ -37,6 +37,7 @@ export interface HereCompetition {
   name?: string
   date?: string | number
   venue?: string
+  space?: string
   address?: string
   location?: string
   lat?: number

@@ -168,14 +168,17 @@ export function staffAggregator(
 
 // --- Venues: from competition meta writes. Each competition has at most one
 // venue (so recordIdParam is null — the comp itself is the source record).
-// Identity is composite — normalized venue + locality, so two same-named
-// venues in different cities don't merge.
+// Identity is composite — normalized venue + town, so two same-named
+// venues in different cities don't merge. The town is the locality, else the
+// town as typed ("Calgary, AB"), so a competition whose town was typed rather
+// than picked still joins its venue.
 
 export interface CompRecord {
   venue?: string
   published?: boolean
   listed?: boolean
   locality?: string | null
+  location?: string | null
   region?: string | null
   country?: string | null
   lat?: number | null
@@ -189,6 +192,7 @@ export interface VenueAppearance {
   competitionId: string
   venue: string | null
   locality: string | null
+  location?: string | null
   region: string | null
   country: string | null
   lat: number | null
@@ -209,11 +213,15 @@ function dateMs(d: unknown): number | null {
   return Number.isFinite(t) ? t : null;
 }
 
-function venueKey(venue: unknown, locality: unknown): string {
+/** The town a venue is told apart by: its locality, else the town typed first in `location`. */
+export function venueTown(locality: unknown, location: unknown): string {
+  return normalizeName(locality as string) || normalizeName(String(location ?? '').split(',')[0]);
+}
+
+export function venueKey(venue: unknown, locality: unknown, location?: unknown): string {
   const v = normalizeName(venue as string);
   if (!v) return '';
-  const l = normalizeName(locality as string);
-  return `${v}|${l || 'none'}`;
+  return `${v}|${venueTown(locality, location) || 'none'}`;
 }
 
 export const venueAggregator: AggregatorConfig<CompRecord, VenueAppearance> = {
@@ -222,8 +230,8 @@ export const venueAggregator: AggregatorConfig<CompRecord, VenueAppearance> = {
   backPointerField: 'venueId',
   predicate: hasVenue,
   nameOf: (c) => c.venue ?? '',
-  identityKey: (c) => venueKey(c.venue, c.locality),
-  identityKeyFromAppearance: (a) => venueKey(a.venue, a.locality),
+  identityKey: (c) => venueKey(c.venue, c.locality, c.location),
+  identityKeyFromAppearance: (a) => venueKey(a.venue, a.locality, a.location),
   seedAggregate: (c) => ({
     locality: c.locality ?? null,
     region: c.region ?? null,
@@ -241,6 +249,7 @@ export const venueAggregator: AggregatorConfig<CompRecord, VenueAppearance> = {
     competitionId,
     venue: c.venue ?? null,
     locality: c.locality ?? null,
+    location: c.location ?? null,
     region: c.region ?? null,
     country: c.country ?? null,
     lat: typeof c.lat === 'number' ? c.lat : null,

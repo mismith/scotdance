@@ -11,6 +11,7 @@ const {
   leaveSeparate,
   mergeVenues,
   namesAlike,
+  spaceFrom,
   separated,
   tierOf,
   venuesFrom,
@@ -211,3 +212,27 @@ describe('wordDiff', () => {
   })
 })
 
+
+describe('spaces', () => {
+  it('finds the space a name adds to the kept one', () => {
+    expect(spaceFrom('Acacia Ridge State School - Assembly Hall near the oval', 'Acacia Ridge State School')).toBe('Assembly Hall near the oval')
+    expect(spaceFrom('WinSport - Markin Macphail Centre (Upstairs Conference Room)', 'WinSport - Markin Macphail Centre')).toBe('Upstairs Conference Room')
+    expect(spaceFrom('Edmonton Scottish Society (Grant MacEwan Park)', 'Edmonton Scottish Society')).toBe('Grant MacEwan Park')
+    expect(spaceFrom('Chief Sepass Theatre Langley Fine Arts School', 'Langley Fine Arts School')).toBe('Chief Sepass Theatre')
+    expect(spaceFrom('Beaumont Community Center', 'Beaumont Community Centre')).toBeNull()
+    expect(spaceFrom('Beaumont Community Centre', 'Beaumont Community Centre')).toBeNull()
+  })
+
+  it('gives a merged venue’s competitions its space, unless they have one', () => {
+    const hall = { c10: { venue: 'Beaumont Community Centre - Hall B', locality: 'Beaumont', listed: true, venueId: 'VH', ...BEAUMONT }, c11: { venue: 'Beaumont Community Centre - Hall B', space: 'Gym', listed: true, venueId: 'VH', ...BEAUMONT } }
+    const all = { ...comps, ...hall }
+    const vs = venuesFrom(all)
+    const group = [vs.find((v) => v.id === 'V1')!, vs.find((v) => v.id === 'VH')!]
+    const m = mergeVenues({ keep: group[0], group, fields: group[0].fields, comps: all, synced: new Set(), favorites: {}, spaces: { VH: 'Hall B' } })
+    expect(m.after['competitions/c10/space']).toBe('Hall B')
+    expect(m.after['competitions/c10/venue']).toBe('Beaumont Community Centre')
+    expect(m.before['competitions/c10/space']).toBeNull()
+    expect(m.after).not.toHaveProperty('competitions/c11/space')
+    expect(m.after).not.toHaveProperty('competitions/c1/space')
+  })
+})

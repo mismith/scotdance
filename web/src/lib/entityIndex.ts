@@ -42,21 +42,26 @@ export async function lookupEntityIdOrThrow(
   return readIndex(namespace, key)
 }
 
-// Venues key on `normalize(name) + '|' + normalize(locality) || 'none'` so
-// "Telus Convention Centre" in Calgary vs Brisbane don't silently merge.
-// Mirrors venueKey() in functions/src/utility/entityConfigs.ts.
-export function venueKey(venue: string | null | undefined, locality?: string | null): string {
+// Venues key on `normalize(name) + '|' + town || 'none'` so "Telus
+// Convention Centre" in Calgary vs Brisbane don't silently merge. The town is
+// the locality, else the town typed first in `location` ("Calgary, AB").
+// Mirrors venueTown() and venueKey() in functions/src/utility/entityConfigs.ts.
+export function venueTown(locality?: string | null, location?: string | null): string {
+  return normalizeEntityName(locality || '') || normalizeEntityName((location ?? '').split(',')[0])
+}
+
+export function venueKey(venue: string | null | undefined, locality?: string | null, location?: string | null): string {
   const v = normalizeEntityName(venue ?? '')
   if (!v) return ''
-  const l = normalizeEntityName(locality || '')
-  return `${v}|${l || 'none'}`
+  return `${v}|${venueTown(locality, location) || 'none'}`
 }
 
 export async function lookupVenueId(
   venue: string,
   locality?: string | null,
+  location?: string | null,
 ): Promise<string | null> {
-  const key = venueKey(venue, locality)
+  const key = venueKey(venue, locality, location)
   if (!key) return null
   return readIndex('venues', key).catch(() => null)
 }

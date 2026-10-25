@@ -36,6 +36,8 @@ import {
   type KnownCompetition,
   type Suggestions,
 } from '@/lib/knownCompetitions'
+import { lookupVenueId } from '@/lib/entityIndex'
+import { knownVenueFields } from '@/lib/knownVenues'
 import { guessUserCountry } from '@/lib/locale'
 import { type VenuePlace } from '@/lib/maps'
 import { registrationPreview } from '@/lib/registration'
@@ -68,6 +70,7 @@ const blank = () => ({
   date: '',
   name: '',
   venue: '',
+  space: '',
   address: '',
   location: '',
   sobhd: '',
@@ -391,7 +394,7 @@ async function afterDate() {
 // (or another) puts that back, leaving anything typed since, like your name.
 // A pick is for its day and country: choosing another is a new question.
 type Answers = {
-  form: Pick<typeof form, 'name' | 'venue' | 'address' | 'location'>
+  form: Pick<typeof form, 'name' | 'venue' | 'space' | 'address' | 'location'>
   place: VenuePlace | null
   hosts: { ids: string[]; fresh: Array<{ name: string; shortName: string }>; offered: boolean }
 }
@@ -403,7 +406,7 @@ const pickedBefore = ref<string | null>(null)
 const answersNow = (): Answers =>
   JSON.parse(
     JSON.stringify({
-      form: { name: form.name, venue: form.venue, address: form.address, location: form.location },
+      form: { name: form.name, venue: form.venue, space: form.space, address: form.address, location: form.location },
       place: place.value,
       hosts,
     }),
@@ -437,8 +440,9 @@ function noneOfThese() {
 const organisationsIn = (ids?: Record<string, boolean>) => Object.keys(ids ?? {}).filter((id) => ids?.[id] === true)
 function pickKnown(k: KnownCompetition) {
   pick(k.key, () => {
-    Object.assign(form, { name: k.name, venue: k.venue ?? '', address: k.address ?? '', location: townOf(k) })
+    Object.assign(form, { name: k.name, venue: k.venue ?? '', space: '', address: k.address ?? '', location: townOf(k) })
     place.value = null
+    void joinKnownVenue(k)
     // When its organiser is an organisation here.
     const ids = organisationsIn(k.organisations)
     if (ids.length) {
@@ -448,11 +452,24 @@ function pickKnown(k: KnownCompetition) {
     hosts.offered = true
   })
 }
+// A listed competition's venue, when it's one the app already knows (same
+// name and town): its name, address, town and map position as the app has
+// them, so the competition joins that venue rather than starting another
+// with only a typed town. (Shown on Review like anything else picked.)
+async function joinKnownVenue(k: KnownCompetition) {
+  if (!k.venue) return
+  const id = await lookupVenueId(k.venue, k.locality ?? null, townOf(k))
+  if (!id || pickedKey.value !== k.key) return
+  const f = await knownVenueFields(id).catch(() => null)
+  if (!f || pickedKey.value !== k.key) return
+  Object.assign(form, { venue: f.venue ?? form.venue, address: f.address ?? form.address, location: f.location ?? form.location })
+  place.value = { lat: f.lat, lng: f.lng, country: f.country, region: f.region, locality: f.locality }
+}
 // Same again: last year's, a year on. Not its registration number, which
 // changes every year.
 function sameAgain(c: HereCompetition) {
   pick(c.id, () => {
-    Object.assign(form, { name: thisYears(c), venue: c.venue ?? '', address: c.address ?? '', location: c.location ?? '' })
+    Object.assign(form, { name: thisYears(c), venue: c.venue ?? '', space: c.space ?? '', address: c.address ?? '', location: c.location ?? '' })
     place.value =
       typeof c.lat === 'number' && typeof c.lng === 'number'
         ? { lat: c.lat, lng: c.lng, country: c.country ?? null, region: c.region ?? null, locality: c.locality ?? null }
@@ -514,6 +531,7 @@ async function send() {
           name: t(form.name),
           date: form.date,
           venue: t(form.venue),
+          space: t(form.space),
           address: t(form.address),
           location: t(form.location),
           // As shown beside the box while it was typed.
@@ -645,7 +663,7 @@ const review = computed(() => {
     {
       slide: 'venue' as const,
       label: 'Venue',
-      lines: [form.venue, form.address, form.location],
+      lines: [form.venue, form.space, form.address, form.location],
     },
     { slide: 'registration' as const, label: 'Registration number', lines: [regPreview.value.saved] },
     {
@@ -678,6 +696,7 @@ const ANSWERS = [
   'date',
   'name',
   'venue',
+  'space',
   'address',
   'location',
   'sobhd',
@@ -1068,6 +1087,7 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
               v-else-if="at === 'venue'"
               ref="venueStep"
               v-model:venue="form.venue"
+              v-model:space="form.space"
               v-model:address="form.address"
               v-model:location="form.location"
               v-model:place="place"

@@ -187,7 +187,7 @@ export function getOnSearchAll(db: any) {
             // High enough to capture all comps for any one venue/locality/region
             // so the picker sheet gets the full list (not just a sample).
             group_limit: 50,
-            include_fields: 'id,venue,locality,region,country',
+            include_fields: 'id,venue,locality,location,region,country',
           });
         });
       } else if (type === 'organisations') {

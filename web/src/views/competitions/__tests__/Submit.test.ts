@@ -39,6 +39,16 @@ vi.mock('firebase/database', async (original) => {
     },
   }
 })
+// A venue the app already knows, found by a known competition's venue and town.
+const venues = vi.hoisted(() => ({ known: null as null | { id: string; fields: Record<string, unknown> } }))
+vi.mock('@/lib/entityIndex', async (original) => ({
+  ...(await original<typeof import('@/lib/entityIndex')>()),
+  lookupVenueId: async () => venues.known?.id ?? null,
+}))
+vi.mock('@/lib/knownVenues', async (original) => ({
+  ...(await original<typeof import('@/lib/knownVenues')>()),
+  knownVenueFields: async () => venues.known!.fields,
+}))
 const confirmAnswer = vi.hoisted(() => ({ value: false, asked: [] as unknown[] }))
 vi.mock('@/lib/admin/feedback', () => ({
   confirm: async (opts: unknown) => {
@@ -385,6 +395,7 @@ describe('Add a competition', () => {
     expect(sent.competition).toEqual({
       name: 'Calgary Highland Games',
       date: '2027-06-05',
+      space: null,
       venue: 'Telus Convention Centre',
       address: '120 9 Ave SE',
       location: 'Calgary, AB',
@@ -420,6 +431,7 @@ describe('Add a competition', () => {
     expect(slide(w)).toBe('venue')
     expect(w.text()).toContain('Add the town or city to continue.')
     await field(w, 'Town or city').setValue('Dunoon')
+    await field(w, 'Space (optional)').setValue('Main Stand')
     await cont(w)
     await cont(w)
     await field(w).setValue('Morag Ross')
@@ -428,6 +440,7 @@ describe('Add a competition', () => {
     await cont(w)
     expect(sentValue().competition).not.toHaveProperty('lat')
     expect(sentValue().competition).toMatchObject({
+      space: 'Main Stand',
       venue: 'Dunoon Stadium',
       location: 'Dunoon',
       country: 'GB',
@@ -862,6 +875,31 @@ describe('Add a competition', () => {
     })
     expect(sent.competition.links).toBeUndefined()
     expect(sent.organisations).toEqual({ o1: true })
+  })
+
+  it('a known one at a venue the app knows takes that venue’s town and map position', async () => {
+    db.data = { knownCompetitions: { k1: { ...KNOWN, venue: 'Spruce Meadows ', address: undefined } } }
+    venues.known = {
+      id: 'V1',
+      fields: { venue: 'Spruce Meadows', address: '18011 Spruce Meadows Way SW', location: 'Calgary, AB', lat: 50.9, lng: -114.1, country: 'CA', region: 'AB', locality: 'Calgary' },
+    }
+    const w = await begin()
+    await toMatches(w)
+    await rowButton(w, 'Calgary Highland Games').trigger('click')
+    await flushPromises()
+    await field(w).setValue('Morag Ross')
+    await cont(w)
+    await w.find('[role=checkbox]').trigger('click')
+    await cont(w)
+    expect(sentValue().competition).toMatchObject({
+      venue: 'Spruce Meadows',
+      address: '18011 Spruce Meadows Way SW',
+      location: 'Calgary, AB',
+      lat: 50.9,
+      lng: -114.1,
+      locality: 'Calgary',
+    })
+    venues.known = null
   })
 
   it('tapping the pick again puts back what was there, but not what’s been typed since', async () => {

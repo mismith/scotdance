@@ -317,6 +317,16 @@ describe('triggers', () => {
     expect(problems(s)).toEqual([])
   })
 
+  it('put a competition with only a typed town at the venue in that town', async () => {
+    const s = await seeded()
+    const venueId = s.read('competitions/c1/venueId')
+    s.write({ 'competitions/c9': comp(true, { venue: 'Spruce Meadows', location: 'Calgary, AB', date: '2027-07-03' }) })
+    await s.drain()
+    expect(s.read('competitions/c9/venueId')).toBe(venueId)
+    expect(s.read('venues:index/spruce meadows|calgary')).toMatchObject({ appearanceCount: 2 })
+    expect(problems(s)).toEqual([])
+  })
+
   it('clean everything up when a competition is deleted', async () => {
     const s = await seeded()
     s.write({ 'competitions/c1': null, 'competitions:data/c1': null })
@@ -577,9 +587,9 @@ describe('backfill', () => {
     expect(s.read('judges:index/draft judge')).toBeNull()
     expect(s.read('venues:index/draft hall|none')).toBeNull()
     expect(s.read('venues:index/sheraton ottawa hotel|ottawa')).toBeTruthy() // listed
-    // Venues key on name and town: no town is its own venue.
+    // Venues key on name and town (typed, when there's no locality): another town is its own venue.
     expect(s.read('venues:index/telus convention centre|calgary')).toMatchObject({ appearanceCount: 2 })
-    expect(s.read('venues:index/telus convention centre|none')).toMatchObject({ appearanceCount: 1 })
+    expect(s.read('venues:index/telus convention centre|calgary city')).toMatchObject({ appearanceCount: 1 })
     // Legacy string dates still order venue appearances.
     const telus = s.read(`venues/${s.read('venues:index/telus convention centre|calgary').id}`)
     expect(Object.values(telus.appearances as Obj).map((a) => a.date)).toEqual([Date.parse('2019-01-14'), Date.parse('2018-07-02T06:00:00.000Z')])

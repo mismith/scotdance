@@ -142,17 +142,17 @@ const nothing = computed(() => {
 type PersonType = 'dancers' | 'judges' | 'pipers'
 const ids = ref<Record<string, string | null>>({})
 const keyOf = (type: PersonType | 'venues', name: string) => `${type}:${name}`
-const lookup = (type: PersonType | 'venues', name: string, locality?: string | null) =>
-  type === 'venues' ? lookupVenueId(name, locality ?? null) : lookupEntityId(type, name)
+const lookup = (type: PersonType | 'venues', name: string, locality?: string | null, location?: string | null) =>
+  type === 'venues' ? lookupVenueId(name, locality ?? null, location ?? null) : lookupEntityId(type, name)
 watch(results, (r) => {
-  const wanted: ReadonlyArray<readonly [PersonType | 'venues', string, string | null | undefined]> = [
-    ...(['dancers', 'judges', 'pipers'] as const).flatMap((t) => r[t].groups.map((g) => [t, g.name, null] as const)),
-    ...r.places.groups.filter((g) => g.kind === 'venue').map((g) => ['venues', g.name, g.locality] as const),
+  const wanted: ReadonlyArray<readonly [PersonType | 'venues', string, string | null | undefined, string | null | undefined]> = [
+    ...(['dancers', 'judges', 'pipers'] as const).flatMap((t) => r[t].groups.map((g) => [t, g.name, null, null] as const)),
+    ...r.places.groups.filter((g) => g.kind === 'venue').map((g) => ['venues', g.name, g.locality, g.location] as const),
   ]
-  for (const [type, name, locality] of wanted) {
+  for (const [type, name, locality, location] of wanted) {
     const key = keyOf(type, name)
     if (key in ids.value) continue
-    void lookup(type, name, locality).then((id) => (ids.value = { ...ids.value, [key]: id }))
+    void lookup(type, name, locality, location).then((id) => (ids.value = { ...ids.value, [key]: id }))
   }
 })
 const ROUTES = {
@@ -166,10 +166,10 @@ function linkTo(type: PersonType | 'venues', name: string) {
   return id ? { name: ROUTES[type][0], params: { [ROUTES[type][1]]: id } } : null
 }
 const opening = ref<string | null>(null)
-async function openLate(type: PersonType | 'venues', name: string, locality?: string | null) {
+async function openLate(type: PersonType | 'venues', name: string, locality?: string | null, location?: string | null) {
   const key = keyOf(type, name)
   opening.value = key
-  const id = await lookup(type, name, locality)
+  const id = await lookup(type, name, locality, location)
   if (opening.value !== key) return
   opening.value = null
   if (id) router.push({ name: ROUTES[type][0], params: { [ROUTES[type][1]]: id } })
@@ -457,7 +457,7 @@ watch(mode, async (m) => {
                   :type="g.kind === 'venue' && linkTo('venues', g.name) ? undefined : 'button'"
                   :data-tapping="opening === keyOf('venues', g.name) || undefined"
                   class="press-row focus-inset flex min-h-16 w-full items-center gap-3 py-2 pr-3 pl-4 text-left"
-                  @click="g.kind !== 'venue' ? openArea(g) : !linkTo('venues', g.name) && openLate('venues', g.name, g.locality)"
+                  @click="g.kind !== 'venue' ? openArea(g) : !linkTo('venues', g.name) && openLate('venues', g.name, g.locality, g.location)"
                 >
                   <span class="flex w-11 shrink-0 justify-center">
                     <MapPin class="text-muted-foreground size-5" aria-hidden="true" />

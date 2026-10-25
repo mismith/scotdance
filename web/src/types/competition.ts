@@ -11,6 +11,8 @@ export interface Competition {
   description?: string
   image?: string
   venue?: string
+  /** The hall, theatre, gym or stage within the venue, when it's in one. */
+  space?: string
   address?: string
   location?: string
   lat?: number

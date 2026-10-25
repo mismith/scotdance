@@ -21,7 +21,7 @@ type FieldPart = Exclude<Part, 'staff'>;
 /** The fields on competitions/{id} each part covers. */
 export const PART_FIELDS: Record<FieldPart, string[]> = {
   about: ['description', 'image'],
-  venue: ['venue', 'address', 'location', 'lat', 'lng', 'country', 'region', 'locality'],
+  venue: ['venue', 'space', 'address', 'location', 'lat', 'lng', 'country', 'region', 'locality'],
   registration: ['registrationURL', 'registrationStart', 'registrationEnd'],
   links: ['links'],
   // Together, so a copy can never be published without being listed.

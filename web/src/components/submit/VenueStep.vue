@@ -12,6 +12,9 @@ import { countryChoice, townHint } from '@/lib/submitCountries'
 // and not picked, or without a Maps key). Only the town is needed.
 
 const venue = defineModel<string>('venue', { default: '' })
+// The hall, theatre or gym within it, when it has more than one: kept out of
+// the venue's name, so the venue stays the one place.
+const space = defineModel<string>('space', { default: '' })
 const address = defineModel<string>('address', { default: '' })
 const location = defineModel<string>('location', { default: '' })
 const place = defineModel<VenuePlace | null>('place', { default: null })
@@ -59,6 +62,7 @@ async function to(next: Mode) {
     place.value = null
     venue.value = ''
     address.value = ''
+    space.value = ''
   }
   mode.value = next
   emit('switched')
@@ -73,6 +77,7 @@ function settle() {
 const search = ref<InstanceType<typeof VenueField> | null>(null)
 const busy = computed(() => !!search.value?.loading)
 defineExpose({ settle, mode, busy })
+const SPACE = { placeholder: 'e.g. Main Hall', hint: 'The hall, theatre, gym or stage, if the venue has more than one.' }
 </script>
 
 <template>
@@ -110,6 +115,7 @@ defineExpose({ settle, mode, busy })
           Change
         </button>
       </div>
+      <FormInput v-model="space" label="Space (optional)" :placeholder="SPACE.placeholder" :hint="SPACE.hint" />
       <FormInput
         v-if="townAsked"
         v-model="location"
@@ -138,6 +144,7 @@ defineExpose({ settle, mode, busy })
         label="Venue name"
         placeholder="e.g. Telus Convention Centre"
       />
+      <FormInput v-model="space" label="Space (optional)" :placeholder="SPACE.placeholder" :hint="SPACE.hint" />
       <FormInput
         v-model="address"
         label="Address"
