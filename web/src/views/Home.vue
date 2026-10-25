@@ -23,7 +23,7 @@ import { useCompetitionSpans } from '@/composables/useCompetitionSpans'
 import { useAuthStore } from '@/stores/auth'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useMeStore } from '@/stores/me'
-import { compareDays, competitionPhase, dayStage, firstDance } from '@/lib/dancerDay'
+import { compareDays, dayStage, firstDance } from '@/lib/dancerDay'
 import { formatLongDate, formatRelative, formatShortDate, parseDate } from '@/lib/format'
 import { now } from '@/lib/now'
 import { getOrdinalSuffix } from '@/lib/results'
@@ -178,13 +178,14 @@ const context = computed(() => {
   return null
 })
 
-// Coming up: competitions your dancers are entered in, plus competitions you
-// follow, soonest first. One you manage is already under Your competitions
-// (where it opens Manage), so it isn't listed twice.
+// Coming up: competitions your favourite dancers are entered in, soonest
+// first (ADR 0008: a competition is never pinned here by its alerts). One you
+// manage is already under Your competitions (where it opens Manage), so it
+// isn't listed twice.
 const { competitions: recentCompetitions, loading: competitionsLoading } = useCompetitions(ref(false))
 const { linkOf, othersLine } = useCompetitionLinks()
 const comingUp = computed(() => {
-  const map = new Map<string, { id: string; competition: Competition; dancers: Map<string, string>; followed: boolean }>()
+  const map = new Map<string, { id: string; competition: Competition; dancers: Map<string, string> }>()
   if (!showingRecent.value) {
     for (const c of cards.value) {
       const list = [...c.upcoming]
@@ -192,18 +193,11 @@ const comingUp = computed(() => {
         list.unshift({ competitionId: c.focus.competitionId, competition: c.focus.competition })
       }
       for (const u of list) {
-        const e = map.get(u.competitionId) ?? { id: u.competitionId, competition: u.competition, dancers: new Map(), followed: false }
+        const e = map.get(u.competitionId) ?? { id: u.competitionId, competition: u.competition, dancers: new Map() }
         e.dancers.set(c.id, firstName(c))
         map.set(u.competitionId, e)
       }
     }
-  }
-  for (const comp of recentCompetitions.value) {
-    if (!favorites.isFavorite('competitions', comp.id)) continue
-    if (competitionPhase(comp.date) !== 'before') continue
-    const e = map.get(comp.id) ?? { id: comp.id, competition: comp, dancers: new Map(), followed: true }
-    e.followed = true
-    map.set(comp.id, e)
   }
   const managed = new Set(yours.value.map((c) => c.id))
   const entries = [...map.values()]
@@ -542,7 +536,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
                 :competition-id="c.id"
                 :to="{ name: 'competition.info', params: { competitionId: c.id } }"
                 :dancers="[...c.dancers].map(([id, name]) => ({ id, name }))"
-                :followed="c.followed"
+                :alerts="favorites.isFavorite('competitions', c.id)"
                 :rail="c.rail"
                 :note="c.note"
               />
@@ -553,7 +547,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
                 :key="c.id"
                 :competition="c"
                 :to="{ name: 'competition.info', params: { competitionId: c.id } }"
-                :followed="favorites.isFavorite('competitions', c.id)"
+                :alerts="favorites.isFavorite('competitions', c.id)"
                 :today="phaseOf(c) === 'today'"
                 :rail="c.rail"
                 :note="c.note"

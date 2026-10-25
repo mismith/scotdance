@@ -8,7 +8,6 @@ function choice(id: string, days: number, extra: Partial<CompetitionChoice> & { 
     competition: { id, name, location },
     days,
     today: days === 0,
-    followed: false,
     dancers: [],
     near: false,
     ...rest,
@@ -31,13 +30,12 @@ describe('compareChoices', () => {
     expect(ids(ranked(choice('tomorrow', 1), choice('dayTwo', -1, { today: true })))).toEqual(['dayTwo', 'tomorrow'])
   })
 
-  it('breaks a tie with yours (followed, or your dancers entered), then your area, then the earlier', () => {
-    expect(ids(ranked(choice('a', 0), choice('mine', 0, { followed: true })))).toEqual(['mine', 'a'])
+  it('breaks a tie with yours (your dancers entered), then your area, then the earlier', () => {
     expect(ids(ranked(choice('a', 0), choice('ava', 0, { dancers: [{ id: 'p1', name: 'Ava' }] })))).toEqual(['ava', 'a'])
     expect(ids(ranked(choice('far', 0), choice('near', 0, { near: true })))).toEqual(['near', 'far'])
     expect(ids(ranked(choice('next', 2), choice('last', -2)))).toEqual(['last', 'next'])
     // Yours never beats a nearer one: the closest stays first.
-    expect(ids(ranked(choice('mine', 3, { followed: true }), choice('soon', 1)))).toEqual(['soon', 'mine'])
+    expect(ids(ranked(choice('mine', 3, { dancers: [{ id: 'p1', name: 'Ava' }] }), choice('soon', 1)))).toEqual(['soon', 'mine'])
   })
 })
 

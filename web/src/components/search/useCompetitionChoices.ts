@@ -3,7 +3,6 @@ import type { CompetitionListItem } from '@/composables/useCompetitions'
 import { useCompetitionSpans } from '@/composables/useCompetitionSpans'
 import { useFollowedCompetitions } from '@/composables/useFollowedCompetitions'
 import { useLocationFilter } from '@/composables/useLocationFilter'
-import { useFavoritesStore } from '@/stores/favorites'
 import { useMeStore } from '@/stores/me'
 import { compareChoices, type CompetitionChoice } from './choices'
 
@@ -16,7 +15,6 @@ export const WINDOW_DAYS = 30
  * the schedules that say whether a recent competition is still on.
  */
 export function useCompetitionChoices(competitions: Ref<CompetitionListItem[]>, active: Ref<boolean>) {
-  const favorites = useFavoritesStore()
   const me = useMeStore()
   const { byCompetition } = useFollowedCompetitions()
   const { filterFor } = useLocationFilter()
@@ -39,7 +37,6 @@ export function useCompetitionChoices(competitions: Ref<CompetitionListItem[]>, 
             competition: c,
             days: span.first,
             today: span.first <= 0 && span.last >= 0,
-            followed: favorites.isFavorite('competitions', c.id),
             dancers: byCompetition.value[c.id] ?? [],
             near: area.isActive && area.predicate(c),
           },

@@ -18,9 +18,9 @@ test.use({ timezoneId: 'America/Edmonton' })
 const tag = uid('sn').slice(-5)
 let anchor = 0 // days from today to the pretend today
 let today: SeededCompetition // two days, starting on the pretend today, with dancers
-const listings: Record<'next' | 'followed' | 'far', { id: string; name: string }> = {
+const listings: Record<'next' | 'alerts' | 'far', { id: string; name: string }> = {
   next: { id: `sn-next-${tag}`, name: `Number Next Games ${tag}` },
-  followed: { id: `sn-followed-${tag}`, name: `Number Followed Games ${tag}` },
+  alerts: { id: `sn-alerts-${tag}`, name: `Number Bell Games ${tag}` },
   far: { id: `sn-far-${tag}`, name: `Faraway Fling ${tag}` },
 }
 const fillers = [-3, 4, -8, 12, -15].map((days, i) => ({ id: `sn-filler${i}-${tag}`, days }))
@@ -45,7 +45,7 @@ test.beforeAll(async ({}, info) => {
     seedCompetition({ id: `sn-today-${tag}`, name: `Number Today Games ${tag}`, startOffset: anchor, dancersPerGroup: 1, resultsForGroups: 0 }),
   )
   await retry(() => seedListing(listings.next.id, listings.next.name, 2))
-  await retry(() => seedListing(listings.followed.id, listings.followed.name, 20))
+  await retry(() => seedListing(listings.alerts.id, listings.alerts.name, 20))
   await retry(() => seedListing(listings.far.id, listings.far.name, 25))
   for (const f of fillers) await retry(() => seedListing(f.id, `Number Filler ${f.days} ${tag}`, f.days))
 })
@@ -156,16 +156,20 @@ test('works from the keyboard: the chip opens the picker, Enter picks the match'
   await expect(chip(page)).toContainText(listings.far.name)
 })
 
-test('a followed competition further out is marked in the picker', async ({ page }) => {
+// A competition's alerts never pin it anywhere (ADR 0008): the picker goes
+// by your dancers, not your alerts.
+test('a competition with alerts on isn’t marked in the picker', async ({ page }) => {
   const email = `sn-${tag}@example.test`
   const userId = await ensureUser(email)
-  await dbSet(`users:favorites/${userId}/competitions/${listings.followed.id}`, true)
+  await dbSet(`users:favorites/${userId}/competitions/${listings.alerts.id}`, true)
   try {
     await signIn(page, email)
     await open(page)
     await expect(chip(page)).toContainText(today.name)
     await chip(page).click()
-    await expect(sheet(page).getByRole('radio', { name: new RegExp(listings.followed.name) })).toContainText('Following')
+    const row = sheet(page).getByRole('radio', { name: new RegExp(listings.alerts.name) })
+    await expect(row).toBeVisible()
+    await expect(row).not.toContainText(/Following|Alerts on/)
   } finally {
     await dbRemove(`users:favorites/${userId}`)
   }

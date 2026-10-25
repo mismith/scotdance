@@ -10,15 +10,13 @@ export interface CompetitionChoice {
   days: number
   /** On today: every day of a multi-day competition counts. */
   today: boolean
-  /** A competition you follow. */
-  followed: boolean
-  /** Dancers you follow who are entered (aggregate id, first name). */
+  /** Your favourite dancers who are entered (aggregate id, first name). */
   dancers: Array<{ id: string; name: string }>
   /** In the area the Competitions list is set to. */
   near: boolean
 }
 
-const isYours = (c: CompetitionChoice) => c.followed || c.dancers.length > 0
+const isYours = (c: CompetitionChoice) => c.dancers.length > 0
 
 const distance = (c: CompetitionChoice) => (c.today ? 0 : Math.abs(c.days))
 

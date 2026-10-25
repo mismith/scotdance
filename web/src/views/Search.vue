@@ -412,7 +412,7 @@ watch(mode, async (m) => {
                 :competition="c"
                 :below="isBeforeToday(c.date) ? 'year' : 'weekday'"
                 :to="{ name: 'competition.info', params: { competitionId: c.id } }"
-                :followed="favorites.isFavorite('competitions', c.id)"
+                :alerts="favorites.isFavorite('competitions', c.id)"
                 :rail="rail"
                 :note="note"
               />

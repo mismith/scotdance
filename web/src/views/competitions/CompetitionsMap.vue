@@ -81,9 +81,8 @@ const shortDate = (c: CompetitionListItem) =>
 function pinElement(group: VenueGroup, idx: number): HTMLElement {
   const el = document.createElement('button')
   el.type = 'button'
-  const fav = group.competitions.some((c) => favorites.isFavoriteCompetition(c.id))
   const hidden = group.competitions.every((c) => hiddenAs(c.id, c) === 'unlisted')
-  el.className = `map-pin${fav ? ' is-fav' : ''}${hidden ? ' is-private' : ''}`
+  el.className = `map-pin${hidden ? ' is-private' : ''}`
   const n = group.competitions.length
   el.setAttribute(
     'aria-label',
@@ -363,7 +362,7 @@ watch(
             :key="c.id"
             :competition="c"
             :to="{ name: 'competition.info', params: { competitionId: c.id } }"
-            :followed="favorites.isFavorite('competitions', c.id)"
+            :alerts="favorites.isFavorite('competitions', c.id)"
             class="bg-transparent!"
           />
         </ul>
@@ -403,7 +402,7 @@ watch(
           :key="c.id"
           :competition="c"
           :to="{ name: 'competition.info', params: { competitionId: c.id } }"
-          :followed="favorites.isFavorite('competitions', c.id)"
+          :alerts="favorites.isFavorite('competitions', c.id)"
           class="bg-transparent!"
         />
       </ul>
@@ -456,12 +455,6 @@ html:has(.comp-map) {
 }
 .map-pin-tail {
   @apply border-t-primary-fill -mt-px h-0 w-0 border-x-[5px] border-t-[6px] border-x-transparent;
-}
-.map-pin.is-fav .map-pin-label {
-  @apply bg-secondary text-secondary-foreground;
-}
-.map-pin.is-fav .map-pin-tail {
-  @apply border-t-secondary;
 }
 .map-pin.is-private .map-pin-label {
   @apply bg-foreground text-background;

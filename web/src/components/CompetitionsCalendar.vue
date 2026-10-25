@@ -6,7 +6,6 @@ import type { CompetitionListItem } from '@/composables/useCompetitions'
 import CompetitionDateRow from '@/components/CompetitionDateRow.vue'
 import { useCompetitionLinks } from '@/composables/useCompetitionLinks'
 import { orderLinked, railRows } from '@/lib/linked'
-import FavCount from '@/components/FavCount.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { formatLongDate, formatMonthYear, formatShortDate, formatWeekdayShortDate, parseDate } from '@/lib/format'
 import { selectionHaptic } from '@/lib/haptics'
@@ -106,7 +105,6 @@ const calendarCells = computed(() => {
       inMonth,
       isToday: d.getTime() === today.getTime(),
       eventCount: dayEvents.length,
-      favCount: dayEvents.filter((c) => favorites.isFavoriteCompetition(c.id)).length,
     }
   })
 })
@@ -130,7 +128,6 @@ const visibleCompetitions = computed(() =>
     ? onDay(selected.value)
     : [...monthEvents.value].sort((a, b) => parseDate(a.date!).getTime() - parseDate(b.date!).getTime()),
 )
-const favCount = (list: CompetitionListItem[]) => list.filter((c) => favorites.isFavoriteCompetition(c.id)).length
 // Linked ones together on their rail (ADR 0007 §8); one on its own (as on a
 // single day) names the rest of its set.
 const { linkOf, othersLine } = useCompetitionLinks()
@@ -295,7 +292,7 @@ function onPointerUp(e: PointerEvent) {
                   :key="n"
                   :class="[
                     'size-1 rounded-full',
-                    isSelected(cell.date) ? 'bg-primary-foreground' : n <= cell.favCount ? 'bg-secondary' : 'bg-primary',
+                    isSelected(cell.date) ? 'bg-primary-foreground' : 'bg-primary',
                   ]"
                 />
               </span>
@@ -318,7 +315,7 @@ function onPointerUp(e: PointerEvent) {
         <section class="space-y-2">
           <h3 class="text-heading flex items-baseline justify-between gap-3">
             {{ sectionLabel }}
-            <FavCount class="text-sm font-normal" :favs="favCount(visibleCompetitions)" :total="visibleCompetitions.length" />
+            <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ visibleCompetitions.length }}</span>
           </h3>
           <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
             <CompetitionDateRow
@@ -326,7 +323,7 @@ function onPointerUp(e: PointerEvent) {
               :key="competition.id"
               :competition="competition"
               :to="props.linkTo(competition)"
-              :followed="favorites.isFavorite('competitions', competition.id)"
+              :alerts="favorites.isFavorite('competitions', competition.id)"
               :rail="rail"
               :note="note"
             />
@@ -356,7 +353,7 @@ function onPointerUp(e: PointerEvent) {
       <section v-for="d in nearby" :key="d.kind" class="space-y-2">
         <h3 class="text-heading flex items-baseline justify-between gap-3">
           {{ d.kind }} · {{ d.label }}
-          <FavCount class="text-sm font-normal" :favs="favCount(d.comps)" :total="d.comps.length" />
+          <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ d.comps.length }}</span>
         </h3>
         <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
           <CompetitionDateRow
@@ -364,7 +361,7 @@ function onPointerUp(e: PointerEvent) {
             :key="competition.id"
             :competition="competition"
             :to="props.linkTo(competition)"
-            :followed="favorites.isFavorite('competitions', competition.id)"
+            :alerts="favorites.isFavorite('competitions', competition.id)"
             :rail="rail"
             :note="note"
           />

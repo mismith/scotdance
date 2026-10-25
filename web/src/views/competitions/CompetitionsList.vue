@@ -233,7 +233,7 @@ const sections = computed<Section[]>(() => {
               :competition="c"
               :to="{ name: 'competition.info', params: { competitionId: c.id } }"
               :dancers="byCompetition[c.id] ?? []"
-              :followed="favorites.isFavorite('competitions', c.id)"
+              :alerts="favorites.isFavorite('competitions', c.id)"
               :today="s.key === 'today' && isOn(c)"
               :note="note"
               :rail="rail"

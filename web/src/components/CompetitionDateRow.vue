@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
-import { ChevronRight, Star } from '@lucide/vue'
+import { Bell, ChevronRight } from '@lucide/vue'
 import { useFollowing } from '@/composables/useFollowing'
 import { useHiddenAs } from '@/composables/useHiddenAs'
 import CompetitionName from '@/components/CompetitionName.vue'
@@ -16,7 +16,7 @@ import type { Competition } from '@/types/competition'
 
 // A competition as a row: a calendar date block (what people scan for, pink
 // while it's on), the name, the town, then a short note ("Day 2 of 2"), and
-// your dancers as coloured dots. Its admins also see the shield and, until
+// your dancers as coloured dots (or "Alerts on", with none). Its admins also see the shield and, until
 // it's published, how it's hidden. The name leads with its organisation's
 // short name (CompetitionName); on that organisation's own page (`within`),
 // without it. Lists put these in a `rows-inset` card with
@@ -27,8 +27,9 @@ const props = withDefaults(
   defineProps<{
     competition: Omit<Competition, 'date'> & { id?: string; date?: number | string }
     to: RouteLocationRaw
-    followed?: boolean
-    /** Followed dancers entered here (aggregate id, first name). */
+    /** Its alerts are on (ADR 0008): said when none of your dancers are entered. */
+    alerts?: boolean
+    /** Your favourite dancers entered here (aggregate id, first name). */
     dancers?: Array<{ id: string; name: string }>
     /** On today. Pass it when the schedule's later days are known; otherwise the start date decides. */
     today?: boolean
@@ -52,7 +53,7 @@ const props = withDefaults(
     below?: 'weekday' | 'year'
   }>(),
   {
-    followed: false,
+    alerts: false,
     dancers: () => [],
     today: undefined,
     competitionId: undefined,
@@ -96,7 +97,7 @@ const hidden = computed(() => (props.preview ? null : hiddenAs(id.value, props.c
           {{ competition.location }}
         </span>
         <span v-if="managed" class="sr-only">You can manage this.</span>
-        <span v-if="note || hidden || followed || dancers.length" class="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+        <span v-if="note || hidden || alerts || dancers.length" class="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
           <VisibilityChip :visibility="hidden" />
           <span
             v-if="note"
@@ -113,8 +114,8 @@ const hidden = computed(() => (props.preview ? null : hiddenAs(id.value, props.c
             </span>
             <span class="truncate">{{ dancers.map((x) => x.name).join(', ') }}</span>
           </span>
-          <span v-else-if="followed" class="text-muted-foreground inline-flex items-center gap-1 text-sm">
-            <Star class="text-secondary size-3.5 fill-current" aria-hidden="true" /> Following
+          <span v-else-if="alerts" class="text-muted-foreground inline-flex items-center gap-1 text-sm">
+            <Bell class="text-primary size-3.5 fill-current" aria-hidden="true" /> Alerts on
           </span>
         </span>
       </span>
