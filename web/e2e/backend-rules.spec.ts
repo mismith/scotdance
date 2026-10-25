@@ -56,6 +56,7 @@ test.afterAll(async () => {
     await dbRemove(`users:permissions/${who.uid}`)
     await dbRemove(`users/${who.uid}`)
     await dbRemove(`users:favorites/${who.uid}`)
+    await dbRemove(`users:alertsOff/${who.uid}`)
     await dbRemove(`users:dancerColors/${who.uid}`)
   }
 })
@@ -87,7 +88,9 @@ test('public reads: published data and profiles yes, private data and other peop
   await refused('signed-out read of /dancers:retired', as(null, 'GET', 'dancers:retired'))
   await refused('a parent reading /dancers:retired', as(parent, 'GET', 'dancers:retired'))
   await refused('signed-out read of a user', as(null, 'GET', `users/${parent.uid}`))
-  await refused('reading someone else’s follows', as(parent, 'GET', `users:favorites/${org.uid}`))
+  await refused('reading someone else’s favourites', as(parent, 'GET', `users:favorites/${org.uid}`))
+  await refused('reading someone else’s alerts turned off', as(parent, 'GET', `users:alertsOff/${org.uid}`))
+  await refused('signed-out read of anyone’s alerts turned off', as(null, 'GET', `users:alertsOff/${parent.uid}`))
   await refused('reading someone else’s dancer colours', as(parent, 'GET', `users:dancerColors/${org.uid}`))
   await refused('a parent reading a competition’s admins', as(parent, 'GET', `competitions:permissions/${pub}`))
   await allowed('an organiser reading their competition’s admins', as(org, 'GET', `competitions:permissions/${pub}`))
@@ -98,9 +101,9 @@ test('a parent can save their own things and nothing else', async () => {
   const me = parent.uid
   await allowed('roles (useRoles)', as(parent, 'PATCH', `users/${me}`, { roles: { parent: true }, rolesAnsweredAt: Date.now() }))
   await allowed('display name', as(parent, 'PATCH', `users/${me}`, { displayName: 'Rules Parent' }))
-  await allowed('follow a dancer (name as the value)', as(parent, 'PUT', `users:favorites/${me}/dancers/-Agg1`, 'Rules Dancer'))
-  await allowed('favourite a competition', as(parent, 'PUT', `users:favorites/${me}/competitions/${pub}`, true))
-  await allowed('the follows migration (one multi-path write)', as(parent, 'PATCH', `users:favorites/${me}`, { 'dancers/-Agg2': 'Rules Dancer', 'dancers/-Agg1': null }))
+  await allowed('favourite a dancer (name as the value)', as(parent, 'PUT', `users:favorites/${me}/dancers/-Agg1`, 'Rules Dancer'))
+  await allowed('turn on a competition’s alerts', as(parent, 'PUT', `users:favorites/${me}/competitions/${pub}`, true))
+  await allowed('the favourites migration (one multi-path write)', as(parent, 'PATCH', `users:favorites/${me}`, { 'dancers/-Agg2': 'Rules Dancer', 'dancers/-Agg1': null }))
   await allowed('choose a dancer colour', as(parent, 'PUT', `users:dancerColors/${me}/-Agg2`, 'dancer-3'))
   await allowed('clear a dancer colour', as(parent, 'PUT', `users:dancerColors/${me}/-Agg2`, null))
   await refused('a colour that isn’t a short string', as(parent, 'PUT', `users:dancerColors/${me}/-Agg2`, 'x'.repeat(17)))
@@ -121,7 +124,7 @@ test('a parent can save their own things and nothing else', async () => {
   await refused('a colour for black', as(parent, 'PUT', look, { color: 'dancer-3', sett: 'K16', colors: { K: '#6a3fa0' } }))
   await refused('anything else in a tartan', as(parent, 'PUT', look, { color: 'dancer-3', sett: 'P16 K16', note: 'hi' }))
   await refused('someone else’s colours', as(parent, 'PUT', `users:dancerColors/${org.uid}/-Agg2`, 'dancer-1'))
-  await refused('someone else’s follows', as(parent, 'PUT', `users:favorites/${org.uid}/dancers/x`, true))
+  await refused('someone else’s favourites', as(parent, 'PUT', `users:favorites/${org.uid}/dancers/x`, true))
   const submission = uid('rules-sub')
   await allowed('submit a competition', as(parent, 'PUT', `competitions:submissions/${submission}`, { competition: { name: 'Rules sub', date: '2026-11-01', location: 'Calgary, AB' }, contact: { email: 'p@example.test' }, submitted: new Date().toISOString() }))
   // What review needs to say anything: a name, a date and a town or city.
@@ -146,6 +149,32 @@ test('a parent can save their own things and nothing else', async () => {
   await refused('write a profile (aggregate)', as(parent, 'PATCH', 'dancers/-Agg', { name: 'x' }))
   await refused('publish a competition', as(parent, 'PUT', `competitions:published/${priv}`, true))
   await dbRemove(`competitions:submissions/${submission}`)
+})
+
+// A favourite dancer's alerts, turned off and on (ADR 0008): the user's own,
+// written the way the app writes them (stores/favorites.ts).
+test('a favourite dancer’s alerts are yours alone to turn off and on', async () => {
+  const me = parent.uid
+  const off = `users:alertsOff/${me}/dancers/-Agg3`
+  await allowed(
+    'favourite a dancer, alerts on (one write at the top)',
+    as(parent, 'PATCH', '', { [`users:favorites/${me}/dancers/-Agg3`]: 'Rules Dancer', [off]: null }),
+  )
+  await allowed('turn their alerts off', as(parent, 'PUT', off, true))
+  await allowed('read your own alerts turned off', as(parent, 'GET', `users:alertsOff/${me}`))
+  expect(await dbGet(off)).toBe(true)
+  await allowed('turn their alerts back on', as(parent, 'PUT', off, null))
+  await refused('alerts off as anything but true', as(parent, 'PUT', off, 'yes'))
+  await refused('alerts off as false', as(parent, 'PUT', off, false))
+  await refused('anything but dancers under alerts off', as(parent, 'PUT', `users:alertsOff/${me}/competitions/${pub}`, true))
+  await refused('someone else’s alerts', as(parent, 'PUT', `users:alertsOff/${org.uid}/dancers/-Agg3`, true))
+  await refused('signed out', as(null, 'PUT', off, true))
+  await allowed('turn their alerts off again', as(parent, 'PUT', off, true))
+  await allowed(
+    'unfavourite them, alerts off and all (one write at the top)',
+    as(parent, 'PATCH', '', { [`users:favorites/${me}/dancers/-Agg3`]: null, [off]: null }),
+  )
+  expect(await dbGet(off)).toBeNull()
 })
 
 test('an organiser can change their competitions and nothing else', async () => {
@@ -206,10 +235,12 @@ test('deleting an account can wipe its data in one write', async () => {
   const who = await account(`${uid('rules-leaver')}@example.test`)
   await as(who, 'PUT', `users:favorites/${who.uid}/dancers/-Agg1`, 'X')
   await as(who, 'PUT', `users:dancerColors/${who.uid}/-Agg1`, 'dancer-2')
+  await as(who, 'PUT', `users:alertsOff/${who.uid}/dancers/-Agg1`, true)
   await dbSet(`users:permissions/${who.uid}/competitions/${pub}`, true)
   await allowed(
     'the deleteAccount multi-path wipe',
-    as(who, 'PATCH', '', { [`users/${who.uid}`]: null, [`users:favorites/${who.uid}`]: null, [`users:dancerColors/${who.uid}`]: null, [`users:permissions/${who.uid}`]: null }),
+    as(who, 'PATCH', '', { [`users/${who.uid}`]: null, [`users:favorites/${who.uid}`]: null, [`users:alertsOff/${who.uid}`]: null, [`users:dancerColors/${who.uid}`]: null, [`users:permissions/${who.uid}`]: null }),
   )
   expect(await dbGet(`users:dancerColors/${who.uid}`)).toBeNull()
+  expect(await dbGet(`users:alertsOff/${who.uid}`)).toBeNull()
 })

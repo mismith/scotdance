@@ -14,8 +14,11 @@ const index: Record<string, string> = {}
 const extraPeople: string[] = []
 let indexDown = false
 const auth = reactive<{ uid: string | null }>({ uid: null })
-let emit: ((val: unknown) => void) | null = null
-let listening: string | null = null
+/** Live listeners, by path: their favourites, and their dancers with alerts off. */
+const listeners = new Map<string, (val: unknown) => void>()
+const listening = () => [...listeners.keys()].find((p) => p.includes('users:favorites/')) ?? null
+const emit = (val: unknown) => listeners.get(listening()!)!(val)
+const emitAlertsOff = (val: unknown) => listeners.get([...listeners.keys()].find((p) => p.includes('users:alertsOff/'))!)!(val)
 
 vi.mock('@/firebase', () => ({ database: {}, dataRef: () => ({}) }))
 vi.mock('firebase/database', () => ({
@@ -29,12 +32,8 @@ vi.mock('firebase/database', () => ({
 }))
 vi.mock('@/lib/offline', () => ({
   onValueSaved: (r: { path: string }, cb: (snap: { val: () => unknown }) => void) => {
-    listening = r.path
-    emit = (v) => cb({ val: () => v })
-    return () => {
-      listening = null
-      emit = null
-    }
+    listeners.set(r.path, (v) => cb({ val: () => v }))
+    return () => listeners.delete(r.path)
   },
 }))
 vi.mock('@/lib/entityIndex', () => ({
@@ -127,8 +126,8 @@ describe('useFavoritesStore', () => {
     const fav = useFavoritesStore()
     auth.uid = 'u1'
     await nextTick()
-    expect(listening).toBe(`${NS}/users:favorites/u1`)
-    emit!({
+    expect(listening()).toBe(`${NS}/users:favorites/u1`)
+    emit({
       dancers: { oldIsla: 'Isla Ross', oldGone: 'Isla Ross AB', oldTrue: true, personIsla: 'Isla Ross', personAva: 'Ava Grant' },
       oldDancers: { oldIsla: 'personIsla', oldGone: true },
       competitions: { c1: true },
@@ -143,10 +142,10 @@ describe('useFavoritesStore', () => {
     useFavoritesStore()
     auth.uid = 'u1'
     await nextTick()
-    emit!({ dancers: { oldAva: 'Ava Grant' } })
+    emit({ dancers: { oldAva: 'Ava Grant' } })
     await flush()
     expect(writes).toHaveLength(1)
-    emit!({ dancers: { oldAva: 'Ava Grant', personAva: 'Ava Grant' }, oldDancers: { oldAva: 'personAva' } })
+    emit({ dancers: { oldAva: 'Ava Grant', personAva: 'Ava Grant' }, oldDancers: { oldAva: 'personAva' } })
     await flush()
     expect(writes).toHaveLength(1)
   })
@@ -155,7 +154,7 @@ describe('useFavoritesStore', () => {
     const fav = useFavoritesStore()
     auth.uid = 'u1'
     await nextTick()
-    emit!({ dancers: { personIsla: 'Isla Ross' }, competitions: { c1: true } })
+    emit({ dancers: { personIsla: 'Isla Ross' }, competitions: { c1: true } })
     expect(Object.keys(fav.dancers)).toEqual(['personIsla'])
 
     auth.uid = 'u2'
@@ -163,24 +162,55 @@ describe('useFavoritesStore', () => {
     // u2's favourites haven't arrived yet: nothing of u1's shows meanwhile.
     expect(fav.dancers).toEqual({})
     expect(fav.competitions).toEqual({})
-    expect(listening).toBe(`${NS}/users:favorites/u2`)
+    expect(listening()).toBe(`${NS}/users:favorites/u2`)
 
     auth.uid = null
     await nextTick()
-    expect(listening).toBeNull()
+    expect(listening()).toBeNull()
     expect(fav.dancers).toEqual({})
   })
 
-  it('writes a follow under the person, with their name', async () => {
+  it('writes a favourite under the person, with their name, alerts on; taking one off leaves nothing behind', async () => {
     const fav = useFavoritesStore()
     await expect(fav.setFavorite('dancers', 'personIsla', true, 'Isla Ross')).rejects.toThrow('Not signed in')
     auth.uid = 'u1'
     await nextTick()
     await fav.setFavorite('dancers', 'personIsla', true, 'Isla Ross')
     await fav.setFavorite('dancers', 'personAva', false)
+    await fav.setFavorite('judges', 'judgeLisa', true, 'Lisa Barker')
     expect(writes).toEqual([
-      { path: `${NS}/users:favorites/u1/dancers/personIsla`, value: 'Isla Ross' },
-      { path: `${NS}/users:favorites/u1/dancers/personAva`, value: null },
+      { path: NS, value: { 'users:favorites/u1/dancers/personIsla': 'Isla Ross', 'users:alertsOff/u1/dancers/personIsla': null } },
+      { path: NS, value: { 'users:favorites/u1/dancers/personAva': null, 'users:alertsOff/u1/dancers/personAva': null } },
+      { path: `${NS}/users:favorites/u1/judges/judgeLisa`, value: 'Lisa Barker' },
     ])
+  })
+
+  // ADR 0008: a favourite dancer's alerts are on until turned off; a
+  // competition's entry is its alerts.
+  it('turns a favourite dancer’s alerts off and on, and keeps them a favourite', async () => {
+    const fav = useFavoritesStore()
+    auth.uid = 'u1'
+    await nextTick()
+    emit({ dancers: { personIsla: 'Isla Ross', personAva: 'Ava Grant' }, competitions: { c1: true } })
+    emitAlertsOff({ personAva: true })
+    expect(fav.hasAlerts('dancers', 'personIsla')).toBe(true)
+    expect(fav.hasAlerts('dancers', 'personAva')).toBe(false)
+    expect(fav.isFavorite('dancers', 'personAva')).toBe(true)
+    expect(fav.hasAlerts('dancers', 'nobody')).toBe(false)
+    expect(fav.hasAlerts('competitions', 'c1')).toBe(true)
+    expect(fav.hasAlerts('competitions', 'c2')).toBe(false)
+
+    await fav.setDancerAlerts('personIsla', false)
+    await fav.setDancerAlerts('personAva', true)
+    expect(writes).toEqual([
+      { path: `${NS}/users:alertsOff/u1/dancers/personIsla`, value: true },
+      { path: `${NS}/users:alertsOff/u1/dancers/personAva`, value: null },
+    ])
+
+    // Another account: none of it carries over.
+    auth.uid = 'u2'
+    await nextTick()
+    expect(fav.dancerAlertsOff).toEqual({})
+    expect([...listeners.keys()].sort()).toEqual([`${NS}/users:alertsOff/u2/dancers`, `${NS}/users:favorites/u2`])
   })
 })

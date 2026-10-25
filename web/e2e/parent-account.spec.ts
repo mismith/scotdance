@@ -29,11 +29,12 @@ test('every account has a record with its email, mended if it’s missing or old
   await expect.poll(() => dbGet(`users/${freshId}/email`)).toBe(fresh)
 })
 
-test('deleting your account removes your follows, colours and record', async ({ page }) => {
+test('deleting your account removes your favourites, alerts, colours and record', async ({ page }) => {
   const email = `${uid('parent')}@example.test`
   const id = await ensureUser(email)
   await dbSet(`users:favorites/${id}`, { dancers: { p1: 'Isla Ross' }, competitions: { c1: true } })
   await dbSet(`users:dancerColors/${id}`, { p1: 'dancer-3' })
+  await dbSet(`users:alertsOff/${id}`, { dancers: { p1: true } })
   await page.goto('/')
   await page.getByRole('main').getByRole('button', { name: 'Sign in', exact: true }).click()
   await signInFromSheet(page, email)
@@ -55,6 +56,7 @@ test('deleting your account removes your follows, colours and record', async ({ 
   expect(await dbGet(`users/${id}`)).toBeNull()
   expect(await dbGet(`users:favorites/${id}`)).toBeNull()
   expect(await dbGet(`users:dancerColors/${id}`)).toBeNull()
+  expect(await dbGet(`users:alertsOff/${id}`)).toBeNull()
   // The sign-in is gone too: the same email makes a new account.
   expect(await ensureUser(email)).not.toBe(id)
 })

@@ -4,9 +4,10 @@ import { useDancerCards } from '@/composables/useDancerCards'
 import { useAlerts } from '@/composables/useAlerts'
 import { getOrdinalSuffix } from '@/lib/results'
 
-// While the app is open on competition day, watch followed dancers' live
-// results and raise an alert the moment a placing is posted. The first read
-// only records a baseline; alerts fire on changes after it.
+// While the app is open on competition day, watch your favourite dancers'
+// live results and raise an alert the moment a placing is posted, unless
+// their alerts are turned off (ADR 0008). The first read only records a
+// baseline; alerts fire on changes after it.
 
 export interface LiveAlert {
   id: string
@@ -57,6 +58,7 @@ export function startLiveAlerts() {
             if (!baselined.has(f.competitionId) || before === undefined) continue
             if (before === sig) continue
             if (!['placed', 'unplaced', 'no-placings'].includes(s.state)) continue
+            if (!favorites.hasAlerts('dancers', card.id)) continue
             const first = day.dancer.firstName || day.dancer.fullName
             const danceName = s.dance.id === 'overall' ? 'Overall' : s.dance.fullName || s.dance.name
             fresh.push({

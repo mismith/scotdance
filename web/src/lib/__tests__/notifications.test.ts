@@ -311,6 +311,25 @@ describe('result alerts', () => {
     expect(said()).toEqual([])
   })
 
+  // ADR 0008: a favourite with alerts turned off stays a favourite, silently.
+  it('skips a favourite dancer whose alerts are turned off', async () => {
+    const data = seed()
+    data['users:alertsOff'] = { u1: { dancers: { p1: true } }, u4: { dancers: { p3: true } } }
+    const { save, results, said } = setup(data)
+    await save({ [fling]: ['e2', 'e1'] }, results())
+    expect(said()).toEqual(['u2: Mairi placed 1st (Highland Fling)'])
+  })
+
+  it('queues nothing when every favourite in the age group has alerts off', async () => {
+    const data = seed()
+    data['users:alertsOff'] = { u1: { dancers: { p1: true } }, u2: { dancers: { p2: true } }, u3: { dancers: { p3: true } }, u4: { dancers: { p3: true } }, u5: { dancers: { p3: true } } }
+    const { save, results, said } = setup(data)
+    const queue: SettleTask[] = []
+    await save({ [fling]: ['e1'] }, results(true, queue))
+    expect(queue).toEqual([])
+    expect(said()).toEqual([])
+  })
+
   it('says nothing for unpublished or (outside the emulator) old competitions', async () => {
     const hidden = setup()
     hidden.rtdb.data.competitions.c1.published = false
@@ -352,6 +371,25 @@ describe('competition alerts', () => {
     await save({ 'competitions/c1/published': false }, handler)
     await save({ 'competitions/c1/published': true }, handler)
     expect(log()).toHaveLength(5)
+  })
+
+  it('leaves out favourites with alerts off, unless the competition’s own alerts are on', async () => {
+    const data = seed()
+    data.competitions.c1.published = false
+    // u1: Ailsa's alerts off, Kirsty's on. u2: Mairi's off, but the competition's on.
+    // u4: Iona's off and nothing else, so nothing.
+    data['users:alertsOff'] = { u1: { dancers: { p1: true } }, u2: { dancers: { p2: true } }, u4: { dancers: { p3: true } } }
+    data['competitions:followers'] = { c1: { u2: true } }
+    const { db, save, log, said } = setup(data)
+    await save({ 'competitions/c1/published': true }, getOnCompetitionPublished(db, app, true))
+    expect(said()).toEqual([
+      'u1: Calgary Highland Games is live',
+      'u2: Calgary Highland Games is live',
+      'u3: Calgary Highland Games is live',
+    ])
+    const body = (uid: string) => log().find((m) => m.uid === uid)?.body
+    expect(body('u1')).toBe('Kirsty is on the dancer list. See platforms and dancing order.')
+    expect(body('u2')).toBe('The dancer list and schedule are up.')
   })
 
   it('says nothing when an old competition is published (outside the emulator)', async () => {
@@ -441,6 +479,18 @@ describe('morning summaries', () => {
     await sendMorningSummaries(db, app, true, at('2026-07-04T13:30:00Z'))
     expect(said().filter((line) => line.includes('Vancouver'))).toEqual(['u6: Vancouver Games is today'])
     expect(rtdb.read('notifications:sent/van/morning/u6')).toBe('morning:2026-07-04')
+  })
+
+  it('leaves out favourites with alerts off', async () => {
+    const data = morningData()
+    data['users:alertsOff'] = { u1: { dancers: { p1: true, p4: true } }, u2: { dancers: { p2: true } } }
+    const { db, said } = setup(data)
+    await sendMorningSummaries(db, app, true, at('2026-07-04T12:30:00Z'))
+    expect(said().filter((line) => line.includes('Calgary'))).toEqual([
+      'u3: Calgary Highland Games is today',
+      'u4: Calgary Highland Games is today',
+      'u6: Calgary Highland Games is today',
+    ])
   })
 })
 

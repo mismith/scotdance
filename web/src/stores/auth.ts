@@ -19,7 +19,7 @@ import { auth, database } from '@/firebase'
 
 type PostLoginAction = () => void | Promise<void>
 
-/** Why sign-in was asked for, so the sheet can say so ("Sign in to follow Emma"). */
+/** Why sign-in was asked for, so the sheet can say so ("Sign in to favourite Emma"). */
 export interface LoginReason {
   reason: 'follow' | 'favorite' | 'alerts' | 'account' | 'submit'
   name?: string
@@ -46,7 +46,7 @@ export const useAuthStore = defineStore('auth', () => {
   const displayName = computed(() => user.value?.displayName ?? user.value?.email ?? null)
   const photoURL = computed(() => user.value?.photoURL ?? null)
 
-  // The sign-in sheet grows out of whatever asked for it (a Follow button…).
+  // The sign-in sheet grows out of whatever asked for it (a Favourite button…).
   const loginSheet = useMorph()
   const loginDialogOpen = computed(() => loginSheet.open)
   const loginReason = ref<LoginReason | null>(null)
@@ -61,7 +61,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function closeLogin() {
-    // Closed without signing in: whatever asked for it (a Follow) is off.
+    // Closed without signing in: whatever asked for it (a Favourite) is off.
     if (!isSignedIn.value) pendingActions.value = []
     loginSheet.hide()
   }
@@ -179,6 +179,7 @@ export const useAuthStore = defineStore('auth', () => {
     await update(dbRef(database, NAMESPACE), {
       [`users/${uid}`]: null,
       [`users:favorites/${uid}`]: null,
+      [`users:alertsOff/${uid}`]: null,
       [`users:dancerColors/${uid}`]: null,
       [`users:tokens/${uid}`]: null,
       [`users:permissions/${uid}`]: null,

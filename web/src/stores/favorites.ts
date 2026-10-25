@@ -21,6 +21,13 @@ export type FavoriteType =
 // denormed display name (kept so the favourites section on each list page can
 // render before the slim index for that entity loads).
 //
+// What a favourite means (ADR 0008): a dancer, judge, piper, venue or
+// organisation is a favourite (the star). A competition can't be one: its
+// entry here means its alerts are on (the bell). A favourite dancer gets
+// alerts too, unless they're turned off: /users:alertsOff/{uid}/dancers/{id}
+// = true, which the alert senders (functions/src/notifications.ts) and the
+// in-app banner (useLiveAlerts) skip.
+//
 // All types now key by AGGREGATE id (one entity = one favourite). The old app
 // (v3, still on many phones) keyed dancer favourites by per-competition entry
 // and still reads them, so those are never deleted: each one with a name is
@@ -42,11 +49,13 @@ export const useFavoritesStore = defineStore('favorites', () => {
   const venues = ref<Record<string, FavoriteValue>>({})
   const organisations = ref<Record<string, FavoriteValue>>({})
   const copiedOld = ref<Record<string, string | true>>({})
+  /** Favourite dancers with their alerts turned off. */
+  const dancerAlertsOff = ref<Record<string, true>>({})
 
-  // The people you follow. Old per-competition keys are left out: a `true`
+  // Your favourite dancers. Old per-competition keys are left out: a `true`
   // one has no name to find its person by (v4 never stores `true` for a
-  // dancer), and a named one is followed under the person's id once copied,
-  // or dropped when no one goes by its name now.
+  // dancer), and a named one is a favourite under the person's id once
+  // copied, or dropped when no one goes by its name now.
   const dancers = computed<Record<string, FavoriteValue>>(() =>
     Object.fromEntries(
       Object.entries(allDancers.value).filter(([id, v]) => typeof v === 'string' && !copiedOld.value[id]),
@@ -63,6 +72,7 @@ export const useFavoritesStore = defineStore('favorites', () => {
   }
 
   let unsubscribe: (() => void) | null = null
+  let unsubscribeAlertsOff: (() => void) | null = null
 
   function byType(type: FavoriteType): Record<string, FavoriteValue> {
     return refs[type].value
@@ -79,8 +89,25 @@ export const useFavoritesStore = defineStore('favorites', () => {
     name?: string,
   ): Promise<void> {
     if (!auth.uid) throw new Error('Not signed in')
-    const path = `${NAMESPACE}/users:favorites/${auth.uid}/${type}/${id}`
-    await set(dbRef(database, path), on ? name || true : null)
+    const path = `users:favorites/${auth.uid}/${type}/${id}`
+    if (type !== 'dancers') return set(dbRef(database, `${NAMESPACE}/${path}`), on ? name || true : null)
+    // A dancer's alerts start on, and an unfavourited dancer leaves nothing
+    // behind: either way, no "alerts off" is kept for them.
+    await update(dbRef(database, NAMESPACE), {
+      [path]: on ? name || true : null,
+      [`users:alertsOff/${auth.uid}/dancers/${id}`]: null,
+    })
+  }
+
+  /** Alerts for a favourite dancer, or a competition's (its entry is its alerts). */
+  function hasAlerts(type: 'dancers' | 'competitions', id: string): boolean {
+    return isFavorite(type, id) && !(type === 'dancers' && dancerAlertsOff.value[id])
+  }
+
+  /** Turn a favourite dancer's alerts off (they stay a favourite) or back on. */
+  async function setDancerAlerts(id: string, on: boolean): Promise<void> {
+    if (!auth.uid) throw new Error('Not signed in')
+    await set(dbRef(database, `${NAMESPACE}/users:alertsOff/${auth.uid}/dancers/${id}`), on ? null : true)
   }
 
   async function toggle(
@@ -90,18 +117,6 @@ export const useFavoritesStore = defineStore('favorites', () => {
   ): Promise<void> {
     await setFavorite(type, id, !refs[type].value[id], name)
   }
-
-  // Back-compat aliases — existing callsites use these. Kept as thin wrappers
-  // so we don't touch every consumer in this change.
-  const isFavoriteDancer = (id: string) => isFavorite('dancers', id)
-  const isFavoriteCompetition = (id: string) => isFavorite('competitions', id)
-  const setDancer = (id: string, on: boolean, name?: string) =>
-    setFavorite('dancers', id, on, name)
-  const setCompetition = (id: string, on: boolean) =>
-    setFavorite('competitions', id, on)
-  const toggleDancer = (id: string, name?: string) =>
-    toggle('dancers', id, name)
-  const toggleCompetition = (id: string) => toggle('competitions', id)
 
   function load(val: StoredFavorites) {
     competitions.value = val.competitions ?? {}
@@ -120,9 +135,15 @@ export const useFavoritesStore = defineStore('favorites', () => {
         unsubscribe()
         unsubscribe = null
       }
+      unsubscribeAlertsOff?.()
+      unsubscribeAlertsOff = null
       // Nothing of the last account carries over, even for a moment.
       load({})
+      dancerAlertsOff.value = {}
       if (!uid) return
+      unsubscribeAlertsOff = onValueSaved(dbRef(database, `${NAMESPACE}/users:alertsOff/${uid}/dancers`), (snap) => {
+        dancerAlertsOff.value = (snap.val() as Record<string, true> | null) ?? {}
+      })
       const r = dbRef(database, `${NAMESPACE}/users:favorites/${uid}`)
       let copied = false
       unsubscribe = onValueSaved(r, (snap) => {
@@ -144,25 +165,21 @@ export const useFavoritesStore = defineStore('favorites', () => {
     pipers,
     venues,
     organisations,
+    dancerAlertsOff,
     byType,
     isFavorite,
     setFavorite,
     toggle,
-    // back-compat
-    isFavoriteDancer,
-    isFavoriteCompetition,
-    setDancer,
-    setCompetition,
-    toggleDancer,
-    toggleCompetition,
+    hasAlerts,
+    setDancerAlerts,
   }
 })
 
 /**
- * Follow the people behind old per-competition dancer favourites. The old
+ * Favourite the people behind old per-competition dancer favourites. The old
  * app keyed them by the competition entry, with the dancer's name as the
  * value; the name finds the person (/dancers:index). Each is copied once and
- * noted under `oldDancers`, so unfollowing in v4 sticks, and nothing is
+ * noted under `oldDancers`, so unfavouriting in v4 sticks, and nothing is
  * deleted: the old app still reads its keys. A key that's already a person
  * matches its own name and is left alone. A name no one goes by now (say a
  * surname typed with the province after it, since corrected) leads nowhere,
@@ -175,7 +192,7 @@ export async function copyOldDancerFavourites(uid: string, stored: StoredFavorit
   const updates: Record<string, string | true> = {}
   for (const [key, value] of Object.entries(dancers)) {
     if (typeof value !== 'string' || done[key]) continue
-    // Already a person (a v4 follow, even of a profile that shares its name
+    // Already a person (a v4 favourite, even of a profile that shares its name
     // with another): never an old key. Old keys are competition entries.
     // (If that can't be checked right now, leave it for next time.)
     const isPerson = await get(dbRef(database, `${NAMESPACE}/dancers/${key}/name`)).then((snap) => snap.exists(), () => true)

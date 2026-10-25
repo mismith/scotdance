@@ -183,6 +183,17 @@
           ".write": "auth !== null && auth.uid === $userId" // is SELF
         }
       },
+      "users:alertsOff": {
+        "$userId": {
+          ".read": "auth !== null && auth.uid === $userId", // is SELF
+          ".write": "auth !== null && auth.uid === $userId", // is SELF
+          // A favourite dancer with their alerts turned off (ADR 0008).
+          "dancers": {
+            "$dancerId": { ".validate": "newData.val() === true" }
+          },
+          "$other": { ".validate": false }
+        }
+      },
       "users:tokens": {
         "$userId": {
           ".read": "auth !== null && auth.uid === $userId", // is SELF

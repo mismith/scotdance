@@ -4,11 +4,15 @@ import type { DataSnapshot, Reference } from 'firebase-admin/database';
 import { getMessaging, type MulticastMessage } from 'firebase-admin/messaging';
 import tzlookup from '@photostructure/tz-lookup';
 
-// Push alerts for people following dancers and competitions.
+// Push alerts for people's favourite dancers, and competitions they've
+// turned alerts on for (ADR 0008).
 //
 // Data:
-//   users:favorites/{uid}/dancers/{aggregateId}      who follows whom (written by the app)
+//   users:favorites/{uid}/dancers/{aggregateId}      favourite dancers (written by the app)
 //   users:favorites/{uid}/competitions/{competitionId}
+//                                                    a competition's alerts, on
+//   users:alertsOff/{uid}/dancers/{aggregateId}      a favourite dancer with alerts turned
+//                                                    off: they're skipped
 //   dancers:followers/{aggregateId}/{uid}            reverse indexes, kept in step by the
 //   competitions:followers/{competitionId}/{uid}     favourite triggers (backfillFollowers
 //                                                    builds them once)
@@ -380,7 +384,17 @@ export interface SettleTask {
 
 type Entry = { firstName?: string; dancerId?: string };
 
-/** Everyone entered in an age group, with who follows them. */
+/**
+ * Who gets a dancer's alerts: everyone with them as a favourite, except anyone
+ * who's turned their alerts off (users:alertsOff, ADR 0008).
+ */
+async function alertFollowers(db: Db, personId: string) {
+  const uids = Object.keys((await db.child(`dancers:followers/${personId}`).get()).val() || {});
+  const off = await Promise.all(uids.map(async (uid) => (await db.child(`users:alertsOff/${uid}/dancers/${personId}`).get()).val() === true));
+  return uids.filter((_, i) => !off[i]);
+}
+
+/** Everyone entered in an age group, with who gets their alerts. */
 async function entriesWithFollowers(db: Db, competitionId: string, groupId: string) {
   const snap = await db.child(`competitions:data/${competitionId}/dancers`).orderByChild('groupId').equalTo(groupId).get();
   return Promise.all(
@@ -389,7 +403,7 @@ async function entriesWithFollowers(db: Db, competitionId: string, groupId: stri
       .map(async ([entryId, entry]) => ({
         entryId,
         entry,
-        followers: Object.keys((await db.child(`dancers:followers/${entry.dancerId}`).get()).val() || {}),
+        followers: await alertFollowers(db, entry.dancerId as string),
       })),
   );
 }
@@ -542,8 +556,9 @@ export function getOnBackfillFollowers(db: Db) {
 }
 
 /**
- * uid → first names of followed dancers entered in a competition. People who
- * follow the competition itself are included with no names.
+ * uid → first names of their favourite dancers entered in a competition (with
+ * alerts on). People with the competition's own alerts on are included with
+ * no names.
  */
 async function recipientsFor(db: Db, competitionId: string) {
   type Entry = { firstName?: string; dancerId?: string };
@@ -553,9 +568,7 @@ async function recipientsFor(db: Db, competitionId: string) {
   const byUid = new Map<string, Set<string>>();
   const personIds = [...new Set(entries.map((e) => e?.dancerId).filter((x): x is string => !!x))];
   const firstName = new Map(entries.filter((e) => e?.dancerId).map((e) => [e.dancerId as string, e.firstName?.trim() || '']));
-  const followerLists = await Promise.all(
-    personIds.map(async (id) => Object.keys((await db.child(`dancers:followers/${id}`).get()).val() || {})),
-  );
+  const followerLists = await Promise.all(personIds.map((id) => alertFollowers(db, id)));
   followerLists.forEach((uids, i) => uids.forEach((uid) => {
     const set = byUid.get(uid) ?? new Set<string>();
     const name = firstName.get(personIds[i]);

@@ -12,10 +12,11 @@ import {
   type DancerLook,
 } from '@/stores/dancerColors'
 
-// Following a dancer means favouriting their AGGREGATE record (one person
-// across every competition). A per-competition record carries a back-pointer
-// `dancerId` to it. Competitor numbers belong to a competition entry, never
-// to the person, so nothing here keys on a number.
+// Your dancers are your favourites (ADR 0008): favouriting a dancer means
+// their AGGREGATE record (one person across every competition). A
+// per-competition record carries a back-pointer `dancerId` to it. Competitor
+// numbers belong to a competition entry, never to the person, so nothing
+// here keys on a number. A favourite gets alerts until they're turned off.
 
 export interface FollowableDancer {
   /** Aggregate id: the person. */
@@ -112,7 +113,19 @@ export function useFollowing() {
     return setFollowing(d, !isFollowing(d))
   }
 
+  /** A favourite's alerts: on unless turned off (false for anyone not a favourite). */
+  function alertsOn(d: FollowableDancer | string | null | undefined): boolean {
+    const id = typeof d === 'string' ? d : d?.dancerId
+    return !!id && favorites.hasAlerts('dancers', id)
+  }
+
+  /** Turn a favourite's alerts off (they stay a favourite) or back on. */
+  async function setAlerts(d: FollowableDancer, on: boolean) {
+    if (!d.dancerId || !isFollowing(d)) return
+    await favorites.setDancerAlerts(d.dancerId, on)
+  }
+
   const followedIds = computed(() => order.value)
 
-  return { isFollowing, lookFor, colorFor, colorIdFor, paint, toggle, setFollowing, followedIds }
+  return { isFollowing, alertsOn, setAlerts, lookFor, colorFor, colorIdFor, paint, toggle, setFollowing, followedIds }
 }

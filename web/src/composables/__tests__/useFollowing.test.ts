@@ -11,8 +11,11 @@ const auth = reactive({
 })
 const favorites = reactive({
   dancers: {} as Record<string, string>,
+  dancerAlertsOff: {} as Record<string, true>,
   isFavorite: (_t: string, id: string) => !!favorites.dancers[id],
+  hasAlerts: (_t: string, id: string) => !!favorites.dancers[id] && !favorites.dancerAlertsOff[id],
   setFavorite: vi.fn(async () => {}),
+  setDancerAlerts: vi.fn(async () => {}),
 })
 const writes: Array<{ path: string; value: unknown }> = []
 let emit: ((v: unknown) => void) | null = null
@@ -39,7 +42,9 @@ beforeEach(() => {
   auth.isSignedIn = false
   auth.requireSignIn.mockReset()
   favorites.setFavorite.mockClear()
+  favorites.setDancerAlerts.mockClear()
   favorites.dancers = {}
+  favorites.dancerAlertsOff = {}
   writes.length = 0
 })
 
@@ -187,6 +192,21 @@ describe('following', () => {
     expect(f.isFollowing({ dancerId: 'p1' })).toBe(true)
     expect(f.isFollowing('p1')).toBe(true)
     expect(f.isFollowing({})).toBe(false)
+  })
+
+  it('turns a favourite’s alerts off and on, and only a favourite’s', async () => {
+    await signIn()
+    const f = useFollowing()
+    favorites.dancers = { p1: 'Isla Ross' }
+    expect(f.alertsOn({ dancerId: 'p1' })).toBe(true)
+    expect(f.alertsOn('p2')).toBe(false)
+    await f.setAlerts({ dancerId: 'p1' }, false)
+    expect(favorites.setDancerAlerts).toHaveBeenCalledWith('p1', false)
+    favorites.dancerAlertsOff = { p1: true }
+    expect(f.alertsOn('p1')).toBe(false)
+    expect(f.isFollowing('p1')).toBe(true)
+    await f.setAlerts({ dancerId: 'p2' }, true)
+    expect(favorites.setDancerAlerts).toHaveBeenCalledTimes(1)
   })
 
   it('lists each person once however many entries they have', () => {
