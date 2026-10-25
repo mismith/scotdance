@@ -339,6 +339,18 @@ test('the new look is news only to people whose old favourites came over', async
   await page.goto('/?now=')
 })
 
+test('Home says a slot once: dances at the same time and place share a row', async ({ page }) => {
+  // Beginner 9 & 10: three dances in one event on platform B, no draws.
+  const person = await follow(4)
+  const { email, uid: parentId } = await freshParent()
+  await dbSet(`users:favorites/${parentId}/dancers/${person.id}`, person.name)
+  await signInFromHome(page, email)
+  const day = card(page, person)
+  await expect(day.getByText('From 9:45 am')).toHaveCount(1)
+  const row = day.getByRole('link', { name: /From 9:45 am/ })
+  for (const d of comp.dances.slice(0, 3)) await expect(row).toContainText(d.name)
+})
+
 test('the competition’s pages show your dancer’s day', async ({ page }) => {
   // Beginner 7 & 8: on platform A after Under 7, with a draw of its own.
   const person = await follow(3)

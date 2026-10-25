@@ -77,3 +77,17 @@ export function staffHeading(type: string, count: number): string {
   if (/[^aeiou]y$/i.test(t)) return `${t.slice(0, -1)}ies`
   return `${t}s`
 }
+
+/**
+ * Where a dancer's from, unless it only repeats their age group or category
+ * (some imports put the category in that column).
+ */
+export function dancerPlace(
+  location: string | null | undefined,
+  group: { fullName?: string; category?: { name?: string } } | null | undefined,
+): string | null {
+  const l = location?.trim()
+  if (!l) return null
+  const same = (s: string | undefined) => !!s && s.trim().toLowerCase() === l.toLowerCase()
+  return same(group?.category?.name) || same(group?.fullName) ? null : l
+}

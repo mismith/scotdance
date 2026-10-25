@@ -99,6 +99,26 @@ const sections = computed(() =>
     .filter((s) => s.rows.length),
 )
 
+// One list where it can be: a category that is one age group is one row
+// ("Beginner", not "Beginner" over "All Ages"), and neighbouring ones share
+// a card. A category with several age groups keeps its heading.
+const isWholeCategory = (g: EnrichedGroup) => !g.name?.trim() || /^all ages$/i.test(g.name.trim())
+const blocks = computed(() => {
+  const out: Array<{ key: string; heading: string | null; rows: Array<Row & { title: string }> }> = []
+  for (const s of sections.value) {
+    if (s.rows.length === 1) {
+      const [r] = s.rows
+      const row = { ...r, title: isWholeCategory(r.group) ? s.category.name || r.group.fullName : r.group.fullName }
+      const last = out.at(-1)
+      if (last && !last.heading) last.rows.push(row)
+      else out.push({ key: s.category.id, heading: null, rows: [row] })
+    } else {
+      out.push({ key: s.category.id, heading: s.category.name || 'Other', rows: s.rows.map((r) => ({ ...r, title: r.group.name || r.group.fullName })) })
+    }
+  }
+  return out
+})
+
 const totals = computed(() => resultsCount(groups.value, dances.value, results.value))
 
 const anyFollowedHere = computed(() => followedByGroup.value.size > 0)
@@ -119,7 +139,7 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
         </div>
         <p class="text-muted-foreground flex flex-wrap items-center gap-x-2 text-sm">
           <span><span class="text-foreground font-semibold tabular-nums">{{ totals.posted }} of {{ totals.total }}</span> results posted</span>
-          <span v-if="isLive" class="flex items-center gap-1.5">
+          <span v-if="isLive && totals.posted < totals.total" class="flex items-center gap-1.5">
             <LiveDot :pulse="pulse" />
             <span class="text-live font-semibold">Live</span><template v-if="lastResult"> · {{ lastResult }}</template>
           </span>
@@ -161,9 +181,9 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
       leave-to-class="opacity-0"
     >
       <div :key="String(mineOnly)" class="space-y-3">
-        <section v-for="s in sections" :key="s.category.id">
-          <h2 class="bg-background text-muted-foreground text-callout sticky top-(--chrome-top) z-10 py-2 font-semibold">
-            {{ s.category.name || 'Other' }}
+        <section v-for="s in blocks" :key="s.key">
+          <h2 v-if="s.heading" class="bg-background text-muted-foreground text-callout sticky top-(--chrome-top) z-10 py-2 font-semibold">
+            {{ s.heading }}
           </h2>
           <ul class="surface rows-inset overflow-hidden rounded-2xl">
             <li v-for="r in s.rows" :key="r.group.id">
@@ -174,7 +194,7 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
               >
                 <span v-if="r.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
                 <span class="min-w-0 flex-1">
-                  <span class="block truncate text-base font-semibold">{{ r.group.name || r.group.fullName }}</span>
+                  <span class="block truncate text-base font-semibold">{{ r.title }}</span>
                   <!-- Said in words: a bare warning sign reads as "something's wrong with the results". -->
                   <span v-if="r.unknown" class="text-muted-foreground mt-0.5 flex items-center gap-1 text-sm">
                     <AlertTriangle class="size-3.5 shrink-0" aria-hidden="true" />

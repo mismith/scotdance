@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { ChevronRight, Hourglass } from '@lucide/vue'
 import Medal from '@/components/Medal.vue'
@@ -8,6 +8,7 @@ import DanceStatusChip from '@/components/DanceStatusChip.vue'
 import { getOrdinalSuffix } from '@/lib/results'
 import { platformLabel } from '@/lib/schedule'
 import type { DancerDay, DanceStatus } from '@/lib/dancerDay'
+import { successHaptic } from '@/lib/haptics'
 
 // One followed dancer at one competition, led by the number card they wear
 // there (in their colour, the one mark of "yours"). Placings pin on beside
@@ -71,6 +72,18 @@ const pinned = computed(
   () => calledBack.value != null || placed.value || unplaced.value || waiting.value || (settled.value && day.value.phase === 'today'),
 )
 
+// A placing just landed here: the card catches the light once, with a tap.
+const sweeping = ref(false)
+watch(
+  () => props.fresh,
+  (key) => {
+    if (!key || !shown.value.some((d) => key.startsWith(`${d.dancer.id}:`))) return
+    sweeping.value = false
+    requestAnimationFrame(() => (sweeping.value = true))
+    successHaptic()
+  },
+)
+
 const ordinal = (n: number) => `${n}${getOrdinalSuffix(n)}`
 // A dance still to come, as the schedule has it: when its event (or session)
 // starts, as "From 12:15 pm", since the dances in it share that start and
@@ -92,6 +105,21 @@ function detail(s: DanceStatus): string[] {
   return [session, s.drawPos ? `${ordinal(s.drawPos)} to dance` : ''].filter(Boolean)
 }
 
+// Dances that share a slot (same start, platform and draw) are one row, so
+// "From 12:15 pm · Platform A · 6th to dance" is said once.
+const upcomingRows = computed(() => {
+  const rows: { key: string; d: DancerDay; names: string[]; danceId: string; when: string | null; where: string }[] = []
+  for (const { d, s } of upcoming.value) {
+    const w = when(s)
+    const at = where(d, s)
+    const name = s.dance.fullName || s.dance.name || ''
+    const same = (w || at) && rows.find((r) => r.d === d && r.when === w && r.where === at)
+    if (same) same.names.push(name)
+    else rows.push({ key: `${d.dancer.id}:${s.dance.id}`, d, names: [name], danceId: s.dance.id, when: w, where: at })
+  }
+  return rows
+})
+
 const groupRoute = (d: DancerDay, danceId?: string) => ({
   name: 'competition.group',
   params: { competitionId: props.competitionId, groupId: d.group?.id ?? '' },
@@ -103,7 +131,10 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-5 py-2.5' : 'min-h-12 px
 </script>
 
 <template>
-  <article :class="['surface @container overflow-hidden', bare && lg ? 'rounded-3xl' : 'rounded-[1.25rem]']">
+  <article
+    :class="['surface @container overflow-hidden', bare && lg ? 'rounded-3xl' : 'rounded-[1.25rem]', sweeping && 'card-sweep']"
+    @animationend="(e: AnimationEvent) => e.animationName === 'card-sweep' && (sweeping = false)"
+  >
     <template v-if="!bare">
       <!-- The bib, the name, and the placings pinned on: beside the name when
            the card has room, under it on a phone. -->
@@ -169,15 +200,16 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-5 py-2.5' : 'min-h-12 px
 
       <!-- Still to come, as the schedule has it. -->
       <ul v-if="upcoming.length" class="rows-inset shadow-[inset_0_1px_0_var(--border)] [--inset:1rem]">
-        <li v-for="{ d, s } in upcoming" :key="`${d.dancer.id}:${s.dance.id}`">
-          <RouterLink :to="groupRoute(d, s.dance.id)" class="press-row focus-inset flex min-h-14 flex-wrap items-center gap-x-3 gap-y-0.5 px-4 py-2.5">
+        <li v-for="r in upcomingRows" :key="r.key">
+          <RouterLink :to="groupRoute(r.d, r.danceId)" class="press-row focus-inset flex min-h-14 flex-wrap items-center gap-x-3 gap-y-0.5 px-4 py-2.5">
             <span class="min-w-[8rem] flex-1 text-base font-semibold break-words">
-              {{ s.dance.fullName || s.dance.name }}
-              <span v-if="multi" class="text-muted-foreground block text-sm font-normal">{{ d.group?.fullName }}</span>
+              <span v-for="n in r.names" :key="n" class="block">{{ n }}</span>
+              <span v-if="multi" class="text-muted-foreground block text-sm font-normal">{{ r.d.group?.fullName }}</span>
             </span>
-            <span v-if="when(s) || where(d, s)" class="ml-auto text-right">
-              <span v-if="when(s)" class="block text-base font-bold tabular-nums">{{ when(s) }}</span>
-              <span v-if="where(d, s)" class="text-muted-foreground block text-sm">{{ where(d, s) }}</span>
+            <!-- Where they dance is what a parent is looking for: ink, not grey. -->
+            <span v-if="r.when || r.where" class="ml-auto text-right">
+              <span v-if="r.when" class="block text-base font-bold tabular-nums">{{ r.when }}</span>
+              <span v-if="r.where" class="text-foreground block text-sm font-medium">{{ r.where }}</span>
             </span>
           </RouterLink>
         </li>

@@ -220,10 +220,10 @@ const dayNote = (c: Competition & { id: string }) => {
 }
 
 // If nothing personal is coming up, show what's next anywhere (but not
-// again what's under Your competitions).
+// again what's under Your competitions, or today's, already shown with your dancers).
 const nextAnywhere = computed(() => {
-  const managed = new Set(yours.value.map((c) => c.id))
-  const next = recentCompetitions.value.filter((c) => phaseOf(c) !== 'after' && !managed.has(c.id))
+  const shown = new Set([...yours.value.map((c) => c.id), ...todays.value.map((t) => t.competitionId)])
+  const next = recentCompetitions.value.filter((c) => phaseOf(c) !== 'after' && !shown.has(c.id))
   const at = (c: { date?: number | string }) => parseDate(c.date ?? 0).getTime()
   return railRows(orderLinked(next, linkOf, { at }), 3).map(({ item, rail, alone }) => ({
     ...item,
@@ -312,8 +312,9 @@ const { freshKey: liveFresh } = useLiveAlertState()
           </div>
         </Transition>
 
+        <!-- Never above the dancers: it waits for a day without a competition. -->
         <button
-          v-if="auth.isSignedIn && roles.pending.value && !roles.answered.value"
+          v-if="auth.isSignedIn && roles.pending.value && !roles.answered.value && !todays.length"
           type="button"
           class="surface press-row focus-inset flex w-full items-center gap-3 rounded-2xl p-4 text-left"
           @click="roles.open()"

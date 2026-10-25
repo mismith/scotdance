@@ -636,6 +636,37 @@
   @apply text-xs leading-snug font-medium;
 }
 
+/* A placing landing on a dancer's card: the card catches the light, once,
+   as the rosette flips in. Nothing under Reduce Motion. */
+@utility card-sweep {
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      color-mix(in oklab, var(--card) 60%, transparent) 42%,
+      color-mix(in oklab, var(--primary) 16%, transparent) 50%,
+      transparent 64%
+    );
+    translate: -120% 0;
+    animation: card-sweep 900ms var(--ease-standard) 260ms forwards;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      display: none;
+    }
+  }
+}
+@keyframes card-sweep {
+  to {
+    translate: 120% 0;
+  }
+}
+
 /* Content settling in on first load: up 6px and in. */
 @keyframes rise-in {
   from {

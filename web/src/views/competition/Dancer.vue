@@ -13,6 +13,7 @@ import DancerLookButton from '@/components/DancerLookButton.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import Skeleton from '@/components/Skeleton.vue'
+import { dancerPlace } from '@/lib/competitionInfo'
 
 const route = useRoute()
 const setHeader = injectInfoHeaderSetter()
@@ -89,7 +90,7 @@ const fresh = computed(() => {
         <NumberCard v-else :number="dancer.number" :color="color" size="xl" />
         <h1 class="text-display mt-5">{{ dancer.fullName }}</h1>
         <p class="text-muted-foreground text-callout mt-1">
-          {{ [dancer.group?.fullName, dancer.location].filter(Boolean).join(' · ') }}
+          {{ [dancer.group?.fullName, dancerPlace(dancer.location, dancer.group)].filter(Boolean).join(' · ') }}
         </p>
         <FollowButton v-if="dancer.dancerId" :dancer="dancer" size="block" class="mt-4 w-auto! min-w-48" />
       </header>

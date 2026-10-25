@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { directions, staffHeading } from '@/lib/competitionInfo'
+import { dancerPlace, directions, staffHeading } from '@/lib/competitionInfo'
 
 describe('staffHeading', () => {
   it('pluralises the types organisers type', () => {
@@ -29,5 +29,19 @@ describe('directions', () => {
   it('has nowhere to go without a place', () => {
     expect(directions({})).toBeNull()
     expect(directions(null)).toBeNull()
+  })
+})
+
+describe('dancerPlace', () => {
+  const group = { fullName: 'Intermediate All Ages', category: { name: 'Intermediate' } }
+  it('keeps where they are from', () => {
+    expect(dancerPlace('Calgary, AB', group)).toBe('Calgary, AB')
+    expect(dancerPlace(' Prince George ', group)).toBe('Prince George')
+  })
+  it('drops a location that only repeats the category or age group', () => {
+    expect(dancerPlace('Intermediate', group)).toBeNull()
+    expect(dancerPlace('intermediate all ages', group)).toBeNull()
+    expect(dancerPlace('', group)).toBeNull()
+    expect(dancerPlace(null, null)).toBeNull()
   })
 })

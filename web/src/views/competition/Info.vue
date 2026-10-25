@@ -92,6 +92,17 @@ onMounted(async () => {
 // "Live · Day 1 of 2 · Calgary, AB" with the one live dot (pulsing only
 // while results are coming in).
 const live = computed(() => phase.value === 'today')
+// The date row, only when it adds to the tile and "Yesterday" above: the
+// year once it's more than a week away, the start time, or no tile at all.
+const showDateRow = computed(() => {
+  const c = competition.value
+  if (!c?.date || mode.value === 'today') return false
+  const days = daysFromToday(c.date)
+  return !!c.image || days == null || Math.abs(days) >= 7 || (!!sessions.value[0]?.time && mode.value === 'before')
+})
+// A long name takes the next size down, so it doesn't fill the screen.
+const longName = computed(() => (competition.value?.name?.length ?? 0) > 40)
+
 const kicker = computed(() => {
   const c = competition.value
   if (!c) return ''
@@ -255,7 +266,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         />
         <!-- The name leads; when and where follows it. -->
         <div class="min-w-0 flex-1">
-          <h1 class="text-display">
+          <h1 :class="longName ? 'text-title font-[760]' : 'text-display'">
             <CompetitionName :competition="competition" link />
           </h1>
           <p :class="['text-callout mt-0.5 flex items-center gap-1.5 font-semibold', live ? 'text-live' : 'text-muted-foreground']">
@@ -308,11 +319,8 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
       </section>
 
       <!-- Not following anyone here: find them -->
-      <section v-else-if="ready && dancers.length" key="find" class="surface space-y-3 rounded-2xl p-4">
-        <p class="text-callout">
-          <span class="font-semibold">Is your dancer here?</span>
-          {{ mode === 'after' ? 'Find them to see their results.' : 'Favourite them to see their day at a glance.' }}
-        </p>
+      <section v-else-if="ready && dancers.length" key="find" class="space-y-2.5">
+        <h2 class="text-heading">Is your dancer here?</h2>
         <label class="field flex h-12 items-center gap-2 rounded-xl pr-1 pl-3">
           <Search class="text-muted-foreground size-5 shrink-0" />
           <input
@@ -337,7 +345,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         <TransitionGroup
           v-if="shownMatches.length"
           tag="ul"
-          class="rows-inset -mx-4 -mb-2 [interpolate-size:allow-keywords] [--inset:4.75rem]"
+          class="surface rows-inset overflow-hidden rounded-2xl [interpolate-size:allow-keywords] [--inset:4.75rem]"
           v-bind="rowsMove"
         >
           <li v-for="d in shownMatches" :key="d.id" class="flex items-center gap-1 pr-2">
@@ -404,7 +412,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
 
     <!-- When and where -->
     <section class="surface rows-inset overflow-hidden rounded-2xl [--inset:3rem]">
-      <div v-if="competition.date && mode !== 'today'" class="flex items-center gap-3 p-4">
+      <div v-if="showDateRow" class="flex items-center gap-3 p-4">
         <Clock class="text-primary size-5 shrink-0" />
         <div>
           <p class="text-base font-semibold">{{ formatLongDate(competition.date) }}</p>

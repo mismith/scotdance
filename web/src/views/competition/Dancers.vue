@@ -16,6 +16,7 @@ import Skeleton from '@/components/Skeleton.vue'
 import Switch from '@/components/ui/Switch.vue'
 import { selectionHaptic } from '@/lib/haptics'
 import { useMorph } from '@/lib/morph'
+import { dancerPlace } from '@/lib/competitionInfo'
 
 // Every dancer, open by default (v3 showed names straight away; next hid them
 // behind 30 collapsed age groups). Typing digits matches competitor numbers
@@ -242,7 +243,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
                 <span class="min-w-0">
                   <span class="block truncate text-base font-semibold">{{ d.fullName }}</span>
                   <span class="text-muted-foreground block truncate text-sm">
-                    {{ sortBy === 'group' ? d.location : d.group?.fullName }}
+                    {{ sortBy === 'group' ? dancerPlace(d.location, d.group) : d.group?.fullName }}
                   </span>
                 </span>
               </RouterLink>

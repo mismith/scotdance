@@ -27,6 +27,7 @@ import {
 import { competitionPhase, scheduleIndex } from '@/lib/dancerDay'
 import { platformLabel } from '@/lib/schedule'
 import { OVERALL_ID, groupHasOverall, staffMemberName, type EnrichedDance, type EnrichedDancer } from '@/types/competition'
+import { dancerPlace } from '@/lib/competitionInfo'
 
 const route = useRoute()
 const setHeader = injectInfoHeaderSetter()
@@ -296,7 +297,7 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
                 />
                 <span class="min-w-0 flex-1">
                   <span class="block truncate text-base font-semibold">{{ row.dancer.fullName }}</span>
-                  <span v-if="row.dancer.location" class="text-muted-foreground block truncate text-sm">{{ row.dancer.location }}</span>
+                  <span v-if="dancerPlace(row.dancer.location, group)" class="text-muted-foreground block truncate text-sm">{{ row.dancer.location }}</span>
                 </span>
               </template>
               <span v-else class="text-muted-foreground text-base">Unknown dancer</span>
