@@ -2,7 +2,7 @@
 import { useMorph } from '@/lib/morph'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Check, ChevronDown, ChevronRight, Clock, Copy, ExternalLink, Hourglass, Map as MapIcon, MapPin, Navigation, Search, Star, Trophy, Users, X } from '@lucide/vue'
+import { CalendarDays, Check, ChevronDown, ChevronRight, Copy, ExternalLink, Hourglass, Map as MapIcon, MapPin, Navigation, Search, Star, X } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
 import { useCompetitionLive } from '@/composables/useCompetitionLive'
@@ -68,6 +68,7 @@ const {
   resultsHidden,
   schedule,
   loadSchedule,
+  hasSchedule,
 } = useCompetition()
 const { phase, followedHere } = useCompetitionDays()
 // A studio follows dozens: the first few, so the rest of the Overview is in
@@ -166,6 +167,17 @@ async function copyAddress(closeMenu: boolean) {
 const registrationLines = computed(() => competitionRegistrationLines(competition.value))
 const links = computed(() => competitionLinks(competition.value))
 const registrationOpen = computed(() => isRegistrationOpen(competition.value))
+// The third action beside Alerts and Directions: Register while entries are
+// open, or else the one link when there's just one. More links keep their row.
+const actionLink = computed(() => {
+  const c = competition.value
+  if (c?.registrationURL && mode.value === 'before' && registrationOpen.value) {
+    return { label: 'Register', href: formatExternalURL(c.registrationURL), primary: true }
+  }
+  const [only] = links.value
+  return links.value.length === 1 ? { label: linkLabel(only), href: formatExternalURL(only.url), primary: false } : null
+})
+const moreLinks = computed(() => (actionLink.value && !actionLink.value.primary ? [] : links.value))
 
 // Sessions: the schedule's blocks, with the time organisers put in their
 // description ("8:00 am"), and how many of their results are in.
@@ -200,6 +212,17 @@ const sessions = computed(() =>
 // row and what's on; after, the results so far instead of the map.
 const mode = computed(() => phase.value)
 const posted = computed(() => resultsCount(groups.value, dances.value, results.value))
+// What's here, in figures: each opens where it's listed.
+const figures = computed(() => {
+  const tab = (name: string) => ({ name, params: { competitionId: competitionId.value } })
+  return [
+    dancers.value.length ? { value: String(dancers.value.length), label: dancers.value.length === 1 ? 'Dancer' : 'Dancers', to: tab('competition.dancers') } : null,
+    dances.value.length ? { value: String(dances.value.length), label: dances.value.length === 1 ? 'Dance' : 'Dances', to: tab(hasSchedule.value ? 'competition.schedule' : 'competition.results') } : null,
+    mode.value !== 'before' && posted.value.total && !resultsHidden.value
+      ? { value: `${posted.value.posted}/${posted.value.total}`, label: 'Results in', to: tab('competition.results') }
+      : null,
+  ].filter((f) => f != null)
+})
 
 // Following no one here: find your dancer right on the Overview.
 const find = ref('')
@@ -256,7 +279,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
     <header :ref="setHeader" class="space-y-3">
       <div class="flex items-start gap-3">
         <span v-if="competition.image" class="relative shrink-0">
-          <img :src="competition.image" alt="" class="size-14 rounded-xl object-cover" />
+          <img :src="competition.image" alt="" class="size-[3.75rem] rounded-[0.875rem] object-cover shadow-[0_0_0_0.5px_rgb(0_0_0/0.12),0_2px_6px_rgb(16_24_40/0.12)]" />
           <AdminMark v-if="me.organises(competitionId)" size="md" ring="background" />
         </span>
         <DateTile
@@ -265,18 +288,43 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
           :managed="me.organises(competitionId)"
         />
         <!-- The name leads; when and where follows it. -->
-        <div class="min-w-0 flex-1">
-          <h1 :class="longName ? 'text-title font-[760]' : 'text-display'">
+        <div class="min-w-0 flex-1 pt-0.5">
+          <h1 :class="longName ? 'text-[1.5rem] leading-[1.1] font-[800] tracking-[-0.024em] text-balance' : 'text-hero'">
             <CompetitionName :competition="competition" link />
           </h1>
-          <p :class="['text-callout mt-0.5 flex items-center gap-1.5 font-semibold', live ? 'text-live' : 'text-muted-foreground']">
+          <p :class="['text-callout mt-1.5 flex items-center gap-1.5 font-semibold', live ? 'text-live' : 'text-muted-foreground']">
             <LiveDot v-if="live" :pulse="pulse" />
             {{ kicker }}
           </p>
         </div>
       </div>
-      <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <FavoriteButton :id="competitionId" type="competitions" :name="competition.name" labelled variant="tonal" />
+      <!-- What you can do here, in one row of equal buttons. -->
+      <div class="grid auto-cols-fr grid-flow-col gap-2 pt-2">
+        <FavoriteButton :id="competitionId" type="competitions" :name="competition.name" labelled variant="tile" />
+        <button
+          v-if="where"
+          type="button"
+          class="press action-tile bg-blue-paper text-primary"
+          aria-haspopup="dialog"
+          :aria-expanded="directionsMenu.open"
+          @click="openDirections"
+        >
+          <Navigation aria-hidden="true" /> Directions
+        </button>
+        <a
+          v-if="actionLink"
+          :href="actionLink.href"
+          target="_blank"
+          rel="noopener"
+          :class="['press action-tile', actionLink.primary ? 'bg-primary-fill text-primary-foreground press-fill' : 'bg-blue-paper text-primary']"
+        >
+          <ExternalLink aria-hidden="true" /> <span class="max-w-full truncate">{{ actionLink.label }}</span>
+        </a>
+      </div>
+      <template v-if="competition.registrationURL && mode === 'before'">
+        <p v-for="line in registrationLines" :key="line" class="text-muted-foreground text-center text-sm">{{ line }}</p>
+      </template>
+      <div v-if="switcher?.linked.value || lastResult" class="flex flex-wrap items-center gap-x-3 gap-y-2">
         <button
           v-if="switcher?.linked.value"
           type="button"
@@ -301,7 +349,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
     >
       <!-- Your dancers here -->
       <section v-if="followedHere.length" key="yours" class="space-y-3">
-        <h2 class="text-heading">
+        <h2 class="text-section">
           Your dancers here
           <span v-if="followedHere.length > 1" class="text-muted-foreground text-sm font-medium tabular-nums">{{ followedHere.length }}</span>
         </h2>
@@ -320,9 +368,9 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
 
       <!-- Not following anyone here: find them -->
       <section v-else-if="ready && dancers.length" key="find" class="space-y-2.5">
-        <h2 class="text-heading">Is your dancer here?</h2>
-        <label class="field flex h-12 items-center gap-2 rounded-xl pr-1 pl-3">
-          <Search class="text-muted-foreground size-5 shrink-0" />
+        <h2 class="text-section">Is your dancer here?</h2>
+        <label class="search-fill">
+          <Search class="text-muted-foreground size-[1.125rem] shrink-0" stroke-width="2.4" />
           <input
             v-model="find"
             type="search"
@@ -330,7 +378,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
             aria-label="Find your dancer by name or number"
             autocomplete="off"
             enterkeyhint="search"
-            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none"
+            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-[1.0625rem] outline-none"
           />
           <button
             v-if="find"
@@ -384,9 +432,22 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
       </p>
     </Transition>
 
+    <!-- What's here, in figures -->
+    <div v-if="figures.length > 1" class="surface grid auto-cols-fr grid-flow-col overflow-hidden rounded-2xl">
+      <RouterLink
+        v-for="(f, i) in figures"
+        :key="f.label"
+        :to="f.to"
+        :class="['press-row focus-inset flex flex-col items-center py-3', i > 0 && 'shadow-[inset_0.5px_0_0_var(--border)]']"
+      >
+        <span class="text-[1.625rem] leading-none font-[800] tracking-[-0.02em] tabular-nums">{{ f.value }}</span>
+        <span class="text-muted-foreground mt-1 text-[0.8125rem] font-semibold">{{ f.label }}</span>
+      </RouterLink>
+    </div>
+
     <!-- The competitions it's linked with: the ones either side, and all of them -->
     <section v-if="switcher?.linked.value" class="space-y-3">
-      <h2 class="text-heading">{{ switcher.label.value }}</h2>
+      <h2 class="text-section">{{ switcher.label.value }}</h2>
       <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
         <CompetitionDateRow
           v-for="r in nearby"
@@ -411,48 +472,28 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
     </section>
 
     <!-- When and where -->
-    <section class="surface rows-inset overflow-hidden rounded-2xl [--inset:3rem]">
+    <section
+      v-if="showDateRow || competition.venue || competition.address || competition.location"
+      class="surface rows-inset overflow-hidden rounded-2xl [--inset:3rem]"
+    >
       <div v-if="showDateRow" class="flex items-center gap-3 p-4">
-        <Clock class="text-primary size-5 shrink-0" />
+        <CalendarDays class="text-primary size-5 shrink-0" />
         <div>
-          <p class="text-base font-semibold">{{ formatLongDate(competition.date) }}</p>
+          <p class="text-[1.0625rem] font-semibold">{{ formatLongDate(competition.date) }}</p>
           <p v-if="sessions[0]?.time && mode === 'before'" class="text-muted-foreground text-sm">Starts {{ sessions[0].time }}</p>
         </div>
       </div>
-      <!-- After: what's in. -->
-      <RouterLink
-        v-if="mode === 'after' && posted.total && !resultsHidden"
-        :to="{ name: 'competition.results', params: { competitionId } }"
-        class="press-row focus-inset flex items-center gap-3 p-4"
-      >
-        <Trophy class="text-primary size-5 shrink-0" />
-        <span class="min-w-0 flex-1">
-          <span class="block text-base font-semibold">Results</span>
-          <span class="text-muted-foreground block text-sm tabular-nums">{{ posted.posted }} of {{ posted.total }} posted</span>
-        </span>
-        <ChevronRight class="text-muted-foreground size-5" />
-      </RouterLink>
       <div v-if="competition.venue || competition.address || competition.location" class="space-y-3 p-4">
         <div class="flex items-center gap-3">
           <MapPin class="text-primary size-5 shrink-0" />
           <div class="min-w-0 flex-1">
             <!-- Venue and address in full: they're what you'd read out to a taxi. -->
-            <p v-if="competition.venue" class="text-base font-semibold break-words">{{ competition.venue }}</p>
+            <p v-if="competition.venue" class="text-[1.0625rem] font-semibold break-words">{{ competition.venue }}</p>
             <p v-if="competition.space" class="text-sm font-medium break-words">{{ competition.space }}</p>
             <p class="text-muted-foreground text-sm break-words">
               {{ [competition.address, competition.location].filter(Boolean).join(', ') }}
             </p>
           </div>
-          <Button
-            v-if="where"
-            variant="tonal"
-            size="sm"
-            aria-haspopup="dialog"
-            :aria-expanded="directionsMenu.open"
-            @click="openDirections"
-          >
-            <Navigation /> Directions
-          </Button>
         </div>
         <!-- The map before the day; on and after it, it's in the Directions menu. -->
         <MapPreview
@@ -464,22 +505,11 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
           @click="mapSheet.show($event)"
         />
       </div>
-      <RouterLink
-        v-if="dancers.length"
-        :to="{ name: 'competition.dancers', params: { competitionId } }"
-        class="press-row focus-inset flex items-center gap-3 p-4"
-      >
-        <Users class="text-primary size-5 shrink-0" />
-        <span class="flex-1 text-base font-semibold">
-          {{ dancers.length }} dancers<template v-if="dances.length">, {{ dances.length }} dances</template>
-        </span>
-        <ChevronRight class="text-muted-foreground size-5" />
-      </RouterLink>
     </section>
 
     <!-- Sessions -->
     <section v-if="sessions.length" class="space-y-3">
-      <h2 class="text-heading flex min-h-6 items-center justify-between">
+      <h2 class="text-section flex min-h-6 items-center justify-between">
         Sessions
         <RouterLink
           :to="{ name: 'competition.schedule', params: { competitionId } }"
@@ -507,36 +537,19 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
       </ul>
     </section>
 
-    <!-- Registration + links -->
-    <section v-if="(competition.registrationURL && mode === 'before') || links.length" class="space-y-2">
+    <!-- Links beyond the one beside Alerts -->
+    <div v-if="moreLinks.length" class="flex flex-wrap gap-2">
       <Button
-        v-if="competition.registrationURL && mode === 'before'"
-        variant="primary"
-        size="lg"
-        block
-        :href="formatExternalURL(competition.registrationURL)"
+        v-for="link in moreLinks"
+        :key="link.id"
+        :href="formatExternalURL(link.url)"
         target="_blank"
         rel="noopener"
-        :disabled="!registrationOpen"
+        class="max-w-full"
       >
-        Register <ExternalLink />
+        <span class="truncate">{{ linkLabel(link) }}</span> <ExternalLink />
       </Button>
-      <template v-if="mode === 'before'">
-        <p v-for="line in registrationLines" :key="line" class="text-muted-foreground text-center text-sm">{{ line }}</p>
-      </template>
-      <div v-if="links.length" class="flex flex-wrap gap-2 pt-1">
-        <Button
-          v-for="link in links"
-          :key="link.id"
-          :href="formatExternalURL(link.url)"
-          target="_blank"
-          rel="noopener"
-          class="max-w-full"
-        >
-          <span class="truncate">{{ linkLabel(link) }}</span> <ExternalLink />
-        </Button>
-      </div>
-    </section>
+    </div>
 
     <section
       v-if="competition.description"
@@ -546,18 +559,18 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
 
     <!-- Judges, pipers, and other staff -->
     <section v-for="g in staffGroups" :key="g.type" class="space-y-3">
-      <h2 class="text-heading">
+      <h2 class="text-section">
         {{ staffHeading(g.type, g.members.length) }}
         <span v-if="g.members.length > 1" class="text-muted-foreground text-sm font-medium tabular-nums">{{ g.members.length }}</span>
       </h2>
-      <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4rem]">
+      <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.25rem]">
         <li v-for="m in staffShown(g)" :key="m.id">
           <button
             type="button"
             class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left"
             @click="(activeStaff = m), staffSheet.show($event)"
           >
-            <StaffAvatar :member="m" :size="36" />
+            <StaffAvatar :member="m" :size="40" />
             <span class="min-w-0 flex-1">
               <span class="flex items-center gap-1.5 text-base font-semibold">
                 <span class="truncate">{{ staffMemberName(m) }}</span>
@@ -581,7 +594,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
 
     <!-- Who runs it: last, after the people -->
     <section v-if="organisations.length" class="space-y-3">
-      <h2 class="text-heading">
+      <h2 class="text-section">
         {{ organisations.length === 1 ? 'Organisation' : 'Organisations' }}
         <span v-if="organisations.length > 1" class="text-muted-foreground text-sm font-medium tabular-nums">{{ organisations.length }}</span>
       </h2>
@@ -663,10 +676,9 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
     </Dialog>
 
     <!-- Its registration numbers, each beside who it's registered with. -->
-    <div v-if="registrations(competition.sobhd).length" class="text-muted-foreground space-y-1 pt-2 text-sm">
-      <p v-for="r in registrations(competition.sobhd)" :key="r.number" class="flex justify-between gap-4">
-        <span>{{ registrationLabel(r) }}</span>
-        <span class="font-medium tabular-nums">{{ r.number }}</span>
+    <div v-if="registrations(competition.sobhd).length" class="text-muted-foreground space-y-1 pt-2 text-center text-footnote">
+      <p v-for="r in registrations(competition.sobhd)" :key="r.number">
+        {{ registrationLabel(r) }} · <span class="font-medium tabular-nums">{{ r.number }}</span>
       </p>
     </div>
   </article>

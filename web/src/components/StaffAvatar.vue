@@ -13,6 +13,8 @@ const props = withDefaults(defineProps<{ member: StaffMember; size?: number }>()
 const name = computed(() => staffMemberName(props.member))
 const sponsor = computed(() => /sponsor/i.test(props.member.type ?? ''))
 const broken = ref(false)
+// Initials on a soft colour of their own, from their name (as in Contacts).
+const hue = computed(() => [...name.value].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) % 360, 7))
 </script>
 
 <template>
@@ -28,8 +30,8 @@ const broken = ref(false)
   />
   <span
     v-else
-    class="bg-blue-paper text-primary inline-flex shrink-0 items-center justify-center rounded-full font-semibold tracking-[0.01em] select-none"
-    :style="{ width: `${size}px`, height: `${size}px`, fontSize: `${Math.round(size * 0.38)}px` }"
+    class="inline-flex shrink-0 items-center justify-center rounded-full bg-[oklch(0.93_0.05_var(--h))] font-bold tracking-[0.01em] text-[oklch(0.45_0.13_var(--h))] select-none dark:bg-[oklch(0.34_0.06_var(--h))] dark:text-[oklch(0.88_0.08_var(--h))]"
+    :style="{ width: `${size}px`, height: `${size}px`, fontSize: `${Math.round(size * 0.38)}px`, '--h': hue }"
     aria-hidden="true"
   >
     <Award v-if="sponsor" :style="{ width: `${size * 0.5}px`, height: `${size * 0.5}px` }" />

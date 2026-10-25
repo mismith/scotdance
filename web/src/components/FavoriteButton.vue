@@ -19,8 +19,8 @@ const props = defineProps<{
   name?: string
   /** Show the word ("Favourite", or "Alerts" on a competition) next to the icon. */
   labelled?: boolean
-  /** Labelled only: tonal where another button is the view's main action. */
-  variant?: 'filled' | 'tonal'
+  /** Labelled only: tonal where another button is the view's main action; a tile in a row of actions. */
+  variant?: 'filled' | 'tonal' | 'tile'
 }>()
 
 const auth = useAuthStore()
@@ -60,8 +60,12 @@ async function handleClick(e: Event) {
     :aria-pressed="isFavorite"
     :aria-label="labelled ? undefined : `${word}${name ? ` ${alerts ? 'for ' : ''}${name}` : ''}`"
     :class="[
-      'press flex shrink-0 items-center justify-center rounded-full transition-colors',
-      labelled
+      variant === 'tile'
+        ? ['press action-tile text-primary transition-colors', isFavorite ? 'surface' : 'bg-blue-paper']
+        : 'press flex shrink-0 items-center justify-center rounded-full transition-colors',
+      variant === 'tile'
+        ? null
+        : labelled
         ? [
             'h-11 gap-1.5 px-4 text-callout font-semibold',
             isFavorite
@@ -77,7 +81,7 @@ async function handleClick(e: Event) {
     <component
       :is="alerts ? Bell : Star"
       :class="[
-        'size-5',
+        variant !== 'tile' && 'size-5',
         isFavorite && (alerts ? 'text-primary fill-current' : 'text-secondary fill-current'),
         animating && 'motion-safe:animate-pop',
       ]"

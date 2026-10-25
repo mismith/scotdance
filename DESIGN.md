@@ -287,6 +287,9 @@ Every rounded shape uses continuous corners (`corner-shape: superellipse(1.5)`),
 ### Profile Hero
 A person's or place's page (dancer, judge, piper, venue) opens centred, as a competition dancer's page does under their number card: a 96px avatar (initials on the dancer's colour or tartan when followed, with a palette badge: tap it to choose their look) or the venue's map pin tile, the name at Display size, one line of who or where, then Favourite at a button's width (a dancer's, once a favourite, with their Alerts bell beside it). Outside a competition there is no number card; inside a dancer's history each competition row shows the number they wore there as a small card, then their rosettes.
 
+### Competition Overview
+In the manner of Apple's own apps (a place in Maps, an event in Sports). The title at `text-hero` (800, tight; a long name a size down) beside the logo or date tile. Under it one row of equal **action tiles** (`action-tile`, icon above the word): Alerts, Directions, and Register while entries are open (filled, the view's one blue) or else the one link when there's only one. Then the dancers (yours, or the iOS-style filled search, `search-fill`), then **figures**: dancers, dances and results in as big tabular numbers, each opening where it's listed. The when-and-where card holds only the date (when it adds to the tile) and the venue. Section titles at `text-section`. Staff initials sit on a soft colour of their own, from their name.
+
 ### Navigation
 - **Tab bar:** a floating glass capsule at the bottom on phones (Home, Competitions, Search, More); inside a competition it swaps to that competition's tabs with a round "leave" button beside it. The current tab sits on a quiet pill.
 - **App bar:** a back button that names where it goes, the title once the page's own title scrolls under, and up to two icon actions (36px in chrome), in blue like Back: grey reads as switched off.

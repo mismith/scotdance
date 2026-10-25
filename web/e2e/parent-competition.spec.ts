@@ -45,12 +45,13 @@ test('links and files show on the Overview, in order, skipping any with no addre
   await expect(page.getByText(/^Registration closes /)).toBeVisible()
   await expect(page.getByText(/^Registration open/)).toHaveCount(0)
 
-  // Registration closed: still says when, and Register is greyed out.
+  // Registration closed: still says when, and Register leaves the row of actions.
   await dbUpdate(`competitions/${comp.id}`, { registrationEnd: '2020-01-01T07:00:00.000Z' })
   // (Not waiting for "load": that waits for the map's tiles too.)
   await page.reload({ waitUntil: 'domcontentloaded' })
   await expect(page.getByText(/^Registration closed /)).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Register' })).toHaveAttribute('aria-disabled', 'true')
+  await expect(page.getByRole('link', { name: 'Register' })).toHaveCount(0)
+  await expect(links).toHaveText(['Entry form', 'Program', 'Day schedule.pdf'])
 })
 
 test('following no one here, the Overview finds your dancer by name or number', async ({ page }) => {
@@ -116,7 +117,7 @@ test('after the competition, the Overview leads with results instead of the map 
   const after = new Date(Date.now() + 15 * 86_400_000)
   const pad = (n: number) => String(n).padStart(2, '0')
   await page.goto(`/competitions/${comp.id}/info?now=${after.getFullYear()}-${pad(after.getMonth() + 1)}-${pad(after.getDate())}`)
-  await expect(page.getByRole('link', { name: /Results \d+ of \d+ posted/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /\d+\/\d+ Results in/ })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Register' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Show the map' })).toHaveCount(0)
 })

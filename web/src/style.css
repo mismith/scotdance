@@ -443,6 +443,19 @@
 /* Surfaces. Paper for content (a hairline, a whisper of shadow, no border),
    raised for what floats above it (menus, sheets). Glass is for chrome. */
 /* High contrast mode drops shadows, so paper gets an edge there instead. */
+/* Equal action buttons in a row under a title (Alerts, Directions, Register):
+   icon above the word, as on a place in Apple Maps. The caller colours it. */
+@utility action-tile {
+  @apply flex h-[3.75rem] min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[0.8125rem] leading-tight font-semibold;
+  & svg {
+    @apply size-[1.375rem];
+  }
+}
+/* The iOS search field: filled, no outline. */
+@utility search-fill {
+  @apply flex h-11 items-center gap-2 rounded-xl bg-[rgb(118_118_128/0.12)] pr-1 pl-3 focus-within:outline-2 focus-within:outline-offset-0 focus-within:outline-(--ring);
+}
+
 /* The page itself, grain and all: for what sits on the page but has to hide
    what scrolls under it (sticky headings). Fixed, so its grain lines up. */
 @utility paper {
@@ -649,6 +662,15 @@
 @utility text-title {
   @apply text-[1.3125rem] leading-tight font-bold tracking-[-0.014em];
   text-wrap: balance;
+}
+/* A page's own name at its most confident (a competition's Overview). */
+@utility text-hero {
+  @apply text-[1.9375rem] leading-[1.06] font-[800] tracking-[-0.032em];
+  text-wrap: balance;
+}
+/* Section titles that read as chapters, not form labels. */
+@utility text-section {
+  @apply text-[1.25rem] leading-tight font-[760] tracking-[-0.012em];
 }
 @utility text-heading {
   @apply text-[1.0625rem] leading-snug font-[650];
