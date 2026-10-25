@@ -12,12 +12,12 @@ import { successHaptic } from '@/lib/haptics'
 
 // One followed dancer at one competition, led by the number card they wear
 // there (in their colour, the one mark of "yours"). Placings pin on beside
-// it as rosettes as they're posted; the dances still to come sit at the foot
-// with what the schedule says about them. A dancer entered in more than one
-// age group (Premier plus a Broadsword event) is one card under one number.
-// The header opens the dancer's page; each dance still to come opens its
-// age group's results. `bare` is just the day's dances, one row each, for
-// the dancer's own page, which has its own header.
+// it as rosettes as they're posted; under them, one line of what the
+// schedule says about the next dance, when it says anything. A dancer
+// entered in more than one age group (Premier plus a Broadsword event) is one
+// card under one number. The card opens the dancer's page, which lists every
+// dance. `bare` is just the day's dances, one row each, for that page, which
+// has its own header.
 const props = withDefaults(
   defineProps<{
     days: DancerDay[]
@@ -85,18 +85,24 @@ watch(
 )
 
 const ordinal = (n: number) => `${n}${getOrdinalSuffix(n)}`
-// A dance still to come, as the schedule has it: when its event (or session)
-// starts, as "From 12:15 pm", since the dances in it share that start and
-// the schedule has no time for each one; then where, and their place in the
-// draw. Never a guess at what's on now.
-const when = (s: DanceStatus) => {
-  const t = s.slot?.eventTime ?? s.slot?.blockTime
-  return t ? `From ${t}` : (s.slot?.blockName ?? null)
-}
-const where = (d: DancerDay, s: DanceStatus) =>
-  [d.phase === 'before' ? s.slot?.dayName : null, platformLabel(s.slot?.platformName), s.drawPos ? `${ordinal(s.drawPos)} to dance` : null]
-    .filter(Boolean)
-    .join(' · ')
+// The next dance still to come, in the schedule's own facts: which day
+// (before the competition), where, from when (its event's or session's start,
+// since the dances in it share that start), and their place in the draw. One
+// line, and none at all when the competition entered no schedule, as most
+// don't. Never a guess at what's on now.
+const nextFacts = computed(() => {
+  for (const { d, s } of upcoming.value) {
+    const time = s.slot?.eventTime ?? s.slot?.blockTime
+    const bits = [
+      d.phase === 'before' ? s.slot?.dayName : null,
+      platformLabel(s.slot?.platformName),
+      time ? `from ${time}` : s.slot?.blockName,
+      s.drawPos ? `${ordinal(s.drawPos)} to dance` : null,
+    ].filter(Boolean)
+    if (bits.length) return bits.join(' · ')
+  }
+  return null
+})
 
 // The bare rows' details: the session with its time, and the draw.
 function detail(s: DanceStatus): string[] {
@@ -104,21 +110,6 @@ function detail(s: DanceStatus): string[] {
   const session = [s.slot?.blockName, s.slot?.eventTime ?? s.slot?.blockTime].filter(Boolean).join(', ')
   return [session, s.drawPos ? `${ordinal(s.drawPos)} to dance` : ''].filter(Boolean)
 }
-
-// Dances that share a slot (same start, platform and draw) are one row, so
-// "From 12:15 pm · Platform A · 6th to dance" is said once.
-const upcomingRows = computed(() => {
-  const rows: { key: string; d: DancerDay; names: string[]; danceId: string; when: string | null; where: string }[] = []
-  for (const { d, s } of upcoming.value) {
-    const w = when(s)
-    const at = where(d, s)
-    const name = s.dance.fullName || s.dance.name || ''
-    const same = (w || at) && rows.find((r) => r.d === d && r.when === w && r.where === at)
-    if (same) same.names.push(name)
-    else rows.push({ key: `${d.dancer.id}:${s.dance.id}`, d, names: [name], danceId: s.dance.id, when: w, where: at })
-  }
-  return rows
-})
 
 const groupRoute = (d: DancerDay, danceId?: string) => ({
   name: 'competition.group',
@@ -196,24 +187,9 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-5 py-2.5' : 'min-h-12 px
           </span>
           <span v-if="settled && day.phase === 'today' && !won.length && !overall" class="text-muted-foreground text-sm">Every result is in</span>
         </span>
+        <span v-if="nextFacts" class="text-callout col-span-full font-medium">{{ nextFacts }}</span>
       </RouterLink>
 
-      <!-- Still to come, as the schedule has it. -->
-      <ul v-if="upcoming.length" class="rows-inset shadow-[inset_0_1px_0_var(--border)] [--inset:1rem]">
-        <li v-for="r in upcomingRows" :key="r.key">
-          <RouterLink :to="groupRoute(r.d, r.danceId)" class="press-row focus-inset flex min-h-14 flex-wrap items-center gap-x-3 gap-y-0.5 px-4 py-2.5">
-            <span class="min-w-[8rem] flex-1 text-base font-semibold break-words">
-              <span v-for="n in r.names" :key="n" class="block">{{ n }}</span>
-              <span v-if="multi" class="text-muted-foreground block text-sm font-normal">{{ r.d.group?.fullName }}</span>
-            </span>
-            <!-- Where they dance is what a parent is looking for: ink, not grey. -->
-            <span v-if="r.when || r.where" class="ml-auto text-right">
-              <span v-if="r.when" class="block text-base font-bold tabular-nums">{{ r.when }}</span>
-              <span v-if="r.where" class="text-foreground block text-sm font-medium">{{ r.where }}</span>
-            </span>
-          </RouterLink>
-        </li>
-      </ul>
       <p
         v-if="!dances.length"
         class="text-muted-foreground px-4 pb-4 text-sm"

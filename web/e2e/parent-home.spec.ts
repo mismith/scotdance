@@ -82,26 +82,24 @@ test('favourite a dancer, see their day on Home, and watch a placing arrive', as
   const day = card(page, person)
   await expect(day.getByLabel('Number 107')).toBeVisible()
   await expect(day.getByText('Beginner Under 7', { exact: true })).toBeVisible()
-  // Each dance still to come, in facts from the schedule: the platform and
-  // 3rd in the draw.
-  // (In the list of dances still to come: once placed, a dance's rosette is
-  // in the card's header instead.)
-  const fling = day.getByRole('listitem').getByRole('link', { name: /Highland Fling \(4\)/ })
-  await expect(fling).toContainText('Platform A')
-  await expect(fling).toContainText('3rd to dance')
-  await expect(fling).not.toContainText('Next')
+  // The next dance, in one line of the schedule's facts: the platform, when
+  // its session starts and 3rd in the draw. The dances themselves are on
+  // their page.
+  const facts = day.getByText(/^Platform A · from /)
+  await expect(facts).toHaveText('Platform A · from 9:45 am · 3rd to dance')
+  await expect(day.getByText(/Highland Fling/)).toHaveCount(0)
 
   // The organiser posts the Fling: 2nd. Home pins it on as a rosette without
   // a reload, and the Fling leaves the dances still to come.
   const g = comp.groups[2].id
   await dbSet(`competitions:data/${comp.id}/results/${g}/${comp.dances[0].id}`, [entry(2, 1).id, entry(2).id])
   await expect(day.getByRole('img', { name: /^Highland Fling.*: 2nd place$/ })).toBeVisible()
-  await expect(fling).toHaveCount(0)
-  const sword = day.getByRole('listitem').getByRole('link', { name: /Sword Dance/ })
+  // The line moves on to the Sword, with its own place in the draw.
+  await expect(facts).toHaveText('Platform A · from 9:45 am · 2nd to dance')
 
   // A late change to the draw shows up too.
   await dbSet(`competitions:data/${comp.id}/draws/${g}/${comp.dances[1].id}`, ['107', '108'])
-  await expect(sword).toContainText('1st to dance')
+  await expect(facts).toHaveText('Platform A · from 9:45 am · 1st to dance')
 
   // Take them off from their page: Home goes back to the pitch, with them under
   // Recently viewed rather than Your dancers.
@@ -130,7 +128,8 @@ test('on competition day, whoever has dances to come comes first, and a finished
   // Finished: the bib and its rosettes, no dances still to come.
   await expect(card(page, done).getByRole('img', { name: /place/ }).first()).toBeVisible()
   await expect(card(page, done).getByRole('link')).toHaveCount(1)
-  await expect(card(page, next).getByRole('link', { name: /Highland Fling/ })).toBeVisible()
+  await expect(card(page, next).getByText(/^Platform [AB] · from /)).toBeVisible()
+  await expect(card(page, done).getByText(/^Platform /)).toHaveCount(0)
 })
 
 test('a chosen colour sticks, and stays with that account', async ({ page }) => {
@@ -339,16 +338,23 @@ test('the new look is news only to people whose old favourites came over', async
   await page.goto('/?now=')
 })
 
-test('Home says a slot once: dances at the same time and place share a row', async ({ page }) => {
-  // Beginner 9 & 10: three dances in one event on platform B, no draws.
+test('with no schedule, the card says nothing about dances to come', async ({ page }) => {
+  // Beginner 9 & 10, with its schedule taken away: no platform, time or draw.
   const person = await follow(4)
+  const path = `competitions:data/${comp.id}/schedule`
+  const schedule = await dbGet(path)
   const { email, uid: parentId } = await freshParent()
   await dbSet(`users:favorites/${parentId}/dancers/${person.id}`, person.name)
-  await signInFromHome(page, email)
-  const day = card(page, person)
-  await expect(day.getByText('From 9:45 am')).toHaveCount(1)
-  const row = day.getByRole('link', { name: /From 9:45 am/ })
-  for (const d of comp.dances.slice(0, 3)) await expect(row).toContainText(d.name)
+  try {
+    await dbSet(path, null)
+    await signInFromHome(page, email)
+    const day = card(page, person)
+    await expect(day.getByLabel(/^Number /)).toBeVisible()
+    await expect(day.getByText(/ · from |to dance|Platform/)).toHaveCount(0)
+    await expect(day.getByText(/Highland Fling|Sword Dance/)).toHaveCount(0)
+  } finally {
+    await dbSet(path, schedule)
+  }
 })
 
 test('the competition’s pages show your dancer’s day', async ({ page }) => {
