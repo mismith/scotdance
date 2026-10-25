@@ -471,8 +471,16 @@ export const RSOBHD_ICS = 'https://www.rsobhd.net/events.ics';
 /** Each source: where it's read from, and how. */
 export const READERS: Record<Source, (f: Fetch) => Promise<{ rows: Known[]; from: string[] }>> = {
   async sdc(f) {
-    const lists = sdcLists(await (await get(f, SDC_PAGE)).text(), SDC_PAGE);
-    if (!lists.length) throw new Error('There’s no “View … SDC Events List” link on scotdance.ca/events');
+    const res = await get(f, SDC_PAGE);
+    const page = await res.text();
+    const lists = sdcLists(page, SDC_PAGE);
+    if (!lists.length) {
+      // Say what came instead, since the site's host can answer servers like
+      // this one with a bot check rather than the page.
+      if (/captcha/i.test(page)) throw new Error(`scotdance.ca answered with a bot check (${res.status}) instead of its events page`);
+      const title = text(page.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]).slice(0, 80);
+      throw new Error(`There’s no “View … SDC Events List” link on scotdance.ca/events (${res.status}${title ? `, “${title}”` : ''})`);
+    }
     // (Only loaded here: every function shares this code.)
     const { default: readXlsxFile } = await import('read-excel-file/node');
     const rows: Known[] = [];

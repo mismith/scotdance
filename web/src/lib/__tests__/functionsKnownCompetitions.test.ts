@@ -527,6 +527,13 @@ SUMMARY:(NW) Spokane Highland Games`)
     expect(result.error).toMatch(/no “View … SDC Events List” link/)
   })
 
+  it('says when ScotDance Canada’s host answers with a bot check instead', async () => {
+    const db = seeded()
+    const check = '<html><head><meta http-equiv="refresh" content="0;/.well-known/sgcaptcha/?r=%2Fevents%2F"></head></html>'
+    const result = await refreshSource(db.ref(), 'sdc', { fetch: feeds({ 'scotdance.ca': check }), now: NOW })
+    expect(result.error).toMatch(/scotdance\.ca answered with a bot check \(200\)/)
+  })
+
   it('goes through every source, one failing not stopping the rest', async () => {
     const db = seeded()
     const results = await refresh(db.ref(), undefined, {
