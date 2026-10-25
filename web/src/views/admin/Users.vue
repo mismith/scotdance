@@ -131,7 +131,7 @@ function pick(id: string) {
 <template>
   <MasterDetail :show-detail="!!uid">
     <template #list>
-      <div class="bg-background sticky top-(--chrome-top) z-10 border-b p-4 md:top-0">
+      <div class="paper sticky top-(--chrome-top) z-10 border-b p-4 md:top-0">
         <SectionHeader title="Users" :count="users.length || null">
           <SearchField v-model="query" label="Search users" placeholder="Search by email or name" />
         </SectionHeader>

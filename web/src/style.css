@@ -73,13 +73,19 @@
    in daylight. Surfaces are opaque; nothing important sits on glass. */
 :root {
   color-scheme: light;
-  --background: #f2f4f7;
+  --background: #f5f3ee;
+  /* Paper: a faint fibre, lit from the top left (see body). */
+  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75 .22' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeDiffuseLighting lighting-color='%23fff' surfaceScale='1.6'%3E%3CfeDistantLight azimuth='225' elevation='58'/%3E%3C/feDiffuseLighting%3E%3CfeColorMatrix values='0 0 0 0 .35  0 0 0 0 .33  0 0 0 0 .3  -1 0 0 0 1'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='.18'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29'/%3E%3C/svg%3E");
   --foreground: #12161b;
   --card: #ffffff;
   /* Frosted chrome (tab bar): a hint of the page through it, a lit top edge. */
   --glass: color-mix(in oklab, var(--card) 72%, transparent);
   --glass-edge: rgb(255 255 255 / 0.6);
   --glass-line: rgb(0 0 0 / 0.08);
+  /* The rim: lit along the top left, a touch of shade lower down. */
+  --glass-rim: linear-gradient(140deg, rgb(255 255 255 / 1), rgb(255 255 255 / 0.25) 32%, rgb(16 24 40 / 0.16) 58%, rgb(255 255 255 / 0.85) 92%);
+  --glass-glow: rgb(255 255 255 / 0.95);
+  --glass-shade: rgb(16 24 40 / 0.18);
   --card-foreground: #12161b;
   --popover: #ffffff;
   --popover-foreground: #12161b;
@@ -153,9 +159,9 @@
   --chrome-bottom: calc(4.5rem + max(0.5rem, var(--safe-bottom)));
   --chrome-left: calc(var(--sidebar) + var(--safe-left));
   --chrome-right: var(--safe-right);
-  /* Surfaces: a hairline and a whisper of shadow for cards; a soft lift for
-     what floats above them. No borders as well. */
-  --shadow-card: 0 0 0 0.5px rgb(18 22 27 / 0.09), 0 1px 2px rgb(16 24 40 / 0.05);
+  /* Surfaces: a hairline, a lit top edge and a soft depth for cards; a soft
+     lift for what floats above them. No borders as well. */
+  --shadow-card: inset 0 1px 0 rgb(255 255 255), inset 0 -1px 0 rgb(16 24 40 / 0.035), 0 0 0 0.5px rgb(18 22 27 / 0.11), 0 1px 1px rgb(16 24 40 / 0.04), 0 6px 14px -6px rgb(16 24 40 / 0.12);
   --shadow-raised: 0 0 0 0.5px rgb(18 22 27 / 0.06), 0 10px 30px -8px rgb(16 24 40 / 0.2), 0 2px 6px rgb(16 24 40 / 0.06);
   /* Pressed and hovered rows tint by this much of the ink colour. */
   --tint-hover: color-mix(in oklab, var(--foreground) 4%, transparent);
@@ -178,6 +184,11 @@
   --glass: color-mix(in oklab, var(--card) 78%, transparent);
   --glass-edge: rgb(255 255 255 / 0.1);
   --glass-line: rgb(255 255 255 / 0.1);
+  --glass-rim: linear-gradient(140deg, rgb(255 255 255 / 0.34), rgb(255 255 255 / 0.08) 32%, rgb(0 0 0 / 0.3) 58%, rgb(255 255 255 / 0.22) 92%);
+  --glass-glow: rgb(255 255 255 / 0.16);
+  --glass-shade: rgb(0 0 0 / 0.4);
+  /* At night the fibres catch the light instead: pale, and far fainter. */
+  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75 .22' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeDiffuseLighting lighting-color='%23fff' surfaceScale='1.6'%3E%3CfeDistantLight azimuth='225' elevation='58'/%3E%3C/feDiffuseLighting%3E%3CfeColorMatrix values='0 0 0 0 .86  0 0 0 0 .9  0 0 0 0 .96  2 0 0 0 -1.1'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='.04'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29'/%3E%3C/svg%3E");
   --card-foreground: #eef2f6;
   --popover: #222a33;
   --popover-foreground: #eef2f6;
@@ -273,6 +284,8 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
+    background-image: var(--paper-grain);
+    background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -331,16 +344,24 @@
    on a mostly opaque surface so they stay easy to read. Opaque when the
    system asks for less transparency. */
 @utility glass {
-  background: var(--glass);
+  /* The fill inside, the lit rim around it (a gradient border). */
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--glass), var(--glass)) padding-box,
+    var(--glass-rim) border-box;
   backdrop-filter: blur(24px) saturate(1.8);
   -webkit-backdrop-filter: blur(24px) saturate(1.8);
-  border: 1px solid var(--glass-line);
   box-shadow:
-    inset 0 1px 0 var(--glass-edge),
-    0 8px 28px rgb(0 0 0 / 0.14),
-    0 1px 3px rgb(0 0 0 / 0.08);
+    inset 0 8px 14px -10px var(--glass-glow),
+    inset 0 -6px 12px -10px var(--glass-shade),
+    0 10px 28px -8px rgb(16 24 40 / 0.24),
+    0 1px 2px rgb(16 24 40 / 0.08);
   @media (prefers-reduced-transparency: reduce) {
     background: var(--card);
+    border-color: var(--glass-line);
+  }
+  @media (forced-colors: active) {
+    border-color: CanvasText;
   }
 }
 
@@ -422,6 +443,13 @@
 /* Surfaces. Paper for content (a hairline, a whisper of shadow, no border),
    raised for what floats above it (menus, sheets). Glass is for chrome. */
 /* High contrast mode drops shadows, so paper gets an edge there instead. */
+/* The page itself, grain and all: for what sits on the page but has to hide
+   what scrolls under it (sticky headings). Fixed, so its grain lines up. */
+@utility paper {
+  background-color: var(--background);
+  background-image: var(--paper-grain);
+  background-attachment: fixed;
+}
 @utility surface {
   background-color: var(--card);
   box-shadow: var(--shadow-card);

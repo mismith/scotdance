@@ -467,7 +467,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
   <!-- With nothing in it yet, one column: no blank pane beside an empty list. -->
   <MasterDetail :show-detail="showDetail" :single="!items.length && !showDetail">
     <template #list>
-      <div class="bg-background sticky top-(--chrome-top) z-10 border-b p-4 md:top-0">
+      <div class="paper sticky top-(--chrome-top) z-10 border-b p-4 md:top-0">
         <SectionHeader :title="title" :count="items.length ? countLabel : null">
           <template v-if="items.length && !readonly" #actions>
             <Button variant="plain" class="-mr-3" :aria-pressed="selecting" @click="toggleSelecting">
@@ -553,7 +553,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
                 'has-focus-visible:outline-ring flex items-stretch has-focus-visible:outline-3 has-focus-visible:-outline-offset-3',
                 lifted === item.id
                   ? 'surface-raised z-1'
-                  : ['press-row', itemId === item.id || (selecting && selected.has(item.id)) ? 'bg-blue-paper' : 'bg-background'],
+                  : ['press-row', itemId === item.id || (selecting && selected.has(item.id)) ? 'bg-blue-paper' : 'paper'],
               ]"
             >
               <!-- The leading edge: a grip where the list can be reordered, else a margin. -->

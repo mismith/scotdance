@@ -455,7 +455,7 @@ async function remove(s: Submission) {
     <template #list>
       <!-- Each group's heading sticks under the title while its rows scroll by. -->
       <div :style="{ '--list-head': `${headHeight}px` }" :class="showBulk && 'max-md:pb-24'">
-        <div ref="head" class="bg-background sticky top-(--chrome-top) z-10 border-b p-4 md:top-0">
+        <div ref="head" class="paper sticky top-(--chrome-top) z-10 border-b p-4 md:top-0">
           <SectionHeader title="Submissions" :count="waiting.length ? `${waiting.length} waiting` : null">
             <template v-if="canSelect" #actions>
               <Button variant="plain" class="-mr-3" :aria-pressed="selecting" @click="toggleSelecting">

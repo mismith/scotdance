@@ -1171,7 +1171,7 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
              wide screens. -->
         <div
           :class="[
-            'bg-background sticky bottom-0 z-10 -mx-4 mt-auto px-4 pt-3 pb-[calc(1rem+var(--safe-bottom))] transition-[border-color] duration-(--dur-quick) lg:static lg:mx-0 lg:mt-2 lg:max-w-xl lg:border-transparent lg:px-0',
+            'paper sticky bottom-0 z-10 -mx-4 mt-auto px-4 pt-3 pb-[calc(1rem+var(--safe-bottom))] transition-[border-color] duration-(--dur-quick) lg:static lg:mx-0 lg:mt-2 lg:max-w-xl lg:border-transparent lg:px-0',
             'border-t',
             atEnd ? 'border-transparent' : 'border-border',
           ]"

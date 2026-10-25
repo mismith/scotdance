@@ -102,7 +102,7 @@ const transform = computed(() => {
     v-if="show"
     aria-hidden="true"
     :class="[
-      'fixed inset-0 z-[100] grid place-items-center bg-[#f2f4f7] text-[#0065bd]',
+      'fixed inset-0 z-[100] grid place-items-center bg-[#f5f3ee] text-[#0065bd]',
       '[@media(prefers-color-scheme:dark)]:bg-[#0c0f13]',
     ]"
   >

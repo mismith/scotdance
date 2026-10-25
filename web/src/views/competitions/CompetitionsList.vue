@@ -152,7 +152,7 @@ const sections = computed<Section[]>(() => {
       <div data-page-head class="relative z-10 space-y-3">
         <div
           v-if="view === 'map'"
-          class="from-background pointer-events-none absolute -inset-x-[100vw] -top-[calc(var(--chrome-top)+0.5rem)] -bottom-10 -z-10 bg-linear-to-b from-[calc(100%-2rem)] to-transparent"
+          class="paper pointer-events-none absolute -inset-x-[100vw] -top-[calc(var(--chrome-top)+0.5rem)] -bottom-10 -z-10 [mask-image:linear-gradient(to_bottom,black_calc(100%-2rem),transparent)]"
           aria-hidden="true"
         />
         <header ref="titleEl" class="flex items-center gap-3">
@@ -219,7 +219,7 @@ const sections = computed<Section[]>(() => {
         <section v-for="(s, i) in sections" :key="s.key" :class="settle" :style="settleDelay(i)">
           <h2
             :class="[
-              'text-heading bg-background sticky top-(--chrome-top) z-10 flex items-center gap-1.5 py-2',
+              'text-heading paper sticky top-(--chrome-top) z-10 flex items-center gap-1.5 py-2',
               s.key === 'today' && 'text-live',
             ]"
           >

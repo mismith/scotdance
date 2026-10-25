@@ -102,7 +102,7 @@ export function phone({
     btn('right', 0.45, 0.05) +
     `<div style="position:absolute;inset:0;border-radius:${(r + bezel + band).toFixed(1)}px;background:${metal.band};padding:${band.toFixed(1)}px;box-shadow:${shadow},inset 0 0 0 ${Math.max(1, w * 0.0012).toFixed(1)}px ${metal.edge}">` +
     `<div style="width:100%;height:100%;border-radius:${(r + bezel).toFixed(1)}px;background:#05070a;padding:${bezel.toFixed(1)}px;box-shadow:inset 0 0 0 ${Math.max(1, w * 0.001).toFixed(1)}px rgba(255,255,255,.08)">` +
-    `<div style="position:relative;width:${sw.toFixed(1)}px;height:${sh.toFixed(1)}px;border-radius:${r.toFixed(1)}px;overflow:hidden;background:#f2f4f7 url('${img}') 0 0/100% 100% no-repeat">` +
+    `<div style="position:relative;width:${sw.toFixed(1)}px;height:${sh.toFixed(1)}px;border-radius:${r.toFixed(1)}px;overflow:hidden;background:#f5f3ee url('${img}') 0 0/100% 100% no-repeat">` +
     statusBar(device, k) +
     // The Dynamic Island, the home indicator, and a whisper of glass.
     (device.id === 'iphone'

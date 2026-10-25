@@ -15,7 +15,7 @@ defineProps<{
     <section :class="['min-w-0 md:h-full md:overflow-y-auto', !single && 'md:border-r', showDetail && 'max-md:hidden']">
       <slot name="list" />
     </section>
-    <section v-if="!single" :class="['bg-background min-w-0 md:overflow-y-auto', !showDetail && 'max-md:hidden']">
+    <section v-if="!single" :class="['paper min-w-0 md:overflow-y-auto', !showDetail && 'max-md:hidden']">
       <slot v-if="showDetail" name="detail" />
       <slot v-else name="empty" />
     </section>

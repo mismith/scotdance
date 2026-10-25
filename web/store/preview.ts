@@ -76,7 +76,7 @@ await context.addInitScript(
       getPlatform: () => 'ios',
       Plugins: {},
     }
-    document.documentElement.style.background = '#f2f4f7'
+    document.documentElement.style.background = '#f5f3ee'
     document.addEventListener('DOMContentLoaded', () => {
       const style = document.createElement('style')
       style.textContent =

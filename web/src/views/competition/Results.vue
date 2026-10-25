@@ -182,7 +182,7 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
     >
       <div :key="String(mineOnly)" class="space-y-3">
         <section v-for="s in blocks" :key="s.key">
-          <h2 v-if="s.heading" class="bg-background text-muted-foreground text-callout sticky top-(--chrome-top) z-10 py-2 font-semibold">
+          <h2 v-if="s.heading" class="paper text-muted-foreground text-callout sticky top-(--chrome-top) z-10 py-2 font-semibold">
             {{ s.heading }}
           </h2>
           <ul class="surface rows-inset overflow-hidden rounded-2xl">

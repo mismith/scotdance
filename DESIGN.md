@@ -14,7 +14,7 @@ colors:
   blue-paper: "#e1ecf8"
   destructive: "#b42318"
   ink: "#12161b"
-  mist: "#f2f4f7"
+  mist: "#f5f3ee"
   paper: "#ffffff"
   slate-wash: "#e9edf2"
   slate-text: "#454e59"
@@ -182,7 +182,7 @@ Density follows the visitor. The public app is spacious and glanceable for one-h
 
 **Key Characteristics:**
 - Atkinson Hyperlegible everywhere, rem-based so the phone's text size (in the app) and browser zoom scale it all.
-- Flat paper on a cool mist background; glass only for floating chrome; one textured brand panel per surface at most.
+- Paper cards on a warm sheet with a faint fibre grain; glass with a lit rim only for floating chrome; one textured brand panel per surface at most.
 - Continuous (squircle) corners on every rounded shape; capsules for buttons and chips.
 - iOS-style lists: full-width rows, inset hairline separators, a tint on press.
 - Motion that follows the finger: pages slide toward what you tapped and back out the way they came.
@@ -202,7 +202,7 @@ One confident blue for action, a Scottish red kept for favourites, and a small s
 
 ### Neutral
 - **Ink** (#12161b): text and the Private chip.
-- **Mist** (#f2f4f7): the page behind everything.
+- **Mist** (#f5f3ee): the page behind everything, a warm sheet with a faint fibre grain. At night the fibres are pale and far fainter (0.04), like dark card stock.
 - **Paper** (#ffffff): cards, rows, fields, sheets.
 - **Slate Wash** (#e9edf2): date tiles, chips, quiet fills.
 - **Slate Text** (#454e59): secondary text (7:1 on paper).
@@ -247,14 +247,14 @@ One column, at most 48rem wide, with a 1rem gutter on phones. From 64rem the tab
 
 ## Elevation & Depth
 
-Flat by default. Content sits on paper that is defined by a hairline and a whisper of shadow, not by borders. Depth only means "this floats": menus and sheets are raised; floating chrome (tab bar, app bar buttons) is frosted glass that stays mostly opaque so labels never lose contrast; notices use one dark glass in both themes.
+Quiet by default. Content sits on paper cards defined by a hairline, a lit top edge and a soft depth, not by borders. Depth only means "this floats": menus and sheets are raised; floating chrome (tab bar, app bar buttons) is frosted glass with a lit rim, mostly opaque so labels never lose contrast; notices use one dark glass in both themes.
 
 ### Shadow Vocabulary
-- **Card** (`box-shadow: 0 0 0 0.5px rgb(18 22 27 / 0.09), 0 1px 2px rgb(16 24 40 / 0.05)`): every content surface.
+- **Card** (`box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 rgb(16 24 40 / 0.035), 0 0 0 0.5px rgb(18 22 27 / 0.11), 0 1px 1px rgb(16 24 40 / 0.04), 0 6px 14px -6px rgb(16 24 40 / 0.12)`): every content surface.
 - **Raised** (`box-shadow: 0 0 0 0.5px rgb(18 22 27 / 0.06), 0 10px 30px -8px rgb(16 24 40 / 0.2), 0 2px 6px rgb(16 24 40 / 0.06)`): menus, sheets, popovers.
-- **Glass** (`backdrop-filter: blur(24px) saturate(1.8)` over 72% paper, lit top edge, `0 8px 28px rgb(0 0 0 / 0.14)`): floating chrome only; solid under Reduce Transparency.
+- **Glass** (`backdrop-filter: blur(24px) saturate(1.8)` over 72% paper, a gradient rim lit along the top left with a touch of shade lower down, a soft inner glow and shade, `0 10px 28px -8px rgb(16 24 40 / 0.24)`): floating chrome only, never content; solid under Reduce Transparency.
 
-**The Flat Paper Rule.** Only the brand panel (Home's pitch, About's hero) gets texture and gradient light. Everything else is flat paper.
+**The Paper Rule.** The page is one sheet with a faint fibre grain (`--paper-grain`: dark fibres at 0.18 by day, pale ones at 0.04 at night), and whatever hides what scrolls under it (sticky headings, the bars' fades) uses `paper` so the grain never breaks. Cards stay clean, untextured paper. Only the brand panel (Home's pitch, About's hero) gets stronger texture and gradient light.
 
 ## Shapes
 
@@ -322,5 +322,5 @@ The dancer in the mark, drawn whole (never cropped, never given a face) in Salti
 - **Don't** use uppercase tracked labels or eyebrows above headings.
 - **Don't** put text on translucent glass without the mostly-opaque surface behind it.
 - **Don't** show a competitor number as who someone is outside its competition.
-- **Don't** add texture or gradient light outside the brand panel.
+- **Don't** add texture beyond the page grain, or gradient light outside the brand panel; never paint a sticky bar `bg-background` (use `paper`).
 - **Don't** fade text with opacity to mean "done" or "out"; mute it by colour and add the words.

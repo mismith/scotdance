@@ -153,7 +153,7 @@ async function openAtToday() {
         class="scroll-mt-[calc(var(--chrome-top)+0.25rem)]"
       >
         <h3
-          class="bg-background text-muted-foreground text-callout sticky top-(--chrome-top) z-10 flex items-baseline justify-between gap-2 py-2 font-semibold"
+          class="paper text-muted-foreground text-callout sticky top-(--chrome-top) z-10 flex items-baseline justify-between gap-2 py-2 font-semibold"
         >
           <span class="truncate">{{ b.block.name || 'Session' }}</span>
           <span v-if="b.time" class="shrink-0 font-medium tabular-nums">{{ b.time }}</span>

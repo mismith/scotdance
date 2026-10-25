@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- The app's background, before the page paints (MainActivity). -->
-    <color name="app_background">#F2F4F7</color>
+    <color name="app_background">#F5F3EE</color>
 </resources>

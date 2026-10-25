@@ -40,7 +40,7 @@ function onTap(item: TabItem, e: MouseEvent) {
     <!-- As under the top bar: the page's colour behind the bar, and what
          scrolls toward it fades and blurs away in a short band just above. -->
     <div
-      class="from-background absolute inset-x-0 bottom-0 -z-10 h-[calc(100%+1.25rem)] bg-linear-to-t from-[calc(100%-1.25rem)] to-transparent backdrop-blur-sm [mask-image:linear-gradient(to_top,black_calc(100%-1.25rem),transparent)]"
+      class="paper absolute inset-x-0 bottom-0 -z-10 h-[calc(100%+1.25rem)] backdrop-blur-sm [mask-image:linear-gradient(to_top,black_calc(100%-1.25rem),transparent)]"
       aria-hidden="true"
     />
     <div class="mx-auto flex max-w-lg items-center gap-2">

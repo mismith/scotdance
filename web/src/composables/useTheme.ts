@@ -16,7 +16,7 @@ watch(
   isDark,
   (dark) => {
     for (const meta of document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) {
-      meta.content = dark ? '#0c0f13' : '#f2f4f7'
+      meta.content = dark ? '#0c0f13' : '#f5f3ee'
     }
   },
   { immediate: true },
