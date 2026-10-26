@@ -289,7 +289,11 @@
   input::-webkit-date-and-time-value {
     @apply text-left;
   }
+  /* The plain colour on <html>, as index.html paints it before this loads.
+     Not on <body> too: a painted body covers the page's light and grain
+     (body::before) everywhere. */
   html {
+    @apply bg-background;
     @apply scroll-pt-[calc(var(--chrome-top)+1rem)] scroll-pb-[calc(var(--chrome-bottom)+1rem)];
     -webkit-text-size-adjust: 100%;
     /* Every control has its own press state (press-* below). */
@@ -309,7 +313,7 @@
     font-variant-numeric: tabular-nums;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply text-foreground font-sans;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -384,7 +388,6 @@
     linear-gradient(var(--glass), var(--glass)) padding-box,
     var(--glass-rim) border-box;
   backdrop-filter: blur(24px) saturate(1.8);
-  -webkit-backdrop-filter: blur(24px) saturate(1.8);
   box-shadow:
     inset 0 8px 14px -10px var(--glass-glow),
     inset 0 -6px 12px -10px var(--glass-shade),
@@ -408,7 +411,6 @@
   --hud-link: #8cc4ff;
   --hud-danger: #ff8a8a;
   backdrop-filter: blur(20px) saturate(1.6);
-  -webkit-backdrop-filter: blur(20px) saturate(1.6);
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.08),
     0 0 0 0.5px rgb(255 255 255 / 0.1),
@@ -510,12 +512,12 @@
   background-color: color-mix(in oklab, var(--background) 72%, transparent);
   background-image: var(--paper-grain);
   backdrop-filter: blur(30px) saturate(1.5);
-  -webkit-backdrop-filter: blur(30px) saturate(1.5);
   @media (prefers-reduced-transparency: reduce) {
     background-color: var(--background);
   }
 }
 @utility surface {
+  --row-radius: 0;
   border: 1.5px solid transparent;
   background: var(--card-fill) padding-box, var(--rim, var(--rim-neutral)) border-box;
   box-shadow: var(--shadow-card);
@@ -549,7 +551,6 @@
 @utility glass-menu {
   background-color: color-mix(in oklab, var(--raised) 74%, transparent);
   backdrop-filter: blur(30px) saturate(1.8);
-  -webkit-backdrop-filter: blur(30px) saturate(1.8);
   box-shadow:
     inset 0 0 0 1px var(--menu-edge),
     inset 0 1px 0 var(--menu-lit),
@@ -618,10 +619,18 @@
    frame, the same way for its level). Pressed comes in at once and springs
    back out. iOS needs a touchstart listener for :active (main.ts), and the
    v-tap-feedback directive's data-tapping outlasts a quick tap.
-   Rows: a tint layered over whatever background they have. */
+   Rows: a tint layered over whatever background they have, rounded even on
+   the frameless page (square inside a card, which has its own corners).
+   A dancer's sash runs to the left edge, so the tint stays square there. */
 @utility press-row {
   box-shadow: inset 0 0 0 100vmax var(--row-tint, transparent);
   transition: box-shadow var(--dur-base) var(--ease-standard);
+  border-radius: var(--row-radius, var(--radius-xl));
+  .dancer-sash ~ &,
+  &:has(> .dancer-sash) {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+  }
   @media (hover: hover) {
     &:hover {
       --row-tint: var(--tint-hover);

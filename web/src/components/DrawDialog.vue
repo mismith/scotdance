@@ -169,7 +169,7 @@ function openDancer() {
             v-bind="row.dancer ? { to: { name: 'competition.dancer', params: { competitionId, dancerId: row.dancer.id } } } : {}"
             :class="[
               'flex min-h-14 min-w-0 flex-1 items-center gap-2.5 py-2 pl-3',
-              row.dancer && 'press-row focus-inset rounded-r-xl',
+              row.dancer && 'press-row focus-inset',
             ]"
             @click="row.dancer && openDancer()"
           >

@@ -233,7 +233,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
               <span v-if="following.isFollowing(d)" class="dancer-sash" aria-hidden="true" />
               <RouterLink
                 :to="{ name: 'competition.dancer', params: { competitionId, dancerId: d.id } }"
-                class="press-row focus-inset flex min-h-15 min-w-0 flex-1 items-center gap-3 rounded-r-xl py-2 pl-4"
+                class="press-row focus-inset flex min-h-15 min-w-0 flex-1 items-center gap-3 py-2 pl-4"
               >
                 <NumberCard
                   :number="d.number"
