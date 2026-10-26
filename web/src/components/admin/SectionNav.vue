@@ -37,7 +37,7 @@ const to = (routeName: string) => ({ name: routeName, params: { competitionId: m
       <span class="text-muted-foreground flex size-7 shrink-0 items-center justify-center"><LayoutDashboard class="size-5" /></span>
       <span class="text-callout">Overview</span>
     </RouterLink>
-    <ol :class="!props.compact && 'surface overflow-hidden rounded-2xl'">
+    <ol :class="!props.compact && '-mx-4'">
       <li v-for="(s, i) in MANAGE_STEPS" :key="s.id" class="relative">
         <!-- The line joining one step to the next -->
         <span
@@ -110,7 +110,7 @@ const to = (routeName: string) => ({ name: routeName, params: { competitionId: m
       </li>
     </ol>
 
-    <div :class="!props.compact && 'surface overflow-hidden rounded-2xl'">
+    <div :class="!props.compact && '-mx-4'">
       <RouterLink
         :to="to(ADMINS_SECTION.route)"
         :aria-current="isActive(ADMINS_SECTION.route) ? 'page' : undefined"

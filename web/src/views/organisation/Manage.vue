@@ -260,38 +260,40 @@ async function deleteOrganisation() {
               <h2 class="text-heading">Links and files</h2>
               <p class="text-muted-foreground text-sm">Rules, forms, newsletters. Each shows as a button on its page.</p>
             </div>
-            <MovingList v-if="links.length" class="surface divide-y rounded-2xl">
-              <li v-for="link in links" :key="link.id" class="space-y-3 p-4">
+            <div class="rows-engraved">
+              <MovingList v-if="links.length" class="rows-engraved">
+                <li v-for="link in links" :key="link.id" class="space-y-3 py-4 first:pt-0 last:pb-0">
+                  <div class="grid gap-3 sm:grid-cols-2">
+                    <TextField :model-value="link.name" label="Label" placeholder="e.g. Rules" :save="(v) => m.writeInfo({ [`links/${link.id}/name`]: v })" />
+                    <TextField :model-value="link.url" label="Link" type="url" required :save="(v) => m.writeInfo({ [`links/${link.id}/url`]: v })" />
+                  </div>
+                  <div class="flex items-center justify-between gap-2">
+                    <Button v-if="link.url" variant="plain" class="-ml-4" :href="formatExternalURL(link.url)" target="_blank" rel="noopener">Open <ExternalLink /></Button>
+                    <Button variant="plain" class="text-destructive! -mr-4 ml-auto" :disabled="!canEdit" @click="removeLink(link)"><Trash2 /> Remove</Button>
+                  </div>
+                </li>
+              </MovingList>
+              <form v-if="addingLink" ref="linkFormEl" class="mt-4 space-y-3 pt-4 first:mt-0 first:pt-0" novalidate @submit.prevent="submitLink">
                 <div class="grid gap-3 sm:grid-cols-2">
-                  <TextField :model-value="link.name" label="Label" placeholder="e.g. Rules" :save="(v) => m.writeInfo({ [`links/${link.id}/name`]: v })" />
-                  <TextField :model-value="link.url" label="Link" type="url" required :save="(v) => m.writeInfo({ [`links/${link.id}/url`]: v })" />
+                  <label class="space-y-1.5">
+                    <span class="text-callout block font-medium">Label</span>
+                    <input v-model="newLinkName" :disabled="!canEdit" type="text" placeholder="e.g. Rules" class="field h-12 w-full rounded-xl px-3 text-base" />
+                  </label>
+                  <label class="space-y-1.5">
+                    <span class="text-callout block font-medium">Link</span>
+                    <input v-model="newLinkUrl" :disabled="!canEdit" type="url" placeholder="https://" :aria-invalid="!!linkError || undefined" class="field h-12 w-full rounded-xl px-3 text-base" @input="linkError = null" />
+                    <span v-if="linkError" class="text-destructive block text-sm font-medium" role="alert">{{ linkError }}</span>
+                  </label>
                 </div>
-                <div class="flex items-center justify-between gap-2">
-                  <Button v-if="link.url" variant="plain" class="-ml-4" :href="formatExternalURL(link.url)" target="_blank" rel="noopener">Open <ExternalLink /></Button>
-                  <Button variant="plain" class="text-destructive! -mr-4 ml-auto" :disabled="!canEdit" @click="removeLink(link)"><Trash2 /> Remove</Button>
+                <div class="flex flex-wrap gap-2">
+                  <Button type="submit" variant="tonal" :disabled="!canEdit || !newLinkUrl.trim()"><Plus /> Add link</Button>
+                  <Button :disabled="!canEdit" :busy="uploading" @click="fileInput?.click()">
+                    <FileUp v-if="!uploading" /> {{ uploading ? 'Uploading…' : 'Upload a PDF or image' }}
+                  </Button>
+                  <input ref="fileInput" type="file" accept="application/pdf,image/*" class="sr-only" tabindex="-1" @change="onFile" />
                 </div>
-              </li>
-            </MovingList>
-            <form v-if="addingLink" ref="linkFormEl" class="surface space-y-3 rounded-2xl p-4" novalidate @submit.prevent="submitLink">
-              <div class="grid gap-3 sm:grid-cols-2">
-                <label class="space-y-1.5">
-                  <span class="text-callout block font-medium">Label</span>
-                  <input v-model="newLinkName" :disabled="!canEdit" type="text" placeholder="e.g. Rules" class="field h-12 w-full rounded-xl px-3 text-base" />
-                </label>
-                <label class="space-y-1.5">
-                  <span class="text-callout block font-medium">Link</span>
-                  <input v-model="newLinkUrl" :disabled="!canEdit" type="url" placeholder="https://" :aria-invalid="!!linkError || undefined" class="field h-12 w-full rounded-xl px-3 text-base" @input="linkError = null" />
-                  <span v-if="linkError" class="text-destructive block text-sm font-medium" role="alert">{{ linkError }}</span>
-                </label>
-              </div>
-              <div class="flex flex-wrap gap-2">
-                <Button type="submit" variant="tonal" :disabled="!canEdit || !newLinkUrl.trim()"><Plus /> Add link</Button>
-                <Button :disabled="!canEdit" :busy="uploading" @click="fileInput?.click()">
-                  <FileUp v-if="!uploading" /> {{ uploading ? 'Uploading…' : 'Upload a PDF or image' }}
-                </Button>
-                <input ref="fileInput" type="file" accept="application/pdf,image/*" class="sr-only" tabindex="-1" @change="onFile" />
-              </div>
-            </form>
+              </form>
+            </div>
           </section>
         </Transition>
         <Button v-if="!addingLink" class="-mt-4" :disabled="!canEdit" @click="openLinkForm"><Plus /> Add a link or file</Button>
@@ -308,7 +310,7 @@ async function deleteOrganisation() {
           <template v-for="[title, list] in ([['Coming up', upcoming], ['Past', past]] as const)" :key="title">
             <div v-if="list.length" class="space-y-2">
               <h3 class="text-muted-foreground text-footnote font-semibold">{{ title }}</h3>
-              <MovingList class="surface divide-y overflow-hidden rounded-2xl">
+              <MovingList class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
                 <li v-for="c in list" :key="c.id" class="flex items-center gap-1 pr-2">
                   <RouterLink :to="{ name: 'competition.info', params: { competitionId: c.id } }" class="press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap-3 py-2 pl-4">
                     <DateTile :date="c.date" :managed="me.organises(c.id)" />
@@ -349,7 +351,7 @@ async function deleteOrganisation() {
           </AdminsPanel>
         </section>
 
-        <section v-if="me.isAdmin" class="space-y-3 border-t pt-8">
+        <section v-if="me.isAdmin" class="engraved-line space-y-3 pt-8">
           <h2 class="text-heading">Delete this organisation</h2>
           <p class="text-muted-foreground text-sm">Removes its page and takes it off every competition. The competitions stay.</p>
           <Button class="text-destructive!" :disabled="!canEdit" @click="deleteOrganisation"><Trash2 /> Delete organisation</Button>

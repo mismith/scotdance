@@ -105,7 +105,7 @@ function setGroup(danceId: string, groupId: string, on: boolean) {
           <h3 class="text-heading">Age groups</h3>
           <p class="text-muted-foreground text-sm">Who dances it.</p>
         </div>
-        <ul class="surface divide-y rounded-2xl px-4">
+        <ul class="rows-engraved">
           <li v-for="g in m.groups.value" :key="g.id" class="py-1">
             <SwitchField :model-value="!!item.groupIds?.[g.id]" :label="g.label" :save="(on) => setGroup(item.id, g.id, on)" />
           </li>

@@ -159,7 +159,7 @@ async function create() {
 
         <section v-for="[title, list] in ([['Coming up', upcoming], ['Past', past]] as const)" v-show="list.length" :key="title" class="space-y-2">
           <h2 class="text-heading">{{ title }}</h2>
-          <ul class="surface divide-y overflow-hidden rounded-2xl">
+          <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
             <li v-for="c in list" :key="c.id" class="sm:flex sm:items-center">
               <RouterLink :to="{ name: 'manage', params: { competitionId: c.id } }" class="press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap-3 py-2 pr-3 pl-4">
                 <DateTile :date="c.date" :today="isToday(c)" :managed="shielded(c)" />
@@ -183,7 +183,7 @@ async function create() {
         <!-- Your organisations, last. -->
         <section v-if="myOrgs.length" class="space-y-2">
           <h2 class="text-heading">Your organisations</h2>
-          <ul class="surface divide-y overflow-hidden rounded-2xl">
+          <ul class="rows-engraved -mx-4 [--inset:4.25rem] [--inset-end:1rem]">
             <li v-for="org in myOrgs" :key="org.id">
               <RouterLink :to="{ name: 'organisation.manage', params: { organisationId: org.id } }" class="press-row focus-inset flex min-h-16 items-center gap-3 py-2 pr-3 pl-4">
                 <OrganisationMark :organisation="org" />

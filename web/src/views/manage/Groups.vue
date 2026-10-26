@@ -179,7 +179,7 @@ const items = computed(() => m.groups.value)
             </span>
           </label>
         </div>
-        <ul v-if="m.dances.value.length" class="surface divide-y rounded-2xl px-4">
+        <ul v-if="m.dances.value.length" class="rows-engraved">
           <li v-for="d in m.dances.value" :key="d.id" class="py-1">
             <SwitchField :model-value="!!d.groupIds?.[item.id]" :label="d.label" :save="(on) => setDance(item.id, d.id, on)" />
           </li>
@@ -194,7 +194,7 @@ const items = computed(() => m.groups.value)
         <h3 class="text-heading">Draws</h3>
         <RouterLink
           :to="{ name: 'manage.groups.draws', params: { competitionId: m.competitionId.value, itemId: item.id } }"
-          class="surface press-row focus-inset flex min-h-16 items-center gap-3 rounded-2xl px-4 py-3"
+          class="press-row focus-inset -mx-4 flex min-h-16 items-center gap-3 py-3 pr-3 pl-4"
         >
           <Shuffle class="text-primary size-6 shrink-0" stroke-width="1.75" aria-hidden="true" />
           <span class="min-w-0 flex-1">

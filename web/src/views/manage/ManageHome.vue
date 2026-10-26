@@ -49,7 +49,8 @@ const results = computed(() => ({ name: 'manage.results', params: { competitionI
       </p>
     </header>
 
-    <section :class="['rounded-2xl px-4 py-1.5', shared('visibility') ? 'bg-muted' : 'surface']">
+    <!-- (Shared from the main one: each switch carries the lock.) -->
+    <section class="rows-engraved [&>*]:py-1.5">
       <SwitchField
         :model-value="!!c?.listed"
         label="Listed"
@@ -57,7 +58,6 @@ const results = computed(() => ({ name: 'manage.results', params: { competitionI
         :shared="shared('visibility') ? 'visibility' : undefined"
         :save="(on) => m.writeInfo(on ? { listed: true } : { listed: false, published: false }, on ? 'Listed' : 'Unlisted')"
       />
-      <div class="border-t" />
       <SwitchField
         :model-value="!!c?.published"
         label="Published"
@@ -72,7 +72,7 @@ const results = computed(() => ({ name: 'manage.results', params: { competitionI
       <!-- (On the day, results entry is already the line under the name.) -->
       <section v-if="next && !(today && next.id === 'results')" class="space-y-3">
         <h2 class="text-heading">Up next</h2>
-        <div class="surface flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl p-4">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-3">
           <component :is="next.icon" class="text-primary size-6 shrink-0" stroke-width="1.75" aria-hidden="true" />
           <span class="min-w-0 flex-1">
             <span class="block text-base font-semibold">{{ next.title }}</span>
@@ -84,7 +84,7 @@ const results = computed(() => ({ name: 'manage.results', params: { competitionI
 
       <section v-if="problems.length" class="space-y-3">
         <h2 class="text-heading">To fix</h2>
-        <ul class="surface divide-y overflow-hidden rounded-2xl">
+        <ul class="rows-engraved -mx-4 [--inset:2.125rem] [--inset-end:1rem]">
           <li v-for="p in problems" :key="p.id">
             <RouterLink :to="p.to" class="press-row focus-inset flex min-h-14 items-center gap-3 py-2 pr-3 pl-4">
               <!-- Caution tape: unfinished, not broken. -->

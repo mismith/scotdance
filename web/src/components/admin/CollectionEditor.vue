@@ -110,6 +110,14 @@ watch(
   { immediate: true },
 )
 const canReorder = computed(() => !!props.spec.sortable && !readonly.value && !query.value.trim() && !selecting.value && canEdit.value)
+// Where a row's text starts (after the grip or margin, a tick box while
+// selecting, and a number tile), so the hairlines between rows start there too.
+const listInset = computed(() => {
+  const tile = !!props.spec.badge
+  if (selecting.value) return tile ? '[--inset:6.875rem]' : '[--inset:3.125rem]'
+  if (canReorder.value) return tile ? '[--inset:6.25rem]' : '[--inset:2.5rem]'
+  return tile ? '[--inset:4.75rem]' : '[--inset:1rem]'
+})
 
 async function saveOrder() {
   const updates: Record<string, unknown> = {}
@@ -467,7 +475,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
   <!-- With nothing in it yet, one column: no blank pane beside an empty list. -->
   <MasterDetail :show-detail="showDetail" :single="!items.length && !showDetail">
     <template #list>
-      <div class="paper sticky top-(--chrome-top) z-10 border-b p-4 md:top-0">
+      <div class="paper sticky top-(--chrome-top) z-10 p-4 md:top-0">
         <SectionHeader :title="title" :count="items.length ? countLabel : null">
           <template v-if="items.length && !readonly" #actions>
             <Button variant="plain" class="-mr-3" :aria-pressed="selecting" @click="toggleSelecting">
@@ -543,7 +551,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
         @start="dragging = true"
         @end="onDragEnd"
       >
-        <MovingList :still="dragging || hushed" :class="['sort-target divide-y', selecting && selected.size && 'pb-24']">
+        <MovingList :still="dragging || hushed" :class="['sort-target rows-engraved [--inset-end:1rem]', listInset, selecting && selected.size && 'pb-24']">
           <li v-for="item in canReorder ? order : filtered" :key="item.id">
             <!-- The row's tint and focus ring take in the grip too. -->
             <SwipeRow
@@ -729,7 +737,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
           </div>
         </div>
         <slot name="detail-extra" :item="current" />
-        <footer v-if="!readonly" class="border-t pt-6">
+        <footer v-if="!readonly" class="engraved-line pt-6">
           <Button variant="plain" class="text-destructive! -ml-4" :disabled="!canEdit" @click="remove([current.id])">
             <Trash2 /> Delete {{ spec.singular }}
           </Button>

@@ -139,7 +139,7 @@ const anyDraws = computed(() => dances.value.some((d) => stored(d.id).length))
           <p class="text-muted-foreground text-sm">Reels keep number order when shuffling every dance, since they’re danced together.</p>
         </div>
 
-        <section v-for="d in dances" :key="d.id" class="surface space-y-3 rounded-2xl p-4">
+        <section v-for="d in dances" :key="d.id" class="space-y-3 pt-4">
           <div class="flex flex-wrap items-center gap-2">
             <h2 class="text-heading w-full sm:w-auto sm:min-w-0 sm:flex-1">{{ d.label }}</h2>
             <Button :disabled="!canEdit" @click="shuffleOne(d)"><Shuffle /> Shuffle</Button>
@@ -170,7 +170,7 @@ const anyDraws = computed(() => dances.value.some((d) => stored(d.id).length))
                 :key="keyAt(lists[d.id], i)"
                 :style="{ '--i': i }"
                 :class="[
-                  'flex min-h-11 break-inside-avoid items-center gap-2 border-b pr-1 last:border-b-0',
+                  'engraved-line flex min-h-11 break-inside-avoid items-center gap-2 bg-bottom pr-1 last:bg-none',
                   !byNumber.has(n) && 'text-destructive',
                 ]"
               >

@@ -190,7 +190,7 @@ const to = (c: CompetitionListItem) =>
   me.hasCompetitionPerm(c.id) ? { name: 'manage.details', params: { competitionId: c.id } } : { name: 'competition.info', params: { competitionId: c.id } }
 
 const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-base font-medium disabled:opacity-(--disabled-opacity)'
-const ROW = 'press-row focus-inset flex min-h-14 w-full items-center gap-3 border-t px-4 text-left'
+const ROW = 'press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 text-left'
 const TAG = { main: 'bg-blue-paper text-primary', own: 'bg-next text-next-foreground' }
 </script>
 
@@ -216,8 +216,8 @@ const TAG = { main: 'bg-blue-paper text-primary', own: 'bg-next text-next-foregr
     </template>
 
     <!-- The main one: every competition, a tag where one differs -->
-    <div v-else-if="isMain" class="surface overflow-hidden rounded-2xl">
-      <ul class="rows-inset [--inset:4.5rem]">
+    <div v-else-if="isMain" class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
+      <ul class="rows-engraved [--inset:4.5rem]">
         <li v-for="c in members" :key="c.id">
           <component
             :is="c.id === id ? 'div' : RouterLink"
@@ -241,7 +241,7 @@ const TAG = { main: 'bg-blue-paper text-primary', own: 'bg-next text-next-foregr
     </div>
 
     <!-- One of the others: its main one, what it shares, and the rest on asking -->
-    <div v-else class="surface overflow-hidden rounded-2xl">
+    <div v-else class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
       <RouterLink v-if="mainRecord" :to="to(mainRecord)" class="press-row focus-inset flex min-h-15 items-center gap-3 py-2 pr-3 pl-4">
         <DateTile :date="mainRecord.date" />
         <span class="min-w-0 flex-1">
@@ -262,7 +262,7 @@ const TAG = { main: 'bg-blue-paper text-primary', own: 'bg-next text-next-foregr
         <span class="text-muted-foreground text-callout">{{ span }}</span>
         <ChevronDown :class="['text-muted-foreground size-5 shrink-0 transition-transform duration-(--dur-quick)', showAll && 'rotate-180']" aria-hidden="true" />
       </button>
-      <ul v-if="showAll" class="rows-inset border-t [--inset:4.5rem]">
+      <ul v-if="showAll" class="rows-engraved [--inset:4.5rem]">
         <li v-for="c in members" :key="c.id">
           <component
             :is="c.id === id ? 'div' : RouterLink"
@@ -283,7 +283,7 @@ const TAG = { main: 'bg-blue-paper text-primary', own: 'bg-next text-next-foregr
         <h2 class="text-title">{{ isMain ? 'Shared with the others' : `Shared from ${mainName}` }}</h2>
       </template>
       <div class="space-y-3 p-4 pt-1 pb-[calc(1.5rem+var(--safe-bottom))]">
-        <div class="surface divide-y rounded-2xl px-4 py-1">
+        <div class="divide-y">
           <div v-for="p in LINK_PARTS" :key="p.id">
             <SwitchField
               :model-value="shared.includes(p.id)"

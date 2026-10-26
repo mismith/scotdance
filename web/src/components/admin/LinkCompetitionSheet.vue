@@ -220,7 +220,7 @@ watch(
           Choose what’s shared
           <ChevronDown :class="['size-4 transition-transform duration-(--dur-quick)', choosing && 'rotate-180']" aria-hidden="true" />
         </button>
-        <ul v-if="choosing" class="surface divide-y rounded-2xl px-4 py-1">
+        <ul v-if="choosing" class="divide-y">
           <li v-for="p in parts" :key="p.id" class="flex items-center gap-3 py-2.5">
             <span class="min-w-0 flex-1">
               <span class="block text-base font-medium">{{ p.label }}</span>

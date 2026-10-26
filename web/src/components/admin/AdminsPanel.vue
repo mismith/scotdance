@@ -134,7 +134,7 @@ const when = (iso?: string) => (iso ? formatRelative(iso) : '')
 <template>
   <div class="space-y-8">
     <section class="space-y-3">
-      <MovingList v-if="others.length || admins.length" class="surface divide-y overflow-hidden rounded-2xl">
+      <MovingList v-if="others.length || admins.length" class="rows-engraved -mx-4 [--inset:3rem] [--inset-end:1rem]">
         <li v-for="o in others" :key="o.uid" class="flex min-h-15 items-center gap-3 px-4 py-2">
           <ShieldCheck class="text-primary size-5 shrink-0" />
           <span class="min-w-0 flex-1">
@@ -159,7 +159,7 @@ const when = (iso?: string) => (iso ? formatRelative(iso) : '')
       <slot name="note" />
     </section>
 
-    <form class="surface space-y-3 rounded-2xl p-4" novalidate @submit.prevent="invite">
+    <form class="space-y-3" novalidate @submit.prevent="invite">
       <label :for="`invite-email-${what}`" class="text-heading block">Invite someone</label>
       <!-- (Only flex-1 side by side: stacked, its zero basis would squash it.) -->
       <div class="flex flex-col gap-2 sm:flex-row">
@@ -184,7 +184,7 @@ const when = (iso?: string) => (iso ? formatRelative(iso) : '')
 
     <section v-if="pending.length" class="space-y-3">
       <h2 class="text-heading">Invites</h2>
-      <MovingList class="surface divide-y overflow-hidden rounded-2xl">
+      <MovingList class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
         <li v-for="i in pending" :key="i.id" class="flex flex-wrap items-center gap-x-2 gap-y-1 py-2 pr-2 pl-4">
           <span class="min-w-0 flex-1 basis-48 py-1">
             <span class="block truncate text-base font-medium">{{ i.payload?.email ?? 'Unknown' }}</span>

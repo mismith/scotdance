@@ -239,7 +239,7 @@ async function doImport() {
         </Button>
       </section>
 
-      <section class="bg-muted/60 space-y-3 rounded-2xl p-5">
+      <section class="space-y-3">
         <h2 class="text-heading">What the list should look like</h2>
         <p class="text-muted-foreground text-sm">Either way works:</p>
         <div class="grid gap-4 md:grid-cols-2">
@@ -374,8 +374,8 @@ async function doImport() {
           </table>
           <p v-if="shownRows.length > 500" class="text-muted-foreground border-t p-3 text-sm">Showing the first 500 rows.</p>
         </div>
-        <!-- …and on a phone, a card each, nothing cut off -->
-        <ul v-else class="surface divide-y overflow-hidden rounded-2xl">
+        <!-- …and on a phone, a row each, nothing cut off -->
+        <ul v-else class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
           <li v-for="d in shownRows.slice(0, 500)" :key="d.source.row" class="space-y-1 px-4 py-3">
             <div class="flex items-center gap-2">
               <NumberTile :num="d.source.number" />
@@ -388,7 +388,7 @@ async function doImport() {
               {{ field }}: <span class="line-through">{{ change[0] || 'empty' }}</span> → {{ change[1] || 'empty' }}
             </p>
           </li>
-          <li v-if="shownRows.length > 500" class="text-muted-foreground p-3 text-sm">Showing the first 500 rows.</li>
+          <li v-if="shownRows.length > 500" class="text-muted-foreground px-4 py-3 text-sm">Showing the first 500 rows.</li>
         </ul>
 
         <!-- Dancers not in the file -->
@@ -397,7 +397,7 @@ async function doImport() {
           type="button"
           role="checkbox"
           :aria-checked="removeMissing"
-          class="surface press-row focus-inset flex w-full items-start gap-3 rounded-2xl p-4 text-left"
+          class="press-row focus-inset -mx-4 flex w-[calc(100%+2rem)] items-start gap-3 p-4 text-left"
           @click="removeMissing = !removeMissing"
         >
           <Checkbox :checked="removeMissing" class="mt-0.5" />

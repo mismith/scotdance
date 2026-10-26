@@ -31,7 +31,8 @@ const unlisted = computed(() => visibilityOf(c.value) === 'unlisted')
       <h3 class="text-muted-foreground text-sm font-medium">
         In the competitions list<template v-if="unlisted">, once it’s listed</template>
       </h3>
-      <ul class="surface divide-y overflow-hidden rounded-2xl">
+      <!-- Frameless, as the list is. -->
+      <ul class="-mx-4">
         <CompetitionDateRow :competition="c" :competition-id="competitionId" :to="{ name: 'competition.info', params: { competitionId } }" preview />
       </ul>
     </section>
