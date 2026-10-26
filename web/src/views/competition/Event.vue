@@ -28,7 +28,7 @@ import {
 // One event in the schedule: each dance, then each platform with its judges
 // and the age groups in the order they'll dance. Your dancers are called out
 // with where they fall in the dancing order; tapping a group always shows
-// the full order, and a Results pill goes to the placings once posted.
+// the full order, and a Results link goes to the placings once posted.
 const route = useRoute()
 const setHeader = injectInfoHeaderSetter()
 const {
@@ -202,7 +202,7 @@ const judging = computed(() => {
 
       <p v-if="!sections.length" class="text-muted-foreground text-base">Nothing is scheduled in this part yet.</p>
 
-      <!-- Each dance: its name as a heading, then one card of platforms. -->
+      <!-- Each dance: its name as a heading, then each platform over its age groups. -->
       <section v-for="(s, i) in sections" :key="s.sd.id" class="space-y-2 pt-2">
         <div class="space-y-0.5">
           <h2 class="text-section">{{ s.name ?? `Dance ${i + 1}` }}</h2>
@@ -214,66 +214,69 @@ const judging = computed(() => {
           />
         </div>
 
-        <div class="surface divide-y overflow-hidden rounded-2xl">
-          <p v-if="s.sd.danceId && !s.platforms.length" class="text-muted-foreground px-4 py-3 text-base">
-            Platforms haven’t been assigned yet.
-          </p>
+        <p v-if="s.sd.danceId && !s.platforms.length" class="text-muted-foreground text-base">
+          Platforms haven’t been assigned yet.
+        </p>
 
-          <div v-for="p in s.platforms" :key="p.id">
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 pt-3 pb-2">
-              <h3 class="text-callout font-semibold">{{ p.name }}</h3>
-              <!-- Judges: chips that open each one's sheet. -->
-              <div v-if="p.judges.length" class="flex flex-wrap gap-1.5">
+        <div v-for="p in s.platforms" :key="p.id" class="pt-1">
+          <!-- The platform and its judges in one line over its age groups
+               ("Platform 1 · Mary Munro"); each judge opens their sheet. -->
+          <div class="flex items-start gap-x-1.5 pb-1">
+            <h3 class="text-callout flex h-8 shrink-0 items-center font-semibold">{{ p.name }}</h3>
+            <template v-if="p.judges.length">
+              <span class="text-muted-foreground text-callout flex h-8 items-center" aria-hidden="true">·</span>
+              <!-- (More than fit wrap under the first judge.) -->
+              <span class="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
                 <button
                   v-for="j in p.judges"
                   :key="j.id"
                   type="button"
-                  class="press bg-muted text-callout relative flex h-9 items-center gap-2 rounded-full pr-3 pl-1 font-medium after:absolute after:inset-x-0 after:-inset-y-1"
+                  class="press text-callout relative flex h-8 items-center gap-1.5 rounded-full font-medium after:absolute after:-inset-x-1 after:-inset-y-1.5"
                   @click="openJudge($event, j)"
                 >
-                  <StaffAvatar :member="j" :size="28" />
+                  <StaffAvatar :member="j" :size="20" />
                   {{ staffMemberName(j) || 'Judge' }}
                 </button>
-              </div>
-            </div>
-            <ul class="rows-inset">
-              <li v-for="g in p.groups" :key="g.group.id" class="relative">
-                <!-- The whole row opens the order (its tint spans it); a posted
-                     age group's Results pill sits on top, at the right. -->
-                <button
-                  type="button"
-                  :class="['press-row focus-inset relative isolate flex min-h-14 w-full items-center gap-3 py-2 pl-4 text-left', g.posted ? 'pr-28' : 'pr-4']"
-                  :style="g.mine.length ? { '--dc': g.mine[0].color ?? 'var(--primary)' } : undefined"
-                  @click="openDraw($event, g.group, s.sd)"
-                >
-                  <span v-if="g.mine.length" class="dancer-sash" aria-hidden="true" />
-                  <span class="min-w-0 flex-1">
-                    <span class="block text-base font-semibold">{{ g.group.fullName }}</span>
-                    <span class="text-muted-foreground block text-sm">{{ g.count }} dancers</span>
-                    <MyDancerLine
-                      v-for="m in g.mine"
-                      :key="m.dancer.id"
-                      :color="m.color"
-                      :name="m.dancer.firstName ?? ''"
-                      :details="[`#${m.dancer.number}`, m.pos ? `${m.pos}${getOrdinalSuffix(m.pos)} to dance` : null]"
-                      class="mt-1"
-                    />
-                  </span>
-                  <span v-if="g.waiting" class="text-muted-foreground text-footnote shrink-0 font-medium">Results to come</span>
-                  <span v-else-if="!g.posted" class="text-primary text-footnote shrink-0 font-medium">Dancing order</span>
-                </button>
-                <!-- Once posted, the placings are a tap away; the row still opens the order. -->
-                <RouterLink
-                  v-if="g.posted"
-                  :to="{ name: 'competition.group', params: { competitionId, groupId: g.group.id }, hash: `#dance-${s.sd.danceId}` }"
-                  :aria-label="`${g.group.fullName} results`"
-                  class="press bg-done text-done-foreground text-footnote absolute top-1/2 right-3 flex h-8 -translate-y-1/2 items-center gap-1 rounded-full pr-3 pl-2 font-semibold after:absolute after:-inset-1.5"
-                >
-                  <Check class="size-4" stroke-width="2.75" /> Results
-                </RouterLink>
-              </li>
-            </ul>
+              </span>
+            </template>
           </div>
+          <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
+            <li v-for="g in p.groups" :key="g.group.id" class="relative">
+              <!-- The whole row opens the order (its tint spans it); a posted
+                   age group's Results link sits on top, at the right. -->
+              <button
+                type="button"
+                :class="['press-row focus-inset relative isolate flex min-h-14 w-full items-center gap-3 py-2 pl-4 text-left', g.posted ? 'pr-24' : 'pr-4']"
+                :style="g.mine.length ? { '--dc': g.mine[0].color ?? 'var(--primary)' } : undefined"
+                @click="openDraw($event, g.group, s.sd)"
+              >
+                <span v-if="g.mine.length" class="dancer-sash" aria-hidden="true" />
+                <span class="min-w-0 flex-1">
+                  <span class="block text-base font-semibold">{{ g.group.fullName }}</span>
+                  <span class="text-muted-foreground block text-sm">{{ g.count }} dancers</span>
+                  <MyDancerLine
+                    v-for="m in g.mine"
+                    :key="m.dancer.id"
+                    :color="m.color"
+                    :name="m.dancer.firstName ?? ''"
+                    :details="[`#${m.dancer.number}`, m.pos ? `${m.pos}${getOrdinalSuffix(m.pos)} to dance` : null]"
+                    class="mt-1"
+                  />
+                </span>
+                <span v-if="g.waiting" class="text-muted-foreground text-footnote shrink-0 font-medium">Results to come</span>
+                <span v-else-if="!g.posted" class="text-primary text-footnote shrink-0 font-medium">Dancing order</span>
+              </button>
+              <!-- Once posted, the placings are a tap away; the row still opens the order. -->
+              <RouterLink
+                v-if="g.posted"
+                :to="{ name: 'competition.group', params: { competitionId, groupId: g.group.id }, hash: `#dance-${s.sd.danceId}` }"
+                :aria-label="`${g.group.fullName} results`"
+                class="press text-done-foreground text-footnote absolute top-1/2 right-4 flex h-8 -translate-y-1/2 items-center gap-1 rounded-full font-semibold after:absolute after:-inset-x-3 after:-inset-y-1.5"
+              >
+                <Check class="size-4" stroke-width="2.75" /> Results
+              </RouterLink>
+            </li>
+          </ul>
         </div>
       </section>
     </template>

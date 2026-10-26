@@ -110,10 +110,10 @@ const fresh = computed(() => {
         <DancerDayCard :days="entries" :competition-id="competitionId" :color="color" :fresh="fresh" size="lg" bare />
       </section>
 
-      <div v-if="dancer.dancerId" class="surface overflow-hidden rounded-2xl">
+      <div v-if="dancer.dancerId" class="-mx-4">
         <RouterLink
           :to="{ name: 'dancer.info', params: { dancerId: dancer.dancerId } }"
-          class="press-row focus-inset flex min-h-14 items-center gap-3 px-4"
+          class="press-row focus-inset flex min-h-14 items-center gap-3 pr-3 pl-4"
         >
           <span class="flex-1 text-base font-semibold">All competitions for {{ firstName }}</span>
           <ChevronRight class="text-muted-foreground size-5" />

@@ -166,17 +166,17 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
 
 <template>
   <DefineCallbacks>
-    <!-- Callbacks -->
+    <!-- Callbacks: a heading that folds the list (your dancers' rows still
+         show folded), then the rows, as under each dance. -->
     <section
       v-if="callbacks.hasResults || callbacks.explicitlyEmpty"
       id="dance-callbacks"
-      class="surface scroll-mt-[calc(var(--chrome-top)+0.75rem)] overflow-hidden rounded-2xl"
+      class="scroll-mt-[calc(var(--chrome-top)+0.75rem)] space-y-1 pt-2"
     >
-      <!-- Folded, it's one row (your dancers' rows still show). -->
       <h2>
         <button
           type="button"
-          class="press-row focus-inset flex min-h-12 w-full items-center justify-between gap-2 px-4 py-3 text-left"
+          class="press-row focus-inset -mx-4 flex min-h-12 w-[calc(100%+2rem)] items-center justify-between gap-2 py-2 pr-3 pl-4 text-left"
           :aria-expanded="callbacksOpen"
           @click="callbacksOpen = !callbacksOpen"
         >
@@ -187,43 +187,45 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
           </span>
         </button>
       </h2>
-      <p v-if="callbacksOpen && callbacks.explicitlyEmpty" class="border-t px-4 py-3 text-base">No callbacks for this group.</p>
-      <TransitionGroup tag="ul" :class="['rows-inset [interpolate-size:allow-keywords] [--inset:4.5rem]', shownCallbacks.length && 'border-t']" v-bind="rowsMove">
-        <li
-          v-for="row in shownCallbacks"
-          :key="row.dancerId"
-          class="relative isolate"
-          :style="rowStyle(row.dancer)"
-        >
-          <span v-if="colorOf(row.dancer)" class="dancer-sash" aria-hidden="true" />
-          <RouterLink
-            v-if="row.dancer"
-            :to="{ name: 'competition.dancer', params: { competitionId, dancerId: row.dancer.id } }"
-            class="press-row focus-inset flex min-h-12 items-center gap-3 px-4 py-1.5"
+      <div class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
+        <p v-if="callbacksOpen && callbacks.explicitlyEmpty" class="px-4 py-3 text-base">No callbacks for this group.</p>
+        <TransitionGroup tag="ul" class="rows-engraved [interpolate-size:allow-keywords] [--inset:4.5rem] [--inset-end:1rem]" v-bind="rowsMove">
+          <li
+            v-for="row in shownCallbacks"
+            :key="row.dancerId"
+            class="relative isolate"
+            :style="rowStyle(row.dancer)"
           >
-            <NumberCard
-              :number="row.dancer.number"
-              size="xs"
-              :color="colorOf(row.dancer)"
-            />
-            <!-- Showing everyone: those not called back say so, in words, not
-                 only by being quieter. -->
-            <span :class="['min-w-0 flex-1 truncate text-base', row.out ? 'text-muted-foreground font-medium' : 'font-semibold']">
-              {{ row.dancer.fullName }}
-            </span>
-            <span v-if="row.out" class="text-muted-foreground shrink-0 text-sm">Not called back</span>
-          </RouterLink>
-          <span v-else class="text-muted-foreground flex min-h-12 items-center px-4 text-base">Unknown dancer</span>
-        </li>
-      </TransitionGroup>
-      <button
-        v-if="callbacksOpen && callbacks.dancers.length && callbacks.dancers.length < groupDancers.length"
-        type="button"
-        class="press-row focus-inset text-primary text-callout h-12 w-full border-t font-semibold"
-        @click="showAllCallbacks = !showAllCallbacks"
-      >
-        {{ showAllCallbacks ? 'Show callbacks only' : `Show all ${groupDancers.length} dancers` }}
-      </button>
+            <span v-if="colorOf(row.dancer)" class="dancer-sash" aria-hidden="true" />
+            <RouterLink
+              v-if="row.dancer"
+              :to="{ name: 'competition.dancer', params: { competitionId, dancerId: row.dancer.id } }"
+              class="press-row focus-inset flex min-h-12 items-center gap-3 px-4 py-1.5"
+            >
+              <NumberCard
+                :number="row.dancer.number"
+                size="xs"
+                :color="colorOf(row.dancer)"
+              />
+              <!-- Showing everyone: those not called back say so, in words, not
+                   only by being quieter. -->
+              <span :class="['min-w-0 flex-1 truncate text-base', row.out ? 'text-muted-foreground font-medium' : 'font-semibold']">
+                {{ row.dancer.fullName }}
+              </span>
+              <span v-if="row.out" class="text-muted-foreground shrink-0 text-sm">Not called back</span>
+            </RouterLink>
+            <span v-else class="text-muted-foreground flex min-h-12 items-center px-4 text-base">Unknown dancer</span>
+          </li>
+        </TransitionGroup>
+        <button
+          v-if="callbacksOpen && callbacks.dancers.length && callbacks.dancers.length < groupDancers.length"
+          type="button"
+          class="press-row focus-inset text-primary text-callout h-12 w-full font-semibold"
+          @click="showAllCallbacks = !showAllCallbacks"
+        >
+          {{ showAllCallbacks ? 'Show callbacks only' : `Show all ${groupDancers.length} dancers` }}
+        </button>
+      </div>
     </section>
   </DefineCallbacks>
   <article class="space-y-4">

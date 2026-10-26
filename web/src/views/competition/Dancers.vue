@@ -135,7 +135,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
     </label>
 
     <div class="flex items-center gap-2">
-      <label v-if="anyFollowedHere" class="surface flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full pr-1.5 pl-4">
+      <label v-if="anyFollowedHere" class="flex h-11 min-w-0 flex-1 items-center gap-2">
         <span id="only-my-dancers" class="text-callout min-w-0 flex-1 truncate font-medium">Only my dancers</span>
         <Switch v-model="onlyMine" aria-labelledby="only-my-dancers" />
       </label>

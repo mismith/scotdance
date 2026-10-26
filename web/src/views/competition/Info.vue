@@ -384,13 +384,13 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         <TransitionGroup
           v-if="shownMatches.length"
           tag="ul"
-          class="surface rows-inset overflow-hidden rounded-2xl [interpolate-size:allow-keywords] [--inset:4.75rem]"
+          class="rows-engraved -mx-4 [interpolate-size:allow-keywords] [--inset:4.75rem] [--inset-end:1rem]"
           v-bind="rowsMove"
         >
-          <li v-for="d in shownMatches" :key="d.id" class="flex items-center gap-1 pr-2">
+          <li v-for="d in shownMatches" :key="d.id" class="flex items-center gap-1 pr-1">
             <RouterLink
               :to="{ name: 'competition.dancer', params: { competitionId, dancerId: d.id } }"
-              class="press-row focus-inset flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-xl py-2 pl-4"
+              class="press-row focus-inset flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 pl-4"
             >
               <NumberCard :number="d.number" size="xs" />
               <span class="min-w-0">
@@ -416,20 +416,24 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
       <p
         v-else-if="restricted"
         key="restricted"
-        class="surface text-muted-foreground text-callout flex items-center gap-3 rounded-2xl p-4"
+        class="text-muted-foreground text-callout flex items-center gap-3"
       >
         <Hourglass class="text-primary size-5 shrink-0" />
         Dancers, the schedule and results show here once they’re published.
       </p>
     </Transition>
 
-    <!-- What's here, in figures -->
-    <div v-if="figures.length > 1" class="surface grid auto-cols-fr grid-flow-col overflow-hidden rounded-2xl">
+    <!-- What's here, in figures: big numbers on the page, an engraved line
+         between them. -->
+    <div
+      v-if="figures.length > 1"
+      class="-mx-4 grid auto-cols-fr grid-flow-col [&>*+*]:bg-[linear-gradient(90deg,var(--engrave-cut)_0_1px,var(--engrave-lit)_1px_2px)] [&>*+*]:bg-[length:2px_2.75rem] [&>*+*]:bg-left [&>*+*]:bg-no-repeat"
+    >
       <RouterLink
-        v-for="(f, i) in figures"
+        v-for="f in figures"
         :key="f.label"
         :to="f.to"
-        :class="['press-row focus-inset flex flex-col items-center py-3', i > 0 && 'shadow-[inset_0.5px_0_0_var(--border)]']"
+        class="press-row focus-inset flex flex-col items-center py-2.5"
       >
         <span class="text-[1.625rem] leading-none font-[800] tracking-[-0.02em] tabular-nums">{{ f.value }}</span>
         <span class="text-muted-foreground mt-1 text-[0.8125rem] font-semibold">{{ f.label }}</span>
@@ -465,7 +469,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
     <!-- When and where -->
     <section
       v-if="showDateRow || competition.venue || competition.address || competition.location"
-      class="surface rows-inset overflow-hidden rounded-2xl [--inset:3rem]"
+      class="rows-engraved -mx-4 [--inset:3rem] [--inset-end:1rem]"
     >
       <div v-if="showDateRow" class="flex items-center gap-3 p-4">
         <CalendarDays class="text-primary size-5 shrink-0" />

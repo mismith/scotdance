@@ -149,7 +149,7 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
 
     <label
       v-if="anyFollowedHere && !resultsHidden"
-      class="surface flex h-11 items-center gap-2 rounded-full pr-1.5 pl-4"
+      class="flex min-h-11 items-center gap-2"
     >
       <span id="only-my-groups" class="text-callout min-w-0 flex-1 truncate font-medium">Only my dancers’ age groups</span>
       <Switch v-model="onlyMine" aria-labelledby="only-my-groups" />
