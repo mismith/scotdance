@@ -255,7 +255,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
     </template>
     <div :class="wide ? 'space-y-1.5' : 'space-y-4 p-4 pb-[calc(1.5rem+var(--safe-bottom))]'">
       <ul
-        :class="!wide && 'surface rows-inset overflow-hidden rounded-2xl [--inset:3.25rem]'"
+        :class="!wide && 'rows-engraved -mx-4 [--inset:3.25rem] [--inset-end:1rem]'"
         role="radiogroup"
         aria-label="Where to look"
       >
@@ -323,7 +323,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
                 <X class="size-5" />
               </button>
             </label>
-            <ul v-if="suggestions.length" class="surface rows-inset overflow-hidden rounded-xl">
+            <ul v-if="suggestions.length" class="rows-engraved [--inset:0.75rem] [--inset-end:0.75rem]">
               <li v-for="s in suggestions" :key="s.placeId">
                 <button type="button" class="press-row focus-inset w-full px-3 py-2.5 text-left" @click="pickSuggestion(s)">
                   <span class="block text-base font-medium">{{ s.primaryText }}</span>

@@ -59,7 +59,7 @@ const rows = computed(() =>
       <ul
         role="radiogroup"
         :aria-label="switcher.label.value ?? undefined"
-        :class="!wide && 'surface rows-inset overflow-hidden rounded-2xl [--inset:4.25rem]'"
+        :class="!wide && 'rows-engraved -mx-4 [--inset:4.25rem] [--inset-end:1rem]'"
       >
         <li v-for="r in rows" :key="r.c.id">
           <button

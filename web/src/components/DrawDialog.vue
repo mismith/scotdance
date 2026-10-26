@@ -155,7 +155,7 @@ function openDancer() {
       <p v-if="!drawRows.length" class="text-muted-foreground p-4 text-base">
         The dancing order hasn’t been posted yet.
       </p>
-      <ol v-else class="rows-inset pb-[calc(1rem+var(--safe-bottom))] [--inset:3.25rem]">
+      <ol v-else class="rows-engraved pb-[calc(1rem+var(--safe-bottom))] [--inset:3.25rem] [--inset-end:1rem]">
         <li
           v-for="(row, i) in drawRows"
           :key="row.key"

@@ -102,7 +102,7 @@ function pick(id: string) {
           <div v-if="filtered.length" role="radiogroup" aria-label="Competitions" class="space-y-4">
             <section v-for="s in grouped" :key="s.key" class="space-y-2">
               <h3 :class="['text-heading', s.key === 'today' && 'text-live']">{{ s.label }}</h3>
-              <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+              <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
                 <li v-for="c in s.choices" :key="c.id">
                   <button
                     type="button"

@@ -43,7 +43,7 @@ async function save() {
     </template>
     <div class="space-y-4 p-4 pb-[calc(1.5rem+var(--safe-bottom))]">
       <p class="text-base">Pick all that apply.</p>
-      <div class="surface rows-inset overflow-hidden rounded-2xl [--inset:3.375rem]" role="group" aria-label="How you use ScotDance.app">
+      <div class="rows-engraved -mx-4 [--inset:3.375rem] [--inset-end:1rem]" role="group" aria-label="How you use ScotDance.app">
         <button
           v-for="role in ROLES"
           :key="role.id"

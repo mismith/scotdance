@@ -356,7 +356,7 @@ watch(
             <X class="size-5" />
           </button>
         </header>
-        <ul class="rows-inset max-h-64 overflow-y-auto overscroll-contain shadow-[inset_0_1px_0_var(--border)] [--inset:4.5rem]">
+        <ul class="rows-engraved max-h-64 overflow-y-auto overscroll-contain shadow-[inset_0_1px_0_var(--border)] [--inset:4.5rem]">
           <CompetitionDateRow
             v-for="c in selectedGroup.competitions"
             :key="c.id"
@@ -392,7 +392,7 @@ watch(
         v-if="inView.length"
         ref="list"
         :class="[
-          'rows-inset max-h-[calc(45dvh+5.5rem)] overscroll-contain [--inset:4.5rem]',
+          'rows-engraved max-h-[calc(45dvh+5.5rem)] overscroll-contain [--inset:4.5rem]',
           sheetOpen ? 'overflow-y-auto' : 'overflow-hidden',
           !listShown && '[&>li+li]:hidden',
         ]"
