@@ -7,7 +7,8 @@ import { tapHaptic } from '@/lib/haptics'
 // indicator, always labelled, the current tab sitting in a soft capsule.
 // Used for both the app-wide tabs and a competition's tabs, in the same
 // place, so there's one pattern to learn. A `leading` slot holds a separate
-// round button beside the pill (the competition's way out). Labels never
+// round button before the pill (the competition's way out), `trailing` one
+// after it (More). Labels never
 // scale past 12px so the bar can't break at large text. On wide screens
 // (lg) the sidebar (nav/AppSidebar) takes over, and the bar steps aside.
 export interface TabItem {
@@ -40,7 +41,7 @@ function onTap(item: TabItem, e: MouseEvent) {
     <!-- As under the top bar: the page's colour behind the bar, and what
          scrolls toward it fades and blurs away in a short band just above. -->
     <div
-      class="paper absolute inset-x-0 bottom-0 -z-10 h-[calc(100%+1.25rem)] backdrop-blur-sm [mask-image:linear-gradient(to_top,black_calc(100%-1.25rem),transparent)]"
+      class="paper absolute inset-x-0 bottom-0 -z-10 h-[calc(100%+1.25rem)] [mask-image:linear-gradient(to_top,black_calc(100%-1.25rem),transparent)]"
       aria-hidden="true"
     />
     <div class="mx-auto flex max-w-lg items-center gap-2">
@@ -80,6 +81,7 @@ function onTap(item: TabItem, e: MouseEvent) {
           />
         </component>
       </div>
+      <slot name="trailing" />
     </div>
   </nav>
 </template>

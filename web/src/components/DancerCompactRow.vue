@@ -55,8 +55,8 @@ const to = computed(() =>
 </script>
 
 <template>
-  <li class="relative flex items-center" :style="color ? { '--dc': color } : undefined">
-    <span v-if="color" class="sash absolute inset-y-0 left-0 w-1" aria-hidden="true" />
+  <li class="relative isolate flex items-center" :style="color ? { '--dc': color } : undefined">
+    <span v-if="color" class="dancer-sash" aria-hidden="true" />
     <RouterLink
       :to="to"
       :class="['press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap-3 py-2 pl-4', follow ? 'pr-1' : 'pr-3']"

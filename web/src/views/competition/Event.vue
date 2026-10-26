@@ -242,11 +242,11 @@ const judging = computed(() => {
                      age group's Results pill sits on top, at the right. -->
                 <button
                   type="button"
-                  :class="['press-row focus-inset relative flex min-h-14 w-full items-center gap-3 py-2 pl-4 text-left', g.posted ? 'pr-28' : 'pr-4']"
+                  :class="['press-row focus-inset relative isolate flex min-h-14 w-full items-center gap-3 py-2 pl-4 text-left', g.posted ? 'pr-28' : 'pr-4']"
                   :style="g.mine.length ? { '--dc': g.mine[0].color ?? 'var(--primary)' } : undefined"
                   @click="openDraw($event, g.group, s.sd)"
                 >
-                  <span v-if="g.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
+                  <span v-if="g.mine.length" class="dancer-sash" aria-hidden="true" />
                   <span class="min-w-0 flex-1">
                     <span class="block text-base font-semibold">{{ g.group.fullName }}</span>
                     <span class="text-muted-foreground block text-sm">{{ g.count }} dancers</span>

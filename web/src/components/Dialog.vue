@@ -173,11 +173,12 @@ const dragStyle = computed(() =>
       // Reset native dialog defaults. The dialog itself takes focus on open
       // (see sync), so it draws no ring of its own. Each variant sets its own
       // max size: a general max-h/max-w-full here would win over theirs.
-      'bg-raised border-0 p-0 text-inherit outline-none',
+      'border-0 p-0 text-inherit outline-none',
+      variant === 'dropdown' ? 'glass-menu' : 'bg-raised',
       // Width by size prop.
       variant !== 'dropdown' && (size === 'sm' ? 'w-full md:max-w-sm' : 'w-full md:max-w-md'),
       variant === 'dropdown' &&
-        'fixed top-[calc(var(--chrome-top)+0.25rem)] bottom-auto left-auto right-[calc(var(--chrome-right)+0.75rem)] m-0 w-72 max-w-[calc(100vw-1.5rem)] max-h-[calc(100svh-var(--chrome-top)-1rem)] origin-top-right overflow-y-auto rounded-[1.375rem] p-1.5 shadow-(--shadow-raised)',
+        'fixed top-[calc(var(--chrome-top)+0.25rem)] bottom-auto left-auto right-[calc(var(--chrome-right)+0.75rem)] m-0 w-72 max-w-[calc(100vw-1.5rem)] max-h-[calc(100svh-var(--chrome-top)-1rem)] origin-top-right overflow-y-auto rounded-[1.375rem] p-1.5',
       // Layout per variant.
       variant === 'center' &&
         'fixed inset-x-0 top-[calc(var(--chrome-top)+1rem)] bottom-[calc(var(--chrome-bottom)+1rem)] m-auto h-fit rounded-3xl p-6 shadow-(--shadow-raised) max-h-[calc(100svh-var(--chrome-top)-var(--chrome-bottom)-4rem)] max-md:max-w-[calc(100vw-2rem)]',

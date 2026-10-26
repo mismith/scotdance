@@ -230,18 +230,18 @@ function onPointerUp(e: PointerEvent) {
         <button
           type="button"
           aria-label="Previous month"
-          class="press surface flex size-11 items-center justify-center rounded-full"
+          class="press button-fill flex size-11 items-center justify-center rounded-full"
           @click="shiftMonth(-1)"
         >
           <ChevronLeft class="size-5" />
         </button>
-        <button type="button" class="press surface h-11 rounded-full px-4 text-callout font-semibold" @click="goToToday">
+        <button type="button" class="press button-fill h-11 rounded-full px-4 text-callout font-semibold" @click="goToToday">
           Today
         </button>
         <button
           type="button"
           aria-label="Next month"
-          class="press surface flex size-11 items-center justify-center rounded-full"
+          class="press button-fill flex size-11 items-center justify-center rounded-full"
           @click="shiftMonth(1)"
         >
           <ChevronRight class="size-5" />

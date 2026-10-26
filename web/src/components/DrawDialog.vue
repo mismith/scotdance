@@ -160,10 +160,10 @@ function openDancer() {
           v-for="(row, i) in drawRows"
           :key="row.key"
           :ref="(el) => (rowEls[row.key] = el as HTMLElement | null)"
-          class="relative flex items-center pr-2"
+          class="relative isolate flex items-center pr-2"
           :style="row.mine && row.dancer ? following.paint(row.dancer.dancerId) : undefined"
         >
-          <span v-if="row.mine" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
+          <span v-if="row.mine" class="dancer-sash" aria-hidden="true" />
           <component
             :is="row.dancer ? RouterLink : 'div'"
             v-bind="row.dancer ? { to: { name: 'competition.dancer', params: { competitionId, dancerId: row.dancer.id } } } : {}"

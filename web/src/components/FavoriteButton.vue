@@ -61,7 +61,7 @@ async function handleClick(e: Event) {
     :aria-label="labelled ? undefined : `${word}${name ? ` ${alerts ? 'for ' : ''}${name}` : ''}`"
     :class="[
       variant === 'tile'
-        ? ['press action-tile text-primary transition-colors', isFavorite ? 'surface' : 'bg-blue-paper']
+        ? ['press action-tile text-primary transition-colors', isFavorite ? 'button-fill' : 'bg-blue-paper']
         : 'press flex shrink-0 items-center justify-center rounded-full transition-colors',
       variant === 'tile'
         ? null
@@ -69,7 +69,7 @@ async function handleClick(e: Event) {
         ? [
             'h-11 gap-1.5 px-4 text-callout font-semibold',
             isFavorite
-              ? 'surface text-foreground'
+              ? 'button-fill text-foreground'
               : variant === 'tonal'
                 ? 'bg-blue-paper text-primary'
                 : 'bg-primary-fill text-primary-foreground press-fill',

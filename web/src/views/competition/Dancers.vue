@@ -227,10 +227,10 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
             <li
               v-for="d in s.rows"
               :key="d.id"
-              class="relative flex items-center gap-1 pr-2"
+              class="relative isolate flex items-center gap-1 pr-2"
               :style="following.isFollowing(d) ? following.paint(d.dancerId) : undefined"
             >
-              <span v-if="following.isFollowing(d)" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
+              <span v-if="following.isFollowing(d)" class="dancer-sash" aria-hidden="true" />
               <RouterLink
                 :to="{ name: 'competition.dancer', params: { competitionId, dancerId: d.id } }"
                 class="press-row focus-inset flex min-h-15 min-w-0 flex-1 items-center gap-3 rounded-r-xl py-2 pl-4"

@@ -34,7 +34,7 @@ const SIZE = {
 const VARIANT = {
   primary: 'bg-primary-fill text-primary-foreground press-fill proximity shadow-[0_1px_2px_rgb(10_40_90/0.22)]',
   tonal: 'bg-blue-paper text-primary press',
-  secondary: 'surface text-foreground press',
+  secondary: 'button-fill text-foreground press',
   plain: 'text-primary press-row',
   destructive: 'bg-destructive-fill text-destructive-foreground press-fill',
 }

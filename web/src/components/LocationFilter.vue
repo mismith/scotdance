@@ -229,7 +229,7 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
 <template>
   <button
     type="button"
-    class="press surface flex h-11 min-w-0 items-center gap-1.5 rounded-full px-4 text-callout font-semibold"
+    class="press button-fill flex h-11 min-w-0 items-center gap-1.5 rounded-full px-4 text-callout font-semibold"
     :aria-label="ariaLabel"
     aria-haspopup="dialog"
     :aria-expanded="sheet.open"

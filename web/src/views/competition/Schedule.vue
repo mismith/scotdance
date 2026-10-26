@@ -174,10 +174,10 @@ async function openAtToday() {
                 name: 'competition.event',
                 params: { competitionId, dayId: d.day.id, blockId: b.block.id, eventId: e.event.id },
               }"
-              class="press-row focus-inset relative flex min-h-14 items-center gap-3 py-2.5 pr-3 pl-4"
+              class="press-row focus-inset relative isolate flex min-h-14 items-center gap-3 py-2.5 pr-3 pl-4"
               :style="e.mine.length ? { '--dc': e.mine[0].color ?? 'var(--primary)' } : undefined"
             >
-              <span v-if="e.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
+              <span v-if="e.mine.length" class="dancer-sash" aria-hidden="true" />
               <span class="min-w-0 flex-1">
                 <span :class="['block text-base leading-snug break-words', e.state === 'done' ? 'text-muted-foreground font-medium' : 'font-semibold']">
                   {{ e.event.name || 'Event' }}

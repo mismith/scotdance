@@ -192,10 +192,10 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
         <li
           v-for="row in shownCallbacks"
           :key="row.dancerId"
-          class="relative"
+          class="relative isolate"
           :style="rowStyle(row.dancer)"
         >
-          <span v-if="colorOf(row.dancer)" class="sash absolute inset-y-0 left-0 z-1 w-1.5" aria-hidden="true" />
+          <span v-if="colorOf(row.dancer)" class="dancer-sash" aria-hidden="true" />
           <RouterLink
             v-if="row.dancer"
             :to="{ name: 'competition.dancer', params: { competitionId, dancerId: row.dancer.id } }"
@@ -300,8 +300,8 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
             class="rows-engraved [interpolate-size:allow-keywords] [--inset:7rem] [--inset-end:1rem]"
             v-bind="rowsMove"
           >
-            <li v-for="row in s.placings.rows" :key="row.dancerId" class="relative" :style="rowStyle(row.dancer)">
-              <span v-if="colorOf(row.dancer)" class="sash absolute inset-y-0 left-0 z-1 w-1.5" aria-hidden="true" />
+            <li v-for="row in s.placings.rows" :key="row.dancerId" class="relative isolate" :style="rowStyle(row.dancer)">
+              <span v-if="colorOf(row.dancer)" class="dancer-sash" aria-hidden="true" />
               <component
                 :is="row.dancer ? RouterLink : 'div'"
                 v-bind="row.dancer ? { to: { name: 'competition.dancer', params: { competitionId, dancerId: row.dancer.id } } } : {}"

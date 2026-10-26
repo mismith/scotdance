@@ -76,7 +76,7 @@ const lists = ['dancers', 'judges', 'pipers', 'venues', 'organisations'].map(sec
         v-for="r in recentSearches.recent.value"
         :key="r"
         type="button"
-        class="surface press flex h-11 max-w-full items-center gap-2 rounded-full px-4 text-callout font-medium"
+        class="button-fill press flex h-11 max-w-full items-center gap-2 rounded-full px-4 text-callout font-medium"
         @click="emit('search', r)"
       >
         <Clock class="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
@@ -160,7 +160,7 @@ const lists = ['dancers', 'judges', 'pipers', 'venues', 'organisations'].map(sec
     <!-- One list, as in More: muted icons, the label, a chevron. -->
     <ul class="rows-engraved -mx-4 [--inset:3.25rem] [--inset-end:1rem]">
       <li v-for="b in [competitions, ...lists]" :key="b.path">
-        <RouterLink :to="b.to" class="press-row focus-inset flex min-h-14 items-center gap-4 px-4 py-2">
+        <RouterLink :to="b.to" class="press-row focus-inset flex min-h-14 items-center gap-4 py-2 pr-3 pl-4">
           <component :is="b.icon" class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
           <span class="flex-1 text-base font-medium">{{ b.label }}</span>
           <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />

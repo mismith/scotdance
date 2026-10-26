@@ -119,7 +119,7 @@ watch(() => route.hash, applyHash)
 
       <section class="space-y-3">
         <h2 class="text-section">For organisers</h2>
-        <div class="surface space-y-3 rounded-2xl p-4">
+        <div class="space-y-3">
           <p class="text-base">
             <span class="font-semibold">Run the day without the paper.</span>
             Build the schedule, import your dancers and post results as they’re announced. It keeps every result on record for later. Free, for any competition.
@@ -152,7 +152,7 @@ watch(() => route.hash, applyHash)
           <li v-for="f in faqs" :id="`faq-${f.id}`" :key="f.id" class="scroll-mt-[calc(var(--chrome-top)+0.5rem)]">
             <button
               type="button"
-              class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left"
+              class="press-row focus-inset flex min-h-14 w-full items-center gap-3 py-3 pr-3 pl-4 text-left"
               :aria-expanded="open.has(f.id)"
               :aria-controls="`faq-panel-${f.id}`"
               @click="toggle(f.id)"

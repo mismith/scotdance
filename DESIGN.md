@@ -214,6 +214,8 @@ State papers: **Next Amber** (#ffefc7, ink #7a4600), in Manage only, for what ne
 
 Dancer colours: nine saturated hues (red, green, purple, gold, blue, teal, magenta, orange, navy), assigned per followed dancer and used for their number card band, avatar, dots and bars. All hold 3:1 as a dot or bar on the page and take white text at 4.5:1, except gold: a true gold rather than a dark mustard, so text on it in the light theme takes ink (`--on-dancer-4`). A follower can weave any of them into a tartan (lib/tartan.ts): the cloth fills the band, avatar and bars in place of the flat colour, dyed in the light palette in both themes; a dot too small for cloth shows the dancer's colour. Initials on cloth are white with a soft halo, or ink with a light halo on light cloth.
 
+**Your dancer's row** (`dancer-sash`): in a list, a favourite dancer's row carries a 0.5rem stripe of their colour or tartan at the left edge that fades into the row as a faint wash.
+
 **The Colour Is News Rule.** Pink, amber and green appear only when they report a state (live, next in Manage, done). A screen with nothing happening is blue, ink and paper. Finished or out-of-the-running things are muted by colour and say so in words, never faded with opacity.
 
 **The One Blue Rule.** Saltire Blue fills at most one button per view; everything else that acts is tonal, paper or plain text.
@@ -255,6 +257,7 @@ Glass, in both themes. A card is a lit pane: an opaque fill, a 1.5px gradient ri
 - **Card** (`surface`: `--card-fill` inside a `--rim-neutral` gradient border, `box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 18px 36px -18px rgb(16 24 40 / 0.3), 0 2px 6px -2px rgb(16 24 40 / 0.08)`; at night a deeper fill, a fainter rim and `0 18px 40px -18px rgb(0 0 0 / 0.8)`): every card.
 - **Engraved line** (`rows-engraved`: a 1px cut in `--engrave-cut` over a 1px lit edge in `--engrave-lit`): between frameless rows.
 - **Raised** (`box-shadow: 0 0 0 0.5px rgb(18 22 27 / 0.06), 0 10px 30px -8px rgb(16 24 40 / 0.2), 0 2px 6px rgb(16 24 40 / 0.06)`): menus, sheets, popovers.
+- **Menu glass** (`glass-menu`): popover menus (More, Directions, a dancer's look) are frosted glass with a lit inner edge and deep shadow, like the bars they open from; solid under Reduce Transparency.
 - **Glass** (`backdrop-filter: blur(24px) saturate(1.8)` over 72% paper, a gradient rim lit along the top left with a touch of shade lower down, a soft inner glow and shade, `0 10px 28px -8px rgb(16 24 40 / 0.24)`): floating chrome only, never content; solid under Reduce Transparency.
 
 **The Paper Rule.** The page is one sheet held still behind everything (`body::before`): a faint fibre grain (`--paper-grain`: dark fibres at 0.18 by day, pale ones at 0.04 at night) in a soft light from the top (`--page-light`; a deep navy glow at night). Whatever hides what scrolls under it (sticky headings, the bars' fades) uses `paper`, a frosted strip of the page, so nothing shows a seam. Cards stay clean, untextured glass. Only the brand panel (Home's pitch, About's hero) gets stronger texture and gradient light.
@@ -269,7 +272,7 @@ Every rounded shape uses continuous corners (`corner-shape: superellipse(1.5)`),
 - **Shape:** capsule (9999px), 44px tall (36px to the eye for small ones, still 44px to the finger).
 - **Primary:** Saltire Blue fill, white label, a faint blue-tinted lift; one per view.
 - **Tonal:** Blue Paper with a blue label: the usual secondary action.
-- **Secondary:** paper with the card shadow; **Plain:** blue text only; **Destructive:** red fill.
+- **Secondary:** a quiet fill (`button-fill`), no rim and no card shadow: a button is a filled capsule, a card is lit glass, and the two never look alike; **Plain:** blue text only; **Destructive:** red fill.
 - **States:** press tints or shrinks within a frame and springs back; busy keeps the label and adds a spinner; disabled at 40%.
 
 ### Chips
@@ -292,10 +295,10 @@ Every rounded shape uses continuous corners (`corner-shape: superellipse(1.5)`),
 A person's or place's page (dancer, judge, piper, venue) opens centred, as a competition dancer's page does under their number card: a 96px avatar (initials on the dancer's colour or tartan when followed, with a palette badge: tap it to choose their look) or the venue's map pin tile, the name at Hero size, one line of who or where, then Favourite at a button's width (a dancer's, once a favourite, with their Alerts bell beside it), or, beside Directions (a venue) or a website (an organisation), one row of equal action tiles. A judge's or piper's initials sit on a soft colour of their own, as among a competition's staff; a dancer's never do (colour on a dancer means yours). Outside a competition there is no number card; inside a dancer's history each competition row shows the number they wore there as a small card, then their rosettes.
 
 ### Competition Overview
-In the manner of Apple's own apps (a place in Maps, an event in Sports). The title at `text-hero` (800, tight; a long name a size down) beside the logo or date tile. Under it one row of equal **action tiles** (`action-tile`, icon above the word): Alerts, Directions, and Register while entries are open (filled, the view's one blue) or else the one link when there's only one. Then the dancers (yours, or the iOS-style filled search, `search-fill`), then **figures**: dancers, dances and results in as big tabular numbers, each opening where it's listed. The when-and-where card holds only the date (when it adds to the tile) and the venue. Section titles at `text-section`. Staff initials sit on a soft colour of their own, from their name.
+In the manner of Apple's own apps (a place in Maps, an event in Sports). The title at `text-hero` (800, tight; a long name a size down) beside the logo or date tile. Under it equal **action tiles** (`action-tile`, icon above the word), up to three a row: Alerts, Register while entries are open (filled, the view's one blue), then each of its links and files. Directions is on the venue itself: the venue row opens the map apps, the map and copy address. Then the dancers (yours, or the iOS-style filled search, `search-fill`), then **figures**: dancers, dances and results in as big tabular numbers, each opening where it's listed. The when-and-where card holds only the date (when it adds to the tile) and the venue. Section titles at `text-section`. Staff initials sit on a soft colour of their own, from their name.
 
 ### Navigation
-- **Tab bar:** a floating glass capsule at the bottom on phones (Home, Competitions, Search, More); inside a competition it swaps to that competition's tabs with a round "leave" button beside it. The current tab sits on a quiet pill.
+- **Tab bar:** a floating glass capsule at the bottom on phones (Home, Competitions, Search), with More as its own round glass button at the right (it opens a menu, not a page); inside a competition it swaps to that competition's tabs with a round "leave" button beside it. The current tab sits on a quiet pill.
 - **App bar:** a back button that names where it goes, the title once the page's own title scrolls under, and up to two icon actions (36px in chrome), in blue like Back: grey reads as switched off.
 - **Sidebar (64rem+):** the same destinations in a list, the current one on Blue Paper.
 

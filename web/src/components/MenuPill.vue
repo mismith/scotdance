@@ -28,7 +28,7 @@ function pick(value: T) {
 <template>
   <button
     type="button"
-    class="press surface flex h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-callout font-semibold"
+    class="press button-fill flex h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-callout font-semibold"
     :aria-label="`${label}: ${current.label}`"
     aria-haspopup="dialog"
     :aria-expanded="menu.open"

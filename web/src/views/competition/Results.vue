@@ -189,10 +189,10 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
             <li v-for="r in s.rows" :key="r.group.id">
               <RouterLink
                 :to="{ name: 'competition.group', params: { competitionId, groupId: r.group.id } }"
-                class="press-row focus-inset relative flex min-h-14 items-center gap-3 py-2 pr-3 pl-4"
+                class="press-row focus-inset relative isolate flex min-h-14 items-center gap-3 py-2 pr-3 pl-4"
                 :style="r.mine.length ? { '--dc': r.mine[0].color ?? 'var(--primary)' } : undefined"
               >
-                <span v-if="r.mine.length" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
+                <span v-if="r.mine.length" class="dancer-sash" aria-hidden="true" />
                 <span class="min-w-0 flex-1">
                   <span class="block truncate text-base font-semibold">{{ r.title }}</span>
                   <!-- Said in words: a bare warning sign reads as "something's wrong with the results". -->

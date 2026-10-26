@@ -49,7 +49,7 @@ const scrollTop = () => {
 <template>
   <nav aria-label="Page" class="fixed inset-x-chrome-0 top-0 z-30 pt-(--safe-top) [view-transition-name:appbar]" :data-scrolled="scrolled ?? showTitle">
     <div
-      class="paper absolute inset-x-0 top-0 -z-10 h-[calc(100%+1.25rem)] backdrop-blur-sm [mask-image:linear-gradient(to_bottom,black_calc(100%-1.25rem),transparent)]"
+      class="paper absolute inset-x-0 top-0 -z-10 h-[calc(100%+1.25rem)] [mask-image:linear-gradient(to_bottom,black_calc(100%-1.25rem),transparent)]"
       aria-hidden="true"
     />
     <div :class="['@container mx-auto flex h-14 items-center gap-2 px-3', wide ? 'max-w-none' : 'appbar-row']">

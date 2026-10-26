@@ -52,7 +52,7 @@ function pick(id: string) {
       aria-haspopup="dialog"
       :aria-expanded="sheet.open"
       :aria-labelledby="`${labelId} ${chipId}`"
-      class="press surface flex h-11 min-w-0 items-center gap-2 rounded-full pr-3 pl-1.5"
+      class="press button-fill flex h-11 min-w-0 items-center gap-2 rounded-full pr-3 pl-1.5"
       @click="openSheet"
     >
       <span

@@ -337,7 +337,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
           <h2 :id="`today-${g.competitionId}`">
             <RouterLink
               :to="{ name: 'competition.info', params: { competitionId: g.competitionId } }"
-              class="press-row -mx-2 flex items-center gap-2 rounded-xl px-2 py-1"
+              class="press-row -mx-4 flex items-center gap-2 py-1 pr-3 pl-4"
             >
               <span class="min-w-0 flex-1">
                 <span class="text-title block">{{ g.competition.name }}</span>
@@ -440,7 +440,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
             <div v-for="(g, i) in otherGroups" :key="g.competitionId" :class="['space-y-1.5', settle]" :style="settleDelay(i)">
               <RouterLink
                 :to="{ name: 'competition.info', params: { competitionId: g.competitionId } }"
-                class="press-row -mx-2 flex items-center gap-2 rounded-xl px-2 py-1"
+                class="press-row -mx-4 flex items-center gap-2 py-1 pr-3 pl-4"
               >
                 <span class="min-w-0 flex-1">
                   <span class="text-muted-foreground block truncate text-footnote">{{ groupKicker(g) }}</span>
@@ -472,10 +472,10 @@ const { freshKey: liveFresh } = useLiveAlertState()
             <RouterLink
               v-else
               :to="{ name: 'dancer.info', params: { dancerId: card.id } }"
-              class="surface press-row focus-inset relative flex items-center gap-3 overflow-hidden rounded-2xl p-4"
+              class="surface press-row focus-inset relative isolate flex items-center gap-3 overflow-hidden rounded-2xl p-4"
               :style="following.paint(card.id)"
             >
-              <span v-if="cardColor(card)" class="sash absolute inset-y-0 left-0 w-1.5" aria-hidden="true" />
+              <span v-if="cardColor(card)" class="dancer-sash" aria-hidden="true" />
               <span class="min-w-0 flex-1">
                 <span class="block truncate text-[1.0625rem] font-semibold">{{ card.name }}</span>
                 <span class="text-muted-foreground block truncate text-sm">{{ cardLine(card) }}</span>
