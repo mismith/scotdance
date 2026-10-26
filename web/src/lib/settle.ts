@@ -1,7 +1,6 @@
 // First loads settle rather than pop: content rises 6px into place as it
 // arrives (the shared rise-in), each a beat after the one before it. Filled
-// backwards only: a translate left on afterwards would pin the fixed layer of
-// a sticky heading inside (paper) to the section.
+// backwards only, so no translate lingers on the section afterwards.
 export const settle = 'motion-safe:animate-[rise-in_var(--dur-slow)_var(--ease-snappy)_backwards]'
 
 /** The stagger for the i-th of a list, capped so long lists don't drag. */

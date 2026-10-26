@@ -4,9 +4,9 @@ import { ChevronDown } from '@lucide/vue'
 import AccountButton from '@/components/nav/AccountButton.vue'
 import TopBackButton from '@/components/nav/TopBackButton.vue'
 
-// The one top bar, 3.5rem, under the status bar. It's solid, so nothing
-// shows through it; what scrolls under it fades and blurs into the page in a
-// short band just below, so there's no hard line. Left: a labelled
+// The one top bar, 3.5rem, under the status bar. It's frosted glass (paper):
+// what scrolls under it blurs, and it fades into the page in a short band
+// just below, so there's no hard line. Left: a labelled
 // Back button (when there's somewhere to go back to), or whatever the page
 // puts in the `leading` slot (Home: the ScotDance.app name). Middle: a small title
 // (and optional subtitle) that appears once the page's own big title has
@@ -23,7 +23,7 @@ const props = withDefaults(
     title?: string | null
     subtitle?: string | null
     showTitle?: boolean
-    /** Border under the bar; defaults to `showTitle` (i.e. once scrolled). */
+    /** Frosted, rather than clear; defaults to `showTitle` (i.e. once scrolled). */
     scrolled?: boolean
     /** Span the full window (Manage screens on wide displays). */
     wide?: boolean
@@ -47,12 +47,19 @@ const scrollTop = () => {
 </script>
 
 <template>
-  <nav aria-label="Page" class="fixed inset-x-chrome-0 top-0 z-30 pt-(--safe-top) [view-transition-name:appbar]" :data-scrolled="scrolled ?? showTitle">
+  <nav aria-label="Page" class="fixed inset-x-chrome-0 top-0 z-30 pt-(--safe-top)" :data-scrolled="scrolled ?? showTitle">
+    <!-- Clear at the top of the page, so the paper shows through; frosted
+         once something scrolls under it, as on iOS. -->
     <div
-      class="paper absolute inset-x-0 top-0 -z-10 h-[calc(100%+1.25rem)] [mask-image:linear-gradient(to_bottom,black_calc(100%-1.25rem),transparent)]"
+      :class="[
+        'paper absolute inset-x-0 top-0 -z-10 h-[calc(100%+1.25rem)] transition-opacity duration-(--dur-base) [mask-image:linear-gradient(to_bottom,black_calc(100%-1.25rem),transparent)] [view-transition-name:appbar-backdrop]',
+        !(scrolled ?? showTitle) && 'opacity-0',
+      ]"
       aria-hidden="true"
     />
-    <div :class="['@container mx-auto flex h-14 items-center gap-2 px-3', wide ? 'max-w-none' : 'appbar-row']">
+    <!-- The glass and the row each hold still through a page change; not
+         the whole bar, as a named element only blurs what's inside it. -->
+    <div :class="['@container mx-auto flex h-14 items-center gap-2 px-3 [view-transition-name:appbar]', wide ? 'max-w-none' : 'appbar-row']">
       <TopBackButton v-if="back" :fallback="fallback" :exit="exit" :compact="compactBack" />
       <slot name="leading" />
       <!-- Or the page's own middle, instead of the small title (Add a competition's progress). -->

@@ -74,13 +74,13 @@
 :root {
   color-scheme: light;
   --background: #f5f3ee;
-  /* Paper: a faint fibre, lit from the top left (see body). Drawn at three
+  /* Paper: a faint fibre, lit from the top left (see html). Drawn at three
      times the size it's shown, so it stays sharp on a phone's screen. */
   --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='660' height='660'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.375 .11' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeDiffuseLighting lighting-color='%23fff' surfaceScale='3.2'%3E%3CfeDistantLight azimuth='225' elevation='58'/%3E%3C/feDiffuseLighting%3E%3CfeColorMatrix values='0 0 0 0 .35  0 0 0 0 .33  0 0 0 0 .3  -1 0 0 0 1'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='.18'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29'/%3E%3C/svg%3E");
   /* The light the page sits in: brighter at the top, like a sheet by a window. */
   --page-light: radial-gradient(120% 55% at 15% 0%, #ffffff, #f5f3ee 55%, #ebe7de);
-  /* Both, as the page wears them (body::before, paper). */
-  --page-paper: var(--paper-grain) 0 0 / 220px, var(--page-light);
+  /* Where the light ends, and the rest of a long page. */
+  --page-end: #ebe7de;
   /* Cards are lit panes: a fill, a gradient rim (bright top left, a touch of
      shade lower down) and depth. A favourite dancer's rim takes their colour. */
   --card-fill: linear-gradient(180deg, #ffffff, #fbfaf7);
@@ -208,6 +208,7 @@
   /* At night the fibres catch the light instead: pale, and far fainter. */
   --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='660' height='660'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.375 .11' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeDiffuseLighting lighting-color='%23fff' surfaceScale='3.2'%3E%3CfeDistantLight azimuth='225' elevation='58'/%3E%3C/feDiffuseLighting%3E%3CfeColorMatrix values='0 0 0 0 .86  0 0 0 0 .9  0 0 0 0 .96  2 0 0 0 -1.1'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='.04'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29'/%3E%3C/svg%3E");
   --page-light: radial-gradient(120% 70% at 20% 0%, #1b2a4a, #0b0f17 55%, #07090d);
+  --page-end: #07090d;
   --card-fill: linear-gradient(180deg, #1c222b, #161b22);
   --rim-neutral: linear-gradient(150deg, rgb(255 255 255 / 0.35), rgb(255 255 255 / 0.05) 40%, rgb(255 255 255 / 0.12));
   --rim-mid: rgb(255 255 255 / 0.06);
@@ -276,6 +277,16 @@
   }
 }
 
+/* The page is paper: its grain and light are printed on it and scroll with
+   it, the light a screen tall at the top. On <html>, so it covers the whole
+   canvas, and outside the layers so it wins over index.html's plain colour
+   (painted before this loads). */
+html {
+  background:
+    var(--paper-grain) 0 0 / 220px,
+    var(--page-light) 0 0 / 100% 100% no-repeat var(--page-end);
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -292,11 +303,7 @@
   input::-webkit-date-and-time-value {
     @apply text-left;
   }
-  /* The plain colour on <html>, as index.html paints it before this loads.
-     Not on <body> too: a painted body covers the page's light and grain
-     (body::before) everywhere. */
   html {
-    @apply bg-background;
     @apply scroll-pt-[calc(var(--chrome-top)+1rem)] scroll-pb-[calc(var(--chrome-bottom)+1rem)];
     -webkit-text-size-adjust: 100%;
     /* Every control has its own press state (press-* below). */
@@ -319,16 +326,6 @@
     @apply text-foreground font-sans;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-  /* The page's light and grain, held still behind everything (a fixed layer:
-     iOS ignores background-attachment: fixed). */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background: var(--page-paper);
   }
   button,
   input,
@@ -508,19 +505,15 @@
   @apply flex h-11 items-center gap-2 rounded-xl bg-[rgb(118_118_128/0.12)] pr-1 pl-3 focus-within:outline-2 focus-within:outline-offset-0 focus-within:outline-(--ring);
 }
 
-/* The page itself, light and grain: for what has to hide what scrolls under
-   it (the top and tab bars, sticky headings). The same fixed layer as the
-   page's (body::before), clipped to the box, so it lines up exactly and
-   nothing shows a seam or shows through. */
+/* Frosted glass, without the grain: for what has to sit over what scrolls
+   under it (the top and tab bars, sticky headings). The page blurs through
+   it, so it never shows a seam against the paper. Solid under Reduce
+   Transparency. */
 @utility paper {
-  clip-path: inset(0);
-  &::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background: var(--page-paper);
+  background-color: color-mix(in oklab, var(--background) 55%, transparent);
+  backdrop-filter: blur(24px) saturate(1.6);
+  @media (prefers-reduced-transparency: reduce) {
+    background-color: var(--background);
   }
 }
 @utility surface {
@@ -1132,12 +1125,20 @@
 ::view-transition-new(page-head) {
   animation: none;
 }
-/* The top bar and the fade behind the tab bar hold still: where they're the
+/* The top bar and the glass behind both bars hold still: where they're the
    same on both pages nothing moves, and what differs (a title, a button)
    cross-fades in place. */
 ::view-transition-group(appbar),
+::view-transition-group(appbar-backdrop),
 ::view-transition-group(tabbar-backdrop) {
   animation-duration: 220ms;
+}
+/* Its snapshot is taken with nothing behind it, so the tab bar's glass blurs
+   the moving pages from its group instead (as paper does), fading out the
+   same. (Not the top bar's: it's often clear, and would flash frosted.) */
+::view-transition-group(tabbar-backdrop) {
+  backdrop-filter: blur(24px) saturate(1.6);
+  mask-image: linear-gradient(to top, black calc(100% - 1.25rem), transparent);
 }
 /* Labels that change in place (the tab bar entering or leaving a
    competition, the back pill's text) fade out before the new ones fade in,

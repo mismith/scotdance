@@ -232,14 +232,14 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
             {{ query ? 'Matches' : places ? `All ${section.label.toLowerCase()}` : 'Everyone' }}
             <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ sorted.length }}</span>
           </h2>
-          <!-- Each letter sticks while its names scroll under it: a strip of
-               the page (its grain over the list's hairline), and the name
-               under it starts without one. -->
+          <!-- Each letter sticks while its names scroll under it: a frosted
+               strip (over the list's hairline), and the name under it starts
+               without one. -->
           <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
             <template v-for="x in rows" :key="'letter' in x ? `@${x.letter}` : x.row.id">
               <li
                 v-if="'letter' in x"
-                class="paper text-muted-foreground sticky top-(--chrome-top) z-10 px-4 py-1.5 text-footnote font-semibold [&+li]:bg-none!"
+                class="paper text-muted-foreground sticky top-(--chrome-top) z-10 bg-none! px-4 py-1.5 text-footnote font-semibold [&+li]:bg-none!"
               >
                 {{ x.letter }}
               </li>

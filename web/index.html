@@ -27,10 +27,11 @@
       } catch {}
     </script>
 
-    <!-- The background, before the stylesheet arrives (style.css takes over). -->
+    <!-- The background, before the stylesheet arrives (style.css takes over:
+         no specificity, so its paper wins). -->
     <style>
-      html { background: #f5f3ee; color-scheme: light; }
-      html.dark { background: #0c0f13; color-scheme: dark; }
+      :where(html) { background: #f5f3ee; color-scheme: light; }
+      :where(html.dark) { background: #0c0f13; color-scheme: dark; }
     </style>
 
     <title>ScotDance.app</title>

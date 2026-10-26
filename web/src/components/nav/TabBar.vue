@@ -39,12 +39,14 @@ function onTap(item: TabItem, e: MouseEvent) {
     data-tabbar
     data-nav-axis="x"
     :aria-label="label"
-    class="pointer-events-none fixed inset-x-chrome-0 bottom-0 z-30 px-3 pb-[max(0.5rem,var(--safe-bottom))] [view-transition-name:tabbar-backdrop] lg:hidden"
+    class="pointer-events-none fixed inset-x-chrome-0 bottom-0 z-30 px-3 pb-[max(0.5rem,var(--safe-bottom))] lg:hidden"
   >
-    <!-- As under the top bar: the page's colour behind the bar, and what
-         scrolls toward it fades and blurs away in a short band just above. -->
+    <!-- As under the top bar: frosted glass behind the bar, fading into the
+         page in a short band just above. It holds still through a page
+         change on its own (not the whole nav: a named element only blurs
+         what's inside it, so the pill would stop frosting the page). -->
     <div
-      class="paper absolute inset-x-0 bottom-0 -z-10 h-[calc(100%+1.25rem)] [mask-image:linear-gradient(to_top,black_calc(100%-1.25rem),transparent)]"
+      class="paper absolute inset-x-0 bottom-0 -z-10 h-[calc(100%+1.25rem)] [mask-image:linear-gradient(to_top,black_calc(100%-1.25rem),transparent)] [view-transition-name:tabbar-backdrop]"
       aria-hidden="true"
     />
     <div class="mx-auto flex max-w-lg items-center gap-2">
