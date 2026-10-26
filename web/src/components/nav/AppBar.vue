@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { RouteLocationRaw } from 'vue-router'
 import { ChevronDown } from '@lucide/vue'
 import AccountButton from '@/components/nav/AccountButton.vue'
@@ -13,9 +14,9 @@ import TopBackButton from '@/components/nav/TopBackButton.vue'
 // scrolled away, or always when `showTitle` says so (or the page's own
 // `middle`, instead). Right: the page's own
 // actions (the `actions` slot), then your account, on every page.
-// The small title comes and goes the same way everywhere: it slides out from
-// behind the back button (where there is one) as it fades in. Through a page
-// change it cross-fades with the rest of the bar, rather than travelling.
+// The small title comes and goes the same way everywhere: it fades in place,
+// with the bar's glass, as on iOS. Through a page change it cross-fades with
+// the rest of the bar, rather than travelling.
 // Tapping it scrolls to the top, unless it opens a menu (`titleMenu`: a
 // linked competition's switcher), when a chevron says so.
 const props = withDefaults(
@@ -38,6 +39,8 @@ const props = withDefaults(
   { title: null, subtitle: null, showTitle: false, scrolled: undefined, wide: false, back: true, fallback: undefined, exit: null, compactBack: false, titleMenu: null },
 )
 
+const frosted = computed(() => props.scrolled ?? props.showTitle)
+
 const onTitle = (e: MouseEvent) => (props.titleMenu ? props.titleMenu.open(e) : scrollTop())
 
 const scrollTop = () => {
@@ -47,19 +50,27 @@ const scrollTop = () => {
 </script>
 
 <template>
-  <nav aria-label="Page" class="fixed inset-x-chrome-0 top-0 z-30 pt-(--safe-top)" :data-scrolled="scrolled ?? showTitle">
+  <!-- The bar holds still through a page change, named only while one runs:
+       a named element's glass only blurs what's inside it. (frosted: see
+       style.css, for the glass's blur during the change.) -->
+  <nav
+    aria-label="Page"
+    :class="[
+      'fixed inset-x-chrome-0 top-0 z-30 pt-(--safe-top) [:root:active-view-transition_&]:[view-transition-name:appbar]',
+      frosted && '[view-transition-class:frosted]',
+    ]"
+  >
     <!-- Clear at the top of the page, so the paper shows through; frosted
-         once something scrolls under it, as on iOS. -->
+         once something scrolls under it, as on iOS. Clear means no blur at
+         all, not just unseen, so a page change doesn't pick one up. -->
     <div
       :class="[
-        'paper absolute inset-x-0 top-0 -z-10 h-[calc(100%+1.25rem)] transition-opacity duration-(--dur-base) [mask-image:linear-gradient(to_bottom,black_calc(100%-1.25rem),transparent)] [view-transition-name:appbar-backdrop]',
-        !(scrolled ?? showTitle) && 'opacity-0',
+        'paper absolute inset-x-0 top-0 -z-10 h-[calc(100%+1.25rem)] transition-[opacity,backdrop-filter] duration-(--dur-base) [mask-image:linear-gradient(to_bottom,black_calc(100%-1.25rem),transparent)]',
+        !frosted && 'opacity-0 [backdrop-filter:none]!',
       ]"
       aria-hidden="true"
     />
-    <!-- The glass and the row each hold still through a page change; not
-         the whole bar, as a named element only blurs what's inside it. -->
-    <div :class="['@container mx-auto flex h-14 items-center gap-2 px-3 [view-transition-name:appbar]', wide ? 'max-w-none' : 'appbar-row']">
+    <div :class="['@container mx-auto flex h-14 items-center gap-2 px-3', wide ? 'max-w-none' : 'appbar-row']">
       <TopBackButton v-if="back" :fallback="fallback" :exit="exit" :compact="compactBack" />
       <slot name="leading" />
       <!-- Or the page's own middle, instead of the small title (Add a competition's progress). -->
@@ -68,9 +79,9 @@ const scrollTop = () => {
         <button
           type="button"
           :class="[
-            'min-w-0 text-left transition-[opacity,translate] duration-(--dur-base) ease-standard',
+            'min-w-0 text-left transition-opacity duration-(--dur-base) ease-standard',
             titleMenu ? 'press hover:bg-accent -my-1 -ml-2 rounded-xl py-1 pr-1.5 pl-2' : 'flex-1',
-            showTitle && title ? 'opacity-100' : 'pointer-events-none -translate-x-3 opacity-0',
+            showTitle && title ? 'opacity-100' : 'pointer-events-none opacity-0',
           ]"
           :tabindex="showTitle && title ? 0 : -1"
           :aria-hidden="showTitle && title ? undefined : 'true'"

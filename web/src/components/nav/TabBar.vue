@@ -39,14 +39,15 @@ function onTap(item: TabItem, e: MouseEvent) {
     data-tabbar
     data-nav-axis="x"
     :aria-label="label"
-    class="pointer-events-none fixed inset-x-chrome-0 bottom-0 z-30 px-3 pb-[max(0.5rem,var(--safe-bottom))] lg:hidden"
+    class="pointer-events-none fixed inset-x-chrome-0 bottom-0 z-30 px-3 pb-[max(0.5rem,var(--safe-bottom))] lg:hidden [:root:active-view-transition_&]:[view-transition-name:tabbar-backdrop]"
   >
-    <!-- As under the top bar: frosted glass behind the bar, fading into the
-         page in a short band just above. It holds still through a page
-         change on its own (not the whole nav: a named element only blurs
-         what's inside it, so the pill would stop frosting the page). -->
+    <!-- Frosted glass behind the bar, from its foot up to a third of the way
+         up the pill, where it fades into the page (so it's not a stark band
+         above the buttons). The bar holds still through a page change, named
+         only while one runs: a named element's glass (the pill's too) only
+         blurs what's inside it. -->
     <div
-      class="paper absolute inset-x-0 bottom-0 -z-10 h-[calc(100%+1.25rem)] [mask-image:linear-gradient(to_top,black_calc(100%-1.25rem),transparent)] [view-transition-name:tabbar-backdrop]"
+      class="paper absolute inset-x-0 top-5 bottom-0 -z-10 [mask-image:linear-gradient(to_bottom,transparent,black_0.75rem)]"
       aria-hidden="true"
     />
     <div class="mx-auto flex max-w-lg items-center gap-2">

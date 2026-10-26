@@ -1125,20 +1125,26 @@ html {
 ::view-transition-new(page-head) {
   animation: none;
 }
-/* The top bar and the glass behind both bars hold still: where they're the
-   same on both pages nothing moves, and what differs (a title, a button)
-   cross-fades in place. */
+/* The top and tab bars hold still: where they're the same on both pages
+   nothing moves, and what differs (a title, a button) cross-fades in place. */
 ::view-transition-group(appbar),
-::view-transition-group(appbar-backdrop),
 ::view-transition-group(tabbar-backdrop) {
   animation-duration: 220ms;
 }
-/* Its snapshot is taken with nothing behind it, so the tab bar's glass blurs
-   the moving pages from its group instead (as paper does), fading out the
-   same. (Not the top bar's: it's often clear, and would flash frosted.) */
+/* A bar's snapshot is taken with nothing behind it, so its glass would go
+   flat and then snap back to frosted; its group blurs the moving pages
+   instead (as paper does), shaped like the glass. The top bar only when the
+   new page's is frosted (AppBar), or it would flash frosted at the top. */
+::view-transition-group(appbar.frosted),
 ::view-transition-group(tabbar-backdrop) {
   backdrop-filter: blur(24px) saturate(1.6);
-  mask-image: linear-gradient(to top, black calc(100% - 1.25rem), transparent);
+}
+::view-transition-group(appbar.frosted) {
+  /* The glass runs 1.25rem past the bar, fading out; the group stops at it. */
+  mask-image: linear-gradient(to bottom, black calc(100% - 0.5rem), transparent);
+}
+::view-transition-group(tabbar-backdrop) {
+  mask-image: linear-gradient(to bottom, transparent 1.25rem, black 2rem);
 }
 /* Labels that change in place (the tab bar entering or leaving a
    competition, the back pill's text) fade out before the new ones fade in,

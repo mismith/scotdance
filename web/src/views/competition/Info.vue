@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useMorph } from '@/lib/morph'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import { RouterLink } from 'vue-router'
 import { CalendarDays, Check, ChevronDown, ChevronRight, Copy, ExternalLink, Hourglass, Map as MapIcon, MapPin, Navigation, Search, Star, X } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
@@ -142,9 +142,12 @@ const nearby = computed(() => {
 const where = computed(() => competitionDirections(competition.value))
 const hasMap = computed(() => Number.isFinite(competition.value?.lat) && Number.isFinite(competition.value?.lng))
 const directionsMenu = useMorph()
-function openDirections(e: MouseEvent) {
+// The whole row opens it, but it grows out of the word Directions and hangs
+// under it, not out of the full width of the row.
+const directionsLabel = useTemplateRef<HTMLElement>('directionsLabel')
+function openDirections() {
   copied.value = false
-  directionsMenu.show(e)
+  directionsMenu.show(directionsLabel.value)
 }
 const mapSheet = useMorph()
 const copied = ref(false)
@@ -488,7 +491,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
           :aria-haspopup="where ? 'dialog' : undefined"
           :aria-expanded="where ? directionsMenu.open : undefined"
           :class="['-m-4 flex w-[calc(100%+2rem)] items-center gap-3 p-4 text-left', where && 'press-row focus-inset']"
-          @click="where && openDirections($event)"
+          @click="where && openDirections()"
         >
           <MapPin class="text-primary size-5 shrink-0" />
           <div class="min-w-0 flex-1">
@@ -499,7 +502,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
               {{ [competition.address, competition.location].filter(Boolean).join(', ') }}
             </p>
           </div>
-          <span v-if="where" class="text-primary flex shrink-0 items-center gap-1 text-callout font-semibold">
+          <span v-if="where" ref="directionsLabel" class="text-primary flex shrink-0 items-center gap-1 rounded-full text-callout font-semibold">
             <Navigation class="size-4" stroke-width="2.4" aria-hidden="true" /> Directions
           </span>
         </component>
