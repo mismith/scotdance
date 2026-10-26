@@ -259,89 +259,94 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
 
       <ReuseCallbacks v-if="!everyResultIn" />
 
-      <!-- Dances + overall -->
+      <!-- Dances + overall: each dance's name, then its placings as a list.
+           What can stand in for the placings comes first, so the list's
+           first hairline never shows under the name. -->
       <section
         v-for="s in sections"
         :id="`dance-${s.dance.id}`"
         :key="s.dance.id"
-        class="surface scroll-mt-[calc(var(--chrome-top)+0.75rem)] divide-y overflow-hidden rounded-2xl"
+        class="scroll-mt-[calc(var(--chrome-top)+0.75rem)] space-y-2 pt-2"
       >
-        <header class="flex items-center gap-2 px-4 py-3">
+        <header class="flex items-center gap-2">
           <h2 class="text-heading flex items-center gap-2">
             <Trophy v-if="s.dance.id === OVERALL_ID" class="text-primary size-5" />
             {{ s.dance.fullName || s.dance.name }}
           </h2>
         </header>
 
-        <!-- Kept mounted, so the first placings to arrive grow in too. -->
-        <TransitionGroup
-          v-show="s.placings.hasResults"
-          tag="ul"
-          class="rows-inset [interpolate-size:allow-keywords] [--inset:7rem]"
-          v-bind="rowsMove"
-        >
-          <li v-for="row in s.placings.rows" :key="row.dancerId" class="relative" :style="rowStyle(row.dancer)">
-            <span v-if="colorOf(row.dancer)" class="sash absolute inset-y-0 left-0 z-1 w-1.5" aria-hidden="true" />
-            <component
-              :is="row.dancer ? RouterLink : 'div'"
-              v-bind="row.dancer ? { to: { name: 'competition.dancer', params: { competitionId, dancerId: row.dancer.id } } } : {}"
-              :class="['flex min-h-13 items-center gap-2.5 px-3 py-1.5', row.dancer && 'press-row focus-inset']"
-            >
-              <span class="flex w-9 shrink-0 justify-center">
-                <Medal :place="row.place" :tied="row.tied" :fresh="isFresh(groupId, s.dance.id, row.dancerId)" :dance="s.dance.fullName" />
-              </span>
-              <template v-if="row.dancer">
-                <NumberCard
-                  :number="row.dancer.number"
-                  size="xs"
-                  :color="colorOf(row.dancer)"
-                />
-                <span class="min-w-0 flex-1">
-                  <span class="block truncate text-base font-semibold">{{ row.dancer.fullName }}</span>
-                  <span v-if="dancerPlace(row.dancer.location, group)" class="text-muted-foreground block truncate text-sm">{{ row.dancer.location }}</span>
+        <div class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
+          <div v-if="!s.placings.hasResults" class="text-muted-foreground flex items-start gap-3 px-4 py-4 text-base">
+            <template v-if="s.placings.explicitlyEmpty">No placings for this dance.</template>
+            <template v-else-if="s.dance.id === OVERALL_ID">
+              <Clock class="mt-0.5 size-5 shrink-0" />
+              <span>Posted after all the dances are in.</span>
+            </template>
+            <template v-else-if="s.state === 'waiting'">
+              <Hourglass class="mt-0.5 size-5 shrink-0" />
+              <span><span class="text-foreground font-semibold">Danced. Results to come.</span><br />Placings appear here as soon as they’re entered.</span>
+            </template>
+            <template v-else-if="phase === 'after'">No result was posted for this dance.</template>
+            <template v-else>
+              <Clock class="mt-0.5 size-5 shrink-0" />
+              <span>No results yet.</span>
+            </template>
+          </div>
+
+          <!-- Kept mounted, so the first placings to arrive grow in too. -->
+          <TransitionGroup
+            v-show="s.placings.hasResults"
+            tag="ul"
+            class="rows-engraved [interpolate-size:allow-keywords] [--inset:7rem] [--inset-end:1rem]"
+            v-bind="rowsMove"
+          >
+            <li v-for="row in s.placings.rows" :key="row.dancerId" class="relative" :style="rowStyle(row.dancer)">
+              <span v-if="colorOf(row.dancer)" class="sash absolute inset-y-0 left-0 z-1 w-1.5" aria-hidden="true" />
+              <component
+                :is="row.dancer ? RouterLink : 'div'"
+                v-bind="row.dancer ? { to: { name: 'competition.dancer', params: { competitionId, dancerId: row.dancer.id } } } : {}"
+                :class="['flex min-h-13 items-center gap-2.5 px-3 py-1.5', row.dancer && 'press-row focus-inset']"
+              >
+                <span class="flex w-9 shrink-0 justify-center">
+                  <Medal :place="row.place" :tied="row.tied" :fresh="isFresh(groupId, s.dance.id, row.dancerId)" :dance="s.dance.fullName" />
                 </span>
-              </template>
-              <span v-else class="text-muted-foreground text-base">Unknown dancer</span>
-            </component>
-          </li>
-        </TransitionGroup>
-        <div v-if="!s.placings.hasResults" class="text-muted-foreground flex items-start gap-3 px-4 py-4 text-base">
-          <template v-if="s.placings.explicitlyEmpty">No placings for this dance.</template>
-          <template v-else-if="s.dance.id === OVERALL_ID">
-            <Clock class="mt-0.5 size-5 shrink-0" />
-            <span>Posted after all the dances are in.</span>
-          </template>
-          <template v-else-if="s.state === 'waiting'">
-            <Hourglass class="mt-0.5 size-5 shrink-0" />
-            <span><span class="text-foreground font-semibold">Danced. Results to come.</span><br />Placings appear here as soon as they’re entered.</span>
-          </template>
-          <template v-else-if="phase === 'after'">No result was posted for this dance.</template>
-          <template v-else>
-            <Clock class="mt-0.5 size-5 shrink-0" />
-            <span>No results yet.</span>
-          </template>
-        </div>
+                <template v-if="row.dancer">
+                  <NumberCard
+                    :number="row.dancer.number"
+                    size="xs"
+                    :color="colorOf(row.dancer)"
+                  />
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-base font-semibold">{{ row.dancer.fullName }}</span>
+                    <span v-if="dancerPlace(row.dancer.location, group)" class="text-muted-foreground block truncate text-sm">{{ row.dancer.location }}</span>
+                  </span>
+                </template>
+                <span v-else class="text-muted-foreground text-base">Unknown dancer</span>
+              </component>
+            </li>
+          </TransitionGroup>
 
-        <!-- Who sponsors the age group's trophy (under Overall, as before) -->
-        <component
-          :is="sponsor.member ? 'button' : 'div'"
-          v-if="s.dance.id === OVERALL_ID && sponsor.name"
-          :type="sponsor.member ? 'button' : undefined"
-          :class="['flex w-full items-center gap-3 px-4 py-3 text-left', sponsor.member && 'press-row focus-inset']"
-          @click="sponsor.member && openSponsor($event)"
-        >
-          <Award class="text-primary size-5 shrink-0" />
-          <span class="min-w-0 flex-1">
-            <span class="block text-base font-semibold">{{ sponsor.name }}</span>
-            <span class="text-muted-foreground block text-sm">{{ !group.trophy ? 'Trophy sponsor' : /trophy/i.test(group.trophy) ? `${group.trophy} sponsor` : `${group.trophy} Trophy sponsor` }}</span>
-          </span>
-        </component>
+          <!-- Who sponsors the age group's trophy (under Overall, as before) -->
+          <component
+            :is="sponsor.member ? 'button' : 'div'"
+            v-if="s.dance.id === OVERALL_ID && sponsor.name"
+            :type="sponsor.member ? 'button' : undefined"
+            :class="['flex w-full items-center gap-3 px-4 py-3 text-left', sponsor.member && 'press-row focus-inset']"
+            @click="sponsor.member && openSponsor($event)"
+          >
+            <Award class="text-primary size-5 shrink-0" />
+            <span class="min-w-0 flex-1">
+              <span class="block text-base font-semibold">{{ sponsor.name }}</span>
+              <span class="text-muted-foreground block text-sm">{{ !group.trophy ? 'Trophy sponsor' : /trophy/i.test(group.trophy) ? `${group.trophy} sponsor` : `${group.trophy} Trophy sponsor` }}</span>
+            </span>
+          </component>
 
-        <div v-if="s.pointed.length" class="px-4 py-3">
-          <p class="text-sm font-semibold">Championship points</p>
-          <p class="text-muted-foreground text-sm">
-            {{ s.pointed.map((d) => `${d.number ?? ''} ${d.fullName}`.trim()).join(', ') }}
-          </p>
+          <div v-if="s.pointed.length" class="px-4 py-3">
+            <p class="text-sm font-semibold">Championship points</p>
+            <p class="text-muted-foreground text-sm">
+              {{ s.pointed.map((d) => `${d.number ?? ''} ${d.fullName}`.trim()).join(', ') }}
+            </p>
+          </div>
         </div>
       </section>
 

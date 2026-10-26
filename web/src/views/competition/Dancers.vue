@@ -213,7 +213,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
 
         <section v-for="s in sections" :key="s.key">
           <h2
-            class="paper text-muted-foreground text-callout sticky top-(--chrome-top) z-10 flex items-baseline justify-between gap-2 py-2 font-semibold"
+            class="paper text-muted-foreground text-callout sticky top-(--chrome-top) z-10 -mx-4 flex items-baseline justify-between gap-2 px-4 py-2 font-semibold"
           >
             <span class="truncate">{{ s.label }}</span>
             <span class="shrink-0 font-medium tabular-nums">{{ s.rows.length }}</span>
@@ -221,7 +221,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
           <!-- Off-screen sections skip rendering; their size estimate is exact
                (rows × row height) so Back restores to the same dancer. -->
           <ul
-            class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.75rem] [content-visibility:auto]"
+            class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem] [content-visibility:auto]"
             :style="{ containIntrinsicSize: `auto calc(${s.rows.length} * 3.75rem)` }"
           >
             <li

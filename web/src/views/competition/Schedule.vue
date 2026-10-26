@@ -153,12 +153,12 @@ async function openAtToday() {
         class="scroll-mt-[calc(var(--chrome-top)+0.25rem)]"
       >
         <h3
-          class="paper text-muted-foreground text-callout sticky top-(--chrome-top) z-10 flex items-baseline justify-between gap-2 py-2 font-semibold"
+          class="paper text-muted-foreground text-callout sticky top-(--chrome-top) z-10 -mx-4 flex items-baseline justify-between gap-2 px-4 py-2 font-semibold"
         >
           <span class="truncate">{{ b.block.name || 'Session' }}</span>
           <span v-if="b.time" class="shrink-0 font-medium tabular-nums">{{ b.time }}</span>
         </h3>
-        <ul class="surface rows-inset overflow-hidden rounded-2xl">
+        <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
           <li v-for="e in b.events" :key="e.event.id">
             <div v-if="!e.dancing" class="px-4 py-3">
               <p class="text-base leading-snug font-semibold">{{ e.event.name || 'Event' }}</p>

@@ -447,7 +447,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
     <!-- The competitions it's linked with: the ones either side, and all of them -->
     <section v-if="switcher?.linked.value" class="space-y-3">
       <h2 class="text-section">{{ switcher.label.value }}</h2>
-      <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+      <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
         <CompetitionDateRow
           v-for="r in nearby"
           :key="r.c.id"
@@ -517,7 +517,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
           Full schedule
         </RouterLink>
       </h2>
-      <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:6rem]">
+      <ul class="rows-engraved -mx-4 [--inset:6.375rem] [--inset-end:1rem]">
         <li
           v-for="s in sessions"
           :key="s.id"
@@ -562,7 +562,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         {{ staffHeading(g.type, g.members.length) }}
         <span v-if="g.members.length > 1" class="text-muted-foreground text-sm font-medium tabular-nums">{{ g.members.length }}</span>
       </h2>
-      <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.25rem]">
+      <ul class="rows-engraved -mx-4 [--inset:4.25rem] [--inset-end:1rem]">
         <li v-for="m in staffShown(g)" :key="m.id">
           <button
             type="button"
@@ -597,7 +597,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         {{ organisations.length === 1 ? 'Organisation' : 'Organisations' }}
         <span v-if="organisations.length > 1" class="text-muted-foreground text-sm font-medium tabular-nums">{{ organisations.length }}</span>
       </h2>
-      <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.25rem]">
+      <ul class="rows-engraved -mx-4 [--inset:4.25rem] [--inset-end:1rem]">
         <li v-for="org in organisations" :key="org.id">
           <RouterLink :to="{ name: 'organisation.info', params: { organisationId: org.id } }" class="press-row focus-inset flex min-h-14 items-center gap-3 px-4 py-2">
             <OrganisationMark :organisation="org" />

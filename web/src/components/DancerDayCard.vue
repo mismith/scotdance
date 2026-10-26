@@ -18,7 +18,7 @@ import { solidOf } from '@/lib/tartan'
 // entered in more than one age group (Premier plus a Broadsword event) is one
 // card under one number. The card opens the dancer's page, which lists every
 // dance. `bare` is just the day's dances, one row each, for that page, which
-// has its own header.
+// has its own header: a frameless list, one block per age group.
 const props = withDefaults(
   defineProps<{
     days: DancerDay[]
@@ -123,12 +123,17 @@ const groupRoute = (d: DancerDay, danceId?: string) => ({
 })
 
 const ROW = 'relative flex items-center justify-between gap-3'
-const rowSize = computed(() => (lg.value ? 'min-h-14 px-5 py-2.5' : 'min-h-12 px-4 py-2'))
+const rowSize = computed(() => (lg.value ? 'min-h-14 px-4 py-2.5' : 'min-h-12 px-4 py-2'))
 </script>
 
 <template>
   <article
-    :class="['surface @container overflow-hidden', bare && lg ? 'rounded-3xl' : 'rounded-[1.25rem]', dancerHue && 'glass-dancer', sweeping && 'card-sweep']"
+    :class="[
+      '@container overflow-hidden',
+      bare ? 'rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]' : 'surface rounded-[1.25rem]',
+      dancerHue && 'glass-dancer',
+      sweeping && 'card-sweep',
+    ]"
     :style="dancerHue ? { '--dh': dancerHue } : undefined"
     @animationend="(e: AnimationEvent) => e.animationName === 'card-sweep' && (sweeping = false)"
   >
@@ -206,21 +211,11 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-5 py-2.5' : 'min-h-12 px
     </template>
 
     <template v-if="bare">
-      <template v-for="(d, i) in shown" :key="d.dancer.id">
-        <p
-          v-if="multi"
-          :class="[
-            'text-muted-foreground pt-3 pb-1 text-footnote font-semibold',
-            lg ? 'px-5' : 'px-4',
-            !(bare && i === 0) && 'shadow-[inset_0_1px_0_var(--border)]',
-          ]"
-        >
+      <div v-for="d in shown" :key="d.dancer.id">
+        <p v-if="multi" class="text-muted-foreground px-4 pt-3 pb-1 text-footnote font-semibold">
           {{ d.group?.fullName }}
         </p>
-        <ul
-          v-if="d.dances.length"
-          :class="['rows-inset', lg ? '[--inset:1.25rem]' : '[--inset:1rem]', !multi && !bare && 'shadow-[inset_0_1px_0_var(--border)]']"
-        >
+        <ul v-if="d.dances.length" class="rows-engraved [--inset:1rem] [--inset-end:1rem]">
           <li v-if="d.calledBack != null" :class="[ROW, rowSize]">
             <span class="text-callout font-medium">Callbacks</span>
             <span :class="['text-sm font-semibold', d.calledBack ? 'text-done-foreground' : 'text-muted-foreground']">
@@ -265,17 +260,8 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-5 py-2.5' : 'min-h-12 px
             </RouterLink>
           </li>
         </ul>
-        <p
-          v-else
-          :class="[
-            'text-muted-foreground py-3 text-sm',
-            lg ? 'px-5' : 'px-4',
-            !(bare && i === 0 && !multi) && 'shadow-[inset_0_1px_0_var(--border)]',
-          ]"
-        >
-          No dances listed for this age group yet.
-        </p>
-      </template>
+        <p v-else class="text-muted-foreground px-4 py-3 text-sm">No dances listed for this age group yet.</p>
+      </div>
     </template>
   </article>
 </template>
