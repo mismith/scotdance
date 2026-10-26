@@ -95,7 +95,7 @@ watch(() => route.hash, applyHash)
       </header>
 
       <section class="space-y-3">
-        <h2 class="text-title">For families</h2>
+        <h2 class="text-section">For families</h2>
         <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:5.5rem]">
           <li v-for="f in forFamilies" :key="f.title" class="flex items-center gap-4 px-4 py-3">
             <span class="flex w-15 shrink-0 justify-center" aria-hidden="true">
@@ -118,7 +118,7 @@ watch(() => route.hash, applyHash)
       </section>
 
       <section class="space-y-3">
-        <h2 class="text-title">For organisers</h2>
+        <h2 class="text-section">For organisers</h2>
         <div class="surface space-y-3 rounded-2xl p-4">
           <p class="text-base">
             <span class="font-semibold">Run the day without the paper.</span>
@@ -147,7 +147,7 @@ watch(() => route.hash, applyHash)
       </section>
 
       <section id="faqs" class="scroll-mt-(--chrome-top) space-y-3">
-        <h2 class="text-title">Questions and answers</h2>
+        <h2 class="text-section">Questions and answers</h2>
         <ul class="surface rows-inset overflow-hidden rounded-2xl">
           <li v-for="f in faqs" :id="`faq-${f.id}`" :key="f.id" class="scroll-mt-[calc(var(--chrome-top)+0.5rem)]">
             <button

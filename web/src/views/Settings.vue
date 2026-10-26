@@ -87,13 +87,13 @@ async function clearHistory() {
     <AppBar title="Settings" :show-title="scrolledPast" :fallback="{ to: { name: 'home' }, label: 'Home' }" />
 
     <main class="mx-auto w-full max-w-3xl space-y-5 px-4 pt-[calc(var(--chrome-top)+0.25rem)]">
-      <header ref="titleEl">
-        <h1 class="text-display">Settings</h1>
+      <header ref="titleEl" class="pt-1.5">
+        <h1 class="text-hero">Settings</h1>
       </header>
 
       <!-- Alerts -->
       <section class="space-y-2">
-        <h2 class="text-heading">Alerts</h2>
+        <h2 class="text-section">Alerts</h2>
         <!-- Notifications, in the apps: on for this phone, then which kinds
              (those go with your account, so every phone you use agrees). -->
         <div v-if="alerts.push.value !== 'unavailable'" class="surface overflow-hidden rounded-2xl">
@@ -157,7 +157,7 @@ async function clearHistory() {
 
       <!-- Display -->
       <section class="space-y-2">
-        <h2 class="text-heading">Display</h2>
+        <h2 class="text-section">Display</h2>
         <div class="surface space-y-3 rounded-2xl p-4">
           <div class="space-y-1">
             <p class="flex items-center gap-3 text-base font-medium"><Sun class="text-primary size-5" /> Appearance</p>
@@ -173,7 +173,7 @@ async function clearHistory() {
 
       <!-- This device -->
       <section class="space-y-2">
-        <h2 class="text-heading">This device</h2>
+        <h2 class="text-section">This device</h2>
         <div class="surface overflow-hidden rounded-2xl">
           <button type="button" :class="rowClass" @click="clearHistory">
             <History class="text-primary" />

@@ -151,7 +151,7 @@ const submitDisabled = computed(() => {
       <header class="flex items-center gap-4">
         <MeAvatar size="lg" />
         <div class="min-w-0">
-          <h1 class="text-display truncate">{{ displayName || 'Your account' }}</h1>
+          <h1 class="text-hero truncate">{{ displayName || 'Your account' }}</h1>
         </div>
       </header>
 

@@ -278,9 +278,9 @@ const { freshKey: liveFresh } = useLiveAlertState()
     >
       <!-- The greeting leads; the date and "what now?" follow it rather than
            sitting above it as a label. -->
-      <header ref="titleEl">
-        <h1 class="text-display text-[2rem]">{{ greeting }}</h1>
-        <p class="text-muted-foreground text-callout font-medium">{{ todayLabel }}</p>
+      <header ref="titleEl" class="pt-1.5">
+        <h1 class="text-hero">{{ greeting }}</h1>
+        <p class="text-muted-foreground text-callout mt-1.5 font-medium">{{ todayLabel }}</p>
         <p v-if="context" :class="['mt-1.5 text-base font-medium', settle]">{{ context }}</p>
       </header>
 
@@ -401,7 +401,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
 
         <!-- Your dancers (the rest), or the ones looked at lately -->
         <section v-if="people.length && (others.length || showingRecent || !todays.length)" class="space-y-2.5">
-          <h2 class="text-heading flex min-h-6 items-center justify-between">
+          <h2 class="text-section flex min-h-6 items-center justify-between">
             {{ showingRecent ? 'Recently viewed' : 'Your dancers' }}
             <RouterLink
               v-if="moreFollowed"
@@ -492,7 +492,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
       <aside class="min-w-0 space-y-5">
         <!-- For organisers -->
         <section v-if="yours.length" class="space-y-2.5">
-          <h2 class="text-heading flex min-h-6 items-center justify-between">
+          <h2 class="text-section flex min-h-6 items-center justify-between">
             Your competitions
             <RouterLink
               :to="{ name: 'manage.competitions' }"
@@ -515,7 +515,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
 
         <!-- Coming up -->
         <section v-if="comingUp.length || nextAnywhere.length || competitionsLoading" class="space-y-2.5">
-          <h2 class="text-heading flex min-h-6 items-center justify-between">
+          <h2 class="text-section flex min-h-6 items-center justify-between">
             {{ comingUp.length ? 'Coming up' : 'Next competitions' }}
             <RouterLink
               :to="{ name: 'competitions' }"
@@ -559,7 +559,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
 
         <!-- Latest results, when nothing personal is on -->
         <section v-if="showingRecent && latestResults.length" class="space-y-2.5">
-          <h2 class="text-heading">Latest results</h2>
+          <h2 class="text-section">Latest results</h2>
           <ul :class="['surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]', settle]">
             <CompetitionDateRow
               v-for="c in latestResults"

@@ -90,7 +90,7 @@ defineExpose({ title })
 <template>
   <div class="space-y-6">
     <header class="space-y-2">
-      <h1 ref="title" tabindex="-1" class="text-display outline-none">
+      <h1 ref="title" tabindex="-1" class="text-hero outline-none">
         Add your competition
       </h1>
       <p class="text-muted-foreground flex items-center gap-2 text-base">
