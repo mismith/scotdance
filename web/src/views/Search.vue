@@ -432,7 +432,7 @@ watch(mode, async (m) => {
                   @click="!linkTo(t, g.name) && openLate(t, g.name)"
                 >
                   <span class="flex w-11 shrink-0 justify-center">
-                    <Avatar :name="g.name" :image="g.image" />
+                    <Avatar :name="g.name" :image="g.image" tinted />
                   </span>
                   <span class="min-w-0 flex-1">
                     <span class="block truncate text-base font-semibold">{{ g.name }}</span>

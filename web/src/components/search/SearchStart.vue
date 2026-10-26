@@ -137,7 +137,7 @@ const lists = ['dancers', 'judges', 'pipers', 'venues', 'organisations'].map(sec
               :below="isBeforeToday(v.date) ? 'year' : 'weekday'"
               :managed="me.organises(v.id)"
             />
-            <Avatar v-else-if="v.kind.ns !== 'venues' && v.kind.ns !== 'organisations'" :name="v.name" :color="v.kind.ns === 'dancers' ? following.colorFor(v.id) : null" />
+            <Avatar v-else-if="v.kind.ns !== 'venues' && v.kind.ns !== 'organisations'" :name="v.name" :color="v.kind.ns === 'dancers' ? following.colorFor(v.id) : null" :tinted="v.kind.ns !== 'dancers'" />
             <component :is="v.kind.icon" v-else class="text-muted-foreground size-5" aria-hidden="true" />
           </span>
           <span class="min-w-0 flex-1">

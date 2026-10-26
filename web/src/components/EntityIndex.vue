@@ -205,7 +205,7 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
                     <span class="flex w-11 shrink-0 justify-center">
                       <slot name="mark" :row="row.agg">
                         <component :is="places" v-if="places" class="text-muted-foreground size-5" aria-hidden="true" />
-                        <Avatar v-else :name="row.agg.name || '?'" :image="imageOf(row.agg)" />
+                        <Avatar v-else :name="row.agg.name || '?'" :image="imageOf(row.agg)" tinted />
                       </slot>
                     </span>
                     <span class="min-w-0 flex-1">
@@ -247,7 +247,7 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
                     <span class="flex w-11 shrink-0 justify-center">
                       <slot name="mark" :row="x.row.agg">
                         <component :is="places" v-if="places" class="text-muted-foreground size-5" aria-hidden="true" />
-                        <Avatar v-else :name="x.row.agg.name || '?'" :image="imageOf(x.row.agg)" />
+                        <Avatar v-else :name="x.row.agg.name || '?'" :image="imageOf(x.row.agg)" tinted />
                       </slot>
                     </span>
                     <span class="min-w-0 flex-1">
