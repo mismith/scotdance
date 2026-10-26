@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
-import { useLocalStorage } from '@vueuse/core'
+import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue'
+import { useEventListener, useLocalStorage } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
 import { CalendarClock, CalendarDays, CloudOff, List, Map as MapIcon, SquarePlus, Trophy } from '@lucide/vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
@@ -133,15 +133,32 @@ const sections = computed<Section[]>(() => {
   }
   return [...out.values()]
 })
+
+// The month (or Today) you're in shows under the bar's title as you scroll,
+// as Photos does, rather than headings that stick and stack under the bar:
+// the last heading whose top has gone up past the bar's foot (where the
+// page's padding ends).
+const mainEl = ref<HTMLElement | null>(null)
+const currentSection = ref<string | null>(null)
+function findCurrentSection() {
+  const main = mainEl.value
+  if (!main || view.value !== 'list') return (currentSection.value = null)
+  const line = parseFloat(getComputedStyle(main).paddingTop)
+  const passed = [...main.querySelectorAll<HTMLElement>('[data-section]')].filter((h) => h.getBoundingClientRect().top < line)
+  currentSection.value = passed.at(-1)?.dataset.section ?? null
+}
+useEventListener(window, 'scroll', findCurrentSection, { passive: true })
+watch([sections, view], () => nextTick(findCurrentSection))
 </script>
 
 <template>
   <div
     :class="['flex flex-1 flex-col', view === 'map' ? 'h-dvh overflow-hidden' : 'pb-[calc(var(--chrome-bottom)+1.5rem)]']"
   >
-    <AppBar title="Competitions" :show-title="scrolledPast" :back="false" />
+    <AppBar title="Competitions" :subtitle="scrolledPast ? currentSection : null" :show-title="scrolledPast" :back="false" />
 
     <main
+      ref="mainEl"
       :class="[
         'mx-auto w-full max-w-3xl space-y-3 px-4 pt-[calc(var(--chrome-top)+0.25rem)]',
         view === 'map' && 'relative flex-1',
@@ -217,12 +234,7 @@ const sections = computed<Section[]>(() => {
         </EmptyState>
 
         <section v-for="(s, i) in sections" :key="s.key" :class="settle" :style="settleDelay(i)">
-          <h2
-            :class="[
-              'text-section paper sticky top-(--chrome-top) z-10 -mx-4 flex items-center gap-1.5 px-4 py-2',
-              s.key === 'today' && 'text-live',
-            ]"
-          >
+          <h2 :data-section="s.label" :class="['text-section flex items-center gap-1.5 py-2', s.key === 'today' && 'text-live']">
             <span v-if="s.key === 'today'" class="bg-live size-2 rounded-full" aria-hidden="true" />
             {{ s.label }}
           </h2>

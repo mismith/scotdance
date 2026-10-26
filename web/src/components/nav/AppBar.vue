@@ -75,7 +75,10 @@ const scrollTop = () => {
       <slot name="leading" />
       <!-- Or the page's own middle, instead of the small title (Add a competition's progress). -->
       <slot name="middle">
-      <div class="flex min-w-0 flex-1">
+      <!-- First in the row (no Back, nothing leading), the title lines up
+           with the page's text, 1rem in; the row's own 0.75rem suits its
+           buttons, whose icons carry their own padding. -->
+      <div class="flex min-w-0 flex-1 first:pl-1">
         <button
           type="button"
           :class="[
