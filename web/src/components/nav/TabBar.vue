@@ -9,7 +9,10 @@ import { tapHaptic } from '@/lib/haptics'
 // place, so there's one pattern to learn. A `leading` slot holds a separate
 // round button before the pill (the competition's way out), `trailing` one
 // after it (More). Labels never
-// scale past 12px so the bar can't break at large text. On wide screens
+// scale past 12px so the bar can't break at large text. Each tab is as wide
+// as its label and some room either side, then they share what's left, so a
+// long label's capsule isn't tight. On a narrow bar that room goes first,
+// then the tabs squeeze alike. On wide screens
 // (lg) the sidebar (nav/AppSidebar) takes over, and the bar steps aside.
 export interface TabItem {
   label: string
@@ -49,7 +52,7 @@ function onTap(item: TabItem, e: MouseEvent) {
       <div
         data-menu-anchor
         class="glass @container pointer-events-auto grid h-16 min-w-0 flex-1 grid-cols-(--cols) rounded-full p-1 [view-transition-name:tabbar]"
-        :style="{ '--cols': `repeat(${items.length}, minmax(0, 1fr))` }"
+        :style="{ '--cols': `repeat(${items.length}, minmax(0, auto))` }"
       >
         <component
           :is="item.to ? RouterLink : 'button'"
@@ -58,7 +61,7 @@ function onTap(item: TabItem, e: MouseEvent) {
           v-tap-feedback
           v-bind="item.to ? { to: item.to, replace, 'aria-current': item.active ? 'page' : undefined } : { type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': !!item.expanded, 'data-current': item.active ? '' : undefined }"
           :class="[
-            'relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-full text-[min(0.6875rem,12px)] leading-none font-semibold transition-colors',
+            'relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-full px-[clamp(1px,(100cqi-14rem)/4,0.75rem)] text-[min(0.6875rem,12px)] leading-none font-semibold transition-colors',
             item.active || item.expanded ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
           ]"
           @click="onTap(item, $event)"
