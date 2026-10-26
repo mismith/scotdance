@@ -72,17 +72,17 @@ async function openLate(name: string) {
     <AppBar title="Dancers" :show-title="scrolledPast" :fallback="{ to: { name: 'home' }, label: 'Home' }" />
 
     <main class="mx-auto w-full max-w-3xl space-y-4 px-4 pt-[calc(var(--chrome-top)+0.25rem)]">
-      <header ref="titleEl" class="space-y-3">
-        <h1 class="text-display">Dancers</h1>
-        <label class="field flex h-12 items-center gap-2 rounded-xl pr-1 pl-3">
-          <Search class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+      <header ref="titleEl" class="space-y-3 pt-1.5">
+        <h1 class="text-hero">Dancers</h1>
+        <label class="search-fill">
+          <Search class="text-muted-foreground size-[1.125rem] shrink-0" stroke-width="2.4" aria-hidden="true" />
           <input
             v-model="q"
             type="search"
             autocomplete="off"
             placeholder="Find a dancer by name"
             aria-label="Search dancers"
-            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none"
+            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-[1.0625rem] outline-none"
           />
           <button
             v-if="q"
@@ -152,7 +152,7 @@ async function openLate(name: string) {
 
       <template v-else>
         <section class="space-y-2">
-          <h2 class="text-heading flex items-baseline justify-between">
+          <h2 class="text-section flex items-baseline justify-between">
             Favourites <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ followed.length }}</span>
           </h2>
           <EmptyState
@@ -185,7 +185,7 @@ async function openLate(name: string) {
         </section>
 
         <section v-if="recentList.length" class="space-y-2">
-          <h2 class="text-heading flex min-h-6 items-center justify-between">
+          <h2 class="text-section flex min-h-6 items-center justify-between">
             Recently viewed
             <button
               type="button"

@@ -131,17 +131,17 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
     <AppBar :title="section.label" :show-title="scrolledPastTitle" :fallback="{ to: { name: 'home' }, label: 'Home' }" />
 
     <main class="mx-auto w-full max-w-3xl flex-1 space-y-4 px-4 pt-[calc(var(--chrome-top)+0.25rem)]">
-      <header ref="titleAnchor" class="space-y-3">
-        <h1 class="text-display">{{ section.label }}</h1>
-        <label class="field flex h-12 items-center gap-2 rounded-xl pr-1 pl-3">
-          <Search class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+      <header ref="titleAnchor" class="space-y-3 pt-1.5">
+        <h1 class="text-hero">{{ section.label }}</h1>
+        <label class="search-fill">
+          <Search class="text-muted-foreground size-[1.125rem] shrink-0" stroke-width="2.4" aria-hidden="true" />
           <input
             v-model="query"
             type="search"
             autocomplete="off"
             :placeholder="placeholder"
             :aria-label="`Search ${section.label.toLowerCase()}`"
-            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none"
+            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-[1.0625rem] outline-none"
           />
           <button
             v-if="query"
@@ -187,7 +187,7 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
             :key="block.key"
             class="space-y-2"
           >
-            <h2 class="text-heading flex min-h-6 items-center justify-between">
+            <h2 class="text-section flex min-h-6 items-center justify-between">
               {{ block.label }}
               <button
                 v-if="block.clear"
@@ -228,7 +228,7 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
         />
 
         <section v-if="sorted.length" :class="['space-y-2', settle]">
-          <h2 class="text-heading flex items-baseline justify-between">
+          <h2 class="text-section flex items-baseline justify-between">
             {{ query ? 'Matches' : places ? `All ${section.label.toLowerCase()}` : 'Everyone' }}
             <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ sorted.length }}</span>
           </h2>
