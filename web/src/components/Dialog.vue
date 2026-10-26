@@ -51,11 +51,34 @@ const shown = computed(() => (ownsMorph.value ? own.open : props.open))
 // (While closing, the dialog stays on screen for its morph but takes no more
 // taps: inert as soon as `open` turns false. A quick double tap can't act twice.)
 
+// A sheet on a phone slides up from the bottom edge, and back down to close,
+// when no morph carries it. Driven by script: WebKit skips the CSS entry and
+// exit transitions of a <dialog> entering or leaving the top layer.
+function slides() {
+  return props.variant === 'sheet' && !morphing.value && !matchMedia('(min-width: 48rem)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+const easing = () => getComputedStyle(document.documentElement).getPropertyValue('--ease-snappy').trim() || 'cubic-bezier(0.2, 0.9, 0.1, 1)'
+// Where a pulled-down sheet was let go, so it leaves from there.
+let releasedAt = 0
+function slide(el: HTMLDialogElement, up: boolean) {
+  const frames = [{ translate: '0 100%' }, { translate: `0 ${up ? 0 : releasedAt}px` }]
+  releasedAt = 0
+  const options = { duration: up ? 320 : 240, easing: up ? easing() : 'cubic-bezier(0.4, 0, 1, 1)' }
+  const fade = [{ opacity: 0 }, { opacity: 1 }]
+  try {
+    el.animate(fade, { ...options, pseudoElement: '::backdrop', direction: up ? 'normal' : 'reverse' })
+  } catch {
+    // An engine without pseudo-element animations just shows the backdrop.
+  }
+  return el.animate(frames, { ...options, direction: up ? 'normal' : 'reverse' })
+}
+
 function sync(open: boolean) {
   const el = dialogRef.value
   if (!el) return
   if (open && !el.open) {
     el.showModal()
+    if (slides()) slide(el, true)
     // Inside something hidden (a phone's list pane while an item is open), a
     // modal dialog can't be seen yet blocks every tap: close it again.
     if (!el.getClientRects().length) {
@@ -68,7 +91,13 @@ function sync(open: boolean) {
     // draws a focus ring on that button the moment a sheet or menu opens.
     el.focus({ preventScroll: true })
   }
-  else if (!open && el.open) el.close()
+  else if (!open && el.open) {
+    if (!slides()) return el.close()
+    slide(el, false).finished.then(
+      () => !shown.value && el.close(),
+      () => !shown.value && el.close(),
+    )
+  }
 }
 
 // Post-flush, so a morph's snapshot sees the dialog already open or closed.
@@ -150,7 +179,10 @@ function onDragEnd(e: PointerEvent) {
   drag.value = null
   const velocity = d.dy / Math.max(1, performance.now() - d.t0)
   // A cancelled touch (the system took it) settles back; only a release closes.
-  if (e.type === 'pointerup' && (d.dy > 120 || (d.dy > 24 && velocity > 0.6))) emit('close')
+  if (e.type === 'pointerup' && (d.dy > 120 || (d.dy > 24 && velocity > 0.6))) {
+    releasedAt = Math.max(0, d.dy)
+    emit('close')
+  }
   else {
     settling.value = true
     setTimeout(() => (settling.value = false), 380)
