@@ -488,7 +488,7 @@ watch(() => props.danceId, showCurrent)
             <p v-if="placings.reverseFrom && tab === 'placings'" class="bg-blue-paper text-primary px-4 py-2.5 text-sm font-semibold">
               Entering from {{ placings.reverseFrom }}{{ getOrdinalSuffix(placings.reverseFrom) }} place
             </p>
-            <ul class="divide-y">
+            <ul class="rows-engraved [--inset:4.75rem] [--inset-end:1rem]">
               <li v-for="d in candidates" :key="d.id">
                 <button
                   type="button"
@@ -596,7 +596,7 @@ watch(() => props.danceId, showCurrent)
       </section>
 
       <!-- The placed order (on phones, in the strip's sheet) -->
-      <section v-if="!strip" ref="placedSection" class="min-w-0 max-md:border-t-8 max-md:border-muted md:overflow-y-auto">
+      <section v-if="!strip" ref="placedSection" class="min-w-0 max-md:mt-4 md:overflow-y-auto">
         <template v-if="tab === 'placings'">
           <h2 class="text-muted-foreground flex items-center gap-1.5 px-4 pt-3 pb-2 text-sm font-semibold">
             {{ isCallbacks ? `Called back · ${placings.entries.length}` : 'Placed' }}
@@ -609,7 +609,7 @@ watch(() => props.danceId, showCurrent)
 
         <template v-else>
           <h2 class="text-muted-foreground px-4 pt-3 pb-2 text-sm font-semibold">Championship points</h2>
-          <ul v-if="pointedIds.length" class="divide-y">
+          <ul v-if="pointedIds.length" class="rows-engraved [--inset:4.75rem] [--inset-end:1rem]">
             <li v-for="id in pointedIds" :key="id">
               <button
                 type="button"

@@ -176,7 +176,7 @@ async function fillSchedule() {
     >
       <!-- Platforms across the top -->
       <div
-        class="bg-background/90 sticky top-0 z-20 col-span-full grid grid-cols-subgrid py-3 backdrop-blur"
+        class="paper sticky top-0 z-20 col-span-full -mx-4 grid grid-cols-subgrid px-4 py-3"
       >
         <div class="flex items-center px-1">
           <RouterLink
@@ -200,14 +200,14 @@ async function fillSchedule() {
           <div
             v-for="p in b.shownPlatforms.value"
             :key="p.id"
-            class="surface flex min-h-11 items-center justify-center rounded-xl px-2 text-center text-base font-semibold"
+            class="bg-muted/60 flex min-h-11 items-center justify-center rounded-xl px-2 text-center text-base font-semibold"
           >
             {{ p.label }}
           </div>
         </template>
       </div>
 
-      <BlockSection v-for="([blockId, block], i) in b.blocks.value" :key="blockId" :block="block" :block-id="blockId" :index="i" class="mb-6" />
+      <BlockSection v-for="([blockId, block], i) in b.blocks.value" :key="blockId" :block="block" :block-id="blockId" :index="i" class="mb-10" />
       <DragIndicator v-if="line" class="inset-x-4" :style="line" />
 
       <!-- After the last session: more, as wide as a phone's screen at most -->

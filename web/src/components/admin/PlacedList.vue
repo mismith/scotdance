@@ -118,7 +118,7 @@ function onEnd(e: { oldIndex?: number; newIndex?: number }) {
   >
     <TransitionGroup
       tag="ol"
-      class="divide-y"
+      :class="['rows-engraved [--inset-end:1rem]', isCallbacks ? '[--inset:4.75rem]' : '[--inset:7rem]']"
       :move-class="still ? undefined : 'transition-transform duration-(--dur-slow) ease-elastic motion-reduce:transition-none'"
       enter-active-class="transition-[opacity,translate] duration-(--dur-base) ease-snappy"
       enter-from-class="opacity-0 motion-safe:-translate-y-2"

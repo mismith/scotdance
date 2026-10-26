@@ -134,7 +134,7 @@ async function remove() {
   >
     <div
       ref="sectionEl"
-      class="surface relative col-span-full grid grid-cols-subgrid rounded-2xl p-4"
+      class="relative col-span-full grid grid-cols-subgrid"
     >
       <div
         ref="headerEl"
@@ -150,7 +150,7 @@ async function remove() {
           class="text-muted-foreground focus-visible:ring-ring flex shrink-0 touch-none items-center self-stretch rounded-sm outline-none focus-visible:ring-2 pointer-coarse:px-1.5 pointer-fine:opacity-0 pointer-fine:transition-opacity pointer-fine:group-hover/block:opacity-100 pointer-fine:focus-visible:opacity-100"
           ><GripVertical class="size-4"
         /></span>
-        <h2 class="text-heading">
+        <h2 class="text-section">
           <InlineEdit
             :model-value="block.name ?? ''"
             placeholder="Session name"
@@ -193,7 +193,7 @@ async function remove() {
           :auto-edit="autoEditEvent === eventId"
         />
       </template>
-      <DragIndicator v-if="line" class="inset-x-4" :style="line" />
+      <DragIndicator v-if="line" class="inset-x-0" :style="line" />
 
       <div v-if="!b.readonly.value" class="col-span-full mt-3">
         <Button variant="plain" class="-ml-3" @click="adding.toggle($event)">

@@ -163,8 +163,8 @@ function exportCsv() {
           </template>
         </EmptyState>
 
-        <ul v-else class="surface divide-y overflow-hidden rounded-2xl [interpolate-size:allow-keywords]">
-          <li v-for="g in m.groups.value" :key="g.id">
+        <ul v-else class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem] [interpolate-size:allow-keywords]">
+          <li v-for="g in m.groups.value" :key="g.id" class="rows-engraved">
             <button
               type="button"
               :aria-expanded="isExpanded(g.id)"
@@ -191,7 +191,7 @@ function exportCsv() {
               <ChevronDown :class="['text-muted-foreground size-5 shrink-0 transition-transform', isExpanded(g.id) && 'rotate-180']" />
             </button>
             <Transition v-bind="rowsOpen">
-              <ul v-if="isExpanded(g.id)" class="bg-background divide-y border-t">
+              <ul v-if="isExpanded(g.id)" class="rows-engraved [--inset:3.5rem]">
               <li v-for="d in danceRows(g)" :key="d.id">
                 <RouterLink
                   :to="{ name: 'manage.results', params: { competitionId: m.competitionId.value, groupId: g.id, danceId: d.id } }"

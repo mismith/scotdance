@@ -69,7 +69,7 @@ async function remove() {
   <div
     v-if="!row.danceId"
     data-row
-    class="group/row col-span-full border-t contain-inline-size first:border-t-0"
+    class="group/row engraved-line col-span-full contain-inline-size first:bg-none"
   >
     <div
       ref="rowEl"
@@ -129,7 +129,7 @@ async function remove() {
   <div
     v-else
     data-row
-    class="col-span-full grid grid-cols-subgrid border-t first:border-t-0"
+    class="engraved-line col-span-full grid grid-cols-subgrid first:bg-none"
   >
     <div class="px-1 py-1.5">
       <BuilderChip
