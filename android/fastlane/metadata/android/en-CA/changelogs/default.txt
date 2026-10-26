@@ -1,4 +1,5 @@
 What's new
-- Fixes and improvements, including importing dancers
+- A cleaner look throughout, with your favourite dancers in their own colours
+- Fixes and improvements
 
 Share your ideas from the More menu.

@@ -1,7 +1,7 @@
 {
   "name": "scotdance-web",
   "private": true,
-  "version": "4.0.2",
+  "version": "4.0.3",
   "type": "module",
   "description": "Highland dancing event tracker",
   "author": "Murray Rowan <murray@mismith.info>",
