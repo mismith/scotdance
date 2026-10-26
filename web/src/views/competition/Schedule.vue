@@ -2,7 +2,7 @@
 import MyDancerLine from '@/components/MyDancerLine.vue'
 import ResultsMark from '@/components/ResultsMark.vue'
 import { computed, nextTick, onMounted, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { CalendarDays, ChevronRight } from '@lucide/vue'
 import { useCompetition } from '@/composables/useCompetition'
 import { useCompetitionDays } from '@/composables/useCompetitionDays'
@@ -85,11 +85,16 @@ const dayList = computed(() =>
 // Days with no sessions (all deleted) aren't a schedule yet.
 const empty = computed(() => !dayList.value.some((d) => d.blocks.length || d.day.description))
 
+const route = useRoute()
 const ready = ref(false)
 onMounted(async () => {
   await Promise.all([loadSchedule(), loadDancers(), loadResults()])
   ready.value = true
-  openAtToday()
+  // Opened from a session on the Overview: straight to it.
+  if (route.hash.startsWith('#block-')) {
+    await nextTick()
+    document.getElementById(route.hash.slice(1))?.scrollIntoView({ block: 'start', behavior: 'instant' })
+  } else openAtToday()
 })
 
 // The first visit of the day opens at today's part of the schedule (when it

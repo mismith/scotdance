@@ -194,6 +194,7 @@ const sessions = computed(() =>
       }
       return {
         id: `${day.id}:${b.id}`,
+        blockId: b.id,
         day: all.length > 1 ? day.name : null,
         name: b.name || 'Session',
         // Its description's first line: the chip when it's a time ("8:30 am"),
@@ -520,20 +521,23 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         </RouterLink>
       </h2>
       <ul class="rows-engraved -mx-4 [--inset:6.375rem] [--inset-end:1rem]">
-        <li
-          v-for="s in sessions"
-          :key="s.id"
-          class="flex items-center gap-3 px-4 py-3"
-        >
-          <span class="bg-muted text-callout flex min-w-16 shrink-0 justify-center rounded-lg px-2 py-1 font-semibold tabular-nums">
-            {{ s.time ?? '—' }}
-          </span>
-          <span class="min-w-0 flex-1">
-            <!-- Over: quieter by colour (opacity would take it under AA). -->
-            <span :class="['block text-base', s.done ? 'text-muted-foreground font-medium' : 'font-semibold']">{{ s.name }}</span>
-            <span v-if="s.day || s.note" class="text-muted-foreground block text-sm">{{ [s.day, s.note].filter(Boolean).join(' · ') }}</span>
-          </span>
-          <ResultsMark :posted="s.count.posted" :total="s.count.total" />
+        <li v-for="s in sessions" :key="s.id">
+          <!-- Each opens the schedule at that session. -->
+          <RouterLink
+            :to="{ name: 'competition.schedule', params: { competitionId }, hash: `#block-${s.blockId}` }"
+            class="press-row focus-inset flex items-center gap-3 py-3 pr-3 pl-4"
+          >
+            <span class="bg-muted text-callout flex min-w-16 shrink-0 justify-center rounded-lg px-2 py-1 font-semibold tabular-nums">
+              {{ s.time ?? '—' }}
+            </span>
+            <span class="min-w-0 flex-1">
+              <!-- Over: quieter by colour (opacity would take it under AA). -->
+              <span :class="['block text-base', s.done ? 'text-muted-foreground font-medium' : 'font-semibold']">{{ s.name }}</span>
+              <span v-if="s.day || s.note" class="text-muted-foreground block text-sm">{{ [s.day, s.note].filter(Boolean).join(' · ') }}</span>
+            </span>
+            <ResultsMark :posted="s.count.posted" :total="s.count.total" />
+            <ChevronRight class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+          </RouterLink>
         </li>
       </ul>
     </section>
