@@ -181,7 +181,7 @@ const sections = computed<Section[]>(() => {
       />
 
       <template v-else>
-        <div v-if="loading && !competitions.length" :class="['surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]', lateSkeleton]" aria-busy="true">
+        <div v-if="loading && !competitions.length" :class="['rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]', lateSkeleton]" aria-busy="true">
           <span class="sr-only">Loading competitions…</span>
           <div v-for="i in 5" :key="i" class="flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4">
             <Skeleton class="h-14 w-11 shrink-0 rounded-xl!" />
@@ -219,14 +219,14 @@ const sections = computed<Section[]>(() => {
         <section v-for="(s, i) in sections" :key="s.key" :class="settle" :style="settleDelay(i)">
           <h2
             :class="[
-              'text-section paper sticky top-(--chrome-top) z-10 flex items-center gap-1.5 py-2',
+              'text-section paper sticky top-(--chrome-top) z-10 -mx-4 flex items-center gap-1.5 px-4 py-2',
               s.key === 'today' && 'text-live',
             ]"
           >
             <span v-if="s.key === 'today'" class="bg-live size-2 rounded-full" aria-hidden="true" />
             {{ s.label }}
           </h2>
-          <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+          <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
             <CompetitionDateRow
               v-for="{ c, rail, note } in s.rows"
               :key="c.id"

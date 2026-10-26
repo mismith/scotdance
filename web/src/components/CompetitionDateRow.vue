@@ -19,8 +19,8 @@ import type { Competition } from '@/types/competition'
 // your dancers as coloured dots (or "Alerts on", with none). Its admins also see the shield and, until
 // it's published, how it's hidden. The name leads with its organisation's
 // short name (CompetitionName); on that organisation's own page (`within`),
-// without it. Lists put these in a `rows-inset` card with
-// `[--inset:4.5rem]`, so separators line up with the name. Linked
+// without it. Lists put these in a frameless `rows-engraved` list with
+// `[--inset:4.5rem]`, so hairlines line up with the name. Linked
 // competitions sit together in a list on a blue rail through their date
 // tiles (`rail`), with no separator between them (ADR 0007 §8).
 const props = withDefaults(
@@ -87,7 +87,6 @@ const hidden = computed(() => (props.preview ? null : hiddenAs(id.value, props.c
         :below="below"
         :managed="managed"
         :today="today"
-        :class="rail && 'ring-card ring-3'"
       />
       <span class="min-w-0 flex-1">
         <span class="line-clamp-2 text-base leading-snug font-semibold">

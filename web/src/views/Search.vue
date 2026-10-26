@@ -342,7 +342,7 @@ watch(mode, async (m) => {
           <Button variant="primary" @click="run(q)">Try again</Button>
           <Button v-if="online" :to="{ name: 'competitions' }">Browse competitions</Button>
         </EmptyState>
-        <div v-else-if="loadingName && nothing" class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]" aria-busy="true">
+        <div v-else-if="loadingName && nothing" class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]" aria-busy="true">
           <span class="sr-only">Searching…</span>
           <div v-for="i in 4" :key="i" class="flex min-h-16 items-center gap-3 py-2 pr-4 pl-4">
             <Skeleton class="size-10 shrink-0 rounded-full!" />
@@ -369,7 +369,7 @@ watch(mode, async (m) => {
         <template v-else>
           <section v-if="results.dancers.groups.length" :class="['space-y-2', settle]">
             <h2 class="text-section">Dancers</h2>
-            <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+            <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
               <li v-for="g in results.dancers.groups" :key="g.name">
                 <component
                   :is="linkTo('dancers', g.name) ? RouterLink : 'button'"
@@ -405,7 +405,7 @@ watch(mode, async (m) => {
 
           <section v-if="results.competitions.hits.length" :class="['space-y-2', settle]">
             <h2 class="text-section">Competitions</h2>
-            <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+            <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
               <CompetitionDateRow
                 v-for="{ c, rail, note } in competitionRows"
                 :key="c.id"
@@ -421,7 +421,7 @@ watch(mode, async (m) => {
 
           <section v-for="t in (['judges', 'pipers'] as const)" v-show="results[t].groups.length" :key="t" :class="['space-y-2', settle]">
             <h2 class="text-section">{{ t === 'judges' ? 'Judges' : 'Pipers' }}</h2>
-            <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+            <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
               <li v-for="g in results[t].groups" :key="g.name">
                 <component
                   :is="linkTo(t, g.name) ? RouterLink : 'button'"
@@ -449,7 +449,7 @@ watch(mode, async (m) => {
 
           <section v-if="results.places.groups.length" :class="['space-y-2', settle]">
             <h2 class="text-section">Places</h2>
-            <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+            <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
               <li v-for="g in results.places.groups" :key="`${g.kind}:${g.name}`">
                 <component
                   :is="g.kind === 'venue' && linkTo('venues', g.name) ? RouterLink : 'button'"
@@ -477,7 +477,7 @@ watch(mode, async (m) => {
 
           <section v-if="organisationHits.length" :class="['space-y-2', settle]">
             <h2 class="text-section">Organisations</h2>
-            <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+            <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
               <li v-for="o in organisationHits" :key="o.id">
                 <RouterLink :to="{ name: 'organisation.info', params: { organisationId: o.id } }" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 py-2 pr-3 pl-4 text-left">
                   <span class="flex w-11 shrink-0 justify-center">
@@ -552,7 +552,7 @@ watch(mode, async (m) => {
           <FollowButton :dancer="exact.dancer" />
         </div>
 
-        <ul v-if="others.length" :class="['surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]', settle]">
+        <ul v-if="others.length" :class="['rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]', settle]">
           <li v-for="{ dancer: d, groups } in others" :key="d.id" class="flex items-center pr-1">
             <RouterLink
               :to="{ name: 'competition.dancer', params: { competitionId, dancerId: d.id } }"

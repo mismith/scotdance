@@ -245,7 +245,7 @@ Dancer colours: nine saturated hues (red, green, purple, gold, blue, teal, magen
 
 ## Layout
 
-One column, at most 48rem wide, with a 1rem gutter on phones. From 64rem the tab bars become a 17rem sidebar on the left and the app bar keeps to the column. Fixed chrome reserves its space: `--chrome-top` (3.5rem plus the safe area) above and `--chrome-bottom` (the floating tab bar) below. Sections stack with 1.5 to 2rem between them; a heading sits 0.625rem above its card. Plain lists are frameless (`rows-engraved`, set -mx-4 so the rows' own padding meets the gutter), rows at least 4rem tall, engraved hairlines inset to line up with the text (5.5rem when rows lead with a date tile or number card). Manage on wide screens is a split view: list beside detail, never a stack of panels.
+One column, at most 48rem wide, with a 1rem gutter on phones. From 64rem the tab bars become a 17rem sidebar on the left and the app bar keeps to the column. Fixed chrome reserves its space: `--chrome-top` (3.5rem plus the safe area) above and `--chrome-bottom` (the floating tab bar) below. Sections stack with 1.5 to 2rem between them; a heading sits 0.625rem above its card. Plain lists are frameless (`rows-engraved`, set -mx-4 so the rows' own padding meets the gutter), rows at least 4rem tall, engraved hairlines inset to line up with the text (4.5rem when rows lead with a date tile, number card or avatar; 1rem for plain rows), and sticky headings over them span the same width (-mx-4 px-4). Manage on wide screens is a split view: list beside detail, never a stack of panels.
 
 ## Elevation & Depth
 

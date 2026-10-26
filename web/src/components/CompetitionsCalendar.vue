@@ -317,7 +317,7 @@ function onPointerUp(e: PointerEvent) {
             {{ sectionLabel }}
             <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ visibleCompetitions.length }}</span>
           </h3>
-          <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+          <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
             <CompetitionDateRow
               v-for="{ competition, rail, note } in railed(visibleCompetitions)"
               :key="competition.id"
@@ -331,7 +331,7 @@ function onPointerUp(e: PointerEvent) {
         </section>
       </template>
 
-      <div v-else-if="loading" :class="['surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]', lateSkeleton]" aria-busy="true">
+      <div v-else-if="loading" :class="['rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]', lateSkeleton]" aria-busy="true">
         <span class="sr-only">Loading competitions…</span>
         <div v-for="i in 3" :key="i" class="flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4">
           <Skeleton class="h-14 w-11 shrink-0 rounded-xl!" />
@@ -355,7 +355,7 @@ function onPointerUp(e: PointerEvent) {
           {{ d.kind }} · {{ d.label }}
           <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ d.comps.length }}</span>
         </h3>
-        <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+        <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
           <CompetitionDateRow
             v-for="{ competition, rail, note } in railed(d.comps)"
             :key="competition.id"

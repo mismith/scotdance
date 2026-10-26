@@ -124,7 +124,7 @@ const lists = ['dancers', 'judges', 'pipers', 'venues', 'organisations'].map(sec
         Clear
       </button>
     </h2>
-    <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+    <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
       <li v-for="v in viewed" :key="`${v.kind.ns}:${v.id}`">
         <RouterLink
           :to="{ name: v.kind.route, params: { [v.kind.param]: v.id } }"
@@ -158,7 +158,7 @@ const lists = ['dancers', 'judges', 'pipers', 'venues', 'organisations'].map(sec
   <section class="space-y-2 lg:hidden">
     <h2 class="text-section">Browse</h2>
     <!-- One list, as in More: muted icons, the label, a chevron. -->
-    <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:3.5rem]">
+    <ul class="rows-engraved -mx-4 [--inset:3.25rem] [--inset-end:1rem]">
       <li v-for="b in [competitions, ...lists]" :key="b.path">
         <RouterLink :to="b.to" class="press-row focus-inset flex min-h-14 items-center gap-4 px-4 py-2">
           <component :is="b.icon" class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />

@@ -355,7 +355,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
               <ChevronRight class="text-muted-foreground size-5 shrink-0" />
             </RouterLink>
           </h2>
-          <ul v-if="compact" class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+          <ul v-if="compact" class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
             <DancerCompactRow v-for="card in g.cards" :key="card.id" :card="card" :color="cardColor(card)" />
           </ul>
           <template v-for="card in compact ? [] : g.cards" :key="card.id">
@@ -432,7 +432,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
             />
           </template>
 
-          <ul v-if="showingRecent && cards.length" :class="['surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]', settle]">
+          <ul v-if="showingRecent && cards.length" :class="['rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]', settle]">
             <DancerCompactRow v-for="card in cards" :key="card.id" :card="card" :color="null" follow show-competition />
           </ul>
 
@@ -448,11 +448,11 @@ const { freshKey: liveFresh } = useLiveAlertState()
                 </span>
                 <ChevronRight class="text-muted-foreground size-5 shrink-0" />
               </RouterLink>
-              <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+              <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
                 <DancerCompactRow v-for="card in g.cards" :key="card.id" :card="card" :color="cardColor(card)" />
               </ul>
             </div>
-            <ul v-if="unplaced.length" class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+            <ul v-if="unplaced.length" class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
               <DancerCompactRow v-for="card in unplaced" :key="card.id" :card="card" :color="cardColor(card)" />
             </ul>
           </template>
@@ -501,7 +501,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
               Manage
             </RouterLink>
           </h2>
-          <ul :class="['surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]', settle]">
+          <ul :class="['rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]', settle]">
             <CompetitionDateRow
               v-for="c in yours"
               :key="c.id"
@@ -528,7 +528,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
           <div v-if="competitionsLoading && !comingUp.length && !nextAnywhere.length" class="space-y-2" aria-busy="true">
             <Skeleton v-for="i in 3" :key="i" class="h-16 w-full rounded-2xl!" />
           </div>
-          <ul v-else :class="['rows-engraved -mx-4 [--inset:5.5rem] [--inset-end:1rem]', settle]">
+          <ul v-else :class="['rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]', settle]">
             <template v-if="comingUp.length">
               <CompetitionDateRow
                 v-for="c in comingUp"
@@ -560,7 +560,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
         <!-- Latest results, when nothing personal is on -->
         <section v-if="showingRecent && latestResults.length" class="space-y-2.5">
           <h2 class="text-section">Latest results</h2>
-          <ul :class="['surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]', settle]">
+          <ul :class="['rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]', settle]">
             <CompetitionDateRow
               v-for="c in latestResults"
               :key="c.id"
