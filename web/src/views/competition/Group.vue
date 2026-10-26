@@ -26,6 +26,7 @@ import {
 } from '@/lib/results'
 import { competitionPhase, scheduleIndex } from '@/lib/dancerDay'
 import { platformLabel } from '@/lib/schedule'
+import { heroTitle } from '@/lib/heroTitle'
 import { OVERALL_ID, groupHasOverall, staffMemberName, type EnrichedDance, type EnrichedDancer } from '@/types/competition'
 import { dancerPlace } from '@/lib/competitionInfo'
 
@@ -238,9 +239,9 @@ watch(() => [groupId.value, route.hash, sections.value.length], focusHash, { imm
     </p>
 
     <template v-else>
-      <header :ref="setHeader" class="space-y-1">
+      <header :ref="setHeader" class="space-y-1 pt-0.5">
         <!-- One title with the category in it ("Primary Under 7"), not a label above. -->
-        <h1 class="text-display">{{ group.fullName || group.name }}</h1>
+        <h1 :class="heroTitle(group.fullName || group.name)">{{ group.fullName || group.name }}</h1>
         <p class="text-muted-foreground text-callout">
           {{ [where, `${groupDancers.length} dancers`].filter(Boolean).join(' · ') }}
         </p>

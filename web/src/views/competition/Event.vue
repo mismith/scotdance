@@ -15,6 +15,7 @@ import StaffDialog from '@/components/StaffDialog.vue'
 import { dances as eventDances, dayLabel, days, getScheduleDanceName, platformLabel, slugline } from '@/lib/schedule'
 import { findGroupDancers, getOrdinalSuffix, isPosted } from '@/lib/results'
 import { sanitizeRichText } from '@/lib/sanitize'
+import { heroTitle } from '@/lib/heroTitle'
 import { clockMinutes } from '@/lib/scheduleProgress'
 import {
   staffMemberName,
@@ -187,8 +188,8 @@ const judging = computed(() => {
     </p>
 
     <template v-else>
-      <header :ref="setHeader" class="space-y-1">
-        <h1 class="text-display">{{ event.name || 'Event' }}</h1>
+      <header :ref="setHeader" class="space-y-1 pt-0.5">
+        <h1 :class="heroTitle(event.name)">{{ event.name || 'Event' }}</h1>
         <p class="text-muted-foreground flex items-center gap-1.5 text-base">
           <Clock v-if="blockTime" class="size-4 shrink-0" /> {{ [dayName, block?.name, blockTime].filter(Boolean).join(' · ') }}
         </p>
@@ -204,7 +205,7 @@ const judging = computed(() => {
       <!-- Each dance: its name as a heading, then one card of platforms. -->
       <section v-for="(s, i) in sections" :key="s.sd.id" class="space-y-2 pt-2">
         <div class="space-y-0.5">
-          <h2 class="text-heading">{{ s.name ?? `Dance ${i + 1}` }}</h2>
+          <h2 class="text-section">{{ s.name ?? `Dance ${i + 1}` }}</h2>
           <p v-if="s.realName" class="text-muted-foreground text-sm">{{ s.realName }}</p>
           <div
             v-if="s.sd.description"

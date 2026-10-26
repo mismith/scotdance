@@ -14,6 +14,7 @@ import FollowButton from '@/components/FollowButton.vue'
 import NumberCard from '@/components/NumberCard.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import { dancerPlace } from '@/lib/competitionInfo'
+import { heroTitle } from '@/lib/heroTitle'
 
 const route = useRoute()
 const setHeader = injectInfoHeaderSetter()
@@ -88,15 +89,15 @@ const fresh = computed(() => {
           <NumberCard :number="dancer.number" :color="color" size="xl" />
         </DancerLookButton>
         <NumberCard v-else :number="dancer.number" :color="color" size="xl" />
-        <h1 class="text-display mt-5">{{ dancer.fullName }}</h1>
-        <p class="text-muted-foreground text-callout mt-1">
+        <h1 :class="[heroTitle(dancer.fullName), 'mt-5']">{{ dancer.fullName }}</h1>
+        <p class="text-muted-foreground text-callout mt-1.5">
           {{ [dancer.group?.fullName, dancerPlace(dancer.location, dancer.group)].filter(Boolean).join(' · ') }}
         </p>
         <FollowButton v-if="dancer.dancerId" :dancer="dancer" size="block" class="mt-4 w-auto! min-w-48" />
       </header>
 
       <section class="space-y-2">
-        <h2 class="text-heading flex min-h-6 items-center justify-between gap-2 pt-2">
+        <h2 class="text-section flex min-h-6 items-center justify-between gap-2 pt-2">
           <span>{{ phase === 'today' ? 'Today' : phase === 'before' ? 'Dances' : 'Results' }}</span>
           <RouterLink
             v-if="entries.length === 1 && entries[0]?.group"

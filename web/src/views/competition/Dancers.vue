@@ -105,15 +105,15 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
 
 <template>
   <div class="space-y-3">
-    <header :ref="setHeader">
-      <h1 class="text-display flex items-baseline gap-2">
+    <header :ref="setHeader" class="pt-0.5">
+      <h1 class="text-hero flex items-baseline gap-2">
         Dancers
         <span v-if="dancers.length" class="text-muted-foreground text-base font-medium tabular-nums">{{ dancers.length }}</span>
       </h1>
     </header>
 
-    <label class="field flex h-12 items-center gap-2 rounded-xl pr-1 pl-3">
-      <Search class="text-muted-foreground size-5 shrink-0" />
+    <label class="search-fill">
+      <Search class="text-muted-foreground size-[1.125rem] shrink-0" stroke-width="2.4" />
       <input
         v-model="query"
         type="search"
@@ -121,7 +121,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         aria-label="Search dancers by name or number"
         autocomplete="off"
         enterkeyhint="search"
-        class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none"
+        class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-[1.0625rem] outline-none"
       />
       <button
         v-if="query"

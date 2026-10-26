@@ -127,8 +127,8 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
 
 <template>
   <div class="space-y-3">
-    <header :ref="setHeader" class="space-y-2">
-      <h1 class="text-display">Results</h1>
+    <header :ref="setHeader" class="space-y-2 pt-0.5">
+      <h1 class="text-hero">Results</h1>
       <div v-if="totals.total && !resultsHidden" class="space-y-2">
         <!-- How much is in: a hairline that grows as results arrive. -->
         <div class="h-1 overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--foreground)_9%,transparent)]" aria-hidden="true">

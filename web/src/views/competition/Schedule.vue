@@ -111,8 +111,8 @@ async function openAtToday() {
 
 <template>
   <div class="space-y-3">
-    <header :ref="setHeader" class="space-y-1">
-      <h1 class="text-display">Schedule</h1>
+    <header :ref="setHeader" class="space-y-1 pt-0.5">
+      <h1 class="text-hero">Schedule</h1>
     </header>
 
     <div v-if="hasSchedule === null || !ready" class="space-y-2" aria-busy="true">
@@ -136,7 +136,7 @@ async function openAtToday() {
     />
 
     <section v-for="d in empty ? [] : dayList" :id="`day-${d.day.id}`" :key="d.day.id" class="scroll-mt-(--chrome-top) space-y-3">
-      <h2 v-if="dayList.length > 1" class="text-title flex items-baseline gap-2 pt-2">
+      <h2 v-if="dayList.length > 1" class="text-section flex items-baseline gap-2 pt-2">
         {{ d.relative ?? d.label }}
         <span v-if="d.relative" class="text-muted-foreground text-base font-medium">{{ d.label }}</span>
       </h2>

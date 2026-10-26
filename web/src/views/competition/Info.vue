@@ -36,6 +36,7 @@ import { rowsMove } from '@/lib/settle'
 import { competitionSpan } from '@/lib/dancerDay'
 import { formatExternalURL, formatLongDate, formatRelative } from '@/lib/format'
 import { sanitizeRichText } from '@/lib/sanitize'
+import { heroTitle } from '@/lib/heroTitle'
 import { registrationLabel, registrations } from '@/lib/registration'
 import {
   competitionLinks,
@@ -101,8 +102,6 @@ const showDateRow = computed(() => {
   const days = daysFromToday(c.date)
   return !!c.image || days == null || Math.abs(days) >= 7 || (!!sessions.value[0]?.time && mode.value === 'before')
 })
-// A long name takes the next size down, so it doesn't fill the screen.
-const longName = computed(() => (competition.value?.name?.length ?? 0) > 40)
 
 const kicker = computed(() => {
   const c = competition.value
@@ -289,7 +288,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         />
         <!-- The name leads; when and where follows it. -->
         <div class="min-w-0 flex-1 pt-0.5">
-          <h1 :class="longName ? 'text-[1.5rem] leading-[1.1] font-[800] tracking-[-0.024em] text-balance' : 'text-hero'">
+          <h1 :class="heroTitle(competition.name)">
             <CompetitionName :competition="competition" link />
           </h1>
           <p :class="['text-callout mt-1.5 flex items-center gap-1.5 font-semibold', live ? 'text-live' : 'text-muted-foreground']">
