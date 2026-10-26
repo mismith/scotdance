@@ -647,6 +647,36 @@ describe('backfill', () => {
     expect(problems(s)).toEqual([])
   })
 
+  it('keeps a venue’s id when the rule for its key changes', async () => {
+    const s = legacy()
+    // As built before venues were told apart by a typed town: c3 joined no town.
+    s.write({
+      'venues/-old': { name: 'Telus Convention Centre', _identity: 'telus convention centre|none', appearanceCount: 1, appearances: { c3: { competitionId: 'c3' } } },
+      'venues:index/telus convention centre|none': { id: '-old', name: 'Telus Convention Centre', appearanceCount: 1 },
+      'competitions/c3/venueId': '-old',
+    })
+    s.rtdb.events.length = 0
+    await backfillAll(s)
+    expect(s.read('venues:index/telus convention centre|calgary city').id).toBe('-old')
+    expect(s.read('venues:index/telus convention centre|none')).toBeNull()
+    expect(problems(s)).toEqual([])
+  })
+
+  it('leaves an old key its id while a competition still has that key', async () => {
+    const s = legacy()
+    s.write({
+      'competitions/c7': comp(true, { venue: 'Telus Convention Centre', date: '2017-05-01', venueId: '-old' }),
+      'venues/-old': { name: 'Telus Convention Centre', _identity: 'telus convention centre|none', appearanceCount: 2, appearances: { c3: { competitionId: 'c3' }, c7: { competitionId: 'c7' } } },
+      'venues:index/telus convention centre|none': { id: '-old', name: 'Telus Convention Centre', appearanceCount: 2 },
+      'competitions/c3/venueId': '-old',
+    })
+    s.rtdb.events.length = 0
+    await backfillAll(s)
+    expect(s.read('venues:index/telus convention centre|none').id).toBe('-old')
+    expect(s.read('venues:index/telus convention centre|calgary city').id).not.toBe('-old')
+    expect(problems(s)).toEqual([])
+  })
+
   it('writes in batches rather than a round trip per record', async () => {
     const s = setup()
     const dancers: Obj = {}

@@ -494,7 +494,8 @@ export function createAggregator<R, A extends Record<string, any>>(
       // far past a function's time limit at production size.
       //
       // Idempotent: aggregates keep their ids (from the index, or their own
-      // `_identity` if the index entry went missing), each one's
+      // `_identity` if the index entry went missing, or their records'
+      // back-pointers if the rule for keys changed), each one's
       // `appearances` is replaced with the current source of truth, and
       // aggregates nothing links to any more are removed. Other fields on an
       // aggregate are left alone.
@@ -521,8 +522,7 @@ export function createAggregator<R, A extends Record<string, any>>(
         if (typeof key === 'string' && validKey(key) && !idByKey.has(key)) idByKey.set(key, id);
       }
 
-      const built = new Map<string, { key: string, first: R, apps: Record<string, A> }>();
-      let linked = 0;
+      const linking: Array<{ ctx: AppearanceCtx, record: R, key: string }> = [];
       let skipped = 0;
       for (const competitionId of compIds) {
         const comp = competitions[competitionId];
@@ -533,24 +533,33 @@ export function createAggregator<R, A extends Record<string, any>>(
             skipped += 1;
             continue;
           }
-          const key = keyOf(record);
-          let id = idByKey.get(key);
-          // An id the index gave two names (left by an old rename) stays with one.
-          if (id && built.has(id) && built.get(id)!.key !== key) id = undefined;
-          if (!id) {
-            const before = retired[key];
-            id = typeof before === 'string' && before && !built.has(before) && !existing[before]
-              ? before
-              : db.child(namespace).push().key as string;
-            idByKey.set(key, id);
-          }
-          const entry = built.get(id) ?? { key, first: record, apps: {} };
-          const ctx: AppearanceCtx = { competitionId, recordId };
-          entry.apps[appearanceKey(ctx)] = toAppearance(record, ctx);
-          built.set(id, entry);
-          linked += 1;
+          linking.push({ ctx: { competitionId, recordId }, record, key: keyOf(record) });
         }
       }
+      // Ids some record still reaches by its key. A key nobody had (the rule
+      // for keys changed, e.g. venues told apart by a typed town) keeps the
+      // id its back-pointer names, if no record reaches that one by its key:
+      // so followers and links stay with it.
+      const reached = new Set(linking.map(({ key }) => idByKey.get(key)).filter(Boolean));
+
+      const built = new Map<string, { key: string, first: R, apps: Record<string, A> }>();
+      for (const { ctx, record, key } of linking) {
+        let id = idByKey.get(key);
+        // An id the index gave two names (left by an old rename) stays with one.
+        if (id && built.has(id) && built.get(id)!.key !== key) id = undefined;
+        if (!id) {
+          const pointer = pointerOf(record);
+          const before = retired[key];
+          if (pointer && existing[pointer] && !reached.has(pointer) && !built.has(pointer)) id = pointer;
+          else if (typeof before === 'string' && before && !built.has(before) && !existing[before]) id = before;
+          else id = db.child(namespace).push().key as string;
+          idByKey.set(key, id);
+        }
+        const entry = built.get(id) ?? { key, first: record, apps: {} };
+        entry.apps[appearanceKey(ctx)] = toAppearance(record, ctx);
+        built.set(id, entry);
+      }
+      const linked = linking.length;
 
       const writer = batchWriter(1000);
       const builtKeys = new Set<string>();
