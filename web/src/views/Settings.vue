@@ -160,7 +160,7 @@ async function clearHistory() {
       <!-- Display -->
       <section class="space-y-2">
         <h2 class="text-section">Display</h2>
-        <div class="surface space-y-3 rounded-2xl p-4">
+        <div class="space-y-3 py-1">
           <div class="space-y-1">
             <p class="flex items-center gap-3 text-base font-medium"><Sun class="text-primary size-5" /> Appearance</p>
             <!-- Only the app can follow the phone's text size; a browser has its own zoom. -->
