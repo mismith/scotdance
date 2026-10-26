@@ -49,7 +49,7 @@ const years = computed(() => {
 </script>
 
 <template>
-  <div v-if="loading && !items.length" class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]" aria-busy="true">
+  <div v-if="loading && !items.length" class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]" aria-busy="true">
     <span class="sr-only">Loading competitions…</span>
     <div v-for="i in 3" :key="i" class="flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4">
       <Skeleton class="h-14 w-11 shrink-0 rounded-xl!" />
@@ -63,7 +63,7 @@ const years = computed(() => {
   <template v-else>
     <section v-if="upcoming.length" class="space-y-2">
       <h2 class="text-section">Coming up</h2>
-      <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+      <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
         <CompetitionDateRow
           v-for="i in upcoming"
           :key="i.competitionId"
@@ -80,7 +80,7 @@ const years = computed(() => {
       <h2 class="text-section flex items-baseline justify-between">
         {{ year }} <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ list.length }}</span>
       </h2>
-      <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+      <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
         <CompetitionDateRow
           v-for="i in list"
           :key="i.competitionId"

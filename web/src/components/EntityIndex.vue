@@ -166,7 +166,7 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
       </EmptyState>
 
       <template v-else>
-        <div v-if="loading && !sorted.length" class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]" aria-busy="true">
+        <div v-if="loading && !sorted.length" class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]" aria-busy="true">
           <span class="sr-only">Loading…</span>
           <div v-for="i in 6" :key="i" class="flex min-h-16 items-center gap-3 py-2 pl-4">
             <Skeleton class="size-10 shrink-0 rounded-full!" />
@@ -198,7 +198,7 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
                 Clear
               </button>
             </h2>
-            <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+            <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
               <li v-for="row in block.rows" :key="row.id" class="flex items-center pr-1">
                 <RouterLink v-slot="{ href, navigate }" :to="to(row.id)" custom>
                   <a :href="href" :class="ROW" @click="navigate">
@@ -232,12 +232,14 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
             {{ query ? 'Matches' : places ? `All ${section.label.toLowerCase()}` : 'Everyone' }}
             <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ sorted.length }}</span>
           </h2>
-          <!-- clip, not hidden: the letter headings can stick while it scrolls. -->
-          <ul class="surface rows-inset overflow-clip rounded-2xl [--inset:4.5rem]">
+          <!-- Each letter sticks while its names scroll under it: a strip of
+               the page (its grain over the list's hairline), and the name
+               under it starts without one. -->
+          <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
             <template v-for="x in rows" :key="'letter' in x ? `@${x.letter}` : x.row.id">
               <li
                 v-if="'letter' in x"
-                class="text-muted-foreground bg-card/90 sticky top-(--chrome-top) z-10 px-4 py-1.5 text-footnote font-semibold backdrop-blur-md"
+                class="paper text-muted-foreground sticky top-(--chrome-top) z-10 bg-(image:--paper-grain)! px-4 py-1.5 text-footnote font-semibold [&+li]:bg-none!"
               >
                 {{ x.letter }}
               </li>

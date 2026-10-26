@@ -145,7 +145,7 @@ function medals(cid: string) {
         <DancerDayCard :days="focus.days" :competition-id="focus.competitionId" :color="color" size="lg" />
       </section>
 
-      <div v-if="profile.loading.value && !rows.length" class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]" aria-busy="true">
+      <div v-if="profile.loading.value && !rows.length" class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]" aria-busy="true">
         <span class="sr-only">Loading competitions…</span>
         <div v-for="i in 3" :key="i" class="flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4">
           <Skeleton class="h-14 w-11 shrink-0 rounded-xl!" />
@@ -164,7 +164,7 @@ function medals(cid: string) {
           <h3 class="text-heading flex items-baseline justify-between pt-2">
             {{ year }} <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ list.length }}</span>
           </h3>
-          <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+          <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
             <li
               v-for="r in list"
               :key="r.competitionId"
@@ -179,7 +179,7 @@ function medals(cid: string) {
                 "
                 class="press-row focus-inset flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4"
               >
-                <DateTile :date="r.competition.date" :managed="me.organises(r.competitionId)" :class="r.rail && 'ring-card ring-3'" />
+                <DateTile :date="r.competition.date" :managed="me.organises(r.competitionId)" />
                 <span class="min-w-0 flex-1">
                   <span class="line-clamp-2 text-base leading-snug font-semibold">{{ r.competition.name }}</span>
                   <span v-if="r.withOthers" class="text-muted-foreground block text-sm">{{ r.withOthers }}</span>

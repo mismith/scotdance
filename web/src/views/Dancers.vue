@@ -98,7 +98,7 @@ async function openLate(name: string) {
 
       <!-- Search -->
       <template v-if="q.trim()">
-        <div v-if="searching && !results.length" class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]" aria-busy="true">
+        <div v-if="searching && !results.length" class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]" aria-busy="true">
           <span class="sr-only">Searching…</span>
           <div v-for="i in 4" :key="i" class="flex min-h-16 items-center gap-3 py-2 pl-4">
             <Skeleton class="size-10 shrink-0 rounded-full!" />
@@ -124,7 +124,7 @@ async function openLate(name: string) {
           :title="`No dancer matches “${q.trim()}”.`"
           description="Try just a first or last name."
         />
-        <ul v-else :class="['surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]', settle]">
+        <ul v-else :class="['rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]', settle]">
           <li v-for="g in results" :key="g.name">
             <component
               :is="ids[g.name] ? RouterLink : 'button'"
@@ -163,7 +163,7 @@ async function openLate(name: string) {
             title="Favourite your dancers"
             description="Search for a dancer above, open their page and tap Favourite. Your favourites show up here and on Home."
           />
-          <ul v-else :class="['surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]', settle]">
+          <ul v-else :class="['rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]', settle]">
             <li v-for="d in followed" :key="d.id" class="flex items-center pr-1">
               <RouterLink
                 :to="{ name: 'dancer.info', params: { dancerId: d.id } }"
@@ -196,7 +196,7 @@ async function openLate(name: string) {
               Clear
             </button>
           </h2>
-          <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
+          <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
             <li v-for="r in recentList" :key="r.id" class="flex items-center pr-1">
               <RouterLink
                 :to="{ name: 'dancer.info', params: { dancerId: r.id } }"
