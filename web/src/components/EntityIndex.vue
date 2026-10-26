@@ -239,7 +239,7 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
             <template v-for="x in rows" :key="'letter' in x ? `@${x.letter}` : x.row.id">
               <li
                 v-if="'letter' in x"
-                class="paper text-muted-foreground sticky top-(--chrome-top) z-10 bg-(image:--paper-grain)! px-4 py-1.5 text-footnote font-semibold [&+li]:bg-none!"
+                class="paper text-muted-foreground sticky top-(--chrome-top) z-10 px-4 py-1.5 text-footnote font-semibold [&+li]:bg-none!"
               >
                 {{ x.letter }}
               </li>

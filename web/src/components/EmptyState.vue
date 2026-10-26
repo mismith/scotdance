@@ -23,7 +23,7 @@ withDefaults(
 <template>
   <div
     :class="[
-      'flex flex-col items-center text-center motion-safe:animate-[rise-in_var(--dur-slow)_var(--ease-snappy)_both]',
+      'flex flex-col items-center text-center motion-safe:animate-[rise-in_var(--dur-slow)_var(--ease-snappy)_backwards]',
       size === 'inline' ? 'gap-3 px-4 py-8' : 'gap-4 px-6 py-16',
     ]"
   >

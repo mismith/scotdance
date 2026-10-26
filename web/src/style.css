@@ -74,10 +74,13 @@
 :root {
   color-scheme: light;
   --background: #f5f3ee;
-  /* Paper: a faint fibre, lit from the top left (see body). */
-  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75 .22' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeDiffuseLighting lighting-color='%23fff' surfaceScale='1.6'%3E%3CfeDistantLight azimuth='225' elevation='58'/%3E%3C/feDiffuseLighting%3E%3CfeColorMatrix values='0 0 0 0 .35  0 0 0 0 .33  0 0 0 0 .3  -1 0 0 0 1'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='.18'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29'/%3E%3C/svg%3E");
+  /* Paper: a faint fibre, lit from the top left (see body). Drawn at three
+     times the size it's shown, so it stays sharp on a phone's screen. */
+  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='660' height='660'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.375 .11' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeDiffuseLighting lighting-color='%23fff' surfaceScale='3.2'%3E%3CfeDistantLight azimuth='225' elevation='58'/%3E%3C/feDiffuseLighting%3E%3CfeColorMatrix values='0 0 0 0 .35  0 0 0 0 .33  0 0 0 0 .3  -1 0 0 0 1'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='.18'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29'/%3E%3C/svg%3E");
   /* The light the page sits in: brighter at the top, like a sheet by a window. */
   --page-light: radial-gradient(120% 55% at 15% 0%, #ffffff, #f5f3ee 55%, #ebe7de);
+  /* Both, as the page wears them (body::before, paper). */
+  --page-paper: var(--paper-grain) 0 0 / 220px, var(--page-light);
   /* Cards are lit panes: a fill, a gradient rim (bright top left, a touch of
      shade lower down) and depth. A favourite dancer's rim takes their colour. */
   --card-fill: linear-gradient(180deg, #ffffff, #fbfaf7);
@@ -203,7 +206,7 @@
   --glass-glow: rgb(255 255 255 / 0.16);
   --glass-shade: rgb(0 0 0 / 0.4);
   /* At night the fibres catch the light instead: pale, and far fainter. */
-  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75 .22' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeDiffuseLighting lighting-color='%23fff' surfaceScale='1.6'%3E%3CfeDistantLight azimuth='225' elevation='58'/%3E%3C/feDiffuseLighting%3E%3CfeColorMatrix values='0 0 0 0 .86  0 0 0 0 .9  0 0 0 0 .96  2 0 0 0 -1.1'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='.04'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29'/%3E%3C/svg%3E");
+  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='660' height='660'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.375 .11' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeDiffuseLighting lighting-color='%23fff' surfaceScale='3.2'%3E%3CfeDistantLight azimuth='225' elevation='58'/%3E%3C/feDiffuseLighting%3E%3CfeColorMatrix values='0 0 0 0 .86  0 0 0 0 .9  0 0 0 0 .96  2 0 0 0 -1.1'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='.04'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29'/%3E%3C/svg%3E");
   --page-light: radial-gradient(120% 70% at 20% 0%, #1b2a4a, #0b0f17 55%, #07090d);
   --card-fill: linear-gradient(180deg, #1c222b, #161b22);
   --rim-neutral: linear-gradient(150deg, rgb(255 255 255 / 0.35), rgb(255 255 255 / 0.05) 40%, rgb(255 255 255 / 0.12));
@@ -325,7 +328,7 @@
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background: var(--paper-grain), var(--page-light);
+    background: var(--page-paper);
   }
   button,
   input,
@@ -505,15 +508,19 @@
   @apply flex h-11 items-center gap-2 rounded-xl bg-[rgb(118_118_128/0.12)] pr-1 pl-3 focus-within:outline-2 focus-within:outline-offset-0 focus-within:outline-(--ring);
 }
 
-/* The page itself, grain and all: for what sits on the page but has to hide
-   what scrolls under it (sticky headings). Fixed, so its grain lines up. */
+/* The page itself, light and grain: for what has to hide what scrolls under
+   it (the top and tab bars, sticky headings). The same fixed layer as the
+   page's (body::before), clipped to the box, so it lines up exactly and
+   nothing shows a seam or shows through. */
 @utility paper {
-  /* Over the page's light: a frosted strip of it, so nothing shows a seam. */
-  background-color: color-mix(in oklab, var(--background) 72%, transparent);
-  background-image: var(--paper-grain);
-  backdrop-filter: blur(30px) saturate(1.5);
-  @media (prefers-reduced-transparency: reduce) {
-    background-color: var(--background);
+  clip-path: inset(0);
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--page-paper);
   }
 }
 @utility surface {
