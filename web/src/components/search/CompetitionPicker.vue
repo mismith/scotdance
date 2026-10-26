@@ -75,8 +75,8 @@ function pick(id: string) {
       <!-- A steady height, so the box doesn't move while typing shrinks the list. -->
       <div class="min-h-[calc(100svh-8rem)] md:min-h-[min(32rem,60vh)]">
         <div class="bg-raised sticky top-0 z-10 px-4 pt-3 pb-2">
-          <label class="field flex h-12 items-center gap-2 rounded-xl pr-1 pl-3">
-            <Search class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+          <label class="search-fill">
+            <Search class="text-muted-foreground size-[1.125rem] shrink-0" stroke-width="2.4" aria-hidden="true" />
             <input
               v-model="query"
               type="search"
@@ -84,7 +84,7 @@ function pick(id: string) {
               autocomplete="off"
               placeholder="Name or town"
               aria-label="Find a competition"
-              class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none"
+              class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-[1.0625rem] outline-none"
               @keydown.enter.prevent="query.trim() && filtered[0] && pick(filtered[0].id)"
             />
             <button

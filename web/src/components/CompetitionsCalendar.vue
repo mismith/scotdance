@@ -226,7 +226,7 @@ function onPointerUp(e: PointerEvent) {
   <div class="space-y-5 md:grid md:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] md:items-start md:gap-8 md:space-y-0">
     <div class="mx-auto w-full max-w-sm space-y-3 md:sticky md:top-[calc(var(--chrome-top)+1rem)]">
       <div class="flex items-center gap-1">
-        <h2 class="text-heading flex-1">{{ monthLabel }}</h2>
+        <h2 class="text-section flex-1">{{ monthLabel }}</h2>
         <button
           type="button"
           aria-label="Previous month"
@@ -313,7 +313,7 @@ function onPointerUp(e: PointerEvent) {
     <div :key="sectionLabel" class="space-y-5">
       <template v-if="visibleCompetitions.length">
         <section class="space-y-2">
-          <h3 class="text-heading flex items-baseline justify-between gap-3">
+          <h3 class="text-section flex items-baseline justify-between gap-3">
             {{ sectionLabel }}
             <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ visibleCompetitions.length }}</span>
           </h3>
@@ -343,7 +343,7 @@ function onPointerUp(e: PointerEvent) {
       </div>
 
       <section v-else-if="selected" class="space-y-2">
-        <h3 class="text-heading">{{ sectionLabel }}</h3>
+        <h3 class="text-section">{{ sectionLabel }}</h3>
         <p class="text-muted-foreground flex items-center gap-3 py-2 pl-1 text-base">
           <CalendarOff class="size-5 shrink-0" aria-hidden="true" />
           {{ selectedIsToday ? 'Nothing today.' : 'Nothing on this day.' }}
@@ -351,7 +351,7 @@ function onPointerUp(e: PointerEvent) {
       </section>
 
       <section v-for="d in nearby" :key="d.kind" class="space-y-2">
-        <h3 class="text-heading flex items-baseline justify-between gap-3">
+        <h3 class="text-section flex items-baseline justify-between gap-3">
           {{ d.kind }} · {{ d.label }}
           <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ d.comps.length }}</span>
         </h3>

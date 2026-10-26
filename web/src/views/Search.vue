@@ -298,16 +298,16 @@ watch(mode, async (m) => {
 
     <main class="mx-auto w-full max-w-3xl space-y-4 px-4 pt-[calc(var(--chrome-top)+0.25rem)]">
       <div data-page-head class="space-y-4">
-        <header ref="titleEl">
-          <h1 class="text-display">Search</h1>
+        <header ref="titleEl" class="pt-1.5">
+          <h1 class="text-hero">Search</h1>
         </header>
         <Segmented :model-value="mode" :options="MODES" label="Search by" @update:model-value="setMode" />
       </div>
 
       <!-- By name -->
       <template v-if="mode === 'name'">
-        <label class="field flex h-12 items-center gap-2 rounded-xl pr-1 pl-3">
-          <Search class="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+        <label class="search-fill">
+          <Search class="text-muted-foreground size-[1.125rem] shrink-0" stroke-width="2.4" aria-hidden="true" />
           <input
             ref="nameInput"
             v-model="q"
@@ -316,7 +316,7 @@ watch(mode, async (m) => {
             autocomplete="off"
             placeholder="Search dancers, competitions and places"
             aria-label="Search"
-            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none"
+            class="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-[1.0625rem] outline-none"
             @keydown.enter="nameInput?.blur()"
           />
           <button
@@ -368,7 +368,7 @@ watch(mode, async (m) => {
 
         <template v-else>
           <section v-if="results.dancers.groups.length" :class="['space-y-2', settle]">
-            <h2 class="text-heading">Dancers</h2>
+            <h2 class="text-section">Dancers</h2>
             <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
               <li v-for="g in results.dancers.groups" :key="g.name">
                 <component
@@ -404,7 +404,7 @@ watch(mode, async (m) => {
           </section>
 
           <section v-if="results.competitions.hits.length" :class="['space-y-2', settle]">
-            <h2 class="text-heading">Competitions</h2>
+            <h2 class="text-section">Competitions</h2>
             <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
               <CompetitionDateRow
                 v-for="{ c, rail, note } in competitionRows"
@@ -420,7 +420,7 @@ watch(mode, async (m) => {
           </section>
 
           <section v-for="t in (['judges', 'pipers'] as const)" v-show="results[t].groups.length" :key="t" :class="['space-y-2', settle]">
-            <h2 class="text-heading">{{ t === 'judges' ? 'Judges' : 'Pipers' }}</h2>
+            <h2 class="text-section">{{ t === 'judges' ? 'Judges' : 'Pipers' }}</h2>
             <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
               <li v-for="g in results[t].groups" :key="g.name">
                 <component
@@ -448,7 +448,7 @@ watch(mode, async (m) => {
           </section>
 
           <section v-if="results.places.groups.length" :class="['space-y-2', settle]">
-            <h2 class="text-heading">Places</h2>
+            <h2 class="text-section">Places</h2>
             <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
               <li v-for="g in results.places.groups" :key="`${g.kind}:${g.name}`">
                 <component
@@ -476,7 +476,7 @@ watch(mode, async (m) => {
           </section>
 
           <section v-if="organisationHits.length" :class="['space-y-2', settle]">
-            <h2 class="text-heading">Organisations</h2>
+            <h2 class="text-section">Organisations</h2>
             <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
               <li v-for="o in organisationHits" :key="o.id">
                 <RouterLink :to="{ name: 'organisation.info', params: { organisationId: o.id } }" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 py-2 pr-3 pl-4 text-left">

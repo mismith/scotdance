@@ -60,7 +60,7 @@ const lists = ['dancers', 'judges', 'pipers', 'venues', 'organisations'].map(sec
 
 <template>
   <section v-if="recentSearches.recent.value.length" class="space-y-2">
-    <h2 class="text-heading flex min-h-6 items-center justify-between">
+    <h2 class="text-section flex min-h-6 items-center justify-between">
       Recent searches
       <button
         type="button"
@@ -113,7 +113,7 @@ const lists = ['dancers', 'judges', 'pipers', 'venues', 'organisations'].map(sec
   </button>
 
   <section v-if="viewed.length" class="space-y-2">
-    <h2 class="text-heading flex min-h-6 items-center justify-between">
+    <h2 class="text-section flex min-h-6 items-center justify-between">
       Recently viewed
       <button
         type="button"
@@ -156,7 +156,7 @@ const lists = ['dancers', 'judges', 'pipers', 'venues', 'organisations'].map(sec
 
   <!-- On wide screens the sidebar already lists all of these. -->
   <section class="space-y-2 lg:hidden">
-    <h2 class="text-heading">Browse</h2>
+    <h2 class="text-section">Browse</h2>
     <!-- One list, as in More: muted icons, the label, a chevron. -->
     <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:3.5rem]">
       <li v-for="b in [competitions, ...lists]" :key="b.path">
