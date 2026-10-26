@@ -227,9 +227,11 @@ Dancer colours: nine saturated hues (red, green, purple, gold, blue, teal, magen
 **Character:** A typeface designed for readers with low vision: open shapes, unmistakable letters (no I/l/1 confusion). It reads friendly and plain rather than stylish, which is the point.
 
 ### Hierarchy
-- **Display** (760, 1.875rem, tight, -0.024em, balanced): a page's own title (a competition's name, a dancer's name under their bib). Home's greeting is a step up at 2rem.
+- **Hero** (800, 1.9375rem, 1.06, -0.032em, balanced; `text-hero`): a page's own title across the public app, in the manner of Apple's large titles (Home's greeting, Competitions, Search, the lists, a competition's tabs, profiles, Settings). A name over 40 characters, or with a word too long for a phone, takes 1.5rem (`lib/heroTitle`). A header that leads with it starts where the Overview's title does (4.125rem down), clear of the app bar's fade.
+- **Display** (760, 1.875rem, tight, -0.024em, balanced): a page's own title in Manage and in Add a competition's questions.
 - **Title** (700, 1.3125rem, tight, -0.014em, balanced): sheet titles and big section openers.
-- **Headline** (650, 1.0625rem, snug): section headings above lists ("Coming up").
+- **Section** (760, 1.25rem, tight; `text-section`): section titles above a list or card ("Coming up", "Judges"), read as chapters.
+- **Headline** (650, 1.0625rem, snug): headings inside a card, inside a sheet, and under a section title (a year under Competitions).
 - **Body** (400 to 600, 1rem): list rows (names semibold), paragraphs. Never smaller than 16px for reading text.
 - **Label / Callout** (600 for labels, 0.9375rem): buttons, chips, secondary row lines, the line under a page title.
 - **Small** (0.875rem): counts beside headings, small chip labels.
@@ -283,9 +285,10 @@ Every rounded shape uses continuous corners (`corner-shape: superellipse(1.5)`),
 - **Style:** paper well, 1px Field Edge inset outline, 0.75rem corners, 44px tall.
 - **Focus:** 1.5px Saltire Blue edge plus a soft 4px halo.
 - **Error:** 1.5px destructive edge; the message is a full sentence below.
+- **Search:** every public search field is the iOS filled field (`search-fill`): a grey fill, no outline, a bolder magnifier, 17px text.
 
 ### Profile Hero
-A person's or place's page (dancer, judge, piper, venue) opens centred, as a competition dancer's page does under their number card: a 96px avatar (initials on the dancer's colour or tartan when followed, with a palette badge: tap it to choose their look) or the venue's map pin tile, the name at Display size, one line of who or where, then Favourite at a button's width (a dancer's, once a favourite, with their Alerts bell beside it). Outside a competition there is no number card; inside a dancer's history each competition row shows the number they wore there as a small card, then their rosettes.
+A person's or place's page (dancer, judge, piper, venue) opens centred, as a competition dancer's page does under their number card: a 96px avatar (initials on the dancer's colour or tartan when followed, with a palette badge: tap it to choose their look) or the venue's map pin tile, the name at Hero size, one line of who or where, then Favourite at a button's width (a dancer's, once a favourite, with their Alerts bell beside it), or, beside Directions (a venue) or a website (an organisation), one row of equal action tiles. A record the page states ("15 competitions since 2023") shows as figures under them. A judge's or piper's initials sit on a soft colour of their own, as among a competition's staff; a dancer's never do (colour on a dancer means yours). Outside a competition there is no number card; inside a dancer's history each competition row shows the number they wore there as a small card, then their rosettes.
 
 ### Competition Overview
 In the manner of Apple's own apps (a place in Maps, an event in Sports). The title at `text-hero` (800, tight; a long name a size down) beside the logo or date tile. Under it one row of equal **action tiles** (`action-tile`, icon above the word): Alerts, Directions, and Register while entries are open (filled, the view's one blue) or else the one link when there's only one. Then the dancers (yours, or the iOS-style filled search, `search-fill`), then **figures**: dancers, dances and results in as big tabular numbers, each opening where it's listed. The when-and-where card holds only the date (when it adds to the tile) and the venue. Section titles at `text-section`. Staff initials sit on a soft colour of their own, from their name.
