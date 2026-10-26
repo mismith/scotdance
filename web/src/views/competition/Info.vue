@@ -166,17 +166,17 @@ async function copyAddress(closeMenu: boolean) {
 const registrationLines = computed(() => competitionRegistrationLines(competition.value))
 const links = computed(() => competitionLinks(competition.value))
 const registrationOpen = computed(() => isRegistrationOpen(competition.value))
-// The third action beside Alerts and Directions: Register while entries are
-// open, or else the one link when there's just one. More links keep their row.
-const actionLink = computed(() => {
+// Beside Alerts, every link the competition gives: Register while entries
+// are open (the view's one filled button), then its links and files, in rows
+// of up to three. (Directions is on the venue itself.)
+const actionLinks = computed(() => {
   const c = competition.value
-  if (c?.registrationURL && mode.value === 'before' && registrationOpen.value) {
-    return { label: 'Register', href: formatExternalURL(c.registrationURL), primary: true }
-  }
-  const [only] = links.value
-  return links.value.length === 1 ? { label: linkLabel(only), href: formatExternalURL(only.url), primary: false } : null
+  const register = c?.registrationURL && mode.value === 'before' && registrationOpen.value
+    ? [{ key: 'register', label: 'Register', href: formatExternalURL(c.registrationURL), primary: true }]
+    : []
+  return [...register, ...links.value.map((l) => ({ key: l.id, label: linkLabel(l), href: formatExternalURL(l.url), primary: false }))]
 })
-const moreLinks = computed(() => (actionLink.value && !actionLink.value.primary ? [] : links.value))
+const actionColumns = computed(() => Math.min(3, 1 + actionLinks.value.length))
 
 // Sessions: the schedule's blocks, with the time organisers put in their
 // description ("8:00 am"), and how many of their results are in.
@@ -298,26 +298,17 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         </div>
       </div>
       <!-- What you can do here, in one row of equal buttons. -->
-      <div class="grid auto-cols-fr grid-flow-col gap-2 pt-2">
+      <div class="grid gap-2 pt-2" :style="{ gridTemplateColumns: `repeat(${actionColumns}, minmax(0, 1fr))` }">
         <FavoriteButton :id="competitionId" type="competitions" :name="competition.name" labelled variant="tile" />
-        <button
-          v-if="where"
-          type="button"
-          class="press action-tile bg-blue-paper text-primary"
-          aria-haspopup="dialog"
-          :aria-expanded="directionsMenu.open"
-          @click="openDirections"
-        >
-          <Navigation aria-hidden="true" /> Directions
-        </button>
         <a
-          v-if="actionLink"
-          :href="actionLink.href"
+          v-for="a in actionLinks"
+          :key="a.key"
+          :href="a.href"
           target="_blank"
           rel="noopener"
-          :class="['press action-tile', actionLink.primary ? 'bg-primary-fill text-primary-foreground press-fill' : 'bg-blue-paper text-primary']"
+          :class="['press action-tile', a.primary ? 'bg-primary-fill text-primary-foreground press-fill' : 'bg-blue-paper text-primary']"
         >
-          <ExternalLink aria-hidden="true" /> <span class="max-w-full truncate">{{ actionLink.label }}</span>
+          <ExternalLink aria-hidden="true" /> <span class="max-w-full truncate">{{ a.label }}</span>
         </a>
       </div>
       <template v-if="competition.registrationURL && mode === 'before'">
@@ -327,7 +318,7 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         <button
           v-if="switcher?.linked.value"
           type="button"
-          class="press surface text-callout flex h-11 shrink-0 items-center gap-1.5 rounded-full pr-3 pl-4 font-semibold"
+          class="press button-fill text-callout flex h-11 shrink-0 items-center gap-1.5 rounded-full pr-3 pl-4 font-semibold"
           aria-haspopup="dialog"
           :aria-label="`${switcher.label.value}: switch competition`"
           @click="switcher.morph.show($event)"
@@ -483,7 +474,15 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         </div>
       </div>
       <div v-if="competition.venue || competition.address || competition.location" class="space-y-3 p-4">
-        <div class="flex items-center gap-3">
+        <!-- The venue opens directions (the map apps, the map, copy the address). -->
+        <component
+          :is="where ? 'button' : 'div'"
+          :type="where ? 'button' : undefined"
+          :aria-haspopup="where ? 'dialog' : undefined"
+          :aria-expanded="where ? directionsMenu.open : undefined"
+          :class="['-m-4 flex w-[calc(100%+2rem)] items-center gap-3 p-4 text-left', where && 'press-row focus-inset']"
+          @click="where && openDirections($event)"
+        >
           <MapPin class="text-primary size-5 shrink-0" />
           <div class="min-w-0 flex-1">
             <!-- Venue and address in full: they're what you'd read out to a taxi. -->
@@ -493,7 +492,10 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
               {{ [competition.address, competition.location].filter(Boolean).join(', ') }}
             </p>
           </div>
-        </div>
+          <span v-if="where" class="text-primary flex shrink-0 items-center gap-1 text-callout font-semibold">
+            <Navigation class="size-4" stroke-width="2.4" aria-hidden="true" /> Directions
+          </span>
+        </component>
         <!-- The map before the day; on and after it, it's in the Directions menu. -->
         <MapPreview
           v-if="hasMap && mode === 'before'"
@@ -535,20 +537,6 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
         </li>
       </ul>
     </section>
-
-    <!-- Links beyond the one beside Alerts -->
-    <div v-if="moreLinks.length" class="flex flex-wrap gap-2">
-      <Button
-        v-for="link in moreLinks"
-        :key="link.id"
-        :href="formatExternalURL(link.url)"
-        target="_blank"
-        rel="noopener"
-        class="max-w-full"
-      >
-        <span class="truncate">{{ linkLabel(link) }}</span> <ExternalLink />
-      </Button>
-    </div>
 
     <section
       v-if="competition.description"
