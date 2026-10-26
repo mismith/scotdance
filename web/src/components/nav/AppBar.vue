@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { RouteLocationRaw } from 'vue-router'
 import { ChevronDown } from '@lucide/vue'
 import AccountButton from '@/components/nav/AccountButton.vue'
@@ -40,6 +40,10 @@ const props = withDefaults(
 )
 
 const frosted = computed(() => props.scrolled ?? props.showTitle)
+
+// The last subtitle, so it can fold away with its words still in it.
+const lastSubtitle = ref(props.subtitle)
+watch(() => props.subtitle, (s) => s && (lastSubtitle.value = s))
 
 const onTitle = (e: MouseEvent) => (props.titleMenu ? props.titleMenu.open(e) : scrollTop())
 
@@ -92,11 +96,27 @@ const scrollTop = () => {
           :aria-label="titleMenu ? titleMenu.label : undefined"
           @click="onTitle"
         >
-          <span :class="['flex min-w-0 items-center gap-1 font-semibold', subtitle ? 'text-callout leading-tight' : 'text-[1.0625rem]']">
+          <span
+            :class="[
+              'flex min-w-0 items-center gap-1 font-semibold transition-[font-size,line-height] duration-(--dur-base) ease-standard',
+              subtitle ? 'text-callout leading-tight' : 'text-[1.0625rem]',
+            ]"
+          >
             <span class="truncate">{{ title }}</span>
             <ChevronDown v-if="titleMenu" class="text-muted-foreground size-4 shrink-0" stroke-width="2.4" aria-hidden="true" />
           </span>
-          <span v-if="subtitle" class="text-muted-foreground block truncate text-xs font-medium">{{ subtitle }}</span>
+          <!-- A subtitle that comes and goes (the month you've scrolled to)
+               grows in under the title as the title shrinks and rises to
+               make room, and keeps its words while it folds away. -->
+          <span
+            :class="[
+              'grid transition-[grid-template-rows,opacity] duration-(--dur-base) ease-standard',
+              subtitle ? 'grid-rows-[1fr]' : 'grid-rows-[0fr] opacity-0',
+            ]"
+            :aria-hidden="subtitle ? undefined : 'true'"
+          >
+            <span class="text-muted-foreground block min-h-0 truncate text-xs font-medium">{{ subtitle ?? lastSubtitle }}</span>
+          </span>
         </button>
       </div>
       </slot>

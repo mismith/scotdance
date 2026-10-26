@@ -1161,6 +1161,29 @@ html {
 ::view-transition-new(nav-back):not(:only-child) {
   animation: vt-fade-in 160ms 70ms var(--ease-standard) both;
 }
+/* Round glass with a name of its own (Back, More): the browser copies its
+   blur onto its transition group, square, and at full strength even while
+   the button fades in or out. The blur goes on the button's own pictures
+   instead, so it fades with them: left unblended, as isolating them would
+   leave the blur nothing behind to see, and clipped round (WebKit doesn't
+   round a picture's blur by its border-radius). */
+::view-transition-group(nav-back),
+::view-transition-group(tabbar-more) {
+  backdrop-filter: none;
+  clip-path: inset(0 round 9999px);
+}
+::view-transition-image-pair(nav-back),
+::view-transition-image-pair(tabbar-more) {
+  isolation: auto;
+}
+::view-transition-old(nav-back),
+::view-transition-new(nav-back),
+::view-transition-old(tabbar-more),
+::view-transition-new(tabbar-more) {
+  mix-blend-mode: normal;
+  clip-path: inset(0 round 9999px);
+  backdrop-filter: blur(24px) saturate(1.8);
+}
 /* …unless the change left it as it was (between a competition's tabs, say):
    then it just stays put, no fade (router, same-back). */
 :active-view-transition-type(same-back)::view-transition-old(nav-back) {
