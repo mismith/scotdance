@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { ExternalLink, Settings2 } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
 import FavoriteButton from '@/components/FavoriteButton.vue'
@@ -10,6 +10,7 @@ import { useOrganisationCompetitions, useOrganisations } from '@/composables/use
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import { competitionLinks, linkLabel } from '@/lib/competitionInfo'
 import { formatExternalURL, formatHumanURL } from '@/lib/format'
+import { heroTitle } from '@/lib/heroTitle'
 import { profileColumns, profileHeader } from '@/lib/profile'
 import { sanitizeRichText } from '@/lib/sanitize'
 import { useMeStore } from '@/stores/me'
@@ -43,20 +44,32 @@ const subline = computed(() => {
       <header :ref="setHeader" class="flex items-center gap-4 lg:flex-col lg:items-start lg:gap-3">
         <OrganisationMark :organisation="org" size="lg" />
         <div class="min-w-0">
-          <h1 class="text-display text-balance">{{ org.name }}</h1>
+          <h1 :class="heroTitle(org.name)">{{ org.name }}</h1>
           <p v-if="subline" class="text-muted-foreground text-sm text-pretty">{{ subline }}</p>
         </div>
       </header>
 
-      <div class="flex flex-wrap gap-2">
-        <FavoriteButton :id="id" type="organisations" :name="org.name" labelled :variant="org.website || me.hasOrganisationPerm(id) ? 'tonal' : 'filled'" />
-        <Button v-if="org.website" :href="formatExternalURL(org.website)" target="_blank" rel="noopener" class="max-w-full">
-          <span class="truncate">{{ formatHumanURL(org.website) }}</span> <ExternalLink aria-hidden="true" />
-        </Button>
-        <Button v-if="me.hasOrganisationPerm(id)" :to="{ name: 'organisation.manage', params: { organisationId: id } }">
+      <!-- What you can do here, in one row of equal buttons; Favourite alone is the page's one button. -->
+      <div v-if="org.website || me.hasOrganisationPerm(id)" class="grid w-full max-w-md auto-cols-fr grid-flow-col gap-2">
+        <FavoriteButton :id="id" type="organisations" :name="org.name" labelled variant="tile" />
+        <a
+          v-if="org.website"
+          :href="formatExternalURL(org.website)"
+          target="_blank"
+          rel="noopener"
+          class="press action-tile bg-blue-paper text-primary"
+        >
+          <ExternalLink aria-hidden="true" /> <span class="max-w-full truncate">{{ formatHumanURL(org.website) }}</span>
+        </a>
+        <RouterLink
+          v-if="me.hasOrganisationPerm(id)"
+          :to="{ name: 'organisation.manage', params: { organisationId: id } }"
+          class="press action-tile bg-blue-paper text-primary"
+        >
           <Settings2 aria-hidden="true" /> Manage
-        </Button>
+        </RouterLink>
       </div>
+      <FavoriteButton v-else :id="id" type="organisations" :name="org.name" labelled variant="filled" />
 
       <section
         v-if="org.description"

@@ -20,6 +20,7 @@ import Skeleton from '@/components/Skeleton.vue'
 import VisibilityChip from '@/components/VisibilityChip.vue'
 import { fetchEntrySummary, type EntrySummary } from '@/lib/entrySummary'
 import { parseDate } from '@/lib/format'
+import { heroTitle } from '@/lib/heroTitle'
 import { profileColumns, profileHeader } from '@/lib/profile'
 import { useMeStore } from '@/stores/me'
 import type { Competition } from '@/types/competition'
@@ -131,8 +132,8 @@ function medals(cid: string) {
           <Avatar :name="name" :image="profile.image.value" :color="color" size="xl" />
         </DancerLookButton>
         <div class="min-w-0">
-          <h1 class="text-display">{{ name }}</h1>
-          <p v-if="subtitle" class="text-muted-foreground text-callout mt-1">{{ subtitle }}</p>
+          <h1 :class="heroTitle(name)">{{ name }}</h1>
+          <p v-if="subtitle" class="text-muted-foreground text-callout mt-1.5">{{ subtitle }}</p>
         </div>
       </header>
       <FollowButton :dancer="{ dancerId, fullName: name }" size="block" class="w-auto! min-w-48" />
@@ -140,7 +141,7 @@ function medals(cid: string) {
 
     <div class="space-y-5">
       <section v-if="focus && showFocus" class="space-y-2">
-        <h2 :class="['text-heading', focus.phase === 'today' && 'text-live']">{{ focusLabel }}</h2>
+        <h2 :class="['text-section', focus.phase === 'today' && 'text-live']">{{ focusLabel }}</h2>
         <DancerDayCard :days="focus.days" :competition-id="focus.competitionId" :color="color" size="lg" />
       </section>
 
@@ -155,7 +156,7 @@ function medals(cid: string) {
         </div>
       </div>
       <section v-if="byYear.length" class="space-y-2">
-        <h2 class="text-heading flex items-baseline justify-between">
+        <h2 class="text-section flex items-baseline justify-between">
           {{ showFocus ? 'Other competitions' : 'Competitions' }}
           <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ byYear.reduce((n, [, l]) => n + l.length, 0) }}</span>
         </h2>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Award } from '@lucide/vue'
-import { initialsOf } from '@/lib/format'
+import { initialsOf, nameHue } from '@/lib/format'
 import { staffMemberName, type StaffMember } from '@/types/competition'
 
 // A staff member's photo, or their initials on a disc when there isn't one
@@ -14,7 +14,7 @@ const name = computed(() => staffMemberName(props.member))
 const sponsor = computed(() => /sponsor/i.test(props.member.type ?? ''))
 const broken = ref(false)
 // Initials on a soft colour of their own, from their name (as in Contacts).
-const hue = computed(() => [...name.value].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) % 360, 7))
+const hue = computed(() => nameHue(name.value))
 </script>
 
 <template>

@@ -5,6 +5,7 @@ import Avatar from '@/components/Avatar.vue'
 import FavoriteButton from '@/components/FavoriteButton.vue'
 import ProfileCompetitions from '@/components/ProfileCompetitions.vue'
 import { daysFromToday, formatRelative, parseDate } from '@/lib/format'
+import { heroTitle } from '@/lib/heroTitle'
 import { profileColumns, profileHeader } from '@/lib/profile'
 import { sanitizeRichText } from '@/lib/sanitize'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
@@ -48,10 +49,10 @@ const next = computed(
   <article :class="profileColumns">
     <div :class="profileHeader">
       <header :ref="setHeader" class="flex flex-col items-center gap-4">
-        <Avatar :name="name" :image="image" size="xl" />
+        <Avatar :name="name" :image="image" size="xl" tinted />
         <div class="min-w-0">
-          <h1 class="text-display">{{ name }}</h1>
-          <p class="text-muted-foreground text-callout mt-1">{{ [label, location].filter(Boolean).join(' · ') }}</p>
+          <h1 :class="heroTitle(name)">{{ name }}</h1>
+          <p class="text-muted-foreground text-callout mt-1.5">{{ [label, location].filter(Boolean).join(' · ') }}</p>
         </div>
       </header>
       <p v-if="next" class="text-callout text-balance">

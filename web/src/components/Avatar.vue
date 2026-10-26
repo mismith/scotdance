@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { initialsOf } from '@/lib/format'
+import { initialsOf, nameHue } from '@/lib/format'
 import { clothInk, isCloth } from '@/lib/tartan'
 import { inkOnLook } from '@/stores/dancerColors'
 
 // A person as a circle: their photo, or their initials when there isn't one
 // (or it won't load). A dancer you follow wears their look, a colour or a
 // tartan; you yourself (MeAvatar) are filled, so you hold on a highlighted row.
+// Judges and pipers can wear a soft colour of their own, from their name, as
+// they do among a competition's staff (StaffAvatar). Never a dancer: colour
+// on a dancer means yours.
 const props = withDefaults(
   defineProps<{
     name: string
@@ -15,6 +18,8 @@ const props = withDefaults(
     color?: string | null
     size?: 'xs' | 'sm' | 'lg' | 'xl'
     you?: boolean
+    /** A person who isn't a dancer: initials on a soft colour of their own. */
+    tinted?: boolean
   }>(),
   { image: null, color: null, size: 'sm' },
 )
@@ -50,15 +55,18 @@ watch(
   <span
     v-else
     :class="[
-      'flex shrink-0 items-center justify-center rounded-full font-semibold tracking-[-0.01em]',
+      'flex shrink-0 items-center justify-center rounded-full tracking-[-0.01em]',
       SIZE[size],
+      tinted && !color && !you ? 'font-bold' : 'font-semibold',
       color
         ? 'sash'
         : you
           ? 'bg-primary-fill text-primary-foreground'
-          : 'bg-blue-paper text-primary',
+          : tinted
+            ? 'bg-[oklch(0.93_0.05_var(--h))] text-[oklch(0.45_0.13_var(--h))] dark:bg-[oklch(0.34_0.06_var(--h))] dark:text-[oklch(0.88_0.08_var(--h))]'
+            : 'bg-blue-paper text-primary',
     ]"
-    :style="color ? { '--dc': color, ...ink } : undefined"
+    :style="color ? { '--dc': color, ...ink } : tinted ? { '--h': nameHue(name) } : undefined"
     aria-hidden="true"
   >
     {{ initialsOf(name) }}

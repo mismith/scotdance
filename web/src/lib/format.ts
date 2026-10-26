@@ -30,6 +30,12 @@ export function initialsOf(name: string): string {
   return `${first}${last}` || '?'
 }
 
+// A soft colour of someone's own for their initials, from their name (as in
+// Contacts): a hue, 0 to 359, the same for the same name everywhere.
+export function nameHue(name: string): number {
+  return [...name].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) % 360, 7)
+}
+
 const MS_PER_DAY = 86_400_000
 
 /**

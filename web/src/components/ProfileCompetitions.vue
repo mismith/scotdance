@@ -62,7 +62,7 @@ const years = computed(() => {
   <EmptyState v-else-if="!items.length" size="inline" :icon="CalendarOff" :title="emptyText ?? 'No competitions on record yet.'" />
   <template v-else>
     <section v-if="upcoming.length" class="space-y-2">
-      <h2 class="text-heading">Coming up</h2>
+      <h2 class="text-section">Coming up</h2>
       <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">
         <CompetitionDateRow
           v-for="i in upcoming"
@@ -77,7 +77,7 @@ const years = computed(() => {
       </ul>
     </section>
     <section v-for="[year, list] in years" :key="year" class="space-y-2">
-      <h2 class="text-heading flex items-baseline justify-between">
+      <h2 class="text-section flex items-baseline justify-between">
         {{ year }} <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ list.length }}</span>
       </h2>
       <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]">

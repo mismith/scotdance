@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { ExternalLink, MapPin } from '@lucide/vue'
-import Button from '@/components/ui/Button.vue'
+import { MapPin, Navigation } from '@lucide/vue'
 import { useVenueProfile } from '@/composables/useVenueProfile'
 import { injectInfoHeaderSetter } from '@/composables/useScrolledPast'
 import FavoriteButton from '@/components/FavoriteButton.vue'
 import MapPreview from '@/components/MapPreview.vue'
 import ProfileCompetitions from '@/components/ProfileCompetitions.vue'
+import { heroTitle } from '@/lib/heroTitle'
 import { profileColumns, profileHeader } from '@/lib/profile'
 
 // A venue: where it is, how to get there, and what's on there.
@@ -43,16 +43,17 @@ const items = computed(() => {
           <MapPin class="size-10" />
         </span>
         <div class="min-w-0">
-          <h1 class="text-display">{{ p.name.value }}</h1>
-          <p class="text-muted-foreground text-callout mt-1">{{ [address, p.locationLine.value].filter(Boolean).join(', ') }}</p>
+          <h1 :class="heroTitle(p.name.value)">{{ p.name.value }}</h1>
+          <p class="text-muted-foreground text-callout mt-1.5">{{ [address, p.locationLine.value].filter(Boolean).join(', ') }}</p>
         </div>
       </header>
 
-      <div class="flex flex-wrap justify-center gap-2">
-        <FavoriteButton :id="id" type="venues" :name="p.name.value" labelled variant="tonal" />
-        <Button v-if="mapsHref" :href="mapsHref" target="_blank" rel="noopener">
-          Directions <ExternalLink aria-hidden="true" />
-        </Button>
+      <!-- What you can do here, in one row of equal buttons. -->
+      <div class="grid w-full max-w-md auto-cols-fr grid-flow-col gap-2">
+        <FavoriteButton :id="id" type="venues" :name="p.name.value" labelled variant="tile" />
+        <a v-if="mapsHref" :href="mapsHref" target="_blank" rel="noopener" class="press action-tile bg-blue-paper text-primary">
+          <Navigation aria-hidden="true" /> Directions
+        </a>
       </div>
 
       <MapPreview
