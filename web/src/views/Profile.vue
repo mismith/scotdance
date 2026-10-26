@@ -174,7 +174,7 @@ const submitDisabled = computed(() => {
         </p>
       </section>
 
-      <ul class="surface rows-inset overflow-hidden rounded-2xl">
+      <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
         <li>
           <button type="button" class="press-row focus-inset flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left" @click="openModal('email')">
             <span class="min-w-0 flex-1">

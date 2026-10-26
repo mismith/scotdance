@@ -96,7 +96,7 @@ watch(() => route.hash, applyHash)
 
       <section class="space-y-3">
         <h2 class="text-section">For families</h2>
-        <ul class="surface rows-inset overflow-hidden rounded-2xl [--inset:5.5rem]">
+        <ul class="rows-engraved -mx-4 [--inset:5.75rem] [--inset-end:1rem]">
           <li v-for="f in forFamilies" :key="f.title" class="flex items-center gap-4 px-4 py-3">
             <span class="flex w-15 shrink-0 justify-center" aria-hidden="true">
               <Medal v-if="f.piece === 'rosette'" :place="1" />
@@ -148,7 +148,7 @@ watch(() => route.hash, applyHash)
 
       <section id="faqs" class="scroll-mt-(--chrome-top) space-y-3">
         <h2 class="text-section">Questions and answers</h2>
-        <ul class="surface rows-inset overflow-hidden rounded-2xl">
+        <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
           <li v-for="f in faqs" :id="`faq-${f.id}`" :key="f.id" class="scroll-mt-[calc(var(--chrome-top)+0.5rem)]">
             <button
               type="button"
