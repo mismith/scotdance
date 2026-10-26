@@ -91,10 +91,19 @@ export function useMorph() {
     return queue
   }
 
+  // On a phone, a sheet slides up from the bottom edge unless it opens from a
+  // small control: grown out of a full-width row high on the screen, it would
+  // start there and travel down, the wrong way for a sheet.
+  function slidesInstead() {
+    if (target.value?.dataset.morphKind !== 'sheet' || matchMedia('(min-width: 48rem)').matches) return false
+    const r = trigger.value?.getBoundingClientRect()
+    return !!r && r.width > innerWidth * 0.6
+  }
+
   async function run(next: boolean) {
     if (open.value === next) return
     const leaving = next ? trigger.value : target.value
-    if (!morphSupported || reduceMotion() || !onScreen(leaving)) {
+    if (!morphSupported || reduceMotion() || !onScreen(leaving) || slidesInstead()) {
       animated.value = false
       open.value = next
       return
