@@ -70,7 +70,7 @@ const host = (url: string) => {
 
     <p v-if="error" class="text-destructive text-sm font-medium" role="alert">{{ error }}</p>
 
-    <ul class="surface divide-y rounded-2xl" :aria-busy="runs === null">
+    <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]" :aria-busy="runs === null">
       <li v-for="s in rows" :key="s.key" class="space-y-0.5 px-4 py-3">
         <span class="block text-base font-medium">{{ s.name }}</span>
         <template v-if="runs === null"><span class="text-muted-foreground block text-sm">…</span></template>

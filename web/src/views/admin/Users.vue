@@ -131,14 +131,14 @@ function pick(id: string) {
 <template>
   <MasterDetail :show-detail="!!uid">
     <template #list>
-      <div class="paper sticky top-(--chrome-top) z-10 border-b p-4 md:top-0">
+      <div class="paper sticky top-(--chrome-top) z-10 p-4 md:top-0">
         <SectionHeader title="Users" :count="users.length || null">
           <SearchField v-model="query" label="Search users" placeholder="Search by email or name" />
         </SectionHeader>
       </div>
       <div v-if="!loaded" class="space-y-2 p-4"><Skeleton v-for="i in 6" :key="i" class="h-14 w-full rounded-xl!" /></div>
       <p v-else-if="loadError" class="text-destructive p-4 font-medium">Users couldn’t be loaded. Check your connection and reload.</p>
-      <ul v-else class="divide-y">
+      <ul v-else class="rows-engraved [--inset:1rem] [--inset-end:1rem]">
         <li v-for="u in shown" :key="u.id">
           <RouterLink
             :to="{ name: 'admin.users', params: { userId: u.id } }"
@@ -176,12 +176,10 @@ function pick(id: string) {
 
         <section class="space-y-3">
           <h3 class="text-heading">Access</h3>
-          <div class="surface rounded-2xl px-4 py-1.5">
-            <SwitchField :model-value="!!currentPerms.admin" label="System admin" description="Can manage every competition and use these admin pages." :save="setAdmin" />
-          </div>
+          <SwitchField :model-value="!!currentPerms.admin" label="System admin" description="Can manage every competition and use these admin pages." :save="setAdmin" />
           <div class="space-y-2">
             <p class="text-callout font-medium">Competitions they manage</p>
-            <MovingList v-if="managed.length" class="surface divide-y overflow-hidden rounded-2xl">
+            <MovingList v-if="managed.length" class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
               <li v-for="cid in managed" :key="cid" class="flex min-h-13 items-center gap-2 py-1 pr-2 pl-4">
                 <RouterLink :to="{ name: 'manage', params: { competitionId: cid } }" class="text-primary flex min-h-11 min-w-0 flex-1 items-center gap-2 font-medium">
                   <span class="truncate">{{ competitionName(cid) }}</span>

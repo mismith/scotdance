@@ -25,7 +25,7 @@ const emit = defineEmits<{ approve: [] }>()
     </template>
     <div class="space-y-4 px-4 pt-4">
       <p class="text-base">Each is created (unlisted, so only admins see it), and its organiser gets access and an email with a link.</p>
-      <ul class="surface divide-y overflow-hidden rounded-2xl">
+      <ul class="-mx-4 divide-y">
         <li v-for="s in items" :key="s.id" class="space-y-0.5 px-4 py-2.5">
           <span class="block text-base font-medium">{{ s.name }}</span>
           <span v-if="s.line" class="text-muted-foreground block text-sm">{{ s.line }}</span>

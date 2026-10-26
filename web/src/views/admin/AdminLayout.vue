@@ -96,9 +96,9 @@ const barSubtitle = computed(() => (isHome.value || exit.value.label === 'System
         <template v-else>
           <div v-if="isHome" class="mx-auto max-w-3xl space-y-4 p-4">
             <h1 class="text-display">System admin</h1>
-            <ul class="surface divide-y overflow-hidden rounded-2xl">
+            <ul class="rows-engraved -mx-4 [--inset:3.25rem] [--inset-end:1rem]">
               <li v-for="s in SECTIONS" :key="s.route">
-                <RouterLink :to="{ name: s.route }" class="press-row focus-inset flex min-h-16 items-center gap-3 px-4 py-2.5">
+                <RouterLink :to="{ name: s.route }" class="press-row focus-inset flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4">
                   <component :is="s.icon" class="text-primary size-6 shrink-0" stroke-width="1.75" aria-hidden="true" />
                   <span class="min-w-0 flex-1">
                     <span class="block text-base font-semibold">{{ s.title }}</span>

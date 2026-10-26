@@ -219,8 +219,8 @@ for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`ag
         <h2 class="text-heading">Search</h2>
         <p class="text-muted-foreground text-sm">Rebuild a search index if results look out of date.</p>
       </div>
-      <ul class="surface divide-y rounded-2xl">
-        <li v-for="r in REINDEX" :key="r.key" class="flex flex-wrap items-center gap-3 py-2 pr-2 pl-4">
+      <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
+        <li v-for="r in REINDEX" :key="r.key" class="flex flex-wrap items-center gap-3 px-4 py-2">
           <span class="min-w-0 flex-1">
             <span class="block text-base font-medium">{{ r.label }}</span>
             <span v-if="job(r.key).result" class="text-done-foreground block text-sm">{{ job(r.key).result }}</span>
@@ -238,8 +238,8 @@ for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`ag
         <h2 class="text-heading">Profiles</h2>
         <p class="text-muted-foreground text-sm">Rebuild the profiles that link people and venues across competitions, and link their entries to them.</p>
       </div>
-      <ul class="surface divide-y rounded-2xl">
-        <li v-for="p in PROFILES" :key="p.key" class="flex flex-wrap items-center gap-3 py-2 pr-2 pl-4">
+      <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
+        <li v-for="p in PROFILES" :key="p.key" class="flex flex-wrap items-center gap-3 px-4 py-2">
           <span class="min-w-0 flex-1">
             <span class="block text-base font-medium">{{ p.label }}</span>
             <span
@@ -261,8 +261,8 @@ for (const key of [...REINDEX.map((r) => r.key), ...PROFILES.flatMap((p) => [`ag
         <h2 class="text-heading">Alerts</h2>
         <p class="text-muted-foreground text-sm">Who has each dancer as a favourite, and each competition’s alerts on: the lists alerts go to. Build it once when alerts first go live; it keeps itself up to date after that.</p>
       </div>
-      <ul class="surface divide-y rounded-2xl">
-        <li class="flex flex-wrap items-center gap-3 py-2 pr-2 pl-4">
+      <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
+        <li class="flex flex-wrap items-center gap-3 px-4 py-2">
           <span class="min-w-0 flex-1">
             <span class="block text-base font-medium">Followers</span>
             <span v-if="job('followers').result" class="text-done-foreground block text-sm">{{ job('followers').result }}</span>

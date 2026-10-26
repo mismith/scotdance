@@ -251,9 +251,9 @@ const CHIP = 'inline-flex h-8 max-w-full items-center gap-1.5 rounded-full pr-3 
       <SearchField v-model="listQuery" label="Find an organisation" />
       <div v-if="!o.loaded.value" class="space-y-2"><Skeleton v-for="i in 5" :key="i" class="h-16 w-full rounded-2xl!" /></div>
       <EmptyState v-else-if="!shownOrgs.length" size="inline" :icon="Landmark" :title="listQuery ? `Nothing matches “${listQuery.trim()}”.` : 'No organisations yet.'" />
-      <ul v-else class="surface divide-y overflow-hidden rounded-2xl">
+      <ul v-else class="rows-engraved -mx-4 [--inset:4.25rem] [--inset-end:1rem]">
         <li v-for="org in shownOrgs" :key="org.id">
-          <RouterLink :to="{ name: 'organisation.manage', params: { organisationId: org.id } }" class="press-row focus-inset flex min-h-16 items-center gap-3 px-4 py-2">
+          <RouterLink :to="{ name: 'organisation.manage', params: { organisationId: org.id } }" class="press-row focus-inset flex min-h-16 items-center gap-3 py-2 pr-3 pl-4">
             <OrganisationMark :organisation="org" />
             <span class="min-w-0 flex-1">
               <span class="block truncate text-base font-semibold">{{ org.name }}</span>
@@ -269,7 +269,7 @@ const CHIP = 'inline-flex h-8 max-w-full items-center gap-1.5 rounded-full pr-3 
 
     <!-- Tagging -->
     <template v-else>
-      <section class="surface space-y-3 rounded-2xl p-4" aria-label="How far along">
+      <section class="space-y-3" aria-label="How far along">
         <div class="flex items-baseline justify-between gap-3">
           <p class="text-base">
             <span class="text-title tabular-nums">{{ progress.done }}</span>
@@ -313,8 +313,8 @@ const CHIP = 'inline-flex h-8 max-w-full items-center gap-1.5 rounded-full pr-3 
           <h3 id="from-names-h" class="text-heading">In competitions’ names</h3>
           <p class="text-muted-foreground text-sm">Not organisations here yet. Start one and it’s added to every competition that names it.</p>
         </div>
-        <ul class="surface divide-y overflow-hidden rounded-2xl">
-          <li v-for="n in shownFromNames" :key="n.name" class="flex min-h-16 items-center gap-3 py-2 pr-2 pl-4">
+        <ul class="rows-engraved -mx-4 [--inset:4.25rem] [--inset-end:1rem]">
+          <li v-for="n in shownFromNames" :key="n.name" class="flex min-h-16 items-center gap-3 px-4 py-2">
             <OrganisationMark :organisation="{ name: n.name, shortName: n.shortName, image: null }" />
             <span class="min-w-0 flex-1">
               <span class="block truncate text-base font-semibold">{{ n.name }}</span>
@@ -335,12 +335,12 @@ const CHIP = 'inline-flex h-8 max-w-full items-center gap-1.5 rounded-full pr-3 
         :icon="Check"
         :title="tagQuery ? `Nothing matches “${tagQuery.trim()}”.` : untaggedOnly ? 'Everything here has an organisation.' : 'No competitions here.'"
       />
-      <ul v-else class="space-y-2">
-        <!-- A card per competition, its years inside it. -->
+      <ul v-else class="rows-engraved -mx-4 [--inset:3.25rem] [--inset-end:1rem]">
+        <!-- A row per competition, its years under it. -->
         <li
           v-for="f in families"
           :key="f.key"
-          :class="['surface overflow-hidden rounded-2xl transition-colors duration-(--dur-quick)', familyState(f) !== 'none' && 'bg-blue-paper/40']"
+          :class="['transition-colors duration-(--dur-quick)', familyState(f) !== 'none' && 'bg-blue-paper/40']"
         >
           <div class="flex items-start gap-1 py-2 pr-3 pl-1">
             <button
@@ -408,15 +408,15 @@ const CHIP = 'inline-flex h-8 max-w-full items-center gap-1.5 rounded-full pr-3 
           <template v-if="f.competitions.length > 1">
             <button
               type="button"
-              class="press-row focus-inset text-primary flex min-h-11 w-full items-center gap-1.5 border-t px-4 text-sm font-semibold"
+              class="press-row focus-inset text-primary flex min-h-11 w-full items-center gap-1.5 pr-4 pl-[3.25rem] text-sm font-semibold"
               :aria-expanded="open.has(f.key)"
               @click="toggleOpen(f.key)"
             >
               {{ open.has(f.key) ? 'Hide them' : f.competitions.length === 2 ? 'Show both' : `Show all ${f.competitions.length}` }}
               <ChevronDown :class="['size-4 transition-transform duration-(--dur-quick)', open.has(f.key) && 'rotate-180']" aria-hidden="true" />
             </button>
-            <ul v-if="open.has(f.key)" class="bg-muted/60 divide-y border-t">
-              <li v-for="c in f.competitions" :key="c.id" class="flex items-center gap-1 py-1 pr-3 pl-1">
+            <ul v-if="open.has(f.key)" class="rows-engraved [--inset:5.5rem]">
+              <li v-for="c in f.competitions" :key="c.id" class="flex items-center gap-1 py-1 pr-3 pl-10">
                 <button type="button" class="press focus-inset flex size-11 shrink-0 items-center justify-center rounded-full" :aria-label="`Choose ${c.name}`" @click="toggleOne(c.id)">
                   <Checkbox :checked="selected.has(c.id)" />
                 </button>
@@ -445,7 +445,7 @@ const CHIP = 'inline-flex h-8 max-w-full items-center gap-1.5 rounded-full pr-3 
     >
       <div
         v-if="view === 'tag' && selected.size"
-        class="surface fixed inset-x-chrome-3 bottom-[calc(var(--chrome-bottom)+0.75rem)] z-30 mx-auto flex max-w-2xl flex-wrap items-center gap-2 rounded-2xl border p-2 pl-4 shadow-lg md:left-[calc(var(--chrome-left)+1rem)]"
+        class="glass fixed inset-x-chrome-3 bottom-[calc(var(--chrome-bottom)+0.75rem)] z-30 mx-auto flex max-w-2xl flex-wrap items-center gap-2 rounded-2xl p-2 pl-4 md:left-[calc(var(--chrome-left)+1rem)]"
         role="toolbar"
         aria-label="Chosen competitions"
       >

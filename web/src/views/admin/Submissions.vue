@@ -117,7 +117,7 @@ watch(current, (s) => {
 // own title, however tall that is, until the next group's pushes it on.
 const head = ref<HTMLElement | null>(null)
 const { height: headHeight } = useElementSize(head, undefined, { box: 'border-box' })
-const groupHead = 'bg-muted sticky top-[calc(var(--chrome-top)+var(--list-head))] z-5 flex items-center md:top-(--list-head)'
+const groupHead = 'paper sticky top-[calc(var(--chrome-top)+var(--list-head))] z-5 flex items-center md:top-(--list-head)'
 
 // Selecting several. What's picked counts only while it still applies (an
 // approved one drops out, say, if someone else approves it meanwhile).
@@ -455,7 +455,7 @@ async function remove(s: Submission) {
     <template #list>
       <!-- Each group's heading sticks under the title while its rows scroll by. -->
       <div :style="{ '--list-head': `${headHeight}px` }" :class="showBulk && 'max-md:pb-24'">
-        <div ref="head" class="paper sticky top-(--chrome-top) z-10 border-b p-4 md:top-0">
+        <div ref="head" class="paper sticky top-(--chrome-top) z-10 p-4 md:top-0">
           <SectionHeader title="Submissions" :count="waiting.length ? `${waiting.length} waiting` : null">
             <template v-if="canSelect" #actions>
               <Button variant="plain" class="-mr-3" :aria-pressed="selecting" @click="toggleSelecting">
@@ -502,7 +502,7 @@ async function remove(s: Submission) {
               </div>
               <p v-if="g.key === 'waiting' && !g.items.length" class="text-muted-foreground px-4 py-6 text-base">Nothing waiting.</p>
               <Transition :css="false" @enter="grow" @leave="shrink">
-                <MovingList v-if="isOpen(g)" class="divide-y">
+                <MovingList v-if="isOpen(g)" :class="['rows-engraved [--inset-end:1rem]', selecting && g.selectable ? '[--inset:3.125rem]' : '[--inset:1rem]']">
                   <li v-for="s in g.items" :key="s.id">
                     <!-- Rows open the submission (or, while selecting, tick it). -->
                     <component
@@ -604,7 +604,7 @@ async function remove(s: Submission) {
         </section>
 
         <!-- What you replied, and whether it went (kept if it's approved after all) -->
-        <section v-if="current.rejection?.reply && (current.rejected || current.replied)" class="surface space-y-3 rounded-2xl p-4" aria-labelledby="reply-h">
+        <section v-if="current.rejection?.reply && (current.rejected || current.replied)" class="space-y-3" aria-labelledby="reply-h">
           <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
             <h3 id="reply-h" class="text-heading min-w-0 flex-1">Your reply</h3>
             <span v-if="replyOf(current) === 'sending'" class="text-muted-foreground flex items-center gap-1.5 text-sm font-medium">
@@ -653,7 +653,7 @@ async function remove(s: Submission) {
           <p v-else-if="placesAvailable && !current.approved" class="text-muted-foreground text-sm">Not on the map yet: choose the venue from the suggestions to add it.</p>
         </section>
 
-        <section class="surface space-y-1 rounded-2xl p-4">
+        <section class="space-y-1">
           <h3 class="text-heading">From</h3>
           <p class="text-base font-medium">{{ current.contact?.name ?? 'Unknown' }}</p>
           <p v-if="current.contact?.email" class="text-base"><a :href="`mailto:${current.contact.email}`" class="text-primary font-medium">{{ current.contact.email }}</a></p>
@@ -662,9 +662,9 @@ async function remove(s: Submission) {
 
         <section v-if="weekendOf(current).length" class="space-y-2">
           <h3 class="text-heading">Linked with</h3>
-          <ul class="surface divide-y overflow-hidden rounded-2xl">
+          <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
             <li v-for="w in weekendOf(current)" :key="w.id">
-              <RouterLink :to="{ name: 'admin.submissions', params: { submissionId: w.id } }" class="press-row focus-inset flex min-h-15 items-center gap-3 px-4 py-2">
+              <RouterLink :to="{ name: 'admin.submissions', params: { submissionId: w.id } }" class="press-row focus-inset flex min-h-15 items-center gap-3 py-2 pr-3 pl-4">
                 <span class="min-w-0 flex-1">
                   <span class="block text-base font-semibold break-words">{{ w.name }}</span>
                   <span class="text-muted-foreground block text-sm">{{ [w.date, w.status].filter(Boolean).join(' · ') }}</span>
@@ -677,7 +677,7 @@ async function remove(s: Submission) {
 
         <section v-if="requested(current).length" class="space-y-2">
           <h3 class="text-heading">Organisations</h3>
-          <ul class="surface divide-y overflow-hidden rounded-2xl">
+          <ul class="rows-engraved -mx-4 [--inset:4.25rem] [--inset-end:1rem]">
             <li v-for="r in requested(current)" :key="r.key" class="flex min-h-15 items-center gap-3 px-4 py-2">
               <OrganisationMark :organisation="r.org" />
               <span class="min-w-0 flex-1">
@@ -705,7 +705,7 @@ async function remove(s: Submission) {
             <Trash2 /> Delete
           </Button>
         </footer>
-        <footer v-else class="border-t pt-6">
+        <footer v-else class="engraved-line pt-6">
           <Button variant="plain" class="text-destructive! -ml-4" :disabled="!canEdit" @click="remove(current)">
             <Trash2 /> Delete
           </Button>
