@@ -89,7 +89,7 @@ test('favourite a dancer, see their day on Home, and watch a placing arrive', as
   await expect(facts).toHaveText('Platform A · from 9:45 am · 3rd to dance')
   await expect(day.getByText(/Highland Fling/)).toHaveCount(0)
 
-  // The organiser posts the Fling: 2nd. Home pins it on as a rosette without
+  // The organiser posts the Fling: 2nd. Home pins it on as a ribbon without
   // a reload, and the Fling leaves the dances still to come.
   const g = comp.groups[2].id
   await dbSet(`competitions:data/${comp.id}/results/${g}/${comp.dances[0].id}`, [entry(2, 1).id, entry(2).id])
@@ -125,7 +125,7 @@ test('on competition day, whoever has dances to come comes first, and a finished
   const days = page.locator('main article')
   await expect(days.first()).toContainText(next.name)
   await expect(days.nth(1)).toContainText(done.name)
-  // Finished: the bib and its rosettes, no dances still to come.
+  // Finished: the bib and its ribbons, no dances still to come.
   await expect(card(page, done).getByRole('img', { name: /place/ }).first()).toBeVisible()
   await expect(card(page, done).getByRole('link')).toHaveCount(1)
   await expect(card(page, next).getByText(/^Platform [AB] · from /)).toBeVisible()

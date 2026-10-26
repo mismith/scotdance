@@ -14,7 +14,7 @@ import { canEdit } from '@/lib/admin/write'
 // the one above. Championship results (entered from the lowest place) show
 // 1st at the top all the same. Rows glide to their places (not while
 // dragging: the drag shows the move), fold away as they leave, and a new
-// placing's rosette flips in.
+// placing's ribbon flips in.
 
 const props = defineProps<{
   placings: Placings

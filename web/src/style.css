@@ -84,7 +84,6 @@
   --rim-neutral: linear-gradient(150deg, #ffffff, rgb(255 255 255 / 0.3) 35%, rgb(16 24 40 / 0.13) 70%, rgb(255 255 255 / 0.75));
   --rim-mid: rgb(16 24 40 / 0.1);
   --rim-end: rgb(255 255 255 / 0.75);
-  --glow-opacity: 0.3;
   --menu-edge: rgb(255 255 255 / 0.55);
   --button-fill: color-mix(in oklab, var(--foreground) 7%, transparent);
   --row-fade: 0.16;
@@ -210,7 +209,6 @@
   --rim-neutral: linear-gradient(150deg, rgb(255 255 255 / 0.35), rgb(255 255 255 / 0.05) 40%, rgb(255 255 255 / 0.12));
   --rim-mid: rgb(255 255 255 / 0.06);
   --rim-end: rgb(255 255 255 / 0.14);
-  --glow-opacity: 0.45;
   --menu-edge: rgb(255 255 255 / 0.1);
   --button-fill: rgb(255 255 255 / 0.1);
   --row-fade: 0.26;
@@ -477,13 +475,13 @@
 }
 /* Your dancer's row: a stripe of their colour (or tartan) at the left edge,
    fading into the row as a faint wash. Behind the row's text: its parent
-   takes `isolate`. */
+   takes `isolate`. A favourite's day block sets a wider --sash-width. */
 @utility dancer-sash {
   position: absolute;
   inset-block: 0;
   left: 0;
   z-index: -1;
-  width: min(11rem, 60%);
+  width: var(--sash-width, min(11rem, 60%));
   background: var(--dc, var(--primary));
   mask-image: linear-gradient(90deg, black 0 0.5rem, rgb(0 0 0 / var(--row-fade)) 0.5rem, transparent);
   pointer-events: none;
@@ -524,30 +522,6 @@
   @media (forced-colors: active) {
     outline: 1px solid CanvasText;
     outline-offset: -1px;
-  }
-}
-/* A favourite dancer's card: their colour (`--dh`, solid) at the rim's lit
-   corner, and as a soft light behind the bib (`dancer-glow`). Text, rosettes
-   and state colours stay on the neutral glass. */
-@utility glass-dancer {
-  position: relative;
-  isolation: isolate;
-  --rim: linear-gradient(150deg, var(--dh), color-mix(in oklab, var(--dh) 35%, transparent) 30%, var(--rim-mid) 65%, var(--rim-end));
-}
-@utility dancer-glow {
-  position: absolute;
-  top: -4rem;
-  left: -3rem;
-  z-index: -1;
-  width: 12rem;
-  height: 12rem;
-  border-radius: 9999px;
-  background: var(--dh);
-  opacity: var(--glow-opacity);
-  filter: blur(40px);
-  pointer-events: none;
-  @media (forced-colors: active) {
-    display: none;
   }
 }
 /* A plain list without a card: the page is the sheet, rows divided by
@@ -805,7 +779,7 @@
 }
 
 /* A placing landing on a dancer's card: the card catches the light, once,
-   as the rosette flips in. Nothing under Reduce Motion. */
+   as the ribbon flips in. Nothing under Reduce Motion. */
 @utility card-sweep {
   position: relative;
   &::after {
@@ -852,7 +826,7 @@
   }
 }
 
-/* A placing arriving: the rosette flips in. */
+/* A placing arriving: the ribbon flips in. */
 @keyframes medal {
   0% {
     transform: rotateY(90deg) scale(0.6);

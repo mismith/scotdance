@@ -2,9 +2,9 @@
 import { computed } from 'vue'
 import { getOrdinalSuffix } from '@/lib/results'
 
-// A placing as a rosette: one colour for every place (Highland dancing has no
-// gold/silver/bronze), "4th" inside and a "Tie" band across the ribbons for
-// a tie. Its own shape so it never reads as a bib number.
+// A placing as a ribbon: one colour for every place (Highland dancing has no
+// gold/silver/bronze), the number big inside it, and a "Tie" tag pinned across
+// its foot. Its own shape, so it never reads as a bib number or an avatar.
 const props = withDefaults(
   defineProps<{
     place: number | null
@@ -19,21 +19,14 @@ const props = withDefaults(
   { tied: false, pointed: false, size: 'md', fresh: false },
 )
 
-const suffix = computed(() => getOrdinalSuffix(props.place ?? 0))
-// Shrink longer labels ("12th") so they stay inside the rosette.
-const fontSize = computed(() => {
-  const len = String(props.place).length + suffix.value.length * 0.6
-  return len <= 2.2 ? 14 : len <= 3.2 ? 12 : 10
-})
-
-// A little weight for the top placings without medal colours. Every tier is
-// blue ink on a blue tint (readable in light and dark); higher places get a
-// stronger tint, a heavier outline and bolder ribbons, and 1st a halo.
+// A little weight for the top placings without medal colours: the blue gets
+// lighter down the order. Every tier has the same engraved edge; on 1st's
+// solid blue it's a lit one.
 const TIERS = {
-  1: { body: 'fill-[color-mix(in_oklab,var(--color-primary)_18%,var(--color-card))]', ring: 2.5, tails: 1, halo: true },
-  2: { body: 'fill-[color-mix(in_oklab,var(--color-primary)_14%,var(--color-card))]', ring: 2, tails: 1, halo: false },
-  3: { body: 'fill-[color-mix(in_oklab,var(--color-primary)_10%,var(--color-card))]', ring: 1.25, tails: 0.6, halo: false },
-  rest: { body: 'fill-[color-mix(in_oklab,var(--color-primary)_6%,var(--color-card))]', ring: 1, tails: 0.5, halo: false },
+  1: { fill: 'fill-primary-fill', edge: 'stroke-white/25', ink: 'text-primary-foreground' },
+  2: { fill: 'fill-[color-mix(in_oklab,var(--primary)_28%,var(--card))]', edge: 'stroke-primary/40', ink: 'text-primary' },
+  3: { fill: 'fill-[color-mix(in_oklab,var(--primary)_16%,var(--card))]', edge: 'stroke-primary/40', ink: 'text-primary' },
+  rest: { fill: 'fill-[color-mix(in_oklab,var(--primary)_6%,var(--card))]', edge: 'stroke-primary/40', ink: 'text-primary' },
 }
 const tier = computed(() => TIERS[props.place === 1 || props.place === 2 || props.place === 3 ? props.place : 'rest'])
 
@@ -46,40 +39,43 @@ const label = computed(() => {
 </script>
 
 <template>
-  <svg
+  <span
     v-if="place != null"
-    viewBox="0 0 34 40"
     role="img"
     :aria-label="label"
     :class="[
-      'text-primary shrink-0 overflow-visible',
-      size === 'lg' ? 'h-12 w-[2.55rem]' : size === 'md' ? 'h-10 w-[2.125rem]' : 'h-8 w-[1.7rem]',
+      'relative inline-flex shrink-0',
+      size === 'lg' ? 'h-[3.25rem] w-12 text-[1.5rem]' : size === 'md' ? 'h-12 w-11 text-[1.25rem]' : 'h-10 w-9 text-[1.0625rem]',
       fresh && 'animate-medal motion-reduce:animate-none',
     ]"
   >
-    <title>{{ label }}</title>
-    <path d="M11 22 L7 39 L13 35 L16 39 L17 24 Z M23 22 L27 39 L21 35 L18 39 L17 24 Z" fill="currentColor" :opacity="tier.tails" />
-    <circle v-if="tier.halo" cx="17" cy="15" r="17" fill="currentColor" opacity=".2" />
-    <circle cx="17" cy="15" :r="14 - tier.ring / 2" :class="tier.body" stroke="currentColor" :stroke-width="tier.ring" />
-    <circle cx="17" cy="15" r="10" fill="none" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="2 2" />
-    <text
-      x="17"
-      y="15"
-      text-anchor="middle"
-      dominant-baseline="central"
-      :font-size="fontSize"
-      class="fill-primary font-extrabold tabular-nums"
+    <!-- Square shoulders would read as a bib; a V-cut foot reads as a ribbon. -->
+    <svg viewBox="0 0 44 48" preserveAspectRatio="none" class="absolute inset-0 size-full" aria-hidden="true">
+      <path d="M0 9a9 9 0 0 1 9-9h26a9 9 0 0 1 9 9v39l-22-8-22 8z" :class="tier.fill" />
+      <path
+        d="M.75 9a8.25 8.25 0 0 1 8.25-8.25h26a8.25 8.25 0 0 1 8.25 8.25v37.9l-21.25-7.7-21.25 7.7z"
+        fill="none"
+        stroke-width="1.5"
+        stroke-linejoin="round"
+        :class="tier.edge"
+      />
+    </svg>
+    <!-- Centred above the V, where the ribbon's body is. -->
+    <span
+      :class="['relative flex h-[83%] w-full items-center justify-center leading-none font-extrabold tracking-[-0.02em] tabular-nums', tier.ink]"
+      aria-hidden="true"
     >
-      {{ place }}<tspan font-size=".6em" dy="-.45em">{{ suffix }}</tspan>
-    </text>
-    <g v-if="tied">
-      <rect x="1" y="26.5" width="32" height="13" rx="3" class="fill-card stroke-primary" stroke-width="1.5" />
-      <text x="17" y="33.25" text-anchor="middle" dominant-baseline="central" font-size="10" class="fill-primary font-extrabold uppercase">
-        Tie
-      </text>
-    </g>
-  </svg>
-  <!-- Blue like the rosettes: amber is reserved for up next. -->
+      <span>{{ place }}<span class="ml-[0.04em] align-[0.75em] text-[0.5em] font-bold">{{ getOrdinalSuffix(place) }}</span></span>
+    </span>
+    <span
+      v-if="tied"
+      class="bg-primary-fill text-primary-foreground absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-full px-1.5 text-[0.6875rem] leading-[1.15rem] font-extrabold tracking-[0.06em] uppercase shadow-[0_0_0_2px_var(--background),0_2px_4px_rgb(16_24_40/0.2)]"
+      aria-hidden="true"
+    >
+      Tie
+    </span>
+  </span>
+  <!-- Blue like the placings: amber is reserved for up next. -->
   <span
     v-else-if="pointed"
     :class="[

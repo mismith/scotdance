@@ -9,11 +9,11 @@ import { getOrdinalSuffix } from '@/lib/results'
 import { platformLabel } from '@/lib/schedule'
 import type { DancerDay, DanceStatus } from '@/lib/dancerDay'
 import { successHaptic } from '@/lib/haptics'
-import { solidOf } from '@/lib/tartan'
 
 // One followed dancer at one competition, led by the number card they wear
-// there (in their colour, the one mark of "yours"). Placings pin on beside
-// it as rosettes as they're posted; under them, one line of what the
+// there. Frameless, like their row in a list: a stripe of their colour (or
+// tartan) down the edge, fading across the block. Placings pin on beside the
+// bib as ribbons as they're posted; under them, one line of what the
 // schedule says about the next dance, when it says anything. A dancer
 // entered in more than one age group (Premier plus a Broadsword event) is one
 // card under one number. The card opens the dancer's page, which lists every
@@ -47,7 +47,7 @@ const lg = computed(() => props.size === 'lg')
 
 const sub = computed(() => (multi.value ? `${shown.value.length} age groups` : (day.value.group?.fullName ?? '')))
 
-// What's pinned on so far: callbacks, a rosette per placing (Overall last),
+// What's pinned on so far: callbacks, a ribbon per placing (Overall last),
 // championship points, and what's still to come in.
 const dances = computed(() => shown.value.flatMap((d) => d.dances.map((s) => ({ d, s }))))
 const won = computed(() => dances.value.filter(({ s }) => s.state === 'placed' && s.place != null))
@@ -61,7 +61,7 @@ const waiting = computed(
     dances.value.some(({ s }) => s.state === 'waiting') ||
     (!upcoming.value.length && shown.value.some((d) => d.overall?.state === 'later' && d.resultsIn > 0)),
 )
-// Placings, Overall or championship points: the rosettes say it.
+// Placings, Overall or championship points: the ribbons say it.
 const placed = computed(() => won.value.length > 0 || !!overall.value || points.value > 0)
 // Callbacks while they're the news: "Called back" until placings come in;
 // "Not called back" (which says not placed too) unless they placed.
@@ -73,7 +73,7 @@ const pinned = computed(
   () => calledBack.value != null || placed.value || unplaced.value || waiting.value || (settled.value && day.value.phase === 'today'),
 )
 
-// A placing just landed here: the card catches the light once, with a tap.
+// A placing just landed here: the block catches the light once, with a tap.
 const sweeping = ref(false)
 watch(
   () => props.fresh,
@@ -84,10 +84,6 @@ watch(
     successHaptic()
   },
 )
-
-// Their colour beyond the bib: the rim's lit corner and a light behind it
-// (a tartan's main colour; the cloth itself stays on the bib).
-const dancerHue = computed(() => (props.color && !props.bare ? solidOf(props.color) : null))
 
 const ordinal = (n: number) => `${n}${getOrdinalSuffix(n)}`
 // The next dance still to come, in the schedule's own facts: which day
@@ -130,14 +126,12 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-4 py-2.5' : 'min-h-12 px
   <article
     :class="[
       '@container overflow-hidden',
-      bare ? 'rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]' : 'surface rounded-[1.25rem]',
-      dancerHue && 'glass-dancer',
+      bare ? 'rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]' : 'relative isolate',
       sweeping && 'card-sweep',
     ]"
-    :style="dancerHue ? { '--dh': dancerHue } : undefined"
     @animationend="(e: AnimationEvent) => e.animationName === 'card-sweep' && (sweeping = false)"
   >
-    <span v-if="dancerHue" class="dancer-glow" aria-hidden="true" />
+    <span v-if="color && !bare" class="dancer-sash [--sash-width:78%]" :style="{ '--dc': color }" aria-hidden="true" />
     <template v-if="!bare">
       <!-- The bib, the name, and the placings pinned on: beside the name when
            the card has room, under it on a phone. -->
@@ -152,7 +146,7 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-4 py-2.5' : 'min-h-12 px
           <span v-if="competitionName" class="text-muted-foreground text-callout block truncate">{{ competitionName }}</span>
         </span>
         <ChevronRight class="text-muted-foreground col-start-3 row-start-1 size-5 shrink-0 @min-[34rem]:col-start-4" />
-        <!-- Pinned on as they're posted. Each rosette names its dance aloud;
+        <!-- Pinned on as they're posted. Each ribbon names its dance aloud;
              the dancer's page lists them. -->
         <span
           v-if="pinned"
@@ -176,7 +170,7 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-4 py-2.5' : 'min-h-12 px
             :dance="s.dance.fullName || s.dance.name"
             size="lg"
           />
-          <span v-if="overall" class="ml-2 inline-flex items-center gap-1.5 border-l pl-3">
+          <span v-if="overall" :class="['inline-flex items-center gap-1.5', (won.length || calledBack != null) && 'ml-2 border-l pl-3']">
             <Medal
               :place="overall.s!.place"
               :tied="overall.s!.tied"

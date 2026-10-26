@@ -299,7 +299,7 @@ const CHIP = 'inline-flex h-8 max-w-full items-center gap-1.5 rounded-full pr-3 
         <SearchField v-model="tagQuery" label="Find a competition" class="sm:flex-1" />
       </div>
 
-      <div v-if="strongCount" class="bg-blue-paper flex flex-wrap items-center gap-3 rounded-2xl py-3 pr-3 pl-4">
+      <div v-if="strongCount" class="glass flex flex-wrap items-center gap-3 rounded-[1.375rem] py-3 pr-3 pl-4">
         <Sparkles class="text-primary size-5 shrink-0" aria-hidden="true" />
         <p class="text-callout min-w-0 flex-1 font-medium">
           {{ strongCount === 1 ? '1 competition has' : `${strongCount} competitions have` }} years to tag like the others.

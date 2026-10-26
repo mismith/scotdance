@@ -155,13 +155,11 @@ components:
     width: "11rem"
     height: "8rem"
   dancer-day-card:
-    backgroundColor: "{colors.paper}"
-    rounded: "1.25rem"
     padding: "1rem"
-  rosette-lg:
+  ribbon-lg:
     textColor: "{colors.saltire-blue}"
-    height: "3rem"
-    width: "2.55rem"
+    height: "3.25rem"
+    width: "3rem"
   chip-pinned:
     backgroundColor: "{colors.slate-wash}"
     textColor: "{colors.slate-text}"
@@ -184,7 +182,7 @@ Density follows the visitor. The public app is spacious and glanceable for one-h
 - Atkinson Hyperlegible everywhere, rem-based so the phone's text size (in the app) and browser zoom scale it all.
 - Cards are lit glass panes (a gradient rim, depth) on a warm sheet with a faint fibre grain and a soft light from the top; plain lists are frameless; one textured brand panel per surface at most.
 - Continuous (squircle) corners on every rounded shape; capsules for buttons and chips.
-- Frameless, everywhere (the public app, Search, Manage and System admin): sections are a heading and engraved rows on the page, never a box. The one card left is a favourite dancer's day card, which carries their colour on its rim and as a glow behind the bib. Floating things (bars, sheets, menus, toasts) stay glass; controls keep their own shapes.
+- Frameless, everywhere (the public app, Search, Manage and System admin): sections are a heading and engraved rows on the page, never a box. A favourite dancer's day is frameless too: a block edge to edge, their colour or tartan as a stripe down the edge fading across it, like their row in a list. Floating things (bars, sheets, menus, toasts) and notes in the page stay glass; controls keep their own shapes.
 - Motion that follows the finger: pages slide toward what you tapped and back out the way they came.
 
 ## Colors
@@ -251,7 +249,7 @@ One column, at most 48rem wide, with a 1rem gutter on phones. From 64rem the tab
 
 ## Elevation & Depth
 
-Glass, in both themes. A card is a lit pane: an opaque fill, a 1.5px gradient rim (bright at the top left, a touch of shade lower down) and soft depth, never a printed border. A favourite dancer's card takes their colour at the rim's lit corner and as a soft light behind the bib (`glass-dancer`, `dancer-glow`; a tartan uses its main colour, the cloth stays on the bib); text, rosettes and state colours always sit on the neutral glass. Depth otherwise only means "this floats": menus and sheets are raised; floating chrome (tab bar, app bar buttons) is frosted glass with a lit rim, mostly opaque so labels never lose contrast; notices use one dark glass in both themes.
+Glass, in both themes. A card is a lit pane: an opaque fill, a 1.5px gradient rim (bright at the top left, a touch of shade lower down) and soft depth, never a printed border. Depth otherwise only means "this floats": menus and sheets are raised; floating chrome (tab bar, app bar buttons) is frosted glass with a lit rim, mostly opaque so labels never lose contrast. Notices that float and go away by themselves (toasts, Offline, a result arriving) use one dark glass in both themes; notes in the page (Home's new look, Manage's import tip, shared staff) are the chrome's glass (`glass`), light in light mode.
 
 ### Shadow Vocabulary
 - **Card** (`surface`: `--card-fill` inside a `--rim-neutral` gradient border, `box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 18px 36px -18px rgb(16 24 40 / 0.3), 0 2px 6px -2px rgb(16 24 40 / 0.08)`; at night a deeper fill, a fainter rim and `0 18px 40px -18px rgb(0 0 0 / 0.8)`): every card.
@@ -292,7 +290,7 @@ Every rounded shape uses continuous corners (`corner-shape: superellipse(1.5)`),
 - **Search:** every public search field is the iOS filled field (`search-fill`): a grey fill, no outline, a bolder magnifier, 17px text.
 
 ### Profile Hero
-A person's or place's page (dancer, judge, piper, venue) opens centred, as a competition dancer's page does under their number card: a 96px avatar (initials on the dancer's colour or tartan when followed, with a palette badge: tap it to choose their look) or the venue's map pin tile, the name at Hero size, one line of who or where, then Favourite at a button's width (a dancer's, once a favourite, with their Alerts bell beside it), or, beside Directions (a venue) or a website (an organisation), one row of equal action tiles. A judge's or piper's initials sit on a soft colour of their own, as among a competition's staff; a dancer's never do (colour on a dancer means yours). Outside a competition there is no number card; inside a dancer's history each competition row shows the number they wore there as a small card, then their rosettes.
+A person's or place's page (dancer, judge, piper, venue) opens centred, as a competition dancer's page does under their number card: a 96px avatar (initials on the dancer's colour or tartan when followed, with a palette badge: tap it to choose their look) or the venue's map pin tile, the name at Hero size, one line of who or where, then Favourite at a button's width (a dancer's, once a favourite, with their Alerts bell beside it), or, beside Directions (a venue) or a website (an organisation), one row of equal action tiles. A judge's or piper's initials sit on a soft colour of their own, as among a competition's staff; a dancer's never do (colour on a dancer means yours). Outside a competition there is no number card; inside a dancer's history each competition row shows the number they wore there as a small card, then their ribbons.
 
 ### Competition Overview
 In the manner of Apple's own apps (a place in Maps, an event in Sports). The title at `text-hero` (800, tight; a long name a size down) beside the logo or date tile. Under it equal **action tiles** (`action-tile`, icon above the word), up to three a row: Alerts, Register while entries are open (filled, the view's one blue), then each of its links and files. Directions is on the venue itself: the venue row opens the map apps, the map and copy address. Then the dancers (yours, or the iOS-style filled search, `search-fill`), then **figures**: dancers, dances and results in as big tabular numbers on the page, divided by faint engraved lines, each opening where it's listed. When and where are engraved rows: the date (when it adds to the tile) and the venue, which opens directions. Sessions open the schedule at that session. Section titles at `text-section`. Staff initials sit on a soft colour of their own, from their name.
@@ -309,10 +307,10 @@ A small calendar page leading a competition row: month, day, weekday (or year). 
 The bib a dancer wears: bold tabular number on white paper, a band in the followed dancer's look, two quiet safety pins in one thin, soft stroke of the band's ink (coil, bar, an open clasp, and the point dipping under the card) so the colour or tartan stays the star. Only ever shown inside a competition, never as someone's identity. Sizes run from a 44px list tile (plain, no band or pins unless the dancer is followed) to the 88px card that leads a dancer's day and the 176px poster-size card that leads a competition dancer's page.
 
 ### Dancer Day Card (signature)
-**The Number Card:** the bib your dancer wears is the hero object. Each followed dancer's card on Home and a competition's Overview is paper at 1.25rem (20px) continuous corners, one step rounder than an ordinary card, and leads with their 88px number card, name (1.25rem bold) and age group. Placings pin on as 48px-tall rosettes in a row (beside the name when the card is 34rem wide or more, under it on a phone), Overall set apart by a hairline with its label, then 2rem capsule chips (taller than the usual chip, to sit level with the rosettes) for callbacks, championship points and "Results to come". Under them, one line in ink, in one size, of what the schedule says about the next dance: platform, "from" its event's or session's start, and their place in the draw (for example "Platform A · from 9:45 am · 3rd to dance"). No line when the competition entered no schedule, as about half don't (and only about 1 in 10 enter times); the dancer's page lists every dance. When a placing lands, its rosette flips in and the card catches the light once (`card-sweep`), with the phone's success tap; nothing moves under Reduce Motion. Dancer colour (or tartan) lives only on the bib's band.
+**The Number Card:** the bib your dancer wears is the hero object. Each followed dancer's day on Home and a competition's Overview is a frameless block, edge to edge with an engraved line between, their colour or tartan as a stripe down its edge fading across 78% of it (`dancer-sash`). It leads with their 88px number card, name (1.25rem bold) and age group. Placings pin on as 52px-tall ribbons in a row (beside the name when the card is 34rem wide or more, under it on a phone), Overall set apart by a hairline with its label, then 2rem capsule chips (taller than the usual chip, to sit level with the ribbons) for callbacks, championship points and "Results to come". Under them, one line in ink, in one size, of what the schedule says about the next dance: platform, "from" its event's or session's start, and their place in the draw (for example "Platform A · from 9:45 am · 3rd to dance"). No line when the competition entered no schedule, as about half don't (and only about 1 in 10 enter times); the dancer's page lists every dance. When a placing lands, its ribbon flips in and the block catches the light once (`card-sweep`), with the phone's success tap; nothing moves under Reduce Motion. Text, ribbons and state colours keep their own colours over the wash.
 
-### Rosettes
-A placing is a rosette, one blue for every place, its dance named only in its spoken label ("Highland Fling: 1st place, tied"); the dancer's page lists each dance by name. A championship point is a blue-paper chip, shown as a result, not as a miss.
+### Ribbons
+A placing is a ribbon: a V-cut foot, the number big inside (1.5rem on a dancer's day, 1.25rem in a list, 1.0625rem in compact rows) and centred above the V. One blue for every place, lighter down the order: 1st solid with a lit inner edge, 2nd and 3rd tinted, the rest a whisper, each with the same engraved edge. A tie is a solid "Tie" tag pinned across the foot. Its dance is named only in its spoken label ("Highland Fling: 1st place, tied"); the dancer's page lists each dance by name. A championship point is a blue-paper chip, shown as a result, not as a miss.
 
 ### Scott (the logo dancer)
 The dancer in the mark, drawn whole (never cropped, never given a face) in Saltire Blue, or white on the brand panel. He appears sparingly: About's hero, Home's pitch before anyone is followed, and the nothing-yet empty states (no one followed, no competitions here). Never on competition-day screens, errors or no-match results, where the news is the point.
@@ -324,7 +322,7 @@ The dancer in the mark, drawn whole (never cropped, never given a face) in Salti
 - **Do** use pink, amber and green only for live, next (in Manage) and done.
 - **Do** give every icon-only button a 44px target (36px inside chrome) and an accessible name.
 - **Do** honour Reduce Motion (pages just change, scrolls jump) and Reduce Transparency (glass turns solid).
-- **Do** give every placing its dance in the rosette's spoken label, and give upcoming dances the schedule's facts (platform, start time, draw), never a guess at what's on now.
+- **Do** give every placing its dance in the ribbon's spoken label, and give upcoming dances the schedule's facts (platform, start time, draw), never a guess at what's on now.
 - **Do** size type in rem from the scale above, so the phone's text size and browser zoom scale everything.
 
 ### Don't:

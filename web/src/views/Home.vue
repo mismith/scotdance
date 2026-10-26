@@ -116,7 +116,7 @@ const others = computed(() => shownCards.value.filter((c) => !isToday(c)))
 const otherGroups = computed(() => byCompetition(others.value))
 const unplaced = computed(() => others.value.filter((c) => !c.focus))
 
-// Finished dancers fold to a line of rosettes, so the ones still dancing
+// Finished dancers fold to a line of ribbons, so the ones still dancing
 // lead (and a past competition is just its placings).
 
 // The live dot pulses only while results are arriving (one in the last 20
@@ -292,8 +292,9 @@ const { freshKey: liveFresh } = useLiveAlertState()
           leave-to-class="grid-rows-[0fr] opacity-0"
         >
           <div v-if="showWhatsNew" class="grid mb-0!">
-            <div class="min-h-0 overflow-hidden">
-              <div class="bg-blue-paper relative mb-5 flex gap-3 rounded-2xl p-4 pr-12" role="note">
+            <!-- Padded so the clip that folds it away doesn't cut its shadow. -->
+            <div class="-mx-4 min-h-0 overflow-hidden px-4 pt-1">
+              <div class="glass relative mb-5 flex gap-3 rounded-[1.375rem] p-4 pr-12" role="note">
                 <Sparkles class="text-primary mt-0.5 size-5 shrink-0" aria-hidden="true" />
                 <p class="text-callout">
                   <span class="font-semibold">ScotDance.app has a new look.</span> Your favourite dancers now appear here,
@@ -358,16 +359,19 @@ const { freshKey: liveFresh } = useLiveAlertState()
           <ul v-if="compact" class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
             <DancerCompactRow v-for="card in g.cards" :key="card.id" :card="card" :color="cardColor(card)" />
           </ul>
-          <template v-for="card in compact ? [] : g.cards" :key="card.id">
-            <DancerDayCard
-              v-if="card.focus?.days.length"
-              :days="card.focus.days"
-              :fresh="liveFresh"
-              :competition-id="card.focus.competitionId"
-              :color="cardColor(card)"
-            />
-            <Skeleton v-else-if="card.loading" class="h-40 w-full rounded-2xl!" />
-          </template>
+          <!-- Frameless blocks, edge to edge, an engraved line between. -->
+          <div v-else class="rows-engraved -mx-4">
+            <template v-for="card in g.cards" :key="card.id">
+              <DancerDayCard
+                v-if="card.focus?.days.length"
+                :days="card.focus.days"
+                :fresh="liveFresh"
+                :competition-id="card.focus.competitionId"
+                :color="cardColor(card)"
+              />
+              <Skeleton v-else-if="card.loading" class="mx-4 my-3 h-36 rounded-2xl!" />
+            </template>
+          </div>
         </section>
 
         <!-- No favourites yet: the pitch, then something to look at -->
@@ -457,32 +461,34 @@ const { freshKey: liveFresh } = useLiveAlertState()
             </ul>
           </template>
 
-          <template v-for="(card, i) in compact || showingRecent ? [] : others" :key="card.id">
-            <DancerDayCard
-              v-if="card.focus && card.focus.days.length"
-              :class="settle"
-              :style="settleDelay(i)"
-              :days="card.focus.days"
-              :fresh="liveFresh"
-              :competition-id="card.focus.competitionId"
-              :color="cardColor(card)"
-              :competition-name="`${card.focus.phase === 'before' ? 'Next' : 'Last'}: ${card.focus.competition.name}`"
-            />
-            <Skeleton v-else-if="card.loading" class="h-40 w-full rounded-2xl!" />
-            <RouterLink
-              v-else
-              :to="{ name: 'dancer.info', params: { dancerId: card.id } }"
-              class="press-row focus-inset relative isolate -mx-4 flex min-h-16 items-center gap-3 py-2 pr-3 pl-4"
-              :style="following.paint(card.id)"
-            >
-              <span v-if="cardColor(card)" class="dancer-sash" aria-hidden="true" />
-              <span class="min-w-0 flex-1">
-                <span class="block truncate text-[1.0625rem] font-semibold">{{ card.name }}</span>
-                <span class="text-muted-foreground block truncate text-sm">{{ cardLine(card) }}</span>
-              </span>
-              <ChevronRight class="text-muted-foreground size-5" />
-            </RouterLink>
-          </template>
+          <div v-if="!compact && !showingRecent && others.length" class="rows-engraved -mx-4">
+            <template v-for="(card, i) in others" :key="card.id">
+              <DancerDayCard
+                v-if="card.focus && card.focus.days.length"
+                :class="settle"
+                :style="settleDelay(i)"
+                :days="card.focus.days"
+                :fresh="liveFresh"
+                :competition-id="card.focus.competitionId"
+                :color="cardColor(card)"
+                :competition-name="`${card.focus.phase === 'before' ? 'Next' : 'Last'}: ${card.focus.competition.name}`"
+              />
+              <Skeleton v-else-if="card.loading" class="mx-4 my-3 h-36 rounded-2xl!" />
+              <RouterLink
+                v-else
+                :to="{ name: 'dancer.info', params: { dancerId: card.id } }"
+                class="press-row focus-inset relative isolate flex min-h-16 items-center gap-3 py-2 pr-3 pl-4"
+                :style="following.paint(card.id)"
+              >
+                <span v-if="cardColor(card)" class="dancer-sash" aria-hidden="true" />
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate text-[1.0625rem] font-semibold">{{ card.name }}</span>
+                  <span class="text-muted-foreground block truncate text-sm">{{ cardLine(card) }}</span>
+                </span>
+                <ChevronRight class="text-muted-foreground size-5" />
+              </RouterLink>
+            </template>
+          </div>
         </section>
         <div v-else-if="moreFollowed" class="flex justify-center">
           <Button variant="plain" :to="{ name: 'dancers' }">See all {{ people.length }} dancers</Button>

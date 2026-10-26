@@ -22,7 +22,7 @@ const platformLabel = platform === 'ios' ? 'iOS' : platform === 'android' ? 'And
 const forFamilies = [
   { piece: 'favourite', title: 'Favourite your dancers', body: 'Your own, or your whole studio, at a glance on Home.' },
   { piece: 'number', title: 'Know when they’re on', body: 'Their platform, dancing order and session, straight from the organisers’ schedule.' },
-  { piece: 'rosette', title: 'Results as they happen', body: 'Placings show up as soon as they’re entered, even when you can’t be there.' },
+  { piece: 'ribbon', title: 'Results as they happen', body: 'Placings show up as soon as they’re entered, even when you can’t be there.' },
   { piece: 'record', title: 'Every result, on record', body: 'All their placings, season after season.' },
 ] as const
 
@@ -99,7 +99,7 @@ watch(() => route.hash, applyHash)
         <ul class="rows-engraved -mx-4 [--inset:5.75rem] [--inset-end:1rem]">
           <li v-for="f in forFamilies" :key="f.title" class="flex items-center gap-4 px-4 py-3">
             <span class="flex w-15 shrink-0 justify-center" aria-hidden="true">
-              <Medal v-if="f.piece === 'rosette'" :place="1" />
+              <Medal v-if="f.piece === 'ribbon'" :place="1" />
               <NumberCard v-else-if="f.piece === 'number'" number="107" color="var(--dancer-1)" size="sm" />
               <span v-else-if="f.piece === 'favourite'" class="bg-blue-paper flex size-11 items-center justify-center rounded-full">
                 <Star class="fill-secondary text-secondary size-6" />

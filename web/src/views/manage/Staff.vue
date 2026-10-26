@@ -105,7 +105,7 @@ async function useItsStaff() {
         <span class="min-w-0 flex-1">Shared from {{ mainName }}</span>
         <ChevronRight class="size-5 shrink-0" aria-hidden="true" />
       </RouterLink>
-      <div v-else-if="!shared" role="note" class="bg-blue-paper m-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl p-4">
+      <div v-else-if="!shared" role="note" class="glass m-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[1.375rem] p-4">
         <Link2 class="text-primary size-5 shrink-0" aria-hidden="true" />
         <p class="text-callout min-w-0 flex-1 basis-48">Use <span class="font-semibold">{{ mainName }}</span>’s staff, kept in step from then on.</p>
         <Button size="sm" :disabled="!canEdit" :busy="busy" @click="useItsStaff">Use its staff</Button>

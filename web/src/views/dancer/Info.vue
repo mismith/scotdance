@@ -77,7 +77,7 @@ const rows = computed<Row[]>(() => {
   return [...map.values()]
 })
 // Their day as a card only while it's to come or on; once it's over, that
-// competition is just the top of the list (its rosettes named there), not
+// competition is just the top of the list (its ribbons named there), not
 // shown twice.
 const showFocus = computed(() => !!focus.value?.days.length && focus.value.phase !== 'after')
 // Linked competitions together on their rail, newest first (ADR 0007 §8);
@@ -142,7 +142,7 @@ function medals(cid: string) {
     <div class="space-y-5">
       <section v-if="focus && showFocus" class="space-y-2">
         <h2 :class="['text-section', focus.phase === 'today' && 'text-live']">{{ focusLabel }}</h2>
-        <DancerDayCard :days="focus.days" :competition-id="focus.competitionId" :color="color" size="lg" />
+        <DancerDayCard class="-mx-4" :days="focus.days" :competition-id="focus.competitionId" :color="color" size="lg" />
       </section>
 
       <div v-if="profile.loading.value && !rows.length" class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]" aria-busy="true">

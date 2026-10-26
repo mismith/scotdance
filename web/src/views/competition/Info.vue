@@ -344,14 +344,16 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
           Your dancers here
           <span v-if="followedHere.length > 1" class="text-muted-foreground text-sm font-medium tabular-nums">{{ followedHere.length }}</span>
         </h2>
-        <template v-for="f in shownFollowed" :key="f.personId">
+        <div class="rows-engraved -mx-4">
           <DancerDayCard
+            v-for="f in shownFollowed"
+            :key="f.personId"
             :days="f.days"
             :fresh="freshIn(f.days)"
             :competition-id="competitionId"
             :color="f.color"
           />
-        </template>
+        </div>
         <Button v-if="followedHere.length > FOLLOWED_SHOWN" block @click="allFollowed = !allFollowed">
           {{ allFollowed ? 'Show fewer' : `Show all ${followedHere.length} dancers` }}
         </Button>

@@ -73,7 +73,7 @@ export function placeAt(index: number, { reverseFrom, entries }: Placings): numb
   return place
 }
 
-/** Tied with a neighbour (for the rosette's tie band). */
+/** Tied with a neighbour (for the ribbon's Tie tag). */
 export const isTied = (index: number, { entries }: Placings) => !!(entries[index]?.tie || entries[index + 1]?.tie)
 
 /**
