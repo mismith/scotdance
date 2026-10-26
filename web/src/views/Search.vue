@@ -531,9 +531,10 @@ watch(mode, async (m) => {
 
         <CompetitionPicker :model-value="competitionId" :choices="choices" @update:model-value="choose" />
 
+        <!-- The match first, its card bigger, then numbers that start the same. -->
         <div
           v-if="exact"
-          :class="['surface flex items-center overflow-hidden rounded-3xl pr-2', settle]"
+          :class="['-mx-4 flex items-center pr-1', settle]"
         >
           <RouterLink
             :to="{ name: 'competition.dancer', params: { competitionId, dancerId: exact.dancer.id } }"

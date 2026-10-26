@@ -243,7 +243,7 @@ const sections = computed<Section[]>(() => {
       </template>
 
       <!-- For organisers, at the end of the list. -->
-      <section v-if="view !== 'map'" class="surface mt-6 flex items-center gap-3 rounded-2xl p-4">
+      <section v-if="view !== 'map'" class="mt-8 flex items-center gap-3">
         <SquarePlus class="text-primary size-6 shrink-0" stroke-width="1.75" aria-hidden="true" />
         <p class="text-callout min-w-0 flex-1">
           <span class="font-semibold">Running a competition?</span> Put its schedule and results on everyone’s phone. It’s

@@ -133,10 +133,10 @@ watch(() => route.hash, applyHash)
         </div>
       </section>
 
-      <section v-if="isWeb" class="surface space-y-3 rounded-2xl p-4 text-center">
-        <h2 class="text-heading">Get the app</h2>
+      <section v-if="isWeb" class="space-y-3">
+        <h2 class="text-section">Get the app</h2>
         <p class="text-muted-foreground text-callout">Install it on your phone, or just bookmark it in any browser.</p>
-        <div class="flex flex-wrap justify-center gap-3">
+        <div class="flex flex-wrap gap-3">
           <a href="https://apps.apple.com/us/app/scotdance/id1386475626" target="_blank" rel="noopener" aria-label="Download on the App Store" class="press rounded-lg">
             <img src="/img/app-store.svg" alt="Download on the App Store" class="h-12" />
           </a>

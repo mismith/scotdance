@@ -89,7 +89,7 @@ const lists = ['dancers', 'judges', 'pipers', 'venues', 'organisations'].map(sec
   <button
     v-if="today"
     type="button"
-    class="surface press-row focus-inset flex w-full items-center gap-3 rounded-2xl p-4 text-left"
+    class="press-row focus-inset -mx-4 flex w-[calc(100%+2rem)] items-center gap-3 py-3 pr-3 pl-4 text-left"
     @click="emit('number', today?.id)"
   >
     <span

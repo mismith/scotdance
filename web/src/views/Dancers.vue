@@ -159,7 +159,6 @@ async function openLate(name: string) {
             v-if="!followed.length"
             size="inline"
             scott
-            class="surface rounded-2xl"
             title="Favourite your dancers"
             description="Search for a dancer above, open their page and tap Favourite. Your favourites show up here and on Home."
           />

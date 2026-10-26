@@ -155,7 +155,7 @@ const submitDisabled = computed(() => {
         </div>
       </header>
 
-      <section class="surface space-y-2 rounded-2xl p-4">
+      <section class="space-y-2">
         <label class="block space-y-1.5">
           <span class="text-callout font-medium">Your name</span>
           <input

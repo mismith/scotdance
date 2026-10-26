@@ -316,7 +316,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
         <button
           v-if="auth.isSignedIn && roles.pending.value && !roles.answered.value && !todays.length"
           type="button"
-          class="surface press-row focus-inset flex w-full items-center gap-3 rounded-2xl p-4 text-left"
+          class="press-row focus-inset -mx-4 flex w-[calc(100%+2rem)] items-center gap-3 py-3 pr-3 pl-4 text-left"
           @click="roles.open()"
         >
           <span class="min-w-0 flex-1">
@@ -472,7 +472,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
             <RouterLink
               v-else
               :to="{ name: 'dancer.info', params: { dancerId: card.id } }"
-              class="surface press-row focus-inset relative isolate flex items-center gap-3 overflow-hidden rounded-2xl p-4"
+              class="press-row focus-inset relative isolate -mx-4 flex min-h-16 items-center gap-3 py-2 pr-3 pl-4"
               :style="following.paint(card.id)"
             >
               <span v-if="cardColor(card)" class="dancer-sash" aria-hidden="true" />

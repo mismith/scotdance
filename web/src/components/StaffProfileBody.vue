@@ -71,7 +71,7 @@ const next = computed(
     <div class="space-y-5">
       <section
         v-if="bio"
-        class="surface rounded-2xl p-4 text-base leading-relaxed [&_a]:text-primary [&_a]:underline [&_p+p]:mt-3"
+        class="text-base leading-relaxed [&_a]:text-primary [&_a]:underline [&_p+p]:mt-3"
         v-html="sanitizeRichText(bio)"
       />
       <ProfileCompetitions :items="items" :loading="loading" />
