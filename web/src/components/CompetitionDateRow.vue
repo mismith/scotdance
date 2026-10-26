@@ -79,7 +79,7 @@ const hidden = computed(() => (props.preview ? null : hiddenAs(id.value, props.c
 </script>
 
 <template>
-  <li :class="['bg-card', rail && 'relative', (rail === 'middle' || rail === 'last') && 'bg-none!']">
+  <li :class="[rail && 'relative', (rail === 'middle' || rail === 'last') && 'bg-none!']">
     <LinkRail :rail="rail" />
     <RouterLink :to="to" :replace="replace" class="press-row focus-inset flex min-h-16 items-center gap-3 py-2.5 pr-3 pl-4">
       <DateTile

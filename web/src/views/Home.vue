@@ -528,7 +528,7 @@ const { freshKey: liveFresh } = useLiveAlertState()
           <div v-if="competitionsLoading && !comingUp.length && !nextAnywhere.length" class="space-y-2" aria-busy="true">
             <Skeleton v-for="i in 3" :key="i" class="h-16 w-full rounded-2xl!" />
           </div>
-          <ul v-else :class="['surface rows-inset overflow-hidden rounded-2xl [--inset:4.5rem]', settle]">
+          <ul v-else :class="['rows-engraved -mx-4 [--inset:5.5rem] [--inset-end:1rem]', settle]">
             <template v-if="comingUp.length">
               <CompetitionDateRow
                 v-for="c in comingUp"

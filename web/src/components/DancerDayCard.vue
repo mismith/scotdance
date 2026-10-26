@@ -9,6 +9,7 @@ import { getOrdinalSuffix } from '@/lib/results'
 import { platformLabel } from '@/lib/schedule'
 import type { DancerDay, DanceStatus } from '@/lib/dancerDay'
 import { successHaptic } from '@/lib/haptics'
+import { solidOf } from '@/lib/tartan'
 
 // One followed dancer at one competition, led by the number card they wear
 // there (in their colour, the one mark of "yours"). Placings pin on beside
@@ -84,6 +85,10 @@ watch(
   },
 )
 
+// Their colour beyond the bib: the rim's lit corner and a light behind it
+// (a tartan's main colour; the cloth itself stays on the bib).
+const dancerHue = computed(() => (props.color && !props.bare ? solidOf(props.color) : null))
+
 const ordinal = (n: number) => `${n}${getOrdinalSuffix(n)}`
 // The next dance still to come, in the schedule's own facts: which day
 // (before the competition), where, from when (its event's or session's start,
@@ -123,9 +128,11 @@ const rowSize = computed(() => (lg.value ? 'min-h-14 px-5 py-2.5' : 'min-h-12 px
 
 <template>
   <article
-    :class="['surface @container overflow-hidden', bare && lg ? 'rounded-3xl' : 'rounded-[1.25rem]', sweeping && 'card-sweep']"
+    :class="['surface @container overflow-hidden', bare && lg ? 'rounded-3xl' : 'rounded-[1.25rem]', dancerHue && 'glass-dancer', sweeping && 'card-sweep']"
+    :style="dancerHue ? { '--dh': dancerHue } : undefined"
     @animationend="(e: AnimationEvent) => e.animationName === 'card-sweep' && (sweeping = false)"
   >
+    <span v-if="dancerHue" class="dancer-glow" aria-hidden="true" />
     <template v-if="!bare">
       <!-- The bib, the name, and the placings pinned on: beside the name when
            the card has room, under it on a phone. -->

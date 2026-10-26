@@ -182,9 +182,9 @@ Density follows the visitor. The public app is spacious and glanceable for one-h
 
 **Key Characteristics:**
 - Atkinson Hyperlegible everywhere, rem-based so the phone's text size (in the app) and browser zoom scale it all.
-- Paper cards on a warm sheet with a faint fibre grain; glass with a lit rim only for floating chrome; one textured brand panel per surface at most.
+- Cards are lit glass panes (a gradient rim, depth) on a warm sheet with a faint fibre grain and a soft light from the top; plain lists are frameless; one textured brand panel per surface at most.
 - Continuous (squircle) corners on every rounded shape; capsules for buttons and chips.
-- iOS-style lists: full-width rows, inset hairline separators, a tint on press.
+- Plain lists without a card: full-width rows, engraved hairlines inset to the text, a tint on press. Cards are kept for things that are objects (a dancer's day, the Overview's figures and where-and-when).
 - Motion that follows the finger: pages slide toward what you tapped and back out the way they came.
 
 ## Colors
@@ -245,18 +245,19 @@ Dancer colours: nine saturated hues (red, green, purple, gold, blue, teal, magen
 
 ## Layout
 
-One column, at most 48rem wide, with a 1rem gutter on phones. From 64rem the tab bars become a 17rem sidebar on the left and the app bar keeps to the column. Fixed chrome reserves its space: `--chrome-top` (3.5rem plus the safe area) above and `--chrome-bottom` (the floating tab bar) below. Sections stack with 1.5 to 2rem between them; a heading sits 0.625rem above its card. Lists are full-width cards of rows at least 4rem tall, separators inset to line up with the text (4.5rem when rows lead with a date tile or number card). Manage on wide screens is a split view: list beside detail, never a stack of panels.
+One column, at most 48rem wide, with a 1rem gutter on phones. From 64rem the tab bars become a 17rem sidebar on the left and the app bar keeps to the column. Fixed chrome reserves its space: `--chrome-top` (3.5rem plus the safe area) above and `--chrome-bottom` (the floating tab bar) below. Sections stack with 1.5 to 2rem between them; a heading sits 0.625rem above its card. Plain lists are frameless (`rows-engraved`, set -mx-4 so the rows' own padding meets the gutter), rows at least 4rem tall, engraved hairlines inset to line up with the text (5.5rem when rows lead with a date tile or number card). Manage on wide screens is a split view: list beside detail, never a stack of panels.
 
 ## Elevation & Depth
 
-Quiet by default. Content sits on paper cards defined by a hairline, a lit top edge and a soft depth, not by borders. Depth only means "this floats": menus and sheets are raised; floating chrome (tab bar, app bar buttons) is frosted glass with a lit rim, mostly opaque so labels never lose contrast; notices use one dark glass in both themes.
+Glass, in both themes. A card is a lit pane: an opaque fill, a 1.5px gradient rim (bright at the top left, a touch of shade lower down) and soft depth, never a printed border. A favourite dancer's card takes their colour at the rim's lit corner and as a soft light behind the bib (`glass-dancer`, `dancer-glow`; a tartan uses its main colour, the cloth stays on the bib); text, rosettes and state colours always sit on the neutral glass. Depth otherwise only means "this floats": menus and sheets are raised; floating chrome (tab bar, app bar buttons) is frosted glass with a lit rim, mostly opaque so labels never lose contrast; notices use one dark glass in both themes.
 
 ### Shadow Vocabulary
-- **Card** (`box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 rgb(16 24 40 / 0.035), 0 0 0 0.5px rgb(18 22 27 / 0.11), 0 1px 1px rgb(16 24 40 / 0.04), 0 6px 14px -6px rgb(16 24 40 / 0.12)`): every content surface.
+- **Card** (`surface`: `--card-fill` inside a `--rim-neutral` gradient border, `box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 18px 36px -18px rgb(16 24 40 / 0.3), 0 2px 6px -2px rgb(16 24 40 / 0.08)`; at night a deeper fill, a fainter rim and `0 18px 40px -18px rgb(0 0 0 / 0.8)`): every card.
+- **Engraved line** (`rows-engraved`: a 1px cut in `--engrave-cut` over a 1px lit edge in `--engrave-lit`): between frameless rows.
 - **Raised** (`box-shadow: 0 0 0 0.5px rgb(18 22 27 / 0.06), 0 10px 30px -8px rgb(16 24 40 / 0.2), 0 2px 6px rgb(16 24 40 / 0.06)`): menus, sheets, popovers.
 - **Glass** (`backdrop-filter: blur(24px) saturate(1.8)` over 72% paper, a gradient rim lit along the top left with a touch of shade lower down, a soft inner glow and shade, `0 10px 28px -8px rgb(16 24 40 / 0.24)`): floating chrome only, never content; solid under Reduce Transparency.
 
-**The Paper Rule.** The page is one sheet with a faint fibre grain (`--paper-grain`: dark fibres at 0.18 by day, pale ones at 0.04 at night), and whatever hides what scrolls under it (sticky headings, the bars' fades) uses `paper` so the grain never breaks. Cards stay clean, untextured paper. Only the brand panel (Home's pitch, About's hero) gets stronger texture and gradient light.
+**The Paper Rule.** The page is one sheet held still behind everything (`body::before`): a faint fibre grain (`--paper-grain`: dark fibres at 0.18 by day, pale ones at 0.04 at night) in a soft light from the top (`--page-light`; a deep navy glow at night). Whatever hides what scrolls under it (sticky headings, the bars' fades) uses `paper`, a frosted strip of the page, so nothing shows a seam. Cards stay clean, untextured glass. Only the brand panel (Home's pitch, About's hero) gets stronger texture and gradient light.
 
 ## Shapes
 

@@ -185,7 +185,7 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
           <h2 v-if="s.heading" class="paper text-muted-foreground text-callout sticky top-(--chrome-top) z-10 py-2 font-semibold">
             {{ s.heading }}
           </h2>
-          <ul class="surface rows-inset overflow-hidden rounded-2xl">
+          <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
             <li v-for="r in s.rows" :key="r.group.id">
               <RouterLink
                 :to="{ name: 'competition.group', params: { competitionId, groupId: r.group.id } }"

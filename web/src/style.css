@@ -76,6 +76,18 @@
   --background: #f5f3ee;
   /* Paper: a faint fibre, lit from the top left (see body). */
   --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75 .22' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeDiffuseLighting lighting-color='%23fff' surfaceScale='1.6'%3E%3CfeDistantLight azimuth='225' elevation='58'/%3E%3C/feDiffuseLighting%3E%3CfeColorMatrix values='0 0 0 0 .35  0 0 0 0 .33  0 0 0 0 .3  -1 0 0 0 1'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='.18'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29'/%3E%3C/svg%3E");
+  /* The light the page sits in: brighter at the top, like a sheet by a window. */
+  --page-light: radial-gradient(120% 55% at 15% 0%, #ffffff, #f5f3ee 55%, #ebe7de);
+  /* Cards are lit panes: a fill, a gradient rim (bright top left, a touch of
+     shade lower down) and depth. A favourite dancer's rim takes their colour. */
+  --card-fill: linear-gradient(180deg, #ffffff, #fbfaf7);
+  --rim-neutral: linear-gradient(150deg, #ffffff, rgb(255 255 255 / 0.3) 35%, rgb(16 24 40 / 0.13) 70%, rgb(255 255 255 / 0.75));
+  --rim-mid: rgb(16 24 40 / 0.1);
+  --rim-end: rgb(255 255 255 / 0.75);
+  --glow-opacity: 0.3;
+  /* Engraved hairlines between frameless rows: a faint cut, lit below. */
+  --engrave-cut: rgb(16 24 40 / 0.08);
+  --engrave-lit: rgb(255 255 255 / 0.85);
   --foreground: #12161b;
   --card: #ffffff;
   /* Frosted chrome (tab bar): a hint of the page through it, a lit top edge. */
@@ -161,7 +173,7 @@
   --chrome-right: var(--safe-right);
   /* Surfaces: a hairline, a lit top edge and a soft depth for cards; a soft
      lift for what floats above them. No borders as well. */
-  --shadow-card: inset 0 1px 0 rgb(255 255 255), inset 0 -1px 0 rgb(16 24 40 / 0.035), 0 0 0 0.5px rgb(18 22 27 / 0.11), 0 1px 1px rgb(16 24 40 / 0.04), 0 6px 14px -6px rgb(16 24 40 / 0.12);
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 18px 36px -18px rgb(16 24 40 / 0.3), 0 2px 6px -2px rgb(16 24 40 / 0.08);
   --shadow-raised: 0 0 0 0.5px rgb(18 22 27 / 0.06), 0 10px 30px -8px rgb(16 24 40 / 0.2), 0 2px 6px rgb(16 24 40 / 0.06);
   /* Pressed and hovered rows tint by this much of the ink colour. */
   --tint-hover: color-mix(in oklab, var(--foreground) 4%, transparent);
@@ -189,6 +201,14 @@
   --glass-shade: rgb(0 0 0 / 0.4);
   /* At night the fibres catch the light instead: pale, and far fainter. */
   --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75 .22' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeDiffuseLighting lighting-color='%23fff' surfaceScale='1.6'%3E%3CfeDistantLight azimuth='225' elevation='58'/%3E%3C/feDiffuseLighting%3E%3CfeColorMatrix values='0 0 0 0 .86  0 0 0 0 .9  0 0 0 0 .96  2 0 0 0 -1.1'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='.04'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29'/%3E%3C/svg%3E");
+  --page-light: radial-gradient(120% 70% at 20% 0%, #1b2a4a, #0b0f17 55%, #07090d);
+  --card-fill: linear-gradient(180deg, #1c222b, #161b22);
+  --rim-neutral: linear-gradient(150deg, rgb(255 255 255 / 0.35), rgb(255 255 255 / 0.05) 40%, rgb(255 255 255 / 0.12));
+  --rim-mid: rgb(255 255 255 / 0.06);
+  --rim-end: rgb(255 255 255 / 0.14);
+  --glow-opacity: 0.45;
+  --engrave-cut: rgb(0 0 0 / 0.55);
+  --engrave-lit: rgb(255 255 255 / 0.07);
   --card-foreground: #eef2f6;
   --popover: #222a33;
   --popover-foreground: #eef2f6;
@@ -232,7 +252,7 @@
   /* Dark mode's dancer colours are brighter, so they take dark ink. */
   --on-dancer: #0c0f13;
   /* Dark surfaces rise by getting lighter, with a faint lit top edge. */
-  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.035), 0 0 0 0.5px rgb(255 255 255 / 0.06);
+  --shadow-card: 0 18px 40px -18px rgb(0 0 0 / 0.8);
   --shadow-raised: inset 0 1px 0 rgb(255 255 255 / 0.07), 0 0 0 0.5px rgb(255 255 255 / 0.08), 0 14px 34px -10px rgb(0 0 0 / 0.65);
   --tint-hover: color-mix(in oklab, var(--foreground) 5%, transparent);
   --tint-press: color-mix(in oklab, var(--foreground) 10%, transparent);
@@ -284,10 +304,18 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
-    background-image: var(--paper-grain);
-    background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  /* The page's light and grain, held still behind everything (a fixed layer:
+     iOS ignores background-attachment: fixed). */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--paper-grain), var(--page-light);
   }
   button,
   input,
@@ -459,16 +487,57 @@
 /* The page itself, grain and all: for what sits on the page but has to hide
    what scrolls under it (sticky headings). Fixed, so its grain lines up. */
 @utility paper {
-  background-color: var(--background);
+  /* Over the page's light: a frosted strip of it, so nothing shows a seam. */
+  background-color: color-mix(in oklab, var(--background) 55%, transparent);
   background-image: var(--paper-grain);
-  background-attachment: fixed;
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  @media (prefers-reduced-transparency: reduce) {
+    background-color: var(--background);
+  }
 }
 @utility surface {
-  background-color: var(--card);
+  border: 1.5px solid transparent;
+  background: var(--card-fill) padding-box, var(--rim, var(--rim-neutral)) border-box;
   box-shadow: var(--shadow-card);
   @media (forced-colors: active) {
     outline: 1px solid CanvasText;
     outline-offset: -1px;
+  }
+}
+/* A favourite dancer's card: their colour (`--dh`, solid) at the rim's lit
+   corner, and as a soft light behind the bib (`dancer-glow`). Text, rosettes
+   and state colours stay on the neutral glass. */
+@utility glass-dancer {
+  position: relative;
+  isolation: isolate;
+  --rim: linear-gradient(150deg, var(--dh), color-mix(in oklab, var(--dh) 35%, transparent) 30%, var(--rim-mid) 65%, var(--rim-end));
+}
+@utility dancer-glow {
+  position: absolute;
+  top: -4rem;
+  left: -3rem;
+  z-index: -1;
+  width: 12rem;
+  height: 12rem;
+  border-radius: 9999px;
+  background: var(--dh);
+  opacity: var(--glow-opacity);
+  filter: blur(40px);
+  pointer-events: none;
+  @media (forced-colors: active) {
+    display: none;
+  }
+}
+/* A plain list without a card: the page is the sheet, rows divided by
+   engraved hairlines. Usually -mx-4 so the rows' own padding lines their
+   text up with the page; --inset and --inset-end line the hairline up too. */
+@utility rows-engraved {
+  & > * + * {
+    background-image: linear-gradient(var(--engrave-cut) 0 1px, var(--engrave-lit) 1px 2px);
+    background-size: calc(100% - var(--inset, 0px) - var(--inset-end, 0px)) 2px;
+    background-position: right var(--inset-end, 0px) top;
+    background-repeat: no-repeat;
   }
 }
 @utility surface-raised {

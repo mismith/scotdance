@@ -553,7 +553,7 @@ const hasStart = computed(() => !!props.spec.importFirst || !!props.spec.presets
                 'has-focus-visible:outline-ring flex items-stretch has-focus-visible:outline-3 has-focus-visible:-outline-offset-3',
                 lifted === item.id
                   ? 'surface-raised z-1'
-                  : ['press-row', itemId === item.id || (selecting && selected.has(item.id)) ? 'bg-blue-paper' : 'paper'],
+                  : ['press-row', itemId === item.id || (selecting && selected.has(item.id)) ? 'bg-blue-paper' : ''],
               ]"
             >
               <!-- The leading edge: a grip where the list can be reordered, else a margin. -->
