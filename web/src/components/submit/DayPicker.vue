@@ -123,11 +123,11 @@ function onPointerUp(e: PointerEvent) {
 
 <template>
   <div
-    class="surface max-w-sm space-y-2 rounded-2xl p-3"
+    class="max-w-sm space-y-2"
     role="group"
     :aria-labelledby="labelledby"
   >
-    <div class="flex items-center gap-1 pl-1">
+    <div class="-mr-2.5 flex items-center gap-1">
       <p class="text-heading flex-1" aria-live="polite">{{ formatMonthYear(cursor) }}</p>
       <button
         type="button"

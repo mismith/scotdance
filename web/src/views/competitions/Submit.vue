@@ -929,7 +929,7 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
             </p>
             <p class="text-muted-foreground mx-auto max-w-md text-sm">If it doesn’t arrive, check your junk folder.</p>
             <!-- Asked every time: a weekend's two (or a week's seven) go together. -->
-            <section v-if="nextDay" aria-labelledby="weekend" class="surface mx-auto mt-8 max-w-md space-y-3 rounded-2xl p-4 text-left">
+            <section v-if="nextDay" aria-labelledby="weekend" class="mx-auto max-w-md space-y-3 pt-6">
               <h2 id="weekend" class="text-heading">Another competition that weekend?</h2>
               <p class="text-muted-foreground text-sm text-pretty">It starts with this one’s details, so it just needs a name. Once both are approved, they’re linked, and the details and staff you add to this one show on both.</p>
               <Button variant="tonal" block @click="sameWeekend"><Plus /> Add {{ nextDayLabel }}</Button>
@@ -984,9 +984,9 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
 
             <template v-else-if="at === 'match'">
               <!-- Yours from last year (as it'd be this year) first, then the lists', each marked where it's from: picking one fills it in. -->
-              <ul v-if="suggestions?.yours.length || suggestions?.known.length" class="surface divide-y overflow-hidden rounded-2xl">
+              <ul v-if="suggestions?.yours.length || suggestions?.known.length" class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
                 <li v-for="c in suggestions.yours" :key="c.id">
-                  <button type="button" :aria-pressed="pickedKey === c.id" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left" @click="sameAgain(c)">
+                  <button type="button" :aria-pressed="pickedKey === c.id" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 py-3 pr-3 pl-4 text-left" @click="sameAgain(c)">
                     <span class="min-w-0 flex-1 space-y-1">
                       <span class="block text-base font-semibold break-words">{{ thisYears(c) }}</span>
                       <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -999,7 +999,7 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
                   </button>
                 </li>
                 <li v-for="k in suggestions.known" :key="k.key">
-                  <button type="button" :aria-pressed="pickedKey === k.key" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left" @click="pickKnown(k)">
+                  <button type="button" :aria-pressed="pickedKey === k.key" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 py-3 pr-3 pl-4 text-left" @click="pickKnown(k)">
                     <span class="min-w-0 flex-1 space-y-1">
                       <span class="block text-base font-semibold break-words">{{ k.name }}</span>
                       <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -1014,9 +1014,9 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
               </ul>
               <section v-if="suggestions?.here.length" aria-labelledby="match-here" class="space-y-2">
                 <h2 id="match-here" class="text-callout text-muted-foreground font-medium">Already on ScotDance.app</h2>
-                <ul class="surface divide-y overflow-hidden rounded-2xl">
+                <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
                   <li v-for="c in suggestions.here" :key="c.id">
-                    <button type="button" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left" @click="alreadyHere(c)">
+                    <button type="button" class="press-row focus-inset flex min-h-16 w-full items-center gap-3 py-3 pr-3 pl-4 text-left" @click="alreadyHere(c)">
                       <span class="min-w-0 flex-1 space-y-1">
                         <span class="block text-base font-semibold break-words">{{ c.name }}</span>
                         <span class="text-muted-foreground block text-sm">{{ hereLine(c) }}</span>
@@ -1046,7 +1046,8 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
             </template>
 
             <template v-else-if="at === 'organisation'">
-              <div v-if="orderedOrgRows.length" class="surface divide-y overflow-hidden rounded-2xl">
+              <!-- The organisations, then a row to find or add another. -->
+              <div class="rows-engraved -mx-4 [--inset:4.25rem] [--inset-end:1rem]">
                 <button
                   v-for="row in orderedOrgRows"
                   :key="row.key"
@@ -1063,15 +1064,15 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
                   </span>
                   <Checkbox :checked="row.checked" />
                 </button>
+                <button
+                  type="button"
+                  class="press-row focus-inset text-primary flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left"
+                  @click="pickingOrg.show($event)"
+                >
+                  <span class="bg-blue-paper flex size-10 shrink-0 items-center justify-center rounded-xl" aria-hidden="true"><Plus class="size-5" /></span>
+                  <span class="flex-1 text-base font-semibold">{{ orderedOrgRows.length ? 'Find or add another' : 'Find or add an organisation' }}</span>
+                </button>
               </div>
-              <button
-                type="button"
-                class="surface press-row focus-inset text-primary flex min-h-16 w-full items-center gap-3 rounded-2xl px-4 py-2 text-left"
-                @click="pickingOrg.show($event)"
-              >
-                <span class="bg-blue-paper flex size-10 shrink-0 items-center justify-center rounded-xl" aria-hidden="true"><Plus class="size-5" /></span>
-                <span class="flex-1 text-base font-semibold">{{ orderedOrgRows.length ? 'Find or add another' : 'Find or add an organisation' }}</span>
-              </button>
               <OrganisationPicker
                 :morph="pickingOrg"
                 :mine="me.managedOrganisationIds"
@@ -1138,7 +1139,7 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
             </template>
 
             <template v-else>
-              <ul class="surface divide-y overflow-hidden rounded-2xl">
+              <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">
                 <li v-for="r in review" :key="r.slide">
                   <button type="button" class="press-row focus-inset flex min-h-14 w-full items-start gap-3 py-3 pr-3 pl-4 text-left" @click="r.slide === 'linked' ? toggleLinking() : change(r.slide)">
                     <span class="text-muted-foreground text-callout w-24 shrink-0 pt-px">{{ r.label }}</span>
@@ -1170,7 +1171,7 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
                 role="checkbox"
                 :aria-checked="form.agree"
                 :aria-invalid="!!error || undefined"
-                class="surface press-row focus-inset flex w-full items-start gap-3 rounded-2xl p-4 text-left"
+                class="press-row focus-inset -mx-4 flex w-[calc(100%+2rem)] items-start gap-3 px-4 py-3 text-left"
                 @click="form.agree = !form.agree"
               >
                 <Checkbox :checked="form.agree" class="mt-0.5" />

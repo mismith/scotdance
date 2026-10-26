@@ -68,12 +68,13 @@ const ROW =
 </script>
 
 <template>
-  <div class="surface overflow-hidden rounded-2xl">
+  <!-- The usual countries, then one row to find another. -->
+  <div class="rows-engraved -mx-4 [--inset:3.75rem] [--inset-end:1rem]">
     <div
       ref="group"
       role="radiogroup"
       :aria-labelledby="labelledby"
-      class="divide-y"
+      class="rows-engraved [--inset:3.75rem] [--inset-end:1rem]"
       @keydown="onArrow"
     >
       <button
@@ -106,7 +107,7 @@ const ROW =
         </span>
       </button>
     </div>
-    <button type="button" :class="[ROW, 'text-primary border-t']" @click="openSheet">
+    <button type="button" :class="[ROW, 'text-primary']" @click="openSheet">
       <span class="flex w-8 shrink-0 justify-center" aria-hidden="true"
         ><Search class="size-5"
       /></span>

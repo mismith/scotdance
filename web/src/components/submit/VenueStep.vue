@@ -91,7 +91,7 @@ const SPACE = { placeholder: 'e.g. Main Hall', hint: 'The hall, theatre, gym or 
 
     <!-- Picked from the search: what it filled in, to check. -->
     <template v-else-if="picked">
-      <div class="surface flex items-start gap-3 rounded-2xl p-4">
+      <div class="flex items-start gap-3">
         <span
           class="bg-blue-paper text-primary flex size-10 shrink-0 items-center justify-center rounded-full"
           aria-hidden="true"

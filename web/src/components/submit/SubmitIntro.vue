@@ -99,7 +99,7 @@ defineExpose({ title })
       </p>
     </header>
 
-    <ol class="surface rounded-2xl px-4 py-1" aria-label="What happens">
+    <ol aria-label="What happens">
       <li
         v-for="(stop, i) in STOPS"
         :key="stop.title"
@@ -127,8 +127,9 @@ defineExpose({ title })
     </ol>
 
     <!-- Left part-way: what's saved, to pick up (the page's button) or drop. -->
-    <div v-if="draft" class="surface flex items-center gap-3 rounded-2xl py-2 pr-2 pl-4">
-      <FilePen class="text-primary size-5 shrink-0" aria-hidden="true" />
+    <div v-if="draft" class="-mr-2 flex items-center gap-3.5">
+      <!-- (Its text lines up with the stops' above.) -->
+      <span class="flex w-10 shrink-0 justify-center" aria-hidden="true"><FilePen class="text-primary size-5" /></span>
       <span class="min-w-0 flex-1 py-1">
         <span class="block truncate text-base font-semibold">{{ draft.name.trim() || 'Your competition' }}</span>
         <span class="text-muted-foreground block truncate text-callout">{{ draftLine }}</span>
