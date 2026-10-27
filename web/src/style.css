@@ -978,12 +978,11 @@ html:not([data-native])::before {
 /* Morph (lib/morph.ts): a trigger grows into the sheet or menu it opens and
    shrinks back into it on close. Same bg/fg split as the nav pills above:
    the group paints a surface whose corners and colour go from the trigger's
-   to the target's (set as --morph-* on <html> per morph), and the two
-   snapshots cross-fade on top: the trigger's at its natural size, the sheet
-   or menu's scaled with the surface (never squashed). Closing, the surface
-   shrinks into an empty ghost over the trigger and fades there, while the
-   trigger holds still in the page. Reduce Motion skips the transition
-   entirely. */
+   to the target's (set as --morph-* on <html> per morph), and the sheet or
+   menu's picture scales with it on top (never squashed). At the trigger's
+   end the group is an empty ghost over it, and the surface is clear there:
+   the trigger holds still in the page while the surface grows out of it and
+   shrinks back into it. Reduce Motion skips the transition entirely. */
 @keyframes vt-morph-surface {
   from {
     border-radius: var(--morph-from-radius);
@@ -1008,8 +1007,7 @@ html:not([data-native])::before {
 }
 /* Timing (F3): menus and centred cards spring out of their control; a
    sheet pinned to the bottom edge glides without overshoot; closing is a
-   quick ease back in. The two snapshots cross-fade with overlap, so there's
-   never an empty frame. */
+   quick ease back in. */
 ::view-transition-group(morph) {
   animation-name: -ua-view-transition-group-anim-morph, vt-morph-surface;
   animation-duration: 300ms;
@@ -1033,29 +1031,23 @@ html:not([data-native])::before {
 :active-view-transition-type(morph-close)::view-transition-new(root) {
   animation-duration: 220ms;
 }
+/* The sheet or menu's picture (new when opening, old when closing; the
+   ghost's is empty) grows and shrinks with the surface rather than being
+   uncovered through a growing window. Closing, it's gone early. */
 ::view-transition-old(morph),
 ::view-transition-new(morph) {
-  @apply size-full object-none object-top-left;
+  @apply size-full object-cover object-top;
 }
 ::view-transition-old(morph) {
-  animation: vt-morph-out 90ms var(--ease-exit) both;
+  animation: vt-morph-out 80ms var(--ease-exit) both;
 }
 ::view-transition-new(morph) {
   animation: vt-morph-in 150ms 50ms var(--ease-standard) both;
 }
-/* The sheet or menu's picture grows out of its trigger and shrinks back into
-   it with the surface, the same both ways, rather than being uncovered
-   through a growing window. Closing, it's gone early. */
-:active-view-transition-type(morph-open)::view-transition-new(morph),
-:active-view-transition-type(morph-close)::view-transition-old(morph) {
-  @apply object-cover object-top;
-}
-:active-view-transition-type(morph-close)::view-transition-old(morph) {
-  animation-duration: 80ms;
-}
 /* While something morphs, the chrome (tab bar, back pill, titles) stays in
    the page's picture instead of its own layer, so the backdrop dims it and
-   the growing sheet passes over it (F2). The morphing element keeps its name. */
+   the growing sheet passes over it (F2). The morphing element (or ghost)
+   keeps its name. */
 :root:active-view-transition-type(morph)
   :is([class*='view-transition-name'], [style*='view-transition-name']):not([style*='view-transition-name: morph']) {
   view-transition-name: none !important;

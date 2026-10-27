@@ -9,9 +9,10 @@ import { startViewTransition } from '@/lib/transition'
 //   <button @click="menu.show">…</button>          the trigger is the clicked element
 //   <Dialog :open="menu.open" :morph="menu" @close="menu.hide()">…</Dialog>
 //
-// Only one element at a time carries the `morph` view-transition name: the
-// trigger before opening, the target once open, then a ghost over the
-// trigger to close, so the trigger holds still while the surface shrinks.
+// Only one element at a time carries the `morph` view-transition name: an
+// empty ghost over the trigger at the trigger's end, the target at the
+// other. The trigger itself never does, so it holds still in the page while
+// the surface grows out of it and shrinks back into it.
 // The look lives in style.css under "Morph". Without View Transitions, or
 // with Reduce Motion on, things just open and close.
 
@@ -77,11 +78,11 @@ function paintSurface(el: HTMLElement, end: 'from' | 'to') {
   root.setProperty(`--morph-${end}-corner`, cs.getPropertyValue('corner-shape') || 'round')
 }
 
-/** Closing, the surface shrinks into a ghost: an empty stand-in pinned over
- *  the trigger, fading as it lands. The trigger itself stays in the page's
- *  picture, holding still (given the name, its picture would ride the
- *  shrinking surface in from the sheet's edge). */
-function ghostOver(el: HTMLElement) {
+/** An empty stand-in pinned over the trigger, carrying the name in its
+ *  place: the surface grows out of it from clear and shrinks back into it to
+ *  clear. Given the name, the trigger's own picture would ride the surface's
+ *  corner out to the sheet's edge and back. */
+function ghostOver(el: HTMLElement, end: 'from' | 'to') {
   const r = el.getBoundingClientRect()
   const ghost = document.createElement('div')
   ghost.setAttribute('aria-hidden', 'true')
@@ -98,8 +99,8 @@ function ghostOver(el: HTMLElement) {
   const g = ghost.getBoundingClientRect()
   ghost.style.left = `${2 * r.left - g.left}px`
   ghost.style.top = `${2 * r.top - g.top}px`
-  paintSurface(el, 'to')
-  document.documentElement.style.setProperty('--morph-to-bg', 'transparent')
+  paintSurface(el, end)
+  document.documentElement.style.setProperty(`--morph-${end}-bg`, 'transparent')
   ghost.style.viewTransitionName = NAME
   return ghost
 }
@@ -134,21 +135,24 @@ export function useMorph() {
       return
     }
     animated.value = true
-    paintSurface(leaving, 'from')
-    leaving.style.viewTransitionName = NAME
+    let ghost = next ? ghostOver(leaving, 'from') : undefined
+    if (!next) {
+      paintSurface(leaving, 'from')
+      leaving.style.viewTransitionName = NAME
+    }
     // Floating menus and centred cards spring a little; a sheet pinned to the
     // bottom edge doesn't overshoot it. style.css times each.
     const kind = target.value?.dataset.morphKind
     const pinned = kind === 'sheet' && !matchMedia('(min-width: 48rem)').matches
     const types = [NAME, pinned ? 'morph-pinned' : 'morph-float', next ? 'morph-open' : 'morph-close']
-    let ghost: HTMLElement | undefined
     const transition = startViewTransition(async () => {
+      ghost?.remove()
       leaving.style.viewTransitionName = ''
       open.value = next
       await nextTick()
       const arriving = next ? target.value : trigger.value
       if (!onScreen(arriving)) return
-      if (!next) ghost = ghostOver(arriving)
+      if (!next) ghost = ghostOver(arriving, 'to')
       else {
         paintSurface(arriving, 'to')
         arriving.style.viewTransitionName = NAME
