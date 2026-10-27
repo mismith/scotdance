@@ -1,6 +1,6 @@
-{{ competition.name }} was approved automatically
+Auto-approved: {{ competition.name }}
 
-Nothing in it needed a look. {{ contact.name }} can manage it now, and has been emailed a link.
+No action needed. This competition passed the automatic checks, and {{ contact.name }} can manage it now.
 
     {{ competition.name }}{{#summary.date}}
     {{.}}{{/summary.date}}{{#summary.where}}
@@ -11,7 +11,7 @@ Submitted by {{ contact.name }} <{{ contact.email }}>{{#contact.message}}, who w
 
     {{.}}{{/contact.message}}
 
-If anything needs fixing, change it in Manage:
+View or edit the competition in Manage:
 {{ admin.link }}
 
 To email {{ contact.name }}, reply to this one.

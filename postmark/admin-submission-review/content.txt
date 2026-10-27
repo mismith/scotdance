@@ -1,6 +1,8 @@
-{{ competition.name }} needs a look
+Review: {{ competition.name }}
 
-{{#review}}Why it needs a look:
+Please review this submission and approve or reject it.
+
+{{#review}}Why it needs review:
 {{#each reasons}}- {{.}}
 {{/each}}
 {{/review}}    {{ competition.name }}{{#summary.date}}
@@ -12,7 +14,7 @@ Submitted by {{ contact.name }} <{{ contact.email }}>{{#contact.message}}, who w
 
     {{.}}{{/contact.message}}
 
-Review it:
+Review submission:
 {{ admin.link }}
 
 To email {{ contact.name }}, reply to this one.

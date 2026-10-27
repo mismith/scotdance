@@ -1,7 +1,7 @@
 {
   "Name": "Admin: submission approved automatically",
   "Alias": "admin-submission-auto-approved",
-  "Subject": "{{ competition.name }} was approved automatically",
+  "Subject": "Auto-approved: {{ competition.name }}",
   "TemplateType": "Standard",
   "LayoutTemplate": "scotdance",
   "TestRenderModel": {

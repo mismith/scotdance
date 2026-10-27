@@ -1,9 +1,10 @@
-<div class="preheader">Submitted by {{ contact.name }}.&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
-<h1>{{ competition.name }} needs a look</h1>
+<div class="preheader">Awaiting your decision. {{#review}}{{#each reasons}}{{.}}. {{/each}}{{/review}}&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+<h1>Review: {{ competition.name }}</h1>
+<p>Please review this submission and approve or reject it.</p>
 {{#review}}<table role="presentation" class="callout" width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr>
     <td class="callout-cell">
-      <p class="callout-title">Why it needs a look</p>
+      <p class="callout-title">Why it needs review</p>
       <ul>{{#each reasons}}<li>{{.}}</li>{{/each}}</ul>
     </td>
   </tr>
@@ -39,7 +40,7 @@
 </table>{{/contact.message}}
 <table role="presentation" class="button-wrap button-table" cellpadding="0" cellspacing="0" border="0">
   <tr>
-    <td class="button-cell" align="center"><a class="button" href="{{ admin.link }}">Review it</a></td>
+    <td class="button-cell" align="center"><a class="button" href="{{ admin.link }}">Review submission</a></td>
   </tr>
 </table>
 <p class="small" style="margin: 16px 0 0;">To email {{ contact.name }}, reply to this one.</p>

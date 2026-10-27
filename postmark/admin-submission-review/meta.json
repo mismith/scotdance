@@ -1,7 +1,7 @@
 {
   "Name": "Admin: submission to review",
   "Alias": "admin-submission-review",
-  "Subject": "{{ competition.name }} needs a look",
+  "Subject": "Review: {{ competition.name }}",
   "TemplateType": "Standard",
   "LayoutTemplate": "scotdance",
   "TestRenderModel": {
