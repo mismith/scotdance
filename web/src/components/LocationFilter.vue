@@ -245,7 +245,6 @@ async function pickSuggestion(s: PlaceSuggestion): Promise<void> {
     :open="sheet.open"
     :morph="sheet"
     :variant="wide ? 'dropdown' : 'sheet'"
-    :closable="false"
     aria-label="Where to look"
     :class="wide && 'w-96'"
     @close="sheet.hide()"
