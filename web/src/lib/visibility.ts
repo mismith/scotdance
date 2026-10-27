@@ -10,12 +10,12 @@ export type Visibility = 'unlisted' | 'unpublished' | 'published'
 export const visibilityOf = (c: Pick<Competition, 'listed' | 'published'>): Visibility =>
   c.published === true ? 'published' : c.listed === true ? 'unpublished' : 'unlisted'
 
-/** Said the same way wherever it shows: "Unlisted: only admins can see this competition." */
+/** Said the same way wherever it shows: "Unlisted: hidden from public listings." */
 export const VISIBILITY = {
   unlisted: {
     label: 'Unlisted',
     icon: EyeOff,
-    line: 'only admins can see this competition.',
+    line: 'hidden from public listings.',
   },
   unpublished: {
     label: 'Unpublished',
