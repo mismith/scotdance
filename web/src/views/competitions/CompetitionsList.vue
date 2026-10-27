@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { OfflineUnavailableError } from '@/lib/offline'
 import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
@@ -200,7 +201,7 @@ const currentSection = useScrollSection(mainEl)
           v-else-if="error && !competitions.length"
           :icon="CloudOff"
           title="Competitions didn’t load"
-          description="Check your connection, then try again."
+          :description="error instanceof OfflineUnavailableError ? error.message : 'Check your connection, then try again.'"
         >
           <Button variant="primary" size="lg" @click="reload()">Try again</Button>
         </EmptyState>

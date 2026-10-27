@@ -21,6 +21,7 @@ import { competitionEntry, historyPosition } from '@/lib/competitionExit'
 import { backLabelFor } from '@/lib/backLabels'
 import { competitionPhase } from '@/lib/dancerDay'
 import { formatShortDate } from '@/lib/format'
+import { OfflineUnavailableError } from '@/lib/offline'
 import { VISIBILITY, visibilityOf } from '@/lib/visibility'
 
 const TAB_LABEL_BY_ROUTE: Record<string, string> = {
@@ -201,7 +202,7 @@ usePageTitle(() => [
         description="It may not be public yet, or the link has changed. Try finding it under Competitions."
       />
       <div v-else-if="error" class="space-y-3 py-8 text-center">
-        <p class="text-base font-semibold">This competition didn’t load. Check your connection.</p>
+        <p class="text-base font-semibold">{{ error instanceof OfflineUnavailableError ? error.message : 'This competition didn’t load. Check your connection.' }}</p>
         <Button variant="primary" size="lg" @click="reload">Try again</Button>
       </div>
       <EmptyState

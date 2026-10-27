@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { connected } from '@/lib/offline'
 import { useMorph } from '@/lib/morph'
 import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import { RouterLink } from 'vue-router'
@@ -93,7 +94,7 @@ onMounted(async () => {
 // The kicker says when and where: "In 6 days · Calgary, AB", or on the day
 // "Live · Day 1 of 2 · Calgary, AB" with the one live dot (pulsing only
 // while results are coming in).
-const live = computed(() => phase.value === 'today')
+const live = computed(() => connected.value && phase.value === 'today')
 // The date row, only when it adds to the tile and "Yesterday" above: the
 // year once it's more than a week away, the start time, or no tile at all.
 const showDateRow = computed(() => {

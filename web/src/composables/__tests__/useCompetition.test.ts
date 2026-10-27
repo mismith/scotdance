@@ -6,6 +6,8 @@ import { mount } from '@vue/test-utils'
 // load: read once, or streamed live on competition day.
 
 const meta: Record<string, unknown> = {}
+const metaStreams = new Map<string, (snap: { val: () => unknown }) => void>()
+const wrappers: Array<ReturnType<typeof mount>> = []
 const me = reactive({
   accessKnown: true,
   perms: {} as Record<string, boolean>,
@@ -16,11 +18,19 @@ const streams = new Map<string, (v: unknown) => void>()
 let failNext: string | null = null
 
 vi.mock('@/firebase', () => ({ dataRef: (path: string) => ({ path }) }))
-vi.mock('firebase/database', () => ({ child: (p: { path: string }, k: string) => ({ path: `${p.path}/${k}` }) }))
-vi.mock('@/lib/offline', () => ({
-  getSavedAt: async (r: { path: string }) => ({ val: () => meta[r.path.split('/').at(-1)!] ?? null }),
+vi.mock('firebase/database', () => ({
+  child: (p: { path: string }, k: string) => ({ path: `${p.path}/${k}` }),
 }))
-vi.mock('@/lib/competitionChanged', () => ({ competitionChanged: async () => null, stampOf: () => null }))
+vi.mock('@/lib/offline', () => ({
+  onReconnect: () => () => {},
+  OfflineUnavailableError: class extends Error {},
+  onValueSaved: (r: { path: string }, cb: (snap: { val: () => unknown }) => void) => {
+    const id = r.path.split('/').at(-1)!
+    metaStreams.set(id, cb)
+    queueMicrotask(() => cb({ val: () => meta[id] ?? null }))
+    return () => metaStreams.delete(id)
+  },
+}))
 vi.mock('@/stores/me', () => ({ useMeStore: () => me }))
 vi.mock('@/composables/useCompetitions', () => ({ peekCompetition: () => null }))
 vi.mock('@/lib/competitionData', () => {
@@ -41,10 +51,25 @@ vi.mock('@/lib/competitionData', () => {
     }
   }
   return {
+    forgetCompetition: vi.fn(),
     fetchStaff: once('staff', () => []),
-    fetchDancers: once('dancers', () => ({ dancers: [{ id: 'd1', fullName: 'Isla Ross' }], groups: [], categories: [] })),
-    fetchResults: once('results', () => ({ dances: [], results: {}, points: {}, hidden: false })),
-    fetchSchedule: once('schedule', () => ({ schedule: null, platforms: [], draws: {}, hidden: true })),
+    fetchDancers: once('dancers', () => ({
+      dancers: [{ id: 'd1', fullName: 'Isla Ross' }],
+      groups: [],
+      categories: [],
+    })),
+    fetchResults: once('results', () => ({
+      dances: [],
+      results: {},
+      points: {},
+      hidden: false,
+    })),
+    fetchSchedule: once('schedule', () => ({
+      schedule: null,
+      platforms: [],
+      draws: {},
+      hidden: true,
+    })),
     watchStaff: live('staff'),
     watchDancers: live('dancers'),
     watchResults: live('results'),
@@ -66,13 +91,15 @@ const flush = async () => {
 function open(id = 'c1') {
   let ctx!: ReturnType<typeof provideCompetition>
   const competitionId = ref(id)
-  mount(
-    defineComponent({
-      setup() {
-        ctx = provideCompetition(competitionId)
-        return () => h('div')
-      },
-    }),
+  wrappers.push(
+    mount(
+      defineComponent({
+        setup() {
+          ctx = provideCompetition(competitionId)
+          return () => h('div')
+        },
+      }),
+    ),
   )
   return { ctx, competitionId }
 }
@@ -87,7 +114,11 @@ beforeEach(() => {
   streams.clear()
   failNext = null
 })
-afterEach(() => vi.useRealTimers())
+afterEach(() => {
+  wrappers.splice(0).forEach((w) => w.unmount())
+  metaStreams.clear()
+  vi.useRealTimers()
+})
 
 describe('who can see it', () => {
   it('shows a published competition to everyone', async () => {
@@ -160,7 +191,11 @@ describe('sections', () => {
     await flush()
     expect(ctx.isLive.value).toBe(true)
     const loaded = ctx.loadDancers()
-    streams.get('dancers')!({ dancers: [{ id: 'd1', fullName: 'Isla Ross' }], groups: [], categories: [] })
+    streams.get('dancers')!({
+      dancers: [{ id: 'd1', fullName: 'Isla Ross' }],
+      groups: [],
+      categories: [],
+    })
     await loaded
     streams.get('dancers')!({
       dancers: [
@@ -172,11 +207,21 @@ describe('sections', () => {
     })
     expect(ctx.dancers.value).toHaveLength(2)
     const results = ctx.loadResults()
-    streams.get('results')!({ dances: [], results: { g1: { d1: ['d1'] } }, points: {}, hidden: false })
+    streams.get('results')!({
+      dances: [],
+      results: { g1: { d1: ['d1'] } },
+      points: {},
+      hidden: false,
+    })
     await results
     // What's there on opening isn't a result arriving; the next one is.
     expect(ctx.liveResultsAt.value).toBeNull()
-    streams.get('results')!({ dances: [], results: { g1: { d1: ['d1'], d2: ['d1'] } }, points: {}, hidden: false })
+    streams.get('results')!({
+      dances: [],
+      results: { g1: { d1: ['d1'], d2: ['d1'] } },
+      points: {},
+      hidden: false,
+    })
     expect(ctx.liveResultsAt.value).not.toBeNull()
     expect(calls).toEqual(['stream dancers', 'stream results'])
   })
@@ -219,5 +264,41 @@ describe('sections', () => {
     expect(calls).toContain('stop dancers')
     await ctx.loadDancers()
     expect(calls.at(-1)).toBe('read dancers')
+  })
+})
+
+describe('publication changes while open', () => {
+  it('loads a requested section as soon as the competition is published', async () => {
+    meta.c1 = { name: 'Games', listed: true, published: false, date: day(10) }
+    const { ctx } = open()
+    await flush()
+    await ctx.loadDancers()
+    expect(calls).not.toContain('read dancers')
+    meta.c1 = { ...(meta.c1 as object), published: true }
+    metaStreams.get('c1')?.({ val: () => meta.c1 })
+    await flush()
+    expect(ctx.restricted.value).toBe(false)
+    expect(ctx.dancers.value).toHaveLength(1)
+  })
+
+  it('stops and clears protected sections when unpublished, then restarts on republishing', async () => {
+    meta.c1 = { name: 'Games', listed: true, published: true, date: day(0) }
+    const { ctx } = open()
+    await flush()
+    void ctx.loadDancers()
+    const old = streams.get('dancers')!
+    old({ dancers: [{ id: 'd1', fullName: 'Isla Ross' }], groups: [], categories: [] })
+    meta.c1 = { ...(meta.c1 as object), published: false }
+    metaStreams.get('c1')?.({ val: () => meta.c1 })
+    await flush()
+    expect(ctx.restricted.value).toBe(true)
+    expect(streams.has('dancers')).toBe(false)
+    expect(ctx.dancers.value).toEqual([])
+    old({ dancers: [{ id: 'late' }], groups: [], categories: [] })
+    expect(ctx.dancers.value).toEqual([])
+    meta.c1 = { ...(meta.c1 as object), published: true }
+    metaStreams.get('c1')?.({ val: () => meta.c1 })
+    await flush()
+    expect(streams.has('dancers')).toBe(true)
   })
 })

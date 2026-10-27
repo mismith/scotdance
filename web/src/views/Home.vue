@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { connected } from '@/lib/offline'
 import LogoMark from '@/components/LogoMark.vue'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
@@ -342,11 +343,12 @@ const { freshKey: liveFresh } = useLiveAlertState()
             >
               <span class="min-w-0 flex-1">
                 <span class="text-title block">{{ g.competition.name }}</span>
-                <span class="text-live text-callout flex items-center gap-1.5 font-semibold">
+                <span :class="['text-callout flex items-center gap-1.5 font-semibold', connected ? 'text-live' : 'text-muted-foreground']">
                   <span
                     :class="[
-                      'bg-live size-2 shrink-0 rounded-full',
-                      pulsing === g.competitionId && 'motion-safe:animate-[live-pulse_2s_infinite]',
+                      'size-2 shrink-0 rounded-full',
+                      connected ? 'bg-live' : 'bg-muted-foreground',
+                      connected && pulsing === g.competitionId && 'motion-safe:animate-[live-pulse_2s_infinite]',
                     ]"
                     aria-hidden="true"
                   />

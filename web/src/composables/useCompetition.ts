@@ -11,13 +11,13 @@ import {
 } from 'vue'
 import { child } from 'firebase/database'
 import { dataRef } from '@/firebase'
-import { competitionChanged, stampOf } from '@/lib/competitionChanged'
-import { getSavedAt } from '@/lib/offline'
+import { OfflineUnavailableError, onReconnect, onValueSaved } from '@/lib/offline'
 import {
   fetchDancers,
   fetchResults,
   fetchSchedule,
   fetchStaff,
+  forgetCompetition,
   watchDancers,
   watchResults,
   watchSchedule,
@@ -88,24 +88,33 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
   const rawCompetition = ref<Competition | null>(null)
   const docExists = ref(false)
   const metaLoading = ref(false)
-  const error = ref<Error | null>(null)
+  const metaError = ref<Error | null>(null)
+  const sectionErrors = ref<Record<string, Error>>({})
+  const error = computed(
+    () => metaError.value ?? Object.values(sectionErrors.value)[0] ?? null,
+  )
 
   // Organisers see their own competitions before they're published. Whether
   // you're one isn't known until your permissions have loaded, so until then
   // an unpublished competition is still loading, not "not found". A listed
   // one shows everyone its overview and staff; publishing adds the dancers,
   // schedule and results (the rules refuse those reads until then).
-  const seesAll = (c: Competition) => me.hasCompetitionPerm(competitionId.value) || c.published === true
+  const seesAll = (c: Competition) =>
+    me.hasCompetitionPerm(competitionId.value) || c.published === true
   const isVisible = (c: Competition) => seesAll(c) || c.listed === true
   const loading = computed(
-    () => metaLoading.value || (!!rawCompetition.value && rawCompetition.value.published !== true && !me.accessKnown),
+    () =>
+      metaLoading.value ||
+      (!!rawCompetition.value &&
+        rawCompetition.value.published !== true &&
+        !me.accessKnown),
   )
   const competition = computed<Competition | null>(() => {
     const c = rawCompetition.value
     return c && isVisible(c) ? c : null
   })
   const notFound = computed(() => {
-    if (loading.value) return false
+    if (loading.value || metaError.value) return false
     if (!docExists.value) return true
     const c = rawCompetition.value
     return !!c && !isVisible(c)
@@ -143,34 +152,60 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
   // A section is loaded the first time a screen asks for it, then kept up
   // to date while the competition is live.
   function section<T>(
+    name: string,
     read: (id: string) => Promise<T>,
-    stream: (id: string, cb: (value: T) => void, onError: (e: Error) => void) => () => void,
+    stream: (
+      id: string,
+      cb: (value: T) => void,
+      onError: (e: Error) => void,
+    ) => () => void,
     apply: (value: T, live: boolean) => void,
+    clear: () => void,
     /** Only once published (or yours): staff show as soon as it's listed. */
     whenPublished = true,
   ) {
     let wanted = false
     let ready: Promise<void> = Promise.resolve()
     let off: (() => void) | null = null
+    let generation = 0
+    let settle: (() => void) | null = null
+    const allowed = computed(
+      () => !!competition.value && (!whenPublished || !restricted.value),
+    )
     const stop = () => {
+      generation++
       off?.()
       off = null
+      settle?.()
+      settle = null
     }
     function start() {
       stop()
+      if (!allowed.value) return Promise.resolve()
       const id = competitionId.value
       const live = isLive.value
+      const run = generation
+      const current = () =>
+        run === generation && id === competitionId.value && allowed.value
+      delete sectionErrors.value[name]
       ready = new Promise<void>((resolve) => {
+        settle = resolve
         const fail = (e: Error) => {
-          if (id !== competitionId.value) return resolve()
-          // Don't keep a failure: the next screen to ask tries again.
-          stop()
-          wanted = false
-          error.value = e
+          if (!current()) return resolve()
+          sectionErrors.value[name] = e
+          // Offline is temporary: keep live listeners and the request for
+          // this section, so reconnecting can recover without a reload.
+          if (!(e instanceof OfflineUnavailableError)) {
+            stop()
+            wanted = false
+          }
           resolve()
         }
         const got = (value: T) => {
-          if (id === competitionId.value) apply(value, live)
+          if (current()) {
+            delete sectionErrors.value[name]
+            apply(value, live)
+          }
           resolve()
         }
         if (live) off = stream(id, got, fail)
@@ -178,17 +213,23 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
       })
       return ready
     }
+    watch([isLive, allowed], () => {
+      if (!allowed.value) {
+        stop()
+        clear()
+        delete sectionErrors.value[name]
+      } else if (wanted) void start()
+    })
     onScopeDispose(stop)
     return {
       load: () => {
-        if (!competitionId.value || (whenPublished && restricted.value)) return Promise.resolve()
+        if (!competitionId.value) return Promise.resolve()
         if (!wanted) {
           wanted = true
           return start()
         }
         return ready
       },
-      /** Switch between reading once and streaming when the day comes or goes. */
       restart: () => {
         if (wanted) void start()
       },
@@ -200,41 +241,93 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
     }
   }
 
-  const staffSection = section(fetchStaff, watchStaff, (v) => (staff.value = v), false)
-  const dancersSection = section(fetchDancers, watchDancers, (b) => {
-    dancers.value = b.dancers
-    groups.value = b.groups
-    categories.value = b.categories
-  })
+  const staffSection = section(
+    'staff',
+    fetchStaff,
+    watchStaff,
+    (v) => (staff.value = v),
+    () => {
+      staff.value = []
+    },
+    false,
+  )
+  const dancersSection = section(
+    'dancers',
+    fetchDancers,
+    watchDancers,
+    (b) => {
+      dancers.value = b.dancers
+      groups.value = b.groups
+      categories.value = b.categories
+    },
+    () => {
+      dancers.value = []
+      groups.value = []
+      categories.value = []
+    },
+  )
   // The first read is what was already there; later ones are news (their
   // placings flip in, see useCompetitionPlacings).
   let resultsRead = false
-  const resultsSection = section(fetchResults, watchResults, (b, live) => {
-    const changed = notePlacings(resultsRead ? results.value : null, b.results)
-    resultsRead = true
-    dances.value = b.dances
-    results.value = b.results
-    points.value = b.points
-    resultsHidden.value = b.hidden
-    if (live && changed) liveResultsAt.value = nowMs()
-  })
-  const scheduleSection = section(fetchSchedule, watchSchedule, (b) => {
-    schedule.value = b.schedule
-    platforms.value = b.platforms
-    draws.value = b.draws
-    scheduleHidden.value = b.hidden
-  })
+  const resultsSection = section(
+    'results',
+    fetchResults,
+    watchResults,
+    (b, live) => {
+      const changed = notePlacings(resultsRead ? results.value : null, b.results)
+      resultsRead = true
+      dances.value = b.dances
+      results.value = b.results
+      points.value = b.points
+      resultsHidden.value = b.hidden
+      if (live && changed) liveResultsAt.value = nowMs()
+    },
+    () => {
+      dances.value = []
+      results.value = {}
+      points.value = {}
+      resultsHidden.value = null
+      resultsRead = false
+      liveResultsAt.value = null
+    },
+  )
+  const scheduleSection = section(
+    'schedule',
+    fetchSchedule,
+    watchSchedule,
+    (b) => {
+      schedule.value = b.schedule
+      platforms.value = b.platforms
+      draws.value = b.draws
+      scheduleHidden.value = b.hidden
+    },
+    () => {
+      schedule.value = null
+      platforms.value = []
+      draws.value = {}
+      scheduleHidden.value = null
+    },
+  )
   const sections = [staffSection, dancersSection, resultsSection, scheduleSection]
 
   watch(isLive, (live) => {
     if (!live) liveResultsAt.value = null
-    for (const s of sections) s.restart()
   })
+  onScopeDispose(
+    onReconnect(() => {
+      for (const s of sections) s.restart()
+    }),
+  )
 
-  async function loadMeta() {
+  let stopMeta: (() => void) | null = null
+  onScopeDispose(() => stopMeta?.())
+
+  function loadMeta() {
+    stopMeta?.()
     if (!competitionId.value) return
     const id = competitionId.value
-    error.value = null
+    metaError.value = null
+    sectionErrors.value = {}
     for (const s of sections) s.reset()
     staff.value = []
     dancers.value = []
@@ -265,23 +358,27 @@ export function provideCompetition(competitionId: Ref<string>): CompetitionConte
       metaLoading.value = true
     }
 
-    try {
-      // Re-used from the device while its details haven't changed.
-      const snap = await getSavedAt(competitionMetaRef(id), stampOf(await competitionChanged(id), 'details'))
-      if (id !== competitionId.value) return
-      const value = snap.val() as Competition | null
-      if (value && typeof value === 'object') {
-        docExists.value = true
-        rawCompetition.value = value
-      } else {
-        docExists.value = false
-        rawCompetition.value = null
-      }
-    } catch (e) {
-      if (id === competitionId.value) error.value = e as Error
-    } finally {
-      if (id === competitionId.value) metaLoading.value = false
-    }
+    // Keep this small record live while open: publication and access can
+    // change even when the competition's date isn't today.
+    stopMeta = onValueSaved(
+      competitionMetaRef(id),
+      (snap) => {
+        if (id !== competitionId.value) return
+        const value = snap.val() as Competition | null
+        if (rawCompetition.value && rawCompetition.value.published !== value?.published) {
+          forgetCompetition(id)
+        }
+        docExists.value = !!value && typeof value === 'object'
+        rawCompetition.value = docExists.value ? value : null
+        metaError.value = null
+        metaLoading.value = false
+      },
+      (e) => {
+        if (id !== competitionId.value) return
+        metaError.value = e
+        metaLoading.value = false
+      },
+    )
   }
 
   watch(competitionId, loadMeta, { immediate: true })

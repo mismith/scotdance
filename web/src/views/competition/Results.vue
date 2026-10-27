@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { connected } from '@/lib/offline'
 import MyDancerLine from '@/components/MyDancerLine.vue'
 import ResultsMark from '@/components/ResultsMark.vue'
 import { computed, onMounted, ref } from 'vue'
@@ -139,7 +140,7 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
         </div>
         <p class="text-muted-foreground flex flex-wrap items-center gap-x-2 text-sm">
           <span><span class="text-foreground font-semibold tabular-nums">{{ totals.posted }} of {{ totals.total }}</span> results posted</span>
-          <span v-if="isLive && totals.posted < totals.total" class="flex items-center gap-1.5">
+          <span v-if="connected && isLive && totals.posted < totals.total" class="flex items-center gap-1.5">
             <LiveDot :pulse="pulse" />
             <span class="text-live font-semibold">Live</span><template v-if="lastResult"> · {{ lastResult }}</template>
           </span>

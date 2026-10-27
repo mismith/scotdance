@@ -1,4 +1,4 @@
-import { computed, ref, watch, type Ref } from 'vue'
+import { computed, onScopeDispose, ref, watch, type Ref } from 'vue'
 import { orderByChild, query, ref as dbRef, startAt } from 'firebase/database'
 import { database } from '@/firebase'
 import { getSaved, onReconnect } from '@/lib/offline'
@@ -51,7 +51,10 @@ async function fetchInto(entry: CacheEntry, includeArchived: boolean) {
   entry.inFlight = (async () => {
     try {
       // The recent query's start date moves daily, so save it under a fixed name.
-      const snap = await getSaved(q, includeArchived ? 'competitions:all' : 'competitions:recent')
+      const snap = await getSaved(
+        q,
+        includeArchived ? 'competitions:all' : 'competitions:recent',
+      )
       const val = (snap.val() as Record<string, Competition> | null) ?? {}
       entry.data.value = Object.entries(val)
         .map<CompetitionListItem>(([id, c]) => ({ id, ...c }))
@@ -76,7 +79,9 @@ async function fetchInto(entry: CacheEntry, includeArchived: boolean) {
 // header content (name, image) instantly on the detail page so view
 // transitions from the list have something to morph into before the
 // per-competition fetch resolves.
-export function peekCompetition(id: string | null | undefined): CompetitionListItem | null {
+export function peekCompetition(
+  id: string | null | undefined,
+): CompetitionListItem | null {
   if (!id) return null
   return (
     recentCache.data.value.find((c) => c.id === id) ??
@@ -101,8 +106,8 @@ export function useCompetitions(includeArchived: Ref<boolean>) {
     await fetchInto(entry, includeArchived.value)
   }
 
-  const rawCompetitions = computed<CompetitionListItem[]>(() =>
-    (includeArchived.value ? archivedCache : recentCache).data.value,
+  const rawCompetitions = computed<CompetitionListItem[]>(
+    () => (includeArchived.value ? archivedCache : recentCache).data.value,
   )
 
   const competitions = computed<CompetitionListItem[]>(() =>
@@ -113,6 +118,11 @@ export function useCompetitions(includeArchived: Ref<boolean>) {
     }),
   )
 
+  onScopeDispose(
+    onReconnect(() => {
+      void load(true)
+    }),
+  )
   watch(includeArchived, () => load(), { immediate: true })
 
   return { competitions, loading, error, reload: () => load(true) }

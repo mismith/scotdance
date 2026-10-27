@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { CloudOff } from '@lucide/vue'
-import { showingSavedFrom } from '@/lib/offline'
+import { offline, showingSavedFrom } from '@/lib/offline'
 
-// Shown while the page is using copies saved on the device (no signal), so
+// Shown when the connection is lost, with a saved timestamp when known, so
 // nobody mistakes an old schedule or results for the latest.
 const time = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' })
 const day = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' })
@@ -26,13 +26,13 @@ const savedWhen = computed(() => {
       leave-to-class="translate-y-4 opacity-0"
     >
       <div
-        v-if="savedWhen"
+        v-if="offline"
         data-offline-notice
         class="pointer-events-none fixed inset-x-chrome-4 bottom-(--notice-bottom) z-40 flex justify-center"
       >
         <p class="hud flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium">
           <CloudOff class="size-4 shrink-0" />
-          Offline · last updated {{ savedWhen }}
+          Offline<span v-if="savedWhen"> · last updated {{ savedWhen }}</span><span v-else> · reconnecting…</span>
         </p>
       </div>
     </Transition>
