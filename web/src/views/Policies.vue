@@ -38,7 +38,7 @@ const crisp = useCrisp()
         <ul class="ml-6 list-disc space-y-1">
           <li>
             basic visit information, like: IP addresses, dates and times (kept by the
-            hosting and live chat services; there are no ads or analytics trackers)
+            hosting and live chat services; there are no ads)
           </li>
           <li>
             device-type information, e.g.: operating system, web browser name and version
