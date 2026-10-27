@@ -7,7 +7,7 @@
 // there, and its grain from the tiles `npm run paper` renders from there (a
 // canvas an SVG is drawn into can't be read back in WebKit).
 
-const TILE = 220 // the grain's size on the page (style.css, html)
+const TILE = 220 // the grain's size on the page (style.css, body)
 
 function cssValue(name: string) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()

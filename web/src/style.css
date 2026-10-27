@@ -74,7 +74,7 @@
 :root {
   color-scheme: light;
   --background: #f5f3ee;
-  /* Paper: a faint fibre, lit from the top left (see html). Drawn at three
+  /* Paper: a faint fibre, lit from the top left (see body). Drawn at three
      times the size it's shown, so it stays sharp on a phone's screen. After
      changing it (either theme's), `npm run paper` redraws the apps' copy. */
   --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='660' height='660'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.375 .11' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeDiffuseLighting lighting-color='%23fff' surfaceScale='3.2'%3E%3CfeDistantLight azimuth='225' elevation='58'/%3E%3C/feDiffuseLighting%3E%3CfeColorMatrix values='0 0 0 0 .35  0 0 0 0 .33  0 0 0 0 .3  -1 0 0 0 1'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='.18'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29'/%3E%3C/svg%3E");
@@ -290,10 +290,30 @@
 }
 
 /* The page is paper: its grain and light are printed on it and scroll with
-   it, the light a screen tall at the top. On <html>, so it covers the whole
-   canvas, and outside the layers so it wins over index.html's plain colour
+   it, the light a screen tall at the top. On <body>, an ordinary box that
+   moves when the page is pulled past its ends; <html> keeps a plain colour,
+   which also stops the body's paper being lifted onto the canvas behind
+   everything. Outside the layers, so it wins over index.html's plain colour
    (painted before this loads). */
 html {
+  background-color: var(--page-end);
+}
+body {
+  background:
+    var(--paper-grain) 0 0 / 220px,
+    var(--page-light) 0 0 / 100% 100vh no-repeat var(--page-end);
+}
+/* Pulled past its ends, a page moves and the browser shows what's behind
+   it: a flat colour, unless something fixed is there. So the same paper,
+   held still behind the page (the body covers it until then). Close at the
+   seam rather than exact: it can't know how far the page has moved. The
+   apps' own paper goes there instead (lib/paperEdges), exactly. */
+html:not([data-native])::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background:
     var(--paper-grain) 0 0 / 220px,
     var(--page-light) 0 0 / 100% 100% no-repeat var(--page-end);
