@@ -167,7 +167,7 @@ function onKeydown(e: KeyboardEvent) {
       </details>
 
       <!-- Kept in reach at the foot of the sheet, however long the preview. -->
-      <div class="bg-raised sticky bottom-0 -mx-4 flex flex-col-reverse gap-2 border-t px-4 pt-3 pb-[calc(1rem+var(--safe-bottom))] sm:flex-row sm:justify-end">
+      <div class="frosted-paper sticky bottom-0 -mx-4 flex flex-col-reverse gap-2 border-t px-4 pt-3 pb-[calc(1rem+var(--safe-bottom))] sm:flex-row sm:justify-end">
         <Button size="lg" @click="morph.hide()">Cancel</Button>
         <Button type="submit" variant="primary" size="lg" :busy="busy" :disabled="!canEdit" :aria-keyshortcuts="isMac ? 'Meta+Enter' : 'Control+Enter'">
           <Send v-if="sends" /> {{ sends ? 'Reject and email' : 'Reject' }}

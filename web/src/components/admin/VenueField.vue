@@ -221,7 +221,7 @@ function onBlur() {
           v-if="options.length"
           :id="`${id}-list`"
           role="listbox"
-          class="surface-raised absolute inset-x-0 top-full z-20 mt-1.5 overflow-hidden rounded-2xl p-1"
+          class="frosted-paper menu-edge absolute inset-x-0 top-full z-20 mt-1.5 overflow-hidden rounded-2xl p-1"
           @mousedown.prevent
         >
           <li

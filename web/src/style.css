@@ -585,9 +585,6 @@ html:not([data-native])::before {
     background-repeat: no-repeat;
   }
 }
-/* Popover menus (More, Directions, a dancer's look): frosted glass with a lit
-   edge, like the floating bars they open from. Solid under Reduce
-   Transparency. */
 /* A secondary button: a quiet fill and no rim, so it never looks like a card
    (cards are lit glass with a rim; buttons are filled capsules). */
 @utility button-fill {
@@ -596,10 +593,11 @@ html:not([data-native])::before {
     outline: 1px solid ButtonText;
   }
 }
-/* A sheet of frosted paper (bottom sheets): it blurs what's behind it, so
-   what's under it never reads through, and carries its own grain, so it's
-   still paper. Solid under Reduce Transparency. */
-@utility paper-sheet {
+/* Frosted paper, for everything that opens over the page (sheets, menus,
+   popovers, dialogs): it blurs what's behind it, so what's under it never
+   reads through, and carries its own grain, so it's still paper. Solid
+   under Reduce Transparency. */
+@utility frosted-paper {
   background:
     var(--paper-grain) 0 0 / 220px,
     color-mix(in oklab, var(--background) 75%, transparent);
@@ -616,18 +614,15 @@ html:not([data-native])::before {
     inset 0 1.5px 2.5px var(--deboss-shade),
     inset 0 -1px 0 var(--deboss-lit);
 }
-@utility glass-menu {
-  background-color: color-mix(in oklab, var(--raised) 74%, transparent);
-  backdrop-filter: blur(30px) saturate(1.8);
+/* What lifts a menu or popover off the page under it (with frosted-paper):
+   a lit edge, like the floating bars they open from, and a soft shadow. */
+@utility menu-edge {
   box-shadow:
     inset 0 0 0 1px var(--menu-edge),
     inset 0 1px 0 var(--menu-lit),
     0 0 0 0.5px rgb(16 24 40 / 0.1),
     0 22px 48px -14px rgb(16 24 40 / 0.35),
     0 4px 12px -4px rgb(16 24 40 / 0.12);
-  @media (prefers-reduced-transparency: reduce) {
-    background-color: var(--raised);
-  }
   @media (forced-colors: active) {
     outline: 1px solid CanvasText;
   }

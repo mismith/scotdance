@@ -74,7 +74,7 @@ function pick(id: string) {
       </template>
       <!-- A steady height, so the box doesn't move while typing shrinks the list. -->
       <div class="min-h-[calc(100svh-8rem)] md:min-h-[min(32rem,60vh)]">
-        <div class="bg-raised sticky top-0 z-10 px-4 pt-3 pb-2">
+        <div class="frosted-paper sticky top-0 z-10 px-4 pt-3 pb-2">
           <label class="search-fill">
             <Search class="text-muted-foreground size-[1.125rem] shrink-0" stroke-width="2.4" aria-hidden="true" />
             <input

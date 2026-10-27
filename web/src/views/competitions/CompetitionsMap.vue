@@ -334,7 +334,7 @@ watch(
     >
       <section
         v-if="selectedGroup && at"
-        class="surface-raised absolute z-20 w-76 origin-bottom overflow-hidden rounded-2xl"
+        class="frosted-paper menu-edge absolute z-20 w-76 origin-bottom overflow-hidden rounded-2xl"
         :style="{ left: `${at.x}px`, top: `${at.y - 40}px`, translate: '-50% -100%' }"
         :aria-label="selectedGroup.venue || 'Venue'"
       >

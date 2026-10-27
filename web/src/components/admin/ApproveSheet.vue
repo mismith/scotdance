@@ -38,7 +38,7 @@ const emit = defineEmits<{ approve: [] }>()
         To tidy one first, cancel and open it. The rest can still go together.
       </p>
       <!-- Kept in reach at the foot of the sheet, however long the list. -->
-      <div class="bg-raised sticky bottom-0 -mx-4 flex flex-col-reverse gap-2 border-t px-4 pt-3 pb-[calc(1rem+var(--safe-bottom))] sm:flex-row sm:justify-end">
+      <div class="frosted-paper sticky bottom-0 -mx-4 flex flex-col-reverse gap-2 border-t px-4 pt-3 pb-[calc(1rem+var(--safe-bottom))] sm:flex-row sm:justify-end">
         <Button size="lg" @click="morph.hide()">Cancel</Button>
         <Button variant="primary" size="lg" :busy="busy" :disabled="!canEdit" @click="emit('approve')">
           Approve {{ items.length }}
