@@ -236,9 +236,9 @@
   --menu-lit: rgb(255 255 255 / 0.18);
   --engrave-cut: rgb(0 0 0 / 0.55);
   --engrave-lit: rgb(255 255 255 / 0.07);
-  --deboss-fill: rgb(0 0 0 / 0.24);
-  --deboss-shade: rgb(0 0 0 / 0.6);
-  --deboss-lit: rgb(255 255 255 / 0.07);
+  --deboss-fill: rgb(255 255 255 / 0.07);
+  --deboss-shade: rgb(0 0 0 / 0.7);
+  --deboss-lit: rgb(255 255 255 / 0.1);
   --card-foreground: #eef2f6;
   --popover: #222a33;
   --popover-foreground: #eef2f6;
