@@ -105,7 +105,7 @@
   --engrave-lit: rgb(255 255 255 / 0.85);
   /* Pressed into the paper (deboss): a touch darker inside, shaded under
      the top edge, the lower lip catching the light. */
-  --deboss-fill: rgb(16 24 40 / 0.025);
+  --deboss-fill: rgb(16 24 40 / 0.06);
   --deboss-shade: rgb(16 24 40 / 0.14);
   --deboss-lit: rgb(255 255 255 / 0.8);
   --foreground: #12161b;
@@ -236,7 +236,7 @@
   --menu-lit: rgb(255 255 255 / 0.18);
   --engrave-cut: rgb(0 0 0 / 0.55);
   --engrave-lit: rgb(255 255 255 / 0.07);
-  --deboss-fill: rgb(0 0 0 / 0.12);
+  --deboss-fill: rgb(0 0 0 / 0.24);
   --deboss-shade: rgb(0 0 0 / 0.6);
   --deboss-lit: rgb(255 255 255 / 0.07);
   --card-foreground: #eef2f6;
