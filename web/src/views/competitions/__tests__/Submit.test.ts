@@ -463,6 +463,35 @@ describe('Add a competition', () => {
     })
   })
 
+  it('offers missing BCHDA without selecting it, and saves only after acceptance', async () => {
+    const w = await begin()
+    await cont(w)
+    await pickDay(w, 5)
+    await cont(w)
+    await field(w).setValue('BCHDA Winter Competition Series #1')
+    await cont(w)
+    expect(label(w)).toBe('Skip')
+    expect(w.find('[aria-label="Suggested organisations"]').text()).toContain('BCHDA')
+    expect(w.findAll('[data-slide] [role=checkbox][aria-checked=true]')).toHaveLength(0)
+    const picker = w.findComponent({ name: 'OrganisationPicker' })
+    // Acceptance of the prefilled form goes through the existing submission payload.
+    picker.vm.$emit('create', { name: 'BCHDA', shortName: 'BCHDA', location: 'Vancouver, BC' })
+    await flushPromises()
+    expect(label(w)).toBe('Continue')
+    expect(w.find('[aria-label="Suggested organisations"]').exists()).toBe(false)
+    await cont(w)
+    await click(w, 'Just the town for now')
+    await field(w, 'Town or city').setValue('Vancouver, BC')
+    await cont(w)
+    await cont(w)
+    await field(w).setValue('Morag Ross')
+    await cont(w)
+    await w.find('[data-slide] [role=checkbox]').trigger('click')
+    await cont(w)
+    expect(sentValue().newOrganisations).toEqual({ sub1: { name: 'BCHDA', shortName: 'BCHDA', location: 'Vancouver, BC' } })
+    w.unmount()
+  })
+
   it('ticks the organisations its name mentions (as whole words), or the only one you run', async () => {
     orgList.value = [
       { id: 'chda', name: 'Calgary Highland Dancing Association', shortName: 'CHDA' },

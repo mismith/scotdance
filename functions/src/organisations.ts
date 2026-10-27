@@ -34,20 +34,27 @@ const text = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slic
 export interface NewOrganisation {
   name?: string
   shortName?: string
+  location?: string
 }
 
 /** Makes an organisation. Whoever it's made for becomes its admin. */
-export async function createOrganisation(db: any, { name, shortName }: NewOrganisation, createdBy: string, adminId: string | null = createdBy) {
+export async function createOrganisation(db: any, { name, shortName, location }: NewOrganisation, createdBy: string, adminId: string | null = createdBy, competitionId?: string) {
   const record = {
     name: text(name, 120),
     shortName: text(shortName, 24) || null,
+    location: text(location, 120) || null,
     created: new Date().toISOString(),
     createdBy,
   };
   if (!record.name) throw new HttpsError('invalid-argument', 'An organisation needs a name.');
   const ref = db.child('organisations').push();
-  await ref.set(record);
-  if (adminId) await attachUserToOrganisation({ db, userId: adminId, organisationId: ref.key });
+  const updates: Record<string, unknown> = { [`organisations/${ref.key}`]: record };
+  if (adminId) {
+    updates[`users:permissions/${adminId}/organisations/${ref.key}`] = true;
+    updates[`organisations:permissions/${ref.key}/users/${adminId}`] = true;
+  }
+  if (competitionId) updates[`competitions/${competitionId}/organisations/${ref.key}`] = true;
+  await db.update(updates);
   return ref.key as string;
 }
 
@@ -67,14 +74,36 @@ export function getOnCreate(db: any) {
     if (!isAdmin && !some(perms.competitions) && !some(perms.organisations)) {
       throw new HttpsError('permission-denied', 'Submit a competition first.');
     }
-    const join = !(isAdmin && data?.join === false);
-    const organisationId = await createOrganisation(db, data ?? {}, uid, join ? uid : null);
-    const competitionId = typeof data?.competitionId === 'string' ? data.competitionId : null;
-    // Only to a competition that's there: writing to a deleted one would bring it back as an empty record.
-    if (competitionId && (isAdmin || perms.competitions?.[competitionId] === true)
-      && (await db.child(`competitions/${competitionId}/date`).get()).exists()) {
-      await db.child(`competitions/${competitionId}/organisations/${organisationId}`).set(true);
+    const key = (v: unknown): v is string => typeof v === 'string' && !!v && !['.', '#', '$', '[', ']', '/'].some((c) => v.includes(c));
+    const competitionId = data?.competitionId;
+    if (competitionId !== undefined && !key(competitionId)) throw new HttpsError('invalid-argument', 'Invalid competition.');
+    let competition: any = null;
+    if (competitionId) {
+      if (!isAdmin && perms.competitions?.[competitionId] !== true) throw new HttpsError('permission-denied', 'You cannot manage this competition.');
+      competition = (await db.child(`competitions/${competitionId}`).get()).val();
+      if (!competition?.date) throw new HttpsError('not-found', 'This competition no longer exists.');
+      if ((await db.child(`competitionLinks:sync/${competitionId}/organisations`).get()).val() === true) throw new HttpsError('failed-precondition', 'Add the organisation to the main competition.');
     }
+    let adminId = isAdmin && data?.join === false ? null : uid;
+    if (data?.grantSubmitter === true) {
+      if (!isAdmin) throw new HttpsError('permission-denied', 'Only system admins can grant this access.');
+      if (!key(competition?.submissionId)) throw new HttpsError('failed-precondition', 'The original submission is unavailable.');
+      const sub = (await db.child(`competitions:submissions/${competition.submissionId}`).get()).val();
+      if (sub?.competitionId !== competitionId || !key(sub?.submittedBy) || sub.submittedBy === 'admin') {
+        throw new HttpsError('failed-precondition', 'The original submitter could not be verified.');
+      }
+      if (!(await db.child(`users/${sub.submittedBy}`).get()).exists()) throw new HttpsError('failed-precondition', 'The submitter’s account no longer exists.');
+      adminId = sub.submittedBy;
+    }
+    // Re-check the current directory: another admin may have created the
+    // suggestion while this form was open. Never grant access to that record.
+    const normalise = (v: unknown) => text(v, 120).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+    const names = [normalise(data?.name), normalise(data?.shortName)].filter(Boolean);
+    const organisations = (await db.child('organisations').get()).val() || {};
+    if (Object.values(organisations).some((o: any) => [normalise(o.name), normalise(o.shortName)].some((n) => n && names.includes(n)))) {
+      throw new HttpsError('already-exists', 'This organisation already exists. Add it from the organisation picker.');
+    }
+    const organisationId = await createOrganisation(db, data ?? {}, uid, adminId, competitionId);
     return { organisationId };
   };
 }

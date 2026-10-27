@@ -86,6 +86,25 @@ one component for both (`AdminsPanel`).
   Anyone who manages a competition or organisation can call it. System
   admins can make one without becoming its admin (`join: false`).
 
+### Organisation suggestions (2026-10-27)
+
+Submit, pending submission review and Manage > Details detect missing
+organisations from the competition name. Whole-name or short-name matches
+reuse existing records. Missing acronyms (BCHDA), ScotDance associations,
+and explicit association/society/club names offer a prefilled creation sheet.
+An acronym is never expanded automatically. These suggestions are optional;
+skipping in Submit does not remove them from Manage. The directory must load
+successfully before missing organisations are suggested.
+
+A system admin creating one from Manage can explicitly give the original
+submitter admin access. The callable checks the competition permission,
+submission back-reference and submitter account, then writes the organisation,
+competition link and both permission records together. It never grants access
+to an existing organisation merely because its name matches. Linking an
+existing organisation does not grant its admin rights. A latest-directory
+check rejects an already-created match; it is not a concurrent uniqueness lock.
+System admins do not join new organisations automatically from this flow.
+
 ### 5. Where they show
 
 Organisations always go last: at the bottom of a page, a menu, a form step

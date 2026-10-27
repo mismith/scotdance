@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
+import { get } from 'firebase/database'
+import { dataRef } from '@/firebase'
 import { RouterLink, useRouter } from 'vue-router'
 import { ChevronRight, ExternalLink, FileUp, Landmark, Lock, Plus, Trash2 } from '@lucide/vue'
 import Button from '@/components/ui/Button.vue'
+import Checkbox from '@/components/ui/Checkbox.vue'
 import MovingList from '@/components/admin/MovingList.vue'
 import SectionHeader from '@/components/admin/SectionHeader.vue'
 import TextField from '@/components/admin/TextField.vue'
@@ -19,6 +22,8 @@ import { replacesSentence } from '@/lib/admin/linkWords'
 import MapPreview from '@/components/MapPreview.vue'
 import OrganisationMark from '@/components/OrganisationMark.vue'
 import OrganisationPicker from '@/components/OrganisationPicker.vue'
+import OrganisationSuggestions from '@/components/OrganisationSuggestions.vue'
+import type { OrganisationDraft } from '@/lib/organisationSuggestions'
 import { useOrganisations } from '@/composables/useOrganisations'
 import { createOrganisation } from '@/lib/admin/organisations'
 import { useMorph } from '@/lib/morph'
@@ -225,6 +230,33 @@ const linked = computed(() =>
     .map(([id]) => orgs.byId.value.get(id) ?? { id, name: 'An organisation' }),
 )
 const pickingOrg = useMorph()
+const orgPrefill = ref<OrganisationDraft | null>(null)
+const grantSubmitter = ref(false)
+const submitter = ref<{ name: string } | null>(null)
+const creatingOrg = ref(false)
+watch(() => m.competitionId.value, () => {
+  void pickingOrg.hide()
+  orgPrefill.value = null
+  grantSubmitter.value = false
+})
+watch([() => c.value.submissionId, () => me.isAdmin], async ([sid, isAdmin], _, onCleanup) => {
+  let stale = false
+  onCleanup(() => { stale = true })
+  submitter.value = null
+  grantSubmitter.value = false
+  if (!isAdmin || !sid) return
+  try {
+    const sub = (await get(dataRef(`competitions:submissions/${sid}`))).val()
+    if (!stale && sub?.submittedBy && sub.submittedBy !== 'admin') {
+      submitter.value = { name: sub.contact?.name || sub.contact?.email || 'the submitter' }
+    }
+  } catch { /* Creation still works when the original submission is unavailable. */ }
+}, { immediate: true })
+function suggestNewOrg(draft: OrganisationDraft, event: MouseEvent) {
+  orgPrefill.value = draft
+  grantSubmitter.value = false
+  void pickingOrg.show(event)
+}
 async function addOrganisation(org: OrganisationListItem) {
   const message = `Added ${org.name}`
   try {
@@ -234,12 +266,17 @@ async function addOrganisation(org: OrganisationListItem) {
     toast(friendlyError(e), { tone: 'error' })
   }
 }
-async function startOrganisation({ name, shortName }: { name: string; shortName: string }) {
+async function startOrganisation(draft: OrganisationDraft) {
+  if (creatingOrg.value) return
+  creatingOrg.value = true
+  const { name } = draft
   try {
-    await createOrganisation({ name, shortName, competitionId: m.competitionId.value })
-    toast(`Started ${name}. Add its logo and details from its page.`)
+    await createOrganisation({ ...draft, competitionId: m.competitionId.value, ...(me.isAdmin ? { join: false, grantSubmitter: grantSubmitter.value } : {}) })
+    toast(`Started ${name}${grantSubmitter.value ? ' and gave the submitter admin access' : ''}.`)
   } catch (e) {
     toast(friendlyError(e), { tone: 'error' })
+  } finally {
+    creatingOrg.value = false
   }
 }
 async function removeOrganisation(org: { id: string; name?: string }) {
@@ -533,17 +570,32 @@ async function deleteCompetition() {
             <Button variant="plain" class="text-destructive!" :disabled="!canEdit" @click="removeOrganisation(org)">Take off</Button>
           </li>
         </MovingList>
-        <Button :disabled="!canEdit" @click="pickingOrg.show($event)">
+        <OrganisationSuggestions
+          :name="c.name ?? ''" :location="c.location" :chosen="linked.map((org) => org.id)"
+          :allowed="me.isAdmin ? undefined : me.managedOrganisationIds" :disabled="!canEdit || creatingOrg"
+          @pick="addOrganisation" @create="suggestNewOrg"
+        />
+        <Button :disabled="!canEdit || creatingOrg" @click="orgPrefill = null; grantSubmitter = false; pickingOrg.show($event)">
           <component :is="linked.length ? Plus : Landmark" /> Add an organisation
         </Button>
         <OrganisationPicker
           :morph="pickingOrg"
+          :prefill="orgPrefill"
+          :create-hint="me.isAdmin ? 'Creates the organisation and adds this competition to it.' : 'You’ll be its admin, and can add its logo and details.'"
           :mine="me.managedOrganisationIds"
           :chosen="linked.map((org) => org.id)"
           :any="me.isAdmin"
           @pick="addOrganisation"
           @create="startOrganisation"
-        />
+        >
+          <template v-if="me.isAdmin && submitter" #create-options>
+            <label class="flex min-h-12 cursor-pointer items-center gap-3 text-base">
+              <input v-model="grantSubmitter" type="checkbox" class="peer sr-only" />
+              <Checkbox :checked="grantSubmitter" class="peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2" />
+              <span>Give {{ submitter.name }} admin access to this organisation</span>
+            </label>
+          </template>
+        </OrganisationPicker>
       </section>
 
       <section class="engraved-line space-y-3 pt-8">

@@ -15,6 +15,8 @@ import SubmitIntro from '@/components/submit/SubmitIntro.vue'
 import VenueStep from '@/components/submit/VenueStep.vue'
 import OrganisationMark from '@/components/OrganisationMark.vue'
 import OrganisationPicker from '@/components/OrganisationPicker.vue'
+import OrganisationSuggestions from '@/components/OrganisationSuggestions.vue'
+import { organisationSuggestions, type OrganisationDraft } from '@/lib/organisationSuggestions'
 import { useLocationFilter } from '@/composables/useLocationFilter'
 import { useOrganisations } from '@/composables/useOrganisations'
 import { usePageTitle } from '@/composables/usePageTitle'
@@ -95,10 +97,15 @@ const startingCountry = () =>
 const orgs = useOrganisations()
 const hosts = reactive({
   ids: [] as string[],
-  fresh: [] as Array<{ name: string; shortName: string }>,
+  fresh: [] as OrganisationDraft[],
   offered: false,
 })
 const pickingOrg = useMorph()
+const orgPrefill = ref<OrganisationDraft | null>(null)
+function suggestNewOrg(draft: OrganisationDraft, event: MouseEvent) {
+  orgPrefill.value = draft
+  void pickingOrg.show(event)
+}
 const chosenOrgs = computed(() => [
   ...hosts.ids.flatMap((id) => {
     const org = orgs.byId.value.get(id)
@@ -112,19 +119,7 @@ const chosenOrgs = computed(() => [
 ])
 // Any the name mentions ("CHDA Fall Competition": by short name or full
 // name, as whole words), then yours: one tap each.
-const words = (s?: string | null) =>
-  ` ${(s ?? '')
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, ' ')
-    .trim()} `
-const mentioned = computed(() => {
-  const name = words(form.name)
-  return orgs.organisations.value.filter((o) =>
-    [o.shortName, o.name].some(
-      (s) => words(s).trim().length >= 3 && name.includes(words(s)),
-    ),
-  )
-})
+const mentioned = computed(() => organisationSuggestions(form.name, orgs.organisations.value).existing)
 const suggestedOrgs = computed(() => {
   const mine = orgs.organisations.value.filter((o) =>
     me.managedOrganisationIds.includes(o.id),
@@ -136,7 +131,7 @@ const suggestedOrgs = computed(() => {
 function addHost(org: OrganisationListItem) {
   if (!hosts.ids.includes(org.id)) hosts.ids.push(org.id)
 }
-function addFreshHost(org: { name: string; shortName: string }) {
+function addFreshHost(org: OrganisationDraft) {
   const known = orgs.organisations.value.find(
     (o) => o.name?.trim().toLowerCase() === org.name.trim().toLowerCase(),
   )
@@ -558,7 +553,7 @@ async function send() {
           newOrganisations: Object.fromEntries(
             hosts.fresh.map((o) => [
               newKey(),
-              { name: o.name, shortName: o.shortName || null },
+              { name: o.name, shortName: o.shortName || null, ...(o.location ? { location: o.location } : {}) },
             ]),
           ),
         }),
@@ -1067,14 +1062,16 @@ useIntersectionObserver(end, ([entry]) => (atEnd.value = !!entry?.isIntersecting
                 <button
                   type="button"
                   class="press-row focus-inset text-primary flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left"
-                  @click="pickingOrg.show($event)"
+                  @click="orgPrefill = null; pickingOrg.show($event)"
                 >
                   <span class="bg-blue-paper flex size-10 shrink-0 items-center justify-center rounded-xl" aria-hidden="true"><Plus class="size-5" /></span>
                   <span class="flex-1 text-base font-semibold">{{ orderedOrgRows.length ? 'Find or add another' : 'Find or add an organisation' }}</span>
                 </button>
               </div>
+              <OrganisationSuggestions :name="form.name" :location="form.location" :drafts="hosts.fresh" :existing="false" @create="suggestNewOrg" />
               <OrganisationPicker
                 :morph="pickingOrg"
+                :prefill="orgPrefill"
                 :mine="me.managedOrganisationIds"
                 :chosen="hosts.ids"
                 any

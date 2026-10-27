@@ -6,6 +6,8 @@ export interface CompetitionLink {
 }
 
 export interface Competition {
+  /** Original submission, for system-admin follow-up. */
+  submissionId?: string
   name?: string
   date?: number
   description?: string

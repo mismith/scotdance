@@ -18,13 +18,17 @@ import { useSplit } from '@/composables/admin/useWide'
 import { dataRef } from '@/firebase'
 import { confirm, toast } from '@/lib/admin/feedback'
 import { emails, reasonLabel, replyStatus, type RejectReason, type Rejection } from '@/lib/admin/submissions'
-import { canEdit, friendlyError, write } from '@/lib/admin/write'
+import { canEdit, friendlyError, newKey, write } from '@/lib/admin/write'
 import { formatLongDate, formatRelative, parseDate } from '@/lib/format'
 import { registrationNote, registrationToSave } from '@/lib/registration'
 import { placesAvailable, type VenueFields } from '@/lib/maps'
 import { grow, shrink } from '@/lib/admin/motion'
 import { useMorph } from '@/lib/morph'
 import OrganisationMark from '@/components/OrganisationMark.vue'
+import OrganisationPicker from '@/components/OrganisationPicker.vue'
+import OrganisationSuggestions from '@/components/OrganisationSuggestions.vue'
+import type { OrganisationDraft } from '@/lib/organisationSuggestions'
+import type { OrganisationListItem } from '@/types/organisation'
 import { useOrganisations } from '@/composables/useOrganisations'
 import { useAuthStore } from '@/stores/auth'
 
@@ -152,6 +156,29 @@ function toggleGroup(g: Group) {
 // submitter one of their admins, or is this a claim to check?) and new ones.
 // Followed for the open one, and for any picked to approve together.
 const orgs = useOrganisations()
+const pickingOrg = useMorph()
+const orgPrefill = ref<OrganisationDraft | null>(null)
+const orgSubmissionId = ref<string | null>(null)
+const savingOrg = ref(false)
+function suggestNewOrg(draft: OrganisationDraft, event: MouseEvent) {
+  orgPrefill.value = draft
+  orgSubmissionId.value = current.value?.id ?? null
+  void pickingOrg.show(event)
+}
+async function addSuggestedOrg(org: OrganisationListItem | OrganisationDraft) {
+  const sid = 'id' in org ? current.value?.id : orgSubmissionId.value
+  const sub = items.value.find((s) => s.id === sid)
+  if (!sub || sub.approved || savingOrg.value) return
+  savingOrg.value = true
+  const base = `competitions:submissions/${sub.id}`
+  try {
+    if ('id' in org) await write({ [`${base}/organisations/${org.id}`]: true })
+    else await write({ [`${base}/newOrganisations/${newKey()}`]: org })
+    toast('Organisation added to the submission')
+  } catch (e) {
+    toast(friendlyError(e), { tone: 'error' })
+  } finally { savingOrg.value = false }
+}
 const adminsOf = ref<Record<string, Record<string, boolean>>>({})
 watch(
   () => [current.value, ...picked.value.waiting].flatMap((s) => Object.keys(s?.organisations ?? {})),
@@ -687,6 +714,18 @@ async function remove(s: Submission) {
             </li>
           </ul>
           <p v-if="!current.approved" class="text-muted-foreground text-sm">Approving lists the competition under these, and starts the new ones with the submitter as their admin.</p>
+        </section>
+
+        <section v-if="!current.approved" class="space-y-3">
+          <OrganisationSuggestions
+            :name="String(current.competition?.name ?? '')"
+            :location="String(current.competition?.location ?? '')"
+            :chosen="Object.keys(current.organisations ?? {})"
+            :drafts="Object.values(current.newOrganisations ?? {}).map((o) => ({ name: o.name ?? '', shortName: o.shortName ?? '' }))"
+            :disabled="!canEdit || savingOrg"
+            @pick="addSuggestedOrg" @create="suggestNewOrg"
+          />
+          <OrganisationPicker :morph="pickingOrg" :prefill="orgPrefill" any create-hint="It’s created on approval, with the submitter as its admin." @pick="addSuggestedOrg" @create="addSuggestedOrg" />
         </section>
 
         <!-- Waiting (or rejected): the decision stays in reach at the foot of the page. -->

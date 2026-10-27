@@ -7,6 +7,7 @@ import OrganisationMark from '@/components/OrganisationMark.vue'
 import SearchField from '@/components/admin/SearchField.vue'
 import { useOrganisations } from '@/composables/useOrganisations'
 import type { Morph } from '@/lib/morph'
+import { organisationKey, type OrganisationDraft } from '@/lib/organisationSuggestions'
 import type { OrganisationListItem } from '@/types/organisation'
 
 // Choose an organisation, or start a new one, in a sheet. Yours come first,
@@ -17,6 +18,7 @@ import type { OrganisationListItem } from '@/types/organisation'
 const props = withDefaults(
   defineProps<{
     morph: Morph
+    prefill?: OrganisationDraft | null
     title?: string
     /** Organisations you're an admin of, listed first. */
     mine?: string[]
@@ -31,11 +33,11 @@ const props = withDefaults(
     /** Under the new organisation's fields, e.g. "You'll be its admin." */
     createHint?: string
   }>(),
-  { title: 'Add an organisation', mine: () => [], mineLabel: 'Yours', chosen: () => [], any: false, creatable: true, createHint: 'You’ll be its admin, and can add its logo and details.' },
+  { prefill: null, title: 'Add an organisation', mine: () => [], mineLabel: 'Yours', chosen: () => [], any: false, creatable: true, createHint: 'You’ll be its admin, and can add its logo and details.' },
 )
 const emit = defineEmits<{
   pick: [organisation: OrganisationListItem]
-  create: [organisation: { name: string; shortName: string }]
+  create: [organisation: OrganisationDraft]
 }>()
 
 const o = useOrganisations()
@@ -54,6 +56,7 @@ const exact = computed(() => o.organisations.value.some((org) => [org.name, org.
 const creating = ref(false)
 const newName = ref('')
 const newShort = ref('')
+const newLocation = ref('')
 const nameEl = ref<HTMLInputElement | null>(null)
 async function startCreate() {
   creating.value = true
@@ -64,7 +67,13 @@ async function startCreate() {
 function create() {
   const name = newName.value.trim()
   if (!name) return
-  emit('create', { name, shortName: newShort.value.trim() })
+  const existing = o.organisations.value.find((org) => [org.name, org.shortName].some((n) => n && [name, newShort.value].filter(Boolean).some((v) => organisationKey(n) === organisationKey(v))))
+  if (existing) {
+    query.value = existing.name ?? existing.shortName ?? name
+    creating.value = false
+    return
+  }
+  emit('create', { name, shortName: newShort.value.trim(), ...(newLocation.value.trim() ? { location: newLocation.value.trim() } : {}) })
   void props.morph.hide()
 }
 function pick(org: OrganisationListItem) {
@@ -79,6 +88,14 @@ watch(
     creating.value = false
     newName.value = ''
     newShort.value = ''
+    newLocation.value = ''
+    if (props.prefill) {
+      creating.value = true
+      newName.value = props.prefill.name
+      newShort.value = props.prefill.shortName
+      newLocation.value = props.prefill.location ?? ''
+      void nextTick(() => nameEl.value?.focus())
+    }
   },
 )
 const ROW = 'press-row focus-inset flex min-h-15 w-full items-center gap-3 px-4 py-2 text-left'
@@ -101,7 +118,13 @@ const ROW = 'press-row focus-inset flex min-h-15 w-full items-center gap-3 px-4 
         <input v-model="newShort" type="text" autocomplete="off" placeholder="e.g. FHDA" class="field h-12 w-full rounded-xl px-3 text-base" />
         <span class="text-muted-foreground block text-sm">What people call it, if it’s shorter. Optional.</span>
       </label>
+      <label v-if="prefill" class="block space-y-1.5">
+        <span class="text-callout block font-medium">Based in</span>
+        <input v-model="newLocation" type="text" class="field h-12 w-full rounded-xl px-3 text-base" />
+        <span class="text-muted-foreground block text-sm">Check where the organisation is based. It may differ from the competition.</span>
+      </label>
       <p class="text-muted-foreground text-sm">{{ createHint }}</p>
+      <slot name="create-options" />
       <div class="flex gap-3">
         <Button size="lg" @click="creating = false">Back</Button>
         <Button type="submit" variant="primary" size="lg" class="flex-1" :disabled="!newName.trim()">Add</Button>

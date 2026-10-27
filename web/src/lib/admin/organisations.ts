@@ -9,6 +9,9 @@ import { OfflineError } from '@/lib/admin/write'
 interface CreateParams {
   name: string
   shortName?: string
+  location?: string
+  /** System admins only: grant the linked competition’s submitter access. */
+  grantSubmitter?: boolean
   /** Also add it to this competition (one you manage). */
   competitionId?: string
   /** System admins: make it without becoming its admin. */
