@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, useTemplateRef } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 import { Palette } from '@lucide/vue'
 import Dialog from '@/components/Dialog.vue'
 import DancerLookPicker from '@/components/DancerLookPicker.vue'
@@ -9,8 +10,9 @@ import { useMorph } from '@/lib/morph'
 
 // The thing that wears a followed dancer's look (their avatar on their page,
 // their number card on a competition's) is where it's chosen: a palette
-// badge says so, a tap opens the picker under it, and Customise opens the
-// loom. For anyone you don't follow it's just the avatar or card.
+// badge says so, a tap opens the picker (under it on wide screens, a sheet on
+// phones, like the loom it leads to), and Customise opens the loom. For
+// anyone you don't follow it's just the avatar or card.
 const props = withDefaults(
   defineProps<{
     dancerId: string
@@ -28,6 +30,7 @@ const on = computed(() => following.isFollowing(props.dancerId))
 const first = computed(() => props.name.split(' ')[0] || 'this dancer')
 const menu = useMorph()
 const sheet = useMorph()
+const wide = useMediaQuery('(min-width: 768px)')
 // The picker and the loom grow out of the palette badge and shrink back into
 // it, not the whole avatar or card around it.
 const badge = useTemplateRef<HTMLElement>('badge')
@@ -60,8 +63,22 @@ function customise() {
         <Palette class="size-[1.125rem]" stroke-width="2.25" />
       </span>
     </button>
-    <Dialog :open="menu.open" :morph="menu" variant="dropdown" :aria-label="`${first}’s look`" @close="menu.hide()">
-      <DancerLookPicker :dancer-id="dancerId" :dancer-name="name" class="px-3 pt-2 pb-3" @customise="customise" />
+    <Dialog
+      :open="menu.open"
+      :morph="menu"
+      :variant="wide ? 'dropdown' : 'sheet'"
+      :aria-label="`${first}’s look`"
+      @close="menu.hide()"
+    >
+      <template #header>
+        <h2 class="text-title">{{ first }}’s look</h2>
+      </template>
+      <DancerLookPicker
+        :dancer-id="dancerId"
+        :dancer-name="name"
+        :class="wide ? 'px-3 pt-2 pb-3' : 'p-4 pb-[calc(1.5rem+var(--safe-bottom))]'"
+        @customise="customise"
+      />
     </Dialog>
     <TartanSheet :open="sheet.open" :morph="sheet" :dancer-id="dancerId" :dancer-name="name" @close="sheet.hide()" />
   </template>
