@@ -92,7 +92,7 @@ export function setupNative(router: Router) {
   // paper or the screen's size changes.
   if (shell) {
     const sendPaper = () =>
-      void paintPaperAbove()
+      void paintPaperAbove(isDark.value)
         .then((image) => (image ? shell.setPaperAbove({ image }) : undefined))
         .catch(ignore)
     watch(isDark, () => requestAnimationFrame(sendPaper), { immediate: true })

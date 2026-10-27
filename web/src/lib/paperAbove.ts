@@ -3,7 +3,9 @@
 // a screen of its own paper, as if the sheet went on above its top edge (the
 // light mirrored there, the grain in step with its own), and the app shows
 // that picture above the page (ScotDancePlugin.setPaperAbove). style.css
-// stays the one place the paper is described: this reads it from there.
+// stays the one place the paper is described: this reads its light from
+// there, and its grain from the tiles `npm run paper` renders from there (a
+// canvas an SVG is drawn into can't be read back in WebKit).
 
 const TILE = 220 // the grain's size on the page (style.css, html)
 
@@ -21,7 +23,7 @@ function loadImage(src: string) {
 }
 
 /** The paper above the page, a screen of it, as a JPEG data URL. */
-export async function paintPaperAbove(): Promise<string | null> {
+export async function paintPaperAbove(dark: boolean): Promise<string | null> {
   const w = innerWidth
   const h = innerHeight
   const scale = devicePixelRatio || 1
@@ -51,15 +53,12 @@ export async function paintPaperAbove(): Promise<string | null> {
   ctx.restore()
 
   // The grain, its tiles meeting the page's at the bottom edge.
-  const src = /url\(["']?(.*?)["']?\)$/.exec(cssValue('--paper-grain'))?.[1]
-  if (src) {
-    const tile = await loadImage(src)
-    const grain = ctx.createPattern(tile, 'repeat')
-    if (grain) {
-      grain.setTransform(new DOMMatrix().translate(0, h % TILE).scale(TILE / tile.width))
-      ctx.fillStyle = grain
-      ctx.fillRect(0, 0, w, h)
-    }
+  const tile = await loadImage(`/paper/grain-${dark ? 'dark' : 'light'}.webp`)
+  const grain = ctx.createPattern(tile, 'repeat')
+  if (grain) {
+    grain.setTransform(new DOMMatrix().translate(0, h % TILE).scale(TILE / tile.width))
+    ctx.fillStyle = grain
+    ctx.fillRect(0, 0, w, h)
   }
 
   return canvas.toDataURL('image/jpeg', 0.9)

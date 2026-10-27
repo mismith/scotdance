@@ -18,6 +18,7 @@
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "brand": "node scripts/brand.ts",
+    "paper": "node scripts/paper.ts",
     "store": "PATH=\"$(ls -d \"$HOME\"/.nvm/versions/node/v\"$(cat ../.nvmrc)\".* 2>/dev/null | sort -V | tail -1)/bin:$PATH\" node store/run.ts",
     "store:stack": "PATH=\"$(ls -d \"$HOME\"/.nvm/versions/node/v\"$(cat ../.nvmrc)\".* 2>/dev/null | sort -V | tail -1)/bin:$PATH\" node store/up.ts",
     "store:render": "node store/render.ts",
