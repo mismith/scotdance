@@ -1,14 +1,21 @@
 # [ScotDance.app](https://scotdance.app)
 
-> Highland dancing event tracker
+> From the warm-up to the awards.
 
-Skip the pen and paper—attend highland dance competitions in style with this app for your mobile device.
+Browse Highland dance competitions, favourite your dancers, and see results as they happen. Free, anywhere in the world: in any web browser, or from the [App Store](https://apps.apple.com/us/app/scotdance/id1386475626) and [Google Play](https://play.google.com/store/apps/details?id=info.mismith.scotdance).
 
-Modernize your highland dancing experience by interacting with program-of-events information digitally:
-- Search through dancers by their competition number, name, age group, etc. Then mark your favourites for easy tracking.
-- Track your 'favourite' dancers to make it easy to follow you/your children/friends.
-- Use the at-a-glance schedule to check event start times, which platforms to dance at, order of dances, and more.
-- Get real-time results updates—from callbacks through to placings—and review them anytime after a competition, too.
+**For families**
+
+- **Favourite your dancers.** Your own, or your whole studio, at a glance on Home.
+- **Know when they’re on.** Their platform, dancing order and session, straight from the organisers’ schedule.
+- **Results as they happen.** Placings show up as soon as they’re entered, even when you can’t be there.
+- **Every result, on record.** All their placings, season after season.
+
+**For organisers**
+
+Run the day without the paper. Build the schedule, import your dancers and post results as they’re announced. It keeps every result on record for later. Free, for any competition: [add yours](https://scotdance.app/competitions/add).
+
+Independent, not-for-profit and volunteer-run. Built by a Highland dance family, for Highland dance families. More on the [About page](https://scotdance.app/about).
 
 ## Dev
 

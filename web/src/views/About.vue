@@ -26,30 +26,51 @@ const forFamilies = [
   { piece: 'record', title: 'Every result, on record', body: 'All their placings, season after season.' },
 ] as const
 
+// Answers are HTML, a <p> per paragraph.
 const faqs: { id: string; q: string; a?: string }[] = [
   {
     id: 'free',
-    q: 'Is there a cost to use it at my local competition?',
-    a: 'No! All competition data is user-submitted, and you can use it as a competition organiser or attendee for free, anywhere in the world. There is no plan for this to ever change.',
+    q: 'Does it cost anything?',
+    a: '<p>No! It’s free for families and organisers alike, anywhere in the world, and there’s no plan for that to ever change.</p><p>There are no ads, no subscriptions and no paid extras. Everyone gets everything, whether you’re following one dancer or running a whole competition. It’s a not-for-profit, volunteer-run project, and its code is open for anyone to read on <a href="https://github.com/mismith/scotdance" target="_blank" rel="noopener" class="text-primary underline">GitHub</a>.</p>',
   },
   {
     id: 'worldwide',
-    q: 'Can I use this in any country?',
+    q: 'Can I use it in any country?',
+  },
+  {
+    id: 'download',
+    q: 'Do I need to download anything?',
+    a: '<p>No. Everything works in any web browser at <a href="https://scotdance.app" class="text-primary underline">scotdance.app</a>, on a phone, tablet or computer, with nothing to install.</p><p>The App Store and Google Play apps are optional, but handy: ScotDance.app sits on your home screen, opens straight to your dancers, and can send a notification the moment they place, even when it’s closed. A browser can only show new placings while the page is open.</p><p>Sign in with the same account on each device and your favourites come with you.</p>',
+  },
+  {
+    id: 'alerts',
+    q: 'Can I get an alert when my dancer places?',
+    a: '<p>Yes. Sign in, find your dancer and tap Favourite. Every dancer you favourite gets alerts, and the bell beside Favourite turns them off (or back on) for just that dancer.</p><p>In the App Store and Google Play apps, turn on Notifications in Settings, then choose which ones you want: <strong>Results</strong>, the moment your dancers’ placings are posted; <strong>Morning of</strong>, who’s dancing today, first thing on competition day; and <strong>Dancer list is up</strong>, when a competition you get alerts for posts its dancers and schedule.</p><p>In a web browser, a banner pops up when one of your dancers places, as long as ScotDance.app is open.</p>',
+  },
+  {
+    id: 'results',
+    q: 'Where do the schedules and results come from?',
+    a: '<p>From each competition’s own organisers. They add the competition, import their entry list, build the schedule and enter the results on the day, so what you see matches the program and what’s announced.</p><p>Results show up as soon as they’re entered. At most competitions that’s soon after they’re read out, but it’s up to the organisers: some enter them as the day goes, others afterwards. Some don’t add a schedule, and a few choose not to share results here at all.</p><p>If a name, number or placing looks wrong, the competition’s organisers can fix it. Let them know, and once it’s fixed it changes for everyone.</p>',
+  },
+  {
+    id: 'add',
+    q: 'My competition isn’t here. Can it be added?',
+    a: '<p>Yes, for free. Its organisers, or someone helping them, can add it from <a href="/competitions/add" class="text-primary underline">Add a competition</a>: a few questions about when and where it is, and who runs it. Many go live straight away; others just need a quick look first, and you’ll hear by email once it’s live.</p><p>From there it’s theirs to run. They can invite other admins, import the entry list from a spreadsheet (which sets up the categories and age groups too), build the schedule platform by platform, and post results on the day. It can stay private until it’s ready.</p><p>If you’re a parent, dancer or teacher, pass the link along to your organisers.</p>',
   },
   {
     id: 'independence',
     q: 'Is ScotDance.app affiliated with any association, governing body or competition?',
-    a: 'No, it’s a completely independent, not-for-profit, volunteer-run endeavour.',
+    a: '<p>No, it’s completely independent: a not-for-profit, volunteer-run endeavour, built by a Highland dance family. No association, governing body or competition runs it, pays for it or decides what goes in it.</p><p>Each competition’s details and results come from its own organisers, who choose to add it here.</p>',
   },
   {
-    id: 'download',
-    q: 'Do I need to download or install anything?',
-    a: 'No, the App Store and Google Play apps are entirely optional. Everything works exactly the same in a web browser on whatever device you own, at <a href="https://scotdance.app" class="text-primary underline">scotdance.app</a>. Of course, it’s handy to have it on your home screen, so the apps make that easy.',
+    id: 'favourites',
+    q: 'Can anyone see which dancers I’ve favourited?',
+    a: '<p>No. Your favourites, and the colours or tartans you choose for them, are private to your account. Nobody else can see who you follow, not the dancers, their teachers or the organisers.</p><p>They’re saved with your account, so they’re the same on every device you sign in on.</p>',
   },
   {
     id: 'privacy',
     q: 'Is it safe to use? What about privacy?',
-    a: 'In plain words: yes, it’s completely legitimate. It checks all the security boxes you’d expect, and does nothing nefarious with the (minimal) data it collects. Competition data is entered by organisers: the same names, numbers, towns, age groups and results as the program and the results PDFs posted on an association’s website. The difference is it’s all in one place, so each dancer’s results are gathered onto one profile, season after season. Nothing like a birthdate, address or school is ever asked for, and search engines like Google are asked not to list dancer pages. There are more details on the <a href="/policies" class="text-primary underline">privacy and terms</a> page.',
+    a: '<p>Yes, it’s completely legitimate. ScotDance.app isn’t a business and never will be. It’s free, it has no ads and nothing to upsell, and nobody’s information is ever sold, shared or used to make money. It was built by a Highland dance family, and it’s kept running for the community, not for profit.</p><p>It checks all the security boxes you’d expect: every connection is encrypted, and your email address and favourites can only be read by you.</p><p>Organisers enter the same details that are already in the program and the results they post afterwards: names, competitor numbers, towns, age groups and placings. The difference is it’s all in one place, so each dancer’s results gather onto one profile, season after season. It never asks for a birthdate, address or school, and search engines are asked not to list dancer pages.</p><p>Your own account is just an email address and a password, plus a display name if you want one. You can delete it, and everything that goes with it, any time from your Account page. There’s more on the <a href="/policies" class="text-primary underline">privacy and terms</a> page.</p>',
   },
 ]
 
@@ -175,14 +196,15 @@ watch(() => route.hash, applyHash)
               ]"
             >
               <div class="text-muted-foreground overflow-hidden px-4 text-base leading-relaxed">
-                <p class="pb-4">
-                  <template v-if="f.id === 'worldwide'">
-                    Yes, anywhere in the world. Curiously, usage in the United States has been very light so far. If you’ve
-                    got a theory why, please
-                    <button v-if="crisp.available" type="button" class="text-primary font-semibold underline" @click="crisp.open()">get in touch</button><template v-else>get in touch</template>.
-                  </template>
-                  <span v-else v-html="f.a" />
-                </p>
+                <div v-if="f.id === 'worldwide'" class="space-y-3 pb-4">
+                  <p>Yes, anywhere in the world. Any competition, in any country, can be added for free, and families anywhere can follow along.</p>
+                  <p>
+                    If you’d like to bring it to your country, city or town, please
+                    <button v-if="crisp.available" type="button" class="text-primary font-semibold underline" @click="crisp.open()">get in touch</button><template v-else>get in touch</template>
+                    for a hand getting your first competition set up.
+                  </p>
+                </div>
+                <div v-else class="space-y-3 pb-4" v-html="f.a" />
               </div>
             </div>
           </li>
