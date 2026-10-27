@@ -915,9 +915,10 @@ html {
 /* Morph (lib/morph.ts): a trigger grows into the sheet or menu it opens and
    shrinks back into it on close. Same bg/fg split as the nav pills above:
    the group paints a surface whose corners and colour go from the trigger's
-   to the target's (set as --morph-* on <html> per morph) and clips the two
-   snapshots, which cross-fade on top at their natural size so text never
-   squashes. Reduce Motion skips the transition entirely. */
+   to the target's (set as --morph-* on <html> per morph), and the two
+   snapshots cross-fade on top: the trigger's at its natural size, the sheet
+   or menu's scaled with the surface (never squashed). Reduce Motion skips the
+   transition entirely. */
 @keyframes vt-morph-surface {
   from {
     border-radius: var(--morph-from-radius);
@@ -977,10 +978,14 @@ html {
 ::view-transition-new(morph) {
   animation: vt-morph-in 150ms 50ms var(--ease-standard) both;
 }
-/* Closing shrinks the sheet's picture with the surface rather than cropping
-   it through a closing window, and it's gone early. */
+/* The sheet or menu's picture grows out of its trigger and shrinks back into
+   it with the surface, the same both ways, rather than being uncovered
+   through a growing window. Closing, it's gone early. */
+:active-view-transition-type(morph-open)::view-transition-new(morph),
 :active-view-transition-type(morph-close)::view-transition-old(morph) {
   @apply object-cover object-top;
+}
+:active-view-transition-type(morph-close)::view-transition-old(morph) {
   animation-duration: 80ms;
 }
 /* While something morphs, the chrome (tab bar, back pill, titles) stays in

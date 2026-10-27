@@ -28,27 +28,29 @@ const on = computed(() => following.isFollowing(props.dancerId))
 const first = computed(() => props.name.split(' ')[0] || 'this dancer')
 const menu = useMorph()
 const sheet = useMorph()
-const button = useTemplateRef<HTMLButtonElement>('button')
+// The picker and the loom grow out of the palette badge and shrink back into
+// it, not the whole avatar or card around it.
+const badge = useTemplateRef<HTMLElement>('badge')
 
 function customise() {
   menu.dismiss()
-  void sheet.show(button.value)
+  void sheet.show(badge.value)
 }
 </script>
 
 <template>
   <template v-if="on">
     <button
-      ref="button"
       type="button"
       :aria-label="`${label ? `${label}. ` : ''}Choose ${first}’s look`"
       aria-haspopup="dialog"
       :aria-expanded="menu.open"
       :class="['press relative inline-flex', shape === 'round' ? 'rounded-full' : 'rounded-2xl']"
-      @click="menu.show($event)"
+      @click="menu.show(badge)"
     >
       <slot />
       <span
+        ref="badge"
         :class="[
           'bg-raised text-foreground absolute flex size-8 items-center justify-center rounded-full shadow-[0_0_0_3px_var(--background),0_2px_6px_rgb(0_0_0/0.18)]',
           shape === 'round' ? '-right-0.5 -bottom-0.5' : '-right-2 -bottom-2',
