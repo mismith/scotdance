@@ -31,12 +31,20 @@ const first = computed(() => props.name.split(' ')[0] || 'this dancer')
 const menu = useMorph()
 const sheet = useMorph()
 const wide = useMediaQuery('(min-width: 768px)')
-// The picker and the loom grow out of the palette badge and shrink back into
-// it, not the whole avatar or card around it.
+// On wide screens the picker and the loom grow out of the palette badge and
+// shrink back into it, not the whole avatar or card around it.
 const badge = useTemplateRef<HTMLElement>('badge')
 
+// Customise swaps the picker for the loom: the picker goes first (on a phone
+// it slides down), then the loom comes in (slides up).
+let toLoom = false
 function customise() {
+  toLoom = true
   menu.dismiss()
+}
+function pickerClosed() {
+  if (!toLoom) return
+  toLoom = false
   void sheet.show(badge.value)
 }
 </script>
@@ -69,6 +77,7 @@ function customise() {
       :variant="wide ? 'dropdown' : 'sheet'"
       :aria-label="`${first}’s look`"
       @close="menu.hide()"
+      @closed="pickerClosed"
     >
       <template #header>
         <h2 class="text-title">{{ first }}’s look</h2>

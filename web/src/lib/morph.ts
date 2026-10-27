@@ -119,13 +119,10 @@ export function useMorph() {
     return queue
   }
 
-  // On a phone, a sheet slides up from the bottom edge unless it opens from a
-  // small control: grown out of a full-width row high on the screen, it would
-  // start there and travel down, the wrong way for a sheet.
+  // On a phone, a sheet always slides up from the bottom edge, as a sheet
+  // does, whatever opened it; it doesn't grow out of its trigger.
   function slidesInstead() {
-    if (target.value?.dataset.morphKind !== 'sheet' || matchMedia('(min-width: 48rem)').matches) return false
-    const r = trigger.value?.getBoundingClientRect()
-    return !!r && r.width > innerWidth * 0.6
+    return target.value?.dataset.morphKind === 'sheet' && !matchMedia('(min-width: 48rem)').matches
   }
 
   async function run(next: boolean) {
