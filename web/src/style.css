@@ -957,8 +957,10 @@ html:not([data-native])::before {
    the group paints a surface whose corners and colour go from the trigger's
    to the target's (set as --morph-* on <html> per morph), and the two
    snapshots cross-fade on top: the trigger's at its natural size, the sheet
-   or menu's scaled with the surface (never squashed). Reduce Motion skips the
-   transition entirely. */
+   or menu's scaled with the surface (never squashed). Closing, the surface
+   shrinks into an empty ghost over the trigger and fades there, while the
+   trigger holds still in the page. Reduce Motion skips the transition
+   entirely. */
 @keyframes vt-morph-surface {
   from {
     border-radius: var(--morph-from-radius);

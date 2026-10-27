@@ -10,7 +10,8 @@ import { startViewTransition } from '@/lib/transition'
 //   <Dialog :open="menu.open" :morph="menu" @close="menu.hide()">…</Dialog>
 //
 // Only one element at a time carries the `morph` view-transition name: the
-// trigger before opening, the target once open (and the reverse to close).
+// trigger before opening, the target once open, then a ghost over the
+// trigger to close, so the trigger holds still while the surface shrinks.
 // The look lives in style.css under "Morph". Without View Transitions, or
 // with Reduce Motion on, things just open and close.
 
@@ -76,6 +77,33 @@ function paintSurface(el: HTMLElement, end: 'from' | 'to') {
   root.setProperty(`--morph-${end}-corner`, cs.getPropertyValue('corner-shape') || 'round')
 }
 
+/** Closing, the surface shrinks into a ghost: an empty stand-in pinned over
+ *  the trigger, fading as it lands. The trigger itself stays in the page's
+ *  picture, holding still (given the name, its picture would ride the
+ *  shrinking surface in from the sheet's edge). */
+function ghostOver(el: HTMLElement) {
+  const r = el.getBoundingClientRect()
+  const ghost = document.createElement('div')
+  ghost.setAttribute('aria-hidden', 'true')
+  Object.assign(ghost.style, {
+    position: 'fixed',
+    left: `${r.left}px`,
+    top: `${r.top}px`,
+    width: `${r.width}px`,
+    height: `${r.height}px`,
+    pointerEvents: 'none',
+  })
+  document.body.append(ghost)
+  // A transformed ancestor would shift `fixed`; line it up with what it covers.
+  const g = ghost.getBoundingClientRect()
+  ghost.style.left = `${2 * r.left - g.left}px`
+  ghost.style.top = `${2 * r.top - g.top}px`
+  paintSurface(el, 'to')
+  document.documentElement.style.setProperty('--morph-to-bg', 'transparent')
+  ghost.style.viewTransitionName = NAME
+  return ghost
+}
+
 export type Morph = ReturnType<typeof useMorph>
 
 export function useMorph() {
@@ -116,12 +144,15 @@ export function useMorph() {
     const kind = target.value?.dataset.morphKind
     const pinned = kind === 'sheet' && !matchMedia('(min-width: 48rem)').matches
     const types = [NAME, pinned ? 'morph-pinned' : 'morph-float', next ? 'morph-open' : 'morph-close']
+    let ghost: HTMLElement | undefined
     const transition = startViewTransition(async () => {
       leaving.style.viewTransitionName = ''
       open.value = next
       await nextTick()
       const arriving = next ? target.value : trigger.value
-      if (onScreen(arriving)) {
+      if (!onScreen(arriving)) return
+      if (!next) ghost = ghostOver(arriving)
+      else {
         paintSurface(arriving, 'to')
         arriving.style.viewTransitionName = NAME
       }
@@ -129,6 +160,7 @@ export function useMorph() {
     // An interrupted morph (say, a route change mid-way) just ends early.
     transition.ready.catch(() => {})
     await transition.finished.catch(() => {})
+    ghost?.remove()
     for (const el of [trigger.value, target.value]) if (el) el.style.viewTransitionName = ''
   }
 
