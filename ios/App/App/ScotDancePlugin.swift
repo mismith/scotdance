@@ -7,7 +7,9 @@ public class ScotDancePlugin: CAPPlugin, CAPBridgedPlugin {
     public let jsName = "ScotDance"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "setAppearance", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setPaperAbove", returnType: CAPPluginReturnPromise),
     ]
+    private var paperAbove: UIImageView?
 
     override public func load() {
         if let webView = bridge?.webView as? WKWebView {
@@ -34,6 +36,26 @@ public class ScotDancePlugin: CAPPlugin, CAPBridgedPlugin {
         }
         DispatchQueue.main.async {
             self.bridge?.viewController?.view.window?.overrideUserInterfaceStyle = style
+            call.resolve()
+        }
+    }
+
+    // A screen of the page's paper (lib/paperAbove paints it), shown just
+    // above the page inside its scroll view: pulled down past the top, the
+    // page bounces to reveal more paper rather than the web view's flat colour.
+    @objc func setPaperAbove(_ call: CAPPluginCall) {
+        guard let url = call.getString("image"),
+              let comma = url.firstIndex(of: ","),
+              let data = Data(base64Encoded: String(url[url.index(after: comma)...])),
+              let image = UIImage(data: data, scale: UIScreen.main.scale)
+        else { return call.reject("No image") }
+        DispatchQueue.main.async {
+            guard let scrollView = self.bridge?.webView?.scrollView else { return call.resolve() }
+            let view = self.paperAbove ?? UIImageView()
+            view.image = image
+            view.frame = CGRect(x: 0, y: -image.size.height, width: image.size.width, height: image.size.height)
+            if view.superview == nil { scrollView.insertSubview(view, at: 0) }
+            self.paperAbove = view
             call.resolve()
         }
     }

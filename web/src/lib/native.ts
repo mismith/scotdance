@@ -1,6 +1,7 @@
 import { watch } from 'vue'
 import type { Router } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'
+import { paintPaperAbove } from '@/lib/paperAbove'
 
 // The native apps (Capacitor) wrap this same web build. The shell injects
 // `window.Capacitor` before the page loads, with a proxy for each native
@@ -37,6 +38,7 @@ interface SystemBarsPlugin {
 }
 interface ScotDancePlugin {
   setAppearance: (o: { theme: 'light' | 'dark' | 'auto' }) => Promise<void>
+  setPaperAbove: (o: { image: string }) => Promise<void>
 }
 interface AppPlugin {
   addListener: ((event: 'backButton', cb: (e: { canGoBack: boolean }) => void) => unknown) &
@@ -86,6 +88,20 @@ export function setupNative(router: Router) {
   watch(isDark, (dark) => bars?.setStyle({ style: dark ? 'DARK' : 'LIGHT' }).catch(ignore), { immediate: true })
   const shell = platform === 'ios' ? nativePlugin<ScotDancePlugin>('ScotDance') : null
   watch(theme, (t) => shell?.setAppearance({ theme: t }).catch(ignore), { immediate: true })
+  // More paper above the page, for when it's pulled down: again whenever the
+  // paper or the screen's size changes.
+  if (shell) {
+    const sendPaper = () =>
+      void paintPaperAbove()
+        .then((image) => (image ? shell.setPaperAbove({ image }) : undefined))
+        .catch(ignore)
+    watch(isDark, () => requestAnimationFrame(sendPaper), { immediate: true })
+    let resized = 0
+    window.addEventListener('resize', () => {
+      clearTimeout(resized)
+      resized = window.setTimeout(sendPaper, 300)
+    })
+  }
 
   // iOS: tapping the status bar scrolls to the top, like every native list.
   window.addEventListener('statusTap', () => {
