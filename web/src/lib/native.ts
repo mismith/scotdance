@@ -1,4 +1,5 @@
 import { watch } from 'vue'
+import type { Router } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'
 
 // The native apps (Capacitor) wrap this same web build. The shell injects
@@ -35,8 +36,23 @@ interface SystemBarsPlugin {
   setStyle: (o: { style: 'DARK' | 'LIGHT' }) => Promise<void>
 }
 interface AppPlugin {
-  addListener: (event: 'backButton', cb: (e: { canGoBack: boolean }) => void) => unknown
+  addListener: ((event: 'backButton', cb: (e: { canGoBack: boolean }) => void) => unknown) &
+    ((event: 'appUrlOpen', cb: (e: { url: string }) => void) => unknown)
+  getLaunchUrl: () => Promise<{ url: string } | undefined>
   minimizeApp: () => Promise<void>
+}
+
+// Links to the site open in the app (Universal Links, App Links: the
+// entitlements, AndroidManifest and /.well-known on each host): the page
+// they point to, or null for any other link.
+const SITE_HOSTS = ['scotdance.app', 'next.scotdance.app']
+function sitePath(url: string) {
+  try {
+    const u = new URL(url)
+    return u.protocol === 'https:' && SITE_HOSTS.includes(u.hostname) ? u.pathname + u.search + u.hash : null
+  } catch {
+    return null
+  }
 }
 
 const ignore = () => {}
@@ -50,7 +66,7 @@ export function hideNativeSplash() {
 }
 
 /** Wire the page up to the native shell. Call once, after the app mounts. */
-export function setupNative() {
+export function setupNative(router: Router) {
   if (!isNative) return
 
   // The splash stays up until the page takes over (launchAutoHide: false):
@@ -70,10 +86,21 @@ export function setupNative() {
     window.scrollTo({ top: 0, behavior: reduce ? 'instant' : 'smooth' })
   })
 
+  // A link to the site goes to its page: in place of Home when it launched
+  // the app, on top of where you were otherwise. (A launch can report it
+  // both ways; the router ignores the second.)
+  const app = nativePlugin<AppPlugin>('App')
+  const openLink = (url: string, launched: boolean) => {
+    const path = sitePath(url)
+    if (!path || path === router.currentRoute.value.fullPath) return
+    void (launched ? router.replace(path) : router.push(path))
+  }
+  void app?.getLaunchUrl().then((r) => r?.url && openLink(r.url, true), ignore)
+  void app?.addListener('appUrlOpen', ({ url }) => openLink(url, false))
+
   // Android back button: close an open sheet or menu first, then go back,
   // and from the first screen put the app away (like other Android apps).
-  const app = platform === 'android' ? nativePlugin<AppPlugin>('App') : null
-  void app?.addListener('backButton', ({ canGoBack }) => {
+  if (platform === 'android') void app?.addListener('backButton', ({ canGoBack }) => {
     const dialog = [...document.querySelectorAll('dialog[open]')].at(-1)
     if (dialog) dialog.dispatchEvent(new Event('cancel', { cancelable: true }))
     else if (canGoBack) history.back()

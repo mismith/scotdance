@@ -9,6 +9,8 @@
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>webcredentials:scotdance.app</string>
+		<string>applinks:scotdance.app</string>
+		<string>applinks:next.scotdance.app</string>
 	</array>
 </dict>
 </plist>

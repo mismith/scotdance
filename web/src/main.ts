@@ -63,6 +63,6 @@ router.onError((err, to) => {
 })
 
 app.mount('#app')
-setupNative()
+setupNative(router)
 // A tapped notification opens what it's about.
 handleNotificationTaps((link) => void router.push(link))
