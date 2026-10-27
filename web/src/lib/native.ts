@@ -35,6 +35,9 @@ interface SplashScreenPlugin {
 interface SystemBarsPlugin {
   setStyle: (o: { style: 'DARK' | 'LIGHT' }) => Promise<void>
 }
+interface ScotDancePlugin {
+  setAppearance: (o: { theme: 'light' | 'dark' | 'auto' }) => Promise<void>
+}
 interface AppPlugin {
   addListener: ((event: 'backButton', cb: (e: { canGoBack: boolean }) => void) => unknown) &
     ((event: 'appUrlOpen', cb: (e: { url: string }) => void) => unknown)
@@ -75,10 +78,14 @@ export function setupNative(router: Router) {
   setTimeout(hideNativeSplash, 4000)
 
   // Status bar icons follow the app's theme, including a manual override.
-  // "DARK" means light icons for a dark background.
+  // "DARK" means light icons for a dark background. On iOS, so does the
+  // rest of the system's look around the page (ScotDancePlugin), unless the
+  // app just follows the phone.
   const bars = nativePlugin<SystemBarsPlugin>('SystemBars')
-  const { isDark } = useTheme()
+  const { theme, isDark } = useTheme()
   watch(isDark, (dark) => bars?.setStyle({ style: dark ? 'DARK' : 'LIGHT' }).catch(ignore), { immediate: true })
+  const shell = platform === 'ios' ? nativePlugin<ScotDancePlugin>('ScotDance') : null
+  watch(theme, (t) => shell?.setAppearance({ theme: t }).catch(ignore), { immediate: true })
 
   // iOS: tapping the status bar scrolls to the top, like every native list.
   window.addEventListener('statusTap', () => {

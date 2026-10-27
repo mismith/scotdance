@@ -24,5 +24,11 @@ class PluginViewController: CAPBridgeViewController {
         webView?.isOpaque = false
         webView?.backgroundColor = background
         webView?.scrollView.backgroundColor = background
+        // iOS 26 shades and blurs a scroll view's edges under the status
+        // bar and home indicator; the page's own bars do that already.
+        if #available(iOS 26.0, *) {
+            webView?.scrollView.topEdgeEffect.isHidden = true
+            webView?.scrollView.bottomEdgeEffect.isHidden = true
+        }
     }
 }
