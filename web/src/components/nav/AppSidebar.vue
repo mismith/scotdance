@@ -46,9 +46,12 @@ const vt = (name: string) => ({ viewTransitionName: `sidebar-${name}`, viewTrans
 </script>
 
 <template>
+  <!-- Clear glass: the page is beside it, never under it, so the page's
+       paper shows through, grain and all, under a light tint and an
+       engraved edge. -->
   <aside
     data-nav-axis="y"
-    class="bg-card fixed inset-y-0 left-0 z-30 hidden w-(--chrome-left) flex-col pt-(--safe-top) pl-(--safe-left) [view-transition-name:sidebar] lg:flex"
+    class="fixed inset-y-0 left-0 z-30 hidden w-(--chrome-left) flex-col bg-[color-mix(in_oklab,var(--background)_40%,transparent)] pt-(--safe-top) pl-(--safe-left) shadow-[inset_-1px_0_0_var(--engrave-lit),inset_-2px_0_0_var(--engrave-cut)] [view-transition-name:sidebar] lg:flex"
   >
     <RouterLink
       :to="{ name: 'home' }"

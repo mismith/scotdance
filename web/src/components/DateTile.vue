@@ -21,8 +21,8 @@ const today = computed(() => props.today ?? isSameDay(props.date ?? undefined))
 <template>
   <span
     :class="[
-      'relative flex w-11 shrink-0 flex-col items-center justify-center gap-px rounded-xl py-1.5 leading-none',
-      today ? 'bg-live-paper' : 'bg-muted',
+      'deboss relative flex w-11 shrink-0 flex-col items-center justify-center gap-px rounded-xl py-1.5 leading-none',
+      today && '[--deboss-fill:var(--live-paper)]',
     ]"
     :title="managed ? 'You can manage this' : undefined"
   >

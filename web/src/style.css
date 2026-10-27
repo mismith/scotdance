@@ -103,6 +103,11 @@
   /* Engraved hairlines between frameless rows: a faint cut, lit below. */
   --engrave-cut: rgb(16 24 40 / 0.08);
   --engrave-lit: rgb(255 255 255 / 0.85);
+  /* Pressed into the paper (deboss): a touch darker inside, shaded under
+     the top edge, the lower lip catching the light. */
+  --deboss-fill: rgb(16 24 40 / 0.025);
+  --deboss-shade: rgb(16 24 40 / 0.14);
+  --deboss-lit: rgb(255 255 255 / 0.8);
   --foreground: #12161b;
   --card: #ffffff;
   /* Frosted chrome (tab bar): a hint of the page through it, a lit top edge. */
@@ -231,6 +236,9 @@
   --menu-lit: rgb(255 255 255 / 0.18);
   --engrave-cut: rgb(0 0 0 / 0.55);
   --engrave-lit: rgb(255 255 255 / 0.07);
+  --deboss-fill: rgb(0 0 0 / 0.12);
+  --deboss-shade: rgb(0 0 0 / 0.6);
+  --deboss-lit: rgb(255 255 255 / 0.07);
   --card-foreground: #eef2f6;
   --popover: #222a33;
   --popover-foreground: #eef2f6;
@@ -587,6 +595,26 @@ html:not([data-native])::before {
   @media (forced-colors: active) {
     outline: 1px solid ButtonText;
   }
+}
+/* A sheet of frosted paper (bottom sheets): it blurs what's behind it, so
+   what's under it never reads through, and carries its own grain, so it's
+   still paper. Solid under Reduce Transparency. */
+@utility paper-sheet {
+  background:
+    var(--paper-grain) 0 0 / 220px,
+    color-mix(in oklab, var(--background) 75%, transparent);
+  backdrop-filter: blur(24px) saturate(1.4);
+  @media (prefers-reduced-transparency: reduce) {
+    background-color: var(--background);
+  }
+}
+/* Pressed into the paper (date tiles): no fill of its own, just the shade
+   and lit lip of a blind stamp, so it can't be mistaken for a bib. */
+@utility deboss {
+  background-color: var(--deboss-fill);
+  box-shadow:
+    inset 0 1.5px 2.5px var(--deboss-shade),
+    inset 0 -1px 0 var(--deboss-lit);
 }
 @utility glass-menu {
   background-color: color-mix(in oklab, var(--raised) 74%, transparent);

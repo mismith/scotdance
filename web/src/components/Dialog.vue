@@ -206,7 +206,7 @@ const dragStyle = computed(() =>
       // (see sync), so it draws no ring of its own. Each variant sets its own
       // max size: a general max-h/max-w-full here would win over theirs.
       'border-0 p-0 text-inherit outline-none',
-      variant === 'dropdown' ? 'glass-menu' : 'bg-raised',
+      variant === 'dropdown' ? 'glass-menu' : variant === 'sheet' ? 'paper-sheet' : 'bg-raised',
       // Width by size prop.
       variant !== 'dropdown' && (size === 'sm' ? 'w-full md:max-w-sm' : 'w-full md:max-w-md'),
       variant === 'dropdown' &&
