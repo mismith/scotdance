@@ -1,4 +1,16 @@
 {
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["UH23LCVKZ2.info.mismith.scotdance"],
+        "components": [
+          { "/": "/__/*", "exclude": true },
+          { "/": "/email/*", "exclude": true },
+          { "/": "/*" }
+        ]
+      }
+    ]
+  },
   "webcredentials": {
     "apps": ["UH23LCVKZ2.info.mismith.scotdance"]
   }
