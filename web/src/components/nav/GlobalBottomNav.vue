@@ -20,7 +20,7 @@ const crisp = useCrisp()
 
 const menu = useMorph()
 
-// On an early build, a dot points the way to "Share your ideas" in More, until
+// On an early build, a dot points the way to "Help & feedback" in More, until
 // the menu's been opened once.
 const moreSeen = useLocalStorage('early-more-seen', false)
 watch(

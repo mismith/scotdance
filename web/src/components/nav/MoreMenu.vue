@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
-import { ArrowDownToLine, ClipboardList, Gavel, HeartHandshake, Info, Landmark, LifeBuoy, Music, School, ServerCog, Settings, SquarePlus, Users } from '@lucide/vue'
+import { ArrowDownToLine, ClipboardList, Gavel, Info, Landmark, LifeBuoy, Music, School, ServerCog, Settings, SquarePlus, Users } from '@lucide/vue'
 import AdminMark from '@/components/AdminMark.vue'
 import Dialog from '@/components/Dialog.vue'
 import { useCrisp } from '@/composables/useCrisp'
@@ -66,9 +66,6 @@ const row =
         <button v-if="update.updateAvailable" type="button" :class="row" @click="run(() => update.openDialog())">
           <ArrowDownToLine class="text-primary! size-5" /> Update available
         </button>
-        <button v-if="update.early && crisp.available" type="button" :class="row" @click="run(() => crisp.open())">
-          <HeartHandshake class="text-primary! size-5" /> Share your ideas
-        </button>
         <button type="button" :class="row" :data-current="here({ name: 'about' })" @click="go({ name: 'about' })">
           <Info class="size-5" /> About ScotDance.app
         </button>
@@ -77,7 +74,7 @@ const row =
         </button>
         <button v-if="crisp.available" type="button" :class="row" @click="run(() => crisp.open())">
           <LifeBuoy class="size-5" />
-          <span class="flex-1">Help</span>
+          <span class="flex-1">Help &amp; feedback</span>
           <span v-if="crisp.unread > 0" class="bg-secondary text-secondary-foreground rounded-full px-2 text-sm">{{ crisp.unread }}</span>
         </button>
       </div>
