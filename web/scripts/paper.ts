@@ -1,8 +1,8 @@
 // Renders the paper's grain (style.css, --paper-grain: an SVG filter, one
-// per theme) to tiles in public/paper/, for the apps to paint above the page
-// (lib/paperAbove): WebKit won't let a canvas an SVG was drawn into be read
-// back, so they draw these instead. The page itself keeps the SVG. Run from
-// web/ after changing the grain: `npm run paper`.
+// per theme) to tiles in public/paper/. The apps use them for the page's
+// grain and the paper they paint beyond its edges (lib/paperEdges), as
+// WebKit won't let a canvas an SVG was drawn into be read back; the website
+// keeps the SVG. Run from web/ after changing the grain: `npm run paper`.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { chromium } from '@playwright/test'
 

@@ -80,7 +80,7 @@
   --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='660' height='660'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.375 .11' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeDiffuseLighting lighting-color='%23fff' surfaceScale='3.2'%3E%3CfeDistantLight azimuth='225' elevation='58'/%3E%3C/feDiffuseLighting%3E%3CfeColorMatrix values='0 0 0 0 .35  0 0 0 0 .33  0 0 0 0 .3  -1 0 0 0 1'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='.18'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29'/%3E%3C/svg%3E");
   /* The light the page sits in: brighter at the top, like a sheet by a window. */
   /* Its parts, so the apps can draw the same light above the page
-     (lib/paperAbove): where it falls from, how far it spreads (across the
+     (lib/paperEdges): where it falls from, how far it spreads (across the
      width, down a screen), its colours from bright to where it ends, and
      the rest of a long page. */
   --light-x: 15%;
@@ -299,8 +299,8 @@ html {
     var(--page-light) 0 0 / 100% 100% no-repeat var(--page-end);
 }
 /* In the apps, the grain is tiles of the same SVG (`npm run paper`): crisper
-   than WebKit draws the filter, the same as the paper they paint above the
-   page (lib/paperAbove), and no filter to run. */
+   than WebKit draws the filter, the same as the paper they paint beyond
+   the page's edges (lib/paperEdges), and no filter to run. */
 :root[data-native] {
   --paper-grain: url('/paper/grain-light.webp');
 }
