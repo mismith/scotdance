@@ -24,6 +24,10 @@
         const t = localStorage.getItem('theme')
         if (t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches))
           document.documentElement.classList.add('dark')
+        // In the apps (Capacitor's bridge is already here), the paper's grain
+        // comes from tiles (style.css, [data-native]).
+        const platform = window.Capacitor?.getPlatform?.()
+        if (platform === 'ios' || platform === 'android') document.documentElement.dataset.native = ''
       } catch {}
     </script>
 

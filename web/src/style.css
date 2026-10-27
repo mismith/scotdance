@@ -298,6 +298,15 @@ html {
     var(--paper-grain) 0 0 / 220px,
     var(--page-light) 0 0 / 100% 100% no-repeat var(--page-end);
 }
+/* In the apps, the grain is tiles of the same SVG (`npm run paper`): crisper
+   than WebKit draws the filter, the same as the paper they paint above the
+   page (lib/paperAbove), and no filter to run. */
+:root[data-native] {
+  --paper-grain: url('/paper/grain-light.webp');
+}
+:root[data-native].dark {
+  --paper-grain: url('/paper/grain-dark.webp');
+}
 @layer base {
   * {
     @apply border-border;
