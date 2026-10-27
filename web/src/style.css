@@ -298,6 +298,15 @@ html {
     var(--paper-grain) 0 0 / 220px,
     var(--page-light) 0 0 / 100% 100% no-repeat var(--page-end);
 }
+/* A trackpad pulls a desktop page past its ends, and the browser fills the
+   gap with a flat colour (no page can paint there): it just stops instead.
+   Phones keep the bounce, and pull-to-refresh; in the apps the paper goes
+   on past the ends (lib/paperEdges). */
+@media (hover: hover) and (pointer: fine) {
+  html:not([data-native]) {
+    overscroll-behavior-y: none;
+  }
+}
 /* In the apps, the grain is tiles of the same SVG (`npm run paper`): crisper
    than WebKit draws the filter, the same as the paper they paint beyond
    the page's edges (lib/paperEdges), and no filter to run. */
