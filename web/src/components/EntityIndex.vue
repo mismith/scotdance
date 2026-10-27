@@ -15,6 +15,7 @@ import {
   type AggregateRow,
 } from '@/composables/useEntityAggregates'
 import { useRecentEntities } from '@/composables/useRecentEntities'
+import { useScrollSection } from '@/composables/useScrollSection'
 import { useScrolledPast } from '@/composables/useScrolledPast'
 import { useFavoritesStore, type FavoriteType } from '@/stores/favorites'
 
@@ -121,6 +122,10 @@ const recentRows = computed(() => {
 const to = (id: string) => ({ name: `${props.routePrefix}.info`, params: { [props.idParam]: id } })
 const imageOf = (agg: AggregateRow) => (typeof agg.image === 'string' ? agg.image : null)
 
+const mainEl = ref<HTMLElement | null>(null)
+const currentSection = useScrollSection(mainEl)
+const listLabel = computed(() => query.value ? 'Matches' : props.places ? `All ${section.value.label.toLowerCase()}` : 'Everyone')
+
 const titleAnchor = ref<HTMLElement | null>(null)
 const scrolledPastTitle = useScrolledPast(titleAnchor)
 const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap-3 py-2 pl-4'
@@ -128,9 +133,9 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
 
 <template>
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
-    <AppBar :title="section.label" :show-title="scrolledPastTitle" :fallback="{ to: { name: 'home' }, label: 'Home' }" />
+    <AppBar :title="section.label" :subtitle="scrolledPastTitle ? currentSection : null" :show-title="scrolledPastTitle" :fallback="{ to: { name: 'home' }, label: 'Home' }" />
 
-    <main class="mx-auto w-full max-w-3xl flex-1 space-y-4 px-4 pt-[calc(var(--chrome-top)+0.25rem)]">
+    <main ref="mainEl" class="mx-auto w-full max-w-3xl flex-1 space-y-4 px-4 pt-[calc(var(--chrome-top)+0.25rem)]">
       <header ref="titleAnchor" class="space-y-3 pt-1.5">
         <h1 class="text-hero">{{ section.label }}</h1>
         <label class="search-fill">
@@ -187,7 +192,7 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
             :key="block.key"
             class="space-y-2"
           >
-            <h2 class="text-section flex min-h-6 items-center justify-between">
+            <h2 :data-section="block.label" class="text-section flex min-h-6 items-center justify-between">
               {{ block.label }}
               <button
                 v-if="block.clear"
@@ -228,18 +233,17 @@ const ROW = 'press-row focus-inset flex min-h-16 min-w-0 flex-1 items-center gap
         />
 
         <section v-if="sorted.length" :class="['space-y-2', settle]">
-          <h2 class="text-section flex items-baseline justify-between">
-            {{ query ? 'Matches' : places ? `All ${section.label.toLowerCase()}` : 'Everyone' }}
+          <h2 :data-section="listLabel" class="text-section flex items-baseline justify-between">
+            {{ listLabel }}
             <span class="text-muted-foreground text-sm font-normal tabular-nums">{{ sorted.length }}</span>
           </h2>
-          <!-- Each letter sticks while its names scroll under it: a frosted
-               strip (over the list's hairline), and the name under it starts
-               without one. -->
+          <!-- Letters scroll with their rows and become the bar's subtitle. -->
           <ul class="rows-engraved -mx-4 [--inset:4.5rem] [--inset-end:1rem]">
             <template v-for="x in rows" :key="'letter' in x ? `@${x.letter}` : x.row.id">
               <li
                 v-if="'letter' in x"
-                class="paper text-muted-foreground sticky top-(--chrome-top) z-10 bg-none! px-4 py-1.5 text-footnote font-semibold [&+li]:bg-none!"
+                :data-section="x.letter"
+                class="text-muted-foreground bg-none! px-4 py-1.5 text-footnote font-semibold [&+li]:bg-none!"
               >
                 {{ x.letter }}
               </li>

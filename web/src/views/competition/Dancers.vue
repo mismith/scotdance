@@ -213,7 +213,8 @@ const MENU_ROW = 'press-row focus-inset flex min-h-11 w-full items-center gap-3 
 
         <section v-for="s in sections" :key="s.key">
           <h2
-            class="paper text-muted-foreground text-callout sticky top-(--chrome-top) z-10 -mx-4 flex items-baseline justify-between gap-2 px-4 py-2 font-semibold"
+            :data-section="s.label"
+            class="text-muted-foreground text-callout flex items-baseline justify-between gap-2 py-2 font-semibold"
           >
             <span class="truncate">{{ s.label }}</span>
             <span class="shrink-0 font-medium tabular-nums">{{ s.rows.length }}</span>

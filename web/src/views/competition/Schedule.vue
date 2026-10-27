@@ -141,7 +141,7 @@ async function openAtToday() {
     />
 
     <section v-for="d in empty ? [] : dayList" :id="`day-${d.day.id}`" :key="d.day.id" class="scroll-mt-(--chrome-top) space-y-3">
-      <h2 v-if="dayList.length > 1" class="text-section flex items-baseline gap-2 pt-2">
+      <h2 v-if="dayList.length > 1" :data-section="d.relative ?? d.label" class="text-section flex items-baseline gap-2 pt-2">
         {{ d.relative ?? d.label }}
         <span v-if="d.relative" class="text-muted-foreground text-base font-medium">{{ d.label }}</span>
       </h2>
@@ -158,7 +158,8 @@ async function openAtToday() {
         class="scroll-mt-[calc(var(--chrome-top)+0.25rem)]"
       >
         <h3
-          class="paper text-muted-foreground text-callout sticky top-(--chrome-top) z-10 -mx-4 flex items-baseline justify-between gap-2 px-4 py-2 font-semibold"
+          :data-section="[dayList.length > 1 ? d.relative ?? d.label : null, b.block.name || 'Session', b.time].filter(Boolean).join(' · ')"
+          class="text-muted-foreground text-callout flex items-baseline justify-between gap-2 py-2 font-semibold"
         >
           <span class="truncate">{{ b.block.name || 'Session' }}</span>
           <span v-if="b.time" class="shrink-0 font-medium tabular-nums">{{ b.time }}</span>

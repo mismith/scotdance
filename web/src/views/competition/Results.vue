@@ -181,8 +181,8 @@ const mineOnly = computed(() => onlyMine.value && anyFollowedHere.value)
       leave-to-class="opacity-0"
     >
       <div :key="String(mineOnly)" class="space-y-3">
-        <section v-for="s in blocks" :key="s.key">
-          <h2 v-if="s.heading" class="paper text-muted-foreground text-callout sticky top-(--chrome-top) z-10 -mx-4 px-4 py-2 font-semibold">
+        <section v-for="s in blocks" :key="s.key" :data-section="s.heading ?? ''">
+          <h2 v-if="s.heading" class="text-muted-foreground text-callout py-2 font-semibold">
             {{ s.heading }}
           </h2>
           <ul class="rows-engraved -mx-4 [--inset:1rem] [--inset-end:1rem]">

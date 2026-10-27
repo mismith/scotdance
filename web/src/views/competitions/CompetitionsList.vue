@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue'
-import { useEventListener, useLocalStorage } from '@vueuse/core'
+import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
+import { useLocalStorage } from '@vueuse/core'
 import { useRoute, useRouter } from 'vue-router'
 import { CalendarClock, CalendarDays, CloudOff, List, Map as MapIcon, SquarePlus, Trophy } from '@lucide/vue'
 import { useCompetitions, type CompetitionListItem } from '@/composables/useCompetitions'
@@ -14,6 +14,7 @@ import LocationFilter from '@/components/LocationFilter.vue'
 import Skeleton from '@/components/Skeleton.vue'
 import MenuPill from '@/components/MenuPill.vue'
 import { swapInPlace } from '@/lib/navMotion'
+import { useScrollSection } from '@/composables/useScrollSection'
 import { useScrolledPast } from '@/composables/useScrolledPast'
 import { useLocationFilter } from '@/composables/useLocationFilter'
 import { useFollowedCompetitions } from '@/composables/useFollowedCompetitions'
@@ -134,21 +135,8 @@ const sections = computed<Section[]>(() => {
   return [...out.values()]
 })
 
-// The month (or Today) you're in shows under the bar's title as you scroll,
-// as Photos does, rather than headings that stick and stack under the bar:
-// the last heading whose top has gone up past the bar's foot (where the
-// page's padding ends).
 const mainEl = ref<HTMLElement | null>(null)
-const currentSection = ref<string | null>(null)
-function findCurrentSection() {
-  const main = mainEl.value
-  if (!main || view.value !== 'list') return (currentSection.value = null)
-  const line = parseFloat(getComputedStyle(main).paddingTop)
-  const passed = [...main.querySelectorAll<HTMLElement>('[data-section]')].filter((h) => h.getBoundingClientRect().top < line)
-  currentSection.value = passed.at(-1)?.dataset.section ?? null
-}
-useEventListener(window, 'scroll', findCurrentSection, { passive: true })
-watch([sections, view], () => nextTick(findCurrentSection))
+const currentSection = useScrollSection(mainEl)
 </script>
 
 <template>

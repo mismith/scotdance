@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, toRef, watch } from 'vue'
+import { computed, ref, toRef, watch } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { CalendarX, ChevronRight, EyeOff, Hourglass, Pencil } from '@lucide/vue'
 import { useMeStore } from '@/stores/me'
@@ -13,6 +13,7 @@ import LinkedSwitcher from '@/components/LinkedSwitcher.vue'
 import Button from '@/components/ui/Button.vue'
 import { provideCompetition } from '@/composables/useCompetition'
 import { TAB_OF, provideLinkedSwitcher } from '@/composables/useLinkedSwitcher'
+import { useScrollSection } from '@/composables/useScrollSection'
 import { provideInfoHeader } from '@/composables/useScrolledPast'
 import { usePageTitle } from '@/composables/usePageTitle'
 import { useRecentEntities } from '@/composables/useRecentEntities'
@@ -102,6 +103,8 @@ const unpublishedNote = computed(() =>
 // but Overview, whose own big title shrinks into the bar as you leave it
 // (shared view-transition name) or scroll past it.
 const { scrolledPast } = provideInfoHeader()
+const mainEl = ref<HTMLElement | null>(null)
+const currentSection = useScrollSection(mainEl)
 
 const isTopTab = computed(() => String(route.name ?? '') in TAB_LABEL_BY_ROUTE)
 const isOverview = computed(() => route.name === 'competition.info')
@@ -147,7 +150,7 @@ usePageTitle(() => [
   <div class="flex flex-1 flex-col pb-[calc(var(--chrome-bottom)+1.5rem)]">
     <AppBar
       :title="competition?.name"
-      :subtitle="subtitle"
+      :subtitle="currentSection ?? subtitle"
       :show-title="!isOverview || scrolledPast"
       :scrolled="scrolledPast"
       :fallback="{ to: { name: 'competitions' }, label: 'Competitions' }"
@@ -170,7 +173,7 @@ usePageTitle(() => [
       </template>
     </AppBar>
 
-    <main class="mx-auto w-full max-w-3xl flex-1 px-4 pt-[calc(var(--chrome-top)+0.5rem)]">
+    <main ref="mainEl" class="mx-auto w-full max-w-3xl flex-1 px-4 pt-[calc(var(--chrome-top)+0.5rem)]">
       <RouterLink
         v-if="hidden && !loading"
         :to="{ name: 'manage', params: { competitionId } }"
