@@ -1,4 +1,5 @@
 import type { Motion } from '@/lib/navMotion'
+import { morphTabBar } from '@/lib/tabBarMorph'
 
 // How a page change moves (lib/pageTransition), as Apple does it: pages
 // slide, they don't fade, so nothing flashes through between them.
@@ -152,6 +153,12 @@ export function crossfadeBars(): Animation[] {
     }
     if (!now) {
       out.push(fade(copy, false))
+      continue
+    }
+    // The app's tabs and a competition's trade sides (lib/tabBarMorph).
+    const morph = kind === 'tabbar' && !stayed ? morphTabBar(copy, now) : null
+    if (morph) {
+      out.push(...morph)
       continue
     }
     const parts = copy.querySelectorAll<HTMLElement>('[data-bar-part]')

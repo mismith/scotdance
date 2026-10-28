@@ -68,7 +68,7 @@ function onTap(item: TabItem, e: MouseEvent) {
     :aria-label="label"
     class="pointer-events-none fixed inset-x-chrome-0 -bottom-10 z-30 px-3 pb-[calc(max(0.5rem,var(--safe-bottom))+2.5rem)] lg:hidden"
   >
-    <div class="mx-auto flex max-w-lg items-center gap-2">
+    <div data-tabbar-row class="mx-auto flex max-w-lg items-center gap-2">
       <slot name="leading" />
       <div
         ref="pill"
